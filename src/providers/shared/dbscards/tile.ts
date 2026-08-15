@@ -36,8 +36,10 @@ import { decode } from "html-entities";
   `[a-z]+\d` it fitted `en-bt25-009` and missed `en-p-082`, so the prefix stayed
   on, the reference regex then read `en` as the set — and **555 English tiles,
   every promo, carried no reference at all**.
+
+  `jp` is Fusion World's, whose Japanese slugs read `jp-fb09-001-l-gogeta-br`.
 */
-const LOCALE_PREFIX = /^(?:en|fr)-(?=[a-z]+\d|[a-z]+-\d)/i;
+const LOCALE_PREFIX = /^(?:en|fr|jp|ja)-(?=[a-z]+\d|[a-z]+-\d)/i;
 
 export function dbscardsSlugToPrintRef(slug: string): string | null {
   const bare = slug.trim().replace(LOCALE_PREFIX, "");

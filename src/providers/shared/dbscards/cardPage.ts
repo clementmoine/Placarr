@@ -18,12 +18,12 @@
  */
 import { decode } from "html-entities";
 
-import { dbscardsSlugToPrintRef } from "./dbscardsIndex";
+import { dbscardsSlugToPrintRef } from "./list";
 import {
   parseDbscardsTiles,
   parseTilePrice,
   type DbscardsTile,
-} from "./dbscardsTile";
+} from "./tile";
 
 /** A label and the values under it, with whatever they linked to. */
 export type DbscardsField = {

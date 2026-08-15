@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { parseDbscardsCardPage } from "./dbscardsCardPage";
+import { parseDbscardsCardPage } from "./cardPage";
 
 const fixture = (name: string) =>
   readFileSync(path.join(__dirname, "fixtures", name), "utf8");

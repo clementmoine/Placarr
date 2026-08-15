@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { readFileSync } from "node:fs";
@@ -30,6 +30,13 @@ describe("searchDbsCgPrints", () => {
     tmp = mkdtempSync(path.join(os.tmpdir(), "dbscg-"));
     const dbPath = path.join(tmp, "catalog.sqlite");
     process.env.PLACARR_DBSCG_DB = dbPath;
+    /*
+      Point the pack assets at the empty temp root too. Without it the test
+      reads the real `data/dbs/cg/cards`, so it passed only while that folder
+      happened to hold no synced face — the first faces run turned it red by
+      doing exactly what it is supposed to do.
+    */
+    process.env.PLACARR_EFFECTS_DIR = tmp;
     resetDbsCgDbCache();
     indexDbsCgCards(parseDbsCardlistHtml(fixture), dbPath);
     resetDbsCgDbCache();
@@ -38,6 +45,7 @@ describe("searchDbsCgPrints", () => {
   afterEach(() => {
     resetDbsCgDbCache();
     delete process.env.PLACARR_DBSCG_DB;
+    delete process.env.PLACARR_EFFECTS_DIR;
     rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -51,6 +59,7 @@ describe("searchDbsCgPrints", () => {
   it("stamps the effect pack, Leader verso, and both finishes", () => {
     const print = lookupDbsCgPrint("dbscg:bt1-001");
     expect(print?.effectPack).toBe(DBS_CG_EFFECT_PACK_ID);
+    // Nothing synced here, so the remote Bandai verso is what a print falls to.
     expect(print?.cardBackUrl).toMatch(/BT1-001_b\.png$/);
     expect(print?.finishes).toEqual(["normal", ...DBS_CG_FINISHES]);
     expect(print?.plainFinishes).toEqual(["normal"]);
@@ -77,6 +86,13 @@ describe("bilingual titles", () => {
     tmp = mkdtempSync(path.join(os.tmpdir(), "dbscg-bidi-"));
     const dbPath = path.join(tmp, "catalog.sqlite");
     process.env.PLACARR_DBSCG_DB = dbPath;
+    /*
+      Point the pack assets at the empty temp root too. Without it the test
+      reads the real `data/dbs/cg/cards`, so it passed only while that folder
+      happened to hold no synced face — the first faces run turned it red by
+      doing exactly what it is supposed to do.
+    */
+    process.env.PLACARR_EFFECTS_DIR = tmp;
     resetDbsCgDbCache();
     indexDbsCgCards(
       [
@@ -91,6 +107,7 @@ describe("bilingual titles", () => {
   afterEach(() => {
     resetDbsCgDbCache();
     delete process.env.PLACARR_DBSCG_DB;
+    delete process.env.PLACARR_EFFECTS_DIR;
     rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -105,10 +122,21 @@ describe("bilingual titles", () => {
   it("looks up the English title row when asked", () => {
     const en = lookupDbsCgPrint("dbscg:bt1-001", { language: "en" });
     expect(en?.language).toBe("en");
-    // The stored back wins over Bandai's remote `_b.png`, and the legacy
-    // `awakened.webp` name still resolves — those files predate the rename.
-    expect(en?.cardBackUrl).toMatch(
-      /^\/assets\/dbs\/cg\/cards\/bt1\/en\/001\/(back\.[a-z]+|awakened)\.webp$/,
+  });
+
+  it("prefers a stored verso over Bandai's remote one", () => {
+    /*
+      Written against the real `data/` folder, this asserted whatever happened
+      to be synced — so it went red the moment a faces run stored a back, and
+      would have gone red the other way on a clean checkout. The file it needs
+      is created here instead.
+    */
+    const dir = path.join(tmp, "dbs", "cg", "cards", "bt1", "en", "001");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, "back.dbscards.webp"), "");
+    const en = lookupDbsCgPrint("dbscg:bt1-001", { language: "en" });
+    expect(en?.cardBackUrl).toBe(
+      "/assets/dbs/cg/cards/bt1/en/001/back.dbscards.webp",
     );
   });
 });

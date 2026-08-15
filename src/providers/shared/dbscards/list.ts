@@ -28,9 +28,9 @@ import {
   dbscardsPrintRef,
   parseDbscardsTiles,
   type DbscardsTile,
-} from "./dbscardsTile";
+} from "./tile";
 
-export { dbscardsPrintRef, dbscardsSlugToPrintRef } from "./dbscardsTile";
+export { dbscardsPrintRef, dbscardsSlugToPrintRef } from "./tile";
 
 /**
  * One card as their list renders it.
@@ -60,28 +60,67 @@ export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
 }
 
 /**
- * Their per-locale list pages.
+ * The two card games they run, on two hosts with the same software.
  *
- * `/cards` alone is the French list too — same pages — but the named path says
- * which locale it is instead of relying on the site's default. The two
- * languages then read the same way, which is the point: `/cards/N` and
- * `/cards/liste-cartes-anglaises/N` would have been the same call spelled two
- * different ways.
+ * Masters lives on `www`, Fusion World on `fw`, and the markup is identical
+ * down to the tile classes — so the same parser serves both and only the origin
+ * and the locale paths differ. Their locales differ too: Masters publishes
+ * French and English, Fusion World English and Japanese, and no French at all.
+ *
+ * `/cards` alone is Masters' French list as well, but the named path says which
+ * locale it is instead of relying on the site's default. Every locale then
+ * reads the same way, which is the point.
  */
-const DBSCARDS_LIST_PATH: Record<string, string> = {
-  fr: "/cards/liste-cartes-francaises",
-  en: "/cards/liste-cartes-anglaises",
+export type DbscardsSiteId = "masters" | "fusion";
+
+export type DbscardsSite = {
+  id: DbscardsSiteId;
+  origin: string;
+  /** Our locale id → their list path. */
+  lists: Readonly<Record<string, string>>;
 };
 
-export function dbscardsListPageUrl(page: number, lang = "fr"): string {
-  const base = DBSCARDS_LIST_PATH[lang.toLowerCase()];
-  if (!base) throw new Error(`dbscards: no list page for locale ${lang}`);
+export const DBSCARDS_SITES: Readonly<Record<DbscardsSiteId, DbscardsSite>> = {
+  masters: {
+    id: "masters",
+    origin: "https://www.dbscards.fr",
+    lists: {
+      fr: "/cards/liste-cartes-francaises",
+      en: "/cards/liste-cartes-anglaises",
+    },
+  },
+  fusion: {
+    id: "fusion",
+    origin: "https://fw.dbscards.fr",
+    lists: {
+      en: "/cards/liste-cartes-anglaises",
+      ja: "/cards/liste-cartes-japonaises",
+    },
+  },
+};
+
+export function dbscardsListPageUrl(
+  page: number,
+  lang = "fr",
+  site: DbscardsSite = DBSCARDS_SITES.masters,
+): string {
+  const base = site.lists[lang.toLowerCase()];
+  if (!base) {
+    throw new Error(`dbscards: no ${site.id} list page for locale ${lang}`);
+  }
   const suffix = page <= 1 ? "" : `/${page}`;
-  return `https://www.dbscards.fr${base}${suffix}`;
+  return `${site.origin}${base}${suffix}`;
 }
 
-/** Locales their site publishes a list for. */
-export const DBSCARDS_LIST_LANGS = Object.keys(DBSCARDS_LIST_PATH);
+/** Locales a site publishes a list for. */
+export function dbscardsListLangs(
+  site: DbscardsSite = DBSCARDS_SITES.masters,
+): string[] {
+  return Object.keys(site.lists);
+}
+
+/** @deprecated Masters' locales — prefer {@link dbscardsListLangs}. */
+export const DBSCARDS_LIST_LANGS = Object.keys(DBSCARDS_SITES.masters.lists);
 
 /** The front image of a Leader, whose list entry points at its awakened side. */
 export function dbscardsFrontFromBack(image: string): string {

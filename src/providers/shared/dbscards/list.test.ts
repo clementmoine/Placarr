@@ -13,8 +13,8 @@ import {
   lookupDbscardsEntry,
   parseDbscardsListPage,
   type DbscardsIndexEntry,
-} from "./dbscardsIndex";
-import type { DbscardsTile } from "./dbscardsTile";
+} from "./list";
+import type { DbscardsTile } from "./tile";
 
 const listPage = readFileSync(
   path.join(__dirname, "fixtures", "dbscards-list-fr.html"),

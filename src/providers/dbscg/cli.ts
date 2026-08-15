@@ -17,7 +17,9 @@ import { ensureArenaClone, installArenaFaces } from "./installArena";
 import { ensureDbsCgCuratedAssets } from "./installCurated";
 import type { DbsCardlistLocaleId } from "./parseCardlist";
 import { scrapeDbsCgCardlist } from "./scrapeCardlist";
-import { scrapeDbscardsIndex } from "./scrapeDbscardsIndex";
+import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
+
+import { DBS_CG_PACK_ID } from "./indexStore";
 
 const STEPS = ["scrape", "dbscards", "arena", "faces"] as const;
 type Step = (typeof STEPS)[number];
@@ -124,6 +126,7 @@ export async function runDbsCgPackPipeline(
       */
       for (const lang of langs) {
         const result = await scrapeDbscardsIndex({
+          packId: DBS_CG_PACK_ID,
           lang,
           delayMs: optionalNumber(argv, "--delay"),
           onProgress: (page, total) => {

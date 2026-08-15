@@ -49,8 +49,8 @@ import {
   lookupDbscardsEntry,
   type DbscardsIndex,
   type DbscardsIndexEntry,
-} from "./dbscardsIndex";
-import { dbscardsIndexPath } from "./scrapeDbscardsIndex";
+} from "@/providers/shared/dbscards/list";
+import { dbscardsIndexPath } from "@/providers/shared/dbscards/scrapeList";
 import {
   dbsFaceFilename,
   dbsFaceSourceOf,
@@ -190,7 +190,7 @@ function dbscardsIndex(lang: string): DbscardsIndex {
   try {
     index = buildDbscardsIndex(
       JSON.parse(
-        readFileSync(dbscardsIndexPath(key), "utf8"),
+        readFileSync(dbscardsIndexPath(DBS_CG_PACK_ID, key), "utf8"),
       ) as DbscardsIndexEntry[],
     );
   } catch {

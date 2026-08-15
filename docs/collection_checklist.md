@@ -71,6 +71,49 @@ pour la recherche — mais surtout elle ouvre une facette **complétion** :
 interroger un catalogue depuis l'application, pas seulement consulter ses
 étagères.
 
+## Un catalogue ne contient pas que des cartes
+
+Une collection ne se compte pas qu'en cartes : decks de démarrage, coffrets,
+displays, blisters. Il faut pouvoir les cocher aussi, et leur associer un
+visuel.
+
+### On les confond déjà, et ça se voit
+
+`set_name` mélange aujourd'hui deux notions distinctes. Chez DBS Masters on y
+trouve `BT31` (un set de boosters) **et** « DECK DE DÉMARRAGE -Final Radiance- »
+ou « Premium Anniversary Box 2024 » (des produits scellés). Bandai les publie
+comme des « séries » de sa cardlist, et nous avons repris sa forme.
+
+Ce n'est pas anodin pour une check-list : « BT31 complet à 80 % » et « je
+possède ce deck » ne sont pas la même affirmation. La première se compte en
+tirages, la seconde est un objet unique.
+
+### La matière existe déjà
+
+- **Naruto** — les pages de decks sont sur disque :
+  `staging/manga-news/Naruto-Deck-Serie-{1..5}.html` et `-Nouvelle-Serie.html`.
+- **DBS** — dbscards publie une taxonomie complète de produits scellés :
+  `/products/{boosters,displays,collector-boxes,decks,special-packs,binders-pages,card-sleeves,deck-boxes,deck-separator,playmats,accessories}`.
+- **Jeux vidéo** — l'équivalent n'est pas le produit scellé mais l'**édition**
+  (collector, limitée, bundle). LaunchBox ne les modélise pas ; à vérifier avant
+  de promettre la parité.
+
+### Comment gérer ça sans tout aplatir
+
+La tentation serait une taxonomie universelle du collectionnable. C'est le
+piège déjà rencontré sur `print_assets` : quatre formes réduites à une auraient
+perdu les vernis de Lorcana et le `wayback_timestamp` de Naruto.
+
+La forme qui tient : **chaque catalogue déclare ses propres types d'entrée**,
+sur un minimum commun — un identifiant, un nom, une portée d'appartenance, une
+image, et « est-ce que ça se possède à l'unité ou en exemplaire ». Un pack
+cartes déclarera `print` et `sealed`; un catalogue de jeux `game` et `edition`;
+un futur pack de figurines ce qu'il voudra.
+
+Le noyau ne connaît que le minimum commun, et la check-list se construit dessus
+sans savoir ce qu'elle compte. C'est la même règle que pour les colonnes de
+`print_assets` : un tronc commun, des extensions déclarées, rien d'aplati.
+
 ## Étagères et catalogues : la question à trancher
 
 `Shelf` ne porte **aucun lien vers un catalogue** — seulement `type` et

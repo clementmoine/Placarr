@@ -52,6 +52,7 @@ import {
 } from "@/providers/shared/dbscards/list";
 import { dbscardsIndexPath } from "@/providers/shared/dbscards/scrapeList";
 import {
+  dbsFaceFileOf,
   dbsFaceFilename,
   dbsFaceSourceOf,
   pickBestFace,
@@ -323,23 +324,37 @@ export function isPngBuffer(buf: Buffer): boolean {
   return buf.length >= 8 && buf.toString("hex", 0, 8) === "89504e470d0a1a0a";
 }
 
-/**
- * Bandai serves PNG where the pack stores WebP. Re-encoding rather than
- * refusing it is what lets a locale's own face be used at all: it is the only
- * source that covers a printing in its language when dbscards does not.
- */
-async function toWebp(buf: Buffer): Promise<Buffer | null> {
-  if (isWebpBuffer(buf)) return buf;
-  if (!isPngBuffer(buf)) return null;
-  try {
-    const { default: sharp } = await import("sharp");
-    return await sharp(buf).webp({ quality: 92 }).toBuffer();
-  } catch {
-    return null;
-  }
+export function isJpegBuffer(buf: Buffer): boolean {
+  return buf.length >= 3 && buf.toString("hex", 0, 3) === "ffd8ff";
 }
 
-export type FaceDownload = { buf: Buffer | null; throttled: boolean };
+/**
+ * The face as the source served it, with the extension that names it.
+ *
+ * It used to be re-encoded: Bandai serves PNG, the pack stored WebP, so every
+ * one of its faces went through `webp({ quality: 92 })` — **lossy**, and
+ * permanently. A catalogue that ranks faces on quality has no business
+ * degrading them on the way in, and now that the filename carries its own
+ * extension there is no reason left to: the bytes are written exactly as they
+ * arrived.
+ *
+ * Refusing an unknown format is deliberate. A body that is neither WebP, PNG
+ * nor JPEG is an error page wearing an image URL, and storing it would put a
+ * broken file in the ranking.
+ */
+function faceFormat(buf: Buffer): "webp" | "png" | "jpg" | null {
+  if (isWebpBuffer(buf)) return "webp";
+  if (isPngBuffer(buf)) return "png";
+  if (isJpegBuffer(buf)) return "jpg";
+  return null;
+}
+
+export type FaceDownload = {
+  buf: Buffer | null;
+  /** The format the source served, which names the file. */
+  ext?: "webp" | "png" | "jpg";
+  throttled: boolean;
+};
 
 /** Hosts that told us to go away, for the rest of this run. */
 type BannedHosts = Set<string>;
@@ -395,10 +410,10 @@ async function downloadFace(
         });
         const raw = toBuffer(response.data);
         if (raw.byteLength < MIN_WEBP_BYTES) break;
-        const webp = await toWebp(raw);
-        if (webp) {
+        const ext = faceFormat(raw);
+        if (ext) {
           onAnswer?.(url, true);
-          return { buf: webp, throttled };
+          return { buf: raw, ext, throttled };
         }
         break;
       } catch (error) {
@@ -441,6 +456,7 @@ async function readStoredFaces(cardDir: string): Promise<StoredFace[]> {
       const meta = await sharp(path.join(cardDir, name)).metadata();
       out.push({
         source,
+        file: name,
         width: meta.width ?? 0,
         height: meta.height ?? 0,
       });
@@ -449,6 +465,31 @@ async function readStoredFaces(cardDir: string): Promise<StoredFace[]> {
     }
   }
   return out;
+}
+
+/**
+ * The file this card already holds for a source and role, whatever its format.
+ *
+ * Probing one fixed name would miss `art.bandai.png` and re-download it every
+ * run — the skip has to ask the same question the reader does: is there a face
+ * from this source, in any format the source might have served?
+ */
+function storedFaceFile(
+  cardDir: string,
+  source: DbsFaceSource,
+  role: DbsFaceRole = "art",
+): string | null {
+  let names: string[];
+  try {
+    names = readdirSync(cardDir);
+  } catch {
+    return null;
+  }
+  for (const name of names) {
+    const parsed = dbsFaceFileOf(name);
+    if (parsed?.source === source && parsed.role === role) return name;
+  }
+  return null;
 }
 
 function writeAtomic(destPath: string, buf: Buffer): void {
@@ -471,8 +512,14 @@ export async function promoteBestFace(
   const stored = await readStoredFaces(cardDir);
   const best = pickBestFace(stored, lang);
   if (!best) return null;
+  /*
+    The file as it sits on disk, not a name rebuilt from the source — the
+    extension belongs to whatever the source served, so rebuilding it would
+    point the decision at a `.webp` that may not exist.
+  */
+  const winner = stored.find((face) => face.source === best);
   // Record the winner; never copy it. See `DBS_FACE_DECISION_FILE`.
-  recordFaceDecision(cardDir, "art", dbsFaceFilename(best));
+  recordFaceDecision(cardDir, "art", winner?.file ?? dbsFaceFilename(best));
   return best;
 }
 
@@ -622,14 +669,13 @@ export async function fetchDbsCgFaces(
     let fetched = 0;
     let throttledHere = false;
     for (const candidate of candidates) {
-      const file = path.join(cardDir, dbsFaceFilename(candidate.source));
       /*
         Skip is per *source*, not per card. That is what lets a later pass fill
         in only what is missing — a card already holding Bandai's face still
         gets asked for the dbscards one, so a run interrupted by a ban is
         repaired by simply running again, no `--force` needed.
       */
-      if (!force && existsSync(file)) continue;
+      if (!force && storedFaceFile(cardDir, candidate.source)) continue;
       /*
         Try the pool that has been answering for this set first.
 
@@ -643,7 +689,7 @@ export async function fetchDbsCgFaces(
         candidate.source === "dbscards"
           ? rankAttempts(order, orderKey, candidate.urls, dbscardsPoolOf)
           : candidate.urls;
-      const { buf, throttled } = await downloadFace(
+      const { buf, ext, throttled } = await downloadFace(
         urls,
         banned,
         retryBackoffMs,
@@ -654,6 +700,10 @@ export async function fetchDbsCgFaces(
       );
       if (throttled) throttledHere = true;
       if (!buf) continue;
+      const file = path.join(
+        cardDir,
+        dbsFaceFilename(candidate.source, "art", ext ?? "webp"),
+      );
       try {
         writeAtomic(file, buf);
         fetched += 1;
@@ -670,11 +720,10 @@ export async function fetchDbsCgFaces(
       copies them out of the local clone. Same filename `arena` uses, so both
       routes land on one name.
     */
-    const awakenedDest = path.join(
-      cardDir,
-      dbsFaceFilename("dbscards", "back"),
-    );
-    if (title?.awakenedName && (force || !existsSync(awakenedDest))) {
+    if (
+      title?.awakenedName &&
+      (force || !storedFaceFile(cardDir, "dbscards", "back"))
+    ) {
       // Their listed `-back` when we have it, constructed otherwise.
       const listedBack = lookupDbscardsEntry(
         dbscardsIndex(lang),
@@ -708,16 +757,16 @@ export async function fetchDbsCgFaces(
       // A Leader without a published verso is ordinary, not a failure: it is
       // not counted as a miss.
       if (back.buf) {
+        const awakenedDest = path.join(
+          cardDir,
+          dbsFaceFilename("dbscards", "back", back.ext ?? "webp"),
+        );
         try {
           writeAtomic(awakenedDest, back.buf);
           // Same convention as the front: role + source, then a recorded
           // winner. A fixed single name had no room for a second source
           // and would have been silently overwritten by whichever ran last.
-          recordFaceDecision(
-            cardDir,
-            "back",
-            dbsFaceFilename("dbscards", "back"),
-          );
+          recordFaceDecision(cardDir, "back", path.basename(awakenedDest));
         } catch {
           stats.fail += 1;
         }

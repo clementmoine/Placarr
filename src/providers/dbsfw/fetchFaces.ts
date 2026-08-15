@@ -15,7 +15,14 @@
  * Sequential like every other pass here — this host bans by the hour when a
  * pass goes parallel.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import sharp from "sharp";
@@ -155,15 +162,32 @@ async function downloadFace(url: string): Promise<Download> {
   }
 }
 
+/**
+ * Every face this card holds, whatever format its source served.
+ *
+ * The directory is scanned rather than probed name by name: a source is free to
+ * answer in PNG or JPEG, and `art.bandai.png` is as much a face as
+ * `art.dbscards.webp`.
+ */
 async function readStoredFaces(cardDir: string): Promise<DbsFwStoredFace[]> {
+  let names: string[];
+  try {
+    names = readdirSync(cardDir);
+  } catch {
+    return [];
+  }
   const out: DbsFwStoredFace[] = [];
-  for (const source of ["dbscards", "bandai"] as const) {
-    const name = dbsFwFaceFilename(source);
-    if (!existsSync(path.join(cardDir, name))) continue;
-    if (!dbsFwFaceSourceOf(name)) continue;
+  for (const name of names) {
+    const source = dbsFwFaceSourceOf(name);
+    if (!source) continue;
     try {
       const meta = await sharp(path.join(cardDir, name)).metadata();
-      out.push({ source, width: meta.width ?? 0, height: meta.height ?? 0 });
+      out.push({
+        source,
+        file: name,
+        width: meta.width ?? 0,
+        height: meta.height ?? 0,
+      });
     } catch {
       /* unreadable file — not a candidate */
     }
@@ -184,7 +208,10 @@ export async function promoteBestFwFace(
   const stored = await readStoredFaces(cardDir);
   const best = pickBestFwFace(stored, lang);
   if (!best) return null;
-  recordFwFaceDecision(cardDir, "art", dbsFwFaceFilename(best));
+  // The file as stored, not a name rebuilt from the source: the extension is
+  // whatever the source served.
+  const winner = stored.find((face) => face.source === best);
+  recordFwFaceDecision(cardDir, "art", winner?.file ?? dbsFwFaceFilename(best));
   return best;
 }
 

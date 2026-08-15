@@ -7,7 +7,7 @@
  * cards at the smallest available scan, and the only way back was
  * re-downloading everything with `--force`.
  *
- * So every source that answers is kept side by side as `art.<source>.webp`, and
+ * So every source that answers is kept side by side as `art.<source>.<ext>`, and
  * the displayed face is *chosen* rather than raced for. Adding a source later
  * needs no re-download of the others, and the choice is a pure function that
  * can be re-run offline.
@@ -65,14 +65,18 @@ export type FaceDecision = Partial<Record<CardFaceRole, string>>;
 
 export type StoredFace<S extends string> = {
   source: S;
+  /** The file as it sits on disk, extension included. */
+  file?: string;
   width: number;
   height: number;
 };
 
 export type CardFaceChoice<S extends string> = {
   sources: readonly S[];
-  faceFilename: (source: S, role?: CardFaceRole) => string;
-  faceFileOf: (filename: string) => { role: CardFaceRole; source: S } | null;
+  faceFilename: (source: S, role?: CardFaceRole, ext?: string) => string;
+  faceFileOf: (
+    filename: string,
+  ) => { role: CardFaceRole; source: S; ext: string } | null;
   faceSourceOf: (filename: string) => S | null;
   pickBestFace: (faces: readonly StoredFace<S>[], lang?: string) => S | null;
   parseFaceDecision: (json: string, role?: CardFaceRole) => string | null;
@@ -111,19 +115,32 @@ export function createCardFaceChoice<S extends string>(config: {
     return rank >= 0 ? rank : sources.length + sources.indexOf(source);
   };
 
-  const faceFilename = (source: S, role: CardFaceRole = "art"): string =>
-    `${role}.${source}.webp`;
+  /*
+    `<role>.<source>.<ext>` — the extension is part of the name, not a constant.
+
+    Writing `.webp` into the convention baked one pack's ingest policy into the
+    shared contract: DBS re-encodes every source to WebP, but Lorcana and Naruto
+    hold `.jpg` as it came, and a source that only serves PNG or GIF would have
+    had to be re-encoded — a permanent loss — purely to satisfy a filename.
+    Keeping the format the source gave also keeps the bytes comparable to it.
+  */
+  const faceFilename = (
+    source: S,
+    role: CardFaceRole = "art",
+    ext = "webp",
+  ): string => `${role}.${source}.${ext.replace(/^\./, "").toLowerCase()}`;
 
   const faceFileOf = (
     filename: string,
-  ): { role: CardFaceRole; source: S } | null => {
-    const match = /^([a-z]+)\.([a-z]+)\.webp$/.exec(filename);
-    const role = match?.[1] as CardFaceRole | undefined;
-    const source = match?.[2] as S | undefined;
-    if (!role || !source) return null;
+  ): { role: CardFaceRole; source: S; ext: string } | null => {
+    const match = /^([a-z]+)\.([a-z0-9-]+)\.([a-z0-9]+)$/i.exec(filename);
+    const role = match?.[1]?.toLowerCase() as CardFaceRole | undefined;
+    const source = match?.[2]?.toLowerCase() as S | undefined;
+    const ext = match?.[3]?.toLowerCase();
+    if (!role || !source || !ext) return null;
     if (!CARD_FACE_ROLES.includes(role)) return null;
     if (!sources.includes(source)) return null;
-    return { role, source };
+    return { role, source, ext };
   };
 
   const faceSourceOf = (filename: string): S | null => {
@@ -151,7 +168,7 @@ export function createCardFaceChoice<S extends string>(config: {
       const score = explainAttachmentScoreForDisplay(
         {
           type: "cover",
-          url: `${face.source}/${faceFilename(face.source)}`,
+          url: `${face.source}/${face.file ?? faceFilename(face.source)}`,
           source: face.source,
           coverProvenance: provenance,
         },

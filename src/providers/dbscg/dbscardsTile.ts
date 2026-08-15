@@ -31,13 +31,39 @@ import { decode } from "html-entities";
  * Lives here rather than with the index because every reader of their markup
  * needs it, and the index reads tiles rather than the other way round.
  */
-const LOCALE_PREFIX = /^(?:en|fr)-(?=[a-z]+\d)/i;
+/*
+  The lookahead has to accept a set code with no digit in it. Written as
+  `[a-z]+\d` it fitted `en-bt25-009` and missed `en-p-082`, so the prefix stayed
+  on, the reference regex then read `en` as the set — and **555 English tiles,
+  every promo, carried no reference at all**.
+*/
+const LOCALE_PREFIX = /^(?:en|fr)-(?=[a-z]+\d|[a-z]+-\d)/i;
 
 export function dbscardsSlugToPrintRef(slug: string): string | null {
   const bare = slug.trim().replace(LOCALE_PREFIX, "");
   const match = /^([a-z0-9]+)-(\d+[a-z]*)-/i.exec(bare);
   if (!match) return null;
   return `${match[1]!.toLowerCase()}-${match[2]!.toLowerCase()}`;
+}
+
+/**
+ * The collector reference of a tile, from its code rather than its slug.
+ *
+ * Their two spellings of a card disagree: the slug says `ex2-01` where the
+ * title says `EX02-01-EX`, and the padded form is the printed one — the one
+ * our catalogue uses. Reading the slug lost the whole EX02 set to a spelling
+ * difference. The slug stays as the fallback for a tile whose title carries no
+ * code.
+ */
+export function dbscardsPrintRef(tile: {
+  sku?: string | null;
+  slug: string;
+}): string | null {
+  const fromSku = /^([a-z0-9]+)-(\d+[a-z]*)-/i.exec(tile.sku ?? "");
+  if (fromSku) {
+    return `${fromSku[1]!.toLowerCase()}-${fromSku[2]!.toLowerCase()}`;
+  }
+  return dbscardsSlugToPrintRef(tile.slug);
 }
 
 /** The slug without its locale prefix, for matching rarity segments. */
@@ -141,6 +167,7 @@ function sideImages(html: string): { front: string | null; back: string | null }
 function parseTile(itemId: string, body: string): DbscardsTile | null {
   const slug = SLUG.exec(body)?.[1];
   if (!slug) return null;
+  const sku = SKU_FROM_TITLE.exec(body)?.[1]?.toUpperCase() ?? null;
   const nameMatch = NAME.exec(body);
   const priceText = (() => {
     const match = PRICE.exec(body);
@@ -156,8 +183,8 @@ function parseTile(itemId: string, body: string): DbscardsTile | null {
   return {
     itemId,
     slug,
-    ref: dbscardsSlugToPrintRef(slug),
-    sku: SKU_FROM_TITLE.exec(body)?.[1]?.toUpperCase() ?? null,
+    ref: dbscardsPrintRef({ sku, slug }),
+    sku,
     name: nameMatch ? textOf(nameMatch[1] ?? "") : "",
     lang: LANG.exec(body)?.[1]?.toLowerCase() ?? null,
     priceText,

@@ -25,12 +25,12 @@
  */
 import {
   dbscardsBareSlug,
-  dbscardsSlugToPrintRef,
+  dbscardsPrintRef,
   parseDbscardsTiles,
   type DbscardsTile,
 } from "./dbscardsTile";
 
-export { dbscardsSlugToPrintRef } from "./dbscardsTile";
+export { dbscardsPrintRef, dbscardsSlugToPrintRef } from "./dbscardsTile";
 
 /**
  * One card as their list renders it.
@@ -107,7 +107,13 @@ export function buildDbscardsIndex(
 ): DbscardsIndex {
   const index: DbscardsIndex = new Map();
   for (const entry of entries) {
-    const ref = entry.ref ?? dbscardsSlugToPrintRef(entry.slug);
+    /*
+      Recomputed rather than trusted: files crawled before the reference was
+      taken from the printed code carry `null` for every English promo, and
+      `ex2-01` where the catalogue says `ex02-01`. Deriving it here fixes those
+      on load, so a 387-request crawl is not owed to a spelling fix.
+    */
+    const ref = dbscardsPrintRef(entry);
     if (!ref) continue;
     const bucket = index.get(ref);
     if (bucket) bucket.push(entry);
@@ -132,9 +138,16 @@ export function lookupDbscardsEntry(
   if (!bucket || bucket.length === 0) return null;
   const wanted = rarityCode?.trim().toLowerCase();
   if (wanted) {
-    const exact = bucket.find((entry) =>
-      dbscardsBareSlug(entry.slug).startsWith(`${ref.toLowerCase()}-${wanted}-`),
-    );
+    const code = `${ref.toLowerCase()}-${wanted}`;
+    /*
+      The printed code first, the slug second — for the same reason the
+      reference is taken from it: on EX02 the slug says `ex2-01-ex-…`, so
+      matching it against `ex02-01-ex-` never fired and every rarity of the set
+      collapsed onto whichever print happened to be first.
+    */
+    const exact =
+      bucket.find((entry) => entry.sku?.toLowerCase() === code) ??
+      bucket.find((entry) => dbscardsBareSlug(entry.slug).startsWith(`${code}-`));
     if (exact) return exact;
   }
   return bucket[0]!;

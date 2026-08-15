@@ -8,6 +8,7 @@ import {
   dbscardsFrontFromBack,
   dbscardsIsBackImage,
   dbscardsListPageUrl,
+  dbscardsPrintRef,
   dbscardsSlugToPrintRef,
   lookupDbscardsEntry,
   parseDbscardsListPage,
@@ -94,6 +95,39 @@ describe("parseDbscardsListPage", () => {
   });
 });
 
+describe("dbscardsPrintRef — the printed code beats the slug", () => {
+  it("reads a promo whose slug hides behind a locale prefix", () => {
+    /*
+      `en-p-082-pr-…`: the prefix was only stripped when the set code held a
+      digit, so `p-082` kept its `en-`, the reference regex read `en` as the
+      set, and 555 English tiles — every promo — carried no reference at all.
+    */
+    expect(dbscardsSlugToPrintRef("en-p-082-pr-event-pack-17-vegeta")).toBe(
+      "p-082",
+    );
+    expect(
+      dbscardsPrintRef({ sku: "P-082-PR", slug: "en-p-082-pr-vegeta" }),
+    ).toBe("p-082");
+  });
+
+  it("prefers the padded code their own title prints", () => {
+    // Their slug says `ex2-01`, their title `EX02-01-EX`; the catalogue says
+    // `ex02-01`, so reading the slug lost the whole set.
+    expect(
+      dbscardsPrintRef({
+        sku: "EX02-01-EX",
+        slug: "ex2-01-ex-time-patrol-trunks",
+      }),
+    ).toBe("ex02-01");
+  });
+
+  it("falls back to the slug when the tile prints no code", () => {
+    expect(dbscardsPrintRef({ sku: null, slug: "bt31-001-uc-gogeta" })).toBe(
+      "bt31-001",
+    );
+  });
+});
+
 describe("dbscardsSlugToPrintRef", () => {
   it("takes the collector part, before the rarity letters", () => {
     expect(dbscardsSlugToPrintRef("bt31-001-uc-gogeta-ss-fusion")).toBe(
@@ -126,6 +160,14 @@ describe("lookupDbscardsEntry", () => {
   it("narrows several prints of one code by rarity", () => {
     // `uc` and `slr` are different prints of the same card, different art.
     expect(lookupDbscardsEntry(index, "bt31-001", "slr")?.image).toBe("b.webp");
+  });
+
+  it("narrows on the printed code when the slug spells the set differently", () => {
+    const ex = buildDbscardsIndex([
+      entry({ slug: "ex2-01-ex-trunks", sku: "EX02-01-EX", image: "a.webp" }),
+      entry({ slug: "ex2-01-pr-trunks", sku: "EX02-01-PR", image: "b.webp" }),
+    ]);
+    expect(lookupDbscardsEntry(ex, "ex02-01", "pr")?.image).toBe("b.webp");
   });
 
   it("answers with something rather than nothing on an unknown rarity", () => {

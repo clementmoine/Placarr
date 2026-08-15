@@ -18,6 +18,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { httpGet } from "@/lib/http/httpClient";
 import { foilPackDataDir } from "@/lib/runtimeData";
 
 import {
@@ -82,15 +83,20 @@ export async function scrapeDbscardsIndex(opts: {
     if (page > 1 && delayMs > 0) await sleep(delayMs);
     let rows: DbscardsIndexEntry[] = [];
     try {
-      const res = await fetch(dbscardsListPageUrl(page, lang, site), {
+      /*
+        Through the shared client, not bare `fetch`: it carries the ambient job
+        abort signal, so cancelling this crawl from the admin actually closes
+        its sockets instead of leaving a worker slot held until timeout.
+      */
+      const res = await httpGet<string>(dbscardsListPageUrl(page, lang, site), {
         headers: { "User-Agent": UA },
-        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        responseType: "text",
+        timeout: PAGE_TIMEOUT_MS,
+        validateStatus: (status) => status === 200,
       });
-      if (!res.ok) {
-        empty += 1;
-        continue;
-      }
-      rows = parseDbscardsListPage(await res.text());
+      rows = parseDbscardsListPage(
+        typeof res.data === "string" ? res.data : String(res.data),
+      );
     } catch {
       // A page that fails is not the end of the list — only a run of empties is.
       empty += 1;

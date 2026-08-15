@@ -139,6 +139,61 @@ Avec la relation de contenu, la check-list ne dit plus seulement « il te manque
 d'un collectionneur n'est pas « que me manque-t-il » mais « que dois-je
 acheter » — et ce sont deux réponses différentes.
 
+## Conseil d'achat — le problème et sa forme
+
+L'objectif final : ne pas seulement lister le manque, mais dire **quoi acheter**
+pour maximiser les acquisitions, en limitant les doublons et le coût. Et
+comparer « acheter les cartes à l'unité » à « acheter un deck / une display ».
+
+### Deux familles de produits, deux mathématiques
+
+C'est la distinction qui décide de ce qu'on peut promettre :
+
+- **Contenu déterministe** — deck de démarrage, coffret, boîte anniversaire. On
+  sait exactement ce qu'il y a dedans. Le problème est un **recouvrement
+  d'ensembles pondéré** : quel sous-ensemble de produits couvre le plus de
+  manques au moindre coût. NP-difficile en théorie, mais à notre échelle
+  (quelques centaines de produits, quelques milliers de manques) un algorithme
+  glouton — meilleur ratio « nouvelles cartes / prix » à chaque tour — donne un
+  résultat proche de l'optimal et instantané. C'est ici que l'exemple de
+  l'utilisateur tombe juste : un deck qui apporte 99 cartes neuves contre
+  3 doublons est évidemment le bon achat, et le calcul le dit tout seul.
+- **Contenu aléatoire** — booster, display. Le contenu n'est pas connu : il
+  dépend des taux de tirage par rareté, que nous n'avons pas. On ne peut donner
+  qu'une **espérance**, et elle décroît à mesure que la collection se remplit
+  (les premières boîtes apportent beaucoup, les dernières presque rien).
+
+Conséquence à assumer dans l'interface : pour un deck on affiche un chiffre,
+pour une display une estimation, et on le dit.
+
+### Le coût est dominé par une poignée de cartes
+
+Mesuré sur les prix dbscards collectés le 2026-08-15 :
+
+| set | cartes cotées | coût à l'unité | prix médian | prix max |
+| --- | --- | --- | --- | --- |
+| BT31 | 164 | **2 404 €** | 0,10 € | 399 € |
+| BT25 | 167 | **5 801 €** | 0,02 € | 1 999 € |
+| BT1 | 146 | 365 € | 0,02 € | 140 € |
+
+7 092 cartes françaises cotées, 99 212 € cumulés.
+
+La médiane est à deux centimes et le maximum à deux mille euros : **compléter
+95 % d'un set ne coûte presque rien, les 5 % restants coûtent tout.** Un conseil
+d'achat qui viserait « le set complet » serait donc inutile. Ce qu'il faut
+montrer, c'est la falaise : « 158 cartes pour 12 €, puis 6 cartes pour 2 390 € ».
+
+### Ce qu'il manque pour le construire
+
+- Le **prix des produits scellés** — nous avons le prix à l'unité de chaque
+  carte, pas celui d'un deck ou d'une display. dbscards publie des pages
+  `/products/…` ; à évaluer comme source.
+- La **relation de contenu par pack** — riche chez DBS parce que Bandai publie
+  ses decks comme des séries de sa cardlist ; à mesurer pour Lorcana, Pokémon et
+  Naruto avant de promettre la fonctionnalité partout.
+- Les **taux de tirage** pour tout ce qui est aléatoire. À défaut, ne pas
+  prétendre chiffrer une display.
+
 ### Comment gérer ça sans tout aplatir
 
 La tentation serait une taxonomie universelle du collectionnable. C'est le

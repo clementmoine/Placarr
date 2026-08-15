@@ -16,6 +16,7 @@ import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
 
 import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./fetchFaces";
 import { DBS_FW_PACK_ID } from "./indexStore";
+import { installDbsFwLocaleTitles } from "./installLocaleTitles";
 
 import { ensureDbsFwCuratedAssets } from "./installCurated";
 import { scrapeDbsFwCardlist } from "./scrapeCardlist";
@@ -95,6 +96,17 @@ export async function runDbsFwPackPipeline(
           `── dbscards fw ${lang} : ${result.cards} cartes sur ${result.pages} pages ` +
             `(${result.withBack} avec verso)`,
         );
+        /*
+          Bandai publishes no Japanese cardlist, so a locale other than English
+          has no titles and its faces would be stored and never shown. The tile
+          that gave the image URL gives the name too.
+        */
+        if (lang !== "en") {
+          const titles = installDbsFwLocaleTitles(lang);
+          console.log(
+            `   titres ${lang} : ${titles.written} posés, ${titles.missing} sans équivalent`,
+          );
+        }
       }
     }
     if (step === "faces") {

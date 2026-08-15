@@ -10,6 +10,7 @@
 import {
   existsSync,
   mkdirSync,
+  readFileSync,
   readdirSync,
   renameSync,
   writeFileSync,
@@ -36,12 +37,26 @@ import {
   type AttemptOrderLedger,
 } from "@/providers/shared/attemptOrder";
 
-import { dbscardsFaceUrls, dbscardsPoolOf } from "./dbscardsFaces";
+import {
+  dbscardsFaceUrls,
+  dbscardsPoolOf,
+  dbscardsRarityCode,
+} from "./dbscardsFaces";
+import {
+  buildDbscardsIndex,
+  dbscardsFrontFromBack,
+  dbscardsIsBackImage,
+  lookupDbscardsEntry,
+  type DbscardsIndex,
+  type DbscardsIndexEntry,
+} from "./dbscardsIndex";
+import { dbscardsIndexPath } from "./scrapeDbscardsIndex";
 import {
   dbsFaceFilename,
   dbsFaceSourceOf,
   pickBestFace,
   recordFaceDecision,
+  type DbsFaceRole,
   type DbsFaceSource,
   type StoredFace,
 } from "./faceChoice";
@@ -158,6 +173,53 @@ export function bandaiFaceUrl(collector: string, lang: string): string {
  */
 export type FaceCandidate = { source: DbsFaceSource; urls: string[] };
 
+const dbscardsIndexCache = new Map<string, DbscardsIndex>();
+
+/**
+ * The crawled list, or an empty index when it has never been scraped.
+ *
+ * Absence is not an error: without it the pass builds URLs the way it always
+ * did. With it, no URL is guessed at all for the 53% of French prints the list
+ * covers.
+ */
+function dbscardsIndex(lang: string): DbscardsIndex {
+  const key = lang.toLowerCase();
+  const cached = dbscardsIndexCache.get(key);
+  if (cached) return cached;
+  let index: DbscardsIndex;
+  try {
+    index = buildDbscardsIndex(
+      JSON.parse(
+        readFileSync(dbscardsIndexPath(key), "utf8"),
+      ) as DbscardsIndexEntry[],
+    );
+  } catch {
+    index = new Map();
+  }
+  dbscardsIndexCache.set(key, index);
+  return index;
+}
+
+/** @internal test hook */
+export function resetDbscardsIndexCache(): void {
+  dbscardsIndexCache.clear();
+}
+
+/**
+ * Their own URL for this print, both sides, when the list carries it.
+ *
+ * A Leader's entry points at its `-back`; the front is the same path without
+ * the suffix. For a plain card the entry is the front and there is no back.
+ */
+function dbscardsListedUrls(
+  entry: DbscardsIndexEntry,
+  role: DbsFaceRole,
+): string[] {
+  const isBack = dbscardsIsBackImage(entry.image);
+  if (role === "back") return isBack ? [entry.image] : [];
+  return [isBack ? dbscardsFrontFromBack(entry.image) : entry.image];
+}
+
 export function dbsCgFaceCandidates(input: {
   setCode: string;
   number: string;
@@ -169,7 +231,21 @@ export function dbsCgFaceCandidates(input: {
 }): FaceCandidate[] {
   const lang = input.lang.toLowerCase();
   const out: FaceCandidate[] = [];
-  if (input.fullName) {
+
+  /*
+    Their own URL first, when their list carries this print — no slug rule, no
+    layout probe, no wasted request. Construction stays behind it for the ~47%
+    of French prints the list does not cover.
+  */
+  const listed = lookupDbscardsEntry(
+    dbscardsIndex(lang),
+    `${input.setCode}-${input.number}`.toLowerCase(),
+    dbscardsRarityCode(input.rarity),
+  );
+
+  if (listed) {
+    out.push({ source: "dbscards", urls: dbscardsListedUrls(listed, "art") });
+  } else if (input.fullName) {
     out.push({
       source: "dbscards",
       urls: dbscardsFaceUrls({
@@ -591,21 +667,26 @@ export async function fetchDbsCgFaces(
       dbsFaceFilename("dbscards", "back"),
     );
     if (title?.awakenedName && (force || !existsSync(awakenedDest))) {
-      const back = await downloadFace(
-        dbscardsFaceUrls(
-          {
-            setCode: print.setCode,
-            number: print.number,
-            lang,
-            rarity: title.rarity,
-            fullName: title.fullName,
-            awakenedName: title.awakenedName,
-          },
-          { face: "back" },
-        ),
-        banned,
-        retryBackoffMs,
+      // Their listed `-back` when we have it, constructed otherwise.
+      const listedBack = lookupDbscardsEntry(
+        dbscardsIndex(lang),
+        `${print.setCode}-${print.number}`.toLowerCase(),
+        dbscardsRarityCode(title.rarity),
       );
+      const backUrls = listedBack
+        ? dbscardsListedUrls(listedBack, "back")
+        : dbscardsFaceUrls(
+            {
+              setCode: print.setCode,
+              number: print.number,
+              lang,
+              rarity: title.rarity,
+              fullName: title.fullName,
+              awakenedName: title.awakenedName,
+            },
+            { face: "back" },
+          );
+      const back = await downloadFace(backUrls, banned, retryBackoffMs);
       if (back.throttled) throttledHere = true;
       // A Leader without a published verso is ordinary, not a failure: it is
       // not counted as a miss.

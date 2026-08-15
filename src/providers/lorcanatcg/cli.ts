@@ -36,7 +36,14 @@ async function runCardsScrape(repo: string): Promise<Record<string, unknown>> {
     force: process.argv.includes("--force"),
     root: repo,
   });
-  return { provider: "lorcanacards", ok: true, ...result };
+  /*
+    `result.ok` est un *compteur* de cartes rangées, `ok` ici le statut booléen
+    de l'étape — comme `lorcanamobile` juste en dessous. Étalé tel quel, le
+    compteur écrasait silencieusement le statut : la convention disait `true`,
+    l'objet portait un nombre.
+  */
+  const { ok: synced, ...counts } = result;
+  return { provider: "lorcanacards", ok: true, synced, ...counts };
 }
 
 function unityInputsAvailable(

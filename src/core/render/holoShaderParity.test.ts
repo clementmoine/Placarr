@@ -4,6 +4,21 @@ import theirs from "./__fixtures__/lorcanaFoilCss.json";
 import { holoShader, type HoloShader } from "./holoShaders";
 
 /**
+ * The shader for an id these tests know exists.
+ *
+ * `holoShader` is deliberately nullable: it accepts any string and answers
+ * `null` for an unknown id — which is exactly what the null cases below check.
+ * Here the id is known, so an absent shader is a broken test rather than a
+ * value to narrow. Throwing names the id; a `!` would let the null travel and
+ * fail three assertions later on something unrelated.
+ */
+function shaderOf(id: string): HoloShader {
+  const shader = holoShader(id);
+  if (!shader) throw new Error(`holoShader: unknown id "${id}"`);
+  return shader;
+}
+
+/**
  * Field-by-field parity between the library and the recipes it was transcribed
  * from.
  *
@@ -97,14 +112,14 @@ describe("parity with the recipes these were transcribed from", () => {
     describe(id, () => {
       for (const [property, read] of FIELDS) {
         it(`matches on ${property}`, () => {
-          expect(normalize(read(holoShader(id)))).toBe(
+          expect(normalize(read(shaderOf(id)))).toBe(
             normalize(rules[selector]?.[property]),
           );
         });
       }
 
       it("matches on background-repeat", () => {
-        expect(normalizeRepeat(holoShader(id).backgroundRepeat)).toBe(
+        expect(normalizeRepeat(shaderOf(id).backgroundRepeat)).toBe(
           normalizeRepeat(rules[selector]?.["background-repeat"]),
         );
       });
@@ -121,7 +136,7 @@ describe("parity with the recipes these were transcribed from", () => {
               )
               .matchAll(/\/(?:assets|foil)(?:\/[a-z]+)*\/([a-z0-9]+)[-.]/g),
           ].map((match) => match[1]);
-        expect(assets(holoShader(id).backgroundImage)).toEqual(
+        expect(assets(shaderOf(id).backgroundImage)).toEqual(
           assets(rules[selector]?.["background-image"]),
         );
       });

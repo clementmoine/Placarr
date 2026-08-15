@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { dedupeByPerceptualHash } from "./imageAssets";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 describe("dedupeByPerceptualHash language roles", () => {
   const sameHash = "1010101010101010";
@@ -9,19 +10,19 @@ describe("dedupeByPerceptualHash language roles", () => {
     const kept = dedupeByPerceptualHash(
       [
         {
-          type: "cover" as const,
+          type: "cover" as AttachmentType,
           url: "/uploads/fr.jpg",
           source: "lorcanajson",
           role: "fr",
         },
         {
-          type: "cover" as const,
+          type: "cover" as AttachmentType,
           url: "/uploads/en.jpg",
           source: "lorcanajson",
           role: "en",
         },
         {
-          type: "cover" as const,
+          type: "cover" as AttachmentType,
           url: "/uploads/de.jpg",
           source: "lorcanajson",
           role: "de",
@@ -44,13 +45,13 @@ describe("dedupeByPerceptualHash language roles", () => {
     const kept = dedupeByPerceptualHash(
       [
         {
-          type: "cover" as const,
+          type: "cover" as AttachmentType,
           url: "/uploads/fr-a.jpg",
           source: "lorcanajson",
           role: "fr",
         },
         {
-          type: "cover" as const,
+          type: "cover" as AttachmentType,
           url: "/uploads/fr-b.jpg",
           source: "lorcanajson",
           role: "fr",

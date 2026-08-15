@@ -340,7 +340,11 @@ export function BulkSeriesForm({
                 </FormControl>
                 <FormMessage />
               </FormItem>
-              ) : null
+              ) : (
+                // Un render prop doit rendre un élément : `null` ne satisfait pas le
+                // type, et le champ reste enregistré dans les deux cas.
+                <></>
+              )
             }
           />
         </div>

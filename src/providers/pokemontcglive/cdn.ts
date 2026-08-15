@@ -610,10 +610,9 @@ export async function downloadBundleResolved(
     if (res.ok) return res;
     last = res;
     if (res.softBan === true) return res;
-    if (
-      (res.status === 403 || res.status === 404) &&
-      res.softBan !== true
-    ) {
+    // `softBan` est déjà retombé à `false | undefined` juste au-dessus : le
+    // retester ne pouvait qu'être vrai.
+    if (res.status === 403 || res.status === 404) {
       const setId = bundleSetId(name);
       if (setId) {
         await opts.cacheLock.run(() => {
@@ -1482,7 +1481,7 @@ export async function main(argv: string[] | null = null): Promise<number> {
       bundleUrl(args.urlName!, {
         version: args.version,
         contentDir: args.contentDir,
-        contentBase: args.contentBase,
+        contentBase: args.contentBase ?? undefined,
       }),
     );
     return 0;

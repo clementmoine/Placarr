@@ -116,6 +116,9 @@ export type ShelfItemPriceFields = {
 
 export type CacheSummaryFields = {
   priceNew: number | null;
+  /** Foil price (TCG). Optional like the sibling types above: most shelf types
+   *  never carry one, but the pipeline reads it and the cache stores it. */
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
   priceLastUpdated: Date | null;

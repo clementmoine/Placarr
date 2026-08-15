@@ -103,11 +103,20 @@ type NavdGotoBody = {
   };
   name?: string;
 };
+/**
+ * Which print the Live nav should land on.
+ *
+ * `mph` / `sph` are the laminate keys: `card_foil` only ever stores `std` or
+ * `ph` (measured — 93 741 and 55 038 rows, nothing else), but a laminate print
+ * is addressed by its own key, so the nav has to carry them.
+ */
+export type LiveNavPrefer = "" | "ph" | "mph" | "sph" | "holo" | "maxOwned";
+
 
 /** Warm-path RPC — no python3 spawn, reuses navd attach. */
 function navdGoto(
   bundleId: string,
-  prefer: "" | "ph" | "holo" | "maxOwned",
+  prefer: LiveNavPrefer,
 ): FridaGotoResult {
   const payload = JSON.stringify({
     method: "goto",
@@ -322,7 +331,7 @@ export function fridaOpenCard(
  */
 export function fridaGotoCard(
   bundleId: string,
-  prefer: "" | "ph" | "holo" | "maxOwned" = "",
+  prefer: LiveNavPrefer = "",
 ): FridaGotoResult {
   if (!fridaNavAvailable())
     return { ok: false, error: "frida scratch missing" };

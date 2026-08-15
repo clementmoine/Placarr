@@ -10,10 +10,26 @@ import {
   HOLO_SHADER_IDS,
   holoLayerStyle,
   holoShader,
+  type HoloShader,
   isHoloShaderId,
   maskedByStyle,
   varnishShader,
 } from "./holoShaders";
+
+/**
+ * The shader for an id these tests know exists.
+ *
+ * `holoShader` is deliberately nullable: it accepts any string and answers
+ * `null` for an unknown id — which is exactly what the null cases below check.
+ * Here the id is known, so an absent shader is a broken test rather than a
+ * value to narrow. Throwing names the id; a `!` would let the null travel and
+ * fail three assertions later on something unrelated.
+ */
+function shaderOf(id: string): HoloShader {
+  const shader = holoShader(id);
+  if (!shader) throw new Error(`holoShader: unknown id "${id}"`);
+  return shader;
+}
 
 describe("FOIL_POINTER_GLARE_STYLE", () => {
   it("covers the card once — default repeat seams at corner leans", () => {
@@ -190,7 +206,7 @@ describe("the neutral a coat falls back to", () => {
 
 describe("holoLayerStyle", () => {
   it("carries the whole recipe onto the element", () => {
-    const style = holoLayerStyle(holoShader("silver"));
+    const style = holoLayerStyle(shaderOf("silver"));
     expect(style.mixBlendMode).toBe("hard-light");
     expect(style.backgroundBlendMode).toBe("exclusion");
     expect(style.opacity).toBe(0.5);
@@ -199,8 +215,8 @@ describe("holoLayerStyle", () => {
 
   it("leaves out what a look does not set, rather than inventing a value", () => {
     // `undefined` lets the stylesheet decide; a literal would override it.
-    expect(holoLayerStyle(holoShader("magma")).filter).toBeUndefined();
-    expect(holoLayerStyle(holoShader("lore")).opacity).toBeUndefined();
+    expect(holoLayerStyle(shaderOf("magma")).filter).toBeUndefined();
+    expect(holoLayerStyle(shaderOf("lore")).opacity).toBeUndefined();
   });
 });
 
@@ -249,10 +265,10 @@ describe("holoLayerStyle tuning", () => {
     // byte-identical, because the recipes are pinned against the publisher's
     // stylesheet and a nudged default would quietly break that.
     for (const id of HOLO_SHADER_IDS) {
-      const plain = holoLayerStyle(holoShader(id));
-      expect(holoLayerStyle(holoShader(id), {})).toEqual(plain);
+      const plain = holoLayerStyle(shaderOf(id));
+      expect(holoLayerStyle(shaderOf(id), {})).toEqual(plain);
       expect(
-        holoLayerStyle(holoShader(id), {
+        holoLayerStyle(shaderOf(id), {
           rainbow: 1,
           inkwash: 1,
           motif: 1,
@@ -263,44 +279,44 @@ describe("holoLayerStyle tuning", () => {
   });
 
   it("adds saturation for rainbow rather than replacing the look's own", () => {
-    const style = holoLayerStyle(holoShader("silver"), { rainbow: 2 });
+    const style = holoLayerStyle(shaderOf("silver"), { rainbow: 2 });
     // Silver already desaturates to 0.2; the axis composes onto that.
     expect(style.filter).toBe("brightness(1.6) saturate(0.2) invert() saturate(2)");
   });
 
   it("darkens as the wash gets stronger, and lifts as it weakens", () => {
-    const strong = holoLayerStyle(holoShader("magma"), { inkwash: 2 });
+    const strong = holoLayerStyle(shaderOf("magma"), { inkwash: 2 });
     expect(strong.filter).toBe("brightness(0.5) contrast(2)");
 
-    const weak = holoLayerStyle(holoShader("magma"), { inkwash: 0.5 });
+    const weak = holoLayerStyle(shaderOf("magma"), { inkwash: 0.5 });
     expect(weak.filter).toBe("brightness(2) contrast(0.5)");
   });
 
   it("scales a look that declares no filter of its own", () => {
     // `magma` has no filter, so the axis must not produce `undefined saturate(…)`.
     expect(holoShader("magma")!.filter).toBeUndefined();
-    expect(holoLayerStyle(holoShader("magma"), { rainbow: 1.5 }).filter).toBe(
+    expect(holoLayerStyle(shaderOf("magma"), { rainbow: 1.5 }).filter).toBe(
       "saturate(1.5)",
     );
   });
 
   it("weights the whole layer, treating a look with no opacity as opaque", () => {
-    expect(holoLayerStyle(holoShader("silver"), { motif: 0.5 }).opacity).toBe(
+    expect(holoLayerStyle(shaderOf("silver"), { motif: 0.5 }).opacity).toBe(
       0.25,
     );
     // `lore` declares none, so the weight applies to a full 1.
     expect(holoShader("lore")!.opacity).toBeUndefined();
-    expect(holoLayerStyle(holoShader("lore"), { motif: 0.4 }).opacity).toBe(0.4);
+    expect(holoLayerStyle(shaderOf("lore"), { motif: 0.4 }).opacity).toBe(0.4);
   });
 
   it("scales the grain by resizing every length, keeping keywords intact", () => {
     // `cover` and `contain` have no size to scale, and dropping them would
     // change which layer covers the card.
     expect(
-      holoLayerStyle(holoShader("lava"), { grain: 2 }).backgroundSize,
+      holoLayerStyle(shaderOf("lava"), { grain: 2 }).backgroundSize,
     ).toBe("cover, 600% 600%");
     expect(
-      holoLayerStyle(holoShader("silver"), { grain: 0.5 }).backgroundSize,
+      holoLayerStyle(shaderOf("silver"), { grain: 0.5 }).backgroundSize,
     ).toBe("150% 50%, 50% 50%");
   });
 });

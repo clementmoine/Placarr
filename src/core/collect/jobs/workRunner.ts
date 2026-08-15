@@ -381,8 +381,17 @@ export async function executeBackgroundWorkJob(
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.catalogProviderSync) {
+    /*
+      Restreint ici comme les autres branches le font : `payload` est
+      volontairement `unknown` en tête de fonction, et chaque type de job dit
+      lui-même ce qu'il attend. La forme est documentée sur `workQueue` —
+      `{ providerId, auto? }`.
+    */
+    const catalogPayload = payload as { providerId?: unknown; auto?: unknown };
     const providerId =
-      typeof payload.providerId === "string" ? payload.providerId.trim() : "";
+      typeof catalogPayload.providerId === "string"
+        ? catalogPayload.providerId.trim()
+        : "";
     if (!providerId) throw new Error("catalogProviderSync requires providerId");
     const { getCatalogProviderModule } = await import("@/core/catalog/catalog");
     const mdl = getCatalogProviderModule(providerId);
@@ -390,7 +399,7 @@ export async function executeBackgroundWorkJob(
       throw new Error(`No catalog hooks for provider ${providerId}`);
     }
     await mdl.catalog.refresh({
-      auto: Boolean(payload.auto),
+      auto: Boolean(catalogPayload.auto),
     });
     return;
   }

@@ -25,7 +25,9 @@ export function liveFrontUrlForPrint(opts: {
 }): string | null {
   const liveBundle = resolveLiveBundleForPrintKey(
     opts.printKey,
-    opts.language,
+    // `lang` a une valeur par défaut : seul `undefined` la déclenche, un `null`
+    // explicite la traverserait et casserait la résolution.
+    opts.language ?? undefined,
     opts.name,
   );
   if (!liveBundle) return null;
@@ -62,7 +64,9 @@ export function liveTitleForPrint(opts: {
 }): string | null {
   const liveBundle = resolveLiveBundleForPrintKey(
     opts.printKey,
-    opts.language,
+    // `lang` a une valeur par défaut : seul `undefined` la déclenche, un `null`
+    // explicite la traverserait et casserait la résolution.
+    opts.language ?? undefined,
     opts.name,
   );
   if (!liveBundle) return opts.name?.trim() || null;

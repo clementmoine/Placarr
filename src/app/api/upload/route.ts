@@ -100,7 +100,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let storeBuffer = originalBuffer;
+    // Annoté : `originalBuffer` est un `Buffer<ArrayBuffer>` et le rognage rend
+    // un `Buffer` ordinaire ; sans ça la réaffectation ne passe plus depuis que
+    // les types Node distinguent les deux.
+    let storeBuffer: Buffer = originalBuffer;
     if (trim) {
       storeBuffer = await trimLightImageMargins(originalBuffer, {
         minMarginPixels: 30,

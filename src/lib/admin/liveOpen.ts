@@ -9,9 +9,11 @@ import {
   fridaGotoCard,
   fridaNavAvailable,
   type FridaGotoResult,
+  type LiveNavPrefer,
 } from "@/lib/admin/liveNavFrida";
 
-export type LiveOpenPrefer = "" | "ph" | "mph" | "sph" | "holo" | "maxOwned";
+/** Alias de ce que la navigation Live accepte — une seule définition. */
+export type LiveOpenPrefer = LiveNavPrefer;
 
 /** Prefer foil dump variant (`ph` / `mph` / `sph`) when it carries the material. */
 export function preferForLiveOpen(
@@ -29,9 +31,14 @@ export function preferForLiveOpen(
     : undefined;
   const foil =
     byMaterial ?? vars.find((v) => v.shader && v.shader !== "NonFoil") ?? null;
+  /*
+    `card_foil` ne stocke que `std` et `ph` — mesuré, 93 741 et 55 038 lignes,
+    rien d'autre. Les clés laminate `mph` / `sph` viennent de
+    `liveLaminatePreferForBundle` plus haut ; les chercher ici ne pouvait rien
+    trouver.
+  */
   const variant = foil?.variant;
-  if (variant === "ph" || variant === "mph" || variant === "sph")
-    return variant;
+  if (variant === "ph") return variant;
   return "";
 }
 

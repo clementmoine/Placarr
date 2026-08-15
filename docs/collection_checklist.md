@@ -98,6 +98,47 @@ tirages, la seconde est un objet unique.
   (collector, limitée, bundle). LaunchBox ne les modélise pas ; à vérifier avant
   de promettre la parité.
 
+### Un produit **contient** des tirages, et ça traverse les sets
+
+C'est la relation qui manquait au modèle : un produit scellé n'est pas un type
+d'entrée à côté des tirages, il en **contient**. Et son contenu ne respecte pas
+les frontières de sets. Mesuré sur DBS Masters :
+
+| produit | tirages | sets d'origine distincts |
+| --- | --- | --- |
+| DECK DE DÉMARRAGE -Final Radiance- | 19 | **11** (bt18, bt16, bt13, bt12, bt11, bt7, bt6, bt5, sd23, ex15, ex06) |
+| Premium Anniversary Box 2024 | 52 | **9** |
+| Premium Anniversary Box 2023 | 59 | **7** |
+
+31 autres produits sont mono-set. La relation est donc bien **plusieurs à
+plusieurs**, et elle est déjà dans nos données — simplement pas nommée comme
+telle.
+
+### Deux faits distincts, aujourd'hui confondus
+
+Chaque tirage porte en réalité **deux** appartenances :
+
+- son **set d'origine** — `set_code` (`bt5`, `bt18`) : d'où vient son numéro de
+  collection ;
+- le **produit de distribution** — `set_name` : dans quelle boîte il a été
+  vendu.
+
+Nous les stockons tous les deux, mais sous des noms qui laissent croire à une
+seule notion. C'est exactement la même donnée que le segment `evp17` repéré
+dans les URLs dbscards le 2026-08-15 : « Event Pack 17 », le produit de
+distribution, distinct du set d'origine.
+
+### Ce que ça débloque
+
+C'est le cas d'usage qui justifie la fonctionnalité : *« j'ai acheté des cartes
+à l'unité, il m'en manque 99 % — qu'est-ce que j'achète ? »*
+
+Avec la relation de contenu, la check-list ne dit plus seulement « il te manque
+47 cartes », elle dit **« ces 47 cartes sont dans le deck Final Radiance »**, ou
+« aucun produit ne les regroupe, il faudra les acheter à l'unité ». La question
+d'un collectionneur n'est pas « que me manque-t-il » mais « que dois-je
+acheter » — et ce sont deux réponses différentes.
+
 ### Comment gérer ça sans tout aplatir
 
 La tentation serait une taxonomie universelle du collectionnable. C'est le

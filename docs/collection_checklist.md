@@ -342,6 +342,38 @@ composition annoncée d'un booster.
 rien ne l'exploite au début : c'est de la donnée qu'on ne peut pas reconstituer
 après coup.
 
+### Trois questions ouvertes sur les contenants
+
+**1. Le contenu d'un booster s'identifie carte par carte.** « M cartes » est un
+raccourci d'écriture : ce sont des cartes nommées et numérotées, à saisir
+individuellement. C'est précisément pourquoi le booster est le seul niveau qui
+demande une saisie manuelle — display et deck se déplient tout seuls.
+
+**2. Sait-on quels boosters contient une display avant de l'ouvrir ?** Chez
+Lorcana les boosters portent des illustrations différentes. Question à trancher
+**par jeu**, et je n'ai pas la réponse : si l'assortiment est connu, ouvrir une
+display peut créer les bons boosters ; sinon elle crée N boosters génériques que
+l'utilisateur précise ensuite. À vérifier avant de promettre l'un ou l'autre.
+
+**3. Les cartes hors format ne sont pas gérées.** Mesuré le 2026-08-15 :
+
+- **Rotation** — le contrat porte déjà `faceQuarterTurns` (0-3), renseigné par
+  Pokémon (cartes BREAK) et Lorcana (Lieux). **DBS ne le renseigne jamais**,
+  alors qu'il a de vraies cartes en paysage : `BT24-061` « You Fool! », une
+  Z-EXTRA imprimée à l'horizontale, dont le fichier fait 1254×893. Sur
+  27 739 faces DBS analysées, 20 sortent du ratio standard. Le mécanisme existe,
+  la donnée ne circule pas.
+- **Surdimensionné** — les cartes géantes (jumbo, « la taille de quatre cartes
+  côte à côte ») ne sont **modélisées nulle part** : aucune notion de dimension
+  dans aucun pack. Elles sont soit absentes des catalogues éditeurs, soit
+  présentes et indistinguables d'une carte normale.
+- `is_horizontal` existe dans le dump Arena mais vaut **toujours faux**
+  (0/8600) — déclaré, jamais rempli, comme `finishes`.
+
+Une carte jumbo n'est pas un détail cosmétique pour une check-list : elle se
+possède, elle a un prix, et elle n'entre pas dans un classeur. C'est un attribut
+physique du tirage, au même titre que la rotation.
+
 ### Ajouter un deck ajoute-t-il ses cartes ?
 
 Question posée, et la bonne réponse est probablement « ça dépend, et il faut le

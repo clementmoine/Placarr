@@ -4,6 +4,47 @@
 rien ici n'est urgent, l'app fonctionne. C'est de la maintenabilité, et le coût
 d'un pack de plus augmente tant que ce n'est pas fait.
 
+## Cause racine — mesurée le 2026-08-15
+
+Deux défauts, et le second explique pourquoi l'alignement n'aboutit jamais.
+
+**1. Le contrat n'est pas un contrat, c'est un inventaire.**
+`types/providerModule.ts` fait 721 lignes et **nomme 16 providers dans ses
+propres champs** : `fetchFromDeezer`, `fetchFromEbay`, `fetchFromGoogleBooks`,
+`fetchFromMusicBrainz`, `fetchFromOpenLibrary`, `fetchFromDiscogs`,
+`fetchMetadataFromPriceCharting`, `fetchPricesFromLeDenicheur`… Plus des fuites
+de domaine : `romChecksums`, `isPal`, `isClassics`, `includePcSources`,
+`imdbId`, `leDenicheurQueries`.
+
+Un type censé rendre le core aveugle aux providers **contient leurs noms**. Il
+a grossi par union : chaque besoin nouveau a ajouté un champ au lieu d'entrer
+dans une abstraction. Aucun garde ne le vérifie — `privateRuntimeDataGuard` et
+`untrackedSourceGuard` regardent ailleurs.
+
+**2. Il manque un niveau entre « provider » et « pack cartes ».**
+65 providers partagent `providerModule`. Les 5 packs cartes ne partagent
+**rien de formel**, et réimplémentent pourtant les mêmes concepts :
+
+| fichier | packs qui l'ont |
+| --- | --- |
+| `pipeline.ts` | 5/5 |
+| `cli.ts` | 5/5 |
+| `index.ts` | 5/5 |
+| `indexStore.ts` | 4/5 |
+| `searchPrints.ts` | 3/5 |
+| `facts.ts` | 3/5 |
+
+**Pourquoi ça ne converge jamais.** Le code partagé est extrait *à la seconde
+utilisation*, depuis le pack qui en a eu besoin en deuxième. `cardFaces` existe
+parce que dbsfw voulait ce que dbscg avait ; `shared/dbscards` pour la même
+raison, le même jour. La couche partagée est donc **façonnée par l'ordre
+d'arrivée, pas par le domaine** — et comme il n'y a pas de forme cible, chaque
+alignement est une réconciliation deux à deux qui ne finit pas.
+
+La correction n'est pas d'extraire plus vite : c'est de **définir le contrat
+`CardPack` d'abord**, à partir des besoins réels des cinq packs, puis de les y
+faire converger.
+
 ## Ce qui est déjà commun
 
 - **Contrat app** — chaque pack rend un `PrintCandidate`, avec le même nommage

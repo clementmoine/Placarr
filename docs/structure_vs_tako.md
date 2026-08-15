@@ -58,6 +58,40 @@ source. Chez nous la même chose est répartie sur 3 à 31 fichiers.
 **`core/providers/BaseProvider.js`** — un contrat de base explicite, là où nous
 avons un type `providerModule` et beaucoup de convention non écrite.
 
+## Lu pour de vrai : `BaseProvider.js` (359 lignes)
+
+Une seule classe qui porte **à la fois le contrat et la plomberie** :
+
+- cycle de vie — `initialize`, `healthCheck`, `shutdown`
+- contrat — `search`, `getById`
+- HTTP — `request`, `get`, `post`, `buildUrl`, `buildFetchOptions`,
+  `fetchWithTimeout`, `parseResponse`, `isNonRetryableError`, `wrapError`,
+  `sleep`
+- observabilité — `getStats`, `resetStats`
+
+Un provider hérite et obtient timeout, retry, erreurs et stats sans rien
+importer d'autre. **Pour comprendre une source, on ouvre deux fichiers** :
+`BaseProvider.js` et `<nom>.provider.js`.
+
+Chez nous, le même besoin est réparti :
+
+| | |
+| --- | --- |
+| `types/providerModule.ts` | 721 lignes — le contrat, **déclaratif** |
+| `lib/http/httpClient.ts` | 226 |
+| `providers/shared/attemptOrder.ts` | 121 |
+| `providers/shared/softban.ts` | 92 |
+| `providers/shared/catalogCorpus.ts` | 73 |
+| `core/enrich/providerQueue.ts` | cadence par provider |
+
+Plus les fichiers du provider lui-même : **14 pour `dbscg`**, 3 pour
+`bedetheque`. Comprendre `dbscg` demande d'en ouvrir une vingtaine.
+
+Le diagnostic tient en une phrase : **nous avons un contrat, pas une
+implémentation de base.** Chaque provider réassemble la plomberie en important
+cinq modules partagés et en suivant une convention non écrite. C'est ça qui
+coûte, bien plus que le nombre de fichiers.
+
 ## Réserves
 
 - **Sans tests, on ne compare pas la même chose.** Nos 509 fichiers de test sont
@@ -68,6 +102,11 @@ avons un type `providerModule` et beaucoup de convention non écrite.
 - Leur découpage par domaine supposerait de savoir à quel domaine appartient un
   provider — or `pricecharting` ou `ebay` en servent plusieurs. À vérifier avant
   de transposer.
+- **Leur hygiène n'est pas exemplaire partout.** `shared/utils/` contient
+  `genre-dictionaries.js` (32 Ko), `genre-dictionaries_temp.js` (17 Ko) **et**
+  `genre-dictionaries.js.backup` (41 Ko) — 90 Ko de quasi-doublons versionnés.
+  Deux `cache-wrapper.js` distincts. 730 Ko de seeds SQL dans l'arbre. La forme
+  est plus lisible que la nôtre ; le contenu ne l'est pas uniformément.
 
 ## À faire
 

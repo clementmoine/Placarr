@@ -7,9 +7,10 @@
  * crawled list gives a real URL per card — front and back, named outright by
  * the tile rather than guessed from a filename suffix.
  *
- * Two locales, English and Japanese, each filed under its own folder because
- * they are different scans of different printings. There is no French: Bandai
- * never published one for this game.
+ * Two locales, each filed under its own folder because they are different
+ * printings: `en` for the English one, `asia-en` for the Japanese one — which
+ * Bandai also publishes named in English, so a Japanese card reads in Roman
+ * script instead of 孫悟天. There is no French; Bandai never published one.
  *
  * Sequential like every other pass here — this host bans by the hour when a
  * pass goes parallel.
@@ -61,8 +62,22 @@ const SOFTBAN_LEDGER = "faces";
 const SOFTBAN_COOLDOWN_MS = 60 * 60 * 1000;
 const PROGRESS_EVERY_MS = 10_000;
 
-/** Locales dbscards publishes a Fusion World list for. */
-export const DBS_FW_FACE_LANGS = ["en", "ja"] as const;
+/**
+ * The locales this pack files faces under.
+ *
+ * `asia-en` is the Japanese printing named in English — Bandai publishes it at
+ * `/fw/asia-en/`, and it is where the Japanese card belongs for a reader who
+ * wants Roman script. dbscards calls that same printing `ja` in its own list,
+ * so the two are mapped rather than kept apart: one printing, one folder,
+ * whichever source filled it.
+ */
+export const DBS_FW_FACE_LANGS = ["en", "asia-en"] as const;
+
+/** Our locale → the dbscards list that carries its printing. */
+export const DBSCARDS_LIST_FOR: Record<string, string> = {
+  en: "en",
+  "asia-en": "ja",
+};
 
 export type FetchDbsFwFacesOptions = {
   force?: boolean;
@@ -219,7 +234,7 @@ export async function fetchDbsFwFaces(
   let throttledStreak = 0;
 
   for (const lang of langs) {
-    const index = fwIndex(lang);
+    const index = fwIndex(DBSCARDS_LIST_FOR[lang] ?? lang);
     if (index.size === 0) {
       console.warn(
         `── fw faces [${lang}] : liste dbscards absente — lancer d'abord --only dbscards`,

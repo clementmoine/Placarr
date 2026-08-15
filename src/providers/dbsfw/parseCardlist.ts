@@ -16,8 +16,69 @@ import {
 } from "./printIdentity";
 
 export const DBS_FW_CARDLIST_ORIGIN = "https://www.dbs-cardgame.com";
-export const DBS_FW_CARDLIST_PATH = "/fw/en/cardlist/";
-export const DBS_FW_INDEX_URL = `${DBS_FW_CARDLIST_ORIGIN}${DBS_FW_CARDLIST_PATH}`;
+
+/**
+ * Every locale Bandai publishes this game in.
+ *
+ * Five of them, not one — the pack shipped reading `/fw/en/` alone and calling
+ * that the catalogue. The Japanese path is `/fw/jp/`, which is worth writing
+ * down: probing `/fw/ja/` returns 404 and reads as "Bandai publishes no
+ * Japanese", which is how this stayed English-only.
+ *
+ * Category ids differ per locale, so each list is discovered from its own
+ * index page rather than reusing another's.
+ *
+ * `lang` is our id, not theirs. `asia-en` earns its place by being the odd one
+ * out: it is the **Japanese printing carrying an English name**, so it is the
+ * one locale that shows a Japanese card readably. `/fw/jp/` and `/fw/asia-tc/`
+ * name the same cards 孫悟天 and 克林 — real localisations, and useless to a
+ * reader who wants Roman script.
+ */
+export const DBS_FW_CARDLIST_LOCALES = {
+  en: { lang: "en", path: "/fw/en/cardlist/" },
+  "asia-en": { lang: "asia-en", path: "/fw/asia-en/cardlist/" },
+  jp: { lang: "ja", path: "/fw/jp/cardlist/" },
+  "asia-tc": { lang: "asia-tc", path: "/fw/asia-tc/cardlist/" },
+  "asia-th": { lang: "asia-th", path: "/fw/asia-th/cardlist/" },
+} as const;
+
+export type DbsFwLocaleId = keyof typeof DBS_FW_CARDLIST_LOCALES;
+
+/**
+ * What a run reads unless told otherwise: the two Roman-script catalogues.
+ *
+ * `en` is the English printing, `asia-en` the Japanese one named in English.
+ * Between them every Fusion World card is listed once, readably. The CJK and
+ * Thai locales stay reachable through `--locales` for the day a script other
+ * than Latin is wanted.
+ */
+export const DBS_FW_DEFAULT_LOCALES = ["en", "asia-en"] as const;
+
+/**
+ * Where a locale's faces live on Bandai's CDN.
+ *
+ * Only two pools exist: English printings under `/card/en/`, everything else —
+ * Japanese, Asia-English, Traditional Chinese, Thai — under `/card/jp/`,
+ * because those markets print the Japanese card and translate only the
+ * catalogue text. Measured on ST01: four locales, one set of image URLs.
+ */
+export function dbsFwFacePool(lang: string): "en" | "ja" {
+  return lang.toLowerCase() === "en" ? "en" : "ja";
+}
+
+export function dbsFwCardlistUrls(locale: DbsFwLocaleId = "en"): {
+  lang: string;
+  index: string;
+  base: string;
+} {
+  const { lang, path } = DBS_FW_CARDLIST_LOCALES[locale];
+  const index = `${DBS_FW_CARDLIST_ORIGIN}${path}`;
+  return { lang, index, base: index };
+}
+
+/** @deprecated Prefer {@link dbsFwCardlistUrls}. Kept for existing imports. */
+export const DBS_FW_CARDLIST_PATH = DBS_FW_CARDLIST_LOCALES.en.path;
+export const DBS_FW_INDEX_URL = dbsFwCardlistUrls("en").index;
 
 const SEARCH_BASE = DBS_FW_INDEX_URL;
 
@@ -142,10 +203,13 @@ export function parseDbsFwSeriesOptions(html: string): DbsFwSeriesOption[] {
   return options;
 }
 
-export function dbsFwSeriesSearchUrl(categoryId: string): string {
+export function dbsFwSeriesSearchUrl(
+  categoryId: string,
+  locale: DbsFwLocaleId = "en",
+): string {
   const params = new URLSearchParams({
     search: "true",
     "category[0]": categoryId,
   });
-  return `${DBS_FW_INDEX_URL}?${params.toString()}`;
+  return `${dbsFwCardlistUrls(locale).index}?${params.toString()}`;
 }

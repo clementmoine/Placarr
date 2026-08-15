@@ -11,7 +11,12 @@ import {
   dbsFwFaceFilename,
   pickBestFwFace,
 } from "./faceChoice";
-import { fwListedUrl } from "./fetchFaces";
+import {
+  DBSCARDS_LIST_FOR,
+  DBS_FW_FACE_LANGS,
+  fwListedUrl,
+} from "./fetchFaces";
+import { dbsFwFacePool } from "./parseCardlist";
 
 const tile = (over: Record<string, unknown> = {}) =>
   ({
@@ -98,5 +103,27 @@ describe("pickBestFwFace", () => {
   it("names files by role and source", () => {
     expect(dbsFwFaceFilename("dbscards")).toBe("art.dbscards.webp");
     expect(dbsFwFaceFilename("dbscards", "back")).toBe("back.dbscards.webp");
+  });
+});
+
+describe("locale mapping", () => {
+  it("files the Japanese printing where Bandai names it in Roman script", () => {
+    /*
+      Bandai publishes the same printing twice: `/fw/jp/` names it 孫悟天,
+      `/fw/asia-en/` names it "Son Goten". dbscards calls it `ja`. One printing,
+      one folder — ours is the readable one.
+    */
+    expect(DBSCARDS_LIST_FOR["asia-en"]).toBe("ja");
+    expect(DBSCARDS_LIST_FOR["en"]).toBe("en");
+    expect([...DBS_FW_FACE_LANGS]).toEqual(["en", "asia-en"]);
+  });
+
+  it("sends every locale but English to Bandai's Japanese image pool", () => {
+    // Asia-EN, Traditional Chinese and Thai all print the Japanese card and
+    // translate only the catalogue text — measured on ST01, one set of URLs.
+    expect(dbsFwFacePool("en")).toBe("en");
+    for (const l of ["asia-en", "ja", "asia-tc", "asia-th"]) {
+      expect(dbsFwFacePool(l)).toBe("ja");
+    }
   });
 });

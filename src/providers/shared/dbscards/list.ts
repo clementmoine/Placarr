@@ -64,8 +64,14 @@ export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
  *
  * Masters lives on `www`, Fusion World on `fw`, and the markup is identical
  * down to the tile classes — so the same parser serves both and only the origin
- * and the locale paths differ. Their locales differ too: Masters publishes
- * French and English, Fusion World English and Japanese, and no French at all.
+ * and the locale paths differ.
+ *
+ * Only the locales they actually fill are listed. Measured 2026-08-15: both
+ * sites answer 200 on *every* locale route, including Masters' Japanese list
+ * and Fusion World's French one, and both of those render **zero tiles** —
+ * their own navigation does not even link them. A route that exists is not a
+ * catalogue, so registering them would buy nothing but a crawl of empty pages
+ * and an index file full of nothing. They go in the day they hold cards.
  *
  * `/cards` alone is Masters' French list as well, but the named path says which
  * locale it is instead of relying on the site's default. Every locale then

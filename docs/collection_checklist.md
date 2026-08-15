@@ -189,6 +189,63 @@ La médiane est à deux centimes et le maximum à deux mille euros : **compléte
 d'achat qui viserait « le set complet » serait donc inutile. Ce qu'il faut
 montrer, c'est la falaise : « 158 cartes pour 12 €, puis 6 cartes pour 2 390 € ».
 
+### Le prix de bascule display / cartes à l'unité
+
+La formulation utile n'est pas « achète une display » ou « achète à l'unité »,
+c'est : **« achète à l'unité, sauf si tu trouves une display sous X € »**. Un
+seuil, pas un verdict — et il se calcule.
+
+Le seuil dépend de l'avancement, ce qui produit exactement la bascule
+pressentie : à 50 % de complétion une display apporte beaucoup, à 80 % elle
+apporte surtout des doublons.
+
+#### On n'a pas besoin des taux de tirage
+
+Les éditeurs les publient rarement. Mais on peut s'en passer, parce qu'ils se
+reconstituent à partir de deux choses :
+
+1. **La composition d'un booster** — combien d'emplacements par rareté. Publiée
+   par les éditeurs, c'est une poignée de constantes par jeu.
+2. **La distribution des raretés du set** — que nous avons **déjà, en entier** :
+   la rareté est renseignée sur 12 318/12 318 tirages Lorcana, 15 662/15 662
+   DBS, 746/755 Naruto. Exemple mesuré, *Archazia's Island* : 72 communes,
+   54 peu communes, 48 rares, 20 super rares, 12 légendaires, 18 enchantées,
+   14 spéciales.
+
+Pour une display de `D` boosters offrant `s_r` emplacements de rareté `r`, et
+`N_r` cartes distinctes de cette rareté dans le set :
+
+```
+P(une carte donnée de rareté r apparaît) ≈ 1 − (1 − 1/N_r) ^ (D × s_r)
+```
+
+#### Le seuil
+
+En notant `M` l'ensemble de ce qui vous manque :
+
+```
+valeur attendue de la display = Σ  P(apparaît | rareté de c) × prix_unitaire(c)
+                              c ∈ M
+```
+
+C'est le prix de bascule : **au-dessus, mieux vaut acheter à l'unité ; en
+dessous, la display est rentable.** Aucun taux de tirage propriétaire n'est
+requis — seulement la composition d'un booster et notre propre catalogue.
+
+Et la bascule que décrit l'utilisateur en découle sans être postulée : à mesure
+que `M` se réduit, la somme diminue, donc le seuil baisse. Une collection
+avancée rend mécaniquement la display moins intéressante.
+
+#### La réserve qui compte
+
+Les cartes chères dominent la somme. Une Enchanted à 400 € pèse plus que
+150 communes à deux centimes — donc le seuil sera souvent décidé par **une
+seule carte manquante**. C'est la même falaise que plus haut, et il faut
+l'afficher : « display rentable sous 210 €, mais 190 € de ce seuil tiennent à
+une seule Enchanted que vous avez 4 % de chance d'y trouver ». Sans cette
+transparence, le conseil serait mathématiquement juste et pratiquement
+trompeur.
+
 ### Ce qu'il manque pour le construire
 
 - Le **prix des produits scellés** — nous avons le prix à l'unité de chaque
@@ -197,8 +254,9 @@ montrer, c'est la falaise : « 158 cartes pour 12 €, puis 6 cartes pour 2 390 
 - La **relation de contenu par pack** — riche chez DBS parce que Bandai publie
   ses decks comme des séries de sa cardlist ; à mesurer pour Lorcana, Pokémon et
   Naruto avant de promettre la fonctionnalité partout.
-- Les **taux de tirage** pour tout ce qui est aléatoire. À défaut, ne pas
-  prétendre chiffrer une display.
+- La **composition d'un booster** par jeu (emplacements par rareté) — quelques
+  constantes publiées. C'est le seul vrai manque : la distribution des raretés,
+  elle, est déjà complète dans nos catalogues.
 
 ### Comment gérer ça sans tout aplatir
 

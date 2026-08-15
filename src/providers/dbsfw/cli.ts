@@ -9,11 +9,21 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  DBSCARDS_SITES,
+} from "@/providers/shared/dbscards/list";
+import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
+
+import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./fetchFaces";
+import { DBS_FW_PACK_ID } from "./indexStore";
+
 import { ensureDbsFwCuratedAssets } from "./installCurated";
 import { scrapeDbsFwCardlist } from "./scrapeCardlist";
 
-const STEPS = ["scrape"] as const;
+const STEPS = ["scrape", "dbscards", "faces"] as const;
 type Step = (typeof STEPS)[number];
+/** Everything but a local re-range needs the network. */
+const ONLINE = new Set<Step>(["scrape", "dbscards", "faces"]);
 
 function argValueFrom(
   argv: readonly string[],
@@ -39,7 +49,7 @@ export function selectDbsFwSteps(argv: readonly string[]): Step[] {
     ? STEPS.filter((step) => only.includes(step))
     : [...STEPS];
   return base.filter(
-    (step) => !skip.has(step) && !(offline && step === "scrape"),
+    (step) => !skip.has(step) && !(offline && ONLINE.has(step)),
   );
 }
 
@@ -56,7 +66,52 @@ export async function runDbsFwPackPipeline(
   console.log(`── curated sync${dryRun ? " (dry run)" : ""}`);
   await ensureDbsFwCuratedAssets({ dryRun, force });
 
+  const langs = argListFrom(argv, "--langs").filter((l) =>
+    (DBS_FW_FACE_LANGS as readonly string[]).includes(l),
+  );
+
   for (const step of steps) {
+    if (step === "dbscards") {
+      /*
+        Fusion World lives on `fw.dbscards.fr`, same software as Masters. One
+        request per thirty cards gives the real face URLs this pack has never
+        had — it shipped with no local image at all.
+      */
+      for (const lang of langs.length ? langs : DBS_FW_FACE_LANGS) {
+        const result = await scrapeDbscardsIndex({
+          packId: DBS_FW_PACK_ID,
+          site: DBSCARDS_SITES.fusion,
+          lang,
+          delayMs: argValueFrom(argv, "--delay")
+            ? Number(argValueFrom(argv, "--delay"))
+            : undefined,
+          onProgress: (page, total) => {
+            if (page % 20 === 0) {
+              console.log(`   dbscards fw ${lang} — page ${page}, ${total} cartes`);
+            }
+          },
+        });
+        console.log(
+          `── dbscards fw ${lang} : ${result.cards} cartes sur ${result.pages} pages ` +
+            `(${result.withBack} avec verso)`,
+        );
+      }
+    }
+    if (step === "faces") {
+      const result = await fetchDbsFwFaces({
+        force,
+        ...(langs.length ? { langs } : {}),
+        ...(argValueFrom(argv, "--limit")
+          ? { limit: Number(argValueFrom(argv, "--limit")) }
+          : {}),
+        ...(argValueFrom(argv, "--delay")
+          ? { delayMs: Number(argValueFrom(argv, "--delay")) }
+          : {}),
+      });
+      console.log(
+        `── fw faces : ok=${result.ok} skip=${result.skip} miss=${result.miss} fail=${result.fail}`,
+      );
+    }
     if (step === "scrape") {
       await scrapeDbsFwCardlist({
         force,

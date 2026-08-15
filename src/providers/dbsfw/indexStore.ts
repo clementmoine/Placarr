@@ -2,12 +2,24 @@
  * Fusion World local catalogue — `data/dbs/fw/catalog.sqlite`.
  * Faces stay on Bandai's FW CDN (SAMPLE watermark); we index metadata.
  */
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { dataRoot } from "@/lib/runtimeData";
+import { packCardDir } from "@/lib/packPaths";
 
+import {
+  DBS_FW_FACE_DECISION_FILE,
+  parseFwFaceDecision,
+  type DbsFwFaceRole,
+} from "./faceChoice";
 import { DBS_FW_GAME } from "./printIdentity";
 
 export const DBS_FW_SCHEMA_VERSION = "1";
@@ -234,4 +246,86 @@ export function exportDbsFwCardsIndexJson(
     `${outPath}`,
     `${JSON.stringify({ version: 1, pack: DBS_FW_PACK_ID, generatedAt: new Date().toISOString(), cards }, null, 0)}\n`,
   );
+}
+
+/**
+ * The folder one printing owns, under `cards/<set>/<lang>/`.
+ *
+ * A parallel (`_p1`) is a different printing with different art, so it gets its
+ * own folder rather than overwriting the base card's face.
+ */
+export function dbsFwCardFolder(
+  print: Pick<DbsFwPrintRow, "number" | "grouping">,
+): string {
+  return print.grouping ? `${print.number}-${print.grouping}` : print.number;
+}
+
+/**
+ * The synced face for one printing *in its own language*.
+ *
+ * Locale is a parameter, not a constant: English and Japanese are different
+ * printings with different art, and a card must show its own.
+ */
+export function dbsFwLocalArtFilename(
+  print: Pick<DbsFwPrintRow, "setCode" | "number" | "grouping">,
+  lang = "en",
+  role: DbsFwFaceRole = "art",
+): string | null {
+  const cardDir = packCardDir(DBS_FW_PACK_ID, {
+    set: print.setCode,
+    lang: lang.toLowerCase(),
+    card: dbsFwCardFolder(print),
+  });
+  const decision = path.join(cardDir, DBS_FW_FACE_DECISION_FILE);
+  if (!existsSync(decision)) return null;
+  try {
+    const named = parseFwFaceDecision(readFileSync(decision, "utf8"), role);
+    if (named && existsSync(path.join(cardDir, named))) return named;
+  } catch {
+    /* unreadable decision — the remote URL still stands in */
+  }
+  return null;
+}
+
+export function dbsFwLocalBackFilename(
+  print: Pick<DbsFwPrintRow, "setCode" | "number" | "grouping">,
+  lang = "en",
+): string | null {
+  return dbsFwLocalArtFilename(print, lang, "back");
+}
+
+/** Everything the faces pass needs, in one read. */
+export function loadDbsFwIndex(): {
+  prints: DbsFwPrintRow[];
+  titles: DbsFwTitleRow[];
+  assets: DbsFwAssetRow[];
+} | null {
+  const db = ensureDbsFwIndex();
+  if (!db) return null;
+  try {
+    const prints = db
+      .prepare(
+        `SELECT print_key AS printKey, set_code AS setCode, number, grouping,
+                source_url AS sourceUrl
+           FROM prints
+          ORDER BY set_code, number, grouping`,
+      )
+      .all() as DbsFwPrintRow[];
+    const titles = db
+      .prepare(
+        `SELECT print_key AS printKey, lang, full_name AS fullName,
+                set_name AS setName
+           FROM print_titles`,
+      )
+      .all() as DbsFwTitleRow[];
+    const assets = db
+      .prepare(
+        `SELECT print_key AS printKey, lang, image_url AS imageUrl
+           FROM print_assets`,
+      )
+      .all() as DbsFwAssetRow[];
+    return { prints, titles, assets };
+  } catch {
+    return null;
+  }
 }

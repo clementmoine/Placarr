@@ -8,7 +8,15 @@ import {
 } from "@/effects/dbsfw";
 import type { PrintCandidate } from "@/types/providerModule";
 
-import { ensureDbsFwIndex } from "./indexStore";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
+
+import {
+  DBS_FW_PACK_ID,
+  dbsFwCardFolder,
+  dbsFwLocalArtFilename,
+  dbsFwLocalBackFilename,
+  ensureDbsFwIndex,
+} from "./indexStore";
 import { DBS_FW_GAME, formatDbsFwReference } from "./printIdentity";
 
 const PLAIN_FINISH = "normal";
@@ -25,16 +33,45 @@ export type DbsFwPrintDetail = {
   imageUrl: string | null;
 };
 
+/**
+ * The synced face, when the pack holds one.
+ *
+ * Worth preferring over `image_url`: the local file is 400x560 from dbscards,
+ * where Bandai's own cardlist image is smaller and carries the SAMPLE
+ * watermark. Read from the printing's own locale folder — English and Japanese
+ * are different printings and a card must show its own.
+ */
+function localFwFileUrl(
+  row: DbsFwPrintDetail,
+  resolve: (
+    print: DbsFwPrintDetail,
+    lang: string,
+  ) => string | null,
+): string | null {
+  const lang = (row.lang || "en").toLowerCase();
+  const file = resolve(row, lang);
+  if (!file) return null;
+  return assetsCardUrl(
+    DBS_FW_PACK_ID,
+    { set: row.setCode, lang, card: dbsFwCardFolder(row) },
+    file,
+  );
+}
+
 function toCandidate(row: DbsFwPrintDetail): PrintCandidate {
   const finishes = DBS_FINISHES;
   const reference = formatDbsFwReference(row.setCode, row.number, row.grouping);
+  // Local first, Bandai's remote URL as the fallback for a print not synced.
+  const face = localFwFileUrl(row, dbsFwLocalArtFilename) ?? row.imageUrl;
+  const back = localFwFileUrl(row, dbsFwLocalBackFilename);
   return {
     printKey: row.printKey,
     title: row.fullName?.trim() || reference,
     reference,
     setCode: row.setCode,
-    ...(row.imageUrl ? { imageUrl: row.imageUrl } : {}),
-    ...(row.imageUrl ? { thumbnailUrl: row.imageUrl } : {}),
+    ...(face ? { imageUrl: face } : {}),
+    ...(face ? { thumbnailUrl: face } : {}),
+    ...(back ? { cardBackUrl: back } : {}),
     language: row.lang,
     finishes,
     plainFinishes: finishes.filter((finish) => finish === PLAIN_FINISH),

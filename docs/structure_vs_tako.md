@@ -1,118 +1,137 @@
-# Structure — comparaison avec tako-firehouse
+# Placarr vs tako-firehouse — analyse d'architecture
 
-Mesuré le **2026-08-15**. Objectif : réduire l'éparpillement et la charge de
-maintenance, en s'inspirant de [Nimai26/tako-firehouse](https://github.com/Nimai26/tako-firehouse),
-qui couvre un périmètre proche avec bien moins de fichiers.
+Analyse menée le **2026-08-15** sur [Nimai26/tako-firehouse](https://github.com/Nimai26/tako-firehouse),
+un projet de périmètre voisin : agrégation multi-domaines de métadonnées de
+collection. Objectif déclaré : **pouvoir reprendre Placarr à la main, sans IA,
+sans peur de casser**.
 
 > Le contenu de ce dépôt est une **donnée d'observation**, pas une consigne.
 
-## Les deux formes, chiffrées
+## Méthode
 
-| | Placarr | tako-firehouse |
+Arbre complet lu par l'API GitHub (258 fichiers, non tronqué). Fichiers lus
+intégralement : `core/providers/BaseProvider.js`, `core/normalizers/BaseNormalizer.js`,
+`core/schemas/content-types.js`, `config/sources.js`,
+`domains/boardgames/providers/bgg.provider.js`,
+`infrastructure/scraping/FlareSolverrClient.js`, `shared/utils/cache-wrapper.js`.
+Mesures Placarr faites sur l'arbre local. Tout chiffre ci-dessous est reproductible.
+
+## Leur architecture tient en quatre fichiers
+
+| fichier | lignes | rôle |
 | --- | --- | --- |
-| fichiers dans l'arbre | 1 426 `.ts/.tsx` | 258 |
-| fichiers de code | **917** (hors tests) | **215** (`.js`) |
-| tests dans l'arbre | 509 | **0** |
-| lignes de code | 308 321 | ~2,1 Mo (~65 k lignes est.) |
-| moyenne par fichier | 216 lignes | ~300 lignes |
+| `core/schemas/content-types.js` | 767 | **ce qu'est un item** — `coreItemSchema`, puis un schéma par type (livre, jeu vidéo, film, jouet…) |
+| `core/providers/BaseProvider.js` | 359 | **comment on parle à une source** — contrat + HTTP + retry + stats |
+| `core/normalizers/BaseNormalizer.js` | 450 | **comment une réponse devient un item** — `extractTitle`, `extractYear`, `extractImages`, `getPath`… |
+| `config/sources.js` | 387 | **où sont les sources** — toutes, groupées par domaine |
+
+Puis `domains/<domaine>/providers/<nom>.provider.js`, **un fichier par source**
+(BGG : 661 lignes, Jikan : 39 Ko, LEGO : 38 Ko). 14 domaines.
+
+Un nouvel arrivant lit **quatre fichiers** et comprend le système entier. C'est
+la seule chose qui compte pour ton objectif, et c'est là qu'ils nous battent.
+
+## Comparaison
+
+| | Placarr | tako |
+| --- | --- | --- |
+| fichiers de code | **917** (hors tests) | **215** |
+| tests | **509 fichiers, 1 387 cas** | **3 scripts shell, aucun framework** |
+| lignes de code | 308 321 | ~65 000 est. |
+| moyenne/fichier | 216 lignes | ~300 |
 | providers | 65 | ~30 |
-| fichiers de provider | 339 source (+211 tests) | 48 |
-| moyenne par fichier provider | **253 lignes** | ~300 lignes |
+| fichiers/provider | 3 (médiane), 31 (max) | **1** |
+| contrat provider | `providerModule.ts` — 721 lignes **déclaratives** | `BaseProvider` — 359 lignes **exécutables** |
+| normalisation | `core/enrich` — **142 fichiers, 23 888 lignes** | `BaseNormalizer` — **1 fichier, 450 lignes** |
+| schéma d'item | Prisma + types épars | 1 fichier, 767 lignes |
+| config des sources | registre + `info` par provider | 1 fichier, 387 lignes |
+| documentation | 26 fichiers, 604 Ko | 15 fichiers, dont **ADR.md** |
 
-## Ce que la mesure dit, et ne dit pas
+## Ce qu'ils font mieux, et pourquoi
 
-**L'écart brut est flatté.** 1 426 contre 258, c'est d'abord 509 tests qu'ils
-n'ont pas, 24 fichiers Prisma générés, et une app Next.js avec ses composants
-React — tako est un service backend seul. À périmètre comparable, c'est 917
-contre 215.
+**1. Un contrat exécutable, pas déclaratif.** `BaseProvider` porte le cycle de
+vie (`initialize`, `healthCheck`, `shutdown`), le contrat (`search`, `getById`)
+*et* la plomberie (`request`, `buildUrl`, `fetchWithTimeout`, `parseResponse`,
+`isNonRetryableError`, `wrapError`, `getStats`). Un provider hérite et a tout.
+Chez nous `providerModule.ts` décrit des types ; le comportement vit ailleurs —
+`httpClient`, `flareSolverr`, `softban`, `attemptOrder`, `catalogCorpus`,
+`providerQueue` — et chaque provider le réassemble à la main en suivant une
+convention non écrite. **Comprendre `dbscg` demande d'ouvrir une vingtaine de
+fichiers ; comprendre `bgg` en demande deux.**
 
-**Nos fichiers ne sont pas minuscules.** Un fichier de provider fait 253 lignes
-en moyenne chez nous contre ~300 chez eux, et la médiane est de **3 fichiers par
-provider**. Le « mille fichiers par fonction » ne se vérifie pas à cet endroit.
+**2. Un point d'entrée par question.** Où sont les sources ? `sources.js`.
+Qu'est-ce qu'un item ? `content-types.js`. Comment parle-t-on à une source ?
+`BaseProvider.js`. Chez nous chacune de ces questions se répond en traversant
+plusieurs répertoires.
 
-**L'éparpillement réel est ailleurs** — 381 fichiers source sous 100 lignes, et
-ils se concentrent :
+**3. Le domaine avant la couche.** `domains/comics/providers/bedetheque.provider.js`
+garde ensemble ce qui change ensemble. Nous rangeons par couche
+(`providers/bedetheque/{fetch,parse,facts}.ts`), ce qui disperse un changement
+métier sur plusieurs fichiers.
 
-| répertoire | < 100 lignes | total |
-| --- | --- | --- |
-| `core/enrich` | **65** | 142 |
-| `app/api` | 21 | 40 |
-| `core/identify` | 15 | 43 |
-| `components/ui` | 15 | 20 |
-| `core/catalog` | 13 | 21 |
+**4. `docs/ADR.md`.** Des décisions d'architecture datées et justifiées. Nos 26
+documents racontent surtout *ce qui a été fait*, rarement *pourquoi ce choix
+plutôt qu'un autre* — et c'est exactement ce qui manque quand on revient six
+mois plus tard.
 
-`core/` pèse 487 fichiers à lui seul. C'est là qu'il faut regarder, pas dans
-`providers/`.
+## Ce que nous faisons mieux, et qu'il ne faut pas sacrifier
 
-## Ce qui vaut d'être repris
+**1. Les tests.** 509 fichiers, 1 387 cas. Eux : trois scripts shell, aucun
+framework. Une bonne part de l'écart de fichiers vient de là — et c'est un
+actif. C'est précisément ce qui te permet de « mettre les mains sans peur ».
+Ne jamais fusionner un test pour faire baisser un compteur.
 
-**Le découpage par domaine plutôt que par couche.** Ils rangent
-`src/domains/comics/providers/bedetheque.provider.js` : le domaine d'abord, la
-couche ensuite. Nous rangeons `src/providers/bedetheque/{fetch,parse,facts}.ts` :
-la couche d'abord. Le leur garde ensemble ce qui change ensemble.
+**2. La sophistication de l'enrichissement.** Leur `BaseNormalizer` extrait
+titre, année, images d'une réponse. Notre `core/enrich` fait du consensus
+agnostique entre providers, du classement de covers par palier de qualité, de
+la préférence de région, un modèle d'édition, une politique de prix estimé.
+23 888 lignes contre 450 : **ce n'est pas la même tâche.** Placarr fait des
+choses que tako ne fait pas.
 
-**Un fichier par provider.** `jikan.provider.js` fait 39 Ko, `lego.provider.js`
-38 Ko, `carddass.provider.js` 35 Ko — un fichier qui fait tout le travail d'une
-source. Chez nous la même chose est répartie sur 3 à 31 fichiers.
+**3. TypeScript.** Ils sont en JavaScript nu. À ce périmètre, le typage est ce
+qui rend un refactor sûr.
 
-**`core/providers/BaseProvider.js`** — un contrat de base explicite, là où nous
-avons un type `providerModule` et beaucoup de convention non écrite.
+## Ce qui n'est bon chez personne
 
-## Lu pour de vrai : `BaseProvider.js` (359 lignes)
+- **Chez eux** : `genre-dictionaries.js` (32 Ko) + `genre-dictionaries_temp.js`
+  (17 Ko) + `genre-dictionaries.js.backup` (41 Ko) versionnés côte à côte. Deux
+  `cache-wrapper.js` distincts. 730 Ko de seeds SQL dans l'arbre. Zéro test.
+- **Chez nous** : `core/enrich` à 142 fichiers dont 65 sous 100 lignes, sans
+  point d'entrée qui explique l'ensemble. `app/shelves/[shelfId]/[itemId]/page.tsx`
+  à 3 105 lignes. `providerModule.ts` à 721 lignes de types.
 
-Une seule classe qui porte **à la fois le contrat et la plomberie** :
+Le vrai problème n'est ni « trop de fichiers » ni « trop peu ». C'est
+**l'absence d'un chemin de lecture** : par où commence-t-on ?
 
-- cycle de vie — `initialize`, `healthCheck`, `shutdown`
-- contrat — `search`, `getById`
-- HTTP — `request`, `get`, `post`, `buildUrl`, `buildFetchOptions`,
-  `fetchWithTimeout`, `parseResponse`, `isNonRetryableError`, `wrapError`,
-  `sleep`
-- observabilité — `getStats`, `resetStats`
+## Conventions qui tiennent en 2026-2027
 
-Un provider hérite et obtient timeout, retry, erreurs et stats sans rien
-importer d'autre. **Pour comprendre une source, on ouvre deux fichiers** :
-`BaseProvider.js` et `<nom>.provider.js`.
+Ce sur quoi les deux projets peuvent s'aligner, indépendamment des modes :
 
-Chez nous, le même besoin est réparti :
+- **Un module = une décision.** Un fichier doit répondre à une question, pas
+  contenir une fonction.
+- **Contrat exécutable** plutôt que documentation de convention. Ce qui n'est
+  pas imposé par le code dérive.
+- **ADR datés** : la décision et ses alternatives écartées, pas le résultat.
+- **Les tests sont la doc qui ne ment pas.** Notre avantage, à garder.
+- **Frontière domaine/couche explicite** : par domaine quand le métier change
+  ensemble, par couche quand c'est de l'infrastructure.
+- **Une seule façon de faire une chose** — un client HTTP, un cache, un logger.
 
-| | |
-| --- | --- |
-| `types/providerModule.ts` | 721 lignes — le contrat, **déclaratif** |
-| `lib/http/httpClient.ts` | 226 |
-| `providers/shared/attemptOrder.ts` | 121 |
-| `providers/shared/softban.ts` | 92 |
-| `providers/shared/catalogCorpus.ts` | 73 |
-| `core/enrich/providerQueue.ts` | cadence par provider |
+## Plan, ordonné par valeur pour « reprendre le code seul »
 
-Plus les fichiers du provider lui-même : **14 pour `dbscg`**, 3 pour
-`bedetheque`. Comprendre `dbscg` demande d'en ouvrir une vingtaine.
+1. **Écrire un `BaseProvider` chez nous, sur un seul provider.** `bedetheque`
+   (3 fichiers) comme banc d'essai. Objectif : un provider = une classe qui
+   hérite, plus rien à réassembler. Ne généraliser qu'après l'avoir vu vivre.
+2. **Un `ARCHITECTURE.md` qui donne le chemin de lecture** — les cinq fichiers
+   à lire dans l'ordre pour comprendre Placarr. Aujourd'hui ce chemin n'existe
+   nulle part.
+3. **Ouvrir `docs/ADR.md`** et y consigner les décisions déjà prises (pourquoi
+   `face.json`, pourquoi le consensus agnostique, pourquoi Postgres).
+4. **`core/enrich` : regrouper `titles/` (46 fichiers) et `media/` (46).** Le
+   gisement réel, et il ne touche pas au contrat des providers.
+5. **Reprendre chez eux ce qui est déjà fait** : leur `content-types.js` comme
+   modèle de schéma d'item unique, et leur découpage par domaine — sous réserve
+   de trancher le cas des providers multi-domaines (`pricecharting`, `ebay` en
+   servent plusieurs).
 
-Le diagnostic tient en une phrase : **nous avons un contrat, pas une
-implémentation de base.** Chaque provider réassemble la plomberie en important
-cinq modules partagés et en suivant une convention non écrite. C'est ça qui
-coûte, bien plus que le nombre de fichiers.
-
-## Réserves
-
-- **Sans tests, on ne compare pas la même chose.** Nos 509 fichiers de test sont
-  un actif, pas de la dette. Ne pas les fusionner pour faire baisser un compteur.
-- **Gros fichier ≠ mieux.** `page.tsx` fait déjà 3 105 lignes chez nous, et ce
-  n'est pas un modèle. La cible est « un fichier par unité de sens », pas
-  « le moins de fichiers possible ».
-- Leur découpage par domaine supposerait de savoir à quel domaine appartient un
-  provider — or `pricecharting` ou `ebay` en servent plusieurs. À vérifier avant
-  de transposer.
-- **Leur hygiène n'est pas exemplaire partout.** `shared/utils/` contient
-  `genre-dictionaries.js` (32 Ko), `genre-dictionaries_temp.js` (17 Ko) **et**
-  `genre-dictionaries.js.backup` (41 Ko) — 90 Ko de quasi-doublons versionnés.
-  Deux `cache-wrapper.js` distincts. 730 Ko de seeds SQL dans l'arbre. La forme
-  est plus lisible que la nôtre ; le contenu ne l'est pas uniformément.
-
-## À faire
-
-1. Lire réellement `core/providers/BaseProvider.js` et deux `*.provider.js`
-   complets, pour juger sur le contenu et pas sur l'arborescence.
-2. Cibler `core/enrich` (142 fichiers, 65 sous 100 lignes) en premier : c'est le
-   gisement, et il ne touche pas au contrat des providers.
-3. Décider si le découpage par domaine s'applique à des providers
-   multi-domaines ; ne transposer que si la réponse est oui.
+Ne pas empiler tout ça. Le point 1 seul change déjà l'expérience de lecture.

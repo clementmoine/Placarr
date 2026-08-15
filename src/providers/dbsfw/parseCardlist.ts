@@ -28,18 +28,21 @@ export const DBS_FW_CARDLIST_ORIGIN = "https://www.dbs-cardgame.com";
  * Category ids differ per locale, so each list is discovered from its own
  * index page rather than reusing another's.
  *
- * `lang` is our id, not theirs. `asia-en` earns its place by being the odd one
- * out: it is the **Japanese printing carrying an English name**, so it is the
- * one locale that shows a Japanese card readably. `/fw/jp/` and `/fw/asia-tc/`
- * name the same cards 孫悟天 and 克林 — real localisations, and useless to a
- * reader who wants Roman script.
+ * `lang` is our id and it names the **printing**, not the script of the text —
+ * the same rule Masters follows. Four of these paths describe one printing, the
+ * Japanese one, so all four file under `ja`; only the names differ, 孫悟天 at
+ * `/fw/jp/`, 克林 at `/fw/asia-tc/`, and "Son Goten" at `/fw/asia-en/`.
+ *
+ * That is why `asia-en` is the default rather than `jp`: same cards, same
+ * images, readable in Roman script. Running two of them writes the same rows
+ * twice, last one winning — pick one.
  */
 export const DBS_FW_CARDLIST_LOCALES = {
   en: { lang: "en", path: "/fw/en/cardlist/" },
-  "asia-en": { lang: "asia-en", path: "/fw/asia-en/cardlist/" },
+  "asia-en": { lang: "ja", path: "/fw/asia-en/cardlist/" },
   jp: { lang: "ja", path: "/fw/jp/cardlist/" },
-  "asia-tc": { lang: "asia-tc", path: "/fw/asia-tc/cardlist/" },
-  "asia-th": { lang: "asia-th", path: "/fw/asia-th/cardlist/" },
+  "asia-tc": { lang: "ja", path: "/fw/asia-tc/cardlist/" },
+  "asia-th": { lang: "ja", path: "/fw/asia-th/cardlist/" },
 } as const;
 
 export type DbsFwLocaleId = keyof typeof DBS_FW_CARDLIST_LOCALES;
@@ -53,18 +56,6 @@ export type DbsFwLocaleId = keyof typeof DBS_FW_CARDLIST_LOCALES;
  * than Latin is wanted.
  */
 export const DBS_FW_DEFAULT_LOCALES = ["en", "asia-en"] as const;
-
-/**
- * Where a locale's faces live on Bandai's CDN.
- *
- * Only two pools exist: English printings under `/card/en/`, everything else —
- * Japanese, Asia-English, Traditional Chinese, Thai — under `/card/jp/`,
- * because those markets print the Japanese card and translate only the
- * catalogue text. Measured on ST01: four locales, one set of image URLs.
- */
-export function dbsFwFacePool(lang: string): "en" | "ja" {
-  return lang.toLowerCase() === "en" ? "en" : "ja";
-}
 
 export function dbsFwCardlistUrls(locale: DbsFwLocaleId = "en"): {
   lang: string;

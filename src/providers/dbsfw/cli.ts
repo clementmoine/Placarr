@@ -14,11 +14,7 @@ import {
 } from "@/providers/shared/dbscards/list";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
 
-import {
-  DBSCARDS_LIST_FOR,
-  DBS_FW_FACE_LANGS,
-  fetchDbsFwFaces,
-} from "./fetchFaces";
+import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./fetchFaces";
 import { DBS_FW_PACK_ID } from "./indexStore";
 
 import { ensureDbsFwCuratedAssets } from "./installCurated";
@@ -81,15 +77,7 @@ export async function runDbsFwPackPipeline(
         request per thirty cards gives the real face URLs this pack has never
         had — it shipped with no local image at all.
       */
-      /*
-        Their list locales, not ours: dbscards files the Japanese printing under
-        `ja` where we file it under `asia-en`, the locale Bandai names it in.
-        `--langs` selects our locales, so it is translated here.
-      */
-      const listLangs = (langs.length ? langs : DBS_FW_FACE_LANGS).map(
-        (l) => DBSCARDS_LIST_FOR[l] ?? l,
-      );
-      for (const lang of listLangs) {
+      for (const lang of langs.length ? langs : DBS_FW_FACE_LANGS) {
         const result = await scrapeDbscardsIndex({
           packId: DBS_FW_PACK_ID,
           site: DBSCARDS_SITES.fusion,

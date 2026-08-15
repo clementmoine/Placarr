@@ -8,9 +8,9 @@
  * the tile rather than guessed from a filename suffix.
  *
  * Two locales, each filed under its own folder because they are different
- * printings: `en` for the English one, `asia-en` for the Japanese one — which
- * Bandai also publishes named in English, so a Japanese card reads in Roman
- * script instead of 孫悟天. There is no French; Bandai never published one.
+ * printings: `en` for the English one, `ja` for the Japanese one — read from
+ * Bandai's `asia-en` catalogue so it reads "Son Goten" rather than 孫悟天.
+ * There is no French; Bandai never published one.
  *
  * Sequential like every other pass here — this host bans by the hour when a
  * pass goes parallel.
@@ -63,21 +63,14 @@ const SOFTBAN_COOLDOWN_MS = 60 * 60 * 1000;
 const PROGRESS_EVERY_MS = 10_000;
 
 /**
- * The locales this pack files faces under.
+ * The locales this pack files faces under — one per *printing*.
  *
- * `asia-en` is the Japanese printing named in English — Bandai publishes it at
- * `/fw/asia-en/`, and it is where the Japanese card belongs for a reader who
- * wants Roman script. dbscards calls that same printing `ja` in its own list,
- * so the two are mapped rather than kept apart: one printing, one folder,
- * whichever source filled it.
+ * `ja` is the Japanese card whatever names it: dbscards lists it as `ja`,
+ * Bandai serves its images from `/card/jp/` and its catalogue from four paths
+ * at once. One printing, one folder, whichever source filled it — which is why
+ * no name translation is needed here.
  */
-export const DBS_FW_FACE_LANGS = ["en", "asia-en"] as const;
-
-/** Our locale → the dbscards list that carries its printing. */
-export const DBSCARDS_LIST_FOR: Record<string, string> = {
-  en: "en",
-  "asia-en": "ja",
-};
+export const DBS_FW_FACE_LANGS = ["en", "ja"] as const;
 
 export type FetchDbsFwFacesOptions = {
   force?: boolean;
@@ -234,7 +227,7 @@ export async function fetchDbsFwFaces(
   let throttledStreak = 0;
 
   for (const lang of langs) {
-    const index = fwIndex(DBSCARDS_LIST_FOR[lang] ?? lang);
+    const index = fwIndex(lang);
     if (index.size === 0) {
       console.warn(
         `── fw faces [${lang}] : liste dbscards absente — lancer d'abord --only dbscards`,

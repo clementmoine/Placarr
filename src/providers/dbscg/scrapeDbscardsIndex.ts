@@ -1,12 +1,14 @@
 /**
- * Crawl dbscards.fr's own card list into `data/dbs/cg/dbscards-fr.json`.
+ * Crawl dbscards.fr's own card list into `data/dbs/cg/dbscards-<lang>.json`.
  *
- * Their `/cards` pages publish a schema.org `ItemList` naming each card's page,
- * printed name and image URL. Reading it once replaces the slug construction
- * the faces pass used to rely on — see `dbscardsIndex` for why that mattered.
+ * One request per list page yields thirty cards with their real page URL, their
+ * rarity-qualified code, their price with its thirty-day move, and both face
+ * URLs — see `dbscardsTile`. That is most of what a card page holds, at a
+ * thirtieth of the requests, which is why this pass exists at all: the detail
+ * crawl is 5800 requests against a host that tarpits, and this one is 390.
  *
- * Sequential, like every other scrape here: this host tarpits under load and
- * banned us for an evening when a pass went parallel.
+ * Sequential, like every other scrape here: this host banned us for an evening
+ * when a pass went parallel.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -26,6 +28,8 @@ const UA =
 /** Stop after this many consecutive pages yield nothing. */
 const EMPTY_STREAK_STOP = 2;
 const PAGE_TIMEOUT_MS = 60_000;
+/** Between pages. Modest, but this host has form. */
+const DEFAULT_DELAY_MS = 300;
 
 export function dbscardsIndexPath(lang = "fr"): string {
   return path.join(
@@ -38,24 +42,36 @@ export type ScrapeDbscardsIndexResult = {
   lang: string;
   cards: number;
   pages: number;
+  /** How many carried a price — the share of the catalogue that is quoted. */
+  priced: number;
+  /** How many carried a verso, i.e. Leaders. */
+  withBack: number;
   file: string;
 };
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 export async function scrapeDbscardsIndex(
   opts: {
     /** Which locale's list to read. Their site publishes one per language. */
     lang?: string;
     maxPages?: number;
+    delayMs?: number;
     onProgress?: (page: number, total: number) => void;
   } = {},
 ): Promise<ScrapeDbscardsIndexResult> {
   const lang = (opts.lang ?? "fr").toLowerCase();
   const maxPages = opts.maxPages ?? 400;
+  const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
   const all = new Map<string, DbscardsIndexEntry>();
   let empty = 0;
   let lastPage = 0;
 
   for (let page = 1; page <= maxPages && empty < EMPTY_STREAK_STOP; page++) {
+    if (page > 1 && delayMs > 0) await sleep(delayMs);
     let rows: DbscardsIndexEntry[] = [];
     try {
       const res = await fetch(dbscardsListPageUrl(page, lang), {
@@ -82,12 +98,16 @@ export async function scrapeDbscardsIndex(
     opts.onProgress?.(page, all.size);
   }
 
+  const entries = [...all.values()];
   const file = dbscardsIndexPath(lang);
   mkdirSync(path.dirname(file), { recursive: true });
-  writeFileSync(
+  writeFileSync(file, `${JSON.stringify(entries, null, 1)}\n`, "utf8");
+  return {
+    lang,
+    cards: entries.length,
+    pages: lastPage,
+    priced: entries.filter((entry) => entry.price != null).length,
+    withBack: entries.filter((entry) => entry.imageBack).length,
     file,
-    `${JSON.stringify([...all.values()], null, 1)}\n`,
-    "utf8",
-  );
-  return { lang, cards: all.size, pages: lastPage, file };
+  };
 }

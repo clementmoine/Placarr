@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -8,32 +11,71 @@ import {
   dbscardsSlugToPrintRef,
   lookupDbscardsEntry,
   parseDbscardsListPage,
+  type DbscardsIndexEntry,
 } from "./dbscardsIndex";
+import type { DbscardsTile } from "./dbscardsTile";
 
-const page = (items: Array<{ url: string; name: string; image: string }>) =>
-  `<html><script type="application/ld+json">${JSON.stringify({
-    "@type": "ItemList",
-    itemListElement: items.map((it, i) => ({ position: i + 1, ...it })),
-  })}</script></html>`;
+const listPage = readFileSync(
+  path.join(__dirname, "fixtures", "dbscards-list-fr.html"),
+  "utf8",
+);
+
+const entry = (over: Partial<DbscardsIndexEntry>): DbscardsIndexEntry =>
+  ({
+    itemId: null,
+    slug: "",
+    ref: null,
+    sku: null,
+    name: "",
+    lang: null,
+    priceText: null,
+    price: null,
+    currency: null,
+    priceDeltaText: null,
+    priceDelta: null,
+    imageFront: null,
+    imageBack: null,
+    image: "",
+    ...over,
+  }) satisfies DbscardsTile & { image: string };
 
 describe("parseDbscardsListPage", () => {
-  it("reads the card list their pages publish for search engines", () => {
-    const rows = parseDbscardsListPage(
-      page([
-        {
-          url: "https://www.dbscards.fr/cards/bt31-003-r-gogeta-ss",
-          name: "Gogeta SS, Puissance invincible",
-          image: "https://static.dbscards.fr/cards/fr/bt31/img-bt31-003.webp",
-        },
-      ]),
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.slug).toBe("bt31-003-r-gogeta-ss");
+  it("reads every tile the page renders, not only those it publishes", () => {
+    /*
+      On the live pages the `ItemList` names 15 cards where the markup renders
+      30. Reading the list built an index that was silently half the catalogue,
+      and a card in the unpublished half was indistinguishable from one the site
+      does not carry — which is how three real cards got reported as missing.
+      The fixture keeps that shape at 4 tiles for 2 published entries.
+    */
+    const rows = parseDbscardsListPage(listPage);
+    const listed = (listPage.match(/"@type"\s*:\s*"ListItem"/g) ?? []).length;
+    expect(listed).toBeGreaterThan(0);
+    expect(rows.length).toBeGreaterThan(listed);
+    expect(rows).toHaveLength(4);
   });
 
-  it("yields nothing rather than throwing on a page without a list", () => {
+  it("carries the price and both faces, which the list never held", () => {
+    const rows = parseDbscardsListPage(listPage);
+    const slr = rows.find((row) => row.sku === "BT31-001-SLR");
+    expect(slr?.price).toBe(108);
+    expect(slr?.currency).toBe("EUR");
+    // The thirty-day move is a separate span that must not be read as the price.
+    expect(slr?.priceDelta).toBe(-1.99);
+    expect(slr?.imageFront).toMatch(/bt31-001-slr-.*-back\.webp$/);
+    expect(slr?.imageBack).toMatch(/bt31-001-slr-[^/]*\.webp$/);
+  });
+
+  it("takes the image from `data-src`, never the lazy-loading placeholder", () => {
+    // `src` is a shared card back; reading it collects one generic file 7770 times.
+    for (const row of parseDbscardsListPage(listPage)) {
+      expect(row.imageFront).not.toMatch(/cards\/original\/back\.webp$/);
+    }
+  });
+
+  it("yields nothing rather than throwing on a page with no tiles", () => {
     // The crawl walks hundreds of pages; one oddity must not lose the rest.
-    expect(parseDbscardsListPage("<html>no ld+json</html>")).toEqual([]);
+    expect(parseDbscardsListPage("<html>no tiles</html>")).toEqual([]);
     expect(
       parseDbscardsListPage(
         '<script type="application/ld+json">{oops</script>',
@@ -67,8 +109,8 @@ describe("dbscardsSlugToPrintRef", () => {
 
 describe("lookupDbscardsEntry", () => {
   const index = buildDbscardsIndex([
-    { slug: "bt31-001-uc-gogeta", name: "", image: "a.webp" },
-    { slug: "bt31-001-slr-gogeta", name: "", image: "b.webp" },
+    entry({ slug: "bt31-001-uc-gogeta", image: "a.webp" }),
+    entry({ slug: "bt31-001-slr-gogeta", image: "b.webp" }),
   ]);
 
   it("narrows several prints of one code by rarity", () => {

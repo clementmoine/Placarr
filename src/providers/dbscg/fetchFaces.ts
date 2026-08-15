@@ -208,13 +208,21 @@ export function resetDbscardsIndexCache(): void {
 /**
  * Their own URL for this print, both sides, when the list carries it.
  *
- * A Leader's entry points at its `-back`; the front is the same path without
- * the suffix. For a plain card the entry is the front and there is no back.
+ * The tile names the sides outright — `item-image-recto` and `-verso` — so
+ * that is what we read. The `-back.webp` suffix rule below is the older way,
+ * kept for entries crawled before the tiles were parsed: a Leader's `image`
+ * points at its awakened side and the front is the same path without the
+ * suffix, while a plain card's `image` is its front and has no back at all.
  */
 function dbscardsListedUrls(
   entry: DbscardsIndexEntry,
   role: DbsFaceRole,
 ): string[] {
+  if (entry.imageFront ?? entry.imageBack) {
+    const side = role === "back" ? entry.imageBack : entry.imageFront;
+    return side ? [side] : [];
+  }
+  if (!entry.image) return [];
   const isBack = dbscardsIsBackImage(entry.image);
   if (role === "back") return isBack ? [entry.image] : [];
   return [isBack ? dbscardsFrontFromBack(entry.image) : entry.image];
@@ -673,8 +681,17 @@ export async function fetchDbsCgFaces(
         `${print.setCode}-${print.number}`.toLowerCase(),
         dbscardsRarityCode(title.rarity),
       );
-      const backUrls = listedBack
+      /*
+        Their listed verso when we have it, constructed otherwise — including
+        when the tile carries a front but no verso. Our catalogue is what says
+        this print has an awakened side, so a tile without one is a gap in
+        their markup, not evidence the side does not exist.
+      */
+      const listedBackUrls = listedBack
         ? dbscardsListedUrls(listedBack, "back")
+        : [];
+      const backUrls = listedBackUrls.length
+        ? listedBackUrls
         : dbscardsFaceUrls(
             {
               setCode: print.setCode,

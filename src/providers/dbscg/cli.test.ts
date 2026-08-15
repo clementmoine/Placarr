@@ -8,18 +8,29 @@ import {
 } from "./cli";
 
 describe("selectDbsCgSteps", () => {
-  it("runs scrape, then the Arena dump, then HTTP faces", () => {
-    expect(selectDbsCgSteps([])).toEqual(["scrape", "arena", "faces"]);
+  it("reads dbscards' list before the faces pass that consumes it", () => {
+    expect(selectDbsCgSteps([])).toEqual([
+      "scrape",
+      "dbscards",
+      "arena",
+      "faces",
+    ]);
   });
 
   it("still ranges a local clone when --offline", () => {
+    // Only the Arena dump is on disk; everything else needs the network.
     expect(selectDbsCgSteps(["--offline"])).toEqual(["arena"]);
   });
 
   it("honours --only and --skip", () => {
     expect(selectDbsCgSteps(["--only", "arena"])).toEqual(["arena"]);
     expect(selectDbsCgSteps(["--only", "faces"])).toEqual(["faces"]);
-    expect(selectDbsCgSteps(["--skip", "faces"])).toEqual(["scrape", "arena"]);
+    expect(selectDbsCgSteps(["--only", "dbscards"])).toEqual(["dbscards"]);
+    expect(selectDbsCgSteps(["--skip", "faces"])).toEqual([
+      "scrape",
+      "dbscards",
+      "arena",
+    ]);
     expect(selectDbsCgSteps(["--only", "faces", "--offline"])).toEqual([]);
   });
 });

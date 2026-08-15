@@ -8,37 +8,50 @@
  * indistinguishable from a card they simply do not carry, and a slow host turns
  * both into a timeout.
  *
- * Their `/cards` pages carry a schema.org `ItemList` naming, per card, its page
- * URL, its printed name and **its image URL**. That is the mapping we were
- * guessing at, published in the markup search engines read. Crawled once, it
- * removes the guess entirely: no slug rules, no layout probing, no wasted
- * request.
+ * The first version of this read their schema.org `ItemList`, which was a
+ * mistake worth recording: **a list page renders 30 cards and publishes only 15
+ * of them in its `ItemList`**. The index was silently half the catalogue —
+ * 3884 French entries where the markup holds roughly 7770 — and cards that were
+ * simply in the unpublished half looked like cards the site did not carry.
  *
- * A Leader's entry points at its `-back` image, and its `name` carries both
- * sides separated by `//` — the front is derived from the same slug.
+ * So the tiles are the source now, and the `ItemList` is kept only as a
+ * supplement: it is the one place the *representative* image of a card is
+ * named. Reading tiles costs no extra request and yields, per card, the real
+ * page URL, the rarity-qualified code, the price with its thirty-day move, and
+ * both face URLs — see `dbscardsTile`.
  */
+import { decode } from "html-entities";
 
-/** One card as their list publishes it. */
-export type DbscardsIndexEntry = {
-  /** `bt31-001-uc-gogeta-ss-fusion-de-renversement-de-situation` */
-  slug: string;
-  /** Printed name; `front // awakened` on a Leader. */
-  name: string;
-  /** The image their own page points at — may be the `-back` of a Leader. */
+import {
+  dbscardsBareSlug,
+  dbscardsSlugToPrintRef,
+  parseDbscardsTiles,
+  type DbscardsTile,
+} from "./dbscardsTile";
+
+export { dbscardsSlugToPrintRef } from "./dbscardsTile";
+
+/**
+ * One card as their list publishes it.
+ *
+ * A tile, plus the representative image when the page's `ItemList` named one.
+ * `image` stays for the faces pass, which predates the tiles.
+ */
+export type DbscardsIndexEntry = DbscardsTile & {
+  /**
+   * The image the page points at — a Leader's is its `-back`.
+   *
+   * Prefer `imageFront` / `imageBack`: the tile names the sides outright, where
+   * this one has to be told apart by its filename suffix.
+   */
   image: string;
 };
 
 const LD_JSON = /<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi;
 
-/**
- * Entries from one list page.
- *
- * Tolerant on purpose: a page that carries no `ItemList`, or a malformed
- * block, yields nothing rather than throwing — the crawl walks hundreds of
- * pages and one oddity must not lose the rest.
- */
-export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
-  const out: DbscardsIndexEntry[] = [];
+/** The `ItemList` image for each slug it happens to publish. */
+function listedImages(html: string): Map<string, string> {
+  const out = new Map<string, string>();
   for (const match of html.matchAll(LD_JSON)) {
     let parsed: unknown;
     try {
@@ -48,7 +61,7 @@ export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
     }
     const list = parsed as {
       "@type"?: string;
-      itemListElement?: Array<{ url?: string; name?: string; image?: string }>;
+      itemListElement?: Array<{ url?: string; image?: string }>;
     };
     if (list?.["@type"] !== "ItemList") continue;
     for (const item of list.itemListElement ?? []) {
@@ -56,35 +69,32 @@ export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
       const image = item?.image?.trim();
       if (!url || !image) continue;
       const slug = url.split("/cards/").pop()?.trim();
-      if (!slug) continue;
-      out.push({ slug, name: item?.name?.trim() ?? "", image });
+      if (slug) out.set(slug, decode(image));
     }
   }
   return out;
 }
 
 /**
- * `bt31-001-uc-gogeta-…` → `bt31-001`.
+ * Entries from one list page.
  *
- * The rarity letters sit between the number and the name, so the collector
- * part is the first two segments — after an optional locale prefix. Their
- * English slugs carry one (`en-bt25-009-sr-…`) and the French ones do not,
- * which silently yielded zero references for the whole English list.
+ * Tolerant on purpose: a page that carries no tiles, or a malformed `ItemList`,
+ * yields what it can rather than throwing — the crawl walks hundreds of pages
+ * and one oddity must not lose the rest.
  */
-const LOCALE_PREFIX = /^(?:en|fr)-(?=[a-z]+\d)/i;
-
-export function dbscardsSlugToPrintRef(slug: string): string | null {
-  const bare = slug.trim().replace(LOCALE_PREFIX, "");
-  const match = /^([a-z0-9]+)-(\d+[a-z]*)-/i.exec(bare);
-  if (!match) return null;
-  return `${match[1]!.toLowerCase()}-${match[2]!.toLowerCase()}`;
+export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
+  const listed = listedImages(html);
+  return parseDbscardsTiles(html).map((tile) => ({
+    ...tile,
+    image: listed.get(tile.slug) ?? tile.imageFront ?? tile.imageBack ?? "",
+  }));
 }
 
 /**
  * Their per-locale list pages.
  *
- * `/cards` alone is the French list too — same 259 pages — but the named path
- * says which locale it is instead of relying on the site's default. The two
+ * `/cards` alone is the French list too — same pages — but the named path says
+ * which locale it is instead of relying on the site's default. The two
  * languages then read the same way, which is the point: `/cards/N` and
  * `/cards/liste-cartes-anglaises/N` would have been the same call spelled two
  * different ways.
@@ -128,7 +138,7 @@ export function buildDbscardsIndex(
 ): DbscardsIndex {
   const index: DbscardsIndex = new Map();
   for (const entry of entries) {
-    const ref = dbscardsSlugToPrintRef(entry.slug);
+    const ref = entry.ref ?? dbscardsSlugToPrintRef(entry.slug);
     if (!ref) continue;
     const bucket = index.get(ref);
     if (bucket) bucket.push(entry);
@@ -154,9 +164,7 @@ export function lookupDbscardsEntry(
   const wanted = rarityCode?.trim().toLowerCase();
   if (wanted) {
     const exact = bucket.find((entry) =>
-      entry.slug
-        .replace(LOCALE_PREFIX, "")
-        .startsWith(`${ref.toLowerCase()}-${wanted}-`),
+      dbscardsBareSlug(entry.slug).startsWith(`${ref.toLowerCase()}-${wanted}-`),
     );
     if (exact) return exact;
   }

@@ -4,6 +4,7 @@
  *
  *   pnpm dbs:cards
  *   pnpm dbs:cards -- --only arena
+ *   pnpm dbs:cards -- --only dbscards   # la liste réelle de dbscards.fr
  *   pnpm dbs:cards -- --skip faces
  *   pnpm dbs:cards -- --offline          # range le clone déjà là, pas de HTTP
  *   pnpm dbs:cards -- --langs fr         # une locale (défaut: fr,en)
@@ -16,10 +17,11 @@ import { ensureArenaClone, installArenaFaces } from "./installArena";
 import { ensureDbsCgCuratedAssets } from "./installCurated";
 import type { DbsCardlistLocaleId } from "./parseCardlist";
 import { scrapeDbsCgCardlist } from "./scrapeCardlist";
+import { scrapeDbscardsIndex } from "./scrapeDbscardsIndex";
 
-const STEPS = ["scrape", "arena", "faces"] as const;
+const STEPS = ["scrape", "dbscards", "arena", "faces"] as const;
 type Step = (typeof STEPS)[number];
-const ONLINE = new Set<Step>(["scrape", "faces"]);
+const ONLINE = new Set<Step>(["scrape", "dbscards", "faces"]);
 
 function argValueFrom(
   argv: readonly string[],
@@ -113,6 +115,28 @@ export async function runDbsCgPackPipeline(
         limit: optionalNumber(argv, "--limit"),
         delayMs: optionalNumber(argv, "--delay"),
       });
+    }
+    if (step === "dbscards") {
+      /*
+        Their list before the faces pass, which reads it: one request per
+        thirty cards, giving real URLs instead of slugs built from printed
+        names. `--langs` picks which locales' lists to read.
+      */
+      for (const lang of langs) {
+        const result = await scrapeDbscardsIndex({
+          lang,
+          delayMs: optionalNumber(argv, "--delay"),
+          onProgress: (page, total) => {
+            if (page % 20 === 0) {
+              console.log(`   dbscards ${lang} — page ${page}, ${total} cartes`);
+            }
+          },
+        });
+        console.log(
+          `── dbscards ${lang} : ${result.cards} cartes sur ${result.pages} pages ` +
+            `(${result.priced} cotées, ${result.withBack} avec verso)`,
+        );
+      }
     }
     if (step === "arena") {
       const ready = ensureArenaClone({ offline });

@@ -301,6 +301,47 @@ l'emballage : l'un est aléatoire, l'autre déterministe. C'est la même
 distinction que pour le conseil d'achat, ce qui est plutôt rassurant — le modèle
 et le calcul reposent sur le même axe.
 
+### Ouvrir n'est pas un état, c'est une transformation
+
+La hiérarchie est en réalité uniforme :
+
+```
+display  →  N boosters  →  M cartes
+starter deck            →  K cartes
+```
+
+Une display ouverte ne donne pas des cartes : elle donne des **boosters**. D'où
+une règle unique, valable aux trois niveaux : **ouvrir un contenant, c'est le
+remplacer par son contenu.**
+
+Formulé ainsi, « ouvert » cesse d'être un booléen à porter sur l'item. Un
+booster déballé ne devient pas un « booster ouvert » qu'il faudrait conserver
+dans l'étagère : il **cesse d'exister** et laisse ses cartes. Rien à modéliser.
+
+Et l'inverse est un raccourci de saisie utile : ouvrir une display dans
+l'application, c'est ajouter ses N boosters d'un geste. Ouvrir un deck, ses K
+cartes. Ouvrir un booster, saisir ses M cartes — les seules qu'il faille entrer
+à la main, puisqu'elles sont aléatoires.
+
+Une réserve : certains collectionneurs gardent l'emballage vide (boîte de
+display, wrapper). Ce n'est pas « une display ouverte », c'est un **autre
+objet** — une boîte vide. À traiter comme tel si le besoin apparaît, pas comme
+un état du premier.
+
+### Les ouvertures produisent la donnée qui nous manque
+
+Conséquence inattendue et précieuse. Le conseil d'achat bute sur un seul manque :
+les **taux de tirage**, que les éditeurs ne publient pas.
+
+Or si l'application enregistre les ouvertures — « ce booster a donné ces
+cartes » — elle accumule des tirages réels. Au bout d'un certain volume, elle
+mesure ses propres taux, par set et par rareté, au lieu de les estimer depuis la
+composition annoncée d'un booster.
+
+Ça vaut la peine d'enregistrer l'événement d'ouverture dès le départ, même si
+rien ne l'exploite au début : c'est de la donnée qu'on ne peut pas reconstituer
+après coup.
+
 ### Ajouter un deck ajoute-t-il ses cartes ?
 
 Question posée, et la bonne réponse est probablement « ça dépend, et il faut le

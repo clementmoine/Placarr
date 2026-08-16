@@ -59,13 +59,12 @@ export const config = {
      * - manifest.json (manifest file)
      * - robots.txt (robots file)
      * - screenshots/wide or screenshots/narrow (screenshots)
-     * - sw.js (service worker file)
      * - icons (icons)
      * - public folder and uploaded media
      * - auth/error (auth error page)
      * - auth/login (login page)
      * - auth/register (register page)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|public|uploads|auth/error|auth/login|auth/register|manifest.json|robots.txt|screenshots|sw.js|icons).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|public|uploads|auth/error|auth/login|auth/register|manifest.json|robots.txt|screenshots|icons).*)",
   ],
 };

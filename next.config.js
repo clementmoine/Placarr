@@ -1,18 +1,6 @@
 // @ts-check
-import crypto from "node:crypto";
-import withSerwistInit from "@serwist/next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 import { NEXT_IMAGE_CONFIG_REMOTE_PATTERNS } from "./src/core/enrich/media/nextImageRemoteHosts.ts";
-
-const revision = crypto.randomUUID();
-
-const withSerwist = withSerwistInit({
-  disable: process.env.NODE_ENV !== "production",
-  cacheOnNavigation: true,
-  swSrc: "src/app/sw.ts",
-  swDest: "public/sw.js",
-  additionalPrecacheEntries: [{ url: "/", revision }],
-});
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
@@ -65,20 +53,28 @@ const nextConfig = {
    * Next's defaults intersected with what this project actually depends on,
    * minus that one entry.
    */
-  serverExternalPackages: ["eslint", "pg", "prettier", "prisma", "sharp", "typescript"],
+  serverExternalPackages: [
+    "eslint",
+    "pg",
+    "prettier",
+    "prisma",
+    "sharp",
+    "typescript",
+  ],
 };
 
 /**
- * Watch tuning for the dev server only.
+ * Watch tuning for the webpack *dev* server only.
  *
  * Foil/CDN dumps write heavily under ``data/``. Watching them forces webpack to
  * recompile on every texture pull (and races JSON parses on concurrent
  * ``/assets/...`` requests during invalidation).
  *
  * Deliberately outside `nextConfig`: since Next 16 the mere presence of a
- * `webpack` key makes `next build` fail, because builds run on Turbopack. This
- * block never applied to a build anyway — it was entirely inside `if (dev)`.
+ * `webpack` key makes a Turbopack `next build` fail. The key exists only for
+ * `next dev --webpack`.
  */
+/** @param {{ watchOptions?: Record<string, unknown> }} config */
 const devWebpack = (config) => {
   const ignored = [
     "**/node_modules/**",
@@ -89,7 +85,6 @@ const devWebpack = (config) => {
     "**/scripts/pokemon/.venv/**",
     "**/src/providers/lorcanatcg/unity/.venv/**",
     "**/src/providers/pokemontcglive/unity/.venv/**",
-    // Dumpers rewrite these in place; watching them recompiles mid-extract.
     "**/src/effects/**/cards.json",
     "**/src/effects/**/manifest.json",
   ];
@@ -97,14 +92,11 @@ const devWebpack = (config) => {
   return config;
 };
 
-/*
-  Phase-aware config: the `webpack` key exists only for `next dev --webpack`.
-  Absent everywhere else, `next build` runs on Turbopack — the Next 16 default,
-  and 2 to 5 times faster.
-*/
-export default (phase) =>
-  withSerwist(
-    phase === PHASE_DEVELOPMENT_SERVER
-      ? { ...nextConfig, webpack: devWebpack }
-      : nextConfig,
-  );
+/** @param {string} phase */
+function nextConfigForPhase(phase) {
+  return phase === PHASE_DEVELOPMENT_SERVER
+    ? { ...nextConfig, webpack: devWebpack }
+    : nextConfig;
+}
+
+export default nextConfigForPhase;

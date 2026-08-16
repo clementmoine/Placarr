@@ -46,8 +46,8 @@ next-env.d.ts
 
 certificates
 
-# Serwist
-public/sw*
+# Leftover PWA workers from older builds — we do not ship a service worker.
+public/sw.js
 public/swe-worker*
 
 # Prisma / base locale — jamais versionner (données privées runtime)

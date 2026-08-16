@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import { DevServiceWorkerCleanup } from "@/components/DevServiceWorkerCleanup";
+import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -61,7 +61,7 @@ export default function RootLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                <DevServiceWorkerCleanup />
+                <ServiceWorkerManager />
                 {children}
                 <Toaster />
               </ThemeProvider>

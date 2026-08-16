@@ -11,12 +11,15 @@ import {
 } from "@/providers/shared/catalogCorpus";
 import { packLogsDir } from "@/lib/packPaths";
 
-import { runDbsFwPackPipeline } from "./cli";
 import { dbsFwDbPath, DBS_FW_PACK_ID } from "./indexStore";
 
 export async function refreshDbsFwCatalog(
   opts?: ProviderCatalogRefreshOpts,
 ): Promise<void> {
+  const { runDbsFwPackPipeline } = await import(
+    /* webpackIgnore: true */
+    "./cli"
+  );
   await runDbsFwPackPipeline([]);
   const logs = packLogsDir(DBS_FW_PACK_ID);
   mkdirSync(logs, { recursive: true });

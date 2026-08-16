@@ -12,7 +12,6 @@ import {
 } from "@/providers/shared/catalogCorpus";
 import { packLogsDir } from "@/lib/packPaths";
 
-import { runNarutoPackPipeline } from "./cli";
 import { narutoCcgDbPath } from "./indexStore";
 
 const DATA_PACK = "naruto/ccg";
@@ -28,6 +27,10 @@ export async function refreshNarutoCcgCatalog(
     Lorcana and Pokémon likewise derive everything from `opts`.
   */
   const argv = opts?.auto ? ["--offline", "--skip", "checklist"] : [];
+  const { runNarutoPackPipeline } = await import(
+    /* webpackIgnore: true */
+    "./cli"
+  );
   await runNarutoPackPipeline(argv);
   const logs = packLogsDir(DATA_PACK);
   mkdirSync(logs, { recursive: true });

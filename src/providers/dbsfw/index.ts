@@ -129,14 +129,11 @@ export const dbsfwModule: ProviderModule = {
       return {
         ok,
         latency: Date.now() - start,
-        error: ok
-          ? null
-          : `Index unavailable — run pnpm dbs:fw (${dbPath})`,
+        error: ok ? null : `Index unavailable — run pnpm dbs:fw (${dbPath})`,
         configured: true,
       };
     },
   ),
 };
 
-export { runDbsFwPackPipeline, selectDbsFwSteps } from "./cli";
 export { dbsFwDbPath, ensureDbsFwIndex, writeDbsFwIndex } from "./indexStore";

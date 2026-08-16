@@ -1,11 +1,32 @@
 // @ts-check
-import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 import { NEXT_IMAGE_CONFIG_REMOTE_PATTERNS } from "./src/core/enrich/media/nextImageRemoteHosts.ts";
+
+/**
+ * Trees `@vercel/nft` must not walk. The webpack plugin ignores only
+ * `node_modules` by default — `data/` (multi-GB foil dumps) and Python
+ * venvs under provider `unity` folders were on the critical path (~11 min).
+ * `outputFileTracingExcludes` only filters after that walk; these go into
+ * `TraceEntryPointsPlugin.traceIgnores` so NFT never stats them.
+ */
+const NFT_TRACE_IGNORES = [
+  "**/data/**",
+  "**/.venv/**",
+  "**/__pycache__/**",
+  "**/*.pyc",
+  "**/unity/.venv/**",
+  "**/curated/reconstructed/**",
+  "**/scratch/**",
+  "**/.tmp-*/**",
+  "**/coverage/**",
+];
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  // Next 16 writes AGENTS.md / CLAUDE.md on `next dev`. We already have
+  // project rules under `.cursor/`; don't dump extra files into the tree.
+  agentRules: false,
   /**
    * Hosts allowed to load dev assets, for testing on a phone over the LAN.
    *
@@ -27,12 +48,26 @@ const nextConfig = {
     "*.local",
     "*.localhost",
   ],
-  // Runtime data stays out of the standalone trace (multi‑GB under data/).
   outputFileTracingExcludes: {
-    "*": ["./data/**"],
+    "*": [
+      "./data/**",
+      "./src/providers/**/unity/**",
+      "./src/providers/**/unity/.venv/**",
+      "./src/providers/**/curated/reconstructed/**",
+      "./scripts/**/.venv/**",
+      "./**/.venv/**",
+      "./**/__pycache__/**",
+      "./scratch/**",
+      "./coverage/**",
+    ],
   },
   typescript: {
     ignoreBuildErrors: false,
+  },
+  experimental: {
+    // Large app: lets webpack drop compilation caches between compilers
+    // so the worker stays under the 16 GB heap cap in `package.json`.
+    webpackMemoryOptimizations: true,
   },
   images: {
     // Next.js caps remotePatterns at 50 — runtime host guard in `src/proxy.ts`.
@@ -71,32 +106,49 @@ const nextConfig = {
  * ``/assets/...`` requests during invalidation).
  *
  * Deliberately outside `nextConfig`: since Next 16 the mere presence of a
- * `webpack` key makes a Turbopack `next build` fail. The key exists only for
- * `next dev --webpack`.
+ * `webpack` key makes a Turbopack `next build` fail. The key exists only when
+ * `TURBOPACK` is unset (`next dev --webpack` / `pnpm build`).
+ *
+ * @param {{ watchOptions?: Record<string, unknown>, plugins?: { constructor?: { name?: string }, traceIgnores?: string[] }[] }} config
+ * @param {{ dev?: boolean, isServer?: boolean, nextRuntime?: string }} options
  */
-/** @param {{ watchOptions?: Record<string, unknown> }} config */
-const devWebpack = (config) => {
-  const ignored = [
-    "**/node_modules/**",
-    "**/.git/**",
-    "**/.next/**",
-    "**/data/**",
-    "**/scripts/lorcana/.venv/**",
-    "**/scripts/pokemon/.venv/**",
-    "**/src/providers/lorcanatcg/unity/.venv/**",
-    "**/src/providers/pokemontcglive/unity/.venv/**",
-    "**/src/effects/**/cards.json",
-    "**/src/effects/**/manifest.json",
-  ];
-  config.watchOptions = { ...config.watchOptions, ignored };
+const applyWebpack = (config, { dev, isServer, nextRuntime }) => {
+  if (dev) {
+    const ignored = [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/.next/**",
+      "**/data/**",
+      "**/scripts/lorcana/.venv/**",
+      "**/scripts/pokemon/.venv/**",
+      "**/src/providers/lorcanatcg/unity/.venv/**",
+      "**/src/providers/pokemontcglive/unity/.venv/**",
+      "**/src/effects/**/cards.json",
+      "**/src/effects/**/manifest.json",
+    ];
+    config.watchOptions = { ...config.watchOptions, ignored };
+    return config;
+  }
+  if (isServer && nextRuntime === "nodejs") {
+    for (const plugin of config.plugins ?? []) {
+      if (
+        plugin?.constructor?.name === "TraceEntryPointsPlugin" &&
+        Array.isArray(plugin.traceIgnores)
+      ) {
+        plugin.traceIgnores.push(...NFT_TRACE_IGNORES);
+      }
+    }
+  }
   return config;
 };
 
-/** @param {string} phase */
-function nextConfigForPhase(phase) {
-  return phase === PHASE_DEVELOPMENT_SERVER
-    ? { ...nextConfig, webpack: devWebpack }
-    : nextConfig;
+function nextConfigForPhase() {
+  // Turbopack rejects a `webpack` key. `pnpm build` is `--webpack`.
+  if (process.env.TURBOPACK) return nextConfig;
+  return {
+    ...nextConfig,
+    webpack: (config, options) => applyWebpack(config, options),
+  };
 }
 
 export default nextConfigForPhase;

@@ -27,7 +27,6 @@ export {
 } from "./indexStore";
 
 export { scrapeLorcanaCards } from "./scrapeCards";
-export { dumpLorcanaWeb, runDump } from "./dumpWeb";
 
 const PROVIDER_ID = "lorcanatcg";
 const PROVIDER_LABEL = "Lorcana TCG (local)";

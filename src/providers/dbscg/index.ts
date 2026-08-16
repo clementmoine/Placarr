@@ -148,5 +148,4 @@ export const dbscgModule: ProviderModule = {
   ),
 };
 
-export { runDbsCgPackPipeline, selectDbsCgSteps } from "./cli";
 export { dbsCgDbPath, ensureDbsCgIndex, writeDbsCgIndex } from "./indexStore";

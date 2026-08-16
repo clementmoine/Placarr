@@ -11,7 +11,6 @@ import {
 } from "@/providers/shared/catalogCorpus";
 import { packLogsDir } from "@/lib/packPaths";
 
-import { runDbsCgPackPipeline } from "./cli";
 import { dbsCgDbPath, DBS_CG_PACK_ID } from "./indexStore";
 
 export async function refreshDbsCgCatalog(
@@ -20,6 +19,10 @@ export async function refreshDbsCgCatalog(
   // Bandai's cardlist is live — auto refresh re-scrapes, clones the TCG Arena
   // EN dump, then fills FR faces over HTTP. `--offline` still ranges a clone
   // already on disk.
+  const { runDbsCgPackPipeline } = await import(
+    /* webpackIgnore: true */
+    "./cli"
+  );
   await runDbsCgPackPipeline([]);
   const logs = packLogsDir(DBS_CG_PACK_ID);
   mkdirSync(logs, { recursive: true });

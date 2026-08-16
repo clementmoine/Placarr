@@ -43,6 +43,8 @@ RUN npx prisma generate
 
 ENV NODE_ENV=production
 ENV NEXT_PRIVATE_STANDALONE=true
+# Webpack worker OOMs at the Node 26 default ~4 GB heap on this app.
+ENV NODE_OPTIONS=--max-old-space-size=16384
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry

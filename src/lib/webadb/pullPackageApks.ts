@@ -20,9 +20,14 @@ export function webUsbSupported(): boolean {
   return typeof navigator !== "undefined" && "usb" in navigator;
 }
 
-async function readAll(
-  stream: ReadableStream<Uint8Array>,
-): Promise<Uint8Array> {
+type ReadableBytes = {
+  getReader(options?: { mode?: string }): {
+    read(): Promise<{ done: boolean; value?: Uint8Array }>;
+    releaseLock(): void;
+  };
+};
+
+async function readAll(stream: ReadableBytes): Promise<Uint8Array> {
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
@@ -30,6 +35,7 @@ async function readAll(
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (!value) continue;
       chunks.push(value);
       total += value.byteLength;
     }

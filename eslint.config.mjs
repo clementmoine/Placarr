@@ -1,3 +1,4 @@
+import "./eslint-ts6-alias.cjs";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import nextTypescript from "eslint-config-next/typescript";
@@ -5,6 +6,9 @@ import prettierRecommended from "eslint-plugin-prettier/recommended";
 
 // Next 16 : `next lint` n'existe plus et eslint-config-next est nativement en
 // flat config — plus de FlatCompat. `pnpm lint` = `eslint .`.
+//
+// `eslint-ts6-alias.cjs` doit rester le premier import : typescript-eslint 8
+// n'a pas d'API TS 7. `tsc` / `next build` restent sur typescript@7.
 const eslintConfig = [
   {
     // `next lint` gérait ces exclusions ; avec `eslint .` elles doivent être
@@ -17,9 +21,16 @@ const eslintConfig = [
       "coverage/",
       "tests/fixtures/",
       "scratch/",
+      // Dumps / audit locaux (gitignorés) — pas du source produit.
+      "data/",
+      ".tmp-foil-audit/",
+      ".tmp-rebase-aside/",
+      "**/unity/.venv/",
+      "scripts/**/.venv/",
       // Client Prisma généré (prisma generate) — jamais édité à la main.
       "src/generated/",
       "next-env.d.ts",
+      "eslint-ts6-alias.cjs",
     ],
   },
   ...nextCoreWebVitals,

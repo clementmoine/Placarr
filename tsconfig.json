@@ -7,6 +7,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -14,16 +15,17 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "types": ["@serwist/next/typings", "node"],
+    "types": ["node"],
     "plugins": [
       {
         "name": "next"
       }
     ],
+    // `baseUrl` a été retiré des options en TypeScript 7. Les chemins ci-dessus
+    // sont déjà relatifs au tsconfig, la résolution est donc inchangée.
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "baseUrl": "."
+    }
   },
   "include": [
     "next-env.d.ts",

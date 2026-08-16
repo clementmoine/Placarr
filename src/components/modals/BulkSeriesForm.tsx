@@ -52,7 +52,7 @@ const fieldInputClassName =
   "bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 w-full text-xs sm:text-sm h-10";
 
 function volumeFieldSchema(message: string) {
-  return z.coerce.number({ invalid_type_error: message }).int().min(1, message);
+  return z.number({ error: message }).int().min(1, { error: message });
 }
 
 export function BulkSeriesForm({
@@ -300,46 +300,48 @@ export function BulkSeriesForm({
             name="condition"
             render={({ field }) =>
               shelfShowsItemCondition(shelfType) ? (
-              <FormItem>
-                <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  {t("items.condition")}
-                </FormLabel>
-                <FormControl>
-                  <ToggleGroup
-                    size="sm"
-                    type="single"
-                    variant="outline"
-                    className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                    value={field.value}
-                    onValueChange={(value) => {
-                      if (value) field.onChange(value as Condition);
-                    }}
-                  >
-                    {itemConditionsForShelfType(shelfType).map((condition) => {
-                      const isActiveCondition = field.value === condition;
-                      return (
-                        <ToggleGroupItem
-                          key={condition}
-                          value={condition}
-                          aria-label={condition}
-                          className={cn(
-                            "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
-                            isActiveCondition
-                              ? conditionToggleActiveClass(condition)
-                              : "bg-transparent hover:text-foreground",
-                          )}
-                        >
-                          <ConditionIcon condition={condition} />
-                          <span className="shrink-0 font-medium">
-                            {t(`items.conditions.${condition}`)}
-                          </span>
-                        </ToggleGroupItem>
-                      );
-                    })}
-                  </ToggleGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+                <FormItem>
+                  <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    {t("items.condition")}
+                  </FormLabel>
+                  <FormControl>
+                    <ToggleGroup
+                      size="sm"
+                      type="single"
+                      variant="outline"
+                      className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                      value={field.value}
+                      onValueChange={(value) => {
+                        if (value) field.onChange(value as Condition);
+                      }}
+                    >
+                      {itemConditionsForShelfType(shelfType).map(
+                        (condition) => {
+                          const isActiveCondition = field.value === condition;
+                          return (
+                            <ToggleGroupItem
+                              key={condition}
+                              value={condition}
+                              aria-label={condition}
+                              className={cn(
+                                "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
+                                isActiveCondition
+                                  ? conditionToggleActiveClass(condition)
+                                  : "bg-transparent hover:text-foreground",
+                              )}
+                            >
+                              <ConditionIcon condition={condition} />
+                              <span className="shrink-0 font-medium">
+                                {t(`items.conditions.${condition}`)}
+                              </span>
+                            </ToggleGroupItem>
+                          );
+                        },
+                      )}
+                    </ToggleGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               ) : (
                 // Un render prop doit rendre un élément : `null` ne satisfait pas le
                 // type, et le champ reste enregistré dans les deux cas.

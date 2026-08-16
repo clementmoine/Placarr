@@ -17,10 +17,7 @@ import type {
   FoilWrap,
 } from "@/core/render/foil/types";
 import { hotFoilStampUniforms } from "@/core/render/foil/hotFoilStamp";
-import {
-  cameraPosFromTilt,
-  lightDirectionFromTilt,
-} from "./lightDirection";
+import { cameraPosFromTilt, lightDirectionFromTilt } from "./lightDirection";
 
 import type {
   WebglFoilRenderer,
@@ -186,8 +183,7 @@ export function aspectCorrectSquareMotifUv(
   const hasSquareDir = source.includes("_T_Direction_RGB_Random");
   if (!hasCc && !hasStarDot && !hasCross && !hasSquareDir) return source;
 
-  const motifSampler =
-    "_Tex_CC(?!_)|_StarsTexture|_TexDots|_T_noise_dots";
+  const motifSampler = "_Tex_CC(?!_)|_StarsTexture|_TexDots|_T_noise_dots";
 
   // Equal vec2 → earliest texture(motif) within the next 1–3 lines.
   // Non-greedy so two back-to-back CC samples (SunPillar) each match once.
@@ -627,8 +623,7 @@ export function createWebglFoilRenderer(
     binding: FoilTextureBinding | undefined,
   ): Promise<void> {
     const role = binding?.role;
-    const fallback =
-      (role && ROLE_FALLBACK[role]) ?? UNBOUND_TEXTURE_FALLBACK;
+    const fallback = (role && ROLE_FALLBACK[role]) ?? UNBOUND_TEXTURE_FALLBACK;
     texturesBySlot.set(
       slot,
       solidTexture(fallback as [number, number, number, number]),
@@ -716,23 +711,23 @@ export function createWebglFoilRenderer(
       } else if (info.type === gl!.FLOAT_VEC2 && color) {
         gl!.uniform2f(location, color[0], color[1]);
       } else if (info.type === gl!.FLOAT_VEC3) {
-          if (color) {
-            gl!.uniform3f(location, color[0], color[1], color[2]);
-          } else if (info.name === "_WorldSpaceCameraPos") {
-            // Above the card — the app's card lies flat, normal +Y.
-            gl!.uniform3f(location, 0, 2, 0);
-          }
+        if (color) {
+          gl!.uniform3f(location, color[0], color[1], color[2]);
+        } else if (info.name === "_WorldSpaceCameraPos") {
+          // Above the card — the app's card lies flat, normal +Y.
+          gl!.uniform3f(location, 0, 2, 0);
+        }
       } else if (info.type === gl!.FLOAT_VEC4) {
         if (color) {
           gl!.uniform4f(location, color[0], color[1], color[2], color[3]);
         } else if (/_ST$/.test(info.name)) {
           // Unity `*_ST` tiling/offset — identity when the dump sheet omitted it.
           gl!.uniform4f(location, 1, 1, 0, 0);
-            } else if (info.name === "_Time" || info.name.startsWith("_Time[")) {
-              gl!.uniform4f(location, 0, 0, 0, 0);
-            } else if (info.name === "_WorldSpaceCameraPos") {
-              gl!.uniform4f(location, 0, 2, 0, 1);
-            } else {
+        } else if (info.name === "_Time" || info.name.startsWith("_Time[")) {
+          gl!.uniform4f(location, 0, 0, 0, 0);
+        } else if (info.name === "_WorldSpaceCameraPos") {
+          gl!.uniform4f(location, 0, 2, 0, 1);
+        } else {
           const mtx = info.name.match(
             /^hlslcc_mtx4x4unity_(?:WorldToObject|ObjectToWorld)\[(\d+)\]$/,
           );

@@ -32,10 +32,10 @@ export type LiveCardTbn = {
  */
 export function liveCardTbnFromLean(x: number, y: number): LiveCardTbn {
   const N = lightDirectionFromTilt(x, y);
-  let tx = 1 - N[0] * N[0];
-  let ty = -N[0] * N[1];
-  let tz = -N[0] * N[2];
-  let tLen = Math.hypot(tx, ty, tz);
+  const tx = 1 - N[0] * N[0];
+  const ty = -N[0] * N[1];
+  const tz = -N[0] * N[2];
+  const tLen = Math.hypot(tx, ty, tz);
   let T: readonly [number, number, number];
   if (tLen > 1e-4) {
     T = [tx / tLen, ty / tLen, tz / tLen];

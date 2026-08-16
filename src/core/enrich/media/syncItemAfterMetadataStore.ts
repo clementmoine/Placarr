@@ -149,8 +149,8 @@ export async function syncItemFieldsAfterMetadataStore(input: {
       : detectVideoGamePlatformKey(metadata.platformKey ?? "");
   const discoveredBarcodePlatformConflicts = Boolean(
     requestedPlatformKey &&
-      metadataPlatformKey &&
-      metadataPlatformKey !== requestedPlatformKey,
+    metadataPlatformKey &&
+    metadataPlatformKey !== requestedPlatformKey,
   );
   let effectiveBarcode = normalizeProductBarcode(item?.barcode);
   if (

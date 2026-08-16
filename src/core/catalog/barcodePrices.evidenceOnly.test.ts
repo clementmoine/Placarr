@@ -39,9 +39,8 @@ vi.mock("@/core/catalog/registry", () => ({
   ] as unknown as ProviderModule[],
 }));
 
-const { collectRefreshBarcodePriceOffers } = await import(
-  "@/core/catalog/barcodePrices"
-);
+const { collectRefreshBarcodePriceOffers } =
+  await import("@/core/catalog/barcodePrices");
 
 function refreshCtx(
   overrides: Partial<BarcodePriceRefreshContext> = {},

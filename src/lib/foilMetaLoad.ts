@@ -44,10 +44,7 @@ export function installFoilMetaFileReader(reader: FoilMetaFileReader): void {
   g.__PLACARR_FOIL_META_READER__ = reader;
 }
 
-export function readDataJsonSync<T>(
-  relativeUnderData: string,
-  fallback: T,
-): T {
+export function readDataJsonSync<T>(relativeUnderData: string, fallback: T): T {
   const hit = cache()[relativeUnderData];
   if (hit !== undefined) return hit as T;
 
@@ -255,18 +252,16 @@ export async function hydrateFoilMetaFromAssets(
   );
 
   try {
-    const { invalidatePokemonFoilNamesCache } = await import(
-      "@/effects/pokemon/foilNames"
-    );
+    const { invalidatePokemonFoilNamesCache } =
+      await import("@/effects/pokemon/foilNames");
     invalidatePokemonFoilNamesCache();
   } catch {
     /* optional */
   }
 
   try {
-    const { resetPaperMaterialCache } = await import(
-      "@/effects/pokemon/materials"
-    );
+    const { resetPaperMaterialCache } =
+      await import("@/effects/pokemon/materials");
     resetPaperMaterialCache();
   } catch {
     /* server / circular */

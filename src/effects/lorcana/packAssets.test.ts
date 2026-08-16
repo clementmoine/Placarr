@@ -51,7 +51,10 @@ describe("lorcana packAssets", () => {
 
   it("preferPackUrl keeps remote when pack missing", () => {
     expect(
-      preferPackUrl(packFoilMaskUrl("lorcana:1-42", "fr"), "https://cdn/mask.jpg"),
+      preferPackUrl(
+        packFoilMaskUrl("lorcana:1-42", "fr"),
+        "https://cdn/mask.jpg",
+      ),
     ).toBe("/assets/lorcana/cards/1/fr/42/mask.jpg");
     expect(preferPackUrl(null, "https://cdn/mask.jpg")).toBe(
       "https://cdn/mask.jpg",

@@ -32,10 +32,7 @@ export function liveFrontUrlForPrint(opts: {
   );
   if (!liveBundle) return null;
   const entry = paperCard(liveBundle);
-  return paperArtUrl(
-    liveBundle,
-    entry?.std?.cardTex ?? entry?.ph?.cardTex,
-  );
+  return paperArtUrl(liveBundle, entry?.std?.cardTex ?? entry?.ph?.cardTex);
 }
 
 export function buildPokemonLiveAttachments(opts: {

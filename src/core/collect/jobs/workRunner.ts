@@ -356,25 +356,22 @@ export async function executeBackgroundWorkJob(
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.icollectCatalogSync) {
-    const { refreshICollectCatalog } = await import(
-      "@/providers/icollect/pipeline"
-    );
+    const { refreshICollectCatalog } =
+      await import("@/providers/icollect/pipeline");
     await refreshICollectCatalog({ auto: true });
     return;
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.launchboxIndexSync) {
-    const { refreshLaunchBoxCatalog } = await import(
-      "@/providers/launchbox/pipeline"
-    );
+    const { refreshLaunchBoxCatalog } =
+      await import("@/providers/launchbox/pipeline");
     await refreshLaunchBoxCatalog();
     return;
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.nointroIndexSync) {
-    const { refreshNoIntroCatalog } = await import(
-      "@/providers/nointro/pipeline"
-    );
+    const { refreshNoIntroCatalog } =
+      await import("@/providers/nointro/pipeline");
     // Legacy kind — treat like auto when no DAT is configured (skip, don't fail).
     await refreshNoIntroCatalog({ auto: true });
     return;
@@ -420,12 +417,10 @@ async function stampFoilExtractFailure(
   try {
     const { appendCatalogueExtractLog, beginCatalogueExtractLog } =
       await import("@/lib/admin/catalogueExtractLog");
-    const { readCatalogueExtractLog } = await import(
-      "@/lib/admin/catalogueExtractLog"
-    );
-    const { isCatalogueExtractTarget } = await import(
-      "@/lib/admin/catalogueExtractRunner"
-    );
+    const { readCatalogueExtractLog } =
+      await import("@/lib/admin/catalogueExtractLog");
+    const { isCatalogueExtractTarget } =
+      await import("@/lib/admin/catalogueExtractRunner");
     if (!isCatalogueExtractTarget(pack)) return;
     const typed = pack;
     const existing = await readCatalogueExtractLog(typed, {

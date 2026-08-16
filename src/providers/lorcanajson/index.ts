@@ -416,9 +416,7 @@ export function mapLorcanaMetadata(
   if (!card) return null;
 
   const languageRows =
-    variants && variants.length > 0
-      ? variants
-      : ([card] as LorcanaCard[]);
+    variants && variants.length > 0 ? variants : ([card] as LorcanaCard[]);
   // Prefer the resolved card's language for primary fields even if a caller
   // passed variants in a different order.
   const ordered = [

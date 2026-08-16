@@ -200,7 +200,7 @@ const SV_COUNTER = [
 ];
 
 /** `FX_T_Spectrum_FlatSilver` — the reverse-holo silver, with its green cast. */
-const FLAT_SILVER = [
+const _FLAT_SILVER = [
   "#3f3835",
   "#393b3a",
   "#38453c",
@@ -227,7 +227,11 @@ const GOLD_TINT = "#5a4326";
  * percent of the gradient box, so a small period gives the fine hatch and a
  * large one the broad sweep.
  */
-function bands(palette: readonly string[], angle: number, period: number): string {
+function bands(
+  palette: readonly string[],
+  angle: number,
+  period: number,
+): string {
   const step = period / palette.length;
   const stops = palette
     .map((c, i) => `${c} ${(i * step).toFixed(2)}%`)
@@ -362,12 +366,7 @@ function sweep(angle: number, width = 22): string {
  * the same: large `background-size`, `no-repeat`. Motions ride compressed
  * `--background-x/y` so the lobe stays on-card.
  */
-function glare(
-  angle: number,
-  size: string,
-  motion: Motion,
-  width = 22,
-): Layer {
+function glare(angle: number, size: string, motion: Motion, width = 22): Layer {
   return {
     raw: sweep(angle, width),
     size,
@@ -424,13 +423,20 @@ const BARW = "var(--barwidth, 1.2%)";
 function radiantBars(angle: 45 | -45): string {
   const grey = (l: number) => `hsl(0,0%,${l}%)`;
   const head = RADIANT_BAR_STEPS[0];
-  const stops = [`${grey(head)} 0%`, `${grey(head)} 1%`, `${grey(head)} ${BARW}`];
+  const stops = [
+    `${grey(head)} 0%`,
+    `${grey(head)} 1%`,
+    `${grey(head)} ${BARW}`,
+  ];
   for (let i = 1; i < RADIANT_BAR_STEPS.length; i++) {
     const l = grey(RADIANT_BAR_STEPS[i]!);
     // Hard edge: the +0.01% keeps each band flat instead of ramping into the
     // next. Stops must stay ascending — a non-ascending ramp once flattened the
     // hatch entirely in the browser.
-    stops.push(`${l} calc(${BARW} * ${i} + 0.01%)`, `${l} calc(${BARW} * ${i + 1})`);
+    stops.push(
+      `${l} calc(${BARW} * ${i} + 0.01%)`,
+      `${l} calc(${BARW} * ${i + 1})`,
+    );
   }
   return `repeating-linear-gradient(${angle}deg, ${stops.join(", ")})`;
 }

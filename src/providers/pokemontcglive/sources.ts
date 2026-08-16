@@ -21,8 +21,7 @@ import { fetchContentBase } from "./gameSettings";
 export const UPDATER_NOTES_URL =
   "https://cdn.studio-prod.pokemon.com/rainier/updater/StandaloneOSX/ReleaseNotes/notes_en.json";
 
-export const VERSION_RE =
-  /Version\s+(\d+\.\d+\.\d+)\s*\((\d+)\)/i;
+export const VERSION_RE = /Version\s+(\d+\.\d+\.\d+)\s*\((\d+)\)/i;
 
 export const SOURCE_MATRIX = [
   {
@@ -75,7 +74,8 @@ export const SOURCE_MATRIX = [
     needs: "{dir} path segment",
     source: "config-cache|probe",
     urlPattern: "asset-bundle-manifest directories / HEAD probe",
-    update: "prefer 10101_0000 (primary scrape); --probe-all-dirs for dated epochs",
+    update:
+      "prefer 10101_0000 (primary scrape); --probe-all-dirs for dated epochs",
   },
   {
     id: "cdnAssetManifest",

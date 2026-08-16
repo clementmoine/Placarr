@@ -764,241 +764,237 @@ function ShelfComponent() {
 
       {/* Content */}
       <div className="overflow-y-auto min-h-0 flex-1">
-          <div
-            className={cn(
-              "flex-1 p-4 md:p-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300",
-              // Always reserve space for the fixed selection bar when the user can
-              // edit — toggling pb-* on first select was shifting the scrollport.
-              isAuthenticated && !isGuest && canEdit
-                ? "pb-36 md:pb-28"
-                : "pb-24 md:pb-6",
-            )}
-          >
-            {/* Shelf header — title + primary actions only */}
-            <div className="flex items-center justify-between gap-3 mt-2 w-full">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="shrink-0 text-foreground dark:text-white">
-                  <ShelfTypeIcon type={shelf?.type} className="size-8" />
-                </span>
-                <h1 className="truncate text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-none">
-                  {shelf?.name || "..."}
-                </h1>
-              </div>
-
-              {/* Primary actions — keep in layout while selecting (invisible) so
-                the header height does not collapse and jump scroll to top. */}
-              {isAuthenticated && !isGuest && canEdit && (
-                <div
-                  className={cn(
-                    "flex items-center gap-2 shrink-0 select-none",
-                    selectionMode && "invisible pointer-events-none",
-                  )}
-                  aria-hidden={selectionMode || undefined}
-                >
-                  <Button
-                    variant="secondary"
-                    className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
-                    onClick={() => handleModalOpen("shelf")}
-                    tabIndex={selectionMode ? -1 : undefined}
-                  >
-                    <Wrench className="size-4" />
-                    <span className="hidden sm:inline">
-                      {t("shelves.editShelf")}
-                    </span>
-                  </Button>
-
-                  <DropdownMenu
-                    open={addMenuOpen}
-                    onOpenChange={setAddMenuOpen}
-                    modal={false}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
-                        tabIndex={selectionMode ? -1 : undefined}
-                      >
-                        <Plus className="size-4" />
-                        {t("items.addItem")}
-                        <ChevronDown className="size-4 opacity-80" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-xl">
-                      <DropdownMenuItem
-                        className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("item")}
-                      >
-                        <Plus className="size-4 mr-2" />
-                        {t("items.addItem")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("bulk", "names")}
-                      >
-                        <ListPlus className="size-4 mr-2" />
-                        {t("items.bulkAdd.menuLabel")}
-                      </DropdownMenuItem>
-                      {!isPrintSearchShelf && (
-                        <DropdownMenuItem
-                          className="cursor-pointer font-medium"
-                          onSelect={() => openModalFromAddMenu("bulk", "scan")}
-                        >
-                          <ScanLine className="size-4 mr-2" />
-                          {t("items.bulkAdd.tabScan")}
-                        </DropdownMenuItem>
-                      )}
-                      {shelf?.type === "books" && (
-                        <DropdownMenuItem
-                          className="cursor-pointer font-medium"
-                          onSelect={() =>
-                            openModalFromAddMenu("bulk", "series")
-                          }
-                        >
-                          <Layers className="size-4 mr-2" />
-                          {t("items.bulkSeries.menuLabel")}
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
+        <div
+          className={cn(
+            "flex-1 p-4 md:p-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300",
+            // Always reserve space for the fixed selection bar when the user can
+            // edit — toggling pb-* on first select was shifting the scrollport.
+            isAuthenticated && !isGuest && canEdit
+              ? "pb-36 md:pb-28"
+              : "pb-24 md:pb-6",
+          )}
+        >
+          {/* Shelf header — title + primary actions only */}
+          <div className="flex items-center justify-between gap-3 mt-2 w-full">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="shrink-0 text-foreground dark:text-white">
+                <ShelfTypeIcon type={shelf?.type} className="size-8" />
+              </span>
+              <h1 className="truncate text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-none">
+                {shelf?.name || "..."}
+              </h1>
             </div>
 
-            {/* Search and Sort controls */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full">
-              <div className="flex-1">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleSearch)}>
-                    <FormField
-                      control={form.control}
-                      name="search"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="hidden">
-                            {t("common.search")}
-                          </FormLabel>
-                          <FormControl>
-                            <div className="relative w-full flex items-center">
-                              <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
-                              <Input
-                                type="search"
-                                autoFocus
-                                className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
-                                placeholder={t("common.search")}
-                                {...field}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  handleSearchChange(e);
+            {/* Primary actions — keep in layout while selecting (invisible) so
+                the header height does not collapse and jump scroll to top. */}
+            {isAuthenticated && !isGuest && canEdit && (
+              <div
+                className={cn(
+                  "flex items-center gap-2 shrink-0 select-none",
+                  selectionMode && "invisible pointer-events-none",
+                )}
+                aria-hidden={selectionMode || undefined}
+              >
+                <Button
+                  variant="secondary"
+                  className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
+                  onClick={() => handleModalOpen("shelf")}
+                  tabIndex={selectionMode ? -1 : undefined}
+                >
+                  <Wrench className="size-4" />
+                  <span className="hidden sm:inline">
+                    {t("shelves.editShelf")}
+                  </span>
+                </Button>
+
+                <DropdownMenu
+                  open={addMenuOpen}
+                  onOpenChange={setAddMenuOpen}
+                  modal={false}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                      tabIndex={selectionMode ? -1 : undefined}
+                    >
+                      <Plus className="size-4" />
+                      {t("items.addItem")}
+                      <ChevronDown className="size-4 opacity-80" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    <DropdownMenuItem
+                      className="cursor-pointer font-medium"
+                      onSelect={() => openModalFromAddMenu("item")}
+                    >
+                      <Plus className="size-4 mr-2" />
+                      {t("items.addItem")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer font-medium"
+                      onSelect={() => openModalFromAddMenu("bulk", "names")}
+                    >
+                      <ListPlus className="size-4 mr-2" />
+                      {t("items.bulkAdd.menuLabel")}
+                    </DropdownMenuItem>
+                    {!isPrintSearchShelf && (
+                      <DropdownMenuItem
+                        className="cursor-pointer font-medium"
+                        onSelect={() => openModalFromAddMenu("bulk", "scan")}
+                      >
+                        <ScanLine className="size-4 mr-2" />
+                        {t("items.bulkAdd.tabScan")}
+                      </DropdownMenuItem>
+                    )}
+                    {shelf?.type === "books" && (
+                      <DropdownMenuItem
+                        className="cursor-pointer font-medium"
+                        onSelect={() => openModalFromAddMenu("bulk", "series")}
+                      >
+                        <Layers className="size-4 mr-2" />
+                        {t("items.bulkSeries.menuLabel")}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+          </div>
+
+          {/* Search and Sort controls */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            <div className="flex-1">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSearch)}>
+                  <FormField
+                    control={form.control}
+                    name="search"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="hidden">
+                          {t("common.search")}
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative w-full flex items-center">
+                            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none z-10" />
+                            <Input
+                              type="search"
+                              autoFocus
+                              className="w-full pr-10 pl-10 bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
+                              placeholder={t("common.search")}
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                handleSearchChange(e);
+                              }}
+                            />
+                            {!isPrintSearchShelf && (
+                              <ScannerButton
+                                className="absolute right-1 rounded-xl"
+                                onScan={(barcode) => {
+                                  handleSearch({ search: barcode });
                                 }}
                               />
-                              {!isPrintSearchShelf && (
-                                <ScannerButton
-                                  className="absolute right-1 rounded-xl"
-                                  onScan={(barcode) => {
-                                    handleSearch({ search: barcode });
-                                  }}
-                                />
-                              )}
-                            </div>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </form>
-                </Form>
-              </div>
-
-              <div className="w-full sm:w-[220px] shrink-0">
-                <ItemCollectionSortSelect
-                  value={sortBy}
-                  shelfType={shelf?.type}
-                  onValueChange={(value) => {
-                    setSortBy(value);
-                    replaceCollectionParams({ sort: value });
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Items Grid */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
-              <h2 className="text-xl font-semibold">
-                {sortedItems.length || 0}{" "}
-                {sortedItems.length === 1 ? "item" : "items"}
-              </h2>
-
-              {totalValue.total > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
-                  <span>Valeur estimée :</span>
-                  <span className="font-extrabold text-sm">
-                    {totalValue.includesEstimates ? "~" : ""}
-                    {totalValue.total.toFixed(2)} €
-                  </span>
-                </div>
-              )}
-            </div>
-            <LayoutGroup id="shelf-grid">
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
-                {groupedItems.map(({ key, lead: item, copies }, index) =>
-                  isLoading || !item.id ? (
-                    <Skeleton
-                      key={`skeleton-${index}`}
-                      className="flex rounded-xl w-full"
-                      style={{
-                        aspectRatio: skeletonAspectRatio,
-                      }}
-                    />
-                  ) : (
-                    <ShelfGridItem
-                      key={key}
-                      item={item}
-                      copyCount={copies.length}
-                      index={index}
-                      shelf={shelf}
-                      resolvedShelfId={resolvedShelfId}
-                      selectionMode={selectionMode}
-                      isSelected={selectedItemIds.has(item.id)}
-                      canSelect={Boolean(
-                        isAuthenticated && !isGuest && canEdit,
-                      )}
-                      onSelect={beginSelection}
-                    />
-                  ),
-                )}
-
-                {/* Plus Add Item Card in the items grid — keep the slot while
-                  selecting so layout animations do not reflow the whole grid. */}
-                {!isLoading && isAuthenticated && !isGuest && canEdit && (
-                  <motion.button
-                    layout={!selectionMode}
-                    layoutId="add-item-btn"
-                    onClick={() => handleModalOpen("item")}
-                    tabIndex={selectionMode ? -1 : undefined}
-                    aria-hidden={selectionMode || undefined}
-                    className={cn(
-                      "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
-                      selectionMode && "invisible pointer-events-none",
+                            )}
+                          </div>
+                        </FormControl>
+                      </FormItem>
                     )}
-                    style={{ aspectRatio: skeletonAspectRatio }}
-                  >
-                    <Plus className="size-5 text-primary" />
-                    <span>{t("items.addItem")}</span>
-                  </motion.button>
-                )}
-              </div>
-            </LayoutGroup>
+                  />
+                </form>
+              </Form>
+            </div>
 
-            {/* Empty state for non-editable shelves */}
-            {sortedItems.length === 0 &&
-              !isLoading &&
-              (!isAuthenticated || isGuest || !canEdit) && (
-                <div className="flex flex-col items-center justify-center py-12 select-none">
-                  <Pizza className="size-12 text-zinc-400 dark:text-zinc-650 mb-3 animate-pulse" />
-                  <p className="text-muted-foreground text-xs">
-                    {t("items.noItems")}
-                  </p>
-                </div>
-              )}
+            <div className="w-full sm:w-[220px] shrink-0">
+              <ItemCollectionSortSelect
+                value={sortBy}
+                shelfType={shelf?.type}
+                onValueChange={(value) => {
+                  setSortBy(value);
+                  replaceCollectionParams({ sort: value });
+                }}
+              />
+            </div>
           </div>
+
+          {/* Items Grid */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
+            <h2 className="text-xl font-semibold">
+              {sortedItems.length || 0}{" "}
+              {sortedItems.length === 1 ? "item" : "items"}
+            </h2>
+
+            {totalValue.total > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
+                <span>Valeur estimée :</span>
+                <span className="font-extrabold text-sm">
+                  {totalValue.includesEstimates ? "~" : ""}
+                  {totalValue.total.toFixed(2)} €
+                </span>
+              </div>
+            )}
+          </div>
+          <LayoutGroup id="shelf-grid">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
+              {groupedItems.map(({ key, lead: item, copies }, index) =>
+                isLoading || !item.id ? (
+                  <Skeleton
+                    key={`skeleton-${index}`}
+                    className="flex rounded-xl w-full"
+                    style={{
+                      aspectRatio: skeletonAspectRatio,
+                    }}
+                  />
+                ) : (
+                  <ShelfGridItem
+                    key={key}
+                    item={item}
+                    copyCount={copies.length}
+                    index={index}
+                    shelf={shelf}
+                    resolvedShelfId={resolvedShelfId}
+                    selectionMode={selectionMode}
+                    isSelected={selectedItemIds.has(item.id)}
+                    canSelect={Boolean(isAuthenticated && !isGuest && canEdit)}
+                    onSelect={beginSelection}
+                  />
+                ),
+              )}
+
+              {/* Plus Add Item Card in the items grid — keep the slot while
+                  selecting so layout animations do not reflow the whole grid. */}
+              {!isLoading && isAuthenticated && !isGuest && canEdit && (
+                <motion.button
+                  layout={!selectionMode}
+                  layoutId="add-item-btn"
+                  onClick={() => handleModalOpen("item")}
+                  tabIndex={selectionMode ? -1 : undefined}
+                  aria-hidden={selectionMode || undefined}
+                  className={cn(
+                    "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
+                    selectionMode && "invisible pointer-events-none",
+                  )}
+                  style={{ aspectRatio: skeletonAspectRatio }}
+                >
+                  <Plus className="size-5 text-primary" />
+                  <span>{t("items.addItem")}</span>
+                </motion.button>
+              )}
+            </div>
+          </LayoutGroup>
+
+          {/* Empty state for non-editable shelves */}
+          {sortedItems.length === 0 &&
+            !isLoading &&
+            (!isAuthenticated || isGuest || !canEdit) && (
+              <div className="flex flex-col items-center justify-center py-12 select-none">
+                <Pizza className="size-12 text-zinc-400 dark:text-zinc-650 mb-3 animate-pulse" />
+                <p className="text-muted-foreground text-xs">
+                  {t("items.noItems")}
+                </p>
+              </div>
+            )}
+        </div>
       </div>
 
       {selectionMode && canEdit && (

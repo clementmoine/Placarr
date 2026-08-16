@@ -48,7 +48,9 @@ export function loadAttestedPromos(
 ): AttestedPromoRow[] {
   if (!existsSync(filePath)) return [];
   try {
-    const raw = JSON.parse(readFileSync(filePath, "utf8")) as AttestedPromosFile;
+    const raw = JSON.parse(
+      readFileSync(filePath, "utf8"),
+    ) as AttestedPromosFile;
     const rows = raw.promos ?? [];
     return rows.filter(
       (row) =>
@@ -105,7 +107,9 @@ export function mergeAttestedPromos(input: {
   const titles = [...input.titles];
   const printByKey = new Map(prints.map((p) => [p.printKey, p]));
   const titleByKey = new Map(
-    titles.filter((t) => t.lang.toLowerCase() === "fr").map((t) => [t.printKey, t]),
+    titles
+      .filter((t) => t.lang.toLowerCase() === "fr")
+      .map((t) => [t.printKey, t]),
   );
   const addedPrints: string[] = [];
   const titled: string[] = [];

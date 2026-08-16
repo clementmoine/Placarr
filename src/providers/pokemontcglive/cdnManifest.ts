@@ -18,8 +18,7 @@ import type { PokemonLiveLanguage } from "./languages";
 /** Live CDN locale tags inside manifest filenames (ptbr, not pt-BR). */
 export type ManifestLocale = PokemonLiveLanguage;
 
-export const CARD_BUNDLE_NAME_RE =
-  /^[a-z0-9.-]+_[a-z]{2,4}_\d{1,4}(_[a-z])?$/i;
+export const CARD_BUNDLE_NAME_RE = /^[a-z0-9.-]+_[a-z]{2,4}_\d{1,4}(_[a-z])?$/i;
 
 export function assetManifestUrl(
   contentBase: string,

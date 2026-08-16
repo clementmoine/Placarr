@@ -71,24 +71,16 @@ describe("playroomArtForMaterial", () => {
     const dumped = pickDumpedBundleForShader("Rainbow");
     expect(dumped?.bundleId).toBe("bw1_fr_095");
     const art = playroomArtForMaterial("Rainbow");
-    expect(art?.imageUrl).toBe(
-      "/assets/pokemon/cards/bw1/fr/095/art.webp",
-    );
-    expect(art?.maskUrl).toBe(
-      "/assets/pokemon/cards/bw1/fr/095/mask-ph.webp",
-    );
+    expect(art?.imageUrl).toBe("/assets/pokemon/cards/bw1/fr/095/art.webp");
+    expect(art?.maskUrl).toBe("/assets/pokemon/cards/bw1/fr/095/mask-ph.webp");
   });
 
   it("SunPillar → Charkos-ex (me5_fr_045) owned Live face preferred", () => {
     const dumped = pickDumpedBundleForShader("SunPillar");
     expect(dumped?.bundleId).toBe("me5_fr_045");
     const art = playroomArtForMaterial("SunPillar");
-    expect(art?.imageUrl).toBe(
-      "/assets/pokemon/cards/me5/fr/045/art.webp",
-    );
-    expect(art?.maskUrl).toBe(
-      "/assets/pokemon/cards/me5/fr/045/mask.webp",
-    );
+    expect(art?.imageUrl).toBe("/assets/pokemon/cards/me5/fr/045/art.webp");
+    expect(art?.maskUrl).toBe("/assets/pokemon/cards/me5/fr/045/mask.webp");
     expect(art?.label).toMatch(/Charkos-ex/);
     expect(art?.label).toMatch(/Nuit Noire/);
     expect(art?.foilMask).toBe("CastAndCure");
@@ -104,12 +96,8 @@ describe("playroomArtForMaterial", () => {
     expect(dumped?.bundleId).toBe("sm1_fr_009");
     expect(dumped?.variant).toBe("ph");
     const art = playroomArtForMaterial("SunBeam");
-    expect(art?.imageUrl).toBe(
-      "/assets/pokemon/cards/sm1/fr/009/art.webp",
-    );
-    expect(art?.maskUrl).toBe(
-      "/assets/pokemon/cards/sm1/fr/009/mask-ph.webp",
-    );
+    expect(art?.imageUrl).toBe("/assets/pokemon/cards/sm1/fr/009/art.webp");
+    expect(art?.maskUrl).toBe("/assets/pokemon/cards/sm1/fr/009/mask-ph.webp");
     expect(art?.label).toMatch(/sm1_fr_009 · Soleil & Lune n°9/);
     expect(art?.bundleId).toBe("sm1_fr_009");
     expect(art?.liveOwned).toBe(true);

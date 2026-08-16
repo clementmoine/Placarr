@@ -10,7 +10,12 @@ vi.mock("@/core/catalog/registry", () => ({
   },
 }));
 
-import { searchPrintCandidates, resolveUniquePrintCandidate, supportsPrintSearch, collectorQueryFromItemSlug } from "./printSearch";
+import {
+  searchPrintCandidates,
+  resolveUniquePrintCandidate,
+  supportsPrintSearch,
+  collectorQueryFromItemSlug,
+} from "./printSearch";
 
 function candidate(overrides: Partial<PrintCandidate> = {}): PrintCandidate {
   return {
@@ -283,7 +288,9 @@ describe("collectorQueryFromItemSlug", () => {
   });
 
   it("ignores ordinary title slugs", () => {
-    expect(collectorQueryFromItemSlug("ariel-chanteuse-exceptionnelle")).toBeNull();
+    expect(
+      collectorQueryFromItemSlug("ariel-chanteuse-exceptionnelle"),
+    ).toBeNull();
     expect(collectorQueryFromItemSlug("tfc")).toBeNull();
   });
 });

@@ -208,10 +208,7 @@ export function OrientedMediaFrame({
   } | null>(null);
 
   useLayoutEffect(() => {
-    if (fit !== "contain" || !ratio) {
-      setContainPx(null);
-      return;
-    }
+    if (fit !== "contain" || !ratio) return;
     const host = hostRef.current;
     if (!host) return;
 
@@ -225,17 +222,18 @@ export function OrientedMediaFrame({
     const ro = new ResizeObserver(update);
     ro.observe(host);
     return () => ro.disconnect();
-  }, [fit, oriented, ratio?.w, ratio?.h]);
+  }, [fit, oriented, ratio]);
+  const containBox = fit === "contain" && ratio ? containPx : null;
 
   const sizeStyle: CSSProperties = (() => {
     if (fit === "contain" && ratio) {
-      if (!containPx || containPx.width <= 0 || containPx.height <= 0) {
+      if (!containBox || containBox.width <= 0 || containBox.height <= 0) {
         return { width: 0, height: 0, aspectRatio: oriented };
       }
       return {
         aspectRatio: oriented,
-        width: containPx.width,
-        height: containPx.height,
+        width: containBox.width,
+        height: containBox.height,
       };
     }
     return {

@@ -492,12 +492,9 @@ export function getAttachmentGalleryLabels(
 } {
   const kindKey = resolveAttachmentDisplayKind(input);
   const language = formatAttachmentLanguageLabel(input.role, locale);
-  const regionKey = language
-    ? null
-    : resolveAttachmentDisplayRegion(input);
+  const regionKey = language ? null : resolveAttachmentDisplayRegion(input);
   const kind = formatAttachmentKindLabel(kindKey, locale);
-  const region =
-    language ?? formatAttachmentRegionLabel(regionKey, locale);
+  const region = language ?? formatAttachmentRegionLabel(regionKey, locale);
   const sourceNames = formatAttachmentSourceNames(input);
   const provider = sourceNames[0] ?? null;
   const styleLabel =

@@ -19,11 +19,7 @@
 import { decode } from "html-entities";
 
 import { dbscardsSlugToPrintRef } from "./list";
-import {
-  parseDbscardsTiles,
-  parseTilePrice,
-  type DbscardsTile,
-} from "./tile";
+import { parseDbscardsTiles, parseTilePrice, type DbscardsTile } from "./tile";
 
 /** A label and the values under it, with whatever they linked to. */
 export type DbscardsField = {
@@ -200,7 +196,8 @@ const DESCRIPTION_REGION =
 const DESCRIPTION_TITLE =
   /<span[^>]*class="[^"]*description-title[^"]*"[^>]*>([\s\S]*?)<\/span>/i;
 const DESCRIPTION_BODY = /<div\s+lang="([a-z]{2})"[^>]*>([\s\S]*?)<\/div>/gi;
-const SKILL_CHIP = /<span[^>]*class="[^"]*\bskill\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi;
+const SKILL_CHIP =
+  /<span[^>]*class="[^"]*\bskill\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi;
 
 /**
  * The rules text, split by side.
@@ -242,7 +239,8 @@ function parseDescriptions(html: string): DbscardsDescription[] {
 
 const TAGS_SECTION = /Tags\s+associés[\s\S]*?(?=<h2|<\/body>|$)/i;
 const TAG_GROUP = /<h3[^>]*>([\s\S]*?)<\/h3>([\s\S]*?)(?=<h3|$)/gi;
-const TAG_ITEM = /<(?:a|span|li)[^>]*class="[^"]*\btag\b[^"]*"[^>]*>([\s\S]*?)<\/(?:a|span|li)>/gi;
+const TAG_ITEM =
+  /<(?:a|span|li)[^>]*class="[^"]*\btag\b[^"]*"[^>]*>([\s\S]*?)<\/(?:a|span|li)>/gi;
 
 function parseTags(html: string): Array<{ group: string; labels: string[] }> {
   const section = TAGS_SECTION.exec(html);
@@ -290,17 +288,23 @@ function parsePriceHistory(html: string): DbscardsPriceHistory | null {
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 function str(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function parseOffer(product: Record<string, unknown> | null): DbscardsOffer | null {
+function parseOffer(
+  product: Record<string, unknown> | null,
+): DbscardsOffer | null {
   const offer = asRecord(product?.offers);
   if (!offer) return null;
-  const priceText = str(offer.price) ?? (typeof offer.price === "number" ? String(offer.price) : null);
+  const priceText =
+    str(offer.price) ??
+    (typeof offer.price === "number" ? String(offer.price) : null);
   const parsed = parseTilePrice(priceText);
   return {
     price: parsed?.value ?? null,
@@ -385,9 +389,8 @@ export function parseDbscardsCardPage(
 ): DbscardsCardPage {
   const blocks = jsonLdBlocks(html);
   const product =
-    blocks
-      .map(asRecord)
-      .find((block) => block?.["@type"] === "Product") ?? null;
+    blocks.map(asRecord).find((block) => block?.["@type"] === "Product") ??
+    null;
 
   return {
     slug: meta.slug,

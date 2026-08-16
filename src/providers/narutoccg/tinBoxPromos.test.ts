@@ -4,7 +4,11 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { mapSiteMedThumbsOntoAssets, collectorNumbersWithThumb, installedTinStagingPaths } from "./scrapeCards";
+import {
+  mapSiteMedThumbsOntoAssets,
+  collectorNumbersWithThumb,
+  installedTinStagingPaths,
+} from "./scrapeCards";
 import { materializeTinBoxPromos } from "./tinBoxPromos";
 import type { NarutoAssetRow, NarutoPrintRow } from "./indexStore";
 
@@ -189,9 +193,9 @@ describe("materializeTinBoxPromos", () => {
 
     const { installed } = materializeTinBoxPromos(root);
     expect(installed).toEqual(["pr011", "pr016"]);
-    expect(
-      fs.existsSync(path.join(root, "cards/promo/fr/pr011/art.jpg")),
-    ).toBe(true);
+    expect(fs.existsSync(path.join(root, "cards/promo/fr/pr011/art.jpg"))).toBe(
+      true,
+    );
     expect(fs.existsSync(path.join(staging, artRel))).toBe(false);
     expect(fs.existsSync(path.join(staging, thumbRel))).toBe(false);
     // Unused alias stays for inspection.

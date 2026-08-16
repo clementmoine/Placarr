@@ -43,10 +43,7 @@ export type DbsFwPrintDetail = {
  */
 function localFwFileUrl(
   row: DbsFwPrintDetail,
-  resolve: (
-    print: DbsFwPrintDetail,
-    lang: string,
-  ) => string | null,
+  resolve: (print: DbsFwPrintDetail, lang: string) => string | null,
 ): string | null {
   const lang = (row.lang || "en").toLowerCase();
   const file = resolve(row, lang);

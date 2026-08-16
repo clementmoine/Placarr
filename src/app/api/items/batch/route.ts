@@ -173,8 +173,11 @@ async function createItemsInChunks(
 
   for (let offset = 0; offset < rows.length; offset += CREATE_CHUNK_SIZE) {
     const chunk = rows.slice(offset, offset + CREATE_CHUNK_SIZE);
-    const planned: Array<{ name: string; slug: string; printKey: string | null }> =
-      [];
+    const planned: Array<{
+      name: string;
+      slug: string;
+      printKey: string | null;
+    }> = [];
     for (const row of chunk) {
       const slug = await allocateUniqueItemSlug(data.shelfId, row.name, {
         reserved: reservedSlugs,
@@ -211,7 +214,9 @@ async function createItemsInChunks(
 async function resolveBatchCreateRows(
   names: string[],
   shelfType: Type,
-): Promise<Array<{ name: string; printKey: string | null; lookupQuery: string }>> {
+): Promise<
+  Array<{ name: string; printKey: string | null; lookupQuery: string }>
+> {
   if (!supportsPrintSearch(shelfType)) {
     return names.map((name) => ({
       name,

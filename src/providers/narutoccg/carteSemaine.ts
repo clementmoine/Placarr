@@ -2,13 +2,23 @@
  * Parse carddass.fr « archiveN_carte_semaine_*.html » (staging) into structured
  * card-number / name / date rows. Strategy spotlights — not tournament promos.
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+} from "node:fs";
 import path from "node:path";
 
 import { buildPrintKey } from "@/core/identify/printKey";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { NARUTO_PACK_ID, type NarutoPrintRow, type NarutoTitleRow } from "./indexStore";
+import {
+  NARUTO_PACK_ID,
+  type NarutoPrintRow,
+  type NarutoTitleRow,
+} from "./indexStore";
 import { cardTypeFromCollectorNumber } from "./parseBandaicgAsset";
 
 export type CarteSemaineFeature = {
@@ -91,8 +101,7 @@ function cleanName(name: string): string {
   return n;
 }
 
-const FOCUS_STOP =
-  String.raw`Cette|Voici|Son|Si|Une|Le|La|Les|Ce|Elle|Il|Avec|Ne|Pour|Grace|Grâce|De|Du|Des|En|Au|Aux|Sur|Par|Mais|Ou|Et|Car|Donc`;
+const FOCUS_STOP = String.raw`Cette|Voici|Son|Si|Une|Le|La|Les|Ce|Elle|Il|Avec|Ne|Pour|Grace|Grâce|De|Du|Des|En|Au|Aux|Sur|Par|Mais|Ou|Et|Car|Donc`;
 
 /** Push a focus card once (first win keeps the richer dated form). */
 function pushFeature(
@@ -106,8 +115,15 @@ function pushFeature(
   featured.push(entry);
 }
 
-function snippetAfter(plain: string, index: number, len = 220): string | undefined {
-  const snip = plain.slice(index, index + len + 40).replace(/\s+/g, " ").trim();
+function snippetAfter(
+  plain: string,
+  index: number,
+  len = 220,
+): string | undefined {
+  const snip = plain
+    .slice(index, index + len + 40)
+    .replace(/\s+/g, " ")
+    .trim();
   if (!snip) return undefined;
   return snip.length > len ? `${snip.slice(0, len - 1)}…` : snip;
 }

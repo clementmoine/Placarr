@@ -75,9 +75,8 @@ export function isFoilPackStale(pack: CatalogueExtractTarget): boolean {
 export async function maybeEnqueueFoilCatalogSync(
   pack: CatalogueExtractTarget,
 ): Promise<boolean> {
-  const { maybeEnqueueFoilCatalogSync: enqueue } = await import(
-    "./catalogueAutoSync"
-  );
+  const { maybeEnqueueFoilCatalogSync: enqueue } =
+    await import("./catalogueAutoSync");
   return enqueue(pack);
 }
 

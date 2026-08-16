@@ -23,8 +23,7 @@ export type NoIntroDatSyncOptions = {
 };
 
 export type NoIntroDatPackSource =
-  | { kind: "local"; path: string }
-  | { kind: "url"; url: string };
+  { kind: "local"; path: string } | { kind: "url"; url: string };
 
 export type NoIntroDatSyncResult = {
   destDir: string;
@@ -85,11 +84,13 @@ export function isNoIntroDatSourceConfigured(
   options?: NoIntroDatSyncOptions,
 ): boolean {
   if (process.env.NOINTRO_DAT_PATH?.trim()) return true;
-  return resolveNoIntroDatPackSource({
-    ...options,
-    // Catalogue refresh passes allowDownload; status should match that path.
-    allowDownload: options?.allowDownload ?? true,
-  }) != null;
+  return (
+    resolveNoIntroDatPackSource({
+      ...options,
+      // Catalogue refresh passes allowDownload; status should match that path.
+      allowDownload: options?.allowDownload ?? true,
+    }) != null
+  );
 }
 
 async function fileExists(filePath: string): Promise<boolean> {

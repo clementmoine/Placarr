@@ -25,7 +25,13 @@ const SHARED_DIR = path.join(
   "foil",
   "textures",
 );
-const SHADERS_DIR = path.join(process.cwd(), "data", "pokemon", "foil", "shaders");
+const SHADERS_DIR = path.join(
+  process.cwd(),
+  "data",
+  "pokemon",
+  "foil",
+  "shaders",
+);
 const SHEETS_PATH = path.join(
   process.cwd(),
   "src",
@@ -59,23 +65,29 @@ describe("pokemon foil layer audit", () => {
         existsSync(path.join(SHADERS_DIR, `${fragStem}.frag`)),
         `missing frag ${fragStem} for ${name}`,
       ).toBe(true);
-      expect(sheets[name] ?? sheets[fragStem], `missing sheet ${name}`).toBeTruthy();
+      expect(
+        sheets[name] ?? sheets[fragStem],
+        `missing sheet ${name}`,
+      ).toBeTruthy();
       expect(paperMaterial(name)).toBeTruthy();
     }
   });
 
-  it.skipIf(!hasDump)("SHARED motifs exist on disk for every declared slot", () => {
-    for (const name of POKEMON_MATERIAL_NAMES) {
-      for (const [slot, stem] of Object.entries(sharedMotifStems(name))) {
-        const webp = path.join(SHARED_DIR, foilTextureFile(stem));
-        const png = path.join(SHARED_DIR, `${stem}.png`);
-        expect(
-          existsSync(webp) || existsSync(png),
-          `${name}.${slot} → ${stem}`,
-        ).toBe(true);
+  it.skipIf(!hasDump)(
+    "SHARED motifs exist on disk for every declared slot",
+    () => {
+      for (const name of POKEMON_MATERIAL_NAMES) {
+        for (const [slot, stem] of Object.entries(sharedMotifStems(name))) {
+          const webp = path.join(SHARED_DIR, foilTextureFile(stem));
+          const png = path.join(SHARED_DIR, `${stem}.png`);
+          expect(
+            existsSync(webp) || existsSync(png),
+            `${name}.${slot} → ${stem}`,
+          ).toBe(true);
+        }
       }
-    }
-  });
+    },
+  );
 
   it.skipIf(!hasDump)("SunPillar / FlatSilver_CC CC layers wired", () => {
     const sun = paperMaterial("SunPillar")!;

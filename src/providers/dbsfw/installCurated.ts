@@ -2,12 +2,7 @@
  * Install curated sleeve back + generated full-face foil plate into `data/dbs/fw/`.
  * Same dbscards Masters verso as a placeholder — physical FW back is unverified.
  */
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  statSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 

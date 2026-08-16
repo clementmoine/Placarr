@@ -42,14 +42,18 @@ describe("the captioned tables", () => {
       Ère and Puissance per side, a Battle card has energy and combo costs, and
       a type we have never seen still lands whole instead of being dropped.
     */
-    const general = fr.tables.find((t) => t.caption === "Informations générales");
+    const general = fr.tables.find(
+      (t) => t.caption === "Informations générales",
+    );
     const field = (caption: string, label: string) =>
       fr.tables
         .find((t) => t.caption === caption)
         ?.fields.find((f) => f.label === label)?.values;
 
     expect(general).toBeDefined();
-    expect(field("Informations générales", "Date Sortie")).toEqual(["03/07/2026"]);
+    expect(field("Informations générales", "Date Sortie")).toEqual([
+      "03/07/2026",
+    ]);
     expect(field("Informations générales", "Rareté")).toEqual(["Uncommon"]);
     expect(field("Face Avant", "Puissance")).toEqual(["10000"]);
     expect(field("Face Arrière", "Puissance")).toEqual(["15000"]);

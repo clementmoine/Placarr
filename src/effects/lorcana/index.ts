@@ -6,7 +6,6 @@ import {
   lorcanaMaterial,
   lorcanaMaterialForPrint,
   listLorcanaMaterialNames,
-  LORCANA_MATERIAL_NAMES,
 } from "./manifest";
 import {
   parseMaterialName,

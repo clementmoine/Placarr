@@ -185,7 +185,10 @@ describe("No-Intro indexStore", () => {
     );
     const nested = path.join(dir, "pack", "systems");
     await fs.mkdir(nested, { recursive: true });
-    await fs.writeFile(path.join(nested, "Nintendo - Game Boy.dat"), FIXTURE_DAT);
+    await fs.writeFile(
+      path.join(nested, "Nintendo - Game Boy.dat"),
+      FIXTURE_DAT,
+    );
     const zipPath = path.join(dir, "nointro-pack.zip");
     await new Promise<void>((resolve, reject) => {
       const zip = spawn("zip", ["-r", zipPath, "pack"], {

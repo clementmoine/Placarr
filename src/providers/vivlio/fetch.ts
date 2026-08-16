@@ -287,8 +287,7 @@ export function parseVivlioProductPage(
     workExample?.potentialAction &&
     typeof workExample.potentialAction === "object"
       ? ((workExample.potentialAction as JsonLd).expectsAcceptanceOf as
-          | JsonLd
-          | undefined)
+          JsonLd | undefined)
       : null;
   const priceCents = parseEuroCents(
     offers?.price ??

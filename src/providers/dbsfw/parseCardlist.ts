@@ -126,9 +126,7 @@ function parseCardItem(
   html: string,
   setName: string | null,
 ): DbsFwParsedCard | null {
-  const detail = html.match(
-    /data-src="detail\.php\?([^"]+)"/i,
-  );
+  const detail = html.match(/data-src="detail\.php\?([^"]+)"/i);
   if (!detail) return null;
   const params = new URLSearchParams(detail[1]!.replace(/&amp;/g, "&"));
   const cardNo = params.get("card_no")?.trim();

@@ -42,9 +42,9 @@ describe("scrapeInventory", () => {
     expect(fr002.sources).toContain("apk");
     expect(inv.report.malieUnavailable).toBeGreaterThanOrEqual(1);
     expect(fs.existsSync(inv.report.malieUnavailablePath)).toBe(true);
-    expect(
-      fs.readFileSync(inv.report.malieUnavailablePath, "utf8"),
-    ).toContain("sv1_fr_002");
+    expect(fs.readFileSync(inv.report.malieUnavailablePath, "utf8")).toContain(
+      "sv1_fr_002",
+    );
   });
 
   it("merges_cdn_results_into_availability_log", () => {

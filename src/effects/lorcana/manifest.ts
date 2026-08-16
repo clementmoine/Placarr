@@ -82,8 +82,7 @@ const ACTIVE_SECOND_TOP_LAYER_FRAGMENTS = new Set([
 const SECOND_VARNISH_DISTORTION_TEX =
   "_CalculateVarnishLayers_b94d50f356ab4aa9980ffc008846a1cd_DistortionTex_3454849507_Texture2D";
 
-const VARNISH_DISTORTION_TEX_RE =
-  /^_CalculateVarnishLayers_.*_DistortionTex_/;
+const VARNISH_DISTORTION_TEX_RE = /^_CalculateVarnishLayers_.*_DistortionTex_/;
 
 /**
  * The HotFoil sibling that enables the second stamp, or `null` when this
@@ -154,11 +153,9 @@ export function lorcanaMaterialForPrint(
     textures: texturesForSecondTopLayer(base.textures),
     colors: {
       ...base.colors,
-      _SecondHotFoilColor:
-        base.colors._SecondHotFoilColor ??
+      _SecondHotFoilColor: base.colors._SecondHotFoilColor ??
         base.colors._HotFoilColor ??
-        base.colors._VarnishLightColor ??
-        [1, 1, 1, 1],
+        base.colors._VarnishLightColor ?? [1, 1, 1, 1],
     },
   };
 }

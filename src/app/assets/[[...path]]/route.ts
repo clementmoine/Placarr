@@ -2,10 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth/config";
-import {
-  resolveAssetsDiskRoot,
-  splitAssetsPackPath,
-} from "@/lib/packPaths";
+import { resolveAssetsDiskRoot, splitAssetsPackPath } from "@/lib/packPaths";
 import {
   resolveUnderRoot,
   streamFileResponse,

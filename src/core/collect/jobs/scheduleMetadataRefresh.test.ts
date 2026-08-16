@@ -123,9 +123,8 @@ describe("scheduleBatchItemMetadataRefresh", () => {
   });
 
   it("always stamps a new generation even when a refresh flag is already set", async () => {
-    const { scheduleBatchItemMetadataRefresh } = await import(
-      "./scheduleMetadataRefresh"
-    );
+    const { scheduleBatchItemMetadataRefresh } =
+      await import("./scheduleMetadataRefresh");
     scheduleBatchItemMetadataRefresh(
       [
         { itemId: "item-a", lookupQuery: "A" },

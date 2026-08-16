@@ -159,7 +159,9 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
   );
 }
 
-const entry = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : "";
+const entry = process.argv[1]
+  ? pathToFileURL(path.resolve(process.argv[1])).href
+  : "";
 if (import.meta.url === entry) {
   main().then((code) => process.exit(code));
 }

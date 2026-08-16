@@ -66,9 +66,8 @@ describe("packPaths", () => {
   });
 
   it("serves the render kit, which clients address without a foil segment", async () => {
-    const { splitAssetsPackPath, resolveAssetsDiskRoot } = await import(
-      "./packPaths"
-    );
+    const { splitAssetsPackPath, resolveAssetsDiskRoot } =
+      await import("./packPaths");
     // `/assets/lorcana/web/calc.jpg` and `/assets/pokemon/shaders/x.frag` are
     // what holoShaders / cssRecipes build. Accepting only `cards` and `foil`
     // here 404'd every shader and web texture of every pack.
@@ -95,9 +94,8 @@ describe("packPaths", () => {
   });
 
   it("resolves pack back.webp or back.png", async () => {
-    const { assetsPackBackUrl, resolvePackBackPath } = await import(
-      "./packPaths"
-    );
+    const { assetsPackBackUrl, resolvePackBackPath } =
+      await import("./packPaths");
     // Naruto CCG ships curated back.webp under data/naruto/ccg/cards/.
     const naruto = resolvePackBackPath("naruto/ccg");
     if (naruto) {
@@ -111,9 +109,8 @@ describe("packPaths", () => {
   });
 
   it("resolves optional set-level back under cards/{set}/", async () => {
-    const { resolveSetBackPath, assetsSetBackUrl } = await import(
-      "./packPaths"
-    );
+    const { resolveSetBackPath, assetsSetBackUrl } =
+      await import("./packPaths");
     // No set verso is required; helpers must reject path traversal and stay null.
     expect(resolveSetBackPath("naruto/ccg", "../etc")).toBeNull();
     expect(resolveSetBackPath("naruto/ccg", "s1/../s2")).toBeNull();
@@ -128,9 +125,8 @@ describe("packPaths", () => {
  */
 describe("loose file at the pack foil root", () => {
   it("serves a pack-root file, flat pack and nested alike", async () => {
-    const { splitAssetsPackPath, resolveAssetsDiskRoot } = await import(
-      "./packPaths"
-    );
+    const { splitAssetsPackPath, resolveAssetsDiskRoot } =
+      await import("./packPaths");
     expect(splitAssetsPackPath(["pokemon", "full_foil_mask.webp"])).toEqual({
       pack: "pokemon",
       rest: ["full_foil_mask.webp"],

@@ -199,7 +199,7 @@ export function preferRequestedDisplayTitle(
 function metadataHasCover(metadata: MetadataResult): boolean {
   return Boolean(
     metadata.imageUrl ||
-      metadata.attachments?.some((attachment) => attachment.type === "cover"),
+    metadata.attachments?.some((attachment) => attachment.type === "cover"),
   );
 }
 

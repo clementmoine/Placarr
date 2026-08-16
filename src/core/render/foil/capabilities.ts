@@ -77,8 +77,7 @@ export function astcFormatConstant(
   formatName: string,
 ): number | null {
   const ext = gl.getExtension("WEBGL_compressed_texture_astc") as
-    | (Record<string, number> & { COMPRESSED_RGBA_ASTC_4x4_KHR?: number })
-    | null;
+    (Record<string, number> & { COMPRESSED_RGBA_ASTC_4x4_KHR?: number }) | null;
   if (!ext) return null;
 
   const value = ext[formatName];

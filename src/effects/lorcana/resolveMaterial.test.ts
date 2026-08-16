@@ -12,10 +12,7 @@ describe("resolveMaterialName", () => {
     ["Lore", "MetallicHotFoil", "CardLoreMetallicHotFoil"],
     ["FreeForm2", "RainbowHotFoil", "CardFreeForm2RainbowHotFoil"],
     ["None", null, null],
-  ] as const)(
-    "finish=%s varnish=%s → %s",
-    (finish, varnish, expected) => {
-      expect(resolveMaterialName(finish, varnish)).toBe(expected);
-    },
-  );
+  ] as const)("finish=%s varnish=%s → %s", (finish, varnish, expected) => {
+    expect(resolveMaterialName(finish, varnish)).toBe(expected);
+  });
 });

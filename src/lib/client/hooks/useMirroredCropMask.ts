@@ -16,9 +16,9 @@ export function maskNeedsMirroring(
 ): boolean {
   return Boolean(
     artworkUrl &&
-      maskUrl &&
-      artworkUrl.startsWith("/uploads/") &&
-      isEditDerivativeUrl(artworkUrl),
+    maskUrl &&
+    artworkUrl.startsWith("/uploads/") &&
+    isEditDerivativeUrl(artworkUrl),
   );
 }
 

@@ -228,9 +228,7 @@ export async function syncMetadataDisplayFactsFromFieldEvidence(input: {
 
   const merged = purgeContradictedProviderExternalLinks(
     dropSupersededMiscTagFacts(
-      dedupeFacts(
-        dedupeProviderExternalLinkFacts([...byKey.values()]),
-      ) ?? [],
+      dedupeFacts(dedupeProviderExternalLinkFacts([...byKey.values()])) ?? [],
     ),
     input.itemBarcode,
     input.itemTitle,

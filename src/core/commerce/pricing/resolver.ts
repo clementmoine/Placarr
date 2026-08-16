@@ -177,7 +177,10 @@ export async function getCachedBarcodePrices(
       priceUsedCIB: summary.priceUsedCIB,
       priceLastUpdated:
         usableBarcodeCache?.priceLastUpdated ?? offers[0]?.observedAt ?? null,
-      priceSources: priceSourcesFromOffers(offers, usableBarcodeCache?.provider),
+      priceSources: priceSourcesFromOffers(
+        offers,
+        usableBarcodeCache?.provider,
+      ),
       priceObservations: serializePriceOffers(offers),
     }),
     sourceOffers,
@@ -603,10 +606,7 @@ export async function refreshBarcodePrices(
     externalIds,
     providerProductUrls,
     regionHints: rawNamesList,
-    printKey:
-      printKey?.trim() ||
-      externalIds?.printKey?.trim() ||
-      null,
+    printKey: printKey?.trim() || externalIds?.printKey?.trim() || null,
   });
   const priceOffers = await collectRefreshBarcodePriceOffers(
     toBarcodePriceRefreshContext(match, {
@@ -670,10 +670,7 @@ export async function refreshItemPrices(
     releaseDate,
     externalIds,
     providerProductUrls,
-    printKey:
-      printKey?.trim() ||
-      externalIds?.printKey?.trim() ||
-      null,
+    printKey: printKey?.trim() || externalIds?.printKey?.trim() || null,
   });
   const priceOffers = await collectRefreshBarcodePriceOffers(
     toBarcodePriceRefreshContext(match, {

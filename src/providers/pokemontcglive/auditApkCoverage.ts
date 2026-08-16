@@ -53,7 +53,10 @@ function loadCatalogueFile(filePath: string): Set<string> {
   return out;
 }
 
-function loadScrapedSetnums(cardsPath: string, bundlesDir: string): Set<string> {
+function loadScrapedSetnums(
+  cardsPath: string,
+  bundlesDir: string,
+): Set<string> {
   const scraped = new Set<string>();
   if (fs.existsSync(cardsPath)) {
     const cards = JSON.parse(fs.readFileSync(cardsPath, "utf8")) as Record<
@@ -77,7 +80,7 @@ function loadScrapedSetnums(cardsPath: string, bundlesDir: string): Set<string> 
       const parts = name.split("_");
       if (parts.length < 3) continue;
       const setId = parts[0]!;
-      let num = parts[2]!.split(".")[0]!;
+      const num = parts[2]!.split(".")[0]!;
       if (/^\d+$/.test(num)) {
         scraped.add(
           `${setId.toLowerCase()}_${Number.parseInt(num, 10).toString().padStart(3, "0")}`,
@@ -111,8 +114,14 @@ export function runAuditApkCoverage(opts: AuditApkOptions = {}): number {
     ...defaultAuditPaths(opts.paths?.root ?? repoRoot()),
     ...opts.paths,
   };
-  const { root, configCache, cataloguePath, cardsPath, bundlesDir, reportPath } =
-    paths;
+  const {
+    root,
+    configCache,
+    cataloguePath,
+    cardsPath,
+    bundlesDir,
+    reportPath,
+  } = paths;
 
   if (!fs.existsSync(configCache) || !fs.statSync(configCache).isDirectory()) {
     console.error(`Missing config-cache: ${configCache}`);
@@ -219,7 +228,8 @@ export function runAuditApkCoverage(opts: AuditApkOptions = {}): number {
   );
   if (missingFromCatalogue.length) {
     console.log("  Catalogue MISSING (APK not listed):");
-    for (const row of missingFromCatalogue.slice(0, 25)) console.log(`    ${row}`);
+    for (const row of missingFromCatalogue.slice(0, 25))
+      console.log(`    ${row}`);
     if (missingFromCatalogue.length > 25) {
       console.log(`    … +${missingFromCatalogue.length - 25} more`);
     }

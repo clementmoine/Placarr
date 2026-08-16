@@ -179,7 +179,9 @@ export function createCardFaceChoice<S extends string>(config: {
         continue;
       }
       if (score === best.score) {
-        if (priorityOf(face.source, lang) < priorityOf(best.face.source, lang)) {
+        if (
+          priorityOf(face.source, lang) < priorityOf(best.face.source, lang)
+        ) {
           best = { face, score };
         }
       }

@@ -69,7 +69,9 @@ describe("foil cache", () => {
     expect(rewritten).toMatch(/^\/_next\/image\?.*url=/);
     // Next.js rejects any q outside images.qualities (default [75]).
     expect(rewritten).toMatch(/[?&]q=75(?:&|$)/);
-    expect(foilTextureRequestUrl("/assets/local.png")).toBe("/assets/local.png");
+    expect(foilTextureRequestUrl("/assets/local.png")).toBe(
+      "/assets/local.png",
+    );
   });
 
   it("fetches an array buffer once per URL", async () => {

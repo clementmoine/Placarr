@@ -39,27 +39,23 @@ import {
   filterMalieStemsByLangs,
   loadMalieBundleStems,
 } from "@/providers/pokemontcglive/malie";
-import {
-  POKEMON_LIVE_SCRAPE_DEFAULT_LANGUAGES,
-} from "@/providers/pokemontcglive/languages";
+import { POKEMON_LIVE_SCRAPE_DEFAULT_LANGUAGES } from "@/providers/pokemontcglive/languages";
 import {
   buildScrapeInventory,
   mergeCdnResultsIntoInventory,
   mergeLiveIdentities,
 } from "@/providers/pokemontcglive/scrapeInventory";
-import {
-  loadCdnCatalogue,
-  planScrapeNames,
-  releaseScrapeLock,
-  tryAcquireScrapeLock,
-} from "@/providers/pokemontcglive/scrapePlan";
+import { loadCdnCatalogue } from "@/providers/pokemontcglive/scrapePlan";
 import { main as auditApkMain } from "./auditApkCoverage";
 import {
   collectIdentitiesFromConfigCache,
   writeLiveCardsSqlite,
   writeLiveFoilMasksJson,
 } from "@/providers/pokemontcglive/cardDatabase";
-import { resolveCdnTarget, writeSourcesReport } from "@/providers/pokemontcglive/sources";
+import {
+  resolveCdnTarget,
+  writeSourcesReport,
+} from "@/providers/pokemontcglive/sources";
 import type { BundleResult } from "@/providers/pokemontcglive/cdn";
 
 function packPython(repo: string): string {
@@ -274,16 +270,12 @@ export async function runUpdate(
     `CDN target ver=${target.version} dir=${target.content_dir}` +
       (target.content_base ? ` base=${target.content_base}` : "") +
       ` (ver:${target.versionSource}, dir:${target.dirSource}` +
-      (target.contentBaseSource
-        ? `, base:${target.contentBaseSource}`
-        : "") +
+      (target.contentBaseSource ? `, base:${target.contentBaseSource}` : "") +
       `)`,
   );
 
   let malieReport: Record<string, unknown> | null = null;
-  let malieIdentities: ReturnType<
-    typeof collectIdentitiesFromConfigCache
-  > = [];
+  let malieIdentities: ReturnType<typeof collectIdentitiesFromConfigCache> = [];
   // Malie catalogue (skip unchanged DBs) — merge into APK inventory below.
   if (opts.bootstrapMalie !== false) {
     console.log("── Malie bootstrap (catalogue stems; skip unchanged)");
@@ -343,9 +335,7 @@ export async function runUpdate(
   );
   const apkStems = [
     ...new Set(
-      apkIdentities
-        .map((r) => r.bundle_stem)
-        .filter((s) => Boolean(s?.trim())),
+      apkIdentities.map((r) => r.bundle_stem).filter((s) => Boolean(s?.trim())),
     ),
   ];
   console.log("── scrape inventory (APK/config ∪ Malie)");
@@ -506,7 +496,11 @@ export async function runUpdate(
   let storeAuditRc: number | null = null;
   if (!opts.skipStoreAudit) {
     console.log("── audit store coverage");
-    const storeCmd = ["exec", "tsx", "src/providers/pokemontcglive/audit_store.ts"];
+    const storeCmd = [
+      "exec",
+      "tsx",
+      "src/providers/pokemontcglive/audit_store.ts",
+    ];
     if (opts.strictStoreAudit) storeCmd.push("--", "--strict");
     storeAuditRc =
       spawnSync("pnpm", storeCmd, { cwd: repo, stdio: "inherit" }).status ?? 1;
@@ -585,7 +579,9 @@ export async function runUpdate(
   return summary;
 }
 
-function parseArgs(argv: string[]): UpdateOpts & { repo: string; noJob: boolean } {
+function parseArgs(
+  argv: string[],
+): UpdateOpts & { repo: string; noJob: boolean } {
   const out: UpdateOpts & { repo: string; noJob: boolean } = {
     repo: process.cwd(),
     langs: [...POKEMON_LIVE_SCRAPE_DEFAULT_LANGUAGES],
@@ -611,7 +607,9 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string; noJob: boolean 
     const a = argv[i]!;
     if (a === "--repo") out.repo = path.resolve(argv[++i]!);
     else if (a === "--langs") {
-      out.langs = argv[++i]!.split(",").map((x) => x.trim()).filter(Boolean);
+      out.langs = argv[++i]!.split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
     } else if (a === "--skip-scrape") out.skipScrape = true;
     else if (a === "--scrape-limit") out.scrapeLimit = Number(argv[++i]);
     else if (a === "--extract-limit") out.extractLimit = Number(argv[++i]);
@@ -622,13 +620,11 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string; noJob: boolean 
     else if (a === "--refresh-manifests") {
       out.fromManifest = true;
       out.refreshManifests = true;
-    }
-    else if (a === "--bootstrap-malie") out.bootstrapMalie = true;
+    } else if (a === "--bootstrap-malie") out.bootstrapMalie = true;
     else if (a === "--skip-bootstrap-malie") out.bootstrapMalie = false;
     else if (a === "--malie-limit-files") {
       out.malieLimitFiles = Number(argv[++i]);
-    }
-    else if (a === "--no-shared") out.withShared = false;
+    } else if (a === "--no-shared") out.withShared = false;
     else if (a === "--foil-t") out.includeFoilT = true;
     else if (a === "--textures") out.textureMode = argv[++i]!;
     else if (a === "--extract-workers") out.extractWorkers = Number(argv[++i]);

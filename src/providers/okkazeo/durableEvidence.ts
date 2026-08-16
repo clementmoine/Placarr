@@ -39,7 +39,7 @@ function isOkkazeoSearchUrl(url: string): boolean {
       parsed.pathname.includes("/jeux/resultats") &&
       Boolean(
         parsed.searchParams.get("ean")?.trim() ||
-          parsed.searchParams.get("titre_jeu")?.trim(),
+        parsed.searchParams.get("titre_jeu")?.trim(),
       )
     );
   } catch {

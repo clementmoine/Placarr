@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type SyntheticEvent,
 } from "react";
 
@@ -266,21 +267,25 @@ function CssFoilFace({
   );
 }
 
+const NO_FOIL_CAPS: FoilCapabilities = {
+  supportsWebgl2: false,
+  supportsAstc: false,
+};
+
+function subscribeFoilCaps() {
+  return () => {};
+}
+
 /**
- * Capabilities must be read after mount: a first render without `document`
- * (SSR) would otherwise cache `supportsWebgl2: false` for the session if the
- * module were ever shared — and more importantly we need a client re-render
- * once the probe has a real canvas.
+ * Capabilities must be read on the client: a first render without `document`
+ * (SSR) would otherwise cache `supportsWebgl2: false`.
  */
 function useFoilCapabilities(): FoilCapabilities {
-  const [caps, setCaps] = useState<FoilCapabilities>({
-    supportsWebgl2: false,
-    supportsAstc: false,
-  });
-  useEffect(() => {
-    setCaps(getFoilCapabilities());
-  }, []);
-  return caps;
+  return useSyncExternalStore(
+    subscribeFoilCaps,
+    getFoilCapabilities,
+    () => NO_FOIL_CAPS,
+  );
 }
 
 export function FoilCardImage({
@@ -312,9 +317,7 @@ export function FoilCardImage({
   children,
 }: FoilCardImageProps) {
   const pack = getEffectPack(effectPackId);
-  const [metaReady, setMetaReady] = useState(
-    typeof window === "undefined",
-  );
+  const [metaReady, setMetaReady] = useState(typeof window === "undefined");
 
   useEffect(() => {
     let cancelled = false;
@@ -332,6 +335,7 @@ export function FoilCardImage({
   // USESECONDTOPLAYER clones). A new identity remounts WebGL every lean tick.
   // `metaReady` re-resolves after browser foil-meta hydrate.
   const material = useMemo(() => {
+    void metaReady;
     if (!pack) return null;
     if (materialName) {
       return (
@@ -389,9 +393,22 @@ export function FoilCardImage({
   const tiltUniformRef = useRef<readonly [number, number]>([0, 0]);
   const leanDegreesRef = useRef<readonly [number, number]>([0, 0]);
 
-  const [inView, setInView] = useState(false);
-  const [poolOk, setPoolOk] = useState(false);
+  const [observedInView, setObservedInView] = useState(false);
+  const [acquired, setAcquired] = useState(false);
+  const foilIdentity = [
+    preference,
+    materialName,
+    finish,
+    varnishType,
+    effectPackId,
+    printKey,
+  ].join("\0");
   const [failed, setFailed] = useState(false);
+  const [failedFor, setFailedFor] = useState(foilIdentity);
+  if (failedFor !== foilIdentity) {
+    setFailedFor(foilIdentity);
+    setFailed(false);
+  }
   const [rendererReady, setRendererReady] = useState(false);
   const [isActive, setIsActive] = useState(false);
 
@@ -423,14 +440,11 @@ export function FoilCardImage({
     }) === "webgl";
 
   useEffect(() => {
-    if (!eligible) {
-      setInView(false);
-      return;
-    }
+    if (!eligible) return;
     const frame = frameRef.current;
     if (!frame) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
+      ([entry]) => setObservedInView(entry.isIntersecting),
       // Small cushion so a 1px scroll does not thrash pool acquire/release
       // (that read as a blink). Keep it modest — large margins starved HotFoil.
       { rootMargin: "40px" },
@@ -438,23 +452,23 @@ export function FoilCardImage({
     observer.observe(frame);
     return () => observer.disconnect();
   }, [eligible]);
+  const inView = eligible && observedInView;
 
   // A failed acquire must retry when someone else releases — otherwise the
   // first N cards hog the pool forever and the rest stay on CSS even in view.
   useEffect(() => {
     if (!eligible || !inView) {
       releaseFoilSlot(slotId);
-      setPoolOk(false);
       return;
     }
     const tryAcquire = () => {
-      setPoolOk(acquireFoilSlot(slotId));
+      setAcquired(acquireFoilSlot(slotId));
     };
     tryAcquire();
     const unsubscribe = subscribeFoilPool(() => {
       // FIFO handoff may have granted the slot already — sync state.
       if (hasFoilSlot(slotId)) {
-        setPoolOk(true);
+        setAcquired(true);
         return;
       }
       tryAcquire();
@@ -462,14 +476,9 @@ export function FoilCardImage({
     return () => {
       unsubscribe();
       releaseFoilSlot(slotId);
-      setPoolOk(false);
     };
   }, [eligible, inView, slotId]);
-
-  // Allow a later mount / backend switch to retry after a compile failure.
-  useEffect(() => {
-    setFailed(false);
-  }, [preference, materialName, finish, varnishType, effectPackId, printKey]);
+  const poolOk = eligible && inView && acquired && hasFoilSlot(slotId);
 
   const useWebgl =
     eligible &&
@@ -542,9 +551,8 @@ export function FoilCardImage({
 
     void (async () => {
       try {
-        const { createWebglFoilRenderer } = await import(
-          "@/core/render/foil/webgl"
-        );
+        const { createWebglFoilRenderer } =
+          await import("@/core/render/foil/webgl");
         if (cancelled) return;
         const renderer = createWebglFoilRenderer(
           canvas,
@@ -737,7 +745,10 @@ export function FoilCardImage({
             "relative h-full w-full rounded-[inherit]",
             // Lorcana dual-frag can ease the canvas tilt; Live single-frag
             // follows the pointer immediately (CSS transition felt like a pose).
-            tilt && isDriven && hasTimeSibling && "transition-transform duration-200 ease-out",
+            tilt &&
+              isDriven &&
+              hasTimeSibling &&
+              "transition-transform duration-200 ease-out",
           )}
         >
           {/*

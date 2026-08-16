@@ -7,18 +7,13 @@ import {
   sharedCardBackSkeletonUrl,
   type CardBackCandidate,
 } from "./cardBacks";
-import {
-  __resetEffectPacksForTests,
-  registerEffectPack,
-} from "./registry";
-import {
-  resolveCardBackUrl,
-  resolveDefaultCardBack,
-} from "./resolveBack";
+import { __resetEffectPacksForTests, registerEffectPack } from "./registry";
+import { resolveCardBackUrl, resolveDefaultCardBack } from "./resolveBack";
 import type { EffectPackModule } from "./types";
 
 function fakePack(
-  overrides: Partial<EffectPackModule> & Pick<EffectPackModule, "id" | "cardBackUrl">,
+  overrides: Partial<EffectPackModule> &
+    Pick<EffectPackModule, "id" | "cardBackUrl">,
 ): EffectPackModule {
   return {
     assetBase: "/assets/test",
@@ -58,12 +53,12 @@ describe("pickDefaultCardBack", () => {
 
 describe("sharedCardBackSkeletonUrl", () => {
   it("allows pack and set backs as shared skeletons", () => {
-    expect(
-      sharedCardBackSkeletonUrl({ url: "/pack.png", scope: "pack" }),
-    ).toBe("/pack.png");
-    expect(
-      sharedCardBackSkeletonUrl({ url: "/set.png", scope: "set" }),
-    ).toBe("/set.png");
+    expect(sharedCardBackSkeletonUrl({ url: "/pack.png", scope: "pack" })).toBe(
+      "/pack.png",
+    );
+    expect(sharedCardBackSkeletonUrl({ url: "/set.png", scope: "set" })).toBe(
+      "/set.png",
+    );
   });
 
   it("refuses print-scoped alt faces", () => {

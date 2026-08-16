@@ -16,7 +16,8 @@ describe("remapCollectorNumberForLive", () => {
   ] as const)("%s %s → Live %s", (set, num, expected) => {
     expect(remapCollectorNumberForLive(set, num)).toBe(expected);
     expect(Number(expected)).toBe(
-      SM115_SHINY_VAULT_LIVE_OFFSET + Number.parseInt(num.replace(/\D/g, ""), 10),
+      SM115_SHINY_VAULT_LIVE_OFFSET +
+        Number.parseInt(num.replace(/\D/g, ""), 10),
     );
   });
 

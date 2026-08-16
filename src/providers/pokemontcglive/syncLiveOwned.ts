@@ -11,10 +11,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 const ROOT = path.resolve(__dirname, "../../..");
-const TOKENS = path.join(
-  ROOT,
-  ".tmp-foil-audit/live-unity/mitm/tokens.json",
-);
+const TOKENS = path.join(ROOT, ".tmp-foil-audit/live-unity/mitm/tokens.json");
 const OUT_JSON = path.join(ROOT, "data/pokemon/liveOwned.json");
 const SQLITE = path.join(ROOT, "data/pokemon/catalog.sqlite");
 const KEY = "421d8904-0236-4ab4-94f5-a8a84aeb3f7b";
@@ -59,7 +56,9 @@ function toFrStem(stem: string): string {
 
 async function main() {
   if (!fs.existsSync(TOKENS)) {
-    throw new Error(`Missing ${TOKENS} — capture a Live login under mitm first`);
+    throw new Error(
+      `Missing ${TOKENS} — capture a Live login under mitm first`,
+    );
   }
   if (!fs.existsSync(SQLITE)) {
     throw new Error(`Missing ${SQLITE} — run pnpm foil:pokemon:index-cards`);
@@ -79,7 +78,9 @@ async function main() {
       true,
     );
     if (r.status !== 200) {
-      throw new Error(`PTCS refresh failed ${r.status}: ${r.text.slice(0, 200)}`);
+      throw new Error(
+        `PTCS refresh failed ${r.status}: ${r.text.slice(0, 200)}`,
+      );
     }
     tok = { ...tok, ...JSON.parse(r.text) };
     fs.writeFileSync(TOKENS, JSON.stringify(tok, null, 2) + "\n");
@@ -101,7 +102,9 @@ async function main() {
     guest,
   );
   if (auth.status !== 200) {
-    throw new Error(`studio auth failed ${auth.status}: ${auth.text.slice(0, 200)}`);
+    throw new Error(
+      `studio auth failed ${auth.status}: ${auth.text.slice(0, 200)}`,
+    );
   }
   const studio = (JSON.parse(auth.text) as { accessToken: string }).accessToken;
 
@@ -112,7 +115,9 @@ async function main() {
     studio,
   );
   if (cdxRes.status !== 200) {
-    throw new Error(`carddex failed ${cdxRes.status}: ${cdxRes.text.slice(0, 200)}`);
+    throw new Error(
+      `carddex failed ${cdxRes.status}: ${cdxRes.text.slice(0, 200)}`,
+    );
   }
   const cardRecords = (
     JSON.parse(cdxRes.text) as {

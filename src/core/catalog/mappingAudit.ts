@@ -25,10 +25,7 @@ import type {
 export type { MappingProbeStatus } from "@/types/providerModule";
 
 export type ProviderObservationMode =
-  | "enabled"
-  | "migrating"
-  | "legacy"
-  | "unknown";
+  "enabled" | "migrating" | "legacy" | "unknown";
 
 export interface ProviderMappingProbeEntry {
   providerId: string;
@@ -271,9 +268,8 @@ async function runMetadataAdapterProbe(
       metadata,
     };
   } catch (error) {
-    const { PrestashopAccessDeniedError } = await import(
-      "@/providers/prestashop/fetch"
-    );
+    const { PrestashopAccessDeniedError } =
+      await import("@/providers/prestashop/fetch");
     if (error instanceof PrestashopAccessDeniedError) {
       return {
         probe: probeErrorResult(error.message, "blocked"),
@@ -357,9 +353,8 @@ export async function runProviderMappingAudit(): Promise<ProviderMappingAuditPay
                 : [];
               return { ...execution, rawKeys };
             } catch (error) {
-              const { PrestashopAccessDeniedError } = await import(
-                "@/providers/prestashop/fetch"
-              );
+              const { PrestashopAccessDeniedError } =
+                await import("@/providers/prestashop/fetch");
               if (error instanceof PrestashopAccessDeniedError) {
                 return {
                   probe: probeErrorResult(error.message, "blocked"),

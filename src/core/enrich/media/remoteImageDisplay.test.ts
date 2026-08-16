@@ -24,7 +24,9 @@ describe("remoteImageDisplay", () => {
     expect(isLocalUploadImageSrc("/uploads/cover.webp")).toBe(true);
     expect(isLocalFoilImageSrc("/assets/pokemon/textures/x.png")).toBe(true);
     expect(
-      isTcgdexAssetImageSrc("https://assets.tcgdex.net/fr/sv/sv03.5/006/low.webp"),
+      isTcgdexAssetImageSrc(
+        "https://assets.tcgdex.net/fr/sv/sv03.5/006/low.webp",
+      ),
     ).toBe(true);
     expect(remoteImageShouldSkipOptimizer("/uploads/cover.webp")).toBe(true);
     expect(

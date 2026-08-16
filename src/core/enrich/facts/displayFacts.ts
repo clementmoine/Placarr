@@ -91,7 +91,9 @@ export function collapseDuplicateDisplayFactSlots(
   const categoryValues = new Set(
     facts
       .filter((fact) => fact.kind === "category")
-      .flatMap((fact) => splitTagValues(fact.value).map((v) => v.toLowerCase())),
+      .flatMap((fact) =>
+        splitTagValues(fact.value).map((v) => v.toLowerCase()),
+      ),
   );
 
   const groups = new Map<string, DetailFact[]>();
@@ -294,10 +296,7 @@ export function consolidateTagLikeFactsByKind(
     const lead = orderedFacts[0]!;
 
     // Labeled scalar collector tags (Type, PV, Rareté…): one value, not a soup.
-    if (
-      slot.startsWith("tag:") &&
-      !isMultiValueCollectorLabel(lead.label)
-    ) {
+    if (slot.startsWith("tag:") && !isMultiValueCollectorLabel(lead.label)) {
       const sourceNames = Array.from(
         new Set(kindFacts.flatMap((fact) => getFactSourceNames(fact))),
       );

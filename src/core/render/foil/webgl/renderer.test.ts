@@ -197,10 +197,7 @@ describe("identityMatrixColumns", () => {
     // GL n'expose qu'une entrée pour tout le tableau vec4[4] : n'écrire que
     // la colonne 0 laissait WorldToObject aux 3/4 nul → normalize(0) → NaN.
     expect(identityMatrixColumns(0, 4)).toEqual([
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1,
+      1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
     ]);
   });
 

@@ -147,9 +147,8 @@ function assertExpectation(
 }
 
 async function recordBarcodeFixture(testCase: BarcodeRegressionCase) {
-  const { isBarcodeRecordSlimMode } = await import(
-    "@/core/identify/lookup/recordMode"
-  );
+  const { isBarcodeRecordSlimMode } =
+    await import("@/core/identify/lookup/recordMode");
   expect(isBarcodeRecordSlimMode()).toBe(true);
 
   const replay = new HttpReplay();

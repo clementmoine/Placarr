@@ -484,8 +484,7 @@ export function parseChasseAuxLivresProductPage(
       (Array.isArray(image) ? image[0] : image)?.split("?")[0],
     ) || galleryImages[0];
   const aggregateRating = productSchema?.aggregateRating as
-    | { ratingValue?: unknown; ratingCount?: unknown }
-    | undefined;
+    { ratingValue?: unknown; ratingCount?: unknown } | undefined;
   const sku =
     firstSchemaValue(productSchema?.sku) ||
     productUrl?.match(/\/prix\/([^/]+)/)?.[1];

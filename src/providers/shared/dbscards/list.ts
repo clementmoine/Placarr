@@ -192,7 +192,9 @@ export function lookupDbscardsEntry(
     */
     const exact =
       bucket.find((entry) => entry.sku?.toLowerCase() === code) ??
-      bucket.find((entry) => dbscardsBareSlug(entry.slug).startsWith(`${code}-`));
+      bucket.find((entry) =>
+        dbscardsBareSlug(entry.slug).startsWith(`${code}-`),
+      );
     if (exact) return exact;
   }
   return bucket[0]!;

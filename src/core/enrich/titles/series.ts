@@ -173,10 +173,7 @@ export function applySeriesDisplayName<
 /** Apply series volume padding across a shelf's presented items. */
 export function applySeriesDisplayNames<
   T extends { id: string; name: string; storedName?: string },
->(
-  items: T[],
-  options?: { shelfType?: string | null },
-): T[] {
+>(items: T[], options?: { shelfType?: string | null }): T[] {
   if (items.length === 0) return items;
   // Collector codes (`TFC#002`) look like volume markers; never invent a manga
   // series on print shelves.

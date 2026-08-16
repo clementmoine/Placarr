@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildPrintKey, isPrintKey, parsePrintKey, comparePrintKeys, comparePrintSetCodes } from "./printKey";
+import {
+  buildPrintKey,
+  isPrintKey,
+  parsePrintKey,
+  comparePrintKeys,
+  comparePrintSetCodes,
+} from "./printKey";
 
 describe("buildPrintKey", () => {
   it("builds a key from what is printed on the card", () => {

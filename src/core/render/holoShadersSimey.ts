@@ -582,7 +582,11 @@ const SIMEY_SHADERS: Readonly<Record<SimeyHoloShaderId, HoloShader>> = {
     filter: `brightness(${lit(0.75, 0.15)}) contrast(1) saturate(1)`,
     pointerFalloff: false,
     overlay: "pokeBallHoloCoat",
-    carve: { url: `${T}/TEX_CC_PB.webp`, size: "190px 190px", repeat: "repeat" },
+    carve: {
+      url: `${T}/TEX_CC_PB.webp`,
+      size: "190px 190px",
+      repeat: "repeat",
+    },
   }),
 
   pokeBallHoloCoat: L("pokeBallHoloCoat", {

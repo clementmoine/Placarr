@@ -20,8 +20,14 @@ describe("maskCoverage", () => {
 
   it("bakes foil coverage into alpha (anti-wash JPEG)", () => {
     const pixels = new Uint8ClampedArray([
-      200, 100, 50, 255, // opaque JPEG pixel
-      10, 10, 10, 255,
+      200,
+      100,
+      50,
+      255, // opaque JPEG pixel
+      10,
+      10,
+      10,
+      255,
     ]);
     applyMaskCoverage(pixels, "foil");
     expect(pixels[3]).toBe(Math.round(lumaOf(200, 100, 50)));

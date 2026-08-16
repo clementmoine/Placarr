@@ -23,8 +23,12 @@ describe("lorcana pack assets", () => {
 
   it.skipIf(!hasDump)("ships cards/back.webp on the pack", () => {
     expect(
-      existsSync(path.join(process.cwd(), "data", "lorcana", "cards", "back.webp")) ||
-        existsSync(path.join(process.cwd(), "data", "lorcana", "cards", "back.png")),
+      existsSync(
+        path.join(process.cwd(), "data", "lorcana", "cards", "back.webp"),
+      ) ||
+        existsSync(
+          path.join(process.cwd(), "data", "lorcana", "cards", "back.png"),
+        ),
     ).toBe(true);
   });
 
@@ -35,36 +39,45 @@ describe("lorcana pack assets", () => {
     expect(astcFiles.length).toBeGreaterThan(0);
   });
 
-  it.skipIf(!hasDump)("manifest binds at least one texture with astc metadata", () => {
-    const hasAstc = Object.values(MATERIALS).some((material) =>
-      Object.values(material.textures).some((binding) => binding.astc?.file),
-    );
-    expect(hasAstc).toBe(true);
-  });
+  it.skipIf(!hasDump)(
+    "manifest binds at least one texture with astc metadata",
+    () => {
+      const hasAstc = Object.values(MATERIALS).some((material) =>
+        Object.values(material.textures).some((binding) => binding.astc?.file),
+      );
+      expect(hasAstc).toBe(true);
+    },
+  );
 
-  it.skipIf(!hasDump)("every astc.file named in the manifest exists on disk", () => {
-    const astcFiles = new Set<string>();
-    for (const material of Object.values(MATERIALS)) {
-      for (const binding of Object.values(material.textures)) {
-        if (binding.astc?.file) astcFiles.add(binding.astc.file);
+  it.skipIf(!hasDump)(
+    "every astc.file named in the manifest exists on disk",
+    () => {
+      const astcFiles = new Set<string>();
+      for (const material of Object.values(MATERIALS)) {
+        for (const binding of Object.values(material.textures)) {
+          if (binding.astc?.file) astcFiles.add(binding.astc.file);
+        }
       }
-    }
-    expect(astcFiles.size).toBeGreaterThan(0);
-    for (const file of astcFiles) {
-      expect(existsSync(path.join(TEXTURES_DIR, file)), file).toBe(true);
-    }
-  });
+      expect(astcFiles.size).toBeGreaterThan(0);
+      for (const file of astcFiles) {
+        expect(existsSync(path.join(TEXTURES_DIR, file)), file).toBe(true);
+      }
+    },
+  );
 
-  it.skipIf(!hasDump)("every PNG file in manifest bindings exists on disk", () => {
-    const pngFiles = new Set<string>();
-    for (const material of Object.values(MATERIALS)) {
-      for (const binding of Object.values(material.textures)) {
-        if (binding.file) pngFiles.add(binding.file);
+  it.skipIf(!hasDump)(
+    "every PNG file in manifest bindings exists on disk",
+    () => {
+      const pngFiles = new Set<string>();
+      for (const material of Object.values(MATERIALS)) {
+        for (const binding of Object.values(material.textures)) {
+          if (binding.file) pngFiles.add(binding.file);
+        }
       }
-    }
-    expect(pngFiles.size).toBeGreaterThan(0);
-    for (const file of pngFiles) {
-      expect(existsSync(path.join(TEXTURES_DIR, file)), file).toBe(true);
-    }
-  });
+      expect(pngFiles.size).toBeGreaterThan(0);
+      for (const file of pngFiles) {
+        expect(existsSync(path.join(TEXTURES_DIR, file)), file).toBe(true);
+      }
+    },
+  );
 });

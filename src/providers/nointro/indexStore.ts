@@ -370,9 +370,7 @@ export async function ensureNoIntroIndex(): Promise<DatabaseSync | null> {
 
   const file = indexPath();
   if (!(await fileExists(file))) {
-    console.info(
-      "[No-Intro] Index unavailable — run `pnpm nointro:update`",
-    );
+    console.info("[No-Intro] Index unavailable — run `pnpm nointro:update`");
     return null;
   }
 

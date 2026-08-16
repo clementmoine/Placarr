@@ -7,7 +7,8 @@ export function isAllowedAdbEndpoint(serial: string): boolean {
   }
   const [host, portRaw] = trimmed.split(":");
   const port = Number(portRaw);
-  if (!host || !Number.isInteger(port) || port < 1 || port > 65535) return false;
+  if (!host || !Number.isInteger(port) || port < 1 || port > 65535)
+    return false;
   if (host === "localhost" || host === "127.0.0.1" || host === "::1") {
     return true;
   }

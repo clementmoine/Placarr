@@ -20,7 +20,11 @@ function tmpRoot(): string {
   return d;
 }
 
-function writeCompendium(cache: string, stem: string, content: Record<string, string>) {
+function writeCompendium(
+  cache: string,
+  stem: string,
+  content: Record<string, string>,
+) {
   fs.mkdirSync(cache, { recursive: true });
   fs.writeFileSync(
     path.join(cache, `${stem}-compendium_0.0.json`),

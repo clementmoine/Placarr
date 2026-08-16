@@ -27,9 +27,7 @@ function normalizeFinishToken(value: string): string {
 
 export function cardHasFinish(card: LorcanaCard, finish: string): boolean {
   const wanted = normalizeFinishToken(finish);
-  return card.foilTypes.some(
-    (foil) => normalizeFinishToken(foil) === wanted,
-  );
+  return card.foilTypes.some((foil) => normalizeFinishToken(foil) === wanted);
 }
 
 function needKey(need: FoilPlayroomNeed): string {

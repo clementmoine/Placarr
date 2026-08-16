@@ -26,7 +26,11 @@ export function useFoilPointerSpring(place: Place): {
   const rafRef = useRef(0);
   const lastTsRef = useRef(0);
   const placeRef = useRef(place);
-  placeRef.current = place;
+  const tickRef = useRef<(ts: number) => void>(() => {});
+
+  useEffect(() => {
+    placeRef.current = place;
+  });
 
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -60,10 +64,14 @@ export function useFoilPointerSpring(place: Place): {
         stop();
         return;
       }
-      rafRef.current = requestAnimationFrame(tick);
+      rafRef.current = requestAnimationFrame((next) => tickRef.current(next));
     },
     [stop],
   );
+
+  useEffect(() => {
+    tickRef.current = tick;
+  });
 
   const ensureRunning = useCallback(() => {
     if (rafRef.current) return;

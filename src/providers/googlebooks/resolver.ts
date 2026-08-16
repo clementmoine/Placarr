@@ -60,12 +60,10 @@ async function resolveGoogleBooksCoverUrl(
 ): Promise<string | undefined> {
   if (!imageLinks) return undefined;
 
-  const { fetchRemoteImageBuffer } = await import(
-    "@/core/enrich/media/remoteFetch"
-  );
-  const { isUnavailableCoverPlaceholderBuffer } = await import(
-    "@/core/enrich/media/coverPlaceholder.server"
-  );
+  const { fetchRemoteImageBuffer } =
+    await import("@/core/enrich/media/remoteFetch");
+  const { isUnavailableCoverPlaceholderBuffer } =
+    await import("@/core/enrich/media/coverPlaceholder.server");
 
   const candidates = [
     imageLinks.extraLarge,

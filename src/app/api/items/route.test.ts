@@ -252,9 +252,8 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
   });
 
   it("attache les prix aux listes d'items", async () => {
-    const { summarizeListItemPrices } = await import(
-      "@/core/commerce/pricing/itemDisplay"
-    );
+    const { summarizeListItemPrices } =
+      await import("@/core/commerce/pricing/itemDisplay");
 
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findMany.mockResolvedValue([

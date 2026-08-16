@@ -16,9 +16,9 @@ describe("attestedPromos", () => {
   });
 
   it("builds promo printKeys", () => {
-    expect(
-      attestedPromoPrintKey({ number: "ni063", name: "Iruka" }),
-    ).toBe("naruto:promo-ni063");
+    expect(attestedPromoPrintKey({ number: "ni063", name: "Iruka" })).toBe(
+      "naruto:promo-ni063",
+    );
     expect(
       attestedPromoPrintKey({
         number: "te030",

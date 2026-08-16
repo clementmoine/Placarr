@@ -76,17 +76,20 @@ describe("manifest lorcana", () => {
     }
   });
 
-  it.skipIf(!hasDump)("expose un fragment Time pour chaque matériau (idle natif)", () => {
-    for (const name of LORCANA_MATERIAL_NAMES) {
-      const material = lorcanaMaterial(name)!;
-      expect(material.fragmentTime, name).toBeTruthy();
-      expect(
-        existsSync(path.join(SHADERS_DIR, material.fragmentTime!)),
-        material.fragmentTime,
-      ).toBe(true);
-      expect(material.fragmentTime).toContain("SCROLLMODE_TIME");
-    }
-  });
+  it.skipIf(!hasDump)(
+    "expose un fragment Time pour chaque matériau (idle natif)",
+    () => {
+      for (const name of LORCANA_MATERIAL_NAMES) {
+        const material = lorcanaMaterial(name)!;
+        expect(material.fragmentTime, name).toBeTruthy();
+        expect(
+          existsSync(path.join(SHADERS_DIR, material.fragmentTime!)),
+          material.fragmentTime,
+        ).toBe(true);
+        expect(material.fragmentTime).toContain("SCROLLMODE_TIME");
+      }
+    },
+  );
 
   for (const name of LORCANA_MATERIAL_NAMES) {
     const material = lorcanaMaterial(name)!;
@@ -112,7 +115,9 @@ describe("manifest lorcana", () => {
           sources.push(readFileSync(fragmentTimePath, "utf8"));
         }
         const unbound = [
-          ...new Set(sources.flatMap((source) => [...fragmentSamplers(source)])),
+          ...new Set(
+            sources.flatMap((source) => [...fragmentSamplers(source)]),
+          ),
         ].filter((sampler) => !material.textures[sampler]);
         expect(unbound).toEqual([]);
       });
@@ -144,9 +149,7 @@ describe("manifest lorcana", () => {
         const declared = new Set<string>();
         for (const source of [
           readFileSync(fragmentPath, "utf8"),
-          ...(fragmentTimePath
-            ? [readFileSync(fragmentTimePath, "utf8")]
-            : []),
+          ...(fragmentTimePath ? [readFileSync(fragmentTimePath, "utf8")] : []),
           ...(sibling && existsSync(path.join(SHADERS_DIR, sibling))
             ? [readFileSync(path.join(SHADERS_DIR, sibling), "utf8")]
             : []),
@@ -166,22 +169,23 @@ describe("manifest lorcana", () => {
 describe("USESECONDTOPLAYER", () => {
   const hasDump = LORCANA_MATERIAL_NAMES.length > 0;
 
-  it.skipIf(!hasDump)("bascule MagmaMetallicHotFoil vers le sibling qui sample le 2e masque", () => {
-    const upgraded = lorcanaMaterialForPrint("CardMagmaMetallicHotFoil", {
-      secondVarnishMaskUrl: "/uploads/second.png",
-    });
-    expect(upgraded?.fragment).toContain("USESECONDTOPLAYER");
-    expect(upgraded?.textures._SecondTopLayerMask).toEqual({
-      role: "secondVarnishMask",
-    });
-    expect(upgraded?.colors._SecondHotFoilColor).toBeDefined();
-    expect(
-      existsSync(path.join(SHADERS_DIR, upgraded!.fragment)),
-    ).toBe(true);
-    expect(
-      readFileSync(path.join(SHADERS_DIR, upgraded!.fragment), "utf8"),
-    ).toContain("sampler2D _SecondTopLayerMask");
-  });
+  it.skipIf(!hasDump)(
+    "bascule MagmaMetallicHotFoil vers le sibling qui sample le 2e masque",
+    () => {
+      const upgraded = lorcanaMaterialForPrint("CardMagmaMetallicHotFoil", {
+        secondVarnishMaskUrl: "/uploads/second.png",
+      });
+      expect(upgraded?.fragment).toContain("USESECONDTOPLAYER");
+      expect(upgraded?.textures._SecondTopLayerMask).toEqual({
+        role: "secondVarnishMask",
+      });
+      expect(upgraded?.colors._SecondHotFoilColor).toBeDefined();
+      expect(existsSync(path.join(SHADERS_DIR, upgraded!.fragment))).toBe(true);
+      expect(
+        readFileSync(path.join(SHADERS_DIR, upgraded!.fragment), "utf8"),
+      ).toContain("sampler2D _SecondTopLayerMask");
+    },
+  );
 
   it.skipIf(!hasDump)(
     "lie le DistortionTex du 2e CalculateVarnishLayers (sinon sampler noir)",
@@ -256,26 +260,34 @@ describe("USESECONDTOPLAYER", () => {
 describe("CardMagmaSnowHotFoil APK fidelity", () => {
   const hasDump = LORCANA_MATERIAL_NAMES.includes("CardMagmaSnowHotFoil");
 
-  it.skipIf(!hasDump)("garde les reglages Snow de l'APK (pas de HotFoilColor)", () => {
-    const material = lorcanaMaterial("CardMagmaSnowHotFoil")!;
-    // Snow compiles _HotFoilColor out — stamp rides on VarnishLightColor.
-    expect(material.colors._HotFoilColor).toBeUndefined();
-    expect(material.colors._VarnishLightColor).toEqual([
-      0.858824, 0.937255, 0.952941, 1.0,
-    ]);
-    expect(material.keywords).toContain("_HOTFOILSURFACE_SNOW");
-    expect(material.fragment).toContain("HOTFOILSURFACE_SNOW");
-    expect(hotFoilStampUniforms(material)).toEqual(
-      new Set(["_VarnishLightColor"]),
-    );
-  });
+  it.skipIf(!hasDump)(
+    "garde les reglages Snow de l'APK (pas de HotFoilColor)",
+    () => {
+      const material = lorcanaMaterial("CardMagmaSnowHotFoil")!;
+      // Snow compiles _HotFoilColor out — stamp rides on VarnishLightColor.
+      expect(material.colors._HotFoilColor).toBeUndefined();
+      expect(material.colors._VarnishLightColor).toEqual([
+        0.858824, 0.937255, 0.952941, 1.0,
+      ]);
+      expect(material.keywords).toContain("_HOTFOILSURFACE_SNOW");
+      expect(material.fragment).toContain("HOTFOILSURFACE_SNOW");
+      expect(hotFoilStampUniforms(material)).toEqual(
+        new Set(["_VarnishLightColor"]),
+      );
+    },
+  );
 
-  it.skipIf(!hasDump)("Metallic stamp via HotFoilColor, lighting via VarnishLight", () => {
-    const material = lorcanaMaterial("CardMagmaMetallicHotFoil")!;
-    expect(material.colors._HotFoilColor).toBeDefined();
-    expect(material.colors._VarnishLightColor).toBeDefined();
-    expect(hotFoilStampUniforms(material)).toEqual(new Set(["_HotFoilColor"]));
-  });
+  it.skipIf(!hasDump)(
+    "Metallic stamp via HotFoilColor, lighting via VarnishLight",
+    () => {
+      const material = lorcanaMaterial("CardMagmaMetallicHotFoil")!;
+      expect(material.colors._HotFoilColor).toBeDefined();
+      expect(material.colors._VarnishLightColor).toBeDefined();
+      expect(hotFoilStampUniforms(material)).toEqual(
+        new Set(["_HotFoilColor"]),
+      );
+    },
+  );
 
   it.skipIf(!hasDump)("bind chaque sampler Snow (tilt + time)", () => {
     const material = lorcanaMaterial("CardMagmaSnowHotFoil")!;

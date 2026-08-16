@@ -7,12 +7,7 @@
 import type { FaceQuarterTurns } from "@/lib/text/cardFormat";
 
 /** Localised spellings of Location across LorcanaJSON languages. */
-const LOCATION_TYPES = new Set([
-  "location",
-  "lieu",
-  "ort",
-  "luogo",
-]);
+const LOCATION_TYPES = new Set(["location", "lieu", "ort", "luogo"]);
 
 export function faceQuarterTurnsForLorcanaPrint(signals: {
   cardType?: string | null;

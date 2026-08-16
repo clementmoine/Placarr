@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { LorcanaCard } from "./fetch";
-import {
-  cardHasFinish,
-  pickLorcanaPlayroomSamples,
-} from "./playroomSamples";
+import { cardHasFinish, pickLorcanaPlayroomSamples } from "./playroomSamples";
 
 function card(overrides: Partial<LorcanaCard>): LorcanaCard {
   return {

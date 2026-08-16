@@ -39,7 +39,11 @@ function detailPayload(overrides: Record<string, unknown> = {}) {
     illustrator: "5ban Graphics",
     rarity: "Double rare",
     image: "https://assets.tcgdex.net/fr/sv/sv03.5/006",
-    set: { id: "sv03.5", name: "151", cardCount: { official: 165, total: 207 } },
+    set: {
+      id: "sv03.5",
+      name: "151",
+      cardCount: { official: 165, total: 207 },
+    },
     hp: 330,
     types: ["Feu"],
     stage: "Niveau 2",
@@ -145,7 +149,13 @@ describe("cardmarketPricesFromPayload", () => {
           idProduct: 1,
         },
       },
-      { normal: true, reverse: true, holo: false, firstEdition: false, wPromo: false },
+      {
+        normal: true,
+        reverse: true,
+        holo: false,
+        firstEdition: false,
+        wPromo: false,
+      },
     );
     expect(prices.cmPriceCents).toBe(12);
     expect(prices.cmFoilPriceCents).toBe(36);
@@ -154,7 +164,13 @@ describe("cardmarketPricesFromPayload", () => {
   it("puts a holo-only avg into the foil bucket", () => {
     const prices = cardmarketPricesFromPayload(
       { cardmarket: { avg: 8.85, "avg-holo": null } },
-      { normal: false, holo: true, reverse: false, firstEdition: false, wPromo: false },
+      {
+        normal: false,
+        holo: true,
+        reverse: false,
+        firstEdition: false,
+        wPromo: false,
+      },
     );
     expect(prices.cmPriceCents).toBeNull();
     expect(prices.cmFoilPriceCents).toBe(885);
@@ -163,7 +179,13 @@ describe("cardmarketPricesFromPayload", () => {
   it("keeps a normal-only avg in the new bucket", () => {
     const prices = cardmarketPricesFromPayload(
       { cardmarket: { avg: 1.5, "avg-holo": null } },
-      { normal: true, holo: false, reverse: false, firstEdition: false, wPromo: false },
+      {
+        normal: true,
+        holo: false,
+        reverse: false,
+        firstEdition: false,
+        wPromo: false,
+      },
     );
     expect(prices.cmPriceCents).toBe(150);
     expect(prices.cmFoilPriceCents).toBeNull();
@@ -172,7 +194,13 @@ describe("cardmarketPricesFromPayload", () => {
   it("still surfaces avg-holo when TCGdex only flags normal", () => {
     const prices = cardmarketPricesFromPayload(
       { cardmarket: { avg: 95.88, "avg-holo": 74.13, idProduct: 293368 } },
-      { normal: true, holo: false, reverse: false, firstEdition: false, wPromo: false },
+      {
+        normal: true,
+        holo: false,
+        reverse: false,
+        firstEdition: false,
+        wPromo: false,
+      },
     );
     expect(prices.cmPriceCents).toBe(9588);
     expect(prices.cmFoilPriceCents).toBe(7413);
@@ -284,18 +312,16 @@ describe("searchTcgdexCards / fetchTcgdexCardByPrintKey", () => {
   });
 
   it("falls back to EN when FR name search is empty (Charizard)", async () => {
-    httpGet
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "sv03.5-006",
-            localId: "006",
-            name: "Charizard ex",
-            image: "https://assets.tcgdex.net/en/sv/sv03.5/006",
-          },
-        ],
-      });
+    httpGet.mockResolvedValueOnce({ data: [] }).mockResolvedValueOnce({
+      data: [
+        {
+          id: "sv03.5-006",
+          localId: "006",
+          name: "Charizard ex",
+          image: "https://assets.tcgdex.net/en/sv/sv03.5/006",
+        },
+      ],
+    });
 
     const results = await searchTcgdexCards("Charizard", {
       limit: 1,

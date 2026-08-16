@@ -248,8 +248,7 @@ async function fetchWikipediaSummary(
     timeout: 10000,
   });
   const page = Object.values(response.data?.query?.pages || {})[0] as
-    | { extract?: string; thumbnail?: { source?: string } }
-    | undefined;
+    { extract?: string; thumbnail?: { source?: string } } | undefined;
   return {
     extract: page?.extract,
     thumbnail: page?.thumbnail?.source,
@@ -430,8 +429,7 @@ export function createWikidataResolver(
       const releaseDate = parseWikidataDate(
         (
           selectedEntity.claims?.P577?.[0]?.mainsnak?.datavalue?.value as
-            | { time?: string }
-            | undefined
+            { time?: string } | undefined
         )?.time,
       );
 

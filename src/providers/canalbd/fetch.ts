@@ -119,8 +119,8 @@ export function canalbdOffersUrl(articleId: string): string {
 export function looksLikeCanalbdArticlePage(html: string): boolean {
   return Boolean(
     metaContent(html, "isbn") ||
-      html.match(/itemprop=["']isbn["']/i) ||
-      (metaContent(html, "og:type") === "product" && html.match(/EAN13\s*:/i)),
+    html.match(/itemprop=["']isbn["']/i) ||
+    (metaContent(html, "og:type") === "product" && html.match(/EAN13\s*:/i)),
   );
 }
 
@@ -252,11 +252,11 @@ function isCandidateAligned(query: string, title: string): boolean {
     .trim();
   return Boolean(
     subtitle &&
-      isMetadataTitleAligned(
-        { title: subtitle },
-        [query],
-        METADATA_TITLE_ALIGN_FLOOR,
-      ),
+    isMetadataTitleAligned(
+      { title: subtitle },
+      [query],
+      METADATA_TITLE_ALIGN_FLOOR,
+    ),
   );
 }
 

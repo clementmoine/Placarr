@@ -100,8 +100,7 @@ async function processOneJob(): Promise<boolean> {
     console.error(`[Worker ${WORKER_ID}] failed ${job.id}:`, error);
     await failBackgroundWorkJob(job.id, error, {
       // Foil CDN scrape is expensive — do not auto-retry three times.
-      maxAttempts:
-        job.kind === "foilExtract" ? job.attempts : undefined,
+      maxAttempts: job.kind === "foilExtract" ? job.attempts : undefined,
     });
   }
   return true;
@@ -155,18 +154,16 @@ async function main(): Promise<void> {
 
   await sweepStaleLocks();
 
-  const { ICOLLECT_WORKER_KINDS } = await import(
-    "../src/core/collect/jobs/workQueue"
-  );
+  const { ICOLLECT_WORKER_KINDS } =
+    await import("../src/core/collect/jobs/workQueue");
   const runsCatalogueAutoSync =
     !claimKinds ||
     claimKinds.some((kind) =>
       (ICOLLECT_WORKER_KINDS as readonly string[]).includes(kind),
     );
   if (runsCatalogueAutoSync) {
-    const { startCatalogueAutoSyncLoop } = await import(
-      "../src/lib/admin/catalogueAutoSync"
-    );
+    const { startCatalogueAutoSyncLoop } =
+      await import("../src/lib/admin/catalogueAutoSync");
     startCatalogueAutoSyncLoop();
   }
 

@@ -21,7 +21,14 @@
  *
  *   pnpm naruto:cards -- --only known
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
@@ -163,7 +170,9 @@ export function collectPhotoFallbackArt(
       } catch {
         continue;
       }
-      if (!isCollectorPhotoFallbackFace({ preferredArtFile: preferred, bytes })) {
+      if (
+        !isCollectorPhotoFallbackFace({ preferredArtFile: preferred, bytes })
+      ) {
         continue;
       }
       rows.push({
@@ -202,9 +211,7 @@ export const PHYSICAL_KNOWN_SOURCES: readonly KnownSource[] = [
  * Lone `carddass-html` → never printed (same bucket as S6), still tracked.
  * We do not delete the number / ref — only mark it unpublished.
  */
-export function isUnpublishedHtmlRef(
-  sources: readonly KnownSource[],
-): boolean {
+export function isUnpublishedHtmlRef(sources: readonly KnownSource[]): boolean {
   return sources.length > 0 && sources.every((s) => s === "carddass-html");
 }
 
@@ -363,20 +370,13 @@ export function buildNarutoKnownCards(): KnownCardsReport {
 
   const withoutArt = cards.filter((c) => !c.hasArt);
   const unreleasedHtmlOnly = withoutArt
-    .filter(
-      (c) => isUnpublishedHtmlRef(c.sources) && !isSerie06(c.number),
-    )
+    .filter((c) => isUnpublishedHtmlRef(c.sources) && !isSerie06(c.number))
     .map((c) => c.number);
   const unreleased = withoutArt
-    .filter(
-      (c) => isSerie06(c.number) || isUnpublishedHtmlRef(c.sources),
-    )
+    .filter((c) => isSerie06(c.number) || isUnpublishedHtmlRef(c.sources))
     .map((c) => c.number);
   const missingArt = withoutArt
-    .filter(
-      (c) =>
-        !isSerie06(c.number) && !isUnpublishedHtmlRef(c.sources),
-    )
+    .filter((c) => !isSerie06(c.number) && !isUnpublishedHtmlRef(c.sources))
     .map((c) => c.number);
 
   const setsFile = readJson<{ sets: Record<string, SetInfo> }>(
@@ -556,15 +556,15 @@ export function runNarutoKnownCardsCli(): KnownCardsReport {
       `   ${"dont HTML seule".padEnd(20)} ${report.unreleasedHtmlOnly.join(", ")}`,
     );
   }
-  const photoHigh = report.photoFallbackArt.filter((r) => r.priority === "high");
+  const photoHigh = report.photoFallbackArt.filter(
+    (r) => r.priority === "high",
+  );
   console.log(
     `   ${"photo fallback".padEnd(20)} ${report.photoFallbackArt.length}` +
       ` (${photoHigh.length} high)`,
   );
   if (photoHigh.length) {
-    console.log(
-      `   → ${photoHigh.map((r) => r.printKey).join(", ")}`,
-    );
+    console.log(`   → ${photoHigh.map((r) => r.printKey).join(", ")}`);
   }
   return report;
 }

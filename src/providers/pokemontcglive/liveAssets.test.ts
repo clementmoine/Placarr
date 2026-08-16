@@ -19,7 +19,8 @@ describe("pokemontcglive", () => {
 
   it("resolves cover metadata from printKey when Live art exists", async () => {
     const adapter = pokemontcgliveModule.createMetadataAdapter!();
-    if (!adapter) throw new Error("pokemontcglive: pas d'adaptateur de métadonnées");
+    if (!adapter)
+      throw new Error("pokemontcglive: pas d'adaptateur de métadonnées");
     const result = await adapter.resolve({
       name: "Dracaufeu-ex",
       printKey: "pokemon:sv03.5-006",

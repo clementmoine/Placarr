@@ -78,10 +78,7 @@ describe("metadataAliases", () => {
           },
         ],
       }),
-    ).toEqual([
-      "Ariel - On Human Legs",
-      "Arielle - Auf menschlichen Beinen",
-    ]);
+    ).toEqual(["Ariel - On Human Legs", "Arielle - Auf menschlichen Beinen"]);
   });
 
   it("does not repeat the display name as an alias", async () => {
@@ -96,9 +93,8 @@ describe("metadataAliases", () => {
   });
 
   it("drops placeholder, platform-prefixed, and bracket stub aliases", async () => {
-    const { displayAliasesForItem, aliasesExcludingTitle } = await import(
-      "@/core/enrich/aliases"
-    );
+    const { displayAliasesForItem, aliasesExcludingTitle } =
+      await import("@/core/enrich/aliases");
     expect(
       displayAliasesForItem({
         name: "Prototype",

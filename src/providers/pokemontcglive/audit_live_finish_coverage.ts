@@ -14,24 +14,23 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import {
-  LIVE_SET_NON_CATALOGUE,
-} from "@/effects/pokemon/setAliases";
+import { LIVE_SET_NON_CATALOGUE } from "@/effects/pokemon/setAliases";
 import {
   isPaperFoilVariant,
   listPaperBundleIds,
   paperCard,
   type PaperCardEntry,
 } from "@/effects/pokemon/resolveEffect";
-import {
-  unreachableLiveKeys,
-} from "@/effects/pokemon/liveFinishVariants";
+import { unreachableLiveKeys } from "@/effects/pokemon/liveFinishVariants";
 
 // Server-side: installs the SQLite lookups over the client-safe stubs.
 // Without it the pack answers empty and every audit reports zero.
 import "@/effects/pokemon/cardFoilIndex";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../..",
+);
 const REPORT_PATH = path.join(
   ROOT,
   "data/pokemon/logs/live-finish-coverage.json",
@@ -132,7 +131,9 @@ function main() {
   if (samples.length) {
     console.log(`  Samples (holo→miss ph):`);
     for (const s of samples.slice(0, 8)) {
-      console.log(`    ${s.bundle} foil=[${s.foil}] gap=[${s.holoUnreachable}]`);
+      console.log(
+        `    ${s.bundle} foil=[${s.foil}] gap=[${s.holoUnreachable}]`,
+      );
     }
   }
 

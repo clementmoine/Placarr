@@ -180,11 +180,8 @@ describe("maskUploadPath", () => {
 
 describe("localizeMaskImage", () => {
   it("leaves pack /assets/ URLs alone (raw scrape, convert at display)", async () => {
-    const pack =
-      "/assets/lorcana/cards/lorcana%3A1-1/foil_mask.jpg";
-    await expect(
-      localizeMaskImage(pack, { kind: "foil" }),
-    ).resolves.toBe(pack);
+    const pack = "/assets/lorcana/cards/lorcana%3A1-1/foil_mask.jpg";
+    await expect(localizeMaskImage(pack, { kind: "foil" })).resolves.toBe(pack);
   });
 
   it("leaves /uploads/ alone", async () => {

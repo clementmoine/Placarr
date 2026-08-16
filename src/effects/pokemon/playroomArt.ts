@@ -15,12 +15,18 @@ import {
   listPokemonFoilNames,
   type PokemonPaperFoilName,
 } from "./foilNames";
-import { liveFoilMaskForBundle, liveLaminatePreferForBundle } from "./liveFoilMasks";
+import {
+  liveFoilMaskForBundle,
+  liveLaminatePreferForBundle,
+} from "./liveFoilMasks";
 import { faceQuarterTurnsForPokemonPrint } from "./faceOrientation";
 import { POKEMON_MAT_ALIASES } from "./materials";
 import { lookupByBundle } from "./liveCardsLookups";
 import { ownedBundlesForShader } from "./liveOwnedBundles";
-import { formatPlayroomFaceCaption, pickLiveCardDisplayName } from "./liveSetDisplay";
+import {
+  formatPlayroomFaceCaption,
+  pickLiveCardDisplayName,
+} from "./liveSetDisplay";
 
 const LANG = "fr";
 
@@ -198,7 +204,6 @@ type BundlePick = {
   etchTex: string;
   coldFoilTex: string;
 };
-
 
 function seedFor(shader: string): Seed {
   return (
@@ -432,8 +437,7 @@ function artFromDump(
     0;
 
   const liveOwned = Boolean(
-    dumped?.bundleId &&
-      ownedBundlesForShader(shader).includes(dumped.bundleId),
+    dumped?.bundleId && ownedBundlesForShader(shader).includes(dumped.bundleId),
   );
   return {
     imageUrl: liveArtUrl(dumped) ?? highPng(seed.imageBase),

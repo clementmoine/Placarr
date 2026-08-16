@@ -50,9 +50,7 @@ export type PaperEffectResolution = {
    * catalogue title within candidate sets.
    */
   source:
-    | "tcglive-bundle"
-    | "tcglive-reprint-fallback"
-    | "tcglive-name-fallback";
+    "tcglive-bundle" | "tcglive-reprint-fallback" | "tcglive-name-fallback";
   maskTex: string | null;
   /** Live card art stem under ``cards/{set}/{lang}/{card}/``. */
   cardTex: string | null;

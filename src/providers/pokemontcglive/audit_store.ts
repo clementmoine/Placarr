@@ -7,7 +7,13 @@
  *   tsx scripts/pokemon/audit_store.ts -- --strict
  */
 
-import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,7 +28,10 @@ import {
   pokemonFaceFileFromTex,
 } from "@/lib/packAssetUrls";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../..",
+);
 const PACK_ROOT = path.join(ROOT, "data", "pokemon", "foil");
 const CARDS_ROOT = path.join(ROOT, "data", "pokemon", "cards");
 const CARDS_PATH = path.join(ROOT, "data", "pokemon", "cards.json");
@@ -58,7 +67,10 @@ function maskPath(bundleId: string, maskTex: string): string | null {
   const id = cardDiskIdFromBundleStem(bundleId);
   if (!id) return null;
   const cardDir = path.join(CARDS_ROOT, id.set, id.lang, id.card);
-  const stem = maskTex.trim().toLowerCase().replace(/\.(webp|png)$/i, "");
+  const stem = maskTex
+    .trim()
+    .toLowerCase()
+    .replace(/\.(webp|png)$/i, "");
   const candidates = [
     path.join(cardDir, pokemonFaceFileFromTex(bundleId, maskTex)),
     path.join(cardDir, `extra-${stem}.webp`),
@@ -101,7 +113,12 @@ function main() {
 
   const missingFrags = POKEMON_FOIL_NAMES.filter((name) => !frags.has(name));
   const extraFrags = [...frags]
-    .filter((name) => !POKEMON_FOIL_NAMES.includes(name as (typeof POKEMON_FOIL_NAMES)[number]))
+    .filter(
+      (name) =>
+        !POKEMON_FOIL_NAMES.includes(
+          name as (typeof POKEMON_FOIL_NAMES)[number],
+        ),
+    )
     .sort();
 
   const foilCounts: Record<string, number> = Object.fromEntries(
@@ -211,12 +228,16 @@ function main() {
     console.log(`  Missing .frag: ${missingFrags.join(", ")}`);
   }
   if (foilsWithoutDump.length) {
-    console.log(`  Foil leaves with zero cards.json rows: ${foilsWithoutDump.join(", ")}`);
+    console.log(
+      `  Foil leaves with zero cards.json rows: ${foilsWithoutDump.join(", ")}`,
+    );
   }
   if (unmappedSamples.length) {
     console.log("  Unmapped foil samples:");
     for (const row of unmappedSamples.slice(0, 8)) {
-      console.log(`    ${row.bundle} ${row.variant}: foil=${row.foil} shader=${row.shader}`);
+      console.log(
+        `    ${row.bundle} ${row.variant}: foil=${row.foil} shader=${row.shader}`,
+      );
     }
   }
   if (missingMaskSamples.length) {
@@ -232,7 +253,10 @@ function main() {
     unmappedCount > 0 ||
     missingMasks > 0 ||
     !report.hasFullFoilMask;
-  if (strict && (hardFail || foilsWithoutDump.length > 0 || sharedCount === 0)) {
+  if (
+    strict &&
+    (hardFail || foilsWithoutDump.length > 0 || sharedCount === 0)
+  ) {
     process.exitCode = 2;
   } else if (hardFail) {
     process.exitCode = 2;

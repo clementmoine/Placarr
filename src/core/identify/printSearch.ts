@@ -184,7 +184,8 @@ export async function resolveUniquePrintCandidate(
   const wantedPromo = queryPromoGrouping(query);
   if (wantedPromo) {
     const promoHits = [...byKey.values()].filter(
-      (candidate) => parsePrintKey(candidate.printKey)?.grouping === wantedPromo,
+      (candidate) =>
+        parsePrintKey(candidate.printKey)?.grouping === wantedPromo,
     );
     if (promoHits.length === 1) return promoHits[0]!;
     return null;

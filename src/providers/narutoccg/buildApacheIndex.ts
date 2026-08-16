@@ -22,9 +22,9 @@ import { dataRoot } from "@/lib/runtimeData";
 
 import { NARUTO_PACK_ID } from "./indexStore";
 
-const INDEX_TITLE_RE = /<title>\s*Index of\s+(\/naruto\/images(?:\/[^<\s]*)?)\s*<\/title>/i;
-const HREF_FILE_RE =
-  /href="([^"?#]+\.(?:jpe?g|gif|png|pdf|webp))"/gi;
+const INDEX_TITLE_RE =
+  /<title>\s*Index of\s+(\/naruto\/images(?:\/[^<\s]*)?)\s*<\/title>/i;
+const HREF_FILE_RE = /href="([^"?#]+\.(?:jpe?g|gif|png|pdf|webp))"/gi;
 
 export type ApacheIndexDirectory = {
   timestamp?: string;
@@ -178,16 +178,13 @@ export function buildApacheIndexFromStaging(): ApacheIndexDoc {
 
   return {
     source: "Apache autoindex of carddass.fr /naruto/images/ (Wayback)",
-    note:
-      "Authoritative list of files that EXISTED on the server, including files Wayback never downloaded. Regenerated from staging/carddass-fr/pages Index-of HTML.",
+    note: "Authoritative list of files that EXISTED on the server, including files Wayback never downloaded. Regenerated from staging/carddass-fr/pages Index-of HTML.",
     generatedAt: new Date().toISOString(),
     directories,
   };
 }
 
-export function writeApacheIndexSource(opts?: {
-  dryRun?: boolean;
-}): {
+export function writeApacheIndexSource(opts?: { dryRun?: boolean }): {
   path: string;
   directories: number;
   files: number;
@@ -212,9 +209,7 @@ export function writeApacheIndexSource(opts?: {
 }
 
 export function runNarutoSourcesCli(opts?: { dryRun?: boolean }): void {
-  console.log(
-    `── Naruto derived sources${opts?.dryRun ? " (dry run)" : ""}`,
-  );
+  console.log(`── Naruto derived sources${opts?.dryRun ? " (dry run)" : ""}`);
   const result = writeApacheIndexSource(opts);
   console.log(
     `   apache-index.json  ${result.directories} dirs / ${result.files} files` +

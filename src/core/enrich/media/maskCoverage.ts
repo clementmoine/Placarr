@@ -30,9 +30,7 @@ export function applyMaskCoverage(
     const g = pixels[i + 1]!;
     const b = pixels[i + 2]!;
     if (kind === "foil") {
-      const coverage = Math.round(
-        Math.min(255, Math.max(0, lumaOf(r, g, b))),
-      );
+      const coverage = Math.round(Math.min(255, Math.max(0, lumaOf(r, g, b))));
       pixels[i] = coverage;
       pixels[i + 1] = coverage;
       pixels[i + 2] = coverage;

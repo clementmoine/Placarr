@@ -83,8 +83,10 @@ describe("pokemon materials shared motifs", () => {
     const m = paperMaterial("SunPillar")!;
     expect(m.textures._Tex_CC?.file).toContain("FX_T_Northern_Cross");
     expect(m.floats._UseCCFoil).toBe(0);
-    expect(paperMaterial("SunPillar", { foilMask: "CastAndCure" })!.floats
-      ._UseCCFoil).toBe(1);
+    expect(
+      paperMaterial("SunPillar", { foilMask: "CastAndCure" })!.floats
+        ._UseCCFoil,
+    ).toBe(1);
   });
 
   it("CastAndCure: même référence material (évite remount WebGL / clignotement)", () => {
@@ -102,9 +104,9 @@ describe("pokemon materials shared motifs", () => {
     expect(paperMaterial("FlatSilver_CC")!.textures._Tex_CC?.file).toContain(
       "TEX_CC_PB",
     );
-    expect(paperMaterial("Rainbow02")!.textures._SpectrumTexture?.file).toContain(
-      "FX_T_Spectrum.webp",
-    );
+    expect(
+      paperMaterial("Rainbow02")!.textures._SpectrumTexture?.file,
+    ).toContain("FX_T_Spectrum.webp");
   });
 
   it("SvHolo / SvUltraScodix: samplers HLSLcc anonymes reliés", () => {
@@ -131,8 +133,7 @@ describe("applyLiveFoilMask", () => {
     expect(base.textures._Tex_CC).toBeUndefined();
     expect(base.floats._UseCCFoil).toBe(1);
     expect(
-      applyLiveFoilMask(base, "ReverseLaminatePokeBall").textures._Tex_CC
-        ?.file,
+      applyLiveFoilMask(base, "ReverseLaminatePokeBall").textures._Tex_CC?.file,
     ).toContain("TEX_CC_PB");
     expect(
       applyLiveFoilMask(base, "ReverseLaminateMasterBall").textures._Tex_CC

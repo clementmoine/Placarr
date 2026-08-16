@@ -104,8 +104,7 @@ export function classifyCdn403Body(body: string): Cdn403Kind {
 }
 
 const SETNUM_RE = /^([a-z0-9.-]+)_(\d+)$/i;
-const BUNDLE_RE =
-  /^([a-z0-9.-]+)_([a-z]{2,4})_(\d+)(_[a-z])?$/i;
+const BUNDLE_RE = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d+)(_[a-z])?$/i;
 
 /** longFormID: ``Name_set_num_<variant>_Rarity_Foil_Mask`` */
 const LONG_FORM_SETNUM_RE =
@@ -211,11 +210,11 @@ export function bundleUrl(
 ): string {
   const version = opts.version ?? DEFAULT_VERSION;
   const contentDir = opts.contentDir ?? DEFAULT_CONTENT_DIR;
-  const base = (opts.contentBase?.trim()
+  const base = opts.contentBase?.trim()
     ? opts.contentBase.trim().endsWith("/")
       ? opts.contentBase.trim()
       : `${opts.contentBase.trim()}/`
-    : `${CDN_HOST}/rainier/Content/Android/${version}/`);
+    : `${CDN_HOST}/rainier/Content/Android/${version}/`;
   return `${base}${contentDir}/${name}`;
 }
 
@@ -225,10 +224,7 @@ export function bundleUrl(
  * ``_t`` is the **thumbnail**, not a foil variant: 22 KB against 188 KB for the
  * same card. Only probe it when thumbnails are actually wanted.
  */
-export function setnumToBundleNames(
-  setnum: string,
-  lang = "fr",
-): string[] {
+export function setnumToBundleNames(setnum: string, lang = "fr"): string[] {
   const trimmed = setnum.trim();
   const m = SETNUM_RE.exec(trimmed);
   if (!m) {
@@ -311,7 +307,10 @@ export async function headBundle(
       headers: { "User-Agent": DEFAULT_UA },
       signal: AbortSignal.timeout(timeoutS * 1000),
     });
-    const length = Number.parseInt(res.headers.get("content-length") || "0", 10);
+    const length = Number.parseInt(
+      res.headers.get("content-length") || "0",
+      10,
+    );
     const len = Number.isFinite(length) ? length : 0;
     if (res.status !== 403) return [res.status, len];
 
@@ -724,7 +723,9 @@ export function collectApkSetnumPairs(configCache: string): ApkSetnumInventory {
       for (const clientId of Object.keys(keys)) {
         const m = COMPENDIUM_SETNUM_RE.exec(String(clientId));
         if (!m) continue;
-        fromCompendium.add(pairKey(m[1]!.toLowerCase(), Number.parseInt(m[2]!, 10)));
+        fromCompendium.add(
+          pairKey(m[1]!.toLowerCase(), Number.parseInt(m[2]!, 10)),
+        );
       }
     } catch {
       /* skip bad file */
@@ -803,7 +804,9 @@ async function runPool<T, R>(
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(n, items.length || 1) }, () => runner()));
+  await Promise.all(
+    Array.from({ length: Math.min(n, items.length || 1) }, () => runner()),
+  );
   return results;
 }
 
@@ -1091,8 +1094,7 @@ export async function scrape(
         }
 
         const blocked =
-          res.softBan === true ||
-          res.error === "cloudfront-request-blocked";
+          res.softBan === true || res.error === "cloudfront-request-blocked";
 
         if (blocked) {
           softbanStreak += 1;
@@ -1168,10 +1170,7 @@ export async function scrape(
       const status = res.status;
       let logFail = false;
       if (!ok) {
-        if (
-          (status === 403 || status === 404) &&
-          res.softBan === false
-        ) {
+        if ((status === 403 || status === 404) && res.softBan === false) {
           missLogged += 1;
           logFail = missLogged <= 3 || missLogged % 100 === 0;
         } else {
@@ -1380,7 +1379,9 @@ function parseCli(argv: string[]): CliArgs {
       i = ni + 1;
     } else if (a === "--names" || a.startsWith("--names=")) {
       if (a.startsWith("--names=") && a.length > "--names=".length) {
-        args.names.push(...a.slice("--names=".length).split(/\s+/).filter(Boolean));
+        args.names.push(
+          ...a.slice("--names=".length).split(/\s+/).filter(Boolean),
+        );
         i += 1;
       } else {
         i += 1;
@@ -1551,7 +1552,9 @@ export async function main(argv: string[] | null = null): Promise<number> {
     console.error("No bundle names to scrape.");
     return 2;
   }
-  console.log(`Scraping ${names.length} bundle(s) langs=${langs.join(",")} → ${out}`);
+  console.log(
+    `Scraping ${names.length} bundle(s) langs=${langs.join(",")} → ${out}`,
+  );
 
   /*
     Resolve the content root before the first GET, unless the caller pinned one.

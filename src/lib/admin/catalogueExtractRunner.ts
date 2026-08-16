@@ -273,9 +273,8 @@ export async function runCatalogueExtractCommand(
     catalogueExtractTimeoutMs(target, options.scope ?? "inventory");
   const root = repoRoot();
 
-  const { appendCatalogueExtractLog, beginCatalogueExtractLog } = await import(
-    "@/lib/admin/catalogueExtractLog"
-  );
+  const { appendCatalogueExtractLog, beginCatalogueExtractLog } =
+    await import("@/lib/admin/catalogueExtractLog");
   await beginCatalogueExtractLog(target, options.logHeader ?? []);
 
   // Serialize disk writes so rapid lines are not interleaved / dropped.
@@ -375,9 +374,8 @@ export async function runCatalogueExtractCommand(
       });
     });
     if (target === "pokemon") {
-      const { invalidatePokemonFoilNamesCache } = await import(
-        "@/effects/pokemon/foilNames"
-      );
+      const { invalidatePokemonFoilNamesCache } =
+        await import("@/effects/pokemon/foilNames");
       invalidatePokemonFoilNamesCache();
     }
     onLog("── done");

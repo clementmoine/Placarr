@@ -36,7 +36,9 @@ describe("pokemon CSS foil fallback", () => {
     );
     // Catalogue finishes: vendored simey regular/reverse holo (not house gradients).
     expect(resolveCssRecipe("holo", null).finishShaderId).toBe("regularHolo");
-    expect(resolveCssRecipe("live-ph", null).finishShaderId).toBe("reverseHolo");
+    expect(resolveCssRecipe("live-ph", null).finishShaderId).toBe(
+      "reverseHolo",
+    );
   });
 
   it("keeps sheet aliases on their own recipe rather than their frag stem", () => {
@@ -60,9 +62,9 @@ describe("pokemon CSS foil fallback", () => {
   });
 
   it("remaps Live foil_mask the same way WebGL toggles CC / laminate", () => {
-    expect(
-      resolveCssRecipe("SunPillar", null).finishShaderId,
-    ).toBe("sunPillar");
+    expect(resolveCssRecipe("SunPillar", null).finishShaderId).toBe(
+      "sunPillar",
+    );
     expect(
       resolveCssRecipe("SunPillar", null, { foilMask: "CastAndCure" })
         .finishShaderId,
@@ -178,9 +180,7 @@ describe("pokemon CSS foil fallback", () => {
         css.finishShaderId !== "ultraScodix" &&
         css.finishShaderId !== "swSecret" &&
         css.finishShaderId !== "secretRare";
-      expect(css.varnishShaderId, finish).toBe(
-        expectHouseEtch ? "etch" : null,
-      );
+      expect(css.varnishShaderId, finish).toBe(expectHouseEtch ? "etch" : null);
     }
   });
 });
@@ -438,7 +438,9 @@ describe("simey catalogue foils", () => {
   it("ships regularHolo / reverseHolo from the vendored poke-holo recipes", () => {
     const holo = holoShader("regularHolo")!;
     expect(holo.mixBlendMode).toBe("color-dodge");
-    expect(holo.backgroundImage).toMatch(/repeating-linear-gradient\(\s*110deg/);
+    expect(holo.backgroundImage).toMatch(
+      /repeating-linear-gradient\(\s*110deg/,
+    );
     expect(holo.overlay).toBe("regularHoloBars");
     const reverse = holoShader("reverseHolo")!;
     expect(reverse.mixBlendMode).toBe("color-dodge");
@@ -586,7 +588,9 @@ describe("pokemon CSS opacity dose", () => {
     expect(ccGlitter.backgroundImage).toContain("FX_T_Spectrum_SVHolo2");
     expect(ccGlitter.carve?.url).toContain("FX_T_Northern_Cross");
     expect(ccGlitter.mixBlendMode).toBe("color-dodge");
-    expect(ccGlitter.opacity).toBeLessThanOrEqual(POKEMON_CSS_DODGE_OPACITY_CEILING);
+    expect(ccGlitter.opacity).toBeLessThanOrEqual(
+      POKEMON_CSS_DODGE_OPACITY_CEILING,
+    );
     expect(
       resolveCssRecipe("SunPillar", null, { foilMask: "CastAndCure" })
         .finishShaderId,
@@ -610,7 +614,9 @@ describe("pokemon CSS opacity dose", () => {
       "soft-light, soft-light, hue, hard-light",
     );
     expect(shine.mixBlendMode).toBe("color-dodge");
-    expect(shine.opacity).toBeLessThanOrEqual(POKEMON_CSS_DODGE_OPACITY_CEILING);
+    expect(shine.opacity).toBeLessThanOrEqual(
+      POKEMON_CSS_DODGE_OPACITY_CEILING,
+    );
     for (const part of shine.backgroundRepeat?.split(",") ?? []) {
       expect(part.trim()).toBe("no-repeat");
     }
@@ -627,10 +633,9 @@ describe("pokemon CSS opacity dose", () => {
       rainbow wash; FlatSilver_CC / ReverseLaminate* still need it.
     */
     for (const id of ["flatSilver", "flatSilverCoat"] as const) {
-      expect(
-        pokemonHoloShader(id).backgroundImage,
-        id,
-      ).not.toContain("SVHolo2");
+      expect(pokemonHoloShader(id).backgroundImage, id).not.toContain(
+        "SVHolo2",
+      );
     }
     expect(pokemonHoloShader("flatSilverCc").backgroundImage).toContain(
       "SVHolo2",
@@ -645,9 +650,7 @@ describe("pokemon CSS opacity dose", () => {
 
   it("matches poke-holo Radiant structure with Live etch polarity adapted", () => {
     const look = pokemonHoloShader("radiantHolo");
-    expect(look.backgroundImage).toMatch(
-      /repeating-linear-gradient\(\s*45deg/,
-    );
+    expect(look.backgroundImage).toMatch(/repeating-linear-gradient\(\s*45deg/);
     expect(look.backgroundImage).toMatch(
       /repeating-linear-gradient\(\s*-45deg/,
     );

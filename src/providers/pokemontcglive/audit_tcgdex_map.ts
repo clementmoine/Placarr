@@ -27,16 +27,16 @@ import {
   TCGDEX_TO_LIVE_SETS,
 } from "@/effects/pokemon/setAliases";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../..",
+);
 const CARDS_PATH = path.join(ROOT, "data/pokemon/cards.json");
 const REPORT_PATH = path.join(
   ROOT,
   "data/pokemon/logs/tcgdex-live-set-map.json",
 );
-const REPRINT_META_PATH = path.join(
-  ROOT,
-  "data/pokemon/reprintMeta.json",
-);
+const REPRINT_META_PATH = path.join(ROOT, "data/pokemon/reprintMeta.json");
 
 const MALIE_INDEX_URL =
   "https://cdn.malie.io/file/malie-io/tcgl/export/index.json";
@@ -114,7 +114,9 @@ function parseArgs(argv: string[]) {
     if (arg === "--malie") malie = true;
     if (arg === "--write-reprint-meta") writeReprintMeta = true;
     if (arg === "--sets" && argv[i + 1]) {
-      sets = argv[++i]!.split(",").map((s) => s.trim()).filter(Boolean);
+      sets = argv[++i]!.split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     }
   }
   return { fetchSets, malie, writeReprintMeta, sets };
@@ -275,7 +277,11 @@ async function writeReprintMetaFile(opts: {
     source: "tcgdex-fr+live-dump",
     byTcgdexSet,
   };
-  writeFileSync(REPRINT_META_PATH, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  writeFileSync(
+    REPRINT_META_PATH,
+    `${JSON.stringify(payload, null, 2)}\n`,
+    "utf8",
+  );
   return Object.keys(byTcgdexSet).length;
 }
 
@@ -350,12 +356,11 @@ async function main() {
       liveReport[stem] = {
         status: "unmapped",
         bundles,
-        hint:
-          stem.endsWith("a")
-            ? "Likely JP Character Rare — join via catalog.sqlite name (foil:pokemon:index-cards)"
-            : stem.endsWith("r")
-              ? "Radiant/reprint slice — check EN TCGdex or parent set RC ids"
-              : "No TCGdex set id resolves here yet — add alias or confirm absent",
+        hint: stem.endsWith("a")
+          ? "Likely JP Character Rare — join via catalog.sqlite name (foil:pokemon:index-cards)"
+          : stem.endsWith("r")
+            ? "Radiant/reprint slice — check EN TCGdex or parent set RC ids"
+            : "No TCGdex set id resolves here yet — add alias or confirm absent",
       };
     }
   }
@@ -431,7 +436,9 @@ async function main() {
   console.log(
     `Live dump coverage: ${mapped + nonCatalogue}/${liveStems.length} (${(
       report.liveCoverage * 100
-    ).toFixed(1)}%) — mapped=${mapped}, non-catalogue=${nonCatalogue}, UNMAPPED=${unmapped}`,
+    ).toFixed(
+      1,
+    )}%) — mapped=${mapped}, non-catalogue=${nonCatalogue}, UNMAPPED=${unmapped}`,
   );
   if (unmapped > 0) {
     console.log("Unmapped Live stems (wasted until aliased):");

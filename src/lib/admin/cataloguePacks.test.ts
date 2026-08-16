@@ -261,9 +261,8 @@ describe("same-number art fallback (Naruto)", () => {
 
 describe("mergeCatalogueBackRows", () => {
   it("puts pack back first and set backs ahead of each set", async () => {
-    const { mergeCatalogueBackRows } = await import(
-      "@/lib/admin/catalogueCards"
-    );
+    const { mergeCatalogueBackRows } =
+      await import("@/lib/admin/catalogueCards");
     const faces = [
       {
         printKey: "naruto:promo-ni001",
@@ -326,9 +325,8 @@ describe("mergeCatalogueBackRows", () => {
   });
 
   it("leaves face order unchanged when no backs exist", async () => {
-    const { mergeCatalogueBackRows } = await import(
-      "@/lib/admin/catalogueCards"
-    );
+    const { mergeCatalogueBackRows } =
+      await import("@/lib/admin/catalogueCards");
     const faces = [
       {
         printKey: "naruto:s1-ni001",

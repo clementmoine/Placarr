@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  noIntroCatalogStatus,
-  refreshNoIntroCatalog,
-} from "./pipeline";
+import { noIntroCatalogStatus, refreshNoIntroCatalog } from "./pipeline";
 
 describe("nointro catalog pipeline", () => {
   const originalDat = process.env.NOINTRO_DAT_PATH;
@@ -44,7 +41,9 @@ describe("nointro catalog pipeline", () => {
     delete process.env.NOINTRO_DAT_PACK_URL;
     process.env.NOINTRO_CACHE_DIR = "/tmp/placarr-nointro-pipeline-auto";
 
-    await expect(refreshNoIntroCatalog({ auto: true })).resolves.toBeUndefined();
+    await expect(
+      refreshNoIntroCatalog({ auto: true }),
+    ).resolves.toBeUndefined();
   });
 
   it("manual refresh still throws when unconfigured", async () => {

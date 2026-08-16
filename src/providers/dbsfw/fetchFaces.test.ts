@@ -31,7 +31,8 @@ const tile = (over: Record<string, unknown> = {}) =>
     priceDeltaText: null,
     priceDelta: null,
     imageFront: "https://static.fw.dbscards.fr/cards/en/st01/…-son-goten.webp",
-    imageBack: "https://static.fw.dbscards.fr/cards/en/st01/…-son-goten-back.webp",
+    imageBack:
+      "https://static.fw.dbscards.fr/cards/en/st01/…-son-goten-back.webp",
     ...over,
   }) as never;
 

@@ -5,8 +5,6 @@ import path from "path";
 import sharp from "sharp";
 import {
   applyMaskCoverage,
-  lumaOf,
-  normalMapCoverage,
   type MaskKind,
 } from "@/core/enrich/media/maskCoverage";
 import { uploadsDir } from "@/lib/runtimeData";
@@ -71,10 +69,7 @@ export async function bakeMask(input: Buffer, kind: MaskKind): Promise<Buffer> {
   // on zero-coverage texels for bevels — keep a 1/255 alpha so RGB survives.
   for (let index = 0; index < info.width * info.height; index += 1) {
     const dest = index * 4;
-    if (
-      out[dest + 3] === 0 &&
-      (out[dest]! | out[dest + 1]! | out[dest + 2]!)
-    ) {
+    if (out[dest + 3] === 0 && out[dest]! | out[dest + 1]! | out[dest + 2]!) {
       out[dest + 3] = 1;
     }
   }

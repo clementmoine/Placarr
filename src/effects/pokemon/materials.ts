@@ -319,11 +319,16 @@ function sheetColorsFrom(
   );
 }
 
-function motifsForLeaf(sheetName: string, fragStem: string): Record<string, string> {
+function motifsForLeaf(
+  sheetName: string,
+  fragStem: string,
+): Record<string, string> {
   const generated = loadSharedMotifs();
   return {
     ...(generated[sheetName] ?? generated[fragStem] ?? {}),
-    ...(SHARED_MOTIF_OVERRIDES[sheetName] ?? SHARED_MOTIF_OVERRIDES[fragStem] ?? {}),
+    ...(SHARED_MOTIF_OVERRIDES[sheetName] ??
+      SHARED_MOTIF_OVERRIDES[fragStem] ??
+      {}),
   };
 }
 
@@ -413,8 +418,7 @@ function baseMaterialFor(name: string): FoilMaterial | null {
   const cached = BASE_MATERIALS.get(name);
   if (cached) return cached;
 
-  const aliasFrag =
-    POKEMON_MAT_ALIASES[name as PokemonMatAliasName] ?? null;
+  const aliasFrag = POKEMON_MAT_ALIASES[name as PokemonMatAliasName] ?? null;
   if (aliasFrag) {
     const m = materialForSheet(name, aliasFrag);
     BASE_MATERIALS.set(name, m);
@@ -443,8 +447,7 @@ export function paperMaterial(
 ): FoilMaterial | null {
   const direct = baseMaterialFor(name);
   const mapped = direct ? null : foilManifestToShader(name);
-  const base =
-    direct ?? (mapped ? baseMaterialFor(mapped) : null);
+  const base = direct ?? (mapped ? baseMaterialFor(mapped) : null);
   if (!base) return null;
   const mask = (opts?.foilMask ?? "").trim();
   if (!mask || mask === "None") return base;

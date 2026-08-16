@@ -88,16 +88,15 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
 
   const topTabs = useMemo<TopTab[]>(
     () => [
-      ...franchises.map(
-        (franchise): TopTab => ({ kind: "franchise", franchise }),
-      ),
-      ...otherCorpora.map(
-        (corpus): TopTab => ({
-          kind: "corpus",
-          providerId: corpus.providerId,
-          label: corpus.label,
-        }),
-      ),
+      ...franchises.map((franchise): TopTab => ({
+        kind: "franchise",
+        franchise,
+      })),
+      ...otherCorpora.map((corpus): TopTab => ({
+        kind: "corpus",
+        providerId: corpus.providerId,
+        label: corpus.label,
+      })),
     ],
     [franchises, otherCorpora],
   );

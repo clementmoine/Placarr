@@ -5,11 +5,7 @@ vi.mock("@/lib/http/httpClient", () => ({
 }));
 
 import { httpGet } from "@/lib/http/httpClient";
-import {
-  mapTcgdexMetadata,
-  tcgdexModule,
-  toPrintCandidate,
-} from "./index";
+import { mapTcgdexMetadata, tcgdexModule, toPrintCandidate } from "./index";
 import { mapTcgdexCard } from "./fetch";
 import { pickTcgdexPlayroomSamples } from "./playroomSamples";
 
@@ -22,7 +18,11 @@ function detailPayload() {
     illustrator: "5ban Graphics",
     rarity: "Double rare",
     image: "https://assets.tcgdex.net/fr/sv/sv03.5/006",
-    set: { id: "sv03.5", name: "151", cardCount: { official: 165, total: 207 } },
+    set: {
+      id: "sv03.5",
+      name: "151",
+      cardCount: { official: 165, total: 207 },
+    },
     hp: 330,
     types: ["Feu"],
     stage: "Niveau 2",
@@ -84,24 +84,20 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     });
     expect(metadata?.title).toBe("Dracaufeu-ex");
     expect(metadata?.facts?.some((f) => f.label === "Série")).toBe(true);
-    expect(
-      metadata?.facts?.find((f) => f.label === "Série")?.value,
-    ).toBe("Écarlate et Violet");
-    expect(
-      metadata?.facts?.find((f) => f.label === "Extension")?.value,
-    ).toBe("151");
-    expect(
-      metadata?.facts?.find((f) => f.label === "Numéro")?.value,
-    ).toBe("006/165");
-    expect(
-      metadata?.facts?.find((f) => f.label === "Type")?.value,
-    ).toBe("Feu");
-    expect(
-      metadata?.facts?.find((f) => f.label === "Catégorie")?.value,
-    ).toBe("Pokémon");
-    expect(
-      metadata?.facts?.find((f) => f.label === "PV")?.value,
-    ).toBe("330");
+    expect(metadata?.facts?.find((f) => f.label === "Série")?.value).toBe(
+      "Écarlate et Violet",
+    );
+    expect(metadata?.facts?.find((f) => f.label === "Extension")?.value).toBe(
+      "151",
+    );
+    expect(metadata?.facts?.find((f) => f.label === "Numéro")?.value).toBe(
+      "006/165",
+    );
+    expect(metadata?.facts?.find((f) => f.label === "Type")?.value).toBe("Feu");
+    expect(metadata?.facts?.find((f) => f.label === "Catégorie")?.value).toBe(
+      "Pokémon",
+    );
+    expect(metadata?.facts?.find((f) => f.label === "PV")?.value).toBe("330");
     expect(metadata?.externalIds?.tcgdex).toBe("sv03.5-006");
     expect(metadata?.externalIds?.printKey).toBe("pokemon:sv03.5-006");
     expect(metadata?.attachments?.some((a) => a.role === "tcgdex-scan")).toBe(
@@ -110,9 +106,9 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     expect(metadata?.attachments?.some((a) => a.role === "tcglive-front")).toBe(
       false,
     );
-    expect(
-      metadata?.attachments?.every((a) => a.source === "tcgdex"),
-    ).toBe(true);
+    expect(metadata?.attachments?.every((a) => a.source === "tcgdex")).toBe(
+      true,
+    );
   });
 
   it("keeps TCGdex low.webp as picker thumb when Live art is absent", () => {

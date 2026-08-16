@@ -63,7 +63,10 @@ export function liveFoilMaskForBundle(
   const laminates: string[] = [];
   for (const v of ["mph", "sph"] as const) {
     const mask = liveFoilMasksMap()[`${stem}::${v}`];
-    if (mask === "ReverseLaminateMasterBall" || mask === "ReverseLaminatePokeBall") {
+    if (
+      mask === "ReverseLaminateMasterBall" ||
+      mask === "ReverseLaminatePokeBall"
+    ) {
       if (!laminates.includes(mask)) laminates.push(mask);
     }
   }
@@ -91,6 +94,8 @@ export function liveLaminatePreferForBundle(
 }
 
 /** True when a Live foil_mask changes CC / laminate uniforms. */
-export function isLiveFoilMaskOverride(mask: string | null | undefined): boolean {
+export function isLiveFoilMaskOverride(
+  mask: string | null | undefined,
+): boolean {
   return Boolean(mask && OVERRIDE_MASKS.has(mask));
 }

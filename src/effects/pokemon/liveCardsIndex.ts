@@ -15,10 +15,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import { dataRoot } from "@/lib/runtimeData";
 
-import {
-  installLiveCardsLookups,
-  type LiveCardRow,
-} from "./liveCardsLookups";
+import { installLiveCardsLookups, type LiveCardRow } from "./liveCardsLookups";
 
 export type { LiveCardRow } from "./liveCardsLookups";
 
@@ -117,8 +114,7 @@ export function lookupByBundle(
          WHERE bundle_stem = ? AND variant = ? LIMIT 1`,
       )
       .get(stem, opts.variant.trim().toLowerCase()) as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     return mapRow(row);
   }
   // Prefer std, then any variant for the bundle.
@@ -142,7 +138,9 @@ export function lookupBySetNum(
   if (!db) return null;
   const set = liveSet.trim().toLowerCase();
   const n =
-    typeof num === "number" ? num : Number.parseInt(String(num).replace(/\D/g, ""), 10);
+    typeof num === "number"
+      ? num
+      : Number.parseInt(String(num).replace(/\D/g, ""), 10);
   if (!set || !Number.isFinite(n)) return null;
   const lang = (opts?.lang ?? "fr").trim().toLowerCase() || "fr";
   const variant = opts?.variant?.trim().toLowerCase();
@@ -190,7 +188,9 @@ export function lookupByName(
   const name = cardName.trim();
   if (!name || liveSets.length === 0) return null;
   const lang = (opts?.lang ?? "fr").trim().toLowerCase() || "fr";
-  const sets = [...new Set(liveSets.map((s) => s.trim().toLowerCase()).filter(Boolean))];
+  const sets = [
+    ...new Set(liveSets.map((s) => s.trim().toLowerCase()).filter(Boolean)),
+  ];
   if (sets.length === 0) return null;
 
   const placeholders = sets.map(() => "?").join(", ");

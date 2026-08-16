@@ -112,12 +112,8 @@ type NavdGotoBody = {
  */
 export type LiveNavPrefer = "" | "ph" | "mph" | "sph" | "holo" | "maxOwned";
 
-
 /** Warm-path RPC — no python3 spawn, reuses navd attach. */
-function navdGoto(
-  bundleId: string,
-  prefer: LiveNavPrefer,
-): FridaGotoResult {
+function navdGoto(bundleId: string, prefer: LiveNavPrefer): FridaGotoResult {
   const payload = JSON.stringify({
     method: "goto",
     args: [bundleId, prefer || ""],

@@ -53,11 +53,7 @@ import {
   type DbsFwFaceSource,
   type DbsFwStoredFace,
 } from "./faceChoice";
-import {
-  DBS_FW_PACK_ID,
-  dbsFwCardFolder,
-  loadDbsFwIndex,
-} from "./indexStore";
+import { DBS_FW_PACK_ID, dbsFwCardFolder, loadDbsFwIndex } from "./indexStore";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -154,10 +150,12 @@ async function downloadFace(url: string): Promise<Download> {
     });
     const buf = res.data;
     // A body too small to be an image is an error page wearing a `.webp` name.
-    if (!buf || buf.byteLength < MIN_WEBP_BYTES) return { buf: null, throttled: false };
+    if (!buf || buf.byteLength < MIN_WEBP_BYTES)
+      return { buf: null, throttled: false };
     return { buf: Buffer.from(buf), throttled: false };
   } catch (error) {
-    const status = (error as { response?: { status?: number } })?.response?.status;
+    const status = (error as { response?: { status?: number } })?.response
+      ?.status;
     return { buf: null, throttled: isSoftbanStatus(status) };
   }
 }
@@ -298,7 +296,9 @@ export async function fetchDbsFwFaces(
                 reason: "fw.dbscards.fr a refusé 20 requêtes d'affilée",
                 name: SOFTBAN_LEDGER,
               });
-              console.warn("── fw faces : hôte fermé, arrêt et refroidissement");
+              console.warn(
+                "── fw faces : hôte fermé, arrêt et refroidissement",
+              );
               return stats;
             }
             continue;

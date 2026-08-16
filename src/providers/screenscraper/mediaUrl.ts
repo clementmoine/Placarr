@@ -118,8 +118,7 @@ export function parseScreenScraperMediaUrl(url: string): {
 export function screenScraperAttachmentFromMediaUrl(
   url: string,
 ):
-  | (ScreenScraperMediaAttachmentSemantics & { source: "screenscraper" })
-  | null {
+  (ScreenScraperMediaAttachmentSemantics & { source: "screenscraper" }) | null {
   const parsed = parseScreenScraperMediaUrl(url);
   if (!parsed?.mediaType) return null;
 

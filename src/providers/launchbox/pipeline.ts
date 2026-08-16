@@ -6,10 +6,7 @@ import type {
   ProviderCatalogStatus,
 } from "@/types/providerModule";
 
-import {
-  buildLaunchBoxIndex,
-  getLaunchBoxIndexPath,
-} from "./indexStore";
+import { buildLaunchBoxIndex, getLaunchBoxIndexPath } from "./indexStore";
 
 export async function refreshLaunchBoxCatalog(
   _opts?: ProviderCatalogRefreshOpts,

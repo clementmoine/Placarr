@@ -4,7 +4,10 @@ export function isAbortError(error: unknown): boolean {
   if (error instanceof Error && error.name === "AbortError") return true;
   // undici / Next when the client disconnects mid-flight
   if (error instanceof Error && error.name === "ResponseAborted") return true;
-  if (error instanceof Error && /request aborted|response aborted/i.test(error.message)) {
+  if (
+    error instanceof Error &&
+    /request aborted|response aborted/i.test(error.message)
+  ) {
     return true;
   }
   if (typeof error === "object" && error !== null) {

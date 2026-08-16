@@ -19,9 +19,11 @@ import {
   paperMaterial,
   parsePaperMaterialName,
   listPokemonMaterialNames,
-  POKEMON_MATERIAL_NAMES,
 } from "./materials";
-import { playroomArtForMaterial, listPlayroomArtsForMaterial } from "./playroomArt";
+import {
+  playroomArtForMaterial,
+  listPlayroomArtsForMaterial,
+} from "./playroomArt";
 import {
   resolveEffectForPaperCard,
   resolveEffectForPrintKey,
@@ -34,10 +36,7 @@ export const POKEMON_CARD_BACK_URL = `${POKEMON_ASSET_BASE}/cards/back.webp`;
 /** Opaque white when a HoloFoil material needs a mask and none is dumped yet. */
 export const POKEMON_FULL_FOIL_MASK_URL = `${POKEMON_ASSET_BASE}/full_foil_mask.webp`;
 
-export {
-  foilManifestToShader,
-  POKEMON_FOIL_NAMES,
-} from "./foilNames";
+export { foilManifestToShader, POKEMON_FOIL_NAMES } from "./foilNames";
 export {
   applyLiveFoilMask,
   listPokemonMaterialNames,
@@ -68,10 +67,7 @@ export {
   isLiveSyntheticFinish,
   unreachableLiveKeys,
 } from "./liveFinishVariants";
-export {
-  joinLiveForPrint,
-  type LiveJoinResult,
-} from "./liveJoin";
+export { joinLiveForPrint, type LiveJoinResult } from "./liveJoin";
 export {
   lookupByBundle,
   lookupByName,
@@ -95,10 +91,7 @@ export {
   liveSetCandidatesFromTcgdexSet,
   mechanicalReprintFallbackStems,
 } from "./liveSetId";
-export {
-  listReprintMetaSets,
-  reprintMetaForTcgdexSet,
-} from "./reprintMeta";
+export { listReprintMetaSets, reprintMetaForTcgdexSet } from "./reprintMeta";
 export {
   playroomArtForMaterial,
   listPlayroomArtsForMaterial,
@@ -125,10 +118,7 @@ function foilMaskForBundle(
   return isLiveFoilMaskOverride(mask) ? mask : null;
 }
 
-function materialFromName(
-  name: string,
-  opts?: { foilMask?: string | null },
-) {
+function materialFromName(name: string, opts?: { foilMask?: string | null }) {
   const direct = paperMaterial(name, opts);
   if (direct) return direct;
   const resolved = resolveEffectForPaperCard({ bundleId: name });

@@ -127,8 +127,7 @@ describe("cardDatabase", () => {
           "SELECT bundle_stem, name_fr, variant FROM live_cards WHERE name_en=?",
         )
         .get("Pineco") as
-        | { bundle_stem: string; name_fr: string; variant: string }
-        | undefined;
+        { bundle_stem: string; name_fr: string; variant: string } | undefined;
       expect(hit?.bundle_stem).toBe("sv1_fr_001");
       expect(hit?.name_fr).toBe("Pomdepik");
       expect(hit?.variant).toBe("ph");
@@ -220,8 +219,7 @@ describe("cardDatabase", () => {
           "SELECT bundle_id, variant, shader FROM card_foil WHERE bundle_id=?",
         )
         .get("sv1_fr_001") as
-        | { bundle_id: string; variant: string; shader: string }
-        | undefined;
+        { bundle_id: string; variant: string; shader: string } | undefined;
       expect(foil).toEqual({
         bundle_id: "sv1_fr_001",
         variant: "ph",

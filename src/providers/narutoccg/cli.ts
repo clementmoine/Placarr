@@ -100,9 +100,7 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     else if (locale === "jap" || locale === "ja" || locale === "jp")
       await scrapeNarutoJpCards(shared);
     else {
-      throw new Error(
-        `Unknown --locale ${locale} (expected fr | en | jap).`,
-      );
+      throw new Error(`Unknown --locale ${locale} (expected fr | en | jap).`);
     }
   }
 }

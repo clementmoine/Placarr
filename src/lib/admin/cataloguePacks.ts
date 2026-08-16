@@ -23,11 +23,7 @@ export type CatalogueBrowseScope = "foils" | "all";
  * later (`naruto-panini`) without breaking existing jobs.
  */
 export type CatalogueExtractTarget =
-  | "lorcana"
-  | "pokemon"
-  | "naruto"
-  | "dbs-cg"
-  | "dbs-fw";
+  "lorcana" | "pokemon" | "naruto" | "dbs-cg" | "dbs-fw";
 
 export type CatalogueFranchiseId = "pokemon" | "lorcana" | "naruto" | "dbs";
 

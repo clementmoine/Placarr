@@ -55,10 +55,7 @@ export type HoloShader = {
    * thing `cssGuard` exists to forbid, arriving by a path it could not see.
    */
   id:
-    | HoloShaderId
-    | HouseHoloShaderId
-    | PokemonHoloShaderId
-    | SimeyHoloShaderId;
+    HoloShaderId | HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
   /** Comma-separated `background-image` layers. */
   backgroundImage: string;
   backgroundRepeat: string;
@@ -83,10 +80,7 @@ export type HoloShader = {
     multiply for the depth — because no single blend does all three.
   */
   overlay?:
-    | HoloShaderId
-    | HouseHoloShaderId
-    | PokemonHoloShaderId
-    | SimeyHoloShaderId;
+    HoloShaderId | HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
   /**
    * A repeating pattern that **cuts** this finish into shapes, rather than
    * being painted with it.
@@ -552,9 +546,7 @@ export const FOIL_POINTER_LIGHT_MASK: MaskLayer = {
 
 export function maskedByStyle(
   maskUrl:
-    | string
-    | MaskLayer
-    | readonly (string | MaskLayer | null | undefined)[],
+    string | MaskLayer | readonly (string | MaskLayer | null | undefined)[],
 ): CSSProperties {
   /*
    * Several masks intersect rather than stack.

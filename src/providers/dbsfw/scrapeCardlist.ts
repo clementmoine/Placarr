@@ -30,7 +30,6 @@ import {
   type DbsFwTitleRow,
 } from "./indexStore";
 
-const LANG = "en";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const HEADERS = {
@@ -91,7 +90,10 @@ function rowsFromCards(
   return { prints, titles, assets };
 }
 
-async function fetchHtml(url: string, referer = DBS_FW_INDEX_URL): Promise<string> {
+async function fetchHtml(
+  url: string,
+  referer = DBS_FW_INDEX_URL,
+): Promise<string> {
   const response = await httpGet<string>(url, {
     headers: { ...HEADERS, Referer: referer },
     timeout: SEARCH_TIMEOUT_MS,
@@ -114,9 +116,7 @@ export async function scrapeDbsFwCardlist(
     the locales merge on `printKey` and differ only in their title and asset
     rows.
   */
-  const locales = opts.locales?.length
-    ? opts.locales
-    : DBS_FW_DEFAULT_LOCALES;
+  const locales = opts.locales?.length ? opts.locales : DBS_FW_DEFAULT_LOCALES;
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
 
   const prints = new Map<string, DbsFwPrintRow>();

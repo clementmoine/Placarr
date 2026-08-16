@@ -40,8 +40,7 @@ describe("dumpWeb", () => {
   });
 
   it("discoverCssPaths finds routes/index sheets", () => {
-    const html =
-      '<link rel="stylesheet" href="/assets/routes-DdJjns6d.css">';
+    const html = '<link rel="stylesheet" href="/assets/routes-DdJjns6d.css">';
     expect(discoverCssPaths(html)).toEqual(["/assets/routes-DdJjns6d.css"]);
   });
 });

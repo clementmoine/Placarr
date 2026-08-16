@@ -73,7 +73,10 @@ describe("mapLorcanaMetadata language variants", () => {
     const mapped = mapLorcanaMetadata(en, [en]);
     expect(mapped?.imageUrl).toBe("https://example.test/en-tempest.jpg");
     expect(mapped?.attachments?.filter((row) => row.type === "cover")).toEqual([
-      expect.objectContaining({ role: "en", url: "https://example.test/en-tempest.jpg" }),
+      expect.objectContaining({
+        role: "en",
+        url: "https://example.test/en-tempest.jpg",
+      }),
     ]);
   });
 });
@@ -154,8 +157,9 @@ describe("toPrintCandidate finishes", () => {
         faceQuarterTurns: 1,
       });
     }
-    expect(toPrintCandidate(card({ cardType: "Personnage" })).faceQuarterTurns)
-      .toBeUndefined();
+    expect(
+      toPrintCandidate(card({ cardType: "Personnage" })).faceQuarterTurns,
+    ).toBeUndefined();
     expect(toPrintCandidate(card({ cardType: "Character" })).category).toBe(
       "Character",
     );

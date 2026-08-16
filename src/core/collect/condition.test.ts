@@ -78,10 +78,7 @@ describe("item conditions", () => {
         "used",
         "tcg",
         {
-          priceObservations: [
-            { condition: "new" },
-            { condition: "foil" },
-          ],
+          priceObservations: [{ condition: "new" }, { condition: "foil" }],
         },
         { variant: "Lore", plainFinishes: ["None"] },
       ),

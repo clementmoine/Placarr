@@ -653,9 +653,7 @@ describe("looking a print up across languages", () => {
       "Ariel - Sur des jambes humaines",
     );
     // Same provider id must not appear twice (FR + EN).
-    expect(
-      preferred.filter((card) => card.providerId === "1"),
-    ).toHaveLength(1);
+    expect(preferred.filter((card) => card.providerId === "1")).toHaveLength(1);
 
     const onlyEnglish = await searchLorcanaCards("tempest print", {
       language: "fr",

@@ -6,10 +6,7 @@ vi.mock("@/lib/http/httpClient", () => ({
   httpGet: (...args: unknown[]) => httpGet(...args),
 }));
 
-import {
-  __resetTcgdexSetSerieCacheForTests,
-  tcgdexSetSerie,
-} from "./setMeta";
+import { __resetTcgdexSetSerieCacheForTests, tcgdexSetSerie } from "./setMeta";
 
 describe("tcgdexSetSerie", () => {
   beforeEach(() => {

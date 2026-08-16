@@ -181,7 +181,9 @@ describe("planCroppedCoverAttachmentSync", () => {
         "/uploads/new-local_edited.jpg",
         "/uploads/cover-a_edited.jpg",
       ),
-    ).toEqual([{ action: "create-user", url: "/uploads/new-local_edited.jpg" }]);
+    ).toEqual([
+      { action: "create-user", url: "/uploads/new-local_edited.jpg" },
+    ]);
   });
 
   it("only updates the matching provider row when re-cropping the same cover", () => {

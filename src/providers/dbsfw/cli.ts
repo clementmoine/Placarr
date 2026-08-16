@@ -9,9 +9,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import {
-  DBSCARDS_SITES,
-} from "@/providers/shared/dbscards/list";
+import { DBSCARDS_SITES } from "@/providers/shared/dbscards/list";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
 
 import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./fetchFaces";
@@ -87,7 +85,9 @@ export async function runDbsFwPackPipeline(
             : undefined,
           onProgress: (page, total) => {
             if (page % 20 === 0) {
-              console.log(`   dbscards fw ${lang} — page ${page}, ${total} cartes`);
+              console.log(
+                `   dbscards fw ${lang} — page ${page}, ${total} cartes`,
+              );
             }
           },
         });

@@ -7,7 +7,10 @@
  *   pnpm nointro:update
  *   pnpm nointro:update -- --enqueue   # catalog worker job (visible in app)
  */
-import { enqueueBackgroundWorkJob, BACKGROUND_WORK_KIND } from "@/core/collect/jobs/workQueue";
+import {
+  enqueueBackgroundWorkJob,
+  BACKGROUND_WORK_KIND,
+} from "@/core/collect/jobs/workQueue";
 import { buildNoIntroIndex } from "@/providers/nointro/indexStore";
 
 async function main() {
@@ -31,18 +34,15 @@ async function main() {
 
   const gameCount = (
     db.prepare("SELECT COUNT(*) AS count FROM games").get() as
-      | { count?: number }
-      | undefined
+      { count?: number } | undefined
   )?.count;
   const romCount = (
     db.prepare("SELECT COUNT(*) AS count FROM roms").get() as
-      | { count?: number }
-      | undefined
+      { count?: number } | undefined
   )?.count;
   const datCount = (
     db.prepare("SELECT COUNT(DISTINCT datName) AS count FROM games").get() as
-      | { count?: number }
-      | undefined
+      { count?: number } | undefined
   )?.count;
   console.log(
     `No-Intro index ready (${typeof gameCount === "number" ? gameCount : "?"} games, ${typeof romCount === "number" ? romCount : "?"} roms, ${typeof datCount === "number" ? datCount : "?"} DAT set(s)).`,

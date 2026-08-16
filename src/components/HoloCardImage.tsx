@@ -190,8 +190,7 @@ export function HoloCardImage({
   const isSwSecretCss = shader?.id === "swSecret";
   /** Catalogue leftover — same full-card / raw-etch rules as SwSecret. */
   const isSecretRareCss = shader?.id === "secretRare";
-  const isLiveGoldCss =
-    isUltraGoldCss || isSwSecretCss || isSecretRareCss;
+  const isLiveGoldCss = isUltraGoldCss || isSwSecretCss || isSecretRareCss;
   /**
    * Radiant CSS = Live etch invert + lattice unmasked.
    *
@@ -208,8 +207,7 @@ export function HoloCardImage({
     isRadiantCss ? varnishMaskUrl : null,
   );
   /** Ultra Gold etch fingerprint — same-origin Live etch URL (no invert). */
-  const goldEtchPaint =
-    isLiveGoldCss && varnishMaskUrl ? varnishMaskUrl : null;
+  const goldEtchPaint = isLiveGoldCss && varnishMaskUrl ? varnishMaskUrl : null;
   const etchCssPaint = isLiveGoldCss ? goldEtchPaint : foilEtchPaint;
   /**
    * Inverted etch as Safari foil mask: `useMaskBlob` writes luma→alpha on the
@@ -225,8 +223,8 @@ export function HoloCardImage({
     trackPointer &&
       Boolean(
         liveWpMaskUrl ||
-          ((isRadiantCss || isLiveGoldCss) && varnishMaskUrl) ||
-          (!isRadiantCss && !isLiveGoldCss && maskUrl),
+        ((isRadiantCss || isLiveGoldCss) && varnishMaskUrl) ||
+        (!isRadiantCss && !isLiveGoldCss && maskUrl),
       ),
   ).lean;
 
@@ -256,10 +254,10 @@ export function HoloCardImage({
    */
   const wantsFoil = Boolean(
     (shader || varnishShader) &&
-      (isLiveGoldCss ||
-        liveWpMaskUrl ||
-        (isRadiantCss && varnishMaskUrl) ||
-        (!isRadiantCss && maskUrl)),
+    (isLiveGoldCss ||
+      liveWpMaskUrl ||
+      (isRadiantCss && varnishMaskUrl) ||
+      (!isRadiantCss && maskUrl)),
   );
   const faceReady = foilFaceReady({
     artReady,
@@ -479,9 +477,7 @@ export function HoloCardImage({
             once so the coat can keep upstream's stack: foil on top of the
             pastel rainbow, `hard-light`, one `color-dodge`.
           */
-          ...(etchCssPaint
-            ? { "--foil-etch": `url("${etchCssPaint}")` }
-            : {}),
+          ...(etchCssPaint ? { "--foil-etch": `url("${etchCssPaint}")` } : {}),
         } as React.CSSProperties
       }
       className={cn(
@@ -613,25 +609,27 @@ export function HoloCardImage({
           here — coats carry the stencil, not the base shine.
         */}
               {overlayLooks
-                .filter((look) => !(isRadiantCss && look.id === "radiantHoloCoat"))
+                .filter(
+                  (look) => !(isRadiantCss && look.id === "radiantHoloCoat"),
+                )
                 .map((overlayLook) => (
-                <div
-                  key={overlayLook.id}
-                  aria-hidden
-                  style={{
-                    ...holoLayerStyle(overlayLook, tuning),
-                    ...maskedByStyle([
-                      shineMask,
-                      foilPlate,
-                      overlayLook.carve,
-                      overlayLook.pointerFalloff === false
-                        ? null
-                        : FOIL_POINTER_LIGHT_MASK,
-                    ]),
-                  }}
-                  className="pointer-events-none absolute inset-0"
-                />
-              ))}
+                  <div
+                    key={overlayLook.id}
+                    aria-hidden
+                    style={{
+                      ...holoLayerStyle(overlayLook, tuning),
+                      ...maskedByStyle([
+                        shineMask,
+                        foilPlate,
+                        overlayLook.carve,
+                        overlayLook.pointerFalloff === false
+                          ? null
+                          : FOIL_POINTER_LIGHT_MASK,
+                      ]),
+                    }}
+                    className="pointer-events-none absolute inset-0"
+                  />
+                ))}
 
               {varnishMask && varnishShader && (
                 <div

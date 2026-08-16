@@ -531,9 +531,9 @@ export function ItemModal({
 
   const hasCoverTab = Boolean(
     item ||
-      fetchedMetadata ||
-      prefilledValues?.imageUrl ||
-      prefilledValues?.barcode,
+    fetchedMetadata ||
+    prefilledValues?.imageUrl ||
+    prefilledValues?.barcode,
   );
   /**
    * When the crop on screen was applied. Re-cropping overwrites the same

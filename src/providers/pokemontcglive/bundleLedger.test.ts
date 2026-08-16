@@ -27,7 +27,9 @@ afterEach(() => {
 describe("bundleLedger", () => {
   it("round_trips_through_gzip", () => {
     const ledger = emptyBundleLedger();
-    recordBundleVersion(ledger, "XY8_FR_012", "abc123", { bucket: "10101_0000" });
+    recordBundleVersion(ledger, "XY8_FR_012", "abc123", {
+      bucket: "10101_0000",
+    });
     saveBundleLedger(root, ledger);
 
     const back = loadBundleLedger(root);

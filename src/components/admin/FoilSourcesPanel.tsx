@@ -275,9 +275,8 @@ export function FoilPackSources({
   const runExtract = async (scope?: CatalogueExtractScope) => {
     setEnqueueing(true);
     try {
-      const { enqueueCatalogueExtract } = await import(
-        "@/lib/client/catalogueExtract"
-      );
+      const { enqueueCatalogueExtract } =
+        await import("@/lib/client/catalogueExtract");
       // Pokémon: catalogue = AssetManifests CDN (authoritative). Inventory is
       // only APK∪Malie — used by auto-sync, not the admin button.
       const effective =

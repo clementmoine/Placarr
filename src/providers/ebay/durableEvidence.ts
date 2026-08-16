@@ -64,8 +64,8 @@ function isEbayBrowseSearchUrl(url: string): boolean {
     if (!parsed.pathname.includes("/item_summary/search")) return false;
     return Boolean(
       parsed.searchParams.get("gtin")?.trim() ||
-        parsed.searchParams.get("q")?.trim() ||
-        parsed.searchParams.get("epid")?.trim(),
+      parsed.searchParams.get("q")?.trim() ||
+      parsed.searchParams.get("epid")?.trim(),
     );
   } catch {
     return (

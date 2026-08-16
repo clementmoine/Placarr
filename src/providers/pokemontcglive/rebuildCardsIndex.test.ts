@@ -44,7 +44,9 @@ describe("rebuildPokemonCardsIndex", () => {
   });
 
   it("soft-skips when cards/ is missing", () => {
-    const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-poke-index-empty-"));
+    const tmp = mkdtempSync(
+      path.join(os.tmpdir(), "placarr-poke-index-empty-"),
+    );
     process.env.PLACARR_DATA_DIR = tmp;
     const result = rebuildPokemonCardsIndex();
     expect(result.skipped).toBe(true);

@@ -291,29 +291,15 @@ function AdminDashboardComponent() {
   const { t, locale } = useLocale();
 
   const tabFromUrl = searchParams.get("tab");
-  const initialTab =
+  const activeTab =
     tabFromUrl === "catalogue" ||
     tabFromUrl === "refresh" ||
     tabFromUrl === "playground" ||
     tabFromUrl === "providers"
       ? tabFromUrl
       : "providers";
-  const [activeTab, setActiveTab] = useState(initialTab);
-
-  useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (
-      tab === "catalogue" ||
-      tab === "refresh" ||
-      tab === "playground" ||
-      tab === "providers"
-    ) {
-      setActiveTab(tab);
-    }
-  }, [searchParams]);
 
   const setTab = (value: string) => {
-    setActiveTab(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", value);
     if (value !== "catalogue") params.delete("pack");

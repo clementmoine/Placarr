@@ -66,6 +66,14 @@ export function WebAdbApkLab({
   const fr = locale === "fr";
   const [source, setSource] = useState<Source>("upload");
   const [uploadPack, setUploadPack] = useState<PackId>(initialPack);
+  const [syncedPack, setSyncedPack] = useState({ open, initialPack });
+  if (
+    open !== syncedPack.open ||
+    (open && initialPack !== syncedPack.initialPack)
+  ) {
+    setSyncedPack({ open, initialPack });
+    if (open) setUploadPack(initialPack);
+  }
   const [serial, setSerial] = useState("127.0.0.1:26624");
   const [devices, setDevices] = useState<{ serial: string; state: string }[]>(
     [],
@@ -78,10 +86,6 @@ export function WebAdbApkLab({
   const append = (line: string) => {
     setLog((prev) => [...prev, line]);
   };
-
-  useEffect(() => {
-    if (open) setUploadPack(initialPack);
-  }, [open, initialPack]);
 
   useEffect(() => {
     const el = logRef.current;

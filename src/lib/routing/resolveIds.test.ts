@@ -164,9 +164,9 @@ describe("resolveItemId", () => {
       title: "Ariel - Chanteuse exceptionnelle",
     });
 
-    await expect(
-      resolveItemId("tfc-2", "lorcana", "user-1"),
-    ).resolves.toBe("item-ariel");
+    await expect(resolveItemId("tfc-2", "lorcana", "user-1")).resolves.toBe(
+      "item-ariel",
+    );
 
     expect(resolveUniquePrintCandidate).toHaveBeenCalledWith("TFC#2", "tcg");
     expect(prismaMock.item.findFirst).toHaveBeenLastCalledWith({

@@ -17,12 +17,12 @@ describe("liveFoilMaskForBundle", () => {
   });
 
   it("distingue Poké Ball vs Master Ball sur le même stem", () => {
-    expect(
-      liveFoilMaskForBundle("rsv10-5_de_001", { variant: "sph" }),
-    ).toBe("ReverseLaminatePokeBall");
-    expect(
-      liveFoilMaskForBundle("rsv10-5_de_001", { variant: "mph" }),
-    ).toBe("ReverseLaminateMasterBall");
+    expect(liveFoilMaskForBundle("rsv10-5_de_001", { variant: "sph" })).toBe(
+      "ReverseLaminatePokeBall",
+    );
+    expect(liveFoilMaskForBundle("rsv10-5_de_001", { variant: "mph" })).toBe(
+      "ReverseLaminateMasterBall",
+    );
     // Sans variant / variant dump `ph`: ne pas inventer quand mph+sph coexistent.
     expect(liveFoilMaskForBundle("rsv10-5_de_001")).toBeNull();
     expect(
@@ -31,9 +31,9 @@ describe("liveFoilMaskForBundle", () => {
   });
 
   it("Frillish dump `ph` → Master Ball (seul laminate mph sur le stem)", () => {
-    expect(
-      liveFoilMaskForBundle("rsv10-5_fr_044", { variant: "ph" }),
-    ).toBe("ReverseLaminateMasterBall");
+    expect(liveFoilMaskForBundle("rsv10-5_fr_044", { variant: "ph" })).toBe(
+      "ReverseLaminateMasterBall",
+    );
     expect(liveFoilMaskForBundle("rsv10-5_fr_044")).toBe(
       "ReverseLaminateMasterBall",
     );

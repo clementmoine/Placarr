@@ -56,8 +56,7 @@ function classifyFrag(
 ): FragDrivers {
   const sdl = floats?._ShadowDarknessLimit;
   const usesLight = source.includes("_LightDirection");
-  const lightDead =
-    usesLight && sdl !== undefined && Number(sdl) >= 1 - 1e-9;
+  const lightDead = usesLight && sdl !== undefined && Number(sdl) >= 1 - 1e-9;
   return {
     stem,
     usesLight,
@@ -109,7 +108,10 @@ describe("Live HoloFoil tilt drivers", () => {
         .filter((n) => n.endsWith(".frag"))
         .map((n) => n.replace(/\.frag$/i, ""));
       const withTbn = stems.filter((stem) => {
-        const src = readFileSync(path.join(SHADERS_DIR, `${stem}.frag`), "utf8");
+        const src = readFileSync(
+          path.join(SHADERS_DIR, `${stem}.frag`),
+          "utf8",
+        );
         return /vs_TEXCOORD[123]\.xyz/.test(src);
       });
       // Flat audit: nearly every leaf — if this ratio collapses, dump changed.

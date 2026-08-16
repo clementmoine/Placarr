@@ -50,12 +50,7 @@ type RefreshableType =
   | "tcg"
   | "toys";
 type RefreshState =
-  | "idle"
-  | "queued"
-  | "running"
-  | "success"
-  | "empty"
-  | "error";
+  "idle" | "queued" | "running" | "success" | "empty" | "error";
 
 interface AdminRefreshItem {
   id: string;

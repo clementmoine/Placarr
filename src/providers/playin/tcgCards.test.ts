@@ -33,9 +33,7 @@ describe("resolvePlayInSetCode", () => {
   it("maps Play-In image slugs and chapitre labels", () => {
     expect(resolvePlayInSetCode({ imageSetSlug: "tfc" })).toBe("1");
     expect(resolvePlayInSetCode({ imageSetSlug: "AOV" })).toBe("13");
-    expect(
-      resolvePlayInSetCode({ setLabel: "Premier Chapitre" }),
-    ).toBe("1");
+    expect(resolvePlayInSetCode({ setLabel: "Premier Chapitre" })).toBe("1");
     expect(
       resolvePlayInSetCode({
         setLabel: "Invasion Épineuse ! Chapitre 13",

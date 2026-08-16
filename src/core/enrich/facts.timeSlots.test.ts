@@ -82,14 +82,13 @@ describe("dedupeFieldEvidence — fact slots", () => {
     ]);
 
     expect(
-      deduped.filter((row) => row.field === "format:Numéro").map((row) => row.value),
+      deduped
+        .filter((row) => row.field === "format:Numéro")
+        .map((row) => row.value),
     ).toEqual(["11/108"]);
     expect(
       deduped.filter((row) => row.field === "cover").map((row) => row.value),
-    ).toEqual([
-      "https://assets.tcgdex.net/a.png",
-      "/uploads/local.png",
-    ]);
+    ).toEqual(["https://assets.tcgdex.net/a.png", "/uploads/local.png"]);
   });
 });
 

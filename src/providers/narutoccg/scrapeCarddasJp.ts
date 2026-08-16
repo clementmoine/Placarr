@@ -147,9 +147,7 @@ async function sweepJp(): Promise<{
     if (parseCarddasJpAssetPath(hit.original)) specials += 1;
   }
 
-  console.log(
-    `JP alias extras from carddass.com (unique paths)=${aliasExtra}`,
-  );
+  console.log(`JP alias extras from carddass.com (unique paths)=${aliasExtra}`);
 
   return {
     hits,

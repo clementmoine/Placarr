@@ -553,8 +553,7 @@ export function parseBooknodeBookPage(
     | { ratingValue?: unknown; ratingCount?: unknown; reviewCount?: unknown }
     | undefined;
   const series = book?.isPartOf as
-    | { name?: unknown; url?: unknown; position?: unknown }
-    | undefined;
+    { name?: unknown; url?: unknown; position?: unknown } | undefined;
   const image =
     firstSchemaValue(book?.image) ||
     metaContent(html, "twitter:image") ||

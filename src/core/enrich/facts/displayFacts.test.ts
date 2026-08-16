@@ -262,7 +262,11 @@ describe("displayFacts", () => {
       const filtered = filterRedundantDisplayFacts(facts);
       expect(filtered).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ kind: "format", label: "Numéro", value: "34/P3" }),
+          expect.objectContaining({
+            kind: "format",
+            label: "Numéro",
+            value: "34/P3",
+          }),
           expect.objectContaining({
             kind: "series",
             label: "Extension",
@@ -322,11 +326,15 @@ describe("displayFacts", () => {
       expect(filtered.find((fact) => fact.label === "Numéro")?.value).toBe(
         "11/108",
       );
-      expect(filtered.filter((fact) => fact.label === "Numéro")).toHaveLength(1);
-      expect(filtered.find((fact) => fact.label === "Type")?.value).toBe("Feu");
-      expect(filtered.some((fact) => fact.value === "Pokémon" && fact.label === "Type")).toBe(
-        false,
+      expect(filtered.filter((fact) => fact.label === "Numéro")).toHaveLength(
+        1,
       );
+      expect(filtered.find((fact) => fact.label === "Type")?.value).toBe("Feu");
+      expect(
+        filtered.some(
+          (fact) => fact.value === "Pokémon" && fact.label === "Type",
+        ),
+      ).toBe(false);
       expect(filtered.find((fact) => fact.label === "Catégorie")?.value).toBe(
         "Pokémon",
       );

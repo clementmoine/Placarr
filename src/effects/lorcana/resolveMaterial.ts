@@ -1,9 +1,6 @@
 import type { FoilMaterial } from "@/core/render/foil/types";
 
-import {
-  LORCANA_MATERIAL_NAMES,
-  lorcanaMaterial,
-} from "./manifest";
+import { LORCANA_MATERIAL_NAMES, lorcanaMaterial } from "./manifest";
 
 /** Longest varnish suffixes first so ChromeRainbowHotFoil wins over RainbowHotFoil. */
 const VARNISH_SUFFIXES = [
@@ -21,10 +18,7 @@ function normalizeFinish(finish: string | null): string | null {
   return finish;
 }
 
-function finishesMatch(
-  parsed: string | null,
-  requested: string,
-): boolean {
+function finishesMatch(parsed: string | null, requested: string): boolean {
   if (!parsed) return false;
   const p = normalizeFinish(parsed)!;
   const r = normalizeFinish(requested)!;

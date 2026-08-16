@@ -3,9 +3,7 @@ import { describe, expect, it } from "vitest";
 import { hotFoilStampUniforms } from "@/core/render/foil/hotFoilStamp";
 import type { FoilMaterial } from "@/core/render/foil/types";
 
-function colors(
-  entries: FoilMaterial["colors"],
-): Pick<FoilMaterial, "colors"> {
+function colors(entries: FoilMaterial["colors"]): Pick<FoilMaterial, "colors"> {
   return { colors: entries };
 }
 

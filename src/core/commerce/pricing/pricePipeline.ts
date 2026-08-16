@@ -473,7 +473,6 @@ export async function withFxPriceEstimated(
   };
 }
 
-
 export function priceSourcesFromOffers(
   offers: PriceObservation[],
   fallbackProvider?: string | null,
@@ -831,7 +830,9 @@ export function alignBarcodePricesForItemNames(
       } else if (priceSummaryMatchesOffers(shelfType, prices, namedOffers)) {
         // FR primary vs EN PriceCharting title: keep reference aggregates when
         // the catalog still shares the franchise family (not a spinoff / bare stem).
-        if (shouldKeepReferencePricesOnTitleMiss(names, namedOffers, shelfType)) {
+        if (
+          shouldKeepReferencePricesOnTitleMiss(names, namedOffers, shelfType)
+        ) {
           const referenceOffers = namedOffers.filter((offer) =>
             isReferencePriceSource(offer.source ?? ""),
           );

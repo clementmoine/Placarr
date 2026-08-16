@@ -26,13 +26,11 @@ export type DbsFwFaceSource = (typeof DBS_FW_FACE_SOURCES)[number];
  * dbscards serves 400x560 where Bandai's cardlist is smaller, so size already
  * settles it and this list only breaks an exact tie.
  */
-export const DBS_FW_FACE_PRIORITY: Record<
-  string,
-  readonly DbsFwFaceSource[]
-> = {
-  en: ["dbscards", "bandai"],
-  ja: ["dbscards", "bandai"],
-};
+export const DBS_FW_FACE_PRIORITY: Record<string, readonly DbsFwFaceSource[]> =
+  {
+    en: ["dbscards", "bandai"],
+    ja: ["dbscards", "bandai"],
+  };
 
 const choice = createCardFaceChoice<DbsFwFaceSource>({
   sources: DBS_FW_FACE_SOURCES,

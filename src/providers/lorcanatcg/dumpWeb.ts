@@ -18,8 +18,7 @@ const VIEWER_BASE = "https://cards.disneylorcana.com";
 const VIEWER_LOCALE = "fr-FR";
 const UA = "Placarr-lorcana-web/1.0";
 
-const CSS_HREF_RE =
-  /['"](\/assets\/(?:routes|index)-[^'"]+\.css)['"]/gi;
+const CSS_HREF_RE = /['"](\/assets\/(?:routes|index)-[^'"]+\.css)['"]/gi;
 const ASSET_URL_RE =
   /url\(\s*['"]?(\/assets\/([a-z0-9]+)(?:-([A-Za-z0-9_-]+))?\.((?:jpe?g|png|webp)))['"]?\s*\)/gi;
 const CSS_FALLBACK_RE = /\/assets\/[^"'\\\s]+\.css/g;
@@ -205,9 +204,7 @@ function resolveWebDest(root?: string): {
 }
 
 /** @deprecated Prefer `dumpLorcanaWeb`. */
-export async function runDump(
-  repo: string,
-): Promise<Record<string, unknown>> {
+export async function runDump(repo: string): Promise<Record<string, unknown>> {
   return dumpLorcanaWeb({ root: repo });
 }
 

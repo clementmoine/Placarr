@@ -40,7 +40,9 @@ function scanShaderStems(): string[] {
 }
 
 function longestFirst(names: string[]): string[] {
-  return [...new Set(names)].sort((a, b) => b.length - a.length || a.localeCompare(b));
+  return [...new Set(names)].sort(
+    (a, b) => b.length - a.length || a.localeCompare(b),
+  );
 }
 
 let cachedFoilNames: string[] | null = null;
@@ -62,18 +64,15 @@ export function invalidatePokemonFoilNamesCache(): void {
  * Live view of discovered foil names (lazy — safe before/after meta hydrate).
  * Prefer {@link listPokemonFoilNames} in new code.
  */
-export const POKEMON_FOIL_NAMES: readonly string[] = new Proxy(
-  [] as string[],
-  {
-    get(_target, prop) {
-      const names = listPokemonFoilNames();
-      const value = Reflect.get(names, prop, names);
-      return typeof value === "function"
-        ? (value as (...args: unknown[]) => unknown).bind(names)
-        : value;
-    },
+export const POKEMON_FOIL_NAMES: readonly string[] = new Proxy([] as string[], {
+  get(_target, prop) {
+    const names = listPokemonFoilNames();
+    const value = Reflect.get(names, prop, names);
+    return typeof value === "function"
+      ? (value as (...args: unknown[]) => unknown).bind(names)
+      : value;
   },
-);
+});
 
 /** Exact MAT / playroom leaf name when it is a sheet alias (not a .frag stem). */
 export function foilSheetAliasName(foil: string): string | null {
@@ -86,7 +85,9 @@ export function foilSheetAliasName(foil: string): string | null {
   return compactAliases[key] ?? null;
 }
 
-export function foilManifestToShader(foil: string): PokemonPaperFoilName | null {
+export function foilManifestToShader(
+  foil: string,
+): PokemonPaperFoilName | null {
   const raw = foil.trim();
   if (!raw) return null;
   const names = listPokemonFoilNames();

@@ -12,8 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 const LONG_FORM_RE =
   /([A-Za-z][A-Za-z0-9']*)_([a-z0-9.-]+)_(\d{1,3})_([a-z]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)/g;
 
-const CARD_DATABASE_STEM_RE =
-  /^card-database-([a-z0-9.-]+)_\d+_([a-z]{2,4})_/i;
+const CARD_DATABASE_STEM_RE = /^card-database-([a-z0-9.-]+)_\d+_([a-z]{2,4})_/i;
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS live_cards (
@@ -147,9 +146,7 @@ export function liveSetFromCardDatabasePath(filePath: string): string | null {
 }
 
 /** Find ASCII longForm matches in a binary blob (mirrors Python bytes regex). */
-function findLongForms(
-  blob: Buffer,
-): Array<{
+function findLongForms(blob: Buffer): Array<{
   index: number;
   length: number;
   en: string;
@@ -331,11 +328,7 @@ export function writeLiveFoilMasksJson(
 ): { path: string; entries: number } {
   const map = liveFoilMaskOverrideMap(rows);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.writeFileSync(
-    dest,
-    `${JSON.stringify(map, null, 0)}\n`,
-    "utf8",
-  );
+  fs.writeFileSync(dest, `${JSON.stringify(map, null, 0)}\n`, "utf8");
   return { path: dest, entries: Object.keys(map).length };
 }
 

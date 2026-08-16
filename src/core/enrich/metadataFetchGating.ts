@@ -163,8 +163,8 @@ export function stage1HasMetadataCapability(
       case "people":
         return Boolean(
           result.authors?.length ||
-            result.publishers?.length ||
-            result.facts?.some((fact) => fact.kind === "person"),
+          result.publishers?.length ||
+          result.facts?.some((fact) => fact.kind === "person"),
         );
       case "ageRating":
         return Boolean(
@@ -282,10 +282,10 @@ export function metadataCapabilitiesOf(provider: ProviderInfo): Capability[] {
 function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
   return Boolean(
     provider.gameMediaGallerySource ||
-      provider.bookGallerySource ||
-      (provider.isRealBoxCover &&
-        provider.capabilities.includes("cover") &&
-        provider.isSecondary),
+    provider.bookGallerySource ||
+    (provider.isRealBoxCover &&
+      provider.capabilities.includes("cover") &&
+      provider.isSecondary),
   );
 }
 

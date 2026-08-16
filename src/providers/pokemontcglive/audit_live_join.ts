@@ -34,7 +34,10 @@ import { liveSetCandidatesFromTcgdexSet } from "@/effects/pokemon/liveSetId";
 // Without it the pack answers empty and every audit reports zero.
 import "@/effects/pokemon/cardFoilIndex";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../..",
+);
 const REPORT_PATH = path.join(
   ROOT,
   "data/pokemon/logs/tcgdex-live-card-join.json",
@@ -61,11 +64,7 @@ const SEED_PRINT_KEYS: ReadonlyArray<{
 ];
 
 type LiveOrphanStatus =
-  | "joined"
-  | "non-catalogue"
-  | "no-tcgdex-set"
-  | "dump-miss"
-  | "true-orphan";
+  "joined" | "non-catalogue" | "no-tcgdex-set" | "dump-miss" | "true-orphan";
 
 function parseArgs(argv: string[]) {
   let strict = false;
@@ -281,12 +280,18 @@ async function main(argv: string[]): Promise<number> {
   }
   console.log(`Wrote ${REPORT_PATH}`);
 
-  if (strict && (liveToTcgdex.trueOrphans > 0 || tcgdexToLive.unexpectedMiss > 0)) {
+  if (
+    strict &&
+    (liveToTcgdex.trueOrphans > 0 || tcgdexToLive.unexpectedMiss > 0)
+  ) {
     return 2;
   }
   return 0;
 }
 
-if (process.argv[1] && path.basename(process.argv[1]).includes("audit_live_join")) {
+if (
+  process.argv[1] &&
+  path.basename(process.argv[1]).includes("audit_live_join")
+) {
   main(process.argv.slice(2)).then((code) => process.exit(code));
 }

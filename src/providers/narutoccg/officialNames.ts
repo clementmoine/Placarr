@@ -19,10 +19,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { narutoCuratedSourcesDir } from "./curatedPaths";
-import {
-  type NarutoPrintRow,
-  type NarutoTitleRow,
-} from "./indexStore";
+import { type NarutoPrintRow, type NarutoTitleRow } from "./indexStore";
 
 type OfficialCard = {
   name: string;

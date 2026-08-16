@@ -10,9 +10,7 @@ describe("selectFoilBackend", () => {
   };
 
   it("always picks css when preference is css", () => {
-    expect(
-      selectFoilBackend({ preference: "css", ...ready }),
-    ).toBe("css");
+    expect(selectFoilBackend({ preference: "css", ...ready })).toBe("css");
     expect(
       selectFoilBackend({
         preference: "css",
@@ -24,9 +22,7 @@ describe("selectFoilBackend", () => {
   });
 
   it("picks webgl when preference is webgl and requirements are met", () => {
-    expect(
-      selectFoilBackend({ preference: "webgl", ...ready }),
-    ).toBe("webgl");
+    expect(selectFoilBackend({ preference: "webgl", ...ready })).toBe("webgl");
   });
 
   it("falls back to css when webgl preference cannot be satisfied", () => {
@@ -57,9 +53,7 @@ describe("selectFoilBackend", () => {
   });
 
   it("auto behaves like webgl preference", () => {
-    expect(
-      selectFoilBackend({ preference: "auto", ...ready }),
-    ).toBe("webgl");
+    expect(selectFoilBackend({ preference: "auto", ...ready })).toBe("webgl");
     expect(
       selectFoilBackend({
         preference: "auto",

@@ -32,7 +32,6 @@ import {
   fridaFindLabel,
   fridaGotoCard,
   fridaNavAvailable,
-  fridaOpenCard,
   fridaSelectSet,
   liveSetIdFromBundle,
   seriesLabelFr,
@@ -76,13 +75,14 @@ function adb(): string {
       /* try the next */
     }
   }
-  throw new Error(
-    "adb not found — set ADB_PATH or add platform-tools to PATH",
-  );
+  throw new Error("adb not found — set ADB_PATH or add platform-tools to PATH");
 }
 
 function sh(bin: string, args: string[]): string {
-  return execFileSync(bin, args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  return execFileSync(bin, args, {
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
 }
 
 type Screen = { w: number; h: number };
@@ -105,7 +105,13 @@ function tap(bin: string, s: Screen, fx: number, fy: number): void {
 }
 
 function tapPx(bin: string, x: number, y: number): void {
-  sh(bin, ["shell", "input", "tap", String(Math.round(x)), String(Math.round(y))]);
+  sh(bin, [
+    "shell",
+    "input",
+    "tap",
+    String(Math.round(x)),
+    String(Math.round(y)),
+  ]);
 }
 
 function sleep(ms: number): void {
@@ -228,9 +234,13 @@ function pickTarget(
   const norm = (s: string) => s.replace(/_/g, "-").toUpperCase();
   if (preferSet) {
     const want = norm(preferSet);
-    const hit = matches.find((m) => norm(m.set) === want || norm(m.bundle.split("_")[0]!) === want);
+    const hit = matches.find(
+      (m) => norm(m.set) === want || norm(m.bundle.split("_")[0]!) === want,
+    );
     if (hit) return hit;
-    console.log(`  --set ${preferSet} : aucun hit, repli sur ${matches[0]!.bundle}`);
+    console.log(
+      `  --set ${preferSet} : aucun hit, repli sur ${matches[0]!.bundle}`,
+    );
   }
   if (fridaHint?.setId) {
     const cur = norm(fridaHint.setId);
@@ -324,9 +334,7 @@ async function main(): Promise<void> {
 
     console.log(`${matches.length} correspondance(s) pour « ${args.name} » :`);
     for (const m of matches.slice(0, 10)) {
-      const foils = m.variants
-        .map((v) => `${v.variant}=${v.shader}`)
-        .join(" ");
+      const foils = m.variants.map((v) => `${v.variant}=${v.shader}`).join(" ");
       console.log(
         `  ${m.bundle.padEnd(18)} ${m.name.padEnd(20)} set=${m.set.padEnd(8)} n°${m.num.padStart(3)}  ${foils}`,
       );

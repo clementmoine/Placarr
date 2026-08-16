@@ -16,7 +16,6 @@ import { tcgdexSetSerie } from "./setMeta";
 /** Game slug in every print key this provider emits (paper Pokémon TCG). */
 export const POKEMON_GAME = "pokemon";
 
-
 export const TCGDEX_LANGUAGES = [
   "fr",
   "en",
@@ -226,7 +225,9 @@ export function tcgdexImageUrl(
   return `${base}/${quality}.${extension}`;
 }
 
-function finishesFromVariants(variants: RawVariants | null | undefined): string[] {
+function finishesFromVariants(
+  variants: RawVariants | null | undefined,
+): string[] {
   if (!variants || typeof variants !== "object") return [];
   const finishes: string[] = [];
   if (variants.normal === true) finishes.push("normal");
@@ -338,7 +339,8 @@ export function mapTcgdexCard(
   const name = text(raw.name);
   if (!providerId || !localId || !name) return null;
 
-  const setId = text(raw.set?.id) ?? providerId.split("-").slice(0, -1).join("-");
+  const setId =
+    text(raw.set?.id) ?? providerId.split("-").slice(0, -1).join("-");
   if (!setId) return null;
 
   const printKey = printKeyFromTcgdexIds(setId, localId);
@@ -458,10 +460,7 @@ export async function attachTcgdexSerieNames(
 export function tcgdexPrintLabel(card: TcgdexCard): string {
   const set = card.setName ?? card.setId;
   const parts: string[] = [];
-  if (
-    card.serieName &&
-    card.serieName.toLowerCase() !== set.toLowerCase()
-  ) {
+  if (card.serieName && card.serieName.toLowerCase() !== set.toLowerCase()) {
     parts.push(card.serieName);
   }
   parts.push(set);
@@ -545,7 +544,9 @@ export function tcgdexQueryHints(query: string): {
   for (const word of words) {
     // `227`, `227/226`, `A1-153` — the collector number, with or without the
     // set total or the set in front of it.
-    const numbered = /^(?:([A-Za-z][A-Za-z0-9.]*)-)?(\d+)(?:\/\d+)?$/.exec(word);
+    const numbered = /^(?:([A-Za-z][A-Za-z0-9.]*)-)?(\d+)(?:\/\d+)?$/.exec(
+      word,
+    );
     if (numbered) {
       setId ??= numbered[1] ?? null;
       number ??= numbered[2]!;
@@ -651,7 +652,5 @@ export async function searchTcgdexCards(
     ),
   );
 
-  return detailed
-    .map((card, index) => card ?? slim[index]!)
-    .filter(Boolean);
+  return detailed.map((card, index) => card ?? slim[index]!).filter(Boolean);
 }

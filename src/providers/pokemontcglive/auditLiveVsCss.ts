@@ -159,7 +159,8 @@ function main(): void {
     const flag = owned ? "OWNED" : "     ";
     const notes: string[] = [];
     if (data.length) notes.push(`${data.length} carte(s) de données`);
-    if (dropped.length) notes.push(`${dropped.length} écartée(s) — ${chosen!.why}`);
+    if (dropped.length)
+      notes.push(`${dropped.length} écartée(s) — ${chosen!.why}`);
     const verdict = missing.length
       ? `MANQUE ${missing.join(" ")}`
       : notes.length
@@ -184,7 +185,9 @@ function main(): void {
       ` — dont ${owned.length} vérifiable(s) à l'œil (owned).`,
   );
   for (const f of findings) {
-    console.log(`  ${f.owned ? "OWNED" : "     "} ${f.material}: ${f.missing.join(" ")}`);
+    console.log(
+      `  ${f.owned ? "OWNED" : "     "} ${f.material}: ${f.missing.join(" ")}`,
+    );
   }
 }
 

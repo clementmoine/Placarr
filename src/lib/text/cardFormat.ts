@@ -7,7 +7,7 @@ export function normalizeFaceQuarterTurns(
   value: number | null | undefined,
 ): FaceQuarterTurns {
   if (value == null || !Number.isFinite(value)) return 0;
-  return ((((Math.round(value) % 4) + 4) % 4) as FaceQuarterTurns);
+  return (((Math.round(value) % 4) + 4) % 4) as FaceQuarterTurns;
 }
 
 /**
@@ -24,9 +24,7 @@ export function orientAspectRatio(
   return `${match[2]} / ${match[1]}`;
 }
 
-export function faceRotateDeg(
-  quarterTurns: number | null | undefined,
-): number {
+export function faceRotateDeg(quarterTurns: number | null | undefined): number {
   return normalizeFaceQuarterTurns(quarterTurns) * 90;
 }
 

@@ -78,10 +78,7 @@ async function formatShelfWithItemPrices<
             metadataRefreshStartedAt:
               "metadataRefreshStartedAt" in item
                 ? (item.metadataRefreshStartedAt as
-                    | Date
-                    | string
-                    | null
-                    | undefined)
+                    Date | string | null | undefined)
                 : undefined,
             metadata: presented.metadata as MetadataResult | null | undefined,
           },

@@ -747,10 +747,7 @@ type ScreenScraperResolverDeps = {
 
 function screenScraperTextValues(
   value:
-    | string
-    | { text?: string }
-    | Array<string | { text?: string }>
-    | undefined,
+    string | { text?: string } | Array<string | { text?: string }> | undefined,
 ): string[] {
   const values = Array.isArray(value) ? value : value == null ? [] : [value];
   return values

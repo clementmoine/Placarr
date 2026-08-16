@@ -87,7 +87,8 @@ const SERIES_FALLBACK: ReadonlyArray<{
     title: { fr: "Épée & Bouclier", en: "Sword & Shield" },
   },
   {
-    test: (s) => s.startsWith("sv") || s.startsWith("rsv") || s.startsWith("zsv"),
+    test: (s) =>
+      s.startsWith("sv") || s.startsWith("rsv") || s.startsWith("zsv"),
     title: { fr: "Écarlate & Violet", en: "Scarlet & Violet" },
   },
   {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,45 +55,44 @@ export function CatalogueBrowser({
   const preferLang = fr ? "fr" : "en";
   const [query, setQuery] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
-  const [offset, setOffset] = useState(0);
-  const [cards, setCards] = useState<CatalogueCardRow[]>([]);
-  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(query), 250);
     return () => clearTimeout(timer);
   }, [query]);
 
-  useEffect(() => {
-    setOffset(0);
-    setCards([]);
-    setTotal(0);
-  }, [packId, debouncedQ]);
-
-  const { data, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ["catalogueCards", packId, debouncedQ, offset, preferLang],
-    queryFn: () =>
+  const {
+    data,
+    isFetching,
+    isError,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["catalogueCards", packId, debouncedQ, preferLang],
+    queryFn: ({ pageParam }) =>
       fetchPage({
         pack: packId,
-        offset,
+        offset: pageParam,
         q: debouncedQ,
         preferLang,
       }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((n, page) => n + page.cards.length, 0);
+      return loaded < lastPage.total
+        ? lastPage.offset + lastPage.cards.length
+        : undefined;
+    },
   });
 
-  useEffect(() => {
-    if (!data) return;
-    setTotal(data.total);
-    setCards((prev) =>
-      data.offset === 0 ? data.cards : [...prev, ...data.cards],
-    );
-  }, [data]);
-
-  const loadMore = useCallback(() => {
-    setOffset((prev) => prev + PAGE);
-  }, []);
-
-  const hasMore = cards.length < total;
+  const cards = data?.pages.flatMap((page) => page.cards) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
+  const hasMore = Boolean(hasNextPage);
+  const loadMore = () => {
+    void fetchNextPage();
+  };
 
   return (
     <div className="flex flex-col gap-3">

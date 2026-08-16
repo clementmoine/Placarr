@@ -185,10 +185,7 @@ export function stripLegacyFlatIndexKeys(
   return stripped;
 }
 
-function collectJobsForCard(
-  card: LorcanaCard,
-  cardsDir: string,
-): Job[] {
+function collectJobsForCard(card: LorcanaCard, cardsDir: string): Job[] {
   const language = card.language;
   const disk = cardDiskIdFromPrintKey(card.printKey, language);
   if (!disk) return [];
@@ -208,7 +205,8 @@ function collectJobsForCard(
   };
 
   if (card.foilMaskUrl) add("foilMask", "mask", card.foilMaskUrl);
-  if (card.varnishMaskUrl) add("varnishMask", "varnish_mask", card.varnishMaskUrl);
+  if (card.varnishMaskUrl)
+    add("varnishMask", "varnish_mask", card.varnishMaskUrl);
   if (card.secondVarnishMaskUrl) {
     add("secondVarnishMask", "second_varnish_mask", card.secondVarnishMaskUrl);
   }
@@ -235,9 +233,7 @@ export async function scrapeLorcanaCards(
   const indexPath = path.join(root, "data/lorcana/cards-index.json");
   const dbPath = path.join(root, "data/lorcana/catalog.sqlite");
 
-  console.log(
-    `Loading Lorcana indexes (${SCRAPE_LANGUAGES.join(" + ")})…`,
-  );
+  console.log(`Loading Lorcana indexes (${SCRAPE_LANGUAGES.join(" + ")})…`);
 
   const jobs: Job[] = [];
   const prints = new Map<string, LorcanaTcgPrintRow>();
@@ -348,7 +344,10 @@ export async function scrapeLorcanaCards(
   const legacy = cleanupLegacyPrintRootAssets(cardsDir);
 
   await fs.promises.mkdir(path.dirname(indexPath), { recursive: true });
-  await fs.promises.writeFile(indexPath, `${JSON.stringify(payload, null, 2)}\n`);
+  await fs.promises.writeFile(
+    indexPath,
+    `${JSON.stringify(payload, null, 2)}\n`,
+  );
 
   console.log(
     JSON.stringify(
@@ -361,9 +360,9 @@ export async function scrapeLorcanaCards(
         languages: [...SCRAPE_LANGUAGES],
         legacyRootRemoved: legacy.removed,
         legacyRootBytes: legacy.bytes,
-        errorSample: errors.slice(0, 5).map((e) =>
-          e instanceof Error ? e.message : String(e),
-        ),
+        errorSample: errors
+          .slice(0, 5)
+          .map((e) => (e instanceof Error ? e.message : String(e))),
       },
       null,
       2,

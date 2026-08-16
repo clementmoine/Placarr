@@ -82,16 +82,11 @@ function cssCardsDir(treeId: PokemonSimeyTreeId): string {
 
 function refreshTree(tree: (typeof TREES)[number], head: string): void {
   const dest = pokemonSimeyTreeDir(tree.id);
-  const tmp = path.join(
-    os.tmpdir(),
-    `placarr-simey-${tree.id}-${process.pid}`,
-  );
+  const tmp = path.join(os.tmpdir(), `placarr-simey-${tree.id}-${process.pid}`);
   rmSync(tmp, { recursive: true, force: true });
-  const clone = spawnSync(
-    "git",
-    ["clone", "--depth", "1", tree.repo, tmp],
-    { encoding: "utf8" },
-  );
+  const clone = spawnSync("git", ["clone", "--depth", "1", tree.repo, tmp], {
+    encoding: "utf8",
+  });
   if (clone.status !== 0) {
     throw new Error(
       `clone ${tree.label} failed: ${clone.stderr || clone.stdout}`,
@@ -153,9 +148,7 @@ function main() {
       if (!local || !hasCss) {
         console.log(`  ${tree.id}: missing → fetch ${short(head)}`);
       } else if (!atHead) {
-        console.log(
-          `  ${tree.id}: behind ${short(local!)} → ${short(head)}`,
-        );
+        console.log(`  ${tree.id}: behind ${short(local!)} → ${short(head)}`);
       } else {
         console.log(`  ${tree.id}: force refresh ${short(head)}`);
       }
@@ -169,9 +162,7 @@ function main() {
   }
 
   if (args.check) {
-    console.log(
-      `simey check: ok=${ok} behind=${behind} missing=${missing}`,
-    );
+    console.log(`simey check: ok=${ok} behind=${behind} missing=${missing}`);
     if (behind + missing > 0) process.exitCode = 1;
     return;
   }

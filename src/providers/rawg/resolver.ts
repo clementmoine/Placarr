@@ -186,9 +186,7 @@ export function readRawgGameplayClip(
 /** Official alternate titles from a RAWG game detail payload. */
 export function readRawgCatalogAliases(
   detail:
-    | Pick<RawgGame, "name_original" | "alternative_names">
-    | null
-    | undefined,
+    Pick<RawgGame, "name_original" | "alternative_names"> | null | undefined,
 ): string[] {
   if (!detail) return [];
   const names: string[] = [];

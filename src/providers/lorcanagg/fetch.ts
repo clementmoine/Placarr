@@ -11,7 +11,11 @@ import {
   putProviderEvidence,
 } from "@/core/enrich/providerEvidenceStore";
 
-import { dotggIndexKey, dotggLookupFromPrintKey, type DotggLookup } from "./match";
+import {
+  dotggIndexKey,
+  dotggLookupFromPrintKey,
+  type DotggLookup,
+} from "./match";
 
 const PROVIDER_ID = "lorcanagg";
 const CARDS_URL = "https://api.dotgg.gg/cgfw/getcards?game=lorcana";
@@ -118,7 +122,7 @@ export function priceIndexFromDotggCards(payload: unknown): DotggPriceIndex {
     : payload &&
         typeof payload === "object" &&
         Array.isArray((payload as { data?: unknown }).data)
-      ? ((payload as { data: unknown[] }).data)
+      ? (payload as { data: unknown[] }).data
       : [];
 
   const index: DotggPriceIndex = {};
@@ -145,9 +149,7 @@ export function dotggCardLabel(card: DotggCardPrices): string {
 
 let inFlight: Promise<DotggPriceIndex> | null = null;
 
-async function fetchDotggCardsPayload(
-  signal?: AbortSignal,
-): Promise<unknown> {
+async function fetchDotggCardsPayload(signal?: AbortSignal): Promise<unknown> {
   const response = await httpGet<unknown>(CARDS_URL, {
     signal,
     timeout: 60_000,
@@ -165,10 +167,12 @@ async function fetchDotggCardsPayload(
  * Load (or reuse) the compact Cardmarket price index for Lorcana.
  * Never throws — empty index on failure so other price providers still run.
  */
-export async function loadDotggPriceIndex(options: {
-  signal?: AbortSignal;
-  now?: Date;
-} = {}): Promise<DotggPriceIndex> {
+export async function loadDotggPriceIndex(
+  options: {
+    signal?: AbortSignal;
+    now?: Date;
+  } = {},
+): Promise<DotggPriceIndex> {
   const stored = await getFreshProviderEvidence(
     PROVIDER_ID,
     CARDS_URL,

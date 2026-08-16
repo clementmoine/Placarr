@@ -148,7 +148,12 @@ async function sweepEn(): Promise<{
     else bucket.art += 1;
   }
 
-  return { hits, cdxRows: siteRows.length + imageRows.length, cardAssets, bySet };
+  return {
+    hits,
+    cdxRows: siteRows.length + imageRows.length,
+    cardAssets,
+    bySet,
+  };
 }
 
 export async function scrapeNarutoEnCards(
@@ -160,7 +165,9 @@ export async function scrapeNarutoEnCards(
   fs.mkdirSync(logsDir, { recursive: true });
   fs.mkdirSync(stagingDir, { recursive: true });
 
-  console.log("── CDX Wayback bandaicg.com/naruto → staging (images + pages, no forum)");
+  console.log(
+    "── CDX Wayback bandaicg.com/naruto → staging (images + pages, no forum)",
+  );
   const sweep = await sweepEn();
   let hits = sweep.hits;
   console.log(

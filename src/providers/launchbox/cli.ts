@@ -6,7 +6,10 @@
  * With `--enqueue`, schedules a catalog worker job instead of building inline
  * (visible in the background-jobs menu).
  */
-import { enqueueBackgroundWorkJob, BACKGROUND_WORK_KIND } from "@/core/collect/jobs/workQueue";
+import {
+  enqueueBackgroundWorkJob,
+  BACKGROUND_WORK_KIND,
+} from "@/core/collect/jobs/workQueue";
 import { buildLaunchBoxIndex } from "@/providers/launchbox/indexStore";
 
 async function main() {
@@ -30,8 +33,7 @@ async function main() {
 
   const gameCount = (
     db.prepare("SELECT COUNT(*) AS count FROM games").get() as
-      | { count?: number }
-      | undefined
+      { count?: number } | undefined
   )?.count;
   console.log(
     `LaunchBox index ready (${typeof gameCount === "number" ? gameCount : "?"} games).`,

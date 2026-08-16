@@ -429,11 +429,7 @@ export interface ProviderHealthCheck {
 }
 
 export type TestProviderHandlerKind =
-  | "scraped-list"
-  | "prices"
-  | "metadata-barcode"
-  | "metadata"
-  | "cover";
+  "scraped-list" | "prices" | "metadata-barcode" | "metadata" | "cover";
 
 export interface TestProviderFormatContext {
   processScrapedNames: (
@@ -483,11 +479,7 @@ export interface ProviderMappingProbe {
 }
 
 export type MappingProbeStatus =
-  | "ok"
-  | "partial"
-  | "empty"
-  | "blocked"
-  | "error";
+  "ok" | "partial" | "empty" | "blocked" | "error";
 
 export interface MappingProbeResult {
   rawKeys: string[];

@@ -8,7 +8,6 @@
  * `_b.webp` is not the pack sleeve.
  */
 import {
-  existsSync,
   mkdirSync,
   readFileSync,
   readdirSync,

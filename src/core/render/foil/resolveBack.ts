@@ -4,10 +4,7 @@ import {
   type CardBackCandidate,
 } from "./cardBacks";
 
-export type {
-  CardBackCandidate,
-  CardBackScope,
-} from "./cardBacks";
+export type { CardBackCandidate, CardBackScope } from "./cardBacks";
 export {
   pickDefaultCardBack,
   rankCardBacks,

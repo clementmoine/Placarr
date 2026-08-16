@@ -42,17 +42,20 @@ describe("pokemon pack assets", () => {
     },
   );
 
-  it.skipIf(!hasDump)("ships WebGL-ready frags (no orphan FRAGMENT #endif)", () => {
-    for (const name of POKEMON_FOIL_NAMES) {
-      const text = readFileSync(
-        path.join(SHADERS_DIR, `${name}.frag`),
-        "utf8",
-      );
-      expect(text.includes("#ifdef FRAGMENT"), name).toBe(false);
-      expect(text.trimEnd().endsWith("#endif"), name).toBe(false);
-      expect(text.includes("\x17"), name).toBe(false);
-    }
-  });
+  it.skipIf(!hasDump)(
+    "ships WebGL-ready frags (no orphan FRAGMENT #endif)",
+    () => {
+      for (const name of POKEMON_FOIL_NAMES) {
+        const text = readFileSync(
+          path.join(SHADERS_DIR, `${name}.frag`),
+          "utf8",
+        );
+        expect(text.includes("#ifdef FRAGMENT"), name).toBe(false);
+        expect(text.trimEnd().endsWith("#endif"), name).toBe(false);
+        expect(text.includes("\x17"), name).toBe(false);
+      }
+    },
+  );
 
   it.skipIf(!hasDump)("ships full_foil_mask + shared motifs", () => {
     expect(packFile("full_foil_mask.webp", "full_foil_mask.png")).toBe(true);
@@ -89,39 +92,47 @@ describe("pokemon pack assets", () => {
     60_000,
   );
 
-  it.skipIf(!hasDump)("ships mask textures for a sample of FR foil variants", () => {
-    let checked = 0;
-    const missing: string[] = [];
-    for (const bundleId of BUNDLE_IDS) {
-      if (!/_fr_/i.test(bundleId)) continue;
-      const m = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})$/i.exec(bundleId);
-      if (!m) continue;
-      const cardDir = path.join(CARDS_ROOT, m[1]!.toLowerCase(), m[2]!.toLowerCase(), m[3]!);
-      if (!existsSync(cardDir)) continue;
-      for (const variant of variantsForBundle(bundleId)) {
-        const maskTex = variant.maskTex.trim();
-        if (!maskTex) continue;
-        checked += 1;
-        if (checked % 400 !== 1) continue;
-        const file = foilTextureFile(maskTex)
-          .replace(/^.*_wp_mph_.*$/i, "mask-mph.webp")
-          .replace(/^.*_wp_sph_.*$/i, "mask-sph.webp")
-          .replace(/^.*_wp_ph_.*$/i, "mask-ph.webp")
-          .replace(/^.*_wp_.*$/i, "mask.webp");
-        const canonical = file.includes("mask")
-          ? file
-          : maskTex.toLowerCase().includes("_wp_ph_")
-            ? "mask-ph.webp"
-            : maskTex.toLowerCase().includes("_wp_")
-              ? "mask.webp"
-              : "mask.webp";
-        const webp = path.join(cardDir, canonical);
-        if (!existsSync(webp)) {
-          missing.push(`${bundleId}/${canonical}`);
+  it.skipIf(!hasDump)(
+    "ships mask textures for a sample of FR foil variants",
+    () => {
+      let checked = 0;
+      const missing: string[] = [];
+      for (const bundleId of BUNDLE_IDS) {
+        if (!/_fr_/i.test(bundleId)) continue;
+        const m = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})$/i.exec(bundleId);
+        if (!m) continue;
+        const cardDir = path.join(
+          CARDS_ROOT,
+          m[1]!.toLowerCase(),
+          m[2]!.toLowerCase(),
+          m[3]!,
+        );
+        if (!existsSync(cardDir)) continue;
+        for (const variant of variantsForBundle(bundleId)) {
+          const maskTex = variant.maskTex.trim();
+          if (!maskTex) continue;
+          checked += 1;
+          if (checked % 400 !== 1) continue;
+          const file = foilTextureFile(maskTex)
+            .replace(/^.*_wp_mph_.*$/i, "mask-mph.webp")
+            .replace(/^.*_wp_sph_.*$/i, "mask-sph.webp")
+            .replace(/^.*_wp_ph_.*$/i, "mask-ph.webp")
+            .replace(/^.*_wp_.*$/i, "mask.webp");
+          const canonical = file.includes("mask")
+            ? file
+            : maskTex.toLowerCase().includes("_wp_ph_")
+              ? "mask-ph.webp"
+              : maskTex.toLowerCase().includes("_wp_")
+                ? "mask.webp"
+                : "mask.webp";
+          const webp = path.join(cardDir, canonical);
+          if (!existsSync(webp)) {
+            missing.push(`${bundleId}/${canonical}`);
+          }
         }
       }
-    }
-    expect(checked).toBeGreaterThan(0);
-    expect(missing, missing.join("\n")).toEqual([]);
-  });
+      expect(checked).toBeGreaterThan(0);
+      expect(missing, missing.join("\n")).toEqual([]);
+    },
+  );
 });

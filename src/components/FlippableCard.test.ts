@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { showsBack, turnAfterPush, turnTowardBack, turnTowardFace } from "./FlippableCard";
+import {
+  showsBack,
+  turnAfterPush,
+  turnTowardBack,
+  turnTowardFace,
+} from "./FlippableCard";
 
 describe("turnAfterPush", () => {
   it("turns the way the card was pushed", () => {

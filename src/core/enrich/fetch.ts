@@ -40,7 +40,10 @@ import {
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
 } from "@/core/enrich/providerExternalLinks";
-import { CACHED_FICHE_MERGE_KEY, metadataForCachedFicheMerge } from "@/core/enrich/internalMergeKeys";
+import {
+  CACHED_FICHE_MERGE_KEY,
+  metadataForCachedFicheMerge,
+} from "@/core/enrich/internalMergeKeys";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { buildBoardGameMetadataSearchQueries } from "@/core/enrich/boardGame";
 import { buildPriceSearchQueries } from "@/core/commerce/pricing/searchQueries";

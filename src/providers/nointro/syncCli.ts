@@ -41,8 +41,7 @@ async function main() {
 
   const gameCount = (
     db.prepare("SELECT COUNT(*) AS count FROM games").get() as
-      | { count?: number }
-      | undefined
+      { count?: number } | undefined
   )?.count;
   console.log(
     `No-Intro index ready (${typeof gameCount === "number" ? gameCount : "?"} games).`,

@@ -237,11 +237,11 @@ function isCandidateAligned(query: string, title: string): boolean {
     .trim();
   return Boolean(
     subtitle &&
-      isMetadataTitleAligned(
-        { title: subtitle },
-        [query],
-        METADATA_TITLE_ALIGN_FLOOR,
-      ),
+    isMetadataTitleAligned(
+      { title: subtitle },
+      [query],
+      METADATA_TITLE_ALIGN_FLOOR,
+    ),
   );
 }
 

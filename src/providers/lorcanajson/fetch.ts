@@ -612,7 +612,10 @@ function buildSetCatalog(indexes: LorcanaIndex[]): LorcanaSetCatalog {
 
 /** `p3` / `pr3` → `P3`. */
 export function parseLorcanaPromoToken(token: string): string | null {
-  const match = token.trim().toLowerCase().match(/^pr?(\d+)$/);
+  const match = token
+    .trim()
+    .toLowerCase()
+    .match(/^pr?(\d+)$/);
   return match ? `P${match[1]}` : null;
 }
 
@@ -621,15 +624,15 @@ export function parseLorcanaCollectorNumber(token: string): {
   number: number;
   variant: string | null;
 } | null {
-  const match = token.trim().toLowerCase().match(/^(\d+)([a-z])?$/);
+  const match = token
+    .trim()
+    .toLowerCase()
+    .match(/^(\d+)([a-z])?$/);
   if (!match) return null;
   return { number: Number(match[1]), variant: match[2] ?? null };
 }
 
-function resolveSetRef(
-  ref: string,
-  catalog: LorcanaSetCatalog,
-): string | null {
+function resolveSetRef(ref: string, catalog: LorcanaSetCatalog): string | null {
   if (!ref) return null;
   if (catalog.codes.has(ref)) return ref;
   const letter = SET_LETTER_CODES[ref];
@@ -739,10 +742,7 @@ export function scoreLorcanaCollectorMatch(
 
   if (query.number != null) {
     if (card.number !== query.number) return 0;
-    if (
-      query.variant &&
-      (card.variant ?? "").toLowerCase() !== query.variant
-    ) {
+    if (query.variant && (card.variant ?? "").toLowerCase() !== query.variant) {
       return 0;
     }
     // Exact print when promo was asked; otherwise every print of that number.

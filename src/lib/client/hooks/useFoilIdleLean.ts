@@ -40,7 +40,9 @@ export function useFoilIdleLean(
   const releaseAtRef = useRef<number | null>(null);
   const wasDrivenRef = useRef(driven);
   const onFrameRef = useRef(onFrame);
-  onFrameRef.current = onFrame;
+  useEffect(() => {
+    onFrameRef.current = onFrame;
+  });
 
   const noteLean = useCallback((lean: Lean, glare = 0.66) => {
     lastLeanRef.current = lean;

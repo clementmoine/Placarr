@@ -5,10 +5,7 @@
 import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
 import { isCardsIndexV1 } from "@/effects/cardsIndex";
 import { loadCardsIndexJson } from "@/lib/foilMetaLoad";
-import {
-  assetsCardUrl,
-  cardDiskIdFromPrintKey,
-} from "@/lib/packAssetUrls";
+import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 
 type PackLang = "fr" | "en" | "de" | "it";
 const PACK_LANGS = ["fr", "en", "de", "it"] as const;
@@ -23,9 +20,7 @@ function isPackLang(value: unknown): value is PackLang {
 
 function loadIndex(): CardsIndexV1 {
   const raw = loadCardsIndexJson("lorcana");
-  return isCardsIndexV1(raw)
-    ? raw
-    : { version: 1, pack: "lorcana", cards: {} };
+  return isCardsIndexV1(raw) ? raw : { version: 1, pack: "lorcana", cards: {} };
 }
 
 export const LORCANA_CARDS_BASE = "/assets/lorcana/cards";

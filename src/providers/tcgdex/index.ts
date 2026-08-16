@@ -314,7 +314,7 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
   const tcgdexThumb = card.thumbnailUrl ?? card.imageUrl ?? null;
   const tcgdexFull = card.imageUrl ?? card.thumbnailUrl ?? null;
   const liveRarity =
-    (liveBundle ?? liveBundleId
+    ((liveBundle ?? liveBundleId)
       ? lookupByBundle(liveBundle ?? liveBundleId!)?.rarityCode
       : null) ?? null;
   const faceQuarterTurns = faceQuarterTurnsForPokemonPrint({
@@ -348,9 +348,7 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
     varnishMaskUrl,
     secondVarnishMaskUrl,
     effectPack: POKEMON_EFFECT_PACK_ID,
-    ...(faceQuarterTurns
-      ? { faceQuarterTurns }
-      : {}),
+    ...(faceQuarterTurns ? { faceQuarterTurns } : {}),
     externalIds: {
       [PROVIDER_ID]: card.providerId,
       ...((liveBundle ?? liveBundleId)
@@ -361,7 +359,9 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
   };
 }
 
-export function mapTcgdexMetadata(card: TcgdexCard | null): MetadataResult | null {
+export function mapTcgdexMetadata(
+  card: TcgdexCard | null,
+): MetadataResult | null {
   if (!card) return null;
 
   const metadata: MetadataResult = {
@@ -544,7 +544,9 @@ export const tcgdexModule: ProviderModule = {
     // 2024sv) — keep them out of the add UI rather than empty muted tiles.
     return cards
       .map(toPrintCandidate)
-      .filter((candidate) => Boolean(candidate.thumbnailUrl || candidate.imageUrl));
+      .filter((candidate) =>
+        Boolean(candidate.thumbnailUrl || candidate.imageUrl),
+      );
   },
   lookupPrint: async ({ printKey, name, language, signal }) => {
     if (parsePrintKey(printKey)?.game !== POKEMON_GAME) return null;

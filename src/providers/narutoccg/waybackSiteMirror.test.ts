@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  canonicalizeUrl,
-  stagingRelFromUrl,
-} from "./waybackSiteMirror";
+import { canonicalizeUrl, stagingRelFromUrl } from "./waybackSiteMirror";
 
 describe("stagingRelFromUrl", () => {
   it("strips /naruto/ and lowercases", () => {

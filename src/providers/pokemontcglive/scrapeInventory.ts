@@ -68,12 +68,7 @@ export type StemInventorySource = "apk" | "malie" | "setnum-expand";
 export type MalieAvailability = "catalogued" | "unavailable";
 
 export type CdnAvailability =
-  | "pending"
-  | "ok"
-  | "skipped"
-  | "unavailable"
-  | "softban"
-  | "aborted";
+  "pending" | "ok" | "skipped" | "unavailable" | "softban" | "aborted";
 
 export type StemInventoryEntry = {
   stem: string;
@@ -116,10 +111,7 @@ export type ScrapeInventory = {
 const STEM_RE = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})(?:_[a-z])?$/i;
 
 /** ``me1_fr_001`` → Malie soft tex URL (std variant). */
-export function malieCardTexUrl(
-  stem: string,
-  variant = "std",
-): string | null {
+export function malieCardTexUrl(stem: string, variant = "std"): string | null {
   const m = STEM_RE.exec(stem.trim());
   if (!m) return null;
   const set = m[1]!.toLowerCase();
@@ -173,7 +165,11 @@ export function buildScrapeInventory(opts: {
     const s = stem.trim();
     if (!s) continue;
     const langMatch = /^[a-z0-9.-]+_([a-z]{2,4})_\d{3}/i.exec(s);
-    if (langs.length && langMatch && !langs.includes(langMatch[1]!.toLowerCase())) {
+    if (
+      langs.length &&
+      langMatch &&
+      !langs.includes(langMatch[1]!.toLowerCase())
+    ) {
       continue;
     }
     addSource(map, s, "apk");
@@ -192,7 +188,11 @@ export function buildScrapeInventory(opts: {
     const s = stem.trim();
     if (!s) continue;
     const langMatch = /^[a-z0-9.-]+_([a-z]{2,4})_\d{3}/i.exec(s);
-    if (langs.length && langMatch && !langs.includes(langMatch[1]!.toLowerCase())) {
+    if (
+      langs.length &&
+      langMatch &&
+      !langs.includes(langMatch[1]!.toLowerCase())
+    ) {
       continue;
     }
     addSource(map, s, "malie");
@@ -216,7 +216,8 @@ export function buildScrapeInventory(opts: {
   let both = 0;
   let malieUnavailable = 0;
   for (const e of entries) {
-    if (e.sources.includes("apk") || e.sources.includes("setnum-expand")) apk += 1;
+    if (e.sources.includes("apk") || e.sources.includes("setnum-expand"))
+      apk += 1;
     if (e.sources.includes("malie")) malie += 1;
     if (e.sources.includes("setnum-expand")) setnumExpand += 1;
     const fromApk =
@@ -233,7 +234,10 @@ export function buildScrapeInventory(opts: {
   const stemsPath = path.join(opts.outDir, "scrape-inventory.txt");
   const reportPath = path.join(opts.outDir, "scrape-inventory.json.gz");
   const availabilityPath = path.join(logsDir, "scrape-availability.json.gz");
-  const malieUnavailablePath = path.join(logsDir, "malie-unavailable-stems.txt");
+  const malieUnavailablePath = path.join(
+    logsDir,
+    "malie-unavailable-stems.txt",
+  );
   const cdnUnavailablePath = path.join(logsDir, "cdn-unavailable-stems.txt");
 
   const report: ScrapeInventoryReport = {
@@ -250,7 +254,11 @@ export function buildScrapeInventory(opts: {
     cdnUnavailablePath,
   };
 
-  writeFileSync(stemsPath, `${stems.join("\n")}${stems.length ? "\n" : ""}`, "utf8");
+  writeFileSync(
+    stemsPath,
+    `${stems.join("\n")}${stems.length ? "\n" : ""}`,
+    "utf8",
+  );
   writeJsonGzip(reportPath, { report, entries });
   writeMalieUnavailableList(malieUnavailablePath, entries);
 
@@ -278,7 +286,11 @@ export function cdnStatusFromBundleResult(
     };
   }
   if (res.error === "aborted" || res.error === "cloudfront-softban") {
-    return { cdn: "aborted", cdnStatus: res.status ?? null, cdnError: res.error };
+    return {
+      cdn: "aborted",
+      cdnStatus: res.status ?? null,
+      cdnError: res.error,
+    };
   }
   if (res.softBan === true || res.error === "cloudfront-request-blocked") {
     return {
@@ -320,28 +332,28 @@ export function mergeCdnResultsIntoInventory(
     entries: inventory.entries,
   });
   writeJsonGzip(inventory.report.availabilityPath, {
-        report: inventory.report,
-        malieUnavailable: inventory.entries
-          .filter((e) => e.malie === "unavailable")
-          .map((e) => e.stem),
-        cdnUnavailable: inventory.entries
-          .filter((e) => e.cdn === "unavailable")
-          .map((e) => ({
-            stem: e.stem,
-            sources: e.sources,
-            malie: e.malie,
-            status: e.cdnStatus,
-            error: e.cdnError,
-            malieArtUrl: e.malieArtUrl,
-          })),
-        cdnSoftban: inventory.entries
-          .filter((e) => e.cdn === "softban" || e.cdn === "aborted")
-          .map((e) => ({
-            stem: e.stem,
-            cdn: e.cdn,
-            status: e.cdnStatus,
-            error: e.cdnError,
-          })),
+    report: inventory.report,
+    malieUnavailable: inventory.entries
+      .filter((e) => e.malie === "unavailable")
+      .map((e) => e.stem),
+    cdnUnavailable: inventory.entries
+      .filter((e) => e.cdn === "unavailable")
+      .map((e) => ({
+        stem: e.stem,
+        sources: e.sources,
+        malie: e.malie,
+        status: e.cdnStatus,
+        error: e.cdnError,
+        malieArtUrl: e.malieArtUrl,
+      })),
+    cdnSoftban: inventory.entries
+      .filter((e) => e.cdn === "softban" || e.cdn === "aborted")
+      .map((e) => ({
+        stem: e.stem,
+        cdn: e.cdn,
+        status: e.cdnStatus,
+        error: e.cdnError,
+      })),
   });
   const cdnMiss = inventory.entries
     .filter((e) => e.cdn === "unavailable")

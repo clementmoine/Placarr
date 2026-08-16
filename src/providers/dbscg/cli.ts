@@ -131,7 +131,9 @@ export async function runDbsCgPackPipeline(
           delayMs: optionalNumber(argv, "--delay"),
           onProgress: (page, total) => {
             if (page % 20 === 0) {
-              console.log(`   dbscards ${lang} — page ${page}, ${total} cartes`);
+              console.log(
+                `   dbscards ${lang} — page ${page}, ${total} cartes`,
+              );
             }
           },
         });

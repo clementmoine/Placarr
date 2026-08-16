@@ -24,10 +24,7 @@ import path from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 
 import type { LiveCardIdentity } from "./cardDatabase";
-import {
-  isPokemonLiveLanguage,
-  type PokemonLiveLanguage,
-} from "./languages";
+import { isPokemonLiveLanguage, type PokemonLiveLanguage } from "./languages";
 
 export const MALIE_CDN_BASE = "https://cdn.malie.io/file/malie-io/tcgl";
 export const MALIE_DATABASES_INDEX_URL = `${MALIE_CDN_BASE}/databases/index.json`;
@@ -42,23 +39,23 @@ export const MALIE_BUNDLE_STEM_RE =
   /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})(?:_[a-z]+)?$/i;
 
 /** Live ``cardID``: ``bw10_1`` or ``bw10_1_ph``. */
-export const MALIE_CARD_ID_RE =
-  /^([a-z0-9.-]+)_(\d+)(?:_([a-z]+))?$/i;
+export const MALIE_CARD_ID_RE = /^([a-z0-9.-]+)_(\d+)(?:_([a-z]+))?$/i;
 
 export const LONG_FORM_ID_RE =
   /^([A-Za-z][A-Za-z0-9']*)_([a-z0-9.-]+)_(\d{1,3})_([a-z]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)$/;
 
 /** Malie locale tag → Live CDN lang (skip es-419 / ``la`` until Live ships it). */
-export const MALIE_LOCALE_TO_LIVE: Record<string, PokemonLiveLanguage | null> = {
-  "en-US": "en",
-  "fr-FR": "fr",
-  "de-DE": "de",
-  "it-IT": "it",
-  "es-ES": "es",
-  "pt-BR": "ptbr",
-  "es-419": null,
-  la: null,
-};
+export const MALIE_LOCALE_TO_LIVE: Record<string, PokemonLiveLanguage | null> =
+  {
+    "en-US": "en",
+    "fr-FR": "fr",
+    "de-DE": "de",
+    "it-IT": "it",
+    "es-ES": "es",
+    "pt-BR": "ptbr",
+    "es-419": null,
+    la: null,
+  };
 
 export type MalieDatabaseIndexEntry = {
   data: string;
@@ -170,10 +167,7 @@ export function identityFromMalieRow(
     variant = (cid[3] ?? "std").toLowerCase();
   }
 
-  const bundleStem = bundleStemFromCardId(
-    cardId || `${liveSet}_${num}`,
-    lang,
-  );
+  const bundleStem = bundleStemFromCardId(cardId || `${liveSet}_${num}`, lang);
   if (!bundleStem || !Number.isFinite(num)) return null;
 
   const foilEffect =
@@ -207,7 +201,9 @@ export function identityFromMalieRow(
     num,
     lang: lang.toLowerCase(),
     variant,
-    long_form_id: longForm || `${enName || "Card"}_${liveSet}_${num}_${variant}_Unknown_NonFoil_None`,
+    long_form_id:
+      longForm ||
+      `${enName || "Card"}_${liveSet}_${num}_${variant}_Unknown_NonFoil_None`,
     card_id: cardId || `${liveSet}_${num}`,
     name_en: enName,
     name_fr: frName,
@@ -579,9 +575,7 @@ export async function bootstrapMalieCatalogue(opts: {
       seenLong.add(id.long_form_id);
       identities.push(id);
       stemSet.add(id.bundle_stem);
-      setnumSet.add(
-        `${id.live_set}_${String(id.num).padStart(3, "0")}`,
-      );
+      setnumSet.add(`${id.live_set}_${String(id.num).padStart(3, "0")}`);
     }
   }
 

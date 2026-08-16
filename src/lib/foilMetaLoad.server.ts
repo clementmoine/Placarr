@@ -9,7 +9,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { installPokemonShaderStemScanner, invalidatePokemonFoilNamesCache } from "@/effects/pokemon/foilNames";
+import {
+  installPokemonShaderStemScanner,
+  invalidatePokemonFoilNamesCache,
+} from "@/effects/pokemon/foilNames";
 import {
   installFoilMetaFileReader,
   installFoilMetaFileWriter,

@@ -11,42 +11,43 @@
  * from at least one TCGdex id (see `liveSetToTcgdexSets`). Cards without Live
  * data stay honest-null; Live rows without a TCGdex path are wasted assets.
  */
-export const TCGDEX_TO_LIVE_SETS: Readonly<Record<string, readonly string[]>> = {
-  // Hidden Fates (+ Shiny Vault slice in the same Live table; see collectorRemap)
-  sm115: ["sm11-5"],
-  sma: ["sm11-5"],
-  // Celebrations (+ classic collection reprints)
-  cel25: ["swsh7-5"],
-  cel25cc: ["swsh7-5r"],
-  // Double Crisis
-  dc1: ["xy5-5"],
-  // Generations (+ radiant collection slice in Live)
-  g1: ["xy9-5", "xy9-5r"],
-  // Dragon Vault
-  dv1: ["bw6-5"],
-  // Detective Pikachu
-  det1: ["gum"],
-  // Black Bolt / White Flare
-  "sv10.5w": ["rsv10-5"],
-  "sv10.5b": ["zsv10-5"],
-  // Crown Zenith Galarian Gallery
-  "swsh12.5gg": ["swsh12-5a"],
-  // Black Star promos
-  mep: ["mebsp"],
-  svp: ["svbsp"],
-  swshp: ["swshbsp"],
-  xyp: ["xybsp"],
-  bwp: ["bwbsp"],
-  smp: ["smbsp"],
-  // Trainer Gallery / Character Rare Western sets ↔ Live `*a` JP CHR tables
-  // (collector numbers still differ — card-level match may be needed).
-  "swsh9.5tg": ["swsh9a"],
-  "swsh10.5tg": ["swsh10a"],
-  "swsh11.5tg": ["swsh11a"],
-  "swsh12.5tg": ["swsh12a"],
-  // EN TCGdex — Legendary Treasures (+ radiant slice)
-  bw11: ["bw11", "bw11r"],
-};
+export const TCGDEX_TO_LIVE_SETS: Readonly<Record<string, readonly string[]>> =
+  {
+    // Hidden Fates (+ Shiny Vault slice in the same Live table; see collectorRemap)
+    sm115: ["sm11-5"],
+    sma: ["sm11-5"],
+    // Celebrations (+ classic collection reprints)
+    cel25: ["swsh7-5"],
+    cel25cc: ["swsh7-5r"],
+    // Double Crisis
+    dc1: ["xy5-5"],
+    // Generations (+ radiant collection slice in Live)
+    g1: ["xy9-5", "xy9-5r"],
+    // Dragon Vault
+    dv1: ["bw6-5"],
+    // Detective Pikachu
+    det1: ["gum"],
+    // Black Bolt / White Flare
+    "sv10.5w": ["rsv10-5"],
+    "sv10.5b": ["zsv10-5"],
+    // Crown Zenith Galarian Gallery
+    "swsh12.5gg": ["swsh12-5a"],
+    // Black Star promos
+    mep: ["mebsp"],
+    svp: ["svbsp"],
+    swshp: ["swshbsp"],
+    xyp: ["xybsp"],
+    bwp: ["bwbsp"],
+    smp: ["smbsp"],
+    // Trainer Gallery / Character Rare Western sets ↔ Live `*a` JP CHR tables
+    // (collector numbers still differ — card-level match may be needed).
+    "swsh9.5tg": ["swsh9a"],
+    "swsh10.5tg": ["swsh10a"],
+    "swsh11.5tg": ["swsh11a"],
+    "swsh12.5tg": ["swsh12a"],
+    // EN TCGdex — Legendary Treasures (+ radiant slice)
+    bw11: ["bw11", "bw11r"],
+  };
 
 /** @deprecated Prefer {@link TCGDEX_TO_LIVE_SETS}; kept for single-stem callers. */
 export const TCGDEX_TO_LIVE_SET: Readonly<Record<string, string>> =
@@ -72,7 +73,9 @@ export const LIVE_SET_NON_CATALOGUE: ReadonlySet<string> = new Set([
   "xyalt",
 ]);
 
-export function isLiveNonCatalogueSet(stem: string | null | undefined): boolean {
+export function isLiveNonCatalogueSet(
+  stem: string | null | undefined,
+): boolean {
   const s = stem?.trim().toLowerCase() ?? "";
   if (!s) return false;
   if (LIVE_SET_NON_CATALOGUE.has(s)) return true;

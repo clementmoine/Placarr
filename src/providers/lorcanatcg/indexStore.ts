@@ -174,9 +174,10 @@ function parseJsonArray(raw: string | null | undefined): string[] | null {
 }
 
 /** Rebuild sqlite from scrape rows (full replace). */
-export function writeLorcanaTcgIndex(
-  input: WriteLorcanaTcgIndexInput,
-): { dbPath: string; printCount: number } {
+export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
+  dbPath: string;
+  printCount: number;
+} {
   const dbPath = input.dbPath ?? lorcanaTcgDbPath();
   resetLorcanaTcgDbCache();
   if (existsSync(dbPath)) {
@@ -296,9 +297,9 @@ export function writeLorcanaTcgIndex(
       row.secondVarnishMask ?? null,
     );
   }
-  db.prepare(
-    "INSERT INTO meta (key, value) VALUES ('schema_version', ?)",
-  ).run(LORCANA_TCG_SCHEMA_VERSION);
+  db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', ?)").run(
+    LORCANA_TCG_SCHEMA_VERSION,
+  );
   db.prepare("INSERT INTO meta (key, value) VALUES ('languages', ?)").run(
     JSON.stringify(input.languages),
   );
@@ -321,9 +322,9 @@ export function exportLorcanaCardsIndexJson(
   try {
     const generatedAt =
       (
-        db.prepare("SELECT value FROM meta WHERE key = 'generated_at'").get() as
-          | { value?: string }
-          | undefined
+        db
+          .prepare("SELECT value FROM meta WHERE key = 'generated_at'")
+          .get() as { value?: string } | undefined
       )?.value ?? new Date().toISOString();
 
     const rows = db

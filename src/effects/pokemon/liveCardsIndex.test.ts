@@ -44,9 +44,7 @@ async function makeDb(): Promise<string> {
       set_code TEXT
     );
   `);
-  db.prepare(
-    `INSERT INTO live_cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-  ).run(
+  db.prepare(`INSERT INTO live_cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     "sv1_fr_001",
     "sv1",
     1,
@@ -62,9 +60,7 @@ async function makeDb(): Promise<string> {
     "Common",
     "SV1",
   );
-  db.prepare(
-    `INSERT INTO live_cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-  ).run(
+  db.prepare(`INSERT INTO live_cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     "sv1_fr_100",
     "sv1",
     100,

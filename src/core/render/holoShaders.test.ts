@@ -115,7 +115,9 @@ describe("the library itself", () => {
     for (const id of HOLO_SHADER_IDS) {
       const look = holoShader(id)!;
       for (const url of look.backgroundImage.matchAll(/url\((\/[^)]+)\)/g)) {
-        expect(url[1]).toMatch(/^\/assets\/lorcana\/web\/[a-z0-9]+\.(jpg|png)$/);
+        expect(url[1]).toMatch(
+          /^\/assets\/lorcana\/web\/[a-z0-9]+\.(jpg|png)$/,
+        );
       }
     }
   });
@@ -281,7 +283,9 @@ describe("holoLayerStyle tuning", () => {
   it("adds saturation for rainbow rather than replacing the look's own", () => {
     const style = holoLayerStyle(shaderOf("silver"), { rainbow: 2 });
     // Silver already desaturates to 0.2; the axis composes onto that.
-    expect(style.filter).toBe("brightness(1.6) saturate(0.2) invert() saturate(2)");
+    expect(style.filter).toBe(
+      "brightness(1.6) saturate(0.2) invert() saturate(2)",
+    );
   });
 
   it("darkens as the wash gets stronger, and lifts as it weakens", () => {
@@ -312,9 +316,9 @@ describe("holoLayerStyle tuning", () => {
   it("scales the grain by resizing every length, keeping keywords intact", () => {
     // `cover` and `contain` have no size to scale, and dropping them would
     // change which layer covers the card.
-    expect(
-      holoLayerStyle(shaderOf("lava"), { grain: 2 }).backgroundSize,
-    ).toBe("cover, 600% 600%");
+    expect(holoLayerStyle(shaderOf("lava"), { grain: 2 }).backgroundSize).toBe(
+      "cover, 600% 600%",
+    );
     expect(
       holoLayerStyle(shaderOf("silver"), { grain: 0.5 }).backgroundSize,
     ).toBe("150% 50%, 50% 50%");

@@ -167,9 +167,9 @@ export function buildAttachmentDisplayScoreDetails(
       }
     }
     if (/\bmedia\b(?!=)/.test(signal)) {
-      if (
-        !(options?.preferDiscCover && isDiscOrSupportCoverCandidate(attachment))
-      ) {
+      if (!(
+        options?.preferDiscCover && isDiscOrSupportCoverCandidate(attachment)
+      )) {
         addSignal(-220, "back/disc media signal");
       }
     }

@@ -9,10 +9,7 @@
 import { CDN_HOST, DEFAULT_UA, DEFAULT_VERSION } from "./cdn";
 
 export type RainierPlatform =
-  | "android"
-  | "iphoneplayer"
-  | "osxplayer"
-  | "windowsplayer";
+  "android" | "iphoneplayer" | "osxplayer" | "windowsplayer";
 
 export const DEFAULT_RAINIER_PLATFORM: RainierPlatform = "android";
 

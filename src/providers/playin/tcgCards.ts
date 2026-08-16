@@ -102,10 +102,7 @@ export function resolvePlayInSetCode(input: {
   return null;
 }
 
-export function parsePlayInCardHits(
-  html: string,
-  limit = 8,
-): PlayInCardHit[] {
+export function parsePlayInCardHits(html: string, limit = 8): PlayInCardHit[] {
   const seen = new Set<string>();
   const hits: PlayInCardHit[] = [];
 
@@ -286,7 +283,9 @@ export function playInCardMatchesIdentity(
   return true;
 }
 
-export function lorcanaPrintKeyFromContext(printKey?: string | null): string | null {
+export function lorcanaPrintKeyFromContext(
+  printKey?: string | null,
+): string | null {
   const identity = parsePrintKey(printKey);
   if (!identity || identity.game !== LORCANA_GAME) return null;
   return printKey!.trim();

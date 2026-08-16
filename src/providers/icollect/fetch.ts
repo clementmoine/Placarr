@@ -723,9 +723,9 @@ export async function fetchICollectMetadataByBarcode(
   const itemId = itemRef?.itemId ?? local?.itemId ?? undefined;
   const needsPageRefresh = Boolean(
     db &&
-      itemId &&
-      !process.env.RECORD &&
-      shouldFetchICollectItemPageOnLookup(db, itemId, local),
+    itemId &&
+    !process.env.RECORD &&
+    shouldFetchICollectItemPageOnLookup(db, itemId, local),
   );
 
   if (local && !needsPageRefresh) {

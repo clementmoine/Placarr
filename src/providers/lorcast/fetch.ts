@@ -91,7 +91,9 @@ export function lorcastCardLabel(card: LorcastCard): string {
  * `lorcana:3-4a` → set `3`, number `4a`
  * `lorcana:1-20-p1` → try `20p1` then search fallbacks in the caller
  */
-export function lorcastLookupFromPrintKey(printKey: string | null | undefined): {
+export function lorcastLookupFromPrintKey(
+  printKey: string | null | undefined,
+): {
   set: string;
   number: string;
   grouping: string | null;
@@ -167,7 +169,9 @@ function collectorNumberCandidates(number: string): string[] {
   if (!raw) return [];
   const upper = raw.toUpperCase();
   const digits = raw.replace(/[a-z]+$/i, "");
-  return [...new Set([raw, upper, ...(digits && digits !== raw ? [digits] : [])])];
+  return [
+    ...new Set([raw, upper, ...(digits && digits !== raw ? [digits] : [])]),
+  ];
 }
 
 function preferPricedLorcastCard(

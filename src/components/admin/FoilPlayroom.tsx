@@ -433,18 +433,17 @@ function MaterialTile({
     varnish: null,
   };
 
-  const candidates = useMemo(() => {
-    if (!finish) {
-      // Varnish-only: prefer prints that already carry a varnish mask. Do not
-      // slice the collection-first list — that hid catalogue fillers.
-      const withVarnishMask = samples.filter(
-        (sample) => sample.imageUrl && sample.varnishMaskUrl,
-      );
-      if (withVarnishMask.length > 0) return withVarnishMask;
-      return samples.filter((sample) => Boolean(sample.imageUrl));
-    }
-    return samplesForFinish(finish, samples);
-  }, [finish, samples]);
+  const candidates = !finish
+    ? (() => {
+        // Varnish-only: prefer prints that already carry a varnish mask. Do not
+        // slice the collection-first list — that hid catalogue fillers.
+        const withVarnishMask = samples.filter(
+          (sample) => sample.imageUrl && sample.varnishMaskUrl,
+        );
+        if (withVarnishMask.length > 0) return withVarnishMask;
+        return samples.filter((sample) => Boolean(sample.imageUrl));
+      })()
+    : samplesForFinish(finish, samples);
 
   const packArt =
     packArtProp !== undefined
@@ -731,10 +730,10 @@ export function FoilPlayroom({
   const pack = packs.find((entry) => entry.id === packId) ?? null;
   const extractTarget = foilExtractTargetForPack(packId);
   // Re-read after foil-meta hydrate (manifest / frag-stems).
-  const materials = useMemo(
-    () => pack?.listMaterials() ?? [],
-    [pack, metaReady],
-  );
+  const materials = useMemo(() => {
+    void metaReady;
+    return pack?.listMaterials() ?? [];
+  }, [pack, metaReady]);
   /** Owned Live faces first so MuMu-checkable effects are easy to find. */
   const materialsOrdered = useMemo(() => {
     if (!pack) return materials;
@@ -745,7 +744,7 @@ export function FoilPlayroom({
       else rest.push(name);
     }
     return [...owned, ...rest];
-  }, [materials, pack]);
+  }, [materials, pack, artsFor]);
   const focusedMaterial = resolvePlayroomMaterial(
     searchParams.get("material"),
     materialsOrdered,

@@ -355,9 +355,8 @@ export function createScrapeCatalogModule<
               : undefined,
           });
         } catch (error) {
-          const { PrestashopAccessDeniedError } = await import(
-            "@/providers/prestashop/fetch"
-          );
+          const { PrestashopAccessDeniedError } =
+            await import("@/providers/prestashop/fetch");
           if (error instanceof PrestashopAccessDeniedError) {
             return probeErrorResult(error.message, "blocked");
           }

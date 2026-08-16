@@ -110,7 +110,8 @@ const LANG = /\blang="([a-z]{2})"/i;
  * every card whose price moved reported `-1.99€` instead of `108.00€`. The
  * class token has to end at whitespace or the closing quote.
  */
-const PRICE = /<span[^>]*class="[^"]*item-price(?=[\s"])[^"]*"[^>]*>([\s\S]*?)<\/span>/i;
+const PRICE =
+  /<span[^>]*class="[^"]*item-price(?=[\s"])[^"]*"[^>]*>([\s\S]*?)<\/span>/i;
 const DELTA =
   /<span[^>]*class="[^"]*item-price-difference[^"]*"[^>]*>([\s\S]*?)<\/span>/i;
 const IMG = /<img[^>]*>/gi;
@@ -153,7 +154,10 @@ export function parseTilePrice(
   return { value, currency };
 }
 
-function sideImages(html: string): { front: string | null; back: string | null } {
+function sideImages(html: string): {
+  front: string | null;
+  back: string | null;
+} {
   let front: string | null = null;
   let back: string | null = null;
   for (const tag of html.matchAll(IMG)) {

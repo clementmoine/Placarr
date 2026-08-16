@@ -26,9 +26,7 @@ export function isLiveSyntheticFinish(finish: string): boolean {
   return n === LIVE_STD_FINISH || n === LIVE_PH_FINISH;
 }
 
-export function liveKeyForSyntheticFinish(
-  finish: string,
-): "std" | "ph" | null {
+export function liveKeyForSyntheticFinish(finish: string): "std" | "ph" | null {
   const n = finish.trim().toLowerCase();
   if (n === LIVE_STD_FINISH) return "std";
   if (n === LIVE_PH_FINISH) return "ph";

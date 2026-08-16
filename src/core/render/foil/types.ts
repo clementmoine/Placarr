@@ -2,11 +2,7 @@ export type FoilBackend = "webgl" | "css";
 export type FoilBackendPreference = "auto" | "webgl" | "css";
 
 export type FoilTextureRole =
-  | "art"
-  | "foilMask"
-  | "varnishMask"
-  | "secondVarnishMask"
-  | "normals";
+  "art" | "foilMask" | "varnishMask" | "secondVarnishMask" | "normals";
 
 export type FoilWrap = "repeat" | "clamp" | "mirror" | "mirrorOnce";
 export type FoilFilter = "point" | "bilinear" | "trilinear";
@@ -202,7 +198,10 @@ export type EffectPackModule = {
    * Several Live faces for one material (seed + other sets). Focus/compare
    * stacks these so a look is checked generically, not on one print only.
    */
-  playroomArtsForMaterial?(name: string, limit?: number): Array<{
+  playroomArtsForMaterial?(
+    name: string,
+    limit?: number,
+  ): Array<{
     imageUrl: string;
     maskUrl?: string | null;
     varnishMaskUrl?: string | null;

@@ -47,9 +47,7 @@ describe("carteSemaine", () => {
        08/12/2008 L'homme-ivre [TA-240] Voici`,
       { week: 26, page: "w26.html" },
     );
-    const byId = Object.fromEntries(
-      week.featured.map((e) => [e.cardId, e]),
-    );
+    const byId = Object.fromEntries(week.featured.map((e) => [e.cardId, e]));
     expect(byId.te177).toMatchObject({
       date: "27/06/2007",
       name: "Arcanes Lunaires",

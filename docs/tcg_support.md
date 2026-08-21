@@ -269,6 +269,34 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   `collectorQueryClause` (`lorcanatcg/indexStore.ts`) traduit les deux formes en
   une clause SQL. À savoir pour qui chercherait l'origine de ce comportement :
   il est arrivé avec `d7cb3467`, dont le message ne le mentionne pas.
+- **L'APK ne porte aucune base de cartes** (mesuré le 2026-08-21, en cherchant la
+  finition de `36/P2`). Les bundles Unity ne contiennent que l'UI, la
+  localisation, les shaders et les textures : `datapack.unity3d` a 7 `TextAsset`
+  — le plus gros est `LorcanaLocalization` — et `data.unity3d` six, tous des
+  politiques de confidentialité ou des crédits. L'appli **télécharge** ses
+  cartes. Ce que le dump apporte, c'est la _mécanique_ du foil : douze types
+  (`CardFoilSilver`, `CardFoilGlitter`, `CardFoilLava`…) et un atlas de masques
+  partagé, pas un masque par carte. Le type, lui, est une donnée de carte, donc
+  hors APK. Inutile d'y rechercher un tirage : la question « telle carte est-elle
+  dans l'appli ? » n'a pas de réponse dans les fichiers qu'on possède.
+- **LorcanaJSON ne publie pas les sets promo comme sets.** Amont du 2026-08-15 :
+  3242 cartes, `setCode` ∈ {1…13, Q1, Q2} — ni `P1`, ni `P2`, ni `C2`, ni
+  Coconut. Les 23 tirages que notre base range en `promo_grouping = P2` avec
+  `["Silver"]` sont des cartes de sets numérotés (`5-1`, `5-2`…) réimprimées en
+  promo, pas le set P2 lui-même. Le trou est donc **structurel**, pas un fetch
+  périmé : re-tirer LorcanaJSON ne le comblera jamais.
+- **Lorcast n'a pas de champ de finition.** Ses 28 champs vont de `cost` à
+  `purchase_uris` ; aucun ne dit le foil. Seule la forme des prix informe, et
+  indirectement : sur le set 1, les 204 cartes ont `usd` **et** `usd_foil` ; sur
+  P2, aucune des 36 n'a les deux (30 foil seul, 3 normal seul, 3 sans prix) — les
+  promos sont donc mono-finition. `15/P2` n'est coté qu'en non-foil (66,41 $) et
+  `36/P2` pas du tout. Cela dit qu'une finition existe, jamais **laquelle** :
+  c'est pourquoi ces 28 restent sans type plutôt que de recevoir le `Silver`
+  majoritaire.
+- **`15/P2` et `36/P2` sont deux impressions distinctes**, pas un doublon : deux
+  identifiants Lorcast, même date (2024-08-09), mêmes stats, mais `15` a le cadre
+  noir standard et l'encart de texte vide, quand `36` a un cadre doré pailleté et
+  un texte d'ambiance. La check-list a raison de les compter séparément.
 
 - **Les sets d'une promo ne se recouvrent pas d'une source à l'autre.**
   LorcanaJSON range une promo sous l'extension de la carte qu'elle réimprime

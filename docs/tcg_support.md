@@ -261,6 +261,15 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   signalait. Lorcast les publie ; `lorcanatcg/lorcastFill.ts` les verse en
   **remplissage seul**, sans jamais contredire un fait de LorcanaJSON. Restent
   ouverts `25/P1` et `5/C1`, attestés par dotgg seul.
+- **La référence imprimée ne se cherchait pas.** Taper `36/P2` rendait zéro, et
+  `18/P2` aussi — donc les 189 promos que LorcanaJSON tenait **déjà**, pas
+  seulement les 28 ajoutées par le remplissage. Aucune colonne ne porte
+  l'identifiant sous cette forme, et `12/204` échouait pour une autre raison :
+  le second segment est la **taille du set**, pas son code.
+  `collectorQueryClause` (`lorcanatcg/indexStore.ts`) traduit les deux formes en
+  une clause SQL. À savoir pour qui chercherait l'origine de ce comportement :
+  il est arrivé avec `d7cb3467`, dont le message ne le mentionne pas.
+
 - **Les sets d'une promo ne se recouvrent pas d'une source à l'autre.**
   LorcanaJSON range une promo sous l'extension de la carte qu'elle réimprime
   (`10/P3` → set 1) ; Lorcast n'a que le code imprimé (`P3`). L'extension de base

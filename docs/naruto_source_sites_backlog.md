@@ -1441,6 +1441,16 @@ vrais codes de volume.
       **zéro** sur `s24`, qui n'a que son anglais. Le même message atteste aussi un
       starter français « La Tempête Approche », 33 cartes, absent de notre scellé.
 
+- [ ] **PDF « complete CCG » d'aplaceforcollectors.it** — 820 Ko, accessible, mais
+      ses huit sous-polices ont des encodages contradictoires : un décodage propre
+      demande de suivre la police active par fragment de texte. Le dossier parent
+      rend 403, donc pas de version HTML. À reprendre avec un vrai extracteur de
+      couche texte.
+
+- [ ] **Reddit r/Narutoccg** — plusieurs fils cités, dont « europe version of
+      naruto ccg », inaccessibles : le domaine est bloqué par la politique du
+      navigateur et par WebFetch. À consulter autrement si les fils comptent.
+
 - [ ] **Long terme** — figer la DB Naruto curée en fichier compressé / Internet Archive.
 
 ### 疾風伝 CARD GAME — un second jeu dans le pack, et il est japonais seul

@@ -1,0 +1,17 @@
+{
+  "source": "narutoccgitalia.wordpress.com — « Una breve Storia del Naruto CCG », 06/12/2012",
+  "url": "https://narutoccgitalia.wordpress.com/2012/12/06/una-breve-storia-del-naruto-ccg/",
+  "observed": "2026-08-21",
+  "ingest": "none — histoire du métagame, pas une checklist",
+  "lang": "it",
+  "whyItMatters": "Un joueur italien qui raconte l'évolution du jeu de 2006 à 2012, en citant les cartes par leur numéro. Ce n'est pas une liste, mais il explique **la structure** que notre base porte sans l'avoir écrite.",
+  "usExclusiveLine": {
+    "claim": "« E' così che nasce Eternal Rivalry, la prima serie **only-Usa** creata per cambiare il meta, e possiamo definirla anche come la serie con la quale, la versione americana del CCG, **prende la sua personale strada, a differenza delle altre parti del mondo**. »",
+    "whatItExplains": "Nos familles `nus` / `jus` / `mus` / `cus` / `prus` sont les **American Exclusive Cards**, introduites avec Eternal Rivalry pour changer le métagame américain. Le code les portait, rien ne disait ce qu'elles étaient.",
+    "verified": "Mesuré le 2026-08-21 : les quatre familles démarrent toutes à `s6` — 124 `nus`, 94 `jus`, 111 `mus`, 1 `cus`, plus 15 `prus` en promo. Aucune n'existe avant. La donnée dit exactement ce que l'article dit.",
+    "cited": "N-US006 Sakura Haruno, US-025 Temari, N-US013/014/016 la formation Ino-Shika-Cho, N-US015 Shikamaru, PUS-008 Gaara, J-US024 Wood Style: Deep Forest Creation, M-US086 Just Like Drifting Clouds."
+  },
+  "corroborates": "Le set 6 est le point de divergence entre l'Amérique et le reste du monde. Trois sources indépendantes le disent maintenant, chacune par un autre bout : notre registre `sets.json` (Série 6 annulée en France, imprimée en Italie), un récapitulatif de collectionneur français de 2015 (cinq parts françaises, pas six), et cet article italien (première série only-USA). Elles ne se connaissent pas.",
+  "alsoUseful": "Le vainqueur du GenCon avait le droit de créer une carte — `M-US086` est de Joe Colon, 2007. Et trois cartes ont reçu un errata officiel : The One Who Inherits and Entrusts the Will, The Third Hokage [Addressing Past Wrongs], Ino Yamanaka [(US) Formation]. Un errata change le texte sans changer le numéro : à savoir avant de comparer deux relevés.",
+  "not": ["checklist", "faces", "cartes italiennes"]
+}

@@ -297,6 +297,27 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   identifiants Lorcast, même date (2024-08-09), mêmes stats, mais `15` a le cadre
   noir standard et l'encart de texte vide, quand `36` a un cadre doré pailleté et
   un texte d'ambiance. La check-list a raison de les compter séparément.
+- **Une finition peut venir de l'exemplaire physique.** Ni LorcanaJSON ni Lorcast
+  ne diront jamais celle des vingt-huit tirages bouchés ; une carte en main, si.
+  `curated/attestedFinishes.json` porte ces observations, versées par
+  `curated/attestedFinishes.ts` en toute fin de `scrapeCards`, **jamais** sur un
+  tirage qui déclare déjà quelque chose. Ce qui est stocké est une **relation**,
+  pas un type : l'œil constate « même finition que cette carte-là », pas
+  `Glitter`, qui est un nom interne à LorcanaJSON. Le type se résout au build
+  depuis la carte de référence et la suit si l'amont la corrige. Premier cas :
+  `36/P2` reprend le `Glitter` de `25/P2` (Lilo – Escape Artist), attesté par le
+  propriétaire et corroboré par le visuel — les deux portent le cadre doré semé
+  d'étoiles, que `15/P2` n'a pas et qui reste donc sans finition.
+- **Un tirage bouché par Lorcast n'a pas de masque de foil**, Lorcast n'en
+  publiant aucun. Conséquence de rendu, mesurée : `CardFoilGlitter` lie
+  `_MotifMask` en rôle `foilMask`, donc `foilSurfacesReady` refuse le WebGL — et
+  le pack Lorcana ne déclare pas de `fallbackFoilMaskUrl`, contrairement à
+  `dbscg`, `narutoccg` et `pokemon`. La carte retombe sur la recette CSS, qui
+  n'utilise que la texture partagée `glitter`. Le foil s'affiche donc, mais
+  **non masqué** : sur toute la carte au lieu des seules zones foilées. Y
+  remédier voudrait dire soit une source de masques pour ces vingt-huit, soit un
+  masque de repli pour le pack — un choix qui les concernerait tous les
+  vingt-huit, pas seulement `36/P2`.
 
 - **Les sets d'une promo ne se recouvrent pas d'une source à l'autre.**
   LorcanaJSON range une promo sous l'extension de la carte qu'elle réimprime

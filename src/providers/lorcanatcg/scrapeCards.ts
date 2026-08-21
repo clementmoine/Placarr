@@ -36,6 +36,7 @@ import {
   lorcanaGapKey,
   type LorcastFillPrint,
 } from "./lorcastFill";
+import { resolveAttestedFinishes } from "./curated/attestedFinishes";
 
 export type ScrapeLorcanaCardsOptions = {
   force?: boolean;
@@ -378,7 +379,9 @@ export async function scrapeLorcanaCards(
       providerId: print.providerId,
       cost: print.cost,
       artists: print.artists.length ? print.artists : null,
-      // Lorcast ne dit rien des finitions : les inventer serait pire que le vide.
+      // Lorcast ne dit rien des finitions : les inventer serait pire que le
+      // vide. Seule une carte en main tranche — voir `curated/attestedFinishes`,
+      // appliqué plus bas.
       foilTypes: null,
       varnishType: null,
       cardmarketUrl: null,
@@ -411,6 +414,24 @@ export async function scrapeLorcanaCards(
       secondVarnishMaskUrl: null,
     });
     jobs.push(...collectJobsForLorcastPrint(print, cardsDir));
+  }
+
+  // Ce que ni LorcanaJSON ni Lorcast ne disent, un exemplaire en main peut le
+  // dire. Appliqué en dernier, et seulement sur un tirage sans finition.
+  const attested = resolveAttestedFinishes((printKey) => {
+    const print = prints.get(printKey);
+    if (!print) return undefined;
+    return {
+      foilTypes: print.foilTypes ?? null,
+      varnishType: print.varnishType ?? null,
+      foilEffectColors: print.foilEffectColors ?? null,
+    };
+  });
+  for (const note of attested.notes) console.log(`  attesté: ${note}`);
+  for (const [printKey, finish] of attested.finishes) {
+    const print = prints.get(printKey);
+    if (!print) continue;
+    prints.set(printKey, { ...print, ...finish });
   }
 
   console.log(

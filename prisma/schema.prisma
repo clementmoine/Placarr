@@ -145,19 +145,19 @@ model PriceOffer {
 }
 
 model Shelf {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String?
-  imageUrl    String?
-  color       String?
-  type        Type
-  isPublic    Boolean  @default(true)
-  cardFormat  String   @default("default")
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  items       Item[]
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  name       String
+  slug       String?
+  imageUrl   String?
+  color      String?
+  type       Type
+  isPublic   Boolean  @default(true)
+  cardFormat String   @default("default")
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  items      Item[]
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([slug])
@@ -219,6 +219,15 @@ model Item {
   // health rather than which thing it is. Options come from the metadata's
   // `variant-option` facts. See core/enrich/variants.
   variant                   String?
+  // Which language this copy is printed in, as a lowercase code (`fr`, `ja`).
+  // Part of what the copy IS, not of the print's identity: providers give one
+  // key per card and several localizations under it — TCGdex answers `2011bw-1`
+  // for both Snivy and Vipélierre. 898 Naruto keys and 19673 Pokémon keys carry
+  // titles in more than one language, and without this column the French and
+  // the Japanese copy of the same number were indistinguishable — same slug,
+  // and the second one got a `-copy-N` suffix claiming it duplicated the first.
+  // Null means unknown, never "the default one".
+  language                  String?
   condition                 Condition
   metadataId                String?
   shelfId                   String
@@ -240,6 +249,7 @@ model Item {
   @@index([metadataId])
   @@index([barcode])
   @@index([printKey])
+  @@index([printKey, variant, language])
   @@index([slug])
 }
 

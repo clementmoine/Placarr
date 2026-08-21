@@ -253,6 +253,7 @@ export async function POST(req: NextRequest) {
         barcode,
         printKey: rawPrintKey,
         variant: rawVariant,
+        language: rawLanguage,
         condition,
         fetchMetadata = true,
         metadataPreview,
@@ -288,6 +289,17 @@ export async function POST(req: NextRequest) {
       const variant =
         typeof rawVariant === "string" && rawVariant.trim()
           ? rawVariant.trim()
+          : null;
+      /*
+        La langue de **cet exemplaire**, pas du tirage : une clé vaut pour
+        toutes les localisations d'une carte, et sans cette colonne l'Inari
+        française et l'イナリ japonaise étaient le même objet. Code court en
+        minuscules, comme les sources le donnent ; absent = inconnu, jamais
+        « la langue par défaut ».
+      */
+      const language =
+        typeof rawLanguage === "string" && rawLanguage.trim()
+          ? rawLanguage.trim().toLowerCase()
           : null;
       let resolvedName = typeof name === "string" ? name.trim() : "";
       if (!resolvedName) {
@@ -337,6 +349,7 @@ export async function POST(req: NextRequest) {
       const itemSlug = await allocateUniqueItemSlug(
         resolvedShelfId,
         resolvedName,
+        { print: { printKey, variant, language } },
       );
 
       const item = await prisma.item.create({
@@ -350,6 +363,7 @@ export async function POST(req: NextRequest) {
           barcode: normalizedBarcode ?? barcode,
           printKey,
           variant,
+          language,
           condition: resolvedCondition,
           userId: auth.user.id,
         },

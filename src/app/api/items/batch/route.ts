@@ -181,6 +181,7 @@ async function createItemsInChunks(
     for (const row of chunk) {
       const slug = await allocateUniqueItemSlug(data.shelfId, row.name, {
         reserved: reservedSlugs,
+        print: { printKey: row.printKey },
       });
       reservedSlugs.add(slug);
       planned.push({ name: row.name, slug, printKey: row.printKey });

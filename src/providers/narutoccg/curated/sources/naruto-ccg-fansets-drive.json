@@ -1,0 +1,38 @@
+{
+  "source": "Google Drive [Fansets] Naruto CCG Sets Database (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "staging+fallback-faces",
+  "crawl": false,
+  "download": true,
+  "kind": "fan-custom-cards",
+  "line": "en-ccg-unofficial",
+  "url": "https://drive.google.com/drive/folders/1tq0OWmtvZ4Slh8ZlDBEx51uLZUcqnh-T",
+  "folderId": "1tq0OWmtvZ4Slh8ZlDBEx51uLZUcqnh-T",
+  "title": "[Fansets] Naruto CCG Sets Database",
+  "note": "Unofficial post-s28 fansets (Mardo s29, Henrich s30, TP5 fan, Silent Humming, tokens…). Archive under staging. A file here is not proof the card was never Bandai — remakes of official numbers may be the only scan we hold. Copy onto an existing card as art.fanset (last rank). Do not mint a new print from a fanset-only filename, and do not compare each remake to the original.",
+  "folders": [
+    "Promo (Fan Made)",
+    "Set 29 - Shinobi's Dreams (Fan Made - Mardo)",
+    "Set 30 - Naruto CCG (Fan Made - Henrich)",
+    "Set 30.5 - Tournament Pack 5 (Fan Made)",
+    "Set 31 - Silent Humming (Fan Made)",
+    "Sub Set 1 - Revenge and Remorse (Fan Made)",
+    "Tokens (Fan Made)",
+    "Unlisted Fansets [Unofficial]"
+  ],
+  "folderCount": 8,
+  "dated": "2024-12-31",
+  "related": [
+    "band-of-the-hawk.json",
+    "lineage2universe.json",
+    "naruto-ccg-app.json",
+    "naruto-ccg-drive.json",
+    "vintage-naruto-ccg.json"
+  ],
+  "not": [
+    "carddass",
+    "bandai-s1-s28",
+    "official-tp5",
+    "cards-without-attestation"
+  ]
+}

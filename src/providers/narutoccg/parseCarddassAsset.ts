@@ -9,6 +9,8 @@
 
 import { buildPrintKey } from "@/core/identify/printKey";
 
+import { narutoDumpFaceRank } from "./faceChoice";
+
 /** Pack + printKey game slug — all Naruto TCG locales. */
 export const NARUTO_GAME = "naruto";
 
@@ -178,11 +180,12 @@ export function carddassFaceFilename(
   ext: string,
 ): string {
   const e = ext.startsWith(".") ? ext : `.${ext}`;
-  return role === "corrected" ? `art.corrected${e}` : `art${e}`;
+  return role === "corrected" ? `art.corrected${e}` : `art.carddass${e}`;
 }
 
 /**
- * Display order: `art.reconstructed.*` → `art.corrected.*` → `art.*`.
+ * Display order: `art.reconstructed.*` → `art.corrected.*` → dump
+ * `art.<source>.*` (pixels via `face.json`, filename tie-break here).
  *
  * `reconstructed` wins because the official S5 faces carry a burnt-in
  * `www.carddass.fr` watermark and some errata scans are crude; a hand-made
@@ -194,10 +197,11 @@ export function carddassFaceFilename(
  */
 export function pickPreferredFaceArtFilename(
   files: readonly string[],
+  lang = "fr",
 ): string | null {
   let best: { name: string; rank: number } | null = null;
   for (const f of files) {
-    const rank = faceArtRank(f);
+    const rank = faceArtRank(f, lang);
     if (rank > 0 && (!best || rank > best.rank)) best = { name: f, rank };
   }
   return best?.name ?? null;
@@ -211,11 +215,10 @@ export function pickPreferredFaceArtFilename(
  *
  * 0 means "not a face" (thumb, back, …).
  */
-export function faceArtRank(filename: string): number {
-  if (/^art\.reconstructed\.(jpe?g|png|webp|gif)$/i.test(filename)) return 3;
-  if (/^art\.corrected\.(jpe?g|png|webp|gif)$/i.test(filename)) return 2;
-  if (/^art\.(jpe?g|png|webp|gif)$/i.test(filename)) return 1;
-  return 0;
+export function faceArtRank(filename: string, lang = "fr"): number {
+  if (/^art\.reconstructed\.(jpe?g|png|webp|gif)$/i.test(filename)) return 300;
+  if (/^art\.corrected\.(jpe?g|png|webp|gif)$/i.test(filename)) return 200;
+  return narutoDumpFaceRank(filename, lang);
 }
 
 /** Prefer newest capture; CDX rows are [timestamp, original, …]. */

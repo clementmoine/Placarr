@@ -1,0 +1,92 @@
+{
+  "source": "Slab-Z vintage guide (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "ingest": "none",
+  "titleIngest": "rookiesClaimed",
+  "crawl": false,
+  "url": "https://www.slab-z.com/post/the-definitive-2002-naruto-card-game-vintage-guide-rookies-grails",
+  "published": "2026-07-13",
+  "line": "carddass-jp",
+  "note": "Shop-guide about the 2002 Bandai NARUTOカードゲーム — same tabletop game as FR/IT Carddass, not Data Carddass, not Bandai USA CCG, not Jump Festa 2001 Shueisha merch. Useful for 巻ノ壱 product shapes and PR忍-1 vs PR忍-1-R. Starter-box photo is labelled « Digital Reconstruction, Not Accurate ». Prices and « to the moon » talk are not catalogue facts. Do not mint JP vol1 SKUs from this page. Do not ingest faces.",
+  "game": {
+    "title": "NARUTO-ナルト-カードゲーム",
+    "set": "巻ノ壱",
+    "claimedLaunch": "2002-12-13",
+    "types": ["忍", "術", "作戦"],
+    "alsoMentioned": ["依頼人", "Knights"],
+    "elements": ["火", "風", "雷", "土", "水"],
+    "copyrightHint": "© 岸本斉史 スコット／集英社・テレビ東京・ぴえろ 忍-X BANDAI 2002 MADE IN JAPAN"
+  },
+  "productsClaimed": {
+    "coreSetSize": 70,
+    "starter": { "cards": 40, "priceJpy": 840 },
+    "booster": { "cards": 6, "priceJpy": 158 },
+    "carddass100": { "cards": 4, "priceJpy": 100 },
+    "alignsWith": "FR starters are also 40 cards (sets.json). JP 巻ノ五 booster is attested 6 cards (gradedcardcenter.json)."
+  },
+  "rarityDotsClaimed": {
+    "0": "normal",
+    "1": "rare",
+    "2": "super-rare",
+    "3": "ultra-rare",
+    "4": "promo-exclusive",
+    "note": "JP face-margin dots. Do not map to FR promo shuriken. Unverified on disk."
+  },
+  "rookiesClaimed": [
+    {
+      "printedRef": "忍-1",
+      "name": "うずまきナルト",
+      "diskHint": "ni001",
+      "not": ["pr-nin-1", "n001"]
+    },
+    { "printedRef": "忍-2", "name": "うちはサスケ", "diskHint": "ni002" },
+    { "printedRef": "忍-3", "name": "春野サクラ", "diskHint": "ni003" },
+    {
+      "printedRef": "忍-11",
+      "name": "はたけカカシ",
+      "diskHint": "ni011",
+      "dotsClaimed": 1
+    }
+  ],
+  "promos": {
+    "prNin1": {
+      "printedRef": "PR忍-1",
+      "claimedChannel": "Jump Festa 2003 (Dec 2002) Bandai folding brochure with One Piece Treasure Battle",
+      "not": ["ni001", "jump-festa-2001-no14"]
+    },
+    "prNin1R": {
+      "printedRef": "PR忍-1-R",
+      "claimed": "later foil / different ref",
+      "seen": "narutozabuza.json"
+    }
+  },
+  "notTcg": [
+    {
+      "title": "Weekly Jump illust. collection Jump Festa 2001 No. 14",
+      "year": 2000,
+      "note": "Shueisha attendee giveaway — manga art, no game stats"
+    },
+    {
+      "title": "Jump Festa 2001 calendar illustration card",
+      "year": 2001,
+      "note": "calendar on the back — not Carddass CG"
+    }
+  ],
+  "tournaments2003": {
+    "press": "2003-07-25",
+    "firstShop": "Sōka, Saitama",
+    "sourceClaimed": "TV Tokyo tournament page",
+    "prizesClaimed": [
+      "mission certificates",
+      "yellow binders",
+      "red deck boxes"
+    ],
+    "winnerCards": false
+  },
+  "unverified": [
+    "Knights movie-tie-in type",
+    "4-dot = promo only",
+    "exact 2002-12-13 vs their own « early 2003 retail » wording"
+  ],
+  "not": ["data-carddass", "en-ccg", "kayou", "mythos"]
+}

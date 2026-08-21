@@ -1,6 +1,6 @@
 /**
- * Rebuild `data/naruto/ccg/logs/apache-index.json` from Wayback Apache Index-of
- * HTML under `data/naruto/ccg/staging/carddass-fr/pages/`.
+ * Rebuild `data/naruto/carddass/logs/apache-index.json` from Wayback Apache Index-of
+ * HTML under `data/naruto/carddass/staging/carddass-fr/pages/`.
  *
  * Prefer autoindex pages over CDX: they list files that existed on the server
  * even when Wayback never captured the JPEG itself. Regenerable → `data/`, not

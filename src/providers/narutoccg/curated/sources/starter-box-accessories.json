@@ -1,0 +1,62 @@
+{
+  "source": "collector used-lot listing (chat 2026-08-16, no URL)",
+  "observed": "2026-08-16",
+  "note": "Seller inventory of four opened S1–S2 starters. Official card split stays sets.json (carddass.fr: 40 = 11 rares + 2 holos + 27 communes). This listing attests box accessories for S1 and S2 only. Missing cards / tokens / wear are that copy, not the SKU. Do not set contentsKnown — we still do not know which 40 cards. Do not invent S3–S5 accessories.",
+  "sku": {
+    "cardCount": 40,
+    "livretDeJeu": "per-starter",
+    "plateauDeJeu": "per-starter",
+    "plateauSharedAcrossDecks": true,
+    "jetons": 6,
+    "jetonNarutoAmongTokens": true,
+    "livretCartesACollectionner": "per-series",
+    "livretCollectionCoversBothStarters": true,
+    "attestedSets": ["s1", "s2"]
+  },
+  "thisCopy": [
+    {
+      "slug": "starter-maitre-hokage",
+      "setCode": "s1",
+      "cards": "complete-40",
+      "livretDeJeu": true,
+      "plateauDeJeu": true,
+      "jetons": 6,
+      "livretCollection": false
+    },
+    {
+      "slug": "starter-pays-du-vent",
+      "setCode": "s1",
+      "cards": "complete-40",
+      "livretDeJeu": true,
+      "plateauDeJeu": true,
+      "jetons": 6,
+      "livretCollection": true,
+      "livretCollectionNote": "one booklet for both S1 starters"
+    },
+    {
+      "slug": "starter-sceller-le-malefice",
+      "setCode": "s2",
+      "cards": "complete-40",
+      "livretDeJeu": true,
+      "plateauDeJeu": false,
+      "plateauNote": "seller: same board as the other S2 starter",
+      "jetons": 5,
+      "missingTokens": ["naruto"],
+      "livretCollection": true,
+      "livretCollectionNote": "one booklet for both S2 starters"
+    },
+    {
+      "slug": "starter-detruire-konoha",
+      "setCode": "s2",
+      "cards": "incomplete",
+      "cardsNote": "seller: one original Technique missing, probably swapped for a S1 Technique — that copy, not the SKU",
+      "livretDeJeu": true,
+      "plateauDeJeu": true,
+      "jetons": 4,
+      "missingTokens": ["naruto", "standard"],
+      "livretCollection": true,
+      "livretCollectionNote": "one booklet for both S2 starters"
+    }
+  ],
+  "boxWear": "slight wear at openings — that lot, not the SKU"
+}

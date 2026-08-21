@@ -7,6 +7,7 @@ import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
 
+import { narutoLedgerNumber, narutoNumbersEqual } from "./collectorIdentity";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import { NARUTO_PACK_ID } from "./indexStore";
 import {
@@ -112,7 +113,12 @@ export function titlesForPrints(
 
   const titles: NarutoTitleRow[] = [];
   for (const print of prints) {
-    const list = byNumber.get(print.number);
+    const list =
+      byNumber.get(print.number) ??
+      byNumber.get(narutoLedgerNumber(print.number) ?? "") ??
+      [...byNumber.entries()].find(([n]) =>
+        narutoNumbersEqual(n, print.number),
+      )?.[1];
     if (!list?.length) continue;
     const picked = pickTitleForNumber(list, print.setCode);
     if (!picked) continue;

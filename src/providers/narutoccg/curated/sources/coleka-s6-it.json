@@ -1,0 +1,36 @@
+{
+  "source": "coleka.com — Cartes Naruto Série 06 (CACG italien, Rivalità Eterna)",
+  "observed": "2026-08-16",
+  "note": "Same CACG game as FR Carddass, not Bandai USA CCG. France cancelled s6; Italy printed it (BANDAI 2008 MADE IN CHINA). Coleka lists 136 / enumerates 135, outside the French Carddass branch. Listing refs use TA; the printed tactique prefix is ST. Disk ids stay ni/te/ta/cl (ta226, never st226). Locale it under cards/s6/it/. Placeholder titles « Carte NI-255 » are not names. Do not scrape the umbrella. Do not write Italian effect names into langs.fr.",
+  "umbrella": {
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102",
+    "scrape": false,
+    "reason": "~7000 mixed Carddass + CCG"
+  },
+  "frenchBranch": {
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises_r41705",
+    "scrape": false,
+    "reason": "FR s1–s5 already on disk from carddass.fr"
+  },
+  "listing": {
+    "path": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06_r41388",
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06_r41388",
+    "scrape": true,
+    "lang": "it",
+    "set": "s6",
+    "disk": "cards/s6/it/",
+    "announced": 136,
+    "enumerated": 135
+  },
+  "printedTactiquePrefix": "ST",
+  "diskTactiquePrefix": "ta",
+  "ingestFaces": "s6/it",
+  "ingestUmbrella": "none",
+  "imagesVerdict": {
+    "on": "2026-08-20",
+    "finding": "Coleka **n'a pas** d'image pour la majorité des 135 cartes s6-it. Les 64 sans `imageUrl` dans notre relevé ne sont pas un défaut de moisson : leur fiche affiche le gabarit `https://www.coleka.com/css/assets/default/no-image.jpg`. Signalé par l'utilisateur sur `carte-ni-268_i1761768`, confirmé sans requête réseau — le HTML de liste déjà en staging porte **68 occurrences de `no-image`**.",
+    "consequence": "Il n'y a rien à aller chercher page par page. J'avais produit une liste de 64 pages à ouvrir : elle est retirée, elle demandait un travail impossible.",
+    "kept": "Les 71 faces déjà récupérées sont celles qui existent. Le reste de la série 6 italienne devra venir d'ailleurs — places de marché, comme les autres faces IT.",
+    "measurementNote": "Le rapprochement tuile par tuile reste approximatif : la fenêtre de texte autour d'un identifiant attrape parfois la tuile voisine, d'où 27 désaccords sur 135. La conclusion, elle, ne dépend pas de cette précision."
+  }
+}

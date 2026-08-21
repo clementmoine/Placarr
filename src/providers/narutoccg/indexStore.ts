@@ -1,24 +1,34 @@
 /**
- * Naruto CCG local catalogue — `data/naruto/ccg/catalog.sqlite` + cards-index.json.
+ * Naruto CCG local catalogue — `data/naruto/carddass/catalog.sqlite` + cards-index.json.
  * Closed corpus (Wayback carddass.fr). Server/script only.
  */
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { japaneseVolumeForPrintNumber } from "./japaneseVolumes";
+
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
+import { canonicalDataPack } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 
+import { canonicalizeNarutoPrintKey } from "./collectorIdentity";
+import { foldNarutoCatalogueRecords } from "./foldNarutoIndex";
+import { NARUTO_EN_PACK_ID, NARUTO_PACK_ID } from "./packs";
 import { NARUTO_GAME } from "./parseCarddassAsset";
+import { isNarutoLangPrinted } from "./printed";
 
-export const NARUTO_CCG_SCHEMA_VERSION = "1";
-export const NARUTO_PACK_ID = "naruto/ccg";
+export const NARUTO_CCG_SCHEMA_VERSION = "2";
+export { NARUTO_EN_PACK_ID, NARUTO_PACK_ID };
 
 export type NarutoPrintRow = {
   printKey: string;
+  /** Appearance (s1, s28, promo) — not the printKey set segment. */
   setCode: string;
   number: string;
   cardType: string;
+  /** Folder family (`ninja`) when known. */
+  family?: string | null;
   grouping?: string | null;
   sourceUrl?: string | null;
 };
@@ -39,23 +49,33 @@ export type NarutoAssetRow = {
   back?: string | null;
   sourceUrl?: string | null;
   waybackTimestamp?: string | null;
+  /** False = unprinted locale (S6 FR). Omitted / true = addable. */
+  printed?: boolean;
 };
 
-let activeDb: DatabaseSync | null = null;
+const activeDbs = new Map<string, DatabaseSync>();
+
+export function narutoPackDbPath(packId: string = NARUTO_PACK_ID): string {
+  if (packId === NARUTO_PACK_ID) {
+    const override = process.env.PLACARR_NARUTO_DB?.trim();
+    if (override) return path.resolve(override);
+  }
+  return path.join(dataRoot(), canonicalDataPack(packId), "catalog.sqlite");
+}
 
 export function narutoCcgDbPath(): string {
-  const override = process.env.PLACARR_NARUTO_DB?.trim();
-  if (override) return path.resolve(override);
-  return path.join(dataRoot(), NARUTO_PACK_ID, "catalog.sqlite");
+  return narutoPackDbPath(NARUTO_PACK_ID);
 }
 
 export function resetNarutoCcgDbCache(): void {
-  try {
-    activeDb?.close();
-  } catch {
-    /* ignore */
+  for (const db of activeDbs.values()) {
+    try {
+      db.close();
+    } catch {
+      /* ignore */
+    }
   }
-  activeDb = null;
+  activeDbs.clear();
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -96,6 +116,7 @@ function createSchema(db: DatabaseSync): void {
       back TEXT,
       source_url TEXT,
       wayback_timestamp TEXT,
+      printed INTEGER NOT NULL DEFAULT 1,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
@@ -107,9 +128,11 @@ export function writeNarutoCcgIndex(input: {
   titles?: NarutoTitleRow[];
   assets: NarutoAssetRow[];
   dbPath?: string;
+  pack?: string;
   meta?: Record<string, string>;
 }): { dbPath: string; printCount: number } {
-  const dbPath = input.dbPath ?? narutoCcgDbPath();
+  const pack = input.pack ?? NARUTO_PACK_ID;
+  const dbPath = input.dbPath ?? narutoPackDbPath(pack);
   resetNarutoCcgDbCache();
   if (existsSync(dbPath)) {
     try {
@@ -119,6 +142,12 @@ export function writeNarutoCcgIndex(input: {
     }
   }
   mkdirSync(path.dirname(dbPath), { recursive: true });
+
+  const folded = foldNarutoCatalogueRecords({
+    prints: input.prints,
+    titles: input.titles,
+    assets: input.assets,
+  });
 
   const db = new DatabaseSync(dbPath);
   createSchema(db);
@@ -141,14 +170,15 @@ export function writeNarutoCcgIndex(input: {
       rarity = excluded.rarity
   `);
   const insertAsset = db.prepare(`
-    INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, wayback_timestamp)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, wayback_timestamp, printed)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(print_key, lang) DO UPDATE SET
       art = COALESCE(excluded.art, print_assets.art),
       thumb = COALESCE(excluded.thumb, print_assets.thumb),
       back = COALESCE(excluded.back, print_assets.back),
       source_url = COALESCE(excluded.source_url, print_assets.source_url),
-      wayback_timestamp = COALESCE(excluded.wayback_timestamp, print_assets.wayback_timestamp)
+      wayback_timestamp = COALESCE(excluded.wayback_timestamp, print_assets.wayback_timestamp),
+      printed = excluded.printed
   `);
 
   db.exec("BEGIN");
@@ -159,13 +189,13 @@ export function writeNarutoCcgIndex(input: {
     );
     metaInsert.run("schemaVersion", NARUTO_CCG_SCHEMA_VERSION);
     metaInsert.run("game", NARUTO_GAME);
-    metaInsert.run("pack", NARUTO_PACK_ID);
+    metaInsert.run("pack", pack);
     metaInsert.run("generatedAt", new Date().toISOString());
     for (const [k, v] of Object.entries(input.meta ?? {})) {
       metaInsert.run(k, v);
     }
 
-    for (const p of input.prints) {
+    for (const p of folded.prints) {
       insertPrint.run(
         p.printKey,
         p.setCode,
@@ -175,10 +205,10 @@ export function writeNarutoCcgIndex(input: {
         p.sourceUrl ?? null,
       );
     }
-    for (const t of input.titles ?? []) {
+    for (const t of folded.titles) {
       insertTitle.run(t.printKey, t.lang, t.fullName, t.rarity ?? null);
     }
-    for (const a of input.assets) {
+    for (const a of folded.assets) {
       insertAsset.run(
         a.printKey,
         a.lang,
@@ -187,6 +217,7 @@ export function writeNarutoCcgIndex(input: {
         a.back ?? null,
         a.sourceUrl ?? null,
         a.waybackTimestamp ?? null,
+        a.printed === false ? 0 : 1,
       );
     }
     db.exec("COMMIT");
@@ -197,7 +228,7 @@ export function writeNarutoCcgIndex(input: {
   }
 
   db.close();
-  return { dbPath, printCount: input.prints.length };
+  return { dbPath, printCount: folded.prints.length };
 }
 
 export function exportNarutoCardsIndexJson(
@@ -205,38 +236,65 @@ export function exportNarutoCardsIndexJson(
   assets: NarutoAssetRow[],
   outPath: string,
   titles?: NarutoTitleRow[],
+  pack: string = NARUTO_PACK_ID,
 ): CardsIndexV1 {
+  const folded = foldNarutoCatalogueRecords({ prints, titles, assets });
   const index: CardsIndexV1 = {
     version: 1,
-    pack: NARUTO_PACK_ID,
+    pack,
     generatedAt: new Date().toISOString(),
     cards: {},
   };
 
-  const titleByKey = new Map<string, NarutoTitleRow>();
-  for (const t of titles ?? []) {
-    if (t.lang.toLowerCase() !== "fr") continue;
-    titleByKey.set(t.printKey, t);
+  const titlesByPrint = new Map<string, NarutoTitleRow[]>();
+  for (const t of folded.titles) {
+    const list = titlesByPrint.get(t.printKey) ?? [];
+    list.push(t);
+    titlesByPrint.set(t.printKey, list);
   }
 
-  for (const p of prints) {
-    const title = titleByKey.get(p.printKey);
+  for (const p of folded.prints) {
+    const printTitles = titlesByPrint.get(p.printKey) ?? [];
+    const preferred =
+      printTitles.find((t) => t.lang.toLowerCase() === "fr") ??
+      printTitles.find((t) => t.lang.toLowerCase() === "en") ??
+      printTitles[0];
     const entry: CardsIndexEntry = {
-      set: p.setCode,
-      card: p.grouping ? `${p.number}-${p.grouping}` : p.number,
+      set: p.family || p.setCode,
+      card: p.number,
       langs: {},
     };
-    if (title?.fullName) entry.name = title.fullName;
-    if (title?.rarity) entry.rarity = title.rarity;
+    if (preferred?.fullName) entry.name = preferred.fullName;
+    if (preferred?.rarity) entry.rarity = preferred.rarity;
+    /*
+      Le set japonais se dérive du numéro imprimé, pas de `set_code`.
+
+      `set_code` porte le découpage **européen** — ce qu'on a acheté en
+      boutique — et une série française empaquette deux à trois 巻ノ. Résultat
+      mesuré avant correction : 21 volumes japonais sur 25 éclatés sur
+      plusieurs sets. La numérotation japonaise, elle, est continue sur toute
+      la ligne et chaque sortie a ouvert une plage connue : c'est elle qui
+      range la carte, et elle seule.
+    */
+    const japaneseSet = japaneseVolumeForPrintNumber(p.number)?.setCode;
+    for (const t of printTitles) {
+      const code = t.lang.toLowerCase();
+      const slot = entry.langs[code] ?? {};
+      if (t.fullName) slot.name = t.fullName;
+      if (code === "ja" && japaneseSet) slot.set = japaneseSet;
+      if (isNarutoLangPrinted(p.setCode, code) === false) slot.printed = false;
+      entry.langs[code] = slot;
+    }
     index.cards[p.printKey] = entry;
   }
-  for (const a of assets) {
+  for (const a of folded.assets) {
     const entry = index.cards[a.printKey];
     if (!entry) continue;
     const lang = entry.langs[a.lang] ?? {};
     if (a.art) lang.art = a.art;
     if (a.thumb) lang.thumb = a.thumb;
     if (a.back) lang.back = a.back;
+    if (a.printed === false) lang.printed = false;
     entry.langs[a.lang] = lang;
   }
 
@@ -245,42 +303,68 @@ export function exportNarutoCardsIndexJson(
   return index;
 }
 
-export function ensureNarutoCcgIndex(): DatabaseSync | null {
-  const dbPath = narutoCcgDbPath();
+export function ensureNarutoPackIndex(
+  packId: string = NARUTO_PACK_ID,
+): DatabaseSync | null {
+  const hit = activeDbs.get(packId);
+  if (hit) return hit;
+  const dbPath = narutoPackDbPath(packId);
   if (!existsSync(dbPath)) return null;
-  if (activeDb) return activeDb;
   try {
-    activeDb = new DatabaseSync(dbPath, { readOnly: true });
-    return activeDb;
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    activeDbs.set(packId, db);
+    return db;
   } catch {
     return null;
   }
+}
+
+export function ensureNarutoCcgIndex(): DatabaseSync | null {
+  return (
+    ensureNarutoPackIndex(NARUTO_PACK_ID) ??
+    ensureNarutoPackIndex(NARUTO_EN_PACK_ID)
+  );
+}
+
+export function narutoIndexPacks(): string[] {
+  const packs = new Set<string>();
+  for (const id of [NARUTO_PACK_ID, NARUTO_EN_PACK_ID]) {
+    const disk = canonicalDataPack(id);
+    if (existsSync(narutoPackDbPath(disk))) packs.add(disk);
+  }
+  return [...packs];
 }
 
 export function lookupNarutoTitle(
   printKey: string,
   lang: string,
 ): NarutoTitleRow | null {
-  const db = ensureNarutoCcgIndex();
-  if (!db) return null;
-  const row = db
-    .prepare(
-      `SELECT print_key AS printKey, lang, full_name AS fullName, rarity
-       FROM print_titles WHERE print_key = ? AND lang = ?`,
-    )
-    .get(printKey, lang) as
-    | {
-        printKey: string;
-        lang: string;
-        fullName: string;
-        rarity: string | null;
-      }
-    | undefined;
-  if (!row) return null;
-  return {
-    printKey: row.printKey,
-    lang: row.lang,
-    fullName: row.fullName,
-    rarity: row.rarity,
-  };
+  const keys = [...new Set([printKey, canonicalizeNarutoPrintKey(printKey)])];
+  for (const pack of narutoIndexPacks()) {
+    const db = ensureNarutoPackIndex(pack);
+    if (!db) continue;
+    for (const key of keys) {
+      const row = db
+        .prepare(
+          `SELECT print_key AS printKey, lang, full_name AS fullName, rarity
+           FROM print_titles WHERE print_key = ? AND lang = ?`,
+        )
+        .get(key, lang) as
+        | {
+            printKey: string;
+            lang: string;
+            fullName: string;
+            rarity: string | null;
+          }
+        | undefined;
+      if (!row) continue;
+      return {
+        printKey: row.printKey,
+        lang: row.lang,
+        fullName: row.fullName,
+        rarity: row.rarity,
+      };
+    }
+  }
+  return null;
 }

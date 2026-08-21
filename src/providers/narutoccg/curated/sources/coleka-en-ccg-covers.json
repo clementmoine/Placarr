@@ -1,0 +1,144 @@
+{
+  "source": "coleka.com rubrique thumbs (collector chat 2026-08-16 19:15)",
+  "observed": "2026-08-16",
+  "note": "User pasted 300×300 Coleka rubrique thumbs, some concatenated. Full size = drop `_300x300`. These are EN CCG display packshots (box + booster), same kind as s28. Do not scrape Kayou or the Carddass-FR branch as CCG faces. Do not invent s1–s6 EN displays (collision with Carddass FR). Missing from this paste: s16, s19, s21–s23, s27 — Goat 3970 fills those display boxes only.",
+  "covers": [
+    {
+      "set": "s13",
+      "title": "Fateful Reunion",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202406/12/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-13-fateful-reunion_300x300.webp",
+      "sku": "display-s13",
+      "staging": "staging/coleka-en-covers/s13.webp"
+    },
+    {
+      "set": "s14",
+      "title": "Emerging Alliance",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202406/05/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-14-emerging-alliance_300x300.webp",
+      "sku": "display-s14",
+      "staging": "staging/coleka-en-covers/s14.webp"
+    },
+    {
+      "set": "s15",
+      "title": "Foretold Prophecy",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202403/24/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-15-foretold-prophecy_300x300.webp",
+      "sku": "display-s15",
+      "staging": "staging/coleka-en-covers/s15.webp"
+    },
+    {
+      "set": "s17",
+      "title": "Will of Fire",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202403/19/cartes-de-collection-cartes-anime-manga-carte-naruto-serie-17-will-of-fire_300x300.webp",
+      "sku": "display-s17",
+      "staging": "staging/coleka-en-covers/s17.webp"
+    },
+    {
+      "set": "s18",
+      "title": "Fangs of the Snake",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202403/18/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-18-fangs-of-the-snake_300x300.webp",
+      "sku": "display-s18",
+      "staging": "staging/coleka-en-covers/s18.webp"
+    },
+    {
+      "set": "s20",
+      "title": "Tales of the Gallant Sage",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202402/29/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-20-tales-of-the-gallant-sage_300x300.webp",
+      "sku": "display-s20",
+      "staging": "staging/coleka-en-covers/s20.webp"
+    },
+    {
+      "set": "s24",
+      "title": "Sage's Legacy",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202010/14/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-24-sage-s-legacy_300x300.webp",
+      "sku": "display-s24",
+      "staging": "staging/coleka-en-covers/s24.webp"
+    },
+    {
+      "set": "s25",
+      "title": "Kage Summit",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202401/30/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-25-kage-summit-001_300x300.webp",
+      "sku": "display-s25",
+      "staging": "staging/coleka-en-covers/s25.webp",
+      "note": "Pasted twice."
+    },
+    {
+      "set": "s26",
+      "title": "Avenger's Wrath",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202401/26/96f6jtlhy9888hjmetwn_300x300.webp",
+      "sku": "display-s26",
+      "staging": "staging/coleka-en-covers/s26.webp",
+      "note": "Hashed Coleka filename. Packshot text is Avenger's Wrath (s26), not Storm 3."
+    },
+    {
+      "set": "s28",
+      "title": "Ultimate Ninja Storm 3",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202012/05/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-28_300x300.webp",
+      "sku": "display-s28",
+      "staging": "staging/coleka-s28/set-cover.webp",
+      "note": "300×300 of the full webp already used as display-s28."
+    }
+  ],
+  "skip": [
+    {
+      "kind": "kayou",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202209/03/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-kayou_300x300.webp",
+      "reason": "Chinese Kayou T3 box, not Bandai CCG. Other game / pack later."
+    },
+    {
+      "kind": "carddass-fr-branch",
+      "url": "https://thumbs.coleka.com/media/rubrique/202411/15/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-naruto-carddass-series-francaises.webp",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/202411/15/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-naruto-carddass-series-francaises_300x300.webp",
+      "branch": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises_r41705",
+      "staging": "staging/coleka-carddass-fr/branch-cover.webp",
+      "reason": "Coleka branch cover for Carddass FR (Pays du Vent starter). Always the full webp, never `_300x300`."
+    }
+  ],
+  "rampageTornado": {
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/deck-special-naruto-la-tempete-approche-rampage-tornado_r16963",
+    "kind": "deck",
+    "setCode": "s11",
+    "titleEn": "Rampage Tornado",
+    "titleFr": "La tempête approche",
+    "enSetTitle": "Approaching Wind",
+    "colekaCardCount": 33,
+    "ean": "3296580933228",
+    "colekaPrefix": "NI/JU/MI = N/J/M (same trap as s28)",
+    "blazingFlameNeverFr": true,
+    "scrape": false,
+    "reason": "Listing HTML is behind Turnstile. 33-card Coleka list is reprints from s1–s11, not a new set dump. No packshot in this paste."
+  },
+  "carddassFrSeriesIcons": [
+    {
+      "set": "s1",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/201802/21/cartes-de-collection-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-01_120x120.webp"
+    },
+    {
+      "set": "s2",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/201802/21/cartes-de-collection-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-02_120x120.webp"
+    },
+    {
+      "set": "s3",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/201802/21/cartes-de-collection-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-03_120x120.webp"
+    },
+    {
+      "set": "s4",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/201802/21/cartes-de-collection-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-04_120x120.webp"
+    },
+    {
+      "set": "s5",
+      "thumb": "https://thumbs.coleka.com/media/rubrique/201802/21/cartes-de-collection-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-05_120x120.webp"
+    }
+  ],
+  "seriesPages": [
+    {
+      "set": "s27",
+      "title": "Hero's Ascension",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-27-hero-s-ascension_r36959",
+      "colekaId": "r36959",
+      "printedLanguages": ["en"],
+      "colekaNote": "sorti uniquement en anglais",
+      "parentUmbrella": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102"
+    }
+  ],
+  "missingSeriesInPaste": [16, 19, 21, 22, 23],
+  "goatGapPackshots": ["s16", "s19", "s21", "s22", "s23", "s27"]
+}

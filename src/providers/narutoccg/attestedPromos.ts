@@ -9,7 +9,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  canonicalizeNarutoPrintKey,
+  mintNarutoPrintKey,
+  narutoDiskCardId,
+  parseNarutoCollector,
+} from "./collectorIdentity";
 
 import { narutoCuratedSourcesDir } from "./curatedPaths";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
@@ -78,14 +83,7 @@ export function groupingFromDiskCardId(
 }
 
 export function attestedPromoPrintKey(row: AttestedPromoRow): string | null {
-  const number = row.number.trim().toLowerCase();
-  const grouping = groupingFromDiskCardId(number, row.diskCardId);
-  return buildPrintKey({
-    game: "naruto",
-    set: "promo",
-    number,
-    grouping,
-  });
+  return mintNarutoPrintKey(row.diskCardId?.trim() || row.number, "promo");
 }
 
 /**
@@ -106,10 +104,13 @@ export function mergeAttestedPromos(input: {
   const prints = [...input.prints];
   const titles = [...input.titles];
   const printByKey = new Map(prints.map((p) => [p.printKey, p]));
+  const printByCanonical = new Map(
+    prints.map((p) => [canonicalizeNarutoPrintKey(p.printKey), p]),
+  );
   const titleByKey = new Map(
     titles
       .filter((t) => t.lang.toLowerCase() === "fr")
-      .map((t) => [t.printKey, t]),
+      .map((t) => [canonicalizeNarutoPrintKey(t.printKey), t]),
   );
   const addedPrints: string[] = [];
   const titled: string[] = [];
@@ -117,19 +118,25 @@ export function mergeAttestedPromos(input: {
   for (const row of promos) {
     const printKey = attestedPromoPrintKey(row);
     if (!printKey) continue;
-    const number = row.number.trim().toLowerCase();
-    const grouping = groupingFromDiskCardId(number, row.diskCardId);
+    const raw = row.diskCardId?.trim() || row.number.trim();
+    const number = narutoDiskCardId(raw, "promo") ?? raw.toLowerCase();
+    const grouping =
+      groupingFromDiskCardId(row.number.trim().toLowerCase(), row.diskCardId) ??
+      parseNarutoCollector(number)?.grouping ??
+      null;
 
-    if (!printByKey.has(printKey)) {
+    if (!printByKey.has(printKey) && !printByCanonical.has(printKey)) {
       const print: NarutoPrintRow = {
         printKey,
         setCode: "promo",
         number,
         cardType: cardTypeFromCollectorNumber(number),
+        family: parseNarutoCollector(number)?.family ?? null,
         grouping,
       };
       prints.push(print);
       printByKey.set(printKey, print);
+      printByCanonical.set(printKey, print);
       addedPrints.push(printKey);
     }
 

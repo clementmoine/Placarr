@@ -1,5 +1,5 @@
 /**
- * Naruto CCG (Bandai) — local closed catalogue under `data/naruto/ccg/`.
+ * Naruto CCG (Bandai) — local closed catalogue under `data/naruto/carddass/`.
  * Provider id `narutoccg`; printKey game slug stays `naruto`.
  */
 import { existsSync } from "node:fs";
@@ -26,10 +26,14 @@ import {
   searchNarutoPrints,
   lookupNarutoPrint,
   lookupNarutoPrintDetail,
+  listNarutoPrintSets,
 } from "./searchPrints";
 import { narutoPrintFacts } from "./facts";
-import { assetsCardUrl } from "@/lib/packAssetUrls";
-import { NARUTO_PACK_ID } from "./indexStore";
+import {
+  narutoAssetsCardUrl,
+  narutoCardPathFromCollector,
+} from "./narutoCardPath";
+import { NARUTO_PACK_ID } from "./packs";
 import { narutoccgCatalog } from "./pipeline";
 
 const PROVIDER_ID = "narutoccg";
@@ -52,13 +56,11 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
     lookupNarutoTitle(printKey, "en")?.fullName;
   if (!title) return null;
 
-  const face = row.art
-    ? assetsCardUrl(
-        NARUTO_PACK_ID,
-        { set: row.setCode, lang: row.lang, card: row.number },
-        row.art,
-      )
-    : undefined;
+  const pathId = narutoCardPathFromCollector(row.number, row.lang);
+  const face =
+    row.art && pathId
+      ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.art)
+      : undefined;
 
   return {
     title,
@@ -75,6 +77,7 @@ export const narutoccgModule: ProviderModule = {
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
+    catalogueLabel: "Naruto Carddass",
     types: ["tcg"],
     capabilities: ["identify", "cover"],
     /** Closed local corpus: its own names are the reference for manual entry. */
@@ -85,7 +88,7 @@ export const narutoccgModule: ProviderModule = {
     defaultLanguage: "fr",
     websiteUrl: "https://www.carddass.com/",
     notes:
-      "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/ccg/`. Curated sous `src/providers/narutoccg/curated/`. Sync : `pnpm naruto:cards`.",
+      "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/carddass/`. Curated sous `src/providers/narutoccg/curated/`. Sync : `pnpm naruto:cards`.",
   },
   catalog: narutoccgCatalog,
   evidence: {
@@ -105,8 +108,24 @@ export const narutoccgModule: ProviderModule = {
       return resolveFromLocal(ctx);
     },
   }),
-  searchPrints: async ({ query, language, limit }) =>
-    searchNarutoPrints(query, { language: language ?? undefined, limit }),
+  searchPrints: async ({ query, language, limit, setId }) =>
+    searchNarutoPrints(query, {
+      language: language ?? undefined,
+      limit,
+      setId,
+    }),
+  /*
+    Les quatre langues du jeu, telles que le catalogue les porte. Annoncées
+    d'avance : le japonais change la découpe, donc il faut pouvoir le choisir
+    avant de chercher.
+  */
+  listPrintLanguages: () => ["fr", "en", "ja", "it"],
+  /*
+    La langue choisit la **découpe**, pas seulement les libellés : le japonais
+    compte en 巻ノ (dix-sept volumes 2002-2006), l'Europe en séries `s1`…`s28`,
+    et les deux ne se superposent pas — le 巻ノ十 recoupe les séries 4 et 5.
+  */
+  listPrintSets: (_type, language) => listNarutoPrintSets(language),
   lookupPrint: async ({ printKey, language }) => {
     if (parsePrintKey(printKey)?.game !== "naruto") return null;
     return lookupNarutoPrint(printKey, { language: language ?? undefined });

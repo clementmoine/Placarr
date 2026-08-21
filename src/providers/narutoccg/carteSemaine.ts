@@ -11,9 +11,16 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { buildPrintKey } from "@/core/identify/printKey";
 import { dataRoot } from "@/lib/runtimeData";
 
+import {
+  canonicalizeNarutoPrintKey,
+  mintNarutoPrintKey,
+  narutoDiskCardId,
+  narutoNumbersEqual,
+  parseNarutoCollector,
+} from "./collectorIdentity";
+import { isImplausibleNarutoTitle } from "./foldNarutoIndex";
 import {
   NARUTO_PACK_ID,
   type NarutoPrintRow,
@@ -101,7 +108,7 @@ function cleanName(name: string): string {
   return n;
 }
 
-const FOCUS_STOP = String.raw`Cette|Voici|Son|Si|Une|Le|La|Les|Ce|Elle|Il|Avec|Ne|Pour|Grace|Grâce|De|Du|Des|En|Au|Aux|Sur|Par|Mais|Ou|Et|Car|Donc`;
+const FOCUS_STOP = String.raw`Cette|Voici|Son|Si|Une|Le|La|Les|Ce|Elle|Il|Avec|Ne|Pour|Grace|Grâce|De|Du|Des|En|Au|Aux|Sur|Par|Mais|Ou|Et|Car|Donc|Qui|Que|Dont|Quand`;
 
 /** Push a focus card once (first win keeps the richer dated form). */
 function pushFeature(
@@ -111,6 +118,8 @@ function pushFeature(
 ): void {
   if (seen.has(entry.cardId)) return;
   if (entry.name.length < 2) return;
+  if (isImplausibleNarutoTitle(entry.name)) return;
+  if (new RegExp(`^(?:${FOCUS_STOP})\\b`, "i").test(entry.name)) return;
   seen.add(entry.cardId);
   featured.push(entry);
 }
@@ -144,7 +153,7 @@ export function guessSetForCarteSemaineId(cardId: string): string {
   if (type === "ni" && n >= 201) return "s5";
   if (type === "te" && n >= 191) return "s5";
   if (type === "ta" && n >= 191) return "s5";
-  return "s6";
+  return "unknown";
 }
 
 export function carteSemainePagesDir(root?: string): string {
@@ -326,7 +335,13 @@ export function carteSemaineNameByCardId(
   const map = new Map<string, string>();
   for (const w of [...report.weeks].sort((a, b) => b.week - a.week)) {
     for (const e of w.featured) {
-      if (!map.has(e.cardId) && e.name.trim()) map.set(e.cardId, e.name.trim());
+      if (
+        !map.has(e.cardId) &&
+        e.name.trim() &&
+        !isImplausibleNarutoTitle(e.name)
+      ) {
+        map.set(e.cardId, e.name.trim());
+      }
     }
   }
   return map;
@@ -351,45 +366,47 @@ export function mergeCarteSemaineIntoIndex(input: {
   const names = carteSemaineNameByCardId(report);
   const prints = [...input.prints];
   const titles = [...input.titles];
-  const printByKey = new Map(prints.map((p) => [p.printKey, p]));
-  const printsByNumber = new Map<string, NarutoPrintRow[]>();
-  for (const p of prints) {
-    const list = printsByNumber.get(p.number) ?? [];
-    list.push(p);
-    printsByNumber.set(p.number, list);
-  }
+  const printByKey = new Map(
+    prints.map((p) => [canonicalizeNarutoPrintKey(p.printKey), p]),
+  );
   const titleByKey = new Map(
     titles
       .filter((t) => t.lang.toLowerCase() === "fr")
-      .map((t) => [t.printKey, t]),
+      .map((t) => [canonicalizeNarutoPrintKey(t.printKey), t]),
   );
   const named: string[] = [];
   const addedPrints: string[] = [];
 
   for (const [cardId, name] of names) {
-    let rows = printsByNumber.get(cardId) ?? [];
+    if (isImplausibleNarutoTitle(name)) continue;
+    const wantKey = mintNarutoPrintKey(cardId);
+    let rows = prints.filter(
+      (p) =>
+        (wantKey != null &&
+          canonicalizeNarutoPrintKey(p.printKey) === wantKey) ||
+        narutoNumbersEqual(p.number, cardId),
+    );
     if (rows.length === 0) {
       const set = guessSetForCarteSemaineId(cardId);
-      const printKey = buildPrintKey({
-        game: "naruto",
-        set,
-        number: cardId,
-      });
+      const printKey = mintNarutoPrintKey(cardId, set);
       if (!printKey || printByKey.has(printKey)) continue;
+      const parsed = parseNarutoCollector(cardId);
       const print: NarutoPrintRow = {
         printKey,
         setCode: set,
-        number: cardId,
+        number: narutoDiskCardId(cardId) ?? cardId,
         cardType: cardTypeFromCollectorNumber(cardId),
+        family: parsed?.family ?? null,
       };
       prints.push(print);
       printByKey.set(printKey, print);
-      printsByNumber.set(cardId, [print]);
       rows = [print];
       addedPrints.push(printKey);
     }
     for (const print of rows) {
-      const existing = titleByKey.get(print.printKey);
+      const existing = titleByKey.get(
+        canonicalizeNarutoPrintKey(print.printKey),
+      );
       if (!existing) {
         const title: NarutoTitleRow = {
           printKey: print.printKey,
@@ -397,7 +414,7 @@ export function mergeCarteSemaineIntoIndex(input: {
           fullName: name,
         };
         titles.push(title);
-        titleByKey.set(print.printKey, title);
+        titleByKey.set(canonicalizeNarutoPrintKey(print.printKey), title);
         named.push(print.printKey);
       } else if (!existing.fullName.trim()) {
         existing.fullName = name;

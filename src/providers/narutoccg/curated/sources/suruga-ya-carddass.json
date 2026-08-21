@@ -1,0 +1,17 @@
+{
+  "source": "Suruga-ya.jp used search — NARUTOカードゲーム 巻ノ (user paste GL636976, harvested 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "faces",
+  "crawl": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "disk": "cards/{family}/{ni0001}/ja/",
+  "search": "https://www.suruga-ya.jp/search?category=5&search_word=NARUTO-ナルト- カードゲーム 巻ノ",
+  "sampleProduct": "https://www.suruga-ya.jp/product/detail/GL636976",
+  "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "servedPixels": { "width": 351, "height": 512 },
+  "listings": "suruga-ya-carddass-listings.tsv",
+  "listed": 457,
+  "note": "Tabletop Carddass CG (忍/術/作/依), same game as FR/IT. Search HTML is Cloudflare; CDN JPEGs are not. Harvested 457 used singles from the 巻ノ search (468 hits, sealed/chrome dropped). Skip Data Carddass (DN/NM) — that shop category is suruga-ya-data-carddass.json. Do not mint EN CCG n/j. Always keep art.suruga.* even when nikita (or any other dump) is already in the folder.",
+  "not": ["data-carddass", "en-ccg", "n001", "dn", "nm"]
+}

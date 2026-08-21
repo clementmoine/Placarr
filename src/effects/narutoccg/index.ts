@@ -1,5 +1,5 @@
 /**
- * Naruto CCG effect pack — card back, and a house look per finish.
+ * Naruto Carddass effect pack — card back, and a house look per finish.
  *
  * The pack is catalogue-only: no APK and no shader dump, so there is no
  * extracted material library to browse — that is what
@@ -24,9 +24,12 @@ import type { EffectPackModule } from "@/core/render/foil/types";
  * an id wrapped in quotes or backticks, so any of those three would flag a
  * innocent mention as a leak into core.
  */
-export const NARUTO_CCG_EFFECT_PACK_ID = "naruto-ccg";
+export const NARUTO_CARDDASS_EFFECT_PACK_ID = "naruto-carddass";
+export const NARUTO_CCG_EFFECT_PACK_ID = NARUTO_CARDDASS_EFFECT_PACK_ID;
+/** @deprecated Same pack — CCG sleeve is `back.en.webp` on Carddass. */
+export const NARUTO_EN_CCG_EFFECT_PACK_ID = NARUTO_CARDDASS_EFFECT_PACK_ID;
 
-const ASSET_BASE = "/assets/naruto/ccg";
+const ASSET_BASE = "/assets/naruto/carddass";
 
 /**
  * Whole face shines: these cards have foil under the art, not a shaped layer.
@@ -36,7 +39,10 @@ const ASSET_BASE = "/assets/naruto/ccg";
  * the detail page all gate the foil layer on the *candidate* having a mask, so
  * a print without one renders flat before the pack fallback is ever consulted.
  */
-export const NARUTO_CCG_FULL_FOIL_MASK_URL = `${ASSET_BASE}/full_foil_mask.webp`;
+export const NARUTO_CARDDASS_FULL_FOIL_MASK_URL = `${ASSET_BASE}/full_foil_mask.webp`;
+export const NARUTO_CCG_FULL_FOIL_MASK_URL = NARUTO_CARDDASS_FULL_FOIL_MASK_URL;
+/** USA CCG sleeve — FR Storm 3 uses this verso, not the Carddass back. */
+export const NARUTO_CCG_SLEEVE_BACK_URL = `${ASSET_BASE}/cards/back.en.webp`;
 
 /**
  * Finish → house shader. The house set is texture-free, so a pack with no
@@ -57,18 +63,58 @@ const FINISH_SHADER: Record<string, string> = {
 };
 
 /** Finish names this pack renders, lower-cased as they are stored. */
-export const NARUTO_CCG_FINISHES = Object.keys(FINISH_SHADER);
+export const NARUTO_CARDDASS_FINISHES = Object.keys(FINISH_SHADER);
+export const NARUTO_CCG_FINISHES = NARUTO_CARDDASS_FINISHES;
 
-export const narutoCcgEffectPack: EffectPackModule = {
-  id: NARUTO_CCG_EFFECT_PACK_ID,
-  label: "Naruto CCG",
+/**
+ * Les quatre familles du 「NARUTO-ナルト- 疾風伝 カードゲーム」 (2007-2009).
+ *
+ * C'est **un autre jeu** que le Carddass, pas une extension : maquette
+ * différente (sous-titre latin 忍 SHINOBI / 術 JUTSU / 作 SAKUSEN, gemmes
+ * rondes), pied « BANDAI 2007 », référence en 忍伝-N, numérotation qui repart
+ * de 1 — `ni0001` et `shi0001` sont tous deux うずまきナルト. Aucun set commun
+ * avec le Carddass, dans les deux sens.
+ *
+ * À ne pas confondre avec le « Naruto Shippuden Collectible Card Game »
+ * **anglais** (`s13`-`s28`), qui est encore autre chose : la suite de la
+ * localisation américaine du Carddass, et qui garde le dos anglais.
+ */
+const SHIPPUDEN_JA_FAMILIES = /^(shi|mju|msa|gaku)\d/i;
+/** Les actes 第一幕…第八幕 de cette ligne. */
+const SHIPPUDEN_JA_SETS = /^(maku\d+|shi|mju|msa|gaku)$/i;
+
+/**
+ * Le dos de cette ligne — 「NARUTO 疾風伝 CARD GAME」 dans un losange, sans
+ * rapport avec le triskèle 忍/術/幻 du Carddass.
+ *
+ * Un seul fichier pour les quatre familles, rangé sous `shi/` parce que
+ * l'installeur de dos curés est indexé par dossier. C'est un dos **de ligne**,
+ * pas de famille : les quatre le partagent.
+ */
+const SHIPPUDEN_JA_BACK_URL = `${ASSET_BASE}/cards/shi/back.webp`;
+
+export const narutoCarddassEffectPack: EffectPackModule = {
+  id: NARUTO_CARDDASS_EFFECT_PACK_ID,
+  label: "Naruto Carddass",
   blurb: "Catalogue local — dos de pack, sans effet foil",
   assetBase: ASSET_BASE,
-  /** Recreated in Figma; provenance in `data/naruto/ccg/cards/BACK.md`. */
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  /** Flip default = Carddass FR sleeve (`curated/cards/back.fr.png`). */
+  cardBackUrl: `${ASSET_BASE}/cards/back.fr.webp`,
+  /*
+    Les 313 cartes du 疾風伝 montraient le dos Carddass : les dos sont servis
+    par **langue**, et cette ligne est japonaise, donc elle héritait de
+    `back.ja.webp`. Deux jeux différents ne partagent pas un dos.
+  */
+  resolveCardBack: ({ setCode, printKey }) => {
+    const card = (printKey ?? "").split(":").pop() ?? "";
+    const set = (setCode ?? "").trim();
+    return SHIPPUDEN_JA_FAMILIES.test(card) || SHIPPUDEN_JA_SETS.test(set)
+      ? SHIPPUDEN_JA_BACK_URL
+      : null;
+  },
   resolveMaterial: () => null,
   resolveMaterialForPrint: () => null,
-  fallbackFoilMaskUrl: NARUTO_CCG_FULL_FOIL_MASK_URL,
+  fallbackFoilMaskUrl: NARUTO_CARDDASS_FULL_FOIL_MASK_URL,
   resolveCss: (finish) => ({
     finishShaderId: FINISH_SHADER[(finish ?? "").toLowerCase()] ?? null,
     // No varnish on this line — the cards are matte outside the foil.
@@ -78,4 +124,6 @@ export const narutoCcgEffectPack: EffectPackModule = {
   material: () => null,
 };
 
-registerEffectPack(narutoCcgEffectPack);
+registerEffectPack(narutoCarddassEffectPack);
+export const narutoCcgEffectPack = narutoCarddassEffectPack;
+export const narutoEnCcgEffectPack = narutoCarddassEffectPack;

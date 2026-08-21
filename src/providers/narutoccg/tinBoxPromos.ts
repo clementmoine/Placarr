@@ -8,6 +8,7 @@ import path from "node:path";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { NARUTO_PACK_ID } from "./indexStore";
+import { narutoCardAbsDir } from "./narutoCardDisk";
 import { NARUTO_STAGING_SITE } from "./scrapeCards";
 
 export type TinPromoMap = {
@@ -75,16 +76,22 @@ export function materializeTinBoxPromos(root?: string): {
 } {
   const pack = root ?? path.join(dataRoot(), NARUTO_PACK_ID);
   const staging = path.join(pack, NARUTO_STAGING_SITE);
-  const cards = path.join(pack, "cards", "promo", "fr");
+  const cardsDir = path.join(pack, "cards");
   const installed: string[] = [];
   const missing: string[] = [];
 
   for (const promo of TIN_BOX_PROMOS) {
-    const cardDir = path.join(cards, promo.cardId);
+    const cardDir =
+      narutoCardAbsDir(cardsDir, promo.cardId, "fr", "promo") ??
+      path.join(cardsDir, "promo", "fr", promo.cardId);
     fs.mkdirSync(cardDir, { recursive: true });
 
     const artSrc = path.join(staging, promo.artFrom);
-    const artDest = path.join(cardDir, "art.jpg");
+    const ext = path.extname(promo.artFrom).toLowerCase() || ".jpg";
+    const artDest = path.join(
+      cardDir,
+      `art.carddass${ext === ".jpeg" ? ".jpg" : ext}`,
+    );
     if (!moveInto(artSrc, artDest)) {
       if (!fs.existsSync(artDest)) missing.push(promo.artFrom);
     }

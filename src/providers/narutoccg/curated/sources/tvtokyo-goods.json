@@ -1,0 +1,25 @@
+{
+  "source": "TV Tokyo — グッズねっと, pages officielles des produits Naruto 2002",
+  "observed": "2026-08-20",
+  "ingest": "packshots",
+  "crawlLive": true,
+  "lang": "ja",
+  "base": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/",
+  "mapping": "Vingt et une pages, `card_game.html` puis `card_game5` → `card_game20` (les numéros 1 à 4 répondent 404). Chaque page **écrit son volume en clair** ; le numéro du fichier de visuel suit **le volume**, pas la page — d'où `card_package6.jpg` servi sur les pages 7, 8 et 9, qui parlent toutes du 巻ノ六. Ce n'était donc pas une réutilisation fautive, contrairement à ce que j'avais craint.",
+  "resolutionCaveat": "Les visuels sont **petits** : 102×215 pour le 巻ノ十, 182×250 pour le 巻ノ十一. Trop petits pour lire le numéro de volume sur l'emballage, donc l'identification repose sur deux signaux concordants — le texte de la page et le nom du fichier — et non sur une lecture de l'image. Ils ne sont retenus que là où on n'a rien de mieux.",
+  "products": [
+    {
+      "slug": "booster-vol10-jp",
+      "file": "card_package10.jpg",
+      "page": "card_game16.html",
+      "volume": "巻ノ十"
+    },
+    {
+      "slug": "booster-vol11-jp",
+      "file": "pack11.jpg",
+      "page": "card_game18.html",
+      "volume": "巻ノ十一"
+    }
+  ],
+  "notTaken": "Les volumes 4 à 9 et 12 sont aussi illustrés ici, mais on a déjà mieux pour eux — Bandai, Suruga ou un détourage."
+}

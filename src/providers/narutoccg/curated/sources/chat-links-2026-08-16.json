@@ -1,0 +1,321 @@
+{
+  "source": "collector chat 2026-08-16",
+  "note": "Every URL pasted today, classified. Detail in the sibling ledger or sites.ts. Localhost is a UI pointer, not a source.",
+  "links": [
+    {
+      "url": "https://www.lorcards.fr/",
+      "where": "sites.ts lorcards",
+      "role": "TCG Cards family — Lorcana sealed"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/boosters/booster-set-12-contrees-inconnues-woody",
+      "where": "sites.ts lorcards + sealed ingest",
+      "role": "example booster fiche (15-tile preview, not known contents)"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/displays",
+      "where": "TCGCARDS_CATEGORY_ROLES displays=index",
+      "role": "category"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/boosters",
+      "where": "TCGCARDS_CATEGORY_ROLES boosters=preview",
+      "role": "category"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/boosters-blister",
+      "where": "TCGCARDS_CATEGORY_ROLES boosters-blister=preview",
+      "role": "category"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/collector-boxes",
+      "where": "TCGCARDS_CATEGORY_ROLES collector-boxes=detail",
+      "role": "category"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/decks",
+      "where": "TCGCARDS_CATEGORY_ROLES decks=detail",
+      "role": "category"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/puzzles",
+      "where": "TCGCARDS_CATEGORY_ROLES puzzles=detail",
+      "role": "category — not a card SKU kind"
+    },
+    {
+      "url": "https://www.lorcards.fr/products/trove-packs",
+      "where": "TCGCARDS_CATEGORY_ROLES trove-packs=detail",
+      "role": "category — coffret"
+    },
+    {
+      "url": "https://www.dbscards.fr/products/boosters/booster-b02-union-force",
+      "where": "sites.ts masters",
+      "role": "example booster fiche"
+    },
+    {
+      "url": "https://www.dbscards.fr/products/displays",
+      "where": "TCGCARDS_CATEGORY_ROLES displays=index",
+      "role": "category"
+    },
+    {
+      "url": "https://www.dbscards.fr/products/boosters",
+      "where": "TCGCARDS_CATEGORY_ROLES boosters=preview",
+      "role": "category"
+    },
+    {
+      "url": "https://www.dbscards.fr/products/collector-boxes",
+      "where": "TCGCARDS_CATEGORY_ROLES collector-boxes=detail",
+      "role": "category"
+    },
+    {
+      "url": "https://www.dbscards.fr/products/decks",
+      "where": "TCGCARDS_CATEGORY_ROLES decks=detail",
+      "role": "category"
+    },
+    {
+      "url": "https://www.dbscards.fr/products/special-packs",
+      "where": "TCGCARDS_CATEGORY_ROLES special-packs=detail",
+      "role": "category"
+    },
+    {
+      "url": "https://www.pkmcards.fr/",
+      "where": "sites.ts pkmcards",
+      "role": "TCG Cards family — Pokémon sealed"
+    },
+    {
+      "url": "https://www.opecards.fr/",
+      "where": "sites.ts opecards",
+      "role": "family row — pack not in Catalogue yet"
+    },
+    {
+      "url": "https://www.ygocards.fr/",
+      "where": "sites.ts ygocards",
+      "role": "family row — pack not in Catalogue yet"
+    },
+    {
+      "url": "https://www.mtgcards.fr/",
+      "where": "sites.ts mtgcards",
+      "role": "family row — pack not in Catalogue yet"
+    },
+    {
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102",
+      "where": "coleka-s28.json umbrella",
+      "role": "do not scrape"
+    },
+    {
+      "url": "https://thumbs.coleka.com/media/rubrique/202012/05/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-28.webp",
+      "where": "coleka-s28.json displayPackshot",
+      "role": "display-s28 packshot"
+    },
+    {
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/116757/2006-Naruto-Series-1:-The-Path-to-Hokage",
+      "where": "tcdb-en-ccg.json mainSets",
+      "role": "EN CCG s1 checklist — not cards/s1/en"
+    },
+    {
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/117553/2006-Naruto-Series-2:-Coils-of-the-Snake",
+      "where": "tcdb-en-ccg.json mainSets",
+      "role": "EN CCG s2"
+    },
+    {
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/117701/2006-Naruto-Series-3:-Curse-of-the-Sand",
+      "where": "tcdb-en-ccg.json mainSets",
+      "role": "EN CCG s3"
+    },
+    {
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/118974/2006-Naruto-Promos",
+      "where": "tcdb-en-ccg.json doNotIngest",
+      "role": "grab-bag — do not scrape"
+    },
+    {
+      "url": "https://www.tcdb.com/ViewAll.cfm/sp/Gaming?Let=N&MODE=Years",
+      "where": "tcdb-en-ccg.json nIndex",
+      "role": "series titles index, missing s13 and s19–s28"
+    },
+    {
+      "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles/3837",
+      "where": "goat-en-ccg.json urls.umbrella",
+      "role": "Bandai CCG singles umbrella — set tree, not a face dump"
+    },
+    {
+      "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-ultimate_ninja_storm_3/naruto_uzumaki_9_tails_cloak__n1646__super_rare__unlimited_edition__foil/550288",
+      "where": "goat-en-ccg.json urls.n1646Foil",
+      "role": "shop SKU — same JPEG as stop2shop"
+    },
+    {
+      "url": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/6578562/n1646.jpg",
+      "where": "goat-en-ccg.json urls.cdnN1646",
+      "role": "CDN face 350×490 — ingest none"
+    },
+    {
+      "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-ultimate_ninja_storm_3/3920?page=5&sort_by_price=0",
+      "where": "goat-en-ccg.json urls.storm3Catalog",
+      "role": "Storm 3 catalog page 5 of 10"
+    },
+    {
+      "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_sealed_product-naruto_ccg_sealed_booster_boxes/3970?sort_by_price=0",
+      "where": "goat-en-ccg.json urls.sealedBoosterBoxes",
+      "role": "Bandai CCG sealed booster boxes — 34 SKUs; faces none; packshots only Coleka gaps s16/s19/s21–s23/s27"
+    },
+    {
+      "url": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351974/broken_promise.jpg",
+      "where": "goat-en-ccg.json sealed.boosterBoxes display-s16",
+      "role": "Goat box photo — Coleka gap s16 Broken Promises"
+    },
+    {
+      "url": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685638/path_of_pain.jpg",
+      "where": "goat-en-ccg.json sealed.boosterBoxes display-s19",
+      "role": "Goat box photo — Coleka gap s19 Path of Pain"
+    },
+    {
+      "url": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685640/shattered_truth.jpg",
+      "where": "goat-en-ccg.json sealed.boosterBoxes display-s21",
+      "role": "Goat box photo — Coleka gap s21 Shattered Truth"
+    },
+    {
+      "url": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685641/weapons-of-war.png",
+      "where": "goat-en-ccg.json sealed.boosterBoxes display-s22",
+      "role": "Goat box photo — Coleka gap s22 Weapons of War"
+    },
+    {
+      "url": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/850768/invasion.jpg",
+      "where": "goat-en-ccg.json sealed.boosterBoxes display-s23",
+      "role": "Goat box photo — Coleka gap s23 Invasion"
+    },
+    {
+      "url": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/882960/herosascension.jpg",
+      "where": "goat-en-ccg.json sealed.boosterBoxes display-s27",
+      "role": "Goat box photo — Coleka gap s27 Hero's Ascension"
+    },
+    {
+      "url": "https://narutomontreal.wordpress.com/",
+      "where": "naruto-montreal.json",
+      "role": "2013 quizzes / dead Bandai CDN breadcrumbs"
+    },
+    {
+      "url": "https://narutocardgamebrasil.blogspot.com/",
+      "where": "en-ccg-series.json storm3Post",
+      "role": "PR-032 trap + YouTube box opening"
+    },
+    {
+      "url": "https://narutocardgamebrasil.blogspot.com/p/rogue-card-list.html",
+      "where": "en-ccg-series.json",
+      "role": "Unlimited titles + N-US codes"
+    },
+    {
+      "url": "https://payhip.com/BandoftheHawkCardShop",
+      "where": "band-of-the-hawk.json",
+      "role": "custom printables — not Bandai EN faces"
+    },
+    {
+      "url": "https://thumbs.coleka.com/media/rubrique/202411/15/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-naruto-carddass-series-francaises.webp",
+      "where": "coleka.json branches.series-francaises-cover",
+      "role": "Carddass FR branch cover — full webp, never _300x300"
+    },
+    {
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-27-hero-s-ascension_r36959",
+      "where": "coleka-en-ccg-covers.json seriesPages + sets.json s27",
+      "role": "EN CCG s27 — Coleka: sorti uniquement en anglais"
+    },
+    {
+      "url": "https://vialudibunda.com/media/catalog/product/n/a/naruto-serie-1-booster.jpg",
+      "where": "vialudibunda.json",
+      "role": "Carddass FR booster S1 — Magento original, never the 700×700 cache"
+    },
+    {
+      "url": "https://vialudibunda.com/media/catalog/product/n/a/naruto-serie-1-deck-pays-du-vent.jpg",
+      "where": "vialudibunda.json",
+      "role": "Carddass FR starter Pays du Vent — Magento original, never the 700×700 cache"
+    },
+    {
+      "url": "https://i.ebayimg.com/images/g/XvQAAOSwOR5nAWTW/s-l1600.webp",
+      "where": "ebay.json",
+      "role": "Carddass FR booster S2 — eBay s-l1600 (s-l2048 is a stub)"
+    },
+    {
+      "url": "https://www.manga-news.com/index.php/collection/TCG-Naruto",
+      "where": "manga-news-packshots.json",
+      "role": "Deck Série 1–5 covers are FR booster packshots, not starters"
+    },
+    {
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-1",
+      "where": "trictrac.json",
+      "role": "Carddass FR S1 gallery — 184 types; starter boxes, not card faces"
+    },
+    {
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-2",
+      "where": "trictrac.json",
+      "role": "Carddass FR S2 gallery — community 146 vs 136 faces on disk"
+    },
+    {
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-3",
+      "where": "trictrac.json",
+      "role": "Carddass FR S3 gallery — Apprentissage / Puissances Cachées boxes"
+    },
+    {
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-4",
+      "where": "trictrac.json",
+      "role": "Carddass FR S4 gallery — tiny box thumb only, no new SKU"
+    },
+    {
+      "url": "https://boardgamegeek.com/filepage/20590/narutotcglistxls",
+      "where": "bgg-en-ccg-s1.json",
+      "role": "EN CCG S1 Path to Hokage checklist xls — not cards/s1/en, never the tokenized download_redirect"
+    },
+    {
+      "url": "https://boardgamegeek.com/boardgame/22910/naruto-collectible-card-game",
+      "where": "bgg-en-ccg-s1.json",
+      "role": "BGG thing for Bandai USA Naruto CCG"
+    },
+    {
+      "url": "https://gradedcardcenter.com/item/f96806f8-6e60-4dcd-9acd-8592855db527",
+      "where": "gradedcardcenter.json",
+      "role": "JP Carddass 巻ノ五 booster face+back — not FR s5, not 第五幕"
+    },
+    {
+      "url": "http://narutozabuza.centerblog.net/14-cartes-naruto",
+      "where": "narutozabuza.json",
+      "role": "JP promo PR忍-1-R 400×400 — not NI-001 / NI-180, do not crawl the blog"
+    },
+    {
+      "url": "https://www.suruga-ya.com/en/category/501080113",
+      "where": "suruga-ya-data-carddass.json",
+      "role": "Arcade Data Carddass (DN/NM) — not Carddass tabletop, not EN CCG"
+    },
+    {
+      "url": "https://www.suruga-ya.jp/product/detail/GL636976",
+      "where": "suruga-ya-carddass.json",
+      "role": "Carddass tabletop 巻ノ六 依-12 — CDN face, not Data Carddass"
+    },
+    {
+      "url": "https://www.slab-z.com/post/the-definitive-2002-naruto-card-game-vintage-guide-rookies-grails",
+      "where": "slab-z-2002-carddass.json",
+      "role": "JP Carddass 巻ノ壱 / PR忍-1 guide — same game as FR/IT, ingest none"
+    },
+    {
+      "url": "https://neokyo.com/blog/naruto-cards-guide-rare-valuable-cards-and-how-to-identify-them/",
+      "where": "neokyo-naruto-cards-guide.json",
+      "role": "Proxy-shop grab-bag — « not a TCG » is false, ingest none"
+    },
+    {
+      "url": "https://naruto.fandom.com/wiki/Naruto_Collectible_Card_Game",
+      "where": "fandom-en-ccg.json narutopedia",
+      "role": "Narutopedia — Bandai USA CCG overview; set list drops s24"
+    },
+    {
+      "url": "https://narutoccg.fandom.com/wiki/Naruto_CCG_wiki",
+      "where": "fandom-en-ccg.json fanWiki",
+      "role": "Stub wiki — TCDB-style PTHN prefixes, not a face dump"
+    },
+    {
+      "url": "https://www.carddas.com/naruto/",
+      "where": "carddas-com-naruto.json",
+      "role": "Official JP Carddass CG — live 404; Wayback → staging/carddas-jp/"
+    },
+    {
+      "url": "http://www.tradecardsonline.com/im/selectCard/game_id/48",
+      "where": "tradecardsonline.json",
+      "role": "TCO Naruto (game 48) — live shut 2019; EN CCG community DB, not Carddass locales; goal/DC = dream cards"
+    }
+  ]
+}

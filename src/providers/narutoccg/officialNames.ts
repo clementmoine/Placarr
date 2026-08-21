@@ -18,6 +18,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { narutoLedgerNumber } from "./collectorIdentity";
 import { narutoCuratedSourcesDir } from "./curatedPaths";
 import { type NarutoPrintRow, type NarutoTitleRow } from "./indexStore";
 
@@ -44,9 +45,35 @@ export function loadOfficialNames(): OfficialNames {
   return new Map(Object.entries(doc.cards ?? {}));
 }
 
-/** `naruto:s5-ni232` → `ni232`; promos keep their `-cdf` suffix off. */
-export function collectorNumberOf(print: NarutoPrintRow): string {
-  return String(print.number).replace(/-.*$/, "").toLowerCase();
+/**
+ * Suffixes qui désignent une **autre carte**, pas une réimpression.
+ *
+ * Le bonus de précommande du jeu PlayStation « 忍の里の陣取り合戦 » (2003) porte
+ * les numéros 忍-1/2/3/11 avec une **illustration inédite** — la page de Bandai
+ * dit `書き下ろしイラスト`, et notre registre le note explicitement
+ * `not: ["reimpression-de-忍-1"]`. Ces quatre cartes ne sont jamais sorties
+ * hors du Japon.
+ *
+ * Le nom officiel se cherche par numéro, suffixe retiré. Pour un `-promo` c'est
+ * juste : un retirage marqué PROMO est bien la même carte. Pour `-ps` c'est
+ * faux, et ça leur collait le nom **français** de la carte de base — « Naruto
+ * Uzumaki » sur une carte qu'aucun francophone n'a jamais pu tenir.
+ */
+const NEW_ARTWORK_GROUPINGS = new Set(["ps"]);
+
+/**
+ * `naruto:s5-ni232` → `ni232`, suffixe retiré pour aller chercher le nom
+ * officiel de la carte de base.
+ *
+ * Rend `null` quand le suffixe dit qu'il ne **s'agit pas** de cette carte :
+ * l'appelant n'a alors rien à chercher, plutôt qu'un nom emprunté.
+ */
+export function collectorNumberOf(print: NarutoPrintRow): string | null {
+  const raw =
+    narutoLedgerNumber(print.number) ?? String(print.number).toLowerCase();
+  const grouping = /-([a-z0-9]+)$/i.exec(raw)?.[1]?.toLowerCase();
+  if (grouping && NEW_ARTWORK_GROUPINGS.has(grouping)) return null;
+  return raw.replace(/-.*$/, "").toLowerCase();
 }
 
 /**
@@ -65,7 +92,14 @@ export function applyOfficialNames(
   let added = 0;
 
   for (const print of prints) {
-    const hit = official.get(collectorNumberOf(print));
+    /*
+      `null` = ce tirage n'est pas la carte de base, malgré le numéro partagé.
+      Rien à emprunter : sans ça, les quatre 忍-n（PS） recevaient le nom
+      français de la carte qu'elles ne sont pas.
+    */
+    const number = collectorNumberOf(print);
+    if (!number) continue;
+    const hit = official.get(number);
     if (!hit?.name) continue;
     const key = `${print.printKey}|fr`;
     const prev = byKey.get(key);

@@ -1,0 +1,62 @@
+{
+  "source": "chasse aux sources italiennes et allemandes — journal",
+  "observed": "2026-08-20",
+  "ingest": "none",
+  "why": "313 faces italiennes et 703 japonaises manquent. L'anglais est à 100 %. Ce journal dit ce qui a été essayé pour que personne ne recommence à l'aveugle.",
+  "structuralFinding": "L'anglais est complet **parce que le CCG Bandai USA a trois bases de fans** — narutocards.ca, narutocards.net, ccgtrader — qui l'ont catalogué carte par carte. La ligne **Carddass** (JA d'origine, localisée FR/IT) n'en a aucune. Ce n'est pas un défaut de recherche, c'est une asymétrie de documentation : le jeu américain a eu une communauté de joueurs, le Carddass une communauté de collectionneurs, qui photographie moins et publie moins.",
+  "italian": [
+    {
+      "source": "cardgameclub.it",
+      "verdict": "mort",
+      "detail": "Migré sur Shopify ; `collections/naruto/products.json` ne rend que 6 produits scellés."
+    },
+    {
+      "source": "Wayback de cardgame-club.it",
+      "verdict": "exploité",
+      "detail": "14 captures des listes par série. Seules celles de 2020 portent la charge JSON d'analytics ; aucune pagination archivée. 118 produits, séries 2/3/5, **0 titre nouveau**, mais **117 raretés** là où le catalogue n'en avait aucune. Google indexe les pages `?p=3`, `?p=8` — Wayback ne les a jamais prises."
+    },
+    {
+      "source": "coleka.com",
+      "verdict": "double impasse",
+      "detail": "Porte de vérification depuis ce jour, **et** le site n'a pas les images : 68 `no-image` dans le HTML de liste déjà en staging."
+    },
+    {
+      "source": "primegame.it",
+      "verdict": "vivant, muet",
+      "detail": "Connaît les huit séries italiennes, serie-7 et serie-8 comprises, mais n'expose aucune liste de cartes à une lecture anonyme."
+    },
+    {
+      "source": "picclick.it",
+      "verdict": "banni",
+      "detail": "Par mes propres sondes. Voir hosts-blocked.json."
+    },
+    {
+      "source": "ccgdb.com, naruto.lineage2universe.com, narutocards.ca, narutocards.net",
+      "verdict": "hors sujet",
+      "detail": "Bases du CCG anglais uniquement — aucune mention de carddass, italien, allemand ou japonais."
+    }
+  ],
+  "german": {
+    "finding": "La ligne allemande est du **Naruto Shippuden** Bandai, pas du Carddass : « Naruto Shippuden Sammelkartenspiel Serie 1 — Nahender Wind », cartes entièrement en allemand.",
+    "hypothesis": "Si elle reprend la numérotation du CCG américain (N-/J-/M-/C-), l'allemand serait un problème de **titres**, pas de faces — le catalogue tient déjà 4 261 faces EN à 100 %. À vérifier sur une carte avant d'y consacrer du travail.",
+    "deadEnds": [
+      "de.narutopedia.eu : domaine mort, une seule capture Wayback de 2012, descriptive",
+      "spieleforum.de : 403 sur le fil « Naruto Cardlist »"
+    ]
+  },
+  "whatWorks": "Le collage d'URL. slab-z a donné 5 scans à plat en quelques minutes le même jour ; eBay avait donné +45 faces avant. Les sources qui restent pour IT/JA sont des places de marché et des blogs de collectionneurs, tous fermés au crawl et ouverts au copier-coller.",
+  "paniniLead": {
+    "on": "2026-08-20",
+    "publisher": "L'italien n'est pas édité par Bandai mais par **Panini Comics** à partir de 2006. « À partir de la 8ᵉ série, Panini a abandonné la production, revenue aux mains de Bandai » — d'où un changement de charte graphique en cours de ligne, et des couleurs de carte qui varient entre séries Panini et séries Bandai.",
+    "universe": "La même source parle de **quinze extensions** italiennes. Notre catalogue en connaît six. L'univers italien est donc bien plus grand que les ~740 cartes des relevés de boutique.",
+    "familiesConfirmed": "Quatre familles, comme le Carddass : Ninja (rouges), Strategia (vertes), Tecnica (bleues), Cliente (orange) — soit NI / ST / TE / CL.",
+    "seriesFound": [
+      "serie-7 « Sete di Potere »",
+      "serie-8 « Il Vento del Cambiamento »"
+    ],
+    "seriesEvidence": "Confirmées par deux sources indépendantes : les captures Wayback de cardgame-club et les pages de primegame.it.",
+    "archiveSearched": "Aucune trace d'un mini-site Panini : `naruto.panini.it`, `panini.it/*naruto*`, `paninicomics.it/*naruto*`, `narutocardgame.it`, `naruto-cardgame.it` — zéro capture pour chacun.",
+    "articleSource": "https://www.pianetahobby.it/blog/naruto-trading-card-game-il-gioco-di-carte-collezionabili/ — site en erreur 500 aujourd'hui, lu via Wayback. L'article est une critique du jeu : il donne l'histoire éditoriale et les familles, pas de liste de cartes.",
+    "verdict": "La piste Panini éclaire la **carte du terrain** — éditeur, nombre d'extensions, familles — mais ne donne aucune image. Elle vaut surtout parce qu'elle montre que notre univers italien de référence est incomplet : chercher 313 faces manquantes sur 410 titres sous-estime le vrai trou."
+  }
+}

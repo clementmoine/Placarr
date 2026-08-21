@@ -17,7 +17,7 @@ describe("attestedPromos", () => {
 
   it("builds promo printKeys", () => {
     expect(attestedPromoPrintKey({ number: "ni063", name: "Iruka" })).toBe(
-      "naruto:promo-ni063",
+      "naruto:ni-0063-promo",
     );
     expect(
       attestedPromoPrintKey({
@@ -25,7 +25,7 @@ describe("attestedPromos", () => {
         name: "L'éclair pourfendeur",
         diskCardId: "te030-cdf",
       }),
-    ).toBe("naruto:promo-te030-cdf");
+    ).toBe("naruto:te-0030-cdf");
   });
 
   it("injects missing promo prints with FR names, keeps existing art rows", () => {
@@ -58,12 +58,19 @@ describe("attestedPromos", () => {
       promos,
     });
     expect(merged.addedPrints).toEqual([
-      "naruto:promo-ni063",
-      "naruto:promo-te030-cdf",
+      "naruto:ni-0063-promo",
+      "naruto:te-0030-cdf",
     ]);
     expect(
-      merged.titles.find((t) => t.printKey === "naruto:promo-ni063")?.fullName,
+      merged.titles.find((t) => t.printKey === "naruto:ni-0063-promo")
+        ?.fullName,
     ).toBe("Iruka");
+    expect(
+      merged.prints.find((p) => p.printKey === "naruto:ni-0063-promo"),
+    ).toMatchObject({
+      number: "ni0063-promo",
+      grouping: "promo",
+    });
     expect(
       merged.prints.find((p) => p.printKey === "naruto:promo-ni095"),
     ).toEqual(existing);

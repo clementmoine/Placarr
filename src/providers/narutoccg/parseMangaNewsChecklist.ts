@@ -141,6 +141,46 @@ export function uniqueNumbers(
   return [...set].sort();
 }
 
+/**
+ * Packshot of the deck itself, not a card.
+ *
+ * Prefer `og:image` when it is the goodie (`tcg-naruto-deck-…`). The same
+ * page also lists unrelated shop thumbs under `/public/images/goodies/`.
+ */
+function deckImageScore(url: string): number {
+  const name = url.split("/").pop() ?? "";
+  if (name.startsWith(".")) return 0;
+  if (/_medium\./i.test(name)) return 1;
+  return 2;
+}
+
+export function mangaNewsDeckImageUrl(html: string): string | null {
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+  const add = (url: string | undefined) => {
+    const clean = url?.trim();
+    if (!clean || !/tcg-naruto-deck/i.test(clean) || seen.has(clean)) return;
+    seen.add(clean);
+    candidates.push(clean);
+  };
+
+  const og =
+    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(
+      html,
+    ) ??
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(
+      html,
+    );
+  add(og?.[1]);
+  for (const match of html.matchAll(
+    /https?:\/\/[^"' ]+\/public\/images\/goodies\/\.?tcg-naruto-deck[^"' ]+/gi,
+  )) {
+    add(match[0]);
+  }
+  candidates.sort((a, b) => deckImageScore(b) - deckImageScore(a));
+  return candidates[0] ?? null;
+}
+
 /** Strip scripts/styles then keep text-ish content for the line parser. */
 export function htmlToChecklistText(html: string): string {
   return html

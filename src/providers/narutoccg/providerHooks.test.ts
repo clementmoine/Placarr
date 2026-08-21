@@ -31,7 +31,8 @@ describe("narutoccg provider hooks", () => {
       cleanedName: "Tayuya",
     } as never);
     // `ni151` and `ni253` are both "Tayuya": one suggestion, two prints.
-    expect(titles).toEqual(["Tayuya"]);
+    // EN CCG also has a distinct "Tayuya (State 1)" title — keep it separate.
+    expect(titles).toEqual(["Tayuya", "Tayuya (State 1)"]);
   });
 
   it("probes a sample that is always on disk", async () => {

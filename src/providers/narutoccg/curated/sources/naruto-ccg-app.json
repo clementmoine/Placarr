@@ -1,0 +1,45 @@
+{
+  "source": "Card Collector Naruto/Ninja CCG app (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "crawl": false,
+  "downloadApk": false,
+  "line": "en-ccg",
+  "note": "2019 companion app by Claudio Atilano (same person as Primal TCG / marketplace.primaltcg.com). Search + decks + collection for Bandai USA CCG (50-card decks, Midwest rogue list). Not a face dump. Android listing claims sets 1–29 — skip unofficial set 29 like lineage2universe / Shinobi's Dream. Do not download the APKPure APK (third-party uploader, Play listing gone). Screenshots are UI, not catalogue art.",
+  "author": "Claudio Atilano",
+  "sameAuthorAs": ["primal-tcg-marketplace.json"],
+  "urls": {
+    "medium": "https://medium.com/@claudio_69833/the-naruto-ccg-app-release-bd7e9a09ccd9",
+    "apkpure": "https://apkpure.com/card-collector-ninja-ccg-edition/com.narutoapp",
+    "apkpureDownload": "https://apkpure.com/card-collector-ninja-ccg-edition/com.narutoapp/download",
+    "ios": "https://apps.apple.com/us/app/card-collector-naruto-edition/id1460633152",
+    "play": "https://play.google.com/store/apps/details?id=com.narutoapp"
+  },
+  "android": {
+    "package": "com.narutoapp",
+    "storeTitle": "Card Collector: Ninja CCG Edition",
+    "versionSeen": "1.2.5.1",
+    "apkpureUpdated": "2020-01-30",
+    "playStore": "404",
+    "claimedSets": "1-29"
+  },
+  "ios": {
+    "bundleId": "com.Dattebayo-Labs.NarutoCCG",
+    "storeTitle": "Card Collector: Naruto Edition",
+    "adamId": 1460633152,
+    "versionSeen": "1.5.1",
+    "released": "2019-05-27",
+    "lastUpdate": "2021-05-13"
+  },
+  "medium": {
+    "published": "2019-05-25",
+    "mentionsTradeCardsOnline": true,
+    "deckThreshold": 50,
+    "contact": "claudio@metamesh.io"
+  },
+  "traps": {
+    "unofficialSet29": true,
+    "sameTrapAs": ["lineage2universe.json", "band-of-the-hawk.json"]
+  },
+  "not": ["carddass", "apk-faces", "shinobis-dream", "kayou"]
+}

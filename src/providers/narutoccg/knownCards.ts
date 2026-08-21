@@ -41,6 +41,8 @@ import {
   normalizeCardNumber,
   type MangaNewsCardType,
 } from "./parseMangaNewsChecklist";
+import { mintNarutoPrintKey } from "./collectorIdentity";
+import { listNarutoCardDirs } from "./narutoCardDisk";
 import { pickPreferredFaceArtFilename } from "./parseCarddassAsset";
 
 export const KNOWN_SOURCES = [
@@ -147,43 +149,38 @@ export function isCollectorPhotoFallbackFace(input: {
   return input.bytes >= (input.minBytes ?? PHOTO_FALLBACK_MIN_BYTES);
 }
 
-/** Scan `cards/{set}/fr/{cardId}/` for photo-fallback faces still preferred. */
+/** Scan card folders for photo-fallback faces still preferred. */
 export function collectPhotoFallbackArt(
   cardsRoot: string,
 ): PhotoFallbackArtRow[] {
   if (!existsSync(cardsRoot)) return [];
   const rows: PhotoFallbackArtRow[] = [];
-  for (const set of readdirSync(cardsRoot, { withFileTypes: true })) {
-    if (!set.isDirectory() || set.name.startsWith(".")) continue;
-    const fr = path.join(cardsRoot, set.name, "fr");
-    if (!existsSync(fr)) continue;
-    for (const card of readdirSync(fr, { withFileTypes: true })) {
-      if (!card.isDirectory() || card.name.startsWith(".")) continue;
-      const dir = path.join(fr, card.name);
-      const files = readdirSync(dir);
-      const preferred = pickPreferredFaceArtFilename(files);
-      if (!preferred) continue;
-      const artPath = path.join(dir, preferred);
-      let bytes = 0;
-      try {
-        bytes = statSync(artPath).size;
-      } catch {
-        continue;
-      }
-      if (
-        !isCollectorPhotoFallbackFace({ preferredArtFile: preferred, bytes })
-      ) {
-        continue;
-      }
-      rows.push({
-        printKey: `naruto:${set.name}-${card.name}`,
-        set: set.name,
-        cardId: card.name,
-        artFile: preferred,
-        bytes,
-        priority: set.name === "s6" ? "low" : "high",
-      });
+  for (const hit of listNarutoCardDirs(cardsRoot)) {
+    if (hit.lang !== "fr") continue;
+    const files = readdirSync(hit.abs);
+    const preferred = pickPreferredFaceArtFilename(files, "fr");
+    if (!preferred) continue;
+    const artPath = path.join(hit.abs, preferred);
+    let bytes = 0;
+    try {
+      bytes = statSync(artPath).size;
+    } catch {
+      continue;
     }
+    if (!isCollectorPhotoFallbackFace({ preferredArtFile: preferred, bytes })) {
+      continue;
+    }
+    const appearance = hit.appearanceSet ?? hit.family;
+    rows.push({
+      printKey:
+        mintNarutoPrintKey(hit.diskId, hit.appearanceSet) ??
+        `naruto:${appearance}-${hit.diskId}`,
+      set: appearance,
+      cardId: hit.diskId,
+      artFile: preferred,
+      bytes,
+      priority: appearance === "s6" ? "low" : "high",
+    });
   }
   rows.sort((a, b) => {
     const p = a.priority.localeCompare(b.priority);
@@ -498,7 +495,7 @@ export function formatKnownCardsMarkdown(report: KnownCardsReport): string {
     "",
     "Face affichée = plain `art.*` trop lourde (≥ ~300 KB ; site ~40–80 KB /",
     "~350×495). Pas de `art.corrected` / `art.reconstructed` préféré — OK en",
-    "fallback catalogue, à préparer en reconstruct (`curated/reconstructed/`).",
+    "fallback catalogue, à préparer en reconstruct (`curated/cards/{family}/{id}/{lang}/`).",
     "",
     "_Exclut_ les cartes déjà servies via `-vc` (`art.corrected`) ou reconstruct.",
     "",

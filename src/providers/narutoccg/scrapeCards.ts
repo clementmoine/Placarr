@@ -12,7 +12,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
-import { buildPrintKey } from "@/core/identify/printKey";
 
 import {
   exportNarutoCardsIndexJson,
@@ -21,6 +20,8 @@ import {
   type NarutoAssetRow,
   type NarutoPrintRow,
 } from "./indexStore";
+import { NARUTO_EN_PACK_ID } from "./packs";
+import { hinokunianJaNames } from "./scrapeHinokunian";
 import {
   loadMangaNewsTitleHitsFromCache,
   titlesForPrints,
@@ -32,8 +33,34 @@ import {
   writeCarteSemaineReport,
 } from "./carteSemaine";
 import { applyOfficialNames, loadOfficialNames } from "./officialNames";
+import { mergeFoundCatalogueLedgers } from "./mergeAttestedLedgers";
+import { mergeColekaS6ItIntoIndex } from "./scrapeColekaS6It";
+import { loadColekaStorm3Ledger } from "./scrapeColekaStorm3";
+import { loadStorm3Ledger } from "./scrapeStorm3";
 import { ensureNarutoChecklistLayout } from "./buildCoverageChecklist";
 import { ensureNarutoCuratedAssets } from "./installReconstructed";
+import {
+  isNarutoFamilyFolder,
+  mintNarutoPrintKey,
+  narutoDiskCardId,
+  narutoLedgerNumber,
+  narutoNumbersEqual,
+  parseNarutoCollector,
+} from "./collectorIdentity";
+import { foldUnsourcedNarutoArt } from "./foldUnsourcedNarutoArt";
+import {
+  migrateNarutoCardLayout,
+  upsertNarutoAppearances,
+} from "./migrateCardLayout";
+import {
+  NARUTO_FACE_DECISION_FILE,
+  narutoFaceSourceOf,
+  parseNarutoFaceDecision,
+} from "./faceChoice";
+import { promoteAllNarutoFaces, promoteNarutoFace } from "./narutoFaceBytes";
+import { narutoCardAbsDir, listNarutoCardDirs } from "./narutoCardDisk";
+import { isNarutoLangPrinted, preferNarutoAppearanceSet } from "./printed";
+import { normalizeNarutoLang } from "./narutoCardPath";
 import {
   medThumbRank,
   parseCarddassAssetPath,
@@ -176,6 +203,8 @@ type CdxSweep = {
   site: SiteHit[];
   cdxRows: number;
   imageRows: number;
+  /** live Wayback / last cdx-hits.json / archive.org down with nothing cached. */
+  source?: "live" | "cache" | "unavailable";
 };
 
 async function fetchCdxSweep(): Promise<CdxSweep> {
@@ -206,14 +235,14 @@ async function fetchCdxSweep(): Promise<CdxSweep> {
       console.log(
         `CDX done in ${Math.round((Date.now() - started) / 1000)}s → cards=${sweep.cards.length} siteExtras=${sweep.site.length}`,
       );
-      return sweep;
+      return { ...sweep, source: "live" as const };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       const wait = attempt * 2_000;
       console.warn(
         `CDX attempt ${attempt}/5 failed: ${lastError.message} — retry in ${wait}ms`,
       );
-      await sleep(wait);
+      if (attempt < 5) await sleep(wait);
     } finally {
       clearInterval(heartbeat);
     }
@@ -286,6 +315,103 @@ function parseCdxRows(raw: string[][]): CdxSweep {
     site,
     cdxRows,
     imageRows: byCanon.size,
+  };
+}
+
+const SITE_KINDS = new Set<SiteHit["kind"]>([
+  "promo_misc",
+  "thumb_med",
+  "packshot",
+  "chrome",
+  "other",
+]);
+
+/** Rebuild a sweep from `logs/cdx-hits.json` when archive.org CDX is down. */
+export function cdxSweepFromHitsLog(raw: unknown): CdxSweep | null {
+  if (!raw || typeof raw !== "object") return null;
+  const doc = raw as {
+    cards?: unknown;
+    site?: unknown;
+    cdxRows?: unknown;
+    imageRows?: unknown;
+  };
+  if (!Array.isArray(doc.cards) && !Array.isArray(doc.site)) return null;
+  const cards: CdxHit[] = [];
+  for (const row of Array.isArray(doc.cards) ? doc.cards : []) {
+    if (!row || typeof row !== "object") continue;
+    const hit = row as { original?: unknown; timestamp?: unknown };
+    const original = typeof hit.original === "string" ? hit.original : "";
+    const timestamp = typeof hit.timestamp === "string" ? hit.timestamp : "";
+    if (!original || !timestamp) continue;
+    const parsed = parseCarddassAssetPath(original);
+    if (!parsed) continue;
+    cards.push({ timestamp, original, parsed });
+  }
+  const site: SiteHit[] = [];
+  for (const row of Array.isArray(doc.site) ? doc.site : []) {
+    if (!row || typeof row !== "object") continue;
+    const hit = row as {
+      original?: unknown;
+      timestamp?: unknown;
+      relPath?: unknown;
+      kind?: unknown;
+    };
+    const original = typeof hit.original === "string" ? hit.original : "";
+    const timestamp = typeof hit.timestamp === "string" ? hit.timestamp : "";
+    const relPath = typeof hit.relPath === "string" ? hit.relPath : "";
+    const kind = SITE_KINDS.has(hit.kind as SiteHit["kind"])
+      ? (hit.kind as SiteHit["kind"])
+      : null;
+    if (!original || !timestamp || !relPath || !kind) continue;
+    site.push({ timestamp, original, relPath, kind });
+  }
+  if (cards.length === 0 && site.length === 0) return null;
+  return {
+    cards,
+    site,
+    cdxRows:
+      typeof doc.cdxRows === "number"
+        ? doc.cdxRows
+        : cards.length + site.length,
+    imageRows:
+      typeof doc.imageRows === "number"
+        ? doc.imageRows
+        : cards.length + site.length,
+    source: "cache",
+  };
+}
+
+export function readCdxHitsLog(filePath: string): CdxSweep | null {
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    return cdxSweepFromHitsLog(JSON.parse(fs.readFileSync(filePath, "utf8")));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Wayback CDX 5xx/timeout must not fail a catalogue extract: faces already on
+ * disk are enough to rebuild the index. `--cdx-only` still wants a live answer.
+ */
+export function recoverCdxSweep(input: {
+  error: Error;
+  cached: CdxSweep | null;
+  requireLive: boolean;
+}): CdxSweep {
+  if (input.requireLive) throw input.error;
+  if (
+    input.cached &&
+    (input.cached.cards.length > 0 || input.cached.site.length > 0)
+  ) {
+    return { ...input.cached, source: "cache" };
+  }
+  return {
+    cards: [],
+    site: [],
+    cdxRows: 0,
+    imageRows: 0,
+    source: "unavailable",
   };
 }
 
@@ -394,6 +520,80 @@ export function migrateNarutoVcBacksToCorrectedArt(root: string): number {
   return moved;
 }
 
+function loadAppearances(root: string): Record<string, Record<string, string>> {
+  try {
+    const raw = JSON.parse(
+      fs.readFileSync(path.join(root, "appearances.json"), "utf8"),
+    ) as { appearances?: Record<string, Record<string, string>> };
+    return raw.appearances ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function pickArtForNarutoCardDir(
+  cardDir: string,
+  files: readonly string[],
+  lang: string,
+): string | null {
+  const preferred = pickPreferredFaceArtFilename(files, lang);
+  if (preferred && /^art\.(reconstructed|corrected)\./i.test(preferred)) {
+    return preferred;
+  }
+  try {
+    const json = fs.readFileSync(
+      path.join(cardDir, NARUTO_FACE_DECISION_FILE),
+      "utf8",
+    );
+    const named = parseNarutoFaceDecision(json, "art");
+    if (named && files.includes(named)) return named;
+  } catch {
+    /* no decision yet */
+  }
+  return preferred;
+}
+
+function ingestNarutoCardDir(input: {
+  prints: Map<string, NarutoPrintRow>;
+  assets: NarutoAssetRow[];
+  seen: Set<string>;
+  cardDir: string;
+  diskId: string;
+  lang: string;
+  family: string;
+  appearanceSet: string;
+}): void {
+  if (!fs.statSync(input.cardDir).isDirectory()) return;
+  const files = fs.readdirSync(input.cardDir);
+  const art = pickArtForNarutoCardDir(input.cardDir, files, input.lang);
+  const thumb = files.find((f) => /^thumb\.(jpe?g|png|webp|gif)$/i.test(f));
+  if (!art && !thumb) return;
+  const parsed = parseNarutoCollector(input.diskId);
+  const printKey = mintNarutoPrintKey(input.diskId, input.appearanceSet);
+  if (!parsed || !printKey) return;
+  const lang = normalizeNarutoLang(input.lang);
+  const assetKey = `${printKey}\0${lang}`;
+  if (input.seen.has(assetKey)) return;
+  input.seen.add(assetKey);
+  const existing = input.prints.get(printKey);
+  input.prints.set(printKey, {
+    printKey,
+    setCode: preferNarutoAppearanceSet(existing?.setCode, input.appearanceSet),
+    number: existing?.number ?? input.diskId,
+    cardType: existing?.cardType ?? cardTypeFromCollectorNumber(input.diskId),
+    family: existing?.family ?? input.family,
+    grouping: existing?.grouping ?? parsed.grouping,
+  });
+  input.assets.push({
+    printKey,
+    lang,
+    art: art ?? null,
+    thumb: thumb ?? null,
+    back: null,
+    printed: isNarutoLangPrinted(input.appearanceSet, lang),
+  });
+}
+
 export function buildIndexFromDisk(root: string): {
   prints: NarutoPrintRow[];
   assets: NarutoAssetRow[];
@@ -401,53 +601,56 @@ export function buildIndexFromDisk(root: string): {
   const cardsDir = path.join(root, "cards");
   const prints = new Map<string, NarutoPrintRow>();
   const assets: NarutoAssetRow[] = [];
+  const seen = new Set<string>();
+  const appearances = loadAppearances(root);
 
   if (!fs.existsSync(cardsDir)) {
     return { prints: [], assets: [] };
   }
 
+  for (const family of fs.readdirSync(cardsDir)) {
+    const familyDir = path.join(cardsDir, family);
+    if (!fs.statSync(familyDir).isDirectory()) continue;
+    if (!isNarutoFamilyFolder(family)) continue;
+    for (const diskId of fs.readdirSync(familyDir)) {
+      const diskDir = path.join(familyDir, diskId);
+      if (!fs.statSync(diskDir).isDirectory()) continue;
+      for (const lang of fs.readdirSync(diskDir)) {
+        const appearance =
+          appearances[diskId]?.[normalizeNarutoLang(lang)] ?? "unknown";
+        ingestNarutoCardDir({
+          prints,
+          assets,
+          seen,
+          cardDir: path.join(diskDir, lang),
+          diskId,
+          lang,
+          family,
+          appearanceSet: appearance,
+        });
+      }
+    }
+  }
+
   for (const set of fs.readdirSync(cardsDir)) {
     const setDir = path.join(cardsDir, set);
     if (!fs.statSync(setDir).isDirectory()) continue;
+    if (isNarutoFamilyFolder(set)) continue;
     for (const lang of fs.readdirSync(setDir)) {
       const langDir = path.join(setDir, lang);
       if (!fs.statSync(langDir).isDirectory()) continue;
       for (const cardId of fs.readdirSync(langDir)) {
-        const cardDir = path.join(langDir, cardId);
-        if (!fs.statSync(cardDir).isDirectory()) continue;
-        const files = fs.readdirSync(cardDir);
-        const art = pickPreferredFaceArtFilename(files);
-        const thumb = files.find((f) =>
-          /^thumb\.(jpe?g|png|webp|gif)$/i.test(f),
-        );
-        if (!art && !thumb) continue;
-
-        // cardId = ni023, ni023-cdf, or EN n001 / pr018b
-        const [numberPart, ...groupParts] = cardId.split("-");
-        const number = numberPart!;
-        const grouping = groupParts.length ? groupParts.join("-") : null;
-        const cardType = cardTypeFromCollectorNumber(number);
-        const printKey = buildPrintKey({
-          game: "naruto",
-          set,
-          number,
-          grouping,
-        });
-        if (!printKey) continue;
-
-        prints.set(printKey, {
-          printKey,
-          setCode: set,
-          number,
-          cardType,
-          grouping,
-        });
-        assets.push({
-          printKey,
+        const diskId = narutoDiskCardId(cardId, set) ?? cardId;
+        const parsed = parseNarutoCollector(cardId);
+        ingestNarutoCardDir({
+          prints,
+          assets,
+          seen,
+          cardDir: path.join(langDir, cardId),
+          diskId,
           lang,
-          art: art ?? null,
-          thumb: thumb ?? null,
-          back: null,
+          family: parsed?.family ?? "ninja",
+          appearanceSet: set.toLowerCase(),
         });
       }
     }
@@ -468,26 +671,31 @@ function assetMapKey(printKey: string, lang: string): string {
 export function collectorNumbersWithThumb(root: string): Set<string> {
   const cardsDir = path.join(root, "cards");
   const out = new Set<string>();
-  if (!fs.existsSync(cardsDir)) return out;
-  for (const set of fs.readdirSync(cardsDir)) {
-    const setDir = path.join(cardsDir, set);
-    if (!fs.statSync(setDir).isDirectory()) continue;
-    for (const lang of fs.readdirSync(setDir)) {
-      const langDir = path.join(setDir, lang);
-      if (!fs.statSync(langDir).isDirectory()) continue;
-      for (const cardId of fs.readdirSync(langDir)) {
-        const thumb = path.join(langDir, cardId, "thumb.jpg");
-        try {
-          if (!fs.statSync(thumb).isFile()) continue;
-        } catch {
-          continue;
-        }
-        const m = /^(ni|te|ta|cl|pr)\d+/i.exec(cardId);
-        if (m) out.add(m[0]!.toLowerCase());
-      }
+  for (const hit of listNarutoCardDirs(cardsDir)) {
+    const thumb = path.join(hit.abs, "thumb.jpg");
+    try {
+      if (!fs.statSync(thumb).isFile()) continue;
+    } catch {
+      continue;
     }
+    const ledger = narutoLedgerNumber(hit.diskId);
+    if (ledger) out.add(ledger);
   }
   return out;
+}
+
+function cardDirHasAnyNarutoFace(dir: string): boolean {
+  try {
+    return fs
+      .readdirSync(dir)
+      .some(
+        (name) =>
+          narutoFaceSourceOf(name) != null ||
+          /^art\.(reconstructed|corrected)\./i.test(name),
+      );
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -496,9 +704,14 @@ export function collectorNumbersWithThumb(root: string): Set<string> {
  */
 export function installedTinStagingPaths(root: string): Set<string> {
   const out = new Set<string>();
-  const cards = path.join(root, "cards", "promo", "fr");
+  const cardsDir = path.join(root, "cards");
   for (const promo of TIN_BOX_PROMOS) {
-    if (!fs.existsSync(path.join(cards, promo.cardId, "art.jpg"))) continue;
+    const next = narutoCardAbsDir(cardsDir, promo.cardId, "fr", "promo");
+    const legacy = path.join(cardsDir, "promo", "fr", promo.cardId);
+    const hasFace = [next, legacy]
+      .filter(Boolean)
+      .some((dir) => cardDirHasAnyNarutoFace(dir!));
+    if (!hasFace) continue;
     out.add(promo.artFrom);
     if (promo.thumbFrom) out.add(promo.thumbFrom);
   }
@@ -566,8 +779,17 @@ export function mapSiteMedThumbsOntoAssets(
       const cardId = print.grouping
         ? `${print.number}-${print.grouping}`
         : print.number;
-      const cardDir = path.join(cardsDir, print.setCode, asset.lang, cardId);
-      if (!fs.existsSync(cardDir)) continue;
+      const next = narutoCardAbsDir(
+        cardsDir,
+        cardId,
+        asset.lang,
+        print.setCode,
+      );
+      const legacy = path.join(cardsDir, print.setCode, asset.lang, cardId);
+      const cardDir =
+        (next && fs.existsSync(next) && next) ||
+        (fs.existsSync(legacy) ? legacy : next);
+      if (!cardDir || !fs.existsSync(cardDir)) continue;
       setCodes.add(print.setCode);
       destPaths.push(path.join(cardDir, "thumb.jpg"));
     }
@@ -581,7 +803,7 @@ export function mapSiteMedThumbsOntoAssets(
         ? destPaths.filter((dest) => {
             const rel = path.relative(cardsDir, path.dirname(dest));
             const setCode = rel.split(path.sep)[0];
-            return setCode !== "promo";
+            return setCode !== "promo" && !/-promo$/i.test(rel);
           })
         : destPaths;
     if (medDestPaths.length === 0) continue;
@@ -666,13 +888,14 @@ export function mapSiteMedThumbsOntoAssets(
  * Community cache first (it covers Série 06 and the promos, which no official
  * checklist ever named), then official names overlaid on top.
  */
-function titlesForNarutoPrints(prints: NarutoPrintRow[]) {
+function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
   const hits = loadMangaNewsTitleHitsFromCache();
   const titles = titlesForPrints(prints, hits);
   const byKey = new Map(titles.map((t) => [t.printKey, t]));
   for (const promo of TIN_BOX_PROMOS) {
     const print = prints.find(
-      (p) => p.setCode === "promo" && p.number === promo.cardId,
+      (p) =>
+        p.setCode === "promo" && narutoNumbersEqual(p.number, promo.cardId),
     );
     if (!print) continue;
     if (byKey.has(print.printKey)) continue;
@@ -690,7 +913,167 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[]) {
       `── titles: ${merged.replaced} renommés / ${merged.added} ajoutés depuis les noms officiels (${official.size} connus)`,
     );
   }
-  return merged.titles;
+  const withStorm3 = [...merged.titles];
+  const seen = new Set(
+    withStorm3.map((t) => `${t.printKey}\0${t.lang.toLowerCase()}`),
+  );
+  const storm3En = [
+    ...loadStorm3Ledger(root),
+    ...loadStorm3Ledger(path.join(dataRoot(), NARUTO_EN_PACK_ID)),
+  ].filter(
+    (card, i, all) => all.findIndex((c) => c.number === card.number) === i,
+  );
+  const rarityByNumber = new Map(storm3En.map((c) => [c.number, c.rarity]));
+  for (const card of storm3En) {
+    const print = prints.find(
+      (p) =>
+        (p.setCode === "s28" ||
+          p.family === "ninja" ||
+          p.family === "jutsu" ||
+          p.family === "mission") &&
+        narutoNumbersEqual(p.number, card.number),
+    );
+    if (!print) continue;
+    const key = `${print.printKey}\0en`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    withStorm3.push({
+      printKey: print.printKey,
+      lang: "en",
+      fullName: card.name,
+      rarity: card.rarity,
+    });
+  }
+  const colekaStorm3 = [
+    ...loadColekaStorm3Ledger(root),
+    ...loadColekaStorm3Ledger(path.join(dataRoot(), NARUTO_EN_PACK_ID)),
+  ].filter(
+    (card, i, all) => all.findIndex((c) => c.number === card.number) === i,
+  );
+  for (const card of colekaStorm3) {
+    const print = prints.find((p) => narutoNumbersEqual(p.number, card.number));
+    if (!print) continue;
+    const key = `${print.printKey}\0fr`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    withStorm3.push({
+      printKey: print.printKey,
+      lang: "fr",
+      fullName: card.name,
+      rarity: rarityByNumber.get(card.number) ?? null,
+    });
+  }
+  return withStorm3;
+}
+
+const FOUND_TITLE_SOURCE =
+  "carddass-official + manga-news-cache + attested-promos + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocards-ca + cardgameclub-it + user-physical";
+
+function assembleNarutoCatalogue(
+  prints: NarutoPrintRow[],
+  titles: ReturnType<typeof titlesForNarutoPrints>,
+  root: string,
+) {
+  const withPromos = mergeAttestedPromos({ prints, titles });
+  const withS6It = mergeColekaS6ItIntoIndex({
+    prints: withPromos.prints,
+    titles: withPromos.titles,
+    root,
+  });
+  const carteSemaine = writeCarteSemaineReport(root);
+  const withSemaine = mergeCarteSemaineIntoIndex({
+    prints: withS6It.prints,
+    titles: withS6It.titles,
+    report: carteSemaine,
+    root,
+  });
+  const found = mergeFoundCatalogueLedgers({
+    prints: withSemaine.prints,
+    titles: withSemaine.titles,
+    hinokunianNames: hinokunianJaNames(root),
+  });
+  /*
+    Le 疾風伝 a son propre pack depuis le 2026-08-21 : c'est un autre jeu, avec
+    sa maquette, son année et son dos. Ce pack-ci cesse donc de le revendiquer.
+
+    Le filtre est ici, à l'assemblage, et non par une suppression en base :
+    l'index se **reconstruit** à chaque passe depuis le disque et les relevés
+    curés, si bien qu'une ligne effacée revenait à la suivante.
+
+    Les relevés, eux, vivent encore dans ce provider — c'est la pièce qui reste
+    à déménager pour que le nouveau pack sache se rafraîchir seul.
+  */
+  const shippudenFamilies = new Set(["shi", "mju", "msa", "gaku"]);
+  const isShippuden = (cardType?: string | null) =>
+    shippudenFamilies.has((cardType ?? "").trim().toLowerCase());
+  const keptPrints = found.prints.filter(
+    (print) => !isShippuden(print.cardType),
+  );
+  const keptKeys = new Set(keptPrints.map((print) => print.printKey));
+  const keptTitles = found.titles.filter((title) =>
+    keptKeys.has(title.printKey),
+  );
+  return {
+    prints: keptPrints,
+    titles: keptTitles,
+    attestedPromosAdded: withPromos.addedPrints,
+    s6ItAdded: withS6It.addedPrints,
+    s6ItNamed: withS6It.titled,
+    carteSemaine,
+    hinokunianTitled: found.hinokunianTitled,
+    carteSemaineNamed: withSemaine.named,
+    carteSemaineAdded: withSemaine.addedPrints,
+    found,
+  };
+}
+
+function indexNarutoEnPackFromDisk(): void {
+  // EN faces and sealed SKUs live on the carddass pack after layout migrate.
+  const root = path.join(dataRoot(), NARUTO_EN_PACK_ID);
+  const cardsDir = path.join(root, "cards");
+  if (!fs.existsSync(cardsDir)) return;
+  const leftover = listNarutoCardDirs(cardsDir).filter((hit) => {
+    try {
+      return fs.readdirSync(hit.abs).some((name) => !name.startsWith("."));
+    } catch {
+      return false;
+    }
+  });
+  if (leftover.length === 0) {
+    console.log(JSON.stringify({ enCcgIndex: "merged-into-carddass" }));
+    return;
+  }
+  const { prints, assets } = buildIndexFromDisk(root);
+  const titles = titlesForNarutoPrints(prints, root);
+  const { dbPath, printCount } = writeNarutoCcgIndex({
+    prints,
+    titles,
+    assets,
+    pack: NARUTO_EN_PACK_ID,
+    dbPath: path.join(root, "catalog.sqlite"),
+    meta: {
+      source: "disk",
+      titleSource: "stop2shop + coleka-s28",
+      titleCount: String(titles.length),
+    },
+  });
+  const indexPath = path.join(root, "cards-index.json");
+  exportNarutoCardsIndexJson(
+    prints,
+    assets,
+    indexPath,
+    titles,
+    NARUTO_EN_PACK_ID,
+  );
+  console.log(
+    JSON.stringify({
+      enCcgIndex: true,
+      printCount,
+      titleCount: titles.length,
+      dbPath,
+      indexPath,
+    }),
+  );
 }
 
 export async function scrapeNarutoCards(
@@ -704,52 +1087,67 @@ export async function scrapeNarutoCards(
   ensureNarutoChecklistLayout();
 
   if (options.indexOnly) {
+    migrateNarutoCardLayout();
     await ensureNarutoCuratedAssets();
+    const folded = await foldUnsourcedNarutoArt(root);
+    const facesRewritten = await promoteAllNarutoFaces(root);
     const migratedVc = migrateNarutoVcBacksToCorrectedArt(root);
     const tinPromos = materializeTinBoxPromos(root);
     const { prints, assets } = buildIndexFromDisk(root);
     const thumbMapped = mapSiteMedThumbsOntoAssets(root, prints, assets);
-    const baseTitles = titlesForNarutoPrints(prints);
-    const withPromos = mergeAttestedPromos({ prints, titles: baseTitles });
-    const carteSemaine = writeCarteSemaineReport(root);
-    const merged = mergeCarteSemaineIntoIndex({
-      prints: withPromos.prints,
-      titles: withPromos.titles,
-      report: carteSemaine,
+    const assembled = assembleNarutoCatalogue(
+      prints,
+      titlesForNarutoPrints(prints, root),
       root,
-    });
+    );
     const { dbPath, printCount } = writeNarutoCcgIndex({
-      prints: merged.prints,
-      titles: merged.titles,
+      prints: assembled.prints,
+      titles: assembled.titles,
       assets,
       dbPath: path.join(root, "catalog.sqlite"),
       meta: {
         source: "disk",
-        titleSource:
-          "carddass-official + manga-news-cache + attested-promos + carte-semaine",
-        titleCount: String(merged.titles.length),
+        titleSource: FOUND_TITLE_SOURCE,
+        titleCount: String(assembled.titles.length),
         thumbMapped: String(thumbMapped),
         tinPromos: tinPromos.installed.join(","),
-        attestedPromosAdded: String(withPromos.addedPrints.length),
-        carteSemaineNamed: String(merged.named.length),
-        carteSemaineAdded: String(merged.addedPrints.length),
+        attestedPromosAdded: String(assembled.attestedPromosAdded.length),
+        s6ItAdded: String(assembled.s6ItAdded.length),
+        s6ItNamed: String(assembled.s6ItNamed.length),
+        carteSemaineNamed: String(assembled.carteSemaineNamed.length),
+        carteSemaineAdded: String(assembled.carteSemaineAdded.length),
+        bggEnS1Added: String(assembled.found.bggAdded.length),
+        physicalAdded: String(assembled.found.physicalAdded.length),
+        slabZJaNamed: String(assembled.found.slabZTitled.length),
         migratedVcBacks: String(migratedVc),
       },
     });
     const indexPath = path.join(root, "cards-index.json");
-    exportNarutoCardsIndexJson(merged.prints, assets, indexPath, merged.titles);
+    exportNarutoCardsIndexJson(
+      assembled.prints,
+      assets,
+      indexPath,
+      assembled.titles,
+    );
+    indexNarutoEnPackFromDisk();
     console.log(
       JSON.stringify(
         {
           indexOnly: true,
           printCount,
-          titleCount: merged.titles.length,
+          titleCount: assembled.titles.length,
           thumbMapped,
           migratedVc,
+          foldedUnsourced: folded,
+          facesRewritten,
           tinPromos,
-          attestedPromosAdded: withPromos.addedPrints.length,
-          carteSemaineNamed: merged.named.length,
-          carteSemaineAdded: merged.addedPrints.length,
+          attestedPromosAdded: assembled.attestedPromosAdded.length,
+          carteSemaineNamed: assembled.carteSemaineNamed.length,
+          carteSemaineAdded: assembled.carteSemaineAdded.length,
+          bggEnS1Added: assembled.found.bggAdded.length,
+          physicalAdded: assembled.found.physicalAdded.length,
+          hinokunianJaNamed: assembled.hinokunianTitled.length,
+          titlesCorrected: assembled.found.titlesCorrected.length,
           dbPath,
           indexPath,
         },
@@ -761,11 +1159,31 @@ export async function scrapeNarutoCards(
   }
 
   console.log("── CDX Wayback carddass.fr/naruto/images (all image/*)");
-  const sweep = await fetchCdxSweep();
+  let sweep: CdxSweep;
+  const hitsLog = path.join(logsDir, "cdx-hits.json");
+  try {
+    sweep = await fetchCdxSweep();
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    sweep = recoverCdxSweep({
+      error: err,
+      cached: readCdxHitsLog(hitsLog),
+      requireLive: options.cdxOnly === true,
+    });
+    if (sweep.source === "cache") {
+      console.warn(
+        `CDX ${err.message} — reprise du dernier index Wayback (${sweep.cards.length} faces, ${sweep.site.length} extras)`,
+      );
+    } else {
+      console.warn(
+        `CDX ${err.message} — Wayback indisponible, index depuis le disque (pas de nouvelles faces)`,
+      );
+    }
+  }
   let hits = sweep.cards;
   let siteHits = sweep.site;
   console.log(
-    `CDX rows=${sweep.cdxRows} images=${sweep.imageRows} cards=${hits.length} siteExtras=${siteHits.length}`,
+    `CDX rows=${sweep.cdxRows} images=${sweep.imageRows} cards=${hits.length} siteExtras=${siteHits.length}${sweep.source && sweep.source !== "live" ? ` source=${sweep.source}` : ""}`,
   );
 
   if (options.limit && options.limit > 0) {
@@ -774,29 +1192,31 @@ export async function scrapeNarutoCards(
     console.log(`limited cards=${hits.length} site=${siteHits.length}`);
   }
 
-  fs.writeFileSync(
-    path.join(logsDir, "cdx-hits.json"),
-    `${JSON.stringify(
-      {
-        cards: hits.map((h) => ({
-          printKey: h.parsed.printKey,
-          original: h.original,
-          timestamp: h.timestamp,
-          role: h.parsed.role,
-        })),
-        site: siteHits.map((h) => ({
-          relPath: h.relPath,
-          original: h.original,
-          timestamp: h.timestamp,
-          kind: h.kind,
-        })),
-        cdxRows: sweep.cdxRows,
-        imageRows: sweep.imageRows,
-      },
-      null,
-      2,
-    )}\n`,
-  );
+  if (sweep.source !== "cache" && sweep.source !== "unavailable") {
+    fs.writeFileSync(
+      hitsLog,
+      `${JSON.stringify(
+        {
+          cards: hits.map((h) => ({
+            printKey: h.parsed.printKey,
+            original: h.original,
+            timestamp: h.timestamp,
+            role: h.parsed.role,
+          })),
+          site: siteHits.map((h) => ({
+            relPath: h.relPath,
+            original: h.original,
+            timestamp: h.timestamp,
+            kind: h.kind,
+          })),
+          cdxRows: sweep.cdxRows,
+          imageRows: sweep.imageRows,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  }
 
   if (options.cdxOnly) {
     const byKind: Record<string, number> = {};
@@ -836,17 +1256,29 @@ export async function scrapeNarutoCards(
 
   const prints = new Map<string, NarutoPrintRow>();
   const assetsByKey = new Map<string, NarutoAssetRow>();
+  const appearanceRows: {
+    diskId: string;
+    lang: string;
+    appearanceSet: string;
+  }[] = [];
 
   await runPool(hits, concurrency, delayMs, async (hit) => {
     const { parsed, timestamp, original } = hit;
     const ext = extFromUrl(original);
     const destName = carddassFaceFilename(parsed.role, ext);
-    const dest = path.join(cardsDir, parsed.set, LANG, parsed.cardId, destName);
+    const destDir =
+      narutoCardAbsDir(cardsDir, parsed.cardId, LANG, parsed.set) ??
+      path.join(cardsDir, parsed.set, LANG, parsed.cardId);
+    const dest = path.join(destDir, destName);
     const url = waybackRawUrl(timestamp, original);
     const result = await downloadRaw(url, dest, !force);
-    if (result === "ok") ok += 1;
-    else if (result === "skip") skip += 1;
-    else fail += 1;
+    if (result === "ok") {
+      ok += 1;
+      await promoteNarutoFace(destDir, LANG);
+    } else if (result === "skip") {
+      skip += 1;
+      await promoteNarutoFace(destDir, LANG);
+    } else fail += 1;
 
     doneHits += 1;
     if (
@@ -862,18 +1294,26 @@ export async function scrapeNarutoCards(
 
     if (result === "fail") return;
 
-    prints.set(parsed.printKey, {
-      printKey: parsed.printKey,
+    const printKey =
+      mintNarutoPrintKey(parsed.cardId, parsed.set) ?? parsed.printKey;
+    const diskId = narutoDiskCardId(parsed.cardId, parsed.set) ?? parsed.number;
+    appearanceRows.push({
+      diskId,
+      lang: LANG,
+      appearanceSet: parsed.set,
+    });
+    prints.set(printKey, {
+      printKey,
       setCode: parsed.set,
-      number: parsed.number,
+      number: diskId,
       cardType: parsed.type,
       grouping: parsed.grouping,
       sourceUrl: original,
     });
 
-    const aKey = assetMapKey(parsed.printKey, LANG);
+    const aKey = assetMapKey(printKey, LANG);
     const prev = assetsByKey.get(aKey) ?? {
-      printKey: parsed.printKey,
+      printKey,
       lang: LANG,
       art: null,
       back: null,
@@ -891,6 +1331,7 @@ export async function scrapeNarutoCards(
     assetsByKey.set(aKey, prev);
   });
 
+  if (appearanceRows.length) upsertNarutoAppearances(root, appearanceRows);
   console.log(`── cards pass done (ok=${ok} skip=${skip} fail=${fail})`);
 
   let siteOk = 0;
@@ -953,6 +1394,8 @@ export async function scrapeNarutoCards(
 
   // Legacy: `-vc` was saved as back.jpg → art.corrected.jpg before indexing.
   const migratedVc = migrateNarutoVcBacksToCorrectedArt(root);
+  const foldedUnsourced = await foldUnsourcedNarutoArt(root);
+  await promoteAllNarutoFaces(root);
 
   // Merge disk for any pre-existing when not force-limited (keyed by print+lang).
   const fromDisk = buildIndexFromDisk(root);
@@ -968,7 +1411,11 @@ export async function scrapeNarutoCards(
     }
     // Disk may hold a face the scrape knows nothing about (a hand-made
     // `art.reconstructed.*`). Compare by rank so it is never demoted.
-    if (a.art && (!prev.art || faceArtRank(a.art) > faceArtRank(prev.art))) {
+    if (
+      a.art &&
+      (!prev.art ||
+        faceArtRank(a.art, a.lang) > faceArtRank(prev.art, prev.lang))
+    ) {
       prev.art = a.art;
     }
     if (!prev.thumb && a.thumb) prev.thumb = a.thumb;
@@ -988,7 +1435,11 @@ export async function scrapeNarutoCards(
       assetsByKey.set(aKey, a);
       continue;
     }
-    if (a.art && (!prev.art || faceArtRank(a.art) > faceArtRank(prev.art))) {
+    if (
+      a.art &&
+      (!prev.art ||
+        faceArtRank(a.art, a.lang) > faceArtRank(prev.art, prev.lang))
+    ) {
       prev.art = a.art;
     }
     if (!prev.thumb && a.thumb) prev.thumb = a.thumb;
@@ -1002,55 +1453,63 @@ export async function scrapeNarutoCards(
   const thumbMapped = mapSiteMedThumbsOntoAssets(root, printList, assetList);
 
   console.log("── index catalog.sqlite + cards-index.json");
-  const baseTitles = titlesForNarutoPrints(printList);
-  const withPromos = mergeAttestedPromos({
-    prints: printList,
-    titles: baseTitles,
-  });
-  if (withPromos.addedPrints.length) {
+  const assembled = assembleNarutoCatalogue(
+    printList,
+    titlesForNarutoPrints(printList, root),
+    root,
+  );
+  if (assembled.attestedPromosAdded.length) {
     console.log(
-      `── attested promos: ${withPromos.addedPrints.length} printKeys sans face encore`,
+      `── attested promos: ${assembled.attestedPromosAdded.length} printKeys sans face encore`,
     );
   }
-  const carteSemaine = writeCarteSemaineReport(root);
-  const merged = mergeCarteSemaineIntoIndex({
-    prints: withPromos.prints,
-    titles: withPromos.titles,
-    report: carteSemaine,
-    root,
-  });
-  if (merged.named.length || merged.addedPrints.length) {
+  if (assembled.s6ItAdded.length || assembled.s6ItNamed.length) {
     console.log(
-      `── carte-semaine: ${merged.named.length} titres, ${merged.addedPrints.length} stubs`,
+      `── S6 IT : ${assembled.s6ItAdded.length} printKeys, ${assembled.s6ItNamed.length} noms italiens`,
+    );
+  }
+  if (
+    assembled.carteSemaineNamed.length ||
+    assembled.carteSemaineAdded.length
+  ) {
+    console.log(
+      `── carte-semaine: ${assembled.carteSemaineNamed.length} titres, ${assembled.carteSemaineAdded.length} stubs`,
+    );
+  }
+  if (assembled.found.bggAdded.length || assembled.found.physicalAdded.length) {
+    console.log(
+      `── ledgers: BGG EN S1 +${assembled.found.bggAdded.length}, PR physiques +${assembled.found.physicalAdded.length}`,
     );
   }
   const { dbPath, printCount } = writeNarutoCcgIndex({
-    prints: merged.prints,
-    titles: merged.titles,
+    prints: assembled.prints,
+    titles: assembled.titles,
     assets: assetList,
     dbPath: path.join(root, "catalog.sqlite"),
     meta: {
       source: "wayback:carddass.fr",
       cdxHits: String(hits.length),
       siteExtras: String(siteHits.length),
-      titleSource:
-        "carddass-official + manga-news-cache + attested-promos + carte-semaine",
-      titleCount: String(merged.titles.length),
+      titleSource: FOUND_TITLE_SOURCE,
+      titleCount: String(assembled.titles.length),
       thumbMapped: String(thumbMapped),
       tinPromos: tinPromos.installed.join(","),
-      attestedPromosAdded: String(withPromos.addedPrints.length),
-      carteSemaineNamed: String(merged.named.length),
-      carteSemaineAdded: String(merged.addedPrints.length),
+      attestedPromosAdded: String(assembled.attestedPromosAdded.length),
+      carteSemaineNamed: String(assembled.carteSemaineNamed.length),
+      carteSemaineAdded: String(assembled.carteSemaineAdded.length),
+      bggEnS1Added: String(assembled.found.bggAdded.length),
+      physicalAdded: String(assembled.found.physicalAdded.length),
       migratedVcBacks: String(migratedVc),
     },
   });
   const indexPath = path.join(root, "cards-index.json");
   exportNarutoCardsIndexJson(
-    merged.prints,
+    assembled.prints,
     assetList,
     indexPath,
-    merged.titles,
+    assembled.titles,
   );
+  indexNarutoEnPackFromDisk();
 
   const siteByKind: Record<string, number> = {};
   for (const h of siteHits) siteByKind[h.kind] = (siteByKind[h.kind] ?? 0) + 1;
@@ -1060,12 +1519,15 @@ export async function scrapeNarutoCards(
     skipped: skip,
     failed: fail,
     printCount,
-    titleCount: merged.titles.length,
-    attestedPromosAdded: withPromos.addedPrints.length,
-    carteSemaineNamed: merged.named.length,
-    carteSemaineAdded: merged.addedPrints.length,
+    titleCount: assembled.titles.length,
+    attestedPromosAdded: assembled.attestedPromosAdded.length,
+    carteSemaineNamed: assembled.carteSemaineNamed.length,
+    carteSemaineAdded: assembled.carteSemaineAdded.length,
+    bggEnS1Added: assembled.found.bggAdded.length,
+    physicalAdded: assembled.found.physicalAdded.length,
     thumbMapped,
     migratedVc,
+    foldedUnsourced,
     tinPromos,
     site: {
       downloaded: siteOk,

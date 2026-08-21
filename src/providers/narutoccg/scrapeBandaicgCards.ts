@@ -2,7 +2,7 @@
  * Dump official EN Naruto CCG site from Wayback (bandaicg.com) into staging.
  * Not the FR CACG catalogue — do **not** write under `cards/`.
  *
- *   data/naruto/ccg/staging/bandaicg-en/
+ *   data/naruto/carddass/staging/bandaicg-en/
  *     images/…     ← /naruto/images/* (cards_* + chrome)
  *     pages/…      ← home, cardlists, FAQ… (forum PHP excluded)
  *     cdx.json

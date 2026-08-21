@@ -193,9 +193,9 @@ describe("materializeTinBoxPromos", () => {
 
     const { installed } = materializeTinBoxPromos(root);
     expect(installed).toEqual(["pr011", "pr016"]);
-    expect(fs.existsSync(path.join(root, "cards/promo/fr/pr011/art.jpg"))).toBe(
-      true,
-    );
+    expect(
+      fs.existsSync(path.join(root, "cards/promo/pr0011/fr/art.carddass.jpg")),
+    ).toBe(true);
     expect(fs.existsSync(path.join(staging, artRel))).toBe(false);
     expect(fs.existsSync(path.join(staging, thumbRel))).toBe(false);
     // Unused alias stays for inspection.

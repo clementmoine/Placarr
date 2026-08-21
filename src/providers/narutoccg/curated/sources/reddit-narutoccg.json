@@ -1,0 +1,32 @@
+{
+  "source": "reddit.com/r/Narutoccg (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "crawl": false,
+  "line": "en-ccg",
+  "note": "Subreddit is Bandai USA CCG (N/J/M), not Carddass NI/TE/TA. Index still useful later for inventory sheets. Do not crawl. This thread is a rules question, not a scan dump.",
+  "subreddit": "https://www.reddit.com/r/Narutoccg/",
+  "threads": [
+    {
+      "id": "1vjw5hb",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1vjw5hb/question_about_rules_effect_vs_cost/",
+      "title": "Question about rules: effect vs cost",
+      "kind": "rules",
+      "cited": {
+        "printed": "N-1080",
+        "diskHint": "n1080",
+        "name": "Sasuke",
+        "phrase": "because of your effects"
+      },
+      "photo": {
+        "host": "preview.redd.it",
+        "file": "b564se44zdih1.jpg",
+        "note": "Phone crop of the EN CCG card. Not a face dump — Vintage/Goat already serve n1080."
+      },
+      "ruling": "Cost is part of the effect. Timing / You can / In that case (older); bracket timing then text before ':' (later sets). If the card is negated you cannot pay the cost.",
+      "ingestPhoto": false
+    }
+  ],
+  "stillWanted": ["inventory-sheets"],
+  "not": ["carddass", "chrono-clash", "kayou"]
+}

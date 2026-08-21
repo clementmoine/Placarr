@@ -1,0 +1,50 @@
+{
+  "source": "Suruga-ya used category (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "ingest": "model-ready — en attente d'une source",
+  "crawl": false,
+  "url": "https://www.suruga-ya.com/en/category/501080113",
+  "shopTitle": "NARUTO DATA CARDDASS",
+  "breadcrumb": [
+    "Toy / Hobby",
+    "Hobby",
+    "Trading cards / Other cards",
+    "Arcade",
+    "NARUTO DATA CARDDASS"
+  ],
+  "results": 180,
+  "maker": "Bandai",
+  "line": "data-carddass",
+  "note": "Bandai arcade Data Carddass (データカードダス), not the 2002 tabletop Carddass (NI/TE/TA / 忍術作戦) and not Bandai USA CCG (N/J/M). Cabinets scan a barcode on the card. First page of this used listing mixes DN-…T (ナルティメットカードバトル, 2005 — e.g. DN-032T dated 2005-10-01) and NM-… (ナルティメットミッション, 2007 — e.g. NM-049 猿飛アスマ). A third cabinet, ナルティメットクロス (2009), exists; not confirmed on this first page. Suruga EN titles are machine-translated junk. Do not crawl the 180 SKUs. Do not mint printKeys.",
+  "prefixesSeen": ["DN", "NM"],
+  "cabinets": [
+    {
+      "title": "ナルト ナルティメットカードバトル",
+      "year": 2005,
+      "prefix": "DN"
+    },
+    {
+      "title": "ナルト疾風伝 究極忍務 ナルティメットミッション",
+      "year": 2007,
+      "prefix": "NM"
+    },
+    {
+      "title": "ナルト疾風伝 ナルティメットクロス",
+      "year": 2009,
+      "prefix": null
+    }
+  ],
+  "not": ["carddass", "en-ccg", "ni", "te", "ta", "n", "j", "m"],
+  "decisionReversed": {
+    "on": "2026-08-19",
+    "was": "Do not crawl the 180 SKUs. Do not mint printKeys.",
+    "now": "La ligne arcade entre au catalogue, sur demande. Le modèle est prêt : familles `arcadeBattle` (DN, cabinet 2005) et `arcadeMission` (NM, cabinet 2007) dans collectorIdentity, ligne `data-carddass` dans packs.ts, dossiers de disque `dn` et `nm`. Aucune carte n'est encore frappée : il manque une source.",
+    "sourcesTried": [
+      "nikita tcg-db — ne porte que `nrt` (428) et `nrts` (13) pour Naruto ; son `dn` est ドレッドノート, son `das` ドラゴン☆オールスターズ. Rien d'arcade.",
+      "Suruga catégorie 501080113 — 403 depuis ce conteneur, en .jp comme en .com/en. L'intégration Suruga existante marche par TSV collé à la main, même chemin à prévoir.",
+      "dream-hobby — ligne carddass-jp, ne mentionne l'arcade qu'en passant.",
+      "fril — 15 annonces, rien d'exploitable."
+    ],
+    "note": "`DN-032T` porte un T collé au numéro, sans tiret : il est détaché en suffixe à la lecture, jamais jeté — c'est lui qui marque le cabinet 2005."
+  }
+}

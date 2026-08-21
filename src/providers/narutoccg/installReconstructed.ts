@@ -1,7 +1,8 @@
 /**
  * Install hand-made card faces from
- * `src/providers/narutoccg/curated/reconstructed/<cardId>.png` into the catalogue
- * as `art.reconstructed.webp` under `data/naruto/ccg/cards/`.
+ * `src/providers/narutoccg/curated/cards/{family}/{id}/{lang}/art.reconstructed.png`
+ * into the catalogue as `art.reconstructed.webp` under
+ * `data/naruto/carddass/cards/`.
  *
  * These are not scrape output: they are rebuilt by hand (AI restoration of a
  * collector photo, then Figma retouching) for cards whose official face is
@@ -9,8 +10,7 @@
  * `www.carddass.fr` watermark. They take display priority over the official
  * files — see `pickPreferredFaceArtFilename` — but never replace them on disk:
  * the official face stays as the authentic source, and the collector photo
- * stays in `curated/reconstructed/source-photos/` so the reconstruction remains
- * auditable.
+ * stays beside the PNG as `source.jpg` so the reconstruction remains auditable.
  *
  * Normalisation applied: crop the fully-opaque bounding box (Figma exports a
  * 1px transparent bleed), scale to the official 843x1206, flatten to opaque.
@@ -23,12 +23,10 @@
  *   pnpm naruto:cards -- --force   # rewrite even when dest is newer
  */
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
   readdirSync,
-  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -36,83 +34,88 @@ import path from "node:path";
 
 import sharp, { type Sharp } from "sharp";
 
+import { packCardsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
+import {
+  curatedCardsDir,
+  curatedDestStale,
+  installCuratedCardBacks,
+} from "@/providers/shared/curatedCardsInstall";
 
 import {
   narutoCuratedDir,
-  narutoCuratedReconstructedDir,
+  narutoCuratedReconstructedProvenancePath,
 } from "./curatedPaths";
-import { NARUTO_PACK_ID } from "./indexStore";
-import { isNarutoSetDir } from "./parseCarddassAsset";
+import { installMercariFaces } from "./installMercariFaces";
+import { installYahooAuctionFaces } from "./installYahooAuctionFaces";
+import { NARUTO_PACK_ID } from "./packs";
+import { listNarutoCardDirs } from "./narutoCardDisk";
 
 /** Official S5 face geometry — every reconstruction is normalised to it. */
 export const RECONSTRUCTED_WIDTH = 843;
 export const RECONSTRUCTED_HEIGHT = 1206;
 
 export const RECONSTRUCTED_FILENAME = "art.reconstructed.webp";
+const RECONSTRUCTED_FACE = /^art\.reconstructed\.(png|webp)$/i;
 
 export type ReconstructedInstall = {
   cardId: string;
   set: string;
+  lang: string;
   source: string;
   dest: string;
   from: { width: number; height: number };
   cropped: boolean;
 };
 
-export { narutoCuratedDir };
+export type CuratedReconstructedFace = {
+  source: string;
+  cardId: string;
+  lang: string;
+  family: string;
+};
+
+export { curatedDestStale, narutoCuratedDir };
 
 function packRoot(): string {
   return path.join(dataRoot(), NARUTO_PACK_ID);
 }
 
-function reconstructedDir(): string {
-  return narutoCuratedReconstructedDir();
+/** Faces under `curated/cards/{family}/{id}/{lang}/art.reconstructed.*`. */
+export function listCuratedReconstructedFaces(
+  cardsDir = curatedCardsDir(narutoCuratedDir()),
+): CuratedReconstructedFace[] {
+  const out: CuratedReconstructedFace[] = [];
+  for (const hit of listNarutoCardDirs(cardsDir)) {
+    for (const name of readdirSync(hit.abs)) {
+      if (!RECONSTRUCTED_FACE.test(name)) continue;
+      const source = path.join(hit.abs, name);
+      out.push({
+        source,
+        cardId: hit.diskId,
+        lang: hit.lang,
+        family: hit.family,
+      });
+    }
+  }
+  return out.sort((a, b) => a.source.localeCompare(b.source));
+}
+
+function warnLegacyReconstructedDir(): void {
+  const legacy = path.join(narutoCuratedDir(), "reconstructed");
+  if (!existsSync(legacy)) return;
+  const leftover = readdirSync(legacy).filter((name) => /\.png$/i.test(name));
+  if (leftover.length === 0) return;
+  console.warn(
+    "   leftover curated/reconstructed/*.png — move each face to " +
+      "curated/cards/{family}/{id}/{lang}/art.reconstructed.png",
+  );
 }
 
 function cardsDir(): string {
   return path.join(packRoot(), "cards");
 }
 
-/** True when dest is missing or older than the curated source. */
-export function curatedDestStale(srcPath: string, destPath: string): boolean {
-  if (!existsSync(destPath)) return true;
-  return statSync(srcPath).mtimeMs > statSync(destPath).mtimeMs;
-}
-
-/**
- * Install curated pack back into `data/naruto/ccg/cards/back.webp`.
- * Source stays PNG in `curated/`; runtime copy is lossless WebP (same as
- * Lorcana / Pokémon dumps). Reinstalls when source is newer, or `force`.
- * Removes a leftover `back.png` after a successful write.
- */
-export async function installNarutoCuratedBack(
-  opts: { force?: boolean; dryRun?: boolean } = {},
-): Promise<{ installed: boolean; dest: string | null }> {
-  const src = path.join(narutoCuratedDir(), "back.png");
-  const dest = path.join(cardsDir(), "back.webp");
-  const legacyPng = path.join(cardsDir(), "back.png");
-  if (!existsSync(src)) return { installed: false, dest: null };
-  if (!opts.force && !curatedDestStale(src, dest)) {
-    return { installed: false, dest };
-  }
-  if (opts.dryRun) return { installed: true, dest };
-  mkdirSync(path.dirname(dest), { recursive: true });
-  await sharp(src).webp({ lossless: true, effort: 6 }).toFile(dest);
-  if (existsSync(legacyPng)) unlinkSync(legacyPng);
-  const mdSrc = path.join(narutoCuratedDir(), "BACK.md");
-  if (existsSync(mdSrc)) {
-    copyFileSync(mdSrc, path.join(cardsDir(), "BACK.md"));
-  }
-  return { installed: true, dest };
-}
-
-/**
- * Sync curated pack back + reconstructed faces into `data/naruto/ccg/cards/`.
- * Idempotent: only rewrites when curated source is newer than dest (or `force`).
- * Called at the start of every pack update / extract so edits in
- * `curated/reconstructed/` are never left behind.
- */
 /**
  * Full-card foil mask — a solid white plate.
  *
@@ -149,10 +152,16 @@ export async function ensureNarutoCuratedAssets(opts?: {
   backInstalled: boolean;
   installs: ReconstructedInstall[];
 }> {
-  const back = await installNarutoCuratedBack(opts);
-  if (back.installed) {
+  const backs = await installCuratedCardBacks({
+    curatedCardsDir: curatedCardsDir(narutoCuratedDir()),
+    destCardsDir: packCardsDir(NARUTO_PACK_ID),
+    dryRun: opts?.dryRun,
+    force: opts?.force,
+  });
+  for (const row of backs) {
+    if (!row.installed) continue;
     console.log(
-      `   pack back → ${back.dest}${opts?.dryRun ? " (dry run)" : ""}`,
+      `   curated back → ${row.dest}${opts?.dryRun ? " (dry run)" : ""}`,
     );
   }
   const mask = await installNarutoFullFoilMask(opts ?? {});
@@ -162,52 +171,32 @@ export async function ensureNarutoCuratedAssets(opts?: {
     );
   }
   const installs = await installNarutoReconstructed(opts);
-  return { backInstalled: back.installed, installs };
-}
-
-/** Which series set already holds this card on disk (`s1`… / `promo`). */
-function findSetForCard(cardId: string): string | undefined {
-  const root = cardsDir();
-  if (!existsSync(root)) return undefined;
-  for (const set of readdirSync(root)) {
-    if (!isNarutoSetDir(set)) continue;
-    if (existsSync(path.join(root, set, "fr", cardId))) return set;
+  const yahoo = await installYahooAuctionFaces({
+    dryRun: opts?.dryRun,
+    force: opts?.force,
+  });
+  for (const key of yahoo.written) {
+    console.log(`   curated yahoo → ${key}${opts?.dryRun ? " (dry run)" : ""}`);
   }
-  return undefined;
-}
-
-/**
- * A card that was never in the catalogue has no folder to read the set from.
- * Infer it from its numeric neighbours of the same type: `ni232` sits between
- * `ni231` and `ni233`, both in `s5`. Only accept an unambiguous answer —
- * a card straddling two sets is a judgement call, not a guess to automate.
- */
-function inferSetFromNeighbours(cardId: string): string | undefined {
-  const m = /^([a-z]+)(\d+)$/i.exec(cardId);
-  if (!m) return undefined;
-  const [, type, digits] = m;
-  const target = Number.parseInt(digits!, 10);
-
-  const root = cardsDir();
-  if (!existsSync(root)) return undefined;
-
-  let below: { n: number; set: string } | undefined;
-  let above: { n: number; set: string } | undefined;
-  for (const set of readdirSync(root)) {
-    if (!isNarutoSetDir(set) || set === "promo") continue;
-    const frDir = path.join(root, set, "fr");
-    if (!existsSync(frDir)) continue;
-    for (const entry of readdirSync(frDir)) {
-      const em = new RegExp(`^${type}(\\d+)$`, "i").exec(entry);
-      if (!em) continue;
-      const n = Number.parseInt(em[1]!, 10);
-      if (n < target && (!below || n > below.n)) below = { n, set };
-      if (n > target && (!above || n < above.n)) above = { n, set };
-    }
+  for (const key of yahoo.failed) {
+    console.log(`   curated yahoo FAIL → ${key}`);
   }
-
-  if (below && above && below.set === above.set) return below.set;
-  return undefined;
+  const mercari = await installMercariFaces({
+    dryRun: opts?.dryRun,
+    force: opts?.force,
+  });
+  for (const key of mercari.written) {
+    console.log(
+      `   curated mercari → ${key}${opts?.dryRun ? " (dry run)" : ""}`,
+    );
+  }
+  for (const key of mercari.failed) {
+    console.log(`   curated mercari FAIL → ${key}`);
+  }
+  return {
+    backInstalled: backs.some((row) => row.installed),
+    installs,
+  };
 }
 
 export type Box = { left: number; top: number; width: number; height: number };
@@ -277,81 +266,73 @@ async function opaqueBox(
 }
 
 /**
- * `provenance.json` is a ledger of every reconstructed face on disk, not a log
- * of the last run. Unchanged cards are skipped as fresh and never reach
- * `installs`, so writing that array alone would silently drop them: adding one
- * card would leave a one-entry ledger. Merge on top of what is already
- * recorded, drop cards whose PNG is gone, and sort for stable diffs.
+ * `sources/reconstructed-provenance.json` is a ledger of every reconstructed
+ * face on disk, not a log of the last run. Unchanged cards are skipped as
+ * fresh and never reach `installs`, so writing that array alone would silently
+ * drop them: adding one card would leave a one-entry ledger. Merge on top of
+ * what is already recorded, drop cards whose PNG is gone, and sort for stable
+ * diffs.
  */
+function provenanceKey(row: ReconstructedInstall): string {
+  return `${row.cardId}:${row.lang}`;
+}
+
 function mergeProvenanceInstalls(
   installs: readonly ReconstructedInstall[],
 ): ReconstructedInstall[] {
   const byCard = new Map<string, ReconstructedInstall>();
-  const ledger = path.join(reconstructedDir(), "provenance.json");
+  const ledger = narutoCuratedReconstructedProvenancePath();
+  const curatedRoot = narutoCuratedDir();
   if (existsSync(ledger)) {
     try {
       const previous = JSON.parse(readFileSync(ledger, "utf8")) as {
         installs?: ReconstructedInstall[];
       };
       for (const row of previous.installs ?? []) {
-        if (!row?.cardId) continue;
+        if (!row?.cardId || !row.source) continue;
         // A card whose source PNG was removed no longer belongs in the ledger.
-        if (!existsSync(path.join(reconstructedDir(), `${row.cardId}.png`))) {
-          continue;
-        }
-        byCard.set(row.cardId, row);
+        if (!existsSync(path.join(curatedRoot, row.source))) continue;
+        const next = { ...row, lang: row.lang || "fr" };
+        byCard.set(provenanceKey(next), next);
       }
     } catch {
       // Unreadable ledger: rebuild from this run rather than fail the install.
     }
   }
-  for (const row of installs) byCard.set(row.cardId, row);
-  return [...byCard.values()].sort((a, b) => a.cardId.localeCompare(b.cardId));
+  for (const row of installs) byCard.set(provenanceKey(row), row);
+  return [...byCard.values()].sort((a, b) =>
+    provenanceKey(a).localeCompare(provenanceKey(b)),
+  );
 }
 
 export async function installNarutoReconstructed(opts?: {
   dryRun?: boolean;
   force?: boolean;
 }): Promise<ReconstructedInstall[]> {
-  const dir = reconstructedDir();
-  if (!existsSync(dir)) {
-    throw new Error(`Missing ${dir} — drop <cardId>.png files there first`);
-  }
+  warnLegacyReconstructedDir();
 
   const installs: ReconstructedInstall[] = [];
   let skippedFresh = 0;
-  for (const name of readdirSync(dir).sort()) {
-    if (!/\.png$/i.test(name)) continue;
-    const cardId = name.replace(/\.png$/i, "");
-    const existing = findSetForCard(cardId);
-    const set = existing ?? inferSetFromNeighbours(cardId);
-    if (!set) {
-      console.warn(
-        `   ${cardId.padEnd(12)} SKIP — no cards/*/fr/${cardId}/ and neighbours disagree on the set`,
-      );
-      continue;
-    }
-
-    const source = path.join(dir, name);
+  for (const face of listCuratedReconstructedFaces()) {
     const dest = path.join(
       cardsDir(),
-      set,
-      "fr",
-      cardId,
+      face.family,
+      face.cardId,
+      face.lang,
       RECONSTRUCTED_FILENAME,
     );
 
-    if (!opts?.force && !opts?.dryRun && !curatedDestStale(source, dest)) {
+    if (!opts?.force && !opts?.dryRun && !curatedDestStale(face.source, dest)) {
       skippedFresh += 1;
       continue;
     }
 
-    const image = sharp(source);
+    const image = sharp(face.source);
     const meta = await image.metadata();
     const width = meta.width ?? 0;
     const height = meta.height ?? 0;
     if (!width || !height) {
-      console.warn(`   ${cardId.padEnd(12)} SKIP — unreadable`);
+      console.warn(`   ${face.cardId.padEnd(12)} SKIP — unreadable`);
       continue;
     }
 
@@ -360,7 +341,7 @@ export async function installNarutoReconstructed(opts?: {
 
     if (!opts?.dryRun) {
       mkdirSync(path.dirname(dest), { recursive: true });
-      await sharp(source)
+      await sharp(face.source)
         .extract(box)
         .resize(RECONSTRUCTED_WIDTH, RECONSTRUCTED_HEIGHT, { fit: "fill" })
         .flatten({ background: "#ffffff" })
@@ -371,17 +352,18 @@ export async function installNarutoReconstructed(opts?: {
     }
 
     installs.push({
-      cardId,
-      set,
-      source: path.relative(narutoCuratedDir(), source),
+      cardId: face.cardId,
+      set: face.family,
+      lang: face.lang,
+      source: path.relative(narutoCuratedDir(), face.source),
       dest: path.relative(packRoot(), dest),
       from: { width, height },
       cropped,
     });
     console.log(
-      `   ${cardId.padEnd(12)} ${String(`${width}x${height}`).padEnd(11)}` +
-        `→ ${RECONSTRUCTED_WIDTH}x${RECONSTRUCTED_HEIGHT}  ${set}` +
-        `${existing ? "" : "  (new card, set inferred)"}` +
+      `   ${face.cardId.padEnd(12)} ${face.lang.padEnd(3)} ` +
+        `${String(`${width}x${height}`).padEnd(11)}` +
+        `→ ${RECONSTRUCTED_WIDTH}x${RECONSTRUCTED_HEIGHT}  ${face.family}` +
         `${cropped ? "  (bleed trimmed)" : ""}` +
         `${opts?.dryRun ? "  (dry run)" : ""}`,
     );
@@ -395,14 +377,14 @@ export async function installNarutoReconstructed(opts?: {
 
   if (!opts?.dryRun && installs.length) {
     writeFileSync(
-      path.join(reconstructedDir(), "provenance.json"),
+      narutoCuratedReconstructedProvenancePath(),
       `${JSON.stringify(
         {
           generatedAt: new Date().toISOString(),
           method:
             "AI restoration of an authenticated collector photo, then Figma retouching",
           sourcePhotos:
-            "src/providers/narutoccg/curated/reconstructed/source-photos/",
+            "source.jpg next to art.reconstructed.png under curated/cards/{family}/{id}/{lang}/",
           note:
             "Displayed in place of the official face. The official file is kept on " +
             "disk and remains the authentic source; every field was proofread " +

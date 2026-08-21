@@ -13,7 +13,7 @@
  *   pnpm naruto:cards -- --only thumbs
  *   pnpm naruto:cards -- --only thumbs --dry-run
  */
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import sharp from "sharp";
@@ -21,6 +21,7 @@ import sharp from "sharp";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { NARUTO_PACK_ID } from "./indexStore";
+import { listNarutoCardDirs } from "./narutoCardDisk";
 import { pickPreferredFaceArtFilename } from "./parseCarddassAsset";
 
 /** A thumb may drift this far from its face before we call it distorted. */
@@ -29,6 +30,8 @@ export const THUMB_RATIO_TOLERANCE = 0.02;
 export type ThumbCheck = {
   cardId: string;
   set: string;
+  dir: string;
+  lang: string;
   thumb: { width: number; height: number; ratio: number };
   face: { width: number; height: number; ratio: number };
   deviation: number;
@@ -64,55 +67,37 @@ export async function checkNarutoThumbs(): Promise<ThumbCheck[]> {
   const root = cardsDir();
   if (!existsSync(root)) return [];
 
-  const dirsIn = (dir: string): string[] => {
-    if (!existsSync(dir)) return [];
-    return readdirSync(dir).filter((name) => {
-      try {
-        return statSync(path.join(dir, name)).isDirectory();
-      } catch {
-        return false;
-      }
-    });
-  };
-
   const out: ThumbCheck[] = [];
-  for (const set of dirsIn(root)) {
-    const setDir = path.join(root, set);
-    for (const lang of dirsIn(setDir)) {
-      const langDir = path.join(setDir, lang);
-      for (const cardId of dirsIn(langDir)) {
-        const cardDir = path.join(langDir, cardId);
-        let files: string[];
-        try {
-          files = readdirSync(cardDir);
-        } catch {
-          continue;
-        }
-        const thumb = files.find((f) =>
-          /^thumb\.(jpe?g|png|webp|gif)$/i.test(f),
-        );
-        const face = pickPreferredFaceArtFilename(files);
-        if (!thumb || !face) continue;
-
-        const t = await sharp(path.join(cardDir, thumb)).metadata();
-        const f = await sharp(path.join(cardDir, face)).metadata();
-        const tw = t.width ?? 0;
-        const th = t.height ?? 0;
-        const fw = f.width ?? 0;
-        const fh = f.height ?? 0;
-        if (!tw || !th || !fw || !fh) continue;
-
-        const deviation = thumbRatioDeviation(tw, th, fw, fh);
-        out.push({
-          cardId,
-          set,
-          thumb: { width: tw, height: th, ratio: tw / th },
-          face: { width: fw, height: fh, ratio: fw / fh },
-          deviation,
-          distorted: deviation > THUMB_RATIO_TOLERANCE,
-        });
-      }
+  for (const hit of listNarutoCardDirs(root)) {
+    let files: string[];
+    try {
+      files = readdirSync(hit.abs);
+    } catch {
+      continue;
     }
+    const thumb = files.find((f) => /^thumb\.(jpe?g|png|webp|gif)$/i.test(f));
+    const face = pickPreferredFaceArtFilename(files, hit.lang);
+    if (!thumb || !face) continue;
+
+    const t = await sharp(path.join(hit.abs, thumb)).metadata();
+    const f = await sharp(path.join(hit.abs, face)).metadata();
+    const tw = t.width ?? 0;
+    const th = t.height ?? 0;
+    const fw = f.width ?? 0;
+    const fh = f.height ?? 0;
+    if (!tw || !th || !fw || !fh) continue;
+
+    const deviation = thumbRatioDeviation(tw, th, fw, fh);
+    out.push({
+      cardId: hit.diskId,
+      set: hit.appearanceSet ?? hit.family,
+      dir: hit.abs,
+      lang: hit.lang,
+      thumb: { width: tw, height: th, ratio: tw / th },
+      face: { width: fw, height: fh, ratio: fw / fh },
+      deviation,
+      distorted: deviation > THUMB_RATIO_TOLERANCE,
+    });
   }
   return out;
 }
@@ -133,10 +118,10 @@ export async function runNarutoFixThumbsCli(opts?: {
       c.face.width,
       c.face.height,
     );
-    const dir = path.join(cardsDir(), c.set, "fr", c.cardId);
+    const dir = c.dir;
     const files = readdirSync(dir);
     const thumb = files.find((f) => /^thumb\.(jpe?g|png|webp|gif)$/i.test(f))!;
-    const face = pickPreferredFaceArtFilename(files)!;
+    const face = pickPreferredFaceArtFilename(files, c.lang)!;
 
     console.log(
       `   ${c.set}/${c.cardId.padEnd(10)} ${c.thumb.width}x${c.thumb.height}` +

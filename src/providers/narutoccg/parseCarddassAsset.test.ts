@@ -129,7 +129,7 @@ describe("parseCarddassMedThumbFilename", () => {
 
 describe("corrected face filenames", () => {
   it("maps roles to disk names", () => {
-    expect(carddassFaceFilename("art", ".jpg")).toBe("art.jpg");
+    expect(carddassFaceFilename("art", ".jpg")).toBe("art.carddass.jpg");
     expect(carddassFaceFilename("corrected", "jpg")).toBe("art.corrected.jpg");
   });
 
@@ -182,6 +182,23 @@ describe("corrected face filenames", () => {
     expect(pickPreferredFaceArtFilename(["art.reconstructed.png"])).toBe(
       "art.reconstructed.png",
     );
+  });
+
+  it("keeps every dump as art.<source> and prefers the locale's dump on a tie", () => {
+    expect(faceArtRank("art.suruga.jpg")).toBeGreaterThan(0);
+    expect(faceArtRank("art.nikita.jpg")).toBeGreaterThan(0);
+    expect(faceArtRank("art.nikita.jpg", "ja")).toBeGreaterThan(
+      faceArtRank("art.suruga.jpg", "ja"),
+    );
+    expect(
+      pickPreferredFaceArtFilename(
+        ["art.jpg", "art.suruga.jpg", "art.nikita.jpg"],
+        "ja",
+      ),
+    ).toBe("art.nikita.jpg");
+    expect(
+      pickPreferredFaceArtFilename(["art.jpg", "art.vintage.jpg"], "en"),
+    ).toBe("art.vintage.jpg");
   });
 });
 

@@ -20,6 +20,7 @@ describe("carteSemaine", () => {
     expect(guessSetForCarteSemaineId("ta240")).toBe("s6");
     expect(guessSetForCarteSemaineId("ni309")).toBe("s6");
     expect(guessSetForCarteSemaineId("ni203")).toBe("s5");
+    expect(guessSetForCarteSemaineId("ni064")).not.toBe("s6");
   });
 
   it("parses early [ID] Name layout", () => {
@@ -69,15 +70,16 @@ describe("carteSemaine", () => {
   it("fills empty titles and injects missing print stubs", () => {
     const prints: NarutoPrintRow[] = [
       {
-        printKey: "naruto:s6-ni264",
+        printKey: "naruto:ni-0264",
         setCode: "s6",
-        number: "ni264",
+        number: "ni0264",
         cardType: "ni",
+        family: "ninja",
       },
     ];
     const titles: NarutoTitleRow[] = [
       {
-        printKey: "naruto:s6-ni264",
+        printKey: "naruto:ni-0264",
         lang: "fr",
         fullName: "",
       },
@@ -116,13 +118,71 @@ describe("carteSemaine", () => {
         ],
       },
     });
-    expect(merged.named).toContain("naruto:s6-ni264");
+    expect(merged.named).toContain("naruto:ni-0264");
     expect(
-      merged.titles.find((t) => t.printKey === "naruto:s6-ni264")?.fullName,
+      merged.titles.find((t) => t.printKey === "naruto:ni-0264")?.fullName,
     ).toBe("Shikamaru Nara & Temari");
-    expect(merged.addedPrints).toEqual(["naruto:s6-te263"]);
+    expect(merged.addedPrints).toEqual(["naruto:te-0263"]);
     expect(
-      merged.titles.find((t) => t.printKey === "naruto:s6-te263")?.fullName,
+      merged.titles.find((t) => t.printKey === "naruto:te-0263")?.fullName,
     ).toBe("Mélodie du guerrier illusoire");
+  });
+
+  it("does not mint a second NI-064 beside the retail print", () => {
+    const merged = mergeCarteSemaineIntoIndex({
+      prints: [
+        {
+          printKey: "naruto:ni-0064",
+          setCode: "s2",
+          number: "ni0064",
+          cardType: "ni",
+          family: "ninja",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:ni-0064",
+          lang: "fr",
+          fullName: "Kakashi Hatake",
+        },
+      ],
+      report: {
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        source: "test",
+        weekCount: 1,
+        featuredCount: 1,
+        uniqueFeaturedIds: ["ni064"],
+        weeks: [
+          {
+            week: 1,
+            page: "w1.html",
+            featured: [
+              {
+                week: 1,
+                name: "qui",
+                printedId: "NI-064",
+                cardId: "ni064",
+                page: "w1.html",
+              },
+            ],
+            alsoMentioned: [],
+          },
+        ],
+      },
+    });
+    expect(merged.prints).toHaveLength(1);
+    expect(merged.prints[0]?.printKey).toBe("naruto:ni-0064");
+    expect(merged.addedPrints).toEqual([]);
+    expect(
+      merged.titles.find((t) => t.printKey === "naruto:ni-0064")?.fullName,
+    ).toBe("Kakashi Hatake");
+  });
+
+  it("drops a relative pronoun captured as a name", () => {
+    const week = parseCarteSemaineHtml(`15/12/2008 qui [NI-064]`, {
+      week: 1,
+      page: "w1.html",
+    });
+    expect(week.featured.find((e) => e.cardId === "ni064")).toBeUndefined();
   });
 });

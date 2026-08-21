@@ -6,7 +6,7 @@
  *   www.carddas.com/naruto/*   (primary — richer)
  *   www.carddass.com/naruto/*  (alias / leftovers)
  *
- *   data/naruto/ccg/staging/carddas-jp/
+ *   data/naruto/carddass/staging/carddas-jp/
  *     www.carddas.com/naruto/…
  *     www.carddass.com/naruto/…   (paths not already on carddas.com)
  *     cdx.json

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   htmlToChecklistText,
+  mangaNewsDeckImageUrl,
   normalizeCardNumber,
   parseMangaNewsChecklistText,
   uniqueNumbers,
@@ -153,5 +154,27 @@ describe("titlesForPrints", () => {
         rarity: "holo",
       },
     ]);
+  });
+});
+
+describe("mangaNewsDeckImageUrl", () => {
+  it("prefers the deck og:image over other goodie thumbs", () => {
+    const html = `
+      <meta property="og:image" content="https://www.manga-news.com/public/images/goodies/tcg-naruto-deck-serie-1.jpg">
+      <img src="/public/images/goodies/.spy-x-family-agenda.webp">
+    `;
+    expect(mangaNewsDeckImageUrl(html)).toBe(
+      "https://www.manga-news.com/public/images/goodies/tcg-naruto-deck-serie-1.jpg",
+    );
+  });
+
+  it("prefers the full packshot over the dotted _medium og:image", () => {
+    const html = `
+      <meta property="og:image" content="https://www.manga-news.com/public/images/goodies/.tcg-naruto-deck-serie-4_medium.jpg">
+      <a href="https://www.manga-news.com/public/images/goodies/tcg-naruto-deck-serie-4.jpg">deck</a>
+    `;
+    expect(mangaNewsDeckImageUrl(html)).toBe(
+      "https://www.manga-news.com/public/images/goodies/tcg-naruto-deck-serie-4.jpg",
+    );
   });
 });

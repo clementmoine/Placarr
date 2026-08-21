@@ -1,0 +1,622 @@
+{
+  "source": "Goat Cards (CrystalCommerce shop)",
+  "observed": "2026-08-16",
+  "urls": {
+    "umbrella": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles/3837",
+    "n1646Foil": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-ultimate_ninja_storm_3/naruto_uzumaki_9_tails_cloak__n1646__super_rare__unlimited_edition__foil/550288",
+    "cdnN1646": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/6578562/n1646.jpg",
+    "storm3Catalog": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-ultimate_ninja_storm_3/3920",
+    "storm3CatalogPage5": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-ultimate_ninja_storm_3/3920?page=5&sort_by_price=0",
+    "sealedUmbrella": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_sealed_product/3969",
+    "sealedBoosterBoxes": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_sealed_product-naruto_ccg_sealed_booster_boxes/3970"
+  },
+  "note": "Shop singles for Bandai USA CCG. 3837 is the umbrella (user paste) — not just Storm 3 / 3920. N-1646 CDN JPEG is the same 350×490 as stop2shop EN art already on disk. EXIF still records an original 751×1051 that the shop does not serve. Catalog 3920 is 10 pages / ~230 SKUs = Unlimited + Unlimited Foil sharing one JPEG. No card back. Two shop folders titled Battle of Destiny: 3885 is the s8 main list (N/J/M + N-US/J-US/M-US, many finishes); 3887 is a small reprint/promo drawer (N-295 reprint, N-256 foil promo, M-262 starter reprint…). Goat s6 Eternal Rivalry is Bandai CCG, not Italian Carddass Rivalità Eterna. Shop title « Broken Promise » = official Broken Promises (s16). Fierce Ambitions / Rebirth tins are not in this nav. Faces: shop 350×490 into cards/{family}/{n0001}/en/ for s1–s27; skip s28 (stop2shop already there). 3970 (booster boxes) was pasted — listing ingest none; packshots only Coleka gaps s16/s19/s21–s23/s27. Do not mint display-s1…s6 (Carddass collision) or file Japanese 4/6 as EN. Do not crawl 3969 / 3971 / 3972 / 3998 unless pasted. Goat PR-011 Successors is EN CCG, not Carddass tin pr011.",
+  "servedPixels": { "width": 350, "height": 490 },
+  "exifOriginalNotServed": { "width": 751, "height": 1051 },
+  "umbrella": {
+    "id": 3837,
+    "slug": "naruto_ccg_singles",
+    "title": "Naruto CCG Singles"
+  },
+  "catalog": {
+    "id": 3920,
+    "pages": 10,
+    "approxSkus": 230,
+    "foilAndUnlimitedShareJpeg": true,
+    "verso": false
+  },
+  "sets": [
+    {
+      "id": 3877,
+      "setCode": "s1",
+      "title": "The Path to Hokage",
+      "slug": "naruto_ccg_singles-the_path_to_hokage"
+    },
+    {
+      "id": 3878,
+      "setCode": "s2",
+      "title": "Coils of the Snake",
+      "slug": "naruto_ccg_singles-coils_of_the_snake"
+    },
+    {
+      "id": 3879,
+      "setCode": "s3",
+      "title": "Curse of the Sand",
+      "slug": "naruto_ccg_singles-curse_of_the_sand"
+    },
+    {
+      "id": 3880,
+      "setCode": "s4",
+      "title": "Revenge and Rebirth",
+      "slug": "naruto_ccg_singles-revenge_and_rebirth"
+    },
+    {
+      "id": 3881,
+      "setCode": "s5",
+      "title": "Dream Legacy",
+      "slug": "naruto_ccg_singles-dream_legacy"
+    },
+    {
+      "id": 3882,
+      "setCode": "s6",
+      "title": "Eternal Rivalry",
+      "slug": "naruto_ccg_singles-eternal_rivalry",
+      "not": "carddass-it-s6"
+    },
+    {
+      "id": 3884,
+      "setCode": "s7",
+      "title": "Quest for Power",
+      "slug": "naruto_ccg_singles-quest_for_power"
+    },
+    {
+      "id": 3885,
+      "setCode": "s8",
+      "title": "Battle Of Destiny",
+      "slug": "naruto_ccg_singles-battle_of_destiny",
+      "role": "main"
+    },
+    {
+      "id": 3886,
+      "setCode": "s9",
+      "title": "The Chosen",
+      "slug": "naruto_ccg_singles-the_chosen"
+    },
+    {
+      "id": 3888,
+      "setCode": "s10",
+      "title": "lineage of legends",
+      "slug": "naruto_ccg_singles-lineage_of_legends"
+    },
+    {
+      "id": 3893,
+      "setCode": "s11",
+      "title": "Approaching Wind",
+      "slug": "naruto_ccg_singles-approaching_wind"
+    },
+    {
+      "id": 3887,
+      "setCode": "s8",
+      "title": "Battle of Destiny",
+      "slug": "naruto_ccg_singles-battle_of_destiny",
+      "role": "reprints-drawer"
+    },
+    {
+      "id": 3892,
+      "setCode": "s12",
+      "title": "A New Chronicle",
+      "slug": "naruto_ccg_singles-a_new_chronicle"
+    },
+    {
+      "id": 3849,
+      "setCode": "s13",
+      "title": "Fateful Reunion",
+      "slug": "naruto_ccg_singles-fateful_reunion"
+    },
+    {
+      "id": 3846,
+      "setCode": "s14",
+      "title": "Emerging Alliance",
+      "slug": "naruto_ccg_singles-emerging_alliance"
+    },
+    {
+      "id": 3895,
+      "setCode": "s15",
+      "title": "Foretold Prophecy",
+      "slug": "naruto_ccg_singles-foretold_prophecy"
+    },
+    {
+      "id": 3901,
+      "setCode": "s16",
+      "title": "Broken Promise",
+      "slug": "naruto_ccg_singles-broken_promise"
+    },
+    {
+      "id": 3902,
+      "setCode": "s17",
+      "title": "Will of Fire",
+      "slug": "naruto_ccg_singles-will_of_fire"
+    },
+    {
+      "id": 3903,
+      "setCode": "s18",
+      "title": "Fangs of the Snake",
+      "slug": "naruto_ccg_singles-fangs_of_the_snake"
+    },
+    {
+      "id": 3904,
+      "setCode": "s19",
+      "title": "Path of Pain",
+      "slug": "naruto_ccg_singles-path_of_pain"
+    },
+    {
+      "id": 3912,
+      "setCode": "s20",
+      "title": "Tales of the Gallant Sage",
+      "slug": "naruto_ccg_singles-tales_of_the_gallant_sage"
+    },
+    {
+      "id": 3913,
+      "setCode": "s21",
+      "title": "Shattered Truth",
+      "slug": "naruto_ccg_singles-shattered_truth"
+    },
+    {
+      "id": 3914,
+      "setCode": "s22",
+      "title": "Weapons of War",
+      "slug": "naruto_ccg_singles-weapons_of_war"
+    },
+    {
+      "id": 3915,
+      "setCode": "s23",
+      "title": "Invasion",
+      "slug": "naruto_ccg_singles-invasion"
+    },
+    {
+      "id": 3916,
+      "setCode": "s24",
+      "title": "Sage's Legacy",
+      "slug": "naruto_ccg_singles-sages_legacy"
+    },
+    {
+      "id": 3917,
+      "setCode": "s25",
+      "title": "Kage Summit",
+      "slug": "naruto_ccg_singles-kage_summit"
+    },
+    {
+      "id": 3918,
+      "setCode": "s26",
+      "title": "Avenger's Wrath",
+      "slug": "naruto_ccg_singles-avengers_wrath"
+    },
+    {
+      "id": 3919,
+      "setCode": "s27",
+      "title": "Hero's Ascension",
+      "slug": "naruto_ccg_singles-heros_ascension"
+    },
+    {
+      "id": 3920,
+      "setCode": "s28",
+      "title": "Ultimate Ninja Storm 3",
+      "slug": "naruto_ccg_singles-ultimate_ninja_storm_3"
+    }
+  ],
+  "extras": [
+    {
+      "id": 3908,
+      "kind": "tournament-pack",
+      "title": "Tournament pack 1",
+      "slug": "naruto_ccg_singles-tournament_pack_1"
+    },
+    {
+      "id": 3910,
+      "kind": "tournament-pack",
+      "title": "Tournament Pack 2",
+      "slug": "naruto_ccg_singles-tournament_pack_2"
+    },
+    {
+      "id": 3909,
+      "kind": "tournament-pack",
+      "title": "Tournament Pack 3",
+      "slug": "naruto_ccg_singles-tournament_pack_3"
+    },
+    {
+      "id": 3911,
+      "kind": "tournament-pack",
+      "title": "Tournament Pack 4",
+      "slug": "naruto_ccg_singles-tournament_pack_4"
+    },
+    {
+      "id": 3855,
+      "kind": "promo",
+      "title": "Promo Cards",
+      "slug": "naruto_ccg_singles-promo_cards"
+    },
+    {
+      "id": 3865,
+      "kind": "tin-singles",
+      "title": "Ultimate Battle Tins",
+      "slug": "naruto_ccg_singles-ultimate_battle_tins"
+    },
+    {
+      "id": 3866,
+      "kind": "tin-singles",
+      "title": "Untouchables Tin",
+      "slug": "naruto_ccg_singles-untouchables_tin"
+    }
+  ],
+  "sealed": {
+    "id": 3969,
+    "slug": "naruto_sealed_product",
+    "title": "Naruto sealed product",
+    "crawl": false,
+    "children": [
+      {
+        "id": 3970,
+        "title": "Naruto CCG Sealed Booster Boxes",
+        "recorded": true
+      },
+      { "id": 3971, "title": "Naruto CCG Sealed Tins" },
+      { "id": 3972, "title": "Naruto CCG Sealed Theme Decks" },
+      { "id": 3998, "title": "Naruto Booster Pack" }
+    ],
+    "boosterBoxes": {
+      "id": 3970,
+      "slug": "naruto_sealed_product-naruto_ccg_sealed_booster_boxes",
+      "title": "Naruto CCG Sealed Booster Boxes",
+      "pages": 2,
+      "stock": "all-out-of-stock",
+      "ingest": "none",
+      "packshots": {
+        "ingest": "coleka-gaps",
+        "sets": ["s16", "s19", "s21", "s22", "s23", "s27"],
+        "not": ["display-s1", "display-s6", "jp-box", "blister-case"]
+      },
+      "cdnOriginal": "drop /medium/ from listing thumbs",
+      "note": "34 SKUs on 2 pages (2026-08-16). Blister cases (15 packs) are not displays. Japanese 4/6 have no photo and are not EN s4/s6. Battle Boost listing art is a rules GIF, not a box. Shop typos: Galant=Gallant, Chosen Booster Booster, Broken Promise=Promises. Coleka already has better box+booster packshots for s13–s15, s17–s18, s20, s24–s26, s28. Goat box photos fill Coleka gaps s16, s19, s21–s23, s27 only — not s1–s6.",
+      "absent": ["s3", "s25", "s26", "s28", "tournament-1"],
+      "products": [
+        {
+          "id": 564642,
+          "page": 1,
+          "kind": "blister-case",
+          "setCode": "s12",
+          "title": "A new chronicle blister box (15 blister packs inside)",
+          "photo": "cdn",
+          "img": "https://cc-client-assets.nyc3.cdn.digitaloceanspaces.com/photo/goatcardsshop/file/0c0f3698d82c41d899a2f529114855af/71X1YE0havS._AC_SL1500_.jpg",
+          "not": ["display-s12"]
+        },
+        {
+          "id": 561394,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s12",
+          "title": "A New Chronicle Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351972/A_New_Chronicle.jpg"
+        },
+        {
+          "id": 561393,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s11",
+          "title": "Approaching Wind Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351971/Approaching_Wind.jpg"
+        },
+        {
+          "id": 561395,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s8",
+          "title": "Battle of Destiny Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351973/battle_of_destinhy.jpg"
+        },
+        {
+          "id": 561396,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s16",
+          "title": "Broken Promise Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351974/broken_promise.jpg",
+          "bytes": "gif89a",
+          "colekaGap": true,
+          "ingestPackshot": true,
+          "sku": "display-s16",
+          "staging": "staging/goat-en-boxes/s16.gif"
+        },
+        {
+          "id": 561422,
+          "page": 1,
+          "kind": "chibi-tournament-box",
+          "setCode": null,
+          "title": "Chibi Tournament Pack 2 Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/882541/882541.jpg"
+        },
+        {
+          "id": 561421,
+          "page": 1,
+          "kind": "chibi-tournament-box",
+          "setCode": null,
+          "title": "Chibi Tournament Pack 3 Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/882540/chibitourneypack3.jpg"
+        },
+        {
+          "id": 561397,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s2",
+          "title": "Coils of the Snake Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351975/coils_of_the_snake.jpg",
+          "not": ["display-s2"]
+        },
+        {
+          "id": 561398,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s5",
+          "title": "Dream Legacy Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351976/dream_legacy.jpg",
+          "not": ["display-s5"]
+        },
+        {
+          "id": 564641,
+          "page": 1,
+          "kind": "blister-case",
+          "setCode": "s14",
+          "title": "Emerging alliance Blister box (15 blisters inside)",
+          "photo": "cdn",
+          "img": "https://cc-client-assets.nyc3.cdn.digitaloceanspaces.com/photo/goatcardsshop/file/c62d7642472844d9b52776699199c4f5/narutoeablb_500.jpg",
+          "not": ["display-s14"]
+        },
+        {
+          "id": 561399,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s14",
+          "title": "Emerging Alliance Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351977/emerging_alliance.jpg"
+        },
+        {
+          "id": 561400,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s6",
+          "title": "Eternal Rivalry Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351978/eternal_rivalry.jpg",
+          "not": ["carddass-it-s6", "display-s6"]
+        },
+        {
+          "id": 561409,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s18",
+          "title": "Fangs of the Snake Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685637/Fangs_of_the_Snake.jpg"
+        },
+        {
+          "id": 561401,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s13",
+          "title": "Fateful Reunion Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351979/fateful_reunion.jpg"
+        },
+        {
+          "id": 561402,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s15",
+          "title": "Foretold Prophecy Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351980/foretold_prophecy.jpg"
+        },
+        {
+          "id": 561423,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s27",
+          "title": "Hero's Ascension Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/882960/herosascension.jpg",
+          "colekaGap": true,
+          "ingestPackshot": true,
+          "sku": "display-s27",
+          "staging": "staging/goat-en-boxes/s27.jpg"
+        },
+        {
+          "id": 561414,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s23",
+          "title": "Invasion Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/850768/invasion.jpg",
+          "colekaGap": true,
+          "ingestPackshot": true,
+          "sku": "display-s23",
+          "staging": "staging/goat-en-boxes/s23.jpg"
+        },
+        {
+          "id": 561419,
+          "page": 1,
+          "kind": "jp-box",
+          "setCode": null,
+          "title": "Japanese 4 Booster Box",
+          "photo": "placeholder",
+          "not": ["display-s4", "en-ccg", "carddass-it-s6"]
+        },
+        {
+          "id": 561420,
+          "page": 1,
+          "kind": "jp-box",
+          "setCode": null,
+          "title": "Japanese 6 Booster Box",
+          "photo": "placeholder",
+          "not": ["display-s6", "en-ccg", "carddass-it-s6"]
+        },
+        {
+          "id": 561403,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s10",
+          "title": "Lineage of Legends Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351981/Lineage_of_Legends.jpg"
+        },
+        {
+          "id": 561424,
+          "page": 1,
+          "kind": "unknown",
+          "setCode": null,
+          "title": "Naruto Battle Boost",
+          "photo": "rules-logo",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/6478923/logo_naruto-regole-Naruto.gif"
+        },
+        {
+          "id": 561410,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s19",
+          "title": "Path of Pain Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685638/path_of_pain.jpg",
+          "colekaGap": true,
+          "ingestPackshot": true,
+          "sku": "display-s19",
+          "staging": "staging/goat-en-boxes/s19.jpg"
+        },
+        {
+          "id": 561404,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s7",
+          "title": "Quest for Power Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351982/quest_for_power.jpg"
+        },
+        {
+          "id": 561405,
+          "page": 1,
+          "kind": "display-box",
+          "setCode": "s4",
+          "title": "Revenge and Rebirth Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351983/revenge_and_rebirth.jpg",
+          "not": ["display-s4"]
+        },
+        {
+          "id": 561418,
+          "page": 2,
+          "kind": "display-box",
+          "setCode": "s24",
+          "title": "Sage's Legacy Booster Box",
+          "photo": "placeholder"
+        },
+        {
+          "id": 561412,
+          "page": 2,
+          "kind": "display-box",
+          "setCode": "s21",
+          "title": "Shattered Truth Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685640/shattered_truth.jpg",
+          "colekaGap": true,
+          "ingestPackshot": true,
+          "sku": "display-s21",
+          "staging": "staging/goat-en-boxes/s21.jpg"
+        },
+        {
+          "id": 561411,
+          "page": 2,
+          "kind": "display-box",
+          "setCode": "s20",
+          "title": "Tales of the Galant Sage Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685639/tales-of-the-galant-sage.png",
+          "official": "Tales of the Gallant Sage"
+        },
+        {
+          "id": 561406,
+          "page": 2,
+          "kind": "display-box",
+          "setCode": "s9",
+          "title": "The Chosen Booster Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351984/the_chosen.jpg",
+          "official": "The Chosen"
+        },
+        {
+          "id": 561407,
+          "page": 2,
+          "kind": "display-box",
+          "setCode": "s1",
+          "title": "The Path to Hokage Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/351985/the_path_to_hokage.jpg",
+          "not": ["display-s1"]
+        },
+        {
+          "id": 561415,
+          "page": 2,
+          "kind": "tournament-box",
+          "setCode": null,
+          "title": "Tournament 2 Booster Box",
+          "photo": "placeholder"
+        },
+        {
+          "id": 561416,
+          "page": 2,
+          "kind": "tournament-box",
+          "setCode": null,
+          "title": "Tournament 3 Booster Box",
+          "photo": "placeholder"
+        },
+        {
+          "id": 561417,
+          "page": 2,
+          "kind": "tournament-box",
+          "setCode": null,
+          "title": "Tournament 4 Booster Box",
+          "photo": "placeholder"
+        },
+        {
+          "id": 561413,
+          "page": 2,
+          "kind": "display-box",
+          "setCode": "s22",
+          "title": "Weapons of War Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/685641/weapons-of-war.png",
+          "colekaGap": true,
+          "ingestPackshot": true,
+          "sku": "display-s22",
+          "staging": "staging/goat-en-boxes/s22.png"
+        },
+        {
+          "id": 561408,
+          "page": 2,
+          "kind": "display-box",
+          "setCode": "s17",
+          "title": "Will of Fire Booster Box",
+          "photo": "cdn",
+          "img": "https://crystalcommerce-assets.nyc3.cdn.digitaloceanspaces.com/photos/378774/willoffireboosterbox.jpg"
+        }
+      ]
+    }
+  },
+  "ingest": "faces"
+}

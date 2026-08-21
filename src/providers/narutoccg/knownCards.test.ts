@@ -70,7 +70,7 @@ describe("collector photo fallback", () => {
     mkdirSync(gap, { recursive: true });
     writeFileSync(path.join(gap, "art.jpg"), Buffer.alloc(400_000));
     const rows = collectPhotoFallbackArt(root);
-    expect(rows.map((r) => r.printKey)).toEqual(["naruto:s4-ni194"]);
+    expect(rows.map((r) => r.printKey)).toEqual(["naruto:ni-0194"]);
     expect(rows[0]?.priority).toBe("high");
   });
 });

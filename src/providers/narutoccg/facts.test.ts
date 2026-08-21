@@ -22,14 +22,56 @@ const value = (facts: ReturnType<typeof narutoPrintFacts>, label: string) =>
 describe("narutoSetLabel", () => {
   it("names a series by its two starters, which is what a collector recognises", () => {
     expect(narutoSetLabel("s5")).toBe("Série 5 — La quête / Un nouveau départ");
+    expect(narutoSetLabel("s1")).toBe("Série 1 — Maître Hokage / Pays du Vent");
+    expect(narutoSetLabel("s1", "ni001")).toBe(
+      "Série 1 — Maître Hokage / Pays du Vent",
+    );
   });
 
-  it("marks the cancelled series rather than presenting it as shipped", () => {
-    expect(narutoSetLabel("s6")).toContain("(annulée)");
+  it("names EN CCG Series 1 Path to Hokage without colliding with Carddass s1", () => {
+    expect(narutoSetLabel("s1", "n001")).toBe("The Path to Hokage");
+    expect(narutoSetLabel("s1", "j001")).toBe("The Path to Hokage");
+  });
+
+  it("names the Italian physical series, not a shipped French set", () => {
+    expect(narutoSetLabel("s6")).toBe("Série 6 — Rivalità Eterna");
   });
 
   it("keeps promos out of the series numbering", () => {
     expect(narutoSetLabel("promo")).toBe("Promo (hors série)");
+  });
+
+  it("uses the official EN CCG title for Ultimate Ninja Storm 3", () => {
+    expect(narutoSetLabel("s28")).toBe("Ultimate Ninja Storm 3");
+  });
+
+  it("uses the official EN CCG title for Fateful Reunion and Avenger's Wrath", () => {
+    expect(narutoSetLabel("s13")).toBe("Fateful Reunion");
+    expect(narutoSetLabel("s26")).toBe("Avenger's Wrath");
+    expect(narutoSetLabel("s27")).toBe("Hero's Ascension");
+  });
+
+  it("uses Goat / official EN titles for Coleka-missing series", () => {
+    expect(narutoSetLabel("s7")).toBe("Quest for Power");
+    expect(narutoSetLabel("s16")).toBe("Broken Promises");
+    expect(narutoSetLabel("s19")).toBe("Path of Pain");
+    expect(narutoSetLabel("s21")).toBe("Shattered Truth");
+    expect(narutoSetLabel("s22")).toBe("Weapons of War");
+    expect(narutoSetLabel("s23")).toBe("Invasion");
+  });
+
+  it("names Bandai USA tins and tournament packs", () => {
+    expect(narutoSetLabel("tin1")).toBe("Rebirth Tin");
+    expect(narutoSetLabel("tp3")).toBe("Tournament Pack 3");
+  });
+
+  it("keeps 巻ノ五 and 第五幕 as distinct JP labels", () => {
+    expect(narutoSetLabel("maki1")).toBe("巻ノ壱");
+    expect(narutoSetLabel("maki5")).toBe("巻ノ五 — 実力伯仲！予選死闘編");
+    expect(narutoSetLabel("maki17")).toBe("巻ノ十七");
+    expect(narutoSetLabel("maku1")).toBe("第一幕");
+    expect(narutoSetLabel("gaku")).toBe("忍者学校");
+    expect(narutoSetLabel("maku5")).toBe("第五幕 — 再会、忌まわしき写輪眼！編");
   });
 });
 
@@ -67,5 +109,24 @@ describe("narutoPrintFacts", () => {
   it("skips a fact it has no value for rather than emitting a blank row", () => {
     const facts = narutoPrintFacts(row({ rarity: null }), "narutoccg");
     expect(value(facts, "Rareté")).toBeUndefined();
+  });
+
+  it("labels an EN Path to Hokage print, not the Carddass starters", () => {
+    expect(
+      value(
+        narutoPrintFacts(
+          row({
+            printKey: "naruto:n-0001",
+            setCode: "s1",
+            number: "n0001",
+            cardType: "n",
+            lang: "en",
+            fullName: "Naruto Uzumaki",
+          }),
+          "narutoccg",
+        ),
+        "Extension",
+      ),
+    ).toBe("The Path to Hokage");
   });
 });

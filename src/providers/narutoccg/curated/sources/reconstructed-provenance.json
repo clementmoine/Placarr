@@ -1,0 +1,272 @@
+{
+ "generatedAt": "2026-08-20T11:52:50.685Z",
+ "method": "AI restoration of an authenticated collector photo, then Figma retouching",
+ "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{family}/{id}/{lang}/",
+ "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
+ "installs": [
+  {
+   "cardId": "ki0001",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0001/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0001/ja/art.reconstructed.webp",
+   "from": {
+    "width": 951,
+    "height": 1371
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0002",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0002/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0002/ja/art.reconstructed.webp",
+   "from": {
+    "width": 988,
+    "height": 1420
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0003",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0003/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0003/ja/art.reconstructed.webp",
+   "from": {
+    "width": 941,
+    "height": 1369
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0004",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0004/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0004/ja/art.reconstructed.webp",
+   "from": {
+    "width": 944,
+    "height": 1374
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0005",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0005/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0005/ja/art.reconstructed.webp",
+   "from": {
+    "width": 946,
+    "height": 1372
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0006",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0006/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0006/ja/art.reconstructed.webp",
+   "from": {
+    "width": 942,
+    "height": 1367
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0007",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0007/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0007/ja/art.reconstructed.webp",
+   "from": {
+    "width": 941,
+    "height": 1375
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0008",
+   "set": "knight",
+   "lang": "ja",
+   "source": "cards/knight/ki0008/ja/art.reconstructed.png",
+   "dest": "cards/knight/ki0008/ja/art.reconstructed.webp",
+   "from": {
+    "width": 942,
+    "height": 1374
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0001-ps",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0001-ps/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0001-ps/ja/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0002-ps",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0002-ps/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0002-ps/ja/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0003-ps",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0003-ps/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0003-ps/ja/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0011-ps",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0011-ps/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0011-ps/ja/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0194",
+   "set": "ninja",
+   "lang": "fr",
+   "source": "cards/ninja/ni0194/fr/art.reconstructed.png",
+   "dest": "cards/ninja/ni0194/fr/art.reconstructed.webp",
+   "from": {
+    "width": 1051,
+    "height": 1497
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0195",
+   "set": "ninja",
+   "lang": "fr",
+   "source": "cards/ninja/ni0195/fr/art.reconstructed.png",
+   "dest": "cards/ninja/ni0195/fr/art.reconstructed.webp",
+   "from": {
+    "width": 865,
+    "height": 1238
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0232",
+   "set": "ninja",
+   "lang": "fr",
+   "source": "cards/ninja/ni0232/fr/art.reconstructed.png",
+   "dest": "cards/ninja/ni0232/fr/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1236
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0236",
+   "set": "ninja",
+   "lang": "fr",
+   "source": "cards/ninja/ni0236/fr/art.reconstructed.png",
+   "dest": "cards/ninja/ni0236/fr/art.reconstructed.webp",
+   "from": {
+    "width": 865,
+    "height": 1236
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0241",
+   "set": "ninja",
+   "lang": "fr",
+   "source": "cards/ninja/ni0241/fr/art.reconstructed.png",
+   "dest": "cards/ninja/ni0241/fr/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1237
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0252",
+   "set": "ninja",
+   "lang": "fr",
+   "source": "cards/ninja/ni0252/fr/art.reconstructed.png",
+   "dest": "cards/ninja/ni0252/fr/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1088
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0253",
+   "set": "ninja",
+   "lang": "fr",
+   "source": "cards/ninja/ni0253/fr/art.reconstructed.png",
+   "dest": "cards/ninja/ni0253/fr/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1225
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0221",
+   "set": "mission",
+   "lang": "fr",
+   "source": "cards/mission/ta0221/fr/art.reconstructed.png",
+   "dest": "cards/mission/ta0221/fr/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1076
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0226",
+   "set": "mission",
+   "lang": "fr",
+   "source": "cards/mission/ta0226/fr/art.reconstructed.png",
+   "dest": "cards/mission/ta0226/fr/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1076
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0212",
+   "set": "jutsu",
+   "lang": "fr",
+   "source": "cards/jutsu/te0212/fr/art.reconstructed.png",
+   "dest": "cards/jutsu/te0212/fr/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1077
+   },
+   "cropped": false
+  }
+ ]
+}

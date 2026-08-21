@@ -6,6 +6,7 @@
  * - Local cards-index / disk (Wayback carddass.fr dump)
  *
  *   pnpm naruto:cards -- --only checklist
+ *     HTML decks + photos (`staging/manga-news/images/`). Pas un grab manuel.
  */
 import {
   existsSync,
@@ -19,11 +20,13 @@ import {
 import path from "node:path";
 
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
+import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
 import {
   MANGA_NEWS_DECKS,
   htmlToChecklistText,
+  mangaNewsDeckImageUrl,
   normalizeCardNumber,
   parseMangaNewsChecklistText,
   uniqueNumbers,
@@ -168,15 +171,38 @@ async function fetchDeckHtml(
   if (!force && existsSync(cachePath)) {
     return { html: readFileSync(cachePath, "utf8"), fromCache: true };
   }
-  const res = await fetch(deck.url, {
+  const res = await httpGet<string>(deck.url, {
     headers: { "user-agent": USER_AGENT, accept: "text/html" },
+    responseType: "text",
+    validateStatus: (status) => status === 200,
   });
-  if (!res.ok) {
-    throw new Error(`Manga-News ${deck.slug}: HTTP ${res.status}`);
-  }
-  const html = await res.text();
+  const html = typeof res.data === "string" ? res.data : String(res.data);
   writeFileSync(cachePath, html, "utf8");
   return { html, fromCache: false };
+}
+
+function deckImageDest(cacheDir: string, imageUrl: string): string {
+  const name = path.basename(new URL(imageUrl).pathname);
+  return path.join(cacheDir, "images", name);
+}
+
+async function fetchDeckImage(
+  html: string,
+  cacheDir: string,
+  force: boolean,
+): Promise<string | null> {
+  const imageUrl = mangaNewsDeckImageUrl(html);
+  if (!imageUrl) return null;
+  const dest = deckImageDest(cacheDir, imageUrl);
+  if (!force && existsSync(dest)) return dest;
+  const res = await httpGet<ArrayBuffer>(imageUrl, {
+    headers: { "user-agent": USER_AGENT, accept: "image/*" },
+    responseType: "arraybuffer",
+    validateStatus: (status) => status === 200,
+  });
+  mkdirSync(path.dirname(dest), { recursive: true });
+  writeFileSync(dest, Buffer.from(res.data));
+  return dest;
 }
 
 export { htmlToChecklistText } from "./parseMangaNewsChecklist";
@@ -203,6 +229,7 @@ export async function buildNarutoCoverageChecklist(opts?: {
   for (const deck of decksMeta) {
     try {
       const { html } = await fetchDeckHtml(deck, cacheDir, forceFetch);
+      await fetchDeckImage(html, cacheDir, forceFetch);
       const lines = parseMangaNewsChecklistText(htmlToChecklistText(html));
       deckLines.set(deck.setHint, lines);
       deckSummaries.push({
@@ -328,6 +355,17 @@ export async function buildNarutoCoverageChecklist(opts?: {
     localOutsideS1to5,
     cards,
   };
+
+  mkdirSync(path.join(cacheDir, "images"), { recursive: true });
+  writeFileSync(
+    path.join(cacheDir, "images", "README.md"),
+    `# Manga-News — photos de decks Naruto FR
+
+Écrit par \`pnpm naruto:cards -- --only checklist\` (URL lue dans le HTML
+du deck, \`og:image\`). **Pas un grab manuel.**
+`,
+    "utf8",
+  );
 
   mkdirSync(logsDir(), { recursive: true });
   const outPath = path.join(logsDir(), "coverage.json");

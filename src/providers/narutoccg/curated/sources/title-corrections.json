@@ -1,0 +1,16 @@
+{
+  "source": "corrections de titre vérifiées à l'image",
+  "observed": "2026-08-20",
+  "ingest": "titles",
+  "note": "Les relevés se trompent parfois de nom, et il n'existait aucun endroit pour le dire. Une correction n'est acceptée que si le titre en place est **exactement** celui qu'on déclare faux : si la source se corrige d'elle-même, ou si un autre nom arrive, la correction ne s'applique plus. On répare ce qu'on a vérifié, pas ce qu'on suppose.",
+  "corrections": [
+    {
+      "number": "n0849",
+      "lang": "en",
+      "wrong": "Ghost Samurai",
+      "right": "Cursed Warrior",
+      "evidence": "La carte imprime « Cursed Warrior », 忍 849 火, avec le sous-titre « Land of Birds | Cursed Warrior | SURGE ». Vérifié sur deux images indépendantes : notre face `drive` et la photo de Goat elle-même (photos/372381/n849.jpg). Le nom « Ghost Samurai » vient du **texte d'effet** de la carte — « search your Deck for 1 \"Ghost Samurai\" Ninja card » — que la boutique a pris pour le nom.",
+      "sideNote": "La vraie carte « Ghost Samurai » manque au catalogue comme chez Goat."
+    }
+  ]
+}

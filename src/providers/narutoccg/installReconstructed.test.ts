@@ -3,7 +3,11 @@ import { mkdtempSync, writeFileSync, utimesSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { curatedDestStale, opaqueBounds } from "./installReconstructed";
+import {
+  curatedDestStale,
+  listCuratedReconstructedFaces,
+  opaqueBounds,
+} from "./installReconstructed";
 
 /** Alpha plane with a `bleed`-wide fully transparent frame. */
 function framed(width: number, height: number, bleed: number): Uint8Array {
@@ -50,6 +54,32 @@ describe("curatedDestStale", () => {
     utimesSync(src, t, t);
     utimesSync(dest, t, t);
     expect(curatedDestStale(src, dest)).toBe(false);
+  });
+});
+
+describe("listCuratedReconstructedFaces", () => {
+  it("reads lang from the folder, not a hardcoded locale", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "naruto-curated-faces-"));
+    const cards = path.join(root, "cards");
+    mkdirSync(path.join(cards, "ninja", "n0001", "en"), { recursive: true });
+    mkdirSync(path.join(cards, "ninja", "ni0001", "fr"), { recursive: true });
+    writeFileSync(
+      path.join(cards, "ninja", "n0001", "en", "art.reconstructed.png"),
+      "en",
+    );
+    writeFileSync(
+      path.join(cards, "ninja", "ni0001", "fr", "art.reconstructed.png"),
+      "fr",
+    );
+    writeFileSync(
+      path.join(cards, "ninja", "ni0001", "fr", "source.jpg"),
+      "pic",
+    );
+    writeFileSync(path.join(cards, "back.fr.png"), "back");
+
+    expect(
+      listCuratedReconstructedFaces(cards).map((f) => `${f.cardId}/${f.lang}`),
+    ).toEqual(["n0001/en", "ni0001/fr"]);
   });
 });
 

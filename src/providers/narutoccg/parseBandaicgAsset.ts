@@ -6,6 +6,8 @@
  * Promo folder: `cards_pr/`.
  * Set codes: `s1`…`s28`, `promo` — same series tree as FR/JP; locale = `en`
  * under `cards/{set}/en/…`. Dump target today: `staging/bandaicg-en/`.
+ * TCDB checklists use invented prefixes (`PTHJ-001`) — see `parseTcdbNaruto`.
+ * Do not promote those scans onto `cards/s1/en/` next to Carddass FR s1.
  */
 
 import { buildPrintKey } from "@/core/identify/printKey";

@@ -1,0 +1,31 @@
+{
+  "source": "collector physical copies (chat 2026-08-16 17:46)",
+  "observed": "2026-08-16",
+  "note": "French-text Bandai USA CCG in hand — same game as EN, not Carddass NI/TE/TA. Storm 3 lives in pack naruto/en-ccg set s28 locale fr. The 4e Hokage is promo PR-096, not the s28 booster. 10-char codes are Ultimate Ninja Storm 3 video-game passwords, not printKeys. « © 2002 MK – 2007 SP » is the Kishimoto / Shippuden legal line, not the print year (Storm 3 = May 2013). CCG sleeve: curated/cards/back.en.png. Do not put PR-096 under Carddass tin promos without a locale split; disk ids differ (pr096 vs pr011) but the set folder is the same promo/.",
+  "sameSleeveEnFr": true,
+  "pack": "naruto/en-ccg",
+  "legalLine": "2002MK - 2007SP",
+  "legalLineIsNotPrintYear": true,
+  "prints": [
+    {
+      "namePrinted": "4E Hokage",
+      "ref": "PR-096",
+      "password": "5CBNQ9W86S",
+      "lang": "fr",
+      "setCode": "promo",
+      "notBoosterS28": true,
+      "printKeyHint": "naruto:pr-0096",
+      "inCardsIndex": true
+    },
+    {
+      "namePrinted": "Kisame Hoshigaki",
+      "ref": "1650",
+      "printedAlso": "52B",
+      "password": "9EHS44A9ST",
+      "lang": "fr",
+      "setCode": "s28",
+      "printKeyHint": "naruto:n-1650",
+      "inCardsIndex": true
+    }
+  ]
+}

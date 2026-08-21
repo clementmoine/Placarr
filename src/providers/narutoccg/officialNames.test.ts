@@ -108,3 +108,28 @@ describe("applyOfficialNames", () => {
     expect(collectorNumberOf(print("ni232"))).toBe("ni232");
   });
 });
+
+/*
+  Le nom officiel se cherche par numéro, suffixe retiré — juste pour un
+  `-promo`, qui est un retirage de la même carte. Faux pour `-ps` : le bonus de
+  précommande du jeu PS1 porte les numéros 忍-1/2/3/11 avec une illustration
+  **inédite**, et n'est jamais sorti hors du Japon. Il recevait le nom français
+  de la carte qu'il n'est pas.
+*/
+describe("un suffixe qui désigne une autre carte n'emprunte rien", () => {
+  const print = (number: string) =>
+    ({ printKey: `naruto:x-${number}`, number }) as never;
+
+  /** Le registre des noms est indexé en trois chiffres : `ni023`, pas `ni0023`. */
+  it("keeps looking up the base card for a reprint", () => {
+    expect(collectorNumberOf(print("ni0023-promo"))).toBe("ni023");
+    expect(collectorNumberOf(print("te0030-cdf"))).toBe("te030");
+    expect(collectorNumberOf(print("ni0046"))).toBe("ni046");
+  });
+
+  it("refuses to for the PS1 bonus, whose art is its own", () => {
+    for (const n of ["ni0001-ps", "ni0002-ps", "ni0003-ps", "ni0011-ps"]) {
+      expect(collectorNumberOf(print(n)), n).toBeNull();
+    }
+  });
+});

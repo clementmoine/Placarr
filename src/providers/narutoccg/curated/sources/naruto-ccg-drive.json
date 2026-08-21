@@ -1,0 +1,239 @@
+{
+  "source": "Google Drive Naruto CCG hub (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "staging+faces",
+  "crawl": false,
+  "download": true,
+  "line": "en-ccg",
+  "lang": "en",
+  "url": "https://drive.google.com/drive/folders/1PbZ0xYY94xeBNvrUb-Bbr35ZSAzEeBI7",
+  "folderId": "1PbZ0xYY94xeBNvrUb-Bbr35ZSAzEeBI7",
+  "title": "Naruto CCG",
+  "note": "Archive the whole hub under staging/naruto-ccg-drive/hub/ (Enhanced, Fansets, deck composites, Gimp tools, rules PDFs, card back). Promote official Enhanced s1–s28 + TP 17.5–23.5 + Promos into cards/ as art.drive.webp. 16-bit PNG host → 8-bit webp in cards/. Prefer [Errata] over base; [Foil Print] only when no base. Retail N/J/M in Promos = n0145-promo. Fansets are not Bandai: copy onto a card that already exists as art.fanset (last rank, only shown when no other dump is present). Do not mint a print from a fanset-only filename. Title typos match Collectors Comet.",
+  "folders": [
+    {
+      "name": "_Deck Lists",
+      "id": "1PQhkg-6cl-D3jSEYmhW5LYIp_ZB4wa75",
+      "kind": "deck-composites"
+    },
+    {
+      "name": "Card Database",
+      "id": "1IBO3aRfMmJbpyicc8eP670eMyeOqfKhE",
+      "kind": "index"
+    },
+    {
+      "name": "Custom Card Creator",
+      "id": "1KtPPkiqJHZkdZCUPoAD5HI0x0YIXuxc5",
+      "kind": "fan-tools"
+    },
+    {
+      "name": "Print Template",
+      "id": "1Lg7QphEhVyfPitQGgiIhZjx0f2foFGpj",
+      "kind": "fan-tools"
+    },
+    {
+      "name": "Rules",
+      "id": "1MucC0WJUbTv6IpOk9p_C1qTRGafx5_E-",
+      "kind": "rules"
+    }
+  ],
+  "cardDatabase": {
+    "enhanced": {
+      "id": "1kkWP4bgYh6TxAyXBkQki8a0EspMs8E_M",
+      "title": "[Enhanced] Naruto CCG Sets Database",
+      "ingest": "faces",
+      "boosters": 28,
+      "tournamentPacks": 4,
+      "promos": 1,
+      "s1Title": "Set 1 - Path of the Hokage",
+      "servedPixels": { "width": 750, "height": 1050 },
+      "folders": [
+        {
+          "name": "Promos",
+          "id": "1si3wX_lwHdp27xwjkQV1wljlGLHyE_C3",
+          "setCode": "promo"
+        },
+        {
+          "name": "Set 1 - Path of the Hokage",
+          "id": "1sjqOKYf-ytPsZlNz5CkcJWdFSmFKY-UT",
+          "setCode": "s1"
+        },
+        {
+          "name": "Set 2 - Coils of the Snake",
+          "id": "1rxTugkDXyRjISpaIwMKGri5Y_wAouPI5",
+          "setCode": "s2"
+        },
+        {
+          "name": "Set 3 - Curse of the Sand",
+          "id": "1Gccy6I_AVZa2s8MZRG29f74nmsPYrEug",
+          "setCode": "s3"
+        },
+        {
+          "name": "Set 4 - Revenge and Rebirth",
+          "id": "1Qv4wDZ2J8yheX-Y9VooQcvf0K4XczTmO",
+          "setCode": "s4"
+        },
+        {
+          "name": "Set 5 - Dream Legacy",
+          "id": "1XapzQYqLVnSUDI6WSRq3o8oW50_22fhg",
+          "setCode": "s5"
+        },
+        {
+          "name": "Set 6 - Eternal Rivalry",
+          "id": "1g-AD57fXPCi51cV0DZZ4-gPoVUXhp17Y",
+          "setCode": "s6"
+        },
+        {
+          "name": "Set 7 - Quest for Power",
+          "id": "1rEYiM0ViAsIX79wy42EVxMIjrttv-kfB",
+          "setCode": "s7"
+        },
+        {
+          "name": "Set 8 - Battle For Destiny",
+          "id": "109UfZZpzyknGyGKTDp-5v0zsxO2Oomlj",
+          "setCode": "s8"
+        },
+        {
+          "name": "Set 9 - The Chosen",
+          "id": "17nyKztc1IdM1WIUGSTR6qba4jY3cDKT1",
+          "setCode": "s9"
+        },
+        {
+          "name": "Set 10 - Lineage of the Legends",
+          "id": "1-0_4nbyXXMuP95MbJUOTAhwSUNr87zrw",
+          "setCode": "s10"
+        },
+        {
+          "name": "Set 11 - Approaching Wind",
+          "id": "1Bm-QET1eXxyil_86R4PX5Rov7F1XjXJ2",
+          "setCode": "s11"
+        },
+        {
+          "name": "Set 12 - A New Chronicle",
+          "id": "1O6RgHZkivpeczO6AJXWTyq9S0nEGApZH",
+          "setCode": "s12"
+        },
+        {
+          "name": "Set 13 - Fateful Reunion",
+          "id": "1aIWXv1ooiB1N89sQYGqNcaan5lAxsvTd",
+          "setCode": "s13"
+        },
+        {
+          "name": "Set 14 - Emerging Alliance",
+          "id": "1k_ar2iTgtz42TvNQWHETS6GK9CNoUrVI",
+          "setCode": "s14"
+        },
+        {
+          "name": "Set 15 - Fortold Prophecy",
+          "id": "1ouB-GqM20BiMPHyVClXAIyMIwTdlwlwV",
+          "setCode": "s15"
+        },
+        {
+          "name": "Set 16 - Broken Promise",
+          "id": "14CUoPRyNAbUd0VwVohNJ-5boVUcMRh6u",
+          "setCode": "s16"
+        },
+        {
+          "name": "Set 17 - Will of Fire",
+          "id": "1HphkIioLUQUlB2AR4l0nOaQxptt1Q4qT",
+          "setCode": "s17"
+        },
+        {
+          "name": "Set 17.5 - Tournament  Pack  1",
+          "id": "1TIUZnqjuxpWwvamw4MASDAOTewlfNnJX",
+          "setCode": "tp1"
+        },
+        {
+          "name": "Set 18 - Fangs of the Snake",
+          "id": "1Ux5oAtiupT6GZXlKGBKVrXWlWr0S1pHv",
+          "setCode": "s18"
+        },
+        {
+          "name": "Set 19 - Path of Pain",
+          "id": "1iRGo-p--6ppTPjNUvDthBwRYjj1OpLfc",
+          "setCode": "s19"
+        },
+        {
+          "name": "Set 19.5 - Tournament Pack 2",
+          "id": "1n-FxlIch4ezeC8tVn0X3RpLW7zky1ZuF",
+          "setCode": "tp2"
+        },
+        {
+          "name": "Set 20 - Tales of the Galiant Sage",
+          "id": "120wqIv0rGYNPufrCvgrUx0wcNURji1Wp",
+          "setCode": "s20"
+        },
+        {
+          "name": "Set 21 - Shattered Truth",
+          "id": "17mHRQEYkNVuFVns9mMnwX8pXx2AYM6Xa",
+          "setCode": "s21"
+        },
+        {
+          "name": "Set 21.5 - Tournament Pack 3",
+          "id": "1JJT-oREEvKgUPR1Qqwa_jLpaF8bx8YAW",
+          "setCode": "tp3"
+        },
+        {
+          "name": "Set 22 - Weapons of War",
+          "id": "1KdpgivW5kR_4OKZBF8BS2W5AcQxyGctR",
+          "setCode": "s22"
+        },
+        {
+          "name": "Set 23 - Invasion",
+          "id": "1TyJ-DXy11drLAbzewYVl7xpCsRh4Ncjb",
+          "setCode": "s23"
+        },
+        {
+          "name": "Set 23.5 - Tournament Pack 4",
+          "id": "1aZ5BCRuqa7e1T8JfdHC1dr9ScbceoIX0",
+          "setCode": "tp4"
+        },
+        {
+          "name": "Set 24 - Sage's Legacy",
+          "id": "1fEXmNlrTD_v3TNOb-ZcOYjkieQ0tTNau",
+          "setCode": "s24"
+        },
+        {
+          "name": "Set 25 - Kage Summit",
+          "id": "1mZJj90wkOea2kvidIG4RBunEAUV956dj",
+          "setCode": "s25"
+        },
+        {
+          "name": "Set 26 - Avenger's Wrath",
+          "id": "1uwl5VyT81pI7BIKADOmBPKNXPXaTObDx",
+          "setCode": "s26"
+        },
+        {
+          "name": "Set 27 - Hero's Ascension",
+          "id": "11yluZO4BI_z_86PafWKtbJKk1EJ8qeSq",
+          "setCode": "s27"
+        },
+        {
+          "name": "Set 28 - Ultimate Ninja Storm 3",
+          "id": "1A8TSNw0Lk9smgvq0OFmHbIK76MOTa1In",
+          "setCode": "s28"
+        }
+      ]
+    },
+    "fansetsId": "1tq0OWmtvZ4Slh8ZlDBEx51uLZUcqnh-T",
+    "erratasId": "1bc-AlieB0W73kk3hpRjlPwKlJ4s3Mw1o",
+    "cardBack": {
+      "id": "1Kuyoj_v5Vz2Mb7raizi1QWnAfIcUNcck",
+      "name": "Naruto Card Back.png",
+      "bytesApprox": 1800000,
+      "ingest": true
+    }
+  },
+  "traps": {
+    "nestsFansets": true,
+    "sameTitleTyposAs": "collectors-comet.json",
+    "customCreatorIsNotBandai": true
+  },
+  "related": [
+    "naruto-ccg-fansets-drive.json",
+    "collectors-comet.json",
+    "vintage-naruto-ccg.json",
+    "reddit-narutoccg.json"
+  ],
+  "not": ["carddass", "fansets-as-bandai", "cards-without-attestation"]
+}

@@ -19,6 +19,8 @@ import type { MetadataFact } from "@/types/metadataProvider";
 
 import { loadAttestedPromos } from "./attestedPromos";
 import { narutoCuratedSourcesDir } from "./curatedPaths";
+import { narutoNumbersEqual } from "./collectorIdentity";
+import { narutoCatalogueLineForCard } from "./packs";
 import { formatNarutoReference, type NarutoPrintDetail } from "./searchPrints";
 
 /** Card families, as carddass.fr filed them (`cartes/5/ninjas/`, `tactique/`…). */
@@ -27,13 +29,37 @@ const CARD_FAMILY: Record<string, string> = {
   ta: "Tactique",
   te: "Technique",
   cl: "Client",
+  ki: "Chevalier",
   pr: "Promo",
+  n: "Ninja",
+  j: "Jutsu",
+  m: "Mission",
+  st: "Tactique",
+  c: "Client",
+  shi: "Ninja",
+  mju: "Jutsu",
+  msa: "Tactique",
+  prni: "Promo",
+  prte: "Promo",
+  prta: "Promo",
+  prcl: "Promo",
+  prki: "Promo",
+  opni: "Promo",
+  gaku: "Ninja",
 };
 
 type SetsFile = {
   sets?: Record<
     string,
-    { series?: number | null; starters?: string[]; released?: boolean }
+    {
+      series?: number | null;
+      starters?: string[];
+      released?: boolean;
+      /** Official expansion title when Bandai named the set (EN CCG s28…). */
+      title?: string | null;
+      /** EN CCG series that shares s1–s6 with Carddass FR. */
+      enCcgTitle?: string | null;
+    }
   >;
 };
 
@@ -55,11 +81,42 @@ function loadSets(): SetsFile {
  * `s5` → `Série 5 — La quête / Un nouveau départ`. Bandai never titled its
  * series; the two starter names are what a collector actually recognises, so
  * both are shown rather than the collector-convention single label.
+ * EN CCG Series 1 shares `s1` with Carddass — pass the printed id (`n001`).
  */
-export function narutoSetLabel(setCode: string): string {
+/**
+ * Les sets que le registre déclare **jamais sortis en français**.
+ *
+ * La Série 6 est le cas : annoncée pour avril 2008, repoussée, puis annulée —
+ * Carddass s'est reporté sur Dragon Ball. Les cartes existent, mais imprimées
+ * **en Italie** (« Serie 6 — Rivalità Eterna »), et les entrées françaises du
+ * catalogue sont des rendus de pré-production trouvés sur `carddass.fr`, pas
+ * des cartes physiques.
+ *
+ * Mesurer les langues sur ces titres faisait donc apparaître la Série 6 sous
+ * « français », pour des cartes qu'on ne peut pas posséder. Le fait curé prime
+ * sur la mesure : ce que le registre sait, la statistique ne le devine pas.
+ */
+export function narutoSetsUnreleasedInFrench(): Set<string> {
+  const entries = loadSets().sets ?? {};
+  return new Set(
+    Object.entries(entries)
+      .filter(([, entry]) => entry?.released === false)
+      .map(([code]) => code.toLowerCase()),
+  );
+}
+
+export function narutoSetLabel(setCode: string, card?: string | null): string {
   const code = setCode.toLowerCase();
   if (code === "promo") return "Promo (hors série)";
   const entry = loadSets().sets?.[code];
+  if (
+    card &&
+    narutoCatalogueLineForCard(card, setCode) === "en-ccg" &&
+    entry?.enCcgTitle?.trim()
+  ) {
+    return entry.enCcgTitle.trim();
+  }
+  if (entry?.title?.trim()) return entry.title.trim();
   if (!entry?.series) return setCode.toUpperCase();
   const starters = (entry.starters ?? []).filter(Boolean);
   const base = `Série ${entry.series}`;
@@ -84,7 +141,12 @@ const PROMO_CHANNEL_LABEL: Record<string, string> = {
 function promoFacts(number: string, providerId: string): MetadataFact[] {
   let row;
   try {
-    row = loadAttestedPromos().find((p) => p.number === number);
+    row = loadAttestedPromos().find(
+      (p) =>
+        p.number === number ||
+        narutoNumbersEqual(p.number, number) ||
+        (p.diskCardId != null && narutoNumbersEqual(p.diskCardId, number)),
+    );
   } catch {
     return [];
   }
@@ -127,9 +189,7 @@ export function narutoPrintFacts(
       // table, and the printed number is the first thing a collector reads.
       kind: "format",
       label: "Numéro",
-      value:
-        formatNarutoReference(row.setCode, row.number).split(" · ")[1] ??
-        row.number,
+      value: formatNarutoReference(row.setCode, row.number),
       source: providerId,
       confidence: 0.95,
       priority: 45,
@@ -137,7 +197,7 @@ export function narutoPrintFacts(
     {
       kind: "series",
       label: "Extension",
-      value: narutoSetLabel(row.setCode),
+      value: narutoSetLabel(row.setCode, row.number),
       source: providerId,
       confidence: 0.9,
       priority: 36,

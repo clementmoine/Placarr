@@ -1,0 +1,125 @@
+{
+  "source": "予約特典 du jeu PlayStation「NARUTO -ナルト- 忍の里の陣取り合戦」— visuels officiels",
+  "observed": "2026-08-19",
+  "ingest": "thumbs + faces (via mercari.json)",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "productName": "「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）",
+  "productKind": "スペシャルカードダス — 初回予約特典, quantité limitée",
+  "game": {
+    "title": "NARUTO -ナルト- 忍の里の陣取り合戦",
+    "platform": "PlayStation",
+    "publisher": "Bandai",
+    "released": "2003-06-26",
+    "price": "5 800 ¥ (hors taxe)"
+  },
+  "note": "Les quatre 忍-n（PS） sont le bonus de précommande d'un jeu PS1, pas une réimpression : la page de Bandai dit 書き下ろしイラスト — illustration inédite. Aucun scan de carte n'a été trouvé (Fril, eBay, buyee, zenmarket, jauce, aucfan ; Yahoo Auctions répond 403 EEA depuis ce conteneur). Ce qui existe, ce sont deux visuels officiels du set, tous deux composites : la page goods de TV Tokyo (470×300, les 4 côte à côte) et le mini-site du jeu chez Bandai via Wayback (220×315, en 2×2). Les vignettes installées sont des découpes de la première, à leur taille native — ce sont des `thumb.jpg`, jamais des `art.*` : une découpe de 106×160 dans une image promotionnelle n'est pas un scan de carte.",
+  "not": ["art", "reimpression-de-忍-1", "data-carddass"],
+  "images": [
+    {
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/images/ps2/card.gif",
+      "page": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/playstation.html",
+      "size": "470×300",
+      "layout": "4 cartes côte à côte sous le bandeau 初回予約特典!!",
+      "usedForThumbs": true
+    },
+    {
+      "url": "https://web.archive.org/web/20030702075039im_/http://www.bandaigames.channel.or.jp/list/naruto_si/img/card.gif",
+      "page": "https://web.archive.org/web/20030629161500/http://www.bandaigames.channel.or.jp/list/naruto_si/yoyaku.html",
+      "size": "220×315",
+      "layout": "les 4 en 2×2",
+      "usedForThumbs": false
+    }
+  ],
+  "cards": [
+    {
+      "printed": "忍-11（PS）",
+      "number": "ni0011-ps",
+      "name": "はたけカカシ",
+      "slot": 0
+    },
+    {
+      "printed": "忍-3（PS）",
+      "number": "ni0003-ps",
+      "name": "春野サクラ",
+      "slot": 1
+    },
+    {
+      "printed": "忍-1（PS）",
+      "number": "ni0001-ps",
+      "name": "うずまきナルト",
+      "slot": 2
+    },
+    {
+      "printed": "忍-2（PS）",
+      "number": "ni0002-ps",
+      "name": "うちはサスケ",
+      "slot": 3
+    }
+  ],
+  "cropBox": {
+    "note": "Fractions de l'image 470×300, quatre fentes régulières. Recalculables : rien n'est codé en dur ailleurs.",
+    "top": 0.44,
+    "height": 0.53,
+    "leftStart": 0.015,
+    "pitch": 0.2475,
+    "width": 0.225
+  },
+  "stillMissing": "Rien pour les faces : les quatre sont servies. Restent des scans à plat pour 忍-1/2/3 (seul 忍-11 en a un, chez Suruga).",
+  "scans": {
+    "mercariLot": {
+      "listing": "https://jp.mercari.com/item/m28811788058",
+      "note": "10 photos : 1 = les 4 ensemble, 2 = les dos, puis recto/verso carte par carte (3/5/7/9 = les rectos). 810×1080, sous pochette, de face, plein cadre. C'est la source des `art.mercari.jpg` des quatre PS — ledger dans mercari.json.",
+      "photos": {
+        "ni0001-ps": 3,
+        "ni0002-ps": 5,
+        "ni0003-ps": 7,
+        "ni0011-ps": 9
+      }
+    },
+    "surugaKaitori": {
+      "id": "GL734891",
+      "page": "https://www.suruga-ya.jp/kaitori/kaitori_detail/GL734891",
+      "image": "https://cdn.suruga-ya.jp/database/pics/game/gl734891.jpg",
+      "card": "ni0011-ps",
+      "size": "348×512",
+      "note": "Scan à plat de 忍-11（PS）, corrobore la photo Mercari. **Ne pas l'ajouter au TSV Suruga** : `PRINTED_RE` n'y connaît pas （PS）, la ligne serait lue « 忍-11 » et le scan atterrirait sur la carte de booster. Les ids kaitori voisins (GL734886…894) sont d'autres jeux — pas de bloc contigu à exploiter."
+    }
+  },
+  "products": [
+    {
+      "slug": "ps-yoyaku-tokuten",
+      "setCode": "promo",
+      "kind": "coffret",
+      "lang": "JA",
+      "title": "「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）",
+      "cardsPerPack": 4,
+      "released": "2003-06-26",
+      "staging": "staging/tv-tokyo/ps-yoyaku-tokuten.gif",
+      "ingest": true,
+      "note": "予約特典 du jeu PS1 : un set de 4 cartes, contenu connu (忍-1/2/3/11 en illustration inédite). Le visuel est celui de Bandai/TV Tokyo, 470×300, les 4 cartes côte à côte — il montre le CONTENU. Le sachet lui-même est photographié chez Mercari, recto et verso — voir `wrapper`. **Le vocabulaire de `kind` n'a pas de case pour « bonus de précommande à contenu connu »** : `coffret` est le fourre-tout le moins faux. L'emballage imprime bien BOOSTER PACK, mais ce mot décrit le format du sachet, pas un tirage aléatoire — voir `wrapper.kindNote`.",
+      "backStaging": "staging/mercari/ps-yoyaku-tokuten-wrapper-back.jpg"
+    }
+  ],
+  "wrapper": {
+    "found": "2026-08-19",
+    "note": "L'emballage EXISTE en photo, contrairement à ce que ce ledger disait : sept annonces Mercari du sachet 未開封, 22 photos au total. Le sachet est un カードダスEX, et il porte en toutes lettres « 1パック4枚入り BOOSTER PACK ブースターパック（追加拡張） », « 全4種 », « NOT FOR SALE », « 二人対戦型カードゲーム », « BANDAI 2003 MADE IN JAPAN ».",
+    "kindNote": "Le mot imprimé est BOOSTER PACK, mais `kind` reste `coffret` : notre champ décrit un comportement, pas la typographie. `booster` entraînerait `random_pack` + `contentsKnown: false`, alors que « 全4種 » dans un sachet de 4 cartes veut dire qu'on les a toutes.",
+    "back": "Le verso porte ce que le recto tait : 発売元 株式会社バンダイ, 東京都台東区駒形2-5-4 〒111-8081, la centrale service client (04-7146-0371 / 06-6375-5050 / 052-872-0374), « ANY AND ALL SALE AND/OR EXPORT OF THIS PRODUCT OUTSIDE JAPAN IS STRICTLY PROHIBITED », le renvoi vers carddas.com/naruto/, le sigle PP,M, et l'avertissement « このスペシャルパックだけでは、ゲームすることができません » — il faut un pack starter pour jouer.",
+    "listings": [
+      "https://jp.mercari.com/item/m90197224266",
+      "https://jp.mercari.com/item/m12813630641",
+      "https://jp.mercari.com/item/m78734203706",
+      "https://jp.mercari.com/item/m27992106498",
+      "https://jp.mercari.com/item/m88125751693",
+      "https://jp.mercari.com/item/m87534301418",
+      "https://jp.mercari.com/item/m37394926550"
+    ],
+    "photos": {
+      "recto": "m87534301418_1 — sachet entier, à plat, 1080×1080",
+      "verso": "m88125751693_2 — dos entier et lisible, 1080×1080"
+    },
+    "rejected": "Trois autres liens proposés le même jour pointaient vers des boutiques Zen Cart sur domaines jetables (render.yzjjzrof.shop, hobbypick.cotterek.click, jttrq.zhxggoga.shop). Sous-domaine aléatoire + TLD .shop/.click + gabarit Zen Cart recopié : ce sont des vitrines d'arnaque qui rehébergent des photos d'ailleurs. Rien n'en a été pris."
+  }
+}

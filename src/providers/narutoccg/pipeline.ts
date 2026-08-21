@@ -14,7 +14,7 @@ import { packLogsDir } from "@/lib/packPaths";
 
 import { narutoCcgDbPath } from "./indexStore";
 
-const DATA_PACK = "naruto/ccg";
+const DATA_PACK = "naruto/carddass";
 
 export async function refreshNarutoCcgCatalog(
   opts?: ProviderCatalogRefreshOpts,
@@ -32,12 +32,10 @@ export async function refreshNarutoCcgCatalog(
     "./cli"
   );
   await runNarutoPackPipeline(argv);
+  const payload = `${JSON.stringify({ finishedAt: new Date().toISOString(), auto: Boolean(opts?.auto) })}\n`;
   const logs = packLogsDir(DATA_PACK);
   mkdirSync(logs, { recursive: true });
-  writeFileSync(
-    path.join(logs, "last-run.json"),
-    `${JSON.stringify({ finishedAt: new Date().toISOString(), auto: Boolean(opts?.auto) })}\n`,
-  );
+  writeFileSync(path.join(logs, "last-run.json"), payload);
 }
 
 export function narutoCcgCatalogStatus() {

@@ -1,0 +1,28 @@
+{
+  "source": "amazon.fr ASIN B0019R7M2W Wayback product page",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "kind": "sealed-sku",
+  "lang": "fr",
+  "slug": "starter-pays-du-vent",
+  "asin": "B0019R7M2W",
+  "printedRef": "05110",
+  "title": "Bandai - Cartes à jouer - Naruto - Starter Série 1 - Le pays du vent",
+  "page": "https://www.amazon.fr/Bandai-Cartes-jouer-Naruto-Starter/dp/B0019R7M2W",
+  "wayback": {
+    "timestamp": "20101115093130",
+    "url": "https://web.archive.org/web/20101115093130/http://www.amazon.fr/Bandai-Cartes-jouer-Naruto-Starter/dp/B0019R7M2W",
+    "staging": "staging/amazon-fr/B0019R7M2W-20101115.html",
+    "also": ["20090101045216", "20090130134201", "20110220160151"]
+  },
+  "imageIds": [
+    "51qoMTBbSDL",
+    "51ZUuG4ggbL",
+    "51i3VIEiohL",
+    "512rWO0GhyL",
+    "51sBivIMTkL"
+  ],
+  "note": "HTML snapshot confirms réf. 05110 + ASIN. ecx.images-amazon.com JPEGs are not in CDX; reconstructed Wayback URLs return 404 HTML. Live Amazon often 503. Do not displace Tric Trac starter-pays-du-vent.jpeg (already preferred over the carddass.fr GIF).",
+  "doNotDisplace": "staging/trictrac/starter-pays-du-vent.jpeg",
+  "crossSell": "Maître Hokage"
+}

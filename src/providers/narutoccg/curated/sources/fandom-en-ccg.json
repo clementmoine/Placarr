@@ -1,0 +1,96 @@
+{
+  "source": "Fandom wikis (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "ingest": "none",
+  "crawl": false,
+  "line": "en-ccg",
+  "note": "Both pages are Bandai USA CCG (2006–2013), not Carddass FR/IT and not Data Carddass. Rules (10 battle rewards, 50-card deck) match the Carddass family. Do not scrape wiki uploads. Do not mint printKeys from fan prefixes.",
+  "narutopedia": {
+    "url": "https://naruto.fandom.com/wiki/Naruto_Collectible_Card_Game",
+    "pageid": 16813,
+    "title": "Naruto Collectible Card Game",
+    "span": { "from": 2006, "to": 2013, "lastSet": "s28" },
+    "setListPaste": [
+      "Path To Hokage",
+      "Coils Of The Snake",
+      "Curse Of The Sand",
+      "Revenge and Rebirth",
+      "Dream Legacy",
+      "Eternal Rivalry",
+      "Quest for Power",
+      "Battle of Destiny",
+      "The Chosen",
+      "Lineage of Legends",
+      "Approaching Wind",
+      "A New Chronicle",
+      "Faithful Reunion",
+      "Emerging Alliance",
+      "Foretold Prophecy",
+      "Broken Promise",
+      "Will Of Fire",
+      "Fangs Of The Snake",
+      "Path Of Pain",
+      "Tales Of The Gallant Sage",
+      "Shattered Truth",
+      "Weapons Of War.",
+      "Invasion",
+      "Kage Summit",
+      "Avenger's Wrath",
+      "Hero's Ascension",
+      "Ultimate Ninja Storm 3",
+      "Tournament Pack 1",
+      "Tournament Pack 2",
+      "Tournament Pack 3",
+      "Tournament Pack 4"
+    ],
+    "setListErrors": [
+      "Faithful Reunion — official Fateful Reunion (s13)",
+      "Broken Promise — official Broken Promises (s16)",
+      "drops Sage's Legacy (s24); Kage Summit…Storm 3 are shifted down one",
+      "27 main-set names + 4 tournament packs — official main line is 28 (s24 Sage's Legacy is missing)"
+    ],
+    "externalsMix": [
+      "bandaicg.com/naruto — EN CCG",
+      "carddas.com/naruto — JP Carddass official, other cut",
+      "narutoccg.fandom.com"
+    ],
+    "notReplacements": [
+      "Naruto Shippuden Deck Building Game",
+      "Naruto x Boruto Card Game"
+    ],
+    "usefulClaims": [
+      "April 2006 NA launch sold out; Unlimited Path to Hokage ~6 months later",
+      "May 2013 cancel after set 28",
+      "starter = 40-card deck + 10-card sideboard + playmat + turn-counter + ninja-blade coin",
+      "display = 24 packs"
+    ]
+  },
+  "fanWiki": {
+    "url": "https://narutoccg.fandom.com/wiki/Naruto_CCG_wiki",
+    "home": "empty Wikia template — Card of the Week unfilled",
+    "approxPages": 39,
+    "setsPage": "https://narutoccg.fandom.com/wiki/Sets",
+    "setsHasSagesLegacy": true,
+    "setsListsBattleOfDestinyTwice": true,
+    "inventedPrefixes": [
+      "PTHN-001",
+      "QFPN-235",
+      "DLN-186",
+      "SLN-1395",
+      "TP3N-1184",
+      "TP3M-1174",
+      "WWJ-839",
+      "TGSN-1039",
+      "STN-1162"
+    ],
+    "sameTrapAs": "tcdb-en-ccg.json — PTHN-001 is Bandai N-001 → disk n001, never pthn001",
+    "sample": {
+      "title": "Naruto Uzumaki - PTHN-001",
+      "url": "https://narutoccg.fandom.com/wiki/Naruto_Uzumaki_-_PTHN-001",
+      "printedHint": "N-001",
+      "diskHint": "n001",
+      "not": ["pthn001", "ni001"]
+    }
+  },
+  "not": ["carddass", "data-carddass", "kayou", "mythos", "dbg", "boruto-cg"]
+}

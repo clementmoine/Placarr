@@ -1,19 +1,22 @@
 {
-  "source": "chitoroshop.com — boutique française de cartes japonaises à l'unité",
-  "observed": "2026-08-20",
-  "ingest": "none — identification bloquée",
-  "crawlLive": true,
-  "lang": "ja",
-  "url": "https://chitoroshop.com/collections/naruto-tcg-cartes-a-lunite-japonaises-naruto",
-  "access": "Shopify : `products.json?limit=250` rend la collection entière en **une requête**. 227 produits.",
-  "whatItHas": "Des scans à plat en **1414×2000**, quatre à six par produit, et de la Data Carddass (10 produits `dn-0NNt`). La fiche donne le volume et l'année : « Naruto Card Game Vol.6 (2004) | BANDAI | Baki 130 ».",
-  "whyBlocked": [
-    "La **famille manque** partout : ni le handle ni le titre ni le corps ne disent 忍/術/作/依. « Baki 130 » peut être 忍-130 comme 術-130.",
-    "Le numéro seul ne tranche pas : mesuré, chacun des 227 numéros existe dans **six ou sept familles** du catalogue, CCG américain compris.",
-    "Le volume ne rattrape pas non plus, et la faute est **de notre côté** : nos tirages japonais portent des codes de série **français** (`s1`–`s6`, 778 tirages) et non les volumes japonais. Seuls 59 utilisent `maki16`. Le « Vol.6 » de la boutique n'a donc rien à quoi se rattacher."
-  ],
-  "measured": "Sur 227 produits : 0 correspondance par numéro seul, 6 par volume+numéro, 142 sans volume lisible, 79 sans tirage correspondant.",
-  "whatWouldUnlock": "Deux voies. (1) Lire le glyphe de famille en haut à gauche de chaque scan — il est gros et net à 1414×2000. (2) Donner aux tirages japonais leur **vrai code de volume**, ce qui rendrait le « Vol.N » de la boutique directement joignable et servirait bien au-delà de cette source.",
-  "note": "L'utilisateur signale que la **deuxième** image d'une fiche est souvent le scan recadré, la première étant la photo sous pochette. À vérifier sur un échantillon avant d'automatiser quoi que ce soit : l'ordre des images Shopify n'est pas garanti.",
-  "not": ["products"]
+ "source": "chitoroshop.com — boutique française de cartes japonaises à l'unité",
+ "observed": "2026-08-20",
+ "ingest": "faces — 64 scans à plat 1414×2000, identifiés par nom+volume",
+ "crawlLive": true,
+ "lang": "ja",
+ "url": "https://chitoroshop.com/collections/naruto-tcg-cartes-a-lunite-japonaises-naruto",
+ "access": "Shopify : `products.json?limit=250` rend la collection entière en **une requête**. 227 produits.",
+ "whatItHas": "Des scans à plat en **1414×2000**, quatre à six par produit, et de la Data Carddass (10 produits `dn-0NNt`). La fiche donne le volume et l'année : « Naruto Card Game Vol.6 (2004) | BANDAI | Baki 130 ».",
+ "whyBlocked": [
+  "La **famille manque** partout : ni le handle ni le titre ni le corps ne disent 忍/術/作/依. « Baki 130 » peut être 忍-130 comme 術-130.",
+  "Le numéro seul ne tranche pas : mesuré, chacun des 227 numéros existe dans **six ou sept familles** du catalogue, CCG américain compris.",
+  "Le volume ne rattrape pas non plus, et la faute est **de notre côté** : nos tirages japonais portent des codes de série **français** (`s1`–`s6`, 778 tirages) et non les volumes japonais. Seuls 59 utilisent `maki16`. Le « Vol.6 » de la boutique n'a donc rien à quoi se rattacher."
+ ],
+ "measured": "Sur 227 produits : 67 identifiés (15 par les deux signaux, 42 par le nom seul, 10 par le volume seul), 0 contradiction, 75 non résolus, 85 qui ne sont pas des cartes de ce jeu. Les 67 tombent tous sur un tirage réel du catalogue — aucune clé inventée. 32 comblent une face japonaise manquante sur les 398.",
+ "whatWouldUnlock": "Deux voies. (1) Lire le glyphe de famille en haut à gauche de chaque scan — il est gros et net à 1414×2000. (2) Donner aux tirages japonais leur **vrai code de volume**, ce qui rendrait le « Vol.N » de la boutique directement joignable et servirait bien au-delà de cette source.",
+ "not": [
+  "products"
+ ],
+ "unblocked": "2026-08-21 : la voie (2) de `whatWouldUnlock` a été prise. Les plages de numéros par sortie japonaise (cardcheckbox) rendent le « Vol.N » de la boutique joignable, et le **nom anglais** du titre joint le catalogue CCG américain. Deux signaux indépendants, qui se prononcent ensemble 15 fois et ne se contredisent jamais : 67 produits identifiés sur 227, contre 6 auparavant.",
+ "imageOrder": "**Corrigé.** Ce registre affirmait que la deuxième image était le scan et la première une photo sous pochette. C'est l'inverse : `images[0]` est le scan à plat de la face, les suivantes sont les photos d'inventaire de la boutique — un exemplaire chacune, avec une étiquette « #N025 » incrustée. Vérifié à l'œil sur trois produits, un par famille (忍-130 バキ, 作-200 陰謀の足音, 術-270 獄砂埋葬), et les trois confirment aussi l'identification."
 }

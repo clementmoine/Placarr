@@ -273,6 +273,12 @@ export function parseNarutoCollector(raw: string): NarutoCollectorId | null {
   };
 }
 
+export function narutoFamilyForPrefix(
+  prefix: string,
+): NarutoCollectorFamily | null {
+  return familyForPrefix(prefix);
+}
+
 function familyForPrefix(prefix: string): NarutoCollectorFamily | null {
   const lower = prefix.toLowerCase();
   for (const [token, family] of PREFIX_FAMILY) {

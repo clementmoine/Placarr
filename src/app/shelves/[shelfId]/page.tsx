@@ -312,6 +312,7 @@ function ShelfComponent() {
             description: null,
             printKey: null,
             variant: null,
+            language: null,
             barcode: null,
             condition: "new",
             metadataId: null,
@@ -398,6 +399,23 @@ function ShelfComponent() {
    * appears where its first copy did. See `docs/tcg_support.md` §4.
    */
   const groupedItems = useMemo(() => groupCopies(sortedItems), [sortedItems]);
+
+  /*
+    Ce que l'étagère tient déjà, pour que le sélecteur de tirages le dise avant
+    qu'on rachète en double. Dérivé des items de la page plutôt que refetché :
+    elle les a sous la main, et deux sources divergeraient dès le premier ajout.
+  */
+  const ownedPrints = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[])
+        .filter((item) => item.printKey)
+        .map((item) => ({
+          printKey: item.printKey,
+          variant: item.variant,
+          language: item.language,
+        })),
+    [shelf?.items],
+  );
 
   const totalValue = useMemo(() => {
     if (!shelf?.items) return { total: 0, includesEstimates: false };
@@ -725,6 +743,7 @@ function ShelfComponent() {
             <PrintPickerModal
               shelfId={resolvedShelfId}
               shelfType={shelf.type}
+              ownedPrints={ownedPrints}
               isOpen={visibleModal === "item" && usesPrintPicker}
               onClose={handleModalClose}
               onAdded={() => {

@@ -170,6 +170,9 @@ export function CatalogueBrowser({
                     {card.lang}
                   </span>
                 ) : null}
+                {card.printed === false ? (
+                  <span className="ml-1 text-foreground/70">· non éditée</span>
+                ) : null}
                 {card.hasFoil ? (
                   <span className="ml-1 text-foreground/70">· foil</span>
                 ) : null}
@@ -178,7 +181,9 @@ export function CatalogueBrowser({
                 ) : card.missingArt ? (
                   <span className="ml-1 text-foreground/70">· stub</span>
                 ) : card.artFallbackFrom ? (
-                  <span className="ml-1 text-foreground/70">· retail art</span>
+                  <span className="ml-1 text-foreground/70">
+                    {fr ? "· art booster" : "· booster art"}
+                  </span>
                 ) : null}
               </figcaption>
             </figure>

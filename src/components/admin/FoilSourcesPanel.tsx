@@ -140,7 +140,7 @@ export function foilExtractTargetForPack(
   packId: string | null | undefined,
 ): CatalogueExtractTarget | null {
   // Catalogue ids and extract targets are not the same vocabulary: the Naruto
-  // pack is `naruto/ccg`, the extract target is `naruto`. Go through the pack
+  // pack is `naruto/carddass`, the extract target is `naruto`. Go through the pack
   // resolver so aliases (`carddass`, `cacg`, `pokemonpaper`…) map too.
   // The server-side `normalizeCatalogueExtractTarget` cannot be reused here — it
   // pulls `node:child_process` and this is a client component.
@@ -287,6 +287,7 @@ export function FoilPackSources({
       );
       void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
       void queryClient.invalidateQueries({ queryKey: ["catalogueCards"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalogueProducts"] });
       openLogs();
       void refetchStatus();
     } catch (error) {

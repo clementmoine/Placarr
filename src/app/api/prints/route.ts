@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireGuestOrHigher } from "@/lib/auth";
 import {
   lookupPrintCandidate,
+  printSearchCatalogues,
   searchPrintCandidates,
   supportsPrintSearch,
 } from "@/core/identify/printSearch";
@@ -142,11 +143,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ supported: true, candidate: localized });
     }
 
-    if (!query || !type) {
-      return NextResponse.json(
-        { error: "q and type are required" },
-        { status: 400 },
-      );
+    if (!type) {
+      return NextResponse.json({ error: "type is required" }, { status: 400 });
     }
 
     if (!supportsPrintSearch(type)) {
@@ -154,13 +152,49 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ supported: false, candidates: [] });
     }
 
-    const candidates = await searchPrintCandidates(query, type, {
+    const set = searchParams.get("set")?.trim() || null;
+
+    /*
+      Les catalogues se demandent **sans** requête : c'est ce qui permet de
+      choisir une extension avant de savoir quoi y chercher. Tant qu'il fallait
+      un `q`, le sélecteur restait vide à l'ouverture.
+    */
+    if (!query && !set) {
+      return NextResponse.json({
+        supported: true,
+        candidates: [],
+        catalogues: await printSearchCatalogues(
+          type,
+          searchParams.get("language"),
+        ),
+      });
+    }
+
+    const candidates = await searchPrintCandidates(query ?? "", type, {
       language: searchParams.get("language"),
       limit: parseLimit(searchParams.get("limit")),
+      providerId: searchParams.get("catalogue"),
+      setId: set,
       signal: req.signal,
     });
 
-    return NextResponse.json({ supported: true, candidates });
+    /*
+      Les catalogues sont listés par le serveur, avec leur libellé : le client
+      n'a ainsi aucun nom de provider écrit en dur, et un jeu qui s'ajoute
+      apparaît dans le sélecteur sans qu'on touche à l'interface.
+
+      La liste est celle de tous les catalogues du type, pas seulement de ceux
+      qui ont répondu : un filtre qui disparaît quand il ne rend rien est un
+      filtre qu'on ne peut plus relâcher.
+    */
+    return NextResponse.json({
+      supported: true,
+      candidates,
+      catalogues: await printSearchCatalogues(
+        type,
+        searchParams.get("language"),
+      ),
+    });
   } catch (error) {
     if (isAbortError(error)) {
       return NextResponse.json({ supported: true, candidates: [] });

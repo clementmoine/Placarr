@@ -43,7 +43,7 @@ function topTabValue(tab: TopTab): string {
 
 /**
  * Admin Catalogue — franchise tabs, then product-line tabs when a franchise
- * has several (Dragon Ball Masters | Fusion World; later Naruto CCG | Panini).
+ * has several (Dragon Ball Masters | Fusion World). Naruto is one Carddass line.
  *
  * `?pack=` is always the line / data pack id (or a non-pack corpus provider).
  * Mount only when the Catalogue tab is open — the foil grid spins WebGL canvases.

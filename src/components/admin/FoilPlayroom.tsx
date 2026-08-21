@@ -18,6 +18,7 @@ import {
   foilExtractTargetForPack,
 } from "@/components/admin/FoilSourcesPanel";
 import { CatalogueBrowser } from "@/components/admin/CatalogueBrowser";
+import { CatalogueSealedBrowser } from "@/components/admin/CatalogueSealedBrowser";
 import { OpenInLiveButton } from "@/components/admin/OpenInLiveButton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
@@ -777,6 +778,10 @@ export function FoilPlayroom({
       replaceParams((params) => {
         if (next === "foils") {
           params.delete("scope");
+        } else if (next === "sealed") {
+          params.set("scope", "sealed");
+          params.delete("material");
+          params.delete("view");
         } else {
           params.set("scope", "all");
           params.delete("material");
@@ -887,29 +892,42 @@ export function FoilPlayroom({
           </div>
         ) : null}
         <div className="flex flex-wrap items-center gap-2">
-          {catalogueInfo.hasFoilEffects ? (
-            <SegmentedControl
-              value={browseScope}
-              onChange={selectScope}
-              options={[
-                {
-                  value: "foils",
-                  label: fr ? "Foils" : "Foils",
-                },
-                {
-                  value: "all",
-                  label: fr ? "Toutes les cartes" : "All cards",
-                },
-              ]}
-            />
-          ) : (
+          <SegmentedControl<CatalogueBrowseScope>
+            value={
+              browseScope === "sealed"
+                ? "sealed"
+                : catalogueInfo.hasFoilEffects
+                  ? browseScope
+                  : "all"
+            }
+            onChange={selectScope}
+            options={[
+              ...(catalogueInfo.hasFoilEffects
+                ? [
+                    {
+                      value: "foils" as const,
+                      label: fr ? "Foils" : "Foils",
+                    },
+                  ]
+                : []),
+              {
+                value: "all",
+                label: fr ? "Cartes" : "Cards",
+              },
+              {
+                value: "sealed",
+                label: fr ? "Scellés" : "Sealed",
+              },
+            ]}
+          />
+          {!catalogueInfo.hasFoilEffects ? (
             <p className="text-xs text-muted-foreground">
               {fr
                 ? (catalogueInfo.blurbFr ??
                   "Catalogue local — pas de dump foil")
                 : (catalogueInfo.blurbEn ?? "Local catalogue — no foil dump")}
             </p>
-          )}
+          ) : null}
         </div>
         {/* Focus needs every vertical pixel for the card — sources stay on grid. */}
         {extractTarget && (layout === "grid" || !showFoilPlayroom) ? (
@@ -917,7 +935,9 @@ export function FoilPlayroom({
         ) : null}
       </div>
 
-      {!showFoilPlayroom ? (
+      {browseScope === "sealed" ? (
+        <CatalogueSealedBrowser packId={cataloguePackId} locale={locale} />
+      ) : !showFoilPlayroom ? (
         <CatalogueBrowser packId={cataloguePackId} locale={locale} />
       ) : materials.length === 0 ? (
         <p className="text-sm text-muted-foreground">

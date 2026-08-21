@@ -17,6 +17,23 @@ export type CardsIndexLangFiles = {
   artUrl?: string;
   /** Printed name in this locale when the pack ships more than one. */
   name?: string;
+  /**
+   * Le set **de cette langue**, quand il diffère de celui de l'entrée.
+   *
+   * Un éditeur ne redécoupe pas toujours sa ligne à l'identique d'un marché à
+   * l'autre. Naruto en est le cas net : une série européenne empaquette deux à
+   * trois 巻ノ japonais, si bien qu'un `set` unique par carte ne peut pas dire
+   * la vérité aux deux publics à la fois. La carte reste une, son rangement
+   * change avec la langue.
+   *
+   * Absent = le `set` de l'entrée fait foi pour cette langue.
+   */
+  set?: string;
+  /**
+   * False when this language was never printed (cancelled series, pre-prod).
+   * Omitted / true = a real edition. Catalogue still shows the slot.
+   */
+  printed?: boolean;
   /** Pokémon: foil metadata per Live variant; files stay in the same card dir. */
   variants?: Record<
     string,

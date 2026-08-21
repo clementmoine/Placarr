@@ -1,0 +1,126 @@
+{
+ "source": "カードダスドットコム — sec.carddass.com, base produit officielle Bandai",
+ "observed": "2026-08-20",
+ "ingest": "none — packshots à verser",
+ "crawlLive": true,
+ "lang": "ja",
+ "url": "https://sec.carddass.com/club/products/?keyword=NARUTO",
+ "note": "Base produit officielle de Bandai, vivante. La recherche par mot-clé rend **56 produits Naruto** sur 6 pages ; 26 relèvent de notre ligne (les autres sont de la Miracle Battle Carddass, un autre jeu, ou des accessoires). Chaque fiche porte un titre officiel, une date de sortie et un visuel sur le CDN Akamai de Bandai. **26 sur 26 en ont un.**",
+ "whyItMatters": "Nos 31 SKU japonais scellés n'ont que 2 visuels : 29 sont entrés au catalogue sans image, sur la seule foi du relevé `cardcheckbox-jp.json`. Ce sont les packshots officiels qui manquaient.",
+ "reveals": "La ligne 疾風伝 (Shippuden) compte au moins **huit 幕** — du 第二幕 au 第八幕 — chacun avec sa ブースターパック, son 自販機ブースター et parfois un 構築済みスターター. Notre catalogue n'en connaissait presque rien : le pack `nrts` de nikita n'a que 13 faces.",
+ "modelGap": "Les titres officiels distinguent trois formats que nos specs confondent : **ブースターパック** (sachet), **自販機ブースター** (distributeur automatique) et **構築済みスターター** (deck construit). Les verser demande de décider si le distributeur est un SKU à part — c'est le même contenu dans un autre emballage.",
+ "imageHost": "bandai-a.akamaihd.net/bc/img/model/b/{id}_1.jpg",
+ "products": [
+  {
+   "jan": "4543112553331000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第八幕 ～新技炸裂!伝説を超える力 編～ ブースターパック",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000065511_1.jpg",
+   "released": "2008-11"
+  },
+  {
+   "jan": "4543112553300000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第八幕 ～新技炸裂！伝説を超える力 編～ 自販機ブースター",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000065512_1.jpg",
+   "released": "2008-11"
+  },
+  {
+   "jan": "4543112536488000",
+   "title": "NARUTO-ナルト-疾風伝カードゲーム 第七幕～紅き烈風の絆 編～構築済みスターターセット",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000066008_1.jpg",
+   "released": "2008-07"
+  },
+  {
+   "jan": "4543112536112000",
+   "title": "NARUTO-ナルト-疾風伝カードゲーム 第七幕～紅き烈風の絆 編～ ブースターパック",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000066015_1.jpg",
+   "released": "2008-07"
+  },
+  {
+   "jan": "4543112536082000",
+   "title": "NARUTO-ナルト-疾風伝カードゲーム 第七幕～紅き烈風の絆 編～ 自販機ブースター",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000066016_1.jpg",
+   "released": "2008-07"
+  },
+  {
+   "jan": "4543112520876000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第六幕 ～友との絆！断ち切れない想い 編～ ブースターパック",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000066404_1.jpg",
+   "released": "2008-04"
+  },
+  {
+   "jan": "4543112520739000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第六幕 ～友との絆！断ち切れない想い 編～ 自販機ブースター",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000066405_1.jpg",
+   "released": "2008-04"
+  },
+  {
+   "jan": "4543112519702000",
+   "title": "ＮＡＲＵＴＯ‐ナルト‐疾風伝 カードゲーム 第五幕 ～再会、忌まわしき写輪眼！編～ ブースターパック",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000066808_1.jpg",
+   "released": "2008-01"
+  },
+  {
+   "jan": "4543112519610000",
+   "title": "ＮＡＲＵＴＯ‐ナルト‐疾風伝 カードゲーム 第五幕 ～再会、忌まわしき写輪眼！編～ 自販機ブースター",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000066822_1.jpg",
+   "released": "2007-12"
+  },
+  {
+   "jan": "4543112504401000",
+   "title": "NARUTO-ナルト-疾風伝 カードゲーム 第四幕 ～天地橋決戦!“根”から来た男編～自販機ブースター",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067188_1.jpg",
+   "released": "2007-10"
+  },
+  {
+   "jan": "4543112504357000",
+   "title": "NARUTO-ナルト-疾風伝 カードゲーム 第四幕 ～天地橋決戦!“根”から来た男編～ブースタパックー",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067180_1.jpg",
+   "released": "2007-10"
+  },
+  {
+   "jan": "4543112486875000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム　第三幕　～激しき野望！傀儡演舞 編～　ブースターパック",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067540_1.jpg",
+   "released": "2007-07"
+  },
+  {
+   "jan": "4543112486868000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第三幕 ～激しき野望！傀儡演舞 編～ 構築済みスターターセット",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067541_1.jpg",
+   "released": "2007-07"
+  },
+  {
+   "jan": "4543112486660000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム第３幕 第三幕　～激しき野望！傀儡演舞 編～",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067598_1.jpg",
+   "released": "2007-07"
+  },
+  {
+   "jan": "4543112486370000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム Coin＋",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067762_1.jpg",
+   "released": "2007-06"
+  },
+  {
+   "jan": "4543112486110000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム第２幕 ～“暁\"を追え!我愛羅奪還 編～　ブースターパック",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067864_1.jpg",
+   "released": "2007-05"
+  },
+  {
+   "jan": "4543112485939000",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム第２幕 ～“暁\"を追え!我愛羅奪還 編～ 自販機ブースター",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067873_1.jpg",
+   "released": "2007-05"
+  }
+ ],
+ "keywordNote": "La recherche est **littérale**.  rend 56 produits,  en rend 58 : Bandai écrit certains titres en latin **pleine chasse** (ＮＡＲＵＴＯ), que la requête ASCII ne trouve pas. Les deux manquants étaient l'acte 5 du 疾風伝, booster et distributeur — précisément les actes que je notais comme absents de la base.",
+ "vendingImageCaveat": {
+  "on": "2026-08-20",
+  "finding": "Les fiches 自販機ブースター ne sont **pas illustrées par un emballage**, et pas de façon homogène : le 巻ノ十六 montre le **distributeur** lui-même, le 巻ノ十二 une **seule carte** (忍-256 うずまきナルト), le 疾風伝 acte 2 **deux cartes**.",
+  "why": "Un booster de distributeur n'a pas d'emballage de vente à photographier : l'éditeur montre donc la machine ou le contenu.",
+  "decision": "Les visuels sont **gardés** : ce sont les illustrations officielles de ces produits, pas des images d'un autre produit. Rien à voir avec le logo qui recopiait sa propre photo, ni avec une face posée sur la mauvaise carte. Mais il faut savoir qu'un `art.carddassofficial` sur un SKU `vending-*` peut montrer une carte plutôt qu'un paquet.",
+  "answersQuestion": "D'où la différence entre les deux JAN du 巻ノ十二 : `…307668000` (ブースターパック) montre le sachet, `…307453000` (自販機ブースター) montre une carte. Deux produits, deux JAN, deux illustrations de nature différente."
+ },
+ "splitNote": "Scindé du pack Carddass le 2026-08-21 : la base produit de Bandai mélange les deux jeux (28 fiches, dont 17 du 疾風伝). Chaque pack ne garde que les siennes — un registre lu par un pack qui n'est pas le sien est un pack qui ne peut pas se reconstruire seul."
+}

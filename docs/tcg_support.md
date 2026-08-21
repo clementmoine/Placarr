@@ -318,6 +318,30 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   remédier voudrait dire soit une source de masques pour ces vingt-huit, soit un
   masque de repli pour le pack — un choix qui les concernerait tous les
   vingt-huit, pas seulement `36/P2`.
+- **Emprunter le masque d'une autre impression de la même carte : mesuré, et
+  non.** L'idée tient debout — `Mickey Mouse – True Friend` existe en `1-12`,
+  `9-13` et `1-10-p3`, tous avec masque — mais elle bute sur deux murs. D'abord
+  la géométrie : corrélation des illustrations en niveaux de gris, meilleur
+  décalage cherché en force brute sur ±28 px, deux tirages au **même** cadre
+  donnent 0,978 à décalage nul (`1-12` vs `9-13`) et encore 0,887 en traversant
+  les sources (`1-12` JPG local vs `15/P2` AVIF Lorcast) — donc ni le format ni
+  la compression ne faussent la mesure. `1-12` vs `36/P2` tombe à 0,638, et
+  `15/P2` vs `36/P2`, mêmes octets d'origine, à 0,648 : aucun décalage ne
+  rattrape ça, la promo **recadre** l'illustration. Un masque est une carte par
+  pixel ; décalé, il foile les mauvais. Ensuite la nature de l'objet : un masque
+  `Silver` et un masque `Glitter` ne sont pas la même chose. Le premier est un
+  pochoir dur, borné à la fenêtre d'illustration, moitié basse entièrement
+  noire ; le second couvre la carte entière, texte et bordure compris. Même
+  parfaitement aligné, le masque `Silver` foilerait les mauvaises **zones**.
+- **Générer le masque depuis l'illustration : pas assez.** Le masque `Glitter`
+  en dérive visiblement — 0,833 sur Lilo `25/P2`, 0,742 sur Mickey `18/P2`
+  contre l'illustration désaturée — mais pas au point d'en être une fonction
+  (`Silver` `1-12` tombe à 0,367, `SeaWave` `8-P2` à 0,601). L'écart, ce sont des
+  retouches délibérées ; le reproduire serait inventer.
+- **Ce qui marcherait, en revanche :** un masque **se transfère** entre
+  impressions qui partagent le cadre, et le seuil est net (≈0,89–0,98 contre
+  ≈0,64). Aucun des vingt-huit tirages sans masque n'est aujourd'hui dans ce cas
+  **avec** une finition à dessiner, mais la règle vaut si l'un le devient.
 
 - **Les sets d'une promo ne se recouvrent pas d'une source à l'autre.**
   LorcanaJSON range une promo sous l'extension de la carte qu'elle réimprime

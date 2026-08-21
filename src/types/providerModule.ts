@@ -627,10 +627,10 @@ export interface ProviderModule {
   /**
    * L'extension du **catalogue** qu'un produit scellé désigne.
    *
-   * Les boutiques et les catalogues ne nomment pas les extensions pareil : les
-   * produits Lorcana portent `ROTF`, `ITI`, `AZS`, le catalogue de tirages
-   * porte `2`, `3`, `6`. Sans traduction, un conseil d'achat ne rattache aucun
-   * produit à un set — mesuré, zéro option sur les 141 SKU Lorcana.
+   * Les boutiques et les catalogues ne nomment pas les extensions pareil : une
+   * boutique peut porter un sigle de trois lettres là où le catalogue de
+   * tirages porte un numéro. Sans traduction, un conseil d'achat ne rattache
+   * aucun produit à un set — mesuré, zéro option sur cent quarante et un SKU.
    *
    * Le pack sait faire la correspondance : il la fait déjà pour choisir le logo.
    * Il la déclare ici plutôt que de la laisser deviner à qui lit l'URL de
@@ -679,12 +679,12 @@ export interface ProviderModule {
    * lieu de compter à moitié.
    */
   /**
-   * Les slugs de jeu que ce pack sert, tels qu'ils apparaissent dans une
-   * `printKey` — `lorcana`, `pokemon`, `naruto`.
+   * Les slugs de jeu que ce pack sert, tels qu'ils apparaissent dans le premier
+   * segment d'une `printKey`.
    *
    * `Shelf` ne porte qu'un `type`, et `tcg` est partagé par tous les jeux de
-   * cartes. Sans cette liste, une check-list d'étagère Lorcana additionnait les
-   * extensions de Pokémon et de Dragon Ball, et annonçait « 1 % » sur un
+   * cartes. Sans cette liste, la check-list d'une étagère additionnait les
+   * extensions de tous les autres jeux, et annonçait « 1 % » sur un
    * dénominateur de trente mille cartes qu'elle ne contiendrait jamais.
    *
    * Absent = le pack ne dit pas quel jeu il sert, et on ne le retire d'aucune

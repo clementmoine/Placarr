@@ -60,9 +60,16 @@ export type BuyOption = {
   slug: string;
   name: string;
   kind: string;
-  /** Cartes neuves apportées. Exact ou espéré selon `certainty`. */
+  /**
+   * Cartes neuves apportées, à lire **selon `certainty`** :
+   *
+   * - `exact` — on connaît tout le contenu, c'est un compte.
+   * - `atLeast` — contenu fixe dont on ne connaît qu'une partie : un plancher.
+   * - `expected` — contenu aléatoire : une espérance.
+   * - `unknown` — rien à dire, et `newCards` vaut zéro.
+   */
   newCards: number;
-  certainty: "exact" | "expected";
+  certainty: "exact" | "atLeast" | "expected" | "unknown";
   priceCents: number | null;
   /** Coût par carte neuve, quand on connaît le prix. Sert au classement. */
   centsPerNewCard: number | null;
@@ -116,22 +123,41 @@ export function buyOptionsForMissing(input: {
 
   for (const product of input.products) {
     const random = RANDOM.has(product.behavior);
-    const knownPrints =
-      !random && !product.printsArePreview ? (product.prints ?? []) : [];
+    const listed = product.prints ?? [];
+    const hits = listed.filter((key) => input.missing.has(key)).length;
 
     let newCards: number;
     let certainty: BuyOption["certainty"];
     let basis: string;
 
-    if (knownPrints.length > 0) {
-      newCards = knownPrints.filter((key) => input.missing.has(key)).length;
+    if (!random && listed.length > 0 && !product.printsArePreview) {
+      newCards = hits;
       certainty = "exact";
-      basis = `Contenu connu : ${knownPrints.length} cartes listées.`;
-    } else if (random) {
+      basis = `Contenu connu : ${listed.length} cartes listées.`;
+    } else if (!random && listed.length > 0) {
       /*
-        Un paquet aléatoire ne se calcule que si l'on sait **combien de cartes
-        il contient**. `cardCount` ne le dit pas — il porte la taille du pool —
-        et sans la taille du paquet, une espérance serait une invention.
+        **Un contenu fixe partiellement connu n'est pas un tirage au sort.**
+        Un deck de démarrage contient toujours les mêmes cartes ; si nous n'en
+        connaissons que quinze sur vingt-huit, l'inconnue est notre relevé, pas
+        le produit. Lui appliquer la formule des paquets aléatoires affichait
+        « +1,7 » — une probabilité là où il n'y en a aucune.
+
+        On rend donc un **plancher** : ce que les cartes listées apportent, en
+        disant combien manquent à l'appel.
+      */
+      newCards = hits;
+      certainty = "atLeast";
+      basis = product.cardCount
+        ? `Contenu fixe, ${listed.length} des ${product.cardCount} cartes listées.`
+        : `Contenu fixe, ${listed.length} cartes listées sur un total inconnu.`;
+    } else if (!random) {
+      newCards = 0;
+      certainty = "unknown";
+      basis = "Contenu fixe, mais aucune carte listée — rien à dire.";
+    } else {
+      /*
+        Un paquet aléatoire ne se calcule que si l'on sait combien de cartes il
+        contient. `cardCount` ne le dit pas — il porte la taille du pool.
       */
       const packSize = product.packSize ?? 0;
       newCards = packSize
@@ -141,30 +167,10 @@ export function buyOptionsForMissing(input: {
             missing: input.missing.size,
           })
         : 0;
-      certainty = "expected";
+      certainty = packSize ? "expected" : "unknown";
       basis = packSize
         ? `Contenu aléatoire : ${packSize} cartes tirées dans un pool de ${input.poolSize}.`
         : "Contenu aléatoire, et la taille du paquet n'est pas connue — rien à estimer.";
-    } else {
-      /*
-        Un coffret qui annonce plus de cartes que le set entier n'annonce pas sa
-        taille : il annonce le pool. Mesuré chez Lorcana, un « Coffret Cadeau »
-        porte 420 quand son set en compte 220 — pris pour argent comptant, il
-        promettait d'apporter les seize cartes manquantes d'un coup.
-      */
-      const declared = product.packSize ?? product.cardCount ?? 0;
-      const packSize = declared > 0 && declared < input.poolSize ? declared : 0;
-      newCards = packSize
-        ? expectedNewCards({
-            packSize,
-            poolSize: input.poolSize,
-            missing: input.missing.size,
-          })
-        : 0;
-      certainty = "expected";
-      basis = packSize
-        ? `Contenu non listé : estimé sur ${packSize} cartes annoncées.`
-        : "Contenu non listé, et le nombre annoncé dépasse le set — rien à estimer.";
     }
 
     const priceCents = product.priceCents ?? null;

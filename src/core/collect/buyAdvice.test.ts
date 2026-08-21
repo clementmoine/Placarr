@@ -77,6 +77,9 @@ describe("comparer les options d'achat", () => {
     Un aperçu de quinze tuiles sur un pool de 452 n'est pas un contenu : le
     prendre pour tel ferait annoncer « ce booster contient exactement ces
     quinze cartes », ce que le site lui-même ne dit pas.
+
+    Sur un paquet **aléatoire**, l'aperçu ne vaut même pas comme plancher : les
+    cartes montrées ne sont pas celles qu'on tirera.
   */
   it("refuses to read a preview as the real contents", () => {
     const [option] = buyOptionsForMissing({
@@ -85,12 +88,12 @@ describe("comparer les options d'achat", () => {
       products: [
         {
           slug: "booster",
-          name: "Booster",
+          name: "Booster 10 cartes",
           kind: "booster",
           behavior: "random_pack",
           prints: ["a", "b", "c"],
           printsArePreview: true,
-          cardCount: 10,
+          packSize: 10,
         },
       ],
     });
@@ -254,15 +257,47 @@ describe("ce que « nombre de cartes » veut dire", () => {
       ],
     });
     expect(option.newCards).toBe(0);
+    expect(option.certainty).toBe("unknown");
     expect(option.basis).toContain("taille du paquet");
   });
 
   /*
-    Un coffret qui annonce plus de cartes que le set entier annonce le pool.
-    Mesuré : un « Coffret Cadeau » Lorcana porte 420 quand son set en compte
-    220, et promettait donc les seize manquantes d'un coup.
+    **Un contenu fixe n'est pas un tirage au sort.** Un deck de démarrage
+    contient toujours les mêmes cartes ; si nous n'en connaissons que quinze sur
+    vingt-huit, l'inconnue est notre relevé, pas le produit.
+
+    L'ancienne version lui appliquait la formule des paquets aléatoires et
+    affichait « +1,7 » — une probabilité là où il n'y en a aucune. On rend
+    désormais un **plancher** : ce que les cartes listées apportent, en disant
+    combien manquent à l'appel.
   */
-  it("refuses a bundle claiming more cards than the set holds", () => {
+  it("floors a fixed bundle we only partly know, never averages it", () => {
+    const [option] = buyOptionsForMissing({
+      missing,
+      poolSize: 220,
+      products: [
+        {
+          slug: "deck",
+          name: "Deck de démarrage",
+          kind: "deck",
+          behavior: "known_bundle",
+          prints: ["c0", "c1", "zzz"],
+          printsArePreview: true,
+          cardCount: 28,
+        },
+      ],
+    });
+    expect(option.certainty).toBe("atLeast");
+    expect(option.newCards).toBe(2);
+    expect(option.basis).toContain("3 des 28");
+  });
+
+  /*
+    Un contenu fixe dont on ne connaît **rien** ne se devine pas non plus. La
+    réponse est entre zéro et tout ; ce n'est pas une distribution, c'est de
+    l'ignorance, et un chiffre la déguiserait.
+  */
+  it("says nothing about a fixed bundle it knows nothing of", () => {
     const [option] = buyOptionsForMissing({
       missing,
       poolSize: 220,
@@ -272,28 +307,12 @@ describe("ce que « nombre de cartes » veut dire", () => {
           name: "Coffret Cadeau",
           kind: "coffret",
           behavior: "mixed_bundle",
-          cardCount: 420,
-        },
-      ],
-    });
-    expect(option.newCards).toBe(0);
-    expect(option.basis).toContain("dépasse le set");
-  });
-
-  it("still estimates a bundle whose count is plausible", () => {
-    const [option] = buyOptionsForMissing({
-      missing,
-      poolSize: 220,
-      products: [
-        {
-          slug: "deck",
-          name: "Deck de démarrage",
-          kind: "deck",
-          behavior: "mixed_bundle",
           cardCount: 28,
         },
       ],
     });
-    expect(option.newCards).toBeCloseTo(2, 0);
+    expect(option.certainty).toBe("unknown");
+    expect(option.newCards).toBe(0);
+    expect(option.basis).toContain("aucune carte listée");
   });
 });

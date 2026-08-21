@@ -1,0 +1,28 @@
+{
+  "source": "narutocardgame.gg — archive rétro du CCG Bandai 2006-2013",
+  "url": "https://narutocardgame.gg/archive/classic-ccg",
+  "observed": "2026-08-21",
+  "ingest": "none — décomptes seuls, aucune donnée carte par carte",
+  "lang": "en",
+  "line": "en-ccg",
+  "whatItActuallyIs": "Un site consacré au **nouveau** NARUTO CARD GAME de Bandai, annoncé pour 2027, avec une section rétro en annexe. Sa page `/cards` sert douze cartes d'échantillon du jeu à venir, pas le catalogue classique.",
+  "claimChecked": "Une piste extérieure le présentait comme « la meilleure base occidentale actuelle, 4 487 cartes sur 38 sets, une fiche individuelle pour chaque carte et son artwork ». **Mesuré le 2026-08-21 : faux.** L'archive classique affiche 0 carte pour les sets 1 à 9, n'expose aucune fiche par carte, et ses liens « PRICES » pointent vers des recherches eBay. Il n'y a pas d'artwork à y prendre.",
+  "whatItHas": "Une table de 38 lignes — 28 sets principaux, `A Shinobis Dream`, 4 Tournament Packs, 4 tins, les promos — avec une année et un décompte, plus un guide de raretés (C/U/R/SR/STSR/PR).",
+  "countsVsOurs": {
+    "note": "Ses décomptes divergent des nôtres presque partout, dans les deux sens. Rien ne dit qui a raison : les bases comptent différemment les starters, les variantes de foil et les réimpressions. Consigné comme un contradicteur à vérifier, pas comme une correction.",
+    "tp1": { "gg": 60, "ours": 30 },
+    "tp2": { "gg": 64, "ours": 118 },
+    "tp3": { "gg": 60, "ours": 105 },
+    "tp4": { "gg": 60, "ours": 83 },
+    "tin1": { "gg": 6, "ours": 8 },
+    "tin2": { "gg": 6, "ours": 9 },
+    "tin3": { "gg": 12, "ours": 6 },
+    "tin4": { "gg": 10, "ours": 3 },
+    "promo": { "gg": 106, "ours": 197 },
+    "s17": { "gg": 198, "ours": 181 },
+    "s10": { "gg": 208, "ours": 208, "agree": true },
+    "s28": { "gg": 120, "ours": 120, "agree": true }
+  },
+  "worthKeeping": "Les noms de tins — Rebirth, Ultimate Battle, Untouchables, Fierce Ambitions — que notre catalogue ne porte que sous `tin1`…`tin4`. Et l'existence d'un set 29 « A Shinobis Dream », qui contredit la clôture officielle du jeu au set 28.",
+  "not": ["faces", "titres", "checklist"]
+}

@@ -1414,6 +1414,21 @@ vrais codes de volume.
       départage. Ces six numéros restent sans volume. Il faudrait un scan du
       dos ou de l'emballage pour trancher.
 
+- [ ] **Livrets européens — la seule piste produit → cartes** — le livret allemand
+      Bandai/AMIGO (19/06/2007, doczz.net) donne le contenu **exact** de trois
+      produits : Booster 3 (`NI-85→114`, `JU-85→105`, `ER-85→107`, `KL-8→11`) et
+      les deux starters « Naruto & Iruka » / « Sasuke & Kakashi ». Aucune base
+      occidentale ne dit ce qu'une boîte contenait. Il en faudrait d'autres :
+      chaque livret donne un produit, et deux suffiraient à trancher si un
+      booster européen suit un volume japonais — le Booster 3 couvre exactement
+      la plage du 巻ノ五, mais un point de mesure n'est pas une règle.
+
+- [ ] **Décomptes contradictoires du CCG anglais** — `narutocardgame.gg` diverge
+      de nous sur dix sets, dans les deux sens : `tp2` 64 contre nos 118, `tin4`
+      10 contre nos 3, `promo` 106 contre nos 197. Rien ne dit qui a raison ;
+      les bases comptent différemment starters, foils et réimpressions. À
+      trancher set par set, avec des scans.
+
 - [ ] **Long terme** — figer la DB Naruto curée en fichier compressé / Internet Archive.
 
 ### 疾風伝 CARD GAME — un second jeu dans le pack, et il est japonais seul

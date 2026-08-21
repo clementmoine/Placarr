@@ -19,6 +19,7 @@ import { lorcanatcgCatalog } from "./pipeline";
 import {
   ensureLorcanaSetLogoIndex,
   loadLorcanaSetLogoIndex,
+  lorcanaCatalogueSetIdForProduct,
   lorcanaLogoUrlForSet,
 } from "./setLogos";
 
@@ -119,6 +120,19 @@ export const lorcanatcgModule: ProviderModule = {
     const withLogo = logos.sets.filter((row) => row.logo).length;
     return `lorcana set logos : ${withLogo} thumbs / ${logos.sets.length} sets`;
   },
+  /*
+    La boutique dit `ROTF`, le catalogue dit `2`. La correspondance est la même
+    que celle qui choisit le logo — on la déclare au lieu de la laisser deviner
+    à qui lirait l'URL de l'image.
+  */
+  resolveCatalogueSetId: ({ setCode, slug, name }) =>
+    lorcanaCatalogueSetIdForProduct({
+      setCode,
+      slug,
+      name,
+      index: loadLorcanaSetLogoIndex(),
+    }),
+  printGames: ["lorcana"],
   resolveSetLogo: ({ setCode, slug, name }) =>
     lorcanaLogoUrlForSet({
       setCode,

@@ -142,6 +142,11 @@ export function sealedProductFromStaging(input: {
   page?: DbscardsProductPage | null;
   /** Pokémon: TCGdex wordmark index. Other packs ignore it. */
   /** Fourni par le pack qui possède ce catalogue, ou absent. */
+  resolveCatalogueSetId?: (input: {
+    setCode?: string | null;
+    slug?: string | null;
+    name?: string | null;
+  }) => string | null;
   resolveSetLogo?: (input: {
     setCode?: string | null;
     slug?: string | null;
@@ -180,6 +185,18 @@ export function sealedProductFromStaging(input: {
         name: page?.name,
       }) ?? null,
     setCode: page?.setCode ?? null,
+    /*
+      L'extension telle que le **catalogue** la nomme. Le `setCode` ci-dessus
+      est celui de la boutique, et les deux divergent : `ROTF` contre `2`. Sans
+      cette traduction, aucun produit ne se rattache à un set, donc aucun
+      conseil d'achat n'est possible.
+    */
+    catalogueSetId:
+      input.resolveCatalogueSetId?.({
+        setCode: page?.setCode,
+        slug: input.listing.slug,
+        name: page?.name,
+      }) ?? null,
     lang: page?.lang ?? null,
     releaseDate: page?.releaseDate ?? null,
     declaredCardCount: page?.declaredCardCount ?? null,
@@ -227,6 +244,7 @@ export async function ingestSealedProducts(
   */
   const owner = providerModuleForPack(packId);
   const resolveSetLogo = owner?.resolveSetLogo;
+  const resolveCatalogueSetId = owner?.resolveCatalogueSetId;
 
   const index: ProductsIndexV1 = emptyProductsIndex(packId);
   let skipped = 0;
@@ -244,6 +262,7 @@ export async function ingestSealedProducts(
       listing,
       page: bySlug.get(listing.slug) ?? null,
       resolveSetLogo,
+      resolveCatalogueSetId,
     });
     if (!entry) {
       skipped += 1;

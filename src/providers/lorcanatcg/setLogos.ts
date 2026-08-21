@@ -236,12 +236,25 @@ function uniqueSetNameTokens(index: LorcanaSetLogoIndex): Map<string, string> {
  * word from the catalog name (`floodborn` on a ROTF booster). Several hits
  * or none → null.
  */
-export function lorcanaLogoUrlForSet(input: {
+/**
+ * L'extension du relevé de logos que ce produit désigne.
+ *
+ * La résolution était enfouie dans `lorcanaLogoUrlForSet`, qui n'en rendait que
+ * l'URL du logo. Or elle établit une correspondance plus précieuse que l'image :
+ * le code de la boutique (`ROTF`) vers l'extension du catalogue (`set2`). Sans
+ * elle, un conseil d'achat ne peut rattacher aucun produit à un set — les
+ * produits Lorcana portent des codes lettres, le catalogue des numéros, et les
+ * deux ne se joignent pas.
+ *
+ * Rend `null` dès qu'il y a **plus d'une** correspondance : rattacher un
+ * booster au mauvais set serait pire que de ne pas le rattacher.
+ */
+export function lorcanaSetRowForProduct(input: {
   setCode?: string | null;
   slug?: string | null;
   name?: string | null;
   index?: LorcanaSetLogoIndex | null;
-}): string | null {
+}): LorcanaSetLogoRow | null {
   const index = input.index;
   if (!index?.sets.length) return null;
 
@@ -260,7 +273,7 @@ export function lorcanaLogoUrlForSet(input: {
   const idHits = index.sets.filter((row) =>
     lorcanaSetLogoCodes(row).some((code) => needles.has(code)),
   );
-  if (idHits.length === 1) return idHits[0]!.logo;
+  if (idHits.length === 1) return idHits[0]!;
   if (idHits.length > 1) return null;
 
   const hay = normalizeLorcanaSetText(
@@ -272,7 +285,7 @@ export function lorcanaLogoUrlForSet(input: {
       (label) => label.length >= 4 && hay.includes(label),
     ),
   );
-  if (nameHits.length === 1) return nameHits[0]!.logo;
+  if (nameHits.length === 1) return nameHits[0]!;
   if (nameHits.length > 1) return null;
 
   const tokens = uniqueSetNameTokens(index);
@@ -283,7 +296,33 @@ export function lorcanaLogoUrlForSet(input: {
   }
   if (tokenIds.size !== 1) return null;
   const id = [...tokenIds][0]!;
-  return index.sets.find((row) => row.id === id)?.logo ?? null;
+  return index.sets.find((row) => row.id === id) ?? null;
+}
+
+export function lorcanaLogoUrlForSet(input: {
+  setCode?: string | null;
+  slug?: string | null;
+  name?: string | null;
+  index?: LorcanaSetLogoIndex | null;
+}): string | null {
+  return lorcanaSetRowForProduct(input)?.logo ?? null;
+}
+
+/**
+ * `set2` → `2` : l'identifiant que le **catalogue** emploie.
+ *
+ * Le relevé de logos numérote `setN`, le catalogue de tirages `N`. Une quête ou
+ * un gateway n'a pas d'équivalent côté tirages et rend donc `null`.
+ */
+export function lorcanaCatalogueSetIdForProduct(input: {
+  setCode?: string | null;
+  slug?: string | null;
+  name?: string | null;
+  index?: LorcanaSetLogoIndex | null;
+}): string | null {
+  const id = lorcanaSetRowForProduct(input)?.id?.trim().toLowerCase();
+  const numbered = id ? /^set(\d+)$/.exec(id) : null;
+  return numbered ? numbered[1]! : null;
 }
 
 async function httpGet(url: string): Promise<Buffer> {

@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   buyOptionsForMissing,
   expectedNewCards,
+  packSizeFromName,
   singlesCostBreakdown,
 } from "./buyAdvice";
 
@@ -214,5 +215,85 @@ describe("la falaise des prix", () => {
 
   it("says nothing rather than zero when nothing is priced", () => {
     expect(singlesCostBreakdown([null, null]).medianCents).toBeNull();
+  });
+});
+
+/*
+  Le champ « nombre de cartes » d'un produit ne dit pas la même chose selon le
+  produit, et le prendre au pied de la lettre faisait promettre n'importe quoi :
+  un booster Lorcana annonce 452 cartes — la taille du set, pas du sachet — et
+  l'espérance calculée dessus affirmait qu'il apportait d'un coup toutes les
+  cartes manquantes.
+*/
+describe("ce que « nombre de cartes » veut dire", () => {
+  const missing = new Set(Array.from({ length: 16 }, (_, i) => `c${i}`));
+
+  it("reads the pack size out of the name the shop wrote", () => {
+    expect(packSizeFromName("Booster 12 cartes Premier Chapitre")).toBe(12);
+    expect(packSizeFromName("Blister 3 cartes")).toBe(3);
+  });
+
+  /** Au-delà de cent ce n'est plus un paquet : c'est le pool, dans le même champ. */
+  it("refuses a count that is obviously a set, not a pack", () => {
+    expect(packSizeFromName("Booster 452 cartes")).toBeNull();
+    expect(packSizeFromName("Coffret Cadeau - Hadès & Mulan")).toBeNull();
+  });
+
+  it("estimates nothing for a random pack of unknown size", () => {
+    const [option] = buyOptionsForMissing({
+      missing,
+      poolSize: 220,
+      products: [
+        {
+          slug: "blister",
+          name: "Booster Blister Carton",
+          kind: "booster",
+          behavior: "random_pack",
+          cardCount: 420,
+        },
+      ],
+    });
+    expect(option.newCards).toBe(0);
+    expect(option.basis).toContain("taille du paquet");
+  });
+
+  /*
+    Un coffret qui annonce plus de cartes que le set entier annonce le pool.
+    Mesuré : un « Coffret Cadeau » Lorcana porte 420 quand son set en compte
+    220, et promettait donc les seize manquantes d'un coup.
+  */
+  it("refuses a bundle claiming more cards than the set holds", () => {
+    const [option] = buyOptionsForMissing({
+      missing,
+      poolSize: 220,
+      products: [
+        {
+          slug: "coffret",
+          name: "Coffret Cadeau",
+          kind: "coffret",
+          behavior: "mixed_bundle",
+          cardCount: 420,
+        },
+      ],
+    });
+    expect(option.newCards).toBe(0);
+    expect(option.basis).toContain("dépasse le set");
+  });
+
+  it("still estimates a bundle whose count is plausible", () => {
+    const [option] = buyOptionsForMissing({
+      missing,
+      poolSize: 220,
+      products: [
+        {
+          slug: "deck",
+          name: "Deck de démarrage",
+          kind: "deck",
+          behavior: "mixed_bundle",
+          cardCount: 28,
+        },
+      ],
+    });
+    expect(option.newCards).toBeCloseTo(2, 0);
   });
 });

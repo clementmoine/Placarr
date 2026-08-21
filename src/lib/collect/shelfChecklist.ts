@@ -23,6 +23,7 @@ import {
 } from "@/core/collect/checklist";
 import {
   buyOptionsForMissing,
+  packSizeFromName,
   singlesCostBreakdown,
   type BuyOption,
   type BuyProduct,
@@ -105,10 +106,19 @@ function sealedProductsFor(pack: string | null | undefined): BuyProduct[] {
       name: String(row.name ?? ""),
       kind: String(row.kind ?? ""),
       behavior: String(row.behavior ?? "random_pack") as ProductBehavior,
-      setId: (row.setCode as string | null) ?? null,
+      /*
+        L'extension du **catalogue**, pas celle de la boutique : les produits
+        Lorcana portent `ROTF` quand le catalogue porte `2`. Le `setCode` reste
+        en repli pour les packs dont les deux coïncident — Naruto, Dragon Ball.
+      */
+      setId:
+        (row.catalogueSetId as string | null) ??
+        (row.setCode as string | null) ??
+        null,
       prints: Array.isArray(row.prints) ? (row.prints as string[]) : null,
       printsArePreview: Boolean(row.containsPrintsIsPreview),
       cardCount: (row.declaredCardCount as number | null) ?? null,
+      packSize: packSizeFromName(String(row.name ?? "")),
       priceCents: null,
     }));
   } catch {
@@ -170,10 +180,8 @@ export async function buildChecklistForShelf(input: {
   /** Tarifer les manquantes coûte du temps ; l'appelant décide. */
   withPrices?: boolean;
 }): Promise<ShelfChecklistResult> {
-  const modules = providersForShelf({
-    type: input.shelfType,
-    games: gamesInShelf(input.owned),
-  });
+  const games = gamesInShelf(input.owned);
+  const modules = providersForShelf({ type: input.shelfType, games });
   const language = input.language?.trim().toLowerCase() || null;
 
   const catalogues: { id: string; label: string }[] = [];
@@ -201,13 +209,6 @@ export async function buildChecklistForShelf(input: {
     const moduleSets = await Promise.resolve(
       pack.listPrintSets!(input.shelfType, language),
     );
-    for (const product of sealedProductsFor(pack.catalog?.dataPack)) {
-      if (!product.setId) continue;
-      const rows = productsBySet.get(product.setId) ?? [];
-      rows.push(product);
-      productsBySet.set(product.setId, rows);
-    }
-
     for (const set of moduleSets) {
       /*
         Une extension qui n'est pas parue dans cette langue n'entre pas dans le
@@ -238,6 +239,29 @@ export async function buildChecklistForShelf(input: {
           thumbnailUrl: row.thumbnailUrl ?? row.imageUrl ?? null,
         });
       }
+    }
+  }
+
+  /*
+    Les produits scellés appartiennent au **jeu**, pas au pack qui énumère ses
+    extensions. Chez Lorcana comme chez Pokémon, ce sont deux modules
+    différents : `lorcanajson` sait lister les sets mais ne possède aucune
+    donnée, `lorcanatcg` possède le pack mais n'énumère pas. Chercher les
+    produits chez l'énumérateur rendait donc zéro option sur 141 SKU.
+  */
+  for (const pack of PROVIDER_MODULES) {
+    if (!pack.info.types.includes(input.shelfType)) continue;
+    if (
+      games.size > 0 &&
+      !(pack.printGames ?? []).some((game) => games.has(game))
+    ) {
+      continue;
+    }
+    for (const product of sealedProductsFor(pack.catalog?.dataPack)) {
+      if (!product.setId) continue;
+      const rows = productsBySet.get(product.setId) ?? [];
+      rows.push(product);
+      productsBySet.set(product.setId, rows);
     }
   }
 

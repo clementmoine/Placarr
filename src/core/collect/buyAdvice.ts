@@ -32,8 +32,27 @@ export type BuyProduct = {
   prints?: readonly string[] | null;
   /** `true` quand `prints` n'est qu'un aperçu, pas le contenu réel. */
   printsArePreview?: boolean;
-  /** Combien de cartes le produit annonce. */
+  /**
+   * Combien de cartes le produit annonce.
+   *
+   * **Attention à ce que ça veut dire selon le produit.** Sur un paquet
+   * aléatoire, ce chiffre est la taille du **pool** — mesuré chez Lorcana, les
+   * boosters annoncent 222 à 452, soit le set entier, pas les douze cartes du
+   * sachet. Le prendre pour la taille du paquet faisait annoncer qu'un booster
+   * apportait les seize cartes manquantes d'un coup.
+   *
+   * Sur un contenu connu, c'est bien le nombre de cartes du produit.
+   */
   cardCount?: number | null;
+  /**
+   * Combien de cartes le paquet contient, quand on le sait.
+   *
+   * Le seul endroit où l'information se trouve chez Lorcana est le **nom du
+   * produit** — « Booster 12 cartes Premier Chapitre ». C'est la boutique qui
+   * l'écrit, pas nous qui le devinons ; absent, on ne calcule aucune espérance
+   * plutôt que d'en inventer une.
+   */
+  packSize?: number | null;
   priceCents?: number | null;
 };
 
@@ -108,17 +127,44 @@ export function buyOptionsForMissing(input: {
       newCards = knownPrints.filter((key) => input.missing.has(key)).length;
       certainty = "exact";
       basis = `Contenu connu : ${knownPrints.length} cartes listées.`;
-    } else {
-      const packSize = product.cardCount ?? 0;
-      newCards = expectedNewCards({
-        packSize,
-        poolSize: input.poolSize,
-        missing: input.missing.size,
-      });
+    } else if (random) {
+      /*
+        Un paquet aléatoire ne se calcule que si l'on sait **combien de cartes
+        il contient**. `cardCount` ne le dit pas — il porte la taille du pool —
+        et sans la taille du paquet, une espérance serait une invention.
+      */
+      const packSize = product.packSize ?? 0;
+      newCards = packSize
+        ? expectedNewCards({
+            packSize,
+            poolSize: input.poolSize,
+            missing: input.missing.size,
+          })
+        : 0;
       certainty = "expected";
-      basis = random
-        ? `Contenu aléatoire : ${packSize || "?"} cartes tirées dans un pool de ${input.poolSize}.`
-        : `Contenu non listé : estimé sur ${packSize || "?"} cartes annoncées.`;
+      basis = packSize
+        ? `Contenu aléatoire : ${packSize} cartes tirées dans un pool de ${input.poolSize}.`
+        : "Contenu aléatoire, et la taille du paquet n'est pas connue — rien à estimer.";
+    } else {
+      /*
+        Un coffret qui annonce plus de cartes que le set entier n'annonce pas sa
+        taille : il annonce le pool. Mesuré chez Lorcana, un « Coffret Cadeau »
+        porte 420 quand son set en compte 220 — pris pour argent comptant, il
+        promettait d'apporter les seize cartes manquantes d'un coup.
+      */
+      const declared = product.packSize ?? product.cardCount ?? 0;
+      const packSize = declared > 0 && declared < input.poolSize ? declared : 0;
+      newCards = packSize
+        ? expectedNewCards({
+            packSize,
+            poolSize: input.poolSize,
+            missing: input.missing.size,
+          })
+        : 0;
+      certainty = "expected";
+      basis = packSize
+        ? `Contenu non listé : estimé sur ${packSize} cartes annoncées.`
+        : "Contenu non listé, et le nombre annoncé dépasse le set — rien à estimer.";
     }
 
     const priceCents = product.priceCents ?? null;
@@ -194,4 +240,28 @@ export function singlesCostBreakdown(pricesCents: readonly (number | null)[]): {
       ? (known[Math.floor(known.length / 2)] ?? null)
       : null,
   };
+}
+
+/**
+ * La taille d'un paquet, lue dans le nom que la boutique lui donne.
+ *
+ * « Booster 12 cartes Premier Chapitre » → 12. C'est le seul endroit où
+ * l'information existe chez Lorcana : le champ `declaredCardCount` d'un booster
+ * porte la taille du **set**, pas du sachet.
+ *
+ * On ne lit que ce qui est écrit. Un nom qui ne dit rien rend `null`, et
+ * l'option s'affiche alors sans estimation — c'est plus honnête qu'un chiffre
+ * tiré d'une moyenne du marché qu'on n'a pas mesurée.
+ */
+export function packSizeFromName(
+  name: string | null | undefined,
+): number | null {
+  const match = /\b(\d{1,3})\s*cartes?\b/i.exec(name ?? "");
+  if (!match) return null;
+  const size = Number(match[1]);
+  /*
+    Au-delà de cent, ce n'est plus un paquet mais un set : les boutiques
+    écrivent « 452 cartes » pour désigner le pool dans le même champ.
+  */
+  return size > 0 && size <= 100 ? size : null;
 }

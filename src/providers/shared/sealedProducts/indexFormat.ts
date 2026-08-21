@@ -33,6 +33,18 @@ export type SealedProductEntry = {
   /** Series logo (Naruto packshots, Pokémon TCGdex wordmark, …). */
   setLogo: string | null;
   setCode: string | null;
+  /**
+   * L'extension telle que le **catalogue de tirages** la nomme.
+   *
+   * `setCode` juste au-dessus est celui de la boutique, et les deux divergent :
+   * les produits Lorcana portent `ROTF`, le catalogue porte `2`. Sans cette
+   * traduction, aucun produit ne se rattache à un set — mesuré, zéro option de
+   * conseil d'achat sur les 141 SKU Lorcana.
+   *
+   * `null` quand le pack ne sait pas traduire, ou quand plusieurs extensions
+   * correspondent : mal rattacher est pire que ne pas rattacher.
+   */
+  catalogueSetId?: string | null;
   lang: string | null;
   releaseDate: string | null;
   /** Cartes par sachet / par boîte. */

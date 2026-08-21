@@ -624,6 +624,26 @@ export interface ProviderModule {
     /** Ne rien télécharger : lire ce qui est déjà là. */
     offline?: boolean;
   }) => Promise<string | null>;
+  /**
+   * L'extension du **catalogue** qu'un produit scellé désigne.
+   *
+   * Les boutiques et les catalogues ne nomment pas les extensions pareil : les
+   * produits Lorcana portent `ROTF`, `ITI`, `AZS`, le catalogue de tirages
+   * porte `2`, `3`, `6`. Sans traduction, un conseil d'achat ne rattache aucun
+   * produit à un set — mesuré, zéro option sur les 141 SKU Lorcana.
+   *
+   * Le pack sait faire la correspondance : il la fait déjà pour choisir le logo.
+   * Il la déclare ici plutôt que de la laisser deviner à qui lit l'URL de
+   * l'image, ce qui casserait silencieusement le jour où le chemin change.
+   *
+   * `null` quand rien ne correspond, ou quand **plusieurs** correspondent :
+   * rattacher un booster au mauvais set serait pire que de ne pas le rattacher.
+   */
+  resolveCatalogueSetId?: (input: {
+    setCode?: string | null;
+    slug?: string | null;
+    name?: string | null;
+  }) => string | null;
   resolveSetLogo?: (input: {
     setCode?: string | null;
     /** Slug de la fiche produit, quand le logo s'y raccroche mieux. */

@@ -86,6 +86,7 @@ export const pokemontcgliveModule: ProviderModule = {
     const withLogo = logos.sets.filter((row) => row.logo).length;
     return `tcgdex set logos : ${withLogo} wordmarks / ${logos.sets.length} sets`;
   },
+  printGames: [POKEMON_GAME],
   resolveSetLogo: ({ setCode }) =>
     tcgdexLogoUrlForSetCode(setCode, loadTcgdexSetLogoIndex()),
   createMetadataAdapter: () => ({

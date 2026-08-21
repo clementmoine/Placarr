@@ -15,8 +15,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Loader2, Printer } from "lucide-react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ChevronRight, Coins, Loader2, Printer } from "lucide-react";
 
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
@@ -40,6 +40,32 @@ type ChecklistSet = {
   missing: ChecklistPrint[];
 };
 
+type BuyOption = {
+  slug: string;
+  name: string;
+  kind: string;
+  newCards: number;
+  certainty: "exact" | "expected";
+  priceCents: number | null;
+  centsPerNewCard: number | null;
+  basis: string;
+};
+
+type SetAdvice = {
+  setId: string;
+  singles: {
+    priced: number;
+    unpriced: number;
+    totalCents: number;
+    cheapCount: number;
+    cheapCents: number;
+    expensiveCount: number;
+    expensiveCents: number;
+    medianCents: number | null;
+  };
+  options: BuyOption[];
+};
+
 type ChecklistResponse = {
   shelf: { id: string; name: string | null; slug: string | null };
   language: string | null;
@@ -48,8 +74,18 @@ type ChecklistResponse = {
   completedSets: ChecklistSet[];
   untouchedSets: ChecklistSet[];
   setsWithoutCatalogue: { id: string; label: string }[];
+  advice: SetAdvice[];
   totals: { total: number; owned: number; completion: number };
 };
+
+/** Les centimes ne s'affichent pas à l'utilisateur ; les euros, si. */
+function euros(cents: number): string {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
+  }).format(cents / 100);
+}
 
 function CompletionBar({ value }: { value: number }) {
   return (
@@ -59,12 +95,106 @@ function CompletionBar({ value }: { value: number }) {
   );
 }
 
+/**
+ * Ce qu'il en coûte, et ce qu'on peut acheter à la place.
+ *
+ * Deux colonnes parce que ce sont deux décisions : compléter à l'unité, ou
+ * ouvrir du scellé. La **certitude** est affichée à côté de chaque chiffre —
+ * un deck donne un compte exact, un booster une espérance, et les comparer
+ * sans le dire tromperait.
+ */
+function Advice({
+  advice,
+  t,
+}: {
+  advice: SetAdvice;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  const { singles, options } = advice;
+  const best = options.find((option) => option.newCards > 0) ?? null;
+  return (
+    <div className={styles.advice}>
+      <div className={styles.adviceCol}>
+        <h3 className={styles.adviceTitle}>{t("items.checklistSingles")}</h3>
+        <p className={styles.adviceTotal}>{euros(singles.totalCents)}</p>
+        {/*
+          La falaise, pas le total : la médiane est basse et le maximum énorme,
+          si bien qu'annoncer « le set complet vous coûtera X » cache que
+          l'essentiel du prix tient dans une poignée de cartes.
+        */}
+        {singles.expensiveCount > 0 && (
+          <p className={styles.adviceNote}>
+            {t("items.checklistCliff", {
+              cheapCount: singles.cheapCount,
+              cheapPrice: euros(singles.cheapCents),
+              expensiveCount: singles.expensiveCount,
+              expensivePrice: euros(singles.expensiveCents),
+            })}
+          </p>
+        )}
+        {singles.medianCents != null && (
+          <p className={styles.adviceNote}>
+            {t("items.checklistMedian", { price: euros(singles.medianCents) })}
+          </p>
+        )}
+        {/* Une carte sans prix se compte : elle n'est pas gratuite. */}
+        {singles.unpriced > 0 && (
+          <p className={styles.adviceWarn}>
+            {t("items.checklistUnpriced", { count: singles.unpriced })}
+          </p>
+        )}
+      </div>
+
+      <div className={styles.adviceCol}>
+        <h3 className={styles.adviceTitle}>{t("items.checklistSealed")}</h3>
+        {options.length === 0 && (
+          <p className={styles.adviceNote}>{t("items.checklistNoAdvice")}</p>
+        )}
+        <ul className={styles.optionList}>
+          {options.slice(0, 5).map((option) => (
+            <li key={option.slug} className={styles.option}>
+              <span className={styles.optionName}>{option.name}</span>
+              <span
+                className={cn(
+                  styles.optionGain,
+                  option.certainty === "exact" && styles.optionExact,
+                )}
+                title={option.basis}
+              >
+                {t("items.checklistNewCards", { count: option.newCards })}
+                {" · "}
+                {t(
+                  option.certainty === "exact"
+                    ? "items.checklistExact"
+                    : "items.checklistEstimated",
+                )}
+              </span>
+              {option.priceCents != null && (
+                <span className={styles.optionPrice}>
+                  {euros(option.priceCents)}
+                </span>
+              )}
+              {option === best && (
+                <span className={styles.badge}>
+                  {t("items.checklistRecommended")}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function SetRow({
   set,
+  advice,
   expandable,
   t,
 }: {
   set: ChecklistSet;
+  advice?: SetAdvice;
   expandable: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
@@ -97,6 +227,8 @@ function SetRow({
         l'impression** : une check-list papier qu'il faut déplier n'en est pas
         une.
       */}
+      {advice && open && <Advice advice={advice} t={t} />}
+
       {set.missing.length > 0 && (
         <ol className={cn(styles.missing, open && styles.missingOpen)}>
           {set.missing.map((row) => (
@@ -117,19 +249,40 @@ export default function ChecklistPage() {
   const shelfId = params?.shelfId ?? "";
   const { t } = useLocale();
   const [language, setLanguage] = useState<string | null>(null);
+  /*
+    Les prix se demandent, ils ne s'imposent pas : les chercher coûte une
+    recherche par carte manquante. La vue d'ensemble s'ouvre sans, et le
+    conseil d'achat les réclame quand on le veut.
+  */
+  const [withPrices, setWithPrices] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["checklist", shelfId, language],
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["checklist", shelfId, language, withPrices],
     queryFn: async (): Promise<ChecklistResponse> => {
+      const params = new URLSearchParams();
+      if (language) params.set("language", language);
+      if (withPrices) params.set("prices", "1");
+      const query = params.toString();
       const url = `/api/shelves/${encodeURIComponent(shelfId)}/checklist${
-        language ? `?language=${encodeURIComponent(language)}` : ""
+        query ? `?${query}` : ""
       }`;
       const response = await fetch(url);
       if (!response.ok) throw new Error(String(response.status));
       return (await response.json()) as ChecklistResponse;
     },
     enabled: Boolean(shelfId),
+    /*
+      La liste reste à l'écran pendant qu'on cherche les prix. Sans ça, activer
+      les conseils vidait la page une seconde entière : changer de paramètre
+      crée une requête neuve, et une requête neuve n'a pas de données.
+    */
+    placeholderData: keepPreviousData,
   });
+
+  const adviceBySet = useMemo(
+    () => new Map((data?.advice ?? []).map((row) => [row.setId, row])),
+    [data?.advice],
+  );
 
   const groups = useMemo(
     () =>
@@ -173,6 +326,20 @@ export default function ChecklistPage() {
                 })}
               </select>
             )}
+            <button
+              type="button"
+              onClick={() => setWithPrices((value) => !value)}
+              className={cn(styles.print, withPrices && styles.printOn)}
+              disabled={isFetching}
+            >
+              {isFetching && withPrices ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Coins className="size-4" aria-hidden />
+              )}
+              {t("items.checklistAdvice")}
+            </button>
+
             <button
               type="button"
               onClick={() => window.print()}
@@ -224,6 +391,7 @@ export default function ChecklistPage() {
               <SetRow
                 key={set.id}
                 set={set}
+                advice={adviceBySet.get(set.id)}
                 expandable={group.expandable}
                 t={t}
               />

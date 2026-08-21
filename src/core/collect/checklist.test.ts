@@ -4,7 +4,11 @@
 */
 import { describe, expect, it } from "vitest";
 
-import { buildShelfChecklist, type ChecklistPrint } from "./checklist";
+import {
+  buildShelfChecklist,
+  referenceWithinSet,
+  type ChecklistPrint,
+} from "./checklist";
 
 const print = (
   printKey: string,
@@ -160,5 +164,30 @@ describe("check-list d'étagère", () => {
       "NI-002",
       "NI-010",
     ]);
+  });
+});
+
+/*
+  Les providers rendent une référence qui se suffit hors contexte — nom de
+  l'extension compris. Dans une liste déjà titrée par ce nom, elle le répète à
+  chaque ligne : « Premier Chapitre · 21/P1 » dans un bloc « Premier Chapitre ».
+*/
+describe("la référence dans son set", () => {
+  it("drops the set name the block already carries", () => {
+    expect(
+      referenceWithinSet("Premier Chapitre · 21/P1", "Premier Chapitre"),
+    ).toBe("21/P1");
+    expect(
+      referenceWithinSet("Premier Chapitre 205/204", "Premier Chapitre"),
+    ).toBe("205/204");
+  });
+
+  it("leaves alone a reference that does not start with it", () => {
+    expect(referenceWithinSet("NI-046", "Série 1")).toBe("NI-046");
+  });
+
+  /** Ne jamais rendre vide : une carte sans référence ne s'identifie plus. */
+  it("never strips a reference down to nothing", () => {
+    expect(referenceWithinSet("Série 1", "Série 1")).toBe("Série 1");
   });
 });

@@ -244,10 +244,10 @@ export async function buildChecklistForShelf(input: {
 
   /*
     Les produits scellés appartiennent au **jeu**, pas au pack qui énumère ses
-    extensions. Chez Lorcana comme chez Pokémon, ce sont deux modules
-    différents : `lorcanajson` sait lister les sets mais ne possède aucune
-    donnée, `lorcanatcg` possède le pack mais n'énumère pas. Chercher les
-    produits chez l'énumérateur rendait donc zéro option sur 141 SKU.
+    extensions. Deux jeux sur quatre sont servis par une paire de modules : l'un
+    sait lister les sets sans posséder de données, l'autre possède le dossier de
+    données sans savoir énumérer. Chercher les produits chez l'énumérateur
+    rendait donc zéro option d'achat sur cent quarante et un produits.
   */
   for (const pack of PROVIDER_MODULES) {
     if (!pack.info.types.includes(input.shelfType)) continue;

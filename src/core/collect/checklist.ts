@@ -75,6 +75,25 @@ export type ShelfChecklist = {
   setsWithoutCatalogue: ChecklistSetInput[];
 };
 
+/**
+ * `Premier Chapitre · 21/P1` → `21/P1`, à l'intérieur du bloc de ce set.
+ *
+ * Les providers rendent une référence qui se suffit hors contexte, nom de
+ * l'extension compris. Dans une liste déjà titrée par ce nom, il le répète à
+ * chaque ligne et mange la place du titre de la carte.
+ */
+export function referenceWithinSet(
+  reference: string,
+  setLabel: string,
+): string {
+  const label = setLabel.trim();
+  if (!label) return reference;
+  const trimmed = reference.trim();
+  if (!trimmed.toLowerCase().startsWith(label.toLowerCase())) return reference;
+  // Le séparateur varie selon le pack : on retire ce qui n'est pas la référence.
+  return trimmed.slice(label.length).replace(/^[\s·\-—:]+/, "") || reference;
+}
+
 function percent(owned: number, total: number): number {
   if (total <= 0) return 0;
   return Math.round((owned / total) * 100);
@@ -114,6 +133,10 @@ export function buildShelfChecklist(input: {
       continue;
     }
     const missing = prints
+      .map((print) => ({
+        ...print,
+        reference: referenceWithinSet(print.reference, set.label),
+      }))
       .filter((print) => !input.owned.has(print.printKey))
       .sort((a, b) =>
         a.reference.localeCompare(b.reference, "fr", { numeric: true }),

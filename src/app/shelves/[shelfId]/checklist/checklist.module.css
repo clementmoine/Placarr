@@ -296,3 +296,124 @@
     background: #666;
   }
 }
+
+/* ── Conseil d'achat ─────────────────────────────────────────────────────── */
+
+.printOn {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
+.printOn:hover {
+  background: var(--primary);
+  opacity: 0.9;
+}
+
+.advice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--muted);
+  padding: 0.875rem 1rem;
+}
+@media (max-width: 40rem) {
+  .advice {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.adviceCol {
+  min-width: 0;
+}
+
+.adviceTitle {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.375rem;
+}
+
+.adviceTotal {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.adviceNote,
+.adviceWarn {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.125rem;
+}
+/* Ce qu'on ne sait pas chiffrer se voit : ce n'est pas gratuit. */
+.adviceWarn {
+  color: var(--destructive);
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.optionName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionGain {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+/* Un compte exact ne se lit pas comme une espérance. */
+.optionExact {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.optionPrice {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.badge {
+  flex: none;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media print {
+  /* Le conseil suit sur le papier : c'est ce qu'on emporte en boutique. */
+  .advice {
+    background: none;
+    padding: 0.5rem 0;
+    break-inside: avoid;
+  }
+  .badge {
+    background: none;
+    color: inherit;
+    border: 1px solid #999;
+  }
+}

@@ -18,6 +18,14 @@ import {
   type LorcanaCard,
   type LorcanaLanguage,
 } from "@/providers/lorcanajson/fetch";
+import {
+  loadLorcastCatalogue,
+  lorcanaGapKey,
+  selectLorcastFillPrints,
+  LORCAST_LANGUAGE,
+  LORCAST_SOURCE,
+  type LorcastPrint,
+} from "@/providers/lorcast/fetch";
 import { cardDiskIdFromPrintKey } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import {
@@ -81,7 +89,8 @@ type Job = {
 function extFromUrl(url: string): string {
   try {
     const ext = path.extname(new URL(url).pathname).toLowerCase();
-    if ([".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
+    // `.avif` : le seul format que Lorcast publie pour ses faces.
+    if ([".jpg", ".jpeg", ".png", ".webp", ".avif"].includes(ext)) {
       return ext === ".jpeg" ? ".jpg" : ext;
     }
   } catch {

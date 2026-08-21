@@ -24,4 +24,6 @@ export type CatalogueCardRow = {
   artFallbackFrom?: string;
   /** Synthetic pack/set back tiles in the catalogue grid. */
   kind?: "face" | "pack-back" | "set-back";
+  /** False = unprinted locale (shown in catalogue, hidden from add). */
+  printed?: boolean;
 };

@@ -38,6 +38,17 @@ export interface ProviderInfo {
    */
   factLabel?: string;
   /**
+   * Le **jeu** que ce provider catalogue, tel qu'un joueur le nomme.
+   *
+   * `label` désigne la *source* — « LorcanaJSON », « TCGdex » — ce qui est juste
+   * pour une provenance de fait, et faux pour un choix de catalogue : on y
+   * cherche « Lorcana » ou « Pokémon », pas le nom du dépôt de données. Le
+   * provider possède son nom de jeu, plutôt qu'un aiguillage dans le cœur.
+   *
+   * Absent = `label` fait l'affaire (c'est déjà le nom du jeu).
+   */
+  catalogueLabel?: string;
+  /**
    * This provider supplies authoritative *reference/catalog* prices (a price
    * database) rather than live marketplace listings — so its presence alone makes
    * cached pricing trustworthy. Lets the price-cache policy stay provider-blind.

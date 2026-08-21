@@ -13,24 +13,58 @@ import {
 } from "@/effects/cardsIndex";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import {
+  narutoAssetsCardUrl,
+  narutoCardPathFromCollector,
+} from "@/providers/narutoccg/narutoCardPath";
+import {
   assetsPackBackUrl,
   assetsSetBackUrl,
   packCardsIndexPath,
 } from "@/lib/packPaths";
 import {
+  catalogueCorpusPack,
   cataloguePackInfo,
   type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
+import {
+  canonicalizeNarutoPrintKey,
+  compareNarutoCollectors,
+  compareNarutoLangs,
+  formatNarutoReference,
+  narutoCollectorNumberKey,
+} from "@/providers/narutoccg/collectorIdentity";
+import { foldNarutoCardsIndex } from "@/providers/narutoccg/foldNarutoIndex";
 
 export type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 
-/** `ni024`, `te030-cdf`, `TE-030` → `ni024` / `te030` for same-number art fallback. */
+const NARUTO_UNIFIED_PACKS: readonly CataloguePackId[] = ["naruto/carddass"];
+
+/** `ni024` / `n024` / `TE-030-cdf` → `ni:0024` / `n:0024` / `te:0030`. */
 export function catalogueCollectorKey(card: string): string {
-  const raw = card.trim().toLowerCase();
-  const m = /^((?:ni|te|ta|cl|pr)[\-]?\d{1,4})(?:-.*)?$/i.exec(raw);
-  if (!m) return raw;
-  return m[1]!.replace(/-/g, "");
+  return narutoCollectorNumberKey(card) ?? card.trim().toLowerCase();
+}
+
+export function compareNarutoCatalogueRows(
+  a: CatalogueCardRow,
+  b: CatalogueCardRow,
+): number {
+  const byCard = compareNarutoCollectors(a.card, b.card);
+  if (byCard !== 0) return byCard;
+  const byLang = compareNarutoLangs(a.lang, b.lang);
+  if (byLang !== 0) return byLang;
+  return a.printKey.localeCompare(b.printKey);
+}
+
+/** FR / EN / IT / JP faces of the same number sit together; series is not the axis. */
+export function mergeNarutoCatalogueFaces(
+  ...groups: readonly CatalogueCardRow[][]
+): CatalogueCardRow[] {
+  return groups.flat().sort(compareNarutoCatalogueRows);
+}
+
+function isNarutoUnifiedPack(pack: CataloguePackId): boolean {
+  return NARUTO_UNIFIED_PACKS.includes(pack);
 }
 
 type ArtDonor = {
@@ -67,7 +101,11 @@ export function packFaceAssetUrl(
   id: { set: string; lang: string; card: string },
   file: string,
 ): string {
-  return assetsCardUrl(pack, id, file);
+  const naruto = narutoCardPathFromCollector(id.card, id.lang);
+  if (naruto) {
+    return narutoAssetsCardUrl(catalogueCorpusPack(pack), naruto, file);
+  }
+  return assetsCardUrl(catalogueCorpusPack(pack), id, file);
 }
 
 export function langFilesHaveFoil(files: CardsIndexLangFiles): boolean {
@@ -140,9 +178,10 @@ function catalogueNames(
       ].filter((n): n is string => Boolean(n && n !== preferred)),
     ),
   ];
-  const label = preferred
-    ? `${entry.set} · ${entry.card} — ${preferred}`
+  const printed = narutoCollectorNumberKey(entry.card)
+    ? formatNarutoReference(entry.set, entry.card)
     : `${entry.set} · ${entry.card}`;
+  const label = preferred ? `${printed} — ${preferred}` : printed;
   return {
     ...(preferred ? { name: preferred } : {}),
     ...(aka.length ? { aka } : {}),
@@ -156,22 +195,86 @@ function thumbFile(files: CardsIndexLangFiles): string | null {
 
 function indexMtimeMs(pack: string): number {
   try {
-    return statSync(packCardsIndexPath(pack)).mtimeMs;
+    return statSync(packCardsIndexPath(catalogueCorpusPack(pack))).mtimeMs;
   } catch {
     return 0;
   }
 }
 
 function loadIndex(pack: CataloguePackId): CardsIndexV1 {
+  const corpus = catalogueCorpusPack(pack);
   try {
     const raw = JSON.parse(
-      readFileSync(packCardsIndexPath(pack), "utf8"),
+      readFileSync(packCardsIndexPath(corpus), "utf8"),
     ) as unknown;
     if (isCardsIndexV1(raw)) return raw;
   } catch {
     /* missing / invalid */
   }
-  return emptyCardsIndex(pack);
+  return emptyCardsIndex(corpus);
+}
+
+function localeSlots(
+  entry: CardsIndexEntry,
+  preferLang: string | undefined,
+  expand: boolean,
+): Array<{ lang: string; files: CardsIndexLangFiles }> {
+  const langs = Object.entries(entry.langs);
+  if (langs.length === 0) {
+    return [{ lang: preferLang ?? "fr", files: {} }];
+  }
+  if (!expand) {
+    const picked = pickLang(entry, preferLang);
+    return picked ? [picked] : [{ lang: preferLang ?? "fr", files: {} }];
+  }
+  return langs
+    .map(([lang, files]) => ({ lang, files: files ?? {} }))
+    .sort((a, b) => compareNarutoLangs(a.lang, b.lang));
+}
+
+function donorMapKey(card: string, lang: string): string {
+  return `${catalogueCollectorKey(card)}\0${lang.toLowerCase()}`;
+}
+
+function catalogueRowScore(row: CatalogueCardRow): number {
+  let score = 0;
+  if (row.printed !== false) score += 20;
+  if (row.artUrl && !row.missingArt && !row.artFallbackFrom) score += 10;
+  if (!row.artFallbackFrom) score += 3;
+  if (row.name) score += 1;
+  return score;
+}
+
+/**
+ * One tile per printed identity + locale. An unprinted stub of NI-086 must
+ * not sit beside the real FR face just because the printKey padding differs.
+ */
+function collapseNarutoIdentityRows(
+  rows: CatalogueCardRow[],
+): CatalogueCardRow[] {
+  const groups = new Map<string, CatalogueCardRow[]>();
+  const passthrough: CatalogueCardRow[] = [];
+  for (const row of rows) {
+    if (row.kind && row.kind !== "face") {
+      passthrough.push(row);
+      continue;
+    }
+    const identity = canonicalizeNarutoPrintKey(row.printKey);
+    const key = `${identity}\0${row.lang.toLowerCase()}`;
+    const list = groups.get(key) ?? [];
+    list.push(row);
+    groups.set(key, list);
+  }
+  const collapsed: CatalogueCardRow[] = [];
+  for (const list of groups.values()) {
+    if (list.length === 1) {
+      collapsed.push(list[0]!);
+      continue;
+    }
+    list.sort((a, b) => catalogueRowScore(b) - catalogueRowScore(a));
+    collapsed.push(list[0]!);
+  }
+  return [...passthrough, ...collapsed].sort(compareNarutoCatalogueRows);
 }
 
 /** Build browse rows from an in-memory index (also used by unit tests). */
@@ -180,108 +283,118 @@ export function buildCatalogueCardRows(
   index: CardsIndexV1,
   preferLang?: string,
 ): CatalogueCardRow[] {
-  const allowFallback = cataloguePackInfo(pack)?.sameNumberArtFallback === true;
+  const packInfo = cataloguePackInfo(pack);
+  const allowFallback = packInfo?.sameNumberArtFallback === true;
+  const expandLocales = isNarutoUnifiedPack(pack);
+  const source = expandLocales ? foldNarutoCardsIndex(index) : index;
 
   const donorsByNumber = new Map<string, ArtDonor>();
   if (allowFallback) {
-    for (const [printKey, entry] of Object.entries(index.cards)) {
-      const picked = pickLang(entry, preferLang);
-      const file = picked ? artFile(picked.files) : null;
-      if (!picked || !file) continue;
-      const key = catalogueCollectorKey(entry.card);
-      const thumb = thumbFile(picked.files) ?? undefined;
-      const candidate: ArtDonor = {
-        printKey,
-        set: entry.set,
-        card: entry.card,
-        lang: picked.lang,
-        file,
-        ...(thumb ? { thumb } : {}),
-      };
-      const prev = donorsByNumber.get(key);
-      if (
-        !prev ||
-        donorScore(candidate.set, candidate.file) >
-          donorScore(prev.set, prev.file)
-      ) {
-        donorsByNumber.set(key, candidate);
+    for (const [printKey, entry] of Object.entries(source.cards)) {
+      for (const slot of localeSlots(entry, preferLang, true)) {
+        const file = artFile(slot.files);
+        if (!file) continue;
+        const key = donorMapKey(entry.card, slot.lang);
+        const thumb = thumbFile(slot.files) ?? undefined;
+        const candidate: ArtDonor = {
+          printKey,
+          set: entry.set,
+          card: entry.card,
+          lang: slot.lang,
+          file,
+          ...(thumb ? { thumb } : {}),
+        };
+        const prev = donorsByNumber.get(key);
+        if (
+          !prev ||
+          donorScore(candidate.set, candidate.file) >
+            donorScore(prev.set, prev.file)
+        ) {
+          donorsByNumber.set(key, candidate);
+        }
       }
     }
   }
 
   const rows: CatalogueCardRow[] = [];
-  for (const [printKey, entry] of Object.entries(index.cards)) {
-    const picked = pickLang(entry, preferLang);
-    const file = picked ? artFile(picked.files) : null;
-    const lang = picked?.lang ?? preferLang ?? "fr";
+  for (const [printKey, entry] of Object.entries(source.cards)) {
     const hasFoil = entryHasFoil(entry);
-    const names = catalogueNames(entry, picked?.files);
-    const identity = {
-      printKey,
-      set: entry.set,
-      card: entry.card,
-      hasFoil,
-      label: names.label,
-      ...(names.name ? { name: names.name } : {}),
-      ...(names.aka ? { aka: names.aka } : {}),
-      ...(entry.rarity ? { rarity: entry.rarity } : {}),
-    };
+    for (const slot of localeSlots(entry, preferLang, expandLocales)) {
+      const file = artFile(slot.files);
+      const lang = slot.lang;
+      const names = catalogueNames(entry, slot.files);
+      const identity = {
+        printKey,
+        set: entry.set,
+        card: entry.card,
+        hasFoil,
+        label: names.label,
+        ...(names.name ? { name: names.name } : {}),
+        ...(names.aka ? { aka: names.aka } : {}),
+        ...(entry.rarity ? { rarity: entry.rarity } : {}),
+        ...(slot.files.printed === false ? { printed: false } : {}),
+      };
 
-    if (!file) {
-      const remote = picked ? remoteArtUrl(picked.files) : null;
-      if (remote) {
+      if (!file) {
+        const remote = remoteArtUrl(slot.files);
+        if (remote) {
+          rows.push({
+            ...identity,
+            lang,
+            artUrl: remote,
+          });
+          continue;
+        }
+        const donor = allowFallback
+          ? donorsByNumber.get(donorMapKey(entry.card, lang))
+          : undefined;
+        if (donor && donor.printKey !== printKey) {
+          const diskId = {
+            set: donor.set,
+            lang: donor.lang,
+            card: donor.card,
+          };
+          const artUrl = packFaceAssetUrl(pack, diskId, donor.file);
+          const thumbUrl = donor.thumb
+            ? packFaceAssetUrl(pack, diskId, donor.thumb)
+            : undefined;
+          rows.push({
+            ...identity,
+            lang,
+            artUrl,
+            ...(thumbUrl ? { thumbUrl } : {}),
+            artFallbackFrom: donor.printKey,
+          });
+          continue;
+        }
         rows.push({
           ...identity,
           lang,
-          artUrl: remote,
+          artUrl: "",
+          missingArt: true,
         });
         continue;
       }
-      const donor = allowFallback
-        ? donorsByNumber.get(catalogueCollectorKey(entry.card))
+      const diskId = {
+        set: entry.set,
+        lang,
+        card: entry.card,
+      };
+      const thumb = thumbFile(slot.files);
+      const artUrl = packFaceAssetUrl(pack, diskId, file);
+      const thumbUrl = thumb
+        ? packFaceAssetUrl(pack, diskId, thumb)
         : undefined;
-      // Don't point a stub at itself (no art) or another empty print.
-      if (donor && donor.printKey !== printKey) {
-        const diskId = {
-          set: donor.set,
-          lang: donor.lang,
-          card: donor.card,
-        };
-        const artUrl = packFaceAssetUrl(pack, diskId, donor.file);
-        const thumbUrl = donor.thumb
-          ? packFaceAssetUrl(pack, diskId, donor.thumb)
-          : undefined;
-        rows.push({
-          ...identity,
-          lang: donor.lang,
-          artUrl,
-          ...(thumbUrl ? { thumbUrl } : {}),
-          artFallbackFrom: donor.printKey,
-        });
-        continue;
-      }
       rows.push({
         ...identity,
         lang,
-        artUrl: "",
-        missingArt: true,
+        artUrl,
+        ...(thumbUrl ? { thumbUrl } : {}),
       });
-      continue;
     }
-    const diskId = {
-      set: entry.set,
-      lang,
-      card: entry.card,
-    };
-    const thumb = picked ? thumbFile(picked.files) : null;
-    const artUrl = packFaceAssetUrl(pack, diskId, file);
-    const thumbUrl = thumb ? packFaceAssetUrl(pack, diskId, thumb) : undefined;
-    rows.push({
-      ...identity,
-      lang,
-      artUrl,
-      ...(thumbUrl ? { thumbUrl } : {}),
-    });
+  }
+  if (expandLocales) {
+    return collapseNarutoIdentityRows(rows);
   }
   rows.sort((a, b) => {
     const setCmp = a.set.localeCompare(b.set, undefined, { numeric: true });
@@ -299,7 +412,7 @@ export function buildCatalogueCardRows(
  * One verso tile. `lang` is `"—"` for a back shared by every locale of the
  * pack; it carries a code only when that print run has its own verso.
  */
-export type CatalogueBackTile = { url: string; lang: string };
+export type CatalogueBackTile = { url: string; lang: string; key?: string };
 
 /** Accept a bare URL (one shared back) or an explicit per-language list. */
 type BackInput = string | null | undefined | readonly CatalogueBackTile[];
@@ -325,7 +438,7 @@ export function mergeCatalogueBackRows(input: {
 
   /** Suffix keeps print keys unique when a pack has several versos. */
   const suffix = (tile: CatalogueBackTile) =>
-    tile.lang === "—" ? "" : `-${tile.lang}`;
+    tile.key ?? (tile.lang === "—" ? "" : `-${tile.lang}`);
   const suffixLabel = (tile: CatalogueBackTile) =>
     tile.lang === "—" ? "" : ` · ${tile.lang.toUpperCase()}`;
 
@@ -387,10 +500,11 @@ export function withCatalogueBackRows(
     return [...byUrl].map(([url, lang]) => ({ url, lang }));
   };
 
-  const packBackUrl = distinct((lang) => assetsPackBackUrl(pack, lang));
+  const corpus = catalogueCorpusPack(pack);
+  const packBackUrl = distinct((lang) => assetsPackBackUrl(corpus, lang));
   const setBackUrls = new Map<string, CatalogueBackTile[]>();
   for (const set of new Set(faceRows.map((r) => r.set))) {
-    const tiles = distinct((lang) => assetsSetBackUrl(pack, set, lang));
+    const tiles = distinct((lang) => assetsSetBackUrl(corpus, set, lang));
     if (tiles.length) setBackUrls.set(set, tiles);
   }
   return mergeCatalogueBackRows({
@@ -401,20 +515,51 @@ export function withCatalogueBackRows(
   });
 }
 
-function rowsForPack(
+function cachedFaces(
   pack: CataloguePackId,
   preferLang?: string,
 ): CatalogueCardRow[] {
   const mtimeMs = indexMtimeMs(pack);
   const cacheKey = `${pack}|${preferLang ?? ""}`;
   const hit = cache.get(cacheKey);
-  let faces: CatalogueCardRow[];
-  if (hit && hit.mtimeMs === mtimeMs) {
-    faces = hit.rows;
-  } else {
-    faces = buildCatalogueCardRows(pack, loadIndex(pack), preferLang);
-    cache.set(cacheKey, { mtimeMs, rows: faces });
+  if (hit && hit.mtimeMs === mtimeMs) return hit.rows;
+  const faces = buildCatalogueCardRows(pack, loadIndex(pack), preferLang);
+  cache.set(cacheKey, { mtimeMs, rows: faces });
+  return faces;
+}
+
+function withNarutoUnifiedBacks(faces: CatalogueCardRow[]): CatalogueCardRow[] {
+  const langs = [
+    ...new Set(["fr", "en", "it", "ja", ...faces.map((row) => row.lang)]),
+  ].filter(Boolean);
+  const tiles: CatalogueBackTile[] = [];
+  const seen = new Set<string>();
+  const corpus = catalogueCorpusPack("naruto/carddass");
+  const resolve = (lang: string | undefined) => assetsPackBackUrl(corpus, lang);
+  for (const lang of langs) {
+    const url = resolve(lang);
+    if (url && !seen.has(url)) {
+      seen.add(url);
+      tiles.push({ url, lang, key: `-${lang}` });
+    }
   }
+  // `back.webp` is the FR alias for flip — not a fifth catalogue tile.
+  return mergeCatalogueBackRows({
+    pack: "naruto/carddass",
+    faceRows: faces,
+    packBackUrl: tiles,
+    setBackUrls: {},
+  });
+}
+
+function rowsForPack(
+  pack: CataloguePackId,
+  preferLang?: string,
+): CatalogueCardRow[] {
+  if (isNarutoUnifiedPack(pack)) {
+    return withNarutoUnifiedBacks(cachedFaces(pack, preferLang));
+  }
+  const faces = cachedFaces(pack, preferLang);
   // Backs are cheap existsSync lookups; keep them outside the index mtime cache
   // so installing `cards/back.webp` shows up without a re-sync.
   return withCatalogueBackRows(pack, faces);
@@ -450,14 +595,19 @@ export function listCatalogueCards(
   }
   const q = input.q?.trim().toLowerCase();
   if (q) {
-    rows = rows.filter(
-      (row) =>
+    const qKey = narutoCollectorNumberKey(q);
+    rows = rows.filter((row) => {
+      if (
         row.printKey.toLowerCase().includes(q) ||
         row.set.toLowerCase().includes(q) ||
         row.card.toLowerCase().includes(q) ||
         row.label.toLowerCase().includes(q) ||
-        row.aka?.some((alias) => alias.toLowerCase().includes(q)),
-    );
+        row.aka?.some((alias) => alias.toLowerCase().includes(q))
+      ) {
+        return true;
+      }
+      return qKey != null && qKey === catalogueCollectorKey(row.card);
+    });
   }
   return {
     pack: input.pack,

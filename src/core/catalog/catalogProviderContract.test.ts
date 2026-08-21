@@ -36,7 +36,7 @@ describe("provider catalog contract", () => {
     for (const pack of [
       "lorcana",
       "pokemon",
-      "naruto/ccg",
+      "naruto/carddass",
       "dbs/cg",
       "dbs/fw",
       "launchbox",

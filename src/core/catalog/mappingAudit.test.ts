@@ -104,6 +104,7 @@ describe("provider mapping probes", () => {
         "monsieurde",
         "myludo",
         "narutoccg",
+        "narutoshippuden",
         "netgamesretro",
         "nointro",
         "okkazeo",

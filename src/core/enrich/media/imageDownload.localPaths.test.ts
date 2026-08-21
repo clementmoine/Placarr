@@ -15,8 +15,8 @@ describe("downloadRemoteImage — already-local paths", () => {
   it("keeps a pack asset served from disk", async () => {
     const { downloadRemoteImage } = await import("./imageDownload");
     await expect(
-      downloadRemoteImage("/assets/naruto/ccg/cards/s5/fr/ni253/art.webp"),
-    ).resolves.toBe("/assets/naruto/ccg/cards/s5/fr/ni253/art.webp");
+      downloadRemoteImage("/assets/naruto/carddass/cards/s5/fr/ni253/art.webp"),
+    ).resolves.toBe("/assets/naruto/carddass/cards/s5/fr/ni253/art.webp");
   });
 
   it("keeps a previously localized upload", async () => {

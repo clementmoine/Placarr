@@ -45,8 +45,13 @@ function packLooksEmpty(pack: CatalogueExtractTarget): boolean {
     return !existsSync(cards) && !existsSync(web);
   }
   if (pack === "naruto") {
-    const cards = path.join(dataRoot(), "naruto", "ccg", "cards-index.json");
-    const db = path.join(dataRoot(), "naruto", "ccg", "catalog.sqlite");
+    const cards = path.join(
+      dataRoot(),
+      "naruto",
+      "carddass",
+      "cards-index.json",
+    );
+    const db = path.join(dataRoot(), "naruto", "carddass", "catalog.sqlite");
     return !existsSync(cards) && !existsSync(db);
   }
   if (pack === "dbs-cg") {

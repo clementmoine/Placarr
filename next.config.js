@@ -14,7 +14,7 @@ const NFT_TRACE_IGNORES = [
   "**/__pycache__/**",
   "**/*.pyc",
   "**/unity/.venv/**",
-  "**/curated/reconstructed/**",
+  "**/curated/cards/**",
   "**/scratch/**",
   "**/.tmp-*/**",
   "**/coverage/**",
@@ -53,7 +53,7 @@ const nextConfig = {
       "./data/**",
       "./src/providers/**/unity/**",
       "./src/providers/**/unity/.venv/**",
-      "./src/providers/**/curated/reconstructed/**",
+      "./src/providers/**/curated/cards/**",
       "./scripts/**/.venv/**",
       "./**/.venv/**",
       "./**/__pycache__/**",
@@ -143,10 +143,22 @@ const applyWebpack = (config, { dev, isServer, nextRuntime }) => {
 };
 
 function nextConfigForPhase() {
+  /*
+    `PLACARR_DIST_DIR` construit ailleurs que dans `.next` — de quoi vérifier un
+    build sans écraser celui du serveur de dev qui tourne. Vérification
+    seulement : la sortie normale reste `.next`.
+
+    Étalé dans un **nouvel** objet : Next gèle la config qu'il a lue, et y
+    écrire échoue à la validation, avant le moindre message utile — un build
+    muet pendant plusieurs minutes, puis une erreur qui ne dit pas d'où elle
+    vient.
+  */
+  const distDir = process.env.PLACARR_DIST_DIR;
+  const base = distDir ? { ...nextConfig, distDir } : nextConfig;
   // Turbopack rejects a `webpack` key. `pnpm build` is `--webpack`.
-  if (process.env.TURBOPACK) return nextConfig;
+  if (process.env.TURBOPACK) return base;
   return {
-    ...nextConfig,
+    ...base,
     webpack: (config, options) => applyWebpack(config, options),
   };
 }

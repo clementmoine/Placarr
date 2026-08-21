@@ -22,9 +22,9 @@ describe("catalogueExtractRunner targets", () => {
     for (const pack of CATALOGUE_PACKS) {
       expect(isCatalogueExtractTarget(pack.extractTarget), pack.id).toBe(true);
     }
-    expect(CATALOGUE_EXTRACT_TARGETS).toEqual(
-      CATALOGUE_PACKS.map((pack) => pack.extractTarget),
-    );
+    expect(CATALOGUE_EXTRACT_TARGETS).toEqual([
+      ...new Set(CATALOGUE_PACKS.map((pack) => pack.extractTarget)),
+    ]);
   });
 
   it("exposes one target per pack", () => {
@@ -37,10 +37,13 @@ describe("catalogueExtractRunner targets", () => {
     expect(normalizeCatalogueExtractTarget("lorcana-cards")).toBe("lorcana");
     expect(normalizeCatalogueExtractTarget("lorcana-mobile")).toBe("lorcana");
     expect(normalizeCatalogueExtractTarget("naruto-cacg")).toBe("naruto");
+    expect(normalizeCatalogueExtractTarget("naruto/carddass")).toBe("naruto");
+    expect(normalizeCatalogueExtractTarget("naruto/ccg")).toBe("naruto");
+    expect(normalizeCatalogueExtractTarget("naruto/en-ccg")).toBe("naruto");
     expect(normalizeCatalogueExtractTarget("dbs/cg")).toBe("dbs-cg");
     expect(normalizeCatalogueExtractTarget("fusionworld")).toBe("dbs-fw");
     expect(catalogueExtractLabel("lorcana")).toBe("Lorcana");
-    expect(catalogueExtractLabel("naruto")).toBe("Naruto CCG");
+    expect(catalogueExtractLabel("naruto")).toBe("Naruto Carddass");
     expect(catalogueExtractLabel("dbs-cg")).toBe("Dragon Ball Masters");
   });
 
@@ -56,6 +59,7 @@ describe("catalogueExtractRunner targets", () => {
     // Clone EN dump, HTTP FR faces; existing files skipped unless --force.
     expect(masters.prelude.some((line) => /TCG Arena/i.test(line))).toBe(true);
     expect(masters.prelude.some((line) => /--force/.test(line))).toBe(true);
+    expect(masters.prelude.some((line) => /produit/i.test(line))).toBe(true);
     const fw = await resolveCatalogueExtractCommand("dbs-fw");
     expect(
       fw.args.some(
@@ -64,6 +68,7 @@ describe("catalogueExtractRunner targets", () => {
           a.includes("/dbsfw/cli.ts"),
       ),
     ).toBe(true);
+    expect(fw.prelude.some((line) => /produit/i.test(line))).toBe(true);
   });
 
   it("builds Naruto Wayback catalogue sync command", async () => {
@@ -77,6 +82,7 @@ describe("catalogueExtractRunner targets", () => {
       ),
     ).toBe(true);
     expect(cmd.prelude.some((l) => /Naruto/i.test(l))).toBe(true);
+    expect(cmd.prelude.some((l) => /Storm 3/i.test(l))).toBe(true);
   });
 
   it("builds a full Lorcana command (web + cards; Unity when APK exists)", async () => {
@@ -86,7 +92,12 @@ describe("catalogueExtractRunner targets", () => {
       cmd.args.some((a) => a.includes("src/providers/lorcanatcg/cli.ts")),
     ).toBe(true);
     expect(cmd.args).toEqual(
-      expect.arrayContaining(["--providers", "lorcanaweb", "lorcanacards"]),
+      expect.arrayContaining([
+        "--providers",
+        "lorcanaweb",
+        "lorcanacards",
+        "lorcanaproducts",
+      ]),
     );
   });
 
@@ -117,8 +128,10 @@ describe("catalogueExtractRunner targets", () => {
     expect(cmd.args).toEqual(
       expect.arrayContaining(["--langs", "fr,en,de,it,es,ptbr", "--no-job"]),
     );
+    expect(cmd.args).toContain("--products");
     expect(cmd.prelude.some((l) => /inventory/i.test(l))).toBe(true);
     expect(cmd.prelude.some((l) => /Malie/i.test(l))).toBe(true);
+    expect(cmd.prelude.some((l) => /pkmcards/i.test(l))).toBe(true);
   });
 
   it("pokemon extract passes --refresh-manifests for catalogue scope", async () => {

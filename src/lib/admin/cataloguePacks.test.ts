@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,11 +8,16 @@ import {
   catalogueCollectorKey,
   entryHasFoil,
   langFilesHaveFoil,
+  mergeNarutoCatalogueFaces,
 } from "@/lib/admin/catalogueCards";
 import {
+  applyCataloguePackParams,
+  catalogueCorpusPack,
   catalogueFranchises,
   catalogueFranchiseForPack,
   foilExtractNeedsApk,
+  narutoCatalogueLineForCard,
+  narutoCatalogueLineForSealed,
   resolveCataloguePackId,
   resolveCatalogueScope,
   cataloguePackInfo,
@@ -18,16 +26,32 @@ import {
 describe("cataloguePacks", () => {
   it("resolves pack ids and aliases", () => {
     expect(resolveCataloguePackId("pokemon")).toBe("pokemon");
-    expect(resolveCataloguePackId("carddass")).toBe("naruto/ccg");
-    expect(resolveCataloguePackId("naruto")).toBe("naruto/ccg");
-    expect(resolveCataloguePackId("ccg")).toBe("naruto/ccg");
+    expect(resolveCataloguePackId("carddass")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("naruto")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("cacg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("naruto/ccg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("naruto/en-ccg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("ccg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("bandaiccg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("enccg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("storm3")).toBe("naruto/carddass");
     expect(resolveCataloguePackId("dbs")).toBe("dbs/cg");
     expect(resolveCataloguePackId("masters")).toBe("dbs/cg");
     expect(resolveCataloguePackId("fusionworld")).toBe("dbs/fw");
     expect(resolveCataloguePackId("nope")).toBeNull();
   });
 
-  it("groups Dragon Ball lines under one franchise (Naruto stays one line until Panini)", () => {
+  /*
+    Naruto a deux lignes, et une seule raison de les avoir : le Carddass
+    (2002-2007) et le 疾風伝 (2007-2009) sont **deux jeux** — maquette, année et
+    dos différents.
+
+    Ce que ce test protège n'a pas changé : le **CCG anglais** ne doit pas
+    devenir une ligne. Il partage la numérotation et le verso du Carddass, dont
+    il est la localisation ; lui donner un onglet séparerait ce qui est un même
+    jeu. D'où les deux assertions sur `naruto/en-ccg`, restées intactes.
+  */
+  it("donne deux lignes à Naruto, sans en faire une pour le CCG anglais", () => {
     const franchises = catalogueFranchises();
     expect(franchises.map((row) => row.id)).toEqual([
       "pokemon",
@@ -36,17 +60,74 @@ describe("cataloguePacks", () => {
       "dbs",
     ]);
     const naruto = franchises.find((row) => row.id === "naruto");
-    expect(naruto?.lines.map((line) => line.id)).toEqual(["naruto/ccg"]);
+    expect(naruto?.lines.map((line) => line.id)).toEqual([
+      "naruto/carddass",
+      "naruto/shippuden",
+    ]);
     const dbs = catalogueFranchiseForPack("dbs/fw");
     expect(dbs?.id).toBe("dbs");
     expect(dbs?.lines.map((line) => line.id)).toEqual(["dbs/cg", "dbs/fw"]);
+    expect(catalogueCorpusPack("naruto/en-ccg")).toBe("naruto/carddass");
+    expect(cataloguePackInfo("naruto/en-ccg")).toBeNull();
+    expect(cataloguePackInfo("naruto/carddass")?.blurbFr).toContain("voisins");
     expect(foilExtractNeedsApk("naruto")).toBe(false);
     expect(foilExtractNeedsApk("dbs-cg")).toBe(false);
     expect(foilExtractNeedsApk("pokemon")).toBe(true);
   });
 
+  it("splits Carddass NI/TE from EN CCG N/J/M — s1 is not enough", () => {
+    expect(narutoCatalogueLineForCard("ni001", "s1")).toBe("carddass-fr");
+    expect(narutoCatalogueLineForCard("n001", "s1")).toBe("en-ccg");
+    expect(narutoCatalogueLineForCard("n1621", "s28")).toBe("en-ccg");
+    expect(narutoCatalogueLineForCard("j1002", "s28")).toBe("en-ccg");
+    expect(narutoCatalogueLineForCard("te001", "s1")).toBe("carddass-fr");
+    expect(
+      narutoCatalogueLineForSealed({
+        slug: "booster-s1",
+        setCode: "s1",
+        lang: "FR",
+      }),
+    ).toBe("carddass-fr");
+    expect(
+      narutoCatalogueLineForSealed({
+        slug: "display-s28",
+        setCode: "s28",
+        lang: "EN",
+      }),
+    ).toBe("en-ccg");
+    expect(
+      narutoCatalogueLineForSealed({ slug: "display-s13", setCode: "s13" }),
+    ).toBe("en-ccg");
+    expect(
+      narutoCatalogueLineForSealed({
+        slug: "display-s1-it",
+        setCode: "s1",
+        lang: "IT",
+      }),
+    ).toBe("carddass-fr");
+    expect(
+      narutoCatalogueLineForSealed({
+        slug: "booster-vol5-jp",
+        setCode: "maki5",
+        lang: "JA",
+      }),
+    ).toBe("carddass-fr");
+  });
+
+  it("keeps Catalogue pack helpers free of node: (admin client bundle)", () => {
+    const files = [
+      "src/lib/admin/cataloguePacks.ts",
+      "src/providers/narutoccg/packs.ts",
+    ];
+    for (const rel of files) {
+      const src = readFileSync(path.join(process.cwd(), rel), "utf8");
+      expect(`${rel}\n${src}`).not.toMatch(/from ["']node:/);
+    }
+  });
+
   it("forces all scope when pack has no foil effects", () => {
-    const naruto = cataloguePackInfo("naruto/ccg")!;
+    const naruto = cataloguePackInfo("naruto/carddass")!;
+    expect(resolveCatalogueScope("sealed", naruto)).toBe("sealed");
     expect(resolveCatalogueScope("foils", naruto)).toBe("all");
     expect(resolveCatalogueScope(null, naruto)).toBe("all");
   });
@@ -55,6 +136,22 @@ describe("cataloguePacks", () => {
     const pokemon = cataloguePackInfo("pokemon")!;
     expect(resolveCatalogueScope(null, pokemon)).toBe("foils");
     expect(resolveCatalogueScope("all", pokemon)).toBe("all");
+    expect(resolveCatalogueScope("sealed", pokemon)).toBe("sealed");
+  });
+
+  it("keeps the sealed tab when switching packs", () => {
+    const sealed = new URLSearchParams("pack=pokemon&scope=sealed");
+    applyCataloguePackParams(sealed, "naruto/carddass");
+    expect(sealed.get("pack")).toBe("naruto/carddass");
+    expect(sealed.get("scope")).toBe("sealed");
+
+    const foilsToNaruto = new URLSearchParams("pack=pokemon");
+    applyCataloguePackParams(foilsToNaruto, "naruto/carddass");
+    expect(foilsToNaruto.get("scope")).toBe("all");
+
+    const sealedToPokemon = new URLSearchParams("pack=dbs/cg&scope=sealed");
+    applyCataloguePackParams(sealedToPokemon, "pokemon");
+    expect(sealedToPokemon.get("scope")).toBe("sealed");
   });
 });
 
@@ -83,17 +180,213 @@ describe("catalogueCards foil detection", () => {
   });
 });
 
+describe("Naruto catalogue lines", () => {
+  it("puts NI and N in the same Carddass grid, one tile per locale", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s1-ni001": {
+          set: "s1",
+          card: "ni001",
+          name: "Naruto Uzumaki",
+          langs: {
+            fr: { art: "art.jpg", name: "Naruto Uzumaki" },
+            ja: { name: "うずまきナルト" },
+          },
+        },
+        "naruto:s1-n001": {
+          set: "s1",
+          card: "n001",
+          name: "Naruto Uzumaki",
+          langs: { en: { art: "art.jpg" } },
+        },
+        "naruto:s28-n1621": {
+          set: "s28",
+          card: "n1621",
+          name: "Kisame",
+          langs: {
+            en: { art: "art.jpg", name: "Kisame Hoshigaki" },
+            fr: { art: "art.jpg", name: "Kisame Hoshigaki" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    expect(rows.map((row) => `${row.card}:${row.lang}`)).toEqual([
+      "ni001:fr",
+      "ni001:ja",
+      "n001:en",
+      "n1621:fr",
+      "n1621:en",
+    ]);
+    expect(
+      rows.find((row) => row.card === "n1621" && row.lang === "en")?.artUrl,
+    ).toBe("/assets/naruto/carddass/cards/ninja/n1621/en/art.jpg");
+    expect(
+      rows.find((row) => row.card === "ni001" && row.lang === "ja")?.name,
+    ).toBe("うずまきナルト");
+  });
+
+  it("keeps unprinted S6 FR in the catalogue and marks it", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:ni-0255": {
+          set: "ninja",
+          card: "ni0255",
+          name: "Pré-prod S6",
+          langs: { fr: { art: "art.jpg", printed: false } },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.printed).toBe(false);
+    expect(rows[0]?.artUrl).toContain("/ninja/ni0255/fr/");
+  });
+
+  it("shows one FR Kakashi for NI-064, not a junk S6 stub", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:ni-0064": {
+          set: "ninja",
+          card: "ni0064",
+          name: "Kakashi Hatake",
+          langs: {
+            fr: { name: "Kakashi Hatake", art: "art.jpg" },
+            it: { name: "Kakashi Hatake" },
+          },
+        },
+        "naruto:s6-ni064": {
+          set: "s6",
+          card: "ni064",
+          name: "qui",
+          langs: { fr: { name: "qui", printed: false } },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    const fr = rows.filter((row) => row.lang === "fr");
+    expect(fr).toHaveLength(1);
+    expect(fr[0]?.printKey).toBe("naruto:ni-0064");
+    expect(fr[0]?.name).toBe("Kakashi Hatake");
+    expect(fr[0]?.printed).toBeUndefined();
+    expect(fr[0]?.artFallbackFrom).toBeUndefined();
+  });
+
+  it("shows one FR Sasuke for NI-086 even when the stub key is unpadded", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:ni-0086": {
+          set: "ninja",
+          card: "ni0086",
+          name: "Sasuke Uchiwa",
+          langs: { fr: { name: "Sasuke Uchiwa", art: "art.jpg" } },
+        },
+        "naruto:ni-086": {
+          set: "s6",
+          card: "ni086",
+          name: "Sasuke Uchiwa",
+          langs: { fr: { name: "Sasuke Uchiwa", printed: false } },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    const fr = rows.filter((row) => row.lang === "fr");
+    expect(fr).toHaveLength(1);
+    expect(fr[0]?.printKey).toBe("naruto:ni-0086");
+    expect(fr[0]?.name).toBe("Sasuke Uchiwa");
+    expect(fr[0]?.printed).toBeUndefined();
+    expect(fr[0]?.artFallbackFrom).toBeUndefined();
+  });
+});
+
 describe("same-number art fallback (Naruto)", () => {
   it("normalizes collector keys", () => {
-    expect(catalogueCollectorKey("ni024")).toBe("ni024");
-    expect(catalogueCollectorKey("TE-030-cdf")).toBe("te030");
-    expect(catalogueCollectorKey("te030-cdf")).toBe("te030");
+    expect(catalogueCollectorKey("ni024")).toBe("ni:0024");
+    expect(catalogueCollectorKey("n024")).toBe("n:0024");
+    expect(catalogueCollectorKey("TE-030-cdf")).toBe("te:0030");
+    expect(catalogueCollectorKey("te030-cdf")).toBe("te:0030");
+    expect(catalogueCollectorKey("j001")).toBe("j:0001");
+    expect(catalogueCollectorKey("ta081")).toBe("ta:0081");
+    expect(catalogueCollectorKey("M-081")).toBe("m:0081");
+    expect(catalogueCollectorKey("n1621")).toBe("n:1621");
+    expect(catalogueCollectorKey("j1002")).toBe("j:1002");
+  });
+
+  it("lines FR / EN printings of the same number, ignoring series", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s7-n001": {
+          set: "s7",
+          card: "n001",
+          name: "Naruto Uzumaki",
+          langs: { en: { art: "art.jpg" } },
+        },
+        "naruto:s1-ni001": {
+          set: "s1",
+          card: "ni001",
+          name: "Naruto Uzumaki",
+          langs: { fr: { art: "art.jpg" } },
+        },
+        "naruto:s1-te001": {
+          set: "s1",
+          card: "te001",
+          name: "Kunai",
+          langs: { fr: { art: "art.jpg" } },
+        },
+        "naruto:s7-j001": {
+          set: "s7",
+          card: "j001",
+          name: "Kunai",
+          langs: { en: { art: "art.jpg" } },
+        },
+        "naruto:s2-ta081": {
+          set: "s2",
+          card: "ta081",
+          name: "Livre de la Terre",
+          langs: { fr: { art: "art.jpg" } },
+        },
+        "naruto:s2-m081": {
+          set: "s2",
+          card: "m081",
+          name: "Earth Scroll",
+          langs: { en: { art: "art.jpg" } },
+        },
+      },
+    };
+    const rows = mergeNarutoCatalogueFaces(
+      buildCatalogueCardRows("naruto/carddass", index),
+    );
+    expect(rows.map((row) => row.card)).toEqual([
+      "ni001",
+      "n001",
+      "te001",
+      "j001",
+      "ta081",
+      "m081",
+    ]);
+    expect(rows[0]?.label).toMatch(/^NI-001/);
+    expect(rows[1]?.label).toMatch(/^N-001/);
   });
 
   it("inherits retail face onto promo stub until official art exists", () => {
     const index = {
       version: 1 as const,
-      pack: "naruto/ccg",
+      pack: "naruto/carddass",
       generatedAt: "2026-01-01T00:00:00.000Z",
       cards: {
         "naruto:s1-ni024": {
@@ -111,10 +404,10 @@ describe("same-number art fallback (Naruto)", () => {
         },
       },
     };
-    const rows = buildCatalogueCardRows("naruto/ccg", index);
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
     const promo = rows.find((r) => r.printKey === "naruto:promo-ni024");
     const retail = rows.find((r) => r.printKey === "naruto:s1-ni024");
-    expect(retail?.artUrl).toContain("/s1/");
+    expect(retail?.artUrl).toContain("/ninja/ni0024/fr/");
     expect(promo?.missingArt).toBeUndefined();
     expect(promo?.artFallbackFrom).toBe("naruto:s1-ni024");
     expect(promo?.artUrl).toBe(retail?.artUrl);
@@ -232,7 +525,7 @@ describe("same-number art fallback (Naruto)", () => {
   it("prefers non-promo donor and matches cdf grouping to base number", () => {
     const index = {
       version: 1 as const,
-      pack: "naruto/ccg",
+      pack: "naruto/carddass",
       generatedAt: "2026-01-01T00:00:00.000Z",
       cards: {
         "naruto:s3-te030": {
@@ -253,7 +546,7 @@ describe("same-number art fallback (Naruto)", () => {
         },
       },
     };
-    const rows = buildCatalogueCardRows("naruto/ccg", index);
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
     const cdf = rows.find((r) => r.printKey === "naruto:promo-te030-cdf");
     expect(cdf?.artFallbackFrom).toBe("naruto:s3-te030");
   });
@@ -302,18 +595,18 @@ describe("mergeCatalogueBackRows", () => {
       },
     ];
     const rows = mergeCatalogueBackRows({
-      pack: "naruto/ccg",
+      pack: "naruto/carddass",
       faceRows: faces,
-      packBackUrl: "/assets/naruto/ccg/cards/back.webp",
+      packBackUrl: "/assets/naruto/carddass/cards/back.webp",
       setBackUrls: {
-        s1: "/assets/naruto/ccg/cards/s1/back.webp",
+        s1: "/assets/naruto/carddass/cards/s1/back.webp",
         // s2 intentionally missing
       },
     });
     expect(rows.map((r) => r.printKey)).toEqual([
-      "naruto/ccg:__pack-back__",
+      "naruto/carddass:__pack-back__",
       "naruto:promo-ni001",
-      "naruto/ccg:__set-back-s1__",
+      "naruto/carddass:__set-back-s1__",
       "naruto:s1-ni001",
       "naruto:s1-ni002",
       "naruto:s2-ni001",
@@ -340,7 +633,7 @@ describe("mergeCatalogueBackRows", () => {
     ];
     expect(
       mergeCatalogueBackRows({
-        pack: "naruto/ccg",
+        pack: "naruto/carddass",
         faceRows: faces,
         packBackUrl: null,
         setBackUrls: {},

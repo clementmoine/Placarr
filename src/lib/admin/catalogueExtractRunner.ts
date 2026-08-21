@@ -17,7 +17,6 @@ import { DBS_CG_CLI_PATH } from "@/providers/dbscg/cli";
 import { DBS_FW_CLI_PATH } from "@/providers/dbsfw/cli";
 import {
   CATALOGUE_PACKS,
-  cataloguePackForExtractTarget,
   type CatalogueExtractTarget,
 } from "@/lib/admin/cataloguePacks";
 
@@ -46,7 +45,10 @@ export function normalizeCatalogueExtractTarget(
   if (
     value === "naruto-cacg" ||
     value === "carddass" ||
-    value === "naruto/ccg"
+    value === "naruto/carddass" ||
+    value === "naruto/ccg" ||
+    value === "naruto/en-ccg" ||
+    value === "naruto-en-ccg"
   ) {
     return "naruto";
   }
@@ -70,8 +72,9 @@ export function isCatalogueExtractTarget(
 }
 
 export function catalogueExtractLabel(target: CatalogueExtractTarget): string {
-  const pack = cataloguePackForExtractTarget(target);
-  return pack?.labelEn ?? target;
+  const packs = CATALOGUE_PACKS.filter((pack) => pack.extractTarget === target);
+  if (packs.length > 1) return packs[0]!.franchiseLabelEn;
+  return packs[0]?.labelEn ?? target;
 }
 
 /** Inventory / Lorcana — CDN scrape + extract within a dev session. */
@@ -153,8 +156,8 @@ export async function resolveCatalogueExtractCommand(
     const apk = await preferredLorcanaApk();
     // Always scrape CSS + catalogue cards; Unity when an APK is present.
     const providers = apk
-      ? ["lorcanaweb", "lorcanacards", "lorcanamobile"]
-      : ["lorcanaweb", "lorcanacards"];
+      ? ["lorcanaweb", "lorcanacards", "lorcanaproducts", "lorcanamobile"]
+      : ["lorcanaweb", "lorcanacards", "lorcanaproducts"];
     const args = ["--providers", ...providers, "--no-job"];
     const prelude: string[] = [];
     if (apk) {
@@ -165,6 +168,9 @@ export async function resolveCatalogueExtractCommand(
         "skip Unity: no APK under data/lorcana/staging/apks/ (web + cards only)",
       );
     }
+    prelude.push(
+      "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
+    );
     return {
       command: path.join(root, "node_modules/.bin/tsx"),
       args: [path.join(root, "src/providers/lorcanatcg/cli.ts"), ...args],
@@ -175,7 +181,10 @@ export async function resolveCatalogueExtractCommand(
     return {
       command: path.join(root, "node_modules/.bin/tsx"),
       args: [NARUTO_CCG_CLI_PATH],
-      prelude: ["Naruto CCG: Wayback → data/naruto/ccg (catalogue fermé)"],
+      prelude: [
+        "Naruto: Carddass FR+IT+JA + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
+        "scellés FR : packshots carddass.fr (boosters / starters / tin) → products-index.json",
+      ],
     };
   }
   if (target === "dbs-cg") {
@@ -185,6 +194,7 @@ export async function resolveCatalogueExtractCommand(
       prelude: [
         "Dragon Ball Masters: cardlists Bandai FR+EN + clone TCG Arena → data/dbs/cg",
         "noms FR et EN dans l’index ; faces HTTP (FR dbscards / Bandai) séquentielles ; dump EN déjà rangé ignoré — --force pour écraser",
+        "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
       ],
     };
   }
@@ -194,6 +204,7 @@ export async function resolveCatalogueExtractCommand(
       args: [DBS_FW_CLI_PATH],
       prelude: [
         "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dbs/fw",
+        "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
       ],
     };
   }
@@ -209,6 +220,10 @@ export async function resolveCatalogueExtractCommand(
       : [
           "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
         ];
+  args.push("--products");
+  prelude.push(
+    "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
+  );
   if (scope === "catalogue") args.push("--refresh-manifests");
   prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
   return {

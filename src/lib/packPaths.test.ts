@@ -57,12 +57,18 @@ describe("packPaths", () => {
       rest: ["cards", "s1", "en", "1"],
     });
     expect(
+      splitAssetsPackPath(["naruto", "carddass", "cards", "s1", "fr", "ni001"]),
+    ).toEqual({
+      pack: "naruto/carddass",
+      rest: ["cards", "s1", "fr", "ni001"],
+    });
+    expect(
       splitAssetsPackPath(["naruto", "ccg", "cards", "s1", "fr", "ni001"]),
     ).toEqual({
       pack: "naruto/ccg",
       rest: ["cards", "s1", "fr", "ni001"],
     });
-    expect(splitAssetsPackPath(["naruto", "ccg"])).toBeNull();
+    expect(splitAssetsPackPath(["naruto", "carddass"])).toBeNull();
   });
 
   it("serves the render kit, which clients address without a foil segment", async () => {
@@ -71,13 +77,15 @@ describe("packPaths", () => {
     // `/assets/lorcana/web/calc.jpg` and `/assets/pokemon/shaders/x.frag` are
     // what holoShaders / cssRecipes build. Accepting only `cards` and `foil`
     // here 404'd every shader and web texture of every pack.
-    for (const root of ["web", "shaders", "textures"]) {
+    for (const root of ["web", "shaders", "textures", "products"]) {
       expect(splitAssetsPackPath(["lorcana", root, "x.jpg"])).toEqual({
         pack: "lorcana",
         rest: [root, "x.jpg"],
       });
-      expect(splitAssetsPackPath(["naruto", "ccg", root, "x.jpg"])).toEqual({
-        pack: "naruto/ccg",
+      expect(
+        splitAssetsPackPath(["naruto", "carddass", root, "x.jpg"]),
+      ).toEqual({
+        pack: "naruto/carddass",
         rest: [root, "x.jpg"],
       });
     }
@@ -86,6 +94,12 @@ describe("packPaths", () => {
     // Kit paths land under `data/<pack>/foil/`, catalogue paths under `cards/`.
     expect(mapped.root.endsWith("/lorcana/foil")).toBe(true);
     expect(mapped.relative).toEqual(["web", "calc.jpg"]);
+    const products = resolveAssetsDiskRoot("naruto/carddass", [
+      "products",
+      "booster-s1.gif",
+    ])!;
+    expect(products.root.endsWith("/naruto/carddass/products")).toBe(true);
+    expect(products.relative).toEqual(["booster-s1.gif"]);
   });
 
   it("still refuses a segment that names neither a pack root nor a nest", async () => {
@@ -96,14 +110,12 @@ describe("packPaths", () => {
   it("resolves pack back.webp or back.png", async () => {
     const { assetsPackBackUrl, resolvePackBackPath } =
       await import("./packPaths");
-    // Naruto CCG ships curated back.webp under data/naruto/ccg/cards/.
-    const naruto = resolvePackBackPath("naruto/ccg");
+    // Naruto ships back.{lang}.webp under data/naruto/carddass/cards/.
+    const naruto = resolvePackBackPath("naruto/carddass", "fr");
     if (naruto) {
-      expect(naruto.endsWith("back.png") || naruto.endsWith("back.webp")).toBe(
-        true,
-      );
-      expect(assetsPackBackUrl("naruto/ccg")).toMatch(
-        /^\/assets\/naruto\/ccg\/cards\/back\.(png|webp)$/,
+      expect(naruto.endsWith("back.fr.webp")).toBe(true);
+      expect(assetsPackBackUrl("naruto/carddass", "fr")).toBe(
+        "/assets/naruto/carddass/cards/back.fr.webp",
       );
     }
   });
@@ -112,9 +124,9 @@ describe("packPaths", () => {
     const { resolveSetBackPath, assetsSetBackUrl } =
       await import("./packPaths");
     // No set verso is required; helpers must reject path traversal and stay null.
-    expect(resolveSetBackPath("naruto/ccg", "../etc")).toBeNull();
-    expect(resolveSetBackPath("naruto/ccg", "s1/../s2")).toBeNull();
-    expect(assetsSetBackUrl("naruto/ccg", "s1/../s2")).toBeNull();
+    expect(resolveSetBackPath("naruto/carddass", "../etc")).toBeNull();
+    expect(resolveSetBackPath("naruto/carddass", "s1/../s2")).toBeNull();
+    expect(assetsSetBackUrl("naruto/carddass", "s1/../s2")).toBeNull();
   });
 });
 
@@ -133,23 +145,51 @@ describe("loose file at the pack foil root", () => {
     });
     const nested = splitAssetsPackPath([
       "naruto",
-      "ccg",
+      "carddass",
       "full_foil_mask.webp",
     ]);
     expect(nested).toEqual({
+      pack: "naruto/carddass",
+      rest: ["full_foil_mask.webp"],
+    });
+    const legacy = splitAssetsPackPath([
+      "naruto",
+      "ccg",
+      "full_foil_mask.webp",
+    ]);
+    expect(legacy).toEqual({
       pack: "naruto/ccg",
       rest: ["full_foil_mask.webp"],
     });
+    expect(
+      resolveAssetsDiskRoot(legacy!.pack, legacy!.rest)!.root.endsWith(
+        "naruto/carddass/foil",
+      ),
+    ).toBe(true);
+    const enCcg = splitAssetsPackPath([
+      "naruto",
+      "en-ccg",
+      "full_foil_mask.webp",
+    ]);
+    expect(enCcg).toEqual({
+      pack: "naruto/en-ccg",
+      rest: ["full_foil_mask.webp"],
+    });
+    expect(
+      resolveAssetsDiskRoot(enCcg!.pack, enCcg!.rest)!.root.endsWith(
+        "naruto/carddass/foil",
+      ),
+    ).toBe(true);
     // The `foil` segment is implicit in the disk root — it must not be doubled.
     const mapped = resolveAssetsDiskRoot(nested!.pack, nested!.rest)!;
-    expect(mapped.root.endsWith("naruto/ccg/foil")).toBe(true);
+    expect(mapped.root.endsWith("naruto/carddass/foil")).toBe(true);
     expect(mapped.relative).toEqual(["full_foil_mask.webp"]);
   });
 
   it("still refuses a bare segment, which is a pack name or a traversal", async () => {
     const { splitAssetsPackPath } = await import("./packPaths");
-    // No extension: `ccg` is the product line, not a file.
-    expect(splitAssetsPackPath(["naruto", "ccg"])).toBeNull();
+    // No extension: `carddass` is the product line, not a file.
+    expect(splitAssetsPackPath(["naruto", "carddass"])).toBeNull();
     expect(splitAssetsPackPath(["lorcana", "passwd"])).toBeNull();
     expect(splitAssetsPackPath(["lorcana", "..", "secret.env"])).toBeNull();
   });

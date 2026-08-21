@@ -2,28 +2,38 @@
  * Admin Catalogue packs — local `data/<pack>/` corpora (cards-index + optional foil kit).
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
- * Dragon Ball has Masters + Fusion World; Naruto is CCG today and will grow
- * the same way (Panini, …) without a second top-level tab.
+ * Dragon Ball has Masters + Fusion World. Naruto is one catalogue (Carddass):
+ * NI sits beside N, FR / EN / IT / JA are language slots.
  */
+
+import {
+  narutoCatalogueLineForCard as narutoLineForCard,
+  narutoCatalogueLineForSealed as narutoLineForSealed,
+  type NarutoCardLine,
+} from "@/providers/narutoccg/packs";
 
 export const CATALOGUE_PACK_IDS = [
   "pokemon",
   "lorcana",
-  "naruto/ccg",
+  "naruto/carddass",
+  "naruto/shippuden",
   "dbs/cg",
   "dbs/fw",
 ] as const;
 export type CataloguePackId = (typeof CATALOGUE_PACK_IDS)[number];
 
-export type CatalogueBrowseScope = "foils" | "all";
+export type CatalogueBrowseScope = "foils" | "all" | "sealed";
+
+/** Naruto disk / verso line — same game, different back and sealed SKUs. */
+export type CatalogueCardLine = NarutoCardLine;
 
 /**
  * Worker / admin extract target. May differ from the data pack id (Naruto:
- * pack `naruto/ccg`, target `naruto`) so a second line can take its own target
+ * pack `naruto/carddass`, target `naruto`) so a second line can take its own target
  * later (`naruto-panini`) without breaking existing jobs.
  */
 export type CatalogueExtractTarget =
-  "lorcana" | "pokemon" | "naruto" | "dbs-cg" | "dbs-fw";
+  "lorcana" | "pokemon" | "naruto" | "naruto-shippuden" | "dbs-cg" | "dbs-fw";
 
 export type CatalogueFranchiseId = "pokemon" | "lorcana" | "naruto" | "dbs";
 
@@ -45,7 +55,7 @@ export type CataloguePackInfo = {
   defaultScope: CatalogueBrowseScope;
   /**
    * When a print has no face yet, reuse art from another print that shares the
-   * same collector number (Naruto NI/TE/TA… — unsafe for Pokémon set numbers).
+   * same printed prefix + number (Naruto promo stub → retail — not NI→N).
    */
   sameNumberArtFallback?: boolean;
   extractTarget: CatalogueExtractTarget;
@@ -90,21 +100,48 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "lorcana",
   },
   {
-    id: "naruto/ccg",
+    id: "naruto/carddass",
     franchiseId: "naruto",
     franchiseLabelFr: "Naruto",
     franchiseLabelEn: "Naruto",
-    lineLabelFr: "CCG",
-    lineLabelEn: "CCG",
-    labelFr: "Naruto CCG",
-    labelEn: "Naruto CCG",
+    lineLabelFr: "Carddass",
+    lineLabelEn: "Carddass",
+    labelFr: "Naruto Carddass",
+    labelEn: "Naruto Carddass",
     hasFoilEffects: false,
     defaultScope: "all",
     sameNumberArtFallback: true,
     extractTarget: "naruto",
     catalogueOnly: true,
-    blurbFr: "Catalogue local — pas de dump foil",
-    blurbEn: "Local catalogue — no foil dump",
+    blurbFr:
+      "Un jeu, quatre langues. NI et N sont voisins, pas la même carte. S6 FR visible, pas addable.",
+    blurbEn:
+      "One game, four languages. NI and N sit side by side, they are not the same card. S6 FR visible, not addable.",
+  },
+  {
+    /*
+      Le 疾風伝 est une **ligne** de la franchise Naruto, pas une franchise à
+      part : même onglet, deux lignes — exactement comme Masters et Fusion World
+      chez Dragon Ball. Ce qui les sépare est réel (autre jeu, autre maquette,
+      autre dos), ce qui les rapproche aussi : c'est le même univers, et on les
+      cherche au même endroit.
+    */
+    id: "naruto/shippuden",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "疾風伝",
+    lineLabelEn: "疾風伝",
+    labelFr: "Naruto 疾風伝",
+    labelEn: "Naruto 疾風伝",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "naruto-shippuden",
+    catalogueOnly: true,
+    blurbFr:
+      "Jeu 疾風伝 (2007-2009), japonais seul. Familles 忍伝 / 術伝 / 作伝, actes 第一幕 à 第四幕. Ni le Carddass, ni le CCG anglais.",
+    blurbEn:
+      "The 疾風伝 game (2007-2009), Japanese only. 忍伝 / 術伝 / 作伝 families, acts 第一幕 to 第四幕. Neither the Carddass nor the English CCG.",
   },
   {
     id: "dbs/cg",
@@ -216,14 +253,21 @@ export function resolveCataloguePackId(
   const raw = (slug ?? "").trim().toLowerCase();
   if (!raw) return null;
   if (isCataloguePackId(raw)) return raw;
+  if (raw === "naruto/ccg" || raw === "naruto/en-ccg") return "naruto/carddass";
   const wanted = raw.replace(/[^a-z0-9]/g, "");
   if (!wanted) return null;
   const aliases: Record<string, CataloguePackId> = {
     pokemonpaper: "pokemon",
-    carddass: "naruto/ccg",
-    naruto: "naruto/ccg",
-    cacg: "naruto/ccg",
-    ccg: "naruto/ccg",
+    carddass: "naruto/carddass",
+    naruto: "naruto/carddass",
+    cacg: "naruto/carddass",
+    jcc: "naruto/carddass",
+    ccg: "naruto/carddass",
+    enccg: "naruto/carddass",
+    narutoen: "naruto/carddass",
+    bandaiusa: "naruto/carddass",
+    bandaiccg: "naruto/carddass",
+    storm3: "naruto/carddass",
     dbs: "dbs/cg",
     dragonball: "dbs/cg",
     masters: "dbs/cg",
@@ -242,6 +286,14 @@ export function resolveCatalogueScope(
   pack: CataloguePackInfo,
 ): CatalogueBrowseScope {
   const raw = (value ?? "").trim().toLowerCase();
+  if (
+    raw === "sealed" ||
+    raw === "scelles" ||
+    raw === "scellés" ||
+    raw === "products"
+  ) {
+    return "sealed";
+  }
   if (!pack.hasFoilEffects) return "all";
   if (raw === "all" || raw === "toutes" || raw === "cards") return "all";
   if (raw === "foils" || raw === "foil" || raw === "effects") return "foils";
@@ -260,10 +312,13 @@ export function applyCataloguePackParams(
   params.set("pack", packId);
   params.delete("material");
   const next = cataloguePackInfo(packId);
+  const scope = params.get("scope");
   if (next && !next.hasFoilEffects) {
-    params.set("scope", "all");
+    if (scope !== "sealed") params.set("scope", "all");
   } else if (next?.defaultScope === "foils") {
-    params.delete("scope");
+    if (scope !== "sealed" && scope !== "all") {
+      params.delete("scope");
+    }
   }
 }
 
@@ -276,4 +331,25 @@ export function cataloguePackForDataPack(
   dataPack: string | null | undefined,
 ): CataloguePackInfo | null {
   return cataloguePackInfo(dataPack);
+}
+
+/** Disk pack behind a Catalogue tab. */
+export function catalogueCorpusPack(packId: string): string {
+  if (packId === "naruto/en-ccg") return "naruto/carddass";
+  return packId;
+}
+
+export function narutoCatalogueLineForCard(
+  card: string,
+  set?: string,
+): CatalogueCardLine {
+  return narutoLineForCard(card, set);
+}
+
+export function narutoCatalogueLineForSealed(entry: {
+  lang?: string | null;
+  setCode?: string | null;
+  slug: string;
+}): CatalogueCardLine {
+  return narutoLineForSealed(entry);
 }

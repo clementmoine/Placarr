@@ -98,7 +98,7 @@ export async function readFoilPackStatuses(opts: {
   const packs: Array<{
     id: FoilPackId;
     label: string;
-    /** On-disk data pack (may nest: naruto/ccg, dbs/cg). */
+    /** On-disk data pack (may nest: naruto/carddass, dbs/cg). */
     dataPack: string;
     staging: string;
     extractTarget: CatalogueExtractTarget;
@@ -140,16 +140,16 @@ export async function readFoilPackStatuses(opts: {
     },
     {
       id: "naruto",
-      label: "Naruto CCG",
-      dataPack: "naruto/ccg",
-      staging: "naruto/ccg/staging",
+      label: "Naruto",
+      dataPack: "naruto/carddass",
+      staging: "naruto/carddass/staging",
       extractTarget: "naruto",
       apkRequired: false,
       extractMarkers: [
-        path.join(dataRoot, "naruto", "ccg", "cards-index.json"),
-        path.join(dataRoot, "naruto", "ccg", "catalog.sqlite"),
-        path.join(dataRoot, "naruto", "ccg", "cards"),
-        path.join(dataRoot, "naruto", "ccg", "cards", "back.webp"),
+        path.join(dataRoot, "naruto", "carddass", "cards-index.json"),
+        path.join(dataRoot, "naruto", "carddass", "catalog.sqlite"),
+        path.join(dataRoot, "naruto", "carddass", "cards"),
+        path.join(dataRoot, "naruto", "carddass", "cards", "back.webp"),
       ],
     },
     {

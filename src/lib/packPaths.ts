@@ -1,6 +1,6 @@
 /**
  * Pack data layout helpers — catalogue (`cards/`), render (`foil/`), staging.
- * Public URLs: `/assets/<pack>/…` (cards + foil kit) — see {@link ./packAssetUrls}.
+ * Public URLs: `/assets/<pack>/…` (cards + products + foil kit) — see {@link ./packAssetUrls}.
  * Disk path helpers use `node:path` — **server/scripts only**. Client code must
  * import URL helpers from `packAssetUrls` (FoilCardImage / effects graph).
  */
@@ -52,20 +52,30 @@ export function backFilenameCandidates(lang?: string | null): string[] {
   return names;
 }
 
+/** Old Carddass folder `naruto/ccg` still serves from `naruto/carddass`. */
+const PACK_DISK_ALIASES: Readonly<Record<string, string>> = {
+  "naruto/ccg": "naruto/carddass",
+  "naruto/en-ccg": "naruto/carddass",
+};
+
+export function canonicalDataPack(pack: string): string {
+  return PACK_DISK_ALIASES[pack] ?? pack;
+}
+
 export function packDataDir(pack: string): string {
-  return path.join(dataRoot(), pack);
+  return path.join(dataRoot(), canonicalDataPack(pack));
 }
 
 /** Catalogue faces + backs — `data/<pack>/cards`. */
 export function packCardsDir(pack: string): string {
-  return path.join(foilDataRoot(), pack, "cards");
+  return path.join(foilDataRoot(), canonicalDataPack(pack), "cards");
 }
 
 /** Render kit — `data/<pack>/foil` (shaders, FX textures, web). */
 export { foilPackDir };
 
 export function packStagingDir(pack: string): string {
-  return path.join(dataRoot(), pack, "staging");
+  return path.join(dataRoot(), canonicalDataPack(pack), "staging");
 }
 
 /** Uploaded / pulled APKs — `data/<pack>/staging/apks`. */
@@ -95,15 +105,25 @@ export function pokemonSimeyCssCardsDir(tree: PokemonSimeyTreeId): string {
 }
 
 export function packLogsDir(pack: string): string {
-  return path.join(dataRoot(), pack, "logs");
+  return path.join(dataRoot(), canonicalDataPack(pack), "logs");
 }
 
 export function packCatalogDb(pack: string): string {
-  return path.join(dataRoot(), pack, "catalog.sqlite");
+  return path.join(dataRoot(), canonicalDataPack(pack), "catalog.sqlite");
 }
 
 export function packCardsIndexPath(pack: string): string {
-  return path.join(dataRoot(), pack, "cards-index.json");
+  return path.join(dataRoot(), canonicalDataPack(pack), "cards-index.json");
+}
+
+/** Sealed SKUs — `data/<pack>/products-index.json`. */
+export function packProductsIndexPath(pack: string): string {
+  return path.join(dataRoot(), canonicalDataPack(pack), "products-index.json");
+}
+
+/** Local packshots — `data/<pack>/products/{slug}/{lang}/art.<source>.<ext>`. */
+export function packSealedProductsDir(pack: string): string {
+  return path.join(dataRoot(), canonicalDataPack(pack), "products");
 }
 
 /**
@@ -227,7 +247,7 @@ export function packCardDir(
 
 /**
  * Resolve a `/assets/<pack>/…` path segments (after host) to pack id + rest.
- * Supports nested product lines: `/assets/naruto/ccg/cards/…`.
+ * Supports nested product lines: `/assets/naruto/carddass/cards/…`.
  */
 /**
  * Segments that end a pack id and start its content.
@@ -241,6 +261,7 @@ export function packCardDir(
 const PACK_ASSET_ROOTS = [
   "cards",
   "foil",
+  "products",
   "web",
   "shaders",
   "textures",
@@ -267,7 +288,7 @@ export function splitAssetsPackPath(
   if (isPackAssetRoot(b)) {
     return { pack: a, rest: segments.slice(1) };
   }
-  // Nested product line: `naruto/ccg/cards/…`, `naruto/ccg/shaders/…`.
+  // Nested product line: `naruto/carddass/cards/…`, `naruto/carddass/shaders/…`.
   if (b && segOk(b) && isPackAssetRoot(c) && segments.length >= 3) {
     return { pack: `${a}/${b}`, rest: segments.slice(2) };
   }
@@ -276,7 +297,7 @@ export function splitAssetsPackPath(
     webp` is the one that matters, and it is what every pack's
     `fallbackFoilMaskUrl` points at. Requiring a directory root here made those
     URLs 404, so the Pokémon fallback mask had never once been served.
-    An extension is required so `naruto/ccg` stays a pack (not a file) and
+    An extension is required so `naruto/carddass` stays a pack (not a file) and
     `lorcana/etc/passwd` stays rejected.
   */
   if (segments.length === 2 && isPackAssetFile(b)) {
@@ -290,15 +311,19 @@ export function splitAssetsPackPath(
 
 /**
  * Resolve a `/assets/<pack>/…` path segments (after pack) to an absolute file
- * under cards/ or foil/ (staging is never served).
+ * under cards/, products/, or foil/ (staging is never served).
  */
 export function resolveAssetsDiskRoot(
   pack: string,
   rest: string[],
 ): { root: string; relative: string[] } | null {
   if (rest.length === 0) return null;
+  const disk = canonicalDataPack(pack);
   if (rest[0] === "cards") {
-    return { root: packCardsDir(pack), relative: rest.slice(1) };
+    return { root: packCardsDir(disk), relative: rest.slice(1) };
   }
-  return { root: foilPackDir(pack), relative: rest };
+  if (rest[0] === "products") {
+    return { root: packSealedProductsDir(disk), relative: rest.slice(1) };
+  }
+  return { root: foilPackDir(disk), relative: rest };
 }

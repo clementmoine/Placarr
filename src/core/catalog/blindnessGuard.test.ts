@@ -22,7 +22,19 @@ type ProviderLiteralInventory = Record<
 >;
 
 /** Empty = zero quoted provider ids outside `src/providers/` (+ tests). */
-const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {};
+const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
+  /*
+    Faux positif assumé, et le seul. `PACK_PRINT_GAME` associe un id de **pack**
+    au slug de jeu de ses `printKey` ; deux de ces slugs — `dbscg`, `dbsfw` —
+    s'écrivent comme l'id du provider correspondant. Ce ne sont pas des
+    références à un provider : cette table vit dans `providers/` exprès, pour
+    que `core/` n'ait jamais à nommer un TCG.
+
+    À ne pas confondre avec ce que le garde des imports frères interdit, lui,
+    pour de bon — voir `providers/shared/sharedBlindness.test.ts`.
+  */
+  "src/providers/shared/sealedProducts/ingest.ts": { dbscg: 2, dbsfw: 2 },
+};
 
 /**
  * Same idea for provider ids used as **unquoted object keys** (`philibert: …`).
@@ -37,6 +49,8 @@ const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
   "src/core/identify/lookup/lookups.ts": { ebay: 1, freakxy: 1 },
 };
 
+const SHARED_PROVIDER_DIR = path.join("src", "providers", "shared");
+
 const SOURCE_ROOTS = ["src", "scripts"];
 const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);
 
@@ -50,8 +64,23 @@ function listSourceFiles(dir: string, files: string[] = []): string[] {
     const relativePath = path.relative(process.cwd(), absolutePath);
 
     if (entry.isDirectory()) {
-      if (relativePath === "src/providers") continue;
-      if (relativePath.startsWith("src/providers/")) continue;
+      /*
+        `src/providers/shared/` est balayé comme le reste : c'est de
+        l'infrastructure, pas un provider. La distinction manquait, et c'est par
+        cet angle mort que du code partagé s'est mis à importer un provider
+        nommément et à brancher sur des ids de pack — ce que ce garde existe
+        précisément pour interdire ailleurs.
+      */
+      if (relativePath === "src/providers") {
+        listSourceFiles(path.join(absolutePath, "shared"), files);
+        continue;
+      }
+      if (
+        relativePath.startsWith("src/providers/") &&
+        !relativePath.startsWith(SHARED_PROVIDER_DIR)
+      ) {
+        continue;
+      }
       listSourceFiles(absolutePath, files);
       continue;
     }

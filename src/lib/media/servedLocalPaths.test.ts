@@ -11,7 +11,7 @@ describe("isServedLocalPath", () => {
   it("accepts both roots this app serves", () => {
     expect(isServedLocalPath("/uploads/abc.jpg")).toBe(true);
     expect(
-      isServedLocalPath("/assets/naruto/ccg/cards/s4/fr/ta158/art.jpg"),
+      isServedLocalPath("/assets/naruto/carddass/cards/s4/fr/ta158/art.jpg"),
     ).toBe(true);
   });
 

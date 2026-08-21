@@ -16,6 +16,15 @@ export type SetOption = {
   group?: string;
   /** Les langues dans lesquelles ce set a paru — voir `PrintSetOption`. */
   languages?: string[];
+  /**
+   * Le rang du set dans sa ligne, **rendu à l'appelant**.
+   *
+   * Il servait au tri interne puis était jeté. Or c'est la seule chose qui
+   * porte l'ordre quand le libellé ne le dit pas : « Quest for Power » est la
+   * septième série, et rien dans son nom ne l'annonce. Une check-list qui trie
+   * par libellé la range sous Q, entre « Path of Pain » et « Revenge ».
+   */
+  sortKey?: number;
 };
 
 /** Un libellé sans lettre ni chiffre ne se choisit pas — le catalogue Dragon
@@ -60,7 +69,7 @@ export type FinalizeSetOptionsInput = {
 export function finalizeSetOptions(
   rows: readonly FinalizeSetOptionsInput[],
 ): SetOption[] {
-  const named: (SetOption & { sortKey: number | null })[] = [];
+  const named: (Omit<SetOption, "sortKey"> & { sortKey: number | null })[] = [];
   for (const row of rows) {
     const id = row.id?.trim();
     if (!id) continue;
@@ -93,11 +102,12 @@ export function finalizeSetOptions(
       }
       return a.label.localeCompare(b.label, "fr", { numeric: true });
     })
-    .map(({ id, label, group, languages }) => ({
+    .map(({ id, label, group, languages, sortKey }) => ({
       id,
       label,
       ...(group ? { group } : {}),
       ...(languages ? { languages } : {}),
+      ...(sortKey != null ? { sortKey } : {}),
     }));
 }
 

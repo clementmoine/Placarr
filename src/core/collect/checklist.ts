@@ -27,6 +27,14 @@ export type ChecklistSetInput = {
   label: string;
   /** La découpe, quand le jeu en a plusieurs — voir `PrintSetOption.group`. */
   group?: string | null;
+  /**
+   * Le rang du set dans sa ligne, quand son libellé ne le porte pas.
+   *
+   * « Quest for Power » est la septième série : trié par son nom il tombe sous
+   * Q, entre « Path of Pain » et « Revenge and Rebirth ». Le rang le remet où
+   * il est sorti.
+   */
+  sortKey?: number | null;
 };
 
 export type ChecklistSet = ChecklistSetInput & {
@@ -39,7 +47,22 @@ export type ChecklistSet = ChecklistSetInput & {
 
 export type ShelfChecklist = {
   language: string | null;
+  /**
+   * Les extensions **entamées et pas finies** — celles sur lesquelles il y a
+   * quelque chose à faire.
+   */
   sets: ChecklistSet[];
+  /** Les extensions **terminées**. Elles restent visibles : c'est le résultat. */
+  completedSets: ChecklistSet[];
+  /**
+   * Les extensions dont on ne possède **aucune** carte.
+   *
+   * À part, jamais mêlées aux autres : sur une étagère Lorcana où l'on ne suit
+   * que le Premier Chapitre, treize sets à 0 % noyaient le seul qui compte. Ce
+   * n'est pas du travail en cours, c'est une collection qu'on n'a pas
+   * commencée — une information, pas une tâche.
+   */
+  untouchedSets: ChecklistSet[];
   totals: { total: number; owned: number; completion: number };
   /**
    * Extensions que le catalogue annonce mais dont il ne tient **aucune** carte
@@ -77,7 +100,9 @@ export function buildShelfChecklist(input: {
     bySet.set(print.setId, rows);
   }
 
-  const sets: ChecklistSet[] = [];
+  const started: ChecklistSet[] = [];
+  const completed: ChecklistSet[] = [];
+  const untouched: ChecklistSet[] = [];
   const setsWithoutCatalogue: ChecklistSetInput[] = [];
   let total = 0;
   let owned = 0;
@@ -96,25 +121,49 @@ export function buildShelfChecklist(input: {
     const held = prints.length - missing.length;
     total += prints.length;
     owned += held;
-    sets.push({
+    const row: ChecklistSet = {
       ...set,
       total: prints.length,
       owned: held,
       completion: percent(held, prints.length),
       missing,
-    });
+    };
+    /*
+      Trois états, pas un classement : rien commencé, en cours, terminé. Le
+      pourcentage sert à lire une ligne, jamais à décider dans quel groupe elle
+      tombe — un set à 99 % reste en cours, et c'est ce qui compte.
+    */
+    if (held === 0) untouched.push(row);
+    else if (missing.length === 0) completed.push(row);
+    else started.push(row);
   }
 
   /*
-    Les sets les moins complets d'abord : une check-list se lit pour savoir où
-    il reste du travail, pas pour admirer ce qui est fini. À égalité, le plus
-    gros passe devant — c'est là qu'il y a le plus à gagner.
+    Dans l'ordre de sortie quand on le connaît, alphabétique sinon — et
+    numérique, pour que « Série 2 » précède « Série 10 ».
+
+    C'est la séparation en trois groupes qui porte l'information ; à
+    l'intérieur, on cherche un set par son nom ou son numéro, jamais par son
+    avancement. Un ordre qui change à chaque carte ajoutée se parcourt mal.
+
+    Le rang est ce qui sauve les extensions **nommées** : « Quest for Power »
+    est la septième série, et triée par libellé elle tombe sous Q.
   */
-  sets.sort((a, b) => a.completion - b.completion || b.total - a.total);
+  const inReleaseOrder = (a: ChecklistSet, b: ChecklistSet) => {
+    if (a.sortKey != null && b.sortKey != null) return a.sortKey - b.sortKey;
+    if (a.sortKey != null) return -1;
+    if (b.sortKey != null) return 1;
+    return a.label.localeCompare(b.label, "fr", { numeric: true });
+  };
+  started.sort(inReleaseOrder);
+  completed.sort(inReleaseOrder);
+  untouched.sort(inReleaseOrder);
 
   return {
     language: input.language ?? null,
-    sets,
+    sets: started,
+    completedSets: completed,
+    untouchedSets: untouched,
     totals: { total, owned, completion: percent(owned, total) },
     setsWithoutCatalogue,
   };

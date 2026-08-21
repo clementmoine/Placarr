@@ -19,6 +19,7 @@ import {
   Compass,
   Plus,
   Wrench,
+  ListChecks,
   Pizza,
   Search,
   ChevronDown,
@@ -405,6 +406,15 @@ function ShelfComponent() {
     qu'on rachète en double. Dérivé des items de la page plutôt que refetché :
     elle les a sous la main, et deux sources divergeraient dès le premier ajout.
   */
+  /** Une étagère sans tirage n'a rien à compter : pas de check-list. */
+  const hasPrintItems = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).some(
+        (item) => item.printKey,
+      ),
+    [shelf?.items],
+  );
+
   const ownedPrints = useMemo(
     () =>
       ((shelf?.items ?? []) as unknown as ItemWithMetadata[])
@@ -814,6 +824,29 @@ function ShelfComponent() {
                 )}
                 aria-hidden={selectionMode || undefined}
               >
+                {/*
+                  La check-list n'apparaît que là où elle a un sens : elle
+                  compte des tirages, et une étagère qui n'en porte aucun
+                  n'aurait rien à compter.
+                */}
+                {hasPrintItems && (
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
+                    tabIndex={selectionMode ? -1 : undefined}
+                  >
+                    <Link
+                      href={`/shelves/${encodeURIComponent(shelfId)}/checklist`}
+                    >
+                      <ListChecks className="size-4" />
+                      <span className="hidden sm:inline">
+                        {t("items.checklistOpen")}
+                      </span>
+                    </Link>
+                  </Button>
+                )}
+
                 <Button
                   variant="secondary"
                   className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"

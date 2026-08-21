@@ -178,7 +178,12 @@ export async function buildChecklistForShelf(input: {
 
   const catalogues: { id: string; label: string }[] = [];
   const languages = new Set<string>();
-  const sets: { id: string; label: string; group?: string | null }[] = [];
+  const sets: {
+    id: string;
+    label: string;
+    group?: string | null;
+    sortKey?: number | null;
+  }[] = [];
   const prints: ChecklistPrint[] = [];
   const productsBySet = new Map<string, BuyProduct[]>();
 
@@ -216,7 +221,12 @@ export async function buildChecklistForShelf(input: {
         !set.languages.includes(language)
       )
         continue;
-      sets.push({ id: set.id, label: set.label, group: set.group ?? null });
+      sets.push({
+        id: set.id,
+        label: set.label,
+        group: set.group ?? null,
+        sortKey: set.sortKey ?? null,
+      });
       for (const row of await Promise.resolve(
         pack.listSetPrints!({ setId: set.id, language }),
       )) {

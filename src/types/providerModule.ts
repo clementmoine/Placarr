@@ -210,6 +210,15 @@ export type PrintSetOption = {
    */
   group?: string;
   /**
+   * Le rang de cette extension dans sa ligne, quand le libellé ne le porte pas.
+   *
+   * « Quest for Power » est la septième série, et son nom ne l'annonce pas :
+   * trié alphabétiquement il tombe sous Q. Ce rang est ce qui permet de ranger
+   * les extensions dans l'ordre où elles sont sorties, y compris quand elles
+   * sont nommées et non numérotées.
+   */
+  sortKey?: number;
+  /**
    * Les langues dans lesquelles cette extension a **paru**.
    *
    * Ce n'est pas la langue des cartes qui la composent : le 巻ノ一 contient des

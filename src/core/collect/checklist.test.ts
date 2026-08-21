@@ -58,26 +58,81 @@ describe("check-list d'étagère", () => {
     expect(list.totals.total).toBe(4);
   });
 
-  /** Une check-list se lit pour savoir où il reste du travail. */
-  it("puts the least complete sets first, the biggest first on a tie", () => {
+  /*
+    Trois états, pas un classement : rien commencé, en cours, terminé. Sur une
+    étagère Lorcana où l'on ne suit que le Premier Chapitre, treize sets à 0 %
+    noyaient le seul qui compte.
+  */
+  it("splits started, finished and never-started", () => {
     const list = buildShelfChecklist({
       sets: [
-        { id: "plein", label: "Plein" },
-        { id: "vide-petit", label: "Vide petit" },
-        { id: "vide-gros", label: "Vide gros" },
+        { id: "encours", label: "En cours" },
+        { id: "fini", label: "Fini" },
+        { id: "jamais", label: "Jamais commencé" },
       ],
       prints: [
-        print("a", "plein", "A"),
-        print("b", "vide-petit", "B"),
-        print("c", "vide-gros", "C"),
-        print("d", "vide-gros", "D"),
+        print("a", "encours", "A"),
+        print("b", "encours", "B"),
+        print("c", "fini", "C"),
+        print("d", "jamais", "D"),
       ],
-      owned: new Set(["a"]),
+      owned: new Set(["a", "c"]),
     });
-    expect(list.sets.map((s) => s.id)).toEqual([
-      "vide-gros",
-      "vide-petit",
-      "plein",
+    expect(list.sets.map((s) => s.id)).toEqual(["encours"]);
+    expect(list.completedSets.map((s) => s.id)).toEqual(["fini"]);
+    expect(list.untouchedSets.map((s) => s.id)).toEqual(["jamais"]);
+    // Tous comptent dans le total : ce sont des cartes qui existent.
+    expect(list.totals.total).toBe(4);
+  });
+
+  /** Un set à 99 % reste en cours : c'est le zéro manquant qui le termine. */
+  it("calls a set finished only when nothing is missing", () => {
+    const prints = Array.from({ length: 100 }, (_, i) =>
+      print(`k${i}`, "s", `${i}`),
+    );
+    const list = buildShelfChecklist({
+      sets: [{ id: "s", label: "S" }],
+      prints,
+      owned: new Set(prints.slice(0, 99).map((p) => p.printKey)),
+    });
+    expect(list.sets[0]?.completion).toBe(99);
+    expect(list.completedSets).toHaveLength(0);
+  });
+
+  /*
+    « Quest for Power » est la septième série, et son nom ne l'annonce pas :
+    trié par libellé il tombe sous Q, entre « Path of Pain » et « Revenge ».
+    Le rang le remet où il est sorti.
+  */
+  it("orders by the rank when the label does not carry it", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "s7", label: "Quest for Power", sortKey: 7 },
+        { id: "s1", label: "Série 1", sortKey: 1 },
+        { id: "s19", label: "Path of Pain", sortKey: 19 },
+      ],
+      prints: [
+        print("a", "s7", "A"),
+        print("b", "s1", "B"),
+        print("c", "s19", "C"),
+      ],
+      owned: new Set(["a", "b", "c"]),
+    });
+    expect(list.completedSets.map((s) => s.id)).toEqual(["s1", "s7", "s19"]);
+  });
+
+  it("falls back to a numeric alphabetical order without a rank", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "b", label: "Série 10" },
+        { id: "a", label: "Série 2" },
+      ],
+      prints: [print("x", "b", "X"), print("y", "a", "Y")],
+      owned: new Set(["x", "y"]),
+    });
+    expect(list.completedSets.map((s) => s.label)).toEqual([
+      "Série 2",
+      "Série 10",
     ]);
   });
 
@@ -93,8 +148,13 @@ describe("check-list d'étagère", () => {
   it("orders the missing by their printed reference, numerically", () => {
     const list = buildShelfChecklist({
       sets: [{ id: "s", label: "S" }],
-      prints: [print("a", "s", "NI-010"), print("b", "s", "NI-002")],
-      owned: new Set(),
+      prints: [
+        print("a", "s", "NI-010"),
+        print("b", "s", "NI-002"),
+        print("c", "s", "NI-001"),
+      ],
+      // Une carte possédée, sinon le set part chez les non entamés.
+      owned: new Set(["c"]),
     });
     expect(list.sets[0].missing.map((m) => m.reference)).toEqual([
       "NI-002",

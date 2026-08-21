@@ -1,0 +1,298 @@
+/*
+  La check-list se lit à l'écran **et** s'imprime. Le PDF est produit par
+  l'impression du navigateur, ce qui évite d'embarquer un moteur de rendu pour
+  un document qu'il sait déjà faire — mais ça déplace la responsabilité ici : ce
+  qui n'est pas prévu pour le papier n'y sera pas.
+*/
+
+.page {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.headBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.back:hover {
+  color: var(--foreground);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.select,
+.print {
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+}
+.print {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.print:hover {
+  background: var(--accent);
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  margin-top: 0.25rem;
+}
+
+.totals {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  font-size: 0.9375rem;
+}
+
+.bar {
+  flex: 1;
+  min-width: 4rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--muted);
+  overflow: hidden;
+}
+.barFill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--primary);
+}
+
+.group {
+  margin-top: 2rem;
+  break-inside: avoid;
+}
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.75rem;
+}
+.groupCount {
+  border-radius: 9999px;
+  background: var(--muted);
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0;
+}
+
+.setList,
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.plainList {
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.setRow {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+.setHead {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+.setHead:disabled {
+  cursor: default;
+}
+.setHead:not(:disabled):hover {
+  background: var(--accent);
+}
+
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--muted-foreground);
+  transition: transform 0.15s ease;
+}
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.setLabel {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.setCount {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  flex: none;
+}
+.setPct {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  width: 2.75rem;
+  text-align: right;
+  flex: none;
+}
+.setHead .bar {
+  max-width: 8rem;
+}
+
+/* Repliées à l'écran, dépliées au clic — et toujours ouvertes au papier. */
+.missing {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 1rem 0.75rem;
+  columns: 2;
+  column-gap: 1.5rem;
+}
+.missingOpen {
+  display: block;
+}
+
+.missingRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.1875rem 0;
+  font-size: 0.8125rem;
+  break-inside: avoid;
+}
+
+/* Une case à cocher dessinée, pas un input : elle est faite pour un stylo. */
+.checkbox {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 0.1875rem;
+  transform: translateY(0.125rem);
+}
+
+.ref {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  flex: none;
+  /* Une référence ne se coupe pas : « CL-003 » sur deux lignes ne se lit plus. */
+  white-space: nowrap;
+}
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint,
+.empty,
+.loading {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+.hint {
+  margin-bottom: 0.5rem;
+}
+
+@media print {
+  /*
+    Le papier n'a ni bouton ni repli : tout ce qui manque doit être là, et rien
+    de ce qui sert à naviguer.
+  */
+  .actions,
+  .back,
+  .chevron {
+    display: none !important;
+  }
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+  .missing {
+    display: block !important;
+    /*
+      Deux colonnes, pas trois : à trois, la référence et le nom se marchent
+      dessus sur les titres longs — « Doton technique de la décapitation » ne
+      tient pas dans un tiers de page.
+    */
+    columns: 2;
+    font-size: 0.75rem;
+  }
+  .setRow,
+  .group {
+    break-inside: avoid;
+  }
+  .setHead {
+    padding: 0.375rem 0;
+  }
+  /* La barre et le pourcentage restent : c'est l'état de la collection. */
+  .name {
+    white-space: normal;
+  }
+  .setRow {
+    border: none;
+    border-bottom: 1px solid #ddd;
+    border-radius: 0;
+    background: none;
+  }
+  .barFill {
+    background: #666;
+  }
+}

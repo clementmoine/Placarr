@@ -87,10 +87,17 @@ describe("finalizeSetOptions — rang donné par le pack", () => {
     expect(sets.map((row) => row.id)).toEqual(["s2", "s10"]);
   });
 
-  /** Le rang ne doit pas fuir dans ce que l'appelant reçoit. */
-  it("does not leak the rank into the option", () => {
-    const [set] = finalizeSetOptions([{ id: "a", label: "A", sortKey: 1 }]);
-    expect(Object.keys(set).sort()).toEqual(["id", "label"]);
+  /*
+    Le rang est **rendu** à l'appelant depuis le 2026-08-21. Il était jeté en
+    sortie, ce qui obligeait la check-list à retrier par libellé — et « Quest
+    for Power », septième série, tombait sous Q.
+  */
+  it("hands the rank back to the caller", () => {
+    const [set] = finalizeSetOptions([{ id: "a", label: "A", sortKey: 7 }]);
+    expect(set.sortKey).toBe(7);
+    // Sans rang, la clé reste absente plutôt que nulle.
+    const [sans] = finalizeSetOptions([{ id: "b", label: "B" }]);
+    expect("sortKey" in sans).toBe(false);
   });
 });
 

@@ -32,6 +32,7 @@ import {
   DEFAULT_WORKERS,
   loadNames,
   scrape,
+  type BundleResult,
   type DirProbeMode,
 } from "@/providers/pokemontcglive/cdn";
 import {
@@ -56,7 +57,7 @@ import {
   resolveCdnTarget,
   writeSourcesReport,
 } from "@/providers/pokemontcglive/sources";
-import type { BundleResult } from "@/providers/pokemontcglive/cdn";
+import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 
 function packPython(repo: string): string {
   const candidates = [
@@ -244,6 +245,11 @@ export type UpdateOpts = {
   strictApkScrape?: boolean;
   skipStoreAudit?: boolean;
   strictStoreAudit?: boolean;
+  /**
+   * Paper sealed-product graph from pkmcards.fr (TCG Cards family).
+   * Off by default on a Live dump; admin extract passes `--products`.
+   */
+  skipProducts?: boolean;
   /** AbortSignal from CLI background-job cancel. */
   signal?: AbortSignal;
 };
@@ -258,6 +264,17 @@ export async function runUpdate(
     if (signal?.aborted) throw new Error("foil extract cancelled");
   };
   throwIfAborted();
+  if (opts.skipProducts === false) {
+    console.log("── products pkmcards.fr (papier scellé, famille TCG Cards)");
+    const products = await scrapeTcgCardsProducts("pkmcards", {
+      onProgress: (message) => console.log(`   products — ${message}`),
+    });
+    console.log(
+      `── products : ${products.listed} SKU, ${products.detail} fiches, ` +
+        `${products.printsLinked} liens carte (${products.fetched} GET)`,
+    );
+  }
+
   const cache = path.join(repo, "data/pokemon");
   const staging = path.join(cache, "staging");
   const bundles = path.join(staging, "cdn-bundles");
@@ -601,6 +618,7 @@ function parseArgs(
     strictApkScrape: false,
     skipStoreAudit: false,
     strictStoreAudit: false,
+    skipProducts: true,
     noJob: false,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -632,6 +650,8 @@ function parseArgs(
     else if (a === "--strict-apk-scrape") out.strictApkScrape = true;
     else if (a === "--skip-store-audit") out.skipStoreAudit = true;
     else if (a === "--strict-store-audit") out.strictStoreAudit = true;
+    else if (a === "--products") out.skipProducts = false;
+    else if (a === "--skip-products") out.skipProducts = true;
     else if (a === "--no-job") out.noJob = true;
   }
   return out;

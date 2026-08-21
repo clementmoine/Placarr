@@ -1,46 +1,32 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import path from "node:path";
-
-import type {
-  ProviderCatalogHooks,
-  ProviderCatalogRefreshOpts,
-} from "@/types/providerModule";
-import {
-  dataPackPath,
-  statusFromLastRun,
-} from "@/providers/shared/catalogCorpus";
-import { packLogsDir } from "@/lib/packPaths";
+/**
+ * Crochets de catalogue du pack `dbs/cg`.
+ *
+ * Le corps est commun à tous les packs de cartes — voir
+ * `shared/cardCatalogue/pipeline`. Ne reste ici que ce qui est propre au pack :
+ * sa base, son pipeline, et ce qu'une passe automatique s'autorise.
+ */
+import type { ProviderCatalogHooks } from "@/types/providerModule";
+import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 
 import { dbsCgDbPath, DBS_CG_PACK_ID } from "./indexStore";
 
-export async function refreshDbsCgCatalog(
-  opts?: ProviderCatalogRefreshOpts,
-): Promise<void> {
-  // Bandai's cardlist is live — auto refresh re-scrapes, clones the TCG Arena
-  // EN dump, then fills FR faces over HTTP. `--offline` still ranges a clone
-  // already on disk.
-  const { runDbsCgPackPipeline } = await import(
-    /* webpackIgnore: true */
-    "./cli"
-  );
-  await runDbsCgPackPipeline([]);
-  const logs = packLogsDir(DBS_CG_PACK_ID);
-  mkdirSync(logs, { recursive: true });
-  writeFileSync(
-    path.join(logs, "last-run.json"),
-    `${JSON.stringify({ finishedAt: new Date().toISOString(), auto: Boolean(opts?.auto) })}\n`,
-  );
-}
+const hooks = cardCatalogueHooks({
+  packId: DBS_CG_PACK_ID,
+  dbPath: dbsCgDbPath,
+  runPipeline: async (argv) => {
+    const { runDbsCgPackPipeline } = await import(
+      /* webpackIgnore: true */
+      "./cli"
+    );
+    return runDbsCgPackPipeline(argv);
+  },
+  /*
+    Le graphe produit vit sur le même hôte que `dbscards`, qui ralentit les
+    rafales : soixante-dix fiches, c'est un clic, pas un battement d'horloge.
+  */
+  autoSkip: ["products"],
+});
 
-export function dbsCgCatalogStatus() {
-  const db = dbsCgDbPath();
-  const cardsIndex = dataPackPath(DBS_CG_PACK_ID, "cards-index.json");
-  const empty = !existsSync(db) && !existsSync(cardsIndex);
-  return statusFromLastRun({ dataPack: DBS_CG_PACK_ID, empty });
-}
-
-export const dbscgCatalog: ProviderCatalogHooks = {
-  dataPack: DBS_CG_PACK_ID,
-  status: dbsCgCatalogStatus,
-  refresh: refreshDbsCgCatalog,
-};
+export const refreshDbsCgCatalog = hooks.refresh;
+export const dbsCgCatalogStatus = hooks.status;
+export const dbscgCatalog: ProviderCatalogHooks = hooks;

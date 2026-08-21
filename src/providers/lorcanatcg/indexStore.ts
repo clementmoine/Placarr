@@ -10,6 +10,12 @@ import { existsSync, mkdirSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import {
+  finalizeSetOptions,
+  isAnsweredQuery,
+  setScopedWhere,
+} from "@/providers/shared/cardCatalogue/sets";
+
 import { dataRoot } from "@/lib/runtimeData";
 import { parsePrintKey } from "@/core/identify/printKey";
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
@@ -36,6 +42,11 @@ export type LorcanaTcgTitleRow = {
   color?: string | null;
   story?: string | null;
   flavorText?: string | null;
+  /**
+   * `Storyborn`, `Héros`, `Prince`… — traduits par LorcanaJSON, donc rangés
+   * avec les autres champs de langue et non dans `prints`.
+   */
+  subtypes?: string[] | null;
   searchName?: string | null;
   /** Remote URLs from the catalogue call (not local paths). */
   imageUrl?: string | null;
@@ -58,6 +69,22 @@ export type LorcanaTcgPrintRow = {
   foilTypes?: string[] | null;
   varnishType?: string | null;
   cardmarketUrl?: string | null;
+  /** Chiffres du jeu, identiques dans toutes les langues. */
+  lore?: number | null;
+  strength?: number | null;
+  willpower?: number | null;
+  inkwell?: boolean | null;
+  /** Taille du set principal lue dans `fullIdentifier` (`1/204` → 204). */
+  setCardCount?: number | null;
+  /**
+   * Teintes que jette le vernis stampé (`foilEffectColors`).
+   *
+   * Rien d'autre ne les prédit, et elles pilotent la couleur du vernis à
+   * l'affichage. Sans cette colonne, une recherche servie par la base locale
+   * les perdrait **en silence** sur les quelque 83 tirages qui en portent —
+   * exactement le genre de dégradation invisible qu'on refuse.
+   */
+  foilEffectColors?: string[] | null;
 };
 
 export type LorcanaTcgAssetRow = LorcanaTcgAssetFiles & {
@@ -99,7 +126,13 @@ function createSchema(db: DatabaseSync): void {
       artists_json TEXT,
       foil_types_json TEXT,
       varnish_type TEXT,
-      cardmarket_url TEXT
+      cardmarket_url TEXT,
+      lore INTEGER,
+      strength INTEGER,
+      willpower INTEGER,
+      inkwell INTEGER,
+      set_card_count INTEGER,
+      foil_effect_colors_json TEXT
     );
 
     CREATE TABLE print_titles (
@@ -114,6 +147,7 @@ function createSchema(db: DatabaseSync): void {
       color TEXT,
       story TEXT,
       flavor_text TEXT,
+      subtypes_json TEXT,
       search_name TEXT,
       image_url TEXT,
       thumbnail_url TEXT,
@@ -148,6 +182,45 @@ export function resetLorcanaTcgDbCache(): void {
   activeDb = null;
   activePath = null;
 }
+
+/** Une ligne de recherche : le tirage et son titre, joints. */
+export type LorcanaTcgSearchRow = {
+  printKey: string;
+  setCode: string | null;
+  number: string | null;
+  variant: string | null;
+  promoGrouping: string | null;
+  providerId: string | null;
+  cost: number | null;
+  artistsJson: string | null;
+  foilTypesJson: string | null;
+  varnishType: string | null;
+  cardmarketUrl: string | null;
+  foilEffectColorsJson: string | null;
+  lore: number | null;
+  strength: number | null;
+  willpower: number | null;
+  inkwell: number | null;
+  setCardCount: number | null;
+  lang: string;
+  fullName: string;
+  name: string | null;
+  version: string | null;
+  setName: string | null;
+  rarity: string | null;
+  cardType: string | null;
+  color: string | null;
+  story: string | null;
+  flavorText: string | null;
+  subtypesJson: string | null;
+  searchName: string | null;
+  imageUrl: string | null;
+  thumbnailUrl: string | null;
+  fullFoilUrl: string | null;
+  foilMaskUrl: string | null;
+  varnishMaskUrl: string | null;
+  secondVarnishMaskUrl: string | null;
+};
 
 export type WriteLorcanaTcgIndexInput = {
   prints: LorcanaTcgPrintRow[];
@@ -195,9 +268,11 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
   const insertPrint = db.prepare(`
     INSERT INTO prints (
       print_key, set_code, number, variant, promo_grouping, provider_id,
-      cost, artists_json, foil_types_json, varnish_type, cardmarket_url
+      cost, artists_json, foil_types_json, varnish_type, cardmarket_url,
+      foil_effect_colors_json,
+      lore, strength, willpower, inkwell, set_card_count
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(print_key) DO UPDATE SET
       set_code = excluded.set_code,
       number = excluded.number,
@@ -208,16 +283,22 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
       artists_json = excluded.artists_json,
       foil_types_json = excluded.foil_types_json,
       varnish_type = excluded.varnish_type,
-      cardmarket_url = excluded.cardmarket_url
+      foil_effect_colors_json = excluded.foil_effect_colors_json,
+      cardmarket_url = excluded.cardmarket_url,
+      lore = excluded.lore,
+      strength = excluded.strength,
+      willpower = excluded.willpower,
+      inkwell = excluded.inkwell,
+      set_card_count = excluded.set_card_count
   `);
   const insertTitle = db.prepare(`
     INSERT INTO print_titles (
       print_key, lang, full_name, name, version, set_name, rarity, card_type,
-      color, story, flavor_text, search_name,
+      color, story, flavor_text, subtypes_json, search_name,
       image_url, thumbnail_url, full_foil_url, foil_mask_url, varnish_mask_url,
       second_varnish_mask_url
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(print_key, lang) DO UPDATE SET
       full_name = excluded.full_name,
       name = excluded.name,
@@ -228,6 +309,7 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
       color = excluded.color,
       story = excluded.story,
       flavor_text = excluded.flavor_text,
+      subtypes_json = excluded.subtypes_json,
       search_name = excluded.search_name,
       image_url = excluded.image_url,
       thumbnail_url = excluded.thumbnail_url,
@@ -262,6 +344,12 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
       jsonOrNull(row.foilTypes),
       row.varnishType ?? null,
       row.cardmarketUrl ?? null,
+      jsonOrNull(row.foilEffectColors),
+      row.lore ?? null,
+      row.strength ?? null,
+      row.willpower ?? null,
+      row.inkwell == null ? null : row.inkwell ? 1 : 0,
+      row.setCardCount ?? null,
     );
   }
   for (const row of input.titles) {
@@ -277,6 +365,7 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
       row.color ?? null,
       row.story ?? null,
       row.flavorText ?? null,
+      jsonOrNull(row.subtypes),
       row.searchName ?? null,
       row.imageUrl ?? null,
       row.thumbnailUrl ?? null,
@@ -394,6 +483,7 @@ type TitleSqlRow = {
   color: string | null;
   story: string | null;
   flavorText: string | null;
+  subtypesJson: string | null;
   searchName: string | null;
   imageUrl: string | null;
   thumbnailUrl: string | null;
@@ -407,7 +497,8 @@ const TITLE_SELECT = `
   SELECT print_key AS printKey, lang, full_name AS fullName,
          name, version, set_name AS setName, rarity,
          card_type AS cardType, color, story,
-         flavor_text AS flavorText, search_name AS searchName,
+         flavor_text AS flavorText, subtypes_json AS subtypesJson,
+         search_name AS searchName,
          image_url AS imageUrl, thumbnail_url AS thumbnailUrl,
          full_foil_url AS fullFoilUrl, foil_mask_url AS foilMaskUrl,
          varnish_mask_url AS varnishMaskUrl,
@@ -428,6 +519,7 @@ function mapTitleRow(row: TitleSqlRow): LorcanaTcgTitleRow {
     color: row.color,
     story: row.story,
     flavorText: row.flavorText,
+    subtypes: parseJsonArray(row.subtypesJson),
     searchName: row.searchName,
     imageUrl: row.imageUrl,
     thumbnailUrl: row.thumbnailUrl,
@@ -471,7 +563,10 @@ export function lookupLorcanaTcgPrint(
                 artists_json AS artistsJson,
                 foil_types_json AS foilTypesJson,
                 varnish_type AS varnishType,
-                cardmarket_url AS cardmarketUrl
+                cardmarket_url AS cardmarketUrl,
+                lore, strength, willpower, inkwell,
+                set_card_count AS setCardCount,
+                foil_effect_colors_json AS foilEffectColorsJson
          FROM prints WHERE print_key = ?`,
       )
       .get(printKey) as
@@ -487,6 +582,12 @@ export function lookupLorcanaTcgPrint(
           foilTypesJson: string | null;
           varnishType: string | null;
           cardmarketUrl: string | null;
+          lore: number | null;
+          strength: number | null;
+          willpower: number | null;
+          inkwell: number | null;
+          setCardCount: number | null;
+          foilEffectColorsJson: string | null;
         }
       | undefined;
     if (!row) return null;
@@ -502,7 +603,46 @@ export function lookupLorcanaTcgPrint(
       foilTypes: parseJsonArray(row.foilTypesJson),
       varnishType: row.varnishType,
       cardmarketUrl: row.cardmarketUrl,
+      lore: row.lore,
+      strength: row.strength,
+      willpower: row.willpower,
+      // SQLite ne connaît pas le booléen : 0 doit revenir `false`, pas `null`.
+      inkwell: row.inkwell == null ? null : row.inkwell !== 0,
+      setCardCount: row.setCardCount,
+      foilEffectColors: parseJsonArray(row.foilEffectColorsJson),
     };
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Colonnes ajoutées après coup, posées sur une base déjà écrite.
+ *
+ * `createSchema` recrée les tables, donc une base **neuve** les a — mais celle
+ * qui est déjà sur disque, non, et la seule façon de l'y amener serait de
+ * refaire toute la moisson. Une colonne manquante fait échouer la requête
+ * entière : la recherche rendait zéro, et le repli distant ne se déclenchait
+ * même pas puisque l'erreur survenait avant.
+ */
+const ADDED_PRINT_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
+  { name: "foil_effect_colors_json", ddl: "TEXT" },
+];
+
+function migrateLorcanaTcgSchema(dbPath: string): void {
+  const db = new DatabaseSync(dbPath);
+  try {
+    const present = new Set(
+      (db.prepare(`PRAGMA table_info(prints)`).all() as { name: string }[]).map(
+        (row) => row.name,
+      ),
+    );
+    for (const column of ADDED_PRINT_COLUMNS) {
+      if (present.has(column.name)) continue;
+      db.exec(`ALTER TABLE prints ADD COLUMN ${column.name} ${column.ddl}`);
+    }
+  } catch {
+    // Base illisible ou verrouillée : la recherche retombera sur le distant.
   } finally {
     db.close();
   }
@@ -512,8 +652,112 @@ export function ensureLorcanaTcgIndex(): DatabaseSync | null {
   const dbPath = lorcanaTcgDbPath();
   if (!existsSync(dbPath)) return null;
   if (activeDb && activePath === dbPath) return activeDb;
+  migrateLorcanaTcgSchema(dbPath);
   const db = new DatabaseSync(dbPath, { readOnly: true });
   activeDb = db;
   activePath = dbPath;
   return db;
+}
+
+/**
+ * Recherche **locale**, dans la base que ce provider tient déjà.
+ *
+ * Le catalogue Lorcana vivait sur disque depuis toujours — 3 241 tirages, 12 318
+ * titres en quatre langues — mais la recherche interrogeait les JSON distants de
+ * lorcanajson.org. Deux sources pour une même question, donc deux vérités
+ * possibles ; et une extension choisie dans le sélecteur ne rendait rien, les
+ * identifiants de sets n'étant pas les mêmes des deux côtés.
+ *
+ * Les colonnes rendues ici sont exactement celles dont `toPrintCandidate` a
+ * besoin : la carte est reconstruite entière, pas approchée.
+ */
+export function searchLorcanaTcgRows(
+  query: string,
+  opts: { language?: string; limit?: number; setId?: string | null } = {},
+): LorcanaTcgSearchRow[] {
+  const db = ensureLorcanaTcgIndex();
+  if (!db) return [];
+
+  const trimmed = query.trim().toLowerCase();
+  const setId = opts.setId?.trim().toLowerCase();
+  // Une extension seule est une question complète : « montre-moi ce set ».
+  if (!isAnsweredQuery(trimmed, setId)) return [];
+
+  const lang = (opts.language || "fr").toLowerCase();
+  const limit = Math.max(1, Math.min(opts.limit ?? 40, 200));
+  const like = `%${trimmed}%`;
+
+  const scope = setScopedWhere({
+    setColumn: "p.set_code",
+    setId,
+    textClause: trimmed
+      ? `LOWER(t.full_name) LIKE ?
+           OR LOWER(COALESCE(t.search_name, '')) LIKE ?
+           OR LOWER(p.print_key) LIKE ?
+           OR LOWER(p.set_code || '-' || p.number) LIKE ?`
+      : null,
+    textParams: [like, like, like, like],
+  });
+
+  return db
+    .prepare(
+      `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+              p.variant, p.promo_grouping AS promoGrouping,
+              p.provider_id AS providerId, p.cost,
+              p.artists_json AS artistsJson,
+              p.foil_types_json AS foilTypesJson,
+              p.varnish_type AS varnishType,
+              p.cardmarket_url AS cardmarketUrl,
+              p.foil_effect_colors_json AS foilEffectColorsJson,
+              p.lore, p.strength, p.willpower, p.inkwell,
+              p.set_card_count AS setCardCount,
+              t.lang, t.full_name AS fullName, t.name, t.version,
+              t.set_name AS setName, t.rarity, t.card_type AS cardType,
+              t.color, t.story, t.flavor_text AS flavorText,
+              t.subtypes_json AS subtypesJson, t.search_name AS searchName,
+              t.image_url AS imageUrl, t.thumbnail_url AS thumbnailUrl,
+              t.full_foil_url AS fullFoilUrl,
+              t.foil_mask_url AS foilMaskUrl,
+              t.varnish_mask_url AS varnishMaskUrl,
+              t.second_varnish_mask_url AS secondVarnishMaskUrl
+         FROM prints p
+         JOIN print_titles t ON t.print_key = p.print_key
+        WHERE ${scope.where}
+        ORDER BY (t.lang = ?) DESC,
+                 CAST(p.set_code AS INTEGER), CAST(p.number AS INTEGER)
+        LIMIT ?`,
+    )
+    .all(...scope.params, lang, limit * 4) as LorcanaTcgSearchRow[];
+}
+
+/**
+ * Les extensions du catalogue local, telles qu'un joueur les nomme.
+ *
+ * Le nom est pris **dans la langue demandée**. Un simple `MIN()` sur toutes les
+ * langues rendait le premier par ordre alphabétique — donc « Archazia's Island »
+ * à un utilisateur français, alors que la base tient « L'Isola di Archazia » et
+ * « Contrées Inconnues » juste à côté.
+ */
+export function listLorcanaTcgSets(
+  language = "fr",
+): { id: string; label: string }[] {
+  const db = ensureLorcanaTcgIndex();
+  if (!db) return [];
+  const lang = language.trim().toLowerCase();
+  const rows = db
+    .prepare(
+      `SELECT p.set_code AS setCode,
+              COALESCE(
+                MIN(CASE WHEN t.lang = ? THEN NULLIF(TRIM(t.set_name), '') END),
+                MIN(NULLIF(TRIM(t.set_name), ''))
+              ) AS setName
+         FROM prints p
+         LEFT JOIN print_titles t ON t.print_key = p.print_key
+        WHERE p.set_code IS NOT NULL AND TRIM(p.set_code) <> ''
+        GROUP BY p.set_code`,
+    )
+    .all(lang) as { setCode: string; setName: string | null }[];
+  return finalizeSetOptions(
+    rows.map((row) => ({ id: row.setCode, label: row.setName })),
+  );
 }

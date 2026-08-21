@@ -12,6 +12,8 @@ import {
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { finalizeSetOptions } from "@/providers/shared/cardCatalogue/sets";
+
 import { dataRoot } from "@/lib/runtimeData";
 import { packCardDir } from "@/lib/packPaths";
 
@@ -328,4 +330,30 @@ export function loadDbsFwIndex(): {
   } catch {
     return null;
   }
+}
+
+/**
+ * Les extensions du catalogue, telles qu'un joueur les nomme.
+ *
+ * `set_name` vit sur le titre, pas sur le tirage : un même code peut donc
+ * porter plusieurs libellés selon la langue. On garde le premier non vide, et
+ * on retombe sur le code quand aucun titre ne l'a nommé — un set réel sans
+ * libellé vaut mieux qu'un set absent de la liste.
+ */
+export function listDbsFwPrintSets(): { id: string; label: string }[] {
+  const db = ensureDbsFwIndex();
+  if (!db) return [];
+  const rows = db
+    .prepare(
+      `SELECT p.set_code AS setCode,
+              MIN(NULLIF(TRIM(t.set_name), '')) AS setName
+         FROM prints p
+         LEFT JOIN print_titles t ON t.print_key = p.print_key
+        GROUP BY p.set_code`,
+    )
+    .all() as { setCode: string; setName: string | null }[];
+  // Nettoyage, homonymes et tri : communs à tous les catalogues.
+  return finalizeSetOptions(
+    rows.map((row) => ({ id: row.setCode, label: row.setName })),
+  );
 }

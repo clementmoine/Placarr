@@ -40,6 +40,11 @@ describe("lorcanatcg indexStore", () => {
           foilTypes: ["Satin"],
           varnishType: "HighGloss",
           cardmarketUrl: "https://example.test/cm",
+          lore: 2,
+          strength: 3,
+          willpower: 4,
+          inkwell: true,
+          setCardCount: 204,
         },
       ],
       titles: [
@@ -55,6 +60,7 @@ describe("lorcanatcg indexStore", () => {
           color: "Améthyste",
           story: "La Petite Sirène",
           flavorText: "Elle rêve de terre ferme.",
+          subtypes: ["Née du récit", "Héros", "Princesse"],
           searchName: "ariel sur ses jambes",
           imageUrl: "https://cdn.example/fr/art.jpg",
           foilMaskUrl: "https://cdn.example/fr/mask.jpg",
@@ -119,5 +125,63 @@ describe("lorcanatcg indexStore", () => {
         en: { art: "art.jpg" },
       },
     });
+  });
+});
+
+describe("lorcanatcg — les chiffres du jeu", () => {
+  const dirs: string[] = [];
+  afterEach(() => {
+    resetLorcanaTcgDbCache();
+    while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true });
+  });
+
+  /*
+    Lore, force, volonté, encrier et taille de set étaient lus par le provider
+    puis jetés à l'écriture : la table n'avait pas de colonne. Les sous-types,
+    eux, sont traduits — ils vont avec la langue, pas avec le tirage.
+  */
+  it("garde lore / force / volonté / encrier / taille de set, et les sous-types par langue", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "lorcanatcg-stats-"));
+    dirs.push(dir);
+    const dbPath = path.join(dir, "catalog.sqlite");
+
+    writeLorcanaTcgIndex({
+      dbPath,
+      languages: ["fr"],
+      prints: [
+        {
+          printKey: "lorcana:1-2",
+          setCode: "1",
+          number: "2",
+          lore: 1,
+          strength: 5,
+          willpower: 6,
+          inkwell: false,
+          setCardCount: 204,
+        },
+      ],
+      titles: [
+        {
+          printKey: "lorcana:1-2",
+          lang: "fr",
+          fullName: "Sébastien - Chef d'orchestre",
+          subtypes: ["Né du récit", "Allié"],
+        },
+      ],
+      assets: [],
+    });
+
+    const print = lookupLorcanaTcgPrint("lorcana:1-2", dbPath);
+    expect(print).toMatchObject({
+      lore: 1,
+      strength: 5,
+      willpower: 6,
+      setCardCount: 204,
+    });
+    // `false` doit survivre au passage par l'entier SQLite, pas devenir null.
+    expect(print?.inkwell).toBe(false);
+    expect(
+      lookupLorcanaTcgTitle("lorcana:1-2", "fr", dbPath)?.subtypes,
+    ).toEqual(["Né du récit", "Allié"]);
   });
 });

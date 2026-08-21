@@ -1,11 +1,11 @@
 # Pack card back — provenance
 
-| Fichier curated | `src/providers/dbsfw/curated/back.webp` |
-|-----------------|----------------------------------------|
-| Fichier data | `cards/back.webp` (copie) |
-| URL | `/assets/dbs/fw/cards/back.webp` |
-| Taille | 400×560 WebP |
-| Source | même octet que Masters : [dbscards.fr](https://www.dbscards.fr/) `original/back.webp` |
+| Fichier curated | `src/providers/dbsfw/curated/cards/back.webp`                                         |
+| --------------- | ------------------------------------------------------------------------------------- |
+| Fichier data    | `cards/back.webp` (copie)                                                             |
+| URL             | `/assets/dbs/fw/cards/back.webp`                                                      |
+| Taille          | 400×560 WebP                                                                          |
+| Source          | même octet que Masters : [dbscards.fr](https://www.dbscards.fr/) `original/back.webp` |
 
 ## Placeholder
 

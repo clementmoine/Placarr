@@ -12,23 +12,38 @@ describe("selectDbsCgSteps", () => {
     expect(selectDbsCgSteps([])).toEqual([
       "scrape",
       "dbscards",
+      "products",
+      "arena",
+      "faces",
+    ]);
+  });
+
+  it("keeps the product graph off the hourly tick", () => {
+    expect(selectDbsCgSteps(["--skip", "products"])).toEqual([
+      "scrape",
+      "dbscards",
       "arena",
       "faces",
     ]);
   });
 
   it("still ranges a local clone when --offline", () => {
-    // Only the Arena dump is on disk; everything else needs the network.
-    expect(selectDbsCgSteps(["--offline"])).toEqual(["arena"]);
+    // Arena dump + product HTML already on disk; the rest needs the network.
+    expect(selectDbsCgSteps(["--offline"])).toEqual(["products", "arena"]);
   });
 
   it("honours --only and --skip", () => {
     expect(selectDbsCgSteps(["--only", "arena"])).toEqual(["arena"]);
     expect(selectDbsCgSteps(["--only", "faces"])).toEqual(["faces"]);
     expect(selectDbsCgSteps(["--only", "dbscards"])).toEqual(["dbscards"]);
+    expect(selectDbsCgSteps(["--only", "products"])).toEqual(["products"]);
+    expect(selectDbsCgSteps(["--only", "products", "--offline"])).toEqual([
+      "products",
+    ]);
     expect(selectDbsCgSteps(["--skip", "faces"])).toEqual([
       "scrape",
       "dbscards",
+      "products",
       "arena",
     ]);
     expect(selectDbsCgSteps(["--only", "faces", "--offline"])).toEqual([]);

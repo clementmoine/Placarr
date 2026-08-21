@@ -16,6 +16,11 @@ import type {
 
 import { buildPokemonLiveAttachments, liveTitleForPrint } from "./liveAssets";
 import { pokemontcgliveCatalog } from "./pipeline";
+import {
+  ensureTcgdexSetLogoIndex,
+  loadTcgdexSetLogoIndex,
+  tcgdexLogoUrlForSetCode,
+} from "@/providers/tcgdex/setLogos";
 
 const PROVIDER_ID = "pokemontcglive";
 const PROVIDER_LABEL = "Pokémon TCG Live (local)";
@@ -66,9 +71,23 @@ export const pokemontcgliveModule: ProviderModule = {
     defaultLanguage: "en",
     websiteUrl: "https://www.pokemon.com/us/pokemon-tcg/",
     notes:
-      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `catalog.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Sync : `pnpm foil:pokemon`.",
+      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `catalog.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Produits papier scellés : pkmcards.fr (famille dbscards), étape Sync, hors horaire. Sync : `pnpm foil:pokemon`.",
   },
   catalog: pokemontcgliveCatalog,
+  /*
+    Le pack `pokemon` est servi par ce module, mais ses logos de set viennent du
+    relevé tcgdex — l'un tient le foil du client Live, l'autre l'identité des
+    cartes. C'est ici que les deux se rejoignent, plutôt que dans du code
+    partagé qui aurait dû connaître les deux.
+  */
+  refreshSetLogos: async () => {
+    const logos = await ensureTcgdexSetLogoIndex();
+    if (!logos) return "tcgdex set logos : indisponible";
+    const withLogo = logos.sets.filter((row) => row.logo).length;
+    return `tcgdex set logos : ${withLogo} wordmarks / ${logos.sets.length} sets`;
+  },
+  resolveSetLogo: ({ setCode }) =>
+    tcgdexLogoUrlForSetCode(setCode, loadTcgdexSetLogoIndex()),
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,
     async resolve(ctx) {

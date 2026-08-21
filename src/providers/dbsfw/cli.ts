@@ -4,6 +4,9 @@
  *
  *   pnpm dbs:fw
  *   pnpm dbs:fw -- --limit 2
+ *   pnpm dbs:fw -- --only products
+ *   pnpm dbs:fw -- --only products --offline
+ *   pnpm dbs:fw -- --only details      # rareté, type, coûts, traits, texte
  *   pnpm dbs:fw -- --offline
  */
 import path from "node:path";
@@ -11,17 +14,19 @@ import { fileURLToPath } from "node:url";
 
 import { DBSCARDS_SITES } from "@/providers/shared/dbscards/list";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
+import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 
 import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./fetchFaces";
 import { DBS_FW_PACK_ID } from "./indexStore";
 
 import { ensureDbsFwCuratedAssets } from "./installCurated";
+import { scrapeDbsFwCardDetails } from "./scrapeCardDetails";
 import { scrapeDbsFwCardlist } from "./scrapeCardlist";
 
-const STEPS = ["scrape", "dbscards", "faces"] as const;
+const STEPS = ["scrape", "dbscards", "products", "faces", "details"] as const;
 type Step = (typeof STEPS)[number];
 /** Everything but a local re-range needs the network. */
-const ONLINE = new Set<Step>(["scrape", "dbscards", "faces"]);
+const ONLINE = new Set<Step>(["scrape", "dbscards", "faces", "details"]);
 
 function argValueFrom(
   argv: readonly string[],
@@ -97,6 +102,24 @@ export async function runDbsFwPackPipeline(
         );
       }
     }
+    if (step === "products") {
+      const result = await scrapeTcgCardsProducts("fusion", {
+        force,
+        offline: argv.includes("--offline"),
+        delayMs: argValueFrom(argv, "--delay")
+          ? Number(argValueFrom(argv, "--delay"))
+          : undefined,
+        limit: argValueFrom(argv, "--limit")
+          ? Number(argValueFrom(argv, "--limit"))
+          : undefined,
+        onProgress: (message) => console.log(`   products — ${message}`),
+      });
+      console.log(
+        `── products : ${result.listed} SKU, ${result.detail} fiches, ` +
+          `${result.printsLinked} liens carte (${result.fetched} GET, ` +
+          `${result.catalogCompleted} complétés catalogue)`,
+      );
+    }
     if (step === "faces") {
       const result = await fetchDbsFwFaces({
         force,
@@ -111,6 +134,23 @@ export async function runDbsFwPackPipeline(
       console.log(
         `── fw faces : ok=${result.ok} skip=${result.skip} miss=${result.miss} fail=${result.fail}`,
       );
+    }
+    if (step === "details") {
+      /*
+        La liste de cartes ne donne qu'un numéro, un nom et une image : 3 962
+        tirages sans une seule rareté. La fiche détaillée porte le reste, et
+        une seule fiche sert toutes les illustrations d'un numéro — 1 927
+        requêtes au lieu de 3 962. Les fiches déjà tenues ne sont pas relues.
+      */
+      await scrapeDbsFwCardDetails({
+        force,
+        limit: argValueFrom(argv, "--limit")
+          ? Number(argValueFrom(argv, "--limit"))
+          : undefined,
+        delayMs: argValueFrom(argv, "--delay")
+          ? Number(argValueFrom(argv, "--delay"))
+          : undefined,
+      });
     }
     if (step === "scrape") {
       await scrapeDbsFwCardlist({

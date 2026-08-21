@@ -760,6 +760,11 @@ export type LorcanaSearchOptions = {
   language?: LorcanaLanguage;
   signal?: AbortSignal;
   limit?: number;
+  /**
+   * Restreint à une extension. Une requête **vide** devient alors légitime :
+   * c'est ainsi qu'on parcourt un set sans savoir quoi y chercher.
+   */
+  setId?: string | null;
 };
 
 const DEFAULT_SEARCH_LIMIT = 25;
@@ -780,7 +785,8 @@ export async function searchLorcanaCards(
   options: LorcanaSearchOptions = {},
 ): Promise<LorcanaCard[]> {
   const normalized = normalizeLorcanaSearchText(query ?? "");
-  if (!normalized) return [];
+  const setId = options.setId?.trim().toLowerCase();
+  if (!normalized && !setId) return [];
 
   const indexes = await loadLorcanaIndexes(options.language, options);
   const catalog = buildSetCatalog(indexes);
@@ -792,11 +798,16 @@ export async function searchLorcanaCards(
 
   indexes.forEach((index, langRank) => {
     for (const card of index.cards) {
+      // L'extension **borne** avant de scorer : une carte d'un autre set n'a
+      // pas à concourir, si bien nommée soit-elle.
+      if (setId && card.setCode.trim().toLowerCase() !== setId) continue;
       const nameScore = scoreLorcanaCard(card, normalized);
       const collectorScore = collector
         ? scoreLorcanaCollectorMatch(card, collector)
         : 0;
-      const score = Math.max(nameScore, collectorScore);
+      // Sans mot-clé, tout le set compte pour un : c'est un parcours, pas un
+      // classement de pertinence.
+      const score = normalized ? Math.max(nameScore, collectorScore) : 1;
       if (score <= 0) continue;
       const previous = bestByProvider.get(card.providerId);
       if (
@@ -841,4 +852,29 @@ export function lorcanaCollectorNumberLabel(card: LorcanaCard): string {
 export function lorcanaPrintLabel(card: LorcanaCard): string {
   const set = card.setName ?? `Set ${card.setCode}`;
   return `${set} · ${lorcanaCollectorNumberLabel(card)}`;
+}
+
+/**
+ * Les extensions du catalogue, dérivées des **cartes**.
+ *
+ * Surtout pas du relevé de logos : il numérote ses sets `set1`, `set2`,
+ * `quest2`, là où les cartes disent `1`, `2`. Deux espaces d'identifiants, donc
+ * un filtre qui ne rendait rien — la liste et la recherche doivent sortir de la
+ * même source pour parler le même langage.
+ */
+export async function listLorcanaPrintSets(
+  options: LorcanaSearchOptions = {},
+): Promise<{ id: string; label: string }[]> {
+  const indexes = await loadLorcanaIndexes(options.language, options);
+  const byCode = new Map<string, string>();
+  for (const index of indexes) {
+    for (const card of index.cards) {
+      const code = card.setCode?.trim();
+      if (!code || byCode.has(code)) continue;
+      byCode.set(code, card.setName?.trim() || code);
+    }
+  }
+  return [...byCode.entries()]
+    .map(([id, label]) => ({ id, label }))
+    .sort((a, b) => a.label.localeCompare(b.label, "fr", { numeric: true }));
 }

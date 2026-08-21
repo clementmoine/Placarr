@@ -1,43 +1,29 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import path from "node:path";
-
-import type {
-  ProviderCatalogHooks,
-  ProviderCatalogRefreshOpts,
-} from "@/types/providerModule";
-import {
-  dataPackPath,
-  statusFromLastRun,
-} from "@/providers/shared/catalogCorpus";
-import { packLogsDir } from "@/lib/packPaths";
+/**
+ * Crochets de catalogue du pack `dbs/fw`.
+ *
+ * Le corps est commun à tous les packs de cartes — voir
+ * `shared/cardCatalogue/pipeline`. Ne reste ici que ce qui est propre au pack :
+ * sa base, son pipeline, et ce qu'une passe automatique s'autorise.
+ */
+import type { ProviderCatalogHooks } from "@/types/providerModule";
+import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 
 import { dbsFwDbPath, DBS_FW_PACK_ID } from "./indexStore";
 
-export async function refreshDbsFwCatalog(
-  opts?: ProviderCatalogRefreshOpts,
-): Promise<void> {
-  const { runDbsFwPackPipeline } = await import(
-    /* webpackIgnore: true */
-    "./cli"
-  );
-  await runDbsFwPackPipeline([]);
-  const logs = packLogsDir(DBS_FW_PACK_ID);
-  mkdirSync(logs, { recursive: true });
-  writeFileSync(
-    path.join(logs, "last-run.json"),
-    `${JSON.stringify({ finishedAt: new Date().toISOString(), auto: Boolean(opts?.auto) })}\n`,
-  );
-}
+const hooks = cardCatalogueHooks({
+  packId: DBS_FW_PACK_ID,
+  dbPath: dbsFwDbPath,
+  runPipeline: async (argv) => {
+    const { runDbsFwPackPipeline } = await import(
+      /* webpackIgnore: true */
+      "./cli"
+    );
+    return runDbsFwPackPipeline(argv);
+  },
+  // Même partage que les Masters : la synchro admin prend le graphe produit.
+  autoSkip: ["products"],
+});
 
-export function dbsFwCatalogStatus() {
-  const db = dbsFwDbPath();
-  const cardsIndex = dataPackPath(DBS_FW_PACK_ID, "cards-index.json");
-  const empty = !existsSync(db) && !existsSync(cardsIndex);
-  return statusFromLastRun({ dataPack: DBS_FW_PACK_ID, empty });
-}
-
-export const dbsfwCatalog: ProviderCatalogHooks = {
-  dataPack: DBS_FW_PACK_ID,
-  status: dbsFwCatalogStatus,
-  refresh: refreshDbsFwCatalog,
-};
+export const refreshDbsFwCatalog = hooks.refresh;
+export const dbsFwCatalogStatus = hooks.status;
+export const dbsfwCatalog: ProviderCatalogHooks = hooks;

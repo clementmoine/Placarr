@@ -16,6 +16,8 @@ import { DatabaseSync } from "node:sqlite";
 
 import type { CardsIndexLangFiles } from "@/effects/cardsIndex";
 import { packCardDir } from "@/lib/packPaths";
+import { finalizeSetOptions } from "@/providers/shared/cardCatalogue/sets";
+
 import { dataRoot } from "@/lib/runtimeData";
 
 import {
@@ -420,5 +422,31 @@ export function exportDbsCgCardsIndexJson(
   writeFileSync(
     `${outPath}`,
     `${JSON.stringify({ version: 1, pack: DBS_CG_PACK_ID, generatedAt: new Date().toISOString(), cards }, null, 0)}\n`,
+  );
+}
+
+/**
+ * Les extensions du catalogue, telles qu'un joueur les nomme.
+ *
+ * `set_name` vit sur le titre, pas sur le tirage : un même code peut donc
+ * porter plusieurs libellés selon la langue. On garde le premier non vide, et
+ * on retombe sur le code quand aucun titre ne l'a nommé — un set réel sans
+ * libellé vaut mieux qu'un set absent de la liste.
+ */
+export function listDbsCgPrintSets(): { id: string; label: string }[] {
+  const db = ensureDbsCgIndex();
+  if (!db) return [];
+  const rows = db
+    .prepare(
+      `SELECT p.set_code AS setCode,
+              MIN(NULLIF(TRIM(t.set_name), '')) AS setName
+         FROM prints p
+         LEFT JOIN print_titles t ON t.print_key = p.print_key
+        GROUP BY p.set_code`,
+    )
+    .all() as { setCode: string; setName: string | null }[];
+  // Nettoyage, homonymes et tri : communs à tous les catalogues.
+  return finalizeSetOptions(
+    rows.map((row) => ({ id: row.setCode, label: row.setName })),
   );
 }

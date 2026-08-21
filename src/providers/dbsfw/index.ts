@@ -1,3 +1,5 @@
+import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { listDbsFwPrintSets } from "./indexStore";
 /**
  * Dragon Ball Super Card Game Fusion World — Bandai fw/en cardlist, local index.
  * Provider id `dbsfw`; printKey game slug `dbsfw`. Masters is `dbscg`.
@@ -59,6 +61,7 @@ export const dbsfwModule: ProviderModule = {
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
+    catalogueLabel: "Dragon Ball Fusion World",
     factLabel: "DBS FW",
     types: ["tcg"],
     capabilities: ["identify", "cover"],
@@ -86,8 +89,17 @@ export const dbsfwModule: ProviderModule = {
       return resolveFromLocal(ctx);
     },
   }),
-  searchPrints: async ({ query, language, limit }) =>
-    searchDbsFwPrints(query, { language: language ?? undefined, limit }),
+  /* Les extensions viennent du catalogue local, comme les cartes elles-mêmes. */
+  /*
+    Lues dans la base, pas écrites ici : Fusion World n'est sorti qu'en anglais
+    et en japonais, et le filtre de langue doit pouvoir le retirer de « FR »
+    sans qu'on ait à le lui dire — ni à corriger une liste en dur le jour où
+    Bandai localise le jeu.
+  */
+  listPrintLanguages: () => distinctPrintLanguages(dbsFwDbPath()),
+  listPrintSets: () => listDbsFwPrintSets(),
+  searchPrints: async ({ query, language, limit, setId }) =>
+    searchDbsFwPrints(query, { language: language ?? undefined, limit, setId }),
   lookupPrint: async ({ printKey, language }) => {
     if (parsePrintKey(printKey)?.game !== DBS_FW_GAME) return null;
     return lookupDbsFwPrint(printKey, { language: language ?? undefined });

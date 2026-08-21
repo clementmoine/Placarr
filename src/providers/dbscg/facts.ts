@@ -95,6 +95,120 @@ export function dbsCgPrintFacts(
     });
   }
 
+  /*
+    Ce qui suit vient du dépôt Masters (`facts.json`), en anglais. Le catalogue
+    tenait déjà nom, rareté, couleur, personnage et puissance ; il ne portait ni
+    le texte de la carte, ni les traits, ni le statut tournoi.
+  */
+  const harvested = row.harvested;
+  if (harvested?.traits.length) {
+    facts.push({
+      kind: "category",
+      label: "Traits",
+      value: harvested.traits.join(", "),
+      source: providerId,
+      confidence: 0.85,
+      priority: 21,
+    });
+  }
+
+  if (harvested?.era.length) {
+    facts.push({
+      kind: "series",
+      label: "Ère",
+      value: harvested.era.join(", "),
+      source: providerId,
+      confidence: 0.85,
+      priority: 23,
+    });
+  }
+
+  if (harvested?.keywords.length) {
+    facts.push({
+      kind: "category",
+      label: "Mots-clés",
+      value: harvested.keywords.join(", "),
+      source: providerId,
+      confidence: 0.85,
+      priority: 19,
+    });
+  }
+
+  if (harvested?.energyCost) {
+    facts.push({
+      kind: "category",
+      label: "Coût en énergie",
+      value: harvested.energyCost,
+      source: providerId,
+      confidence: 0.88,
+      priority: 22,
+    });
+  }
+
+  if (harvested?.comboPower) {
+    facts.push({
+      kind: "category",
+      label: "Puissance de combo",
+      value: harvested.comboPower,
+      source: providerId,
+      confidence: 0.85,
+      priority: 17,
+    });
+  }
+
+  if (harvested?.skill) {
+    facts.push({
+      kind: "description",
+      label: "Texte",
+      value: harvested.skill,
+      source: providerId,
+      confidence: 0.9,
+      priority: 30,
+    });
+  }
+
+  if (harvested?.back?.skill) {
+    facts.push({
+      kind: "description",
+      label: "Texte du verso",
+      value: harvested.back.skill,
+      source: providerId,
+      confidence: 0.9,
+      priority: 29,
+    });
+  }
+
+  if (harvested?.banned) {
+    facts.push({
+      kind: "category",
+      label: "Statut tournoi",
+      value: "Bannie",
+      source: providerId,
+      confidence: 0.85,
+      priority: 34,
+    });
+  } else if (harvested?.limitedTo != null) {
+    facts.push({
+      kind: "category",
+      label: "Statut tournoi",
+      value: `Limitée à ${harvested.limitedTo}`,
+      source: providerId,
+      confidence: 0.85,
+      priority: 34,
+    });
+  }
+
+  if (harvested?.erratas.length) {
+    facts.push({
+      kind: "description",
+      label: "Errata",
+      value: harvested.erratas.join("\n"),
+      source: providerId,
+      confidence: 0.85,
+      priority: 16,
+    });
+  }
+
   if (row.lang) {
     facts.push({
       kind: "category",

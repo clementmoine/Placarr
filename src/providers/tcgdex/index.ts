@@ -1,3 +1,5 @@
+import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { tcgdexDbPath } from "./indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
@@ -6,6 +8,12 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  listTcgdexLocalSets,
+  searchTcgdexRows,
+  type TcgdexSearchRow,
+} from "./indexStore";
+import { loadTcgdexSetLogoIndex } from "./setLogos";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -44,12 +52,14 @@ import type {
 } from "@/types/providerModule";
 
 import {
+  POKEMON_GAME,
   fetchTcgdexCardById,
   fetchTcgdexCardByPrintKey,
-  POKEMON_GAME,
+  isTcgdexLanguage,
   resolveTcgdexLanguage,
   searchTcgdexCards,
   tcgdexCollectorNumberLabel,
+  tcgdexImageUrl,
   tcgdexLanguageFromLiveOrDex,
   tcgdexPrintLabel,
   type TcgdexCard,
@@ -410,7 +420,25 @@ async function resolveTcgdexCard(
   }
 
   const printKey = ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim();
-  if (printKey && parsePrintKey(printKey)?.game === POKEMON_GAME) {
+  /*
+    Un `printKey` est une **affirmation d'identité** : l'objet est ce tirage-là,
+    de ce jeu-là. Quand il en nomme un autre, ce provider n'a rien à en dire et
+    se tait.
+
+    Sans ce garde, on sautait bien la recherche par clé — puis on retombait sur
+    la recherche par **nom**, qui rendait la première carte approchante. Des
+    noms courts suffisaient à faire mouche par sous-chaîne : sur une étagère
+    Naruto, « Inari » est devenu « Illum*inari*um », « Chou » → « At*chou*m »,
+    « Haku » → « *Haku*na Matata ». Quatre objets sur trente-six, tous
+    confidemment faux.
+
+    Une clé illisible ne bloque pas : c'est l'absence d'affirmation, pas une
+    affirmation contraire, et la recherche par nom reste alors le seul recours.
+  */
+  const identity = printKey ? parsePrintKey(printKey) : null;
+  if (identity && identity.game !== POKEMON_GAME) return null;
+
+  if (printKey && identity?.game === POKEMON_GAME) {
     const byKey = await fetchTcgdexCardByPrintKey(printKey, {
       ...options,
       name: ctx.name,
@@ -493,10 +521,56 @@ async function refreshTcgdexOffers(ctx: BarcodePriceRefreshContext) {
   return offersFromCard(card);
 }
 
+/**
+ * Une ligne de la base locale, rendue sous la forme d'une carte du catalogue.
+ *
+ * Reconstruire un `TcgdexCard` plutôt que de fabriquer un candidat directement
+ * garde **une seule** mise en forme : `toPrintCandidate` ne sait pas d'où vient
+ * la carte, et la sortie locale ne peut donc pas dériver de la distante.
+ *
+ * Les champs absents le sont pour de bon : le brief d'un set ne porte ni
+ * rareté ni type — la recherche distante ne les avait pas non plus. En
+ * revanche le nom du set et de la série, eux, arrivent **avec** la moisson,
+ * là où le distant demandait un appel de plus par set.
+ */
+function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
+  return {
+    providerId: row.providerId,
+    printKey: row.printKey,
+    setId: row.setId,
+    setName: row.setName,
+    serieName: row.serieName,
+    serieId: null,
+    setOfficialCount: null,
+    setTotalCount: null,
+    localId: row.localId,
+    language: (isTcgdexLanguage(row.lang)
+      ? row.lang
+      : "fr") as TcgdexCard["language"],
+    name: row.name,
+    rarity: null,
+    stage: null,
+    category: null,
+    types: [],
+    hp: null,
+    evolveFrom: null,
+    regulationMark: null,
+    illustrator: null,
+    finishes: [],
+    imageBaseUrl: row.imageBaseUrl,
+    imageUrl: tcgdexImageUrl(row.imageBaseUrl, "high", "png"),
+    thumbnailUrl: tcgdexImageUrl(row.imageBaseUrl, "low", "webp"),
+    cmPriceCents: null,
+    cmFoilPriceCents: null,
+    cardmarketProductId: null,
+  };
+}
+
 export const tcgdexModule: ProviderModule = {
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
+    catalogueLabel: "Pokémon",
     types: ["tcg"],
     nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people", "price"],
@@ -534,19 +608,61 @@ export const tcgdexModule: ProviderModule = {
     });
     return Array.from(new Set(cards.map((card) => card.name)));
   },
-  searchPrints: async ({ query, language, limit, signal }) => {
-    const cards = await searchTcgdexCards(query, {
-      language: tcgdexLanguageFromLiveOrDex(language) ?? undefined,
+  /*
+    Même source que les visuels de set : l'index tcgdex déjà sur disque. On ne
+    liste que ce qui a un nom — un identifiant nu ne se choisit pas.
+  */
+  /* Le catalogue moissonné d'abord ; l'index de logos en repli. */
+  /** Ce que la moisson a réellement rapporté, pas ce que TCGdex publie. Voir `distinctPrintLanguages`. */
+  listPrintLanguages: () => distinctPrintLanguages(tcgdexDbPath()),
+  listPrintSets: (_type, language) => {
+    const local = listTcgdexLocalSets(language ?? undefined);
+    if (local.length > 0) return local;
+    return (loadTcgdexSetLogoIndex()?.sets ?? [])
+      .filter((row) => row.name?.trim())
+      .map((row) => ({ id: row.id, label: row.name!.trim() }))
+      .sort((a, b) => a.label.localeCompare(b.label, "fr", { numeric: true }));
+  },
+  searchPrints: async ({ query, language, limit, signal, setId }) => {
+    /*
+      La base locale d'abord : même donnée, sans le réseau. Mesuré avant
+      moisson — 327 ms l'appel distant, contre 42 à 56 ms pour les packs qui
+      lisent leur base. Le distant reste le repli tant que la moisson n'a pas
+      tourné : un catalogue vide ne doit pas rendre l'ajout impossible.
+    */
+    const localRows = searchTcgdexRows(query, {
+      language: language ?? undefined,
       limit,
-      signal,
+      setId,
     });
-    // Picker grid needs a face. Some TCGdex rows have no `image` (e.g. McDonald's
-    // 2024sv) — keep them out of the add UI rather than empty muted tiles.
-    return cards
-      .map(toPrintCandidate)
-      .filter((candidate) =>
-        Boolean(candidate.thumbnailUrl || candidate.imageUrl),
-      );
+    const cards =
+      localRows.length > 0
+        ? localRows.map(cardFromLocalRow)
+        : await searchTcgdexCards(query, {
+            language: tcgdexLanguageFromLiveOrDex(language) ?? undefined,
+            limit,
+            signal,
+            setId,
+          });
+    /*
+      Une carte sans face **descend**, elle ne disparaît pas.
+
+      Elle était écartée pour ne pas remplir la grille de tuiles vides. Mais
+      1507 tirages n'ont pas d'image chez la source — dont les 406 Kits du
+      dresseur, qui n'en ont aucune — et les écarter les rendait tout
+      simplement **impossibles à ajouter** : la carte existe, le collectionneur
+      l'a en main, et le catalogue prétendait le contraire.
+
+      Reléguer plutôt que cacher, c'est la règle qu'on applique déjà aux visuels
+      de la mauvaise console.
+    */
+    const candidates = cards.map(toPrintCandidate);
+    const hasFace = (candidate: (typeof candidates)[number]) =>
+      Boolean(candidate.thumbnailUrl || candidate.imageUrl);
+    return [
+      ...candidates.filter(hasFace),
+      ...candidates.filter((candidate) => !hasFace(candidate)),
+    ];
   },
   lookupPrint: async ({ printKey, name, language, signal }) => {
     if (parsePrintKey(printKey)?.game !== POKEMON_GAME) return null;

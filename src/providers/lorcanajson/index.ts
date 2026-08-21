@@ -1,3 +1,5 @@
+import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { lorcanaTcgDbPath } from "@/providers/lorcanatcg/indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import {
@@ -5,6 +7,11 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  listLorcanaTcgSets,
+  searchLorcanaTcgRows,
+  type LorcanaTcgSearchRow,
+} from "@/providers/lorcanatcg/indexStore";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -40,6 +47,7 @@ import {
   searchLorcanaCards,
   type LorcanaCard,
   type LorcanaLanguage,
+  listLorcanaPrintSets,
 } from "./fetch";
 
 export {
@@ -355,6 +363,67 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
 }
 
 /** One shape for both the search results and a lookup by key. */
+/**
+ * Une ligne de la base locale, rendue sous la forme d'une carte du catalogue.
+ *
+ * Reconstruire un `LorcanaCard` plutôt que de fabriquer un candidat directement
+ * garde **une seule** mise en forme : `toPrintCandidate` ne sait pas d'où vient
+ * la carte, et la sortie locale ne peut donc pas dériver de la distante.
+ */
+function cardFromLocalRow(row: LorcanaTcgSearchRow): LorcanaCard {
+  const list = (raw: string | null): string[] => {
+    if (!raw) return [];
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed)
+        ? parsed.filter((v): v is string => typeof v === "string")
+        : [];
+    } catch {
+      return [];
+    }
+  };
+  return {
+    providerId: row.providerId ?? row.printKey,
+    printKey: row.printKey,
+    setCode: row.setCode ?? "",
+    setName: row.setName,
+    number: Number.parseInt(row.number ?? "0", 10) || 0,
+    setCardCount: row.setCardCount,
+    variant: row.variant,
+    promoGrouping: row.promoGrouping,
+    language: (isLorcanaLanguage(row.lang)
+      ? row.lang
+      : LORCANA_DEFAULT_LANGUAGE) as LorcanaCard["language"],
+    fullName: row.fullName,
+    name: row.name ?? row.fullName,
+    version: row.version,
+    rarity: row.rarity,
+    cardType: row.cardType,
+    color: row.color,
+    cost: row.cost,
+    lore: row.lore,
+    strength: row.strength,
+    willpower: row.willpower,
+    subtypes: list(row.subtypesJson),
+    // SQLite ne connaît pas le booléen : 0 doit revenir `false`, pas `null`.
+    inkwell: row.inkwell == null ? null : row.inkwell !== 0,
+    artists: list(row.artistsJson),
+    story: row.story,
+    flavorText: row.flavorText,
+    foilTypes: list(row.foilTypesJson),
+    varnishType: row.varnishType,
+    imageUrl: row.imageUrl,
+    thumbnailUrl: row.thumbnailUrl,
+    foilMaskUrl: row.foilMaskUrl,
+    fullFoilUrl: row.fullFoilUrl,
+    varnishMaskUrl: row.varnishMaskUrl,
+    secondVarnishMaskUrl: row.secondVarnishMaskUrl,
+    foilEffectColors: list(row.foilEffectColorsJson),
+    cardmarketUrl: row.cardmarketUrl,
+    searchName: row.searchName ?? row.fullName.toLowerCase(),
+  };
+}
+
 export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
   const faceQuarterTurns = faceQuarterTurnsForLorcanaPrint({
     cardType: card.cardType,
@@ -484,7 +553,25 @@ async function resolveLorcanaCard(
   }
 
   const printKey = ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim();
-  if (printKey && parsePrintKey(printKey)?.game === LORCANA_GAME) {
+  /*
+    Un `printKey` est une **affirmation d'identité** : l'objet est ce tirage-là,
+    de ce jeu-là. Quand il en nomme un autre, ce provider n'a rien à en dire et
+    se tait.
+
+    Sans ce garde, on sautait bien la recherche par clé — puis on retombait sur
+    la recherche par **nom**, qui rendait la première carte approchante. Des
+    noms courts suffisaient à faire mouche par sous-chaîne : sur une étagère
+    Naruto, « Inari » est devenu « Illum*inari*um », « Chou » → « At*chou*m »,
+    « Haku » → « *Haku*na Matata ». Quatre objets sur trente-six, tous
+    confidemment faux.
+
+    Une clé illisible ne bloque pas : c'est l'absence d'affirmation, pas une
+    affirmation contraire, et la recherche par nom reste alors le seul recours.
+  */
+  const identity = printKey ? parsePrintKey(printKey) : null;
+  if (identity && identity.game !== LORCANA_GAME) return null;
+
+  if (printKey && identity?.game === LORCANA_GAME) {
     const byKey = await fetchLorcanaCardByPrintKey(printKey, {
       ...options,
       name: ctx.name,
@@ -521,6 +608,7 @@ export const lorcanajsonModule: ProviderModule = {
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
+    catalogueLabel: "Lorcana",
     types: ["tcg"],
     nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people"],
@@ -555,11 +643,47 @@ export const lorcanajsonModule: ProviderModule = {
     // Several prints share a name; the picker exists to tell them apart.
     return Array.from(new Set(cards.map((card) => card.fullName)));
   },
-  searchPrints: async ({ query, language, limit, signal }) => {
+  /*
+    Les extensions viennent de l'index de logos déjà tenu sur disque : c'est le
+    même relevé qui nomme les sets pour les visuels, donc les deux ne peuvent
+    pas diverger. Absent tant qu'aucune synchro n'a tourné — on rend alors une
+    liste vide plutôt qu'une liste devinée.
+  */
+  /* Les extensions de la base locale ; les JSON distants en repli. */
+  /** Le catalogue local sert fr/en/de/it ; la liste se lit dans la base. Voir `distinctPrintLanguages`. */
+  listPrintLanguages: () => distinctPrintLanguages(lorcanaTcgDbPath()),
+  listPrintSets: async (_type, language) => {
+    const local = listLorcanaTcgSets(language ?? undefined);
+    return local.length > 0 ? local : listLorcanaPrintSets();
+  },
+  searchPrints: async ({ query, language, limit, signal, setId }) => {
+    /*
+      La base locale d'abord : c'est la même donnée, sans le réseau, et c'est
+      elle qui connaît les identifiants d'extension que le sélecteur propose.
+      Les JSON distants restent le repli tant qu'aucune synchro n'a tourné —
+      un catalogue vide ne doit pas rendre l'ajout impossible.
+    */
+    const local = searchLorcanaTcgRows(query, {
+      language: language ?? undefined,
+      limit,
+      setId,
+    });
+    if (local.length > 0) {
+      const seen = new Set<string>();
+      const out: PrintCandidate[] = [];
+      for (const row of local) {
+        if (seen.has(row.printKey)) continue;
+        seen.add(row.printKey);
+        out.push(toPrintCandidate(cardFromLocalRow(row)));
+        if (limit && out.length >= limit) break;
+      }
+      return out;
+    }
     const cards = await searchLorcanaCards(query, {
       language: isLorcanaLanguage(language) ? language : undefined,
       limit,
       signal,
+      setId,
     });
     return cards.map((card) => toPrintCandidate(card));
   },

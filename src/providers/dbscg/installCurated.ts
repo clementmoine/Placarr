@@ -1,14 +1,19 @@
 /**
- * Install curated sleeve back + generated full-face foil plate into `data/dbs/cg/`.
+ * Assets curés du pack `dbs/cg` : verso et plaque de foil.
+ *
+ * Le travail lui-même est commun à tous les packs de cartes — il ne différait
+ * ici que par l'id et le nom des fonctions, à une ligne près entre les deux
+ * jumeaux Dragon Ball. Ce module ne garde donc que ce qui est propre au pack :
+ * où vit son dossier curé.
  */
-import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import sharp from "sharp";
-
-import { foilPackDir } from "@/lib/runtimeData";
-import { packCardsDir } from "@/lib/packPaths";
+import {
+  ensureCuratedPackAssets,
+  installFullFoilMask,
+  type CuratedAssetsOptions,
+} from "@/providers/shared/cardCatalogue/curatedAssets";
 
 import { DBS_CG_PACK_ID } from "./indexStore";
 
@@ -18,64 +23,18 @@ export function dbsCgCuratedDir(): string {
   return path.join(PROVIDER_DIR, "curated");
 }
 
-function curatedDestStale(srcPath: string, destPath: string): boolean {
-  if (!existsSync(destPath)) return true;
-  return statSync(srcPath).mtimeMs > statSync(destPath).mtimeMs;
-}
-
-export async function installDbsCgCuratedBack(
-  opts: { force?: boolean; dryRun?: boolean } = {},
-): Promise<{ installed: boolean; dest: string | null }> {
-  const src = path.join(dbsCgCuratedDir(), "back.webp");
-  const dest = path.join(packCardsDir(DBS_CG_PACK_ID), "back.webp");
-  if (!existsSync(src)) return { installed: false, dest: null };
-  if (!opts.force && !curatedDestStale(src, dest)) {
-    return { installed: false, dest };
-  }
-  if (opts.dryRun) return { installed: true, dest };
-  mkdirSync(path.dirname(dest), { recursive: true });
-  copyFileSync(src, dest);
-  const mdSrc = path.join(dbsCgCuratedDir(), "BACK.md");
-  if (existsSync(mdSrc)) {
-    copyFileSync(mdSrc, path.join(packCardsDir(DBS_CG_PACK_ID), "BACK.md"));
-  }
-  return { installed: true, dest };
-}
-
-export async function installDbsCgFullFoilMask(
-  opts: { force?: boolean; dryRun?: boolean } = {},
+export function installDbsCgFullFoilMask(
+  opts: CuratedAssetsOptions = {},
 ): Promise<{ installed: boolean; dest: string }> {
-  const dest = path.join(foilPackDir(DBS_CG_PACK_ID), "full_foil_mask.webp");
-  if (!opts.force && existsSync(dest)) return { installed: false, dest };
-  if (opts.dryRun) return { installed: true, dest };
-  mkdirSync(path.dirname(dest), { recursive: true });
-  await sharp({
-    create: {
-      width: 64,
-      height: 64,
-      channels: 3,
-      background: "#ffffff",
-    },
-  })
-    .webp({ lossless: true })
-    .toFile(dest);
-  return { installed: true, dest };
+  return installFullFoilMask(DBS_CG_PACK_ID, opts);
 }
 
-export async function ensureDbsCgCuratedAssets(opts?: {
-  dryRun?: boolean;
-  force?: boolean;
-}): Promise<void> {
-  const back = await installDbsCgCuratedBack(opts);
-  if (back.installed) {
-    console.log(
-      `   pack back → ${back.dest}${opts?.dryRun ? " (dry run)" : ""}`,
-    );
-  }
-  const mask = await installDbsCgFullFoilMask(opts ?? {});
-  if (mask.installed) {
-    console.log(
-      `   full foil mask → ${mask.dest}${opts?.dryRun ? " (dry run)" : ""}`,
-    );
-  }
+export function ensureDbsCgCuratedAssets(
+  opts?: CuratedAssetsOptions,
+): Promise<void> {
+  return ensureCuratedPackAssets({
+    packId: DBS_CG_PACK_ID,
+    curatedDir: dbsCgCuratedDir(),
+    options: opts,
+  });
 }

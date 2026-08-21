@@ -279,6 +279,16 @@ export async function scrapeLorcanaCards(
         foilTypes: card.foilTypes.length ? card.foilTypes : null,
         varnishType: card.varnishType,
         cardmarketUrl: card.cardmarketUrl,
+        lore: card.lore,
+        strength: card.strength,
+        willpower: card.willpower,
+        inkwell: card.inkwell,
+        setCardCount: card.setCardCount,
+        // Rien d'autre ne prédit la teinte du vernis : la perdre ici la perd
+        // pour de bon côté base locale.
+        foilEffectColors: card.foilEffectColors.length
+          ? card.foilEffectColors
+          : null,
       });
       titles.push({
         printKey: card.printKey,
@@ -292,6 +302,7 @@ export async function scrapeLorcanaCards(
         color: card.color,
         story: card.story,
         flavorText: card.flavorText,
+        subtypes: card.subtypes.length ? card.subtypes : null,
         searchName: card.searchName,
         imageUrl: card.imageUrl,
         thumbnailUrl: card.thumbnailUrl,

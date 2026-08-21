@@ -1,15 +1,21 @@
 /**
- * Install curated sleeve back + generated full-face foil plate into `data/dbs/fw/`.
- * Same dbscards Masters verso as a placeholder — physical FW back is unverified.
+ * Assets curés du pack `dbs/fw` : verso et plaque de foil. *
+ * Le verso est celui des Masters, faute d'avoir vérifié le verso physique
+ * de Fusion World — un placeholder assumé, pas une mesure.
+ *
+ * Le travail lui-même est commun à tous les packs de cartes — il ne différait
+ * ici que par l'id et le nom des fonctions, à une ligne près entre les deux
+ * jumeaux Dragon Ball. Ce module ne garde donc que ce qui est propre au pack :
+ * où vit son dossier curé.
  */
-import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import sharp from "sharp";
-
-import { foilPackDir } from "@/lib/runtimeData";
-import { packCardsDir } from "@/lib/packPaths";
+import {
+  ensureCuratedPackAssets,
+  installFullFoilMask,
+  type CuratedAssetsOptions,
+} from "@/providers/shared/cardCatalogue/curatedAssets";
 
 import { DBS_FW_PACK_ID } from "./indexStore";
 
@@ -19,64 +25,18 @@ export function dbsFwCuratedDir(): string {
   return path.join(PROVIDER_DIR, "curated");
 }
 
-function curatedDestStale(srcPath: string, destPath: string): boolean {
-  if (!existsSync(destPath)) return true;
-  return statSync(srcPath).mtimeMs > statSync(destPath).mtimeMs;
-}
-
-export async function installDbsFwCuratedBack(
-  opts: { force?: boolean; dryRun?: boolean } = {},
-): Promise<{ installed: boolean; dest: string | null }> {
-  const src = path.join(dbsFwCuratedDir(), "back.webp");
-  const dest = path.join(packCardsDir(DBS_FW_PACK_ID), "back.webp");
-  if (!existsSync(src)) return { installed: false, dest: null };
-  if (!opts.force && !curatedDestStale(src, dest)) {
-    return { installed: false, dest };
-  }
-  if (opts.dryRun) return { installed: true, dest };
-  mkdirSync(path.dirname(dest), { recursive: true });
-  copyFileSync(src, dest);
-  const mdSrc = path.join(dbsFwCuratedDir(), "BACK.md");
-  if (existsSync(mdSrc)) {
-    copyFileSync(mdSrc, path.join(packCardsDir(DBS_FW_PACK_ID), "BACK.md"));
-  }
-  return { installed: true, dest };
-}
-
-export async function installDbsFwFullFoilMask(
-  opts: { force?: boolean; dryRun?: boolean } = {},
+export function installDbsFwFullFoilMask(
+  opts: CuratedAssetsOptions = {},
 ): Promise<{ installed: boolean; dest: string }> {
-  const dest = path.join(foilPackDir(DBS_FW_PACK_ID), "full_foil_mask.webp");
-  if (!opts.force && existsSync(dest)) return { installed: false, dest };
-  if (opts.dryRun) return { installed: true, dest };
-  mkdirSync(path.dirname(dest), { recursive: true });
-  await sharp({
-    create: {
-      width: 64,
-      height: 64,
-      channels: 3,
-      background: "#ffffff",
-    },
-  })
-    .webp({ lossless: true })
-    .toFile(dest);
-  return { installed: true, dest };
+  return installFullFoilMask(DBS_FW_PACK_ID, opts);
 }
 
-export async function ensureDbsFwCuratedAssets(opts?: {
-  dryRun?: boolean;
-  force?: boolean;
-}): Promise<void> {
-  const back = await installDbsFwCuratedBack(opts);
-  if (back.installed) {
-    console.log(
-      `   pack back → ${back.dest}${opts?.dryRun ? " (dry run)" : ""}`,
-    );
-  }
-  const mask = await installDbsFwFullFoilMask(opts ?? {});
-  if (mask.installed) {
-    console.log(
-      `   full foil mask → ${mask.dest}${opts?.dryRun ? " (dry run)" : ""}`,
-    );
-  }
+export function ensureDbsFwCuratedAssets(
+  opts?: CuratedAssetsOptions,
+): Promise<void> {
+  return ensureCuratedPackAssets({
+    packId: DBS_FW_PACK_ID,
+    curatedDir: dbsFwCuratedDir(),
+    options: opts,
+  });
 }

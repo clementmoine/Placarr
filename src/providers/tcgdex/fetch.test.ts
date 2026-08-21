@@ -14,7 +14,9 @@ import {
   printKeyFromTcgdexIds,
   resolveTcgdexLanguage,
   searchTcgdexCards,
+  tcgdexIdCandidatesFromPrintKey,
   tcgdexIdFromPrintKey,
+  printKeySetSegment,
   tcgdexImageUrl,
   tcgdexLanguageFromLiveOrDex,
   tcgdexPrintLabel,
@@ -136,6 +138,51 @@ describe("printKeyFromTcgdexIds / tcgdexIdFromPrintKey", () => {
 
   it("rejects non-pokemon keys", () => {
     expect(tcgdexIdFromPrintKey("lorcana:1-1")).toBeNull();
+  });
+});
+
+/*
+  23 sets — tous des Kits du dresseur, 641 cartes — n'avaient aucune clé : leur
+  id porte des tirets, et le tiret sépare le set du numéro. Le point le traduit,
+  et il était déjà légal dans un segment.
+*/
+describe("sets dont l'id porte un tiret", () => {
+  it("leaves every existing id untouched — no key already written moves", () => {
+    expect(printKeySetSegment("sv03.5")).toBe("sv03.5");
+    expect(printKeySetSegment("swsh10.5")).toBe("swsh10.5");
+    expect(printKeySetSegment("base1")).toBe("base1");
+    expect(printKeyFromTcgdexIds("sv03.5", "006")).toBe("pokemon:sv03.5-006");
+  });
+
+  it("mints the Trainer Kits that had no key at all", () => {
+    expect(printKeyFromTcgdexIds("tk-xy-latia", "1")).toBe(
+      "pokemon:tk.xy.latia-1",
+    );
+    expect(printKeyFromTcgdexIds("p-a", "12")).toBe("pokemon:p.a-12");
+    expect(printKeyFromTcgdexIds("2018sm-fr", "3")).toBe("pokemon:2018sm.fr-3");
+  });
+
+  /*
+    Un segment à point est ambigu en théorie : `sv03.5` en porte un pour de
+    vrai, `tk.xy.latia` l'a reçu du tiret. On rend les deux lectures, la
+    littérale d'abord — sur le catalogue réel elles ne se croisent jamais.
+  */
+  it("reads a dotted segment both ways, the literal one first", () => {
+    expect(tcgdexIdCandidatesFromPrintKey("pokemon:sv03.5-006")).toEqual([
+      "sv03.5-006",
+      "sv03-5-006",
+    ]);
+    expect(tcgdexIdCandidatesFromPrintKey("pokemon:tk.xy.latia-1")).toEqual([
+      "tk.xy.latia-1",
+      "tk-xy-latia-1",
+    ]);
+  });
+
+  it("has nothing to disambiguate when the segment carries no dot", () => {
+    expect(tcgdexIdCandidatesFromPrintKey("pokemon:base1-4")).toEqual([
+      "base1-4",
+    ]);
+    expect(tcgdexIdCandidatesFromPrintKey("lorcana:1-1")).toEqual([]);
   });
 });
 

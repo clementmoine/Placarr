@@ -9,6 +9,7 @@ import {
   dataPackPath,
   statusFromLastRun,
 } from "@/providers/shared/catalogCorpus";
+import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { indexLiveCards } from "./indexCards";
@@ -23,7 +24,7 @@ function cardsDbPath(): string {
 }
 
 export async function refreshPokemonLiveCatalog(
-  _opts?: ProviderCatalogRefreshOpts,
+  opts?: ProviderCatalogRefreshOpts,
 ): Promise<void> {
   // Re-index identities from local config-cache when present; always refresh
   // Catalogue face index from on-disk cards/ (soft-skip if empty).
@@ -41,6 +42,13 @@ export async function refreshPokemonLiveCatalog(
     console.log(
       `[pokemon catalog] cards-index ${faces.cards} stems → ${faces.path}`,
     );
+  }
+  /*
+    pkmcards.fr is the same host family as dbscards. Manual Sync takes the
+    paper sealed-product graph. The hourly loop skips it.
+  */
+  if (!opts?.auto) {
+    await scrapeTcgCardsProducts("pkmcards", {});
   }
 }
 

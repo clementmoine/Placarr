@@ -11,6 +11,10 @@ import {
   DBS_CG_FINISHES,
   DBS_CG_FULL_FOIL_MASK_URL,
 } from "@/effects/dbscg";
+import {
+  isAnsweredQuery,
+  setScopedWhere,
+} from "@/providers/shared/cardCatalogue/sets";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { assetsCardUrl } from "@/lib/packAssetUrls";
@@ -22,6 +26,8 @@ import {
   dbsCgLocalBackFilename,
   ensureDbsCgIndex,
 } from "./indexStore";
+import type { DbsCgFactsEntry } from "./buildMastersFacts";
+import { dbsCgFactsFor } from "./factsStore";
 import { DBS_CG_GAME, formatDbsReference } from "./printIdentity";
 
 const PLAIN_FINISH = "normal";
@@ -43,6 +49,11 @@ export type DbsPrintDetail = {
   awakenedName: string | null;
   imageUrl: string | null;
   backUrl: string | null;
+  /**
+   * Texte de la carte, traits, ère, coûts, verso, statut tournoi et errata,
+   * bâtis depuis le dépôt Masters. Anglophones.
+   */
+  harvested?: DbsCgFactsEntry | null;
 };
 
 /**
@@ -133,10 +144,16 @@ const DETAIL_SQL = `SELECT p.print_key AS printKey,
 
 export function searchDbsCgPrints(
   query: string,
-  opts: { language?: string; limit?: number } = {},
+  opts: { language?: string; limit?: number; setId?: string | null } = {},
 ): PrintCandidate[] {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  const setId = opts.setId?.trim().toLowerCase();
+  /*
+    Une extension seule est une question complète — « montre-moi ce set » — et
+    c'est ainsi qu'on le parcourt sans savoir quoi y chercher. Sans extension,
+    une requête vide reste sans réponse.
+  */
+  if (!isAnsweredQuery(trimmed, setId)) return [];
   const db = ensureDbsCgIndex();
   if (!db) return [];
 
@@ -146,28 +163,28 @@ export function searchDbsCgPrints(
   const like = `%${trimmed.toLowerCase()}%`;
   const likeCompact = `%${compact}%`;
 
-  const rows = db
-    .prepare(
-      `${DETAIL_SQL}
-        WHERE LOWER(t.full_name) LIKE ?
+  const scope = setScopedWhere({
+    setColumn: "p.set_code",
+    setId,
+    textClause: trimmed
+      ? `LOWER(t.full_name) LIKE ?
            OR LOWER(COALESCE(t.awakened_name, '')) LIKE ?
            OR LOWER(p.number)    LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.set_code || '-' || p.number) LIKE ?
-           OR (p.grouping IS NOT NULL AND LOWER(p.set_code || '-' || p.number || '_' || p.grouping) LIKE ?)
+           OR (p.grouping IS NOT NULL AND LOWER(p.set_code || '-' || p.number || '_' || p.grouping) LIKE ?)`
+      : null,
+    textParams: [like, like, likeCompact, likeCompact, like, like],
+  });
+
+  const rows = db
+    .prepare(
+      `${DETAIL_SQL}
+        WHERE ${scope.where}
         ORDER BY (t.lang = ?) DESC, p.set_code, p.number, p.grouping
         LIMIT ?`,
     )
-    .all(
-      like,
-      like,
-      likeCompact,
-      likeCompact,
-      like,
-      like,
-      lang,
-      limit * 3,
-    ) as DbsPrintDetail[];
+    .all(...scope.params, lang, limit * 3) as DbsPrintDetail[];
 
   const seen = new Set<string>();
   const out: PrintCandidate[] = [];
@@ -195,7 +212,8 @@ export function lookupDbsCgPrintDetail(
         LIMIT 1`,
     )
     .get(printKey, lang) as DbsPrintDetail | undefined;
-  return row ?? null;
+  if (!row) return null;
+  return { ...row, harvested: dbsCgFactsFor(row.setCode, row.number) };
 }
 
 export function lookupDbsCgPrint(

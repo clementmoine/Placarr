@@ -1,3 +1,5 @@
+import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { listDbsCgPrintSets } from "./indexStore";
 /**
  * Dragon Ball Super Card Game (Masters) — Bandai FR+EN cardlists, local index.
  * Provider id `dbscg`; printKey game slug `dbscg`. Fusion World is `dbsfw`.
@@ -71,6 +73,7 @@ export const dbscgModule: ProviderModule = {
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
+    catalogueLabel: "Dragon Ball Masters",
     factLabel: "DBS CG",
     types: ["tcg"],
     capabilities: ["identify", "cover"],
@@ -98,8 +101,12 @@ export const dbscgModule: ProviderModule = {
       return resolveFromLocal(ctx);
     },
   }),
-  searchPrints: async ({ query, language, limit }) =>
-    searchDbsCgPrints(query, { language: language ?? undefined, limit }),
+  /* Les extensions viennent du catalogue local, comme les cartes elles-mêmes. */
+  /** Lues dans la base : voir `distinctPrintLanguages`. */
+  listPrintLanguages: () => distinctPrintLanguages(dbsCgDbPath()),
+  listPrintSets: () => listDbsCgPrintSets(),
+  searchPrints: async ({ query, language, limit, setId }) =>
+    searchDbsCgPrints(query, { language: language ?? undefined, limit, setId }),
   lookupPrint: async ({ printKey, language }) => {
     if (parsePrintKey(printKey)?.game !== DBS_CG_GAME) return null;
     return lookupDbsCgPrint(printKey, { language: language ?? undefined });

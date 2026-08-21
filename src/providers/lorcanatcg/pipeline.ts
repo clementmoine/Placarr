@@ -10,6 +10,7 @@ import {
 } from "@/providers/shared/catalogCorpus";
 
 import { scrapeLorcanaCards } from "./scrapeCards";
+import { scrapeLorcardsProducts } from "./lorcards";
 
 const DATA_PACK = "lorcana";
 
@@ -19,6 +20,13 @@ export async function refreshLorcanaTcgCatalog(
   // Rebuild catalogue faces + sqlite. Full Unity foil extract stays on CLI /
   // foilExtract until the Unity island is invoked from this pipeline.
   await scrapeLorcanaCards({ force: Boolean(opts && !opts.auto) });
+  /*
+    lorcards.fr is the same host family as dbscards. Manual Sync takes the
+    product graph (sequential, cache-friendly). The hourly loop skips it.
+  */
+  if (!opts?.auto) {
+    await scrapeLorcardsProducts({});
+  }
 }
 
 export function lorcanaTcgCatalogStatus() {

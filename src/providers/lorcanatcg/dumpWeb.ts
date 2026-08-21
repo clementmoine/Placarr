@@ -4,6 +4,8 @@
  * Fetches `https://cards.disneylorcana.com/fr-FR`, follows hashed CSS
  * (`routes-*.css` / `index-*.css`), downloads `/assets/<stem>-<hash>.ext`
  * and writes stable names `<stem>.ext` under `lorcana/web/`.
+ * Set logos come from `api.lorcana.ravensburger.com/v3/catalog/fr`
+ * (`card_sets[].thumbnail_image_url`) → `products/sets/{id}/logo.png`.
  * Provenance → `data/lorcana/logs/web-source.json`.
  */
 
@@ -13,6 +15,7 @@ import path from "node:path";
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
 import { lorcanaWebRecipeTextureStems } from "@/effects/lorcana/cssRecipes";
+import { ensureLorcanaSetLogoIndex } from "@/providers/lorcanatcg/setLogos";
 
 const VIEWER_BASE = "https://cards.disneylorcana.com";
 const VIEWER_LOCALE = "fr-FR";
@@ -233,9 +236,27 @@ export async function dumpLorcanaWeb(
       `  Asset stems from CSS (${unlisted.length}) — see logs/web-source.json`,
     );
   }
+  let setLogos = 0;
+  try {
+    const logos = await ensureLorcanaSetLogoIndex({ root: opts.root });
+    setLogos = logos?.sets.filter((row) => row.logo).length ?? 0;
+    console.log(
+      logos
+        ? `  set logos : ${setLogos} / ${logos.sets.length} (catalog thumbs)`
+        : "  set logos : indisponible",
+    );
+  } catch (err) {
+    console.log(`  ATTENTION set logos: ${err}`);
+  }
   if (Object.keys(refs).length === 0) {
     console.log("  No hashed foil assets found — store unchanged");
-    return { provider: "lorcanaweb", files: 0, dest, unlistedStems: unlisted };
+    return {
+      provider: "lorcanaweb",
+      files: 0,
+      dest,
+      setLogos,
+      unlistedStems: unlisted,
+    };
   }
   console.log(
     `Phase 2 — download ${Object.keys(refs).length} texture(s) as stable names`,
@@ -249,6 +270,7 @@ export async function dumpLorcanaWeb(
     files: written.length,
     stems: Object.keys(refs).sort(),
     unlistedStems: unlisted,
+    setLogos,
     dest,
   };
 }

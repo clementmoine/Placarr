@@ -6,6 +6,10 @@ import {
   DBS_FW_FINISHES,
   DBS_FW_FULL_FOIL_MASK_URL,
 } from "@/effects/dbsfw";
+import {
+  isAnsweredQuery,
+  setScopedWhere,
+} from "@/providers/shared/cardCatalogue/sets";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { assetsCardUrl } from "@/lib/packAssetUrls";
@@ -17,6 +21,8 @@ import {
   dbsFwLocalBackFilename,
   ensureDbsFwIndex,
 } from "./indexStore";
+import { dbsFwFactsFor } from "./factsStore";
+import type { DbsFwCardDetail } from "./parseCardDetail";
 import { DBS_FW_GAME, formatDbsFwReference } from "./printIdentity";
 
 const PLAIN_FINISH = "normal";
@@ -31,6 +37,11 @@ export type DbsFwPrintDetail = {
   fullName: string | null;
   setName: string | null;
   imageUrl: string | null;
+  /**
+   * Rareté, type, coût, puissance, traits et texte, relevés sur la fiche
+   * détaillée. Absent sur les huit numéros dont la page est un gabarit vide.
+   */
+  harvested?: DbsFwCardDetail | null;
 };
 
 /**
@@ -93,10 +104,16 @@ const DETAIL_SQL = `SELECT p.print_key AS printKey,
 
 export function searchDbsFwPrints(
   query: string,
-  opts: { language?: string; limit?: number } = {},
+  opts: { language?: string; limit?: number; setId?: string | null } = {},
 ): PrintCandidate[] {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  const setId = opts.setId?.trim().toLowerCase();
+  /*
+    Une extension seule est une question complète — « montre-moi ce set » — et
+    c'est ainsi qu'on le parcourt sans savoir quoi y chercher. Sans extension,
+    une requête vide reste sans réponse.
+  */
+  if (!isAnsweredQuery(trimmed, setId)) return [];
   const db = ensureDbsFwIndex();
   if (!db) return [];
 
@@ -106,26 +123,27 @@ export function searchDbsFwPrints(
   const like = `%${trimmed.toLowerCase()}%`;
   const likeCompact = `%${compact}%`;
 
-  const rows = db
-    .prepare(
-      `${DETAIL_SQL}
-        WHERE LOWER(t.full_name) LIKE ?
+  const scope = setScopedWhere({
+    setColumn: "p.set_code",
+    setId,
+    textClause: trimmed
+      ? `LOWER(t.full_name) LIKE ?
            OR LOWER(p.number)    LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.set_code || '-' || p.number) LIKE ?
-           OR (p.grouping IS NOT NULL AND LOWER(p.set_code || '-' || p.number || '_' || p.grouping) LIKE ?)
+           OR (p.grouping IS NOT NULL AND LOWER(p.set_code || '-' || p.number || '_' || p.grouping) LIKE ?)`
+      : null,
+    textParams: [like, likeCompact, likeCompact, like, like],
+  });
+
+  const rows = db
+    .prepare(
+      `${DETAIL_SQL}
+        WHERE ${scope.where}
         ORDER BY (t.lang = ?) DESC, p.set_code, p.number, p.grouping
         LIMIT ?`,
     )
-    .all(
-      like,
-      likeCompact,
-      likeCompact,
-      like,
-      like,
-      lang,
-      limit * 3,
-    ) as DbsFwPrintDetail[];
+    .all(...scope.params, lang, limit * 3) as DbsFwPrintDetail[];
 
   const seen = new Set<string>();
   const out: PrintCandidate[] = [];
@@ -153,7 +171,8 @@ export function lookupDbsFwPrintDetail(
         LIMIT 1`,
     )
     .get(printKey, lang) as DbsFwPrintDetail | undefined;
-  return row ?? null;
+  if (!row) return null;
+  return { ...row, harvested: dbsFwFactsFor(row.setCode, row.number) };
 }
 
 export function lookupDbsFwPrint(

@@ -16,6 +16,11 @@ import {
   lorcanaTcgDbPath,
 } from "./indexStore";
 import { lorcanatcgCatalog } from "./pipeline";
+import {
+  ensureLorcanaSetLogoIndex,
+  loadLorcanaSetLogoIndex,
+  lorcanaLogoUrlForSet,
+} from "./setLogos";
 
 export {
   exportLorcanaCardsIndexJson,
@@ -98,9 +103,29 @@ export const lorcanatcgModule: ProviderModule = {
     defaultLanguage: "fr",
     websiteUrl: "https://cards.disneylorcana.com/",
     notes:
-      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : `pnpm foil:lorcana:cards`. Dump app/Unity = cette source (`lorcanatcg`), pas `lorcanajson`.",
+      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : `pnpm foil:lorcana:cards`. Produits scellés : lorcards.fr (famille TCG Cards / dbscards), étape Sync, hors horaire. Dump app/Unity = cette source (`lorcanatcg`), pas `lorcanajson`.",
   },
   catalog: lorcanatcgCatalog,
+  /*
+    Les logos vivent dans ce provider ; l'ingest scellé les demande plutôt que
+    d'aller les chercher lui-même. Le relevé est lu à chaque appel — il est mis
+    en cache en mémoire par `loadLorcanaSetLogoIndex`.
+  */
+  refreshSetLogos: async ({ force, offline }) => {
+    const logos = offline
+      ? loadLorcanaSetLogoIndex()
+      : await ensureLorcanaSetLogoIndex({ force });
+    if (!logos) return "lorcana set logos : indisponible";
+    const withLogo = logos.sets.filter((row) => row.logo).length;
+    return `lorcana set logos : ${withLogo} thumbs / ${logos.sets.length} sets`;
+  },
+  resolveSetLogo: ({ setCode, slug, name }) =>
+    lorcanaLogoUrlForSet({
+      setCode,
+      slug,
+      name,
+      index: loadLorcanaSetLogoIndex(),
+    }),
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,
     async resolve(ctx) {

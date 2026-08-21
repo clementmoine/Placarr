@@ -1,11 +1,11 @@
 # Pack card back — provenance
 
-| Fichier curated | `src/providers/dbscg/curated/back.webp` |
-|-----------------|----------------------------------------|
-| Fichier data | `cards/back.webp` (copie) |
-| URL | `/assets/dbs/cg/cards/back.webp` |
-| Taille | 400×560 WebP |
-| Source | [dbscards.fr](https://www.dbscards.fr/) `static.dbscards.fr/cards/original/back.webp` (2026-08-14) |
+| Fichier curated | `src/providers/dbscg/curated/cards/back.webp`                                                      |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| Fichier data    | `cards/back.webp` (copie)                                                                          |
+| URL             | `/assets/dbs/cg/cards/back.webp`                                                                   |
+| Taille          | 400×560 WebP                                                                                       |
+| Source          | [dbscards.fr](https://www.dbscards.fr/) `static.dbscards.fr/cards/original/back.webp` (2026-08-14) |
 
 ## Pourquoi pas Bandai
 

@@ -306,13 +306,34 @@ export function cardmarketPricesFromPayload(
   };
 }
 
+/**
+ * Un identifiant de set, tel qu'une `printKey` peut le porter.
+ *
+ * Le tiret sépare le set du numéro dans une clé, si bien qu'un set qui en
+ * contient — `tk-xy-latia`, `p-a`, `2018sm-fr` — n'en produisait aucune : ses
+ * cartes étaient invisibles au catalogue, 23 sets et 641 cartes, tous des Kits
+ * du dresseur bien réels.
+ *
+ * Le point est déjà légal dans un segment (`sv03.5`), et il traduit le tiret
+ * sans rien casser : **un id sans tiret ressort inchangé**, donc toutes les
+ * clés déjà écrites survivent au bit près.
+ *
+ * Vérifié le 2026-08-21 sur les 221 ids publiés par les six langues moissonnées
+ * — 20 à point, 23 à tiret : aucun id à point ne se relit comme un id à tiret,
+ * aucun id à tiret encodé ne heurte un id à point. Les deux familles sont
+ * disjointes, et c'est ce qui rend la lecture inverse sûre.
+ */
+export function printKeySetSegment(setId: string): string {
+  return setId.trim().toLowerCase().replace(/-/g, ".");
+}
+
 export function printKeyFromTcgdexIds(
   setId: string,
   localId: string,
 ): string | null {
   return buildPrintKey({
     game: POKEMON_GAME,
-    set: setId,
+    set: printKeySetSegment(setId),
     number: localId,
   });
 }
@@ -328,6 +349,27 @@ export function tcgdexIdFromPrintKey(
     return null;
   }
   return `${identity.set}-${identity.number}`;
+}
+
+/**
+ * Les identifiants distants que cette clé peut désigner, du plus probable au
+ * moins.
+ *
+ * Un segment à point est **soit** un id qui en porte un (`sv03.5`), **soit** un
+ * id à tiret encodé (`tk.xy.latia`). Les deux familles étant disjointes sur le
+ * catalogue réel, essayer la forme littérale puis la forme décodée tranche sans
+ * table de correspondance — et le jour où un set démentirait cette disjonction,
+ * la seconde tentative rattraperait au lieu d'échouer.
+ */
+export function tcgdexIdCandidatesFromPrintKey(
+  printKey: string | null | undefined,
+): string[] {
+  const literal = tcgdexIdFromPrintKey(printKey);
+  if (!literal) return [];
+  const identity = parsePrintKey(printKey);
+  if (!identity?.set.includes(".")) return [literal];
+  const decoded = `${identity.set.replace(/\./g, "-")}-${identity.number}`;
+  return decoded === literal ? [literal] : [literal, decoded];
 }
 
 export function mapTcgdexCard(
@@ -512,10 +554,12 @@ export async function fetchTcgdexCardByPrintKey(
   printKey: string,
   options: FetchOptions & { name?: string | null } = {},
 ): Promise<TcgdexCard | null> {
-  const id = tcgdexIdFromPrintKey(printKey);
-  if (!id) return null;
-  const card = await fetchTcgdexCardById(id, options);
-  if (card) return card;
+  const candidates = tcgdexIdCandidatesFromPrintKey(printKey);
+  if (candidates.length === 0) return null;
+  for (const id of candidates) {
+    const card = await fetchTcgdexCardById(id, options);
+    if (card) return card;
+  }
 
   // Fallback: name search then match print key (ids with unusual casing).
   const query = options.name?.trim();
@@ -571,12 +615,41 @@ function sameNumber(localId: string, wanted: string): boolean {
   );
 }
 
+/**
+ * Les cartes d'une extension, pour la parcourir sans mot-clé.
+ *
+ * L'API cherche par **nom** ; un set se lit ailleurs, sur `/sets/{id}`, dont la
+ * réponse porte la liste de ses cartes. Sans ce chemin, choisir une extension
+ * dans le sélecteur ne rendait rien du tout.
+ */
+async function fetchTcgdexSetCards(
+  setId: string,
+  language: TcgdexLanguage,
+  signal?: AbortSignal,
+): Promise<RawCardBrief[]> {
+  try {
+    const response = await httpGet<{ cards?: RawCardBrief[] }>(
+      `${API_BASE}/${language}/sets/${encodeURIComponent(setId)}`,
+      { signal, timeout: 15_000 },
+    );
+    return Array.isArray(response.data?.cards) ? response.data.cards : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function searchTcgdexCards(
   query: string,
-  options: FetchOptions & { limit?: number; hydrate?: boolean } = {},
+  options: FetchOptions & {
+    limit?: number;
+    hydrate?: boolean;
+    setId?: string | null;
+  } = {},
 ): Promise<TcgdexCard[]> {
   const cleaned = query.trim();
-  if (!cleaned) return [];
+  const wantedSet = options.setId?.trim();
+  // Une extension seule est une question complète : « montre-moi ce set ».
+  if (!cleaned && !wantedSet) return [];
 
   const language = resolveLanguage(options.language);
   const limit = Math.min(Math.max(options.limit ?? 20, 1), 50);
@@ -591,7 +664,21 @@ export async function searchTcgdexCards(
 
   let briefs: RawCardBrief[] = [];
   let hitLanguage = language;
-  for (const tryLang of languagesToTry) {
+  if (wantedSet) {
+    for (const tryLang of languagesToTry) {
+      const rows = await fetchTcgdexSetCards(
+        wantedSet,
+        tryLang,
+        options.signal,
+      );
+      if (rows.length > 0) {
+        briefs = rows;
+        hitLanguage = tryLang;
+        break;
+      }
+    }
+  }
+  for (const tryLang of briefs.length > 0 ? [] : languagesToTry) {
     try {
       const response = await httpGet<RawCardBrief[]>(
         `${API_BASE}/${tryLang}/cards`,
@@ -624,6 +711,10 @@ export async function searchTcgdexCards(
     .map((row) => mapTcgdexBrief(row, hitLanguage))
     .filter((card): card is TcgdexCard => card != null)
     .filter((card) => !digitalOnly.has(card.setId.toLowerCase()))
+    .filter(
+      (card) =>
+        !wantedSet || card.setId.toLowerCase() === wantedSet.toLowerCase(),
+    )
     .map((card, index) => {
       let score = 0;
       if (hints.number && sameNumber(card.localId, hints.number)) score += 2;

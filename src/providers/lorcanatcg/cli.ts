@@ -3,7 +3,7 @@
  * Lorcana foil dump: web (Node) + cards (Node) + Unity (Python/UnityPy).
  *
  *   pnpm foil:lorcana
- *   tsx src/providers/lorcanatcg/cli.ts --providers lorcanaweb lorcanacards
+ *   tsx src/providers/lorcanatcg/cli.ts --providers lorcanaweb lorcanacards lorcanaproducts
  */
 
 import { spawnSync } from "node:child_process";
@@ -17,6 +17,7 @@ import {
   writeLastRun,
 } from "@/providers/shared/foilPaths";
 import { withCliFoilExtractJob } from "@/lib/admin/foilExtractCliJob";
+import { scrapeLorcardsProducts } from "@/providers/lorcanatcg/lorcards";
 import { scrapeLorcanaCards } from "@/providers/lorcanatcg/scrapeCards";
 import { dumpLorcanaWeb } from "@/providers/lorcanatcg/dumpWeb";
 
@@ -29,6 +30,19 @@ function packPython(repo: string): string {
     if (fs.existsSync(venv)) return venv;
   }
   return "python3";
+}
+
+async function runLorcardsProducts(): Promise<Record<string, unknown>> {
+  const result = await scrapeLorcardsProducts({
+    force: process.argv.includes("--force"),
+    offline: process.argv.includes("--offline"),
+    onProgress: (message) => console.log(`   products — ${message}`),
+  });
+  console.log(
+    `── products : ${result.listed} SKU, ${result.detail} fiches, ` +
+      `${result.printsLinked} liens carte (${result.fetched} GET)`,
+  );
+  return { provider: "lorcanaproducts", ok: true, ...result };
 }
 
 async function runCardsScrape(repo: string): Promise<Record<string, unknown>> {
@@ -135,6 +149,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
           results.push(await dumpLorcanaWeb({ root: repo }));
         } else if (pid === "lorcanacards") {
           results.push(await runCardsScrape(repo));
+        } else if (pid === "lorcanaproducts") {
+          results.push(await runLorcardsProducts());
         } else if (pid === "lorcanamobile") {
           if (!unityInputsAvailable(repo, args.apk, args.data)) {
             console.log(

@@ -5,6 +5,8 @@
  *   pnpm dbs:cards
  *   pnpm dbs:cards -- --only arena
  *   pnpm dbs:cards -- --only dbscards   # la liste réelle de dbscards.fr
+ *   pnpm dbs:cards -- --only products
+ *   pnpm dbs:cards -- --only products --offline
  *   pnpm dbs:cards -- --skip faces
  *   pnpm dbs:cards -- --offline          # range le clone déjà là, pas de HTTP
  *   pnpm dbs:cards -- --langs fr         # une locale (défaut: fr,en)
@@ -13,15 +15,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { fetchDbsCgFaces } from "./fetchFaces";
+import { buildDbsCgFacts } from "./buildMastersFacts";
 import { ensureArenaClone, installArenaFaces } from "./installArena";
 import { ensureDbsCgCuratedAssets } from "./installCurated";
 import type { DbsCardlistLocaleId } from "./parseCardlist";
 import { scrapeDbsCgCardlist } from "./scrapeCardlist";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
+import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 
 import { DBS_CG_PACK_ID } from "./indexStore";
 
-const STEPS = ["scrape", "dbscards", "arena", "faces"] as const;
+const STEPS = ["scrape", "dbscards", "products", "arena", "faces"] as const;
 type Step = (typeof STEPS)[number];
 const ONLINE = new Set<Step>(["scrape", "dbscards", "faces"]);
 
@@ -143,6 +147,20 @@ export async function runDbsCgPackPipeline(
         );
       }
     }
+    if (step === "products") {
+      const result = await scrapeTcgCardsProducts("masters", {
+        force,
+        offline,
+        delayMs: optionalNumber(argv, "--delay"),
+        limit: optionalNumber(argv, "--limit"),
+        onProgress: (message) => console.log(`   products — ${message}`),
+      });
+      console.log(
+        `── products : ${result.listed} SKU, ${result.detail} fiches, ` +
+          `${result.printsLinked} liens carte (${result.fetched} GET, ` +
+          `${result.catalogCompleted} complétés catalogue)`,
+      );
+    }
     if (step === "arena") {
       const ready = ensureArenaClone({ offline });
       if (!ready) {
@@ -152,6 +170,10 @@ export async function runDbsCgPackPipeline(
           force,
           limit: dbsCgArenaLimit(argv, steps),
         });
+        // Le clone porte aussi `masters_superset.json` : texte des cartes,
+        // traits, ère, coûts, verso, statut tournoi et errata. Les visuels
+        // seuls laissaient tout ça sur le disque sans jamais l'ouvrir.
+        buildDbsCgFacts();
       }
     }
     if (step === "faces") {

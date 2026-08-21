@@ -28,11 +28,16 @@ describe("effect pack card-back contract", () => {
       .filter((pack) => pack.id.startsWith("naruto"))
       .map((pack) => pack.id)
       .sort();
-    expect(naruto).toEqual(["naruto-carddass", "naruto-shippuden"]);
+    expect(naruto).toEqual([
+      "naruto-carddass",
+      "naruto-ninja-ranks",
+      "naruto-shippuden",
+      "naruto-ultra-challenge",
+    ]);
     /*
-      Aucun pack pour le CCG anglais : son verso est celui du Carddass. Le test
-      nomme les deux packs attendus juste au-dessus — un troisième les ferait
-      échouer, ce qui est la garantie voulue.
+      Aucun pack pour le CCG anglais : son verso est celui du Carddass. Les
+      autres lignes Naruto ont chacune le leur, y compris tant que le fichier
+      n'est pas encore curé — l'URL est le contrat.
     */
     expect(naruto).not.toContain("naruto-en-ccg");
   });
@@ -49,6 +54,17 @@ describe("effect pack card-back contract", () => {
     expect(packs.get("naruto-shippuden")).toBeTruthy();
     expect(packs.get("naruto-shippuden")).not.toBe(
       packs.get("naruto-carddass"),
+    );
+    expect(packs.get("naruto-ninja-ranks")).toBeTruthy();
+    expect(packs.get("naruto-ninja-ranks")).not.toBe(
+      packs.get("naruto-carddass"),
+    );
+    expect(packs.get("naruto-ultra-challenge")).toBeTruthy();
+    expect(packs.get("naruto-ultra-challenge")).not.toBe(
+      packs.get("naruto-carddass"),
+    );
+    expect(packs.get("naruto-ultra-challenge")).not.toBe(
+      packs.get("naruto-ninja-ranks"),
     );
   });
 });

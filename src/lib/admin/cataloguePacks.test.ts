@@ -34,7 +34,12 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("ccg")).toBe("naruto/carddass");
     expect(resolveCataloguePackId("bandaiccg")).toBe("naruto/carddass");
     expect(resolveCataloguePackId("enccg")).toBe("naruto/carddass");
-    expect(resolveCataloguePackId("storm3")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("shippuden")).toBe("naruto/shippuden");
+    expect(resolveCataloguePackId("ninjaranks")).toBe("naruto/ninja-ranks");
+    expect(resolveCataloguePackId("ultrachallenge")).toBe(
+      "naruto/ultra-challenge",
+    );
+    expect(resolveCataloguePackId("lamincards")).toBe("naruto/ultra-challenge");
     expect(resolveCataloguePackId("dbs")).toBe("dbs/cg");
     expect(resolveCataloguePackId("masters")).toBe("dbs/cg");
     expect(resolveCataloguePackId("fusionworld")).toBe("dbs/fw");
@@ -42,16 +47,15 @@ describe("cataloguePacks", () => {
   });
 
   /*
-    Naruto a deux lignes, et une seule raison de les avoir : le Carddass
-    (2002-2007) et le 疾風伝 (2007-2009) sont **deux jeux** — maquette, année et
-    dos différents.
+    Naruto a plusieurs lignes, et une seule raison de les avoir : ce sont
+    **des jeux distincts** — Carddass, 疾風伝, Ninja Ranks, Ultra Challenge.
 
     Ce que ce test protège n'a pas changé : le **CCG anglais** ne doit pas
     devenir une ligne. Il partage la numérotation et le verso du Carddass, dont
     il est la localisation ; lui donner un onglet séparerait ce qui est un même
     jeu. D'où les deux assertions sur `naruto/en-ccg`, restées intactes.
   */
-  it("donne deux lignes à Naruto, sans en faire une pour le CCG anglais", () => {
+  it("donne à Naruto ses lignes de jeux distincts, sans en faire une pour le CCG anglais", () => {
     const franchises = catalogueFranchises();
     expect(franchises.map((row) => row.id)).toEqual([
       "pokemon",
@@ -63,6 +67,8 @@ describe("cataloguePacks", () => {
     expect(naruto?.lines.map((line) => line.id)).toEqual([
       "naruto/carddass",
       "naruto/shippuden",
+      "naruto/ninja-ranks",
+      "naruto/ultra-challenge",
     ]);
     const dbs = catalogueFranchiseForPack("dbs/fw");
     expect(dbs?.id).toBe("dbs");

@@ -46,6 +46,8 @@ import { musicbrainzModule } from "@/providers/musicbrainz";
 import { nointroModule } from "@/providers/nointro";
 import { narutoccgModule } from "@/providers/narutoccg";
 import { narutoshippudenModule } from "@/providers/narutoshippuden";
+import { narutoranksModule } from "@/providers/narutoranks";
+import { narutoultraModule } from "@/providers/narutoultra";
 import { dbscgModule } from "@/providers/dbscg";
 import { dbsfwModule } from "@/providers/dbsfw";
 import { omdbModule } from "@/providers/omdb";
@@ -118,6 +120,8 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   lorcanatcgModule,
   narutoccgModule,
   narutoshippudenModule,
+  narutoranksModule,
+  narutoultraModule,
   dbscgModule,
   dbsfwModule,
   lorcanaggModule,

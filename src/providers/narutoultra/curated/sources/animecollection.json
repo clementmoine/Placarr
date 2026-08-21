@@ -1,0 +1,25 @@
+{
+  "source": "AnimeCollection — Naruto Ultra card / Panini Ultra Challenge",
+  "url": "http://www.animecollection.fr/cartes.php?idl=4&idc=113&ids=254",
+  "observed": "2026-08-21",
+  "ingest": "none — attestation de la ligne, pas de cartes",
+  "lang": "fr",
+  "line": "ultra-challenge",
+  "publisher": "Panini",
+  "product": "Ultra Challenge (lamincards)",
+  "released": "2007-09",
+  "size": "100 cartes + checklist, selon AnimeCollection",
+  "quote": "« Les ultra cards Naruto sortent en France en Septembre 2007 par l’éditeur Panini. La collection est composée de 100 cartes + 1 checklist recto verso. Les informations contenues dans les cartes proviennent des épisodes 1 à 70. »",
+  "officialSite": "Aucun mini-site produit trouvé sur Wayback — ledger `wayback-official-hunt.json`.",
+  "also": [
+    "forum.animecollection.fr — sanji12, 2015-08-21",
+    "vintagenaruto.com « French » : Panini/Ultra, pas du Carddass NI/TE/TA — skip `french-panini` du scrape Vintage CCG"
+  ],
+  "not": [
+    "Carddass NI/TE/TA",
+    "CCG Bandai USA N/J/M",
+    "疾風伝 忍伝/術伝/作伝",
+    "Ninja Ranks Premium Trading Cards"
+  ],
+  "whyItMatters": "Autre jeu, autre catalogue. Le pack `naruto/ultra-challenge` existe pour ne plus les chercher (ni les coller) dans le Carddass."
+}

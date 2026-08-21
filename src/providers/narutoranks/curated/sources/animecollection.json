@@ -1,0 +1,22 @@
+{
+  "source": "AnimeCollection — Naruto Ninja Ranks",
+  "url": "http://www.animecollection.fr/cartes.php?idl=4&idc=87&ids=200",
+  "observed": "2026-08-21",
+  "ingest": "none — attestation de la ligne, pas de cartes",
+  "lang": "fr",
+  "line": "ninja-ranks",
+  "publisher": "Panini",
+  "product": "Ninja Ranks Premium Trading Cards",
+  "officialSite": "Inkworks (distributeur US exclusif) — ledger `inkworks.json`. Pas un mini-site panini.fr.",
+  "also": [
+    "forum.animecollection.fr — sanji12, 2015-08-21 : « Ultra Challenge (lamincards), Ninja Ranks Premium Trading Cards, et des stickers True Spirit of the Ninja »",
+    "grille AC : 1–72 + FF + NW + SD + NS1–6 + GS1–3 (102). La checklist officielle US n’a pas les NS."
+  ],
+  "not": [
+    "Carddass NI/TE/TA",
+    "CCG Bandai USA N/J/M",
+    "疾風伝 忍伝/術伝/作伝",
+    "Ultra Challenge lamincards"
+  ],
+  "whyItMatters": "Autre jeu, autre catalogue. Le pack `naruto/ninja-ranks` existe pour ne plus les chercher (ni les coller) dans le Carddass."
+}

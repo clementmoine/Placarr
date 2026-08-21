@@ -13,6 +13,9 @@ import { dataRoot } from "@/lib/runtimeData";
 import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_LIVE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
 import { NARUTO_CCG_CLI_PATH } from "@/providers/narutoccg/cli";
+import { NARUTO_SHIPPUDEN_CLI_PATH } from "@/providers/narutoshippuden/cli";
+import { NARUTO_RANKS_CLI_PATH } from "@/providers/narutoranks/cli";
+import { NARUTO_ULTRA_CLI_PATH } from "@/providers/narutoultra/cli";
 import { DBS_CG_CLI_PATH } from "@/providers/dbscg/cli";
 import { DBS_FW_CLI_PATH } from "@/providers/dbsfw/cli";
 import {
@@ -51,6 +54,24 @@ export function normalizeCatalogueExtractTarget(
     value === "naruto-en-ccg"
   ) {
     return "naruto";
+  }
+  if (value === "naruto/shippuden" || value === "shippuden") {
+    return "naruto-shippuden";
+  }
+  if (
+    value === "naruto/ninja-ranks" ||
+    value === "ninjaranks" ||
+    value === "ninja-ranks"
+  ) {
+    return "naruto-ranks";
+  }
+  if (
+    value === "naruto/ultra-challenge" ||
+    value === "ultrachallenge" ||
+    value === "ultra-challenge" ||
+    value === "lamincards"
+  ) {
+    return "naruto-ultra";
   }
   if (value === "dbs/cg" || value === "dbs-masters") {
     return "dbs-cg";
@@ -187,6 +208,33 @@ export async function resolveCatalogueExtractCommand(
       ],
     };
   }
+  if (target === "naruto-shippuden") {
+    return {
+      command: path.join(root, "node_modules/.bin/tsx"),
+      args: [NARUTO_SHIPPUDEN_CLI_PATH],
+      prelude: [
+        "Naruto 疾風伝 : registres officiels + verso curé → data/naruto/shippuden",
+      ],
+    };
+  }
+  if (target === "naruto-ranks") {
+    return {
+      command: path.join(root, "node_modules/.bin/tsx"),
+      args: [NARUTO_RANKS_CLI_PATH],
+      prelude: [
+        "Naruto Ninja Ranks : checklist Inkworks + packshots officiels + dumps fan → data/naruto/ninja-ranks",
+      ],
+    };
+  }
+  if (target === "naruto-ultra") {
+    return {
+      command: path.join(root, "node_modules/.bin/tsx"),
+      args: [NARUTO_ULTRA_CLI_PATH],
+      prelude: [
+        "Naruto Ultra Challenge : album + pochette (upscales) ; cartes encore vides → data/naruto/ultra-challenge",
+      ],
+    };
+  }
   if (target === "dbs-cg") {
     return {
       command: path.join(root, "node_modules/.bin/tsx"),
@@ -207,6 +255,9 @@ export async function resolveCatalogueExtractCommand(
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
       ],
     };
+  }
+  if (target !== "pokemon") {
+    throw new Error(`No extract command for catalogue target ${target}`);
   }
   // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
   // adoptCli (that cancels the parent job → instant ── cancelled).

@@ -43,7 +43,19 @@ describe("catalogueExtractRunner targets", () => {
     expect(normalizeCatalogueExtractTarget("dbs/cg")).toBe("dbs-cg");
     expect(normalizeCatalogueExtractTarget("fusionworld")).toBe("dbs-fw");
     expect(catalogueExtractLabel("lorcana")).toBe("Lorcana");
+    expect(isCatalogueExtractTarget("naruto-shippuden")).toBe(true);
+    expect(isCatalogueExtractTarget("naruto-ranks")).toBe(true);
+    expect(isCatalogueExtractTarget("naruto-ultra")).toBe(true);
+    expect(normalizeCatalogueExtractTarget("naruto/shippuden")).toBe(
+      "naruto-shippuden",
+    );
+    expect(normalizeCatalogueExtractTarget("ninjaranks")).toBe("naruto-ranks");
+    expect(normalizeCatalogueExtractTarget("lamincards")).toBe("naruto-ultra");
     expect(catalogueExtractLabel("naruto")).toBe("Naruto Carddass");
+    expect(catalogueExtractLabel("naruto-ranks")).toBe("Naruto Ninja Ranks");
+    expect(catalogueExtractLabel("naruto-ultra")).toBe(
+      "Naruto Ultra Challenge",
+    );
     expect(catalogueExtractLabel("dbs-cg")).toBe("Dragon Ball Masters");
   });
 
@@ -83,6 +95,33 @@ describe("catalogueExtractRunner targets", () => {
     ).toBe(true);
     expect(cmd.prelude.some((l) => /Naruto/i.test(l))).toBe(true);
     expect(cmd.prelude.some((l) => /Storm 3/i.test(l))).toBe(true);
+  });
+
+  it("builds Naruto side-line catalogue commands, not the Pokémon fallback", async () => {
+    const shippuden = await resolveCatalogueExtractCommand("naruto-shippuden");
+    expect(
+      shippuden.args.some(
+        (a) =>
+          a.includes(`${path.sep}narutoshippuden${path.sep}cli.ts`) ||
+          a.includes("/narutoshippuden/cli.ts"),
+      ),
+    ).toBe(true);
+    const ranks = await resolveCatalogueExtractCommand("naruto-ranks");
+    expect(
+      ranks.args.some(
+        (a) =>
+          a.includes(`${path.sep}narutoranks${path.sep}cli.ts`) ||
+          a.includes("/narutoranks/cli.ts"),
+      ),
+    ).toBe(true);
+    const ultra = await resolveCatalogueExtractCommand("naruto-ultra");
+    expect(
+      ultra.args.some(
+        (a) =>
+          a.includes(`${path.sep}narutoultra${path.sep}cli.ts`) ||
+          a.includes("/narutoultra/cli.ts"),
+      ),
+    ).toBe(true);
   });
 
   it("builds a full Lorcana command (web + cards; Unity when APK exists)", async () => {

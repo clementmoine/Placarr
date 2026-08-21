@@ -2,6 +2,8 @@ import "@/effects/lorcana";
 import "@/effects/pokemon";
 import "@/effects/narutoccg";
 import "@/effects/narutoshippuden";
+import "@/effects/narutoranks";
+import "@/effects/narutoultra";
 import "@/effects/dbscg";
 import "@/effects/dbsfw";
 
@@ -15,3 +17,5 @@ export {
 export { DBS_CG_EFFECT_PACK_ID } from "@/effects/dbscg";
 export { DBS_FW_EFFECT_PACK_ID } from "@/effects/dbsfw";
 export { NARUTO_SHIPPUDEN_EFFECT_PACK_ID } from "@/effects/narutoshippuden";
+export { NARUTO_RANKS_EFFECT_PACK_ID } from "@/effects/narutoranks";
+export { NARUTO_ULTRA_EFFECT_PACK_ID } from "@/effects/narutoultra";

@@ -1,0 +1,24 @@
+{
+  "source": "Coleka — photo collectionneur de l’album Ultra Challenge",
+  "url": "https://www.coleka.com/it/carte-collezionabili/carte-panini/naruto-ultra-challenge/album_i886778",
+  "observed": "2026-08-21",
+  "ingest": "album front dump as art.coleka — displayed reconstructed upscale when present. No cards.",
+  "line": "ultra-challenge",
+  "sourceId": "coleka",
+  "lang": "fr",
+  "released": "2007-09",
+  "printedUrl": "www.paninigroup.com",
+  "sku": {
+    "slug": "collector-album",
+    "kind": "coffret",
+    "category": "albums",
+    "name": "Naruto Ultra Challenge collector's album",
+    "file": "album.webp",
+    "url": "https://www.coleka.com/media/item/202103/24/naruto-ultra-challenge-new-item.webp",
+    "declaredCardCount": null
+  },
+  "notIngested": [
+    "101 Coleka card thumbs — no official checklist in this pack, no print keys to map honestly.",
+    "Album verso — the Coleka photo is the front only. Reconstructed back is the Figma upscale, not this host."
+  ]
+}

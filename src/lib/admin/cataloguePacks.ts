@@ -2,8 +2,8 @@
  * Admin Catalogue packs — local `data/<pack>/` corpora (cards-index + optional foil kit).
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
- * Dragon Ball has Masters + Fusion World. Naruto is one catalogue (Carddass):
- * NI sits beside N, FR / EN / IT / JA are language slots.
+ * Dragon Ball has Masters + Fusion World. Naruto has several lines (Carddass,
+ * 疾風伝, Ninja Ranks, Ultra Challenge) under one franchise tab.
  */
 
 import {
@@ -17,6 +17,8 @@ export const CATALOGUE_PACK_IDS = [
   "lorcana",
   "naruto/carddass",
   "naruto/shippuden",
+  "naruto/ninja-ranks",
+  "naruto/ultra-challenge",
   "dbs/cg",
   "dbs/fw",
 ] as const;
@@ -30,10 +32,17 @@ export type CatalogueCardLine = NarutoCardLine;
 /**
  * Worker / admin extract target. May differ from the data pack id (Naruto:
  * pack `naruto/carddass`, target `naruto`) so a second line can take its own target
- * later (`naruto-panini`) without breaking existing jobs.
+ * later (`naruto-ranks`, `naruto-ultra`) without breaking existing jobs.
  */
 export type CatalogueExtractTarget =
-  "lorcana" | "pokemon" | "naruto" | "naruto-shippuden" | "dbs-cg" | "dbs-fw";
+  | "lorcana"
+  | "pokemon"
+  | "naruto"
+  | "naruto-shippuden"
+  | "naruto-ranks"
+  | "naruto-ultra"
+  | "dbs-cg"
+  | "dbs-fw";
 
 export type CatalogueFranchiseId = "pokemon" | "lorcana" | "naruto" | "dbs";
 
@@ -120,11 +129,12 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
   },
   {
     /*
-      Le 疾風伝 est une **ligne** de la franchise Naruto, pas une franchise à
-      part : même onglet, deux lignes — exactement comme Masters et Fusion World
-      chez Dragon Ball. Ce qui les sépare est réel (autre jeu, autre maquette,
-      autre dos), ce qui les rapproche aussi : c'est le même univers, et on les
-      cherche au même endroit.
+      Le 疾風伝, Ninja Ranks et Ultra Challenge sont des **lignes** de la
+      franchise Naruto, pas des franchises à part : même onglet, plusieurs
+      lignes — exactement comme Masters et Fusion World chez Dragon Ball. Ce
+      qui les sépare est réel (autre jeu, autre maquette, autre dos), ce qui
+      les rapproche aussi : c'est le même univers, et on les cherche au même
+      endroit.
     */
     id: "naruto/shippuden",
     franchiseId: "naruto",
@@ -142,6 +152,42 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Jeu 疾風伝 (2007-2009), japonais seul. Familles 忍伝 / 術伝 / 作伝, actes 第一幕 à 第四幕. Ni le Carddass, ni le CCG anglais.",
     blurbEn:
       "The 疾風伝 game (2007-2009), Japanese only. 忍伝 / 術伝 / 作伝 families, acts 第一幕 to 第四幕. Neither the Carddass nor the English CCG.",
+  },
+  {
+    id: "naruto/ninja-ranks",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "Ninja Ranks",
+    lineLabelEn: "Ninja Ranks",
+    labelFr: "Naruto Ninja Ranks",
+    labelEn: "Naruto Ninja Ranks",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "naruto-ranks",
+    catalogueOnly: true,
+    blurbFr:
+      "Panini / Inkworks, 2006. Checklist US (100 titres EN). Packshots officiels en produits (booster, display, album). Faces échantillon officielles + dumps fan (sachet vert, SD-4). Ni le Carddass, ni le 疾風伝, ni Ultra Challenge.",
+    blurbEn:
+      "Panini / Inkworks, 2006. Official US checklist (100 EN titles). Official packshots as sealed products (booster, display, album). Official sample faces plus fan dumps (green wrap, SD-4). Neither the Carddass, the 疾風伝, nor Ultra Challenge.",
+  },
+  {
+    id: "naruto/ultra-challenge",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "Ultra Challenge",
+    lineLabelEn: "Ultra Challenge",
+    labelFr: "Naruto Ultra Challenge",
+    labelEn: "Naruto Ultra Challenge",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "naruto-ultra",
+    catalogueOnly: true,
+    blurbFr:
+      "Panini Ultra Challenge (lamincards, 2007). Ni le Carddass, ni le 疾風伝, ni Ninja Ranks. Album et pochette (upscales) ; cartes encore vides.",
+    blurbEn:
+      "Panini Ultra Challenge (lamincards, 2007). Neither the Carddass, the 疾風伝, nor Ninja Ranks. Album and booster (upscales); no cards ingested yet.",
   },
   {
     id: "dbs/cg",
@@ -268,6 +314,10 @@ export function resolveCataloguePackId(
     bandaiusa: "naruto/carddass",
     bandaiccg: "naruto/carddass",
     storm3: "naruto/carddass",
+    shippuden: "naruto/shippuden",
+    ninjaranks: "naruto/ninja-ranks",
+    ultrachallenge: "naruto/ultra-challenge",
+    lamincards: "naruto/ultra-challenge",
     dbs: "dbs/cg",
     dragonball: "dbs/cg",
     masters: "dbs/cg",

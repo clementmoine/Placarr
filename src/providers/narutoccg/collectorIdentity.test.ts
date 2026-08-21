@@ -39,6 +39,13 @@ describe("parseNarutoCollector", () => {
     expect(id?.printedPrefix).toBe(prefix);
   });
 
+  it.each(["NR-1", "NR-0001", "FF-1", "SD-1", "NW-1", "BL-1", "PN-1", "UC-1"])(
+    "does not swallow Panini Ninja Ranks / Ultra %s as Carddass",
+    (raw) => {
+      expect(parseNarutoCollector(raw)).toBeNull();
+    },
+  );
+
   /*
     Ce test disait l'inverse jusqu'au 2026-08-19 : `NM-`/`DN-` rendaient `null`,
     Data Carddass étant tenu hors du catalogue. La ligne arcade y entre

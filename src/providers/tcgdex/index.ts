@@ -1,3 +1,4 @@
+import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { tcgdexDbPath } from "./indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
@@ -623,6 +624,24 @@ export const tcgdexModule: ProviderModule = {
       .map((row) => ({ id: row.id, label: row.name!.trim() }))
       .sort((a, b) => a.label.localeCompare(b.label, "fr", { numeric: true }));
   },
+  /*
+    L'énumération lit la base locale, plafond levé — la check-list compte, elle
+    n'échantillonne pas. Pas de repli distant : un décompte tiré d'un catalogue
+    absent serait faux, et mieux vaut ne rien annoncer.
+  */
+  listSetPrints: async ({ setId, language }) =>
+    enumerateSetPrints({
+      setId,
+      language,
+      search: (opts) =>
+        searchTcgdexRows(opts.query, {
+          language: opts.language,
+          limit: opts.limit,
+          setId: opts.setId,
+        })
+          .map(cardFromLocalRow)
+          .map(toPrintCandidate),
+    }),
   searchPrints: async ({ query, language, limit, signal, setId }) => {
     /*
       La base locale d'abord : même donnée, sans le réseau. Mesuré avant

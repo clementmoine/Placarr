@@ -1,3 +1,4 @@
+import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrints";
 /**
  * Lorcana official local SQLite index under `data/lorcana/catalog.sqlite`.
  * Built by scrape / `pnpm foil:lorcana:cards`. Blobs stay on disk; this stores
@@ -684,7 +685,13 @@ export function searchLorcanaTcgRows(
   if (!isAnsweredQuery(trimmed, setId)) return [];
 
   const lang = (opts.language || "fr").toLowerCase();
-  const limit = Math.max(1, Math.min(opts.limit ?? 40, 200));
+  /*
+    Le plafond monte à `SET_ENUMERATION_LIMIT` pour la check-list, qui doit
+    énumérer un set entier : compté sur les deux cents premières lignes, un set
+    de 452 cartes annonçait une complétion fausse, et fausse par excès. Le
+    sélecteur, lui, ne demande jamais autant.
+  */
+  const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
   const like = `%${trimmed}%`;
 
   const scope = setScopedWhere({

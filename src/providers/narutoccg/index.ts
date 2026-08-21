@@ -23,10 +23,11 @@ import {
   narutoCcgDbPath,
 } from "./indexStore";
 import {
-  searchNarutoPrints,
+  listNarutoPrintSets,
+  listNarutoSetPrints,
   lookupNarutoPrint,
   lookupNarutoPrintDetail,
-  listNarutoPrintSets,
+  searchNarutoPrints,
 } from "./searchPrints";
 import { narutoPrintFacts } from "./facts";
 import {
@@ -126,6 +127,8 @@ export const narutoccgModule: ProviderModule = {
     et les deux ne se superposent pas — le 巻ノ十 recoupe les séries 4 et 5.
   */
   listPrintSets: (_type, language) => listNarutoPrintSets(language),
+  listSetPrints: ({ setId, language }) =>
+    listNarutoSetPrints({ setId, language }),
   lookupPrint: async ({ printKey, language }) => {
     if (parsePrintKey(printKey)?.game !== "naruto") return null;
     return lookupNarutoPrint(printKey, { language: language ?? undefined });

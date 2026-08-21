@@ -634,6 +634,25 @@ export interface ProviderModule {
    * sélecteur retombe sur ce que les résultats montrent.
    */
   listPrintLanguages?: (type: string) => string[] | Promise<string[]>;
+  /**
+   * **Tous** les tirages d'une extension, sans plafond.
+   *
+   * `searchPrints` répond à « montre-moi quelques cartes » et se borne à
+   * quelques dizaines : c'est ce qu'il faut pour un sélecteur, jamais pour une
+   * check-list. Compter ce qui manque dans un set de 452 cartes sur les 200
+   * premières annoncerait une complétion fausse, et fausse **par excès** — le
+   * pire des deux sens.
+   *
+   * La langue borne le résultat : compléter une extension n'a de sens que dans
+   * une langue, ses tirages français et anglais n'étant pas la même collection.
+   *
+   * Absent = ce pack ne sait pas énumérer un set, et la check-list le dit au
+   * lieu de compter à moitié.
+   */
+  listSetPrints?: (input: {
+    setId: string;
+    language?: string | null;
+  }) => PrintCandidate[] | Promise<PrintCandidate[]>;
   listPrintSets?: (
     type: string,
     language?: string | null,

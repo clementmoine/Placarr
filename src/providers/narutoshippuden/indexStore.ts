@@ -1,3 +1,4 @@
+import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrints";
 /**
  * Catalogue du 「NARUTO-ナルト- 疾風伝 カードゲーム」 (Bandai, 2007-2009).
  *
@@ -211,7 +212,13 @@ export function searchNarutoShippudenRows(
   if (!isAnsweredQuery(trimmed, setId)) return [];
 
   const lang = (opts.language || "ja").toLowerCase();
-  const limit = Math.max(1, Math.min(opts.limit ?? 40, 200));
+  /*
+    Le plafond monte à `SET_ENUMERATION_LIMIT` pour la check-list, qui doit
+    énumérer un set entier : compté sur les deux cents premières lignes, un set
+    de 452 cartes annonçait une complétion fausse, et fausse par excès. Le
+    sélecteur, lui, ne demande jamais autant.
+  */
+  const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
   const like = `%${trimmed}%`;
   const compact = trimmed.replace(/[\s-]/g, "");
 

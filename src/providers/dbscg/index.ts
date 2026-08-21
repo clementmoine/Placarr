@@ -1,3 +1,4 @@
+import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { listDbsCgPrintSets } from "./indexStore";
 /**
@@ -105,6 +106,12 @@ export const dbscgModule: ProviderModule = {
   /** Lues dans la base : voir `distinctPrintLanguages`. */
   listPrintLanguages: () => distinctPrintLanguages(dbsCgDbPath()),
   listPrintSets: () => listDbsCgPrintSets(),
+  listSetPrints: ({ setId, language }) =>
+    enumerateSetPrints({
+      setId,
+      language,
+      search: (opts) => searchDbsCgPrints(opts.query, opts),
+    }),
   searchPrints: async ({ query, language, limit, setId }) =>
     searchDbsCgPrints(query, { language: language ?? undefined, limit, setId }),
   lookupPrint: async ({ printKey, language }) => {

@@ -321,7 +321,12 @@ export function searchNarutoPrints(
   if (!isAnsweredQuery(trimmed, setId)) return [];
 
   const lang = (opts.language || "fr").toLowerCase();
-  const limit = Math.max(1, Math.min(opts.limit ?? 40, 200));
+  /*
+    Le plafond monte à cinq mille pour la check-list, qui doit énumérer un set
+    entier : compter les manquantes d'un set de 452 cartes sur les deux cents
+    premières annoncerait une complétion fausse, et fausse par excès.
+  */
+  const limit = Math.max(1, Math.min(opts.limit ?? 40, 5000));
   // `NI-232` and `ni 232` must both reach `ni232` as stored.
   const compact = trimmed.toLowerCase().replace(/[\s-]/g, "");
   const like = `%${trimmed.toLowerCase()}%`;
@@ -512,3 +517,32 @@ export function lookupNarutoPrint(
 }
 
 export type { NarutoPrintRow };
+
+/**
+ * Tous les tirages d'une extension, sans plafond — pour la check-list.
+ *
+ * `searchNarutoPrints` se borne à deux cents lignes, ce qui convient au
+ * sélecteur d'ajout et jamais à un décompte : compter les manquantes d'une
+ * Série 1 de 182 cartes sur un échantillon annoncerait une complétion fausse.
+ *
+ * La langue borne le résultat. Sans elle, on rendrait les tirages de toutes
+ * les langues confondues, et « la Série 1 est complète » ne voudrait plus rien
+ * dire.
+ */
+export function listNarutoSetPrints(input: {
+  setId: string;
+  language?: string | null;
+}): PrintCandidate[] {
+  const setId = input.setId.trim();
+  if (!setId) return [];
+  const rows = searchNarutoPrints("", {
+    setId,
+    language: input.language ?? undefined,
+    limit: 5000,
+  });
+  const lang = input.language?.trim().toLowerCase();
+  if (!lang) return rows;
+  return rows.filter(
+    (row) => (row.language ?? "").trim().toLowerCase() === lang,
+  );
+}

@@ -1,3 +1,4 @@
+import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { lorcanaTcgDbPath } from "@/providers/lorcanatcg/indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
@@ -656,6 +657,22 @@ export const lorcanajsonModule: ProviderModule = {
     const local = listLorcanaTcgSets(language ?? undefined);
     return local.length > 0 ? local : listLorcanaPrintSets();
   },
+  /*
+    L'énumération lit la base locale, plafond levé — la check-list compte, elle
+    n'échantillonne pas. Pas de repli distant ici : un décompte tiré d'un
+    catalogue absent serait faux, et mieux vaut ne rien annoncer.
+  */
+  listSetPrints: async ({ setId, language }) =>
+    enumerateSetPrints({
+      setId,
+      language,
+      search: (opts) =>
+        searchLorcanaTcgRows(opts.query, {
+          language: opts.language,
+          limit: opts.limit,
+          setId: opts.setId,
+        }).map((row) => toPrintCandidate(cardFromLocalRow(row))),
+    }),
   searchPrints: async ({ query, language, limit, signal, setId }) => {
     /*
       La base locale d'abord : c'est la même donnée, sans le réseau, et c'est

@@ -1,3 +1,4 @@
+import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 /**
  * 「NARUTO-ナルト- 疾風伝 カードゲーム」 — Bandai, 2007-2009, japonais seul.
  *
@@ -78,6 +79,12 @@ export const narutoshippudenModule: ProviderModule = {
   */
   listPrintLanguages: () => ["ja"],
   listPrintSets: () => listNarutoShippudenSets(),
+  listSetPrints: ({ setId, language }) =>
+    enumerateSetPrints({
+      setId,
+      language,
+      search: (opts) => searchNarutoShippudenPrints(opts.query, opts),
+    }),
   searchPrints: async ({ query, language, limit, setId }) =>
     searchNarutoShippudenPrints(query, {
       language: language ?? undefined,

@@ -1,3 +1,4 @@
+import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { listDbsFwPrintSets } from "./indexStore";
 /**
@@ -98,6 +99,12 @@ export const dbsfwModule: ProviderModule = {
   */
   listPrintLanguages: () => distinctPrintLanguages(dbsFwDbPath()),
   listPrintSets: () => listDbsFwPrintSets(),
+  listSetPrints: ({ setId, language }) =>
+    enumerateSetPrints({
+      setId,
+      language,
+      search: (opts) => searchDbsFwPrints(opts.query, opts),
+    }),
   searchPrints: async ({ query, language, limit, setId }) =>
     searchDbsFwPrints(query, { language: language ?? undefined, limit, setId }),
   lookupPrint: async ({ printKey, language }) => {

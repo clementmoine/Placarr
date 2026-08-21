@@ -1,28 +1,53 @@
 {
-  "source": "narutocardgame.gg — archive rétro du CCG Bandai 2006-2013",
-  "url": "https://narutocardgame.gg/archive/classic-ccg",
+  "source": "narutocardgame.gg — base de cartes du CCG Bandai 2006-2013",
+  "url": "https://narutocardgame.gg/archive/classic-ccg/cards",
   "observed": "2026-08-21",
-  "ingest": "none — décomptes seuls, aucune donnée carte par carte",
+  "ingest": "checklist — 4 452 cartes avec préfixe, numéro, nom anglais et set",
   "lang": "en",
   "line": "en-ccg",
-  "whatItActuallyIs": "Un site consacré au **nouveau** NARUTO CARD GAME de Bandai, annoncé pour 2027, avec une section rétro en annexe. Sa page `/cards` sert douze cartes d'échantillon du jeu à venir, pas le catalogue classique.",
-  "claimChecked": "Une piste extérieure le présentait comme « la meilleure base occidentale actuelle, 4 487 cartes sur 38 sets, une fiche individuelle pour chaque carte et son artwork ». **Mesuré le 2026-08-21 : faux.** L'archive classique affiche 0 carte pour les sets 1 à 9, n'expose aucune fiche par carte, et ses liens « PRICES » pointent vers des recherches eBay. Il n'y a pas d'artwork à y prendre.",
-  "whatItHas": "Une table de 38 lignes — 28 sets principaux, `A Shinobis Dream`, 4 Tournament Packs, 4 tins, les promos — avec une année et un décompte, plus un guide de raretés (C/U/R/SR/STSR/PR).",
-  "countsVsOurs": {
-    "note": "Ses décomptes divergent des nôtres presque partout, dans les deux sens. Rien ne dit qui a raison : les bases comptent différemment les starters, les variantes de foil et les réimpressions. Consigné comme un contradicteur à vérifier, pas comme une correction.",
-    "tp1": { "gg": 60, "ours": 30 },
-    "tp2": { "gg": 64, "ours": 118 },
-    "tp3": { "gg": 60, "ours": 105 },
-    "tp4": { "gg": 60, "ours": 83 },
-    "tin1": { "gg": 6, "ours": 8 },
-    "tin2": { "gg": 6, "ours": 9 },
-    "tin3": { "gg": 12, "ours": 6 },
-    "tin4": { "gg": 10, "ours": 3 },
-    "promo": { "gg": 106, "ours": 197 },
-    "s17": { "gg": 198, "ours": 181 },
-    "s10": { "gg": 208, "ours": 208, "agree": true },
-    "s28": { "gg": 120, "ours": 120, "agree": true }
+  "correction": "Ce registre a d'abord conclu que le site n'avait aucune donnée carte par carte. **C'était faux, et l'erreur était la mienne** : j'avais ouvert `/cards` à la racine, qui sert douze cartes d'échantillon du nouveau jeu Bandai de 2027. La base du CCG classique est ailleurs, sous `/archive/classic-ccg/cards`, et elle tient bien les 4 487 cartes annoncées. Une URL voisine n'est pas la même page.",
+  "access": "Une seule requête rend tout : la page liste les 4 452 cartes en HTML, chacune liée à `/archive/classic-ccg/{set}/{prefixe}{numero}-{slug}`. Le set est donc dans l'URL, sans avoir à ouvrir la fiche.",
+  "counts": {
+    "cartes": 4452,
+    "sets": 38,
+    "parPrefixe": {
+      "n": 1836,
+      "j": 1073,
+      "m": 1000,
+      "nus": 130,
+      "mus": 113,
+      "jus": 96,
+      "pr": 93,
+      "c": 73,
+      "nc": 16,
+      "prus": 15,
+      "ps": 4,
+      "ex": 2,
+      "cus": 1
+    }
   },
-  "worthKeeping": "Les noms de tins — Rebirth, Ultimate Battle, Untouchables, Fierce Ambitions — que notre catalogue ne porte que sous `tin1`…`tin4`. Et l'existence d'un set 29 « A Shinobis Dream », qui contredit la clôture officielle du jeu au set 28.",
-  "not": ["faces", "titres", "checklist"]
+  "measuredAgainstOurs": {
+    "note": "Comparé sur le couple (préfixe, numéro), le 2026-08-21.",
+    "quIlsOntEtPasNous": 140,
+    "parPrefixe": {
+      "n": 70,
+      "m": 22,
+      "j": 19,
+      "nc": 16,
+      "c": 8,
+      "pr": 3,
+      "ex": 2
+    },
+    "queNousAvonsEtPasEux": 1422,
+    "pourquoiNousEnAvonsPlus": "Notre catalogue porte aussi les lignes japonaise et européenne (ni/te/ta/cl), que cette base ne couvre pas — elle est américaine seule."
+  },
+  "newPrefixes": "`nc` (16 cartes) et `ex` (2) n'existent nulle part chez nous. **Identifiés le 2026-08-21** en ouvrant leurs fiches : `nc` est une famille NINJA à numérotation propre à l'intérieur de Quest for Power (set 7) — `NC001` y est Naruto Uzumaki, position 132/161, avec ses stats complètes. `ex` est une paire promo, Naruto et Sasuke. Ce ne sont donc pas des jeux ni des lignes inconnues, mais des variantes à verser avec leur préfixe propre.",
+  "images": {
+    "url": "https://narutocardgame.gg/images/classic/{id}.jpg",
+    "size": "350×490",
+    "verdict": "Trop petites pour remplacer quoi que ce soit — nos faces existantes vont jusqu'à 1414×2000. Elles ne valent que pour les 140 cartes qu'on n'a pas du tout, où une petite face vaut mieux que pas de face."
+  },
+  "not": ["raretés", "titres français", "cartes japonaises"],
+  "cardPagesAlsoHave": "Chaque fiche porte les données de jeu : type, attribut, symbole, coût de tour, coût de main, et les statistiques en état sain et blessé. Non moissonné — ce n'est pas ce qu'un catalogue de collection a besoin de savoir — mais c'est là si un jour la question se pose.",
+  "harvested": "Index en une requête (4 318 cartes après dédoublonnage), puis un visuel par carte à cadence basse. Les 350×490 sont prises malgré leur taille : elles ne remplacent rien là où on a mieux, et le classement par pixels s'en charge, mais elles couvrent ce qu'on n'a pas du tout."
 }

@@ -1361,7 +1361,12 @@ vrais codes de volume.
 
 - [ ] **chitoroshop** — 245 fiches à joindre une fois la famille résolue.
 - [ ] **kingslayercards** — la liste des ~90 bannies + 30 limitées, jamais moissonnée.
-- [ ] **Data Carddass** — modèle prêt (familles, ligne, préfixes), **aucune source trouvée**.
+- [ ] **Data Carddass** — modèle prêt, et **les sources sont trouvées** (2026-08-21,
+      forum animecollection) : DN sur `carddass.com/naruto/mission/cardlist/battle_card.shtml`,
+      NM sur `.../cardlist.shtml`, NF sur `fudanin.com/formation/cardlist/1st.php`,
+      NX sur `fudanin.com/x/cardlist/`. Liens de 2015 : `fudanin.com` est
+      probablement mort, à tenter via la CDX Wayback ; `carddass.com` est le même
+      hôte que notre miroir, donc déjà partiellement sur disque.
 - [ ] **Codes de volume japonais** — la table des plages est **acquise**
       (cardcheckbox, 30 sorties, ingérée), et la découpe 巻ノ est parcourable.
       Reste à s'en servir pour joindre chitoroshop, qui était bloqué là-dessus.
@@ -1428,6 +1433,13 @@ vrais codes de volume.
       10 contre nos 3, `promo` 106 contre nos 197. Rien ne dit qui a raison ;
       les bases comptent différemment starters, foils et réimpressions. À
       trancher set par set, avec des scans.
+
+- [ ] **Une part française entière manque — `s24` Sage's Legacy** — un
+      collectionneur français atteste en 2015 que la ligne française a eu **deux**
+      parts tardives dos noir, correspondant aux sets américains Sage's Legacy et
+      Ultimate Ninja Storm 3. Mesuré : nous avons 120 titres français sur `s28` et
+      **zéro** sur `s24`, qui n'a que son anglais. Le même message atteste aussi un
+      starter français « La Tempête Approche », 33 cartes, absent de notre scellé.
 
 - [ ] **Long terme** — figer la DB Naruto curée en fichier compressé / Internet Archive.
 

@@ -1,0 +1,57 @@
+{
+  "source": "forum.animecollection.fr — sujet « Naruto », message de sanji12 du 21/08/2015",
+  "url": "https://forum.animecollection.fr/viewtopic.php?p=21992",
+  "observed": "2026-08-21",
+  "ingest": "none — attestation de structure, pas de cartes",
+  "lang": "fr",
+  "whyItMatters": "Un collectionneur français qui récapitule, en 2015, la structure de TOUTES les gammes Naruto qu'il connaît. Ce n'est pas une checklist : c'est une attestation indépendante de ce qui est sorti et sous quelle forme, par quelqu'un qui avait les boîtes en main.",
+  "frenchLine": {
+    "claim": "« Pour les card game française, il existe les card game Naruto (dos bleu) composés de 5 part et les card game Naruto Shippuden (dos noir) composé de 2 part. Il y a aussi un Starter : La Tempête Approche composé de 33 cartes. » — « Les deux séries françaises correspondent aux séries américaines sage's legacy et ultimate ninja storm. »",
+    "corroborates": "**Cinq** parts françaises, pas six : recoupe indépendamment l'annulation de la Série 6 en France, que notre registre `sets.json` tenait déjà de la presse de 2008.",
+    "actionable": "Il annonce DEUX parts françaises tardives, dos noir : Sage's Legacy (`s24`) et Ultimate Ninja Storm 3 (`s28`). Mesuré le 2026-08-21, notre catalogue n'a du français QUE sur `s28` — 120 titres — et rien sur `s24`, qui n'a que ses 120 titres anglais. **Il manque donc une part française entière.**",
+    "starter": "« La Tempête Approche », 33 cartes. Absent de notre catalogue de produits scellés."
+  },
+  "dataCarddass": {
+    "why": "Le backlog notait « Data Carddass — modèle prêt, aucune source trouvée ». En voici quatre, avec leur numérotation.",
+    "series": [
+      {
+        "name": "Naruto Narultimate Card Battle",
+        "prefix": "DN",
+        "url": "http://www.carddass.com/naruto/mission/cardlist/battle_card.shtml"
+      },
+      {
+        "name": "Naruto Shippuden: Kyuukyoku Ninmu Narultimate Mission",
+        "prefix": "NM",
+        "url": "http://www.carddass.com/naruto/mission/cardlist/cardlist.shtml"
+      },
+      {
+        "name": "Naruto Shippuden - Formation Narutimate",
+        "prefix": "NF",
+        "url": "http://www.fudanin.com/formation/cardlist/1st.php"
+      },
+      {
+        "name": "Naruto Shippuden: Narultimate Cross",
+        "prefix": "NX",
+        "url": "http://www.fudanin.com/x/cardlist/?search=true&category=69001"
+      }
+    ],
+    "caveat": "Liens de 2015 : `fudanin.com` est probablement mort, à tenter via la CDX Wayback. `carddass.com/naruto/mission/` est le même hôte que notre miroir existant, donc déjà partiellement sur disque."
+  },
+  "otherLines": {
+    "miracleBattleCarddass": "5 parts + un starter. Un autre message du même sujet détaille le deck NRS01 (20 cartes : 16 communes, 2 rares, 1 super rare, 1 Super Oméga) et la partie NR01 (91 cartes, avec Miracle et Super Oméga).",
+    "gumica": "3 parts.",
+    "panini": "Ultra Challenge (lamincards), Ninja Ranks Premium Trading Cards, et des stickers « True Spirit of the Ninja ».",
+    "note": "Toutes hors de notre catalogue : ce sont d'autres jeux, comme le 疾風伝. Consignés pour ne pas les confondre avec le Carddass."
+  },
+  "newLeads": [
+    {
+      "url": "http://www.cartes-naruto.com/manga-cartes.html",
+      "what": "Site français du card game, cité comme la liste des cartes françaises. À tenter via Wayback."
+    },
+    {
+      "url": "http://www.carddass.com/naruto/product/",
+      "what": "« Cliquer sur le petit parchemin noir » ouvre la liste des cartes de chaque partie japonaise — une navigation qu'on n'avait pas décrite."
+    }
+  ],
+  "not": ["checklist", "faces", "raretés"]
+}

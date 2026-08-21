@@ -126,6 +126,7 @@ export const narutoccgModule: ProviderModule = {
     compte en 巻ノ (dix-sept volumes 2002-2006), l'Europe en séries `s1`…`s28`,
     et les deux ne se superposent pas — le 巻ノ十 recoupe les séries 4 et 5.
   */
+  printGames: ["naruto"],
   listPrintSets: (_type, language) => listNarutoPrintSets(language),
   listSetPrints: ({ setId, language }) =>
     listNarutoSetPrints({ setId, language }),

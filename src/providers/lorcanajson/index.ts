@@ -662,6 +662,7 @@ export const lorcanajsonModule: ProviderModule = {
     n'échantillonne pas. Pas de repli distant ici : un décompte tiré d'un
     catalogue absent serait faux, et mieux vaut ne rien annoncer.
   */
+  printGames: [LORCANA_GAME],
   listSetPrints: async ({ setId, language }) =>
     enumerateSetPrints({
       setId,

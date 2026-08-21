@@ -106,6 +106,7 @@ export const dbscgModule: ProviderModule = {
   /** Lues dans la base : voir `distinctPrintLanguages`. */
   listPrintLanguages: () => distinctPrintLanguages(dbsCgDbPath()),
   listPrintSets: () => listDbsCgPrintSets(),
+  printGames: [DBS_CG_GAME],
   listSetPrints: ({ setId, language }) =>
     enumerateSetPrints({
       setId,

@@ -78,6 +78,7 @@ export const narutoshippudenModule: ProviderModule = {
     chose dessous.
   */
   listPrintLanguages: () => ["ja"],
+  printGames: [NARUTO_GAME],
   listPrintSets: () => listNarutoShippudenSets(),
   listSetPrints: ({ setId, language }) =>
     enumerateSetPrints({

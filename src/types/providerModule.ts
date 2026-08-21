@@ -649,6 +649,19 @@ export interface ProviderModule {
    * Absent = ce pack ne sait pas énumérer un set, et la check-list le dit au
    * lieu de compter à moitié.
    */
+  /**
+   * Les slugs de jeu que ce pack sert, tels qu'ils apparaissent dans une
+   * `printKey` — `lorcana`, `pokemon`, `naruto`.
+   *
+   * `Shelf` ne porte qu'un `type`, et `tcg` est partagé par tous les jeux de
+   * cartes. Sans cette liste, une check-list d'étagère Lorcana additionnait les
+   * extensions de Pokémon et de Dragon Ball, et annonçait « 1 % » sur un
+   * dénominateur de trente mille cartes qu'elle ne contiendrait jamais.
+   *
+   * Absent = le pack ne dit pas quel jeu il sert, et on ne le retire d'aucune
+   * étagère : mieux vaut trop montrer que de taire un jeu qu'on y range.
+   */
+  printGames?: readonly string[];
   listSetPrints?: (input: {
     setId: string;
     language?: string | null;

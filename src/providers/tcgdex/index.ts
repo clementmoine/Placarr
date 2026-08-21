@@ -629,6 +629,7 @@ export const tcgdexModule: ProviderModule = {
     n'échantillonne pas. Pas de repli distant : un décompte tiré d'un catalogue
     absent serait faux, et mieux vaut ne rien annoncer.
   */
+  printGames: [POKEMON_GAME],
   listSetPrints: async ({ setId, language }) =>
     enumerateSetPrints({
       setId,

@@ -99,6 +99,7 @@ export const dbsfwModule: ProviderModule = {
   */
   listPrintLanguages: () => distinctPrintLanguages(dbsFwDbPath()),
   listPrintSets: () => listDbsFwPrintSets(),
+  printGames: [DBS_FW_GAME],
   listSetPrints: ({ setId, language }) =>
     enumerateSetPrints({
       setId,

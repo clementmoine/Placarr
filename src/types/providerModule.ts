@@ -181,6 +181,46 @@ export type PrintSearchContext = {
   language?: string | null;
   limit?: number;
   signal?: AbortSignal;
+  /**
+   * Restreint à une extension, telle que `listPrintSets` l'a annoncée.
+   *
+   * Avec elle, une requête **vide** est légitime : c'est ainsi qu'on parcourt
+   * un set sans savoir quoi y chercher. Un provider qui ne la gère pas rend une
+   * liste vide plutôt que d'ignorer la restriction et de répondre à côté.
+   */
+  setId?: string | null;
+};
+
+/** Une extension telle qu'un joueur la nomme, pour la choisir avant de chercher. */
+export type PrintSetOption = {
+  id: string;
+  label: string;
+  /**
+   * La **découpe** dont cette extension fait partie, quand un jeu en a
+   * plusieurs.
+   *
+   * Un même jeu peut avoir été découpé différemment selon le marché, et ces
+   * découpes ne se recouvrent pas : le Naruto Carddass compte dix-sept 巻ノ au
+   * Japon et vingt-huit séries en Europe, le 巻ノ十 recoupant les séries 4 et 5.
+   * Les fondre en une seule liste dirait qu'elles sont interchangeables ; n'en
+   * montrer qu'une à la fois cacherait l'autre. Nommer la découpe permet de les
+   * présenter côte à côte sans les confondre.
+   *
+   * Absent = le jeu n'a qu'une découpe, et il n'y a rien à distinguer.
+   */
+  group?: string;
+  /**
+   * Les langues dans lesquelles cette extension a **paru**.
+   *
+   * Ce n'est pas la langue des cartes qui la composent : le 巻ノ一 contient des
+   * numéros dont il existe une version française, mais aucun 巻ノ n'est jamais
+   * sorti en France — c'était une sortie japonaise. Choisir « français » doit
+   * donc faire disparaître les 巻ノ de la liste, pas les garder au prétexte que
+   * leurs cartes ont un nom français.
+   *
+   * Absent = on ne sait pas, et un filtre de langue ne masque rien.
+   */
+  languages?: string[];
 };
 
 /**
@@ -195,6 +235,17 @@ export type PrintCandidate = {
   title: string;
   /** Where it comes from, as a collector reads it: `Premier Chapitre · 207`. */
   reference: string;
+  /**
+   * L'extension seule, telle qu'un joueur la nomme — `Série 1 — Maître Hokage /
+   * Pays du Vent`, `Le Retour d'Ursula`.
+   *
+   * Distincte de `reference`, qui mêle l'extension et le numéro, et de
+   * `setCode`, qui est un identifiant. Sert à regrouper des tirages par
+   * extension sans découper une chaîne d'affichage : tous les catalogues ne
+   * mettent pas l'extension dans `reference`, et celui qui l'omet donnerait un
+   * faux groupe par carte.
+   */
+  setLabel?: string | null;
   rarity?: string | null;
   /**
    * Quarters of a turn for faces that share the shelf card format but sit on
@@ -282,6 +333,11 @@ export type PrintCandidate = {
   varnishMaskUrl?: string | null;
   /** Exact provider handles, so re-resolution never re-runs the search. */
   externalIds?: Record<string, string>;
+  /**
+   * False when this language was never printed. Omitted / true = addable.
+   * Search hides `printed: false`; the catalogue may still show the slot.
+   */
+  printed?: boolean;
   /** Stamped by core from the module's own id; modules must not set it. */
   providerId?: string;
 };
@@ -527,6 +583,61 @@ export interface ProviderModule {
    */
   catalog?: ProviderCatalogHooks;
   evidence?: ProviderEvidenceConfig;
+  /**
+   * Les extensions de ce catalogue, pour les proposer **avant** toute recherche.
+   *
+   * Sans ça, un sélecteur ne peut lister que ce que les résultats contiennent —
+   * donc rien tant qu'on n'a pas tapé, et jamais un set entier. Le provider les
+   * possède ; le cœur se contente de les demander.
+   */
+  /**
+   * Le logo d'une extension, pour un produit scellé de ce pack.
+   *
+   * Le code partagé de l'ingest **savait** quel pack allait chercher ses logos
+   * où : une branche par jeu, comparant l'id du pack, et deux imports de
+   * providers depuis `shared/`. Ajouter un catalogue obligeait donc à éditer du
+   * code commun pour lui faire une place.
+   *
+   * Le pack sait, lui, où vivent ses logos. Il répond `null` quand il n'en a
+   * pas — ce qui est le cas de la plupart.
+   */
+  /**
+   * Rafraîchit le relevé de logos de set du pack, avant l'ingest scellé.
+   *
+   * Étape à **effet de bord** : elle télécharge, donc elle appartient au pack
+   * qui sait où et à quel rythme. Le code partagé la déclenchait lui-même, une
+   * branche par jeu, ce qui l'obligeait à importer deux providers.
+   *
+   * Rend un message de progression, ou `null` s'il n'y a rien à dire.
+   */
+  refreshSetLogos?: (opts: {
+    force?: boolean;
+    /** Ne rien télécharger : lire ce qui est déjà là. */
+    offline?: boolean;
+  }) => Promise<string | null>;
+  resolveSetLogo?: (input: {
+    setCode?: string | null;
+    /** Slug de la fiche produit, quand le logo s'y raccroche mieux. */
+    slug?: string | null;
+    name?: string | null;
+  }) => string | null;
+  /**
+   * Les langues dans lesquelles ce catalogue a été imprimé.
+   *
+   * Annoncées **avant** toute recherche, parce que la langue n'est pas qu'un
+   * filtre d'affichage : chez Naruto elle change la **découpe** proposée — les
+   * dix-sept 巻ノ japonais au lieu des séries européennes. La déduire des
+   * résultats arrivait donc trop tard, une extension japonaise n'étant offerte
+   * qu'après avoir déjà cherché en japonais.
+   *
+   * Codes courts en minuscules. Absent = le pack ne sait pas le dire, et le
+   * sélecteur retombe sur ce que les résultats montrent.
+   */
+  listPrintLanguages?: (type: string) => string[] | Promise<string[]>;
+  listPrintSets?: (
+    type: string,
+    language?: string | null,
+  ) => PrintSetOption[] | Promise<PrintSetOption[]>;
   createMetadataAdapter?: (
     deps?: Record<string, unknown>,
   ) => MetadataProviderAdapter | null;

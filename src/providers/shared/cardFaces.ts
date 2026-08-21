@@ -30,15 +30,14 @@ import path from "node:path";
 import { explainAttachmentScoreForDisplay } from "@/core/enrich/media/attachmentDisplayScoring";
 
 /**
- * The two sides a print can hold.
+ * Named files a catalogue folder can hold: `art.<source>.<ext>`,
+ * `back.<source>.<ext>`, `logo.<source>.<ext>`.
  *
- * `back` on purpose, not a separate `awakened` notion: the app already resolves
- * a card's verso through one mechanism — pack default, per set, per print (see
- * `resolveCardBackCandidates`) — and a Leader's awakened side is exactly that,
- * the back of this print. A parallel concept would have been a second way to
- * say the same thing.
+ * Cards use art + back (`back` is also a Leader's awakened side — the app
+ * already resolves verso through one mechanism). Sealed SKUs use art + logo
+ * in `products/{slug}/{lang}/`. Same ranking, same sidecar.
  */
-export const CARD_FACE_ROLES = ["art", "back"] as const;
+export const CARD_FACE_ROLES = ["art", "back", "logo"] as const;
 
 export type CardFaceRole = (typeof CARD_FACE_ROLES)[number];
 
@@ -104,9 +103,25 @@ export function createCardFaceChoice<S extends string>(config: {
    * Provenance handed to the scorer. Publisher scans, not marketplace photos.
    */
   coverProvenance?: string;
+  /**
+   * Surface (en pixels) sous laquelle la **taille** tranche seule, sans passer
+   * par le score d'affichage.
+   *
+   * Sous le plancher de résolution du scorer, celui-ci applique la même
+   * pénalité à tout le monde : il ne reste que le bonus de ratio. Or ce bonus
+   * récompense le **cadre**, pas le produit — une vignette de boutique de
+   * 200×300, rembourrée jusqu'au 2:3 idéal, y bat une photo de 286×500 qui
+   * montre deux fois plus de pack. Le scorer a déjà dit qu'il ne savait pas
+   * départager ; ce qu'il ajoute ensuite est du bruit.
+   *
+   * Laissé à zéro par défaut : seuls les paquets scellés, dont les visuels
+   * sont presque tous sous le plancher, en ont besoin aujourd'hui.
+   */
+  areaDecidesBelow?: number;
 }): CardFaceChoice<S> {
   const { sources, priority } = config;
   const provenance = config.coverProvenance ?? "catalog";
+  const areaFloor = config.areaDecidesBelow ?? 0;
 
   /** Rank within a locale; unlisted sources sort last, in declaration order. */
   const priorityOf = (source: S, lang: string): number => {
@@ -174,6 +189,24 @@ export function createCardFaceChoice<S extends string>(config: {
         },
         { width: face.width, height: face.height },
       ).score;
+      const area = face.width * face.height;
+      const bestArea = best ? best.face.width * best.face.height : 0;
+      // Les deux sous le plancher : la taille tranche, le score n'y voit rien.
+      const bothTiny =
+        best != null &&
+        areaFloor > 0 &&
+        area < areaFloor &&
+        bestArea < areaFloor;
+      if (bothTiny) {
+        if (area > bestArea) best = { face, score };
+        else if (
+          area === bestArea &&
+          priorityOf(face.source, lang) < priorityOf(best!.face.source, lang)
+        ) {
+          best = { face, score };
+        }
+        continue;
+      }
       if (!best || score > best.score) {
         best = { face, score };
         continue;

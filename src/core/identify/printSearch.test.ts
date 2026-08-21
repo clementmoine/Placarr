@@ -115,6 +115,26 @@ describe("searchPrintCandidates", () => {
     expect(warn).toHaveBeenCalled();
   });
 
+  it("hides a locale that was never printed", async () => {
+    modules.push(
+      fakeModule("narutoccg", ["tcg"], async () => [
+        candidate({
+          printKey: "naruto:ni-0255",
+          printed: false,
+          language: "fr",
+        }),
+        candidate({
+          printKey: "naruto:ni-0255",
+          printed: true,
+          language: "it",
+        }),
+      ]),
+    );
+
+    const found = await searchPrintCandidates("ni255", "tcg");
+    expect(found.map((entry) => entry.language)).toEqual(["it"]);
+  });
+
   it("drops a candidate whose key could never be re-resolved", async () => {
     modules.push(
       fakeModule("lorcanajson", ["tcg"], async () => [

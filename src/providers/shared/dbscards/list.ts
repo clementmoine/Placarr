@@ -60,11 +60,11 @@ export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
 }
 
 /**
- * The two card games they run, on two hosts with the same software.
+ * The two Dragon Ball card games they run, on two hosts with the same software.
  *
- * Masters lives on `www`, Fusion World on `fw`, and the markup is identical
- * down to the tile classes — so the same parser serves both and only the origin
- * and the locale paths differ.
+ * Product hosts for the rest of the family (lorcards, pkmcards, opecards, …)
+ * live in `sites.ts`. This table is the `/cards` index only: Masters on `www`,
+ * Fusion World on `fw`. Markup is identical down to the tile classes.
  *
  * Only the locales they actually fill are listed. Measured 2026-08-15: both
  * sites answer 200 on *every* locale route, including Masters' Japanese list
@@ -80,9 +80,9 @@ export function parseDbscardsListPage(html: string): DbscardsIndexEntry[] {
 export type DbscardsSiteId = "masters" | "fusion";
 
 export type DbscardsSite = {
-  id: DbscardsSiteId;
+  id: string;
   origin: string;
-  /** Our locale id → their list path. */
+  /** Our locale id → their list path. Empty when the site is products-only. */
   lists: Readonly<Record<string, string>>;
 };
 

@@ -13,25 +13,98 @@ import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { isAbortError } from "@/lib/http/abort";
 
-import type { PrintCandidate } from "@/types/providerModule";
+import type { PrintCandidate, PrintSetOption } from "@/types/providerModule";
 
 const DEFAULT_LIMIT = 24;
 
 /** Per-provider ceiling, so one chatty source cannot crowd the others out. */
 const PER_PROVIDER_LIMIT = 24;
 
+/**
+ * Plafond par provider quand l'appelant en demande davantage.
+ *
+ * Le plafond fixe ne tronquait pas au hasard : les providers rendent leurs
+ * résultats classés, langue préférée d'abord, si bien qu'à vingt-quatre lignes
+ * une recherche large ne montrait que du français — les tirages qui n'existent
+ * qu'en japonais n'apparaissaient jamais, et filtrer par langue ne pouvait rien
+ * y faire. Une demande explicite passe donc jusqu'au provider.
+ */
+const MAX_PER_PROVIDER_LIMIT = 200;
+
 export type PrintSearchOptions = {
   language?: string | null;
   limit?: number;
   signal?: AbortSignal;
+  /** Restreint à une extension — permet une requête vide. */
+  setId?: string | null;
+  /**
+   * Restreint la recherche à un catalogue, par son id de provider.
+   *
+   * Core reste aveugle : il reçoit un identifiant, il n'en nomme aucun. Sans
+   * cette restriction, le plafond de résultats se partage entre tous les jeux
+   * de cartes — demander « les Naruto » ne donnait qu'une part des places, le
+   * reste allant à des catalogues qu'on ne regardait pas.
+   */
+  providerId?: string | null;
 };
 
-function providersFor(type: string) {
+function providersFor(type: string, providerId?: string | null) {
+  const wanted = providerId?.trim().toLowerCase();
   return PROVIDER_MODULES.filter(
     (module) =>
       typeof module.searchPrints === "function" &&
-      module.info.types.some((mediaType) => mediaType === type),
+      module.info.types.some((mediaType) => mediaType === type) &&
+      (!wanted || module.info.id.toLowerCase() === wanted),
   );
+}
+
+export type PrintCatalogue = {
+  id: string;
+  label: string;
+  /** Vide quand le provider n'annonce pas encore ses extensions. */
+  sets: PrintSetOption[];
+  /**
+   * Les langues de ce catalogue, si le pack les annonce.
+   *
+   * Sert à proposer la langue **avant** la première recherche : chez Naruto
+   * elle change la découpe des extensions, pas seulement ce qu'on voit.
+   */
+  languages: string[];
+};
+
+/**
+ * Les catalogues interrogeables pour ce type, avec leurs extensions.
+ *
+ * Rendus **sans requête** : c'est ce qui permet de choisir « la Série 1 » avant
+ * de savoir quoi y chercher. Tant que la liste se dérivait des résultats, elle
+ * était vide à l'ouverture et ne montrait ensuite que les extensions présentes
+ * dans la page de résultats — jamais un set entier.
+ */
+export async function printSearchCatalogues(
+  type: string,
+  language?: string | null,
+): Promise<PrintCatalogue[]> {
+  const rows = await Promise.all(
+    providersFor(type).map(async (module) => ({
+      id: module.info.id,
+      // Le nom du **jeu** quand le provider le donne : on choisit un catalogue,
+      // pas un dépôt de données. `label` désigne la source, et « LorcanaJSON »
+      // n'est pas ce qu'on cherche dans une liste de jeux.
+      label: module.info.catalogueLabel ?? module.info.label,
+      /*
+        Un catalogue qui échoue à lister ses extensions n'en prive pas les
+        autres : il apparaît sans set, ce qui reste vrai, plutôt que de vider
+        tout le sélecteur.
+      */
+      sets: await Promise.resolve(
+        module.listPrintSets?.(type, language) ?? [],
+      ).catch(() => [] as PrintSetOption[]),
+      languages: await Promise.resolve(
+        module.listPrintLanguages?.(type) ?? [],
+      ).catch(() => [] as string[]),
+    })),
+  );
+  return rows.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 /**
@@ -87,17 +160,27 @@ export async function searchPrintCandidates(
   options: PrintSearchOptions = {},
 ): Promise<PrintCandidate[]> {
   const trimmed = query?.trim();
-  if (!trimmed) return [];
+  const setId = options.setId?.trim();
+  /*
+    Une requête vide n'est plus forcément une non-question : accompagnée d'une
+    extension, elle veut dire « montre-moi ce set ». Sans extension, elle reste
+    sans réponse — chercher tout le catalogue n'est pas une intention.
+  */
+  if (!trimmed && !setId) return [];
 
-  const modules = providersFor(type);
+  const modules = providersFor(type, options.providerId);
   if (modules.length === 0) return [];
 
   const settled = await Promise.allSettled(
     modules.map(async (module) => {
       const found = await module.searchPrints!({
-        query: trimmed,
+        query: trimmed ?? "",
+        setId,
         language: options.language,
-        limit: PER_PROVIDER_LIMIT,
+        limit: Math.min(
+          Math.max(options.limit ?? PER_PROVIDER_LIMIT, PER_PROVIDER_LIMIT),
+          MAX_PER_PROVIDER_LIMIT,
+        ),
         signal: options.signal,
       });
       return found.map((candidate) => ({
@@ -121,6 +204,7 @@ export async function searchPrintCandidates(
     }
 
     for (const candidate of result.value) {
+      if (candidate.printed === false) continue;
       if (!parsePrintKey(candidate.printKey)) continue;
       const key = `${candidate.printKey}|${candidate.language ?? ""}`;
       if (seen.has(key)) continue;

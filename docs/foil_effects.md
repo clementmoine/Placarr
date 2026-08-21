@@ -6,12 +6,12 @@
 
 ## 1. Sources de vérité (fidélité)
 
-| Pack | Surface | Source | Où ça vit |
-|------|---------|--------|-----------|
-| **Pokémon** | WebGL | TCG Live (Unity / HoloFoil GLES3) | `data/pokemon/foil/shaders` + `effects/pokemon/materials*` |
-| **Pokémon** | CSS | **Live / Unity d’abord** (plaques + intention frag) ; Simey / forks = **analyse** seulement | `holoShadersSimey` (noms historiques) + `holoShadersPokemon` ; plaques via `HoloCardImage` |
-| **Lorcana** | CSS | Site officiel Lorcana (viewer web) | dump `data/lorcana/foil/web` → `holoShadersApp` + `cssRecipes` |
-| **Lorcana** | WebGL | App Lorcana TCG (Unity) | `data/lorcana/foil/shaders` + `manifest.json` |
+| Pack        | Surface | Source                                                                                      | Où ça vit                                                                                  |
+| ----------- | ------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Pokémon** | WebGL   | TCG Live (Unity / HoloFoil GLES3)                                                           | `data/pokemon/foil/shaders` + `effects/pokemon/materials*`                                 |
+| **Pokémon** | CSS     | **Live / Unity d’abord** (plaques + intention frag) ; Simey / forks = **analyse** seulement | `holoShadersSimey` (noms historiques) + `holoShadersPokemon` ; plaques via `HoloCardImage` |
+| **Lorcana** | CSS     | Site officiel Lorcana (viewer web)                                                          | dump `data/lorcana/foil/web` → `holoShadersApp` + `cssRecipes`                             |
+| **Lorcana** | WebGL   | App Lorcana TCG (Unity)                                                                     | `data/lorcana/foil/shaders` + `manifest.json`                                              |
 
 **Règles :**
 
@@ -44,12 +44,12 @@ Provider (effectPack id)
   → FoilCardImage / HoloCardImage
 ```
 
-| Couche | Responsabilité | Partagé ? |
-|--------|----------------|-----------|
-| `effects/<pack>/` | Map finish→recette, dump topology, join identité | Non — un dossier = un jeu |
-| `core/render/holoShaders*` | Définitions de looks CSS | Oui (ids stables) |
-| `core/render/foil/` | `EffectPackModule`, pool, WebGL, pointer | Oui |
-| UI | `FoilCardImage`, playroom admin | Oui |
+| Couche                     | Responsabilité                                   | Partagé ?                 |
+| -------------------------- | ------------------------------------------------ | ------------------------- |
+| `effects/<pack>/`          | Map finish→recette, dump topology, join identité | Non — un dossier = un jeu |
+| `core/render/holoShaders*` | Définitions de looks CSS                         | Oui (ids stables)         |
+| `core/render/foil/`        | `EffectPackModule`, pool, WebGL, pointer         | Oui                       |
+| UI                         | `FoilCardImage`, playroom admin                  | Oui                       |
 
 **DRY cible (pas maintenant) :** factoriser ce qui est vraiment commun
 (pointer/idle, mask overlay, backend select, playroom shell) ; **ne pas**
@@ -60,14 +60,14 @@ plug-and-play comme les providers.
 
 Même skeleton pour tout nouveau jeu :
 
-| Fichier | Rôle |
-|---------|------|
-| `index.ts` | `EffectPackModule` + `registerEffectPack` |
-| `cssRecipes.ts` | `resolveCss(finish, varnish)` → ids `HoloShader` |
-| WebGL resolve | Lorcana : `manifest.ts` + `resolveMaterial.ts` · Pokémon : `materials.ts` + `resolveEffect.ts` |
-| `faceOrientation.ts` | quarts de tour Face (BREAK, etc.) |
-| `playroomArt.ts` | art de banc (recommandé) |
-| tests | `cssRecipes` / material resolve / face |
+| Fichier              | Rôle                                                                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| `index.ts`           | `EffectPackModule` + `registerEffectPack`                                                      |
+| `cssRecipes.ts`      | `resolveCss(finish, varnish)` → ids `HoloShader`                                               |
+| WebGL resolve        | Lorcana : `manifest.ts` + `resolveMaterial.ts` · Pokémon : `materials.ts` + `resolveEffect.ts` |
+| `faceOrientation.ts` | quarts de tour Face (BREAK, etc.)                                                              |
+| `playroomArt.ts`     | art de banc (recommandé)                                                                       |
+| tests                | `cssRecipes` / material resolve / face                                                         |
 
 Disk / URL (voir [data-layout.md](data-layout.md)) :
 
@@ -105,10 +105,10 @@ admin foil-status (`computeFoilGaps`) → map → ship. Checklist par surface :
 
 ## 7. Docs liées
 
-| Doc | Contenu |
-|-----|---------|
-| [foil_new_finish.md](foil_new_finish.md) | Checklist opérateur (4 surfaces) |
-| [data-layout.md](data-layout.md) | Disque, URLs, CLI |
-| [foil_css_sources.md](foil_css_sources.md) | Pokémon : simey ↔ Live leafs |
-| [tcg_support.md](tcg_support.md) | Produit TCG, dumps, Face/Dos |
-| [archive/tcglive_effects.md](archive/tcglive_effects.md) | Handoff Live (historique) |
+| Doc                                                      | Contenu                          |
+| -------------------------------------------------------- | -------------------------------- |
+| [foil_new_finish.md](foil_new_finish.md)                 | Checklist opérateur (4 surfaces) |
+| [data-layout.md](data-layout.md)                         | Disque, URLs, CLI                |
+| [foil_css_sources.md](foil_css_sources.md)               | Pokémon : simey ↔ Live leafs     |
+| [tcg_support.md](tcg_support.md)                         | Produit TCG, dumps, Face/Dos     |
+| [archive/tcglive_effects.md](archive/tcglive_effects.md) | Handoff Live (historique)        |

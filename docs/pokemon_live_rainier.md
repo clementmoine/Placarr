@@ -2,34 +2,34 @@
 
 Réfs. externes (catalogue / tooling Rainier — **pas** inventaire joueur) :
 
-| Repo | Intérêt |
-|---|---|
+| Repo                                                                                                                   | Intérêt                                                                                                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [zwolsman/ptcgl.dev @ `7415f015`](https://github.com/zwolsman/ptcgl.dev/tree/7415f01582dc7af86e93bf38bbd5b45b2d136236) | Miroir CDN + auth + `DataTableCodec` + [`DESIGN.md`](https://github.com/zwolsman/ptcgl.dev/blob/7415f01582dc7af86e93bf38bbd5b45b2d136236/DESIGN.md) (faits prod vérifiés) |
-| [Hastwell/Omukade.ProcedualAssemblyRewriter](https://github.com/Hastwell/Omukade.ProcedualAssemblyRewriter) | `RainierFetcher` — updater `Manifest.json` / release notes (AGPL) |
-| [Hastwell/Omukade.RainierCardDefinitionFetcher](https://github.com/Hastwell/Omukade.RainierCardDefinitionFetcher) | Fetch config-docs via login PTC + assemblies client (AGPL) — carddb / rules / defs ; **pas** collection owned |
-| Homebrew cask `pokemon-tcg-live` | `installer.studio-prod…` + livecheck sur `…/updater/StandaloneOSX/ReleaseNotes/notes_en.json` |
+| [Hastwell/Omukade.ProcedualAssemblyRewriter](https://github.com/Hastwell/Omukade.ProcedualAssemblyRewriter)            | `RainierFetcher` — updater `Manifest.json` / release notes (AGPL)                                                                                                         |
+| [Hastwell/Omukade.RainierCardDefinitionFetcher](https://github.com/Hastwell/Omukade.RainierCardDefinitionFetcher)      | Fetch config-docs via login PTC + assemblies client (AGPL) — carddb / rules / defs ; **pas** collection owned                                                             |
+| Homebrew cask `pokemon-tcg-live`                                                                                       | `installer.studio-prod…` + livecheck sur `…/updater/StandaloneOSX/ReleaseNotes/notes_en.json`                                                                             |
 
 Recherche code utile : [`cdn.studio-prod.pokemon.com` sur GitHub](https://github.com/search?q=cdn.studio-prod.pokemon.com&type=code)
 (~28 hits ; le reste = forks cask / listes bugbounty / dumps d’URLs OSX).
 
 ### Autres endpoints (code search, 2026-08-08)
 
-| Query | Hits utiles | Bruit |
-|---|---|---|
-| `api.studio-prod.pokemon.com` | **ptcgl.dev** seulement | listes bugbounty |
-| `api.us-east-1.studio-prod…` | **ptcgl.dev** `DESIGN.md` | idem |
-| `configdocument/getMultiple` | **ptcgl.dev** seul | — |
-| `tpci-tcg-app` / `421d8904-…` | **ptcgl.dev** + **Omukade CardDefinitionFetcher** | — |
-| `studio-preprod.pokemon.biz` | **ptcgl.dev** `DESIGN.md` | — |
-| `installer.studio-prod…` | Homebrew cask (+ forks) | — |
-| `access.pokemon.com` | Omukade `AccessHelper` (OAuth PKCE) ; sinon GO/MAD/etc. | beaucoup de faux positifs PTC |
-| `me.pokemon.com` | rien TCGL (HOME / GO / DNS lists) | — |
-| `clientTypeAccessKey` | **ptcgl.dev** seul (4 fichiers) | — |
-| `external/token/register` | **ptcgl.dev** | faux positif `Rayllanderson/raybank` |
-| `tpcitcgapp/callback` / `routing/route` / `getMultiple` | **ptcgl.dev** + forks Omukade (`Hastwell`, `Hill-98`, `mrzapa`) | — |
-| `PTOK` + studio/ptcgl | **ptcgl.dev** + Omukade forks | bruit datasets / PoGo |
+| Query                                                   | Hits utiles                                                     | Bruit                                |
+| ------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------ |
+| `api.studio-prod.pokemon.com`                           | **ptcgl.dev** seulement                                         | listes bugbounty                     |
+| `api.us-east-1.studio-prod…`                            | **ptcgl.dev** `DESIGN.md`                                       | idem                                 |
+| `configdocument/getMultiple`                            | **ptcgl.dev** seul                                              | —                                    |
+| `tpci-tcg-app` / `421d8904-…`                           | **ptcgl.dev** + **Omukade CardDefinitionFetcher**               | —                                    |
+| `studio-preprod.pokemon.biz`                            | **ptcgl.dev** `DESIGN.md`                                       | —                                    |
+| `installer.studio-prod…`                                | Homebrew cask (+ forks)                                         | —                                    |
+| `access.pokemon.com`                                    | Omukade `AccessHelper` (OAuth PKCE) ; sinon GO/MAD/etc.         | beaucoup de faux positifs PTC        |
+| `me.pokemon.com`                                        | rien TCGL (HOME / GO / DNS lists)                               | —                                    |
+| `clientTypeAccessKey`                                   | **ptcgl.dev** seul (4 fichiers)                                 | —                                    |
+| `external/token/register`                               | **ptcgl.dev**                                                   | faux positif `Rayllanderson/raybank` |
+| `tpcitcgapp/callback` / `routing/route` / `getMultiple` | **ptcgl.dev** + forks Omukade (`Hastwell`, `Hill-98`, `mrzapa`) | —                                    |
+| `PTOK` + studio/ptcgl                                   | **ptcgl.dev** + Omukade forks                                   | bruit datasets / PoGo                |
 
-*(Relancé via UI GitHub connectée — pas de rate-limit API.)*
+_(Relancé via UI GitHub connectée — pas de rate-limit API.)_
 
 Conclusion : hors **ptcgl.dev** + famille **Omukade**, GitHub n’a quasiment
 pas d’implémentation des endpoints studio / config-docs. Pas de repo public
@@ -50,11 +50,11 @@ ptcgl.dev / DESIGN + sniffs MuMu.
 
 ## 1. Ce que c’est / n’est pas
 
-| | |
-|---|---|
-| **Oui** | Auth studio → config-docs → CDN UnityFS **et** commerce owned (carddex / inventory) |
-| **Disque app** | Pas d’inventaire joueur dans les fichiers MuMu (prefs / UnityCache seulement) |
-| **Miroirs publics** | ptcgl.dev / Omukade = catalogue ; **pas** les routes commerce owned |
+|                     |                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| **Oui**             | Auth studio → config-docs → CDN UnityFS **et** commerce owned (carddex / inventory) |
+| **Disque app**      | Pas d’inventaire joueur dans les fichiers MuMu (prefs / UnityCache seulement)       |
+| **Miroirs publics** | ptcgl.dev / Omukade = catalogue ; **pas** les routes commerce owned                 |
 
 Pour l’owned playroom : `pnpm foil:pokemon:sync-owned` →
 `data/pokemon/liveOwned.json` + `pnpm foil:pokemon:inventory-faces`.
@@ -82,12 +82,12 @@ Ordre figé :
 
 Identifiants client (publics dans `sync/.../application.yaml` du miroir) :
 
-| Clé | Valeur |
-|---|---|
-| `rainier.client-id` | `tpci-tcg-app` |
+| Clé                              | Valeur                                 |
+| -------------------------------- | -------------------------------------- |
+| `rainier.client-id`              | `tpci-tcg-app`                         |
 | `rainier.client-type-access-key` | `421d8904-0236-4ab4-94f5-a8a84aeb3f7b` |
-| `rainier.app-version` (ex.) | `1.40.0` |
-| `rainier.platform` | `android` / `osxplayer` / … |
+| `rainier.app-version` (ex.)      | `1.40.0`                               |
+| `rainier.platform`               | `android` / `osxplayer` / …            |
 
 Studio 424 = access PTCS invalidé côté serveur → forcer un refresh puis retry
 (une fois), comme `AuthService` du miroir.
@@ -103,14 +103,14 @@ compendiums).
 
 ## 3. CDN — sans auth
 
-| Ressource | URL |
-|---|---|
-| GameSettings | `https://cdn.studio-prod.pokemon.com/rainier/GameSettings/{ver}/GameSettings.json` |
-| Content root | clé `{platform}_contentpath` (+ évent. `{platform}_env_redirect_contentpath`) |
-| Bundle | `{contentPath}{dir}/{bundle}` — miss souvent **403** S3, pas 404 |
-| Manifest | `{contentPath}{bucket}/manifest_{locale}_{bucket}` (UnityFS → `AssetManifest`) |
+| Ressource         | URL                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| GameSettings      | `https://cdn.studio-prod.pokemon.com/rainier/GameSettings/{ver}/GameSettings.json`         |
+| Content root      | clé `{platform}_contentpath` (+ évent. `{platform}_env_redirect_contentpath`)              |
+| Bundle            | `{contentPath}{dir}/{bundle}` — miss souvent **403** S3, pas 404                           |
+| Manifest          | `{contentPath}{bucket}/manifest_{locale}_{bucket}` (UnityFS → `AssetManifest`)             |
 | Updater (desktop) | `…/rainier/updater/Standalone{OSX\|Windows64}/Manifest.json` + `ReleaseNotes/notes_*.json` |
-| Installer Mac | `https://installer.studio-prod.pokemon.com/installer/PokemonTCGLiveInstaller_Mac.dmg` |
+| Installer Mac     | `https://installer.studio-prod.pokemon.com/installer/PokemonTCGLiveInstaller_Mac.dmg`      |
 
 **Host contentpath non stable** — ex. migration `cdn.studio-prod.pokemon.com` →
 `cdn.studio-preprod.pokemon.biz` entre clients 1.38→1.39. Toujours lire
@@ -164,12 +164,12 @@ PCAP : `.tmp-foil-audit/live-unity/launch_sniff.pcap`.
 Chaîne auth §2 inchangée (PTCS → route → guest → PTOK studio JWT). Ensuite,
 contre `{apiEndpoint}` (ex. `https://api.us-east-1.studio-prod.pokemon.com`) :
 
-| Méthode | Path | Body | Réponse utile |
-|---|---|---|---|
-| POST | `/commerce/v1/external/carddex/getCardDexData` | `{}` | `{ cardRecords: [{ cardId, timestamp, isNew }] }` — **cardId** type `me5_45`, `sv4_177` |
-| POST | `/commerce/v1/external/inventory/get` | `{}` | `{ items: [{ hi, lo, count }], version, currencies }` — GUID .NET en deux int64 ; **mixte** cartes / avatars / items |
-| POST | `/commerce/v1/external/wallet/get` | `{}` | `{ currencyStacks: [{ name, quantity }], version }` |
-| POST | `/commerce/v1/external/collections/list` / `all` | `{}` | Decks (items aussi en hi/lo) |
+| Méthode | Path                                             | Body | Réponse utile                                                                                                        |
+| ------- | ------------------------------------------------ | ---- | -------------------------------------------------------------------------------------------------------------------- |
+| POST    | `/commerce/v1/external/carddex/getCardDexData`   | `{}` | `{ cardRecords: [{ cardId, timestamp, isNew }] }` — **cardId** type `me5_45`, `sv4_177`                              |
+| POST    | `/commerce/v1/external/inventory/get`            | `{}` | `{ items: [{ hi, lo, count }], version, currencies }` — GUID .NET en deux int64 ; **mixte** cartes / avatars / items |
+| POST    | `/commerce/v1/external/wallet/get`               | `{}` | `{ currencyStacks: [{ name, quantity }], version }`                                                                  |
+| POST    | `/commerce/v1/external/collections/list` / `all` | `{}` | Decks (items aussi en hi/lo)                                                                                         |
 
 Chemins tirés de `global-metadata.dat` (`/commerce/v1/external/…`). Les guesses
 `/account/v1/external/inventory/get` → **403** (route gate, pas la bonne famille).
@@ -193,9 +193,7 @@ Tokens PTCS (`ory_at_*` / `ory_rt_*`) : **ne pas committer** — garder sous
 
 ```json
 {
-  "purchaseRequestDetails": [
-    { "shopOfferingId": "bw6-5_2", "quantity": 1 }
-  ],
+  "purchaseRequestDetails": [{ "shopOfferingId": "bw6-5_2", "quantity": 1 }],
   "idempotencyKey": "<uuid-v4>"
 }
 ```
@@ -218,12 +216,12 @@ Exemple live : craft `bw6-5_2` (Dratini / Tinsel, Common, 40) → wallet
 
 ## 8. Interception locale (état outillage)
 
-| Élément | État |
-|---|---|
+| Élément      | État                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------ |
 | CA mitmproxy | Installé user (`/data/misc/user/0/cacerts-added/c8750f0d.0`, fingerprint = `~/.mitmproxy`) |
-| Proxy | `settings http_proxy` → `10.0.2.2:8080` (quand armé) |
-| mitmdump | CDN + WebView OAuth en clair ; **0** hit `api.*.studio-prod` (Unity TLS hors proxy) |
-| frida-server | Présent — unpin non requis une fois les paths commerce connus |
+| Proxy        | `settings http_proxy` → `10.0.2.2:8080` (quand armé)                                       |
+| mitmdump     | CDN + WebView OAuth en clair ; **0** hit `api.*.studio-prod` (Unity TLS hors proxy)        |
+| frida-server | Présent — unpin non requis une fois les paths commerce connus                              |
 
 Inutile de vider les caches app pour l’owned si on a un refresh PTCS valide :
 appeler carddex/inventory directement.

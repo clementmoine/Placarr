@@ -24,7 +24,7 @@ Rainbow, Cosmos et FlatSilver_CC sont désormais proches de l'Unity.
 La teinte périphérique (`--card-glow`) est inchangée : elle appartient à la carte.
 
 Pourquoi : chez simey ce radial est la **couche 1 d'un seul `.card__shine`**,
-fondue dans les losanges par `exclusion` *avant* l'unique `color-dodge` qui
+fondue dans les losanges par `exclusion` _avant_ l'unique `color-dodge` qui
 rencontre la carte — son blanc à 95 % ne touche jamais l'illustration
 directement. Sorti sur son propre élément (nécessaire pour survivre à l'idle,
 cf. §6), il devient un second dodge plein contre la carte, et un dodge de
@@ -42,15 +42,15 @@ visibles, mais uniformément éclairés — et ce n'est pas ce que fait poke-hol
 
 Diff mesuré des deux `.card__shine`, avant correction :
 
-| | simey | nous |
-|---|---|---|
-| couches | 3 — spot + 2 jeux de barres | 2 |
-| paliers | 26, 51, 89, 108, **128**, … | 51, 102, 179, 217, **255**, … |
-| blend | `exclusion, darken, color-dodge` | `darken, darken` |
-| période / filtre | 12 % / `brightness(.5) contrast(2)` | identiques ✓ |
+|                  | simey                               | nous                          |
+| ---------------- | ----------------------------------- | ----------------------------- |
+| couches          | 3 — spot + 2 jeux de barres         | 2                             |
+| paliers          | 26, 51, 89, 108, **128**, …         | 51, 102, 179, 217, **255**, … |
+| blend            | `exclusion, darken, color-dodge`    | `darken, darken`              |
+| période / filtre | 12 % / `brightness(.5) contrast(2)` | identiques ✓                  |
 
 `exclusion` contre le radial est ce qui rend les barres **brillantes sous le
-pointeur et sombres ailleurs** : les losanges sont *modelés*, pas seulement
+pointeur et sombres ailleurs** : les losanges sont _modelés_, pas seulement
 éclaircis. Un multiplicateur uniforme ne peut pas devenir spatial — aucun
 réglage de rampe ne reproduit ça.
 
@@ -65,7 +65,7 @@ Rampe, blend, size et filtre sont désormais **identiques aux valeurs mesurées
 sur le site**.
 
 `cssGuard.test.ts` : l'ancre `not.toContain("radial-gradient")` a été remplacée
-par l'invariant qui compte réellement — le spot est dans la pile *et* il fond
+par l'invariant qui compte réellement — le spot est dans la pile _et_ il fond
 vers `#000`, jamais vers `transparent`. Ne jamais y remettre un fondu en alpha.
 
 ### 2b. ~~`radiantBars()` — rampe doublée~~ (annulé, voir 2b′)
@@ -73,10 +73,10 @@ vers `#000`, jamais vers `transparent`. Ne jamais y remettre un fondu en alpha.
 **Les losanges n'étaient pas masqués : ils étaient annihilés par leur propre
 filtre.** Même cause racine que 2a — l'élément a perdu une couche.
 
-Upstream, `.card__shine` porte *trois* couches : le spot d'abord, fondu dans les
+Upstream, `.card__shine` porte _trois_ couches : le spot d'abord, fondu dans les
 barres par `exclusion`, puis les deux jeux de barres. Ce composite culmine près
 du blanc, donc `brightness(.5) contrast(2)` laisse de quoi travailler. Chez nous
-le spot est sur sa propre passe (il doit l'être), donc l'élément n'est *que* les
+le spot est sur sa propre passe (il doit l'être), donc l'élément n'est _que_ les
 barres, qui plafonnent à `hsl(0,0%,50%)` :
 
 ```
@@ -94,6 +94,7 @@ attend. **Filtre, blend, opacité et `--barwidth` vendorés : intacts.** Seule
 l'entrée est corrigée pour la couche qu'on a dû retirer.
 
 > Deux voies ont été essayées et rejetées :
+>
 > - `brightness(1)` sur le lattice — casse le guard « dodge pleine force ⇒
 >   `brightness ≤ 0.66` », qui est la règle anti-délavage. À ne pas contourner.
 > - remettre le spot dans la pile via `color-mix` vers le noir (neutre
@@ -106,20 +107,20 @@ l'entrée est corrigée pour la couche qu'on a dû retirer.
 
 Mesure du site live (Radiant Charizard, pointeur actif) contre le nôtre :
 
-| | poke-holo | nous |
-|---|---|---|
-| `.card__shine` | 3 couches · `exclusion, darken, color-dodge` | 2 · `darken` |
-| `::before` | 2 · `color-dodge, color-dodge` | idem |
-| `::after` | 2 · `cover, 400% 100%` · `hard-light, hard-light` | 3 · `normal, soft-light, hard-light` |
-| glare | 1 · `hard-light` | idem |
-| **total** | **8** | **10** |
+|                | poke-holo                                         | nous                                 |
+| -------------- | ------------------------------------------------- | ------------------------------------ |
+| `.card__shine` | 3 couches · `exclusion, darken, color-dodge`      | 2 · `darken`                         |
+| `::before`     | 2 · `color-dodge, color-dodge`                    | idem                                 |
+| `::after`      | 2 · `cover, 400% 100%` · `hard-light, hard-light` | 3 · `normal, soft-light, hard-light` |
+| glare          | 1 · `hard-light`                                  | idem                                 |
+| **total**      | **8**                                             | **10**                               |
 
 **Le nombre de couches n'est pas le problème.** L'écart est le contenu :
-leur `::after` couche 1 est `var(--foil)` — l'image *etched* de l'impression.
+leur `::after` couche 1 est `var(--foil)` — l'image _etched_ de l'impression.
 
 La nôtre était `linear-gradient(hsl(0,0%,8%), hsl(0,0%,14%))`, et c'est pire
 qu'inutile : première dans la liste, elle est la couche du **dessus**, opaque,
-en `normal` — elle *remplace* les deux couches sous elle. Puis
+en `normal` — elle _remplace_ les deux couches sous elle. Puis
 `brightness(.6) contrast(3)` la met à noir, et `color-dodge` contre noir est un
 no-op. **Le coat ne contribuait rien.**
 
@@ -134,16 +135,16 @@ lit `var(--foil-etch, <aplat sombre>)`. Aucun rôle changé, et une impression
 sans etch retombe sur l'ancien comportement.
 
 **Blend : `multiply`, pas `hard-light`.** Upstream met `hard-light`, mais ça
-suppose *sa* plaque. La nôtre est un `_CardEtch` Live : gravure **sombre sur
+suppose _sa_ plaque. La nôtre est un `_CardEtch` Live : gravure **sombre sur
 blanc**, luminance moyenne 196. `hard-light` se décide sur la couche du dessus,
-donc une plaque majoritairement blanche *screene* presque partout — essayé,
+donc une plaque majoritairement blanche _screene_ presque partout — essayé,
 mesuré, Dracaufeu vire au rose pâle. `multiply` lit la même plaque dans le bon
 sens : le blanc laisse passer les plaques du dessous, seules les lignes gravées
-marquent, et la lumière court *entre* les lignes sous `color-dodge`. À revoir si
+marquent, et la lumière court _entre_ les lignes sous `color-dodge`. À revoir si
 l'etch est un jour dumpé en polarité inverse.
 
 > **Note d'architecture :** l'etch est désormais consommé deux fois — en
-> *peinture* ici (upstream `var(--foil)`), et en *masque* par le look de vernis
+> _peinture_ ici (upstream `var(--foil)`), et en _masque_ par le look de vernis
 > `etch` (`holoShadersHouse`), qui passe une brillance douce à travers. Ce n'est
 > pas un doublon au sens strict (usages différents), mais c'est un point de
 > conception à trancher si Radiant devient trop chargé.
@@ -199,12 +200,12 @@ Aucun guard affaibli, aucun test réécrit.
 
 Mesuré dans le playroom, `view=compare`, pointeur actif.
 
-| Finition | Avant | Après |
-|---|---|---|
-| **RadiantHolo** (Dracaufeu Radieux) | lavis rose, Dracaufeu délavé, losanges noyés | rouge dense, corps noir tenu, très proche Unity |
-| **FlatSilver_CC** (Énergie Plante) | — | Poké Balls lisibles des deux côtés, quasi identiques |
-| **Cosmos** (Raichu) | — | très proche, rien à signaler |
-| **Rainbow** (Arakdo) | — | correct sous pointeur ; boîte de texte un peu plus plate que l'Unity, qui garde plus de moutonnement |
+| Finition                            | Avant                                        | Après                                                                                                |
+| ----------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **RadiantHolo** (Dracaufeu Radieux) | lavis rose, Dracaufeu délavé, losanges noyés | rouge dense, corps noir tenu, très proche Unity                                                      |
+| **FlatSilver_CC** (Énergie Plante)  | —                                            | Poké Balls lisibles des deux côtés, quasi identiques                                                 |
+| **Cosmos** (Raichu)                 | —                                            | très proche, rien à signaler                                                                         |
+| **Rainbow** (Arakdo)                | —                                            | correct sous pointeur ; boîte de texte un peu plus plate que l'Unity, qui garde plus de moutonnement |
 
 Encore faux : le moutonnement fin de Rainbow dans la boîte de texte. Non
 corrigé — voir §5.
@@ -235,8 +236,8 @@ corrigé — voir §5.
   passe, compter les dodges de la chaîne (script en §7).
 - **`exclusion` n'est pas transposable d'un blend interne à un `mix-blend-mode`.**
   Essayé sur le halo pour coller à la source : la carte vire au gris et perd son
-  rouge. `exclusion` contre le *lattice* (dans un même élément) ≠ `exclusion`
-  contre la *carte*.
+  rouge. `exclusion` contre le _lattice_ (dans un même élément) ≠ `exclusion`
+  contre la _carte_.
 - **Ne pas remettre le spot dans le `background-blend` du lattice** — la règle du
   handoff entrant tient toujours, et pour la bonne raison : l'idle met
   `--opacity: 0` et ça tuait les losanges. Le spot doit rester sur sa passe.

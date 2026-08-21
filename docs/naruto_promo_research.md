@@ -186,7 +186,7 @@ indépendamment du forum, que la version française est bien fautive.
 _Unire le forze_, _Grande funerale del deserto_…) dans le champ français. Ils
 relèvent d'une locale `it`. Seuls les noms propres sont neutres.
 
-Données brutes : `data/naruto/ccg/staging/coleka/catalogue.json`.
+Données brutes : `data/naruto/carddass/staging/coleka/catalogue.json`.
 
 **Question ouverte pour le catalogue** : ces 92 cartes sont des cartes physiques
 réelles, mais italiennes. Les intégrer demanderait un set distinct (`cacg.it.s6`),
@@ -452,7 +452,7 @@ des promos. C'est une troisième source qui corrobore notre `cacg.s5`.
 
 En énumérant le parent Coleka (`_r4102`, 7 114 cartes) j'ai trouvé une branche
 **promo dédiée : 101 cartes, toutes avec photo** (`_r38199`). Énumérée en entier,
-sauvegardée dans `data/naruto/ccg/staging/coleka/us-promos.json`.
+sauvegardée dans `data/naruto/carddass/staging/coleka/us-promos.json`.
 
 L'hypothèse à tester était séduisante : puisque la numérotation NI/TA/TE est
 **partagée entre éditions** (TA-226 est TA-226 en français comme en italien), les

@@ -21,29 +21,29 @@ Companion to [provider_integration_checklist.md](provider_integration_checklist.
 
 ## `supplyMode` (on `ProviderInfo`)
 
-| Mode | Meaning | Examples |
-|------|---------|----------|
-| `api_live` | Remote API / static HTTP JSON | TCGdex, IGDB, LorcanaJSON |
-| `scrape_cache` | Scraper + durable local cache | iCollect, shop scrapes |
+| Mode            | Meaning                             | Examples                                                   |
+| --------------- | ----------------------------------- | ---------------------------------------------------------- |
+| `api_live`      | Remote API / static HTTP JSON       | TCGdex, IGDB, LorcanaJSON                                  |
+| `scrape_cache`  | Scraper + durable local cache       | iCollect, shop scrapes                                     |
 | `local_catalog` | Owned local corpus (SQLite / cards) | LaunchBox, No-Intro, lorcanatcg, pokemontcglive, narutoccg |
 
 Default when unset after materialize: `api_live`.
 
 ## Data vs curated
 
-| Content | Location |
-|---------|----------|
-| Fully recoverable via the provider’s scripts (DB, CDN dumps, Wayback bytes) | `data/<pack>/` — **never commit** |
-| Hand-assembled; no reliable official/repeatable net source | `src/providers/<id>/curated/` (git); install into `data/` at refresh |
+| Content                                                                     | Location                                                             |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Fully recoverable via the provider’s scripts (DB, CDN dumps, Wayback bytes) | `data/<pack>/` — **never commit**                                    |
+| Hand-assembled; no reliable official/repeatable net source                  | `src/providers/<id>/curated/` (git); install into `data/` at refresh |
 
 ## Catalog hook (`ProviderModule.catalog`)
 
 Optional surface for refreshable local corpora (same pattern as `searchPrints`):
 
-| Field | Role |
-|-------|------|
-| `dataPack` | Slug under `data/<pack>/` |
-| `status()` | `{ empty, stale, lastSyncAt }` |
+| Field            | Role                                      |
+| ---------------- | ----------------------------------------- |
+| `dataPack`       | Slug under `data/<pack>/`                 |
+| `status()`       | `{ empty, stale, lastSyncAt }`            |
 | `refresh(opts?)` | In-process rebuild/sync (`auto` vs force) |
 
 Admin **Catalogue** tab: refresh all / per-provider / Plex-like auto loop when
@@ -58,7 +58,9 @@ src/providers/<id>/
   pipeline.ts    # catalog.refresh implementation
   cli.ts         # thin pnpm entry
   indexStore.ts  # sqlite helpers
-  curated/       # non-replayable
+  curated/
+    cards/       # same tree as data/<pack>/cards — mirrored at refresh
+    sources/     # ledgers (optional)
   unity/         # UnityPy island only (if needed)
 ```
 
@@ -78,9 +80,9 @@ Repo-wide tools stay under `scripts/` (`backgroundWorker`, shared media audits).
 
 ## Lorcana attribution
 
-| Provider | Role |
-|----------|------|
-| `lorcanatcg` | Local dump (web CSS + cards scrape + **Unity / mobile app**) → `data/lorcana/` |
+| Provider      | Role                                                                              |
+| ------------- | --------------------------------------------------------------------------------- |
+| `lorcanatcg`  | Local dump (web CSS + cards scrape + **Unity / mobile app**) → `data/lorcana/`    |
 | `lorcanajson` | Live/community JSON API — complementary observations, not a stand-in for app dump |
 
 Gaps in one source → second provider + consensus; never silent merge under the

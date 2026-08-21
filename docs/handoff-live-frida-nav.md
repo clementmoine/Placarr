@@ -8,18 +8,18 @@ Branche `feat/foundation-postgres-tests`. Scratch : `~/.cache/placarr-frida-ugui
 
 ## 1. Verdict
 
-| Question | Réponse |
-|---|---|
-| Deep link / intent carte ? | **Non** |
-| DOM | **uGUI** + `frida-il2cpp-bridge` |
-| Entrée Card-Dex | `MainMenuNavigation_P.GoToHomeScreen` + `MainMenuController.OpenScreen(HUBCardDex)` / `ChangeToCardCollection` (parfois AV mais UI OK) |
-| Fermer overlays (carte / tri) | **`OverlayManager.CloseAllOverlays()`** — **jamais** tap y≈0.91 (ouvre « Trier par ») |
-| Série | `CardDexSeriesDropdownItem.OnClickSeries` / `CardDexSeriesSelector.SelectSeries` |
-| **Set (y compris hors pool recyclé)** | **`CollectionSetCarousel.ShiftCarouselToTargetSet(id)` + `OnClickExpansion(id, bool, bool)`** |
-| Set (fallback cellule GC) | `CollectionCarouselObjects.SelectExpansion()` |
-| Carte | `CardDexStackParts.InvokeClickDelegateWithBoundArchetypeStack` via `_assetBundleToUse` |
-| Catalogue sets | `HUBCardDexScreenController.get_AllCachedExpansionDetails()` |
-| Thread | Unity main (`Il2Cpp.mainThread.schedule` quand dispo) |
+| Question                              | Réponse                                                                                                                                |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Deep link / intent carte ?            | **Non**                                                                                                                                |
+| DOM                                   | **uGUI** + `frida-il2cpp-bridge`                                                                                                       |
+| Entrée Card-Dex                       | `MainMenuNavigation_P.GoToHomeScreen` + `MainMenuController.OpenScreen(HUBCardDex)` / `ChangeToCardCollection` (parfois AV mais UI OK) |
+| Fermer overlays (carte / tri)         | **`OverlayManager.CloseAllOverlays()`** — **jamais** tap y≈0.91 (ouvre « Trier par »)                                                  |
+| Série                                 | `CardDexSeriesDropdownItem.OnClickSeries` / `CardDexSeriesSelector.SelectSeries`                                                       |
+| **Set (y compris hors pool recyclé)** | **`CollectionSetCarousel.ShiftCarouselToTargetSet(id)` + `OnClickExpansion(id, bool, bool)`**                                          |
+| Set (fallback cellule GC)             | `CollectionCarouselObjects.SelectExpansion()`                                                                                          |
+| Carte                                 | `CardDexStackParts.InvokeClickDelegateWithBoundArchetypeStack` via `_assetBundleToUse`                                                 |
+| Catalogue sets                        | `HUBCardDexScreenController.get_AllCachedExpansionDetails()`                                                                           |
+| Thread                                | Unity main (`Il2Cpp.mainThread.schedule` quand dispo)                                                                                  |
 
 Identité foil admin → Live : `printKey` → `paperBundleId` → `{liveSet}_{lang}_{num}` ex. `me5_fr_001`. Playroom : `bundleId` déjà sur `packArts`.
 
@@ -45,14 +45,14 @@ Ne pas ajouter `frida-il2cpp-bridge` aux deps Placarr. Proxy mitm off pendant la
 
 ## 3. Placarr
 
-| Fichier | Rôle |
-|---|---|
-| `scripts/pokemon/liveCard.ts` | Nom → sqlite → `fridaGotoCard` → tilt → vérif |
-| `src/lib/admin/liveNavFrida.ts` | Shell `nav.py` (`goto` / `select` / `open`) |
-| `src/app/api/admin/live-open` | Admin bouton playroom → `openCardInLive` |
-| `scripts/pokemon/liveCardVerify.ts` | Screenshot ↔ `cardTex` (complément) |
-| `src/effects/pokemon/resolveEffect.ts` | `printKey` → bundle |
-| Admin | `/admin?tab=tcg-effects` (`FoilPlayroom` / `packArts.bundleId`) |
+| Fichier                                | Rôle                                                            |
+| -------------------------------------- | --------------------------------------------------------------- |
+| `scripts/pokemon/liveCard.ts`          | Nom → sqlite → `fridaGotoCard` → tilt → vérif                   |
+| `src/lib/admin/liveNavFrida.ts`        | Shell `nav.py` (`goto` / `select` / `open`)                     |
+| `src/app/api/admin/live-open`          | Admin bouton playroom → `openCardInLive`                        |
+| `scripts/pokemon/liveCardVerify.ts`    | Screenshot ↔ `cardTex` (complément)                             |
+| `src/effects/pokemon/resolveEffect.ts` | `printKey` → bundle                                             |
+| Admin                                  | `/admin?tab=tcg-effects` (`FoilPlayroom` / `packArts.bundleId`) |
 
 ```bash
 pnpm foil:pokemon:live-card "Tropius" --set me5 --tilt
@@ -62,15 +62,15 @@ pnpm foil:pokemon:live-card "Tropius" --set me5 --tilt
 
 ## 4. Validé live (API)
 
-| Étape | Résultat |
-|---|---|
-| CloseAllOverlays / GoToHome | OK |
-| Card-Dex (OpenScreen) | AV possible ; `inCardDex` / titre Collection = source de vérité (pas GC carousel stale) |
-| `listExpansions` | Catalogue complet (bw/xy/sv/…) |
-| `selectSeries("XY")` dropdown | OK |
-| `Shift+OnClickExpansion("XY1")` | OK — pool passe à XY0/1/2, `loaded=XY1` |
-| `open XY12_fr_005` | OK — Aspicot Évolutions |
-| `open me5_fr_001 --prefer ph` | OK — Tropius owned 4 |
+| Étape                           | Résultat                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| CloseAllOverlays / GoToHome     | OK                                                                                      |
+| Card-Dex (OpenScreen)           | AV possible ; `inCardDex` / titre Collection = source de vérité (pas GC carousel stale) |
+| `listExpansions`                | Catalogue complet (bw/xy/sv/…)                                                          |
+| `selectSeries("XY")` dropdown   | OK                                                                                      |
+| `Shift+OnClickExpansion("XY1")` | OK — pool passe à XY0/1/2, `loaded=XY1`                                                 |
+| `open XY12_fr_005`              | OK — Aspicot Évolutions                                                                 |
+| `open me5_fr_001 --prefer ph`   | OK — Tropius owned 4                                                                    |
 
 ---
 
@@ -118,5 +118,6 @@ pnpm foil:pokemon:live-card --bundle smalt_fr_001 --tilt
 ## 7. Prompt de reprise
 
 > Lis ce handoff. Priorité : (1) `tour` exhaustif via `ShiftCarouselToTargetSet`
-> + catalogue `listExpansions` ; (2) stabiliser `openCardDex` ; (3) bouton admin
-> foil → `goto` bundle. API-first, pas de taps. Scratch hors repo.
+>
+> - catalogue `listExpansions` ; (2) stabiliser `openCardDex` ; (3) bouton admin
+>   foil → `goto` bundle. API-first, pas de taps. Scratch hors repo.

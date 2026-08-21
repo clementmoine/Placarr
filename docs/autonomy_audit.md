@@ -1,8 +1,8 @@
 # Autonomie du conteneur — audit
 
-Mesuré le **2026-08-15**. Objectif produit, tel qu'énoncé : *« Je le lance, je
+Mesuré le **2026-08-15**. Objectif produit, tel qu'énoncé : _« Je le lance, je
 l'héberge, il se débrouille tout seul. Après moi je viens juste rajouter du
-contenu dans mes collections. »* Un Plex-like.
+contenu dans mes collections. »_ Un Plex-like.
 
 Conséquences de ce cadrage, à garder en tête pour toute décision :
 
@@ -13,22 +13,22 @@ Conséquences de ce cadrage, à garder en tête pour toute décision :
   build et un déploiement. Ne pas construire de mécanique de plugin à chaud.
 - **Ce qui n'est joignable qu'en CLI n'existe pas au quotidien.** `tsx` est bien
   dans l'image (le Dockerfile copie l'arbre complet pour que le worker tourne),
-  donc la CLI *pourrait* s'exécuter — mais personne n'ouvrira un SSH sur le NAS.
+  donc la CLI _pourrait_ s'exécuter — mais personne n'ouvrira un SSH sur le NAS.
 
 ## Ce qui tourne déjà tout seul
 
 Le squelette est là, et il est bon.
 
-| brique | état |
-| --- | --- |
-| `init.sh` | *« All-in-one entrypoint (Plex-style): migrate → workers → Next »*. Migrations, deux workers (`interactive`, `icollect` en concurrence 1), puis le serveur. |
-| supervision | si un worker meurt, **init.sh descend le conteneur** — un conteneur sain avec un worker mort arrêtait l'enrichissement en silence. La politique de redémarrage Docker fait le reste. |
-| fraîcheur | `catalogueAutoSync` — *« Plex-like: enqueue refresh when status().stale »*. Contrôle horaire, découverte par le registre, jamais par id. |
-| file | persistée en base : `attempts`, `maxAttempts = 3`, délai de reprise. Un job échoué repart seul et survit à un redémarrage. |
-| anti-blocage | `scrapeAccessBlocked()` détecte 403/429/503 **et** les signatures Cloudflare (« just a moment », « cf-browser-verification », « enable javascript and cookies ») ; `fetchGetWithFlareFallback` bascule automatiquement. |
-| couverture FlareSolverr | **29 providers sur 65** — exactement ceux qui scrapent. Les 36 autres sont des API sans mur. Ce n'est pas un trou. |
-| cadence | déclarée par provider (`minRequestIntervalMs`, `maxConcurrentRequests`) ; `providerQueueSettings` en dérive la forme de queue. |
-| quotas | `retry.ts` sait qu'un 429 est un signal de quota **à ne pas réessayer** — le marteler aggrave. |
+| brique                  | état                                                                                                                                                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init.sh`               | _« All-in-one entrypoint (Plex-style): migrate → workers → Next »_. Migrations, deux workers (`interactive`, `icollect` en concurrence 1), puis le serveur.                                                             |
+| supervision             | si un worker meurt, **init.sh descend le conteneur** — un conteneur sain avec un worker mort arrêtait l'enrichissement en silence. La politique de redémarrage Docker fait le reste.                                    |
+| fraîcheur               | `catalogueAutoSync` — _« Plex-like: enqueue refresh when status().stale »_. Contrôle horaire, découverte par le registre, jamais par id.                                                                                |
+| file                    | persistée en base : `attempts`, `maxAttempts = 3`, délai de reprise. Un job échoué repart seul et survit à un redémarrage.                                                                                              |
+| anti-blocage            | `scrapeAccessBlocked()` détecte 403/429/503 **et** les signatures Cloudflare (« just a moment », « cf-browser-verification », « enable javascript and cookies ») ; `fetchGetWithFlareFallback` bascule automatiquement. |
+| couverture FlareSolverr | **29 providers sur 65** — exactement ceux qui scrapent. Les 36 autres sont des API sans mur. Ce n'est pas un trou.                                                                                                      |
+| cadence                 | déclarée par provider (`minRequestIntervalMs`, `maxConcurrentRequests`) ; `providerQueueSettings` en dérive la forme de queue.                                                                                          |
+| quotas                  | `retry.ts` sait qu'un 429 est un signal de quota **à ne pas réessayer** — le marteler aggrave.                                                                                                                          |
 
 ## Ce qui manque
 
@@ -78,18 +78,18 @@ la CLI dispensable — mais elle ne bloque pas l'autonomie.
 `BackgroundWorkJob` porte `status`, `attempts`, `updatedAt`, et `updatedAt` est
 mis à `NOW()` au moment où un worker réclame le job. Mais **rien ne balaie les
 jobs restés `running` dont le worker a disparu** — le module le dit lui-même :
-*« they would sit `running` forever »*.
+_« they would sit `running` forever »_.
 
 Un conteneur qui redémarre en plein travail laisse donc un job mort en base,
 qui bloque son `replaceOpenForKind` et n'est jamais repris.
 
 **Politique voulue**, et `updatedAt` suffit à la mettre en œuvre :
 
-| depuis le dernier signe de vie | décision |
-| --- | --- |
-| < quelques minutes | un worker est probablement encore vivant — ne pas toucher |
-| lease dépassé, coupure récente (~15 min) | **reprendre** là où on en était |
-| coupure ancienne (~24 h) | **repartir de zéro** : le monde a bougé, une reprise partielle mentirait |
+| depuis le dernier signe de vie           | décision                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| < quelques minutes                       | un worker est probablement encore vivant — ne pas toucher                |
+| lease dépassé, coupure récente (~15 min) | **reprendre** là où on en était                                          |
+| coupure ancienne (~24 h)                 | **repartir de zéro** : le monde a bougé, une reprise partielle mentirait |
 
 **Ce qui rend la reprise utile, c'est le point de contrôle**, pas la décision
 elle-même. Nos étapes sont déjà idempotentes — la passe de faces saute ce qui

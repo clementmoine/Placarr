@@ -1,38 +1,44 @@
 # Check-list de collection — « ce qui existe » vs « ce que j'ai »
 
-Demandé le **2026-08-15**. Une vue par collection listant *tout ce qui existe*
+Demandé le **2026-08-15**. Une vue par collection listant _tout ce qui existe_
 — tous les jeux PS1, toutes les cartes Naruto — avec une case cochée quand on
 le possède, une vignette, et un export imprimable.
 
 C'est une **fonctionnalité utilisateur**, pas de la maintenance : à mettre dans
 la roadmap, pas dans la dette.
 
-**Quand.** Décidé le 2026-08-15 : *après* la consolidation de l'existant et
+**Quand.** Décidé le 2026-08-15 : _après_ la consolidation de l'existant et
 l'ajout de nouvelles sources de données (nouveaux TCG). Ce document est là pour
 que l'idée ne se perde pas d'ici là — elle a déjà produit deux constats qui
 valent indépendamment d'elle : l'absence de table de sets, et la confusion
 entre set d'origine et produit de distribution.
 
+**Poussé le 2026-08-16** : compositions, types d'entrée TCG, visuels. **Archivé
+dans `data/`** au Sync admin (pas un grab manuel) : graphe dbscards
+produit→cartes + photos de decks Naruto. Les quatre TCG (Naruto, DBS,
+Lorcana, Pokémon) suffisent comme échantillon des objets hors cartes —
+voir plus bas. L'objet utile aujourd'hui, c'est le tirage.
+
 ## La donnée existe déjà, entièrement en local
 
-| corpus | volume | vignettes |
-| --- | --- | --- |
-| LaunchBox — Sony PlayStation | **4 613** jeux | oui (`game_images`, 1 290 570 au total) |
-| LaunchBox — PS2 / PS4 / PS3 | 4 746 / 3 849 / 2 602 | oui |
-| LaunchBox — tous supports | 182 172 jeux, colonne `platform` | oui |
-| Naruto CCG | 771 tirages | oui |
-| DBS Masters | 8 434 tirages | oui |
-| DBS Fusion World | 3 946 tirages | après la passe faces |
-| Lorcana | 3 241 (en) | oui |
-| Pokémon | 93 777 cartes, 6 langues | oui |
+| corpus                       | volume                           | vignettes                               |
+| ---------------------------- | -------------------------------- | --------------------------------------- |
+| LaunchBox — Sony PlayStation | **4 613** jeux                   | oui (`game_images`, 1 290 570 au total) |
+| LaunchBox — PS2 / PS4 / PS3  | 4 746 / 3 849 / 2 602            | oui                                     |
+| LaunchBox — tous supports    | 182 172 jeux, colonne `platform` | oui                                     |
+| Naruto CCG                   | 771 tirages                      | oui                                     |
+| DBS Masters                  | 8 434 tirages                    | oui                                     |
+| DBS Fusion World             | 3 962 tirages                    | après la passe faces                    |
+| Lorcana                      | 3 241 (en)                       | oui                                     |
+| Pokémon                      | 93 777 cartes, 6 langues         | oui                                     |
 
 Aucun téléchargement n'est nécessaire : la check-list est une **jointure entre
 un catalogue local et les items possédés**.
 
 ## Ce qui existe déjà et sert de base
 
-`src/providers/narutoccg/buildCoverageChecklist.ts` — *« Cross-source coverage
-checklist for Naruto CACG FR »*, lancé par `pnpm naruto:cards -- --only
+`src/providers/narutoccg/buildCoverageChecklist.ts` — _« Cross-source coverage
+checklist for Naruto CACG FR »_, lancé par `pnpm naruto:cards -- --only
 checklist`. Il croise déjà les sources et produit un état de couverture.
 
 Mais c'est un outil de développement : il écrit un fichier, il est propre à un
@@ -59,12 +65,12 @@ Le statut appartient au couple **(set, territoire)**, pas au set.
 
 ### Ce qu'il faudrait porter
 
-| champ | pourquoi |
-| --- | --- |
-| code, nom, pack | aujourd'hui une chaîne libre, dupliquée sur chaque tirage |
-| date de sortie | dbscards la publie (`Date Sortie: 03/07/2026`) mais **sur la fiche carte**, pas dans la liste — donc absente de notre index |
-| territoire | une même série n'existe pas partout |
-| statut + **preuve** | `en cours` / `terminé` / `annulé`, avec la source qui l'atteste et sa date |
+| champ               | pourquoi                                                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| code, nom, pack     | aujourd'hui une chaîne libre, dupliquée sur chaque tirage                                                                   |
+| date de sortie      | dbscards la publie (`Date Sortie: 03/07/2026`) mais **sur la fiche carte**, pas dans la liste — donc absente de notre index |
+| territoire          | une même série n'existe pas partout                                                                                         |
+| statut + **preuve** | `en cours` / `terminé` / `annulé`, avec la source qui l'atteste et sa date                                                  |
 
 Le champ « preuve » n'est pas décoratif : c'est ce qui distingue « la série est
 finie » de « on n'a rien vu passer depuis six mois ». Sans lui, une check-list
@@ -98,11 +104,80 @@ tirages, la seconde est un objet unique.
 
 - **Naruto** — les pages de decks sont sur disque :
   `staging/manga-news/Naruto-Deck-Serie-{1..5}.html` et `-Nouvelle-Serie.html`.
-- **DBS** — dbscards publie une taxonomie complète de produits scellés :
-  `/products/{boosters,displays,collector-boxes,decks,special-packs,binders-pages,card-sleeves,deck-boxes,deck-separator,playmats,accessories}`.
+- **DBS / Lorcana / Pokémon papier / One Piece** — même logiciel
+  (dbscards, fw.dbscards, lorcards, pkmcards, opecards, …). Un registre
+  `src/providers/shared/dbscards/sites.ts`, un crawl. Accessoires exclus.
+  Sync admin pour les packs déjà ouverts ; One Piece via
+  `pnpm tcgcards:products -- --site opecards` en attendant un provider.
 - **Jeux vidéo** — l'équivalent n'est pas le produit scellé mais l'**édition**
   (collector, limitée, bundle). LaunchBox ne les modélise pas ; à vérifier avant
   de promettre la parité.
+
+### Visuels des produits scellés — mesuré 2026-08-16
+
+On peut les trouver. Ils ne sont **nulle part** dans `print_assets` : le
+pipeline cartes les ignore exprès (Naruto classe `/packshots/` en chrome).
+Une face de carte ne doit pas servir de vignette de booster.
+
+| jeu                  | déjà local                                                                                                                                                                                  | source trouvée                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | taille typique                   | trou                                                                                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Naruto FR**        | **Oui.** `staging/carddass-fr/images/packshots/` + copie Catalogue `products/`. Boosters S1–S5, 8 starters S1–S4, 2 decks S5 `PEM05124_*`, tin box, logos S1–S5.                            | Manga-News decks encore en ligne (`…/goodies/tcg-naruto-deck-serie-1.jpg`, 150×251).                                                                                                                                                                                                                                                                                                                                                                                                                       | Petit, époque 2006–08.           | **Pas de display.** Pas de S6 FR — le produit n'existe pas (déjà dans `knownCards.ts`).                                                                                |
+| **Naruto JP**        | **Oui.** `staging/carddas-jp/…/image/product/{1st,2nd,3rd,4th}/` : `pack.jpg` / `box.jpg` / starters, ~120×250.                                                                             | Site officiel d'époque, mirroir local.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Petit.                           | Corpus JP, pas FR. Utile comme preuve de forme, pas comme visuel de collection FR.                                                                                     |
+| **DBS Masters**      | HTML + URL d'image au Sync admin. **Pas** le fichier CDN (on n'en a pas besoin pour la carte).                                                                                              | **dbscards est debout** aujourd'hui. Motif stable : `https://static.dbscards.fr/products/{slug}.webp` — 400×400, ~150–190 Ko. Listing paginé en chemin (`/products/boosters/2`, pas `?page=`) : **120** boosters, **34** displays, **28** decks, **16** coffrets, **26** special packs. **Officiel Bandai** : `https://www.dbs-cardgame.com/images/product/dbs-b31/img_item.png` (pack 431×458) + `img_promobox.png` (display 960×602). `dbs-b25/img_item.png` répond encore → l'archive officielle tient. | 400² communauté / ~960 officiel. | Même ToS que les faces dbscards. Préférer Bandai quand le fichier existe.                                                                                              |
+| **DBS Fusion World** | Idem, Sync admin.                                                                                                                                                                           | Même famille : `https://static.fw.dbscards.fr/products/en/{catégorie}/image-….webp` (400×400). Officiel : pages `/fw/en/products/01_*.html` — FB11 = `…/FB11_en.png` 400×400 (visuel pack, pas display).                                                                                                                                                                                                                                                                                                   | 400².                            | Rareté toujours absente de l'index ; le visuel, lui, est là.                                                                                                           |
+| **Lorcana**          | HTML + URL d'image au Sync admin (`staging/lorcards-products/`). **Pas** le fichier CDN.                                                                                                    | **lorcards.fr** — même logiciel que dbscards (routing identique). Motif : `https://static.lorcards.fr/products/fr/{catégorie}/image-…-{slug}.webp`. Wrappers distincts (Woody ≠ Merida ≠ Gadget). Boutique Ravensburger (Cloudflare) en secours.                                                                                                                                                                                                                                                           | 400².                            | Faces déjà au dump officiel. Produits = Sync, pas l'heure.                                                                                                             |
+| **Pokémon papier**   | HTML + URL d'image au Sync admin (`staging/pkmcards-products/`). **Pas** le fichier CDN. Logos d'extension : `staging/tcgdex-set-logos.json` (API TCGdex), overlay Catalogue via `setCode`. | **pkmcards.fr** — même logiciel que dbscards. Boosters, ETB, tins, Pokébox, tripacks, coffrets. Displays en index. Boutique officielle Pokémon en secours.                                                                                                                                                                                                                                                                                                                                                 | 400².                            | Faces = dump Live / TCGdex. Produits = Sync, pas l'heure. Live `booster-compendium` = digital, pas papier. Display souvent **sans** `setCode` → pas de logo (honnête). |
+
+Conséquence pour la check-list : le visuel du scellé est un **asset du produit**,
+pas un `print_asset`. Catalogue → **Scellés** lit `data/<pack>/products-index.json`
+(projeté depuis le graphe TCG Cards au Sync). Un SKU existe ; posséder le
+scellé ≠ posséder les cartes. P3 check-list / buy-advice n'est pas dans ce slice.
+Naruto decks : photos au Sync (étape checklist). DBS / Lorcana / Pokémon papier :
+graphe produits au Sync admin, pas à l'heure.
+
+### Archivé 2026-08-16 — ce qui sert la carte, pas le booster
+
+L'objet qui compte aujourd'hui, c'est le **tirage**. Pas de packshots.
+Le graphe produit→cartes est une **étape de pipeline**, pas un grab
+manuel :
+
+- Masters / Fusion World : bouton **Sync** de la ligne
+- Naruto decks : même Sync (HTML + photo du deck)
+
+Inclus au **Sync admin**. Hors de la boucle horaire (l'hôte tarpitte ;
+fiches decks / coffrets / special-packs **et** boosters). HTML déjà là
+= reprise sans GET.
+
+| où                                                | quoi                                                                                                                                | pour plus tard                                                                                                                                                                                                                           |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data/dbs/cg/staging/dbscards-products/`          | **224** SKU ; **190** fiches (120 boosters + 70 decks / coffrets / special-packs)                                                   | date, prix, `declaredCardCount`, URL d'image. **2451** liens carte. Decks / coffrets exclusifs complétés depuis `catalog.sqlite`. Un booster reste sur l'aperçu 15 tuiles (Union Force 15/127) — le site le dit ; on ne dump pas le set. |
+| `data/lorcana/staging/lorcards-products/`         | **122** SKU ; **110** fiches (boosters / blisters / decks / coffrets / troves). Displays en index.                                  | date, prix, URL d'image, aperçu 15 tuiles. **1491** liens carte. Un booster Set 12 Woody = 15/446 — le pool du chapitre, pas le contenu du pack. Puzzles au prochain Sync (catégorie ajoutée).                                           |
+| `data/pokemon/staging/pkmcards-products/`         | **420** SKU ; **400** fiches (193 boosters + ETB / tins / Pokébox / tripacks / coffrets / special-packs). **20** displays en index. | date, prix, URL d'image, aperçu 15 tuiles. **5910** liens carte. Catalogue Live **non joint** (122 du set ≠ le pack).                                                                                                                    |
+| `data/onepiece/staging/opecards-products/`        | `pnpm tcgcards:products -- --site opecards`                                                                                         | Pas de pack Catalogue ni de provider. Graphe scellé en staging pour plus tard.                                                                                                                                                           |
+| `data/yugioh/staging/ygocards-products/`          | `pnpm tcgcards:products -- --site ygocards`                                                                                         | Boosters + displays (28 / 24 au nav, 2026-08-16). Pas de provider.                                                                                                                                                                       |
+| `data/mtg/staging/mtgcards-products/`             | `pnpm tcgcards:products -- --site mtgcards`                                                                                         | Rayon scellé **mince** : 0 booster, 0 display, 1 Commander, 5 prerelease. Binders / playmats exclus. Pas de provider.                                                                                                                    |
+| `data/naruto/carddass/staging/manga-news/images/` | 6 photos de **decks** (150–319 px)                                                                                                  | les HTML checklists étaient déjà là ; les visuels étaient encore distants. Packshots booster : déjà dans `carddass-fr/images/packshots/`, unused.                                                                                        |
+
+Accessoires exclus. Displays = nom + slug + URL d'image, pas de fiche.
+Boosters = fiche + aperçu 15 tuiles (le site le dit), pas le pool du set.
+
+Restes **honnêtes** (pas un trou de parseur) :
+
+- **Decks anciens** (SD01 14/18, SD08 19/24) — Bandai n'a listé que les
+  uniques ; les reprints absents de la fiche et du catalogue restent
+  vides. On n'invente pas les 4–5 cartes manquantes.
+- **Mega Box vol.1/2** — 0 carte : boîtes de rangement, pas une liste.
+- **Gift Collection GC-02** (15/167) et premium packs de set (15/155) —
+  pool loterie, pas une série Bandai. On ne dump pas BT19.
+- **Anniversary 2021** — 36 exclusifs joints ; le déclaré 76/112 inclut
+  le pool booster. Pareil GE01 30/55, 5th Anniversary 45/78.
+- **Naruto** — l'étagère a déjà la série : fact `Extension` =
+  `narutoSetLabel(set_code)` (`Série 5 — La quête / Un nouveau départ`).
+  Ce qui n'est pas dans `print_titles.set_name`, c'est l'axe DBS
+  « ce tirage a été distribué dans le produit X » (un deck qui traverse
+  les sets). Chez Naruto la série **est** le `set_code` ; l'appartenance
+  deck est dans les checklists Manga-News (`setHint`), pas un oubli
+  d'étagère.
 
 ### Un produit **contient** des tirages, et ça traverse les sets
 
@@ -110,11 +185,11 @@ C'est la relation qui manquait au modèle : un produit scellé n'est pas un type
 d'entrée à côté des tirages, il en **contient**. Et son contenu ne respecte pas
 les frontières de sets. Mesuré sur DBS Masters :
 
-| produit | tirages | sets d'origine distincts |
-| --- | --- | --- |
-| DECK DE DÉMARRAGE -Final Radiance- | 19 | **11** (bt18, bt16, bt13, bt12, bt11, bt7, bt6, bt5, sd23, ex15, ex06) |
-| Premium Anniversary Box 2024 | 52 | **9** |
-| Premium Anniversary Box 2023 | 59 | **7** |
+| produit                            | tirages | sets d'origine distincts                                               |
+| ---------------------------------- | ------- | ---------------------------------------------------------------------- |
+| DECK DE DÉMARRAGE -Final Radiance- | 19      | **11** (bt18, bt16, bt13, bt12, bt11, bt7, bt6, bt5, sd23, ex15, ex06) |
+| Premium Anniversary Box 2024       | 52      | **9**                                                                  |
+| Premium Anniversary Box 2023       | 59      | **7**                                                                  |
 
 31 autres produits sont mono-set. La relation est donc bien **plusieurs à
 plusieurs**, et elle est déjà dans nos données — simplement pas nommée comme
@@ -136,8 +211,8 @@ distribution, distinct du set d'origine.
 
 ### Ce que ça débloque
 
-C'est le cas d'usage qui justifie la fonctionnalité : *« j'ai acheté des cartes
-à l'unité, il m'en manque 99 % — qu'est-ce que j'achète ? »*
+C'est le cas d'usage qui justifie la fonctionnalité : _« j'ai acheté des cartes
+à l'unité, il m'en manque 99 % — qu'est-ce que j'achète ? »_
 
 Avec la relation de contenu, la check-list ne dit plus seulement « il te manque
 47 cartes », elle dit **« ces 47 cartes sont dans le deck Final Radiance »**, ou
@@ -176,11 +251,11 @@ pour une display une estimation, et on le dit.
 
 Mesuré sur les prix dbscards collectés le 2026-08-15 :
 
-| set | cartes cotées | coût à l'unité | prix médian | prix max |
-| --- | --- | --- | --- | --- |
-| BT31 | 164 | **2 404 €** | 0,10 € | 399 € |
-| BT25 | 167 | **5 801 €** | 0,02 € | 1 999 € |
-| BT1 | 146 | 365 € | 0,02 € | 140 € |
+| set  | cartes cotées | coût à l'unité | prix médian | prix max |
+| ---- | ------------- | -------------- | ----------- | -------- |
+| BT31 | 164           | **2 404 €**    | 0,10 €      | 399 €    |
+| BT25 | 167           | **5 801 €**    | 0,02 €      | 1 999 €  |
+| BT1  | 146           | 365 €          | 0,02 €      | 140 €    |
 
 7 092 cartes françaises cotées, 99 212 € cumulés.
 
@@ -199,25 +274,52 @@ Le seuil dépend de l'avancement, ce qui produit exactement la bascule
 pressentie : à 50 % de complétion une display apporte beaucoup, à 80 % elle
 apporte surtout des doublons.
 
-#### On n'a pas besoin des taux de tirage
+#### Emplacements dédiés vs emplacements partagés
 
-Les éditeurs les publient rarement. Mais on peut s'en passer, parce qu'ils se
-reconstituent à partir de deux choses :
+Les éditeurs publient rarement des taux. On peut s'en passer **seulement**
+quand un emplacement est dédié à une rareté : 6 communes Lorcana, 4 communes
+Pokémon SV. Alors deux choses suffisent :
 
-1. **La composition d'un booster** — combien d'emplacements par rareté. Publiée
-   par les éditeurs, c'est une poignée de constantes par jeu.
-2. **La distribution des raretés du set** — que nous avons **déjà, en entier** :
-   la rareté est renseignée sur 12 318/12 318 tirages Lorcana, 15 662/15 662
-   DBS, 746/755 Naruto. Exemple mesuré, *Archazia's Island* : 72 communes,
-   54 peu communes, 48 rares, 20 super rares, 12 légendaires, 18 enchantées,
-   14 spéciales.
+1. **La composition du booster** — combien d'emplacements, de quelle nature.
+2. **La distribution des raretés du set** — déjà dans nos catalogues là où
+   la colonne existe.
 
-Pour une display de `D` boosters offrant `s_r` emplacements de rareté `r`, et
-`N_r` cartes distinctes de cette rareté dans le set :
+Pour une display de `D` boosters offrant `s_r` emplacements **dédiés** à la
+rareté `r`, et `N_r` cartes distinctes de cette rareté dans le set :
 
 ```
 P(une carte donnée de rareté r apparaît) ≈ 1 − (1 − 1/N_r) ^ (D × s_r)
 ```
+
+Dès qu'un emplacement est **partagé** — « Rare ou mieux », « foil de n'importe
+quelle rareté », « holo SV qui peut être Rare / Double Rare / Ultra / Hyper »
+— cette formule ment. Reconstituer les poids _dans_ l'emplacement, c'est
+exactement un taux de tirage. Les chase (Enchanted, God Rare, Illustration
+Rare) vivent presque toutes dans un emplacement partagé. Or ce sont elles qui
+dominent le seuil.
+
+Donc : pour les communes, un chiffre. Pour la carte à 400 €, une **fourchette**
+(poids min / max dans le slot) jusqu'à ce que les ouvertures enregistrées
+resserrent la mesure. Le « aucun taux requis » du paragraphe précédent ne
+tient que pour le plancher du set, pas pour la falaise.
+
+#### Compositions publiées — mesuré 2026-08-16
+
+Ce n'est pas « une constante par jeu ». C'est **(jeu, ère / type de produit)**.
+Un booster SV n'a pas la même ossature qu'un booster Sword & Shield ; un
+_Story Booster_ Fusion World n'est pas un `FB**`.
+
+| jeu                    | booster (slots)                                                                                                                                                                      | display                                               | dans notre index                                                                                                                                                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lorcana** (sets 1→)  | 12 : 6 C, 3 UC, 2 Rare+, 1 foil (toute rareté, y compris Enchanted / Epic / Iconic). + 1 carte marketing.                                                                            | **24** packs (casier courant = 4 displays = 96 packs) | Rareté **complète** (3 241 prints, 4 langues). _Archazia's Island_ (set 7) : 72 C, 54 UC, 48 R, 20 SR, 12 L, 18 Enchanted, 14 Special. Sets 9+ ajoutent Epic / Iconic dans le slot foil. `Q1`/`Q2` = Illumineer's Quest (contenu déterministe), pas des boosters. |
+| **Pokémon papier SV+** | 10 + 1 Energy + 1 code Live : 4 C, 3 UC, 2 reverse holo, 1 holo. IR / SIR remplacent le 2ᵉ reverse ; le holo peut être Rare / Double Rare / Ultra / Hyper.                           | **36** packs                                          | **Pas dans `catalog.sqlite`** — ce fichier est Live (`card_foil` / `live_cards`, rareté d'app, surtout `de`). Le papier passe par TCGdex (API), sans table locale de produits scellés. Pré-SV : une autre ossature (1 reverse, pas de holo garanti).              |
+| **DBS Masters**        | 12 cartes / pack. Bandai publie le _compte de types_ du set — **pas** le remplissage d'un pack. Chez nous, `bt31` FR : 50 C, 40 UC, 34 R, 18 SR, 15 SPR, 10 SLR, 6 CR, 3 SCR, 1 GDR. | **24** packs                                          | Rareté **complète** FR (7 241 titres ; 8 434 prints). 28 graphies (`Common[C]`, `UnCommon[UC]`, `Promotion[PR]` vs `PR］`…). Starter Rare = decks, pas boosters.                                                                                                  |
+| **DBS Fusion World**   | 12 cartes + code digital / pack. Même display 24 (sauf _Story Booster_ : 20).                                                                                                        | **24** (SB : 20)                                      | **Aucune colonne `rarity`.** 3 962 prints, 3 946 titres `en` (+ 3 003 `ja`), `grouping` = variantes (`p1`…`p7`). Le slot model est bloqué tant que Bandai n'est pas indexé.                                                                                       |
+| **Naruto CCG FR**      | 8 cartes dont **1 holo** (annonce Kana 2008, inchangé S1–S6). Starter : 40 dont 2 holos.                                                                                             | **inconnu**                                           | Rareté binaire `commune` (611) / `holo` (112) / `promo` (23). Pas de `set_name`. S1–S5 = 184/135/127/127/151 ; S6 = 24 restes IT, pas une série FR.                                                                                                               |
+
+Lorcana est le seul jeu où l'éditeur **écrit les slots sur la fiche produit**.
+DBS publie le checklist du set, pas le pack. Pokémon Support décrit SV+ et
+prévient que les visuels d'emballage **ne sont pas le contenu**.
 
 #### Le seuil
 
@@ -229,8 +331,10 @@ valeur attendue de la display = Σ  P(apparaît | rareté de c) × prix_unitaire
 ```
 
 C'est le prix de bascule : **au-dessus, mieux vaut acheter à l'unité ; en
-dessous, la display est rentable.** Aucun taux de tirage propriétaire n'est
-requis — seulement la composition d'un booster et notre propre catalogue.
+dessous, la display est rentable.** Pour les emplacements dédiés, `P` est
+exact sans taux. Pour les emplacements partagés, `P` est une fourchette —
+donc le seuil aussi. Aucun taux propriétaire n'est requis pour le plancher
+du set ; la falaise attend des poids (éditeur ou ouvertures).
 
 Et la bascule que décrit l'utilisateur en découle sans être postulée : à mesure
 que `M` se réduit, la somme diminue, donc le seuil baisse. Une collection
@@ -248,15 +352,25 @@ trompeur.
 
 ### Ce qu'il manque pour le construire
 
-- Le **prix des produits scellés** — nous avons le prix à l'unité de chaque
-  carte, pas celui d'un deck ou d'une display. dbscards publie des pages
-  `/products/…` ; à évaluer comme source.
-- La **relation de contenu par pack** — riche chez DBS parce que Bandai publie
-  ses decks comme des séries de sa cardlist ; à mesurer pour Lorcana, Pokémon et
-  Naruto avant de promettre la fonctionnalité partout.
-- La **composition d'un booster** par jeu (emplacements par rareté) — quelques
-  constantes publiées. C'est le seul vrai manque : la distribution des raretés,
-  elle, est déjà complète dans nos catalogues.
+Mesuré 2026-08-16 sur les `catalog.sqlite` locaux — plus seulement « à
+évaluer » :
+
+- Le **prix des produits scellés** — decks / coffrets / special-packs /
+  boosters : dans `products.json` (étape `products`). Displays : index
+  seul, pas de fiche, donc **pas leur prix**. Le visuel reste une URL CDN,
+  pas un fichier local. Voir plus haut.
+- La **relation de contenu** n'est riche **que chez DBS Masters**. Cinq
+  `set_name` y traversent ≥ 3 `set_code` (Anniversary Box 2023 : 7 sets ;
+  2024 : 9 ; Final Radiance : 11). Chez Lorcana, un `set_name` = un chapitre
+  (plus deux Quêtes). Chez Naruto, l'étagère a déjà la série (`Extension` ←
+  `set_code` + `sets.json`) ; ce qui manque est l'axe produit (decks =
+  HTML Manga-News, pas une relation catalogue). Chez Pokémon, le sqlite
+  local ne connaît pas le papier. Chez Fusion World, pas de rareté.
+- La **composition d'un booster** n'est plus « le seul vrai manque » : elle
+  est **connue et publiée** pour Lorcana, Pokémon SV+ et Naruto FR ; connue
+  en taille (12 / 24) mais **pas en slots** pour DBS Masters / FW. Le vrai
+  manque pour le seuil, ce sont les **poids des emplacements partagés** —
+  et la rareté Fusion World.
 
 ### Comment gérer ça sans tout aplatir
 
@@ -264,15 +378,136 @@ La tentation serait une taxonomie universelle du collectionnable. C'est le
 piège déjà rencontré sur `print_assets` : quatre formes réduites à une auraient
 perdu les vernis de Lorcana et le `wayback_timestamp` de Naruto.
 
-La forme qui tient : **chaque catalogue déclare ses propres types d'entrée**,
-sur un minimum commun — un identifiant, un nom, une portée d'appartenance, une
-image, et « est-ce que ça se possède à l'unité ou en exemplaire ». Un pack
-cartes déclarera `print` et `sealed`; un catalogue de jeux `game` et `edition`;
-un futur pack de figurines ce qu'il voudra.
+`print` + `sealed` est trop plat — un deck et une display ne s'ouvrent pas
+pareil, un tapis n'entre pas dans la complétion. L'inverse (20 SKU dans le
+noyau : ETB, Trove, Quest, blister, judge pack…) recopie les catalogues
+éditeurs et casse au prochain jeu.
+
+La forme qui tient : **chaque catalogue nomme ses types**, le noyau ne voit
+que des **comportements** — identifiant, nom, image, portée, et les traits
+ci-dessous. Un pack cartes déclarera `print`, `booster`, `display`, `starter`…
+un catalogue de jeux `game` et `edition`. Voir « Types d'entrée TCG ».
 
 Le noyau ne connaît que le minimum commun, et la check-list se construit dessus
 sans savoir ce qu'elle compte. C'est la même règle que pour les colonnes de
 `print_assets` : un tronc commun, des extensions déclarées, rien d'aplati.
+
+## Types d'entrée TCG — ce qu'on oublie (2026-08-16)
+
+Carte, booster, display : les trois qu'on nomme. Le reste n'est pas une
+liste de SKU à graver dans le core. C'est **deux axes**, et le second est
+celui qu'on oublie.
+
+### Ce qui change le modèle (pas le nom en rayon)
+
+| comportement       | scellé                                   | à l'ouverture                        | exemples                                                                                                              |
+| ------------------ | ---------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **print**          | —                                        | l'unité                              | carte, parallèle, promo, jumbo (le jumbo est un _attribut_ du tirage, pas un autre type)                              |
+| **random_pack**    | loterie                                  | saisir les cartes                    | booster de set, booster sous blister plastique, pack tournoi / judge / championship, certains _special packs_         |
+| **pack_container** | loterie emboîtée                         | → N packs                            | display (24 / 36), casier (4 displays Lorcana), _booster bundle_ Pokémon (6)                                          |
+| **known_bundle**   | contenu exact                            | → les K cartes (ou garder le bundle) | starter / theme / structure deck, Illumineer's Quest, certains decks « Ultimate » DBS                                 |
+| **mixed_bundle**   | exclus **connus** + packs **aléatoires** | → exclus + N packs                   | Trove (8 boosters + boîte + dés), gift set, ETB / UPC, tin + boosters, anniversary / mega box, blister 3-pack + promo |
+| **accessory**      | pas de cartes (ou ce n'est pas le sujet) | reste un accessoire                  | sleeves, playmat, deck box, classeur, séparateur, poster, _energy marker pack_ FW                                     |
+| **shell**          | —                                        | déjà vide                            | wrapper, boîte de display vide — autre objet, déjà noté                                                               |
+
+Un _mixed_bundle_ n'est ni un deck ni une display. L'ouvrir donne les
+exclus (chiffre) **et** des boosters (loterie). C'est le cas le plus
+fréquent dès qu'on sort de « booster / display / starter », et c'est
+celui que `print` + `sealed` écrase.
+
+La hiérarchie s'allonge, la règle d'ouverture ne change pas :
+
+```
+casier        →  4 displays
+display       →  N boosters
+blister 3+1   →  3 boosters + 1 promo
+trove / ETB   →  exclus connus + N boosters
+booster       →  M cartes (saisie)
+starter/quest →  K cartes
+```
+
+### Ce que chaque jeu vend vraiment (au-delà des trois)
+
+Mesuré sur les listings dbscards / FW (2026-08-16) et les gammes éditeur :
+
+| jeu                | en plus de carte / booster / display                                                                                                                                                                                                                                                                | hors complétion cartes                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Naruto FR**      | **2 starters par série** (pas un), tin box, decks S5 nommés, promos. **Pas de display.**                                                                                                                                                                                                            | —                                                                                                     |
+| **DBS Masters**    | starter / ultimate / theme deck ; _special / premium / event pack_ ; pack tournoi / championship / judge ; anniversary / gift / mega box ; blister carton 3-pack (`booster-blister-carton-bt24`). Listing : **120** boosters, **34** displays, **28** decks, **16** coffrets, **26** special packs. | sleeves (~31), playmats (~27), deck boxes (~24), classeurs UG, séparateurs, **posters** d'annonce (6) |
+| **Fusion World**   | starter `FS01`–`FS10` ; _Story / Manga booster_ (display **20**, pas 24) ; judge / tournament / limited pack ; _energy marker pack_ ; 2 coffrets.                                                                                                                                                   | energy markers, storage box                                                                           |
+| **Lorcana**        | booster **sous sleeve** (même loterie, autre SKU) ; casier 4×24 ; starter / 2-player / single-player deck ; **Trove** (8 packs + rangement) ; **Illumineer's Quest** ; gift set ; _collection starter set_.                                                                                         | playmat, portfolio, pins, lore counters — Ravensburger les range à part                               |
+| **Pokémon papier** | sleeved booster ; **bundle** (6, ≠ display 36) ; ETB ; Ultra-Premium Collection ; tin ; collection / poster box ; blister 3+promo ; Build & Battle. **Carte code** Live = objet digital, pas une carte papier.                                                                                      | sleeves, playmat, classeur, dés ETB                                                                   |
+
+Les packs « tournoi / judge / championship » sont des `random_pack` avec
+leur propre pool — les traiter comme le booster du set serait un faux
+positif. Le _Story Booster_ FW n'est pas un `FB**`. Un booster sous
+plastique n'est pas un autre contenu : c'est le même pack, autre
+emballage (SKU distinct si on collectionne les wrappers).
+
+### Échantillon représentatif — les quatre jeux suffisent
+
+Après avoir fouillé Naruto, DBS (Masters + FW), Lorcana et Pokémon, le
+noyau n'a **pas** vingt types à apprendre. Il a **six comportements**
+(+ le `print`). Le prochain TCG n'en inventera presque jamais un
+septième : il collera un nouveau nom sur l'un des six.
+
+Objets qu'on gère vraiment (décidé 2026-08-16) — le nom + le visuel
+font le reste :
+
+| objet       | c'est quoi                                                         | notes                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Carte**   | le tirage                                                          | —                                                                                                                                                      |
+| **Booster** | loterie, on saisit les cartes                                      | Un seul type. Judge / _Story_ / sous sleeve = d'autres **noms** et visuels, pas d'autres types. Ne pas fusionner un Judge Pack dans le booster du set. |
+| **Display** | la boîte de boosters du set                                        | 24 (Lorcana / DBS), 20 (_Story_ FW), 36 (Pokémon). **Pas chez Naruto FR.**                                                                             |
+| **Deck**    | contenu connu                                                      | Starter / theme / ultimate. Naruto : **2 par série**. Chez Lorcana, la _Quête_ est le même objet (nom de rayon).                                       |
+| **Coffret** | plusieurs boosters, **pas** une display — parfois + cartes connues | Bundle 6 packs, tin, ETB, Trove, anniversary, blister 3+1. Nom + visuel + contenu. Les dés / sleeves = accessoires.                                    |
+
+Hors sujet, on ne gère pas :
+
+- **Casier** (4 displays Lorcana) — carton revendeur, pas un produit rayon.
+- **Accessoire** — tapis, sleeves, posters, energy markers.
+- **Boîte vide** — on ne collectionne pas le carton une fois ouvert.
+- **Digital** — carte code / textures Live : ne pas les coller sur du papier.
+
+Et les pièges que cet échantillon a déjà payés :
+
+1. **Un produit qui se fait passer pour un set** — starter Naruto = nom de
+   série Coleka ; deck DBS dans `set_name` ; Quête Lorcana = `set_code` Q1.
+2. **Le même mot, pas la même taille** — display 24 / 20 / 36 ; un
+   coffret de 6 n'est pas une petite display.
+3. **Le même contenu, pas le même SKU** — booster nu vs sous plastique
+   (le nom + le visuel suffisent).
+4. **Un produit annulé** — starters/boosters Naruto S6 FR : jamais fabriqués
+   (imprimés en Italie, autre objet).
+5. **Un visuel d'app n'est pas le produit** — Unity Lorcana = foil ; Live
+   `*-compendium` / wrappers CDN = set **digital**.
+
+Mesuré dans les dumps, pas dans une boutique :
+
+- **Lorcana** — `api.lorcana.ravensburger.com/v3/catalog` est public et
+  **sans clé `products`**. `deck_building_id` = limite de copies du
+  deckbuilder, pas le contenu d'un starter. _Gateway_ (`gateway1`) est
+  dans l'API, absent de LorcanaJSON / sqlite.
+- **Pokémon Live** — `config-cache` contient déjà `booster-compendium`
+  (125), `battle-box-compendium` (45), decks Battle Academy (listes
+  déterministes en IDs Live). **Aucun n'est parsé.** Ce n'est pas du
+  papier. TCGdex `/sets` : toujours **pas** de champ `boosters`.
+
+Donc : le modèle à gérer, c'est cette table. Les noms (Trove, ETB, Quest,
+_Story Booster_, tin 5130) restent dans le catalogue qui les vend. Un
+cinquième TCG ajoutera des libellés, pas une septième colonne.
+
+### Ce qui n'est pas un type d'entrée
+
+- **Parallèle / foil / promo / paysage / jumbo** — propriétés du `print`.
+- **Set** — portée, pas un objet qu'on possède (déjà le prérequis).
+- **Accessoire** — collectionnable, oui ; case de la check-list _cartes_,
+  non. Une deuxième portée « matériel » si le besoin apparaît, pas un
+  mélange dans le graphe de complétion.
+
+Donc : monter les types dans le TCG, oui — **par comportement**, chaque
+catalogue collant ses noms par-dessus. Pas une enum universelle
+`etb | trove | quest | tin | …` dans le noyau.
 
 ## Posséder un produit scellé : une nature, pas une condition
 
@@ -290,24 +525,32 @@ d'être un booster.
 
 ### Trois cas, et ils ne se comportent pas pareil
 
-| objet | scellé | ouvert |
-| --- | --- | --- |
-| **booster / display** | un item, contenu **inconnu** — c'est une loterie non tirée | n'existe plus : on saisit les cartes obtenues |
-| **deck de démarrage** | un item, contenu **connu** | soit un item « deck ouvert », soit ses N cartes — au choix du collectionneur |
-| **carte** | — | l'unité de base |
+Le tableau court tenait pour carte / booster / deck. Les coffrets mixtes
+(Trove, ETB, tin, anniversary) cassent la troisième ligne — voir
+« Types d'entrée TCG ». L'axe, lui, ne change pas : **connu vs aléatoire**,
+éventuellement les deux dans le même carton.
 
-La différence entre booster et deck tient à la nature du contenu, pas à
-l'emballage : l'un est aléatoire, l'autre déterministe. C'est la même
-distinction que pour le conseil d'achat, ce qui est plutôt rassurant — le modèle
-et le calcul reposent sur le même axe.
+| objet                               | scellé                         | ouvert                                       |
+| ----------------------------------- | ------------------------------ | -------------------------------------------- |
+| **random_pack / pack_container**    | contenu **inconnu**            | n'existe plus : packs ou cartes obtenus      |
+| **known_bundle** (starter, quest)   | contenu **connu**              | le bundle ouvert, ou ses K cartes — au choix |
+| **mixed_bundle** (Trove, ETB, tin…) | exclus connus + packs inconnus | exclus + N boosters                          |
+| **carte**                           | —                              | l'unité de base                              |
+| **accessory / shell**               | pas une loterie de cartes      | reste cet objet                              |
+
+La différence tient à la nature du contenu, pas à l'emballage. C'est la
+même distinction que pour le conseil d'achat — le modèle et le calcul
+reposent sur le même axe.
 
 ### Ouvrir n'est pas un état, c'est une transformation
 
-La hiérarchie est en réalité uniforme :
+La hiérarchie est en réalité uniforme (les coffrets mixtes s'y glissent
+sans nouveau verbe — voir « Types d'entrée TCG ») :
 
 ```
-display  →  N boosters  →  M cartes
-starter deck            →  K cartes
+display / casier / bundle  →  N boosters  →  M cartes
+trove / ETB / tin          →  exclus + N boosters
+starter / quest            →  K cartes
 ```
 
 Une display ouverte ne donne pas des cartes : elle donne des **boosters**. D'où
@@ -330,13 +573,13 @@ un état du premier.
 
 ### Les ouvertures produisent la donnée qui nous manque
 
-Conséquence inattendue et précieuse. Le conseil d'achat bute sur un seul manque :
-les **taux de tirage**, que les éditeurs ne publient pas.
+Conséquence inattendue et précieuse. Le conseil d'achat bute sur les **poids
+dans les emplacements partagés**, que les éditeurs ne publient presque jamais.
 
 Or si l'application enregistre les ouvertures — « ce booster a donné ces
 cartes » — elle accumule des tirages réels. Au bout d'un certain volume, elle
-mesure ses propres taux, par set et par rareté, au lieu de les estimer depuis la
-composition annoncée d'un booster.
+mesure ses propres poids, par set et par slot, au lieu de les encadrer depuis
+la composition annoncée d'un booster.
 
 Ça vaut la peine d'enregistrer l'événement d'ouverture dès le départ, même si
 rien ne l'exploite au début : c'est de la donnée qu'on ne peut pas reconstituer
@@ -349,11 +592,14 @@ raccourci d'écriture : ce sont des cartes nommées et numérotées, à saisir
 individuellement. C'est précisément pourquoi le booster est le seul niveau qui
 demande une saisie manuelle — display et deck se déplient tout seuls.
 
-**2. Sait-on quels boosters contient une display avant de l'ouvrir ?** Chez
-Lorcana les boosters portent des illustrations différentes. Question à trancher
-**par jeu**, et je n'ai pas la réponse : si l'assortiment est connu, ouvrir une
-display peut créer les bons boosters ; sinon elle crée N boosters génériques que
-l'utilisateur précise ensuite. À vérifier avant de promettre l'un ou l'autre.
+**2. Sait-on quels boosters contient une display avant de l'ouvrir ?** Non,
+pas au sens du contenu — tranché 2026-08-16. Lorcana et Pokémon le disent
+noir sur blanc : les arts d'emballage montrent des personnages du set, **pas**
+ce qu'il y a dans _ce_ pack. Une display de 24 (Lorcana / DBS) ou 36 (Pokémon)
+crée N boosters **génériques du set**. L'utilisateur peut ensuite coller un
+art de wrapper s'il collectionne les blisters ; ça ne change pas la loterie.
+Exception : produits déterministes (starter, Trove, Quête, ETB) — ce ne sont
+pas des displays de boosters.
 
 **3. Les cartes hors format ne sont pas gérées.** Mesuré le 2026-08-15 :
 
@@ -379,7 +625,7 @@ physique du tirage, au même titre que la rotation.
 Question posée, et la bonne réponse est probablement « ça dépend, et il faut le
 demander » :
 
-- **Deck scellé** → un seul item. Ne *pas* créer les cartes : elles ne sont pas
+- **Deck scellé** → un seul item. Ne _pas_ créer les cartes : elles ne sont pas
   disponibles, et un collectionneur qui garde son deck sous blister ne considère
   pas qu'il possède ces cartes au sens de la collection.
 - **Deck ouvert** → proposer d'ajouter ses N cartes d'un coup. C'est le geste
@@ -394,7 +640,7 @@ pouvoir montrer les deux plutôt que d'en choisir un.
 
 Un display scellé ne doit pas compter comme « j'ai ces cartes » : on ne sait pas
 lesquelles. Un deck scellé le pourrait, puisqu'on les connaît — mais on ne les a
-pas *en main*.
+pas _en main_.
 
 Il y a donc deux complétions défendables, et il faut choisir laquelle on affiche
 (ou afficher les deux) : **« cartes que je détiens »** et **« cartes que je
@@ -402,12 +648,51 @@ possède, scellé compris »**. Ne pas trancher en silence : le collectionneur q
 garde un deck sous blister et celui qui l'a ouvert n'ont pas la même collection,
 et aucune des deux lectures n'est fausse.
 
+## Vue étagère : vrac et groupé (2026-08-16)
+
+Le vrac reste : cartes, displays neuves, boosters pas ouverts, coffrets —
+chaque item une vignette. Un **mode groupé** (comme une autre lecture, pas
+une autre étagère) range par **set** et, en dessous, par **produit** (deck,
+coffret encore scellé).
+
+La complétion d'un set (« 80 / 204 ») joint le **catalogue** (ce qui existe)
+aux items de l'étagère (ce que tu as). L'étagère ne porte pas le catalogue ;
+elle en dérive les portées via les `printKey`.
+
+En-tête de groupe : **nom + image**, pas un code seul. Ce qu'on a déjà
+(ou à portée du Sync) :
+
+- **Pokémon** — TCGdex : nom + logo (`/sets/{id}`, URL `…/logo.png`). Nom
+  de série déjà affiché ; wordmark joint aux scellés (`setCode` pkmcards
+  → abbr officielle / id TCGdex) via `staging/tcgdex-set-logos.json`.
+- **Lorcana** — nom du chapitre / de la Quête (sqlite). Visuel de set :
+  `api.lorcana.ravensburger.com/v3/catalog/fr` → `card_sets[].thumbnail_image_url`
+  (bannière 512×288, chapitres + Quêtes + Gateway). Dump
+  `data/lorcana/products/sets/{id}/logo.png` + overlay Catalogue via slug
+  `set-12` / nom. LorcanaJSON / Lorcast n'ont pas ce champ.
+- **DBS** — code `BT31` + visuel booster/display (URL dbscards déjà en
+  archive). Attention : `set_name` sur une carte est souvent le _deck_,
+  pas l'extension.
+- **Naruto** — « Série 3 » + les deux starters (pas de titre officiel).
+  Packshots booster déjà locaux, unused.
+
+Ouvrir un starter : la boîte disparaît, les cartes apparaissent. Chaque
+carte a **un** tirage (son set d'origine, ex. `bt13-135`) **et** une
+provenance (« sortie du deck Final Radiance »). La complétion BT13 compte
+la carte ; la fiche du deck permet encore de voir que c'était _ce_ starter.
+Ce n'est pas deux sets — c'est un print + un contenant.
+
+Les piles : déjà tranché (`tcg_support.md`) — **N items**, regroupés à
+l'affichage (`Elsa foil ×3`). Même identité + même finition + même langue
+
+- même état. Le détail du groupe liste les exemplaires (prix, prêt).
+
 ## Étagères et catalogues : la question à trancher
 
 `Shelf` ne porte **aucun lien vers un catalogue** — seulement `type` et
 `cardFormat`. Le rattachement passe par les items : `Item.printKey` encode le
-pack (`dbscg:bt1-001`). Le catalogue d'une étagère est donc *dérivable de son
-contenu*, et une étagère peut légitimement en mélanger plusieurs.
+pack (`dbscg:bt1-001`). Le catalogue d'une étagère est donc _dérivable de son
+contenu_, et une étagère peut légitimement en mélanger plusieurs.
 
 Conséquence pour la fonctionnalité : **une check-list s'ancre sur un catalogue
 et une portée** (un set, une plateforme), jamais sur une étagère. Éditer une
@@ -424,8 +709,8 @@ vise — et à le proposer explicitement quand l'étagère en couvre plusieurs.
    page d'étagère : pagination, filtre par set/plateforme, et un compteur de
    complétion (« 312 / 4 613 »).
 3. **Que veut dire « exhaustif ».** LaunchBox liste toutes les régions et
-   variantes ; « tous les jeux PS1 » veut probablement dire *une entrée par
-   jeu*, pas une par édition régionale. À définir avec l'utilisateur — le même
+   variantes ; « tous les jeux PS1 » veut probablement dire _une entrée par
+   jeu_, pas une par édition régionale. À définir avec l'utilisateur — le même
    piège que les tirages parallèles côté cartes.
 4. **La case à cocher est-elle une écriture ?** Cocher = créer un item dans la
    collection, ou seulement marquer un souhait ? Les deux sont défendables ; ce

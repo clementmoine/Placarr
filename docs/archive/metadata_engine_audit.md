@@ -82,7 +82,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 | Blindness allowlist empty            | No provider literals outside `providers/`   |
 | Trait-driven covers (`sourceTraits`) | Client scorer stays provider-blind          |
 | Workers out of Next                  | `BackgroundWorkJob` + SKIP LOCKED           |
-| `MatchContext` shared                | Enrich ↔ price seek                        |
+| `MatchContext` shared                | Enrich ↔ price seek                         |
 | `residualIdentity` hardware SSOT     | Direction right — finish locking call sites |
 | Gallery preservation tests           | Progressive store covered                   |
 
@@ -107,7 +107,7 @@ Paths utiles : `storage` / `media` / `titleMatch` / `providerExternalLinks` / `f
 
 | #   | Move                                                     | Why                                 | État                                                                                                                                     |
 | --- | -------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Unify store ↔ present cover filter                      | Stops gallery accept→hide           | **Fait 2026-07-24** — `attachmentTitleAllowedForItem`                                                                                    |
+| 1   | Unify store ↔ present cover filter                       | Stops gallery accept→hide           | **Fait 2026-07-24** — `attachmentTitleAllowedForItem`                                                                                    |
 | 2   | Thread `shelfType` everywhere (games/hardware)           | Kills soft-accept → residual-reject | **Fait 2026-07-24** — fetch/storage/AMC/chasse/smartoys/metadataLookup (+ remaining providers as found)                                  |
 | 3   | Align offer link + offer cover on residual SSOT          | One marketplace product decision    | **Fait 2026-07-24** — listing title + cover share `priceListingSharesItemIdentity`                                                       |
 | 4   | Purge after fieldEvidence sync; filter prices at write   | DB matches UI                       | **Fait 2026-07-24** — purge after fieldEvidence; `filterPriceOfferInputsForPersist` on write                                             |

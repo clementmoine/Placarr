@@ -31,15 +31,15 @@ Disponible sur le CDN public (`shadersbundle`, même préfixe Content/Android).
 
 ### Propriétés d'un shader — exemple `SvHolo` (16 props)
 
-| Propriété | Rôle |
-|---|---|
-| `_CardColorDiffuse` | le scan de la carte |
-| `_CardWhitePlateMask` | **le masque** — où le foil s'applique |
-| `_CardEtch` | la couche etch / relief |
-| `_ShineTexture`, `_GrainTexture`, `_SpectrumTexture` | les motifs |
-| `_LightDirection` | l'inclinaison (l'équivalent de notre lean) |
-| `_OverallBrightness`, `_CardLighting_On`, `_NormalMask_On`, `_ShadowDarknessLimit` | réglages |
-| `_StencilRef`, `_StencilComp` | pochoir |
+| Propriété                                                                          | Rôle                                       |
+| ---------------------------------------------------------------------------------- | ------------------------------------------ |
+| `_CardColorDiffuse`                                                                | le scan de la carte                        |
+| `_CardWhitePlateMask`                                                              | **le masque** — où le foil s'applique      |
+| `_CardEtch`                                                                        | la couche etch / relief                    |
+| `_ShineTexture`, `_GrainTexture`, `_SpectrumTexture`                               | les motifs                                 |
+| `_LightDirection`                                                                  | l'inclinaison (l'équivalent de notre lean) |
+| `_OverallBrightness`, `_CardLighting_On`, `_NormalMask_On`, `_ShadowDarknessLimit` | réglages                                   |
+| `_StencilRef`, `_StencilComp`                                                      | pochoir                                    |
 
 ### Format des shaders — **GLES3, pas Vulkan**
 
@@ -101,21 +101,21 @@ pas seulement des cartes en cache.
 
 Volumes par type (utile pour savoir ce qui est courant et ce qui est une curiosité) :
 
-| Type | Cartes | | Type | Cartes |
-|---|---:|---|---|---:|
-| NonFoil | 8375 | | Tinsel | 242 |
-| FlatSilver | 5172 | | AngledPillars | 203 |
-| Rainbow | 3724 | | CrackedIce | 91 |
-| SunPillar | 2526 | | Thatch | 54 |
-| SunBeam | 1949 | | Squares | 35 |
-| Cosmos | 608 | | AceFoil | 33 |
-| SunLava | 546 | | 25thConfetti | 25 |
-| SvUltra | 505 | | RadiantHolo | 16 |
-| SvHolo | 396 | | Stamped | 14 |
-| SwHolo | 323 | | Galaxy | 13 |
-| SwSecret | 308 | | SvUltraScodix | 11 |
-| | | | SvUltraGoldRainbow | 8 |
-| | | | SolidColor | 3 |
+| Type       | Cartes |     | Type               | Cartes |
+| ---------- | -----: | --- | ------------------ | -----: |
+| NonFoil    |   8375 |     | Tinsel             |    242 |
+| FlatSilver |   5172 |     | AngledPillars      |    203 |
+| Rainbow    |   3724 |     | CrackedIce         |     91 |
+| SunPillar  |   2526 |     | Thatch             |     54 |
+| SunBeam    |   1949 |     | Squares            |     35 |
+| Cosmos     |    608 |     | AceFoil            |     33 |
+| SunLava    |    546 |     | 25thConfetti       |     25 |
+| SvUltra    |    505 |     | RadiantHolo        |     16 |
+| SvHolo     |    396 |     | Stamped            |     14 |
+| SwHolo     |    323 |     | Galaxy             |     13 |
+| SwSecret   |    308 |     | SvUltraScodix      |     11 |
+|            |        |     | SvUltraGoldRainbow |      8 |
+|            |        |     | SolidColor         |      3 |
 
 ### Ce que le client ne contient pas
 
@@ -142,19 +142,20 @@ est extraite via voisinage des `longFormID` → `data/pokemon/live-cards.sqlite`
 
 `data/pokemon/` (gitignoré via `data/`) :
 
-| Contenu | Rôle |
-|---|---|
-| `apks/base.apk` | Texture2D `cardBack` → `foil/card_back.png` (pendant extract) |
-| `cdn-bundles/` | UnityFS scrapés (cartes + `shadersbundle` + motifs partagés) |
-| `config-cache/` | Catalogue `card-database-*` + `asset-bundle-manifest` |
-| `live-cards.sqlite` | Identité Live (nom EN/FR, #, longForm) pour jointure foil/TCGdex |
-| `live-cards` rebuild | `pnpm foil:pokemon:index-cards` |
-| Card join audit | `pnpm foil:pokemon:audit-join` → `logs/tcgdex-live-card-join.json` |
+| Contenu                    | Rôle                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| `apks/base.apk`            | Texture2D `cardBack` → `foil/card_back.png` (pendant extract)                               |
+| `cdn-bundles/`             | UnityFS scrapés (cartes + `shadersbundle` + motifs partagés)                                |
+| `config-cache/`            | Catalogue `card-database-*` + `asset-bundle-manifest`                                       |
+| `live-cards.sqlite`        | Identité Live (nom EN/FR, #, longForm) pour jointure foil/TCGdex                            |
+| `live-cards` rebuild       | `pnpm foil:pokemon:index-cards`                                                             |
+| Card join audit            | `pnpm foil:pokemon:audit-join` → `logs/tcgdex-live-card-join.json`                          |
 | `cdn-catalogue-setnum.txt` | Liste `set_num` depuis les **compendiums** APK (+ longForm en filet ; inclut `op` / `*alt`) |
-| `logs/` | Scrapes |
+| `logs/`                    | Scrapes                                                                                     |
 
 Pack extrait : `data/pokemon/foil/` (shaders, textures/`cardTex`, `card_back.png`)
-+ `src/effects/pokemon/cards.json` (`pnpm foil:pokemon`, éventuellement `--skip-scrape`).
+
+- `src/effects/pokemon/cards.json` (`pnpm foil:pokemon`, éventuellement `--skip-scrape`).
 
 Runtime produit : TCGdex reste le provider catalogue ; le pack `pokemon` +
 `liveJoin` / `resolveEffect` attachent **front Live**, **dos pack**, et **foils**
@@ -166,11 +167,11 @@ sur le `PrintCandidate` (voir [tcg_support.md](tcg_support.md) §Pokémon).
 https://cdn.studio-prod.pokemon.com/rainier/Content/Android/{version}/{dir}/{bundle}
 ```
 
-| Param | Notes |
-|---|---|
-| `version` | ex. `1.40.0` (updater notes / fallback) |
-| `dir` | `10101_0000` **ou** dirs datés du manifeste (`20260521_1700` pour `me4`, `20260716_1700` pour `me5`, …). Un 403 S3 sur un dir = souvent « pas sur ce préfixe », pas un UA manquant. |
-| `bundle` | `{set}_{lang}_{num}` |
+| Param     | Notes                                                                                                                                                                               |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version` | ex. `1.40.0` (updater notes / fallback)                                                                                                                                             |
+| `dir`     | `10101_0000` **ou** dirs datés du manifeste (`20260521_1700` pour `me4`, `20260716_1700` pour `me5`, …). Un 403 S3 sur un dir = souvent « pas sur ce préfixe », pas un UA manquant. |
+| `bundle`  | `{set}_{lang}_{num}`                                                                                                                                                                |
 
 ```sh
 pnpm foil:pokemon:sources
@@ -189,18 +190,18 @@ le CDN ne sert pas (ou pas encore).
 
 ### 4.1 Matrice « quoi / où / pour quoi »
 
-| Donnée | Rôle Placarr | Source nominale | Fallback | Update |
-|---|---|---|---|---|
-| Bundle carte `{set}_{lang}_{num}` | art + masque + `MaterialManifest` (`_s/_f/_c/_w`, `_ph`) | **CDN** `…/Content/Android/{ver}/{dir}/…` | — | scrape catalogue manquant / full refresh |
-| `shadersbundle` | 23+1 shaders GLES3 + ~70 motifs foil | **CDN** (même préfixe, nom fixe) | — | à chaque bump `ver` / hash |
-| Motifs foil nommés (`t_holofoil_distortion_*`, …) | textures partagées | **CDN** (certains noms 200) ; aussi **dans** `shadersbundle` | — | via `shadersbundle` en priorité |
-| Catalogue `longFormID` / set+num | liste à scraper + foil/mask attendus | `config-cache/card-database-*` (aujourd’hui **pull device**) | regex sur tables déjà en cache | **à clarifier** : endpoint op-core / config API vs ADB ponctuel |
-| `asset-bundle-manifest` → `{dir}` | choisir `10101_0000` etc. | config-cache device aujourd’hui | hardcode + probe HEAD CDN | bump client |
-| `{ver}` app (`1.40.0`) | segment d’URL CDN | PlayerPrefs / updater public (`cdn…/rainier/updater/…`) | probe HEAD multi-versions | bump client |
-| Auth / SSO (`ptcs-urls.json`) | login jeu, **pas** assets foil | **CDN** public `…/rainier/PTCS/ptcs-urls.json` | — | rare |
-| Art « papier » TCGdex | diffuse sous le foil en app | **TCGdex API** (déjà) | texture `_c` du bundle Live | sync provider |
-| Dos pack `card_back.png` | verso défaut jeu | **APK** Texture2D `cardBack` (`scripts/tcglive/card_back.py`) | — | à chaque extract / bump APK |
-| Binaires IL2CPP / APK | reverse one-shot (pas runtime) | APK Play / device | — | seulement si le CDN change de schéma |
+| Donnée                                            | Rôle Placarr                                             | Source nominale                                               | Fallback                       | Update                                                          |
+| ------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------- |
+| Bundle carte `{set}_{lang}_{num}`                 | art + masque + `MaterialManifest` (`_s/_f/_c/_w`, `_ph`) | **CDN** `…/Content/Android/{ver}/{dir}/…`                     | —                              | scrape catalogue manquant / full refresh                        |
+| `shadersbundle`                                   | 23+1 shaders GLES3 + ~70 motifs foil                     | **CDN** (même préfixe, nom fixe)                              | —                              | à chaque bump `ver` / hash                                      |
+| Motifs foil nommés (`t_holofoil_distortion_*`, …) | textures partagées                                       | **CDN** (certains noms 200) ; aussi **dans** `shadersbundle`  | —                              | via `shadersbundle` en priorité                                 |
+| Catalogue `longFormID` / set+num                  | liste à scraper + foil/mask attendus                     | `config-cache/card-database-*` (aujourd’hui **pull device**)  | regex sur tables déjà en cache | **à clarifier** : endpoint op-core / config API vs ADB ponctuel |
+| `asset-bundle-manifest` → `{dir}`                 | choisir `10101_0000` etc.                                | config-cache device aujourd’hui                               | hardcode + probe HEAD CDN      | bump client                                                     |
+| `{ver}` app (`1.40.0`)                            | segment d’URL CDN                                        | PlayerPrefs / updater public (`cdn…/rainier/updater/…`)       | probe HEAD multi-versions      | bump client                                                     |
+| Auth / SSO (`ptcs-urls.json`)                     | login jeu, **pas** assets foil                           | **CDN** public `…/rainier/PTCS/ptcs-urls.json`                | —                              | rare                                                            |
+| Art « papier » TCGdex                             | diffuse sous le foil en app                              | **TCGdex API** (déjà)                                         | texture `_c` du bundle Live    | sync provider                                                   |
+| Dos pack `card_back.png`                          | verso défaut jeu                                         | **APK** Texture2D `cardBack` (`scripts/tcglive/card_back.py`) | —                              | à chaque extract / bump APK                                     |
+| Binaires IL2CPP / APK                             | reverse one-shot (pas runtime)                           | APK Play / device                                             | —                              | seulement si le CDN change de schéma                            |
 
 **Verdict provisoire CDN-only pour le foil runtime :** cartes + `shadersbundle`
 (+ motifs embarqués) suffisent à reproduire le look WebGL. Ce qui bloque encore
@@ -268,6 +269,7 @@ pnpm effects:update:tcglive -- --langs fr,en --scrape-limit 50 --extract-limit 5
 **Catalogue** : toujours `config-cache/card-database-*` (ADB pull ponctuel).
 Aucun endpoint op-core public trouvé — seul gap « zéro device ».
 **CDN** : Content GETs publics. Deux causes de HTTP 403 distinctes :
+
 1. **Mauvais `content_dir`** — S3 `AccessDenied` identique à un objet absent.
    Les sets récents (`me4` → `20260521_1700`, `me5` → `20260716_1700`) ne sont
    **pas** sous `10101_0000`. Le scrape probe les dirs du
@@ -279,17 +281,16 @@ Aucun endpoint op-core public trouvé — seul gap « zéro device ».
 
 ---
 
-
 ## 5. Repères externes
 
 ### Cartographie (2026-08-02) — Live Unity vs fan
 
-| Projet | Rendu | Données | Pour Placarr |
-|--------|-------|---------|--------------|
-| [simeydotme/pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | CSS (gradients, blend, filters) | scans / finitions SW-SH fan | **Fallback CSS** via `resolveCss` — approximation, pas Live |
-| [selop/pokebox](https://github.com/selop/pokebox) | Three.js + GLSL **réécrit d’après Simey** | [malie.io](https://malie.io/static/) (métadonnées + foil/etch layers) | Taxonomie `foilType` / masks Malie ; **pas** les `TPCi/Cards3D/HoloFoil/*.frag` |
-| Omukade / Rainier fetchers | serveur / defs | CDN Live / assemblies | Catalogue / scrape — **pas** de renderer foil |
-| cards-css, card-foil, … | holo générique | — | Hors Live — ne pas en faire la base produit |
+| Projet                                                                          | Rendu                                     | Données                                                               | Pour Placarr                                                                    |
+| ------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [simeydotme/pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | CSS (gradients, blend, filters)           | scans / finitions SW-SH fan                                           | **Fallback CSS** via `resolveCss` — approximation, pas Live                     |
+| [selop/pokebox](https://github.com/selop/pokebox)                               | Three.js + GLSL **réécrit d’après Simey** | [malie.io](https://malie.io/static/) (métadonnées + foil/etch layers) | Taxonomie `foilType` / masks Malie ; **pas** les `TPCi/Cards3D/HoloFoil/*.frag` |
+| Omukade / Rainier fetchers                                                      | serveur / defs                            | CDN Live / assemblies                                                 | Catalogue / scrape — **pas** de renderer foil                                   |
+| cards-css, card-foil, …                                                         | holo générique                            | —                                                                     | Hors Live — ne pas en faire la base produit                                     |
 
 **Constat :** aucun dépôt public ne porte les fragments GLES3 Live (`HoloFoil_*`) en WebGL. Le chemin fidèle reste **dump APK/CDN → `/foil/pokemon`**. Simey/Pokebox = couche légère pour grille / WebGL KO / carte sans dump.
 

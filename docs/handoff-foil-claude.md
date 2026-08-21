@@ -14,12 +14,12 @@ clés, tests, ouvertures, pièges) pour que Cursor / Composer reprenne.
 
 ## 1. Intent produit (ne pas dévier)
 
-| Pack | Surface | Source de vérité |
-|------|---------|------------------|
-| Pokémon | **WebGL** | TCG Live (Unity HoloFoil GLES3) |
-| Pokémon | **CSS** | **Structure** simey (poke-holo / poke-151) + **paint** plaques Live dump (`data/pokemon/foil/textures/_shared`) |
-| Lorcana | **CSS** | Site cards.disneylorcana.com |
-| Lorcana | **WebGL** | App Lorcana TCG Unity |
+| Pack    | Surface   | Source de vérité                                                                                                |
+| ------- | --------- | --------------------------------------------------------------------------------------------------------------- |
+| Pokémon | **WebGL** | TCG Live (Unity HoloFoil GLES3)                                                                                 |
+| Pokémon | **CSS**   | **Structure** simey (poke-holo / poke-151) + **paint** plaques Live dump (`data/pokemon/foil/textures/_shared`) |
+| Lorcana | **CSS**   | Site cards.disneylorcana.com                                                                                    |
+| Lorcana | **WebGL** | App Lorcana TCG Unity                                                                                           |
 
 - Pas de bijection CSS ↔ WebGL. Mapping **par intention visuelle**.
 - Ne **pas** charger les `.css` simey au runtime — adaptation dans `HoloShader`.
@@ -34,20 +34,21 @@ clés, tests, ouvertures, pièges) pour que Cursor / Composer reprenne.
 
 ## 2. Docs à lire en premier
 
-| Doc | Rôle |
-|-----|------|
-| `docs/foil_effects.md` | Contrat commun packs + couches |
-| `docs/foil_css_sources.md` | Leaf Live → look CSS (simey/APK) |
-| `docs/foil_new_finish.md` | Checklist opérateur « nouveau finish en minutes » |
-| `docs/data-layout.md` | `data/<pack>/foil/` ↔ `/foil/<pack>/…` |
-| `third_party/README.md` | Refresh simey vendored |
-| `src/effects/README.md` | Skeleton pack |
+| Doc                        | Rôle                                              |
+| -------------------------- | ------------------------------------------------- |
+| `docs/foil_effects.md`     | Contrat commun packs + couches                    |
+| `docs/foil_css_sources.md` | Leaf Live → look CSS (simey/APK)                  |
+| `docs/foil_new_finish.md`  | Checklist opérateur « nouveau finish en minutes » |
+| `docs/data-layout.md`      | `data/<pack>/foil/` ↔ `/foil/<pack>/…`            |
+| `third_party/README.md`    | Refresh simey vendored                            |
+| `src/effects/README.md`    | Skeleton pack                                     |
 
 ---
 
 ## 3. Fait récemment (à ne pas défaire)
 
 ### Architecture / process
+
 - GPL Placarr + NOTICE simey ; simey vendored (pas submodules).
 - Docs contrat + checklist nouveau finish.
 - `pnpm foil:audit-gaps` (`scripts/foil/auditGaps.ts` + `gapMaps.ts`) — gaps Live
@@ -56,7 +57,9 @@ clés, tests, ouvertures, pièges) pour que Cursor / Composer reprenne.
   (`src/providers/lorcanatcg/dumpWeb.ts`).
 
 ### CSS Pokémon = simey choreography + Live plates
+
 Fichiers :
+
 - `src/core/render/holoShadersSimey.ts` — recettes catalogue/rareté : overlays
   simey, paint via `url(/foil/pokemon/textures/_shared/….webp)` aligné
   `SHARED_BY_FOIL` (`materials.ts`).
@@ -67,6 +70,7 @@ Fichiers :
   `--opacity: 0` ; motifs/tilt restent.
 
 **Radiant** (playroom seed souvent Dracaufeu Radieux `swsh10-5_fr_011`) :
+
 1. `radiantHolo` — lattice CSS ±45° (simey `--barwidth`)
 2. `radiantHoloHalo` — spot glare (`opacityFollowsGlare`)
 3. `radiantHoloCoat` — base sombre + `FX_T_Gradient_Shine_Dull` +
@@ -77,6 +81,7 @@ Ne pas remettre le spotlight dans le `background-blend` du lattice (ça tuait
 les losanges quand idle mettait opacity à 0).
 
 ### WebGL
+
 - Renderer partagé `core/render/foil/webgl/renderer.ts` — pack-blind.
 - Pokémon materials : `materials.ts` + `materialSheets.json` + `SHARED_BY_FOIL`.
 - Lorcana : `manifest.json` + `resolveMaterial.ts` (souvent dump → ship).
@@ -119,6 +124,7 @@ data/pokemon/foil/textures/_shared/     # 70 webp (peut manquer hors machine dum
 ```
 
 Tests utiles :
+
 ```bash
 pnpm exec vitest run src/effects/pokemon/cssGuard.test.ts \
   src/core/render/holoShadersSimey.test.ts src/effects/pokemon

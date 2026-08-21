@@ -39,9 +39,7 @@ Script sync : `pnpm foil:pokemon:sync-owned` (`scripts/pokemon/syncLiveOwned.ts`
 
 ```json
 {
-  "purchaseRequestDetails": [
-    { "shopOfferingId": "bw6-5_2", "quantity": 1 }
-  ],
+  "purchaseRequestDetails": [{ "shopOfferingId": "bw6-5_2", "quantity": 1 }],
   "idempotencyKey": "<uuid-v4-nouveau>"
 }
 ```
@@ -56,11 +54,11 @@ Script sync : `pnpm foil:pokemon:sync-owned` (`scripts/pokemon/syncLiveOwned.ts`
 
 ## 4. État compte (fin de passe)
 
-| | |
-|---|---|
+|               |                                                     |
+| ------------- | --------------------------------------------------- |
 | TradeCurrency | **~535** (était ~1580 → crafts manuels + batch API) |
-| HardCurrency | 150 |
-| carddex | ~421 |
+| HardCurrency  | 150                                                 |
+| carddex       | ~421                                                |
 
 ### Effets avec owned (playroom Live)
 
@@ -70,16 +68,16 @@ SvHolo, SvUltra, SwHolo, Thatch, Tinsel (`bw6-5_fr_001` + `_002`).
 
 ### Toujours sans owned (budget / pas d’offre)
 
-| Effet | Prix mini observé | Note |
-|---|---|---|
-| RadiantHolo | ~600 | pas assez de Trade |
-| Squares | ~600 | idem |
-| SwSecret | ~600 | idem |
-| 25thConfetti | ~1250 | |
-| SolidColor | ~2000 | |
-| SvUltraGoldRainbow | ~2000 | |
-| SvUltraScodix | ~2000 | |
-| Stamped | — | **aucune** offre catalogue (pas craftable API) |
+| Effet              | Prix mini observé | Note                                           |
+| ------------------ | ----------------- | ---------------------------------------------- |
+| RadiantHolo        | ~600              | pas assez de Trade                             |
+| Squares            | ~600              | idem                                           |
+| SwSecret           | ~600              | idem                                           |
+| 25thConfetti       | ~1250             |                                                |
+| SolidColor         | ~2000             |                                                |
+| SvUltraGoldRainbow | ~2000             |                                                |
+| SvUltraScodix      | ~2000             |                                                |
+| Stamped            | —                 | **aucune** offre catalogue (pas craftable API) |
 
 Batch artifacts : `.tmp-foil-audit/live-unity/mitm/craft_batch_missing_effects.json`.
 
@@ -87,14 +85,14 @@ Batch artifacts : `.tmp-foil-audit/live-unity/mitm/craft_batch_missing_effects.j
 
 ## 5. Code Placarr touché (souvent **non commité**)
 
-| Fichier | Rôle |
-|---|---|
-| `data/pokemon/liveOwned.json` | cache carddex → stems `_fr_` par effet |
-| `src/effects/pokemon/liveOwnedBundles.ts` | `ownedBundlesForShader` |
-| `src/effects/pokemon/playroomArt.ts` | owned d’abord ; flag `liveOwned` ; `ec_*` après Pokémon |
-| `src/components/admin/FoilPlayroom.tsx` | badge Live, tri owned en tête |
-| `scripts/pokemon/syncLiveOwned.ts` | `pnpm foil:pokemon:sync-owned` |
-| `docs/pokemon_live_rainier.md` | auth + commerce + purchase |
+| Fichier                                   | Rôle                                                    |
+| ----------------------------------------- | ------------------------------------------------------- |
+| `data/pokemon/liveOwned.json`             | cache carddex → stems `_fr_` par effet                  |
+| `src/effects/pokemon/liveOwnedBundles.ts` | `ownedBundlesForShader`                                 |
+| `src/effects/pokemon/playroomArt.ts`      | owned d’abord ; flag `liveOwned` ; `ec_*` après Pokémon |
+| `src/components/admin/FoilPlayroom.tsx`   | badge Live, tri owned en tête                           |
+| `scripts/pokemon/syncLiveOwned.ts`        | `pnpm foil:pokemon:sync-owned`                          |
+| `docs/pokemon_live_rainier.md`            | auth + commerce + purchase                              |
 
 **Commit poussé** (autre sujet) : `e9c172c` vendor simeydotme CSS + NOTICE.
 Le reste du working tree (foil Live, playroom owned, scripts pokemon, …) est

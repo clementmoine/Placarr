@@ -27,12 +27,12 @@ Après sync : nouveaux sets/cartes/frags/textures **sans edit `src/`**. Index so
 
 ## 1. Pokémon WebGL ← TCG Live
 
-| Étape | Action |
-|-------|--------|
-| 1 | Sync / `pnpm foil:pokemon` |
-| 2 | Admin foil-status gaps → motifs manquants |
-| 3 | Si motif pathologique : override B dans `materials.ts` (rare) |
-| 4 | Playroom WebGL |
+| Étape | Action                                                        |
+| ----- | ------------------------------------------------------------- |
+| 1     | Sync / `pnpm foil:pokemon`                                    |
+| 2     | Admin foil-status gaps → motifs manquants                     |
+| 3     | Si motif pathologique : override B dans `materials.ts` (rare) |
+| 4     | Playroom WebGL                                                |
 
 Les `.frag` sont découverts sur disque — plus de liste `POKEMON_FOIL_NAMES`.
 
@@ -40,21 +40,21 @@ Les `.frag` sont découverts sur disque — plus de liste `POKEMON_FOIL_NAMES`.
 
 ## 2. Pokémon CSS ← Live
 
-| Étape | Action |
-|-------|--------|
-| 1 | Gaps → « CSS fallback only » |
-| 2 | Si convention `Leaf`→`leaf` rate : alias B dans `cssRecipes.ts` **ou** porter un nouveau `HoloShader` |
-| 3 | `pnpm test` — `cssGuard` |
+| Étape | Action                                                                                                |
+| ----- | ----------------------------------------------------------------------------------------------------- |
+| 1     | Gaps → « CSS fallback only »                                                                          |
+| 2     | Si convention `Leaf`→`leaf` rate : alias B dans `cssRecipes.ts` **ou** porter un nouveau `HoloShader` |
+| 3     | `pnpm test` — `cssGuard`                                                                              |
 
 ---
 
 ## 3. Lorcana WebGL ← App Unity
 
-| Étape | Action |
-|-------|--------|
-| 1 | Dump APK (one-shot — **apk-gated**, analyse CDN ouverte) |
-| 2 | Nouveau `CardFoil*` : souvent rien (`resolveMaterial`) |
-| 3 | Playroom WebGL |
+| Étape | Action                                                   |
+| ----- | -------------------------------------------------------- |
+| 1     | Dump APK (one-shot — **apk-gated**, analyse CDN ouverte) |
+| 2     | Nouveau `CardFoil*` : souvent rien (`resolveMaterial`)   |
+| 3     | Playroom WebGL                                           |
 
 Sans APK : produit CSS (web + cards) reste auto.
 
@@ -62,13 +62,13 @@ Sans APK : produit CSS (web + cards) reste auto.
 
 ## 4. Lorcana CSS ← Site + catalogue API
 
-| Étape | Action |
-|-------|--------|
-| 1 | Sync web + cards (`foilExtract` / `pnpm foil:lorcana`) |
-| 2 | Gaps → `foilType` / `varnishType` en **fallback only** (silver / hotFoil) |
-| 3 | Nouveau look : recette `HoloShader` + alias `cssRecipes.ts` si le camelCase rate |
-| 4 | Stem web inconnu (hors chrome `frame`/`menu`) → texture ou skip |
-| 5 | Playroom CSS |
+| Étape | Action                                                                           |
+| ----- | -------------------------------------------------------------------------------- |
+| 1     | Sync web + cards (`foilExtract` / `pnpm foil:lorcana`)                           |
+| 2     | Gaps → `foilType` / `varnishType` en **fallback only** (silver / hotFoil)        |
+| 3     | Nouveau look : recette `HoloShader` + alias `cssRecipes.ts` si le camelCase rate |
+| 4     | Stem web inconnu (hors chrome `frame`/`menu`) → texture ou skip                  |
+| 5     | Playroom CSS                                                                     |
 
 Produit = ce path. WebGL APK = compare seulement (§3).
 
@@ -76,6 +76,6 @@ Produit = ce path. WebGL APK = compare seulement (§3).
 
 ## Ordre typique
 
-1. Laisser / lancer le sync  
-2. Lire gaps (admin ou CLI)  
-3. Porter seulement les looks / alias listés  
+1. Laisser / lancer le sync
+2. Lire gaps (admin ou CLI)
+3. Porter seulement les looks / alias listés

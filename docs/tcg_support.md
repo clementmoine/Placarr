@@ -54,20 +54,20 @@ ment coûte toujours plus cher que la colonne en trop.
 
 ## 2. Providers — sondés le 2026-07-26
 
-| Jeu                     | Provider                                        | Données FR      | Images FR      | Variantes                            | Prix                              | Clé               |
-| ----------------------- | ----------------------------------------------- | --------------- | -------------- | ------------------------------------ | --------------------------------- | ----------------- |
-| Pokémon                 | [TCGdex](https://tcgdex.dev/)                   | ✅ vérifié      | ✅ vérifié     | ✅ `variants_detailed` + `variantId` | ✅ Cardmarket **EUR** + TCGplayer | aucune            |
-| Lorcana                 | [LorcanaJSON](https://lorcanajson.org/)         | ✅ FR/DE/IT     | ✅ toutes langues stockées | ✅ `foilTypes` + **`foilMask`**      | ❌ (métadonnées)                  | fichiers          |
-| Lorcana                 | [Play-In](https://www.play-in.com/)             | ✅ FR           | ✅             | stock Mint / FOIL                    | ✅ EUR retail (scrape)            | scrape            |
-| Lorcana                 | [Lorcana.gg](https://lorcana.gg/cards/) (DotGG) | EN catalogue    | ✅             | `cmPrice` / `cmFoilPrice`            | ✅ Cardmarket **EUR** (dump API)  | dump + printKey   |
-| Lorcana                 | [Lorcast](https://lorcast.com/docs/api/cards)   | ❌ EN seulement | ❌             | prix foil + non-foil                 | ✅ TCGplayer USD → EUR `~`        | aucune            |
-| Magic                   | [Scryfall](https://scryfall.com/docs/api)       | ✅ vérifié      | ✅             | ✅ `finishes: nonfoil/foil/etched`   | ✅                                | UA requis         |
-| Yu-Gi-Oh                | [YGOPRODeck](https://ygoprodeck.com/api-guide/) | ✅ noms         | EN             | sets + raretés                       | ✅                                | aucune            |
-| Dragon Ball Super (Masters) | Bandai europe-fr cardlist (`dbscg`) + Deckplanet | ✅ FR | ✅ dump 260×364 (SAMPLE en fallback) | `_SPR` / `_PR` + finish `foil` maison | ❌ | scrape local — [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md) |
-| Dragon Ball Super (Fusion World) | Bandai fw/en cardlist (`dbsfw`) | EN (pas de `/fw/fr/`) | ✅ SAMPLE WebP | `_P1` + finish `foil` maison | ❌ | scrape local — même doc |
-| One Piece, Dragon Ball FW (apitcg) | [apitcg.com](https://apitcg.com/) | ? | SAMPLE Bandai | ✅ | ? | clé — OPTCG [one_piece_tcg.md](one_piece_tcg.md) ; FW Placarr = `dbsfw` (cardlist Bandai, pas apitcg) |
-| One Piece, Gundam, etc. | [Scrydex](https://scrydex.com/)                 | ?               | ?              | ✅                                   | ✅                                | **payant**        |
-| Naruto (CACG / multi-lignes) | pas d’API catalogue (Coleka / nikita / TCDB) | FR partiel | community | foil physique | estimates / eBay | pack `naruto` + sets `s*` + lang `fr|en|jap` — [naruto_carddass_tcg.md](naruto_carddass_tcg.md) |
+| Jeu                                | Provider                                         | Données FR            | Images FR                            | Variantes                             | Prix                              | Clé                                                                                                   |
+| ---------------------------------- | ------------------------------------------------ | --------------------- | ------------------------------------ | ------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Pokémon                            | [TCGdex](https://tcgdex.dev/)                    | ✅ vérifié            | ✅ vérifié                           | ✅ `variants_detailed` + `variantId`  | ✅ Cardmarket **EUR** + TCGplayer | aucune                                                                                                |
+| Lorcana                            | [LorcanaJSON](https://lorcanajson.org/)          | ✅ FR/DE/IT           | ✅ toutes langues stockées           | ✅ `foilTypes` + **`foilMask`**       | ❌ (métadonnées)                  | fichiers                                                                                              |
+| Lorcana                            | [Play-In](https://www.play-in.com/)              | ✅ FR                 | ✅                                   | stock Mint / FOIL                     | ✅ EUR retail (scrape)            | scrape                                                                                                |
+| Lorcana                            | [Lorcana.gg](https://lorcana.gg/cards/) (DotGG)  | EN catalogue          | ✅                                   | `cmPrice` / `cmFoilPrice`             | ✅ Cardmarket **EUR** (dump API)  | dump + printKey                                                                                       |
+| Lorcana                            | [Lorcast](https://lorcast.com/docs/api/cards)    | ❌ EN seulement       | ❌                                   | prix foil + non-foil                  | ✅ TCGplayer USD → EUR `~`        | aucune                                                                                                |
+| Magic                              | [Scryfall](https://scryfall.com/docs/api)        | ✅ vérifié            | ✅                                   | ✅ `finishes: nonfoil/foil/etched`    | ✅                                | UA requis                                                                                             |
+| Yu-Gi-Oh                           | [YGOPRODeck](https://ygoprodeck.com/api-guide/)  | ✅ noms               | EN                                   | sets + raretés                        | ✅                                | aucune                                                                                                |
+| Dragon Ball Super (Masters)        | Bandai europe-fr cardlist (`dbscg`) + Deckplanet | ✅ FR                 | ✅ dump 260×364 (SAMPLE en fallback) | `_SPR` / `_PR` + finish `foil` maison | ❌                                | scrape local — [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md)                       |
+| Dragon Ball Super (Fusion World)   | Bandai fw/en cardlist (`dbsfw`)                  | EN (pas de `/fw/fr/`) | ✅ SAMPLE WebP                       | `_P1` + finish `foil` maison          | ❌                                | scrape local — même doc                                                                               |
+| One Piece, Dragon Ball FW (apitcg) | [apitcg.com](https://apitcg.com/)                | ?                     | SAMPLE Bandai                        | ✅                                    | ?                                 | clé — OPTCG [one_piece_tcg.md](one_piece_tcg.md) ; FW Placarr = `dbsfw` (cardlist Bandai, pas apitcg) |
+| One Piece, Gundam, etc.            | [Scrydex](https://scrydex.com/)                  | ?                     | ?                                    | ✅                                    | ✅                                | **payant**                                                                                            |
+| Naruto (CACG / multi-lignes)       | pas d’API catalogue (Coleka / nikita / TCDB)     | FR partiel            | community                            | foil physique                         | estimates / eBay                  | pack `naruto` + sets `s*` + lang `fr                                                                  | en  | jap` — [naruto_carddass_tcg.md](naruto_carddass_tcg.md) |
 
 Ça tombe pile dans le registre existant : **un module par jeu**, chacun
 déclarant `types: ["tcg"]`. Aucun concept nouveau côté providers.
@@ -262,6 +262,8 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
 3. **Pokémon via TCGdex** : apporte les prix en euros natifs et les variantes
    `reverse`/`holo` en prime.
 4. **Magic / Yu-Gi-Oh**, puis Scrydex si on veut One Piece & co.
+   Produits scellés déjà crawlables (famille TCG Cards, pas de provider) :
+   `pnpm tcgcards:products -- --site mtgcards|ygocards`.
 
 ## 8. Décisions prises (2026-07-26)
 
@@ -347,7 +349,7 @@ Ce que l'app expose et que le CSS n'a pas :
 — déplacement de surface, biseau éclairé, contour. Une pile de `mix-blend-mode`
 CSS ne sait pas les faire : elle compose des images, elle ne modèle pas une
 surface. Cette limite est celle du médium CSS, pas de la source : les fragments
-extraits les font, puisqu'ils *sont* le code qui les fait.
+extraits les font, puisqu'ils _sont_ le code qui les fait.
 
 ### Le port réel : `core/render/foil` + `effects/lorcana`
 
@@ -410,12 +412,12 @@ Le client officiel des cartes physiques expose 23 shaders
 
 **Médias sur `PrintCandidate`** (TCGdex + Live) :
 
-| Champ | Source |
-|---|---|
-| Face (`imageUrl` / variantes) | Front Live dump (`cardTex`) si joint, sinon scan TCGdex |
-| Dos (`cardBackUrl`) | Pack `/foil/pokemon/card_back.webp` (Texture2D `cardBack` dans `base.apk`) |
-| Foils | `finishShaders` + `finishFoilMaskUrls` depuis le dump Live |
-| Attachments | `tcgdex-scan` + `tcglive-front` quand les deux existent |
+| Champ                         | Source                                                                     |
+| ----------------------------- | -------------------------------------------------------------------------- |
+| Face (`imageUrl` / variantes) | Front Live dump (`cardTex`) si joint, sinon scan TCGdex                    |
+| Dos (`cardBackUrl`)           | Pack `/foil/pokemon/card_back.webp` (Texture2D `cardBack` dans `base.apk`) |
+| Foils                         | `finishShaders` + `finishFoilMaskUrls` depuis le dump Live                 |
+| Attachments                   | `tcgdex-scan` + `tcglive-front` quand les deux existent                    |
 
 **Pocket (app)** : code et docs handoff **retirés** — cartes jamais imprimées.
 

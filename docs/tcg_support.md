@@ -342,6 +342,36 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   impressions qui partagent le cadre, et le seuil est net (≈0,89–0,98 contre
   ≈0,64). Aucun des vingt-huit tirages sans masque n'est aujourd'hui dans ce cas
   **avec** une finition à dessiner, mais la règle vaut si l'un le devient.
+- **La source des masques est l'API officielle Ravensburger**, et elle est
+  ouverte. `GET https://api.lorcana.ravensburger.com/v3/catalog/{fr,en,de,it}`
+  (~4,3 Mo, sans authentification, l'`User-Agent` de `setLogos.ts` suffit) rend
+  `cards.{actions,characters,items,locations}[].variants[]`, chaque variante
+  portant `variant_id` (`Regular` / `Foiled` / `StarterFoil`), **`foil_type`** et
+  **`foil_mask_url`**. C'est de là que viennent nos masques, via LorcanaJSON —
+  le dépôt n'utilisait cet endpoint que pour les logos de sets. Il confirme de
+  première main le `Glitter` de `25/P2`, masque compris.
+- **Fouille du 2026-08-22 : le masque de `36/P2` n'existe nulle part, et c'est
+  structurel.** Les quatre catalogues de langue plafonnent P2 à 35 (plus
+  `24A`/`24B`) — aucun ne porte nos six. Interrogé par `deck_building_id`
+  (`a393e1fb…`), qui relie les impressions d'une même carte, l'officiel ne
+  connaît que trois `Mickey Mouse – True Friend` : `12/204`, `13/204` et
+  `10/P3`. La raison : `36/P2` est un **encart de puzzle**, glissé dans les six
+  puzzles « Glimmers of the Realm », d'abord à Destination D23 en 2025. C'est de
+  la marchandise, pas un produit que l'appli suit — et un masque n'existe que
+  parce que Ravensburger le fabrique pour l'appli. Pas de fiche, donc pas de
+  masque, nulle part. Vérifié en aval : Lorcast ne rend que trois tailles d'une
+  même image plate et aucun champ de finition ; `lorcana-api.com` n'a ni promos
+  ni champ de masque (2 694 cartes) ; les projets communautaires
+  (LorcanaCardCollector, LorcanaPygres, lorcanadb, disney-lorcana-datahub)
+  moissonnent tous cette même API et héritent du trou. Inutile de recommencer.
+- **Deux constats à côté, dans la même fouille.** Les `C2` 15-18 versés par
+  Lorcast (`Stand Out`, `Down In New Orleans`, `The Headless Horseman`,
+  `Tinker Bell`) sont des cartes **franchement différentes** des `C2` 1-10
+  officielles (Pegasus, Elsa, Mulan, Simba, Dragon Fire, Let it Go) : le piège du
+  set `cp` ne s'est pas répété, aucun fantôme. Et les dix-huit `coconut_cards`
+  du catalogue ont un schéma à part — trois URL d'image, **pas de `variants`** —
+  donc leur absence de `foil_type` ne prouve rien sur leur finition ; c'est une
+  piste à instruire, pas un fait.
 
 - **Les sets d'une promo ne se recouvrent pas d'une source à l'autre.**
   LorcanaJSON range une promo sous l'extension de la carte qu'elle réimprime

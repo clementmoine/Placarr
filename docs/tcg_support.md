@@ -60,7 +60,7 @@ ment coûte toujours plus cher que la colonne en trop.
 | Lorcana                            | [LorcanaJSON](https://lorcanajson.org/)          | ✅ FR/DE/IT           | ✅ toutes langues stockées           | ✅ `foilTypes` + **`foilMask`**       | ❌ (métadonnées)                  | fichiers                                                                                              |
 | Lorcana                            | [Play-In](https://www.play-in.com/)              | ✅ FR                 | ✅                                   | stock Mint / FOIL                     | ✅ EUR retail (scrape)            | scrape                                                                                                |
 | Lorcana                            | [Lorcana.gg](https://lorcana.gg/cards/) (DotGG)  | EN catalogue          | ✅                                   | `cmPrice` / `cmFoilPrice`             | ✅ Cardmarket **EUR** (dump API)  | dump + printKey                                                                                       |
-| Lorcana                            | [Lorcast](https://lorcast.com/docs/api/cards)    | ❌ EN seulement       | ❌                                   | prix foil + non-foil                  | ✅ TCGplayer USD → EUR `~`        | aucune                                                                                                |
+| Lorcana                            | [Lorcast](https://lorcast.com/docs/api/cards)    | ❌ EN seulement       | ✅ AVIF, sans masque                 | prix foil + non-foil                  | ✅ TCGplayer USD → EUR `~`        | aucune — sert aussi de **remplissage catalogue** (28 tirages que LorcanaJSON ignore, voir § 6 bis)    |
 | Magic                              | [Scryfall](https://scryfall.com/docs/api)        | ✅ vérifié            | ✅                                   | ✅ `finishes: nonfoil/foil/etched`    | ✅                                | UA requis                                                                                             |
 | Yu-Gi-Oh                           | [YGOPRODeck](https://ygoprodeck.com/api-guide/)  | ✅ noms               | EN                                   | sets + raretés                        | ✅                                | aucune                                                                                                |
 | Dragon Ball Super (Masters)        | Bandai europe-fr cardlist (`dbscg`) + Deckplanet | ✅ FR                 | ✅ dump 260×364 (SAMPLE en fallback) | `_SPR` / `_PR` + finish `foil` maison | ❌                                | scrape local — [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md)                       |
@@ -253,6 +253,21 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
 - **`foilEffectColors` + `images.varnishMask2`** (août 2026) : teinte(s) du
   vernis stampé et second masque. Rien d'autre ne les prédit. Plus besoin du
   scrape SSO catalogue Ravensburger.
+- **Le catalogue n'est pas complet** (mesuré le 2026-08-21, remonté par un
+  utilisateur qui cherchait `36/P2`). LorcanaJSON ignore 28 tirages réellement
+  imprimés : six promos P2 — dont les deux _Mickey Mouse – True Friend_, `15` et
+  la promo puzzle `36` —, quatre C2, et les dix-huit cartes du **Format
+  Coconut**, un set promo entier. Aucun ne se voyait dans l'appli, et rien ne le
+  signalait. Lorcast les publie ; `lorcanatcg/lorcastFill.ts` les verse en
+  **remplissage seul**, sans jamais contredire un fait de LorcanaJSON. Restent
+  ouverts `25/P1` et `5/C1`, attestés par dotgg seul.
+- **Les sets d'une promo ne se recouvrent pas d'une source à l'autre.**
+  LorcanaJSON range une promo sous l'extension de la carte qu'elle réimprime
+  (`10/P3` → set 1) ; Lorcast n'a que le code imprimé (`P3`). L'extension de base
+  n'est pas récupérable depuis Lorcast, donc un tirage venu de lui est rangé sous
+  son code imprimé et apparaît comme sa propre extension. Corollaire : le set
+  `cp` de Lorcast n'est **pas** fusionné — ce sont les neuf cartes de `C1`,
+  numérotées autrement (`25/41/42/43` contre `1/2/3/4`).
 
 ## 7. Découpage proposé
 

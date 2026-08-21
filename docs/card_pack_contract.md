@@ -139,7 +139,11 @@ même travail de façon inspectable. Naruto et Lorcana n'en ont pas non plus.
 2. **`print_assets` sur un noyau commun** + extension JSON — migration de schéma.
 3. **`STEPS` déclarées partout** — opérabilité.
 4. **`<role>.<source>.<ext>` chez Lorcana et Pokémon** — seulement le jour où
-   l'un d'eux gagne une seconde source d'images.
+   l'un d'eux gagne une seconde source d'images. ✅ **fait côté Lorcana** le
+   2026-08-21 : Lorcast bouche 28 trous de LorcanaJSON, et ses faces se posent
+   en `art.lorcast.avif` / `thumb.lorcast.avif`. Les fichiers LorcanaJSON gardent
+   `art.jpg` — aucun octet déplacé, la provenance ne se lit que là où il y a
+   effectivement deux sources. Pokémon reste à faire, faute d'une seconde source.
 
 Ne pas empiler ces chantiers sur un pack dont les données ne sont pas encore
 vérifiées : Fusion World est prêt mais vide au 2026-08-15.

@@ -19,13 +19,9 @@ import {
   type LorcanaLanguage,
 } from "@/providers/lorcanajson/fetch";
 import {
-  loadLorcastCatalogue,
-  lorcanaGapKey,
-  selectLorcastFillPrints,
   LORCAST_LANGUAGE,
   LORCAST_SOURCE,
-  type LorcastPrint,
-} from "@/providers/lorcast/fetch";
+} from "@/providers/lorcast/catalogue";
 import { cardDiskIdFromPrintKey } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import {
@@ -35,6 +31,11 @@ import {
   type LorcanaTcgPrintRow,
   type LorcanaTcgTitleRow,
 } from "./indexStore";
+import {
+  loadLorcastFill,
+  lorcanaGapKey,
+  type LorcastFillPrint,
+} from "./lorcastFill";
 
 export type ScrapeLorcanaCardsOptions = {
   force?: boolean;
@@ -227,6 +228,43 @@ function collectJobsForCard(card: LorcanaCard, cardsDir: string): Job[] {
   return jobs;
 }
 
+/**
+ * Les faces venues de Lorcast, nommées `art.lorcast.avif`.
+ *
+ * Le contrat des packs prévoyait `<rôle>.<source>.<ext>` « le jour où Lorcana
+ * gagne une seconde source d'images » : c'est ce jour. Le nom est une donnée
+ * comme une autre, rangée telle quelle dans `cards-index.json` — mais il est la
+ * seule chose qui dise, une fois le fichier sur le disque, d'où viennent ses
+ * octets.
+ */
+function collectJobsForLorcastPrint(
+  print: LorcastFillPrint,
+  cardsDir: string,
+): Job[] {
+  const disk = cardDiskIdFromPrintKey(print.printKey, LORCAST_LANGUAGE);
+  if (!disk) return [];
+  const dir = path.join(cardsDir, disk.set, disk.lang, disk.card);
+  const jobs: Job[] = [];
+
+  const add = (field: keyof LangFiles, fileStem: string, url: string) => {
+    const file = `${fileStem}.${LORCAST_SOURCE}${extFromUrl(url)}`;
+    jobs.push({
+      printKey: print.printKey,
+      language: LORCAST_LANGUAGE,
+      field,
+      file,
+      url,
+      dest: path.join(dir, file),
+    });
+  };
+
+  if (print.imageUrl) add("art", "art", print.imageUrl);
+  if (print.thumbnailUrl && print.thumbnailUrl !== print.imageUrl) {
+    add("thumb", "thumb", print.thumbnailUrl);
+  }
+  return jobs;
+}
+
 export async function scrapeLorcanaCards(
   opts: ScrapeLorcanaCardsOptions = {},
 ): Promise<{
@@ -248,6 +286,8 @@ export async function scrapeLorcanaCards(
   const prints = new Map<string, LorcanaTcgPrintRow>();
   const titles: LorcanaTcgTitleRow[] = [];
   const assetsByKey = new Map<string, LorcanaTcgAssetRow>();
+  /** Les {@link lorcanaGapKey} que LorcanaJSON couvre — le reste est un trou. */
+  const covered = new Set<string>();
 
   // Seed assets from previous sqlite so --skip keeps paths for untouched files.
   const prior = exportLorcanaCardsIndexJson(dbPath);
@@ -321,7 +361,56 @@ export async function scrapeLorcanaCards(
         secondVarnishMaskUrl: card.secondVarnishMaskUrl,
       });
       jobs.push(...collectJobsForCard(card, cardsDir));
+      const gap = lorcanaGapKey(card);
+      if (gap) covered.add(gap);
     }
+  }
+
+  const fill = await loadLorcastFill(covered);
+  for (const note of fill.notes) console.log(`  lorcast: ${note}`);
+  for (const print of fill.prints) {
+    prints.set(print.printKey, {
+      printKey: print.printKey,
+      setCode: print.setCode,
+      number: print.baseNumber,
+      variant: print.variant,
+      promoGrouping: print.promoGrouping,
+      providerId: print.providerId,
+      cost: print.cost,
+      artists: print.artists.length ? print.artists : null,
+      // Lorcast ne dit rien des finitions : les inventer serait pire que le vide.
+      foilTypes: null,
+      varnishType: null,
+      cardmarketUrl: null,
+      lore: print.lore,
+      strength: print.strength,
+      willpower: print.willpower,
+      inkwell: print.inkwell,
+      setCardCount: null,
+      foilEffectColors: null,
+    });
+    titles.push({
+      printKey: print.printKey,
+      lang: LORCAST_LANGUAGE,
+      fullName: print.fullName,
+      name: print.name,
+      version: print.version,
+      setName: print.setName,
+      rarity: print.rarity,
+      cardType: print.cardType,
+      color: print.color,
+      story: null,
+      flavorText: print.flavorText,
+      subtypes: print.subtypes.length ? print.subtypes : null,
+      searchName: print.searchName,
+      imageUrl: print.imageUrl,
+      thumbnailUrl: print.thumbnailUrl,
+      fullFoilUrl: null,
+      foilMaskUrl: null,
+      varnishMaskUrl: null,
+      secondVarnishMaskUrl: null,
+    });
+    jobs.push(...collectJobsForLorcastPrint(print, cardsDir));
   }
 
   console.log(

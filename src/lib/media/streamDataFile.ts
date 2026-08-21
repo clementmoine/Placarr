@@ -12,6 +12,8 @@ const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
+  // Les faces venues de Lorcast n'existent qu'en AVIF.
+  ".avif": "image/avif",
   ".gif": "image/gif",
   ".svg": "image/svg+xml",
   ".json": "application/json",

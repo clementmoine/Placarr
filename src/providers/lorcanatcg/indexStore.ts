@@ -15,6 +15,7 @@ import {
   finalizeSetOptions,
   isAnsweredQuery,
   setScopedWhere,
+  type SqlBindValue,
 } from "@/providers/shared/cardCatalogue/sets";
 
 import { dataRoot } from "@/lib/runtimeData";
@@ -672,6 +673,51 @@ export function ensureLorcanaTcgIndex(): DatabaseSync | null {
  * Les colonnes rendues ici sont exactement celles dont `toPrintCandidate` a
  * besoin : la carte est reconstruite entière, pas approchée.
  */
+/**
+ * `36/P2` — l'identifiant tel qu'il est imprimé, et donc tel qu'on le tape.
+ *
+ * Aucune colonne ne le porte sous cette forme : le catalogue range la promo
+ * `36/P2` en `p2 · 36`, et une carte d'extension `12/204` en `1 · 12`, où `204`
+ * est la taille du set et non son code. Un `LIKE` sur du texte ne pouvait donc
+ * pas y répondre — et la recherche rendait zéro sur la référence même que porte
+ * la carte. On lit les deux segments et on interroge les colonnes qui les
+ * tiennent : le groupe promo (ou l'extension) d'un côté, la taille du set de
+ * l'autre.
+ *
+ * Les deux ordres sont acceptés (`36/P2` et `P2 36`) : les vitrines écrivent
+ * l'un, les tableaux de check-list l'autre.
+ */
+export function collectorQueryClause(
+  query: string,
+): { clause: string; params: SqlBindValue[] } | null {
+  const tokens = query.split(/[\s/·•-]+/).filter(Boolean);
+  if (tokens.length !== 2) return null;
+
+  const digits = /^\d+$/;
+  const code = /^[a-z]{1,10}\d*$/;
+  let number: string | null = null;
+  let scope: string | null = null;
+  if (digits.test(tokens[0]!) && !digits.test(tokens[1]!)) {
+    [number, scope] = [tokens[0]!, tokens[1]!];
+  } else if (digits.test(tokens[1]!) && !digits.test(tokens[0]!)) {
+    [scope, number] = [tokens[0]!, tokens[1]!];
+  } else if (digits.test(tokens[0]!) && digits.test(tokens[1]!)) {
+    // `12/204` : le second segment est la taille du set, pas son code.
+    const [left, right] = tokens as [string, string];
+    return {
+      clause: "(p.set_card_count = ? AND CAST(p.number AS INTEGER) = ?)",
+      params: [Number(right), Number(left)],
+    };
+  }
+  if (!number || !scope || !code.test(scope)) return null;
+
+  return {
+    clause: `(LOWER(COALESCE(NULLIF(TRIM(p.promo_grouping), ''), p.set_code)) = ?
+              AND CAST(p.number AS INTEGER) = ?)`,
+    params: [scope, Number(number)],
+  };
+}
+
 export function searchLorcanaTcgRows(
   query: string,
   opts: { language?: string; limit?: number; setId?: string | null } = {},
@@ -694,6 +740,7 @@ export function searchLorcanaTcgRows(
   const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
   const like = `%${trimmed}%`;
 
+  const collector = collectorQueryClause(trimmed);
   const scope = setScopedWhere({
     setColumn: "p.set_code",
     setId,
@@ -701,9 +748,10 @@ export function searchLorcanaTcgRows(
       ? `LOWER(t.full_name) LIKE ?
            OR LOWER(COALESCE(t.search_name, '')) LIKE ?
            OR LOWER(p.print_key) LIKE ?
-           OR LOWER(p.set_code || '-' || p.number) LIKE ?`
+           OR LOWER(p.set_code || '-' || p.number) LIKE ?
+           ${collector ? `OR ${collector.clause}` : ""}`
       : null,
-    textParams: [like, like, like, like],
+    textParams: [like, like, like, like, ...(collector?.params ?? [])],
   });
 
   return db

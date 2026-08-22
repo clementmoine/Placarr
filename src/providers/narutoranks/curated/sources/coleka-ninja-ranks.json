@@ -1,0 +1,25 @@
+{
+  "source": "coleka.com — Naruto: Ninja Ranks (Panini/Inkworks 2006), branche `_r25928`",
+  "url": "https://www.coleka.com/en/trading-cards/panini-cards/naruto-ninja-ranks_r25928",
+  "observed": "2026-08-22",
+  "ingest": "faces `art.coleka` du set de base uniquement",
+  "lang": "fr",
+  "sourceId": "coleka",
+  "note": "Coleka écrit `Ref. 001` — le numéro imprimé nu, cette ligne n'ayant pas de préfixe. Les visuels sont des photos de collectionneur (~1060×1500), pas des rendus éditeur. La branche EN du site est lue plutôt que la FR, qui déclenche le mur de vérification plus vite — mais c'est la langue de l'interface, pas celle des cartes : Coleka photographie le tirage **français**. La carte 68 s'y intitule « Secon examen des survivants » là où la feuille Inkworks écrit « Second Exam Survivors ». Même numérotation, autre langue, d'où des faces en `fr` sous des titres en `en`.",
+  "whyItMatters": "Le pack n'avait que trois faces sur cent — deux échantillons Inkworks et une du rip de blog. Coleka est le seul gisement mesuré qui en porte des dizaines à une taille utilisable. TCDB en a davantage (57 rectos) mais interdit l'extraction dans ses conditions, et n'est donc pas une source.",
+  "twoSignals": "La référence dit le numéro, et le nom de fichier de la vignette le répète (`…-carte-n-7-007_250x250.webp`). Une fiche dont le fichier ne porte pas son numéro est refusée : un visuel plausible mais faux coûte plus cher qu'un trou.",
+  "notIngested": [
+    {
+      "what": "Carte 3 (« Groupe 7 kakashi sasuke »)",
+      "reason": "vignette générique `coleka-carte-panini-naruto` : le numéro ne s'y relit pas, donc un seul signal. Refusée."
+    },
+    {
+      "what": "Douze gabarits « pas encore photographiée » (6, 20, 21, 22, 48, 49, 52, 54, 57, 58, 61, 64)",
+      "reason": "Coleka sert un cadre blanc au numéro centré quand personne n'a photographié la carte. Leur nom de fichier répète le slug de la collection au lieu de porter le titre, et les douze pèsent 26,2 à 26,7 Ko en 436×600 exactement — le même gabarit à un chiffre près. Refusés au parsing, donc jamais téléchargés."
+    },
+    {
+      "what": "Les 28 inserts (ff, sd, nw, bl, pn)",
+      "reason": "Coleka annonce 102 fiches quand la ligne compte 72 cartes de base et 28 inserts. Sa séquence au-delà de 72 ne correspond à rien de vérifié, et la deviner créerait des cartes fantômes."
+    }
+  ]
+}

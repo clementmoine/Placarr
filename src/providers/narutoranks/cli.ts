@@ -12,6 +12,10 @@ import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLi
 
 import { buildNinjaRanksFromLedgers } from "./buildFromLedgers";
 import {
+  harvestColekaNinjaRanks,
+  installColekaNinjaRanks,
+} from "./colekaNinjaRanks";
+import {
   harvestInkworksOfficialAssets,
   ingestInkworksProducts,
   installInkworksSampleFaces,
@@ -34,6 +38,18 @@ export async function runNarutoRanksPackPipeline(
   console.log(
     `── Blogger — ${unofficial.ok} JPEG, ${unofficial.skip} déjà là, ${unofficial.fail} manqué${unofficial.fail === 1 ? "" : "s"}`,
   );
+  const coleka = await harvestColekaNinjaRanks({ force });
+  console.log(
+    `── Coleka — ${coleka.pages} page(s) lue(s), ${coleka.cards} carte(s) retenue(s) : ${coleka.ok} scan, ${coleka.skip} déjà là, ${coleka.fail} manqué${coleka.fail === 1 ? "" : "s"}`,
+  );
+  if (coleka.rejected.length) {
+    console.log(
+      `── Coleka — ${coleka.rejected.length} fiche(s) refusée(s) : ${coleka.rejected
+        .slice(0, 4)
+        .map((r) => `${r.ref} (${r.reason.slice(0, 48)}…)`)
+        .join(", ")}`,
+    );
+  }
   return runLocalTcgPipeline({
     packId: NARUTO_RANKS_PACK_ID,
     curatedDir: narutoRanksCuratedDir(),
@@ -44,6 +60,12 @@ export async function runNarutoRanksPackPipeline(
       if (faces.installed) {
         console.log(
           `── Naruto Ninja Ranks — ${faces.installed} face${faces.installed === 1 ? "" : "s"} échantillon`,
+        );
+      }
+      const scans = installColekaNinjaRanks(index);
+      if (scans.faces || scans.missing.length) {
+        console.log(
+          `── Naruto Ninja Ranks — ${scans.faces} face(s) Coleka${scans.missing.length ? `, ${scans.missing.length} sans octets en staging` : ""}`,
         );
       }
       const fan = installBloggerPackRip(index);

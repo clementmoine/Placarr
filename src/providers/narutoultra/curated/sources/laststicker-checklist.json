@@ -1,0 +1,515 @@
+{
+  "source": "laststicker.com — Panini Naruto Ultra Challenge (collection 589)",
+  "url": "https://www.laststicker.com/cards/panini_naruto_ultra_cards/",
+  "observed": "2026-08-22",
+  "ingest": "titles only — 100 numéros et noms, aucune face",
+  "note": "La page collection liste les cent cartes, chacune vers sa fiche `/cards/panini_naruto_ultra_cards/{n}/` dont le titre est « Card {n}: {nom} ». Structure parfaitement régulière : vingt-cinq personnages, quatre cartes chacun, dans l'ordre. C'est cette régularité qui fait foi — un relevé fautif ne tomberait pas juste sur 25×4 sans trou ni doublon de numéro.",
+  "whyItMatters": "Le pack n'avait aucune carte. Le verso d'album est bien une checklist, mais l'upscale en brouille les numéros — d'où le refus, justifié, d'en tirer des titres. laststicker donne la même information sans l'incertitude.",
+  "robots": "Le `robots.txt` du site interdit `/cards/preview/` à tous les robots : la galerie de scans n'est donc pas moissonnée. La page collection et les fiches par carte, elles, sont autorisées, et ce sont les seules lues. Le site bloque par ailleurs nommément trente-et-un robots, dont GPTBot et CCBot.",
+  "notIngested": [
+    "Les scans `/i/cards/589/{n}.jpg` ne font que 211×300 et n'ont pas de variante plus grande : trop petits pour une face, pas versés.",
+    "Aucune rareté publiée : le champ reste vide plutôt que deviné."
+  ],
+  "cards": [
+    {
+      "printed": "1",
+      "number": "0001",
+      "name": "Naruto"
+    },
+    {
+      "printed": "2",
+      "number": "0002",
+      "name": "Naruto"
+    },
+    {
+      "printed": "3",
+      "number": "0003",
+      "name": "Naruto"
+    },
+    {
+      "printed": "4",
+      "number": "0004",
+      "name": "Naruto"
+    },
+    {
+      "printed": "5",
+      "number": "0005",
+      "name": "Sakura"
+    },
+    {
+      "printed": "6",
+      "number": "0006",
+      "name": "Sakura"
+    },
+    {
+      "printed": "7",
+      "number": "0007",
+      "name": "Sakura"
+    },
+    {
+      "printed": "8",
+      "number": "0008",
+      "name": "Sakura"
+    },
+    {
+      "printed": "9",
+      "number": "0009",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "10",
+      "number": "0010",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "11",
+      "number": "0011",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "12",
+      "number": "0012",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "13",
+      "number": "0013",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "14",
+      "number": "0014",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "15",
+      "number": "0015",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "16",
+      "number": "0016",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "17",
+      "number": "0017",
+      "name": "Iruka"
+    },
+    {
+      "printed": "18",
+      "number": "0018",
+      "name": "Iruka"
+    },
+    {
+      "printed": "19",
+      "number": "0019",
+      "name": "Iruka"
+    },
+    {
+      "printed": "20",
+      "number": "0020",
+      "name": "Iruka"
+    },
+    {
+      "printed": "21",
+      "number": "0021",
+      "name": "Shikamaru"
+    },
+    {
+      "printed": "22",
+      "number": "0022",
+      "name": "Shikamaru"
+    },
+    {
+      "printed": "23",
+      "number": "0023",
+      "name": "Shikamaru"
+    },
+    {
+      "printed": "24",
+      "number": "0024",
+      "name": "Shikamaru"
+    },
+    {
+      "printed": "25",
+      "number": "0025",
+      "name": "Asuma"
+    },
+    {
+      "printed": "26",
+      "number": "0026",
+      "name": "Asuma"
+    },
+    {
+      "printed": "27",
+      "number": "0027",
+      "name": "Asuma"
+    },
+    {
+      "printed": "28",
+      "number": "0028",
+      "name": "Asuma"
+    },
+    {
+      "printed": "29",
+      "number": "0029",
+      "name": "Guy"
+    },
+    {
+      "printed": "30",
+      "number": "0030",
+      "name": "Guy"
+    },
+    {
+      "printed": "31",
+      "number": "0031",
+      "name": "Guy"
+    },
+    {
+      "printed": "32",
+      "number": "0032",
+      "name": "Guy"
+    },
+    {
+      "printed": "33",
+      "number": "0033",
+      "name": "Choji"
+    },
+    {
+      "printed": "34",
+      "number": "0034",
+      "name": "Choji"
+    },
+    {
+      "printed": "35",
+      "number": "0035",
+      "name": "Choji"
+    },
+    {
+      "printed": "36",
+      "number": "0036",
+      "name": "Choji"
+    },
+    {
+      "printed": "37",
+      "number": "0037",
+      "name": "Hinata"
+    },
+    {
+      "printed": "38",
+      "number": "0038",
+      "name": "Hinata"
+    },
+    {
+      "printed": "39",
+      "number": "0039",
+      "name": "Hinata"
+    },
+    {
+      "printed": "40",
+      "number": "0040",
+      "name": "Hinata"
+    },
+    {
+      "printed": "41",
+      "number": "0041",
+      "name": "Neji"
+    },
+    {
+      "printed": "42",
+      "number": "0042",
+      "name": "Neji"
+    },
+    {
+      "printed": "43",
+      "number": "0043",
+      "name": "Neji"
+    },
+    {
+      "printed": "44",
+      "number": "0044",
+      "name": "Neji"
+    },
+    {
+      "printed": "45",
+      "number": "0045",
+      "name": "Rock Lee"
+    },
+    {
+      "printed": "46",
+      "number": "0046",
+      "name": "Rock Lee"
+    },
+    {
+      "printed": "47",
+      "number": "0047",
+      "name": "Rock Lee"
+    },
+    {
+      "printed": "48",
+      "number": "0048",
+      "name": "Rock Lee"
+    },
+    {
+      "printed": "49",
+      "number": "0049",
+      "name": "Kurenai"
+    },
+    {
+      "printed": "50",
+      "number": "0050",
+      "name": "Kurenai"
+    },
+    {
+      "printed": "51",
+      "number": "0051",
+      "name": "Kurenai"
+    },
+    {
+      "printed": "52",
+      "number": "0052",
+      "name": "Kurenai"
+    },
+    {
+      "printed": "53",
+      "number": "0053",
+      "name": "Ino"
+    },
+    {
+      "printed": "54",
+      "number": "0054",
+      "name": "Ino"
+    },
+    {
+      "printed": "55",
+      "number": "0055",
+      "name": "Ino"
+    },
+    {
+      "printed": "56",
+      "number": "0056",
+      "name": "Ino"
+    },
+    {
+      "printed": "57",
+      "number": "0057",
+      "name": "Shino"
+    },
+    {
+      "printed": "58",
+      "number": "0058",
+      "name": "Shino"
+    },
+    {
+      "printed": "59",
+      "number": "0059",
+      "name": "Shino"
+    },
+    {
+      "printed": "60",
+      "number": "0060",
+      "name": "Shino"
+    },
+    {
+      "printed": "61",
+      "number": "0061",
+      "name": "Kabuto"
+    },
+    {
+      "printed": "62",
+      "number": "0062",
+      "name": "Kabuto"
+    },
+    {
+      "printed": "63",
+      "number": "0063",
+      "name": "Kabuto"
+    },
+    {
+      "printed": "64",
+      "number": "0064",
+      "name": "Kabuto"
+    },
+    {
+      "printed": "65",
+      "number": "0065",
+      "name": "Haku"
+    },
+    {
+      "printed": "66",
+      "number": "0066",
+      "name": "Haku"
+    },
+    {
+      "printed": "67",
+      "number": "0067",
+      "name": "Haku"
+    },
+    {
+      "printed": "68",
+      "number": "0068",
+      "name": "Haku"
+    },
+    {
+      "printed": "69",
+      "number": "0069",
+      "name": "Zabuza"
+    },
+    {
+      "printed": "70",
+      "number": "0070",
+      "name": "Zabuza"
+    },
+    {
+      "printed": "71",
+      "number": "0071",
+      "name": "Zabuza"
+    },
+    {
+      "printed": "72",
+      "number": "0072",
+      "name": "Zabuza"
+    },
+    {
+      "printed": "73",
+      "number": "0073",
+      "name": "Kankuro"
+    },
+    {
+      "printed": "74",
+      "number": "0074",
+      "name": "Kankuro"
+    },
+    {
+      "printed": "75",
+      "number": "0075",
+      "name": "Kankuro"
+    },
+    {
+      "printed": "76",
+      "number": "0076",
+      "name": "Kankuro"
+    },
+    {
+      "printed": "77",
+      "number": "0077",
+      "name": "Temari"
+    },
+    {
+      "printed": "78",
+      "number": "0078",
+      "name": "Temari"
+    },
+    {
+      "printed": "79",
+      "number": "0079",
+      "name": "Temari"
+    },
+    {
+      "printed": "80",
+      "number": "0080",
+      "name": "Temari"
+    },
+    {
+      "printed": "81",
+      "number": "0081",
+      "name": "Tenten"
+    },
+    {
+      "printed": "82",
+      "number": "0082",
+      "name": "Tenten"
+    },
+    {
+      "printed": "83",
+      "number": "0083",
+      "name": "Tenten"
+    },
+    {
+      "printed": "84",
+      "number": "0084",
+      "name": "Tenten"
+    },
+    {
+      "printed": "85",
+      "number": "0085",
+      "name": "Kiba"
+    },
+    {
+      "printed": "86",
+      "number": "0086",
+      "name": "Kiba"
+    },
+    {
+      "printed": "87",
+      "number": "0087",
+      "name": "Kiba"
+    },
+    {
+      "printed": "88",
+      "number": "0088",
+      "name": "Kiba"
+    },
+    {
+      "printed": "89",
+      "number": "0089",
+      "name": "Gaara"
+    },
+    {
+      "printed": "90",
+      "number": "0090",
+      "name": "Gaara"
+    },
+    {
+      "printed": "91",
+      "number": "0091",
+      "name": "Gaara"
+    },
+    {
+      "printed": "92",
+      "number": "0092",
+      "name": "Gaara"
+    },
+    {
+      "printed": "93",
+      "number": "0093",
+      "name": "Orochimaru"
+    },
+    {
+      "printed": "94",
+      "number": "0094",
+      "name": "Orochimaru"
+    },
+    {
+      "printed": "95",
+      "number": "0095",
+      "name": "Orochimaru"
+    },
+    {
+      "printed": "96",
+      "number": "0096",
+      "name": "Orochimaru"
+    },
+    {
+      "printed": "97",
+      "number": "0097",
+      "name": "Jiraiya"
+    },
+    {
+      "printed": "98",
+      "number": "0098",
+      "name": "Jiraiya"
+    },
+    {
+      "printed": "99",
+      "number": "0099",
+      "name": "Jiraiya"
+    },
+    {
+      "printed": "100",
+      "number": "0100",
+      "name": "Jiraiya"
+    }
+  ]
+}

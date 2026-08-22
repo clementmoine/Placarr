@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Naruto Ultra Challenge — album + pochette (upscales) ; cartes encore vides.
+ * Naruto Ultra Challenge — album, pochette, et les cent cartes de la checklist.
  *
  *   pnpm naruto:ultra
  *   pnpm naruto:ultra -- --force
@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 
+import { buildUltraChallengeFromLedgers } from "./buildFromLedgers";
 import { harvestColekaAlbum } from "./colekaAlbum";
 import { ingestUltraSealedProducts } from "./sealedProducts";
 import { NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "./pack";
@@ -26,6 +27,15 @@ export async function runNarutoUltraPackPipeline(
     packId: NARUTO_ULTRA_PACK_ID,
     curatedDir: narutoUltraCuratedDir(),
     label: "Naruto Ultra Challenge",
+    seed: (index) => {
+      const built = buildUltraChallengeFromLedgers({ index });
+      if (built.skipped.length) {
+        console.log(
+          `── Ultra Challenge — ${built.skipped.length} écartée(s) : ${built.skipped.join(", ")}`,
+        );
+      }
+      return { prints: built.prints, titles: built.titles };
+    },
     seedProducts: () => ingestUltraSealedProducts(),
   });
 }

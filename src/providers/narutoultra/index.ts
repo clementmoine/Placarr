@@ -3,7 +3,7 @@
  *
  * Autre jeu que le Carddass : Vintage rangeait ces faces sous « French » et
  * elles n'ont jamais été des NI/TE/TA. Ligne Catalogue à part : album et
- * pochette (upscales Figma + dump Coleka), aucune carte ingérée.
+ * pochette (upscales Figma + dump Coleka), et cent cartes titrées, sans face.
  */
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 import { createLocalTcgLine } from "@/providers/shared/cardCatalogue/localTcgLine";
@@ -33,7 +33,7 @@ const line = createLocalTcgLine({
   syncHint: "pnpm naruto:ultra",
   websiteUrl: "http://www.animecollection.fr/cartes.php?idl=4&idc=113&ids=254",
   notes:
-    "Panini Ultra Challenge (lamincards, sept. 2007) → `data/naruto/ultra-challenge/`. Ni Carddass, ni CCG Bandai, ni 疾風伝, ni Ninja Ranks. Album et pochette (upscales Figma, dump Coleka à côté). Aucune carte ingérée : le verso d’album est une checklist, pas une source de titres tant que les numéros upscalés ne sont pas relus.",
+    "Panini Ultra Challenge (lamincards, sept. 2007) → `data/naruto/ultra-challenge/`. Ni Carddass, ni CCG Bandai, ni 疾風伝, ni Ninja Ranks. Album et pochette (upscales Figma, dump Coleka à côté). Les cent cartes viennent de la checklist laststicker (collection 589) : le verso d’album en est une aussi, mais l’upscale en brouille les numéros. Aucune face : les scans laststicker ne font que 211×300, et sa galerie est interdite aux robots.",
 });
 
 export const narutoUltraLine = line;

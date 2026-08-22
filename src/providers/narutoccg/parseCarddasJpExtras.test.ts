@@ -42,7 +42,6 @@ describe("carddasJpPromoCards", () => {
   });
 });
 
-
 describe("mergeCarddasJpPromoIntoIndex", () => {
   it("mints PR忍 beside NI and does not overwrite 巻ノ JA", () => {
     const merged = mergeCarddasJpPromoIntoIndex({
@@ -65,4 +64,3 @@ describe("mergeCarddasJpPromoIntoIndex", () => {
     ).toBe("うずまきナルト");
   });
 });
-

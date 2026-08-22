@@ -24,9 +24,7 @@ import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import { mergeBandaicgEnNamesIntoIndex } from "./parseBandaicgCardlist";
 import { mergeBggEnCcgS1IntoIndex } from "./parseBggNarutoList";
 import { mergeCarddasJpNamesIntoIndex } from "./parseCarddasJpCardlist";
-import {
-  mergeCarddasJpPromoIntoIndex,
-} from "./parseCarddasJpExtras";
+import { mergeCarddasJpPromoIntoIndex } from "./parseCarddasJpExtras";
 import { cardTypeFromCollectorNumber } from "./parseBandaicgAsset";
 import { parseEnCcgPrintedRef } from "./parseEnCcgPrinted";
 import { mergeCardgameclubItIntoIndex } from "./scrapeCardgameclubIt";

@@ -279,9 +279,20 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   partagé, pas un masque par carte. Le type, lui, est une donnée de carte, donc
   hors APK. Inutile d'y rechercher un tirage : la question « telle carte est-elle
   dans l'appli ? » n'a pas de réponse dans les fichiers qu'on possède.
-- **LorcanaJSON ne publie pas les sets promo comme sets.** Amont du 2026-08-15 :
-  3242 cartes, `setCode` ∈ {1…13, Q1, Q2} — ni `P1`, ni `P2`, ni `C2`, ni
-  Coconut. Les 23 tirages que notre base range en `promo_grouping = P2` avec
+- **LorcanaJSON ne publie pas les sets promo comme sets.** Amont du 2026-08-15
+  (format 2.3.5) : 3242 cartes, `setCode` ∈ {1…13, Q1, Q2} — ni `P1`, ni `P2`,
+  ni `C2`, ni Coconut. **Chercher un promo par `setCode` ne rend donc rien, et
+  c'est un faux négatif** : les promos sont bien là, 185 d'entre elles, sous
+  `promoGrouping`, rangées sous l'extension de la carte réimprimée. La bonne
+  requête énumère ce champ, et elle donne `P1` 1–40 (sans 25), `P2` 1–35
+  (sans 15, 16, 17 ; 24 et 26 en double pour leurs variantes), `P3` 1–60,
+  `P4` 9–16, `C1` 1–10 (sans 5), `C2` 1–10, plus `CC1`, `D23`, `DIS`, `PD1`.
+  Les deux manques de `P1` et `C1` tombent pile sur `25/P1` et `5/C1`, les deux
+  trous déjà connus par dotgg — la méthode se valide d'elle-même. Aucun des
+  quatre dumps de langue (en 3242, fr 3160, de 3160, it 2757) ne porte de `P2`
+  au-delà de 35, et `promoSourceCategory` n'a que sept valeurs — D23, Organized
+  Play, Promo, Disney 100, Challenge, Disney Cruise, Disney Parks & Stores —
+  dont aucune ne couvre les encarts de puzzle. Les 23 tirages que notre base range en `promo_grouping = P2` avec
   `["Silver"]` sont des cartes de sets numérotés (`5-1`, `5-2`…) réimprimées en
   promo, pas le set P2 lui-même. Le trou est donc **structurel**, pas un fetch
   périmé : re-tirer LorcanaJSON ne le comblera jamais.

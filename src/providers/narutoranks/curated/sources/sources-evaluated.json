@@ -1,0 +1,65 @@
+{
+  "observed": "2026-08-22",
+  "note": "Quatorze pistes proposées, évaluées une par une. Écrit ici pour qu'on ne les rouvre pas sans raison.",
+  "useful": [
+    {
+      "host": "arcadegamecards.com",
+      "yield": "72 cartes de base sans un trou + 9 inserts, 740×1036, édition américaine",
+      "state": "moissonneur écrit et câblé ; le site est derrière un challenge Cloudflare, donc il ne rend rien sans `FLARESOLVERR_URL`"
+    },
+    {
+      "host": "imadokicollection.it",
+      "yield": "81 faces italiennes découpées de 11 planches",
+      "state": "ingéré"
+    },
+    {
+      "host": "paninionline.com (Wayback)",
+      "yield": "checklist officielle complète — corrobore la nôtre 72/72 — plus « Group Seven » comme nom de BL",
+      "state": "attestation versée"
+    }
+  ],
+  "exhausted": [
+    {
+      "host": "nonsportrealm.com",
+      "finding": "fiches par carte pour les neuf Ninja Warriors, noms conformes aux nôtres, mais **aucun scan Naruto** — les vignettes de ses pages viennent d'autres séries."
+    },
+    {
+      "host": "paninimania.com",
+      "finding": "structure de l'édition européenne (1-72, FF6, NS6, SD6, NW9, GS3), code-barres 8018190028805, janvier 2007. Les checklists par carte sont réservées aux membres connectés."
+    },
+    {
+      "host": "nslists.com",
+      "finding": "checklist en texte, conforme, plus les ratios d'insertion (1:7 pour NW, 1:11 pour FF et SD). Aucune image."
+    },
+    {
+      "host": "laststicker.com",
+      "finding": "checklist et vignettes, mais 211×300 sans variante plus grande — trop petit pour une face."
+    },
+    {
+      "host": "coleka.com",
+      "finding": "59 faces françaises ingérées depuis la branche EN ; les branches FR et IT sont derrière le mur de vérification."
+    },
+    {
+      "host": "inkworks.com (Wayback)",
+      "finding": "15 assets, presque tous marketing ; 2 faces échantillon déjà ingérées."
+    }
+  ],
+  "blocked": [
+    {
+      "host": "naruto.fandom.com",
+      "finding": "challenge Cloudflare."
+    },
+    {
+      "host": "trocafigurinhas.com",
+      "finding": "redirection 307 non suivie ; à réessayer."
+    },
+    {
+      "host": "ebay.com",
+      "finding": "les deux annonces (293490000296, 403984180609) rendent une page d'erreur, en `curl` comme au navigateur — annonces terminées, ou blocage. Le flyer reste un produit qu'on n'a pas."
+    },
+    {
+      "host": "tcdb.com",
+      "finding": "57 rectos et 56 versos, la meilleure couverture mesurée — mais ses conditions d'utilisation interdisent l'extraction en toutes lettres. Consultable, pas moissonnable."
+    }
+  ]
+}

@@ -10,6 +10,10 @@ import { fileURLToPath } from "node:url";
 
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 
+import {
+  harvestArcadeGameCards,
+  installArcadeGameCards,
+} from "./arcadeGameCards";
 import { buildNinjaRanksFromLedgers } from "./buildFromLedgers";
 import {
   harvestColekaNinjaRanks,
@@ -51,6 +55,20 @@ export async function runNarutoRanksPackPipeline(
         .join(", ")}`,
     );
   }
+  const arcade = await harvestArcadeGameCards({ force });
+  console.log(
+    `── arcadegamecards — ${arcade.pages} page(s), ${arcade.cards} carte(s) retenue(s) : ${arcade.ok} photo, ${arcade.skip} déjà là, ${arcade.fail} manquée${arcade.fail === 1 ? "" : "s"}`,
+  );
+  if (arcade.rejected.length) {
+    console.log(
+      `── arcadegamecards — ${arcade.rejected.length} fiche(s) refusée(s) : ${arcade.rejected
+        .map(
+          (r: { printed: string; reason: string }) =>
+            `${r.printed} (${r.reason.slice(0, 44)}…)`,
+        )
+        .join(", ")}`,
+    );
+  }
   const imadoki = await harvestImadokiSheets({ force });
   console.log(
     `── Imadoki — ${imadoki.ok} planche(s), ${imadoki.skip} déjà là, ${imadoki.fail} manquée${imadoki.fail === 1 ? "" : "s"}`,
@@ -73,6 +91,12 @@ export async function runNarutoRanksPackPipeline(
       if (faces.installed) {
         console.log(
           `── Naruto Ninja Ranks — ${faces.installed} face${faces.installed === 1 ? "" : "s"} échantillon`,
+        );
+      }
+      const usa = installArcadeGameCards(index);
+      if (usa.faces) {
+        console.log(
+          `── Naruto Ninja Ranks — ${usa.faces} face(s) américaine(s)`,
         );
       }
       const scans = installColekaNinjaRanks(index);

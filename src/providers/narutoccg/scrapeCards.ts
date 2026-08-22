@@ -41,6 +41,7 @@ import { loadStorm3Ledger } from "./scrapeStorm3";
 import { ensureNarutoChecklistLayout } from "./buildCoverageChecklist";
 import { ensureNarutoCuratedAssets } from "./installReconstructed";
 import {
+  ALT_LINE_DISK_PREFIXES,
   isNarutoFamilyFolder,
   mintNarutoPrintKey,
   narutoDiskCardId,
@@ -613,6 +614,20 @@ export function buildIndexFromDisk(root: string): {
     const familyDir = path.join(cardsDir, family);
     if (!fs.statSync(familyDir).isDirectory()) continue;
     if (!isNarutoFamilyFolder(family)) continue;
+    /*
+      La ligne 疾風伝 est un **autre jeu**, servi par le pack `narutoshippuden`.
+
+      `DISK_LAYOUT_FOLDERS` accepte ses dossiers (`shi`, `mju`, `msa`, `gaku`)
+      parce que le disque les range ainsi, hérité d'avant la scission. Mais les
+      ranger n'est pas les posséder : leurs tirages ne sont plus dans ce
+      catalogue, et en ramasser les faces produisait des faces sans tirage —
+      dix-sept le 2026-08-22 — sur quoi l'écriture d'index mourait, et la base
+      restait vide.
+
+      Les dix-sept sont déjà dans le pack Shippuden, aux mêmes noms de fichier :
+      rien à récupérer ici, seulement un jeu voisin à ne pas s'annexer.
+    */
+    if (ALT_LINE_DISK_PREFIXES.has(family.trim().toLowerCase())) continue;
     for (const diskId of fs.readdirSync(familyDir)) {
       const diskDir = path.join(familyDir, diskId);
       if (!fs.statSync(diskDir).isDirectory()) continue;

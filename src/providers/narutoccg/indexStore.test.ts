@@ -1,10 +1,11 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { exportNarutoCardsIndexJson } from "./indexStore";
+import { exportNarutoCardsIndexJson, writeNarutoCcgIndex } from "./indexStore";
 
 const dirs: string[] = [];
 
@@ -128,5 +129,78 @@ describe("exportNarutoCardsIndexJson", () => {
       art: "art.jpg",
     });
     expect(index.cards["naruto:ni-0064"]?.langs.fr?.printed).toBeUndefined();
+  });
+});
+
+describe("writeNarutoCcgIndex", () => {
+  const print = {
+    printKey: "naruto:ni-0001",
+    setCode: "s1",
+    number: "ni0001",
+    cardType: "character",
+  };
+
+  function scratch(): string {
+    const dir = mkdtempSync(path.join(tmpdir(), "naruto-index-"));
+    dirs.push(dir);
+    return path.join(dir, "catalog.sqlite");
+  }
+
+  it("nomme le tirage manquant plutôt que de rendre « constraint failed »", () => {
+    // Le cas réel : des faces d'un jeu voisin ramassées par erreur, sans
+    // tirage en face. SQLite ne disait que « constraint failed », et la seule
+    // piste restante était une base vide.
+    expect(() =>
+      writeNarutoCcgIndex({
+        prints: [print],
+        assets: [
+          { printKey: "naruto:mju-0023", lang: "ja", art: "art.nikita.jpg" },
+        ],
+        dbPath: scratch(),
+      }),
+    ).toThrow(/naruto:mju-0023/);
+  });
+
+  it("laisse le catalogue précédent intact quand la construction échoue", () => {
+    const dbPath = scratch();
+    writeNarutoCcgIndex({ prints: [print], assets: [], dbPath });
+
+    const countPrints = () => {
+      const db = new DatabaseSync(dbPath);
+      const [row] = db.prepare("select count(*) as n from prints").all() as {
+        n: number;
+      }[];
+      db.close();
+      return row.n;
+    };
+    expect(countPrints()).toBe(1);
+
+    expect(() =>
+      writeNarutoCcgIndex({
+        prints: [print],
+        assets: [{ printKey: "naruto:absent", lang: "ja", art: "a.jpg" }],
+        dbPath,
+      }),
+    ).toThrow();
+
+    // Une reconstruction ratée effaçait la base : le fichier était supprimé
+    // avant l'écriture, et le ROLLBACK ne rendait rien.
+    expect(countPrints()).toBe(1);
+    expect(existsSync(`${dbPath}.building`)).toBe(false);
+  });
+
+  it("remplace bien le catalogue quand la construction réussit", () => {
+    const dbPath = scratch();
+    writeNarutoCcgIndex({ prints: [print], assets: [], dbPath });
+    const second = writeNarutoCcgIndex({
+      prints: [
+        print,
+        { ...print, printKey: "naruto:ni-0002", number: "ni0002" },
+      ],
+      assets: [],
+      dbPath,
+    });
+    expect(second.printCount).toBe(2);
+    expect(existsSync(`${dbPath}.building`)).toBe(false);
   });
 });

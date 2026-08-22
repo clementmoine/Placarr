@@ -2,7 +2,13 @@
  * Naruto CCG local catalogue — `data/naruto/carddass/catalog.sqlite` + cards-index.json.
  * Closed corpus (Wayback carddass.fr). Server/script only.
  */
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -134,14 +140,24 @@ export function writeNarutoCcgIndex(input: {
   const pack = input.pack ?? NARUTO_PACK_ID;
   const dbPath = input.dbPath ?? narutoPackDbPath(pack);
   resetNarutoCcgDbCache();
-  if (existsSync(dbPath)) {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+  /*
+    On construit à côté, et on ne remplace qu'une fois l'écriture réussie.
+
+    L'ancienne version supprimait la base avant d'écrire : une contrainte violée
+    au milieu des insertions laissait alors zéro catalogue au lieu de l'ancien —
+    le `ROLLBACK` ne rendait rien, le fichier ayant déjà disparu. Un index est
+    dérivé et reconstructible, mais pas en une seconde : perdre le précédent
+    parce que le suivant échoue coûte plus cher que le disque d'un doublon.
+  */
+  const buildPath = `${dbPath}.building`;
+  if (existsSync(buildPath)) {
     try {
-      unlinkSync(dbPath);
+      unlinkSync(buildPath);
     } catch {
       /* ignore */
     }
   }
-  mkdirSync(path.dirname(dbPath), { recursive: true });
 
   const folded = foldNarutoCatalogueRecords({
     prints: input.prints,
@@ -149,7 +165,7 @@ export function writeNarutoCcgIndex(input: {
     assets: input.assets,
   });
 
-  const db = new DatabaseSync(dbPath);
+  const db = new DatabaseSync(buildPath);
   createSchema(db);
 
   const insertPrint = db.prepare(`
@@ -205,6 +221,26 @@ export function writeNarutoCcgIndex(input: {
         p.sourceUrl ?? null,
       );
     }
+    /*
+      Un titre ou une face qui nomme un tirage absent viole la clé étrangère, et
+      SQLite ne dit alors que « constraint failed ». On nomme le coupable : sans
+      ça, la seule piste est une base vide.
+    */
+    const known = new Set(folded.prints.map((p) => p.printKey));
+    const orphans = [
+      ...folded.titles
+        .filter((t) => !known.has(t.printKey))
+        .map((t) => `titre ${t.printKey} (${t.lang})`),
+      ...folded.assets
+        .filter((a) => !known.has(a.printKey))
+        .map((a) => `face ${a.printKey} (${a.lang})`),
+    ];
+    if (orphans.length) {
+      throw new Error(
+        `${orphans.length} enregistrement(s) nomment un tirage absent de \`prints\` : ` +
+          `${orphans.slice(0, 12).join(", ")}${orphans.length > 12 ? `, … (+${orphans.length - 12})` : ""}`,
+      );
+    }
     for (const t of folded.titles) {
       insertTitle.run(t.printKey, t.lang, t.fullName, t.rarity ?? null);
     }
@@ -224,10 +260,16 @@ export function writeNarutoCcgIndex(input: {
   } catch (error) {
     db.exec("ROLLBACK");
     db.close();
+    try {
+      unlinkSync(buildPath);
+    } catch {
+      /* ignore */
+    }
     throw error;
   }
 
   db.close();
+  renameSync(buildPath, dbPath);
   return { dbPath, printCount: folded.prints.length };
 }
 

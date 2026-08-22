@@ -31,6 +31,9 @@ describe("productSourceFromStagingRel", () => {
     expect(
       productSourceFromStagingRel("staging/coleka-s28/set-cover.webp"),
     ).toBe("coleka");
+    expect(
+      productSourceFromStagingRel("staging/coleka-s24/set-cover.webp"),
+    ).toBe("coleka");
     expect(productSourceFromStagingRel("staging/goat-en-boxes/s16.gif")).toBe(
       "goat",
     );

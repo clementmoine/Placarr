@@ -1,23 +1,30 @@
 /**
- * Coleka FR scans for Bandai USA CCG Series 28 (Ultimate Ninja Storm 3).
+ * Coleka FR scans for Bandai USA CCG late series (Sage's Legacy s24,
+ * Ultimate Ninja Storm 3 s28).
  *
- * Coleka files this set as « Cartes Naruto Série 28 » (`_r16649`) and prints
- * EU prefixes `NI-` / `JU-` / `MI-`. Those are the same cards as EN `N/J/M`
- * (and the same collector family as Carddass `NI/TE/TA`). Disk ids stay
- * `n1650` / `j1002` / `m976` so files land in the EN pack, not `ni1650`.
+ * Coleka prints EU prefixes `NI-` / `JU-` / `MI-`. Those are the same cards
+ * as EN `N/J/M` (and the same collector family as Carddass `NI/TE/TA`). Disk
+ * ids stay `n1358` / `j895` / `m855` so files land beside the EN pack, never
+ * `ni1358`.
  *
- * Do not scrape the parent umbrella `_r4102` (~7000 mixed cards). The
- * rubrique webp is the Series 28 display packshot (box + booster), not a
- * card listing.
+ * Do not scrape the parent umbrella `_r4102` (~7000 mixed cards). Each
+ * série listing is its own branch (`_r15466` s24, `_r16649` s28).
  */
 import { STORM3_SET } from "./parseStorm3Shop";
 
 export { STORM3_SET };
 
-export const COLEKA_STORM3_LANG = "fr";
+export const SAGES_LEGACY_SET = "s24";
+export const COLEKA_CCG_FR_LANG = "fr";
+export const COLEKA_STORM3_LANG = COLEKA_CCG_FR_LANG;
 export const COLEKA_ORIGIN = "https://www.coleka.com";
+export const COLEKA_SAGES_LEGACY_LISTING_PATH =
+  "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-24-sage-s-legacy_r15466";
 export const COLEKA_STORM3_LISTING_PATH =
   "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-28_r16649";
+/** Display packshot Coleka uses for Série 24 (box + booster). Already SKU display-s24. */
+export const COLEKA_SAGES_LEGACY_SET_COVER_URL =
+  "https://thumbs.coleka.com/media/rubrique/202010/14/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-24-sage-s-legacy.webp";
 /** Display packshot Coleka uses for Série 28 (box + booster). */
 export const COLEKA_STORM3_SET_COVER_URL =
   "https://thumbs.coleka.com/media/rubrique/202012/05/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-28.webp";
@@ -86,9 +93,17 @@ export function colekaHtmlIsVerifyWall(html: string): boolean {
  * Coleka paginates 48-per-page (`?p=1` is page 2). Page 1 is often a Cloudflare
  * cache HIT; later pages tend to trip the verify wall. `nbpp=240` is uncached.
  */
-export function colekaStorm3ListingPageUrls(): string[] {
-  const base = `${COLEKA_ORIGIN}${COLEKA_STORM3_LISTING_PATH}`;
+export function colekaCcgFrListingPageUrls(listingPath: string): string[] {
+  const base = `${COLEKA_ORIGIN}${listingPath}`;
   return [base, `${base}?p=1`, `${base}?p=2`];
+}
+
+export function colekaSagesLegacyListingPageUrls(): string[] {
+  return colekaCcgFrListingPageUrls(COLEKA_SAGES_LEGACY_LISTING_PATH);
+}
+
+export function colekaStorm3ListingPageUrls(): string[] {
+  return colekaCcgFrListingPageUrls(COLEKA_STORM3_LISTING_PATH);
 }
 
 const ITEM_RE =

@@ -180,8 +180,9 @@ const JAPANESE_LANGUAGES = ["ja"];
  * Les langues d'une série européenne, **mesurées** carte par carte.
  *
  * Ici l'inverse est vrai : ces séries n'ont pas toutes paru partout. Le
- * français s'arrête à la Série 5 — la 6 fut annulée — puis les séries 7 à 27
- * sont anglaises seules, et la 28 a reçu une impression française tardive.
+ * français s'arrête à la Série 5 — la 6 fut annulée — puis les séries 7 à 23
+ * et 25–27 sont anglaises seules. Sage's Legacy (s24) et Storm 3 (s28) ont
+ * reçu une impression française tardive.
  * Une liste en bloc proposait donc « Quest for Power », le set 7 américain,
  * à qui filtrait sur le français.
  *
@@ -331,16 +332,28 @@ export function searchNarutoPrints(
   const compact = trimmed.toLowerCase().replace(/[\s-]/g, "");
   const like = `%${trimmed.toLowerCase()}%`;
   const likeCompact = `%${compact}%`;
-  const siblingLikes = [
+  /*
+    Collector needles must not be wrapped in `%n14%` : that substring matches
+    `n1400` (Sage's Legacy FR `NI-1400`) and, with enough French hits, fills
+    the SQL LIMIT before `ni0014` can be sorted first. Exact id or grouping
+    suffix (`n0014-ps`) keeps `ni14` on the printed Carddass ref.
+  */
+  const siblingNeedles = [
     ...new Set([
       ...narutoCollectorSearchNeedles(trimmed),
       ...narutoCollectorSearchNeedles(compact),
     ]),
-  ].map((needle) => `%${needle}%`);
-  const numberLikes = [...new Set([likeCompact, ...siblingLikes])];
-  const numberClause = numberLikes
-    .map(() => "LOWER(p.number) LIKE ?")
-    .join(" OR ");
+  ].map((needle) => needle.toLowerCase());
+  const numberClause =
+    siblingNeedles.length > 0
+      ? siblingNeedles
+          .map(() => "(LOWER(p.number) = ? OR LOWER(p.number) LIKE ?)")
+          .join(" OR ")
+      : "LOWER(p.number) LIKE ?";
+  const numberParams =
+    siblingNeedles.length > 0
+      ? siblingNeedles.flatMap((needle) => [needle, `${needle}-%`])
+      : [likeCompact];
   /*
     L'extension borne la requête, le texte l'affine. Sans texte, `1 = 1` laisse
     passer tout le set — c'est la question « montre-moi la Série 1 », qui n'a
@@ -408,7 +421,7 @@ export function searchNarutoPrints(
       stockées avec : coller `naruto:ni-0014`, l'identifiant exact de la carte,
       ne rendait donc rien du tout.
     */
-    textParams: [like, like, likeCompact, ...numberLikes],
+    textParams: [like, like, likeCompact, ...numberParams],
   });
 
   const rows: NarutoPrintDetail[] = [];

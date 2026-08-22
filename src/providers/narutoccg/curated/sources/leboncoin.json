@@ -1,0 +1,21 @@
+{
+  "source": "img.leboncoin.fr listing photos (collector pastes)",
+  "observed": "2026-08-21",
+  "note": "Pasted CDN URLs only — do not crawl listings or seller stores. `ad-large` is 602×800. Photos are toploader shots with a leboncoin watermark, not flat scans. Coleka has no French PR-096 (search « 4e Hokage » is empty); the EN copy lives under US promos `_r38199`. Verso of this listing is the Bandai USA CCG back already at curated/cards/back.en.png — do not ingest it as a face.",
+  "ingestCollection": false,
+  "faces": [
+    {
+      "printedRef": "PR-096",
+      "lang": "fr",
+      "setCode": "promo",
+      "title": "4E Hokage",
+      "listing": "https://www.leboncoin.fr/ad/collection/3233037633",
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/22/aa/a7/22aaa7568219b8dcf0505417cec451c376711181.jpg?rule=ad-large",
+      "staging": "staging/leboncoin/pr0096-fr.jpg",
+      "ingest": true,
+      "role": "face",
+      "pixels": { "width": 602, "height": 800 },
+      "note": "French-text Storm 3 promo in a toploader. Printed: 4e HOKAGE, password 5CBNQ9W86S, [SAUVEUR DE KONOHA], PR-096 PROMO."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "source": "collector physical copies (chat 2026-08-16 17:46)",
   "observed": "2026-08-16",
-  "note": "French-text Bandai USA CCG in hand — same game as EN, not Carddass NI/TE/TA. Storm 3 lives in pack naruto/en-ccg set s28 locale fr. The 4e Hokage is promo PR-096, not the s28 booster. 10-char codes are Ultimate Ninja Storm 3 video-game passwords, not printKeys. « © 2002 MK – 2007 SP » is the Kishimoto / Shippuden legal line, not the print year (Storm 3 = May 2013). CCG sleeve: curated/cards/back.en.png. Do not put PR-096 under Carddass tin promos without a locale split; disk ids differ (pr096 vs pr011) but the set folder is the same promo/.",
+  "note": "French-text Bandai USA CCG in hand — same game as EN, not Carddass NI/TE/TA. Storm 3 lives in pack naruto/en-ccg set s28 locale fr. The 4e Hokage is promo PR-096, not the s28 booster. 10-char codes are Ultimate Ninja Storm 3 video-game passwords, not printKeys. « © 2002 MK – 2007 SP » is the Kishimoto / Shippuden legal line, not the print year (Storm 3 = May 2013). CCG sleeve: curated/cards/back.en.png. Do not put PR-096 under Carddass tin promos without a locale split; disk ids differ (pr096 vs pr011) but the set folder is the same promo/. FR face: Leboncoin listing 3233037633 (toploader, art.leboncoin). EN face: Drive pr096.png + Coleka _r38199 / _i1624567. Coleka search for the French title is empty.",
   "sameSleeveEnFr": true,
   "pack": "naruto/en-ccg",
   "legalLine": "2002MK - 2007SP",
@@ -15,7 +15,11 @@
       "setCode": "promo",
       "notBoosterS28": true,
       "printKeyHint": "naruto:pr-0096",
-      "inCardsIndex": true
+      "inCardsIndex": true,
+      "effectName": "SAUVEUR DE KONOHA",
+      "characterName": "Minato Namikaze",
+      "faceFr": "leboncoin",
+      "faceEn": "drive + coleka _r38199"
     },
     {
       "namePrinted": "Kisame Hoshigaki",

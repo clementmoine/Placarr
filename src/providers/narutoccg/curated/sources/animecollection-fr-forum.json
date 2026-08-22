@@ -8,7 +8,7 @@
   "frenchLine": {
     "claim": "« Pour les card game française, il existe les card game Naruto (dos bleu) composés de 5 part et les card game Naruto Shippuden (dos noir) composé de 2 part. Il y a aussi un Starter : La Tempête Approche composé de 33 cartes. » — « Les deux séries françaises correspondent aux séries américaines sage's legacy et ultimate ninja storm. »",
     "corroborates": "**Cinq** parts françaises, pas six : recoupe indépendamment l'annulation de la Série 6 en France, que notre registre `sets.json` tenait déjà de la presse de 2008.",
-    "actionable": "Il annonce DEUX parts françaises tardives, dos noir : Sage's Legacy (`s24`) et Ultimate Ninja Storm 3 (`s28`). Mesuré le 2026-08-21, notre catalogue n'a du français QUE sur `s28` — 120 titres — et rien sur `s24`, qui n'a que ses 120 titres anglais. **Il manque donc une part française entière.**",
+    "actionable": "Il annonce DEUX parts françaises tardives, dos noir : Sage's Legacy (`s24`) et Ultimate Ninja Storm 3 (`s28`). Les deux sont au catalogue : `s28` via Coleka `_r16649` (120 titres FR) et `s24` via `_r15466` (120 titres FR ; Coleka annonce 121, 120 refs NI/JU/MI uniques). Le starter « La Tempête Approche » (33 cartes) reste absent du scellé.",
     "starter": "« La Tempête Approche », 33 cartes. Absent de notre catalogue de produits scellés."
   },
   "dataCarddass": {
@@ -41,7 +41,7 @@
     "miracleBattleCarddass": "5 parts + un starter. Un autre message du même sujet détaille le deck NRS01 (20 cartes : 16 communes, 2 rares, 1 super rare, 1 Super Oméga) et la partie NR01 (91 cartes, avec Miracle et Super Oméga).",
     "gumica": "3 parts.",
     "panini": "Ultra Challenge (lamincards), Ninja Ranks Premium Trading Cards, et des stickers « True Spirit of the Ninja ».",
-    "note": "Toutes hors de notre catalogue : ce sont d'autres jeux, comme le 疾風伝. Consignés pour ne pas les confondre avec le Carddass."
+    "note": "Ninja Ranks et Ultra Challenge ont chacun leur ligne Catalogue (`naruto/ninja-ranks`, `naruto/ultra-challenge`) depuis 2026-08-21 — pour ne plus les confondre avec le Carddass. Miracle Battle et Gumica restent hors catalogue."
   },
   "newLeads": [
     {

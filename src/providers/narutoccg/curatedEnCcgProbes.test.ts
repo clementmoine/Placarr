@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import bandaiCom from "./curated/sources/bandai-com-naruto.json";
 import chatLinks from "./curated/sources/chat-links-2026-08-16.json";
+import colekaS24 from "./curated/sources/coleka-s24.json";
 import colekaS28 from "./curated/sources/coleka-s28.json";
 import colekaS6It from "./curated/sources/coleka-s6-it.json";
 import goat from "./curated/sources/goat-en-ccg.json";
@@ -22,6 +23,8 @@ import { narutoDiskCardId } from "./collectorIdentity";
 import lineage2 from "./curated/sources/lineage2universe.json";
 import montreal from "./curated/sources/naruto-montreal.json";
 import physical from "./curated/sources/user-physical-ccg.json";
+import leboncoin from "./curated/sources/leboncoin.json";
+import colekaUsPromos from "./curated/sources/coleka-us-promos.json";
 import enCcgSeries from "./curated/sources/en-ccg-series.json";
 import tcdb from "./curated/sources/tcdb-en-ccg.json";
 import bggEnCcgS1 from "./curated/sources/bgg-en-ccg-s1.json";
@@ -378,9 +381,13 @@ describe("EN CCG source ledgers", () => {
     expect(physical.legalLineIsNotPrintYear).toBe(true);
     const hokage = physical.prints.find((row) => row.ref === "PR-096");
     const kisame = physical.prints.find((row) => row.ref === "1650");
-    expect(hokage?.notBoosterS28).toBe(true);
-    expect(hokage?.password).toBe("5CBNQ9W86S");
-    expect(hokage?.inCardsIndex).toBe(true);
+    expect(hokage).toMatchObject({
+      notBoosterS28: true,
+      password: "5CBNQ9W86S",
+      inCardsIndex: true,
+      faceFr: "leboncoin",
+      effectName: "SAUVEUR DE KONOHA",
+    });
     expect(kisame?.printKeyHint).toBe("naruto:n-1650");
     expect(kisame?.password).toBe("9EHS44A9ST");
     expect(kisame?.printedAlso).toBe("52B");
@@ -395,6 +402,44 @@ describe("EN CCG source ledgers", () => {
     expect(colekaS6It.diskTactiquePrefix).toBe("ta");
     expect(colekaS6It.umbrella.scrape).toBe(false);
     expect(colekaS6It.frenchBranch.scrape).toBe(false);
+  });
+
+  it("keeps Coleka US promos _r38199 as EN CCG, not the 7000-card umbrella", () => {
+    expect(colekaUsPromos.listing.scrape).toBe(true);
+    expect(colekaUsPromos.listing.count).toBe(101);
+    expect(colekaUsPromos.listing.url).toContain("_r38199");
+    expect(colekaUsPromos.listing.lang).toBe("en");
+    expect(colekaUsPromos.listing.set).toBe("promo");
+    expect(colekaUsPromos.umbrella.scrape).toBe(false);
+    expect(colekaUsPromos.pr096).toMatchObject({
+      printedRef: "PR-096",
+      lang: "en",
+      name: "The 4th Hokage",
+    });
+    expect(colekaUsPromos.pr096.page).toContain("_i1624567");
+  });
+
+  it("pastes the French PR-096 Leboncoin photo without crawling the seller", () => {
+    expect(leboncoin.ingestCollection).toBe(false);
+    expect(leboncoin.faces[0]).toMatchObject({
+      printedRef: "PR-096",
+      lang: "fr",
+      ingest: true,
+    });
+    expect(leboncoin.faces[0]?.listing).toContain("3233037633");
+  });
+
+  it("keeps Coleka umbrella vs série-24 listing vs existing display-s24", () => {
+    expect(colekaS24.umbrella.scrape).toBe(false);
+    expect(colekaS24.umbrella.url).toContain("_r4102");
+    expect(colekaS24.listing.url).toContain("_r15466");
+    expect(colekaS24.listing.scrape).toBe(true);
+    expect(colekaS24.listing.lang).toBe("fr");
+    expect(colekaS24.listing.set).toBe("s24");
+    expect(colekaS24.listing.announced).toBe(121);
+    expect(colekaS24.listing.enumerated).toBe(120);
+    expect(colekaS24.displayPackshot.sku).toBe("display-s24");
+    expect(colekaS24.ingestFaces).toBe("s24/fr");
   });
 
   it("keeps Coleka umbrella vs série-28 listing vs display packshot", () => {

@@ -184,6 +184,11 @@ describe("mergeFoundCatalogueLedgers", () => {
       )?.fullName,
     ).toBe("うずまきナルト");
     expect(merged.physicalAdded).toContain("naruto:pr-0096");
+    expect(
+      merged.titles.find(
+        (t) => t.printKey === "naruto:pr-0096" && t.lang === "fr",
+      )?.fullName,
+    ).toBe("4E Hokage");
     expect(merged.prints.some((p) => p.printKey === "naruto:n-1715")).toBe(
       false,
     );

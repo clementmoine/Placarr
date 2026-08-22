@@ -275,7 +275,7 @@ Exemple face :
    - Même pack pour les trois locales ; EN/JP encore staging jusqu’à promotion sous `cards/{set}/{en|jap}/`
 2. **Catalogue fermé** (CACG FR) : candidat idéal pour une **DB locale terminée** (`data/naruto/…` : `catalog.sqlite` + images) — backlog **« Catalogues locaux finis »**, [data-layout.md](data-layout.md).
 3. **Provider** : pas d’API live — index offline (`pnpm naruto:cards`), pas un poll réseau perpétuel.
-4. **FR CACG d’abord** (~741 Coleka + promos + 2012) ; **Storm 3** (CCG Bandai USA set 28) = `cards/s28/en/` + copies FR `cards/s28/fr/` dans le même pack. Autres lignes (Panini…) = **nouveaux prefixes de set** ou une ligne Catalogue, pas un second pack.
+4. **FR CACG d’abord** (~741 Coleka + promos + 2012) ; **Storm 3** (CCG Bandai USA set 28) = `cards/s28/en/` + copies FR `cards/s28/fr/` dans le même pack. Autres lignes (Panini Ninja Ranks, Ultra Challenge) = **lignes Catalogue** (`naruto/ninja-ranks`, `naruto/ultra-challenge`), pas des prefixes dans le Carddass.
 5. **Finition** = propriété exemplaire (`foil` / holo / `promo`+shuriken) sans rendu.
 6. **Prix** = secondaire.
 7. **Data Carddass arcade / Mythos / Kayou / 2027** = jeux séparés (autre `game` / pack) — hors ombrelle CACG/CCG legacy si produit vraiment distinct.
@@ -331,8 +331,9 @@ Exemple face :
 - [x] Non publiées (`ta090` HTML-only + S6) dans `unreleased` — **conservées** dans le ledger, pas des suppressions.
 - [x] Storm 3 (CCG Bandai USA s28) : scans boutique stop2shop → `cards/s28/en/` (120/120) + ledger `staging/stop2shop-uns3/`.
 - [x] Storm 3 FR : scans Coleka `_r16649` (pas l’ombrelle `_r4102`) → `cards/s28/fr/` + ledger `staging/coleka-s28/`. Coleka imprime `NI/JU/MI` ; disque `n/j/m`. Photos collectionneur, pas des rendus Bandai. Pagination HTML souvent derrière le mur « Vérification ». Packshot display (boîte + booster) = rubrique Coleka Série 28 → SKU `display-s28` (pas un booster inventé).
+- [x] Sage's Legacy FR : scans Coleka `_r15466` → `cards/{family}/{n|j|m}####/fr/` + ledger `staging/coleka-s24/`. Même mapping NI/JU/MI → `n/j/m`. Display déjà SKU `display-s24` (coleka-en-ccg-covers) — pas un second scellé. EN HD = Drive + Vintage 750×1050 (120/120) ; Coleka FR ≈ 1080×1500 photos collectionneur.
 - [x] Dos par langue : `curated/cards/back.{fr|en|it|ja}.png` → `cards/back.{lang}.webp` (pas de `back.webp` générique). CCG Bandai USA = `back.en`.
-- [x] Copies FR en main : Kisame `n1650` (mot de passe UNS3 `9EHS44A9ST`, mention `52B`) déjà au catalogue ; **4e Hokage `PR-096`** (`5CBNQ9W86S`) attesté, **pas** le booster s28 — stub `naruto:pr-0096` via `user-physical-ccg.json`. « © 2002 MK – 2007 SP » ≠ millésime d’impression.
+- [x] Copies FR en main : Kisame `n1650` (mot de passe UNS3 `9EHS44A9ST`, mention `52B`) déjà au catalogue ; **4e Hokage `PR-096`** (`5CBNQ9W86S`) attesté, **pas** le booster s28 — `naruto:pr-0096` via `user-physical-ccg.json`. Face FR : Leboncoin 3233037633 (`art.leboncoin`, toploader). Face EN : Drive `pr096.png` + Coleka `_r38199` (101 promos US, `art.coleka`). « © 2002 MK – 2007 SP » ≠ millésime d’impression.
 - [x] Titres attestés sans face : BGG EN S1 (127, `naruto:n-0001` ≠ `ni-0001`), Coleka FR S6 (hors `Carte NI-255`), Slab-Z JA rookies (4), checklist FR en comblement. Pas de `cards/s1/en/`.
 - [ ] Inventaire Coleka fiche-par-fiche pour nommer les **~20** S2 (et ± S3/S5).
 - [ ] Inventaire complet promo shuriken + Nouvelle Série 2012 (~118).

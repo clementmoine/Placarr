@@ -46,7 +46,9 @@ data/
       staging/  carddass-fr/ | carddas-jp/ | bandaicg-en/ | goat-en-ccg/ | cardgameclub-it/ | coleka-s6-it/ | stop2shop-uns3/ …
       logs/
     en-ccg/                        # alias → carddass (staging historique peut rester ici)
-    # ultra-challenge/ …           # autres lignes produit plus tard
+    shippuden/                     # 「疾風伝 カードゲーム」 — autre jeu, autre pack
+    ninja-ranks/                   # Panini / Inkworks Ninja Ranks (titres EN ; packshots en produits ; 2 faces échantillon)
+    ultra-challenge/               # Panini Ultra Challenge (lamincards, 2007)
   dbs/                             # franchise Dragon Ball Super
     cg/                            # Masters (provider dbscg)
       catalog.sqlite | cards-index.json | products-index.json
@@ -67,8 +69,7 @@ data/
   indexes/title-idf/
 ```
 
-`naruto` = franchise ; **`naruto/carddass`** = dataPack / catalogue admin unique
-(plus d’onglet Bandai CCG). Layout cartes :
+`naruto` = franchise ; **`naruto/carddass`** = Carddass + CCG (plus d’onglet Bandai CCG). **`naruto/shippuden`**, **`naruto/ninja-ranks`**, **`naruto/ultra-challenge`** = autres jeux, autres packs. Layout Carddass :
 `cards/{family}/{ni0001|n0001|nus0097}/{lang}/` — family = tri (`ninja`…), id = préfixe
 imprimé + numéro. NI et N sont **voisins**, pas la même carte. `N-US097` n’est
 pas `N-097` : disque `nus0097`, printKey `naruto:nus-0097`. La série (`s1`,
@@ -83,8 +84,11 @@ Chaque dump reste `art.<source>.<ext>` ; `face.json` choisit l’affichage
 Produits scellés : même contrat sous `products/{slug}/{lang}/` (`art` +
 `logo`). Le wordmark de série est recopié dans chaque SKU (Pokémon / Lorcana
 déjà un logo par produit ; Naruto S1–S5 partagent un GIF — on duplique).
-Titres attestés sans face (BGG EN S1, Coleka FR, Slab-Z JA, PR-096) : print +
+Titres attestés sans face (BGG EN S1, Coleka FR, Slab-Z JA) : print +
 `langs.*.name` dans `cards-index.json`, pas de dossier vide.
+PR-096 a désormais une face FR (`art.leboncoin`) et EN (`art.drive` + `art.coleka`).
+Les 101 promos US Coleka `_r38199` (`PR-001`–`100` + `005R`–`009R`) vivent sous
+`cards/promo/pr0nnn/en/` — pas l’ombrelle `_r4102`, pas les tins FR.
 Provider : `src/providers/narutoccg/`. CLI : `pnpm naruto:cards` — voir
 [naruto_carddass_tcg.md](naruto_carddass_tcg.md).
 Dos = langue : `cards/back.{fr|en|it|ja}.webp` depuis
@@ -119,13 +123,13 @@ Voir [provider_supply_modes.md](provider_supply_modes.md) :
 
 **Trous correctibles (régénération incomplète, pas curated) :**
 
-| Artefact                              | Gap                                                                                                                                          |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `data/pokemon/cards-index.json`       | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + `foil:pokemon` + `pnpm foil:pokemon:rebuild-cards-index`                        |
-| `data/<pack>/products-index.json`     | TCG Cards : ingest au Sync. Naruto : packshots carddass.fr (`pnpm naruto:cards -- --only products`).                                         |
-| `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés)                                                                  |
-| `catalog.refresh` Pokémon/Lorcana     | Identités/scrape + faces index ; foil Unity = CLI / foilExtract                                                                              |
-| Naruto `curated/sources/*.json`       | Ledgers manuels (checklist, names, sets, coleka…). **`apache-index`** → `data/naruto/carddass/logs/` (`pnpm naruto:cards -- --only sources`) |
+| Artefact                              | Gap                                                                                                                                                                   |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data/pokemon/cards-index.json`       | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + `foil:pokemon` + `pnpm foil:pokemon:rebuild-cards-index`                                                 |
+| `data/<pack>/products-index.json`     | TCG Cards : ingest au Sync. Naruto Carddass : packshots carddass.fr (`pnpm naruto:cards -- --only products`). Ninja Ranks : packshots Inkworks (`pnpm naruto:ranks`). |
+| `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés)                                                                                           |
+| `catalog.refresh` Pokémon/Lorcana     | Identités/scrape + faces index ; foil Unity = CLI / foilExtract                                                                                                       |
+| Naruto `curated/sources/*.json`       | Ledgers manuels (checklist, names, sets, coleka…). **`apache-index`** → `data/naruto/carddass/logs/` (`pnpm naruto:cards -- --only sources`)                          |
 
 Certains corpus **ne grandissent plus** (TCG Bandai arrêté, etc.) : base locale
 terminée sous `data/<pack>/`. Candidat : Naruto CACG FR

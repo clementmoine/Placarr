@@ -19,6 +19,7 @@ describe("narutoFaceSourceOf", () => {
     expect(narutoFaceSourceOf("art.carddass.jpg")).toBe("carddass");
     expect(narutoFaceSourceOf("art.ultrajeux.jpg")).toBe("ultrajeux");
     expect(narutoFaceSourceOf("art.ebay.webp")).toBe("ebay");
+    expect(narutoFaceSourceOf("art.leboncoin.jpg")).toBe("leboncoin");
     expect(narutoFaceSourceOf("art.mercari.jpg")).toBe("mercari");
     expect(narutoFaceSourceOf("art.yahoo.jpg")).toBe("yahoo");
     expect(narutoFaceSourceOf("art.cardgameclub.jpg")).toBe("cardgameclub");
@@ -64,6 +65,12 @@ describe("narutoDumpFaceRank", () => {
     );
     expect(narutoDumpFaceRank("art.ultrajeux.jpg", "fr")).toBeGreaterThan(
       narutoDumpFaceRank("art.coleka.jpg", "fr"),
+    );
+    expect(narutoDumpFaceRank("art.coleka.jpg", "fr")).toBeGreaterThan(
+      narutoDumpFaceRank("art.leboncoin.jpg", "fr"),
+    );
+    expect(narutoDumpFaceRank("art.leboncoin.jpg", "fr")).toBeGreaterThan(
+      narutoDumpFaceRank("art.ebay.jpg", "fr"),
     );
     expect(narutoDumpFaceRank("art.coleka.jpg", "it")).toBeGreaterThan(
       narutoDumpFaceRank("art.ebay.jpg", "it"),

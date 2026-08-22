@@ -140,6 +140,11 @@ describe("chercher par clé de tirage", () => {
     expect(searchNarutoPrints("NI-014", { limit: 5 })[0]?.printKey).toBe(
       "naruto:ni-0014",
     );
+    // Coleka FR s24 prints NI-1400 on disk n1400 — substring `%n14%` used to
+    // surface it first once that print had a French title.
+    expect(
+      searchNarutoPrints("ni14", { limit: 5 }).map((row) => row.printKey),
+    ).not.toContain("naruto:n-1400");
   });
 });
 
@@ -184,13 +189,13 @@ describe("parcourir la découpe japonaise", () => {
     const langs = (id: string) => sets.find((s) => s.id === id)?.languages;
     /*
       Le français s'arrête à la Série 5 — la 6 fut annulée — puis les séries 7
-      à 27 sont anglaises seules. Une liste en bloc proposait « Quest for
-      Power », le set 7 américain, à qui filtrait sur le français.
+      à 23 et 25–27 sont anglaises seules. Sage's Legacy (s24) et Storm 3 (s28)
+      ont reçu une impression française tardive. Une liste en bloc proposait
+      « Quest for Power », le set 7 américain, à qui filtrait sur le français.
     */
     expect(langs("s1")).toEqual(["en", "fr", "it"]);
     expect(langs("s7")).toEqual(["en"]);
-    expect(langs("s24")).toEqual(["en"]);
-    // La 28 a bien reçu une impression française tardive.
+    expect(langs("s24")).toEqual(["en", "fr"]);
     expect(langs("s28")).toEqual(["en", "fr"]);
   });
 

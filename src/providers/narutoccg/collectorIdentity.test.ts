@@ -76,6 +76,16 @@ describe("parseNarutoCollector", () => {
       grouping: "R",
       printedPrefix: "prni",
     });
+    expect(parseNarutoCollector("PR-005R")).toEqual({
+      family: "promo",
+      number: 5,
+      grouping: "R",
+      printedPrefix: "PR",
+    });
+    expect(narutoDiskCardId("PR-005R")).toBe("pr0005-R");
+    expect(narutoDiskCardId("Pr 005R")).toBe("pr0005-R");
+    expect(mintNarutoPrintKey("PR-005R")).toBe("naruto:pr-0005-r");
+    expect(narutoCollectorsMatch("PR-005", "PR-005R")).toBe(false);
   });
 
   it("keeps N-US tin exclusives off the regular N number", () => {

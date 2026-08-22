@@ -5,7 +5,9 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  colekaSagesLegacyLedgerPath,
   colekaStorm3LedgerPath,
+  loadColekaSagesLegacyLedger,
   loadColekaStorm3Ledger,
 } from "./scrapeColekaStorm3";
 
@@ -39,6 +41,41 @@ describe("loadColekaStorm3Ledger", () => {
     );
     expect(loadColekaStorm3Ledger(packDir).map((c) => c.number)).toEqual([
       "n1650",
+    ]);
+  });
+});
+
+describe("loadColekaSagesLegacyLedger", () => {
+  it("reads staging/coleka-s24 under the pack root (not nested twice)", () => {
+    const packDir = mkdtempSync(path.join(tmpdir(), "naruto-coleka-s24-"));
+    const dest = colekaSagesLegacyLedgerPath(packDir);
+    expect(dest).toBe(
+      path.join(packDir, "staging", "coleka-s24", "cards.json"),
+    );
+    mkdirSync(path.dirname(dest), { recursive: true });
+    writeFileSync(
+      dest,
+      JSON.stringify({
+        cards: [
+          {
+            number: "j895",
+            cardType: "j",
+            colekaRef: "JU-895",
+            name: "Scellage des Démons à Queues",
+            colekaId: "788802",
+            pagePath:
+              "/fr/cartes-naruto-serie-24-sage-s-legacy/scellage-des-demons-a-queues_i788802",
+            thumbUrl:
+              "https://thumbs.coleka.com/media/item/202010/16/cartes-naruto-serie-24-sage-s-legacy-scellage-des-demons-a-queues_250x250.webp",
+            faceUrl:
+              "https://thumbs.coleka.com/media/item/202010/16/cartes-naruto-serie-24-sage-s-legacy-scellage-des-demons-a-queues.webp",
+          },
+        ],
+      }),
+      "utf8",
+    );
+    expect(loadColekaSagesLegacyLedger(packDir).map((c) => c.number)).toEqual([
+      "j895",
     ]);
   });
 });

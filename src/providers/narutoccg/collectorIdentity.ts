@@ -247,6 +247,9 @@ function foldPrintedNarutoRef(raw: string): string {
         /^((?:DN|DT)[-]?\d+)([A-Za-z])$/i,
         (_m, head: string, tail: string) => `${head}-${tail.toLowerCase()}`,
       )
+      // Coleka prints EN CCG foil promos as `Pr 005R` (R glued). Same grouping
+      // as JP `PR忍-1-R` — not the untagged `PR-005`.
+      .replace(/^(PR[-]?\d+)R$/i, (_m, head: string) => `${head}-R`)
   );
 }
 

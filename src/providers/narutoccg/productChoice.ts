@@ -202,6 +202,7 @@ const STAGING_FOLDER_SOURCE: Readonly<Record<string, NarutoProductSource>> = {
   gradedcardcenter: "gradedcardcenter",
   "goat-en-boxes": "goat",
   "coleka-en-covers": "coleka",
+  "coleka-s24": "coleka",
   "coleka-s28": "coleka",
   "scifi-universe": "scifi-universe",
   "tv-tokyo": "tvtokyo",

@@ -3,13 +3,16 @@ import { describe, expect, it } from "vitest";
 import { catalogueCollectorKey } from "@/lib/admin/catalogueCards";
 
 import {
+  COLEKA_SAGES_LEGACY_SET_COVER_URL,
   COLEKA_STORM3_SET_COVER_URL,
   colekaEuPrefixToCollector,
   colekaFullFaceUrl,
   colekaHtmlIsVerifyWall,
+  colekaSagesLegacyListingPageUrls,
   colekaStorm3ListingPageUrls,
   parseColekaStorm3Listing,
 } from "./parseColekaStorm3";
+import colekaS24 from "./curated/sources/coleka-s24.json";
 import colekaS28 from "./curated/sources/coleka-s28.json";
 
 const LISTING = `
@@ -43,6 +46,13 @@ const LISTING = `
     </a>
   </li>
   <li class="pending col-md-4">
+    <a class="lib_has_2_lines" data-id="788802" href="/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-24-sage-s-legacy/scellage-des-demons-a-queues_i788802">
+      <img src="https://thumbs.coleka.com/media/item/202010/16/cartes-naruto-serie-24-sage-s-legacy-scellage-des-demons-a-queues_250x250.webp" alt="Scellage des Démons à Queues" />
+      <h3 class="product-title">Scellage des Démons à Queues</h3>
+      <span class="ref">Ref. JU-895</span>
+    </a>
+  </li>
+  <li class="pending col-md-4">
     <a class="lib_has_2_lines" data-id="203137" href="/fr/cartes-naruto-serie-03/invocation_i203137">
       <img src="https://thumbs.coleka.com/media/item/202012/09/cartes-naruto-serie-03-invocation-te-109.jpg" alt="Invocation" />
       <h3 class="product-title">Invocation</h3>
@@ -58,6 +68,8 @@ describe("colekaEuPrefixToCollector", () => {
     expect(colekaEuPrefixToCollector("JU-1002")).toBe("j1002");
     expect(colekaEuPrefixToCollector("MI-976")).toBe("m976");
     expect(colekaEuPrefixToCollector("NI-1358")).toBe("n1358");
+    expect(colekaEuPrefixToCollector("JU-895")).toBe("j895");
+    expect(colekaEuPrefixToCollector("MI-855")).toBe("m855");
     expect(colekaEuPrefixToCollector("NI-1621")).toBe("n1621");
     expect(colekaEuPrefixToCollector("TE-109")).toBeNull();
     expect(colekaEuPrefixToCollector("n1650")).toBeNull();
@@ -93,9 +105,14 @@ describe("colekaFullFaceUrl", () => {
 });
 
 describe("parseColekaStorm3Listing", () => {
-  it("reads unique Série 28 singles and ignores Carddass TE refs", () => {
+  it("reads unique Série 28 singles, Série 24 three-digit refs, and ignores Carddass TE", () => {
     const cards = parseColekaStorm3Listing(LISTING);
-    expect(cards.map((c) => c.number)).toEqual(["j1002", "m976", "n1650"]);
+    expect(cards.map((c) => c.number)).toEqual([
+      "j1002",
+      "j895",
+      "m976",
+      "n1650",
+    ]);
     expect(cards.find((c) => c.number === "n1650")).toMatchObject({
       cardType: "n",
       colekaRef: "NI-1650",
@@ -103,6 +120,14 @@ describe("parseColekaStorm3Listing", () => {
       colekaId: "819630",
       faceUrl:
         "https://thumbs.coleka.com/media/item/202102/10/cartes-naruto-serie-28-kisame-hoshigaki-ni-1650.webp",
+    });
+    expect(cards.find((c) => c.number === "j895")).toMatchObject({
+      cardType: "j",
+      colekaRef: "JU-895",
+      name: "Scellage des Démons à Queues",
+      colekaId: "788802",
+      faceUrl:
+        "https://thumbs.coleka.com/media/item/202010/16/cartes-naruto-serie-24-sage-s-legacy-scellage-des-demons-a-queues.webp",
     });
   });
 });
@@ -126,9 +151,29 @@ describe("colekaStorm3ListingPageUrls", () => {
   });
 });
 
+describe("colekaSagesLegacyListingPageUrls", () => {
+  it("stays on _r15466 and does not open the parent umbrella", () => {
+    const urls = colekaSagesLegacyListingPageUrls();
+    expect(urls[0]).toContain("cartes-naruto-serie-24-sage-s-legacy_r15466");
+    expect(urls[0]).toContain(colekaS24.listing.path);
+    expect(urls.join("")).not.toContain("_r4102");
+    expect(urls).toHaveLength(3);
+  });
+});
+
 describe("COLEKA_STORM3_SET_COVER_URL", () => {
   it("is the Series 28 display packshot, not the umbrella listing", () => {
     expect(COLEKA_STORM3_SET_COVER_URL).toBe(colekaS28.displayPackshot.url);
     expect(COLEKA_STORM3_SET_COVER_URL).not.toContain("_r4102");
+  });
+});
+
+describe("COLEKA_SAGES_LEGACY_SET_COVER_URL", () => {
+  it("is the Series 24 display packshot already used as display-s24", () => {
+    expect(COLEKA_SAGES_LEGACY_SET_COVER_URL).toBe(
+      colekaS24.displayPackshot.url,
+    );
+    expect(colekaS24.displayPackshot.sku).toBe("display-s24");
+    expect(COLEKA_SAGES_LEGACY_SET_COVER_URL).not.toContain("_r4102");
   });
 });

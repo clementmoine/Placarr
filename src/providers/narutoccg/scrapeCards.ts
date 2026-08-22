@@ -35,7 +35,8 @@ import {
 import { applyOfficialNames, loadOfficialNames } from "./officialNames";
 import { mergeFoundCatalogueLedgers } from "./mergeAttestedLedgers";
 import { mergeColekaS6ItIntoIndex } from "./scrapeColekaS6It";
-import { loadColekaStorm3Ledger } from "./scrapeColekaStorm3";
+import { mergeColekaUsPromosIntoIndex } from "./colekaUsPromos";
+import { loadColekaCcgFrLedgers } from "./scrapeColekaStorm3";
 import { loadStorm3Ledger } from "./scrapeStorm3";
 import { ensureNarutoChecklistLayout } from "./buildCoverageChecklist";
 import { ensureNarutoCuratedAssets } from "./installReconstructed";
@@ -944,13 +945,13 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
       rarity: card.rarity,
     });
   }
-  const colekaStorm3 = [
-    ...loadColekaStorm3Ledger(root),
-    ...loadColekaStorm3Ledger(path.join(dataRoot(), NARUTO_EN_PACK_ID)),
+  const colekaCcgFr = [
+    ...loadColekaCcgFrLedgers(root),
+    ...loadColekaCcgFrLedgers(path.join(dataRoot(), NARUTO_EN_PACK_ID)),
   ].filter(
     (card, i, all) => all.findIndex((c) => c.number === card.number) === i,
   );
-  for (const card of colekaStorm3) {
+  for (const card of colekaCcgFr) {
     const print = prints.find((p) => narutoNumbersEqual(p.number, card.number));
     if (!print) continue;
     const key = `${print.printKey}\0fr`;
@@ -967,7 +968,7 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
 }
 
 const FOUND_TITLE_SOURCE =
-  "carddass-official + manga-news-cache + attested-promos + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocards-ca + cardgameclub-it + user-physical";
+  "carddass-official + manga-news-cache + attested-promos + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + coleka-us-promos + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocards-ca + cardgameclub-it + user-physical + leboncoin";
 
 function assembleNarutoCatalogue(
   prints: NarutoPrintRow[],
@@ -992,6 +993,11 @@ function assembleNarutoCatalogue(
     titles: withSemaine.titles,
     hinokunianNames: hinokunianJaNames(root),
   });
+  const withUsPromos = mergeColekaUsPromosIntoIndex({
+    prints: found.prints,
+    titles: found.titles,
+    root,
+  });
   /*
     Le 疾風伝 a son propre pack depuis le 2026-08-21 : c'est un autre jeu, avec
     sa maquette, son année et son dos. Ce pack-ci cesse donc de le revendiquer.
@@ -1006,11 +1012,11 @@ function assembleNarutoCatalogue(
   const shippudenFamilies = new Set(["shi", "mju", "msa", "gaku"]);
   const isShippuden = (cardType?: string | null) =>
     shippudenFamilies.has((cardType ?? "").trim().toLowerCase());
-  const keptPrints = found.prints.filter(
+  const keptPrints = withUsPromos.prints.filter(
     (print) => !isShippuden(print.cardType),
   );
   const keptKeys = new Set(keptPrints.map((print) => print.printKey));
-  const keptTitles = found.titles.filter((title) =>
+  const keptTitles = withUsPromos.titles.filter((title) =>
     keptKeys.has(title.printKey),
   );
   return {
@@ -1053,7 +1059,7 @@ function indexNarutoEnPackFromDisk(): void {
     dbPath: path.join(root, "catalog.sqlite"),
     meta: {
       source: "disk",
-      titleSource: "stop2shop + coleka-s28",
+      titleSource: "stop2shop + coleka-s24 + coleka-s28",
       titleCount: String(titles.length),
     },
   });

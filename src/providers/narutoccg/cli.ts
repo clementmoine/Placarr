@@ -8,6 +8,7 @@
  *   pnpm naruto:cards
  *   pnpm naruto:cards -- --only index
  *   pnpm naruto:cards -- --only scrape --locale colekafr
+ *   pnpm naruto:cards -- --only scrape --locale uspromos
  *   pnpm naruto:cards -- --only scrape --locale drive
  *   pnpm naruto:cards -- --only scrape --locale drive --staging-only
  *   pnpm naruto:cards -- --only scrape --locale drive --drive-local ~/Downloads/Naruto\ CCG
@@ -35,7 +36,10 @@ import { scrapeNarutoJpCards } from "./scrapeCarddasJp";
 import { scrapeNarutoCards } from "./scrapeCards";
 import { scrapeNarutoColekaCarddassFrCards } from "./scrapeColekaCarddassFr";
 import { scrapeNarutoColekaS6ItCards } from "./scrapeColekaS6It";
-import { scrapeNarutoColekaStorm3Cards } from "./scrapeColekaStorm3";
+import {
+  scrapeNarutoColekaSagesLegacyCards,
+  scrapeNarutoColekaStorm3Cards,
+} from "./scrapeColekaStorm3";
 import { scrapeNarutoStorm3Cards } from "./scrapeStorm3";
 import { scrapeCardgameclubItFaces } from "./scrapeCardgameclubIt";
 import { scrapeGoatEnCcgTitles } from "./scrapeGoatEnCcg";
@@ -63,6 +67,8 @@ import {
 import { installCardgameclubPackshots } from "./installCardgameclubPackshots";
 import { installEbayPackshots } from "./installEbayPackshots";
 import { installEbayFaces } from "./installEbayFaces";
+import { installLeboncoinFaces } from "./installLeboncoinFaces";
+import { scrapeNarutoColekaUsPromoCards } from "./colekaUsPromos";
 import { scrapeAvalonNarutoFaces } from "./scrapeAvalonShop";
 import { writeNarutoCompleteness } from "./buildCompleteness";
 import { scrapeFrilNarutoFaces } from "./scrapeFrilShop";
@@ -163,6 +169,13 @@ async function runScrape(argv: readonly string[]): Promise<void> {
       }
     } else if (locale === "storm3" || locale === "s28" || locale === "uns3") {
       // Storm 3 runs after this loop (not a Wayback locale).
+    } else if (
+      locale === "s24" ||
+      locale === "sages" ||
+      locale === "sageslegacy" ||
+      locale === "sage"
+    ) {
+      // Sage's Legacy FR runs after this loop (Coleka, not Wayback).
     } else if (locale === "s6it" || locale === "ita" || locale === "rivalita") {
       // Italian S6 runs after this loop (Coleka, not Wayback).
     } else if (locale === "colekafr" || locale === "coleka-fr") {
@@ -171,9 +184,15 @@ async function runScrape(argv: readonly string[]): Promise<void> {
       // S5 hole JPEGs run after this loop.
     } else if (locale === "drive" || locale === "drive-enhanced") {
       // Drive Enhanced runs after this loop.
+    } else if (
+      locale === "uspromos" ||
+      locale === "us-promos" ||
+      locale === "coleka-us-promos"
+    ) {
+      // Coleka EN CCG promos run after this loop.
     } else {
       throw new Error(
-        `Unknown --locale ${locale} (expected fr | en | jap | storm3 | s6it | colekafr | ultrajeux | drive).`,
+        `Unknown --locale ${locale} (expected fr | en | jap | storm3 | s24 | s6it | colekafr | ultrajeux | drive | uspromos).`,
       );
     }
   }
@@ -183,6 +202,9 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     );
     const storm3 = locales.some((locale) =>
       ["storm3", "s28", "uns3"].includes(locale),
+    );
+    const sages = locales.some((locale) =>
+      ["s24", "sages", "sageslegacy", "sage"].includes(locale),
     );
     const s6it = locales.some((locale) =>
       ["s6it", "ita", "rivalita"].includes(locale),
@@ -194,10 +216,16 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     const drive = locales.some((locale) =>
       ["drive", "drive-enhanced"].includes(locale),
     );
+    const uspromos = locales.some((locale) =>
+      ["uspromos", "us-promos", "coleka-us-promos"].includes(locale),
+    );
     // Default `--locale fr` still finishes Storm 3 + S6 IT after Wayback.
     if (wayback || storm3) {
       await scrapeNarutoStorm3Cards(shared);
       await scrapeNarutoColekaStorm3Cards(shared);
+    }
+    if (wayback || sages) {
+      await scrapeNarutoColekaSagesLegacyCards(shared);
     }
     if (wayback || s6it) {
       await scrapeNarutoColekaS6ItCards(shared);
@@ -230,6 +258,9 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         concurrency: shared.concurrency,
         limit: shared.limit,
       });
+    }
+    if (wayback || uspromos) {
+      await scrapeNarutoColekaUsPromoCards(shared);
     }
     if (wayback || drive) {
       const stagingOnly = argv.includes("--staging-only");
@@ -335,6 +366,7 @@ async function runScrape(argv: readonly string[]): Promise<void> {
       });
       await scrapeNarutoZabuzaPromo({ force: shared.force });
       await installEbayFaces({ force: shared.force });
+      await installLeboncoinFaces({ force: shared.force });
       await installCarddasJpStagingFaces({ force: shared.force });
     }
   }
@@ -405,6 +437,16 @@ export async function runNarutoPackPipeline(
         ) {
           console.log(
             `── eBay faces : ${ebayFaces.written.length} écrits, ${ebayFaces.skipped.length} sautés, ${ebayFaces.failed.length} échecs`,
+          );
+        }
+        const lbcFaces = await installLeboncoinFaces({ force });
+        if (
+          lbcFaces.written.length ||
+          lbcFaces.skipped.length ||
+          lbcFaces.failed.length
+        ) {
+          console.log(
+            `── Leboncoin faces : ${lbcFaces.written.length} écrits, ${lbcFaces.skipped.length} sautés, ${lbcFaces.failed.length} échecs`,
           );
         }
         const cgc = await installCardgameclubPackshots({ force });

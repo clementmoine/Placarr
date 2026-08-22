@@ -77,7 +77,12 @@ describe("Ninja Ranks unofficial dumps", () => {
       writeFileSync(path.join(official, sku.art), TINY);
     }
     writeFileSync(path.join(official, inkworks.logo.file), TINY);
-    ingestInkworksProducts({ stagingDir: official });
+    // Ce test porte sur le dump fan à côté du packshot éditeur : on écarte
+    // les packshots curés, qui prendraient sinon la place affichée.
+    ingestInkworksProducts({
+      stagingDir: official,
+      curatedProductsDir: path.join(official, "no-curated"),
+    });
 
     const index = createLocalPrintsIndex(NARUTO_RANKS_PACK_ID);
     buildNinjaRanksFromLedgers({ index });
@@ -128,8 +133,8 @@ describe("Ninja Ranks unofficial dumps", () => {
         path.join(
           packCardsDir(NARUTO_RANKS_PACK_ID),
           "sd",
-          "0004",
           "en",
+          "0004",
           "art.blogger.jpg",
         ),
       ),
@@ -139,8 +144,8 @@ describe("Ninja Ranks unofficial dumps", () => {
         path.join(
           packCardsDir(NARUTO_RANKS_PACK_ID),
           "sd",
-          "0004",
           "en",
+          "0004",
           "back.blogger.jpg",
         ),
       ),

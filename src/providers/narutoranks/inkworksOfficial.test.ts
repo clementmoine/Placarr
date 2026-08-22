@@ -1,5 +1,6 @@
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -10,7 +11,11 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
-import { packCardsDir, packProductsIndexPath } from "@/lib/packPaths";
+import {
+  packCardsDir,
+  packProductsIndexPath,
+  packSealedProductsDir,
+} from "@/lib/packPaths";
 
 import { buildNinjaRanksFromLedgers } from "./buildFromLedgers";
 import {
@@ -20,6 +25,7 @@ import {
   ingestInkworksProducts,
   installInkworksSampleFaces,
   readInkworksProductsLedger,
+  readNinjaRanksReconstructedArt,
 } from "./inkworksOfficial";
 import { NARUTO_RANKS_PACK_ID } from "./pack";
 
@@ -84,7 +90,11 @@ describe("Inkworks official assets", () => {
   it("writes booster, display and album as sealed products, not as cards", () => {
     tmpDataRoot();
     const staging = stageOfficialJpegs();
-    const report = ingestInkworksProducts({ stagingDir: staging });
+    const report = ingestInkworksProducts({
+      stagingDir: staging,
+      // Dossier curé vide : on exerce ici la branche Inkworks seule.
+      curatedProductsDir: path.join(staging, "no-curated"),
+    });
     expect(report.written).toBe(3);
     expect(report.skipped).toBe(0);
 
@@ -130,8 +140,8 @@ describe("Inkworks official assets", () => {
         path.join(
           packCardsDir(NARUTO_RANKS_PACK_ID),
           "sd",
-          "0001",
           "en",
+          "0001",
           "art.inkworks.jpg",
         ),
       ),
@@ -164,3 +174,57 @@ function upcAChecksumOk(digits: string): boolean {
   const check = (10 - ((odd * 3 + even) % 10)) % 10;
   return check === Number(digits[11]);
 }
+
+describe("packshots curés", () => {
+  it("affiche le packshot curé et rétrograde l'officiel en dump", () => {
+    tmpDataRoot();
+    const staging = stageOfficialJpegs();
+    const curated = mkdtempSync(path.join(os.tmpdir(), "nr-curated-"));
+    roots.push(curated);
+    for (const sku of readInkworksProductsLedger().skus) {
+      const dir = path.join(curated, sku.slug, "en");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, "art.reconstructed.png"), TINY);
+    }
+
+    ingestInkworksProducts({
+      stagingDir: staging,
+      curatedProductsDir: curated,
+    });
+
+    const dir = path.join(
+      packSealedProductsDir(NARUTO_RANKS_PACK_ID),
+      "booster",
+      "en",
+    );
+    // Le curé s'affiche, l'officiel reste à côté : jamais écrasé.
+    expect(existsSync(path.join(dir, "art.reconstructed.png"))).toBe(true);
+    expect(existsSync(path.join(dir, "art.inkworks.jpg"))).toBe(true);
+  });
+
+  it("ne bascule pas le lot si un seul SKU a son packshot curé", () => {
+    // Sinon un visuel Inkworks porterait le nom `art.reconstructed` — un
+    // mensonge sur sa provenance, puisque le lot ne déclare qu'une source.
+    tmpDataRoot();
+    const staging = stageOfficialJpegs();
+    const curated = mkdtempSync(path.join(os.tmpdir(), "nr-partial-"));
+    roots.push(curated);
+    const only = path.join(curated, "booster", "en");
+    mkdirSync(only, { recursive: true });
+    writeFileSync(path.join(only, "art.reconstructed.png"), TINY);
+    expect(readNinjaRanksReconstructedArt(curated).size).toBe(1);
+
+    ingestInkworksProducts({
+      stagingDir: staging,
+      curatedProductsDir: curated,
+    });
+
+    const dir = path.join(
+      packSealedProductsDir(NARUTO_RANKS_PACK_ID),
+      "booster",
+      "en",
+    );
+    expect(existsSync(path.join(dir, "art.inkworks.jpg"))).toBe(true);
+    expect(existsSync(path.join(dir, "art.reconstructed.png"))).toBe(false);
+  });
+});

@@ -152,7 +152,43 @@ export async function harvestInkworksOfficialAssets(
   return { ok, skip, fail };
 }
 
-export function ingestInkworksProducts(opts: { stagingDir?: string } = {}): {
+/** Packshots fournis par le propriétaire, sous `curated/products/{slug}/en/`. */
+export function ninjaRanksCuratedProductsDir(): string {
+  return path.join(narutoRanksCuratedDir(), "products");
+}
+
+const RECONSTRUCTED_LEDGER = "reconstructed-products.json";
+const RECONSTRUCTED_SOURCE_ID = "reconstructed";
+
+export function readNinjaRanksReconstructedArt(
+  root?: string,
+): Map<string, string> {
+  const dir = root ?? ninjaRanksCuratedProductsDir();
+  const ledgerPath = path.join(
+    narutoRanksCuratedDir(),
+    "sources",
+    RECONSTRUCTED_LEDGER,
+  );
+  if (!existsSync(ledgerPath)) return new Map();
+  const ledger = JSON.parse(readFileSync(ledgerPath, "utf8")) as {
+    lang: string;
+    products: { slug: string; art: string }[];
+  };
+  const lang = ledger.lang.trim().toLowerCase();
+  const found = new Map<string, string>();
+  for (const product of ledger.products) {
+    const file = path.join(dir, product.slug, lang, product.art);
+    if (existsSync(file)) found.set(product.slug, file);
+  }
+  return found;
+}
+
+export function ingestInkworksProducts(
+  opts: {
+    stagingDir?: string;
+    curatedProductsDir?: string;
+  } = {},
+): {
   written: number;
   skipped: number;
   file: string;
@@ -160,23 +196,48 @@ export function ingestInkworksProducts(opts: { stagingDir?: string } = {}): {
   const ledger = readInkworksProductsLedger();
   const staging = opts.stagingDir ?? inkworksStagingDir();
   const logoPath = path.join(staging, ledger.logo.file);
-  const products = ledger.skus.map((sku) => ({
-    slug: sku.slug,
-    kind: sku.kind,
-    category: sku.category,
-    name: sku.name,
-    setCode: ledger.setCode,
-    catalogueSetId: ledger.setCode,
-    lang: ledger.lang,
-    releaseDate: ledger.released,
-    declaredCardCount: sku.declaredCardCount,
-    path: ledger.productPage,
-    artPath: path.join(staging, sku.art),
-    logoPath: existsSync(logoPath) ? logoPath : null,
-  }));
+  /*
+    Les packshots détourés priment sur les vignettes marketing du Wayback —
+    `nnrwrapmed` fait 253×360 quand le PNG fourni fait 1597×2599. L'original
+    éditeur n'est pas écrasé pour autant : il descend en dump à côté, comme
+    l'album Coleka reste à côté de l'upscale chez Ultra Challenge.
+  */
+  const curatedArt = readNinjaRanksReconstructedArt(opts.curatedProductsDir);
+  /*
+    `writeLocalSealedProducts` étiquette tout un lot d'une seule source. Le lot
+    ne bascule donc en `reconstructed` que si **chaque** SKU a son packshot
+    curé — sinon un visuel Inkworks se retrouverait nommé `art.reconstructed`,
+    ce qui mentirait sur sa provenance. Même précédent que le pack Ultra
+    Challenge.
+  */
+  const allCurated =
+    ledger.skus.length > 0 &&
+    ledger.skus.every((sku) => curatedArt.has(sku.slug));
+  const products = ledger.skus.map((sku) => {
+    const better = allCurated ? (curatedArt.get(sku.slug) ?? null) : null;
+    const official = path.join(staging, sku.art);
+    return {
+      slug: sku.slug,
+      kind: sku.kind,
+      category: sku.category,
+      name: sku.name,
+      setCode: ledger.setCode,
+      catalogueSetId: ledger.setCode,
+      lang: ledger.lang,
+      releaseDate: ledger.released,
+      declaredCardCount: sku.declaredCardCount,
+      path: ledger.productPage,
+      artPath: better ?? official,
+      logoPath: existsSync(logoPath) ? logoPath : null,
+      extraDumps:
+        better && existsSync(official)
+          ? [{ source: ledger.sourceId, artPath: official }]
+          : [],
+    };
+  });
   return writeLocalSealedProducts({
     packId: NARUTO_RANKS_PACK_ID,
-    source: ledger.sourceId,
+    source: allCurated ? RECONSTRUCTED_SOURCE_ID : ledger.sourceId,
     products,
   });
 }
@@ -205,8 +266,8 @@ export function installInkworksSampleFaces(
     const destDir = path.join(
       packCardsDir(NARUTO_RANKS_PACK_ID),
       sample.setCode.trim().toLowerCase(),
-      sample.number.trim().toLowerCase(),
       "en",
+      sample.number.trim().toLowerCase(),
     );
     mkdirSync(destDir, { recursive: true });
     copyFileSync(src, path.join(destDir, ART_FILE));

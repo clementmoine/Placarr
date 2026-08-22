@@ -177,8 +177,8 @@ export function installBloggerPackRip(
     const destDir = path.join(
       packCardsDir(NARUTO_RANKS_PACK_ID),
       setCode,
-      number,
       lang,
+      number,
     );
     mkdirSync(destDir, { recursive: true });
     if (asset.role === "card-back") {

@@ -147,8 +147,9 @@ describe("gabarits « pas encore photographiée »", () => {
     ).toBe(false);
   });
 
-  it("attribue les faces au tirage français, pas à l'anglais du site", () => {
-    // La branche EN est celle du site ; les cartes photographiées sont FR.
-    expect(COLEKA_NINJA_RANKS_LANG).toBe("fr");
+  it("range les faces sous la langue des titres, sinon elles n'apparaissent pas", () => {
+    // `exportIndex` apparie face et titre par la langue : une face `fr` sous des
+    // titres `en` disparaît de l'index, et donc de l'admin.
+    expect(COLEKA_NINJA_RANKS_LANG).toBe("en");
   });
 });

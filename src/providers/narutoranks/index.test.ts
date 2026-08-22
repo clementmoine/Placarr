@@ -64,6 +64,6 @@ describe("verso curé de Ninja Ranks", () => {
       readdirSync(curated)
         .filter((name) => !name.startsWith("."))
         .sort(),
-    ).toEqual(["BACK.md", "sources"]);
+    ).toEqual(["BACK.md", "products", "sources"]);
   });
 });

@@ -176,11 +176,22 @@ export function installColekaNinjaRanks(
         missing.push(card.number);
         continue;
       }
+      /*
+        `cards/{set}/{langue}/{numéro}` — dans cet ordre.
+
+        C'est celui qu'`assetsCardUrl` reconstruit pour servir le fichier, et
+        celui que le pack `dbs` respecte (`cards/sd16/fr/03/`). Ce pack-ci
+        écrivait `{set}/{numéro}/{langue}` : les octets étaient bien là, l'URL
+        pointait à côté, et l'admin n'a jamais montré une seule face. Le pack
+        Carddass n'a pas ce problème parce qu'il passe par
+        `narutoCardPathFromCollector`, qui ne sait lire que ses propres
+        identifiants (`ni0001`) et rend `null` sur un numéro nu.
+      */
       const destDir = path.join(
         packCardsDir(NARUTO_RANKS_PACK_ID),
         COLEKA_NINJA_RANKS_SET,
-        card.number,
         lang,
+        card.number,
       );
       mkdirSync(destDir, { recursive: true });
       const ext = path.extname(src).toLowerCase() || ".webp";

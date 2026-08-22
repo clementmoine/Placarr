@@ -23,15 +23,22 @@ export const COLEKA_NINJA_RANKS_ORIGIN = "https://www.coleka.com";
 export const COLEKA_NINJA_RANKS_LISTING_PATH =
   "/en/trading-cards/panini-cards/naruto-ninja-ranks_r25928";
 /**
- * Langue de la **carte**, pas du site.
+ * Langue sous laquelle la face est rangée.
  *
- * La branche EN est lue parce qu'elle résiste mieux au mur de vérification,
- * mais Coleka photographie le tirage français : la carte 68 s'y intitule
- * « Secon examen des survivants » là où la feuille Inkworks écrit « Second Exam
- * Survivors ». Même numérotation, autre langue — et la langue est portée par
- * l'exemplaire, jamais par la clé.
+ * Ce champ n'est pas « la langue du tirage photographié » : `exportIndex`
+ * apparie une face à un **titre** de la même langue
+ * (`a.lang = t.lang`), et une face sans titre dans sa langue n'apparaît nulle
+ * part. Les titres de ce pack viennent de la feuille Inkworks, en anglais —
+ * les faces s'y rangent donc.
+ *
+ * Ce que Coleka photographie est bien le tirage **français** : la carte 68 s'y
+ * intitule « Secon examen des survivants » là où Inkworks écrit « Second Exam
+ * Survivors ». Sur les cartes de personnage, l'écart ne se voit pas — la 40 est
+ * « ROCK LEE » en latin et en katakana, sans un mot de français. Seules les
+ * cartes à texte traduisent. La provenance est notée au registre plutôt que
+ * dans un champ que le modèle n'entend pas ainsi.
  */
-export const COLEKA_NINJA_RANKS_LANG = "fr";
+export const COLEKA_NINJA_RANKS_LANG = "en";
 /** Set de base : le seul dont la numérotation Coleka est attestée. */
 export const COLEKA_NINJA_RANKS_SET = "nr";
 /** Cartes du set de base — au-delà, Coleka ne dit plus rien de sûr. */

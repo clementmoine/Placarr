@@ -27,7 +27,8 @@ import {
   sharedCardBackSkeletonUrl,
 } from "@/core/render/foil";
 import "@/effects";
-import { getAspectRatio, orientAspectRatio } from "@/lib/text/cardFormat";
+import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
+import { getAspectRatio, faceDisplayAspect } from "@/lib/text/cardFormat";
 import { OrientedMediaRotator } from "@/components/OrientedMediaFrame";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getItemValueEstimate } from "@/core/collect/value";
@@ -175,16 +176,18 @@ function ItemCardInner(props: ItemCardProps) {
 
   const displayImageUrl = imageUrl;
 
-  // Determine aspect ratio based on shelf type or card format (+ print orientation).
-  const faceQuarterTurns = printVariant?.faceQuarterTurns ?? 0;
+  const artOrient = useArtFaceOrientation(displayImageUrl, printVariant ?? undefined);
+  const faceQuarterTurns = artOrient.faceQuarterTurns;
+  const landscapeFace = artOrient.landscapeFace;
   const baseAspect = useMemo(
     () => getAspectRatio(cardFormat, shelfType),
     [cardFormat, shelfType],
   );
   const aspectRatio = useMemo(
-    () => orientAspectRatio(baseAspect, faceQuarterTurns),
-    [baseAspect, faceQuarterTurns],
+    () => faceDisplayAspect(baseAspect, { faceQuarterTurns, landscapeFace }),
+    [baseAspect, faceQuarterTurns, landscapeFace],
   );
+  const displayQuarterTurns = landscapeFace ? 0 : faceQuarterTurns;
 
   // Pick placeholder icon based on shelf type — memoized as an ELEMENT so no
   // component identity is created during render.
@@ -313,12 +316,12 @@ function ItemCardInner(props: ItemCardProps) {
           {!(edgeColors && !foilMaskUrl) && (
             <CardBackSkeleton
               url={cardBackSkeletonUrl}
-              faceQuarterTurns={faceQuarterTurns}
+              faceQuarterTurns={displayQuarterTurns}
               orientedAspect={aspectRatio}
             />
           )}
           <OrientedMediaRotator
-            faceQuarterTurns={faceQuarterTurns}
+            faceQuarterTurns={displayQuarterTurns}
             orientedAspect={aspectRatio}
           >
             {/* Main Cover Image */}

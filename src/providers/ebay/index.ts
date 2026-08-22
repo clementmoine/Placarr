@@ -46,6 +46,7 @@ export {
   fetchPricesFromEbay,
   pingEbay,
 };
+export { fetchEbayBrowseItem, ebayBrowseItemId } from "./browseItem";
 
 const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",

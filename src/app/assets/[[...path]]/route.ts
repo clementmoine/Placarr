@@ -34,5 +34,14 @@ export async function GET(req: Request, ctx: Ctx) {
   if (!filePath) {
     return new NextResponse("Not found", { status: 404 });
   }
-  return streamFileResponse(filePath, { request: req });
+  return streamFileResponse(filePath, {
+    request: req,
+    /*
+      Pack faces keep stable names (`art.imadoki.jpg`, `art.coleka.webp`) while
+      harvest/install rewrites them in place. `immutable` made a remapped NS
+      planche invisible: the file on disk was Kakashi and the browser kept
+      serving the old sequential cut forever.
+    */
+    cache: "revalidate",
+  });
 }

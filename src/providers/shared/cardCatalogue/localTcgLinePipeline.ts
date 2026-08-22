@@ -8,6 +8,7 @@
  */
 import { packCardsDir } from "@/lib/packPaths";
 
+import { enrichCardsIndexArtDimensions } from "./enrichCardsIndexArtDimensions";
 import {
   createLocalPrintsIndex,
   type LocalPrintsIndex,
@@ -35,6 +36,13 @@ export async function runLocalTcgPipeline(input: {
   console.log(
     `── ${input.label} — ${written.cards} carte${written.cards === 1 ? "" : "s"} → ${written.path}`,
   );
+
+  const dims = await enrichCardsIndexArtDimensions(input.packId);
+  if (dims.probed) {
+    console.log(
+      `── ${input.label} — ${dims.probed} face${dims.probed === 1 ? "" : "s"} dimensionnée${dims.probed === 1 ? "" : "s"} (${dims.landscapePrints} paysage)`,
+    );
+  }
 
   const { installCuratedCardBacks, curatedCardsDir } = await import(
     /* webpackIgnore: true */

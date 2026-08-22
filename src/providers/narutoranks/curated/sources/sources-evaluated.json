@@ -4,13 +4,13 @@
   "useful": [
     {
       "host": "arcadegamecards.com",
-      "yield": "72 cartes de base sans un trou + 9 inserts, 740×1036, édition américaine",
-      "state": "moissonneur écrit et câblé ; le site est derrière un challenge Cloudflare, donc il ne rend rien sans `FLARESOLVERR_URL`"
+      "yield": "73/100 prints checklist (66/72 base EN), ~744×1032, édition américaine — détail dans `arcadegamecards.json`",
+      "state": "moissonné 2026-08-22 via FlareSolverr ; 8 fiches refusées (parseur trois signaux), 19 inserts absents du site"
     },
     {
       "host": "imadokicollection.it",
-      "yield": "81 faces italiennes découpées de 11 planches",
-      "state": "ingéré"
+      "yield": "87 faces italiennes découpées de 12 planches (NS 5/6 — Guy absent de la planche Imadoki, Ebisu case 5)",
+      "state": "ingéré — grille NS 2×3 equal (2026-08-22)"
     },
     {
       "host": "paninionline.com (Wayback)",
@@ -44,6 +44,28 @@
       "finding": "15 assets, presque tous marketing ; 2 faces échantillon déjà ingérées."
     }
   ],
+  "toEvaluate": [
+    {
+      "host": "comc.com",
+      "finding": "Set US complet listé (base 72 + chase). `img.comc.com/...?size=original` sur fiches publiques — Cloudflare bloque le CLI nu. Priorité EN inserts. Détail : `supplemental-sources-hunt.json`."
+    },
+    {
+      "host": "ebay.com (curated per print)",
+      "finding": "Browse API OK pour annonces 1 carte / 1 photo. Pick-a-card = ledger manuel d'URLs JPEG. Meilleur levier transversal FR/IT/EN. Détail : `supplemental-sources-hunt.json`."
+    },
+    {
+      "host": "coleka.com (branche IT)",
+      "finding": "Mur de vérif sur `/it/` et `/fr/` — pas testé avec FlareSolverr. Pourrait combler ff-0004, sd-0004, ns-0006 et les nr absents d'Imadoki."
+    },
+    {
+      "host": "paninimania.com (photos article 121)",
+      "finding": "HTML 200 mais galerie `files/15/1/` non sondee. Grille EU + NS attestee ailleurs."
+    },
+    {
+      "host": "marketplaces EU (leboncoin, vinted)",
+      "finding": "Modele deja valide pour titres (`leboncoin-checklist.json`). Etendre en `marketplace-faces.json` pour scans unitaires."
+    }
+  ],
   "blocked": [
     {
       "host": "naruto.fandom.com",
@@ -55,7 +77,7 @@
     },
     {
       "host": "ebay.com",
-      "finding": "les deux annonces (293490000296, 403984180609) rendent une page d'erreur, en `curl` comme au navigateur — annonces terminées, ou blocage. Le flyer reste un produit qu'on n'a pas."
+      "finding": "Browse API (`fetchEbayBrowseItem`) — pas de scrape HTML ni FlareSolverr. `293490000296` expirée (404). `403984180609` sell sheet live → 2 JPEG staging. Les annonces pick-a-card ne livrent que la galerie officielle (1–2 photos), pas une face par carte."
     },
     {
       "host": "tcdb.com",

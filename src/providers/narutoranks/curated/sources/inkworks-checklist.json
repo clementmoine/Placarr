@@ -5,7 +5,7 @@
   "ingest": "titles",
   "lang": "en",
   "line": "ninja-ranks",
-  "note": "Checklist officielle Inkworks, juin 2006. Titres EN tels qu'écrits (y compris « Rock lee » et l'espace de Gaara-Temari). Pas de faces. L'album collector n'est pas une carte. Les NS1–6 / GS européennes d'AnimeCollection ne sont pas sur cette feuille : elles restent dehors.",
+  "note": "Checklist officielle Inkworks, juin 2006. Titres EN tels qu'écrits (y compris « Rock lee » et l'espace de Gaara-Temari). Pas de faces. L'album collector n'est pas une carte. Les NS1–6 / GS européennes d'AnimeCollection ne sont pas sur cette feuille US : NS est modélisé à part (`european-ns-checklist.json`, EU-only).",
   "not": [
     "ns",
     "gs",
@@ -22,6 +22,42 @@
     "nw": 9,
     "bl": 3,
     "pn": 4
+  },
+  "sets": {
+    "nr": {
+      "label": "Base set",
+      "inkworks": "72 cartes numérotées 1–72 sans préfixe sur l'édition US ; c'est le cœur du produit « Ninja Ranks »"
+    },
+    "ff": {
+      "label": "Friends and Foes",
+      "printed": "FF-1…FF-6",
+      "inkworks": "Insert duotones personnages adversaires / alliés"
+    },
+    "sd": {
+      "label": "Super Deformed",
+      "printed": "SD-1…SD-6",
+      "inkworks": "Insert chibi"
+    },
+    "nw": {
+      "label": "Ninja Warriors",
+      "printed": "NW-1…NW-9",
+      "inkworks": "Insert personnages en posture de combat"
+    },
+    "ns": {
+      "label": "Ninja Sensei",
+      "printed": "NS-1…NS-6",
+      "note": "Insert EU — absent de la feuille Inkworks US ; voir `european-ns-checklist.json`"
+    },
+    "bl": {
+      "label": "Box Loader",
+      "printed": "BL-1…BL-3",
+      "inkworks": "Cartes chargeur de display (loader) — Panini Online les appelle aussi « Group Seven »"
+    },
+    "pn": {
+      "label": "Promo",
+      "printed": "PN-1, PN-T, PN-GA, PN-i",
+      "inkworks": "Cartes promotionnelles non tirées en booster"
+    }
   },
   "cards": [
     {

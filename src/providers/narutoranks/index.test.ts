@@ -1,12 +1,14 @@
+import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
 
 import { narutoRanksEffectPack } from "@/effects/narutoranks";
 import { listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
+import { enrichCardsIndexArtDimensions } from "@/providers/shared/cardCatalogue/enrichCardsIndexArtDimensions";
+import { resetCardsIndexOrientationCache } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
 
 import { narutoranksModule } from "./index";
-import { narutoRanksCuratedDir } from "./pack";
+import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
 
 describe("narutoranks provider hooks", () => {
   it("declares the card-database surface of the local catalogue", () => {
@@ -36,6 +38,47 @@ describe("narutoranks provider hooks", () => {
       "narutoranks-printkey",
     ]);
   });
+
+  it("déduit paysage / rotation depuis les dimensions du scan", async () => {
+    await enrichCardsIndexArtDimensions(NARUTO_RANKS_PACK_ID);
+    resetCardsIndexOrientationCache();
+
+    const kakashi = await narutoranksModule.lookupPrint!({
+      printKey: "naruto:ns-0001",
+    });
+    expect(kakashi?.landscapeFace).toBe(true);
+
+    const rookies = await narutoranksModule.lookupPrint!({
+      printKey: "naruto:nr-0067",
+      language: "fr",
+    });
+    expect(rookies?.landscapeFace).toBe(true);
+
+    const trio = await narutoranksModule.lookupPrint!({
+      printKey: "naruto:nr-0069",
+      language: "fr",
+    });
+    expect(trio?.landscapeFace).toBe(true);
+
+    const eight = await narutoranksModule.lookupPrint!({
+      printKey: "naruto:nr-0068",
+      language: "fr",
+    });
+    expect(eight?.landscapeFace).toBe(true);
+
+    const rookiesIt = await narutoranksModule.lookupPrint!({
+      printKey: "naruto:nr-0067",
+      language: "it",
+    });
+    expect(rookiesIt?.faceQuarterTurns).toBe(1);
+    expect(rookiesIt?.landscapePrint).toBe(true);
+
+    const ten = await narutoranksModule.lookupPrint!({
+      printKey: "naruto:nr-0010",
+    });
+    expect(ten?.landscapeFace).toBeFalsy();
+    expect(ten?.faceQuarterTurns).toBeFalsy();
+  });
 });
 
 describe("verso curé de Ninja Ranks", () => {
@@ -59,11 +102,14 @@ describe("verso curé de Ninja Ranks", () => {
     expect(existsSync(path.join(curated, "BACK.md"))).toBe(true);
   });
 
-  it("keeps the tree to sources + the note, nothing staged", () => {
+  // `cards/` porte les scans curés (faces reconstruites, versos) — c'est
+  // l'arbre que lit `installReconstructedFaces`. Ce qui reste interdit, c'est
+  // du staging de scrape sous `curated/`.
+  it("keeps the tree to sources, curated cards + the note, nothing staged", () => {
     expect(
       readdirSync(curated)
         .filter((name) => !name.startsWith("."))
         .sort(),
-    ).toEqual(["BACK.md", "products", "sources"]);
+    ).toEqual(["BACK.md", "cards", "products", "sources"]);
   });
 });

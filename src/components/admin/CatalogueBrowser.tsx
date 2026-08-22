@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
+import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 
@@ -19,16 +21,67 @@ type CatalogueCardsResponse = {
 
 const PAGE = 48;
 
+function CatalogueCardArt({
+  card,
+  fr,
+}: {
+  card: CatalogueCardRow;
+  fr: boolean;
+}) {
+  const artUrl = card.thumbUrl ?? card.artUrl;
+  const orient = useArtFaceOrientation(artUrl, {
+    landscapeFace: card.landscapeFace,
+    faceQuarterTurns: card.faceQuarterTurns,
+    landscapePrint: card.landscapePrint,
+  });
+  const wide =
+    orient.landscapeFace || (orient.faceQuarterTurns ?? 0) % 2 === 1;
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-md bg-muted/40 ${
+        wide ? "aspect-[88/63]" : "aspect-[63/88]"
+      }`}
+    >
+      {card.missingArt || !artUrl ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 text-center">
+          <span className="text-[10px] font-medium text-muted-foreground">
+            {fr ? "sans image" : "no art"}
+          </span>
+        </div>
+      ) : (
+        <OrientedMediaFrame
+          aspectRatio="63 / 88"
+          faceQuarterTurns={orient.faceQuarterTurns}
+          landscapeFace={orient.landscapeFace}
+          className="h-full w-full"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={artUrl}
+            alt={card.label}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            className="h-full w-full object-contain"
+          />
+        </OrientedMediaFrame>
+      )}
+    </div>
+  );
+}
+
 async function fetchPage(input: {
   pack: CataloguePackId;
   offset: number;
   q: string;
   preferLang: string;
+  allLocales: boolean;
 }): Promise<CatalogueCardsResponse> {
   const params = new URLSearchParams({
     pack: input.pack,
     offset: String(input.offset),
     limit: String(PAGE),
+    locales: input.allLocales ? "all" : "preferred",
   });
   if (input.q.trim()) params.set("q", input.q.trim());
   if (input.preferLang) params.set("lang", input.preferLang);
@@ -55,6 +108,7 @@ export function CatalogueBrowser({
   const preferLang = fr ? "fr" : "en";
   const [query, setQuery] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
+  const [allLocales, setAllLocales] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(query), 250);
@@ -70,13 +124,14 @@ export function CatalogueBrowser({
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ["catalogueCards", packId, debouncedQ, preferLang],
+    queryKey: ["catalogueCards", packId, debouncedQ, preferLang, allLocales],
     queryFn: ({ pageParam }) =>
       fetchPage({
         pack: packId,
         offset: pageParam,
         q: debouncedQ,
         preferLang,
+        allLocales,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -111,6 +166,21 @@ export function CatalogueBrowser({
             ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} cartes`
             : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} cards`}
         </p>
+        <Button
+          type="button"
+          variant={allLocales ? "secondary" : "outline"}
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => setAllLocales((on) => !on)}
+        >
+          {allLocales
+            ? fr
+              ? "Toutes locales"
+              : "All locales"
+            : fr
+              ? `Locale ${preferLang.toUpperCase()}`
+              : `${preferLang.toUpperCase()} only`}
+        </Button>
         {isFetching ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
         ) : null}
@@ -143,24 +213,7 @@ export function CatalogueBrowser({
               key={`${card.printKey}:${card.lang}`}
               className="flex flex-col gap-1"
             >
-              <div className="relative aspect-[63/88] overflow-hidden rounded-md bg-muted/40">
-                {card.missingArt || !card.artUrl ? (
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 text-center">
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      {fr ? "sans image" : "no art"}
-                    </span>
-                  </div>
-                ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={card.thumbUrl ?? card.artUrl}
-                    alt={card.label}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
+              <CatalogueCardArt card={card} fr={fr} />
               <figcaption className="truncate text-[11px] text-muted-foreground">
                 {card.label}
                 {/* Six locales share one set+number: without this the grid
@@ -180,6 +233,14 @@ export function CatalogueBrowser({
                   <span className="ml-1 text-foreground/70">· back</span>
                 ) : card.missingArt ? (
                   <span className="ml-1 text-foreground/70">· stub</span>
+                ) : card.versoOnly ? (
+                  <span className="ml-1 text-foreground/70">· verso</span>
+                ) : card.artLocaleFrom ? (
+                  <span className="ml-1 text-foreground/70">
+                    {fr
+                      ? `· art ${card.artLocaleFrom.toUpperCase()}`
+                      : `· ${card.artLocaleFrom.toUpperCase()} art`}
+                  </span>
                 ) : card.artFallbackFrom ? (
                   <span className="ml-1 text-foreground/70">
                     {fr ? "· art booster" : "· booster art"}

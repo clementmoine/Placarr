@@ -10,6 +10,7 @@ import {
 
 import {
   faceRotateDeg,
+  faceDisplayAspect,
   normalizeFaceQuarterTurns,
   orientAspectRatio,
 } from "@/lib/text/cardFormat";
@@ -185,6 +186,7 @@ export function OrientedMediaRotator({
 export function OrientedMediaFrame({
   aspectRatio,
   faceQuarterTurns = 0,
+  landscapeFace = false,
   fit = "fill-width",
   className,
   style,
@@ -193,13 +195,18 @@ export function OrientedMediaFrame({
   /** Base aspect before orientation (e.g. shelf `5 / 7`). */
   aspectRatio: string;
   faceQuarterTurns?: number | null;
+  /** Native landscape scan — swap frame, do not rotate pixels. */
+  landscapeFace?: boolean;
   fit?: "fill-width" | "contain";
   className?: string;
   style?: CSSProperties;
   children: ReactNode;
 }) {
-  const turns = normalizeFaceQuarterTurns(faceQuarterTurns);
-  const oriented = orientAspectRatio(aspectRatio, turns);
+  const turns = landscapeFace ? 0 : normalizeFaceQuarterTurns(faceQuarterTurns);
+  const oriented = faceDisplayAspect(aspectRatio, {
+    faceQuarterTurns: turns,
+    landscapeFace,
+  });
   const ratio = parseAspect(oriented);
   const hostRef = useRef<HTMLDivElement>(null);
   const [containPx, setContainPx] = useState<{

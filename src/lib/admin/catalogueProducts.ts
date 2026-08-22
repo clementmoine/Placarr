@@ -55,6 +55,8 @@ const KIND_ORDER: Record<SealedProductEntry["kind"], number> = {
   display: 1,
   deck: 2,
   coffret: 3,
+  // Le papier promotionnel ferme la liste : c'est l'objet le plus périphérique.
+  ephemera: 4,
 };
 
 export function buildCatalogueSealedRows(

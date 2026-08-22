@@ -1,8 +1,9 @@
 /**
- * Catalogue Ninja Ranks depuis la checklist officielle Inkworks.
+ * Catalogue Ninja Ranks depuis la checklist officielle Inkworks (+ NS EU).
  *
- * Titres anglais seulement — c'est ce que le site éditeur écrivait. Pas de
- * faces, pas des NS européennes absentes de cette feuille.
+ * Titres anglais — ce que l'éditeur US écrivait sur sa feuille (100 cartes).
+ * Les NS1–6 (Ninja Sensei) sont un insert européen absent de cette feuille ;
+ * ils vivent dans `european-ns-checklist.json` et sont semés à part.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -27,6 +28,17 @@ type Checklist = {
   cards: InkworksChecklistCard[];
 };
 
+type SupplementalChecklist = {
+  source: string;
+  cards: InkworksChecklistCard[];
+};
+
+type EuropeanNsChecklist = {
+  source: string;
+  notUs: boolean;
+  cards: InkworksChecklistCard[];
+};
+
 const CHECKLIST_FILE = "inkworks-checklist.json";
 
 export function inkworksChecklistPath(): string {
@@ -44,13 +56,13 @@ export type RanksLedgerBuildReport = {
   skipped: string[];
 };
 
-export function buildNinjaRanksFromLedgers(
+function writeLedgerCards(
+  ledger: { source: string; cards: InkworksChecklistCard[] },
   opts: {
     dryRun?: boolean;
     index?: ReturnType<typeof createLocalPrintsIndex>;
   } = {},
 ): RanksLedgerBuildReport {
-  const ledger = readInkworksChecklist();
   const skipped: string[] = [];
   const rows = [];
 
@@ -70,7 +82,7 @@ export function buildNinjaRanksFromLedgers(
       setCode: card.setCode.trim().toLowerCase(),
       number: card.number.trim().toLowerCase(),
       cardType: card.setCode.trim().toLowerCase(),
-      sourceUrl: ledger.wayback,
+      sourceUrl: ledger.source,
       titles: [
         {
           lang: "en",
@@ -92,4 +104,61 @@ export function buildNinjaRanksFromLedgers(
   const index = opts.index ?? createLocalPrintsIndex(NARUTO_RANKS_PACK_ID);
   index.writePrints(rows);
   return report;
+}
+
+export function buildNinjaRanksFromLedgers(
+  opts: {
+    dryRun?: boolean;
+    index?: ReturnType<typeof createLocalPrintsIndex>;
+  } = {},
+): RanksLedgerBuildReport {
+  const ledger = readInkworksChecklist();
+  return writeLedgerCards(
+    { source: ledger.wayback, cards: ledger.cards },
+    opts,
+  );
+}
+
+const EUROPEAN_NS_FILE = "european-ns-checklist.json";
+
+export function europeanNsChecklistPath(): string {
+  return path.join(narutoRanksCuratedDir(), "sources", EUROPEAN_NS_FILE);
+}
+
+export function readEuropeanNsChecklist(): EuropeanNsChecklist {
+  return JSON.parse(
+    readFileSync(europeanNsChecklistPath(), "utf8"),
+  ) as EuropeanNsChecklist;
+}
+
+/** NS1–6 : insert EU, absent de la checklist Inkworks US. */
+export function buildEuropeanNsFromLedger(
+  opts: {
+    dryRun?: boolean;
+    index?: ReturnType<typeof createLocalPrintsIndex>;
+  } = {},
+): RanksLedgerBuildReport {
+  return writeLedgerCards(readEuropeanNsChecklist(), opts);
+}
+
+const SUPPLEMENTAL_PROMOS_FILE = "supplemental-promos-checklist.json";
+
+export function supplementalPromosChecklistPath(): string {
+  return path.join(narutoRanksCuratedDir(), "sources", SUPPLEMENTAL_PROMOS_FILE);
+}
+
+export function readSupplementalPromosChecklist(): SupplementalChecklist {
+  return JSON.parse(
+    readFileSync(supplementalPromosChecklistPath(), "utf8"),
+  ) as SupplementalChecklist;
+}
+
+/** Promos attestées hors feuille Inkworks US (ex. PN-SD2006 SDCC). */
+export function buildSupplementalPromosFromLedger(
+  opts: {
+    dryRun?: boolean;
+    index?: ReturnType<typeof createLocalPrintsIndex>;
+  } = {},
+): RanksLedgerBuildReport {
+  return writeLedgerCards(readSupplementalPromosChecklist(), opts);
 }

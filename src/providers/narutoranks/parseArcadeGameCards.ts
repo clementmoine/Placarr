@@ -68,38 +68,66 @@ export function arcadeReferenceToCard(
   return { setCode, number: String(digits).padStart(4, "0") };
 }
 
+function foldCardName(raw: string): string {
+  return raw
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function nameTokens(raw: string): string[] {
+  return foldCardName(raw).split(/\s+/).filter(Boolean);
+}
+
 /** Le nom de fichier redit-il la référence ? `…card02front` / `…ff1front`. */
 export function fileEchoesReference(
   imageUrl: string,
   printed: string,
 ): boolean {
-  const stem = (imageUrl.split("/").pop() ?? "").toLowerCase();
+  const stem = (imageUrl.split("/").pop() ?? "").toLowerCase().split("?")[0]!;
   const ref = printed.trim().toLowerCase();
   const m = /^([a-z]{0,2})(\d{1,3})$/.exec(ref);
   if (!m) return false;
   const prefix = m[1]!;
   const digits = Number.parseInt(m[2]!, 10);
-  const token = prefix
-    ? `${prefix}${digits}`
-    : `card${String(digits).padStart(2, "0")}`;
-  return new RegExp(`naruto2002panini${token}(front|back)`).test(stem);
+  if (prefix) {
+    const token = `${prefix}${digits}`;
+    return new RegExp(`naruto2002panini${token}(front|back)`).test(stem);
+  }
+  // Base : `card10`, `card010`, `card010front-e161` — zéros optionnels après `card`.
+  return new RegExp(`naruto2002paninicard0*${digits}(front|back)`).test(stem);
 }
 
 /** Compare deux noms de carte en ignorant casse, accents et séparateurs. */
 export function namesAgree(a: string, b: string): boolean {
-  const fold = (s: string) =>
-    s
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, " ")
-      .trim();
-  const left = fold(a);
-  const right = fold(b);
+  const left = foldCardName(a);
+  const right = foldCardName(b);
   if (!left || !right) return false;
   if (left === right) return true;
-  // « Guy Kakashi » contre « Guy - Kakashi » : mêmes mots, même ordre.
-  return left.split(" ").join(" ") === right.split(" ").join(" ");
+  const aTokens = nameTokens(a);
+  const bTokens = nameTokens(b);
+  if (aTokens.length && aTokens.length === bTokens.length) {
+    const bag = (tokens: string[]) => [...tokens].sort().join(" ");
+    if (bag(aTokens) === bag(bTokens)) return true;
+  }
+  // « Group 7 puzzle » vs « Group 7 Naruto Sakura » : le vendeur suffixe des persos.
+  if (bTokens.length >= 2 && left.startsWith(bTokens.slice(0, -1).join(" "))) {
+    return true;
+  }
+  return false;
+}
+
+export type ArcadeNameCheck = (
+  setCode: string,
+  number: string,
+  vendorName: string,
+) => boolean;
+
+/** Dérive le verso à partir du recto déjà validé : `…card72front.jpg` → `…card72back.jpg`. */
+export function arcadeBackImageUrl(frontUrl: string): string {
+  return frontUrl.replace(/front/i, "back");
 }
 
 export function arcadeListingUrls(): string[] {
@@ -111,7 +139,7 @@ export function arcadeListingUrls(): string[] {
 
 export function parseArcadeListing(
   html: string,
-  checklistName: (setCode: string, number: string) => string | null,
+  nameCheck: ArcadeNameCheck,
 ): ArcadeParse {
   const cards = new Map<string, ArcadeCard>();
   const rejected: ArcadeParse["rejected"] = [];
@@ -138,14 +166,11 @@ export function parseArcadeListing(
       });
       continue;
     }
-    const expected = checklistName(card.setCode, card.number);
-    if (!expected || !namesAgree(name, expected)) {
+    if (!nameCheck(card.setCode, card.number, name)) {
       rejected.push({
         printed,
         name,
-        reason: expected
-          ? `la checklist nomme « ${expected} » cette référence`
-          : "référence absente de la checklist",
+        reason: "le nom vendeur ne concorde pas avec la checklist",
       });
       continue;
     }

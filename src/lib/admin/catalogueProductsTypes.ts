@@ -3,8 +3,13 @@
 export type CatalogueSealedRow = {
   productKey: string;
   slug: string;
-  kind: "booster" | "display" | "deck" | "coffret";
-  behavior: "random_pack" | "pack_container" | "known_bundle" | "mixed_bundle";
+  kind: "booster" | "display" | "deck" | "coffret" | "ephemera";
+  behavior:
+    | "random_pack"
+    | "pack_container"
+    | "known_bundle"
+    | "mixed_bundle"
+    | "no_cards";
   name: string | null;
   setCode: string | null;
   image: string | null;

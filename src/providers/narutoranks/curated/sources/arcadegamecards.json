@@ -2,25 +2,117 @@
   "source": "arcadegamecards.com — boutique, catégorie « Naruto 2002 Panini »",
   "url": "https://www.arcadegamecards.com/product-category/naruto-2002-panini/",
   "observed": "2026-08-22",
-  "ingest": "faces `art.arcadegamecards` de l'édition américaine",
+  "ingest": "rectos et versos `art.arcadegamecards` / `back.arcadegamecards` de l'édition américaine",
   "lang": "en",
   "sourceId": "arcadegamecards",
-  "note": "Une photo par carte, 740×1036 en natif — le CDN Jetpack ne sert pas plus grand, `?w=2000` rend la même image. Trois pages de listing, 81 produits : les 72 cartes de base sans un trou, plus neuf inserts. L'édition photographiée est l'américaine : la carte 2 y porte « GROUP 7 », contre « GROUPE 7 » chez Coleka et « GRUPPO 7 » chez Imadoki.",
-  "whyItMatters": "C'est la seule source mesurée qui porte les 72 de base au complet. Elle comble `nr-0048` et `nr-0049`, que ni Coleka ni Imadoki n'ont, et donne à l'édition américaine une couverture qu'elle n'avait pas — le pack n'en tenait que deux échantillons éditeur.",
+  "setCodes": "Voir `sets` dans `inkworks-checklist.json` — nr = base 1–72, ff = Friends and Foes, sd = Super Deformed, nw = Ninja Warriors, bl = Box Loader, pn = Promo.",
+  "note": "Une photo par carte, ~740×1032 en natif — le CDN Jetpack ne sert pas plus grand (`?w=2000` rend la même image). Trois pages de listing, 81 fiches produit : les 72 cartes de base y figurent toutes ; une seule (`21`) échoue au parseur (image de la 22). Neuf inserts manquent carrément sur le site.",
+  "whyItMatters": "Meilleure couverture EN mesurée pour la base (71/72 faces installées). Comble `nr-0048` et `nr-0049`, absents de Coleka et Imadoki. Seul `nr-0021` reste sans EN : la fiche vendeur pointe l'image de la 22.",
   "threeSignals": "Le titre donne la référence (`Card 02`, `Card FF1`), le nom de fichier la redonne (`…card02front.jpg`, `…ff1front.jpg`), et le nom doit tomber sur celui de la checklist Inkworks. Les trois sont exigés.",
+  "backs": "Le listing ne montre que le recto (`…front.jpg`). Une fois le recto validé, le verso se dérive en remplaçant `front` par `back` dans la même URL (`…card72front.jpg` → `…card72back.jpg`). Mesuré : 72/73 versos sur le CDN pour les cartes acceptées.",
   "access": {
     "state": "protégé par un challenge Cloudflare",
     "detail": "Le listing rend 403 « Just a moment… » à tout client non navigateur. Le moissonneur passe par `fetchTextWithFlareFallback`, le mécanisme déjà présent dans le dépôt : sans `FLARESOLVERR_URL`, il ne fait rien et le dit. Rien n'est contourné.",
     "robots": "`User-agent: *` sans aucune interdiction ; seuls des robots d'IA nommés sont exclus. Aucune condition d'utilisation ne s'oppose à la lecture — c'est une barrière technique, pas contractuelle."
   },
-  "notIngested": [
+  "harvest": {
+    "observed": "2026-08-22",
+    "flareSolverr": "listing HTML mis en cache (`listing-0..2.html`)",
+    "pages": 3,
+    "productsOnSite": 81,
+    "checklistPrints": 100,
+    "acceptedByParser": 78,
+    "rejectedByParser": 3,
+    "absentFromSite": 19,
+    "stagingJpegs": 78,
+    "facesInstalled": 78,
+    "bySet": {
+      "nr": { "checklist": 72, "accepted": 71, "rejectedOnSite": 1, "absent": 0 },
+      "ff": { "checklist": 6, "accepted": 3, "rejectedOnSite": 0, "absent": 3 },
+      "sd": { "checklist": 6, "accepted": 0, "rejectedOnSite": 2, "absent": 4 },
+      "nw": { "checklist": 9, "accepted": 3, "rejectedOnSite": 0, "absent": 6 },
+      "bl": { "checklist": 3, "accepted": 1, "rejectedOnSite": 0, "absent": 2 },
+      "pn": { "checklist": 4, "accepted": 0, "rejectedOnSite": 0, "absent": 4 }
+    },
+    "imageQuality": {
+      "widthPx": { "min": 736, "max": 1040, "typical": 744 },
+      "heightPx": { "min": 732, "max": 1044, "typical": 1032 },
+      "cdnCap": "Jetpack `?w=740` — pas de variante plus grande observée"
+    }
+  },
+  "vendorTitleAliases": [
     {
-      "what": "Les deux fiches Super Deformed",
-      "reason": "« SD3 Kakashi » porte le fichier `sd3`, « SD3 Sasuke » porte le fichier `sd4` — or la checklist dit sd3 = Sasuke et sd4 = Kakashi. Les noms sont intervertis chez le vendeur ; les deux fiches échouent au contrôle et sont refusées. Aucune perte : `sd` est déjà complet par ailleurs."
+      "setCode": "nr",
+      "number": "0001",
+      "vendorTitles": ["The Ninja Are Here"],
+      "note": "Carte titre : le vendeur décrit la carte, la checklist dit « Title Card ». Ref + fichier concordent."
+    }
+  ],
+  "rejected": [
+    {
+      "printed": "21",
+      "setCode": "nr",
+      "number": "0021",
+      "vendorTitle": "Kakashi",
+      "checklistName": "Kakashi",
+      "failedSignal": "file",
+      "fileStem": "naruto2002paninicard22front",
+      "detail": "La fiche « Card 21 » pointe l'image de la 22. La fiche « Card 22 » utilise `card22front-1.jpg` et est ingérée. Pas de scan distinct pour la 21 sur le site.",
+      "recoverable": "non — erreur vendeur, pas d'attestation d'une face 21 distincte"
     },
     {
-      "what": "Les versos",
-      "reason": "Les fichiers sont tous nommés `…front.jpg` ; la boutique n'en publie aucun."
+      "printed": "SD3",
+      "setCode": "sd",
+      "number": "0003",
+      "vendorTitle": "Kakashi",
+      "checklistName": "Sasuke",
+      "failedSignal": "name",
+      "fileStem": "naruto2002paninisd3front",
+      "detail": "Nom interverti : sd3 checklist = Sasuke, vendeur = Kakashi.",
+      "recoverable": "non sans attestation — ne pas inverser automatiquement"
+    },
+    {
+      "printed": "SD3",
+      "setCode": "sd",
+      "number": "0004",
+      "vendorTitle": "Sasuke",
+      "checklistName": "Kakashi",
+      "failedSignal": "file",
+      "fileStem": "naruto2002paninisd4front",
+      "detail": "Deuxième fiche libellée « SD3 » mais fichier sd4 ; sd4 checklist = Kakashi. Double erreur vendeur.",
+      "recoverable": "non"
     }
-  ]
+  ],
+  "absentFromSite": [
+    "ff-0002",
+    "ff-0003",
+    "ff-0004",
+    "sd-0001",
+    "sd-0002",
+    "sd-0005",
+    "sd-0006",
+    "nw-0004",
+    "nw-0005",
+    "nw-0006",
+    "nw-0007",
+    "nw-0008",
+    "nw-0009",
+    "bl-0001",
+    "bl-0003",
+    "pn-0001",
+    "pn-t",
+    "pn-ga",
+    "pn-i"
+  ],
+  "notIngested": [
+    {
+      "what": "Les deux fiches Super Deformed SD3",
+      "reason": "Noms et fichiers intervertis — voir `rejected`. Seules fiches SD présentes sur le site ; SD1, SD2, SD5, SD6 absentes. Aucune perte nette : `sd` est déjà complet par Imadoki."
+    }
+  ],
+  "overlap": {
+    "colekaFr": "59 faces FR ; les six `nr` EN manquants côté arcade incluent 01–03, 06 — plusieurs ont une face FR Coleka",
+    "imadokiIt": "81 faces IT ; couvre inserts absents d'arcade (FF, NW, SD, BL)",
+    "uniqueEn": "nr-0048, nr-0049 — seule source EN mesurée pour ces numéros"
+  }
 }

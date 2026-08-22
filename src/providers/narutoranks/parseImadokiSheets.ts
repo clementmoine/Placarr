@@ -12,14 +12,15 @@
  * Le site n'a pas de `robots.txt` — rien n'y est interdit.
  *
  * **Ce que la galerie couvre, et ce que notre pack modélise, ne coïncident
- * pas.** Elle publie l'édition européenne : 72 de base, FF6, NW9, **NS6**, SD6
- * et **GS3**. Le pack tient l'édition américaine, qui a BL3 et PN4 à la place
- * de NS6 et GS3. Deux correspondances mesurées :
+ * pas tout à fait.** Elle publie l'édition européenne : 72 de base, FF6, NW9,
+ * **NS6**, SD6 et **GS3**. L'édition américaine Inkworks a BL3 et PN4 à la
+ * place de NS6 et GS3. Deux correspondances mesurées :
  *
  * - `GS1-3` **sont** nos `bl1-3` — mêmes Naruto, Sakura et Sasuke à pastille
  *   « 7 », et `bl-0001` d'Inkworks est au pixel la même carte que GS1.
- * - `NS1-6` n'existe pas chez nous : la planche est ignorée, faute de tirage
- *   auquel rattacher ses faces.
+ * - `NS1-6` n'existe pas sur la feuille Inkworks US : on les modélise quand
+ *   même comme tirages EU-only (`european-ns-checklist.json`), avec faces IT
+ *   sur la planche `naruto_premiumtc_ns01-06.JPG`.
  */
 export const IMADOKI_ORIGIN = "https://www.imadokicollection.it";
 export const IMADOKI_GALLERY_PATH =
@@ -38,6 +39,11 @@ export type ImadokiSheet = {
   rows: number;
   /** Les cases en ordre de lecture, ligne par ligne. */
   slots: readonly ImadokiSlot[];
+  /**
+   * `gutter` (défaut) — gouttières blanches détectées sur la planche.
+   * `equal` — découpe régulière sans gouttières (foils paysage NS).
+   */
+  gridMode?: "gutter" | "equal";
 };
 
 function run(setCode: string, from: number, to: number): ImadokiSlot[] {
@@ -69,6 +75,30 @@ export const IMADOKI_SHEETS: readonly ImadokiSheet[] = [
   },
   {
     /*
+      Foils paysage — pas de gouttières blanches lisibles ; grille 2×3 mesurée
+      sur le scan (~691×750).
+
+      Grille 2×3, lecture gauche→droite puis haut→bas. Les noms sur la planche
+      ne suivent pas NS1…NS6 :
+      slot 0 Asuma → `ns-0004`, 1 Kakashi → `ns-0001`, 2 Iruka → `ns-0005`,
+      3 Kurenai → `ns-0002`, 4 Ebisu → `ns-0006`, 5 vide — `ns-0003` *Guy*
+      manque à la galerie Imadoki.
+    */
+    file: "naruto_premiumtc_ns01-06.JPG",
+    columns: 2,
+    rows: 3,
+    gridMode: "equal",
+    slots: [
+      { setCode: "ns", number: "0004" },
+      { setCode: "ns", number: "0001" },
+      { setCode: "ns", number: "0005" },
+      { setCode: "ns", number: "0002" },
+      { setCode: "ns", number: "0006" },
+      null,
+    ],
+  },
+  {
+    /*
       Mapping relevé sur la planche, pas déduit : « QUARTO HOKAGE » est notre
       `sd-0005` *Fourth Hokage*, « SHIKAMARU » notre `sd-0006`. La quatrième
       case est vide — `sd-0004` *Kakashi* manque à la galerie, et c'est
@@ -87,11 +117,6 @@ export const IMADOKI_SHEETS_SKIPPED: readonly {
   file: string;
   reason: string;
 }[] = [
-  {
-    file: "naruto_premiumtc_ns01-06.JPG",
-    reason:
-      "NS1-6 est propre à l'édition européenne ; le pack tient l'édition américaine et n'a aucun tirage auquel rattacher ces faces.",
-  },
   {
     file: "naruto_premiumtc_pack.JPG",
     reason: "Photo du sachet, pas une carte — les packshots ont leur registre.",

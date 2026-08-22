@@ -5,11 +5,12 @@ const SET_LABELS: Readonly<Record<string, string>> = {
   ff: "Friends and Foes",
   sd: "Super Deformed",
   nw: "Ninja Warriors",
+  ns: "Ninja Sensei",
   bl: "Box Loaders",
   pn: "Promos",
 };
 
-const SET_ORDER = ["nr", "ff", "sd", "nw", "bl", "pn"] as const;
+const SET_ORDER = ["nr", "ff", "sd", "nw", "ns", "bl", "pn"] as const;
 
 /** `naruto:nr-0001`, `naruto:ff-0001`, `naruto:pn-i`. */
 export function ninjaRanksPrintKey(

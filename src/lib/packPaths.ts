@@ -116,6 +116,11 @@ export function packCardsIndexPath(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "cards-index.json");
 }
 
+/** Prints whose recto text is locale-specific — optional, per pack. */
+export function packLocaleSpecificFacesPath(pack: string): string {
+  return path.join(dataRoot(), canonicalDataPack(pack), "locale-specific-faces.json");
+}
+
 /** Sealed SKUs — `data/<pack>/products-index.json`. */
 export function packProductsIndexPath(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "products-index.json");

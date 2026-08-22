@@ -5,6 +5,10 @@
 export type CardsIndexLangFiles = {
   art?: string;
   thumb?: string;
+  /** Face pixel width — probed at index export for orientation. */
+  artW?: number;
+  /** Face pixel height — probed at index export for orientation. */
+  artH?: number;
   mask?: string;
   varnishMask?: string;
   secondVarnishMask?: string;
@@ -54,6 +58,8 @@ export type CardsIndexEntry = {
   name?: string;
   /** Optional rarity tag when known from checklist. */
   rarity?: string;
+  /** True when any locale art scan is wider than tall. */
+  landscapePrint?: boolean;
 };
 
 export type CardsIndexV1 = {

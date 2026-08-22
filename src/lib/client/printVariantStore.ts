@@ -29,7 +29,8 @@ const MAX_BATCH_KEYS = 120;
  */
 /** Bumped when CSS must re-resolve via pack (effectPack + resolveCss). */
 /** Bumped again when faceQuarterTurns joined the print payload. */
-const PRINT_VARIANT_CACHE_VERSION = 6;
+/** Bumped when landscapePrint + dimension-based orientation joined the payload. */
+const PRINT_VARIANT_CACHE_VERSION = 8;
 
 /** `type` is part of the key: it decides which providers are even asked. */
 function cacheKey(printKey: string, type: string): string {

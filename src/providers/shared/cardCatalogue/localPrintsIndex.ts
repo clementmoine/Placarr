@@ -28,13 +28,15 @@ export type LocalPrintSearchRow = {
   rarity: string | null;
   art: string | null;
   thumb: string | null;
+  back: string | null;
 };
 
 /** Face attestée — le fichier est déjà sous `cards/`, on n'enregistre que le nom. */
 export type LocalPrintAssetWrite = {
   printKey: string;
   lang: string;
-  art: string;
+  art?: string;
+  back?: string;
   sourceUrl?: string | null;
 };
 
@@ -63,7 +65,7 @@ export type LocalPrintsIndex = {
     query: string,
     opts?: { language?: string; limit?: number; setId?: string | null },
   ) => LocalPrintSearchRow[];
-  lookupRow: (printKey: string) => LocalPrintSearchRow | null;
+  lookupRow: (printKey: string, opts?: { language?: string }) => LocalPrintSearchRow | null;
   listSets: (opts?: {
     setLabel?: (setCode: string) => string;
     setSortKey?: (setCode: string) => number | null;
@@ -85,7 +87,7 @@ export type LocalPrintsIndex = {
 const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
               p.card_type AS cardType, p.grouping,
               t.lang, t.full_name AS fullName, t.rarity,
-              a.art, a.thumb
+              a.art, a.thumb, a.back
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN print_assets a
@@ -105,7 +107,7 @@ const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.num
   l'index avec leur image et sans nom, ce que `CardsIndexEntry` permet déjà.
 */
 const SELECT_ORPHAN_ASSETS = `SELECT a.print_key AS printKey, p.card_type AS cardType,
-              p.number, a.lang, a.art, a.thumb
+              p.number, a.lang, a.art, a.thumb, a.back
          FROM print_assets a
          JOIN prints p ON p.print_key = a.print_key
         WHERE NOT EXISTS (
@@ -222,12 +224,60 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       .all(...scope.params, lang, limit * 3) as LocalPrintSearchRow[];
   };
 
-  const lookupRow = (printKey: string): LocalPrintSearchRow | null => {
+  const lookupRow = (
+    printKey: string,
+    opts?: { language?: string },
+  ): LocalPrintSearchRow | null => {
     const db = ensure();
     if (!db) return null;
+    const key = printKey.trim().toLowerCase();
+    const lang = opts?.language?.trim().toLowerCase();
+    if (lang) {
+      const titled = db
+        .prepare(`${SELECT_ROW} WHERE p.print_key = ? AND t.lang = ? LIMIT 1`)
+        .get(key, lang) as LocalPrintSearchRow | undefined;
+      if (titled) return titled;
+      const orphan = db
+        .prepare(
+          `SELECT a.print_key AS printKey, p.card_type AS cardType,
+                  p.number, a.lang, a.art, a.thumb, a.back
+             FROM print_assets a
+             JOIN prints p ON p.print_key = a.print_key
+            WHERE a.print_key = ? AND a.lang = ?
+              AND NOT EXISTS (
+                    SELECT 1 FROM print_titles t
+                     WHERE t.print_key = a.print_key AND t.lang = a.lang)
+            LIMIT 1`,
+        )
+        .get(key, lang) as LocalPrintSearchRow | undefined;
+      if (orphan) {
+        const print = db
+          .prepare(
+            `SELECT set_code AS setCode, number, card_type AS cardType, grouping
+               FROM prints WHERE print_key = ? LIMIT 1`,
+          )
+          .get(key) as
+          | { setCode: string; number: string; cardType: string; grouping: string | null }
+          | undefined;
+        if (!print) return null;
+        return {
+          printKey: key,
+          setCode: print.setCode,
+          number: print.number,
+          cardType: print.cardType,
+          grouping: print.grouping,
+          lang,
+          fullName: null,
+          rarity: null,
+          art: orphan.art,
+          thumb: orphan.thumb,
+          back: orphan.back,
+        };
+      }
+    }
     const row = db
       .prepare(`${SELECT_ROW} WHERE p.print_key = ? LIMIT 1`)
-      .get(printKey.trim().toLowerCase()) as LocalPrintSearchRow | undefined;
+      .get(key) as LocalPrintSearchRow | undefined;
     return row ?? null;
   };
 
@@ -324,21 +374,24 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     let assets = 0;
     try {
       const upsert = db.prepare(
-        `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
-         VALUES (?, ?, ?, ?, 1)
+        `INSERT INTO print_assets (print_key, lang, art, back, source_url, printed)
+         VALUES (?, ?, ?, ?, ?, 1)
          ON CONFLICT(print_key, lang) DO UPDATE SET
-           art = excluded.art,
-           source_url = excluded.source_url`,
+           art = COALESCE(excluded.art, print_assets.art),
+           back = COALESCE(excluded.back, print_assets.back),
+           source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
       );
       db.exec("BEGIN IMMEDIATE");
       try {
         for (const row of rows) {
-          const art = row.art.trim();
-          if (!art) continue;
+          const art = row.art?.trim() || null;
+          const back = row.back?.trim() || null;
+          if (!art && !back) continue;
           upsert.run(
             row.printKey,
             row.lang.trim().toLowerCase(),
             art,
+            back,
             row.sourceUrl ?? null,
           );
           assets += 1;
@@ -372,6 +425,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       if (row.fullName) slot.name = row.fullName;
       if (row.art) slot.art = row.art;
       if (row.thumb) slot.thumb = row.thumb;
+      if (row.back) slot.back = row.back;
       entry.langs[row.lang] = slot;
       if (!entry.name && row.fullName) entry.name = row.fullName;
       if (!entry.rarity && row.rarity) entry.rarity = row.rarity;
@@ -383,7 +437,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       .prepare(SELECT_ORPHAN_ASSETS)
       .all() as LocalPrintSearchRow[];
     for (const row of orphans) {
-      if (!row.lang || (!row.art && !row.thumb)) continue;
+      if (!row.lang || (!row.art && !row.thumb && !row.back)) continue;
       const entry = (cards[row.printKey] ??= {
         set: row.cardType,
         card: row.number,
@@ -392,6 +446,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       const slot = entry.langs[row.lang] ?? {};
       if (row.art) slot.art = row.art;
       if (row.thumb) slot.thumb = row.thumb;
+      if (row.back) slot.back = row.back;
       entry.langs[row.lang] = slot;
     }
 

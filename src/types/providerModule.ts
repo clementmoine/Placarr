@@ -262,6 +262,13 @@ export type PrintCandidate = {
    */
   faceQuarterTurns?: 0 | 1 | 2 | 3;
   /**
+   * Native landscape scan in a portrait card slot — swap the display frame, do
+   * not rotate the artwork (Ninja Ranks NS, ROOKIES).
+   */
+  landscapeFace?: boolean;
+  /** Any locale art for this print is wider than tall. */
+  landscapePrint?: boolean;
+  /**
    * Card family as the catalogue spells it (`Pokémon`, `Dresseur`, `Énergie`).
    * A look is chosen per family as much as per rarity — a Dresseur wearing a
    * Pokémon frame gets an energy badge and an HP bar it has no use for.

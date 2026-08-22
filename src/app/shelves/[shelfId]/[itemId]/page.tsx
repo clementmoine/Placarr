@@ -118,10 +118,11 @@ import {
   usePrintVariant,
   variantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
+import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
 import {
   getDetailCoverClass,
   getAspectRatio,
-  orientAspectRatio,
+  faceDisplayAspect,
 } from "@/lib/text/cardFormat";
 import { AmbientBackdrop } from "@/components/AmbientBackdrop";
 import { CardBackSkeleton } from "@/components/CardBackSkeleton";
@@ -1974,10 +1975,13 @@ export default function ItemDetailsPage() {
     );
   }, [shelf, resolvedItemId, seriesVolumes, franchiseItems]);
 
-  const faceQuarterTurns = printVariant?.faceQuarterTurns ?? 0;
+  const artOrient = useArtFaceOrientation(coverImage, printVariant ?? undefined);
+  const faceQuarterTurns = artOrient.faceQuarterTurns;
+  const landscapeFace = artOrient.landscapeFace;
+  const displayQuarterTurns = landscapeFace ? 0 : faceQuarterTurns;
   const coverAspectRatio = useMemo(() => {
     const base = getDetailCoverClass(shelf?.cardFormat, shelf?.type);
-    if (!faceQuarterTurns) return base;
+    if (!displayQuarterTurns && !landscapeFace) return base;
     // Aspect comes from inline style when the print sits on its side.
     return base
       .replace(/\baspect-\[[^\]]+\]\b/g, "")
@@ -1985,14 +1989,14 @@ export default function ItemDetailsPage() {
       .replace(/\baspect-video\b/g, "")
       .replace(/\s+/g, " ")
       .trim();
-  }, [shelf?.cardFormat, shelf?.type, faceQuarterTurns]);
+  }, [shelf?.cardFormat, shelf?.type, displayQuarterTurns, landscapeFace]);
   const coverOrientedAspect = useMemo(
     () =>
-      orientAspectRatio(
-        getAspectRatio(shelf?.cardFormat, shelf?.type),
+      faceDisplayAspect(getAspectRatio(shelf?.cardFormat, shelf?.type), {
         faceQuarterTurns,
-      ),
-    [shelf?.cardFormat, shelf?.type, faceQuarterTurns],
+        landscapeFace,
+      }),
+    [shelf?.cardFormat, shelf?.type, faceQuarterTurns, landscapeFace],
   );
   /**
    * The backdrop turns with the card only when it *is* the card. A Location has
@@ -2003,7 +2007,8 @@ export default function ItemDetailsPage() {
   const heroQuarterTurns =
     heroImage &&
     heroArtworkUrl &&
-    urlsReferToSameLocalizedImage(heroImage, heroArtworkUrl)
+    urlsReferToSameLocalizedImage(heroImage, heroArtworkUrl) &&
+    !landscapeFace
       ? faceQuarterTurns
       : 0;
 
@@ -2436,7 +2441,7 @@ export default function ItemDetailsPage() {
                  * holographic layers instead.
                  */
                 style={{
-                  ...(faceQuarterTurns
+                  ...(displayQuarterTurns || landscapeFace
                     ? { aspectRatio: coverOrientedAspect }
                     : {}),
                   ...(coverEdgeColors && !variantView.foilMaskUrl
@@ -2449,14 +2454,14 @@ export default function ItemDetailsPage() {
                 {!(coverEdgeColors && !variantView.foilMaskUrl) && (
                   <CardBackSkeleton
                     url={cardBackSkeletonUrl}
-                    faceQuarterTurns={faceQuarterTurns}
+                    faceQuarterTurns={displayQuarterTurns}
                     orientedAspect={coverOrientedAspect}
                   />
                 )}
                 {coverImage ? (
                   <>
                     <OrientedMediaRotator
-                      faceQuarterTurns={faceQuarterTurns}
+                      faceQuarterTurns={displayQuarterTurns}
                       orientedAspect={coverOrientedAspect}
                     >
                       {variantView.foilMaskUrl ? (
@@ -3024,7 +3029,7 @@ export default function ItemDetailsPage() {
                     // The card's own corner, quoted against this (oriented)
                     // box. FlippableCard clips to the same shape; this is what
                     // its `rounded-[inherit]` chain starts from.
-                    borderRadius: cardFaceRadius(faceQuarterTurns),
+                    borderRadius: cardFaceRadius(displayQuarterTurns),
                     aspectRatio: coverOrientedAspect,
                     width: `min(calc(100vw - 2rem), calc(80dvh * ${coverOrientedAspect}))`,
                   } as CSSProperties
@@ -3036,13 +3041,13 @@ export default function ItemDetailsPage() {
                   backAlt={`${itemDisplayName ?? ""} — dos`}
                   flipLabel={t("items.flipCard")}
                   tiltPromptLabel={t("items.tiltPrompt")}
-                  faceQuarterTurns={faceQuarterTurns}
+                  faceQuarterTurns={displayQuarterTurns}
                   orientedAspect={coverOrientedAspect}
                   faceTabLabel={t("items.cardFace")}
                   backTabLabel={t("items.cardBack")}
                 >
                   <OrientedMediaRotator
-                    faceQuarterTurns={faceQuarterTurns}
+                    faceQuarterTurns={displayQuarterTurns}
                     orientedAspect={coverOrientedAspect}
                   >
                     <FoilCardImage

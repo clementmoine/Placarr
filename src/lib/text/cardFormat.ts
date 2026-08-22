@@ -24,6 +24,17 @@ export function orientAspectRatio(
   return `${match[2]} / ${match[1]}`;
 }
 
+/** Display aspect for a face: sideways rotation vs native landscape scan. */
+export function faceDisplayAspect(
+  aspect: string,
+  opts: { faceQuarterTurns?: number | null; landscapeFace?: boolean },
+): string {
+  if (opts.landscapeFace) {
+    return orientAspectRatio(aspect, 1);
+  }
+  return orientAspectRatio(aspect, opts.faceQuarterTurns);
+}
+
 export function faceRotateDeg(quarterTurns: number | null | undefined): number {
   return normalizeFaceQuarterTurns(quarterTurns) * 90;
 }

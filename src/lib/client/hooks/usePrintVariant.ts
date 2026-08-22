@@ -47,6 +47,9 @@ export type PrintVariantInfo = {
    * side (Pokémon BREAK → 1). Omit / 0 = upright.
    */
   faceQuarterTurns?: 0 | 1 | 2 | 3;
+  /** Native landscape scan — swap display aspect without rotating pixels. */
+  landscapeFace?: boolean;
+  landscapePrint?: boolean;
 };
 
 /**

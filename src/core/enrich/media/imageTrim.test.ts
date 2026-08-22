@@ -39,6 +39,45 @@ describe("trimLightImageMargins", () => {
     expect(metadata.height).toBe(50);
   });
 
+  it("crops grey off-white scan beds with a lower luminance threshold", async () => {
+    const input = await sharp({
+      create: {
+        width: 120,
+        height: 100,
+        channels: 3,
+        background: "#ededed",
+      },
+    })
+      .composite([
+        {
+          input: await sharp({
+            create: {
+              width: 70,
+              height: 50,
+              channels: 3,
+              background: "#f97316",
+            },
+          })
+            .png()
+            .toBuffer(),
+          left: 25,
+          top: 20,
+        },
+      ])
+      .png()
+      .toBuffer();
+
+    const unchanged = await trimLightImageMargins(input);
+    expect(unchanged).toBe(input);
+
+    const output = await trimLightImageMargins(input, {
+      lightLuminanceThreshold: 220,
+    });
+    const metadata = await sharp(output).metadata();
+    expect(metadata.width).toBe(70);
+    expect(metadata.height).toBe(50);
+  });
+
   it("keeps full-bleed dark images without neutral margins unchanged", async () => {
     const input = await sharp({
       create: {

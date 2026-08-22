@@ -67,6 +67,26 @@ export type CataloguePackInfo = {
    * same printed prefix + number (Naruto promo stub → retail — not NI→N).
    */
   sameNumberArtFallback?: boolean;
+  /**
+   * One grid tile per locale in `cards-index.json` (Naruto Carddass, Ninja
+   * Ranks). Without this, `pickLang` keeps a single row and hides FR / IT /
+   * EN faces that live on other lang slots.
+   */
+  expandLocales?: boolean;
+  /**
+   * When `expandLocales` is on, emit a tile for every listed locale even when
+   * `cards-index.json` has no lang slot yet (shown as missing art, not hidden).
+   */
+  catalogueLocales?: readonly string[];
+  /**
+   * How catalogue tiles pick rectos across locales. Versos stay on the tile
+   * locale; a missing back is honest. Any pack can opt in — see
+   * `locale-specific-faces.json` next to `cards-index.json`.
+   */
+  localeArt?: {
+    /** Neutral prints borrow the best recto among `catalogueLocales`. */
+    bestFaceAcrossLocales?: boolean;
+  };
   extractTarget: CatalogueExtractTarget;
   /** No APK lab — Bandai / Wayback catalogue sync. */
   catalogueOnly?: boolean;
@@ -164,12 +184,15 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Naruto Ninja Ranks",
     hasFoilEffects: false,
     defaultScope: "all",
+    expandLocales: true,
+    catalogueLocales: ["en", "fr", "it"],
+    localeArt: { bestFaceAcrossLocales: true },
     extractTarget: "naruto-ranks",
     catalogueOnly: true,
     blurbFr:
-      "Panini / Inkworks, 2006. Checklist US (100 titres EN). Packshots officiels en produits (booster, display, album). Faces échantillon officielles + dumps fan (sachet vert, SD-4). Ni le Carddass, ni le 疾風伝, ni Ultra Challenge.",
+      "Panini / Inkworks, 2006 — grille FR 102 cartes. Une tuile par locale (FR Coleka, EN arcade, IT Imadoki). Les trous FR restent visibles tant qu'on n'a pas de scan attesté.",
     blurbEn:
-      "Panini / Inkworks, 2006. Official US checklist (100 EN titles). Official packshots as sealed products (booster, display, album). Official sample faces plus fan dumps (green wrap, SD-4). Neither the Carddass, the 疾風伝, nor Ultra Challenge.",
+      "Panini / Inkworks, 2006 — 102-card FR grid. One tile per locale (FR Coleka, EN arcade, IT Imadoki). FR gaps stay visible until an attested scan exists.",
   },
   {
     id: "naruto/ultra-challenge",

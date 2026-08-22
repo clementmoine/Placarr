@@ -40,6 +40,8 @@ export type PrintCandidateView = {
   rarity?: string | null;
   category?: string | null;
   faceQuarterTurns?: 0 | 1 | 2 | 3;
+  landscapeFace?: boolean;
+  landscapePrint?: boolean;
   thumbnailUrl?: string | null;
   imageUrl?: string | null;
   language?: string | null;
@@ -174,6 +176,8 @@ function candidateAsVariantInfo(
     foilMaskUrl: candidate.foilMaskUrl,
     varnishMaskUrl: candidate.varnishMaskUrl,
     faceQuarterTurns: candidate.faceQuarterTurns,
+    landscapeFace: candidate.landscapeFace,
+    landscapePrint: candidate.landscapePrint,
   };
 }
 
@@ -999,6 +1003,7 @@ export function PrintPickerModal({
                       <OrientedMediaFrame
                         aspectRatio="5 / 7"
                         faceQuarterTurns={row.faceQuarterTurns}
+                        landscapeFace={row.landscapeFace}
                         className="overflow-hidden rounded-lg bg-muted"
                       >
                         <PrintPickerTileArt

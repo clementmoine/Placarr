@@ -35,6 +35,15 @@ import {
   narutoCollectorNumberKey,
 } from "@/providers/narutoccg/collectorIdentity";
 import { foldNarutoCardsIndex } from "@/providers/narutoccg/foldNarutoIndex";
+import {
+  orientationFromIndexSlot,
+  printIsLandscapeCard,
+} from "@/lib/text/artFaceOrientation";
+import { resolveCatalogueFace } from "@/lib/admin/catalogueFacePick";
+import {
+  isLocaleSpecificFace,
+  loadLocaleSpecificFaces,
+} from "@/lib/admin/localeSpecificFaces";
 
 export type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 
@@ -193,6 +202,10 @@ function thumbFile(files: CardsIndexLangFiles): string | null {
   return files.thumb ?? null;
 }
 
+function backFile(files: CardsIndexLangFiles): string | null {
+  return files.back?.trim() || null;
+}
+
 function indexMtimeMs(pack: string): number {
   try {
     return statSync(packCardsIndexPath(catalogueCorpusPack(pack))).mtimeMs;
@@ -218,6 +231,7 @@ function localeSlots(
   entry: CardsIndexEntry,
   preferLang: string | undefined,
   expand: boolean,
+  catalogueLocales?: readonly string[],
 ): Array<{ lang: string; files: CardsIndexLangFiles }> {
   const langs = Object.entries(entry.langs);
   if (langs.length === 0) {
@@ -226,6 +240,15 @@ function localeSlots(
   if (!expand) {
     const picked = pickLang(entry, preferLang);
     return picked ? [picked] : [{ lang: preferLang ?? "fr", files: {} }];
+  }
+  if (catalogueLocales?.length) {
+    const byLang = new Map(
+      langs.map(([lang, files]) => [lang, files ?? {}] as const),
+    );
+    return catalogueLocales.map((lang) => ({
+      lang,
+      files: byLang.get(lang) ?? {},
+    }));
   }
   return langs
     .map(([lang, files]) => ({ lang, files: files ?? {} }))
@@ -285,13 +308,21 @@ export function buildCatalogueCardRows(
 ): CatalogueCardRow[] {
   const packInfo = cataloguePackInfo(pack);
   const allowFallback = packInfo?.sameNumberArtFallback === true;
-  const expandLocales = isNarutoUnifiedPack(pack);
-  const source = expandLocales ? foldNarutoCardsIndex(index) : index;
+  const expandLocales =
+    packInfo?.expandLocales === true || isNarutoUnifiedPack(pack);
+  const catalogueLocales = packInfo?.catalogueLocales;
+  const corpusPack = catalogueCorpusPack(pack);
+  const bestFaceAcrossLocales =
+    packInfo?.localeArt?.bestFaceAcrossLocales === true;
+  const localeSpecificFaces = bestFaceAcrossLocales
+    ? loadLocaleSpecificFaces(corpusPack)
+    : null;
+  const source = isNarutoUnifiedPack(pack) ? foldNarutoCardsIndex(index) : index;
 
   const donorsByNumber = new Map<string, ArtDonor>();
   if (allowFallback) {
     for (const [printKey, entry] of Object.entries(source.cards)) {
-      for (const slot of localeSlots(entry, preferLang, true)) {
+      for (const slot of localeSlots(entry, preferLang, true, catalogueLocales)) {
         const file = artFile(slot.files);
         if (!file) continue;
         const key = donorMapKey(entry.card, slot.lang);
@@ -319,10 +350,34 @@ export function buildCatalogueCardRows(
   const rows: CatalogueCardRow[] = [];
   for (const [printKey, entry] of Object.entries(source.cards)) {
     const hasFoil = entryHasFoil(entry);
-    for (const slot of localeSlots(entry, preferLang, expandLocales)) {
-      const file = artFile(slot.files);
+    for (const slot of localeSlots(
+      entry,
+      preferLang,
+      expandLocales,
+      catalogueLocales,
+    )) {
       const lang = slot.lang;
+      const languageSpecific = isLocaleSpecificFace(
+        localeSpecificFaces,
+        entry.set,
+        entry.card,
+      );
+      const face = resolveCatalogueFace({
+        entry,
+        tileLang: lang,
+        tileFiles: slot.files,
+        catalogueLocales,
+        languageSpecific,
+        bestFaceAcrossLocales,
+      });
+      const file = face.file;
       const names = catalogueNames(entry, slot.files);
+      const orient = orientationFromIndexSlot(entry, face.files);
+      const landscapePrint = printIsLandscapeCard(entry);
+      const artLocaleFrom =
+        file && face.artLang.toLowerCase() !== lang.toLowerCase()
+          ? face.artLang
+          : undefined;
       const identity = {
         printKey,
         set: entry.set,
@@ -333,6 +388,11 @@ export function buildCatalogueCardRows(
         ...(names.aka ? { aka: names.aka } : {}),
         ...(entry.rarity ? { rarity: entry.rarity } : {}),
         ...(slot.files.printed === false ? { printed: false } : {}),
+        ...(orient.landscapeFace ? { landscapeFace: true } : {}),
+        ...(orient.faceQuarterTurns
+          ? { faceQuarterTurns: orient.faceQuarterTurns }
+          : {}),
+        ...(landscapePrint ? { landscapePrint: true } : {}),
       };
 
       if (!file) {
@@ -342,6 +402,21 @@ export function buildCatalogueCardRows(
             ...identity,
             lang,
             artUrl: remote,
+          });
+          continue;
+        }
+        const diskId = {
+          set: entry.set,
+          lang,
+          card: entry.card,
+        };
+        const back = backFile(slot.files);
+        if (back) {
+          rows.push({
+            ...identity,
+            lang,
+            artUrl: packFaceAssetUrl(pack, diskId, back),
+            versoOnly: true,
           });
           continue;
         }
@@ -377,10 +452,10 @@ export function buildCatalogueCardRows(
       }
       const diskId = {
         set: entry.set,
-        lang,
+        lang: face.artLang,
         card: entry.card,
       };
-      const thumb = thumbFile(slot.files);
+      const thumb = face.thumb;
       const artUrl = packFaceAssetUrl(pack, diskId, file);
       const thumbUrl = thumb
         ? packFaceAssetUrl(pack, diskId, thumb)
@@ -390,11 +465,24 @@ export function buildCatalogueCardRows(
         lang,
         artUrl,
         ...(thumbUrl ? { thumbUrl } : {}),
+        ...(artLocaleFrom ? { artLocaleFrom } : {}),
       });
     }
   }
-  if (expandLocales) {
+  if (expandLocales && isNarutoUnifiedPack(pack)) {
     return collapseNarutoIdentityRows(rows);
+  }
+  if (expandLocales) {
+    rows.sort((a, b) => {
+      const setCmp = a.set.localeCompare(b.set, undefined, { numeric: true });
+      if (setCmp !== 0) return setCmp;
+      const cardCmp = a.card.localeCompare(b.card, undefined, {
+        numeric: true,
+      });
+      if (cardCmp !== 0) return cardCmp;
+      return compareNarutoLangs(a.lang, b.lang);
+    });
+    return rows;
   }
   rows.sort((a, b) => {
     const setCmp = a.set.localeCompare(b.set, undefined, { numeric: true });
@@ -574,6 +662,11 @@ export type ListCatalogueCardsInput = {
   /** Substring match on printKey / set / card / label. */
   q?: string;
   preferLang?: string;
+  /**
+   * `preferred` — one tile per print in `preferLang` (clean grid).
+   * `all` — every locale in `catalogueLocales` (Ninja Ranks audit).
+   */
+  locales?: "all" | "preferred";
 };
 
 export type ListCatalogueCardsResult = {
@@ -590,6 +683,21 @@ export function listCatalogueCards(
   const offset = Math.max(0, Math.floor(input.offset ?? 0));
   const limit = Math.min(200, Math.max(1, Math.floor(input.limit ?? 48)));
   let rows = rowsForPack(input.pack, input.preferLang);
+  const packInfo = cataloguePackInfo(input.pack);
+  const localeMode = input.locales ?? "preferred";
+  const preferLang = input.preferLang?.trim().toLowerCase();
+  if (
+    localeMode === "preferred" &&
+    preferLang &&
+    packInfo?.catalogueLocales?.length
+  ) {
+    rows = rows.filter(
+      (row) =>
+        row.kind === "pack-back" ||
+        row.kind === "set-back" ||
+        row.lang.toLowerCase() === preferLang,
+    );
+  }
   if (input.foilOnly) {
     rows = rows.filter((row) => row.hasFoil);
   }

@@ -8,6 +8,7 @@ import {
   catalogueCollectorKey,
   entryHasFoil,
   langFilesHaveFoil,
+  listCatalogueCards,
   mergeNarutoCatalogueFaces,
 } from "@/lib/admin/catalogueCards";
 import {
@@ -555,6 +556,248 @@ describe("same-number art fallback (Naruto)", () => {
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     const cdf = rows.find((r) => r.printKey === "naruto:promo-te030-cdf");
     expect(cdf?.artFallbackFrom).toBe("naruto:s3-te030");
+  });
+
+  it("expands every locale for Ninja Ranks instead of hiding FR behind EN titles", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:nr-0001": {
+          set: "nr",
+          card: "0001",
+          name: "Title Card",
+          langs: {
+            en: { name: "Title Card", art: "art.inkworks.jpg" },
+            fr: { name: "Et voici les ninjas !", art: "art.coleka.webp" },
+            it: { art: "art.imadoki.jpg" },
+          },
+        },
+        "naruto:nr-0003": {
+          set: "nr",
+          card: "0003",
+          name: "Group 7 puzzle",
+          langs: {
+            en: { name: "Group 7 puzzle" },
+            fr: {
+              name: "Groupe 7 puzzle",
+              art: "art.reconstructed.webp",
+              artW: 1043,
+              artH: 1500,
+            },
+            it: { art: "art.imadoki.jpg" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "en");
+    expect(rows).toHaveLength(6);
+    const one = rows.filter((r) => r.printKey === "naruto:nr-0001");
+    expect(one.map((r) => r.lang).sort()).toEqual(["en", "fr", "it"]);
+    expect(one.find((r) => r.lang === "fr")?.artUrl).toContain("/nr/fr/0001/");
+    const threeFr = rows.find(
+      (r) => r.printKey === "naruto:nr-0003" && r.lang === "fr",
+    );
+    expect(threeFr?.missingArt).toBeUndefined();
+    expect(threeFr?.artUrl).toContain("/nr/fr/0003/art.reconstructed.webp");
+  });
+
+  it("shows every Ninja Ranks locale even when the index has no lang slot yet", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:ff-0004": {
+          set: "ff",
+          card: "0004",
+          name: "Sasuke - Naruto",
+          langs: {
+            en: { name: "Sasuke - Naruto" },
+            fr: { art: "art.coleka.webp" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "it");
+    const ff4 = rows.filter((r) => r.printKey === "naruto:ff-0004");
+    expect(ff4.map((r) => r.lang).sort()).toEqual(["en", "fr", "it"]);
+    expect(ff4.find((r) => r.lang === "it")?.artUrl).toContain("/ff/fr/0004/");
+    expect(ff4.find((r) => r.lang === "it")?.artLocaleFrom).toBe("fr");
+  });
+
+  it("filtre sur la locale préférée pour Ninja Ranks (évite 3× le même libellé)", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:sd-0006": {
+          set: "sd",
+          card: "0006",
+          name: "Shikamaru",
+          langs: {
+            en: { name: "Shikamaru" },
+            fr: { art: "art.coleka.webp" },
+            it: { art: "art.imadoki.jpg" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "fr");
+    expect(rows).toHaveLength(3);
+    const frOnly = rows.filter((r) => r.lang === "fr");
+    expect(frOnly).toHaveLength(1);
+    expect(frOnly[0]?.printKey).toBe("naruto:sd-0006");
+    const listed = listCatalogueCards({
+      pack: "naruto/ninja-ranks",
+      locales: "preferred",
+      preferLang: "fr",
+      limit: 500,
+    });
+    expect(listed.cards.every((r) => r.lang === "fr" || r.kind?.endsWith("-back"))).toBe(
+      true,
+    );
+  });
+
+  it("emprunte la meilleure face neutre pour une autre locale du même tirage", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:nr-0010": {
+          set: "nr",
+          card: "0010",
+          name: "Ten",
+          langs: {
+            en: { art: "art.arcadegamecards.jpg", artW: 600, artH: 840 },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "fr");
+    const fr = rows.find(
+      (r) => r.printKey === "naruto:nr-0010" && r.lang === "fr",
+    );
+    expect(fr?.artUrl).toContain("/nr/en/0010/");
+    expect(fr?.artLocaleFrom).toBe("en");
+  });
+
+  it("ne vole pas la face IT d'un tirage language-specific", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:nr-0068": {
+          set: "nr",
+          card: "0068",
+          name: "Second Exam Survivors",
+          langs: {
+            fr: { name: "Second Examen des survivants" },
+            it: { art: "art.imadoki.jpg", artW: 1500, artH: 1068 },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "fr");
+    const fr = rows.find(
+      (r) => r.printKey === "naruto:nr-0068" && r.lang === "fr",
+    );
+    expect(fr?.missingArt).toBe(true);
+    expect(fr?.artLocaleFrom).toBeUndefined();
+  });
+
+  it("préfère arcade à Coleka pour nr-0044 Gaï FR (reflet)", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:nr-0044": {
+          set: "nr",
+          card: "0044",
+          name: "Guy",
+          langs: {
+            en: { art: "art.arcadegamecards.jpg", artW: 748, artH: 1032 },
+            fr: { name: "Gaï", art: "art.coleka.webp", artW: 750, artH: 1098 },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "fr");
+    const fr = rows.find(
+      (r) => r.printKey === "naruto:nr-0044" && r.lang === "fr",
+    );
+    expect(fr?.artUrl).toContain("/nr/en/0044/");
+    expect(fr?.artLocaleFrom).toBe("en");
+  });
+
+  it("préfère arcade à Coleka pour ff-0006 FR (reflet)", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:ff-0006": {
+          set: "ff",
+          card: "0006",
+          name: "Itachi - Sasuke",
+          langs: {
+            en: { art: "art.arcadegamecards.jpg", artW: 740, artH: 1032 },
+            fr: { art: "art.coleka.webp", artW: 750, artH: 1096 },
+            it: { art: "art.imadoki.jpg", artW: 244, artH: 342 },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "fr");
+    const fr = rows.find(
+      (r) => r.printKey === "naruto:ff-0006" && r.lang === "fr",
+    );
+    expect(fr?.artUrl).toContain("/ff/en/0006/");
+    expect(fr?.artLocaleFrom).toBe("en");
+  });
+
+  it("marque paysage depuis les dimensions indexées", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/ninja-ranks",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:ns-0001": {
+          set: "ns",
+          card: "0001",
+          name: "Kakashi",
+          landscapePrint: true,
+          langs: {
+            fr: {
+              name: "Kakashi",
+              art: "art.coleka.webp",
+              artW: 1500,
+              artH: 1068,
+            },
+          },
+        },
+        "naruto:nr-0010": {
+          set: "nr",
+          card: "0010",
+          name: "Ten",
+          langs: {
+            en: { art: "art.arcadegamecards.jpg", artW: 600, artH: 840 },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "fr");
+    expect(rows.find((r) => r.printKey === "naruto:ns-0001")?.landscapeFace).toBe(
+      true,
+    );
+    expect(
+      rows.find((r) => r.printKey === "naruto:nr-0010")?.landscapeFace,
+    ).toBeUndefined();
   });
 });
 

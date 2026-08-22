@@ -24,6 +24,7 @@ const KIND_FR: Record<CatalogueSealedRow["kind"], string> = {
   display: "Display",
   deck: "Deck",
   coffret: "Coffret",
+  ephemera: "Éphémère",
 };
 
 async function fetchPage(input: {

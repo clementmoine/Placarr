@@ -33,6 +33,7 @@ function isTrimMarginPixel(
   green: number,
   blue: number,
   alpha: number,
+  lightLuminanceThreshold = LIGHT_BACKGROUND_LUMINANCE,
 ) {
   if (alpha < 12) return true;
 
@@ -42,7 +43,7 @@ function isTrimMarginPixel(
       green,
       blue,
       alpha,
-      LIGHT_BACKGROUND_LUMINANCE,
+      lightLuminanceThreshold,
       LIGHT_BACKGROUND_MAX_DELTA,
       "light",
     ) ||
@@ -93,6 +94,12 @@ export function normalizeRotation(value: unknown): number {
   return (QUARTER_TURNS as readonly number[]).includes(wrapped) ? wrapped : 0;
 }
 
+export type ImageTrimOptions = {
+  minMarginPixels?: number;
+  /** Default {@link LIGHT_BACKGROUND_LUMINANCE}. Lower for off-white scan beds (Imadoki). */
+  lightLuminanceThreshold?: number;
+};
+
 /**
  * The rectangle that would remain once neutral margins are trimmed, or `null`
  * when there is nothing worth trimming.
@@ -104,9 +111,11 @@ export function normalizeRotation(value: unknown): number {
  */
 export async function suggestCropBox(
   buffer: Buffer,
-  options: { minMarginPixels?: number } = {},
+  options: ImageTrimOptions = {},
 ): Promise<CropBox | null> {
   const minMarginPixels = options.minMarginPixels ?? MIN_CROP_PIXELS;
+  const lightLuminanceThreshold =
+    options.lightLuminanceThreshold ?? LIGHT_BACKGROUND_LUMINANCE;
 
   try {
     const image = sharp(buffer).rotate();
@@ -140,7 +149,16 @@ export async function suggestCropBox(
         const blue = data[offset + 2] ?? 0;
         const alpha = data[offset + 3] ?? 255;
 
-        if (isTrimMarginPixel(red, green, blue, alpha)) continue;
+        if (
+          isTrimMarginPixel(
+            red,
+            green,
+            blue,
+            alpha,
+            lightLuminanceThreshold,
+          )
+        )
+          continue;
 
         minX = Math.min(minX, x);
         minY = Math.min(minY, y);
@@ -190,7 +208,7 @@ export async function suggestCropBox(
  */
 export async function trimLightImageMargins(
   buffer: Buffer,
-  options: { minMarginPixels?: number } = {},
+  options: ImageTrimOptions = {},
 ): Promise<Buffer> {
   const box = await suggestCropBox(buffer, options);
   if (!box) return buffer;

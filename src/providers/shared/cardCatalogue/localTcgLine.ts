@@ -14,6 +14,7 @@ import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
 import type {
   PrintCandidate,
   ProviderCatalogHooks,
@@ -53,7 +54,10 @@ export type LocalTcgLine = {
     query: string,
     opts?: { language?: string; limit?: number; setId?: string | null },
   ) => PrintCandidate[];
-  lookupPrint: (printKey: string) => PrintCandidate | null;
+  lookupPrint: (
+    printKey: string,
+    language?: string | null,
+  ) => PrintCandidate | null;
   curatedDir: () => string;
 };
 
@@ -89,8 +93,23 @@ function toCandidate(
         row.thumb,
       )
     : null;
+  const back = row.back
+    ? assetsPackFileUrl(
+        spec.packId,
+        "cards",
+        row.cardType.trim().toLowerCase(),
+        row.number.trim().toLowerCase(),
+        row.lang.trim().toLowerCase(),
+        row.back,
+      )
+    : null;
   const setLabel =
     spec.setLabel ?? ((code: string) => code.trim().toUpperCase());
+  const orient = artOrientationForPackPrint(
+    spec.packId,
+    row.printKey,
+    row.lang,
+  );
   return {
     printKey: row.printKey,
     title: row.fullName?.trim() || reference,
@@ -99,9 +118,15 @@ function toCandidate(
     ...(row.rarity ? { rarity: row.rarity } : {}),
     ...(art ? { imageUrl: art } : {}),
     ...(thumb ? { thumbnailUrl: thumb } : {}),
+    ...(back ? { cardBackUrl: back } : {}),
     language: row.lang,
     printed: true,
     effectPack: spec.effectPackId,
+    ...(orient?.landscapeFace ? { landscapeFace: true } : {}),
+    ...(orient?.faceQuarterTurns
+      ? { faceQuarterTurns: orient.faceQuarterTurns }
+      : {}),
+    ...(orient?.landscapePrint ? { landscapePrint: true } : {}),
   };
 }
 
@@ -124,10 +149,15 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     return out;
   };
 
-  const lookupPrint = (printKey: string): PrintCandidate | null => {
+  const lookupPrint = (
+    printKey: string,
+    language?: string | null,
+  ): PrintCandidate | null => {
     const parsed = parsePrintKey(printKey);
     if (parsed?.game !== spec.printGame) return null;
-    const row = index.lookupRow(printKey);
+    const row = index.lookupRow(printKey, {
+      ...(language ? { language } : {}),
+    });
     return row ? toCandidate(spec, row) : null;
   };
 
@@ -182,7 +212,8 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
         limit,
         setId,
       }),
-    lookupPrint: async ({ printKey }) => lookupPrint(printKey),
+    lookupPrint: async ({ printKey, language }) =>
+      lookupPrint(printKey, language),
     runMappingProbe: async () => metadataProbe(lookupPrint("")),
     mappingProbe: {
       sampleInput: spec.packId,

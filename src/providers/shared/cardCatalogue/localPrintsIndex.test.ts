@@ -82,6 +82,39 @@ describe("createLocalPrintsIndex", () => {
     ]);
     expect(index.lookupRow("naruto:sd-0001")?.art).toBe("art.inkworks.jpg");
   });
+
+  it("records an attested verso beside the recto", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0072",
+        setCode: "nr",
+        number: "0072",
+        cardType: "nr",
+        titles: [{ lang: "en", fullName: "Carte n°72" }],
+      },
+    ]);
+    index.writeAssets([
+      {
+        printKey: "naruto:nr-0072",
+        lang: "fr",
+        art: "art.coleka.webp",
+        back: "back.coleka.webp",
+      },
+    ]);
+    const written = index.exportIndex();
+    const entry = (
+      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
+        cards: Record<
+          string,
+          { langs: Record<string, { art?: string; back?: string }> }
+        >;
+      }
+    ).cards["naruto:nr-0072"];
+    expect(entry.langs.fr?.art).toBe("art.coleka.webp");
+    expect(entry.langs.fr?.back).toBe("back.coleka.webp");
+  });
 });
 
 describe("faces sans titre dans leur langue", () => {

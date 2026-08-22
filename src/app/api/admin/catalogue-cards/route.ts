@@ -31,6 +31,11 @@ export async function GET(req: Request) {
   const limit = Number(url.searchParams.get("limit") ?? "48");
   const q = url.searchParams.get("q") ?? undefined;
   const preferLang = url.searchParams.get("lang") ?? undefined;
+  const localesParam = url.searchParams.get("locales");
+  const locales =
+    localesParam === "all" || localesParam === "preferred"
+      ? localesParam
+      : undefined;
 
   const result = listCatalogueCards({
     pack,
@@ -39,6 +44,7 @@ export async function GET(req: Request) {
     limit: Number.isFinite(limit) ? limit : 48,
     q,
     preferLang,
+    locales,
   });
 
   return NextResponse.json(result);

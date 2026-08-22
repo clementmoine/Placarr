@@ -1,0 +1,243 @@
+{
+  "observed": "2026-08-22",
+  "purpose": "Combler les trous restants après Coleka FR, Imadoki IT et Arcade EN. Une source par rôle — pas de doublon inutile.",
+  "gaps": {
+    "en": {
+      "count": 25,
+      "prints": [
+        "nr-0021",
+        "ff-0002",
+        "ff-0003",
+        "ff-0004",
+        "sd-0002",
+        "sd-0003",
+        "sd-0005",
+        "sd-0006",
+        "nw-0004",
+        "nw-0005",
+        "nw-0006",
+        "nw-0007",
+        "nw-0008",
+        "nw-0009",
+        "bl-0003",
+        "pn-0001",
+        "pn-t",
+        "pn-ga",
+        "pn-i",
+        "ns-0001",
+        "ns-0002",
+        "ns-0003",
+        "ns-0004",
+        "ns-0005",
+        "ns-0006"
+      ],
+      "note": "Les six NS n'ont pas d'édition US — slots EN = titres seulement, pas de faces à chercher côté Inkworks/Arcade. Vrais trous EN = 19 + promos PN."
+    },
+    "fr": {
+      "count": 17,
+      "prints": [
+        "nr-0003",
+        "nr-0006",
+        "nr-0020",
+        "nr-0021",
+        "nr-0022",
+        "nr-0048",
+        "nr-0049",
+        "nr-0052",
+        "nr-0054",
+        "nr-0057",
+        "nr-0058",
+        "nr-0061",
+        "nr-0064",
+        "pn-0001",
+        "pn-t",
+        "pn-ga",
+        "pn-i"
+      ],
+      "note": "13× `nr` = gabarits Coleka « pas encore photographiée » (436×600). Les PN n'existent qu'en US."
+    },
+    "it": {
+      "count": 20,
+      "prints": [
+        "nr-0023",
+        "nr-0024",
+        "nr-0025",
+        "nr-0026",
+        "nr-0027",
+        "nr-0028",
+        "nr-0042",
+        "nr-0043",
+        "nr-0044",
+        "nr-0047",
+        "nr-0048",
+        "nr-0049",
+        "ff-0004",
+        "sd-0004",
+        "nw-0007",
+        "pn-0001",
+        "pn-t",
+        "pn-ga",
+        "pn-i",
+        "ns-0006"
+      ],
+      "note": "15 cases vides sur planches Imadoki + sd-0004 (case manifeste null) + PN US-only. ff-0004 = case vide planche FF."
+    }
+  },
+  "candidates": [
+    {
+      "id": "ebay-curated",
+      "host": "ebay.com",
+      "priority": 1,
+      "edition": "US + EU (selon annonce)",
+      "langs": ["en", "fr", "it"],
+      "yieldEstimate": "1 face / annonce collée — ciblage manuel ou recherche `printKey`",
+      "fills": {
+        "en": ["nr-0021", "ff-0002", "ff-0003", "ff-0004", "sd-*", "nw-*", "bl-0003"],
+        "fr": ["nr-0048", "nr-0049", "nr-0020", "nr-0021", "nr-0022", "nr-0052", "nr-0054", "nr-0057", "nr-0058", "nr-0061", "nr-0064"],
+        "it": ["ff-0004", "sd-0004", "nw-0007", "ns-0006", "nr-0023", "nr-0048", "nr-0049"]
+      },
+      "quality": "~800–1500 px typique sur annonces pick-a-card (hors galerie API)",
+      "access": "Browse API pour annonces live (`fetchEbayBrowseItem`) ; pick-a-card = URLs JPEG curées à la main dans le ledger (pas scrape HTML)",
+      "blocker": "293490000296 expirée ; 127955574207 live mais API = 2 photos seulement",
+      "next": "Ledger `ebay-ninja-ranks.json` → entrées `{ printKey, legacyItemId, imageUrl }` une par trou, harvest via API ou URL CDN directe attestée"
+    },
+    {
+      "id": "comc",
+      "host": "comc.com",
+      "priority": 2,
+      "edition": "US (Inkworks/Panini 2006)",
+      "langs": ["en"],
+      "yieldEstimate": "Base 72 + sous-sets FF / NW / SD (à confirmer sur le site)",
+      "fills": {
+        "en": ["nr-0021", "ff-0002", "ff-0003", "ff-0004", "sd-0002", "sd-0003", "sd-0005", "sd-0006", "nw-0004", "nw-0005", "nw-0006", "nw-0007", "nw-0008", "nw-0009", "bl-0003"]
+      },
+      "quality": "`img.comc.com/...?size=original` — zoom mesuré sur fiches publiques",
+      "access": "Cloudflare depuis CLI (0 octet sans session) — même pattern que Arcade → FlareSolverr",
+      "blocker": "Conditions d'utilisation à lire avant ingest automatisé ; pas de NS (hors checklist US)",
+      "next": "Probe FlareSolverr sur set index + parser ref → `art.comc.jpg` pour édition EN uniquement"
+    },
+    {
+      "id": "coleka-refresh",
+      "host": "coleka.com",
+      "priority": 3,
+      "edition": "EU (photos FR même sur branche EN du site)",
+      "langs": ["fr"],
+      "yieldEstimate": "89/102 aujourd'hui — les 13 gabarits peuvent passer en vraie photo si un contributeur upload",
+      "fills": {
+        "fr": ["nr-0003", "nr-0006", "nr-0020", "nr-0021", "nr-0022", "nr-0048", "nr-0049", "nr-0052", "nr-0054", "nr-0057", "nr-0058", "nr-0061", "nr-0064"]
+      },
+      "quality": "~1060×1500",
+      "access": "Listing EN déjà moissonné ; re-run `pnpm naruto:ranks` périodique",
+      "blocker": "Aucun levier pour forcer l'upload contributeur",
+      "next": "Cron ou note dans pipeline : re-harvest Coleka si placeholder count baisse"
+    },
+    {
+      "id": "coleka-it",
+      "host": "coleka.com",
+      "priority": 4,
+      "edition": "EU",
+      "langs": ["it"],
+      "yieldEstimate": "Jusqu'à 102 faces si la branche IT/FR passe le mur de vérif",
+      "fills": {
+        "it": ["ff-0004", "sd-0004", "nw-0007", "ns-0006", "nr-0023", "nr-0024", "nr-0025", "nr-0026", "nr-0027", "nr-0028", "nr-0042", "nr-0043", "nr-0044", "nr-0047", "nr-0048", "nr-0049"]
+      },
+      "quality": "~1060×1500",
+      "access": "Mur de vérif Coleka sur `/fr/` et `/it/` — FlareSolverr + cookies à tester",
+      "blocker": "Non évalué en live cette session",
+      "next": "Même harvester que Coleka FR avec `COLEKA_LOCALE=it` et session FlareSolverr"
+    },
+    {
+      "id": "paninimania-photos",
+      "host": "paninimania.com",
+      "priority": 5,
+      "edition": "EU",
+      "langs": ["fr", "it"],
+      "yieldEstimate": "Photos collectionneur `files/15/1/?n=121_i*` (grille + scans cités dans inkworks.json)",
+      "fills": {
+        "fr": ["inserts EU", "ns-*"],
+        "it": ["ff-0004", "sd-0004", "ns-0006"]
+      },
+      "quality": "inconnue — à mesurer sur un JPEG public",
+      "access": "Article id=121 répond 200 mais images non extraites sans parseur dédié ; checklists membres",
+      "blocker": "Peut nécessiter login pour la galerie complète",
+      "next": "Fetch article + sonder pattern `files/15/1/121_i*.jpg`"
+    },
+    {
+      "id": "marketplace-curated",
+      "host": "leboncoin.fr / vinted.fr / facebook marketplace",
+      "priority": 6,
+      "edition": "EU",
+      "langs": ["fr", "it"],
+      "yieldEstimate": "1–N faces par annonce (modèle `leboncoin-checklist.json`)",
+      "fills": {
+        "fr": ["nr-* trous Coleka", "ff-*"],
+        "it": ["tout trou Imadoki/Coleka"]
+      },
+      "quality": "variable — filtrer <600 px court",
+      "access": "URLs collées manuellement, pas de crawl marketplace",
+      "blocker": "Pas de découverte automatique fiable",
+      "next": "Ledger `marketplace-faces.json` même forme que `leboncoin-checklist.json`"
+    },
+    {
+      "id": "waynescomics-dealer",
+      "host": "waynescomics.com",
+      "priority": 7,
+      "edition": "US",
+      "langs": ["en"],
+      "yieldEstimate": "Grilles NW/FF/SD/BL en photos d'objets (cite inkworks.json)",
+      "fills": {
+        "en": ["ff-*", "nw-*", "sd-*", "bl-*"]
+      },
+      "quality": "inconnue — revendeur, pas éditeur",
+      "access": "À sonder ; pas de réponse utile sur `/waynescards/` en HEAD cette session",
+      "blocker": "Provenance fan/dealer — attestation ou faces secondaires seulement",
+      "next": "Wayback CDX `waynescomics.com/waynescards/*ninjaranks*`"
+    },
+    {
+      "id": "blogger-expanded",
+      "host": "apacktobenamedlater.blogspot.com",
+      "priority": 8,
+      "edition": "US",
+      "langs": ["en"],
+      "yieldEstimate": "1 face aujourd'hui (SD-4) — d'autres posts Naruto NR possibles",
+      "fills": {
+        "en": ["sd-0004"]
+      },
+      "quality": "scan foils ~500 px",
+      "access": "Déjà branché (`blogger-pack-rip.json`)",
+      "blocker": "Un seul post identifié",
+      "next": "Recherche site: `ninja ranks` sur le blog"
+    }
+  ],
+  "rejectedForFaces": [
+    {
+      "host": "laststicker.com",
+      "reason": "211×300, pas de variante HD"
+    },
+    {
+      "host": "animecollection.fr",
+      "reason": "102 vignettes 100×71 — attestation seulement"
+    },
+    {
+      "host": "tcdb.com",
+      "reason": "57 rectos mesurés mais TOS interdit l'extraction"
+    },
+    {
+      "host": "nslists.com",
+      "reason": "checklist texte, zéro image"
+    },
+    {
+      "host": "trocafigurinhas.com",
+      "reason": "URL `/cartas/naruto-ninja-ranks` → 404 (2026-08-22) ; recherche site à refaire"
+    }
+  ],
+  "recommendedOrder": [
+    "ebay-curated",
+    "comc",
+    "coleka-it",
+    "coleka-refresh",
+    "paninimania-photos",
+    "marketplace-curated"
+  ],
+  "whyItMatters": "Imadoki et Arcade sont au plafond. Les 20–25 trous par locale ne se comblent plus en élargissant les mêmes parsers — il faut des gisements secondaires ciblés, surtout eBay curé (EU+US) et COMC/Coleka IT pour les inserts."
+}

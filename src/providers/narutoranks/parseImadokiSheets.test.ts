@@ -26,8 +26,8 @@ describe("manifeste des planches", () => {
         seen.add(key);
       }
     }
-    // 72 de base + FF6 + NW9 + SD5 (la 4 manque à la galerie) + BL3.
-    expect(seen.size).toBe(72 + 6 + 9 + 5 + 3);
+    // 72 de base + FF6 + NW9 + NS5 (Guy absent) + SD5 (la 4 manque) + BL3.
+    expect(seen.size).toBe(72 + 6 + 9 + 5 + 5 + 3);
   });
 
   it("laisse la case de `sd-0004` vide, absente de la galerie", () => {
@@ -38,13 +38,28 @@ describe("manifeste des planches", () => {
     expect(sheet.slots[6]).toEqual({ setCode: "bl", number: "0001" });
   });
 
-  it("écarte NS et le sachet, en disant pourquoi", () => {
-    expect(IMADOKI_SHEETS_SKIPPED).toHaveLength(2);
-    expect(IMADOKI_SHEETS_SKIPPED[0]!.reason).toMatch(/européenne/);
+  it("écarte le sachet, en disant pourquoi", () => {
+    expect(IMADOKI_SHEETS_SKIPPED).toHaveLength(1);
+    expect(IMADOKI_SHEETS_SKIPPED[0]!.file).toBe("naruto_premiumtc_pack.JPG");
     const files = IMADOKI_SHEETS.map((s) => s.file);
     for (const skipped of IMADOKI_SHEETS_SKIPPED) {
       expect(files).not.toContain(skipped.file);
     }
+  });
+
+  it("mappe la planche NS sur les tirages EU-only (grille 2×3 paysage)", () => {
+    const sheet = IMADOKI_SHEETS.find((s) => s.file.includes("ns01-06"))!;
+    expect(sheet.columns).toBe(2);
+    expect(sheet.rows).toBe(3);
+    expect(sheet.gridMode).toBe("equal");
+    expect(sheet.slots).toEqual([
+      { setCode: "ns", number: "0004" },
+      { setCode: "ns", number: "0001" },
+      { setCode: "ns", number: "0005" },
+      { setCode: "ns", number: "0002" },
+      { setCode: "ns", number: "0006" },
+      null,
+    ]);
   });
 
   it("étiquette les faces dans la langue de l'édition photographiée", () => {

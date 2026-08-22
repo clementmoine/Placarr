@@ -1,22 +1,17 @@
 /**
  * Scans Coleka de Naruto: Ninja Ranks (Panini/Inkworks, 2006).
  *
- * Coleka écrit `Ref. 001` — le numéro imprimé du set de base, sans préfixe,
- * puisque cette ligne n'en a pas. Les visuels sont des photos de
- * collectionneur, pas des rendus éditeur : ~1057×1500, la même classe que la
- * Série 24.
+ * Coleka écrit `Ref. 001` pour la base, ou `Ref. FF01` / `NW09` / `GS03` pour
+ * les inserts EU. Les visuels sont des photos de collectionneur (~1057×1500),
+ * pas des rendus éditeur.
  *
- * **Deux signaux, jamais un.** La référence dit le numéro, et le nom de fichier
- * de la vignette le répète (`…-carte-n-7-007_250x250.webp`). Une fiche dont le
- * fichier ne porte pas son numéro est écartée : sur la page 1 mesurée le
- * 2026-08-22, c'est le cas de la carte 3, dont la vignette générique
- * (`coleka-carte-panini-naruto`) pourrait être n'importe quoi. Un visuel
- * plausible mais faux coûte plus cher qu'un trou.
+ * **Deux signaux, jamais un.** La référence dit le tirage, et le nom de fichier
+ * de la vignette le répète (`…-carte-n-7-007`, `…-carte-ff1-ff01`,
+ * `…-holographique-nw05`). Une fiche dont le fichier ne porte pas sa ref est
+ * écartée. Un gabarit « pas encore photographiée » (436×600, slug répété) est
+ * refusé même si le numéro s'y relit.
  *
- * **Seul le set de base est adressé.** Coleka annonce 102 fiches quand la ligne
- * compte 72 cartes de base et 28 inserts : sa séquence au-delà de 72 ne
- * correspond à rien de vérifié, et la deviner créerait des cartes fantômes.
- * Les inserts restent donc sans face jusqu'à ce qu'on sache lire leur numéro.
+ * `GS1-3` = nos `bl1-3` (Group Seven EU) — attesté Panini Online / PaniniMania.
  */
 export const COLEKA_NINJA_RANKS_ORIGIN = "https://www.coleka.com";
 /** Branche EN : la FR déclenche le mur de vérification plus vite. */
@@ -27,48 +22,32 @@ export const COLEKA_NINJA_RANKS_LISTING_PATH =
  *
  * Coleka photographie l'édition **française** : la carte 68 s'y intitule
  * « Secon examen des survivants » là où Inkworks écrit « Second Exam
- * Survivors », et la 44 « Gaï » contre « Guy ». Sur les cartes de personnage
- * l'écart ne se voit pas — la 40 est « ROCK LEE » en latin et katakana — mais
- * l'édition, elle, reste française.
- *
- * Ces faces ont d'abord été rangées en `en` pour qu'elles s'affichent :
- * `exportIndex` n'attachait une face qu'à un titre de sa langue, et le pack n'a
- * que des titres anglais. C'était faire mentir la donnée pour satisfaire une
- * jointure. La jointure a été corrigée — une face sans titre dans sa langue
- * entre désormais dans l'index avec son image et sans nom — et l'étiquette dit
- * de nouveau ce qui est vrai.
+ * Survivors », et la 44 « Gaï » contre « Guy ».
  */
 export const COLEKA_NINJA_RANKS_LANG = "fr";
-/** Set de base : le seul dont la numérotation Coleka est attestée. */
+/** Set de base sans préfixe imprimé. */
 export const COLEKA_NINJA_RANKS_SET = "nr";
-/** Cartes du set de base — au-delà, Coleka ne dit plus rien de sûr. */
 export const NINJA_RANKS_BASE_CARDS = 72;
 
-/**
- * Slug de la collection, tel que Coleka nomme ses fichiers.
- *
- * Un vrai scan porte le titre de la carte (`…-carte-n-7-007`,
- * `…-secon-examen-des-survivants-068`). Le **substitut** que le site affiche
- * pour une carte non photographiée répète le slug de la collection
- * (`naruto-ninja-ranks-panini-naruto-ninja-ranks-6-006`) : c'est un gabarit,
- * un cadre blanc avec le numéro au centre. Les douze rencontrés le 2026-08-22
- * pèsent tous entre 26,2 et 26,7 Ko en 436×600 exactement — le même fichier à
- * un chiffre près. Les verser donnerait des faces qui ne montrent pas la carte.
- */
 export const COLEKA_NINJA_RANKS_SLUG = "naruto-ninja-ranks";
 
-/** Le nom de fichier répète-t-il le slug de la collection ? Alors c'est un gabarit. */
-export function thumbIsPlaceholder(thumbUrl: string): boolean {
-  const stem = (thumbUrl.split("/").pop() ?? "").replace(/_\d+x\d+\.\w+$/, "");
-  const parts = stem.split(COLEKA_NINJA_RANKS_SLUG);
-  return parts.length > 2;
-}
+/** GS EU = box loaders BL du pack (Panini Online « Group Seven »). */
+const COLEKA_INSERT_PREFIX: Readonly<Record<string, string>> = {
+  ff: "ff",
+  nw: "nw",
+  sd: "sd",
+  ns: "ns",
+  gs: "bl",
+};
 
-export type ColekaNinjaRanksCard = {
-  /** Numéro à quatre chiffres, comme la clé de tirage : `0007`. */
+export type ColekaParsedRef = {
+  setCode: string;
   number: string;
-  /** Référence telle que Coleka l'imprime : `7`. */
-  colekaRef: number;
+  /** Ref. Coleka telle qu'imprimée — `7`, `FF01`, `GS03`. */
+  printed: string;
+};
+
+export type ColekaNinjaRanksCard = ColekaParsedRef & {
   name: string;
   thumbUrl: string;
   faceUrl: string;
@@ -76,8 +55,7 @@ export type ColekaNinjaRanksCard = {
 
 export type ColekaNinjaRanksParse = {
   cards: ColekaNinjaRanksCard[];
-  /** Fiches vues mais refusées, avec la raison — jamais un silence. */
-  rejected: { ref: number; name: string; reason: string }[];
+  rejected: { ref: string; name: string; reason: string }[];
 };
 
 const ITEM_RE =
@@ -99,15 +77,93 @@ function decodeEntities(raw: string): string {
     .trim();
 }
 
-/** Les vignettes sont `_250x250.webp` ; la pleine taille est le même chemin nu. */
+/** Le nom de fichier répète-t-il le slug de la collection ? Alors c'est un gabarit. */
+export function thumbIsPlaceholder(thumbUrl: string): boolean {
+  const stem = (thumbUrl.split("/").pop() ?? "").replace(/_\d+x\d+\.\w+$/, "");
+  const parts = stem.split(COLEKA_NINJA_RANKS_SLUG);
+  return parts.length > 2;
+}
+
+export function parseColekaPrintedRef(raw: string): ColekaParsedRef | null {
+  const printed = raw.trim().toUpperCase();
+  const base = /^(\d{1,4})$/.exec(printed);
+  if (base) {
+    const digits = Number.parseInt(base[1]!, 10);
+    if (!Number.isFinite(digits) || digits < 1 || digits > NINJA_RANKS_BASE_CARDS) {
+      return null;
+    }
+    return {
+      setCode: COLEKA_NINJA_RANKS_SET,
+      number: String(digits).padStart(4, "0"),
+      printed: String(digits),
+    };
+  }
+  const insert = /^(FF|NW|SD|NS|GS)(\d{1,2})$/.exec(printed);
+  if (!insert) return null;
+  const prefix = insert[1]!.toLowerCase();
+  const setCode = COLEKA_INSERT_PREFIX[prefix];
+  if (!setCode) return null;
+  const digits = Number.parseInt(insert[2]!, 10);
+  if (!Number.isFinite(digits) || digits < 1) return null;
+  return {
+    setCode,
+    number: String(digits).padStart(4, "0"),
+    printed,
+  };
+}
+
+/** Le nom de fichier répète-t-il le numéro nu de la base ? */
+export function thumbCorroboratesRef(thumbUrl: string, ref: number): boolean {
+  const stem = (thumbUrl.split("/").pop() ?? "").replace(/_\d+x\d+\.\w+$/, "");
+  return new RegExp(`(^|[^0-9])0*${ref}([^0-9]|$)`, "i").test(stem);
+}
+
+/** Le nom de fichier répète-t-il la ref imprimée (`FF01`, `NW9`) ? */
+export function thumbCorroboratesPrintedRef(
+  thumbUrl: string,
+  printed: string,
+): boolean {
+  const stem = (thumbUrl.split("/").pop() ?? "")
+    .replace(/_\d+x\d+\.\w+$/, "")
+    .toLowerCase();
+  const token = printed.trim().toLowerCase();
+  if (!token) return false;
+  const parsed = parseColekaPrintedRef(printed);
+  if (!parsed) return false;
+  if (parsed.setCode === COLEKA_NINJA_RANKS_SET) {
+    return thumbCorroboratesRef(thumbUrl, Number.parseInt(parsed.number, 10));
+  }
+  if (stem.includes(token)) return true;
+  const compact = token.replace(/^([a-z]+)0+(\d+)$/, "$1$2");
+  return compact !== token && stem.includes(compact);
+}
+
 export function colekaNinjaRanksFaceUrl(thumbUrl: string): string {
   return thumbUrl.replace(/_\d+x\d+(?=\.(?:webp|jpe?g|png|gif)(?:\?|$))/i, "");
 }
 
-/** Le nom de fichier répète-t-il le numéro de la référence ? */
-export function thumbCorroboratesRef(thumbUrl: string, ref: number): boolean {
-  const stem = (thumbUrl.split("/").pop() ?? "").replace(/_\d+x\d+\.\w+$/, "");
-  return new RegExp(`(^|[^0-9])0*${ref}([^0-9]|$)`).test(stem);
+export function colekaNinjaRanksWwwFaceUrl(faceUrl: string): string {
+  const url = new URL(faceUrl);
+  url.hostname = "www.coleka.com";
+  return url.toString();
+}
+
+export function colekaNinjaRanksBackUrlCandidates(faceUrl: string): string[] {
+  const url = new URL(faceUrl);
+  url.hostname = "www.coleka.com";
+  const m = url.pathname.match(/^(.*)(\.[a-z]+)$/i);
+  if (!m) return [];
+  const base = m[1]!;
+  const ext = m[2]!;
+  return ["-001", "-002"].map((suffix) => {
+    const candidate = new URL(url);
+    candidate.pathname = `${base}${suffix}${ext}`;
+    return candidate.toString();
+  });
+}
+
+export function colekaNinjaRanksBackUrl(faceUrl: string): string {
+  return colekaNinjaRanksBackUrlCandidates(faceUrl)[0]!;
 }
 
 export function colekaNinjaRanksListingPageUrls(): string[] {
@@ -115,20 +171,27 @@ export function colekaNinjaRanksListingPageUrls(): string[] {
   return [base, `${base}?p=1`, `${base}?p=2`];
 }
 
+export function colekaNinjaRanksCardKey(card: {
+  setCode: string;
+  number: string;
+}): string {
+  return `${card.setCode.trim().toLowerCase()}-${card.number.trim()}`;
+}
+
 export function parseColekaNinjaRanksListing(
   html: string,
 ): ColekaNinjaRanksParse {
-  const byNumber = new Map<string, ColekaNinjaRanksCard>();
+  const byKey = new Map<string, ColekaNinjaRanksCard>();
   const rejected: ColekaNinjaRanksParse["rejected"] = [];
 
   for (const match of html.matchAll(ITEM_RE)) {
     const attrs = match[1]!;
     const inner = match[2]!;
     const refMatch = inner.match(
-      /<span class="ref">\s*Ref\.\s*(\d{1,4})\s*<\/span>/i,
+      /<span class="ref">\s*Ref\.\s*([A-Za-z0-9]{1,4})\s*<\/span>/i,
     );
     if (!refMatch) continue;
-    const ref = Number.parseInt(refMatch[1]!, 10);
+    const printedRaw = refMatch[1]!.trim();
     const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
     const img = inner.match(
       /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
@@ -136,39 +199,38 @@ export function parseColekaNinjaRanksListing(
     if (!title || !img || !attrs.includes("href=")) continue;
     const name = decodeEntities(title[1]!);
     const thumbUrl = img[1]!;
-
-    if (!Number.isFinite(ref) || ref < 1 || ref > NINJA_RANKS_BASE_CARDS) {
+    const parsed = parseColekaPrintedRef(printedRaw);
+    if (!parsed) {
       rejected.push({
-        ref,
+        ref: printedRaw,
         name,
-        reason: `hors du set de base (1–${NINJA_RANKS_BASE_CARDS}) : la séquence Coleka au-delà n'est pas attestée`,
+        reason: "référence hors checklist (base 1–72 ou inserts FF/NW/SD/NS/GS)",
       });
       continue;
     }
     if (thumbIsPlaceholder(thumbUrl)) {
       rejected.push({
-        ref,
+        ref: parsed.printed,
         name,
         reason:
           "gabarit « pas encore photographiée » : le nom de fichier répète le slug de la collection",
       });
       continue;
     }
-    if (!thumbCorroboratesRef(thumbUrl, ref)) {
+    if (!thumbCorroboratesPrintedRef(thumbUrl, parsed.printed)) {
       rejected.push({
-        ref,
+        ref: parsed.printed,
         name,
         reason:
-          "le nom de fichier ne porte pas le numéro — un seul signal ne suffit pas",
+          "le nom de fichier ne porte pas la référence — un seul signal ne suffit pas",
       });
       continue;
     }
 
-    const number = String(ref).padStart(4, "0");
-    if (byNumber.has(number)) continue;
-    byNumber.set(number, {
-      number,
-      colekaRef: ref,
+    const key = colekaNinjaRanksCardKey(parsed);
+    if (byKey.has(key)) continue;
+    byKey.set(key, {
+      ...parsed,
       name,
       thumbUrl,
       faceUrl: colekaNinjaRanksFaceUrl(thumbUrl),
@@ -176,7 +238,11 @@ export function parseColekaNinjaRanksListing(
   }
 
   return {
-    cards: [...byNumber.values()].sort((a, b) => a.colekaRef - b.colekaRef),
+    cards: [...byKey.values()].sort((a, b) => {
+      const setCmp = a.setCode.localeCompare(b.setCode);
+      if (setCmp !== 0) return setCmp;
+      return a.number.localeCompare(b.number, undefined, { numeric: true });
+    }),
     rejected,
   };
 }

@@ -14,7 +14,13 @@ import {
   harvestArcadeGameCards,
   installArcadeGameCards,
 } from "./arcadeGameCards";
-import { buildNinjaRanksFromLedgers } from "./buildFromLedgers";
+import { syncEbayNinjaRanksFromBrowseApi } from "./ebayAssets";
+import {
+  buildNinjaRanksFromLedgers,
+  buildEuropeanNsFromLedger,
+  buildSupplementalPromosFromLedger,
+} from "./buildFromLedgers";
+import { buildFrenchNinjaRanksTitles } from "./frenchTitles";
 import {
   harvestColekaNinjaRanks,
   installColekaNinjaRanks,
@@ -29,7 +35,9 @@ import {
   harvestBloggerPackRip,
   installBloggerPackRip,
 } from "./unofficialVisuals";
+import { installReconstructedFaces } from "./installReconstructedFaces";
 import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
+import { enrichCardsIndexArtDimensions } from "@/providers/shared/cardCatalogue/enrichCardsIndexArtDimensions";
 
 export async function runNarutoRanksPackPipeline(
   argv: readonly string[] = process.argv,
@@ -45,8 +53,14 @@ export async function runNarutoRanksPackPipeline(
   );
   const coleka = await harvestColekaNinjaRanks({ force });
   console.log(
-    `── Coleka — ${coleka.pages} page(s) lue(s), ${coleka.cards} carte(s) retenue(s) : ${coleka.ok} scan, ${coleka.skip} déjà là, ${coleka.fail} manqué${coleka.fail === 1 ? "" : "s"}`,
+    `── Coleka — ${coleka.pages} page(s) lue(s), ${coleka.cards} carte(s) retenue(s) : ${coleka.ok} recto, ${coleka.backOk} verso, ${coleka.skip + coleka.backSkip} déjà là, ${coleka.fail + coleka.backFail} manqué${coleka.fail + coleka.backFail === 1 ? "" : "s"}`,
   );
+  const ebay = await syncEbayNinjaRanksFromBrowseApi({ force });
+  if (ebay.fetched || ebay.expired.length || ebay.images) {
+    console.log(
+      `── eBay Browse — ${ebay.fetched} annonce(s) lue(s), ${ebay.images} JPEG staging, ${ebay.expired.length} expirée${ebay.expired.length === 1 ? "" : "s"} (API, pas de scrape)`,
+    );
+  }
   if (coleka.rejected.length) {
     console.log(
       `── Coleka — ${coleka.rejected.length} fiche(s) refusée(s) : ${coleka.rejected
@@ -57,7 +71,7 @@ export async function runNarutoRanksPackPipeline(
   }
   const arcade = await harvestArcadeGameCards({ force });
   console.log(
-    `── arcadegamecards — ${arcade.pages} page(s), ${arcade.cards} carte(s) retenue(s) : ${arcade.ok} photo, ${arcade.skip} déjà là, ${arcade.fail} manquée${arcade.fail === 1 ? "" : "s"}`,
+    `── arcadegamecards — ${arcade.pages} page(s), ${arcade.cards} carte(s) retenue(s) : ${arcade.ok} recto, ${arcade.backOk} verso, ${arcade.skip + arcade.backSkip} déjà là, ${arcade.fail + arcade.backFail} manqué${arcade.fail + arcade.backFail === 1 ? "" : "s"}`,
   );
   if (arcade.rejected.length) {
     console.log(
@@ -87,6 +101,14 @@ export async function runNarutoRanksPackPipeline(
     seed: (index) => {
       seeded = index;
       const report = buildNinjaRanksFromLedgers({ index });
+      const ns = buildEuropeanNsFromLedger({ index });
+      const promos = buildSupplementalPromosFromLedger({ index });
+      const french = buildFrenchNinjaRanksTitles({ index });
+      if (french.titles) {
+        console.log(
+          `── Naruto Ninja Ranks — ${french.titles} titre(s) français${french.missing.length ? ` (${french.missing.length} trou${french.missing.length === 1 ? "" : "s"} sans attestation)` : ""}`,
+        );
+      }
       const faces = installInkworksSampleFaces(index);
       if (faces.installed) {
         console.log(
@@ -94,15 +116,15 @@ export async function runNarutoRanksPackPipeline(
         );
       }
       const usa = installArcadeGameCards(index);
-      if (usa.faces) {
+      if (usa.faces || usa.backs) {
         console.log(
-          `── Naruto Ninja Ranks — ${usa.faces} face(s) américaine(s)`,
+          `── Naruto Ninja Ranks — ${usa.faces} face(s) américaine(s), ${usa.backs} verso(s)`,
         );
       }
       const scans = installColekaNinjaRanks(index);
-      if (scans.faces || scans.missing.length) {
+      if (scans.faces || scans.backs || scans.missing.length) {
         console.log(
-          `── Naruto Ninja Ranks — ${scans.faces} face(s) Coleka${scans.missing.length ? `, ${scans.missing.length} sans octets en staging` : ""}`,
+          `── Naruto Ninja Ranks — ${scans.faces} face(s) Coleka, ${scans.backs} verso(s)${scans.missing.length ? `, ${scans.missing.length} sans octets en staging` : ""}`,
         );
       }
       const fan = installBloggerPackRip(index);
@@ -111,7 +133,12 @@ export async function runNarutoRanksPackPipeline(
           `── Naruto Ninja Ranks — dumps fan : ${fan.cards} face, ${fan.backs} verso, ${fan.products} packshot`,
         );
       }
-      return report;
+      return {
+        rows: report.rows + ns.rows + promos.rows,
+        prints: report.prints + ns.prints + promos.prints,
+        titles: report.titles + ns.titles + promos.titles,
+        skipped: [...report.skipped, ...ns.skipped, ...promos.skipped],
+      };
     },
     seedProducts: async () => {
       /*
@@ -119,6 +146,28 @@ export async function runNarutoRanksPackPipeline(
         `sharp` ne l'est pas. L'index est le même, et `exportIndex` a déjà
         tourné — d'où la seconde passe ci-dessous.
       */
+      const reconstructed = seeded
+        ? await installReconstructedFaces(seeded, { force })
+        : { faces: 0, backs: 0, skipped: [], unattested: [] };
+      if (reconstructed.faces || reconstructed.backs) {
+        console.log(
+          `── Naruto Ninja Ranks — ${reconstructed.faces} face(s) reconstruite(s), ${reconstructed.backs} verso(s)${reconstructed.skipped.length ? `, ${reconstructed.skipped.length} sans source curée` : ""}`,
+        );
+      }
+      if (reconstructed.unattested.length) {
+        console.warn(
+          `   ${reconstructed.unattested.length} face(s) installée(s) sans ligne dans reconstructed-faces.json : ${reconstructed.unattested.join(", ")}`,
+        );
+      }
+      if ((reconstructed.faces || reconstructed.backs) && seeded) {
+        seeded.exportIndex();
+        const dims = await enrichCardsIndexArtDimensions(NARUTO_RANKS_PACK_ID);
+        if (dims.probed) {
+          console.log(
+            `── Naruto Ninja Ranks — ${dims.probed} face(s) re-dimensionnée(s) après scans curés`,
+          );
+        }
+      }
       const cut = seeded
         ? await installImadokiSheets(seeded)
         : { faces: 0, sheets: 0, rejected: [] };
@@ -127,7 +176,15 @@ export async function runNarutoRanksPackPipeline(
           `── Naruto Ninja Ranks — ${cut.faces} face(s) italienne(s) sur ${cut.sheets} planche(s)${cut.rejected.length ? `, ${cut.rejected.length} case(s) refusée(s)` : ""}`,
         );
       }
-      if (cut.faces && seeded) seeded.exportIndex();
+      if (cut.faces && seeded) {
+        seeded.exportIndex();
+        const dims = await enrichCardsIndexArtDimensions(NARUTO_RANKS_PACK_ID);
+        if (dims.probed) {
+          console.log(
+            `── Naruto Ninja Ranks — ${dims.probed} face(s) re-dimensionnée(s) après Imadoki`,
+          );
+        }
+      }
       return ingestInkworksProducts();
     },
   });

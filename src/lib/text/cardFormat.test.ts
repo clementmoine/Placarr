@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   coerceCardFormatForType,
+  faceDisplayAspect,
   faceRotateDeg,
   getCardFormatsForPicker,
   getDefaultCardFormatAlias,
@@ -73,6 +74,18 @@ describe("face orientation", () => {
   ] as const)("orientAspectRatio(%s, %s) → %s", (aspect, turns, expected) => {
     expect(orientAspectRatio(aspect, turns)).toBe(expected);
   });
+
+  it.each([
+    ["5 / 7", { landscapeFace: true }, "7 / 5"],
+    ["5 / 7", { faceQuarterTurns: 1 }, "7 / 5"],
+    ["5 / 7", { faceQuarterTurns: 1, landscapeFace: true }, "7 / 5"],
+    ["5 / 7", {}, "5 / 7"],
+  ] as const)(
+    "faceDisplayAspect(%s, %j) → %s",
+    (aspect, opts, expected) => {
+      expect(faceDisplayAspect(aspect, opts)).toBe(expected);
+    },
+  );
 
   it.each([
     [0, 0],

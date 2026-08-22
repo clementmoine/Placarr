@@ -15,26 +15,30 @@ describe("ninjaRanksPrintKey", () => {
     expect(ninjaRanksPrintKey("pn", "t")).toBe("naruto:pn-t");
     expect(ninjaRanksPrintKey("pn", "ga")).toBe("naruto:pn-ga");
     expect(ninjaRanksPrintKey("pn", "i")).toBe("naruto:pn-i");
+    expect(ninjaRanksPrintKey("pn", "sd2006")).toBe("naruto:pn-sd2006");
   });
 
   it("formats the Inkworks printed refs", () => {
     expect(formatNinjaRanksReference("nr", "0008")).toBe("8");
     expect(formatNinjaRanksReference("ff", "0001")).toBe("FF-1");
     expect(formatNinjaRanksReference("nw", "0009")).toBe("NW-9");
+    expect(formatNinjaRanksReference("ns", "0001")).toBe("NS-1");
     expect(formatNinjaRanksReference("pn", "0001")).toBe("PN-1");
     expect(formatNinjaRanksReference("pn", "t")).toBe("PN-T");
     expect(formatNinjaRanksReference("pn", "ga")).toBe("PN-GA");
     expect(formatNinjaRanksReference("pn", "i")).toBe("PN-i");
+    expect(formatNinjaRanksReference("pn", "sd2006")).toBe("PN-SD2006");
   });
 
   it("orders the 2006 subsets as Inkworks listed them", () => {
     expect(ninjaRanksSetLabel("nr")).toBe("Ninja Ranks");
+    expect(ninjaRanksSetLabel("ns")).toBe("Ninja Sensei");
     expect(
-      ["pn", "nr", "ff"].sort(
+      ["pn", "nr", "ff", "ns"].sort(
         (a, b) =>
           (ninjaRanksSetSortKey(a) ?? 99) - (ninjaRanksSetSortKey(b) ?? 99),
       ),
-    ).toEqual(["nr", "ff", "pn"]);
+    ).toEqual(["nr", "ff", "ns", "pn"]);
   });
 });
 

@@ -12,7 +12,10 @@ import {
 } from "react";
 
 import { HoloCardImage } from "@/components/HoloCardImage";
-import { foilSurfacesReady } from "@/components/foilFaceReady";
+import {
+  foilLookSuppressed,
+  foilSurfacesReady,
+} from "@/components/foilFaceReady";
 import {
   acquireFoilSlot,
   getEffectPack,
@@ -366,6 +369,21 @@ export function FoilCardImage({
     metaReady,
   ]);
 
+  const effectiveMaskUrl = maskUrl ?? pack?.fallbackFoilMaskUrl ?? null;
+  /**
+   * Un matériau qui réclame un masque n'a rien à dessiner sans lui.
+   *
+   * Le WebGL le refusait déjà (`foilSurfacesReady`), mais la retombée CSS,
+   * elle, n'a jamais consulté le masque : elle étalait la finition sur toute
+   * la carte au lieu des seules zones foilées. Mieux vaut une carte plate
+   * qu'un foil au mauvais endroit — un tirage sans masque n'est pas un
+   * tirage sans zones, c'est un tirage dont on ignore les zones.
+   */
+  const foilMaskMissing = foilLookSuppressed({
+    hasMaterial: Boolean(material),
+    needsFoilMask: material ? materialNeedsRole(material, "foilMask") : false,
+    foilMaskUrl: effectiveMaskUrl,
+  });
   const fromPack = pack
     ? pack.resolveCss(finish ?? "", varnishType, {
         foilMask: liveFoilMask,
@@ -378,7 +396,7 @@ export function FoilCardImage({
   // Plain leaves (`webgl: false`, Live NonFoil) must stay shader-less even if
   // a stale `finish` prop names another print's foil.
   const cssRecipe =
-    material?.webgl === false
+    material?.webgl === false || foilMaskMissing
       ? { finishShaderId: null, varnishShaderId: null }
       : {
           finishShaderId: fromPack.finishShaderId ?? cssFinishShaderId ?? null,
@@ -413,7 +431,6 @@ export function FoilCardImage({
   const [isActive, setIsActive] = useState(false);
 
   const caps = useFoilCapabilities();
-  const effectiveMaskUrl = maskUrl ?? pack?.fallbackFoilMaskUrl ?? null;
   const surfacesReady = foilSurfacesReady({
     hasMaterial: Boolean(material),
     needsFoilMask: material ? materialNeedsRole(material, "foilMask") : false,

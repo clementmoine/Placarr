@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   foilFaceReady,
+  foilLookSuppressed,
   foilSurfacesReady,
   holoCssIdleEnabled,
 } from "./foilFaceReady";
@@ -167,5 +168,59 @@ describe("foilSurfacesReady", () => {
         foilMaskUrl: "/mask.webp",
       }),
     ).toBe(true);
+  });
+});
+
+describe("foilLookSuppressed", () => {
+  it("supprime la finition quand le matériau réclame un masque absent", () => {
+    // Le cas de `36/P2` : une finition attestée, mais aucun masque publié.
+    expect(
+      foilLookSuppressed({
+        hasMaterial: true,
+        needsFoilMask: true,
+        foilMaskUrl: null,
+      }),
+    ).toBe(true);
+  });
+
+  it("laisse passer dès qu'un masque existe, fût-il de repli", () => {
+    expect(
+      foilLookSuppressed({
+        hasMaterial: true,
+        needsFoilMask: true,
+        foilMaskUrl: "/assets/lorcana/cards/6/en/25-p2/mask.jpg",
+      }),
+    ).toBe(false);
+  });
+
+  it("laisse passer un matériau qui n'échantillonne aucun masque", () => {
+    expect(
+      foilLookSuppressed({
+        hasMaterial: true,
+        needsFoilMask: false,
+        foilMaskUrl: null,
+      }),
+    ).toBe(false);
+  });
+
+  it("ne se prononce pas sans matériau", () => {
+    // Sans matériau il n'y a pas de look à supprimer, et le composant garde sa
+    // retombée sur les identifiants pré-résolus d'un cache périmé.
+    expect(
+      foilLookSuppressed({
+        hasMaterial: false,
+        needsFoilMask: true,
+        foilMaskUrl: null,
+      }),
+    ).toBe(false);
+  });
+
+  it("est l'exact complément de foilSurfacesReady quand un matériau existe", () => {
+    for (const needsFoilMask of [true, false]) {
+      for (const foilMaskUrl of [null, "/mask.jpg"]) {
+        const input = { hasMaterial: true, needsFoilMask, foilMaskUrl };
+        expect(foilLookSuppressed(input)).toBe(!foilSurfacesReady(input));
+      }
+    }
   });
 });

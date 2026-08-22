@@ -54,3 +54,22 @@ export function foilSurfacesReady(input: {
   if (input.needsFoilMask && !input.foilMaskUrl) return false;
   return true;
 }
+
+/**
+ * Whether a look must be suppressed for want of the mask it samples.
+ *
+ * The twin of {@link foilSurfacesReady}, for the CSS path. WebGL already
+ * refused a material whose foil mask is missing; CSS never looked, so it
+ * spread the finish across the whole card instead of the foiled zones only.
+ *
+ * A print without a mask is not a print without zones — it is a print whose
+ * zones are unknown. Flat is the honest rendering; a misplaced foil is not.
+ */
+export function foilLookSuppressed(input: {
+  hasMaterial: boolean;
+  needsFoilMask: boolean;
+  foilMaskUrl?: string | null;
+}): boolean {
+  if (!input.hasMaterial) return false;
+  return input.needsFoilMask && !input.foilMaskUrl;
+}

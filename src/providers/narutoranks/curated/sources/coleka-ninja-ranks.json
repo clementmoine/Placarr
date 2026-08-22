@@ -3,7 +3,7 @@
   "url": "https://www.coleka.com/en/trading-cards/panini-cards/naruto-ninja-ranks_r25928",
   "observed": "2026-08-22",
   "ingest": "faces `art.coleka` du set de base uniquement",
-  "lang": "en",
+  "lang": "fr",
   "sourceId": "coleka",
   "note": "Coleka écrit `Ref. 001` — le numéro imprimé nu, cette ligne n'ayant pas de préfixe. Les visuels sont des photos de collectionneur (~1060×1500), pas des rendus éditeur. La branche EN du site est lue plutôt que la FR, qui déclenche le mur de vérification plus vite — mais c'est la langue de l'interface, pas celle des cartes : Coleka photographie le tirage **français**. La carte 68 s'y intitule « Secon examen des survivants » là où la feuille Inkworks écrit « Second Exam Survivors ». Même numérotation, autre langue, d'où des faces en `fr` sous des titres en `en`.",
   "whyItMatters": "Le pack n'avait que trois faces sur cent — deux échantillons Inkworks et une du rip de blog. Coleka est le seul gisement mesuré qui en porte des dizaines à une taille utilisable. TCDB en a davantage (57 rectos) mais interdit l'extraction dans ses conditions, et n'est donc pas une source.",
@@ -22,5 +22,5 @@
       "reason": "Coleka annonce 102 fiches quand la ligne compte 72 cartes de base et 28 inserts. Sa séquence au-delà de 72 ne correspond à rien de vérifié, et la deviner créerait des cartes fantômes."
     }
   ],
-  "provenance": "Coleka photographie le tirage **français** — la carte 68 s'y intitule « Secon examen des survivants » là où Inkworks écrit « Second Exam Survivors ». Les faces sont pourtant rangées en `en`, avec les titres : `exportIndex` apparie face et titre par la langue, et une face sans titre dans sa langue n'apparaît nulle part. Sur les cartes de personnage l'écart ne se voit pas — la 40 est « ROCK LEE » en latin et katakana, sans un mot de français ; seules les cartes à texte traduisent."
+  "provenance": "Coleka photographie l'édition **française** : la carte 68 s'y intitule « Secon examen des survivants » contre « Second Exam Survivors » chez Inkworks, et la 44 « Gaï » contre « Guy ». Les faces sont donc rangées en `fr`, sous des titres qui restent anglais — la langue d'une face et celle d'un titre sont deux faits indépendants. Coleka n'est pas une source de titres français : il ne nomme que 6 cartes sur 72, au petit bonheur du contributeur, et écrit « Carte n°N » pour les 66 autres."
 }

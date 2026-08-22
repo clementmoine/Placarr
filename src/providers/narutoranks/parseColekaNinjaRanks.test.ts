@@ -147,9 +147,9 @@ describe("gabarits « pas encore photographiée »", () => {
     ).toBe(false);
   });
 
-  it("range les faces sous la langue des titres, sinon elles n'apparaissent pas", () => {
-    // `exportIndex` apparie face et titre par la langue : une face `fr` sous des
-    // titres `en` disparaît de l'index, et donc de l'admin.
-    expect(COLEKA_NINJA_RANKS_LANG).toBe("en");
+  it("étiquette les faces de l'édition photographiée, pas de celle des titres", () => {
+    // Coleka photographie l'édition française ; les titres du pack restent
+    // anglais. Les deux peuvent différer : l'index accepte une face sans nom.
+    expect(COLEKA_NINJA_RANKS_LANG).toBe("fr");
   });
 });

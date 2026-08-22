@@ -23,22 +23,22 @@ export const COLEKA_NINJA_RANKS_ORIGIN = "https://www.coleka.com";
 export const COLEKA_NINJA_RANKS_LISTING_PATH =
   "/en/trading-cards/panini-cards/naruto-ninja-ranks_r25928";
 /**
- * Langue sous laquelle la face est rangée.
+ * Langue du tirage photographié — `fr`.
  *
- * Ce champ n'est pas « la langue du tirage photographié » : `exportIndex`
- * apparie une face à un **titre** de la même langue
- * (`a.lang = t.lang`), et une face sans titre dans sa langue n'apparaît nulle
- * part. Les titres de ce pack viennent de la feuille Inkworks, en anglais —
- * les faces s'y rangent donc.
+ * Coleka photographie l'édition **française** : la carte 68 s'y intitule
+ * « Secon examen des survivants » là où Inkworks écrit « Second Exam
+ * Survivors », et la 44 « Gaï » contre « Guy ». Sur les cartes de personnage
+ * l'écart ne se voit pas — la 40 est « ROCK LEE » en latin et katakana — mais
+ * l'édition, elle, reste française.
  *
- * Ce que Coleka photographie est bien le tirage **français** : la carte 68 s'y
- * intitule « Secon examen des survivants » là où Inkworks écrit « Second Exam
- * Survivors ». Sur les cartes de personnage, l'écart ne se voit pas — la 40 est
- * « ROCK LEE » en latin et en katakana, sans un mot de français. Seules les
- * cartes à texte traduisent. La provenance est notée au registre plutôt que
- * dans un champ que le modèle n'entend pas ainsi.
+ * Ces faces ont d'abord été rangées en `en` pour qu'elles s'affichent :
+ * `exportIndex` n'attachait une face qu'à un titre de sa langue, et le pack n'a
+ * que des titres anglais. C'était faire mentir la donnée pour satisfaire une
+ * jointure. La jointure a été corrigée — une face sans titre dans sa langue
+ * entre désormais dans l'index avec son image et sans nom — et l'étiquette dit
+ * de nouveau ce qui est vrai.
  */
-export const COLEKA_NINJA_RANKS_LANG = "en";
+export const COLEKA_NINJA_RANKS_LANG = "fr";
 /** Set de base : le seul dont la numérotation Coleka est attestée. */
 export const COLEKA_NINJA_RANKS_SET = "nr";
 /** Cartes du set de base — au-delà, Coleka ne dit plus rien de sûr. */

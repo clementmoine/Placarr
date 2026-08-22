@@ -15,6 +15,7 @@ import {
   harvestColekaNinjaRanks,
   installColekaNinjaRanks,
 } from "./colekaNinjaRanks";
+import { harvestImadokiSheets, installImadokiSheets } from "./imadokiSheets";
 import {
   harvestInkworksOfficialAssets,
   ingestInkworksProducts,
@@ -50,11 +51,23 @@ export async function runNarutoRanksPackPipeline(
         .join(", ")}`,
     );
   }
+  const imadoki = await harvestImadokiSheets({ force });
+  console.log(
+    `── Imadoki — ${imadoki.ok} planche(s), ${imadoki.skip} déjà là, ${imadoki.fail} manquée${imadoki.fail === 1 ? "" : "s"}`,
+  );
+  // Le semis rend l'index ; la découpe des planches, asynchrone, s'en ressert
+  // juste après.
+  let seeded:
+    | Parameters<
+        NonNullable<Parameters<typeof runLocalTcgPipeline>[0]["seed"]>
+      >[0]
+    | null = null;
   return runLocalTcgPipeline({
     packId: NARUTO_RANKS_PACK_ID,
     curatedDir: narutoRanksCuratedDir(),
     label: "Naruto Ninja Ranks",
     seed: (index) => {
+      seeded = index;
       const report = buildNinjaRanksFromLedgers({ index });
       const faces = installInkworksSampleFaces(index);
       if (faces.installed) {
@@ -76,7 +89,23 @@ export async function runNarutoRanksPackPipeline(
       }
       return report;
     },
-    seedProducts: () => ingestInkworksProducts(),
+    seedProducts: async () => {
+      /*
+        Les planches se découpent après le semis : `seed` est synchrone, et
+        `sharp` ne l'est pas. L'index est le même, et `exportIndex` a déjà
+        tourné — d'où la seconde passe ci-dessous.
+      */
+      const cut = seeded
+        ? await installImadokiSheets(seeded)
+        : { faces: 0, sheets: 0, rejected: [] };
+      if (cut.faces || cut.rejected.length) {
+        console.log(
+          `── Naruto Ninja Ranks — ${cut.faces} face(s) italienne(s) sur ${cut.sheets} planche(s)${cut.rejected.length ? `, ${cut.rejected.length} case(s) refusée(s)` : ""}`,
+        );
+      }
+      if (cut.faces && seeded) seeded.exportIndex();
+      return ingestInkworksProducts();
+    },
   });
 }
 

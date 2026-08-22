@@ -91,6 +91,27 @@ const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.num
          LEFT JOIN print_assets a
                 ON a.print_key = p.print_key AND a.lang = t.lang`;
 
+/*
+  Les faces dont la langue n'a pas de titre.
+
+  `SELECT_ROW` apparie face et titre par la langue. Une face dans une langue que
+  les titres ne couvrent pas tombe donc de l'index — elle est sur le disque, elle
+  est en base, et elle n'apparaît nulle part. Mesuré le 2026-08-22 : 262 faces du
+  Carddass et 4 des 17 du 疾風伝 étaient perdues ainsi.
+
+  Or la langue d'une face et celle d'un titre sont deux faits **indépendants** :
+  avoir le scan d'un tirage italien n'oblige pas à connaître son nom italien.
+  Cette seconde requête récupère ces faces orphelines ; elles entrent dans
+  l'index avec leur image et sans nom, ce que `CardsIndexEntry` permet déjà.
+*/
+const SELECT_ORPHAN_ASSETS = `SELECT a.print_key AS printKey, p.card_type AS cardType,
+              p.number, a.lang, a.art, a.thumb
+         FROM print_assets a
+         JOIN prints p ON p.print_key = a.print_key
+        WHERE NOT EXISTS (
+              SELECT 1 FROM print_titles t
+               WHERE t.print_key = a.print_key AND t.lang = a.lang)`;
+
 export function createPrintsSchema(db: DatabaseSync): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS prints (
@@ -354,6 +375,24 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       entry.langs[row.lang] = slot;
       if (!entry.name && row.fullName) entry.name = row.fullName;
       if (!entry.rarity && row.rarity) entry.rarity = row.rarity;
+    }
+
+    // Puis les faces dont la langue n'a pas de titre : sans elles, un scan
+    // honnêtement étiqueté disparaîtrait pour n'avoir pas de nom traduit.
+    const orphans = db
+      .prepare(SELECT_ORPHAN_ASSETS)
+      .all() as LocalPrintSearchRow[];
+    for (const row of orphans) {
+      if (!row.lang || (!row.art && !row.thumb)) continue;
+      const entry = (cards[row.printKey] ??= {
+        set: row.cardType,
+        card: row.number,
+        langs: {},
+      });
+      const slot = entry.langs[row.lang] ?? {};
+      if (row.art) slot.art = row.art;
+      if (row.thumb) slot.thumb = row.thumb;
+      entry.langs[row.lang] = slot;
     }
 
     const dest = packCardsIndexPath(packId);

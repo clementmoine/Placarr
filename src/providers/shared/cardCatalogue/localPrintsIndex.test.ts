@@ -83,3 +83,72 @@ describe("createLocalPrintsIndex", () => {
     expect(index.lookupRow("naruto:sd-0001")?.art).toBe("art.inkworks.jpg");
   });
 });
+
+describe("faces sans titre dans leur langue", () => {
+  it("les fait entrer dans l'index, avec l'image et sans nom", () => {
+    // Le cas réel : un scan de l'édition française sous des titres anglais.
+    // Avant, la jointure par langue le faisait disparaître — 262 faces du
+    // Carddass étaient ainsi perdues, présentes en base et nulle part visibles.
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0040",
+        setCode: "nr",
+        number: "0040",
+        cardType: "nr",
+        titles: [{ lang: "en", fullName: "Rock Lee", rarity: null }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:nr-0040", lang: "fr", art: "art.coleka.webp" },
+    ]);
+
+    const written = index.exportIndex();
+    expect(written).not.toBeNull();
+    const entry = (
+      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
+        cards: Record<
+          string,
+          { langs: Record<string, { name?: string; art?: string }> }
+        >;
+      }
+    ).cards["naruto:nr-0040"];
+    expect(entry.langs.en?.name).toBe("Rock Lee");
+    expect(entry.langs.fr?.art).toBe("art.coleka.webp");
+    expect(entry.langs.fr?.name).toBeUndefined();
+  });
+
+  it("laisse cohabiter plusieurs éditions sur un même tirage", () => {
+    // Un scan français et un scan italien de la même carte, sous un titre
+    // anglais : trois faits indépendants, et aucun n'écrase les autres.
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0044",
+        setCode: "nr",
+        number: "0044",
+        cardType: "nr",
+        titles: [{ lang: "en", fullName: "Guy", rarity: null }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:nr-0044", lang: "fr", art: "art.coleka.webp" },
+      { printKey: "naruto:nr-0044", lang: "it", art: "art.imadoki.jpg" },
+    ]);
+
+    const written = index.exportIndex();
+    const entry = (
+      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
+        cards: Record<
+          string,
+          { langs: Record<string, { name?: string; art?: string }> }
+        >;
+      }
+    ).cards["naruto:nr-0044"];
+    expect(entry.langs.en?.name).toBe("Guy");
+    expect(entry.langs.fr?.art).toBe("art.coleka.webp");
+    expect(entry.langs.it?.art).toBe("art.imadoki.jpg");
+  });
+});

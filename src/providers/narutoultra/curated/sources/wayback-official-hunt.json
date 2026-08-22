@@ -90,7 +90,7 @@
       "Sell sheet / Wayne’s / paniniusa.com (2026-08-21 soir) : piste US Ninja Ranks, pas Ultra. Aucune URL imprimée Ultra."
     ],
     "finding": "Recto album Coleka : `www.paninigroup.com`. Ce domaine n’a pas de chemin Naruto archivé. Le verso / la checklist restent la piste physique.",
-    "fanPackagingNotOfficialHost": "AC pochette FR « 8 CARTES ». Coleka `album_i886778` = scan collectionneur du recto, dump `art.coleka`. Affichage = upscales Figma `art.reconstructed` (recto, verso, pochette). Ne pas en faire des faces de cartes.",
+    "fanPackagingNotOfficialHost": "AC pochette FR « 8 CARTES ». Coleka `album_i886778` = scan collectionneur du recto, dump `art.coleka`. Affichage = upscales Figma `art.reconstructed` (recto, verso, pochette). Ne pas en faire des faces de cartes."
   },
   "fanImageHosts": {
     "note": "Scans / photos utilisateurs. Pas CDN Panini.",

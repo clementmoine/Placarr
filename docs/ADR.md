@@ -350,7 +350,35 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   garde de test d'alignement Prisma/MediaType ; le découpage physique
   domaine reste ouvert et volontairement différé.
 
+## ADR-021 : Sortie UnityPy — cadre (Node-first)
+
+- **Date** : 2026-08-25
+- **Statut** : Accepté (cadre) — implémentation phasée, Python oracle jusqu’à
+  parité
+- **Contexte** : le seul Python **produit** est l’île Unity
+  (`pokemontcglive/unity`, `lorcanatcg/unity`) via UnityPy. Le reste est déjà
+  `tsx`/Node. Les libs npm UnityFS (`unityfs-js`, `@arkntools/unity-js`) ne
+  sont pas drop-in sous Node (Vite workers, WASM codecs vides, ESM sans
+  extension, Texture2D 2022.3, absence de Shader chez arkntools). Un spike
+  2026-08 sur fixtures Live a prouvé : typetree `MaterialManifest`, ASTC via
+  `.resS`+`decodeTexture`, et **24/24** `.frag` GLES depuis `compressedBlob`
+  sans UnityPy. Détail : [unity_without_python.md](unity_without_python.md).
+- **Décision** :
+  1. Objectif = **une toolchain Node** pour l’extract Unity produit ; Frida
+     QA peut rester Python.
+  2. Pas d’ajout naïf des packages Unity au `package.json` tant qu’un
+     **wrapper** (`src/lib/unity/` ou équivalent provider-local) n’isole
+     codecs JS, typetree et resolve ESM.
+  3. Migration **par phases** A→E (manifest → textures → shaders → quad/back
+     / Lorcana → retrait venv), chacune derrière golden-master vs UnityPy /
+     artefacts `data/pokemon/foil/`.
+  4. UnityPy reste **référence de test** jusqu’à la phase E ; on n’affaiblit
+     pas les tests extract existants.
+- **Conséquences** : item backlog P2 ; docs `data-layout` / README unity
+  pointent le plan ; le hot path foil peut progresser sans attendre une lib
+  upstream « complète ».
+
 ---
 
-_Les ADR suivants documentent les décisions de la réorganisation 2026-08 au fil
-de son exécution (defineProvider, contrat curated formel, nouveaux domaines)._
+_Les ADR suivants documentent les décisions au fil de l’exécution (réorga
+2026-08, sortie UnityPy, …)._

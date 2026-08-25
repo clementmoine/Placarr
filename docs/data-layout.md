@@ -186,5 +186,7 @@ UnityPy venv: preferred `src/providers/<id>/unity/.venv` (see `unity/README.md`)
 
 **Node vs Python:** everything that is not Unity asset extract runs under `tsx` /
 Node. Python stays only where **UnityPy** is required (`providers/*/unity/`).
+Cadre de sortie (spike 2026-08, ADR-021) :
+[unity_without_python.md](unity_without_python.md).
 
 Historical Live handoff notes: [archive/tcglive_effects.md](archive/tcglive_effects.md).

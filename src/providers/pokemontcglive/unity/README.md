@@ -3,6 +3,8 @@
 Python remains **only** for UnityFS extract / AssetManifest. Orchestration is
 TypeScript (`cli.ts`).
 
+Cadre de sortie Node (ADR-021) : [`docs/unity_without_python.md`](../../../../docs/unity_without_python.md).
+
 ```bash
 cd src/providers/pokemontcglive/unity
 python3 -m venv .venv

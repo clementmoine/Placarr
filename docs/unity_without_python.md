@@ -71,7 +71,7 @@ ni wrapper codecs. Python reste la référence jusqu’à parité mesurée.
 
 | Phase | Remplace | Critère de sortie |
 | ----- | -------- | ----------------- |
-| **A** | `dump_cdn_manifest.py` + lecture `MaterialManifest` | JSON / champs `_f/_c/_s/_w` = Python sur N bundles CDN |
+| **A** | `dump_cdn_manifest.py` + lecture `MaterialManifest` | JSON / champs `_f/_c/_s/_w` = Python sur N bundles CDN — **livré 2026-08** (`@/lib/unity` + `dumpCdnManifest.ts`, fixture golden, `PLACARR_UNITY_PYTHON=1` escape) |
 | **B** | export Texture2D face + mask (ASTC→PNG/WebP) | hash ou SSIM vs sorties `extract.py` |
 | **C** | `extract_shadersbundle` → `foil/shaders/*.frag` | stems + golden strip = disque / Python |
 | **D** | `card_quad` / `card_back` / Lorcana `dump_unity` | tests module existants verts sans `.venv` |

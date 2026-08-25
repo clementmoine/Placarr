@@ -74,16 +74,17 @@ function packPython(repo: string): string {
 
 /**
  * Dump ``manifest_<locale>_<bucket>`` for every bucket × lang into
- * ``staging/cdn-manifests``. Needs UnityPy, hence the Python hop.
+ * ``staging/cdn-manifests``. Default: Node (`dumpCdnManifest.ts`, ADR-021).
+ * Escape hatch: ``PLACARR_UNITY_PYTHON=1`` → UnityPy script.
  */
-function runManifestDump(
+async function runManifestDump(
   repo: string,
   opts: {
     staging: string;
     contentBase: string;
     langs: string[];
   },
-): number {
+): Promise<number> {
   const dirsManifest = path.join(
     opts.staging,
     "config-cache",
@@ -95,33 +96,48 @@ function runManifestDump(
     );
     return 1;
   }
-  const args = [
-    path.join(repo, "src/providers/pokemontcglive/unity/dump_cdn_manifest.py"),
-    "--content-base",
-    opts.contentBase,
-    "--buckets",
-    "all",
-    "--dirs-manifest",
+  const outDir = path.join(opts.staging, "cdn-manifests");
+  if (process.env.PLACARR_UNITY_PYTHON === "1") {
+    const args = [
+      path.join(repo, "src/providers/pokemontcglive/unity/dump_cdn_manifest.py"),
+      "--content-base",
+      opts.contentBase,
+      "--buckets",
+      "all",
+      "--dirs-manifest",
+      dirsManifest,
+      "--locales",
+      opts.langs.join(","),
+      "--out-dir",
+      outDir,
+    ];
+    const r = spawnSync(packPython(repo), args, {
+      cwd: repo,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PYTHONPATH: [
+          path.join(repo, "src/providers/pokemontcglive/unity/lib"),
+          path.join(repo, "src/providers/pokemontcglive/unity"),
+        ].join(path.delimiter),
+      },
+    });
+    if (r.stdout) process.stdout.write(r.stdout);
+    if (r.stderr) process.stderr.write(r.stderr);
+    return r.status ?? 1;
+  }
+  const { dumpCdnManifests } = await import(
+    "@/providers/pokemontcglive/dumpCdnManifest"
+  );
+  const result = await dumpCdnManifests({
+    contentBase: opts.contentBase,
+    buckets: "all",
     dirsManifest,
-    "--locales",
-    opts.langs.join(","),
-    "--out-dir",
-    path.join(opts.staging, "cdn-manifests"),
-  ];
-  const r = spawnSync(packPython(repo), args, {
-    cwd: repo,
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      PYTHONPATH: [
-        path.join(repo, "src/providers/pokemontcglive/unity/lib"),
-        path.join(repo, "src/providers/pokemontcglive/unity"),
-      ].join(path.delimiter),
-    },
+    locales: opts.langs.join(","),
+    outDir,
   });
-  if (r.stdout) process.stdout.write(r.stdout);
-  if (r.stderr) process.stderr.write(r.stderr);
-  return r.status ?? 1;
+  console.log(JSON.stringify(result));
+  return result.ok || result.written > 0 ? 0 : 2;
 }
 
 function runExtract(
@@ -398,7 +414,7 @@ export async function runUpdate(
   if (opts.fromManifest) {
     if (opts.refreshManifests) {
       console.log("── dump AssetManifests (14 buckets × langs)");
-      const code = runManifestDump(repo, {
+      const code = await runManifestDump(repo, {
         staging,
         contentBase: target.content_base,
         langs: opts.langs,

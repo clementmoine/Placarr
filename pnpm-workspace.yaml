@@ -1,0 +1,6 @@
+# Single-package repo; settings live here for pnpm ≥11 (package.json#pnpm ignored).
+packages:
+  - "."
+
+patchedDependencies:
+  unityfs-js@0.2.8: patches/unityfs-js@0.2.8.patch

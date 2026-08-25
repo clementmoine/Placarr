@@ -1,0 +1,220 @@
+diff --git a/decoders/drivers/LZ4Driver.js b/decoders/drivers/LZ4Driver.js
+index 02081d9795ecd775471815b638fe4662350804e5..a2a412d66a69e7094a7ec439fe4c54922adc1b00 100644
+--- a/decoders/drivers/LZ4Driver.js
++++ b/decoders/drivers/LZ4Driver.js
+@@ -1,19 +1,13 @@
+ import { decompressBlock } from './lz4.js'
+-import { lz4BlockWASM } from '../../wasm/wasmDecoders.js'
+ 
+ /**
+- * Decompress LZ4 data block
++ * Decompress LZ4 — pure JS (WASM path returns empty buffers under Node).
+  * @param {Uint8Array} data
+  * @param {number} uncompressedSize
+  * @returns {Uint8Array}
+  */
+ export function lz4DecompressDriver(data, uncompressedSize) {
+     const p = new Uint8Array(uncompressedSize)
+-    const decoder = (typeof window !== 'undefined' && window.lz4BlockWASM) || lz4BlockWASM
+-    if (decoder) {
+-        const decoded = decoder.decodeBlock(data, 0, uncompressedSize)
+-        return decoded ? decoded.slice() : p
+-    }
+-    decompressBlock(data, p, 0, uncompressedSize, 0)
++    decompressBlock(data, p, 0, data.length, 0)
+     return p
+ }
+diff --git a/decoders/drivers/LZMADriver.js b/decoders/drivers/LZMADriver.js
+index 89338082db090cfff29666a671875031720135ea..93f4bb9201ee3fafe19f0873fde8bba025cad242 100644
+--- a/decoders/drivers/LZMADriver.js
++++ b/decoders/drivers/LZMADriver.js
+@@ -1,18 +1,11 @@
+ import { lzmaDecompress } from '../../vendor/lzma.js'
+-import { lzmaBlockWASM } from '../../wasm/wasmDecoders.js'
+ 
+ /**
+- * Decompress LZMA data stream
++ * Decompress LZMA — pure JS (WASM path returns empty buffers under Node).
+  * @param {Uint8Array} data
+  * @param {number} uncompressedSize
+  * @returns {Uint8Array}
+  */
+ export function lzmaDecompressDriver(data, uncompressedSize) {
+-    const p = new Uint8Array(uncompressedSize)
+-    const decoder = (typeof window !== 'undefined' && window.lzmaBlockWASM) || lzmaBlockWASM
+-    if (decoder) {
+-        const decoded = decoder.decodeBlock(data, uncompressedSize)
+-        return decoded ? decoded.slice() : p
+-    }
+     return lzmaDecompress(data, uncompressedSize)
+ }
+diff --git a/decoders/drivers/TextureDecoderPool.js b/decoders/drivers/TextureDecoderPool.js
+index 1fc305d3e15224e7f9c0c182bb01cdec47c0a90b..4c65bdd82027e87d2525df6e7ee8c786eb2fe2d4 100644
+--- a/decoders/drivers/TextureDecoderPool.js
++++ b/decoders/drivers/TextureDecoderPool.js
+@@ -1,133 +1,17 @@
+-import TextureWorker from './textureDecoder.worker.js?worker&inline'
+-
+-export class TextureDecoderPool {
+-    constructor(poolSize) {
+-        const defaultSize =
+-            typeof navigator !== 'undefined' && navigator.hardwareConcurrency
+-                ? navigator.hardwareConcurrency
+-                : 4
+-        this.poolSize = Math.max(1, Math.min(poolSize || defaultSize, 16))
+-        this.workers = []
+-        this.taskQueue = []
+-        this.pendingTasks = new Map()
+-        this.taskId = 0
+-        this.initPool()
+-    }
+-
+-    initPool() {
+-        if (typeof Worker === 'undefined' || typeof TextureWorker !== 'function') {
+-            return
+-        }
+-
+-        for (let i = 0; i < this.poolSize; i++) {
+-            try {
+-                const worker = new TextureWorker()
+-                const workerItem = {
+-                    id: i,
+-                    worker,
+-                    busy: false,
+-                    currentTaskId: null,
+-                }
+-
+-                worker.onmessage = (e) => {
+-                    const { id, result, error } = e.data
+-                    const task = this.pendingTasks.get(id)
+-                    if (task) {
+-                        this.pendingTasks.delete(id)
+-                        if (error) {
+-                            task.reject(new Error(error))
+-                        } else {
+-                            task.resolve(new Uint8Array(result))
+-                        }
+-                    }
+-                    workerItem.busy = false
+-                    workerItem.currentTaskId = null
+-                    this.dispatchNext()
+-                }
+-
+-                worker.onerror = (err) => {
+-                    if (workerItem.currentTaskId !== null) {
+-                        const task = this.pendingTasks.get(workerItem.currentTaskId)
+-                        if (task) {
+-                            this.pendingTasks.delete(workerItem.currentTaskId)
+-                            task.reject(err)
+-                        }
+-                    }
+-                    workerItem.busy = false
+-                    workerItem.currentTaskId = null
+-                    this.dispatchNext()
+-                }
+-
+-                this.workers.push(workerItem)
+-            } catch (err) {
+-                console.warn('[TextureDecoderPool] Failed to spawn worker:', err)
+-            }
+-        }
+-    }
+-
+-    dispatchNext() {
+-        if (this.taskQueue.length === 0) return
+-        const availableWorker = this.workers.find((w) => !w.busy)
+-        if (!availableWorker) return
+-
+-        const task = this.taskQueue.shift()
+-        availableWorker.busy = true
+-        availableWorker.currentTaskId = task.id
+-
+-        const buffer = task.buffer
+-        availableWorker.worker.postMessage(
+-            {
+-                id: task.id,
+-                data: buffer,
+-                width: task.width,
+-                height: task.height,
+-                textureFormat: task.textureFormat,
+-                options: task.options,
+-            },
+-            [buffer],
+-        )
+-    }
+-
+-    decode(data, width, height, textureFormat, options = {}) {
+-        if (this.workers.length === 0) {
+-            return null
+-        }
+-
+-        return new Promise((resolve, reject) => {
+-            const id = this.taskId++
+-            const u8 = data instanceof Uint8Array ? data : new Uint8Array(data.buffer || data)
+-            // Clone buffer for transferable transfer to avoid detaching the caller's buffer
+-            const bufferCopy = u8.slice().buffer
+-
+-            this.pendingTasks.set(id, { resolve, reject })
+-            this.taskQueue.push({
+-                id,
+-                buffer: bufferCopy,
+-                width,
+-                height,
+-                textureFormat,
+-                options,
+-            })
+-
+-            this.dispatchNext()
+-        })
+-    }
+-
+-    terminate() {
+-        for (const item of this.workers) {
+-            item.worker.terminate()
+-        }
+-        this.workers = []
+-        this.pendingTasks.clear()
+-        this.taskQueue = []
++/** Node-safe stub — Vite `?worker&inline` import is browser-only. */
++export function getTextureDecoderPool() {
++    return {
++        decode() {
++            return Promise.reject(
++                new Error('TextureDecoderPool stubbed for Node (no Vite worker)'),
++            )
++        },
++        terminate() {},
+     }
+ }
+ 
+-let globalPool = null
+-
+-export function getTextureDecoderPool() {
+-    if (!globalPool) {
+-        globalPool = new TextureDecoderPool()
++export default class TextureDecoderPool {
++    static getInstance() {
++        return getTextureDecoderPool()
+     }
+-    return globalPool
+ }
+diff --git a/package.json b/package.json
+index a85ebe09eaeb7f9fa7a440305255da0e82c11969..16f4b0356d30795f1377b1aac79b8006bd7bd904 100644
+--- a/package.json
++++ b/package.json
+@@ -10,7 +10,14 @@
+             "types": "./index.d.ts",
+             "import": "./index.js"
+         },
+-        "./exporters/*": "./exporters/*"
++        "./exporters/*": "./exporters/*",
++        "./unityfs/*": "./unityfs/*",
++        "./decoders/*": "./decoders/*",
++        "./decoders/drivers/*": "./decoders/drivers/*",
++        "./core/*": "./core/*",
++        "./vendor/*": "./vendor/*",
++        "./wasm/*": "./wasm/*",
++        "./assetManager.js": "./assetManager.js"
+     },
+     "files": [
+         "index.js",

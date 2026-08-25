@@ -85,7 +85,7 @@ export const SOURCE_MATRIX = [
     source: "cdn-public",
     urlPattern: "{contentBase}{bucket}/manifest_{locale}_{bucket}",
     update:
-      "dump via unity/dump_cdn_manifest.py (UnityPy); intersect with Malie stems",
+      "dump via `@/lib/unity` / `dumpCdnManifest.ts` (Node); intersect with Malie stems",
   },
   {
     id: "paperArt",

@@ -1,9 +1,11 @@
 # UnityPy island (Pokémon TCG Live)
 
-Python remains **only** for UnityFS extract / AssetManifest. Orchestration is
+Python remains for UnityFS **texture / shader / mesh** extract. Orchestration is
 TypeScript (`cli.ts`).
 
-Cadre de sortie Node (ADR-021) : [`docs/unity_without_python.md`](../../../../docs/unity_without_python.md).
+**Phase A (ADR-021)** — CDN AssetManifest dump is Node by default
+(`dumpCdnManifest.ts` + `@/lib/unity`). Escape hatch: `PLACARR_UNITY_PYTHON=1`.
+Research: [`docs/unity_without_python.md`](../../../../docs/unity_without_python.md).
 
 ```bash
 cd src/providers/pokemontcglive/unity

@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  unityfs-js@0.2.8:
+    hash: gmcvgklzuso4rv7svnlr5flgxy
+    path: patches/unityfs-js@0.2.8.patch
+
 importers:
 
   .:
@@ -152,6 +157,9 @@ importers:
       tw-animate-css:
         specifier: 1.4.0
         version: 1.4.0
+      unityfs-js:
+        specifier: 0.2.8
+        version: 0.2.8(patch_hash=gmcvgklzuso4rv7svnlr5flgxy)
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -4600,6 +4608,9 @@ packages:
 
   unist-util-visit@5.1.0:
     resolution: {integrity: sha512-m+vIdyeCOpdr/QeQCu2EzxX/ohgS8KbnPDgFni4dQsfSCtpz8UqDyY5GjRru8PDKuYn7Fq19j1CQ+nJSsGKOzg==}
+
+  unityfs-js@0.2.8:
+    resolution: {integrity: sha512-PPIEyLlqOC0KLyuhiCIMDzEjFBXnCWnGkxA2u/DeesRJnaft0ej/X5CzZi7fBn2PH2NHzkpU6PGYODcOe1kv4Q==}
 
   unrs-resolver@1.12.2:
     resolution: {integrity: sha512-dmlRxBJJayXjqTwC+JtF1HhJmgf3ftQ3YejFcZrf4+KKtJv0qDsK1pjqaaVjG7wJ5NJ6UVP1OqRMQ71Z4C3rxQ==}
@@ -9460,6 +9471,8 @@ snapshots:
       '@types/unist': 3.0.3
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.0.2
+
+  unityfs-js@0.2.8(patch_hash=gmcvgklzuso4rv7svnlr5flgxy): {}
 
   unrs-resolver@1.12.2:
     dependencies:

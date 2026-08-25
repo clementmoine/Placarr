@@ -184,9 +184,9 @@ Pokémon Live↔CSS audit: `pnpm foil:audit-live-css` → `pokemontcglive/auditL
 Foil gaps: admin `/api/admin/foil-status` → `computeFoilGaps()` (`src/lib/admin/foilGaps.ts`).
 UnityPy venv: preferred `src/providers/<id>/unity/.venv` (see `unity/README.md`).
 
-**Node vs Python:** CDN AssetManifest dump = Node (`@/lib/unity`, ADR-021 A).
-Texture / shader / mesh extract reste UnityPy (`providers/*/unity/`) jusqu’aux
-phases B–D. Escape : `PLACARR_UNITY_PYTHON=1`. Voir
+**Node vs Python:** CDN AssetManifest + card Texture2D (ASTC→WebP) = Node
+(`@/lib/unity`, ADR-021 A–B). Shaders / mesh / cards.json aggregation restent
+UnityPy jusqu’aux phases C–D. Escape : `PLACARR_UNITY_PYTHON=1`. Voir
 [unity_without_python.md](unity_without_python.md).
 
 Historical Live handoff notes: [archive/tcglive_effects.md](archive/tcglive_effects.md).

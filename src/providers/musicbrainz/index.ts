@@ -9,7 +9,7 @@ import {
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   createTeardownMetadataTask,
@@ -190,7 +190,7 @@ function createMusicBrainzAdapter(): MetadataProviderAdapter {
   };
 }
 
-export const musicbrainzModule: ProviderModule = {
+export const musicbrainzModule = defineProvider({
   info: {
     id: "musicbrainz",
     label: "MusicBrainz",
@@ -263,4 +263,4 @@ export const musicbrainzModule: ProviderModule = {
       },
     ];
   },
-};
+});

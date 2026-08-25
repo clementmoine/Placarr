@@ -12,6 +12,7 @@ import path from "node:path";
 import { dataRoot } from "@/lib/runtimeData";
 import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_LIVE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
+import { catalogueExtractSkipArgs } from "@/lib/admin/catalogueExtractCheckpoint";
 import {
   CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
   CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
@@ -120,7 +121,11 @@ export function normalizeCatalogueExtractScope(
 
 export async function resolveCatalogueExtractCommand(
   target: CatalogueExtractTarget,
-  opts: { scope?: CatalogueExtractScope } = {},
+  opts: {
+    scope?: CatalogueExtractScope;
+    /** Steps already done — appended as `--skip` when the pack declares pipelineSteps. */
+    completedSteps?: readonly string[];
+  } = {},
 ): Promise<CatalogueExtractCommand> {
   const scope = opts.scope ?? "inventory";
   const root = repoRoot();
@@ -130,14 +135,22 @@ export async function resolveCatalogueExtractCommand(
   }
   const tsx = path.join(root, "node_modules/.bin/tsx");
   const cli = path.join(root, pack.extract.cliPath);
+  const skipArgs = catalogueExtractSkipArgs(
+    opts.completedSteps,
+    pack.extract.pipelineSteps,
+  );
+  const resumePrelude =
+    skipArgs.length > 0
+      ? [`reprise: ${skipArgs[0]} ${skipArgs[1]}`]
+      : [];
   if (target === "lorcana") {
     const apk = await preferredLorcanaApk();
     // Always scrape CSS + catalogue cards; Unity when an APK is present.
     const providers = apk
       ? ["lorcanaweb", "lorcanacards", "lorcanaproducts", "lorcanamobile"]
       : ["lorcanaweb", "lorcanacards", "lorcanaproducts"];
-    const args = ["--providers", ...providers, "--no-job"];
-    const prelude: string[] = [];
+    const args = ["--providers", ...providers, "--no-job", ...skipArgs];
+    const prelude: string[] = [...resumePrelude];
     if (apk) {
       args.push("--apk", apk);
       prelude.push(`apk=${apk}`);
@@ -154,20 +167,22 @@ export async function resolveCatalogueExtractCommand(
   if (target !== "pokemon") {
     return {
       command: tsx,
-      args: [cli],
-      prelude: [...(pack.extract.prelude ?? [])],
+      args: [cli, ...skipArgs],
+      prelude: [...resumePrelude, ...(pack.extract.prelude ?? [])],
     };
   }
   // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
   // adoptCli (that cancels the parent job → instant ── cancelled).
-  const args = ["--langs", POKEMON_LIVE_LANGS_CSV, "--no-job"];
+  const args = ["--langs", POKEMON_LIVE_LANGS_CSV, "--no-job", ...skipArgs];
   const prelude =
     scope === "catalogue"
       ? [
+          ...resumePrelude,
           "Pokémon: catalogue CDN (AssetManifests, 14 buckets) → tous les bundles listés",
           "chaque bundle porte son bucket : aucune sonde de dossiers",
         ]
       : [
+          ...resumePrelude,
           "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
         ];
   args.push("--products");
@@ -221,12 +236,15 @@ export async function runCatalogueExtractCommand(
     /** Extra header lines when (re)starting the pack log file. */
     logHeader?: readonly string[];
     scope?: CatalogueExtractScope;
+    /** Resume: skip steps already recorded on the job payload. */
+    completedSteps?: readonly string[];
   } = {},
 ): Promise<void> {
   const { command, args, prelude } = await resolveCatalogueExtractCommand(
     target,
     {
       scope: options.scope,
+      completedSteps: options.completedSteps,
     },
   );
   const timeoutMs =

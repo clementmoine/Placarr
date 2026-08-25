@@ -32,7 +32,7 @@ import {
   stagingRelFromUrl,
   writeJson,
   type MirrorHit,
-} from "../waybackSiteMirror";
+} from "../sources/waybackSiteMirror";
 
 const CDX_CARDDAS =
   "https://web.archive.org/cdx/search/cdx?url=www.carddas.com/naruto/*&output=json&fl=timestamp,original,mimetype,statuscode&filter=statuscode:200&collapse=urlkey&limit=20000";

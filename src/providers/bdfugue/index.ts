@@ -26,8 +26,8 @@ import type { ObservationEvidenceSignal } from "@/types/metadataObservation";
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchBdFugueByBarcode,
@@ -295,7 +295,7 @@ async function refreshBdFugueOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const bdfugueModule: ProviderModule = {
+export const bdfugueModule = defineProvider({
   info: {
     id: "bdfugue",
     label: "BD Fugue",
@@ -388,6 +388,6 @@ export const bdfugueModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshBdFugueOffers,
-};
+});
 
 export { mapBdFugueMetadata };

@@ -88,20 +88,42 @@ export function packUnityDataDir(pack: string): string {
   return path.join(packStagingDir(pack), "unity-data");
 }
 
-/** Simey CSS trees — `data/pokemon/staging/simey` (volatile; not served). */
+/** Simey CSS trees — `data/<pack>/staging/simey` (volatile; not served). */
 export type PokemonSimeyTreeId = "poke-holo" | "poke-151";
 
-export function pokemonSimeyStagingDir(): string {
-  return path.join(packStagingDir("pokemon"), "simey");
+/** Staging Simey pour un pack (défaut Pokémon — seul consommateur aujourd'hui). */
+export function packSimeyStagingDir(pack = "pokemon"): string {
+  return path.join(packStagingDir(pack), "simey");
 }
 
-export function pokemonSimeyTreeDir(tree: PokemonSimeyTreeId): string {
-  return path.join(pokemonSimeyStagingDir(), tree);
+export function packSimeyTreeDir(
+  tree: PokemonSimeyTreeId,
+  pack = "pokemon",
+): string {
+  return path.join(packSimeyStagingDir(pack), tree);
 }
 
 /** CSS cards dir for gap audit — empty / missing when not synced. */
+export function packSimeyCssCardsDir(
+  tree: PokemonSimeyTreeId,
+  pack = "pokemon",
+): string {
+  return path.join(packSimeyTreeDir(tree, pack), "public", "css", "cards");
+}
+
+/** @deprecated Prefer {@link packSimeyStagingDir}. */
+export function pokemonSimeyStagingDir(): string {
+  return packSimeyStagingDir("pokemon");
+}
+
+/** @deprecated Prefer {@link packSimeyTreeDir}. */
+export function pokemonSimeyTreeDir(tree: PokemonSimeyTreeId): string {
+  return packSimeyTreeDir(tree, "pokemon");
+}
+
+/** @deprecated Prefer {@link packSimeyCssCardsDir}. */
 export function pokemonSimeyCssCardsDir(tree: PokemonSimeyTreeId): string {
-  return path.join(pokemonSimeyTreeDir(tree), "public", "css", "cards");
+  return packSimeyCssCardsDir(tree, "pokemon");
 }
 
 export function packLogsDir(pack: string): string {

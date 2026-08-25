@@ -4,8 +4,8 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
@@ -15,7 +15,7 @@ import { isTheGamesDbQuotaBlocked } from "./quota";
 
 export { fetchFromTheGamesDB } from "./resolver";
 
-export const thegamesdbModule: ProviderModule = {
+export const thegamesdbModule = defineProvider({
   info: {
     id: "thegamesdb",
     label: "TheGamesDB",
@@ -71,13 +71,7 @@ export const thegamesdbModule: ProviderModule = {
     (key) =>
       `https://api.thegamesdb.net/v1/Platforms?apikey=${encodeURIComponent(key)}`,
   ),
-  testHandlers: {
-    "thegamesdb-metadata": {
-      label: "TheGamesDB - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromTheGamesDB(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromTheGamesDB(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -127,4 +121,4 @@ export const thegamesdbModule: ProviderModule = {
       fetchFromTheGamesDB(ctx.name, ctx.platform ?? undefined),
     );
   },
-};
+});

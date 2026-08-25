@@ -577,6 +577,18 @@ export type ProviderCatalogRefreshOpts = {
   /** Background / Plex-like path — prefer cheap sync when the provider supports it. */
   auto?: boolean;
   signal?: AbortSignal;
+  /**
+   * Run only these pipeline steps (`--only a,b`). Pack CLIs that do not
+   * understand `--only` ignore unknown argv or no-op — callers should stick to
+   * steps declared on the pack (`extract.pipelineSteps`).
+   */
+  only?: readonly string[];
+  /** Extra steps to skip (`--skip a,b`), merged with autoSkip when `auto`. */
+  skip?: readonly string[];
+  /** Locale filter (`--langs fr,en`). */
+  langs?: readonly string[];
+  /** Cap for series / faces / listings (`--limit N`). */
+  limit?: number;
 };
 
 /**

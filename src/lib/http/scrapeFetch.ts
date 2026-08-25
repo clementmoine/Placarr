@@ -69,8 +69,10 @@ function directResponseAccepted(
  * Le circuit breaker du host est consulté avant l'appel direct : un host qui
  * a répondu 403/429/503 (ou une page de challenge) ouvre son circuit, et les
  * appels suivants sont court-circuités — on tente le solver sans re-marteler
- * l'origine — jusqu'au reset exponentiel. Le direct passe par le profil
- * `scrape` du limiteur par host (1 s entre requêtes vers une même cible).
+ * l'origine — jusqu'au reset exponentiel. L'état est **persisté** sous
+ * `data/http/circuits/` : un restart de worker ne repart pas innocent.
+ * Le direct passe par le profil `scrape` du limiteur par host (1 s entre
+ * requêtes vers une même cible).
  */
 export async function fetchGetWithFlareFallback(
   url: string,

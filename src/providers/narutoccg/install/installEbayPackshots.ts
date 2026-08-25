@@ -7,7 +7,7 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { ebayIngestPackshots, ebayListingImageFull } from "../ebayPackshots";
+import { ebayIngestPackshots, ebayListingImageFull } from "../sources/ebayPackshots";
 import { NARUTO_PACK_ID } from "../indexStore";
 
 export const NARUTO_STAGING_EBAY = path.join("staging", "ebay");

@@ -46,19 +46,19 @@ import {
 } from "@/providers/shared/sealedProducts/indexFormat";
 import { sealedBehaviorForKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { cardgameclubIngestPackshots } from "./cardgameclubPackshots";
-import { colekaEnCcgNewDisplays } from "./colekaEnCcgCovers";
-import { ebayIngestPackshots } from "./ebayPackshots";
-import { goatIngestPackshots } from "./goatPackshots";
-import { gradedcardcenterIngestPackshots } from "./gradedcardcenterPackshots";
-import { germanSealedReleases } from "./germanSealedReleases";
-import { japaneseSealedReleases } from "./japaneseSealedReleases";
+import { cardgameclubIngestPackshots } from "./sources/cardgameclubPackshots";
+import { colekaEnCcgNewDisplays } from "./sources/colekaEnCcgCovers";
+import { ebayIngestPackshots } from "./sources/ebayPackshots";
+import { goatIngestPackshots } from "./sources/goatPackshots";
+import { gradedcardcenterIngestPackshots } from "./sources/gradedcardcenterPackshots";
+import { germanSealedReleases } from "./sources/germanSealedReleases";
+import { japaneseSealedReleases } from "./sources/japaneseSealedReleases";
 import { volumeOfficialProducts } from "./volumeOfficialProducts";
-import { psYoyakuIngestPackshots } from "./psYoyakuPackshots";
+import { psYoyakuIngestPackshots } from "./sources/psYoyakuPackshots";
 import { narutoCuratedProductsDir } from "./curatedPaths";
 import { NARUTO_PACK_ID } from "./packs";
-import { mangaNewsIngestPackshots } from "./mangaNewsPackshots";
-import { martinaIngestPackshots } from "./martinaPackshots";
+import { mangaNewsIngestPackshots } from "./sources/mangaNewsPackshots";
+import { martinaIngestPackshots } from "./sources/martinaPackshots";
 import {
   narutoProductFileOf,
   narutoProductFilename,
@@ -71,9 +71,9 @@ import {
   type NarutoProductStoredFace,
 } from "./productChoice";
 import { NARUTO_STAGING_SITE } from "./scrape/scrapeCards";
-import { trictracIngestPackshots } from "./trictracPackshots";
-import { scifiUniverseIngestPackshots } from "./scifiUniverse";
-import { vialudibundaIngestPackshots } from "./vialudibunda";
+import { trictracIngestPackshots } from "./sources/trictracPackshots";
+import { scifiUniverseIngestPackshots } from "./sources/scifiUniverse";
+import { vialudibundaIngestPackshots } from "./sources/vialudibunda";
 
 /** Printed booster (carddass.fr / presse 2006–07). */
 export const NARUTO_BOOSTER_CARD_COUNT = 8;

@@ -2,8 +2,8 @@ import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import { createWikidataResolver } from "./resolver";
@@ -11,7 +11,7 @@ import { createWikidataResolver } from "./resolver";
 const fetchBoardGameFromWikidata = createWikidataResolver("boardgames");
 const fetchGameFromWikidata = createWikidataResolver("games");
 
-export const wikidataModule: ProviderModule = {
+export const wikidataModule = defineProvider({
   info: {
     id: "wikidata",
     label: "Wikidata",
@@ -33,12 +33,13 @@ export const wikidataModule: ProviderModule = {
     return {
       id: "wikidata",
       async resolve({ name, type }) {
-        return type === "games"
+        return type === "game"
           ? fetchGameFromWikidata(name)
           : fetchBoardGameFromWikidata(name);
       },
     } satisfies MetadataProviderAdapter;
   },
+  // Ping API avec User-Agent (Wikidata exige un UA identifiable).
   healthCheck: createMetadataHealthCheck("wikidata", "Wikidata", async () => {
     const start = Date.now();
     const isUp = await pingUrl(
@@ -51,19 +52,13 @@ export const wikidataModule: ProviderModule = {
       error: isUp ? null : "Host unreachable",
     };
   }),
-  testHandlers: {
-    "wikidata-metadata": {
-      label: "Wikidata - Metadata",
-      kind: "metadata",
-      run: (query) => fetchBoardGameFromWikidata(query),
-    },
-  },
+  metadataSearch: (query) => fetchBoardGameFromWikidata(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
       "Wikidata",
       () =>
-        ctx.type === "games"
+        ctx.type === "game"
           ? fetchGameFromWikidata(ctx.name)
           : fetchBoardGameFromWikidata(ctx.name),
       ctx.type,
@@ -92,6 +87,6 @@ export const wikidataModule: ProviderModule = {
       externalIds: metadata.externalIds,
     });
   },
-};
+});
 
 export { createWikidataResolver };

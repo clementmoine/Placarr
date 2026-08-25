@@ -29,7 +29,7 @@ import {
   stagingRelFromUrl,
   writeJson,
   type MirrorHit,
-} from "../waybackSiteMirror";
+} from "../sources/waybackSiteMirror";
 
 /** Broad site index — filtered to images + non-forum pages. */
 const CDX_SITE =

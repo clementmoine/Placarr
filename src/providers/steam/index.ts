@@ -5,14 +5,14 @@ import {
   fetchWithTimeout,
 } from "@/core/catalog/healthUtils";
 import { fetchFromSteam } from "./fetch";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
 export { fetchFromSteam } from "./fetch";
 
-export const steamModule: ProviderModule = {
+export const steamModule = defineProvider({
   info: {
     id: "steam",
     label: "Steam",
@@ -65,13 +65,7 @@ export const steamModule: ProviderModule = {
       };
     }
   }),
-  testHandlers: {
-    "steam-metadata": {
-      label: "Steam - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromSteam(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromSteam(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -108,4 +102,4 @@ export const steamModule: ProviderModule = {
       return [];
     }
   },
-};
+});

@@ -6,8 +6,8 @@ import type {
 } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   ensureLorcanaTcgIndex,
@@ -92,7 +92,7 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   };
 }
 
-export const lorcanatcgModule: ProviderModule = {
+export const lorcanatcgModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
@@ -167,4 +167,4 @@ export const lorcanatcgModule: ProviderModule = {
       };
     },
   ),
-};
+});

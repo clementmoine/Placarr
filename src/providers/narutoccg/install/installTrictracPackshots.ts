@@ -14,7 +14,7 @@ import { NARUTO_PACK_ID } from "../indexStore";
 import {
   trictracCdnOriginal,
   trictracIngestPackshots,
-} from "../trictracPackshots";
+} from "../sources/trictracPackshots";
 
 export const NARUTO_STAGING_TRICTRAC = path.join("staging", "trictrac");
 

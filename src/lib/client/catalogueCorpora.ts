@@ -15,6 +15,18 @@ export type CatalogueCorpusRow = {
   dataPack: string;
   supplyMode: string;
   status: CatalogueCorpusStatus;
+  /** Declared CLI steps when the pack supports `--only` / `--skip`. */
+  pipelineSteps?: string[] | null;
+};
+
+export type CatalogueRefreshRequest = {
+  providerId?: string;
+  all?: boolean;
+  auto?: boolean;
+  only?: string[] | string;
+  skip?: string[] | string;
+  langs?: string[] | string;
+  limit?: number;
 };
 
 export async function fetchCatalogueCorpora(): Promise<CatalogueCorpusRow[]> {
@@ -26,11 +38,9 @@ export async function fetchCatalogueCorpora(): Promise<CatalogueCorpusRow[]> {
   return body.corpora ?? [];
 }
 
-export async function enqueueCatalogueRefresh(opts: {
-  providerId?: string;
-  all?: boolean;
-  auto?: boolean;
-}): Promise<{ jobs: { providerId: string; jobId: string; label: string }[] }> {
+export async function enqueueCatalogueRefresh(
+  opts: CatalogueRefreshRequest,
+): Promise<{ jobs: { providerId: string; jobId: string; label: string }[] }> {
   const res = await fetch("/api/admin/catalogue-corpora", {
     method: "POST",
     headers: {

@@ -2,38 +2,46 @@
 
 Placarr est une app de gestion de collection personnelle (livres, BD/manga, jeux
 vidéo, films/séries, musique, TCG, jeux de société) : Next.js + TypeScript +
-Prisma/Postgres, avec 68 providers de métadonnées/prix et un moteur de rendu
+Prisma/Postgres, avec ~70 providers de métadonnées/prix et un moteur de rendu
 foil pour les cartes.
 
 Ce fichier répond à une seule question : **par où commencer la lecture ?**
 
 ## Les cinq fichiers à lire, dans l'ordre
 
-1. **`prisma/schema.prisma`** — ce qu'est une collection : `Item`, `Shelf`,
-   `BackgroundWorkJob` (file de jobs), prix, prêts.
+1. **`src/core/schemas/content-types.ts`** — ce qu'est un item (contrat
+   logique) : types de contenu, identité (`barcode` / `printKey` / titre),
+   profils par type, domaines de lecture. Persisté ensuite dans
+   **`prisma/schema.prisma`** (`Item`, `Metadata`, `Type`).
 2. **`src/types/providerRegistry.ts`** puis **`src/types/providerModule.ts`** —
    le contrat provider : `info` (capabilities, supplyMode, auth) + hooks
    optionnels (métadonnées, prix, catalogue de tirages, corpus local). Un
    provider déclare ce qu'il sait faire ; le core décide.
-3. **`src/core/catalog/registry.ts`** — où tous les providers sont enregistrés
+3. **`src/providers/shared/defineProvider.ts`** — la factory **exécutable**
+   du cas commun (ADR-009 / ADR-016) : manifeste validé Zod, healthCheck et
+   testHandler par défaut, contexte `ctx.http`. Remplace le réassemblage
+   manuel de plomberie (équivalent Placarr du `BaseProvider` tako, sans
+   abandonner le contrat déclaratif).
+4. **`src/core/catalog/registry.ts`** — où tous les providers sont enregistrés
    (une entrée = un import + une ligne). Ajouter une source commence et finit
    ici côté câblage.
-4. **`src/core/enrich/index.ts`** — le cœur métier : consensus agnostique entre
-   providers, classement des visuels, préférence de région. (Gros dossier —
-   lire d'abord l'index, descendre ensuite dans `titles/`, `media/`…)
-5. **Un provider minimal** : `src/providers/narutoranks/index.ts` (~60 lignes,
-   construit via `createLocalTcgLine` de `src/providers/shared/cardCatalogue/`)
-   — le modèle à suivre pour un catalogue local de cartes. Pour une source
-   distante simple, `src/providers/bedetheque/`.
+5. **Un provider minimal** :
+   - distant / scrape : `src/providers/bedetheque/` (`defineProvider`) ;
+   - catalogue local TCG : `src/providers/narutoranks/index.ts`
+     (`createLocalTcgLine`).
+
+Ensuite seulement : `src/core/enrich/index.ts` (consensus, covers) et
+`docs/ADR.md` (décisions datées).
 
 ## Carte des dossiers
 
 | Dossier           | Rôle                                                                                                                                              |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/core/`       | Métier aveugle aux sources : `catalog` (registry), `identify`, `enrich`, `collect` (jobs), `commerce` (prix), `render` (foil WebGL/CSS), `locale` |
-| `src/providers/`  | Une source = un dossier. `shared/` : fabriques et plomberie mutualisées (cardCatalogue, sealedProducts, softban…)                                 |
+| `src/core/`       | Métier aveugle aux sources : `schemas` (content-types), `catalog`, `identify`, `enrich`, `collect`, `commerce`, `render`, `locale` |
+
+| `src/providers/`  | Une source = un dossier. `shared/` : fabriques et plomberie mutualisées (`defineProvider`, cardCatalogue, softban…)                               |
 | `src/effects/`    | Packs d'effets foil par TCG (contrat `EffectPackModule`, auto-enregistrement)                                                                     |
-| `src/lib/`        | Infrastructure : `http/` (client, retry, FlareSolverr), `admin/` (catalogue, foil status), `client/` (hooks React)                                |
+| `src/lib/`        | Infrastructure : `http/` (client, retry, circuit breaker persisté, FlareSolverr), `admin/` (catalogue, foil status), `client/` (hooks React)     |
 | `src/app/`        | Routes Next.js (pages + `api/`). L'admin catalogue vit sous `app/admin/`                                                                          |
 | `src/components/` | UI. `admin/` : playroom foil, catalogue browser                                                                                                   |
 | `data/`           | Données runtime **non commitées**, re-dérivables via les pipelines (voir `docs/data-layout.md`)                                                   |
@@ -48,9 +56,11 @@ Ce fichier répond à une seule question : **par où commencer la lecture ?**
 - **Prix** : `core/commerce` interroge les providers à capability `price`.
 - **Catalogue TCG** : providers avec `searchPrints`/`listPrintSets` (tirages,
   sets, langues) ; l'admin pilote l'extraction via `lib/admin/cataloguePacks.ts`
-  (registre `CATALOGUE_PACKS`).
+  (registre `CATALOGUE_PACKS`) — refresh granulaire : `only` / `langs` /
+  `limit` (ADR-018).
 - **Jobs de fond** : processus séparé (`pnpm worker`), file Postgres
-  `BackgroundWorkJob` (SKIP LOCKED), kinds dans `core/collect/jobs/workQueue.ts`.
+  `BackgroundWorkJob` (SKIP LOCKED), kinds dans `core/collect/jobs/workQueue.ts`
+  ; extracts longs → `payload.completedSteps` (ADR-017).
 - **Données** : `data/<pack>/` écrit par les CLIs/pipelines des providers
   (`pnpm foil:pokemon`, `pnpm naruto:cards`…), servi via `/assets/<pack>/…` ;
   jamais commité. Les données assemblées à la main vivent dans
@@ -66,3 +76,12 @@ Ce fichier répond à une seule question : **par où commencer la lecture ?**
   contrat qui s'exécutent contre chaque provider/pack.
 - Les décisions structurantes sont consignées dans `docs/ADR.md` — lire avant
   de refactorer, écrire après avoir décidé.
+
+## Voir aussi
+
+- [`docs/core_architecture.md`](docs/core_architecture.md) — 5 piliers du core
+- [`docs/ADR.md`](docs/ADR.md) — décisions datées
+- [`docs/provider_integration_checklist.md`](docs/provider_integration_checklist.md)
+  — ajouter un provider
+- [`docs/structure_vs_tako.md`](docs/structure_vs_tako.md) — pourquoi ce chemin
+  de lecture (analyse tako-firehouse)

@@ -100,6 +100,12 @@ export type CataloguePackExtract = {
   /** Heavier per-scope timeout (Pokémon catalogue scope). */
   timeoutMsByScope?: Partial<Record<CatalogueExtractScope, number>>;
   postExtract?: CataloguePackPostExtract;
+  /**
+   * Ordered pipeline steps the CLI accepts via `--skip` / `--only`.
+   * When set, the foil worker can resume after a crash by appending
+   * `--skip` for `payload.completedSteps` (see catalogueExtractCheckpoint).
+   */
+  pipelineSteps?: readonly string[];
 };
 
 export type CataloguePackInfo = {
@@ -256,6 +262,16 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
         "scellés FR : packshots carddass.fr (boosters / starters / tin) → products-index.json",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      pipelineSteps: [
+        "scrape",
+        "reconstruct",
+        "index",
+        "products",
+        "thumbs",
+        "checklist",
+        "known",
+        "sources",
+      ],
     },
     blurbFr:
       "Un jeu, quatre langues. NI et N sont voisins, pas la même carte. S6 FR visible, pas addable.",
@@ -397,6 +413,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
       ],
       timeoutMs: CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+      pipelineSteps: ["scrape", "dbscards", "products", "arena", "faces"],
     },
     blurbFr:
       "Catalogue Bandai Masters — faces Deckplanet (sync), SAMPLE en fallback",
@@ -430,6 +447,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      pipelineSteps: ["scrape", "dbscards", "products", "faces", "details"],
     },
     blurbFr: "Catalogue Bandai Fusion World — faces SAMPLE, pas de dump foil",
     blurbEn: "Bandai Fusion World catalogue — SAMPLE faces, no foil dump",

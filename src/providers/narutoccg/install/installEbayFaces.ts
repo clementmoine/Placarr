@@ -9,7 +9,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { narutoDiskCardId } from "../collectorIdentity";
-import { ebayIngestFaces, ebayListingImageFull } from "../ebayPackshots";
+import { ebayIngestFaces, ebayListingImageFull } from "../sources/ebayPackshots";
 import { upsertNarutoAppearances } from "../migrateCardLayout";
 import { narutoCardAbsDir } from "../narutoCardDisk";
 import {

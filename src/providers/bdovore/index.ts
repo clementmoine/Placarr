@@ -20,8 +20,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchBdovoreAlbumByEan,
@@ -282,7 +282,7 @@ async function refreshBdovoreOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const bdovoreModule: ProviderModule = {
+export const bdovoreModule = defineProvider({
   info: {
     id: "bdovore",
     label: "BDovore",
@@ -394,4 +394,4 @@ export const bdovoreModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshBdovoreOffers,
-};
+});

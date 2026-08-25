@@ -8,7 +8,7 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { martinaIngestPackshots } from "../martinaPackshots";
+import { martinaIngestPackshots } from "../sources/martinaPackshots";
 import { NARUTO_PACK_ID } from "../packs";
 
 export const NARUTO_STAGING_MARTINA = path.join("staging", "martina");

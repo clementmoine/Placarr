@@ -11,7 +11,7 @@ import { dataRoot } from "@/lib/runtimeData";
 import {
   cardgameclubImageUrl,
   cardgameclubIngestPackshots,
-} from "../cardgameclubPackshots";
+} from "../sources/cardgameclubPackshots";
 import { NARUTO_PACK_ID } from "../packs";
 
 export const NARUTO_STAGING_CARDGAMECLUB = path.join("staging", "cardgameclub");

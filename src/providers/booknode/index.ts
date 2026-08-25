@@ -16,8 +16,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import { matchBarcodes } from "@/core/catalog/matchContext";
 
 import { fetchBooknodeMetadata, getBooknodeSuggestions } from "./fetch";
@@ -338,7 +338,7 @@ export function mapBooknodeMetadata(
   };
 }
 
-export const booknodeModule: ProviderModule = {
+export const booknodeModule = defineProvider({
   info: {
     id: "booknode",
     label: "Booknode",
@@ -457,4 +457,4 @@ export const booknodeModule: ProviderModule = {
     return downloadBooknodeCoverImage(url, options);
   },
   refreshBarcodePriceOffers: refreshBooknodeOffers,
-};
+});

@@ -11,7 +11,8 @@ import {
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import { listingLooksLikeConsoleSystemProduct } from "@/core/identify/listingMerch";
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
@@ -245,7 +246,7 @@ function icollectScanOffers(metadata: ICollectMetadata) {
   ]);
 }
 
-export const icollectModule: ProviderModule = {
+export const icollectModule = defineProvider({
   info: {
     id: "icollect",
     label: "iCollect Everything",
@@ -412,4 +413,4 @@ export const icollectModule: ProviderModule = {
     }
     return icollectScanOffers(metadata);
   },
-};
+});

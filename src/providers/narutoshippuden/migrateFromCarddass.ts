@@ -12,21 +12,110 @@
  * Le discriminant est la **famille**, pas le set : certains tirages portent
  * `unknown`, `mju` ou `gaku` en `set_code`, et seul le préfixe dit à quel jeu
  * ils appartiennent.
+ *
+ * Après la base : les **faces** et le staging harvest (`nikita-nrt` /
+ * `nikita-backs`) sont aussi copiés sous `data/naruto/shippuden/`, pour que le
+ * pack se reconstruise sans lire `carddass/staging/` (audit tcg_pack §« Ce qui
+ * reste chez le Carddass »).
  */
-import { existsSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { dataRoot } from "@/lib/runtimeData";
 
 import {
+  NARUTO_SHIPPUDEN_PACK_ID,
   openNarutoShippudenDbForWrite,
   resetNarutoShippudenIndexCache,
   SHIPPUDEN_FAMILIES,
 } from "./indexStore";
 
-function carddassDbPath(): string {
-  return path.join(dataRoot(), "naruto", "carddass", "catalog.sqlite");
+function carddassPackRoot(root = dataRoot()): string {
+  return path.join(root, "naruto", "carddass");
+}
+
+function shippudenPackRoot(root = dataRoot()): string {
+  return path.join(root, ...NARUTO_SHIPPUDEN_PACK_ID.split("/"));
+}
+
+function carddassDbPath(root = dataRoot()): string {
+  return path.join(carddassPackRoot(root), "catalog.sqlite");
+}
+
+/** Staging slices that only exist because 疾風伝 lived under Carddass. */
+export const SHIPPUDEN_STAGING_SLICES = [
+  "nikita-nrt",
+  "nikita-backs",
+] as const;
+
+function countFiles(dir: string): number {
+  if (!existsSync(dir)) return 0;
+  let n = 0;
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith(".")) continue;
+    const abs = path.join(dir, name);
+    const st = statSync(abs);
+    if (st.isDirectory()) n += countFiles(abs);
+    else n += 1;
+  }
+  return n;
+}
+
+export type DiskPromoteReport = {
+  faceFamilies: string[];
+  faceFiles: number;
+  stagingSlices: string[];
+  stagingFiles: number;
+};
+
+/**
+ * Copy face trees + harvest staging from Carddass → Shippuden.
+ * Idempotent (`cpSync` overwrite). Pure roots for tests.
+ */
+export function promoteShippudenDiskAssetsFromCarddass(opts: {
+  dryRun?: boolean;
+  dataDir?: string;
+} = {}): DiskPromoteReport {
+  const root = opts.dataDir ?? dataRoot();
+  const srcPack = carddassPackRoot(root);
+  const destPack = shippudenPackRoot(root);
+  const report: DiskPromoteReport = {
+    faceFamilies: [],
+    faceFiles: 0,
+    stagingSlices: [],
+    stagingFiles: 0,
+  };
+
+  for (const family of SHIPPUDEN_FAMILIES) {
+    const from = path.join(srcPack, "cards", family);
+    if (!existsSync(from)) continue;
+    const files = countFiles(from);
+    if (files === 0) continue;
+    report.faceFamilies.push(family);
+    report.faceFiles += files;
+    if (!opts.dryRun) {
+      const to = path.join(destPack, "cards", family);
+      mkdirSync(path.dirname(to), { recursive: true });
+      cpSync(from, to, { recursive: true, force: true });
+    }
+  }
+
+  for (const slice of SHIPPUDEN_STAGING_SLICES) {
+    const from = path.join(srcPack, "staging", slice);
+    if (!existsSync(from)) continue;
+    const files = countFiles(from);
+    if (files === 0) continue;
+    report.stagingSlices.push(slice);
+    report.stagingFiles += files;
+    if (!opts.dryRun) {
+      const to = path.join(destPack, "staging", slice);
+      mkdirSync(path.dirname(to), { recursive: true });
+      cpSync(from, to, { recursive: true, force: true });
+    }
+  }
+
+  return report;
 }
 
 export type MigrationReport = {
@@ -34,20 +123,31 @@ export type MigrationReport = {
   titles: number;
   assets: number;
   bySet: Record<string, number>;
+  disk?: DiskPromoteReport;
 };
 
-export function migrateShippudenFromCarddass(opts: { dryRun?: boolean } = {}): {
+export function migrateShippudenFromCarddass(opts: {
+  dryRun?: boolean;
+  dataDir?: string;
+} = {}): {
   report: MigrationReport;
   applied: boolean;
 } {
-  const source = carddassDbPath();
+  const root = opts.dataDir ?? dataRoot();
+  const source = carddassDbPath(root);
   const empty: MigrationReport = {
     prints: 0,
     titles: 0,
     assets: 0,
     bySet: {},
   };
-  if (!existsSync(source)) return { report: empty, applied: false };
+  if (!existsSync(source)) {
+    const disk = promoteShippudenDiskAssetsFromCarddass(opts);
+    return {
+      report: { ...empty, disk },
+      applied: disk.faceFiles > 0 || disk.stagingFiles > 0,
+    };
+  }
 
   const src = new DatabaseSync(source, { readOnly: true });
   const families = SHIPPUDEN_FAMILIES.map((f) => `'${f}'`).join(", ");
@@ -66,7 +166,13 @@ export function migrateShippudenFromCarddass(opts: { dryRun?: boolean } = {}): {
       grouping: string | null;
       sourceUrl: string | null;
     }[];
-    if (prints.length === 0) return { report: empty, applied: false };
+    if (prints.length === 0) {
+      const disk = promoteShippudenDiskAssetsFromCarddass(opts);
+      return {
+        report: { ...empty, disk },
+        applied: disk.faceFiles > 0 || disk.stagingFiles > 0,
+      };
+    }
 
     const keys = new Set(prints.map((row) => row.printKey));
     const titles = (
@@ -115,7 +221,13 @@ export function migrateShippudenFromCarddass(opts: { dryRun?: boolean } = {}): {
       assets: assets.length,
       bySet,
     };
-    if (opts.dryRun) return { report, applied: false };
+    if (opts.dryRun) {
+      report.disk = promoteShippudenDiskAssetsFromCarddass({
+        ...opts,
+        dryRun: true,
+      });
+      return { report, applied: false };
+    }
 
     const dest = openNarutoShippudenDbForWrite();
     try {
@@ -182,6 +294,7 @@ export function migrateShippudenFromCarddass(opts: { dryRun?: boolean } = {}): {
       dest.close();
       resetNarutoShippudenIndexCache();
     }
+    report.disk = promoteShippudenDiskAssetsFromCarddass(opts);
     return { report, applied: true };
   } finally {
     src.close();

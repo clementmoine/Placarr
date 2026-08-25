@@ -18,8 +18,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectIzneoMappingRawKeys,
@@ -264,7 +264,7 @@ async function refreshIzneoOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const izneoModule: ProviderModule = {
+export const izneoModule = defineProvider({
   info: {
     id: "izneo",
     label: "Izneo",
@@ -362,4 +362,4 @@ export const izneoModule: ProviderModule = {
     return collectIzneoMappingRawKeys(ctx.name);
   },
   refreshBarcodePriceOffers: refreshIzneoOffers,
-};
+});

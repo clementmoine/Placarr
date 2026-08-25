@@ -9,7 +9,7 @@ import {
   narutoDiskCardId,
   parseNarutoCollector,
 } from "../collectorIdentity";
-import { goatCdnOriginal } from "../goatPackshots";
+import { goatCdnOriginal } from "../sources/goatPackshots";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { cardTypeFromCollectorNumber } from "./parseBandaicgAsset";
 import { parseEnCcgPrintedRef } from "./parseEnCcgPrinted";

@@ -7,14 +7,14 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
 export { fetchFromSteamGridDB, pingSteamGridDB } from "./fetch";
 
-export const steamgriddbModule: ProviderModule = {
+export const steamgriddbModule = defineProvider({
   info: {
     id: "steamgriddb",
     label: "SteamGridDB",
@@ -59,6 +59,7 @@ export const steamgriddbModule: ProviderModule = {
       };
     });
   })(),
+  // Label « Artwork » — pas le défaut « Metadata ».
   testHandlers: {
     "steamgriddb-metadata": {
       label: "SteamGridDB - Artwork",
@@ -82,4 +83,4 @@ export const steamgriddbModule: ProviderModule = {
     const ctx = probeContextOrDefault(context, { name: "Hades" });
     return mappingRawKeysFromFetch(() => fetchFromSteamGridDB(ctx.name));
   },
-};
+});

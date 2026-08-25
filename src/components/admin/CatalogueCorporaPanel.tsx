@@ -6,10 +6,12 @@ import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   enqueueCatalogueRefresh,
   fetchCatalogueCorpora,
   type CatalogueCorpusRow,
+  type CatalogueRefreshRequest,
 } from "@/lib/client/catalogueCorpora";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
@@ -38,7 +40,7 @@ export function useCatalogueCorpora() {
   const fr = locale === "fr";
 
   const refresh = useCallback(
-    async (opts: { providerId?: string; all?: boolean }) => {
+    async (opts: CatalogueRefreshRequest) => {
       setBusy(opts.all ? ALL : (opts.providerId ?? ""));
       try {
         const done = await enqueueCatalogueRefresh(opts);
@@ -122,33 +124,85 @@ export function CorpusPanel({
 }: {
   corpus: CatalogueCorpusRow;
   busy: string | null;
-  onRefresh: (opts: { providerId: string }) => void | Promise<void>;
+  onRefresh: (opts: CatalogueRefreshRequest) => void | Promise<void>;
 }) {
   const { locale } = useLocale();
   const fr = locale === "fr";
+  const steps = corpus.pipelineSteps?.filter(Boolean) ?? [];
+  const [only, setOnly] = useState("");
+  const [langs, setLangs] = useState("");
+  const [limit, setLimit] = useState("");
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-background/50 p-3">
-      <div className="min-w-0">
-        <div className="text-sm font-medium">{corpus.label}</div>
-        <p className="text-xs text-muted-foreground">
-          {corpusStatusLabel(corpus, fr)}
-        </p>
+    <div className="flex flex-col gap-3 rounded-md border bg-background/50 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-medium">{corpus.label}</div>
+          <p className="text-xs text-muted-foreground">
+            {corpusStatusLabel(corpus, fr)}
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-7 gap-1 px-2 text-xs"
+          disabled={busy !== null}
+          onClick={() => {
+            const limitN = Number(limit);
+            void onRefresh({
+              providerId: corpus.providerId,
+              ...(only.trim() ? { only: only.trim() } : {}),
+              ...(langs.trim() ? { langs: langs.trim() } : {}),
+              ...(Number.isFinite(limitN) && limitN > 0
+                ? { limit: Math.floor(limitN) }
+                : {}),
+            });
+          }}
+        >
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${
+              busy === corpus.providerId ? "animate-spin" : ""
+            }`}
+          />
+          {fr ? "Rafraîchir" : "Refresh"}
+        </Button>
       </div>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="h-7 gap-1 px-2 text-xs"
-        disabled={busy !== null}
-        onClick={() => void onRefresh({ providerId: corpus.providerId })}
-      >
-        <RefreshCw
-          className={`h-3.5 w-3.5 ${
-            busy === corpus.providerId ? "animate-spin" : ""
-          }`}
-        />
-        {fr ? "Rafraîchir" : "Refresh"}
-      </Button>
+      {steps.length > 0 ? (
+        <div className="grid gap-2 sm:grid-cols-3">
+          <label className="grid gap-1 text-[11px] text-muted-foreground">
+            {fr ? "Étapes (--only)" : "Steps (--only)"}
+            <Input
+              value={only}
+              onChange={(event) => setOnly(event.target.value)}
+              placeholder={steps.join(",")}
+              className="h-7 text-xs"
+              disabled={busy !== null}
+            />
+          </label>
+          <label className="grid gap-1 text-[11px] text-muted-foreground">
+            {fr ? "Langues (--langs)" : "Langs (--langs)"}
+            <Input
+              value={langs}
+              onChange={(event) => setLangs(event.target.value)}
+              placeholder="fr,en"
+              className="h-7 text-xs"
+              disabled={busy !== null}
+            />
+          </label>
+          <label className="grid gap-1 text-[11px] text-muted-foreground">
+            limit
+            <Input
+              value={limit}
+              onChange={(event) => setLimit(event.target.value)}
+              placeholder="10"
+              inputMode="numeric"
+              className="h-7 text-xs"
+              disabled={busy !== null}
+            />
+          </label>
+        </div>
+      ) : null}
     </div>
   );
 }

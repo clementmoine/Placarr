@@ -127,7 +127,7 @@ drop a noisy observation just because today's display engine will rank it low.
 
 ---
 
-## Voie `defineProvider` (pilote)
+## Voie `defineProvider` (cas commun)
 
 Pour le cas commun (métadonnées par recherche), `index.ts` peut être assemblé
 par `defineProvider(spec)` (`src/providers/shared/defineProvider.ts`, ADR-009)
@@ -144,8 +144,11 @@ au lieu d'écrire le `ProviderModule` à la main :
 - Tout hook avancé (`refreshBarcodePriceOffers`, `mappingProbe`…) passe tel
   quel dans le spec.
 
-Pilote de référence : `src/providers/bedetheque/`. Ne pas généraliser aux
-autres providers sans décision ADR ultérieure.
+Pilote de référence : `src/providers/bedetheque/`. Cas commun migrés :
+`babelio`, `planetebd`, `bdphile`, `fullset`, `senscritique` (ADR-016).
+Préférer `defineProvider` pour tout nouveau provider metadata search /
+ping health ; réserver le hand-roll aux modules hors défauts (TCG local,
+prix multi-hooks, auth exotique).
 
 ---
 

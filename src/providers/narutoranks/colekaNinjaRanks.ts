@@ -20,7 +20,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packCatalogDb, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { fetchColekaListingHtml } from "@/providers/narutoccg/colekaListingFetch";
+import { fetchColekaListingHtml } from "@/providers/narutoccg/sources/colekaListingFetch";
 
 import {
   COLEKA_NINJA_RANKS_LANG,

@@ -3,14 +3,13 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type {
   BarcodeLookupType,
   MetadataAdapterContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
 
 import {
@@ -23,7 +22,7 @@ import { createMyLudoResolver, mapMyLudoMetadata } from "./resolver";
 const fetchFromMyLudo = createMyLudoResolver();
 const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
 
-export const myludoModule: ProviderModule = {
+export const myludoModule = defineProvider({
   info: {
     id: "myludo",
     label: "MyLudo",
@@ -60,15 +59,6 @@ export const myludoModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck("myludo", "MyLudo", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.myludo.fr/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
   testHandlers: {
     "myludo-metadata": {
       label: "MyLudo - Metadata",
@@ -148,7 +138,7 @@ export const myludoModule: ProviderModule = {
       },
     ];
   },
-};
+});
 
 export { createMyLudoResolver, fetchMyLudoGame, searchMyLudoHits };
 

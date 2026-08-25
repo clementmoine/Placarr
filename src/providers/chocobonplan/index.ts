@@ -6,7 +6,7 @@ import {
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { inferCover3dRoleFromHints } from "@/core/enrich/media/coverPerspective";
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -128,7 +128,7 @@ async function refreshChocoBonPlanOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const chocobonplanModule: ProviderModule = {
+export const chocobonplanModule = defineProvider({
   info: {
     id: "chocobonplan",
     label: "ChocoBonPlan",
@@ -209,4 +209,4 @@ export const chocobonplanModule: ProviderModule = {
     return mappingRawKeysFromFetch(() => fetchFromChocoBonPlan(ctx.name));
   },
   refreshBarcodePriceOffers: refreshChocoBonPlanOffers,
-};
+});

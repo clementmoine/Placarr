@@ -2,13 +2,13 @@ import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import { formatScore } from "@/core/enrich/search/searchUtils";
 import { resolveWithLookupQueries } from "@/core/enrich/search/searchUtils";
 import { fetchCoverFromCoverProject } from "@/providers/coverproject/resolver";
 import { createRawgResolver } from "./resolver";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import { isRawgQuotaBlocked } from "./quota";
 
 const fetchFromRawg = createRawgResolver({
@@ -16,7 +16,7 @@ const fetchFromRawg = createRawgResolver({
   fetchCoverFromCoverProject,
 });
 
-export const rawgModule: ProviderModule = {
+export const rawgModule = defineProvider({
   info: {
     id: "rawg",
     label: "RAWG",
@@ -64,13 +64,7 @@ export const rawgModule: ProviderModule = {
     ["RAWG_API_KEY"],
     (key) => `https://api.rawg.io/api/platforms?key=${key}`,
   ),
-  testHandlers: {
-    "rawg-metadata": {
-      label: "RAWG - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromRawg(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromRawg(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -99,6 +93,6 @@ export const rawgModule: ProviderModule = {
       return [];
     }
   },
-};
+});
 
 export { createRawgResolver } from "./resolver";

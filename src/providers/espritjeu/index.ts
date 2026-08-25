@@ -3,7 +3,6 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
@@ -18,8 +17,8 @@ import type {
   BarcodePriceRefreshContext,
   MetadataAdapterContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchEspritJeuBarcodeProduct,
@@ -117,7 +116,7 @@ async function refreshEspritJeuOffers(
   return [];
 }
 
-export const espritjeuModule: ProviderModule = {
+export const espritjeuModule = defineProvider({
   info: {
     id: "espritjeu",
     label: "Esprit Jeu",
@@ -145,19 +144,6 @@ export const espritjeuModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck(
-    "espritjeu",
-    "Esprit Jeu",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://www.espritjeu.com/");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
   testHandlers: {
     "espritjeu-metadata": {
       label: "Esprit Jeu - Metadata",
@@ -271,7 +257,7 @@ export const espritjeuModule: ProviderModule = {
     ]);
   },
   refreshBarcodePriceOffers: refreshEspritJeuOffers,
-};
+});
 
 export { createEspritJeuResolver, fetchEspritJeuProduct, searchEspritJeuHits };
 

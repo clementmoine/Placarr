@@ -10,6 +10,7 @@ import {
   recordCircuitSuccess,
   resetCircuitBreakersForTests,
 } from "./circuitBreaker";
+import { setCircuitPersistenceRoot } from "./circuitPersistence";
 
 const MIN = 60_000;
 
@@ -31,6 +32,7 @@ describe("circuitCooldownMs", () => {
 
 describe("circuit breaker", () => {
   beforeEach(() => {
+    setCircuitPersistenceRoot(null);
     resetCircuitBreakersForTests();
   });
 

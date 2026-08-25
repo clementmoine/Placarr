@@ -26,17 +26,17 @@ import { hinokunianJaNames } from "./scrapeHinokunian";
 import {
   loadMangaNewsTitleHitsFromCache,
   titlesForPrints,
-} from "../mangaNewsTitles";
+} from "../sources/mangaNewsTitles";
 import { materializeTinBoxPromos, TIN_BOX_PROMOS } from "../tinBoxPromos";
-import { mergeAttestedPromos } from "../attestedPromos";
+import { mergeAttestedPromos } from "../sources/attestedPromos";
 import {
   mergeCarteSemaineIntoIndex,
   writeCarteSemaineReport,
-} from "../carteSemaine";
+} from "../sources/carteSemaine";
 import { applyOfficialNames, loadOfficialNames } from "../officialNames";
 import { mergeFoundCatalogueLedgers } from "../mergeAttestedLedgers";
 import { mergeColekaS6ItIntoIndex } from "./scrapeColekaS6It";
-import { mergeColekaUsPromosIntoIndex } from "../colekaUsPromos";
+import { mergeColekaUsPromosIntoIndex } from "../sources/colekaUsPromos";
 import { loadColekaCcgFrLedgers } from "./scrapeColekaStorm3";
 import { loadStorm3Ledger } from "./scrapeStorm3";
 import { ensureNarutoChecklistLayout } from "../buildCoverageChecklist";

@@ -34,6 +34,28 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     pour de bon — voir `providers/shared/sharedBlindness.test.ts`.
   */
   "src/providers/shared/sealedProducts/ingest.ts": { dbscg: 2, dbsfw: 2 },
+  /*
+    Vague TCG locale (ADR-014) : l'id de **pack** catalogue / effets /
+    staging dbscards est volontairement le même slug que le provider
+    `createLocalTcgLine` (un dossier data = une ligne = un module). Ce n'est
+    pas du câblage core→provider — c'est le registre des packs et le lien
+    site→pack. Renommer les packs casserait `data/<pack>/`.
+  */
+  "src/lib/admin/cataloguePacks.ts": {
+    digimon: 9,
+    mtg: 9,
+    onepiece: 8,
+    yugioh: 8,
+  },
+  "src/effects/digimon/index.ts": { digimon: 1 },
+  "src/effects/mtg/index.ts": { mtg: 1 },
+  "src/effects/onepiece/index.ts": { onepiece: 1 },
+  "src/effects/yugioh/index.ts": { yugioh: 1 },
+  "src/providers/shared/dbscards/sites.ts": {
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
 };
 
 /**
@@ -47,6 +69,13 @@ const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
   // from them in provider-preference order — tracked in docs/backlog.md.
   "src/core/identify/gameLookup.ts": { ebay: 2, freakxy: 1 },
   "src/core/identify/lookup/lookups.ts": { ebay: 1, freakxy: 1 },
+  // Alias map pack extract target → CataloguePackId (même collision pack/provider).
+  "src/lib/admin/cataloguePacks.ts": {
+    digimon: 1,
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
 };
 
 const SHARED_PROVIDER_DIR = path.join("src", "providers", "shared");

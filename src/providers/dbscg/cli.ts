@@ -22,6 +22,7 @@ import type { DbsCardlistLocaleId } from "./parseCardlist";
 import { scrapeDbsCgCardlist } from "./scrapeCardlist";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
+import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
 
 import { DBS_CG_PACK_ID } from "./indexStore";
 
@@ -185,6 +186,7 @@ export async function runDbsCgPackPipeline(
         concurrency: optionalNumber(argv, "--concurrency"),
       });
     }
+    logCatalogueCheckpoint(step);
   }
 }
 

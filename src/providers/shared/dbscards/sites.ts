@@ -79,8 +79,8 @@ export type TcgCardsSite = {
   /**
    * Local `data/<pack>/` folder. `null` = family member we do not collect
    * yet; the row is still here so a later pack is one id, not a new scraper.
-   * A pack id without a Catalogue tab (onepiece, yugioh, mtg) is still
-   * crawlable — staging only, no provider.
+   * A pack id without a Catalogue tab (OP / YGO / Magic stubs) is still
+   * crawlable — staging only until the local line is wired.
    */
   packId: string | null;
   stagingFolder: string;

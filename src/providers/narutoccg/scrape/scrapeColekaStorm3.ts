@@ -16,7 +16,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { narutoDiskCardId } from "../collectorIdentity";
-import { fetchColekaListingHtml } from "../colekaListingFetch";
+import { fetchColekaListingHtml } from "../sources/colekaListingFetch";
 import { NARUTO_PACK_ID } from "../packs";
 import { narutoCardAbsDir } from "../narutoCardDisk";
 import { upsertNarutoAppearances } from "../migrateCardLayout";

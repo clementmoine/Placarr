@@ -11,7 +11,7 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { fetchColekaListingHtml } from "../colekaListingFetch";
+import { fetchColekaListingHtml } from "../sources/colekaListingFetch";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_PACK_ID } from "../indexStore";
 import {

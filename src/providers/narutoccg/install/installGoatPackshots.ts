@@ -11,7 +11,7 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { goatCdnOriginal, goatIngestPackshots } from "../goatPackshots";
+import { goatCdnOriginal, goatIngestPackshots } from "../sources/goatPackshots";
 import { NARUTO_PACK_ID } from "../packs";
 
 export const NARUTO_STAGING_GOAT_EN_BOXES = path.join(

@@ -17,7 +17,7 @@ import path from "node:path";
 
 import type { MetadataFact } from "@/types/metadataProvider";
 
-import { loadAttestedPromos } from "./attestedPromos";
+import { loadAttestedPromos } from "./sources/attestedPromos";
 import { narutoCuratedSourcesDir } from "./curatedPaths";
 import { narutoNumbersEqual } from "./collectorIdentity";
 import { narutoCatalogueLineForCard } from "./packs";

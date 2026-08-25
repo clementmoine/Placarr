@@ -1,4 +1,3 @@
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -7,16 +6,15 @@ import {
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { throwIfAborted } from "@/lib/http/abort";
+import { defineProvider } from "@/providers/shared/defineProvider";
+import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import type {
-  MetadataProviderAdapter,
-  ProviderModule,
-} from "@/types/providerModule";
+import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import {
   collectPlanetebdMappingRawKeys,
@@ -25,7 +23,6 @@ import {
   resolvePlanetebdMetadata,
   type PlanetebdAlbum,
 } from "./fetch";
-import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 export {
   fetchPlanetebdAlbum,
@@ -179,7 +176,7 @@ export function mapPlanetebdMetadata(
   };
 }
 
-export const planetebdModule: ProviderModule = {
+export const planetebdModule = defineProvider({
   info: {
     id: "planetebd",
     label: "Planète BD",
@@ -251,26 +248,7 @@ export const planetebdModule: ProviderModule = {
   },
   suggestDatabaseTitles: ({ cleanedName }) =>
     getPlanetebdSuggestions(cleanedName),
-  healthCheck: createMetadataHealthCheck(
-    "planetebd",
-    "Planète BD",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://www.planetebd.com/");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
-  testHandlers: {
-    "planetebd-metadata": {
-      label: "Planète BD - Metadata",
-      kind: "metadata",
-      run: (query) => resolvePlanetebdMetadata({ name: query }),
-    },
-  },
+  metadataSearch: (query) => resolvePlanetebdMetadata({ name: query }),
   mappingProbe: {
     sampleInput: SAMPLE_QUERY,
     context: { name: SAMPLE_QUERY },
@@ -285,4 +263,4 @@ export const planetebdModule: ProviderModule = {
     const ctx = probeContextOrDefault(context, { name: SAMPLE_QUERY });
     return collectPlanetebdMappingRawKeys(ctx.name);
   },
-};
+});

@@ -1,4 +1,3 @@
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -7,16 +6,15 @@ import {
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { throwIfAborted } from "@/lib/http/abort";
+import { defineProvider } from "@/providers/shared/defineProvider";
+import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import type {
-  MetadataProviderAdapter,
-  ProviderModule,
-} from "@/types/providerModule";
+import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import {
   collectBabelioMappingRawKeys,
@@ -25,7 +23,6 @@ import {
   resolveBabelioMetadata,
   type BabelioBook,
 } from "./fetch";
-import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 export {
   fetchBabelioBook,
@@ -226,7 +223,7 @@ export function mapBabelioMetadata(
   };
 }
 
-export const babelioModule: ProviderModule = {
+export const babelioModule = defineProvider({
   info: {
     id: "babelio",
     label: "Babelio",
@@ -299,22 +296,7 @@ export const babelioModule: ProviderModule = {
   },
   suggestDatabaseTitles: ({ cleanedName }) =>
     getBabelioSuggestions(cleanedName),
-  healthCheck: createMetadataHealthCheck("babelio", "Babelio", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.babelio.com/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
-  testHandlers: {
-    "babelio-metadata": {
-      label: "Babelio - Metadata",
-      kind: "metadata",
-      run: (query) => resolveBabelioMetadata({ name: query }),
-    },
-  },
+  metadataSearch: (query) => resolveBabelioMetadata({ name: query }),
   mappingProbe: {
     sampleInput: SAMPLE_QUERY,
     context: { name: SAMPLE_QUERY },
@@ -327,4 +309,4 @@ export const babelioModule: ProviderModule = {
     const ctx = probeContextOrDefault(context, { name: SAMPLE_QUERY });
     return collectBabelioMappingRawKeys(ctx.name);
   },
-};
+});

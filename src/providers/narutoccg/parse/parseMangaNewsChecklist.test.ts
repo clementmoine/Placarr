@@ -7,7 +7,7 @@ import {
   parseMangaNewsChecklistText,
   uniqueNumbers,
 } from "./parseMangaNewsChecklist";
-import { pickTitleForNumber, titlesForPrints } from "../mangaNewsTitles";
+import { pickTitleForNumber, titlesForPrints } from "../sources/mangaNewsTitles";
 
 describe("parseMangaNewsChecklistText", () => {
   it("parses NI/TE/TA/CL lines with rarity", () => {

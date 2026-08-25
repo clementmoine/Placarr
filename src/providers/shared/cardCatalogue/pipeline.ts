@@ -58,6 +58,53 @@ export type CardCatalogueHooks = {
   refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
 };
 
+function csvTokens(values: readonly string[] | undefined): string | null {
+  if (!values?.length) return null;
+  const tokens = values
+    .map((value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase(),
+    )
+    .filter(Boolean);
+  return tokens.length ? tokens.join(",") : null;
+}
+
+/**
+ * Build CLI argv for a card-pack refresh. Pure — unit-tested.
+ * Manual opts (`only` / `skip` / `langs` / `limit`) compose with auto defaults.
+ */
+export function catalogueRefreshArgv(
+  opts: ProviderCatalogRefreshOpts | undefined,
+  input: Pick<CardCatalogueHooksInput, "autoSkip" | "autoExtraArgs">,
+): string[] {
+  const argv: string[] = [];
+  if (opts?.auto) {
+    if (input.autoExtraArgs?.length) {
+      argv.push(...input.autoExtraArgs);
+    }
+  }
+
+  const only = csvTokens(opts?.only);
+  if (only) argv.push("--only", only);
+
+  const skipParts = [
+    ...(opts?.auto && input.autoSkip?.length ? input.autoSkip : []),
+    ...(opts?.skip ?? []),
+  ];
+  const skip = csvTokens(skipParts);
+  if (skip) argv.push("--skip", skip);
+
+  const langs = csvTokens(opts?.langs);
+  if (langs) argv.push("--langs", langs);
+
+  if (opts?.limit != null && Number.isFinite(opts.limit) && opts.limit > 0) {
+    argv.push("--limit", String(Math.floor(opts.limit)));
+  }
+
+  return argv;
+}
+
 export function cardCatalogueHooks(
   input: CardCatalogueHooksInput,
 ): CardCatalogueHooks {
@@ -69,15 +116,7 @@ export function cardCatalogueHooks(
   };
 
   const refresh = async (opts?: ProviderCatalogRefreshOpts): Promise<void> => {
-    const argv: string[] = [];
-    if (opts?.auto) {
-      if (input.autoExtraArgs?.length) {
-        argv.push(...input.autoExtraArgs);
-      }
-      if (input.autoSkip?.length) {
-        argv.push("--skip", ...input.autoSkip);
-      }
-    }
+    const argv = catalogueRefreshArgv(opts, input);
     await input.runPipeline(argv);
     /*
       La trace est écrite **après**, et seulement si la moisson n'a pas jeté :
@@ -91,6 +130,10 @@ export function cardCatalogueHooks(
       `${JSON.stringify({
         finishedAt: new Date().toISOString(),
         auto: Boolean(opts?.auto),
+        only: opts?.only ?? null,
+        skip: opts?.skip ?? null,
+        langs: opts?.langs ?? null,
+        limit: opts?.limit ?? null,
       })}\n`,
     );
   };

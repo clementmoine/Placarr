@@ -11,8 +11,8 @@ import { dataRoot } from "@/lib/runtimeData";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import { buildPokemonLiveAttachments, liveTitleForPrint } from "./liveAssets";
 import { pokemontcgliveCatalog } from "./pipeline";
@@ -59,7 +59,7 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   };
 }
 
-export const pokemontcgliveModule: ProviderModule = {
+export const pokemontcgliveModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
@@ -117,7 +117,7 @@ export const pokemontcgliveModule: ProviderModule = {
       };
     },
   ),
-};
+});
 
 export {
   buildPokemonLiveAttachments,

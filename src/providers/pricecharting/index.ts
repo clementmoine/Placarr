@@ -1,4 +1,5 @@
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPrimaryBarcode } from "@/core/catalog/matchContext";
 import {
@@ -303,7 +304,7 @@ async function refreshPriceChartingOffers(ctx: BarcodePriceRefreshContext) {
   return priceChartingScanOffers(result);
 }
 
-export const pricechartingModule: ProviderModule = {
+export const pricechartingModule = defineProvider({
   info: {
     id: "pricecharting",
     label: "PriceCharting",
@@ -541,4 +542,4 @@ export const pricechartingModule: ProviderModule = {
     return priceChartingScanOffers(payload.pc.prices);
   },
   refreshBarcodePriceOffers: refreshPriceChartingOffers,
-};
+});

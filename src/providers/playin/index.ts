@@ -22,8 +22,8 @@ import type {
   BarcodePriceRefreshContext,
   MetadataAdapterContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchPlayInBarcodeProduct,
@@ -220,7 +220,7 @@ async function refreshPlayInOffers(
   return [];
 }
 
-export const playinModule: ProviderModule = {
+export const playinModule = defineProvider({
   info: {
     id: "playin",
     label: "Play-In",
@@ -375,7 +375,7 @@ export const playinModule: ProviderModule = {
     ]);
   },
   refreshBarcodePriceOffers: refreshPlayInOffers,
-};
+});
 
 export { createPlayInResolver, fetchPlayInProduct, searchPlayInHits };
 

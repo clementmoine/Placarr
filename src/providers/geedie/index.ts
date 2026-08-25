@@ -4,7 +4,7 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataResult } from "@/types/metadataProvider";
 import {
   resolveGameAttachmentPlatformKey,
@@ -55,7 +55,7 @@ function galleryToMetadata(
   );
 }
 
-export const geedieModule: ProviderModule = {
+export const geedieModule = defineProvider({
   info: {
     id: "geedie",
     label: "Geedie",
@@ -144,4 +144,4 @@ export const geedieModule: ProviderModule = {
       fetchFromGeedie(ctx.name, ctx.platform ?? undefined),
     );
   },
-};
+});

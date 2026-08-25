@@ -29,7 +29,7 @@ import {
   fetchCdxRows,
   stagingRelFromUrl,
   WAYBACK_UA,
-} from "../waybackSiteMirror";
+} from "../sources/waybackSiteMirror";
 
 const DEFAULT_DELAY_MS = 250;
 

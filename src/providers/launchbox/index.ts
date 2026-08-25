@@ -2,8 +2,8 @@ import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import {
@@ -12,7 +12,7 @@ import {
 } from "./resolver";
 import { launchboxCatalog } from "./pipeline";
 
-export const launchboxModule: ProviderModule = {
+export const launchboxModule = defineProvider({
   info: {
     id: "launchbox",
     label: "LaunchBox",
@@ -49,13 +49,7 @@ export const launchboxModule: ProviderModule = {
       )) as MetadataResult | null;
     },
   }),
-  testHandlers: {
-    "launchbox-metadata": {
-      label: "LaunchBox - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromLaunchBox(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromLaunchBox(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -89,6 +83,6 @@ export const launchboxModule: ProviderModule = {
     );
     return collectObjectMappingSignals(metadata);
   },
-};
+});
 
 export { fetchFromLaunchBox } from "./resolver";

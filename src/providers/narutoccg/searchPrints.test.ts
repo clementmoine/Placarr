@@ -5,7 +5,7 @@ import {
   narutoCarddassEffectPack,
 } from "@/effects/narutoccg";
 
-import { japaneseVolumeForNumber } from "./japaneseVolumes";
+import { japaneseVolumeForNumber } from "./sources/japaneseVolumes";
 
 import {
   formatNarutoReference,

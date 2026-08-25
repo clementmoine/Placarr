@@ -10,6 +10,7 @@ import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
   isBackgroundWorkJobCancelled,
+  mergeCatalogueExtractCompletedStep,
   touchBackgroundWorkJobLock,
   type BackgroundWorkJobRow,
   type CatalogueExtractJobPayload,
@@ -33,6 +34,7 @@ import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProvide
 import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesSiblingBarcodes";
 import { prisma } from "@/lib/db/prisma";
 import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
+import { parseCatalogueCheckpointStep } from "@/lib/admin/catalogueExtractCheckpoint";
 import {
   catalogueExtractTimeoutMs,
   normalizeCatalogueExtractScope,
@@ -382,22 +384,26 @@ export async function executeBackgroundWorkJob(
       Restreint ici comme les autres branches le font : `payload` est
       volontairement `unknown` en tête de fonction, et chaque type de job dit
       lui-même ce qu'il attend. La forme est documentée sur `workQueue` —
-      `{ providerId, auto? }`.
+      `{ providerId, auto?, only?, skip?, langs?, limit? }`.
     */
-    const catalogPayload = payload as { providerId?: unknown; auto?: unknown };
+    const catalogPayload =
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : {};
     const providerId =
       typeof catalogPayload.providerId === "string"
         ? catalogPayload.providerId.trim()
         : "";
     if (!providerId) throw new Error("catalogProviderSync requires providerId");
     const { getCatalogProviderModule } = await import("@/core/catalog/catalog");
+    const { catalogRefreshOptsFromPayload } = await import(
+      "@/lib/admin/catalogRefreshOpts"
+    );
     const mdl = getCatalogProviderModule(providerId);
     if (!mdl?.catalog) {
       throw new Error(`No catalog hooks for provider ${providerId}`);
     }
-    await mdl.catalog.refresh({
-      auto: Boolean(catalogPayload.auto),
-    });
+    await mdl.catalog.refresh(catalogRefreshOptsFromPayload(catalogPayload));
     return;
   }
 
@@ -472,6 +478,10 @@ async function executeFoilExtractJob(
     if (logTail.length % 20 === 0) {
       console.info(`[FoilExtract ${target}] ${line}`);
     }
+    const step = parseCatalogueCheckpointStep(line);
+    if (step) {
+      void mergeCatalogueExtractCompletedStep(job.id, step);
+    }
   };
 
   try {
@@ -484,6 +494,11 @@ async function executeFoilExtractJob(
       onLog: writeLog,
       logHeader: [`jobId=${job.id}`],
       scope: normalizeCatalogueExtractScope(payload?.scope),
+      completedSteps: Array.isArray(payload?.completedSteps)
+        ? payload.completedSteps.filter(
+            (value): value is string => typeof value === "string",
+          )
+        : undefined,
     });
   } catch (error) {
     if (

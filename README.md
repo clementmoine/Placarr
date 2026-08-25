@@ -77,6 +77,8 @@ pnpm dev:docker                  # Postgres + Next, hot-reload, http://localhost
 
 ## 📚 Learn More
 
+- [Architecture — chemin de lecture](./ARCHITECTURE.md) (par où commencer)
+- [Docs](./docs/README.md) — ADR, core, providers, TCG
 - [Next.js Documentation](https://nextjs.org/docs)
 - [shadcn/ui Documentation](https://ui.shadcn.com)
 

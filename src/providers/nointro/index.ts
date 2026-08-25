@@ -4,14 +4,14 @@ import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import { ensureNoIntroIndex } from "./indexStore";
 import { nointroCatalog } from "./pipeline";
 import { fetchFromNoIntro, resolveNoIntroMetadata } from "./resolver";
 
-export const nointroModule: ProviderModule = {
+export const nointroModule = defineProvider({
   info: {
     id: "nointro",
     label: "No-Intro",
@@ -80,7 +80,7 @@ export const nointroModule: ProviderModule = {
     );
     return collectObjectMappingSignals(metadata);
   },
-};
+});
 
 export {
   fetchFromNoIntro,

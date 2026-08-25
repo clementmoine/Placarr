@@ -33,8 +33,8 @@ import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
   PrintCandidate,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchLorcanaCardByPrintKey,
@@ -605,7 +605,7 @@ async function resolveLorcanaMetadata(
   return mapLorcanaMetadata(card, variants);
 }
 
-export const lorcanajsonModule: ProviderModule = {
+export const lorcanajsonModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
@@ -763,4 +763,4 @@ export const lorcanajsonModule: ProviderModule = {
       return card ?? null;
     });
   },
-};
+});

@@ -19,8 +19,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectGibertMappingRawKeys,
@@ -204,7 +204,7 @@ async function refreshGibertOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const gibertModule: ProviderModule = {
+export const gibertModule = defineProvider({
   info: {
     id: "gibert",
     label: "Gibert",
@@ -296,4 +296,4 @@ export const gibertModule: ProviderModule = {
     return collectGibertMappingRawKeys(ctx.barcode || ctx.name);
   },
   refreshBarcodePriceOffers: refreshGibertOffers,
-};
+});

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
+import { catalogRefreshOptsFromPayload } from "@/lib/admin/catalogRefreshOpts";
+import {
+  cataloguePackInfo,
+  resolveCataloguePackId,
+} from "@/lib/admin/cataloguePacks";
 import {
   discoverCatalogProviderModules,
   getCatalogProviderModule,
@@ -13,6 +18,12 @@ import {
 
 export const maxDuration = 30;
 
+function pipelineStepsForDataPack(dataPack: string): string[] | undefined {
+  const pack = cataloguePackInfo(resolveCataloguePackId(dataPack));
+  const steps = pack?.extract?.pipelineSteps;
+  return steps?.length ? [...steps] : undefined;
+}
+
 /**
  * List refreshable local corpora (derived from ProviderModule.catalog).
  */
@@ -23,12 +34,14 @@ export async function GET() {
   const corpora = await Promise.all(
     discoverCatalogProviderModules().map(async (mdl) => {
       const status = await mdl.catalog!.status();
+      const dataPack = mdl.catalog!.dataPack;
       return {
         providerId: mdl.info.id,
         label: mdl.info.label,
-        dataPack: mdl.catalog!.dataPack,
+        dataPack,
         supplyMode: mdl.info.supplyMode ?? "api_live",
         status,
+        pipelineSteps: pipelineStepsForDataPack(dataPack) ?? null,
       };
     }),
   );
@@ -38,7 +51,7 @@ export async function GET() {
 
 /**
  * Enqueue catalog refresh — one provider or all.
- * Body: `{ providerId?: string, all?: boolean, auto?: boolean }`
+ * Body: `{ providerId?, all?, auto?, only?, skip?, langs?, limit? }`
  */
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();
@@ -55,11 +68,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = (await req.json()) as {
-    providerId?: string;
-    all?: boolean;
-    auto?: boolean;
-  };
+  const body = (await req.json()) as Record<string, unknown>;
+  const refreshOpts = catalogRefreshOptsFromPayload(body);
 
   const targets = body.all
     ? discoverCatalogProviderModules()
@@ -76,6 +86,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Granularity is for a single pack debug pass — not a bulk "refresh all".
+  if (
+    body.all &&
+    (refreshOpts.only || refreshOpts.skip || refreshOpts.langs || refreshOpts.limit)
+  ) {
+    return NextResponse.json(
+      { error: "only/skip/langs/limit require a single providerId" },
+      { status: 400 },
+    );
+  }
+
   const jobs: { providerId: string; jobId: string; label: string }[] = [];
   for (const mdl of targets) {
     const job = await enqueueBackgroundWorkJob({
@@ -83,8 +104,8 @@ export async function POST(req: NextRequest) {
       userId: auth.user.id,
       payload: {
         providerId: mdl.info.id,
-        auto: Boolean(body.auto),
         source: "admin",
+        ...refreshOpts,
       },
       replaceOpenForKind: false,
     });

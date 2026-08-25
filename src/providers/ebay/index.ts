@@ -1,8 +1,8 @@
 import type {
   BarcodePriceRefreshContext,
   BarcodeLookupType,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import { matchPrimaryBarcode } from "@/core/catalog/matchContext";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
@@ -155,7 +155,7 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   return [];
 }
 
-export const ebayModule: ProviderModule = {
+export const ebayModule = defineProvider({
   info: {
     id: "ebay",
     label: "eBay",
@@ -355,7 +355,7 @@ export const ebayModule: ProviderModule = {
     ];
   },
   refreshBarcodePriceOffers: refreshEbayOffers,
-};
+});
 
 import type { NamedListing } from "@/core/identify/gameLookup";
 

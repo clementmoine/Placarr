@@ -18,8 +18,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectVivlioMappingRawKeys,
@@ -228,7 +228,7 @@ async function refreshVivlioOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const vivlioModule: ProviderModule = {
+export const vivlioModule = defineProvider({
   info: {
     id: "vivlio",
     label: "Vivlio",
@@ -339,4 +339,4 @@ export const vivlioModule: ProviderModule = {
     return collectVivlioMappingRawKeys(ctx.barcode || ctx.name);
   },
   refreshBarcodePriceOffers: refreshVivlioOffers,
-};
+});

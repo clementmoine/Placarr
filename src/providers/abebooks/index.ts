@@ -21,8 +21,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   abebooksCoverDownloadCandidates,
@@ -147,7 +147,7 @@ async function refreshAbeBooksOffers(ctx: BarcodePriceRefreshContext) {
   );
 }
 
-export const abebooksModule: ProviderModule = {
+export const abebooksModule = defineProvider({
   info: {
     id: "abebooks",
     label: "AbeBooks",
@@ -229,4 +229,4 @@ export const abebooksModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshAbeBooksOffers,
-};
+});

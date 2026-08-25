@@ -15,7 +15,7 @@ import {
   colekaCarddassFrBranchCoverUrl,
   colekaEnCcgNewDisplays,
   colekaThumbToFull,
-} from "../colekaEnCcgCovers";
+} from "../sources/colekaEnCcgCovers";
 import { NARUTO_PACK_ID } from "../packs";
 
 export const NARUTO_STAGING_COLEKA_EN_COVERS = path.join(

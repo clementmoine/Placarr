@@ -17,8 +17,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   enrichBackMarketProductGallery,
@@ -269,7 +269,7 @@ async function refreshBackMarketOffers(ctx: BarcodePriceRefreshContext) {
   return [];
 }
 
-export const backmarketModule: ProviderModule = {
+export const backmarketModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: "Back Market",
@@ -365,4 +365,4 @@ export const backmarketModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshBackMarketOffers,
-};
+});

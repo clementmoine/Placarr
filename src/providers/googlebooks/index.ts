@@ -7,15 +7,16 @@ import {
   shouldRunBookBarcodeTeardown,
 } from "@/lib/dev/teardownUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 const fetchFromGoogleBooks = createGoogleBooksResolver();
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["books", "generic"];
 
-export const googlebooksModule: ProviderModule = {
+export const googlebooksModule = defineProvider({
   info: {
     id: "googlebooks",
     label: "Google Books",
@@ -130,6 +131,6 @@ export const googlebooksModule: ProviderModule = {
       return [];
     }
   },
-};
+});
 
 export { createGoogleBooksResolver };

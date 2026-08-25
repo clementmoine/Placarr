@@ -14,7 +14,7 @@ import { NARUTO_PACK_ID } from "../indexStore";
 import {
   magentoCatalogOriginal,
   vialudibundaIngestPackshots,
-} from "../vialudibunda";
+} from "../sources/vialudibunda";
 
 export const NARUTO_STAGING_VIALUDIBUNDA = path.join("staging", "vialudibunda");
 

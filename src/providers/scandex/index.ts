@@ -1,4 +1,5 @@
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import {
   probeBarcodesWithFallback,
   probeErrorResult,
@@ -23,7 +24,7 @@ const FALLBACK_BARCODES = [
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["games", "boardgames", "generic"];
 
-export const scandexModule: ProviderModule = {
+export const scandexModule = defineProvider({
   info: {
     id: "scandex",
     label: "ScanDex",
@@ -124,4 +125,4 @@ export const scandexModule: ProviderModule = {
       }),
     );
   },
-};
+});

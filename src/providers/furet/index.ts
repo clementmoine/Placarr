@@ -22,8 +22,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectFuretMappingRawKeys,
@@ -212,7 +212,7 @@ async function refreshFuretOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const furetModule: ProviderModule = {
+export const furetModule = defineProvider({
   info: {
     id: "furet",
     label: "Furet du Nord",
@@ -305,4 +305,4 @@ export const furetModule: ProviderModule = {
     });
     return collectFuretMappingRawKeys(ctx.barcode || SAMPLE_BARCODE);
   },
-};
+});

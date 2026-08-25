@@ -19,8 +19,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectCanalbdMappingRawKeys,
@@ -241,7 +241,7 @@ async function refreshCanalbdOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const canalbdModule: ProviderModule = {
+export const canalbdModule = defineProvider({
   info: {
     id: "canalbd",
     label: "Canal BD",
@@ -344,4 +344,4 @@ export const canalbdModule: ProviderModule = {
     const ctx = probeContextOrDefault(context, { name: SAMPLE_QUERY });
     return collectCanalbdMappingRawKeys(ctx.name);
   },
-};
+});

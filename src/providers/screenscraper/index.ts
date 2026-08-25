@@ -4,7 +4,7 @@ import {
 } from "@/core/catalog/healthUtils";
 import { httpGet } from "@/lib/http/httpClient";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
@@ -88,7 +88,7 @@ function buildScreenScraperProducts(
   return products;
 }
 
-export const screenscraperModule: ProviderModule = {
+export const screenscraperModule = defineProvider({
   info: {
     id: "screenscraper",
     label: "ScreenScraper",
@@ -311,7 +311,7 @@ export const screenscraperModule: ProviderModule = {
       source: "screenscraper",
     };
   },
-};
+});
 
 export { createScreenScraperResolver, pickSSCover } from "./resolver";
 export type { SSMedia } from "./resolver";

@@ -2,7 +2,6 @@ import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   cleanSearchQuery,
@@ -11,13 +10,14 @@ import {
 import { createTMDBResolver } from "./resolver";
 import { getTMDBSuggestions } from "./suggestions";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 const fetchFromTMDB = createTMDBResolver({
   formatScore,
   cleanSearchQuery,
 });
 
-export const tmdbModule: ProviderModule = {
+export const tmdbModule = defineProvider({
   info: {
     id: "tmdb",
     label: "TMDB",
@@ -65,13 +65,7 @@ export const tmdbModule: ProviderModule = {
     ["TMDB_API_KEY"],
     (key) => `https://api.themoviedb.org/3/configuration?api_key=${key}`,
   ),
-  testHandlers: {
-    "tmdb-metadata": {
-      label: "TMDB - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromTMDB(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromTMDB(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -128,7 +122,7 @@ export const tmdbModule: ProviderModule = {
       },
     ];
   },
-};
+});
 
 export { createTMDBResolver, parseTMDBSeriesIntent } from "./resolver";
 

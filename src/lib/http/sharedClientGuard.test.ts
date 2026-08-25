@@ -30,4 +30,30 @@ describe("shared HTTP client", () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it("forbids naked fetch() in providers except the documented CDN allowlist", () => {
+    const allowFetch = new Set(["src/providers/pokemontcglive/cdn.ts"]);
+    /** CallExpression-like `fetch(` — pas `git fetch`, `forceFetch`, commentaires. */
+    const nakedFetchCall = /(?<![\w.$])fetch\s*\(/;
+    const offenders = walk("src/providers")
+      .map((file) => relative(process.cwd(), file))
+      .filter((file) => !allowFetch.has(file))
+      .filter((file) => {
+        for (const line of readFileSync(file, "utf8").split("\n")) {
+          const trimmed = line.trim();
+          if (
+            trimmed.startsWith("//") ||
+            trimmed.startsWith("*") ||
+            trimmed.startsWith("/*")
+          ) {
+            continue;
+          }
+          if (/\bgit\s+fetch\b/.test(line)) continue;
+          if (nakedFetchCall.test(line)) return true;
+        }
+        return false;
+      });
+
+    expect(offenders).toEqual([]);
+  });
 });

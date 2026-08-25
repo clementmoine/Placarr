@@ -10,14 +10,14 @@ import {
 import { getIGDBDatabaseSuggestions } from "./suggestions";
 import { resolveWithLookupQueries } from "@/core/enrich/search/searchUtils";
 import { extractTitleIntentYear } from "@/core/enrich/titles/intentYear";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
 export { fetchFromIGDB, getIGDBSuggestions, pingIGDB } from "./fetch";
 
-export const igdbModule: ProviderModule = {
+export const igdbModule = defineProvider({
   info: {
     id: "igdb",
     label: "IGDB",
@@ -83,13 +83,7 @@ export const igdbModule: ProviderModule = {
       };
     });
   })(),
-  testHandlers: {
-    "igdb-metadata": {
-      label: "IGDB - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromIGDB(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromIGDB(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -106,4 +100,4 @@ export const igdbModule: ProviderModule = {
     const ctx = probeContextOrDefault(context, { name: "Hades" });
     return mappingRawKeysFromFetch(() => fetchFromIGDB(ctx.name));
   },
-};
+});

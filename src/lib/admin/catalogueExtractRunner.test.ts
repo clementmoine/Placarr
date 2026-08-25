@@ -83,6 +83,23 @@ describe("catalogueExtractRunner targets", () => {
     expect(fw.prelude.some((line) => /produit/i.test(line))).toBe(true);
   });
 
+  it("resumes stepped packs with --skip from completedSteps", async () => {
+    const masters = await resolveCatalogueExtractCommand("dbs-cg", {
+      completedSteps: ["scrape", "dbscards", "products", "arena"],
+    });
+    expect(masters.args).toContain("--skip");
+    expect(masters.args).toContain("scrape,dbscards,products,arena");
+    expect(masters.prelude.some((line) => /reprise: --skip/.test(line))).toBe(
+      true,
+    );
+
+    const naruto = await resolveCatalogueExtractCommand("naruto", {
+      completedSteps: ["scrape", "index"],
+    });
+    expect(naruto.args).toContain("--skip");
+    expect(naruto.args).toContain("scrape,index");
+  });
+
   it("builds Naruto Wayback catalogue sync command", async () => {
     const cmd = await resolveCatalogueExtractCommand("naruto");
     expect(cmd.command).toContain("tsx");

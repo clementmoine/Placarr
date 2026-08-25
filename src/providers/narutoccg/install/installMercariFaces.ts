@@ -10,7 +10,7 @@ import { dataRoot } from "@/lib/runtimeData";
 
 import { narutoDiskCardId } from "../collectorIdentity";
 import { narutoCuratedDir } from "../curatedPaths";
-import { mercariIngestFaces } from "../mercari";
+import { mercariIngestFaces } from "../sources/mercari";
 import { upsertNarutoAppearances } from "../migrateCardLayout";
 import { narutoCardAbsDir } from "../narutoCardDisk";
 import { existingNarutoArtForSource, saveNarutoFace } from "../narutoFaceBytes";

@@ -47,8 +47,8 @@ import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
   PrintCandidate,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   createPrintKeyPriceRefresh,
@@ -530,7 +530,7 @@ function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
   };
 }
 
-export const tcgdexModule: ProviderModule = {
+export const tcgdexModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
@@ -709,4 +709,4 @@ export const tcgdexModule: ProviderModule = {
       return card ?? null;
     });
   },
-};
+});

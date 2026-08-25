@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 
 import "dotenv/config";
 
+import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
 import { runNarutoChecklistCli } from "./buildCoverageChecklist";
 import { runNarutoSourcesCli } from "./buildApacheIndex";
 import { runNarutoFixThumbsCli } from "./fixThumbs";
@@ -68,7 +69,7 @@ import { installCardgameclubPackshots } from "./install/installCardgameclubPacks
 import { installEbayPackshots } from "./install/installEbayPackshots";
 import { installEbayFaces } from "./install/installEbayFaces";
 import { installLeboncoinFaces } from "./install/installLeboncoinFaces";
-import { scrapeNarutoColekaUsPromoCards } from "./colekaUsPromos";
+import { scrapeNarutoColekaUsPromoCards } from "./sources/colekaUsPromos";
 import { scrapeAvalonNarutoFaces } from "./scrape/scrapeAvalonShop";
 import { writeNarutoCompleteness } from "./buildCompleteness";
 import { scrapeFrilNarutoFaces } from "./scrape/scrapeFrilShop";
@@ -503,6 +504,7 @@ export async function runNarutoPackPipeline(
         runNarutoSourcesCli({ dryRun });
         break;
     }
+    logCatalogueCheckpoint(step);
   }
 }
 

@@ -60,6 +60,50 @@ describe("cardCatalogueHooks", () => {
     expect(runPipeline).toHaveBeenCalledWith(["--skip", "products"]);
   });
 
+  it("compose only / langs / limit pour une passe manuelle ciblée", async () => {
+    tmpDataRoot();
+    const runPipeline = vi.fn().mockResolvedValue(undefined);
+    const hooks = cardCatalogueHooks({
+      packId: "test/pack",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline,
+      autoSkip: ["products"],
+    });
+
+    await hooks.refresh({
+      only: ["faces"],
+      langs: ["fr"],
+      limit: 10,
+    });
+    expect(runPipeline).toHaveBeenCalledWith([
+      "--only",
+      "faces",
+      "--langs",
+      "fr",
+      "--limit",
+      "10",
+    ]);
+  });
+
+  it("fusionne skip manuel et autoSkip en CSV", async () => {
+    tmpDataRoot();
+    const runPipeline = vi.fn().mockResolvedValue(undefined);
+    const hooks = cardCatalogueHooks({
+      packId: "test/pack",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline,
+      autoSkip: ["products"],
+    });
+
+    await hooks.refresh({ auto: true, skip: ["arena"], only: ["faces"] });
+    expect(runPipeline).toHaveBeenCalledWith([
+      "--only",
+      "faces",
+      "--skip",
+      "products,arena",
+    ]);
+  });
+
   it("préfixe des args automatiques (ex. --offline Naruto)", async () => {
     tmpDataRoot();
     const runPipeline = vi.fn().mockResolvedValue(undefined);

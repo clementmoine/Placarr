@@ -7,17 +7,17 @@ import {
   pingUrl,
 } from "@/core/catalog/healthUtils";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import { formatScore } from "@/core/enrich/search/searchUtils";
 import { createBGGResolver } from "./resolver";
 import type { BGGResponse } from "./resolver";
 import { getBGGSuggestions } from "./suggestions";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 const fetchFromBGG = createBGGResolver({ formatScore });
 
-export const bggModule: ProviderModule = {
+export const bggModule = defineProvider({
   info: {
     id: "boardgamegeek",
     label: "BoardGameGeek",
@@ -137,7 +137,7 @@ export const bggModule: ProviderModule = {
       return [];
     }
   },
-};
+});
 
 export { createBGGResolver } from "./resolver";
 export type { BGGChild, BGGResponse } from "./resolver";

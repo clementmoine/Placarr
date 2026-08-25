@@ -119,19 +119,22 @@ Ce sur quoi les deux projets peuvent s'aligner, indépendamment des modes :
 
 ## Plan, ordonné par valeur pour « reprendre le code seul »
 
-1. **Écrire un `BaseProvider` chez nous, sur un seul provider.** `bedetheque`
-   (3 fichiers) comme banc d'essai. Objectif : un provider = une classe qui
-   hérite, plus rien à réassembler. Ne généraliser qu'après l'avoir vu vivre.
-2. **Un `ARCHITECTURE.md` qui donne le chemin de lecture** — les cinq fichiers
-   à lire dans l'ordre pour comprendre Placarr. Aujourd'hui ce chemin n'existe
-   nulle part.
-3. **Ouvrir `docs/ADR.md`** et y consigner les décisions déjà prises (pourquoi
-   `face.json`, pourquoi le consensus agnostique, pourquoi Postgres).
-4. **`core/enrich` : regrouper `titles/` (46 fichiers) et `media/` (46).** Le
-   gisement réel, et il ne touche pas au contrat des providers.
-5. **Reprendre chez eux ce qui est déjà fait** : leur `content-types.js` comme
-   modèle de schéma d'item unique, et leur découpage par domaine — sous réserve
-   de trancher le cas des providers multi-domaines (`pricecharting`, `ebay` en
-   servent plusieurs).
+1. ~~**Écrire un `BaseProvider` chez nous, sur un seul provider.**~~
+   **Livré** comme factory exécutable `defineProvider` (pilote `bedetheque`,
+   ADR-009 ; cohorte cas commun ADR-016) — manifeste validé + plomberie par
+   défaut, sans abandonner le contrat déclaratif `ProviderModule`.
+2. ~~**Un `ARCHITECTURE.md` qui donne le chemin de lecture**~~ — **livré**
+   à la racine du repo (cinq fichiers + carte des dossiers).
+3. ~~**Ouvrir `docs/ADR.md`**~~ — **livré** (décisions 2026-08, HTTP,
+   defineProvider, checkpoints, refresh granulaire…).
+4. ~~**`core/enrich` : regrouper `titles/` et `media/`**~~ — **livré**
+   (`titles/`, `media/`, `search/`, `facts/` + README) ; orchestrateurs
+   restent à la racine volontairement.
+5. ~~**Reprendre chez eux ce qui est déjà fait**~~ — **partiel (ADR-020)** :
+   `src/core/schemas/content-types.ts` = schéma d'item logique + domaines de
+   lecture ; Prisma reste la persistance. **Non fait** (volontaire) : découpage
+   physique `domains/<domaine>/providers/` — providers multi-domaines
+   (`pricecharting`, `ebay`) et churn massif écartés par le plan Kimi.
 
-Ne pas empiler tout ça. Le point 1 seul change déjà l'expérience de lecture.
+Les points 1–4 + le schéma logique (§5 partiel) changent l'expérience de lecture.
+Le déplacement physique par domaine reste ouvert.

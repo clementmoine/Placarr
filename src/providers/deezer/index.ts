@@ -3,8 +3,9 @@ import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { createDeezerResolver } from "./resolver";
 import { getDeezerSuggestions } from "./suggestions";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
@@ -12,7 +13,7 @@ const fetchFromDeezer = createDeezerResolver();
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["musics", "generic"];
 
-export const deezerModule: ProviderModule = {
+export const deezerModule = defineProvider({
   info: {
     id: "deezer",
     label: "Deezer",
@@ -116,7 +117,7 @@ export const deezerModule: ProviderModule = {
       },
     ];
   },
-};
+});
 
 export { createDeezerResolver };
 

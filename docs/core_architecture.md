@@ -12,7 +12,9 @@
 | **commerce** | « Quel prix / quelle annonce ? »            | `@/core/commerce/` | pricing/, retailer/                             |
 | **catalog**  | « Quels providers, comment les brancher ? » | `@/core/catalog/`  | registry, bootstrap, guard                      |
 
-Transverse : `core/locale/` (préférences UI/région).
+Transverse : `core/locale/` (préférences UI/région) ; `core/schemas/`
+(contrat logique item — [content-types.ts](../src/core/schemas/content-types.ts),
+ADR-020).
 
 **API publique** : `@/core` ré-exporte les entrypoints (`resolveBarcode`, `getMetadata`, `fetchAndStoreMetadata`, …). Le reste = imports ciblés dans le pilier.
 

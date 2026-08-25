@@ -1,6 +1,6 @@
 /**
  * Numéros Bandai `SET-NNN` / `SET-NNN_SUFFIX` — forme commune Masters et
- * Fusion World. Le slug de jeu (`dbscg` / `dbsfw`) reste chez le provider.
+ * Fusion World. Le slug de jeu (Masters / Fusion World) reste chez le provider.
  */
 import { buildPrintKey, type PrintIdentity } from "@/core/identify/printKey";
 

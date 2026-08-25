@@ -1,5 +1,5 @@
 /**
- * Circuit breaker soft-ban, persisté entre les runs.
+ * Circuit breaker soft-ban, persisté entre les runs (packs CLI).
  *
  * A host that answers 403/429/503 is not saying "no such file", it is saying
  * "stop". Two packs learned that the expensive way — the Pokémon CDN scrape
@@ -9,13 +9,11 @@
  * États : closed → open (échec rapide) → half-open (la requête suivante est
  * la sonde) → closed. Le reset est exponentiel à ouvertures consécutives
  * (2 → 5 → 15 → 60 min, plafonné — voir `circuitBreaker`) : un host qui
- * repousse la sonde reste fermé plus longtemps à chaque fois. La machine à
- * états est la même que le breaker en mémoire de `lib/http/circuitBreaker` ;
- * ici elle survit au process.
+ * repousse la sonde reste fermé plus longtemps à chaque fois.
  *
- * Persisted on purpose: an in-memory flag only protects the run that got
- * banned. The next run starts innocent, hammers the same host, and extends the
- * block. On disk, the cooldown outlives the process.
+ * Le chemin scrape commun (`scrapeFetch` → `circuitBreaker`) persiste aussi
+ * sous `data/http/circuits/` — ce module reste le ledger **par pack** pour
+ * les CLI (faces CDN, etc.) dont le cacheRoot n'est pas le data root global.
  */
 import {
   existsSync,

@@ -4,7 +4,6 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffer, pricedOffers } from "@/core/catalog/priceOffers";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
@@ -17,8 +16,8 @@ import type {
   BarcodeLookupType,
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchPhilibertBarcodeProduct,
@@ -120,7 +119,7 @@ async function refreshPhilibertOffers(
   return [];
 }
 
-export const philibertModule: ProviderModule = {
+export const philibertModule = defineProvider({
   info: {
     id: "philibert",
     label: "Philibert",
@@ -158,15 +157,7 @@ export const philibertModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck("philibert", "Philibert", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.philibertnet.com/fr/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
+  healthCheckUrl: "https://www.philibertnet.com/fr/",
   testHandlers: {
     "philibert-metadata": {
       label: "Philibert - Metadata",
@@ -268,7 +259,7 @@ export const philibertModule: ProviderModule = {
     return offer ? [offer] : [];
   },
   refreshBarcodePriceOffers: refreshPhilibertOffers,
-};
+});
 
 export { createPhilibertResolver } from "./resolver";
 export {

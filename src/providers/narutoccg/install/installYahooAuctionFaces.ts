@@ -14,7 +14,7 @@ import { upsertNarutoAppearances } from "../migrateCardLayout";
 import { narutoCardAbsDir } from "../narutoCardDisk";
 import { existingNarutoArtForSource, saveNarutoFace } from "../narutoFaceBytes";
 import { NARUTO_PACK_ID } from "../packs";
-import { yahooIngestFaces } from "../yahooAuctions";
+import { yahooIngestFaces } from "../sources/yahooAuctions";
 
 export type InstallYahooAuctionFacesOptions = {
   packRoot?: string;

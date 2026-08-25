@@ -1,15 +1,14 @@
 import { httpGet } from "@/lib/http/httpClient";
-
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 import { createOMDbResolver } from "./resolver";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 const fetchFromOMDb = createOMDbResolver();
 
-export const omdbModule: ProviderModule = {
+export const omdbModule = defineProvider({
   info: {
     id: "omdb",
     label: "OMDb",
@@ -46,13 +45,7 @@ export const omdbModule: ProviderModule = {
     ["OMDB_API_KEY"],
     (key) => `https://www.omdbapi.com/?apikey=${key}&i=tt0111161`,
   ),
-  testHandlers: {
-    "omdb-metadata": {
-      label: "OMDb - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromOMDb(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromOMDb(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -78,6 +71,6 @@ export const omdbModule: ProviderModule = {
       return [];
     }
   },
-};
+});
 
 export { createOMDbResolver };

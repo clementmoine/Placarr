@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { DBSCARDS_SITES } from "@/providers/shared/dbscards/list";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
+import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
 
 import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./fetchFaces";
 import { DBS_FW_PACK_ID } from "./indexStore";
@@ -163,6 +164,7 @@ export async function runDbsFwPackPipeline(
           : undefined,
       });
     }
+    logCatalogueCheckpoint(step);
   }
 }
 

@@ -26,8 +26,8 @@ import type { ObservationEvidenceSignal } from "@/types/metadataObservation";
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchDecitreByBarcode,
@@ -239,7 +239,7 @@ async function refreshDecitreOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const decitreModule: ProviderModule = {
+export const decitreModule = defineProvider({
   info: {
     id: "decitre",
     label: "Decitre",
@@ -328,6 +328,6 @@ export const decitreModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshDecitreOffers,
-};
+});
 
 export { mapDecitreMetadata };

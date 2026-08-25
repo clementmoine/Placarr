@@ -16,8 +16,10 @@
  *    que lit l'écran Catalogue, et l'oublier laissait un catalogue peuplé
  *    s'afficher « 0 carte ».
  *
- * La migration reste en tête tant que les faces vivent dans le staging du
- * Carddass. Le jour où ce staging suivra son jeu, seul ce module changera.
+ * La migration copie aussi faces + staging harvest (`nikita-nrt` /
+ * `nikita-backs`) vers `data/naruto/shippuden/` — le pack ne dépend plus de
+ * `carddass/staging/` pour se reconstruire (les harvests Carddass restent
+ * la source amont tant qu'ils n'ont pas leur propre CLI).
  */
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";

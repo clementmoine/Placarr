@@ -14,8 +14,8 @@ import { parsePrintKey } from "@/core/identify/printKey";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   ensureNarutoCcgIndex,
@@ -74,7 +74,7 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   };
 }
 
-export const narutoccgModule: ProviderModule = {
+export const narutoccgModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
@@ -178,7 +178,7 @@ export const narutoccgModule: ProviderModule = {
       };
     },
   ),
-};
+});
 
 export {
   writeNarutoCcgIndex,

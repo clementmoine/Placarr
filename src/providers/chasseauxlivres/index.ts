@@ -33,7 +33,8 @@ import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProdu
 
 export { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/commerce/retailer/catalogTitleAlignment";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import {
@@ -490,7 +491,7 @@ async function resolveChasseAuxLivresMetadata(
   return null;
 }
 
-export const chasseauxlivresModule: ProviderModule = {
+export const chasseauxlivresModule = defineProvider({
   info: {
     id: "chasseauxlivres",
     label: "Chasse aux Livres",
@@ -693,4 +694,4 @@ export const chasseauxlivresModule: ProviderModule = {
   extractScanPriceOffers: extractChasseScanOffers,
   refreshBarcodePriceOffers: refreshChasseAuxLivresOffers,
   expandCoverDownloadCandidates: chasseCoverDownloadCandidates,
-};
+});

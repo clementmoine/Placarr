@@ -11,7 +11,7 @@ import { dataRoot } from "@/lib/runtimeData";
 import {
   gradedcardcenterIngestPackshots,
   gradedcardcenterOriginalUrl,
-} from "../gradedcardcenterPackshots";
+} from "../sources/gradedcardcenterPackshots";
 import { NARUTO_PACK_ID } from "../packs";
 
 export const NARUTO_STAGING_GRADEDCARDCENTER = path.join(

@@ -38,7 +38,7 @@ import {
   narutoCardPathFromCollector,
   narutoAssetsCardUrl,
 } from "./narutoCardPath";
-import { japaneseReleaseBands, listJapaneseReleases } from "./japaneseVolumes";
+import { japaneseReleaseBands, listJapaneseReleases } from "./sources/japaneseVolumes";
 import {
   finalizeSetOptions,
   isAnsweredQuery,

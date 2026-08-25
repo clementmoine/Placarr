@@ -20,7 +20,7 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { japaneseReleaseBands } from "../japaneseVolumes";
+import { japaneseReleaseBands } from "../sources/japaneseVolumes";
 import { NARUTO_PACK_ID } from "../packs";
 import {
   chitoroVolumeSetCode,

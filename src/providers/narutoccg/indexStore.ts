@@ -12,7 +12,7 @@ import {
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import { japaneseVolumeForPrintNumber } from "./japaneseVolumes";
+import { japaneseVolumeForPrintNumber } from "./sources/japaneseVolumes";
 
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 import { canonicalDataPack } from "@/lib/packPaths";

@@ -1,4 +1,4 @@
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import { rawProbe } from "@/lib/dev/mappingProbe";
@@ -49,7 +49,7 @@ async function refreshSmartoysOffers(ctx: BarcodePriceRefreshContext) {
   return [];
 }
 
-export const smartoysModule: ProviderModule = {
+export const smartoysModule = defineProvider({
   info: {
     id: "smartoys",
     label: "Smartoys",
@@ -78,4 +78,4 @@ export const smartoysModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshSmartoysOffers,
-};
+});

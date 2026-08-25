@@ -116,11 +116,14 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   (`archive/autonomy_audit.md`).
 - **Décision** : la politesse vit dans la couche transport (`src/lib/http/`),
   pas dans les providers : backoff avec full jitter + respect de `Retry-After`,
-  limiter par host, softban en circuit breaker persisté, FlareSolverr derrière
-  une interface `ChallengeSolver` ; règle ESLint interdisant `fetch`/`axios`
-  directs dans `src/providers/` (allowlist documentée).
+  limiter par host, softban en circuit breaker persisté
+  (`data/http/circuits/` via `circuitPersistence`, hydraté au restart),
+  FlareSolverr derrière une interface `ChallengeSolver` ; règle ESLint
+  interdisant `fetch`/`axios` directs dans `src/providers/` (allowlist
+  documentée : `pokemontcglive/cdn.ts` uniquement).
 - **Conséquences** : contourner la plomberie devient du travail supplémentaire
-  au lieu d'un raccourci.
+  au lieu d'un raccourci. Les ledgers softban **par pack**
+  (`providers/shared/softban`) restent pour les CLI CDN (Pokémon / DBS faces).
 - **Références** : AWS Architecture Blog (backoff & jitter), modèle RomM
   (contexte injecté), Backstage (factory + manifeste validé).
 
@@ -245,6 +248,107 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
 - **Conséquences** : scan EAN d'une boîte LEGO → Brickset ; recherche
   set_num / titre → les deux. Sans clé, les adapters no-op (health
   unconfigured).
+
+## ADR-016 : Généralisation `defineProvider` aux providers cas commun
+
+- **Date** : 2026-08-25
+- **Statut** : Accepté
+- **Contexte** : ADR-009 a introduit `defineProvider` avec un pilote
+  (`bedetheque`). Les vagues suivantes (nautiljon, jikan, brickset,
+  rebrickable) ont confirmé le pattern. Restait une cohorte de modules
+  hand-rolled dont la plomberie (ping `websiteUrl` / URL dédiée +
+  testHandler `<id>-metadata`) était identique au défaut de la factory.
+- **Décision** : migrer les providers cas commun vers `defineProvider` dès
+  que health + testHandlers se réduisent aux défauts (ou à un override
+  minimal). Première cohorte post-pilote : `babelio`, `planetebd`,
+  `bdphile` (label « Revue » conservé), `fullset`, `senscritique`
+  (`healthCheckUrl` GraphQL). Deuxième vague : `howlongtobeat`,
+  `coverproject`, `wikidata`, `omdb`, `openlibrary`. Troisième vague :
+  `launchbox`, `myludo`, `steam`, `tmdb`, `rawg`, `freakxy`, `igdb`,
+  `thegamesdb`, `boardgamegeek`, `deezer`, `googlebooks`, `steamgriddb`.
+  Vague 4 : catalogues / cover / boardgame retailers (`musicbrainz`,
+  `nointro`, `scandex`, `smartoys`, `geedie`, `hdjv`, `ledenicheur`,
+  `chocobonplan`, `espritjeu`, `okkazeo`, `philibert`). Vague finale :
+  tous les `*/index.ts` restants (retailers livres, Discogs, eBay,
+  ScreenScraper, packs TCG locaux…) — hooks avancés conservés, manifeste
+  validé Zod. Les hooks avancés (adapters, teardown, probes, pinned
+  records, barcode deps) restent inchangés — la factory ne les bride pas.
+- **Conséquences** : moins de boilerplate ; validation Zod du manifeste à
+  la création ; checklist d'intégration oriente vers `defineProvider` par
+  défaut. Tout module `src/providers/*/index.ts` passe par la factory ;
+  les overrides (health clé, probes, barcode slots, catalog local) restent
+  explicites.
+
+## ADR-017 : Checkpoint d'extract catalogue dans le payload du job
+
+- **Date** : 2026-08-25
+- **Statut** : Accepté
+- **Contexte** : après coupure, `recoverStaleRunningBackgroundWorkJobs`
+  requeue le job foil, mais la reprise relançait le pipeline depuis le
+  début (audit autonomie §4 — cas DBS Masters). Les étapes sont déjà
+  idempotentes ; le coût est le temps perdu à les refaire.
+- **Décision** : protocole `── checkpoint <step>` émis par les CLI à
+  étapes (`dbscg`, `dbsfw`, `narutoccg`). Le worker merge dans
+  `payload.completedSteps`. À la reprise, le runner ajoute `--skip a,b,…`
+  quand le pack déclare `extract.pipelineSteps`. Packs sans étapes
+  déclarées (Pokémon, Lorcana…) inchangés.
+- **Conséquences** : une reprise saute les étapes finies ; un crash
+  *intra*-étape rejoue seulement cette étape (idempotente). Pas de
+  migration Prisma — le JSON payload suffit.
+
+## ADR-018 : Granularité de `ProviderCatalogHooks.refresh`
+
+- **Date** : 2026-08-25
+- **Statut** : Accepté
+- **Contexte** : `refresh` ne recevait que `{ auto }` — admin et sync horaire
+  ne savaient dire que « le pack en entier » (autonomy_audit §3). Les CLI
+  acceptaient déjà `--only` / `--skip` / `--langs` / `--limit`.
+- **Décision** : étendre `ProviderCatalogRefreshOpts` avec `only`, `skip`,
+  `langs`, `limit`. `cardCatalogueHooks` les traduit en argv CLI. L'API
+  `/api/admin/catalogue-corpora` et le job `catalogProviderSync` les
+  transportent. L'UI admin expose les champs quand le pack déclare
+  `extract.pipelineSteps`. `all: true` refuse la granularité (passe debug
+  mono-pack).
+- **Conséquences** : un admin peut rejouer `faces` / une langue / un `limit`
+  sans relancer toute la moisson ; la CLI reste disponible mais n'est plus
+  obligatoire pour le debug ciblé.
+
+## ADR-019 : Densité `narutoccg` — `sources/` par rôle
+
+- **Date** : 2026-08-25
+- **Statut** : Accepté
+- **Contexte** : phase 6.1 du plan de réorganisation — `narutoccg` mélangeait
+  à la racine collecteurs externes, parse, scrape et contrat catalogue
+  (~120 fichiers plats). `parse/`, `scrape/`, `harvest/`, `install/` et
+  `curated/` existaient déjà ; les ledgers / packshots restaient à plat.
+- **Décision** : dossier `sources/` pour les collecteurs externes (Coleka,
+  eBay, Mercari, Manga-News, ledgers scellés…). Racine = contrat
+  (`index`, `pipeline`, `cli`, `facts`, `packs`, `searchPrints`…). Voir
+  `src/providers/narutoccg/README.md`. Pas de découpage `domains/` global
+  (hors périmètre plan).
+- **Conséquences** : un nouvel arrivant trouve d'abord le contrat, puis les
+  sources ; imports relatifs mis à jour ; `narutoranks` pointe vers
+  `sources/colekaListingFetch`.
+
+## ADR-020 : Schéma d'item logique — `core/schemas/content-types`
+
+- **Date** : 2026-08-25
+- **Statut** : Accepté (livraison partielle de structure_vs_tako §5)
+- **Contexte** : tako répond « qu'est-ce qu'un item ? » en un fichier
+  (`content-types.js`). Chez nous la réponse était dispersée (Prisma +
+  `MetadataResult` + commentaires `Item.printKey`). Le plan Kimi écartait
+  le churn `domains/<domaine>/providers/` ; il restait le besoin d'un
+  **point d'entrée de lecture**.
+- **Décision** : `src/core/schemas/content-types.ts` — `CONTENT_TYPES`
+  (sync Prisma `Type` + `MediaType`), profils (identité / champs
+  caractéristiques), `CONTENT_DOMAINS` (carte de lecture), Zod
+  `coreItemIdentitySchema` + `coreMetadataSchema`. Prisma reste la
+  persistance. **Pas** de déplacement des providers par domaine : les
+  sources multi-domaines (marketplaces / agrégateurs prix) casseraient un
+  découpage naïf.
+- **Conséquences** : `ARCHITECTURE.md` commence par content-types ;
+  garde de test d'alignement Prisma/MediaType ; le découpage physique
+  domaine reste ouvert et volontairement différé.
 
 ---
 

@@ -3,7 +3,6 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
 import { pricedOffers } from "@/core/catalog/priceOffers";
@@ -23,8 +22,8 @@ import type {
   BarcodePriceRefreshContext,
   MetadataAdapterContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchOkkazeoBarcodeProduct,
@@ -136,7 +135,7 @@ async function refreshOkkazeoOffers(
   return [];
 }
 
-export const okkazeoModule: ProviderModule = {
+export const okkazeoModule = defineProvider({
   info: {
     id: "okkazeo",
     label: "Okkazeo",
@@ -174,15 +173,6 @@ export const okkazeoModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck("okkazeo", "Okkazeo", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.okkazeo.com/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
   testHandlers: {
     "okkazeo-metadata": {
       label: "Okkazeo - Metadata",
@@ -287,7 +277,7 @@ export const okkazeoModule: ProviderModule = {
     ]);
   },
   refreshBarcodePriceOffers: refreshOkkazeoOffers,
-};
+});
 
 export { createOkkazeoResolver, fetchOkkazeoGame, searchOkkazeo };
 

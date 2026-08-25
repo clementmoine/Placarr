@@ -1,4 +1,4 @@
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
 import { probeBarcodesWithFallback, listProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -8,6 +8,7 @@ import {
   marketplaceContributions,
   typedOnlyContributions,
 } from "@/core/identify/lookup/sourceContribution";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import { fetchFromFreakxy } from "./fetch";
 
@@ -17,7 +18,7 @@ const FALLBACK_QUERIES = ["0045496365226", "045496360730", "Mario Kart Wii"];
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["games", "hardware", "generic"];
 
-export const freakxyModule: ProviderModule = {
+export const freakxyModule = defineProvider({
   info: {
     id: "freakxy",
     label: "Freakxy",
@@ -81,7 +82,7 @@ export const freakxyModule: ProviderModule = {
       ...typedOnlyContributions("Freakxy", payload.freakxy, ctx, ["hardware"]),
     ];
   },
-};
+});
 
 import type { NamedListing } from "@/core/identify/gameLookup";
 

@@ -119,6 +119,12 @@ export type CatalogueExtractJobPayload = {
   target: CatalogueExtractTarget;
   /** Absent on rows enqueued before scopes existed → treated as ``inventory``. */
   scope?: CatalogueExtractScope;
+  /**
+   * Steps already finished (from `── checkpoint <step>` log lines).
+   * On resume the runner appends `--skip` for these when the pack declares
+   * `extract.pipelineSteps`.
+   */
+  completedSteps?: string[];
 };
 
 export type BackgroundWorkJobRow = {
@@ -467,6 +473,57 @@ export async function touchBackgroundWorkJobLock(
     },
     data: {
       lockedAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+  return result.count > 0;
+}
+
+/**
+ * Record a finished extract pipeline step on the job payload so a later
+ * resume can `--skip` it (autonomy_audit §4 / ADR-017).
+ */
+export async function mergeCatalogueExtractCompletedStep(
+  jobId: string,
+  step: string,
+): Promise<boolean> {
+  const { mergeCompletedSteps } = await import(
+    "@/lib/admin/catalogueExtractCheckpoint"
+  );
+  const job = await prisma.backgroundWorkJob.findUnique({
+    where: { id: jobId },
+    select: { payload: true, status: true, kind: true },
+  });
+  if (
+    !job ||
+    job.status !== BACKGROUND_WORK_STATUS.running ||
+    job.kind !== BACKGROUND_WORK_KIND.catalogueExtract
+  ) {
+    return false;
+  }
+
+  const raw =
+    job.payload && typeof job.payload === "object" && !Array.isArray(job.payload)
+      ? (job.payload as Record<string, unknown>)
+      : {};
+  const existing = Array.isArray(raw.completedSteps)
+    ? raw.completedSteps.filter((value): value is string => typeof value === "string")
+    : [];
+  const completedSteps = mergeCompletedSteps(existing, step);
+  if (
+    completedSteps.length === existing.length &&
+    completedSteps.every((value, i) => value === existing[i])
+  ) {
+    return true;
+  }
+
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where: {
+      id: jobId,
+      status: BACKGROUND_WORK_STATUS.running,
+    },
+    data: {
+      payload: { ...raw, completedSteps } as Prisma.InputJsonValue,
       updatedAt: new Date(),
     },
   });

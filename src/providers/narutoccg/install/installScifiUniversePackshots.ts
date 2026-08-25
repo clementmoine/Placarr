@@ -11,7 +11,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { NARUTO_PACK_ID } from "../packs";
-import { scifiUniverseIngestPackshots } from "../scifiUniverse";
+import { scifiUniverseIngestPackshots } from "../sources/scifiUniverse";
 
 export const NARUTO_STAGING_SCIFI = path.join(
   "staging",

@@ -18,7 +18,7 @@ import type {
   ObservationEvidenceSignal,
 } from "@/types/metadataObservation";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   createTeardownMetadataTask,
@@ -359,7 +359,7 @@ function createDiscogsAdapter(): MetadataProviderAdapter {
   };
 }
 
-export const discogsModule: ProviderModule = {
+export const discogsModule = defineProvider({
   info: {
     id: "discogs",
     label: "Discogs",
@@ -459,7 +459,7 @@ export const discogsModule: ProviderModule = {
       },
     ];
   },
-};
+});
 
 import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
 

@@ -26,8 +26,8 @@ import {
   extFromMagic,
   saveNarutoFace,
 } from "./narutoFaceBytes";
-import { cardTypeFromCollectorNumber } from "./parseBandaicgAsset";
-import { COLEKA_ORIGIN } from "./parseColekaStorm3";
+import { cardTypeFromCollectorNumber } from "./parse/parseBandaicgAsset";
+import { COLEKA_ORIGIN } from "./parse/parseColekaStorm3";
 import {
   COLEKA_US_PROMO_LANG,
   COLEKA_US_PROMO_LISTING_PATH,
@@ -35,7 +35,7 @@ import {
   colekaUsPromoListingPageUrls,
   parseColekaUsPromoListing,
   type ColekaUsPromoCard,
-} from "./parseColekaUsPromos";
+} from "./parse/parseColekaUsPromos";
 import ledger from "./curated/sources/coleka-us-promos.json";
 
 export const NARUTO_STAGING_COLEKA_US_PROMOS = path.join(

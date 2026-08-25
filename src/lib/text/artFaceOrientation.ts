@@ -1,4 +1,7 @@
-import type { CardsIndexEntry, CardsIndexLangFiles } from "@/effects/cardsIndex";
+import type {
+  CardsIndexEntry,
+  CardsIndexLangFiles,
+} from "@/effects/cardsIndex";
 
 import type { FaceQuarterTurns } from "./cardFormat";
 

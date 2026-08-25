@@ -32,7 +32,7 @@ import {
   uniqueNumbers,
   type MangaNewsChecklistLine,
   type MangaNewsDeckMeta,
-} from "./parseMangaNewsChecklist";
+} from "./parse/parseMangaNewsChecklist";
 import { NARUTO_PACK_ID } from "./indexStore";
 
 export type CoverageSource = "manga-news" | "local-index";
@@ -205,7 +205,7 @@ async function fetchDeckImage(
   return dest;
 }
 
-export { htmlToChecklistText } from "./parseMangaNewsChecklist";
+export { htmlToChecklistText } from "./parse/parseMangaNewsChecklist";
 
 export async function buildNarutoCoverageChecklist(opts?: {
   forceFetch?: boolean;

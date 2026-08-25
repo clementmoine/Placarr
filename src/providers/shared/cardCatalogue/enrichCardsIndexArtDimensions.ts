@@ -3,7 +3,6 @@ import path from "node:path";
 
 import { readFileImageMetrics } from "@/core/enrich/media/imageMetrics";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
-import { artSlotIsLandscape } from "@/lib/text/artFaceOrientation";
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { isCardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardDir, packCardsIndexPath } from "@/lib/packPaths";

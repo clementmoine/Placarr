@@ -1,43 +1,38 @@
-import { existsSync } from "node:fs";
+/**
+ * Crochets de catalogue du pack `lorcana`.
+ *
+ * Corps commun : `shared/cardCatalogue/pipeline`. Ici : la moisson cartes +
+ * le graphe produits lorcards.fr (sauté en automatique).
+ *
+ * L'extract Unity / foil reste sur la CLI (`pnpm foil:lorcana`) et la route
+ * foilExtract — ce pipeline ne le lance pas.
+ */
+import type { ProviderCatalogHooks } from "@/types/providerModule";
+import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 
-import type {
-  ProviderCatalogHooks,
-  ProviderCatalogRefreshOpts,
-} from "@/types/providerModule";
-import {
-  dataPackPath,
-  statusFromLastRun,
-} from "@/providers/shared/catalogCorpus";
-
-import { scrapeLorcanaCards } from "./scrapeCards";
+import { lorcanaTcgDbPath } from "./indexStore";
 import { scrapeLorcardsProducts } from "./lorcards";
+import { scrapeLorcanaCards } from "./scrapeCards";
 
-const DATA_PACK = "lorcana";
+const LORCANA_PACK_ID = "lorcana";
 
-export async function refreshLorcanaTcgCatalog(
-  opts?: ProviderCatalogRefreshOpts,
-): Promise<void> {
-  // Rebuild catalogue faces + sqlite. Full Unity foil extract stays on CLI /
-  // foilExtract until the Unity island is invoked from this pipeline.
-  await scrapeLorcanaCards({ force: Boolean(opts && !opts.auto) });
-  /*
-    lorcards.fr is the same host family as dbscards. Manual Sync takes the
-    product graph (sequential, cache-friendly). The hourly loop skips it.
-  */
-  if (!opts?.auto) {
-    await scrapeLorcardsProducts({});
-  }
-}
+const hooks = cardCatalogueHooks({
+  packId: LORCANA_PACK_ID,
+  dbPath: lorcanaTcgDbPath,
+  runPipeline: async (argv) => {
+    /*
+      Manual Sync : force rebuild + produits. Horaire : `--skip products` —
+      pas de force (réutilise le cache cartes), pas de graphe lorcards.
+    */
+    const skipProducts = argv.includes("products");
+    await scrapeLorcanaCards({ force: !skipProducts });
+    if (!skipProducts) {
+      await scrapeLorcardsProducts({});
+    }
+  },
+  autoSkip: ["products"],
+});
 
-export function lorcanaTcgCatalogStatus() {
-  const cardsIndex = dataPackPath(DATA_PACK, "cards-index.json");
-  const db = dataPackPath(DATA_PACK, "catalog.sqlite");
-  const empty = !existsSync(cardsIndex) && !existsSync(db);
-  return statusFromLastRun({ dataPack: DATA_PACK, empty });
-}
-
-export const lorcanatcgCatalog: ProviderCatalogHooks = {
-  dataPack: DATA_PACK,
-  status: lorcanaTcgCatalogStatus,
-  refresh: refreshLorcanaTcgCatalog,
-};
+export const refreshLorcanaTcgCatalog = hooks.refresh;
+export const lorcanaTcgCatalogStatus = hooks.status;
+export const lorcanatcgCatalog: ProviderCatalogHooks = hooks;

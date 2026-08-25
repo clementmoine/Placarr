@@ -2,7 +2,6 @@ import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { tcgdexDbPath } from "./indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
-import { pricedOffers } from "@/core/catalog/priceOffers";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -45,12 +44,16 @@ import type {
   MetadataResult,
 } from "@/types/metadataProvider";
 import type {
-  BarcodePriceRefreshContext,
   MetadataAdapterContext,
   MetadataProviderAdapter,
   PrintCandidate,
   ProviderModule,
 } from "@/types/providerModule";
+
+import {
+  createPrintKeyPriceRefresh,
+  dualFinishPriceRows,
+} from "@/providers/shared/createPrintKeyPriceModule";
 
 import {
   POKEMON_GAME,
@@ -460,67 +463,27 @@ async function resolveTcgdexCard(
   return null;
 }
 
-function printKeyFromContext(ctx: BarcodePriceRefreshContext): string | null {
-  const direct = ctx.printKey?.trim();
-  if (direct) return direct;
-  return ctx.externalIds?.printKey?.trim() || null;
-}
-
-function offersFromCard(card: TcgdexCard) {
-  const label = tcgdexPrintLabel(card);
-  const rows: Array<{
-    condition: string;
-    priceCents: number | null;
-    productName: string;
-  }> = [];
-
-  if (card.cmPriceCents != null) {
-    rows.push({
-      condition: "new",
-      priceCents: card.cmPriceCents,
-      productName: label,
-    });
-  }
-  if (card.cmFoilPriceCents != null) {
-    rows.push({
-      condition: "foil",
-      priceCents: card.cmFoilPriceCents,
-      productName: `${label} (foil)`,
-    });
-  }
-
-  return pricedOffers(
-    PRICE_SOURCE,
-    rows.map((row) => ({
-      condition: row.condition,
-      priceCents: row.priceCents,
-      rawValue: card,
-      extra: {
-        currency: "EUR",
-        productName: row.productName,
-        sourceUrl:
-          card.cardmarketProductId != null
-            ? `https://www.cardmarket.com/fr/Pokemon/Products?idProduct=${card.cardmarketProductId}`
-            : undefined,
-        metadataScoped: true,
-      },
-    })),
-  );
-}
-
-async function refreshTcgdexOffers(ctx: BarcodePriceRefreshContext) {
-  if (ctx.shelfType !== "tcg") return [];
-  const printKey = printKeyFromContext(ctx);
-  if (!printKey || parsePrintKey(printKey)?.game !== POKEMON_GAME) return [];
-
-  const card = await fetchTcgdexCardByPrintKey(printKey, {
-    language: resolveLanguage(ctx),
-    name: ctx.primaryName || ctx.primaryTitle,
-    signal: ctx.signal,
-  });
-  if (!card) return [];
-  return offersFromCard(card);
-}
+const refreshTcgdexOffers = createPrintKeyPriceRefresh<TcgdexCard>({
+  priceSource: PRICE_SOURCE,
+  currency: "EUR",
+  printGame: POKEMON_GAME,
+  fetchCard: (printKey, { signal, ctx }) =>
+    fetchTcgdexCardByPrintKey(printKey, {
+      language: resolveLanguage(ctx),
+      name: ctx.primaryName || ctx.primaryTitle,
+      signal,
+    }),
+  priceRows: (card) =>
+    dualFinishPriceRows({
+      label: tcgdexPrintLabel(card),
+      newCents: card.cmPriceCents,
+      foilCents: card.cmFoilPriceCents,
+      sourceUrl:
+        card.cardmarketProductId != null
+          ? `https://www.cardmarket.com/fr/Pokemon/Products?idProduct=${card.cardmarketProductId}`
+          : undefined,
+    }),
+});
 
 /**
  * Une ligne de la base locale, rendue sous la forme d'une carte du catalogue.

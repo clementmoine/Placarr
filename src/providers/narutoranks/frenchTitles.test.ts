@@ -58,9 +58,7 @@ describe("buildFrenchNinjaRanksTitles", () => {
     expect(frenchTitle("naruto:nr-0044")).toBe("Gaï");
     expect(frenchTitle("naruto:nr-0058")).toBe("Hokage le 3e");
     expect(frenchTitle("naruto:nr-0066")).toBe("Groupe de Konohamaru");
-    expect(frenchTitle("naruto:nr-0068")).toBe(
-      "Second Examen des Survivants",
-    );
+    expect(frenchTitle("naruto:nr-0068")).toBe("Second Examen des Survivants");
     expect(frenchTitle("naruto:nr-0070")).toBe("Kakashi-Zabuza");
     expect(frenchTitle("naruto:nr-0071")).toBe("Carte");
     expect(frenchTitle("naruto:nr-0057")).toBe("Dosu");

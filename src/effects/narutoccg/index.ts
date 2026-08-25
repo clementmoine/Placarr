@@ -1,12 +1,11 @@
 /**
  * Naruto Carddass effect pack — card back, and a house look per finish.
  *
- * The pack is catalogue-only: no APK and no shader dump, so there is no
- * extracted material library to browse — that is what
- * `cataloguePacks.hasFoilEffects === false` still means, and why every
- * material hook returns empty. It is registered because the card back resolves
- * through the effect pack registry (`resolveCardBackCandidates`), and without
- * one a Naruto card had nothing to flip to.
+ * The pack is catalogue-only: no APK and no shader dump — that is what
+ * `cataloguePacks.hasFoilEffects === false` still means. It is registered
+ * because the card back resolves through the effect pack registry
+ * (`resolveCardBackCandidates`), and without one a Naruto card had nothing to
+ * flip to.
  *
  * What it does render is a *house* CSS look. Those are texture-free, so they
  * need no dump: an approximation is honest here because we know from the
@@ -14,8 +13,7 @@
  * just do not have the captured layer. The alternative was showing a holo and
  * a common as the same flat scan.
  */
-import { registerEffectPack } from "@/core/render/foil/registry";
-import type { EffectPackModule } from "@/core/render/foil/types";
+import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 /**
  * Id chosen to collide with nothing else quoted in the tree: the data-pack
@@ -93,7 +91,7 @@ const SHIPPUDEN_JA_SETS = /^(maku\d+|shi|mju|msa|gaku)$/i;
  */
 const SHIPPUDEN_JA_BACK_URL = `${ASSET_BASE}/cards/shi/back.webp`;
 
-export const narutoCarddassEffectPack: EffectPackModule = {
+export const narutoCarddassEffectPack = defineCatalogueOnlyPack({
   id: NARUTO_CARDDASS_EFFECT_PACK_ID,
   label: "Naruto Carddass",
   blurb: "Catalogue local — dos de pack, sans effet foil",
@@ -112,18 +110,9 @@ export const narutoCarddassEffectPack: EffectPackModule = {
       ? SHIPPUDEN_JA_BACK_URL
       : null;
   },
-  resolveMaterial: () => null,
-  resolveMaterialForPrint: () => null,
+  finishShader: FINISH_SHADER,
   fallbackFoilMaskUrl: NARUTO_CARDDASS_FULL_FOIL_MASK_URL,
-  resolveCss: (finish) => ({
-    finishShaderId: FINISH_SHADER[(finish ?? "").toLowerCase()] ?? null,
-    // No varnish on this line — the cards are matte outside the foil.
-    varnishShaderId: null,
-  }),
-  listMaterials: () => [],
-  material: () => null,
-};
+});
 
-registerEffectPack(narutoCarddassEffectPack);
 export const narutoCcgEffectPack = narutoCarddassEffectPack;
 export const narutoEnCcgEffectPack = narutoCarddassEffectPack;

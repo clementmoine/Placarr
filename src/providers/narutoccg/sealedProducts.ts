@@ -70,7 +70,7 @@ import {
   type NarutoProductSource,
   type NarutoProductStoredFace,
 } from "./productChoice";
-import { NARUTO_STAGING_SITE } from "./scrapeCards";
+import { NARUTO_STAGING_SITE } from "./scrape/scrapeCards";
 import { trictracIngestPackshots } from "./trictracPackshots";
 import { scifiUniverseIngestPackshots } from "./scifiUniverse";
 import { vialudibundaIngestPackshots } from "./vialudibunda";

@@ -10,6 +10,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { httpGet, httpPost } from "@/lib/http/httpClient";
+
 const ROOT = path.resolve(__dirname, "../../..");
 const TOKENS = path.join(ROOT, ".tmp-foil-audit/live-unity/mitm/tokens.json");
 const OUT_JSON = path.join(ROOT, "data/pokemon/liveOwned.json");
@@ -46,8 +48,20 @@ async function req(
   if (bearer) headers.Authorization = `Bearer ${bearer}`;
   headers["User-Agent"] =
     "UnityPlayer/2022.3.22f1 (UnityWebRequest/1.0, libcurl/8.5.0-DEV)";
-  const res = await fetch(url, { method, headers, body: payload });
-  return { status: res.status, text: await res.text() };
+  const options = {
+    headers,
+    timeout: 30_000,
+    responseType: "text" as const,
+    validateStatus: () => true,
+  };
+  const res =
+    method === "GET"
+      ? await httpGet<string>(url, options)
+      : await httpPost<string>(url, payload, options);
+  return {
+    status: res.status,
+    text: typeof res.data === "string" ? res.data : JSON.stringify(res.data),
+  };
 }
 
 function toFrStem(stem: string): string {

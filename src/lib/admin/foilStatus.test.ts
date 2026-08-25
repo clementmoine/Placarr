@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { readFoilPackStatuses } from "./foilStatus";
+import { CATALOGUE_PACKS } from "./cataloguePacks";
 
 const tmpDirs: string[] = [];
 
@@ -30,12 +31,23 @@ describe("readFoilPackStatuses", () => {
       dataRoot: data,
       repoRoot: repo,
     });
+    expect(packs.map((pack) => pack.id)).toEqual(
+      CATALOGUE_PACKS.map((pack) => pack.extractTarget),
+    );
+    // Drift guard: every Naruto line shows up, not just the Carddass.
     expect(packs.map((pack) => pack.id)).toEqual([
-      "lorcana",
       "pokemon",
+      "lorcana",
       "naruto",
+      "naruto-shippuden",
+      "naruto-ranks",
+      "naruto-ultra",
       "dbs-cg",
       "dbs-fw",
+      "onepiece",
+      "digimon",
+      "yugioh",
+      "mtg",
     ]);
     for (const pack of packs) {
       expect(pack).toMatchObject({

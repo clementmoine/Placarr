@@ -18,7 +18,7 @@ import narutoCcgApp from "./curated/sources/naruto-ccg-app.json";
 import narutoCcgFansetsDrive from "./curated/sources/naruto-ccg-fansets-drive.json";
 import narutoCcgDrive from "./curated/sources/naruto-ccg-drive.json";
 import redditNarutoccg from "./curated/sources/reddit-narutoccg.json";
-import { parseTcdbNarutoRef } from "./parseTcdbNaruto";
+import { parseTcdbNarutoRef } from "./parse/parseTcdbNaruto";
 import { narutoDiskCardId } from "./collectorIdentity";
 import lineage2 from "./curated/sources/lineage2universe.json";
 import montreal from "./curated/sources/naruto-montreal.json";

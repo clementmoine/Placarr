@@ -317,12 +317,19 @@ export function buildCatalogueCardRows(
   const localeSpecificFaces = bestFaceAcrossLocales
     ? loadLocaleSpecificFaces(corpusPack)
     : null;
-  const source = isNarutoUnifiedPack(pack) ? foldNarutoCardsIndex(index) : index;
+  const source = isNarutoUnifiedPack(pack)
+    ? foldNarutoCardsIndex(index)
+    : index;
 
   const donorsByNumber = new Map<string, ArtDonor>();
   if (allowFallback) {
     for (const [printKey, entry] of Object.entries(source.cards)) {
-      for (const slot of localeSlots(entry, preferLang, true, catalogueLocales)) {
+      for (const slot of localeSlots(
+        entry,
+        preferLang,
+        true,
+        catalogueLocales,
+      )) {
         const file = artFile(slot.files);
         if (!file) continue;
         const key = donorMapKey(entry.card, slot.lang);

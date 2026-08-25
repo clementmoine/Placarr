@@ -5,7 +5,7 @@ export type FoilPackId = CatalogueExtractTarget;
 export type FoilPackStatus = {
   id: FoilPackId;
   label: string;
-  /** Staging folder under data/ (lorcana | pokemon | naruto/carddass | dbs/cg). */
+  /** Staging folder under data/ (`<pack>/staging`, packs may nest: naruto/carddass). */
   staging: string;
   apk: {
     present: boolean;

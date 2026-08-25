@@ -137,9 +137,9 @@ describe("les trois signaux, pris un par un", () => {
   it("compare les noms sans buter sur la casse ni les séparateurs", () => {
     expect(namesAgree("Guy Kakashi", "Guy - Kakashi")).toBe(true);
     expect(namesAgree("Rock lee", "ROCK LEE")).toBe(true);
-    expect(
-      namesAgree("Naruto Sakura Sasuke", "Naruto-Sasuke-Sakura"),
-    ).toBe(true);
+    expect(namesAgree("Naruto Sakura Sasuke", "Naruto-Sasuke-Sakura")).toBe(
+      true,
+    );
     expect(namesAgree("Kakashi", "Sasuke")).toBe(false);
   });
 
@@ -165,9 +165,7 @@ const STAGING = path.join(
   packStagingDir(NARUTO_RANKS_PACK_ID),
   "arcadegamecards",
 );
-const HAS_CACHED_LISTING = existsSync(
-  path.join(STAGING, "listing-0.html"),
-);
+const HAS_CACHED_LISTING = existsSync(path.join(STAGING, "listing-0.html"));
 
 describe.skipIf(!HAS_CACHED_LISTING)(
   "moisson arcadegamecards (HTML en cache, 2026-08-22)",
@@ -190,7 +188,11 @@ describe.skipIf(!HAS_CACHED_LISTING)(
 
       expect(found.size).toBe(78);
       expect(rejected).toHaveLength(3);
-      expect(rejected.map((r) => r.printed).sort()).toEqual(["21", "SD3", "SD3"]);
+      expect(rejected.map((r) => r.printed).sort()).toEqual([
+        "21",
+        "SD3",
+        "SD3",
+      ]);
     });
 
     it("couvre 71/72 cartes de base", () => {

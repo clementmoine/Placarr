@@ -15,6 +15,8 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { httpGet } from "@/lib/http/httpClient";
+
 import {
   liveSetCandidatesFromTcgdexSet,
   liveSetIdFromTcgdexSet,
@@ -128,20 +130,26 @@ function isDigitalOnlySet(setId: string): boolean {
 
 async function fetchTcgdexSetIds(lang: "fr" | "en"): Promise<string[]> {
   const url = `https://api.tcgdex.net/v2/${lang}/sets`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`TCGdex ${lang} sets HTTP ${res.status}`);
-  const body = (await res.json()) as Array<{ id?: string }>;
-  return body
+  const res = await httpGet<Array<{ id?: string }>>(url, {
+    validateStatus: () => true,
+  });
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`TCGdex ${lang} sets HTTP ${res.status}`);
+  }
+  return res.data
     .map((row) => row.id?.trim().toLowerCase())
     .filter((id): id is string => Boolean(id));
 }
 
 async function fetchMalieIndex(): Promise<MalieIndex> {
-  const res = await fetch(MALIE_INDEX_URL, {
+  const res = await httpGet<MalieIndex>(MALIE_INDEX_URL, {
     headers: { "user-agent": "placarr-foil-audit/1.0" },
+    validateStatus: () => true,
   });
-  if (!res.ok) throw new Error(`Malie index HTTP ${res.status}`);
-  return (await res.json()) as MalieIndex;
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`Malie index HTTP ${res.status}`);
+  }
+  return res.data;
 }
 
 function stripHtml(name: string | undefined): string {
@@ -218,12 +226,12 @@ async function fetchTcgdexSetDetail(
   id: string,
 ): Promise<{ id: string; cardTotal: number } | null> {
   const url = `https://api.tcgdex.net/v2/${lang}/sets/${encodeURIComponent(id)}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const body = (await res.json()) as {
+  const res = await httpGet<{
     id?: string;
     cardCount?: { total?: number; official?: number };
-  };
+  }>(url, { validateStatus: () => true });
+  if (res.status < 200 || res.status >= 300) return null;
+  const body = res.data;
   const total = body.cardCount?.total ?? body.cardCount?.official ?? 0;
   if (!body.id || total <= 0) return null;
   return { id: body.id, cardTotal: total };

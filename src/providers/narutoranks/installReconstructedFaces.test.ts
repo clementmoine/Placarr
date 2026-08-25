@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -113,7 +119,13 @@ describe("installReconstructedFaces", () => {
     writeCurated("pn", "en", "i", "art.reconstructed.png");
 
     const index = createLocalPrintsIndex(NARUTO_RANKS_PACK_ID);
-    seedPrint(index, "naruto:pn-i", "pn", "i", "FREE CARD OFFER ON INKWORKS.COM");
+    seedPrint(
+      index,
+      "naruto:pn-i",
+      "pn",
+      "i",
+      "FREE CARD OFFER ON INKWORKS.COM",
+    );
 
     const report = await installReconstructedFaces(index, {
       force: true,

@@ -8,7 +8,6 @@ import {
   colekaNinjaRanksBackUrlCandidates,
   colekaNinjaRanksFaceUrl,
   colekaNinjaRanksListingPageUrls,
-  colekaNinjaRanksWwwFaceUrl,
   NINJA_RANKS_BASE_CARDS,
   parseColekaNinjaRanksListing,
   parseColekaPrintedRef,
@@ -44,11 +43,7 @@ describe("parseColekaNinjaRanksListing", () => {
 
   it("retient un insert EU quand la ref et le fichier se croisent", () => {
     const { cards } = parseColekaNinjaRanksListing(
-      item(
-        "FF01",
-        "Flash Forward 1",
-        "naruto-ninja-ranks-carte-ff1-ff01",
-      ),
+      item("FF01", "Flash Forward 1", "naruto-ninja-ranks-carte-ff1-ff01"),
     );
     expect(cards).toMatchObject([
       { setCode: "ff", number: "0001", printed: "FF01" },
@@ -255,8 +250,9 @@ describe("listings Coleka en cache", () => {
   it.skipIf(listings.length === 0)(
     "accepte 59 base + 30 inserts EU photographiés",
     () => {
-      const cards = listings.flatMap((file) =>
-        parseColekaNinjaRanksListing(readFileSync(file, "utf8")).cards,
+      const cards = listings.flatMap(
+        (file) =>
+          parseColekaNinjaRanksListing(readFileSync(file, "utf8")).cards,
       );
       const bySet = Object.groupBy(cards, (card) => card.setCode);
       expect(bySet.nr?.length).toBe(59);

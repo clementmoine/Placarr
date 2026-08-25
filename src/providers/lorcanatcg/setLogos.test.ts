@@ -16,6 +16,12 @@ import {
   type LorcanaSetLogoIndex,
 } from "./setLogos";
 
+const httpGetMock = vi.fn();
+vi.mock("@/lib/http/httpClient", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/http/httpClient")>()),
+  httpGet: (...args: unknown[]) => httpGetMock(...args),
+}));
+
 const CATALOG = {
   card_sets: [
     {
@@ -256,15 +262,8 @@ describe("installLorcanaSetLogos", () => {
 
   it("dumps each catalog thumb next to a staging index", async () => {
     const png = Buffer.from("png");
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) => ({
-        ok: true,
-        arrayBuffer: async () => png,
-        status: 200,
-        url,
-      })),
-    );
+    httpGetMock.mockReset();
+    httpGetMock.mockResolvedValue({ status: 200, data: png });
     const dest = path.join(dir, "set-logos.json");
     const logosDir = path.join(dir, "sets");
     const index = await installLorcanaSetLogos(

@@ -2,7 +2,7 @@
  * Official JP Carddass 巻ノ… vol.1 face GIFs (`shinobi-003_1.gif`, …).
  * Pure — no I/O.
  */
-import { carddasJpCardlistCards } from "./parseCarddasJpCardlist";
+import { carddasJpCardlistCards } from "./parse/parseCarddasJpCardlist";
 
 const PRINTED_TO_KIND: Record<string, string> = {
   忍: "shinobi",

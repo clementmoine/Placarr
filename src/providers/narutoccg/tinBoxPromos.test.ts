@@ -8,7 +8,7 @@ import {
   mapSiteMedThumbsOntoAssets,
   collectorNumbersWithThumb,
   installedTinStagingPaths,
-} from "./scrapeCards";
+} from "./scrape/scrapeCards";
 import { materializeTinBoxPromos } from "./tinBoxPromos";
 import type { NarutoAssetRow, NarutoPrintRow } from "./indexStore";
 

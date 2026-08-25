@@ -24,8 +24,8 @@ import driveLedger from "./curated/sources/naruto-ccg-drive.json";
 import {
   NARUTO_STAGING_DRIVE,
   type DriveHarvestManifest,
-} from "./harvestNarutoCcgDriveStaging";
-import { driveHubHarvestRoots } from "./parseNarutoCcgDrive";
+} from "./harvest/harvestNarutoCcgDriveStaging";
+import { driveHubHarvestRoots } from "./parse/parseNarutoCcgDrive";
 import { NARUTO_PACK_ID } from "./packs";
 
 const execFileAsync = promisify(execFile);

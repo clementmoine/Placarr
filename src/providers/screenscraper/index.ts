@@ -8,8 +8,8 @@ import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
-import { formatScore } from "@/core/enrich/searchUtils";
-import { cleanSearchQuery } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
+import { cleanSearchQuery } from "@/core/enrich/search/searchUtils";
 import {
   createScreenScraperResolver,
   rewriteScreenScraperGameInfoUrl,

@@ -8,8 +8,7 @@
  *   IGDB_CLIENT_SECRET — from dev.twitch.tv/console/apps
  */
 
-import axios from "axios";
-import { httpPost } from "@/lib/http/httpClient";
+import { httpPost, isAxiosError } from "@/lib/http/httpClient";
 import { prisma } from "@/lib/db/prisma";
 import levenshtein from "fast-levenshtein";
 import type {
@@ -122,11 +121,11 @@ function igdbHeaders(token: string): Record<string, string> {
 }
 
 function isUnauthorizedIGDBError(err: unknown): boolean {
-  return axios.isAxiosError(err) && err.response?.status === 401;
+  return isAxiosError(err) && err.response?.status === 401;
 }
 
 function describeIGDBError(err: unknown): string {
-  if (axios.isAxiosError(err)) {
+  if (isAxiosError(err)) {
     const status = err.response?.status;
     const responseMessage =
       typeof err.response?.data === "object" &&

@@ -5,7 +5,10 @@
  * borrow the best recto across `catalogueLocales` while the verso stays on the
  * tile locale (often localized — missing back is fine).
  */
-import type { CardsIndexEntry, CardsIndexLangFiles } from "@/effects/cardsIndex";
+import type {
+  CardsIndexEntry,
+  CardsIndexLangFiles,
+} from "@/effects/cardsIndex";
 
 export type CatalogueFaceSlot = {
   lang: string;
@@ -28,9 +31,7 @@ export function catalogueFaceArtFile(
   return files.thumb ?? null;
 }
 
-function catalogueFaceThumbFile(
-  files: CardsIndexLangFiles,
-): string | null {
+function catalogueFaceThumbFile(files: CardsIndexLangFiles): string | null {
   if (files.art) return files.thumb ?? null;
   return null;
 }

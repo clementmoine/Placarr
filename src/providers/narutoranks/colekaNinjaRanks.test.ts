@@ -56,10 +56,7 @@ describe("readColekaNinjaRanksLedger", () => {
 describe("installColekaNinjaRanks", () => {
   it("pose un verso seul sur le set attesté, sans inventer de recto", () => {
     tmpDataRoot();
-    const staging = path.join(
-      os.tmpdir(),
-      `coleka-nr-install-${Date.now()}`,
-    );
+    const staging = path.join(os.tmpdir(), `coleka-nr-install-${Date.now()}`);
     roots.push(staging);
     fs.mkdirSync(staging, { recursive: true });
     fs.writeFileSync(path.join(staging, "0003-back.webp"), "fake-back");
@@ -108,10 +105,7 @@ describe("installColekaNinjaRanks", () => {
 
   it("refuse un recto Coleka reflété et le retire de l'index", () => {
     tmpDataRoot();
-    const staging = path.join(
-      os.tmpdir(),
-      `coleka-nr-reject-${Date.now()}`,
-    );
+    const staging = path.join(os.tmpdir(), `coleka-nr-reject-${Date.now()}`);
     roots.push(staging);
     fs.mkdirSync(staging, { recursive: true });
     fs.writeFileSync(
@@ -125,7 +119,7 @@ describe("installColekaNinjaRanks", () => {
       "src/providers/narutoranks/curated/sources/coleka-ninja-ranks.json",
     );
     const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8")) as {
-      rejectedFaces?: { setCode?: string; number: string }[];
+      rejectedFaces?: { setCode?: string; number: string; reason?: string }[];
     };
     const hadRejected = ledger.rejectedFaces?.some(
       (row) => row.setCode === "ff" && row.number === "0002",
@@ -175,10 +169,7 @@ describe("installColekaNinjaRanks", () => {
     const exported = index.exportIndex();
     const entry = (
       JSON.parse(fs.readFileSync(exported!.path, "utf8")) as {
-        cards: Record<
-          string,
-          { langs: Record<string, { art?: string }> }
-        >;
+        cards: Record<string, { langs: Record<string, { art?: string }> }>;
       }
     ).cards["naruto:ff-0002"];
     expect(entry.langs.fr?.art).toBeUndefined();
@@ -186,10 +177,7 @@ describe("installColekaNinjaRanks", () => {
 
   it("pose un insert EU sous le bon set", () => {
     tmpDataRoot();
-    const staging = path.join(
-      os.tmpdir(),
-      `coleka-nr-insert-${Date.now()}`,
-    );
+    const staging = path.join(os.tmpdir(), `coleka-nr-insert-${Date.now()}`);
     roots.push(staging);
     fs.mkdirSync(staging, { recursive: true });
     fs.writeFileSync(

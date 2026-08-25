@@ -14,7 +14,7 @@ import { isUnavailableCoverPlaceholderBuffer } from "@/core/enrich/media/coverPl
 import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
 import { fetchRemoteImageBuffer } from "@/core/enrich/media/remoteFetch";
-import { providerOriginalImageUrl } from "@/core/enrich/imageUrls";
+import { providerOriginalImageUrl } from "@/core/enrich/media/imageUrls";
 import { ASSETS_URL_PREFIX } from "@/lib/packAssetUrls";
 import { FETCHED_IMAGE_MAX_SIDE, toUploadWebp } from "@/lib/media/losslessWebp";
 import { uploadsDir } from "@/lib/runtimeData";

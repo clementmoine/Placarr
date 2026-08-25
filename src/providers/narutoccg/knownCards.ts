@@ -40,10 +40,10 @@ import { NARUTO_PACK_ID } from "./indexStore";
 import {
   normalizeCardNumber,
   type MangaNewsCardType,
-} from "./parseMangaNewsChecklist";
+} from "./parse/parseMangaNewsChecklist";
 import { mintNarutoPrintKey } from "./collectorIdentity";
 import { listNarutoCardDirs } from "./narutoCardDisk";
-import { pickPreferredFaceArtFilename } from "./parseCarddassAsset";
+import { pickPreferredFaceArtFilename } from "./parse/parseCarddassAsset";
 
 export const KNOWN_SOURCES = [
   "carddass-fr-checklist",

@@ -1,7 +1,9 @@
 # Naruto Carddass / CACG Bandai — recherche sources
 
-> Statut : **recherche only** (2026-08-12). Pas de provider Placarr, pas de pack
-> foil. Besoin utilisateur : **Naruto Carddass Bandai** / **Naruto Cartes à jouer
+> Statut : **provider `narutoccg` livré** (recherche ouverte le 2026-08-12 ; le
+> pack est depuis en place — `data/naruto/` : carddass, shippuden, ninja-ranks,
+> ultra-challenge). Besoin utilisateur : **Naruto Carddass Bandai** / **Naruto
+> Cartes à jouer
 > et à collectionner** (ère ~2002–2008 FR / JP Carddass ; pas le TCG Bandai 2027).
 >
 > Contrat produit (idem One Piece / Pokémon sans Live) :

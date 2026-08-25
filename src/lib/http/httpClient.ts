@@ -8,8 +8,16 @@
  * in-flight GETs (the same search URL is often requested by several passes at
  * once).
  */
-import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
+import axios, {
+  type AxiosError,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+} from "axios";
 
+import {
+  waitForHostSlot,
+  type HostLimiterProfile,
+} from "@/lib/http/hostLimiter";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 
 /** Third-party JSON object whose members the caller narrows itself. */
@@ -17,6 +25,23 @@ export type JsonObject = { [key: string]: unknown };
 
 /** Cap for any GET that does not ask for its own timeout. */
 export const HTTP_DEFAULT_TIMEOUT_MS = 15_000;
+
+/**
+ * User-Agent déclaré quand l'appelant n'en fournit pas : on ne se fait pas
+ * passer pour un navigateur quand on n'est pas en train d'imiter un
+ * navigateur. À faire suivre avec `version` dans package.json. Les providers
+ * de scraping qui posent leur propre UA navigateur gardent la main — cet
+ * en-tête n'est posé qu'en l'absence du leur.
+ */
+export const HTTP_DEFAULT_USER_AGENT = "Placarr/0.1.0 (+https://github.com/)";
+
+/**
+ * Re-exported so providers can narrow errors thrown by {@link httpGet} /
+ * {@link httpPost} without importing axios directly (no-restricted-imports).
+ */
+export function isAxiosError(error: unknown): error is AxiosError {
+  return axios.isAxiosError(error);
+}
 
 /** Bound the maps so a long-running worker cannot grow them without limit. */
 const MAX_CACHE_ENTRIES = 200;
@@ -30,6 +55,13 @@ export type HttpGetOptions = AxiosRequestConfig & {
   cacheTtlMs?: number;
   /** Bypass both the in-flight join and the response cache. */
   noDedup?: boolean;
+  /**
+   * Cadence plancher vers ce host, en ms. Défaut : le profil `api` du
+   * limiteur (voir `hostLimiter`). `0` court-circuite le limiteur.
+   */
+  minIntervalMs?: number;
+  /** Profil de cadence du limiteur par host (`api` par défaut). */
+  hostProfile?: HostLimiterProfile;
 };
 
 type InFlight = {
@@ -142,6 +174,43 @@ function joinInFlight(
 }
 
 /**
+ * Vrai si les en-têtes portent déjà un User-Agent — objet plat ou instance
+ * `AxiosHeaders`, casse indifférente. Un provider qui assume son UA navigateur
+ * le garde.
+ */
+function hasUserAgent(headers: unknown): boolean {
+  if (!headers || typeof headers !== "object") return false;
+  const maybeAxiosHeaders = headers as { has?: unknown };
+  if (typeof maybeAxiosHeaders.has === "function") {
+    return Boolean(
+      (maybeAxiosHeaders as { has: (name: string) => boolean }).has(
+        "User-Agent",
+      ),
+    );
+  }
+  return Object.keys(headers as Record<string, unknown>).some(
+    (key) => key.toLowerCase() === "user-agent",
+  );
+}
+
+/**
+ * Pose l'UA honnête si l'appelant n'en a pas mis un. Les en-têtes fournis sont
+ * copiés (jamais mutés) ; un `AxiosHeaders` est aplati via son `toJSON` —
+ * pas d'import de la classe, pour rester compatible avec les tests qui
+ * mockent `axios` au strict minimum.
+ */
+function withDefaultUserAgent(
+  headers: AxiosRequestConfig["headers"],
+): AxiosRequestConfig["headers"] {
+  if (hasUserAgent(headers)) return headers;
+  const base =
+    headers && typeof (headers as { toJSON?: unknown }).toJSON === "function"
+      ? (headers as { toJSON: () => Record<string, unknown> }).toJSON()
+      : { ...(headers as Record<string, unknown> | undefined) };
+  return { ...base, "User-Agent": HTTP_DEFAULT_USER_AGENT };
+}
+
+/**
  * GET with a default timeout, the ambient job signal, and in-flight dedup.
  * Responses are shared between joined callers — treat them as read-only.
  */
@@ -149,19 +218,37 @@ export async function httpGet<T = unknown>(
   url: string,
   options: HttpGetOptions = {},
 ): Promise<AxiosResponse<T>> {
-  const { cacheTtlMs = 0, noDedup, signal: explicitSignal, ...rest } = options;
+  const {
+    cacheTtlMs = 0,
+    noDedup,
+    minIntervalMs,
+    hostProfile,
+    signal: explicitSignal,
+    ...rest
+  } = options;
   const signal = resolveRequestAbortSignal(explicitSignal);
   if (signal?.aborted) throw abortError(signal.reason);
 
   const axiosOptions: AxiosRequestConfig = {
     ...rest,
+    headers: withDefaultUserAgent(rest.headers),
     timeout: rest.timeout ?? HTTP_DEFAULT_TIMEOUT_MS,
   };
+
+  // Chaque requête qui part réellement prend un créneau du limiteur de son
+  // host — les hits cache/dedup n'attendent pas, eux.
+  const waitSlot = (slotSignal?: AbortSignal) =>
+    waitForHostSlot(url, {
+      profile: hostProfile ?? "api",
+      minIntervalMs,
+      signal: slotSignal,
+    });
 
   // Streams have a single consumer — never share or replay them.
   const shareable = !noDedup && axiosOptions.responseType !== "stream";
   if (!shareable) {
     stats.requests += 1;
+    await waitSlot(signal);
     return axios.get<T>(url, { ...axiosOptions, signal });
   }
 
@@ -187,8 +274,17 @@ export async function httpGet<T = unknown>(
   const entry: InFlight = {
     controller,
     waiters: 0,
-    promise: axios
-      .get<T>(url, { ...axiosOptions, signal: controller.signal })
+    promise: waitSlot(controller.signal)
+      .then(() => {
+        // Tous les waiters sont partis pendant l'attente du créneau : ne pas
+        // émettre une requête que plus personne n'écoute.
+        if (controller.signal.aborted)
+          throw abortError(controller.signal.reason);
+        return axios.get<T>(url, {
+          ...axiosOptions,
+          signal: controller.signal,
+        });
+      })
       .then((response) => {
         if (cacheTtlMs > 0 && response.status >= 200 && response.status < 300) {
           rememberEntry(responseCache, key, { at: Date.now(), response });
@@ -213,13 +309,55 @@ export async function httpPost<T = unknown>(
   body?: unknown,
   options: Omit<HttpGetOptions, "cacheTtlMs" | "noDedup"> = {},
 ): Promise<AxiosResponse<T>> {
-  const { signal: explicitSignal, ...rest } = options;
+  const {
+    signal: explicitSignal,
+    minIntervalMs,
+    hostProfile,
+    ...rest
+  } = options;
   const signal = resolveRequestAbortSignal(explicitSignal);
   if (signal?.aborted) throw abortError(signal.reason);
 
   stats.requests += 1;
+  await waitForHostSlot(url, {
+    profile: hostProfile ?? "api",
+    minIntervalMs,
+    signal,
+  });
   return axios.post<T>(url, body, {
     ...rest,
+    headers: withDefaultUserAgent(rest.headers),
+    timeout: rest.timeout ?? HTTP_DEFAULT_TIMEOUT_MS,
+    signal,
+  });
+}
+
+/**
+ * HEAD with the same timeout and abort defaults as {@link httpGet}.
+ * Never de-duplicated or cached — existence probes must hit the origin.
+ */
+export async function httpHead(
+  url: string,
+  options: Omit<HttpGetOptions, "cacheTtlMs" | "noDedup"> = {},
+): Promise<AxiosResponse<unknown>> {
+  const {
+    signal: explicitSignal,
+    minIntervalMs,
+    hostProfile,
+    ...rest
+  } = options;
+  const signal = resolveRequestAbortSignal(explicitSignal);
+  if (signal?.aborted) throw abortError(signal.reason);
+
+  stats.requests += 1;
+  await waitForHostSlot(url, {
+    profile: hostProfile ?? "api",
+    minIntervalMs,
+    signal,
+  });
+  return axios.head(url, {
+    ...rest,
+    headers: withDefaultUserAgent(rest.headers),
     timeout: rest.timeout ?? HTTP_DEFAULT_TIMEOUT_MS,
     signal,
   });

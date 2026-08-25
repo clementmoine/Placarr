@@ -149,15 +149,7 @@ export async function suggestCropBox(
         const blue = data[offset + 2] ?? 0;
         const alpha = data[offset + 3] ?? 255;
 
-        if (
-          isTrimMarginPixel(
-            red,
-            green,
-            blue,
-            alpha,
-            lightLuminanceThreshold,
-          )
-        )
+        if (isTrimMarginPixel(red, green, blue, alpha, lightLuminanceThreshold))
           continue;
 
         minX = Math.min(minX, x);

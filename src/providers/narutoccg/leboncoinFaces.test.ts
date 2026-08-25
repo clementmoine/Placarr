@@ -5,7 +5,7 @@ import {
   leboncoinFaceLedger,
   leboncoinIngestFaces,
   leboncoinListingImageFull,
-} from "./installLeboncoinFaces";
+} from "./install/installLeboncoinFaces";
 
 describe("leboncoin pasted faces", () => {
   it("keeps PR-096 as a pasted CDN URL, not a store crawl", () => {

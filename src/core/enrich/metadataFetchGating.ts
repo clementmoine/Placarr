@@ -33,8 +33,8 @@ import { bookIsbnBootstrapProviderIds } from "@/core/catalog/catalog";
 import {
   metadataResultsNeedGalleryEnrichment,
   metadataResultsHaveGameGallerySource,
-} from "@/core/enrich/galleryEnrichment";
-import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
+} from "@/core/enrich/media/galleryEnrichment";
+import { metadataHasDisplayImage } from "@/core/enrich/media/displayImage";
 import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 /**

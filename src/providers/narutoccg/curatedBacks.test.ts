@@ -9,7 +9,7 @@ import {
 } from "@/providers/shared/curatedCardsInstall";
 
 import { narutoCuratedDir } from "./curatedPaths";
-import { listCuratedReconstructedFaces } from "./installReconstructed";
+import { listCuratedReconstructedFaces } from "./install/installReconstructed";
 
 function listRelFiles(dir: string, prefix = ""): string[] {
   if (!existsSync(dir)) return [];

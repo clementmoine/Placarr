@@ -30,11 +30,7 @@ import {
   saveBundleLedger,
 } from "./bundleLedger";
 import { POKEMON_LIVE_SCRAPE_DEFAULT_LANGS_CSV } from "./languages";
-import {
-  DEFAULT_SOFTBAN_ABORT_COOLDOWN_MS,
-  softbanRemainingMs,
-  writeSoftbanState,
-} from "./scrapePlan";
+import { recordSoftbanFailure, softbanRemainingMs } from "./scrapePlan";
 
 export const CDN_HOST = "https://cdn.studio-prod.pokemon.com";
 export const DEFAULT_VERSION = "1.40.0";
@@ -1015,12 +1011,11 @@ export async function scrape(
 
     function persistSoftbanAbort(reason: string): void {
       if (!cacheRoot) return;
-      writeSoftbanState(cacheRoot, {
-        until: new Date(Date.now() + DEFAULT_SOFTBAN_ABORT_COOLDOWN_MS),
-        reason,
-      });
+      // Circuit breaker : reset exponentiel (2 → 5 → 15 → 60 min) à chaque
+      // ouverture consécutive — voir `providers/shared/softban`.
+      const state = recordSoftbanFailure(cacheRoot, { reason });
       console.log(
-        `  [soft-ban] wrote cooldown → ${path.join(cacheRoot, "logs/cdn-softban-until.json")}`,
+        `  [soft-ban] wrote cooldown → ${path.join(cacheRoot, "logs/cdn-softban-until.json")} (ouverture n°${state.openings ?? 1}, reset ${state.until})`,
       );
     }
 

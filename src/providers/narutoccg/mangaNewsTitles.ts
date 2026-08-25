@@ -15,7 +15,7 @@ import {
   htmlToChecklistText,
   parseMangaNewsChecklistText,
   type MangaNewsChecklistLine,
-} from "./parseMangaNewsChecklist";
+} from "./parse/parseMangaNewsChecklist";
 
 export type MangaNewsTitleHit = {
   number: string;

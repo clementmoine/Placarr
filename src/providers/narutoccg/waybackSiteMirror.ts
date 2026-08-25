@@ -5,8 +5,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { waybackRawUrl } from "./parseCarddassAsset";
-import { downloadRaw, runPool } from "./scrapeCards";
+import { httpGet } from "@/lib/http/httpClient";
+
+import { waybackRawUrl } from "./parse/parseCarddassAsset";
+import { downloadRaw, runPool } from "./scrape/scrapeCards";
 
 export const WAYBACK_UA = "PlacarrNarutoScrape/1.0 (local collection)";
 
@@ -111,11 +113,16 @@ export async function fetchCdxRows(
     const started = Date.now();
     console.log(`CDX ${label} attempt ${attempt}/5…`);
     try {
-      const response = await fetch(cdxUrl, {
+      const response = await httpGet<string[][]>(cdxUrl, {
         headers: { "user-agent": WAYBACK_UA },
+        // Le CDX Wayback met souvent 20–90s à répondre.
+        timeout: 180_000,
+        validateStatus: () => true,
       });
-      if (!response.ok) throw new Error(`CDX HTTP ${response.status}`);
-      const raw = (await response.json()) as string[][];
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`CDX HTTP ${response.status}`);
+      }
+      const raw = response.data;
       const rows: CdxRow[] = [];
       for (const row of raw) {
         if (!row[0] || row[0] === "timestamp") continue;

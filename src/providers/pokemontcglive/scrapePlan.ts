@@ -25,6 +25,9 @@ import path from "node:path";
 export {
   clearSoftbanState,
   readSoftbanState,
+  recordSoftbanFailure,
+  softbanAllows,
+  softbanCircuitState,
   softbanRemainingMs,
   softbanStatePath,
   writeSoftbanState,
@@ -257,6 +260,3 @@ export function planScrapeNames(opts: {
     softbanBlocked: remaining > 0,
   };
 }
-
-/** Default soft-ban resume delay after abort (15 min — Cron-friendly). */
-export const DEFAULT_SOFTBAN_ABORT_COOLDOWN_MS = 15 * 60 * 1000;

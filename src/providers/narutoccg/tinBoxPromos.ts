@@ -9,7 +9,7 @@ import { dataRoot } from "@/lib/runtimeData";
 
 import { NARUTO_PACK_ID } from "./indexStore";
 import { narutoCardAbsDir } from "./narutoCardDisk";
-import { NARUTO_STAGING_SITE } from "./scrapeCards";
+import { NARUTO_STAGING_SITE } from "./scrape/scrapeCards";
 
 export type TinPromoMap = {
   /** Collector id under cards/, e.g. pr011 */

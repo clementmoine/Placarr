@@ -1,5 +1,4 @@
-import axios from "axios";
-import { httpGet } from "@/lib/http/httpClient";
+import { httpGet, isAxiosError } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
@@ -443,7 +442,7 @@ export function createGoogleBooksResolver() {
 
       return await mapVolumeToMetadata(best, cleanedBarcode);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 429) {
+      if (isAxiosError(error) && error.response?.status === 429) {
         throw new Error(
           apiKey
             ? "Google Books API rate limit exceeded"

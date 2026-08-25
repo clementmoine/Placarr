@@ -6,6 +6,7 @@
  * same shape as Lorcast's promo path.
  */
 import { parsePrintKey } from "@/core/identify/printKey";
+import { lorcanaPromoSetFromGrouping } from "@/providers/shared/lorcanaPromoSet";
 
 const LORCANA_GAME = "lorcana";
 
@@ -31,14 +32,8 @@ export function padDotggMainSetId(set: string): string {
   return trimmed.toUpperCase();
 }
 
-/** `p3` / `P3` → `P3`. */
-export function dotggPromoSetFromGrouping(
-  grouping: string | null | undefined,
-): string | null {
-  if (!grouping) return null;
-  const match = /^p(\d+)$/i.exec(grouping.trim());
-  return match ? `P${match[1]}` : null;
-}
+/** Alias historique — même fonction que `lorcanaPromoSetFromGrouping`. */
+export const dotggPromoSetFromGrouping = lorcanaPromoSetFromGrouping;
 
 export function dotggLookupFromPrintKey(
   printKey: string | null | undefined,
@@ -46,7 +41,7 @@ export function dotggLookupFromPrintKey(
   const identity = parsePrintKey(printKey);
   if (!identity || identity.game !== LORCANA_GAME) return null;
 
-  const promoSet = dotggPromoSetFromGrouping(identity.grouping);
+  const promoSet = lorcanaPromoSetFromGrouping(identity.grouping);
   if (promoSet) {
     return { setId: promoSet, number: identity.number };
   }

@@ -238,7 +238,7 @@ Reste ouvert :
 3. **dbscards** = visuel FR plus grand (400×560) — fallback HD à trancher (ToS).
 4. **Vrai HD** = piste FW Digital (Unity) ou scans ; `cardgame.fr` est fermé.
 5. **Foil réel** : pas de masks Masters. FW Digital à vérifier avant d’inventer du CSS.
-6. TTS Workshop 1552795176 / `card_game_steam.md` = recovery cardgame.fr, **pas** le catalogue.
+6. TTS Workshop 1552795176 / `archive/card_game_steam.md` = recovery cardgame.fr, **pas** le catalogue.
 
 ## 7. Suite
 

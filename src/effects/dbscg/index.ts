@@ -6,8 +6,7 @@
  * `data/dbs/cg/cards/back.webp`. There is no Unity / mask dump, so shiny
  * finishes use a house look on a full-face plate — same honesty as Naruto.
  */
-import { registerEffectPack } from "@/core/render/foil/registry";
-import type { EffectPackModule } from "@/core/render/foil/types";
+import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 export const DBS_CG_EFFECT_PACK_ID = "dbs-cg";
 
@@ -21,21 +20,12 @@ const FINISH_SHADER: Record<string, string> = {
 
 export const DBS_CG_FINISHES = Object.keys(FINISH_SHADER);
 
-export const dbsCgEffectPack: EffectPackModule = {
+export const dbsCgEffectPack = defineCatalogueOnlyPack({
   id: DBS_CG_EFFECT_PACK_ID,
   label: "Dragon Ball Super Card Game",
   blurb: "Catalogue Bandai Masters — dos sleeve, sans dump foil",
   assetBase: ASSET_BASE,
   cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
-  resolveMaterial: () => null,
-  resolveMaterialForPrint: () => null,
+  finishShader: FINISH_SHADER,
   fallbackFoilMaskUrl: DBS_CG_FULL_FOIL_MASK_URL,
-  resolveCss: (finish) => ({
-    finishShaderId: FINISH_SHADER[(finish ?? "").toLowerCase()] ?? null,
-    varnishShaderId: null,
-  }),
-  listMaterials: () => [],
-  material: () => null,
-};
-
-registerEffectPack(dbsCgEffectPack);
+});

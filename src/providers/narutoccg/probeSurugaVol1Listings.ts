@@ -18,8 +18,8 @@ import {
   parseSurugaProductDetailHtml,
   SURUGA_CARDDASS_ORIGIN,
   type SurugaCarddassListing,
-} from "./parseSurugaCarddass";
-import { NARUTO_STAGING_SURUGA_CARDDASS } from "./scrapeSurugaCarddass";
+} from "./parse/parseSurugaCarddass";
+import { NARUTO_STAGING_SURUGA_CARDDASS } from "./scrape/scrapeSurugaCarddass";
 
 const DEFAULT_DELAY_MS = 400;
 const PROBE_START = 636_800;

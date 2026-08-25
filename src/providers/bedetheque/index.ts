@@ -1,4 +1,3 @@
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
@@ -16,7 +15,6 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
 import {
   matchBarcodes,
@@ -32,6 +30,7 @@ import {
 import { collectBedethequeMappingRawKeys } from "./fetch";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 export {
   fetchBedethequeMetadata,
@@ -399,7 +398,7 @@ function mapBedethequeMetadata(
   };
 }
 
-export const bedethequeModule: ProviderModule = {
+export const bedethequeModule = defineProvider({
   info: {
     id: "bedetheque",
     label: "Bédéthèque",
@@ -477,19 +476,7 @@ export const bedethequeModule: ProviderModule = {
   },
   suggestDatabaseTitles: ({ cleanedName }) =>
     getBedethequeSuggestions(cleanedName),
-  healthCheck: createMetadataHealthCheck(
-    "bedetheque",
-    "Bédéthèque",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://www.bedetheque.com/");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
+  // healthCheck : défaut defineProvider (ping de info.websiteUrl).
   testHandlers: {
     "bedetheque-metadata": {
       label: "Bédéthèque - Metadata",
@@ -520,4 +507,4 @@ export const bedethequeModule: ProviderModule = {
     return collectBedethequeMappingRawKeys(ctx.name);
   },
   refreshBarcodePriceOffers: refreshBedethequeOffers,
-};
+});

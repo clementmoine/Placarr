@@ -4,10 +4,10 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
+import { CATALOGUE_PACKS, cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { packApksDir } from "@/lib/packPaths";
 
-const PACKS = new Set(["lorcana", "pokemon"]);
 const MAX_APK_BYTES = 512 * 1024 * 1024;
 
 /**
@@ -28,9 +28,12 @@ export async function POST(req: NextRequest) {
 
   const form = await req.formData();
   const pack = String(form.get("pack") || "").trim();
-  if (!PACKS.has(pack)) {
+  if (!cataloguePackInfo(pack)?.hasFoilMeta) {
+    const allowed = CATALOGUE_PACKS.filter((info) => info.hasFoilMeta).map(
+      (info) => info.id,
+    );
     return NextResponse.json(
-      { error: "pack must be lorcana or pokemon" },
+      { error: `pack must be one of: ${allowed.join(", ")}` },
       { status: 400 },
     );
   }

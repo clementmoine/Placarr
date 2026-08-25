@@ -118,7 +118,11 @@ export function packCardsIndexPath(pack: string): string {
 
 /** Prints whose recto text is locale-specific — optional, per pack. */
 export function packLocaleSpecificFacesPath(pack: string): string {
-  return path.join(dataRoot(), canonicalDataPack(pack), "locale-specific-faces.json");
+  return path.join(
+    dataRoot(),
+    canonicalDataPack(pack),
+    "locale-specific-faces.json",
+  );
 }
 
 /** Sealed SKUs — `data/<pack>/products-index.json`. */
@@ -208,33 +212,33 @@ export function packFoilManifestPath(pack: string): string {
   return path.join(foilPackDir(pack), "manifest.json");
 }
 
-/** Pokémon Live material float/color sheets. */
-export function packMaterialSheetsPath(pack = "pokemon"): string {
+/** Material float/color sheets — `data/<pack>/foil/materialSheets.json`. */
+export function packMaterialSheetsPath(pack: string): string {
   return path.join(foilPackDir(pack), "materialSheets.json");
 }
 
-export function packTextureFlagsPath(pack = "pokemon"): string {
+export function packTextureFlagsPath(pack: string): string {
   return path.join(foilPackDir(pack), "textureFlags.json");
 }
 
-export function packFragStemsPath(pack = "pokemon"): string {
+export function packFragStemsPath(pack: string): string {
   return path.join(foilPackDir(pack), "frag-stems.json");
 }
 
-export function packSharedMotifsPath(pack = "pokemon"): string {
+export function packSharedMotifsPath(pack: string): string {
   return path.join(foilPackDir(pack), "shared-motifs.json");
 }
 
 /** Client-safe Live foil_mask overrides (beside catalog). */
-export function packLiveFoilMasksPath(pack = "pokemon"): string {
+export function packLiveFoilMasksPath(pack: string): string {
   return path.join(dataRoot(), pack, "liveFoilMasks.json");
 }
 
-export function packLiveOwnedPath(pack = "pokemon"): string {
+export function packLiveOwnedPath(pack: string): string {
   return path.join(dataRoot(), pack, "liveOwned.json");
 }
 
-export function packReprintMetaPath(pack = "pokemon"): string {
+export function packReprintMetaPath(pack: string): string {
   return path.join(dataRoot(), pack, "reprintMeta.json");
 }
 

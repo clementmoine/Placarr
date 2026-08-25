@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { carddasJpCardlistCards } from "./parseCarddasJpCardlist";
+import { carddasJpCardlistCards } from "./parse/parseCarddasJpCardlist";
 
 describe("probeSurugaMissingVol1 targets", () => {
   it("vol1 checklist includes 忍-3 as ni0003", () => {

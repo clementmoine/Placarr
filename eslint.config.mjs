@@ -65,6 +65,54 @@ const eslintConfig = [
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  {
+    // Convention HTTP sortant : tout appel réseau d'un provider passe par la
+    // couche partagée `@/lib/http` (httpGet/httpPost/httpHead,
+    // fetchTextWithFlareFallback) — timeout, abort du job ambiant, dédup et
+    // soft-ban y sont centralisés. Ni `fetch()` nu ni import direct d'axios.
+    files: ["src/providers/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: 'CallExpression[callee.name="fetch"]',
+          message:
+            "fetch() nu interdit dans un provider — passe par @/lib/http (httpGet/httpPost/httpHead ou fetchTextWithFlareFallback).",
+        },
+      ],
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "axios",
+              message:
+                "Import direct d'axios interdit dans un provider — passe par @/lib/http (httpGet/httpPost/httpHead ; isAxiosError y est ré-exporté).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Exemption assumée : scrape CDN UnityFS séquentiel maison (canary,
+    // soft-ban CloudFront dédié) — ne pas migrer vers @/lib/http.
+    files: ["src/providers/pokemontcglive/cdn.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
+      "no-restricted-imports": "off",
+    },
+  },
+  {
+    // Tests : ils mockent la couche réseau (stubGlobal("fetch") historique,
+    // fixtures AxiosError pour les erreurs rejetées par httpGet) sans émettre
+    // de trafic — la règle vise le code provider, pas les fixtures.
+    files: ["src/providers/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": "off",
+      "no-restricted-imports": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

@@ -4,6 +4,10 @@
  */
 import { httpGet } from "@/lib/http/httpClient";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { lorcanaPromoSetFromGrouping } from "@/providers/shared/lorcanaPromoSet";
+
+/** Alias — une seule implémentation dans `shared/lorcanaPromoSet`. */
+export const lorcastPromoSetFromGrouping = lorcanaPromoSetFromGrouping;
 
 const BASE_URL = "https://api.lorcast.com/v0";
 const LORCANA_GAME = "lorcana";
@@ -154,15 +158,9 @@ export async function searchLorcastCards(
 /**
  * Lorcast indexes set promos under set codes `P1`/`P2`/… (collector number
  * only), not under the main set with a `-pN` suffix. Placarr printKeys keep
- * the printed identity (`lorcana:7-24b-p2`); this maps the grouping segment.
+ * the printed identity (`lorcana:7-24b-p2`); this maps via
+ * `lorcastPromoSetFromGrouping`.
  */
-export function lorcastPromoSetFromGrouping(
-  grouping: string | null | undefined,
-): string | null {
-  if (!grouping) return null;
-  const match = /^p(\d+)$/i.exec(grouping.trim());
-  return match ? `P${match[1]}` : null;
-}
 
 function collectorNumberCandidates(number: string): string[] {
   const raw = number.trim();

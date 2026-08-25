@@ -10,7 +10,7 @@ const SHELF_TYPE_READINESS: Record<Type, ShelfTypeReadiness> = {
   boardgames: "ready",
   hardware: "ready",
   tcg: "ready",
-  toys: "comingSoon",
+  toys: "ready",
 };
 
 export function shelfTypeReadiness(type: string): ShelfTypeReadiness {

@@ -13,6 +13,7 @@ import path from "node:path";
 
 import { assetsPackFileUrl, packSealedProductsDir } from "@/lib/packPaths";
 import { foilPackDataDir } from "@/lib/runtimeData";
+import { httpGet } from "@/lib/http/httpClient";
 
 export const LORCANA_SET_LOGO_CACHE_VERSION = 2;
 export const LORCANA_CATALOG_URL =
@@ -325,13 +326,13 @@ export function lorcanaCatalogueSetIdForProduct(input: {
   return numbered ? numbered[1]! : null;
 }
 
-async function httpGet(url: string): Promise<Buffer> {
-  const res = await fetch(url, {
+async function fetchBytes(url: string): Promise<Buffer> {
+  const res = await httpGet<ArrayBuffer>(url, {
     headers: { "User-Agent": UA },
-    signal: AbortSignal.timeout(45_000),
+    timeout: 45_000,
+    responseType: "arraybuffer",
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
-  return Buffer.from(await res.arrayBuffer());
+  return Buffer.from(res.data);
 }
 
 function writeIndexFile(file: string, index: LorcanaSetLogoIndex): void {
@@ -351,7 +352,7 @@ async function downloadSetLogo(
     return { ...row, logo: lorcanaSetLogoAssetUrl(row.id, ext) };
   }
   try {
-    const buf = await httpGet(row.sourceUrl);
+    const buf = await fetchBytes(row.sourceUrl);
     mkdirSync(path.dirname(dest), { recursive: true });
     writeFileSync(dest, buf);
     return { ...row, logo: lorcanaSetLogoAssetUrl(row.id, ext) };
@@ -405,7 +406,7 @@ export async function refreshLorcanaSetLogoIndex(opts?: {
   const raw =
     opts?.catalog ??
     (JSON.parse(
-      (await httpGet(LORCANA_CATALOG_URL)).toString("utf8"),
+      (await fetchBytes(LORCANA_CATALOG_URL)).toString("utf8"),
     ) as unknown);
   return installLorcanaSetLogos(parseLorcanaSetLogosFromCatalog(raw), opts);
 }

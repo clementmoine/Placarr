@@ -60,6 +60,25 @@ describe("cardCatalogueHooks", () => {
     expect(runPipeline).toHaveBeenCalledWith(["--skip", "products"]);
   });
 
+  it("préfixe des args automatiques (ex. --offline Naruto)", async () => {
+    tmpDataRoot();
+    const runPipeline = vi.fn().mockResolvedValue(undefined);
+    const hooks = cardCatalogueHooks({
+      packId: "test/pack",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline,
+      autoExtraArgs: ["--offline"],
+      autoSkip: ["checklist"],
+    });
+
+    await hooks.refresh({ auto: true });
+    expect(runPipeline).toHaveBeenCalledWith([
+      "--offline",
+      "--skip",
+      "checklist",
+    ]);
+  });
+
   it("n'invente pas de saut quand le pack n'en déclare aucun", async () => {
     tmpDataRoot();
     const runPipeline = vi.fn().mockResolvedValue(undefined);

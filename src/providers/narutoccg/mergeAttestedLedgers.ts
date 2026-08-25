@@ -21,20 +21,20 @@ import coleka from "./curated/sources/coleka.json";
 import slabZ from "./curated/sources/slab-z-2002-carddass.json";
 import physical from "./curated/sources/user-physical-ccg.json";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
-import { mergeBandaicgEnNamesIntoIndex } from "./parseBandaicgCardlist";
-import { mergeBggEnCcgS1IntoIndex } from "./parseBggNarutoList";
-import { mergeCarddasJpNamesIntoIndex } from "./parseCarddasJpCardlist";
-import { mergeCarddasJpPromoIntoIndex } from "./parseCarddasJpExtras";
-import { cardTypeFromCollectorNumber } from "./parseBandaicgAsset";
-import { parseEnCcgPrintedRef } from "./parseEnCcgPrinted";
-import { mergeCardgameclubItIntoIndex } from "./scrapeCardgameclubIt";
-import { mergeGoatEnCcgIntoIndex } from "./scrapeGoatEnCcg";
+import { mergeBandaicgEnNamesIntoIndex } from "./parse/parseBandaicgCardlist";
+import { mergeBggEnCcgS1IntoIndex } from "./parse/parseBggNarutoList";
+import { mergeCarddasJpNamesIntoIndex } from "./parse/parseCarddasJpCardlist";
+import { mergeCarddasJpPromoIntoIndex } from "./parse/parseCarddasJpExtras";
+import { cardTypeFromCollectorNumber } from "./parse/parseBandaicgAsset";
+import { parseEnCcgPrintedRef } from "./parse/parseEnCcgPrinted";
+import { mergeCardgameclubItIntoIndex } from "./scrape/scrapeCardgameclubIt";
+import { mergeGoatEnCcgIntoIndex } from "./scrape/scrapeGoatEnCcg";
 import {
   mergeNarutoCardsCaIntoIndex,
   type NarutoCardsCaCard,
-} from "./parseNarutoCardsCa";
-import { mergeNarutoCardsCaLedgerIntoIndex } from "./scrapeNarutoCardsCa";
-import { loadColekaCarddassFrLedger } from "./scrapeColekaCarddassFr";
+} from "./parse/parseNarutoCardsCa";
+import { mergeNarutoCardsCaLedgerIntoIndex } from "./scrape/scrapeNarutoCardsCa";
+import { loadColekaCarddassFrLedger } from "./scrape/scrapeColekaCarddassFr";
 
 export type FoundCatalogueMerge = {
   prints: NarutoPrintRow[];

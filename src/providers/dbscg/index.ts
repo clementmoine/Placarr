@@ -1,28 +1,19 @@
-import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
-import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
-import { listDbsCgPrintSets } from "./indexStore";
 /**
  * Dragon Ball Super Card Game (Masters) — Bandai FR+EN cardlists, local index.
  * Provider id `dbscg`; printKey game slug `dbscg`. Fusion World is `dbsfw`.
  */
-import { existsSync } from "node:fs";
-
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
-import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
-import { metadataProbe } from "@/lib/dev/mappingProbe";
-import {
-  mappingRawKeysFromFetch,
-  probeContextOrDefault,
-} from "@/lib/dev/mappingRawKeys";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { createDbsCatalogModule } from "@/providers/shared/dbs/createDbsCatalogModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import type {
-  MetadataAdapterContext,
-  ProviderModule,
-} from "@/types/providerModule";
+import type { MetadataAdapterContext } from "@/types/providerModule";
 
 import { dbsCgPrintFacts } from "./facts";
-import { dbsCgDbPath, ensureDbsCgIndex } from "./indexStore";
+import {
+  dbsCgDbPath,
+  ensureDbsCgIndex,
+  listDbsCgPrintSets,
+} from "./indexStore";
 import { dbscgCatalog } from "./pipeline";
 import { DBS_CG_GAME } from "./printIdentity";
 import {
@@ -70,97 +61,27 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   };
 }
 
-export const dbscgModule: ProviderModule = {
-  info: {
-    id: PROVIDER_ID,
-    label: PROVIDER_LABEL,
-    catalogueLabel: "Dragon Ball Masters",
-    factLabel: "DBS CG",
-    types: ["tcg"],
-    capabilities: ["identify", "cover"],
-    nameDatabase: true,
-    auth: { kind: "none" },
-    supplyMode: "local_catalog",
-    canonical: false,
-    defaultLanguage: "fr",
-    websiteUrl: "https://www.dbs-cardgame.com/europe-fr/cartes/",
-    notes:
-      "Masters (cardlists Bandai europe-fr + us-en) → `data/dbs/cg/`. Noms FR et EN dans l’index. Faces Deckplanet EN / dbscards FR au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : `pnpm dbs:cards`. Fusion World = module `dbsfw`.",
-  },
+export const dbscgModule = createDbsCatalogModule({
+  providerId: PROVIDER_ID,
+  providerLabel: PROVIDER_LABEL,
+  catalogueLabel: "Dragon Ball Masters",
+  factLabel: "DBS CG",
+  printGame: DBS_CG_GAME,
+  defaultLanguage: "fr",
+  websiteUrl: "https://www.dbs-cardgame.com/europe-fr/cartes/",
+  notes:
+    "Masters (cardlists Bandai europe-fr + us-en) → `data/dbs/cg/`. Noms FR et EN dans l’index. Faces Deckplanet EN / dbscards FR au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : `pnpm dbs:cards`. Fusion World = module `dbsfw`.",
+  syncHint: "pnpm dbs:cards",
+  probePrintKey: PROBE_PRINT_KEY,
+  probeCardName: PROBE_CARD_NAME,
   catalog: dbscgCatalog,
-  evidence: {
-    label: PROVIDER_LABEL,
-    sourceWeight: 0.9,
-  },
-  suggestDatabaseTitles: async ({ cleanedName }) => {
-    const cards = searchDbsCgPrints(cleanedName, { limit: 10 });
-    return Array.from(new Set(cards.map((card) => card.title)));
-  },
-  createMetadataAdapter: () => ({
-    id: PROVIDER_ID,
-    async resolve(ctx) {
-      return resolveFromLocal(ctx);
-    },
-  }),
-  /* Les extensions viennent du catalogue local, comme les cartes elles-mêmes. */
-  /** Lues dans la base : voir `distinctPrintLanguages`. */
-  listPrintLanguages: () => distinctPrintLanguages(dbsCgDbPath()),
-  listPrintSets: () => listDbsCgPrintSets(),
-  printGames: [DBS_CG_GAME],
-  listSetPrints: ({ setId, language }) =>
-    enumerateSetPrints({
-      setId,
-      language,
-      search: (opts) => searchDbsCgPrints(opts.query, opts),
-    }),
-  searchPrints: async ({ query, language, limit, setId }) =>
-    searchDbsCgPrints(query, { language: language ?? undefined, limit, setId }),
-  lookupPrint: async ({ printKey, language }) => {
-    if (parsePrintKey(printKey)?.game !== DBS_CG_GAME) return null;
-    return lookupDbsCgPrint(printKey, { language: language ?? undefined });
-  },
-  runMappingProbe: async () =>
-    metadataProbe(lookupDbsCgPrintDetail(PROBE_PRINT_KEY)),
-  collectMappingRawKeys: async (context) => {
-    const ctx = probeContextOrDefault(context, {
-      name: PROBE_CARD_NAME,
-      printKey: PROBE_PRINT_KEY,
-    });
-    return mappingRawKeysFromFetch(async () =>
-      lookupDbsCgPrintDetail(ctx.printKey ?? PROBE_PRINT_KEY),
-    );
-  },
-  testHandlers: {
-    "dbscg-search": {
-      label: "DBS CG - Recherche",
-      kind: "metadata",
-      run: (query) => Promise.resolve(searchDbsCgPrints(query, { limit: 10 })),
-    },
-    "dbscg-printkey": {
-      label: "DBS CG - Clé de tirage",
-      kind: "metadata",
-      run: (query) => Promise.resolve(lookupDbsCgPrint(query)),
-    },
-  },
-  mappingProbe: {
-    sampleInput: PROBE_PRINT_KEY,
-    context: { printKey: PROBE_PRINT_KEY },
-  },
-  healthCheck: createMetadataHealthCheck(
-    PROVIDER_ID,
-    PROVIDER_LABEL,
-    async () => {
-      const start = Date.now();
-      const dbPath = dbsCgDbPath();
-      const ok = existsSync(dbPath) && Boolean(ensureDbsCgIndex());
-      return {
-        ok,
-        latency: Date.now() - start,
-        error: ok ? null : `Index unavailable — run pnpm dbs:cards (${dbPath})`,
-        configured: true,
-      };
-    },
-  ),
-};
+  dbPath: dbsCgDbPath,
+  ensureIndex: ensureDbsCgIndex,
+  listPrintSets: listDbsCgPrintSets,
+  searchPrints: searchDbsCgPrints,
+  lookupPrint: lookupDbsCgPrint,
+  lookupDetail: lookupDbsCgPrintDetail,
+  resolveMetadata: resolveFromLocal,
+});
 
 export { dbsCgDbPath, ensureDbsCgIndex, writeDbsCgIndex } from "./indexStore";

@@ -1,5 +1,4 @@
-import axios from "axios";
-import { httpGet } from "@/lib/http/httpClient";
+import { httpGet, isAxiosError } from "@/lib/http/httpClient";
 import { prisma } from "@/lib/db/prisma";
 import levenshtein from "fast-levenshtein";
 import { retry } from "@/lib/http/retry";
@@ -69,7 +68,7 @@ import {
 import { areLikelySameProduct } from "@/core/identify/titleUtils";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 import { isWeakMetadataSearchFragment } from "@/core/enrich/titles/searchVariants";
-import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
+import { metadataHasDisplayImage } from "@/core/enrich/media/displayImage";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
@@ -257,7 +256,7 @@ function hasCachedCandidateSystemConflict(
 
 function isScreenScraperQuotaError(error: unknown): boolean {
   return (
-    axios.isAxiosError(error) &&
+    isAxiosError(error) &&
     (error.response?.status === 430 || error.response?.status === 429)
   );
 }

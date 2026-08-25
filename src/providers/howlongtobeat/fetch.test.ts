@@ -21,14 +21,20 @@ vi.mock("./durableEvidence", () => ({
     promoteHowLongToBeatSearchEvidence(...args),
 }));
 
-import { searchHowLongToBeat } from "./fetch";
+const httpGetMock = vi.fn();
+const httpPostMock = vi.fn();
 
-const fetchMock = vi.fn();
+vi.mock("@/lib/http/httpClient", () => ({
+  httpGet: (...args: unknown[]) => httpGetMock(...args),
+  httpPost: (...args: unknown[]) => httpPostMock(...args),
+}));
+
+import { searchHowLongToBeat } from "./fetch";
 
 describe("searchHowLongToBeat", () => {
   beforeEach(() => {
-    fetchMock.mockReset();
-    vi.stubGlobal("fetch", fetchMock);
+    httpGetMock.mockReset();
+    httpPostMock.mockReset();
     readHowLongToBeatSearchEvidence.mockReset();
     promoteHowLongToBeatSearchEvidence.mockReset();
     readHowLongToBeatSearchEvidence.mockResolvedValue(null);
@@ -48,32 +54,32 @@ describe("searchHowLongToBeat", () => {
     await expect(
       searchHowLongToBeat("Hades", "Nintendo Switch"),
     ).resolves.toEqual(hits);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(httpGetMock).not.toHaveBeenCalled();
+    expect(httpPostMock).not.toHaveBeenCalled();
     expect(promoteHowLongToBeatSearchEvidence).not.toHaveBeenCalled();
   });
 
   it("promotes SearchYield after init+POST search", async () => {
-    fetchMock
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          token: "tok",
-          hpKey: "hp",
-          hpVal: "val",
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          data: [
-            {
-              game_id: 2127,
-              game_name: "Hades",
-              comp_main: 12345,
-            },
-          ],
-        }),
-      });
+    httpGetMock.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        token: "tok",
+        hpKey: "hp",
+        hpVal: "val",
+      },
+    });
+    httpPostMock.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        data: [
+          {
+            game_id: 2127,
+            game_name: "Hades",
+            comp_main: 12345,
+          },
+        ],
+      },
+    });
 
     const hits = await searchHowLongToBeat("Hades", "Nintendo Switch");
     expect(hits[0]?.game_id).toBe(2127);

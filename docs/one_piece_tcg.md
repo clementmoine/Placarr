@@ -1,7 +1,9 @@
 # One Piece Card Game (OPTCG) — recherche sources
 
-> Statut : **recherche only** (2026-08-12). Pas de provider Placarr, pas de pack
-> `effects/onepiece`. Prochain TCG d’intérêt après Pokémon / Lorcana.
+> Statut : **ligne catalogue branchée** (2026-08-25) — provider `onepiece` +
+> pack effets catalogue-only + onglet Admin. Catalogue **vide** jusqu'à la
+> moisson (`pnpm onepiece:sync` bootstrap ; ingest apitcg / vegapull à venir).
+> Pas de rendu foil sans masks réels.
 >
 > Contrat produit (aligné Pokémon sans Live) :
 >

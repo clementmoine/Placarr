@@ -29,59 +29,59 @@ import "dotenv/config";
 import { runNarutoChecklistCli } from "./buildCoverageChecklist";
 import { runNarutoSourcesCli } from "./buildApacheIndex";
 import { runNarutoFixThumbsCli } from "./fixThumbs";
-import { ensureNarutoCuratedAssets } from "./installReconstructed";
+import { ensureNarutoCuratedAssets } from "./install/installReconstructed";
 import { runNarutoKnownCardsCli } from "./knownCards";
-import { scrapeNarutoEnCards } from "./scrapeBandaicgCards";
-import { scrapeNarutoJpCards } from "./scrapeCarddasJp";
-import { scrapeNarutoCards } from "./scrapeCards";
-import { scrapeNarutoColekaCarddassFrCards } from "./scrapeColekaCarddassFr";
-import { scrapeNarutoColekaS6ItCards } from "./scrapeColekaS6It";
+import { scrapeNarutoEnCards } from "./scrape/scrapeBandaicgCards";
+import { scrapeNarutoJpCards } from "./scrape/scrapeCarddasJp";
+import { scrapeNarutoCards } from "./scrape/scrapeCards";
+import { scrapeNarutoColekaCarddassFrCards } from "./scrape/scrapeColekaCarddassFr";
+import { scrapeNarutoColekaS6ItCards } from "./scrape/scrapeColekaS6It";
 import {
   scrapeNarutoColekaSagesLegacyCards,
   scrapeNarutoColekaStorm3Cards,
-} from "./scrapeColekaStorm3";
-import { scrapeNarutoStorm3Cards } from "./scrapeStorm3";
-import { scrapeCardgameclubItFaces } from "./scrapeCardgameclubIt";
-import { scrapeGoatEnCcgTitles } from "./scrapeGoatEnCcg";
-import { scrapeNarutoCardsCaTitles } from "./scrapeNarutoCardsCa";
-import { scrapeNarutoZabuzaPromo } from "./scrapeNarutoZabuza";
-import { scrapeNikitaNrtCards } from "./scrapeNikitaNrt";
-import { scrapeSurugaCarddassCards } from "./scrapeSurugaCarddass";
-import { scrapeUltrajeuxS5Holes } from "./scrapeUltrajeuxS5";
-import { scrapeVintageNarutoCcgFaces } from "./scrapeVintageNarutoCcg";
-import { installCarddasJpStagingFaces } from "./installCarddasJpStagingFaces";
-import { harvestCarddasVol1Faces } from "./harvestCarddasVol1Faces";
+} from "./scrape/scrapeColekaStorm3";
+import { scrapeNarutoStorm3Cards } from "./scrape/scrapeStorm3";
+import { scrapeCardgameclubItFaces } from "./scrape/scrapeCardgameclubIt";
+import { scrapeGoatEnCcgTitles } from "./scrape/scrapeGoatEnCcg";
+import { scrapeNarutoCardsCaTitles } from "./scrape/scrapeNarutoCardsCa";
+import { scrapeNarutoZabuzaPromo } from "./scrape/scrapeNarutoZabuza";
+import { scrapeNikitaNrtCards } from "./scrape/scrapeNikitaNrt";
+import { scrapeSurugaCarddassCards } from "./scrape/scrapeSurugaCarddass";
+import { scrapeUltrajeuxS5Holes } from "./scrape/scrapeUltrajeuxS5";
+import { scrapeVintageNarutoCcgFaces } from "./scrape/scrapeVintageNarutoCcg";
+import { installCarddasJpStagingFaces } from "./install/installCarddasJpStagingFaces";
+import { harvestCarddasVol1Faces } from "./harvest/harvestCarddasVol1Faces";
 import { probeSurugaVol1Listings } from "./probeSurugaVol1Listings";
 import { probeSurugaMissingVol1 } from "./probeSurugaMissingVol1";
 import {
   harvestNarutoCcgDriveStaging,
   driveStagingHubFileCount,
   driveStagingHubPopulated,
-} from "./harvestNarutoCcgDriveStaging";
+} from "./harvest/harvestNarutoCcgDriveStaging";
 import { ingestNarutoCcgDriveLocalExport } from "./ingestNarutoCcgDriveLocalExport";
 import {
   installNarutoCcgDriveCardBack,
   installNarutoCcgDriveFaces,
   installNarutoCcgDriveFansetFallbacks,
-} from "./installNarutoCcgDriveFaces";
-import { installCardgameclubPackshots } from "./installCardgameclubPackshots";
-import { installEbayPackshots } from "./installEbayPackshots";
-import { installEbayFaces } from "./installEbayFaces";
-import { installLeboncoinFaces } from "./installLeboncoinFaces";
+} from "./install/installNarutoCcgDriveFaces";
+import { installCardgameclubPackshots } from "./install/installCardgameclubPackshots";
+import { installEbayPackshots } from "./install/installEbayPackshots";
+import { installEbayFaces } from "./install/installEbayFaces";
+import { installLeboncoinFaces } from "./install/installLeboncoinFaces";
 import { scrapeNarutoColekaUsPromoCards } from "./colekaUsPromos";
-import { scrapeAvalonNarutoFaces } from "./scrapeAvalonShop";
+import { scrapeAvalonNarutoFaces } from "./scrape/scrapeAvalonShop";
 import { writeNarutoCompleteness } from "./buildCompleteness";
-import { scrapeFrilNarutoFaces } from "./scrapeFrilShop";
+import { scrapeFrilNarutoFaces } from "./scrape/scrapeFrilShop";
 import {
   scrapeNikitaCardlistFacts,
   scrapeNikitaShippudenFaces,
-} from "./scrapeNikitaCardlist";
-import { installGoatPackshots } from "./installGoatPackshots";
-import { installGradedcardcenterPackshots } from "./installGradedcardcenterPackshots";
-import { installMartinaPackshots } from "./installMartinaPackshots";
-import { installScifiUniversePackshots } from "./installScifiUniversePackshots";
-import { installTrictracPackshots } from "./installTrictracPackshots";
-import { installVialudibundaPackshots } from "./installVialudibunda";
+} from "./scrape/scrapeNikitaCardlist";
+import { installGoatPackshots } from "./install/installGoatPackshots";
+import { installGradedcardcenterPackshots } from "./install/installGradedcardcenterPackshots";
+import { installMartinaPackshots } from "./install/installMartinaPackshots";
+import { installScifiUniversePackshots } from "./install/installScifiUniversePackshots";
+import { installTrictracPackshots } from "./install/installTrictracPackshots";
+import { installVialudibundaPackshots } from "./install/installVialudibunda";
 import { ingestNarutoSealedProducts } from "./sealedProducts";
 
 const STEPS = [

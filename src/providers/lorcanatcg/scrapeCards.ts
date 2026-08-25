@@ -24,6 +24,7 @@ import {
 } from "@/providers/lorcast/catalogue";
 import { cardDiskIdFromPrintKey } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
+import { httpGet } from "@/lib/http/httpClient";
 import {
   exportLorcanaCardsIndexJson,
   writeLorcanaTcgIndex,
@@ -107,9 +108,14 @@ async function downloadRaw(
   skipExisting: boolean,
 ): Promise<"ok" | "skip"> {
   if (skipExisting && fs.existsSync(destPath)) return "skip";
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`HTTP ${response.status} ${url}`);
-  const buf = Buffer.from(await response.arrayBuffer());
+  const response = await httpGet<ArrayBuffer>(url, {
+    responseType: "arraybuffer",
+    validateStatus: () => true,
+  });
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`HTTP ${response.status} ${url}`);
+  }
+  const buf = Buffer.from(response.data);
   await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
   await fs.promises.writeFile(destPath, buf);
   return "ok";

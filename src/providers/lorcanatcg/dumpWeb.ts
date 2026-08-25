@@ -14,6 +14,7 @@ import path from "node:path";
 
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
+import { httpGet } from "@/lib/http/httpClient";
 import { lorcanaWebRecipeTextureStems } from "@/effects/lorcana/cssRecipes";
 import { ensureLorcanaSetLogoIndex } from "@/providers/lorcanatcg/setLogos";
 
@@ -34,13 +35,13 @@ export type DumpLorcanaWebOptions = {
   root?: string;
 };
 
-async function httpGet(url: string): Promise<Buffer> {
-  const res = await fetch(url, {
+async function fetchBytes(url: string): Promise<Buffer> {
+  const res = await httpGet<ArrayBuffer>(url, {
     headers: { "User-Agent": UA },
-    signal: AbortSignal.timeout(45_000),
+    timeout: 45_000,
+    responseType: "arraybuffer",
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
-  return Buffer.from(await res.arrayBuffer());
+  return Buffer.from(res.data);
 }
 
 export function discoverCssPaths(html: string): string[] {
@@ -117,7 +118,7 @@ async function downloadAssets(
     const target = path.join(dest, name);
     const url = `${VIEWER_BASE.replace(/\/$/, "")}${assetPath}`;
     try {
-      const data = await httpGet(url);
+      const data = await fetchBytes(url);
       fs.writeFileSync(target, data);
       written.push(name);
       sources[name] = url;
@@ -133,7 +134,7 @@ async function scrapeViewer(): Promise<{
   refs: Record<string, string>;
   allStems: Record<string, string>;
 }> {
-  const html = (await httpGet(`${VIEWER_BASE}/${VIEWER_LOCALE}`)).toString(
+  const html = (await fetchBytes(`${VIEWER_BASE}/${VIEWER_LOCALE}`)).toString(
     "utf8",
   );
   const cssPaths = discoverCssPaths(html);
@@ -143,7 +144,7 @@ async function scrapeViewer(): Promise<{
   for (const cssPath of cssPaths) {
     try {
       const css = (
-        await httpGet(`${VIEWER_BASE.replace(/\/$/, "")}${cssPath}`)
+        await fetchBytes(`${VIEWER_BASE.replace(/\/$/, "")}${cssPath}`)
       ).toString("utf8");
       const discovered = parseAllAssetStems(css);
       const refs = parseAssetRefs(css);

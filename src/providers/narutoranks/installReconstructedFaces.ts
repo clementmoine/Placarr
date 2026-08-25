@@ -13,7 +13,14 @@
  * Les fichiers étrangers au rôle (`source.webp`, `art.coleka.png`) sont ignorés
  * ici : ils appartiennent à d'autres installateurs.
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+} from "node:fs";
 import path from "node:path";
 
 import sharp from "sharp";
@@ -189,8 +196,7 @@ export function mergeReconstructedCandidates(
     const back = row.backSourceFile
       ? resolveCuratedSource(curatedRoot, row.backSourceFile)
       : undefined;
-    const backSource =
-      back && existsSync(back) ? back : found?.backSource;
+    const backSource = back && existsSync(back) ? back : found?.backSource;
 
     if (!artSource && !backSource) {
       skipped.push(row.printed ?? `${setCode}-${number}`);
@@ -287,7 +293,8 @@ export async function installReconstructedFaces(
     let backFile: string | undefined;
     if (card.backSource) {
       const backDest = path.join(destDir, `${BACK_BASENAME}.webp`);
-      if (await writeFaceWebp(card.backSource, backDest, opts.force)) backs += 1;
+      if (await writeFaceWebp(card.backSource, backDest, opts.force))
+        backs += 1;
       backFile = `${BACK_BASENAME}.webp`;
     }
 

@@ -43,6 +43,23 @@ export type LocalTcgLineSpec = {
   formatReference?: (cardType: string, number: string) => string;
   setLabel?: (setCode: string) => string;
   setSortKey?: (setCode: string) => number | null;
+  /**
+   * Traduit une requête utilisateur avant la recherche SQL (ex. référence
+   * imprimée `忍伝-43` → id disque `shi0043`).
+   */
+  normalizeSearchQuery?: (query: string) => string;
+  /**
+   * Langues listées dans le sélecteur. Défaut : ce que la base contient
+   * réellement (`distinctPrintLanguages`).
+   */
+  listPrintLanguages?: () => string[];
+  /** Langues déclarées sur chaque set (ex. jeu JA-only → `["ja"]`). */
+  listSetLanguages?: readonly string[];
+  /**
+   * Langue préférée pour le ORDER BY de recherche. Défaut : `defaultLanguage`
+   * quand c'est `en`/`fr`, sinon `fr`.
+   */
+  searchPreferLanguage?: string;
 };
 
 export type LocalTcgLine = {
@@ -132,12 +149,19 @@ function toCandidate(
 
 export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
   const index = createLocalPrintsIndex(spec.packId);
+  const preferLang =
+    spec.searchPreferLanguage ??
+    (spec.defaultLanguage === "unknown" ? "fr" : spec.defaultLanguage);
 
   const searchPrints = (
     query: string,
     opts: { language?: string; limit?: number; setId?: string | null } = {},
   ): PrintCandidate[] => {
-    const rows = index.searchRows(query, opts);
+    const normalized = spec.normalizeSearchQuery?.(query) ?? query;
+    const rows = index.searchRows(normalized, {
+      ...opts,
+      language: opts.language ?? preferLang,
+    });
     const seen = new Set<string>();
     const out: PrintCandidate[] = [];
     for (const row of rows) {
@@ -164,7 +188,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
   const curatedDir = () =>
     path.join(process.cwd(), "src", "providers", spec.providerId, "curated");
 
-  const module: ProviderModule = {
+  const providerModule: ProviderModule = {
     info: {
       id: spec.providerId,
       label: spec.providerLabel,
@@ -191,14 +215,16 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     /*
       Lues dans la base : un catalogue vide n'annonce aucune langue, donc le
       filtre n'a rien à cacher. Le jour où une moisson pose des titres FR, le
-      japonais le retirera tout seul.
+      japonais le retirera tout seul — sauf override explicite (jeu JA-only).
     */
-    listPrintLanguages: () => distinctPrintLanguages(index.dbPath()),
+    listPrintLanguages: () =>
+      spec.listPrintLanguages?.() ?? distinctPrintLanguages(index.dbPath()),
     printGames: [spec.printGame],
     listPrintSets: () =>
       index.listSets({
         setLabel: spec.setLabel,
         setSortKey: spec.setSortKey,
+        ...(spec.listSetLanguages ? { languages: spec.listSetLanguages } : {}),
       }),
     listSetPrints: ({ setId, language }) =>
       enumerateSetPrints({
@@ -251,7 +277,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
   return {
     spec,
     index,
-    attachCatalog: (catalog) => ({ ...module, catalog }),
+    attachCatalog: (catalog) => ({ ...providerModule, catalog }),
     searchPrints,
     lookupPrint,
     curatedDir,

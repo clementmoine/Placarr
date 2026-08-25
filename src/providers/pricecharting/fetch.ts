@@ -1,6 +1,6 @@
-import axios from "axios";
 import levenshtein from "fast-levenshtein";
 
+import { isAxiosError } from "@/lib/http/httpClient";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import type {
   PriceChartingMetadata,
@@ -1573,7 +1573,7 @@ async function fetchDirectDetailHtmlFromNameFallback(
         return detailRes.data;
       } catch (error) {
         if (isRateLimitedError(error)) throw error;
-        if (!axios.isAxiosError(error) || error.response?.status !== 404) {
+        if (!isAxiosError(error) || error.response?.status !== 404) {
           console.warn(
             `[PriceCharting] Direct detail lookup failed for ${directUrl}:`,
             error instanceof Error ? error.message : error,

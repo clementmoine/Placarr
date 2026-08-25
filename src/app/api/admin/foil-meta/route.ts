@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth/config";
+import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import "@/lib/foilMetaLoad.server";
 import {
   loadCardsIndexJson,
@@ -25,23 +26,24 @@ export async function GET(req: Request) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const pack = new URL(req.url).searchParams.get("pack")?.trim() || "pokemon";
-  if (pack === "lorcana") {
+  const raw = new URL(req.url).searchParams.get("pack")?.trim() || "pokemon";
+  const pack = cataloguePackInfo(raw);
+  if (!pack?.hasFoilMeta) {
+    return NextResponse.json({ error: "unknown pack" }, { status: 400 });
+  }
+  if (pack.id === "lorcana") {
     return NextResponse.json({
       cardsIndex: loadCardsIndexJson("lorcana"),
       manifest: loadFoilManifest("lorcana"),
     });
   }
-  if (pack === "pokemon") {
-    return NextResponse.json({
-      liveFoilMasks: loadLiveFoilMasks(),
-      liveOwned: loadLiveOwned(),
-      reprintMeta: loadReprintMeta(),
-      materialSheets: loadMaterialSheets(),
-      textureFlags: loadTextureFlags(),
-      sharedMotifs: loadSharedMotifs(),
-      fragStems: loadFragStems(),
-    });
-  }
-  return NextResponse.json({ error: "unknown pack" }, { status: 400 });
+  return NextResponse.json({
+    liveFoilMasks: loadLiveFoilMasks(),
+    liveOwned: loadLiveOwned(),
+    reprintMeta: loadReprintMeta(),
+    materialSheets: loadMaterialSheets(),
+    textureFlags: loadTextureFlags(),
+    sharedMotifs: loadSharedMotifs(),
+    fragStems: loadFragStems(),
+  });
 }

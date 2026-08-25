@@ -1,6 +1,4 @@
 import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ebayBrowseItemId } from "@/providers/ebay/browseItem";
@@ -20,15 +18,14 @@ describe("ebay-ninja-ranks ledger", () => {
     const ledger = readEbayNinjaRanksLedger();
     expect(ledger.marketplaceId).toBe("EBAY_US");
     expect(
-      ledger.listings.find((row) => row.legacyItemId === "293490000296")
-        ?.state,
+      ledger.listings.find((row) => row.legacyItemId === "293490000296")?.state,
     ).toBe("expired");
     expect(
       ledger.listings.find((row) => row.legacyItemId === "403984180609")
         ?.ingest,
     ).toBe("staging");
-    expect(
-      ebayBrowseItemId("127955574207", "429137825416"),
-    ).toBe("v1|127955574207|429137825416");
+    expect(ebayBrowseItemId("127955574207", "429137825416")).toBe(
+      "v1|127955574207|429137825416",
+    );
   });
 });

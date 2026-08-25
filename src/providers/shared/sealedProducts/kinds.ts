@@ -17,7 +17,11 @@ export type SealedKind =
   "booster" | "display" | "deck" | "coffret" | "ephemera";
 
 export type SealedBehavior =
-  "random_pack" | "pack_container" | "known_bundle" | "mixed_bundle" | "no_cards";
+  | "random_pack"
+  | "pack_container"
+  | "known_bundle"
+  | "mixed_bundle"
+  | "no_cards";
 
 export function sealedKindForCategory(category: string): SealedKind | null {
   if (tcgCardsCategoryRole(category) === "skip") return null;

@@ -22,6 +22,9 @@ vi.mock("./durableEvidence", () => ({
 
 import axios from "axios";
 
+import { resetCircuitBreakersForTests } from "@/lib/http/circuitBreaker";
+import { resetHostLimiterForTests } from "@/lib/http/hostLimiter";
+
 import {
   isPriceChartingQuotaBlocked,
   resetPriceChartingQuotaBlockForTests,
@@ -83,6 +86,8 @@ function detailResponse(html = DETAIL_HTML) {
 beforeEach(() => {
   mockedGet.mockReset();
   resetPriceChartingQuotaBlockForTests();
+  resetCircuitBreakersForTests();
+  resetHostLimiterForTests();
   vi.mocked(axios.isAxiosError).mockReturnValue(false);
   readPriceChartingPriceEvidence.mockReset();
   promotePriceChartingPriceEvidence.mockReset();

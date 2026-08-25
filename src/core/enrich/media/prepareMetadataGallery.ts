@@ -15,7 +15,7 @@ import {
   type AttachmentImageMetrics,
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
-import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/galleryPreservation";
+import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/media/galleryPreservation";
 import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
 import {
   withProviderAttachmentTraits,

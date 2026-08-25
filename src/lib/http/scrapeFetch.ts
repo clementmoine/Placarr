@@ -1,9 +1,15 @@
 import { type AxiosRequestConfig } from "axios";
 
 import { isAbortError } from "@/lib/http/abort";
+import { getChallengeSolver } from "@/lib/http/challengeSolver";
+import {
+  circuitAllowsRequest,
+  recordCircuitFailure,
+  recordCircuitSuccess,
+} from "@/lib/http/circuitBreaker";
+import { hostKeyOf } from "@/lib/http/hostLimiter";
 import { httpGet } from "@/lib/http/httpClient";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
-import { flareSolverrRequestGet } from "@/lib/http/flareSolverr";
 import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
 
 export type ScrapeFetchResponse = {
@@ -56,8 +62,15 @@ function directResponseAccepted(
 }
 
 /**
- * GET with a single FlareSolverr retry when direct access is blocked or fails.
- * Requires `FLARESOLVERR_URL` for the fallback path.
+ * GET with a single challenge-solver retry when direct access is blocked or
+ * fails. Solving requires a configured solver (FlareSolverr par défaut,
+ * `FLARESOLVERR_URL`).
+ *
+ * Le circuit breaker du host est consulté avant l'appel direct : un host qui
+ * a répondu 403/429/503 (ou une page de challenge) ouvre son circuit, et les
+ * appels suivants sont court-circuités — on tente le solver sans re-marteler
+ * l'origine — jusqu'au reset exponentiel. Le direct passe par le profil
+ * `scrape` du limiteur par host (1 s entre requêtes vers une même cible).
  */
 export async function fetchGetWithFlareFallback(
   url: string,
@@ -67,6 +80,8 @@ export async function fetchGetWithFlareFallback(
     skipDirect?: boolean;
     /** Reuse an identical direct GET for this long (shared client). */
     cacheTtlMs?: number;
+    /** Cadence plancher vers ce host (défaut : profil `scrape`, 1 s). */
+    minIntervalMs?: number;
   } = {},
 ): Promise<ScrapeFetchResponse> {
   const {
@@ -74,6 +89,7 @@ export async function fetchGetWithFlareFallback(
     signal: explicitSignal,
     skipDirect,
     cacheTtlMs,
+    minIntervalMs,
     ...axiosOptions
   } = options;
   const signal = resolveRequestAbortSignal(explicitSignal);
@@ -90,18 +106,22 @@ export async function fetchGetWithFlareFallback(
 
   let directStatus = 0;
   let directData: unknown = null;
+  const host = hostKeyOf(url);
 
-  if (!skipDirect) {
+  if (!skipDirect && circuitAllowsRequest(host)) {
     try {
       const response = await httpGet(url, {
         ...axiosOptions,
         ...(cacheTtlMs ? { cacheTtlMs } : {}),
+        hostProfile: "scrape",
+        ...(minIntervalMs != null ? { minIntervalMs } : {}),
         validateStatus: () => true,
         signal,
       });
       directStatus = response.status;
       directData = response.data;
       if (directResponseAccepted(directStatus, directData, validateStatus)) {
+        recordCircuitSuccess(host);
         return {
           status: directStatus,
           data: directData,
@@ -111,12 +131,21 @@ export async function fetchGetWithFlareFallback(
               ?.responseUrl ?? url,
         };
       }
+      // Le host a répondu : un blocage ouvre le circuit, une réponse franche
+      // (404…) le referme — seule la "stop" compte comme un ban.
+      if (scrapeAccessBlocked(directStatus, directData)) {
+        recordCircuitFailure(host);
+      } else {
+        recordCircuitSuccess(host);
+      }
     } catch (error) {
       if (isAbortError(error)) throw error;
+      // Silence réseau : neutre pour le breaker — un host en panne n'est pas
+      // un host qui nous bannit.
     }
   }
 
-  const flareBody = await flareSolverrRequestGet(url, {
+  const flareBody = await getChallengeSolver().fetchHtml(url, {
     maxTimeoutMs: flareMaxTimeoutMs,
     signal,
   });

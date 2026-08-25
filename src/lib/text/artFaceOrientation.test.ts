@@ -54,13 +54,9 @@ describe("printIsLandscapeCard", () => {
   });
 
   it("fusionne les hints serveur avec les pixels chargés", () => {
-    expect(
-      mergeArtFaceOrientation(
-        { landscapePrint: true },
-        245,
-        328,
-      ),
-    ).toEqual({ faceQuarterTurns: 1 });
+    expect(mergeArtFaceOrientation({ landscapePrint: true }, 245, 328)).toEqual(
+      { faceQuarterTurns: 1 },
+    );
     expect(mergeArtFaceOrientation({}, 1500, 1068)).toEqual({
       landscapeFace: true,
     });

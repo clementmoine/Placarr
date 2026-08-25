@@ -1,4 +1,4 @@
-import axios from "axios";
+import { isAbortError } from "@/lib/http/abort";
 import { httpGet } from "@/lib/http/httpClient";
 
 import {
@@ -183,7 +183,7 @@ export async function searchFullSet(
     await promoteFullSetSearchEvidence(searchUrl, hits);
     return hits;
   } catch (error) {
-    if (!axios.isCancel(error)) {
+    if (!isAbortError(error)) {
       console.error(
         "[FullSet] Search request failed:",
         error instanceof Error ? error.message : error,
@@ -205,7 +205,7 @@ export async function fetchFullSetItem(
     });
     return parseFullSetItemHtml(String(response.data), url);
   } catch (error) {
-    if (!axios.isCancel(error)) {
+    if (!isAbortError(error)) {
       console.error(
         "[FullSet] Item request failed:",
         error instanceof Error ? error.message : error,

@@ -12,19 +12,27 @@ import path from "node:path";
 import { dataRoot } from "@/lib/runtimeData";
 import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_LIVE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
-import { NARUTO_CCG_CLI_PATH } from "@/providers/narutoccg/cli";
-import { NARUTO_SHIPPUDEN_CLI_PATH } from "@/providers/narutoshippuden/cli";
-import { NARUTO_RANKS_CLI_PATH } from "@/providers/narutoranks/cli";
-import { NARUTO_ULTRA_CLI_PATH } from "@/providers/narutoultra/cli";
-import { DBS_CG_CLI_PATH } from "@/providers/dbscg/cli";
-import { DBS_FW_CLI_PATH } from "@/providers/dbsfw/cli";
 import {
+  CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_SCOPES,
+  CATALOGUE_EXTRACT_TIMEOUT_MS,
   CATALOGUE_PACKS,
+  cataloguePackForExtractTarget,
+  cataloguePackInfo,
+  resolveCataloguePackId,
+  type CatalogueExtractScope,
   type CatalogueExtractTarget,
 } from "@/lib/admin/cataloguePacks";
 
 /** Same vocabulary as Catalogue packs — adding a pack is enough. */
-export type { CatalogueExtractTarget };
+export type { CatalogueExtractScope, CatalogueExtractTarget };
+export {
+  CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_SCOPES,
+  CATALOGUE_EXTRACT_TIMEOUT_MS,
+};
 
 export const CATALOGUE_EXTRACT_TARGETS: readonly CatalogueExtractTarget[] = [
   ...new Set(CATALOGUE_PACKS.map((pack) => pack.extractTarget)),
@@ -41,49 +49,13 @@ export function normalizeCatalogueExtractTarget(
   value: unknown,
 ): CatalogueExtractTarget | null {
   if (typeof value !== "string") return null;
-  if ((CATALOGUE_EXTRACT_TARGETS as readonly string[]).includes(value)) {
-    return value as CatalogueExtractTarget;
+  const raw = value.trim();
+  if ((CATALOGUE_EXTRACT_TARGETS as readonly string[]).includes(raw)) {
+    return raw as CatalogueExtractTarget;
   }
-  if (LEGACY_LORCANA_TARGETS.has(value)) return "lorcana";
-  if (
-    value === "naruto-cacg" ||
-    value === "carddass" ||
-    value === "naruto/carddass" ||
-    value === "naruto/ccg" ||
-    value === "naruto/en-ccg" ||
-    value === "naruto-en-ccg"
-  ) {
-    return "naruto";
-  }
-  if (value === "naruto/shippuden" || value === "shippuden") {
-    return "naruto-shippuden";
-  }
-  if (
-    value === "naruto/ninja-ranks" ||
-    value === "ninjaranks" ||
-    value === "ninja-ranks"
-  ) {
-    return "naruto-ranks";
-  }
-  if (
-    value === "naruto/ultra-challenge" ||
-    value === "ultrachallenge" ||
-    value === "ultra-challenge" ||
-    value === "lamincards"
-  ) {
-    return "naruto-ultra";
-  }
-  if (value === "dbs/cg" || value === "dbs-masters") {
-    return "dbs-cg";
-  }
-  if (
-    value === "dbs/fw" ||
-    value === "fusion-world" ||
-    value === "fusionworld"
-  ) {
-    return "dbs-fw";
-  }
-  return null;
+  if (LEGACY_LORCANA_TARGETS.has(raw)) return "lorcana";
+  // Pack ids and aliases share one resolver — `resolveCataloguePackId`.
+  return cataloguePackInfo(resolveCataloguePackId(raw))?.extractTarget ?? null;
 }
 
 export function isCatalogueExtractTarget(
@@ -98,26 +70,13 @@ export function catalogueExtractLabel(target: CatalogueExtractTarget): string {
   return packs[0]?.labelEn ?? target;
 }
 
-/** Inventory / Lorcana — CDN scrape + extract within a dev session. */
-export const CATALOGUE_EXTRACT_TIMEOUT_MS = 40 * 60 * 1000;
-
-/** Pokémon catalogue (~93k bundles): scrape skip-pass + extract can run hours. */
-export const CATALOGUE_EXTRACT_FULL_TIMEOUT_MS = 8 * 60 * 60 * 1000;
-
-/** Masters first-run Deckplanet dump (~10k WebP) plus Bandai scrape. */
-export const CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS = 2 * 60 * 60 * 1000;
-
 export function catalogueExtractTimeoutMs(
   target: CatalogueExtractTarget,
   scope: CatalogueExtractScope = "inventory",
 ): number {
-  if (target === "pokemon" && scope === "catalogue") {
-    return CATALOGUE_EXTRACT_FULL_TIMEOUT_MS;
-  }
-  if (target === "dbs-cg") {
-    return CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS;
-  }
-  return CATALOGUE_EXTRACT_TIMEOUT_MS;
+  const extract = cataloguePackForExtractTarget(target)?.extract;
+  if (!extract) return CATALOGUE_EXTRACT_TIMEOUT_MS;
+  return extract.timeoutMsByScope?.[scope] ?? extract.timeoutMs;
 }
 
 function repoRoot(): string {
@@ -148,14 +107,6 @@ export type CatalogueExtractCommand = {
   prelude: string[];
 };
 
-/**
- * ``inventory`` (default) scrapes the derived APK ∪ Malie stem list.
- * ``catalogue`` re-dumps the CDN AssetManifests and scrapes everything they
- * list — authoritative and phantom-free, but that is the full ~93k bundles.
- */
-export const CATALOGUE_EXTRACT_SCOPES = ["inventory", "catalogue"] as const;
-export type CatalogueExtractScope = (typeof CATALOGUE_EXTRACT_SCOPES)[number];
-
 export function normalizeCatalogueExtractScope(
   value: unknown,
 ): CatalogueExtractScope {
@@ -173,6 +124,12 @@ export async function resolveCatalogueExtractCommand(
 ): Promise<CatalogueExtractCommand> {
   const scope = opts.scope ?? "inventory";
   const root = repoRoot();
+  const pack = cataloguePackForExtractTarget(target);
+  if (!pack) {
+    throw new Error(`No extract command for catalogue target ${target}`);
+  }
+  const tsx = path.join(root, "node_modules/.bin/tsx");
+  const cli = path.join(root, pack.extract.cliPath);
   if (target === "lorcana") {
     const apk = await preferredLorcanaApk();
     // Always scrape CSS + catalogue cards; Unity when an APK is present.
@@ -192,72 +149,14 @@ export async function resolveCatalogueExtractCommand(
     prelude.push(
       "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
     );
-    return {
-      command: path.join(root, "node_modules/.bin/tsx"),
-      args: [path.join(root, "src/providers/lorcanatcg/cli.ts"), ...args],
-      prelude,
-    };
-  }
-  if (target === "naruto") {
-    return {
-      command: path.join(root, "node_modules/.bin/tsx"),
-      args: [NARUTO_CCG_CLI_PATH],
-      prelude: [
-        "Naruto: Carddass FR+IT+JA + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
-        "scellés FR : packshots carddass.fr (boosters / starters / tin) → products-index.json",
-      ],
-    };
-  }
-  if (target === "naruto-shippuden") {
-    return {
-      command: path.join(root, "node_modules/.bin/tsx"),
-      args: [NARUTO_SHIPPUDEN_CLI_PATH],
-      prelude: [
-        "Naruto 疾風伝 : registres officiels + verso curé → data/naruto/shippuden",
-      ],
-    };
-  }
-  if (target === "naruto-ranks") {
-    return {
-      command: path.join(root, "node_modules/.bin/tsx"),
-      args: [NARUTO_RANKS_CLI_PATH],
-      prelude: [
-        "Naruto Ninja Ranks : checklist Inkworks + packshots officiels + dumps fan → data/naruto/ninja-ranks",
-      ],
-    };
-  }
-  if (target === "naruto-ultra") {
-    return {
-      command: path.join(root, "node_modules/.bin/tsx"),
-      args: [NARUTO_ULTRA_CLI_PATH],
-      prelude: [
-        "Naruto Ultra Challenge : album + pochette (upscales) ; cartes encore vides → data/naruto/ultra-challenge",
-      ],
-    };
-  }
-  if (target === "dbs-cg") {
-    return {
-      command: path.join(root, "node_modules/.bin/tsx"),
-      args: [DBS_CG_CLI_PATH],
-      prelude: [
-        "Dragon Ball Masters: cardlists Bandai FR+EN + clone TCG Arena → data/dbs/cg",
-        "noms FR et EN dans l’index ; faces HTTP (FR dbscards / Bandai) séquentielles ; dump EN déjà rangé ignoré — --force pour écraser",
-        "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
-      ],
-    };
-  }
-  if (target === "dbs-fw") {
-    return {
-      command: path.join(root, "node_modules/.bin/tsx"),
-      args: [DBS_FW_CLI_PATH],
-      prelude: [
-        "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dbs/fw",
-        "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
-      ],
-    };
+    return { command: tsx, args: [cli, ...args], prelude };
   }
   if (target !== "pokemon") {
-    throw new Error(`No extract command for catalogue target ${target}`);
+    return {
+      command: tsx,
+      args: [cli],
+      prelude: [...(pack.extract.prelude ?? [])],
+    };
   }
   // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
   // adoptCli (that cancels the parent job → instant ── cancelled).
@@ -277,11 +176,7 @@ export async function resolveCatalogueExtractCommand(
   );
   if (scope === "catalogue") args.push("--refresh-manifests");
   prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
-  return {
-    command: path.join(root, "node_modules/.bin/tsx"),
-    args: [path.join(root, "src/providers/pokemontcglive/cli.ts"), ...args],
-    prelude,
-  };
+  return { command: tsx, args: [cli, ...args], prelude };
 }
 
 function pipeLines(
@@ -439,7 +334,9 @@ export async function runCatalogueExtractCommand(
           .catch(reject);
       });
     });
-    if (target === "pokemon") {
+    const postExtract =
+      cataloguePackForExtractTarget(target)?.extract.postExtract;
+    if (postExtract === "invalidatePokemonFoilNamesCache") {
       const { invalidatePokemonFoilNamesCache } =
         await import("@/effects/pokemon/foilNames");
       invalidatePokemonFoilNamesCache();

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { normalizeCatalogueExtractTarget } from "@/lib/admin/catalogueExtractRunner";
+import {
+  CATALOGUE_EXTRACT_TARGETS,
+  normalizeCatalogueExtractTarget,
+} from "@/lib/admin/catalogueExtractRunner";
 import {
   readFoilExtractJobId,
   readCatalogueExtractLog,
@@ -26,7 +29,7 @@ export async function GET(req: NextRequest) {
   );
   if (!pack) {
     return NextResponse.json(
-      { error: "pack must be lorcana, pokemon, or naruto" },
+      { error: `pack must be one of: ${CATALOGUE_EXTRACT_TARGETS.join(", ")}` },
       { status: 400 },
     );
   }

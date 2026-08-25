@@ -6,6 +6,10 @@ import "@/effects/narutoranks";
 import "@/effects/narutoultra";
 import "@/effects/dbscg";
 import "@/effects/dbsfw";
+import "@/effects/onepiece";
+import "@/effects/digimon";
+import "@/effects/yugioh";
+import "@/effects/mtg";
 
 export { getEffectPack, listEffectPacks } from "@/core/render/foil/registry";
 export { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
@@ -19,3 +23,7 @@ export { DBS_FW_EFFECT_PACK_ID } from "@/effects/dbsfw";
 export { NARUTO_SHIPPUDEN_EFFECT_PACK_ID } from "@/effects/narutoshippuden";
 export { NARUTO_RANKS_EFFECT_PACK_ID } from "@/effects/narutoranks";
 export { NARUTO_ULTRA_EFFECT_PACK_ID } from "@/effects/narutoultra";
+export { ONEPIECE_EFFECT_PACK_ID } from "@/effects/onepiece";
+export { DIGIMON_EFFECT_PACK_ID } from "@/effects/digimon";
+export { YUGIOH_EFFECT_PACK_ID } from "@/effects/yugioh";
+export { MTG_EFFECT_PACK_ID } from "@/effects/mtg";

@@ -4,8 +4,7 @@
  * Bandai does not publish a sleeve back. Until a verified FW verso exists, the
  * pack back is the same dbscards Masters 7-ball image (see curated/BACK.md).
  */
-import { registerEffectPack } from "@/core/render/foil/registry";
-import type { EffectPackModule } from "@/core/render/foil/types";
+import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 export const DBS_FW_EFFECT_PACK_ID = "dbs-fw";
 
@@ -19,21 +18,12 @@ const FINISH_SHADER: Record<string, string> = {
 
 export const DBS_FW_FINISHES = Object.keys(FINISH_SHADER);
 
-export const dbsFwEffectPack: EffectPackModule = {
+export const dbsFwEffectPack = defineCatalogueOnlyPack({
   id: DBS_FW_EFFECT_PACK_ID,
   label: "Dragon Ball Super Card Game Fusion World",
   blurb: "Catalogue Bandai Fusion World — dos placeholder, sans dump foil",
   assetBase: ASSET_BASE,
   cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
-  resolveMaterial: () => null,
-  resolveMaterialForPrint: () => null,
+  finishShader: FINISH_SHADER,
   fallbackFoilMaskUrl: DBS_FW_FULL_FOIL_MASK_URL,
-  resolveCss: (finish) => ({
-    finishShaderId: FINISH_SHADER[(finish ?? "").toLowerCase()] ?? null,
-    varnishShaderId: null,
-  }),
-  listMaterials: () => [],
-  material: () => null,
-};
-
-registerEffectPack(dbsFwEffectPack);
+});

@@ -8,27 +8,18 @@
  * deux jeux différents, deux dos.
  *
  * Aucun foil capté : comme le Carddass, ce pack est catalogue seul, sans APK ni
- * dump de shaders. Les crochets de matériau rendent donc vide, et c'est ce que
- * `hasFoilEffects === false` veut dire.
+ * dump de shaders — c'est ce que `hasFoilEffects === false` veut dire.
  */
-import { registerEffectPack } from "@/core/render/foil/registry";
-import type { EffectPackModule } from "@/core/render/foil/types";
+import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 export const NARUTO_SHIPPUDEN_EFFECT_PACK_ID = "naruto-shippuden";
 
 const ASSET_BASE = "/assets/naruto/shippuden";
 
-export const narutoShippudenEffectPack: EffectPackModule = {
+export const narutoShippudenEffectPack = defineCatalogueOnlyPack({
   id: NARUTO_SHIPPUDEN_EFFECT_PACK_ID,
   label: "Naruto 疾風伝",
   blurb: "Catalogue local — dos du jeu, sans effet foil",
   assetBase: ASSET_BASE,
   cardBackUrl: `${ASSET_BASE}/cards/back.ja.webp`,
-  resolveMaterial: () => null,
-  resolveMaterialForPrint: () => null,
-  resolveCss: () => ({ finishShaderId: null, varnishShaderId: null }),
-  listMaterials: () => [],
-  material: () => null,
-};
-
-registerEffectPack(narutoShippudenEffectPack);
+});

@@ -19,12 +19,23 @@ export function useArtFaceOrientation(
   imageUrl: string | null | undefined,
   hint: ArtFaceOrientationHint | null | undefined,
 ): Required<ArtFaceOrientation> {
-  const [pixels, setPixels] = useState<{ width: number; height: number } | null>(
-    null,
-  );
+  const [pixels, setPixels] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  /*
+    Reset synchronisé au changement d'URL, pendant le rendu (pattern React
+    officiel "adjust state during render") : un setState en début d'effet
+    déclencherait une cascade de rendus (react-hooks/set-state-in-effect).
+  */
+  const [loadedUrl, setLoadedUrl] = useState(imageUrl);
+  if (loadedUrl !== imageUrl) {
+    setLoadedUrl(imageUrl);
+    setPixels(null);
+  }
 
   useEffect(() => {
-    setPixels(null);
     const url = imageUrl?.trim();
     if (!url) return;
     const img = new Image();

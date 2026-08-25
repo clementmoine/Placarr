@@ -9,7 +9,7 @@ import path from "node:path";
 import type { CatalogueExtractTarget } from "@/lib/admin/catalogueExtractRunner";
 import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
 import { packLogsDir } from "@/lib/packPaths";
-import { dataRoot, foilPackDir } from "@/lib/runtimeData";
+import { dataRoot } from "@/lib/runtimeData";
 
 import { startCatalogueAutoSyncLoop } from "./catalogueAutoSync";
 
@@ -39,34 +39,11 @@ function lastRunMtime(pack: CatalogueExtractTarget): number | null {
 }
 
 function packLooksEmpty(pack: CatalogueExtractTarget): boolean {
-  if (pack === "lorcana") {
-    const cards = path.join(dataRoot(), "lorcana", "cards-index.json");
-    const web = path.join(foilPackDir("lorcana"), "web");
-    return !existsSync(cards) && !existsSync(web);
-  }
-  if (pack === "naruto") {
-    const cards = path.join(
-      dataRoot(),
-      "naruto",
-      "carddass",
-      "cards-index.json",
-    );
-    const db = path.join(dataRoot(), "naruto", "carddass", "catalog.sqlite");
-    return !existsSync(cards) && !existsSync(db);
-  }
-  if (pack === "dbs-cg") {
-    const cards = path.join(dataRoot(), "dbs", "cg", "cards-index.json");
-    const db = path.join(dataRoot(), "dbs", "cg", "catalog.sqlite");
-    return !existsSync(cards) && !existsSync(db);
-  }
-  if (pack === "dbs-fw") {
-    const cards = path.join(dataRoot(), "dbs", "fw", "cards-index.json");
-    const db = path.join(dataRoot(), "dbs", "fw", "catalog.sqlite");
-    return !existsSync(cards) && !existsSync(db);
-  }
-  const shaders = path.join(foilPackDir("pokemon"), "shaders");
-  const db = path.join(dataRoot(), "pokemon", "catalog.sqlite");
-  return !existsSync(shaders) && !existsSync(db);
+  const info = cataloguePackForExtractTarget(pack);
+  if (!info) return true;
+  return !info.emptyUnless.some((rel) =>
+    existsSync(path.join(dataRoot(), info.id, rel)),
+  );
 }
 
 export function isFoilPackStale(pack: CatalogueExtractTarget): boolean {

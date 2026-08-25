@@ -9,7 +9,7 @@ import {
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import { formatScore } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
 import { createBGGResolver } from "./resolver";
 import type { BGGResponse } from "./resolver";
 import { getBGGSuggestions } from "./suggestions";

@@ -86,7 +86,9 @@ export function createArcadeNameCheck(): ArcadeNameCheck {
     if (!expected) return false;
     if (namesAgree(vendorName, expected)) return true;
     const key = `${setCode.trim().toLowerCase()}-${number.trim().toLowerCase()}`;
-    return (aliases.get(key) ?? []).some((alias) => namesAgree(vendorName, alias));
+    return (aliases.get(key) ?? []).some((alias) =>
+      namesAgree(vendorName, alias),
+    );
   };
 }
 
@@ -184,12 +186,15 @@ export async function harvestArcadeGameCards(
       backFail += 1;
     } else {
       try {
-        const res = await httpGet<ArrayBuffer>(arcadeBackImageUrl(card.imageUrl), {
-          headers: { "User-Agent": UA, Referer: arcadeListingUrls()[0]! },
-          responseType: "arraybuffer",
-          timeout: 40_000,
-          validateStatus: (status: number) => status === 200,
-        });
+        const res = await httpGet<ArrayBuffer>(
+          arcadeBackImageUrl(card.imageUrl),
+          {
+            headers: { "User-Agent": UA, Referer: arcadeListingUrls()[0]! },
+            responseType: "arraybuffer",
+            timeout: 40_000,
+            validateStatus: (status: number) => status === 200,
+          },
+        );
         const data = res.data;
         if (!data || data.byteLength < 2_000) {
           backFail += 1;
@@ -246,7 +251,10 @@ export function installArcadeGameCards(
   for (const [i] of arcadeListingUrls().entries()) {
     const cache = path.join(dir, `listing-${i}.html`);
     if (!existsSync(cache)) continue;
-    const { cards } = parseArcadeListing(readFileSync(cache, "utf8"), nameCheck);
+    const { cards } = parseArcadeListing(
+      readFileSync(cache, "utf8"),
+      nameCheck,
+    );
     for (const card of cards) {
       const src = path.join(dir, arcadeStagingFile(card));
       const backSrc = path.join(dir, arcadeStagingBackFile(card));

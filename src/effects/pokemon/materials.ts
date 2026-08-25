@@ -3,6 +3,7 @@ import type {
   FoilTextureBinding,
 } from "@/core/render/foil/types";
 import { foilTextureFile } from "@/effects/foilTextureFile";
+import { lazyLiveList } from "@/effects/lazyLiveList";
 import {
   loadMaterialSheets,
   loadSharedMotifs,
@@ -379,17 +380,8 @@ export function listPokemonMaterialNames(): string[] {
 /**
  * Live view of material names (lazy). Prefer {@link listPokemonMaterialNames}.
  */
-export const POKEMON_MATERIAL_NAMES: readonly string[] = new Proxy(
-  [] as string[],
-  {
-    get(_target, prop) {
-      const names = listPokemonMaterialNames();
-      const value = Reflect.get(names, prop, names);
-      return typeof value === "function"
-        ? (value as (...args: unknown[]) => unknown).bind(names)
-        : value;
-    },
-  },
+export const POKEMON_MATERIAL_NAMES: readonly string[] = lazyLiveList(
+  listPokemonMaterialNames,
 );
 
 /** Shared motif stems declared for a foil leaf (tests / audits). */

@@ -176,7 +176,10 @@ function ItemCardInner(props: ItemCardProps) {
 
   const displayImageUrl = imageUrl;
 
-  const artOrient = useArtFaceOrientation(displayImageUrl, printVariant ?? undefined);
+  const artOrient = useArtFaceOrientation(
+    displayImageUrl,
+    printVariant ?? undefined,
+  );
   const faceQuarterTurns = artOrient.faceQuarterTurns;
   const landscapeFace = artOrient.landscapeFace;
   const baseAspect = useMemo(

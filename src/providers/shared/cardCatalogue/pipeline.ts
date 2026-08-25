@@ -37,6 +37,11 @@ export type CardCatalogueHooksInput = {
    * acceptable à la demande et pas toutes les heures.
    */
   autoSkip?: readonly string[];
+  /**
+   * Arguments supplémentaires en tête quand la passe est automatique
+   * (ex. `--offline` pour ne pas retélécharger les faces Naruto).
+   */
+  autoExtraArgs?: readonly string[];
 };
 
 /**
@@ -64,10 +69,16 @@ export function cardCatalogueHooks(
   };
 
   const refresh = async (opts?: ProviderCatalogRefreshOpts): Promise<void> => {
-    const skip = input.autoSkip ?? [];
-    await input.runPipeline(
-      opts?.auto && skip.length > 0 ? ["--skip", ...skip] : [],
-    );
+    const argv: string[] = [];
+    if (opts?.auto) {
+      if (input.autoExtraArgs?.length) {
+        argv.push(...input.autoExtraArgs);
+      }
+      if (input.autoSkip?.length) {
+        argv.push("--skip", ...input.autoSkip);
+      }
+    }
+    await input.runPipeline(argv);
     /*
       La trace est écrite **après**, et seulement si la moisson n'a pas jeté :
       une date de dernier passage qui ment est pire que pas de date du tout, on

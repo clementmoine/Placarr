@@ -37,19 +37,31 @@ export function liveFoilMaskForBundle(
   bundleStem: string | null | undefined,
   opts?: LiveFoilMaskLookup,
 ): string | null {
+  return liveFoilMaskFromMap(liveFoilMasksMap(), bundleStem, opts);
+}
+
+/**
+ * Core lookup against an explicit map — the testable, data-independent form of
+ * {@link liveFoilMaskForBundle} (unit tests must not depend on a local dump).
+ */
+export function liveFoilMaskFromMap(
+  map: Record<string, string>,
+  bundleStem: string | null | undefined,
+  opts?: LiveFoilMaskLookup,
+): string | null {
   if (!bundleStem) return null;
   const stem = normalizeStem(bundleStem);
   if (!stem) return null;
 
   const variant = normalizeVariant(opts?.variant);
   if (variant) {
-    const hit = liveFoilMasksMap()[`${stem}::${variant}`];
+    const hit = map[`${stem}::${variant}`];
     if (hit) return hit;
   }
 
   // Playroom / unknown variant: prefer CastAndCure on this stem (SunPillar
   // seeds).
-  for (const [key, mask] of Object.entries(liveFoilMasksMap())) {
+  for (const [key, mask] of Object.entries(map)) {
     if (!key.startsWith(`${stem}::`)) continue;
     if (mask === "CastAndCure") return mask;
   }
@@ -62,7 +74,7 @@ export function liveFoilMaskForBundle(
   */
   const laminates: string[] = [];
   for (const v of ["mph", "sph"] as const) {
-    const mask = liveFoilMasksMap()[`${stem}::${v}`];
+    const mask = map[`${stem}::${v}`];
     if (
       mask === "ReverseLaminateMasterBall" ||
       mask === "ReverseLaminatePokeBall"
@@ -78,10 +90,17 @@ export function liveFoilMaskForBundle(
 export function liveLaminatePreferForBundle(
   bundleStem: string | null | undefined,
 ): "mph" | "sph" | null {
+  return liveLaminatePreferFromMap(liveFoilMasksMap(), bundleStem);
+}
+
+/** Data-independent form of {@link liveLaminatePreferForBundle}. */
+export function liveLaminatePreferFromMap(
+  map: Record<string, string>,
+  bundleStem: string | null | undefined,
+): "mph" | "sph" | null {
   if (!bundleStem) return null;
   const stem = normalizeStem(bundleStem);
   if (!stem) return null;
-  const map = liveFoilMasksMap();
   const mph = map[`${stem}::mph`];
   const sph = map[`${stem}::sph`];
   const mphLam =

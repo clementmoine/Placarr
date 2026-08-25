@@ -24,8 +24,8 @@ import { dataPackPath } from "@/providers/shared/catalogCorpus";
 import {
   clearSoftbanState,
   isSoftbanStatus,
+  recordSoftbanFailure,
   softbanRemainingMs,
-  writeSoftbanState,
 } from "@/providers/shared/softban";
 
 import {
@@ -101,8 +101,6 @@ const DEFAULT_DELAY_MS = 0;
 
 /** Where the cooldown is written, next to the pack's other logs. */
 const SOFTBAN_LEDGER = "faces";
-/** Long enough to be a real pause: this host bans by the hour, not the minute. */
-const SOFTBAN_COOLDOWN_MS = 60 * 60 * 1000;
 const PREFERRED_HOST = "static.dbscards.fr";
 const ATTEMPT_ORDER_LEDGER = "faces";
 const MIN_WEBP_BYTES = 100;
@@ -813,8 +811,12 @@ export async function fetchDbsCgFaces(
     `── faces ok=${stats.ok} skip=${stats.skip} miss=${stats.miss} fail=${stats.fail} → ${indexPath}`,
   );
   if (banned.has(PREFERRED_HOST) && remainingMs === 0) {
-    writeSoftbanState(cacheRoot, {
-      until: new Date(Date.now() + SOFTBAN_COOLDOWN_MS),
+    /*
+      Circuit breaker : le reset grandit à chaque ouverture consécutive
+      (2 → 5 → 15 → 60 min). Une sonde qui passe referme le circuit via
+      `clearSoftbanState` ci-dessous.
+    */
+    recordSoftbanFailure(cacheRoot, {
       reason: `${PREFERRED_HOST} a refusé pendant la passe faces`,
       name: SOFTBAN_LEDGER,
     });

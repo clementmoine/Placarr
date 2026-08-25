@@ -1,5 +1,6 @@
 import type { FoilMaterial } from "@/core/render/foil/types";
 import { hotFoilStampUniforms } from "@/core/render/foil/hotFoilStamp";
+import { lazyLiveList } from "@/effects/lazyLiveList";
 import { loadFoilManifest } from "@/lib/foilMetaLoad";
 
 export { hotFoilStampUniforms };
@@ -23,17 +24,8 @@ export function listLorcanaMaterialNames(): string[] {
  * Live view of dumped materials (lazy — empty until meta hydrate / server reader).
  * Prefer {@link listLorcanaMaterialNames}.
  */
-export const LORCANA_MATERIAL_NAMES: readonly string[] = new Proxy(
-  [] as string[],
-  {
-    get(_target, prop) {
-      const names = listLorcanaMaterialNames();
-      const value = Reflect.get(names, prop, names);
-      return typeof value === "function"
-        ? (value as (...args: unknown[]) => unknown).bind(names)
-        : value;
-    },
-  },
+export const LORCANA_MATERIAL_NAMES: readonly string[] = lazyLiveList(
+  listLorcanaMaterialNames,
 );
 
 /**

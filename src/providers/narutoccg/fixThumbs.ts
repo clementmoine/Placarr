@@ -22,7 +22,7 @@ import { dataRoot } from "@/lib/runtimeData";
 
 import { NARUTO_PACK_ID } from "./indexStore";
 import { listNarutoCardDirs } from "./narutoCardDisk";
-import { pickPreferredFaceArtFilename } from "./parseCarddassAsset";
+import { pickPreferredFaceArtFilename } from "./parse/parseCarddassAsset";
 
 /** A thumb may drift this far from its face before we call it distorted. */
 export const THUMB_RATIO_TOLERANCE = 0.02;

@@ -39,8 +39,8 @@ import { dbscardsIndexPath } from "@/providers/shared/dbscards/scrapeList";
 import {
   clearSoftbanState,
   isSoftbanStatus,
+  recordSoftbanFailure,
   softbanRemainingMs,
-  writeSoftbanState,
 } from "@/providers/shared/softban";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
 
@@ -62,7 +62,6 @@ const DOWNLOAD_TIMEOUT_MS = 60_000;
 const MAX_FACE_BYTES = 2 * 1024 * 1024;
 const MIN_WEBP_BYTES = 100;
 const SOFTBAN_LEDGER = "faces";
-const SOFTBAN_COOLDOWN_MS = 60 * 60 * 1000;
 const PROGRESS_EVERY_MS = 10_000;
 
 /**
@@ -291,8 +290,9 @@ export async function fetchDbsFwFaces(
             throttledStreak += 1;
             stats.throttled += 1;
             if (throttledStreak >= 20) {
-              writeSoftbanState(cacheRoot, {
-                until: new Date(Date.now() + SOFTBAN_COOLDOWN_MS),
+              // Circuit breaker : reset exponentiel (2 → 5 → 15 → 60 min) à
+              // chaque réouverture — voir `providers/shared/softban`.
+              recordSoftbanFailure(cacheRoot, {
                 reason: "fw.dbscards.fr a refusé 20 requêtes d'affilée",
                 name: SOFTBAN_LEDGER,
               });

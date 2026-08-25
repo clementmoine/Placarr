@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { migrateNarutoVcBacksToCorrectedArt } from "./scrapeCards";
+import { migrateNarutoVcBacksToCorrectedArt } from "./scrape/scrapeCards";
 
 /**
  * carddass.fr saved `-vc` (version corrigée) faces as `back.jpg` inside the

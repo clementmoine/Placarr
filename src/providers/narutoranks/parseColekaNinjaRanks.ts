@@ -89,7 +89,11 @@ export function parseColekaPrintedRef(raw: string): ColekaParsedRef | null {
   const base = /^(\d{1,4})$/.exec(printed);
   if (base) {
     const digits = Number.parseInt(base[1]!, 10);
-    if (!Number.isFinite(digits) || digits < 1 || digits > NINJA_RANKS_BASE_CARDS) {
+    if (
+      !Number.isFinite(digits) ||
+      digits < 1 ||
+      digits > NINJA_RANKS_BASE_CARDS
+    ) {
       return null;
     }
     return {
@@ -204,7 +208,8 @@ export function parseColekaNinjaRanksListing(
       rejected.push({
         ref: printedRaw,
         name,
-        reason: "référence hors checklist (base 1–72 ou inserts FF/NW/SD/NS/GS)",
+        reason:
+          "référence hors checklist (base 1–72 ou inserts FF/NW/SD/NS/GS)",
       });
       continue;
     }

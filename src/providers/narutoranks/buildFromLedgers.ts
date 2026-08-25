@@ -144,7 +144,11 @@ export function buildEuropeanNsFromLedger(
 const SUPPLEMENTAL_PROMOS_FILE = "supplemental-promos-checklist.json";
 
 export function supplementalPromosChecklistPath(): string {
-  return path.join(narutoRanksCuratedDir(), "sources", SUPPLEMENTAL_PROMOS_FILE);
+  return path.join(
+    narutoRanksCuratedDir(),
+    "sources",
+    SUPPLEMENTAL_PROMOS_FILE,
+  );
 }
 
 export function readSupplementalPromosChecklist(): SupplementalChecklist {

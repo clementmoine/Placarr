@@ -26,7 +26,7 @@ import {
   type NarutoPrintRow,
   type NarutoTitleRow,
 } from "./indexStore";
-import { cardTypeFromCollectorNumber } from "./parseBandaicgAsset";
+import { cardTypeFromCollectorNumber } from "./parse/parseBandaicgAsset";
 
 export type CarteSemaineFeature = {
   week: number;

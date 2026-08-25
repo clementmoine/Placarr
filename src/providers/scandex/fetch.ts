@@ -1,5 +1,4 @@
-import axios from "axios";
-import { httpGet } from "@/lib/http/httpClient";
+import { httpGet, isAxiosError } from "@/lib/http/httpClient";
 
 export interface ScanDexLookupResult {
   id: number;
@@ -47,7 +46,7 @@ export async function fetchFromScanDex(
     );
     return res.data ?? null;
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
+    if (isAxiosError(error) && error.response?.status === 404) {
       if (!options.suppressNotFoundLog) {
         console.info(`[ScanDex] Barcode "${cleanedBarcode}" not found (404).`);
       }

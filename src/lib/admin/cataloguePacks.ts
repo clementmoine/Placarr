@@ -21,6 +21,10 @@ export const CATALOGUE_PACK_IDS = [
   "naruto/ultra-challenge",
   "dbs/cg",
   "dbs/fw",
+  "onepiece",
+  "digimon",
+  "yugioh",
+  "mtg",
 ] as const;
 export type CataloguePackId = (typeof CATALOGUE_PACK_IDS)[number];
 
@@ -42,9 +46,61 @@ export type CatalogueExtractTarget =
   | "naruto-ranks"
   | "naruto-ultra"
   | "dbs-cg"
-  | "dbs-fw";
+  | "dbs-fw"
+  | "onepiece"
+  | "digimon"
+  | "yugioh"
+  | "mtg";
 
-export type CatalogueFranchiseId = "pokemon" | "lorcana" | "naruto" | "dbs";
+export type CatalogueFranchiseId =
+  | "pokemon"
+  | "lorcana"
+  | "naruto"
+  | "dbs"
+  | "onepiece"
+  | "digimon"
+  | "yugioh"
+  | "mtg";
+
+/** Inventory / Lorcana — CDN scrape + extract within a dev session. */
+export const CATALOGUE_EXTRACT_TIMEOUT_MS = 40 * 60 * 1000;
+
+/** Pokémon catalogue (~93k bundles): scrape skip-pass + extract can run hours. */
+export const CATALOGUE_EXTRACT_FULL_TIMEOUT_MS = 8 * 60 * 60 * 1000;
+
+/** Masters first-run Deckplanet dump (~10k WebP) plus Bandai scrape. */
+export const CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * ``inventory`` (default) scrapes the derived APK ∪ Malie stem list.
+ * ``catalogue`` re-dumps the CDN AssetManifests and scrapes everything they
+ * list — authoritative and phantom-free, but that is the full ~93k bundles.
+ */
+export const CATALOGUE_EXTRACT_SCOPES = ["inventory", "catalogue"] as const;
+export type CatalogueExtractScope = (typeof CATALOGUE_EXTRACT_SCOPES)[number];
+
+/**
+ * Server-side hook the extract runner runs after a successful extract.
+ * Declarative token — this module stays client-bundle safe (no node:), so the
+ * runner resolves the token to its dynamic import.
+ */
+export type CataloguePackPostExtract = "invalidatePokemonFoilNamesCache";
+
+/** Extract command descriptor — the runner spawns `tsx <cliPath>`. */
+export type CataloguePackExtract = {
+  /** tsx CLI entry, relative to the repo root (server-side only). */
+  cliPath: string;
+  /**
+   * Static header lines for the admin extract log. Packs whose command line
+   * is dynamic (APK probe, scope flags) build their prelude in the runner.
+   */
+  prelude?: readonly string[];
+  /** Default extract timeout. */
+  timeoutMs: number;
+  /** Heavier per-scope timeout (Pokémon catalogue scope). */
+  timeoutMsByScope?: Partial<Record<CatalogueExtractScope, number>>;
+  postExtract?: CataloguePackPostExtract;
+};
 
 export type CataloguePackInfo = {
   id: CataloguePackId;
@@ -90,6 +146,20 @@ export type CataloguePackInfo = {
   extractTarget: CatalogueExtractTarget;
   /** No APK lab — Bandai / Wayback catalogue sync. */
   catalogueOnly?: boolean;
+  /** Foil meta hydrate + APK lab routes (Pokémon + Lorcana). */
+  hasFoilMeta?: boolean;
+  /**
+   * Extract-presence probes, relative to `data/<pack>/` — foilStatus watches
+   * their newest mtime; the newest hit over 200 bytes marks the extract present.
+   */
+  extractMarkers: readonly string[];
+  /**
+   * The pack "looks empty" (auto-sync kicks an extract) when none of these
+   * paths exists, relative to `data/<pack>/`.
+   */
+  emptyUnless: readonly string[];
+  /** Extract command (CLI path, log prelude, timeouts, post-run hook). */
+  extract: CataloguePackExtract;
   blurbFr?: string;
   blurbEn?: string;
 };
@@ -112,8 +182,24 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Pokémon",
     labelEn: "Pokémon",
     hasFoilEffects: true,
+    hasFoilMeta: true,
     defaultScope: "foils",
     extractTarget: "pokemon",
+    extractMarkers: [
+      "foil/shaders",
+      "foil/textures",
+      "foil/materialSheets.json",
+      "catalog.sqlite",
+      "liveFoilMasks.json",
+      "cards.json",
+    ],
+    emptyUnless: ["foil/shaders", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/pokemontcglive/cli.ts",
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      timeoutMsByScope: { catalogue: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS },
+      postExtract: "invalidatePokemonFoilNamesCache",
+    },
   },
   {
     id: "lorcana",
@@ -125,8 +211,22 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Lorcana",
     labelEn: "Lorcana",
     hasFoilEffects: true,
+    hasFoilMeta: true,
     defaultScope: "foils",
     extractTarget: "lorcana",
+    extractMarkers: [
+      "foil/shaders",
+      "foil/textures",
+      "foil/web",
+      "foil/manifest.json",
+      "cards-index.json",
+      "catalog.sqlite",
+    ],
+    emptyUnless: ["cards-index.json", "foil/web"],
+    extract: {
+      cliPath: "src/providers/lorcanatcg/cli.ts",
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
   },
   {
     id: "naruto/carddass",
@@ -142,6 +242,21 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     sameNumberArtFallback: true,
     extractTarget: "naruto",
     catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/narutoccg/cli.ts",
+      prelude: [
+        "Naruto: Carddass FR+IT+JA + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
+        "scellés FR : packshots carddass.fr (boosters / starters / tin) → products-index.json",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
     blurbFr:
       "Un jeu, quatre langues. NI et N sont voisins, pas la même carte. S6 FR visible, pas addable.",
     blurbEn:
@@ -168,6 +283,20 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "naruto-shippuden",
     catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/narutoshippuden/cli.ts",
+      prelude: [
+        "Naruto 疾風伝 : registres officiels + verso curé → data/naruto/shippuden",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
     blurbFr:
       "Jeu 疾風伝 (2007-2009), japonais seul. Familles 忍伝 / 術伝 / 作伝, actes 第一幕 à 第四幕. Ni le Carddass, ni le CCG anglais.",
     blurbEn:
@@ -189,6 +318,20 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     localeArt: { bestFaceAcrossLocales: true },
     extractTarget: "naruto-ranks",
     catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/narutoranks/cli.ts",
+      prelude: [
+        "Naruto Ninja Ranks : checklist Inkworks + packshots officiels + dumps fan → data/naruto/ninja-ranks",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
     blurbFr:
       "Panini / Inkworks, 2006 — grille FR 102 cartes. Une tuile par locale (FR Coleka, EN arcade, IT Imadoki). Les trous FR restent visibles tant qu'on n'a pas de scan attesté.",
     blurbEn:
@@ -207,6 +350,20 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "naruto-ultra",
     catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/narutoultra/cli.ts",
+      prelude: [
+        "Naruto Ultra Challenge : album + pochette (upscales) ; cartes encore vides → data/naruto/ultra-challenge",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
     blurbFr:
       "Panini Ultra Challenge (lamincards, 2007). Ni le Carddass, ni le 疾風伝, ni Ninja Ranks. Album et pochette (upscales) ; cartes encore vides.",
     blurbEn:
@@ -225,6 +382,22 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "dbs-cg",
     catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/dbscg/cli.ts",
+      prelude: [
+        "Dragon Ball Masters: cardlists Bandai FR+EN + clone TCG Arena → data/dbs/cg",
+        "noms FR et EN dans l’index ; faces HTTP (FR dbscards / Bandai) séquentielles ; dump EN déjà rangé ignoré — --force pour écraser",
+        "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+    },
     blurbFr:
       "Catalogue Bandai Masters — faces Deckplanet (sync), SAMPLE en fallback",
     blurbEn:
@@ -243,8 +416,150 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "dbs-fw",
     catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/dbsfw/cli.ts",
+      prelude: [
+        "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dbs/fw",
+        "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
     blurbFr: "Catalogue Bandai Fusion World — faces SAMPLE, pas de dump foil",
     blurbEn: "Bandai Fusion World catalogue — SAMPLE faces, no foil dump",
+  },
+  {
+    id: "onepiece",
+    franchiseId: "onepiece",
+    franchiseLabelFr: "One Piece",
+    franchiseLabelEn: "One Piece",
+    lineLabelFr: "Card Game",
+    lineLabelEn: "Card Game",
+    labelFr: "One Piece Card Game",
+    labelEn: "One Piece Card Game",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "onepiece",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/onepiece/cli.ts",
+      prelude: [
+        "One Piece Card Game: bootstrap catalogue vide → data/onepiece",
+        "Moisson apitcg / vegapull à brancher (docs/one_piece_tcg.md)",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr:
+      "Catalogue OPTCG Bandai — onglet prêt, moisson à brancher (apitcg / vegapull).",
+    blurbEn:
+      "Bandai OPTCG catalogue — tab ready, ingest pending (apitcg / vegapull).",
+  },
+  {
+    id: "digimon",
+    franchiseId: "digimon",
+    franchiseLabelFr: "Digimon",
+    franchiseLabelEn: "Digimon",
+    lineLabelFr: "Card Game",
+    lineLabelEn: "Card Game",
+    labelFr: "Digimon Card Game",
+    labelEn: "Digimon Card Game",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "digimon",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/digimon/cli.ts",
+      prelude: [
+        "Digimon Card Game: bootstrap catalogue vide → data/digimon",
+        "Moisson digimoncard.io / apitcg à brancher",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr: "Catalogue Digimon Card Game — onglet prêt, moisson à brancher.",
+    blurbEn: "Digimon Card Game catalogue — tab ready, ingest pending.",
+  },
+  {
+    id: "yugioh",
+    franchiseId: "yugioh",
+    franchiseLabelFr: "Yu-Gi-Oh!",
+    franchiseLabelEn: "Yu-Gi-Oh!",
+    lineLabelFr: "TCG",
+    lineLabelEn: "TCG",
+    labelFr: "Yu-Gi-Oh!",
+    labelEn: "Yu-Gi-Oh!",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "yugioh",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/yugioh/cli.ts",
+      prelude: [
+        "Yu-Gi-Oh!: bootstrap catalogue vide → data/yugioh",
+        "Moisson YGOPRODeck à brancher",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr:
+      "Catalogue Yu-Gi-Oh! — onglet prêt, moisson YGOPRODeck à brancher.",
+    blurbEn: "Yu-Gi-Oh! catalogue — tab ready, YGOPRODeck ingest pending.",
+  },
+  {
+    id: "mtg",
+    franchiseId: "mtg",
+    franchiseLabelFr: "Magic",
+    franchiseLabelEn: "Magic",
+    lineLabelFr: "The Gathering",
+    lineLabelEn: "The Gathering",
+    labelFr: "Magic: The Gathering",
+    labelEn: "Magic: The Gathering",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "mtg",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      cliPath: "src/providers/mtg/cli.ts",
+      prelude: [
+        "Magic: The Gathering: bootstrap catalogue vide → data/mtg",
+        "Moisson Scryfall à brancher",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr: "Catalogue Magic — onglet prêt, moisson Scryfall à brancher.",
+    blurbEn: "Magic catalogue — tab ready, Scryfall ingest pending.",
   },
 ];
 
@@ -330,10 +645,12 @@ export function resolveCataloguePackId(
     carddass: "naruto/carddass",
     naruto: "naruto/carddass",
     cacg: "naruto/carddass",
+    narutocacg: "naruto/carddass",
     jcc: "naruto/carddass",
     ccg: "naruto/carddass",
     enccg: "naruto/carddass",
     narutoen: "naruto/carddass",
+    narutoenccg: "naruto/carddass",
     bandaiusa: "naruto/carddass",
     bandaiccg: "naruto/carddass",
     storm3: "naruto/carddass",
@@ -344,7 +661,16 @@ export function resolveCataloguePackId(
     dbs: "dbs/cg",
     dragonball: "dbs/cg",
     masters: "dbs/cg",
+    dbsmasters: "dbs/cg",
     fusionworld: "dbs/fw",
+    onepiece: "onepiece",
+    optcg: "onepiece",
+    digimon: "digimon",
+    yugioh: "yugioh",
+    ygo: "yugioh",
+    mtg: "mtg",
+    magic: "mtg",
+    scryfall: "mtg",
   };
   const mapped = aliases[wanted];
   if (mapped) return mapped;

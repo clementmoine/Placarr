@@ -1,5 +1,4 @@
-import axios from "axios";
-import { httpPost } from "@/lib/http/httpClient";
+import { httpHead, httpPost } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
@@ -223,7 +222,7 @@ async function extractBestCover(
       continue;
     }
     try {
-      const res = await axios.head(url, {
+      const res = await httpHead(url, {
         headers: {
           "User-Agent": HEADERS["User-Agent"],
           Referer: "https://www.achatmoinscher.com/",

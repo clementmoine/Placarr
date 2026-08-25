@@ -15,6 +15,7 @@ import { bdphileModule } from "@/providers/bdphile";
 import { bdfugueModule } from "@/providers/bdfugue";
 import { bggModule } from "@/providers/bgg";
 import { booknodeModule } from "@/providers/booknode";
+import { bricksetModule } from "@/providers/brickset";
 import { bedethequeModule } from "@/providers/bedetheque";
 import { canalbdModule } from "@/providers/canalbd";
 import { chocobonplanModule } from "@/providers/chocobonplan";
@@ -41,13 +42,19 @@ import { howlongtobeatModule } from "@/providers/howlongtobeat";
 import { icollectModule } from "@/providers/icollect";
 import { igdbModule } from "@/providers/igdb";
 import { izneoModule } from "@/providers/izneo";
+import { jikanModule } from "@/providers/jikan";
 import { ledenicheurModule } from "@/providers/ledenicheur";
+import { nautiljonModule } from "@/providers/nautiljon";
 import { musicbrainzModule } from "@/providers/musicbrainz";
 import { nointroModule } from "@/providers/nointro";
 import { narutoccgModule } from "@/providers/narutoccg";
 import { narutoshippudenModule } from "@/providers/narutoshippuden";
 import { narutoranksModule } from "@/providers/narutoranks";
 import { narutoultraModule } from "@/providers/narutoultra";
+import { onepieceModule } from "@/providers/onepiece";
+import { digimonModule } from "@/providers/digimon";
+import { yugiohModule } from "@/providers/yugioh";
+import { mtgModule } from "@/providers/mtg";
 import { dbscgModule } from "@/providers/dbscg";
 import { dbsfwModule } from "@/providers/dbsfw";
 import { omdbModule } from "@/providers/omdb";
@@ -64,6 +71,7 @@ import { SHOPIFY_RETAILER_MODULES } from "@/providers/shopify";
 import { wikidataModule } from "@/providers/wikidata";
 import { pricechartingModule } from "@/providers/pricecharting";
 import { rawgModule } from "@/providers/rawg";
+import { rebrickableModule } from "@/providers/rebrickable";
 import { scandexModule } from "@/providers/scandex";
 import { screenscraperModule } from "@/providers/screenscraper";
 import { senscritiqueModule } from "@/providers/senscritique";
@@ -98,10 +106,14 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   openlibraryModule,
   googlebooksModule,
   booknodeModule,
+  bricksetModule,
+  rebrickableModule,
   babelioModule,
   planetebdModule,
   vivlioModule,
   izneoModule,
+  nautiljonModule,
+  jikanModule,
   bedethequeModule,
   bdovoreModule,
   bdphileModule,
@@ -122,6 +134,10 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   narutoshippudenModule,
   narutoranksModule,
   narutoultraModule,
+  onepieceModule,
+  digimonModule,
+  yugiohModule,
+  mtgModule,
   dbscgModule,
   dbsfwModule,
   lorcanaggModule,

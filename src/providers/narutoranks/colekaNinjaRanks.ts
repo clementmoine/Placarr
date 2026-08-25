@@ -190,7 +190,10 @@ function resolveColekaNinjaRanksStagingFace(
   staging: string,
   card: ColekaNinjaRanksCard,
 ): string | null {
-  for (const candidate of colekaNinjaRanksStagingFaceCandidates(staging, card)) {
+  for (const candidate of colekaNinjaRanksStagingFaceCandidates(
+    staging,
+    card,
+  )) {
     if (existsSync(candidate)) return candidate;
   }
   return null;
@@ -200,7 +203,10 @@ function resolveColekaNinjaRanksStagingBack(
   staging: string,
   card: ColekaNinjaRanksCard,
 ): string | null {
-  for (const candidate of colekaNinjaRanksStagingBackCandidates(staging, card)) {
+  for (const candidate of colekaNinjaRanksStagingBackCandidates(
+    staging,
+    card,
+  )) {
     if (existsSync(candidate)) return candidate;
   }
   return null;

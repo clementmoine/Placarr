@@ -62,8 +62,14 @@ prisma/*.sql.dump
 /src/generated/prisma/
 
 # Médias / foil / indexes runtime (jamais versionnés)
+# (chemins des .gitkeep ré-inclus explicitement : une négation sur un fichier
+# ne peut pas fonctionner si son répertoire parent reste exclu)
 /data/**
-!/data/**/.gitkeep
+!/data/uploads/
+!/data/uploads/.gitkeep
+!/data/indexes/
+!/data/indexes/title-idf/
+!/data/indexes/title-idf/.gitkeep
 
 # JSON générés par les dumpers (stubs via `pnpm foil:ensure`)
 # Generated foil meta lives under data/ (see docs/data-layout.md)

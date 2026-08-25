@@ -8,7 +8,7 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { getIGDBDatabaseSuggestions } from "./suggestions";
-import { resolveWithLookupQueries } from "@/core/enrich/searchUtils";
+import { resolveWithLookupQueries } from "@/core/enrich/search/searchUtils";
 import { extractTitleIntentYear } from "@/core/enrich/titles/intentYear";
 
 import type { ProviderModule } from "@/types/providerModule";

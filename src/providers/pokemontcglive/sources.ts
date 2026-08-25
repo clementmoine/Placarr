@@ -8,6 +8,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { httpGet } from "@/lib/http/httpClient";
+
 import {
   DEFAULT_CONTENT_DIR,
   DEFAULT_UA,
@@ -113,12 +115,16 @@ export type CdnTarget = {
 };
 
 async function fetchBytes(url: string, timeoutMs = 20_000): Promise<Buffer> {
-  const res = await fetch(url, {
+  const res = await httpGet<ArrayBuffer>(url, {
     headers: { "User-Agent": DEFAULT_UA },
-    signal: AbortSignal.timeout(timeoutMs),
+    timeout: timeoutMs,
+    responseType: "arraybuffer",
+    validateStatus: () => true,
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
-  return Buffer.from(await res.arrayBuffer());
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`HTTP ${res.status} ${url}`);
+  }
+  return Buffer.from(res.data);
 }
 
 function walkStrings(obj: unknown): string[] {

@@ -34,8 +34,7 @@ function CatalogueCardArt({
     faceQuarterTurns: card.faceQuarterTurns,
     landscapePrint: card.landscapePrint,
   });
-  const wide =
-    orient.landscapeFace || (orient.faceQuarterTurns ?? 0) % 2 === 1;
+  const wide = orient.landscapeFace || (orient.faceQuarterTurns ?? 0) % 2 === 1;
 
   return (
     <div

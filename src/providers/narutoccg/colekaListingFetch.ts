@@ -7,7 +7,7 @@ import path from "node:path";
 
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 
-import { colekaHtmlIsVerifyWall } from "./parseColekaStorm3";
+import { colekaHtmlIsVerifyWall } from "./parse/parseColekaStorm3";
 
 export async function fetchColekaListingHtml(
   url: string,

@@ -31,13 +31,16 @@ export function parseEbayBrowseItemImages(data: JsonObject): string[] {
     const upgraded = bestEbayCoverUrl(raw);
     if (upgraded) urls.add(upgraded);
   };
-  push(typeof data.image?.imageUrl === "string" ? data.image.imageUrl : null);
-  for (const row of data.additionalImages ?? []) {
-    if (row && typeof row === "object" && "imageUrl" in row) {
-      push(typeof row.imageUrl === "string" ? row.imageUrl : null);
-    }
+  const image = data.image;
+  if (image && typeof image === "object" && "imageUrl" in image) {
+    push(typeof image.imageUrl === "string" ? image.imageUrl : null);
   }
-  for (const row of data.thumbnailImages ?? []) {
+  const rows = (value: unknown): unknown[] =>
+    Array.isArray(value) ? value : [];
+  for (const row of [
+    ...rows(data.additionalImages),
+    ...rows(data.thumbnailImages),
+  ]) {
     if (row && typeof row === "object" && "imageUrl" in row) {
       push(typeof row.imageUrl === "string" ? row.imageUrl : null);
     }

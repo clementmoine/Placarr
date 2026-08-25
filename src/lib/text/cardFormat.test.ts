@@ -80,12 +80,9 @@ describe("face orientation", () => {
     ["5 / 7", { faceQuarterTurns: 1 }, "7 / 5"],
     ["5 / 7", { faceQuarterTurns: 1, landscapeFace: true }, "7 / 5"],
     ["5 / 7", {}, "5 / 7"],
-  ] as const)(
-    "faceDisplayAspect(%s, %j) → %s",
-    (aspect, opts, expected) => {
-      expect(faceDisplayAspect(aspect, opts)).toBe(expected);
-    },
-  );
+  ] as const)("faceDisplayAspect(%s, %j) → %s", (aspect, opts, expected) => {
+    expect(faceDisplayAspect(aspect, opts)).toBe(expected);
+  });
 
   it.each([
     [0, 0],

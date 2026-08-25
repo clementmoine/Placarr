@@ -13,9 +13,14 @@ import {
 } from "@/lib/admin/catalogueCards";
 import {
   applyCataloguePackParams,
+  CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
+  CATALOGUE_EXTRACT_TIMEOUT_MS,
+  CATALOGUE_PACKS,
   catalogueCorpusPack,
   catalogueFranchises,
   catalogueFranchiseForPack,
+  cataloguePackForExtractTarget,
   foilExtractNeedsApk,
   narutoCatalogueLineForCard,
   narutoCatalogueLineForSealed,
@@ -44,6 +49,10 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("dbs")).toBe("dbs/cg");
     expect(resolveCataloguePackId("masters")).toBe("dbs/cg");
     expect(resolveCataloguePackId("fusionworld")).toBe("dbs/fw");
+    expect(resolveCataloguePackId("optcg")).toBe("onepiece");
+    expect(resolveCataloguePackId("ygo")).toBe("yugioh");
+    expect(resolveCataloguePackId("magic")).toBe("mtg");
+    expect(resolveCataloguePackId("scryfall")).toBe("mtg");
     expect(resolveCataloguePackId("nope")).toBeNull();
   });
 
@@ -63,6 +72,10 @@ describe("cataloguePacks", () => {
       "lorcana",
       "naruto",
       "dbs",
+      "onepiece",
+      "digimon",
+      "yugioh",
+      "mtg",
     ]);
     const naruto = franchises.find((row) => row.id === "naruto");
     expect(naruto?.lines.map((line) => line.id)).toEqual([
@@ -80,6 +93,69 @@ describe("cataloguePacks", () => {
     expect(foilExtractNeedsApk("naruto")).toBe(false);
     expect(foilExtractNeedsApk("dbs-cg")).toBe(false);
     expect(foilExtractNeedsApk("pokemon")).toBe(true);
+  });
+
+  it("keeps every pack self-describing: markers, empty probes, extract CLI", () => {
+    for (const pack of CATALOGUE_PACKS) {
+      expect(pack.extractMarkers.length, pack.id).toBeGreaterThan(0);
+      expect(pack.emptyUnless.length, pack.id).toBeGreaterThan(0);
+      // Registry paths stay relative — foilStatus / foilCatalogSync root them.
+      for (const rel of [...pack.extractMarkers, ...pack.emptyUnless]) {
+        expect(path.isAbsolute(rel), `${pack.id}:${rel}`).toBe(false);
+        expect(rel, `${pack.id}:${rel}`).not.toMatch(/^\.{2}([/\\]|$)/);
+      }
+      expect(pack.extract.cliPath, pack.id).toMatch(
+        /^src\/providers\/[a-z]+\/cli\.ts$/,
+      );
+      expect(pack.extract.timeoutMs, pack.id).toBeGreaterThan(0);
+      expect(
+        cataloguePackForExtractTarget(pack.extractTarget)?.id,
+        pack.extractTarget,
+      ).toBe(pack.id);
+    }
+  });
+
+  it("declares the Pokémon-specific extract bits on the pack, not the runner", () => {
+    const pokemon = cataloguePackInfo("pokemon")!;
+    expect(pokemon.extract.cliPath).toBe("src/providers/pokemontcglive/cli.ts");
+    expect(pokemon.extract.timeoutMs).toBe(CATALOGUE_EXTRACT_TIMEOUT_MS);
+    expect(pokemon.extract.timeoutMsByScope?.catalogue).toBe(
+      CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
+    );
+    expect(pokemon.extract.postExtract).toBe("invalidatePokemonFoilNamesCache");
+
+    const masters = cataloguePackInfo("dbs/cg")!;
+    expect(masters.extract.timeoutMs).toBe(
+      CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+    );
+    // Static preludes live on the descriptor; dynamic packs keep none.
+    expect(masters.extract.prelude?.some((l) => /TCG Arena/i.test(l))).toBe(
+      true,
+    );
+    expect(
+      cataloguePackInfo("naruto/carddass")!.extract.prelude?.some((l) =>
+        /Storm 3/i.test(l),
+      ),
+    ).toBe(true);
+    expect(pokemon.extract.prelude).toBeUndefined();
+    expect(cataloguePackInfo("lorcana")!.extract.prelude).toBeUndefined();
+  });
+
+  it("limits foil meta / APK lab to Pokémon and Lorcana", () => {
+    expect(
+      CATALOGUE_PACKS.filter((pack) => pack.hasFoilMeta).map((pack) => pack.id),
+    ).toEqual(["pokemon", "lorcana"]);
+  });
+
+  it("resolves legacy extract-target aliases through the pack resolver", () => {
+    expect(resolveCataloguePackId("naruto-cacg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("naruto-en-ccg")).toBe("naruto/carddass");
+    expect(resolveCataloguePackId("dbs-masters")).toBe("dbs/cg");
+    expect(resolveCataloguePackId("fusion-world")).toBe("dbs/fw");
+    expect(resolveCataloguePackId("ninja-ranks")).toBe("naruto/ninja-ranks");
+    expect(resolveCataloguePackId("ultra-challenge")).toBe(
+      "naruto/ultra-challenge",
+    );
   });
 
   it("splits Carddass NI/TE from EN CCG N/J/M — s1 is not enough", () => {
@@ -656,9 +732,9 @@ describe("same-number art fallback (Naruto)", () => {
       preferLang: "fr",
       limit: 500,
     });
-    expect(listed.cards.every((r) => r.lang === "fr" || r.kind?.endsWith("-back"))).toBe(
-      true,
-    );
+    expect(
+      listed.cards.every((r) => r.lang === "fr" || r.kind?.endsWith("-back")),
+    ).toBe(true);
   });
 
   it("emprunte la meilleure face neutre pour une autre locale du même tirage", () => {
@@ -792,9 +868,9 @@ describe("same-number art fallback (Naruto)", () => {
       },
     };
     const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "fr");
-    expect(rows.find((r) => r.printKey === "naruto:ns-0001")?.landscapeFace).toBe(
-      true,
-    );
+    expect(
+      rows.find((r) => r.printKey === "naruto:ns-0001")?.landscapeFace,
+    ).toBe(true);
     expect(
       rows.find((r) => r.printKey === "naruto:nr-0010")?.landscapeFace,
     ).toBeUndefined();

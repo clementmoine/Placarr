@@ -18,8 +18,7 @@ import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
 
 const LEDGER_FILE = "ebay-ninja-ranks.json";
 const STAGING_FOLDER = "ebay-ninja-ranks";
-const UA =
-  "Mozilla/5.0 PlacarrNarutoScrape/1.0 (eBay Browse API image fetch)";
+const UA = "Mozilla/5.0 PlacarrNarutoScrape/1.0 (eBay Browse API image fetch)";
 
 export type EbayNinjaRanksListing = {
   legacyItemId: string;
@@ -80,10 +79,7 @@ export async function syncEbayNinjaRanksFromBrowseApi(
       skipped.push(row.legacyItemId);
       continue;
     }
-    const itemId = ebayBrowseItemId(
-      row.legacyItemId,
-      row.variationId ?? "0",
-    );
+    const itemId = ebayBrowseItemId(row.legacyItemId, row.variationId ?? "0");
     const item = await fetchEbayBrowseItem(itemId, {
       marketplaceId: ledger.marketplaceId,
     });

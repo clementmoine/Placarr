@@ -96,7 +96,7 @@ Auth / DB / HTTP             → lib/
 | commerce | pricing/resolver, retailer/titleMatch                                  |
 | locale   | preference                                                             |
 
-**Prochaines réductions utiles** (voir [metadata_engine_audit.md](metadata_engine_audit.md)) :
+**Prochaines réductions utiles** (voir [metadata_engine_audit.md](archive/metadata_engine_audit.md)) :
 
 1. ~~Découper `enrich/storage.ts` images / crop / localize / cover bootstrap / store stages~~ **fait 2026-07-24** — `media/image*` + `croppedCoverSync` + `attachmentLocalization` + `metadataCoverBootstrap` + `prepareMetadataGallery` / `resolveMetadataCoverHero` / `syncItemAfterMetadataStore` ; `storage.ts` = orchestrateur.
 2. ~~`fetch` gating/merge/book~~ **partiel 2026-07-24** — `metadataFetchGating` / `merge` / `mergeObservationRanking` / `bookSearch*`.

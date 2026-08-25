@@ -4,8 +4,8 @@ import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import { formatScore } from "@/core/enrich/searchUtils";
-import { resolveWithLookupQueries } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
+import { resolveWithLookupQueries } from "@/core/enrich/search/searchUtils";
 import { fetchCoverFromCoverProject } from "@/providers/coverproject/resolver";
 import { createRawgResolver } from "./resolver";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";

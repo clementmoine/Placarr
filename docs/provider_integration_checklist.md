@@ -2,9 +2,9 @@
 
 A followable checklist for adding a provider so it is **fully exploited, properly
 tested, and verified against the live source** — never under-used, never a hidden
-bias. Companion to [unbiased_ranking.md](unbiased_ranking.md),
+bias. Companion to [unbiased_ranking.md](archive/unbiased_ranking.md),
 [archive/word_list_audit.md](archive/word_list_audit.md),
-[provider_agnostic_architecture.md](provider_agnostic_architecture.md),
+[provider_agnostic_architecture.md](archive/provider_agnostic_architecture.md),
 [provider_supply_modes.md](provider_supply_modes.md) (catalog / local corpora).
 Worked example: `src/providers/okkazeo/`.
 
@@ -124,6 +124,28 @@ drop a noisy observation just because today's display engine will rank it low.
   - [ ] `refreshBarcodePriceOffers` lit `ctx.providerProductUrls` avant seek ;
   - [ ] gate EAN si slug URL ou barcode page peut diverger.
   - [ ] Voir [provider_external_links.md](provider_external_links.md).
+
+---
+
+## Voie `defineProvider` (pilote)
+
+Pour le cas commun (métadonnées par recherche), `index.ts` peut être assemblé
+par `defineProvider(spec)` (`src/providers/shared/defineProvider.ts`, ADR-009)
+au lieu d'écrire le `ProviderModule` à la main :
+
+- `spec.info` est validé par Zod à la création (fail fast : `types` vide,
+  capability inconnue, `auth` incohérent…).
+- `healthCheck` par défaut : ping de `healthCheckUrl` (fallback
+  `info.websiteUrl`) via `createMetadataHealthCheck` — ne plus le réassembler.
+- `metadataSearch` génère le testHandler `<id>-metadata` ; des `testHandlers`
+  explicites priment.
+- La forme `defineProvider((ctx) => spec)` injecte `ctx.http` (ré-export ciblé
+  de `@/lib/http`) : le provider n'importe pas la couche bas niveau.
+- Tout hook avancé (`refreshBarcodePriceOffers`, `mappingProbe`…) passe tel
+  quel dans le spec.
+
+Pilote de référence : `src/providers/bedetheque/`. Ne pas généraliser aux
+autres providers sans décision ADR ultérieure.
 
 ---
 

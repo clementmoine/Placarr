@@ -79,7 +79,7 @@ import {
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
-} from "@/core/enrich/galleries";
+} from "@/core/enrich/media/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
@@ -1975,7 +1975,10 @@ export default function ItemDetailsPage() {
     );
   }, [shelf, resolvedItemId, seriesVolumes, franchiseItems]);
 
-  const artOrient = useArtFaceOrientation(coverImage, printVariant ?? undefined);
+  const artOrient = useArtFaceOrientation(
+    coverImage,
+    printVariant ?? undefined,
+  );
   const faceQuarterTurns = artOrient.faceQuarterTurns;
   const landscapeFace = artOrient.landscapeFace;
   const displayQuarterTurns = landscapeFace ? 0 : faceQuarterTurns;

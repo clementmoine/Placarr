@@ -50,7 +50,7 @@ export {
   MAX_ATTACHMENTS_TO_LOCALIZE,
   selectAttachmentsForLocalization,
 } from "@/core/enrich/media/attachmentLocalization";
-export { isMissingMusicGallery } from "@/core/enrich/galleries";
+export { isMissingMusicGallery } from "@/core/enrich/media/galleries";
 export { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
 export {
   canKeepRemoteImageOnDownloadFailure,
@@ -74,7 +74,7 @@ export {
 export {
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
-} from "@/core/enrich/imageUrls";
+} from "@/core/enrich/media/imageUrls";
 
 export type StoreMetadataOptions = {
   /** Persist remote URLs immediately; localize images in a background job. */

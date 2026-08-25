@@ -65,7 +65,10 @@ export type LocalPrintsIndex = {
     query: string,
     opts?: { language?: string; limit?: number; setId?: string | null },
   ) => LocalPrintSearchRow[];
-  lookupRow: (printKey: string, opts?: { language?: string }) => LocalPrintSearchRow | null;
+  lookupRow: (
+    printKey: string,
+    opts?: { language?: string },
+  ) => LocalPrintSearchRow | null;
   listSets: (opts?: {
     setLabel?: (setCode: string) => string;
     setSortKey?: (setCode: string) => number | null;
@@ -257,7 +260,12 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
                FROM prints WHERE print_key = ? LIMIT 1`,
           )
           .get(key) as
-          | { setCode: string; number: string; cardType: string; grouping: string | null }
+          | {
+              setCode: string;
+              number: string;
+              cardType: string;
+              grouping: string | null;
+            }
           | undefined;
         if (!print) return null;
         return {

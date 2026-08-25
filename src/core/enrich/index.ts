@@ -13,7 +13,7 @@ import {
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
-} from "@/core/enrich/galleries";
+} from "@/core/enrich/media/galleries";
 import { isLightRefreshEligible } from "@/core/enrich/lightRefresh";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import { isMediaType } from "@/core/enrich/selection";

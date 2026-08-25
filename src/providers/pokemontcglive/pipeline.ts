@@ -1,66 +1,57 @@
-import { existsSync } from "node:fs";
+/**
+ * Crochets de catalogue du pack `pokemon`.
+ *
+ * Corps commun : `shared/cardCatalogue/pipeline`. Ici : ré-index Live +
+ * cards-index, et le graphe produits pkmcards.fr (sauté en automatique).
+ *
+ * L'extract CDN / Unity / APK reste sur la CLI (`pnpm foil:pokemon`) et la
+ * route foilExtract.
+ */
 import path from "node:path";
 
-import type {
-  ProviderCatalogHooks,
-  ProviderCatalogRefreshOpts,
-} from "@/types/providerModule";
-import {
-  dataPackPath,
-  statusFromLastRun,
-} from "@/providers/shared/catalogCorpus";
+import type { ProviderCatalogHooks } from "@/types/providerModule";
+import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { indexLiveCards } from "./indexCards";
 import { rebuildPokemonCardsIndex } from "./rebuildCardsIndex";
 
-const DATA_PACK = "pokemon";
+const POKEMON_PACK_ID = "pokemon";
 
 function cardsDbPath(): string {
   const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
   if (override) return path.resolve(override);
-  return path.join(dataRoot(), DATA_PACK, "catalog.sqlite");
+  return path.join(dataRoot(), POKEMON_PACK_ID, "catalog.sqlite");
 }
 
-export async function refreshPokemonLiveCatalog(
-  opts?: ProviderCatalogRefreshOpts,
-): Promise<void> {
-  // Re-index identities from local config-cache when present; always refresh
-  // Catalogue face index from on-disk cards/ (soft-skip if empty).
-  try {
-    indexLiveCards();
-  } catch (err) {
-    console.warn(
-      `[pokemon catalog] live index skipped: ${err instanceof Error ? err.message : err}`,
-    );
-  }
-  const faces = rebuildPokemonCardsIndex();
-  if (faces.skipped) {
-    console.warn("[pokemon catalog] cards-index skipped — no cards/ yet");
-  } else {
-    console.log(
-      `[pokemon catalog] cards-index ${faces.cards} stems → ${faces.path}`,
-    );
-  }
-  /*
-    pkmcards.fr is the same host family as dbscards. Manual Sync takes the
-    paper sealed-product graph. The hourly loop skips it.
-  */
-  if (!opts?.auto) {
-    await scrapeTcgCardsProducts("pkmcards", {});
-  }
-}
+const hooks = cardCatalogueHooks({
+  packId: POKEMON_PACK_ID,
+  dbPath: cardsDbPath,
+  runPipeline: async (argv) => {
+    const skipProducts = argv.includes("products");
+    try {
+      indexLiveCards();
+    } catch (err) {
+      console.warn(
+        `[pokemon catalog] live index skipped: ${err instanceof Error ? err.message : err}`,
+      );
+    }
+    const faces = rebuildPokemonCardsIndex();
+    if (faces.skipped) {
+      console.warn("[pokemon catalog] cards-index skipped — no cards/ yet");
+    } else {
+      console.log(
+        `[pokemon catalog] cards-index ${faces.cards} stems → ${faces.path}`,
+      );
+    }
+    if (!skipProducts) {
+      await scrapeTcgCardsProducts("pkmcards", {});
+    }
+  },
+  autoSkip: ["products"],
+});
 
-export function pokemonLiveCatalogStatus() {
-  const db = cardsDbPath();
-  const cardsIndex = dataPackPath(DATA_PACK, "cards-index.json");
-  const empty = !existsSync(db) && !existsSync(cardsIndex);
-  return statusFromLastRun({ dataPack: DATA_PACK, empty });
-}
-
-export const pokemontcgliveCatalog: ProviderCatalogHooks = {
-  dataPack: DATA_PACK,
-  status: pokemonLiveCatalogStatus,
-  refresh: refreshPokemonLiveCatalog,
-};
+export const refreshPokemonLiveCatalog = hooks.refresh;
+export const pokemonLiveCatalogStatus = hooks.status;
+export const pokemontcgliveCatalog: ProviderCatalogHooks = hooks;

@@ -4,7 +4,10 @@ import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
 import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import { cleanSearchQuery, formatScore } from "@/core/enrich/searchUtils";
+import {
+  cleanSearchQuery,
+  formatScore,
+} from "@/core/enrich/search/searchUtils";
 import { createTMDBResolver } from "./resolver";
 import { getTMDBSuggestions } from "./suggestions";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";

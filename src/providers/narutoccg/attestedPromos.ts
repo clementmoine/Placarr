@@ -18,7 +18,7 @@ import {
 
 import { narutoCuratedSourcesDir } from "./curatedPaths";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
-import { cardTypeFromCollectorNumber } from "./parseBandaicgAsset";
+import { cardTypeFromCollectorNumber } from "./parse/parseBandaicgAsset";
 
 export type AttestedPromoSource = {
   id: string;

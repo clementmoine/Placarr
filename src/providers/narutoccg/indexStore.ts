@@ -21,7 +21,7 @@ import { dataRoot } from "@/lib/runtimeData";
 import { canonicalizeNarutoPrintKey } from "./collectorIdentity";
 import { foldNarutoCatalogueRecords } from "./foldNarutoIndex";
 import { NARUTO_EN_PACK_ID, NARUTO_PACK_ID } from "./packs";
-import { NARUTO_GAME } from "./parseCarddassAsset";
+import { NARUTO_GAME } from "./parse/parseCarddassAsset";
 import { isNarutoLangPrinted } from "./printed";
 
 export const NARUTO_CCG_SCHEMA_VERSION = "2";

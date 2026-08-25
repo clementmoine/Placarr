@@ -12,7 +12,6 @@ import {
   faceRotateDeg,
   faceDisplayAspect,
   normalizeFaceQuarterTurns,
-  orientAspectRatio,
 } from "@/lib/text/cardFormat";
 import { cn } from "@/lib/shared/utils";
 

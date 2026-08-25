@@ -792,6 +792,32 @@ Yahoo.
 
 ---
 
+## Promos FR — pistes ouvertes (versées de `archive/naruto_promo_research.md`, 2026-08-24)
+
+Recouvre les items 17 et 20 de la queue — le détail et la formulation d'origine
+sont dans le journal archivé :
+
+1. **Tome 12** — seul trou de la liste blister Kana. Un membre a peut-être
+   répondu plus loin dans t1185, ou dans t1192 dont le corps est tronqué pour
+   les invités.
+2. **La 7ᵉ inédite** — le fil t1185 parle de **7** cartes inédites, on en a
+   identifié 6. La liste des `(Inédite)` est tronquée dans les extraits
+   récupérés.
+3. **L'annonce Kana d'origine** — « Eux-même l'avaient annoncé sur leur site
+   ici », lien mort dans le fil. Chercher dans les actus archivées de
+   `mangakana.com`.
+4. **Le présentoir de vente Kana** — un membre décrit « la liste des cartes à
+   collectionner affichée sur le présentoir ». Une photo donnerait la liste
+   officielle des 15.
+5. **La 2ᵉ tin box** — Amazon dit « le premier coffret » et le forum évoque une
+   variante grands distributeurs à 1 carte. (La question « d'autres `PR-`
+   françaises » est **tranchée : non** — pool japonais, la France n'en a eu que
+   deux. Ne pas rouvrir sans fait niveau « carte en main ».)
+6. **Divergence PR-011/016** — le posteur de t1003 (2008, objet en main) écrit
+   PR-011 = Naruto et PR-016 = Orochimaru, l'inverse du catalogue (qui tranche
+   par l'art des cartes : `pr011` = Orochimaru). À reconfirmer si une photo
+   nette d'une tin scellée apparaît.
+
 ## Officiel / Wayback
 
 | Site                                                                                                                  | Lang | Faces                    | Dos            | Sealed           | Détails             | Statut  | Prochaine action                                                                                                                                                    |

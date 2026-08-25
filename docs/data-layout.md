@@ -24,12 +24,13 @@ data/
     # lorcana/products/sets/{set12}/logo.png
     # pokemon/staging/pkmcards-products/  — Sync admin (même famille)
     # pokemon/staging/tcgdex-set-logos.json — wordmarks d'extension (API)
-  onepiece/staging/opecards-products/     # CLI famille ; pas encore de pack Catalogue
-  yugioh/staging/ygocards-products/       # CLI famille ; pas encore de pack Catalogue
-  mtg/staging/mtgcards-products/          # CLI famille ; rayon scellé mince (pas de boosters)
+  # prévu, pas encore sur disque : onepiece/staging/opecards-products/,
+  # yugioh/staging/ygocards-products/, mtg/staging/mtgcards-products/
+  # (CLI famille ; pas encore de pack Catalogue ; mtg = rayon scellé mince)
   naruto/                          # franchise ombrelle
     carddass/                      # un pack (Carddass + CCG). `naruto/en-ccg` = alias disque
       catalog.sqlite | cards-index.json | products-index.json | appearances.json
+      facts-ja.json | facts-hinokunian.json   # relevés de titres JA
       cards/
         back.fr.webp | back.en.webp | …   # sleeve par langue (pas de back.webp générique)
         back.en.webp | back.it.webp | back.ja.webp
@@ -48,10 +49,13 @@ data/
     en-ccg/                        # alias → carddass (staging historique peut rester ici)
     shippuden/                     # 「疾風伝 カードゲーム」 — autre jeu, autre pack
     ninja-ranks/                   # Panini / Inkworks Ninja Ranks (titres EN ; packshots en produits ; 2 faces échantillon)
+      locale-specific-faces.json | prints.sqlite
     ultra-challenge/               # Panini Ultra Challenge (lamincards, 2007)
   dbs/                             # franchise Dragon Ball Super
     cg/                            # Masters (provider dbscg)
       catalog.sqlite | cards-index.json | products-index.json
+      facts.json | dbscards-fr.json | dbscards-en.json | scrape-summary.json
+      backup/
       cards/back.webp              → /assets/dbs/cg/cards/back.webp
       cards/{set}/fr/{card}/art.webp   # dbscards / Bandai (FR)
       cards/{set}/en/{card}/art.webp   # clone TCG Arena / Deckplanet
@@ -65,8 +69,10 @@ data/
       staging/dbscards-products/          # Sync admin Fusion World
       foil/full_foil_mask.webp
       logs/
-  launchbox|icollect|nointro/
-  indexes/title-idf/
+  launchbox|icollect/
+  # nointro/ prévu — provider + index SQLite existent, rien de synchronisé sur disque
+  indexes/title-idf/               # vide tant que `pnpm title-idf:update` n'a pas tourné
+  logs/                            # artefacts d'audit foil (writer : src/providers/pokemontcglive/liveCard.ts)
 ```
 
 `naruto` = franchise ; **`naruto/carddass`** = Carddass + CCG (plus d’onglet Bandai CCG). **`naruto/shippuden`**, **`naruto/ninja-ranks`**, **`naruto/ultra-challenge`** = autres jeux, autres packs. Layout Carddass :
@@ -94,8 +100,10 @@ Provider : `src/providers/narutoccg/`. CLI : `pnpm naruto:cards` — voir
 Dos = langue : `cards/back.{fr|en|it|ja}.webp` depuis
 `curated/cards/back.{lang}.png`. Pas de `back.webp` sans langue sur Naruto.
 Reconstruct : `curated/cards/{family}/{id}/{lang}/art.reconstructed.png`
-(+ `source.jpg`). Ledgers JSON : `curated/sources/` — pas de markdown dans
-`curated/`.
+(+ `source.jpg`). Ledgers JSON : `curated/sources/`. Le markdown **est
+autorisé** dans `curated/` comme documentation locale (`BACK.md` chez dbscg,
+dbsfw, narutoshippuden, narutoranks, narutoultra) — jamais installé vers
+`data/` (`curatedCardsInstall` ne copie pas le markdown).
 
 `dbs` = franchise ; **`dbs/cg`** = Masters (`dbscg:bt1-001`) ; **`dbs/fw`** =
 Fusion World (`dbsfw:st01-001`, parallels `_P1`). Identité Masters = cardlists
@@ -114,9 +122,8 @@ Voir [provider_supply_modes.md](provider_supply_modes.md) :
 - **Provider catalogue** = `ProviderModule` avec `supplyMode` + hook `catalog`
   (refresh / status / `dataPack`) — core provider-blind.
 - **Récupérable** → `data/<pack>/` (jamais commit). **Manuel non rejouable** →
-  `src/providers/<id>/curated/` (git), installé vers `data/` au refresh
-  (arbre `curated/cards/` = `data/<pack>/cards/` — voir
-  `src/providers/shared/curatedCardsInstall.ts`).
+  `src/providers/<id>/curated/` (git), installé vers `data/` au refresh —
+  contrat complet : [curated_data.md](curated_data.md).
 - **`src/effects/`** = moteur foil (pas les octets).
 - Admin **Catalogue** : refresh all / unitaire / auto (Plex-like). Distinct de
   l’onglet Refresh metadata.

@@ -2,7 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 import type { FoilPackId, FoilPackStatus } from "./foilStatusTypes";
-import type { CatalogueExtractTarget } from "./cataloguePacks";
+import { CATALOGUE_PACKS, type CatalogueExtractTarget } from "./cataloguePacks";
 
 export type { FoilPackId, FoilPackStatus } from "./foilStatusTypes";
 
@@ -87,7 +87,7 @@ function toIso(mtimeMs: number | null): string | null {
 
 /**
  * Observe on-disk APK + foil extract state for the admin APK lab.
- * Pure FS walk — no provider literals beyond pack folder names.
+ * Pure FS walk — one row per CATALOGUE_PACKS entry, paths from the registry.
  */
 export async function readFoilPackStatuses(opts: {
   dataRoot: string;
@@ -102,85 +102,17 @@ export async function readFoilPackStatuses(opts: {
     dataPack: string;
     staging: string;
     extractTarget: CatalogueExtractTarget;
-    /** APK unlocks Unity extras; packs can still extract without one. */
-    apkRequired: boolean;
     extractMarkers: string[];
-  }> = [
-    {
-      id: "lorcana",
-      label: "Lorcana",
-      dataPack: "lorcana",
-      staging: "lorcana/staging",
-      extractTarget: "lorcana",
-      apkRequired: false,
-      extractMarkers: [
-        path.join(dataRoot, "lorcana", "foil", "shaders"),
-        path.join(dataRoot, "lorcana", "foil", "textures"),
-        path.join(dataRoot, "lorcana", "foil", "web"),
-        path.join(dataRoot, "lorcana", "foil", "manifest.json"),
-        path.join(dataRoot, "lorcana", "cards-index.json"),
-        path.join(dataRoot, "lorcana", "catalog.sqlite"),
-      ],
-    },
-    {
-      id: "pokemon",
-      label: "Pokémon",
-      dataPack: "pokemon",
-      staging: "pokemon/staging",
-      extractTarget: "pokemon",
-      apkRequired: false,
-      extractMarkers: [
-        path.join(dataRoot, "pokemon", "foil", "shaders"),
-        path.join(dataRoot, "pokemon", "foil", "textures"),
-        path.join(dataRoot, "pokemon", "foil", "materialSheets.json"),
-        path.join(dataRoot, "pokemon", "catalog.sqlite"),
-        path.join(dataRoot, "pokemon", "liveFoilMasks.json"),
-        path.join(dataRoot, "pokemon", "cards.json"),
-      ],
-    },
-    {
-      id: "naruto",
-      label: "Naruto",
-      dataPack: "naruto/carddass",
-      staging: "naruto/carddass/staging",
-      extractTarget: "naruto",
-      apkRequired: false,
-      extractMarkers: [
-        path.join(dataRoot, "naruto", "carddass", "cards-index.json"),
-        path.join(dataRoot, "naruto", "carddass", "catalog.sqlite"),
-        path.join(dataRoot, "naruto", "carddass", "cards"),
-        path.join(dataRoot, "naruto", "carddass", "cards", "back.webp"),
-      ],
-    },
-    {
-      id: "dbs-cg",
-      label: "Dragon Ball Masters",
-      dataPack: "dbs/cg",
-      staging: "dbs/cg/staging",
-      extractTarget: "dbs-cg",
-      apkRequired: false,
-      extractMarkers: [
-        path.join(dataRoot, "dbs", "cg", "cards-index.json"),
-        path.join(dataRoot, "dbs", "cg", "catalog.sqlite"),
-        path.join(dataRoot, "dbs", "cg", "cards"),
-        path.join(dataRoot, "dbs", "cg", "cards", "back.webp"),
-      ],
-    },
-    {
-      id: "dbs-fw",
-      label: "Dragon Ball Fusion World",
-      dataPack: "dbs/fw",
-      staging: "dbs/fw/staging",
-      extractTarget: "dbs-fw",
-      apkRequired: false,
-      extractMarkers: [
-        path.join(dataRoot, "dbs", "fw", "cards-index.json"),
-        path.join(dataRoot, "dbs", "fw", "catalog.sqlite"),
-        path.join(dataRoot, "dbs", "fw", "cards"),
-        path.join(dataRoot, "dbs", "fw", "cards", "back.webp"),
-      ],
-    },
-  ];
+  }> = CATALOGUE_PACKS.map((pack) => ({
+    id: pack.extractTarget,
+    label: pack.labelEn,
+    dataPack: pack.id,
+    staging: `${pack.id}/staging`,
+    extractTarget: pack.extractTarget,
+    extractMarkers: pack.extractMarkers.map((marker) =>
+      path.join(dataRoot, pack.id, marker),
+    ),
+  }));
 
   const results: FoilPackStatus[] = [];
   for (const pack of packs) {
@@ -225,7 +157,7 @@ export async function readFoilPackStatuses(opts: {
         newestAt: toIso(extractBest?.mtimeMs ?? null),
         stale,
       },
-      canExtract: pack.apkRequired ? apkPresent : true,
+      canExtract: true,
       extractTarget: pack.extractTarget,
     });
   }

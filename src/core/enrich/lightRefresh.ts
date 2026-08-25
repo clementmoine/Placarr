@@ -13,8 +13,8 @@ import {
   canonicalProviderIdForSource,
   isCanonicalCoverSource,
 } from "@/core/catalog/sourceTraits";
-import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
-import { metadataResultsNeedGalleryEnrichment } from "@/core/enrich/galleryEnrichment";
+import { metadataHasDisplayImage } from "@/core/enrich/media/displayImage";
+import { metadataResultsNeedGalleryEnrichment } from "@/core/enrich/media/galleryEnrichment";
 import { metadataResultsHavePrimaryBookCover } from "@/core/enrich/scrapePassGate";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import type { MetadataResult } from "@/types/metadataProvider";

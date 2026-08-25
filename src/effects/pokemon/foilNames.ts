@@ -7,6 +7,7 @@
  * via {@link installPokemonShaderStemScanner}.
  */
 
+import { lazyLiveList } from "@/effects/lazyLiveList";
 import { loadFragStems } from "@/lib/foilMetaLoad";
 
 /** Widened: any dumped `.frag` stem (plus NonFoil). */
@@ -64,15 +65,8 @@ export function invalidatePokemonFoilNamesCache(): void {
  * Live view of discovered foil names (lazy — safe before/after meta hydrate).
  * Prefer {@link listPokemonFoilNames} in new code.
  */
-export const POKEMON_FOIL_NAMES: readonly string[] = new Proxy([] as string[], {
-  get(_target, prop) {
-    const names = listPokemonFoilNames();
-    const value = Reflect.get(names, prop, names);
-    return typeof value === "function"
-      ? (value as (...args: unknown[]) => unknown).bind(names)
-      : value;
-  },
-});
+export const POKEMON_FOIL_NAMES: readonly string[] =
+  lazyLiveList(listPokemonFoilNames);
 
 /** Exact MAT / playroom leaf name when it is a sheet alias (not a .frag stem). */
 export function foilSheetAliasName(foil: string): string | null {

@@ -11,14 +11,14 @@ import "dotenv/config";
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { carddasJpCardlistCards } from "./parseCarddasJpCardlist";
+import { carddasJpCardlistCards } from "./parse/parseCarddasJpCardlist";
 import { NARUTO_PACK_ID } from "./packs";
 import {
   loadSurugaCarddassCuratedListings,
   parseSurugaProductDetailHtml,
   surugaPrintedToDiskId,
   type SurugaCarddassListing,
-} from "./parseSurugaCarddass";
+} from "./parse/parseSurugaCarddass";
 import {
   loadSurugaVol1ProbeListings,
   surugaVol1ProbesTsvPath,

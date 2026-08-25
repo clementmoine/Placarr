@@ -17,16 +17,12 @@ describe("shelfTypeReadiness", () => {
       "hardware",
       // Cards resolve by print identity instead of a barcode.
       "tcg",
+      // LEGO / toys — Brickset (EAN) + Rebrickable (set_num).
+      "toys",
     ]) {
       expect(shelfTypeReadiness(type)).toBe("ready");
       expect(isShelfTypeReady(type)).toBe(true);
       expect(isShelfTypeComingSoon(type)).toBe(false);
     }
-  });
-
-  it("blocks toys until identify is wired", () => {
-    expect(shelfTypeReadiness("toys")).toBe("comingSoon");
-    expect(isShelfTypeReady("toys")).toBe(false);
-    expect(isShelfTypeComingSoon("toys")).toBe(true);
   });
 });

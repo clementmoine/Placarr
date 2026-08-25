@@ -28,8 +28,8 @@ import {
   requestedTitleCoversCurrentTitle,
 } from "@/core/enrich/titles/displayScore";
 import { preferredMetadataLanguagesFromShelfName } from "@/core/enrich/shelfContentLocale";
-import { buildBookMetadataSearchQueries } from "@/core/enrich/bookSearch";
-import { withBookSearchAliases } from "@/core/enrich/bookSearchAliases";
+import { buildBookMetadataSearchQueries } from "@/core/enrich/search/bookSearch";
+import { withBookSearchAliases } from "@/core/enrich/search/bookSearchAliases";
 import { aliasesExcludingTitle } from "@/core/enrich/aliases";
 import {
   dedupeFieldEvidence,
@@ -59,8 +59,8 @@ import {
   withMatchOnAdapterContext,
 } from "@/core/catalog/matchContext";
 
-import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
-import { metadataResultsNeedGalleryEnrichment } from "@/core/enrich/galleryEnrichment";
+import { metadataHasDisplayImage } from "@/core/enrich/media/displayImage";
+import { metadataResultsNeedGalleryEnrichment } from "@/core/enrich/media/galleryEnrichment";
 import {
   apiProvidersForMetadataPass,
   preferPinnedProviderIds,
@@ -1215,8 +1215,8 @@ export {
   type ProviderMetadataInput,
 } from "@/core/enrich/merge";
 export { preferredMetadataLanguagesFromShelfName } from "@/core/enrich/shelfContentLocale";
-export { buildBookMetadataSearchQueries } from "@/core/enrich/bookSearch";
+export { buildBookMetadataSearchQueries } from "@/core/enrich/search/bookSearch";
 export {
   supplementBookSearchAliases,
   withBookSearchAliases,
-} from "@/core/enrich/bookSearchAliases";
+} from "@/core/enrich/search/bookSearchAliases";

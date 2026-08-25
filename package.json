@@ -63,6 +63,7 @@
     "foil:audit-live-css": "tsx src/providers/pokemontcglive/auditLiveVsCss.ts"
   },
   "dependencies": {
+    "@arkntools/unity-js-tools": "3.2.0",
     "@hookform/resolvers": "5.9.0",
     "@prisma/adapter-pg": "7.9.1",
     "@prisma/client": "7.9.1",

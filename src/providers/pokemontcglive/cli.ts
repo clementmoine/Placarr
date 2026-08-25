@@ -140,7 +140,7 @@ async function runManifestDump(
   return result.ok || result.written > 0 ? 0 : 2;
 }
 
-function runExtract(
+async function runExtract(
   repo: string,
   opts: {
     bundlesDir: string;
@@ -150,6 +150,27 @@ function runExtract(
   },
   runOpts?: { signal?: AbortSignal },
 ): Promise<Record<string, unknown>> {
+  const usePythonAll = process.env.PLACARR_UNITY_PYTHON === "1";
+  /** Node dumps card faces/masks; Python keeps shaders + cards.json (phase C). */
+  const nodeTextures =
+    !usePythonAll &&
+    ["cards", "masks", "all"].includes(opts.textureMode);
+
+  if (nodeTextures) {
+    console.log("── extract card textures (Node, ADR-021 B)");
+    const { extractCardsNode } = await import(
+      "@/providers/pokemontcglive/extractCardsNode"
+    );
+    const nodeResult = await extractCardsNode({
+      repo,
+      bundlesDir: opts.bundlesDir,
+      textureMode: opts.textureMode as "cards" | "masks" | "all",
+      limitCards: opts.extractLimit > 0 ? opts.extractLimit : undefined,
+    });
+    console.log(JSON.stringify({ nodeTextures: nodeResult }));
+  }
+
+  const pyTextureMode = nodeTextures ? "none" : opts.textureMode;
   const args = [
     path.join(repo, "src/providers/pokemontcglive/unity/extract.py"),
     "--repo",
@@ -157,7 +178,7 @@ function runExtract(
     "--bundles-dir",
     opts.bundlesDir,
     "--textures",
-    opts.textureMode,
+    pyTextureMode,
   ];
   if (opts.extractLimit > 0) {
     args.push("--limit-cards", String(opts.extractLimit));

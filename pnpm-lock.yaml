@@ -13,6 +13,9 @@ importers:
 
   .:
     dependencies:
+      '@arkntools/unity-js-tools':
+        specifier: 3.2.0
+        version: 3.2.0
       '@hookform/resolvers':
         specifier: 5.9.0
         version: 5.9.0(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(effect@3.20.0)(react-hook-form@7.85.0(react@19.2.8))(valibot@1.4.2(typescript@7.0.2))(zod@4.4.3)
@@ -230,6 +233,12 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
+
+  '@arkntools/unity-js-tools-wasm@3.2.0':
+    resolution: {integrity: sha512-g3UateFLIcoF6cbaFxEMUf9Jfrvp3DgIKHx7xWA1LlSQEBem2xPQjMR58n1DIY0v3Fmx/8X7K806ufjlC/Q5zg==}
+
+  '@arkntools/unity-js-tools@3.2.0':
+    resolution: {integrity: sha512-FzWRWQF+bicVwYAa+LTmyXjlxZ4U+Bf4NCvg/X9JspEwRD7TXCcTeL2Rn2ZQGVkDa24rDIPnfd1gYHfMuY6CPQ==}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -4833,6 +4842,12 @@ packages:
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
+
+  '@arkntools/unity-js-tools-wasm@3.2.0': {}
+
+  '@arkntools/unity-js-tools@3.2.0':
+    dependencies:
+      '@arkntools/unity-js-tools-wasm': 3.2.0
 
   '@babel/code-frame@7.29.7':
     dependencies:

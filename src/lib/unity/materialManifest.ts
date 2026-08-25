@@ -18,6 +18,12 @@ export type MaterialManifestRow = {
   _s: string | null;
   /** Weak / mask texture stem. */
   _w: string | null;
+  /** Material path. */
+  _p: string | null;
+  /** Cold foil texture. */
+  _cf: string | null;
+  /** Etch texture. */
+  _e: string | null;
 };
 
 function strField(tree: UnityTypeTree, key: string): string | null {
@@ -41,6 +47,9 @@ export function materialManifestsFromTypeTrees(
       _c: strField(tree, "_c"),
       _s: strField(tree, "_s"),
       _w: strField(tree, "_w"),
+      _p: strField(tree, "_p"),
+      _cf: strField(tree, "_cf"),
+      _e: strField(tree, "_e"),
     });
   }
   return out;

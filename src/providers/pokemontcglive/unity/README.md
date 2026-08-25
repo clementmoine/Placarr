@@ -3,8 +3,8 @@
 Python remains for UnityFS **texture / shader / mesh** extract. Orchestration is
 TypeScript (`cli.ts`).
 
-**Phase A (ADR-021)** — CDN AssetManifest dump is Node by default
-(`dumpCdnManifest.ts` + `@/lib/unity`). Escape hatch: `PLACARR_UNITY_PYTHON=1`.
+**ADR-021 A–B** — AssetManifest dump + card Texture2D (ASTC→lossless WebP) are Node
+by default. Python still does shaders / cards.json / mesh. Escape: `PLACARR_UNITY_PYTHON=1`.
 Research: [`docs/unity_without_python.md`](../../../../docs/unity_without_python.md).
 
 ```bash

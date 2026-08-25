@@ -1,6 +1,8 @@
 export {
   loadUnityFs,
   iterMonoBehaviourTrees,
+  iterClassTrees,
+  resolveResourceBlob,
   type LoadedUnityFs,
   type UnityTypeTree,
 } from "@/lib/unity/loadUnityFs";
@@ -14,3 +16,15 @@ export {
   materialManifestsFromTypeTrees,
   type MaterialManifestRow,
 } from "@/lib/unity/materialManifest";
+export {
+  decodeTexturesFromUnityFs,
+  listTexture2D,
+  decodeTextureFormat,
+  type DecodedTexture2D,
+} from "@/lib/unity/texture2d";
+export {
+  cropCardRgba,
+  loadUvRectFromJson,
+  type UvRect,
+  type CroppedRgba,
+} from "@/lib/unity/cardCrop";

@@ -88,11 +88,7 @@ export async function GET(
     shelfType: shelf.type as MediaType,
     owned,
     language,
-    /*
-      Tarifer coûte une recherche par carte manquante. On ne le fait que sur
-      demande : la vue d'ensemble s'ouvre sans, le conseil d'achat le réclame.
-    */
-    withPrices: params.get("prices") === "1",
+    shelfName: shelf.name,
   });
 
   return NextResponse.json({

@@ -61,7 +61,9 @@ import {
   getItem,
   saveItem,
   refreshItemMetadata,
+  getItemSealedContainment,
   type ItemPrices,
+  type SealedContainmentSourceDto,
 } from "@/lib/api/items";
 import {
   cancelBackgroundJob,
@@ -254,8 +256,57 @@ function RelatedItemsRow({
   );
 }
 
+/** Packshots des produits scellés qui contiennent ce tirage. */
+function IncludedInRow({
+  title,
+  sources,
+  checklistHref,
+}: {
+  title: string;
+  sources: SealedContainmentSourceDto[];
+  checklistHref: string;
+}) {
+  if (sources.length === 0) return null;
+  return (
+    <div className="mt-8 flex flex-col gap-3">
+      <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
+        {title}
+      </h3>
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+        {sources.slice(0, 12).map((source) => (
+          <Link
+            key={source.slug}
+            href={`${checklistHref}?product=${encodeURIComponent(source.slug)}`}
+            className="group w-28 sm:w-32 shrink-0 flex flex-col gap-2"
+          >
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-border/70 bg-card/50 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
+              {source.imageUrl ? (
+                <RemoteImage
+                  src={source.imageUrl}
+                  alt={source.name}
+                  fill
+                  sizes="128px"
+                  className="object-contain p-1.5"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-medium text-muted-foreground">
+                  {source.kind}
+                </div>
+              )}
+            </div>
+            <span className="line-clamp-2 text-center text-[11px] font-medium leading-snug text-foreground/90 group-hover:text-primary">
+              {source.name}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ItemDiscoverySection({
   isPending,
+  includedIn,
   seriesVolumes,
   franchiseName,
   franchiseItems,
@@ -265,6 +316,7 @@ function ItemDiscoverySection({
   t,
 }: {
   isPending: boolean;
+  includedIn: SealedContainmentSourceDto[];
   seriesVolumes: ItemWithMetadata[];
   franchiseName: string | null;
   franchiseItems: ItemWithMetadata[];
@@ -274,13 +326,23 @@ function ItemDiscoverySection({
   t: (key: string, values?: Record<string, string>) => string;
 }) {
   if (isPending) return null;
+  const hasIncluded = includedIn.length > 0;
   const hasSeries = seriesVolumes.length > 0;
   const hasFranchise = Boolean(franchiseName) && franchiseItems.length > 0;
   const hasOther = otherItems.length > 0;
-  if (!hasSeries && !hasFranchise && !hasOther) return null;
+  if (!hasIncluded && !hasSeries && !hasFranchise && !hasOther) return null;
+
+  const checklistHref = `${shelfPath(shelf || { id: shelfId })}/checklist`;
 
   return (
     <div className="mt-8 flex flex-col gap-1 w-full">
+      {hasIncluded && (
+        <IncludedInRow
+          title={t("items.includedIn")}
+          sources={includedIn}
+          checklistHref={checklistHref}
+        />
+      )}
       {hasSeries && (
         <RelatedItemsRow
           title={t("items.otherVolumes")}
@@ -1209,6 +1271,14 @@ export default function ItemDetailsPage() {
       metadataBusyRefetchInterval(query.state.data ? [query.state.data] : null),
     refetchIntervalInBackground: true,
   });
+
+  const { data: sealedContainment } = useQuery({
+    queryKey: ["shelf", shelfId, "items", item?.id, "sealed-containment"],
+    queryFn: () => getItemSealedContainment(shelfId, item!.id),
+    enabled: Boolean(item?.id && item.printKey),
+    staleTime: 60_000,
+  });
+  const includedInSources = sealedContainment?.sources ?? [];
 
   const isMetadataBusy = isItemMetadataBusy(item);
   const hasNoMetadata =
@@ -2478,6 +2548,9 @@ export default function ItemDetailsPage() {
                           varnishType={variantView.varnishType}
                           cssFinishShaderId={variantView.shader?.id ?? null}
                           cssVarnishShaderId={variantView.varnish?.id ?? null}
+                          lenticularGrid={variantView.lenticularGrid}
+                          lenticularCropProfile={variantView.lenticularCropProfile}
+                          scanCrop={variantView.scanCrop}
                           maskUrl={foilMaskUrl}
                           varnishMaskUrl={varnishMaskUrl}
                           varnishColor={variantView.varnishColor}
@@ -2946,6 +3019,7 @@ export default function ItemDetailsPage() {
 
           <ItemDiscoverySection
             isPending={isPending}
+            includedIn={includedInSources}
             seriesVolumes={seriesVolumes}
             franchiseName={franchiseName}
             franchiseItems={franchiseItems}
@@ -3063,6 +3137,9 @@ export default function ItemDetailsPage() {
                       varnishType={variantView.varnishType}
                       cssFinishShaderId={variantView.shader?.id ?? null}
                       cssVarnishShaderId={variantView.varnish?.id ?? null}
+                      lenticularGrid={variantView.lenticularGrid}
+                      lenticularCropProfile={variantView.lenticularCropProfile}
+                      scanCrop={variantView.scanCrop}
                       /* The wrapper leans the whole card so the back turns with
                          it; this keeps only the light on its own surface. */
                       tilt={false}

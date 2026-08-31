@@ -753,6 +753,7 @@ function ShelfComponent() {
             <PrintPickerModal
               shelfId={resolvedShelfId}
               shelfType={shelf.type}
+              shelfName={shelf?.name}
               ownedPrints={ownedPrints}
               isOpen={visibleModal === "item" && usesPrintPicker}
               onClose={handleModalClose}

@@ -11,9 +11,6 @@
  * ne sont pas la même collection — et un pourcentage qui les mêlerait ne
  * voudrait rien dire.
  */
-import { readFileSync, existsSync } from "node:fs";
-import path from "node:path";
-
 import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { parsePrintKey } from "@/core/identify/printKey";
 import {
@@ -23,21 +20,61 @@ import {
 } from "@/core/collect/checklist";
 import {
   buyOptionsForMissing,
-  packSizeFromName,
+  planSetCompletion,
+  projectBuyProductsBySet,
+  sealedSourcesByPrint,
   singlesCostBreakdown,
   type BuyOption,
   type BuyProduct,
-  type ProductBehavior,
+  type CompletionPlan,
+  type SealedPrintSource,
 } from "@/core/collect/buyAdvice";
-import { dataRoot } from "@/lib/runtimeData";
+import {
+  readBoosterCompositionFile,
+  resolveBoosterComposition,
+  specificPacksPerHitByPrint,
+  type BoosterCompositionFile,
+} from "@/providers/shared/sealedProducts/boosterComposition";
+import {
+  inferPrintPickerDefaults,
+  type PrintPickerCatalogueHint,
+} from "@/lib/collect/inferPrintPickerDefaults";
+import { loadBuyProducts } from "@/lib/collect/sealedProductsLoad";
 import type { ProviderModule } from "@/types/providerModule";
 import type { MediaType } from "@/types/providerRegistry";
+
+function boosterCompositionForModules(
+  modules: readonly ProviderModule[],
+  dataPackIds: readonly string[],
+): BoosterCompositionFile | null {
+  for (const pack of modules) {
+    const fromModule = pack.loadBoosterComposition?.() ?? null;
+    if (fromModule?.version === 1) return fromModule;
+  }
+  for (const packId of dataPackIds) {
+    const fromDisk = readBoosterCompositionFile(packId);
+    if (fromDisk) return fromDisk;
+  }
+  return null;
+}
 
 export type ChecklistSetAdvice = {
   setId: string;
   /** Ce que coûterait l'achat à l'unité, et où est la falaise. */
   singles: ReturnType<typeof singlesCostBreakdown>;
+  /**
+   * Prix unitaire des manquantes (`printKey` → centimes). Absent = pas de cote
+   * connue — la carte n'est pas gratuite, elle est juste hors cache.
+   */
+  prices: Record<string, number>;
+  /**
+   * Produits scellés qui **garantissent** chaque manquante (starter, promo
+   * gift…). Absent = seulement le pool booster du set, pas de liste connue.
+   */
+  sealedSources: Record<string, SealedPrintSource[]>;
   options: BuyOption[];
+  /** Singles (chase / fin de set) + fill scellé milieu de set si l'EV tient. */
+  plan: CompletionPlan;
 };
 
 export type ShelfChecklistResult = ShelfChecklist & {
@@ -56,13 +93,18 @@ export type ShelfChecklistResult = ShelfChecklist & {
  * cartes Pokémon qu'elle ne contiendra jamais.
  *
  * Le jeu se **déduit de ce que l'étagère contient**, comme le fait déjà le
- * sélecteur d'ajout : chaque `printKey` porte son slug de jeu. Une étagère vide
- * ou mixte n'impose rien, et on retombe alors sur tous les packs du type —
+ * sélecteur d'ajout : chaque `printKey` porte son slug de jeu.
+ *
+ * Plusieurs catalogues partagent parfois le même slug (`naruto` = Carddass,
+ * Ninja Ranks, Ultra Challenge, 疾風伝). On resserre alors au **catalogue** :
+ * nom d'étagère (comme le print picker) et/ou extensions réellement présentes
+ * dans les `printKey` possédés. Une étagère vide ou ambiguë n'impose rien —
  * mieux vaut trop montrer que de taire un jeu que l'utilisateur y range.
  */
 function providersForShelf(input: {
   type: MediaType;
   games: ReadonlySet<string>;
+  catalogueIds?: ReadonlySet<string>;
 }): ProviderModule[] {
   const candidates = PROVIDER_MODULES.filter(
     (pack) =>
@@ -70,11 +112,20 @@ function providersForShelf(input: {
       typeof pack.listSetPrints === "function" &&
       typeof pack.listPrintSets === "function",
   );
-  if (input.games.size === 0) return candidates;
-  const scoped = candidates.filter((pack) =>
-    (pack.printGames ?? []).some((game: string) => input.games.has(game)),
+  const byGame =
+    input.games.size === 0
+      ? candidates
+      : candidates.filter((pack) =>
+          (pack.printGames ?? []).some((game: string) =>
+            input.games.has(game),
+          ),
+        );
+  const scoped = byGame.length > 0 ? byGame : candidates;
+  if (!input.catalogueIds || input.catalogueIds.size === 0) return scoped;
+  const byCatalogue = scoped.filter((pack) =>
+    input.catalogueIds!.has(pack.info.id),
   );
-  return scoped.length > 0 ? scoped : candidates;
+  return byCatalogue.length > 0 ? byCatalogue : scoped;
 }
 
 /** Les jeux qu'une étagère contient, lus dans les clés de ses tirages. */
@@ -88,55 +139,119 @@ export function gamesInShelf(printKeys: Iterable<string>): Set<string> {
 }
 
 /**
- * Les produits scellés d'un pack, tels que son index les publie.
+ * Catalogues dont une extension apparaît dans les tirages possédés.
  *
- * Absent = pas de conseil d'achat pour ce pack, ce que l'interface doit dire.
- * Inventer un booster serait pire que de n'en proposer aucun.
+ * `naruto:nr-0001` et `naruto:uc-0001` partagent le jeu `naruto` mais pas le
+ * catalogue — le set de la clé tranche.
  */
-function sealedProductsFor(pack: string | null | undefined): BuyProduct[] {
-  if (!pack) return [];
-  const file = path.join(dataRoot(), ...pack.split("/"), "products-index.json");
-  if (!existsSync(file)) return [];
-  try {
-    const parsed = JSON.parse(readFileSync(file, "utf8")) as {
-      products?: Record<string, Record<string, unknown>>;
-    };
-    return Object.values(parsed.products ?? {}).map((row) => ({
-      slug: String(row.slug ?? ""),
-      name: String(row.name ?? ""),
-      kind: String(row.kind ?? ""),
-      behavior: String(row.behavior ?? "random_pack") as ProductBehavior,
-      /*
-        L'extension du **catalogue**, pas celle de la boutique : les produits
-        Lorcana portent `ROTF` quand le catalogue porte `2`. Le `setCode` reste
-        en repli pour les packs dont les deux coïncident — Naruto, Dragon Ball.
-      */
-      setId:
-        (row.catalogueSetId as string | null) ??
-        (row.setCode as string | null) ??
-        null,
-      prints: Array.isArray(row.prints) ? (row.prints as string[]) : null,
-      printsArePreview: Boolean(row.containsPrintsIsPreview),
-      cardCount: (row.declaredCardCount as number | null) ?? null,
-      packSize: packSizeFromName(String(row.name ?? "")),
-      priceCents: null,
-    }));
-  } catch {
-    return [];
+export async function cataloguesInShelf(
+  modules: readonly ProviderModule[],
+  printKeys: Iterable<string>,
+  language?: string | null,
+): Promise<Set<string>> {
+  const ownedSets = new Set<string>();
+  for (const key of printKeys) {
+    const set = parsePrintKey(key)?.set;
+    if (set) ownedSets.add(set);
   }
+  if (ownedSets.size === 0) return new Set();
+
+  const owners = new Set<string>();
+  for (const pack of modules) {
+    const sets = await Promise.resolve(
+      pack.listPrintSets?.(
+        pack.info.types[0] ?? "tcg",
+        language,
+      ) ?? [],
+    );
+    for (const set of sets) {
+      if (ownedSets.has(set.id.trim().toLowerCase())) {
+        owners.add(pack.info.id);
+        break;
+      }
+    }
+  }
+  return owners;
+}
+
+function catalogueHintsFor(
+  modules: readonly ProviderModule[],
+): PrintPickerCatalogueHint[] {
+  return modules.map((pack) => ({
+    id: pack.info.id,
+    label: pack.info.catalogueLabel ?? pack.info.label,
+    aliases: (pack.info.catalogueAliases ?? []).map((entry) =>
+      typeof entry === "string" ? { label: entry } : entry,
+    ),
+    defaultLanguage:
+      pack.info.defaultLanguage === "fr" || pack.info.defaultLanguage === "en"
+        ? pack.info.defaultLanguage
+        : null,
+    languages: [],
+  }));
 }
 
 /**
- * Un prix pour une carte qu'on ne possède pas.
+ * Quel(s) catalogue(s) bornent la check-list.
  *
- * Les offres en base sont attachées aux **items** : par construction, elles ne
- * disent rien de ce qui manque. On redemande donc aux packs qui savent tarifer
- * un tirage isolé — chez Lorcana c'est un index déjà chargé, donc bon marché.
- *
- * Une carte sans prix reste **comptée comme sans prix**, jamais comme gratuite :
- * c'est ce qui distingue « ce set coûte 12 € » de « ce set coûte 12 € plus
- * quarante cartes qu'on ne sait pas chiffrer ».
+ * 1. Nom d'étagère unique (« Naruto Ninja Ranks ») → ce catalogue.
+ * 2. Sinon, catalogues qui possèdent réellement les extensions des cartes
+ *    déjà rangées.
+ * 3. Sinon rien — on reste au scope jeu / type.
  */
+export async function resolveChecklistCatalogueIds(input: {
+  modules: readonly ProviderModule[];
+  shelfName?: string | null;
+  owned: ReadonlySet<string>;
+  language?: string | null;
+}): Promise<Set<string>> {
+  const inferred = inferPrintPickerDefaults(
+    input.shelfName,
+    catalogueHintsFor(input.modules),
+    [...input.owned].map((printKey) => ({ printKey })),
+  );
+  if (inferred.catalogueId) {
+    return new Set([inferred.catalogueId]);
+  }
+  return cataloguesInShelf(input.modules, input.owned, input.language);
+}
+
+/**
+ * Un prix pour une carte manquante — sync auto puis lecture cache.
+ *
+ * Les offres en base sont attachées aux **items** : elles ne disent rien de ce
+ * qui manque. On demande donc aux packs de cote (`referencePriceSource`) qui
+ * savent aussi rejouer un cache (`evidenceOnlyPriceRefresh`) :
+ *
+ * 1. **une** passe sans `evidenceOnly` sur la première clé — peuplement /
+ *    rafraîchissement du ProviderEvidence (ex. dump DotGG Lorcana) ;
+ * 2. les clés suivantes en `evidenceOnly` — zéro HTTP, lecture du cache.
+ *
+ * Pas de bouton : ouvrir la check-list suffit. Une carte toujours sans cote
+ * reste « sans prix connu », jamais gratuite.
+ */
+function checklistPriceContext(
+  shelfType: MediaType,
+  printKey: string,
+  evidenceOnly: boolean,
+) {
+  return {
+    shelfType,
+    printKey,
+    evidenceOnly,
+    barcodes: [] as string[],
+    cleanedBarcode: "",
+    primaryTitle: "",
+    primaryName: "",
+    titles: [] as string[],
+    acceptanceTitles: [] as string[],
+    fallbackNames: [] as string[],
+    leDenicheurQueries: [] as string[],
+    isPal: false,
+    isClassics: false,
+  };
+}
+
 async function priceMissing(
   shelfType: MediaType,
   printKeys: readonly string[],
@@ -145,17 +260,34 @@ async function priceMissing(
   const pricers = PROVIDER_MODULES.filter(
     (pack) =>
       pack.info.types.includes(shelfType) &&
-      typeof pack.refreshBarcodePriceOffers === "function",
+      typeof pack.refreshBarcodePriceOffers === "function" &&
+      pack.info.evidenceOnlyPriceRefresh &&
+      /*
+        Sur une étagère TCG on ne réveille pas eBay / Back Market : ce sont des
+        scrapers à la carte. Les cotes de référence (Lorcana.gg, …) tiennent un
+        index bulk qu'on peut syncer une fois puis relire.
+      */
+      (shelfType !== "tcg" || pack.info.referencePriceSource),
   );
-  if (pricers.length === 0) return prices;
+  if (pricers.length === 0 || printKeys.length === 0) return prices;
+
+  const seed = printKeys[0]!;
+  for (const pack of pricers) {
+    try {
+      await pack.refreshBarcodePriceOffers!(
+        checklistPriceContext(shelfType, seed, false),
+      );
+    } catch {
+      /* un pack muet n'empêche pas les autres de répondre */
+    }
+  }
 
   for (const printKey of printKeys) {
     for (const pack of pricers) {
       try {
-        const offers = await pack.refreshBarcodePriceOffers!({
-          shelfType,
-          printKey,
-        } as never);
+        const offers = await pack.refreshBarcodePriceOffers!(
+          checklistPriceContext(shelfType, printKey, true),
+        );
         const cheapest = (offers ?? [])
           .map((offer) => offer.priceCents)
           .filter((cents): cents is number => typeof cents === "number")
@@ -177,12 +309,23 @@ export async function buildChecklistForShelf(input: {
   /** `printKey` des exemplaires possédés, déjà filtrés sur la langue. */
   owned: ReadonlySet<string>;
   language?: string | null;
-  /** Tarifer les manquantes coûte du temps ; l'appelant décide. */
-  withPrices?: boolean;
+  /** Nom d'étagère — borne au catalogue quand il est unique (Ninja Ranks…). */
+  shelfName?: string | null;
 }): Promise<ShelfChecklistResult> {
   const games = gamesInShelf(input.owned);
-  const modules = providersForShelf({ type: input.shelfType, games });
   const language = input.language?.trim().toLowerCase() || null;
+  const gameScoped = providersForShelf({ type: input.shelfType, games });
+  const catalogueIds = await resolveChecklistCatalogueIds({
+    modules: gameScoped,
+    shelfName: input.shelfName,
+    owned: input.owned,
+    language,
+  });
+  const modules = providersForShelf({
+    type: input.shelfType,
+    games,
+    catalogueIds,
+  });
 
   const catalogues: { id: string; label: string }[] = [];
   const languages = new Set<string>();
@@ -192,8 +335,11 @@ export async function buildChecklistForShelf(input: {
     group?: string | null;
     sortKey?: number | null;
   }[] = [];
+  /** Langues de cartes par extension — borne les conseils scellés. */
+  const setCardLanguages = new Map<string, string[]>();
   const prints: ChecklistPrint[] = [];
   const productsBySet = new Map<string, BuyProduct[]>();
+  const allSealed: BuyProduct[] = [];
 
   for (const pack of modules) {
     catalogues.push({
@@ -228,6 +374,12 @@ export async function buildChecklistForShelf(input: {
         group: set.group ?? null,
         sortKey: set.sortKey ?? null,
       });
+      if (set.languages?.length) {
+        setCardLanguages.set(
+          set.id,
+          set.languages.map((code) => code.trim().toLowerCase()).filter(Boolean),
+        );
+      }
       for (const row of await Promise.resolve(
         pack.listSetPrints!({ setId: set.id, language }),
       )) {
@@ -237,6 +389,7 @@ export async function buildChecklistForShelf(input: {
           reference: row.reference ?? row.printKey,
           title: row.title ?? row.reference ?? row.printKey,
           thumbnailUrl: row.thumbnailUrl ?? row.imageUrl ?? null,
+          rarity: row.rarity ?? null,
         });
       }
     }
@@ -248,22 +401,55 @@ export async function buildChecklistForShelf(input: {
     sait lister les sets sans posséder de données, l'autre possède le dossier de
     données sans savoir énumérer. Chercher les produits chez l'énumérateur
     rendait donc zéro option d'achat sur cent quarante et un produits.
+
+    Quand un catalogue est tranché (Ninja Ranks, pas tout Naruto), on borne
+    aussi les scellés à ce catalogue — un display Ultra Challenge n'aide pas
+    à finir les NW.
   */
-  for (const pack of PROVIDER_MODULES) {
-    if (!pack.info.types.includes(input.shelfType)) continue;
-    if (
-      games.size > 0 &&
-      !(pack.printGames ?? []).some((game) => games.has(game))
-    ) {
-      continue;
-    }
-    for (const product of sealedProductsFor(pack.catalog?.dataPack)) {
-      if (!product.setId) continue;
-      const rows = productsBySet.get(product.setId) ?? [];
-      rows.push(product);
-      productsBySet.set(product.setId, rows);
+  const sealedModules =
+    catalogueIds.size > 0
+      ? PROVIDER_MODULES.filter(
+          (pack) =>
+            pack.info.types.includes(input.shelfType) &&
+            catalogueIds.has(pack.info.id),
+        )
+      : PROVIDER_MODULES.filter((pack) => {
+          if (!pack.info.types.includes(input.shelfType)) return false;
+          if (
+            games.size > 0 &&
+            !(pack.printGames ?? []).some((game) => games.has(game))
+          ) {
+            return false;
+          }
+          return true;
+        });
+  for (const pack of sealedModules) {
+    for (const product of loadBuyProducts(pack.catalog?.dataPack)) {
+      allSealed.push(product);
     }
   }
+
+  const printSetIds = new Map<string, string>();
+  for (const row of prints) {
+    printSetIds.set(row.printKey, row.setId);
+  }
+  for (const [setId, rows] of projectBuyProductsBySet({
+    products: allSealed,
+    printSetIds,
+  })) {
+    productsBySet.set(setId, rows);
+  }
+
+  const sourcesIndex = sealedSourcesByPrint(allSealed);
+
+  const dataPackIds = [
+    ...new Set(
+      sealedModules.flatMap((pack) =>
+        pack.catalog?.dataPack ? [pack.catalog.dataPack] : [],
+      ),
+    ),
+  ];
+  const compositionFile = boosterCompositionForModules(modules, dataPackIds);
 
   const checklist = buildShelfChecklist({
     sets,
@@ -273,21 +459,62 @@ export async function buildChecklistForShelf(input: {
   });
 
   const advice: ChecklistSetAdvice[] = [];
+  // Toute extension incomplète — y compris à 0 % — reçoit un conseil d'achat.
   for (const set of checklist.sets) {
     if (set.missing.length === 0) continue;
     const missingKeys = set.missing.map((row) => row.printKey);
-    const prices = input.withPrices
-      ? await priceMissing(input.shelfType, missingKeys)
-      : new Map<string, number>();
+    const prices = await priceMissing(input.shelfType, missingKeys);
+    /*
+      Filtre check-list → une seule langue. Sinon les langues **des cartes**
+      de l'extension (pas tous les scellés du monde : un booster DE pour une
+      Série 1 sans titres DE n'aide pas).
+    */
+    const allowedLanguages = language
+      ? [language]
+      : (setCardLanguages.get(set.id) ?? []);
+    const products = productsBySet.get(set.id) ?? [];
+
+    const setPrints = prints.filter((row) => row.setId === set.id);
+    const packsPerHitByPrint =
+      compositionFile != null
+        ? specificPacksPerHitByPrint({
+            profile: resolveBoosterComposition(compositionFile, set.id),
+            pool: setPrints.map((row) => ({
+              printKey: row.printKey,
+              rarity: row.rarity,
+            })),
+          })
+        : undefined;
+
+    const options = buyOptionsForMissing({
+      missing: new Set(missingKeys),
+      poolSize: set.total,
+      products,
+      allowedLanguages,
+      preferredLanguage: language,
+      packsPerHitByPrint,
+    });
+    const sealedSources: Record<string, SealedPrintSource[]> = {};
+    for (const key of missingKeys) {
+      const sources = sourcesIndex.get(key);
+      if (sources?.length) sealedSources[key] = sources;
+    }
     advice.push({
       setId: set.id,
       singles: singlesCostBreakdown(
         missingKeys.map((key) => prices.get(key) ?? null),
       ),
-      options: buyOptionsForMissing({
-        missing: new Set(missingKeys),
+      prices: Object.fromEntries(prices),
+      sealedSources,
+      options,
+      plan: planSetCompletion({
+        missingPrices: new Map(
+          missingKeys.map((key) => [key, prices.get(key) ?? null]),
+        ),
         poolSize: set.total,
-        products: productsBySet.get(set.id) ?? [],
+        options,
+        products,
+        packsPerHitByPrint,
       }),
     });
   }

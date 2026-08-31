@@ -14,8 +14,10 @@ import { ITEM_CONDITIONS } from "@/core/collect/condition";
 import {
   resolveUniquePrintCandidate,
   supportsPrintSearch,
+  type PrintSearchOptions,
 } from "@/core/identify/printSearch";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { shelfPrintSearchScope } from "@/lib/collect/shelfPrintSearchScope";
 
 const VALID_CONDITIONS = new Set<string>(ITEM_CONDITIONS);
 const CREATE_CHUNK_SIZE = 100;
@@ -209,12 +211,30 @@ async function createItemsInChunks(
 }
 
 /**
+ * Prefer the shelf catalogue (picker defaults / owned sets), then fall back to
+ * a global unique hit — so `3` on Ultra Challenge links UC, while `stitch`
+ * can still resolve outside that catalogue when unambiguous.
+ */
+async function resolveBatchPrintHit(
+  query: string,
+  shelfType: Type,
+  scope: PrintSearchOptions,
+) {
+  if (scope.providerId) {
+    const scoped = await resolveUniquePrintCandidate(query, shelfType, scope);
+    if (scoped) return scoped;
+  }
+  return resolveUniquePrintCandidate(query, shelfType);
+}
+
+/**
  * On print shelves, pasted codes (`TFC#001`) resolve to the catalog title +
  * printKey before insert. Unresolved lines stay as typed (honest empty later).
  */
 async function resolveBatchCreateRows(
   names: string[],
   shelfType: Type,
+  scope: PrintSearchOptions = {},
 ): Promise<
   Array<{ name: string; printKey: string | null; lookupQuery: string }>
 > {
@@ -232,7 +252,7 @@ async function resolveBatchCreateRows(
     lookupQuery: string;
   }> = [];
   for (const query of names) {
-    const hit = await resolveUniquePrintCandidate(query, shelfType);
+    const hit = await resolveBatchPrintHit(query, shelfType, scope);
     const printKey =
       hit?.printKey && parsePrintKey(hit.printKey)
         ? hit.printKey.trim().toLowerCase()
@@ -301,9 +321,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const ownedOnShelf = supportsPrintSearch(shelf.type)
+      ? await prisma.item.findMany({
+          where: { shelfId: resolvedShelfId, printKey: { not: null } },
+          select: { printKey: true, language: true },
+          take: 200,
+        })
+      : [];
+    const printScope = supportsPrintSearch(shelf.type)
+      ? await shelfPrintSearchScope({
+          type: shelf.type,
+          shelfName: shelf.name,
+          owned: ownedOnShelf,
+        })
+      : {};
     const createRows = await resolveBatchCreateRows(
       normalizedNames,
       shelf.type,
+      printScope,
     );
     const createdItems = await createItemsInChunks(createRows, {
       shelfId: resolvedShelfId,

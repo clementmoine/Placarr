@@ -339,6 +339,9 @@ function ItemCardInner(props: ItemCardProps) {
                 varnishType={variantView.varnishType}
                 cssFinishShaderId={variantView.shader?.id ?? null}
                 cssVarnishShaderId={variantView.varnish?.id ?? null}
+                lenticularGrid={variantView.lenticularGrid}
+                lenticularCropProfile={variantView.lenticularCropProfile}
+                scanCrop={variantView.scanCrop}
                 maskUrl={foilMaskUrl}
                 varnishMaskUrl={varnishMaskUrl}
                 varnishColor={variantView.varnishColor}

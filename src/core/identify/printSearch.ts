@@ -61,6 +61,16 @@ function providersFor(type: string, providerId?: string | null) {
 export type PrintCatalogue = {
   id: string;
   label: string;
+  /**
+   * Autres libellés d'étagère pour ce catalogue (aliases provider), éventuellement
+   * avec une langue d'impression préférée.
+   */
+  aliases: Array<{
+    label: string;
+    language?: "fr" | "en" | "ja" | "it" | "de";
+  }>;
+  /** Langue catalogue par défaut du provider (`unknown` omis). */
+  defaultLanguage: "fr" | "en" | null;
   /** Vide quand le provider n'annonce pas encore ses extensions. */
   sets: PrintSetOption[];
   /**
@@ -85,24 +95,36 @@ export async function printSearchCatalogues(
   language?: string | null,
 ): Promise<PrintCatalogue[]> {
   const rows = await Promise.all(
-    providersFor(type).map(async (module) => ({
-      id: module.info.id,
-      // Le nom du **jeu** quand le provider le donne : on choisit un catalogue,
-      // pas un dépôt de données. `label` désigne la source, et « LorcanaJSON »
-      // n'est pas ce qu'on cherche dans une liste de jeux.
-      label: module.info.catalogueLabel ?? module.info.label,
-      /*
-        Un catalogue qui échoue à lister ses extensions n'en prive pas les
-        autres : il apparaît sans set, ce qui reste vrai, plutôt que de vider
-        tout le sélecteur.
-      */
-      sets: await Promise.resolve(
-        module.listPrintSets?.(type, language) ?? [],
-      ).catch(() => [] as PrintSetOption[]),
-      languages: await Promise.resolve(
-        module.listPrintLanguages?.(type) ?? [],
-      ).catch(() => [] as string[]),
-    })),
+    providersFor(type).map(async (module) => {
+      const aliases = (module.info.catalogueAliases ?? []).map((entry) =>
+        typeof entry === "string" ? { label: entry } : entry,
+      );
+      const defaultLanguage =
+        module.info.defaultLanguage === "fr" ||
+        module.info.defaultLanguage === "en"
+          ? module.info.defaultLanguage
+          : null;
+      return {
+        id: module.info.id,
+        // Le nom du **jeu** quand le provider le donne : on choisit un catalogue,
+        // pas un dépôt de données. `label` désigne la source, et « LorcanaJSON »
+        // n'est pas ce qu'on cherche dans une liste de jeux.
+        label: module.info.catalogueLabel ?? module.info.label,
+        aliases,
+        defaultLanguage,
+        /*
+          Un catalogue qui échoue à lister ses extensions n'en prive pas les
+          autres : il apparaît sans set, ce qui reste vrai, plutôt que de vider
+          tout le sélecteur.
+        */
+        sets: await Promise.resolve(
+          module.listPrintSets?.(type, language) ?? [],
+        ).catch(() => [] as PrintSetOption[]),
+        languages: await Promise.resolve(
+          module.listPrintLanguages?.(type) ?? [],
+        ).catch(() => [] as string[]),
+      };
+    }),
   );
   return rows.sort((a, b) => a.label.localeCompare(b.label));
 }
@@ -240,11 +262,44 @@ function printNumberIdentity(printKey: string): string | null {
 }
 
 /**
+ * Pure digit paste (`3`, `47`) vs padded collector number (`0003`).
+ *
+ * Substring search otherwise treats `3` as a hit for `0013` / `0030`. Only
+ * purely numeric number segments count — `ni003` stays a typed code.
+ */
+export function printKeyMatchesDigitQuery(
+  printKey: string,
+  digitQuery: string,
+): boolean {
+  const wanted = digitQuery.trim();
+  if (!/^\d+$/.test(wanted)) return false;
+  const number = parsePrintKey(printKey)?.number?.trim() ?? "";
+  if (!/^\d+$/.test(number)) return false;
+  return Number.parseInt(number, 10) === Number.parseInt(wanted, 10);
+}
+
+function candidatesByPrintKey(
+  found: readonly PrintCandidate[],
+): Map<string, PrintCandidate> {
+  const byKey = new Map<string, PrintCandidate>();
+  for (const candidate of found) {
+    if (!byKey.has(candidate.printKey)) {
+      byKey.set(candidate.printKey, candidate);
+    }
+  }
+  return byKey;
+}
+
+/**
  * Resolve a pasted line to a single printing when the query is unambiguous.
  *
  * Used by bulk add: `TFC#001` is a lookup code, not a display name. Ambiguous
  * names (`elsa`, `premier chapitre`, twin promos) stay unresolved so we never
  * invent a print the collector did not pick.
+ *
+ * Digit-only lines drop substring false friends (`3` ≠ `13`) before the
+ * uniqueness check. Callers that know the shelf catalogue pass `providerId`
+ * (same idea as the print picker defaults).
  */
 export async function resolveUniquePrintCandidate(
   query: string,
@@ -257,12 +312,17 @@ export async function resolveUniquePrintCandidate(
   });
   if (found.length === 0) return null;
 
-  const byKey = new Map<string, PrintCandidate>();
-  for (const candidate of found) {
-    if (!byKey.has(candidate.printKey)) {
-      byKey.set(candidate.printKey, candidate);
+  let byKey = candidatesByPrintKey(found);
+  const digitQuery = query.trim();
+  if (/^\d+$/.test(digitQuery) && byKey.size > 1) {
+    const exact = [...byKey.values()].filter((candidate) =>
+      printKeyMatchesDigitQuery(candidate.printKey, digitQuery),
+    );
+    if (exact.length > 0) {
+      byKey = candidatesByPrintKey(exact);
     }
   }
+
   if (byKey.size === 1) return byKey.values().next().value ?? null;
 
   const wantedPromo = queryPromoGrouping(query);

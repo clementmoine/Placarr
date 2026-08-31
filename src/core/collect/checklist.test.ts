@@ -63,16 +63,15 @@ describe("check-list d'étagère", () => {
   });
 
   /*
-    Trois états, pas un classement : rien commencé, en cours, terminé. Sur une
-    étagère Lorcana où l'on ne suit que le Premier Chapitre, treize sets à 0 %
-    noyaient le seul qui compte.
+    Une seule liste, ordre de sortie — l'état se lit sur owned / completion /
+    missing, pas sur un découpage en groupes.
   */
-  it("splits started, finished and never-started", () => {
+  it("keeps started, finished and never-started in one release-ordered list", () => {
     const list = buildShelfChecklist({
       sets: [
-        { id: "encours", label: "En cours" },
-        { id: "fini", label: "Fini" },
-        { id: "jamais", label: "Jamais commencé" },
+        { id: "encours", label: "En cours", sortKey: 2 },
+        { id: "fini", label: "Fini", sortKey: 1 },
+        { id: "jamais", label: "Jamais commencé", sortKey: 3 },
       ],
       prints: [
         print("a", "encours", "A"),
@@ -82,14 +81,14 @@ describe("check-list d'étagère", () => {
       ],
       owned: new Set(["a", "c"]),
     });
-    expect(list.sets.map((s) => s.id)).toEqual(["encours"]);
-    expect(list.completedSets.map((s) => s.id)).toEqual(["fini"]);
-    expect(list.untouchedSets.map((s) => s.id)).toEqual(["jamais"]);
+    expect(list.sets.map((s) => s.id)).toEqual(["fini", "encours", "jamais"]);
+    expect(list.sets.map((s) => s.completion)).toEqual([100, 50, 0]);
+    expect(list.sets.find((s) => s.id === "jamais")?.missing).toHaveLength(1);
     // Tous comptent dans le total : ce sont des cartes qui existent.
     expect(list.totals.total).toBe(4);
   });
 
-  /** Un set à 99 % reste en cours : c'est le zéro manquant qui le termine. */
+  /** Un set à 99 % n'est pas fini : c'est le zéro manquant qui le termine. */
   it("calls a set finished only when nothing is missing", () => {
     const prints = Array.from({ length: 100 }, (_, i) =>
       print(`k${i}`, "s", `${i}`),
@@ -100,7 +99,7 @@ describe("check-list d'étagère", () => {
       owned: new Set(prints.slice(0, 99).map((p) => p.printKey)),
     });
     expect(list.sets[0]?.completion).toBe(99);
-    expect(list.completedSets).toHaveLength(0);
+    expect(list.sets[0]?.missing).toHaveLength(1);
   });
 
   /*
@@ -122,7 +121,7 @@ describe("check-list d'étagère", () => {
       ],
       owned: new Set(["a", "b", "c"]),
     });
-    expect(list.completedSets.map((s) => s.id)).toEqual(["s1", "s7", "s19"]);
+    expect(list.sets.map((s) => s.id)).toEqual(["s1", "s7", "s19"]);
   });
 
   it("falls back to a numeric alphabetical order without a rank", () => {
@@ -134,10 +133,7 @@ describe("check-list d'étagère", () => {
       prints: [print("x", "b", "X"), print("y", "a", "Y")],
       owned: new Set(["x", "y"]),
     });
-    expect(list.completedSets.map((s) => s.label)).toEqual([
-      "Série 2",
-      "Série 10",
-    ]);
+    expect(list.sets.map((s) => s.label)).toEqual(["Série 2", "Série 10"]);
   });
 
   it("says zero rather than NaN on an empty shelf", () => {
@@ -157,13 +153,34 @@ describe("check-list d'étagère", () => {
         print("b", "s", "NI-002"),
         print("c", "s", "NI-001"),
       ],
-      // Une carte possédée, sinon le set part chez les non entamés.
       owned: new Set(["c"]),
     });
     expect(list.sets[0].missing.map((m) => m.reference)).toEqual([
       "NI-002",
       "NI-010",
     ]);
+    expect(list.sets[0].cards.map((c) => [c.reference, c.owned])).toEqual([
+      ["NI-001", true],
+      ["NI-002", false],
+      ["NI-010", false],
+    ]);
+  });
+
+  it("keeps groups apart before comparing ranks", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "maki1", label: "巻ノ一", group: "Japon", sortKey: 1 },
+        { id: "s1", label: "Série 1", group: "Europe", sortKey: 1 },
+        { id: "s2", label: "Série 2", group: "Europe", sortKey: 2 },
+      ],
+      prints: [
+        print("a", "maki1", "A"),
+        print("b", "s1", "B"),
+        print("c", "s2", "C"),
+      ],
+      owned: new Set(["a", "b", "c"]),
+    });
+    expect(list.sets.map((s) => s.id)).toEqual(["s1", "s2", "maki1"]);
   });
 });
 

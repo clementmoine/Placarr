@@ -37,8 +37,8 @@ un catalogue local et les items possédés**.
 
 ## Ce qui existe déjà et sert de base
 
-`src/providers/narutoccg/buildCoverageChecklist.ts` — _« Cross-source coverage
-checklist for Naruto CACG FR »_, lancé par `pnpm naruto:cards -- --only
+`src/providers/narutocarddass/buildCoverageChecklist.ts` — _« Cross-source coverage
+checklist for Naruto CACG FR »_, lancé par `Catalogue Sync -- --only
 checklist`. Il croise déjà les sources et produit un état de couverture.
 
 Mais c'est un outil de développement : il écrit un fichier, il est propre à un
@@ -107,8 +107,8 @@ tirages, la seconde est un objet unique.
 - **DBS / Lorcana / Pokémon papier / One Piece** — même logiciel
   (dbscards, fw.dbscards, lorcards, pkmcards, opecards, …). Un registre
   `src/providers/shared/dbscards/sites.ts`, un crawl. Accessoires exclus.
-  Sync admin pour les packs déjà ouverts ; One Piece via
-  `pnpm tcgcards:products -- --site opecards` en attendant un provider.
+  Sync admin pour les packs déjà ouverts (y compris One Piece /
+  `scrapeTcgCardsProducts("opecards")` via Catalogue Extract).
 - **Jeux vidéo** — l'équivalent n'est pas le produit scellé mais l'**édition**
   (collector, limitée, bundle). LaunchBox ne les modélise pas ; à vérifier avant
   de promettre la parité.
@@ -153,9 +153,9 @@ fiches decks / coffrets / special-packs **et** boosters). HTML déjà là
 | `data/dbs/cg/staging/dbscards-products/`          | **224** SKU ; **190** fiches (120 boosters + 70 decks / coffrets / special-packs)                                                   | date, prix, `declaredCardCount`, URL d'image. **2451** liens carte. Decks / coffrets exclusifs complétés depuis `catalog.sqlite`. Un booster reste sur l'aperçu 15 tuiles (Union Force 15/127) — le site le dit ; on ne dump pas le set. |
 | `data/lorcana/staging/lorcards-products/`         | **122** SKU ; **110** fiches (boosters / blisters / decks / coffrets / troves). Displays en index.                                  | date, prix, URL d'image, aperçu 15 tuiles. **1491** liens carte. Un booster Set 12 Woody = 15/446 — le pool du chapitre, pas le contenu du pack. Puzzles au prochain Sync (catégorie ajoutée).                                           |
 | `data/pokemon/staging/pkmcards-products/`         | **420** SKU ; **400** fiches (193 boosters + ETB / tins / Pokébox / tripacks / coffrets / special-packs). **20** displays en index. | date, prix, URL d'image, aperçu 15 tuiles. **5910** liens carte. Catalogue Live **non joint** (122 du set ≠ le pack).                                                                                                                    |
-| `data/onepiece/staging/opecards-products/`        | `pnpm tcgcards:products -- --site opecards`                                                                                         | Pas de pack Catalogue ni de provider. Graphe scellé en staging pour plus tard.                                                                                                                                                           |
-| `data/yugioh/staging/ygocards-products/`          | `pnpm tcgcards:products -- --site ygocards`                                                                                         | Boosters + displays (28 / 24 au nav, 2026-08-16). Pas de provider.                                                                                                                                                                       |
-| `data/mtg/staging/mtgcards-products/`             | `pnpm tcgcards:products -- --site mtgcards`                                                                                         | Rayon scellé **mince** : 0 booster, 0 display, 1 Commander, 5 prerelease. Binders / playmats exclus. Pas de provider.                                                                                                                    |
+| `data/onepiece/staging/opecards-products/`        | Catalogue Sync One Piece (products)                                                                                                 | Graphe scellé via `scrapeTcgCardsProducts("opecards")`.                                                                                                                                                                                  |
+| `data/yugioh/staging/ygocards-products/`          | Catalogue Sync Yu-Gi-Oh (products)                                                                                                  | Boosters + displays (28 / 24 au nav, 2026-08-16).                                                                                                                                                                                        |
+| `data/mtg/staging/mtgcards-products/`             | Catalogue Sync MTG (products)                                                                                                       | Rayon scellé **mince** : 0 booster, 0 display, 1 Commander, 5 prerelease. Binders / playmats exclus.                                                                                                                                     |
 | `data/naruto/carddass/staging/manga-news/images/` | 6 photos de **decks** (150–319 px)                                                                                                  | les HTML checklists étaient déjà là ; les visuels étaient encore distants. Packshots booster : déjà dans `carddass-fr/images/packshots/`, unused.                                                                                        |
 
 Accessoires exclus. Displays = nom + slug + URL d'image, pas de fiche.
@@ -366,11 +366,11 @@ Mesuré 2026-08-16 sur les `catalog.sqlite` locaux — plus seulement « à
   `set_code` + `sets.json`) ; ce qui manque est l'axe produit (decks =
   HTML Manga-News, pas une relation catalogue). Chez Pokémon, le sqlite
   local ne connaît pas le papier. Chez Fusion World, pas de rareté.
-- La **composition d'un booster** n'est plus « le seul vrai manque » : elle
-  est **connue et publiée** pour Lorcana, Pokémon SV+ et Naruto FR ; connue
-  en taille (12 / 24) mais **pas en slots** pour DBS Masters / FW. Le vrai
-  manque pour le seuil, ce sont les **poids des emplacements partagés** —
-  et la rareté Fusion World.
+Les **poids des emplacements partagés** (Enchanted, SCR, SIR, holo…) sont
+stockés en curated — voir `docs/sealed_product_contents.md` § Composition
+booster + `ProviderModule.loadBoosterComposition` (Lorcana, Naruto, DBS
+Masters/FW, Pokémon SV+).
+
 
 ### Comment gérer ça sans tout aplatir
 

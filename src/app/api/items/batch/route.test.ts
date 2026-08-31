@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
   transaction: vi.fn(),
   resolveUniquePrintCandidate: vi.fn(),
   supportsPrintSearch: vi.fn(),
+  shelfPrintSearchScope: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -62,6 +63,9 @@ vi.mock("@/core/identify/printSearch", () => ({
   resolveUniquePrintCandidate: h.resolveUniquePrintCandidate,
   supportsPrintSearch: h.supportsPrintSearch,
 }));
+vi.mock("@/lib/collect/shelfPrintSearchScope", () => ({
+  shelfPrintSearchScope: h.shelfPrintSearchScope,
+}));
 
 import { POST, PATCH, PUT, DELETE } from "./route";
 
@@ -93,6 +97,7 @@ beforeEach(() => {
     h.transaction,
     h.resolveUniquePrintCandidate,
     h.supportsPrintSearch,
+    h.shelfPrintSearchScope,
   ]) {
     fn.mockReset();
   }
@@ -100,6 +105,8 @@ beforeEach(() => {
   h.resolveShelfId.mockImplementation(async (id: string) => id);
   h.supportsPrintSearch.mockReturnValue(false);
   h.resolveUniquePrintCandidate.mockResolvedValue(null);
+  h.shelfPrintSearchScope.mockResolvedValue({});
+  h.item.findMany.mockResolvedValue([]);
   h.shelf.findUnique.mockResolvedValue({
     type: "books",
     userId: "u1",
@@ -143,6 +150,10 @@ describe("POST /api/items/batch", () => {
       name: "Lorcana",
     });
     h.supportsPrintSearch.mockReturnValue(true);
+    h.shelfPrintSearchScope.mockResolvedValue({
+      providerId: "lorcanajson",
+      language: "fr",
+    });
     h.resolveUniquePrintCandidate.mockResolvedValue({
       printKey: "lorcana:1-1",
       title: "Ariel - Sur une mission",
@@ -165,10 +176,15 @@ describe("POST /api/items/batch", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(h.resolveUniquePrintCandidate).toHaveBeenCalledWith(
-      "TFC#001",
-      "tcg",
-    );
+    expect(h.shelfPrintSearchScope).toHaveBeenCalledWith({
+      type: "tcg",
+      shelfName: "Lorcana",
+      owned: [],
+    });
+    expect(h.resolveUniquePrintCandidate).toHaveBeenCalledWith("TFC#001", "tcg", {
+      providerId: "lorcanajson",
+      language: "fr",
+    });
     expect(h.item.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -180,6 +196,61 @@ describe("POST /api/items/batch", () => {
     expect(h.scheduleBatchItemMetadataRefresh).toHaveBeenCalledWith(
       [{ itemId: "i1", lookupQuery: "Ariel - Sur une mission" }],
       { type: "tcg", userId: "u1", name: "Lorcana" },
+    );
+  });
+
+  it("falls back outside the shelf catalogue when the scoped lookup misses", async () => {
+    h.shelf.findUnique.mockResolvedValue({
+      type: "tcg",
+      userId: "u1",
+      name: "Naruto Ultra Challenge",
+    });
+    h.supportsPrintSearch.mockReturnValue(true);
+    h.shelfPrintSearchScope.mockResolvedValue({
+      providerId: "narutoultra",
+      language: "fr",
+    });
+    h.resolveUniquePrintCandidate
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        printKey: "lorcana:1-7",
+        title: "Stitch - Rock Star",
+        reference: "Premier Chapitre · 7",
+      });
+    h.transaction.mockImplementation(async (ops: Promise<unknown>[]) =>
+      Promise.all(ops),
+    );
+    h.item.create.mockResolvedValueOnce({
+      id: "i1",
+      name: "Stitch - Rock Star",
+    });
+
+    const res = await POST(
+      withBody({
+        shelfId: "shelf-uc",
+        names: ["stitch"],
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.resolveUniquePrintCandidate).toHaveBeenNthCalledWith(
+      1,
+      "stitch",
+      "tcg",
+      { providerId: "narutoultra", language: "fr" },
+    );
+    expect(h.resolveUniquePrintCandidate).toHaveBeenNthCalledWith(
+      2,
+      "stitch",
+      "tcg",
+    );
+    expect(h.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          name: "Stitch - Rock Star",
+          printKey: "lorcana:1-7",
+        }),
+      }),
     );
   });
 

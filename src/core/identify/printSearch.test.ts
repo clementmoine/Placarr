@@ -15,6 +15,7 @@ import {
   resolveUniquePrintCandidate,
   supportsPrintSearch,
   collectorQueryFromItemSlug,
+  printKeyMatchesDigitQuery,
 } from "./printSearch";
 
 function candidate(overrides: Partial<PrintCandidate> = {}): PrintCandidate {
@@ -48,6 +49,14 @@ function fakeModule(
 beforeEach(() => {
   modules.length = 0;
   vi.restoreAllMocks();
+});
+
+describe("printKeyMatchesDigitQuery", () => {
+  it("equates padded and bare collector numbers", () => {
+    expect(printKeyMatchesDigitQuery("naruto:uc-0003", "3")).toBe(true);
+    expect(printKeyMatchesDigitQuery("naruto:uc-0003", "0003")).toBe(true);
+    expect(printKeyMatchesDigitQuery("naruto:uc-0013", "3")).toBe(false);
+  });
 });
 
 describe("supportsPrintSearch", () => {
@@ -117,7 +126,7 @@ describe("searchPrintCandidates", () => {
 
   it("hides a locale that was never printed", async () => {
     modules.push(
-      fakeModule("narutoccg", ["tcg"], async () => [
+      fakeModule("narutocarddass", ["tcg"], async () => [
         candidate({
           printKey: "naruto:ni-0255",
           printed: false,
@@ -297,6 +306,34 @@ describe("resolveUniquePrintCandidate", () => {
 
     expect(found?.printKey).toBe("lorcana:1-20-p1");
     expect(found?.title).toBe("Genie");
+  });
+
+  it("keeps a digit query on the exact collector number, not substring hits", async () => {
+    modules.push(
+      fakeModule("narutoultra", ["tcg"], async () => [
+        candidate({ printKey: "naruto:uc-0003", title: "Naruto" }),
+        candidate({ printKey: "naruto:uc-0013", title: "Sasuke" }),
+        candidate({ printKey: "naruto:uc-0030", title: "Sakura" }),
+      ]),
+    );
+
+    const found = await resolveUniquePrintCandidate("3", "tcg", {
+      providerId: "narutoultra",
+    });
+
+    expect(found?.printKey).toBe("naruto:uc-0003");
+    expect(found?.title).toBe("Naruto");
+  });
+
+  it("does not treat alphanumeric collector numbers as digit pastes", async () => {
+    modules.push(
+      fakeModule("narutocarddass", ["tcg"], async () => [
+        candidate({ printKey: "naruto:s1-ni003", title: "NI003" }),
+        candidate({ printKey: "naruto:s1-te003", title: "TE003" }),
+      ]),
+    );
+
+    expect(await resolveUniquePrintCandidate("3", "tcg")).toBeNull();
   });
 });
 

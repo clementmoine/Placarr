@@ -13,6 +13,7 @@ import {
   variantRendering,
   type PrintVariantInfo,
 } from "@/lib/client/hooks/usePrintVariant";
+import { inferPrintPickerDefaults } from "@/lib/collect/inferPrintPickerDefaults";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import {
@@ -42,6 +43,9 @@ export type PrintCandidateView = {
   faceQuarterTurns?: 0 | 1 | 2 | 3;
   landscapeFace?: boolean;
   landscapePrint?: boolean;
+  lenticularGrid?: { cols: number; rows: number } | null;
+  lenticularCropProfile?: string | null;
+  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
   thumbnailUrl?: string | null;
   imageUrl?: string | null;
   language?: string | null;
@@ -72,6 +76,11 @@ export type OwnedPrintRef = {
 type PrintPickerModalProps = {
   shelfId: string;
   shelfType: string;
+  /**
+   * Nom de l'étagère — sert à préremplir catalogue / langue / extension quand
+   * il désigne clairement un jeu (voir `inferPrintPickerDefaults`).
+   */
+  shelfName?: string | null;
   isOpen: boolean;
   onClose: () => void;
   /** Called once the item exists, so the shelf can refetch. */
@@ -178,6 +187,9 @@ function candidateAsVariantInfo(
     faceQuarterTurns: candidate.faceQuarterTurns,
     landscapeFace: candidate.landscapeFace,
     landscapePrint: candidate.landscapePrint,
+    lenticularGrid: candidate.lenticularGrid ?? null,
+    lenticularCropProfile: candidate.lenticularCropProfile ?? null,
+    scanCrop: candidate.scanCrop ?? null,
   };
 }
 
@@ -213,6 +225,9 @@ function PrintPickerTileArt({
         varnishType={view.varnishType}
         cssFinishShaderId={view.shader?.id ?? null}
         cssVarnishShaderId={view.varnish?.id ?? null}
+        lenticularGrid={view.lenticularGrid}
+        lenticularCropProfile={view.lenticularCropProfile}
+        scanCrop={view.scanCrop}
         maskUrl={view.foilMaskUrl}
         varnishMaskUrl={view.varnishMaskUrl}
         varnishColor={view.varnishColor}
@@ -248,6 +263,7 @@ function PrintPickerTileArt({
 export function PrintPickerModal({
   shelfId,
   shelfType,
+  shelfName,
   isOpen,
   onClose,
   onAdded,
@@ -267,6 +283,8 @@ export function PrintPickerModal({
     readonly {
       id: string;
       label: string;
+      aliases?: { label: string; language?: string }[];
+      defaultLanguage?: string | null;
       sets?: {
         id: string;
         label: string;
@@ -293,6 +311,9 @@ export function PrintPickerModal({
     done: number;
     total: number;
   } | null>(null);
+
+  /** Une seule application des défauts par ouverture. */
+  const shelfDefaultsApplied = useRef(false);
 
   /*
     Deux niveaux, parce qu'ils ne disent pas la même chose : la finition exacte
@@ -340,6 +361,7 @@ export function PrintPickerModal({
     setCatalogue(ALL_CATALOGUES);
     setSetId(null);
     setProgress(null);
+    shelfDefaultsApplied.current = false;
     onClose();
   }, [onClose]);
 
@@ -353,7 +375,10 @@ export function PrintPickerModal({
     tombées dans la page — jamais un set entier.
   */
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      shelfDefaultsApplied.current = false;
+      return;
+    }
     const controller = new AbortController();
     void (async () => {
       try {
@@ -376,6 +401,8 @@ export function PrintPickerModal({
           catalogues?: {
             id: string;
             label: string;
+            aliases?: { label: string; language?: string }[];
+            defaultLanguage?: string | null;
             sets?: {
               id: string;
               label: string;
@@ -385,13 +412,29 @@ export function PrintPickerModal({
             languages?: string[];
           }[];
         };
-        if (data.catalogues?.length) setCatalogues(data.catalogues);
+        if (!data.catalogues?.length) return;
+        setCatalogues(data.catalogues);
+
+        /*
+          Une seule fois par ouverture : le nom d'étagère ne doit pas écraser
+          un choix manuel si on recharge les catalogues (changement de langue).
+        */
+        if (shelfDefaultsApplied.current) return;
+        const defaults = inferPrintPickerDefaults(
+          shelfName,
+          data.catalogues,
+          ownedPrints ?? [],
+        );
+        shelfDefaultsApplied.current = true;
+        if (defaults.catalogueId) setCatalogue(defaults.catalogueId);
+        if (defaults.language) setLanguage(defaults.language);
+        if (defaults.setId) setSetId(defaults.setId);
       } catch {
         // Le sélecteur reste au minimum ; la recherche, elle, marche toujours.
       }
     })();
     return () => controller.abort();
-  }, [isOpen, shelfType, language]);
+  }, [isOpen, shelfType, language, shelfName, ownedPrints]);
 
   /*
     Les extensions que la langue choisie laisse voir.

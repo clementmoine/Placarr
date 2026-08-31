@@ -215,6 +215,25 @@ export const getItemPrices = (
   return axios.get(url.toString()).then((res) => res.data);
 };
 
+export type SealedContainmentSourceDto = {
+  slug: string;
+  name: string;
+  kind: string;
+  imageUrl?: string | null;
+  relation: "guaranteed" | "listed_pool" | "set_pool";
+};
+
+export const getItemSealedContainment = (
+  shelfId: string,
+  itemId: string,
+): Promise<{ sources: SealedContainmentSourceDto[] }> => {
+  const url = new URL(
+    `/api/shelves/${encodeURIComponent(shelfId)}/items/${encodeURIComponent(itemId)}/sealed-containment`,
+    window.location.origin,
+  );
+  return axios.get(url.toString()).then((res) => res.data);
+};
+
 export const refreshItemMetadata = (
   itemId: string,
   shelfId?: string | null,

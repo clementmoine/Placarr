@@ -18,9 +18,9 @@ import { beginCatalogueExtractLog } from "@/lib/admin/catalogueExtractLog";
 export const maxDuration = 60;
 
 /**
- * Admin: enqueue a durable foil extract on the interactive worker
- * (`pnpm worker`). Survives leaving the admin page — progress shows in the
- * header background-jobs menu.
+ * Admin: enqueue a durable catalogue extract on the interactive worker.
+ * Survives leaving the admin page — progress shows in the header
+ * background-jobs menu. In-process Node (no CLI).
  */
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();

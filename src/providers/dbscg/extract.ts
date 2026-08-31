@@ -1,19 +1,6 @@
-#!/usr/bin/env tsx
 /**
- * Dragon Ball Super Card Game (Masters) — Bandai FR+EN cardlists + TCG Arena dump.
- *
- *   pnpm dbs:cards
- *   pnpm dbs:cards -- --only arena
- *   pnpm dbs:cards -- --only dbscards   # la liste réelle de dbscards.fr
- *   pnpm dbs:cards -- --only products
- *   pnpm dbs:cards -- --only products --offline
- *   pnpm dbs:cards -- --skip faces
- *   pnpm dbs:cards -- --offline          # range le clone déjà là, pas de HTTP
- *   pnpm dbs:cards -- --langs fr         # une locale (défaut: fr,en)
+ * Dragon Ball Super Masters pack extract — Catalogue Sync / worker (in-process).
  */
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { fetchDbsCgFaces } from "./fetchFaces";
 import { buildDbsCgFacts } from "./buildMastersFacts";
 import { ensureArenaClone, installArenaFaces } from "./installArena";
@@ -100,7 +87,7 @@ export function dbsCgArenaLimit(
 }
 
 export async function runDbsCgPackPipeline(
-  argv: readonly string[] = process.argv,
+  argv: readonly string[] = [],
 ): Promise<void> {
   const dryRun = argv.includes("--dry-run");
   const force = argv.includes("--force");
@@ -190,12 +177,3 @@ export async function runDbsCgPackPipeline(
   }
 }
 
-const thisFile = fileURLToPath(import.meta.url);
-export const DBS_CG_CLI_PATH = thisFile;
-const invoked = process.argv[1] ? path.resolve(process.argv[1]) : "";
-if (invoked === thisFile) {
-  runDbsCgPackPipeline(process.argv).catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
-}

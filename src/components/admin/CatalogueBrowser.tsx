@@ -5,9 +5,18 @@ import { Loader2, Search } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
+import { LenticularStripArt } from "@/components/LenticularStripArt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
+import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 
@@ -17,6 +26,7 @@ type CatalogueCardsResponse = {
   offset: number;
   limit: number;
   cards: CatalogueCardRow[];
+  availableLocales?: string[];
 };
 
 const PAGE = 48;
@@ -35,6 +45,9 @@ function CatalogueCardArt({
     landscapePrint: card.landscapePrint,
   });
   const wide = orient.landscapeFace || (orient.faceQuarterTurns ?? 0) % 2 === 1;
+  const lenticular =
+    card.lenticularGrid &&
+    card.lenticularGrid.cols * card.lenticularGrid.rows > 1;
 
   return (
     <div
@@ -55,14 +68,23 @@ function CatalogueCardArt({
           landscapeFace={orient.landscapeFace}
           className="h-full w-full"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={artUrl}
-            alt={card.label}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            className="h-full w-full object-contain"
-          />
+          {lenticular && card.lenticularGrid ? (
+            <LenticularStripArt
+              imageUrl={artUrl}
+              grid={card.lenticularGrid}
+              alt={card.label}
+              className="h-full w-full"
+            />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={artUrl}
+              alt={card.label}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              className="h-full w-full object-contain"
+            />
+          )}
         </OrientedMediaFrame>
       )}
     </div>
@@ -75,6 +97,7 @@ async function fetchPage(input: {
   q: string;
   preferLang: string;
   allLocales: boolean;
+  incompleteOnly: boolean;
 }): Promise<CatalogueCardsResponse> {
   const params = new URLSearchParams({
     pack: input.pack,
@@ -84,6 +107,7 @@ async function fetchPage(input: {
   });
   if (input.q.trim()) params.set("q", input.q.trim());
   if (input.preferLang) params.set("lang", input.preferLang);
+  if (input.incompleteOnly) params.set("incomplete", "1");
   const res = await fetch(`/api/admin/catalogue-cards?${params}`);
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -108,6 +132,7 @@ export function CatalogueBrowser({
   const [query, setQuery] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [allLocales, setAllLocales] = useState(false);
+  const [incompleteOnly, setIncompleteOnly] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(query), 250);
@@ -123,7 +148,14 @@ export function CatalogueBrowser({
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ["catalogueCards", packId, debouncedQ, preferLang, allLocales],
+    queryKey: [
+      "catalogueCards",
+      packId,
+      debouncedQ,
+      preferLang,
+      allLocales,
+      incompleteOnly,
+    ],
     queryFn: ({ pageParam }) =>
       fetchPage({
         pack: packId,
@@ -131,6 +163,7 @@ export function CatalogueBrowser({
         q: debouncedQ,
         preferLang,
         allLocales,
+        incompleteOnly,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -180,6 +213,21 @@ export function CatalogueBrowser({
               ? `Locale ${preferLang.toUpperCase()}`
               : `${preferLang.toUpperCase()} only`}
         </Button>
+        <Button
+          type="button"
+          variant={incompleteOnly ? "secondary" : "outline"}
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => setIncompleteOnly((on) => !on)}
+        >
+          {incompleteOnly
+            ? fr
+              ? "Incomplets"
+              : "Incomplete"
+            : fr
+              ? "Tous"
+              : "All cards"}
+        </Button>
         {isFetching ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
         ) : null}
@@ -219,7 +267,7 @@ export function CatalogueBrowser({
                     shows six identical captions for six different cards. */}
                 {card.lang && card.lang !== "—" ? (
                   <span className="ml-1 font-medium uppercase text-foreground/80">
-                    {card.lang}
+                    {` ${card.lang}`}
                   </span>
                 ) : null}
                 {card.printed === false ? (

@@ -5,7 +5,7 @@ import {
   dbsCgFaceDownloadLimit,
   dbsCgScrapeLangs,
   selectDbsCgSteps,
-} from "./cli";
+} from "./extract";
 
 describe("selectDbsCgSteps", () => {
   it("reads dbscards' list before the faces pass that consumes it", () => {

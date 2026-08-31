@@ -27,6 +27,9 @@ export async function GET(req: Request) {
   const foilOnly =
     url.searchParams.get("foilOnly") === "1" ||
     url.searchParams.get("foilOnly") === "true";
+  const incompleteOnly =
+    url.searchParams.get("incomplete") === "1" ||
+    url.searchParams.get("incomplete") === "true";
   const offset = Number(url.searchParams.get("offset") ?? "0");
   const limit = Number(url.searchParams.get("limit") ?? "48");
   const q = url.searchParams.get("q") ?? undefined;
@@ -40,6 +43,7 @@ export async function GET(req: Request) {
   const result = listCatalogueCards({
     pack,
     foilOnly,
+    incompleteOnly,
     offset: Number.isFinite(offset) ? offset : 0,
     limit: Number.isFinite(limit) ? limit : 48,
     q,

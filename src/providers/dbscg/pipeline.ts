@@ -16,7 +16,7 @@ const hooks = cardCatalogueHooks({
   runPipeline: async (argv) => {
     const { runDbsCgPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runDbsCgPackPipeline(argv);
   },

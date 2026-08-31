@@ -39,4 +39,6 @@ export type CatalogueCardRow = {
   faceQuarterTurns?: 0 | 1 | 2 | 3;
   /** Any locale art for this print is wider than tall. */
   landscapePrint?: boolean;
+  /** Kayou HR/BP sprite sheet — cols×rows. */
+  lenticularGrid?: { cols: number; rows: number };
 };

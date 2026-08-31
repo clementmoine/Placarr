@@ -16,7 +16,7 @@ const hooks = cardCatalogueHooks({
   runPipeline: async (argv) => {
     const { runDbsFwPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runDbsFwPackPipeline(argv);
   },

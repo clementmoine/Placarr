@@ -1,13 +1,6 @@
-#!/usr/bin/env tsx
 /**
- * Naruto Ninja Ranks — checklist officielle Inkworks → catalogue.
- *
- *   pnpm naruto:ranks
- *   pnpm naruto:ranks -- --force   # re-télécharge Wayback + dumps fan
+ * Naruto Ninja Ranks pack extract — Catalogue Sync / worker (in-process).
  */
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 
 import {
@@ -28,9 +21,9 @@ import {
 import { harvestImadokiSheets, installImadokiSheets } from "./imadokiSheets";
 import {
   harvestInkworksOfficialAssets,
-  ingestInkworksProducts,
   installInkworksSampleFaces,
 } from "./inkworksOfficial";
+import { ingestNinjaRanksSealedProducts } from "./paniniEuProducts";
 import {
   harvestBloggerPackRip,
   installBloggerPackRip,
@@ -40,7 +33,7 @@ import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
 import { enrichCardsIndexArtDimensions } from "@/providers/shared/cardCatalogue/enrichCardsIndexArtDimensions";
 
 export async function runNarutoRanksPackPipeline(
-  argv: readonly string[] = process.argv,
+  argv: readonly string[] = [],
 ): Promise<{ cards: number; products: number }> {
   const force = argv.includes("--force");
   const harvested = await harvestInkworksOfficialAssets({ force });
@@ -104,9 +97,9 @@ export async function runNarutoRanksPackPipeline(
       const ns = buildEuropeanNsFromLedger({ index });
       const promos = buildSupplementalPromosFromLedger({ index });
       const french = buildFrenchNinjaRanksTitles({ index });
-      if (french.titles) {
+      if (french.titles || french.sharedFromEnglish) {
         console.log(
-          `── Naruto Ninja Ranks — ${french.titles} titre(s) français${french.missing.length ? ` (${french.missing.length} trou${french.missing.length === 1 ? "" : "s"} sans attestation)` : ""}`,
+          `── Naruto Ninja Ranks — ${french.titles} titre(s) localisés attestés, ${french.sharedFromEnglish} nom(s) partagés depuis l'EN${french.missing.length ? ` (${french.missing.length} trou${french.missing.length === 1 ? "" : "s"} sans attestation)` : ""}`,
         );
       }
       const faces = installInkworksSampleFaces(index);
@@ -185,17 +178,7 @@ export async function runNarutoRanksPackPipeline(
           );
         }
       }
-      return ingestInkworksProducts();
+      return ingestNinjaRanksSealedProducts();
     },
-  });
-}
-
-const thisFile = fileURLToPath(import.meta.url);
-export const NARUTO_RANKS_CLI_PATH = thisFile;
-const invoked = process.argv[1] ? path.resolve(process.argv[1]) : "";
-if (invoked === thisFile) {
-  runNarutoRanksPackPipeline(process.argv).catch((error) => {
-    console.error(error);
-    process.exit(1);
   });
 }

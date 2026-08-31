@@ -24,7 +24,7 @@ export const nointroModule = defineProvider({
     defaultLanguage: "en",
     websiteUrl: "https://www.no-intro.org/",
     notes:
-      "Dump DAT Logiqx (`pnpm nointro:update` : NOINTRO_DAT_PATH et/ou pack zip NOINTRO_DAT_PACK / URL). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
+      "Dump DAT Logiqx (admin Local indexes / worker catalog : NOINTRO_DAT_PATH et/ou pack zip NOINTRO_DAT_PACK / URL). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
   },
   catalog: nointroCatalog,
   createMetadataAdapter: () => ({
@@ -39,7 +39,7 @@ export const nointroModule = defineProvider({
     return {
       ok: Boolean(db),
       latency: Date.now() - start,
-      error: db ? null : "Index unavailable — run pnpm nointro:update",
+      error: db ? null : "Index unavailable — sync No-Intro from admin Local indexes",
       configured: true,
     };
   }),

@@ -14,7 +14,8 @@ export type BackgroundJob = {
     | "foilExtract"
     | "icollectCatalogSync"
     | "launchboxIndexSync"
-    | "nointroIndexSync";
+    | "nointroIndexSync"
+    | "catalogProviderSync";
   startedAt: string;
   cancellable: boolean;
   foilTarget?: CatalogueExtractTarget | null;

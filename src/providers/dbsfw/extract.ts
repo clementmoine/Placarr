@@ -1,17 +1,6 @@
-#!/usr/bin/env tsx
 /**
- * Dragon Ball Super Card Game Fusion World — Bandai fw/en cardlist → local index.
- *
- *   pnpm dbs:fw
- *   pnpm dbs:fw -- --limit 2
- *   pnpm dbs:fw -- --only products
- *   pnpm dbs:fw -- --only products --offline
- *   pnpm dbs:fw -- --only details      # rareté, type, coûts, traits, texte
- *   pnpm dbs:fw -- --offline
+ * Dragon Ball Fusion World pack extract — Catalogue Sync / worker (in-process).
  */
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { DBSCARDS_SITES } from "@/providers/shared/dbscards/list";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
@@ -58,7 +47,7 @@ export function selectDbsFwSteps(argv: readonly string[]): Step[] {
 }
 
 export async function runDbsFwPackPipeline(
-  argv: readonly string[] = process.argv,
+  argv: readonly string[] = [],
 ): Promise<void> {
   const dryRun = argv.includes("--dry-run");
   const force = argv.includes("--force");
@@ -168,12 +157,3 @@ export async function runDbsFwPackPipeline(
   }
 }
 
-const thisFile = fileURLToPath(import.meta.url);
-export const DBS_FW_CLI_PATH = thisFile;
-const invoked = process.argv[1] ? path.resolve(process.argv[1]) : "";
-if (invoked === thisFile) {
-  runDbsFwPackPipeline(process.argv).catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
-}

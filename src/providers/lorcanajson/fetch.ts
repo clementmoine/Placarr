@@ -864,7 +864,7 @@ export function lorcanaPrintLabel(card: LorcanaCard): string {
  */
 export async function listLorcanaPrintSets(
   options: LorcanaSearchOptions = {},
-): Promise<{ id: string; label: string }[]> {
+): Promise<{ id: string; label: string; sortKey?: number }[]> {
   const indexes = await loadLorcanaIndexes(options.language, options);
   const byCode = new Map<string, string>();
   for (const index of indexes) {
@@ -874,7 +874,15 @@ export async function listLorcanaPrintSets(
       byCode.set(code, card.setName?.trim() || code);
     }
   }
-  return [...byCode.entries()]
-    .map(([id, label]) => ({ id, label }))
-    .sort((a, b) => a.label.localeCompare(b.label, "fr", { numeric: true }));
+  const { finalizeSetOptions } = await import(
+    "@/providers/shared/cardCatalogue/sets"
+  );
+  return finalizeSetOptions(
+    [...byCode.entries()].map(([id, label]) => ({
+      id,
+      label,
+      // Même règle que `lorcanaSetSortKey` (indexStore) — évite un import croisé.
+      sortKey: /^\d+$/.test(id.trim()) ? Number(id.trim()) : null,
+    })),
+  );
 }

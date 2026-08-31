@@ -37,6 +37,30 @@ import {
   resolveLiveBundleForPrintKey,
 } from "@/effects/pokemon/resolveEffect";
 import { appendUnreachableLiveFinishes } from "@/effects/pokemon/liveFinishVariants";
+import tcgdexBoosterComposition from "./curated/booster-composition.json";
+import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
+
+/**
+ * Codes Live → libellés alignés sur `booster-composition.json` (TCGdex / FR).
+ * Le brief set local n'a pas de rareté ; Live en porte une pour beaucoup de tirages.
+ */
+function rarityLabelFromLiveCode(code: string | null | undefined): string | null {
+  if (!code?.trim()) return null;
+  const map: Record<string, string> = {
+    IllustrationRare: "Illustration rare",
+    SpecialIllustrationRare: "Special illustration rare",
+    DoubleRare: "Double rare",
+    HyperRare: "Hyper rare",
+    RareUltra: "Ultra Rare",
+    RareHolo: "Rare",
+    Rare: "Rare",
+    RareSecret: "Hyper rare",
+    Ace: "ACE SPEC Rare",
+    Common: "Common",
+    Uncommon: "Uncommon",
+  };
+  return map[code] ?? code;
+}
 
 import type {
   MetadataAttachment,
@@ -340,7 +364,7 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
     printKey: card.printKey,
     title: card.name,
     reference: tcgdexPrintLabel(card),
-    rarity: card.rarity,
+    rarity: card.rarity ?? rarityLabelFromLiveCode(liveRarity) ?? null,
     category: card.category,
     setCode: card.setId,
     thumbnailUrl: liveFront ?? tcgdexThumb,
@@ -593,6 +617,10 @@ export const tcgdexModule = defineProvider({
     absent serait faux, et mieux vaut ne rien annoncer.
   */
   printGames: [POKEMON_GAME],
+  loadBoosterComposition: () => {
+    const raw = tcgdexBoosterComposition as BoosterCompositionFile;
+    return raw?.version === 1 ? raw : null;
+  },
   listSetPrints: async ({ setId, language }) =>
     enumerateSetPrints({
       setId,

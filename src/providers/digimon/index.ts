@@ -28,7 +28,7 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: DIGIMON_EFFECT_PACK_ID,
     printGame: DIGIMON_PRINT_GAME,
     defaultLanguage: "en",
-    syncHint: "pnpm digimon:sync",
+    syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://digimoncard.io/",
     notes:
       "Bandai Digimon Card Game → `data/digimon/`. Catalogue local vide (digimoncard.io / apitcg à brancher). Catalogue-only, pas de foil dump.",
@@ -36,7 +36,7 @@ const built = createEmptyLocalTcgProvider({
   runPipeline: async (argv) => {
     const { runDigimonPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runDigimonPackPipeline(argv);
   },

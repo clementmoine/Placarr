@@ -47,6 +47,16 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     onepiece: 8,
     yugioh: 8,
   },
+  /*
+    Extract targets = pack ids pour Digimon / OPTCG / YGO / MTG (même collision
+    pack/provider que cataloguePacks). Un `case "digimon"` par ligne.
+  */
+  "src/lib/admin/catalogueExtractRunner.ts": {
+    digimon: 1,
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
   "src/effects/digimon/index.ts": { digimon: 1 },
   "src/effects/mtg/index.ts": { mtg: 1 },
   "src/effects/onepiece/index.ts": { onepiece: 1 },

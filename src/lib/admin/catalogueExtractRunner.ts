@@ -1,12 +1,11 @@
 /**
- * Shared foil dump/extract runner (admin API + background worker).
- * Spawns the same host scripts as the former streaming admin route.
+ * Catalogue extract runner (admin API + background worker).
  *
- * One target per pack (like Pokémon): internal web / Unity / cards scrapes are
- * one complete `lorcana` process — not separate admin buttons.
+ * In-process Node only — no `tsx` / CLI spawn. Docker prod never needs a CLI
+ * entrypoint; Catalogue Sync / Extract is the product path.
  */
-import { spawn, type ChildProcess } from "node:child_process";
 import { access } from "node:fs/promises";
+import { inspect } from "node:util";
 import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
@@ -55,7 +54,6 @@ export function normalizeCatalogueExtractTarget(
     return raw as CatalogueExtractTarget;
   }
   if (LEGACY_LORCANA_TARGETS.has(raw)) return "lorcana";
-  // Pack ids and aliases share one resolver — `resolveCataloguePackId`.
   return cataloguePackInfo(resolveCataloguePackId(raw))?.extractTarget ?? null;
 }
 
@@ -102,9 +100,10 @@ async function preferredLorcanaApk(): Promise<string | null> {
   return null;
 }
 
-export type CatalogueExtractCommand = {
-  command: string;
-  args: string[];
+export type CatalogueExtractPlan = {
+  target: CatalogueExtractTarget;
+  /** Flags passed to the in-process pack pipeline (no CLI path). */
+  argv: string[];
   prelude: string[];
 };
 
@@ -119,22 +118,32 @@ export function normalizeCatalogueExtractScope(
     : "inventory";
 }
 
+/**
+ * Build argv + log prelude for a catalogue extract (validation + UI).
+ * @deprecated alias — prefer {@link resolveCatalogueExtractPlan}
+ */
 export async function resolveCatalogueExtractCommand(
   target: CatalogueExtractTarget,
   opts: {
     scope?: CatalogueExtractScope;
-    /** Steps already done — appended as `--skip` when the pack declares pipelineSteps. */
     completedSteps?: readonly string[];
   } = {},
-): Promise<CatalogueExtractCommand> {
+): Promise<CatalogueExtractPlan> {
+  return resolveCatalogueExtractPlan(target, opts);
+}
+
+export async function resolveCatalogueExtractPlan(
+  target: CatalogueExtractTarget,
+  opts: {
+    scope?: CatalogueExtractScope;
+    completedSteps?: readonly string[];
+  } = {},
+): Promise<CatalogueExtractPlan> {
   const scope = opts.scope ?? "inventory";
-  const root = repoRoot();
   const pack = cataloguePackForExtractTarget(target);
   if (!pack) {
-    throw new Error(`No extract command for catalogue target ${target}`);
+    throw new Error(`No extract pipeline for catalogue target ${target}`);
   }
-  const tsx = path.join(root, "node_modules/.bin/tsx");
-  const cli = path.join(root, pack.extract.cliPath);
   const skipArgs = catalogueExtractSkipArgs(
     opts.completedSteps,
     pack.extract.pipelineSteps,
@@ -143,16 +152,16 @@ export async function resolveCatalogueExtractCommand(
     skipArgs.length > 0
       ? [`reprise: ${skipArgs[0]} ${skipArgs[1]}`]
       : [];
+
   if (target === "lorcana") {
     const apk = await preferredLorcanaApk();
-    // Always scrape CSS + catalogue cards; Unity when an APK is present.
     const providers = apk
       ? ["lorcanaweb", "lorcanacards", "lorcanaproducts", "lorcanamobile"]
       : ["lorcanaweb", "lorcanacards", "lorcanaproducts"];
-    const args = ["--providers", ...providers, "--no-job", ...skipArgs];
+    const argv = ["--providers", ...providers, ...skipArgs];
     const prelude: string[] = [...resumePrelude];
     if (apk) {
-      args.push("--apk", apk);
+      argv.push("--apk", apk);
       prelude.push(`apk=${apk}`);
     } else {
       prelude.push(
@@ -162,70 +171,204 @@ export async function resolveCatalogueExtractCommand(
     prelude.push(
       "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
     );
-    return { command: tsx, args: [cli, ...args], prelude };
+    return { target, argv, prelude };
   }
-  if (target !== "pokemon") {
-    return {
-      command: tsx,
-      args: [cli, ...skipArgs],
-      prelude: [...resumePrelude, ...(pack.extract.prelude ?? [])],
-    };
+
+  if (target === "pokemon") {
+    const argv = ["--langs", POKEMON_LIVE_LANGS_CSV, ...skipArgs, "--products"];
+    const prelude =
+      scope === "catalogue"
+        ? [
+            ...resumePrelude,
+            "Pokémon: catalogue CDN (AssetManifests, 14 buckets) → tous les bundles listés",
+            "chaque bundle porte son bucket : aucune sonde de dossiers",
+          ]
+        : [
+            ...resumePrelude,
+            "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
+          ];
+    prelude.push(
+      "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
+    );
+    if (scope === "catalogue") argv.push("--refresh-manifests");
+    prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
+    return { target, argv, prelude };
   }
-  // ``--no-job``: worker already owns the BackgroundWorkJob; child must not
-  // adoptCli (that cancels the parent job → instant ── cancelled).
-  const args = ["--langs", POKEMON_LIVE_LANGS_CSV, "--no-job", ...skipArgs];
-  const prelude =
-    scope === "catalogue"
-      ? [
-          ...resumePrelude,
-          "Pokémon: catalogue CDN (AssetManifests, 14 buckets) → tous les bundles listés",
-          "chaque bundle porte son bucket : aucune sonde de dossiers",
-        ]
-      : [
-          ...resumePrelude,
-          "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
-        ];
-  args.push("--products");
-  prelude.push(
-    "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
-  );
-  if (scope === "catalogue") args.push("--refresh-manifests");
-  prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
-  return { command: tsx, args: [cli, ...args], prelude };
+
+  return {
+    target,
+    argv: [...skipArgs],
+    prelude: [...resumePrelude, ...(pack.extract.prelude ?? [])],
+  };
 }
 
-function pipeLines(
-  stream: NodeJS.ReadableStream,
-  onLine: (line: string) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    let buffer = "";
-    stream.on("data", (chunk: Buffer | string) => {
-      buffer += typeof chunk === "string" ? chunk : chunk.toString("utf8");
-      let newline = buffer.indexOf("\n");
-      while (newline >= 0) {
-        const line = buffer.slice(0, newline).replace(/\r$/, "");
-        buffer = buffer.slice(newline + 1);
-        if (line.length > 0) onLine(line);
-        newline = buffer.indexOf("\n");
-      }
-    });
-    stream.on("error", reject);
-    stream.on("end", () => {
-      const rest = buffer.replace(/\r$/, "").trimEnd();
-      if (rest) onLine(rest);
-      resolve();
-    });
-  });
+function formatLogArgs(args: unknown[]): string {
+  return args
+    .map((a) =>
+      typeof a === "string"
+        ? a
+        : inspect(a, { depth: 2, breakLength: 120, compact: true }),
+    )
+    .join(" ");
 }
 
 /**
- * Run the extract process. Honours AbortSignal (kills the child).
- * Throws when the script exits non-zero or times out.
+ * Tee console → admin extract log while keeping stdout for the worker.
  *
- * Always tees stdout/stderr to ``data/<pack>/logs/foil-extract.log`` so the
- * admin Logs dialog works even when the worker was started without an
- * explicit onLog hook.
+ * Re-entrant: if ``onLog`` itself calls ``console.*`` (worker heartbeat),
+ * we forward to the originals only — otherwise the tee stacks prefixes until
+ * ``Maximum call stack size exceeded``.
+ */
+export async function withConsoleTee<T>(
+  onLog: (line: string) => void,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const orig = {
+    log: console.log,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+  };
+  let insideTee = false;
+  const tee =
+    (level: keyof typeof orig) =>
+    (...args: unknown[]) => {
+      if (!insideTee) {
+        insideTee = true;
+        try {
+          const text = formatLogArgs(args);
+          for (const line of text.split("\n")) {
+            if (line.length > 0) onLog(line);
+          }
+        } finally {
+          insideTee = false;
+        }
+      }
+      orig[level](...args);
+    };
+  console.log = tee("log");
+  console.info = tee("info");
+  console.warn = tee("warn");
+  console.error = tee("error");
+  try {
+    return await fn();
+  } finally {
+    console.log = orig.log;
+    console.info = orig.info;
+    console.warn = orig.warn;
+    console.error = orig.error;
+  }
+}
+
+async function invokePackPipeline(
+  target: CatalogueExtractTarget,
+  argv: string[],
+  signal?: AbortSignal,
+): Promise<void> {
+  if (signal?.aborted) throw new Error("foil extract aborted");
+  const root = repoRoot();
+
+  switch (target) {
+    case "pokemon": {
+      const { runPokemonFoilExtract } = await import(
+        "@/providers/pokemontcglive/extract"
+      );
+      await runPokemonFoilExtract(argv, { repo: root, signal });
+      return;
+    }
+    case "lorcana": {
+      const { runLorcanaFoilExtract } = await import(
+        "@/providers/lorcanatcg/extract"
+      );
+      await runLorcanaFoilExtract(argv, { repo: root, signal });
+      return;
+    }
+    case "naruto": {
+      const { runNarutoPackPipeline } = await import(
+        "@/providers/narutocarddass/extract"
+      );
+      await runNarutoPackPipeline(argv);
+      return;
+    }
+    case "naruto-shippuden": {
+      const { runNarutoShippudenPackPipeline } = await import(
+        "@/providers/narutoshippuden/extract"
+      );
+      await runNarutoShippudenPackPipeline();
+      return;
+    }
+    case "naruto-ranks": {
+      const { runNarutoRanksPackPipeline } = await import(
+        "@/providers/narutoranks/extract"
+      );
+      await runNarutoRanksPackPipeline(argv);
+      return;
+    }
+    case "naruto-ultra": {
+      const { runNarutoUltraPackPipeline } = await import(
+        "@/providers/narutoultra/extract"
+      );
+      await runNarutoUltraPackPipeline(argv);
+      return;
+    }
+    case "naruto-mythos": {
+      const { runNarutoMythosPackPipeline } = await import(
+        "@/providers/narutomythos/extract"
+      );
+      await runNarutoMythosPackPipeline(argv);
+      return;
+    }
+    case "naruto-kayou": {
+      const { runNarutoKayouPackPipeline } = await import(
+        "@/providers/narutokayou/extract"
+      );
+      await runNarutoKayouPackPipeline(argv);
+      return;
+    }
+    case "dbs-cg": {
+      const { runDbsCgPackPipeline } = await import("@/providers/dbscg/extract");
+      await runDbsCgPackPipeline(argv);
+      return;
+    }
+    case "dbs-fw": {
+      const { runDbsFwPackPipeline } = await import("@/providers/dbsfw/extract");
+      await runDbsFwPackPipeline(argv);
+      return;
+    }
+    case "onepiece": {
+      const { runOnepiecePackPipeline } = await import(
+        "@/providers/onepiece/extract"
+      );
+      await runOnepiecePackPipeline(argv);
+      return;
+    }
+    case "digimon": {
+      const { runDigimonPackPipeline } = await import("@/providers/digimon/extract");
+      await runDigimonPackPipeline(argv);
+      return;
+    }
+    case "yugioh": {
+      const { runYugiohPackPipeline } = await import("@/providers/yugioh/extract");
+      await runYugiohPackPipeline(argv);
+      return;
+    }
+    case "mtg": {
+      const { runMtgPackPipeline } = await import("@/providers/mtg/extract");
+      await runMtgPackPipeline(argv);
+      return;
+    }
+    default: {
+      const _exhaustive: never = target;
+      throw new Error(`No in-process pipeline for ${_exhaustive}`);
+    }
+  }
+}
+
+/**
+ * Run the extract in-process. Honours AbortSignal (cooperative — pipelines
+ * that check `signal` stop; others finish the current step).
+ *
+ * Always tees stdout-style logs to ``data/<pack>/logs/foil-extract.log``.
  */
 export async function runCatalogueExtractCommand(
   target: CatalogueExtractTarget,
@@ -233,30 +376,23 @@ export async function runCatalogueExtractCommand(
     signal?: AbortSignal;
     onLog?: (line: string) => void;
     timeoutMs?: number;
-    /** Extra header lines when (re)starting the pack log file. */
     logHeader?: readonly string[];
     scope?: CatalogueExtractScope;
-    /** Resume: skip steps already recorded on the job payload. */
     completedSteps?: readonly string[];
   } = {},
 ): Promise<void> {
-  const { command, args, prelude } = await resolveCatalogueExtractCommand(
-    target,
-    {
-      scope: options.scope,
-      completedSteps: options.completedSteps,
-    },
-  );
+  const { argv, prelude } = await resolveCatalogueExtractPlan(target, {
+    scope: options.scope,
+    completedSteps: options.completedSteps,
+  });
   const timeoutMs =
     options.timeoutMs ??
     catalogueExtractTimeoutMs(target, options.scope ?? "inventory");
-  const root = repoRoot();
 
   const { appendCatalogueExtractLog, beginCatalogueExtractLog } =
     await import("@/lib/admin/catalogueExtractLog");
   await beginCatalogueExtractLog(target, options.logHeader ?? []);
 
-  // Serialize disk writes so rapid lines are not interleaved / dropped.
   let logChain: Promise<void> = Promise.resolve();
   const onLog = (line: string) => {
     options.onLog?.(line);
@@ -268,49 +404,21 @@ export async function runCatalogueExtractCommand(
   };
 
   for (const line of prelude) onLog(line);
-  onLog(`$ ${command} ${args.join(" ")}`);
+  onLog(`in-process extract ${target} ${argv.join(" ")}`.trimEnd());
 
   if (options.signal?.aborted) {
     throw new Error("foil extract aborted");
   }
 
+  const abortError = new Error("foil extract aborted");
+  const onAbort = () => {
+    /* cooperative pipelines check signal; this rejects the outer race */
+  };
+  options.signal?.addEventListener("abort", onAbort);
+
   try {
     await new Promise<void>((resolve, reject) => {
-      const child: ChildProcess = spawn(command, args, {
-        cwd: root,
-        env: { ...process.env, PYTHONUNBUFFERED: "1" },
-        stdio: ["ignore", "pipe", "pipe"],
-        /*
-          Own process group, so cancelling kills the whole tree.
-          We spawn `tsx`, which forks the real node process, and the extract
-          itself may fork python. SIGKILL on the direct child only reaped the
-          wrapper: the grandchild kept downloading and kept writing to the
-          inherited pipes, so the log showed `── cancelled` followed by two
-          hundred more cards.
-        */
-        detached: process.platform !== "win32",
-      });
-
-      const killChild = () => {
-        // Negative pid = the whole group. Falls back to the lone child when
-        // there is no group (Windows, or spawn failed before it had a pid).
-        try {
-          if (child.pid && process.platform !== "win32") {
-            process.kill(-child.pid, "SIGKILL");
-            return;
-          }
-        } catch {
-          /* group already gone, or never existed — try the child below */
-        }
-        try {
-          child.kill("SIGKILL");
-        } catch {
-          /* already gone */
-        }
-      };
-
       const timer = setTimeout(() => {
-        killChild();
         reject(
           new Error(
             `foil extract timed out after ${Math.round(timeoutMs / 1000)}s`,
@@ -319,39 +427,27 @@ export async function runCatalogueExtractCommand(
       }, timeoutMs);
       if (typeof timer.unref === "function") timer.unref();
 
-      const onAbort = () => {
-        killChild();
-        reject(new Error("foil extract aborted"));
+      const abortReject = () => {
+        clearTimeout(timer);
+        reject(abortError);
       };
-      options.signal?.addEventListener("abort", onAbort);
+      options.signal?.addEventListener("abort", abortReject, { once: true });
 
-      if (!child.stdout || !child.stderr) {
-        clearTimeout(timer);
-        options.signal?.removeEventListener("abort", onAbort);
-        reject(new Error("foil extract missing stdio pipes"));
-        return;
-      }
-
-      const stdoutDone = pipeLines(child.stdout, onLog);
-      const stderrDone = pipeLines(child.stderr, onLog);
-
-      child.on("error", (error) => {
-        clearTimeout(timer);
-        options.signal?.removeEventListener("abort", onAbort);
-        reject(error);
-      });
-
-      child.on("close", (code) => {
-        clearTimeout(timer);
-        options.signal?.removeEventListener("abort", onAbort);
-        void Promise.all([stdoutDone, stderrDone])
-          .then(() => {
-            if (code === 0) resolve();
-            else reject(new Error(`extract failed (exit ${code ?? 1})`));
-          })
-          .catch(reject);
-      });
+      void withConsoleTee(onLog, () =>
+        invokePackPipeline(target, argv, options.signal),
+      )
+        .then(() => {
+          clearTimeout(timer);
+          options.signal?.removeEventListener("abort", abortReject);
+          resolve();
+        })
+        .catch((error) => {
+          clearTimeout(timer);
+          options.signal?.removeEventListener("abort", abortReject);
+          reject(error);
+        });
     });
+
     const postExtract =
       cataloguePackForExtractTarget(target)?.extract.postExtract;
     if (postExtract === "invalidatePokemonFoilNamesCache") {
@@ -366,6 +462,7 @@ export async function runCatalogueExtractCommand(
     else onLog(`── failed: ${message}`);
     throw error;
   } finally {
+    options.signal?.removeEventListener("abort", onAbort);
     await logChain.catch(() => undefined);
   }
 }

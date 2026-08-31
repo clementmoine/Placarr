@@ -78,6 +78,7 @@ function toCandidate(row: DbsFwPrintDetail): PrintCandidate {
     title: row.fullName?.trim() || reference,
     reference,
     setCode: row.setCode,
+    ...(row.harvested?.rarity ? { rarity: row.harvested.rarity } : {}),
     ...(face ? { imageUrl: face } : {}),
     ...(face ? { thumbnailUrl: face } : {}),
     ...(back ? { cardBackUrl: back } : {}),
@@ -157,7 +158,12 @@ export function searchDbsFwPrints(
   for (const row of rows) {
     if (seen.has(row.printKey)) continue;
     seen.add(row.printKey);
-    out.push(toCandidate(row));
+    out.push(
+      toCandidate({
+        ...row,
+        harvested: dbsFwFactsFor(row.setCode, row.number),
+      }),
+    );
     if (out.length >= limit) break;
   }
   return out;

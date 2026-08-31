@@ -26,7 +26,8 @@ export type BackgroundJobKind =
   | "foilExtract"
   | "icollectCatalogSync"
   | "launchboxIndexSync"
-  | "nointroIndexSync";
+  | "nointroIndexSync"
+  | "catalogProviderSync";
 
 export type BackgroundJobRow = {
   id: string;
@@ -161,6 +162,7 @@ async function listCatalogIndexJobsForUser(
     BACKGROUND_WORK_KIND.icollectCatalogSync,
     BACKGROUND_WORK_KIND.launchboxIndexSync,
     BACKGROUND_WORK_KIND.nointroIndexSync,
+    BACKGROUND_WORK_KIND.catalogProviderSync,
   ] as const;
 
   const jobs = await prisma.backgroundWorkJob.findMany({
@@ -172,30 +174,54 @@ async function listCatalogIndexJobsForUser(
       OR: [{ userId }, { userId: null }],
     },
     orderBy: [{ createdAt: "asc" }],
-    take: 20,
+    take: 40,
     select: {
       id: true,
       kind: true,
+      payload: true,
       createdAt: true,
       lockedAt: true,
     },
   });
 
-  const labels: Record<(typeof kinds)[number], string> = {
+  const labels: Record<
+    Exclude<(typeof kinds)[number], "catalogProviderSync">,
+    string
+  > = {
     [BACKGROUND_WORK_KIND.icollectCatalogSync]: "iCollect catalog",
     [BACKGROUND_WORK_KIND.launchboxIndexSync]: "LaunchBox index",
     [BACKGROUND_WORK_KIND.nointroIndexSync]: "No-Intro index",
   };
 
-  return jobs.map((job) => ({
-    id: job.id,
-    name: labels[job.kind as (typeof kinds)[number]] ?? job.kind,
-    slug: null,
-    kind: job.kind as BackgroundJobKind,
-    startedAt: job.lockedAt ?? job.createdAt,
-    cancellable: true,
-    shelf: null,
-  }));
+  return jobs.map((job) => {
+    if (job.kind === BACKGROUND_WORK_KIND.catalogProviderSync) {
+      // Pas de registry ici : ce poll tourne souvent dans Next, et les lignes
+      // sont de toute façon regroupées en « Données fournisseurs ».
+      const providerId =
+        typeof (job.payload as { providerId?: unknown })?.providerId ===
+        "string"
+          ? (job.payload as { providerId: string }).providerId
+          : "catalogue";
+      return {
+        id: job.id,
+        name: providerId,
+        slug: null,
+        kind: "catalogProviderSync" as const,
+        startedAt: job.lockedAt ?? job.createdAt,
+        cancellable: true,
+        shelf: null,
+      };
+    }
+    return {
+      id: job.id,
+      name: labels[job.kind as keyof typeof labels] ?? job.kind,
+      slug: null,
+      kind: job.kind as BackgroundJobKind,
+      startedAt: job.lockedAt ?? job.createdAt,
+      cancellable: true,
+      shelf: null,
+    };
+  });
 }
 
 async function listCatalogueExtractJobsForUser(

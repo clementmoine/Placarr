@@ -15,6 +15,7 @@ import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
 } from "@/core/collect/jobs/workQueue";
+import type { Prisma } from "@/generated/prisma/client";
 
 export const maxDuration = 30;
 
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
         providerId: mdl.info.id,
         source: "admin",
         ...refreshOpts,
-      },
+      } as unknown as Prisma.InputJsonValue,
       replaceOpenForKind: false,
     });
     jobs.push({

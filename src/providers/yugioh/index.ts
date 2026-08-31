@@ -28,7 +28,7 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: YUGIOH_EFFECT_PACK_ID,
     printGame: YUGIOH_PRINT_GAME,
     defaultLanguage: "en",
-    syncHint: "pnpm yugioh:sync",
+    syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://ygoprodeck.com/",
     notes:
       "Yu-Gi-Oh! TCG → `data/yugioh/`. Catalogue local vide (YGOPRODeck à brancher). Catalogue-only.",
@@ -36,7 +36,7 @@ const built = createEmptyLocalTcgProvider({
   runPipeline: async (argv) => {
     const { runYugiohPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runYugiohPackPipeline(argv);
   },

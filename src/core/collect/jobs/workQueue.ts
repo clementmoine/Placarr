@@ -559,8 +559,10 @@ export const DEFAULT_STALE_RUNNING_MS = 30 * 60 * 1000;
 /**
  * Foil extracts heartbeat every ~60s. No touch for this long ⇒ zombie lock
  * (worker died mid-spawn, or claim without execute).
+ * 15 min leaves room for brief event-loop stalls (Unity typetree / GC) without
+ * abandoning a live worker; a crashed process still clears within one window.
  */
-export const FOIL_STALE_RUNNING_MS = 5 * 60 * 1000;
+export const FOIL_STALE_RUNNING_MS = 15 * 60 * 1000;
 /** After this many claims that went stale, abandon instead of infinite requeue. */
 export const FOIL_STALE_MAX_ATTEMPTS = 2;
 

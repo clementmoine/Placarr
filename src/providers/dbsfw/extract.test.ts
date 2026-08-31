@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { selectDbsFwSteps } from "./cli";
+import { selectDbsFwSteps } from "./extract";
 
 describe("selectDbsFwSteps", () => {
   it("includes the product graph on a manual Sync", () => {

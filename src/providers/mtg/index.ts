@@ -28,7 +28,7 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: MTG_EFFECT_PACK_ID,
     printGame: MTG_PRINT_GAME,
     defaultLanguage: "en",
-    syncHint: "pnpm mtg:sync",
+    syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://scryfall.com/",
     notes:
       "Magic: The Gathering → `data/mtg/`. Catalogue local vide (Scryfall à brancher). Catalogue-only ; foil Scryfall ≠ masks Unity.",
@@ -36,7 +36,7 @@ const built = createEmptyLocalTcgProvider({
   runPipeline: async (argv) => {
     const { runMtgPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runMtgPackPipeline(argv);
   },

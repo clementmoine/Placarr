@@ -1,5 +1,5 @@
 /**
- * One Piece Card Game — ligne catalogue locale (vide jusqu'à la moisson).
+ * One Piece Card Game — ligne catalogue locale (punk-records + faces Bandai).
  */
 import { createEmptyLocalTcgProvider } from "@/providers/shared/cardCatalogue/createEmptyLocalTcgProvider";
 
@@ -9,6 +9,7 @@ import {
   ONEPIECE_PRINT_GAME,
   ONEPIECE_PROVIDER_ID,
 } from "./pack";
+import { formatOnepieceReference } from "./printIdentity";
 
 export {
   ONEPIECE_EFFECT_PACK_ID,
@@ -23,20 +24,23 @@ const built = createEmptyLocalTcgProvider({
     providerId: ONEPIECE_PROVIDER_ID,
     providerLabel: "One Piece Card Game (local)",
     catalogueLabel: "One Piece Card Game",
+    catalogueAliases: ["OPTCG", "One Piece"],
     factLabel: "One Piece Card Game",
     packId: ONEPIECE_PACK_ID,
     effectPackId: ONEPIECE_EFFECT_PACK_ID,
     printGame: ONEPIECE_PRINT_GAME,
-    defaultLanguage: "en",
-    syncHint: "pnpm onepiece:sync",
+    defaultLanguage: "fr",
+    syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://en.onepiece-cardgame.com/cardlist/",
+    formatReference: formatOnepieceReference,
+    borrowFaceAcrossLocales: true,
     notes:
-      "Bandai OPTCG → `data/onepiece/`. Catalogue local vide (moisson apitcg / vegapull à brancher). Pas de client Unity foil Bandai → face plate.",
+      "Bandai OPTCG → `data/onepiece/`. Titres FR/EN via punk-records (vegapull) ; faces cardlist Bandai (`art.bandai.webp`) ; scellé opecards.fr. Pas de client Unity foil Bandai → face plate.",
   },
   runPipeline: async (argv) => {
     const { runOnepiecePackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runOnepiecePackPipeline(argv);
   },

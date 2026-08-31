@@ -3,14 +3,14 @@
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
  * Dragon Ball has Masters + Fusion World. Naruto has several lines (Carddass,
- * 疾風伝, Ninja Ranks, Ultra Challenge) under one franchise tab.
+ * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Kayou) under one franchise tab.
  */
 
 import {
   narutoCatalogueLineForCard as narutoLineForCard,
   narutoCatalogueLineForSealed as narutoLineForSealed,
   type NarutoCardLine,
-} from "@/providers/narutoccg/packs";
+} from "@/providers/narutocarddass/packs";
 
 export const CATALOGUE_PACK_IDS = [
   "pokemon",
@@ -19,6 +19,8 @@ export const CATALOGUE_PACK_IDS = [
   "naruto/shippuden",
   "naruto/ninja-ranks",
   "naruto/ultra-challenge",
+  "naruto/mythos",
+  "naruto/kayou",
   "dbs/cg",
   "dbs/fw",
   "onepiece",
@@ -45,6 +47,8 @@ export type CatalogueExtractTarget =
   | "naruto-shippuden"
   | "naruto-ranks"
   | "naruto-ultra"
+  | "naruto-mythos"
+  | "naruto-kayou"
   | "dbs-cg"
   | "dbs-fw"
   | "onepiece"
@@ -86,10 +90,8 @@ export type CatalogueExtractScope = (typeof CATALOGUE_EXTRACT_SCOPES)[number];
  */
 export type CataloguePackPostExtract = "invalidatePokemonFoilNamesCache";
 
-/** Extract command descriptor — the runner spawns `tsx <cliPath>`. */
+/** Extract descriptor — in-process pipeline via catalogueExtractRunner. */
 export type CataloguePackExtract = {
-  /** tsx CLI entry, relative to the repo root (server-side only). */
-  cliPath: string;
   /**
    * Static header lines for the admin extract log. Packs whose command line
    * is dynamic (APK probe, scope flags) build their prelude in the runner.
@@ -101,7 +103,7 @@ export type CataloguePackExtract = {
   timeoutMsByScope?: Partial<Record<CatalogueExtractScope, number>>;
   postExtract?: CataloguePackPostExtract;
   /**
-   * Ordered pipeline steps the CLI accepts via `--skip` / `--only`.
+   * Ordered pipeline steps the pack accepts via `--skip` / `--only`.
    * When set, the foil worker can resume after a crash by appending
    * `--skip` for `payload.completedSteps` (see catalogueExtractCheckpoint).
    */
@@ -164,7 +166,7 @@ export type CataloguePackInfo = {
    * paths exists, relative to `data/<pack>/`.
    */
   emptyUnless: readonly string[];
-  /** Extract command (CLI path, log prelude, timeouts, post-run hook). */
+  /** Extract timeouts / prelude / resume steps (in-process runner). */
   extract: CataloguePackExtract;
   blurbFr?: string;
   blurbEn?: string;
@@ -201,7 +203,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["foil/shaders", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/pokemontcglive/cli.ts",
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
       timeoutMsByScope: { catalogue: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS },
       postExtract: "invalidatePokemonFoilNamesCache",
@@ -230,7 +231,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "foil/web"],
     extract: {
-      cliPath: "src/providers/lorcanatcg/cli.ts",
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
   },
@@ -256,7 +256,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/narutoccg/cli.ts",
       prelude: [
         "Naruto: Carddass FR+IT+JA + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
         "scellés FR : packshots carddass.fr (boosters / starters / tin) → products-index.json",
@@ -307,7 +306,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/narutoshippuden/cli.ts",
       prelude: [
         "Naruto 疾風伝 : registres officiels + verso curé → data/naruto/shippuden",
       ],
@@ -342,7 +340,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/narutoranks/cli.ts",
       prelude: [
         "Naruto Ninja Ranks : checklist Inkworks + packshots officiels + dumps fan → data/naruto/ninja-ranks",
       ],
@@ -374,7 +371,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/narutoultra/cli.ts",
       prelude: [
         "Naruto Ultra Challenge : album + pochette (upscales) ; cartes encore vides → data/naruto/ultra-challenge",
       ],
@@ -384,6 +380,68 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Panini Ultra Challenge (lamincards, 2007). Ni le Carddass, ni le 疾風伝, ni Ninja Ranks. Album et pochette (upscales) ; cartes encore vides.",
     blurbEn:
       "Panini Ultra Challenge (lamincards, 2007). Neither the Carddass, the 疾風伝, nor Ninja Ranks. Album and booster (upscales); no cards ingested yet.",
+  },
+  {
+    id: "naruto/mythos",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "Mythos",
+    lineLabelEn: "Mythos",
+    labelFr: "Naruto Mythos",
+    labelEn: "Naruto Mythos",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "naruto-mythos",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Naruto Mythos (CICABOOM) : bootstrap catalogue vide → data/naruto/mythos",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr:
+      "CICABOOM Naruto Mythos TCG (Konoha Shidō, 2025–). Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou. Catalogue local vide.",
+    blurbEn:
+      "CICABOOM Naruto Mythos TCG (Konoha Shidō, 2025–). A different game from Carddass, Ninja Ranks, Ultra Challenge, and Kayou. Empty local catalogue.",
+  },
+  {
+    id: "naruto/kayou",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "Kayou",
+    lineLabelEn: "Kayou",
+    labelFr: "Naruto Kayou",
+    labelEn: "Naruto Kayou",
+    hasFoilEffects: true,
+    defaultScope: "foils",
+    extractTarget: "naruto-kayou",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Naruto Kayou : bootstrap catalogue vide → data/naruto/kayou",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr:
+      "Kayou Naruto — cartes à collectionner (pas un TCG jouable). Autre éditeur que Bandai et CICABOOM Mythos. Catalogue local vide.",
+    blurbEn:
+      "Kayou Naruto — collectible cards (not a playable TCG). Different publisher from Bandai and CICABOOM Mythos. Empty local catalogue.",
   },
   {
     id: "dbs/cg",
@@ -406,7 +464,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/dbscg/cli.ts",
       prelude: [
         "Dragon Ball Masters: cardlists Bandai FR+EN + clone TCG Arena → data/dbs/cg",
         "noms FR et EN dans l’index ; faces HTTP (FR dbscards / Bandai) séquentielles ; dump EN déjà rangé ignoré — --force pour écraser",
@@ -441,7 +498,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/dbsfw/cli.ts",
       prelude: [
         "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dbs/fw",
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
@@ -473,17 +529,16 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/onepiece/cli.ts",
       prelude: [
-        "One Piece Card Game: bootstrap catalogue vide → data/onepiece",
-        "Moisson apitcg / vegapull à brancher (docs/one_piece_tcg.md)",
+        "One Piece Card Game: punk-records (FR/EN) + faces Bandai + opecards.fr",
+        "Titres et printKeys depuis buhbbl/punk-records ; images cardlist officiel",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
-      "Catalogue OPTCG Bandai — onglet prêt, moisson à brancher (apitcg / vegapull).",
+      "Catalogue OPTCG Bandai — punk-records + faces cardlist ; scellé opecards.fr.",
     blurbEn:
-      "Bandai OPTCG catalogue — tab ready, ingest pending (apitcg / vegapull).",
+      "Bandai OPTCG catalogue — punk-records + official cardlist faces; sealed via opecards.fr.",
   },
   {
     id: "digimon",
@@ -506,7 +561,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/digimon/cli.ts",
       prelude: [
         "Digimon Card Game: bootstrap catalogue vide → data/digimon",
         "Moisson digimoncard.io / apitcg à brancher",
@@ -537,7 +591,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/yugioh/cli.ts",
       prelude: [
         "Yu-Gi-Oh!: bootstrap catalogue vide → data/yugioh",
         "Moisson YGOPRODeck à brancher",
@@ -569,7 +622,6 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
-      cliPath: "src/providers/mtg/cli.ts",
       prelude: [
         "Magic: The Gathering: bootstrap catalogue vide → data/mtg",
         "Moisson Scryfall à brancher",
@@ -676,6 +728,8 @@ export function resolveCataloguePackId(
     ninjaranks: "naruto/ninja-ranks",
     ultrachallenge: "naruto/ultra-challenge",
     lamincards: "naruto/ultra-challenge",
+    mythos: "naruto/mythos",
+    kayou: "naruto/kayou",
     dbs: "dbs/cg",
     dragonball: "dbs/cg",
     masters: "dbs/cg",

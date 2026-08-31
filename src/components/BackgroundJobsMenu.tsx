@@ -36,22 +36,23 @@ function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   if (job.kind === "launchboxIndexSync")
     return t("backgroundJobs.kindLaunchbox");
   if (job.kind === "nointroIndexSync") return t("backgroundJobs.kindNointro");
+  if (job.kind === "catalogProviderSync")
+    return t("backgroundJobs.kindProviderSync");
   return t("backgroundJobs.kindEnrich");
 }
 
 /**
  * Catalogue crawls the collector never asked for by name.
  *
- * iCollect, LaunchBox and No-Intro are how the app keeps its provider data
- * fresh; which of the three is running is plumbing. Listed individually they
- * announced themselves in English — the server names them from a hardcoded
- * map — under a French subtitle that repeated the same thing, and linked to the
- * TCG effects admin, which is not where any of them lives.
+ * iCollect, LaunchBox, No-Intro and « Tout rafraîchir » (`catalogProviderSync`)
+ * keep provider data fresh; listing each crawl as its own row is plumbing noise.
+ * They collapse into one “provider data” row in the menu.
  */
 const PROVIDER_DATA_KINDS = new Set([
   "icollectCatalogSync",
   "launchboxIndexSync",
   "nointroIndexSync",
+  "catalogProviderSync",
 ]);
 
 function isProviderDataJob(job: BackgroundJob): boolean {
@@ -228,7 +229,10 @@ export function BackgroundJobsMenu() {
                 {t("backgroundJobs.providerData")}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {t("backgroundJobs.providerDataHint")}
+                {t("backgroundJobs.providerDataHint").replace(
+                  "{count}",
+                  String(providerDataJobs.length),
+                )}
               </p>
             </div>
             <Button

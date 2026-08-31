@@ -180,7 +180,7 @@ export async function syncNoIntroDatPack(
   const source = resolveNoIntroDatPackSource(options);
   if (!source) {
     console.warn(
-      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL, then `pnpm nointro:update`",
+      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL, then admin Local indexes",
     );
     return null;
   }

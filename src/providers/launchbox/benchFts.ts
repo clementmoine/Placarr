@@ -1,9 +1,6 @@
-#!/usr/bin/env tsx
 /**
  * Measure LaunchBox local FTS candidate collection against a prebuilt index.
- * Does not download or rebuild — run `pnpm launchbox:build-index` first.
- *
- * Usage: `pnpm launchbox:bench-fts`
+ * Does not download or rebuild — sync LaunchBox from admin Local indexes first.
  */
 import {
   collectLaunchBoxCandidateIds,
@@ -41,7 +38,7 @@ async function main() {
   const db = await ensureLaunchBoxIndex();
   if (!db) {
     console.error(
-      `No LaunchBox index at ${getLaunchBoxIndexPath()}. Run \`pnpm launchbox:build-index\` first.`,
+      `No LaunchBox index at ${getLaunchBoxIndexPath()}. Sync LaunchBox from admin Local indexes first.`,
     );
     process.exit(1);
   }

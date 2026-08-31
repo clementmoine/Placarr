@@ -21,6 +21,8 @@ import {
   lookupDbsCgPrintDetail,
   searchDbsCgPrints,
 } from "./searchPrints";
+import dbscgBoosterComposition from "./curated/booster-composition.json";
+import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 
 const PROVIDER_ID = "dbscg";
 const PROVIDER_LABEL = "Dragon Ball Super Card Game";
@@ -70,8 +72,8 @@ export const dbscgModule = createDbsCatalogModule({
   defaultLanguage: "fr",
   websiteUrl: "https://www.dbs-cardgame.com/europe-fr/cartes/",
   notes:
-    "Masters (cardlists Bandai europe-fr + us-en) → `data/dbs/cg/`. Noms FR et EN dans l’index. Faces Deckplanet EN / dbscards FR au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : `pnpm dbs:cards`. Fusion World = module `dbsfw`.",
-  syncHint: "pnpm dbs:cards",
+    "Masters (cardlists Bandai europe-fr + us-en) → `data/dbs/cg/`. Noms FR et EN dans l’index. Faces Deckplanet EN / dbscards FR au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : Catalogue Extract (admin / worker). Fusion World = module `dbsfw`.",
+  syncHint: "Catalogue Sync (admin)",
   probePrintKey: PROBE_PRINT_KEY,
   probeCardName: PROBE_CARD_NAME,
   catalog: dbscgCatalog,
@@ -82,6 +84,10 @@ export const dbscgModule = createDbsCatalogModule({
   lookupPrint: lookupDbsCgPrint,
   lookupDetail: lookupDbsCgPrintDetail,
   resolveMetadata: resolveFromLocal,
+  loadBoosterComposition: () => {
+    const raw = dbscgBoosterComposition as BoosterCompositionFile;
+    return raw?.version === 1 ? raw : null;
+  },
 });
 
 export { dbsCgDbPath, ensureDbsCgIndex, writeDbsCgIndex } from "./indexStore";

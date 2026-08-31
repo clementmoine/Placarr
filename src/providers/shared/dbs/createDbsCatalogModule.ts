@@ -35,7 +35,7 @@ export type DbsCatalogModuleSpec = {
   defaultLanguage: "fr" | "en" | "unknown";
   websiteUrl: string;
   notes: string;
-  /** Suffixe du message health si la base manque (`pnpm dbs:cards`). */
+  /** Suffixe du message health si la base manque (Catalogue Sync). */
   syncHint: string;
   probePrintKey: string;
   probeCardName: string;
@@ -53,6 +53,7 @@ export type DbsCatalogModuleSpec = {
   ) => PrintCandidate | null;
   lookupDetail: (printKey: string, opts?: { language?: string }) => unknown;
   resolveMetadata: (ctx: MetadataAdapterContext) => MetadataResult | null;
+  loadBoosterComposition?: ProviderModule["loadBoosterComposition"];
 };
 
 export function createDbsCatalogModule(
@@ -78,6 +79,7 @@ export function createDbsCatalogModule(
     lookupPrint,
     lookupDetail,
     resolveMetadata,
+    loadBoosterComposition,
   } = spec;
 
   return {
@@ -114,6 +116,7 @@ export function createDbsCatalogModule(
     listPrintLanguages: () => distinctPrintLanguages(dbPath()),
     listPrintSets,
     printGames: [printGame],
+    ...(loadBoosterComposition ? { loadBoosterComposition } : {}),
     listSetPrints: ({ setId, language }) =>
       enumerateSetPrints({
         setId,

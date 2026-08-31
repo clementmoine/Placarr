@@ -20,6 +20,8 @@ import {
   lookupDbsFwPrintDetail,
   searchDbsFwPrints,
 } from "./searchPrints";
+import dbsfwBoosterComposition from "./curated/booster-composition.json";
+import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 
 const PROVIDER_ID = "dbsfw";
 const PROVIDER_LABEL = "Dragon Ball Super Card Game Fusion World";
@@ -58,8 +60,8 @@ export const dbsfwModule = createDbsCatalogModule({
   defaultLanguage: "en",
   websiteUrl: "https://www.dbs-cardgame.com/fw/en/cardlist/",
   notes:
-    "Fusion World (fw/en cardlist, pas de locale FR) → `data/dbs/fw/`. Faces Bandai (SAMPLE). Dos sleeve placeholder Masters. Sync : `pnpm dbs:fw`.",
-  syncHint: "pnpm dbs:fw",
+    "Fusion World (fw/en cardlist, pas de locale FR) → `data/dbs/fw/`. Faces Bandai (SAMPLE). Dos sleeve placeholder Masters. Sync : Catalogue Extract (admin / worker).",
+  syncHint: "Catalogue Sync (admin)",
   probePrintKey: PROBE_PRINT_KEY,
   probeCardName: PROBE_CARD_NAME,
   catalog: dbsfwCatalog,
@@ -70,6 +72,10 @@ export const dbsfwModule = createDbsCatalogModule({
   lookupPrint: lookupDbsFwPrint,
   lookupDetail: lookupDbsFwPrintDetail,
   resolveMetadata: resolveFromLocal,
+  loadBoosterComposition: () => {
+    const raw = dbsfwBoosterComposition as BoosterCompositionFile;
+    return raw?.version === 1 ? raw : null;
+  },
 });
 
 export { dbsFwDbPath, ensureDbsFwIndex, writeDbsFwIndex } from "./indexStore";

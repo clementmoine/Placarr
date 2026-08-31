@@ -83,6 +83,8 @@ describe("cataloguePacks", () => {
       "naruto/shippuden",
       "naruto/ninja-ranks",
       "naruto/ultra-challenge",
+      "naruto/mythos",
+      "naruto/kayou",
     ]);
     const dbs = catalogueFranchiseForPack("dbs/fw");
     expect(dbs?.id).toBe("dbs");
@@ -95,7 +97,7 @@ describe("cataloguePacks", () => {
     expect(foilExtractNeedsApk("pokemon")).toBe(true);
   });
 
-  it("keeps every pack self-describing: markers, empty probes, extract CLI", () => {
+  it("keeps every pack self-describing: markers, empty probes, extract timeouts", () => {
     for (const pack of CATALOGUE_PACKS) {
       expect(pack.extractMarkers.length, pack.id).toBeGreaterThan(0);
       expect(pack.emptyUnless.length, pack.id).toBeGreaterThan(0);
@@ -104,9 +106,6 @@ describe("cataloguePacks", () => {
         expect(path.isAbsolute(rel), `${pack.id}:${rel}`).toBe(false);
         expect(rel, `${pack.id}:${rel}`).not.toMatch(/^\.{2}([/\\]|$)/);
       }
-      expect(pack.extract.cliPath, pack.id).toMatch(
-        /^src\/providers\/[a-z]+\/cli\.ts$/,
-      );
       expect(pack.extract.timeoutMs, pack.id).toBeGreaterThan(0);
       expect(
         cataloguePackForExtractTarget(pack.extractTarget)?.id,
@@ -117,7 +116,6 @@ describe("cataloguePacks", () => {
 
   it("declares the Pokémon-specific extract bits on the pack, not the runner", () => {
     const pokemon = cataloguePackInfo("pokemon")!;
-    expect(pokemon.extract.cliPath).toBe("src/providers/pokemontcglive/cli.ts");
     expect(pokemon.extract.timeoutMs).toBe(CATALOGUE_EXTRACT_TIMEOUT_MS);
     expect(pokemon.extract.timeoutMsByScope?.catalogue).toBe(
       CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
@@ -200,7 +198,7 @@ describe("cataloguePacks", () => {
   it("keeps Catalogue pack helpers free of node: (admin client bundle)", () => {
     const files = [
       "src/lib/admin/cataloguePacks.ts",
-      "src/providers/narutoccg/packs.ts",
+      "src/providers/narutocarddass/packs.ts",
     ];
     for (const rel of files) {
       const src = readFileSync(path.join(process.cwd(), rel), "utf8");
@@ -215,11 +213,14 @@ describe("cataloguePacks", () => {
     expect(resolveCatalogueScope(null, naruto)).toBe("all");
   });
 
-  it("defaults pokemon/lorcana to foils", () => {
+  it("defaults pokemon/lorcana/kayou to foils", () => {
     const pokemon = cataloguePackInfo("pokemon")!;
     expect(resolveCatalogueScope(null, pokemon)).toBe("foils");
     expect(resolveCatalogueScope("all", pokemon)).toBe("all");
     expect(resolveCatalogueScope("sealed", pokemon)).toBe("sealed");
+    expect(resolveCatalogueScope(null, cataloguePackInfo("naruto/kayou")!)).toBe(
+      "foils",
+    );
   });
 
   it("keeps the sealed tab when switching packs", () => {

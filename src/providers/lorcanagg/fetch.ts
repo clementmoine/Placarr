@@ -27,6 +27,10 @@ export const DOTGG_PRICE_TTL_MS = 12 * 60 * 60 * 1000;
 const BROWSER_UA =
   "Mozilla/5.0 (compatible; Placarr/1.0; +https://github.com/) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36";
 
+/** Index tenu en mémoire après un chargement (check-list : N lookups / requête). */
+let memoryIndex: DotggPriceIndex | null = null;
+let memoryIndexLoadedAt = 0;
+
 export type DotggCardPrices = {
   id: string;
   setId: string;
@@ -171,16 +175,32 @@ export async function loadDotggPriceIndex(
   options: {
     signal?: AbortSignal;
     now?: Date;
+    /**
+     * Rejoue uniquement l'index déjà en ProviderEvidence — aucun HTTP.
+     * Miss ⇒ index vide (les autres providers de prix peuvent encore répondre).
+     */
+    evidenceOnly?: boolean;
   } = {},
 ): Promise<DotggPriceIndex> {
+  const nowMs = (options.now ?? new Date()).getTime();
+  if (
+    memoryIndex &&
+    nowMs - memoryIndexLoadedAt < DOTGG_PRICE_TTL_MS
+  ) {
+    return memoryIndex;
+  }
+
   const stored = await getFreshProviderEvidence(
     PROVIDER_ID,
     CARDS_URL,
     options.now,
   ).catch(() => null);
   if (stored?.yieldJson && typeof stored.yieldJson === "object") {
-    return stored.yieldJson as DotggPriceIndex;
+    memoryIndex = stored.yieldJson as DotggPriceIndex;
+    memoryIndexLoadedAt = nowMs;
+    return memoryIndex;
   }
+  if (options.evidenceOnly) return {};
 
   return (inFlight ??= (async () => {
     try {
@@ -193,6 +213,8 @@ export async function loadDotggPriceIndex(
         yieldJson: index,
         ttlMs: DOTGG_PRICE_TTL_MS,
       });
+      memoryIndex = index;
+      memoryIndexLoadedAt = Date.now();
       return index;
     } catch {
       return {};
@@ -205,11 +227,17 @@ export async function loadDotggPriceIndex(
 /** Test helper — drop the in-flight join between cases. */
 export function resetDotggPriceIndexCache(): void {
   inFlight = null;
+  memoryIndex = null;
+  memoryIndexLoadedAt = 0;
 }
 
 export async function fetchDotggCardForPrintKey(
   printKey: string | null | undefined,
-  options: { signal?: AbortSignal; now?: Date } = {},
+  options: {
+    signal?: AbortSignal;
+    now?: Date;
+    evidenceOnly?: boolean;
+  } = {},
 ): Promise<DotggCardPrices | null> {
   const lookup = dotggLookupFromPrintKey(printKey);
   if (!lookup) return null;

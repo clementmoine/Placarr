@@ -51,6 +51,16 @@ const METADATA_JOB_TIMEOUT_MS = 90_000;
 /** Price scrapes must not monopolize every worker slot for minutes. */
 const PRICE_JOB_TIMEOUT_MS = 60_000;
 
+/** Admin Local indexes → full rebuild; tick / auto schedule → soft pass. */
+function catalogIndexJobIsAuto(payload: unknown): boolean {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const row = payload as Record<string, unknown>;
+    if (row.source === "admin") return false;
+    if (row.tick === true) return true;
+  }
+  return true;
+}
+
 function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
@@ -360,7 +370,9 @@ export async function executeBackgroundWorkJob(
   if (job.kind === BACKGROUND_WORK_KIND.icollectCatalogSync) {
     const { refreshICollectCatalog } =
       await import("@/providers/icollect/pipeline");
-    await refreshICollectCatalog({ auto: true });
+    await refreshICollectCatalog({
+      auto: catalogIndexJobIsAuto(payload),
+    });
     return;
   }
 
@@ -374,8 +386,9 @@ export async function executeBackgroundWorkJob(
   if (job.kind === BACKGROUND_WORK_KIND.nointroIndexSync) {
     const { refreshNoIntroCatalog } =
       await import("@/providers/nointro/pipeline");
-    // Legacy kind — treat like auto when no DAT is configured (skip, don't fail).
-    await refreshNoIntroCatalog({ auto: true });
+    await refreshNoIntroCatalog({
+      auto: catalogIndexJobIsAuto(payload),
+    });
     return;
   }
 
@@ -475,8 +488,10 @@ async function executeFoilExtractJob(
   const writeLog = (line: string) => {
     logTail.push(line);
     if (logTail.length > 40) logTail.shift();
+    // Do not use console.* here: runCatalogueExtractCommand tees console, and
+    // console → onLog → console would recurse until stack overflow.
     if (logTail.length % 20 === 0) {
-      console.info(`[FoilExtract ${target}] ${line}`);
+      process.stdout.write(`[FoilExtract ${target}] ${line}\n`);
     }
     const step = parseCatalogueCheckpointStep(line);
     if (step) {

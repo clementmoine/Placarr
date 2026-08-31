@@ -1,7 +1,7 @@
 /**
  * No-Intro local SQLite index — build from Logiqx DAT XML (prebuild only).
  * Scan path opens an existing index; never downloads DATs.
- * `pnpm nointro:update` may sync a DAT pack zip first (allowDownload).
+ * admin Local indexes may sync a DAT pack zip first (allowDownload).
  */
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
@@ -238,7 +238,7 @@ export type NoIntroIndexBuildOptions = {
    */
   datPath?: string;
   /**
-   * Intentional prebuild (`pnpm nointro:update`) — may sync a DAT pack zip
+   * Intentional prebuild (admin Local indexes) — may sync a DAT pack zip
    * (local `NOINTRO_DAT_PACK` or URL when download is allowed).
    */
   allowDownload?: boolean;
@@ -302,7 +302,7 @@ export async function buildNoIntroIndex(
   const datPath = await resolveDatRootForBuild(options);
   if (!datPath) {
     console.warn(
-      "[No-Intro] No DAT path — set NOINTRO_DAT_PATH, or NOINTRO_DAT_PACK / URL, then `pnpm nointro:update`",
+      "[No-Intro] No DAT path — set NOINTRO_DAT_PATH, or NOINTRO_DAT_PACK / URL, then admin Local indexes",
     );
     return null;
   }
@@ -310,7 +310,7 @@ export async function buildNoIntroIndex(
   const files = await resolveNoIntroDatFiles(datPath);
   if (files.length === 0) {
     console.warn(
-      `[No-Intro] No .dat/.xml files found at ${datPath} — run \`pnpm nointro:update\` with a pack or DAT path`,
+      `[No-Intro] No .dat/.xml files found at ${datPath} — sync No-Intro from admin Local indexes with a pack or DAT path`,
     );
     return null;
   }
@@ -370,7 +370,7 @@ export async function ensureNoIntroIndex(): Promise<DatabaseSync | null> {
 
   const file = indexPath();
   if (!(await fileExists(file))) {
-    console.info("[No-Intro] Index unavailable — run `pnpm nointro:update`");
+    console.info("[No-Intro] Index unavailable — sync No-Intro from admin Local indexes");
     return null;
   }
 
@@ -378,7 +378,7 @@ export async function ensureNoIntroIndex(): Promise<DatabaseSync | null> {
     const db = new DatabaseSync(file);
     if (!isIndexSchemaCurrent(db)) {
       console.info(
-        `[No-Intro] Index schema outdated — rebuild with \`pnpm nointro:update\` (v${NOINTRO_INDEX_SCHEMA_VERSION})`,
+        `[No-Intro] Index schema outdated — rebuild from admin Local indexes (v${NOINTRO_INDEX_SCHEMA_VERSION})`,
       );
       db.close();
       return null;

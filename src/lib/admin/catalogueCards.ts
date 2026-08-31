@@ -15,10 +15,12 @@ import { assetsCardUrl } from "@/lib/packAssetUrls";
 import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
-} from "@/providers/narutoccg/narutoCardPath";
+} from "@/providers/narutocarddass/narutoCardPath";
 import {
   assetsPackBackUrl,
+  assetsPackTierBackUrl,
   assetsSetBackUrl,
+  listPackTierBackSlugs,
   packCardsIndexPath,
 } from "@/lib/packPaths";
 import {
@@ -33,8 +35,8 @@ import {
   compareNarutoLangs,
   formatNarutoReference,
   narutoCollectorNumberKey,
-} from "@/providers/narutoccg/collectorIdentity";
-import { foldNarutoCardsIndex } from "@/providers/narutoccg/foldNarutoIndex";
+} from "@/providers/narutocarddass/collectorIdentity";
+import { foldNarutoCardsIndex } from "@/providers/narutocarddass/foldNarutoIndex";
 import {
   orientationFromIndexSlot,
   printIsLandscapeCard,
@@ -400,6 +402,7 @@ export function buildCatalogueCardRows(
           ? { faceQuarterTurns: orient.faceQuarterTurns }
           : {}),
         ...(landscapePrint ? { landscapePrint: true } : {}),
+        ...(entry.lenticularGrid ? { lenticularGrid: entry.lenticularGrid } : {}),
       };
 
       if (!file) {
@@ -522,6 +525,8 @@ export function mergeCatalogueBackRows(input: {
   pack: CataloguePackId;
   faceRows: CatalogueCardRow[];
   packBackUrl?: BackInput;
+  /** Kayou-style tier sleeves — `back.<slug>.webp` at pack root. */
+  tierBackUrls?: readonly { slug: string; url: string }[];
   setBackUrls?:
     | ReadonlyMap<string, BackInput>
     | Record<string, Exclude<BackInput, undefined>>;
@@ -537,8 +542,25 @@ export function mergeCatalogueBackRows(input: {
   const suffixLabel = (tile: CatalogueBackTile) =>
     tile.lang === "—" ? "" : ` · ${tile.lang.toUpperCase()}`;
 
+  const tierUrlSet = new Set(
+    (input.tierBackUrls ?? []).map((row) => row.url),
+  );
+
   const out: CatalogueCardRow[] = [];
+  for (const tier of input.tierBackUrls ?? []) {
+    out.push({
+      printKey: `${input.pack}:__pack-back-tier-${tier.slug}__`,
+      set: "",
+      card: "back",
+      lang: "—",
+      artUrl: tier.url,
+      hasFoil: false,
+      label: `Dos · pack · ${tier.slug.toUpperCase()}`,
+      kind: "pack-back",
+    });
+  }
   for (const tile of backTiles(input.packBackUrl)) {
+    if (tierUrlSet.has(tile.url)) continue;
     out.push({
       printKey: `${input.pack}:__pack-back${suffix(tile)}__`,
       set: "",
@@ -597,6 +619,10 @@ export function withCatalogueBackRows(
 
   const corpus = catalogueCorpusPack(pack);
   const packBackUrl = distinct((lang) => assetsPackBackUrl(corpus, lang));
+  const tierBackUrls = listPackTierBackSlugs(corpus).flatMap((slug) => {
+    const url = assetsPackTierBackUrl(corpus, slug);
+    return url ? [{ slug, url }] : [];
+  });
   const setBackUrls = new Map<string, CatalogueBackTile[]>();
   for (const set of new Set(faceRows.map((r) => r.set))) {
     const tiles = distinct((lang) => assetsSetBackUrl(corpus, set, lang));
@@ -606,6 +632,7 @@ export function withCatalogueBackRows(
     pack,
     faceRows,
     packBackUrl,
+    tierBackUrls,
     setBackUrls,
   });
 }
@@ -664,6 +691,8 @@ export type ListCatalogueCardsInput = {
   pack: CataloguePackId;
   /** When true, only rows with foil-related assets. */
   foilOnly?: boolean;
+  /** When true, only rows missing a face or a name (audit / debug). */
+  incompleteOnly?: boolean;
   offset?: number;
   limit?: number;
   /** Substring match on printKey / set / card / label. */
@@ -682,6 +711,8 @@ export type ListCatalogueCardsResult = {
   offset: number;
   limit: number;
   cards: CatalogueCardRow[];
+  /** Locales du pack, pour le sélecteur de langue côté client. */
+  availableLocales: string[];
 };
 
 export function listCatalogueCards(
@@ -708,6 +739,19 @@ export function listCatalogueCards(
   if (input.foilOnly) {
     rows = rows.filter((row) => row.hasFoil);
   }
+  /*
+    Fiches incomplètes, pour l'audit : ni dos synthétique, et il manque la
+    face ou le nom. Un stub promo qui emprunte l'art retail reste incomplet —
+    le visuel affiché n'est pas le sien.
+  */
+  if (input.incompleteOnly) {
+    rows = rows.filter(
+      (row) =>
+        row.kind !== "pack-back" &&
+        row.kind !== "set-back" &&
+        (row.missingArt || row.versoOnly || !row.name),
+    );
+  }
   const q = input.q?.trim().toLowerCase();
   if (q) {
     const qKey = narutoCollectorNumberKey(q);
@@ -730,5 +774,6 @@ export function listCatalogueCards(
     offset,
     limit,
     cards: rows.slice(offset, offset + limit),
+    availableLocales: [...(packInfo?.catalogueLocales ?? [])],
   };
 }

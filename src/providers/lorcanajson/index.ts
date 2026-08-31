@@ -50,6 +50,8 @@ import {
   type LorcanaLanguage,
   listLorcanaPrintSets,
 } from "./fetch";
+import lorcanaBoosterComposition from "./curated/booster-composition.json";
+import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 
 export {
   fetchLorcanaCardByPrintKey,
@@ -610,6 +612,7 @@ export const lorcanajsonModule = defineProvider({
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
     catalogueLabel: "Lorcana",
+    catalogueAliases: ["Disney Lorcana", "Lorcana TCG"],
     types: ["tcg"],
     nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people"],
@@ -663,6 +666,10 @@ export const lorcanajsonModule = defineProvider({
     catalogue absent serait faux, et mieux vaut ne rien annoncer.
   */
   printGames: [LORCANA_GAME],
+  loadBoosterComposition: () => {
+    const raw = lorcanaBoosterComposition as BoosterCompositionFile;
+    return raw?.version === 1 ? raw : null;
+  },
   listSetPrints: async ({ setId, language }) =>
     enumerateSetPrints({
       setId,

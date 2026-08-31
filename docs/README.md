@@ -13,6 +13,7 @@
 | [tcg_support.md](tcg_support.md)                                       | TCG produit (Lorcana / Pokémon)                                                                                                                                                         | **Vivant** |
 | [card_pack_contract.md](card_pack_contract.md)                         | Contrat des packs cartes (cible d'harmonisation)                                                                                                                                        | **Vivant** |
 | [collection_checklist.md](collection_checklist.md)                     | Check-list de collection + conseil d'achat (analyse)                                                                                                                                    | **Vivant** |
+| [sealed_product_contents.md](sealed_product_contents.md)               | Contrat contenu scellé (`cardsPerPack`, garanties, pool) — obligatoire pour le conseil d'achat                                                                                          | **Vivant** |
 | [one_piece_tcg.md](one_piece_tcg.md)                                   | One Piece : providers, apps, foil (recherche)                                                                                                                                           | **Vivant** |
 | [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md)       | DBS Masters / Fusion World : Deckplanet, SAMPLE, cardgame.fr                                                                                                                            | **Vivant** |
 | [naruto_carddass_tcg.md](naruto_carddass_tcg.md)                       | Naruto — CACG / Carddass (+ autres lignes via sets)                                                                                                                                     | **Vivant** |
@@ -25,7 +26,7 @@
 | [foil_apk_sources.md](foil_apk_sources.md)                             | Réseau vs APK (analyse ouverte)                                                                                                                                                         | **Vivant** |
 | [foil_css_sources.md](foil_css_sources.md)                             | Pokémon CSS : Live ↔ simey                                                                                                                                                              | **Vivant** |
 | [pokemon_live_rainier.md](pokemon_live_rainier.md)                     | Live Rainier : auth, config-docs, CDN, owned                                                                                                                                            | **Vivant** |
-| [unity_without_python.md](unity_without_python.md)                     | Sortie UnityPy → Node (matrice spike + plan phasé, ADR-021)                                                                                                                             | **Vivant** |
+| [unity_without_python.md](unity_without_python.md)                     | Sortie UnityPy → Node (ADR-021 A–E **livré**)                                                                                                                             | **Vivant** |
 | [backlog.md](backlog.md)                                               | Ouverts                                                                                                                                                                                 | Mixte      |
 | [../TESTING.md](../TESTING.md)                                         | Tests                                                                                                                                                                                   | **Vivant** |
 | [archive/](archive/)                                                   | Audits / handoffs historiques — dont `autonomy_audit.md`, `tcg_pack_architecture_audit.md`, `card_game_steam.md`, `naruto_promo_research.md` et les 4 handoffs foil / Live (2026-08-24) | Archive    |
@@ -41,14 +42,15 @@ data/launchbox|icollect|pokemon|lorcana|dbs|naruto/
 data/indexes/title-idf/
 ```
 
-Scripts foil / catalogues locaux :
+Scripts catalogues / indexes locaux :
 
 ```
-src/providers/lorcanatcg/     → pnpm foil:lorcana
-src/providers/pokemontcglive/ → pnpm foil:pokemon
-src/providers/narutoccg/      → pnpm naruto:cards
-src/providers/dbscg/          → pnpm dbs:cards
-src/providers/{icollect,launchbox,nointro}/cli.ts
+src/providers/lorcanatcg/     → Catalogue Extract (admin / worker)
+src/providers/pokemontcglive/ → Catalogue Extract (admin / worker)
+src/providers/narutocarddass/      → Catalogue Extract (admin / worker)
+src/providers/{icollect,launchbox,nointro}/pipeline.ts
+  → admin Local indexes / worker catalog
 ```
 
-`pnpm foil:ensure` = stubs JSON des packs foil. Pocket **supprimé**.
+`installFullFoilMask` (extract) crée `full_foil_mask.webp` si absent. Pocket
+**supprimé**.

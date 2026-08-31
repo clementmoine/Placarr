@@ -57,7 +57,7 @@ Conséquence concrète : sur un crawl de 259 pages, « annuler » n'annulait pas
 la tâche gardait un slot de worker jusqu'au timeout de chaque page.
 
 Relevé le 2026-08-15 : `coverproject/cdnLookup`, `howlongtobeat/fetch` (×2),
-`lorcanatcg/{dumpWeb,scrapeCards}`, `narutoccg/{buildCoverageChecklist,scrapeCards×2,waybackSiteMirror}`,
+`lorcanatcg/{dumpWeb,scrapeCards}`, `narutocarddass/{buildCoverageChecklist,scrapeCards×2,waybackSiteMirror}`,
 `pokemontcglive/{audit_tcgdex_map×3,cdn×3,sources,syncLiveOwned}`.
 `shared/dbscards/scrapeList` en faisait partie — corrigé (`25305a2`).
 
@@ -137,7 +137,7 @@ structurellement, en rendant l'oubli impossible plutôt qu'en le documentant.
    d'exceptions explicite au besoin). Empêche la régression avant de corriger
    l'existant.
 2. **Reprendre les 18 contournements**, en commençant par ceux qui tournent en
-   tâche de fond longue — `narutoccg/scrape/scrapeCards`, `pokemontcglive/cdn`.
+   tâche de fond longue — `narutocarddass/scrape/scrapeCards`, `pokemontcglive/cdn`.
 3. **Généraliser `softban`** au chemin commun plutôt qu'au bon vouloir de chaque
    pack.
 4. La granularité de `refresh` — quand le reste est fait.

@@ -1,7 +1,7 @@
 # Nouveau finish foil — checklist opérateur
 
-But : quand upstream ajoute un effet, le récupérer via **sync auto** (ou
-`pnpm foil:*` / admin Extract) et ne porter à la main que les looks vraiment
+But : quand upstream ajoute un effet, le récupérer via **Catalogue Sync**
+(admin / worker in-process) et ne porter à la main que les looks vraiment
 nouveaux. Contrat : [foil_effects.md](foil_effects.md).
 APK vs réseau : [foil_apk_sources.md](foil_apk_sources.md).
 
@@ -19,7 +19,7 @@ Rapport : payload `/api/admin/foil-status` → `gaps` (moteur `computeFoilGaps`)
 ## Auto (défaut)
 
 - Staleness / boot → enqueue `foilExtract` (`PLACARR_FOIL_AUTO_SYNC`, défaut on).
-- Manuel : admin Extract ou `pnpm foil:lorcana` / `foil:pokemon` (inclut `index-card-foil`).
+- Manuel : admin Catalogue → Extract / Sync.
 
 Après sync : nouveaux sets/cartes/frags/textures **sans edit `src/`**. Index sous `data/` seulement.
 
@@ -29,7 +29,7 @@ Après sync : nouveaux sets/cartes/frags/textures **sans edit `src/`**. Index so
 
 | Étape | Action                                                        |
 | ----- | ------------------------------------------------------------- |
-| 1     | Sync / `pnpm foil:pokemon`                                    |
+| 1     | Catalogue Sync Pokémon (admin / worker)                       |
 | 2     | Admin foil-status gaps → motifs manquants                     |
 | 3     | Si motif pathologique : override B dans `materials.ts` (rare) |
 | 4     | Playroom WebGL                                                |
@@ -64,7 +64,7 @@ Sans APK : produit CSS (web + cards) reste auto.
 
 | Étape | Action                                                                           |
 | ----- | -------------------------------------------------------------------------------- |
-| 1     | Sync web + cards (`foilExtract` / `pnpm foil:lorcana`)                           |
+| 1     | Catalogue Sync Lorcana (admin / worker)                                      |
 | 2     | Gaps → `foilType` / `varnishType` en **fallback only** (silver / hotFoil)        |
 | 3     | Nouveau look : recette `HoloShader` + alias `cssRecipes.ts` si le camelCase rate |
 | 4     | Stem web inconnu (hors chrome `frame`/`menu`) → texture ou skip                  |

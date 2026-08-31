@@ -84,7 +84,8 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
 - **Contexte** : ~120 Go de données crawlées/dumpées ; certaines données
   n'existent plus en ligne (visuels Naruto, reconstructions).
 - **Décision** : tout ce qui est re-récupérable par un script vit dans
-  `data/<pack>/` (gitignored, stubs au postinstall via `foil:ensure`) ; ce qui
+  `data/<pack>/` (gitignored ; extract crée les artefacts manquants, ex.
+  `full_foil_mask.webp`) ; ce qui
   est assemblé à la main vit dans `src/providers/<id>/curated/` (commité,
   trois sous-rôles : `cards/` et `products/` installés vers data,
   `sources/` = ledgers d'attestation).
@@ -188,15 +189,15 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   maintenant (churn data + perte de colonnes Masters) — à réévaluer si un
   3ᵉ pack Bandai arrive.
 
-## ADR-012 : Densité — rôles narutoccg, enrich par question, packPaths explicite
+## ADR-012 : Densité — rôles narutocarddass, enrich par question, packPaths explicite
 
 - **Date** : 2026-08-25
 - **Statut** : Accepté
-- **Contexte** : `narutoccg` (~230 fichiers à plat) et `core/enrich` (racine
+- **Contexte** : `narutocarddass` (~230 fichiers à plat) et `core/enrich` (racine
   dense) freinaient la navigation ; plusieurs helpers `packPaths` defaultaient
   silencieusement à `"pokemon"`.
 - **Décision** : (1) sous-dossiers `parse/` / `scrape/` / `harvest/` / `install/`
-  dans narutoccg, racine = entrypoints + helpers non préfixés ; (2) galleries /
+  dans narutocarddass, racine = entrypoints + helpers non préfixés ; (2) galleries /
   bookSearch → `enrich/media/` et `enrich/search/` + README de flux, sans
   déplacer encore les orchestrateurs `fetch`/`merge`/`storage` ; (3) `pack`
   obligatoire sur les helpers foil/Live de `packPaths`.
@@ -288,7 +289,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   début (audit autonomie §4 — cas DBS Masters). Les étapes sont déjà
   idempotentes ; le coût est le temps perdu à les refaire.
 - **Décision** : protocole `── checkpoint <step>` émis par les CLI à
-  étapes (`dbscg`, `dbsfw`, `narutoccg`). Le worker merge dans
+  étapes (`dbscg`, `dbsfw`, `narutocarddass`). Le worker merge dans
   `payload.completedSteps`. À la reprise, le runner ajoute `--skip a,b,…`
   quand le pack déclare `extract.pipelineSteps`. Packs sans étapes
   déclarées (Pokémon, Lorcana…) inchangés.
@@ -313,18 +314,18 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   sans relancer toute la moisson ; la CLI reste disponible mais n'est plus
   obligatoire pour le debug ciblé.
 
-## ADR-019 : Densité `narutoccg` — `sources/` par rôle
+## ADR-019 : Densité `narutocarddass` — `sources/` par rôle
 
 - **Date** : 2026-08-25
 - **Statut** : Accepté
-- **Contexte** : phase 6.1 du plan de réorganisation — `narutoccg` mélangeait
+- **Contexte** : phase 6.1 du plan de réorganisation — `narutocarddass` mélangeait
   à la racine collecteurs externes, parse, scrape et contrat catalogue
   (~120 fichiers plats). `parse/`, `scrape/`, `harvest/`, `install/` et
   `curated/` existaient déjà ; les ledgers / packshots restaient à plat.
 - **Décision** : dossier `sources/` pour les collecteurs externes (Coleka,
   eBay, Mercari, Manga-News, ledgers scellés…). Racine = contrat
   (`index`, `pipeline`, `cli`, `facts`, `packs`, `searchPrints`…). Voir
-  `src/providers/narutoccg/README.md`. Pas de découpage `domains/` global
+  `src/providers/narutocarddass/README.md`. Pas de découpage `domains/` global
   (hors périmètre plan).
 - **Conséquences** : un nouvel arrivant trouve d'abord le contrat, puis les
   sources ; imports relatifs mis à jour ; `narutoranks` pointe vers
@@ -350,33 +351,23 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   garde de test d'alignement Prisma/MediaType ; le découpage physique
   domaine reste ouvert et volontairement différé.
 
-## ADR-021 : Sortie UnityPy — cadre (Node-first)
+## ADR-021 : Sortie UnityPy — Node only
 
-- **Date** : 2026-08-25
-- **Statut** : Accepté (cadre) — implémentation phasée, Python oracle jusqu’à
-  parité
-- **Contexte** : le seul Python **produit** est l’île Unity
-  (`pokemontcglive/unity`, `lorcanatcg/unity`) via UnityPy. Le reste est déjà
-  `tsx`/Node. Les libs npm UnityFS (`unityfs-js`, `@arkntools/unity-js`) ne
-  sont pas drop-in sous Node (Vite workers, WASM codecs vides, ESM sans
-  extension, Texture2D 2022.3, absence de Shader chez arkntools). Un spike
-  2026-08 sur fixtures Live a prouvé : typetree `MaterialManifest`, ASTC via
-  `.resS`+`decodeTexture`, et **24/24** `.frag` GLES depuis `compressedBlob`
-  sans UnityPy. Détail : [unity_without_python.md](unity_without_python.md).
+- **Date** : 2026-08-25 (clôturé 2026-08-26)
+- **Statut** : Accepté — **phases A–E livrées** (hot path 100 % Node)
+- **Contexte** : l’extract Unity produit passait par UnityPy
+  (`pokemontcglive/unity`, `lorcanatcg/unity`). Les libs npm UnityFS n’étaient
+  pas drop-in sous Node ; un spike + patches `unityfs-js` (codecs JS, SerializedPass
+  Unity 6000) ont permis la parité golden. Détail :
+  [unity_without_python.md](unity_without_python.md).
 - **Décision** :
-  1. Objectif = **une toolchain Node** pour l’extract Unity produit ; Frida
-     QA peut rester Python.
-  2. Pas d’ajout naïf des packages Unity au `package.json` tant qu’un
-     **wrapper** (`src/lib/unity/` ou équivalent provider-local) n’isole
-     codecs JS, typetree et resolve ESM.
-  3. Migration **par phases** A→E (manifest → textures → shaders → quad/back
-     / Lorcana → retrait venv), chacune derrière golden-master vs UnityPy /
-     artefacts `data/pokemon/foil/`.
-  4. UnityPy reste **référence de test** jusqu’à la phase E ; on n’affaiblit
-     pas les tests extract existants.
-- **Conséquences** : item backlog P2 ; docs `data-layout` / README unity
-  pointent le plan ; le hot path foil peut progresser sans attendre une lib
-  upstream « complète ».
+  1. **Une toolchain Node** pour l’extract Unity produit ; Frida QA peut rester
+     Python.
+  2. Wrapper `@/lib/unity` + `patches/unityfs-js@0.2.8.patch`.
+  3. Pas d’escape hatch `PLACARR_UNITY_PYTHON` — scripts UnityPy retirés du repo
+     produit.
+- **Conséquences** : extract foil = Catalogue Sync / worker in-process uniquement
+  (pas de CLI dans le container Docker) ; venv unity obsolète.
 
 ---
 

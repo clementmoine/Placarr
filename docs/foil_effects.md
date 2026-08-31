@@ -21,7 +21,7 @@
    `HoloShader` (comme les recettes Lorcana dumpées).
 3. Assets officiels : faces sous `data/<pack>/cards/`, kit rendu sous `data/<pack>/foil/` → URL `/assets/<pack>/…`.
 4. Trees simey = staging volatile `data/pokemon/staging/simey/`
-   (`pnpm foil:pokemon:simey`) — même idée que le dump web Lorcana.
+   (Simey CSS sync) — même idée que le dump web Lorcana.
 5. **Pokémon CSS :** vérité = **TCG Live** (compare Unity | CSS). Simey,
    photo-cards, ShaderKit, etc. = **références d’analyse** (noms de layers,
    mixes utiles, promo→style) — on ne dépend pas de leur chorégraphie ni de
@@ -74,11 +74,10 @@ Disk / URL (voir [data-layout.md](data-layout.md)) :
 ```
 data/<pack>/cards/  →  /assets/<pack>/cards/…   (faces + back.webp)
 data/<pack>/foil/   →  /assets/<pack>/…          (shaders, textures FX, web, …)
-scripts/<pack>/    →  pnpm foil:<pack>
 ```
 
-CLI et admin : `pnpm foil:<pack>` · `/admin?tab=tcg-effects` (backends
-**Auto | WebGL | CSS**).
+Sync produit : Catalogue Extract (admin / worker in-process) ·
+`/admin?tab=tcg-effects` (backends **Auto | WebGL | CSS**).
 
 ## 4. Backend runtime
 

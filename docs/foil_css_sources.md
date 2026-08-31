@@ -3,7 +3,7 @@
 Contrat commun CSS+WebGL (les deux packs) : [foil_effects.md](foil_effects.md).
 
 Dernière passe 2026-08-13 (simey sous `data/pokemon/staging/simey/`, refresh
-`pnpm foil:pokemon:simey` — plus de `third_party/`).
+via `syncSimeyCss.ts` — plus de `third_party/`).
 
 **Règle.** Placarr = **GPL-3.0-or-later**. Arbres simey = dump staging
 (`data/pokemon/staging/simey/{poke-holo,poke-151}/`) pour **lire** leurs
@@ -262,7 +262,7 @@ Pas de PNGs EN simey ; pas de remap finish → rareté Simey.
 | [pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | `data/pokemon/staging/simey/poke-holo/` | `UPSTREAM_COMMIT` |
 | [pokemon-cards-151](https://github.com/simeydotme/pokemon-cards-151) | `data/pokemon/staging/simey/poke-151/`  | `UPSTREAM_COMMIT` |
 
-Refresh : `pnpm foil:pokemon:simey` (`--check` / `--force`). Pas de submodule.
+Refresh : `tsx src/providers/pokemontcglive/syncSimeyCss.ts` (`--check` / `--force`). Pas de submodule.
 Réf. mapping promo→Live : [kronenz/photo-cards `promos.json`](https://github.com/kronenz/photo-cards/blob/000e554eef94778845cb71aacebe61ec4ec99348/src/lib/components/promos.json).
 
 ---

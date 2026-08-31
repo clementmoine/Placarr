@@ -2,7 +2,7 @@
 
 > Statut : **Catalogue franchise** (2026-08-14). Admin Catalogue → **Dragon Ball**
 > avec onglets **Masters** | **Fusion World**. Providers `dbscg` (`data/dbs/cg`,
-> `pnpm dbs:cards`) et `dbsfw` (`data/dbs/fw`, `pnpm dbs:fw`). Packs foil
+> Catalogue Sync) et `dbsfw` (`data/dbs/fw`, Catalogue Sync). Packs foil
 > `dbs-cg` / `dbs-fw`. Faces Masters FR = dbscards/Bandai ; faces EN = clone
 > TCG Arena (Deckplanet), rangées sous `cards/…/en/`. Naruto suivra le même
 > schéma (CCG | Panini). Journal d’audit des **faces** ci-dessous.
@@ -220,13 +220,13 @@ clé — à caler sur `printKey` ([tcg_support.md](tcg_support.md) §1).
 
 **Livré (Masters)** — `src/providers/dbscg/` + pack `src/effects/dbscg/` (`dbs-cg`) :
 
-- Catalogue local `data/dbs/cg/catalog.sqlite` via POST cardlists **europe-fr** et **us-en** (`pnpm dbs:cards`, `--langs fr,en` par défaut). Noms FR et EN dans `cards-index.json` (`langs.fr.name` / `langs.en.name`).
+- Catalogue local `data/dbs/cg/catalog.sqlite` via POST cardlists **europe-fr** et **us-en** (Catalogue Sync, `--langs fr,en` par défaut). Noms FR et EN dans `cards-index.json` (`langs.fr.name` / `langs.en.name`).
 - printKey `dbscg:bt1-001` ; parallels `_SPR` / `_PR` → grouping (`dbscg:bt1-011-spr`).
 - Faces FR = dbscards / Bandai (étape `faces`, HTTP). Faces EN = clone TCG Arena rangé sous `data/dbs/cg/cards/{set}/en/{card}/` (étape `arena`). Leader `_b` → `awakened.webp`, pas le dos sleeve.
 - Dos sleeve = dbscards `original/back.webp` (curated).
 - Foil : tag `foil` + house `flare`, pas de mask Bandai.
 - Fusion World = **autre** module (`src/providers/dbsfw/`, `data/dbs/fw`,
-  `pnpm dbs:fw`). Catalogue : onglets Dragon Ball → Masters | Fusion World.
+  Catalogue Sync). Catalogue : onglets Dragon Ball → Masters | Fusion World.
 - Graphe produit→cartes : Sync admin (Masters / Fusion World). Hors de
   la boucle horaire — l'hôte tarpitte. HTML déjà là = reprise. Pas de
   packshot CDN.
@@ -242,14 +242,14 @@ Reste ouvert :
 
 ## 7. Suite
 
-- [x] Cardlist europe-fr + us-en : POST `category_exp` — scrape `pnpm dbs:cards` (noms FR et EN).
-- [x] Faces Deckplanet / TCG Arena : clone + rangement `en/` (`pnpm dbs:cards` étape `arena`).
+- [x] Cardlist europe-fr + us-en : POST `category_exp` — scrape Catalogue Sync (noms FR et EN).
+- [x] Faces Deckplanet / TCG Arena : clone + rangement `en/` (Catalogue Sync étape `arena`).
 - [ ] Compte apitcg : FW (et Masters s’il existe), SAMPLE, pagination.
 - [ ] Faces fw.dbscards.fr (taille, SAMPLE, alt arts).
 - [ ] Dos FW physique vs placeholder Masters.
 - [ ] dbscards comme fallback visuel (ToS) vs rester sur Bandai SAMPLE.
 - [ ] Client FW Digital : textures dumpables ?
-- [x] Provider Fusion World (`dbsfw` / `data/dbs/fw/`, `pnpm dbs:fw`).
+- [x] Provider Fusion World (`dbsfw` / `data/dbs/fw/`, Catalogue Sync).
 - [x] Catalogue admin : franchise Dragon Ball → Masters | Fusion World.
 - [x] Graphe produit→cartes : Sync admin (hors boucle horaire).
 
@@ -311,11 +311,8 @@ inclure un témoin connu-bon dans ces sondages.
 | faces deckplanet     | —                    | 8823                             |
 | versos               | 0 (sur 503 attendus) | 628 (ancien nom `awakened.webp`) |
 
-À relancer quand l'hôte répond :
-
-```
-npx tsx src/providers/dbscg/cli.ts --skip scrape
-```
+À relancer quand l'hôte répond : Catalogue Sync Masters (admin), avec
+`--skip scrape` pour ne garder que `arena` + `faces`.
 
 Le catalogue est à jour (scrape des deux locales fait le 14/08), donc seules
 les étapes `arena` (locale, rapide) et `faces` restent utiles.

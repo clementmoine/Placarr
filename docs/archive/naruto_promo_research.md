@@ -7,7 +7,7 @@ en notant aussi bien les trouvailles que les **impasses vérifiées** — pour n
 refouiller deux fois le même terrain.
 
 Voir aussi : [naruto_carddass_fr_recovery.md](naruto_carddass_fr_recovery.md),
-`src/providers/narutoccg/curated/sources/attested-promos.json`.
+`src/providers/narutocarddass/curated/sources/attested-promos.json`.
 
 ---
 
@@ -15,8 +15,8 @@ Voir aussi : [naruto_carddass_fr_recovery.md](naruto_carddass_fr_recovery.md),
 
 **Les six cartes « manquantes » de S5 n'ont jamais été des cartes S5.**
 
-Le fil [t1185 « Des cartes inédites dans les mangas Naruto »](https://narutoccgfrance.1fr1.net/t1185-des-cartes-indites-dans-les-mangas-naruto)
-(narutoccgfrance, 2008) documente un canal de distribution qu'aucune source
+Le fil [t1185 « Des cartes inédites dans les mangas Naruto »](https://narutocarddassfrance.1fr1.net/t1185-des-cartes-indites-dans-les-mangas-naruto)
+(narutocarddassfrance, 2008) documente un canal de distribution qu'aucune source
 consultée jusqu'ici ne mentionnait :
 
 > « Kana sort en ce moment les mangas Naruto **sous blister avec une carte à
@@ -43,7 +43,7 @@ Et la phrase qui referme le dossier :
 |    9 | Tentative désespérée           | `ta219` |     |
 |   10 | Shikamaru                      | `ni232` | ★   |
 |   11 | Chôji Akimichi                 | `ni239` |     |
-|   12 | _(non relevé dans le fil)_     | ?       |     |
+|   12 | Neji Hyûga _(Rare)_             | ? (TBD) |     |
 |   13 | Jeu de hasard                  | `ta227` |     |
 |   14 | Pouvoir de la marque maléfique | `ta226` | ★   |
 |   15 | Soin typique                   | `te207` |     |
@@ -255,7 +255,7 @@ vérifier.
 
 ### La source primaire dit la même chose, en 2008
 
-Le fil [t1003 « Info sur les cartes promo PR-?? »](https://narutoccgfrance.1fr1.net/t1003-info-sur-les-cartes-promo-pr)
+Le fil [t1003 « Info sur les cartes promo PR-?? »](https://narutocarddassfrance.1fr1.net/t1003-info-sur-les-cartes-promo-pr)
 — cité dans le fichier mais **jamais sauvegardé ni lu** jusqu'ici :
 
 > « J'ai remarqué que les références sur les **promo tinbox** étaient PR-011 et
@@ -368,7 +368,7 @@ toujours en place, `6/` daté du **22-Dec-2008 09:52** et `cartes_med/` du
 | archive.today                                                  | aucun snapshot (page générique / bloqué)                                                                                                                                                                                                                                                                                                                                                                        |
 | `tournoi-de-cartes.forumpro.fr`                                | **forum inédit** relayant les révélations hebdo : seulement 3 sujets (4ᵉ `NI-264`, 5ᵉ `TA-254`, 6ᵉ `NI-294`), **tous déjà chez nous**. Le relais s'arrête avec la série                                                                                                                                                                                                                                         |
 | `2img.net` (Forumotion)                                        | **ce n'est pas un cache, c'est un relais à la volée** — prouvé : il sert une image Wikimedia vivante (200) mais renvoie **403 sur un chemin bidon d'un hôte vivant**, exactement comme sur carddass.fr. Le `403` signifie « l'origine ne m'a rien donné », pas « supprimé de mon cache ». Il n'a donc **jamais rien stocké**, et cette voie est morte pour **toute** image carddass.fr, pas seulement ces trois |
-| `i.servimg.com` (hébergement Forumotion)                       | vrai stockage, survit à la mort du site source — mais les 3 sujets de révélation **hotlinkaient** tous carddass.fr au lieu de téléverser, et les fils narutoccgfrance sauvegardés ne contiennent que le logo et la bannière du forum. **Aucun scan de carte téléversé**                                                                                                                                         |
+| `i.servimg.com` (hébergement Forumotion)                       | vrai stockage, survit à la mort du site source — mais les 3 sujets de révélation **hotlinkaient** tous carddass.fr au lieu de téléverser, et les fils narutocarddassfrance sauvegardés ne contiennent que le logo et la bannière du forum. **Aucun scan de carte téléversé**                                                                                                                                         |
 | Recherche par nom de fichier (`TA-240-med`…)                   | rien                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Recherche par nom de carte (« Mélodie du guerrier illusoire ») | rien — seule la technique de Tayuya ressort                                                                                                                                                                                                                                                                                                                                                                     |
 | Ultrajeux                                                      | Ino Yamanaka en `NI-70` et `NI-88`, **jamais `NI-309`** — n'a jamais atteint la vente                                                                                                                                                                                                                                                                                                                           |
@@ -399,9 +399,9 @@ français, il n'existe aucun exemplaire à scanner.
 
 ## 2. Canaux explorés
 
-### narutoccgfrance.1fr1.net — vivant, productif
+### narutocarddassfrance.1fr1.net — vivant, productif
 
-Forum d'époque, **toujours en ligne** (le domaine `forumnarutoccg.com` est
+Forum d'époque, **toujours en ligne** (le domaine `forumnarutocarddass.com` est
 l'ancienne adresse du même board : 76 URLs Wayback, rien de plus).
 
 Wayback n'en a **qu'une seule URL** : il faut crawler le site vivant.
@@ -411,9 +411,9 @@ dont 40 pertinents. Fils dépouillés :
 
 | Fil                                                                                                                       | Verdict                                                                                                                                                     |
 | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [t1185](https://narutoccgfrance.1fr1.net/t1185-des-cartes-indites-dans-les-mangas-naruto) cartes inédites dans les mangas | **la découverte** (§1)                                                                                                                                      |
-| [t544](https://narutoccgfrance.1fr1.net/t544-les-cartes-promotionnelles) les cartes promotionnelles                       | 21 IDs, **18 déjà attestés** — valide le travail existant                                                                                                   |
-| [t1003](https://narutoccgfrance.1fr1.net/t1003-info-sur-les-cartes-promo-pr) info cartes promo PR                         | déjà exploité                                                                                                                                               |
+| [t1185](https://narutocarddassfrance.1fr1.net/t1185-des-cartes-indites-dans-les-mangas-naruto) cartes inédites dans les mangas | **la découverte** (§1)                                                                                                                                      |
+| [t544](https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles) les cartes promotionnelles                       | 21 IDs, **18 déjà attestés** — valide le travail existant                                                                                                   |
+| [t1003](https://narutocarddassfrance.1fr1.net/t1003-info-sur-les-cartes-promo-pr) info cartes promo PR                         | déjà exploité                                                                                                                                               |
 | t1192 liste des 15 cartes des mangas                                                                                      | doublon de t1185, corps tronqué pour les invités                                                                                                            |
 | t1180 cartes-promo                                                                                                        | aucun ID                                                                                                                                                    |
 | **t1132** quelle carte promo souhaiteriez-vous voir                                                                       | ⚠️ **piège** : sondage de souhaits sur des promos **étrangères** (`PR-NI-5`…`PR-NI-19`). « On peut espérer **les voir chez nous** ? » — **ne pas injecter** |
@@ -482,7 +482,7 @@ viennent d'un **tin** (boîte métal). C'est le seul fil `PR-` français connu.
 
 ### Le forum italien — exploré, décevant
 
-`narutocardgame.forumfree.it` est l'équivalent italien de narutoccgfrance, et
+`narutocardgame.forumfree.it` est l'équivalent italien de narutocarddassfrance, et
 **toujours en ligne**. Espoir légitime : l'Italie a eu la Série 6, sa communauté a
 donc vécu plus longtemps.
 
@@ -504,8 +504,8 @@ son hébergement gratuit ; rien à récupérer.
 | `dl.free.fr/nyO0ZE5tt/Promo.pdf` (cité dans t1132) | **HTTP 500**, absent de Wayback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Fiches tomes `mangakana.com` 2008 (tomes 1-3)      | **0 mention** de carte ou blister                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `kana.fr` / `mangakana.com`                        | 52 et 679 URLs Naruto archivées ; annonce des cartes non localisée                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Wayback CDX `narutoccgfrance.1fr1.net`             | **1 URL** — forum quasi non archivé                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `forumnarutoccg.com`                               | même board, ancien domaine, rien de neuf                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Wayback CDX `narutocarddassfrance.1fr1.net`             | **1 URL** — forum quasi non archivé                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `forumnarutocarddass.com`                               | même board, ancien domaine, rien de neuf                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | eBay annonces actives                              | saturé par Miracle Battle / Data Carddass (JP) et Naruto Mythos (2026) ; **aucune promo Carddass FR**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | eBay ventes terminées (connecté)                   | **8 requêtes ciblées, ~1 300 résultats, 0 promo Carddass FR**. Le bruit vient d'autres lignes : Carddass JP (Jump Festa, Miracle Battle, Data), Kayou, Panini Naruto 2002, CCG « Prism » US, Mythos 2026. Seuls objets de la ligne FR : un booster et un deck Série 3                                                                                                                                                                                                                                                                                                                                                                                                   |
 | eBay ventes terminées, **par nom de carte**        | 10 requêtes sur les libellés FR (« devenir chef », « pouvoir de la marque maléfique », « pichenette », « soin typique »…). Les requêtes discriminantes ne rendent que 8 résultats, aucun pertinent ; les « 248 » sont le pool générique renvoyé faute de correspondance                                                                                                                                                                                                                                                                                                                                                                                                 |

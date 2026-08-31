@@ -28,7 +28,7 @@ dans une abstraction. Aucun garde ne le vérifie — `privateRuntimeDataGuard` e
 | fichier           | packs qui l'ont |
 | ----------------- | --------------- |
 | `pipeline.ts`     | 5/5             |
-| `cli.ts`          | 5/5             |
+| `extract.ts`      | 5/5 (ex-`cli.ts`) |
 | `index.ts`        | 5/5             |
 | `indexStore.ts`   | 4/5             |
 | `searchPrints.ts` | 3/5             |
@@ -52,7 +52,7 @@ faire converger.
 - **Locales** — dossiers ISO 639-1 partout (`de en es fr it ja ptbr`). `jp`
   serait un code pays ; ne pas l'introduire.
 - **`catalogCorpus`** — chemins de pack et statut, consommé par dbscg, dbsfw,
-  lorcanatcg, narutoccg, pokemontcglive, icollect.
+  lorcanatcg, narutocarddass, pokemontcglive, icollect.
 - **`cardFaces`** (2026-08-15) — sources multiples, `face.json`, classement par
   `explainAttachmentScoreForDisplay`. Consommé par dbscg et dbsfw.
 - **`softban`** — dbscg, dbsfw, pokemontcglive. **`attemptOrder`** — dbscg seul.
@@ -211,7 +211,7 @@ Deux adresses, choisies selon la source et non selon l'humeur :
 
 ### Fusion World — récolté
 
-`pnpm dbs:fw -- --only details` (nouvelle étape, incrémentale) a lu **1 919
+Catalogue Sync FW --only details (nouvelle étape, incrémentale) a lu **1 919
 fiches** sur les 1 927 numéros distincts. Rareté sur 1 749, type et texte sur
 les 1 919, couleur 1 742, coût 1 660, puissance 1 525, traits réels 1 743.
 
@@ -443,7 +443,7 @@ staging. C'est exactement le comportement voulu : le staging tient l'original,
 
 **Dix dossiers préexistants n'ont aucune mention dans le code** : `amazon-fr`,
 `bgg`, `carddas-jp-ps`, `gamexfood`, `leboncoin`, `liveinternet`,
-`narutoccgfrance`, `retrotcg`, `tradecardsonline`, `tvtokyo-ps`. Ils sont
+`narutocarddassfrance`, `retrotcg`, `tradecardsonline`, `tvtokyo-ps`. Ils sont
 antérieurs à cette session ; je les signale sans y toucher — certains portent
 peut-être des collages qu'il faudrait déplacer vers `curated/`, mais c'est un
 tri à faire en connaissance de cause, pas au passage.

@@ -1,8 +1,8 @@
 # One Piece Card Game (OPTCG) — recherche sources
 
-> Statut : **ligne catalogue branchée** (2026-08-25) — provider `onepiece` +
-> pack effets catalogue-only + onglet Admin. Catalogue **vide** jusqu'à la
-> moisson (`pnpm onepiece:sync` bootstrap ; ingest apitcg / vegapull à venir).
+> Statut : **moisson branchée** (2026-08-27) — provider `onepiece` +
+> Catalogue Sync : **punk-records** (FR/EN, sortie vegapull) → printKeys +
+> titres ; faces cardlist Bandai (`art.bandai.webp`) ; scellé **opecards.fr**.
 > Pas de rendu foil sans masks réels.
 >
 > Contrat produit (aligné Pokémon sans Live) :
@@ -64,29 +64,29 @@ Ne pas brancher comme rendu OPTCG « officiel ».
 ## 4b. Produits scellés (opecards.fr)
 
 Même logiciel que dbscards / lorcards / pkmcards. Le graphe scellé se
-crawle **sans** ouvrir un provider OPTCG :
-
-```
-pnpm tcgcards:products -- --site opecards
-```
+crawle via Catalogue Sync (admin / worker) — pack One Piece → étape products
+(`scrapeTcgCardsProducts("opecards")`).
 
 Écrit `data/onepiece/staging/opecards-products/`. Faces et printKey restent
 le chantier catalogue (§5). On ne scrape pas `/cards` ici.
 
-## 5. Implications Placarr (quand on ouvrira le chantier)
+## 5. Implications Placarr
 
-1. **Provider catalogue d’abord** — candidat principal **apitcg** (déjà prévu backlog) _ou_ index offline **vegapull → punk-records** (multi-lang, sans dépendance API runtime). Sondage clé apitcg avant de choisir.
+1. **Catalogue** — punk-records (`cards_by_id.json` FR/EN) → `onepiece:op01-001`
+   via `bandaiPrintKey` ; faces depuis `img_url` Bandai.
 2. **Finition** = propriété d’**exemplaire** (`Item.variant` / finish) : on peut stocker `foil` / parallel même **sans** rendu.
 3. **Rendu foil** = reporté jusqu’à une source réelle de masks (app Unity Bandai, CDN, etc.). Jusque-là : face plate.
 4. **Sim Batsu / TTS** = hors scope produit (pas de scrape d’assets pour foil).
 5. **Prix** = chantier séparé (Cardmarket / BerryWallet / FX).
+6. **apitcg** reste une alternative runtime (clé) — non requis tant que punk-records + Bandai CDN tiennent.
 
-## 6. Prochaines recherches (avant code)
+## 6. Prochaines recherches
 
-- [ ] Compte apitcg : une carte FR, variants parallel, image URL, pagination, rate limit.
-- [ ] Comparer fraîcheur **punk-records FR** vs apitcg vs cardlist officiel.
+- [x] Index punk-records FR/EN + printKey Bandai.
+- [ ] Comparer fraîcheur punk-records vs cardlist officiel après chaque set.
 - [ ] Lister les finishes catalogue OPTCG (parallel, SP, manga rare, …) pour l’axe variante exemplaire.
 - [ ] Surveiller une éventuelle app / client Bandai avec rendu foil (changement de stratégie dump).
+- [ ] Compte apitcg (optionnel) si punk-records prend du retard.
 
 ## Réfs
 

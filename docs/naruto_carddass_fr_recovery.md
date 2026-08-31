@@ -14,13 +14,13 @@ staging `data/naruto/carddass/staging/` (README).
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **`cards/{family}/{id}/{lang}/`**                                 | Faces **utilisées** (art, `art.corrected`, `art.reconstructed`, thumb)  |
 | **`staging/carddass-fr/`**                                        | Miroir site non utilisé + pages/PDF/CDX (inspectable)                   |
-| **`src/providers/narutoccg/curated/cards/{family}/{id}/{lang}/`** | Reconstruct hand-made (`art.reconstructed.png`) + preuve (`source.jpg`) |
+| **`src/providers/narutocarddass/curated/cards/{family}/{id}/{lang}/`** | Reconstruct hand-made (`art.reconstructed.png`) + preuve (`source.jpg`) |
 | **`staging/bandaicg-en/`**, **`carddas-jp/`**                     | Autres lignes (≠ CACG FR)                                               |
 
 Med / tin **mappés** quittent staging (**move**). Re-scrape **ne re-télécharge
 pas** un med/tin déjà présent sous `cards/` (sauf `--force`).
 
-CLI : `pnpm naruto:cards` (pipeline complet).
+Sync : Catalogue Extract (pipeline complet).
 
 ---
 
@@ -54,7 +54,7 @@ Coverage MN S1–S5 : **711/711**. Preuves :
 Principe : **on ne supprime rien** (numéros, noms, refs, images sources). Si ce
 n’est pas sorti en papier, la carte reste dans le ledger en **non publiée**.
 
-`pnpm naruto:cards -- --only known` :
+Catalogue Sync --only known :
 
 | Bucket                   | Sens                                                             |
 | ------------------------ | ---------------------------------------------------------------- |
@@ -86,8 +86,8 @@ Nouvelle Série 2012 (~118), promos shuriken, gap Coleka S2 (~20), EN/JP.
 
 ### 5bis. Promos shuriken — inventaire 2026-08-13
 
-Ledger recherche : `data/naruto/carddass/staging/narutoccgfrance/promo-attested.json`
-(forum **narutoccgfrance** live + pages tournois déjà en `staging/carddass-fr/`).
+Ledger recherche : `data/naruto/carddass/staging/narutocarddassfrance/promo-attested.json`
+(forum **narutocarddassfrance** live + pages tournois déjà en `staging/carddass-fr/`).
 
 - **Officiel CdF 07** : `TE-30` / `NI-23` / `NI-95` → `cards/promo/fr/` + index.
 - **Tin** : `PR-011` / `PR-016` → déjà sur disque.
@@ -103,7 +103,7 @@ Dos par langue : `curated/cards/back.{fr|en|it|ja}.png`.
 
 ### 5ter. Photos collector en fallback (pas de render carddass) — 2026-08-13
 
-Heuristic (rapport `pnpm naruto:cards -- --only known`) : face préférée =
+Heuristic (rapport Catalogue Sync --only known) : face préférée =
 plain `art.*` ≥ ~300 KB (faces site ~40–80 KB / ~350×495). Exclut
 `art.corrected` / `art.reconstructed`.
 
@@ -136,6 +136,6 @@ Spotlights stratégie (pas promos tournoi). Staging :
 | `logs/carte-semaine.{md,json}` | Focus + IDs extraits des archives CdF          |
 | `logs/coverage.*`              | MN ↔ index                                     |
 | `staging/README.md`            | Layout staging                                 |
-| `src/providers/narutoccg/`     | Pipeline + curated                             |
+| `src/providers/narutocarddass/`     | Pipeline + curated                             |
 
 _Dernière màj : 2026-08-13 — carte-semaine → noms/stubs catalogue._

@@ -323,7 +323,7 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   publiant aucun. Conséquence de rendu, mesurée : `CardFoilGlitter` lie
   `_MotifMask` en rôle `foilMask`, donc `foilSurfacesReady` refuse le WebGL — et
   le pack Lorcana ne déclare pas de `fallbackFoilMaskUrl`, contrairement à
-  `dbscg`, `narutoccg` et `pokemon`. La carte retombe sur la recette CSS, qui
+  `dbscg`, `narutocarddass` et `pokemon`. La carte retombe sur la recette CSS, qui
   n'utilise que la texture partagée `glitter`. Le foil s'affiche donc, mais
   **non masqué** : sur toute la carte au lieu des seules zones foilées. Y
   remédier voudrait dire soit une source de masques pour ces vingt-huit, soit un
@@ -400,8 +400,8 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
 3. **Pokémon via TCGdex** : apporte les prix en euros natifs et les variantes
    `reverse`/`holo` en prime.
 4. **Magic / Yu-Gi-Oh**, puis Scrydex si on veut One Piece & co.
-   Produits scellés déjà crawlables (famille TCG Cards, pas de provider) :
-   `pnpm tcgcards:products -- --site mtgcards|ygocards`.
+   Produits scellés déjà crawlables (famille TCG Cards) via Catalogue Sync
+   (admin / worker — `scrapeTcgCardsProducts`).
 
 ## 8. Décisions prises (2026-07-26)
 
@@ -491,9 +491,8 @@ extraits les font, puisqu'ils _sont_ le code qui les fait.
 
 ### Le port réel : `core/render/foil` + `effects/lorcana`
 
-Pipeline : `pnpm foil:lorcana` — pack complet (web CSS + cards + Unity si APK).
-Les sous-providers (`lorcanaweb` / `lorcanacards` / `lorcanamobile`) restent
-disponibles en CLI pour du debug ; l’admin n’expose qu’un bouton **Lorcana**.
+Pipeline : Catalogue Sync Lorcana (admin / worker) — pack complet (web CSS +
+cards + Unity si APK). L’admin n’expose qu’un bouton **Lorcana**.
 
 Sorties :
 
@@ -501,7 +500,7 @@ Sorties :
   (`_VARNISHTYPE_*`, `_HOTFOILSURFACE_*`, `USESECONDTOPLAYER`…), **Tilt** et
   **Time** (`_SCROLLMODE_*`). Servis en `/foil/lorcana/…`.
 - `data/lorcana/foil/manifest.json` — matériaux carte (généré, gitignoré ;
-  stub via `pnpm foil:ensure`), textures / floats / couleurs filtrés
+  écrit par Catalogue Extract), textures / floats / couleurs filtrés
   data-driven. Slots par-carte (`_Motif`, masques…) = rôles runtime.
 - `data/lorcana/foil/textures/*.{webp,astc}` — dual WebP lossless + ASTC.
 - `data/lorcana/foil/card_back.webp` — dos pack ; produit : `resolveCardBack`
@@ -542,7 +541,7 @@ Le chemin canonique est `effects/lorcana` + `core/render/foil` (`FoilCardImage`)
 Le client officiel des cartes physiques expose 23 shaders
 `TPCi/Cards3D/HoloFoil/*` (GLES3) + masque / type de foil par carte.
 
-- CLI : `pnpm foil:pokemon` (+ `:scrape` / `:sources` / `:index-cards` / `:audit-join`)
+- Sync : Catalogue Extract Pokémon (admin / worker)
 - Store : `data/pokemon/foil/` → `/foil/pokemon/…`
 - JSON : `src/effects/pokemon/cards.json` (généré)
 - Catalogue : TCGdex (`src/providers/tcgdex`) ; série digitale Pocket (`tcgp`) exclue (`digitalOnly.ts`)

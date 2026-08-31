@@ -13,7 +13,7 @@ autre licence, ou un sous-catalogue comme Masters / Fusion World.
 
 | Provider         | Fichiers |    Lignes |
 | ---------------- | -------: | --------: |
-| `narutoccg`      |      120 |    23 077 |
+| `narutocarddass`      |      120 |    23 077 |
 | `pokemontcglive` |       31 |     8 262 |
 | `dbscg`          |       17 |     3 727 |
 | `dbsfw`          |       15 |     2 316 |
@@ -260,7 +260,7 @@ modale d'ajout » — a demandé de toucher **les cinq packs**, un par un :
 
 | Pack          | Lister ses extensions      | Chercher dans une extension    |
 | ------------- | -------------------------- | ------------------------------ |
-| `narutoccg`   | SQL `DISTINCT set_code`    | `WHERE set_code = ?`           |
+| `narutocarddass`   | SQL `DISTINCT set_code`    | `WHERE set_code = ?`           |
 | `dbscg`       | SQL + `set_name`           | `WHERE set_code = ?`           |
 | `dbsfw`       | idem, **fichier séparé**   | idem, **fichier séparé**       |
 | `lorcanajson` | dérivé des cartes chargées | filtre sur `card.setCode`      |
@@ -284,7 +284,7 @@ recherche :
 
 | Pack        |          `catalog.sqlite` | Cherche dans…                                   |
 | ----------- | ------------------------: | ----------------------------------------------- |
-| `narutoccg` |             5 959 tirages | le local                                        |
+| `narutocarddass` |             5 959 tirages | le local                                        |
 | `dbscg`     |             8 434 tirages | le local                                        |
 | `dbsfw`     |             4 112 tirages | le local                                        |
 | `lorcana`   |         **3 241 tirages** | ⚠️ les **JSON** de lorcanajson.org, pas la base |
@@ -661,7 +661,7 @@ visuels de staging.
 
 | Ce qui a bougé      | Avant                                      | Après                                    |
 | ------------------- | ------------------------------------------ | ---------------------------------------- |
-| Module de specs     | `narutoccg/shippudenSealedReleases.ts`     | `narutoshippuden/sealedReleases.ts`      |
+| Module de specs     | `narutocarddass/shippudenSealedReleases.ts`     | `narutoshippuden/sealedReleases.ts`      |
 | Base produit Bandai | 28 fiches mêlées                           | 11 chez Carddass, 17 chez 疾風伝         |
 | Packshots du 第一幕 | clé `shippudenAct1` d'un registre Carddass | son propre registre                      |
 | Visuels de staging  | `carddass/staging/`                        | `shippuden/staging/`                     |

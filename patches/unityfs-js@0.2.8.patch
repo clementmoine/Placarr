@@ -198,13 +198,36 @@ index 1fc305d3e15224e7f9c0c182bb01cdec47c0a90b..4c65bdd82027e87d2525df6e7ee8c786
      }
 -    return globalPool
  }
+diff --git a/unityfs/basicTypes.js b/unityfs/basicTypes.js
+index 1111111111111111111111111111111111111111..2222222222222222222222222222222222222222 100644
+--- a/unityfs/basicTypes.js
++++ b/unityfs/basicTypes.js
+@@ -16,6 +16,14 @@ export class Vector3 {
+         this.z = z
+     }
+ 
++    normalize() {
++        const len = Math.hypot(this.x, this.y, this.z) || 1
++        this.x /= len
++        this.y /= len
++        this.z /= len
++        return this
++    }
++
+     toString() {
+         return `Vector3(${this.x}, ${this.y}, ${this.z})`
+     }
 diff --git a/package.json b/package.json
 index a85ebe09eaeb7f9fa7a440305255da0e82c11969..16f4b0356d30795f1377b1aac79b8006bd7bd904 100644
 --- a/package.json
 +++ b/package.json
-@@ -10,7 +10,14 @@
+@@ -8,9 +8,17 @@
+     "exports": {
+         ".": {
              "types": "./index.d.ts",
-             "import": "./index.js"
+-            "import": "./index.js"
++            "import": "./index.js",
++            "default": "./index.js"
          },
 -        "./exporters/*": "./exporters/*"
 +        "./exporters/*": "./exporters/*",
@@ -218,3 +241,17 @@ index a85ebe09eaeb7f9fa7a440305255da0e82c11969..16f4b0356d30795f1377b1aac79b8006
      },
      "files": [
          "index.js",
+diff --git a/unityfs/classes/shader.js b/unityfs/classes/shader.js
+index 1111111111111111111111111111111111111111..2222222222222222222222222222222222222222 100644
+--- a/unityfs/classes/shader.js
++++ b/unityfs/classes/shader.js
+@@ -620,7 +620,8 @@
+     ]
+ 
+     constructor(reader) {
+-        if (checkHasEditorData(reader)) {
++        // Unity 6000 removed SerializedPass editor-data header (AssetStudio 3dkkb fix).
++        if (reader.versionGTE(2020, 2) && reader.version[0] < 6000) {
+             let numEditorDataHashes = reader.readInt32()
+             this.editorDataHashes = []
+             for (let i = 0; i < numEditorDataHashes; i++) {

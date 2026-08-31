@@ -71,7 +71,7 @@ prisma/*.sql.dump
 !/data/indexes/title-idf/
 !/data/indexes/title-idf/.gitkeep
 
-# JSON générés par les dumpers (stubs via `pnpm foil:ensure`)
+# JSON / assets générés par les dumpers (Catalogue Extract)
 # Generated foil meta lives under data/ (see docs/data-layout.md)
 
 # Caches providers locaux (SQLite) et dumps DB éventuels

@@ -1,6 +1,21 @@
-# Single-package repo; settings live here for pnpm ≥11 (package.json#pnpm ignored).
+# Single-package repo. pnpm ≥10 settings (incl. patchedDependencies) live here.
 packages:
   - "."
+
+# pnpm 11: explicit allowlist for packages that run install scripts.
+allowBuilds:
+  "@parcel/watcher": true
+  "@prisma/engines": true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
+
+# Avoid interactive purge prompt when switching pnpm major (CI / agent installs).
+confirmModulesPurge: false
+
+# Default is 1440 (24h). Disable while we depend on a freshly published unityfs-js
+# that we patch locally; re-enable once the package is past the cooling window.
+minimumReleaseAge: 0
 
 patchedDependencies:
   unityfs-js@0.2.8: patches/unityfs-js@0.2.8.patch

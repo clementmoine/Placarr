@@ -18,51 +18,21 @@
     "build:turbo": "prisma generate && NODE_OPTIONS=--max-old-space-size=16384 next build",
     "start": "next start",
     "lint": "eslint .",
-    "postinstall": "prisma generate && pnpm foil:ensure",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "pnpm foil:ensure && vitest run",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:record": "RECORD=1 BARCODE_RECORD_SLIM=1 vitest run src/core/identify/resolver.fresh.test.ts",
     "test:record:one": "RECORD=1 BARCODE_RECORD_SLIM=1 RECORD_CASE_ID=mario-kart-wii vitest run src/core/identify/resolver.fresh.test.ts",
     "test:record:all": "tsx scripts/record-all-barcode-fixtures.ts",
     "providers:audit:mapping": "tsx scripts/providerMappingAudit.ts",
-    "icollect:update": "tsx src/providers/icollect/cli.ts",
-    "launchbox:update": "tsx src/providers/launchbox/cli.ts",
-    "nointro:update": "tsx src/providers/nointro/cli.ts",
-    "title-idf:update": "tsx scripts/buildTitleIdfIndex.ts",
-    "naruto:cards": "tsx src/providers/narutoccg/cli.ts",
-    "naruto:shippuden": "tsx src/providers/narutoshippuden/cli.ts",
-    "naruto:ranks": "tsx src/providers/narutoranks/cli.ts",
-    "naruto:ultra": "tsx src/providers/narutoultra/cli.ts",
-    "dbs:cards": "tsx src/providers/dbscg/cli.ts",
-    "dbs:fw": "tsx src/providers/dbsfw/cli.ts",
-    "onepiece:sync": "tsx src/providers/onepiece/cli.ts",
-    "digimon:sync": "tsx src/providers/digimon/cli.ts",
-    "yugioh:sync": "tsx src/providers/yugioh/cli.ts",
-    "mtg:sync": "tsx src/providers/mtg/cli.ts",
-    "tcgcards:products": "tsx src/providers/shared/dbscards/cli.ts",
-    "foil:ensure": "node src/providers/shared/ensurePackStubs.mjs",
-    "foil:lorcana": "pnpm foil:ensure && tsx src/providers/lorcanatcg/cli.ts",
-    "foil:lorcana:cards": "pnpm foil:ensure && tsx src/providers/lorcanatcg/cardsCli.ts",
-    "foil:pokemon": "pnpm foil:ensure && tsx src/providers/pokemontcglive/cli.ts",
-    "foil:pokemon:scrape": "tsx src/providers/pokemontcglive/cdn.ts scrape",
-    "foil:pokemon:sources": "tsx src/providers/pokemontcglive/sourcesCli.ts",
-    "foil:pokemon:index-cards": "tsx src/providers/pokemontcglive/indexCards.ts",
-    "foil:pokemon:rebuild-cards-index": "tsx src/providers/pokemontcglive/rebuildCardsIndexCli.ts",
-    "foil:pokemon:index-card-foil": "tsx src/providers/pokemontcglive/indexCardFoil.ts",
-    "foil:pokemon:audit-apk": "tsx src/providers/pokemontcglive/auditApkCoverage.ts",
-    "foil:pokemon:audit-finish": "tsx src/providers/pokemontcglive/audit_live_finish_coverage.ts",
-    "foil:pokemon:audit-store": "tsx src/providers/pokemontcglive/audit_store.ts",
-    "foil:pokemon:inventory-faces": "tsx src/providers/pokemontcglive/inventoryFoilFaces.ts",
-    "foil:pokemon:sync-owned": "tsx src/providers/pokemontcglive/syncLiveOwned.ts",
-    "foil:pokemon:live-card": "tsx src/providers/pokemontcglive/liveCard.ts",
-    "foil:pokemon:simey": "tsx src/providers/pokemontcglive/syncSimeyCss.ts",
-    "foil:audit-live-css": "tsx src/providers/pokemontcglive/auditLiveVsCss.ts"
+    "title-idf:update": "tsx scripts/buildTitleIdfIndex.ts"
   },
   "dependencies": {
+    "@arkntools/unity-js": "5.1.0",
     "@arkntools/unity-js-tools": "3.2.0",
     "@hookform/resolvers": "5.9.0",
     "@prisma/adapter-pg": "7.9.1",
@@ -137,10 +107,5 @@
     "typescript": "7.0.2",
     "vitest": "^4.1.10"
   },
-  "packageManager": "pnpm@9.14.2+sha1.5202b50ab92394b3c922d2e293f196e2df6d441b",
-  "pnpm": {
-    "patchedDependencies": {
-      "unityfs-js@0.2.8": "patches/unityfs-js@0.2.8.patch"
-    }
-  }
+  "packageManager": "pnpm@11.5.1+sha512.k_e1dCLqcGglcjW0wW62B2LraOHcI3IxmcxzkEPqm-LEFDJ0o5nYxt76KxF2Im2cocS2NILWIAwaj7qnjB0UhQ"
 }

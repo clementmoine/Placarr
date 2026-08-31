@@ -62,7 +62,7 @@ Ensuite seulement : `src/core/enrich/index.ts` (consensus, covers) et
   `BackgroundWorkJob` (SKIP LOCKED), kinds dans `core/collect/jobs/workQueue.ts`
   ; extracts longs → `payload.completedSteps` (ADR-017).
 - **Données** : `data/<pack>/` écrit par les CLIs/pipelines des providers
-  (`pnpm foil:pokemon`, `pnpm naruto:cards`…), servi via `/assets/<pack>/…` ;
+  (Catalogue Sync / Extract admin + worker in-process), servi via `/assets/<pack>/…` ;
   jamais commité. Les données assemblées à la main vivent dans
   `src/providers/<id>/curated/`, elles sont commitées.
 

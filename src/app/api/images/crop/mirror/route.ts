@@ -19,9 +19,20 @@ import {
   orientedDimensions,
   type CropBox,
 } from "@/core/enrich/media/imageTrim";
+import { localizePackAssetToUploads } from "@/lib/media/assetsPath";
 import { toLosslessWebp } from "@/lib/media/losslessWebp";
+import { ASSETS_URL_PREFIX } from "@/lib/packAssetUrls";
 import { UPLOADS_PREFIX, uploadsFilePath } from "@/lib/media/uploadsPath";
 import { uploadsDir } from "@/lib/runtimeData";
+
+/** Uploads path for a foil companion — pack assets are copied first. */
+function resolveMirrorTarget(target: string): string | null {
+  if (target.startsWith(UPLOADS_PREFIX)) return target;
+  if (target.startsWith(`${ASSETS_URL_PREFIX}/`)) {
+    return localizePackAssetToUploads(target);
+  }
+  return null;
+}
 
 function parseRole(raw: string | null | undefined): string {
   const role = raw?.trim().toLowerCase();
@@ -92,11 +103,15 @@ export async function GET(req: NextRequest) {
     const rotate = normalizeRotation(stored.rotate);
 
     // The mask is usually remote; localizing it is what makes it croppable at
-    // all, and the download is cached by content hash.
-    const localTarget = target.startsWith(UPLOADS_PREFIX)
-      ? target
-      : await downloadRemoteImage(target);
-    const targetPath = localTarget ? uploadsFilePath(localTarget) : null;
+    // all, and the download is cached by content hash. Pack `/assets/` masks
+    // are copied into uploads first — sidecars cannot live in pack data.
+    const localTarget =
+      resolveMirrorTarget(target) ?? (await downloadRemoteImage(target));
+    const uploadsUrl =
+      localTarget && localTarget.startsWith(`${ASSETS_URL_PREFIX}/`)
+        ? localizePackAssetToUploads(localTarget)
+        : localTarget;
+    const targetPath = uploadsUrl ? uploadsFilePath(uploadsUrl) : null;
     if (!targetPath) return NextResponse.json({ url: target });
 
     const ext = path.extname(targetPath);

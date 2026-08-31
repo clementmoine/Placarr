@@ -1,22 +1,11 @@
-#!/usr/bin/env tsx
 /**
- * Pokémon foil update: sources + CDN scrape + live-cards index (Node),
- * UnityFS extract (Python/UnityPy).
- *
- *   tsx scripts/pokemon/update.ts --skip-scrape
- *   tsx scripts/pokemon/update.ts --langs fr --scrape-limit 50
- *   tsx scripts/pokemon/update.ts --langs en   # second pass after FR
- *   tsx scripts/pokemon/update.ts --skip-bootstrap-malie  # CDN catalogue only
- *
- * Flow: APK/config inventory ∪ Malie DBs → Rainier CDN UnityFS
- * (Malie-miss logged, CDN-miss logged, skip existing) → Unity extract.
+ * Pokémon foil extract — Catalogue Sync / worker (in-process).
  */
 
-import { spawn, spawnSync, type ChildProcess } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 
 import {
   ensureEffectsLayout,
@@ -24,7 +13,6 @@ import {
   repoRoot,
   writeLastRun,
 } from "@/providers/shared/foilPaths";
-import { withCliFoilExtractJob } from "@/lib/admin/foilExtractCliJob";
 import {
   catalogueSetnumsFromConfig,
   DEFAULT_DELAY_S,
@@ -59,26 +47,12 @@ import {
 } from "@/providers/pokemontcglive/sources";
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 
-function packPython(repo: string): string {
-  const candidates = [
-    path.join(repo, "src/providers/pokemontcglive/unity/.venv/bin/python"),
-    path.join(repo, "src/providers/lorcanatcg/unity/.venv/bin/python"),
-    path.join(repo, "scripts/pokemon/.venv/bin/python"),
-    path.join(repo, "scripts/lorcana/.venv/bin/python"),
-  ];
-  for (const venv of candidates) {
-    if (fs.existsSync(venv)) return venv;
-  }
-  return "python3";
-}
-
 /**
  * Dump ``manifest_<locale>_<bucket>`` for every bucket × lang into
- * ``staging/cdn-manifests``. Default: Node (`dumpCdnManifest.ts`, ADR-021).
- * Escape hatch: ``PLACARR_UNITY_PYTHON=1`` → UnityPy script.
+ * ``staging/cdn-manifests`` (Node / ADR-021).
  */
 async function runManifestDump(
-  repo: string,
+  _repo: string,
   opts: {
     staging: string;
     contentBase: string;
@@ -97,35 +71,6 @@ async function runManifestDump(
     return 1;
   }
   const outDir = path.join(opts.staging, "cdn-manifests");
-  if (process.env.PLACARR_UNITY_PYTHON === "1") {
-    const args = [
-      path.join(repo, "src/providers/pokemontcglive/unity/dump_cdn_manifest.py"),
-      "--content-base",
-      opts.contentBase,
-      "--buckets",
-      "all",
-      "--dirs-manifest",
-      dirsManifest,
-      "--locales",
-      opts.langs.join(","),
-      "--out-dir",
-      outDir,
-    ];
-    const r = spawnSync(packPython(repo), args, {
-      cwd: repo,
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        PYTHONPATH: [
-          path.join(repo, "src/providers/pokemontcglive/unity/lib"),
-          path.join(repo, "src/providers/pokemontcglive/unity"),
-        ].join(path.delimiter),
-      },
-    });
-    if (r.stdout) process.stdout.write(r.stdout);
-    if (r.stderr) process.stderr.write(r.stderr);
-    return r.status ?? 1;
-  }
   const { dumpCdnManifests } = await import(
     "@/providers/pokemontcglive/dumpCdnManifest"
   );
@@ -150,107 +95,16 @@ async function runExtract(
   },
   runOpts?: { signal?: AbortSignal },
 ): Promise<Record<string, unknown>> {
-  const usePythonAll = process.env.PLACARR_UNITY_PYTHON === "1";
-  /** Node dumps card faces/masks; Python keeps shaders + cards.json (phase C). */
-  const nodeTextures =
-    !usePythonAll &&
-    ["cards", "masks", "all"].includes(opts.textureMode);
-
-  if (nodeTextures) {
-    console.log("── extract card textures (Node, ADR-021 B)");
-    const { extractCardsNode } = await import(
-      "@/providers/pokemontcglive/extractCardsNode"
-    );
-    const nodeResult = await extractCardsNode({
-      repo,
-      bundlesDir: opts.bundlesDir,
-      textureMode: opts.textureMode as "cards" | "masks" | "all",
-      limitCards: opts.extractLimit > 0 ? opts.extractLimit : undefined,
-    });
-    console.log(JSON.stringify({ nodeTextures: nodeResult }));
-  }
-
-  const pyTextureMode = nodeTextures ? "none" : opts.textureMode;
-  const args = [
-    path.join(repo, "src/providers/pokemontcglive/unity/extract.py"),
-    "--repo",
-    repo,
-    "--bundles-dir",
-    opts.bundlesDir,
-    "--textures",
-    pyTextureMode,
-  ];
-  if (opts.extractLimit > 0) {
-    args.push("--limit-cards", String(opts.extractLimit));
-  }
-  if (opts.extractWorkers != null) {
-    args.push("--workers", String(opts.extractWorkers));
-  }
-  const pyPath = [
-    path.join(repo, "src/providers/pokemontcglive/unity/lib"),
-    path.join(repo, "src/providers/pokemontcglive/unity"),
-  ].join(path.delimiter);
-  const reportPath = path.join(
-    repo,
-    "data",
-    "pokemon",
-    "foil",
-    "extract-report.json",
+  if (runOpts?.signal?.aborted) throw new Error("foil extract cancelled");
+  const { extractAllNode } = await import(
+    "@/providers/pokemontcglive/extractAllNode"
   );
-
-  return new Promise((resolve, reject) => {
-    let child: ChildProcess;
-    try {
-      child = spawn(packPython(repo), args, {
-        cwd: repo,
-        // inherit — spawnSync used to buffer all extract output until exit, so
-        // long runs looked silent in foil-extract.log until timeout killed them.
-        stdio: "inherit",
-        env: {
-          ...process.env,
-          PYTHONPATH: pyPath,
-          PYTHONUNBUFFERED: "1",
-        },
-      });
-    } catch (err) {
-      reject(err);
-      return;
-    }
-
-    const onAbort = () => {
-      try {
-        child.kill("SIGKILL");
-      } catch {
-        /* already gone */
-      }
-      reject(new Error("foil extract cancelled"));
-    };
-    runOpts?.signal?.addEventListener("abort", onAbort, { once: true });
-
-    child.on("error", (err) => {
-      runOpts?.signal?.removeEventListener("abort", onAbort);
-      reject(err);
-    });
-    child.on("close", (code) => {
-      runOpts?.signal?.removeEventListener("abort", onAbort);
-      let meta: Record<string, unknown> = {
-        extractErrors: code === 0 ? 0 : 1,
-      };
-      if (fs.existsSync(reportPath)) {
-        try {
-          meta = JSON.parse(fs.readFileSync(reportPath, "utf8")) as Record<
-            string,
-            unknown
-          >;
-        } catch {
-          /* keep status-based fallback */
-        }
-      }
-      if (typeof meta.extractErrors !== "number") {
-        meta.extractErrors = code === 0 ? 0 : 1;
-      }
-      resolve(meta);
-    });
+  return extractAllNode({
+    repo,
+    bundlesDir: opts.bundlesDir,
+    textureMode: opts.textureMode as "cards" | "masks" | "all" | "none",
+    limitCards: opts.extractLimit > 0 ? opts.extractLimit : undefined,
+    extractWorkers: opts.extractWorkers ?? undefined,
   });
 }
 
@@ -633,10 +487,18 @@ export async function runUpdate(
   return summary;
 }
 
-function parseArgs(
-  argv: string[],
-): UpdateOpts & { repo: string; noJob: boolean } {
-  const out: UpdateOpts & { repo: string; noJob: boolean } = {
+export async function runPokemonFoilExtract(
+  argv: string[] = [],
+  opts: { repo?: string; signal?: AbortSignal } = {},
+): Promise<Record<string, unknown>> {
+  const args = parseArgs(argv);
+  const repo = path.resolve(opts.repo || args.repo || repoRoot());
+  const { repo: _repo, ...updateOpts } = args;
+  return runUpdate(repo, { ...updateOpts, signal: opts.signal });
+}
+
+function parseArgs(argv: string[]): UpdateOpts & { repo: string } {
+  const out: UpdateOpts & { repo: string } = {
     repo: process.cwd(),
     langs: [...POKEMON_LIVE_SCRAPE_DEFAULT_LANGUAGES],
     skipScrape: false,
@@ -656,7 +518,6 @@ function parseArgs(
     skipStoreAudit: false,
     strictStoreAudit: false,
     skipProducts: true,
-    noJob: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
@@ -689,30 +550,6 @@ function parseArgs(
     else if (a === "--strict-store-audit") out.strictStoreAudit = true;
     else if (a === "--products") out.skipProducts = false;
     else if (a === "--skip-products") out.skipProducts = true;
-    else if (a === "--no-job") out.noJob = true;
   }
   return out;
-}
-
-export async function main(argv = process.argv.slice(2)): Promise<number> {
-  const args = parseArgs(argv);
-  const repo = path.resolve(args.repo || repoRoot());
-  const { noJob, repo: _repo, ...updateOpts } = args;
-
-  const summary = await withCliFoilExtractJob(
-    "pokemon",
-    async ({ signal }) => runUpdate(repo, { ...updateOpts, signal }),
-    { disabled: noJob },
-  );
-  const { extract, ...rest } = summary;
-  console.log(JSON.stringify(rest, null, 2));
-  console.log(JSON.stringify(extract, null, 2));
-  return summary.ok ? 0 : 1;
-}
-
-const entry = process.argv[1]
-  ? pathToFileURL(path.resolve(process.argv[1])).href
-  : "";
-if (import.meta.url === entry) {
-  main().then((code) => process.exit(code));
 }

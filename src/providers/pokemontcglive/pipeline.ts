@@ -4,8 +4,8 @@
  * Corps commun : `shared/cardCatalogue/pipeline`. Ici : ré-index Live +
  * cards-index, et le graphe produits pkmcards.fr (sauté en automatique).
  *
- * L'extract CDN / Unity / APK reste sur la CLI (`pnpm foil:pokemon`) et la
- * route foilExtract.
+ * L'extract CDN / Unity / APK passe par Catalogue Extract (admin / worker
+ * in-process) — ce pipeline catalogue ne le lance pas.
  */
 import path from "node:path";
 

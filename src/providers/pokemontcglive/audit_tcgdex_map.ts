@@ -432,7 +432,7 @@ async function main() {
         : null,
       liveCardsIndexAvailable()
         ? "catalog.sqlite present (name join for resolveEffect)"
-        : "catalog.sqlite missing — run pnpm foil:pokemon:index-cards",
+        : "catalog.sqlite missing — run Catalogue Sync for Pokémon",
     ]
       .filter(Boolean)
       .join("; "),

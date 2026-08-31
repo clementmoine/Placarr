@@ -3,8 +3,8 @@
  * (cards.json dump + liveOwned.json) — before hunting Live craft candidates.
  *
  * Usage:
- *   pnpm foil:pokemon:inventory-faces
- *   pnpm foil:pokemon:inventory-faces -- --effect SunPillar
+ *   tsx src/providers/pokemontcglive/inventoryFoilFaces.ts
+ *   tsx src/providers/pokemontcglive/inventoryFoilFaces.ts -- --effect SunPillar
  */
 
 import fs from "node:fs";
@@ -54,7 +54,7 @@ function main(): void {
   console.log(
     `# Foil face inventory (dump + owned preference)\n` +
       `# owned file: ${ownedPath}\n` +
-      `# Note: TCG Live collection is server-side — sync via pnpm foil:pokemon:sync-owned\n` +
+      `# Note: TCG Live collection is server-side — sync via tsx src/providers/pokemontcglive/syncLiveOwned.ts\n` +
       `# (Rainier carddex → liveOwned.json). See docs/pokemon_live_rainier.md.\n`,
   );
 

@@ -1,6 +1,10 @@
+import { mkdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
 import sharp from "sharp";
 
 const UPLOAD_WEBP_QUALITY = 88;
+const LOSSLESS_WEBP_EFFORT = 6;
 
 /** WebP cannot address a side longer than this. A format limit, not a choice. */
 export const WEBP_MAX_SIDE = 16383;
@@ -23,6 +27,22 @@ function animatedFromMeta(pages: number | undefined): boolean {
   return (pages ?? 1) > 1;
 }
 
+function atomicWrite(dest: string, data: Buffer): void {
+  mkdirSync(path.dirname(dest), { recursive: true });
+  const tmp = `${dest}.tmp`;
+  try {
+    writeFileSync(tmp, data);
+    renameSync(tmp, dest);
+  } catch (err) {
+    try {
+      unlinkSync(tmp);
+    } catch {
+      /* ignore */
+    }
+    throw err;
+  }
+}
+
 /** Encode any sharp-readable raster as lossless WebP (pixel-exact — foil dumps). */
 export async function toLosslessWebp(buffer: Buffer): Promise<Buffer> {
   const meta = await sharp(buffer, {
@@ -34,8 +54,49 @@ export async function toLosslessWebp(buffer: Buffer): Promise<Buffer> {
     limitInputPixels: false,
   })
     .rotate()
-    .webp({ lossless: true, effort: 6 })
+    .webp({ lossless: true, effort: LOSSLESS_WEBP_EFFORT })
     .toBuffer();
+}
+
+/** Encode raw RGBA8 as lossless WebP buffer. */
+export async function toLosslessRgbaWebp(
+  rgba: Buffer,
+  width: number,
+  height: number,
+): Promise<Buffer> {
+  return sharp(rgba, { raw: { width, height, channels: 4 } })
+    .webp({ lossless: true, effort: LOSSLESS_WEBP_EFFORT })
+    .toBuffer();
+}
+
+/** Raw RGBA8 → lossless WebP file (atomic tmp + rename). */
+export async function writeLosslessRgbaWebp(
+  rgba: Buffer,
+  width: number,
+  height: number,
+  dest: string,
+): Promise<void> {
+  const out = dest.toLowerCase().endsWith(".webp")
+    ? dest
+    : dest.replace(/\.[^.]+$/, "") + ".webp";
+  const webp = await toLosslessRgbaWebp(rgba, width, height);
+  atomicWrite(out, webp);
+}
+
+/**
+ * Raster path or Buffer → lossless WebP file (via {@link toLosslessWebp}).
+ * Already-``.webp`` sources are re-encoded for a stable effort/profile.
+ */
+export async function writeLosslessWebpFile(
+  src: string | Buffer,
+  dest: string,
+): Promise<void> {
+  const out = dest.toLowerCase().endsWith(".webp")
+    ? dest
+    : dest.replace(/\.[^.]+$/, "") + ".webp";
+  const input = typeof src === "string" ? await sharp(src).toBuffer() : src;
+  const webp = await toLosslessWebp(input);
+  atomicWrite(out, webp);
 }
 
 /**

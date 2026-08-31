@@ -15,15 +15,25 @@ import { assetsPackFileUrl, packSealedProductsDir } from "@/lib/packPaths";
 import { foilPackDataDir } from "@/lib/runtimeData";
 import { httpGet } from "@/lib/http/httpClient";
 
-export const LORCANA_SET_LOGO_CACHE_VERSION = 2;
+export const LORCANA_SET_LOGO_CACHE_VERSION = 3;
+/** Catalogue FR — thumbs + titres officiels. */
 export const LORCANA_CATALOG_URL =
   "https://api.lorcana.ravensburger.com/v3/catalog/fr";
+/** Catalogue EN — mêmes ids, titres anglais (ex. First Chapter vs Premier Chapitre). */
+export const LORCANA_CATALOG_URL_EN =
+  "https://api.lorcana.ravensburger.com/v3/catalog/en";
 const UA = "Placarr-lorcana-web/1.0";
 const SET_ID_RE = /^(set|quest|gateway)\d+$/i;
 
 export type LorcanaSetLogoRow = {
   id: string;
+  /** Titre principal (FR quand le dump vient des deux catalogues). */
   name: string | null;
+  /**
+   * Autres titres officiels du même id (EN, …). Sans ça, un Trove EN
+   * « The First Chapter » ne rejoignait pas `set1` (« Premier Chapitre »).
+   */
+  aliases: string[];
   sourceUrl: string;
   /** Local `/assets/lorcana/products/sets/{id}/logo.png` once dumped. */
   logo: string | null;
@@ -184,11 +194,11 @@ export function lorcanaSetIdsInText(
 
 export function parseLorcanaSetLogosFromCatalog(
   raw: unknown,
-): Omit<LorcanaSetLogoRow, "logo">[] {
+): Omit<LorcanaSetLogoRow, "logo" | "aliases">[] {
   if (!raw || typeof raw !== "object") return [];
   const list = (raw as { card_sets?: unknown }).card_sets;
   if (!Array.isArray(list)) return [];
-  const byId = new Map<string, Omit<LorcanaSetLogoRow, "logo">>();
+  const byId = new Map<string, Omit<LorcanaSetLogoRow, "logo" | "aliases">>();
   for (const entry of list) {
     if (!entry || typeof entry !== "object") continue;
     const row = entry as Record<string, unknown>;
@@ -207,6 +217,32 @@ export function parseLorcanaSetLogosFromCatalog(
   );
 }
 
+/**
+ * Fusionne FR (thumbs + titre) et EN (titres anglais) sur le même id.
+ * Le thumb reste celui du catalogue principal (FR).
+ */
+export function mergeLorcanaSetLogoCatalogs(
+  primary: readonly Omit<LorcanaSetLogoRow, "logo" | "aliases">[],
+  extraNames: readonly Omit<LorcanaSetLogoRow, "logo" | "aliases">[],
+): Omit<LorcanaSetLogoRow, "logo">[] {
+  const aliasesById = new Map<string, string[]>();
+  for (const row of extraNames) {
+    const name = row.name?.trim();
+    if (!name) continue;
+    const list = aliasesById.get(row.id) ?? [];
+    if (!list.includes(name)) list.push(name);
+    aliasesById.set(row.id, list);
+  }
+  return primary.map((row) => {
+    const aliases = (aliasesById.get(row.id) ?? []).filter(
+      (alias) =>
+        normalizeLorcanaSetText(alias) !==
+        normalizeLorcanaSetText(row.name ?? ""),
+    );
+    return { ...row, aliases };
+  });
+}
+
 function lorcanaSetNameVariants(name: string): string[] {
   const n = normalizeLorcanaSetText(name);
   if (n.length < 4) return [];
@@ -214,14 +250,29 @@ function lorcanaSetNameVariants(name: string): string[] {
   return stripped !== n && stripped.length >= 4 ? [n, stripped] : [n];
 }
 
+/** Titre FR + alias EN (et tout autre nom officiel stocké). */
+function lorcanaSetRowLabels(
+  row: Pick<LorcanaSetLogoRow, "name" | "aliases">,
+): string[] {
+  const out: string[] = [];
+  if (row.name?.trim()) out.push(row.name.trim());
+  for (const alias of row.aliases ?? []) {
+    const t = alias.trim();
+    if (t && !out.includes(t)) out.push(t);
+  }
+  return out;
+}
+
 function uniqueSetNameTokens(index: LorcanaSetLogoIndex): Map<string, string> {
   const owners = new Map<string, Set<string>>();
   for (const row of index.sets) {
-    for (const token of normalizeLorcanaSetText(row.name ?? "").split(" ")) {
-      if (token.length < 6) continue;
-      const ids = owners.get(token) ?? new Set<string>();
-      ids.add(row.id);
-      owners.set(token, ids);
+    for (const label of lorcanaSetRowLabels(row)) {
+      for (const token of normalizeLorcanaSetText(label).split(" ")) {
+        if (token.length < 6) continue;
+        const ids = owners.get(token) ?? new Set<string>();
+        ids.add(row.id);
+        owners.set(token, ids);
+      }
     }
   }
   const unique = new Map<string, string>();
@@ -282,8 +333,10 @@ export function lorcanaSetRowForProduct(input: {
   );
   if (!hay) return null;
   const nameHits = index.sets.filter((row) =>
-    lorcanaSetNameVariants(row.name ?? "").some(
-      (label) => label.length >= 4 && hay.includes(label),
+    lorcanaSetRowLabels(row).some((label) =>
+      lorcanaSetNameVariants(label).some(
+        (variant) => variant.length >= 4 && hay.includes(variant),
+      ),
     ),
   );
   if (nameHits.length === 1) return nameHits[0]!;
@@ -341,6 +394,14 @@ function writeIndexFile(file: string, index: LorcanaSetLogoIndex): void {
   memory = { file, index };
 }
 
+/** Persiste un index déjà fusionné (ex. logos site officiel). */
+export function persistLorcanaSetLogoIndex(
+  index: LorcanaSetLogoIndex,
+  file?: string,
+): void {
+  writeIndexFile(file ?? lorcanaSetLogoCachePath(), index);
+}
+
 async function downloadSetLogo(
   row: Omit<LorcanaSetLogoRow, "logo">,
   logosDir: string,
@@ -348,18 +409,20 @@ async function downloadSetLogo(
 ): Promise<LorcanaSetLogoRow> {
   const ext = extFromUrl(row.sourceUrl);
   const dest = path.join(logosDir, row.id, `logo${ext}`);
+  const aliases = row.aliases ?? [];
   if (!force && existsSync(dest)) {
-    return { ...row, logo: lorcanaSetLogoAssetUrl(row.id, ext) };
+    return { ...row, aliases, logo: lorcanaSetLogoAssetUrl(row.id, ext) };
   }
   try {
     const buf = await fetchBytes(row.sourceUrl);
     mkdirSync(path.dirname(dest), { recursive: true });
     writeFileSync(dest, buf);
-    return { ...row, logo: lorcanaSetLogoAssetUrl(row.id, ext) };
+    return { ...row, aliases, logo: lorcanaSetLogoAssetUrl(row.id, ext) };
   } catch (err) {
     console.log(`  ATTENTION set logo ${row.id}: ${err}`);
     return {
       ...row,
+      aliases,
       logo: existsSync(dest) ? lorcanaSetLogoAssetUrl(row.id, ext) : null,
     };
   }
@@ -397,6 +460,7 @@ export async function refreshLorcanaSetLogoIndex(opts?: {
   dest?: string;
   logosDir?: string;
   catalog?: unknown;
+  catalogEn?: unknown;
 }): Promise<LorcanaSetLogoIndex> {
   const dest = opts?.dest ?? lorcanaSetLogoCachePath(opts?.root);
   if (!opts?.force && opts?.catalog === undefined) {
@@ -408,7 +472,22 @@ export async function refreshLorcanaSetLogoIndex(opts?: {
     (JSON.parse(
       (await fetchBytes(LORCANA_CATALOG_URL)).toString("utf8"),
     ) as unknown);
-  return installLorcanaSetLogos(parseLorcanaSetLogosFromCatalog(raw), opts);
+  const rawEn =
+    opts?.catalogEn ??
+    (opts?.catalog !== undefined
+      ? null
+      : (JSON.parse(
+          (await fetchBytes(LORCANA_CATALOG_URL_EN)).toString("utf8"),
+        ) as unknown));
+  const primary = parseLorcanaSetLogosFromCatalog(raw);
+  const merged =
+    rawEn == null
+      ? primary.map((row) => ({ ...row, aliases: [] as string[] }))
+      : mergeLorcanaSetLogoCatalogs(
+          primary,
+          parseLorcanaSetLogosFromCatalog(rawEn),
+        );
+  return installLorcanaSetLogos(merged, opts);
 }
 
 /** Refresh for a Lorcana extract. Failure → keep the on-disk cache if any. */

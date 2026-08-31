@@ -1,13 +1,5 @@
-# UnityPy island (Lorcana)
+# Unity extract — Node only (ADR-021)
 
-Python remains **only** for Unity asset extract. Orchestration is TypeScript
-(`cli.ts` / `pipeline.ts`).
+Hot path: `extractUnityNode.ts` + `@/lib/unity` (patched `unityfs-js`).
 
-```bash
-cd src/providers/lorcanatcg/unity
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-```
-
-`PYTHONPATH` = this folder + `lib/` when invoking `mobile.py`.
-See `docs/provider_supply_modes.md`.
+Local `.venv/` is obsolete — delete if present.

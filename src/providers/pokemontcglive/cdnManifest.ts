@@ -4,8 +4,7 @@
  * Official layout (verified via ptcgl.dev + Live client):
  *   ``{contentBase}{bucket}/manifest_{locale}_{bucket}``
  *
- * Parsing: Node ``@/lib/unity`` (ADR-021 phase A). Python
- * ``unity/dump_cdn_manifest.py`` remains an oracle / ``PLACARR_UNITY_PYTHON=1``.
+ * Parsing: Node ``@/lib/unity`` (ADR-021 phase A).
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";

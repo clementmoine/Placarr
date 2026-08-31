@@ -43,7 +43,7 @@ Omukade `AccessHelper` (bonus) : login PTC browser-like —
 `POST …/oauth2/token` avec `code` + `code_verifier`.
 
 Placarr a déjà le chemin **CDN public** + decode partiel des `card-database-*`
-(`src/providers/pokemontcglive/*`, `pnpm foil:pokemon`). Ce doc consolide
+(`src/providers/pokemontcglive/*`, Catalogue Sync). Ce doc consolide
 ptcgl.dev / DESIGN + sniffs MuMu.
 
 ---
@@ -56,8 +56,8 @@ ptcgl.dev / DESIGN + sniffs MuMu.
 | **Disque app**      | Pas d’inventaire joueur dans les fichiers MuMu (prefs / UnityCache seulement)       |
 | **Miroirs publics** | ptcgl.dev / Omukade = catalogue ; **pas** les routes commerce owned                 |
 
-Pour l’owned playroom : `pnpm foil:pokemon:sync-owned` →
-`data/pokemon/liveOwned.json` + `pnpm foil:pokemon:inventory-faces`.
+Pour l’owned playroom : sync owned (local tool / admin) →
+`data/pokemon/liveOwned.json` + `inventoryFoilFaces.ts`.
 
 ---
 
@@ -121,7 +121,7 @@ récents **override** par hash. Noms carte : `{set}_{locale}_{num}` (+ `_t`
 thumbnail). Liste des dirs : config-doc `asset-bundle-manifest_0.0` →
 `directories[]`.
 
-Placarr : `gameSettings.ts` / `cdn.ts` / `pnpm foil:pokemon:sources`.
+Placarr : `gameSettings.ts` / `cdn.ts` / sources report (Catalogue Sync).
 
 ---
 

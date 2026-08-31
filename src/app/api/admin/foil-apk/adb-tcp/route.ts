@@ -105,9 +105,9 @@ function hintForPack(
         file.name.toLowerCase().includes("unitydataassetpack"),
       ) ??
       saved[0];
-    return `pnpm foil:lorcana -- --providers lorcanamobile --apk ${preferred?.path ?? "data/lorcana/staging/apks/base.apk"}  # fusionne aussi les splits du même dossier`;
+    return `APK prêt (${preferred?.path ?? "data/lorcana/staging/apks/base.apk"}). Lance Extract depuis Catalogue — Unity fusionne aussi les splits du même dossier.`;
   }
-  return "pnpm foil:pokemon  # CDN principal ; APK = secours schéma";
+  return "APK prêt. Lance Extract Pokémon depuis Catalogue (CDN principal ; APK = secours schéma).";
 }
 
 /** List `adb devices` for the admin picker. */

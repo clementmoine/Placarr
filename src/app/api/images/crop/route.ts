@@ -18,7 +18,9 @@ import {
   suggestCropBox,
   type CropBox,
 } from "@/core/enrich/media/imageTrim";
+import { localizePackAssetToUploads } from "@/lib/media/assetsPath";
 import { toUploadWebp } from "@/lib/media/losslessWebp";
+import { ASSETS_URL_PREFIX } from "@/lib/packAssetUrls";
 import { UPLOADS_PREFIX, uploadsFilePath } from "@/lib/media/uploadsPath";
 import { uploadsDir } from "@/lib/runtimeData";
 
@@ -85,7 +87,7 @@ function readStoredCrop(
   }
 }
 
-/** Localize a remote gallery image so it can be cropped like any other. */
+/** Localize a remote or pack gallery image so it can be cropped like any other. */
 async function resolveLocalUrl(rawUrl: string): Promise<string | null> {
   const url = rawUrl.trim();
   if (!url) return null;
@@ -93,6 +95,14 @@ async function resolveLocalUrl(rawUrl: string): Promise<string | null> {
   // cache-busting `?v=` to a crop it just rewrote, and the suffix regex is
   // anchored at the end — leaving it on turned every second crop into a 404.
   if (url.startsWith(UPLOADS_PREFIX)) return stripEditSuffixFromUrl(url);
+  /*
+    Catalogue faces live under `/assets/` (read-only pack data). Cropping needs
+    a writable original in uploads — sidecars and `_edited` derivatives must not
+    land inside `data/<pack>/`. Copy-on-edit, keyed by the asset URL.
+  */
+  if (url.startsWith(`${ASSETS_URL_PREFIX}/`)) {
+    return localizePackAssetToUploads(stripEditSuffixFromUrl(url));
+  }
   if (!/^https?:\/\//i.test(url)) return null;
   return downloadRemoteImage(url);
 }

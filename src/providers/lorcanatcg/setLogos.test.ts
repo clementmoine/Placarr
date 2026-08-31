@@ -7,11 +7,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   __resetLorcanaSetLogoIndexForTests,
   installLorcanaSetLogos,
+  lorcanaCatalogueSetIdForProduct,
   lorcanaLogoUrlForSet,
   LORCANA_CATALOG_URL,
   lorcanaSetIdsInText,
   lorcanaSetLogoAssetUrl,
   lorcanaSetLogoCodes,
+  mergeLorcanaSetLogoCatalogs,
   parseLorcanaSetLogosFromCatalog,
   type LorcanaSetLogoIndex,
 } from "./setLogos";
@@ -64,7 +66,7 @@ const CATALOG = {
 };
 
 const FIXTURE: LorcanaSetLogoIndex = {
-  version: 2,
+  version: 3,
   language: "fr",
   source: LORCANA_CATALOG_URL,
   fetchedAt: "2026-08-19T00:00:00.000Z",
@@ -72,6 +74,7 @@ const FIXTURE: LorcanaSetLogoIndex = {
     {
       id: "set1",
       name: "Premier Chapitre",
+      aliases: ["The First Chapter"],
       sourceUrl:
         "https://api.lorcana.ravensburger.com/images/fr/set1/thumbnails/aaa.png",
       logo: "/assets/lorcana/products/sets/set1/logo.png",
@@ -79,6 +82,7 @@ const FIXTURE: LorcanaSetLogoIndex = {
     {
       id: "set2",
       name: "L'Ascension des Floodborn",
+      aliases: ["Rise of the Floodborn"],
       sourceUrl:
         "https://api.lorcana.ravensburger.com/images/fr/set2/thumbnails/bbb.png",
       logo: "/assets/lorcana/products/sets/set2/logo.png",
@@ -86,6 +90,7 @@ const FIXTURE: LorcanaSetLogoIndex = {
     {
       id: "set12",
       name: "Contrées Inconnues",
+      aliases: ["Wilds Unknown"],
       sourceUrl:
         "https://api.lorcana.ravensburger.com/images/fr/set12/thumbnails/ccc.png",
       logo: "/assets/lorcana/products/sets/set12/logo.png",
@@ -93,6 +98,7 @@ const FIXTURE: LorcanaSetLogoIndex = {
     {
       id: "quest1",
       name: "Menace des profondeurs – Quête des Illumineurs",
+      aliases: ["Deep Trouble – Illumineer's Quest"],
       sourceUrl:
         "https://api.lorcana.ravensburger.com/images/fr/quest1/thumbnails/111.png",
       logo: "/assets/lorcana/products/sets/quest1/logo.png",
@@ -100,6 +106,7 @@ const FIXTURE: LorcanaSetLogoIndex = {
     {
       id: "quest2",
       name: "Vol au Palais – Quête des Illumineurs",
+      aliases: ["Palace Heist – Illumineer's Quest"],
       sourceUrl:
         "https://api.lorcana.ravensburger.com/images/fr/quest2/thumbnails/222.png",
       logo: "/assets/lorcana/products/sets/quest2/logo.png",
@@ -107,6 +114,7 @@ const FIXTURE: LorcanaSetLogoIndex = {
     {
       id: "gateway1",
       name: "Prélude",
+      aliases: ["Gateway"],
       sourceUrl:
         "https://api.lorcana.ravensburger.com/images/fr/gateway1/thumbnails/333.png",
       logo: "/assets/lorcana/products/sets/gateway1/logo.png",
@@ -198,6 +206,25 @@ describe("lorcanaLogoUrlForSet", () => {
     ).toBe("/assets/lorcana/products/sets/gateway1/logo.png");
   });
 
+  it("joins The First Chapter EN via the official EN alias (shop code FC alone is opaque)", () => {
+    expect(
+      lorcanaLogoUrlForSet({
+        setCode: "FC",
+        slug: "the-first-chapter-illumineers-trove",
+        name: "The First Chapter Illumineer's Trove",
+        index: FIXTURE,
+      }),
+    ).toBe("/assets/lorcana/products/sets/set1/logo.png");
+    expect(
+      lorcanaCatalogueSetIdForProduct({
+        setCode: "FC",
+        slug: "the-first-chapter-illumineers-trove",
+        name: "The First Chapter Illumineer's Trove",
+        index: FIXTURE,
+      }),
+    ).toBe("1");
+  });
+
   it("joins Rise of the Floodborn via the unique catalog word, even under ROTF", () => {
     expect(
       lorcanaLogoUrlForSet({
@@ -267,7 +294,10 @@ describe("installLorcanaSetLogos", () => {
     const dest = path.join(dir, "set-logos.json");
     const logosDir = path.join(dir, "sets");
     const index = await installLorcanaSetLogos(
-      parseLorcanaSetLogosFromCatalog(CATALOG),
+      parseLorcanaSetLogosFromCatalog(CATALOG).map((row) => ({
+        ...row,
+        aliases: [],
+      })),
       { dest, logosDir },
     );
     expect(index.sets).toHaveLength(5);
@@ -280,5 +310,24 @@ describe("installLorcanaSetLogos", () => {
       readFileSync(dest, "utf8"),
     ) as LorcanaSetLogoIndex;
     expect(onDisk.sets).toHaveLength(5);
+  });
+});
+
+describe("mergeLorcanaSetLogoCatalogs", () => {
+  it("keeps the FR thumb and adds the EN title as alias", () => {
+    const fr = parseLorcanaSetLogosFromCatalog(CATALOG);
+    const en = [
+      {
+        id: "set1",
+        name: "The First Chapter",
+        sourceUrl:
+          "https://api.lorcana.ravensburger.com/images/en/set1/thumbnails/zzz.png",
+      },
+    ];
+    const merged = mergeLorcanaSetLogoCatalogs(fr, en);
+    const set1 = merged.find((row) => row.id === "set1");
+    expect(set1?.name).toBe("Premier Chapitre");
+    expect(set1?.aliases).toEqual(["The First Chapter"]);
+    expect(set1?.sourceUrl).toContain("/fr/set1/");
   });
 });

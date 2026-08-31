@@ -1,7 +1,7 @@
 /**
  * Open a card in TCG Live on the running emulator, from its name.
  *
- * ``pnpm foil:pokemon:live-card "Tropius" --tilt``
+ * ``tsx …/liveCard.ts "Tropius" --tilt``
  *
  * Why this exists: the playroom's WebGL side renders the publisher's own GLES3
  * fragments, so it should match the app pixel for pixel. Checking that by hand
@@ -304,7 +304,7 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   if (!args.name && !args.bundle) {
     console.error(
-      'usage: pnpm foil:pokemon:live-card "<nom>" | --bundle me5_fr_001 [--prefer ph] [--set me5] [--lang fr] [--tilt] [--out shot.png]',
+      'usage: tsx src/providers/pokemontcglive/liveCard.ts "<nom>" | --bundle me5_fr_001 [--prefer ph] [--set me5] [--lang fr] [--tilt] [--out shot.png]',
     );
     process.exitCode = 2;
     return;

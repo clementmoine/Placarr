@@ -4,8 +4,8 @@
  * Corps commun : `shared/cardCatalogue/pipeline`. Ici : la moisson cartes +
  * le graphe produits lorcards.fr (sauté en automatique).
  *
- * L'extract Unity / foil reste sur la CLI (`pnpm foil:lorcana`) et la route
- * foilExtract — ce pipeline ne le lance pas.
+ * L'extract Unity / foil passe par Catalogue Extract (admin / worker
+ * in-process) — ce pipeline catalogue ne le lance pas.
  */
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";

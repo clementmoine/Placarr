@@ -4,7 +4,7 @@
  * Requires PTCS tokens at `.tmp-foil-audit/live-unity/mitm/tokens.json`
  * (`access_token` + single-use `refresh_token`). See docs/pokemon_live_rainier.md.
  *
- *   pnpm foil:pokemon:sync-owned
+ *   tsx src/providers/pokemontcglive/syncLiveOwned.ts
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -75,7 +75,7 @@ async function main() {
     );
   }
   if (!fs.existsSync(SQLITE)) {
-    throw new Error(`Missing ${SQLITE} — run pnpm foil:pokemon:index-cards`);
+    throw new Error(`Missing ${SQLITE} — run Catalogue Sync for Pokémon`);
   }
 
   let tok = JSON.parse(fs.readFileSync(TOKENS, "utf8")) as Tokens;

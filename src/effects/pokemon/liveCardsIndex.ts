@@ -1,6 +1,6 @@
 /**
  * Local SQLite index of TCG Live card-database identity rows.
- * Built by ``pnpm foil:pokemon:index-cards`` → ``data/pokemon/catalog.sqlite``.
+ * Built by Catalogue Extract → ``data/pokemon/catalog.sqlite``.
  *
  * Join aid only — TCGdex remains the product catalogue.
  *

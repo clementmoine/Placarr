@@ -3,16 +3,15 @@
  * Mirrors ``extract_card_bundle`` texture path in ``unity/extract.py``.
  */
 
-import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
-
-import sharp from "sharp";
 
 import {
   cropCardRgba,
   loadUvRectFromJson,
   type UvRect,
 } from "@/lib/unity/cardCrop";
+import { writeLosslessRgbaWebp } from "@/lib/media/losslessWebp";
 import { parseMaterialManifests } from "@/lib/unity/materialManifest";
 import { decodeTexturesFromUnityFs } from "@/lib/unity/texture2d";
 
@@ -91,32 +90,6 @@ function textureKeyCi(
     if (key.toLowerCase() === lower) return key;
   }
   return null;
-}
-
-async function saveLosslessWebp(
-  rgba: Buffer,
-  width: number,
-  height: number,
-  dest: string,
-): Promise<void> {
-  const out = dest.toLowerCase().endsWith(".webp")
-    ? dest
-    : dest.replace(/\.[^.]+$/, "") + ".webp";
-  mkdirSync(path.dirname(out), { recursive: true });
-  const tmp = `${out}.tmp`;
-  try {
-    await sharp(rgba, { raw: { width, height, channels: 4 } })
-      .webp({ lossless: true, effort: 6 })
-      .toFile(tmp);
-    renameSync(tmp, out);
-  } catch (err) {
-    try {
-      unlinkSync(tmp);
-    } catch {
-      /* ignore */
-    }
-    throw err;
-  }
 }
 
 function migratePngBeside(webpDest: string): boolean {
@@ -260,7 +233,7 @@ export async function extractCardBundleTextures(
       continue;
     }
     const cropped = cropCardRgba(tex.rgba, tex.width, tex.height, cropRect);
-    await saveLosslessWebp(cropped.rgba, cropped.width, cropped.height, dest);
+    await writeLosslessRgbaWebp(cropped.rgba, cropped.width, cropped.height, dest);
     written.push(dest);
   }
 

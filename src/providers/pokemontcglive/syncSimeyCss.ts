@@ -5,9 +5,9 @@
  * Recipes live in `holoShadersSimey.ts`. Same spirit as CDN/APK staging:
  * re-check upstream HEAD when refreshing.
  *
- *   pnpm foil:pokemon:simey
- *   pnpm foil:pokemon:simey -- --check
- *   pnpm foil:pokemon:simey -- --force
+ *   tsx src/providers/pokemontcglive/syncSimeyCss.ts
+ *   tsx src/providers/pokemontcglive/syncSimeyCss.ts -- --check
+ *   tsx src/providers/pokemontcglive/syncSimeyCss.ts -- --force
  */
 import {
   copyFileSync,

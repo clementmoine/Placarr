@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     saved,
     hint:
       pack === "lorcana"
-        ? "Ensuite: pnpm foil:lorcana -- --providers lorcanamobile --apk data/lorcana/staging/apks/base.apk (fusionne aussi split_UnityDataAssetPack.apk du même dossier)"
-        : "Live: refresh CDN reste le chemin principal; APK = secours schéma.",
+        ? "APK enregistré. Lance Extract / Sync depuis Catalogue (admin) — Unity fusionne aussi split_UnityDataAssetPack.apk du même dossier."
+        : "APK enregistré. Live: Extract Catalogue (CDN) est le chemin principal ; APK = secours schéma.",
   });
 }

@@ -4,9 +4,9 @@
  * data/lorcana/cards/{set}/{lang}/{card}/ — all LorcanaJSON languages
  * (fr, en, de, it).
  *
- *   pnpm foil:lorcana:cards
- *   pnpm foil:lorcana -- --providers lorcanacards
- *   pnpm foil:lorcana:cards -- --force
+ *   Catalogue Sync Lorcana
+ *   Catalogue Sync Lorcana
+ *   Catalogue Sync Lorcana -- --force
  */
 import fs from "node:fs";
 import path from "node:path";

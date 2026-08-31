@@ -1,7 +1,7 @@
 import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrints";
 /**
  * Lorcana official local SQLite index under `data/lorcana/catalog.sqlite`.
- * Built by scrape / `pnpm foil:lorcana:cards`. Blobs stay on disk; this stores
+ * Built by Catalogue Sync scrape. Blobs stay on disk; this stores
  * the full catalogue row from the same API call (titles, facts, remote URLs)
  * plus local asset filenames per printKey/lang.
  *
@@ -786,6 +786,16 @@ export function searchLorcanaTcgRows(
 }
 
 /**
+ * Rang de sortie d'un set Lorcana depuis son code catalogue (`1`…`13`).
+ * Les annexes (P2, Q1, C2…) restent sans rang — fin de liste, tri libellé.
+ */
+export function lorcanaSetSortKey(setCode: string): number | null {
+  const code = setCode.trim();
+  if (/^\d+$/.test(code)) return Number(code);
+  return null;
+}
+
+/**
  * Les extensions du catalogue local, telles qu'un joueur les nomme.
  *
  * Le nom est pris **dans la langue demandée**. Un simple `MIN()` sur toutes les
@@ -795,7 +805,7 @@ export function searchLorcanaTcgRows(
  */
 export function listLorcanaTcgSets(
   language = "fr",
-): { id: string; label: string }[] {
+): { id: string; label: string; sortKey?: number }[] {
   const db = ensureLorcanaTcgIndex();
   if (!db) return [];
   const lang = language.trim().toLowerCase();
@@ -813,6 +823,10 @@ export function listLorcanaTcgSets(
     )
     .all(lang) as { setCode: string; setName: string | null }[];
   return finalizeSetOptions(
-    rows.map((row) => ({ id: row.setCode, label: row.setName })),
+    rows.map((row) => ({
+      id: row.setCode,
+      label: row.setName,
+      sortKey: lorcanaSetSortKey(row.setCode),
+    })),
   );
 }

@@ -1,6 +1,6 @@
 /**
  * Batch Node extract of Live card UnityFS textures (ADR-021 phase B).
- * Shaders / cards.json aggregation stay on Python until phases C+.
+ * Full orchestration: {@link extractAllNode}.
  */
 
 import { existsSync, readdirSync, statSync } from "node:fs";

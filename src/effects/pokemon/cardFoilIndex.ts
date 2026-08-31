@@ -2,7 +2,7 @@
  * SQLite implementation of the per-print foil texture lookups.
  *
  * Table `card_foil` in `data/pokemon/catalog.sqlite`, built by
- * ``pnpm foil:pokemon:index-card-foil``.
+ * `Catalogue Sync Pokémon`.
  *
  * Do not import this from client modules — importing it is what *installs* the
  * real lookups, and `node:sqlite` has no browser build. Client packs import

@@ -7,6 +7,7 @@ import {
   applyMaskCoverage,
   type MaskKind,
 } from "@/core/enrich/media/maskCoverage";
+import { toLosslessRgbaWebp } from "@/lib/media/losslessWebp";
 import { uploadsDir } from "@/lib/runtimeData";
 
 export type { MaskKind } from "@/core/enrich/media/maskCoverage";
@@ -74,11 +75,7 @@ export async function bakeMask(input: Buffer, kind: MaskKind): Promise<Buffer> {
     }
   }
 
-  return sharp(Buffer.from(out), {
-    raw: { width: info.width, height: info.height, channels: 4 },
-  })
-    .webp({ lossless: true, effort: 6 })
-    .toBuffer();
+  return toLosslessRgbaWebp(Buffer.from(out), info.width, info.height);
 }
 
 /**

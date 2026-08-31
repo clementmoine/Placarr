@@ -104,7 +104,7 @@ export const lorcanatcgModule = defineProvider({
     defaultLanguage: "fr",
     websiteUrl: "https://cards.disneylorcana.com/",
     notes:
-      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : `pnpm foil:lorcana:cards`. Produits scellés : lorcards.fr (famille TCG Cards / dbscards), étape Sync, hors horaire. Dump app/Unity = cette source (`lorcanatcg`), pas `lorcanajson`.",
+      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : Catalogue Extract (admin / worker). Produits scellés : lorcards.fr + complément `www.disneylorcana.com` (logos wordmark + SKU manquants). Dump app/Unity = cette source (`lorcanatcg`), pas `lorcanajson`.",
   },
   catalog: lorcanatcgCatalog,
   /*
@@ -116,9 +116,26 @@ export const lorcanatcgModule = defineProvider({
     const logos = offline
       ? loadLorcanaSetLogoIndex()
       : await ensureLorcanaSetLogoIndex({ force });
-    if (!logos) return "lorcana set logos : indisponible";
-    const withLogo = logos.sets.filter((row) => row.logo).length;
-    return `lorcana set logos : ${withLogo} thumbs / ${logos.sets.length} sets`;
+    if (!logos && offline) return "lorcana set logos : indisponible";
+
+    if (!offline) {
+      const { harvestOfficialLorcanaSite } = await import("./officialSite");
+      const { applyOfficialSiteLogos } = await import("./officialSiteApply");
+      const harvested = await harvestOfficialLorcanaSite({
+        force,
+        onProgress: (message) => console.log(`   official — ${message}`),
+      });
+      console.log(
+        `── official site — ${harvested.pages} pages, ${harvested.logos} logos, ${harvested.packshots} packshots`,
+      );
+      const applied = applyOfficialSiteLogos({ index: logos });
+      const next = applied.index ?? loadLorcanaSetLogoIndex();
+      const withLogo = next?.sets.filter((row) => row.logo).length ?? 0;
+      return `lorcana set logos : ${withLogo} (API+officiel, +${applied.added} sets) / ${next?.sets.length ?? 0} sets`;
+    }
+
+    const withLogo = logos!.sets.filter((row) => row.logo).length;
+    return `lorcana set logos : ${withLogo} thumbs / ${logos!.sets.length} sets`;
   },
   /*
     La boutique dit `ROTF`, le catalogue dit `2`. La correspondance est la même
@@ -162,7 +179,7 @@ export const lorcanatcgModule = defineProvider({
         latency: Date.now() - start,
         error: db
           ? null
-          : `Index unavailable — run pnpm foil:lorcana:cards (${lorcanaTcgDbPath()})`,
+          : `Index unavailable — run Catalogue Sync for Lorcana (${lorcanaTcgDbPath()})`,
         configured: true,
       };
     },

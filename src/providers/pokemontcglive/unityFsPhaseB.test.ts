@@ -6,8 +6,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { cropCardRgba, loadUvRectFromJson } from "@/lib/unity/cardCrop";
-import { decodeTexturesFromUnityFs } from "@/lib/unity/texture2d";
+import { cropCardRgba, cropRgbaRect, loadUvRectFromJson } from "@/lib/unity/cardCrop";
+import {
+  decodeTexturesFromUnityFs,
+  webglAstcFormat,
+} from "@/lib/unity/texture2d";
 import {
   canonicalFaceFilename,
   extractCardBundleTextures,
@@ -111,6 +114,31 @@ describe("unity Texture2D (Node)", () => {
     });
     expect(out.width).toBe(8);
     expect(out.height).toBe(10);
+  });
+
+  it("cropRgbaRect_bottom_left_origin", () => {
+    // 4x2 texture; fill bottom-left 2x1 block with 9s (Unity y=0).
+    const rgba = Buffer.alloc(4 * 2 * 4, 0);
+    for (let i = 0; i < 2 * 4; i++) rgba[4 * 4 + i] = 9; // row y=1 in top-left buffer = Unity bottom
+    // After imagining Unity bottom-left: rect at (0,0) size 2x1 is the bottom row.
+    // With top-left buffer where row0 is top: Unity y=0 → buffer row 1.
+    const out = cropRgbaRect(
+      rgba,
+      4,
+      2,
+      { x: 0, y: 0, width: 2, height: 1 },
+      { origin: "bottom-left" },
+    );
+    expect(out).not.toBeNull();
+    expect(out!.width).toBe(2);
+    expect(out!.height).toBe(1);
+    expect([...out!.rgba.subarray(0, 4)]).toEqual([9, 9, 9, 9]);
+  });
+
+  it("webglAstcFormat_matches_block_size", () => {
+    expect(webglAstcFormat(50)).toBe("COMPRESSED_RGBA_ASTC_6x6_KHR");
+    expect(webglAstcFormat(51)).toBe("COMPRESSED_RGBA_ASTC_8x8_KHR");
+    expect(webglAstcFormat(1)).toBeNull();
   });
 
   it("loadUvRectFromJson_reads_foil_sidecar_shape", () => {

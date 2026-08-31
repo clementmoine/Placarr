@@ -71,7 +71,7 @@ export const pokemontcgliveModule = defineProvider({
     defaultLanguage: "en",
     websiteUrl: "https://www.pokemon.com/us/pokemon-tcg/",
     notes:
-      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `catalog.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Produits papier scellés : pkmcards.fr (famille dbscards), étape Sync, hors horaire. Sync : `pnpm foil:pokemon`.",
+      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `catalog.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Produits papier scellés : pkmcards.fr (famille dbscards), étape Sync admin. Sync : Catalogue Extract (admin / worker).",
   },
   catalog: pokemontcgliveCatalog,
   /*
@@ -112,7 +112,7 @@ export const pokemontcgliveModule = defineProvider({
         latency: Date.now() - start,
         error: ok
           ? null
-          : `Index unavailable — run pnpm foil:pokemon:index-cards (${dbPath})`,
+          : `Index unavailable — run Catalogue Sync for Pokémon (${dbPath})`,
         configured: true,
       };
     },

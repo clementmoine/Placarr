@@ -1,7 +1,7 @@
 /**
  * Live plates vs what the CSS fallback actually paints, per material.
  *
- * ``pnpm foil:audit-live-css``
+ * audit Live vs CSS (local tool)
  *
  * The WebGL path runs the publisher's own GLES3 fragments against the plates
  * the material binds, so it *is* Live. Anything a material binds and the CSS

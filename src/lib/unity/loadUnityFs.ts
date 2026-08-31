@@ -7,6 +7,7 @@
  */
 
 import "unityfs-js/decoders/DecoderManager.js";
+import { load, type AssetManager } from "unityfs-js";
 import { UnityFS } from "unityfs-js/unityfs/unityFile.js";
 
 export type UnityTypeTree = Record<string, unknown>;
@@ -20,14 +21,20 @@ type BundleFileLike = {
   files?: readonly {
     node?: { path?: string };
     data?: Uint8Array | ArrayBuffer;
+    _data?: Uint8Array | ArrayBuffer;
   }[];
+};
+
+type ResourceFileLike = {
+  data?: Uint8Array | ArrayBuffer;
+  _data?: Uint8Array | ArrayBuffer;
 };
 
 type AssetManagerLike = {
   assetFiles?: readonly AssetFileLike[];
   primaryAssetFile?: AssetFileLike | null;
   bundleFile?: BundleFileLike | null;
-  resourceFiles?: Map<string, { data?: Uint8Array | ArrayBuffer }>;
+  resourceFiles?: Map<string, ResourceFileLike>;
 };
 
 export type LoadedUnityFs = {
@@ -51,14 +58,71 @@ function basenamePath(p: string): string {
   return i >= 0 ? norm.slice(i + 1) : norm;
 }
 
+function fileBytes(file: {
+  data?: Uint8Array | ArrayBuffer;
+  _data?: Uint8Array | ArrayBuffer;
+}): Uint8Array | null {
+  return toUint8(file.data ?? file._data);
+}
+
+function indexResourceBlob(
+  map: Map<string, Uint8Array>,
+  key: string,
+  blob: Uint8Array,
+): void {
+  map.set(key, blob);
+  map.set(basenamePath(key), blob);
+  // unityfs-js lowercases resourceFiles keys; stream paths keep .resS casing.
+  map.set(key.toLowerCase(), blob);
+  map.set(basenamePath(key).toLowerCase(), blob);
+}
+
+/**
+ * Collect ``.resS`` (and other streamed) blobs from an AssetManager /
+ * UnityFS parse — used when typetree is off and Texture2D pixels live in
+ * ``m_StreamData``.
+ */
+export function resourceBlobsFromAssetManager(am: unknown): Map<string, Uint8Array> {
+  const mgr = asAssetManager(am);
+  const resourceBlobs = new Map<string, Uint8Array>();
+  for (const f of mgr.bundleFile?.files ?? []) {
+    const path = f.node?.path;
+    if (!path) continue;
+    const blob = fileBytes(f);
+    if (!blob) continue;
+    indexResourceBlob(resourceBlobs, path, blob);
+  }
+  if (mgr.resourceFiles) {
+    for (const [key, val] of mgr.resourceFiles) {
+      const blob = fileBytes(val ?? {});
+      if (!blob) continue;
+      indexResourceBlob(resourceBlobs, key, blob);
+    }
+  }
+  return resourceBlobs;
+}
+
+/** `load()` from unityfs-js — sync or Promise depending on build. */
+export async function resolveAssetManager(
+  data: Uint8Array | ArrayBuffer | Buffer,
+  opts?: { unityRevision?: string; enableTypeTree?: boolean },
+): Promise<AssetManager> {
+  const bytes =
+    data instanceof ArrayBuffer ? new Uint8Array(data) : new Uint8Array(data);
+  const loaded = load(bytes, {
+    unityRevision: opts?.unityRevision ?? "2022.3.21f1",
+    enableTypeTree: opts?.enableTypeTree ?? true,
+  }) as AssetManager | Promise<AssetManager>;
+  if (loaded && typeof (loaded as Promise<AssetManager>).then === "function") {
+    return loaded as Promise<AssetManager>;
+  }
+  return loaded as AssetManager;
+}
+
 /** Parse a UnityFS / AssetBundle buffer; typetree enabled. */
 export function loadUnityFs(data: Uint8Array | ArrayBuffer | Buffer): LoadedUnityFs {
   const bytes =
-    data instanceof Uint8Array
-      ? data
-      : data instanceof ArrayBuffer
-        ? new Uint8Array(data)
-        : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    data instanceof ArrayBuffer ? new Uint8Array(data) : new Uint8Array(data);
   const u = new UnityFS(bytes, { enableTypeTree: true });
   u.parse();
   const am = asAssetManager(u.assetManager);
@@ -68,25 +132,10 @@ export function loadUnityFs(data: Uint8Array | ArrayBuffer | Buffer): LoadedUnit
       ? [am.primaryAssetFile]
       : [];
 
-  const resourceBlobs = new Map<string, Uint8Array>();
-  for (const f of am.bundleFile?.files ?? []) {
-    const path = f.node?.path;
-    if (!path) continue;
-    const blob = toUint8(f.data);
-    if (!blob) continue;
-    resourceBlobs.set(path, blob);
-    resourceBlobs.set(basenamePath(path), blob);
-  }
-  if (am.resourceFiles) {
-    for (const [key, val] of am.resourceFiles) {
-      const blob = toUint8(val?.data);
-      if (!blob) continue;
-      resourceBlobs.set(key, blob);
-      resourceBlobs.set(basenamePath(key), blob);
-    }
-  }
-
-  return { assetFiles: files, resourceBlobs };
+  return {
+    assetFiles: files,
+    resourceBlobs: resourceBlobsFromAssetManager(am),
+  };
 }
 
 export function classNameOf(obj: object): string {
@@ -103,6 +152,13 @@ export function classIdOf(obj: object): number | null {
   const name = classNameOf(obj);
   const m = /(?:Class_)?(\d+)$/.exec(name);
   return m ? Number(m[1]) : null;
+}
+
+export function pathIdOf(obj: object): string | null {
+  const o = obj as { pathID?: bigint | number; m_PathID?: bigint | number };
+  const raw = o.pathID ?? o.m_PathID;
+  if (raw == null) return null;
+  return String(raw);
 }
 
 function readTree(
@@ -150,13 +206,41 @@ export function* iterClassTrees(
   loaded: LoadedUnityFs,
   classId: number,
 ): Generator<UnityTypeTree> {
+  for (const item of iterClassTreeEntries(loaded, classId)) {
+    yield item.tree;
+  }
+}
+
+/** Typetree + Unity path id (for Material → Texture2D refs). */
+export function* iterClassTreeEntries(
+  loaded: LoadedUnityFs,
+  classId: number,
+): Generator<{ tree: UnityTypeTree; pathId: string | null }> {
   for (const af of loaded.assetFiles) {
     for (const obj of af.objects) {
       if (classIdOf(obj) !== classId) continue;
       const tree = readTree(af, obj);
-      if (tree) yield tree;
+      if (tree) yield { tree, pathId: pathIdOf(obj) };
     }
   }
+}
+
+/** Resolve ``m_StreamData.path`` against a blob map (case-insensitive). */
+export function resolveBlobFromMap(
+  resourceBlobs: ReadonlyMap<string, Uint8Array>,
+  streamPath: string,
+): Uint8Array | null {
+  const raw = streamPath.trim();
+  if (!raw) return null;
+  const direct = resourceBlobs.get(raw);
+  if (direct) return direct;
+  const base = basenamePath(raw);
+  return (
+    resourceBlobs.get(base) ??
+    resourceBlobs.get(raw.toLowerCase()) ??
+    resourceBlobs.get(base.toLowerCase()) ??
+    null
+  );
 }
 
 /** Resolve ``m_StreamData.path`` to a resource blob. */
@@ -164,10 +248,5 @@ export function resolveResourceBlob(
   loaded: LoadedUnityFs,
   streamPath: string,
 ): Uint8Array | null {
-  const raw = streamPath.trim();
-  if (!raw) return null;
-  const direct = loaded.resourceBlobs.get(raw);
-  if (direct) return direct;
-  const base = basenamePath(raw);
-  return loaded.resourceBlobs.get(base) ?? null;
+  return resolveBlobFromMap(loaded.resourceBlobs, streamPath);
 }

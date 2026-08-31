@@ -1,7 +1,7 @@
 /**
  * Build the `card_foil` table from the Live dump's `cards.json`.
  *
- * ``pnpm foil:pokemon:index-card-foil`` (also chained from ``foil:pokemon``).
+ * `Catalogue Sync Pokémon` (via Catalogue Sync).
  */
 
 import { existsSync, readFileSync } from "node:fs";

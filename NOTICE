@@ -22,7 +22,7 @@ Portions of the Pokémon foil CSS recipes are adapted from:
   Licensed under the GNU General Public License v3.0
 
 Vendored reference trees (CSS only, no upstream foil PNGs) live under
-volatile staging (re-sync with `pnpm foil:pokemon:simey`):
+volatile staging (re-sync with `tsx src/providers/pokemontcglive/syncSimeyCss.ts`):
 
   data/pokemon/staging/simey/poke-holo/   → public/css/cards/
   data/pokemon/staging/simey/poke-151/    → public/css/cards/

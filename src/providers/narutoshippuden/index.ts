@@ -15,7 +15,10 @@
 import { createLocalTcgLine } from "@/providers/shared/cardCatalogue/localTcgLine";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 
-import { NARUTO_SHIPPUDEN_EFFECT_PACK_ID } from "./assets";
+import {
+  narutoShippudenAssetsCardUrl,
+  NARUTO_SHIPPUDEN_EFFECT_PACK_ID,
+} from "./assets";
 import {
   NARUTO_SHIPPUDEN_PACK_ID,
   shippudenActNumber,
@@ -42,6 +45,10 @@ const line = createLocalTcgLine({
   providerId: PROVIDER_ID,
   providerLabel: "Naruto 疾風伝 (local)",
   catalogueLabel: "Naruto 疾風伝",
+  catalogueAliases: [
+    { label: "Naruto Shippuden Card Game", language: "ja" },
+    { label: "疾風伝", language: "ja" },
+  ],
   factLabel: "Naruto 疾風伝",
   packId: NARUTO_SHIPPUDEN_PACK_ID,
   effectPackId: NARUTO_SHIPPUDEN_EFFECT_PACK_ID,
@@ -55,6 +62,9 @@ const line = createLocalTcgLine({
   setLabel: shippudenSetLabel,
   setSortKey: shippudenActNumber,
   normalizeSearchQuery: (query) => diskIdFromPrintedReference(query) ?? query,
+  // Arbre Carddass-like : `{set}/{card}/{lang}/`, pas `{set}/{lang}/{card}/`.
+  cardAssetUrl: (id, file) =>
+    narutoShippudenAssetsCardUrl(id.set, id.card, id.lang, file),
   notes:
     "Jeu 疾風伝 (2007-2009), japonais seul → `data/naruto/shippuden/`. Familles 忍伝 / 術伝 / 作伝 / 忍伝-学. **Huit actes sortis** (le scellé les atteste tous) ; le catalogue de cartes n'en tient que quatre, les listes officielles moissonnées s'arrêtant au 第四幕. Distinct du Carddass et du CCG anglais. Catalogue migré depuis le pack Carddass.",
 });

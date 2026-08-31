@@ -20,7 +20,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packCatalogDb, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { fetchColekaListingHtml } from "@/providers/narutoccg/sources/colekaListingFetch";
+import { fetchColekaListingHtml } from "@/providers/narutocarddass/sources/colekaListingFetch";
 
 import {
   COLEKA_NINJA_RANKS_LANG,
@@ -103,7 +103,7 @@ function purgeColekaRejectedFaces(
 ): void {
   const rejected = colekaNinjaRanksRejectedFaceKeys(ledger);
   if (!rejected.size) return;
-  const lang = ledger.lang.trim().toLowerCase();
+  const lang = ledger.lang?.trim().toLowerCase();
   const dbPath = packCatalogDb(NARUTO_RANKS_PACK_ID);
   if (!existsSync(dbPath)) return;
   const db = new DatabaseSync(dbPath);
@@ -376,7 +376,7 @@ export function installColekaNinjaRanks(
 ): ColekaNinjaRanksInstall {
   const staging = opts.stagingDir ?? colekaNinjaRanksStagingDir();
   const ledger = readColekaNinjaRanksLedger();
-  const lang = ledger.lang.trim().toLowerCase();
+  const lang = ledger.lang?.trim().toLowerCase();
   const missing: string[] = [];
   const rejected = colekaNinjaRanksRejectedFaceKeys(ledger);
 

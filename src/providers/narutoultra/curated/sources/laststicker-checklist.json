@@ -2,12 +2,12 @@
   "source": "laststicker.com — Panini Naruto Ultra Challenge (collection 589)",
   "url": "https://www.laststicker.com/cards/panini_naruto_ultra_cards/",
   "observed": "2026-08-22",
-  "ingest": "titles only — 100 numéros et noms, aucune face",
+  "ingest": "titles only — 100 numéros et noms ; faces via AnimeCollection (`animecollection.json`)",
   "note": "La page collection liste les cent cartes, chacune vers sa fiche `/cards/panini_naruto_ultra_cards/{n}/` dont le titre est « Card {n}: {nom} ». Structure parfaitement régulière : vingt-cinq personnages, quatre cartes chacun, dans l'ordre. C'est cette régularité qui fait foi — un relevé fautif ne tomberait pas juste sur 25×4 sans trou ni doublon de numéro.",
   "whyItMatters": "Le pack n'avait aucune carte. Le verso d'album est bien une checklist, mais l'upscale en brouille les numéros — d'où le refus, justifié, d'en tirer des titres. laststicker donne la même information sans l'incertitude.",
   "robots": "Le `robots.txt` du site interdit `/cards/preview/` à tous les robots : la galerie de scans n'est donc pas moissonnée. La page collection et les fiches par carte, elles, sont autorisées, et ce sont les seules lues. Le site bloque par ailleurs nommément trente-et-un robots, dont GPTBot et CCBot.",
   "notIngested": [
-    "Les scans `/i/cards/589/{n}.jpg` ne font que 211×300 et n'ont pas de variante plus grande : trop petits pour une face, pas versés.",
+    "Les scans `/i/cards/589/{n}.jpg` ne font que 211×300 (plus petits que AC h400) : faces versées depuis AnimeCollection, pas d’ici.",
     "Aucune rareté publiée : le champ reste vide plutôt que deviné."
   ],
   "cards": [

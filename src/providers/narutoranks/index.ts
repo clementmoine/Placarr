@@ -18,6 +18,7 @@ import {
   formatNinjaRanksReference,
   ninjaRanksSetLabel,
   ninjaRanksSetSortKey,
+  normalizeNinjaRanksSearchQuery,
 } from "./printKey";
 
 export {
@@ -31,16 +32,19 @@ const line = createLocalTcgLine({
   providerId: NARUTO_RANKS_PROVIDER_ID,
   providerLabel: "Naruto Ninja Ranks (local)",
   catalogueLabel: "Naruto Ninja Ranks",
+  catalogueAliases: ["Ninja Ranks", "Naruto Ninja Ranks"],
   factLabel: "Ninja Ranks",
   packId: NARUTO_RANKS_PACK_ID,
   effectPackId: NARUTO_RANKS_EFFECT_PACK_ID,
   printGame: "naruto",
-  defaultLanguage: "en",
-  syncHint: "pnpm naruto:ranks",
+  defaultLanguage: "fr",
+  syncHint: "Catalogue Sync (admin)",
   websiteUrl: "http://www.inkworks.com/products/naruto/ninjaranks/naruto.html",
   formatReference: formatNinjaRanksReference,
   setLabel: ninjaRanksSetLabel,
   setSortKey: ninjaRanksSetSortKey,
+  normalizeSearchQuery: normalizeNinjaRanksSearchQuery,
+  borrowFaceAcrossLocales: true,
   notes:
     "Panini Ninja Ranks Premium Trading Cards → `data/naruto/ninja-ranks/`. Checklist officielle Inkworks (100 titres EN, juin 2006). Packshots officiels en produits scellés (booster, display, album). Faces échantillon Inkworks (SD-1, BL-1) et dumps fan (sachet vert, SD-4). Ni Carddass, ni CCG Bandai, ni 疾風伝, ni Ultra Challenge. Les NS européennes d'AnimeCollection ne sont pas sur la feuille US.",
 });
@@ -54,7 +58,7 @@ const hooks = cardCatalogueHooks({
   runPipeline: async (argv) => {
     const { runNarutoRanksPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runNarutoRanksPackPipeline(argv);
   },

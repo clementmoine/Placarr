@@ -138,7 +138,7 @@ export function installBloggerPackRip(
   }[] = [];
   let products = 0;
   let backs = 0;
-  const lang = ledger.lang.trim().toLowerCase();
+  const lang = ledger.lang?.trim().toLowerCase();
 
   for (const asset of ledger.assets) {
     const src = path.join(staging, asset.file);

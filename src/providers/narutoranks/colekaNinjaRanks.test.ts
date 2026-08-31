@@ -39,12 +39,12 @@ describe("colekaBackOnlyStagingFile", () => {
 });
 
 describe("readColekaNinjaRanksLedger", () => {
-  it("documente le verso FR de GS03 (bl-0003), pas la carte de base 3", () => {
+  it("documente le verso FR de la carte de base 3, pas GS03/bl-0003", () => {
     const row = readColekaNinjaRanksLedger().backOnly?.find(
       (entry) => entry.number === "0003",
     );
     expect(row).toMatchObject({
-      setCode: "bl",
+      setCode: "nr",
       colekaRef: 3,
       colekaId: "1188740",
       pageUrl: expect.stringContaining("groupe-7-kakashi-sasuke_i1188740"),
@@ -64,13 +64,13 @@ describe("installColekaNinjaRanks", () => {
     const index = createLocalPrintsIndex(NARUTO_RANKS_PACK_ID);
     index.writePrints([
       {
-        printKey: "naruto:bl-0003",
-        setCode: "bl",
+        printKey: "naruto:nr-0003",
+        setCode: "nr",
         number: "0003",
-        cardType: "bl",
+        cardType: "nr",
         titles: [
-          { lang: "en", fullName: "Sasuke" },
-          { lang: "fr", fullName: "Groupe 7 kakashi sasuke" },
+          { lang: "en", fullName: "Group 7 puzzle" },
+          { lang: "fr", fullName: "Groupe 7 puzzle" },
         ],
       },
     ]);
@@ -83,7 +83,7 @@ describe("installColekaNinjaRanks", () => {
       "naruto",
       "ninja-ranks",
       "cards",
-      "bl",
+      "nr",
       "fr",
       "0003",
     );
@@ -98,7 +98,7 @@ describe("installColekaNinjaRanks", () => {
           { langs: Record<string, { art?: string; back?: string }> }
         >;
       }
-    ).cards["naruto:bl-0003"];
+    ).cards["naruto:nr-0003"];
     expect(entry.langs.fr?.back).toBe("back.coleka.webp");
     expect(entry.langs.fr?.art).toBeUndefined();
   });

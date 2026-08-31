@@ -23,9 +23,8 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import sharp from "sharp";
-
 import { packCardsDir } from "@/lib/packPaths";
+import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
 import { curatedDestStale } from "@/providers/shared/curatedCardsInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
@@ -235,7 +234,7 @@ async function writeFaceWebp(
     copyFileSync(src, dest);
     return true;
   }
-  await sharp(src).webp({ lossless: true, effort: 6 }).toFile(dest);
+  await writeLosslessWebpFile(src, dest);
   return true;
 }
 

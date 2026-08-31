@@ -18,7 +18,10 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
-import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
+import {
+  writeLocalSealedProducts,
+  type LocalSealedWrite,
+} from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
 import { ninjaRanksPrintKey } from "./printKey";
@@ -174,7 +177,7 @@ export function readNinjaRanksReconstructedArt(
     lang: string;
     products: { slug: string; art: string }[];
   };
-  const lang = ledger.lang.trim().toLowerCase();
+  const lang = ledger.lang?.trim().toLowerCase();
   const found = new Map<string, string>();
   for (const product of ledger.products) {
     const file = path.join(dir, product.slug, lang, product.art);
@@ -183,16 +186,12 @@ export function readNinjaRanksReconstructedArt(
   return found;
 }
 
-export function ingestInkworksProducts(
+export function inkworksSealedSpecs(
   opts: {
     stagingDir?: string;
     curatedProductsDir?: string;
   } = {},
-): {
-  written: number;
-  skipped: number;
-  file: string;
-} {
+): { products: LocalSealedWrite[]; source: string } {
   const ledger = readInkworksProductsLedger();
   const staging = opts.stagingDir ?? inkworksStagingDir();
   const logoPath = path.join(staging, ledger.logo.file);
@@ -204,11 +203,10 @@ export function ingestInkworksProducts(
   */
   const curatedArt = readNinjaRanksReconstructedArt(opts.curatedProductsDir);
   /*
-    `writeLocalSealedProducts` étiquette tout un lot d'une seule source. Le lot
-    ne bascule donc en `reconstructed` que si **chaque** SKU a son packshot
-    curé — sinon un visuel Inkworks se retrouverait nommé `art.reconstructed`,
-    ce qui mentirait sur sa provenance. Même précédent que le pack Ultra
-    Challenge.
+    Le lot EN ne bascule en `reconstructed` que si **chaque** SKU a son
+    packshot curé — sinon un visuel Inkworks se retrouverait nommé
+    `art.reconstructed`, ce qui mentirait sur sa provenance. Même précédent
+    que le pack Ultra Challenge.
   */
   const allCurated =
     ledger.skus.length > 0 &&
@@ -235,9 +233,26 @@ export function ingestInkworksProducts(
           : [],
     };
   });
+  return {
+    products,
+    source: allCurated ? RECONSTRUCTED_SOURCE_ID : ledger.sourceId,
+  };
+}
+
+export function ingestInkworksProducts(
+  opts: {
+    stagingDir?: string;
+    curatedProductsDir?: string;
+  } = {},
+): {
+  written: number;
+  skipped: number;
+  file: string;
+} {
+  const { products, source } = inkworksSealedSpecs(opts);
   return writeLocalSealedProducts({
     packId: NARUTO_RANKS_PACK_ID,
-    source: allCurated ? RECONSTRUCTED_SOURCE_ID : ledger.sourceId,
+    source,
     products,
   });
 }

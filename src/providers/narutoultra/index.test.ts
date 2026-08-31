@@ -14,8 +14,18 @@ describe("narutoultra provider hooks", () => {
     expect(narutoultraModule.catalog?.dataPack).toBe("naruto/ultra-challenge");
     expect(narutoultraModule.searchPrints).toBeTypeOf("function");
     expect(narutoultraModule.lookupPrint).toBeTypeOf("function");
+    expect(narutoultraModule.createMetadataAdapter).toBeTypeOf("function");
     expect(narutoultraModule.info.nameDatabase).toBe(true);
     expect(narutoultraModule.printGames).toEqual(["naruto"]);
+  });
+
+  it("metadata adapter stays silent on foreign printKeys (no name fallback)", async () => {
+    const adapter = narutoultraModule.createMetadataAdapter!();
+    expect(adapter).not.toBeNull();
+    await expect(
+      adapter!.resolve({ name: "Inari", printKey: "lorcana:6-48" }),
+    ).resolves.toBeNull();
+    await expect(adapter!.resolve({ name: "Inari" })).resolves.toBeNull();
   });
 
   it("does not claim a Carddass, 疾風伝, or Ninja Ranks print", async () => {

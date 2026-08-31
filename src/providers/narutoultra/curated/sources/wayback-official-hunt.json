@@ -55,7 +55,7 @@
     {
       "host": "www.panini.es / panini.it / paninigroup.com",
       "why": "Filiales et groupe.",
-      "finding": "`panini.es/*naruto*` vide. `panini.it/*lamin*` vide (déjà noté pour le TCG IT dans `narutoccg` `it-de-source-hunt.json`). `paninigroup.com/*naruto*` vide."
+      "finding": "`panini.es/*naruto*` vide. `panini.it/*lamin*` vide (déjà noté pour le TCG IT dans `narutocarddass` `it-de-source-hunt.json`). `paninigroup.com/*naruto*` vide."
     },
     {
       "host": "www.panini.co.uk / figurine.panini.it / edibas.fr / lamincards.fr / kana.fr / naruto.fr",
@@ -94,7 +94,7 @@
   },
   "fanImageHosts": {
     "note": "Scans / photos utilisateurs. Pas CDN Panini.",
-    "animecollection": "animecollection.fr/cartes/113/254/h100_*_carte.jpg — 101 thumbs.",
+    "animecollection": "animecollection.fr/cartes/113/254/h400_*_carte.jpg — 100 faces (284×400) mappées 1–100 + checklist 9877 non versée.",
     "coleka": "thumbs.coleka.com (même schéma que Ninja Ranks, uploads utilisateurs).",
     "laststicker": "403 Cloudflare depuis fetch ; checklist fan."
   },

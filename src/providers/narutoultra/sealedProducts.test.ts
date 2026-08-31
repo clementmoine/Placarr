@@ -70,7 +70,7 @@ describe("Ultra Challenge reconstructed sealed products", () => {
     ) as {
       products: Record<
         string,
-        { kind: string; image: string; imageBack: string | null }
+        { kind: string; image: string; imageBack: string | null; setCode: string }
       >;
     };
     expect(Object.keys(index.products).sort()).toEqual([
@@ -81,6 +81,7 @@ describe("Ultra Challenge reconstructed sealed products", () => {
       index.products["naruto/ultra-challenge::collector-album"],
     ).toMatchObject({
       kind: "coffret",
+      setCode: "uc",
       image:
         "/assets/naruto/ultra-challenge/products/collector-album/fr/art.reconstructed.png",
       imageBack:
@@ -88,6 +89,7 @@ describe("Ultra Challenge reconstructed sealed products", () => {
     });
     expect(index.products["naruto/ultra-challenge::booster"]).toMatchObject({
       kind: "booster",
+      setCode: "uc",
       image:
         "/assets/naruto/ultra-challenge/products/booster/fr/art.reconstructed.png",
     });

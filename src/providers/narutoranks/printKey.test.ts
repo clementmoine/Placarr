@@ -5,6 +5,7 @@ import {
   ninjaRanksPrintKey,
   ninjaRanksSetLabel,
   ninjaRanksSetSortKey,
+  normalizeNinjaRanksSearchQuery,
 } from "./printKey";
 import { readInkworksChecklist } from "./buildFromLedgers";
 
@@ -28,17 +29,44 @@ describe("ninjaRanksPrintKey", () => {
     expect(formatNinjaRanksReference("pn", "ga")).toBe("PN-GA");
     expect(formatNinjaRanksReference("pn", "i")).toBe("PN-i");
     expect(formatNinjaRanksReference("pn", "sd2006")).toBe("PN-SD2006");
+    expect(formatNinjaRanksReference("bl", "0001")).toBe("BL-1");
+    expect(formatNinjaRanksReference("bl", "0001", null, "en")).toBe("BL-1");
+  });
+
+  it("formats Group Seven refs for European locales", () => {
+    expect(formatNinjaRanksReference("bl", "0001", null, "fr")).toBe("GS-1");
+    expect(formatNinjaRanksReference("bl", "0002", null, "it")).toBe("GS-2");
+    expect(formatNinjaRanksReference("bl", "0003", null, "FR")).toBe("GS-3");
+    // Autres inserts inchangés en EU.
+    expect(formatNinjaRanksReference("nw", "0001", null, "fr")).toBe("NW-1");
+  });
+
+  it("labels Group Seven in FR/IT, Box Loaders in EN", () => {
+    expect(ninjaRanksSetLabel("bl")).toBe("Box Loaders");
+    expect(ninjaRanksSetLabel("bl", "en")).toBe("Box Loaders");
+    expect(ninjaRanksSetLabel("bl", "fr")).toBe("Group Seven");
+    expect(ninjaRanksSetLabel("bl", "it")).toBe("Group Seven");
+    expect(ninjaRanksSetLabel("nr", "fr")).toBe("Ninja Ranks");
   });
 
   it("orders the 2006 subsets as Inkworks listed them", () => {
     expect(ninjaRanksSetLabel("nr")).toBe("Ninja Ranks");
     expect(ninjaRanksSetLabel("ns")).toBe("Ninja Sensei");
     expect(
-      ["pn", "nr", "ff", "ns"].sort(
+      ["pn", "nr", "ff", "ns", "bl"].sort(
         (a, b) =>
           (ninjaRanksSetSortKey(a) ?? 99) - (ninjaRanksSetSortKey(b) ?? 99),
       ),
-    ).toEqual(["nr", "ff", "ns", "pn"]);
+    ).toEqual(["nr", "ff", "ns", "bl", "pn"]);
+  });
+
+  it("normalizes GS/BL collector queries onto the bl print_key fragment", () => {
+    expect(normalizeNinjaRanksSearchQuery("GS1")).toBe("bl-0001");
+    expect(normalizeNinjaRanksSearchQuery("GS-2")).toBe("bl-0002");
+    expect(normalizeNinjaRanksSearchQuery("gs03")).toBe("bl-0003");
+    expect(normalizeNinjaRanksSearchQuery("BL-1")).toBe("bl-0001");
+    expect(normalizeNinjaRanksSearchQuery("gs")).toBe("bl");
+    expect(normalizeNinjaRanksSearchQuery("Naruto")).toBe("Naruto");
   });
 });
 

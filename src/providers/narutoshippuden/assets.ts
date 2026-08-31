@@ -39,7 +39,7 @@ export function narutoShippudenAssetsCardUrl(
     "cards",
     narutoShippudenCardFolder(cardType),
     number.trim().toLowerCase(),
-    lang.trim().toLowerCase(),
+    lang?.trim().toLowerCase(),
     file,
   );
 }

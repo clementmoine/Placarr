@@ -127,7 +127,7 @@
         "fr": ["nr-0003", "nr-0006", "nr-0020", "nr-0021", "nr-0022", "nr-0048", "nr-0049", "nr-0052", "nr-0054", "nr-0057", "nr-0058", "nr-0061", "nr-0064"]
       },
       "quality": "~1060×1500",
-      "access": "Listing EN déjà moissonné ; re-run `pnpm naruto:ranks` périodique",
+      "access": "Listing EN déjà moissonné ; re-run Catalogue Sync Ninja Ranks périodique",
       "blocker": "Aucun levier pour forcer l'upload contributeur",
       "next": "Cron ou note dans pipeline : re-harvest Coleka si placeholder count baisse"
     },

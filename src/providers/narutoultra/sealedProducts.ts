@@ -14,6 +14,7 @@ import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
 import { colekaAlbumStagingDir, readColekaAlbumLedger } from "./colekaAlbum";
 import { NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "./pack";
+import { NARUTO_ULTRA_SET_CODE } from "./printKey";
 
 const LEDGER_FILE = "reconstructed-products.json";
 
@@ -66,7 +67,7 @@ export function ingestUltraSealedProducts(
   const reconstructed = readUltraReconstructedLedger();
   const coleka = readColekaAlbumLedger();
   const curated = opts.curatedProductsDir ?? ultraCuratedProductsDir();
-  const lang = reconstructed.lang.trim().toLowerCase();
+  const lang = reconstructed.lang?.trim().toLowerCase();
   const colekaArt = path.join(
     opts.colekaStagingDir ?? colekaAlbumStagingDir(),
     coleka.sku.file,
@@ -87,7 +88,7 @@ export function ingestUltraSealedProducts(
         kind: sku.kind,
         category: sku.category,
         name: sku.name,
-        setCode: null,
+        setCode: NARUTO_ULTRA_SET_CODE,
         lang: reconstructed.lang,
         releaseDate: coleka.released,
         declaredCardCount: sku.declaredCardCount,
@@ -116,7 +117,7 @@ export function ingestUltraSealedProducts(
         kind: coleka.sku.kind,
         category: coleka.sku.category,
         name: coleka.sku.name,
-        setCode: null,
+        setCode: NARUTO_ULTRA_SET_CODE,
         lang: coleka.lang,
         releaseDate: coleka.released,
         declaredCardCount: coleka.sku.declaredCardCount,

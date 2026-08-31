@@ -18,7 +18,7 @@
     "declaredCardCount": null
   },
   "notIngested": [
-    "101 Coleka card thumbs — no official checklist in this pack, no print keys to map honestly.",
+    "101 Coleka card thumbs — faces via `coleka-ultra-faces.json` (listing EN + FlareSolverr).",
     "Album verso — the Coleka photo is the front only. Reconstructed back is the Figma upscale, not this host."
   ]
 }

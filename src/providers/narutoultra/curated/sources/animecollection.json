@@ -1,16 +1,19 @@
 {
   "source": "AnimeCollection — Naruto Ultra card / Panini Ultra Challenge",
   "url": "http://www.animecollection.fr/cartes.php?idl=4&idc=113&ids=254",
-  "observed": "2026-08-21",
-  "ingest": "none — attestation de la ligne, pas de cartes",
+  "observed": "2026-08-27",
+  "ingest": "faces h400 → art.animecollection.jpg (100 cartes). Pas de checklist ni packaging comme faces.",
+  "sourceId": "animecollection",
   "lang": "fr",
   "line": "ultra-challenge",
   "publisher": "Panini",
   "product": "Ultra Challenge (lamincards)",
   "released": "2007-09",
-  "size": "100 cartes + checklist, selon AnimeCollection",
+  "size": "100 cartes + 1 checklist recto verso, selon AnimeCollection",
   "quote": "« Les ultra cards Naruto sortent en France en Septembre 2007 par l’éditeur Panini. La collection est composée de 100 cartes + 1 checklist recto verso. Les informations contenues dans les cartes proviennent des épisodes 1 à 70. »",
   "officialSite": "Aucun mini-site produit trouvé sur Wayback — ledger `wayback-official-hunt.json`.",
+  "faceTier": "h400 — 284×400, plus grand palier public sur l’hôte (h100/h200/h400 ; pas de h600/h800)",
+  "faceUrlTemplate": "http://www.animecollection.fr/cartes/113/254/h400_{acId}_carte.jpg",
   "also": [
     "forum.animecollection.fr — sanji12, 2015-08-21",
     "vintagenaruto.com « French » : Panini/Ultra, pas du Carddass NI/TE/TA — skip `french-panini` du scrape Vintage CCG"
@@ -21,5 +24,512 @@
     "疾風伝 忍伝/術伝/作伝",
     "Ninja Ranks Premium Trading Cards"
   ],
-  "whyItMatters": "Autre jeu, autre catalogue. Le pack `naruto/ultra-challenge` existe pour ne plus les chercher (ni les coller) dans le Carddass."
+  "notIngested": [
+    "Image checklist acId 9877 — pas une carte numérotée",
+    "Packagings 481/482 — déjà couverts par les produits reconstruits / Coleka album",
+    "LastSticker `/i/cards/589/{n}.jpg` (211×300) — plus petit, galerie preview interdite aux robots"
+  ],
+  "whyItMatters": "Autre jeu, autre catalogue. Le pack `naruto/ultra-challenge` existe pour ne plus les chercher (ni les coller) dans le Carddass. AC donne enfin des faces mappées 1–100.",
+  "faces": [
+    {
+      "printed": "1",
+      "number": "0001",
+      "acId": "9771"
+    },
+    {
+      "printed": "2",
+      "number": "0002",
+      "acId": "9772"
+    },
+    {
+      "printed": "3",
+      "number": "0003",
+      "acId": "9773"
+    },
+    {
+      "printed": "4",
+      "number": "0004",
+      "acId": "9774"
+    },
+    {
+      "printed": "5",
+      "number": "0005",
+      "acId": "9775"
+    },
+    {
+      "printed": "6",
+      "number": "0006",
+      "acId": "9776"
+    },
+    {
+      "printed": "7",
+      "number": "0007",
+      "acId": "9777"
+    },
+    {
+      "printed": "8",
+      "number": "0008",
+      "acId": "9778"
+    },
+    {
+      "printed": "9",
+      "number": "0009",
+      "acId": "9779"
+    },
+    {
+      "printed": "10",
+      "number": "0010",
+      "acId": "9780"
+    },
+    {
+      "printed": "11",
+      "number": "0011",
+      "acId": "9781"
+    },
+    {
+      "printed": "12",
+      "number": "0012",
+      "acId": "9782"
+    },
+    {
+      "printed": "13",
+      "number": "0013",
+      "acId": "9783"
+    },
+    {
+      "printed": "14",
+      "number": "0014",
+      "acId": "9785"
+    },
+    {
+      "printed": "15",
+      "number": "0015",
+      "acId": "9787"
+    },
+    {
+      "printed": "16",
+      "number": "0016",
+      "acId": "9788"
+    },
+    {
+      "printed": "17",
+      "number": "0017",
+      "acId": "9790"
+    },
+    {
+      "printed": "18",
+      "number": "0018",
+      "acId": "9791"
+    },
+    {
+      "printed": "19",
+      "number": "0019",
+      "acId": "9793"
+    },
+    {
+      "printed": "20",
+      "number": "0020",
+      "acId": "9794"
+    },
+    {
+      "printed": "21",
+      "number": "0021",
+      "acId": "9796"
+    },
+    {
+      "printed": "22",
+      "number": "0022",
+      "acId": "9798"
+    },
+    {
+      "printed": "23",
+      "number": "0023",
+      "acId": "9799"
+    },
+    {
+      "printed": "24",
+      "number": "0024",
+      "acId": "9801"
+    },
+    {
+      "printed": "25",
+      "number": "0025",
+      "acId": "9802"
+    },
+    {
+      "printed": "26",
+      "number": "0026",
+      "acId": "9803"
+    },
+    {
+      "printed": "27",
+      "number": "0027",
+      "acId": "9804"
+    },
+    {
+      "printed": "28",
+      "number": "0028",
+      "acId": "9805"
+    },
+    {
+      "printed": "29",
+      "number": "0029",
+      "acId": "9806"
+    },
+    {
+      "printed": "30",
+      "number": "0030",
+      "acId": "9807"
+    },
+    {
+      "printed": "31",
+      "number": "0031",
+      "acId": "9808"
+    },
+    {
+      "printed": "32",
+      "number": "0032",
+      "acId": "9809"
+    },
+    {
+      "printed": "33",
+      "number": "0033",
+      "acId": "9810"
+    },
+    {
+      "printed": "34",
+      "number": "0034",
+      "acId": "9811"
+    },
+    {
+      "printed": "35",
+      "number": "0035",
+      "acId": "9812"
+    },
+    {
+      "printed": "36",
+      "number": "0036",
+      "acId": "9813"
+    },
+    {
+      "printed": "37",
+      "number": "0037",
+      "acId": "9814"
+    },
+    {
+      "printed": "38",
+      "number": "0038",
+      "acId": "9815"
+    },
+    {
+      "printed": "39",
+      "number": "0039",
+      "acId": "9816"
+    },
+    {
+      "printed": "40",
+      "number": "0040",
+      "acId": "9817"
+    },
+    {
+      "printed": "41",
+      "number": "0041",
+      "acId": "9818"
+    },
+    {
+      "printed": "42",
+      "number": "0042",
+      "acId": "9819"
+    },
+    {
+      "printed": "43",
+      "number": "0043",
+      "acId": "9820"
+    },
+    {
+      "printed": "44",
+      "number": "0044",
+      "acId": "9821"
+    },
+    {
+      "printed": "45",
+      "number": "0045",
+      "acId": "9822"
+    },
+    {
+      "printed": "46",
+      "number": "0046",
+      "acId": "9823"
+    },
+    {
+      "printed": "47",
+      "number": "0047",
+      "acId": "9824"
+    },
+    {
+      "printed": "48",
+      "number": "0048",
+      "acId": "9825"
+    },
+    {
+      "printed": "49",
+      "number": "0049",
+      "acId": "9826"
+    },
+    {
+      "printed": "50",
+      "number": "0050",
+      "acId": "9827"
+    },
+    {
+      "printed": "51",
+      "number": "0051",
+      "acId": "9828"
+    },
+    {
+      "printed": "52",
+      "number": "0052",
+      "acId": "9829"
+    },
+    {
+      "printed": "53",
+      "number": "0053",
+      "acId": "9830"
+    },
+    {
+      "printed": "54",
+      "number": "0054",
+      "acId": "9831"
+    },
+    {
+      "printed": "55",
+      "number": "0055",
+      "acId": "9832"
+    },
+    {
+      "printed": "56",
+      "number": "0056",
+      "acId": "9833"
+    },
+    {
+      "printed": "57",
+      "number": "0057",
+      "acId": "9834"
+    },
+    {
+      "printed": "58",
+      "number": "0058",
+      "acId": "9835"
+    },
+    {
+      "printed": "59",
+      "number": "0059",
+      "acId": "9836"
+    },
+    {
+      "printed": "60",
+      "number": "0060",
+      "acId": "9837"
+    },
+    {
+      "printed": "61",
+      "number": "0061",
+      "acId": "9838"
+    },
+    {
+      "printed": "62",
+      "number": "0062",
+      "acId": "9839"
+    },
+    {
+      "printed": "63",
+      "number": "0063",
+      "acId": "9840"
+    },
+    {
+      "printed": "64",
+      "number": "0064",
+      "acId": "9841"
+    },
+    {
+      "printed": "65",
+      "number": "0065",
+      "acId": "9842"
+    },
+    {
+      "printed": "66",
+      "number": "0066",
+      "acId": "9843"
+    },
+    {
+      "printed": "67",
+      "number": "0067",
+      "acId": "9844"
+    },
+    {
+      "printed": "68",
+      "number": "0068",
+      "acId": "9845"
+    },
+    {
+      "printed": "69",
+      "number": "0069",
+      "acId": "9846"
+    },
+    {
+      "printed": "70",
+      "number": "0070",
+      "acId": "9847"
+    },
+    {
+      "printed": "71",
+      "number": "0071",
+      "acId": "9848"
+    },
+    {
+      "printed": "72",
+      "number": "0072",
+      "acId": "9849"
+    },
+    {
+      "printed": "73",
+      "number": "0073",
+      "acId": "9850"
+    },
+    {
+      "printed": "74",
+      "number": "0074",
+      "acId": "9851"
+    },
+    {
+      "printed": "75",
+      "number": "0075",
+      "acId": "9852"
+    },
+    {
+      "printed": "76",
+      "number": "0076",
+      "acId": "9853"
+    },
+    {
+      "printed": "77",
+      "number": "0077",
+      "acId": "9854"
+    },
+    {
+      "printed": "78",
+      "number": "0078",
+      "acId": "9855"
+    },
+    {
+      "printed": "79",
+      "number": "0079",
+      "acId": "9856"
+    },
+    {
+      "printed": "80",
+      "number": "0080",
+      "acId": "9857"
+    },
+    {
+      "printed": "81",
+      "number": "0081",
+      "acId": "9858"
+    },
+    {
+      "printed": "82",
+      "number": "0082",
+      "acId": "9859"
+    },
+    {
+      "printed": "83",
+      "number": "0083",
+      "acId": "9860"
+    },
+    {
+      "printed": "84",
+      "number": "0084",
+      "acId": "9861"
+    },
+    {
+      "printed": "85",
+      "number": "0085",
+      "acId": "9862"
+    },
+    {
+      "printed": "86",
+      "number": "0086",
+      "acId": "9863"
+    },
+    {
+      "printed": "87",
+      "number": "0087",
+      "acId": "9864"
+    },
+    {
+      "printed": "88",
+      "number": "0088",
+      "acId": "9865"
+    },
+    {
+      "printed": "89",
+      "number": "0089",
+      "acId": "9866"
+    },
+    {
+      "printed": "90",
+      "number": "0090",
+      "acId": "9867"
+    },
+    {
+      "printed": "91",
+      "number": "0091",
+      "acId": "9868"
+    },
+    {
+      "printed": "92",
+      "number": "0092",
+      "acId": "9869"
+    },
+    {
+      "printed": "93",
+      "number": "0093",
+      "acId": "9870"
+    },
+    {
+      "printed": "94",
+      "number": "0094",
+      "acId": "9871"
+    },
+    {
+      "printed": "95",
+      "number": "0095",
+      "acId": "9872"
+    },
+    {
+      "printed": "96",
+      "number": "0096",
+      "acId": "9873"
+    },
+    {
+      "printed": "97",
+      "number": "0097",
+      "acId": "9880"
+    },
+    {
+      "printed": "98",
+      "number": "0098",
+      "acId": "9874"
+    },
+    {
+      "printed": "99",
+      "number": "0099",
+      "acId": "9875"
+    },
+    {
+      "printed": "100",
+      "number": "0100",
+      "acId": "9876"
+    }
+  ]
 }

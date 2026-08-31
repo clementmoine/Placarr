@@ -20,6 +20,6 @@ sans vérif.
 
 ## Règle
 
-- Rejouer : `pnpm dbs:cards` copie curated → `data/dbs/cg/cards/back.webp`.
+- Rejouer : Catalogue Sync copie curated → `data/dbs/cg/cards/back.webp`.
 - Si Bandai publie un dos isolé, remplacer curated et noter l’URL ici.
 - Ne pas confondre avec `{id}_b.png` / `{id}-back.webp` **par carte** (éveil Leader).

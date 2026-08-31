@@ -21,7 +21,7 @@ export async function ingestNarutoShippudenSealedProducts(opts?: {
 }): Promise<{ pack: string; written: number; skipped: number; file: string }> {
   const { ingestSealedLine } = await import(
     /* webpackIgnore: true */
-    "@/providers/narutoccg/sealedProducts"
+    "@/providers/narutocarddass/sealedProducts"
   );
   return ingestSealedLine({
     packId: NARUTO_SHIPPUDEN_PACK_ID,

@@ -3,7 +3,8 @@
  *
  * Autre jeu que le Carddass : Vintage rangeait ces faces sous « French » et
  * elles n'ont jamais été des NI/TE/TA. Ligne Catalogue à part : album et
- * pochette (upscales Figma + dump Coleka), et cent cartes titrées, sans face.
+ * pochette (upscales Figma + dump Coleka), titres laststicker, faces
+ * AnimeCollection (h400).
  */
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 import { createLocalTcgLine } from "@/providers/shared/cardCatalogue/localTcgLine";
@@ -25,15 +26,16 @@ const line = createLocalTcgLine({
   providerId: NARUTO_ULTRA_PROVIDER_ID,
   providerLabel: "Naruto Ultra Challenge (local)",
   catalogueLabel: "Naruto Ultra Challenge",
+  catalogueAliases: ["Ultra Challenge", "Naruto Ultra Challenge"],
   factLabel: "Ultra Challenge",
   packId: NARUTO_ULTRA_PACK_ID,
   effectPackId: NARUTO_ULTRA_EFFECT_PACK_ID,
   printGame: "naruto",
   defaultLanguage: "fr",
-  syncHint: "pnpm naruto:ultra",
+  syncHint: "Catalogue Sync (admin)",
   websiteUrl: "http://www.animecollection.fr/cartes.php?idl=4&idc=113&ids=254",
   notes:
-    "Panini Ultra Challenge (lamincards, sept. 2007) → `data/naruto/ultra-challenge/`. Ni Carddass, ni CCG Bandai, ni 疾風伝, ni Ninja Ranks. Album et pochette (upscales Figma, dump Coleka à côté). Les cent cartes viennent de la checklist laststicker (collection 589) : le verso d’album en est une aussi, mais l’upscale en brouille les numéros. Aucune face : les scans laststicker ne font que 211×300, et sa galerie est interdite aux robots.",
+    "Panini Ultra Challenge (lamincards, sept. 2007) → `data/naruto/ultra-challenge/`. Ni Carddass, ni CCG Bandai, ni 疾風伝, ni Ninja Ranks. Album et pochette (upscales Figma, dump Coleka à côté). Titres : checklist laststicker (collection 589). Faces : Coleka (~995×1393, listing EN + FlareSolverr) → `art.coleka.webp` ; secours AnimeCollection h400.",
 });
 
 export const narutoUltraLine = line;
@@ -45,7 +47,7 @@ const hooks = cardCatalogueHooks({
   runPipeline: async (argv) => {
     const { runNarutoUltraPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./cli"
+      "./extract"
     );
     return runNarutoUltraPackPipeline(argv);
   },

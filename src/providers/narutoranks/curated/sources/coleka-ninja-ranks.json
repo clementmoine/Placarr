@@ -11,13 +11,13 @@
   "backs": "Le verso n'est pas sur le listing. Une fois le recto validé, on sonde `www.coleka.com` avec les suffixes `-001` puis `-002` (`…-072.webp` → `…-072-001.webp` ; `…-001.webp` → `…-001-002.webp`). Installé en `back.coleka.webp`. ~22 cartes n'ont pas de verso sur le CDN Coleka — trou honnête, pas de devinette. Quand le listing n'a qu'une vignette générique mais la fiche item porte une photo attestée, voir `backOnly`.",
   "backOnly": [
     {
-      "setCode": "bl",
+      "setCode": "nr",
       "number": "0003",
       "colekaRef": 3,
       "colekaId": "1188740",
       "pageUrl": "https://www.coleka.com/fr/cartes-de-collection/cartes-panini/naruto-ninja-ranks/groupe-7-kakashi-sasuke_i1188740",
       "backUrl": "https://www.coleka.com/media/item/202205/23/coleka-carte-panini-naruto.webp",
-      "note": "Fiche item GS03 — seule photo listing = verso FR. Recto curé à part (`curatedFaces`). Ref. 003 sur la base `nr` est une autre carte (puzzle)."
+      "note": "Fiche item « Groupe 7 kakashi sasuke » = carte de base **3** (pièce puzzle), pas GS03/BL-3. Le verso imprime le n° 3 et « GROUPE 7 / KAKASHI SASUKE ». Ancien mapping erroné vers `bl-0003` corrigé 2026-08-27. Recto FR via `art.reconstructed` (`nr/fr/0003`)."
     }
   ],
   "rejectedFaces": [
@@ -37,21 +37,14 @@
       "reason": "Remplacé par `art.reconstructed` curé — texte FR language-specific (« SECOND EXAMEN DES SURVIVANTS »)."
     }
   ],
-  "curatedFaces": [
-    {
-      "setCode": "bl",
-      "number": "0003",
-      "printed": "GS03",
-      "pageUrl": "https://www.coleka.com/fr/cartes-de-collection/cartes-panini/naruto-ninja-ranks/groupe-7-kakashi-sasuke_i1188740",
-      "stagingFile": "bl-0003.webp",
-      "sourceFile": "curated/cards/bl/fr/0003/art.coleka.png",
-      "note": "Recto FR pièce puzzle `nr-0003` (« GROUPE 7 » Kakashi/Sasuke) — photo fiche item GS03. Verso FR via `backOnly` sur `bl-0003`. Ref. 003 listing base = autre gabarit absent."
-    }
-  ],
   "notIngested": [
     {
       "what": "Recto listing carte 3 (« Groupe 7 kakashi sasuke »)",
-      "reason": "vignette générique `coleka-carte-panini-naruto` sur le listing : le numéro ne s'y relit pas. Recto FR curé depuis la fiche item (`curatedFaces`, `art.coleka.png`). Verso FR via `backOnly` sur `bl-0003` (GS03), pas `nr-0003`."
+      "reason": "vignette générique `coleka-carte-panini-naruto` sur le listing : le numéro ne s'y relit pas. Recto FR = `art.reconstructed` sous `nr/fr/0003`. Verso FR via `backOnly` sur `nr-0003` (fiche item i1188740)."
+    },
+    {
+      "what": "Recto FR GS03 / bl-0003",
+      "reason": "Pas de scan Coleka attesté pour le box loader Sasuke. Ne pas réutiliser la fiche base 3 (GROUPE 7 puzzle) — mesuré 2026-08-27 : recto+verso de i1188740 portent le n° 3 de base. GS3 emprunte Imadoki IT / EN (`art.imadoki`)."
     },
     {
       "what": "Douze gabarits « pas encore photographiée » (6, 20, 21, 22, 48, 49, 52, 54, 57, 58, 61, 64)",

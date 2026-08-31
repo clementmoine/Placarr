@@ -50,6 +50,12 @@ export type PrintVariantInfo = {
   /** Native landscape scan — swap display aspect without rotating pixels. */
   landscapeFace?: boolean;
   landscapePrint?: boolean;
+  /** Kayou portrait scan gutter trim — single-face strips. */
+  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
+  /** Kayou HR lenticular sprite grid from the catalogue index. */
+  lenticularGrid?: { cols: number; rows: number } | null;
+  /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
+  lenticularCropProfile?: string | null;
 };
 
 /**
@@ -102,6 +108,12 @@ export type VariantRendering = {
   shader: HoloShader | null;
   /** How to draw the varnish coat. Null when the pack has no CSS varnish. */
   varnish: HoloShader | null;
+  /** Kayou HR sprite sheet — one panel at a time. */
+  lenticularGrid: { cols: number; rows: number } | null;
+  /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
+  lenticularCropProfile: string | null;
+  /** Kayou portrait scan crop — single-face HR/MR/BP strips. */
+  scanCrop: { left: number; top: number; right: number; bottom: number } | null;
   /** The hue that coat throws, when the provider knows it. */
   varnishColor: string | null;
   /** The second coat, on the prints that carry two. */
@@ -137,6 +149,9 @@ export function variantRendering(
     varnishMaskUrl: null,
     shader: null,
     varnish: null,
+    lenticularGrid: null,
+    lenticularCropProfile: null,
+    scanCrop: null,
     varnishColor: null,
     secondVarnishMaskUrl: null,
     secondVarnishColor: null,
@@ -188,13 +203,26 @@ export function variantRendering(
       ? info.varnishShaders![info.varnishType]
       : null);
 
+  const lenticularGrid = css?.lenticularGrid ?? info.lenticularGrid ?? null;
+  const scanCrop = info.scanCrop ?? null;
+  const lenticularPanels =
+    lenticularGrid && lenticularGrid.cols * lenticularGrid.rows > 1;
+  const effectiveFinishShaderId =
+    lenticularPanels &&
+    (!finishShaderId || finishShaderId === "flare")
+      ? "kayouLenticular"
+      : finishShaderId;
+
   return {
     imageUrl: info.variantImageUrls?.[resolved] ?? fallbackImageUrl,
     foilMaskUrl:
       info.finishFoilMaskUrls?.[resolved] ?? info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,
-    shader: holoShader(finishShaderId),
+    shader: holoShader(effectiveFinishShaderId),
     varnish: varnishShader(varnishShaderId),
+    lenticularGrid,
+    lenticularCropProfile: info.lenticularCropProfile ?? null,
+    scanCrop,
     varnishColor: info.varnishColor ?? null,
     secondVarnishMaskUrl: info.secondVarnishMaskUrl ?? null,
     secondVarnishColor: info.secondVarnishColor ?? null,

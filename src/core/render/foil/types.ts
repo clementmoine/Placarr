@@ -85,6 +85,12 @@ export type FoilMaterial = {
 export type FoilCssRecipe = {
   finishShaderId: string | null;
   varnishShaderId: string | null;
+  /** Kayou HR sprite sheet — one panel visible at a time. */
+  lenticularGrid?: { cols: number; rows: number } | null;
+  /** Attested per-panel crop profile — skips auto detection in the browser. */
+  lenticularCropProfile?: string | null;
+  /** Wide TCG frame when each lenticular panel is landscape (hr-2x1…). */
+  landscapeFace?: boolean;
 };
 
 export type EffectPackModule = {

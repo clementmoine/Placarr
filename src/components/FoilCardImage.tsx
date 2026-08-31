@@ -152,6 +152,12 @@ type FoilCardImageProps = {
    */
   cssFinishShaderId?: string | null;
   cssVarnishShaderId?: string | null;
+  /** Kayou HR/BP sprite crop — from print lookup or playroom resolveCss. */
+  lenticularGrid?: { cols: number; rows: number } | null;
+  /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
+  lenticularCropProfile?: string | null;
+  /** Kayou portrait scan gutter trim — single-face strips. */
+  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
   fit?: "cover" | "contain";
   tuning?: HoloTuning;
   tilt?: boolean;
@@ -217,6 +223,9 @@ function CssFoilFace({
   varnishColor,
   finishShaderId,
   varnishShaderId,
+  lenticularGrid,
+  lenticularCropProfile,
+  scanCrop,
   fit,
   tuning,
   tilt,
@@ -236,6 +245,9 @@ function CssFoilFace({
   varnishColor?: string | null;
   finishShaderId: string | null;
   varnishShaderId: string | null;
+  lenticularGrid?: { cols: number; rows: number } | null;
+  lenticularCropProfile?: string | null;
+  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
   fit?: "cover" | "contain";
   tuning?: HoloTuning;
   tilt?: boolean;
@@ -258,6 +270,9 @@ function CssFoilFace({
       fit={fit}
       shader={holoShader(finishShaderId)}
       varnishShader={varnishShaderFor(varnishShaderId)}
+      lenticularGrid={lenticularGrid}
+      lenticularCropProfile={lenticularCropProfile}
+      scanCrop={scanCrop}
       tuning={tuning}
       tilt={tilt}
       trackPointer={trackPointer}
@@ -309,6 +324,9 @@ export function FoilCardImage({
   varnishColor,
   cssFinishShaderId,
   cssVarnishShaderId,
+  lenticularGrid: lenticularGridProp,
+  lenticularCropProfile: lenticularCropProfileProp,
+  scanCrop: scanCropProp,
   fit = "contain",
   tuning,
   tilt = true,
@@ -397,11 +415,21 @@ export function FoilCardImage({
   // a stale `finish` prop names another print's foil.
   const cssRecipe =
     material?.webgl === false || foilMaskMissing
-      ? { finishShaderId: null, varnishShaderId: null }
+      ? { finishShaderId: null, varnishShaderId: null, lenticularGrid: null }
       : {
           finishShaderId: fromPack.finishShaderId ?? cssFinishShaderId ?? null,
           varnishShaderId:
             fromPack.varnishShaderId ?? cssVarnishShaderId ?? null,
+          lenticularGrid:
+            lenticularGridProp ?? fromPack.lenticularGrid ?? null,
+          ...(lenticularCropProfileProp ?? fromPack.lenticularCropProfile
+            ? {
+                lenticularCropProfile:
+                  lenticularCropProfileProp ??
+                  fromPack.lenticularCropProfile ??
+                  null,
+              }
+            : {}),
         };
 
   const slotId = useId();
@@ -686,6 +714,9 @@ export function FoilCardImage({
       varnishColor={varnishColor}
       finishShaderId={cssRecipe.finishShaderId}
       varnishShaderId={cssRecipe.varnishShaderId}
+      lenticularGrid={cssRecipe.lenticularGrid}
+      lenticularCropProfile={cssRecipe.lenticularCropProfile}
+      scanCrop={scanCropProp}
       fit={fit}
       tuning={tuning}
       tilt={tilt}

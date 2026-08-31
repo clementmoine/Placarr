@@ -66,7 +66,7 @@ describe("un tirage n'est jamais enrichi par le provider d'un autre jeu", () => 
     for (const provider of tcgModulesWithLookup()) {
       if (typeof provider.createMetadataAdapter !== "function") continue;
       // Le provider qui possède ce jeu a évidemment le droit de répondre.
-      if (provider.info.id === "narutoccg") continue;
+      if (provider.info.id === "narutocarddass") continue;
       const adapter = provider.createMetadataAdapter();
       if (!adapter) continue;
       for (const { printKey, name } of cases) {

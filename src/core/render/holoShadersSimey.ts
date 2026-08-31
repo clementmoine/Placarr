@@ -8,7 +8,7 @@
  * light mask, sunpillar-style diagonals without a spectrum slot).
  *
  * Staging reference CSS: `data/pokemon/staging/simey/{poke-holo,poke-151}/`
- * (`pnpm foil:pokemon:simey`). Not loaded in the browser.
+ * (sync Simey CSS (local tool)). Not loaded in the browser.
  * Leafs with no simey analogue (Thatch, Tinsel, Squares, SunBeam/SunLava,
  * Stamped, Confetti, SolidColor) stay on APK recipes in `holoShadersPokemon.ts`.
  * SunPillar ↔ poke-151 `ex-regular`; AngledPillars ↔ `ex-full-art`.

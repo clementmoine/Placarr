@@ -207,6 +207,8 @@ export function OrientedMediaFrame({
     landscapeFace,
   });
   const ratio = parseAspect(oriented);
+  const ratioW = ratio?.w ?? 0;
+  const ratioH = ratio?.h ?? 0;
   const hostRef = useRef<HTMLDivElement>(null);
   const [containPx, setContainPx] = useState<{
     width: number;
@@ -214,25 +216,33 @@ export function OrientedMediaFrame({
   } | null>(null);
 
   useLayoutEffect(() => {
-    if (fit !== "contain" || !ratio) return;
+    if (fit !== "contain" || !(ratioW > 0 && ratioH > 0)) return;
     const host = hostRef.current;
     if (!host) return;
 
     const update = () => {
       const rect = host.getBoundingClientRect();
-      setContainPx(
-        containOrientedBox(rect.width, rect.height, ratio.w, ratio.h),
-      );
+      const next = containOrientedBox(rect.width, rect.height, ratioW, ratioH);
+      setContainPx((prev) => {
+        if (
+          prev &&
+          Math.abs(prev.width - next.width) < 0.5 &&
+          Math.abs(prev.height - next.height) < 0.5
+        ) {
+          return prev;
+        }
+        return next;
+      });
     };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(host);
     return () => ro.disconnect();
-  }, [fit, oriented, ratio]);
-  const containBox = fit === "contain" && ratio ? containPx : null;
+  }, [fit, oriented, ratioW, ratioH]);
+  const containBox = fit === "contain" && ratioW > 0 && ratioH > 0 ? containPx : null;
 
   const sizeStyle: CSSProperties = (() => {
-    if (fit === "contain" && ratio) {
+    if (fit === "contain" && ratioW > 0 && ratioH > 0) {
       if (!containBox || containBox.width <= 0 || containBox.height <= 0) {
         return { width: 0, height: 0, aspectRatio: oriented };
       }

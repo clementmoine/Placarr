@@ -34,6 +34,7 @@ export const HOUSE_HOLO_SHADER_IDS = [
   "sparkle",
   "etch",
   "flare",
+  "kayouLenticular",
 ] as const;
 
 export type HouseHoloShaderId = (typeof HOUSE_HOLO_SHADER_IDS)[number];
@@ -200,6 +201,23 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
     // Brightest as the card turns away from you, which is when a real foil
     // catches the light; settles as you face it.
     filter: `brightness(${lit(0.95, 0.5)})`,
+  },
+
+  /**
+   * Kayou HR lenticular — the flip lives on the art layer (sprite crop). This
+   * coat is a light glint only; `pointerFalloff: false` so it crosses the
+   * whole face like a physical lenticular laminate.
+   */
+  kayouLenticular: {
+    id: "kayouLenticular",
+    backgroundImage: `linear-gradient(-45deg, transparent 46%, rgba(255,255,255,0.55) 50%, transparent 54%)`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "250% 250%",
+    backgroundPosition: "var(--combined) center",
+    mixBlendMode: "soft-light",
+    opacity: 0.45,
+    pointerFalloff: false,
+    filter: `brightness(${lit(0.98, 0.25)})`,
   },
 };
 

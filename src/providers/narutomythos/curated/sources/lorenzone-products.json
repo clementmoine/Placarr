@@ -1,0 +1,76 @@
+{
+  "source": "LorenZone — produits scellés Naruto Mythos",
+  "url": "https://lorenzone.fr",
+  "observed": "2026-08-28",
+  "products": [
+    {
+      "slug": "display-konoha-shido-ch1-ed2-fr",
+      "kind": "display",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Display — Konoha Shidō / 1er Chapitre ED.2",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 10990,
+      "packsContained": 24,
+      "path": "https://lorenzone.fr/products/display-naruto-mythos-konoha-shido-chapitre-1-edition-2-fr",
+      "imageUrl": "https://lorenzone.fr/cdn/shop/files/Display-KonohaShido1erChapitreedition2.png?v=1772710037"
+    },
+    {
+      "slug": "team-set-konoha-shido-sasuke",
+      "kind": "deck",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Team Set — Konoha Shidō / Sasuke Uchiha",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 1590,
+      "path": "https://lorenzone.fr/products/team-set-konoha-shido-sasuke-uchiha",
+      "imageUrl": "https://lorenzone.fr/cdn/shop/files/TeamSet-KonohaShidoSasukeUchiha.png?v=1772652291"
+    },
+    {
+      "slug": "team-set-konoha-shido-kakashi",
+      "kind": "deck",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Team Set — Konoha Shidō / Kakashi Hatake",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 1590,
+      "path": "https://lorenzone.fr/products/team-set-konoha-shido-kakashi-hatake",
+      "imageUrl": "https://lorenzone.fr/cdn/shop/files/TeamSet-KonohaShidoKakashiHatake.png?v=1772651858"
+    },
+    {
+      "slug": "display-shinobi-shiren-set2-ed1-en",
+      "kind": "display",
+      "category": "Shinobi Shiren — Set 2",
+      "name": "Display — Shinobi Shiren / Set 2 ED.1 (EN)",
+      "lang": "en",
+      "priceCents": 11490,
+      "packsContained": 24,
+      "path": "https://lorenzone.fr/products/display-naruto-mythos-shinobi-shiren-set-2-ed1-en",
+      "imageUrl": "https://lorenzone.fr/cdn/shop/files/Display-NarutoMythos-Set2-ShinobiShiren-ED1-EN-LorenZone.png?v=1776445757"
+    },
+    {
+      "slug": "display-akatsuki-set3-ed1-fr",
+      "kind": "display",
+      "category": "Akatsuki — Chapitre 3",
+      "name": "Display — Akatsuki / Chapitre 3 ED.1",
+      "shopSku": "LZ-DISPLAY-NM3-FR",
+      "lang": "fr",
+      "priceCents": 12000,
+      "packsContained": 24,
+      "path": "https://lorenzone.fr/products/display-naruto-mythos-akatsuki-set-3-ed1-fr",
+      "imageUrl": "https://lorenzone.fr/cdn/shop/files/display-naruto-mythos-akatsuki-chapitre-3-ed1-fr-lorenzone.png?v=1786781398"
+    },
+    {
+      "slug": "display-akatsuki-set3-ed1-en",
+      "kind": "display",
+      "category": "Akatsuki — Set 3",
+      "name": "Display — Akatsuki / Set 3 ED.1 (EN)",
+      "shopSku": "LZ-DISPLAY-NM3-EN",
+      "lang": "en",
+      "priceCents": 12000,
+      "packsContained": 24,
+      "path": "https://lorenzone.fr/products/display-naruto-mythos-akatsuki-set-3-ed1-en",
+      "imageUrl": "https://lorenzone.fr/cdn/shop/files/display-naruto-mythos-akatsuki-set-3-ed1-en-lorenzone.png?v=1786781398"
+    }
+  ]
+}

@@ -240,13 +240,24 @@ type AdaptedPrint = {
 /** Cap how many prints we resolve per material — enough to find a mask, not the whole set. */
 const PRINT_RESOLVE_CAP = 12;
 
-function printInfoFromSample(
+/** @internal exported for unit tests */
+export function printInfoFromSample(
   sample: PlayroomSample,
   info: PrintVariantInfo | null,
 ): PrintVariantInfo | null {
+  const sampleVariant = sample.variant?.trim().toLowerCase() ?? "";
   if (info) {
+    const finishes = [...(info.finishes ?? [])];
+    if (
+      sampleVariant &&
+      !finishes.some((finish) => finish.trim().toLowerCase() === sampleVariant)
+    ) {
+      // Playroom material (Kayou hr-2x2…) vs collection finish axis (hr).
+      finishes.push(sample.variant!.trim());
+    }
     return {
       ...info,
+      finishes,
       foilMaskUrl: info.foilMaskUrl ?? sample.foilMaskUrl ?? null,
       varnishMaskUrl: info.varnishMaskUrl ?? sample.varnishMaskUrl ?? null,
       secondVarnishMaskUrl:
@@ -471,6 +482,11 @@ function MaterialTile({
   const stack = size === "stack";
   const faceQuarterTurns = packArt?.faceQuarterTurns ?? 0;
   const baseAspect = getAspectRatio("tcg", "tcg");
+  const cssForMaterial = pack?.resolveCss?.(
+    finish ?? materialName,
+    varnish ?? null,
+  );
+  const lenticularLandscapeFace = cssForMaterial?.landscapeFace === true;
   const captionClass = focus
     ? "text-sm font-medium leading-tight"
     : "truncate text-[11px] font-medium leading-tight";
@@ -492,6 +508,7 @@ function MaterialTile({
     <OrientedMediaFrame
       aspectRatio={baseAspect}
       faceQuarterTurns={faceQuarterTurns}
+      landscapeFace={lenticularLandscapeFace}
       // `contain` needs a parent with height (single focus stage). Stacked
       // faces live in a scroll column with no fixed height — `contain` then
       // resolves to 0×0 and the captions float over empty space.
@@ -572,9 +589,8 @@ function MaterialTile({
           material?.webgl === false ? null : (packArt?.foilMask ?? null)
         }
         finish={
-          material?.webgl === false
-            ? (finish ?? materialName)
-            : (finish ?? own?.finish)
+          finish ??
+          (material?.webgl === false ? materialName : own?.finish ?? materialName)
         }
         // Only pass varnish from the material under test — not from a random
         // adapted print that happens to carry a varnish coat.
@@ -706,7 +722,17 @@ export function FoilPlayroom({
   );
   const showFoilPlayroom =
     catalogueInfo.hasFoilEffects && browseScope === "foils";
-  const packId = cataloguePackId;
+  /** Effect-pack id (may differ from catalogue path, e.g. naruto/kayou → naruto-kayou). */
+  const packId =
+    resolveEffectPackId(
+      cataloguePackId,
+      packs.map((entry) => entry.id),
+    ) ??
+    resolveEffectPackId(
+      catalogueInfo.extractTarget,
+      packs.map((entry) => entry.id),
+    ) ??
+    cataloguePackId;
   /**
    * Live faces for a material: server-resolved when the prop is there, else the
    * pack — which in the browser can only offer the TCGdex seed.
@@ -729,7 +755,7 @@ export function FoilPlayroom({
   const [tilt, setTilt] = useState(true);
 
   const pack = packs.find((entry) => entry.id === packId) ?? null;
-  const extractTarget = foilExtractTargetForPack(packId);
+  const extractTarget = foilExtractTargetForPack(cataloguePackId);
   // Re-read after foil-meta hydrate (manifest / frag-stems).
   const materials = useMemo(() => {
     void metaReady;
@@ -1092,7 +1118,7 @@ export function FoilPlayroom({
                           art?.imageUrl ??
                           `${focusedMaterial}:face-${artIndex}`
                         }
-                        className="flex w-full shrink-0 justify-center"
+                        className="flex min-h-0 w-full flex-1 justify-center"
                       >
                         <MaterialTile
                           key={`${pack?.id ?? packId}:${focusedMaterial}:${art?.bundleId ?? artIndex}`}
@@ -1102,7 +1128,7 @@ export function FoilPlayroom({
                           backend={backend}
                           tilt={tilt}
                           locale={locale}
-                          size="stack"
+                          size="focus"
                           packArt={art}
                         />
                       </div>

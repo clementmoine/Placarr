@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  printInfoFromSample,
   resolveEffectPackId,
   resolvePlayroomLayout,
   resolvePlayroomMaterial,
 } from "@/components/admin/FoilPlayroom";
+import { variantRendering } from "@/lib/client/hooks/usePrintVariant";
 
 const IDS = ["lorcana", "pokemon"] as const;
 const MATERIALS = ["SvHolo", "SvUltra", "SvUltraGoldRainbow"] as const;
@@ -28,6 +30,12 @@ describe("resolveEffectPackId", () => {
   it("mappe l'ancien slug pokemonpaper", () => {
     expect(resolveEffectPackId("pokemonpaper", IDS)).toBe("pokemon");
     expect(resolveEffectPackId("Pokemon-Paper", IDS)).toBe("pokemon");
+  });
+
+  it("mappe le chemin catalogue Kayou vers le pack d'effets", () => {
+    expect(
+      resolveEffectPackId("naruto/kayou", ["naruto-kayou", "pokemon"]),
+    ).toBe("naruto-kayou");
   });
 
   it.each([null, undefined, "", "magic"])("ne devine rien pour %s", (slug) => {
@@ -87,5 +95,35 @@ describe("compare layout", () => {
     expect(resolvePlayroomLayout(undefined)).toBe("grid");
     // Not a prefix match: a stray value must not fall into compare.
     expect(resolvePlayroomLayout("comp")).toBe("grid");
+  });
+});
+
+describe("printInfoFromSample", () => {
+  it("keeps playroom material finishes when the print only exposes collection axis", () => {
+    const sample = {
+      id: "kayou:smritiheavenscrolls1-nrss.hr.002:hr-2x2",
+      name: "Sasuke & Naruto",
+      variant: "hr-2x2",
+      printKey: "kayou:smritiheavenscrolls1-nrss.hr.002",
+      shelfType: "tcg",
+      imageUrl: "/assets/naruto/kayou/cards/smritiheavenscrolls1/en/nrss.hr.002/art.narutocards.webp",
+      foilMaskUrl: "/assets/naruto/kayou/full_foil_mask.webp",
+      effectPack: "naruto-kayou",
+    };
+    const merged = printInfoFromSample(sample, {
+      finishes: ["normal", "hr", "holo"],
+      plainFinishes: ["normal"],
+      effectPack: "naruto-kayou",
+    });
+    expect(merged?.finishes).toContain("hr-2x2");
+    const rendered = variantRendering(
+      "hr-2x2",
+      merged,
+      sample.imageUrl,
+    );
+    expect(rendered.imageUrl).toBe(sample.imageUrl);
+    expect(rendered.foilMaskUrl).toBe(sample.foilMaskUrl);
+    expect(rendered.shader?.id).toBe("kayouLenticular");
+    expect(rendered.lenticularGrid).toEqual({ cols: 2, rows: 2 });
   });
 });

@@ -27,6 +27,11 @@ export const IDLE_LEAN_FACTOR = 0.35;
  * which ran at 2× and fought the tip). It is still not `x + y` — that sum
  * cancels on the anti-diagonal and freezes finishes keyed on `--combined`.
  */
+/** Idle fake-pointer swing — shared with lenticular idle scrub mapping. */
+export const IDLE_POINTER_CENTER = 50;
+export const IDLE_POINTER_X_AMP = 28;
+export const IDLE_POINTER_Y_AMP = 22;
+
 export function idlePointerFromSeconds(seconds: number): {
   x: number;
   y: number;
@@ -36,8 +41,8 @@ export function idlePointerFromSeconds(seconds: number): {
   const w = Math.cos(seconds);
   const abs = Math.abs(w);
   return {
-    x: 50 + w * 28,
-    y: 50 - w * 22,
+    x: IDLE_POINTER_CENTER + w * IDLE_POINTER_X_AMP,
+    y: IDLE_POINTER_CENTER - w * IDLE_POINTER_Y_AMP,
     // Soft glare that peaks mid-sweep — same band as the old `holo-drift`
     // keyframes (0.12 → 0.3), so the pointer still has somewhere to go.
     glare: 0.12 + (1 - abs) * 0.18,

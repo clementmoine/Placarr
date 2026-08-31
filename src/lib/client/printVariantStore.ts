@@ -29,8 +29,24 @@ const MAX_BATCH_KEYS = 120;
  */
 /** Bumped when CSS must re-resolve via pack (effectPack + resolveCss). */
 /** Bumped again when faceQuarterTurns joined the print payload. */
-/** Bumped when landscapePrint + dimension-based orientation joined the payload. */
-const PRINT_VARIANT_CACHE_VERSION = 8;
+/** Bumped when Kayou scanCrop joined the print payload. */
+/** Bumped when Kayou landscapePrint / lenticularGrid re-mark (t4w6 MR upright). */
+/** Bumped when Ninja Age cc.* landscapePrint joined. */
+/** Bumped when Kayou fixed lenticular crop profiles ship (t4w* dual-wave). */
+/** Bumped when Ninja Age cc landscapePrint narrowed to cc.r / cc.sr only. */
+/** Bumped when t4w1 small-scale lenticular strips (nr.hr.010) seam-probe. */
+/** Bumped when Kayou PR compact pivot scans (nrz07.pr.060) landscapePrint. */
+/** Bumped when stale cc.mr/ptr/qr landscapePrint flags clear from index. */
+/** Bumped when N×M lenticular grids scrub both horizontal and vertical axes. */
+/** Bumped when N×M bottom-row horizontal scrub no longer loses to global Y. */
+/** Bumped when catalogue nr.pr.* landscapePrint clears (portrait promos). */
+/** Bumped when t2w7 story R panels (chapter titles) landscapePrint. */
+/** Bumped when nrb07 character MRs stay portrait (tighter MR pivot window). */
+/** Bumped when t4w6 R-NNN stub story panels landscapePrint. */
+/** Bumped when ninjaageboxn wedding MR uses kayouofficial native landscape. */
+/** Bumped when attested CDN nr.pr.* landscape pivots (058/060–062/068–070). */
+/** Bumped when Naruto 術-192/348/358 gain illustration-B variantImageUrls. */
+const PRINT_VARIANT_CACHE_VERSION = 53;
 
 /** `type` is part of the key: it decides which providers are even asked. */
 function cacheKey(printKey: string, type: string): string {

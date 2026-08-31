@@ -21,6 +21,20 @@ import {
 } from "@/core/render/holoShaders";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { applyFoilPointerCss } from "@/core/render/foil/pointerCss";
+import {
+  lenticularArtAspectRatio,
+  lenticularIdlePanelIndex,
+  lenticularNormFromIdleLean,
+  lenticularNormFromLean,
+  type LenticularGrid,
+  type LenticularPanelCrop,
+} from "@/core/render/kayouLenticularArt";
+import { kayouScanContentAspectRatio } from "@/core/render/kayouScanCrop";
+import {
+  LenticularStripArt,
+  type LenticularStripArtHandle,
+} from "@/components/LenticularStripArt";
+import { KayouScanArt } from "@/components/KayouScanArt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
 import { useFoilPointerSpring } from "@/lib/client/hooks/useFoilPointerSpring";
@@ -106,6 +120,12 @@ type HoloCardImageProps = {
   cardGlow?: string | null;
   /** Fired when the artwork finishes loading (for letterbox edge bleed, etc.). */
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
+  /** Kayou HR sprite sheet — show one panel from tilt instead of the full strip. */
+  lenticularGrid?: LenticularGrid | null;
+  /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
+  lenticularCropProfile?: string | null;
+  /** Kayou portrait scan gutter trim — single-face strips. */
+  scanCrop?: LenticularPanelCrop | null;
   className?: string;
   children?: React.ReactNode;
 };
@@ -148,10 +168,14 @@ export function HoloCardImage({
   trackPointer = tilt,
   cardGlow = null,
   onLoad,
+  lenticularGrid = null,
+  lenticularCropProfile = null,
+  scanCrop = null,
   className,
   children,
 }: HoloCardImageProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
+  const lenticularRef = useRef<LenticularStripArtHandle>(null);
   const [isActive, setIsActive] = useState(false);
   /**
    * The artwork's own proportions, learned when it loads.
@@ -191,6 +215,8 @@ export function HoloCardImage({
   /** Catalogue leftover — same full-card / raw-etch rules as SwSecret. */
   const isSecretRareCss = shader?.id === "secretRare";
   const isLiveGoldCss = isUltraGoldCss || isSwSecretCss || isSecretRareCss;
+  /** Kayou HR — lenticular strip + full-card laminate sheen, no white-plate mask. */
+  const isKayouLenticularCss = shader?.id === "kayouLenticular";
   /**
    * Radiant CSS = Live etch invert + lattice unmasked.
    *
@@ -255,10 +281,16 @@ export function HoloCardImage({
   const wantsFoil = Boolean(
     (shader || varnishShader) &&
     (isLiveGoldCss ||
+      isKayouLenticularCss ||
       liveWpMaskUrl ||
       (isRadiantCss && varnishMaskUrl) ||
-      (!isRadiantCss && maskUrl)),
+      (!isRadiantCss && !isKayouLenticularCss && maskUrl)),
   );
+  const useLenticularArt = Boolean(
+    lenticularGrid && lenticularGrid.cols * lenticularGrid.rows > 1,
+  );
+  const useKayouScanArt = Boolean(scanCrop) && !useLenticularArt;
+  const parentDrivesLenticular = useLenticularArt && trackPointer;
   const faceReady = foilFaceReady({
     artReady,
     wantsFoil,
@@ -283,6 +315,42 @@ export function HoloCardImage({
     [onLoad],
   );
 
+  const onKayouScanLoad = useCallback(
+    (
+      naturalWidth: number,
+      naturalHeight: number,
+      crop: LenticularPanelCrop,
+    ) => {
+      setArtRatio(
+        kayouScanContentAspectRatio(naturalWidth, naturalHeight, crop),
+      );
+      setArtReady(true);
+    },
+    [],
+  );
+
+  const onLenticularProbeLoad = useCallback(
+    (
+      naturalWidth: number,
+      naturalHeight: number,
+      panelCrops: LenticularPanelCrop[] = [],
+    ) => {
+      if (lenticularGrid && lenticularGrid.cols * lenticularGrid.rows > 1) {
+        setArtRatio(
+          lenticularArtAspectRatio(
+            naturalWidth,
+            naturalHeight,
+            lenticularGrid,
+            lenticularIdlePanelIndex(lenticularGrid),
+            panelCrops.length > 0 ? panelCrops : null,
+          ),
+        );
+      }
+      setArtReady(true);
+    },
+    [lenticularGrid],
+  );
+
   /** Pointer on the card, or phone in the hand: either way the light is placed. */
   const isDriven = isActive || Boolean(deviceLean);
 
@@ -303,11 +371,20 @@ export function HoloCardImage({
     ) => {
       const frame = frameRef.current;
       if (!frame) return;
-      // Idle may pass a travelling `--combined` (not lightX+lightY). Motif
-      // scroll + soft idle glare share the same lean as pointer mode.
       applyFoilPointerCss(frame, lean, glare, combined, mode);
+      if (parentDrivesLenticular && lenticularGrid) {
+        const norm =
+          mode === "idle"
+            ? lenticularNormFromIdleLean(lenticularGrid, lean)
+            : lenticularNormFromLean(
+                lenticularGrid,
+                lean.lightX,
+                lean.lightY,
+              );
+        lenticularRef.current?.setTarget(norm.x, norm.y);
+      }
     },
-    [],
+    [lenticularGrid, parentDrivesLenticular],
   );
 
   const { setTarget: springTo, snap: springSnap } = useFoilPointerSpring(place);
@@ -324,7 +401,7 @@ export function HoloCardImage({
   const idleEnabled = holoCssIdleEnabled({
     hasFinish: Boolean(shader || varnishShader),
     isDriven,
-    fullCardFinish: isLiveGoldCss,
+    fullCardFinish: isLiveGoldCss || isKayouLenticularCss,
     shineMask,
   });
   const { noteLean } = useFoilIdleLean(
@@ -366,6 +443,38 @@ export function HoloCardImage({
     springTo(deviceLean, 0.4);
   }, [deviceLean, isActive, springTo, noteLean]);
 
+  const artLayer =
+    useLenticularArt && lenticularGrid ? (
+      <LenticularStripArt
+        ref={parentDrivesLenticular ? lenticularRef : undefined}
+        imageUrl={imageUrl}
+        grid={lenticularGrid}
+        alt={alt}
+        className="h-full w-full"
+        listenPointer={!parentDrivesLenticular}
+        tilt={parentDrivesLenticular ? 0 : undefined}
+        lenticularCropProfile={lenticularCropProfile}
+        onLoad={onLenticularProbeLoad}
+      />
+    ) : useKayouScanArt ? (
+      <KayouScanArt
+        imageUrl={imageUrl}
+        alt={alt}
+        scanCrop={scanCrop}
+        className="h-full w-full"
+        onLoad={onKayouScanLoad}
+      />
+    ) : (
+      /* eslint-disable-next-line @next/next/no-img-element */
+      <img
+        src={imageUrl}
+        alt={alt}
+        draggable={false}
+        onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
+        className={cn("h-full w-full", objectFitClass(fit))}
+      />
+    );
+
   if (!faceReadyForPaint) {
     return (
       <div
@@ -394,36 +503,40 @@ export function HoloCardImage({
     );
   }
 
-  /** No mask / no CSS recipe — better a plain card than a guessed sheen. */
-  // Packs without a CSS recipe (null shaders) stay plain even when a mask URL
-  // exists — core must not invent a TCG default look.
+  /** No mask / no CSS recipe — plain art (lenticular strips still apply). */
   if (!wantsFoil) {
     return (
       <div
-        /**
-         * Carries the frame's radius and clips to it, exactly as the foil branch
-         * does. Without this a plain card came out square-cornered wherever its
-         * frame relied on the card to clip — which is every card that is not
-         * foil, now that they all get the card treatment.
-         */
         className={cn(
           "relative h-full w-full select-none overflow-hidden rounded-[inherit]",
           className,
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt={alt}
-          draggable={false}
-          ref={(img) => {
-            if (img?.complete && img.naturalWidth > 0 && !artReady) {
-              noteArtLoaded(img);
-            }
-          }}
-          onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
-          className={cn("h-full w-full rounded-[inherit]", objectFitClass(fit))}
-        />
+        {!useLenticularArt ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={imageUrl}
+            alt={alt}
+            draggable={false}
+            onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
+            className={cn("h-full w-full rounded-[inherit]", objectFitClass(fit))}
+          />
+        ) : (
+          <div className="relative flex h-full w-full items-center justify-center">
+            <div
+              className="relative h-full w-full"
+              style={
+                useLenticularArt
+                  ? { width: "100%", height: "100%" }
+                  : fit === "contain" && artRatio
+                    ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
+                    : { width: "100%", height: "100%" }
+              }
+            >
+              {artLayer}
+            </div>
+          </div>
+        )}
         {children}
       </div>
     );
@@ -526,24 +639,14 @@ export function HoloCardImage({
             <div
               className="relative"
               style={
-                fit === "contain" && artRatio
-                  ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
-                  : { width: "100%", height: "100%" }
+                useLenticularArt
+                  ? { width: "100%", height: "100%" }
+                  : fit === "contain" && artRatio
+                    ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
+                    : { width: "100%", height: "100%" }
               }
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageUrl}
-                alt={alt}
-                /**
-                 * Dragging the artwork hands the pointer to the browser's own
-                 * drag, which stops `pointermove` — the card freezes mid-lean
-                 * with its light stuck wherever the drag began.
-                 */
-                draggable={false}
-                onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
-                className={cn("h-full w-full", objectFitClass(fit))}
-              />
+              {artLayer}
 
               {/*
                 Radiant paint order (Live etch has no lozenge bake):

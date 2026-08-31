@@ -37,6 +37,11 @@ export type CreatePrintKeyPriceModuleSpec<TCard> = {
   referencePriceSource?: boolean;
   /** Ignore les printKeys d'un autre jeu (ex. `pokemon` pour TCGdex). */
   printGame?: string;
+  /**
+   * Déclare que `refreshBarcodePriceOffers` honore `evidenceOnly` (rejoue le
+   * cache ProviderEvidence, aucun HTTP sur miss).
+   */
+  evidenceOnlyPriceRefresh?: boolean;
   mappingProbe: {
     sampleInput: string;
     /** `name` requis — alimente aussi le contexte prix du probe. */
@@ -180,6 +185,9 @@ export function createPrintKeyPriceModule<TCard>(
       ...(spec.websiteUrl ? { websiteUrl: spec.websiteUrl } : {}),
       notes: spec.notes,
       ...(spec.referencePriceSource ? { referencePriceSource: true } : {}),
+      ...(spec.evidenceOnlyPriceRefresh
+        ? { evidenceOnlyPriceRefresh: true }
+        : {}),
     },
     mappingProbe: {
       sampleInput: spec.mappingProbe.sampleInput,

@@ -60,6 +60,12 @@ export type CardsIndexEntry = {
   rarity?: string;
   /** True when any locale art scan is wider than tall. */
   landscapePrint?: boolean;
+  /** Kayou HR/BP sprite sheet — cols×rows panels in one portrait strip. */
+  lenticularGrid?: { cols: number; rows: number };
+  /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
+  lenticularCropProfile?: string;
+  /** Kayou single-face portrait scan — gutter trim for display (320×450). */
+  scanCrop?: { left: number; top: number; right: number; bottom: number };
 };
 
 export type CardsIndexV1 = {

@@ -1,0 +1,107 @@
+{
+  "source": "cardgameclub.it — CACG italien (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "note": "Same CACG game as FR Carddass, not Bandai CCG. Italian series titles (Forza della Foglia / Spire del Serpente / Maledizione della Sabbia) are the territorial split, not FR starters. Only these six product pages — do not crawl /collections/naruto. Shop GTINs 9771129462918 and 9771129462017 are reused across SKUs (ISSN-shaped, not a barcode). Do not identify from them. Busta = 8 cards; display = 24 buste; mazzo = 40 (shop copy), contents unknown. Live Shopify has S1–S3 only (2026-08-17).",
+  "ingestCollection": false,
+  "probedMissingSealed": {
+    "observed": "2026-08-17",
+    "status": 404,
+    "note": "Guessed S4–S6 handles from the S1–S3 SKU pattern. Product + .json URLs 404. Do not crawl /collections/naruto. S6 IT booster later attested via eBay itm/265148225277 → SKU booster-s6-it.",
+    "handles": [
+      "na04ven-ica08bu",
+      "na04ven-ibu24di",
+      "na04red-ica08bu",
+      "na05ere-ica08bu",
+      "na05sog-ica08bu",
+      "na06riv-ica08bu",
+      "na06riv-ibu24di",
+      "na06riv-isin1mz"
+    ]
+  },
+  "products": [
+    {
+      "slug": "display-s1-it",
+      "handle": "na01for-ibu24di",
+      "sku": "NA01FOR-IBU24DI",
+      "setCode": "s1",
+      "kind": "display",
+      "lang": "IT",
+      "title": "Display Série 1 — La Forza della Foglia",
+      "url": "https://cardgameclub.it/products/na01for-ibu24di",
+      "image": "https://cdn.shopify.com/s/files/1/0918/2072/0513/files/image_a37237af-0de1-4d28-b593-d2fdeec02659.png",
+      "staging": "staging/cardgameclub/display-s1-it.png",
+      "ingest": true,
+      "barcode": null
+    },
+    {
+      "slug": "starter-forza-della-foglia",
+      "handle": "na01for-isin1mz",
+      "sku": "NA01FOR-ISIN1MZ",
+      "setCode": "s1",
+      "kind": "deck",
+      "lang": "IT",
+      "title": "Mazzo La Forza della Foglia (Naruto)",
+      "url": "https://cardgameclub.it/products/na01for-isin1mz",
+      "image": "https://cdn.shopify.com/s/files/1/0918/2072/0513/files/image_6e593efe-44a3-4be4-89db-9bc9c16dfa19.png",
+      "staging": "staging/cardgameclub/starter-forza-della-foglia.png",
+      "ingest": true,
+      "barcode": null
+    },
+    {
+      "slug": "booster-s1-it",
+      "handle": "na01for-ica08bu",
+      "sku": "NA01FOR-ICA08BU",
+      "setCode": "s1",
+      "kind": "booster",
+      "lang": "IT",
+      "title": "Booster Série 1 — La Forza della Foglia",
+      "url": "https://cardgameclub.it/products/na01for-ica08bu",
+      "image": "https://cdn.shopify.com/s/files/1/0918/2072/0513/files/image_4a31ed80-a9e2-48c6-8d39-d41d36665ef7.png",
+      "staging": "staging/cardgameclub/booster-s1-it.png",
+      "ingest": true,
+      "barcode": null
+    },
+    {
+      "slug": "display-s2-it",
+      "handle": "na02spi-ibu24di",
+      "sku": "NA02SPI-IBU24DI",
+      "setCode": "s2",
+      "kind": "display",
+      "lang": "IT",
+      "title": "Display Série 2 — Le Spire del Serpente",
+      "url": "https://cardgameclub.it/products/na02spi-ibu24di",
+      "image": "https://cdn.shopify.com/s/files/1/0918/2072/0513/files/image_10dfc906-3e9f-4948-9184-4f9b054749df.png",
+      "staging": "staging/cardgameclub/display-s2-it.png",
+      "ingest": true,
+      "barcode": null
+    },
+    {
+      "slug": "booster-s2-it",
+      "handle": "na02spi-ica08bu",
+      "sku": "NA02SPI-ICA08BU",
+      "setCode": "s2",
+      "kind": "booster",
+      "lang": "IT",
+      "title": "Booster Série 2 — Le Spire del Serpente",
+      "url": "https://cardgameclub.it/products/na02spi-ica08bu",
+      "image": "https://cdn.shopify.com/s/files/1/0918/2072/0513/files/image_1f8fe0af-b00a-4ce8-bebe-10eb9ec84752.png",
+      "staging": "staging/cardgameclub/booster-s2-it.png",
+      "ingest": true,
+      "barcode": null
+    },
+    {
+      "slug": "booster-s3-it",
+      "handle": "na03mal-ica08bu",
+      "sku": "NA03MAL-ICA08BU",
+      "setCode": "s3",
+      "kind": "booster",
+      "lang": "IT",
+      "title": "Booster Série 3 — La Maledizione della Sabbia",
+      "url": "https://cardgameclub.it/products/na03mal-ica08bu",
+      "image": "https://cdn.shopify.com/s/files/1/0918/2072/0513/files/image_361f704e-8a3a-43c3-a6fc-8ff6fec3620f.png",
+      "staging": "staging/cardgameclub/booster-s3-it.png",
+      "ingest": true,
+      "barcode": null
+    }
+  ]
+}

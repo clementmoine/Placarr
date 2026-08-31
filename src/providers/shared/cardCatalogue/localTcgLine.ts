@@ -11,11 +11,16 @@ import path from "node:path";
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import {
+  assetsCardUrl,
+  type CardDiskId,
+} from "@/lib/packAssetUrls";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
+import type { MetadataResult } from "@/types/metadataProvider";
 import type {
+  MetadataAdapterContext,
   PrintCandidate,
   ProviderCatalogHooks,
   ProviderModule,
@@ -31,6 +36,12 @@ export type LocalTcgLineSpec = {
   providerId: string;
   providerLabel: string;
   catalogueLabel: string;
+  /**
+   * Autres noms d'étagère pour ce catalogue (voir `ProviderInfo.catalogueAliases`).
+   */
+  catalogueAliases?: Array<
+    string | { label: string; language?: "fr" | "en" | "ja" | "it" | "de" }
+  >;
   factLabel: string;
   packId: string;
   effectPackId: string;
@@ -40,8 +51,19 @@ export type LocalTcgLineSpec = {
   /** Ce que dit le health-check si la base n'est pas encore là. */
   syncHint: string;
   websiteUrl?: string;
-  formatReference?: (cardType: string, number: string) => string;
-  setLabel?: (setCode: string) => string;
+  /**
+   * Affiche la référence collectionneur. Le 3ᵉ argument (grouping) est
+   * optionnel — les lignes Bandai / promo Lorcana le passent. Le 4ᵉ
+   * (langue du titre / filtre) laisse un set afficher sa ref locale
+   * (ex. Ninja Ranks `BL-1` US vs `GS-1` EU).
+   */
+  formatReference?: (
+    cardType: string,
+    number: string,
+    grouping?: string | null,
+    language?: string | null,
+  ) => string;
+  setLabel?: (setCode: string, language?: string | null) => string;
   setSortKey?: (setCode: string) => number | null;
   /**
    * Traduit une requête utilisateur avant la recherche SQL (ex. référence
@@ -60,6 +82,17 @@ export type LocalTcgLineSpec = {
    * quand c'est `en`/`fr`, sinon `fr`.
    */
   searchPreferLanguage?: string;
+  /**
+   * URL face sous `/assets/…/cards/…`. Défaut : {@link assetsCardUrl}
+   * (`{set}/{lang}/{card}/`). Override pour les arbres Carddass-like
+   * (`{set}/{card}/{lang}/`, ex. 疾風伝).
+   */
+  cardAssetUrl?: (id: CardDiskId, file: string) => string;
+  /**
+   * Si le titre n'a pas de scan dans sa langue, emprunter une face d'une
+   * autre locale (comme Catalogue `bestFaceAcrossLocales`).
+   */
+  borrowFaceAcrossLocales?: boolean;
 };
 
 export type LocalTcgLine = {
@@ -78,48 +111,95 @@ export type LocalTcgLine = {
   curatedDir: () => string;
 };
 
-function defaultReference(cardType: string, number: string): string {
+function defaultReference(
+  cardType: string,
+  number: string,
+  grouping?: string | null,
+): string {
   const digits = number.replace(/^[a-z]+/i, "").replace(/^0+/, "");
   const prefix = cardType.trim().toUpperCase();
-  return `${prefix}-${digits || number}`;
+  const base = `${prefix}-${digits || number}`;
+  const group = grouping?.trim();
+  return group ? `${base}_${group.toUpperCase()}` : base;
+}
+
+function faceUrl(
+  spec: LocalTcgLineSpec,
+  id: CardDiskId,
+  file: string,
+): string {
+  return (spec.cardAssetUrl ?? ((diskId, name) => assetsCardUrl(spec.packId, diskId, name)))(
+    id,
+    file,
+  );
+}
+
+function resolveFaceFiles(
+  index: LocalPrintsIndex,
+  spec: LocalTcgLineSpec,
+  row: LocalPrintSearchRow,
+): {
+  diskLang: string;
+  art: string | null;
+  thumb: string | null;
+  back: string | null;
+} {
+  if (row.art || row.thumb || row.back) {
+    return {
+      diskLang: row.lang?.trim().toLowerCase(),
+      art: row.art,
+      thumb: row.thumb,
+      back: row.back,
+    };
+  }
+  if (!spec.borrowFaceAcrossLocales) {
+    return {
+      diskLang: row.lang?.trim().toLowerCase(),
+      art: null,
+      thumb: null,
+      back: null,
+    };
+  }
+  const borrowed = index.lookupAssets(row.printKey, {
+    preferLang: row.lang,
+  });
+  if (!borrowed) {
+    return {
+      diskLang: row.lang?.trim().toLowerCase(),
+      art: null,
+      thumb: null,
+      back: null,
+    };
+  }
+  return {
+    diskLang: borrowed.lang?.trim().toLowerCase(),
+    art: borrowed.art,
+    thumb: borrowed.thumb,
+    back: borrowed.back,
+  };
 }
 
 function toCandidate(
   spec: LocalTcgLineSpec,
+  index: LocalPrintsIndex,
   row: LocalPrintSearchRow,
 ): PrintCandidate {
   const format = spec.formatReference ?? defaultReference;
-  const reference = format(row.cardType, row.number);
-  const art = row.art
-    ? assetsPackFileUrl(
-        spec.packId,
-        "cards",
-        row.cardType.trim().toLowerCase(),
-        row.number.trim().toLowerCase(),
-        row.lang.trim().toLowerCase(),
-        row.art,
-      )
-    : null;
-  const thumb = row.thumb
-    ? assetsPackFileUrl(
-        spec.packId,
-        "cards",
-        row.cardType.trim().toLowerCase(),
-        row.number.trim().toLowerCase(),
-        row.lang.trim().toLowerCase(),
-        row.thumb,
-      )
-    : null;
-  const back = row.back
-    ? assetsPackFileUrl(
-        spec.packId,
-        "cards",
-        row.cardType.trim().toLowerCase(),
-        row.number.trim().toLowerCase(),
-        row.lang.trim().toLowerCase(),
-        row.back,
-      )
-    : null;
+  const reference = format(
+    row.cardType,
+    row.number,
+    row.grouping,
+    row.lang,
+  );
+  const set = row.cardType.trim().toLowerCase();
+  const card = row.grouping?.trim()
+    ? `${row.number.trim().toLowerCase()}-${row.grouping.trim().toLowerCase()}`
+    : row.number.trim().toLowerCase();
+  const faces = resolveFaceFiles(index, spec, row);
+  const diskId: CardDiskId = { set, lang: faces.diskLang, card };
+  const art = faces.art ? faceUrl(spec, diskId, faces.art) : null;
+  const thumb = faces.thumb ? faceUrl(spec, diskId, faces.thumb) : null;
+  const back = faces.back ? faceUrl(spec, diskId, faces.back) : null;
   const setLabel =
     spec.setLabel ?? ((code: string) => code.trim().toUpperCase());
   const orient = artOrientationForPackPrint(
@@ -131,7 +211,7 @@ function toCandidate(
     printKey: row.printKey,
     title: row.fullName?.trim() || reference,
     reference,
-    setLabel: setLabel(row.setCode),
+    setLabel: setLabel(row.setCode, row.lang),
     ...(row.rarity ? { rarity: row.rarity } : {}),
     ...(art ? { imageUrl: art } : {}),
     ...(thumb ? { thumbnailUrl: thumb } : {}),
@@ -167,7 +247,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     for (const row of rows) {
       if (seen.has(row.printKey)) continue;
       seen.add(row.printKey);
-      out.push(toCandidate(spec, row));
+      out.push(toCandidate(spec, index, row));
       if (opts.limit && out.length >= opts.limit) break;
     }
     return out;
@@ -182,7 +262,31 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     const row = index.lookupRow(printKey, {
       ...(language ? { language } : {}),
     });
-    return row ? toCandidate(spec, row) : null;
+    return row ? toCandidate(spec, index, row) : null;
+  };
+
+  /**
+   * Bridge print corpus → enrich cover. Same face URL as `lookupPrint` /
+   * PrintCandidate — no second path (admin JSON is only a browse projection).
+   * Foreign printGame → null (never name-fallback).
+   */
+  const resolveFromLocal = (
+    ctx: MetadataAdapterContext,
+  ): MetadataResult | null => {
+    const printKey =
+      ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim() || "";
+    if (!printKey) return null;
+    if (parsePrintKey(printKey)?.game !== spec.printGame) return null;
+    const hit = lookupPrint(printKey, null);
+    if (!hit?.title?.trim()) return null;
+    return {
+      title: hit.title.trim(),
+      ...(hit.imageUrl ? { imageUrl: hit.imageUrl } : {}),
+      externalIds: {
+        [spec.providerId]: printKey,
+        printKey,
+      },
+    };
   };
 
   const curatedDir = () =>
@@ -193,6 +297,9 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       id: spec.providerId,
       label: spec.providerLabel,
       catalogueLabel: spec.catalogueLabel,
+      ...(spec.catalogueAliases?.length
+        ? { catalogueAliases: spec.catalogueAliases }
+        : {}),
       factLabel: spec.factLabel,
       types: ["tcg"],
       capabilities: ["identify", "cover"],
@@ -212,6 +319,12 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       const cards = searchPrints(cleanedName, { limit: 10 });
       return Array.from(new Set(cards.map((card) => card.title)));
     },
+    createMetadataAdapter: () => ({
+      id: spec.providerId,
+      async resolve(ctx) {
+        return resolveFromLocal(ctx);
+      },
+    }),
     /*
       Lues dans la base : un catalogue vide n'annonce aucune langue, donc le
       filtre n'a rien à cacher. Le jour où une moisson pose des titres FR, le
@@ -220,9 +333,10 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     listPrintLanguages: () =>
       spec.listPrintLanguages?.() ?? distinctPrintLanguages(index.dbPath()),
     printGames: [spec.printGame],
-    listPrintSets: () =>
+    listPrintSets: (_type, language) =>
       index.listSets({
-        setLabel: spec.setLabel,
+        setLabel: (code) =>
+          spec.setLabel?.(code, language) ?? code.trim().toUpperCase(),
         setSortKey: spec.setSortKey,
         ...(spec.listSetLanguages ? { languages: spec.listSetLanguages } : {}),
       }),

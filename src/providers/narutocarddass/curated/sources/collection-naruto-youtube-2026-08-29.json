@@ -1,0 +1,228 @@
+{
+  "source": "collection-naruto-youtube",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "sets.json collectorObservations + pack-decouverte attested + tin-box-hobby minted (contenu-tin-box.jpg) ; pas de mint display-s1…s5 FR sans packshot",
+  "channel": {
+    "name": "Collection Naruto",
+    "url": "https://www.youtube.com/@collection_naruto",
+    "contact": "Instagram carte_naruto_collection / Facebook Victor Husson"
+  },
+  "videos": [
+    {
+      "id": "JYwlXQQlooI",
+      "title": "LA PLUS GROSSE COLLECTION DE CARTES NARUTO (je me sépare de tout)",
+      "url": "https://www.youtube.com/watch?v=JYwlXQQlooI",
+      "lengthSeconds": 1816,
+      "role": "inventory sealed FR + master set claim + foreign/Panini/DVD",
+      "transcript": "staging/youtube/collection-naruto/JYwlXQQlooI.transcript.txt",
+      "chapters": {
+        "00:00": "Intro",
+        "01:05": "Série 1 sealed",
+        "04:47": "Série 2",
+        "06:28": "Série 3",
+        "07:48": "Série 4",
+        "09:32": "Série 5",
+        "10:02": "Coffrets / DVD S1–S5",
+        "11:20": "Tin box",
+        "12:18": "Série 6 DVD",
+        "13:10": "Sage's Legacy s24",
+        "15:13": "Storm 3 s28",
+        "15:58": "Jeux vidéo + cartes",
+        "19:16": "Pré-release",
+        "20:55": "Séries étrangères",
+        "22:23": "Panini",
+        "26:34": "Master set"
+      }
+    },
+    {
+      "id": "7r7LwtIENKs",
+      "title": "100% COLLECTION NARUTO BANDAI (SERIE 1-5)",
+      "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+      "lengthSeconds": 987,
+      "role": "binder walkthrough S1–S5 + promos + S6 DVD inserts + indicative prices",
+      "transcript": "staging/youtube/collection-naruto/7r7LwtIENKs.transcript.txt",
+      "note": "Suite promise dans JYwl — classeurs filmés avant vente (~2000 € Genève)."
+    }
+  ],
+  "confidence": {
+    "sealedSkuExistence": "high — objets filmés / décrits avec composition",
+    "cardCountsPerSeries": "medium — compte collectionneur, ASR ; croiser checklist officielle",
+    "marketPrices": "low — indicative 1–2 ans, hors catalogue",
+    "checklistGhosts": "closed — YT « Supplication » S2 never printed : faux ; TA-108 = S3 réelle (web hunt 2026-08-29)"
+  },
+  "setCardCounts": {
+    "note": "Comptes master-set binder (7r7). Holos = holographiques binder ; « communes » = non-holo. Pré-releases S1 comptées à part (4).",
+    "s1": {
+      "total": 198,
+      "altTotalSpoken": 188,
+      "holos": 33,
+      "nonHolo": 151,
+      "prereleaseAlts": 4,
+      "note": "ASR dit 198 puis « 188 quasiment 200 ». Doc Drive Bandai FR « Série 1 détaillée » : total 188 / holos 33 / communes 155 / clients 4 — proche. Catalogue officiel marketing « 184 » (manga-sanctuary / doc)."
+    },
+    "s2": { "total": 145, "holos": 22, "nonHolo": 123 },
+    "s3": { "total": 139, "holos": 23, "nonHolo": 116 },
+    "s4": { "total": 141, "holos": 25, "nonHolo": 116 },
+    "s5": {
+      "total": 149,
+      "nonHolo": 114,
+      "holosImplied": 35,
+      "note": "« 114 communes à 50 c » ; holos prix individuels. Inclut hors-série S6 DVD dans le même classeur S5."
+    }
+  },
+  "checklistClaims": [
+    {
+      "id": "supplication-s2-ghost",
+      "claim": "Card list S2 mentionne « Supplication » — jamais imprimée (erreur d'impression / checklist).",
+      "resolved": "2026-08-29 — faux positif ASR/mémoire. TA-108 Supplication est S3 (checklist Carddass + Coleka + catalogue). Dig youtube-gaps-web-hunt-2026-08-29.json.",
+      "action": "closed"
+    },
+    {
+      "id": "manda-s5-scarce",
+      "claim": "Manda = carte S5 la plus chère / difficile (hors promo).",
+      "action": "Observation marché seulement — pas de rareté catalogue."
+    }
+  ],
+  "sealedFrCarddass": {
+    "alreadyInCatalogue": [
+      "booster-s1…s5",
+      "starter-maitre-hokage",
+      "starter-pays-du-vent",
+      "starter-sceller-le-malefice",
+      "starter-detruire-konoha",
+      "starter-apprentissage",
+      "starter-puissances-cachees",
+      "starter-esprit-du-sable",
+      "starter-invocation",
+      "starter-la-quete",
+      "starter-un-nouveau-depart",
+      "tin-box"
+    ],
+    "attestedNow": [
+      {
+        "slug": "pack-decouverte",
+        "kind": "coffret",
+        "claim": "Pack Découverte scellé = 2 starters S1 (Pays du Vent + Maître Hokage) + 2 boosters S1",
+        "sources": ["JYwlXQQlooI ~01:00", "manga-sanctuary news 7397"],
+        "populationNote": "Vendeur : ~3 exemplaires connus FR (dont 1 LBC ~800 €)."
+      },
+      {
+        "slug": "tin-box-hobby",
+        "kind": "coffret",
+        "claim": "Tin Box Hobby : 5 boosters S1–S5 + PR-016 + PR-011. Packshot = contenu-tin-box.jpg (news Bandai).",
+        "sources": [
+          "JYwlXQQlooI ~11:20 (étiquette écran)",
+          "carddass.fr news.htm Wayback",
+          "contenu-tin-box.jpg"
+        ]
+      }
+    ],
+    "skuGapsNeedPackshot": [
+      {
+        "slug": "display-s1",
+        "kind": "display",
+        "claim": "Display booster S1 scellée = 24 boosters",
+        "note": "Collision slug EN évitée ailleurs ; FR Carddass n'a pas encore ce SKU. Ne pas minter sans packshot."
+      },
+      {
+        "slug": "display-deck-s1",
+        "kind": "display",
+        "claim": "Display de decks S1 = 5× Maître Hokage + 5× Pays du Vent"
+      },
+      {
+        "slug": "display-deck-s2",
+        "kind": "display",
+        "claim": "Display de decks S2 = 10× Sceller le maléfice + 10× Détruire Konoha"
+      },
+      {
+        "slug": "display-deck-s3",
+        "kind": "display",
+        "claim": "Display de decks S3 = 5× Puissances Cachées + 5× Apprentissage"
+      },
+      {
+        "slug": "display-s2",
+        "kind": "display",
+        "claim": "Display booster S2 (vide filmée ; scellée non montrée)"
+      },
+      {
+        "slug": "display-s3",
+        "kind": "display",
+        "claim": "Display booster S3 vide"
+      },
+      {
+        "slug": "display-s4",
+        "kind": "display",
+        "claim": "Display booster S4 vide (état neuf, rare)"
+      },
+      {
+        "slug": "display-s5",
+        "kind": "display",
+        "claim": "Display booster S5 vide — vendeur : seul exemplaire jamais vu"
+      },
+      {
+        "slug": "dvd-promo-*",
+        "kind": "coffret",
+        "claim": "DVD FR avec cartes : vol.8 → 2 cartes S3 ; vol.4 → 1 carte S1 ; coffret DVD « plus grand » → 1 carte S5 ; coffret S6 → inserts Made in Japan",
+        "note": "Plusieurs SKU DVD possibles — attendre Ref/EAN + packshot avant mint."
+      }
+    ]
+  },
+  "serie6Fr": {
+    "claim": "S6 FR starters jamais sortis ; cartes S6 physiques FR = inserts coffret DVD, MADE IN JAPAN, dos plus bleuté vs MADE IN BELGIUM verdâtre.",
+    "corroborates": ["sets.json released:false", "manga-sanctuary Le Duel/Quartet annoncés", "animecollection sanji12 5 parts"],
+    "not": "Ne pas confondre avec IT Rivalità Eterna / starter-il-fascino-del-male"
+  },
+  "promos": {
+    "shuriken": {
+      "1": "Participation tournoi (~9 cartes citées) ; Tin Invocation = Naruto (moins rare, ~5 € vendeur)",
+      "2": "Top 5 tournoi (~30 € vendeur)",
+      "3": "Vainqueur tournoi (~50 €) ; Kakashi NI-23 CdF champion (~100 €) — déjà attested-promos ni023"
+    },
+    "tinInvocation": "Aligné tin-box : deck Invocation S4 + booster S1 + booster S2 + 1 promo holo",
+    "tinHobby": "5 boosters (1 par série 1–5) + promo Naruto + Orochimaru — officiel carddass.fr news.htm ; ASR « Obi » = Hobby"
+  },
+  "prerelease": {
+    "claim": "10 cartes avant-première avec mangas (~2005–2006), versions non-holo d'holos S1 + variantes de noms (TA-05).",
+    "plv": "PLV magasin « arriveras-tu à toutes les collectionner »",
+    "crossref": "Drive Bandai FR « Série 1 détaillée » liste les 10 NI/TE/TA"
+  },
+  "lateLineFr": {
+    "alreadyInCatalogue": [
+      "booster-s24",
+      "booster-s24-en",
+      "display-s24-fr",
+      "deck-la-tempete-approche",
+      "booster-s28",
+      "duopack-s28",
+      "display-s28"
+    ],
+    "claims": [
+      "Duopacks S24 FR : 2 variants promo (« organisation pacifique » / « bicéphale ») — SKU dédiés absents",
+      "Deck Tempête approche souvent retiré de coffret Storm Générations (blister Bandai rare)",
+      "Storm 3 : display FR vendue ; booster + DVD promo « Naruto okage »",
+      "Storm Générations CE : jeu + booster + deck sous blister",
+      "Wheel of Fire / trou disperse : promo « Naruto sang Goku »",
+      "PS Ultimate Ninja 2 blister + booster S1 ; Ultimate Ninja + booster S2",
+      "booster-s24 / display-s24-fr : packshots EN en fallback jusqu'à photo FR"
+    ]
+  },
+  "foreignAndOther": [
+    "Display série 11 étrangère (15 boosters théoriques ; exemplaire 14)",
+    "Boosters S3 IT loose",
+    "Data Carddass McDonald's 2008",
+    "Panini Ultra Challenge FR tripack + display ; Ninja Ranks US display"
+  ],
+  "doNot": [
+    "Minter display-s1…s5 FR sans packshot (règle sealed + collision EN)",
+    "Passer contentsKnown=true sur pack-decouverte sans inventaire ; fusionner tin-box-hobby avec tin-box 05129",
+    "Indexer inserts DVD S6 comme starters Le Duel / Quartet",
+    "Importer les côtes € dans le catalogue"
+  ],
+  "nextPhysical": [
+    "Screenshot / packshot Pack Découverte, display 24 boosters S1, display-deck S1–S3",
+    "Identifier Ref/EAN DVD S6 + liste exacte des inserts",
+    "Croiser compte S1–S5 binder vs cards-index / liste_cartes",
+    "Chercher « Supplication » sur checklist S2 officielle — DONE: S3 TA-108, pas ghost"
+  ]
+}

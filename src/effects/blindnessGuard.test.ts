@@ -19,7 +19,7 @@ const SKIP_DIR_PREFIXES = [
   "src/providers/",
   "src/providers/lorcanatcg/",
   "src/providers/pokemontcglive/",
-  "src/providers/narutoccg/",
+  "src/providers/narutocarddass/",
   "src/providers/icollect/",
   "src/providers/launchbox/",
   "src/providers/nointro/",

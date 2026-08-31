@@ -1,0 +1,127 @@
+{
+  "source": "trictrac.net public game pages (collector chat 2026-08-16)",
+  "observed": "2026-08-16 / tin-box 2026-08-30",
+  "note": "HTML pages render in a browser; urllib hits login-silent (same CNRL wall as the abandoned TricTrac provider). Do not scrape /api/*. CDN originals (cdn10.trictrac.net / cdn.trictrac.net/discourse/original/…) answer without auth — take those, never the Next `_next/image?w=96` thumbs. Card JPEGs are 350×495, same pixels as carddass.fr already in cards/{sN}/fr/. Ingest none as faces. The large JPEGs are starter boxes + Coffret Métal packshot. S4 gallery is a tiny box thumb only.",
+  "pages": [
+    {
+      "setCode": "s1",
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-1",
+      "year": 2006,
+      "community": {
+        "cardTypes": 184,
+        "exclusivePerStarter": 31,
+        "boosterExclusive": 110,
+        "commonDecksAndBoosters": 12,
+        "starterExclusivePlusCommon": "34 + 6",
+        "quote": "La série 1 comprend un total de 184 types de cartes différents : 31 exclusives pour chacun des 2 Decks LE PAYS DU VENT et MAITRE HOKAGE, 110 cartes exclusives additionnelles à collectionner dans les Boosters et 12 cartes communes aux Decks et Boosters. Contenu d'un starter : 34 cartes exclusives + 6 cartes communes avec les Boosters."
+      },
+      "localFrFaces": 184
+    },
+    {
+      "setCode": "s2",
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-2",
+      "year": 2007,
+      "community": {
+        "ninjas": 52,
+        "techniques": 40,
+        "tactiques": 47,
+        "clients": 7,
+        "cardTypes": 146,
+        "quote": "Cette extension (booster + decks) regroupe en tout 52 ninjas, 40 techniques, 47 tactiques et 7 clients."
+      },
+      "localFrFaces": 136,
+      "gap": 10
+    },
+    {
+      "setCode": "s3",
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-3",
+      "year": 2007,
+      "community": {
+        "starters": ["Apprentissage", "Puissances Cachées"],
+        "starterCards": 40,
+        "rares": 11,
+        "holos": 2,
+        "quote": "Les deux Starters s'appellent : Apprentissage et Puissances Cachées. Chacun d'entre eux se compose de 40 cartes, 11 rares, 2 holographiques"
+      },
+      "localFrFaces": 128
+    },
+    {
+      "setCode": "s4",
+      "url": "https://trictrac.net/jeu-de-societe/naruto-jcc-serie-4",
+      "year": 2007,
+      "community": null,
+      "localFrFaces": 128
+    }
+  ],
+  "products": [
+    {
+      "slug": "starter-pays-du-vent",
+      "setCode": "s1",
+      "kind": "deck",
+      "url": "https://cdn10.trictrac.net/trictrac/3f/2d/1d93407cb246c93603268bddb13a4b52e9f1.jpeg",
+      "staging": "staging/trictrac/starter-pays-du-vent.jpeg",
+      "ingest": true,
+      "pixels": { "width": 768, "height": 1000 }
+    },
+    {
+      "slug": "starter-maitre-hokage",
+      "setCode": "s1",
+      "kind": "deck",
+      "url": "https://cdn10.trictrac.net/trictrac/e8/40/e8f65e80b8de9649d8bf415991da9cb8cec0.jpeg",
+      "staging": "staging/trictrac/starter-maitre-hokage.jpeg",
+      "ingest": true,
+      "pixels": { "width": 764, "height": 1000 }
+    },
+    {
+      "slug": "starter-sceller-le-malefice",
+      "setCode": "s2",
+      "kind": "deck",
+      "url": "https://cdn10.trictrac.net/trictrac/7f/13/7fe119e995d1a368c8ba3287cff9d70bfea3.jpeg",
+      "staging": "staging/trictrac/starter-sceller-le-malefice.jpeg",
+      "ingest": true,
+      "pixels": { "width": 774, "height": 1000 }
+    },
+    {
+      "slug": "starter-detruire-konoha",
+      "setCode": "s2",
+      "kind": "deck",
+      "url": "https://cdn10.trictrac.net/trictrac/28/91/20839359bbd1d2f65687f6266f0c05a2d92f.jpeg",
+      "staging": "staging/trictrac/starter-detruire-konoha.jpeg",
+      "ingest": true,
+      "pixels": { "width": 771, "height": 1000 }
+    },
+    {
+      "slug": "starter-apprentissage",
+      "setCode": "s3",
+      "kind": "deck",
+      "url": "https://cdn10.trictrac.net/trictrac/5d/35/ed1bd1ccd93890cee1d14599814384099593.jpeg",
+      "staging": "staging/trictrac/starter-apprentissage.jpeg",
+      "ingest": true,
+      "pixels": { "width": 631, "height": 810 }
+    },
+    {
+      "slug": "starter-puissances-cachees",
+      "setCode": "s3",
+      "kind": "deck",
+      "url": "https://cdn10.trictrac.net/trictrac/f1/d8/8cf4102995ad61b0b4bd327575130a2178df.jpeg",
+      "staging": "staging/trictrac/starter-puissances-cachees.jpeg",
+      "ingest": true,
+      "pixels": { "width": 672, "height": 865 }
+    },
+    {
+      "slug": "tin-box",
+      "setCode": null,
+      "kind": "coffret",
+      "url": "https://cdn.trictrac.net/discourse/original/3X/6/2/62e132077392c32c832507a4a4a184d6a30f122f.jpeg",
+      "staging": "staging/trictrac/tin-box.jpeg",
+      "ingest": true,
+      "pixels": { "width": 281, "height": 400 },
+      "note": "Coffret Métal Invocation (classique, tin noir) fond blanc. Pas Hobby (étui bleu). Discourse /original/ = déjà le JPEG brut (pas un thumb Next)."
+    }
+  ],
+  "faces": {
+    "ingest": "none",
+    "reason": "S1 card JPEGs are 350×495 — same pixels as carddass.fr already under cards/s1/fr/ (184/184). Do not dump a second scan.",
+    "servedPixels": { "width": 350, "height": 495 }
+  }
+}

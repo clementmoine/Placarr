@@ -5,7 +5,7 @@
  * import URL helpers from `packAssetUrls` (FoilCardImage / effects graph).
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { dataRoot, foilDataRoot, foilPackDir } from "./runtimeData";
@@ -208,6 +208,9 @@ export function resolveSetBackPath(
   return null;
 }
 
+const PACK_TIER_BACK_FILE =
+  /^back\.([a-z0-9][a-z0-9-]*)\.(webp|png|jpe?g)$/i;
+
 /** `/assets/<pack>/cards/back.{webp|png|…}` when a back file exists. */
 export function assetsPackBackUrl(
   pack: string,
@@ -216,6 +219,43 @@ export function assetsPackBackUrl(
   const disk = resolvePackBackPath(pack, lang);
   if (!disk) return null;
   return assetsPackFileUrl(pack, "cards", path.basename(disk));
+}
+
+/** Disk path for `cards/back.<tierSlug>.{webp|png|…}`. */
+export function resolvePackTierBackPath(
+  pack: string,
+  tierSlug: string,
+): string | null {
+  const slug = tierSlug.trim().toLowerCase();
+  if (!slug || !/^[a-z0-9][a-z0-9-]*$/.test(slug)) return null;
+  const dir = packCardsDir(pack);
+  for (const ext of BACK_EXTENSIONS) {
+    const candidate = path.join(dir, `back.${slug}.${ext}`);
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+/** `/assets/<pack>/cards/back.<tier>.webp` when installed. */
+export function assetsPackTierBackUrl(
+  pack: string,
+  tierSlug: string,
+): string | null {
+  const disk = resolvePackTierBackPath(pack, tierSlug);
+  if (!disk) return null;
+  return assetsPackFileUrl(pack, "cards", path.basename(disk));
+}
+
+/** Slugs from `back.<slug>.webp` at pack cards root (tier / locale suffix). */
+export function listPackTierBackSlugs(pack: string): string[] {
+  const dir = packCardsDir(pack);
+  if (!existsSync(dir)) return [];
+  const slugs = new Set<string>();
+  for (const name of readdirSync(dir)) {
+    const m = PACK_TIER_BACK_FILE.exec(name);
+    if (m) slugs.add(m[1]!.toLowerCase());
+  }
+  return [...slugs].sort((a, b) => a.localeCompare(b));
 }
 
 /** `/assets/<pack>/cards/{set}/back.{webp|png|…}` when a set verso exists. */

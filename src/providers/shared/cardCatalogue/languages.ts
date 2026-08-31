@@ -34,7 +34,7 @@ export function distinctPrintLanguages(dbPath: string): string[] {
       )
       .all() as { lang: string }[];
     const langs = [
-      ...new Set(rows.map((row) => row.lang.trim().toLowerCase())),
+      ...new Set(rows.map((row) => row.lang?.trim().toLowerCase())),
     ].sort();
     cache.set(dbPath, langs);
     return langs;

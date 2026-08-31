@@ -17,10 +17,11 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import sharp from "sharp";
+import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
 
-const BACK_FILE = /^back(?:\.([a-z]{2}(?:[a-z]{2})?))?\.(webp|png|jpe?g)$/i;
-const BACK_SIBLING = /^(back(?:\.[a-z]{2}(?:[a-z]{2})?)?)\.(webp|png|jpe?g)$/i;
+/** Pack/set sleeve — `back.webp`, locale `back.fr.*`, tier `back.ur.*` (Kayou). */
+const BACK_FILE = /^back(?:\.([a-z0-9][a-z0-9-]*))?\.(webp|png|jpe?g)$/i;
+const BACK_SIBLING = /^(back(?:\.[a-z0-9][a-z0-9-]*)?)\.(webp|png|jpe?g)$/i;
 const LANG_DIR = /^[a-z]{2}(?:[a-z]{2})?$/i;
 
 export type CuratedBackInstall = {
@@ -38,12 +39,12 @@ export function curatedCardsDir(curatedRoot: string): string {
   return path.join(curatedRoot, "cards");
 }
 
-/** `back.png` → `back.webp`; `back.fr.png` → `back.fr.webp`. */
+/** `back.png` → `back.webp`; `back.fr.png` / `back.ur.png` → qualified webp. */
 export function destBackWebpName(filename: string): string | null {
   const m = BACK_FILE.exec(filename);
   if (!m) return null;
-  const lang = m[1]?.toLowerCase();
-  return lang ? `back.${lang}.webp` : "back.webp";
+  const qualifier = m[1]?.toLowerCase();
+  return qualifier ? `back.${qualifier}.webp` : "back.webp";
 }
 
 function isSafeSegment(name: string): boolean {
@@ -128,7 +129,7 @@ async function writeBackWebp(src: string, dest: string): Promise<void> {
     copyFileSync(src, dest);
     return;
   }
-  await sharp(src).webp({ lossless: true, effort: 6 }).toFile(dest);
+  await writeLosslessWebpFile(src, dest);
 }
 
 /**

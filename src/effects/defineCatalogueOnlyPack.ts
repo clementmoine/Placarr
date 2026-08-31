@@ -1,8 +1,11 @@
 /**
- * Factory for catalogue-only effect packs: no APK, no shader dump, so every
- * material hook stays empty (`hasFoilEffects === false`). What these packs do
- * carry is the card back (the flip target resolves through the registry) and,
- * for some, a texture-free *house* CSS look keyed by finish.
+ * Factory for catalogue-only effect packs: no APK, no shader dump. What these
+ * packs carry is the card back (flip target via the registry) and, for some, a
+ * texture-free *house* CSS look keyed by finish.
+ *
+ * Foils admin tab is gated by `cataloguePacks.hasFoilEffects`, not by this
+ * factory. Opt in with {@link CatalogueOnlyPackOptions.listHouseFinishesAsMaterials}
+ * so the playroom has finish names to tile — without inventing Unity materials.
  *
  * Lives in `src/effects/`, not in core: a pack is plug-and-play data, and the
  * blindness guard (`blindnessGuard.test.ts`) keeps pack literals out of
@@ -23,10 +26,18 @@ export type CatalogueOnlyPackOptions = {
    * renders nothing shiny — `resolveCss` then answers null for everything.
    */
   finishShader?: Record<string, string>;
+  /**
+   * Expose `finishShader` keys as playroom material names (CSS-only tiles).
+   * Default off: most catalogue-only packs keep `hasFoilEffects === false`.
+   */
+  listHouseFinishesAsMaterials?: boolean;
   /** Whole-face mask when catalogue prints carry none of their own. */
   fallbackFoilMaskUrl?: string;
   /** Set- or family-scoped back; return null to fall through to cardBackUrl. */
   resolveCardBack?: EffectPackModule["resolveCardBack"];
+  playroomArtForMaterial?: EffectPackModule["playroomArtForMaterial"];
+  /** Override default finishShader → resolveCss mapping. */
+  resolveCss?: EffectPackModule["resolveCss"];
 };
 
 export function defineCatalogueOnlyPack(
@@ -39,9 +50,15 @@ export function defineCatalogueOnlyPack(
     assetBase,
     cardBackUrl,
     finishShader,
+    listHouseFinishesAsMaterials,
     fallbackFoilMaskUrl,
     resolveCardBack,
+    playroomArtForMaterial,
+    resolveCss: resolveCssOverride,
   } = options;
+
+  const houseFinishes = finishShader ? Object.keys(finishShader) : [];
+  const finishSet = new Set(houseFinishes.map((name) => name.toLowerCase()));
 
   const pack: EffectPackModule = {
     id,
@@ -53,14 +70,29 @@ export function defineCatalogueOnlyPack(
     resolveMaterial: () => null,
     resolveMaterialForPrint: () => null,
     ...(fallbackFoilMaskUrl ? { fallbackFoilMaskUrl } : {}),
-    resolveCss: finishShader
-      ? (finish) => ({
-          finishShaderId: finishShader[(finish ?? "").toLowerCase()] ?? null,
-          varnishShaderId: null,
-        })
-      : () => ({ finishShaderId: null, varnishShaderId: null }),
-    listMaterials: () => [],
+    resolveCss:
+      resolveCssOverride ??
+      (finishShader
+        ? (finish, varnish) => ({
+            finishShaderId: finishShader[(finish ?? "").toLowerCase()] ?? null,
+            varnishShaderId: null,
+          })
+        : () => ({ finishShaderId: null, varnishShaderId: null })),
+    listMaterials: () =>
+      listHouseFinishesAsMaterials ? [...houseFinishes] : [],
     material: () => null,
+    ...(listHouseFinishesAsMaterials
+      ? {
+          parseMaterialName: (name: string) => {
+            const finish = name.trim().toLowerCase();
+            return {
+              finish: finishSet.has(finish) ? finish : null,
+              varnish: null,
+            };
+          },
+        }
+      : {}),
+    ...(playroomArtForMaterial ? { playroomArtForMaterial } : {}),
   };
 
   registerEffectPack(pack);

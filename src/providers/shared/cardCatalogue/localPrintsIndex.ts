@@ -69,14 +69,29 @@ export type LocalPrintsIndex = {
     printKey: string,
     opts?: { language?: string },
   ) => LocalPrintSearchRow | null;
+  /**
+   * Face files for a print, preferring ``preferLang`` then any lang with art.
+   * Used when titles exist in a locale that has no local scan yet.
+   */
+  lookupAssets: (
+    printKey: string,
+    opts?: { preferLang?: string },
+  ) => { lang: string; art: string | null; thumb: string | null; back: string | null } | null;
   listSets: (opts?: {
-    setLabel?: (setCode: string) => string;
+    setLabel?: (setCode: string, language?: string | null) => string;
     setSortKey?: (setCode: string) => number | null;
     languages?: readonly string[];
   }) => { id: string; label: string }[];
   writePrints: (rows: readonly LocalPrintWrite[]) => {
     prints: number;
     titles: number;
+  };
+  /**
+   * Copie chaque titre `en` vers les langues cibles qui n'en ont pas encore.
+   * Les titres déjà attestés (traduction, graphie locale…) ne sont pas touchés.
+   */
+  fillMissingTitlesFromEnglish: (targetLangs: readonly string[]) => {
+    copied: number;
   };
   writeAssets: (rows: readonly LocalPrintAssetWrite[]) => { assets: number };
   exportIndex: () => { path: string; cards: number } | null;
@@ -289,8 +304,46 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     return row ?? null;
   };
 
+  const lookupAssets = (
+    printKey: string,
+    opts?: { preferLang?: string },
+  ): {
+    lang: string;
+    art: string | null;
+    thumb: string | null;
+    back: string | null;
+  } | null => {
+    const db = ensure();
+    if (!db) return null;
+    const key = printKey.trim().toLowerCase();
+    const prefer = opts?.preferLang?.trim().toLowerCase() ?? "";
+    const rows = db
+      .prepare(
+        `SELECT lang, art, thumb, back
+           FROM print_assets
+          WHERE print_key = ?
+            AND (art IS NOT NULL OR thumb IS NOT NULL OR back IS NOT NULL)
+          ORDER BY (lang = ?) DESC,
+                   (art IS NOT NULL) DESC`,
+      )
+      .all(key, prefer) as Array<{
+      lang: string;
+      art: string | null;
+      thumb: string | null;
+      back: string | null;
+    }>;
+    const hit = rows[0];
+    if (!hit) return null;
+    return {
+      lang: hit.lang,
+      art: hit.art,
+      thumb: hit.thumb,
+      back: hit.back,
+    };
+  };
+
   const listSets = (opts?: {
-    setLabel?: (setCode: string) => string;
+    setLabel?: (setCode: string, language?: string | null) => string;
     setSortKey?: (setCode: string) => number | null;
     languages?: readonly string[];
   }) => {
@@ -356,7 +409,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
             if (!name) continue;
             insertTitle.run(
               row.printKey,
-              title.lang.trim().toLowerCase(),
+              title.lang?.trim().toLowerCase(),
               name,
               title.rarity?.trim() || null,
             );
@@ -373,6 +426,49 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       resetCache();
     }
     return { prints: rows.length, titles };
+  };
+
+  const fillMissingTitlesFromEnglish = (
+    targetLangs: readonly string[],
+  ): { copied: number } => {
+    const langs = [
+      ...new Set(
+        targetLangs
+          .map((lang) => lang?.trim().toLowerCase())
+          .filter((lang) => lang && lang !== "en"),
+      ),
+    ];
+    if (langs.length === 0) return { copied: 0 };
+
+    const db = openForWrite();
+    let copied = 0;
+    try {
+      const insert = db.prepare(
+        `INSERT INTO print_titles (print_key, lang, full_name, rarity)
+         SELECT print_key, ?, full_name, rarity
+           FROM print_titles
+          WHERE lang = 'en'
+            AND NOT EXISTS (
+                  SELECT 1 FROM print_titles other
+                   WHERE other.print_key = print_titles.print_key
+                     AND other.lang = ?)`,
+      );
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        for (const lang of langs) {
+          const result = insert.run(lang, lang);
+          copied += Number(result.changes ?? 0);
+        }
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    } finally {
+      db.close();
+      resetCache();
+    }
+    return { copied };
   };
 
   const writeAssets = (
@@ -397,7 +493,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
           if (!art && !back) continue;
           upsert.run(
             row.printKey,
-            row.lang.trim().toLowerCase(),
+            row.lang?.trim().toLowerCase(),
             art,
             back,
             row.sourceUrl ?? null,
@@ -503,8 +599,10 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     openForWrite,
     searchRows,
     lookupRow,
+    lookupAssets,
     listSets,
     writePrints,
+    fillMissingTitlesFromEnglish,
     writeAssets,
     exportIndex,
     bootstrapEmpty,

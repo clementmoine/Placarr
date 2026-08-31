@@ -34,7 +34,8 @@ export async function enrichCardsIndexArtDimensions(
   }
 
   for (const entry of Object.values(index.cards)) {
-    let printLandscape = entry.landscapePrint === true;
+    let printLandscape = false;
+    let probedThis = 0;
     for (const [lang, slot] of Object.entries(entry.langs)) {
       const art = slot.art?.trim();
       if (!art) continue;
@@ -51,13 +52,18 @@ export async function enrichCardsIndexArtDimensions(
       slot.artW = dims.width;
       slot.artH = dims.height;
       probed += 1;
+      probedThis += 1;
       if (dims.width > dims.height) printLandscape = true;
     }
-    if (printLandscape) {
-      entry.landscapePrint = true;
-      landscapePrints += 1;
-    } else {
-      delete entry.landscapePrint;
+    // Once we measured at least one face, landscapePrint follows pixels only —
+    // a stale curated/rarity flag must not keep rotating portrait scans.
+    if (probedThis > 0) {
+      if (printLandscape) {
+        entry.landscapePrint = true;
+        landscapePrints += 1;
+      } else {
+        delete entry.landscapePrint;
+      }
     }
   }
 

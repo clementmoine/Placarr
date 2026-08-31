@@ -1,0 +1,37 @@
+{
+  "source": "rakuten",
+  "observed": "2026-08-30",
+  "note": "Pasted CDN URLs only — do not crawl Rakuten listings or seller stores. FR shopping product pages 403 without browser cookies; photos fetched once from open product page.",
+  "products": [
+    {
+      "slug": "tin-box-hobby",
+      "kind": "coffret",
+      "lang": "FR",
+      "title": "NARUTO JCC - Tin box hobby",
+      "listing": "https://fr.shopping.rakuten.com/offer/buy/1962181402/naruto-jcc-tin-box-hobby.html",
+      "productId": "1962181402",
+      "ean": null,
+      "printedRef": null,
+      "stock": "Aucun vendeur ne propose ce produit (alerte prix only)",
+      "staging": "staging/rakuten/tin-box-hobby/01-face.webp",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199c8c5-d9a1-714c-8a15-28695c603f54_L_NOPAD.jpg",
+      "ingest": false,
+      "role": "art",
+      "note": "Archival only — même art tin que Invocation ; au scorer 500×500 bat Tin-box-hobby.jpg (étui bleu). Face catalogue = contenu-tin-box / Tin-box-hobby.jpg. Ne pas fusionner les SKU.",
+      "gallery": [
+        {
+          "staging": "staging/rakuten/tin-box-hobby/02-side-kakashi.jpg",
+          "url": "https://fr.shopping.rakuten.com/pictures/0199c8c5-fe4b-7793-b7f2-53cea353efb7_L.jpg",
+          "role": "side-kakashi",
+          "ingest": false
+        },
+        {
+          "staging": "staging/rakuten/tin-box-hobby/03-lid-embossed.jpg",
+          "url": "https://fr.shopping.rakuten.com/pictures/0199c8c5-45fa-7b5c-8165-5d8ed57e065b_L.jpg",
+          "role": "lid-embossed",
+          "ingest": false
+        }
+      ]
+    }
+  ]
+}

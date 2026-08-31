@@ -1,0 +1,47 @@
+{
+  "source": "kinkai.fr seller uploads (collector pastes)",
+  "observed": "2026-08-29",
+  "note": "Pasted `kinkai.fr/uploads/*.webp` URLs only — do not crawl listings or seller stores. Article 5274 is a sealed FR duopack UNS3 listing (face + verso). Photo 03 on that ad is an unrelated Kayou/Heritage SP Sakura — rejected.",
+  "ingestCollection": false,
+  "listing": "https://kinkai.fr/article/5274",
+  "products": [
+    {
+      "slug": "duopack-s28",
+      "setCode": "s28",
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "art",
+      "title": "Duopack Ultimate Ninja Storm 3 — face (blister + fenêtre PR-096)",
+      "ean": "3391891970488",
+      "url": "https://kinkai.fr/uploads/b8e2682a-80ec-4313-9001-61d4a8465e4c.webp",
+      "listing": "https://kinkai.fr/article/5274",
+      "staging": "staging/kinkai/duopack-s28-01.webp",
+      "ingest": true,
+      "angle": "front",
+      "pixels": { "width": 554, "height": 1200 },
+      "note": "eBay s-l1600 remains preferred art when both present (higher res). Window shows PR-096 4e HOKAGE / 5CBNQ9W86S."
+    },
+    {
+      "slug": "duopack-s28",
+      "setCode": "s28",
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "back",
+      "title": "Duopack Ultimate Ninja Storm 3 — verso",
+      "ean": "3391891970488",
+      "url": "https://kinkai.fr/uploads/f624f068-4537-44e5-903b-0b60aa361a3c.webp",
+      "listing": "https://kinkai.fr/article/5274",
+      "staging": "staging/kinkai/duopack-s28-02.webp",
+      "ingest": true,
+      "angle": "back",
+      "pixels": { "width": 554, "height": 1200 },
+      "note": "Printed: Chaque pack booster contient 8 cartes (7 + 1 carte spéciale). COLLECTIONNEZ LES 120 CARTES… EAN 3391891970488. BANDAI 2013 MADE IN ITALY. NAMCO BANDAI Games Europe (Cergy)."
+    }
+  ],
+  "rejected": [
+    {
+      "url": "https://kinkai.fr/uploads/e5d83dbd-8cc1-456c-a8ea-1ef536d4747a.webp",
+      "reason": "Kayou / Heritage SP Sakura (NRCC-SP-003) — not duopack packaging; not staged"
+    }
+  ]
+}

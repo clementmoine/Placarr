@@ -1,0 +1,72 @@
+{
+  "source": "toywiz.com (BigCommerce / tools.toywiz CDN pastes)",
+  "observed": "2026-08-29",
+  "note": "Pasted product CDN URLs only — do not crawl the shop. EN CCG single boosters (portrait packs, not open displays).",
+  "ingestCollection": false,
+  "products": [
+    {
+      "slug": "booster-s24-en",
+      "setCode": "s24",
+      "kind": "booster",
+      "lang": "EN",
+      "title": "Naruto Shippuden CCG — Sage's Legacy Booster Pack",
+      "listing": "https://toywiz.com/naruto-shippuden-card-game-sages-legacy-booster-pack/",
+      "url": "https://cdn11.bigcommerce.com/s-0kvv9/images/stencil/1280x1280/products/121150/84131/naruto-shippuden-card-game-sage-s-legacy-booster-pack-8__13788.1461297709.jpg?c=2",
+      "staging": "staging/toywiz/booster-s24.jpg",
+      "ingest": true,
+      "upc": "045557236328",
+      "cardsPerPack": 10,
+      "packsPerDisplay": 24,
+      "pixels": { "width": 269, "height": 447 },
+      "note": "Highlights on the page: « 10 cards per pack », « Contains 24 packs per box ». Shared dump with FR `booster-s24` (lang only)."
+    },
+    {
+      "slug": "booster-s28-en",
+      "setCode": "s28",
+      "kind": "booster",
+      "lang": "EN",
+      "title": "Naruto Shippuden CCG — Ultimate Ninja Storm 3 Booster Pack",
+      "listing": "https://toywiz.com/naruto-shippuden-card-game-ultimate-ninja-storm-3-booster-pack/",
+      "url": "https://tools.toywiz.com/_images/_webp/_products/lg/narutoultimatepack.webp",
+      "staging": "staging/toywiz/booster-s28-en.jpg",
+      "ingest": false,
+      "upc": "045557236489",
+      "sku": "narutoultimatepack",
+      "cardsPerPack": 10,
+      "pixels": { "width": 374, "height": 600 },
+      "note": "Archival 2026-08-29 — superseded by Sunny Store USA listing (1946² face + verso UPC/pack math). Highlight still attests « Contains 10 cards per pack » / UPC 045557236489."
+    },
+    {
+      "slug": "booster-s14",
+      "setCode": "s14",
+      "kind": "booster",
+      "lang": "EN",
+      "title": "Naruto Shippuden CCG — Emerging Alliance Booster Pack (Sakura / Sai)",
+      "listing": "https://toywiz.com/naruto-shippuden-card-game-emerging-alliance-booster-pack/",
+      "url": "https://tools.toywiz.com/_images/_webp/_products/lg/emergingalliancepack.webp",
+      "staging": "staging/toywiz/booster-s14.jpg",
+      "ingest": true,
+      "upc": "045557235826",
+      "sku": "emergingalliancepack",
+      "cardsPerPack": 10,
+      "setCardCountClaim": 145,
+      "pixels": { "width": 201, "height": 335 },
+      "note": "Highlights: « Contains 10 cards per pack », « 145 cards available in the set ». Preferred face = Sakura/Sai. Display already display-s14 (Coleka)."
+    },
+    {
+      "slug": "booster-s14",
+      "setCode": "s14",
+      "kind": "booster",
+      "lang": "EN",
+      "role": "art-alt",
+      "title": "Naruto Shippuden CCG — Emerging Alliance Booster Pack (Naruto / Yamato) — alt art archival",
+      "listing": "https://toywiz.com/naruto-shippuden-card-game-emerging-alliance-booster-pack/",
+      "url": "https://tools.toywiz.com/_images/_webp/_products/lg/emergingalliancepack-inset1.webp",
+      "staging": "staging/toywiz/booster-s14-alt.jpg",
+      "ingest": false,
+      "upc": "045557235826",
+      "pixels": { "width": 203, "height": 329 },
+      "note": "Second face art on the same listing (inset), not verso. Do not promote over Sakura/Sai primary."
+    }
+  ]
+}

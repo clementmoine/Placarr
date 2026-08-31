@@ -40,15 +40,12 @@ export async function installFullFoilMask(
   if (opts.dryRun) return { installed: true, dest };
   mkdirSync(path.dirname(dest), { recursive: true });
   /*
-    `sharp` est chargé à la demande : il embarque un binaire natif, et ce module
-    est importé par des chemins qui n'installent jamais rien.
+    `sharp` (via losslessWebp) est chargé à la demande : binaire natif, et ce
+    module est importé par des chemins qui n'installent jamais rien.
   */
-  const { default: sharp } = await import("sharp");
-  await sharp({
-    create: { width: 64, height: 64, channels: 3, background: "#ffffff" },
-  })
-    .webp({ lossless: true })
-    .toFile(dest);
+  const { writeLosslessRgbaWebp } = await import("@/lib/media/losslessWebp");
+  const rgba = Buffer.alloc(64 * 64 * 4, 255);
+  await writeLosslessRgbaWebp(rgba, 64, 64, dest);
   return { installed: true, dest };
 }
 

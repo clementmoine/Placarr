@@ -47,14 +47,15 @@ describe("provider catalog contract", () => {
     }
   });
 
-  it("status() returns the contract shape", async () => {
-    for (const mdl of discoverCatalogProviderModules()) {
-      const status = await mdl.catalog!.status();
-      expect(typeof status.empty).toBe("boolean");
-      expect(typeof status.stale).toBe("boolean");
+  it("every local_catalog module that claims cover exposes createMetadataAdapter", () => {
+    for (const mdl of discoverProviderModules()) {
+      const info = materializeProviderInfo(mdl.info);
+      if (info.supplyMode !== "local_catalog") continue;
+      if (!info.capabilities?.includes("cover")) continue;
       expect(
-        status.lastSyncAt === null || typeof status.lastSyncAt === "string",
-      ).toBe(true);
+        typeof mdl.createMetadataAdapter,
+        `${mdl.info.id} must bridge print/corpus → enrich cover`,
+      ).toBe("function");
     }
   });
 });

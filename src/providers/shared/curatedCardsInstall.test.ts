@@ -38,6 +38,7 @@ describe("destBackWebpName", () => {
     expect(destBackWebpName("back.fr.png")).toBe("back.fr.webp");
     expect(destBackWebpName("back.it.png")).toBe("back.it.webp");
     expect(destBackWebpName("back.ja.png")).toBe("back.ja.webp");
+    expect(destBackWebpName("back.ur.png")).toBe("back.ur.webp");
     expect(destBackWebpName("BACK.PNG")).toBe("back.webp");
     expect(destBackWebpName("art.png")).toBeNull();
     expect(destBackWebpName("BACK.md")).toBeNull();

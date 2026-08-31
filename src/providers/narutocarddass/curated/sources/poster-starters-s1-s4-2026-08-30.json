@@ -1,0 +1,26 @@
+{
+  "source": "poster-starters-s1-s4",
+  "observed": "2026-08-30",
+  "kind": "research-dig",
+  "ingest": "guaranteedPrints (+ qty) → curated/products-contents.json → products-index merge",
+  "proof": "User-confirmed poster membership (S1–S4) + carddass.fr catalogue_* qty; S5 deferred",
+  "notes": [
+    "Holo finish: packaging says 2 holos per starter but poster does not name them — finish omitted (no invention).",
+    "tin-box guaranteed synced to Invocation poster list (no S1 pollution).",
+    "S4 catalogue HTML order is Invocation then Esprit (not title order)."
+  ],
+  "starters": {
+    "starter-pays-du-vent": { "sumQty": 40, "contentsKnown": true },
+    "starter-maitre-hokage": { "sumQty": 40, "contentsKnown": true },
+    "starter-sceller-le-malefice": { "sumQty": 40, "contentsKnown": true },
+    "starter-detruire-konoha": { "sumQty": 40, "contentsKnown": true },
+    "starter-apprentissage": { "sumQty": 40, "contentsKnown": true },
+    "starter-puissances-cachees": { "sumQty": 40, "contentsKnown": true },
+    "starter-esprit-du-sable": { "sumQty": 40, "contentsKnown": true },
+    "starter-invocation": { "sumQty": 40, "contentsKnown": true }
+  },
+  "notDone": [
+    "Identify the 2 holo finishes per starter (not on poster)",
+    "S5 Quête / Nouveau départ (awaiting posters)"
+  ]
+}

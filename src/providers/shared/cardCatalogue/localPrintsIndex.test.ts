@@ -83,6 +83,35 @@ describe("createLocalPrintsIndex", () => {
     expect(index.lookupRow("naruto:sd-0001")?.art).toBe("art.inkworks.jpg");
   });
 
+  it("lookupAssets prefers the requested lang then any art", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0003",
+        setCode: "nr",
+        number: "0003",
+        cardType: "nr",
+        titles: [
+          { lang: "fr", fullName: "FR" },
+          { lang: "en", fullName: "EN" },
+        ],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:nr-0003", lang: "en", art: "art.en.webp" },
+      { printKey: "naruto:nr-0003", lang: "it", art: "art.it.webp" },
+    ]);
+    expect(index.lookupAssets("naruto:nr-0003", { preferLang: "fr" })).toMatchObject({
+      lang: "en",
+      art: "art.en.webp",
+    });
+    expect(index.lookupAssets("naruto:nr-0003", { preferLang: "it" })).toMatchObject({
+      lang: "it",
+      art: "art.it.webp",
+    });
+  });
+
   it("records an attested verso beside the recto", () => {
     tmpDataRoot();
     const index = createLocalPrintsIndex("naruto/ninja-ranks");
@@ -150,6 +179,50 @@ describe("faces sans titre dans leur langue", () => {
     expect(entry.langs.en?.name).toBe("Rock Lee");
     expect(entry.langs.fr?.art).toBe("art.coleka.webp");
     expect(entry.langs.fr?.name).toBeUndefined();
+  });
+
+  it("copie les titres EN vers les autres langues sans écraser l'attesté", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:nw-0001",
+        setCode: "nw",
+        number: "0001",
+        cardType: "nw",
+        titles: [{ lang: "en", fullName: "Naruto" }],
+      },
+      {
+        printKey: "naruto:nr-0001",
+        setCode: "nr",
+        number: "0001",
+        cardType: "nr",
+        titles: [
+          { lang: "en", fullName: "Title Card" },
+          { lang: "fr", fullName: "Et voici les ninjas !" },
+        ],
+      },
+    ]);
+
+    expect(index.fillMissingTitlesFromEnglish(["fr", "it", "en"])).toEqual({
+      copied: 3,
+    });
+    expect(index.lookupRow("naruto:nw-0001", { language: "fr" })?.fullName).toBe(
+      "Naruto",
+    );
+    expect(index.lookupRow("naruto:nw-0001", { language: "it" })?.fullName).toBe(
+      "Naruto",
+    );
+    expect(index.lookupRow("naruto:nr-0001", { language: "fr" })?.fullName).toBe(
+      "Et voici les ninjas !",
+    );
+    expect(index.lookupRow("naruto:nr-0001", { language: "it" })?.fullName).toBe(
+      "Title Card",
+    );
+    // Seconde passe : rien à ajouter.
+    expect(index.fillMissingTitlesFromEnglish(["fr", "it"])).toEqual({
+      copied: 0,
+    });
   });
 
   it("laisse cohabiter plusieurs éditions sur un même tirage", () => {

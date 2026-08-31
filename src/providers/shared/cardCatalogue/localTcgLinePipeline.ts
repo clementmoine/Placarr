@@ -6,8 +6,6 @@
  * inventées), puis on exporte. `seedProducts` pose le scellé à part : un
  * wrapper n'est pas une carte.
  */
-import { packCardsDir } from "@/lib/packPaths";
-
 import { enrichCardsIndexArtDimensions } from "./enrichCardsIndexArtDimensions";
 import {
   createLocalPrintsIndex,
@@ -18,14 +16,18 @@ export async function runLocalTcgPipeline(input: {
   packId: string;
   curatedDir: string;
   label: string;
-  seed?: (index: LocalPrintsIndex) => { prints: number; titles: number };
+  seed?: (
+    index: LocalPrintsIndex,
+  ) =>
+    | { prints: number; titles: number }
+    | Promise<{ prints: number; titles: number }>;
   seedProducts?: () =>
     | { written: number; skipped: number }
     | Promise<{ written: number; skipped: number }>;
 }): Promise<{ cards: number; products: number }> {
   const index = createLocalPrintsIndex(input.packId);
   if (input.seed) {
-    const seeded = input.seed(index);
+    const seeded = await input.seed(index);
     console.log(
       `── ${input.label} — ${seeded.prints} tirage${seeded.prints === 1 ? "" : "s"}, ${seeded.titles} titre${seeded.titles === 1 ? "" : "s"}`,
     );
@@ -44,13 +46,13 @@ export async function runLocalTcgPipeline(input: {
     );
   }
 
-  const { installCuratedCardBacks, curatedCardsDir } = await import(
+  const { ensureCuratedPackAssets } = await import(
     /* webpackIgnore: true */
-    "@/providers/shared/curatedCardsInstall"
+    "@/providers/shared/cardCatalogue/curatedAssets"
   );
-  await installCuratedCardBacks({
-    curatedCardsDir: curatedCardsDir(input.curatedDir),
-    destCardsDir: packCardsDir(input.packId),
+  await ensureCuratedPackAssets({
+    packId: input.packId,
+    curatedDir: input.curatedDir,
   });
 
   let products = 0;

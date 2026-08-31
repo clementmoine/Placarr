@@ -29,14 +29,22 @@ function loadPackIndex(packId: string): CardsIndexV1 | null {
 export function artOrientationForPackPrint(
   packId: string,
   printKey: string,
-  lang: string,
+  lang: string | null | undefined,
 ): (ArtFaceOrientation & { landscapePrint?: boolean }) | null {
   const index = loadPackIndex(packId);
   if (!index) return null;
-  const entry = index.cards[printKey.trim().toLowerCase()];
+  const key = printKey?.trim().toLowerCase();
+  if (!key) return null;
+  const entry = index.cards[key];
   if (!entry) return null;
   const landscapePrint = printIsLandscapeCard(entry);
-  const slot = entry.langs[lang.trim().toLowerCase()];
+  /*
+    `lang` may be null when the catalogue row comes from a LEFT JOIN with no
+    title yet — checklist / search must still resolve landscapePrint without
+    throwing on `.trim()`.
+  */
+  const langKey = lang?.trim().toLowerCase();
+  const slot = langKey ? entry.langs[langKey] : undefined;
 
   if (slot) {
     const orient = orientationFromIndexSlot(entry, slot);

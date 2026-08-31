@@ -49,6 +49,18 @@ export interface ProviderInfo {
    */
   catalogueLabel?: string;
   /**
+   * Autres noms sous lesquels un collectionneur étiquette une étagère pour
+   * **ce** catalogue (« Naruto CCG », « JCC Naruto », « Ultra Challenge »).
+   *
+   * Servent uniquement à préremplir le sélecteur d'ajout de carte quand le nom
+   * d'étagère désigne clairement un jeu — un match ambigu ne force rien. Un
+   * objet `{ label, language }` fixe aussi la langue d'impression (ex. CCG
+   * anglais Shippuden ≠ Carddass FR, même provider).
+   */
+  catalogueAliases?: Array<
+    string | { label: string; language?: "fr" | "en" | "ja" | "it" | "de" }
+  >;
+  /**
    * This provider supplies authoritative *reference/catalog* prices (a price
    * database) rather than live marketplace listings — so its presence alone makes
    * cached pricing trustworthy. Lets the price-cache policy stay provider-blind.

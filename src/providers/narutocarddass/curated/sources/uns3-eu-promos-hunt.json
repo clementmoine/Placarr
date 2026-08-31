@@ -1,0 +1,190 @@
+{
+  "source": "uns3-eu-promos-hunt",
+  "observed": "2026-08-26",
+  "ingest": "titles fr via user-physical-ccg; sealed duopack-s28 via ebay.json; faces FR only from pasted CDN",
+  "kind": "research-dig",
+  "correction": {
+    "of": "fr-promo-dig-2026-08-26.json verdict.pr095Fr=absent",
+    "why": "Absence in our DB ≠ absence of print. Marketplace + Goat EURO Edition attest FR/EU prints.",
+    "newVerdict": "PR-095 exists in French / EURO foil; FR character name stubbed (Naruto Uzumaki); effect FR still null until bandeau OCR"
+  },
+  "channelMap": {
+    "note": "Three distribution channels for late Bandai USA PR line in EU — do not collapse into one promo bag.",
+    "dayOneGame": {
+      "sku": "UNS3 Day One Edition (EU)",
+      "promo": "PR-095",
+      "printKey": "naruto:pr-0095",
+      "art": "Goku outfit",
+      "enEffect": "UNIQUE TRAINING",
+      "press": [
+        "https://jeuvideo.afjv.com/news/6890_naruto_ultimate_ninja_kit.htm",
+        "https://www.gematsu.com/2012/10/narutimate-storm-3-european-limited-editions-announced"
+      ]
+    },
+    "collectorsEditions": {
+      "skus": ["Will of Fire", "True Despair"],
+      "promo": "premium trading card (PR TBD — likely same late wave; do not invent ref)",
+      "note": "Press says « a premium trading card »; sealed-box photos still needed to pin PR-100 vs other."
+    },
+    "retailDuopack": {
+      "slug": "duopack-s28",
+      "inCatalog": true,
+      "promoWindow": "PR-096",
+      "printKey": "naruto:pr-0096",
+      "contents": "2× s28 FR boosters + window promo",
+      "packshot": "staging/ebay/duopack-s28.webp"
+    },
+    "not": [
+      "Carddass tournament shuriken NI/TE/TA",
+      "Carddass tin PR-011/016",
+      "TCDB sid 118974 grab-bag",
+      "Storm Generations Card Edition (EU starter+booster — different SKU)"
+    ]
+  },
+  "checklistAxis": {
+    "hypothesis": "Late Bandai USA PR line tied to UNS3 (Coleka `_r38199` already enumerates PR-095, PR-096, PR-100; gaps 094/097–099). EU Day One/collectors shipped translated EURO foils of that late promo wave — not the full 100+ US promo set.",
+    "enAlreadyInCatalog": ["naruto:pr-0095", "naruto:pr-0096", "naruto:pr-0100"],
+    "frTitlesInLedger": ["naruto:pr-0095", "naruto:pr-0096", "naruto:pr-0100"],
+    "frFaceStillMissing": [],
+    "frEffectStillNull": [],
+    "goatLocaleProbe2026-08-26": {
+      "method": "HEAD known CrystalCommerce slug patterns (no store crawl)",
+      "hits": [
+        { "ref": "PR-095", "variant": "foil_euro_edition", "http": 200, "id": 586269 },
+        { "ref": "PR-100", "variant": "french__foil", "http": 200, "id": 564430 },
+        { "ref": "PR-100", "variant": "german__foil", "http": 200, "id": 564431 }
+      ],
+      "misses404": [
+        "PR-095 french__foil / german__foil",
+        "PR-096 foil_euro_edition / french__foil / german__foil",
+        "PR-100 foil_euro_edition (slug guess)",
+        "PR-090/093 french / euro guesses"
+      ],
+      "ledger": "curated/sources/goat-locale-promos.json",
+      "note": "Goat search UI returns noise; systematic euro_edition enumeration still blocked without a working category filter. Known hits = checklist axis for now."
+    },
+    "systematicSourcesToMine": [
+      {
+        "id": "goat-locale-promos",
+        "path": "curated/sources/goat-locale-promos.json",
+        "note": "Attested FR/DE/EURO Goat SKUs only — expand when a filter page works."
+      },
+      {
+        "id": "coleka-us-promos-late",
+        "path": "curated/sources/coleka-us-promos.json",
+        "note": "EN checklist already: PR-095/096/100. Use as upper bound for UNS3-era PRs."
+      },
+      {
+        "id": "sealed-box-photos",
+        "note": "WoF / True Despair sealed contents — pin which PR each collectors SKU ships."
+      }
+    ]
+  },
+  "marketplaceAttestations": [
+    {
+      "ref": "PR-095",
+      "lang": "fr",
+      "confidence": "marketplace-title",
+      "listing": "https://www.ebay.fr/itm/115771696619",
+      "title": "Naruto Uzumaki PR-095 Unique Training Ultimate Ninja Storm 3 Promo Card (French)",
+      "printedFrName": "Naruto Uzumaki",
+      "enEffect": "Unique Training",
+      "frEffect": null,
+      "note": "Character name shared EN/FR; do not invent FR effect until bandeau OCR."
+    },
+    {
+      "ref": "PR-100",
+      "lang": "fr",
+      "confidence": "shop-sku-photo",
+      "goat": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-promo_cards/naruto_uzumaki__pr100__promo__1st_edition__french__foil/564430",
+      "frEffect": "ASPIRATION",
+      "enEffect": "ASPIRATIONS",
+      "note": "Goat French Foil photo shows FR bandeau; face CDN not yet pasted into leboncoin/ebay faces."
+    },
+    {
+      "ref": null,
+      "listing": "https://www.ebay.fr/itm/318594909401",
+      "title": "Naruto Ultimate Ninja Storm générations card édition",
+      "note": "Different product — do not merge into UNS3 promo PR list."
+    }
+  ],
+  "duopack": {
+    "kind": "sealed-retail-blister",
+    "lang": "fr",
+    "setCode": "s28",
+    "slug": "duopack-s28",
+    "inCatalog": true,
+    "contents": {
+      "boosters": 2,
+      "promoWindow": {
+        "ref": "PR-096",
+        "printKey": "naruto:pr-0096",
+        "namePrinted": "4e HOKAGE",
+        "character": "Minato Namikaze",
+        "effect": "SAUVEUR DE KONOHA"
+      }
+    },
+    "packArt": {
+      "blisterBg": "Sasuke (Sharingan) + Obito/Tobi mask",
+      "boosterFront": "Naruto Nine-Tails Chakra Mode",
+      "boosterCopy": "LES 120 CARTES DE LA SÉRIE « ULTIMATE NINJA STORM 3 » / COMPATIBLE AVEC LE JEU VIDÉO"
+    },
+    "not": [
+      "Day One game pack-in (PR-095 Goku / Unique Training)",
+      "Storm Generations Card Edition",
+      "Display box display-s28"
+    ],
+    "attestations": [
+      {
+        "id": "ebay-alexma-287499390775",
+        "url": "https://www.ebay.fr/itm/287499390775",
+        "image": "https://i.ebayimg.com/images/g/q1cAAeSwLDFqb6zN/s-l1600.webp",
+        "confidence": "visual-window",
+        "ingest": "ebay.json products + staging/ebay/duopack-s28.webp"
+      },
+      {
+        "id": "ebay-duo-405415056820",
+        "url": "https://www.ebay.fr/itm/405415056820",
+        "confidence": "title-only"
+      },
+      {
+        "id": "kinkai-5274",
+        "url": "https://kinkai.fr/article/5274",
+        "note": "Seller text « deux booster avec un carte spécial minato rare » + verso photo: 8 cartes (7+1), EAN 3391891970488, BANDAI 2013 MADE IN ITALY → kinkai.json art/back",
+        "staging": [
+          "staging/kinkai/duopack-s28-01.webp",
+          "staging/kinkai/duopack-s28-02.webp"
+        ]
+      }
+    ],
+    "catalogGap": null
+  },
+  "sellerWatch": [
+    {
+      "id": "ebay-alexma_4850",
+      "url": "https://www.ebay.fr/sch/i.html?_ssn=alexma_4850",
+      "observed": "2026-08-26",
+      "note": "Mostly s28 FR singles (already complete). Promo stock: PR-096 only. Duopack listing used for packshot."
+    }
+  ],
+  "nextActions": [
+    "Optional: sharper collector paste for PR-100 FR (Goat CDN is 218×300)",
+    "OCR already done for PR-095 → ENTRAÎNEMENT UNIQUE (ebay photo)",
+    "WoF / True Despair sealed photos → pin collectors PR ref (Reddit 1vkzduh gallery)",
+    "Visual-ID Reddit xaxwh9 Euro Foil + paste if CDN available",
+    "DE title stubs for PR-095/096 from reddit-narutocarddass (langs.de) once merge path exists",
+    "Arctic Shift pass on r/Narutoccg for more FR US-CCG PR attestations (do not invent)"
+  ],
+  "redditPass2026-08-26": {
+    "ledger": "curated/sources/reddit-narutocarddass.json",
+    "via": "arctic-shift.photon-reddit.com (no live crawl)",
+    "hits": {
+      "pr095De": ["1vk1j0c", "1uthhv7", "1gv4o5o"],
+      "pr095EuropeFoil": ["1v67qcf", "ugdgqq", "xaxwh9"],
+      "pr096DeFoil": ["ugdgqq"],
+      "amigoChecklistAsk": ["1ucmepn", "1my0f03"],
+      "storm3FrBlisters": ["1j7bs5c", "1r052s2", "1gaxxvu"]
+    },
+    "caution": "1ucmepn gallery = Amigo Carddass EU, not UNS3 PR line"
+  }
+}

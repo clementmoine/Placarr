@@ -47,10 +47,12 @@ import { ledenicheurModule } from "@/providers/ledenicheur";
 import { nautiljonModule } from "@/providers/nautiljon";
 import { musicbrainzModule } from "@/providers/musicbrainz";
 import { nointroModule } from "@/providers/nointro";
-import { narutoccgModule } from "@/providers/narutoccg";
+import { narutocarddassModule } from "@/providers/narutocarddass";
 import { narutoshippudenModule } from "@/providers/narutoshippuden";
 import { narutoranksModule } from "@/providers/narutoranks";
 import { narutoultraModule } from "@/providers/narutoultra";
+import { narutomythosModule } from "@/providers/narutomythos";
+import { narutokayouModule } from "@/providers/narutokayou";
 import { onepieceModule } from "@/providers/onepiece";
 import { digimonModule } from "@/providers/digimon";
 import { yugiohModule } from "@/providers/yugioh";
@@ -130,10 +132,12 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   fullsetModule,
   lorcanajsonModule,
   lorcanatcgModule,
-  narutoccgModule,
+  narutocarddassModule,
   narutoshippudenModule,
   narutoranksModule,
   narutoultraModule,
+  narutomythosModule,
+  narutokayouModule,
   onepieceModule,
   digimonModule,
   yugiohModule,

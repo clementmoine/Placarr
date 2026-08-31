@@ -13,8 +13,8 @@ import { describe, expect, it } from "vitest";
  *
  * - **ajouter un pack oblige à éditer le code partagé**, ce qui explique une
  *   bonne part des vingt points de contact d'un nouveau pack ;
- * - le graphe d'imports devient circulaire en pratique — `narutoccg` importe
- *   `shared/sealedProducts`, qui réimporte `narutoccg`.
+ * - le graphe d'imports devient circulaire en pratique — `narutocarddass` importe
+ *   `shared/sealedProducts`, qui réimporte `narutocarddass`.
  *
  * Le garde de cécité de `core/` ne pouvait rien voir : il saute `src/providers/`
  * en entier, et ne repère de toute façon qu'un id **exactement** entre

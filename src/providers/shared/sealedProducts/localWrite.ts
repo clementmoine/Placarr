@@ -12,6 +12,7 @@ import path from "node:path";
 
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
 import { packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import { resolveSealedContents } from "@/core/collect/sealedContents";
 
 import {
   emptyProductsIndex,
@@ -23,18 +24,30 @@ import {
   sealedContentsKnown,
   type SealedKind,
 } from "./kinds";
+import { resolveContentLayers } from "./contentLayers";
 
 export type LocalSealedWrite = {
   slug: string;
   kind: SealedKind;
   category: string;
   name: string;
+  /**
+   * Marque de provenance pour le nom de fichier (`art.<source>.jpg`).
+   * Absent = la source du lot (`input.source`). À renseigner quand un même
+   * lot mélange deux hôtes (p. ex. Inkworks US + Panini EU chez Naruto).
+   */
+  source?: string;
   setCode: string | null;
   catalogueSetId?: string | null;
   lang: string;
   releaseDate: string | null;
   declaredCardCount: number | null;
   setCardCount?: number | null;
+  /** Cote connue (ledger / boutique) — sinon `null`. */
+  priceCents?: number | null;
+  /** Surcharge si le ledger connaît déjà le contenu (sinon dérivé du nom). */
+  cardsPerPack?: number | null;
+  packsContained?: number | null;
   /** Fiche éditeur / page produit, pas une URL d'archive. */
   path?: string;
   /** Octets du packshot, déjà sur disque. Absent = SKU sauté. */
@@ -93,30 +106,45 @@ export function writeLocalSealedProducts(input: {
   let skipped = 0;
 
   for (const spec of input.products) {
-    const langFolder = spec.lang.trim().toLowerCase();
+    const langFolder = spec.lang?.trim().toLowerCase();
     const destDir = path.join(destRoot, spec.slug, langFolder);
-    const artFile = installRole(destDir, "art", input.source, spec.artPath);
+    const source = spec.source ?? input.source;
+    const artFile = installRole(destDir, "art", source, spec.artPath);
     if (!artFile) {
       skipped += 1;
       continue;
     }
-    const logoFile = installRole(destDir, "logo", input.source, spec.logoPath);
-    const backFile = installRole(
-      destDir,
-      "back",
-      input.source,
-      spec.imageBackPath,
-    );
+    const logoFile = installRole(destDir, "logo", source, spec.logoPath);
+    const backFile = installRole(destDir, "back", source, spec.imageBackPath);
     for (const extra of spec.extraDumps ?? []) {
       installRole(destDir, "art", extra.source, extra.artPath);
       installRole(destDir, "back", extra.source, extra.imageBackPath);
     }
     const preview = spec.kind === "booster" || spec.kind === "display";
+    const contents = resolveSealedContents({
+      kind: spec.kind,
+      name: spec.name,
+      slug: spec.slug,
+      declaredCardCount: spec.declaredCardCount,
+    });
+    const behavior = sealedBehaviorForKind(spec.kind);
+    const contentsKnown = sealedContentsKnown({
+      kind: spec.kind,
+      containsPrintsIsPreview: preview,
+      printCount: 0,
+    });
+    const layers = resolveContentLayers({
+      kind: spec.kind,
+      behavior,
+      prints: [],
+      contentsKnown,
+      containsPrintsIsPreview: preview,
+    });
     const entry: SealedProductEntry = {
       slug: spec.slug,
       path: spec.path ?? "",
       kind: spec.kind,
-      behavior: sealedBehaviorForKind(spec.kind),
+      behavior,
       category: spec.category,
       name: spec.name,
       image: assetsPackFileUrl(
@@ -148,13 +176,15 @@ export function writeLocalSealedProducts(input: {
       catalogueSetId: spec.catalogueSetId ?? spec.setCode,
       lang: spec.lang,
       releaseDate: spec.releaseDate,
+      priceCents: spec.priceCents ?? null,
+      cardsPerPack: spec.cardsPerPack ?? contents.cardsPerPack,
+      packsContained: spec.packsContained ?? contents.packsContained,
+      guaranteedPrints: layers.guaranteedPrints,
+      randomPoolScope: layers.randomPoolScope,
+      randomPoolPrints: layers.randomPoolPrints,
       declaredCardCount: spec.declaredCardCount,
       setCardCount: spec.setCardCount ?? null,
-      contentsKnown: sealedContentsKnown({
-        kind: spec.kind,
-        containsPrintsIsPreview: preview,
-        printCount: 0,
-      }),
+      contentsKnown,
       containsPrintsIsPreview: preview,
       prints: [],
     };

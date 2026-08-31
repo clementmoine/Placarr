@@ -18,7 +18,7 @@ Trois sous-rôles constatés, un provider ne prend que ceux dont il a besoin :
 | `dbscg`           | ✓ (+ `template/` foil)  | —           | —          | ✓         |
 | `dbsfw`           | ✓                       | —           | —          | ✓         |
 | `lorcanatcg`      | ledger à la racine\*    | —           | —          | —         |
-| `narutoccg`       | ✓ (backs + reconstruct) | ✓           | ✓          | —         |
+| `narutocarddass`       | ✓ (backs + reconstruct) | ✓           | ✓          | —         |
 | `narutoshippuden` | ✓                       | —           | ✓          | ✓         |
 | `narutoranks`     | ✓                       | ✓           | ✓          | ✓         |
 | `narutoultra`     | —                       | ✓           | ✓          | ✓         |
@@ -55,12 +55,12 @@ Installeur partagé : `src/providers/shared/curatedCardsInstall.ts`
 Le **markdown n'est pas copié** (voir plus bas). Les faces reconstruites
 (`art.reconstructed.*` sous `{family}/{id}/{lang}/`) ne relèvent **pas** de
 l'installeur partagé : le provider les installe lui-même
-(`narutoccg/install/installReconstructed.ts`).
+(`narutocarddass/install/installReconstructed.ts`).
 
 ## `curated/products/` — packshots faits main
 
 Visuels de produit sans source rejouable : badges de série découpés, logo du
-jeu, emballages photographiés (`narutoccg` : `wrappers/`, `jp-boosters/`),
+jeu, emballages photographiés (`narutocarddass` : `wrappers/`, `jp-boosters/`),
 retouches de cadrage, packshots fournis par le propriétaire
 (`narutoranks/curated/products/{slug}/en/`), PNG reconstruits
 (`narutoultra/curated/products/{slug}/fr/art.reconstructed.png`).
@@ -70,11 +70,26 @@ Pas d'installeur partagé : le code du provider les lit au build du pack
 ici et **pas dans `staging/`** : le staging se reconstruit par script, donc
 tout ce qu'on y pose à la main disparaît à la moisson suivante.
 
+## `curated/products-contents.json` — graine de contenu scellé
+
+Ledger **commité** des listes garanties (starters, promos fixes, math blister).
+Schéma : `version: 1`, `skus[slug].guaranteedPrints[]` (`printKey`, `qty?`,
+`finish?`) ou legacy `guaranteedPrintKeys`.
+
+Au refresh / ingest sealed : `installProviderProductsContents` copie vers
+`data/<pack>/curated/products-contents.json` (+ miroir legacy
+`sealed-contents.json`) ; `mergeCuratedSealedContents` applique sur
+`products-index.json`. **Ne jamais** éditer uniquement sous `data/` — la
+graine git est la source de vérité.
+
+Exemple Carddass : `src/providers/narutocarddass/curated/products-contents.json`
+(posters S1–S4 + catalogues qty).
+
 ## `curated/sources/` — ledgers d'attestation
 
 Relevés JSON faits à la main (checklists, names, sets, coleka, mercari,
 yahoo-auctions…) attestant ce qu'un dump ne prouve plus. Importés au build du
-pack : `narutoccg` (`mergeAttestedLedgers.ts`), `narutoshippuden`
+pack : `narutocarddass` (`mergeAttestedLedgers.ts`), `narutoshippuden`
 (`buildFromLedgers.ts`), `narutoranks`, `narutoultra`. Certains exports vont
 ensuite vers `data/` (ex. `apache-index` → `data/naruto/carddass/logs/`).
 
@@ -91,7 +106,7 @@ Le provider expose une fonction qui renvoie `path.join(providerDir, "curated")`
 — lui seul sait où elle est :
 
 - `dbsCgCuratedDir()` / `dbsFwCuratedDir()` — `dbscg|dbsfw/installCurated.ts` ;
-- `narutoCuratedDir()` — `narutoccg/curatedPaths.ts` ;
+- `narutoCuratedDir()` — `narutocarddass/curatedPaths.ts` ;
 - `narutoShippudenCuratedDir()` — `narutoshippuden/assets.ts`.
 
 L'install est branchée dans le **CLI du pack**, étape « curated sync » en tête
@@ -100,8 +115,8 @@ de run (`--dry-run` / `--force` propagés) :
 - `ensureCuratedPackAssets`
   (`src/providers/shared/cardCatalogue/curatedAssets.ts`) = backs +
   `full_foil_mask.webp` (plaque blanche 64×64, `installFullFoilMask`) →
-  `pnpm dbs:cards`, `pnpm dbs:fw`.
-- `pnpm naruto:cards` synchronise le curated en premier à **chaque** run
+  Catalogue Sync Masters / Fusion World.
+- Catalogue Sync Naruto synchronise le curated en premier à **chaque** run
   (`ensureNarutoCuratedAssets`), même pour `--only index`.
 - `runLocalTcgPipeline`
   (`src/providers/shared/cardCatalogue/localTcgLinePipeline.ts`) appelle

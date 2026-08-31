@@ -5,8 +5,27 @@ import {
   sealedContentsKnown,
   sealedKindForCategory,
 } from "./kinds";
-import { printKeyFromCollectorRef, sealedProductFromStaging } from "./ingest";
+import {
+  printKeyFromCollectorRef,
+  sealedPriceCentsFromShop,
+  sealedProductFromStaging,
+} from "./ingest";
 import { sealedProductKey } from "./indexFormat";
+
+describe("sealedPriceCentsFromShop", () => {
+  it("converts EUR shop strings to cents", () => {
+    expect(sealedPriceCentsFromShop({ price: "3.88", currency: "EUR" })).toBe(
+      388,
+    );
+    expect(sealedPriceCentsFromShop({ price: 4.9, currency: "EUR" })).toBe(490);
+  });
+
+  it("ignores non-EUR and empty prices", () => {
+    expect(sealedPriceCentsFromShop({ price: "4.90", currency: "USD" })).toBeNull();
+    expect(sealedPriceCentsFromShop({ price: null, currency: "EUR" })).toBeNull();
+    expect(sealedPriceCentsFromShop({ price: "0", currency: "EUR" })).toBeNull();
+  });
+});
 
 describe("sealed kinds", () => {
   it("maps host categories onto the four catalogue objects", () => {
@@ -123,10 +142,71 @@ describe("sealed ingest", () => {
       contentsKnown: false,
       containsPrintsIsPreview: true,
       declaredCardCount: 446,
+      priceCents: 490,
+      /*
+        « Booster Set 12 … » : le 12 est le n° de set, pas « 12 cartes ».
+        Sans cette mention, cardsPerPack reste null — on n'invente pas.
+      */
+      cardsPerPack: null,
+      packsContained: 1,
     });
     expect(entry?.prints).toHaveLength(1);
     expect(entry?.prints[0]?.printKey).toBeNull();
     expect(entry?.setLogo).toBeNull();
+  });
+
+  it("reads cards-per-pack from « N cartes » in the product name", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "booster-premier-chapitre-malefique",
+        path: "/products/boosters/booster-premier-chapitre-malefique",
+        category: "boosters",
+        image: "https://static.lorcards.fr/malefique.webp",
+      },
+      page: {
+        path: "/products/boosters/booster-premier-chapitre-malefique",
+        slug: "booster-premier-chapitre-malefique",
+        category: "boosters",
+        name: "Booster 12 cartes Premier Chapitre - Maléfique",
+        image: "https://static.lorcards.fr/malefique.webp",
+        sku: 1,
+        price: "3.88",
+        currency: "EUR",
+        setCode: "FC",
+        lang: "FR",
+        releaseDate: "01/09/2023",
+        declaredCardCount: 420,
+        containsPrints: [],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        tables: {},
+      },
+    });
+    expect(entry).toMatchObject({
+      cardsPerPack: 12,
+      packsContained: 1,
+      declaredCardCount: 420,
+      priceCents: 388,
+    });
+  });
+
+  it("reads packs-contained from a display slug without a name", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "display-24-boosters-premier-chapitre",
+        path: "/products/displays/display-24-boosters-premier-chapitre",
+        category: "displays",
+        image: null,
+      },
+      page: null,
+    });
+    expect(entry).toMatchObject({
+      kind: "display",
+      cardsPerPack: null,
+      packsContained: 24,
+    });
   });
 
   it("overlays the official Lorcana chapter thumb when the slug names the set", () => {

@@ -6,7 +6,16 @@ export type SealedPrintLink = {
   ref: string | null;
   /** Set when the collector ref round-trips a printKey for this pack's game. */
   printKey: string | null;
+  /** Copies in the sealed product when known (playset). Default implied 1. */
+  qty?: number;
+  /**
+   * Finish on the same printKey (`holo`, …) — never encoded in the key itself.
+   */
+  finish?: string;
 };
+
+/** D'où sort la loterie — détail dans `contentLayers.ts`. */
+export type RandomPoolScope = "set" | "listed" | "none" | "unknown";
 
 export type SealedProductEntry = {
   slug: string;
@@ -47,7 +56,48 @@ export type SealedProductEntry = {
   catalogueSetId?: string | null;
   lang: string | null;
   releaseDate: string | null;
-  /** Cartes par sachet / par boîte. */
+  /**
+   * Cote boutique en centimes EUR, quand la fiche scellée en publie une
+   * (lorcards / dbscards / …). `null` = pas de prix connu — l'option d'achat
+   * s'affiche quand même, sans inventer un chiffre.
+   */
+  priceCents: number | null;
+  /**
+   * Cartes dans **un** sachet / unité d'ouverture.
+   * Distinct de `declaredCardCount` (souvent le pool / set chez lorcards).
+   * `null` = non vérifié — pas « zéro ».
+   */
+  cardsPerPack: number | null;
+  /**
+   * Sachets que **ce** produit contient.
+   * Booster = 1 ; display annoncé « 24 boosters » = 24 ; `null` si inconnu.
+   */
+  packsContained: number | null;
+  /**
+   * Sachets **par** `catalogueSetId` / `setCode` quand le SKU mélange plusieurs
+   * extensions (Coffret Métal : 1×S1 + 1×S2 + deck S4). Absent = un seul set.
+   */
+  packsBySet?: Record<string, number> | null;
+  /**
+   * Sets où les garanties du ledger comptent pour le conseil d'achat.
+   * Coffret Métal : `["s4", "promo"]` — pas S5 même si un NI du deck y est
+   * rangé au catalogue.
+   */
+  guaranteeSets?: string[] | null;
+  /**
+   * Cartes **toujours** présentes (starter exact, promo fixe d'un blister).
+   * Ne jamais y mettre un aperçu boutique (15 tuiles).
+   */
+  guaranteedPrints: SealedPrintLink[];
+  /**
+   * D'où sort la loterie — voir `contentLayers.ts` / docs/sealed_product_contents.md.
+   * `set` sur un booster classique est une **hypothèse** jusqu'à vérification
+   * (faux pour judge / manga / promo packs).
+   */
+  randomPoolScope: RandomPoolScope;
+  /** Pool explicite si `randomPoolScope === "listed"`. */
+  randomPoolPrints: SealedPrintLink[];
+  /** Cartes annoncées par la boutique (sens variable selon le site). */
   declaredCardCount: number | null;
   /**
    * Cartes **différentes** que la sortie ouvre — autre fait que le précédent.

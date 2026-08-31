@@ -10,6 +10,7 @@ import path from "node:path";
 import { providerModuleForPack } from "@/providers/shared/packOwner";
 
 import { buildPrintKey } from "@/core/identify/printKey";
+import { resolveSealedContents } from "@/core/collect/sealedContents";
 import { packProductsIndexPath } from "@/lib/packPaths";
 import { foilPackDataDir } from "@/lib/runtimeData";
 import type {
@@ -31,6 +32,8 @@ import {
   sealedContentsKnown,
   sealedKindForCategory,
 } from "./kinds";
+import { resolveContentLayers } from "./contentLayers";
+import { mergeCuratedSealedContents } from "./curatedContents";
 
 /**
  * printKey game slug for a data pack. Lives here (providers/) so core never
@@ -112,6 +115,28 @@ function productPages(raw: unknown): DbscardsProductPage[] {
   );
 }
 
+/**
+ * Prix boutique → centimes EUR.
+ *
+ * Les fiches TCG Cards portent `price` + `currency` (souvent `"4.90"` /
+ * `"EUR"`). Hors euro on ignore : le conseil d'achat compare en €.
+ */
+export function sealedPriceCentsFromShop(input: {
+  price?: string | number | null;
+  currency?: string | null;
+}): number | null {
+  const raw = input.price;
+  if (raw == null || raw === "") return null;
+  const currency = (input.currency ?? "EUR").trim().toUpperCase();
+  if (currency && currency !== "EUR" && currency !== "€") return null;
+  const euros =
+    typeof raw === "number"
+      ? raw
+      : Number(String(raw).trim().replace(",", "."));
+  if (!Number.isFinite(euros) || euros <= 0) return null;
+  return Math.round(euros * 100);
+}
+
 function mapPrints(
   packId: string,
   links: readonly DbscardsProductPrintLink[] | undefined,
@@ -162,11 +187,31 @@ export function sealedProductFromStaging(input: {
   const prints = mapPrints(input.packId, page?.containsPrints);
   const preview =
     page?.containsPrintsIsPreview ?? (kind === "booster" || kind === "display");
+  const declaredCardCount = page?.declaredCardCount ?? null;
+  const contents = resolveSealedContents({
+    kind,
+    name: page?.name,
+    slug: input.listing.slug,
+    declaredCardCount,
+  });
+  const behavior = sealedBehaviorForKind(kind);
+  const contentsKnown = sealedContentsKnown({
+    kind,
+    containsPrintsIsPreview: preview,
+    printCount: prints.length,
+  });
+  const layers = resolveContentLayers({
+    kind,
+    behavior,
+    prints,
+    contentsKnown,
+    containsPrintsIsPreview: preview,
+  });
   return {
     slug: input.listing.slug,
     path: input.listing.path || page?.path || "",
     kind,
-    behavior: sealedBehaviorForKind(kind),
+    behavior,
     category: input.listing.category,
     name: page?.name ?? null,
     image: page?.image || input.listing.image || null,
@@ -199,13 +244,18 @@ export function sealedProductFromStaging(input: {
       }) ?? null,
     lang: page?.lang ?? null,
     releaseDate: page?.releaseDate ?? null,
-    declaredCardCount: page?.declaredCardCount ?? null,
-    containsPrintsIsPreview: preview,
-    contentsKnown: sealedContentsKnown({
-      kind,
-      containsPrintsIsPreview: preview,
-      printCount: prints.length,
+    priceCents: sealedPriceCentsFromShop({
+      price: page?.price,
+      currency: page?.currency,
     }),
+    cardsPerPack: contents.cardsPerPack,
+    packsContained: contents.packsContained,
+    guaranteedPrints: layers.guaranteedPrints,
+    randomPoolScope: layers.randomPoolScope,
+    randomPoolPrints: layers.randomPoolPrints,
+    declaredCardCount,
+    containsPrintsIsPreview: preview,
+    contentsKnown,
     prints,
   };
 }
@@ -270,6 +320,8 @@ export async function ingestSealedProducts(
     }
     index.products[sealedProductKey(packId, entry.slug)] = entry;
   }
+
+  index.products = mergeCuratedSealedContents(packId, index.products);
 
   const file = packProductsIndexPath(packId);
   mkdirSync(path.dirname(file), { recursive: true });

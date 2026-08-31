@@ -268,6 +268,12 @@ export type PrintCandidate = {
   landscapeFace?: boolean;
   /** Any locale art for this print is wider than tall. */
   landscapePrint?: boolean;
+  /** Kayou HR/BP lenticular sprite — one panel shown at a time. */
+  lenticularGrid?: { cols: number; rows: number } | null;
+  /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
+  lenticularCropProfile?: string | null;
+  /** Kayou portrait scan gutter trim — single-face HR/MR/BP strips. */
+  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
   /**
    * Card family as the catalogue spells it (`Pokémon`, `Dresseur`, `Énergie`).
    * A look is chosen per family as much as per rarity — a Dresseur wearing a
@@ -714,6 +720,16 @@ export interface ProviderModule {
     setId: string;
     language?: string | null;
   }) => PrintCandidate[] | Promise<PrintCandidate[]>;
+  /**
+   * Composition de booster + taux de tirage par rareté (`packsPerHit`).
+   *
+   * Attestation curated (slots éditeur + consensus openings). Absent = le
+   * conseil d'achat reste sur le modèle uniforme (honête mais trop optimiste
+   * pour les chase). Voir `boosterComposition.ts` / `docs/sealed_product_contents.md`.
+   */
+  loadBoosterComposition?: () =>
+    | import("@/providers/shared/sealedProducts/boosterComposition").BoosterCompositionFile
+    | null;
   listPrintSets?: (
     type: string,
     language?: string | null,

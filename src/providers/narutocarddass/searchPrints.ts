@@ -33,6 +33,18 @@ function printedColumnSql(db: DatabaseSync): string {
   return cols.some((col) => col.name === "printed") ? "a.printed" : "1";
 }
 
+function hasPrintSetsTable(db: DatabaseSync): boolean {
+  return (
+    (
+      db
+        .prepare(
+          `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'print_sets'`,
+        )
+        .all() as { name: string }[]
+    ).length > 0
+  );
+}
+
 /** Appartenance multi-set (`print_sets`) avec repli sur `prints.set_code`. */
 function setMembershipScope(
   db: DatabaseSync,
@@ -40,12 +52,19 @@ function setMembershipScope(
 ): { clause: string; params: (string | number)[] } | null {
   const id = setId?.trim().toLowerCase();
   if (!id) return null;
-  const tables = db
-    .prepare(
-      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'print_sets'`,
-    )
-    .all() as { name: string }[];
-  if (tables.length > 0) {
+  /*
+    Inserts S6 FR (TA-221…) peuvent n'avoir que `set_code` = 巻ノ — pas de
+    ligne `print_sets` — tant que le ledger n'a pas été syncé sur le disque.
+  */
+  const s6InsertNums =
+    id === "s6"
+      ? narutoS6FrPrintedDiskNumbers().map((n) => n.toLowerCase())
+      : [];
+  const s6InsertOr =
+    s6InsertNums.length > 0
+      ? ` OR LOWER(p.number) IN (${s6InsertNums.map(() => "?").join(",")})`
+      : "";
+  if (hasPrintSetsTable(db)) {
     /*
       `print_sets` porte les multi-séries (NI-049 → s1+s5). Un tirage sans
       ligne (legacy / 巻ノ-only) doit encore matcher sa `set_code` primaire —
@@ -65,14 +84,14 @@ function setMembershipScope(
                      WHERE ps2.print_key = p.print_key
                   )
                   AND LOWER(p.set_code) = ?
-                )
+                )${s6InsertOr}
               )`,
-      params: [id, id],
+      params: [id, id, ...s6InsertNums],
     };
   }
   return {
-    clause: `LOWER(p.set_code) = ?`,
-    params: [id],
+    clause: `(LOWER(p.set_code) = ?${s6InsertOr})`,
+    params: [id, ...s6InsertNums],
   };
 }
 import {
@@ -93,13 +112,23 @@ import {
   japaneseReleaseBands,
   listJapaneseReleases,
 } from "./sources/japaneseVolumes";
+import { belongsOnNarutoPromoChecklist } from "./sources/confirmedCarddassTournamentPromos";
 import {
   finalizeSetOptions,
   isAnsweredQuery,
   setScopedWhere,
 } from "@/providers/shared/cardCatalogue/sets";
 
-import { narutoSetLabel, narutoSetsUnreleasedInFrench } from "./facts";
+import {
+  narutoSetLabel,
+  narutoSetShippedLanguages,
+  narutoSetsUnreleasedInFrench,
+} from "./facts";
+import {
+  isNarutoS6FrPrintedNumber,
+  narutoS6FrPrintedDiskNumbers,
+} from "./sources/s6FrPrinted";
+import { RAMPAGE_TORNADO_SET } from "./parse/parseColekaStorm3";
 import { narutoCatalogueLineForCard, NARUTO_PACK_ID } from "./packs";
 
 /**
@@ -122,6 +151,37 @@ const CARD_FAMILY: Record<string, string> = {
 };
 
 export { formatNarutoReference };
+
+/**
+ * s1–s6 exist on two lines (Carddass NI/TE/TA vs CCG N/J/M). A FR title on
+ * CCG `M-092` must not fill the Carddass Série 3 checklist — different back,
+ * different game. Tempête / s24 / s28 stay CCG.
+ *
+ * `promo` is intentionally unsplit: Carddass shuriken reprints (`NI-023 · promo`)
+ * and EU CCG tin / Storm 3 window PRs (`PR-095` Day One, `PR-096` duopack,
+ * `PR-100`) share the set and often share a printKey with titles in several
+ * languages. The language filter alone scopes the checklist — forcing
+ * `carddass-fr` for Promo FR hid every bare `PR-nnn`.
+ */
+function narutoSetListingLine(
+  setId: string | undefined,
+  language: string | undefined,
+): "carddass-fr" | "en-ccg" | null {
+  const id = setId?.trim().toLowerCase();
+  if (!id || !language) return null;
+  if (id === "promo") return null;
+  if (id === RAMPAGE_TORNADO_SET) return "en-ccg";
+  if (/^s(?:[7-9]|1\d|2[0-8])$/.test(id) || /^tp\d+$/.test(id) || /^tin\d+$/.test(id)) {
+    return "en-ccg";
+  }
+  if (/^s[1-6]$/.test(id)) {
+    if (language === "en") return "en-ccg";
+    if (language === "fr" || language === "it" || language === "ja") {
+      return "carddass-fr";
+    }
+  }
+  return null;
+}
 
 /** CCG prints share the USA sleeve; Carddass falls through to the pack back. */
 export function narutoCandidateCardBackUrl(
@@ -437,24 +497,24 @@ function europeanSetLanguages(): Map<string, string[]> {
   */
   const unreleasedInFrench = narutoSetsUnreleasedInFrench();
   /*
-    Le français retail s'arrête à la Série 5 ; Sage's Legacy (s24) et Storm 3
-    (s28) ont une impression FR tardive. Les séries 7–23 / 25–27 sont EN (ou
-    IT) — des titres FR collés sur des reprints partagés ne doivent pas
-    rouvrir le filtre FR sur « Quest for Power ».
+    Le français retail s'arrête à la Série 5 ; Sage's Legacy (s24), Storm 3
+    (s28) et le deck Tempête approche ont une impression FR tardive. Les
+    séries 7–23 / 25–27 sont EN (ou IT) — des titres FR collés sur des
+    reprints partagés ne doivent pas rouvrir le filtre FR sur « Quest for Power ».
   */
-  const frenchLateSeries = new Set(["s24", "s28"]);
+  const frenchLateSeries = new Set(["s24", "s28", RAMPAGE_TORNADO_SET]);
   const found = new Map<string, Set<string>>();
   for (const pack of narutoIndexPacks()) {
     const db = ensureNarutoPackIndex(pack);
     if (!db) continue;
-    for (const row of db
-      .prepare(
-        `SELECT p.set_code AS setCode, t.lang AS lang
+    const langSql = `SELECT p.set_code AS setCode, t.lang AS lang
            FROM prints p JOIN print_titles t ON t.print_key = p.print_key
           WHERE t.lang IS NOT NULL AND TRIM(t.lang) <> ''
-          GROUP BY 1, 2`,
-      )
-      .all() as { setCode: string; lang: string }[]) {
+          GROUP BY 1, 2`;
+    for (const row of db.prepare(langSql).all() as {
+      setCode: string;
+      lang: string;
+    }[]) {
       const code = row.setCode?.trim();
       const lang = row.lang?.trim().toLowerCase();
       if (!code || lang === "ja") continue;
@@ -471,6 +531,13 @@ function europeanSetLanguages(): Map<string, string[]> {
       found.set(code, set);
     }
   }
+  /*
+    Retail S6 FR annulé, mais des inserts Kana (MIJ 2008) existent. On ouvre
+    le set en français sur ce sous-ensemble, pas sur les rendus carddass.fr.
+  */
+  const s6 = found.get("s6") ?? new Set<string>();
+  s6.add("fr");
+  found.set("s6", s6);
   return new Map([...found].map(([code, langs]) => [code, [...langs].sort()]));
 }
 
@@ -483,13 +550,14 @@ function europeanSetLanguages(): Map<string, string[]> {
  * japonaise se calcule donc depuis le numéro imprimé, qui la détermine
  * entièrement.
  */
-export function listNarutoPrintSets(_language?: string | null): {
+export function listNarutoPrintSets(language?: string | null): {
   id: string;
   label: string;
   group?: string;
   languages?: string[];
   sortKey?: number;
 }[] {
+  const labelLang = language?.trim().toLowerCase() || null;
   /*
     Les deux découpes sont rendues **ensemble**, jamais l'une à la place de
     l'autre. Elles ne décrivent pas le même objet : le Japon compte dix-sept
@@ -516,9 +584,12 @@ export function listNarutoPrintSets(_language?: string | null): {
   for (const pack of narutoIndexPacks()) {
     const db = ensureNarutoPackIndex(pack);
     if (!db) continue;
-    for (const row of db
-      .prepare(`SELECT DISTINCT set_code AS setCode FROM prints`)
-      .all() as { setCode: string }[]) {
+    const setSql = hasPrintSetsTable(db)
+      ? `SELECT DISTINCT set_code AS setCode FROM prints
+         UNION
+         SELECT DISTINCT set_code AS setCode FROM print_sets`
+      : `SELECT DISTINCT set_code AS setCode FROM prints`;
+    for (const row of db.prepare(setSql).all() as { setCode: string }[]) {
       const code = row.setCode?.trim();
       if (code && code !== "unknown" && !japaneseIds.has(code))
         european.add(code);
@@ -529,15 +600,22 @@ export function listNarutoPrintSets(_language?: string | null): {
     ...finalizeSetOptions(
       [...european].map((code) => ({
         id: code,
-        label: narutoSetLabel(code),
+        label: narutoSetLabel(code, null, labelLang),
         group: EUROPEAN_CUT,
-        languages: europeanLanguages.get(code) ?? [],
+        languages:
+          narutoSetShippedLanguages(code) ?? europeanLanguages.get(code) ?? [],
         /*
           Le rang est dans le **code** — `s5` — pas dans le libellé, qui porte
           souvent le nom anglais du set. Trié par texte, la liste s'ouvrait sur
           « A New Chronicle », qui est la douzième série.
+          Le deck Tempête se range avec la s11 US dont il reprend les reprints.
         */
-        sortKey: /^s(\d+)$/.exec(code) ? Number(code.slice(1)) : null,
+        sortKey:
+          code === RAMPAGE_TORNADO_SET
+            ? 11
+            : /^s(\d+)$/.exec(code)
+              ? Number(code.slice(1))
+              : null,
       })),
     ),
     ...finalizeSetOptions(
@@ -566,7 +644,8 @@ export function searchNarutoPrints(
   // Une extension seule est une question complète : « montre-moi ce set ».
   if (!isAnsweredQuery(trimmed, setId)) return [];
 
-  const lang = (opts.language || "fr").toLowerCase();
+  const requestedLang = opts.language?.trim().toLowerCase() || "";
+  const lang = requestedLang || "fr";
   /*
     Le plafond monte à cinq mille pour la check-list, qui doit énumérer un set
     entier : compter les manquantes d'un set de 452 cartes sur les deux cents
@@ -717,14 +796,46 @@ export function searchNarutoPrints(
   rows.sort((a, b) => {
     const byNumber = compareNarutoCollectors(a.number, b.number);
     if (byNumber !== 0) return byNumber;
+    /*
+      La langue demandée d'abord. Sans ça, `compareNarutoLangs` mettait le FR
+      devant, `seen` gardait cette ligne, et la check-list IT de la Série 1
+      tombait à zéro alors que les titres italiens sont dans l'index.
+    */
+    if (requestedLang) {
+      const aHit = (a.lang ?? "").toLowerCase() === requestedLang ? 0 : 1;
+      const bHit = (b.lang ?? "").toLowerCase() === requestedLang ? 0 : 1;
+      if (aHit !== bHit) return aHit - bHit;
+    }
     return compareNarutoLangs(a.lang, b.lang);
   });
 
+  const listingLine = narutoSetListingLine(setId, requestedLang || undefined);
+  const promoSet = setId?.trim().toLowerCase() === "promo";
   const seen = new Set<string>();
   const out: PrintCandidate[] = [];
   const enriched = withNarutoRetailArtFallback(rows);
   for (const row of enriched) {
-    if (row.printed === false) continue;
+    if (row.printed === false) {
+      const s6FrInsert =
+        setId === "s6" &&
+        requestedLang === "fr" &&
+        isNarutoS6FrPrintedNumber(row.number);
+      if (!s6FrInsert) continue;
+    }
+    if (promoSet && !belongsOnNarutoPromoChecklist(row.number)) continue;
+    if (
+      listingLine &&
+      narutoCatalogueLineForCard(row.number, row.setCode) !== listingLine
+    )
+      continue;
+    if (setId === "s6" && requestedLang === "fr") {
+      if (!isNarutoS6FrPrintedNumber(row.number)) continue;
+    }
+    if (
+      requestedLang &&
+      (row.lang ?? "").trim().toLowerCase() !== requestedLang
+    )
+      continue;
     if (seen.has(row.printKey)) continue;
     seen.add(row.printKey);
     out.push(toCandidate(row));

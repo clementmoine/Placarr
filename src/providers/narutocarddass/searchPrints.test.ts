@@ -31,6 +31,9 @@ describe("formatNarutoReference", () => {
     expect(formatNarutoReference("promo", "ni0063-promo")).toBe(
       "NI-063 · promo",
     );
+    expect(formatNarutoReference("s1", "ni0019-prerelease")).toBe(
+      "NI-019 · prerelease",
+    );
   });
 
   it("keeps a variant suffix rather than dropping it", () => {
@@ -200,6 +203,93 @@ describe("chercher par clé de tirage", () => {
     ).toBe(true);
   });
 
+  it("does not drop Italian titles behind the French row of the same print", () => {
+    const rows = listNarutoSetPrints({ setId: "s1", language: "it" });
+    expect(rows.length).toBeGreaterThan(50);
+    expect(rows.every((row) => row.language === "it")).toBe(true);
+    expect(rows.map((row) => row.printKey)).toContain("naruto:ni-0001");
+  });
+
+  /*
+    Promo FR mélange shuriken Carddass (`NI-023 · promo`) et PR EU CCG à texte
+    français (Day One PR-095, duopack PR-096, PR-100). Un filtre ligne
+    carddass-fr les excluait toutes — le préfixe `pr` est classé en-ccg.
+  */
+  it("lists FR-titled EU CCG PRs alongside Carddass shuriken in Promo", () => {
+    const rows = listNarutoSetPrints({ setId: "promo", language: "fr" });
+    const keys = new Set(rows.map((row) => row.printKey));
+    expect(keys.has("naruto:ni-0023-promo")).toBe(true);
+    expect(keys.has("naruto:pr-0095")).toBe(true);
+    expect(keys.has("naruto:pr-0096")).toBe(true);
+    expect(keys.has("naruto:pr-0100")).toBe(true);
+    // S6 inserts are Série 6 — not Promo twins.
+    expect(keys.has("naruto:ni-0232-promo")).toBe(false);
+    expect(keys.has("naruto:ta-0221-promo")).toBe(false);
+    expect(rows.every((row) => row.language === "fr")).toBe(true);
+  });
+
+  it("lists only physically printed S6 FR inserts, not carddass.fr preprod", () => {
+    const rows = listNarutoSetPrints({ setId: "s6", language: "fr" });
+    const keys = rows.map((row) => row.printKey).sort();
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "naruto:ni-0232",
+        "naruto:ni-0236",
+        "naruto:ni-0252",
+        "naruto:ni-0253",
+        "naruto:ta-0221",
+        "naruto:ta-0226",
+      ]),
+    );
+    expect(keys).toHaveLength(6);
+    expect(rows.every((row) => row.language === "fr")).toBe(true);
+    expect(keys).not.toContain("naruto:ni-0268");
+    expect(keys).not.toContain("naruto:te-0191");
+  });
+
+  it("does not mix CCG M-092 into Carddass Série 3 FR", () => {
+    const s3 = listNarutoSetPrints({ setId: "s3", language: "fr" });
+    expect(s3.map((row) => row.printKey)).not.toContain("naruto:m-0092");
+    expect(s3.map((row) => row.printKey)).not.toContain("naruto:n-0100");
+    const tempete = listNarutoSetPrints({ setId: "tempete", language: "fr" });
+    expect(tempete.map((row) => row.printKey)).toContain("naruto:m-0092");
+    const s3en = listNarutoSetPrints({ setId: "s3", language: "en" });
+    expect(s3en.map((row) => row.printKey)).toContain("naruto:m-0092");
+  });
+
+  it("lists the 33 Tempête approche reprints as their own FR set, not s24/s28", () => {
+    const rows = listNarutoSetPrints({ setId: "tempete", language: "fr" });
+    expect(rows).toHaveLength(33);
+    expect(rows.some((row) => row.printKey.startsWith("naruto:n-135"))).toBe(
+      false,
+    );
+    expect(listNarutoPrintSets().find((s) => s.id === "tempete")).toMatchObject({
+      label: "Série 11 — La Tempête Approche",
+      languages: ["fr"],
+    });
+    expect(listNarutoPrintSets("en").find((s) => s.id === "s1")).toMatchObject({
+      label: "Series 1 — The Path to Hokage",
+    });
+    expect(listNarutoPrintSets("en").find((s) => s.id === "s6")).toMatchObject({
+      label: "Series 6 — Eternal Rivalry",
+    });
+    expect(listNarutoPrintSets("en").find((s) => s.id === "s24")).toMatchObject({
+      label: "Series 24 — Sage's Legacy",
+    });
+    expect(listNarutoPrintSets("en").find((s) => s.id === "promo")).toMatchObject({
+      label: "Promo (off-series)",
+    });
+    expect(listNarutoPrintSets("it").find((s) => s.id === "s1")).toMatchObject({
+      label: "Serie 1 — La Forza della Foglia",
+    });
+    expect(listNarutoPrintSets("it").find((s) => s.id === "s6")).toMatchObject({
+      label: "Serie 6 — Rivalità Eterna",
+    });
+    expect(listNarutoPrintSets("it").find((s) => s.id === "s8")).toMatchObject({
+      label: "Serie 8 — Il Vento del Cambiamento",
+    });
+  });
+
   /*
     La clé se colle telle qu'elle s'écrit, tirets compris — c'est la forme que
     rend le catalogue et celle que porte l'URL. La variante sans tiret n'est pas
@@ -268,15 +358,19 @@ describe("parcourir la découpe japonaise", () => {
     const sets = listNarutoPrintSets();
     const langs = (id: string) => sets.find((s) => s.id === id)?.languages;
     /*
-      Le français s'arrête à la Série 5 — la 6 fut annulée — puis les séries 7
-      à 23 et 25–27 sont anglaises seules. Sage's Legacy (s24) et Storm 3 (s28)
-      ont reçu une impression française tardive. Une liste en bloc proposait
-      « Quest for Power », le set 7 américain, à qui filtrait sur le français.
+      Le français retail s'arrête à la Série 5 ; la S6 retail est annulée mais
+      des inserts Kana (MIJ 2008) existent — d'où `fr` sur `s6` (sous-ensemble).
+      Les séries 7 à 23 et 25–27 sont anglaises seules. Sage's Legacy (s24) et
+      Storm 3 (s28) ont reçu une impression française tardive.
     */
     expect(langs("s1")).toEqual(["en", "fr", "it"]);
+    expect(langs("s6")).toEqual(["en", "fr", "it"]);
     expect(langs("s7")).toEqual(["en"]);
     expect(langs("s24")).toEqual(["en", "fr"]);
     expect(langs("s28")).toEqual(["en", "fr"]);
+    expect(langs("tempete")).toEqual(["fr"]);
+    expect(langs("s11")).toEqual(["en"]);
+    expect(langs("tp4")).toEqual(["en"]);
   });
 
   /*

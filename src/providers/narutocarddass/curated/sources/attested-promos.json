@@ -1,5 +1,5 @@
 {
-  "note": "Catalogue promo prints (with or without art yet). Each row lists evidence sources (URLs / staging paths). Injected into cards-index at rebuild.",
+  "note": "Catalogue promo prints (with or without art yet). Each row lists evidence sources (URLs / staging paths). Injected into cards-index at rebuild. Promo checklist = PR-… + tournoi 7r7 only — inserts S6 manga/DVD stay on Série 6, never as -promo twins.",
   "promos": [
     {
       "number": "te030",
@@ -14,6 +14,11 @@
         {
           "id": "ncf-t544",
           "url": "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles"
+        },
+        {
+          "id": "forum-havre-t2336",
+          "url": "https://tournoi-de-cartes.forumpro.fr/t2336-recherche-cartes-naruto",
+          "note": "Fil 1800dci « [Recherche] Cartes Naruto » — Wishlist nov. 2010 — cote 8,75 € (CdF champion, voir te030-cdf)"
         }
       ],
       "shuriken": 3,
@@ -36,10 +41,21 @@
         {
           "id": "ncf-t544",
           "url": "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles"
+        },
+        {
+          "id": "forum-havre-t2336",
+          "url": "https://tournoi-de-cartes.forumpro.fr/t2336-recherche-cartes-naruto",
+          "note": "Fil 1800dci « [Recherche] Cartes Naruto » — Wishlist nov. 2010 — cote 7,5 €"
+        },
+        {
+          "id": "collection-naruto-yt-7r7",
+          "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+          "note": "2026-09-03 — cote ~100 € ; cité Champion de France (au-dessus des 3★ génériques 50 €)."
         }
       ],
       "shuriken": 3,
-      "diskCardId": "ni023"
+      "diskCardId": "ni023",
+      "notes": "CdF 2007 — ledger channel top 8 ; vendeur Collection Naruto cote Champion de France 100 €."
     },
     {
       "number": "ni095",
@@ -76,6 +92,11 @@
         {
           "id": "ncf-t544p50",
           "url": "https://narutocarddassfrance.1fr1.net/t544p50-les-cartes-promotionnelles"
+        },
+        {
+          "id": "forum-havre-t2336",
+          "url": "https://tournoi-de-cartes.forumpro.fr/t2336-recherche-cartes-naruto",
+          "note": "Fil 1800dci « [Recherche] Cartes Naruto » — Wishlist nov. 2010 — cote 4 €"
         }
       ],
       "shuriken": 3
@@ -114,6 +135,11 @@
           "id": "mkt-vinted-iruka-item",
           "url": "https://www.vinted.fr/items/6396823637-iruka-ni-63-promo-card-naruto-jcc-cardass",
           "note": "Photo: NI-63 PROMO CARD + 2★"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "shuriken": 2,
@@ -147,6 +173,11 @@
           "id": "mkt-lbc-ni092-b",
           "url": "https://www.leboncoin.fr/ad/collection/3244081620",
           "note": "2026-08-13 — Alexandre LBC « Shino Aburame - NI92 PROMO » (25 €) ; titre explicite NI92 PROMO FR ; photos sleeve"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "shuriken": 2,
@@ -176,6 +207,11 @@
           "id": "mkt-lbc-ni024",
           "url": "https://www.leboncoin.fr/ad/collection/3206088570",
           "note": "2026-08-13 — jipiyami LBC « Carte promo Zabuza Momochi » (45 €) / 2★ ; desc: Carte promo récompense de tournois 2 shuriken, ni 24 Zabuza Momochi, série Naruto Bandai, en français."
+        },
+        {
+          "id": "forum-havre-t2336",
+          "url": "https://tournoi-de-cartes.forumpro.fr/t2336-recherche-cartes-naruto",
+          "note": "Fil 1800dci « [Recherche] Cartes Naruto » — Wishlist août 2010 — pas de cote ; retiré des mises à jour 2011"
         }
       ],
       "shuriken": 2,
@@ -223,6 +259,11 @@
           "id": "mkt-lbc-te114",
           "url": "https://www.leboncoin.fr/ad/collection/3206089611",
           "note": "2026-08-13 — jipiyami LBC « Carte promo La danse sous la nouvelle lune » (45 €) / 2★ ; desc: Carte promo récompense de tournois 2 shuriken, te 114 La danse sous la nouvelle lune, série Naruto Bandai, en français."
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "shuriken": 2
@@ -253,6 +294,11 @@
           "id": "mkt-lbc-te085",
           "url": "https://www.leboncoin.fr/ad/collection/3206085083",
           "note": "2026-08-13 — jipiyami LBC « Carte promo Naruto-Furie » (45 €) / 2★ ; desc: Carte promo récompense de tournoi 2 shuriken, te 85 Naruto-Furie, série Naruto Bandai, en français."
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "shuriken": 2,
@@ -286,6 +332,11 @@
           "id": "mkt-lbc-lot-promo-2023",
           "url": "https://www.leboncoin.fr/ad/collection/2310814926",
           "note": "Lot « cartes Promo Jcc Naruto » (Contes, 05/03/2023) — les 5 cartes photographiees ensemble, toutes holographiques"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "shuriken": 1
@@ -352,6 +403,11 @@
           "id": "mkt-lbc-lot-promo-2023",
           "url": "https://www.leboncoin.fr/ad/collection/2310814926",
           "note": "Lot « cartes Promo Jcc Naruto » (Contes, 05/03/2023) — les 5 cartes photographiees ensemble, toutes holographiques"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "shuriken": 1,
@@ -385,6 +441,11 @@
           "id": "mkt-lbc-lot-promo-2023",
           "url": "https://www.leboncoin.fr/ad/collection/2310814926",
           "note": "Lot « cartes Promo Jcc Naruto » (Contes, 05/03/2023) — les 5 cartes photographiees ensemble, toutes holographiques"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "shuriken": 1,
@@ -394,7 +455,7 @@
       "number": "te002",
       "name": "Shuriken",
       "confidence": "official",
-      "channel": "tournament-s5-example",
+      "channel": "tournament",
       "sources": [
         {
           "id": "carddass-tournois-preview-s5",
@@ -410,10 +471,20 @@
           "id": "mkt-vinted-pr-wave1",
           "url": "https://www.vinted.fr/items/9638162987-carte-naruto-jcc-promo-foil-rare-vintage-francais",
           "note": "Collage 8× PROMO CARD; seller IDs: TE-02, TA-63, NI-117, TE-01, NI-34, TE-139, NI-65, TA-74"
+        },
+        {
+          "id": "forum-havre-t2336",
+          "url": "https://tournoi-de-cartes.forumpro.fr/t2336-recherche-cartes-naruto",
+          "note": "Fil 1800dci « [Recherche] Cartes Naruto » — Wishlist nov. 2010 — cote 1,375 €"
+        },
+        {
+          "id": "collection-naruto-yt-7r7",
+          "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+          "note": "2026-09-03 — user : TE-002 · promo 1★ = récompense de participation (juste en s'inscrivant / jouant), pas top ni vainqueur."
         }
       ],
       "shuriken": 1,
-      "notes": "Collage seller lists as Sasuke TE-02 (Shuriken art) Official S5 tournament promo example (carddass.fr eventail v2)."
+      "notes": "1★ = participation tournoi (tous les joueurs). Art Shuriken (Sasuke) sur eventail officiel S5. Collage seller TE-02."
     },
     {
       "number": "te139",
@@ -445,10 +516,15 @@
           "id": "mkt-lbc-lot-promo-2023",
           "url": "https://www.leboncoin.fr/ad/collection/2310814926",
           "note": "Lot « cartes Promo Jcc Naruto » (Contes, 05/03/2023) — les 5 cartes photographiees ensemble, toutes holographiques"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR : classe te 139 avec les 2★ (ni 92, ni 63, te 85, te 114…)"
         }
       ],
       "shuriken": 1,
-      "notes": "Official S4 preview tournament reward (carddass.fr). Checklist id te139 — not te058 (Caillou)."
+      "notes": "1★ participation (liste YT 7r7 + jabberwock). LBC jipiyami classait parfois 2★ — on suit le palier participation."
     },
     {
       "number": "ta074",
@@ -520,15 +596,21 @@
           "id": "coleka-te109",
           "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-03-puissances-cachees/invocation_i203137",
           "note": "Coleka i203137 — « Invocation TE-109 » S3 holo ; fiche set (pas la variante promo ligue). Utile pour l’art/base name."
+        },
+        {
+          "id": "collection-naruto-yt-7r7",
+          "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+          "note": "2026-09-03 — listé 3★ vainqueur (~50 €)."
         }
       ],
-      "notes": "100-point league reward (summer 2007)"
+      "shuriken": 3,
+      "notes": "100-point league reward (summer 2007) ; stamp 3★ selon liste YT 7r7."
     },
     {
       "number": "ta081",
       "name": "Rouleau de la terre",
       "confidence": "community-consensus",
-      "channel": "upcoming-2007",
+      "channel": "tournament",
       "sources": [
         {
           "id": "ncf-t544p50",
@@ -536,9 +618,15 @@
         },
         {
           "id": "user-2026-08-13"
+        },
+        {
+          "id": "collection-naruto-yt-7r7",
+          "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+          "note": "2026-09-03 — listé 2★ top 5 tournoi (~30 €)."
         }
       ],
-      "notes": "Number confirmed by collector (was unnamed TA in forum)"
+      "shuriken": 2,
+      "notes": "Number confirmed by collector (was unnamed TA in forum). 2★ = top 5."
     },
     {
       "number": "pr011",
@@ -564,6 +652,11 @@
           "id": "coleka-pr011",
           "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-05-un-nouveau-depart/orochimaru_i787868",
           "note": "Coleka i787868 — « Orochimaru PR-11 », taxonomie sous Série 05 (tin PR)"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "diskCardId": "pr011",
@@ -598,6 +691,11 @@
           "id": "coleka-pr016",
           "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-05-un-nouveau-depart/naruto-uzumaki_i787874",
           "note": "Coleka i787874 — « Naruto Uzumaki PR-16 », taxonomie sous Série 05 (tin PR, pas print S5)"
+        },
+        {
+          "id": "mkt-lbc-lot-promo-2026",
+          "url": "https://www.leboncoin.fr/ad/collection/3260788087",
+          "note": "2026-09-02 — jipiyami lot 10 promos FR (tinbox pr11/pr16 + tiers 1★/2★ listés dans la desc)"
         }
       ],
       "diskCardId": "pr016",
@@ -618,10 +716,70 @@
           "id": "mkt-lbc-ta051",
           "url": "https://www.leboncoin.fr/ad/collection/3205345691",
           "note": "2026-08-13 — jipiyami LBC « Carte promo Rencontre avec de puissants adversaires » (45 €) / 2★ ; desc: Carte promo récompense de tournois 2 shuriken, ta 51 Rencontre avec de puissants adversaires, série Naruto Bandai, en fr"
+        },
+        {
+          "id": "mkt-lbc-ta051-c",
+          "url": "https://www.leboncoin.fr/ad/collection/3254326784",
+          "note": "2026-09-02 — autre vendeur LBC « Rencontre avec les puissants adversaires - TA51 - Carte Promo Naruto Bandai - Carte FR » ; titre explicite TA-51"
         }
       ],
       "shuriken": 2,
       "notes": "Vinted PROMO CARD + 2★ — was incorrectly filed as deck-limited-only in forum list"
+    },
+    {
+      "number": "ta067",
+      "name": "Le Rouleau du Ciel",
+      "confidence": "mentioned",
+      "channel": "tournament",
+      "sources": [
+        {
+          "id": "forum-havre-t2336",
+          "url": "https://tournoi-de-cartes.forumpro.fr/t2336-recherche-cartes-naruto",
+          "note": "Fil 1800dci « [Recherche] Cartes Naruto » — Wishlist nov. 2010 — cote 2,125 €"
+        },
+        {
+          "id": "collection-naruto-yt-7r7",
+          "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+          "note": "2026-09-03 — listé 3★ vainqueur (~50 €)."
+        }
+      ],
+      "shuriken": 3,
+      "notes": "3★ vainqueur tournoi (liste YT 7r7)."
+    },
+    {
+      "number": "te073",
+      "name": "Le Feu du Dragon",
+      "confidence": "mentioned",
+      "channel": "tournament",
+      "sources": [
+        {
+          "id": "forum-havre-t2336",
+          "url": "https://tournoi-de-cartes.forumpro.fr/t2336-recherche-cartes-naruto",
+          "note": "Fil 1800dci « [Recherche] Cartes Naruto » — Wishlist nov. 2010 — cote 3,75 €"
+        },
+        {
+          "id": "collection-naruto-yt-7r7",
+          "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+          "note": "2026-09-03 — listé 3★ vainqueur (~50 €)."
+        }
+      ],
+      "shuriken": 3,
+      "notes": "3★ vainqueur tournoi (liste YT 7r7)."
+    },
+    {
+      "number": "ta011",
+      "name": "Bingo Book",
+      "confidence": "mentioned",
+      "channel": "tournament",
+      "sources": [
+        {
+          "id": "collection-naruto-yt-7r7",
+          "url": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+          "note": "2026-09-03 — listé 3★ vainqueur (~50 €)."
+        }
+      ],
+      "shuriken": 3,
+      "notes": "3★ vainqueur tournoi (liste YT 7r7)."
     }
   ]
 }

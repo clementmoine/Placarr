@@ -1,0 +1,23 @@
+{
+  "source": "Coleka — McDonald's Collection (EN)",
+  "observed": "2026-09-04",
+  "note": "Feuilles EN McDo 2023 absentes / introuvables sur Coleka au moment du pass. Faces EN → art.tcgplayer via fillTcgplayer (ids TCGdex).",
+  "umbrella": {
+    "url": "https://www.coleka.com/en/trading-cards/pokemon-tcg",
+    "scrape": false
+  },
+  "branches": [
+    {
+      "id": "m23en",
+      "setId": "2023sv",
+      "lang": "en",
+      "label": "McDonald's Collection 2023",
+      "url": null,
+      "listingPath": null,
+      "listedCount": 15,
+      "scrape": false,
+      "facesFrom": "tcgplayer"
+    }
+  ],
+  "not": ["umbrella-crawl"]
+}

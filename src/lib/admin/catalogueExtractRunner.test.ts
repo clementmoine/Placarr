@@ -47,6 +47,8 @@ describe("catalogueExtractRunner targets", () => {
     expect(isCatalogueExtractTarget("naruto-ultra")).toBe(true);
     expect(isCatalogueExtractTarget("naruto-mythos")).toBe(true);
     expect(isCatalogueExtractTarget("naruto-kayou")).toBe(true);
+    expect(isCatalogueExtractTarget("naruto-defi-ninja")).toBe(true);
+    expect(isCatalogueExtractTarget("naruto-data-carddass")).toBe(true);
     expect(normalizeCatalogueExtractTarget("naruto/shippuden")).toBe(
       "naruto-shippuden",
     );
@@ -54,6 +56,10 @@ describe("catalogueExtractRunner targets", () => {
     expect(normalizeCatalogueExtractTarget("lamincards")).toBe("naruto-ultra");
     expect(normalizeCatalogueExtractTarget("mythos")).toBe("naruto-mythos");
     expect(normalizeCatalogueExtractTarget("kayou")).toBe("naruto-kayou");
+    expect(normalizeCatalogueExtractTarget("defi")).toBe("naruto-defi-ninja");
+    expect(normalizeCatalogueExtractTarget("narultimate")).toBe(
+      "naruto-data-carddass",
+    );
     expect(catalogueExtractLabel("naruto")).toBe("Naruto Carddass");
     expect(catalogueExtractLabel("naruto-ranks")).toBe("Naruto Ninja Ranks");
     expect(catalogueExtractLabel("naruto-ultra")).toBe(
@@ -61,6 +67,10 @@ describe("catalogueExtractRunner targets", () => {
     );
     expect(catalogueExtractLabel("naruto-mythos")).toBe("Naruto Mythos");
     expect(catalogueExtractLabel("naruto-kayou")).toBe("Naruto Kayou");
+    expect(catalogueExtractLabel("naruto-defi-ninja")).toBe("Naruto Défi Ninja");
+    expect(catalogueExtractLabel("naruto-data-carddass")).toBe(
+      "Naruto Data Carddass",
+    );
     expect(catalogueExtractLabel("dbs-cg")).toBe("Dragon Ball Masters");
   });
 

@@ -22,8 +22,8 @@
     },
     {
       "source": "primegame.it",
-      "verdict": "vivant, muet",
-      "detail": "Connaît les huit séries italiennes, serie-7 et serie-8 comprises, mais n'expose aucune liste de cartes à une lecture anonyme."
+      "verdict": "câblé, stock 0",
+      "detail": "2026-09-02 : hub `/Singole/Naruto` → 9 rubriques (S1–S6 + Promo + Sete di Potere + Il Vento del Cambiamento). POST `/ajax/get_singles` avec `sottocat={expansionId};` répond en HTML — **0 annonce** sur chaque rubrique Naruto ce jour. Images attendues via tcg trend `sthumb/1000/{productId}` quand le stock revient. Scraper : `scrapePrimegameIt.ts` → `staging/primegame-it/`."
     },
     {
       "source": "picclick.it",
@@ -45,6 +45,29 @@
     ]
   },
   "whatWorks": "Le collage d'URL. slab-z a donné 5 scans à plat en quelques minutes le même jour ; eBay avait donné +45 faces avant. Les sources qui restent pour IT/JA sont des places de marché et des blogs de collectionneurs, tous fermés au crawl et ouverts au copier-coller.",
+  "ebaySoldListings": {
+    "observed": "2026-09-02",
+    "soldSearchLoggedOut": "Recherche `LH_Sold=1&LH_Complete=1` → redirection login sans session.",
+    "soldSearchLoggedIn": {
+      "errecards": "4 résultats « Naruto Card Game » vendus (juin–août 2026) : NI-01, NI-03, NI-25, NI-39 — déjà dans ebay.json. TE-07 visible via feedback mais pas dans la recherche vendues (`TE-` → 0).",
+      "davidborghfbperfectcards": "0 annonce vendue visible (toutes catégories, connecté)."
+    },
+    "feedbackWorkaround": {
+      "errecards": "Profil feedback + recherche « Naruto Card Game » dans `#searchArea` : 4 ventes sur 5 ans (+ TE-07 hors grille vendues). Pages `/itm/{id}` terminées lisibles sans login.",
+      "davidborghfbperfectcards": "Profil feedback en erreur serveur (connecté ou non)."
+    },
+    "ingestedFromSold": ["NI-25", "TE-07"]
+  },
+  "ebayActiveErrecards": {
+    "observed": "2026-09-02",
+    "search": "https://www.ebay.it/sch/i.html?_nkw=Naruto+Card+Game&_ssn=errecards&_ipg=240",
+    "results": 129,
+    "newVsLedger": 82,
+    "harvest": "fetch() in-page depuis session connectée (4 lots × ~21 URLs) — 82/82 imageId s-l1600",
+    "ingested": 82,
+    "installWritten": 82,
+    "note": "davidborgh store NARUTO : 50 annonces, toutes déjà dans ebay.json (août 2026)."
+  },
   "paniniLead": {
     "on": "2026-08-20",
     "publisher": "L'italien n'est pas édité par Bandai mais par **Panini Comics** à partir de 2006. « À partir de la 8ᵉ série, Panini a abandonné la production, revenue aux mains de Bandai » — d'où un changement de charte graphique en cours de ligne, et des couleurs de carte qui varient entre séries Panini et séries Bandai.",

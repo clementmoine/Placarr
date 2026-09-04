@@ -4,7 +4,7 @@
  */
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { canonicalizeKayouNumber } from "./kayouIdNormalize";
+import { canonicalizeKayouNumberForSet } from "./kayouIdNormalize";
 import { NARUTO_KAYOU_PACK_ID } from "./pack";
 import { kayouPrintKey } from "./printKey";
 
@@ -32,7 +32,7 @@ export function purgeKayouAliasPrints(
 
     const byKey = new Map(rows.map((r) => [r.printKey, r]));
     const aliases = rows.filter((r) => {
-      const canon = canonicalizeKayouNumber(r.number);
+      const canon = canonicalizeKayouNumberForSet(r.setCode, r.number);
       return canon !== r.number.trim().toLowerCase();
     });
 
@@ -54,7 +54,7 @@ export function purgeKayouAliasPrints(
     db.exec("BEGIN IMMEDIATE");
     try {
       for (const row of aliases) {
-        const number = canonicalizeKayouNumber(row.number);
+        const number = canonicalizeKayouNumberForSet(row.setCode, row.number);
         const canonKey = kayouPrintKey(row.setCode, number);
         if (!canonKey || canonKey === row.printKey) continue;
 

@@ -1525,6 +1525,32 @@
       "guaranteedPrintKeys": [],
       "notes": "Face imprimée « DECK DI 40 CARTE CON 2 CARTE HOLO ». Verso : 40 carte + regolamento + plancia + segnaturni + 5 monete ; série 135 (20+20 exclusives decks, 85 boosters, 10 communes). Liste printKeys inconnue — ne pas inventer le 2e starter S6."
     },
+    "starter-tradimento": {
+      "source": "Emporio di Milo shop photo + face Ref. 93176",
+      "verifiedAt": "2026-09-03",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "declaredCardCount": 40,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [],
+      "notes": "Serie 5 IT mazzo Tradimento (Sasuke). Face « DECK DI 40 CARTE CON 2 CARTE HOLO » / L'Eredità del Sogno. Liste printKeys inconnue."
+    },
+    "starter-lealta": {
+      "source": "Emporio di Milo shop photo + face Ref. 93176",
+      "verifiedAt": "2026-09-03",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "declaredCardCount": 40,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [],
+      "notes": "Serie 5 IT mazzo Lealtà (Naruto). Face « DECK DI 40 CARTE CON 2 CARTE HOLO » / L'Eredità del Sogno. Liste printKeys inconnue."
+    },
     "booster-s6-it": {
       "source": "byKind Carddass IT 8 + eBay itm/265148225277 bustina Rivalità Eterna",
       "verifiedAt": "2026-08-29",

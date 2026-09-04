@@ -147,4 +147,61 @@ describe("mergeKayouChecklists", () => {
       "https://capsulecorpgear.com/ss-hr-011.webp",
     );
   });
+
+  it("collapses t2w7 short nr.* onto nrb07.* twins", () => {
+    const nc: KayouChecklist = {
+      source: "narutocards.ca",
+      url: "https://www.narutocards.ca/",
+      sets: [
+        {
+          slug: "t2w7",
+          code: "t2w7",
+          label: "T2W7",
+          url: "https://www.narutocards.ca/",
+          cards: [
+            {
+              printed: "NRB07-CR-023",
+              number: "nrb07.cr.023",
+              name: "NC Card",
+              rarity: "CR",
+              faceUrl: "https://cdn.narutocards.ca/a.webp",
+            },
+          ],
+        },
+      ],
+    };
+    const ccg: KayouChecklist = {
+      source: "capsulecorpgear",
+      url: "https://capsulecorpgear.com/",
+      sets: [
+        {
+          slug: "t2w7",
+          code: "t2w7",
+          label: "T2W7",
+          url: "https://capsulecorpgear.com/",
+          cards: [
+            {
+              printed: "NR-CR-023",
+              number: "nr.cr.023",
+              name: "CCG Card",
+              rarity: "CR",
+              faceUrl: "https://capsulecorpgear.com/b.webp",
+              faceSource: "capsulecorpgear",
+            },
+          ],
+        },
+      ],
+    };
+    const merged = mergeKayouChecklists(nc, {
+      ledger: ccg,
+      source: "capsulecorpgear",
+    });
+    const cards = merged.sets.find((s) => s.code === "t2w7")?.cards ?? [];
+    expect(cards).toHaveLength(1);
+    expect(cards[0]?.number).toBe("nrb07.cr.023");
+    expect(cards[0]?.name).toBe("NC Card");
+    expect(cards[0]?.faceUrlAlternates).toContain(
+      "https://capsulecorpgear.com/b.webp",
+    );
+  });
 });

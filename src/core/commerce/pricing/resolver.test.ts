@@ -8,6 +8,7 @@ const h = vi.hoisted(() => ({
   priceOffer: {
     findMany: vi.fn(),
   },
+  collectRefreshBarcodePriceOffers: vi.fn(),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -16,6 +17,15 @@ vi.mock("@/lib/db/prisma", () => ({
     priceOffer: h.priceOffer,
   },
 }));
+
+vi.mock("@/core/catalog/barcodePrices", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/core/catalog/barcodePrices")>();
+  return {
+    ...actual,
+    collectRefreshBarcodePriceOffers: h.collectRefreshBarcodePriceOffers,
+  };
+});
 
 import {
   alignBarcodePricesForItemNames,
@@ -147,6 +157,79 @@ describe("summarizeShelfItemPrices", () => {
   beforeEach(() => {
     h.barcodeCache.findMany.mockReset();
     h.priceOffer.findMany.mockReset();
+    h.collectRefreshBarcodePriceOffers.mockReset();
+    h.collectRefreshBarcodePriceOffers.mockResolvedValue([]);
+  });
+
+  it("fills TCG priceEstimated from evidence-only printKey sources", async () => {
+    h.barcodeCache.findMany.mockResolvedValue([]);
+    h.priceOffer.findMany.mockResolvedValue([]);
+    h.collectRefreshBarcodePriceOffers.mockResolvedValue([
+      {
+        source: "Collection Naruto",
+        condition: "estimated",
+        priceCents: 2000,
+        productName: "NI-019",
+      },
+    ]);
+
+    const map = await summarizeShelfItemPrices(
+      "tcg",
+      [
+        {
+          id: "item-ni019",
+          barcode: null,
+          name: "NI-019",
+          printKey: "naruto:ni-0019",
+        },
+      ],
+      "Naruto Carddass",
+    );
+
+    expect(h.collectRefreshBarcodePriceOffers).toHaveBeenCalledWith(
+      expect.objectContaining({
+        printKey: "naruto:ni-0019",
+        evidenceOnly: true,
+        shelfType: "tcg",
+      }),
+    );
+    expect(map.get("item-ni019")).toEqual({
+      priceNew: null,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceEstimated: 2000,
+      priceLastUpdated: null,
+    });
+  });
+
+  it("skips printKey estimate fill when priceEstimated already present", async () => {
+    h.barcodeCache.findMany.mockResolvedValue([]);
+    h.priceOffer.findMany.mockResolvedValue([
+      {
+        itemId: "item-ni019",
+        source: "Collection Naruto",
+        productName: "NI-019",
+        condition: "estimated",
+        priceCents: 1500,
+        observedAt: new Date("2026-09-01T12:00:00.000Z"),
+      },
+    ]);
+
+    const map = await summarizeShelfItemPrices(
+      "tcg",
+      [
+        {
+          id: "item-ni019",
+          barcode: null,
+          name: "NI-019",
+          printKey: "naruto:ni-0019",
+        },
+      ],
+      "Naruto Carddass",
+    );
+
+    expect(h.collectRefreshBarcodePriceOffers).not.toHaveBeenCalled();
+    expect(map.get("item-ni019")?.priceEstimated).toBe(1500);
   });
 
   it("falls back to item-scoped offers when barcode is missing", async () => {

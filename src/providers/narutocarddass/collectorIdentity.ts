@@ -24,7 +24,8 @@ import { buildPrintKey, parsePrintKey } from "@/core/identify/printKey";
  * not `N-001` with a US stamp — they sort after that family's regular numbers.
  * Dedicated promo sequences (`PR-11`, `PR-忍-1`, `OP忍-1`, `PR騎-1`) are the
  * promo family — not a `-promo` stamp on `NI-001`. Tourney reprints
- * (`NI-023` + sigle PROMO) stay ninja with grouping `promo`.
+ * (`NI-023` + sigle PROMO) stay ninja with grouping `promo` for identity, and
+ * sort with that promo family so the booster number is not a twin tile.
  */
 export type NarutoCollectorFamily =
   | "ninja"
@@ -32,21 +33,7 @@ export type NarutoCollectorFamily =
   | "mission"
   | "client"
   | "knight"
-  | "promo"
-  /**
-   * Data Carddass — les cartes de borne d'arcade, pas le jeu de table.
-   *
-   * `DN-…T` sort de ナルト ナルティメットカードバトル (2005), `NM-…` de
-   * ナルト疾風伝 究極忍務 ナルティメットミッション (2007). Un troisième
-   * cabinet, ナルティメットクロス (2009), existe sans préfixe confirmé.
-   *
-   * Elles vivent dans le même pack que le Carddass de table mais dans leurs
-   * propres dossiers : ce sont des cartes à code-barres qu'une borne scanne,
-   * leur numérotation n'a rien à voir avec 忍/術/作/依, et les mélanger ferait
-   * cohabiter deux univers sous une même série.
-   */
-  | "arcadeBattle"
-  | "arcadeMission";
+  | "promo";
 
 export type NarutoCollectorId = {
   family: NarutoCollectorFamily;
@@ -62,14 +49,18 @@ const FAMILY_ORDER: readonly NarutoCollectorFamily[] = [
   "client",
   "knight",
   "promo",
-  "arcadeBattle",
-  "arcadeMission",
 ];
+
+/**
+ * Data Carddass arcade (DN / DT / NM / NX) — autre provider
+ * (`narutodatacarddass`). Hors catalogue Carddass : `parseNarutoCollector`
+ * rend `null` pour ces refs (pas de mint `naruto:dn-…`).
+ */
+const DATA_CARDDASS_PRINTED_RE =
+  /^(dn|dt|nm|nx|nf|nfp|nfm|nfc|dnp|dmp|nxp)[-]?\d/i;
 
 /** Longest Latin / JP prefix first so `ni` is not read as `n`. */
 const PREFIX_FAMILY: ReadonlyArray<readonly [string, NarutoCollectorFamily]> = [
-  ["ナルティメットカードバトル", "arcadeBattle"],
-  ["ナルティメットミッション", "arcadeMission"],
   ["忍伝-学", "ninja"],
   ["忍伝学", "ninja"],
   ["忍伝", "ninja"],
@@ -110,10 +101,6 @@ const PREFIX_FAMILY: ReadonlyArray<readonly [string, NarutoCollectorFamily]> = [
   ["jus", "jutsu"],
   ["mus", "mission"],
   ["cus", "client"],
-  ["dn", "arcadeBattle"],
-  // Quatrième vague du même cabinet : la page numérote `DT-002T`, pas `DN-`.
-  ["dt", "arcadeBattle"],
-  ["nm", "arcadeMission"],
   ["ni", "ninja"],
   ["te", "jutsu"],
   ["ju", "jutsu"],
@@ -138,8 +125,6 @@ const FAMILY_SEARCH_PREFIXES: Record<NarutoCollectorFamily, readonly string[]> =
     client: ["cl", "c"],
     knight: ["ki"],
     promo: ["pr", "ps", "prus"],
-    arcadeBattle: ["dn", "dt"],
-    arcadeMission: ["nm"],
   };
 
 /** JP 幕 / 忍者学校 — own disk folder, not NI/N/J/M voisinage. */
@@ -154,8 +139,6 @@ const FAMILY_FOLDERS: readonly NarutoCollectorFamily[] = [
   "client",
   "knight",
   "promo",
-  "arcadeBattle",
-  "arcadeMission",
 ];
 
 const DISK_LAYOUT_FOLDERS: readonly string[] = [
@@ -240,13 +223,6 @@ function foldPrintedNarutoRef(raw: string): string {
       .replace(/^忍伝[-]?/i, "shi")
       .replace(/^術伝[-]?/i, "mju")
       .replace(/^作伝[-]?/i, "msa")
-      // Data Carddass écrit `DN-032T` : le T colle au numéro, alors que la
-      // lecture attend un suffixe séparé. Il est détaché, pas jeté — c'est lui
-      // qui distingue les cartes du cabinet 2005.
-      .replace(
-        /^((?:DN|DT)[-]?\d+)([A-Za-z])$/i,
-        (_m, head: string, tail: string) => `${head}-${tail.toLowerCase()}`,
-      )
       // Coleka prints EN CCG foil promos as `Pr 005R` (R glued). Same grouping
       // as JP `PR忍-1-R` — not the untagged `PR-005`.
       .replace(/^(PR[-]?\d+)R$/i, (_m, head: string) => `${head}-R`)
@@ -254,6 +230,10 @@ function foldPrintedNarutoRef(raw: string): string {
 }
 
 export function parseNarutoCollector(raw: string): NarutoCollectorId | null {
+  // Arcade Data Carddass → `narutodatacarddass` (pas ce pack).
+  if (DATA_CARDDASS_PRINTED_RE.test(raw.trim().replace(/\s+/g, ""))) {
+    return null;
+  }
   const trimmed = foldPrintedNarutoRef(raw);
   const m = PREFIX_RE.exec(trimmed);
   if (!m) return null;
@@ -315,7 +295,6 @@ export function canonicalNarutoDiskPrefix(printedPrefix: string): string {
   if (printedPrefix === "忍伝") return "shi";
   if (printedPrefix === "術伝") return "mju";
   if (printedPrefix === "作伝") return "msa";
-  if (lower === "dn" || lower === "dt" || lower === "nm") return lower;
   if (lower === "st") return "ta";
   if (lower === "ju") return "j";
   if (lower === "mi") return "m";
@@ -401,6 +380,15 @@ export function narutoCollectorKey(raw: string): string | null {
   return id.grouping ? `${prefix}:${n}:${id.grouping}` : `${prefix}:${n}`;
 }
 
+/** Illustration inédite, jamais imprimée hors Japon (bonus PS1 `忍-n（PS）`). */
+const JP_ONLY_ARTWORK_GROUPINGS = new Set(["ps"]);
+
+/** Tirage dont le recto n'existe que sur carton japonais — pas de tuile FR/IT/EN. */
+export function isJpOnlyNarutoArtwork(cardOrNumber: string): boolean {
+  const grouping = parseNarutoCollector(cardOrNumber)?.grouping?.toLowerCase();
+  return grouping != null && JP_ONLY_ARTWORK_GROUPINGS.has(grouping);
+}
+
 /**
  * Disk ids that can store the same collector card (`ni001`, `n001`, `n0001`).
  * Data Carddass `NM` / `DN` never parse, so they stay out.
@@ -444,6 +432,7 @@ export function formatNarutoReference(
   const grouping = id.grouping;
   if (!grouping) return ref;
   if (grouping.toLowerCase() === "promo") return `${ref} · promo`;
+  if (grouping.toLowerCase() === "prerelease") return `${ref} · prerelease`;
   return `${ref}-${grouping}`;
 }
 
@@ -473,15 +462,48 @@ function narutoNumerationLane(prefix: string): number {
   return 0;
 }
 
+/** CdF / shuriken reprint of a retail number — not a dedicated `PR-nn`. */
+function isTourneyPromoReprint(id: NarutoCollectorId): boolean {
+  const grouping = id.grouping?.toLowerCase();
+  return grouping === "promo" || grouping === "cdf";
+}
+
+/**
+ * A print that belongs on the promo checklist: dedicated `PR-nn` / `OP忍`,
+ * tourney `-promo` / `-cdf`, or the JP PS1 bonuses filed as promo.
+ * A booster `NI-063` that leaked `promo` into `print_sets` is not one.
+ */
+export function isNarutoPromoSetMember(raw: string): boolean {
+  const id = parseNarutoCollector(raw);
+  if (!id) return false;
+  if (id.family === "promo") return true;
+  const grouping = id.grouping?.toLowerCase();
+  if (grouping === "ps") return true;
+  return isTourneyPromoReprint(id);
+}
+
+/**
+ * Binder bucket. A `-promo` / `-cdf` reprint keeps its printed family for
+ * identity, but files after knights with the PR sequences so `NI-063` is
+ * not followed by `NI-063 · promo` in the series checklist.
+ */
+function collectorSortFamily(id: NarutoCollectorId): NarutoCollectorFamily {
+  if (isTourneyPromoReprint(id)) return "promo";
+  return id.family;
+}
+
 export function compareNarutoCollectors(a: string, b: string): number {
   const ia = parseNarutoCollector(a);
   const ib = parseNarutoCollector(b);
   if (!ia && !ib) return a.localeCompare(b);
   if (!ia) return 1;
   if (!ib) return -1;
-  const fa = FAMILY_ORDER.indexOf(ia.family);
-  const fb = FAMILY_ORDER.indexOf(ib.family);
+  const fa = FAMILY_ORDER.indexOf(collectorSortFamily(ia));
+  const fb = FAMILY_ORDER.indexOf(collectorSortFamily(ib));
   if (fa !== fb) return fa - fb;
+  const subFa = FAMILY_ORDER.indexOf(ia.family);
+  const subFb = FAMILY_ORDER.indexOf(ib.family);
+  if (subFa !== subFb) return subFa - subFb;
   const pa = canonicalNarutoDiskPrefix(ia.printedPrefix);
   const pb = canonicalNarutoDiskPrefix(ib.printedPrefix);
   const la = narutoNumerationLane(pa);

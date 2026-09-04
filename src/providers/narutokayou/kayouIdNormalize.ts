@@ -73,15 +73,45 @@ export function kayouCleanPrintedId(raw: string): string {
 /**
  * Collapse ledger aliases onto multi-prefix forms used by narutocards.ca:
  * `nr.ss.hr.011` → `nrss.hr.011`, `nr.cc.r.001` → `cc.r.001`.
+ * Also admit `slr+` as `slrplus` (printKey segments reject `+`).
  */
 export function canonicalizeKayouNumber(number: string): string {
   let n = number.trim().toLowerCase();
   if (!n) return n;
+  n = n.replace(/\+/g, "plus");
+  // `NR-AR-001 (SILVER)` → `nr.ar.001silver`
+  n = n.replace(/\s*\(([^)]+)\)\s*/g, "$1");
+  n = n.replace(/\s+/g, "");
   n = n.replace(/^nr\.ss\./, "nrss.");
   n = n.replace(/^nr\.cc\./, "cc.");
   n = n.replace(/^nr\.z(\d{2})\./, "nrz$1.");
   n = n.replace(/^nr\.b(\d{2})\./, "nrb$1.");
   return n;
+}
+
+/**
+ * Sets where CapsuleCorp uses short `nr.*` while narutocards uses a wave
+ * prefix (`nrb07.*` / `nrz06.*`). Mapping them collapses ~280 false twins.
+ */
+export const KAYOU_SET_WAVE_PREFIX: Readonly<Record<string, string>> = {
+  t2w7: "nrb07",
+  t4w6: "nrz06",
+};
+
+/**
+ * Set-aware canonicalize: `nr.cr.023` in `t2w7` → `nrb07.cr.023`.
+ */
+export function canonicalizeKayouNumberForSet(
+  setCode: string,
+  number: string,
+): string {
+  const n = canonicalizeKayouNumber(number);
+  const prefix = KAYOU_SET_WAVE_PREFIX[setCode.trim().toLowerCase()];
+  if (!prefix) return n;
+  if (n.startsWith(`${prefix}.`)) return n;
+  const m = /^nr\.([a-z0-9]+)\.(\d+[a-z0-9]*)$/.exec(n);
+  if (!m) return n;
+  return `${prefix}.${m[1]}.${m[2]}`;
 }
 
 /**

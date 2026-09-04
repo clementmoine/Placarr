@@ -3,7 +3,8 @@
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
  * Dragon Ball has Masters + Fusion World. Naruto has several lines (Carddass,
- * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Kayou) under one franchise tab.
+ * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Kayou, Défi Ninja, Data
+ * Carddass) under one franchise tab.
  */
 
 import {
@@ -21,6 +22,8 @@ export const CATALOGUE_PACK_IDS = [
   "naruto/ultra-challenge",
   "naruto/mythos",
   "naruto/kayou",
+  "naruto/defi-ninja",
+  "naruto/data-carddass",
   "dbs/cg",
   "dbs/fw",
   "onepiece",
@@ -49,6 +52,8 @@ export type CatalogueExtractTarget =
   | "naruto-ultra"
   | "naruto-mythos"
   | "naruto-kayou"
+  | "naruto-defi-ninja"
+  | "naruto-data-carddass"
   | "dbs-cg"
   | "dbs-fw"
   | "onepiece"
@@ -131,6 +136,13 @@ export type CataloguePackInfo = {
    * same printed prefix + number (Naruto promo stub → retail — not NI→N).
    */
   sameNumberArtFallback?: boolean;
+  /**
+   * Face disk layout is Carddass `cards/{family}/{diskId}/{lang}/` resolved via
+   * collector identity (`m1` → `mission/m0001`). Other Naruto packs (Mythos,
+   * Kayou, …) keep `cards/{set}/{lang}/{card}/` — never apply this to them or
+   * Mythos missions become `M-001` with a 404 art URL.
+   */
+  narutoCollectorDisk?: boolean;
   /**
    * One grid tile per locale in `cards-index.json` (Naruto Carddass, Ninja
    * Ranks). Without this, `pickLang` keeps a single row and hides FR / IT /
@@ -246,6 +258,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     hasFoilEffects: false,
     defaultScope: "all",
     sameNumberArtFallback: true,
+    narutoCollectorDisk: true,
     extractTarget: "naruto",
     catalogueOnly: true,
     extractMarkers: [
@@ -295,6 +308,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Naruto 疾風伝",
     labelEn: "Naruto 疾風伝",
     hasFoilEffects: false,
+    /** Japanese-only game — never invent FR/EN catalogue tiles. */
+    catalogueLocales: ["ja"],
     defaultScope: "all",
     extractTarget: "naruto-shippuden",
     catalogueOnly: true,
@@ -391,6 +406,9 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Naruto Mythos",
     labelEn: "Naruto Mythos",
     hasFoilEffects: false,
+    /** KS1 titles FR; SS2 SAMPLE EN until FR gallery — show both under any UI lang. */
+    catalogueLocales: ["fr", "en"],
+    localeArt: { bestFaceAcrossLocales: true },
     defaultScope: "all",
     extractTarget: "naruto-mythos",
     catalogueOnly: true,
@@ -403,14 +421,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
       prelude: [
-        "Naruto Mythos (CICABOOM) : bootstrap catalogue vide → data/naruto/mythos",
+        "Naruto Mythos (CICABOOM) : Konoha Shidō + Shinobi Shiren / Akatsuki sealed → data/naruto/mythos",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
-      "CICABOOM Naruto Mythos TCG (Konoha Shidō, 2025–). Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou. Catalogue local vide.",
+      "CICABOOM Naruto Mythos TCG — Konoha Shidō (KS1) + Shinobi Shiren (SS2). Set 3 Akatsuki : scellés seulement pour l’instant.",
     blurbEn:
-      "CICABOOM Naruto Mythos TCG (Konoha Shidō, 2025–). A different game from Carddass, Ninja Ranks, Ultra Challenge, and Kayou. Empty local catalogue.",
+      "CICABOOM Naruto Mythos TCG — Konoha Shidō (KS1) + Shinobi Shiren (SS2). Set 3 Akatsuki: sealed only for now.",
   },
   {
     id: "naruto/kayou",
@@ -434,7 +452,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
       prelude: [
-        "Naruto Kayou : bootstrap catalogue vide → data/naruto/kayou",
+        "Naruto Kayou : narutocards + CapsuleCorp + kayouofficial Smriti → data/naruto/kayou",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
@@ -442,6 +460,68 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Kayou Naruto — cartes à collectionner (pas un TCG jouable). Autre éditeur que Bandai et CICABOOM Mythos. Catalogue local vide.",
     blurbEn:
       "Kayou Naruto — collectible cards (not a playable TCG). Different publisher from Bandai and CICABOOM Mythos. Empty local catalogue.",
+  },
+  {
+    id: "naruto/defi-ninja",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "Défi Ninja",
+    lineLabelEn: "Ninja Challenge",
+    labelFr: "Naruto Défi Ninja",
+    labelEn: "Naruto Défi Ninja",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "naruto-defi-ninja",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Naruto Défi Ninja (404 Éditions) : checklist 50 cartes → data/naruto/defi-ninja",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr:
+      "404 Éditions — Mon jeu de cartes Le défi ninja (50 cartes, EAN 9791032407592). Autre jeu que Carddass, Ultra Challenge et Mythos.",
+    blurbEn:
+      "404 Éditions — Naruto card game Le défi ninja (50 cards, EAN 9791032407592). A different game from Carddass, Ultra Challenge, and Mythos.",
+  },
+  {
+    id: "naruto/data-carddass",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "Data Carddass",
+    lineLabelEn: "Data Carddass",
+    labelFr: "Naruto Data Carddass",
+    labelEn: "Naruto Data Carddass",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "naruto-data-carddass",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Naruto Data Carddass (arcade DN/NM/NX) → data/naruto/data-carddass",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr:
+      "Bandai Data Carddass arcade (ナルティメット…), JP. Préfixes DN / NM / NX. Autre jeu que le Carddass de table.",
+    blurbEn:
+      "Bandai Data Carddass arcade (Narultimate…), JP only. Prefixes DN / NM / NX. A different game from tabletop Carddass.",
   },
   {
     id: "dbs/cg",
@@ -487,6 +567,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Dragon Ball Fusion World",
     labelEn: "Dragon Ball Fusion World",
     hasFoilEffects: false,
+    /** EN printing + asia-en (filed as `ja`); no FR cardlist. */
+    catalogueLocales: ["en", "ja"],
     defaultScope: "all",
     extractTarget: "dbs-fw",
     catalogueOnly: true,
@@ -730,6 +812,10 @@ export function resolveCataloguePackId(
     lamincards: "naruto/ultra-challenge",
     mythos: "naruto/mythos",
     kayou: "naruto/kayou",
+    defininja: "naruto/defi-ninja",
+    defi: "naruto/defi-ninja",
+    datacarddass: "naruto/data-carddass",
+    narultimate: "naruto/data-carddass",
     dbs: "dbs/cg",
     dragonball: "dbs/cg",
     masters: "dbs/cg",

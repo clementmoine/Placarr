@@ -7,7 +7,9 @@ import path from "node:path";
 
 import {
   canonicalizeNarutoPrintKey,
+  isJpOnlyNarutoArtwork,
   mintNarutoPrintKey,
+  narutoCollectorNumberKey,
   narutoDiskCardId,
   narutoNumbersEqual,
   parseNarutoCollector,
@@ -20,7 +22,11 @@ import titleCorrections from "./curated/sources/title-corrections.json";
 import coleka from "./curated/sources/coleka.json";
 import slabZ from "./curated/sources/slab-z-2002-carddass.json";
 import physical from "./curated/sources/user-physical-ccg.json";
-import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
+import type {
+  NarutoAssetRow,
+  NarutoPrintRow,
+  NarutoTitleRow,
+} from "./indexStore";
 import { mergeBandaicgEnNamesIntoIndex } from "./parse/parseBandaicgCardlist";
 import { mergeBggEnCcgS1IntoIndex } from "./parse/parseBggNarutoList";
 import { mergeCarddasJpNamesIntoIndex } from "./parse/parseCarddasJpCardlist";
@@ -28,12 +34,17 @@ import { mergeCarddasJpPromoIntoIndex } from "./parse/parseCarddasJpExtras";
 import { cardTypeFromCollectorNumber } from "./parse/parseBandaicgAsset";
 import { parseEnCcgPrintedRef } from "./parse/parseEnCcgPrinted";
 import { mergeCardgameclubItIntoIndex } from "./scrape/scrapeCardgameclubIt";
+import { mergePrimegameItLedgerIntoIndex } from "./scrape/scrapePrimegameIt";
 import { mergeGoatEnCcgIntoIndex } from "./scrape/scrapeGoatEnCcg";
 import {
   mergeNarutoCardsCaIntoIndex,
   type NarutoCardsCaCard,
 } from "./parse/parseNarutoCardsCa";
 import { mergeNarutoCardsCaLedgerIntoIndex } from "./scrape/scrapeNarutoCardsCa";
+import { mergeNarutoCardsNetLedgerIntoIndex } from "./scrape/scrapeNarutoCardsNet";
+import { mergeCollectorsCometLedgerIntoIndex } from "./scrape/scrapeCollectorsCometTitles";
+import { mergeFansetEnTitlesIntoIndex } from "./parse/parseFansetEnTitles";
+import { mergeEbayItTitlesIntoIndex } from "./parse/parseEbayItTitles";
 import { loadColekaCarddassFrLedger } from "./scrape/scrapeColekaCarddassFr";
 
 export type FoundCatalogueMerge = {
@@ -62,8 +73,13 @@ export type FoundCatalogueMerge = {
   goatTitled: string[];
   narutocardsAdded: string[];
   narutocardsTitled: string[];
+  narutocardsNetTitled: string[];
+  collectorsCometTitled: string[];
+  fansetEnTitled: string[];
   itAdded: string[];
   itTitled: string[];
+  /** Titres IT nettoyés depuis le ledger eBay (collage boutique). */
+  ebayItTitled: string[];
 };
 
 export { isColekaPlaceholderName } from "./foldNarutoIndex";
@@ -108,6 +124,11 @@ function makePrint(
   };
 }
 
+type NarutoTitleProvenance = {
+  nameLocaleFrom?: string;
+  nameSource?: string;
+};
+
 function fillTitle(
   titles: NarutoTitleRow[],
   seen: Set<string>,
@@ -115,6 +136,7 @@ function fillTitle(
   lang: string,
   fullName: string,
   rarity?: string | null,
+  provenance?: NarutoTitleProvenance,
 ): boolean {
   const name = fullName.trim();
   if (!name) return false;
@@ -125,6 +147,10 @@ function fillTitle(
     lang,
     fullName: name,
     rarity: rarity ?? null,
+    ...(provenance?.nameLocaleFrom
+      ? { nameLocaleFrom: provenance.nameLocaleFrom }
+      : {}),
+    ...(provenance?.nameSource ? { nameSource: provenance.nameSource } : {}),
   });
   seen.add(key);
   return true;
@@ -404,6 +430,97 @@ export function mergeHinokunianJaNamesIntoIndex(input: {
   return { prints, titles, titled };
 }
 
+/**
+ * Cross-locale title fill is intentionally disabled: a name must come from an
+ * attested source in that language. Borrowing JA onto IT (or EN onto FR) hides
+ * gaps we cannot audit and reads as a false local title in the catalogue.
+ */
+export function fillNarutoTitlesFromSiblingLocales(input: {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+  assets: NarutoAssetRow[];
+}): {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+  titled: string[];
+} {
+  return { prints: input.prints, titles: input.titles, titled: [] };
+}
+
+function printGrouping(print: NarutoPrintRow): string | null {
+  if (print.grouping?.trim()) return print.grouping.trim().toLowerCase();
+  return parseNarutoCollector(print.number)?.grouping?.toLowerCase() ?? null;
+}
+
+function isJpOnlyNarutoPrint(print: NarutoPrintRow): boolean {
+  if (print.grouping?.trim().toLowerCase() === "ps") return true;
+  return isJpOnlyNarutoArtwork(print.number);
+}
+
+/**
+ * Tourney / foil reprints (`N-086 · promo`, `PR忍-1-R`) keep the retail name.
+ * Never copies NI onto N — collector keys stay prefix-distinct.
+ */
+export function copyNarutoTitlesOntoGroupedPrints(input: {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+}): {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+  titled: string[];
+} {
+  const prints = input.prints;
+  const titles = [...input.titles];
+  const seen = new Set(titles.map((t) => titleKey(t.printKey, t.lang)));
+  const titled: string[] = [];
+
+  const byCollector = new Map<string, NarutoPrintRow[]>();
+  for (const print of prints) {
+    const key = narutoCollectorNumberKey(print.number);
+    if (!key) continue;
+    const list = byCollector.get(key) ?? [];
+    list.push(print);
+    byCollector.set(key, list);
+  }
+
+  const titlesByPrint = new Map<string, NarutoTitleRow[]>();
+  for (const title of titles) {
+    const list = titlesByPrint.get(title.printKey) ?? [];
+    list.push(title);
+    titlesByPrint.set(title.printKey, list);
+  }
+
+  for (const group of byCollector.values()) {
+    const bases = group.filter((print) => !printGrouping(print));
+    const variants = group.filter((print) => printGrouping(print));
+    if (!bases.length || !variants.length) continue;
+    for (const base of bases) {
+      for (const title of titlesByPrint.get(base.printKey) ?? []) {
+        const name = title.fullName?.trim();
+        if (!name) continue;
+        for (const variant of variants) {
+          if (isJpOnlyNarutoPrint(variant)) continue;
+          if (
+            fillTitle(
+              titles,
+              seen,
+              variant.printKey,
+              title.lang,
+              name,
+              title.rarity,
+            )
+          ) {
+            titled.push(variant.printKey);
+          }
+        }
+      }
+    }
+  }
+
+  titled.sort((a, b) => a.localeCompare(b));
+  return { prints, titles, titled };
+}
+
 function physicalPrintKey(
   row: (typeof physical.prints)[number],
 ): string | null {
@@ -519,17 +636,25 @@ export function mergeFoundCatalogueLedgers(input: {
   const jpPromo = mergeCarddasJpPromoIntoIndex(jp);
   const goat = mergeGoatEnCcgIntoIndex(jpPromo);
   const narutocards = mergeNarutoCardsCaLedgerIntoIndex(goat);
-  const brasilUs = mergeBrasilUsExclusivesIntoIndex(narutocards);
+  const narutocardsNet = mergeNarutoCardsNetLedgerIntoIndex(narutocards);
+  const collectorsComet = mergeCollectorsCometLedgerIntoIndex(narutocardsNet);
+  const brasilUs = mergeBrasilUsExclusivesIntoIndex(collectorsComet);
   const it = mergeCardgameclubItIntoIndex(brasilUs);
-  const physicalCcg = mergeUserPhysicalCcgIntoIndex(it);
+  const primegameIt = mergePrimegameItLedgerIntoIndex(it);
+  // Après les boutiques IT : eBay ne comble que les trous, et refuse un titre
+  // NI qui contredit un nom FR/EN latin déjà attesté (annonce mal étiquetée).
+  const ebayIt = mergeEbayItTitlesIntoIndex(primegameIt);
+  const physicalCcg = mergeUserPhysicalCcgIntoIndex(ebayIt);
+  const fansetEn = mergeFansetEnTitlesIntoIndex(physicalCcg);
   // En dernier : tout ce qui précède est attesté par une source officielle ou
   // une pièce en main, et garde donc la priorité sur un relevé de fan.
   const hinokunian = mergeHinokunianJaNamesIntoIndex({
-    prints: physicalCcg.prints,
-    titles: physicalCcg.titles,
+    prints: fansetEn.prints,
+    titles: fansetEn.titles,
     names: input.hinokunianNames ?? [],
   });
-  const itRarities = mergeCardgameclubItRarities(hinokunian);
+  const grouped = copyNarutoTitlesOntoGroupedPrints(hinokunian);
+  const itRarities = mergeCardgameclubItRarities(grouped);
   // Tout à la fin : une correction vérifiée passe après chaque relevé.
   const fixed = mergeTitleCorrections(itRarities);
   return {
@@ -555,7 +680,11 @@ export function mergeFoundCatalogueLedgers(input: {
     goatTitled: goat.titled,
     narutocardsAdded: narutocards.addedPrints,
     narutocardsTitled: narutocards.titled,
+    narutocardsNetTitled: narutocardsNet.titled,
+    collectorsCometTitled: collectorsComet.titled,
+    fansetEnTitled: fansetEn.titled,
     itAdded: it.addedPrints,
     itTitled: it.titled,
+    ebayItTitled: ebayIt.titled,
   };
 }

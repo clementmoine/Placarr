@@ -4,6 +4,7 @@ import {
   kayouOfficialIdSlug,
   kayouOfficialIdSuffixKeys,
   kayouOfficialIdToCcNumber,
+  kayouOfficialIdToPrint,
   kayouOfficialLookupKeys,
 } from "./kayouOfficialId";
 
@@ -25,6 +26,27 @@ describe("kayouOfficialIdToCcNumber", () => {
     ["NREA02-UR-015L3", null],
   ])("%s → %s", (id, want) => {
     expect(kayouOfficialIdToCcNumber(id)).toBe(want);
+  });
+});
+
+describe("kayouOfficialIdToPrint", () => {
+  it("maps Smriti product codes onto set + number", () => {
+    expect(kayouOfficialIdToPrint("NREA02-CR-001L5")).toEqual({
+      setCode: "nrea02",
+      number: "nrea02.cr.001l5",
+    });
+    expect(kayouOfficialIdToPrint("NRI01-SP-001L5")).toEqual({
+      setCode: "nri01",
+      number: "nri01.sp.001l5",
+    });
+    expect(kayouOfficialIdToPrint("NRSA02-◇ASP-001L5")).toEqual({
+      setCode: "nrsa02",
+      number: "nrsa02.asp.001l5s",
+    });
+    expect(kayouOfficialIdToPrint("NRCCNA-MR-001")).toEqual({
+      setCode: "ninjaagebox",
+      number: "cc.mr.001",
+    });
   });
 });
 

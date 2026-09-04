@@ -28,12 +28,17 @@ describe("onepiece provider hooks", () => {
 });
 
 describe("onepiece curated back", () => {
-  it("ships an attested character-card back from opecards.fr", () => {
+  it("ships attested category backs from opecards.fr", () => {
     expect(
       listCuratedBackSources(path.join(onepieceCuratedDir(), "cards")).map(
         (row) => row.destRel,
       ),
-    ).toEqual(["back.webp"]);
+    ).toEqual([
+      "back.event.webp",
+      "back.leader.webp",
+      "back.stage.webp",
+      "back.webp",
+    ]);
   });
 
   it("registers a catalogue-only effect pack", () => {

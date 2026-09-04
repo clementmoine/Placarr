@@ -23,12 +23,15 @@ import {
 } from "../indexStore";
 import { NARUTO_EN_PACK_ID } from "../packs";
 import { hinokunianJaNames } from "./scrapeHinokunian";
+import { nikitaFactsJaNames } from "./scrapeNikitaCardlist";
+import { loadSurugaResolvedJaNames } from "./scrapeSurugaCarddass";
 import {
   loadMangaNewsTitleHitsFromCache,
   titlesForPrints,
 } from "../sources/mangaNewsTitles";
 import { materializeTinBoxPromos, TIN_BOX_PROMOS } from "../tinBoxPromos";
 import { mergeAttestedPromos } from "../sources/attestedPromos";
+import { mergeS1FrPrerelease } from "../sources/s1FrPrerelease";
 import {
   mergeCarteSemaineIntoIndex,
   writeCarteSemaineReport,
@@ -69,6 +72,7 @@ import {
   type NarutoLangAppearances,
 } from "../appearanceSets";
 import { syncOfficialFrChecklistAppearances } from "../officialFrChecklist";
+import { syncNarutoS6FrPrintedAppearances } from "../sources/s6FrPrinted";
 import { isNarutoLangPrinted, preferNarutoAppearanceSet } from "../printed";
 import { normalizeNarutoLang } from "../narutoCardPath";
 import {
@@ -638,6 +642,7 @@ export function buildIndexFromDisk(root: string): {
     OR SQL au moment de la search.
   */
   syncOfficialFrChecklistAppearances(root);
+  syncNarutoS6FrPrintedAppearances(root);
   const cardsDir = path.join(root, "cards");
   const prints = new Map<string, NarutoPrintRow>();
   const assets: NarutoAssetRow[] = [];
@@ -1022,7 +1027,7 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
 }
 
 const FOUND_TITLE_SOURCE =
-  "carddass-official + manga-news-cache + attested-promos + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + coleka-us-promos + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocards-ca + cardgameclub-it + user-physical + leboncoin";
+  "carddass-official + manga-news-cache + attested-promos + s1-fr-prerelease + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + coleka-us-promos + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocards-ca + narutocards-net + cardgameclub-it + ebay-it + user-physical + leboncoin";
 
 function assembleNarutoCatalogue(
   prints: NarutoPrintRow[],
@@ -1030,9 +1035,13 @@ function assembleNarutoCatalogue(
   root: string,
 ) {
   const withPromos = mergeAttestedPromos({ prints, titles });
-  const withS6It = mergeColekaS6ItIntoIndex({
+  const withPrerelease = mergeS1FrPrerelease({
     prints: withPromos.prints,
     titles: withPromos.titles,
+  });
+  const withS6It = mergeColekaS6ItIntoIndex({
+    prints: withPrerelease.prints,
+    titles: withPrerelease.titles,
     root,
   });
   const carteSemaine = writeCarteSemaineReport(root);
@@ -1045,7 +1054,11 @@ function assembleNarutoCatalogue(
   const found = mergeFoundCatalogueLedgers({
     prints: withSemaine.prints,
     titles: withSemaine.titles,
-    hinokunianNames: hinokunianJaNames(root),
+    hinokunianNames: [
+      ...hinokunianJaNames(root),
+      ...nikitaFactsJaNames(root),
+      ...loadSurugaResolvedJaNames(root),
+    ],
   });
   const withUsPromos = mergeColekaUsPromosIntoIndex({
     prints: found.prints,

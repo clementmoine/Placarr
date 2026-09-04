@@ -190,6 +190,9 @@ export async function resolveCatalogueExtractPlan(
     prelude.push(
       "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
     );
+    prelude.push(
+      "faces papier : Coleka FR + TCGPlayer EN + pokemontcg.io + pkmcards.fr (toutes sources)",
+    );
     if (scope === "catalogue") argv.push("--refresh-manifests");
     prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
     return { target, argv, prelude };
@@ -323,6 +326,20 @@ async function invokePackPipeline(
         "@/providers/narutokayou/extract"
       );
       await runNarutoKayouPackPipeline(argv);
+      return;
+    }
+    case "naruto-defi-ninja": {
+      const { runNarutoDefiNinjaPackPipeline } = await import(
+        "@/providers/narutodefininja/extract"
+      );
+      await runNarutoDefiNinjaPackPipeline(argv);
+      return;
+    }
+    case "naruto-data-carddass": {
+      const { runNarutoDataCarddassPackPipeline } = await import(
+        "@/providers/narutodatacarddass/extract"
+      );
+      await runNarutoDataCarddassPackPipeline(argv);
       return;
     }
     case "dbs-cg": {

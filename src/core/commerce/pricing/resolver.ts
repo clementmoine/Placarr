@@ -35,6 +35,7 @@ import {
   withFxPriceEstimated,
   withPriceSourceTraits,
 } from "@/core/commerce/pricing/pricePipeline";
+import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 
 export type {
   PriceObservation,
@@ -212,15 +213,18 @@ async function resolveShelfItemPriceFields(
     withFx,
     shelfName,
   );
+  // Catalog côtes (`condition: estimated`) are excluded from market summaries —
+  // surface them as priceEstimated so the shelf grid can show ~ without a
+  // second evidence-only pass when PriceOffer rows already exist.
+  const catalogEstimate = catalogEstimatedCentsFromOffers(offers);
+  const priceEstimated = aligned.priceEstimated ?? catalogEstimate;
 
   return {
     priceNew: aligned.priceNew,
     ...(aligned.priceFoil != null ? { priceFoil: aligned.priceFoil } : {}),
     priceUsed: aligned.priceUsed,
     priceUsedCIB: aligned.priceUsedCIB,
-    ...(aligned.priceEstimated != null
-      ? { priceEstimated: aligned.priceEstimated }
-      : {}),
+    ...(priceEstimated != null ? { priceEstimated } : {}),
     ...(aligned.priceEstimatedFoil != null
       ? { priceEstimatedFoil: aligned.priceEstimatedFoil }
       : {}),
@@ -228,9 +232,27 @@ async function resolveShelfItemPriceFields(
   };
 }
 
+function catalogEstimatedCentsFromOffers(
+  offers: Array<Pick<PriceObservation, "condition" | "priceCents">>,
+): number | null {
+  const cents = offers
+    .filter(
+      (offer) =>
+        offer.condition === "estimated" &&
+        typeof offer.priceCents === "number" &&
+        offer.priceCents > 0,
+    )
+    .map((offer) => offer.priceCents);
+  return cents.length > 0 ? Math.min(...cents) : null;
+}
+
 /**
  * Batch price summaries for shelf grids: filtered offers when available, with
  * barcode-cache fallback when every listing title is noisy.
+ *
+ * For TCG printKeys, also fills `priceEstimated` from local reference sources
+ * (`evidenceOnly`) — e.g. Collection Naruto dig — so the shelf grid shows ~cotes
+ * without waiting for an item-page price refresh.
  */
 export async function summarizeShelfItemPrices(
   shelfType: string,
@@ -241,6 +263,7 @@ export async function summarizeShelfItemPrices(
     metadataTitle?: string | null;
     /** Soft aliases (filtered before title-match validation). */
     aliases?: string[] | null;
+    printKey?: string | null;
   }>,
   shelfName?: string | null,
 ): Promise<Map<string, ShelfItemPriceFields>> {
@@ -338,7 +361,93 @@ export async function summarizeShelfItemPrices(
     }
   }
 
+  if (shelfType === "tcg") {
+    await fillShelfPrintKeyEstimates(result, items, shelfType);
+  }
+
   return result;
+}
+
+const PRINT_KEY_ESTIMATE_CONCURRENCY = 8;
+
+async function estimatedCentsForPrintKey(input: {
+  shelfType: string;
+  printKey: string;
+  name: string;
+}): Promise<number | null> {
+  const name = input.name.trim();
+  const offers = await collectRefreshBarcodePriceOffers({
+    shelfType: input.shelfType,
+    printKey: input.printKey,
+    evidenceOnly: true,
+    barcodes: [],
+    cleanedBarcode: "",
+    primaryTitle: name,
+    primaryName: name,
+    titles: name ? [name] : [],
+    acceptanceTitles: name ? [name] : [],
+    fallbackNames: [],
+    leDenicheurQueries: [],
+    isPal: false,
+    isClassics: false,
+  });
+  const cents = offers
+    .filter(
+      (offer) =>
+        offer.condition === "estimated" &&
+        typeof offer.priceCents === "number" &&
+        offer.priceCents > 0,
+    )
+    .map((offer) => offer.priceCents)
+    .sort((a, b) => a - b);
+  return cents[0] ?? null;
+}
+
+async function fillShelfPrintKeyEstimates(
+  result: Map<string, ShelfItemPriceFields>,
+  items: Array<{
+    id: string;
+    name?: string | null;
+    metadataTitle?: string | null;
+    printKey?: string | null;
+  }>,
+  shelfType: string,
+): Promise<void> {
+  const needsEstimate = items.filter((item) => {
+    const printKey = item.printKey?.trim();
+    if (!printKey) return false;
+    const fields = result.get(item.id);
+    return fields?.priceEstimated == null;
+  });
+  if (needsEstimate.length === 0) return;
+
+  await runWithConcurrency(
+    needsEstimate,
+    PRINT_KEY_ESTIMATE_CONCURRENCY,
+    async (item) => {
+      const printKey = item.printKey!.trim();
+      const name =
+        item.name?.trim() || item.metadataTitle?.trim() || printKey;
+      const estimated = await estimatedCentsForPrintKey({
+        shelfType,
+        printKey,
+        name,
+      });
+      if (estimated == null) return;
+      const prev = result.get(item.id);
+      result.set(item.id, {
+        priceNew: prev?.priceNew ?? null,
+        ...(prev?.priceFoil != null ? { priceFoil: prev.priceFoil } : {}),
+        priceUsed: prev?.priceUsed ?? null,
+        priceUsedCIB: prev?.priceUsedCIB ?? null,
+        priceEstimated: estimated,
+        ...(prev?.priceEstimatedFoil != null
+          ? { priceEstimatedFoil: prev.priceEstimatedFoil }
+          : {}),
+        priceLastUpdated: prev?.priceLastUpdated ?? null,
+      });
+    },
+  );
 }
 
 export async function getCachedItemPrices(

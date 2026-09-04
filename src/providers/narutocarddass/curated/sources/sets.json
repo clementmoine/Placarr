@@ -10,13 +10,14 @@
       "starters": ["Maître Hokage", "Pays du Vent"],
       "colekaLabel": "Cartes Naruto Série 01 - Le Pays du Vent",
       "enCcgTitle": "The Path to Hokage",
+      "itTitle": "La Forza della Foglia",
       "collectorCount": {
         "source": "Collection Naruto YT 7r7LwtIENKs + Drive Bandai FR « Série 1 détaillée »",
         "total": 188,
         "holos": 33,
         "nonHolo": 155,
-        "prereleaseAlts": 4,
-        "note": "Binder ASR aussi 198 — préférer 188 (doc Drive). Marketing presse « 184 »."
+        "prereleaseAlts": 10,
+        "note": "10 vraies variantes manga (user 2026-09-03), Estimation ~10 €. Total Drive encore 188 (marketing 184 + 4) — à recaler si le master-set compte les 10."
       }
     },
     "s2": {
@@ -24,6 +25,7 @@
       "starters": ["Sceller le maléfice", "Détruire Konoha"],
       "colekaLabel": "Cartes Naruto Série 02 - Détruire Konoha",
       "enCcgTitle": "Coils of the Snake",
+      "itTitle": "Le Spire del Serpente",
       "collectorCount": {
         "source": "Collection Naruto YT 7r7LwtIENKs",
         "total": 145,
@@ -37,6 +39,7 @@
       "starters": ["Apprentissage", "Puissances Cachées"],
       "colekaLabel": "Cartes Naruto Série 03 - Puissances Cachées",
       "enCcgTitle": "Curse of the Sand",
+      "itTitle": "La Maledizione della Sabbia",
       "collectorCount": {
         "source": "Collection Naruto YT 7r7LwtIENKs",
         "total": 139,
@@ -49,6 +52,7 @@
       "starters": ["L'esprit du sable", "Invocation"],
       "colekaLabel": "Cartes Naruto Série 04 - L'Esprit du Sable",
       "enCcgTitle": "Revenge and Rebirth",
+      "itTitle": "Vendetta e Redenzione",
       "collectorCount": {
         "source": "Collection Naruto YT 7r7LwtIENKs",
         "total": 141,
@@ -61,6 +65,7 @@
       "starters": ["La quête", "Un nouveau départ"],
       "colekaLabel": "Cartes Naruto Série 05 - Un Nouveau Départ",
       "enCcgTitle": "Dream Legacy",
+      "itTitle": "L'Eredità del Sogno",
       "collectorCount": {
         "source": "Collection Naruto YT 7r7LwtIENKs",
         "total": 149,
@@ -73,26 +78,29 @@
       "starters": ["Le Duel", "Quartet"],
       "startersSource": "manga-sanctuary news 7397, 28/01/2008 — « Le Duel » (Naruto contre Sasuke) et « Quartet » (le quatuor de ninjas d'Orochimaru). Noms annoncés ; les starters n'ont jamais été fabriqués.",
       "colekaLabel": "Cartes Naruto Série 06",
-      "title": "Série 6 — Rivalità Eterna",
+      "title": "Série 6 — Rivalité éternelle",
       "enCcgTitle": "Eternal Rivalry",
+      "itTitle": "Rivalità Eterna",
       "released": false,
-      "cancelled": "Annoncée pour AVRIL 2008 (presse du 28/01/2008), repoussée à 2009, puis annulée — Carddass s'est reporté sur Dragon Ball. Jamais imprimée en français : manga-news s'arrête au Deck Série 5, Ultrajeux n'a aucune S6 à l'unité sur 734 fiches, et aucun booster ni starter S6 français n'est jamais apparu en revente (eBay, leboncoin, Vinted, Delcampe). Le site n'a publié ni packshot booster, ni logo, ni starter S6 alors que S1–S5 en ont tous.",
-      "frenchArtefact": "Rendus pré-prod carddass.fr (`images/cartes/6/`) + inserts physiques dans certains coffrets DVD FR : MADE IN JAPAN, dos plus bleuté (vs MADE IN BELGIUM). Attestation Collection Naruto YT JYwlXQQlooI / 7r7LwtIENKs — ce ne sont pas les starters Le Duel / Quartet. Les entrées `s6` catalogue = rendus, pas retail FR.",
-      "printedElsewhere": "ATTENTION : les cartes ont bien été imprimées, mais EN ITALIE (« Serie 6 — Rivalità Eterna », BANDAI 2008 MADE IN CHINA). Coleka en détient 72 photos — l'ancienne note affirmait qu'aucune base n'en avait, c'est faux depuis le 14/08/2026. Numéros partagés avec le FR, seul le préfixe Tactique change (TA→ST). Ne PAS indexer ces cartes dans `s6` : ce sont des objets italiens. Voir docs/naruto_promo_research.md §1 bis."
+      "cancelled": "Annoncée pour AVRIL 2008, repoussée, puis annulée en retail FR (pas de booster / starters Le Duel / Quartet). Des inserts Kana ont quand même été imprimés (BANDAI 2008 MADE IN JAPAN) — ledger `s6-fr-printed.json`. L'Italie a sorti Rivalità Eterna en booster ; libellé FR catalogue = Rivalité éternelle.",
+      "frenchArtefact": "Rendus pré-prod carddass.fr (`images/cartes/6/`) + inserts physiques promo Kana : MADE IN JAPAN, dos plus bleuté (vs MADE IN BELGIUM). Attestations Collection Naruto YT (JYwlXQQlooI / 7r7LwtIENKs) + groupe FB Naruto Collection France (Victor Husson, 2023 : NI-236 coffret DVD vol. 15 ; communes MIJ coffret Shippuden — dig facebook-naruto-collection-france-2026-09-02.json). Ce ne sont pas les starters Le Duel / Quartet. Les entrées `s6` catalogue = rendus + attestations, pas retail booster FR.",
+      "printedElsewhere": "ATTENTION : le set a bien été imprimé en Italie (« Serie 6 — Rivalità Eterna », BANDAI 2008 MADE IN CHINA). Coleka en détient des photos IT. Numéros partagés avec le FR, préfixe Tactique TA→ST. Ne PAS verser la branche Coleka serie-06 entière dans le checklist FR — seulement les inserts attestés (`s6-fr-printed.json`). Voir docs/archive/naruto_promo_research.md §1 bis."
     },
     "s7": {
       "series": 7,
       "title": "Quest for Power",
+      "itTitle": "Sete di Potere",
       "starters": [],
       "released": true,
-      "note": "EN CCG Bandai USA. Title from Goat / Brasil; no Coleka display in the paste."
+      "note": "EN CCG Bandai USA. Title from Goat / Brasil; no Coleka display in the paste. IT retail (Primegame / eBay bustina) = Sete di Potere."
     },
     "s8": {
       "series": 8,
       "title": "Battle of Destiny",
+      "itTitle": "Il Vento del Cambiamento",
       "starters": [],
       "released": true,
-      "note": "EN CCG. Goat has two singles folders (3885 main, 3887 reprints)."
+      "note": "EN CCG Battle of Destiny (Goat). IT retail serie-8 (Primegame) = Il Vento del Cambiamento — content cut may track Approaching Wind more than EN s8; label follows Italian shelf name."
     },
     "s9": {
       "series": 9,
@@ -111,7 +119,14 @@
       "title": "Approaching Wind",
       "starters": [],
       "released": true,
-      "note": "Coleka also lists Rampage Tornado / La tempête approche as a 33-card special deck, not a new set dump."
+      "note": "EN CCG booster set. The FR special deck Rampage Tornado is `tempete`, not this dump."
+    },
+    "tempete": {
+      "series": 11,
+      "title": "Série 11 — La Tempête Approche",
+      "printedLanguages": ["fr"],
+      "released": true,
+      "note": "Deck spécial FR 33 cartes (Coleka `_r16963`). Reprints s1–s11, pas Sage's Legacy ni Storm 3. Set id `tempete` (≠ EN Approaching Wind `s11`)."
     },
     "s12": {
       "series": 12,
@@ -193,7 +208,7 @@
     },
     "s24": {
       "series": 24,
-      "title": "Sage's Legacy",
+      "title": "Série 24 — Sage's Legacy",
       "starters": [],
       "released": true,
       "colekaLabel": "Cartes Naruto Série 24 Sage's Legacy",
@@ -226,7 +241,7 @@
     },
     "s28": {
       "series": 28,
-      "title": "Ultimate Ninja Storm 3",
+      "title": "Série 28 — Ultimate Ninja Storm 3",
       "starters": [],
       "colekaLabel": "Cartes Naruto Série 28",
       "released": true,

@@ -175,6 +175,59 @@ describe("installColekaNinjaRanks", () => {
     expect(entry.langs.fr?.art).toBeUndefined();
   });
 
+  it("retire le faux recto Coleka GS03 (fiche base 3) de bl-0003", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex(NARUTO_RANKS_PACK_ID);
+    index.writePrints([
+      {
+        printKey: "naruto:bl-0003",
+        setCode: "bl",
+        number: "0003",
+        cardType: "bl",
+        titles: [
+          { lang: "en", fullName: "Sasuke" },
+          { lang: "fr", fullName: "Sasuke" },
+        ],
+      },
+    ]);
+    index.writeAssets([
+      {
+        printKey: "naruto:bl-0003",
+        lang: "fr",
+        art: "art.coleka.webp",
+      },
+      {
+        printKey: "naruto:bl-0003",
+        lang: "en",
+        art: "art.imadoki.jpg",
+      },
+    ]);
+
+    const cardDir = path.join(
+      process.env.PLACARR_DATA_DIR!,
+      "naruto",
+      "ninja-ranks",
+      "cards",
+      "bl",
+      "fr",
+      "0003",
+    );
+    fs.mkdirSync(cardDir, { recursive: true });
+    fs.writeFileSync(path.join(cardDir, "art.coleka.webp"), "wrong-base-3");
+
+    installColekaNinjaRanks(index, { stagingDir: path.join(os.tmpdir(), "missing") });
+
+    const exported = index.exportIndex();
+    const entry = (
+      JSON.parse(fs.readFileSync(exported!.path, "utf8")) as {
+        cards: Record<string, { langs: Record<string, { art?: string }> }>;
+      }
+    ).cards["naruto:bl-0003"];
+    expect(entry.langs.fr?.art).toBeUndefined();
+    expect(entry.langs.en?.art).toBe("art.imadoki.jpg");
+    expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(true);
+  });
+
   it("pose un insert EU sous le bon set", () => {
     tmpDataRoot();
     const staging = path.join(os.tmpdir(), `coleka-nr-insert-${Date.now()}`);

@@ -113,6 +113,8 @@ describe("Naruto sealed SKUs", async () => {
       "booster-s2-it",
       "booster-s3-it",
       "booster-s3-es",
+      "starter-tradimento",
+      "starter-lealta",
       "starter-il-fascino-del-male",
       "booster-s6-it",
       "booster-s7-it",
@@ -283,11 +285,22 @@ describe("Naruto sealed SKUs", async () => {
       "display-s2-it",
       "booster-s2-it",
       "booster-s3-it",
+      "starter-tradimento",
+      "starter-lealta",
       "starter-il-fascino-del-male",
       "booster-s6-it",
       "booster-s7-it",
       "booster-s8-it",
     ]);
+    expect(
+      NARUTO_SEALED_SKUS.find((row) => row.slug === "booster-s1-it")?.name,
+    ).toBe("Booster Serie 1 — La Forza della Foglia");
+    expect(
+      NARUTO_SEALED_SKUS.find((row) => row.slug === "starter-tradimento")?.name,
+    ).toBe("Mazzo Tradimento — L'Eredità del Sogno");
+    expect(
+      NARUTO_SEALED_SKUS.find((row) => row.slug === "starter-lealta")?.name,
+    ).toBe("Mazzo Lealtà — L'Eredità del Sogno");
     expect(
       NARUTO_SEALED_SKUS.filter((row) => row.lang === "ES").map(
         (row) => row.slug,
@@ -1662,6 +1675,8 @@ describe("Naruto curated products-contents", () => {
     expect(ledger.skus["starter-il-fascino-del-male"]?.declaredCardCount).toBe(
       40,
     );
+    expect(ledger.skus["starter-tradimento"]?.declaredCardCount).toBe(40);
+    expect(ledger.skus["starter-lealta"]?.declaredCardCount).toBe(40);
     expect(ledger.skus["tin-box"]).toMatchObject({
       cardsPerPack: 8,
       packsContained: 2,

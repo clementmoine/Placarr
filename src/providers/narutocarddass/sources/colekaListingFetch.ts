@@ -21,7 +21,13 @@ export async function fetchColekaListingHtml(
   const html = await fetchTextWithFlareFallback(url, {
     flareMaxTimeoutMs: 60_000,
   });
-  if (!html || html.length < 400 || colekaHtmlIsVerifyWall(html)) return null;
+  if (!html || html.length < 400 || colekaHtmlIsVerifyWall(html)) {
+    if (existsSync(dest)) {
+      const cached = readFileSync(dest, "utf8");
+      if (cached.length > 400 && !colekaHtmlIsVerifyWall(cached)) return cached;
+    }
+    return null;
+  }
   mkdirSync(path.dirname(dest), { recursive: true });
   writeFileSync(dest, html, "utf8");
   return html;

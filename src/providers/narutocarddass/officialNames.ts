@@ -12,8 +12,9 @@
  * "Temari" where card NI-150 reads SAKON, so a handful of entries are resolved
  * against the card itself. See `printedChecklistErrata` in the source file.
  *
- * Manga-News still fills what the official sources never named — Série 06 and
- * the promos, for which no checklist has ever existed.
+ * Manga-News still fills what the official sources never named — most of
+ * Série 06 (cancelled FR) and the promos, for which no checklist has ever
+ * existed. A handful of S6 names are attested from carddass.fr pre-prod art.
  */
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";

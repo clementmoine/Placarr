@@ -1,0 +1,23 @@
+{
+  "note": "10 vraies variantes avant-première manga S1 FR (Kana ~2005–2006). PrintKeys distincts `naruto:{ni|te|ta}-####-prerelease`, set `s1`, grouping `prerelease`. Source : user 2026-09-03 + dig Collection Naruto 7r7 + Drive Bandai FR Série 1 détaillée. Estimation ~10 €.",
+  "source": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+  "observed": "2026-09-03",
+  "setCode": "s1",
+  "grouping": "prerelease",
+  "cards": [
+    { "number": "ni025", "name": "Naruto Uzumaki" },
+    { "number": "ni019", "name": "Naruto Uzumaki" },
+    { "number": "ni047", "name": "Sasuke Uchiwa" },
+    { "number": "ni027", "name": "Sakura Haruno" },
+    {
+      "number": "ta005",
+      "name": "Le désastre Kyubi",
+      "notes": "Titre imprimé prerelease (Drive) ; retail holo = « Le désastre du Démon Renard à 9 queues »."
+    },
+    { "number": "ta004", "name": "Un professeur attachant" },
+    { "number": "te015", "name": "Dédoublement" },
+    { "number": "te007", "name": "Sharingan" },
+    { "number": "te003", "name": "Sexy-meta" },
+    { "number": "te036", "name": "Les démoniaques miroirs de glace" }
+  ]
+}

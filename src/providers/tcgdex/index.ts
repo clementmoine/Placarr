@@ -28,6 +28,7 @@ import "@/effects/pokemon/liveCardsIndex";
 // finds a Live texture, and silently falls back to TCGdex art.
 import "@/effects/pokemon/cardFoilIndex";
 import { faceQuarterTurnsForPokemonPrint } from "@/effects/pokemon/faceOrientation";
+import { localPokemonCatalogueArtUrl } from "./paperCardDisk";
 import { joinLiveForPrint } from "@/effects/pokemon/liveJoin";
 import { lookupByBundle } from "@/effects/pokemon/liveCardsLookups";
 import {
@@ -349,6 +350,8 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
       )) ||
     Object.values(variantImageUrls)[0] ||
     null;
+  const localPaper =
+    localPokemonCatalogueArtUrl(card.printKey, card.language) ?? null;
   const tcgdexThumb = card.thumbnailUrl ?? card.imageUrl ?? null;
   const tcgdexFull = card.imageUrl ?? card.thumbnailUrl ?? null;
   const liveRarity =
@@ -367,8 +370,8 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
     rarity: card.rarity ?? rarityLabelFromLiveCode(liveRarity) ?? null,
     category: card.category,
     setCode: card.setId,
-    thumbnailUrl: liveFront ?? tcgdexThumb,
-    imageUrl: liveFront ?? tcgdexFull,
+    thumbnailUrl: liveFront ?? localPaper ?? tcgdexThumb,
+    imageUrl: liveFront ?? localPaper ?? tcgdexFull,
     // Pack default back lives on EffectPack.cardBackUrl — do not stamp it as
     // print scope (that kills grid skeletons via sharedCardBackSkeletonUrl).
     language: card.language,

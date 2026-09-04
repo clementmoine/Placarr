@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-20T11:52:50.685Z",
+ "generatedAt": "2026-09-03T21:07:38.799Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{family}/{id}/{lang}/",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
@@ -231,6 +231,30 @@
     "height": 1225
    },
    "cropped": false
+  },
+  {
+   "cardId": "pr0095",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/promo/pr0095/fr/art.reconstructed.png",
+   "dest": "cards/promo/pr0095/fr/art.reconstructed.webp",
+   "from": {
+    "width": 649,
+    "height": 911
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "pr0096",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/promo/pr0096/fr/art.reconstructed.png",
+   "dest": "cards/promo/pr0096/fr/art.reconstructed.webp",
+   "from": {
+    "width": 656,
+    "height": 911
+   },
+   "cropped": true
   },
   {
    "cardId": "ta0221",

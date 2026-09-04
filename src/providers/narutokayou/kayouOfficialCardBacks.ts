@@ -57,6 +57,13 @@ export function resetKayouOfficialCardBackManifestCache(): void {
   cached = undefined;
 }
 
+/** @internal test hook — never write the real curated manifest from unit tests. */
+export function __setKayouOfficialCardBackManifestForTests(
+  manifest: KayouOfficialCardBackManifest | null,
+): void {
+  cached = manifest;
+}
+
 export function buildKayouOfficialCardBackManifest(
   rows: readonly KayouOfficialCardBackEntry[],
   meta: { observed: string; seriesIds: readonly string[] },

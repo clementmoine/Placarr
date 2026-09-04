@@ -1,9 +1,9 @@
 /**
- * Catalogue Mythos depuis la checklist LorenZone (Konoha Shidō Ch.1).
+ * Catalogue Mythos depuis les checklists LorenZone (KS1 + Shinobi Shiren).
  *
  * Autre jeu que Carddass / Ranks / Ultra / Kayou — `printGame: mythos`.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
@@ -24,24 +24,40 @@ export type MythosChecklistCard = {
   note?: string;
 };
 
-type Checklist = {
+export type MythosChecklist = {
   source: string;
   url: string;
-  set: { code: string };
+  set: { code: string; label?: string; denominator?: number };
   cards: MythosChecklistCard[];
+  note?: string;
 };
 
-const CHECKLIST_FILE = "lorenzone-ks1-checklist.json";
+const CHECKLIST_FILES = [
+  "lorenzone-ks1-checklist.json",
+  "lorenzone-ss2-checklist.json",
+] as const;
 
-/** Titres FR — checklist boutique française. */
+/** Titres — KS1 FR ledger, SS2 SAMPLE EN until FR gallery lands. */
 export const MYTHOS_TITLE_LANG = "fr";
 
-export function mythosChecklistPath(): string {
-  return path.join(narutoMythosCuratedDir(), "sources", CHECKLIST_FILE);
+export function mythosChecklistPath(
+  file: string = CHECKLIST_FILES[0],
+): string {
+  return path.join(narutoMythosCuratedDir(), "sources", file);
 }
 
-export function readMythosChecklist(): Checklist {
-  return JSON.parse(readFileSync(mythosChecklistPath(), "utf8")) as Checklist;
+export function readMythosChecklist(
+  file: string = CHECKLIST_FILES[0],
+): MythosChecklist {
+  return JSON.parse(readFileSync(mythosChecklistPath(file), "utf8")) as MythosChecklist;
+}
+
+export function readAllMythosChecklists(): MythosChecklist[] {
+  return CHECKLIST_FILES.flatMap((file) => {
+    const p = mythosChecklistPath(file);
+    if (!existsSync(p)) return [];
+    return [readMythosChecklist(file)];
+  });
 }
 
 export type MythosLedgerBuildReport = {
@@ -49,6 +65,7 @@ export type MythosLedgerBuildReport = {
   prints: number;
   titles: number;
   skipped: string[];
+  sets: string[];
 };
 
 export function buildMythosFromLedgers(
@@ -57,43 +74,50 @@ export function buildMythosFromLedgers(
     index?: ReturnType<typeof createLocalPrintsIndex>;
   } = {},
 ): MythosLedgerBuildReport {
-  const ledger = readMythosChecklist();
-  const setCode =
-    ledger.set?.code?.trim().toLowerCase() || NARUTO_MYTHOS_KS1_SET_CODE;
+  const ledgers = readAllMythosChecklists();
   const skipped: string[] = [];
   const rows = [];
+  const sets = new Set<string>();
 
-  for (const card of ledger.cards) {
-    const number = card.number.trim().toLowerCase();
-    const grouping = card.grouping?.trim().toLowerCase() || null;
-    const name = card.name.trim();
-    const printKey = mythosPrintKey(setCode, number, grouping);
-    if (!printKey || !name) {
-      skipped.push(card.printed);
-      continue;
+  for (const ledger of ledgers) {
+    const setCode =
+      ledger.set?.code?.trim().toLowerCase() || NARUTO_MYTHOS_KS1_SET_CODE;
+    sets.add(setCode);
+    const titleLang = setCode === NARUTO_MYTHOS_KS1_SET_CODE ? "fr" : "en";
+
+    for (const card of ledger.cards) {
+      const number = card.number.trim().toLowerCase();
+      const grouping = card.grouping?.trim().toLowerCase() || null;
+      const name = card.name.trim();
+      const printKey = mythosPrintKey(setCode, number, grouping);
+      if (!printKey || !name) {
+        skipped.push(`${setCode}:${card.printed}`);
+        continue;
+      }
+      rows.push({
+        printKey,
+        setCode,
+        number,
+        cardType: setCode,
+        grouping,
+        sourceUrl: ledger.url,
+        titles: [
+          {
+            lang: titleLang,
+            fullName: name,
+            rarity: card.rarity?.trim() || null,
+          },
+        ],
+      });
     }
-    rows.push({
-      printKey,
-      setCode,
-      number,
-      cardType: setCode,
-      grouping,
-      sourceUrl: ledger.url,
-      titles: [
-        {
-          lang: MYTHOS_TITLE_LANG,
-          fullName: name,
-          rarity: card.rarity?.trim() || null,
-        },
-      ],
-    });
   }
 
   const report: MythosLedgerBuildReport = {
-    rows: ledger.cards.length,
+    rows: ledgers.reduce((n, l) => n + l.cards.length, 0),
     prints: rows.length,
     titles: rows.length,
     skipped,
+    sets: [...sets].sort(),
   };
   if (opts.dryRun) return report;
 

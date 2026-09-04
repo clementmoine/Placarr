@@ -2,7 +2,15 @@
  * Stream a file under a data root for ``/uploads`` and ``/foil``.
  * Never buffers the whole body (WebGL packs are multi‑GB).
  */
-import { createReadStream, existsSync, statSync, type Stats } from "node:fs";
+import {
+  createReadStream,
+  existsSync,
+  openSync,
+  readSync,
+  closeSync,
+  statSync,
+  type Stats,
+} from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { NextResponse } from "next/server";
@@ -24,7 +32,39 @@ const MIME: Record<string, string> = {
   ".bin": "application/octet-stream",
 };
 
+/** Magic-byte sniff — harvests often save PNG/JPEG under a `.webp` name. */
+export function sniffImageContentType(filePath: string): string | null {
+  let fd: number | null = null;
+  try {
+    fd = openSync(filePath, "r");
+    const buf = Buffer.alloc(12);
+    const n = readSync(fd, buf, 0, 12, 0);
+    if (n < 3) return null;
+    if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e) return "image/png";
+    if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+    if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return "image/gif";
+    if (
+      n >= 12 &&
+      buf.toString("ascii", 0, 4) === "RIFF" &&
+      buf.toString("ascii", 8, 12) === "WEBP"
+    ) {
+      return "image/webp";
+    }
+    if (buf[0] === 0x00 && buf[1] === 0x00 && buf[2] === 0x00 && n >= 8) {
+      const brand = buf.toString("ascii", 4, 8);
+      if (brand === "ftyp") return "image/avif";
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    if (fd != null) closeSync(fd);
+  }
+}
+
 function contentType(filePath: string): string {
+  const sniffed = sniffImageContentType(filePath);
+  if (sniffed) return sniffed;
   return (
     MIME[path.extname(filePath).toLowerCase()] ?? "application/octet-stream"
   );

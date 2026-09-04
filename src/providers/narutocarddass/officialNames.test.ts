@@ -76,7 +76,7 @@ describe("applyOfficialNames", () => {
     expect(titles[0]).toMatchObject({ fullName: "Sakon", lang: "fr" });
   });
 
-  it("leaves community-only cards alone — nothing official names Série 06", () => {
+  it("leaves Coleka-only S6 names when official has nothing for that number", () => {
     const kept = title("te267", "Bruine de sable", "commune", "s6");
     const { titles, replaced, added } = applyOfficialNames(
       [print("te267", "s6")],
@@ -86,6 +86,25 @@ describe("applyOfficialNames", () => {
     expect(replaced).toBe(0);
     expect(added).toBe(0);
     expect(titles).toEqual([kept]);
+  });
+
+  it("adds attested S6 FR names from the official ledger", () => {
+    const names = loadOfficialNames();
+    const { titles, added } = applyOfficialNames(
+      [print("ni268", "s6"), print("te236", "s6")],
+      [],
+      names,
+    );
+    expect(added).toBe(2);
+    expect(titles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ fullName: "Gaara", lang: "fr" }),
+        expect.objectContaining({
+          fullName: "La morsure du loup",
+          lang: "fr",
+        }),
+      ]),
+    );
   });
 
   it("fills a missing rarity without overwriting one", () => {
@@ -111,13 +130,16 @@ describe("applyOfficialNames", () => {
 
   it("official S5 names are not site-liste HTML bleeds (NI-X glued into name)", () => {
     const names = loadOfficialNames();
-    const bleed = /(?:Ninja|Technique|Tactique|Client)\s+(?:Holo\s+)?(?:rare\s+)?(?:NI|TE|TA|CL)-\d+/i;
+    const bleed =
+      /(?:Ninja|Technique|Tactique|Client)\s+(?:Holo\s+)?(?:rare\s+)?(?:NI|TE|TA|CL)-\d+|Holo\s+(?:Commune|rare)\s+(?:NI|TE|TA|CL)-\d+/i;
     for (const [id, card] of names) {
       expect(card.name, id).not.toMatch(bleed);
-      expect(card.name, id).not.toMatch(/\bNI-\d+/i);
+      expect(card.name, id).not.toMatch(/\b(?:NI|TE|TA|CL)-\d+/i);
     }
     expect(names.get("ni254")?.name).toBe("Kimimaro");
     expect(names.get("ni248")?.name).toBe("Idate Morino");
+    expect(names.get("ta052")?.name).toBe("La fin du démon");
+    expect(names.get("ta053")?.name).toBe("Test écrit");
   });
 });
 

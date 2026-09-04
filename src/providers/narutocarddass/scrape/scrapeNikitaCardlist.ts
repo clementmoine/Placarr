@@ -66,7 +66,12 @@ function packRoot(dataDir?: string): string {
 }
 
 export function narutoJaFactsPath(root?: string): string {
-  return path.join(packRoot(root), NARUTO_JA_FACTS_FILE);
+  /*
+    `root` is already the pack dir when called from scrapeCards. Joining
+    NARUTO_PACK_ID again silently doubled the path and the names never landed.
+  */
+  const pack = root ?? path.join(dataRoot(), NARUTO_PACK_ID);
+  return path.join(pack, NARUTO_JA_FACTS_FILE);
 }
 
 export function loadNarutoJaFacts(root?: string): NarutoJaFactsFile | null {
@@ -78,6 +83,21 @@ export function loadNarutoJaFacts(root?: string): NarutoJaFactsFile | null {
   } catch {
     return null;
   }
+}
+
+/** Names only — combat stats stay in `facts-ja.json`, not `cards-index.json`. */
+export function nikitaFactsJaNames(
+  root?: string,
+): { diskHint: string; name: string }[] {
+  const facts = loadNarutoJaFacts(root);
+  if (!facts) return [];
+  const out: { diskHint: string; name: string }[] = [];
+  for (const [diskHint, card] of Object.entries(facts.cards)) {
+    const name = card.name?.trim();
+    if (!diskHint || !name) continue;
+    out.push({ diskHint, name });
+  }
+  return out;
 }
 
 export type NarutoJaFacts = NikitaCardFacts & {

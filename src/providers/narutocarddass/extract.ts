@@ -26,11 +26,15 @@ import {
 } from "./scrape/scrapeColekaStorm3";
 import { scrapeNarutoStorm3Cards } from "./scrape/scrapeStorm3";
 import { scrapeCardgameclubItFaces } from "./scrape/scrapeCardgameclubIt";
+import { scrapePrimegameIt } from "./scrape/scrapePrimegameIt";
 import { scrapeGoatEnCcgTitles } from "./scrape/scrapeGoatEnCcg";
 import { scrapeNarutoCardsCaTitles } from "./scrape/scrapeNarutoCardsCa";
+import { scrapeNarutoCardsNetTitles } from "./scrape/scrapeNarutoCardsNet";
+import { scrapeCollectorsCometTitles } from "./scrape/scrapeCollectorsCometTitles";
 import { scrapeNarutoZabuzaPromo } from "./scrape/scrapeNarutoZabuza";
 import { scrapeNikitaNrtCards } from "./scrape/scrapeNikitaNrt";
 import { scrapeSurugaCarddassCards } from "./scrape/scrapeSurugaCarddass";
+import { scrapeNarutoChitoroshopCards } from "./scrape/scrapeChitoroshop";
 import { scrapeUltrajeuxS5Holes } from "./scrape/scrapeUltrajeuxS5";
 import { scrapeVintageNarutoCcgFaces } from "./scrape/scrapeVintageNarutoCcg";
 import { installCarddasJpStagingFaces } from "./install/installCarddasJpStagingFaces";
@@ -224,6 +228,12 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         delayMs: shared.delayMs,
         limit: shared.limit,
       });
+      await scrapePrimegameIt({
+        force: shared.force,
+        delayMs: shared.delayMs,
+        limit: shared.limit,
+        faces: true,
+      });
     }
     if (wayback || colekafr) {
       await scrapeNarutoColekaCarddassFrCards(shared);
@@ -239,6 +249,13 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         limit: shared.limit,
       });
       await scrapeNarutoCardsCaTitles({
+        force: shared.force,
+        delayMs: shared.delayMs,
+      });
+      await scrapeNarutoCardsNetTitles({
+        force: shared.force,
+      });
+      await scrapeCollectorsCometTitles({
         force: shared.force,
         delayMs: shared.delayMs,
       });
@@ -341,6 +358,11 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         force: shared.force,
         delayMs: shared.delayMs,
         concurrency: shared.concurrency,
+        limit: shared.limit,
+      });
+      await scrapeNarutoChitoroshopCards({
+        force: shared.force,
+        delayMs: shared.delayMs,
         limit: shared.limit,
       });
       await scrapeNikitaCardlistFacts({});

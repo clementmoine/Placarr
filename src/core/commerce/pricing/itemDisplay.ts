@@ -466,7 +466,9 @@ function hasPriceSummary(
   return (
     prices.priceNew != null ||
     prices.priceUsed != null ||
-    prices.priceUsedCIB != null
+    prices.priceUsedCIB != null ||
+    prices.priceEstimated != null ||
+    prices.priceEstimatedFoil != null
   );
 }
 
@@ -670,6 +672,7 @@ export function itemPricesContextFromPresentedShelfItem(
     id: string;
     name: string;
     barcode?: string | null;
+    printKey?: string | null;
     metadataId?: string | null;
     metadataRefreshStartedAt?: Date | string | null;
     metadata?: MetadataResult | null;
@@ -689,11 +692,16 @@ export function itemPricesContextFromPresentedShelfItem(
     metadataBarcode && metadataBarcode !== itemBarcode
       ? [metadataBarcode]
       : null;
+  const printKey =
+    item.printKey?.trim() ||
+    externalIds.printKey?.trim() ||
+    null;
 
   return {
     id: item.id,
     name: item.name,
     barcode: item.barcode,
+    printKey,
     metadataId: item.metadataId,
     metadataTitle: item.metadata?.title,
     metadataAliases: aliases?.length ? JSON.stringify(aliases) : null,
@@ -716,6 +724,7 @@ type ListItemPriceRecord = {
   id: string;
   barcode?: string | null;
   name: string;
+  printKey?: string | null;
   metadataId?: string | null;
   metadata?: {
     title?: string | null;
@@ -746,6 +755,7 @@ export async function summarizeListItemPrices(
         name?: string | null;
         metadataTitle?: string | null;
         aliases?: string[] | null;
+        printKey?: string | null;
       }>;
     }
   >();
@@ -769,6 +779,7 @@ export async function summarizeListItemPrices(
       name: item.name,
       metadataTitle: item.metadata?.title ?? null,
       aliases,
+      printKey: item.printKey ?? null,
     });
     byShelf.set(key, group);
   }

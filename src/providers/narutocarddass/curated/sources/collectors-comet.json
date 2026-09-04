@@ -1,7 +1,7 @@
 {
   "source": "collectorscomet.com (user paste 2026-08-17)",
   "observed": "2026-08-17",
-  "ingest": "none",
+  "ingest": "titles",
   "crawl": false,
   "line": "en-ccg",
   "note": "Multi-game marketplace (Duel Masters, Life TCG, Naruto CCG, …). Naruto hub lists Bandai USA s1–s28 + TP as 17.5/19.5/21.5/23.5 + a Promos drawer. Catalogue PNGs are 750×1050 — same pixels as Vintage / CCG Trader, not a new dump. Printed codes are real Bandai N/J/M/PR/NUS/PRUS/EX, not TCDB PTHN. Promos (142) still mix reprints, US stamps, EX, and tin missions (M-621). Hub claimed 47 listed collectables; do not crawl listings. Duel Masters images are Fandom; Naruto is images.collectorscomet.com. Promo set icon is a byte-identical copy of the s1 packshot.",

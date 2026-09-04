@@ -93,6 +93,14 @@ export type LocalTcgLineSpec = {
    * autre locale (comme Catalogue `bestFaceAcrossLocales`).
    */
   borrowFaceAcrossLocales?: boolean;
+  /**
+   * Post-process a candidate after disk faces are resolved (e.g. OPTCG
+   * category sleeve backs). Default: identity.
+   */
+  decorateCandidate?: (
+    candidate: PrintCandidate,
+    row: LocalPrintSearchRow,
+  ) => PrintCandidate;
 };
 
 export type LocalTcgLine = {
@@ -213,6 +221,7 @@ function toCandidate(
     reference,
     setLabel: setLabel(row.setCode, row.lang),
     ...(row.rarity ? { rarity: row.rarity } : {}),
+    ...(row.category ? { category: row.category } : {}),
     ...(art ? { imageUrl: art } : {}),
     ...(thumb ? { thumbnailUrl: thumb } : {}),
     ...(back ? { cardBackUrl: back } : {}),
@@ -225,6 +234,15 @@ function toCandidate(
       : {}),
     ...(orient?.landscapePrint ? { landscapePrint: true } : {}),
   };
+}
+
+function candidateForRow(
+  spec: LocalTcgLineSpec,
+  index: LocalPrintsIndex,
+  row: LocalPrintSearchRow,
+): PrintCandidate {
+  const base = toCandidate(spec, index, row);
+  return spec.decorateCandidate ? spec.decorateCandidate(base, row) : base;
 }
 
 export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
@@ -247,7 +265,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     for (const row of rows) {
       if (seen.has(row.printKey)) continue;
       seen.add(row.printKey);
-      out.push(toCandidate(spec, index, row));
+      out.push(candidateForRow(spec, index, row));
       if (opts.limit && out.length >= opts.limit) break;
     }
     return out;
@@ -262,7 +280,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     const row = index.lookupRow(printKey, {
       ...(language ? { language } : {}),
     });
-    return row ? toCandidate(spec, index, row) : null;
+    return row ? candidateForRow(spec, index, row) : null;
   };
 
   /**

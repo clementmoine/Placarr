@@ -26,6 +26,47 @@ export function kayouOfficialIdToCcNumber(idCode: string): string | null {
   return `cc.${tier}.${num}${special ? "s" : ""}`;
 }
 
+/**
+ * Official product id → catalogue set + dotted number.
+ * - `NRCCNA-*` → set `ninjaagebox`, number `cc.*`
+ * - `NREA02-CR-001L5` → set `nrea02`, number `nrea02.cr.001l5`
+ * - `NRI01-*` / `NRSA01–03-*` → same pattern
+ */
+export function kayouOfficialIdToPrint(
+  idCode: string,
+): { setCode: string; number: string } | null {
+  const cc = kayouOfficialIdToCcNumber(idCode);
+  if (cc) return { setCode: "ninjaagebox", number: cc };
+
+  const raw = idCode.trim();
+  const m = raw.match(
+    /^(NREA\d+|NRI\d+|NRSA\d+|NRSS\d+)-((?:\u25C7|◇))?([A-Za-z+]+)-(\d+[A-Za-z0-9]*)$/i,
+  );
+  if (!m) return null;
+  const product = m[1]!.toLowerCase();
+  const special = Boolean(m[2]);
+  const tier = m[3]!.toLowerCase().replace(/\+/g, "plus");
+  const num = m[4]!.toLowerCase();
+  return {
+    setCode: product,
+    number: `${product}.${tier}.${num}${special ? "s" : ""}`,
+  };
+}
+
+/** Human label for an official product set code. */
+export function kayouOfficialSetLabel(setCode: string): string {
+  const code = setCode.trim().toLowerCase();
+  const labels: Record<string, string> = {
+    ninjaagebox: "Ninja Age",
+    nrea02: "Earth Scroll (NREA02)",
+    nri01: "Earth Scroll Box (NRI01)",
+    nrsa01: "Chapter Jin Series 1 (NRSA01)",
+    nrsa02: "Chapter Jin Series 2 (NRSA02)",
+    nrsa03: "Chapter Jin Series 3 (NRSA03)",
+  };
+  return labels[code] ?? setCode.trim().toUpperCase();
+}
+
 /** Suffix keys for lookup when the catalogue ref omits the product prefix. */
 export function kayouOfficialIdSuffixKeys(idCode: string): string[] {
   const parts = idCode.trim().split("-").filter(Boolean);

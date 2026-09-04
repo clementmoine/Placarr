@@ -114,8 +114,28 @@ function mergeLangFiles(
     artUrl: a.artUrl ?? b.artUrl,
     variants: a.variants ?? b.variants,
   };
-  if (name) out.name = name;
-  else delete out.name;
+  if (name) {
+    out.name = name;
+    const winner =
+      a.name === name && !a.nameLocaleFrom && !a.nameSource
+        ? a
+        : b.name === name && !b.nameLocaleFrom && !b.nameSource
+          ? b
+          : a.name === name
+            ? a
+            : b.name === name
+              ? b
+              : !a.nameLocaleFrom && !a.nameSource
+                ? a
+                : b;
+    if (winner.nameLocaleFrom) out.nameLocaleFrom = winner.nameLocaleFrom;
+    else delete out.nameLocaleFrom;
+    if (winner.nameSource) out.nameSource = winner.nameSource;
+    else delete out.nameSource;
+  } else {
+    delete out.nameLocaleFrom;
+    delete out.nameSource;
+  }
   if (printed === false) out.printed = false;
   else delete out.printed;
   return out;
@@ -246,20 +266,25 @@ export function foldNarutoCatalogueRecords(input: {
     const printKey = canonicalizeNarutoPrintKey(raw.printKey);
     const lang = raw.lang.toLowerCase();
     const key = `${printKey}\0${lang}`;
-    const name = pickBetterNarutoTitle(
-      titleByKey.get(key)?.fullName,
-      raw.fullName,
-    );
+    const prev = titleByKey.get(key);
+    const name = pickBetterNarutoTitle(prev?.fullName, raw.fullName);
     if (!name) {
       titleByKey.delete(key);
       continue;
     }
-    const prev = titleByKey.get(key);
+    const winner =
+      prev && !prev.nameLocaleFrom && !prev.nameSource
+        ? prev
+        : !raw.nameLocaleFrom && !raw.nameSource
+          ? raw
+          : (prev ?? raw);
     titleByKey.set(key, {
       printKey,
       lang,
       fullName: name,
       rarity: prev?.rarity ?? raw.rarity ?? null,
+      ...(winner.nameLocaleFrom ? { nameLocaleFrom: winner.nameLocaleFrom } : {}),
+      ...(winner.nameSource ? { nameSource: winner.nameSource } : {}),
     });
   }
 

@@ -18,5 +18,6 @@
   "products"
  ],
  "unblocked": "2026-08-21 : la voie (2) de `whatWouldUnlock` a été prise. Les plages de numéros par sortie japonaise (cardcheckbox) rendent le « Vol.N » de la boutique joignable, et le **nom anglais** du titre joint le catalogue CCG américain. Deux signaux indépendants, qui se prononcent ensemble 15 fois et ne se contredisent jamais : 67 produits identifiés sur 227, contre 6 auparavant.",
+ "wired20260901": "Branché dans extract `--locale jap` (`scrapeNarutoChitoroshopCards`) + source `chitoroshop` dans faceChoice JA. Relevé live : 47 identifiés / 58 unresolved / 145 hors-jeu. 64 faces indexées ; −27 « sans image » JA dans l'admin (690→663).",
  "imageOrder": "**Corrigé.** Ce registre affirmait que la deuxième image était le scan et la première une photo sous pochette. C'est l'inverse : `images[0]` est le scan à plat de la face, les suivantes sont les photos d'inventaire de la boutique — un exemplaire chacune, avec une étiquette « #N025 » incrustée. Vérifié à l'œil sur trois produits, un par famille (忍-130 バキ, 作-200 陰謀の足音, 術-270 獄砂埋葬), et les trois confirment aussi l'identification."
 }

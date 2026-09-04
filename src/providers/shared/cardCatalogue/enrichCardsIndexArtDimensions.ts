@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { readFileImageMetrics } from "@/core/enrich/media/imageMetrics";
-import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
+import { parsePrintKey } from "@/core/identify/printKey";
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { isCardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardDir, packCardsIndexPath } from "@/lib/packPaths";
@@ -24,18 +24,11 @@ export async function enrichCardsIndexArtDimensions(
   let probed = 0;
   let landscapePrints = 0;
 
-  const catalogueLocales = cataloguePackInfo(packId)?.catalogueLocales;
-  if (catalogueLocales?.length) {
-    for (const entry of Object.values(index.cards)) {
-      for (const lang of catalogueLocales) {
-        entry.langs[lang] ??= {};
-      }
-    }
-  }
-
-  for (const entry of Object.values(index.cards)) {
+  for (const [printKey, entry] of Object.entries(index.cards)) {
     let printLandscape = false;
     let probedThis = 0;
+    const grouping = parsePrintKey(printKey)?.grouping?.trim().toLowerCase();
+    const diskCard = grouping ? `${entry.card}-${grouping}` : entry.card;
     for (const [lang, slot] of Object.entries(entry.langs)) {
       const art = slot.art?.trim();
       if (!art) continue;
@@ -43,7 +36,7 @@ export async function enrichCardsIndexArtDimensions(
         packCardDir(packId, {
           set: entry.set,
           lang,
-          card: entry.card,
+          card: diskCard,
         }),
         art,
       );

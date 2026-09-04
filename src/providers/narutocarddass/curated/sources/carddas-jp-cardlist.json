@@ -3,10 +3,10 @@
   "observed": "2026-08-17",
   "ingest": "titles",
   "line": "carddass-jp",
-  "note": "Official JP Carddass CG 巻ノ壱…十七. Same game as FR/IT (忍=NI). Titles only — no faces. Skip d_cardlist (Data Carddass) and cardgame/product/5th.shtml (第五幕 ≠ 巻ノ五). 巻の四 spelling is the page's.",
+  "note": "Official JP Carddass CG 巻ノ壱…十七. Same game as FR/IT (忍=NI). Titles only — no faces. Skip d_cardlist (Data Carddass) and cardgame/product/5th.shtml (第五幕 ≠ 巻ノ五). 巻の四 spelling is the page's. Supplément 2026-09-01 : 忍-393…396 + 依-43 (スペシャルコンボシート2) via `cardlist/card_img/*_spc2.gif` ; 作-322 (巻ノ十六) absent du miroir Wayback — nom Suruga GL685035.",
   "not": ["data-carddass", "en-ccg", "maku5"],
   "counts": {
-    "cards": 998,
+    "cards": 1004,
     "bySet": {
       "maki1": 70,
       "maki2": 57,
@@ -7533,6 +7533,14 @@
       "page": "cardlist/16th.shtml"
     },
     {
+      "printed": "作-322",
+      "number": "ta0322",
+      "name": "熱血指導",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
       "printed": "依-40",
       "number": "cl0040",
       "name": "チシマ",
@@ -7555,6 +7563,46 @@
       "setCode": "maki16",
       "volume": "巻ノ十六",
       "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-393",
+      "number": "ni0393",
+      "name": "うずまきナルト",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-393_spc2.gif"
+    },
+    {
+      "printed": "忍-394",
+      "number": "ni0394",
+      "name": "はたけカカシ",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-394_spc2.gif"
+    },
+    {
+      "printed": "忍-395",
+      "number": "ni0395",
+      "name": "ロック・リー",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-395_spc2.gif"
+    },
+    {
+      "printed": "忍-396",
+      "number": "ni0396",
+      "name": "春野サクラ",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-396_spc2.gif"
+    },
+    {
+      "printed": "依-43",
+      "number": "cl0043",
+      "name": "ツキ・ヒカル",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/irai-043_spc2.gif"
     },
     {
       "printed": "忍-397",

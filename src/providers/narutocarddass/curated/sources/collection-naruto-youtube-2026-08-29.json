@@ -6,7 +6,7 @@
   "channel": {
     "name": "Collection Naruto",
     "url": "https://www.youtube.com/@collection_naruto",
-    "contact": "Instagram carte_naruto_collection / Facebook Victor Husson"
+    "contact": "Instagram carte_naruto_collection / Facebook Victor Husson — groupe https://www.facebook.com/groups/805799330361374 (dig facebook-naruto-collection-france-2026-09-02.json)"
   },
   "videos": [
     {
@@ -48,18 +48,18 @@
   "confidence": {
     "sealedSkuExistence": "high — objets filmés / décrits avec composition",
     "cardCountsPerSeries": "medium — compte collectionneur, ASR ; croiser checklist officielle",
-    "marketPrices": "low — indicative 1–2 ans, hors catalogue",
+    "marketPrices": "low — quotes approximatives YT (~1–2 ans) → Estimation ~ pour valoriser ; pas marché live",
     "checklistGhosts": "closed — YT « Supplication » S2 never printed : faux ; TA-108 = S3 réelle (web hunt 2026-08-29)"
   },
   "setCardCounts": {
-    "note": "Comptes master-set binder (7r7). Holos = holographiques binder ; « communes » = non-holo. Pré-releases S1 comptées à part (4).",
+    "note": "Comptes master-set binder (7r7). Holos = holographiques binder ; « communes » = non-holo. Pré-releases S1 = 10 vraies variantes (user 2026-09-03).",
     "s1": {
       "total": 198,
       "altTotalSpoken": 188,
       "holos": 33,
       "nonHolo": 151,
-      "prereleaseAlts": 4,
-      "note": "ASR dit 198 puis « 188 quasiment 200 ». Doc Drive Bandai FR « Série 1 détaillée » : total 188 / holos 33 / communes 155 / clients 4 — proche. Catalogue officiel marketing « 184 » (manga-sanctuary / doc)."
+      "prereleaseAlts": 10,
+      "note": "ASR dit 198 puis « 188 quasiment 200 ». Doc Drive : marketing 184 + 4 alts → 188 — à recaler vs 10 vraies variantes manga. Estimation ~10 € / alt (user 2026-09-03)."
     },
     "s2": { "total": 145, "holos": 22, "nonHolo": 123 },
     "s3": { "total": 139, "holos": 23, "nonHolo": 116 },
@@ -175,17 +175,161 @@
   },
   "promos": {
     "shuriken": {
-      "1": "Participation tournoi (~9 cartes citées) ; Tin Invocation = Naruto (moins rare, ~5 € vendeur)",
-      "2": "Top 5 tournoi (~30 € vendeur)",
-      "3": "Vainqueur tournoi (~50 €) ; Kakashi NI-23 CdF champion (~100 €) — déjà attested-promos ni023"
+      "1": "Participation tournoi — 20 €/carte (liste ci-dessous) ; PR-016 tin Invocation 5 €",
+      "2": "Top 5 tournoi — 30 €/carte ; PR-011 Tin Box Hobby 8 €",
+      "3": "Vainqueur tournoi — 50 €/carte ; NI-023 CdF (Champion de France) 100 €"
     },
-    "tinInvocation": "Aligné tin-box : deck Invocation S4 + booster S1 + booster S2 + 1 promo holo",
-    "tinHobby": "5 boosters (1 par série 1–5) + promo Naruto + Orochimaru — officiel carddass.fr news.htm ; ASR « Obi » = Hobby"
+    "lists": {
+      "1": ["ni034", "te001", "ni117", "ni065", "te002", "te139", "ta063", "ta074"],
+      "2": ["ni063", "ni024", "ni092", "te034", "te114", "te085", "ta081", "ta051"],
+      "3": ["ni023", "ni101", "ni095", "te030", "te073", "te109", "ta067", "ta011"]
+    },
+    "examples": {
+      "te002": {
+        "number": "te002",
+        "name": "Shuriken",
+        "shuriken": 1,
+        "channel": "tournament-participation",
+        "note": "User 2026-09-03 (7r7) : obtenue juste en participant aux tournois — aligne 1★ = participation."
+      }
+    },
+    "tinInvocation": "PR-016 — Tin Box Série 4 Invocation (+ 1 booster S1 + 1 booster S2) ; cote ~5 €",
+    "tinHobby": "PR-011 — Tin Box Hobby ; cote ~8 €"
   },
   "prerelease": {
-    "claim": "10 cartes avant-première avec mangas (~2005–2006), versions non-holo d'holos S1 + variantes de noms (TA-05).",
+    "claim": "10 vraies variantes avant-première manga (~2005–2006), cote ~10 € / carte (user 2026-09-03). PrintKeys catalogue : `s1-fr-prerelease.json` → `naruto:*-prerelease`.",
     "plv": "PLV magasin « arriveras-tu à toutes les collectionner »",
-    "crossref": "Drive Bandai FR « Série 1 détaillée » liste les 10 NI/TE/TA"
+    "crossref": "Drive Bandai FR « Série 1 détaillée » (`bandai-fr-serie-1-detaillee.json`) — même liste de 10",
+    "fullTen": [
+      "ni025",
+      "ni019",
+      "ni047",
+      "ni027",
+      "ta005",
+      "ta004",
+      "te015",
+      "te007",
+      "te003",
+      "te036"
+    ],
+    "nonHoloAltsOfHolos": {
+      "note": "Sous-ensemble vu non-holo vs holo retail dans 7r7 (ni019 / te007 / te036 / ta005). Les 10 fullTen ont des printKeys `*-prerelease` (ledger s1-fr-prerelease.json) ; Estimation ~10 € uniquement sur ces tirages.",
+      "cards": [
+        {
+          "number": "ni019",
+          "name": "Naruto Uzumaki",
+          "retailHolo": true,
+          "prereleaseFinish": "non-holo"
+        },
+        {
+          "number": "te007",
+          "name": "Sharingan",
+          "retailHolo": true,
+          "prereleaseFinish": "non-holo"
+        },
+        {
+          "number": "te036",
+          "name": "Les démoniaques miroirs de glace",
+          "retailHolo": true,
+          "prereleaseFinish": "non-holo",
+          "note": "Drive marque aussi une ligne holo ; catalogue names.json = commune (à croiser)."
+        },
+        {
+          "number": "ta005",
+          "nameRetail": "Le désastre du Démon Renard à 9 queues",
+          "namePrerelease": "Le désastre Kyubi",
+          "retailHolo": true,
+          "prereleaseFinish": "non-holo",
+          "note": "Variante de titre Drive : holo = titre long ; non-holo prerelease = « LE DÉSASTRE KYUBI »."
+        }
+      ],
+      "channel": "achat manga (Kana) — distinct du blister S6 t1185 (2008) et des inserts DVD",
+      "source": "https://www.youtube.com/watch?v=7r7LwtIENKs + bandai-fr-serie-1-detaillee.json"
+    },
+    "open": [
+      "Ne pas confondre NI-019 prerelease manga avec NI-019 packshot DVD vol. 4 (facebook dig)",
+      "Scan dos / stamp des 10 si distincts du retail (hors 4 alts déjà vues)"
+    ]
+  },
+  "indicativePrices": {
+    "note": "Côtes approximatives vendeur Collection Naruto (YT 7r7) — quotes `~` pour valoriser la collection. Branchées : facts Estimation + `refreshBarcodePriceOffers` (référence checklist / étagères / fiche). Pas des prix marché live.",
+    "source": "https://www.youtube.com/watch?v=7r7LwtIENKs",
+    "observed": "2026-09-03",
+    "s1": {
+      "normalEur": 0.1,
+      "holoEur": 5,
+      "prereleaseEur": 10
+    },
+    "s2": {
+      "normalEur": 0.1,
+      "holoEur": 5,
+      "premium": [
+        { "number": "te073", "priceEur": 7 },
+        { "number": "ni068", "priceEur": 7 },
+        { "number": "ni064", "priceEur": 7 }
+      ]
+    },
+    "s3": {
+      "normalEur": 0.1,
+      "holoEur": 5,
+      "premium": [
+        { "number": "ni063", "priceEur": 7 },
+        { "number": "ni129", "priceEur": 10 },
+        { "number": "ni128", "priceEur": 10 },
+        { "number": "ni153", "priceEur": 10 }
+      ]
+    },
+    "s4": {
+      "normalEur": 0.3,
+      "holoEur": 10,
+      "premium": [
+        { "number": "ni203", "priceEur": 25 },
+        { "number": "ni167", "priceEur": 15 },
+        { "number": "ni168", "priceEur": 15 },
+        { "number": "ni172", "priceEur": 12 }
+      ]
+    },
+    "s5": {
+      "normalEur": 0.5,
+      "premium": [
+        { "number": "ni221", "priceEur": 50 },
+        { "number": "ni247", "priceEur": 25 },
+        { "number": "ni254", "priceEur": 20 }
+      ]
+    },
+    "s6": {
+      "premium": [
+        { "number": "ni236", "priceEur": 10 },
+        { "number": "ni240", "priceEur": 2 },
+        { "number": "ni252", "priceEur": 2 },
+        { "number": "ni253", "priceEur": 2 },
+        { "number": "ta226", "priceEur": 15 },
+        { "number": "ta221", "priceEur": 7 },
+        { "number": "ta227", "priceEur": 7 }
+      ]
+    },
+    "promo": {
+      "shuriken1Eur": 20,
+      "shuriken2Eur": 30,
+      "shuriken3Eur": 50,
+      "special": [
+        {
+          "number": "pr016",
+          "priceEur": 5,
+          "note": "Tin Box Série 4 Invocation (+ boosters S1/S2)"
+        },
+        {
+          "number": "pr011",
+          "priceEur": 8,
+          "note": "Tin Box Hobby"
+        },
+        {
+          "number": "ni023",
+          "priceEur": 100,
+          "note": "Champion de France (CdF) — au-dessus du palier 3★ générique 50 €"
+        }
+      ]
+    }
   },
   "lateLineFr": {
     "alreadyInCatalogue": [
@@ -217,12 +361,14 @@
     "Minter display-s1…s5 FR sans packshot (règle sealed + collision EN)",
     "Passer contentsKnown=true sur pack-decouverte sans inventaire ; fusionner tin-box-hobby avec tin-box 05129",
     "Indexer inserts DVD S6 comme starters Le Duel / Quartet",
-    "Importer les côtes € dans le catalogue"
+    "Importer les côtes € comme prix marché live ou facts d'identité catalogue — OK en Estimation ~ (quotes approximatives)"
   ],
   "nextPhysical": [
     "Screenshot / packshot Pack Découverte, display 24 boosters S1, display-deck S1–S3",
     "Identifier Ref/EAN DVD S6 + liste exacte des inserts",
     "Croiser compte S1–S5 binder vs cards-index / liste_cartes",
-    "Chercher « Supplication » sur checklist S2 officielle — DONE: S3 TA-108, pas ghost"
+    "Chercher « Supplication » sur checklist S2 officielle — DONE: S3 TA-108, pas ghost",
+    "Scan dos / stamp des avant-premières manga (fullTen) si distincts du retail",
+    "7r7 suite : sealed / autres cotes si citées"
   ]
 }

@@ -49,4 +49,70 @@ describe("collection-naruto youtube dig", () => {
     expect(sets.sets.s5.collectorCount?.total).toBe(149);
     expect(sets.sets.s6.frenchArtefact).toMatch(/MADE IN JAPAN/i);
   });
+
+  it("lists the 10 S1 manga prerelease true variants at ~10 €", () => {
+    expect(dig.setCardCounts.s1.prereleaseAlts).toBe(10);
+    expect(dig.indicativePrices.s1.prereleaseEur).toBe(10);
+    expect(dig.prerelease.fullTen).toEqual([
+      "ni025",
+      "ni019",
+      "ni047",
+      "ni027",
+      "ta005",
+      "ta004",
+      "te015",
+      "te007",
+      "te003",
+      "te036",
+    ]);
+    expect(
+      dig.prerelease.nonHoloAltsOfHolos.cards.map((c) => c.number).sort(),
+    ).toEqual(["ni019", "ta005", "te007", "te036"]);
+    expect(dig.indicativePrices.s2.premium.map((p) => p.number).sort()).toEqual(
+      ["ni064", "ni068", "te073"],
+    );
+    expect(dig.indicativePrices.s3.premium.map((p) => p.number).sort()).toEqual(
+      ["ni063", "ni128", "ni129", "ni153"],
+    );
+    expect(dig.indicativePrices.s4).toMatchObject({
+      normalEur: 0.3,
+      holoEur: 10,
+    });
+    expect(dig.indicativePrices.s4.premium.map((p) => p.number).sort()).toEqual(
+      ["ni167", "ni168", "ni172", "ni203"],
+    );
+    expect(dig.indicativePrices.s5).toMatchObject({ normalEur: 0.5 });
+    expect(dig.indicativePrices.s5.premium.map((p) => p.number).sort()).toEqual(
+      ["ni221", "ni247", "ni254"],
+    );
+    expect(dig.indicativePrices.s6.premium.map((p) => p.number).sort()).toEqual(
+      ["ni236", "ni240", "ni252", "ni253", "ta221", "ta226", "ta227"],
+    );
+  });
+
+  it("records promo shuriken lists and CdF / tin specials", () => {
+    expect(dig.promos.lists["1"]).toEqual(
+      expect.arrayContaining(["te002", "te139", "ni034"]),
+    );
+    expect(dig.promos.lists["2"]).toEqual(
+      expect.arrayContaining(["ni063", "ta081"]),
+    );
+    expect(dig.promos.lists["3"]).toEqual(
+      expect.arrayContaining(["ni023", "ta011", "te073"]),
+    );
+    expect(dig.indicativePrices.promo).toMatchObject({
+      shuriken1Eur: 20,
+      shuriken2Eur: 30,
+      shuriken3Eur: 50,
+    });
+    expect(
+      dig.indicativePrices.promo.special.map((p) => [p.number, p.priceEur]),
+    ).toEqual(
+      expect.arrayContaining([
+        ["pr016", 5],
+        ["pr011", 8],
+        ["ni023", 100],
+      ]),
+    );
+  });
 });

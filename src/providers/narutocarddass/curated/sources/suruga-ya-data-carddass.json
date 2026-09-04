@@ -36,9 +36,10 @@
   ],
   "not": ["carddass", "en-ccg", "ni", "te", "ta", "n", "j", "m"],
   "decisionReversed": {
-    "on": "2026-08-19",
-    "was": "Do not crawl the 180 SKUs. Do not mint printKeys.",
-    "now": "La ligne arcade entre au catalogue, sur demande. Le modèle est prêt : familles `arcadeBattle` (DN, cabinet 2005) et `arcadeMission` (NM, cabinet 2007) dans collectorIdentity, ligne `data-carddass` dans packs.ts, dossiers de disque `dn` et `nm`. Aucune carte n'est encore frappée : il manque une source.",
+    "on": "2026-09-03",
+    "was": "La ligne arcade entrait au pack Carddass (familles DN/NM dans collectorIdentity).",
+    "now": "Provider dédié `narutodatacarddass` → `data/naruto/data-carddass/`. Checklist seed sous ce module. Ce ledger reste une note de chasse Suruga ; ne pas mint dans Carddass.",
+    "movedTo": "src/providers/narutodatacarddass/",
     "sourcesTried": [
       "nikita tcg-db — ne porte que `nrt` (428) et `nrts` (13) pour Naruto ; son `dn` est ドレッドノート, son `das` ドラゴン☆オールスターズ. Rien d'arcade.",
       "Suruga catégorie 501080113 — 403 depuis ce conteneur, en .jp comme en .com/en. L'intégration Suruga existante marche par TSV collé à la main, même chemin à prévoir.",

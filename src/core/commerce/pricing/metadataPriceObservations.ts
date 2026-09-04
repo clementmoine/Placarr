@@ -87,6 +87,20 @@ export function parseCatalogEstimatePricing(
     if (minCents != null) return { minCents, displayValue };
   }
 
+  /*
+    Point estimate (« 5 € », « 0,10 € ») — côtes collectionneur / quotes
+    approximatives, pas seulement les fourchettes Bédéthèque.
+  */
+  const singleMatch = displayValue.match(
+    /^(\d+(?:[.,]\d+)?)\s*(?:€|euros?)?$/i,
+  );
+  if (singleMatch) {
+    const cents = parseEuroAmountCents(singleMatch[1]);
+    if (cents != null) {
+      return { minCents: cents, maxCents: cents, displayValue };
+    }
+  }
+
   return null;
 }
 
@@ -254,7 +268,9 @@ function hasPriceSummary(
   return (
     prices.priceNew != null ||
     prices.priceUsed != null ||
-    prices.priceUsedCIB != null
+    prices.priceUsedCIB != null ||
+    prices.priceEstimated != null ||
+    prices.priceEstimatedFoil != null
   );
 }
 

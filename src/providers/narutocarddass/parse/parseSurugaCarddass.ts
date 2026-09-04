@@ -57,6 +57,61 @@ export function parseSurugaCarddassPrinted(raw: string): string | null {
   return m[3] ? `${m[1]}-${m[2]}-${m[3]}` : `${m[1]}-${m[2]}`;
 }
 
+function decodeSurugaHtmlEntities(raw: string): string {
+  return raw
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"');
+}
+
+/**
+ * Character name from a Suruga product title. Shop boilerplate stays out.
+ * `忍-390[ノーマル]：マイト・ガイ（アニメ・ゲーム）` → `マイト・ガイ`.
+ */
+export function parseSurugaCarddassCharacterName(raw: string): string | null {
+  const text = decodeSurugaHtmlEntities(raw).replace(/\s+/g, " ").trim();
+  const printed = parseSurugaCarddassPrinted(text);
+  if (!printed) return null;
+  const compact = text.replace(/\s+/g, "");
+  const pin = printed.replace(/\s+/g, "");
+  const at = compact.indexOf(pin);
+  if (at < 0) return null;
+  let rest = compact.slice(at + pin.length);
+  rest = rest.replace(/^\[[^\]]*\]/, "");
+  rest = rest.replace(/^[：:]/, "");
+  rest = rest.replace(/（アニメ・ゲーム）.*/, "");
+  rest = rest.replace(/[（(]パック版[）)]/g, "");
+  const name = rest.trim();
+  if (!name || name.length > 48) return null;
+  if (/^巻[ノの]/.test(name)) return null;
+  if (/^NARUTO/i.test(name)) return null;
+  return name;
+}
+
+export function surugaJaNamesFromResolvedRows(
+  rows: ReadonlyArray<{ title?: string | null; printed?: string | null }>,
+): Array<{ diskHint: string; name: string }> {
+  const out: Array<{ diskHint: string; name: string }> = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const title = row.title?.trim();
+    if (!title) continue;
+    const printed =
+      parseSurugaCarddassPrinted(row.printed ?? "") ??
+      parseSurugaCarddassPrinted(title);
+    if (!printed) continue;
+    const diskHint = surugaPrintedToDiskId(printed);
+    if (!diskHint || seen.has(diskHint)) continue;
+    if (/^(nm|dn)/i.test(diskHint)) continue;
+    const name = parseSurugaCarddassCharacterName(title);
+    if (!name) continue;
+    seen.add(diskHint);
+    out.push({ diskHint, name });
+  }
+  return out;
+}
+
 /** `忍-85` → `ni0085`. Null for Data Carddass / unrecognised. */
 export function surugaPrintedToDiskId(printed: string): string | null {
   const folded = parseSurugaCarddassPrinted(printed) ?? printed.trim();

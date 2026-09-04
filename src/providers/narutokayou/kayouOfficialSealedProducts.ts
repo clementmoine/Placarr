@@ -24,7 +24,11 @@ const UA =
 /** Official series id → checklist set code when known. */
 const CATALOGUE_SET_BY_SERIES: Readonly<Record<string, string>> = {
   "series-0nyket49": "ninjaagebox",
-  "series-5zdty4vj": "smritiheavenscrolls1",
+  "series-5zdty4vj": "nrsa01",
+  "series-8idoe481": "nrea02",
+  "series-ldbindyv": "nri01",
+  "series-jj9iw6u0": "nrsa02",
+  "series-cv8e3pgi": "nrsa03",
 };
 
 export function kayouOfficialModelSlug(model: string): string {

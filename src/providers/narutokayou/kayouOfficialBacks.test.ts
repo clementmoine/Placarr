@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   pickKayouTierBacks,
@@ -6,13 +6,15 @@ import {
   type KayouOfficialCardBack,
 } from "./kayouOfficialBacks";
 import {
+  __setKayouOfficialCardBackManifestForTests,
   buildKayouOfficialCardBackManifest,
   kayouCardBackUrlForOfficialReference,
   resetKayouOfficialCardBackManifestCache,
 } from "./kayouOfficialCardBacks";
-import { writeFileSync, mkdirSync } from "node:fs";
-import path from "node:path";
-import { narutoKayouCuratedDir } from "./pack";
+
+afterEach(() => {
+  resetKayouOfficialCardBackManifestCache();
+});
 
 describe("pickKayouTierBacks", () => {
   it("groups by tier and picks majority URL on conflict", () => {
@@ -100,24 +102,19 @@ describe("listKayouPerCardBackRows", () => {
 
 describe("kayouOfficialCardBackManifest", () => {
   it("resolves per-card URLs from reference suffixes", () => {
-    const manifest = buildKayouOfficialCardBackManifest(
-      [
-        {
-          idCode: "NREA02-UR-015L3",
-          url: "https://cdn/b.png",
-          seriesId: "series-8idoe481",
-          rarity: "UR",
-        },
-      ],
-      { observed: "2026-08-28", seriesIds: ["series-8idoe481"] },
+    __setKayouOfficialCardBackManifestForTests(
+      buildKayouOfficialCardBackManifest(
+        [
+          {
+            idCode: "NREA02-UR-015L3",
+            url: "https://cdn/b.png",
+            seriesId: "series-8idoe481",
+            rarity: "UR",
+          },
+        ],
+        { observed: "2026-08-28", seriesIds: ["series-8idoe481"] },
+      ),
     );
-    const dir = path.join(narutoKayouCuratedDir(), "sources");
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(
-      path.join(dir, "kayou-official-card-backs.json"),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-    );
-    resetKayouOfficialCardBackManifestCache();
     expect(
       kayouCardBackUrlForOfficialReference("NREA02-UR-015L3", "UR"),
     ).toBe("/assets/naruto/kayou/cards/official/nrea02-ur-015l3.webp");

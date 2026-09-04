@@ -30,6 +30,12 @@ export async function GET(req: Request) {
   const incompleteOnly =
     url.searchParams.get("incomplete") === "1" ||
     url.searchParams.get("incomplete") === "true";
+  const missingArtOnly =
+    url.searchParams.get("missingArt") === "1" ||
+    url.searchParams.get("missingArt") === "true";
+  const missingNameOnly =
+    url.searchParams.get("missingName") === "1" ||
+    url.searchParams.get("missingName") === "true";
   const offset = Number(url.searchParams.get("offset") ?? "0");
   const limit = Number(url.searchParams.get("limit") ?? "48");
   const q = url.searchParams.get("q") ?? undefined;
@@ -44,6 +50,8 @@ export async function GET(req: Request) {
     pack,
     foilOnly,
     incompleteOnly,
+    missingArtOnly,
+    missingNameOnly,
     offset: Number.isFinite(offset) ? offset : 0,
     limit: Number.isFinite(limit) ? limit : 48,
     q,

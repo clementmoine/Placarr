@@ -39,9 +39,10 @@ describe("buildMythosFromLedgers", () => {
     expect(report.prints).toBe(report.rows);
     expect(report.titles).toBe(report.rows);
     expect(report.skipped).toEqual([]);
+    expect(report.sets).toEqual(["ks1", "ss2"]);
   });
 
-  it("titre en français", () => {
+  it("titre KS1 en français", () => {
     expect(MYTHOS_TITLE_LANG).toBe("fr");
   });
 });
@@ -58,11 +59,15 @@ describe("clé et référence Mythos", () => {
     expect(formatMythosReference("ks1", "0001", "a")).toBe("001/130 A");
     expect(formatMythosReference("ks1", "m8")).toBe("M8");
     expect(formatMythosReference("ks1", "lg01")).toBe("XXXX/1000");
+    expect(formatMythosReference("ss2", "0001")).toBe("001/140");
+    expect(formatMythosReference("ss2", "mss01")).toBe("MSS01");
+    expect(formatMythosReference("ss2", "lg01")).toBe("000/000");
   });
 
   it("normalise une recherche par référence imprimée", () => {
     expect(normalizeMythosSearchQuery("001/130")).toBe("0001");
-    expect(normalizeMythosSearchQuery("1/130 A")).toBe("0001");
+    expect(normalizeMythosSearchQuery("1/140 A")).toBe("0001");
     expect(normalizeMythosSearchQuery("M8")).toBe("m8");
+    expect(normalizeMythosSearchQuery("MSS01")).toBe("mss01");
   });
 });

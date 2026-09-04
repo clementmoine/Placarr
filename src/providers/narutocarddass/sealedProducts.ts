@@ -13,7 +13,8 @@
  *
  * Série 6 FR was cancelled — no packshot, not a SKU. Italian S6
  * (`starter-il-fascino-del-male`) is a real CACG starter ; `booster-s6-it`
- * (eBay bustina) fills the missing S6 IT pack. JP product shots stay JP.
+ * (eBay bustina) fills the missing S6 IT pack. Serie 5 IT mazzi Tradimento /
+ * Lealtà come from Emporio di Milo shop pastes. JP product shots stay JP.
  * Série 28 display is the Coleka rubric packshot (box + booster), not a
  * Carddass product and not a guessed booster SKU. Retail FR duopack
  * (`duopack-s28`) is 2 boosters + window PR-096 — eBay overlay packshot.
@@ -70,6 +71,7 @@ import {
   bandaiFrUsDriveNewEnDisplays,
 } from "./sources/bandaiFrUsDrive";
 import { martinaIngestPackshots } from "./sources/martinaPackshots";
+import { emporiodimiloIngestPackshots } from "./sources/emporiodimiloPackshots";
 import {
   vintedIngestBacks,
   vintedIngestPackshots,
@@ -312,7 +314,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "display",
     category: "displays",
     setCode: "s1",
-    name: "Display Série 1",
+    name: "Display Serie 1 — La Forza della Foglia",
     stagingFile: "display-s1-it.png",
     lang: "IT",
     declaredCardCount: null,
@@ -332,7 +334,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "booster",
     category: "boosters",
     setCode: "s1",
-    name: "Booster Série 1",
+    name: "Booster Serie 1 — La Forza della Foglia",
     stagingFile: "booster-s1-it.png",
     lang: "IT",
     declaredCardCount: NARUTO_BOOSTER_CARD_COUNT,
@@ -342,7 +344,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "display",
     category: "displays",
     setCode: "s2",
-    name: "Display Série 2",
+    name: "Display Serie 2 — Le Spire del Serpente",
     stagingFile: "display-s2-it.png",
     lang: "IT",
     declaredCardCount: null,
@@ -352,7 +354,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "booster",
     category: "boosters",
     setCode: "s2",
-    name: "Booster Série 2",
+    name: "Booster Serie 2 — Le Spire del Serpente",
     stagingFile: "booster-s2-it.png",
     lang: "IT",
     declaredCardCount: NARUTO_BOOSTER_CARD_COUNT,
@@ -362,7 +364,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "booster",
     category: "boosters",
     setCode: "s3",
-    name: "Booster Série 3",
+    name: "Booster Serie 3 — La Maledizione della Sabbia",
     stagingFile: "booster-s3-it.png",
     lang: "IT",
     declaredCardCount: NARUTO_BOOSTER_CARD_COUNT,
@@ -385,6 +387,32 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     attested: true,
   },
   {
+    /*
+      S5 IT starters — Emporio di Milo shop photos (Ref. 93176).
+      Tradimento (Sasuke) + Lealtà (Naruto) = the two Serie 5 mazzi.
+    */
+    slug: "starter-tradimento",
+    kind: "deck",
+    category: "decks",
+    setCode: "s5",
+    name: "Mazzo Tradimento — L'Eredità del Sogno",
+    stagingFile: "",
+    lang: "IT",
+    declaredCardCount: NARUTO_STARTER_CARD_COUNT,
+    attested: true,
+  },
+  {
+    slug: "starter-lealta",
+    kind: "deck",
+    category: "decks",
+    setCode: "s5",
+    name: "Mazzo Lealtà — L'Eredità del Sogno",
+    stagingFile: "",
+    lang: "IT",
+    declaredCardCount: NARUTO_STARTER_CARD_COUNT,
+    attested: true,
+  },
+  {
     slug: "starter-il-fascino-del-male",
     kind: "deck",
     category: "decks",
@@ -404,7 +432,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "booster",
     category: "boosters",
     setCode: "s6",
-    name: "Booster Série 6",
+    name: "Booster Serie 6 — Rivalità Eterna",
     stagingFile: "",
     lang: "IT",
     declaredCardCount: NARUTO_BOOSTER_CARD_COUNT,
@@ -415,7 +443,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "booster",
     category: "boosters",
     setCode: "s7",
-    name: "Booster Série 7",
+    name: "Booster Serie 7 — Sete di Potere",
     stagingFile: "",
     lang: "IT",
     declaredCardCount: NARUTO_BOOSTER_CARD_COUNT,
@@ -426,7 +454,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     kind: "booster",
     category: "boosters",
     setCode: "s8",
-    name: "Booster Série 8",
+    name: "Booster Serie 8 — Il Vento del Cambiamento",
     stagingFile: "",
     lang: "IT",
     declaredCardCount: NARUTO_BOOSTER_CARD_COUNT,
@@ -622,17 +650,17 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
   },
   {
     /*
-      Deck spécial Bandai USA CCG FR (Approaching Wind / Rampage Tornado).
-      33 reprints listés sur Coleka `_r16963` — pas un set dump. Contenu
-      exact attesté en staging (`coleka-rampage-tornado/cards.json`) ; les
-      singles FR (titres + faces) sont ingestés via le scrape Coleka.
-      `contentsKnown` reste false tant que l'ingest sealed n'attache pas
-      encore `guaranteedPrints` depuis ce ledger.
+      Deck spécial Bandai USA CCG FR (Rampage Tornado / La tempête approche).
+      33 reprints listés sur Coleka `_r16963` — pas le dump Approaching Wind
+      (`s11`). Checklist = set `tempete`. Contenu exact attesté en staging
+      (`coleka-rampage-tornado/cards.json`) ; les singles FR (titres + faces)
+      sont ingestés via le scrape Coleka. `contentsKnown` reste false tant que
+      l'ingest sealed n'attache pas encore `guaranteedPrints` depuis ce ledger.
     */
     slug: "deck-la-tempete-approche",
     kind: "deck",
     category: "decks",
-    setCode: "s11",
+    setCode: "tempete",
     name: "Deck Spécial — La tempête approche (Rampage Tornado)",
     stagingFile: "set-cover.webp",
     stagingKind: "coleka-rampage-tornado",
@@ -730,6 +758,7 @@ function shopPackshotRows(): readonly { slug: string; staging: string }[] {
   const rows = [
     ...cardgameclubIngestPackshots(),
     ...martinaIngestPackshots(),
+    ...emporiodimiloIngestPackshots(),
     ...vintedIngestPackshots(),
     ...leboncoinIngestPackshots(),
     ...kinkaiIngestPackshots(),

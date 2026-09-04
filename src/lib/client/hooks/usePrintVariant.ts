@@ -36,6 +36,12 @@ export type PrintVariantInfo = {
   secondVarnishMaskUrl?: string | null;
   secondVarnishColor?: string | null;
   variantImageUrls?: Record<string, string>;
+  /**
+   * Catalogue face when the copy has no persisted cover (e.g. McDo sets with
+   * no TCGdex CDN art). Prefer the item's own `imageUrl` when present.
+   */
+  imageUrl?: string | null;
+  thumbnailUrl?: string | null;
   foilMaskUrl?: string | null;
   varnishMaskUrl?: string | null;
   /** Print-specific back / alt face when the catalogue supplies one. */
@@ -129,6 +135,24 @@ export type VariantRendering = {
 };
 
 /**
+ * Face to draw: item cover first, then catalogue print art (local Coleka /
+ * Live / TCGdex). Without this, paper prints harvested after the item was
+ * added stay blank until a manual refresh rewrites `item.imageUrl`.
+ */
+function resolveFaceUrl(
+  info: PrintVariantInfo | null,
+  fallbackImageUrl: string | null,
+  finish?: string | null,
+): string | null {
+  if (finish && info?.variantImageUrls?.[finish]) {
+    return info.variantImageUrls[finish] ?? null;
+  }
+  return (
+    fallbackImageUrl ?? info?.imageUrl ?? info?.thumbnailUrl ?? null
+  );
+}
+
+/**
  * How a copy should be drawn, given its variant.
  *
  * A plain finish gets nothing — the point of a foil effect is that it separates
@@ -144,7 +168,7 @@ export function variantRendering(
   fallbackImageUrl: string | null,
 ): VariantRendering {
   const plain = {
-    imageUrl: fallbackImageUrl,
+    imageUrl: resolveFaceUrl(info, fallbackImageUrl),
     foilMaskUrl: null,
     varnishMaskUrl: null,
     shader: null,
@@ -168,6 +192,7 @@ export function variantRendering(
   if (!resolved) {
     return {
       ...plain,
+      imageUrl: resolveFaceUrl(info, fallbackImageUrl),
       effectPackId: packId,
       varnishType: info.varnishType ?? null,
     };
@@ -181,6 +206,7 @@ export function variantRendering(
   if (isPlainFinish) {
     return {
       ...plain,
+      imageUrl: resolveFaceUrl(info, fallbackImageUrl, resolved),
       effectPackId: packId,
       finish: resolved,
       varnishType: info.varnishType ?? null,
@@ -214,7 +240,7 @@ export function variantRendering(
       : finishShaderId;
 
   return {
-    imageUrl: info.variantImageUrls?.[resolved] ?? fallbackImageUrl,
+    imageUrl: resolveFaceUrl(info, fallbackImageUrl, resolved),
     foilMaskUrl:
       info.finishFoilMaskUrls?.[resolved] ?? info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,

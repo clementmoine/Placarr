@@ -1,17 +1,23 @@
 /**
  * Merge Kayou ledgers — narutocards.ca + capsulecorpgear + alertehit.
  */
-import { canonicalizeKayouNumber } from "./kayouIdNormalize";
+import {
+  canonicalizeKayouNumber,
+  canonicalizeKayouNumberForSet,
+} from "./kayouIdNormalize";
 import type { KayouChecklist, KayouChecklistCard, KayouChecklistSet } from "./kayouLedgerTypes";
 
-export type KayouMergeSource = "narutocards" | "capsulecorpgear" | "alertehit";
+export type KayouMergeSource = "narutocards" | "capsulecorpgear" | "alertehit" | "kayouofficial";
 
 function cardKey(setCode: string, number: string): string {
-  return `${setCode.trim().toLowerCase()}:${canonicalizeKayouNumber(number)}`;
+  return `${setCode.trim().toLowerCase()}:${canonicalizeKayouNumberForSet(setCode, number)}`;
 }
 
-function withCanonicalNumber(card: KayouChecklistCard): KayouChecklistCard {
-  const number = canonicalizeKayouNumber(card.number);
+function withCanonicalNumber(
+  setCode: string,
+  card: KayouChecklistCard,
+): KayouChecklistCard {
+  const number = canonicalizeKayouNumberForSet(setCode, card.number);
   return number === card.number ? card : { ...card, number };
 }
 
@@ -69,7 +75,7 @@ function mergeSets(
       cards: set.cards.map((c) => ({ ...c })),
     });
     for (const card of set.cards) {
-      const normalized = withCanonicalNumber(card);
+      const normalized = withCanonicalNumber(code, card);
       cardsByKey.set(cardKey(code, normalized.number), { ...normalized });
     }
   }
@@ -91,7 +97,7 @@ function mergeSets(
     }
 
     for (const card of set.cards) {
-      const normalized = withCanonicalNumber(card);
+      const normalized = withCanonicalNumber(code, card);
       const key = cardKey(code, normalized.number);
       const existing = cardsByKey.get(key);
       if (existing) {

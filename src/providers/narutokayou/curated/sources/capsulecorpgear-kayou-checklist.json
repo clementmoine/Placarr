@@ -1,7 +1,7 @@
 {
   "source": "capsulecorpgear.com — Naruto Kayou card list",
   "url": "https://capsulecorpgear.com/naruto-kayou-card-list/",
-  "observed": "2026-08-28",
+  "observed": "2026-09-04",
   "ingest": "HTML `let cards = …` base64 fields + wp-content/uploads faces",
   "sets": [
     {
@@ -387,192 +387,192 @@
       "url": "https://capsulecorpgear.com/naruto-kayou-card-list/",
       "cards": [
         {
-          "printed": "NR-SS-AR-001",
-          "number": "nr.ss.ar.001",
+          "printed": "NRSS-AR-001",
+          "number": "nrss.ar.001",
           "name": "Yahiko",
           "rarity": "SS-AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-AR-001-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-AR-002",
-          "number": "nr.ss.ar.002",
+          "printed": "NRSS-AR-002",
+          "number": "nrss.ar.002",
           "name": "Konan",
           "rarity": "SS-AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-AR-002-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-AR-003",
-          "number": "nr.ss.ar.003",
+          "printed": "NRSS-AR-003",
+          "number": "nrss.ar.003",
           "name": "Nagato",
           "rarity": "SS-AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-AR-003-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-AR-004",
-          "number": "nr.ss.ar.004",
+          "printed": "NRSS-AR-004",
+          "number": "nrss.ar.004",
           "name": "Jiraiya",
           "rarity": "SS-AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-AR-004-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-011",
-          "number": "nr.ss.hr.011",
+          "printed": "NRSS-HR-011",
+          "number": "nrss.hr.011",
           "name": "Jiraiya",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-011-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-012",
-          "number": "nr.ss.hr.012",
+          "printed": "NRSS-HR-012",
+          "number": "nrss.hr.012",
           "name": "Sasuke & Naruto",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-012-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-013",
-          "number": "nr.ss.hr.013",
+          "printed": "NRSS-HR-013",
+          "number": "nrss.hr.013",
           "name": "Team 7",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-013-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-014",
-          "number": "nr.ss.hr.014",
+          "printed": "NRSS-HR-014",
+          "number": "nrss.hr.014",
           "name": "Team 7",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-014-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-015",
-          "number": "nr.ss.hr.015",
+          "printed": "NRSS-HR-015",
+          "number": "nrss.hr.015",
           "name": "Naruto Uzumaki",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-015-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-016",
-          "number": "nr.ss.hr.016",
+          "printed": "NRSS-HR-016",
+          "number": "nrss.hr.016",
           "name": "Naruto Uzumaki",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-016-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-017",
-          "number": "nr.ss.hr.017",
+          "printed": "NRSS-HR-017",
+          "number": "nrss.hr.017",
           "name": "Neji Hyuga",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-017-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-018",
-          "number": "nr.ss.hr.018",
+          "printed": "NRSS-HR-018",
+          "number": "nrss.hr.018",
           "name": "Sasuke & Naruto",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-018-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-019",
-          "number": "nr.ss.hr.019",
+          "printed": "NRSS-HR-019",
+          "number": "nrss.hr.019",
           "name": "Hagaromo Otsutsuki",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-019-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-020",
-          "number": "nr.ss.hr.020",
+          "printed": "NRSS-HR-020",
+          "number": "nrss.hr.020",
           "name": "Jiraiya",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-020-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SE-001",
-          "number": "nr.ss.se.001",
+          "printed": "NRSS-SE-001",
+          "number": "nrss.se.001",
           "name": "Uchiha Family",
           "rarity": "SS-SE",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SE-001-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SE-002",
-          "number": "nr.ss.se.002",
+          "printed": "NRSS-SE-002",
+          "number": "nrss.se.002",
           "name": "Uzumaki Family",
           "rarity": "SS-SE",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SE-002-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SP-004",
-          "number": "nr.ss.sp.004",
+          "printed": "NRSS-SP-004",
+          "number": "nrss.sp.004",
           "name": "Jiraiya",
           "rarity": "SS-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SP-004-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SP-005",
-          "number": "nr.ss.sp.005",
+          "printed": "NRSS-SP-005",
+          "number": "nrss.sp.005",
           "name": "Kushina Uzumaki",
           "rarity": "SS-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SP-005-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SP-006",
-          "number": "nr.ss.sp.006",
+          "printed": "NRSS-SP-006",
+          "number": "nrss.sp.006",
           "name": "Hiruzen Sarutobi",
           "rarity": "SS-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SP-006-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SP-007",
-          "number": "nr.ss.sp.007",
+          "printed": "NRSS-SP-007",
+          "number": "nrss.sp.007",
           "name": "Minato Namikaze & Naruto",
           "rarity": "SS-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SP-007-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-006",
-          "number": "nr.ss.ur.006",
+          "printed": "NRSS-UR-006",
+          "number": "nrss.ur.006",
           "name": "Kotetsu Hagane",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-006-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-007",
-          "number": "nr.ss.ur.007",
+          "printed": "NRSS-UR-007",
+          "number": "nrss.ur.007",
           "name": "Might Guy",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-007-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-008",
-          "number": "nr.ss.ur.008",
+          "printed": "NRSS-UR-008",
+          "number": "nrss.ur.008",
           "name": "Kakashi Hatake",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-008-gongh.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-009",
-          "number": "nr.ss.ur.009",
+          "printed": "NRSS-UR-009",
+          "number": "nrss.ur.009",
           "name": "Izumo Kamizuki",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-009-gongh.jpeg",
@@ -683,8 +683,8 @@
       "url": "https://capsulecorpgear.com/naruto-kayou-card-list/",
       "cards": [
         {
-          "printed": "NR-CC-MR-001",
-          "number": "nr.cc.mr.001",
+          "printed": "CC-MR-001",
+          "number": "cc.mr.001",
           "name": "Sasori",
           "rarity": "CC-MR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-MR-D001-yoccg.jpg",
@@ -694,8 +694,8 @@
           ]
         },
         {
-          "printed": "NR-CC-MR-002",
-          "number": "nr.cc.mr.002",
+          "printed": "CC-MR-002",
+          "number": "cc.mr.002",
           "name": "Itachi Uchiha",
           "rarity": "CC-MR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-MR-D002-yoccg.jpg",
@@ -705,8 +705,8 @@
           ]
         },
         {
-          "printed": "NR-CC-MR-003",
-          "number": "nr.cc.mr.003",
+          "printed": "CC-MR-003",
+          "number": "cc.mr.003",
           "name": "Deidara",
           "rarity": "CC-MR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-MR-D003-yoccg.jpg",
@@ -716,184 +716,184 @@
           ]
         },
         {
-          "printed": "NR-CC-MR-004",
-          "number": "nr.cc.mr.004",
+          "printed": "CC-MR-004",
+          "number": "cc.mr.004",
           "name": "Pain Deva Path",
           "rarity": "CC-MR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-MR-004-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-MR-005",
-          "number": "nr.cc.mr.005",
+          "printed": "CC-MR-005",
+          "number": "cc.mr.005",
           "name": "Konan",
           "rarity": "CC-MR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-MR-005-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-001",
-          "number": "nr.cc.ptr.001",
+          "printed": "CC-PTR-001",
+          "number": "cc.ptr.001",
           "name": "CC-PTR-001",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-001-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-002",
-          "number": "nr.cc.ptr.002",
+          "printed": "CC-PTR-002",
+          "number": "cc.ptr.002",
           "name": "CC-PTR-002",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-002.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-003",
-          "number": "nr.cc.ptr.003",
+          "printed": "CC-PTR-003",
+          "number": "cc.ptr.003",
           "name": "CC-PTR-003",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-003.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-004",
-          "number": "nr.cc.ptr.004",
+          "printed": "CC-PTR-004",
+          "number": "cc.ptr.004",
           "name": "CC-PTR-004",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-004.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-005",
-          "number": "nr.cc.ptr.005",
+          "printed": "CC-PTR-005",
+          "number": "cc.ptr.005",
           "name": "CC-PTR-005",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-005.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-006",
-          "number": "nr.cc.ptr.006",
+          "printed": "CC-PTR-006",
+          "number": "cc.ptr.006",
           "name": "CC-PTR-006",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-006.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-007",
-          "number": "nr.cc.ptr.007",
+          "printed": "CC-PTR-007",
+          "number": "cc.ptr.007",
           "name": "CC-PTR-007",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-007.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-008",
-          "number": "nr.cc.ptr.008",
+          "printed": "CC-PTR-008",
+          "number": "cc.ptr.008",
           "name": "CC-PTR-008",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-008.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-009",
-          "number": "nr.cc.ptr.009",
+          "printed": "CC-PTR-009",
+          "number": "cc.ptr.009",
           "name": "CC-PTR-009",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-009.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-010",
-          "number": "nr.cc.ptr.010",
+          "printed": "CC-PTR-010",
+          "number": "cc.ptr.010",
           "name": "CC-PTR-010",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-010-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-011",
-          "number": "nr.cc.ptr.011",
+          "printed": "CC-PTR-011",
+          "number": "cc.ptr.011",
           "name": "CC-PTR-011",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-011-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-012",
-          "number": "nr.cc.ptr.012",
+          "printed": "CC-PTR-012",
+          "number": "cc.ptr.012",
           "name": "CC-PTR-012",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-012-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-013",
-          "number": "nr.cc.ptr.013",
+          "printed": "CC-PTR-013",
+          "number": "cc.ptr.013",
           "name": "CC-PTR-013",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-013-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-014",
-          "number": "nr.cc.ptr.014",
+          "printed": "CC-PTR-014",
+          "number": "cc.ptr.014",
           "name": "CC-PTR-014",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-014-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-015",
-          "number": "nr.cc.ptr.015",
+          "printed": "CC-PTR-015",
+          "number": "cc.ptr.015",
           "name": "CC-PTR-015",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-015-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-016",
-          "number": "nr.cc.ptr.016",
+          "printed": "CC-PTR-016",
+          "number": "cc.ptr.016",
           "name": "CC-PTR-016",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-016-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-017",
-          "number": "nr.cc.ptr.017",
+          "printed": "CC-PTR-017",
+          "number": "cc.ptr.017",
           "name": "CC-PTR-017",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-017-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-018",
-          "number": "nr.cc.ptr.018",
+          "printed": "CC-PTR-018",
+          "number": "cc.ptr.018",
           "name": "CC-PTR-018",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-018-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-019",
-          "number": "nr.cc.ptr.019",
+          "printed": "CC-PTR-019",
+          "number": "cc.ptr.019",
           "name": "CC-PTR-019",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-019-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-PTR-020",
-          "number": "nr.cc.ptr.020",
+          "printed": "CC-PTR-020",
+          "number": "cc.ptr.020",
           "name": "CC-PTR-020",
           "rarity": "CC-PTR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-PTR-020-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-001",
-          "number": "nr.cc.qr.001",
+          "printed": "CC-QR-001",
+          "number": "cc.qr.001",
           "name": "Naruto Uzumaki",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-P001-yoccg.jpg",
@@ -903,72 +903,72 @@
           ]
         },
         {
-          "printed": "NR-CC-QR-002",
-          "number": "nr.cc.qr.002",
+          "printed": "CC-QR-002",
+          "number": "cc.qr.002",
           "name": "Sakura Haruno",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-002-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-003",
-          "number": "nr.cc.qr.003",
+          "printed": "CC-QR-003",
+          "number": "cc.qr.003",
           "name": "Kakashi Hatake",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-003-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-004",
-          "number": "nr.cc.qr.004",
+          "printed": "CC-QR-004",
+          "number": "cc.qr.004",
           "name": "Sasuke Uchiha",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-004-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-005",
-          "number": "nr.cc.qr.005",
+          "printed": "CC-QR-005",
+          "number": "cc.qr.005",
           "name": "Jiraiya",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-005-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-006",
-          "number": "nr.cc.qr.006",
+          "printed": "CC-QR-006",
+          "number": "cc.qr.006",
           "name": "Orochimaru",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-006-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-007",
-          "number": "nr.cc.qr.007",
+          "printed": "CC-QR-007",
+          "number": "cc.qr.007",
           "name": "Minato Namikaze",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-007-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-008",
-          "number": "nr.cc.qr.008",
+          "printed": "CC-QR-008",
+          "number": "cc.qr.008",
           "name": "Tsunade",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-008-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-QR-009",
-          "number": "nr.cc.qr.009",
+          "printed": "CC-QR-009",
+          "number": "cc.qr.009",
           "name": "Itachi Uchiha",
           "rarity": "CC-QR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-QR-009-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-001",
-          "number": "nr.cc.r.001",
+          "printed": "CC-R-001",
+          "number": "cc.r.001",
           "name": "Similar Two People 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-D001-ccg.jpg",
@@ -978,8 +978,8 @@
           ]
         },
         {
-          "printed": "NR-CC-R-002",
-          "number": "nr.cc.r.002",
+          "printed": "CC-R-002",
+          "number": "cc.r.002",
           "name": "Similar Two People 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-D002-ccg.jpg",
@@ -989,8 +989,8 @@
           ]
         },
         {
-          "printed": "NR-CC-R-003",
-          "number": "nr.cc.r.003",
+          "printed": "CC-R-003",
+          "number": "cc.r.003",
           "name": "Similar Two People 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-D003-ccg.jpg",
@@ -1000,8 +1000,8 @@
           ]
         },
         {
-          "printed": "NR-CC-R-004",
-          "number": "nr.cc.r.004",
+          "printed": "CC-R-004",
+          "number": "cc.r.004",
           "name": "Similar Two People 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-D004-ccg.jpg",
@@ -1011,8 +1011,8 @@
           ]
         },
         {
-          "printed": "NR-CC-R-005",
-          "number": "nr.cc.r.005",
+          "printed": "CC-R-005",
+          "number": "cc.r.005",
           "name": "Similar Two People 5",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-D005-ccg.jpg",
@@ -1022,8 +1022,8 @@
           ]
         },
         {
-          "printed": "NR-CC-R-006",
-          "number": "nr.cc.r.006",
+          "printed": "CC-R-006",
+          "number": "cc.r.006",
           "name": "Tragic Night 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-D006-ccg.jpg",
@@ -1033,8 +1033,8 @@
           ]
         },
         {
-          "printed": "NR-CC-R-007",
-          "number": "nr.cc.r.007",
+          "printed": "CC-R-007",
+          "number": "cc.r.007",
           "name": "Tragic Night 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-D007-ccg.jpg",
@@ -1044,296 +1044,296 @@
           ]
         },
         {
-          "printed": "NR-CC-R-008",
-          "number": "nr.cc.r.008",
+          "printed": "CC-R-008",
+          "number": "cc.r.008",
           "name": "Tragic Night 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-008-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-009",
-          "number": "nr.cc.r.009",
+          "printed": "CC-R-009",
+          "number": "cc.r.009",
           "name": "Tragic Night 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-009-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-010",
-          "number": "nr.cc.r.010",
+          "printed": "CC-R-010",
+          "number": "cc.r.010",
           "name": "Farewell 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-010-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-011",
-          "number": "nr.cc.r.011",
+          "printed": "CC-R-011",
+          "number": "cc.r.011",
           "name": "Farewell 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-011-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-012",
-          "number": "nr.cc.r.012",
+          "printed": "CC-R-012",
+          "number": "cc.r.012",
           "name": "Farewell 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-012-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-013",
-          "number": "nr.cc.r.013",
+          "printed": "CC-R-013",
+          "number": "cc.r.013",
           "name": "Farewell 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-013-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-014",
-          "number": "nr.cc.r.014",
+          "printed": "CC-R-014",
+          "number": "cc.r.014",
           "name": "Reunion 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-014-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-015",
-          "number": "nr.cc.r.015",
+          "printed": "CC-R-015",
+          "number": "cc.r.015",
           "name": "Reunion 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-015-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-016",
-          "number": "nr.cc.r.016",
+          "printed": "CC-R-016",
+          "number": "cc.r.016",
           "name": "Reunion 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-016-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-017",
-          "number": "nr.cc.r.017",
+          "printed": "CC-R-017",
+          "number": "cc.r.017",
           "name": "Reunion 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-017-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-018",
-          "number": "nr.cc.r.018",
+          "printed": "CC-R-018",
+          "number": "cc.r.018",
           "name": "Support 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-018-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-019",
-          "number": "nr.cc.r.019",
+          "printed": "CC-R-019",
+          "number": "cc.r.019",
           "name": "Support 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-019-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-020",
-          "number": "nr.cc.r.020",
+          "printed": "CC-R-020",
+          "number": "cc.r.020",
           "name": "Support 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-020-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-021",
-          "number": "nr.cc.r.021",
+          "printed": "CC-R-021",
+          "number": "cc.r.021",
           "name": "The Meaning of King 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-021-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-022",
-          "number": "nr.cc.r.022",
+          "printed": "CC-R-022",
+          "number": "cc.r.022",
           "name": "The Meaning of King 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-022-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-023",
-          "number": "nr.cc.r.023",
+          "printed": "CC-R-023",
+          "number": "cc.r.023",
           "name": "The Meaning of King 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-023-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-024",
-          "number": "nr.cc.r.024",
+          "printed": "CC-R-024",
+          "number": "cc.r.024",
           "name": "The Meaning of King 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-024-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-025",
-          "number": "nr.cc.r.025",
+          "printed": "CC-R-025",
+          "number": "cc.r.025",
           "name": "The Meaning of King 5",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-025-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-026",
-          "number": "nr.cc.r.026",
+          "printed": "CC-R-026",
+          "number": "cc.r.026",
           "name": "Forgive Me 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-026-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-027",
-          "number": "nr.cc.r.027",
+          "printed": "CC-R-027",
+          "number": "cc.r.027",
           "name": "Forgive Me 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-027-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-028",
-          "number": "nr.cc.r.028",
+          "printed": "CC-R-028",
+          "number": "cc.r.028",
           "name": "Forgive Me 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-028-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-029",
-          "number": "nr.cc.r.029",
+          "printed": "CC-R-029",
+          "number": "cc.r.029",
           "name": "Forgive Me 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-029-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-030",
-          "number": "nr.cc.r.030",
+          "printed": "CC-R-030",
+          "number": "cc.r.030",
           "name": "Story of Perseverance and Forbearance 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-030-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-031",
-          "number": "nr.cc.r.031",
+          "printed": "CC-R-031",
+          "number": "cc.r.031",
           "name": "Story of Perseverance and Forbearance 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-031-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-032",
-          "number": "nr.cc.r.032",
+          "printed": "CC-R-032",
+          "number": "cc.r.032",
           "name": "Story of Perseverance and Forbearance 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-032-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-033",
-          "number": "nr.cc.r.033",
+          "printed": "CC-R-033",
+          "number": "cc.r.033",
           "name": "Story of Perseverance and Forbearance 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-033-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-034",
-          "number": "nr.cc.r.034",
+          "printed": "CC-R-034",
+          "number": "cc.r.034",
           "name": "Story of Perseverance and Forbearance 5",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-034-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-035",
-          "number": "nr.cc.r.035",
+          "printed": "CC-R-035",
+          "number": "cc.r.035",
           "name": "Missing 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-035-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-036",
-          "number": "nr.cc.r.036",
+          "printed": "CC-R-036",
+          "number": "cc.r.036",
           "name": "Missing 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-036-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-037",
-          "number": "nr.cc.r.037",
+          "printed": "CC-R-037",
+          "number": "cc.r.037",
           "name": "Missing 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-037-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-038",
-          "number": "nr.cc.r.038",
+          "printed": "CC-R-038",
+          "number": "cc.r.038",
           "name": "Missing 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-038-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-039",
-          "number": "nr.cc.r.039",
+          "printed": "CC-R-039",
+          "number": "cc.r.039",
           "name": "Missing 5",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-039-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-040",
-          "number": "nr.cc.r.040",
+          "printed": "CC-R-040",
+          "number": "cc.r.040",
           "name": "I Will Love You Forever 1",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-040-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-041",
-          "number": "nr.cc.r.041",
+          "printed": "CC-R-041",
+          "number": "cc.r.041",
           "name": "I Will Love You Forever 2",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-041-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-042",
-          "number": "nr.cc.r.042",
+          "printed": "CC-R-042",
+          "number": "cc.r.042",
           "name": "I Will Love You Forever 3",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-042-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-R-043",
-          "number": "nr.cc.r.043",
+          "printed": "CC-R-043",
+          "number": "cc.r.043",
           "name": "I Will Love You Forever 4",
           "rarity": "CC-R",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-R-043-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SP-001",
-          "number": "nr.cc.sp.001",
+          "printed": "CC-SP-001",
+          "number": "cc.sp.001",
           "name": "Naruto Uzumaki",
           "rarity": "CC-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SP-P001-yoccg.jpg",
@@ -1343,8 +1343,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SP-002",
-          "number": "nr.cc.sp.002",
+          "printed": "CC-SP-002",
+          "number": "cc.sp.002",
           "name": "Sasuke Uchiha",
           "rarity": "CC-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SP-P002-yoccg.jpg",
@@ -1354,8 +1354,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SP-003",
-          "number": "nr.cc.sp.003",
+          "printed": "CC-SP-003",
+          "number": "cc.sp.003",
           "name": "Sakura Haruno",
           "rarity": "CC-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SP-P003-yoccg.jpg",
@@ -1365,8 +1365,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SP-004",
-          "number": "nr.cc.sp.004",
+          "printed": "CC-SP-004",
+          "number": "cc.sp.004",
           "name": "Kakashi Hatake",
           "rarity": "CC-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SP-P004-yoccg.jpg",
@@ -1376,24 +1376,24 @@
           ]
         },
         {
-          "printed": "NR-CC-SP-005",
-          "number": "nr.cc.sp.005",
+          "printed": "CC-SP-005",
+          "number": "cc.sp.005",
           "name": "Hinata Hyuga",
           "rarity": "CC-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SP-005-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SP-006",
-          "number": "nr.cc.sp.006",
+          "printed": "CC-SP-006",
+          "number": "cc.sp.006",
           "name": "Jiraiya",
           "rarity": "CC-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SP-006-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-001",
-          "number": "nr.cc.sr.001",
+          "printed": "CC-SR-001",
+          "number": "cc.sr.001",
           "name": "Valley of the End 1",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-D001-ccg.jpg",
@@ -1403,8 +1403,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SR-002",
-          "number": "nr.cc.sr.002",
+          "printed": "CC-SR-002",
+          "number": "cc.sr.002",
           "name": "Valley of the End 2",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-D002-ccg.jpg",
@@ -1414,8 +1414,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SR-003",
-          "number": "nr.cc.sr.003",
+          "printed": "CC-SR-003",
+          "number": "cc.sr.003",
           "name": "Valley of the End 3",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-D003-ccg.jpg",
@@ -1425,8 +1425,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SR-004",
-          "number": "nr.cc.sr.004",
+          "printed": "CC-SR-004",
+          "number": "cc.sr.004",
           "name": "A Tool Called Ninja 1",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-D004-ccg.jpg",
@@ -1436,8 +1436,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SR-005",
-          "number": "nr.cc.sr.005",
+          "printed": "CC-SR-005",
+          "number": "cc.sr.005",
           "name": "A Tool Called Ninja 2",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-D005-ccg.jpg",
@@ -1447,8 +1447,8 @@
           ]
         },
         {
-          "printed": "NR-CC-SR-006",
-          "number": "nr.cc.sr.006",
+          "printed": "CC-SR-006",
+          "number": "cc.sr.006",
           "name": "A Tool Called Ninja 3",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-D006-ccg.jpg",
@@ -1458,576 +1458,576 @@
           ]
         },
         {
-          "printed": "NR-CC-SR-007",
-          "number": "nr.cc.sr.007",
+          "printed": "CC-SR-007",
+          "number": "cc.sr.007",
           "name": "A Tool Called Ninja 4",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-007-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-008",
-          "number": "nr.cc.sr.008",
+          "printed": "CC-SR-008",
+          "number": "cc.sr.008",
           "name": "Clash 1",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-008-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-009",
-          "number": "nr.cc.sr.009",
+          "printed": "CC-SR-009",
+          "number": "cc.sr.009",
           "name": "Clash 2",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-009-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-010",
-          "number": "nr.cc.sr.010",
+          "printed": "CC-SR-010",
+          "number": "cc.sr.010",
           "name": "Clash 3",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-010-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-011",
-          "number": "nr.cc.sr.011",
+          "printed": "CC-SR-011",
+          "number": "cc.sr.011",
           "name": "Clash 4",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-011-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-012",
-          "number": "nr.cc.sr.012",
+          "printed": "CC-SR-012",
+          "number": "cc.sr.012",
           "name": "Duel 1",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-012-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-013",
-          "number": "nr.cc.sr.013",
+          "printed": "CC-SR-013",
+          "number": "cc.sr.013",
           "name": "Duel 2",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-013-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-014",
-          "number": "nr.cc.sr.014",
+          "printed": "CC-SR-014",
+          "number": "cc.sr.014",
           "name": "Duel 3",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-014-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-015",
-          "number": "nr.cc.sr.015",
+          "printed": "CC-SR-015",
+          "number": "cc.sr.015",
           "name": "Duel 4",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-015-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-016",
-          "number": "nr.cc.sr.016",
+          "printed": "CC-SR-016",
+          "number": "cc.sr.016",
           "name": "Duel 5",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-016-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-017",
-          "number": "nr.cc.sr.017",
+          "printed": "CC-SR-017",
+          "number": "cc.sr.017",
           "name": "Son of Prophecy 1",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-017-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-018",
-          "number": "nr.cc.sr.018",
+          "printed": "CC-SR-018",
+          "number": "cc.sr.018",
           "name": "Son of Prophecy 2",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-018-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-019",
-          "number": "nr.cc.sr.019",
+          "printed": "CC-SR-019",
+          "number": "cc.sr.019",
           "name": "Son of Prophecy 3",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-019-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-020",
-          "number": "nr.cc.sr.020",
+          "printed": "CC-SR-020",
+          "number": "cc.sr.020",
           "name": "Son of Prophecy 4",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-020-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-021",
-          "number": "nr.cc.sr.021",
+          "printed": "CC-SR-021",
+          "number": "cc.sr.021",
           "name": "The World Without You 1",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-021-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-022",
-          "number": "nr.cc.sr.022",
+          "printed": "CC-SR-022",
+          "number": "cc.sr.022",
           "name": "The World Without You 2",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-022-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-023",
-          "number": "nr.cc.sr.023",
+          "printed": "CC-SR-023",
+          "number": "cc.sr.023",
           "name": "The World Without You 3",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-023-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SR-024",
-          "number": "nr.cc.sr.024",
+          "printed": "CC-SR-024",
+          "number": "cc.sr.024",
           "name": "The World Without You 4",
           "rarity": "CC-SR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SR-024-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-001",
-          "number": "nr.cc.ssr.001",
+          "printed": "CC-SSR-001",
+          "number": "cc.ssr.001",
           "name": "Jiraiya",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-001-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-002",
-          "number": "nr.cc.ssr.002",
+          "printed": "CC-SSR-002",
+          "number": "cc.ssr.002",
           "name": "Orochimaru",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-002-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-003",
-          "number": "nr.cc.ssr.003",
+          "printed": "CC-SSR-003",
+          "number": "cc.ssr.003",
           "name": "Might Guy",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-003-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-004",
-          "number": "nr.cc.ssr.004",
+          "printed": "CC-SSR-004",
+          "number": "cc.ssr.004",
           "name": "Kisame Hoshigaki",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-004-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-005",
-          "number": "nr.cc.ssr.005",
+          "printed": "CC-SSR-005",
+          "number": "cc.ssr.005",
           "name": "Shikamaru Nara",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-005-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-006",
-          "number": "nr.cc.ssr.006",
+          "printed": "CC-SSR-006",
+          "number": "cc.ssr.006",
           "name": "Hidan",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-006-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-007",
-          "number": "nr.cc.ssr.007",
+          "printed": "CC-SSR-007",
+          "number": "cc.ssr.007",
           "name": "Gaara",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-007-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-008",
-          "number": "nr.cc.ssr.008",
+          "printed": "CC-SSR-008",
+          "number": "cc.ssr.008",
           "name": "Deidara",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-008-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-009",
-          "number": "nr.cc.ssr.009",
+          "printed": "CC-SSR-009",
+          "number": "cc.ssr.009",
           "name": "Sakura Haruno",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-009-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-010",
-          "number": "nr.cc.ssr.010",
+          "printed": "CC-SSR-010",
+          "number": "cc.ssr.010",
           "name": "Sasori",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-010-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-011",
-          "number": "nr.cc.ssr.011",
+          "printed": "CC-SSR-011",
+          "number": "cc.ssr.011",
           "name": "Sasuke Uchiha",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-011-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-012",
-          "number": "nr.cc.ssr.012",
+          "printed": "CC-SSR-012",
+          "number": "cc.ssr.012",
           "name": "Itachi Uchiha",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-012-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-013",
-          "number": "nr.cc.ssr.013",
+          "printed": "CC-SSR-013",
+          "number": "cc.ssr.013",
           "name": "Naruto Uzumaki",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-013-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-014",
-          "number": "nr.cc.ssr.014",
+          "printed": "CC-SSR-014",
+          "number": "cc.ssr.014",
           "name": "Pain Deva Path",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-014-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-015",
-          "number": "nr.cc.ssr.015",
+          "printed": "CC-SSR-015",
+          "number": "cc.ssr.015",
           "name": "Kakashi Hatake",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-015-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-016",
-          "number": "nr.cc.ssr.016",
+          "printed": "CC-SSR-016",
+          "number": "cc.ssr.016",
           "name": "Zabuza Momochi",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-016-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-017",
-          "number": "nr.cc.ssr.017",
+          "printed": "CC-SSR-017",
+          "number": "cc.ssr.017",
           "name": "Minato Namikaze",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-017-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-018",
-          "number": "nr.cc.ssr.018",
+          "printed": "CC-SSR-018",
+          "number": "cc.ssr.018",
           "name": "Obito Uchiha",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-018-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-019",
-          "number": "nr.cc.ssr.019",
+          "printed": "CC-SSR-019",
+          "number": "cc.ssr.019",
           "name": "Hashirama Senju",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-019-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SSR-020",
-          "number": "nr.cc.ssr.020",
+          "printed": "CC-SSR-020",
+          "number": "cc.ssr.020",
           "name": "Madara Uchiha",
           "rarity": "CC-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SSR-020-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-001",
-          "number": "nr.cc.ur.001",
+          "printed": "CC-UR-001",
+          "number": "cc.ur.001",
           "name": "Naruto Uzumaki",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-001-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-002",
-          "number": "nr.cc.ur.002",
+          "printed": "CC-UR-002",
+          "number": "cc.ur.002",
           "name": "Sasuke Uchiha",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-002-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-003",
-          "number": "nr.cc.ur.003",
+          "printed": "CC-UR-003",
+          "number": "cc.ur.003",
           "name": "Hinata Hyuga",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-003-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-004",
-          "number": "nr.cc.ur.004",
+          "printed": "CC-UR-004",
+          "number": "cc.ur.004",
           "name": "Kakashi Hatake",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-004-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-005",
-          "number": "nr.cc.ur.005",
+          "printed": "CC-UR-005",
+          "number": "cc.ur.005",
           "name": "Jiraiya",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-005-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-006",
-          "number": "nr.cc.ur.006",
+          "printed": "CC-UR-006",
+          "number": "cc.ur.006",
           "name": "Shikamaru Nara",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-006-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-007",
-          "number": "nr.cc.ur.007",
+          "printed": "CC-UR-007",
+          "number": "cc.ur.007",
           "name": "Rock Lee",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-007-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-008",
-          "number": "nr.cc.ur.008",
+          "printed": "CC-UR-008",
+          "number": "cc.ur.008",
           "name": "Tenten",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-008-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-009",
-          "number": "nr.cc.ur.009",
+          "printed": "CC-UR-009",
+          "number": "cc.ur.009",
           "name": "Ino Yamanaka",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-009-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-010",
-          "number": "nr.cc.ur.010",
+          "printed": "CC-UR-010",
+          "number": "cc.ur.010",
           "name": "Kiba Inuzuka",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-010-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-011",
-          "number": "nr.cc.ur.011",
+          "printed": "CC-UR-011",
+          "number": "cc.ur.011",
           "name": "Choji Akimichi",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-011-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-012",
-          "number": "nr.cc.ur.012",
+          "printed": "CC-UR-012",
+          "number": "cc.ur.012",
           "name": "Orochimaru",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-012-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-013",
-          "number": "nr.cc.ur.013",
+          "printed": "CC-UR-013",
+          "number": "cc.ur.013",
           "name": "Kabuto Yakushi",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-013-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-014",
-          "number": "nr.cc.ur.014",
+          "printed": "CC-UR-014",
+          "number": "cc.ur.014",
           "name": "Kimimaro",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-014-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-015",
-          "number": "nr.cc.ur.015",
+          "printed": "CC-UR-015",
+          "number": "cc.ur.015",
           "name": "Sakon",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-015-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-016",
-          "number": "nr.cc.ur.016",
+          "printed": "CC-UR-016",
+          "number": "cc.ur.016",
           "name": "Kidomaru",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-016-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-017",
-          "number": "nr.cc.ur.017",
+          "printed": "CC-UR-017",
+          "number": "cc.ur.017",
           "name": "Tayuya",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-017-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-018",
-          "number": "nr.cc.ur.018",
+          "printed": "CC-UR-018",
+          "number": "cc.ur.018",
           "name": "Jirobo",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-018-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-019",
-          "number": "nr.cc.ur.019",
+          "printed": "CC-UR-019",
+          "number": "cc.ur.019",
           "name": "Suigetsu",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-019-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-020",
-          "number": "nr.cc.ur.020",
+          "printed": "CC-UR-020",
+          "number": "cc.ur.020",
           "name": "Karin",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-020-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-021",
-          "number": "nr.cc.ur.021",
+          "printed": "CC-UR-021",
+          "number": "cc.ur.021",
           "name": "Jugo",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-021-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-UR-022",
-          "number": "nr.cc.ur.022",
+          "printed": "CC-UR-022",
+          "number": "cc.ur.022",
           "name": "Danzo Shimura",
           "rarity": "CC-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-UR-022-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-001L5",
-          "number": "nr.cc.xr.001l5",
+          "printed": "CC-XR-001L5",
+          "number": "cc.xr.001l5",
           "name": "Naruto Uzumaki",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-001L5-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-001PL5",
-          "number": "nr.cc.xr.001pl5",
+          "printed": "CC-XR-001PL5",
+          "number": "cc.xr.001pl5",
           "name": "Naruto Uzumaki",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-001-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-001YL5",
-          "number": "nr.cc.xr.001yl5",
+          "printed": "CC-XR-001YL5",
+          "number": "cc.xr.001yl5",
           "name": "Sasuke Uchiha & Naruto Uzumaki",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR001YL5-ccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-002L5",
-          "number": "nr.cc.xr.002l5",
+          "printed": "CC-XR-002L5",
+          "number": "cc.xr.002l5",
           "name": "Sasuke Uchiha",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-002L5-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-002PL5",
-          "number": "nr.cc.xr.002pl5",
+          "printed": "CC-XR-002PL5",
+          "number": "cc.xr.002pl5",
           "name": "Sasuke Uchiha",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-002-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-003L5",
-          "number": "nr.cc.xr.003l5",
+          "printed": "CC-XR-003L5",
+          "number": "cc.xr.003l5",
           "name": "Kakashi Hatake",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-003L5-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-003PL5",
-          "number": "nr.cc.xr.003pl5",
+          "printed": "CC-XR-003PL5",
+          "number": "cc.xr.003pl5",
           "name": "Kakashi Hatake",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-003-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-004L5",
-          "number": "nr.cc.xr.004l5",
+          "printed": "CC-XR-004L5",
+          "number": "cc.xr.004l5",
           "name": "Jiraiya",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-004L5-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-004PL5",
-          "number": "nr.cc.xr.004pl5",
+          "printed": "CC-XR-004PL5",
+          "number": "cc.xr.004pl5",
           "name": "Jiraiya",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-004-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-005L5",
-          "number": "nr.cc.xr.005l5",
+          "printed": "CC-XR-005L5",
+          "number": "cc.xr.005l5",
           "name": "Minato Namikaze",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-005L5-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-005PL5",
-          "number": "nr.cc.xr.005pl5",
+          "printed": "CC-XR-005PL5",
+          "number": "cc.xr.005pl5",
           "name": "Minato Namikaze",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-005-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-XR-006L5",
-          "number": "nr.cc.xr.006l5",
+          "printed": "CC-XR-006L5",
+          "number": "cc.xr.006l5",
           "name": "Iruka Umino",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-006L5-yoccg.jpg",
@@ -2037,8 +2037,8 @@
           ]
         },
         {
-          "printed": "NR-CC-XR-006PL5",
-          "number": "nr.cc.xr.006pl5",
+          "printed": "CC-XR-006PL5",
+          "number": "cc.xr.006pl5",
           "name": "Iruka Umino",
           "rarity": "CC-XR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-XR-006-yoccg.jpg",
@@ -2053,24 +2053,24 @@
       "url": "https://capsulecorpgear.com/naruto-kayou-card-list/",
       "cards": [
         {
-          "printed": "NR-CC-MR-001S",
-          "number": "nr.cc.mr.001s",
+          "printed": "CC-MR-001S",
+          "number": "cc.mr.001s",
           "name": "Naruto Uzumaki",
           "rarity": "CC-MR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-MR-P001-H-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-MR-002S",
-          "number": "nr.cc.mr.002s",
+          "printed": "CC-MR-002S",
+          "number": "cc.mr.002s",
           "name": "Hinata Hyuga",
           "rarity": "CC-MR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-MR-P002-H-yoccg.jpg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-CC-SP-001S",
-          "number": "nr.cc.sp.001s",
+          "printed": "CC-SP-001S",
+          "number": "cc.sp.001s",
           "name": "Naruto Uzumaki",
           "rarity": "CC-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/CC-SP-S001-yoccg.jpg",
@@ -2669,264 +2669,264 @@
       "url": "https://capsulecorpgear.com/naruto-kayou-card-list/",
       "cards": [
         {
-          "printed": "NR-SS-HR-001",
-          "number": "nr.ss.hr.001",
+          "printed": "NRSS-HR-001",
+          "number": "nrss.hr.001",
           "name": "Hinata Hyuga",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-001-75xup.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-002",
-          "number": "nr.ss.hr.002",
+          "printed": "NRSS-HR-002",
+          "number": "nrss.hr.002",
           "name": "Sasuke & Naruto",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-002-acukcf.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-003",
-          "number": "nr.ss.hr.003",
+          "printed": "NRSS-HR-003",
+          "number": "nrss.hr.003",
           "name": "Ichiraku Ramen",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-003-4kn2tj.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-004",
-          "number": "nr.ss.hr.004",
+          "printed": "NRSS-HR-004",
+          "number": "nrss.hr.004",
           "name": "Naruto Uzumaki",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-004-p5k0p.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-005",
-          "number": "nr.ss.hr.005",
+          "printed": "NRSS-HR-005",
+          "number": "nrss.hr.005",
           "name": "Sasuke & Naruto",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-005-bymg.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-006",
-          "number": "nr.ss.hr.006",
+          "printed": "NRSS-HR-006",
+          "number": "nrss.hr.006",
           "name": "Might Guy",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-006-zoo2lj.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-007",
-          "number": "nr.ss.hr.007",
+          "printed": "NRSS-HR-007",
+          "number": "nrss.hr.007",
           "name": "Mei Terumi",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-007-x0rje.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-008",
-          "number": "nr.ss.hr.008",
+          "printed": "NRSS-HR-008",
+          "number": "nrss.hr.008",
           "name": "Boruto Uzumaki",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-008-mzbuw.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-009",
-          "number": "nr.ss.hr.009",
+          "printed": "NRSS-HR-009",
+          "number": "nrss.hr.009",
           "name": "Sasuke & Naruto",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-009-f2t78.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-HR-010",
-          "number": "nr.ss.hr.010",
+          "printed": "NRSS-HR-010",
+          "number": "nrss.hr.010",
           "name": "Naruto Uzumaki",
           "rarity": "SS-HR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-HR-010-0ulop.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-OR-001",
-          "number": "nr.ss.or.001",
+          "printed": "NRSS-OR-001",
+          "number": "nrss.or.001",
           "name": "Hanabi Hyuga",
           "rarity": "SS-OR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-OR-001-bpx.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-OR-002",
-          "number": "nr.ss.or.002",
+          "printed": "NRSS-OR-002",
+          "number": "nrss.or.002",
           "name": "Shisui Uchiha",
           "rarity": "SS-OR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-OR-002-je8tz.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-OR-003",
-          "number": "nr.ss.or.003",
+          "printed": "NRSS-OR-003",
+          "number": "nrss.or.003",
           "name": "Kabuto Yakushi",
           "rarity": "SS-OR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-OR-003-6k7cy.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-OR-004",
-          "number": "nr.ss.or.004",
+          "printed": "NRSS-OR-004",
+          "number": "nrss.or.004",
           "name": "Rock Lee",
           "rarity": "SS-OR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-OR-004-dpt9y.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-OR-005",
-          "number": "nr.ss.or.005",
+          "printed": "NRSS-OR-005",
+          "number": "nrss.or.005",
           "name": "Ino Yamanaka",
           "rarity": "SS-OR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-OR-005-1os8e.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SP-001",
-          "number": "nr.ss.sp.001",
+          "printed": "NRSS-SP-001",
+          "number": "nrss.sp.001",
           "name": "Tsunade",
           "rarity": "SS-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SP-001-5tonq.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SP-002",
-          "number": "nr.ss.sp.002",
+          "printed": "NRSS-SP-002",
+          "number": "nrss.sp.002",
           "name": "Asuma Sarutobi",
           "rarity": "SS-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SP-002-o4fie.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SP-003",
-          "number": "nr.ss.sp.003",
+          "printed": "NRSS-SP-003",
+          "number": "nrss.sp.003",
           "name": "Naruto Uzumaki",
           "rarity": "SS-SP",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SP-003-m3dnw.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-001",
-          "number": "nr.ss.ssr.001",
+          "printed": "NRSS-SSR-001",
+          "number": "nrss.ssr.001",
           "name": "Hashirama Senju",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-001-etq7x.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-002",
-          "number": "nr.ss.ssr.002",
+          "printed": "NRSS-SSR-002",
+          "number": "nrss.ssr.002",
           "name": "Danzo Shimura",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-002-ta02g.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-003",
-          "number": "nr.ss.ssr.003",
+          "printed": "NRSS-SSR-003",
+          "number": "nrss.ssr.003",
           "name": "A",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-003-jlyft.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-004",
-          "number": "nr.ss.ssr.004",
+          "printed": "NRSS-SSR-004",
+          "number": "nrss.ssr.004",
           "name": "Minato Namikaze",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-004-3l289.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-005",
-          "number": "nr.ss.ssr.005",
+          "printed": "NRSS-SSR-005",
+          "number": "nrss.ssr.005",
           "name": "Madara Uchiha",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-005-wdtcq.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-006",
-          "number": "nr.ss.ssr.006",
+          "printed": "NRSS-SSR-006",
+          "number": "nrss.ssr.006",
           "name": "Tsunade",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-006-bpbgs.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-007",
-          "number": "nr.ss.ssr.007",
+          "printed": "NRSS-SSR-007",
+          "number": "nrss.ssr.007",
           "name": "Tobirama Senju",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-007-etith.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-008",
-          "number": "nr.ss.ssr.008",
+          "printed": "NRSS-SSR-008",
+          "number": "nrss.ssr.008",
           "name": "Gaara",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-008-0e7sb.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-009",
-          "number": "nr.ss.ssr.009",
+          "printed": "NRSS-SSR-009",
+          "number": "nrss.ssr.009",
           "name": "Hiruzen Sarutobi",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-009-27ne3.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-SSR-010",
-          "number": "nr.ss.ssr.010",
+          "printed": "NRSS-SSR-010",
+          "number": "nrss.ssr.010",
           "name": "Mei Terumi",
           "rarity": "SS-SSR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-SSR-010-ob6q7.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-001",
-          "number": "nr.ss.ur.001",
+          "printed": "NRSS-UR-001",
+          "number": "nrss.ur.001",
           "name": "Yamato",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-001-e55m6.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-002",
-          "number": "nr.ss.ur.002",
+          "printed": "NRSS-UR-002",
+          "number": "nrss.ur.002",
           "name": "Might Guy",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-002-l0xx4.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-003",
-          "number": "nr.ss.ur.003",
+          "printed": "NRSS-UR-003",
+          "number": "nrss.ur.003",
           "name": "Kakashi Hatake",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-003-brv3q.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-004",
-          "number": "nr.ss.ur.004",
+          "printed": "NRSS-UR-004",
+          "number": "nrss.ur.004",
           "name": "Kurenai Yuhi",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-004-xewjw.jpeg",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SS-UR-005",
-          "number": "nr.ss.ur.005",
+          "printed": "NRSS-UR-005",
+          "number": "nrss.ur.005",
           "name": "Asuma Sarutobi",
           "rarity": "SS-UR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SS-UR-005-ydrig.jpeg",
@@ -11393,8 +11393,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-001 (SILVER)",
-          "number": "nr.ar.001 (silver)",
+          "printed": "NR-AR-001SILVER",
+          "number": "nr.ar.001silver",
           "name": "Pain Deva Path",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-001-S-iseeyoustealing.webp",
@@ -11409,8 +11409,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-002 (SILVER)",
-          "number": "nr.ar.002 (silver)",
+          "printed": "NR-AR-002SILVER",
+          "number": "nr.ar.002silver",
           "name": "Konan",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-002-S-iseeyoustealing.webp",
@@ -11425,8 +11425,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-003 (SILVER)",
-          "number": "nr.ar.003 (silver)",
+          "printed": "NR-AR-003SILVER",
+          "number": "nr.ar.003silver",
           "name": "Deidara",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-003-S-iseeyoustealing.webp",
@@ -11441,8 +11441,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-004 (SILVER)",
-          "number": "nr.ar.004 (silver)",
+          "printed": "NR-AR-004SILVER",
+          "number": "nr.ar.004silver",
           "name": "Sasori",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-004-S-iseeyoustealing.webp",
@@ -11457,8 +11457,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-005 (SILVER)",
-          "number": "nr.ar.005 (silver)",
+          "printed": "NR-AR-005SILVER",
+          "number": "nr.ar.005silver",
           "name": "Itachi Uchiha",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-005-S-iseeyoustealing.webp",
@@ -11473,8 +11473,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-006 (SILVER)",
-          "number": "nr.ar.006 (silver)",
+          "printed": "NR-AR-006SILVER",
+          "number": "nr.ar.006silver",
           "name": "Kisame Hoshigaki",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-006-S-iseeyoustealing.webp",
@@ -11489,8 +11489,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-007 (SILVER)",
-          "number": "nr.ar.007 (silver)",
+          "printed": "NR-AR-007SILVER",
+          "number": "nr.ar.007silver",
           "name": "Hidan",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-007-S-iseeyoustealing.webp",
@@ -11505,8 +11505,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-008 (SILVER)",
-          "number": "nr.ar.008 (silver)",
+          "printed": "NR-AR-008SILVER",
+          "number": "nr.ar.008silver",
           "name": "Kakuzu",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-008-S-iseeyoustealing.webp",
@@ -11521,8 +11521,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-009 (SILVER)",
-          "number": "nr.ar.009 (silver)",
+          "printed": "NR-AR-009SILVER",
+          "number": "nr.ar.009silver",
           "name": "Obito Uchiha",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-009-S-iseeyoustealing.webp",
@@ -11537,8 +11537,8 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-AR-010 (SILVER)",
-          "number": "nr.ar.010 (silver)",
+          "printed": "NR-AR-010SILVER",
+          "number": "nr.ar.010silver",
           "name": "Zetsu",
           "rarity": "AR",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/AR-010-S-iseeyoustealing.webp",
@@ -13753,96 +13753,96 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-001",
-          "number": "nr.slr+.001",
+          "printed": "NR-SLRPLUS-001",
+          "number": "nr.slrplus.001",
           "name": "Naruto Uzumaki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-001-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-002",
-          "number": "nr.slr+.002",
+          "printed": "NR-SLRPLUS-002",
+          "number": "nr.slrplus.002",
           "name": "Sasuke Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-002-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-003",
-          "number": "nr.slr+.003",
+          "printed": "NR-SLRPLUS-003",
+          "number": "nr.slrplus.003",
           "name": "Sakura Haruno",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-003-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-004",
-          "number": "nr.slr+.004",
+          "printed": "NR-SLRPLUS-004",
+          "number": "nr.slrplus.004",
           "name": "Gaara",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-004-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-005",
-          "number": "nr.slr+.005",
+          "printed": "NR-SLRPLUS-005",
+          "number": "nr.slrplus.005",
           "name": "Kakashi Hatake",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-005-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-006",
-          "number": "nr.slr+.006",
+          "printed": "NR-SLRPLUS-006",
+          "number": "nr.slrplus.006",
           "name": "Itachi Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-006-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-007",
-          "number": "nr.slr+.007",
+          "printed": "NR-SLRPLUS-007",
+          "number": "nr.slrplus.007",
           "name": "Might Guy",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-007-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-008",
-          "number": "nr.slr+.008",
+          "printed": "NR-SLRPLUS-008",
+          "number": "nr.slrplus.008",
           "name": "Rock Lee",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-008-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-009",
-          "number": "nr.slr+.009",
+          "printed": "NR-SLRPLUS-009",
+          "number": "nr.slrplus.009",
           "name": "Shikamaru Nara",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-009-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-010",
-          "number": "nr.slr+.010",
+          "printed": "NR-SLRPLUS-010",
+          "number": "nr.slrplus.010",
           "name": "Tsunade",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-010-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-011",
-          "number": "nr.slr+.011",
+          "printed": "NR-SLRPLUS-011",
+          "number": "nr.slrplus.011",
           "name": "Sai",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-011-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-012",
-          "number": "nr.slr+.012",
+          "printed": "NR-SLRPLUS-012",
+          "number": "nr.slrplus.012",
           "name": "Temari",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-012-plus-iseeyoustealing.webp",
@@ -14537,96 +14537,96 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-013",
-          "number": "nr.slr+.013",
+          "printed": "NR-SLRPLUS-013",
+          "number": "nr.slrplus.013",
           "name": "Kakashi Hatake",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-013-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-014",
-          "number": "nr.slr+.014",
+          "printed": "NR-SLRPLUS-014",
+          "number": "nr.slrplus.014",
           "name": "Naruto Uzumaki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-014-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-015",
-          "number": "nr.slr+.015",
+          "printed": "NR-SLRPLUS-015",
+          "number": "nr.slrplus.015",
           "name": "Sakura Haruno",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-015-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-016",
-          "number": "nr.slr+.016",
+          "printed": "NR-SLRPLUS-016",
+          "number": "nr.slrplus.016",
           "name": "Sasuke Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-016-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-017",
-          "number": "nr.slr+.017",
+          "printed": "NR-SLRPLUS-017",
+          "number": "nr.slrplus.017",
           "name": "Might Guy",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-017-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-018",
-          "number": "nr.slr+.018",
+          "printed": "NR-SLRPLUS-018",
+          "number": "nr.slrplus.018",
           "name": "Hinata Hyuga",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-018-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-019",
-          "number": "nr.slr+.019",
+          "printed": "NR-SLRPLUS-019",
+          "number": "nr.slrplus.019",
           "name": "Kiba Inuzuka",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-019-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-020",
-          "number": "nr.slr+.020",
+          "printed": "NR-SLRPLUS-020",
+          "number": "nr.slrplus.020",
           "name": "Neji Hyuga",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-020-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-021",
-          "number": "nr.slr+.021",
+          "printed": "NR-SLRPLUS-021",
+          "number": "nr.slrplus.021",
           "name": "Choji Akimichi",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-021-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-022",
-          "number": "nr.slr+.022",
+          "printed": "NR-SLRPLUS-022",
+          "number": "nr.slrplus.022",
           "name": "Minato Namikaze",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-022-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-023",
-          "number": "nr.slr+.023",
+          "printed": "NR-SLRPLUS-023",
+          "number": "nr.slrplus.023",
           "name": "Jiraiya",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-023-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-024",
-          "number": "nr.slr+.024",
+          "printed": "NR-SLRPLUS-024",
+          "number": "nr.slrplus.024",
           "name": "Orochimaru",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-024-plus-iseeyoustealing.webp",
@@ -15265,96 +15265,96 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-025",
-          "number": "nr.slr+.025",
+          "printed": "NR-SLRPLUS-025",
+          "number": "nr.slrplus.025",
           "name": "Yamato",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-025-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-026",
-          "number": "nr.slr+.026",
+          "printed": "NR-SLRPLUS-026",
+          "number": "nr.slrplus.026",
           "name": "Orochimaru",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-026-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-027",
-          "number": "nr.slr+.027",
+          "printed": "NR-SLRPLUS-027",
+          "number": "nr.slrplus.027",
           "name": "Tsunade",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-027-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-028",
-          "number": "nr.slr+.028",
+          "printed": "NR-SLRPLUS-028",
+          "number": "nr.slrplus.028",
           "name": "Rock Lee",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-028-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-029",
-          "number": "nr.slr+.029",
+          "printed": "NR-SLRPLUS-029",
+          "number": "nr.slrplus.029",
           "name": "Neji Hyuga",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-029-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-030",
-          "number": "nr.slr+.030",
+          "printed": "NR-SLRPLUS-030",
+          "number": "nr.slrplus.030",
           "name": "Kiba Inuzuka",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-030-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-031",
-          "number": "nr.slr+.031",
+          "printed": "NR-SLRPLUS-031",
+          "number": "nr.slrplus.031",
           "name": "Sakura Haruno",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-031-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-032",
-          "number": "nr.slr+.032",
+          "printed": "NR-SLRPLUS-032",
+          "number": "nr.slrplus.032",
           "name": "Boruto Uzumaki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-032-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-033",
-          "number": "nr.slr+.033",
+          "printed": "NR-SLRPLUS-033",
+          "number": "nr.slrplus.033",
           "name": "Naruto Uzumaki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-033-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-034",
-          "number": "nr.slr+.034",
+          "printed": "NR-SLRPLUS-034",
+          "number": "nr.slrplus.034",
           "name": "Iruka Umino",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-034-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-035",
-          "number": "nr.slr+.035",
+          "printed": "NR-SLRPLUS-035",
+          "number": "nr.slrplus.035",
           "name": "Sarada Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-035-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-036",
-          "number": "nr.slr+.036",
+          "printed": "NR-SLRPLUS-036",
+          "number": "nr.slrplus.036",
           "name": "Sasuke Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-036-plus-iseeyoustealing.webp",
@@ -16041,96 +16041,96 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-037",
-          "number": "nr.slr+.037",
+          "printed": "NR-SLRPLUS-037",
+          "number": "nr.slrplus.037",
           "name": "Haku",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-037-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-038",
-          "number": "nr.slr+.038",
+          "printed": "NR-SLRPLUS-038",
+          "number": "nr.slrplus.038",
           "name": "Hinata Hyuga",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-038-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-039",
-          "number": "nr.slr+.039",
+          "printed": "NR-SLRPLUS-039",
+          "number": "nr.slrplus.039",
           "name": "Obito Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-039-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-040",
-          "number": "nr.slr+.040",
+          "printed": "NR-SLRPLUS-040",
+          "number": "nr.slrplus.040",
           "name": "Ino Yamanaka",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-040-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-041",
-          "number": "nr.slr+.041",
+          "printed": "NR-SLRPLUS-041",
+          "number": "nr.slrplus.041",
           "name": "Naruto Uzumaki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-041-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-042",
-          "number": "nr.slr+.042",
+          "printed": "NR-SLRPLUS-042",
+          "number": "nr.slrplus.042",
           "name": "Sakura Haruno",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-042-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-043",
-          "number": "nr.slr+.043",
+          "printed": "NR-SLRPLUS-043",
+          "number": "nr.slrplus.043",
           "name": "Jiraiya",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-043-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-044",
-          "number": "nr.slr+.044",
+          "printed": "NR-SLRPLUS-044",
+          "number": "nr.slrplus.044",
           "name": "Sasuke Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-044-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-045",
-          "number": "nr.slr+.045",
+          "printed": "NR-SLRPLUS-045",
+          "number": "nr.slrplus.045",
           "name": "Jiraiya",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-045-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-046",
-          "number": "nr.slr+.046",
+          "printed": "NR-SLRPLUS-046",
+          "number": "nr.slrplus.046",
           "name": "Himawari Uzumaki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-046-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-047",
-          "number": "nr.slr+.047",
+          "printed": "NR-SLRPLUS-047",
+          "number": "nr.slrplus.047",
           "name": "Mitsuki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-047-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-048",
-          "number": "nr.slr+.048",
+          "printed": "NR-SLRPLUS-048",
+          "number": "nr.slrplus.048",
           "name": "Shikadai Nara",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-048-plus-iseeyoustealing.webp",
@@ -16817,96 +16817,96 @@
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-049",
-          "number": "nr.slr+.049",
+          "printed": "NR-SLRPLUS-049",
+          "number": "nr.slrplus.049",
           "name": "Hinata Hyuga",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-049-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-050",
-          "number": "nr.slr+.050",
+          "printed": "NR-SLRPLUS-050",
+          "number": "nr.slrplus.050",
           "name": "Choji Akimichi",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-050-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-051",
-          "number": "nr.slr+.051",
+          "printed": "NR-SLRPLUS-051",
+          "number": "nr.slrplus.051",
           "name": "Ino Yamanaka",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-051-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-052",
-          "number": "nr.slr+.052",
+          "printed": "NR-SLRPLUS-052",
+          "number": "nr.slrplus.052",
           "name": "Naruto Uzumaki",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-052-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-053",
-          "number": "nr.slr+.053",
+          "printed": "NR-SLRPLUS-053",
+          "number": "nr.slrplus.053",
           "name": "Neji Hyuga",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-053-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-054",
-          "number": "nr.slr+.054",
+          "printed": "NR-SLRPLUS-054",
+          "number": "nr.slrplus.054",
           "name": "Kiba Inuzuka",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-054-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-055",
-          "number": "nr.slr+.055",
+          "printed": "NR-SLRPLUS-055",
+          "number": "nr.slrplus.055",
           "name": "Tenten",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-055-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-056",
-          "number": "nr.slr+.056",
+          "printed": "NR-SLRPLUS-056",
+          "number": "nr.slrplus.056",
           "name": "Konan",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-056-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-057",
-          "number": "nr.slr+.057",
+          "printed": "NR-SLRPLUS-057",
+          "number": "nr.slrplus.057",
           "name": "Sakura Haruno",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-057-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-058",
-          "number": "nr.slr+.058",
+          "printed": "NR-SLRPLUS-058",
+          "number": "nr.slrplus.058",
           "name": "Shino Aburame",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-058-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-059",
-          "number": "nr.slr+.059",
+          "printed": "NR-SLRPLUS-059",
+          "number": "nr.slrplus.059",
           "name": "Rock Lee",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-059-plus-iseeyoustealing.webp",
           "faceSource": "capsulecorpgear"
         },
         {
-          "printed": "NR-SLR+-060",
-          "number": "nr.slr+.060",
+          "printed": "NR-SLRPLUS-060",
+          "number": "nr.slrplus.060",
           "name": "Sasuke Uchiha",
           "rarity": "SLR+",
           "faceUrl": "https://capsulecorpgear.com/wp-content/uploads/SLR-060-plus-iseeyoustealing.webp",

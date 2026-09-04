@@ -1,0 +1,204 @@
+{
+  "source": "i.ebayimg.com listing photos (collector pastes)",
+  "observed": "2026-09-04",
+  "note": "Pasted CDN URLs only — do not crawl mikanshop-ja. Canonical size s-l1600 (thumbs s-l500 upgraded). Dig: ebay-mikan-data-carddass-hunt-2026-09-04.json. Faces as art.ebay.* under cards/{set}/ja/{number}/.",
+  "ingestCollection": false,
+  "seller": {
+    "user": "mikanjuiceshop",
+    "store": "mikanshopja",
+    "url": "https://www.ebay.fr/sch/i.html?_ssn=mikanjuiceshop&store_name=mikanshopja&_oac=1&_nkw=naruto",
+    "observed": "2026-09-04"
+  },
+  "faces": [
+    {
+      "printedRef": "NX-002",
+      "lang": "ja",
+      "title": "Uzumaki Naruto",
+      "listing": "https://www.ebay.fr/itm/185212631805",
+      "imageId": "OHsAAOSwrjRhtx6l",
+      "url": "https://i.ebayimg.com/images/g/OHsAAOSwrjRhtx6l/s-l1600.webp",
+      "staging": "staging/ebay/nx-002-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-141",
+      "lang": "ja",
+      "title": "Itachi Uchiha",
+      "listing": "https://www.ebay.fr/itm/187160270571",
+      "imageId": "jjQAAOSwTONoBbKE",
+      "url": "https://i.ebayimg.com/images/g/jjQAAOSwTONoBbKE/s-l1600.webp",
+      "staging": "staging/ebay/nf-141-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-127",
+      "lang": "ja",
+      "title": "Itachi Uchiha",
+      "listing": "https://www.ebay.fr/itm/187160260103",
+      "imageId": "s5UAAOSwaMFoBbEe",
+      "url": "https://i.ebayimg.com/images/g/s5UAAOSwaMFoBbEe/s-l1600.webp",
+      "staging": "staging/ebay/nm-127-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-143",
+      "lang": "ja",
+      "title": "Uzumaki Naruto",
+      "listing": "https://www.ebay.fr/itm/185231202495",
+      "imageId": "I0AAAOSwiMVhyPxD",
+      "url": "https://i.ebayimg.com/images/g/I0AAAOSwiMVhyPxD/s-l1600.webp",
+      "staging": "staging/ebay/nx-143-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NFP-018",
+      "lang": "ja",
+      "title": "Uzumaki Naruto",
+      "listing": "https://www.ebay.fr/itm/187160192354",
+      "imageId": "dTkAAOSwZ0JoBaX6",
+      "url": "https://i.ebayimg.com/images/g/dTkAAOSwZ0JoBaX6/s-l1600.webp",
+      "staging": "staging/ebay/nfp-018-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NFP-019",
+      "lang": "ja",
+      "title": "Uzumaki Naruto (Bond)",
+      "listing": "https://www.ebay.fr/itm/187160169156",
+      "imageId": "v3gAAOSwZqJoBaO1",
+      "url": "https://i.ebayimg.com/images/g/v3gAAOSwZqJoBaO1/s-l1600.webp",
+      "staging": "staging/ebay/nfp-019-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "DN-205T",
+      "lang": "ja",
+      "title": "Itachi Uchiha",
+      "listing": "https://www.ebay.fr/itm/187160289914",
+      "imageId": "hywAAOSwvfJoBbUx",
+      "url": "https://i.ebayimg.com/images/g/hywAAOSwvfJoBbUx/s-l1600.webp",
+      "staging": "staging/ebay/dn-205t-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-167",
+      "lang": "ja",
+      "title": "Itachi Uchiha",
+      "listing": "https://www.ebay.fr/itm/187160258344",
+      "imageId": "UWkAAOSwZQ9oBbCZ",
+      "url": "https://i.ebayimg.com/images/g/UWkAAOSwZQ9oBbCZ/s-l1600.webp",
+      "staging": "staging/ebay/nm-167-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "DMP-016",
+      "lang": "ja",
+      "title": "Uzumaki Naruto",
+      "listing": "https://www.ebay.fr/itm/187160225332",
+      "imageId": "6I8AAOSwhX1oBapa",
+      "url": "https://i.ebayimg.com/images/g/6I8AAOSwhX1oBapa/s-l1600.webp",
+      "staging": "staging/ebay/dmp-016-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "DN-051-R",
+      "lang": "ja",
+      "title": "Uzumaki Naruto (Nine-Tails)",
+      "listing": "https://www.ebay.fr/itm/187151477813",
+      "imageId": "ifkAAOSwtbdoASaY",
+      "url": "https://i.ebayimg.com/images/g/ifkAAOSwtbdoASaY/s-l1600.webp",
+      "staging": "staging/ebay/dn-051r-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-142",
+      "lang": "ja",
+      "title": "Sasuke Uchiha",
+      "listing": "https://www.ebay.fr/itm/185203454971",
+      "imageId": "Cv0AAOSwZJRhr2Y-",
+      "url": "https://i.ebayimg.com/images/g/Cv0AAOSwZJRhr2Y-/s-l1600.webp",
+      "staging": "staging/ebay/nm-142-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-007",
+      "lang": "ja",
+      "title": "Neji Hyuga",
+      "listing": "https://www.ebay.fr/itm/185397565451",
+      "imageId": "H3MAAOSw32hiZBst",
+      "url": "https://i.ebayimg.com/images/g/H3MAAOSw32hiZBst/s-l1600.webp",
+      "staging": "staging/ebay/nf-007-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "DN-143T",
+      "lang": "ja",
+      "title": "Uzumaki Naruto",
+      "listing": "https://www.ebay.fr/itm/185232204030",
+      "imageId": "BQAAAOSwoa1hycvB",
+      "url": "https://i.ebayimg.com/images/g/BQAAAOSwoa1hycvB/s-l1600.webp",
+      "staging": "staging/ebay/dn-143t-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NFP-006",
+      "lang": "ja",
+      "title": "Itachi Uchiha",
+      "listing": "https://www.ebay.fr/itm/185368219234",
+      "imageId": "IU0AAOSwIfJiSBAk",
+      "url": "https://i.ebayimg.com/images/g/IU0AAOSwIfJiSBAk/s-l1600.webp",
+      "staging": "staging/ebay/nfp-006-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-301",
+      "lang": "ja",
+      "title": "Sasuke Uchiha",
+      "listing": "https://www.ebay.fr/itm/185212366661",
+      "imageId": "oF4AAOSwhm9httq5",
+      "url": "https://i.ebayimg.com/images/g/oF4AAOSwhm9httq5/s-l1600.webp",
+      "staging": "staging/ebay/nx-301-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NFM-003",
+      "lang": "ja",
+      "title": "Reunion with Sasuke!?",
+      "listing": "https://www.ebay.fr/itm/187151427293",
+      "imageId": "odsAAOSwCI9oASJv",
+      "url": "https://i.ebayimg.com/images/g/odsAAOSwCI9oASJv/s-l1600.webp",
+      "staging": "staging/ebay/nfm-003-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-177",
+      "lang": "ja",
+      "title": "Shino Aburame",
+      "listing": "https://www.ebay.fr/itm/185382471437",
+      "imageId": "T0AAAOSwtD5iVTRK",
+      "url": "https://i.ebayimg.com/images/g/T0AAAOSwtD5iVTRK/s-l1600.webp",
+      "staging": "staging/ebay/nf-177-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-035",
+      "lang": "ja",
+      "title": "First Hokage",
+      "listing": "https://www.ebay.fr/itm/187160296989",
+      "imageId": "gqgAAOSwmvVoBbd5",
+      "url": "https://i.ebayimg.com/images/g/gqgAAOSwmvVoBbd5/s-l1600.webp",
+      "staging": "staging/ebay/nf-035-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-193",
+      "lang": "ja",
+      "title": "Uzumaki Naruto",
+      "listing": "https://www.ebay.fr/itm/185368602320",
+      "imageId": "vSsAAOSwdU5iSF7Z",
+      "url": "https://i.ebayimg.com/images/g/vSsAAOSwdU5iSF7Z/s-l1600.webp",
+      "staging": "staging/ebay/nx-193-ja.webp",
+      "ingest": true
+    }
+  ]
+}

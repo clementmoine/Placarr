@@ -1,0 +1,32 @@
+{
+  "source": "Suruga-ya used category (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "movedFrom": "src/providers/narutocarddass/curated/sources/suruga-ya-data-carddass.json",
+  "ingest": "seed-checklist — faces Suruga 180 SKUs hors scope (pas de crawl)",
+  "crawl": false,
+  "url": "https://www.suruga-ya.com/en/category/501080113",
+  "shopTitle": "NARUTO DATA CARDDASS",
+  "results": 180,
+  "maker": "Bandai",
+  "line": "data-carddass",
+  "note": "Bandai arcade Data Carddass — provider `narutodatacarddass`. Exemples attestés dans `data-carddass-checklist.json` (DN-032T, NM-049). Ne pas mint dans Carddass.",
+  "prefixesSeen": ["DN", "NM"],
+  "cabinets": [
+    {
+      "title": "ナルト ナルティメットカードバトル",
+      "year": 2005,
+      "prefix": "DN"
+    },
+    {
+      "title": "ナルト疾風伝 究極忍務 ナルティメットミッション",
+      "year": 2007,
+      "prefix": "NM"
+    },
+    {
+      "title": "ナルト疾風伝 ナルティメットクロス",
+      "year": 2009,
+      "prefix": null
+    }
+  ],
+  "not": ["carddass", "en-ccg", "ni", "te", "ta", "n", "j", "m"]
+}

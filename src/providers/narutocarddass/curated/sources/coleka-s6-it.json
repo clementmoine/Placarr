@@ -1,7 +1,7 @@
 {
   "source": "coleka.com — Cartes Naruto Série 06 (CACG italien, Rivalità Eterna)",
   "observed": "2026-08-16",
-  "note": "Same CACG game as FR Carddass, not Bandai USA CCG. France cancelled s6; Italy printed it (BANDAI 2008 MADE IN CHINA). Coleka lists 136 / enumerates 135, outside the French Carddass branch. Listing refs use TA; the printed tactique prefix is ST. Disk ids stay ni/te/ta/cl (ta226, never st226). Locale it under cards/s6/it/. Placeholder titles « Carte NI-255 » are not names. Do not scrape the umbrella. Do not write Italian effect names into langs.fr.",
+  "note": "Same CACG game as FR Carddass, not Bandai USA CCG. France cancelled s6; Italy printed it (BANDAI 2008 MADE IN CHINA). Coleka lists 136 / enumerates 135, outside the French Carddass branch. Listing refs use TA; the printed tactique prefix is ST. Disk ids stay ni/te/ta/cl (ta226, never st226). Locale it under cards/s6/it/. Placeholder titles « Carte NI-255 » are not names. Do not scrape the umbrella. Do not write Italian effect names into langs.fr. Hunt 2026-09-01 : 64/135 Coleka fiches = no-image.jpg ; cardgame-club.it → Shopify (sealed only), Magento JPEG cache 404, Wayback CDX vide.",
   "umbrella": {
     "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102",
     "scrape": false,

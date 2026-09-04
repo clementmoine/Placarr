@@ -121,6 +121,7 @@ export function buildOnepiecePrintWrites(
       setCode: string;
       number: string;
       grouping: string | null;
+      category: string | null;
       sourceUrl: string | null;
       titles: Map<string, { fullName: string; rarity: string | null }>;
     }
@@ -138,11 +139,13 @@ export function buildOnepiecePrintWrites(
           setCode: identity.set,
           number: identity.number,
           grouping: identity.grouping ?? null,
+          category: card.category,
           sourceUrl: card.imgUrl,
           titles: new Map(),
         };
         byKey.set(printKey, row);
       }
+      if (!row.category && card.category) row.category = card.category;
       if (!row.sourceUrl && card.imgUrl) row.sourceUrl = card.imgUrl;
       if (!row.titles.has(locale.lang)) {
         row.titles.set(locale.lang, {
@@ -160,6 +163,7 @@ export function buildOnepiecePrintWrites(
       number: row.number,
       cardType: row.setCode,
       grouping: row.grouping,
+      category: row.category,
       sourceUrl: row.sourceUrl,
       titles: [...row.titles.entries()].map(([lang, t]) => ({
         lang,

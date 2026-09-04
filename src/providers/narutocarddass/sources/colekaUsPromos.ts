@@ -75,25 +75,97 @@ export function colekaUsPromoLedgerPath(packDir?: string): string {
   );
 }
 
-export function loadColekaUsPromoLedger(packDir?: string): ColekaUsPromoCard[] {
+function isColekaUsPromoCard(row: unknown): row is ColekaUsPromoCard {
+  if (!row || typeof row !== "object") return false;
+  const card = row as ColekaUsPromoCard;
+  return (
+    typeof card.number === "string" &&
+    typeof card.colekaRef === "string" &&
+    typeof card.name === "string" &&
+    typeof card.faceUrl === "string"
+  );
+}
+
+function mergeColekaUsPromoCards(
+  byNumber: Map<string, ColekaUsPromoCard>,
+  cards: readonly ColekaUsPromoCard[],
+): void {
+  for (const card of cards) {
+    if (!byNumber.has(card.number)) byNumber.set(card.number, card);
+  }
+}
+
+/** Reparse cached listing HTML when `cards.json` is empty (Coleka verify shell). */
+export function parseColekaUsPromoLedgerFromStaging(
+  packDir?: string,
+): ColekaUsPromoCard[] {
+  const staging = path.join(
+    packDir ?? packRoot(),
+    NARUTO_STAGING_COLEKA_US_PROMOS,
+  );
+  const byNumber = new Map<string, ColekaUsPromoCard>();
+  for (let pageIdx = 0; pageIdx < 3; pageIdx += 1) {
+    const file = path.join(staging, `listing-${pageIdx}.html`);
+    if (!existsSync(file)) continue;
+    try {
+      mergeColekaUsPromoCards(
+        byNumber,
+        parseColekaUsPromoListing(readFileSync(file, "utf8")),
+      );
+    } catch {
+      /* ignore malformed cache */
+    }
+  }
+  return [...byNumber.values()].sort((a, b) =>
+    a.number.localeCompare(b.number, "en"),
+  );
+}
+
+function readColekaUsPromoLedgerJson(
+  packDir?: string,
+): ColekaUsPromoCard[] {
   const file = colekaUsPromoLedgerPath(packDir);
   if (!existsSync(file)) return [];
   try {
     const raw = JSON.parse(readFileSync(file, "utf8")) as { cards?: unknown };
     if (!Array.isArray(raw.cards)) return [];
-    return raw.cards.filter((row): row is ColekaUsPromoCard => {
-      if (!row || typeof row !== "object") return false;
-      const card = row as ColekaUsPromoCard;
-      return (
-        typeof card.number === "string" &&
-        typeof card.colekaRef === "string" &&
-        typeof card.name === "string" &&
-        typeof card.faceUrl === "string"
-      );
-    });
+    return raw.cards.filter(isColekaUsPromoCard);
   } catch {
     return [];
   }
+}
+
+export function loadColekaUsPromoLedger(packDir?: string): ColekaUsPromoCard[] {
+  const fromJson = readColekaUsPromoLedgerJson(packDir);
+  if (fromJson.length > 0) return fromJson;
+  const fromHtml = parseColekaUsPromoLedgerFromStaging(packDir);
+  if (fromHtml.length > 0) syncColekaUsPromoLedger(packDir, fromHtml);
+  return fromHtml;
+}
+
+function syncColekaUsPromoLedger(
+  packDir: string | undefined,
+  cards: readonly ColekaUsPromoCard[],
+): void {
+  const root = packDir ?? packRoot();
+  mkdirSync(path.join(root, NARUTO_STAGING_COLEKA_US_PROMOS), {
+    recursive: true,
+  });
+  writeFileSync(
+    colekaUsPromoLedgerPath(root),
+    `${JSON.stringify(
+      {
+        source: `${COLEKA_ORIGIN}${COLEKA_US_PROMO_LISTING_PATH}`,
+        set: COLEKA_US_PROMO_SET,
+        lang: COLEKA_US_PROMO_LANG,
+        capturedAt: new Date().toISOString(),
+        cards,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
 }
 
 async function downloadBytes(
@@ -232,6 +304,9 @@ export async function scrapeNarutoColekaUsPromoCards(
   let cards = [...byNumber.values()].sort((a, b) =>
     a.number.localeCompare(b.number, "en"),
   );
+  if (cards.length === 0) {
+    cards = parseColekaUsPromoLedgerFromStaging(root);
+  }
   if (options.limit && options.limit > 0) cards = cards.slice(0, options.limit);
   console.log(`── Coleka US promos listing : ${cards.length} singles`);
 

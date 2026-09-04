@@ -19,6 +19,9 @@ describe("attestedPromos", () => {
     expect(attestedPromoPrintKey({ number: "ni063", name: "Iruka" })).toBe(
       "naruto:ni-0063-promo",
     );
+    expect(attestedPromoPrintKey({ number: "pr011", name: "Orochimaru" })).toBe(
+      "naruto:pr-0011",
+    );
     expect(
       attestedPromoPrintKey({
         number: "te030",
@@ -26,6 +29,21 @@ describe("attestedPromos", () => {
         diskCardId: "te030-cdf",
       }),
     ).toBe("naruto:te-0030-cdf");
+  });
+
+  it("refuses to mint S6 insert twins that are not 7r7 tournament promos", () => {
+    const merged = mergeAttestedPromos({
+      prints: [],
+      titles: [],
+      promos: [
+        { number: "ni232", name: "Shikamaru Nara" },
+        { number: "ni063", name: "Iruka", shuriken: 2 },
+      ],
+    });
+    expect(merged.addedPrints).toEqual(["naruto:ni-0063-promo"]);
+    expect(
+      merged.prints.some((p) => p.printKey === "naruto:ni-0232-promo"),
+    ).toBe(false);
   });
 
   it("injects missing promo prints with FR names, keeps existing art rows", () => {

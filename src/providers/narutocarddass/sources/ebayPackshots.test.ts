@@ -73,6 +73,7 @@ describe("eBay listing packshots", () => {
 
   it("joins the whole Italian batch on numbers we already mint", () => {
     const italian = ebayIngestFaces().filter((row) => row.lang === "it");
+    const byRef = new Map(italian.map((row) => [row.printedRef, row]));
     expect(italian.length).toBeGreaterThanOrEqual(45);
     // Every ingested Italian row resolves, and no number is claimed twice.
     const ids = italian.map((row) => narutoDiskCardId(row.printedRef));
@@ -81,6 +82,10 @@ describe("eBay listing packshots", () => {
     // ST is the Italian tactique prefix — it files under mission, never `st`.
     const strategia = italian.find((row) => row.printedRef === "ST-69");
     expect(strategia && narutoDiskCardId(strategia.printedRef)).toBe("ta0069");
+    // Errecards batch: eight jutsu scans were pasted as NI-N; corrected to TE-N.
+    expect(byRef.has("NI-18")).toBe(false);
+    expect(byRef.get("TE-18")?.title).toBe("Tecnica Del Mimetismo");
+    expect(byRef.get("TE-60")?.staging).toBe("staging/ebay/te0060-it.webp");
   });
 
   it("refuses the Italian S-numbered promos and the seller's duplicate ref", () => {

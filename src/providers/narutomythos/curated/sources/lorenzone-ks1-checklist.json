@@ -1593,9 +1593,10 @@
       "printed": "XXXX/1000",
       "number": "lg01",
       "grouping": null,
-      "name": "NARUTO UZUMAKI - Je serai le plus grand Hokage !",
+      "name": "NARUTO UZUMAKI – Je serai le plus grand Hokage !",
       "rarity": "Legendary",
-      "faceUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/009_130_NARUTO_UZUMAKI_Genin_du_Village_de_la_Feuille_C_Carte_Naruto_Mythos_Naruto_Mythos_TCG_-_Konoha_Shido_1er_Chapitre_Neuf_FR_LorenZone.webp"
+      "faceUrl": null,
+      "note": "LorenZone faceUrl pointed at #009 Genin (wrong). Await real gold Legendary CDN."
     }
   ]
 }

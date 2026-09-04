@@ -23,7 +23,7 @@ export async function runNarutoMythosPackPipeline(
     packId: NARUTO_MYTHOS_PACK_ID,
     curatedDir: narutoMythosCuratedDir(),
     label: "Naruto Mythos",
-    seed: (index) => {
+    seed: async (index) => {
       const built = buildMythosFromLedgers({ index });
       if (built.skipped.length) {
         console.log(
@@ -31,7 +31,7 @@ export async function runNarutoMythosPackPipeline(
         );
       }
       if (!skipFaces) {
-        const faces = installMythosFaces(index);
+        const faces = await installMythosFaces(index);
         console.log(
           `── Faces — LorenZone ${faces.faces}${faces.missing.length ? `, manquant(s) ${faces.missing.length}` : ""}`,
         );

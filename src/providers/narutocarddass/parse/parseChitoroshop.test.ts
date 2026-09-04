@@ -14,6 +14,7 @@ import {
   normalizeShopName,
   parseChitoroTitle,
   resolveChitoroIdentity,
+  resolveChitoroNameFamily,
 } from "./parseChitoroshop";
 
 describe("identifier une carte de chitoroshop", () => {
@@ -26,6 +27,21 @@ describe("identifier une carte de chitoroshop", () => {
       name: "gaara of the desert",
       number: 295,
     });
+  });
+
+  /*
+    La boutique ajoute parfois une rareté ou un surnom (« Hime UR ») après le
+    nom CCG. Le préfixe catalogue le plus long qui matche encore le titre
+    récupère la famille — sans liste magique de tokens.
+  */
+  it("joins a shop title that lengthens the catalog EN name", () => {
+    const index = new Map<string, Set<string>>([
+      ["tsunade|354", new Set(["ni"])],
+      ["chakra rope|354", new Set(["te"])],
+    ]);
+    expect(resolveChitoroNameFamily(index, "tsunade hime ur", 354)).toBe("ni");
+    expect(resolveChitoroNameFamily(index, "tsunade", 354)).toBe("ni");
+    expect(resolveChitoroNameFamily(index, "gaara of the desert", 295)).toBeNull();
   });
 
   /*

@@ -73,6 +73,37 @@ export function parseChitoroTitle(title: string): ChitoroTitle | null {
   return { name, number: Number(match[2]) };
 }
 
+/**
+ * Couple (nom boutique, numéro) → famille japonaise unique.
+ *
+ * Exact d'abord. Sinon, le **plus long** nom catalogue qui est un préfixe du
+ * titre boutique — « Tsunade Hime UR 354 » rejoint « Tsunade » / 354 → `ni`,
+ * sans inventer de liste de raretés. Un préfixe trop court (< 4) est refusé :
+ * « Gaara of the desert » ne doit pas retomber sur un « Ga » ambigu.
+ */
+export function resolveChitoroNameFamily(
+  nameIndex: Map<string, Set<string>>,
+  shopName: string,
+  number: number,
+): string | null {
+  const exact = nameIndex.get(`${shopName}|${number}`);
+  if (exact?.size === 1) return [...exact][0]!;
+  if (exact && exact.size > 1) return null;
+
+  let best: { family: string; length: number } | null = null;
+  const suffix = `|${number}`;
+  for (const [key, families] of nameIndex) {
+    if (!key.endsWith(suffix) || families.size !== 1) continue;
+    const catalog = key.slice(0, -suffix.length);
+    if (catalog.length < 4) continue;
+    if (shopName !== catalog && !shopName.startsWith(`${catalog} `)) continue;
+    if (!best || catalog.length > best.length) {
+      best = { family: [...families][0]!, length: catalog.length };
+    }
+  }
+  return best?.family ?? null;
+}
+
 /** « Naruto Card Game Vol.6 (2004) » → `maki6`. */
 export function chitoroVolumeSetCode(text: string): string | null {
   const match = /Vol\.?\s*(\d{1,2})\b/i.exec(text);

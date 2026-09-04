@@ -38,6 +38,10 @@ import {
 } from "./narutoCardPath";
 import { NARUTO_PACK_ID } from "./packs";
 import { narutocarddassCatalog } from "./pipeline";
+import {
+  NARUTO_INDICATIVE_PRICE_SOURCE,
+  refreshNarutoIndicativePriceOffers,
+} from "./sources/collectionNarutoPriceOffers";
 
 const PROVIDER_ID = "narutocarddass";
 const PROVIDER_LABEL = "Naruto CCG (local)";
@@ -97,7 +101,7 @@ export const narutocarddassModule = defineProvider({
       },
     ],
     types: ["tcg"],
-    capabilities: ["identify", "cover"],
+    capabilities: ["identify", "cover", "price"],
     /** Closed local corpus: its own names are the reference for manual entry. */
     nameDatabase: true,
     auth: { kind: "none" },
@@ -105,8 +109,13 @@ export const narutocarddassModule = defineProvider({
     canonical: false,
     defaultLanguage: "fr",
     websiteUrl: "https://www.carddass.com/",
+    /** Côtes dig Collection Naruto — référence quand le marché live est absent. */
+    referencePriceSource: true,
+    evidenceOnlyPriceRefresh: true,
+    sourceAliases: [NARUTO_INDICATIVE_PRICE_SOURCE],
+    factLabel: NARUTO_INDICATIVE_PRICE_SOURCE,
     notes:
-      "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/carddass/`. Curated sous `src/providers/narutocarddass/curated/`. Sync : Catalogue Extract (admin / worker).",
+      "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/carddass/`. Curated sous `src/providers/narutocarddass/curated/`. Sync : Catalogue Extract (admin / worker). Prix : Estimations Collection Naruto (YT 7r7) en référence checklist / étagères / fiche.",
   },
   catalog: narutocarddassCatalog,
   evidence: {
@@ -114,7 +123,7 @@ export const narutocarddassModule = defineProvider({
     // Its own catalogue, read from disk — no scrape guesswork to discount.
     sourceWeight: 0.9,
   },
-  suggestDatabaseTitles: async ({ cleanedName }) => {
+  refreshBarcodePriceOffers: refreshNarutoIndicativePriceOffers,  suggestDatabaseTitles: async ({ cleanedName }) => {
     const cards = searchNarutoPrints(cleanedName, { limit: 10 });
     // Several prints share a name (`ni023` retail + promo): the picker is what
     // tells them apart, so suggest each distinct title once.

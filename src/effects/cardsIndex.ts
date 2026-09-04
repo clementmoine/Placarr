@@ -22,6 +22,16 @@ export type CardsIndexLangFiles = {
   /** Printed name in this locale when the pack ships more than one. */
   name?: string;
   /**
+   * When `name` was copied from another locale of the same print (approximate).
+   * Same convention as catalogue `artLocaleFrom`.
+   */
+  nameLocaleFrom?: string;
+  /**
+   * Non-attested title pipeline, e.g. `narutocards-net:slug`.
+   * Omitted when the name is attested for this locale.
+   */
+  nameSource?: string;
+  /**
    * Le set **de cette langue**, quand il diffère de celui de l'entrée.
    *
    * Un éditeur ne redécoupe pas toujours sa ligne à l'identique d'un marché à

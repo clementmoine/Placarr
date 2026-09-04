@@ -28,6 +28,7 @@ export const NARUTO_FACE_SOURCES = [
   "fril",
   "coleka",
   "cardgameclub",
+  "primegame",
   "leboncoin",
   "ebay",
   "mercari",
@@ -48,6 +49,13 @@ export const NARUTO_FACE_SOURCES = [
    * marché sont carrées et laissent la moitié du cadre au fond.
    */
   "slabz",
+  "chitoroshop",
+  /**
+   * fr.shopping.rakuten.com — scans boutique à plat (NOPAD), sans watermark
+   * carddass.fr. En FR ils concourent avec le dump éditeur : les pixels
+   * tranchent (517×740 bat 350×495 watermarké). Coleka reste hors pool.
+   */
+  "rakuten",
   "legacy",
   "fanset",
 ] as const;
@@ -60,21 +68,24 @@ export type NarutoFaceSource = (typeof NARUTO_FACE_SOURCES)[number];
  *
  * Coleka FR dumps are collector photos (glare, table, worn corners) at
  * 900×1200. Official carddass.fr raws are 350×495. Area scoring would pick
- * Coleka; on FR we keep the publisher scan instead.
+ * Coleka; on FR we keep the publisher-grade pool instead (carddass /
+ * ultrajeux / rakuten NOPAD). Pixels still decide inside that pool.
  *
  * `fanset` is an unconfirmed remake or custom. Keep the file, never compare
  * it to the original, and never let pixel size beat another dump.
  */
 export const NARUTO_FR_PUBLISHER_SOURCES: ReadonlySet<NarutoFaceSource> =
-  new Set(["carddass", "ultrajeux"]);
+  new Set(["carddass", "ultrajeux", "rakuten"]);
 
 export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
   {
     fr: [
       "carddass",
       "ultrajeux",
+      "rakuten",
       "coleka",
       "cardgameclub",
+      "primegame",
       "leboncoin",
       "ebay",
       "mercari",
@@ -84,6 +95,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "suruga",
       "avalon",
       "fril",
+      "chitoroshop",
       "vintage",
       "goat",
       "stop2shop",
@@ -102,6 +114,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "stop2shop",
       "coleka",
       "cardgameclub",
+      "primegame",
       "ebay",
       "leboncoin",
       "mercari",
@@ -117,11 +130,14 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "carddas-b",
       "zabuza",
       "slabz",
+      "chitoroshop",
+      "rakuten",
       "legacy",
       "fanset",
     ],
     it: [
       "cardgameclub",
+      "primegame",
       "coleka",
       "ebay",
       "leboncoin",
@@ -142,12 +158,15 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "carddas-b",
       "zabuza",
       "slabz",
+      "chitoroshop",
+      "rakuten",
       "legacy",
       "fanset",
     ],
     ja: [
       // Devant nikita, dont les vignettes plafonnent à 340×500.
       "slabz",
+      "chitoroshop",
       "nikita",
       "suruga",
       "avalon",
@@ -164,10 +183,12 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "stop2shop",
       "coleka",
       "cardgameclub",
+      "primegame",
       "ebay",
       "leboncoin",
       "mercari",
       "yahoo",
+      "rakuten",
       "legacy",
       "fanset",
     ],

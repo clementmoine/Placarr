@@ -35,7 +35,7 @@ import {
   narutoCardRelPath,
   normalizeNarutoLang,
 } from "./narutoCardPath";
-import { NARUTO_EN_PACK_ID, NARUTO_PACK_ID } from "./packs";
+import { NARUTO_EN_PACK_ID, NARUTO_PACK_ID, narutoCatalogueLineForCard } from "./packs";
 
 function physicalPackDir(packId: string): string {
   return path.join(dataRoot(), packId);
@@ -354,6 +354,15 @@ export function upsertNarutoAppearances(
     }
   }
   for (const row of rows) {
+    const set = row.appearanceSet.trim().toLowerCase();
+    const lang = row.lang.trim().toLowerCase();
+    if (
+      lang === "fr" &&
+      /^s[1-6]$/.test(set) &&
+      narutoCatalogueLineForCard(row.diskId, set) === "en-ccg"
+    ) {
+      continue;
+    }
     const langs = appearances[row.diskId] ?? {};
     langs[row.lang] = appearanceValueForJson(
       mergeAppearanceValues(langs[row.lang], row.appearanceSet),

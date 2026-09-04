@@ -2,7 +2,7 @@
  * Install Suruga-ya JP Carddass tabletop scans into `cards/{family}/{ni0001}/ja/`.
  * Cloudflare sits on search HTML; CDN JPEGs do not. Skip Data Carddass.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -25,6 +25,7 @@ import {
   SURUGA_CARDDASS_ORIGIN,
   SURUGA_CARDDASS_SEARCH,
   surugaCarddassFaceUrl,
+  surugaJaNamesFromResolvedRows,
   type SurugaCarddassCard,
 } from "../parse/parseSurugaCarddass";
 import { loadSurugaVol1ProbeListings } from "../probeSurugaVol1Listings";
@@ -55,6 +56,31 @@ const sleep = (ms: number) =>
 
 function packRoot(dataDir?: string): string {
   return path.join(dataDir ?? dataRoot(), NARUTO_PACK_ID);
+}
+
+export function loadSurugaResolvedJaNames(
+  root?: string,
+): { diskHint: string; name: string }[] {
+  /*
+    Same contract as hinokunianFactsPath: `root` is the pack dir when the
+    catalogue rebuild passes it. Do not join NARUTO_PACK_ID again.
+  */
+  const pack = root ?? path.join(dataRoot(), NARUTO_PACK_ID);
+  const file = path.join(
+    pack,
+    NARUTO_STAGING_SURUGA_CARDDASS,
+    "resolved-titles.json",
+  );
+  if (!existsSync(file)) return [];
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as unknown;
+    if (!Array.isArray(raw)) return [];
+    return surugaJaNamesFromResolvedRows(
+      raw as Array<{ title?: string | null; printed?: string | null }>,
+    );
+  } catch {
+    return [];
+  }
 }
 
 async function mapPool<T>(

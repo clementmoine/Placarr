@@ -19,6 +19,7 @@ import {
 import { narutoCuratedSourcesDir } from "../curatedPaths";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { cardTypeFromCollectorNumber } from "../parse/parseBandaicgAsset";
+import { belongsOnNarutoPromoChecklist } from "./confirmedCarddassTournamentPromos";
 
 export type AttestedPromoSource = {
   id: string;
@@ -120,6 +121,10 @@ export function mergeAttestedPromos(input: {
     if (!printKey) continue;
     const raw = row.diskCardId?.trim() || row.number.trim();
     const number = narutoDiskCardId(raw, "promo") ?? raw.toLowerCase();
+    // Refuse S6 insert twins and other non-checklist minting.
+    if (!belongsOnNarutoPromoChecklist(number) && !belongsOnNarutoPromoChecklist(raw)) {
+      continue;
+    }
     const grouping =
       groupingFromDiskCardId(row.number.trim().toLowerCase(), row.diskCardId) ??
       parseNarutoCollector(number)?.grouping ??

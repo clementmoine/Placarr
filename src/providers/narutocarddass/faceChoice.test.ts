@@ -185,6 +185,28 @@ describe("pickBestNarutoDumpFace", () => {
     ).toBe("carddass");
   });
 
+  it("lets a larger Rakuten NOPAD beat a watermarked carddass raw on FR", () => {
+    expect(
+      pickBestNarutoDumpFace(
+        [
+          {
+            source: "carddass",
+            file: "art.carddass.jpg",
+            width: 350,
+            height: 496,
+          },
+          {
+            source: "rakuten",
+            file: "art.rakuten.jpg",
+            width: 517,
+            height: 740,
+          },
+        ],
+        "fr",
+      ),
+    ).toBe("rakuten");
+  });
+
   it("still uses Coleka on FR when no publisher scan is held", () => {
     expect(
       pickBestNarutoDumpFace(

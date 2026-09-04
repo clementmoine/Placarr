@@ -1,6 +1,6 @@
 import { buildPrintKey } from "@/core/identify/printKey";
 
-import { canonicalizeKayouNumber } from "./kayouIdNormalize";
+import { canonicalizeKayouNumber, canonicalizeKayouNumberForSet } from "./kayouIdNormalize";
 import { NARUTO_KAYOU_PRINT_GAME } from "./pack";
 
 /** `kayou:t1w1-nr.r.001` — points à la place des tirets du code imprimé. */
@@ -8,7 +8,7 @@ export function kayouPrintKey(setCode: string, number: string): string | null {
   return buildPrintKey({
     game: NARUTO_KAYOU_PRINT_GAME,
     set: setCode,
-    number: canonicalizeKayouNumber(number),
+    number: canonicalizeKayouNumberForSet(setCode, number),
   });
 }
 

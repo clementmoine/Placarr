@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
+import type { NarutoAssetRow, NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import {
   isColekaPlaceholderName,
+  fillNarutoTitlesFromSiblingLocales,
   mergeBrasilUsExclusivesIntoIndex,
   mergeChecklistFrNamesIntoIndex,
   mergeColekaFrNamesIntoIndex,
   mergeCardgameclubItRarities,
   mergeFoundCatalogueLedgers,
   mergeHinokunianJaNamesIntoIndex,
+  copyNarutoTitlesOntoGroupedPrints,
   mergeTitleCorrections,
   mergeSlabZJaNamesIntoIndex,
   mergeUserPhysicalCcgIntoIndex,
@@ -275,6 +277,157 @@ describe("mergeHinokunianJaNamesIntoIndex", () => {
     });
     expect(merged.prints).toHaveLength(2);
     expect(merged.titled).toEqual([]);
+  });
+});
+
+describe("fillNarutoTitlesFromSiblingLocales", () => {
+  it("does not copy JA onto an IT tile that only has art", () => {
+    const merged = fillNarutoTitlesFromSiblingLocales({
+      prints: [ni001],
+      titles: [
+        {
+          printKey: "naruto:ni-0001",
+          lang: "ja",
+          fullName: "うずまきナルト",
+        },
+      ],
+      assets: [
+        {
+          printKey: "naruto:ni-0001",
+          lang: "it",
+          art: "art.coleka.webp",
+        },
+      ],
+    });
+    expect(
+      merged.titles.find(
+        (t) => t.printKey === "naruto:ni-0001" && t.lang === "it",
+      ),
+    ).toBeUndefined();
+    expect(merged.titled).toEqual([]);
+  });
+
+  it("does not copy EN onto a FR tile that only has art", () => {
+    const merged = fillNarutoTitlesFromSiblingLocales({
+      prints: [n1650],
+      titles: [
+        {
+          printKey: "naruto:n-1650",
+          lang: "en",
+          fullName: "Naruto Uzumaki",
+        },
+      ],
+      assets: [
+        {
+          printKey: "naruto:n-1650",
+          lang: "fr",
+          art: "art.coleka.webp",
+        },
+      ],
+    });
+    expect(
+      merged.titles.find(
+        (t) => t.printKey === "naruto:n-1650" && t.lang === "fr",
+      ),
+    ).toBeUndefined();
+    expect(merged.titled).toEqual([]);
+  });
+});
+
+describe("copyNarutoTitlesOntoGroupedPrints", () => {
+  it("copies the retail EN name onto the tourney promo stamp", () => {
+    const merged = copyNarutoTitlesOntoGroupedPrints({
+      prints: [
+        {
+          printKey: "naruto:n-0086",
+          setCode: "s1",
+          number: "n0086",
+          cardType: "n",
+          family: "ninja",
+        },
+        {
+          printKey: "naruto:n-0086-promo",
+          setCode: "promo",
+          number: "n0086-promo",
+          cardType: "n",
+          family: "ninja",
+          grouping: "promo",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:n-0086",
+          lang: "en",
+          fullName: "Sasuke Uchiha",
+        },
+      ],
+    });
+    expect(
+      merged.titles.find((t) => t.printKey === "naruto:n-0086-promo"),
+    ).toMatchObject({ lang: "en", fullName: "Sasuke Uchiha" });
+  });
+
+  it("does not copy the retail FR name onto a PS1 bonus with its own art", () => {
+    const merged = copyNarutoTitlesOntoGroupedPrints({
+      prints: [
+        {
+          printKey: "naruto:ni-0001",
+          setCode: "s1",
+          number: "ni0001",
+          cardType: "ni",
+          family: "ninja",
+        },
+        {
+          printKey: "naruto:ni-0001-ps",
+          setCode: "promo",
+          number: "ni0001-ps",
+          cardType: "ni",
+          family: "ninja",
+          grouping: "ps",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:ni-0001",
+          lang: "fr",
+          fullName: "Naruto Uzumaki",
+        },
+      ],
+    });
+    expect(
+      merged.titles.find((t) => t.printKey === "naruto:ni-0001-ps"),
+    ).toBeUndefined();
+  });
+
+  it("does not copy a Carddass NI name onto an EN CCG N print", () => {
+    const merged = copyNarutoTitlesOntoGroupedPrints({
+      prints: [
+        {
+          printKey: "naruto:ni-0086",
+          setCode: "s1",
+          number: "ni0086",
+          cardType: "ni",
+          family: "ninja",
+        },
+        {
+          printKey: "naruto:n-0086",
+          setCode: "s1",
+          number: "n0086",
+          cardType: "n",
+          family: "ninja",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:ni-0086",
+          lang: "fr",
+          fullName: "Sasuke Uchiwa",
+        },
+      ],
+    });
+    expect(
+      merged.titles.find((t) => t.printKey === "naruto:n-0086"),
+    ).toBeUndefined();
   });
 });
 

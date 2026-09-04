@@ -23,6 +23,8 @@ export type LocalPrintSearchRow = {
   number: string;
   cardType: string;
   grouping: string | null;
+  /** Card type label when the catalogue has one (OPTCG Leader / Event / …). */
+  category: string | null;
   lang: string;
   fullName: string | null;
   rarity: string | null;
@@ -47,6 +49,8 @@ export type LocalPrintWrite = {
   number: string;
   cardType: string;
   grouping?: string | null;
+  /** Card type when known (OPTCG Leader / Character / Event / Stage). */
+  category?: string | null;
   sourceUrl?: string | null;
   titles: readonly {
     lang: string;
@@ -103,7 +107,7 @@ export type LocalPrintsIndex = {
 };
 
 const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
-              p.card_type AS cardType, p.grouping,
+              p.card_type AS cardType, p.grouping, p.category,
               t.lang, t.full_name AS fullName, t.rarity,
               a.art, a.thumb, a.back
          FROM prints p
@@ -132,6 +136,27 @@ const SELECT_ORPHAN_ASSETS = `SELECT a.print_key AS printKey, p.card_type AS car
               SELECT 1 FROM print_titles t
                WHERE t.print_key = a.print_key AND t.lang = a.lang)`;
 
+const ADDED_PRINT_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
+  { name: "category", ddl: "TEXT" },
+];
+
+/** Add columns that older pack DBs may lack (`CREATE IF NOT EXISTS` is a no-op). */
+export function migrateLocalPrintsSchema(db: DatabaseSync): void {
+  const tables = db
+    .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'prints'`)
+    .all() as { name: string }[];
+  if (tables.length === 0) return;
+  const present = new Set(
+    (db.prepare(`PRAGMA table_info(prints)`).all() as { name: string }[]).map(
+      (row) => row.name,
+    ),
+  );
+  for (const column of ADDED_PRINT_COLUMNS) {
+    if (present.has(column.name)) continue;
+    db.exec(`ALTER TABLE prints ADD COLUMN ${column.name} ${column.ddl}`);
+  }
+}
+
 export function createPrintsSchema(db: DatabaseSync): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS prints (
@@ -140,7 +165,8 @@ export function createPrintsSchema(db: DatabaseSync): void {
       number TEXT NOT NULL,
       card_type TEXT NOT NULL,
       grouping TEXT,
-      source_url TEXT
+      source_url TEXT,
+      category TEXT
     );
 
     CREATE TABLE IF NOT EXISTS print_titles (
@@ -166,6 +192,7 @@ export function createPrintsSchema(db: DatabaseSync): void {
 
     CREATE INDEX IF NOT EXISTS idx_prints_set ON prints(set_code);
   `);
+  migrateLocalPrintsSchema(db);
 }
 
 export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
@@ -188,6 +215,17 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     const file = dbPath();
     if (!existsSync(file)) return null;
     if (activeDb && activePath === file) return activeDb;
+    // Writable pass first: older pack DBs may lack `category` and SELECT would fail.
+    try {
+      const writable = new DatabaseSync(file);
+      try {
+        migrateLocalPrintsSchema(writable);
+      } finally {
+        writable.close();
+      }
+    } catch {
+      // Unreadable / locked — read-only open may still work on a fresh schema.
+    }
     const db = new DatabaseSync(file, { readOnly: true });
     activeDb = db;
     activePath = file;
@@ -271,7 +309,8 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       if (orphan) {
         const print = db
           .prepare(
-            `SELECT set_code AS setCode, number, card_type AS cardType, grouping
+            `SELECT set_code AS setCode, number, card_type AS cardType, grouping,
+                    category
                FROM prints WHERE print_key = ? LIMIT 1`,
           )
           .get(key) as
@@ -280,6 +319,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
               number: string;
               cardType: string;
               grouping: string | null;
+              category: string | null;
             }
           | undefined;
         if (!print) return null;
@@ -289,6 +329,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
           number: print.number,
           cardType: print.cardType,
           grouping: print.grouping,
+          category: print.category,
           lang,
           fullName: null,
           rarity: null,
@@ -377,14 +418,15 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     let titles = 0;
     try {
       const insertPrint = db.prepare(
-        `INSERT INTO prints (print_key, set_code, number, card_type, grouping, source_url)
-         VALUES (?, ?, ?, ?, ?, ?)
+        `INSERT INTO prints (print_key, set_code, number, card_type, grouping, source_url, category)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(print_key) DO UPDATE SET
            set_code = excluded.set_code,
            number = excluded.number,
            card_type = excluded.card_type,
            grouping = excluded.grouping,
-           source_url = excluded.source_url`,
+           source_url = excluded.source_url,
+           category = COALESCE(excluded.category, prints.category)`,
       );
       const insertTitle = db.prepare(
         `INSERT INTO print_titles (print_key, lang, full_name, rarity)
@@ -403,6 +445,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
             row.cardType,
             row.grouping ?? null,
             row.sourceUrl ?? null,
+            row.category?.trim() || null,
           );
           for (const title of row.titles) {
             const name = title.fullName.trim();

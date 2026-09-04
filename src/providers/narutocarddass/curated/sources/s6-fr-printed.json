@@ -1,0 +1,94 @@
+{
+  "source": "Forum t1185 (2008) + checklists S5 absentes + Victor FB DVD vol. 15 + Ultrajeux S5 holes",
+  "note": "Le retail S6 FR (starters Le Duel / Quartet, boosters) n'est jamais sorti. Des cartes au numéro S6 / au stamp BANDAI 2008 MADE IN JAPAN ont quand même été imprimées : inserts manga Kana tomes 1–15 et canal DVD. Ne pas y verser la branche Coleka serie-06 entière (noms IT, Rivalità Eterna).",
+  "retailFr": false,
+  "cards": [
+    {
+      "number": "ta221",
+      "name": "Devenir Chef",
+      "channel": "kana-manga-blister",
+      "tome": 1,
+      "confidence": "forum-t1185",
+      "imprint": "BANDAI 2008 MADE IN JAPAN"
+    },
+    {
+      "number": "ni236",
+      "name": "Sasuke",
+      "channel": "kana-manga-blister + kana-dvd-naruto-vol15",
+      "tome": 2,
+      "confidence": "forum-t1185 + victor-dvd-vol15",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Conflit canal encore ouvert : t1185 tome 2 vs coffret DVD vol. 15. Carte physique attestée dans les deux récits."
+    },
+    {
+      "number": "ni253",
+      "name": "Tayuya",
+      "channel": "kana-manga-blister",
+      "tome": 6,
+      "confidence": "forum-t1185",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Erratum papier 3/1 + 1/3 au lieu de 3/3 (t1185)."
+    },
+    {
+      "number": "ni252",
+      "name": "Sakon",
+      "channel": "kana-manga-blister",
+      "tome": 7,
+      "confidence": "forum-t1185",
+      "imprint": "BANDAI 2008 MADE IN JAPAN"
+    },
+    {
+      "number": "ni232",
+      "name": "Shikamaru",
+      "channel": "kana-manga-blister + packshot-dvd-vol15",
+      "tome": 10,
+      "confidence": "forum-t1185 + packshot-vol15",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Packshot vol. 15 empilé : visible, insert ouvert non confirmé."
+    },
+    {
+      "number": "ta226",
+      "name": "Pouvoir de la marque maléfique",
+      "channel": "kana-manga-blister",
+      "tome": 14,
+      "confidence": "forum-t1185",
+      "imprint": "BANDAI 2008 MADE IN JAPAN"
+    }
+  ],
+  "kanaBlisterS5Reprints": [
+    { "tome": 3, "number": "ni206", "name": "Sakura et Ino", "note": "Déjà S5 retail — pas une membership S6." },
+    { "tome": 4, "number": "te192", "name": "Pichenette" },
+    { "tome": 5, "number": "ta214", "name": "Promesse Eternelle" },
+    { "tome": 8, "number": "te205", "name": "Dédoublement" },
+    { "tome": 9, "number": "ta219", "name": "Tentative désespérée" },
+    { "tome": 11, "number": "ni239", "name": "Chôji Akimichi" },
+    { "tome": 13, "number": "ta227", "name": "Jeu de hasard" },
+    { "tome": 15, "number": "te207", "name": "Soin typique" }
+  ],
+  "notS6": [
+    {
+      "number": "te191",
+      "name": "Les lames de chakra",
+      "reason": "IT cardgameclub = S4 TE-191 « Tirapugni a lama ». Trou PDF checklist FR S4 (après TE-189), pas t1185. Absent Ultrajeux serie_5. Ne pas ranger en S6 FR sans lecture d'imprint 2008 sur carton."
+    }
+  ],
+  "open": [
+    {
+      "id": "tome-12",
+      "name": "Neji Hyûga (Rare)",
+      "note": "t1185 — nom clos, numéro imprimé encore TBD."
+    },
+    {
+      "id": "7th-inedite",
+      "note": "t1185 parle de 7 inédites ; 6 identifiées (★). Liste tronquée dans les extraits récupérés."
+    },
+    {
+      "id": "shippuden-dvd-commons",
+      "note": "Victor FB : communes S6 MIJ dos bleu via coffret Shippuden — numéros non lus. Ne pas minter."
+    },
+    {
+      "id": "coffret-tsunade-mij",
+      "note": "Victor réception : coffret Tsunade MIJ S6 distinct du vol. 15 — EAN + table cartes TBD."
+    }
+  ]
+}

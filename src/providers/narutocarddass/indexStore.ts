@@ -19,12 +19,18 @@ import { canonicalDataPack } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { appearanceSetsOf } from "./appearanceSets";
-import { canonicalizeNarutoPrintKey } from "./collectorIdentity";
+import {
+  canonicalizeNarutoPrintKey,
+  isJpOnlyNarutoArtwork,
+} from "./collectorIdentity";
 import { foldNarutoCatalogueRecords } from "./foldNarutoIndex";
+import { fillNarutoTitlesFromSiblingLocales } from "./mergeAttestedLedgers";
 import { narutoEditorialLandscapePrints } from "./printOrientation";
 import { NARUTO_EN_PACK_ID, NARUTO_PACK_ID } from "./packs";
 import { NARUTO_GAME } from "./parse/parseCarddassAsset";
 import { isNarutoLangPrinted } from "./printed";
+import { belongsOnNarutoPromoChecklist } from "./sources/confirmedCarddassTournamentPromos";
+import { isNarutoS6FrPrintedNumber } from "./sources/s6FrPrinted";
 
 export const NARUTO_CCG_SCHEMA_VERSION = "3";
 export { NARUTO_EN_PACK_ID, NARUTO_PACK_ID };
@@ -51,6 +57,10 @@ export type NarutoTitleRow = {
   lang: string;
   fullName: string;
   rarity?: string | null;
+  /** Cross-locale fill — see `CardsIndexLangFiles.nameLocaleFrom`. */
+  nameLocaleFrom?: string | null;
+  /** Slug / heuristic fill — see `CardsIndexLangFiles.nameSource`. */
+  nameSource?: string | null;
 };
 
 export type NarutoAssetRow = {
@@ -174,9 +184,14 @@ export function writeNarutoCcgIndex(input: {
     }
   }
 
-  const folded = foldNarutoCatalogueRecords({
+  const siblingFilled = fillNarutoTitlesFromSiblingLocales({
     prints: input.prints,
-    titles: input.titles,
+    titles: input.titles ?? [],
+    assets: input.assets,
+  });
+  const folded = foldNarutoCatalogueRecords({
+    prints: siblingFilled.prints,
+    titles: siblingFilled.titles,
     assets: input.assets,
   });
 
@@ -240,9 +255,20 @@ export function writeNarutoCcgIndex(input: {
         p.grouping ?? null,
         p.sourceUrl ?? null,
       );
-      const membership = appearanceSetsOf(
+      let membership = appearanceSetsOf(
         p.setCodes?.length ? p.setCodes : [p.setCode],
-      ).filter((set) => !/^maki\d+$/i.test(set));
+      ).filter((set) => {
+        if (/^maki\d+$/i.test(set)) return false;
+        if (set === "promo" && !belongsOnNarutoPromoChecklist(p.number))
+          return false;
+        return true;
+      });
+      if (
+        isNarutoS6FrPrintedNumber(p.number) &&
+        !membership.includes("s6")
+      ) {
+        membership = [...membership, "s6"];
+      }
       for (const set of membership) {
         insertPrintSet.run(p.printKey, set);
       }
@@ -268,6 +294,7 @@ export function writeNarutoCcgIndex(input: {
       );
     }
     for (const t of folded.titles) {
+      if (t.nameLocaleFrom?.trim()) continue;
       insertTitle.run(t.printKey, t.lang, t.fullName, t.rarity ?? null);
     }
     for (const a of folded.assets) {
@@ -306,7 +333,16 @@ export function exportNarutoCardsIndexJson(
   titles?: NarutoTitleRow[],
   pack: string = NARUTO_PACK_ID,
 ): CardsIndexV1 {
-  const folded = foldNarutoCatalogueRecords({ prints, titles, assets });
+  const siblingFilled = fillNarutoTitlesFromSiblingLocales({
+    prints,
+    titles: titles ?? [],
+    assets,
+  });
+  const folded = foldNarutoCatalogueRecords({
+    prints: siblingFilled.prints,
+    titles: siblingFilled.titles,
+    assets,
+  });
   const index: CardsIndexV1 = {
     version: 1,
     pack,
@@ -322,8 +358,14 @@ export function exportNarutoCardsIndexJson(
   }
 
   for (const p of folded.prints) {
-    const printTitles = titlesByPrint.get(p.printKey) ?? [];
+    const jaOnly = isJpOnlyNarutoArtwork(p.number);
+    const printTitles = (titlesByPrint.get(p.printKey) ?? []).filter(
+      (t) => !jaOnly || t.lang.toLowerCase() === "ja",
+    );
     const preferred =
+      (jaOnly
+        ? printTitles.find((t) => t.lang.toLowerCase() === "ja")
+        : null) ??
       printTitles.find((t) => t.lang.toLowerCase() === "fr") ??
       printTitles.find((t) => t.lang.toLowerCase() === "en") ??
       printTitles[0];
@@ -348,7 +390,8 @@ export function exportNarutoCardsIndexJson(
     for (const t of printTitles) {
       const code = t.lang.toLowerCase();
       const slot = entry.langs[code] ?? {};
-      if (t.fullName) slot.name = t.fullName;
+      if (t.fullName && !t.nameLocaleFrom?.trim()) slot.name = t.fullName;
+      if (t.nameSource?.trim()) slot.nameSource = t.nameSource.trim();
       if (code === "ja" && japaneseSet) slot.set = japaneseSet;
       if (isNarutoLangPrinted(p.setCode, code) === false) slot.printed = false;
       entry.langs[code] = slot;

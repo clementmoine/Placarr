@@ -1,17 +1,19 @@
-import { describe, expect, it } from "vitest";
-import { mkdirSync, writeFileSync } from "node:fs";
-import path from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { narutoKayouEffectPack } from "@/effects/narutokayou";
 
 import { stampKayouBack } from "./kayouBack";
 import { kayouBackTierSlug } from "./kayouBackTier";
 import {
+  __setKayouOfficialCardBackManifestForTests,
   buildKayouOfficialCardBackManifest,
   resetKayouOfficialCardBackManifestCache,
 } from "./kayouOfficialCardBacks";
 import { narutokayouModule } from "./index";
-import { narutoKayouCuratedDir } from "./pack";
+
+afterEach(() => {
+  resetKayouOfficialCardBackManifestCache();
+});
 
 describe("narutokayou provider hooks", () => {
   it("declares a Kayou local catalogue surface", () => {
@@ -64,24 +66,19 @@ describe("narutokayou provider hooks", () => {
 
 describe("narutokayou tier backs", () => {
   it("prefers per-card official back over tier sleeve", () => {
-    const manifest = buildKayouOfficialCardBackManifest(
-      [
-        {
-          idCode: "NREA02-UR-015L3",
-          url: "https://cdn/b.png",
-          seriesId: "series-8idoe481",
-          rarity: "UR",
-        },
-      ],
-      { observed: "2026-08-28", seriesIds: ["series-8idoe481"] },
+    __setKayouOfficialCardBackManifestForTests(
+      buildKayouOfficialCardBackManifest(
+        [
+          {
+            idCode: "NREA02-UR-015L3",
+            url: "https://cdn/b.png",
+            seriesId: "series-8idoe481",
+            rarity: "UR",
+          },
+        ],
+        { observed: "2026-08-28", seriesIds: ["series-8idoe481"] },
+      ),
     );
-    const dir = path.join(narutoKayouCuratedDir(), "sources");
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(
-      path.join(dir, "kayou-official-card-backs.json"),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-    );
-    resetKayouOfficialCardBackManifestCache();
 
     const stamped = stampKayouBack({
       printKey: "kayou:test",
@@ -99,13 +96,12 @@ describe("narutokayou tier backs", () => {
   });
 
   it("maps rarity to back.<tier> asset URL when no per-card back", () => {
-    const dir = path.join(narutoKayouCuratedDir(), "sources");
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(
-      path.join(dir, "kayou-official-card-backs.json"),
-      `${JSON.stringify({ source: "", observed: "", cards: {}, suffix: {} }, null, 2)}\n`,
-    );
-    resetKayouOfficialCardBackManifestCache();
+    __setKayouOfficialCardBackManifestForTests({
+      source: "",
+      observed: "",
+      cards: {},
+      suffix: {},
+    });
     const stamped = stampKayouBack({
       printKey: "kayou:test",
       title: "Test",

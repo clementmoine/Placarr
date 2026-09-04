@@ -43,6 +43,22 @@ describe("rebuildPokemonCardsIndex", () => {
     });
   });
 
+  it("prefers live art.webp over art.coleka in the index", () => {
+    const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-poke-index-mc-"));
+    process.env.PLACARR_DATA_DIR = tmp;
+    const cardDir = path.join(tmp, "pokemon", "cards", "2023sv", "fr", "004");
+    mkdirSync(cardDir, { recursive: true });
+    writeFileSync(path.join(cardDir, "art.coleka.webp"), "coleka");
+    writeFileSync(path.join(cardDir, "art.webp"), "live");
+
+    const result = rebuildPokemonCardsIndex();
+    expect(result.cards).toBe(1);
+    const raw = JSON.parse(readFileSync(result.path, "utf8")) as {
+      cards: Record<string, { langs: Record<string, { art?: string }> }>;
+    };
+    expect(raw.cards["2023sv_fr_004"]?.langs.fr?.art).toBe("art.webp");
+  });
+
   it("soft-skips when cards/ is missing", () => {
     const tmp = mkdtempSync(
       path.join(os.tmpdir(), "placarr-poke-index-empty-"),

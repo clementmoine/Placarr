@@ -65,6 +65,7 @@ describe("parsePunkRecordsCardsById", () => {
             card_id: "OP01-001",
             name: "Monkey D. Luffy",
             rarity: "Leader",
+            category: "Leader",
             img_url: "https://fr.example/OP01-001.webp",
           },
         }),
@@ -76,6 +77,7 @@ describe("parsePunkRecordsCardsById", () => {
             card_id: "OP01-001",
             name: "Monkey D. Luffy",
             rarity: "Leader",
+            category: "Leader",
             img_url: "https://en.example/OP01-001.webp",
           },
         }),
@@ -83,6 +85,33 @@ describe("parsePunkRecordsCardsById", () => {
     ]);
     expect(writes).toHaveLength(1);
     expect(writes[0]!.printKey).toBe("onepiece:op01-001");
+    expect(writes[0]!.category).toBe("Leader");
     expect(writes[0]!.titles.map((t) => t.lang).sort()).toEqual(["en", "fr"]);
+  });
+
+  it("conserve Event / Stage sur le write", () => {
+    const writes = buildOnepiecePrintWrites([
+      {
+        lang: "fr",
+        cards: parsePunkRecordsCardsById({
+          "EB01-009_p1": {
+            card_id: "EB01-009_p1",
+            name: "Event",
+            rarity: "Common",
+            category: "Event",
+          },
+          "OP01-050": {
+            card_id: "OP01-050",
+            name: "Stage",
+            rarity: "Common",
+            category: "Stage",
+          },
+        }),
+      },
+    ]);
+    expect(writes.map((w) => [w.printKey, w.category])).toEqual([
+      ["onepiece:eb01-009-p1", "Event"],
+      ["onepiece:op01-050", "Stage"],
+    ]);
   });
 });

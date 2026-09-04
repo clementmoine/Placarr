@@ -52,7 +52,25 @@ describe("parseCarddasJpCardlistHtml", () => {
 describe("carddasJpCardlistCards", () => {
   it("ships the official 巻ノ壱…十七 titles, not Data Carddass", () => {
     const cards = carddasJpCardlistCards();
-    expect(cards.length).toBe(998);
+    expect(cards.length).toBe(1004);
+    expect(cards.find((row) => row.number === "ni0393")?.name).toBe(
+      "うずまきナルト",
+    );
+    expect(cards.find((row) => row.number === "ni0394")?.name).toBe(
+      "はたけカカシ",
+    );
+    expect(cards.find((row) => row.number === "ni0395")?.name).toBe(
+      "ロック・リー",
+    );
+    expect(cards.find((row) => row.number === "ni0396")?.name).toBe(
+      "春野サクラ",
+    );
+    expect(cards.find((row) => row.number === "ta0322")?.name).toBe(
+      "熱血指導",
+    );
+    expect(cards.find((row) => row.number === "cl0043")?.name).toBe(
+      "ツキ・ヒカル",
+    );
     expect(cards[0]).toMatchObject({
       printed: "忍-1",
       number: "ni0001",

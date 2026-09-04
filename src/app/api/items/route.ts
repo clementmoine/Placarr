@@ -208,6 +208,7 @@ export async function GET(req: NextRequest) {
                   id: item.id,
                   name: item.name,
                   barcode: item.barcode,
+                  printKey: item.printKey,
                   metadataId: item.metadataId,
                   metadataRefreshStartedAt: item.metadataRefreshStartedAt,
                   metadata: presented.metadata as MetadataResult | null,

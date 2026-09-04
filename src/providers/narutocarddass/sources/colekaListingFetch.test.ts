@@ -45,4 +45,17 @@ describe("fetchColekaListingHtml", () => {
     expect(html).toBe(LISTING);
     expect(fetchTextWithFlareFallback).not.toHaveBeenCalled();
   });
+
+  it("falls back to a good cached page when a refetch hits the verify wall", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "coleka-listing-"));
+    const dest = path.join(dir, "s1-listing-1.html");
+    writeFileSync(dest, LISTING, "utf8");
+    vi.mocked(fetchTextWithFlareFallback).mockResolvedValue(WALL);
+    const html = await fetchColekaListingHtml(
+      "https://www.coleka.com/x?p=1",
+      dest,
+      true,
+    );
+    expect(html).toBe(LISTING);
+  });
 });

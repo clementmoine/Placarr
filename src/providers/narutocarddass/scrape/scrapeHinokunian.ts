@@ -113,9 +113,8 @@ async function fetchPage(url: string, delayMs: number): Promise<string | null> {
  * son numéro. Le premier nom rencontré gagne : ils concordent, et prendre le
  * dernier ferait dépendre le résultat de l'ordre des pages.
  *
- * Les cartes de borne (`DN`, `DT`) restent dans la liste : elles ne
- * correspondent à aucun tirage aujourd'hui et ne nomment donc rien, mais le
- * jour où la ligne arcade sera frappée, leurs noms seront déjà là.
+ * Les cartes de borne (`DN`, `DT`) ne passent plus `narutoDiskCardId` :
+ * Data Carddass a son provider (`narutodatacarddass`).
  */
 export function hinokunianJaNames(
   root?: string,

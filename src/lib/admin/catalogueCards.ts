@@ -34,9 +34,11 @@ import {
   compareNarutoCollectors,
   compareNarutoLangs,
   formatNarutoReference,
+  isJpOnlyNarutoArtwork,
   narutoCollectorNumberKey,
 } from "@/providers/narutocarddass/collectorIdentity";
 import { foldNarutoCardsIndex } from "@/providers/narutocarddass/foldNarutoIndex";
+import { parsePrintKey } from "@/core/identify/printKey";
 import {
   orientationFromIndexSlot,
   printIsLandscapeCard,
@@ -51,7 +53,58 @@ export type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 
 const NARUTO_UNIFIED_PACKS: readonly CataloguePackId[] = ["naruto/carddass"];
 
-/** `ni024` / `n024` / `TE-030-cdf` → `ni:0024` / `n:0024` / `te:0030`. */
+/** Disk folder under `cards/{set}/{lang}/` — includes printKey grouping (`0120-a`). */
+export function catalogueDiskCard(
+  pack: CataloguePackId,
+  printKey: string,
+  entry: Pick<CardsIndexEntry, "card">,
+): string {
+  // Carddass disk ids already embed the collector (`ni0001-ps`); don't double up.
+  if (cataloguePackInfo(pack)?.narutoCollectorDisk) return entry.card;
+  const grouping = parsePrintKey(printKey)?.grouping?.trim().toLowerCase();
+  if (grouping) return `${entry.card}-${grouping}`;
+  return entry.card;
+}
+
+function langSlotHasContent(files: CardsIndexLangFiles | undefined): boolean {
+  if (!files) return false;
+  return Boolean(
+    files.name?.trim() ||
+      files.art?.trim() ||
+      files.thumb?.trim() ||
+      files.artUrl?.trim() ||
+      files.back?.trim(),
+  );
+}
+
+function pickLang(
+  entry: CardsIndexEntry,
+  prefer: string | undefined,
+): { lang: string; files: CardsIndexLangFiles } | null {
+  const langs = Object.entries(entry.langs).filter(([, files]) =>
+    langSlotHasContent(files),
+  );
+  if (langs.length === 0) {
+    // Empty shells only — keep a stub so missing-art audits still see the print.
+    const all = Object.entries(entry.langs);
+    if (all.length === 0) return null;
+    if (prefer) {
+      const hit = all.find(([lang]) => lang.toLowerCase() === prefer);
+      if (hit) return { lang: hit[0], files: hit[1]! };
+    }
+    return { lang: all[0]![0], files: all[0]![1]! };
+  }
+  if (prefer) {
+    const hit = langs.find(([lang]) => lang.toLowerCase() === prefer);
+    if (hit) return { lang: hit[0], files: hit[1]! };
+  }
+  const fr = langs.find(([lang]) => lang.toLowerCase() === "fr");
+  if (fr) return { lang: fr[0], files: fr[1]! };
+  const en = langs.find(([lang]) => lang.toLowerCase() === "en");
+  if (en) return { lang: en[0], files: en[1]! };
+  const first = langs[0]!;
+  return { lang: first[0], files: first[1]! };
+}
 export function catalogueCollectorKey(card: string): string {
   return narutoCollectorNumberKey(card) ?? card.trim().toLowerCase();
 }
@@ -112,11 +165,14 @@ export function packFaceAssetUrl(
   id: { set: string; lang: string; card: string },
   file: string,
 ): string {
-  const naruto = narutoCardPathFromCollector(id.card, id.lang);
-  if (naruto) {
-    return narutoAssetsCardUrl(catalogueCorpusPack(pack), naruto, file);
+  const corpus = catalogueCorpusPack(pack);
+  if (cataloguePackInfo(pack)?.narutoCollectorDisk) {
+    const naruto = narutoCardPathFromCollector(id.card, id.lang);
+    if (naruto) {
+      return narutoAssetsCardUrl(corpus, naruto, file);
+    }
   }
-  return assetsCardUrl(catalogueCorpusPack(pack), id, file);
+  return assetsCardUrl(corpus, id, file);
 }
 
 export function langFilesHaveFoil(files: CardsIndexLangFiles): boolean {
@@ -142,24 +198,6 @@ export function entryHasFoil(entry: CardsIndexEntry): boolean {
   return false;
 }
 
-function pickLang(
-  entry: CardsIndexEntry,
-  prefer: string | undefined,
-): { lang: string; files: CardsIndexLangFiles } | null {
-  const langs = Object.entries(entry.langs);
-  if (langs.length === 0) return null;
-  if (prefer) {
-    const hit = langs.find(([lang]) => lang.toLowerCase() === prefer);
-    if (hit) return { lang: hit[0], files: hit[1]! };
-  }
-  const fr = langs.find(([lang]) => lang.toLowerCase() === "fr");
-  if (fr) return { lang: fr[0], files: fr[1]! };
-  const en = langs.find(([lang]) => lang.toLowerCase() === "en");
-  if (en) return { lang: en[0], files: en[1]! };
-  const first = langs[0]!;
-  return { lang: first[0], files: first[1]! };
-}
-
 function artFile(files: CardsIndexLangFiles): string | null {
   // Prefer errata / corrected face when both filenames are somehow listed.
   if (files.art && /\.corrected\./i.test(files.art)) return files.art;
@@ -173,25 +211,37 @@ function remoteArtUrl(files: CardsIndexLangFiles): string | null {
   return null;
 }
 
-/** Preferred-lang name on the tile; the other locale stays searchable. */
+/** Locale tile name — attested in that language only; siblings stay in aka. */
 function catalogueNames(
+  pack: CataloguePackId,
+  printKey: string,
   entry: CardsIndexEntry,
   files: CardsIndexLangFiles | undefined,
 ): { name?: string; aka?: string[]; label: string } {
-  const preferred = files?.name?.trim() || entry.name?.trim() || undefined;
+  const localeScoped = files !== undefined;
+  const localName = files?.nameLocaleFrom?.trim()
+    ? undefined
+    : files?.name?.trim();
+  const preferred = localeScoped
+    ? localName
+    : localName || entry.name?.trim() || undefined;
   const aka = [
     ...new Set(
       [
-        entry.name?.trim(),
-        ...Object.values(entry.langs).map((langFiles) =>
-          langFiles.name?.trim(),
-        ),
+        ...(localeScoped ? [] : [entry.name?.trim()]),
+        ...Object.values(entry.langs)
+          .filter((langFiles) => !langFiles.nameLocaleFrom?.trim())
+          .map((langFiles) => langFiles.name?.trim()),
       ].filter((n): n is string => Boolean(n && n !== preferred)),
     ),
   ];
-  const printed = narutoCollectorNumberKey(entry.card)
+  const useNarutoRef =
+    cataloguePackInfo(pack)?.narutoCollectorDisk === true &&
+    Boolean(narutoCollectorNumberKey(entry.card));
+  const diskCard = catalogueDiskCard(pack, printKey, entry);
+  const printed = useNarutoRef
     ? formatNarutoReference(entry.set, entry.card)
-    : `${entry.set} · ${entry.card}`;
+    : `${entry.set} · ${diskCard}`;
   const label = preferred ? `${printed} — ${preferred}` : printed;
   return {
     ...(preferred ? { name: preferred } : {}),
@@ -237,11 +287,23 @@ function localeSlots(
 ): Array<{ lang: string; files: CardsIndexLangFiles }> {
   const langs = Object.entries(entry.langs);
   if (langs.length === 0) {
+    /*
+      Declared `catalogueLocales` wins — 疾風伝 must not invent FR just because
+      the admin UI prefers French. Packs without a declaration still emit a
+      stub tile (promo / empty langs) so same-number fallback and missing-art
+      audits keep working.
+    */
+    if (catalogueLocales?.length) {
+      if (expand) {
+        return catalogueLocales.map((lang) => ({ lang, files: {} }));
+      }
+      return [{ lang: catalogueLocales[0]!, files: {} }];
+    }
     return [{ lang: preferLang ?? "fr", files: {} }];
   }
   if (!expand) {
     const picked = pickLang(entry, preferLang);
-    return picked ? [picked] : [{ lang: preferLang ?? "fr", files: {} }];
+    return picked ? [picked] : [];
   }
   if (catalogueLocales?.length) {
     const byLang = new Map(
@@ -366,11 +428,16 @@ export function buildCatalogueCardRows(
       catalogueLocales,
     )) {
       const lang = slot.lang;
-      const languageSpecific = isLocaleSpecificFace(
-        localeSpecificFaces,
-        entry.set,
-        entry.card,
-      );
+      if (isJpOnlyNarutoArtwork(entry.card) && lang.toLowerCase() !== "ja") {
+        continue;
+      }
+      const languageSpecific = bestFaceAcrossLocales
+        ? isLocaleSpecificFace(
+            localeSpecificFaces,
+            entry.set,
+            entry.card,
+          )
+        : true;
       const face = resolveCatalogueFace({
         entry,
         tileLang: lang,
@@ -380,19 +447,25 @@ export function buildCatalogueCardRows(
         bestFaceAcrossLocales,
       });
       const file = face.file;
-      const names = catalogueNames(entry, slot.files);
+      const nameFiles =
+        slot.files.name?.trim() || !face.artLang
+          ? slot.files
+          : (entry.langs[face.artLang] ?? slot.files);
+      const names = catalogueNames(pack, printKey, entry, nameFiles);
       const orient = orientationFromIndexSlot(entry, face.files);
       const landscapePrint = printIsLandscapeCard(entry);
       const artLocaleFrom =
         file && face.artLang.toLowerCase() !== lang.toLowerCase()
           ? face.artLang
           : undefined;
+      const diskCard = catalogueDiskCard(pack, printKey, entry);
       const identity = {
         printKey,
         set: entry.set,
         card: entry.card,
         hasFoil,
         label: names.label,
+        languageSpecific,
         ...(names.name ? { name: names.name } : {}),
         ...(names.aka ? { aka: names.aka } : {}),
         ...(entry.rarity ? { rarity: entry.rarity } : {}),
@@ -403,6 +476,7 @@ export function buildCatalogueCardRows(
           : {}),
         ...(landscapePrint ? { landscapePrint: true } : {}),
         ...(entry.lenticularGrid ? { lenticularGrid: entry.lenticularGrid } : {}),
+        ...(slot.files.nameSource ? { nameSource: slot.files.nameSource } : {}),
       };
 
       if (!file) {
@@ -418,7 +492,7 @@ export function buildCatalogueCardRows(
         const diskId = {
           set: entry.set,
           lang,
-          card: entry.card,
+          card: diskCard,
         };
         const back = backFile(slot.files);
         if (back) {
@@ -437,7 +511,9 @@ export function buildCatalogueCardRows(
           const diskId = {
             set: donor.set,
             lang: donor.lang,
-            card: donor.card,
+            card: catalogueDiskCard(pack, donor.printKey, {
+              card: donor.card,
+            }),
           };
           const artUrl = packFaceAssetUrl(pack, diskId, donor.file);
           const thumbUrl = donor.thumb
@@ -463,7 +539,7 @@ export function buildCatalogueCardRows(
       const diskId = {
         set: entry.set,
         lang: face.artLang,
-        card: entry.card,
+        card: diskCard,
       };
       const thumb = face.thumb;
       const artUrl = packFaceAssetUrl(pack, diskId, file);
@@ -548,11 +624,16 @@ export function mergeCatalogueBackRows(input: {
 
   const out: CatalogueCardRow[] = [];
   for (const tier of input.tierBackUrls ?? []) {
+    /*
+      `back.ja.webp` is a locale sleeve — tag it so preferred-lang filters apply.
+      Rarity tiers (`back.hr.webp`, Kayou) stay shared (`—`).
+    */
+    const tierLang = catalogueBackLangFromTierSlug(tier.slug);
     out.push({
       printKey: `${input.pack}:__pack-back-tier-${tier.slug}__`,
       set: "",
       card: "back",
-      lang: "—",
+      lang: tierLang,
       artUrl: tier.url,
       hasFoil: false,
       label: `Dos · pack · ${tier.slug.toUpperCase()}`,
@@ -687,12 +768,85 @@ function rowsForPack(
   return withCatalogueBackRows(pack, faces);
 }
 
+function isFaceRow(row: CatalogueCardRow): boolean {
+  return row.kind !== "pack-back" && row.kind !== "set-back";
+}
+
+/** Locale-coded sleeve file (`back.ja.webp`) vs shared rarity tier (`back.hr.webp`). */
+const BACK_TIER_LOCALE = /^(fr|en|it|de|es|pt|ptbr|ja|jp)$/i;
+
+export function catalogueBackLangFromTierSlug(slug: string): string {
+  const raw = slug.trim().toLowerCase();
+  if (!BACK_TIER_LOCALE.test(raw)) return "—";
+  return raw === "jp" ? "ja" : raw;
+}
+
+/**
+ * Preferred-lang browse: neutral rectos stay visible under every language;
+ * language-specific rectos only under their own `lang`.
+ * Backs follow the same rule: `lang === "—"` is shared; otherwise match preferLang.
+ */
+export function matchesCataloguePreferredLang(
+  row: CatalogueCardRow,
+  preferLang: string,
+  opts: { expandLocales?: boolean } = {},
+): boolean {
+  const want = preferLang.trim().toLowerCase();
+  if (!want) return true;
+  if (!isFaceRow(row)) {
+    const backLang = row.lang.trim();
+    if (!backLang || backLang === "—") return true;
+    return backLang.toLowerCase() === want;
+  }
+  if (row.languageSpecific) {
+    if (row.lang.toLowerCase() !== want) return false;
+    /*
+      Expand packs invent empty FR shells for IT-only text cards — hide those.
+      Non-expand (Mythos SS2 SAMPLE EN sans art) must still list the print.
+    */
+    if (
+      opts.expandLocales &&
+      (row.missingArt || row.versoOnly)
+    ) {
+      return false;
+    }
+    return true;
+  }
+  // Neutral + expandLocales: one tile for the preferred lang (borrowed art OK).
+  if (opts.expandLocales) return row.lang.toLowerCase() === want;
+  // Neutral + pickLang: single tile already — keep even if lang ≠ UI language.
+  return true;
+}
+
+/** Audit filters for catalogue browse (unit-tested). */
+export function matchesCatalogueAuditFilter(
+  row: CatalogueCardRow,
+  filter: {
+    incompleteOnly?: boolean;
+    missingArtOnly?: boolean;
+    missingNameOnly?: boolean;
+  },
+): boolean {
+  if (!isFaceRow(row)) return false;
+  const checks: boolean[] = [];
+  if (filter.incompleteOnly) {
+    checks.push(Boolean(row.missingArt || row.versoOnly || !row.name?.trim()));
+  }
+  if (filter.missingArtOnly) checks.push(Boolean(row.missingArt));
+  if (filter.missingNameOnly) checks.push(!row.name?.trim());
+  return checks.some(Boolean);
+}
+
 export type ListCatalogueCardsInput = {
   pack: CataloguePackId;
   /** When true, only rows with foil-related assets. */
   foilOnly?: boolean;
   /** When true, only rows missing a face or a name (audit / debug). */
   incompleteOnly?: boolean;
+  /** When true, only rows without a recto/thumb file. */
+  missingArtOnly?: boolean;
+  /** When true, only rows without a locale name. */
+  missingNameOnly?: boolean;
   offset?: number;
   limit?: number;
   /** Substring match on printKey / set / card / label. */
@@ -715,41 +869,75 @@ export type ListCatalogueCardsResult = {
   availableLocales: string[];
 };
 
+/** Déclarées sur le pack, sinon mesurées sur les tuiles faces du catalogue. */
+export function catalogueAvailableLocales(
+  pack: CataloguePackId,
+  rows: readonly CatalogueCardRow[],
+): string[] {
+  const declared = cataloguePackInfo(pack)?.catalogueLocales;
+  if (declared?.length) return [...declared];
+  const measured = [
+    ...new Set(
+      rows
+        .filter(
+          (row) => row.kind !== "pack-back" && row.kind !== "set-back",
+        )
+        .map((row) => row.lang.trim().toLowerCase())
+        .filter((lang) => lang && lang !== "—"),
+    ),
+  ];
+  measured.sort((a, b) => a.localeCompare(b));
+  return measured;
+}
+
 export function listCatalogueCards(
   input: ListCatalogueCardsInput,
 ): ListCatalogueCardsResult {
   const offset = Math.max(0, Math.floor(input.offset ?? 0));
   const limit = Math.min(200, Math.max(1, Math.floor(input.limit ?? 48)));
   let rows = rowsForPack(input.pack, input.preferLang);
-  const packInfo = cataloguePackInfo(input.pack);
+  const availableLocales = catalogueAvailableLocales(input.pack, rows);
   const localeMode = input.locales ?? "preferred";
-  const preferLang = input.preferLang?.trim().toLowerCase();
+  let preferLang = input.preferLang?.trim().toLowerCase();
+  /*
+    UI defaults to the page locale (often `fr`). Japanese-only packs declare
+    `catalogueLocales: ["ja"]` — coerce before filtering so we don't hide every
+    language-specific tile behind an empty FR shell.
+  */
   if (
     localeMode === "preferred" &&
     preferLang &&
-    packInfo?.catalogueLocales?.length
+    availableLocales.length > 0 &&
+    !availableLocales.includes(preferLang)
   ) {
-    rows = rows.filter(
-      (row) =>
-        row.kind === "pack-back" ||
-        row.kind === "set-back" ||
-        row.lang.toLowerCase() === preferLang,
+    preferLang = availableLocales.includes("en")
+      ? "en"
+      : availableLocales[0]!;
+  }
+  const packInfo = cataloguePackInfo(input.pack);
+  const expandsLocales =
+    packInfo?.expandLocales === true || isNarutoUnifiedPack(input.pack);
+  if (localeMode === "preferred" && preferLang) {
+    rows = rows.filter((row) =>
+      matchesCataloguePreferredLang(row, preferLang!, {
+        expandLocales: expandsLocales,
+      }),
     );
   }
   if (input.foilOnly) {
     rows = rows.filter((row) => row.hasFoil);
   }
-  /*
-    Fiches incomplètes, pour l'audit : ni dos synthétique, et il manque la
-    face ou le nom. Un stub promo qui emprunte l'art retail reste incomplet —
-    le visuel affiché n'est pas le sien.
-  */
-  if (input.incompleteOnly) {
-    rows = rows.filter(
-      (row) =>
-        row.kind !== "pack-back" &&
-        row.kind !== "set-back" &&
-        (row.missingArt || row.versoOnly || !row.name),
+  if (
+    input.incompleteOnly ||
+    input.missingArtOnly ||
+    input.missingNameOnly
+  ) {
+    rows = rows.filter((row) =>
+      matchesCatalogueAuditFilter(row, {
+        incompleteOnly: input.incompleteOnly,
+        missingArtOnly: input.missingArtOnly,
+        missingNameOnly: input.missingNameOnly,
+      }),
     );
   }
   const q = input.q?.trim().toLowerCase();
@@ -774,6 +962,6 @@ export function listCatalogueCards(
     offset,
     limit,
     cards: rows.slice(offset, offset + limit),
-    availableLocales: [...(packInfo?.catalogueLocales ?? [])],
+    availableLocales,
   };
 }

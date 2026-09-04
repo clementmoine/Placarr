@@ -230,4 +230,30 @@ describe("writeNarutoCcgIndex", () => {
     db.close();
     expect(sets).toEqual(["s1", "s5"]);
   });
+
+  it("ajoute s6 aux inserts FR attestés même sans setCodes européen", () => {
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:ta-0221",
+          setCode: "maki11",
+          number: "ta0221",
+          cardType: "ta",
+        },
+      ],
+      assets: [],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const sets = (
+      db
+        .prepare(
+          `SELECT set_code AS setCode FROM print_sets WHERE print_key = ? ORDER BY set_code`,
+        )
+        .all("naruto:ta-0221") as { setCode: string }[]
+    ).map((row) => row.setCode);
+    db.close();
+    expect(sets).toEqual(["s6"]);
+  });
 });

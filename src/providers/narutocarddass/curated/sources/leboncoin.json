@@ -1,7 +1,7 @@
 {
   "source": "img.leboncoin.fr listing photos (collector pastes)",
-  "observed": "2026-08-29",
-  "note": "Pasted CDN URLs only — do not crawl listings or seller stores. Faces use `ad-large` (~602×800). Packshots prefer `classified-1200x800-jpg`. Photos carry a leboncoin watermark. Seller galleries often mix other ads — keep only product frames.",
+  "observed": "2026-09-02",
+  "note": "Pasted CDN URLs only — do not crawl listings or seller stores. Faces use `ad-large` (~602×800). Packshots prefer `classified-1200x800-jpg`. Photos carry a leboncoin watermark. Seller galleries often mix other ads — keep only product frames. Annonces jipiyami promo tournoi (2026-09-02) : preuves texte dans attested-promos.json seulement — pas de face catalogue (photo sleeve < scan carddass retail ; reconstructed promo plus tard).",
   "ingestCollection": false,
   "faces": [
     {
@@ -14,7 +14,10 @@
       "staging": "staging/leboncoin/pr0096-fr.jpg",
       "ingest": true,
       "role": "face",
-      "pixels": { "width": 602, "height": 800 },
+      "pixels": {
+        "width": 602,
+        "height": 800
+      },
       "note": "French-text Storm 3 promo in a toploader. Printed: 4e HOKAGE, password 5CBNQ9W86S, [SAUVEUR DE KONOHA], PR-096 PROMO. Verso of that listing is Bandai USA CCG back — do not ingest as a face."
     }
   ],
@@ -32,7 +35,10 @@
       "staging": "staging/leboncoin/pack-decouverte-01.jpg",
       "ingest": false,
       "angle": "front",
-      "pixels": { "width": 1062, "height": 800 },
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
       "note": "Photo annonce LBC archival. Face catalogue = curated/products/wrappers/pack-decouverte.jpg (packshot clean)."
     },
     {
@@ -48,7 +54,10 @@
       "staging": "staging/leboncoin/pack-decouverte-00.jpg",
       "ingest": false,
       "angle": "angle",
-      "pixels": { "width": 1062, "height": 800 },
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
       "note": "Angle LBC archival. Face catalogue = wrappers/pack-decouverte.jpg."
     },
     {
@@ -64,7 +73,10 @@
       "staging": "staging/leboncoin/pack-decouverte-02.jpg",
       "ingest": false,
       "angle": "angle",
-      "pixels": { "width": 1062, "height": 800 },
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
       "note": "Angle LBC archival. Face catalogue = wrappers/pack-decouverte.jpg."
     },
     {
@@ -80,7 +92,10 @@
       "staging": "staging/leboncoin/pack-decouverte-03.jpg",
       "ingest": true,
       "angle": "back",
-      "pixels": { "width": 1062, "height": 800 },
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
       "note": "Verso LBC (« 2 Starters & 2 Boosters Série 1 »). Face = wrappers/pack-decouverte.jpg."
     },
     {
@@ -97,7 +112,10 @@
       "staging": "staging/leboncoin/tin-box-01.jpg",
       "ingest": true,
       "angle": "front",
-      "pixels": { "width": 1067, "height": 800 },
+      "pixels": {
+        "width": 1067,
+        "height": 800
+      },
       "note": "COFFRET MÉTAL sleeve + tin edge. carddass.fr Tin-boxN.jpg stays preferred art when both present."
     },
     {
@@ -114,7 +132,10 @@
       "staging": "staging/leboncoin/tin-box-02.jpg",
       "ingest": true,
       "angle": "back",
-      "pixels": { "width": 1067, "height": 800 },
+      "pixels": {
+        "width": 1067,
+        "height": 800
+      },
       "note": "Verso: 1 deck [INVOCATION] s4 (40) + booster s1 (8) + booster s2 (8) + 1 promo holo exclusive + tapis + 6 jetons + livret. Réf. 05129 / EAN 3296580051298 / BANDAI 2007 MADE IN BELGIUM."
     }
   ],
@@ -122,6 +143,10 @@
     {
       "listing": "https://www.leboncoin.fr/ad/jeux_jouets/3258840985",
       "reason": "Seller gallery also shows unrelated ads (sweaters, Top Trumps) — not Tin Box packaging"
+    },
+    {
+      "listing": "jipiyami promo batch (3205143041…3260788087)",
+      "reason": "Photos annonce (sleeve, filigrane LBC) rejetées comme faces promo — préférer scan carddass retail ou reconstructed plus tard. URLs + descriptions restent dans attested-promos.json (mkt-lbc-*)."
     }
   ]
 }

@@ -14,12 +14,16 @@
  * staging ; le versement se décide après, avec la corroboration des autres
  * sources, comme pour toutes les moissons de ce pack.
  */
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
+import {
+  narutoFamilyForPrefix,
+  parseNarutoCollector,
+} from "../collectorIdentity";
 import { japaneseReleaseBands } from "../sources/japaneseVolumes";
 import { NARUTO_PACK_ID } from "../packs";
 import {
@@ -28,8 +32,10 @@ import {
   normalizeShopName,
   parseChitoroTitle,
   resolveChitoroIdentity,
+  resolveChitoroNameFamily,
   type ChitoroIdentity,
 } from "../parse/parseChitoroshop";
+import { saveNarutoFace } from "../narutoFaceBytes";
 
 const COLLECTION =
   "https://chitoroshop.com/collections/naruto-tcg-cartes-a-lunite-japonaises-naruto/products.json?limit=250";
@@ -125,8 +131,11 @@ export function identifyChitoroProducts(input: {
       notCards.push(product.title);
       continue;
     }
-    const named = input.nameIndex.get(`${parsed.name}|${parsed.number}`);
-    const byName = named?.size === 1 ? [...named][0] : null;
+    const byName = resolveChitoroNameFamily(
+      input.nameIndex,
+      parsed.name,
+      parsed.number,
+    );
     const byVolume = familyFromVolume(
       chitoroVolumeSetCode(`${product.title} ${product.body_html ?? ""}`),
       parsed.number,
@@ -228,14 +237,6 @@ export async function downloadChitoroFaces(input: {
   rows: readonly ChitoroRow[];
   /** Dossier `cards/` du pack. */
   cardsDir: string;
-  /**
-   * `ni` → `ninja` : le dossier disque de la famille.
-   *
-   * À passer depuis `narutoFamilyForPrefix`, **pas** `narutoFamilyFolder` — ce
-   * dernier attend une famille déjà résolue et rend son argument tel quel, ce
-   * qui a créé des dossiers `cards/ta/` à côté de `cards/mission/`.
-   */
-  folderOf: (family: string) => string;
   force?: boolean;
   delayMs?: number;
   onProgress?: (message: string) => void;
@@ -249,14 +250,15 @@ export async function downloadChitoroFaces(input: {
     const src = row.images[0];
     if (!src) continue;
     const cardId = `${row.family}${String(row.number).padStart(4, "0")}`;
+    const diskFolder = narutoFamilyForPrefix(row.family);
+    if (!diskFolder) continue;
     const dir = path.join(
       input.cardsDir,
-      input.folderOf(row.family),
+      diskFolder,
       cardId,
       "ja",
     );
-    const dest = path.join(dir, "art.chitoroshop.jpg");
-    if (!input.force && existsSync(dest)) {
+    if (!input.force && existsSync(path.join(dir, "art.chitoroshop.jpg"))) {
       skipped += 1;
       continue;
     }
@@ -269,8 +271,15 @@ export async function downloadChitoroFaces(input: {
       const data = (response as { data?: ArrayBuffer }).data;
       if (!data) throw new Error("vide");
       mkdirSync(dir, { recursive: true });
-      writeFileSync(dest, Buffer.from(data));
-      written += 1;
+      const saved = await saveNarutoFace({
+        cardDir: dir,
+        buf: Buffer.from(data),
+        source: "chitoroshop",
+        lang: "ja",
+        force: input.force,
+      });
+      if (saved === "ok") written += 1;
+      else skipped += 1;
       input.onProgress?.(`   ${cardId} ← ${row.by}`);
     } catch {
       failed.push(cardId);
@@ -280,4 +289,94 @@ export async function downloadChitoroFaces(input: {
     });
   }
   return { written, skipped, failed };
+}
+
+type EnTitleRow = {
+  family: string;
+  number: number;
+  lang: string;
+  fullName: string;
+};
+
+/** EN CCG titles from cards-index → chitoro name index (`n`→`ni`, …). */
+export function loadEnTitleRowsFromIndex(root: string): EnTitleRow[] {
+  const file = path.join(root, "cards-index.json");
+  if (!existsSync(file)) return [];
+  const raw = JSON.parse(readFileSync(file, "utf8")) as {
+    cards?: Record<
+      string,
+      { card?: string; langs?: { en?: { name?: string | null } } }
+    >;
+  };
+  const rows: EnTitleRow[] = [];
+  for (const entry of Object.values(raw.cards ?? {})) {
+    const name = entry.langs?.en?.name?.trim();
+    const card = entry.card?.trim();
+    if (!name || !card) continue;
+    const id = parseNarutoCollector(card);
+    if (!id) continue;
+    const family = japaneseFamilyOf(id.printedPrefix);
+    if (!family) continue;
+    rows.push({
+      family: id.printedPrefix.toLowerCase(),
+      number: id.number,
+      lang: "en",
+      fullName: name,
+    });
+  }
+  return rows;
+}
+
+export type ScrapeChitoroshopOptions = {
+  force?: boolean;
+  root?: string;
+  delayMs?: number;
+  limit?: number;
+  /** Ledger only — skip `cards/` writes. */
+  stagingOnly?: boolean;
+};
+
+export async function scrapeNarutoChitoroshopCards(
+  options: ScrapeChitoroshopOptions = {},
+): Promise<void> {
+  const root = path.join(options.root ?? dataRoot(), NARUTO_PACK_ID);
+  const cardsDir = path.join(root, "cards");
+  console.log(
+    "── chitoroshop JA scans → cards/{family}/{ni####}/ja/art.chitoroshop.*",
+  );
+  const products = await fetchChitoroProducts();
+  const nameIndex = englishNameIndex(loadEnTitleRowsFromIndex(root));
+  let harvest = identifyChitoroProducts({ products, nameIndex });
+  if (options.limit && options.limit > 0) {
+    harvest = {
+      ...harvest,
+      identified: harvest.identified.slice(0, options.limit),
+    };
+  }
+  const ledger = writeChitoroLedger(harvest, root);
+  console.log(
+    JSON.stringify({
+      chitoroshop: true,
+      products: harvest.products,
+      identified: harvest.identified.length,
+      unresolved: harvest.unresolved.length,
+      ledger,
+    }),
+  );
+  if (options.stagingOnly || harvest.identified.length === 0) return;
+  const result = await downloadChitoroFaces({
+    rows: harvest.identified,
+    cardsDir,
+    force: options.force,
+    delayMs: options.delayMs,
+    onProgress: (message) => console.log(message),
+  });
+  console.log(
+    JSON.stringify({
+      chitoroshopFaces: true,
+      written: result.written,
+      skipped: result.skipped,
+      failed: result.failed.length,
+    }),
+  );
 }

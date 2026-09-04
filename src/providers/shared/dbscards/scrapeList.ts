@@ -45,6 +45,26 @@ export function dbscardsIndexPath(packId: string, lang = "fr"): string {
   );
 }
 
+/**
+ * Pokémon paper faces from pkmcards.fr use the same crawl, different basename —
+ * `dbscards-fr.json` next to Live data would read as Masters residue.
+ */
+export function pkmcardsIndexPath(lang = "fr"): string {
+  return path.join(
+    foilPackDataDir("pokemon"),
+    `pkmcards-${lang.toLowerCase()}.json`,
+  );
+}
+
+/** Card-list site row for pkmcards.fr (same tile markup as dbscards). */
+export const PKMCARDS_CARD_SITE: DbscardsSite = {
+  id: "pkmcards",
+  origin: "https://www.pkmcards.fr",
+  lists: {
+    fr: "/cards/liste-cartes-francaises",
+  },
+};
+
 export type ScrapeDbscardsIndexResult = {
   lang: string;
   cards: number;
@@ -69,6 +89,8 @@ export async function scrapeDbscardsIndex(opts: {
   site?: DbscardsSite;
   maxPages?: number;
   delayMs?: number;
+  /** Full path override (e.g. `pkmcards-fr.json` for Pokémon). */
+  indexPath?: string;
   onProgress?: (page: number, total: number) => void;
 }): Promise<ScrapeDbscardsIndexResult> {
   const site = opts.site ?? DBSCARDS_SITES.masters;
@@ -113,7 +135,7 @@ export async function scrapeDbscardsIndex(opts: {
   }
 
   const entries = [...all.values()];
-  const file = dbscardsIndexPath(opts.packId, lang);
+  const file = opts.indexPath ?? dbscardsIndexPath(opts.packId, lang);
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(entries, null, 1)}\n`, "utf8");
   return {

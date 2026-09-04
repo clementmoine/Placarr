@@ -470,6 +470,20 @@ export async function runUpdate(
   }
 
   try {
+    const { runPokemonPaperFacesHarvest } = await import(
+      "@/providers/tcgdex/paperFacesHarvest"
+    );
+    const paper = await runPokemonPaperFacesHarvest({
+      force: Boolean((opts as { forcePaperFaces?: boolean }).forcePaperFaces),
+    });
+    (summary as { paperFaces?: unknown }).paperFaces = paper;
+  } catch (err) {
+    console.warn(
+      `[foil] paper faces skipped: ${err instanceof Error ? err.message : err}`,
+    );
+  }
+
+  try {
     const { rebuildPokemonCardsIndex } = await import("./rebuildCardsIndex");
     const faces = rebuildPokemonCardsIndex({ root: repo });
     if (faces.skipped) {

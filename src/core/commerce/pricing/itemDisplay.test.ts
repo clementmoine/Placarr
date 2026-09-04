@@ -810,4 +810,27 @@ describe("shelfGridItemPriceFields", () => {
     expect(prices.priceNew).toBe(3990);
     expect(prices.priceUsed).toBe(3947);
   });
+
+  it("keeps batch priceEstimated for TCG shelf tiles (~ cote)", () => {
+    const context = itemPricesContextFromPresentedShelfItem(
+      {
+        id: "item-ni019",
+        name: "NI-019",
+        printKey: "naruto:ni-0019",
+        metadata: { title: "NI-019", facts: [] },
+      },
+      { type: "tcg", name: "Naruto Carddass" },
+    );
+
+    const prices = shelfGridItemPriceFields(context, {
+      priceNew: null,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceEstimated: 2000,
+      priceLastUpdated: null,
+    });
+
+    expect(prices.priceEstimated).toBe(2000);
+    expect(prices.priceNew).toBeNull();
+  });
 });

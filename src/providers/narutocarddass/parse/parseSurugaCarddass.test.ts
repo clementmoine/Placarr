@@ -8,6 +8,7 @@ import {
   parseSurugaCarddassPrinted,
   parseSurugaCarddassSearchHtml,
   parseSurugaProductDetailHtml,
+  parseSurugaCarddassCharacterName,
   surugaCarddassFaceUrl,
   surugaPrintedToDiskId,
 } from "./parseSurugaCarddass";
@@ -31,6 +32,35 @@ describe("parseSurugaCarddassPrinted", () => {
   });
 });
 
+describe("parseSurugaCarddassCharacterName", () => {
+  it("reads the name after the rarity colon", () => {
+    expect(
+      parseSurugaCarddassCharacterName(
+        "駿河屋 -&lt;中古&gt;忍-390[ノーマル]：マイト・ガイ（アニメ・ゲーム）",
+      ),
+    ).toBe("マイト・ガイ");
+    expect(
+      parseSurugaCarddassCharacterName(
+        "作-322[ノーマル]：熱血指導（アニメ・ゲーム）",
+      ),
+    ).toBe("熱血指導");
+    expect(
+      parseSurugaCarddassCharacterName(
+        "駿河屋 -<中古>忍-391[ウルトラレア]：四代目火影＆ガマブン太(赤箔押し)（アニメ・ゲーム）",
+      ),
+    ).toBe("四代目火影＆ガマブン太(赤箔押し)");
+    expect(
+      parseSurugaCarddassCharacterName(
+        "駿河屋 -<中古>忍-392[レア]：うずまきナルト＆ロック・リー（アニメ・ゲーム）",
+      ),
+    ).toBe("うずまきナルト＆ロック・リー");
+  });
+
+  it("reads a name after the printed ref with no colon", () => {
+    expect(parseSurugaCarddassCharacterName("依-12 ヒマツ")).toBe("ヒマツ");
+  });
+});
+
 describe("surugaPrintedToDiskId", () => {
   it("maps JP Carddass prefixes, never EN CCG n001", () => {
     expect(surugaPrintedToDiskId("忍-85")).toBe("ni0085");
@@ -41,14 +71,13 @@ describe("surugaPrintedToDiskId", () => {
   });
 
   /*
-    `NM-049` rendait `null` jusqu'au 2026-08-19, Data Carddass étant hors
-    catalogue. La ligne arcade y est entrée : le convertisseur sait désormais
-    la nommer. Ce qui n'a pas changé, c'est la frontière — une annonce de borne
-    n'entre pas dans un relevé Carddass, et c'est le parseur qui la garde, pas
-    l'ignorance du numéro.
+    Data Carddass arcade → `narutodatacarddass`. Hors Carddass : pas de
+    disk id `nm####` / `dn####`. Les annonces de borne restent rejetées
+    par le parseur détail.
   */
-  it("nomme les cartes de borne sans les laisser entrer chez le jeu de table", () => {
-    expect(surugaPrintedToDiskId("NM-049")).toBe("nm0049");
+  it("refuse les cartes de borne (autre provider)", () => {
+    expect(surugaPrintedToDiskId("NM-049")).toBeNull();
+    expect(surugaPrintedToDiskId("DN-032T")).toBeNull();
     expect(
       parseSurugaProductDetailHtml("<h1>NM-049 猿飛アスマ</h1>", "GL1"),
     ).toBeNull();
@@ -130,7 +159,10 @@ describe("suruga-ya-carddass ledger", () => {
     expect(ledger.not).toContain("data-carddass");
     expect(ledger.not).toContain("en-ccg");
     const listings = loadSurugaCarddassCuratedListings();
-    expect(listings.length).toBe(612);
+    expect(listings.length).toBe(614);
+    expect(listings.some((row) => row.id === "GL685033")).toBe(true);
+    expect(listings.some((row) => row.id === "GL685034")).toBe(true);
+    expect(listings.some((row) => row.id === "GL685035")).toBe(true);
     expect(listings.some((row) => row.id === "GL636976")).toBe(true);
     expect(listings.some((row) => /DN-|NM-/.test(row.printed))).toBe(false);
     expect(foldSurugaCarddassListings(listings).length).toBeGreaterThan(300);

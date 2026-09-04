@@ -18,8 +18,13 @@ import path from "node:path";
 import type { MetadataFact } from "@/types/metadataProvider";
 
 import { loadAttestedPromos } from "./sources/attestedPromos";
+import { narutoIndicativeQuoteForPrint } from "./sources/collectionNarutoIndicativeQuotes";
+import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./sources/collectionNarutoPriceOffers";
 import { narutoCuratedSourcesDir } from "./curatedPaths";
-import { narutoNumbersEqual } from "./collectorIdentity";
+import {
+  narutoNumbersEqual,
+  parseNarutoCollector,
+} from "./collectorIdentity";
 import { narutoCatalogueLineForCard } from "./packs";
 import { formatNarutoReference, type NarutoPrintDetail } from "./searchPrints";
 
@@ -59,6 +64,11 @@ type SetsFile = {
       title?: string | null;
       /** EN CCG series that shares s1–s6 with Carddass FR. */
       enCcgTitle?: string | null;
+      /** Italian retail series title (CardGameClub / Primegame s1–s8). */
+      itTitle?: string | null;
+      /** When set, the checklist uses this instead of measuring titles. */
+      printedLanguages?: string[];
+      languages?: string[];
     }
   >;
 };
@@ -105,19 +115,77 @@ export function narutoSetsUnreleasedInFrench(): Set<string> {
   );
 }
 
-export function narutoSetLabel(setCode: string, card?: string | null): string {
+/** Langues de sortie curées — le deck Tempête n'est pas l'Approaching Wind EN. */
+export function narutoSetShippedLanguages(setCode: string): string[] | null {
+  const entry = loadSets().sets?.[setCode.trim().toLowerCase()];
+  const langs = entry?.printedLanguages ?? entry?.languages;
+  if (!langs?.length) return null;
+  return langs.map((code) => code.trim().toLowerCase()).filter(Boolean);
+}
+
+/** Drop the FR collector prefix on titles that are already English (s24 / s28). */
+function englishSetTitle(title: string): string {
+  const stripped = title.replace(/^Série\s+\d+\s+[—–-]\s+/i, "").trim();
+  return stripped || title;
+}
+
+function withNumberedSeries(
+  series: number | null | undefined,
+  name: string,
+  word: "Series" | "Serie",
+): string {
+  if (series == null) return name;
+  return `${word} ${series} — ${name}`;
+}
+
+/**
+ * Libellé d'extension pour la fiche / la check-list.
+ *
+ * `language` = langue UI de la check-list (ou langue du tirage sur la fiche).
+ * EN → titres Bandai USA ; IT → titres retail italiens (s1–s8) ; FR → starters.
+ */
+export function narutoSetLabel(
+  setCode: string,
+  card?: string | null,
+  language?: string | null,
+): string {
   const code = setCode.toLowerCase();
-  if (code === "promo") return "Promo (hors série)";
-  const entry = loadSets().sets?.[code];
-  if (
-    card &&
-    narutoCatalogueLineForCard(card, setCode) === "en-ccg" &&
-    entry?.enCcgTitle?.trim()
-  ) {
-    return entry.enCcgTitle.trim();
+  const lang = language?.trim().toLowerCase() || "";
+  if (code === "promo") {
+    if (lang === "en") return "Promo (off-series)";
+    if (lang === "it") return "Promo (fuori serie)";
+    return "Promo (hors série)";
   }
-  if (entry?.title?.trim()) return entry.title.trim();
+  const entry = loadSets().sets?.[code];
+  const cardIsEnCcg =
+    Boolean(card) &&
+    narutoCatalogueLineForCard(card!, setCode) === "en-ccg";
+  const preferEnTitle = lang === "en" || cardIsEnCcg;
+  if (preferEnTitle && entry?.enCcgTitle?.trim()) {
+    return withNumberedSeries(entry.series, entry.enCcgTitle.trim(), "Series");
+  }
+  if (lang === "it" && entry?.itTitle?.trim()) {
+    return withNumberedSeries(entry.series, entry.itTitle.trim(), "Serie");
+  }
+  if (entry?.title?.trim()) {
+    const title = entry.title.trim();
+    if (lang === "en") {
+      return withNumberedSeries(entry.series, englishSetTitle(title), "Series");
+    }
+    if (lang === "it") {
+      return withNumberedSeries(entry.series, englishSetTitle(title), "Serie");
+    }
+    return title;
+  }
   if (!entry?.series) return setCode.toUpperCase();
+  if (lang === "en") {
+    const cancelled = entry.released === false ? " (cancelled)" : "";
+    return `Series ${entry.series}${cancelled}`;
+  }
+  if (lang === "it") {
+    const cancelled = entry.released === false ? " (annullata)" : "";
+    return `Serie ${entry.series}${cancelled}`;
+  }
   const starters = (entry.starters ?? []).filter(Boolean);
   const base = `Série ${entry.series}`;
   const suffix = starters.length ? ` — ${starters.join(" / ")}` : "";
@@ -138,6 +206,21 @@ const PROMO_CHANNEL_LABEL: Record<string, string> = {
   "upcoming-2007": "Annonce 2007",
 };
 
+/** 1★ participation / 2★ top 5 / 3★ vainqueur — le stamp shuriken dit le palier. */
+function tournamentTierLabel(
+  channel: string,
+  shuriken: number | null | undefined,
+): string | null {
+  // CdF / tin : garder le canal dédié (pas « Tournoi — … » générique).
+  if (channel.startsWith("cdf-") || channel === "tin") return null;
+  if (shuriken === 1) return "Tournoi — participation";
+  if (shuriken === 2) return "Tournoi — top 5";
+  if (shuriken === 3) return "Tournoi — vainqueur";
+  const base = PROMO_CHANNEL_LABEL[channel];
+  if (base?.startsWith("Tournoi") || channel === "tournament") return base ?? null;
+  return null;
+}
+
 function promoFacts(number: string, providerId: string): MetadataFact[] {
   let row;
   try {
@@ -153,7 +236,9 @@ function promoFacts(number: string, providerId: string): MetadataFact[] {
   if (!row) return [];
   const out: MetadataFact[] = [];
   const channel = row.channel
-    ? (PROMO_CHANNEL_LABEL[row.channel] ?? row.channel)
+    ? (tournamentTierLabel(row.channel, row.shuriken) ??
+      PROMO_CHANNEL_LABEL[row.channel] ??
+      row.channel)
     : null;
   if (channel) {
     out.push({
@@ -197,7 +282,7 @@ export function narutoPrintFacts(
     {
       kind: "series",
       label: "Extension",
-      value: narutoSetLabel(row.setCode, row.number),
+      value: narutoSetLabel(row.setCode, row.number, row.lang),
       source: providerId,
       confidence: 0.9,
       priority: 36,
@@ -244,6 +329,34 @@ export function narutoPrintFacts(
 
   if (row.setCode.toLowerCase() === "promo") {
     facts.push(...promoFacts(row.number, providerId));
+  } else if (
+    parseNarutoCollector(row.number)?.grouping?.toLowerCase() === "prerelease"
+  ) {
+    facts.push({
+      kind: "category",
+      label: "Distribution",
+      value: "Avant-première manga",
+      source: providerId,
+      confidence: 0.85,
+      priority: 34,
+    });
+  }
+
+  const quote = narutoIndicativeQuoteForPrint({
+    setCode: row.setCode,
+    number: row.number,
+    rarity: row.rarity,
+  });
+  if (quote) {
+    facts.push({
+      kind: "price",
+      label: "Estimation",
+      value: quote.displayValue,
+      source: NARUTO_INDICATIVE_PRICE_SOURCE,
+      url: quote.sourceUrl,
+      confidence: 0.35,
+      priority: 48,
+    });
   }
 
   return facts;

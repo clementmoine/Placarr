@@ -44,7 +44,7 @@ const built = createEmptyLocalTcgProvider({
     setSortKey: mythosSetSortKey,
     normalizeSearchQuery: normalizeMythosSearchQuery,
     notes:
-      "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. Konoha Shidō Ch.1 : checklist + faces LorenZone (`lorenzone-ks1-checklist.json`). Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
+      "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. KS1 LorenZone FR + SS2 Shinobi Shiren SAMPLE EN. Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
   },
   runPipeline: async (argv) => {
     const { runNarutoMythosPackPipeline } = await import(

@@ -7,8 +7,9 @@
  * `fw.dbscards.fr`. Product listings paginate as `/products/{cat}/2`.
  *
  * This module is the site table. Parsing and the sequential crawl live next
- * door; a pack just names a row. Card *faces* stay on each pack's own source
- * (Bandai, official Lorcana dump, TCGdex, …) — we do not scrape `/cards`.
+ * door; a pack just names a row. Product scrapes do not walk `/cards` —
+ * sealed SKUs only. Pokémon also harvests pkmcards.fr `/cards` faces into
+ * `art.pkmcards.*` (all tiles that map to a Live stem — not gap-only).
  *
  * Accessories are classified here and never requested. Displays are listed,
  * not opened. Boosters are opened for the labelled 15-tile preview.

@@ -55,6 +55,27 @@ describe("variantRendering", () => {
     ).toMatchObject({ imageUrl: "/uploads/foil.jpg" });
   });
 
+  it("uses catalogue print art when the item has no persisted cover", () => {
+    const pokemon = {
+      finishes: ["normal"],
+      plainFinishes: ["normal"],
+      effectPack: "pokemon",
+      imageUrl: "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
+      thumbnailUrl: "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
+    };
+    expect(variantRendering("normal", pokemon, null)).toMatchObject({
+      imageUrl: "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
+      foilMaskUrl: null,
+      effectPackId: "pokemon",
+      finish: "normal",
+    });
+    expect(variantRendering(null, pokemon, null).imageUrl).toBe(
+      "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
+    );
+    // Persisted item cover still wins over catalogue art.
+    expect(variantRendering("normal", pokemon, BASE).imageUrl).toBe(BASE);
+  });
+
   it("treats an unrecognized variant as plain rather than guessing", () => {
     expect(variantRendering("Rainbow", lorcana, BASE)).toMatchObject({
       imageUrl: BASE,

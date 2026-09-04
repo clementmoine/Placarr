@@ -53,6 +53,8 @@ async function formatShelfWithItemPrices<
       name: item.name,
       metadataTitle: item.metadata?.title ?? null,
       aliases: metadataAliases(item.metadata?.aliases) ?? null,
+      printKey:
+        typeof item.printKey === "string" ? item.printKey : null,
     })),
     shelf.name,
   );
@@ -74,6 +76,8 @@ async function formatShelfWithItemPrices<
             id: item.id,
             name: item.name,
             barcode: item.barcode,
+            printKey:
+              typeof item.printKey === "string" ? item.printKey : null,
             metadataId: item.metadataId,
             metadataRefreshStartedAt:
               "metadataRefreshStartedAt" in item

@@ -8,6 +8,7 @@ import {
   colekaUsPromoLedgerPath,
   loadColekaUsPromoLedger,
   mergeColekaUsPromosIntoIndex,
+  parseColekaUsPromoLedgerFromStaging,
 } from "./colekaUsPromos";
 
 describe("loadColekaUsPromoLedger", () => {
@@ -40,6 +41,30 @@ describe("loadColekaUsPromoLedger", () => {
     );
     expect(loadColekaUsPromoLedger(packDir).map((c) => c.number)).toEqual([
       "pr0001",
+    ]);
+  });
+
+  it("rebuilds the ledger from cached listing HTML when cards.json is empty", () => {
+    const packDir = mkdtempSync(
+      path.join(tmpdir(), "naruto-coleka-us-promos-html-"),
+    );
+    const staging = path.join(packDir, "staging", "coleka-us-promos");
+    mkdirSync(staging, { recursive: true });
+    writeFileSync(path.join(staging, "cards.json"), JSON.stringify({ cards: [] }));
+    writeFileSync(
+      path.join(staging, "listing-0.html"),
+      `<a class="lib_has_2_lines" data-id="1624573" href="/fr/x_i1624573">
+        <img src="https://thumbs.coleka.com/media/item/x_250x250.webp" />
+        <h3 class="product-title">Naruto Uzumaki</h3>
+        <span class="ref">Ref. Pr 001</span>
+      </a>`,
+      "utf8",
+    );
+    expect(parseColekaUsPromoLedgerFromStaging(packDir)).toMatchObject([
+      { number: "pr0001", name: "Naruto Uzumaki" },
+    ]);
+    expect(loadColekaUsPromoLedger(packDir)).toMatchObject([
+      { number: "pr0001", name: "Naruto Uzumaki" },
     ]);
   });
 });

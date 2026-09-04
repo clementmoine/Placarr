@@ -8,7 +8,6 @@ import { httpGet } from "@/lib/http/httpClient";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { NARUTO_MYTHOS_KS1_SET_CODE } from "./printKey";
 import { NARUTO_MYTHOS_PACK_ID, narutoMythosCuratedDir } from "./pack";
 
 const LEDGER_FILE = "lorenzone-products.json";
@@ -111,6 +110,9 @@ export async function ingestMythosSealedProducts(opts: {
   const products = ledger.products.flatMap((row) => {
     const dest = artPath(row.slug, row.lang);
     if (!existsSync(dest)) return [];
+    const catalogueSetId = row.catalogueSetId?.trim().toLowerCase() || null;
+    // Never invent a set: Set 2/3 SKUs must declare catalogueSetId explicitly.
+    if (!catalogueSetId) return [];
     return [
       {
         slug: row.slug,
@@ -118,7 +120,7 @@ export async function ingestMythosSealedProducts(opts: {
         category: row.category,
         name: row.name,
         setCode: row.shopSku ?? row.slug,
-        catalogueSetId: row.catalogueSetId ?? NARUTO_MYTHOS_KS1_SET_CODE,
+        catalogueSetId,
         lang: row.lang,
         releaseDate: row.releaseDate ?? null,
         priceCents: row.priceCents ?? null,

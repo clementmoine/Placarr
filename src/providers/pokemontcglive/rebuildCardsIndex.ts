@@ -17,6 +17,7 @@ import path from "node:path";
 import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardsDir, packCardsIndexPath } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
+import { resolvePokemonArtFilename } from "@/providers/tcgdex/faceChoice";
 
 const BUNDLE_RE = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})(?:_[a-z]+)?$/i;
 
@@ -40,14 +41,21 @@ function listFiles(dir: string): string[] {
   });
 }
 
-function langFilesFromDir(cardDir: string): CardsIndexLangFiles {
+function langFilesFromDir(
+  cardDir: string,
+  lang: string,
+): CardsIndexLangFiles {
   const langFiles: CardsIndexLangFiles = {};
   const variants: NonNullable<CardsIndexLangFiles["variants"]> = {};
 
+  const artWinner = resolvePokemonArtFilename(cardDir, lang);
+  if (artWinner) langFiles.art = artWinner;
+
   for (const file of listFiles(cardDir)) {
     const low = file.toLowerCase();
-    if (low.startsWith("art.")) langFiles.art = file;
-    else if (low === "mask.webp" || low === "mask.png") langFiles.mask = file;
+    if (low.startsWith("art.")) {
+      if (!langFiles.art) langFiles.art = file;
+    } else if (low === "mask.webp" || low === "mask.png") langFiles.mask = file;
     else if (low.startsWith("mask-ph.")) {
       variants.ph = { ...(variants.ph ?? {}), mask: file };
     } else if (low.startsWith("mask-mph.")) {
@@ -103,7 +111,7 @@ export function rebuildPokemonCardsIndex(opts?: {
         const stem = `${set}_${lang}_${card}`;
         if (!BUNDLE_RE.test(stem)) continue;
 
-        const langFiles = langFilesFromDir(cardDir);
+        const langFiles = langFilesFromDir(cardDir, lang);
         if (!langFiles.art && !langFiles.mask && !langFiles.thumb) continue;
 
         index.cards[stem] = {

@@ -82,6 +82,12 @@ export function listNarutoCardDirs(
     if (isNarutoFamilyFolder(set) && set !== "promo") continue;
     const setDir = path.join(cardsDir, set);
     for (const lang of dirs(setDir)) {
+      /*
+        New family tree is `{promo}/{pr0096}/{fr}`. Without this guard the
+        legacy walker treats `pr0096` as a language and `fr` as a card id —
+        installing the same PNG to `cards/ninja/fr/pr0096/`.
+      */
+      if (!isNarutoLangDir(lang)) continue;
       const langDir = path.join(setDir, lang);
       for (const cardId of dirs(langDir)) {
         const parsed = parseNarutoCollector(cardId);

@@ -5,6 +5,7 @@ import {
   compareNarutoCollectors,
   canonicalizeNarutoPrintKey,
   formatNarutoReference,
+  isJpOnlyNarutoArtwork,
   mintNarutoPrintKey,
   narutoCollectorKey,
   narutoCollectorNumberKey,
@@ -47,20 +48,14 @@ describe("parseNarutoCollector", () => {
   );
 
   /*
-    Ce test disait l'inverse jusqu'au 2026-08-19 : `NM-`/`DN-` rendaient `null`,
-    Data Carddass étant tenu hors du catalogue. La ligne arcade y entre
-    désormais — même pack, familles à part. Les numéros sont lus, pas
-    confondus : c'est tout l'objet des deux familles `arcade*`.
+    Data Carddass arcade vit dans `narutodatacarddass`. Hors Carddass :
+    `NM-`/`DN-`/`DT-`/`NX-` → null (pas de mint `naruto:dn-…`).
   */
-  it("lit Data Carddass dans ses propres familles", () => {
-    expect(parseNarutoCollector("NM-081")).toMatchObject({
-      family: "arcadeMission",
-      number: 81,
-    });
-    expect(parseNarutoCollector("DN-001")).toMatchObject({
-      family: "arcadeBattle",
-      number: 1,
-    });
+  it("refuse Data Carddass arcade (autre provider)", () => {
+    expect(parseNarutoCollector("NM-081")).toBeNull();
+    expect(parseNarutoCollector("DN-001")).toBeNull();
+    expect(parseNarutoCollector("DN-032T")).toBeNull();
+    expect(parseNarutoCollector("DT-002T")).toBeNull();
   });
 
   it("keeps a promo grouping off the collector number", () => {
@@ -223,6 +218,30 @@ describe("compareNarutoCollectors", () => {
     ]);
   });
 
+  it("files tourney reprints with PR, not beside the booster number", () => {
+    const numbers = [
+      "ni063-promo",
+      "ni063",
+      "ni065",
+      "pr011",
+      "te085-promo",
+      "te085",
+      "te030-cdf",
+      "te030",
+    ];
+    const sorted = [...numbers].sort(compareNarutoCollectors);
+    expect(sorted).toEqual([
+      "ni063",
+      "ni065",
+      "te030",
+      "te085",
+      "ni063-promo",
+      "te030-cdf",
+      "te085-promo",
+      "pr011",
+    ]);
+  });
+
   it("files PR忍 with French PR-nn, not beside NI", () => {
     const numbers = ["PR-忍-1", "NI-001", "PR-11", "N-001", "OP忍-1"];
     const sorted = [...numbers].sort(compareNarutoCollectors);
@@ -325,32 +344,21 @@ describe("canonicalizeNarutoPrintKey", () => {
   });
 });
 
-describe("Data Carddass — les cartes de borne", () => {
-  it("lit les deux cabinets et détache le T collé au numéro", () => {
-    // `DN-032T` : le T ne se sépare pas par un tiret sur la carte.
-    expect(parseNarutoCollector("DN-032T")).toEqual({
-      family: "arcadeBattle",
-      number: 32,
-      grouping: "t",
-      printedPrefix: "DN",
-    });
-    expect(parseNarutoCollector("NM-049")).toMatchObject({
-      family: "arcadeMission",
-      number: 49,
-      grouping: null,
-    });
-  });
-
-  it("laisse le jeu de table où il est", () => {
-    // `N-1646` commence par la même lettre que `NM-` : l'ordre des préfixes
-    // décide, et le plus long gagne.
+describe("Data Carddass — hors catalogue Carddass", () => {
+  it("ne confond pas NM/DN avec le CCG US N/M", () => {
+    // `N-1646` / `M-012` restent tabletop/CCG ; l'arcade est rejetée plus haut.
     expect(parseNarutoCollector("N-1646")?.family).toBe("ninja");
     expect(parseNarutoCollector("忍-11")?.family).toBe("ninja");
     expect(parseNarutoCollector("M-012")?.family).toBe("mission");
+    expect(parseNarutoCollector("NM-049")).toBeNull();
+    expect(parseNarutoCollector("DN-032T")).toBeNull();
   });
+});
 
-  it("donne aux deux cabinets leurs propres dossiers de disque", () => {
-    expect(canonicalNarutoDiskPrefix("DN")).toBe("dn");
-    expect(canonicalNarutoDiskPrefix("NM")).toBe("nm");
+describe("isJpOnlyNarutoArtwork", () => {
+  it("marque les bonus PS1, pas le retail ni les promos", () => {
+    expect(isJpOnlyNarutoArtwork("ni0001-ps")).toBe(true);
+    expect(isJpOnlyNarutoArtwork("ni0001")).toBe(false);
+    expect(isJpOnlyNarutoArtwork("ni0023-promo")).toBe(false);
   });
 });

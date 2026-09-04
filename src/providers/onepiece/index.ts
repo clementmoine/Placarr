@@ -9,6 +9,7 @@ import {
   ONEPIECE_PRINT_GAME,
   ONEPIECE_PROVIDER_ID,
 } from "./pack";
+import { stampOnepieceBack } from "./onepieceBack";
 import { formatOnepieceReference } from "./printIdentity";
 
 export {
@@ -34,6 +35,7 @@ const built = createEmptyLocalTcgProvider({
     websiteUrl: "https://en.onepiece-cardgame.com/cardlist/",
     formatReference: formatOnepieceReference,
     borrowFaceAcrossLocales: true,
+    decorateCandidate: (candidate) => stampOnepieceBack(candidate),
     notes:
       "Bandai OPTCG → `data/onepiece/`. Titres FR/EN via punk-records (vegapull) ; faces cardlist Bandai (`art.bandai.webp`) ; scellé opecards.fr. Pas de client Unity foil Bandai → face plate.",
   },

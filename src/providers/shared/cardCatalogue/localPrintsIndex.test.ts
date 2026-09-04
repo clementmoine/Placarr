@@ -60,9 +60,30 @@ describe("createLocalPrintsIndex", () => {
     expect(index.lookupRow("naruto:nr-0001")).toMatchObject({
       fullName: "Title Card",
       art: null,
+      category: null,
     });
     expect(index.searchRows("title")).toHaveLength(1);
     expect(index.listSets().map((row) => row.id)).toEqual(["nr"]);
+  });
+
+  it("persists an optional category on the print", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("onepiece");
+    index.writePrints([
+      {
+        printKey: "onepiece:op01-001",
+        setCode: "op01",
+        number: "001",
+        cardType: "op01",
+        category: "Leader",
+        titles: [{ lang: "fr", fullName: "Luffy", rarity: "Leader" }],
+      },
+    ]);
+    expect(index.lookupRow("onepiece:op01-001")).toMatchObject({
+      category: "Leader",
+      rarity: "Leader",
+      fullName: "Luffy",
+    });
   });
 
   it("records an attested face without inventing the others", () => {

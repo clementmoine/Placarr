@@ -22,19 +22,19 @@
     "deckHolos": 2,
     "prereleaseCount": 10,
     "prereleaseNonHoloAltsOfHolos": 4,
-    "note": "Marketing « 184 » + 4 alts avant-première → 188. sets.json collectorCount aligns on 188."
+    "note": "Marketing « 184 » + 4 alts → 188 (doc). User 2026-09-03 : les 10 `prereleaseListed` sont de vraies variantes (~10 €) — dig Estimation sur fullTen ; total catalogue à recaler si besoin."
   },
   "prereleaseListed": [
     "ni025",
     "ni019",
     "ni047",
     "ni027",
-    "te007",
-    "te036",
-    "te003",
-    "te015",
+    "ta005",
     "ta004",
-    "ta005"
+    "te015",
+    "te007",
+    "te003",
+    "te036"
   ],
   "cards": [
     {

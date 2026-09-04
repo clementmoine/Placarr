@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   NARUTO_PACK_ID,
+  isNarutoDataCarddassPrintedRef,
   narutoCatalogueLineForCard,
   narutoCatalogueLineForSealed,
   narutoDataPackForCard,
@@ -16,21 +17,24 @@ describe("narutoCatalogueLineForCard", () => {
   });
 
   /*
-    Les cartes de borne d'arcade partagent le pack sans partager la série :
-    `DN-…T` vient de ナルティメットカードバトル (2005), `NM-…` de
-    ナルティメットミッション (2007). Elles étaient jusqu'ici filtrées à la
-    lecture, faute d'endroit où les mettre.
+    Data Carddass arcade vit dans `narutodatacarddass`. Les refs DN/NM ne
+    doivent surtout pas tomber en en-ccg (collision N/M).
   */
-  it("reconnaît les deux cabinets Data Carddass", () => {
-    expect(narutoCatalogueLineForCard("DN-032T")).toBe("data-carddass");
-    expect(narutoCatalogueLineForCard("NM-049")).toBe("data-carddass");
-    expect(narutoCatalogueLineForCard("dn-1t")).toBe("data-carddass");
+  it("détecte DN/NM comme arcade hors ligne CCG", () => {
+    expect(isNarutoDataCarddassPrintedRef("DN-032T")).toBe(true);
+    expect(isNarutoDataCarddassPrintedRef("NM-049")).toBe(true);
+    expect(isNarutoDataCarddassPrintedRef("dn-1t")).toBe(true);
+    expect(narutoCatalogueLineForCard("DN-032T")).not.toBe("en-ccg");
+    expect(narutoCatalogueLineForCard("NM-049")).not.toBe("en-ccg");
   });
 
   it("ne vole pas les numéros du CCG US, qui commencent aussi par N et M", () => {
     // `NM-` doit être lu avant `N-` : sinon la borne mange le jeu de table.
     expect(narutoCatalogueLineForCard("N-001")).toBe("en-ccg");
     expect(narutoCatalogueLineForCard("M-012")).toBe("en-ccg");
+    expect(narutoCatalogueLineForCard("jus0088", "s6")).toBe("en-ccg");
+    expect(narutoCatalogueLineForCard("N-US088")).toBe("en-ccg");
+    expect(narutoCatalogueLineForCard("PR-US001")).toBe("en-ccg");
   });
 });
 
@@ -52,10 +56,11 @@ describe("narutoCatalogueLineForSealed", () => {
 });
 
 describe("narutoDataPackForCard", () => {
-  it("garde un seul pack sur le disque, quelle que soit la ligne", () => {
+  it("garde un seul pack Carddass sur le disque, quelle que soit la ligne", () => {
     // La ligne est un axe d'étiquetage, pas un second catalogue.
+    // DN/NM : autre provider (`narutodatacarddass`) — détectés à part.
     expect(narutoDataPackForCard("ni001", "s1")).toBe(NARUTO_PACK_ID);
     expect(narutoDataPackForCard("N-1646")).toBe(NARUTO_PACK_ID);
-    expect(narutoDataPackForCard("DN-032T")).toBe(NARUTO_PACK_ID);
+    expect(isNarutoDataCarddassPrintedRef("DN-032T")).toBe(true);
   });
 });

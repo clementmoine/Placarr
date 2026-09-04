@@ -313,7 +313,7 @@ describe("EN CCG source ledgers", () => {
   });
 
   it("does not scrape Collectors Comet or file N-001 as Carddass", () => {
-    expect(collectorsComet.ingest).toBe("none");
+    expect(collectorsComet.ingest).toBe("titles");
     expect(collectorsComet.crawl).toBe(false);
     expect(collectorsComet.line).toBe("en-ccg");
     expect(collectorsComet.urls.browse).toBe(
@@ -560,14 +560,17 @@ describe("EN CCG source ledgers", () => {
     );
     expect(urls).toContain("https://www.suruga-ya.com/en/category/501080113");
     expect(urls).toContain("https://www.suruga-ya.jp/product/detail/GL636976");
-    // La décision « ne pas ingérer » a été retournée le 2026-08-19 : le modèle
-    // accueille la ligne arcade, il manque une source pour la remplir.
+    // Provider dédié `narutodatacarddass` (2026-09-03) — ledger Suruga = note
+    // de chasse ; checklist seed sous le nouveau module. Pas de mint Carddass.
     expect(surugaDataCarddass.ingest).toContain("model-ready");
     expect(surugaDataCarddass.crawl).toBe(false);
     expect(surugaDataCarddass.line).toBe("data-carddass");
     expect(surugaDataCarddass.prefixesSeen).toEqual(["DN", "NM"]);
     expect(surugaDataCarddass.not).toContain("carddass");
     expect(surugaDataCarddass.not).toContain("en-ccg");
+    expect(surugaDataCarddass.decisionReversed.movedTo).toContain(
+      "narutodatacarddass",
+    );
     expect(surugaCarddass.ingest).toBe("faces");
     expect(surugaCarddass.line).toBe("carddass-jp");
     expect(surugaCarddass.lang).toBe("ja");
@@ -642,7 +645,7 @@ describe("EN CCG source ledgers", () => {
     expect(carddasCom.officialSite.ingestFaces).toBe("none");
     expect(carddasCom.officialSite.promoteStagingHoles).toBe(true);
     expect(carddasJpCardlist.ingest).toBe("titles");
-    expect(carddasJpCardlist.counts.cards).toBe(998);
+    expect(carddasJpCardlist.counts.cards).toBe(1004);
     expect(carddasJpCardlist.not).toContain("data-carddass");
     expect(carddasJpPromo.ingest).toBe("titles");
     expect(carddasJpPromo.counts.cards).toBe(61);

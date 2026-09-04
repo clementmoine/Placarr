@@ -4,6 +4,7 @@ import {
   kayouBoxToSetCode,
   kayouCleanPrintedId,
   canonicalizeKayouNumber,
+  canonicalizeKayouNumberForSet,
   kayouHitmarketFileToNumber,
   kayouHitmarketRelativePath,
   kayouPrintedToNumber,
@@ -40,5 +41,19 @@ describe("kayouIdNormalize", () => {
     expect(kayouPrintedToNumber("NR-CC-R-001")).toBe("cc.r.001");
     expect(canonicalizeKayouNumber("nr.ss.hr.002")).toBe("nrss.hr.002");
     expect(canonicalizeKayouNumber("nr.cc.mr.001s")).toBe("cc.mr.001s");
+  });
+
+  it("admits SLR+ as slrplus for printKey segments", () => {
+    expect(canonicalizeKayouNumber("nr.slr+.001")).toBe("nr.slrplus.001");
+  });
+
+  it("maps short nr.* onto wave prefixes for twin sets", () => {
+    expect(canonicalizeKayouNumberForSet("t2w7", "nr.cr.023")).toBe(
+      "nrb07.cr.023",
+    );
+    expect(canonicalizeKayouNumberForSet("t4w6", "nr.bp.028")).toBe(
+      "nrz06.bp.028",
+    );
+    expect(canonicalizeKayouNumberForSet("t1w1", "nr.r.001")).toBe("nr.r.001");
   });
 });

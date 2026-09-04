@@ -1,0 +1,61 @@
+{
+  "observed": "2026-09-04",
+  "goal": "Fill remaining JA truly-faceless Carddass orphans after eBay saturation",
+  "orphanCountAtStart": 110,
+  "orphanHits": 0,
+  "hits": [],
+  "probes": {
+    "frilTargetedPrOp": {
+      "queries": 29,
+      "listed": 236,
+      "uniqueIds": 17,
+      "orphanHits": 0,
+      "note": "Fuzzy PR忍/PR作 already owned; no exact orphan PR/OP titles"
+    },
+    "frilTargetedNiTeTa": {
+      "queries": 81,
+      "listed": 545,
+      "uniqueIds": 55,
+      "orphanHits": 0,
+      "http404": 2
+    },
+    "frilFamilyDeep": {
+      "queries": ["ナルト カードゲーム 忍", "術", "作", "依", "騎"],
+      "maxPages": 8,
+      "listed": 166,
+      "uniqueIds": 122,
+      "orphanHits": 0
+    },
+    "frilHttpExactTitleProbe": {
+      "refs": ["PR作-2..29 orphans", "PR忍-15/18/19", "OP忍-1/5", "忍-400/417", "術-356", "作-337"],
+      "exactTitleHits": 0
+    },
+    "mercari": { "query": "ナルト カードゲーム 忍-400", "resultItems": 0 },
+    "buyeeMercari": { "query": "ナルト カードゲーム PR作-25", "resultItems": 0 },
+    "suruga": { "status": "cloudflare_challenge" },
+    "yahooAuctions": { "status": "eea_blocked" },
+    "nikitaNrtImg": { "parsedCards": 393, "orphanHits": 0 },
+    "carddasJpStaging": { "images": 1043, "orphanInstallable": 0 },
+    "ebayLatinSold": {
+      "queries": ["Ninja-400/NI-400/忍-400", "PRTA/PR作 OR sold"],
+      "results": 0
+    },
+    "waybackCarddasCdx": {
+      "samples": ["shinobi-400", "shinobi-417", "jutsu-356"],
+      "hits": 0
+    }
+  },
+  "remainingTrulyFacelessJa": 110,
+  "families": {
+    "ni": 35,
+    "te": 30,
+    "ta": 16,
+    "pr*": 26,
+    "opni": 3
+  },
+  "next": [
+    "Yahoo Auctions / Suruga with JP egress (VPN)",
+    "Wait for new Fril/Mercari/eBay singles with printed refs",
+    "Physical/collector scan paste if available"
+  ]
+}

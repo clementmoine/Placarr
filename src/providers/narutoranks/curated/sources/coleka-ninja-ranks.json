@@ -32,6 +32,11 @@
       "reason": "Photo Coleka très reflétée (foil NW) — le catalogue emprunte le scan Imadoki IT en attendant un `art.reconstructed` FR propre."
     },
     {
+      "setCode": "bl",
+      "number": "0003",
+      "reason": "Fiche Coleka i1188740 = carte de base 3 (pièce puzzle GROUPE 7), pas GS03. Recto FR GS3 emprunte Imadoki EN/IT (`art.imadoki`) — voir `notIngested`."
+    },
+    {
       "setCode": "nr",
       "number": "0068",
       "reason": "Remplacé par `art.reconstructed` curé — texte FR language-specific (« SECOND EXAMEN DES SURVIVANTS »)."

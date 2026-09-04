@@ -46,7 +46,9 @@ const MAX_BATCH_KEYS = 120;
 /** Bumped when ninjaageboxn wedding MR uses kayouofficial native landscape. */
 /** Bumped when attested CDN nr.pr.* landscape pivots (058/060–062/068–070). */
 /** Bumped when Naruto 術-192/348/358 gain illustration-B variantImageUrls. */
-const PRINT_VARIANT_CACHE_VERSION = 53;
+/** Bumped when catalogue imageUrl/thumbnailUrl feed shelf faces (McDo paper). */
+/** Bumped when OPTCG Leader/Event/Stage category sleeve backs stamp. */
+const PRINT_VARIANT_CACHE_VERSION = 55;
 
 /** `type` is part of the key: it decides which providers are even asked. */
 function cacheKey(printKey: string, type: string): string {

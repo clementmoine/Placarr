@@ -81,6 +81,27 @@ describe("listCuratedReconstructedFaces", () => {
       listCuratedReconstructedFaces(cards).map((f) => `${f.cardId}/${f.lang}`),
     ).toEqual(["n0001/en", "ni0001/fr"]);
   });
+
+  it("does not misread promo/{pr0096}/{fr} as legacy promo/{lang}/{card}", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "naruto-curated-promo-"));
+    const cards = path.join(root, "cards");
+    mkdirSync(path.join(cards, "promo", "pr0096", "fr"), { recursive: true });
+    mkdirSync(path.join(cards, "promo", "fr", "pr0011"), { recursive: true });
+    writeFileSync(
+      path.join(cards, "promo", "pr0096", "fr", "art.reconstructed.png"),
+      "new",
+    );
+    writeFileSync(
+      path.join(cards, "promo", "fr", "pr0011", "art.reconstructed.png"),
+      "legacy",
+    );
+
+    expect(
+      listCuratedReconstructedFaces(cards)
+        .map((f) => `${f.family}/${f.cardId}/${f.lang}`)
+        .sort(),
+    ).toEqual(["promo/pr0011/fr", "promo/pr0096/fr"]);
+  });
 });
 
 describe("opaqueBounds", () => {

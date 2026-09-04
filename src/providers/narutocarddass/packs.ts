@@ -6,18 +6,17 @@
  * Client-safe (no `node:*`): `cataloguePacks` is imported by the admin
  * Catalogue tab. Disk roots stay in `indexStore` / callers.
  * Line helpers are verso / set-title only — they do not split the catalogue.
+ *
+ * Data Carddass arcade (DN/NM) is a **separate** provider
+ * (`narutodatacarddass`) — never a Carddass line.
  */
 export const NARUTO_PACK_ID = "naruto/carddass";
 export const NARUTO_EN_PACK_ID = "naruto/en-ccg";
 
 /**
- * Les trois lignes qui cohabitent dans le pack.
- *
- * `data-carddass` est le jeu de **borne d'arcade** : la borne scanne un
- * code-barres au dos, la carte n'a rien à voir avec la numérotation 忍/術/作/依
- * du jeu de table. Elle partage le pack, jamais la série.
+ * Les deux lignes qui cohabitent dans le pack Carddass.
  */
-export type NarutoCardLine = "carddass-fr" | "en-ccg" | "data-carddass";
+export type NarutoCardLine = "carddass-fr" | "en-ccg";
 
 /*
   Les familles du 疾風伝 — `shi`, `mju`, `msa`, `gaku` — ont quitté cette liste
@@ -26,9 +25,16 @@ export type NarutoCardLine = "carddass-fr" | "en-ccg" | "data-carddass";
 */
 const CARDDASS_PREFIX =
   /^(ni|te|ta|cl|ki|prni|prte|prta|prcl|prki|opni)[-]?\d/i;
-const EN_CCG_PREFIX = /^(n|j|m|c|pr|ps)[-]?\d/i;
-/** `DN-032T` (cabinet 2005), `NM-049` (cabinet 2007). Testé avant `n`/`m`. */
-const DATA_CARDDASS_PREFIX = /^(dn|nm)[-]?\d/i;
+/** `nus` / `jus` / `prus` before `n` / `j` / `pr`. */
+const EN_CCG_PREFIX =
+  /^(nus|jus|mus|cus|prus|n|j|m|c|pr|ps)[-]?\d/i;
+/** Arcade Data Carddass — autre provider ; ne jamais router vers en-ccg (N/M). */
+const DATA_CARDDASS_PREFIX = /^(dn|nm|nx)[-]?\d/i;
+
+/** True when the printed id belongs to the arcade Data Carddass provider. */
+export function isNarutoDataCarddassPrintedRef(card: string): boolean {
+  return DATA_CARDDASS_PREFIX.test(card.trim());
+}
 
 /**
  * Line split is verso / sealed only. `ni001` and `n001` sit side by side
@@ -41,21 +47,17 @@ export function narutoCatalogueLineForCard(
 ): NarutoCardLine {
   const raw = card.trim();
   // Avant tout le reste : `NM-049` commence par un `n` qui n'est pas celui du CCG US.
-  if (DATA_CARDDASS_PREFIX.test(raw)) return "data-carddass";
+  // Arcade → hors ce pack ; on évite le faux positif en-ccg.
+  if (DATA_CARDDASS_PREFIX.test(raw)) return "carddass-fr";
   if (CARDDASS_PREFIX.test(raw)) return "carddass-fr";
   if (EN_CCG_PREFIX.test(raw)) return "en-ccg";
-  const series = (set ?? "").trim().toLowerCase();
   /*
-    `gaku` et les `maku` sont partis avec le 疾風伝 ; ne restent ici que les
-    séries européennes, les promos et les 巻ノ japonais.
+    Plus de repli `s1`–`s6` / `promo` → Carddass : `J-US088` n'a pas le préfixe
+    `j`+chiffres, et le set le classait à tort. 巻ノ / s1 sans numéro lu restent
+    Carddass ; le reste (TP, tin, s7+) CCG.
   */
-  if (
-    series === "promo" ||
-    /^s[1-6]$/.test(series) ||
-    /^maki\d+$/.test(series)
-  ) {
-    return "carddass-fr";
-  }
+  const series = (set ?? "").trim().toLowerCase();
+  if (/^maki\d+$/.test(series)) return "carddass-fr";
   return "en-ccg";
 }
 

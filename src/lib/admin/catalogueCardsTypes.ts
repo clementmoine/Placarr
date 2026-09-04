@@ -29,6 +29,16 @@ export type CatalogueCardRow = {
    * borrowed across `catalogueLocales`). Verso stays on `lang`.
    */
   artLocaleFrom?: string;
+  /**
+   * Recto carries locale-printed text (or the pack has no cross-locale borrow).
+   * Preferred lang filter keeps these only for matching `lang`; neutral faces
+   * stay visible under every language.
+   */
+  languageSpecific?: boolean;
+  /** When `name` was copied from another locale (approximate title). */
+  nameLocaleFrom?: string;
+  /** Non-attested title pipeline, e.g. slug parse. */
+  nameSource?: string;
   /** Synthetic pack/set back tiles in the catalogue grid. */
   kind?: "face" | "pack-back" | "set-back";
   /** False = unprinted locale (shown in catalogue, hidden from add). */

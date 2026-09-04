@@ -1,6 +1,6 @@
 {
  "source": "carddass.fr — pages « liste des cartes » (S1–S3, S5) + checklist PDF transcrite (staging/carddass-fr/pdf/checklist.txt)",
- "note": "Noms et raretés officiels, lus sur les pages listes du site : le format y est « Tactique Commune TA-90 Le don de la copie », sans le désordre de colonnes qui rend les PDF inexploitables. Les pages S4 sont vides dans la capture Wayback (contenu en JS) : cette série vient de la transcription du PDF, validée 8/8 sur les entrées communes.",
+ "note": "Noms et raretés officiels, lus sur les pages listes du site : le format y est « Tactique Commune TA-90 Le don de la copie », sans le désordre de colonnes qui rend les PDF inexploitables. Les pages S4 sont vides dans la capture Wayback (contenu en JS) : cette série vient de la transcription du PDF, validée 8/8 sur les entrées communes. Série 6 (annulée FR) : bandeaux lus sur les visuels carddass.fr de pré-production (`art.carddass` / reconstructed), 2026-09-02.",
  "aliases": {
   "ni203": {
    "fr": "Itachi Uchiwa",
@@ -1806,9 +1806,9 @@
    "serie": 1
   },
   "ta052": {
-   "name": "La fin du démon Holo Commune TA-53 Test écrit",
-   "source": "site",
-   "rarity": "commune",
+   "name": "La fin du démon",
+   "source": "checklist",
+   "rarity": "holo",
    "serie": 1
   },
   "ta053": {
@@ -1852,7 +1852,7 @@
    "serie": 1
   },
   "ta060": {
-   "name": "Cicatrices effrayantes Tactique Commune Haut de page",
+   "name": "Cicatrices effrayantes",
    "source": "site",
    "rarity": "commune",
    "serie": 1
@@ -2118,7 +2118,7 @@
    "serie": 2
   },
   "ta107": {
-   "name": "La tentation du pouvoir ** Tactique Haut de page",
+   "name": "La tentation du pouvoir",
    "source": "site",
    "serie": 2
   },
@@ -2354,7 +2354,7 @@
    "serie": 4
   },
   "ta153": {
-   "name": "Rivaux éternels Tactique Holo Haut de page",
+   "name": "Rivaux éternels",
    "source": "site",
    "serie": 3
   },
@@ -2783,7 +2783,7 @@
    "serie": 5
   },
   "ta235": {
-   "name": "Formation idéale Tactique Rare Haut de page",
+   "name": "Formation idéale",
    "source": "site",
    "serie": 5
   },
@@ -4011,6 +4011,81 @@
    "source": "site",
    "rarity": "holo",
    "serie": 5
+  },
+  "ni268": {
+   "name": "Gaara",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ni298": {
+   "name": "Hanzaki",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ni316": {
+   "name": "Kakashi Hatake",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te236": {
+   "name": "La morsure du loup",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te240": {
+   "name": "Le rempart",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te248": {
+   "name": "Le bouclier ultime de Shukaku",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te259": {
+   "name": "Les mille oiseaux",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te268": {
+   "name": "La déferlante des sables mouvants",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te269": {
+   "name": "Les funérailles impériales du désert",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te270": {
+   "name": "La prison de sable",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ta238": {
+   "name": "De retour parmi les vivants",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ta239": {
+   "name": "Métamorphose de l'homme-bête",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ta251": {
+   "name": "Attaque surprise manquée",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ta252": {
+   "name": "L'union fait la force",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ta254": {
+   "name": "La puissance du stade deux",
+   "source": "s6-preprod",
+   "serie": 6
   }
  },
  "merge": {

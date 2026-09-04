@@ -106,6 +106,8 @@ describe("provider mapping probes", () => {
         "monsieurde",
         "myludo",
         "narutocarddass",
+        "narutodatacarddass",
+        "narutodefininja",
         "narutokayou",
         "narutomythos",
         "narutoranks",

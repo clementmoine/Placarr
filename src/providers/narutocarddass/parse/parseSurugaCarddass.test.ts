@@ -159,7 +159,9 @@ describe("suruga-ya-carddass ledger", () => {
     expect(ledger.not).toContain("data-carddass");
     expect(ledger.not).toContain("en-ccg");
     const listings = loadSurugaCarddassCuratedListings();
-    expect(listings.length).toBe(614);
+    // 618 = 614 + la moisson orphelins JA du 2026-09-04 (忍-391/392, PR作, 作-321).
+    expect(listings.length).toBe(618);
+    expect(listings.some((row) => row.id === "GL398669")).toBe(true);
     expect(listings.some((row) => row.id === "GL685033")).toBe(true);
     expect(listings.some((row) => row.id === "GL685034")).toBe(true);
     expect(listings.some((row) => row.id === "GL685035")).toBe(true);

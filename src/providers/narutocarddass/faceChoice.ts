@@ -56,6 +56,11 @@ export const NARUTO_FACE_SOURCES = [
    * tranchent (517×740 bat 350×495 watermarké). Coleka reste hors pool.
    */
   "rakuten",
+  /**
+   * narutocardgame.gg classic CCG archive — 350×490 EN faces. Fill holes only;
+   * pixels keep larger Drive / Vintage dumps ahead.
+   */
+  "narutocardgamegg",
   "legacy",
   "fanset",
 ] as const;
@@ -104,6 +109,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "carddas-b",
       "zabuza",
       "slabz",
+      "narutocardgamegg",
       "legacy",
       "fanset",
     ],
@@ -132,6 +138,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "slabz",
       "chitoroshop",
       "rakuten",
+      "narutocardgamegg",
       "legacy",
       "fanset",
     ],
@@ -160,6 +167,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "slabz",
       "chitoroshop",
       "rakuten",
+      "narutocardgamegg",
       "legacy",
       "fanset",
     ],
@@ -189,6 +197,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "mercari",
       "yahoo",
       "rakuten",
+      "narutocardgamegg",
       "legacy",
       "fanset",
     ],

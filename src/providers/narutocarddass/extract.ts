@@ -38,6 +38,9 @@ import { scrapeNarutoChitoroshopCards } from "./scrape/scrapeChitoroshop";
 import { scrapeUltrajeuxS5Holes } from "./scrape/scrapeUltrajeuxS5";
 import { scrapeVintageNarutoCcgFaces } from "./scrape/scrapeVintageNarutoCcg";
 import { installCarddasJpStagingFaces } from "./install/installCarddasJpStagingFaces";
+import { installCarddasDoubleIllustrationFaces } from "./install/installCarddasDoubleIllustrationFaces";
+import { installSlabzFaces } from "./install/installSlabzFaces";
+import { scrapeNarutoCardGameGgCards } from "./scrape/scrapeNarutoCardGameGg";
 import { harvestCarddasVol1Faces } from "./harvest/harvestCarddasVol1Faces";
 import { probeSurugaVol1Listings } from "./probeSurugaVol1Listings";
 import { probeSurugaMissingVol1 } from "./probeSurugaMissingVol1";
@@ -56,6 +59,7 @@ import { installCardgameclubPackshots } from "./install/installCardgameclubPacks
 import { installEbayPackshots } from "./install/installEbayPackshots";
 import { installEbayFaces } from "./install/installEbayFaces";
 import { installLeboncoinFaces } from "./install/installLeboncoinFaces";
+import { installRakutenFaces } from "./install/installRakutenFaces";
 import { installGoatLocalePromoFaces } from "./install/installGoatLocalePromoFaces";
 import { scrapeNarutoColekaUsPromoCards } from "./sources/colekaUsPromos";
 import { scrapeAvalonNarutoFaces } from "./scrape/scrapeAvalonShop";
@@ -265,6 +269,11 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         concurrency: shared.concurrency,
         limit: shared.limit,
       });
+      await scrapeNarutoCardGameGgCards({
+        force: shared.force,
+        delayMs: shared.delayMs,
+        limit: shared.limit,
+      });
     }
     if (wayback || uspromos) {
       await scrapeNarutoColekaUsPromoCards(shared);
@@ -379,8 +388,11 @@ async function runScrape(argv: readonly string[]): Promise<void> {
       await scrapeNarutoZabuzaPromo({ force: shared.force });
       await installEbayFaces({ force: shared.force });
       await installLeboncoinFaces({ force: shared.force });
+      await installRakutenFaces({ force: shared.force });
+      await installSlabzFaces({ force: shared.force });
       await installGoatLocalePromoFaces({ force: shared.force });
       await installCarddasJpStagingFaces({ force: shared.force });
+      await installCarddasDoubleIllustrationFaces({ force: shared.force });
     }
   }
 }
@@ -450,6 +462,38 @@ export async function runNarutoPackPipeline(
         ) {
           console.log(
             `── eBay faces : ${ebayFaces.written.length} écrits, ${ebayFaces.skipped.length} sautés, ${ebayFaces.failed.length} échecs`,
+          );
+        }
+        const rakutenFaces = await installRakutenFaces({ force });
+        if (
+          rakutenFaces.written.length ||
+          rakutenFaces.skipped.length ||
+          rakutenFaces.failed.length
+        ) {
+          console.log(
+            `── Rakuten faces : ${rakutenFaces.written.length} écrits, ${rakutenFaces.skipped.length} sautés, ${rakutenFaces.failed.length} échecs`,
+          );
+        }
+        const slabzFaces = await installSlabzFaces({ force });
+        if (
+          slabzFaces.written.length ||
+          slabzFaces.skipped.length ||
+          slabzFaces.failed.length
+        ) {
+          console.log(
+            `── Slabz faces : ${slabzFaces.written.length} écrits, ${slabzFaces.skipped.length} sautés, ${slabzFaces.failed.length} échecs`,
+          );
+        }
+        const carddasDoubles = await installCarddasDoubleIllustrationFaces({
+          force,
+        });
+        if (
+          carddasDoubles.written.length ||
+          carddasDoubles.skipped.length ||
+          carddasDoubles.failed.length
+        ) {
+          console.log(
+            `── Carddas doubles : ${carddasDoubles.written.length} écrits, ${carddasDoubles.skipped.length} sautés, ${carddasDoubles.failed.length} échecs`,
           );
         }
         const lbcFaces = await installLeboncoinFaces({ force });

@@ -125,6 +125,12 @@ describe("Naruto curated tree", () => {
       "ninja/ni0241/fr",
       "ninja/ni0252/fr",
       "ninja/ni0253/fr",
+      /*
+        PR-95 / PR-96 : reconstructions FR du 2026-09-04, source.jpg à côté —
+        aucun scan à plat de ces promos n'était détenu.
+      */
+      "promo/pr0095/fr",
+      "promo/pr0096/fr",
     ]);
     for (const face of faces) {
       expect(path.basename(face.source)).toMatch(

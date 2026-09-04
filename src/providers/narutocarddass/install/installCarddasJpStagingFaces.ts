@@ -8,13 +8,20 @@ import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
 
+import doubleIllustrations from "../curated/sources/carddas-jp-double-illustrations.json";
 import { NARUTO_PACK_ID } from "../packs";
 import { narutoCardAbsDir } from "../narutoCardDisk";
 import { extFromMagic, saveNarutoFace } from "../narutoFaceBytes";
 import { carddasJpStagingFaceInstallTarget } from "../parse/parseCarddasJpAsset";
 import { NARUTO_STAGING_CARDDAS_JP } from "../scrape/scrapeCarddasJp";
+import { carddasDoubleGifBasename } from "./installCarddasDoubleIllustrationFaces";
 
 const LANG = "ja";
+
+/** Double-height GIFs install via `installCarddasDoubleIllustrationFaces` only. */
+const DOUBLE_GIF_BASENAMES = new Set(
+  doubleIllustrations.cards.map((row) => carddasDoubleGifBasename(row.gif)),
+);
 
 export type InstallCarddasJpStagingFacesOptions = {
   force?: boolean;
@@ -50,7 +57,9 @@ export async function installCarddasJpStagingFaces(
   let skipped = 0;
   console.log("── JA carddas.com GIFs → cards/{family}/{id}/ja/art.carddas.*");
   for (const abs of files) {
-    const diskId = carddasJpStagingFaceInstallTarget(path.basename(abs));
+    const basename = path.basename(abs);
+    if (DOUBLE_GIF_BASENAMES.has(basename)) continue;
+    const diskId = carddasJpStagingFaceInstallTarget(basename);
     if (!diskId) continue;
     listed += 1;
     const cardDir =

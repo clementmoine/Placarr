@@ -26,6 +26,9 @@ describe("narutoFaceSourceOf", () => {
     expect(narutoFaceSourceOf("art.carddas.gif")).toBe("carddas");
     expect(narutoFaceSourceOf("art.carddas-a.png")).toBe("carddas-a");
     expect(narutoFaceSourceOf("art.carddas-b.png")).toBe("carddas-b");
+    expect(narutoFaceSourceOf("art.narutocardgamegg.jpg")).toBe(
+      "narutocardgamegg",
+    );
     expect(narutoFaceSourceOf("art.fanset.webp")).toBe("fanset");
   });
 

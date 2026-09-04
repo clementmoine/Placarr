@@ -11,12 +11,18 @@
  * relevé, comme toutes les moissons de ce pack. Ce que la base ajoute — 140
  * cartes, dont deux familles de préfixes inconnues — se décide après.
  */
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
+import { narutoFamilyForPrefix } from "../collectorIdentity";
+import {
+  existingNarutoArtForSource,
+  extFromMagic,
+  saveNarutoFace,
+} from "../narutoFaceBytes";
 import { NARUTO_PACK_ID } from "../packs";
 import { parseGgCardIndex, type GgCard } from "../parse/parseNarutoCardGameGg";
 
@@ -24,6 +30,7 @@ const INDEX_URL = "https://narutocardgame.gg/archive/classic-ccg/cards";
 const IMAGE_BASE = "https://narutocardgame.gg/images/classic";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
+const LANG = "en";
 
 export const GG_STAGING = "narutocardgame-gg";
 
@@ -97,9 +104,8 @@ export async function downloadGgFaces(input: {
       continue;
     }
     const id = ggDiskNumber(card);
-    const dir = path.join(input.cardsDir, folder, id, "en");
-    const dest = path.join(dir, "art.narutocardgamegg.jpg");
-    if (!input.force && existsSync(dest)) {
+    const dir = path.join(input.cardsDir, folder, id, LANG);
+    if (!input.force && existingNarutoArtForSource(dir, "narutocardgamegg")) {
       skipped += 1;
       continue;
     }
@@ -114,9 +120,17 @@ export async function downloadGgFaces(input: {
       );
       const data = (response as { data?: ArrayBuffer }).data;
       if (!data) throw new Error("vide");
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(dest, Buffer.from(data));
-      written += 1;
+      const buf = Buffer.from(data);
+      if (extFromMagic(buf) === ".bin") throw new Error("bin");
+      const saved = await saveNarutoFace({
+        cardDir: dir,
+        buf,
+        source: "narutocardgamegg",
+        lang: LANG,
+        force: input.force,
+      });
+      if (saved === "skip") skipped += 1;
+      else written += 1;
     } catch {
       failed.push(id);
     }
@@ -128,4 +142,49 @@ export async function downloadGgFaces(input: {
     });
   }
   return { written, skipped, failed };
+}
+
+export type ScrapeNarutoCardGameGgOptions = {
+  force?: boolean;
+  delayMs?: number;
+  limit?: number;
+  packRoot?: string;
+};
+
+/** Index + download → `art.narutocardgamegg.*` under EN card folders. */
+export async function scrapeNarutoCardGameGgCards(
+  options: ScrapeNarutoCardGameGgOptions = {},
+): Promise<{ written: number; skipped: number; failed: string[] }> {
+  const packRoot =
+    options.packRoot ?? path.join(dataRoot(), NARUTO_PACK_ID);
+  const cards = await fetchGgCardIndex();
+  writeGgIndex(cards, packRoot);
+  const slice =
+    typeof options.limit === "number" && options.limit > 0
+      ? cards.slice(0, options.limit)
+      : cards;
+  console.log(
+    `── narutocardgame.gg : ${slice.length}/${cards.length} faces EN → art.narutocardgamegg.*`,
+  );
+  const result = await downloadGgFaces({
+    cards: slice,
+    cardsDir: path.join(packRoot, "cards"),
+    folderOf: (prefix) => narutoFamilyForPrefix(prefix),
+    force: options.force,
+    delayMs: options.delayMs,
+    onProgress: (done, total) => {
+      if (done % 200 === 0 || done === total) {
+        console.log(`── narutocardgame.gg : ${done}/${total}`);
+      }
+    },
+  });
+  console.log(
+    JSON.stringify({
+      narutocardgamegg: true,
+      written: result.written,
+      skipped: result.skipped,
+      failed: result.failed.length,
+    }),
+  );
+  return result;
 }

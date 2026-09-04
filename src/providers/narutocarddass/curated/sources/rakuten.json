@@ -1,7 +1,7 @@
 {
   "source": "rakuten",
   "observed": "2026-09-04",
-  "note": "Pasted CDN URLs only — do not crawl Rakuten listings or seller stores. FR shopping product pages 403 without browser cookies; photos fetched once from open product page.",
+  "note": "Pasted CDN URLs only — do not crawl Rakuten listings or seller stores. Faces: curated/sources/rakuten.json faces[] → installRakutenFaces → art.rakuten.* (recoverable; CDN may 403 without browser cookies). FR shopping product pages 403 without browser cookies; photos fetched once from open product page.",
   "faces": [
     {
       "printedRef": "NI-3",

@@ -40,7 +40,7 @@ describe("holoShadersSimey", () => {
     const look = simeyHoloShader("rainbowHolo");
     expect(look.backgroundBlendMode).toBe("luminosity, soft-light");
     expect(look.overlay).toBe("rainbowHoloCoat");
-    expect(look.backgroundImage).toContain("T_Noise_Random");
+    expect(look.backgroundImage).toContain("simey_glitter");
     expect(look.backgroundImage).toContain("FX_T_Spectrum.webp");
   });
 
@@ -59,10 +59,38 @@ describe("holoShadersSimey", () => {
     expect(coat.opacity).toBe(0.85);
   });
 
-  it("ships cosmos / secret / poke-ball / V family on Live plates", () => {
+  it("ships cosmos / secret / poke-ball / V family on Live + vendored Simey FX", () => {
     expect(simeyHoloShader("cosmosHolo").mixBlendMode).toBe("color-dodge");
     expect(simeyHoloShader("cosmosHolo").backgroundImage).toContain(
+      "simey_cosmos-bottom",
+    );
+    expect(simeyHoloShader("cosmosHolo").backgroundImage).toContain(
       "FX_T_Spectrum_Bands_Rainbow_Bright",
+    );
+    expect(simeyHoloShader("cosmosHolo").backgroundImage).toMatch(
+      /repeating-linear-gradient\(\s*82deg/,
+    );
+    expect(simeyHoloShader("cosmosHolo").overlay).toBe("cosmosHoloCoat");
+    expect(simeyHoloShader("cosmosHoloCoat").backgroundImage).toContain(
+      "simey_cosmos-middle-trans",
+    );
+    expect(simeyHoloShader("cosmosHoloCoat").overlay).toBe("cosmosHoloTop");
+    expect(simeyHoloShader("cosmosHoloTop").backgroundImage).toContain(
+      "simey_cosmos-top-trans",
+    );
+    const amazing = simeyHoloShader("amazingRare");
+    expect(amazing.backgroundImage).toContain("simey_glitter");
+    expect(amazing.mixBlendMode).toBe("normal");
+    expect(amazing.overlay).toBe("amazingRareFoil");
+    expect(amazing.carve?.url).toContain("Galaxy_Stars");
+    expect(simeyHoloShader("amazingRareFoil").mixBlendMode).toBe("lighten");
+    expect(simeyHoloShader("amazingRareFoil").backgroundImage).toContain(
+      "var(--foil-etch",
+    );
+    expect(simeyHoloShader("amazingRareFoil").overlay).toBe("amazingRareCoat");
+    expect(simeyHoloShader("amazingRareCoat").mixBlendMode).toBe("saturation");
+    expect(simeyHoloShader("exRegular").backgroundImage).toContain(
+      "simey_grain",
     );
     const secret = simeyHoloShader("secretRare");
     expect(secret.backgroundImage).toContain("FX_T_Spectrum_SVHolo2");
@@ -99,5 +127,45 @@ describe("holoShadersSimey", () => {
     );
     expect(simeyHoloShader("vRegular").overlay).toBe("vRegularCoat");
     expect(simeyHoloShader("exFullArt").overlay).toBe("exFullArtCoat");
+    expect(simeyHoloShader("exFullArt").backgroundImage).toContain(
+      "simey_illusion",
+    );
+    expect(simeyHoloShader("exFullArt").backgroundImage).toMatch(/128\.5deg/);
+    expect(simeyHoloShader("exFullArt").filter).toContain("contrast(2.5)");
+    // Live mask is clip-only — blend stack keeps a neutral white soft-light
+    // stand-in (not var(--foil-mask) — Live masks crush sunpillar chroma).
+    expect(simeyHoloShader("exFullArt").backgroundImage).toContain(
+      "linear-gradient(#ffffff, #ffffff)",
+    );
+    expect(simeyHoloShader("exFullArt").backgroundImage).not.toContain(
+      "--foil-mask",
+    );
+    expect(simeyHoloShader("exFullArt").backgroundSize).toContain(
+      "var(--foil-imgsize, 33%)",
+    );
+    // SvHolo / v-star: soft-light coat + same rib pan (opposite mid-cuts).
+    const vStar = simeyHoloShader("vStar");
+    expect(vStar.backgroundImage).toContain("simey_grain");
+    expect(vStar.backgroundImage).toMatch(/repeating-linear-gradient\(\s*0deg/);
+    expect(vStar.backgroundImage).not.toContain("FX_T_Spectrum_SVHolo2");
+    expect(vStar.backgroundImage).not.toContain("FX_T_Spectrum_SVHolo3");
+    expect(vStar.backgroundSize).toContain("200% 700%");
+    expect(vStar.overlay).toBe("vStarCoat");
+    const vStarCoat = simeyHoloShader("vStarCoat");
+    expect(vStarCoat.mixBlendMode).toBe("soft-light");
+    expect(vStarCoat.backgroundImage).toMatch(/repeating-linear-gradient\(\s*0deg/);
+    expect(vStarCoat.backgroundPosition).toBe(vStar.backgroundPosition);
+    expect(vStarCoat.backgroundPosition).not.toMatch(/\*\s*-1\)/);
+    // Tinsel / shiny-rare: sunpillar + soft-light coat, same pan.
+    const shiny = simeyHoloShader("shinyRare");
+    expect(shiny.backgroundImage).toMatch(/repeating-linear-gradient\(\s*0deg/);
+    expect(shiny.backgroundImage).not.toContain("FX_T_Spectrum_FlatSilver");
+    expect(shiny.overlay).toBe("shinyRareCoat");
+    const shinyCoat = simeyHoloShader("shinyRareCoat");
+    expect(shinyCoat.mixBlendMode).toBe("soft-light");
+    expect(shinyCoat.backgroundImage).toMatch(/repeating-linear-gradient\(\s*0deg/);
+    expect(shinyCoat.backgroundSize).toContain("200% 400%");
+    expect(shinyCoat.backgroundPosition).toBe(shiny.backgroundPosition);
+    expect(shinyCoat.backgroundPosition).not.toMatch(/\*\s*-1\)/);
   });
 });

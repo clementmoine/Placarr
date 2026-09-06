@@ -12,6 +12,7 @@ import {
 
 import {
   foilManifestToShader,
+  listPokemonEffectFoilNames,
   listPokemonFoilNames,
   type PokemonPaperFoilName,
 } from "./foilNames";
@@ -370,9 +371,10 @@ function materialForSheet(
   };
 }
 
+/** Playroom / admin picker — foiled leaves + sheet aliases; no NonFoil. */
 export function listPokemonMaterialNames(): string[] {
   return [
-    ...listPokemonFoilNames(),
+    ...listPokemonEffectFoilNames(),
     ...(Object.keys(POKEMON_MAT_ALIASES) as PokemonMatAliasName[]),
   ];
 }

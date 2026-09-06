@@ -17,6 +17,7 @@ import {
 import {
   isSimeyHoloShaderId,
   SIMEY_HOLO_SHADER_IDS,
+  simeyHoloShader,
 } from "@/core/render/holoShadersSimey";
 
 import {
@@ -30,34 +31,36 @@ import { POKEMON_EFFECT_PACK_ID } from "./index";
 describe("pokemon CSS foil fallback", () => {
   it("resolves a textured recipe for Live leaves, house looks for catalogue", () => {
     expect(POKEMON_CSS_FOIL_SHIPPED).toBe(true);
-    // Rainbow leaf → Live Spectrum_Rainbow (not SwSecret’s Spectrum).
     expect(resolveCssRecipe("Rainbow", null).finishShaderId).toBe(
-      "rainbowFoil",
+      "rainbowHolo",
     );
-    // Catalogue finishes: vendored simey regular/reverse holo (not house gradients).
+    // Catalogue holo → Simey regular-holo; unknown leaf stays flare.
     expect(resolveCssRecipe("holo", null).finishShaderId).toBe("regularHolo");
     expect(resolveCssRecipe("live-ph", null).finishShaderId).toBe(
       "reverseHolo",
+    );
+    expect(resolveCssRecipe("SomeFutureLeaf", null).finishShaderId).toBe(
+      "flare",
     );
   });
 
   it("keeps sheet aliases on their own recipe rather than their frag stem", () => {
     /*
       `foilManifestToShader` collapses `FlatSilver_CC` onto `FlatSilver` — right
-      for GLES, wrong for CSS: CC carves TEX_CC_PB, FlatSilver stays silver.
-      Rainbow02 keeps Spectrum (not Rainbow’s Spectrum_Rainbow).
+      for GLES, wrong for CSS: CC → poke-ball-holo, FlatSilver stays silver.
+      Rainbow02 → rainbow-alt; SwSecreT02 → secret-rare.
     */
     expect(resolveCssRecipe("FlatSilver_CC", null).finishShaderId).toBe(
-      "flatSilverCc",
+      "pokeBallHolo",
     );
     expect(resolveCssRecipe("FlatSilver", null).finishShaderId).toBe(
       "flatSilver",
     );
     expect(resolveCssRecipe("Rainbow02", null).finishShaderId).toBe(
-      "rainbow02",
+      "rainbowAlt",
     );
     expect(resolveCssRecipe("SwSecreT02", null).finishShaderId).toBe(
-      "swSecret",
+      "secretRare",
     );
   });
 
@@ -85,26 +88,21 @@ describe("pokemon CSS foil fallback", () => {
       }).finishShaderId,
     ).toBe("flatSilverCcMb");
   });
-  it("gives every foiled material a recipe of its own", () => {
-    /*
-      The gap the side-by-side comparator exposed: all 27 materials were
-      rendering one identical house gradient, so the CSS half of the playroom
-      was showing the same card 27 times. Distinctness is the property that
-      failure violated, so it is the one pinned here.
-    */
+  it("maps every discovered Live foil leaf onto a Simey-backed CSS look", () => {
     const foiled = POKEMON_FOIL_NAMES.filter((name) => name !== "NonFoil");
-    const resolved = foiled.map(
-      (name) => resolveCssRecipe(name, null).finishShaderId,
-    );
-    for (const [i, id] of resolved.entries()) {
+    for (const name of foiled) {
+      const id = resolveCssRecipe(name, null).finishShaderId;
+      expect(LIVE_FINISH_CSS[name], name).toBeTruthy();
+      expect(id, name).toBe(LIVE_FINISH_CSS[name]);
       expect(
         isPokemonHoloShaderId(id) || isSimeyHoloShaderId(id),
-        foiled[i],
+        name,
       ).toBe(true);
     }
-    expect(new Set(resolved).size, "every foil needs its own look").toBe(
-      foiled.length,
+    const backedIds = foiled.map(
+      (n) => resolveCssRecipe(n, null).finishShaderId,
     );
+    expect(new Set(backedIds).size).toBeGreaterThan(1);
   });
 
   it("leaves a non-foil print plain rather than inventing a sheen", () => {
@@ -275,13 +273,27 @@ describe("pokemon textured recipes", () => {
     }
     // And the ones that need a stencil actually carry one.
     for (const id of [
-      "cosmos",
-      "galaxy",
+      "amazingRare",
       "crackedIce",
       "sunPillarCcGlitter",
     ] as const) {
-      expect(pokemonHoloShader(id).carve?.url, id).toBeTruthy();
+      expect(holoShader(id)!.carve?.url, id).toBeTruthy();
     }
+    expect(holoShader("cosmosHolo")!.carve).toBeUndefined();
+    expect(holoShader("cosmosHolo")!.backgroundImage).toContain(
+      "simey_cosmos-bottom",
+    );
+    expect(holoShader("cosmosHoloCoat")!.backgroundImage).toContain(
+      "simey_cosmos-middle-trans",
+    );
+    expect(holoShader("cosmosHoloTop")!.backgroundImage).toContain(
+      "simey_cosmos-top-trans",
+    );
+    expect(holoShader("amazingRare")!.backgroundImage).toContain(
+      "simey_glitter",
+    );
+    expect(holoShader("amazingRare")!.overlay).toBe("amazingRareFoil");
+    expect(holoShader("amazingRareFoil")!.overlay).toBe("amazingRareCoat");
     expect(pokemonHoloShader("sunPillar").carve).toBeUndefined();
     expect(pokemonHoloShader("sunPillarCc").carve).toBeUndefined();
     expect(pokemonHoloShader("sunPillarCcCoat").carve).toBeUndefined();
@@ -435,6 +447,24 @@ describe("every look answers the light", () => {
 });
 
 describe("simey catalogue foils", () => {
+  it("ships Cosmos / Galaxy on Simey staging ports (not pokemon forks)", () => {
+    expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmosHolo");
+    expect(resolveCssRecipe("cosmos", null).finishShaderId).toBe("cosmosHolo");
+    expect(resolveCssRecipe("Galaxy", null).finishShaderId).toBe("amazingRare");
+    expect(resolveCssRecipe("amazing", null).finishShaderId).toBe(
+      "amazingRare",
+    );
+    const cosmos = holoShader("cosmosHolo")!;
+    expect(cosmos.mixBlendMode).toBe("color-dodge");
+    expect(cosmos.overlay).toBe("cosmosHoloCoat");
+    expect(holoShader(cosmos.overlay!)!.overlay).toBe("cosmosHoloTop");
+    const galaxy = holoShader("amazingRare")!;
+    expect(galaxy.backgroundBlendMode).toBe("soft-light, color-burn");
+    expect(galaxy.overlay).toBe("amazingRareFoil");
+    expect(holoShader(galaxy.overlay!)!.mixBlendMode).toBe("lighten");
+    expect(holoShader(galaxy.overlay!)!.overlay).toBe("amazingRareCoat");
+  });
+
   it("ships regularHolo / reverseHolo from the vendored poke-holo recipes", () => {
     const holo = holoShader("regularHolo")!;
     expect(holo.mixBlendMode).toBe("color-dodge");
@@ -524,32 +554,34 @@ describe("pokemon CSS opacity dose", () => {
     expect(etch.backgroundImage).toContain("FX_T_Highlight_Gold_Band");
     expect(etch.mixBlendMode).toBe("soft-light");
     expect(etch.opacity).toBe(0.62);
+    // Formerly-flare Live leaves now use closest Simey rarity recipes.
     expect(resolveCssRecipe("SvUltraGoldRainbow", null).finishShaderId).toBe(
-      "ultraGoldRainbow",
+      "hyperRare",
     );
     expect(resolveCssRecipe("SvUltraScodix", null).finishShaderId).toBe(
-      "ultraScodix",
+      "hyperRare",
     );
-    expect(resolveCssRecipe("SwSecret", null).finishShaderId).toBe("swSecret");
-    expect(pokemonHoloShader("swSecret").overlay).toBe("swSecretCoat");
-    expect(pokemonHoloShader("swSecretCoat").overlay).toBe("swSecretEtch");
-    expect(pokemonHoloShader("swSecretEtch").backgroundImage).toContain(
-      "var(--foil-etch",
+    expect(resolveCssRecipe("SunBeam", null).finishShaderId).toBe(
+      "regularHolo",
     );
-    expect(pokemonHoloShader("rainbowFoil").overlay).toBe("rainbowFoilCoat");
-    expect(pokemonHoloShader("cosmos").overlay).toBe("cosmosCoat");
-    expect(pokemonHoloShader("galaxy").overlay).toBe("galaxyCoat");
+    expect(resolveCssRecipe("CrackedIce", null).finishShaderId).toBe(
+      "illustrationRare",
+    );
+    expect(resolveCssRecipe("SwSecret", null).finishShaderId).toBe(
+      "secretRare",
+    );
+    expect(simeyHoloShader("secretRare").overlay).toBe("secretRareCoat");
+    expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmosHolo");
+    expect(resolveCssRecipe("Galaxy", null).finishShaderId).toBe("amazingRare");
+    expect(holoShader("cosmosHolo")!.overlay).toBe("cosmosHoloCoat");
+    expect(holoShader("amazingRare")!.overlay).toBe("amazingRareFoil");
     expect(pokemonHoloShader("flatSilver").overlay).toBe("flatSilverCoat");
-    expect(pokemonHoloShader("svUltra").overlay).toBe("svUltraCoat");
-    expect(pokemonHoloShader("ultraScodix").overlay).toBe(
-      "ultraGoldRainbowEtch",
-    );
-    // Live remaps — no Simey rarity ids on these leaves.
+    // Live remaps — Simey rarity ids on product leaves.
     expect(resolveCssRecipe("Rainbow", null).finishShaderId).toBe(
-      "rainbowFoil",
+      "rainbowHolo",
     );
-    expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmos");
-    expect(resolveCssRecipe("SwHolo", null).finishShaderId).toBe("swHolo");
+    expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmosHolo");
+    expect(resolveCssRecipe("SwHolo", null).finishShaderId).toBe("vRegular");
   });
 
   it("SunPillar CSS mirrors poke-151 ex-regular composition with Live paint", () => {
@@ -574,6 +606,7 @@ describe("pokemon CSS opacity dose", () => {
     expect(coat.backgroundSize).toContain("195% 100%");
     expect(coat.mixBlendMode).toBe("soft-light");
     expect(glitter.mixBlendMode).toBe("soft-light");
+    expect(glitter.backgroundImage).toContain("simey_grain");
     expect(shine.backgroundImage).not.toContain("FX_T_Noise_Dim");
     // Dimmed Live dump hue (raw ×0.45 for soft-light).
     expect(shine.backgroundImage).toMatch(/#190628|#575a32/i);
@@ -597,32 +630,39 @@ describe("pokemon CSS opacity dose", () => {
     ).toBe("sunPillarCc");
   });
 
-  it("AngledPillars matches Simey diagonalFamily / ex-full-art", () => {
+  it("AngledPillars ports poke-151 ex-full-art stack (mask/foil/sunpillar/ribs)", () => {
     expect(resolveCssRecipe("AngledPillars", null).finishShaderId).toBe(
-      "angledPillars",
+      "exFullArt",
     );
-    const shine = pokemonHoloShader("angledPillars");
-    const coat = pokemonHoloShader("angledPillarsCoat");
-    expect(shine.overlay).toBe("angledPillarsCoat");
-    // Same stack as holoShadersSimey exFullArt: shine + Live angled + ribs + spot.
-    expect(shine.backgroundImage).toContain("FX_T_Gradient_Shine");
-    expect(shine.backgroundImage).toContain("FX_T_Spectrum_Bands_Angled");
+    const shine = simeyHoloShader("exFullArt");
+    const coat = simeyHoloShader("exFullArtCoat");
+    expect(shine.overlay).toBe("exFullArtCoat");
+    // Live foil_mask = clip only; blend uses neutral white soft-light stand-in.
+    expect(shine.backgroundImage).toContain("linear-gradient(#ffffff, #ffffff)");
+    expect(shine.backgroundImage).not.toContain("--foil-mask");
+    expect(shine.backgroundImage).toContain("--foil-etch");
+    expect(shine.backgroundImage).toContain("simey_illusion");
     expect(shine.backgroundImage).toMatch(/128\.5deg/);
+    expect(shine.backgroundImage).toMatch(/repeating-linear-gradient\(0deg/);
+    expect(shine.backgroundImage).not.toContain("FX_T_Gradient_Shine");
+    expect(shine.backgroundImage).not.toContain("FX_T_Spectrum_Bands_Angled");
+    expect(shine.backgroundSize).toContain("var(--foil-imgsize, 33%)");
     expect(shine.backgroundSize).toContain("200% 700%");
     expect(shine.backgroundSize).toContain("300% 100%");
+    expect(shine.backgroundRepeat).toContain("var(--foil-repeat, repeat)");
     expect(shine.backgroundBlendMode).toBe(
       "soft-light, soft-light, hue, hard-light",
     );
     expect(shine.mixBlendMode).toBe("color-dodge");
-    expect(shine.opacity).toBeLessThanOrEqual(
-      POKEMON_CSS_DODGE_OPACITY_CEILING,
-    );
-    for (const part of shine.backgroundRepeat?.split(",") ?? []) {
-      expect(part.trim()).toBe("no-repeat");
-    }
+    expect(shine.filter).toContain("contrast(2.5)");
+    expect(shine.filter).toContain("saturate(0.66)");
+    expect(coat.backgroundSize).toContain("var(--foil-imgsize, 33%)");
     expect(coat.backgroundSize).toContain("200% 400%");
     expect(coat.backgroundSize).toContain("195% 100%");
-    expect(coat.mixBlendMode).toBe("exclusion");
+    expect(coat.mixBlendMode).toBe("soft-light");
+    expect(coat.filter).toContain("contrast(1.66)");
+    // Same shear as shine — opposite ribs mid-cut even under soft-light.
+    expect(coat.backgroundPosition).toBe(shine.backgroundPosition);
   });
 
   it("plain FlatSilver keeps SVHolo2 off (CC spectrum is α-gated in GLES)", () => {
@@ -687,9 +727,7 @@ describe("pokemon CSS opacity dose", () => {
 
     const sparkle = pokemonHoloShader("radiantHoloSparkle");
     expect(sparkle.mixBlendMode).toBe("overlay");
-    expect(sparkle.backgroundImage).toContain("T_Noise_Random");
-    // Live noise μ≈143 vs simey glitter μ≈51 — dim before overlay.
-    expect(sparkle.filter).toContain("grayscale(1)");
-    expect(sparkle.filter).toContain("brightness(0.28)");
+    expect(sparkle.backgroundImage).toContain("simey_glitter");
+    expect(sparkle.filter).toContain("brightness(0.66)");
   });
 });

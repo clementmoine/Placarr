@@ -3,9 +3,10 @@
  *
  * **Structure** = simey (overlay chains, blend, clip, glare).
  * **Paint** = TCG Live dump plates under `/assets/pokemon/textures`
- * (same stems as `SHARED_BY_FOIL` in `effects/pokemon/materials`). CSS hue
- * ramps stay only where Live has no drawable plate (regular bars, reverse
- * light mask, sunpillar-style diagonals without a spectrum slot).
+ * (same stems as `SHARED_BY_FOIL` in `effects/pokemon/materials`), plus
+ * lang-agnostic Simey shared FX vendored locally (`simey_glitter`, …).
+ * CSS hue ramps stay only where Live has no drawable plate (regular bars,
+ * reverse light mask, sunpillar-style diagonals without a spectrum slot).
  *
  * Staging reference CSS: `data/pokemon/staging/simey/{poke-holo,poke-151}/`
  * (sync Simey CSS (local tool)). Not loaded in the browser.
@@ -19,11 +20,16 @@ import type { HoloShader } from "@/core/render/holoShaders";
 const T = "/assets/pokemon/textures";
 const tex = (stem: string) => `url(${T}/${stem}.webp)`;
 
-const GLITTER = tex("T_Noise_Random");
+/** Simey poke-holo `glitter.png` — shared FX, not locale-specific (vendored). */
+const GLITTER = tex("simey_glitter");
 const GLITTER_GOLD = tex("FX_T_SVUltra_Glitter");
 const GSIZE = "25%";
-const GRAIN = tex("FX_T_Noise_Dim");
-const COSMOS = tex("T_Holofoil_Cosmos_Dots_RGBA_Gradient");
+/** Simey poke-holo `grain.webp` — global `--grain` (vendored). */
+const GRAIN = tex("simey_grain");
+/** Simey cosmos-holo stack (vendored) — not Live cosmos dots. */
+const COSMOS_BOTTOM = tex("simey_cosmos-bottom");
+const COSMOS_MIDDLE = tex("simey_cosmos-middle-trans");
+const COSMOS_TOP = tex("simey_cosmos-top-trans");
 const CLOUD = tex("T_CloudNoise");
 /** SwSecret / Rainbow02 spectrum. */
 const FOIL = tex("FX_T_Spectrum");
@@ -32,12 +38,10 @@ const FOIL_RAINBOW = tex("FX_T_Spectrum_Rainbow");
 const FOIL_FLAT = tex("FX_T_Spectrum_FlatSilver");
 const FOIL_GOLD = tex("FX_T_Highlight_Gold_Band");
 const FOIL_SV2 = tex("FX_T_Spectrum_SVHolo2");
-const FOIL_SV3 = tex("FX_T_Spectrum_SVHolo3");
 /** Live `_CardEtch` via `HoloCardImage` `--foil-etch` (already inverted). */
 const FOIL_ETCH =
   "var(--foil-etch, linear-gradient(hsl(0, 0%, 8%), hsl(0, 0%, 14%)))";
 const FOIL_VERTICAL = tex("FX_T_Spectrum_Bands_Vertical");
-const FOIL_ANGLED = tex("FX_T_Spectrum_Bands_Angled");
 const FOIL_DESAT = tex("FX_T_Spectrum_Bands_DesaturateOneSide");
 const FOIL_COSMOS = tex("FX_T_Spectrum_Bands_Rainbow_Bright");
 const FOIL_BLACK = tex("FX_T_Spectrum_BlackSide");
@@ -46,6 +50,8 @@ const HIGHLIGHT = tex("FX_T_Highlight_Over");
 const LIGHT_SHEEN = tex("T_Holofoil_Mask_Gradient_LightSheen");
 const BAR_WIDE = tex("T_Holofoil_Mask_Bar_Wide_Single");
 const BW_BARS = tex("T_Holofoil_Mask_BWBars");
+/** poke-151 ex-full-art default `--foil` when no Live etch. */
+const ILLUSION = tex("simey_illusion");
 
 const VIOLET = "var(--violet, #c929f1)";
 const BLUE = "var(--blue, #0dbde9)";
@@ -62,6 +68,9 @@ const SP6 = "hsl(283, 100%, 73%)";
 
 /** Simey rainbow-alt lead bands (`rainbow-alt.css`) — structure, not hue source. */
 const RAINBOW_ALT_BANDS = `repeating-linear-gradient(var(--angle, -22deg), hsla(283, 49%, 60%, 0.75) calc(var(--space, 5%) * 1), hsla(2, 70%, 58%, 0.75) calc(var(--space, 5%) * 2), hsla(53, 67%, 53%, 0.75) calc(var(--space, 5%) * 3), hsla(93, 56%, 52%, 0.75) calc(var(--space, 5%) * 4), hsla(176, 38%, 50%, 0.75) calc(var(--space, 5%) * 5), hsla(228, 100%, 77%, 0.75) calc(var(--space, 5%) * 6), hsla(283, 49%, 61%, 0.75) calc(var(--space, 5%) * 7))`;
+
+/** poke-holo cosmos-holo 82° lattice (staging CSS hue — not locale art). */
+const COSMOS_BANDS = `repeating-linear-gradient(82deg, hsl(53, 65%, 60%) calc(var(--space, 4%) * 1), hsl(93, 56%, 50%) calc(var(--space, 4%) * 2), hsl(176, 54%, 49%) calc(var(--space, 4%) * 3), hsl(228, 59%, 55%) calc(var(--space, 4%) * 4), hsl(283, 60%, 55%) calc(var(--space, 4%) * 5), hsl(326, 59%, 51%) calc(var(--space, 4%) * 6), hsl(326, 59%, 51%) calc(var(--space, 4%) * 7), hsl(283, 60%, 55%) calc(var(--space, 4%) * 8), hsl(228, 59%, 55%) calc(var(--space, 4%) * 9), hsl(176, 54%, 49%) calc(var(--space, 4%) * 10), hsl(93, 56%, 50%) calc(var(--space, 4%) * 11), hsl(53, 65%, 60%) calc(var(--space, 4%) * 12))`;
 
 const R1 = "hsl(0, 57%, 37%)";
 const R2 = "hsl(40, 53%, 39%)";
@@ -80,6 +89,13 @@ const PX = "var(--pointer-x, var(--colorX, 50%))";
 const PY = "var(--pointer-y, var(--colorY, 50%))";
 const PL = "var(--pointer-from-left, 0.5)";
 const PT = "var(--pointer-from-top, 0.5)";
+
+const COSMOS_SPOT = `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(180, 100%, 89%, 0.5) 5%, hsla(180, 14%, 57%, 0.3) 40%, hsl(0, 0%, 0%) 130%)`;
+
+/** Amazing-rare invert spot (poke-holo `amazing-rare.css`). */
+const GALAXY_INVERT_SPOT = `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(150, 20%, 10%, 1) 10%, hsla(177, 22%, 80%, 0.1) 50%, hsla(0, 0%, 95%, 0.98) 90%)`;
+
+const GALAXY_FOIL_SPOT = `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(50, 20%, 90%, 0.95) 10%, rgba(181, 139, 164, 0.5) 50%, hsl(0, 0%, 0%) 60%)`;
 
 function lit(base: number, swing: number): string {
   return `calc(${base} + ${OFF} * ${swing})`;
@@ -101,6 +117,66 @@ function spot(): string {
   return `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(0,0%,0%,0.1) 12%, hsla(0,0%,0%,0.15) 20%, hsla(0,0%,0%,0.25) 120%)`;
 }
 
+/** poke-151 `ex-full-art.css` ribs (`--angle: 128.5deg`). */
+function exFullArtRibs(): string {
+  return `repeating-linear-gradient(128.5deg, #0e152e 0%, hsl(180, 10%, 60%) 3.8%, hsl(180, 29%, 66%) 4.5%, hsl(180, 10%, 60%) 5.2%, #0e152e 14%, #0e152e 16%)`;
+}
+
+/**
+ * AngledPillars ← poke-151 `ex-full-art` stack:
+ * mask → foil → sunpillar 0° → ribs 128.5° → spot.
+ *
+ * Live `foil_mask` is **clip only** (`maskedByStyle` in HoloCardImage) — never
+ * soft-lit as Simey’s `--mask`. Live masks average ~dark grey; soft-lighting
+ * them crushes the sunpillar into grey ribs. First blend layer stays a neutral
+ * white soft-light stand-in so the 5-layer / 4-mode structure still matches.
+ *
+ * Paint: `--foil-etch` when Live etch exists, else `simey_illusion`.
+ * Etch → `--foil-imgsize: cover`. Illusion fallback → always `33%` tiled
+ * (cover illusion = one huge plate → nested diamonds). Live `foil_mask` is
+ * clip only. Bare (no mask, no etch) also sets Simey `:not(.masked)` filters
+ * + exclusion blend on the shine layers.
+ */
+const EX_FULL_ART_MASK = "linear-gradient(#ffffff, #ffffff)";
+const EX_FULL_ART_FOIL = `var(--foil-etch, ${ILLUSION})`;
+const EX_FULL_ART_LAYERS = `${EX_FULL_ART_MASK}, ${EX_FULL_ART_FOIL}, ${sunpillar("0deg")}, ${exFullArtRibs()}, ${spot()}`;
+const EX_FULL_ART_SHEAR = `calc(${BX} + (${BY} * 0.2)) ${BY}`;
+/** Illusion default 33%; HoloCardImage sets cover when Live etch is bound. */
+const EX_FULL_ART_SIZES_SHINE =
+  "cover, var(--foil-imgsize, 33%), 200% 700%, 300% 100%, 200% 100%";
+const EX_FULL_ART_SIZES_COAT =
+  "cover, var(--foil-imgsize, 33%), 200% 400%, 195% 100%, 200% 100%";
+const EX_FULL_ART_REPEAT =
+  "no-repeat, var(--foil-repeat, repeat), no-repeat, no-repeat, no-repeat";
+/** Masked Simey blend; bare cards set `--exfa-blend` (comma list — no var fallback). */
+const EX_FULL_ART_BLEND_MASKED = "soft-light, soft-light, hue, hard-light";
+
+const exFullArt = L("exFullArt", {
+  backgroundImage: EX_FULL_ART_LAYERS,
+  backgroundRepeat: EX_FULL_ART_REPEAT,
+  backgroundSize: EX_FULL_ART_SIZES_SHINE,
+  backgroundPosition: `center, center, 0% ${BY}, ${EX_FULL_ART_SHEAR}, ${BX} ${BY}`,
+  backgroundBlendMode: EX_FULL_ART_BLEND_MASKED,
+  mixBlendMode: "color-dodge",
+  opacity: 1,
+  filter: `var(--exfa-filter, brightness(calc((${OFF} * 0.4) + 0.5)) contrast(2.5) saturate(0.66))`,
+  pointerFalloff: false,
+  overlay: "exFullArtCoat",
+});
+
+const exFullArtCoat = L("exFullArtCoat", {
+  backgroundImage: EX_FULL_ART_LAYERS,
+  backgroundRepeat: EX_FULL_ART_REPEAT,
+  backgroundSize: EX_FULL_ART_SIZES_COAT,
+  // Same shear as shine — opposite ribs mid-cut even under soft-light.
+  backgroundPosition: `center, center, 0% ${BY}, ${EX_FULL_ART_SHEAR}, ${BX} ${BY}`,
+  backgroundBlendMode: EX_FULL_ART_BLEND_MASKED,
+  mixBlendMode: "soft-light",
+  opacity: 1,
+  filter: `var(--exfa-filter-coat, brightness(calc((${OFF} * 0.4) + 0.5)) contrast(1.66) saturate(1.35))`,
+  pointerFalloff: false,
+});
+
 type PartialLook = Omit<HoloShader, "id"> & {
   overlay?: SimeyHoloShaderId;
 };
@@ -110,9 +186,16 @@ function L(id: SimeyHoloShaderId, p: PartialLook): HoloShader {
 }
 
 /**
- * Diagonal V / shiny / ex family — Live spectrum (or foil plate) + optional
- * bars + opposite-pan coat. When `spectrumImg` is set it replaces the CSS
- * sunpillar ramp with a dump plate.
+ * Diagonal V / shiny / ex family — foil + spectrum + bars + spot on shine and
+ * coat (Simey stack).
+ *
+ * Default spectrum = CSS sunpillar (seamless). Pass a dump plate only when it
+ * is a **wide** hue ramp (e.g. Bands_Vertical); tall strips like SVHolo2 belong
+ * in `spectrumTall` boxes (`100% N%`), not `200% 700%`.
+ *
+ * Coat: **`exclusion` → `soft-light`** + **same rib pan as shine**. Opposite
+ * pan mid-cuts (even under soft-light); exclusion washes chroma to grey.
+ * Soft-light + shared pan keeps continuity and hue; saturate bumps chroma.
  */
 function diagonalFamily(
   id: SimeyHoloShaderId,
@@ -125,15 +208,18 @@ function diagonalFamily(
   spectrumImg: string = sunpillar("0deg"),
 ): [HoloShader, HoloShader] {
   const layers = `${foilImg}, ${spectrumImg}, ${vBars()}, ${spot()}`;
+  const resolvedCoatMix = coatMix === "exclusion" ? "soft-light" : coatMix;
+  const ribPan = `${BX} ${BY}`;
+
   const shine = L(id, {
     backgroundImage: layers,
     backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat",
     backgroundSize: "cover, 200% 700%, 300% 100%, 200% 100%",
-    backgroundPosition: `center, 0% ${BY}, ${BX} ${BY}, ${BX} ${BY}`,
+    backgroundPosition: `center, 0% ${BY}, ${ribPan}, ${ribPan}`,
     backgroundBlendMode: blend,
     mixBlendMode: "color-dodge",
     opacity: 1,
-    filter: `${brightFrom(shineBright[0], shineBright[1])} contrast(1.5) saturate(1.5)`,
+    filter: `${brightFrom(shineBright[0], shineBright[1])} contrast(1.5) saturate(1.85)`,
     pointerFalloff: false,
     overlay: coatId,
   });
@@ -141,11 +227,11 @@ function diagonalFamily(
     backgroundImage: layers,
     backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat",
     backgroundSize: "cover, 200% 400%, 195% 100%, 200% 100%",
-    backgroundPosition: `center, 0% ${BY}, calc(${BX} * -1) calc(${BY} * -1), ${BX} ${BY}`,
+    backgroundPosition: `center, 0% ${BY}, ${ribPan}, ${ribPan}`,
     backgroundBlendMode: blend,
-    mixBlendMode: coatMix,
-    opacity: 0.9,
-    filter: `${brightFrom(coatBright[0], coatBright[1])} contrast(1.5) saturate(1.25)`,
+    mixBlendMode: resolvedCoatMix,
+    opacity: 0.75,
+    filter: `${brightFrom(coatBright[0], coatBright[1])} contrast(1.5) saturate(1.75)`,
     pointerFalloff: false,
   });
   return [shine, coat];
@@ -187,28 +273,48 @@ const [vMax, vMaxCoat] = diagonalFamily(
   FOIL_BLACK,
 );
 
-/** SvHolo — SVHolo2/3 tall spectra. */
-const [vStar, vStarCoat] = diagonalFamily(
-  "vStar",
-  "vStarCoat",
-  FOIL_SV3,
-  [0.25, 0.75],
-  [0.5, 0.75],
-  "exclusion",
-  "soft-light, hue, hard-light",
-  FOIL_SV2,
-);
+/**
+ * SvHolo ← poke-holo `v-star.css`.
+ *
+ * Grain foil + sunpillar + ribs. Soft-light coat + same rib pan as shine —
+ * opposite pan mid-cuts; exclusion greys out.
+ */
+const V_STAR_LAYERS = `${GRAIN}, ${sunpillar("0deg")}, ${vBars()}, ${spot()}`;
+const V_STAR_RIB = `${BX} ${BY}`;
 
-/** FlatSilver — FlatSilver spectrum + bar shine. */
+const vStar = L("vStar", {
+  backgroundImage: V_STAR_LAYERS,
+  backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat",
+  backgroundSize: "cover, 200% 700%, 300% 100%, 200% 100%",
+  backgroundPosition: `center, 0% ${BY}, ${V_STAR_RIB}, ${V_STAR_RIB}`,
+  backgroundBlendMode: "soft-light, hue, hard-light",
+  mixBlendMode: "color-dodge",
+  opacity: 1,
+  filter: `${brightFrom(0.25, 0.75)} contrast(2) saturate(1.75)`,
+  pointerFalloff: false,
+  overlay: "vStarCoat",
+});
+
+const vStarCoat = L("vStarCoat", {
+  backgroundImage: V_STAR_LAYERS,
+  backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat",
+  backgroundSize: "cover, 200% 400%, 195% 100%, 200% 100%",
+  backgroundPosition: `center, 0% ${BY}, ${V_STAR_RIB}, ${V_STAR_RIB}`,
+  backgroundBlendMode: "soft-light, hue, hard-light",
+  mixBlendMode: "soft-light",
+  opacity: 0.75,
+  filter: `${brightFrom(0.5, 0.75)} contrast(1.5) saturate(1.75)`,
+  pointerFalloff: false,
+});
+
+/** FlatSilver / Tinsel / Stamped — Simey shiny-rare sunpillar (not FlatSilver plate: too grey under hue). */
 const [shinyRare, shinyRareCoat] = diagonalFamily(
   "shinyRare",
   "shinyRareCoat",
   BAR_WIDE,
   [0.4, 0.4],
   [0.8, 0.4],
-  "exclusion",
-  "soft-light, hue, hard-light",
-  FOIL_FLAT,
+  "exclusion", // → soft-light in diagonalFamily
 );
 
 const [shinyV, shinyVCoat] = diagonalFamily(
@@ -218,8 +324,6 @@ const [shinyV, shinyVCoat] = diagonalFamily(
   [0.35, 0.4],
   [0.7, 0.4],
   "exclusion",
-  "soft-light, hue, hard-light",
-  FOIL_FLAT,
 );
 
 const [exRegular, exRegularCoat] = diagonalFamily(
@@ -231,18 +335,6 @@ const [exRegular, exRegularCoat] = diagonalFamily(
   "difference",
   "screen, hue, hard-light",
 ); // SunPillar ↔ poke-151 double-rare `ex-regular` (house CSS owns the Live port)
-
-/** AngledPillars — Live angled spectrum / poke-151 ultra-rare `ex-full-art`. */
-const [exFullArt, exFullArtCoat] = diagonalFamily(
-  "exFullArt",
-  "exFullArtCoat",
-  SHINE,
-  [0.5, 0.4],
-  [0.5, 0.4],
-  "exclusion",
-  "soft-light, hue, hard-light",
-  FOIL_ANGLED,
-);
 
 /** CrackedIce — desat spectrum + light sheen. */
 const [illustrationRare, illustrationRareCoat] = diagonalFamily(
@@ -278,7 +370,9 @@ export const SIMEY_HOLO_SHADER_IDS = [
   "rainbowAltCoat",
   "cosmosHolo",
   "cosmosHoloCoat",
+  "cosmosHoloTop",
   "amazingRare",
+  "amazingRareFoil",
   "amazingRareCoat",
   "secretRare",
   "secretRareCoat",
@@ -417,49 +511,65 @@ const SIMEY_SHADERS: Readonly<Record<SimeyHoloShaderId, HoloShader>> = {
     pointerFalloff: false,
   }),
 
-  /** Cosmos — Live Spectrum_Bands_Rainbow_Bright + dots carve + Gradient_Shine. */
+  /**
+   * Cosmos — poke-holo `cosmos-holo.css` (shine → :before → :after).
+   * Paint: vendored `simey_cosmos-*` + staging 82° bands (lang-agnostic).
+   * Live Bright spectrum soft-lights as extra hue plate under the bands.
+   */
   cosmosHolo: L("cosmosHolo", {
-    backgroundImage: `${COSMOS}, ${FOIL_COSMOS}, ${SHINE}, radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(180, 100%, 89%, 0.5) 5%, hsla(180, 14%, 57%, 0.3) 40%, hsl(0, 0%, 0%) 130%)`,
-    backgroundRepeat: "repeat, no-repeat, no-repeat, no-repeat",
-    backgroundSize: "cover, 400% 900%, 220% 220%, cover",
-    backgroundPosition: `center, calc(10% + (${PL} * 80%)) calc(10% + (${PT} * 80%)), calc(50% + (${PL} - 0.5) * 40%) center, center`,
-    backgroundBlendMode: "color-burn, multiply, soft-light",
+    backgroundImage: `${COSMOS_BOTTOM}, ${FOIL_COSMOS}, ${COSMOS_BANDS}, ${COSMOS_SPOT}`,
+    backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat",
+    backgroundSize: "cover, 400% 900%, 400% 900%, cover",
+    backgroundPosition: `center, calc(10% + (${PL} * 80%)) calc(10% + (${PT} * 80%)), calc(10% + (${PL} * 80%)) calc(10% + (${PT} * 80%)), center`,
+    backgroundBlendMode: "color-burn, soft-light, multiply",
     mixBlendMode: "color-dodge",
     opacity: 1,
     filter: `brightness(${lit(1, 0.15)}) contrast(${lit(1, 0.2)}) saturate(${lit(0.8, 0.2)})`,
     pointerFalloff: false,
     overlay: "cosmosHoloCoat",
-    carve: {
-      url: `${T}/T_Holofoil_Cosmos_Dots_RGBA_Gradient.webp`,
-      size: "260px 260px",
-      repeat: "repeat",
-    },
   }),
 
   cosmosHoloCoat: L("cosmosHoloCoat", {
-    backgroundImage: `${CLOUD}, ${FOIL_COSMOS}`,
-    backgroundRepeat: "repeat, no-repeat",
-    backgroundSize: "cover, 400% 900%",
-    backgroundPosition: `center, calc(15% + (${PL} * 70%)) calc(15% + (${PT} * 70%))`,
-    backgroundBlendMode: "lighten, multiply",
+    backgroundImage: `${COSMOS_MIDDLE}, ${FOIL_COSMOS}, ${COSMOS_BANDS}`,
+    backgroundRepeat: "no-repeat, no-repeat, no-repeat",
+    backgroundSize: "cover, 400% 900%, 400% 900%",
+    backgroundPosition: `center, calc(15% + (${PL} * 70%)) calc(15% + (${PT} * 70%)), calc(15% + (${PL} * 70%)) calc(15% + (${PT} * 70%))`,
+    backgroundBlendMode: "lighten, soft-light, multiply",
     mixBlendMode: "overlay",
     opacity: 0.9,
     filter: `brightness(${lit(1.25, 0.1)}) contrast(${lit(1.75, 0.15)}) saturate(0.8)`,
     pointerFalloff: false,
+    overlay: "cosmosHoloTop",
   }),
 
-  /** Galaxy — Live vertical spectrum + glitter + galaxy-star carve. */
-  amazingRare: L("amazingRare", {
-    backgroundImage: `${GLITTER_GOLD}, ${FOIL_VERTICAL}, ${CLOUD}, radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(150, 20%, 10%, 1) 10%, hsla(177, 22%, 80%, 0.1) 50%, hsla(0, 0%, 95%, 0.98) 90%)`,
-    backgroundRepeat: "repeat, no-repeat, repeat, no-repeat",
-    backgroundSize: `${GSIZE} ${GSIZE}, 200% 400%, 380px 380px, cover`,
-    backgroundPosition: "40% 45%, 0% 50%, center, center",
-    backgroundBlendMode: "soft-light, color-burn, soft-light",
-    mixBlendMode: "color-dodge",
-    opacity: 1,
-    filter: `brightness(${lit(1, 0.15)}) contrast(1) saturate(0.9)`,
+  cosmosHoloTop: L("cosmosHoloTop", {
+    backgroundImage: `${COSMOS_TOP}, ${FOIL_COSMOS}, ${COSMOS_BANDS}`,
+    backgroundRepeat: "no-repeat, no-repeat, no-repeat",
+    backgroundSize: "cover, 400% 900%, 400% 900%",
+    backgroundPosition: `center, calc(20% + (${PL} * 60%)) calc(20% + (${PT} * 60%)), calc(20% + (${PL} * 60%)) calc(20% + (${PT} * 60%))`,
+    backgroundBlendMode: "multiply, soft-light, multiply",
+    mixBlendMode: "multiply",
+    opacity: 0.85,
+    filter: `brightness(${lit(1.25, 0.1)}) contrast(${lit(1.75, 0.15)}) saturate(0.8)`,
     pointerFalloff: false,
-    overlay: "amazingRareCoat",
+  }),
+
+  /**
+   * Galaxy / Amazing Rare — poke-holo `amazing-rare.css`.
+   * Shine glitter×2 + invert spot; :before Live etch as `--foil`; :after
+   * Live vertical spectrum (sunpillar role) at saturation. Star carve = Live.
+   */
+  amazingRare: L("amazingRare", {
+    backgroundImage: `${GLITTER}, ${GLITTER}, ${GALAXY_INVERT_SPOT}`,
+    backgroundRepeat: "repeat, repeat, no-repeat",
+    backgroundSize: `${GSIZE} ${GSIZE}, ${GSIZE} ${GSIZE}, cover`,
+    backgroundPosition: "40% 45%, 55% 55%, center",
+    backgroundBlendMode: "soft-light, color-burn",
+    mixBlendMode: "normal",
+    opacity: 1,
+    filter: `brightness(${lit(1, 0.1)}) contrast(1) saturate(0.9)`,
+    pointerFalloff: false,
+    overlay: "amazingRareFoil",
     carve: {
       url: `${T}/T_Holofoil_Galaxy_Stars.webp`,
       size: "300px 300px",
@@ -467,11 +577,25 @@ const SIMEY_SHADERS: Readonly<Record<SimeyHoloShaderId, HoloShader>> = {
     },
   }),
 
+  amazingRareFoil: L("amazingRareFoil", {
+    backgroundImage: `${FOIL_ETCH}, ${GALAXY_FOIL_SPOT}`,
+    backgroundRepeat: "no-repeat, no-repeat",
+    backgroundSize: "cover, cover",
+    backgroundPosition: "center, center",
+    backgroundBlendMode: "color-burn",
+    mixBlendMode: "lighten",
+    opacity: 0.5,
+    filter: `brightness(${lit(1, 0.1)}) contrast(1) saturate(1)`,
+    pointerFalloff: false,
+    overlay: "amazingRareCoat",
+  }),
+
   amazingRareCoat: L("amazingRareCoat", {
-    backgroundImage: FOIL_VERTICAL,
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "400% 800%",
-    backgroundPosition: `calc(50% + (50% - ${BX}) * 3) calc(50% + (50% - ${BY}) * 3)`,
+    backgroundImage: `${FOIL_VERTICAL}, ${sunpillar("var(--angle, 133deg)")}`,
+    backgroundRepeat: "no-repeat, no-repeat",
+    backgroundSize: "400% 800%, 400% 800%",
+    backgroundPosition: `calc(50% + (50% - ${BX}) * 3) calc(50% + (50% - ${BY}) * 3), calc(50% + (50% - ${BX}) * 3) calc(50% + (50% - ${BY}) * 3)`,
+    backgroundBlendMode: "soft-light",
     mixBlendMode: "saturation",
     opacity: 0.85,
     filter: `brightness(calc(0.75 - (${OFF} * 0.5))) contrast(1) saturate(1)`,

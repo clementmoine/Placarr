@@ -51,9 +51,20 @@ let cachedFoilNames: string[] | null = null;
 /** Foil leaf names present on disk / in frag-stems meta (longest-first). */
 export function listPokemonFoilNames(): string[] {
   if (cachedFoilNames) return cachedFoilNames;
+  // NonFoil stays in inventory (Live longForm / routing) but is not a look.
   const stems = [...loadFragStems(), ...scanShaderStems(), "NonFoil"];
   cachedFoilNames = longestFirst(stems.filter(Boolean));
   return cachedFoilNames;
+}
+
+/** Live plain print — keep as data/routing sentinel, hide from effect UIs. */
+export function isPokemonPlainPrintLeaf(name: string): boolean {
+  return name.trim() === "NonFoil";
+}
+
+/** Foil leaves that are actual looks (excludes NonFoil). */
+export function listPokemonEffectFoilNames(): string[] {
+  return listPokemonFoilNames().filter((n) => !isPokemonPlainPrintLeaf(n));
 }
 
 /** Call after extract / frag-stems rewrite so discovery sees new leaves. */

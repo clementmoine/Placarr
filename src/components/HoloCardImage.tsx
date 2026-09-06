@@ -234,7 +234,18 @@ export function HoloCardImage({
   );
   /** Ultra Gold etch fingerprint — same-origin Live etch URL (no invert). */
   const goldEtchPaint = isLiveGoldCss && varnishMaskUrl ? varnishMaskUrl : null;
-  const etchCssPaint = isLiveGoldCss ? goldEtchPaint : foilEtchPaint;
+  /**
+   * AngledPillars / ex-full-art: Live `_CardEtch` as Simey `--foil` (same
+   * locale as the face). Raw plate — not Radiant invert.
+   */
+  const exFaEtchPaint =
+    shader?.id === "exFullArt" && varnishMaskUrl ? varnishMaskUrl : null;
+  const etchCssPaint = isLiveGoldCss
+    ? goldEtchPaint
+    : (foilEtchPaint ?? exFaEtchPaint);
+  /** Bare ex-full-art = no Live mask and no etch → Simey `:not(.masked)`. */
+  const isExFaBare =
+    shader?.id === "exFullArt" && !liveWpMaskUrl && !etchCssPaint;
   /**
    * Inverted etch as Safari foil mask: `useMaskBlob` writes luma→alpha on the
    * already-inverted plate, so etch lines (now bright) become coverage.
@@ -590,7 +601,38 @@ export function HoloCardImage({
             once so the coat can keep upstream's stack: foil on top of the
             pastel rainbow, `hard-light`, one `color-dodge`.
           */
-          ...(etchCssPaint ? { "--foil-etch": `url("${etchCssPaint}")` } : {}),
+          ...(etchCssPaint
+            ? {
+                "--foil-etch": `url("${etchCssPaint}")`,
+              }
+            : {}),
+          /*
+            AngledPillars / ex-full-art sizing.
+            Real Live etch → cover (Simey masked `--foil` / `--imgsize: cover`).
+            Illusion fallback → always 33% tiled (Simey bare default). Covering
+            the foil window with one huge illusion plate reads as nested
+            diamonds — not sunpillar ribs.
+            Bare (no Live mask, no etch) also gets Simey `:not(.masked)` filters.
+          */
+          ...(shader?.id === "exFullArt"
+            ? etchCssPaint
+              ? {
+                  "--foil-imgsize": "cover",
+                  "--foil-repeat": "no-repeat",
+                }
+              : {
+                  "--foil-imgsize": "33%",
+                  "--foil-repeat": "repeat",
+                  ...(!liveWpMaskUrl
+                    ? {
+                        "--exfa-filter":
+                          "brightness(calc((var(--pointer-from-center, 0) * 0.3) + 0.35)) contrast(2) saturate(1.5)",
+                        "--exfa-filter-coat":
+                          "brightness(calc((var(--pointer-from-center, 0) * 0.5) + 0.8)) contrast(1.6) saturate(1.4)",
+                      }
+                    : {}),
+                }
+            : {}),
         } as React.CSSProperties
       }
       className={cn(
@@ -683,6 +725,12 @@ export function HoloCardImage({
                   aria-hidden
                   style={{
                     ...holoLayerStyle(shader, tuning),
+                    // Bare ex-full-art: Simey drops mask soft-light → exclusion.
+                    ...(isExFaBare
+                      ? {
+                          backgroundBlendMode: "exclusion, hue, hard-light",
+                        }
+                      : {}),
                     // A look's own stencil intersects the print's masks: see
                     // `HoloShader.carve`. Pointer light falloff (simey) last.
                     //
@@ -721,6 +769,11 @@ export function HoloCardImage({
                     aria-hidden
                     style={{
                       ...holoLayerStyle(overlayLook, tuning),
+                      ...(isExFaBare && overlayLook.id === "exFullArtCoat"
+                        ? {
+                            backgroundBlendMode: "exclusion, hue, hard-light",
+                          }
+                        : {}),
                       ...maskedByStyle([
                         shineMask,
                         foilPlate,
@@ -783,23 +836,35 @@ export function HoloCardImage({
                         filter: "brightness(1) contrast(1.5)",
                         opacity: "var(--opacity)",
                       }
-                    : isLiveGoldCss
+                    : shader?.id === "exFullArt"
                       ? {
-                          // Cooler / dimmer hard-light — Live gold/secret fields
-                          // already warm. Full-card (no white-plate).
+                          // poke-151 `ex-full-art.css` `.card__glare`
                           backgroundImage:
-                            "radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(48, 4%, 62%, 0.2) 0%, hsl(28, 8%, 11%) 180%)",
-                          backgroundSize: "cover",
+                            "radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsl(0, 0%, 75%) 5%, hsl(200, 5%, 35%) 70%, hsl(320, 40%, 10%) 150%)",
+                          backgroundSize: "120% 150%",
+                          backgroundPosition: "center",
                           backgroundRepeat: "no-repeat",
                           mixBlendMode: "hard-light",
-                          filter: "brightness(1.05) contrast(1.35)",
+                          filter: "brightness(0.8) contrast(1) saturate(1)",
                           opacity: "var(--opacity)",
                         }
-                      : {
-                          ...FOIL_POINTER_GLARE_STYLE,
-                          mixBlendMode: "overlay",
-                          opacity: "var(--opacity)",
-                        }
+                      : isLiveGoldCss
+                        ? {
+                            // Cooler / dimmer hard-light — Live gold/secret fields
+                            // already warm. Full-card (no white-plate).
+                            backgroundImage:
+                              "radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(48, 4%, 62%, 0.2) 0%, hsl(28, 8%, 11%) 180%)",
+                            backgroundSize: "cover",
+                            backgroundRepeat: "no-repeat",
+                            mixBlendMode: "hard-light",
+                            filter: "brightness(1.05) contrast(1.35)",
+                            opacity: "var(--opacity)",
+                          }
+                        : {
+                            ...FOIL_POINTER_GLARE_STYLE,
+                            mixBlendMode: "overlay",
+                            opacity: "var(--opacity)",
+                          }
                 }
               />
 

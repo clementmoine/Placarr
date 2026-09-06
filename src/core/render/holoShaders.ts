@@ -369,8 +369,9 @@ export function isHoloShaderId(value: unknown): value is HoloShaderId {
 /**
  * The look for a known id, or `null` when absent / unknown.
  *
- * Packs decide fallbacks (Lorcana maps unknown foil → `"silver"` in
- * `resolveCss`). Core must not invent a TCG-specific default.
+ * Packs decide fallbacks (unknown foil → house `flare` via
+ * `HOUSE_FOIL_FALLBACK_CSS_ID` / pack `DEFAULT_FINISH_CSS_ID`).
+ * Core must not invent a TCG-specific default.
  */
 export function holoShader(id: string | null | undefined): HoloShader | null {
   if (isHoloShaderId(id)) return SHADERS[id];

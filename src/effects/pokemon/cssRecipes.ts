@@ -1,9 +1,9 @@
 /**
- * Pokémon CSS foil — **Live / Unity first** (plaques + intention frag).
- * Simey / forks = analyse only — not the choreography we depend on.
- *
- * Resolve: known irregular aliases → Pascal leaf → camelCase if ported → default.
- * New dumped leaves without a ported look fall back honestly (gap audit).
+ * Pokémon CSS foil — branch **every** Simey rarity recipe we have onto a Live
+ * leaf (and catalogue bucket). Prefer staging Simey look ids (`exFullArt`,
+ * `illustrationRare`, …) tels quels; keep Live-tuned ports only where foil_mask
+ * routing needs them (`sunPillar`+Cc, `flatSilver`+pokéball, `radiantHolo` etch).
+ * WebGL stays Live Unity. Unknown future leaf → {@link DEFAULT_FINISH_CSS_ID}.
  */
 
 /**
@@ -15,92 +15,68 @@
  */
 export const POKEMON_CSS_FOIL_SHIPPED = true;
 
-import { HOUSE_HOLO_SHADER_IDS } from "@/core/render/holoShadersHouse";
 import type { HouseHoloShaderId } from "@/core/render/holoShadersHouse";
+import type { PokemonHoloShaderId } from "@/core/render/holoShadersPokemon";
 import {
-  POKEMON_HOLO_SHADER_IDS,
-  type PokemonHoloShaderId,
-} from "@/core/render/holoShadersPokemon";
-import {
-  SIMEY_HOLO_SHADER_IDS,
   type SimeyHoloShaderId,
 } from "@/core/render/holoShadersSimey";
 
 import { foilManifestToShader } from "./foilNames";
+import { HOUSE_FOIL_FALLBACK_CSS_ID } from "@/core/render/foil/houseFoilFallback";
 
-/** Everyday catalogue holo — simey poke-holo `regular-holo.css`. */
-export const DEFAULT_FINISH_CSS_ID: SimeyHoloShaderId = "regularHolo";
-
-/** Reverse / parallel sheen — simey `reverse-holo.css`. */
+/** Everyday reverse / parallel sheen — simey `reverse-holo.css`. */
 export const REVERSE_FINISH_CSS_ID: SimeyHoloShaderId = "reverseHolo";
+
+/**
+ * Pokémon pack default — shared house fallback (`flare`) when no Simey look.
+ */
+export const DEFAULT_FINISH_CSS_ID = HOUSE_FOIL_FALLBACK_CSS_ID;
 
 type CssLookId = HouseHoloShaderId | PokemonHoloShaderId | SimeyHoloShaderId;
 
-const PORTED_CSS_IDS = new Set<string>([
-  ...HOUSE_HOLO_SHADER_IDS,
-  ...POKEMON_HOLO_SHADER_IDS,
-  ...SIMEY_HOLO_SHADER_IDS,
-]);
-
 /**
- * Irregular Live leaf → CSS id (where `RadiantHolo`→`radiantHolo` is wrong).
+ * Live leaf → best Simey (or Simey-backed) CSS look we already ship.
+ * Goal: use the full poke-holo / poke-151 inventory, not leave Live on `flare`
+ * when a rarity recipe exists.
  */
-const LIVE_FINISH_CSS_ALIASES: Readonly<Record<string, CssLookId>> = {
-  Rainbow: "rainbowFoil",
-  Rainbow02: "rainbow02",
-  SwSecreT02: "swSecret",
-  FlatSilver_CC: "flatSilverCc",
-  SvUltraGoldRainbow: "ultraGoldRainbow",
-  SvUltraScodix: "ultraScodix",
-  "25thConfetti": "confetti25th",
+export const LIVE_FINISH_CSS: Readonly<Record<string, CssLookId>> = {
+  // poke-holo
+  RadiantHolo: "radiantHolo", // Live etch port of radiant-holo
+  Rainbow: "rainbowHolo",
+  Rainbow02: "rainbowAlt",
+  SwSecret: "secretRare",
+  SwSecreT02: "secretRare",
+  Cosmos: "cosmosHolo",
+  Galaxy: "amazingRare",
+  FlatSilver: "flatSilver", // reverse-holo + Live mask routing
+  FlatSilver_CC: "pokeBallHolo",
+  SvUltra: "vFullArt",
+  SvHolo: "vStar",
+  SwHolo: "vRegular",
+  AceFoil: "vMax",
+  // poke-151
+  AngledPillars: "exFullArt",
+  SunPillar: "sunPillar", // ex-regular Live paint + CastAndCure
+  CrackedIce: "illustrationRare",
+  SvUltraScodix: "hyperRare",
+  SvUltraGoldRainbow: "hyperRare",
+  // Remaining Live leaves → closest Simey rarity we have
+  SunBeam: "regularHolo",
+  SunLava: "shinyV",
+  Thatch: "trainerGalleryHolo",
+  Tinsel: "shinyRare",
+  Squares: "shinyV",
+  Stamped: "shinyRare",
+  "25thConfetti": "trainerGalleryHolo",
+  SolidColor: "reverseHolo",
 };
 
-function leafToCamelCssId(leaf: string): string {
-  if (!leaf) return "";
-  return leaf.charAt(0).toLowerCase() + leaf.slice(1);
-}
-
-function isPortedCssId(id: string): id is CssLookId {
-  return PORTED_CSS_IDS.has(id);
-}
-
-/** Resolve Live leaf → ported CSS id without catalogue / default. */
+/** Resolve Live leaf → Simey-backed CSS id, or null (caller → flare). */
 export function resolveLiveFinishCssId(leaf: string): CssLookId | null {
   const trimmed = leaf.trim();
   if (!trimmed) return null;
-  const alias = LIVE_FINISH_CSS_ALIASES[trimmed];
-  if (alias) return alias;
-  const camel = leafToCamelCssId(trimmed);
-  if (isPortedCssId(camel)) return camel;
-  return null;
+  return LIVE_FINISH_CSS[trimmed] ?? null;
 }
-
-/**
- * Snapshot of leaf→id for guards / audits (aliases + convention for known leaves).
- * Prefer {@link resolveLiveFinishCssId} for runtime.
- */
-export const LIVE_FINISH_CSS: Readonly<Record<string, CssLookId>> = {
-  ...LIVE_FINISH_CSS_ALIASES,
-  RadiantHolo: "radiantHolo",
-  SwSecret: "swSecret",
-  Cosmos: "cosmos",
-  Galaxy: "galaxy",
-  CrackedIce: "crackedIce",
-  FlatSilver: "flatSilver",
-  SvUltra: "svUltra",
-  SvHolo: "svHolo",
-  SwHolo: "swHolo",
-  AceFoil: "aceFoil",
-  AngledPillars: "angledPillars",
-  SunPillar: "sunPillar",
-  SunBeam: "sunBeam",
-  SunLava: "sunLava",
-  SolidColor: "solidColor",
-  Squares: "squares",
-  Thatch: "thatch",
-  Tinsel: "tinsel",
-  Stamped: "stamped",
-};
 
 /** True when a named Live leaf would only get the pack default CSS look. */
 export function isCssFinishFallbackOnly(leaf: string): boolean {
@@ -117,30 +93,29 @@ export function isCssFinishFallbackOnly(leaf: string): boolean {
 /** Finishes that paint Live etch inside the shine stack (no house varnish). */
 const ETCH_PAINT_FINISH_IDS = new Set<string>([
   "radiantHolo",
-  "ultraGoldRainbow",
-  "ultraScodix",
   "swSecret",
   "secretRare",
+  "amazingRare",
 ]);
 
 const CATALOGUE: Readonly<Record<string, CssLookId>> = {
-  holo: DEFAULT_FINISH_CSS_ID,
+  holo: "regularHolo",
   reverse: REVERSE_FINISH_CSS_ID,
-  firstedition: DEFAULT_FINISH_CSS_ID,
-  wpromo: DEFAULT_FINISH_CSS_ID,
-  "live-std": DEFAULT_FINISH_CSS_ID,
+  firstedition: "regularHolo",
+  wpromo: "regularHolo",
+  "live-std": "regularHolo",
   "live-ph": REVERSE_FINISH_CSS_ID,
-  cosmos: "cosmos",
-  rainbow: "rainbowFoil",
-  amazing: "galaxy",
-  secret: "swSecret",
-  shiny: "flatSilver",
-  v: "swHolo",
-  vmax: "aceFoil",
-  vstar: "svHolo",
-  pokeball: "flatSilverCc",
+  cosmos: "cosmosHolo",
+  rainbow: "rainbowHolo",
+  amazing: "amazingRare",
+  secret: "secretRare",
+  shiny: "shinyRare",
+  v: "vRegular",
+  vmax: "vMax",
+  vstar: "vStar",
+  pokeball: "pokeBallHolo",
   masterball: "flatSilverCcMb",
-  ex: "angledPillars",
+  ex: "exFullArt",
 };
 
 /** Soft etch / cold-foil coat through the per-print etch mask. */
@@ -166,7 +141,9 @@ export function applyFoilMaskCss(
     return "sunPillarCc";
   }
   if (
-    (finishShaderId === "flatSilver" || finishShaderId === "flatSilverCc") &&
+    (finishShaderId === "flatSilver" ||
+      finishShaderId === "flatSilverCc" ||
+      finishShaderId === "pokeBallHolo") &&
     mask === "ReverseLaminatePokeBall"
   ) {
     return "flatSilverCc";
@@ -174,7 +151,8 @@ export function applyFoilMaskCss(
   if (
     (finishShaderId === "flatSilver" ||
       finishShaderId === "flatSilverCc" ||
-      finishShaderId === "flatSilverCcMb") &&
+      finishShaderId === "flatSilverCcMb" ||
+      finishShaderId === "pokeBallHolo") &&
     mask === "ReverseLaminateMasterBall"
   ) {
     return "flatSilverCcMb";
@@ -182,27 +160,33 @@ export function applyFoilMaskCss(
   return finishShaderId;
 }
 
+/**
+ * Resolve a Pokémon finish string to CSS look ids.
+ * Unknown / NonFoil / no Simey analogue → finish null or pack default flare.
+ */
 export function resolveCssRecipe(
-  finish: string,
-  _varnish: string | null | undefined,
+  finish: string | null | undefined,
+  varnish: string | null | undefined,
   opts?: ResolveCssRecipeOpts,
 ): { finishShaderId: string | null; varnishShaderId: string | null } {
   if (!POKEMON_CSS_FOIL_SHIPPED) {
     return { finishShaderId: null, varnishShaderId: null };
   }
 
-  const trimmed = finish.trim();
-  if (!trimmed) {
+  const trimmed = (finish ?? "").trim();
+  if (!trimmed || /^none$/i.test(trimmed)) {
     return { finishShaderId: null, varnishShaderId: null };
   }
 
-  const withEtch = (finishShaderId: string | null) => {
-    if (finishShaderId && ETCH_PAINT_FINISH_IDS.has(finishShaderId)) {
-      return { finishShaderId, varnishShaderId: null };
-    }
+  const withEtch = (id: string) => {
+    const paintsOwnEtch = ETCH_PAINT_FINISH_IDS.has(id);
+    const varnishId =
+      !paintsOwnEtch && varnish && !/^none$/i.test(varnish.trim())
+        ? ETCH_VARNISH_CSS_ID
+        : null;
     return {
-      finishShaderId,
-      varnishShaderId: finishShaderId ? ETCH_VARNISH_CSS_ID : null,
+      finishShaderId: id,
+      varnishShaderId: varnishId,
     };
   };
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { foilManifestToShader } from "./foilNames";
+import {
+  foilManifestToShader,
+  isPokemonPlainPrintLeaf,
+  listPokemonEffectFoilNames,
+  listPokemonFoilNames,
+} from "./foilNames";
 
 describe("foilManifestToShader", () => {
   it.each([
@@ -20,5 +25,16 @@ describe("foilManifestToShader", () => {
     ["UnknownFoil_XYZ", null],
   ] as const)("%s → %s", (input, expected) => {
     expect(foilManifestToShader(input)).toBe(expected);
+  });
+});
+
+describe("NonFoil vs effect lists", () => {
+  it("keeps NonFoil in inventory but hides it from effect pickers", () => {
+    expect(listPokemonFoilNames()).toContain("NonFoil");
+    expect(isPokemonPlainPrintLeaf("NonFoil")).toBe(true);
+    expect(listPokemonEffectFoilNames()).not.toContain("NonFoil");
+    expect(listPokemonEffectFoilNames().length).toBe(
+      listPokemonFoilNames().length - 1,
+    );
   });
 });

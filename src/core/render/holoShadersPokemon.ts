@@ -254,9 +254,6 @@ const RAINBOW_ALT_BANDS = `repeating-linear-gradient(var(--angle, -22deg), hsla(
 const RAINBOW_PASTEL =
   "hsl(0, 57%, 37%), hsl(40, 53%, 39%), hsl(90, 60%, 35%), hsl(180, 60%, 35%), hsl(180, 60%, 35%), hsl(210, 57%, 39%), hsl(280, 55%, 31%), hsl(0, 57%, 37%), hsl(40, 53%, 39%), hsl(90, 60%, 35%), hsl(180, 60%, 35%), hsl(180, 60%, 35%), hsl(210, 57%, 39%), hsl(280, 55%, 31%), hsl(0, 57%, 37%)";
 
-/** poke-holo cosmos 82° lattice (EN PNGs replaced by Live Bright spectrum). */
-const COSMOS_BANDS = `repeating-linear-gradient(82deg, hsl(53, 65%, 60%) calc(var(--space, 4%) * 1), hsl(93, 56%, 50%) calc(var(--space, 4%) * 2), hsl(176, 54%, 49%) calc(var(--space, 4%) * 3), hsl(228, 59%, 55%) calc(var(--space, 4%) * 4), hsl(283, 60%, 55%) calc(var(--space, 4%) * 5), hsl(326, 59%, 51%) calc(var(--space, 4%) * 6), hsl(326, 59%, 51%) calc(var(--space, 4%) * 7), hsl(283, 60%, 55%) calc(var(--space, 4%) * 8), hsl(228, 59%, 55%) calc(var(--space, 4%) * 9), hsl(176, 54%, 49%) calc(var(--space, 4%) * 10), hsl(93, 56%, 50%) calc(var(--space, 4%) * 11), hsl(53, 65%, 60%) calc(var(--space, 4%) * 12))`;
-
 /** V-family diagonal ribs (`v-*.css`) — px period so they may `repeat`. */
 function vRibs(angle = "133deg"): string {
   return `repeating-linear-gradient(${angle}, #0e152e 0px, hsl(180, 10%, 60%) 4px, hsl(180, 29%, 66%) 5px, hsl(180, 10%, 60%) 6px, #0e152e 12px, #0e152e 14px)`;
@@ -330,11 +327,6 @@ function pillarSpot(): string {
   return `radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(0, 0%, 0%, 0.1) 12%, hsla(0, 0%, 0%, 0.15) 20%, hsla(0, 0%, 0%, 0.25) 120%)`;
 }
 
-/** Amazing-rare inverted radial (dark core → bright rim). */
-function galaxyInvertSpot(): string {
-  return `radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(150, 20%, 10%, 1) 10%, hsla(177, 22%, 80%, 0.1) 50%, hsla(0, 0%, 95%, 0.98) 90%)`;
-}
-
 /** Reverse-holo laminate light masks (`reverse-holo.css`). */
 function reverseRadial(): string {
   return `radial-gradient(circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), #fff 5%, #000 50%, #fff 80%)`;
@@ -347,10 +339,6 @@ function reverseDiagonal(): string {
 /** Poké Ball base grey laminate (`poke-ball-holo.css` .card__shine). */
 function pokeBallLaminate(): string {
   return `linear-gradient(45deg, hsla(0, 0%, 40%) 15%, hsla(0, 0%, 20%) 45%, hsla(0, 0%, 20%) 55%, hsla(0, 0%, 40%) 85%)`;
-}
-
-function cosmosSpot(): string {
-  return `radial-gradient(farthest-corner circle at var(--pointer-x, var(--colorX, 50%)) var(--pointer-y, var(--colorY, 50%)), hsla(180, 100%, 89%, 0.5) 5%, hsla(180, 14%, 57%, 0.3) 40%, hsl(0, 0%, 0%) 130%)`;
 }
 
 /** A soft white sweep that reads as the specular highlight. */
@@ -584,11 +572,6 @@ export const POKEMON_HOLO_SHADER_IDS = [
   "svHoloCoat",
   "swHolo",
   "swHoloCoat",
-  "cosmos",
-  "cosmosCoat",
-  "cosmosTop",
-  "galaxy",
-  "galaxyCoat",
   "crackedIce",
   "crackedIceCoat",
   "rainbowFoil",
@@ -762,7 +745,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
           repeat: "no-repeat",
         },
         spectrum("FX_T_Spectrum", "300% 300%"),
-        tooth("T_Noise_Random", "160px 160px"),
+        tooth("simey_glitter", "160px 160px"),
         glare(100, "220% 220%", "lean", 28),
       ],
       {
@@ -783,7 +766,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
     ...look(
       "swSecretCoat",
       [
-        tooth("T_Noise_Random", "160px 160px"),
+        tooth("simey_glitter", "160px 160px"),
         {
           raw: `linear-gradient(-60deg, ${RAINBOW_PASTEL})`,
           size: "400% 400%",
@@ -812,7 +795,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
         "100% 100%",
         "still",
       ),
-      tooth("T_Noise_Random", "180px 180px"),
+      tooth("simey_glitter", "180px 180px"),
     ],
     {
       blend: "multiply",
@@ -975,138 +958,6 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
     },
   ),
 
-  /**
-   * Cosmos — Live Bright spectrum + carve dots + 3-pass staggered pans
-   * (simey cosmos-holo choreography; EN cosmos-*.png → Live plates).
-   */
-  cosmos: {
-    ...look(
-      "cosmos",
-      [
-        spectrum("FX_T_Spectrum_Bands_Rainbow_Bright", "400% 900%"),
-        {
-          raw: COSMOS_BANDS,
-          size: "400% 900%",
-          motion: "scroll",
-          repeat: "no-repeat",
-        },
-        shine("FX_T_Gradient_Shine"),
-        {
-          raw: cosmosSpot(),
-          size: "100% 100%",
-          motion: "still",
-          repeat: "no-repeat",
-        },
-      ],
-      {
-        blend: "color-burn, multiply, soft-light",
-        mix: "color-dodge",
-        opacity: 0.45,
-        brightness: [0.55, 0.2],
-        contrast: [1.1, 0.35],
-        saturate: [1.0, 0.4],
-        pointerFalloff: false,
-        carve: carve("T_Holofoil_Cosmos_Dots_RGBA_Gradient", "260px 260px"),
-      },
-    ),
-    overlay: "cosmosCoat",
-  },
-
-  cosmosCoat: {
-    ...look(
-      "cosmosCoat",
-      [
-        tooth("T_CloudNoise", "340px 340px"),
-        spectrum("FX_T_Spectrum_Bands_Rainbow_Bright", "400% 700%"),
-        {
-          raw: COSMOS_BANDS,
-          size: "400% 700%",
-          motion: "drift",
-          repeat: "no-repeat",
-        },
-      ],
-      {
-        blend: "lighten, multiply",
-        mix: "overlay",
-        opacity: 0.42,
-        contrast: [1.08, 0.3],
-        saturate: [1.1, 0.45],
-        pointerFalloff: false,
-      },
-    ),
-    overlay: "cosmosTop",
-  },
-
-  cosmosTop: look(
-    "cosmosTop",
-    [
-      spectrum("FX_T_Spectrum_Bands_Rainbow_Bright", "350% 600%"),
-      {
-        raw: COSMOS_BANDS,
-        size: "350% 600%",
-        motion: "opposite",
-        repeat: "no-repeat",
-      },
-    ],
-    {
-      blend: "multiply",
-      mix: "multiply",
-      opacity: 0.35,
-      contrast: [1.05, 0.25],
-      saturate: [1.05, 0.35],
-      pointerFalloff: false,
-    },
-  ),
-
-  /**
-   * Galaxy — dual-offset glitter + inverted radial + saturation coat
-   * (simey amazing-rare); star carve stays Live.
-   */
-  galaxy: {
-    id: "galaxy",
-    backgroundImage: [
-      `url(${T}/T_Noise_Random.webp)`,
-      `url(${T}/T_Noise_Random.webp)`,
-      galaxyInvertSpot(),
-      `url(${T}/FX_T_Spectrum_Bands_Vertical.webp)`,
-      `url(${T}/T_CloudNoise.webp)`,
-    ].join(", "),
-    backgroundRepeat: "repeat, repeat, no-repeat, repeat, repeat",
-    backgroundSize: "25% 25%, 25% 25%, cover, 220% 100%, 380px 380px",
-    backgroundPosition:
-      "40% 45%, 55% 55%, center, var(--background-x, 50%) center, center",
-    backgroundBlendMode: "soft-light, color-burn, soft-light, overlay",
-    mixBlendMode: "overlay",
-    opacity: 0.5,
-    filter: `brightness(${lit(0.7, 0.2)}) contrast(${lit(1.1, 0.35)}) saturate(${lit(1.0, 0.4)})`,
-    pointerFalloff: false,
-    carve: carve("T_Holofoil_Galaxy_Stars", "300px 300px"),
-    overlay: "galaxyCoat",
-  },
-
-  /** Saturation coat — Live vertical spectrum at exaggerated opposite pan. */
-  galaxyCoat: look(
-    "galaxyCoat",
-    [
-      spectrum("FX_T_Spectrum_Bands_Vertical", "400% 800%"),
-      {
-        raw: bands(SV_SPECTRUM, 55, 14),
-        size: "400% 800%",
-        motion: "oppositeStrong",
-        repeat: "no-repeat",
-      },
-    ],
-    {
-      blend: "soft-light",
-      mix: "saturation",
-      opacity: 0.4,
-      brightness: [0.65, 0.2],
-      contrast: [1.05, 0.25],
-      saturate: [1.0, 0.3],
-      pointerFalloff: false,
-    },
-  ),
-
   crackedIce: {
     ...look(
       "crackedIce",
@@ -1158,7 +1009,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
           motion: "scrollY",
           repeat: "no-repeat",
         },
-        tooth("T_Noise_Random", "160px 160px"),
+        tooth("simey_glitter", "160px 160px"),
         spectrum("FX_T_Spectrum_Rainbow", "400% 200%"),
         shine("FX_T_Highlight_Over", "180% 180%"),
       ],
@@ -1178,7 +1029,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
   rainbowFoilCoat: look(
     "rainbowFoilCoat",
     [
-      tooth("T_Noise_Random", "160px 160px"),
+      tooth("simey_glitter", "160px 160px"),
       shine("FX_T_Highlight_Over", "180% 180%"),
       spectrum("FX_T_Spectrum_Rainbow", "400% 200%"),
       {
@@ -1210,7 +1061,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
           motion: "scrollY",
           repeat: "no-repeat",
         },
-        tooth("T_Noise_Random", "160px 160px"),
+        tooth("simey_glitter", "160px 160px"),
         spectrum("FX_T_Spectrum", "400% 200%"),
         shine("FX_T_Highlight_Over", "180% 180%"),
       ],
@@ -1230,7 +1081,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
   rainbow02Coat: look(
     "rainbow02Coat",
     [
-      tooth("T_Noise_Random", "160px 160px"),
+      tooth("simey_glitter", "160px 160px"),
       spectrum("FX_T_Spectrum", "400% 200%"),
       {
         raw: `linear-gradient(-45deg, ${RAINBOW_PASTEL})`,
@@ -1359,7 +1210,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
         repeat: "repeat",
       },
       {
-        tex: "T_Noise_Random",
+        tex: "simey_grain",
         size: "140% 140%",
         motion: "still",
         repeat: "repeat",
@@ -1711,7 +1562,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
    *   lattice pan / size         → FPTI dosage (×0.9, 240%) — quieter than
    *                                poke-holo ×1.5 / 210% with Live etch
    *   var(--foil)                → Live `_CardEtch` via `--foil-etch`, inverted
-   *   var(--glitter)             → `T_Noise_Random` grayscale+dimmed
+   *   var(--glitter)             → vendored `simey_glitter` (Simey glitter.png)
    *   shine mask                 → coat/sparkle only via invert(etch)→alpha;
    *                                lattice unmasked (etch has no lozenge bake)
    */
@@ -1770,14 +1621,13 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
 
   /** `.card__shine:before` — glitter + dark radial, overlay.
    *
-   * Simey `glitter.png` is dark flecks (μ≈51). Live `T_Noise_Random` is mid
-   * RGB grain (μ≈143). Grayscale + lower brightness before the shared
-   * contrast/saturate keeps the overlay tooth from washing the card.
+   * Paint = vendored Simey `glitter.png` (`simey_glitter`) — lang-agnostic
+   * shared FX. Filter matches poke-holo `radiant-holo.css` (brightness .66).
    */
   radiantHoloSparkle: {
     id: "radiantHoloSparkle",
     backgroundImage: [
-      `url(${T}/T_Noise_Random.webp)`,
+      `url(${T}/simey_glitter.webp)`,
       `radial-gradient(farthest-corner ellipse at calc(((var(--pointer-x, var(--colorX, 50%))) * 0.5) + 25%) calc(((var(--pointer-y, var(--colorY, 50%))) * 0.5) + 25%), hsla(0, 0%, 58%, 0.8) 10%, hsla(0, 0%, 20%, 0.9) 20%, hsla(0, 0%, 20%, 0.5) 50%)`,
     ].join(", "),
     backgroundRepeat: "repeat, no-repeat",
@@ -1786,8 +1636,7 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
     backgroundBlendMode: "color-dodge",
     mixBlendMode: "overlay",
     opacity: 1,
-    // 0.66×(51/143)≈0.24 — land near simey's post-filter glitter energy.
-    filter: "grayscale(1) brightness(0.28) contrast(2.2) saturate(0.5)",
+    filter: "brightness(0.66) contrast(2) saturate(0.5)",
     pointerFalloff: false,
     clipPath: "inset(2.8% 4% round 2.55% / 1.5%)",
   },
@@ -1842,24 +1691,30 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
   ),
 
   /**
-   * AngledPillars — Simey `diagonalFamily` / poke-151 `ex-full-art`:
-   *   Gradient_Shine → Live `Bands_Angled` (200%×700%, scrollY) → 128.5° ribs
-   *   (300%×100%, shear) → pointer spot. Coat mirrors with opposite pan.
-   * Seamless: every layer `no-repeat`; gradients tile inside one plate
-   * (Simey sizes — not `background-repeat` on diagonals).
+   * AngledPillars — poke-151 `ex-full-art` / Simey ultra-rare full art:
+   *   mask soft-light → foil (`--foil-etch` or vendored `simey_illusion`) →
+   *   sunpillar CSS 0° → 128.5° ribs (shear) → pointer spot.
+   * Coat mirrors with opposite shear / 200%×400% spectrum / 195% ribs.
+   * Seamless: every layer `no-repeat`; gradients tile inside one plate.
    */
   angledPillars: {
     ...look(
       "angledPillars",
       [
         {
-          tex: "FX_T_Gradient_Shine",
+          raw: "var(--foil-mask, linear-gradient(#0000, #0000))",
           size: "cover",
           motion: "still",
           repeat: "no-repeat",
         },
         {
-          tex: "FX_T_Spectrum_Bands_Angled",
+          raw: `var(--foil-etch, url(${T}/simey_illusion.webp))`,
+          size: "cover",
+          motion: "still",
+          repeat: "no-repeat",
+        },
+        {
+          raw: liveSunPillarBands("0deg"),
           size: "200% 700%",
           motion: "scrollYEdge",
           repeat: "no-repeat",
@@ -1881,9 +1736,10 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
         blend: "soft-light, soft-light, hue, hard-light",
         mix: "color-dodge",
         opacity: POKEMON_CSS_DODGE_OPACITY_CEILING,
+        // ex-full-art.css: brightness((pfc*0.4)+.5) contrast(2.5) saturate(.66)
         brightness: [0.5, 0.4],
-        contrast: [1.5, 0.2],
-        saturate: [1.5, 0.15],
+        contrast: [2.5, 0],
+        saturate: [0.66, 0],
         pointerFalloff: false,
       },
     ),
@@ -1894,13 +1750,19 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
     "angledPillarsCoat",
     [
       {
-        tex: "FX_T_Gradient_Shine",
+        raw: "var(--foil-mask, linear-gradient(#0000, #0000))",
         size: "cover",
         motion: "still",
         repeat: "no-repeat",
       },
       {
-        tex: "FX_T_Spectrum_Bands_Angled",
+        raw: `var(--foil-etch, url(${T}/simey_illusion.webp))`,
+        size: "cover",
+        motion: "still",
+        repeat: "no-repeat",
+      },
+      {
+        raw: liveSunPillarBands("0deg"),
         size: "200% 400%",
         motion: "scrollYEdge",
         repeat: "no-repeat",
@@ -1922,9 +1784,10 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
       blend: "soft-light, soft-light, hue, hard-light",
       mix: "exclusion",
       opacity: 0.55,
+      // :after — contrast(1.66) saturate(1)
       brightness: [0.5, 0.4],
-      contrast: [1.5, 0.2],
-      saturate: [1.25, 0.15],
+      contrast: [1.66, 0],
+      saturate: [1, 0],
       pointerFalloff: false,
     },
   ),

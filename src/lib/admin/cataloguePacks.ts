@@ -2,9 +2,11 @@
  * Admin Catalogue packs — local `data/<pack>/` corpora (cards-index + optional foil kit).
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
- * Dragon Ball has Masters + Fusion World. Naruto has several lines (Carddass,
- * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Kayou, Défi Ninja, Data
- * Carddass) under one franchise tab.
+ * Dragon Ball has Masters + Fusion World + Lamincards (Edibas). Naruto has several lines (Carddass,
+ * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Kayou, Data Carddass) under
+ * one franchise tab. When a franchise has many lines, packs may declare a
+ * `lineFamily` (éditeur) so the UI can group them in a select instead of a
+ * flat chip strip.
  */
 
 import {
@@ -22,10 +24,10 @@ export const CATALOGUE_PACK_IDS = [
   "naruto/ultra-challenge",
   "naruto/mythos",
   "naruto/kayou",
-  "naruto/defi-ninja",
   "naruto/data-carddass",
   "dbs/cg",
   "dbs/fw",
+  "dbs/lamincards",
   "onepiece",
   "digimon",
   "yugioh",
@@ -52,10 +54,10 @@ export type CatalogueExtractTarget =
   | "naruto-ultra"
   | "naruto-mythos"
   | "naruto-kayou"
-  | "naruto-defi-ninja"
   | "naruto-data-carddass"
   | "dbs-cg"
   | "dbs-fw"
+  | "dbs-lamincards"
   | "onepiece"
   | "digimon"
   | "yugioh"
@@ -124,6 +126,16 @@ export type CataloguePackInfo = {
   /** Product-line tab, shown when the franchise has more than one line. */
   lineLabelFr: string;
   lineLabelEn: string;
+  /**
+   * Éditeur / famille produit **dans** la franchise (Bandai vs Panini…).
+   * Optionnel : absent → la ligne reste dans le groupe « Autres » du sélecteur.
+   * N'existe que pour ranger l'UI ; le pack disque reste `id`.
+   */
+  lineFamily?: {
+    id: string;
+    labelFr: string;
+    labelEn: string;
+  };
   /** Standalone pack name (logs, extract label, single-line tab). */
   labelFr: string;
   labelEn: string;
@@ -164,10 +176,15 @@ export type CataloguePackInfo = {
     bestFaceAcrossLocales?: boolean;
   };
   extractTarget: CatalogueExtractTarget;
-  /** No APK lab — Bandai / Wayback catalogue sync. */
+  /** No store APK fetch — Bandai / Wayback catalogue sync. */
   catalogueOnly?: boolean;
-  /** Foil meta hydrate + APK lab routes (Pokémon + Lorcana). */
+  /** Foil meta hydrate + store APK fetch (Pokémon + Lorcana). */
   hasFoilMeta?: boolean;
+  /**
+   * Android app the foil dump comes from — single source of truth for the
+   * store auto-fetch (APKPure / APKCombo).
+   */
+  androidPackageId?: string;
   /**
    * Extract-presence probes, relative to `data/<pack>/` — foilStatus watches
    * their newest mtime; the newest hit over 200 bytes marks the extract present.
@@ -191,6 +208,59 @@ export type CatalogueFranchise = {
   lines: readonly CataloguePackInfo[];
 };
 
+/** Groupe d'éditeur pour le sélecteur de lignes (ordre = première apparition). */
+export type CatalogueLineFamily = {
+  id: string;
+  labelFr: string;
+  labelEn: string;
+  lines: readonly CataloguePackInfo[];
+};
+
+const UNGROUPED_LINE_FAMILY_ID = "other";
+
+/**
+ * Regroupe les lignes d'une franchise par `lineFamily`. Les packs sans famille
+ * tombent dans un groupe « Autres » en fin de liste.
+ */
+export function catalogueLineFamilies(
+  lines: readonly CataloguePackInfo[],
+): CatalogueLineFamily[] {
+  const families: CatalogueLineFamily[] = [];
+  const indexById = new Map<string, number>();
+  const ungrouped: CataloguePackInfo[] = [];
+
+  for (const line of lines) {
+    const family = line.lineFamily;
+    if (!family) {
+      ungrouped.push(line);
+      continue;
+    }
+    const existing = indexById.get(family.id);
+    if (existing === undefined) {
+      indexById.set(family.id, families.length);
+      families.push({
+        id: family.id,
+        labelFr: family.labelFr,
+        labelEn: family.labelEn,
+        lines: [line],
+      });
+      continue;
+    }
+    const row = families[existing]!;
+    families[existing] = { ...row, lines: [...row.lines, line] };
+  }
+
+  if (ungrouped.length > 0) {
+    families.push({
+      id: UNGROUPED_LINE_FAMILY_ID,
+      labelFr: "Autres",
+      labelEn: "Other",
+      lines: ungrouped,
+    });
+  }
+  return families;
+}
+
 export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
   {
     id: "pokemon",
@@ -203,6 +273,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Pokémon",
     hasFoilEffects: true,
     hasFoilMeta: true,
+    androidPackageId: "com.pokemon.pokemontcgl",
     defaultScope: "foils",
     extractTarget: "pokemon",
     extractMarkers: [
@@ -231,6 +302,13 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Lorcana",
     hasFoilEffects: true,
     hasFoilMeta: true,
+    /**
+     * Index holds de/en/fr/it faces. Without expand, pickLang collapses to the
+     * UI preferLang — « All locales » never shows FR+EN together, and the
+     * language filter options shrink to the active lang only.
+     */
+    expandLocales: true,
+    androidPackageId: "com.ravensburger.disney.lorcana",
     defaultScope: "foils",
     extractTarget: "lorcana",
     extractMarkers: [
@@ -253,6 +331,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Naruto",
     lineLabelFr: "Carddass",
     lineLabelEn: "Carddass",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
     labelFr: "Naruto Carddass",
     labelEn: "Naruto Carddass",
     hasFoilEffects: false,
@@ -305,6 +388,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Naruto",
     lineLabelFr: "疾風伝",
     lineLabelEn: "疾風伝",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
     labelFr: "Naruto 疾風伝",
     labelEn: "Naruto 疾風伝",
     hasFoilEffects: false,
@@ -338,6 +426,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Naruto",
     lineLabelFr: "Ninja Ranks",
     lineLabelEn: "Ninja Ranks",
+    lineFamily: {
+      id: "panini",
+      labelFr: "Panini / Inkworks",
+      labelEn: "Panini / Inkworks",
+    },
     labelFr: "Naruto Ninja Ranks",
     labelEn: "Naruto Ninja Ranks",
     hasFoilEffects: false,
@@ -372,6 +465,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Naruto",
     lineLabelFr: "Ultra Challenge",
     lineLabelEn: "Ultra Challenge",
+    lineFamily: {
+      id: "panini",
+      labelFr: "Panini / Inkworks",
+      labelEn: "Panini / Inkworks",
+    },
     labelFr: "Naruto Ultra Challenge",
     labelEn: "Naruto Ultra Challenge",
     hasFoilEffects: false,
@@ -403,6 +501,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Naruto",
     lineLabelFr: "Mythos",
     lineLabelEn: "Mythos",
+    lineFamily: {
+      id: "cicaboom",
+      labelFr: "CICABOOM",
+      labelEn: "CICABOOM",
+    },
     labelFr: "Naruto Mythos",
     labelEn: "Naruto Mythos",
     hasFoilEffects: false,
@@ -437,6 +540,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Naruto",
     lineLabelFr: "Kayou",
     lineLabelEn: "Kayou",
+    lineFamily: {
+      id: "kayou",
+      labelFr: "Kayou",
+      labelEn: "Kayou",
+    },
     labelFr: "Naruto Kayou",
     labelEn: "Naruto Kayou",
     hasFoilEffects: true,
@@ -462,43 +570,17 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Kayou Naruto — collectible cards (not a playable TCG). Different publisher from Bandai and CICABOOM Mythos. Empty local catalogue.",
   },
   {
-    id: "naruto/defi-ninja",
-    franchiseId: "naruto",
-    franchiseLabelFr: "Naruto",
-    franchiseLabelEn: "Naruto",
-    lineLabelFr: "Défi Ninja",
-    lineLabelEn: "Ninja Challenge",
-    labelFr: "Naruto Défi Ninja",
-    labelEn: "Naruto Défi Ninja",
-    hasFoilEffects: false,
-    defaultScope: "all",
-    extractTarget: "naruto-defi-ninja",
-    catalogueOnly: true,
-    extractMarkers: [
-      "cards-index.json",
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
-    extract: {
-      prelude: [
-        "Naruto Défi Ninja (404 Éditions) : checklist 50 cartes → data/naruto/defi-ninja",
-      ],
-      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
-    },
-    blurbFr:
-      "404 Éditions — Mon jeu de cartes Le défi ninja (50 cartes, EAN 9791032407592). Autre jeu que Carddass, Ultra Challenge et Mythos.",
-    blurbEn:
-      "404 Éditions — Naruto card game Le défi ninja (50 cards, EAN 9791032407592). A different game from Carddass, Ultra Challenge, and Mythos.",
-  },
-  {
     id: "naruto/data-carddass",
     franchiseId: "naruto",
     franchiseLabelFr: "Naruto",
     franchiseLabelEn: "Naruto",
     lineLabelFr: "Data Carddass",
     lineLabelEn: "Data Carddass",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
     labelFr: "Naruto Data Carddass",
     labelEn: "Naruto Data Carddass",
     hasFoilEffects: false,
@@ -530,6 +612,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Dragon Ball",
     lineLabelFr: "Masters",
     lineLabelEn: "Masters",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
     labelFr: "Dragon Ball Masters",
     labelEn: "Dragon Ball Masters",
     hasFoilEffects: false,
@@ -564,6 +651,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseLabelEn: "Dragon Ball",
     lineLabelFr: "Fusion World",
     lineLabelEn: "Fusion World",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
     labelFr: "Dragon Ball Fusion World",
     labelEn: "Dragon Ball Fusion World",
     hasFoilEffects: false,
@@ -589,6 +681,44 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     },
     blurbFr: "Catalogue Bandai Fusion World — faces SAMPLE, pas de dump foil",
     blurbEn: "Bandai Fusion World catalogue — SAMPLE faces, no foil dump",
+  },
+  {
+    id: "dbs/lamincards",
+    franchiseId: "dbs",
+    franchiseLabelFr: "Dragon Ball",
+    franchiseLabelEn: "Dragon Ball",
+    lineLabelFr: "Lamincards",
+    lineLabelEn: "Lamincards",
+    lineFamily: {
+      id: "edibas",
+      labelFr: "Edibas",
+      labelEn: "Edibas",
+    },
+    labelFr: "Dragon Ball Lamincards",
+    labelEn: "Dragon Ball Lamincards",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "dbs-lamincards",
+    catalogueOnly: true,
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Dragon Ball Lamincards (Edibas, PVC) : DBC → data/dbs/lamincards",
+        "Séries Nero / Argento / Oro / Platino / Smeraldo / z2008 — Coleka en secours plus tard",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      pipelineSteps: ["dbc", "faces"],
+    },
+    blurbFr:
+      "Edibas Lamincards (PVC transparent). Faces Dragon Ball Center. Autre produit que Masters / Fusion World.",
+    blurbEn:
+      "Edibas Lamincards (clear PVC). Faces from Dragon Ball Center. Not Masters / Fusion World.",
   },
   {
     id: "onepiece",
@@ -768,6 +898,13 @@ export function catalogueFranchiseForPack(
   );
 }
 
+/** Packs whose foil dump can come from an Android APK (store fetch). */
+export function catalogueApkPacks(): CataloguePackInfo[] {
+  return CATALOGUE_PACKS.filter(
+    (pack) => pack.hasFoilMeta && typeof pack.androidPackageId === "string",
+  );
+}
+
 export function cataloguePackForExtractTarget(
   target: string | null | undefined,
 ): CataloguePackInfo | null {
@@ -812,8 +949,6 @@ export function resolveCataloguePackId(
     lamincards: "naruto/ultra-challenge",
     mythos: "naruto/mythos",
     kayou: "naruto/kayou",
-    defininja: "naruto/defi-ninja",
-    defi: "naruto/defi-ninja",
     datacarddass: "naruto/data-carddass",
     narultimate: "naruto/data-carddass",
     dbs: "dbs/cg",
@@ -821,6 +956,9 @@ export function resolveCataloguePackId(
     masters: "dbs/cg",
     dbsmasters: "dbs/cg",
     fusionworld: "dbs/fw",
+    edibas: "dbs/lamincards",
+    dbslamincards: "dbs/lamincards",
+    dbzlamincards: "dbs/lamincards",
     onepiece: "onepiece",
     optcg: "onepiece",
     digimon: "digimon",

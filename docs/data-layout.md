@@ -106,7 +106,10 @@ dbsfw, narutoshippuden, narutoranks, narutoultra) — jamais installé vers
 `data/` (`curatedCardsInstall` ne copie pas le markdown).
 
 `dbs` = franchise ; **`dbs/cg`** = Masters (`dbscg:bt1-001`) ; **`dbs/fw`** =
-Fusion World (`dbsfw:st01-001`, parallels `_P1`). Identité Masters = cardlists
+Fusion World (`dbsfw:st01-001`, parallels `_P1`) ; **`dbs/lamincards`** =
+Edibas Lamincards PVC (`dbslamincards:nero-0001`, …). Faces = Dragon Ball Center
+(`art.dbc.jpg`) ; versos pack `back.it` / `back.fr` ; journal
+`providers/dbslamincards/curated/sources/source-hunt.json`. Identité Masters = cardlists
 Bandai **FR** (`/europe-fr/cartes/`) et **EN** (`/us-en/cardlist/`), fusionnées
 sur printKey ; `cards-index.json` porte `langs.fr.name` et `langs.en.name`.
 Faces Masters FR = dbscards / Bandai au sync HTTP. Faces Masters EN = clone
@@ -161,7 +164,7 @@ Generated TS JSON (gitignored) is written by Catalogue Extract when missing
 
 ## Admin
 
-`/admin?tab=tcg-effects` — playroom + APK upload + extract on host.
+`/admin?tab=catalogue` — playroom + APK upload + extract on host.
 `foilExtract` runs on the **interactive** worker (serialized, long timeout).
 
 `next.config.js` ignores `data/` in webpack watch so foil/CDN dumps do not thrash `next dev`.

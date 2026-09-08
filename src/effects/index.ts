@@ -6,14 +6,18 @@ import "@/effects/narutoranks";
 import "@/effects/narutoultra";
 import "@/effects/narutomythos";
 import "@/effects/narutokayou";
-import "@/effects/narutodefininja";
 import "@/effects/narutodatacarddass";
 import "@/effects/dbscg";
 import "@/effects/dbsfw";
+import "@/effects/dbslamincards";
 import "@/effects/onepiece";
 import "@/effects/digimon";
 import "@/effects/yugioh";
 import "@/effects/mtg";
+
+import { markEffectsRegistered } from "@/effects/ensureEffects";
+
+markEffectsRegistered();
 
 export { getEffectPack, listEffectPacks } from "@/core/render/foil/registry";
 export { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
@@ -24,12 +28,12 @@ export {
 } from "@/effects/narutocarddass";
 export { DBS_CG_EFFECT_PACK_ID } from "@/effects/dbscg";
 export { DBS_FW_EFFECT_PACK_ID } from "@/effects/dbsfw";
+export { DBS_LAMINCARDS_EFFECT_PACK_ID } from "@/effects/dbslamincards";
 export { NARUTO_SHIPPUDEN_EFFECT_PACK_ID } from "@/effects/narutoshippuden";
 export { NARUTO_RANKS_EFFECT_PACK_ID } from "@/effects/narutoranks";
 export { NARUTO_ULTRA_EFFECT_PACK_ID } from "@/effects/narutoultra";
 export { NARUTO_MYTHOS_EFFECT_PACK_ID } from "@/effects/narutomythos";
 export { NARUTO_KAYOU_EFFECT_PACK_ID } from "@/effects/narutokayou";
-export { NARUTO_DEFI_NINJA_EFFECT_PACK_ID } from "@/effects/narutodefininja";
 export { NARUTO_DATA_CARDDASS_EFFECT_PACK_ID } from "@/effects/narutodatacarddass";
 export { ONEPIECE_EFFECT_PACK_ID } from "@/effects/onepiece";
 export { DIGIMON_EFFECT_PACK_ID } from "@/effects/digimon";

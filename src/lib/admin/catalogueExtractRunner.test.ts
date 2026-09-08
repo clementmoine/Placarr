@@ -11,6 +11,9 @@ import {
   catalogueExtractLabel,
   catalogueExtractTimeoutMs,
   isCatalogueExtractTarget,
+  autoExtractPolicy,
+  lorcanaExtractProviders,
+  maybeFetchStoreApkForExtract,
   normalizeCatalogueExtractTarget,
   resolveCatalogueExtractPlan,
 } from "./catalogueExtractRunner";
@@ -32,6 +35,7 @@ describe("catalogueExtractRunner targets", () => {
     expect(isCatalogueExtractTarget("naruto")).toBe(true);
     expect(isCatalogueExtractTarget("dbs-cg")).toBe(true);
     expect(isCatalogueExtractTarget("dbs-fw")).toBe(true);
+    expect(isCatalogueExtractTarget("dbs-lamincards")).toBe(true);
     expect(isCatalogueExtractTarget("lorcana-web")).toBe(true); // legacy alias
     expect(normalizeCatalogueExtractTarget("lorcana-cards")).toBe("lorcana");
     expect(normalizeCatalogueExtractTarget("lorcana-mobile")).toBe("lorcana");
@@ -41,13 +45,16 @@ describe("catalogueExtractRunner targets", () => {
     expect(normalizeCatalogueExtractTarget("naruto/en-ccg")).toBe("naruto");
     expect(normalizeCatalogueExtractTarget("dbs/cg")).toBe("dbs-cg");
     expect(normalizeCatalogueExtractTarget("fusionworld")).toBe("dbs-fw");
+    expect(normalizeCatalogueExtractTarget("edibas")).toBe("dbs-lamincards");
+    expect(normalizeCatalogueExtractTarget("dbzlamincards")).toBe(
+      "dbs-lamincards",
+    );
     expect(catalogueExtractLabel("lorcana")).toBe("Lorcana");
     expect(isCatalogueExtractTarget("naruto-shippuden")).toBe(true);
     expect(isCatalogueExtractTarget("naruto-ranks")).toBe(true);
     expect(isCatalogueExtractTarget("naruto-ultra")).toBe(true);
     expect(isCatalogueExtractTarget("naruto-mythos")).toBe(true);
     expect(isCatalogueExtractTarget("naruto-kayou")).toBe(true);
-    expect(isCatalogueExtractTarget("naruto-defi-ninja")).toBe(true);
     expect(isCatalogueExtractTarget("naruto-data-carddass")).toBe(true);
     expect(normalizeCatalogueExtractTarget("naruto/shippuden")).toBe(
       "naruto-shippuden",
@@ -56,7 +63,6 @@ describe("catalogueExtractRunner targets", () => {
     expect(normalizeCatalogueExtractTarget("lamincards")).toBe("naruto-ultra");
     expect(normalizeCatalogueExtractTarget("mythos")).toBe("naruto-mythos");
     expect(normalizeCatalogueExtractTarget("kayou")).toBe("naruto-kayou");
-    expect(normalizeCatalogueExtractTarget("defi")).toBe("naruto-defi-ninja");
     expect(normalizeCatalogueExtractTarget("narultimate")).toBe(
       "naruto-data-carddass",
     );
@@ -67,7 +73,6 @@ describe("catalogueExtractRunner targets", () => {
     );
     expect(catalogueExtractLabel("naruto-mythos")).toBe("Naruto Mythos");
     expect(catalogueExtractLabel("naruto-kayou")).toBe("Naruto Kayou");
-    expect(catalogueExtractLabel("naruto-defi-ninja")).toBe("Naruto Défi Ninja");
     expect(catalogueExtractLabel("naruto-data-carddass")).toBe(
       "Naruto Data Carddass",
     );
@@ -134,6 +139,18 @@ describe("catalogueExtractRunner targets", () => {
     );
   });
 
+  it("Lorcana auto catalogue omits Unity and products", async () => {
+    const cmd = await resolveCatalogueExtractPlan("lorcana", {
+      skipUnity: true,
+      skipProducts: true,
+    });
+    expect(cmd.argv).toContain("lorcanaweb");
+    expect(cmd.argv).toContain("lorcanacards");
+    expect(cmd.argv).not.toContain("lorcanamobile");
+    expect(cmd.argv).not.toContain("lorcanaproducts");
+    expect(cmd.prelude.some((line) => /skip Unity/i.test(line))).toBe(true);
+  });
+
   it("pokemon catalogue uses a longer worker timeout than inventory", () => {
     expect(catalogueExtractTimeoutMs("pokemon", "catalogue")).toBe(
       CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
@@ -171,6 +188,77 @@ describe("catalogueExtractRunner targets", () => {
     });
     expect(cmd.argv).toContain("--refresh-manifests");
     expect(cmd.prelude.some((l) => /catalogue CDN/i.test(l))).toBe(true);
+  });
+});
+
+describe("store APK prefix on extract", () => {
+  it("skips packs without androidPackageId", async () => {
+    await expect(maybeFetchStoreApkForExtract("naruto")).resolves.toEqual({
+      status: "skipped",
+    });
+  });
+
+  it("auto-sync without a new APK still runs a catalogue-only pass", () => {
+    expect(autoExtractPolicy(true, { status: "up-to-date", versionCode: 1 })).toEqual({
+      skipUnity: true,
+      preferCatalogueScope: true,
+      skipProducts: true,
+      skipAudits: true,
+      skipPaperFaces: true,
+    });
+    expect(
+      autoExtractPolicy(true, { status: "unavailable", reason: "403" }),
+    ).toEqual({
+      skipUnity: true,
+      preferCatalogueScope: true,
+      skipProducts: true,
+      skipAudits: true,
+      skipPaperFaces: true,
+    });
+    expect(autoExtractPolicy(true, { status: "updated", versionCode: 2 })).toEqual({
+      skipUnity: false,
+      preferCatalogueScope: false,
+      skipProducts: false,
+      skipAudits: false,
+      skipPaperFaces: false,
+    });
+    expect(
+      autoExtractPolicy(false, { status: "up-to-date", versionCode: 1 }),
+    ).toEqual({
+      skipUnity: false,
+      preferCatalogueScope: false,
+      skipProducts: false,
+      skipAudits: false,
+      skipPaperFaces: false,
+    });
+  });
+
+  it("omits Lorcana Unity and products when auto-sync skips them", () => {
+    expect(
+      lorcanaExtractProviders({ hasApk: true, skipUnity: true, skipProducts: true }),
+    ).toEqual(["lorcanaweb", "lorcanacards"]);
+    expect(lorcanaExtractProviders({ hasApk: true })).toEqual([
+      "lorcanaweb",
+      "lorcanacards",
+      "lorcanaproducts",
+      "lorcanamobile",
+    ]);
+  });
+
+  it("pokemon auto catalogue plan skips products and store audits", async () => {
+    const cmd = await resolveCatalogueExtractPlan("pokemon", {
+      scope: "catalogue",
+      skipProducts: true,
+      skipAudits: true,
+      skipPaperFaces: true,
+    });
+    expect(cmd.argv).toContain("--refresh-manifests");
+    expect(cmd.argv).toContain("--skip-products");
+    expect(cmd.argv).toContain("--skip-paper-faces");
+    expect(cmd.argv).not.toContain("--products");
+    expect(cmd.argv).toEqual(
+      expect.arrayContaining(["--skip-apk-audit", "--skip-store-audit"]),
+    );
   });
 });
 

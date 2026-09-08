@@ -53,7 +53,6 @@ import { narutoranksModule } from "@/providers/narutoranks";
 import { narutoultraModule } from "@/providers/narutoultra";
 import { narutomythosModule } from "@/providers/narutomythos";
 import { narutokayouModule } from "@/providers/narutokayou";
-import { narutodefininjaModule } from "@/providers/narutodefininja";
 import { narutodatacarddassModule } from "@/providers/narutodatacarddass";
 import { onepieceModule } from "@/providers/onepiece";
 import { digimonModule } from "@/providers/digimon";
@@ -61,6 +60,7 @@ import { yugiohModule } from "@/providers/yugioh";
 import { mtgModule } from "@/providers/mtg";
 import { dbscgModule } from "@/providers/dbscg";
 import { dbsfwModule } from "@/providers/dbsfw";
+import { dbslamincardsModule } from "@/providers/dbslamincards";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
@@ -140,7 +140,6 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   narutoultraModule,
   narutomythosModule,
   narutokayouModule,
-  narutodefininjaModule,
   narutodatacarddassModule,
   onepieceModule,
   digimonModule,
@@ -148,6 +147,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   mtgModule,
   dbscgModule,
   dbsfwModule,
+  dbslamincardsModule,
   lorcanaggModule,
   lorcastModule,
   tcgdexModule,

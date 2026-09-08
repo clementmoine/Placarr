@@ -1,0 +1,29 @@
+{
+  "source": "Coleka — hub Dragon Ball Lamincards",
+  "url": "https://www.coleka.com/en/trading-cards/dragon-ball-cards/lamincards_r4591",
+  "observed": "2026-09-07",
+  "ingest": "none — mur Verifica sur listing (Flare → /verify/)",
+  "sourceId": "coleka",
+  "line": "dbs/lamincards",
+  "hubRef": "r4591",
+  "approxRefs": 1790,
+  "note": "Même pattern que Ultra Challenge (`thumbs.coleka.com` → retirer `_250x250` pour le plein format). Brancher harvest quand le listing EN passe le mur.",
+  "subseriesSample": [
+    {
+      "label": "Argento Series 2006",
+      "ref": "r13562",
+      "path": "/en/trading-cards/dragon-ball-cards/lamincards/lamincards-dragon-ball-argento-series-2006_r13562",
+      "cardsBanner": 152
+    },
+    {
+      "label": "Lamincards Dragon Ball 2009",
+      "path": "/en/trading-cards/dragon-ball-cards/lamincards/lamincards-dragon-ball-2009",
+      "note": "Refs type `078 Gold` — utile pour titres personnage"
+    }
+  ],
+  "cdnOk": {
+    "thumbExample": "https://thumbs.coleka.com/media/item/202003/31/lamincards-dragon-ball-serie-argento-2006-panini-lamincards-dragon-ball-serie-argento-2006-6-006_200x200.webp",
+    "faceExample": "https://thumbs.coleka.com/media/item/202003/31/lamincards-dragon-ball-serie-argento-2006-panini-lamincards-dragon-ball-serie-argento-2006-6-006.webp",
+    "faceBytesObserved": 47022
+  }
+}

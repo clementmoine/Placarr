@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildCatalogueCardRows,
+  catalogueDiskCard,
   catalogueAvailableLocales,
   catalogueCollectorKey,
   entryHasFoil,
@@ -25,6 +26,7 @@ import {
   catalogueCorpusPack,
   catalogueFranchises,
   catalogueFranchiseForPack,
+  catalogueLineFamilies,
   cataloguePackForExtractTarget,
   foilExtractNeedsApk,
   narutoCatalogueLineForCard,
@@ -54,6 +56,8 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("dbs")).toBe("dbs/cg");
     expect(resolveCataloguePackId("masters")).toBe("dbs/cg");
     expect(resolveCataloguePackId("fusionworld")).toBe("dbs/fw");
+    expect(resolveCataloguePackId("edibas")).toBe("dbs/lamincards");
+    expect(resolveCataloguePackId("dbzlamincards")).toBe("dbs/lamincards");
     expect(resolveCataloguePackId("optcg")).toBe("onepiece");
     expect(resolveCataloguePackId("ygo")).toBe("yugioh");
     expect(resolveCataloguePackId("magic")).toBe("mtg");
@@ -90,18 +94,56 @@ describe("cataloguePacks", () => {
       "naruto/ultra-challenge",
       "naruto/mythos",
       "naruto/kayou",
-      "naruto/defi-ninja",
       "naruto/data-carddass",
     ]);
     const dbs = catalogueFranchiseForPack("dbs/fw");
     expect(dbs?.id).toBe("dbs");
-    expect(dbs?.lines.map((line) => line.id)).toEqual(["dbs/cg", "dbs/fw"]);
+    expect(dbs?.lines.map((line) => line.id)).toEqual([
+      "dbs/cg",
+      "dbs/fw",
+      "dbs/lamincards",
+    ]);
     expect(catalogueCorpusPack("naruto/en-ccg")).toBe("naruto/carddass");
     expect(cataloguePackInfo("naruto/en-ccg")).toBeNull();
     expect(cataloguePackInfo("naruto/carddass")?.blurbFr).toContain("voisins");
     expect(foilExtractNeedsApk("naruto")).toBe(false);
     expect(foilExtractNeedsApk("dbs-cg")).toBe(false);
     expect(foilExtractNeedsApk("pokemon")).toBe(true);
+  });
+
+  it("range les lignes Naruto et Dragon Ball par éditeur pour le select Catalogue", () => {
+    const naruto = catalogueFranchises().find((row) => row.id === "naruto")!;
+    const dbs = catalogueFranchises().find((row) => row.id === "dbs")!;
+    expect(
+      catalogueLineFamilies(naruto.lines).map((family) => ({
+        id: family.id,
+        lines: family.lines.map((line) => line.id),
+      })),
+    ).toEqual([
+      {
+        id: "bandai",
+        lines: [
+          "naruto/carddass",
+          "naruto/shippuden",
+          "naruto/data-carddass",
+        ],
+      },
+      {
+        id: "panini",
+        lines: ["naruto/ninja-ranks", "naruto/ultra-challenge"],
+      },
+      { id: "cicaboom", lines: ["naruto/mythos"] },
+      { id: "kayou", lines: ["naruto/kayou"] },
+    ]);
+    expect(
+      catalogueLineFamilies(dbs.lines).map((family) => ({
+        id: family.id,
+        lines: family.lines.map((line) => line.id),
+      })),
+    ).toEqual([
+      { id: "bandai", lines: ["dbs/cg", "dbs/fw"] },
+      { id: "edibas", lines: ["dbs/lamincards"] },
+    ]);
   });
 
   it("keeps every pack self-describing: markers, empty probes, extract timeouts", () => {
@@ -629,6 +671,62 @@ describe("same-number art fallback (Naruto)", () => {
     expect(stub?.missingArt).toBe(true);
     expect(stub?.artUrl).toBe("");
     expect(stub?.artFallbackFrom).toBeUndefined();
+  });
+
+  it("does not double printKey grouping on Lorcana promo disk ids", () => {
+    // Export writes card: "1-c1"; appending grouping again 404'd /1-c1-c1/.
+    expect(
+      catalogueDiskCard("lorcana", "lorcana:1-1-c1", { card: "1-c1" }),
+    ).toBe("1-c1");
+    expect(
+      catalogueDiskCard("lorcana", "lorcana:1-20-p1", { card: "20-p1" }),
+    ).toBe("20-p1");
+    const index = {
+      version: 1 as const,
+      pack: "lorcana",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "lorcana:1-1-c1": {
+          set: "1",
+          card: "1-c1",
+          langs: { en: { art: "art.jpg", name: "Dragon Fire" } },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("lorcana", index, "en");
+    expect(rows[0]?.label).toBe("1 · 1-c1 — Dragon Fire");
+    expect(rows[0]?.artUrl).toBe("/assets/lorcana/cards/1/en/1-c1/art.jpg");
+  });
+
+  it("Lorcana expandLocales: FR+EN side by side; filter options stay stable", () => {
+    expect(cataloguePackInfo("lorcana")?.expandLocales).toBe(true);
+    const index = {
+      version: 1 as const,
+      pack: "lorcana",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "lorcana:1-1": {
+          set: "1",
+          card: "1",
+          langs: {
+            fr: { name: "Feu du dragon", art: "art.jpg" },
+            en: { name: "Dragon Fire", art: "art.jpg" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("lorcana", index, "en");
+    expect(rows.map((row) => row.lang).sort()).toEqual(["en", "fr"]);
+    // listCatalogueCards measures locales before preferred-lang filter.
+    expect(catalogueAvailableLocales("lorcana", rows)).toEqual(["en", "fr"]);
+    const preferredEn = rows.filter((row) =>
+      matchesCataloguePreferredLang(row, "en", { expandLocales: true }),
+    );
+    expect(preferredEn).toHaveLength(1);
+    expect(preferredEn[0]?.lang).toBe("en");
+    expect(preferredEn[0]?.name).toBe("Dragon Fire");
+    // Even after filtering to EN, availableLocales still come from full rows.
+    expect(catalogueAvailableLocales("lorcana", rows)).toEqual(["en", "fr"]);
   });
 
   it("prefers local art over a remote Bandai artUrl", () => {

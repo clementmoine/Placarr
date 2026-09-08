@@ -132,11 +132,27 @@ export async function resolveCatalogueExtractCommand(
   return resolveCatalogueExtractPlan(target, opts);
 }
 
+/** Lorcana in-process providers — Unity / products are optional. */
+export function lorcanaExtractProviders(opts: {
+  hasApk: boolean;
+  skipUnity?: boolean;
+  skipProducts?: boolean;
+}): string[] {
+  const providers = ["lorcanaweb", "lorcanacards"];
+  if (!opts.skipProducts) providers.push("lorcanaproducts");
+  if (opts.hasApk && !opts.skipUnity) providers.push("lorcanamobile");
+  return providers;
+}
+
 export async function resolveCatalogueExtractPlan(
   target: CatalogueExtractTarget,
   opts: {
     scope?: CatalogueExtractScope;
     completedSteps?: readonly string[];
+    skipUnity?: boolean;
+    skipProducts?: boolean;
+    skipAudits?: boolean;
+    skipPaperFaces?: boolean;
   } = {},
 ): Promise<CatalogueExtractPlan> {
   const scope = opts.scope ?? "inventory";
@@ -155,27 +171,39 @@ export async function resolveCatalogueExtractPlan(
 
   if (target === "lorcana") {
     const apk = await preferredLorcanaApk();
-    const providers = apk
-      ? ["lorcanaweb", "lorcanacards", "lorcanaproducts", "lorcanamobile"]
-      : ["lorcanaweb", "lorcanacards", "lorcanaproducts"];
+    const providers = lorcanaExtractProviders({
+      hasApk: Boolean(apk),
+      skipUnity: opts.skipUnity,
+      skipProducts: opts.skipProducts,
+    });
     const argv = ["--providers", ...providers, ...skipArgs];
     const prelude: string[] = [...resumePrelude];
-    if (apk) {
+    if (apk && !opts.skipUnity) {
       argv.push("--apk", apk);
       prelude.push(`apk=${apk}`);
-    } else {
+    } else if (!apk) {
       prelude.push(
         "skip Unity: no APK under data/lorcana/staging/apks/ (web + cards only)",
       );
+    } else {
+      prelude.push("skip Unity: APK unchanged — web + cards only");
     }
-    prelude.push(
-      "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
-    );
+    if (!opts.skipProducts) {
+      prelude.push(
+        "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
+      );
+    }
     return { target, argv, prelude };
   }
 
   if (target === "pokemon") {
-    const argv = ["--langs", POKEMON_LIVE_LANGS_CSV, ...skipArgs, "--products"];
+    const argv = ["--langs", POKEMON_LIVE_LANGS_CSV, ...skipArgs];
+    if (opts.skipProducts) argv.push("--skip-products");
+    else argv.push("--products");
+    if (opts.skipAudits) {
+      argv.push("--skip-apk-audit", "--skip-store-audit");
+    }
+    if (opts.skipPaperFaces) argv.push("--skip-paper-faces");
     const prelude =
       scope === "catalogue"
         ? [
@@ -187,12 +215,18 @@ export async function resolveCatalogueExtractPlan(
             ...resumePrelude,
             "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
           ];
-    prelude.push(
-      "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
-    );
-    prelude.push(
-      "faces papier : Coleka FR + TCGPlayer EN + pokemontcg.io + pkmcards.fr (toutes sources)",
-    );
+    if (!opts.skipProducts) {
+      prelude.push(
+        "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
+      );
+    }
+    if (!opts.skipPaperFaces) {
+      prelude.push(
+        "faces papier : Coleka FR + TCGPlayer EN + pokemontcg.io + pkmcards.fr (toutes sources)",
+      );
+    } else {
+      prelude.push("faces papier skipped (auto catalogue)");
+    }
     if (scope === "catalogue") argv.push("--refresh-manifests");
     prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
     return { target, argv, prelude };
@@ -328,13 +362,6 @@ async function invokePackPipeline(
       await runNarutoKayouPackPipeline(argv);
       return;
     }
-    case "naruto-defi-ninja": {
-      const { runNarutoDefiNinjaPackPipeline } = await import(
-        "@/providers/narutodefininja/extract"
-      );
-      await runNarutoDefiNinjaPackPipeline(argv);
-      return;
-    }
     case "naruto-data-carddass": {
       const { runNarutoDataCarddassPackPipeline } = await import(
         "@/providers/narutodatacarddass/extract"
@@ -350,6 +377,13 @@ async function invokePackPipeline(
     case "dbs-fw": {
       const { runDbsFwPackPipeline } = await import("@/providers/dbsfw/extract");
       await runDbsFwPackPipeline(argv);
+      return;
+    }
+    case "dbs-lamincards": {
+      const { runDbsLamincardsPackPipeline } = await import(
+        "@/providers/dbslamincards/extract"
+      );
+      await runDbsLamincardsPackPipeline(argv);
       return;
     }
     case "onepiece": {
@@ -387,6 +421,82 @@ async function invokePackPipeline(
  *
  * Always tees stdout-style logs to ``data/<pack>/logs/foil-extract.log``.
  */
+export type ExtractApkFetchOutcome =
+  | { status: "skipped" }
+  | { status: "up-to-date"; versionCode: number }
+  | { status: "updated"; versionCode: number }
+  | { status: "unavailable"; reason: string };
+
+/** Probe/download the store APK when the pack has an `androidPackageId`. */
+export async function maybeFetchStoreApkForExtract(
+  target: CatalogueExtractTarget,
+  options: {
+    force?: boolean;
+    signal?: AbortSignal;
+    onLog?: (line: string) => void;
+  } = {},
+): Promise<ExtractApkFetchOutcome> {
+  const pack = cataloguePackForExtractTarget(target);
+  if (!pack?.androidPackageId) return { status: "skipped" };
+  options.onLog?.(
+    `── store APK ${pack.id} (${pack.androidPackageId})`,
+  );
+  const { fetchStoreApksForPack } = await import("@/lib/admin/apkStoreFetch");
+  const result = await fetchStoreApksForPack(pack.id, {
+    force: options.force,
+    signal: options.signal,
+    onLog: options.onLog,
+  });
+  if (result.status === "unavailable") {
+    options.onLog?.(`store APK unavailable: ${result.reason}`);
+    return result;
+  }
+  if (result.status === "up-to-date") {
+    options.onLog?.(
+      `store APK up-to-date (versionCode=${result.versionCode})`,
+    );
+    return result;
+  }
+  options.onLog?.(
+    `store APK updated (versionCode=${result.versionCode})`,
+  );
+  return result;
+}
+
+/**
+ * Auto jobs still refresh CDN / LorcanaJSON when the APK did not move.
+ * Unity + product graphs + paper faces stay on a new APK (or a manual Sync).
+ */
+export type AutoExtractPolicy = {
+  skipUnity: boolean;
+  preferCatalogueScope: boolean;
+  skipProducts: boolean;
+  skipAudits: boolean;
+  skipPaperFaces: boolean;
+};
+
+export function autoExtractPolicy(
+  auto: boolean,
+  outcome: ExtractApkFetchOutcome,
+): AutoExtractPolicy {
+  if (!auto || outcome.status === "updated") {
+    return {
+      skipUnity: false,
+      preferCatalogueScope: false,
+      skipProducts: false,
+      skipAudits: false,
+      skipPaperFaces: false,
+    };
+  }
+  return {
+    skipUnity: true,
+    preferCatalogueScope: true,
+    skipProducts: true,
+    skipAudits: true,
+    skipPaperFaces: true,
+  };
+}
+
 export async function runCatalogueExtractCommand(
   target: CatalogueExtractTarget,
   options: {
@@ -396,29 +506,47 @@ export async function runCatalogueExtractCommand(
     logHeader?: readonly string[];
     scope?: CatalogueExtractScope;
     completedSteps?: readonly string[];
+    auto?: boolean;
+    forceApk?: boolean;
   } = {},
 ): Promise<void> {
-  const { argv, prelude } = await resolveCatalogueExtractPlan(target, {
-    scope: options.scope,
-    completedSteps: options.completedSteps,
-  });
-  const timeoutMs =
-    options.timeoutMs ??
-    catalogueExtractTimeoutMs(target, options.scope ?? "inventory");
-
-  const { appendCatalogueExtractLog, beginCatalogueExtractLog } =
+  const { appendCatalogueExtractLogSync, beginCatalogueExtractLog } =
     await import("@/lib/admin/catalogueExtractLog");
   await beginCatalogueExtractLog(target, options.logHeader ?? []);
 
-  let logChain: Promise<void> = Promise.resolve();
   const onLog = (line: string) => {
     options.onLog?.(line);
-    logChain = logChain
-      .then(() => appendCatalogueExtractLog(target, line))
-      .catch(() => {
-        /* best-effort */
-      });
+    try {
+      appendCatalogueExtractLogSync(target, line);
+    } catch {
+      /* best-effort */
+    }
   };
+
+  const apkOutcome = await maybeFetchStoreApkForExtract(target, {
+    force: options.forceApk,
+    signal: options.signal,
+    onLog,
+  });
+  const policy = autoExtractPolicy(options.auto === true, apkOutcome);
+  if (policy.skipUnity) {
+    onLog("── auto: pas de nouvel APK — catalogue réseau (sans Unity)");
+  }
+
+  const scope =
+    options.scope ??
+    (policy.preferCatalogueScope ? "catalogue" : "inventory");
+  const timeoutMs =
+    options.timeoutMs ?? catalogueExtractTimeoutMs(target, scope);
+
+  const { argv, prelude } = await resolveCatalogueExtractPlan(target, {
+    scope,
+    completedSteps: options.completedSteps,
+    skipUnity: policy.skipUnity,
+    skipProducts: policy.skipProducts,
+    skipAudits: policy.skipAudits,
+    skipPaperFaces: policy.skipPaperFaces,
+  });
 
   for (const line of prelude) onLog(line);
   onLog(`in-process extract ${target} ${argv.join(" ")}`.trimEnd());
@@ -480,6 +608,6 @@ export async function runCatalogueExtractCommand(
     throw error;
   } finally {
     options.signal?.removeEventListener("abort", onAbort);
-    await logChain.catch(() => undefined);
+    // Disk log is sync (appendCatalogueExtractLogSync) — no async chain to flush.
   }
 }

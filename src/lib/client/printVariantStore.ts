@@ -48,7 +48,7 @@ const MAX_BATCH_KEYS = 120;
 /** Bumped when Naruto 術-192/348/358 gain illustration-B variantImageUrls. */
 /** Bumped when catalogue imageUrl/thumbnailUrl feed shelf faces (McDo paper). */
 /** Bumped when OPTCG Leader/Event/Stage category sleeve backs stamp. */
-const PRINT_VARIANT_CACHE_VERSION = 55;
+const PRINT_VARIANT_CACHE_VERSION = 56;
 
 /** `type` is part of the key: it decides which providers are even asked. */
 function cacheKey(printKey: string, type: string): string {

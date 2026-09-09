@@ -2,6 +2,7 @@
 
 import {
   gravityFromOrientation,
+  deviceCanProvideOrientationTilt,
   orientationNeedsPermission,
   smoothGravity,
   type GravityVector,
@@ -103,11 +104,12 @@ export function getOrientationSnapshot(): OrientationSnapshot | null {
 }
 
 /**
- * Whether this browser still has to be asked, which only iOS does — and only
- * from a real user gesture, so something has to be tapped first.
+ * Whether this browser still has to be asked — and only when the device can
+ * actually drive tilt (not desktop WebKit’s empty `requestPermission`).
  */
 export function orientationPermissionPending(): boolean {
   if (typeof window === "undefined") return false;
+  if (!deviceCanProvideOrientationTilt()) return false;
   return !granted && orientationNeedsPermission(window.DeviceOrientationEvent);
 }
 

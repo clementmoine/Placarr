@@ -18,6 +18,7 @@ import {
 } from "@/components/foilFaceReady";
 import {
   acquireFoilSlot,
+  applyHouseFoilFallback,
   getEffectPack,
   getFoilCapabilities,
   hasFoilSlot,
@@ -413,11 +414,19 @@ export function FoilCardImage({
   // to pre-resolved ids when the pack is briefly missing from a stale cache.
   // Plain leaves (`webgl: false`, Live NonFoil) must stay shader-less even if
   // a stale `finish` prop names another print's foil.
+  // Shiny finish with no dedicated CSS → house flare (all TCG packs).
+  const resolvedFinishShaderId =
+    material?.webgl === false || foilMaskMissing
+      ? null
+      : applyHouseFoilFallback(
+          fromPack.finishShaderId ?? cssFinishShaderId ?? null,
+          finish,
+        );
   const cssRecipe =
     material?.webgl === false || foilMaskMissing
       ? { finishShaderId: null, varnishShaderId: null, lenticularGrid: null }
       : {
-          finishShaderId: fromPack.finishShaderId ?? cssFinishShaderId ?? null,
+          finishShaderId: resolvedFinishShaderId,
           varnishShaderId:
             fromPack.varnishShaderId ?? cssVarnishShaderId ?? null,
           lenticularGrid:
@@ -473,7 +482,13 @@ export function FoilCardImage({
    * Grids pass `backend="css"`; detail / fullscreen leave `auto` (WebGL with
    * CSS fallback). `material.webgl === false` (Live NonFoil) stays CSS.
    */
-  const webglMaterial = Boolean(material) && material?.webgl !== false;
+  const webglMaterial =
+    Boolean(material) &&
+    material?.webgl !== false &&
+    !(
+      effectiveMaskUrl &&
+      pack?.isCssOnlyFoilMask?.(effectiveMaskUrl)
+    );
   const eligible =
     !failed &&
     surfacesReady &&

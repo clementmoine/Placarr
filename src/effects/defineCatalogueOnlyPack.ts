@@ -12,6 +12,7 @@
  * `core/`.
  */
 import { registerEffectPack } from "@/core/render/foil/registry";
+import { applyHouseFoilFallback } from "@/core/render/foil/houseFoilFallback";
 import type { EffectPackModule } from "@/core/render/foil/types";
 
 export type CatalogueOnlyPackOptions = {
@@ -70,13 +71,17 @@ export function defineCatalogueOnlyPack(
     resolveMaterial: () => null,
     resolveMaterialForPrint: () => null,
     ...(fallbackFoilMaskUrl ? { fallbackFoilMaskUrl } : {}),
-    resolveCss:
+      resolveCss:
       resolveCssOverride ??
       (finishShader
-        ? (finish, varnish) => ({
-            finishShaderId: finishShader[(finish ?? "").toLowerCase()] ?? null,
-            varnishShaderId: null,
-          })
+        ? (finish) => {
+            const key = (finish ?? "").toLowerCase();
+            const mapped = finishShader[key] ?? null;
+            return {
+              finishShaderId: applyHouseFoilFallback(mapped, finish),
+              varnishShaderId: null,
+            };
+          }
         : () => ({ finishShaderId: null, varnishShaderId: null })),
     listMaterials: () =>
       listHouseFinishesAsMaterials ? [...houseFinishes] : [],

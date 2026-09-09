@@ -1,0 +1,74 @@
+{
+  "source": "fan-foil-repos-coverage-audit",
+  "observed": "2026-09-06",
+  "kind": "research-dig",
+  "question": "Have we taken everything useful from simey poke-holo/151, pokebox, kongyo2/cards-css, hover-tilt?",
+  "verdict": "Yes for product-critical lessons. Remaining items are optional inspiration (pokebox etch-slope sparkle, kongyo2 procedural house looks) — not missing Live fidelity. Simey staging is at upstream HEAD.",
+  "repos": [
+    {
+      "repo": "simeydotme/pokemon-cards-css",
+      "role": "CSS choreography analysis (SWSH rarities)",
+      "status": "absorbed",
+      "evidence": [
+        "staging poke-holo at HEAD (syncSimeyCss --check ok=2 behind=0)",
+        "holoShadersSimey + HoloCardImage glare/shine stack",
+        "pointerCss adjust ranges from 151/base",
+        "docs/foil_css_sources.md §3 ports + intentional SIMEY_CSS_SKIP_STEMS"
+      ],
+      "intentionallySkipped": [
+        "swsh-pikachu",
+        "trainer-full-art",
+        "trainer-gallery-* aliases",
+        "shiny-vmax",
+        "EN foil PNGs / CDN"
+      ],
+      "openButNotRepoGap": "Checklist §2 leaf-by-leaf Unity|CSS dosage QA — visual craft, not missing upstream files"
+    },
+    {
+      "repo": "simeydotme/pokemon-cards-151",
+      "role": "CSS choreography (SV 151 rarities) + pointer compress ranges",
+      "status": "absorbed",
+      "evidence": [
+        "staging poke-151 at HEAD",
+        "pokeBallHolo / exRegular / exFullArt / illustrationRare / hyperRare",
+        "SunPillar composition borrows ex-regular stack structure"
+      ],
+      "intentionallySkipped": ["ex-special-illustration-rare"]
+    },
+    {
+      "repo": "selop/pokebox",
+      "role": "Simey→GLSL rewrite + Malie taxonomy + head-track demo",
+      "status": "partial — correct limits",
+      "taken": [
+        "SCREAMING_SNAKE foilType trap → malieFoilTaxonomy",
+        "doc mapping: not Live HoloFoil frags"
+      ],
+      "notTakenOnPurpose": [
+        "14 GLSL looks as WebGL product path (Simey rewrite ≠ TPCi frags)",
+        "MediaPipe head tracking (we have DeviceOrientation + pointer)",
+        "malie.io asset hosting (licence / size)"
+      ],
+      "optionalFuture": "docs/shaders/special-illustration-rare.md etch-slope sparkle — only if CSS SIR/illustration needs contour-following glitter beyond Live etch paint"
+    },
+    {
+      "repo": "kongyo2/cards-css",
+      "role": "MIT procedural foils (aurora, oilslick, mosaic, …)",
+      "status": "documented, not integrated",
+      "taken": "listed in foil_css_sources §5 as dosage/palette inspiration",
+      "notTakenOnPurpose": "generic TCG looks ≠ Live leaf fidelity; would compete with house flare + Live CSS",
+      "optionalFuture": "palette/glare/physics knobs for house flare or non-Pokémon packs only"
+    },
+    {
+      "repo": "simeydotme/hover-tilt",
+      "role": "Svelte/web-component tilt+glare (MPL-2.0)",
+      "status": "superseded in-house",
+      "evidence": [
+        "pointerCss + useDeviceTilt + useFoilPointerSpring + FlippableCard permission UX",
+        "foil_css_sources: OK maison — no npm dependency"
+      ],
+      "notTakenOnPurpose": "framework package; we already have equivalent lean→CSS vars"
+    }
+  ],
+  "productRuleRestated": "WebGL = Live GLES. CSS = Live plates + intention; Simey/pokebox/kongyo2 = analysis only. flare = honest fallback when no dedicated look.",
+  "ingest": "dig only — no code change required from this audit"
+}

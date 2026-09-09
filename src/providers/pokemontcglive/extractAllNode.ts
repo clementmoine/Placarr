@@ -18,6 +18,7 @@ import { dumpPokemonCardApk } from "@/providers/pokemontcglive/dumpCardApk";
 import { extractCardsNode } from "@/providers/pokemontcglive/extractCardsNode";
 import { extractShadersBundle } from "@/providers/pokemontcglive/extractShadersBundle";
 import { writeMaterialSheets } from "@/providers/pokemontcglive/writeMaterialSheets";
+import { pokemonShadersDumpFresh } from "@/providers/pokemontcglive/shadersDumpFresh";
 import type { TextureMode } from "@/providers/pokemontcglive/extractCardTextures";
 
 export type ExtractAllNodeOpts = {
@@ -69,32 +70,39 @@ export async function extractAllNode(
   const shadersBundle = path.join(opts.bundlesDir, "shadersbundle");
   let shaderReport: Record<string, unknown> = {};
   if (pathExists(shadersBundle)) {
-    console.log("── extract shaders + shared textures (Node, ADR-021 C)");
-    const shaderResult = await extractShadersBundle({
-      shadersBundlePath: shadersBundle,
-      packDir,
-    });
-    shaderReport = {
-      shadersWritten: shaderResult.shadersWritten,
-      foilNames: shaderResult.foilNames,
-      sharedTextures: shaderResult.sharedTextures,
-    };
-    console.log(
-      `  shaders done — frags=${shaderResult.shadersWritten.length} sharedTex=${shaderResult.sharedTextures}`,
-    );
-
-    console.log("── material sheets (Node)");
-    const sheets = writeMaterialSheets(opts.repo, shadersBundle);
-    console.log(
-      `  material sheets → ${sheets.materialSheetsPath} + ${path.basename(sheets.sharedMotifsPath)}`,
-    );
-
-    if (Object.keys(shaderResult.textureFlags).length > 0) {
-      writeFileSync(
-        path.join(packDir, "textureFlags.json"),
-        `${JSON.stringify(shaderResult.textureFlags, null, 1)}\n`,
-        "utf8",
+    if (pokemonShadersDumpFresh(packDir, shadersBundle)) {
+      console.log(
+        "── shaders + material sheets already newer than shadersbundle — skip",
       );
+      shaderReport = { skipped: true, reason: "artifacts-fresh" };
+    } else {
+      console.log("── extract shaders + shared textures (Node, ADR-021 C)");
+      const shaderResult = await extractShadersBundle({
+        shadersBundlePath: shadersBundle,
+        packDir,
+      });
+      shaderReport = {
+        shadersWritten: shaderResult.shadersWritten,
+        foilNames: shaderResult.foilNames,
+        sharedTextures: shaderResult.sharedTextures,
+      };
+      console.log(
+        `  shaders done — frags=${shaderResult.shadersWritten.length} sharedTex=${shaderResult.sharedTextures}`,
+      );
+
+      console.log("── material sheets (Node)");
+      const sheets = writeMaterialSheets(opts.repo, shadersBundle);
+      console.log(
+        `  material sheets → ${sheets.materialSheetsPath} + ${path.basename(sheets.sharedMotifsPath)}`,
+      );
+
+      if (Object.keys(shaderResult.textureFlags).length > 0) {
+        writeFileSync(
+          path.join(packDir, "textureFlags.json"),
+          `${JSON.stringify(shaderResult.textureFlags, null, 1)}\n`,
+          "utf8",
+        );
+      }
     }
   }
 

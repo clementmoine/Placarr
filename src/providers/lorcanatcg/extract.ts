@@ -13,6 +13,7 @@ import {
 import { scrapeLorcardsProducts } from "@/providers/lorcanatcg/lorcards";
 import { scrapeLorcanaCards } from "@/providers/lorcanatcg/scrapeCards";
 import { dumpLorcanaWeb } from "@/providers/lorcanatcg/dumpWeb";
+import { lorcanaUnityArtifactsFresh } from "@/providers/lorcanatcg/extractUnityApk";
 
 async function runLorcardsProducts(
   force: boolean,
@@ -130,6 +131,25 @@ export async function runLorcanaFoilExtract(
   if (signal?.aborted) throw new Error("foil extract cancelled");
   ensureEffectsLayout(repo);
 
+  const { installFullFoilMask } = await import(
+    "@/providers/shared/cardCatalogue/curatedAssets"
+  );
+  const fullMask = await installFullFoilMask("lorcana");
+  if (fullMask.installed) {
+    console.log(`── full foil mask → ${fullMask.dest}`);
+  }
+
+  const { installAttestedArtMasks } = await import(
+    "@/providers/lorcanatcg/curated/installAttestedArtMasks"
+  );
+  for (const row of await installAttestedArtMasks()) {
+    if (row.installed && row.dest) {
+      console.log(`── attested art mask ${row.printKey} → ${row.dest}`);
+    } else if (row.reason) {
+      console.log(`── attested art mask ${row.printKey}: ${row.reason}`);
+    }
+  }
+
   const results: Record<string, unknown>[] = [];
   for (const pid of args.providers) {
     if (signal?.aborted) throw new Error("foil extract cancelled");
@@ -149,6 +169,16 @@ export async function runLorcanaFoilExtract(
           ok: false,
           skipped: true,
           reason: "no APK / unity-data",
+        });
+        continue;
+      }
+      if (!args.data && lorcanaUnityArtifactsFresh(repo)) {
+        console.log("skip Unity: shaders/manifest/back newer than APKs");
+        results.push({
+          provider: "lorcanamobile",
+          ok: true,
+          skipped: true,
+          reason: "artifacts-fresh",
         });
         continue;
       }

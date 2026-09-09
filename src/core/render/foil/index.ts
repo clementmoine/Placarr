@@ -44,6 +44,10 @@ export { hotFoilStampUniforms } from "./hotFoilStamp";
 export { getEffectPack, listEffectPacks, registerEffectPack } from "./registry";
 
 export { selectFoilBackend } from "./selectBackend";
+export {
+  applyHouseFoilFallback,
+  HOUSE_FOIL_FALLBACK_CSS_ID,
+} from "./houseFoilFallback";
 
 export {
   pickDefaultCardBack,
@@ -51,6 +55,7 @@ export {
   resolveCardBackCandidates,
   resolveCardBackUrl,
   resolveDefaultCardBack,
+  resolveSharedCardBackSkeleton,
   sharedCardBackSkeletonUrl,
   type CardBackCandidate,
   type CardBackScope,

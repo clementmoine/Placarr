@@ -156,7 +156,7 @@ describe("variantRendering", () => {
     expect(variantRendering("Lava", legacy, BASE).shader?.id).toBe("lava");
   });
 
-  it("uses the Lorcana pack silver default for an unknown foil finish", () => {
+  it("uses house flare for an unknown Lorcana foil finish", () => {
     const unknown = {
       finishes: ["Kaleidoscope"],
       plainFinishes: [],
@@ -165,14 +165,14 @@ describe("variantRendering", () => {
       varnishMaskUrl: null,
     };
     expect(variantRendering("Kaleidoscope", unknown, BASE).shader?.id).toBe(
-      "silver",
+      "flare",
     );
     expect(variantRendering("Kaleidoscope", unknown, BASE).foilMaskUrl).toBe(
       "/uploads/mask.jpg",
     );
   });
 
-  it("gives Pokémon a simey catalogue look through its own mask, never a Lorcana one", () => {
+  it("gives Pokémon Simey regular-holo for catalogue holo, never a Lorcana look", () => {
     const pokemon = {
       finishes: ["holo"],
       plainFinishes: [],
@@ -183,21 +183,21 @@ describe("variantRendering", () => {
     };
     const rendering = variantRendering("holo", pokemon, BASE);
     /*
-      Catalogue `holo` resolves to simey regularHolo; the mask is the print's
-      own. Unity material names in finishShaders are not CSS look ids.
+      Catalogue `holo` without a Live leaf → Simey `regularHolo`. Unity names in
+      finishShaders are not CSS look ids.
     */
     expect(rendering.shader?.id).toBe("regularHolo");
     expect(JSON.stringify(rendering.shader)).not.toContain("/assets/lorcana/");
     expect(rendering.foilMaskUrl).toBe("/uploads/mask.jpg");
     expect(rendering.effectPackId).toBe("pokemon");
 
-    // A stale candidate without its pack id must stay plain: Unity material
-    // names in finishShaders are not CSS look ids.
+    // Stale candidate without pack id: still shiny → house flare (not Unity
+    // material names, not Lorcana textures).
     const stale = { ...pokemon, effectPack: undefined };
-    expect(variantRendering("holo", stale, BASE).shader).toBeNull();
+    expect(variantRendering("holo", stale, BASE).shader?.id).toBe("flare");
   });
 
-  it("stays plain when there is a mask but no pack and no CSS finishShaders", () => {
+  it("uses house flare when shiny finish has no pack and no CSS finishShaders", () => {
     expect(
       variantRendering(
         "Silver",
@@ -207,8 +207,8 @@ describe("variantRendering", () => {
           foilMaskUrl: "/uploads/mask.jpg",
         },
         BASE,
-      ).shader,
-    ).toBeNull();
+      ).shader?.id,
+    ).toBe("flare");
   });
 
   it("carries the varnish layer when the print has one", () => {

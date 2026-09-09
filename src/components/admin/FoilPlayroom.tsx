@@ -27,6 +27,10 @@ import { listEffectPacks } from "@/effects";
 import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import {
+  simeyDemoUrl,
+  simeyIsoForLeaf,
+} from "@/effects/pokemon/simeyIsoCompare";
+import {
   CATALOGUE_PACKS,
   cataloguePackInfo,
   resolveCataloguePackId,
@@ -223,14 +227,24 @@ const LAYOUTS: readonly {
  * Not the user's backend choice: a side-by-side whose halves could both be
  * WebGL compares nothing. `auto` is deliberately absent for the same reason.
  */
-const COMPARE_SIDES: readonly {
+const COMPARE_SIDES_UNITY: readonly {
   backend: FoilBackendPreference;
   labelFr: string;
   labelEn: string;
 }[] = [
   { backend: "webgl", labelFr: "Unity", labelEn: "Unity" },
-  { backend: "css", labelFr: "Web (CSS)", labelEn: "Web (CSS)" },
+  { backend: "css", labelFr: "Placarr CSS", labelEn: "Placarr CSS" },
 ];
+
+/** ISO pair: our CSS vs Simey’s live demo (same rarity recipe). */
+export type ComparePair = "unity" | "simey";
+
+function resolveComparePair(value: string | null): ComparePair {
+  if (value === "simey" || value === "iso" || value === "css-simey") {
+    return "simey";
+  }
+  return "unity";
+}
 
 type AdaptedPrint = {
   sample: PlayroomSample;
@@ -687,15 +701,106 @@ export type FoilPlayroomProps = {
    */
   packArts?: Record<string, Record<string, PlayroomArt[]>>;
   locale?: string;
-  /** Actions aligned on the sticky toolbar (APK, CLI…). */
-  tools?: ReactNode;
+  /** Franchise + ligne — left side of the sticky Catalogue bar. */
+  chromeLeading?: ReactNode;
 };
+
+function SimeyIsoCompareRow({
+  fr,
+  leaf,
+  tilt,
+  locale,
+  packId,
+  samples,
+  art,
+}: {
+  fr: boolean;
+  leaf: string;
+  tilt: boolean;
+  locale: string;
+  packId: string;
+  samples: readonly PlayroomSample[];
+  art: PlayroomArt | null;
+}) {
+  const target = simeyIsoForLeaf(leaf);
+  const demoUrl = target ? simeyDemoUrl(target) : null;
+  return (
+    <div className="flex flex-col gap-3">
+      {target ? (
+        <p className="mx-auto max-w-3xl text-center text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {target.stem}.css
+          </span>
+          {" · "}
+          {target.demoPick}
+          {" · "}
+          {target.check}
+        </p>
+      ) : (
+        <p className="text-center text-xs text-muted-foreground">
+          {fr
+            ? "Pas de cible Simey pour ce leaf."
+            : "No Simey ISO target for this leaf."}
+        </p>
+      )}
+      <div className="grid shrink-0 grid-cols-2 gap-4">
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            Placarr CSS
+            {target ? ` · ${target.cssId}` : ""}
+          </span>
+          <div className="flex w-full items-center justify-center">
+            <MaterialTile
+              packId={packId}
+              materialName={leaf}
+              samples={samples}
+              backend="css"
+              tilt={tilt}
+              locale={locale}
+              size="stack"
+              packArt={art}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            Simey · {target?.tree ?? "—"}
+          </span>
+          {demoUrl ? (
+            <div className="flex w-full flex-col items-center gap-2">
+              <iframe
+                title={`Simey ${target!.stem}`}
+                src={demoUrl}
+                className="h-[min(70vh,640px)] w-full max-w-[420px] rounded-md border border-border/60 bg-background"
+              />
+              <a
+                href={demoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-primary underline-offset-2 hover:underline"
+              >
+                {fr ? "Ouvrir Simey ↗" : "Open Simey ↗"} — {target!.demoSearch}
+              </a>
+              <p className="max-w-sm text-center text-[11px] text-muted-foreground">
+                {fr
+                  ? "Dans l’iframe : clique la carte indiquée ci-dessus, bouge la souris. Compare grain / taille foil / blends."
+                  : "In the iframe: expand the card named above, move the pointer. Compare grain / foil size / blends."}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">—</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function FoilPlayroom({
   samples,
   packArts,
   locale = "fr",
-  tools,
+  chromeLeading,
 }: FoilPlayroomProps) {
   const fr = locale === "fr";
   const router = useRouter();
@@ -751,6 +856,7 @@ export function FoilPlayroom({
   );
 
   const layout = resolvePlayroomLayout(searchParams.get("view"));
+  const comparePair = resolveComparePair(searchParams.get("pair"));
   const [backend, setBackend] = useState<FoilBackendPreference>("auto");
   const [tilt, setTilt] = useState(true);
 
@@ -793,7 +899,7 @@ export function FoilPlayroom({
     (mutate: (params: URLSearchParams) => void) => {
       const params = new URLSearchParams(searchParams.toString());
       mutate(params);
-      if (!params.get("tab")) params.set("tab", "tcg-effects");
+      if (!params.get("tab")) params.set("tab", "catalogue");
       router.replace(`/admin?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
@@ -836,6 +942,19 @@ export function FoilPlayroom({
       });
     },
     [materialsOrdered, replaceParams],
+  );
+
+  const selectComparePair = useCallback(
+    (next: ComparePair) => {
+      replaceParams((params) => {
+        if (next === "unity") params.delete("pair");
+        else params.set("pair", "simey");
+        if (resolvePlayroomLayout(params.get("view")) !== "compare") {
+          params.set("view", "compare");
+        }
+      });
+    },
+    [replaceParams],
   );
 
   const selectMaterial = useCallback(
@@ -909,57 +1028,47 @@ export function FoilPlayroom({
   }, [layout, stepMaterial]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
       <div className="sticky top-14 z-30 -mx-1 flex flex-col gap-2 bg-background/95 px-1 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
-        {/* Provider tabs live in TcgEffectsPanel — this pack is read from `?pack=`. */}
-        {tools ? (
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {tools}
-          </div>
-        ) : null}
         <div className="flex flex-wrap items-center gap-2">
-          <SegmentedControl<CatalogueBrowseScope>
-            value={
-              browseScope === "sealed"
-                ? "sealed"
-                : catalogueInfo.hasFoilEffects
-                  ? browseScope
-                  : "all"
-            }
-            onChange={selectScope}
-            options={[
-              ...(catalogueInfo.hasFoilEffects
-                ? [
-                    {
-                      value: "foils" as const,
-                      label: fr ? "Foils" : "Foils",
-                    },
-                  ]
-                : []),
-              {
-                value: "all",
-                label: fr ? "Cartes" : "Cards",
-              },
-              {
-                value: "sealed",
-                label: fr ? "Scellés" : "Sealed",
-              },
-            ]}
-          />
-          {!catalogueInfo.hasFoilEffects ? (
-            <p className="text-xs text-muted-foreground">
-              {fr
-                ? (catalogueInfo.blurbFr ??
-                  "Catalogue local — pas de dump foil")
-                : (catalogueInfo.blurbEn ?? "Local catalogue — no foil dump")}
-            </p>
+          {chromeLeading}
+          {extractTarget && (layout === "grid" || !showFoilPlayroom) ? (
+            <FoilPackSources
+              target={extractTarget}
+              locale={locale}
+              layout="toolbar"
+            />
           ) : null}
         </div>
-        {/* Focus needs every vertical pixel for the card — sources stay on grid. */}
-        {extractTarget && (layout === "grid" || !showFoilPlayroom) ? (
-          <FoilPackSources target={extractTarget} locale={locale} />
-        ) : null}
       </div>
+      <SegmentedControl<CatalogueBrowseScope>
+        value={
+          browseScope === "sealed"
+            ? "sealed"
+            : catalogueInfo.hasFoilEffects
+              ? browseScope
+              : "all"
+        }
+        onChange={selectScope}
+        options={[
+          ...(catalogueInfo.hasFoilEffects
+            ? [
+                {
+                  value: "foils" as const,
+                  label: fr ? "Foils" : "Foils",
+                },
+              ]
+            : []),
+          {
+            value: "all",
+            label: fr ? "Cartes" : "Cards",
+          },
+          {
+            value: "sealed",
+            label: fr ? "Scellés" : "Sealed",
+          },
+        ]}
+      />
 
       {browseScope === "sealed" ? (
         <CatalogueSealedBrowser packId={cataloguePackId} locale={locale} />
@@ -1015,11 +1124,33 @@ export function FoilPlayroom({
               </p>
             ) : null}
             {layout === "compare" ? (
-              <p className="text-xs text-muted-foreground">
-                {fr
-                  ? `Plusieurs cartes (sets différents) · Unity | CSS · ${focusedArts.length} face${focusedArts.length > 1 ? "s" : ""}`
-                  : `Several cards (different sets) · Unity | CSS · ${focusedArts.length} face${focusedArts.length > 1 ? "s" : ""}`}
-              </p>
+              <>
+                {(pack?.id ?? packId) === "pokemon" ? (
+                  <SegmentedControl
+                    value={comparePair}
+                    onChange={selectComparePair}
+                    options={[
+                      {
+                        value: "unity" as const,
+                        label: fr ? "Unity | CSS" : "Unity | CSS",
+                      },
+                      {
+                        value: "simey" as const,
+                        label: fr ? "CSS | Simey" : "CSS | Simey",
+                      },
+                    ]}
+                  />
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  {comparePair === "simey" && (pack?.id ?? packId) === "pokemon"
+                    ? fr
+                      ? `ISO Simey · ${focusedArts.length} face${focusedArts.length > 1 ? "s" : ""} · agrandis la bonne rareté chez eux`
+                      : `Simey ISO · ${focusedArts.length} face${focusedArts.length > 1 ? "s" : ""} · expand the matching rarity on their demo`
+                    : fr
+                      ? `Plusieurs cartes · Unity | CSS · ${focusedArts.length} face${focusedArts.length > 1 ? "s" : ""}`
+                      : `Several cards · Unity | CSS · ${focusedArts.length} face${focusedArts.length > 1 ? "s" : ""}`}
+                </p>
+              </>
             ) : null}
           </div>
 
@@ -1067,45 +1198,58 @@ export function FoilPlayroom({
               </div>
               {layout === "compare" ? (
                 <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto py-1">
-                  {(focusedArts.length > 0 ? focusedArts : [null]).map(
-                    (art, artIndex) => (
-                      <div
-                        key={
-                          art?.bundleId ??
-                          art?.imageUrl ??
-                          `${focusedMaterial}:face-${artIndex}`
-                        }
-                        className="grid shrink-0 grid-cols-2 gap-4"
-                      >
-                        {COMPARE_SIDES.map((side) => (
-                          <div
-                            key={side.backend}
-                            className="flex flex-col items-center gap-1.5"
-                          >
-                            {artIndex === 0 ? (
-                              <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                                {fr ? side.labelFr : side.labelEn}
-                              </span>
-                            ) : (
-                              <span className="h-[22px]" aria-hidden />
-                            )}
-                            <div className="flex w-full items-center justify-center">
-                              <MaterialTile
-                                key={`${pack?.id ?? packId}:${focusedMaterial}:${side.backend}:${art?.bundleId ?? artIndex}`}
-                                packId={pack?.id ?? packId}
-                                materialName={focusedMaterial!}
-                                samples={samples}
-                                backend={side.backend}
-                                tilt={tilt}
-                                locale={locale}
-                                size="stack"
-                                packArt={art}
-                              />
+                  {comparePair === "simey" &&
+                  (pack?.id ?? packId) === "pokemon" ? (
+                    <SimeyIsoCompareRow
+                      fr={fr}
+                      leaf={focusedMaterial!}
+                      tilt={tilt}
+                      locale={locale}
+                      packId={pack?.id ?? packId}
+                      samples={samples}
+                      art={focusedArts[0] ?? null}
+                    />
+                  ) : (
+                    (focusedArts.length > 0 ? focusedArts : [null]).map(
+                      (art, artIndex) => (
+                        <div
+                          key={
+                            art?.bundleId ??
+                            art?.imageUrl ??
+                            `${focusedMaterial}:face-${artIndex}`
+                          }
+                          className="grid shrink-0 grid-cols-2 gap-4"
+                        >
+                          {COMPARE_SIDES_UNITY.map((side) => (
+                            <div
+                              key={side.backend}
+                              className="flex flex-col items-center gap-1.5"
+                            >
+                              {artIndex === 0 ? (
+                                <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                                  {fr ? side.labelFr : side.labelEn}
+                                </span>
+                              ) : (
+                                <span className="h-[22px]" aria-hidden />
+                              )}
+                              <div className="flex w-full items-center justify-center">
+                                <MaterialTile
+                                  key={`${pack?.id ?? packId}:${focusedMaterial}:${side.backend}:${art?.bundleId ?? artIndex}`}
+                                  packId={pack?.id ?? packId}
+                                  materialName={focusedMaterial!}
+                                  samples={samples}
+                                  backend={side.backend}
+                                  tilt={tilt}
+                                  locale={locale}
+                                  size="stack"
+                                  packArt={art}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ),
+                          ))}
+                        </div>
+                      ),
+                    )
                   )}
                 </div>
               ) : (
@@ -1118,7 +1262,7 @@ export function FoilPlayroom({
                           art?.imageUrl ??
                           `${focusedMaterial}:face-${artIndex}`
                         }
-                        className="flex min-h-0 w-full flex-1 justify-center"
+                        className="flex min-h-0 w-full flex-1 flex-col items-center gap-2"
                       >
                         <MaterialTile
                           key={`${pack?.id ?? packId}:${focusedMaterial}:${art?.bundleId ?? artIndex}`}

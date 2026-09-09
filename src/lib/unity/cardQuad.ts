@@ -189,7 +189,12 @@ export async function cardQuadFromExtractedData(
       name.startsWith("sharedassets1") ? 0 : name.startsWith("sharedassets") ? 1 : 2;
     return rank(a) - rank(b) || a.localeCompare(b);
   });
-  for (const head of heads) {
+  console.log(`  card quad scan: ${heads.length} serialized heads`);
+  for (let i = 0; i < heads.length; i++) {
+    const head = heads[i]!;
+    if ((i + 1) % 10 === 0) {
+      console.log(`  card quad scan ${i + 1}/${heads.length} (${head})`);
+    }
     const bytes = readSerializedHeadBytes(extracted.dataDir, head);
     const quad = await cardQuadFromSerializedBytes(bytes, head);
     if (quad) return quad;

@@ -42,7 +42,7 @@ const hooks = cardCatalogueHooks({
       console.warn("[pokemon catalog] cards-index skipped — no cards/ yet");
     } else {
       console.log(
-        `[pokemon catalog] cards-index ${faces.cards} stems → ${faces.path}`,
+        `[pokemon catalog] cards-index ${faces.cards} stems (${faces.named} nommées) → ${faces.path}`,
       );
     }
     if (!skipProducts) {

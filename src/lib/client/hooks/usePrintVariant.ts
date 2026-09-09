@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 import { resolveStoredVariant } from "@/core/enrich/variants";
-import { getEffectPack } from "@/core/render/foil";
+import { applyHouseFoilFallback, getEffectPack } from "@/core/render/foil";
 import {
   peekPrintVariant,
   requestPrintVariant,
@@ -15,7 +15,7 @@ import {
   varnishShader,
   type HoloShader,
 } from "@/core/render/holoShaders";
-import "@/effects";
+// Packs load via `ensureEffects()` / FoilCardImage — not eagerly here.
 
 /** What the provider says a printing exists as. Shape mirrors `PrintCandidate`. */
 export type PrintVariantInfo = {
@@ -218,11 +218,14 @@ export function variantRendering(
   // Prefer pack.resolveCss. If the pack id is missing (stale session cache,
   // partial candidate), accept provider finishShaders / varnishShaders only
   // when they are real CSS look ids — never Unity material names (Pokémon).
-  const finishShaderId =
+  // Non-plain finish with no dedicated CSS → house flare (all TCG packs).
+  const finishShaderId = applyHouseFoilFallback(
     css?.finishShaderId ??
-    (isHoloShaderId(info.finishShaders?.[resolved])
-      ? info.finishShaders![resolved]
-      : null);
+      (isHoloShaderId(info.finishShaders?.[resolved])
+        ? info.finishShaders![resolved]
+        : null),
+    resolved,
+  );
   const varnishShaderId =
     css?.varnishShaderId ??
     (info.varnishType && isHoloShaderId(info.varnishShaders?.[info.varnishType])

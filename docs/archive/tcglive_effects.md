@@ -300,7 +300,7 @@ Aucun endpoint op-core public trouvé — seul gap « zéro device ».
   look. Utile comme grille de lecture. Ses assets viennent de malie.io (25 Go
   auto-hébergés, ni API ni licence) — non consommables.
 - Notre vocabulaire de raretés TCGdex couvre déjà 38 étiquettes sur 40, FR et EN.
-- Vocabulaire Live client (`SvHolo`, `FlatSilver`) ≠ pokebox (`SV_HOLO`, `FLAT_SILVER`) — mapper via `foilManifestToShader`, pas via les labels Malie bruts.
+- Vocabulaire Live client (`SvHolo`, `FlatSilver`) ≠ pokebox / Malie **export** (`SV_HOLO`, `FLAT_SILVER`) — mapper via `malieFoilTaxonomy` / `foilManifestToShader`, pas via les labels export bruts. Spec export : [pkproto_sv](https://malie.io/static/draft/html/pkproto_sv.html) (`RAINBOW` ≠ Rainbow Rare).
 
 ---
 

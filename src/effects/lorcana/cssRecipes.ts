@@ -1,18 +1,19 @@
 /**
  * Lorcana web CSS recipes — pack-specific defaults live here, not in core.
  *
- * Resolve: alias overrides → FinishName → camelCase id if ported → silver default.
- * Unknown catalogue finishes still render (silver / hotFoil) but gap audit
- * flags them — same honesty model as Pokémon CSS.
+ * Resolve: alias overrides → FinishName → camelCase id if ported → house flare.
+ * Unknown catalogue finishes still render (`flare`) but gap audit flags them —
+ * same honesty model as Pokémon CSS.
  */
 
+import { HOUSE_FOIL_FALLBACK_CSS_ID } from "@/core/render/foil/houseFoilFallback";
 import { HOLO_SHADER_IDS, type HoloShaderId } from "@/core/render/holoShaders";
 
 /** Where transcribed CSS foil textures live for this pack. */
 export const WEB_TEXTURE_BASE = "/assets/lorcana/web";
 
-/** Everyday foil when the catalogue finish has no dedicated CSS look. */
-export const DEFAULT_FINISH_CSS_ID = "silver";
+/** Unknown catalogue finish → shared house flare (not Lorcana silver texture). */
+export const DEFAULT_FINISH_CSS_ID = HOUSE_FOIL_FALLBACK_CSS_ID;
 
 /** Stamped coat when the varnish type has no dedicated CSS look. */
 export const DEFAULT_VARNISH_CSS_ID = "hotFoil";
@@ -50,8 +51,8 @@ export function hasDedicatedCssFinish(finish: string): boolean {
 }
 
 /**
- * Catalogue finish that only hits pack silver — port a look or add an alias.
- * `Silver` / `None` / empty are not gaps.
+ * Catalogue finish that only hits house flare — port a look or add an alias.
+ * `Silver` / `None` / empty are not gaps (`Silver` has a dedicated look).
  */
 export function isCssFinishFallbackOnly(finish: string): boolean {
   const trimmed = finish.trim();

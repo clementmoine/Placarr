@@ -10,9 +10,14 @@ import {
 import { parsePrintKey } from "@/core/identify/printKey";
 import {
   listLorcanaTcgSets,
+  lookupLorcanaTcgSearchRow,
   searchLorcanaTcgRows,
   type LorcanaTcgSearchRow,
 } from "@/providers/lorcanatcg/indexStore";
+import {
+  attestedArtFoilMaskUrl,
+  attestedNeedsFullFoilMask,
+} from "@/providers/lorcanatcg/curated/attestedFinishes";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -27,6 +32,7 @@ import type {
 import {
   faceQuarterTurnsForLorcanaPrint,
   LORCANA_EFFECT_PACK_ID,
+  LORCANA_FULL_FOIL_MASK_URL,
 } from "@/effects/lorcana";
 import { withPackCardUrls } from "@/effects/lorcana/packAssets";
 import type {
@@ -373,7 +379,8 @@ function buildFacts(card: LorcanaCard): MetadataFact[] {
  * garde **une seule** mise en forme : `toPrintCandidate` ne sait pas d'où vient
  * la carte, et la sortie locale ne peut donc pas dériver de la distante.
  */
-function cardFromLocalRow(row: LorcanaTcgSearchRow): LorcanaCard {
+/** @internal exported for unit tests */
+export function cardFromLocalRow(row: LorcanaTcgSearchRow): LorcanaCard {
   const list = (raw: string | null): string[] => {
     if (!raw) return [];
     try {
@@ -427,50 +434,73 @@ function cardFromLocalRow(row: LorcanaTcgSearchRow): LorcanaCard {
   };
 }
 
+/**
+ * When a Lorcast fill has art but no foil mask, use a greyscale art facsimile
+ * as MotifMask (CardFoilGlitter expects a luminance field of the card face).
+ * Fall back to the pack solid plate only when that file is not yet installed —
+ * both stand-ins are CSS-only (`isCssOnlyFoilMask` on the Lorcana pack).
+ */
+function withAttestedFoilMask(card: LorcanaCard): LorcanaCard {
+  if (card.foilMaskUrl?.trim()) return card;
+  if (!attestedNeedsFullFoilMask(card.printKey)) return card;
+  const artMask = attestedArtFoilMaskUrl(card.printKey, card.language);
+  return {
+    ...card,
+    foilMaskUrl: artMask ?? LORCANA_FULL_FOIL_MASK_URL,
+  };
+}
+
 export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
   const faceQuarterTurns = faceQuarterTurnsForLorcanaPrint({
     cardType: card.cardType,
   });
+  const withMask = withAttestedFoilMask(card);
   return withPackCardUrls({
-    printKey: card.printKey,
-    title: card.fullName,
-    reference: lorcanaPrintLabel(card),
-    rarity: card.rarity,
-    category: card.cardType,
+    printKey: withMask.printKey,
+    title: withMask.fullName,
+    reference: lorcanaPrintLabel(withMask),
+    rarity: withMask.rarity,
+    category: withMask.cardType,
     ...(faceQuarterTurns ? { faceQuarterTurns } : {}),
-    thumbnailUrl: card.thumbnailUrl ?? card.imageUrl,
-    imageUrl: card.imageUrl,
-    language: card.language,
-    finishes: card.foilTypes,
+    thumbnailUrl: withMask.thumbnailUrl ?? withMask.imageUrl,
+    imageUrl: withMask.imageUrl,
+    language: withMask.language,
+    finishes: withMask.foilTypes,
     // `None` is Lorcana's word for "no foil"; every other value is an effect.
-    plainFinishes: card.foilTypes.filter((finish) => finish === PLAIN_FINISH),
+    plainFinishes: withMask.foilTypes.filter(
+      (finish) => finish === PLAIN_FINISH,
+    ),
     // The table is the only gate: `None` is deliberately absent from it, so a
     // plain copy cannot pick up a look even by accident.
     finishShaders: Object.fromEntries(
-      card.foilTypes
+      withMask.foilTypes
         .filter((finish) => FINISH_SHADERS[finish])
         .map((finish) => [finish, FINISH_SHADERS[finish] as string]),
     ),
     effectPack: LORCANA_EFFECT_PACK_ID,
-    variantImageUrls: card.fullFoilUrl
+    variantImageUrls: withMask.fullFoilUrl
       ? Object.fromEntries(
-          card.foilTypes
+          withMask.foilTypes
             .filter((finish) => finish !== PLAIN_FINISH)
-            .map((finish) => [finish, card.fullFoilUrl as string]),
+            .map((finish) => [finish, withMask.fullFoilUrl as string]),
         )
       : undefined,
-    foilMaskUrl: card.foilMaskUrl,
-    varnishMaskUrl: card.varnishMaskUrl,
-    varnishType: card.varnishType,
+    foilMaskUrl: withMask.foilMaskUrl,
+    varnishMaskUrl: withMask.varnishMaskUrl,
+    varnishType: withMask.varnishType,
     // Published as `foilEffectColors` — nothing else predicts the hue.
-    varnishColor: card.foilEffectColors[0] ?? null,
-    secondVarnishMaskUrl: card.secondVarnishMaskUrl,
-    secondVarnishColor: card.foilEffectColors[1] ?? null,
+    varnishColor: withMask.foilEffectColors[0] ?? null,
+    secondVarnishMaskUrl: withMask.secondVarnishMaskUrl,
+    secondVarnishColor: withMask.foilEffectColors[1] ?? null,
     varnishShaders:
-      card.varnishType && VARNISH_SHADERS[card.varnishType]
-        ? { [card.varnishType]: VARNISH_SHADERS[card.varnishType] as string }
+      withMask.varnishType && VARNISH_SHADERS[withMask.varnishType]
+        ? {
+            [withMask.varnishType]: VARNISH_SHADERS[
+              withMask.varnishType
+            ] as string,
+          }
         : {},
-    externalIds: { [PROVIDER_ID]: card.providerId },
+    externalIds: { [PROVIDER_ID]: withMask.providerId },
   });
 }
 
@@ -486,36 +516,39 @@ export function mapLorcanaMetadata(
   variants?: LorcanaCard[],
 ): MetadataResult | null {
   if (!card) return null;
+  const primary = withAttestedFoilMask(card);
 
   const languageRows =
-    variants && variants.length > 0 ? variants : ([card] as LorcanaCard[]);
+    variants && variants.length > 0
+      ? variants.map(withAttestedFoilMask)
+      : ([primary] as LorcanaCard[]);
   // Prefer the resolved card's language for primary fields even if a caller
   // passed variants in a different order.
   const ordered = [
-    card,
-    ...languageRows.filter((row) => row.language !== card.language),
+    primary,
+    ...languageRows.filter((row) => row.language !== primary.language),
   ];
 
   const metadata: MetadataResult = {
-    title: card.fullName,
-    description: card.flavorText ?? undefined,
-    imageUrl: card.imageUrl ?? undefined,
+    title: primary.fullName,
+    description: primary.flavorText ?? undefined,
+    imageUrl: primary.imageUrl ?? undefined,
     authors:
-      card.artists.length > 0
-        ? card.artists.map((name) => ({ name }))
+      primary.artists.length > 0
+        ? primary.artists.map((name) => ({ name }))
         : undefined,
     publishers: [{ name: "Ravensburger" }],
     regionalTitles: regionalTitlesFromVariants(ordered),
     // Other-language full names → "Aussi connu sous" (EN/DE/IT next to FR primary).
     aliases: catalogAliasesFromNames(
-      card.fullName,
+      primary.fullName,
       ordered.map((row) => row.fullName),
     ),
     attachments: buildAttachments(ordered),
-    facts: buildFacts(card),
+    facts: buildFacts(primary),
     externalIds: {
-      [PROVIDER_ID]: card.providerId,
-      printKey: card.printKey,
+      [PROVIDER_ID]: primary.providerId,
+      printKey: primary.printKey,
     },
   };
 
@@ -526,13 +559,13 @@ export function mapLorcanaMetadata(
       providerLabel: PROVIDER_LABEL,
       sourceDocumentRole: "reference_record",
       sourceUrl: "https://lorcanajson.org/",
-      sourceId: card.providerId,
+      sourceId: primary.providerId,
       evidenceSignals: ["structured_data", "title_match"],
       titleRole: "catalog_title",
       aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
-      language: card.language,
+      language: primary.language,
     }),
     observationSchemaVersion: METADATA_OBSERVATION_SCHEMA_VERSION,
   };
@@ -568,18 +601,23 @@ async function resolveLorcanaCard(
     « Haku » → « *Haku*na Matata ». Quatre objets sur trente-six, tous
     confidemment faux.
 
-    Une clé illisible ne bloque pas : c'est l'absence d'affirmation, pas une
-    affirmation contraire, et la recherche par nom reste alors le seul recours.
+    Même jeu, clé absente du JSON distant (fills Lorcast) : la base locale
+    d'abord. Si la clé affirmée ne résout nulle part, on **ne** retombe **pas**
+    sur le nom — sinon `lorcana:p2-36` devient `1-10-p3` (même Mickey).
   */
   const identity = printKey ? parsePrintKey(printKey) : null;
   if (identity && identity.game !== LORCANA_GAME) return null;
 
   if (printKey && identity?.game === LORCANA_GAME) {
+    const local = lookupLorcanaTcgSearchRow(printKey, { language });
+    if (local) return cardFromLocalRow(local);
+
     const byKey = await fetchLorcanaCardByPrintKey(printKey, {
       ...options,
       name: ctx.name,
     });
     if (byKey) return byKey;
+    return null;
   }
 
   const queries =
@@ -714,6 +752,10 @@ export const lorcanajsonModule = defineProvider({
   },
   lookupPrint: async ({ printKey, name, language, signal }) => {
     if (parsePrintKey(printKey)?.game !== LORCANA_GAME) return null;
+    const local = lookupLorcanaTcgSearchRow(printKey, {
+      language: language ?? undefined,
+    });
+    if (local) return toPrintCandidate(cardFromLocalRow(local));
     const card = await fetchLorcanaCardByPrintKey(printKey, {
       language: isLorcanaLanguage(language) ? language : undefined,
       name,

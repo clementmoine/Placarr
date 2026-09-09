@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Play, RefreshCw, ScrollText, Upload } from "lucide-react";
+import { Loader2, Play, RefreshCw, ScrollText } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { WebAdbApkLab } from "@/components/admin/WebAdbApkLab";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -117,7 +116,7 @@ function statusLine(
   }
   if (!catalogueOnly) {
     if (!status.extract.present) {
-      parts.push(fr ? "pas d’extract" : "no extract");
+      parts.push(fr ? "pas de sync" : "no sync");
     } else {
       const extractBits = [
         status.extract.stale ? (fr ? "obsolète" : "stale") : null,
@@ -126,7 +125,7 @@ function statusLine(
           : null,
         formatWhen(status.extract.newestAt, fr) || null,
       ].filter(Boolean);
-      parts.push(extractBits.join(" · ") || "extract");
+      parts.push(extractBits.join(" · ") || (fr ? "sync" : "sync"));
     }
   }
   if (jobRunning) parts.push(fr ? "en cours" : "running");
@@ -148,21 +147,20 @@ export function foilExtractTargetForPack(
   return pack?.extractTarget ?? null;
 }
 
-/** Compact APK / Logs / Extract bar for the active playroom pack. */
+/** Compact Logs / Sync bar for the active playroom pack. */
 export function FoilPackSources({
   target,
   locale,
+  layout = "block",
 }: {
   target: CatalogueExtractTarget;
   locale: string;
+  /** `toolbar` = status + boutons en ligne pour la barre Catalogue. */
+  layout?: "block" | "toolbar";
 }) {
   const fr = locale === "fr";
   const queryClient = useQueryClient();
-  /** APK lab only knows foil packs — never point it at a catalogue-only line. */
-  const apkPack: "lorcana" | "pokemon" | null =
-    target === "pokemon" || target === "lorcana" ? target : null;
   const [enqueueing, setEnqueueing] = useState(false);
-  const [apkOpen, setApkOpen] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [logText, setLogText] = useState("");
@@ -283,7 +281,7 @@ export function FoilPackSources({
         scope ?? (target === "pokemon" ? "catalogue" : "inventory");
       const done = await enqueueCatalogueExtract(target, effective);
       toast.success(
-        done.hint || (fr ? "Extract en file d’attente" : "Extract queued"),
+        done.hint || (fr ? "Sync en file d’attente" : "Sync queued"),
       );
       void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
       void queryClient.invalidateQueries({ queryKey: ["catalogueCards"] });
@@ -300,7 +298,7 @@ export function FoilPackSources({
 
   return (
     <>
-      {gaps && gaps.actionableCount > 0 ? (
+      {layout === "block" && gaps && gaps.actionableCount > 0 ? (
         <details className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
           <summary className="cursor-pointer font-medium text-amber-900 dark:text-amber-100">
             {fr
@@ -321,23 +319,24 @@ export function FoilPackSources({
           </p>
         </details>
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="min-w-0 text-xs text-muted-foreground">
+      <div
+        className={
+          layout === "toolbar"
+            ? "flex flex-wrap items-center gap-1.5"
+            : "flex flex-wrap items-center justify-between gap-2"
+        }
+      >
+        <p
+          className={
+            layout === "toolbar"
+              ? "hidden max-w-[9rem] truncate text-xs text-muted-foreground xl:inline"
+              : "min-w-0 text-xs text-muted-foreground"
+          }
+          title={statusLine(status, jobRunning, fr)}
+        >
           {statusLine(status, jobRunning, fr)}
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {apkPack ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1 px-2 text-xs"
-              onClick={() => setApkOpen(true)}
-            >
-              <Upload className="h-3.5 w-3.5" />
-              APK
-            </Button>
-          ) : null}
           <Button
             type="button"
             variant="outline"
@@ -371,8 +370,8 @@ export function FoilPackSources({
                     ? "Sync le catalogue local de cette ligne"
                     : "Sync this line’s local catalogue"
                   : fr
-                    ? "Sync foil (web + cards + Unity si APK)"
-                    : "Foil sync (web + cards + Unity if APK)"
+                    ? "Sync foil (store APK si màj, puis web + cards + Unity)"
+                    : "Foil sync (store APK if newer, then web + cards + Unity)"
             }
           >
             {busy ? (
@@ -380,7 +379,7 @@ export function FoilPackSources({
             ) : (
               <Play className="h-3.5 w-3.5" />
             )}
-            {!foilExtractNeedsApk(target) ? (fr ? "Sync" : "Sync") : "Extract"}
+            Sync
           </Button>
         </div>
       </div>
@@ -474,17 +473,6 @@ export function FoilPackSources({
           </div>
         </DialogContent>
       </Dialog>
-
-      {apkPack ? (
-        <WebAdbApkLab
-          open={apkOpen}
-          onOpenChange={setApkOpen}
-          locale={locale}
-          initialPack={apkPack}
-          lockPack
-          onUploaded={() => void refetchStatus()}
-        />
-      ) : null}
     </>
   );
 }

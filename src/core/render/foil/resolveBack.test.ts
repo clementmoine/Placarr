@@ -4,6 +4,7 @@ import {
   pickDefaultCardBack,
   rankCardBacks,
   resolveCardBackCandidates,
+  resolveSharedCardBackSkeleton,
   sharedCardBackSkeletonUrl,
   type CardBackCandidate,
 } from "./cardBacks";
@@ -65,6 +66,33 @@ describe("sharedCardBackSkeletonUrl", () => {
     expect(
       sharedCardBackSkeletonUrl({ url: "/alt.png", scope: "print" }),
     ).toBeNull();
+  });
+});
+
+describe("resolveSharedCardBackSkeleton", () => {
+  afterEach(() => {
+    __resetEffectPacksForTests();
+  });
+
+  it("still shows the pack back when a print alt face is the flip default", () => {
+    registerEffectPack(
+      fakePack({
+        id: "pack-a",
+        cardBackUrl: "/pack.png",
+      }),
+    );
+    expect(
+      resolveSharedCardBackSkeleton({
+        printCardBackUrl: "/print-alt.png",
+        effectPackId: "pack-a",
+      }),
+    ).toBe("/pack.png");
+    expect(
+      resolveDefaultCardBack({
+        printCardBackUrl: "/print-alt.png",
+        effectPackId: "pack-a",
+      })?.scope,
+    ).toBe("print");
   });
 });
 

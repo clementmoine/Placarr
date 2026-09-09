@@ -8,6 +8,7 @@ import { foilTextureFile } from "@/effects/foilTextureFile";
 import { POKEMON_FOIL_NAMES } from "./foilNames";
 import {
   applyLiveFoilMask,
+  listPokemonMaterialNames,
   mergeMaterialFloats,
   paperMaterial,
   parsePaperMaterialName,
@@ -64,6 +65,7 @@ describe("pokemon materials shared motifs", () => {
       finish: "NonFoil",
       varnish: null,
     });
+    expect(listPokemonMaterialNames()).not.toContain("NonFoil");
   });
 
   it("SolidColor: motifs + animation malgré le sheet FoilAnimation=0", () => {

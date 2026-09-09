@@ -9,7 +9,7 @@
 | Pack        | Surface | Source                                                                                      | Où ça vit                                                                                  |
 | ----------- | ------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **Pokémon** | WebGL   | TCG Live (Unity / HoloFoil GLES3)                                                           | `data/pokemon/foil/shaders` + `effects/pokemon/materials*`                                 |
-| **Pokémon** | CSS     | **Live / Unity d’abord** (plaques + intention frag) ; Simey / forks = **analyse** seulement | `holoShadersSimey` (noms historiques) + `holoShadersPokemon` ; plaques via `HoloCardImage` |
+| **Pokémon** | CSS     | **Chorégraphie Simey** + **paint multi-locale Live** (faces / masks / FX) ; sinon `flare` | `holoShadersSimey` + ports ; `HoloCardImage` (`--foil-etch`, wp) |
 | **Lorcana** | CSS     | Site officiel Lorcana (viewer web)                                                          | dump `data/lorcana/foil/web` → `holoShadersApp` + `cssRecipes`                             |
 | **Lorcana** | WebGL   | App Lorcana TCG (Unity)                                                                     | `data/lorcana/foil/shaders` + `manifest.json`                                              |
 
@@ -21,18 +21,15 @@
    `HoloShader` (comme les recettes Lorcana dumpées).
 3. Assets officiels : faces sous `data/<pack>/cards/`, kit rendu sous `data/<pack>/foil/` → URL `/assets/<pack>/…`.
 4. Trees simey = staging volatile `data/pokemon/staging/simey/`
-   (Simey CSS sync) — même idée que le dump web Lorcana.
-5. **Pokémon CSS :** vérité = **TCG Live** (compare Unity | CSS). Simey,
-   photo-cards, ShaderKit, etc. = **références d’analyse** (noms de layers,
-   mixes utiles, promo→style) — on ne dépend pas de leur chorégraphie ni de
-   leur bijection rareté↔matériau. Si un layer Live n’a pas d’équivalent CSS
-   évident → s’inspirer du frag WebGL / house pour **reproduire l’intention**
-   (pas porter le GLSL). Détail : [foil_css_sources.md](foil_css_sources.md) §0.
+   (Simey CSS sync) — **même rôle** que le dump web Lorcana.
+5. **Pokémon CSS :** (a) **recette** = compositing Simey (staging) ;
+   (b) **données** = faces + masks + textures FX **Live multi-locale**
+   (jamais rasters EN Simey) ; (c) pas d’amont Simey → **`flare`**.
+   WebGL = Live. Voir [foil_css_sources.md](foil_css_sources.md) §0.
 
-**Statut Pokémon (2026-08-11) :** dumps + recettes **branchés** ; intégration
-**à terminer** — (1) WebGL : vérif Live vs Placarr leaf par leaf ;
-(2) CSS : adaptation intelligente Live (+ Simey en analyse, layers ≠). Voir
-[backlog.md](backlog.md) P1 foil Pokémon.
+**Statut Pokémon (2026-09-06) :** WebGL = Live ; CSS = Simey-backed only
+(`LIVE_FINISH_CSS`), sinon `flare`. Pas d’invention CSS pour leaves sans
+amont Simey. Voir [foil_css_sources.md](foil_css_sources.md) §0.
 
 ## 2. Couches (même partout)
 
@@ -77,15 +74,23 @@ data/<pack>/foil/   →  /assets/<pack>/…          (shaders, textures FX, web,
 ```
 
 Sync produit : Catalogue Extract (admin / worker in-process) ·
-`/admin?tab=tcg-effects` (backends **Auto | WebGL | CSS**).
+`/admin?tab=catalogue` (backends **Auto | WebGL | CSS**).
 
 ## 4. Backend runtime
 
-`selectFoilBackend` : **auto** → WebGL2 si matériau + caps + pool, sinon CSS.
-Playroom force WebGL / CSS pour comparer les deux sources du **même** finish.
+`selectFoilBackend` : **auto** / **webgl** → WebGL2 si matériau + caps + pool,
+sinon CSS. Playroom force WebGL / CSS pour comparer les deux sources du **même**
+finish.
+
+Chaîne produit (tous les TCG) :
+
+1. WebGL si demandé et matériau disponible
+2. sinon CSS du finish / leaf demandé quand porté
+3. sinon house **`flare`** (`HOUSE_FOIL_FALLBACK_CSS_ID`) — « shiny, pas encore
+   de look dédié »
 
 Idle vs pointer : glare figé / opacity 0 en idle ; motif + tilt restent actifs
-(`foil/pointerCss`) — commun aux deux packs.
+(`foil/pointerCss`) — commun aux packs.
 
 ## 5. Checklist « prochain jeu »
 

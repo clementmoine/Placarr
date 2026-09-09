@@ -117,6 +117,12 @@ export type EffectPackModule = {
   }): string | null;
   /** When catalogue prints have no foil mask (Pocket). */
   fallbackFoilMaskUrl?: string | null;
+  /**
+   * When true for a mask URL, keep CSS and refuse WebGL. Unity MotifMask often
+   * expects a structured facsimile (Lorcana Glitter), not a solid plate or an
+   * art greyscale stand-in.
+   */
+  isCssOnlyFoilMask?(maskUrl: string): boolean;
   resolveMaterial(
     finish: string,
     varnish: string | null | undefined,

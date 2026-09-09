@@ -126,12 +126,27 @@ describe("deviceOrientationStore", () => {
 
     it("is pending on the platform that gates the sensor", () => {
       stubPlatform("granted");
+      vi.stubGlobal("navigator", { maxTouchPoints: 5 });
 
       expect(orientationPermissionPending()).toBe(true);
     });
 
+    it("is not pending on desktop WebKit that exposes requestPermission without tilt hardware", () => {
+      stubPlatform("granted");
+      vi.stubGlobal("navigator", { maxTouchPoints: 0 });
+      // Fine pointer desktop — no coarse matchMedia.
+      const win = window as Window & {
+        matchMedia?: (query: string) => MediaQueryList;
+      };
+      win.matchMedia = () =>
+        ({ matches: false, media: "(pointer: coarse)" }) as MediaQueryList;
+
+      expect(orientationPermissionPending()).toBe(false);
+    });
+
     it("stops being pending once granted, and says so to every card", async () => {
       stubPlatform("granted");
+      vi.stubGlobal("navigator", { maxTouchPoints: 5 });
       // A second card, which never rendered a prompt of its own. The bug this
       // store exists to prevent is it staying blind after another card's tap.
       const otherCard = vi.fn();
@@ -145,6 +160,7 @@ describe("deviceOrientationStore", () => {
 
     it("stays pending when the tap is refused", async () => {
       stubPlatform("denied");
+      vi.stubGlobal("navigator", { maxTouchPoints: 5 });
 
       requestOrientationPermission();
       await Promise.resolve();

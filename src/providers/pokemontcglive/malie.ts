@@ -6,6 +6,13 @@
  * processed databases to know *which* `{set}_{lang}_{num}` exist, then fetch
  * UnityFS bytes from the official Pokémon CDN.
  *
+ * Inventory source of truth for Placarr: `databases/` (Live-shaped
+ * `Foil Effect` / `Foil Mask`). The SV **export** JSON draft
+ * (https://malie.io/static/draft/html/pkproto_sv.html) documents interchange
+ * fields + SCREAMING_SNAKE foil taxonomy — see `malieFoilTaxonomy.ts` and
+ * `curated/sources/malie-pkproto-sv-lessons-2026-09-06.json`. Export index is
+ * optional audit/enrichment only (`MALIE_EXPORT_INDEX_URL`).
+ *
  * Credit: https://malie.io/static/ (nago) — please keep a shout-out if you ship
  * with this bootstrap.
  */
@@ -17,7 +24,6 @@ import {
   readFileSync,
   readdirSync,
   statSync,
-  writeSync,
   unlinkSync,
 } from "node:fs";
 import path from "node:path";
@@ -28,7 +34,11 @@ import { isPokemonLiveLanguage, type PokemonLiveLanguage } from "./languages";
 
 export const MALIE_CDN_BASE = "https://cdn.malie.io/file/malie-io/tcgl";
 export const MALIE_DATABASES_INDEX_URL = `${MALIE_CDN_BASE}/databases/index.json`;
+/** Interchange export (SV+) — not used for inventory bootstrap; foil labels differ. */
 export const MALIE_EXPORT_INDEX_URL = `${MALIE_CDN_BASE}/export/index.json`;
+/** Spec for export shape + foil.type/mask enums (draft 2024-05-20). */
+export const MALIE_EXPORT_SPEC_URL =
+  "https://malie.io/static/draft/html/pkproto_sv.html";
 
 /** Live file stem: ``card-database-bw10_0_fr_0.0``. */
 export const MALIE_CARD_DATABASE_KEY_RE =
@@ -81,9 +91,145 @@ export type MalieDatabaseTable = {
 
 const DEFAULT_UA = "Placarr-malie-bootstrap/1.0 (+https://malie.io/static/)";
 
-/** Line-buffered to the parent (admin log pipes are not a TTY). */
+/**
+ * Go through ``console.log`` so the foil extract tee can append to the admin
+ * log *and* refresh the job heartbeat. ``writeSync(1, …)`` bypassed both and
+ * made Malie look frozen while the event loop was busy parsing ~1.4k DBs.
+ */
 function defaultMalieProgress(line: string): void {
-  writeSync(1, `${line}\n`);
+  console.log(line);
+}
+
+/**
+ * Let timers / Prisma heartbeats run between CPU-heavy Malie DB parses.
+ * ``setTimeout(0)`` reaches the timers phase (foil lock heartbeat); a lone
+ * ``setImmediate`` can still starve under a tight immediate queue.
+ */
+export async function yieldMalieEventLoop(): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+}
+
+export const MALIE_IDENTITIES_CACHE = "malie-identities.json.gz";
+export const MALIE_CACHE_META = "malie-cache-meta.json";
+
+export type MalieCacheMeta = {
+  fingerprint: string;
+  langs: string[];
+  identities: number;
+  bundleStems: number;
+  setnums: number;
+  cachedAt: string;
+};
+
+/** Stable key over index revisions for the selected database files. */
+export function malieRevisionFingerprint(
+  keys: readonly { key: string }[],
+  index: MalieDatabaseIndex,
+): string {
+  const parts: string[] = [];
+  for (const { key } of keys) {
+    const rev = index[key]?.revision?.trim() || "";
+    parts.push(`${key}=${rev}`);
+  }
+  parts.sort();
+  return parts.join("\n");
+}
+
+export function malieIdentitiesCachePath(outDir: string): string {
+  return path.join(outDir, MALIE_IDENTITIES_CACHE);
+}
+
+export function malieCacheMetaPath(outDir: string): string {
+  return path.join(outDir, MALIE_CACHE_META);
+}
+
+export function readMalieCacheMeta(outDir: string): MalieCacheMeta | null {
+  const file = malieCacheMetaPath(outDir);
+  if (!existsSync(file)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(file, "utf8")) as MalieCacheMeta;
+    if (
+      typeof parsed.fingerprint !== "string" ||
+      !Array.isArray(parsed.langs) ||
+      typeof parsed.identities !== "number"
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function writeMalieIdentitiesCache(
+  outDir: string,
+  identities: readonly LiveCardIdentity[],
+  meta: Omit<MalieCacheMeta, "cachedAt" | "identities"> & {
+    cachedAt?: string;
+  },
+): void {
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(
+    malieIdentitiesCachePath(outDir),
+    gzipSync(Buffer.from(JSON.stringify(identities), "utf8")),
+  );
+  const body: MalieCacheMeta = {
+    fingerprint: meta.fingerprint,
+    langs: [...meta.langs],
+    identities: identities.length,
+    bundleStems: meta.bundleStems,
+    setnums: meta.setnums,
+    cachedAt: meta.cachedAt ?? new Date().toISOString(),
+  };
+  writeFileSync(
+    malieCacheMetaPath(outDir),
+    `${JSON.stringify(body, null, 2)}\n`,
+    "utf8",
+  );
+}
+
+export function readMalieIdentitiesCache(
+  outDir: string,
+): LiveCardIdentity[] | null {
+  const file = malieIdentitiesCachePath(outDir);
+  if (!existsSync(file)) return null;
+  try {
+    const text = gunzipSync(readFileSync(file)).toString("utf8");
+    const parsed = JSON.parse(text) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    return parsed as LiveCardIdentity[];
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * True when every listed DB is on disk at the indexed revision — no GET, and
+ * we may reuse the identities cache instead of gunzip-parsing ~1.4k tables.
+ */
+export function allMalieDatabasesReusable(opts: {
+  keys: readonly { key: string }[];
+  index: MalieDatabaseIndex;
+  dbDir: string;
+  localRevisions: Record<string, string>;
+}): boolean {
+  for (const { key } of opts.keys) {
+    const entry = opts.index[key];
+    if (!entry?.data) continue;
+    const existingPath = findMalieDatabaseOnDisk(opts.dbDir, key);
+    if (
+      !existingPath ||
+      !canReuseMalieDatabaseFile({
+        destPath: existingPath,
+        key,
+        indexRevision: entry.revision,
+        localRevisions: opts.localRevisions,
+      })
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function liveLangFromMalieLocale(
@@ -178,6 +324,8 @@ export function identityFromMalieRow(
     typeof row["EN Card Name"] === "string"
       ? String(row["EN Card Name"])
       : nameEn;
+  // Column is historically `name_fr` but holds the dump locale's title
+  // (`LocalizedCardName` when FR Card Name is absent). Always join on `lang`.
   const frName =
     typeof row["FR Card Name"] === "string"
       ? String(row["FR Card Name"])
@@ -488,15 +636,86 @@ export async function bootstrapMalieCatalogue(opts: {
     signal: opts.signal,
     fetchImpl: opts.fetchImpl,
   });
+  await yieldMalieEventLoop();
   let keys = listMalieDatabaseKeysForLangs(index, opts.langs);
   if (opts.limitFiles && opts.limitFiles > 0) {
     keys = keys.slice(0, opts.limitFiles);
   }
+  const fingerprint = malieRevisionFingerprint(keys, index);
   log(
     `  Malie: ${keys.length} database files` +
       ` langs=${opts.langs.join(",")}` +
       (skipExisting ? " (skip unchanged revisions)" : " (force refetch)"),
   );
+
+  const cataloguePath = path.join(outDir, "cdn-catalogue-setnum.txt");
+  const stemsPath = path.join(outDir, "malie-bundle-stems.txt");
+
+  if (
+    skipExisting &&
+    allMalieDatabasesReusable({
+      keys,
+      index,
+      dbDir,
+      localRevisions,
+    })
+  ) {
+    const meta = readMalieCacheMeta(outDir);
+    const cached = readMalieIdentitiesCache(outDir);
+    if (
+      meta &&
+      cached &&
+      meta.fingerprint === fingerprint &&
+      existsSync(stemsPath) &&
+      existsSync(cataloguePath)
+    ) {
+      const bundleStems = loadMalieBundleStems(outDir);
+      const setnums = readFileSync(cataloguePath, "utf8")
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith("#"));
+      const report: MalieBootstrapReport = {
+        langs: [...opts.langs],
+        databaseFiles: keys.length,
+        fetched: 0,
+        skipped: keys.length,
+        identities: cached.length,
+        bundleStems: bundleStems.length,
+        setnums: setnums.length,
+        outDir,
+        cataloguePath,
+        stemsPath,
+      };
+      writeFileSync(
+        path.join(outDir, "malie-bootstrap-report.json"),
+        `${JSON.stringify(report, null, 2)}\n`,
+        "utf8",
+      );
+      log(
+        `  Malie cache hit: skipped=${keys.length}` +
+          ` identities=${cached.length} stems=${bundleStems.length}` +
+          ` (no DB reparse)`,
+      );
+      return {
+        report,
+        identities: cached,
+        bundleStems,
+        setnums,
+      };
+    }
+    const why = !meta
+      ? "meta missing"
+      : !cached
+        ? "identities.gz missing/unreadable"
+        : meta.fingerprint !== fingerprint
+          ? "fingerprint mismatch"
+          : !existsSync(stemsPath) || !existsSync(cataloguePath)
+            ? "stems/catalogue missing"
+            : "unknown";
+    log(
+      `  Malie: revisions fresh but cache unusable (${why}) — one-shot reparse`,
+    );
+  }
 
   // Migrate any leftover plain *.json → *.json.gz (one-shot, cheap vs re-fetch).
   const migrated = compressMalieDatabasesDir(dbDir);
@@ -517,6 +736,9 @@ export async function bootstrapMalieCatalogue(opts: {
   let skipped = 0;
   const total = keys.length;
   const progressEvery = Math.max(1, Math.min(25, Math.floor(total / 20) || 1));
+  // Yield often enough that foil lock heartbeats (60s) can fire during a
+  // full local reparse of ~1.4k gzip tables.
+  const yieldEvery = Math.max(1, Math.min(5, progressEvery));
 
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i]!;
@@ -577,14 +799,18 @@ export async function bootstrapMalieCatalogue(opts: {
       stemSet.add(id.bundle_stem);
       setnumSet.add(`${id.live_set}_${String(id.num).padStart(3, "0")}`);
     }
+    // Drop the parsed table ASAP so V8 can reclaim before the next gunzip.
+    table = null;
+
+    if ((i + 1) % yieldEvery === 0 || i + 1 === total) {
+      await yieldMalieEventLoop();
+    }
   }
 
   writeMalieRevisions(dbDir, nextRevisions);
 
   const bundleStems = [...stemSet].sort();
   const setnums = [...setnumSet].sort();
-  const cataloguePath = path.join(outDir, "cdn-catalogue-setnum.txt");
-  const stemsPath = path.join(outDir, "malie-bundle-stems.txt");
   writeFileSync(cataloguePath, `${setnums.join("\n")}\n`, "utf8");
   writeFileSync(stemsPath, `${bundleStems.join("\n")}\n`, "utf8");
 
@@ -605,6 +831,12 @@ export async function bootstrapMalieCatalogue(opts: {
     `${JSON.stringify(report, null, 2)}\n`,
     "utf8",
   );
+  writeMalieIdentitiesCache(outDir, identities, {
+    fingerprint,
+    langs: [...opts.langs],
+    bundleStems: bundleStems.length,
+    setnums: setnums.length,
+  });
 
   log(
     `  Malie done: fetched=${fetched} skipped=${skipped}` +

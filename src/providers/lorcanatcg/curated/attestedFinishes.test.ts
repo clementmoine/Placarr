@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import ledger from "./attestedFinishes.json";
 import {
   resolveAttestedFinishes,
+  attestedArtFoilMaskUrl,
+  attestedFoilMaskDonor,
+  attestedNeedsFullFoilMask,
   type AttestedFinish,
 } from "./attestedFinishes";
 
@@ -23,6 +26,15 @@ function catalogue(entries: Record<string, AttestedFinish>) {
 }
 
 describe("finitions attestées sur exemplaire", () => {
+  it("pointe les fills attestés vers un MotifMask facsimile de leur art", () => {
+    expect(attestedFoilMaskDonor("lorcana:p2-36")).toBe("lorcana:6-25-p2");
+    expect(attestedNeedsFullFoilMask("lorcana:p2-36")).toBe(true);
+    expect(attestedNeedsFullFoilMask("lorcana:1-12")).toBe(false);
+    expect(attestedArtFoilMaskUrl("lorcana:p2-36", "en")).toBe(
+      "/assets/lorcana/cards/p2/en/36/mask.attested.webp",
+    );
+  });
+
   it("reprend la finition de la carte de référence", () => {
     const { finishes, notes } = resolveAttestedFinishes(
       catalogue({

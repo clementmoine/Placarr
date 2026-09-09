@@ -4,6 +4,7 @@ import {
   gravityFromOrientation,
   leanFromPointer,
   leanFromGravity,
+  deviceCanProvideOrientationTilt,
   orientationNeedsPermission,
   smoothGravity,
   type GravityVector,
@@ -134,6 +135,45 @@ describe("orientationNeedsPermission", () => {
     expect(orientationNeedsPermission(function () {})).toBe(false);
     expect(orientationNeedsPermission(undefined)).toBe(false);
     expect(orientationNeedsPermission({ requestPermission: 1 })).toBe(false);
+  });
+});
+
+describe("deviceCanProvideOrientationTilt", () => {
+  it("rejects a desktop with no touch and a fine pointer", () => {
+    expect(
+      deviceCanProvideOrientationTilt({
+        hasDeviceOrientationEvent: true,
+        maxTouchPoints: 0,
+        coarsePointer: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts a phone-shaped surface even when permission is gated", () => {
+    expect(
+      deviceCanProvideOrientationTilt({
+        hasDeviceOrientationEvent: true,
+        maxTouchPoints: 5,
+        coarsePointer: false,
+      }),
+    ).toBe(true);
+    expect(
+      deviceCanProvideOrientationTilt({
+        hasDeviceOrientationEvent: true,
+        maxTouchPoints: 0,
+        coarsePointer: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects when the orientation API is missing", () => {
+    expect(
+      deviceCanProvideOrientationTilt({
+        hasDeviceOrientationEvent: false,
+        maxTouchPoints: 5,
+        coarsePointer: true,
+      }),
+    ).toBe(false);
   });
 });
 

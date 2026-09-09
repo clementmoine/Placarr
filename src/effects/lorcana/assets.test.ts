@@ -5,6 +5,11 @@ import { describe, expect, it } from "vitest";
 
 import type { FoilMaterial } from "@/core/render/foil/types";
 
+import {
+  isLorcanaCssOnlyFoilMask,
+  LORCANA_FULL_FOIL_MASK_URL,
+} from "./index";
+
 const PACK_ROOT = path.join(process.cwd(), "data", "lorcana", "foil");
 const TEXTURES_DIR = path.join(PACK_ROOT, "textures");
 const MANIFEST_PATH = path.join(PACK_ROOT, "manifest.json");
@@ -29,6 +34,27 @@ describe("lorcana pack assets", () => {
         existsSync(
           path.join(process.cwd(), "data", "lorcana", "cards", "back.png"),
         ),
+    ).toBe(true);
+  });
+
+  it("ships full_foil_mask.webp for attested Lorcast fills", () => {
+    expect(existsSync(path.join(PACK_ROOT, "full_foil_mask.webp"))).toBe(true);
+  });
+
+  it("ships mask.attested.webp beside p2-36 Lorcast art", () => {
+    expect(
+      existsSync(
+        path.join(
+          process.cwd(),
+          "data",
+          "lorcana",
+          "cards",
+          "p2",
+          "en",
+          "36",
+          "mask.attested.webp",
+        ),
+      ),
     ).toBe(true);
   });
 
@@ -80,4 +106,18 @@ describe("lorcana pack assets", () => {
       }
     },
   );
+});
+
+describe("lorcana css-only foil masks", () => {
+  it("keeps only the solid full-face plate off WebGL", () => {
+    expect(isLorcanaCssOnlyFoilMask(LORCANA_FULL_FOIL_MASK_URL)).toBe(true);
+    expect(
+      isLorcanaCssOnlyFoilMask(
+        "/assets/lorcana/cards/p2/en/36/mask.attested.webp",
+      ),
+    ).toBe(false);
+    expect(
+      isLorcanaCssOnlyFoilMask("/assets/lorcana/cards/6/en/25-p2/mask.jpg"),
+    ).toBe(false);
+  });
 });

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  inferLangFromPackshotUrl,
   inferOfficialSetId,
   inferPackshotKind,
+  OFFICIAL_SITE_LOCALES,
+  officialSiteLocaleToLang,
   parseOfficialProductMenu,
   parseOfficialProductPage,
 } from "./officialSite";
@@ -44,9 +47,10 @@ describe("parseOfficialProductPage", () => {
     expect(page.setId).toBe("set14");
     expect(page.logoUrl).toContain("whtzuxaqg5_en.png");
     expect(page.packshots.map((p) => p.kind).sort()).toEqual([
-      "coffret",
       "display",
+      "trove",
     ]);
+    expect(page.lang).toBe("fr");
   });
 
   it("accepte logo via chemin CDN même sans « logo » dans l'alt", () => {
@@ -91,13 +95,47 @@ describe("inferOfficialSetId", () => {
 describe("inferPackshotKind", () => {
   it("classe trove / display / gift", () => {
     expect(inferPackshotKind("Illumineer's Trove", "/products/trove/x.png")).toBe(
-      "coffret",
+      "trove",
     );
     expect(
       inferPackshotKind("Booster Display", "/products/booster-display/x.png"),
     ).toBe("display");
     expect(inferPackshotKind("Gift Box Product Image", "/gift.png")).toBe(
-      "coffret",
+      "collector_box",
     );
+  });
+});
+
+describe("official site locales", () => {
+  it("maps site locales and packshot CDN prefixes", () => {
+    expect(officialSiteLocaleToLang("en-US")).toBe("en");
+    expect(officialSiteLocaleToLang("de-DE")).toBe("de");
+    expect(
+      inferLangFromPackshotUrl(
+        "https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14/products/fr_trove.png",
+      ),
+    ).toBe("fr");
+    expect(
+      inferLangFromPackshotUrl(
+        "https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14/products/en_box.png",
+      ),
+    ).toBe("en");
+  });
+
+  it("parses EN pages with lang stamp", () => {
+    const page = parseOfficialProductPage(PAGE_HTML, "hyperia-city", {
+      locale: "en-US",
+    });
+    expect(page.lang).toBe("en");
+    expect(page.sourceUrl).toContain("/en-US/product/");
+  });
+
+  it("lists all catalogue locales for harvest", () => {
+    expect(OFFICIAL_SITE_LOCALES).toEqual([
+      "fr-FR",
+      "en-US",
+      "de-DE",
+      "it-IT",
+    ]);
   });
 });

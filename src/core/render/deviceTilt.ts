@@ -130,6 +130,37 @@ export function orientationNeedsPermission(
 }
 
 /**
+ * Whether this device is worth asking for orientation tilt.
+ *
+ * Desktop Safari (and some WebKit builds) expose
+ * `DeviceOrientationEvent.requestPermission` even with no gyro that a card can
+ * follow — showing “Tilt” there is a dead prompt. Require a real orientation
+ * API plus a touch / coarse-pointer surface (phone, tablet).
+ */
+export function deviceCanProvideOrientationTilt(env?: {
+  hasDeviceOrientationEvent?: boolean;
+  maxTouchPoints?: number;
+  coarsePointer?: boolean;
+}): boolean {
+  const hasEvent =
+    env?.hasDeviceOrientationEvent ??
+    (typeof window !== "undefined" && "DeviceOrientationEvent" in window);
+  if (!hasEvent) return false;
+
+  const touchPoints =
+    env?.maxTouchPoints ??
+    (typeof navigator !== "undefined" ? navigator.maxTouchPoints : 0);
+  if (touchPoints > 0) return true;
+
+  const coarse =
+    env?.coarsePointer ??
+    (typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches);
+  return coarse;
+}
+
+/**
  * The lean a pointer at (x, y) should produce, both as percentages of the card.
  *
  * Shares its shape with {@link leanFromGravity} so the pointer and the phone

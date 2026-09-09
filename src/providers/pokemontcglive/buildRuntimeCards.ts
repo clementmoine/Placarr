@@ -3,7 +3,7 @@
  * Mirrors ``build_keyed_cards`` / ``write_runtime_cards`` in ``extract.py``.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -48,6 +48,28 @@ export function buildKeyedCards(rows: MaterialManifestRow[]): KeyedCards {
   return out;
 }
 
+export function readRuntimeCards(repo: string): KeyedCards {
+  const dest = path.join(packDataDir(repo, "pokemon"), "cards.json");
+  if (!existsSync(dest)) return {};
+  try {
+    const parsed = JSON.parse(readFileSync(dest, "utf8")) as KeyedCards;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function mergeKeyedCards(base: KeyedCards, overlay: KeyedCards): KeyedCards {
+  const out: KeyedCards = { ...base };
+  for (const [bundle, variants] of Object.entries(overlay)) {
+    out[bundle] = { ...out[bundle], ...variants } as Record<
+      "std" | "ph",
+      KeyedCardVariant
+    >;
+  }
+  return out;
+}
+
 export function writeRuntimeCards(
   repo: string,
   rows: MaterialManifestRow[],
@@ -55,7 +77,7 @@ export function writeRuntimeCards(
   invalidatePokemonFoilNamesCache();
   const dest = path.join(packDataDir(repo, "pokemon"), "cards.json");
   mkdirSync(path.dirname(dest), { recursive: true });
-  const keyed = buildKeyedCards(rows);
+  const keyed = mergeKeyedCards(readRuntimeCards(repo), buildKeyedCards(rows));
   writeFileSync(dest, `${JSON.stringify(keyed, null, 2)}\n`, "utf8");
   return dest;
 }

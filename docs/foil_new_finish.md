@@ -5,7 +5,7 @@ But : quand upstream ajoute un effet, le récupérer via **Catalogue Sync**
 nouveaux. Contrat : [foil_effects.md](foil_effects.md).
 APK vs réseau : [foil_apk_sources.md](foil_apk_sources.md).
 
-Lister les trous (admin Catalogue / tcg-effects → foil-status `gaps`) :
+Lister les trous (admin Catalogue → foil-status `gaps`) :
 
 ```bash
 # même payload : GET /api/admin/foil-status → gaps

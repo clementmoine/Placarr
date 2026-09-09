@@ -10,7 +10,10 @@ import {
   liveLangFromMalieLocale,
   malieDatabaseFileUrl,
   malieDatabaseGzPath,
+  malieRevisionFingerprint,
   parseMalieCardDatabaseKey,
+  readMalieIdentitiesCache,
+  writeMalieIdentitiesCache,
 } from "./malie";
 
 describe("pokemontcglive malie naming", () => {
@@ -176,6 +179,63 @@ describe("pokemontcglive malie naming", () => {
       expect(
         readMalieDatabaseTableFromDisk(malieDatabaseGzPath(dir, key))?.rows,
       ).toHaveLength(2);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("fingerprints index revisions in stable order", () => {
+    const index = {
+      "card-database-b_0_fr_0.0": { data: "x", revision: "2" },
+      "card-database-a_0_fr_0.0": { data: "y", revision: "1" },
+    };
+    expect(
+      malieRevisionFingerprint(
+        [
+          { key: "card-database-b_0_fr_0.0" },
+          { key: "card-database-a_0_fr_0.0" },
+        ],
+        index,
+      ),
+    ).toBe(
+      malieRevisionFingerprint(
+        [
+          { key: "card-database-a_0_fr_0.0" },
+          { key: "card-database-b_0_fr_0.0" },
+        ],
+        index,
+      ),
+    );
+  });
+
+  it("round-trips the identities cache used by the Malie fast path", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const os = await import("node:os");
+    const path = await import("node:path");
+    const dir = await mkdtemp(path.join(os.tmpdir(), "malie-id-cache-"));
+    try {
+      const sample = [
+        identityFromMalieRow(
+          {
+            cardID: "bw10_1",
+            longFormID: "Surskit_bw10_1_std_Common_NonFoil_None",
+            "EN Card Name": "Surskit",
+            "FR Card Name": "Arakdo",
+            "Foil Effect": "NonFoil",
+            "Foil Mask": "None",
+            "EN Card #": "1",
+            setCode: "BW10",
+          },
+          "fr",
+        )!,
+      ];
+      writeMalieIdentitiesCache(dir, sample, {
+        fingerprint: "fp",
+        langs: ["fr"],
+        bundleStems: 1,
+        setnums: 1,
+      });
+      expect(readMalieIdentitiesCache(dir)).toEqual(sample);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

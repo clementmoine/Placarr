@@ -13,9 +13,40 @@ import { packStagingDir } from "@/lib/packPaths";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
 export const OFFICIAL_SITE_ORIGIN = "https://www.disneylorcana.com";
+/** Default locale (legacy FR harvest paths). */
 export const OFFICIAL_SITE_LOCALE = "fr-FR";
+/** Locales whose card catalogues we also want sealed SKUs for. */
+export const OFFICIAL_SITE_LOCALES = [
+  "fr-FR",
+  "en-US",
+  "de-DE",
+  "it-IT",
+] as const;
+export type OfficialSiteLocale = (typeof OFFICIAL_SITE_LOCALES)[number];
 export const OFFICIAL_SITE_UA = "Placarr-lorcana-official/1.0";
 const STAGING_FOLDER = "official-site";
+
+const LOCALE_TO_LANG: Readonly<Record<string, string>> = {
+  "fr-FR": "fr",
+  "en-US": "en",
+  "de-DE": "de",
+  "it-IT": "it",
+};
+
+export function officialSiteLocaleToLang(locale: string): string {
+  return LOCALE_TO_LANG[locale] ?? locale.slice(0, 2).toLowerCase();
+}
+
+/** CDN filenames often start with `fr_trove.png` / `en_box.png`. */
+export function inferLangFromPackshotUrl(url: string): string | null {
+  const file = (url.split("/").pop() ?? "").toLowerCase();
+  const m = /^(fr|en|de|it)[_-]/.exec(file);
+  if (m) return m[1]!;
+  if (/\/(fr|en|de|it)\//i.test(url)) {
+    return /\/(fr|en|de|it)\//i.exec(url)![1]!.toLowerCase();
+  }
+  return null;
+}
 
 export type OfficialMenuEntry = {
   slug: string;
@@ -38,6 +69,8 @@ export type OfficialProductPage = {
   setId: string | null;
   packshots: OfficialPackshot[];
   sourceUrl: string;
+  /** Print language for sealed SKUs (`fr`, `en`, …). */
+  lang: string;
 };
 
 const SKIP_MENU_SLUGS = new Set(["books"]);
@@ -113,7 +146,7 @@ export function parseOfficialProductMenu(html: string): OfficialMenuEntry[] {
   const out: OfficialMenuEntry[] = [];
   const seen = new Set<string>();
   const re =
-    /href="(\/(?:fr-FR|en-US)\/product\/([a-z0-9-]+))"[^>]*>\s*<h1[^>]*>(.*?)<\/h1>/gis;
+    /href="(\/(?:fr-FR|en-US|de-DE|it-IT)\/product\/([a-z0-9-]+))"[^>]*>\s*<h1[^>]*>(.*?)<\/h1>/gis;
   for (const match of html.matchAll(re)) {
     const slug = match[2]!.toLowerCase();
     if (SKIP_MENU_SLUGS.has(slug) || seen.has(slug)) continue;
@@ -125,7 +158,7 @@ export function parseOfficialProductMenu(html: string): OfficialMenuEntry[] {
   // Fallback : liens seuls si le markup change.
   if (out.length === 0) {
     for (const match of html.matchAll(
-      /\/(?:fr-FR|en-US)\/product\/([a-z0-9-]+)/gi,
+      /\/(?:fr-FR|en-US|de-DE|it-IT)\/product\/([a-z0-9-]+)/gi,
     )) {
       const slug = match[1]!.toLowerCase();
       if (SKIP_MENU_SLUGS.has(slug) || seen.has(slug)) continue;
@@ -191,18 +224,25 @@ export function inferPackshotKind(
   url: string,
 ): SealedKind | null {
   const hay = `${alt} ${url}`.toLowerCase();
-  if (/trove|tr[eé]sor/.test(hay)) return "coffret";
-  if (/gift\s*box|coffret\s*cadeau|gift-set|giftset/.test(hay)) return "coffret";
+  if (/trove|tr[eé]sor/.test(hay)) return "trove";
+  if (/illumineer'?s?\s*quest|\/iq\d|\/products\/iq/i.test(hay)) {
+    return "quest";
+  }
+  if (/gift\s*box|coffret\s*cadeau|gift-set|giftset/.test(hay)) {
+    return "collector_box";
+  }
   if (/booster\s*display|display/.test(hay)) return "display";
   if (/booster|wrap/.test(hay)) return "booster";
-  if (/starter|démarrage|gateway.*box\s*shot|box\s*shot/.test(hay))
-    return "coffret";
+  if (/starter|démarrage|gateway.*box\s*shot|box\s*shot/.test(hay)) {
+    return "collector_box";
+  }
   if (/\/products\/(?:trove|booster-display|pre-release|iq)/i.test(url)) {
     if (/booster-display/i.test(url)) return "display";
-    if (/trove/i.test(url)) return "coffret";
-    return "coffret";
+    if (/trove/i.test(url)) return "trove";
+    if (/\/iq|pre-release/i.test(url)) return "prerelease";
+    return "collector_box";
   }
-  if (/product[-_ ]?(?:image|shot|photo)/i.test(hay)) return "coffret";
+  if (/product[-_ ]?(?:image|shot|photo)/i.test(hay)) return "collector_box";
   return null;
 }
 
@@ -240,8 +280,11 @@ function pickPreferredLogo(
 export function parseOfficialProductPage(
   html: string,
   slug: string,
-  opts: { sourceUrl?: string } = {},
+  opts: { sourceUrl?: string; locale?: string; lang?: string } = {},
 ): OfficialProductPage {
+  const locale = opts.locale ?? OFFICIAL_SITE_LOCALE;
+  const lang =
+    opts.lang ?? officialSiteLocaleToLang(locale);
   const imgs: { alt: string; url: string }[] = [];
   for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
     const tag = match[0];
@@ -306,7 +349,8 @@ export function parseOfficialProductPage(
     logoAlt: logo?.alt ?? null,
     setId,
     packshots,
-    sourceUrl: opts.sourceUrl ?? officialSiteProductUrl(slug),
+    sourceUrl: opts.sourceUrl ?? officialSiteProductUrl(slug, locale),
+    lang,
   };
 }
 
@@ -353,13 +397,14 @@ export type OfficialSiteHarvest = {
 };
 
 /**
- * Home + chaque page produit → staging HTML / logos / packshots + ledger JSON.
+ * Home + chaque page produit (toutes les locales catalogue) → staging + ledger.
  */
 export async function harvestOfficialLorcanaSite(opts: {
   force?: boolean;
   stagingDir?: string;
   delayMs?: number;
   limit?: number;
+  locales?: readonly string[];
   onProgress?: (message: string) => void;
 } = {}): Promise<OfficialSiteHarvest> {
   const staging = opts.stagingDir ?? officialSiteStagingDir();
@@ -370,68 +415,128 @@ export async function harvestOfficialLorcanaSite(opts: {
   mkdirSync(logosDir, { recursive: true });
   mkdirSync(shotsDir, { recursive: true });
 
-  const homePath = path.join(staging, "home.fr-FR.html");
-  let homeHtml: string | null = null;
-  if (!opts.force && existsSync(homePath) && readFileSync(homePath).byteLength > 1000) {
-    homeHtml = readFileSync(homePath, "utf8");
-  } else {
-    homeHtml = await fetchText(officialSiteHomeUrl());
-    if (homeHtml) writeFileSync(homePath, homeHtml, "utf8");
-  }
-  if (!homeHtml) {
-    return { menu: 0, pages: 0, logos: 0, packshots: 0, fail: 1, pagesParsed: [] };
-  }
-
-  let menu = parseOfficialProductMenu(homeHtml);
-  if (opts.limit && opts.limit > 0) menu = menu.slice(0, opts.limit);
-  opts.onProgress?.(`menu — ${menu.length} pages produit`);
+  const locales = opts.locales?.length
+    ? opts.locales
+    : [...OFFICIAL_SITE_LOCALES];
+  const delayMs = opts.delayMs ?? 80;
 
   const pagesParsed: OfficialProductPage[] = [];
+  const menuBySlug = new Map<string, OfficialMenuEntry>();
   let logos = 0;
   let packshots = 0;
   let fail = 0;
-  const delayMs = opts.delayMs ?? 80;
 
-  for (const entry of menu) {
-    const pageFile = path.join(pagesDir, `${entry.slug}.html`);
-    let html: string | null = null;
-    if (!opts.force && existsSync(pageFile) && readFileSync(pageFile).byteLength > 1000) {
-      html = readFileSync(pageFile, "utf8");
+  for (const locale of locales) {
+    const lang = officialSiteLocaleToLang(locale);
+    const homePath = path.join(staging, `home.${locale}.html`);
+    let homeHtml: string | null = null;
+    if (
+      !opts.force &&
+      existsSync(homePath) &&
+      readFileSync(homePath).byteLength > 1000
+    ) {
+      homeHtml = readFileSync(homePath, "utf8");
     } else {
-      html = await fetchText(officialSiteProductUrl(entry.slug));
-      if (html) writeFileSync(pageFile, html, "utf8");
+      homeHtml = await fetchText(officialSiteHomeUrl(locale));
+      if (homeHtml) writeFileSync(homePath, homeHtml, "utf8");
       if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
     }
-    if (!html) {
+    if (!homeHtml) {
       fail += 1;
+      opts.onProgress?.(`${locale} — home inaccessible`);
       continue;
     }
-    const parsed = parseOfficialProductPage(html, entry.slug);
-    if (!parsed.title) parsed.title = entry.title;
-    pagesParsed.push(parsed);
 
-    if (parsed.logoUrl && parsed.setId) {
-      const ext = path.extname(new URL(parsed.logoUrl).pathname).toLowerCase() || ".png";
-      const dest = path.join(logosDir, `${parsed.setId}${ext === ".jpeg" ? ".jpg" : ext}`);
-      if (opts.force || !existsSync(dest)) {
-        const buf = await fetchBytes(parsed.logoUrl);
-        if (buf) {
-          writeFileSync(dest, buf);
-          logos += 1;
-        } else fail += 1;
+    let menu = parseOfficialProductMenu(homeHtml);
+    if (opts.limit && opts.limit > 0) menu = menu.slice(0, opts.limit);
+    for (const entry of menu) {
+      if (!menuBySlug.has(entry.slug)) menuBySlug.set(entry.slug, entry);
+    }
+    opts.onProgress?.(`${locale} — ${menu.length} pages produit`);
+
+    for (const entry of menu) {
+      const pageFile = path.join(pagesDir, `${entry.slug}.${locale}.html`);
+      // Legacy FR path without locale suffix.
+      const legacyFr =
+        locale === "fr-FR" ? path.join(pagesDir, `${entry.slug}.html`) : null;
+      let html: string | null = null;
+      if (
+        !opts.force &&
+        existsSync(pageFile) &&
+        readFileSync(pageFile).byteLength > 1000
+      ) {
+        html = readFileSync(pageFile, "utf8");
+      } else if (
+        legacyFr &&
+        !opts.force &&
+        existsSync(legacyFr) &&
+        readFileSync(legacyFr).byteLength > 1000
+      ) {
+        html = readFileSync(legacyFr, "utf8");
+      } else {
+        html = await fetchText(officialSiteProductUrl(entry.slug, locale));
+        if (html) writeFileSync(pageFile, html, "utf8");
         if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
       }
-    }
+      if (!html) {
+        fail += 1;
+        continue;
+      }
+      const parsed = parseOfficialProductPage(html, entry.slug, {
+        locale,
+        lang,
+        sourceUrl: officialSiteProductUrl(entry.slug, locale),
+      });
+      if (!parsed.title) parsed.title = entry.title;
+      pagesParsed.push(parsed);
 
-    for (const [i, shot] of parsed.packshots.entries()) {
-      if (!shot.kind) continue;
-      const ext = path.extname(new URL(shot.url).pathname).replace(/\.png$/i, ".png") || ".png";
-      const safeExt = ext.toLowerCase() === ".jpeg" ? ".jpg" : ext.toLowerCase();
-      const dest = path.join(
-        shotsDir,
-        `${entry.slug}.${shot.kind}.${i}${safeExt.endsWith(".png") ? ".png" : safeExt}`,
-      );
-      if (opts.force || !existsSync(dest)) {
+      if (parsed.logoUrl && parsed.setId && lang === "fr") {
+        const ext =
+          path.extname(new URL(parsed.logoUrl).pathname).toLowerCase() ||
+          ".png";
+        const dest = path.join(
+          logosDir,
+          `${parsed.setId}${ext === ".jpeg" ? ".jpg" : ext}`,
+        );
+        if (opts.force || !existsSync(dest)) {
+          const buf = await fetchBytes(parsed.logoUrl);
+          if (buf) {
+            writeFileSync(dest, buf);
+            logos += 1;
+          } else fail += 1;
+          if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
+        }
+      }
+
+      for (const [i, shot] of parsed.packshots.entries()) {
+        if (!shot.kind) continue;
+        const shotLang =
+          inferLangFromPackshotUrl(shot.url) ?? lang;
+        const ext =
+          path.extname(new URL(shot.url).pathname).replace(/\.png$/i, ".png") ||
+          ".png";
+        const safeExt =
+          ext.toLowerCase() === ".jpeg" ? ".jpg" : ext.toLowerCase();
+        const destName = `${entry.slug}.${shot.kind}.${i}.${shotLang}${
+          safeExt.endsWith(".png") ? ".png" : safeExt
+        }`;
+        const dest = path.join(shotsDir, destName);
+        // Legacy FR filename without lang segment.
+        const legacyDest =
+          shotLang === "fr"
+            ? path.join(
+                shotsDir,
+                `${entry.slug}.${shot.kind}.${i}${
+                  safeExt.endsWith(".png") ? ".png" : safeExt
+                }`,
+              )
+            : null;
+        if (
+          !opts.force &&
+          (existsSync(dest) || (legacyDest && existsSync(legacyDest)))
+        ) {
+          continue;
+        }
         const buf = await fetchBytes(shot.url);
         if (buf) {
           writeFileSync(dest, buf);
@@ -442,12 +547,14 @@ export async function harvestOfficialLorcanaSite(opts: {
     }
   }
 
+  const menu = [...menuBySlug.values()];
   const ledgerPath = path.join(staging, "pages.json");
   writeFileSync(
     ledgerPath,
     `${JSON.stringify(
       {
         source: officialSiteHomeUrl(),
+        locales,
         fetchedAt: new Date().toISOString(),
         menu,
         pages: pagesParsed,
@@ -481,9 +588,13 @@ export function readOfficialSiteLedger(
       menu?: OfficialMenuEntry[];
       pages?: OfficialProductPage[];
     };
+    const pages = (raw.pages ?? []).map((page) => ({
+      ...page,
+      lang: page.lang ?? "fr",
+    }));
     return {
       menu: raw.menu ?? [],
-      pages: raw.pages ?? [],
+      pages,
     };
   } catch {
     return null;

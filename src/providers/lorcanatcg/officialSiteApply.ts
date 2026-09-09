@@ -26,11 +26,13 @@ import {
 import {
   sealedBehaviorForKind,
   sealedContentsKnown,
+  sealedKindIsOpaqueContents,
 } from "@/providers/shared/sealedProducts/kinds";
 import { resolveContentLayers } from "@/providers/shared/sealedProducts/contentLayers";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
 
 import {
+  inferLangFromPackshotUrl,
   officialSiteStagingDir,
   readOfficialSiteLedger,
   type OfficialProductPage,
@@ -170,22 +172,29 @@ function isPlausibleWordmarkFile(file: string): boolean {
 function slugForOfficialPackshot(
   page: OfficialProductPage,
   kind: string,
-  _index: number,
+  lang: string,
 ): string {
-  // Une seule variante par kind après dédup parse → slug stable.
-  return `${page.slug}-${kind}`;
+  const base = `${page.slug}-${kind}`;
+  // FR keeps the historical slug so existing lorcards-cover checks still match.
+  return lang === "fr" ? base : `${base}-${lang}`;
 }
 
-/** Évite de dupliquer un SKU déjà fourni par lorcards pour le même set+kind. */
+/** Évite de dupliquer un SKU déjà fourni par lorcards pour le même set+kind+lang. */
 function existingCoversOfficialSku(
   index: ProductsIndexV1,
   page: OfficialProductPage,
   kind: SealedProductEntry["kind"],
+  lang: string,
 ): boolean {
   const setId = page.setId?.toLowerCase() ?? null;
+  const want = lang.toLowerCase();
   for (const p of Object.values(index.products)) {
     if (p.category === "official-site") continue;
     if (p.kind !== kind) continue;
+    const pLang = (p.lang ?? "").trim().toLowerCase();
+    // Unknown-lang shop rows only cover FR official upserts.
+    if (pLang && pLang !== want) continue;
+    if (!pLang && want !== "fr") continue;
     if (setId) {
       const code = (p.setCode || "").toLowerCase();
       if (code === setId) return true;
@@ -231,26 +240,45 @@ export function upsertOfficialSiteProducts(opts: {
   let skipped = 0;
 
   for (const page of ledger.pages) {
+    const pageLang = (page.lang ?? "fr").toLowerCase();
     for (const [shotIndex, shot] of page.packshots.entries()) {
       if (!shot.kind) {
         skipped += 1;
         continue;
       }
       const kind = shot.kind;
+      const lang =
+        inferLangFromPackshotUrl(shot.url) ?? pageLang;
       const ext =
         path.extname(new URL(shot.url).pathname).toLowerCase() || ".png";
       const safeExt = ext === ".jpeg" ? ".jpg" : ext;
-      const file = `${page.slug}.${kind}.${shotIndex}${safeExt}`;
-      const artSrc = path.join(shotsDir, file);
+      const file = `${page.slug}.${kind}.${shotIndex}.${lang}${safeExt}`;
+      const legacyFile = `${page.slug}.${kind}.${shotIndex}${safeExt}`;
+      const artSrc = existsSync(path.join(shotsDir, file))
+        ? path.join(shotsDir, file)
+        : path.join(shotsDir, legacyFile);
       if (!existsSync(artSrc)) {
         skipped += 1;
         continue;
       }
 
-      const productSlug = slugForOfficialPackshot(page, kind, shotIndex);
+      const productSlug = slugForOfficialPackshot(page, kind, lang);
       const key = sealedProductKey(packId, productSlug);
       if (index.products[key]?.image) {
         const existing = index.products[key]!;
+        let touched = false;
+        const cleanTitle = page.title?.trim();
+        if (
+          cleanTitle &&
+          existing.name !== cleanTitle &&
+          (!existing.name ||
+            existing.name === shot.alt?.trim() ||
+            /cards of .+ next to each other/i.test(existing.name) ||
+            /website header/i.test(existing.name))
+        ) {
+          existing.name = cleanTitle;
+          touched = true;
+        }
         if (!existing.setLogo && page.setId) {
           const setRow = logoIndex?.sets.find((s) => s.id === page.setId);
           if (setRow?.logo) {
@@ -258,18 +286,18 @@ export function upsertOfficialSiteProducts(opts: {
             if (!existing.catalogueSetId && /^set(\d+)$/.test(page.setId)) {
               existing.catalogueSetId = page.setId.replace(/^set/, "");
             }
-            written += 1;
+            touched = true;
           }
         }
+        if (touched) written += 1;
         continue;
       }
 
-      if (existingCoversOfficialSku(index, page, kind)) {
+      if (existingCoversOfficialSku(index, page, kind, lang)) {
         skipped += 1;
         continue;
       }
 
-      const lang = "fr";
       const destDir = path.join(packSealedProductsDir(packId), productSlug, lang);
       mkdirSync(destDir, { recursive: true });
       const artFile = `art.${SOURCE}${safeExt}`;
@@ -279,8 +307,10 @@ export function upsertOfficialSiteProducts(opts: {
         ? logoIndex?.sets.find((s) => s.id === page.setId)
         : null;
       const name =
-        shot.alt?.trim() || page.title || productSlug.replace(/-/g, " ");
-      const preview = kind === "booster" || kind === "display";
+        page.title?.trim() ||
+        shot.alt?.trim() ||
+        productSlug.replace(/-/g, " ");
+      const preview = sealedKindIsOpaqueContents(kind);
       const contents = resolveSealedContents({
         kind,
         name,

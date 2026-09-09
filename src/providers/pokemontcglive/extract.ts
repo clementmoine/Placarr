@@ -56,7 +56,10 @@ async function runManifestDump(
   opts: {
     staging: string;
     contentBase: string;
+    contentDir: string;
+    version: string;
     langs: string[];
+    force?: boolean;
   },
 ): Promise<number> {
   const dirsManifest = path.join(
@@ -71,6 +74,38 @@ async function runManifestDump(
     return 1;
   }
   const outDir = path.join(opts.staging, "cdn-manifests");
+  const {
+    shouldReuseCdnManifestDump,
+    shouldResumeCdnManifestDump,
+    writeCdnManifestTargetMeta,
+  } = await import("@/providers/pokemontcglive/cdnManifestTarget");
+  const targetOpts = {
+    outDir,
+    version: opts.version,
+    contentDir: opts.contentDir,
+    contentBase: opts.contentBase,
+    langs: opts.langs,
+  };
+  if (!opts.force && shouldReuseCdnManifestDump(targetOpts)) {
+    console.log(
+      `  AssetManifests reuse (CDN target unchanged: ver=${opts.version} dir=${opts.contentDir})`,
+    );
+    return 0;
+  }
+  const resume =
+    !opts.force && shouldResumeCdnManifestDump(targetOpts);
+  if (resume) {
+    console.log(
+      `  AssetManifests resume (skip existing; ver=${opts.version} dir=${opts.contentDir})`,
+    );
+  }
+  writeCdnManifestTargetMeta(outDir, {
+    version: opts.version,
+    contentDir: opts.contentDir,
+    contentBase: opts.contentBase,
+    langs: opts.langs,
+    complete: false,
+  });
   const { dumpCdnManifests } = await import(
     "@/providers/pokemontcglive/dumpCdnManifest"
   );
@@ -80,9 +115,28 @@ async function runManifestDump(
     dirsManifest,
     locales: opts.langs.join(","),
     outDir,
+    skipExisting: resume,
   });
   console.log(JSON.stringify(result));
-  return result.ok || result.written > 0 ? 0 : 2;
+  if (result.failed.length === 0) {
+    writeCdnManifestTargetMeta(outDir, {
+      version: opts.version,
+      contentDir: opts.contentDir,
+      contentBase: opts.contentBase,
+      langs: opts.langs,
+      complete: true,
+    });
+    return 0;
+  }
+  // Keep complete:false so the next Sync resumes missing buckets only.
+  writeCdnManifestTargetMeta(outDir, {
+    version: opts.version,
+    contentDir: opts.contentDir,
+    contentBase: opts.contentBase,
+    langs: opts.langs,
+    complete: false,
+  });
+  return result.written > 0 || resume ? 0 : 2;
 }
 
 async function runExtract(
@@ -141,6 +195,8 @@ export type UpdateOpts = {
    * Off by default on a Live dump; admin extract passes `--products`.
    */
   skipProducts?: boolean;
+  /** Skip Coleka / TCGPlayer / pkmcards face harvest (auto catalogue pass). */
+  skipPaperFaces?: boolean;
   /** AbortSignal from CLI background-job cancel. */
   signal?: AbortSignal;
 };
@@ -195,7 +251,16 @@ export async function runUpdate(
     });
     malieReport = boot.report as unknown as Record<string, unknown>;
     malieIdentities = boot.identities;
-    console.log(JSON.stringify(boot.report, null, 2));
+    console.log(
+      `  Malie report: fetched=${boot.report.fetched}` +
+        ` skipped=${boot.report.skipped}` +
+        ` identities=${boot.report.identities}` +
+        ` stems=${boot.report.bundleStems}`,
+    );
+    const { yieldMalieEventLoop } = await import(
+      "@/providers/pokemontcglive/malie"
+    );
+    await yieldMalieEventLoop();
   }
 
   const catPath = path.join(staging, "cdn-catalogue-setnum.txt");
@@ -231,7 +296,13 @@ export async function runUpdate(
       path.join(repo, "data", "pokemon", "liveFoilMasks.json"),
     );
     liveCardsIndex = { ...liveCardsIndex, foilMasks };
-    console.log(JSON.stringify(liveCardsIndex, null, 2));
+    console.log(
+      `  indexed rows=${(liveCardsIndex as { rows?: number }).rows ?? identityRows.length}` +
+        ` foilMasks=${foilMasks.entries}`,
+    );
+    // Release identity object graphs before CDN catalogue / scrape allocate.
+    malieIdentities = [];
+    identityRows.length = 0;
   } else if (fs.existsSync(configCache)) {
     console.log("no card-database identities to index");
   }
@@ -292,6 +363,8 @@ export async function runUpdate(
       const code = await runManifestDump(repo, {
         staging,
         contentBase: target.content_base,
+        contentDir: target.content_dir,
+        version: target.version,
         langs: opts.langs,
       });
       if (code !== 0) {
@@ -299,6 +372,7 @@ export async function runUpdate(
       }
     }
     // Manifest dumps + dirs live under staging/ (post data-layout migrate).
+    console.log("── load CDN catalogue from AssetManifest dumps");
     catalogue = loadCdnCatalogue(staging, {
       langs: opts.langs,
       includeThumbnails: Boolean(opts.includeFoilT),
@@ -469,18 +543,23 @@ export async function runUpdate(
     );
   }
 
-  try {
-    const { runPokemonPaperFacesHarvest } = await import(
-      "@/providers/tcgdex/paperFacesHarvest"
-    );
-    const paper = await runPokemonPaperFacesHarvest({
-      force: Boolean((opts as { forcePaperFaces?: boolean }).forcePaperFaces),
-    });
-    (summary as { paperFaces?: unknown }).paperFaces = paper;
-  } catch (err) {
-    console.warn(
-      `[foil] paper faces skipped: ${err instanceof Error ? err.message : err}`,
-    );
+  if (opts.skipPaperFaces) {
+    console.log("── paper faces skipped");
+  } else {
+    try {
+      const { runPokemonPaperFacesHarvest } = await import(
+        "@/providers/tcgdex/paperFacesHarvest"
+      );
+      const paper = await runPokemonPaperFacesHarvest({
+        force: Boolean((opts as { forcePaperFaces?: boolean }).forcePaperFaces),
+        rebuildIndex: false,
+      });
+      (summary as { paperFaces?: unknown }).paperFaces = paper;
+    } catch (err) {
+      console.warn(
+        `[foil] paper faces skipped: ${err instanceof Error ? err.message : err}`,
+      );
+    }
   }
 
   try {
@@ -489,7 +568,9 @@ export async function runUpdate(
     if (faces.skipped) {
       console.warn("cards-index: skipped — no data/pokemon/cards yet");
     } else {
-      console.log(`cards-index: ${faces.cards} stems → ${faces.path}`);
+      console.log(
+        `cards-index: ${faces.cards} stems (${faces.named} nommées) → ${faces.path}`,
+      );
     }
     (summary as { cardsIndex?: unknown }).cardsIndex = faces;
   } catch (err) {
@@ -532,6 +613,7 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string } {
     skipStoreAudit: false,
     strictStoreAudit: false,
     skipProducts: true,
+    skipPaperFaces: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
@@ -564,6 +646,7 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string } {
     else if (a === "--strict-store-audit") out.strictStoreAudit = true;
     else if (a === "--products") out.skipProducts = false;
     else if (a === "--skip-products") out.skipProducts = true;
+    else if (a === "--skip-paper-faces") out.skipPaperFaces = true;
   }
   return out;
 }

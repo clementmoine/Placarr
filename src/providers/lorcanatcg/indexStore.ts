@@ -21,6 +21,7 @@ import {
 import { dataRoot } from "@/lib/runtimeData";
 import { parsePrintKey } from "@/core/identify/printKey";
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
+import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
 
 export const LORCANA_TCG_SCHEMA_VERSION = "2";
 
@@ -404,7 +405,7 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
   return { dbPath, printCount: input.prints.length };
 }
 
-/** Client-facing cards-index.json payload (filenames only + langs). */
+/** Client-facing cards-index.json — filenames + locale titles for catalogue browse. */
 export function exportLorcanaCardsIndexJson(
   dbPath = lorcanaTcgDbPath(),
 ): LorcanaCardsIndexJson | null {
@@ -420,10 +421,13 @@ export function exportLorcanaCardsIndexJson(
 
     const rows = db
       .prepare(
-        `SELECT print_key AS printKey, lang, art, thumb,
-                foil_mask AS foilMask, varnish_mask AS varnishMask,
-                second_varnish_mask AS secondVarnishMask
-         FROM print_assets`,
+        `SELECT a.print_key AS printKey, a.lang, a.art, a.thumb,
+                a.foil_mask AS foilMask, a.varnish_mask AS varnishMask,
+                a.second_varnish_mask AS secondVarnishMask,
+                t.full_name AS fullName, t.name AS characterName
+         FROM print_assets a
+         LEFT JOIN print_titles t
+           ON t.print_key = a.print_key AND t.lang = a.lang`,
       )
       .all() as Array<{
       printKey: string;
@@ -433,6 +437,8 @@ export function exportLorcanaCardsIndexJson(
       foilMask: string | null;
       varnishMask: string | null;
       secondVarnishMask: string | null;
+      fullName: string | null;
+      characterName: string | null;
     }>;
 
     const cards: CardsIndexV1["cards"] = {};
@@ -453,21 +459,38 @@ export function exportLorcanaCardsIndexJson(
       if (row.secondVarnishMask) {
         langFiles.secondVarnishMask = row.secondVarnishMask;
       }
+      const displayName = row.fullName?.trim() || row.characterName?.trim();
+      if (displayName) langFiles.name = displayName;
       const entry = cards[row.printKey] ?? {
         set: parsed.set,
         card: cardId,
         langs: {},
       };
       entry.langs[row.lang] = langFiles;
+      if (!entry.name && displayName && row.lang.toLowerCase() === "fr") {
+        entry.name = displayName;
+      }
       cards[row.printKey] = entry;
     }
-
-    return {
+    const index: CardsIndexV1 = {
       version: 1,
       pack: "lorcana",
       generatedAt,
       cards,
     };
+    // Art without a JOIN title still gets a sibling name + nameSource (not
+    // nameLocaleFrom — catalogue must show Lorcana tiles).
+    attachSiblingTitlesToCardsIndex(index);
+    for (const entry of Object.values(index.cards)) {
+      if (entry.name?.trim()) continue;
+      const fallback =
+        entry.langs.fr?.name?.trim() ||
+        entry.langs.en?.name?.trim() ||
+        Object.values(entry.langs).find((files) => files.name?.trim())?.name;
+      if (fallback) entry.name = fallback;
+    }
+
+    return index;
   } finally {
     db.close();
   }
@@ -716,6 +739,57 @@ export function collectorQueryClause(
               AND CAST(p.number AS INTEGER) = ?)`,
     params: [scope, Number(number)],
   };
+}
+
+/**
+ * Exact print + preferred-language title from the local catalogue.
+ *
+ * Lorcast-only fills live here and nowhere on remote LorcanaJSON — search and
+ * enrich must hit this before falling back to the network.
+ */
+export function lookupLorcanaTcgSearchRow(
+  printKey: string,
+  opts: { language?: string; dbPath?: string } = {},
+): LorcanaTcgSearchRow | null {
+  const key = printKey.trim();
+  if (!key) return null;
+  const dbPath = opts.dbPath ?? lorcanaTcgDbPath();
+  if (!existsSync(dbPath)) return null;
+  const db = new DatabaseSync(dbPath, { readOnly: true });
+  try {
+    const lang = (opts.language || "fr").toLowerCase();
+    const row = db
+      .prepare(
+        `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+                p.variant, p.promo_grouping AS promoGrouping,
+                p.provider_id AS providerId, p.cost,
+                p.artists_json AS artistsJson,
+                p.foil_types_json AS foilTypesJson,
+                p.varnish_type AS varnishType,
+                p.cardmarket_url AS cardmarketUrl,
+                p.foil_effect_colors_json AS foilEffectColorsJson,
+                p.lore, p.strength, p.willpower, p.inkwell,
+                p.set_card_count AS setCardCount,
+                t.lang, t.full_name AS fullName, t.name, t.version,
+                t.set_name AS setName, t.rarity, t.card_type AS cardType,
+                t.color, t.story, t.flavor_text AS flavorText,
+                t.subtypes_json AS subtypesJson, t.search_name AS searchName,
+                t.image_url AS imageUrl, t.thumbnail_url AS thumbnailUrl,
+                t.full_foil_url AS fullFoilUrl,
+                t.foil_mask_url AS foilMaskUrl,
+                t.varnish_mask_url AS varnishMaskUrl,
+                t.second_varnish_mask_url AS secondVarnishMaskUrl
+           FROM prints p
+           JOIN print_titles t ON t.print_key = p.print_key
+          WHERE p.print_key = ?
+          ORDER BY (t.lang = ?) DESC, t.lang ASC
+          LIMIT 1`,
+      )
+      .get(key, lang) as LorcanaTcgSearchRow | undefined;
+    return row ?? null;
+  } finally {
+    db.close();
+  }
 }
 
 export function searchLorcanaTcgRows(

@@ -10,10 +10,13 @@ import {
 } from "@/components/admin/FoilPlayroom";
 import {
   CorpusPanel,
-  RefreshAllCorporaButton,
   useCatalogueCorpora,
 } from "@/components/admin/CatalogueCorporaPanel";
-import { SegmentedControl } from "@/components/admin/SegmentedControl";
+import {
+  CatalogueNav,
+  catalogueTopTabValue,
+  type CatalogueTopTab,
+} from "@/components/admin/CatalogueNav";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import { getItems } from "@/lib/api/items";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,27 +26,12 @@ import {
   catalogueFranchiseForPack,
   cataloguePackForDataPack,
   resolveCataloguePackId,
-  type CatalogueFranchise,
   type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
 
-type TopTab =
-  | { kind: "franchise"; franchise: CatalogueFranchise }
-  | {
-      kind: "corpus";
-      providerId: string;
-      label: string;
-    };
-
-function topTabValue(tab: TopTab): string {
-  return tab.kind === "franchise"
-    ? `franchise:${tab.franchise.id}`
-    : `corpus:${tab.providerId}`;
-}
-
 /**
- * Admin Catalogue — franchise tabs, then product-line tabs when a franchise
- * has several (Dragon Ball Masters | Fusion World). Naruto is one Carddass line.
+ * Admin Catalogue — selecteurs + Logs/Sync, puis Cartes/Scellés au-dessus de
+ * la grille.
  *
  * `?pack=` is always the line / data pack id (or a non-pack corpus provider).
  * Mount only when the Catalogue tab is open — the foil grid spins WebGL canvases.
@@ -86,13 +74,13 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     [corpora],
   );
 
-  const topTabs = useMemo<TopTab[]>(
+  const topTabs = useMemo<CatalogueTopTab[]>(
     () => [
-      ...franchises.map((franchise): TopTab => ({
+      ...franchises.map((franchise): CatalogueTopTab => ({
         kind: "franchise",
         franchise,
       })),
-      ...otherCorpora.map((corpus): TopTab => ({
+      ...otherCorpora.map((corpus): CatalogueTopTab => ({
         kind: "corpus",
         providerId: corpus.providerId,
         label: corpus.label,
@@ -123,14 +111,14 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     : activeCorpus
       ? `corpus:${activeCorpus.providerId}`
       : topTabs[0]
-        ? topTabValue(topTabs[0])
+        ? catalogueTopTabValue(topTabs[0])
         : "";
 
   const selectPack = useCallback(
     (packId: string) => {
       const params = new URLSearchParams(searchParams.toString());
       applyCataloguePackParams(params, packId);
-      if (!params.get("tab")) params.set("tab", "tcg-effects");
+      if (!params.get("tab")) params.set("tab", "catalogue");
       router.replace(`/admin?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
@@ -179,59 +167,32 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     return [...fromCollection, ...fromCatalog];
   }, [catalog?.samples, items]);
 
-  const showLineTabs = (activeFranchise?.lines.length ?? 0) > 1;
-
-  const tabBar = (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {topTabs.length ? (
-          <SegmentedControl
-            value={activeTopValue}
-            onChange={selectTop}
-            options={topTabs.map((tab) => ({
-              value: topTabValue(tab),
-              label:
-                tab.kind === "franchise"
-                  ? fr
-                    ? tab.franchise.labelFr
-                    : tab.franchise.labelEn
-                  : tab.label,
-            }))}
-          />
-        ) : (
-          <span className="text-sm text-muted-foreground">
-            {corporaLoading
-              ? fr
-                ? "Chargement…"
-                : "Loading…"
-              : fr
-                ? "Aucun corpus"
-                : "No corpora"}
-          </span>
-        )}
-        <RefreshAllCorporaButton
-          busy={busy}
-          disabled={topTabs.length === 0}
-          onRefresh={refresh}
-        />
-      </div>
-      {showLineTabs && activeFranchise ? (
-        <SegmentedControl
-          value={activePackId ?? activeFranchise.lines[0]!.id}
-          onChange={selectPack}
-          options={activeFranchise.lines.map((line) => ({
-            value: line.id,
-            label: fr ? line.lineLabelFr : line.lineLabelEn,
-          }))}
-        />
-      ) : null}
-    </div>
+  const nav = topTabs.length ? (
+    <CatalogueNav
+      topTabs={topTabs}
+      topValue={activeTopValue}
+      onTopChange={selectTop}
+      lines={activeFranchise?.lines ?? []}
+      packId={activePackId}
+      onPackChange={selectPack}
+      locale={locale}
+    />
+  ) : (
+    <span className="text-sm text-muted-foreground">
+      {corporaLoading
+        ? fr
+          ? "Chargement…"
+          : "Loading…"
+        : fr
+          ? "Aucun corpus"
+          : "No corpora"}
+    </span>
   );
 
-  if (itemsLoading || catalogLoading) {
+  if (!activePackId && !activeCorpus && (itemsLoading || catalogLoading)) {
     return (
       <div className="space-y-4">
-        {tabBar}
+        {nav}
         <Skeleton className="h-12 w-full rounded-xl" />
         <Skeleton className="h-72 w-full rounded-xl" />
       </div>
@@ -240,16 +201,25 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
 
   return (
     <div className="space-y-4">
-      {tabBar}
       {activePackId ? (
         <FoilPlayroom
           samples={samples}
           packArts={catalog?.packArts}
           locale={locale}
+          chromeLeading={nav}
         />
       ) : activeCorpus ? (
-        <CorpusPanel corpus={activeCorpus} busy={busy} onRefresh={refresh} />
-      ) : null}
+        <>
+          {nav}
+          <CorpusPanel
+            corpus={activeCorpus}
+            busy={busy}
+            onRefresh={refresh}
+          />
+        </>
+      ) : (
+        nav
+      )}
     </div>
   );
 }

@@ -15,6 +15,17 @@ import {
 
 export const LORCANA_EFFECT_PACK_ID = "lorcana";
 export const LORCANA_CARD_BACK_URL = "/assets/lorcana/cards/back.webp";
+/**
+ * Opaque full-face foil plate — last-resort CSS coverage when an attested
+ * Lorcast fill has no greyscale art facsimile yet.
+ */
+export const LORCANA_FULL_FOIL_MASK_URL =
+  "/assets/lorcana/full_foil_mask.webp";
+
+/** Solid full-face plate only — hand-authored `mask.attested.webp` drives WebGL. */
+export function isLorcanaCssOnlyFoilMask(maskUrl: string): boolean {
+  return maskUrl === LORCANA_FULL_FOIL_MASK_URL;
+}
 
 export { faceQuarterTurnsForLorcanaPrint } from "./faceOrientation";
 
@@ -25,6 +36,8 @@ export const lorcanaEffectPack: EffectPackModule = {
   blurb: "CSS site + WebGL app",
   assetBase: "/assets/lorcana",
   cardBackUrl: LORCANA_CARD_BACK_URL,
+  fallbackFoilMaskUrl: LORCANA_FULL_FOIL_MASK_URL,
+  isCssOnlyFoilMask: isLorcanaCssOnlyFoilMask,
   resolveMaterial: (finish, varnish) => resolveMaterial(finish, varnish),
   resolveMaterialForPrint: (finish, varnish, opts) => {
     const name = resolveMaterialName(finish, varnish);

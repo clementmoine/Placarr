@@ -150,6 +150,23 @@ describe("toPrintCandidate finishes", () => {
     expect(toPrintCandidate(card({})).effectPack).toBe("lorcana");
   });
 
+  it("inherits the attested art-facsimile foil mask for Lorcast fill p2-36", () => {
+    // p2-36 has no RB mask; MotifMask = greyscale of its own art (not Lilo).
+    const candidate = toPrintCandidate(
+      card({
+        printKey: "lorcana:p2-36",
+        fullName: "Mickey Mouse - True Friend",
+        foilTypes: ["Glitter"],
+        foilMaskUrl: null,
+        language: "en",
+      }),
+    );
+    expect(candidate.foilMaskUrl).toBe(
+      "/assets/lorcana/cards/p2/en/36/mask.attested.webp",
+    );
+    expect(candidate.effectPack).toBe("lorcana");
+  });
+
   it("rotates Location prints a quarter turn (localised types)", () => {
     for (const cardType of ["Location", "Lieu", "Ort", "Luogo"]) {
       expect(toPrintCandidate(card({ cardType }))).toMatchObject({
@@ -279,5 +296,27 @@ describe("the finish vocabulary", () => {
       toPrintCandidate(card({ foilTypes: ["None", "Kaleidoscope"] }))
         .finishShaders,
     ).toEqual({});
+  });
+});
+
+describe("mapLorcanaMetadata collector facts", () => {
+  it("labels Extension + Numéro from the affirmed print (not a name twin)", () => {
+    const mapped = mapLorcanaMetadata(
+      card({
+        printKey: "lorcana:p2-36",
+        setCode: "P2",
+        setName: "Promo Set 2",
+        number: 36,
+        promoGrouping: "P2",
+        fullName: "Mickey Mouse - True Friend",
+        foilTypes: ["Glitter"],
+      }),
+    );
+    expect(mapped?.facts?.find((f) => f.label === "Extension")?.value).toBe(
+      "Promo Set 2",
+    );
+    expect(mapped?.facts?.find((f) => f.label === "Numéro")?.value).toBe(
+      "36/P2",
+    );
   });
 });

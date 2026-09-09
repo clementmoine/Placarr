@@ -18,7 +18,12 @@
  * la carte de référence, l'attestation suit au lieu de rester figée sur un nom
  * périmé.
  */
+import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
+
 import ledger from "./attestedFinishes.json";
+
+/** Greyscale art facsimile next to Lorcast art — MotifMask for attested fills. */
+export const ATTESTED_ART_MASK_FILE = "mask.attested.webp";
 
 /** Les trois axes qui composent une finition, pris ensemble. */
 export type AttestedFinish = {
@@ -26,6 +31,54 @@ export type AttestedFinish = {
   varnishType: string | null;
   foilEffectColors: string[] | null;
 };
+
+/**
+ * Print whose foil *mask* may be reused when this key has none.
+ *
+ * Attestations store a same-finish relation that, for observed cards, also
+ * shares the foil window (e.g. P2 gold star frame: `p2-36` ↔ `6-25-p2`).
+ * Finish type alone is not enough — Mickey `1-12` is the same character with
+ * a different frame and must not donate its mask.
+ *
+ * @deprecated Prefer {@link attestedNeedsFullFoilMask}: donor character masks
+ * misalign on a different art; attested fills use an art facsimile MotifMask.
+ */
+export function attestedFoilMaskDonor(
+  printKey: string | null | undefined,
+): string | null {
+  const key = printKey?.trim();
+  if (!key) return null;
+  const entry = ledger.entries.find((row) => row.printKey === key);
+  const donor = entry?.sameFinishAs?.trim();
+  return donor || null;
+}
+
+/**
+ * Attested Lorcast fills with a known finish but no per-print RB mask.
+ * They need a stand-in MotifMask — not another print's character window.
+ */
+export function attestedNeedsFullFoilMask(
+  printKey: string | null | undefined,
+): boolean {
+  return Boolean(attestedFoilMaskDonor(printKey));
+}
+
+/**
+ * URL for the greyscale art facsimile (`mask.attested.webp`).
+ *
+ * CardFoilGlitter samples MotifMask as a luminance field of the card face —
+ * a solid white plate breaks that; borrowing Lilo's window misaligns.
+ */
+export function attestedArtFoilMaskUrl(
+  printKey: string | null | undefined,
+  language: string | null | undefined,
+): string | null {
+  if (!attestedNeedsFullFoilMask(printKey) || !printKey) return null;
+  const lang = language?.trim() || "en";
+  const id = cardDiskIdFromPrintKey(printKey, lang);
+  if (!id) return null;
+  return assetsCardUrl("lorcana", id, ATTESTED_ART_MASK_FILE);
+}
 
 /** Une finition est vide quand aucun de ses trois axes n'est renseigné. */
 function isEmpty(finish: AttestedFinish): boolean {

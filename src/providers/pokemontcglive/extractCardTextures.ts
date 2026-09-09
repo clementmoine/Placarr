@@ -3,7 +3,14 @@
  * Mirrors ``extract_card_bundle`` texture path in ``unity/extract.py``.
  */
 
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import {
@@ -242,16 +249,104 @@ export async function extractCardBundleTextures(
 
 export const EXTRACT_SIDECAR = ".extract-manifest.json";
 
+export type ExtractSidecar = {
+  bundleMtime: number;
+  textureMode: string;
+  rows: MaterialManifestRow[];
+  /** CDN AssetManifest Hash128 recorded when faces were last written. */
+  bundleHash?: string;
+  /** Byte size of the UnityFS bundle at extract time. */
+  bundleSize?: number;
+};
+
 export function writeExtractSidecar(
   faceDir: string,
   bundleMtime: number,
   textureMode: string,
   rows: MaterialManifestRow[],
+  opts?: { bundleHash?: string | null; bundleSize?: number },
 ): void {
   mkdirSync(faceDir, { recursive: true });
+  const payload: ExtractSidecar = {
+    bundleMtime,
+    textureMode,
+    rows,
+    ...(opts?.bundleHash ? { bundleHash: opts.bundleHash } : {}),
+    ...(opts?.bundleSize != null && Number.isFinite(opts.bundleSize)
+      ? { bundleSize: opts.bundleSize }
+      : {}),
+  };
   writeFileSync(
     path.join(faceDir, EXTRACT_SIDECAR),
-    `${JSON.stringify({ bundleMtime, textureMode, rows }, null, 0)}\n`,
+    `${JSON.stringify(payload)}\n`,
     "utf8",
   );
+}
+
+export function readExtractSidecarMeta(faceDir: string): ExtractSidecar | null {
+  const dest = path.join(faceDir, EXTRACT_SIDECAR);
+  if (!existsSync(dest)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(dest, "utf8")) as Partial<ExtractSidecar>;
+    if (!Array.isArray(parsed.rows)) return null;
+    return {
+      bundleMtime: Number(parsed.bundleMtime) || 0,
+      textureMode: String(parsed.textureMode ?? ""),
+      rows: parsed.rows,
+      ...(parsed.bundleHash ? { bundleHash: String(parsed.bundleHash) } : {}),
+      ...(parsed.bundleSize != null && Number.isFinite(Number(parsed.bundleSize))
+        ? { bundleSize: Number(parsed.bundleSize) }
+        : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function readExtractSidecar(
+  faceDir: string,
+): MaterialManifestRow[] | null {
+  return readExtractSidecarMeta(faceDir)?.rows ?? null;
+}
+
+/**
+ * Whether on-disk faces still match the UnityFS bundle.
+ *
+ * Order of trust:
+ * 1. CDN AssetManifest Hash128 recorded on the sidecar (stable across
+ *    re-downloads of the same bytes).
+ * 2. Sidecar stamped for this exact bundle mtime — an extract may keep an
+ *    existing `art.webp` (`migratePngBeside`) without bumping its mtime, so
+ *    comparing art→bundle clocks alone falsely re-decodes tens of thousands
+ *    of cards on every Sync.
+ * 3. Art file newer than the bundle (legacy heuristic).
+ */
+export function isCardTextureExtractFresh(input: {
+  artPath: string;
+  bundleMtimeSec: number;
+  bundleSize: number;
+  textureMode: TextureMode;
+  sidecar: ExtractSidecar | null;
+  /** Current AssetManifest Hash128 for this stem, when known. */
+  bundleHash?: string | null;
+}): boolean {
+  if (input.textureMode === "none") return false;
+  if (!existsSync(input.artPath)) return false;
+  const hash = input.bundleHash?.trim() || null;
+  if (hash && input.sidecar?.bundleHash === hash) return true;
+  if (
+    input.sidecar?.rows?.length &&
+    Number.isFinite(input.sidecar.bundleMtime) &&
+    Math.abs(input.sidecar.bundleMtime - input.bundleMtimeSec) < 0.01
+  ) {
+    return true;
+  }
+  try {
+    if (statSync(input.artPath).mtimeMs / 1000 >= input.bundleMtimeSec) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }

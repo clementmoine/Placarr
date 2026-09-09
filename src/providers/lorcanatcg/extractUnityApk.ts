@@ -17,6 +17,8 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { foilPackDir, packCardsDir } from "@/providers/shared/foilPaths";
+
 const UNITY_BUNDLE_NAMES = ["data.unity3d", "datapack.unity3d"] as const;
 
 export function resolveUnityDataFile(dataDir: string): string {
@@ -42,6 +44,55 @@ function apkHasUnityData(apkPath: string): boolean {
   } catch {
     return false;
   }
+}
+
+function listApkFiles(apkDir: string): string[] {
+  if (!existsSync(apkDir)) return [];
+  return readdirSync(apkDir)
+    .filter((name) => name.toLowerCase().endsWith(".apk"))
+    .map((name) => path.join(apkDir, name))
+    .filter((file) => statSync(file).isFile());
+}
+
+function listRegularFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .map((name) => path.join(dir, name))
+    .filter((file) => {
+      try {
+        return statSync(file).isFile();
+      } catch {
+        return false;
+      }
+    });
+}
+
+/** Foil dump already on disk and not older than staging APKs — skip unzip + Unity. */
+export function lorcanaUnityArtifactsFresh(repo: string): boolean {
+  const foilDir = foilPackDir(repo, "lorcana");
+  const manifest = path.join(foilDir, "manifest.json");
+  const back = path.join(packCardsDir(repo, "lorcana"), "back.webp");
+  const shaders = listRegularFiles(path.join(foilDir, "shaders"));
+  const textures = listRegularFiles(path.join(foilDir, "textures"));
+  if (!existsSync(manifest) || !existsSync(back)) return false;
+  if (!shaders.length || !textures.length) return false;
+  const apks = listApkFiles(path.join(repo, "data/lorcana/staging/apks"));
+  if (!apks.length) return false;
+  const newestApk = Math.max(...apks.map((file) => statSync(file).mtimeMs));
+  const oldestOut = Math.min(
+    statSync(manifest).mtimeMs,
+    statSync(back).mtimeMs,
+    ...shaders.map((file) => statSync(file).mtimeMs),
+    ...textures.map((file) => statSync(file).mtimeMs),
+  );
+  return oldestOut >= newestApk;
+}
+
+function persistNewerThanApks(persistDir: string, apkPaths: string[]): boolean {
+  const bundle = path.join(persistDir, "data.unity3d");
+  if (!existsSync(bundle) || !apkPaths.length) return false;
+  const persistMtime = statSync(bundle).mtimeMs;
+  return apkPaths.every((file) => persistMtime >= statSync(file).mtimeMs);
 }
 
 export function listUnityApks(apkDir: string): string[] {
@@ -130,6 +181,10 @@ export function resolveLorcanaUnityDataDir(opts: {
       existsSync(parent) && listUnityApks(parent).length > 1
         ? listUnityApks(parent)
         : [apk];
+    if (existsSync(persist) && persistNewerThanApks(persist, inputs)) {
+      console.log("  reuse staging/unity-data (newer than APKs)");
+      return persist;
+    }
     return mergeApksToUnityData(inputs, persist);
   }
 
@@ -140,6 +195,10 @@ export function resolveLorcanaUnityDataDir(opts: {
   const defaultApks = path.join(opts.repo, "data/lorcana/staging/apks");
   if (existsSync(defaultApks)) {
     const inputs = listUnityApks(defaultApks);
+    if (existsSync(persist) && persistNewerThanApks(persist, inputs)) {
+      console.log("  reuse staging/unity-data (newer than APKs)");
+      return persist;
+    }
     return mergeApksToUnityData(inputs, persist);
   }
 

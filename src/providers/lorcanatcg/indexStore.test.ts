@@ -120,10 +120,62 @@ describe("lorcanatcg indexStore", () => {
     expect(json?.cards["lorcana:1-1"]).toEqual({
       set: "1",
       card: "1",
+      name: "Ariel - Sur ses jambes",
       langs: {
-        fr: { art: "art.jpg", mask: "mask.jpg" },
-        en: { art: "art.jpg" },
+        fr: {
+          art: "art.jpg",
+          mask: "mask.jpg",
+          name: "Ariel - Sur ses jambes",
+        },
+        en: { art: "art.jpg", name: "Ariel - On Human Legs" },
       },
+    });
+  });
+
+  it("attaches sibling titles with nameSource when a lang has art but no title", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "lorcanatcg-sib-"));
+    dirs.push(dir);
+    const dbPath = path.join(dir, "catalog.sqlite");
+
+    writeLorcanaTcgIndex({
+      dbPath,
+      languages: ["fr", "de"],
+      prints: [
+        {
+          printKey: "lorcana:1-9",
+          setCode: "1",
+          number: "9",
+        },
+      ],
+      titles: [
+        {
+          printKey: "lorcana:1-9",
+          lang: "fr",
+          fullName: "Mickey - Brave Petit Tailleur",
+        },
+      ],
+      assets: [
+        {
+          printKey: "lorcana:1-9",
+          lang: "fr",
+          art: "art.fr.jpg",
+        },
+        {
+          printKey: "lorcana:1-9",
+          lang: "de",
+          art: "art.de.jpg",
+        },
+      ],
+    });
+
+    const json = exportLorcanaCardsIndexJson(dbPath);
+    expect(json?.cards["lorcana:1-9"]?.langs.fr?.name).toBe(
+      "Mickey - Brave Petit Tailleur",
+    );
+    expect(json?.cards["lorcana:1-9"]?.langs.de).toEqual({
+      art: "art.de.jpg",
+      name: "Mickey - Brave Petit Tailleur",
+      nameSource: "fr",
     });
   });
 });

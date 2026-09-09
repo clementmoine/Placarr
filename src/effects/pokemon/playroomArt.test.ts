@@ -14,16 +14,26 @@ import {
 } from "./playroomArt";
 
 describe("playroomArtForMaterial", () => {
-  it("covers every dumped foil leaf with a face URL", () => {
-    expect(playroomSeedFoilNames()).toEqual([...POKEMON_FOIL_NAMES]);
+  it("covers every foiled leaf with a face URL (NonFoil stays data-only)", () => {
+    expect(playroomSeedFoilNames()).not.toContain("NonFoil");
+    expect(playroomSeedFoilNames()).toEqual(
+      POKEMON_FOIL_NAMES.filter((n) => n !== "NonFoil"),
+    );
 
-    for (const name of POKEMON_FOIL_NAMES) {
+    for (const name of playroomSeedFoilNames()) {
       const art = playroomArtForMaterial(name);
       expect(art?.imageUrl).toMatch(
         /^(https:\/\/assets\.tcgdex\.net\/.+|\/assets\/pokemon\/cards\/.+)\.(png|webp)$/,
       );
       expect(art?.label).toBeTruthy();
     }
+  });
+
+  it("still resolves NonFoil art when asked by name", () => {
+    const art = playroomArtForMaterial("NonFoil");
+    expect(art?.imageUrl).toMatch(
+      /^(https:\/\/assets\.tcgdex\.net\/.+|\/assets\/pokemon\/cards\/.+)\.(png|webp)$/,
+    );
   });
 
   it("caption names the dumped face (never a mismatched seed fantasy)", () => {
@@ -143,6 +153,15 @@ describe("listPlayroomArtsForMaterial", () => {
     expect(many[0]?.bundleId).toBe(one?.bundleId);
     expect(many[0]?.imageUrl).toBe(one?.imageUrl);
     expect(many.length).toBeGreaterThan(1);
+  });
+
+  it("sheet aliases reuse parent-frag Live dumps (Rainbow02 → Rainbow)", () => {
+    const arts = listPlayroomArtsForMaterial("Rainbow02", 2);
+    expect(arts.length).toBeGreaterThan(0);
+    expect(arts[0]?.bundleId).toBeTruthy();
+    expect(arts[0]?.imageUrl).toMatch(/\/assets\/pokemon\/cards\//);
+    // Reverse Rainbow dumps usually have wp mask, rarely etch.
+    expect(arts[0]?.maskUrl || arts[0]?.varnishMaskUrl).toBeTruthy();
   });
 
   it("listDumpedBundlesForShader prefers the seed then FR", () => {

@@ -12,6 +12,7 @@ import { bundlesForShader, variantsForBundle } from "./cardFoilLookups";
 import {
   foilManifestToShader,
   foilSheetAliasName,
+  listPokemonEffectFoilNames,
   listPokemonFoilNames,
   type PokemonPaperFoilName,
 } from "./foilNames";
@@ -27,6 +28,7 @@ import {
   formatPlayroomFaceCaption,
   pickLiveCardDisplayName,
 } from "./liveSetDisplay";
+import { simeyAnchorForLeaf } from "./simeyDemoAnchors";
 
 const LANG = "fr";
 
@@ -206,12 +208,22 @@ type BundlePick = {
 };
 
 function seedFor(shader: string): Seed {
+  const frag = inventoryFragStem(shader);
   return (
-    FOIL_SEED_OVERRIDES[shader] ?? {
+    FOIL_SEED_OVERRIDES[shader] ??
+    FOIL_SEED_OVERRIDES[frag] ?? {
       imageBase: "https://assets.tcgdex.net/fr/swsh/swsh1/1",
       label: shader,
     }
   );
+}
+
+/**
+ * Sheet aliases (`Rainbow02`, `FlatSilver_CC`, …) share the parent `.frag`
+ * inventory — dumps are keyed as `Rainbow` / `FlatSilver`, not the MAT name.
+ */
+function inventoryFragStem(shader: string): string {
+  return foilManifestToShader(shader) ?? shader;
 }
 
 /** How many Live faces the focus/compare bench stacks per material. */
@@ -224,6 +236,8 @@ export type PlayroomArt = {
   secondVarnishMaskUrl?: string | null;
   foilMask?: string | null;
   bundleId?: string | null;
+  /** Live variant (`std` / `ph` / …) for Malie layer URL pairing. */
+  variant?: string | null;
   label?: string | null;
   faceQuarterTurns?: 0 | 1 | 2 | 3;
   /** Simey `--card-glow` for Radiant (type colour). */
@@ -257,12 +271,13 @@ function pickFromLookup(
   bundleId: string,
   shader: PokemonPaperFoilName,
 ): BundlePick | null {
+  const want = inventoryFragStem(shader);
   const candidates: BundlePick[] = [];
   for (const variant of variantsForBundle(bundleId)) {
     const mapped =
       foilManifestToShader(variant.shader) ||
       foilManifestToShader(variant.foil);
-    if (mapped !== shader) continue;
+    if (mapped !== want) continue;
     candidates.push({
       bundleId,
       variant: variant.variant,
@@ -323,6 +338,7 @@ export function listDumpedBundlesForShader(
     const out: BundlePick[] = [];
     const seenBundle = new Set<string>();
     const seenSet = new Set<string>();
+    const frag = inventoryFragStem(shader);
 
     const push = (pick: BundlePick) => {
       if (seenBundle.has(pick.bundleId)) return;
@@ -337,13 +353,16 @@ export function listDumpedBundlesForShader(
     // Confirmed owned in Live → prefer for 1:1 playroom ↔ MuMu compare.
     // Order: FOIL_SEED hero (if owned), other Pokémon faces, then energy `ec_*`.
     const preferred = seedFor(shader).bundleId;
-    const owned = ownedBundlesForShader(shader);
+    const owned = [
+      ...ownedBundlesForShader(shader),
+      ...(frag !== shader ? ownedBundlesForShader(frag) : []),
+    ];
     const ownedRank = (id: string) => {
       if (preferred && id === preferred) return 0;
       if (/^ec_/i.test(id)) return 2;
       return 1;
     };
-    const ownedOrdered = [...owned].sort(
+    const ownedOrdered = [...new Set(owned)].sort(
       (a, b) => ownedRank(a) - ownedRank(b) || a.localeCompare(b),
     );
     for (const bundleId of ownedOrdered) {
@@ -364,12 +383,12 @@ export function listDumpedBundlesForShader(
       the whole dump to the browser. SQLite already returns FR first and `ph`
       before `std`, which is the order this loop used to impose by hand.
     */
-    for (const row of bundlesForShader(shader)) {
+    for (const row of bundlesForShader(frag)) {
       if (seenBundle.has(row.bundleId)) continue;
       const mapped =
         foilManifestToShader(row.variant.shader) ||
         foilManifestToShader(row.variant.foil);
-      if (mapped !== shader) continue;
+      if (mapped !== frag) continue;
       push({
         bundleId: row.bundleId,
         variant: row.variant.variant,
@@ -451,6 +470,7 @@ function artFromDump(
       liveRow?.foilMask ??
       null,
     bundleId: dumped?.bundleId ?? null,
+    variant: dumped?.variant ?? null,
     label,
     liveOwned,
     ...(faceQuarterTurns ? { faceQuarterTurns } : {}),
@@ -459,8 +479,56 @@ function artFromDump(
 }
 
 /**
- * Several Live faces for one material — seed first, then other sets — so the
- * playroom can check the look is generic (not tuned to a single print).
+ * Any dumped variant for a bundle — ignores Live shader match.
+ * Used for Simey demo anchors whose Unity leaf may differ from our CSS leaf.
+ */
+function pickAnyVariantForBundle(bundleId: string): BundlePick | null {
+  const variants = variantsForBundle(bundleId);
+  if (variants.length === 0) return null;
+  const ranked = [...variants].sort((a, b) => {
+    const score = (v: (typeof variants)[number]) => {
+      let s = 0;
+      if (v.variant === "std") s += 2;
+      if (v.etchTex) s += 1;
+      if (v.maskTex) s += 1;
+      return -s;
+    };
+    return score(a) - score(b);
+  });
+  const v = ranked[0]!;
+  return {
+    bundleId,
+    variant: v.variant,
+    maskTex: v.maskTex,
+    cardTex: v.cardTex,
+    etchTex: v.etchTex,
+    coldFoilTex: v.coldFoilTex,
+  };
+}
+
+function artFromSimeyAnchor(
+  shader: PokemonPaperFoilName,
+  materialName: string,
+): PlayroomArt | null {
+  const anchor = simeyAnchorForLeaf(materialName) ?? simeyAnchorForLeaf(shader);
+  if (!anchor) return null;
+  const dumped = pickAnyVariantForBundle(anchor.bundleId);
+  if (!dumped) return null;
+  const art = artFromDump(shader, dumped);
+  return {
+    ...art,
+    label: `${anchor.name} · Simey ${anchor.stem} (${anchor.rarity})`,
+    // Keep glow only when the seed for this leaf is the same print.
+    cardGlow:
+      seedFor(shader).bundleId === anchor.bundleId
+        ? seedFor(shader).cardGlow
+        : null,
+  };
+}
+
+/**
+ * Several Live faces for one material — seed first, then **Simey demo print**
+ * (same art as poke-holo / poke-151), then other sets.
  */
 export function listPlayroomArtsForMaterial(
   name: string,
@@ -468,19 +536,42 @@ export function listPlayroomArtsForMaterial(
 ): PlayroomArt[] {
   const shader = resolveShaderName(name);
   if (!shader) return [];
-  const dumps = listDumpedBundlesForShader(shader, limit);
+  const dumps = listDumpedBundlesForShader(shader, Math.max(limit, 4));
+  const arts: PlayroomArt[] = [];
   if (dumps.length === 0) {
-    // Cold-start: TCGdex seed only.
-    return [artFromDump(shader, null)];
+    arts.push(artFromDump(shader, null));
+  } else {
+    for (const dumped of dumps) arts.push(artFromDump(shader, dumped));
   }
-  return dumps.map((dumped) => artFromDump(shader, dumped));
+
+  const simeyArt = artFromSimeyAnchor(shader, name);
+  if (simeyArt?.bundleId && limit >= 2 && arts.length > 0) {
+    const hero = arts[0]!;
+    const rest = arts
+      .slice(1)
+      .filter((a) => a.bundleId && a.bundleId !== simeyArt.bundleId);
+    if (hero.bundleId === simeyArt.bundleId) {
+      // Simey exemplar already the hero — keep order, retag label for QA.
+      arts.length = 0;
+      arts.push({ ...hero, label: simeyArt.label }, ...rest);
+    } else {
+      arts.length = 0;
+      arts.push(
+        hero,
+        simeyArt,
+        ...rest.filter((a) => a.bundleId !== hero.bundleId),
+      );
+    }
+  }
+
+  return arts.slice(0, limit);
 }
 
 export function playroomArtForMaterial(name: string): PlayroomArt | null {
   return listPlayroomArtsForMaterial(name, 1)[0] ?? null;
 }
 
-/** Discovered foil leaves (dump) — used by tests / playroom seed lists. */
+/** Foiled leaves for playroom / inventory seeds (excludes NonFoil). */
 export function playroomSeedFoilNames(): PokemonPaperFoilName[] {
-  return listPokemonFoilNames();
+  return listPokemonEffectFoilNames();
 }

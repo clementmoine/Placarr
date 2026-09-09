@@ -109,3 +109,20 @@ export function sharedCardBackSkeletonUrl(
   if (candidate.scope === "print") return null;
   return candidate.url;
 }
+
+/**
+ * Pack/set back for a loading tile — never the print alt face.
+ *
+ * `resolveDefaultCardBack` prefers print > set > pack (correct for flip UI).
+ * Feeding that into {@link sharedCardBackSkeletonUrl} returns null whenever a
+ * print back exists, so the shelf grid showed no placeholder on those cards.
+ * Skeleton only needs the shared catalogue back.
+ */
+export function resolveSharedCardBackSkeleton(
+  opts: Parameters<typeof resolveCardBackCandidates>[0],
+): string | null {
+  const shared = resolveCardBackCandidates(opts).filter(
+    (c) => c.scope !== "print",
+  );
+  return sharedCardBackSkeletonUrl(pickDefaultCardBack(shared));
+}

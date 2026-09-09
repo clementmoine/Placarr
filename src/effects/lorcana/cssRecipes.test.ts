@@ -36,13 +36,13 @@ describe("resolveCssRecipe", () => {
     },
   );
 
-  it("falls back to pack silver for an unknown foil finish", () => {
-    // Same behaviour as the old core default — owned by the Lorcana pack now.
+  it("falls back to house flare for an unknown foil finish", () => {
+    // Owned by the Lorcana pack — same honesty model as Pokémon (`flare`).
     expect(resolveCssRecipe("Kaleidoscope", null)).toEqual({
       finishShaderId: DEFAULT_FINISH_CSS_ID,
       varnishShaderId: null,
     });
-    expect(DEFAULT_FINISH_CSS_ID).toBe("silver");
+    expect(DEFAULT_FINISH_CSS_ID).toBe("flare");
     expect(isCssFinishFallbackOnly("Kaleidoscope")).toBe(true);
   });
 

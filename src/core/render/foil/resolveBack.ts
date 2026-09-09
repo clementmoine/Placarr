@@ -9,6 +9,7 @@ export {
   pickDefaultCardBack,
   rankCardBacks,
   resolveCardBackCandidates,
+  resolveSharedCardBackSkeleton,
   sharedCardBackSkeletonUrl,
 } from "./cardBacks";
 

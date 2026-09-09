@@ -1,292 +1,195 @@
-# Foil CSS — Pokémon : Live leaf ↔ CSS
+# Foil CSS — Pokémon : Simey choreography × Live paint
 
-Contrat commun CSS+WebGL (les deux packs) : [foil_effects.md](foil_effects.md).
+Contrat commun CSS+WebGL : [foil_effects.md](foil_effects.md).
 
-Dernière passe 2026-08-13 (simey sous `data/pokemon/staging/simey/`, refresh
-via `syncSimeyCss.ts` — plus de `third_party/`).
+Dernière passe 2026-09-06 — staging simey via `syncSimeyCss.ts`.
 
-**Règle.** Placarr = **GPL-3.0-or-later**. Arbres simey = dump staging
-(`data/pokemon/staging/simey/{poke-holo,poke-151}/`) pour **lire** leurs
-recettes — on n’en dépend pas au runtime et on ne force pas leur stack sur
-un leaf Live divergent. Assets Pokémon officiels hors arbre. Volatile :
-re-vérifier HEAD upstream à chaque refresh (comme un extract).
-
-**Fidélité Pokémon.** WebGL = Live GLES3. CSS = **même intention visuelle**
-que le compare Unity, avec les **plaques Live multi-locale** (FR/DE/…).
-Simey / [photo-cards](https://github.com/kronenz/photo-cards) / ShaderKit =
-outils d’**analyse** (quels mixes, quelles promos→`style`+`etch`) — pas la
-source de vérité. Exemple : Simey `secret-rare` / SWSH145 ≈ Live **`SwSecret`**,
-pas `SvUltraGoldRainbow` — coller secret-rare sur Ultra Gold a divergé.
+**Règle licence.** Placarr = GPL-3.0-or-later. Arbres simey =
+`data/pokemon/staging/simey/{poke-holo,poke-151}/` pour **lire** recettes —
+pas de dépendance runtime, pas de rasters EN upstream.
 
 ---
 
-## 0. Verdict (lire d’abord)
+## 0. Contrat (lire d’abord)
 
-1. **Unity / Live : tous les finishes dumpés ont une recette CSS.**  
-   23 `.frag` foiled + `NonFoil` = `POKEMON_FOIL_NAMES`.  
-   27 feuilles matériaux = ces 24 + alias `FlatSilver_CC`, `Rainbow02`,
-   `SwSecreT02`. Chaque feuille foiled a une entrée `LIVE_FINISH_CSS`.
-2. **Pas de bijection Simey ↔ Unity.** Simey = rareté catalogue ; Live =
-   matériau shader. Les IDs `holoShadersSimey` sont des **noms historiques**
-   de looks CSS, pas un contrat « maximiser Simey ».
-3. **Leafs sans analogue utile** (Sun*, Thatch, Tinsel, Squares, Stamped,
-   Confetti, SolidColor) = textures extract / house.
+Comme **Lorcana Web CSS** : on porte une adaptation CSS amont, on ne
+réinvente pas. Différence critique — **Simey est EN** ; Placarr est
+**multilingue**.
 
-### Schéma d’adaptation
+| Couche | Source | Interdit |
+| ------ | ------ | -------- |
+| **Compositing** (ordre shine / `:after` / `:before`, mixes, glare, pointer `adjust`) | Simey poke-holo / poke-151 (staging) | Inventer un leaf sans amont Simey |
+| **Face** carte | Dump Live locale du print (FR/DE/…) | CDN `poke-holo.simey.me` / foils EN |
+| **Masks / etch** (`--foil-etch`, white-plate) | Live `_CardEtch`, `_CardWhitePlateMask`, … **même locale** | Scans foil EN Simey en runtime |
+| **FX partagés** (spectrum, noise) | `data/pokemon/foil/textures` (extract Live) | CDN Simey pour art locale |
+| **Glitter / grain partagés** | vendored `simey_glitter`, `simey_grain` | inventer / dimmer Live noise |
+| **Cosmos stack** | vendored `simey_cosmos-{bottom,middle-trans,top-trans}` | scans foil EN par carte |
+| **Motifs finish** (illusion, pokeball, iri, …) | vendored `simey_*` (syncSimeyCss) | CDN Simey en runtime |
+| **Pas d’amont Simey** | house **`flare`** | « CSS Live-fidèle » inventé |
+
+**Intégration = matériaux d’abord.** Les recettes staging restent la cible.
+On ne fork pas les blends pour « corriger » un paint Live brut — on
+**projette** Live/Malie vers l’espace d’entrée Simey (`--foil` clair/noir,
+mask alpha). Glitter / grain / cosmos stack = textures Simey vendored
+(`simey_*`). Motifs finish 151/holo aussi sur disque. Checklist code :
+`simeyPaintContract.ts`.
+
+**Polarité etch.** Live `_CardEtch` ≈ traits sombres sur clair ; Simey
+`--foil` ≈ clair sur noir. `useInvertedPaintBlob` = premier adaptateur ;
+généraliser (contraste foil) avant de retirer les forks CSS.
 
 ```
-┌─────────────────┐     plaques + intention frag (spectrum, shine, etch,
-│  Live / Unity   │     cold-foil, wp, glitter…)  →  compare = vérité
-│  dump + .frag   │ ──────────────────────────────────────────► CSS HoloShader
-└────────┬────────┘
-         │ besoin d’idées de stack / mix / promo mapping
-         ▼
-┌─────────────────┐     analyse seulement (pas de dépendance runtime)
-│  Simey / forks  │     photo-cards style+etch, ShaderKit parity notes…
-│  ShaderKit…     │
-└────────┬────────┘
-         │ trou (pas de plaque CSS-équivalent)
-         ▼
-┌─────────────────┐     inspiration (bandes, exclusion, scrollY, dosage)
-│  WebGL / house  │     — reproduire l’intention, pas porter le frag
-└─────────────────┘
-```
+┌──────────────────────┐
+│ Simey staging CSS    │  compositing only (mixes, layers, pointer ranges)
+└──────────┬───────────┘
+           │ adapt → HoloShader + HoloCardImage
+           ▼
+┌──────────────────────┐
+│ Live dump multi-loc  │  face + etch + wp + shared FX (/assets/pokemon/…)
+└──────────────────────┘
+           │
+           ▼
+     CSS produit (ou flare si pas d’amont Simey)
 
-**Priorité :** (1) Live/Unity → (2) analyse Simey/forks si utile → (3) trou
-comblé à la WebGL/house. Compare playroom = Unity | CSS, **plusieurs faces**
-par effet (généricité).
+WebGL = chemin séparé (frags Live) — pas cette doc.
+```
 
 ---
 
-## 1. Couverture Unity → CSS
+## 0b. Compositing Simey → Placarr
 
-| Leaf `.frag` / sheet                           | CSS Placarr                                | Note                                                                           |
-| ---------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
-| `RadiantHolo`                                  | `radiantHolo` (+ coat / sparkle)           | Live etch invert + lattice                                                     |
-| `SwSecret` / `SwSecreT02`                      | `swSecret` (+ etch)                        | Spectrum + noise + etch brut                                                   |
-| `Rainbow`                                      | `rainbowFoil`                              | Live Spectrum_Rainbow                                                          |
-| `Rainbow02`                                    | `rainbow02`                                | Spectrum + Highlight_Over                                                      |
-| `Cosmos`                                       | `cosmos`                                   | carve dots                                                                     |
-| `Galaxy`                                       | `galaxy`                                   | carve stars                                                                    |
-| `CrackedIce`                                   | `crackedIce`                               | carve ice                                                                      |
-| `FlatSilver`                                   | `flatSilver` (+ Cc / CcMb via `foil_mask`) | laminate Poké / Master Ball                                                    |
-| `FlatSilver_CC`                                | `flatSilverCc` (+ MB override)             | carve Poké Ball                                                                |
-| `SvUltraGoldRainbow`                           | `ultraGoldRainbow` (+ coat / etch)         | exclusion + dodge + etch                                                       |
-| `SvUltraScodix`                                | `ultraScodix` (+ etch Ultra Gold)          |                                                                                |
-| `SvUltra`                                      | `svUltra`                                  |                                                                                |
-| `SvHolo`                                       | `svHolo`                                   |                                                                                |
-| `SwHolo`                                       | `swHolo`                                   |                                                                                |
-| `AceFoil`                                      | `aceFoil`                                  |                                                                                |
-| `AngledPillars`                                | `angledPillars`                            |                                                                                |
-| `SunPillar`                                    | `sunPillar` → coat → glitter (+ Cc)        | poke-151 `ex-regular` stack; Live hues / CC glitter = Northern Cross × SVHolo2 |
-| `SunBeam` / `SunLava`                          | `sunBeam` / `sunLava`                      |                                                                                |
-| `SolidColor` / `Squares` / `Thatch` / `Tinsel` | APK ids                                    |                                                                                |
-| `Stamped` / `25thConfetti`                     | `stamped` / `confetti25th`                 |                                                                                |
-| `NonFoil`                                      | plain                                      | —                                                                              |
-| Catalogue `holo` / `reverse`                   | `regularHolo` / `reverseHolo`              | catalogue                                                                      |
-| Catalogue extras                               | Pokemon / catalogue ids                    | —                                                                              |
+Simey (DOM) :
 
-## 2. Checklist — adapter **tous** les effets CSS
+```
+.card
+  art
+  .card__shine          ← motif / foil paint   (→ HoloShader finish)
+    :after              ← coat / 2e pass       (→ overlay)
+    :before             ← glitter / 3e         (→ overlay.overlay)
+  .card__glare          ← spot pointeur        (→ glare layer)
+  .card__glare2         ← wash foil (option)   (→ glare2)
+```
 
-Leçons Radiant + Ultra Gold (2026-08-07), à rejouer sur chaque finish
-(`/admin?tab=tcg-effects&pack=pokemon&view=compare&material=…`).
+Placarr (`HoloCardImage`) :
 
-### Contrat (schéma §0)
+1. Art = face Live (ou seed playroom), locale du bundle.
+2. Chaîne `shader.overlay` (max 4) = shine → :after → :before.
+3. `--foil-etch` = etch Live (évent. inverted) — rôle de Simey `var(--foil)`.
+4. Mask shine = white-plate Live, ou etch invert (Radiant), ou full-card.
+5. `pointerCss` = mêmes compressions motif que poke-151 (`37–63` / `33–67`).
 
-- [ ] **Cible** = rendu Unity du leaf (playroom compare), pas un fichier Simey.
-- [ ] **Plaques** = dumps Live multi-locale uniquement (pas CDN simey EN).
-- [ ] Simey / forks = **lecture** (mixes, promo→style) si ça aide — jamais
-      forcer une stack upstream sur un leaf dont les plates divergent.
-- [ ] Trou (layer Live sans équivalent CSS) → plaque Live + adapt (invert, μ,
-      split mask) ; si toujours pas → **inspiration WebGL/house**.
-- [ ] WebGL reste le frag Live ; CSS ne prétend pas échantillonner un
-      champ RG (`_CrossTexture`, etc.) — motifs CSS ou plaques dessinables.
-- [ ] Compare **plusieurs faces** du même leaf (sets différents) — pas une
-      seule seed « magique ».
+**Checklist par look Simey porté :**
 
-### Idle ↔ hover (`pointerCss` / `HoloCardImage`)
+- [ ] Recette lue dans staging (pas inventée).
+- [ ] Aucune URL `simey.me` / foil EN dans le `HoloShader`.
+- [ ] Face + etch + wp = dump locale (playroom : plusieurs faces / leaf).
+- [ ] FX = `/assets/pokemon/textures/…` (Live) + `simey_{glitter,grain,cosmos-*}` partagés.
+- [ ] Ordre / blends = Simey sauf contrainte plaque Live (doc Radiant / Ultra…).
+- [ ] Idle + hover = même stack, dose glare seule change.
 
-- [ ] **Même stack** au repos et sous le pointeur (mêmes couches, mêmes
-      mixes). Seule la **dose** change (glare idle ≈0.12–0.30, pointeur ≈0.66).
-- [ ] Motifs + spot suivent le **lean** aussi en idle (pas de spot figé à
-      50 % / glare forcé à 0 — sinon hover = autre recette).
-- [ ] Ne **jamais** gater un motif `background-blend` sur `--opacity`
-      (idle/spring → couche morte). Glare = `.card__glare` + `--opacity` only.
+---
 
-### Masques & plaques
+## 1. Couverture Live leaf → CSS (inventaire Simey)
 
-- [ ] Mesurer polarité / μ (etch Live vs autres plates) ;
-      adapter (invert, grayscale + brightness) **avant** le blend.
-- [ ] Mask = **couverture** (où le foil a le droit d’exister), pas le motif.
-      Si le mask Live n’a pas le pattern baké (ex. etch sans losanges), ne
-      pas le mettre sur la couche qui _est_ le pattern.
-- [ ] **Split mask par couche** OK (Radiant: lattice nu / coat=etch ;
-      Ultra Gold: shine=wp / coat=invert(cf)). Une plaque ≠ un mask unique.
-- [ ] White-plate = couverture soft full-card quand Simey est soft full-card ;
-      **interdit** sur un motif CSS-only (losanges Radiant).
-- [ ] Plaque _dessin_ (cold-foil perso blanc) = **paint** Unity (`--foil-cold`),
-      pas invert-coverage — invert(cf) vidait perso + bords (Ultra Gold).
-- [ ] Vernis house (`withEtch`, etc.) : couper si doublon avec une plaque
-      déjà peinte (`--foil-etch`).
-- [ ] `clip-borders` seulement si Simey l’a **et** que l’art Live ne porte
-      pas de décor overhang (Ultra Gold : **pas** de clip).
+Tout leaf foiled Live a une entrée dans `LIVE_FINISH_CSS`. On branche la
+recette Simey la plus proche (tels quels quand l’id staging existe).
 
-### Ordre & dosage
+| Leaf Live | CSS Placarr | Amont Simey |
+| --------- | ----------- | ----------- |
+| `RadiantHolo` | `radiantHolo` | `radiant-holo` |
+| `Rainbow` / `Rainbow02` | `rainbowHolo` / `rainbowAlt` | `rainbow-holo` / `rainbow-alt` |
+| `SwSecret` / `SwSecreT02` | `secretRare` | `secret-rare` |
+| `Cosmos` | `cosmosHolo` | `cosmos-holo` |
+| `Galaxy` | `amazingRare` | `amazing-rare` |
+| `FlatSilver` (+ masks) | `flatSilver` (+ Cc / Mb) | `reverse-holo` |
+| `FlatSilver_CC` | `pokeBallHolo` | `poke-ball-holo` |
+| `SvUltra` / `SvHolo` / `SwHolo` | `vFullArt` / `vStar` / `vRegular` | V-family |
+| `AceFoil` | `vMax` | `v-max` |
+| `AngledPillars` | `exFullArt` (stack `ex-full-art.css` : mask/foil/sunpillar/ribs) | `ex-full-art` |
+| `SunPillar` (+ CastAndCure) | `sunPillar` (+ Cc) | `ex-regular` |
+| `CrackedIce` | `illustrationRare` | `illustration-rare` |
+| `SvUltraScodix` / `SvUltraGoldRainbow` | `hyperRare` | `hyper-rare` |
+| `SunBeam` | `regularHolo` | `regular-holo` |
+| `SunLava` / `Squares` | `shinyV` | `shiny-v` |
+| `Tinsel` / `Stamped` | `shinyRare` | `shiny-rare` |
+| `Thatch` / `25thConfetti` | `trainerGalleryHolo` | `trainer-gallery-holo` |
+| `SolidColor` | `reverseHolo` | `reverse-holo` |
+| Catalogue `holo` | `regularHolo` | `regular-holo` |
+| Catalogue `reverse` | `reverseHolo` | `reverse-holo` |
 
-- [ ] Ordre DOM simey (shine → :after → :before) n’est pas sacré : si le
-      contenu des plaques diffère, tester l’ordre (coat sous/sur motif).
-- [ ] **Deux curseurs** : opacity/contraste du **motif** vs du **coat**.
-      Live etch + `hard-light` / `contrast(3)` raye les corps sombres —
-      adoucir le coat (`soft-light`, contraste bas, op.) sans toucher au motif.
-- [ ] Art Live très clair (or-sur-or) : `color-dodge` full = lavis → tester
-      `exclusion` / soft-light (Unity house Ultra Gold = exclusion + bandes SV).
-- [ ] Dodge pleine dose seulement si pré-assombri (`brightness` ≤ ~0.66) —
-      voir `cssGuard` ceilings.
-- [ ] Spectre tall (`SVHolo2` 32×256) → pan **Y** (`--background-y`), sinon
-      teinte morte.
-- [ ] Stops de `repeating-linear-gradient` **strictement croissants** (sinon
-      le navigateur aplatit le motif).
-- [ ] Dosage pan/size (FPTI, ShaderKit, …) = leviers anti-lavis, pas un port
-      1:1 d’un autre repo.
+### ISO compare (playroom)
+
+Comparer → **CSS | Simey** (`?pair=simey`). Map leaf → demo :
+`src/effects/pokemon/simeyIsoCompare.ts` (stem, carte démo, checklist).
+Gauche = Placarr CSS ; droite = iframe poke-holo / poke-151. Agrandis **la
+bonne rareté** (ex. AngledPillars = Kangaskhan **#190 Ultra Rare**, pas #115).
+
+Simey one-offs encore skippés (pas de leaf Live) : `SIMEY_CSS_SKIP_STEMS`
+(`swsh-pikachu`, TG aliases, `ex-special-illustration-rare`, …).
+
+---
+
+## 2. Checklist adaptation (par look Simey)
+
+Rejouer `/admin?tab=catalogue&pack=pokemon&view=compare` — **plusieurs
+faces locales** du même leaf.
+
+### Contrat
+
+- [ ] Cible visuelle = **Simey** (même rareté / fichier CSS), paint = **Live**.
+- [ ] Compare secondaire Unity | CSS = QA WebGL, pas la vérité CSS.
+- [ ] Pas de raster EN Simey / Malie foil CDN en runtime.
+
+### Idle ↔ hover
+
+- [ ] Même stack ; glare dose only (`pointerCss`).
+- [ ] Ne jamais gater un motif `background-blend` sur `--opacity`.
+
+### Masks & plaques
+
+- [ ] Polarité etch mesurée ; invert si besoin **avant** le blend Simey.
+- [ ] Mask = couverture (où le foil a le droit) ; motif = autre couche.
+- [ ] Split mask OK (Radiant: lattice / coat=etch).
 
 ### Validation
 
-- [ ] Compare **Unity | CSS** même print + locale.
-- [ ] Réf. visuelle simey (même rareté) pour la chorégraphie.
-- [ ] Idle animé **et** hover : mêmes effets, pas un wash qui apparaît seulement
-      au pointeur.
-- [ ] Zoom zone art (perso) + zone texte : stries etch vs motif distincts.
-- [ ] `cssGuard` / tests du finish verts après retouche.
-
-### File d’attente (passer la checklist)
-
-**Statut 2026-08-11 :** mapping Live → CSS **branché** (table §1) ≠ **terminé**.
-Rester sur la checklist §2 leaf par leaf — dosage / mixes / idle encore faux
-sur plusieurs finishes (ports Simey aveugles ou screen trop agressifs).
-
-Ordre de travail suggéré (Comparer Unity | CSS, plusieurs faces) :
-
-1. `RadiantHolo`
-2. `SvUltraGoldRainbow` / `ultraGoldRainbow` (+ idle full-card)
-3. `SvUltraScodix` / `ultraScodix`
-4. `SwSecret` / `swSecret`
-5. `SunPillar` / `SunPillar`+CastAndCure — Live d’abord ; Simey `ex-regular` = composition seulement
-6. `Rainbow` / `Rainbow02`
-7. `Cosmos` / `Galaxy` / `CrackedIce`
-8. `FlatSilver` / `_CC`
-9. `SvUltra` / `SvHolo` / `SwHolo`
-10. `AceFoil` / `AngledPillars`
-11. Sun* / SolidColor / Squares / Thatch / Tinsel / Stamped / 25th
-
-Cocher dans le PR / la note de finish **après** compare manuel vert (pas
-seulement « ça compile / cssGuard vert »).
-
-Voir aussi backlog P1 « foil Pokémon : terminer l’intégration » (WebGL + CSS).
+- [ ] Face FR **et** autre locale si dump existe.
+- [ ] `cssGuard` vert.
+- [ ] Staging simey à HEAD (`syncSimeyCss --check`).
 
 ---
 
-## 3. Simey IDs runtime (`holoShadersSimey.ts` + Radiant)
+## 3. Simey IDs runtime
 
-poke-holo : regular (+ bars), reverse, rainbow (+ coat), rainbow-alt,
-cosmos, amazing, secret, V / VMAX / VSTAR, shiny, trainer-gallery, radiant
-(lattice / coat / sparkle — 3 passes comme upstream).
+Voir `LIVE_FINISH_CSS` + `holoShadersSimey.ts` / ports Radiant & co dans
+`holoShadersPokemon.ts` (structure Simey, paint Live).
 
-poke-151 : poke-ball, ex, illustration-rare, hyper-rare.
+**Intentionnellement non mappés** (one-offs Simey) : `SIMEY_CSS_SKIP_STEMS`
+(`swsh-pikachu`, TG aliases, `ex-special-illustration-rare`, …).
 
-**Intentionnellement non mappés** (one-offs / peu de valeur Live) :
-`swsh-pikachu`, `trainer-full-art`, aliases TG mineurs.
+### Radiant — exemple (Simey stack × Live paint)
 
-### Radiant — sources factuelles → même résultat simey
-
-Cible visuelle = [poke-holo radiant](https://poke-holo.simey.me/#⚓-radiant).
-Structure = `radiant-holo.css` (3 mixes : dodge / dodge / overlay + glare).
-Applique la checklist §2 ; particularités ci-dessous.
-
-| Rôle simey                    | Source simey                                                        | Source Placarr                                                                | Adaptation                                                                            |
-| ----------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `.card__shine` spot           | CSS `hsl(0,0%,95%)` / `--card-glow`                                 | idem, **toujours allumé**                                                     | ne pas gater sur `--opacity` (idle/spring → losanges morts)                           |
-| `.card__shine` bars           | CSS ±45° `--barwidth`                                               | idem + pan FPTI ×**0.9** / size **240%**                                      | anti-lavis ; **lattice sans mask etch** ; **peint au-dessus du coat** ; opacity ~0.48 |
-| `.card__shine:after`          | foil + pastel, hard-light, **color-dodge** carte                    | etch Live + pastel, soft-light + color-dodge, contraste **1.2** / op **0.42** | adoucir rayures perso ; lattice inchangé                                              |
-| `.card__shine` mask           | scan `*_radiantholo` (lattice baké)                                 | invert(etch) luma→alpha                                                       | **coat + sparkle only** — pas sur le lattice CSS                                      |
-| `.card__shine:before` glitter | [`glitter.png`](https://poke-holo.simey.me/img/glitter.png) EN μ≈51 | `T_Noise_Random.webp` μ≈143                                                   | `grayscale` + `brightness(0.28)` (dosage μ)                                           |
-| `.card__glare`                | `hard-light` + radial 33 %                                          | idem si `shader.id === radiantHolo`                                           | avant : `overlay` global → lavis blanc                                                |
-| Vernis house `etch`           | n’existe pas chez simey                                             | était branché via `withEtch`                                                  | **coupé** pour Radiant (doublon qui cramait)                                          |
-
-WebGL Radiant garde `_CrossTexture` `T_Holofoil_Mask_RadiantHolo_RG_X_Grad_5` +
-plates Live. CSS reconstitue le look simey avec gradients + etch localisé.
-
-### SvUltraGoldRainbow / `ultraGoldRainbow`
-
-**Vérité =** `SvUltraGoldRainbow.frag` + plates Live. Stack CSS :
-
-1. `ultraGoldRainbow` — SVHolo2 + bandes + gold tint → **`exclusion`**
-2. `ultraGoldRainbowCoat` — glitter + glare → quiet **`color-dodge`**
-3. `ultraGoldRainbowEtch` — raw `--foil-etch` × Gold_Band → **`soft-light`**
-
-Full-card (pas de mask white-plate). Etch **non** inversé. Cold-foil =
-WebGL only.
-
-### SwSecret / `swSecret`
-
-**Vérité =** `SwSecret.frag` + plates Live (`FX_T_Spectrum`, `T_Noise_Random`).
-photo-cards SWSH145 → `{ style: SwSecret, etch: Etched }` — pas Ultra Gold.
-
-1. `swSecret` — rainbow-alt bands + Spectrum + noise + glare → **`color-dodge`**
-2. `swSecretCoat` — pastel opposite-pan (simey rainbow-holo :after)
-3. `swSecretEtch` — raw `--foil-etch` × noise → **`soft-light`**
-
-Même règles full-card / etch brut que Ultra Gold. `SwSecreT02` partage le look.
-
-### Layers Simey intégrés (structure, pas dosage)
-
-Choréo poke-holo / poke-151 branchée sur les ids Live (plaques restent dump) :
-
-| Technique Simey                                   | Live CSS ids                                                   |
-| ------------------------------------------------- | -------------------------------------------------------------- |
-| rainbow-alt bands + opposite-pan pastel coat      | `rainbowFoil*`, `rainbow02*`, `swSecret*`                      |
-| cosmos 3-pass staggered pans + 82° lattice        | `cosmos` / `cosmosCoat` / `cosmosTop`                          |
-| amazing dual glitter + invert radial + saturation | `galaxy` / `galaxyCoat`                                        |
-| V diagonal ribs + opposite-pan coat               | `svUltra*`, `svHolo*`, `swHolo*`, `aceFoil*`, `angledPillars*` |
-| reverse laminate radial + diagonal                | `flatSilver` / `flatSilverCoat`                                |
-| poke-ball grey 45° laminate base                  | `flatSilverCc*`                                                |
-| cracked-ice opposite-pan depth                    | `crackedIceCoat`                                               |
-
-Pas de PNGs EN simey ; pas de remap finish → rareté Simey.
+| Rôle Simey | Simey | Placarr |
+| ---------- | ----- | ------- |
+| shine spot / bars | CSS | idem + pan FPTI ; lattice sans mask etch |
+| `:after` foil | scan EN `--foil` | Live `_CardEtch` invert → `--foil-etch` |
+| `:before` glitter | `glitter.png` μ≈51 | vendored `simey_glitter` (+ filter poke-holo) |
 
 ---
 
-## 4. Arbres staging (analyse)
+## 4. Staging
 
-| Upstream                                                             | Path                                    | Pin               |
-| -------------------------------------------------------------------- | --------------------------------------- | ----------------- |
-| [pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | `data/pokemon/staging/simey/poke-holo/` | `UPSTREAM_COMMIT` |
-| [pokemon-cards-151](https://github.com/simeydotme/pokemon-cards-151) | `data/pokemon/staging/simey/poke-151/`  | `UPSTREAM_COMMIT` |
+| Upstream | Path | Pin |
+| -------- | ---- | --- |
+| [pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | `…/simey/poke-holo/` | `UPSTREAM_COMMIT` |
+| [pokemon-cards-151](https://github.com/simeydotme/pokemon-cards-151) | `…/simey/poke-151/` | `UPSTREAM_COMMIT` |
 
-Refresh : `tsx src/providers/pokemontcglive/syncSimeyCss.ts` (`--check` / `--force`). Pas de submodule.
-Réf. mapping promo→Live : [kronenz/photo-cards `promos.json`](https://github.com/kronenz/photo-cards/blob/000e554eef94778845cb71aacebe61ec4ec99348/src/lib/components/promos.json).
+Refresh : `tsx src/providers/pokemontcglive/syncSimeyCss.ts`.
 
 ---
 
-## 5. Autres sources (analyse)
+## 5. Autres sources
 
-Audit GitHub 2026-08-07 — qui a **adapté** (pas seulement forké) :
-
-| Source                                                                                                   | Licence    | Type                                        | Pour Placarr                                               |
-| -------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------- | ---------------------------------------------------------- |
-| [jamesrochabrun/ShaderKit](https://github.com/jamesrochabrun/ShaderKit) `docs/shadercards/css-parity.md` | MIT        | Metal procédural, pas de rasters simey      | idée dual-intensity ; lattice reste full une fois unmasked |
-| [juhee-playground/FPTI](https://github.com/juhee-playground/FPTI) `…/ui/animation`                       | ?          | CSS simey-like + `{id}_holo.webp` local     | **branché** — pan ×0.9 / size 240%                         |
-| [kongyo2/cards-css](https://github.com/kongyo2/cards-css)                                                | MIT        | 14 foils procéduraux (radiant ≠ bars simey) | dosage / palette (pas 1:1) — à piocher si besoin           |
-| [bpisano/Sticker](https://github.com/bpisano/Sticker)                                                    | MIT        | Metal foil générique                        | réf. technique                                             |
-| [daniel-ilett/shaders-holo-card](https://github.com/daniel-ilett/shaders-holo-card)                      | MIT        | Unity TCG Pocket                            | réf. WebGL                                                 |
-| [ciro-unity/FoilTradingCard](https://github.com/ciro-unity/FoilTradingCard)                              | Apache-2.0 | Unity foil challenge                        | réf.                                                       |
-| [akshaykg42/foil-shader](https://github.com/akshaykg42/foil-shader)                                      | aucune     | WebGL physique                              | **ne pas copier**                                          |
-| [BIAsia/holo-card-studio](https://github.com/BIAsia/holo-card-studio)                                    | ?          | Transplant + **assets EN poke-holo**        | skip (inverse de notre contrainte)                         |
-| [pokemon-holo-cards](https://www.npmjs.com/package/pokemon-holo-cards)                                   | MIT        | React + CDN `poke-holo.b-cdn.net`           | skip (foils EN)                                            |
-| Ports Vue / forks ([Maurier](https://github.com/Maurier/vue-pokemon-cards-css), …)                       | GPL-3.0    | Copie framework                             | **aucun apport** plaques                                   |
-| [simeydotme/hover-tilt](https://github.com/simeydotme/hover-tilt)                                        | MIT        | tilt                                        | OK maison                                                  |
-
-**Trou ouvert.** Aucun dépôt public trouvé qui mappe dumps **TCG Live / Unity
-multi-locale** (`_CardEtch`, white-plate) → chorégraphie simey. Placarr est
-seul sur ce chemin (invert etch + mask alpha + noise dosé).
-
-Canvas session : `foil-adaptation-survey`.
+Inchangé — analyse only (ShaderKit, FPTI dosage, kongyo2, hover-tilt maison).
+**Aucun** dépôt public ne mappe dumps Live multi-locale → choréo Simey sauf
+Placarr (`useInvertedPaintBlob` + `--foil-etch`).

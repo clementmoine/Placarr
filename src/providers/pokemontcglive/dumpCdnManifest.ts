@@ -110,13 +110,18 @@ export async function dumpCdnManifests(
   const written: string[] = [];
   const failed: DumpCdnManifestResult["failed"] = [];
   let total = 0;
+  let done = 0;
+  const planned = buckets.length * locales.length;
 
   for (const bucket of buckets) {
     for (const locale of locales) {
       const outPath = single
         ? (opts.out as string)
         : path.join(opts.outDir as string, `manifest_${locale}_${bucket}.json`);
-      if (opts.skipExisting && existsSync(outPath)) continue;
+      if (opts.skipExisting && existsSync(outPath)) {
+        done += 1;
+        continue;
+      }
       const url = manifestUrl(contentBase, bucket, locale);
       let data: Uint8Array;
       try {
@@ -127,6 +132,7 @@ export async function dumpCdnManifests(
           locale,
           error: err instanceof Error ? err.message : String(err),
         });
+        done += 1;
         continue;
       }
       if (
@@ -134,6 +140,7 @@ export async function dumpCdnManifests(
         String.fromCharCode(...data.subarray(0, 7)) !== "UnityFS"
       ) {
         failed.push({ bucket, locale, error: "not-unityfs" });
+        done += 1;
         continue;
       }
       const entries = parseAssetManifestEntries(data);
@@ -154,10 +161,16 @@ export async function dumpCdnManifests(
         source: url,
       };
       mkdirSync(path.dirname(outPath), { recursive: true });
-      writeFileSync(outPath, `${JSON.stringify(dump, null, 2)}\n`, "utf8");
+      // Compact JSON — pretty 6–7MB × 6 langs blocked the event loop on write.
+      writeFileSync(outPath, `${JSON.stringify(dump)}\n`, "utf8");
       written.push(outPath);
       total += entries.length;
+      done += 1;
       console.log(`  [ok] ${locale}/${bucket} assets=${entries.length}`);
+      // UnityFS parse + big write are sync — yield so foil heartbeats can run.
+      if (done % 2 === 0 || done === planned) {
+        await new Promise<void>((r) => setImmediate(r));
+      }
     }
   }
 

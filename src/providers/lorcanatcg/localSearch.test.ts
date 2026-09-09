@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { listLorcanaTcgSets, searchLorcanaTcgRows } from "./indexStore";
+import {
+  listLorcanaTcgSets,
+  lookupLorcanaTcgSearchRow,
+  searchLorcanaTcgRows,
+} from "./indexStore";
 
 /**
  * Lorcana tenait déjà son catalogue sur disque — 3 241 tirages, 12 318 titres
@@ -19,6 +23,14 @@ describe.skipIf(!hasLocalCatalogue)("recherche Lorcana locale", () => {
   it("trouve par nom, sans réseau", () => {
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((row) => /elsa/i.test(row.fullName))).toBe(true);
+  });
+
+  it("résout le fill Lorcast p2-36 par clé exacte", () => {
+    const row = lookupLorcanaTcgSearchRow("lorcana:p2-36", { language: "en" });
+    expect(row?.printKey).toBe("lorcana:p2-36");
+    expect(row?.setName).toMatch(/Promo Set 2/i);
+    expect(row?.number).toBe("36");
+    expect(row?.foilTypesJson).toContain("Glitter");
   });
 
   /*

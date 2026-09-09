@@ -97,7 +97,7 @@ les losanges quand idle mettait opacity à 0).
    (commentaire historique dans `holoShadersPokemon` : Unity déforme/éclaire ;
    parfois mieux sampler en gradients). L’utilisateur a demandé **simey + layers
    APK** : garder la structure, ajuster blend/size/opacity si washout.
-2. **Playroom** `/admin?tab=tcg-effects` — comparer backends Auto | WebGL | CSS
+2. **Playroom** `/admin?tab=catalogue` — comparer backends Auto | WebGL | CSS
    sur le même finish.
 3. **Audit gaps** — `pnpm foil:audit-gaps` ; s’assurer que `package.json` expose
    bien le script ; corriger gaps réels si dump présent.

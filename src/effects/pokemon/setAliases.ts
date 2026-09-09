@@ -45,6 +45,9 @@ export const TCGDEX_TO_LIVE_SETS: Readonly<Record<string, readonly string[]>> =
     "swsh10.5tg": ["swsh10a"],
     "swsh11.5tg": ["swsh11a"],
     "swsh12.5tg": ["swsh12a"],
+    // Pokémon GO (TCGdex `swsh10.5` / Simey `pgo` ↔ Live `swsh10-5`)
+    "swsh10.5": ["swsh10-5"],
+    pgo: ["swsh10-5"],
     // EN TCGdex — Legendary Treasures (+ radiant slice)
     bw11: ["bw11", "bw11r"],
   };

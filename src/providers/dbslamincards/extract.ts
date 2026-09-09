@@ -11,6 +11,7 @@ import {
   harvestDbzcollection,
   ingestDbzcollectionSealedProducts,
   installDbzcollectionFaces,
+  installDbzcollectionTitles,
 } from "./dbzcollection";
 import { DBS_LAMINCARDS_PACK_ID, dbsLamincardsCuratedDir } from "./pack";
 
@@ -45,9 +46,15 @@ export async function runDbsLamincardsPackPipeline(
       console.log(
         `── Faces dbzc — ${dbzcFaces.faces} index, ${dbzcFaces.dumps} dump(s)`,
       );
+
+      const dbzcTitles = installDbzcollectionTitles(index, { argv });
+      console.log(
+        `── Titres dbzc — ${dbzcTitles.titles} posé(s), ${dbzcTitles.matched} match, ${dbzcTitles.skipped} skip`,
+      );
       return {
         prints: installed.prints + dbzcFaces.prints,
-        titles: installed.titles + dbzcFaces.titles,
+        titles:
+          installed.titles + dbzcFaces.titles + dbzcTitles.titles,
       };
     },
     seedProducts: () => {

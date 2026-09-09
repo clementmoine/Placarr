@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseDbzcCardInfo,
+  parseDbzcListingTiles,
+  parseDbzcPrintedNumber,
   parseDbzcollectionListing,
+  dbzcGroupingCandidates,
 } from "./parseDbzcollection";
 
 const FIXTURE = `
@@ -20,6 +23,15 @@ const FIXTURE = `
 <img id="img_20869" src="cartes/94/353/h100_20869_carte.jpg" />
 <div class="bc_cadre_numero" title="Gold"><div class="bc_texte_numero">6</div></div>
 <img id="img_31799" src="cartes/94/465/h100_31799_carte.jpg" />
+`;
+
+const IT_TILE_FIXTURE = `
+<div title="Regular"><div>x</div>
+<img id="img_16179" src="cartes/74/304/h100_16179_carte.jpg" />
+</div>
+<div title="Silver">
+<img id="img_16334" src="cartes/74/305/h100_16334_carte.jpg" />
+</div>
 `;
 
 describe("parseDbzcollectionListing", () => {
@@ -71,6 +83,27 @@ describe("parseDbzcollectionListing", () => {
   });
 });
 
+describe("parseDbzcListingTiles", () => {
+  it("reads IT/ES tiles without printed numbers", () => {
+    expect(parseDbzcListingTiles(IT_TILE_FIXTURE)).toEqual([
+      {
+        grouping: null,
+        rarityLabel: null,
+        cardId: "16179",
+        thumbPath: "cartes/74/304/h100_16179_carte.jpg",
+        facePath: "cartes/74/304/h400_16179_carte.jpg",
+      },
+      {
+        grouping: "s",
+        rarityLabel: "Silver",
+        cardId: "16334",
+        thumbPath: "cartes/74/305/h100_16334_carte.jpg",
+        facePath: "cartes/74/305/h400_16334_carte.jpg",
+      },
+    ]);
+  });
+});
+
 describe("parseDbzcCardInfo", () => {
   it("reads Nom from AJAX detail table", () => {
     const html = `
@@ -80,13 +113,51 @@ describe("parseDbzcCardInfo", () => {
           <td class="apercu_td_valeur" valign="top">Sangoku SSJ</td>
         </tr>
       </table>`;
-    expect(parseDbzcCardInfo(html)).toEqual({ name: "Sangoku SSJ" });
+    expect(parseDbzcCardInfo(html)).toMatchObject({ name: "Sangoku SSJ" });
   });
 
   it("decodes HTML entities in Nom", () => {
     const html = `
       <td class="apercu_td_intitule">Nom :</td>
       <td class="apercu_td_valeur">Caf&eacute;</td>`;
-    expect(parseDbzcCardInfo(html)).toEqual({ name: "Café" });
+    expect(parseDbzcCardInfo(html)).toMatchObject({ name: "Café" });
+  });
+
+  it("parses n° / S / G printed numbers", () => {
+    const html = `
+      <td class="apercu_td_intitule" valign="top">Num&eacute;ro :</td>
+      <td class="apercu_td_valeur" valign="top">n&deg; 1</td>
+      <td class="apercu_td_intitule" valign="top">Raret&eacute; :</td>
+      <td class="apercu_td_valeur" valign="top">Regular</td>
+      <td class="apercu_td_intitule" valign="top">Nom :</td>
+      <td class="apercu_td_valeur" valign="top">Goku</td>`;
+    expect(parseDbzcCardInfo(html)).toEqual({
+      name: "Goku",
+      printed: "1",
+      printedRaw: "n° 1",
+      grouping: null,
+      rarityLabel: null,
+    });
+  });
+});
+
+describe("parseDbzcPrintedNumber", () => {
+  it.each([
+    ["n° 1", { printed: "1", grouping: null }],
+    ["S5", { printed: "5", grouping: "s" }],
+    ["G7", { printed: "7", grouping: "g" }],
+    ["65", { printed: "65", grouping: null }],
+  ])("%s", (raw, expected) => {
+    expect(parseDbzcPrintedNumber(raw)).toEqual(expected);
+  });
+});
+
+describe("dbzcGroupingCandidates", () => {
+  it("tries metalsil for Silver parallels", () => {
+    expect(dbzcGroupingCandidates("s", "Silver")).toEqual([
+      "s",
+      "metalsil",
+      "argento",
+    ]);
   });
 });

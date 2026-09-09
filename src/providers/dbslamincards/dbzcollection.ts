@@ -1,8 +1,8 @@
 /**
- * Moisson dbzcollection.fr — faces h400 + packshots scellés (Lamincards FR).
+ * Moisson dbzcollection.fr — faces h400 + packshots (FR) et noms AJAX (IT/ES).
  *
- * idc=94 / ids=353 (fr2008) et ids=465 (fror). Faces : dump
- * `art.dbzcollection.jpg` ; index = DBC s’il existe, sinon dbzc.
+ * FR idc=94 : faces `art.dbzcollection.jpg` + scellés.
+ * IT idc=74 / ES idc=108 : `namesOnly` — titres via fiche Nom, faces = DBC.
  */
 import {
   copyFileSync,
@@ -26,11 +26,14 @@ import {
 } from "./pack";
 import { dbcCardFolderName } from "./parseDragonballCenter";
 import {
+  DBZC_COLLECTION_IDC,
   dbzcAbsoluteUrl,
   dbzcCardInfoUrl,
+  dbzcGroupingCandidates,
   dbzcSetListingUrl,
   parseDbzcollectionListing,
   parseDbzcCardInfo,
+  parseDbzcListingTiles,
   type DbzcCard,
   type DbzcPack,
 } from "./parseDbzcollection";
@@ -51,6 +54,12 @@ export type DbzcSetSpec = {
   setCode: string;
   label: string;
   listingPath: string;
+  /** Défaut : ledger.collectionIdc / 94. */
+  idc?: string;
+  /** Défaut : ledger.lang. */
+  lang?: string;
+  /** Pas de DL face — titres AJAX seulement (séries IT/ES). */
+  namesOnly?: boolean;
   expectedCards?: number;
   cardsPerBooster?: number;
   note?: string;
@@ -61,8 +70,21 @@ export type DbzcLedger = {
   sourceId: string;
   lang: string;
   origin: string;
+  collectionIdc?: string;
   sets: DbzcSetSpec[];
 };
+
+function setIdc(set: DbzcSetSpec, ledger: DbzcLedger): string {
+  return (
+    set.idc?.trim() ||
+    ledger.collectionIdc?.trim() ||
+    DBZC_COLLECTION_IDC
+  );
+}
+
+function setLang(set: DbzcSetSpec, ledger: DbzcLedger): string {
+  return (set.lang || ledger.lang || "fr").trim().toLowerCase();
+}
 
 export function dbzcollectionLedgerPath(): string {
   return path.join(dbsLamincardsCuratedDir(), "sources", LEDGER_FILE);
@@ -182,12 +204,14 @@ export type DbzcHarvest = {
 
 async function harvestSet(
   set: DbzcSetSpec,
-  lang: string,
+  ledger: DbzcLedger,
   opts: { force?: boolean; stagingRoot?: string },
 ): Promise<{ cards: number; packs: number; ok: number; skip: number; fail: number }> {
   const staging = setStagingDir(set.setCode, opts.stagingRoot);
   mkdirSync(staging, { recursive: true });
-  const listingUrl = dbzcSetListingUrl(set.ids);
+  const idc = setIdc(set, ledger);
+  const lang = setLang(set, ledger);
+  const listingUrl = dbzcSetListingUrl(set.ids, idc);
   const listingDest = path.join(staging, "listing.html");
   let html: string | null = null;
   if (!opts.force && existsSync(listingDest)) {
@@ -200,6 +224,10 @@ async function harvestSet(
     await sleep(DELAY_MS);
   }
 
+  if (set.namesOnly) {
+    return harvestNamesOnlySet(set, html, listingUrl, lang, staging, opts);
+  }
+
   const parsed = parseDbzcollectionListing(html);
   writeFileSync(
     path.join(staging, "cards.json"),
@@ -207,6 +235,7 @@ async function harvestSet(
       {
         setCode: set.setCode,
         ids: set.ids,
+        idc,
         lang,
         listingUrl,
         cards: parsed.cards.map((c) => ({
@@ -350,6 +379,115 @@ async function harvestSet(
   };
 }
 
+/** Moisson titres IT/ES : tuiles + AJAX Nom/Numéro, sans faces. */
+async function harvestNamesOnlySet(
+  set: DbzcSetSpec,
+  html: string,
+  listingUrl: string,
+  lang: string,
+  staging: string,
+  opts: { force?: boolean },
+): Promise<{ cards: number; packs: number; ok: number; skip: number; fail: number }> {
+  const tiles = parseDbzcListingTiles(html);
+  writeFileSync(
+    path.join(staging, "cards.json"),
+    JSON.stringify(
+      {
+        setCode: set.setCode,
+        ids: set.ids,
+        lang,
+        namesOnly: true,
+        listingUrl,
+        tiles: tiles.map((t) => ({
+          cardId: t.cardId,
+          rarity: t.rarityLabel,
+          grouping: t.grouping,
+        })),
+        harvestedAt: new Date().toISOString(),
+      },
+      null,
+      2,
+    ) + "\n",
+    "utf8",
+  );
+
+  let ok = 0;
+  let skip = 0;
+  let fail = 0;
+
+  const namedByCardId = new Map<string, string>();
+  if (!opts.force) {
+    for (const name of readdirSync(staging)) {
+      if (!name.endsWith(".json") || name === "cards.json") continue;
+      try {
+        const row = JSON.parse(
+          readFileSync(path.join(staging, name), "utf8"),
+        ) as { cardId?: string; characterName?: string | null };
+        const n = row.characterName?.trim();
+        if (row.cardId && n) namedByCardId.set(row.cardId, n);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+
+  for (const tile of tiles) {
+    if (!opts.force && namedByCardId.has(tile.cardId)) {
+      skip += 1;
+      continue;
+    }
+    const infoHtml = await fetchText(dbzcCardInfoUrl(tile.cardId), {
+      minLength: 80,
+    });
+    await sleep(DELAY_MS);
+    if (!infoHtml) {
+      fail += 1;
+      continue;
+    }
+    const info = parseDbzcCardInfo(infoHtml);
+    const printed = info.printed;
+    if (!printed) {
+      fail += 1;
+      continue;
+    }
+    const grouping = info.grouping ?? tile.grouping;
+    const rarityLabel = info.rarityLabel ?? tile.rarityLabel;
+    const number = printed.padStart(4, "0");
+    const folder = dbcCardFolderName(number, grouping);
+    const characterName = info.name?.trim() || "";
+    const title = characterName
+      ? characterName
+      : formatLamincardsReference(set.setCode, printed, rarityLabel);
+
+    writeFileSync(
+      path.join(staging, `${folder}.json`),
+      JSON.stringify(
+        {
+          setCode: set.setCode,
+          lang,
+          printed,
+          number,
+          grouping,
+          rarityLabel,
+          cardId: tile.cardId,
+          thumbPath: tile.thumbPath,
+          facePath: tile.facePath,
+          faceUrl: dbzcAbsoluteUrl(tile.facePath),
+          characterName: characterName || null,
+          title,
+          namesOnly: true,
+        },
+        null,
+        2,
+      ) + "\n",
+      "utf8",
+    );
+    ok += 1;
+  }
+
+  return { cards: tiles.length, packs: 0, ok, skip, fail };
+}
+
 export async function harvestDbzcollection(
   opts: {
     force?: boolean;
@@ -370,7 +508,7 @@ export async function harvestDbzcollection(
 
   for (const set of sets) {
     console.log(`── dbzc ${set.setCode} — ${set.label}`);
-    const report = await harvestSet(set, ledger.lang, {
+    const report = await harvestSet(set, ledger, {
       force: opts.force,
       stagingRoot,
     });
@@ -419,20 +557,21 @@ export type DbzcFaceInstall = {
   missing: string[];
 };
 
-/** Pose / complète les tirages FR depuis le staging dbzc. */
+/** Pose / complète les tirages FR depuis le staging dbzc (faces). */
 export function installDbzcollectionFaces(
   index: LocalPrintsIndex,
   opts: { stagingDir?: string; argv?: readonly string[] } = {},
 ): DbzcFaceInstall {
   const ledger = readDbzcollectionLedger();
-  const sets = enabledDbzcSets(ledger, opts.argv ?? []);
+  const sets = enabledDbzcSets(ledger, opts.argv ?? []).filter(
+    (s) => !s.namesOnly,
+  );
   const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
-  const lang = ledger.lang.trim().toLowerCase() || "fr";
   let prints = 0;
   let titles = 0;
   let faces = 0;
   let dumps = 0;
-  const missing: string[] = [];
+  const missingList: string[] = [];
   const assets: {
     printKey: string;
     lang: string;
@@ -441,6 +580,7 @@ export function installDbzcollectionFaces(
   }[] = [];
 
   for (const set of sets) {
+    const lang = setLang(set, ledger);
     const staging = setStagingDir(set.setCode, stagingRoot);
     const manifests = readFaceManifests(staging);
     const printRows = [];
@@ -452,13 +592,13 @@ export function installDbzcollectionFaces(
         row.grouping,
       );
       if (!printKey) {
-        missing.push(`${row.setCode}:${row.number}`);
+        missingList.push(`${row.setCode}:${row.number}`);
         continue;
       }
       const folder = cardFolder(row);
       const src = path.join(staging, `${folder}.jpg`);
       if (!existsSync(src)) {
-        missing.push(`${row.setCode}:${folder}`);
+        missingList.push(`${row.setCode}:${folder}`);
         continue;
       }
 
@@ -516,7 +656,90 @@ export function installDbzcollectionFaces(
   }
 
   if (assets.length) index.writeAssets(assets);
-  return { prints, titles, faces, dumps, missing };
+  return { prints, titles, faces, dumps, missing: missingList };
+}
+
+export type DbzcTitleInstall = {
+  titles: number;
+  matched: number;
+  skipped: number;
+};
+
+/**
+ * Applique les noms personnages (staging dbzc) sur les tirages déjà posés (DBC).
+ * Ne crée pas de print orphelin.
+ */
+export function installDbzcollectionTitles(
+  index: LocalPrintsIndex,
+  opts: { stagingDir?: string; argv?: readonly string[] } = {},
+): DbzcTitleInstall {
+  const ledger = readDbzcollectionLedger();
+  const sets = enabledDbzcSets(ledger, opts.argv ?? []);
+  const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
+  let titles = 0;
+  let matched = 0;
+  let skipped = 0;
+  const printRows: Parameters<LocalPrintsIndex["writePrints"]>[0][number][] =
+    [];
+
+  for (const set of sets) {
+    const lang = setLang(set, ledger);
+    const staging = setStagingDir(set.setCode, stagingRoot);
+    for (const row of readFaceManifests(staging)) {
+      const name = row.characterName?.trim();
+      if (!name) {
+        skipped += 1;
+        continue;
+      }
+      const candidates = dbzcGroupingCandidates(
+        row.grouping ?? null,
+        row.rarityLabel ?? null,
+      );
+      let hit: ReturnType<LocalPrintsIndex["lookupRow"]> = null;
+      let printKey: string | null = null;
+      for (const grouping of candidates) {
+        const key = lamincardsPrintKey(row.setCode, row.number, grouping);
+        if (!key) continue;
+        const found = index.lookupRow(key, { language: lang });
+        if (found) {
+          hit = found;
+          printKey = key;
+          break;
+        }
+        // lookup without lang constraint — print may only have another lang title
+        const any = index.lookupRow(key);
+        if (any) {
+          hit = any;
+          printKey = key;
+          break;
+        }
+      }
+      if (!hit || !printKey) {
+        skipped += 1;
+        continue;
+      }
+      matched += 1;
+      printRows.push({
+        printKey,
+        setCode: hit.setCode,
+        number: hit.number,
+        cardType: hit.cardType,
+        grouping: hit.grouping ?? null,
+        titles: [
+          {
+            lang,
+            fullName: name,
+            rarity: row.rarityLabel ?? hit.rarity ?? null,
+          },
+        ],
+      });
+    }
+  }
+
+  if (printRows.length) {
+    titles = index.writePrints(printRows).titles;
+  }
+  return { titles, matched, skipped };
 }
 
 type PackManifest = DbzcPack & {
@@ -531,7 +754,9 @@ export function ingestDbzcollectionSealedProducts(
   opts: { stagingDir?: string; argv?: readonly string[] } = {},
 ): { written: number; skipped: number } {
   const ledger = readDbzcollectionLedger();
-  const sets = enabledDbzcSets(ledger, opts.argv ?? []);
+  const sets = enabledDbzcSets(ledger, opts.argv ?? []).filter(
+    (s) => !s.namesOnly,
+  );
   const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
   const products: Parameters<typeof writeLocalSealedProducts>[0]["products"] =
     [];
@@ -559,12 +784,12 @@ export function ingestDbzcollectionSealedProducts(
         name: `${set.label} — ${row.label}`,
         source: SOURCE_ID,
         setCode: set.setCode,
-        lang: ledger.lang,
+        lang: setLang(set, ledger),
         releaseDate: set.setCode === "fr2008" ? "2008-11-01" : "2009-11-19",
         declaredCardCount: null,
         cardsPerPack:
           kind === "booster" ? (set.cardsPerBooster ?? null) : null,
-        path: row.listingUrl || dbzcSetListingUrl(set.ids),
+        path: row.listingUrl || dbzcSetListingUrl(set.ids, setIdc(set, ledger)),
         artPath,
       });
     }

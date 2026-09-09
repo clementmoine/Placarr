@@ -1,9 +1,9 @@
 {
   "source": "Hunt archives / faces — Dragon Ball Lamincards (Edibas)",
   "observed": "2026-09-07",
-  "ingest": "journal — faces via dragonball.center (voir dragonball-center.json)",
+  "ingest": "journal — faces via dragonball.center ; noms via dbzcollection (dbzcollection.json)",
   "line": "dbs/lamincards",
-  "verdict": "Pas de CDN Edibas vivant avec dump carte-par-carte. Meilleure source faces = Dragon Ball Center (JPEG ~549×768, recto+verso, sans mur). Coleka r4591 = hub ~1790 refs (sous-séries) mais listing EN tombe sur Verifica même via FlareSolverr (2026-09-07). Paninimania FR = packshots + dos album/cartes, pas checklist numérotée. Wayback edibas.com = packshots marketing (peu de faces individuelles).",
+  "verdict": "Pas de CDN Edibas vivant avec dump carte-par-carte. Faces = Dragon Ball Center. Noms = dbzcollection.fr AJAX (FR idc=94, IT idc=74 Parts 1–5 ≈ Nero→Smeraldo, ES idc=108). Coleka r4591 = hub ~1790 refs mais listing EN tombe sur Verifica même via FlareSolverr. Paninimania FR = packshots, pas checklist. Wayback edibas.com = packshots marketing.",
   "tried": [
     {
       "host": "dragonball.center",

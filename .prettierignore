@@ -4,3 +4,6 @@ dist
 public
 pnpm-lock.yaml
 tests/fixtures
+src/generated
+# Scraped HTML — not source; Prettier's HTML parser rejects truncated pages.
+src/providers/shared/dbscards/fixtures/

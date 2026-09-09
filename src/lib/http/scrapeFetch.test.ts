@@ -10,6 +10,8 @@ vi.mock("@/lib/http/flareSolverr", () => ({
 }));
 
 import { flareSolverrRequestGet } from "@/lib/http/flareSolverr";
+import { resetCircuitBreakersForTests } from "@/lib/http/circuitBreaker";
+import { resetHostLimiterForTests } from "@/lib/http/hostLimiter";
 import { fetchGetWithFlareFallback, scrapeAccessBlocked } from "./scrapeFetch";
 
 const mockedGet = vi.mocked(axios.get);
@@ -18,6 +20,8 @@ const mockedFlare = vi.mocked(flareSolverrRequestGet);
 beforeEach(() => {
   mockedGet.mockReset();
   mockedFlare.mockReset();
+  resetHostLimiterForTests();
+  resetCircuitBreakersForTests();
 });
 
 describe("scrapeAccessBlocked", () => {
@@ -85,5 +89,61 @@ describe("fetchGetWithFlareFallback", () => {
       data: "Forbidden",
       viaFlareSolverr: false,
     });
+  });
+
+  it("opens the host breaker on a blocked response and short-circuits the next direct call", async () => {
+    mockedGet.mockResolvedValueOnce({
+      status: 403,
+      data: "Forbidden",
+    });
+    mockedFlare.mockResolvedValue("<html><body>ok</body></html>");
+
+    await fetchGetWithFlareFallback("https://shop.test/search");
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+
+    // Breaker ouvert : l'appel direct est court-circuité, le solver prend le relais.
+    const second = await fetchGetWithFlareFallback("https://shop.test/other");
+    expect(second.viaFlareSolverr).toBe(true);
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+    expect(mockedFlare).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not open the breaker on an honest miss (404)", async () => {
+    mockedGet.mockResolvedValue({ status: 404, data: "Not Found" });
+    mockedFlare.mockResolvedValue(null);
+
+    await fetchGetWithFlareFallback("https://shop.test/a", {
+      validateStatus: (status) => status === 200,
+    });
+    await fetchGetWithFlareFallback("https://shop.test/b", {
+      validateStatus: (status) => status === 200,
+    });
+
+    // Le host répond franchement : pas de court-circuit.
+    expect(mockedGet).toHaveBeenCalledTimes(2);
+  });
+
+  it("paces direct calls to the same host through the scrape profile", async () => {
+    vi.useFakeTimers();
+    try {
+      const startedAt: number[] = [];
+      mockedGet.mockImplementation(async () => {
+        startedAt.push(Date.now());
+        return { status: 200, data: "ok" };
+      });
+
+      const t0 = Date.now();
+      await fetchGetWithFlareFallback("https://paced.test/a");
+      const second = fetchGetWithFlareFallback("https://paced.test/b");
+
+      await vi.advanceTimersByTimeAsync(999);
+      expect(startedAt).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
+      await second;
+
+      expect(startedAt.map((at) => at - t0)).toEqual([0, 1_000]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

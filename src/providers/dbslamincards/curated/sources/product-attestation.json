@@ -1,0 +1,79 @@
+{
+  "source": "Attestation produit — Dragon Ball Lamincards (Edibas)",
+  "observed": "2026-09-07",
+  "ingest": "none",
+  "line": "dbs/lamincards",
+  "why": "Nommer correctement la ligne avant la moisson : « Lamincards » est la marque Edibas (Turin), pas un surnom. Plusieurs séries DBZ/GT, pas un unique set.",
+  "brand": {
+    "name": "Lamincards",
+    "publisher": "Edibas Collections (Turin)",
+    "format": "Cartes PVC transparentes ~0,3 mm — inventées chez Edibas (Cavalieri dello Zodiaco puis DBZ).",
+    "not": [
+      "Bandai Dragon Ball Super Card Game / Masters",
+      "Bandai Fusion World",
+      "Panini Naruto Ultra Challenge (autre ligne Lamincards / Panini, pack naruto/ultra-challenge)"
+    ]
+  },
+  "seriesAttested": [
+    {
+      "label": "Dragon Ball Z Lamincards 1ʳᵉ série",
+      "year": "≈2006–2007",
+      "note": "Edibas lista avril 2007 : 150 cartes. Voir hunt Ultra Challenge Wayback."
+    },
+    {
+      "label": "Dragon Ball Z Lamincards Serie Platino",
+      "year": "2007",
+      "note": "dragonball.center — images films ; raretes Platino / Rubino / Zaffiro"
+    },
+    {
+      "label": "Dragon Ball GT Lamincards Serie Smeraldo",
+      "year": "2007",
+      "note": "dragonball.center"
+    },
+    {
+      "label": "DragonBall Z — Lamincards — France",
+      "year": "2008",
+      "note": "paninimania cid508 — Edibas 1–162 + 29 spéciales ; pochettes de 6"
+    }
+  ],
+  "sources": [
+    {
+      "host": "www.edibas.com",
+      "role": "éditeur",
+      "waybackLista": "https://web.archive.org/web/20070403094745id_/http://www.edibas.com/edibas_it/collezionabili_lista.aspx"
+    },
+    {
+      "host": "dragonball.center",
+      "role": "catalogue fan / fabricant Edibas",
+      "url": "https://dragonball.center/catalogo/fabricante/14/edibas"
+    },
+    {
+      "host": "paninimania.com",
+      "role": "fiche album FR",
+      "url": "https://www.paninimania.com/?idf=15&idm=1290&pag=cid508_alb"
+    },
+    {
+      "host": "narutoultra/curated/sources/wayback-official-hunt.json",
+      "role": "journal adjacent (Edibas DBZ 150 cartes, zéro Naruto Ultra)"
+    }
+  ],
+  "coverageObserved": {
+    "nero": "150/150",
+    "argento": "150/150",
+    "oro": "~22/150 (reste placeholder DBC)",
+    "platino": "~12/120 listés",
+    "smeraldo": "200 (coins ronds + variantes numérotées)",
+    "z2008": "162/162",
+    "fr2008": "192/192 DBC + dump dbzcollection ids=353",
+    "fror": "faces dbzcollection ids=465 (200 Regular+Gold)"
+  },
+  "next": [
+    "Coleka faces pour combler Oro / Platino (titres personnage aussi)",
+    "Séries Super 3D / Team Battle / Diramix — hors priorité actuelle"
+  ],
+  "faces": {
+    "primary": "dragonball.center (dbcFaces, listing visor)",
+    "france": "dbzcollection.fr idc=94 (faces + sealed packshots)",
+    "journal": "source-hunt.json"
+  }
+}

@@ -25,4 +25,3 @@ export function allNumbers(value: string): string[] {
     ),
   );
 }
-

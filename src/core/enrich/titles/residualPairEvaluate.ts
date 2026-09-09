@@ -1,6 +1,4 @@
-import {
-  titleTokensEquivalent,
-} from "@/core/enrich/titles/tokenEquivalents";
+import { titleTokensEquivalent } from "@/core/enrich/titles/tokenEquivalents";
 import {
   hardwareFinishConflict,
   hardwareFormFactorConflict,
@@ -322,9 +320,13 @@ export function evaluatePair(
     // ("Sony" + PlayStation 5) — accept. But reject when the request still
     // carries unmatched platform/product tokens the catalog dropped (Switch
     // OLED request vs NES Zelda game; PS5 / Classic vs bare PS One).
-    if (shelfType === "hardware" && residual.length === 0 && matched.length > 0) {
-      const missingHardwareIdentity = requestUnmatchedSignificant.some((token) =>
-        isIdentityPlatformNoiseToken(token),
+    if (
+      shelfType === "hardware" &&
+      residual.length === 0 &&
+      matched.length > 0
+    ) {
+      const missingHardwareIdentity = requestUnmatchedSignificant.some(
+        (token) => isIdentityPlatformNoiseToken(token),
       );
       if (missingHardwareIdentity) {
         const controllerRequest = requestTokens.some(
@@ -452,14 +454,9 @@ export function evaluatePair(
 
   const seriesMarkerResidual = residual.filter(
     (token) =>
-      token !== "x" &&
-      !/^\d+$/.test(token) &&
-      !/^t\d+[a-z]*$/i.test(token),
+      token !== "x" && !/^\d+$/.test(token) && !/^t\d+[a-z]*$/i.test(token),
   );
-  if (
-    volMatched &&
-    seriesMarkerResidual.some((token) => token.length <= 3)
-  ) {
+  if (volMatched && seriesMarkerResidual.some((token) => token.length <= 3)) {
     reasons.push("short_series_marker_residual");
     return {
       decision: "reject",
@@ -470,8 +467,7 @@ export function evaluatePair(
   }
 
   if (!volMatched) {
-    const candidateHasVolume =
-      explicitVolumeNumbers(candidateTitle).length > 0;
+    const candidateHasVolume = explicitVolumeNumbers(candidateTitle).length > 0;
     const requestHasVolume = explicitVolumeNumbers(requestTitle).length > 0;
     if (candidateHasVolume && !requestHasVolume) {
       const reqSig = significantTokens(requestTokens);

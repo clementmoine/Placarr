@@ -1,4 +1,7 @@
-import type { MetadataAdapterContext } from "@/types/providerModule";
+import type {
+  MetadataAdapterContext,
+  ProviderMappingProbeContext,
+} from "@/types/providerModule";
 
 import {
   collectCapabilityExpectedSignals,
@@ -7,7 +10,7 @@ import {
 } from "./scrapeMappingSignals";
 
 export type MappingRawKeysFetcher = (
-  context?: MetadataAdapterContext,
+  context?: ProviderMappingProbeContext,
 ) => Promise<unknown>;
 
 export async function mappingRawKeysFromFetch(
@@ -29,7 +32,7 @@ export async function mappingRawKeysFromFetch(
 export function createMappingRawKeysCollector(
   fetchSource: MappingRawKeysFetcher,
   toSignals: (source: unknown) => string[],
-): (context?: MetadataAdapterContext) => Promise<string[]> {
+): (context?: ProviderMappingProbeContext) => Promise<string[]> {
   return async (context) => {
     try {
       const source = await fetchSource(context);
@@ -58,7 +61,7 @@ export function signalsFromObjectAndCapabilities(
 }
 
 export function probeContextOrDefault(
-  context: MetadataAdapterContext | undefined,
+  context: ProviderMappingProbeContext | undefined,
   fallback: MetadataAdapterContext,
 ): MetadataAdapterContext {
   return {

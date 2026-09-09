@@ -14,7 +14,7 @@ utile était souvent perdue (restée dans une observation, un `source-url`, ou l
 `sourceUrl` d’une offer). Conséquences :
 
 1. **Sources & boutiques** (`ProviderLinksBar`) incomplète — impossible de voir
-   d’où vient une fiche erronée.
+   d’où vient une fiche erronée (covers IGDB, prix Lorcast, faits LorcanaJSON…).
 2. **Refresh prix** re-seekait barcode/titre alors qu’on avait déjà la fiche
    produit (`chasseauxlivres`, `okkazeo`, PrestaShop, Philibert, …).
 
@@ -22,13 +22,17 @@ utile était souvent perdue (restée dans une observation, un `source-url`, ou l
 
 ## Invariant produit
 
-> **Chaque hit provider avec une URL fiche produit → un `external-link` persisté
-> (1 par provider, dédupliqué).**
+> **Chaque provider registry qui a contribué (fact / evidence / cover / prix)
+> apparaît dans Sources & boutiques.** Préférer une URL fiche produit ; sinon
+> le `websiteUrl` du registry (attribution). Jamais d’URL inventée.
 
 - Kind affiché UI : `external-link` uniquement (`extractProviderLinkFacts`).
 - Kind intermédiaire accepté : `source-url` (mirrored en `external-link` au merge).
-- Pas de lien pour assets CDN (`looksLikeProviderProductPageUrl` filtre images,
-  `book_cover`, `mediajeu.php`, …).
+- Pas de lien CDN (`looksLikeProviderProductPageUrl` filtre images, `book_cover`,
+  `mediajeu.php`, …).
+- Les chips `websiteUrl` (racine du site) **n’alimentent pas** le refresh prix
+  URL-first (`providerProductUrlsFromMetadataFacts` exige un path produit).
+- Exclus : `MergedEngine`, clés internes (`__cached_fiche__`).
 
 ---
 
@@ -92,15 +96,15 @@ barcode/titre seulement en fallback.
 
 ## Fichiers
 
-| Fichier | Rôle |
-| ------- | ---- |
-| `src/core/enrich/providerExternalLinks.ts` | Heuristiques URL, factories de facts |
-| `src/core/enrich/persistProviderExternalLinks.ts` | Persistance Prisma |
-| `src/core/enrich/fetch.ts` | Hook merge + fieldEvidence |
-| `src/core/catalog/registry.ts` | `providerProductUrlsFromMetadataFacts` |
-| `src/core/commerce/pricing/providerProductUrls.ts` | Filtre par `providerKey` |
-| `src/core/commerce/pricing/itemDisplay.ts` | Injecte URLs dans le refresh |
-| `src/core/enrich/facts/displayFacts.ts` | UI : `external-link` only |
+| Fichier                                            | Rôle                                   |
+| -------------------------------------------------- | -------------------------------------- |
+| `src/core/enrich/providerExternalLinks.ts`         | Heuristiques URL, factories de facts   |
+| `src/core/enrich/persistProviderExternalLinks.ts`  | Persistance Prisma                     |
+| `src/core/enrich/fetch.ts`                         | Hook merge + fieldEvidence             |
+| `src/core/catalog/registry.ts`                     | `providerProductUrlsFromMetadataFacts` |
+| `src/core/commerce/pricing/providerProductUrls.ts` | Filtre par `providerKey`               |
+| `src/core/commerce/pricing/itemDisplay.ts`         | Injecte URLs dans le refresh           |
+| `src/core/enrich/facts/displayFacts.ts`            | UI : `external-link` only              |
 
 ---
 
@@ -146,25 +150,25 @@ pour CDNs pas encore déclarés sur un module.
 - [ ] Optionnel : fact `source-url` explicite ; le merge mirror en `external-link`.
 - [ ] Offers prix avec `sourceUrl` → write-back auto au persist.
 - [ ] Si module prix : `refreshBarcodePriceOffers` lit `ctx.providerProductUrls`
-  avant seek.
+      avant seek.
 - [ ] Gate EAN si URL/slug ou champ barcode peut diverger (leading zero, homonyme).
 - [ ] Test : hit barcode → `external-link` présent ; refresh avec URL stockée ne
-  appelle pas le seek (mock fetch).
+      appelle pas le seek (mock fetch).
 
 ---
 
 ## Tests de non-régression
 
-| Zone | Fichier |
-| ---- | ------- |
-| External-link factories | `src/core/enrich/providerExternalLinks.test.ts` |
-| Persistance DB | `src/core/enrich/persistProviderExternalLinks.test.ts` |
-| Merge | `src/core/enrich/merge.test.ts` |
-| URLs → refresh ctx | `src/core/commerce/pricing/providerProductUrls.test.ts` |
-| Item display inject | `src/core/commerce/pricing/itemDisplay.test.ts` |
-| EAN gate | `src/core/commerce/retailer/productUrl.test.ts` |
-| EAN équivalence | `src/core/identify/normalize.test.ts` |
-| Philibert / PrestaShop / Shopify | `resolver.test.ts` respectifs |
-| CAL landed | `chasseauxlivres/fetch.test.ts` |
-| Refresh URL-first | `okkazeo/refresh.test.ts`, `chasseauxlivres/refresh.test.ts` |
-| next/image hosts | `src/core/enrich/media/nextImageRemoteHosts.test.ts` |
+| Zone                             | Fichier                                                      |
+| -------------------------------- | ------------------------------------------------------------ |
+| External-link factories          | `src/core/enrich/providerExternalLinks.test.ts`              |
+| Persistance DB                   | `src/core/enrich/persistProviderExternalLinks.test.ts`       |
+| Merge                            | `src/core/enrich/merge.test.ts`                              |
+| URLs → refresh ctx               | `src/core/commerce/pricing/providerProductUrls.test.ts`      |
+| Item display inject              | `src/core/commerce/pricing/itemDisplay.test.ts`              |
+| EAN gate                         | `src/core/commerce/retailer/productUrl.test.ts`              |
+| EAN équivalence                  | `src/core/identify/normalize.test.ts`                        |
+| Philibert / PrestaShop / Shopify | `resolver.test.ts` respectifs                                |
+| CAL landed                       | `chasseauxlivres/fetch.test.ts`                              |
+| Refresh URL-first                | `okkazeo/refresh.test.ts`, `chasseauxlivres/refresh.test.ts` |
+| next/image hosts                 | `src/core/enrich/media/nextImageRemoteHosts.test.ts`         |

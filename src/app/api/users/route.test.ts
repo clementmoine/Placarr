@@ -4,9 +4,7 @@ import { NextRequest } from "next/server";
 const h = vi.hoisted(() => ({
   getServerSession: vi.fn(),
   getToken: vi.fn(),
-  findUnique: vi.fn(),
   update: vi.fn(),
-  del: vi.fn(),
   hash: vi.fn(),
 }));
 
@@ -15,12 +13,13 @@ vi.mock("next-auth/jwt", () => ({ getToken: h.getToken }));
 vi.mock("@/lib/auth/config", () => ({ authOptions: {} }));
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
-    user: { findUnique: h.findUnique, update: h.update, delete: h.del },
+    user: { update: h.update },
   },
 }));
 vi.mock("bcryptjs", () => ({ default: { hash: h.hash } }));
 
-import { PATCH, DELETE } from "./route";
+import { PATCH } from "./route";
+import { PASSWORD_HASH_ROUNDS } from "@/lib/auth/passwordPolicy";
 
 function patchReq(body: unknown) {
   return new NextRequest("http://localhost/api/users", {
@@ -39,73 +38,65 @@ describe("PATCH /api/users", () => {
     h.getServerSession.mockResolvedValue(null);
     h.getToken.mockResolvedValue(null);
 
-    const res = await PATCH(patchReq({ name: "X" }));
+    const res = await PATCH(patchReq({ password: "correct-horse-battery" }));
 
     expect(res.status).toBe(401);
     expect(h.update).not.toHaveBeenCalled();
   });
 
-  it("400 quand le nouvel email est déjà pris", async () => {
-    h.getServerSession.mockResolvedValue({ user: { email: "a@b.c" } });
+  it("hash le mot de passe avant de le persister", async () => {
+    h.getServerSession.mockResolvedValue({
+      user: { email: "a@b.c", role: "admin" },
+    });
     h.getToken.mockResolvedValue({ sub: "u1" });
-    h.findUnique.mockResolvedValue({ id: "other" });
+    h.update.mockResolvedValue({
+      id: "u1",
+      email: "a@b.c",
+      role: "admin",
+    });
 
-    const res = await PATCH(patchReq({ email: "taken@b.c" }));
+    await PATCH(patchReq({ password: "correct-horse-battery" }));
+
+    expect(h.hash).toHaveBeenCalledWith(
+      "correct-horse-battery",
+      PASSWORD_HASH_ROUNDS,
+    );
+    expect(h.update.mock.calls[0][0].data.password).toBe("HASHED");
+  });
+
+  it("refuse un mot de passe trop court", async () => {
+    h.getServerSession.mockResolvedValue({
+      user: { email: "a@b.c", role: "admin" },
+    });
+    h.getToken.mockResolvedValue({ sub: "u1" });
+
+    const res = await PATCH(patchReq({ password: "court" }));
 
     expect(res.status).toBe(400);
     expect(h.update).not.toHaveBeenCalled();
   });
 
-  it("ne renvoie JAMAIS le hash du mot de passe dans la réponse", async () => {
-    h.getServerSession.mockResolvedValue({ user: { email: "a@b.c" } });
-    h.getToken.mockResolvedValue({ sub: "u1" });
-    h.update.mockResolvedValue({
-      id: "u1",
-      name: "A",
-      email: "a@b.c",
-      password: "SECRET_HASH",
+  it("refuse name/email/image — seul le mot de passe est accepté", async () => {
+    h.getServerSession.mockResolvedValue({
+      user: { email: "a@b.c", role: "admin" },
     });
-
-    const res = await PATCH(patchReq({ name: "A" }));
-    const json = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(json.password).toBeUndefined();
-  });
-
-  it("hash le mot de passe avant de le persister quand il est fourni", async () => {
-    h.getServerSession.mockResolvedValue({ user: { email: "a@b.c" } });
     h.getToken.mockResolvedValue({ sub: "u1" });
-    h.update.mockResolvedValue({
-      id: "u1",
-      email: "a@b.c",
-      password: "HASHED",
+
+    const res = await PATCH(patchReq({ name: "Pirate", email: "x@y.z" }));
+
+    expect(res.status).toBe(400);
+    expect(h.update).not.toHaveBeenCalled();
+  });
+
+  it("403 pour un rôle guest", async () => {
+    h.getServerSession.mockResolvedValue({
+      user: { email: "guest@b.c", role: "guest" },
     });
+    h.getToken.mockResolvedValue({ sub: "g1" });
 
-    await PATCH(patchReq({ password: "newpass" }));
+    const res = await PATCH(patchReq({ password: "correct-horse-battery" }));
 
-    expect(h.hash).toHaveBeenCalledWith("newpass", 10);
-    expect(h.update.mock.calls[0][0].data.password).toBe("HASHED");
-  });
-});
-
-describe("DELETE /api/users", () => {
-  it("401 sans session", async () => {
-    h.getServerSession.mockResolvedValue(null);
-
-    const res = await DELETE();
-
-    expect(res.status).toBe(401);
-    expect(h.del).not.toHaveBeenCalled();
-  });
-
-  it("supprime le compte de l'utilisateur courant", async () => {
-    h.getServerSession.mockResolvedValue({ user: { email: "a@b.c" } });
-    h.del.mockResolvedValue({});
-
-    const res = await DELETE();
-
-    expect(res.status).toBe(200);
-    expect(h.del.mock.calls[0][0].where.email).toBe("a@b.c");
+    expect(res.status).toBe(403);
+    expect(h.update).not.toHaveBeenCalled();
   });
 });

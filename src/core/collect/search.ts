@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import { cleanCode } from "@/core/identify/query";
 import { stripVolumeMarkersKeepingNumber } from "@/core/enrich/titles/volumeNumber";

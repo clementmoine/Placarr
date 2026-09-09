@@ -1,0 +1,19 @@
+{
+  "source": "Band of the Hawk Card Shop",
+  "url": "https://payhip.com/BandoftheHawkCardShop",
+  "observed": "2026-08-16",
+  "note": "Payhip storefront for printable custom Naruto CCG designs (TIFF/PNG 300 DPI), not Bandai EN faces. About: fill ninjas/jutsus missing from the official game, extra battlefield zones, multiplayer. Numbering (n184 Sasuke, n245 Tobi, m339, j263, t278…) is their own continuation — it would collide with official N/J/M if dropped under cards/. Rulebook PDF is hosted on lineage2universe. Paid license; do not scrape product files.",
+  "kind": "custom-printables",
+  "officialCdn": false,
+  "ingest": "none",
+  "related": "lineage2universe.json",
+  "rulebookPdf": "https://naruto.lineage2universe.com/downloads/Band%20of%20the%20Hawk%27s%20Naruto%20CCG%20Multiplayer%20Rulebook%20-%20v7c.pdf",
+  "collectionsSeen": [
+    "kabuto-yakushi-all-cards",
+    "naruto-sasuke-set",
+    "might-guy-set",
+    "akatsuki-set-all-cards",
+    "obito-madara-card-set"
+  ],
+  "sampleSkus": ["n184", "n245", "m339", "j263", "t278"]
+}

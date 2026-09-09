@@ -1,0 +1,32 @@
+{
+  "source": "coleka.com — Cartes Naruto Série 24 Sage's Legacy (Bandai USA CCG, FR scans)",
+  "observed": "2026-08-21",
+  "note": "User-supplied `_r15466`. Same trap as s28: Coleka prints NI/JU/MI; disk n/j/m (n1358, never ni1358). Photos de collectionneur (~1080×1500), not Bandai renders. Listing announced 121; enumerated 120 unique NI/JU/MI — matches EN catalogue (n1358–n1422 / j0895–j0920 / m0855–m0883). Display packshot is already SKU display-s24 via coleka-en-ccg-covers — do not mint a second sealed product. Do not scrape the umbrella `_r4102`.",
+  "umbrella": {
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102",
+    "scrape": false,
+    "reason": "~7000 mixed cards"
+  },
+  "listing": {
+    "path": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-24-sage-s-legacy_r15466",
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-24-sage-s-legacy_r15466",
+    "scrape": true,
+    "lang": "fr",
+    "set": "s24",
+    "announced": 121,
+    "enumerated": 120,
+    "disk": "cards/{ninja|jutsu|mission}/{n|j|m}####/fr/"
+  },
+  "displayPackshot": {
+    "url": "https://thumbs.coleka.com/media/rubrique/202010/14/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-24-sage-s-legacy.webp",
+    "sku": "display-s24",
+    "staging": "staging/coleka-en-covers/s24.webp",
+    "note": "Already ingested. Scrape archives a copy under staging/coleka-s24/set-cover.webp without a second SKU."
+  },
+  "hdSources": {
+    "fr": "Coleka collector photos only — no Bandai FR scan dump. Typical full webp ~1080×1500.",
+    "en": "Drive Enhanced + Vintage CCG Trader, both 750×1050, already on disk for all 120."
+  },
+  "ingestFaces": "s24/fr",
+  "ingestUmbrella": "none"
+}

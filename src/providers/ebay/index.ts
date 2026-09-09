@@ -1,18 +1,19 @@
 import type {
   BarcodePriceRefreshContext,
   BarcodeLookupType,
-  ProviderModule,
 } from "@/types/providerModule";
-import {
-  matchPrimaryBarcode,
-} from "@/core/catalog/matchContext";
+import { defineProvider } from "@/providers/shared/defineProvider";
+import { matchPrimaryBarcode } from "@/core/catalog/matchContext";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { listProbe, probeErrorResult, retry } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  marketplaceContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
 import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
@@ -45,6 +46,7 @@ export {
   fetchPricesFromEbay,
   pingEbay,
 };
+export { fetchEbayBrowseItem, ebayBrowseItemId } from "./browseItem";
 
 const BARCODE_TYPES: BarcodeLookupType[] = [
   "games",
@@ -117,18 +119,17 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   const expectedNames = Array.from(
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
-  const titleMatch = { shelfType: ctx.shelfType };
+  const titleMatch = {
+    shelfType: ctx.shelfType,
+    ...(ctx.evidenceOnly ? { evidenceOnly: true } : {}),
+  };
   const priceQueries = ebayPriceSearchQueries(
     ctx.primaryName,
     ctx.fallbackNames,
     matchPrimaryBarcode(ctx) || ctx.cleanedBarcode,
   );
   for (const query of priceQueries) {
-    const result = await fetchPricesFromEbay(
-      query,
-      expectedNames,
-      titleMatch,
-    );
+    const result = await fetchPricesFromEbay(query, expectedNames, titleMatch);
     if (!result) continue;
     const extra = {
       productName: result.productName ?? null,
@@ -154,7 +155,7 @@ async function refreshEbayOffers(ctx: BarcodePriceRefreshContext) {
   return [];
 }
 
-export const ebayModule: ProviderModule = {
+export const ebayModule = defineProvider({
   info: {
     id: "ebay",
     label: "eBay",
@@ -166,6 +167,7 @@ export const ebayModule: ProviderModule = {
       env: [...EBAY_ENV_NAMES],
       free: true,
     },
+    supplyMode: "api_live",
     canonical: false,
     coverUrlHost: "i.ebayimg.com",
     remoteImageFallback: true,
@@ -174,6 +176,7 @@ export const ebayModule: ProviderModule = {
     websiteUrl: "https://www.ebay.fr/",
     sourceAliases: ["PicClick", "picclick"],
     marketplaceSearchPriceSource: true,
+    evidenceOnlyPriceRefresh: true,
     apiKeyDashboardUrl: "https://developer.ebay.com/my/keys",
     mappingProbeRetry: true,
     mappingProbeConfigHint:
@@ -338,6 +341,7 @@ export const ebayModule: ProviderModule = {
         "eBay",
         `eBay credentials missing — set ${EBAY_ENV_NAMES.join(" / ")}`,
       ),
+  barcodeLookupSlots: { ebay: () => [] },
   buildBarcodeSources(payload, ctx) {
     return [
       ...marketplaceContributions("eBay", payload.ebay, ctx, [
@@ -351,4 +355,14 @@ export const ebayModule: ProviderModule = {
     ];
   },
   refreshBarcodePriceOffers: refreshEbayOffers,
-};
+});
+
+import type { NamedListing } from "@/core/identify/gameLookup";
+
+// This module owns the `ebay` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    ebay: NamedListing[];
+  }
+}

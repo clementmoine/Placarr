@@ -6,7 +6,7 @@ import {
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { inferCover3dRoleFromHints } from "@/core/enrich/media/coverPerspective";
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
@@ -49,7 +49,7 @@ function chocoBonPlanCoverRole(image: {
 
 function productToMetadata(
   product: NonNullable<Awaited<ReturnType<typeof fetchFromChocoBonPlan>>>,
-  context?: { platform?: string | null; shelfName?: string | null },
+  _context?: { platform?: string | null; shelfName?: string | null },
 ): MetadataResult {
   const facts =
     product.priceNew != null
@@ -128,13 +128,14 @@ async function refreshChocoBonPlanOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const chocobonplanModule: ProviderModule = {
+export const chocobonplanModule = defineProvider({
   info: {
     id: "chocobonplan",
     label: "ChocoBonPlan",
     types: ["games", "movies", "musics", "boardgames", "books"],
     capabilities: ["identify", "description", "cover", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     requiresTitleAlignment: true,
@@ -208,4 +209,4 @@ export const chocobonplanModule: ProviderModule = {
     return mappingRawKeysFromFetch(() => fetchFromChocoBonPlan(ctx.name));
   },
   refreshBarcodePriceOffers: refreshChocoBonPlanOffers,
-};
+});

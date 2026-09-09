@@ -492,8 +492,7 @@ export async function compileResultForType(
   // ("PAC Man Atari Console…" → "Pac Man Edition").
   const marketplaceConsensusTitles = sourceEvidence
     .filter(
-      (e) =>
-        !e.isCanonical && !e.isTrustedRetailer && !e.catalogTitleAnchor,
+      (e) => !e.isCanonical && !e.isTrustedRetailer && !e.catalogTitleAnchor,
     )
     .map((e) =>
       cleanTitleForDisplay(e.rawName, {
@@ -723,7 +722,6 @@ export function scoreTypeCandidate(
 import {
   preferHardwareCatalogConsoleTitle,
   selectConsensusTitle,
-  type ConsensusTitleInput,
 } from "./consensusTitle";
 import {
   buildDatabaseEvidence,

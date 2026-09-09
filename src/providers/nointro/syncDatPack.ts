@@ -7,7 +7,7 @@ import { existsSync, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 const DAT_FILE_RE = /\.(dat|xml)$/i;
 
@@ -18,13 +18,12 @@ export type NoIntroDatSyncOptions = {
   packUrl?: string;
   /** Destination directory for extracted `.dat`/`.xml` (flat copy by basename). */
   destDir?: string;
-  /** Intentional prebuild (`pnpm nointro:sync`) — may download. */
+  /** Intentional prebuild / tooling — may download. */
   allowDownload?: boolean;
 };
 
 export type NoIntroDatPackSource =
-  | { kind: "local"; path: string }
-  | { kind: "url"; url: string };
+  { kind: "local"; path: string } | { kind: "url"; url: string };
 
 export type NoIntroDatSyncResult = {
   destDir: string;
@@ -35,7 +34,7 @@ export type NoIntroDatSyncResult = {
 function cacheDir(): string {
   return (
     process.env.NOINTRO_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "nointro")
+    path.join(process.cwd(), "data", "nointro")
   );
 }
 
@@ -51,7 +50,8 @@ export function isNoIntroDownloadAllowed(
 export function resolveNoIntroDatDestDir(
   options?: Pick<NoIntroDatSyncOptions, "destDir">,
 ): string {
-  const explicit = options?.destDir?.trim() || process.env.NOINTRO_DAT_PATH?.trim();
+  const explicit =
+    options?.destDir?.trim() || process.env.NOINTRO_DAT_PATH?.trim();
   if (explicit) return explicit;
   return path.join(cacheDir(), "dats");
 }
@@ -76,6 +76,23 @@ export function resolveNoIntroDatPackSource(
   return { kind: "url", url };
 }
 
+/**
+ * True when a DAT path or pack (local zip / allowed URL) is configured —
+ * used so catalogue auto-sync does not treat an empty index as forever-stale.
+ */
+export function isNoIntroDatSourceConfigured(
+  options?: NoIntroDatSyncOptions,
+): boolean {
+  if (process.env.NOINTRO_DAT_PATH?.trim()) return true;
+  return (
+    resolveNoIntroDatPackSource({
+      ...options,
+      // Catalogue refresh passes allowDownload; status should match that path.
+      allowDownload: options?.allowDownload ?? true,
+    }) != null
+  );
+}
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
@@ -89,7 +106,7 @@ async function downloadDatPackZip(url: string): Promise<string | null> {
   await fs.mkdir(cacheDir(), { recursive: true });
   const zipPath = path.join(cacheDir(), "nointro-dat-pack.zip");
   try {
-    const response = await axios.get<ArrayBuffer>(url, {
+    const response = await httpGet<ArrayBuffer>(url, {
       responseType: "arraybuffer",
       timeout: 10 * 60_000,
       maxContentLength: 512 * 1024 * 1024,
@@ -163,7 +180,7 @@ export async function syncNoIntroDatPack(
   const source = resolveNoIntroDatPackSource(options);
   if (!source) {
     console.warn(
-      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL with NOINTRO_ALLOW_DOWNLOAD=1",
+      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL, then admin Local indexes",
     );
     return null;
   }
@@ -190,15 +207,11 @@ export async function syncNoIntroDatPack(
     await unzipToDir(zipPath, extractRoot);
     const nested = await collectDatFiles(extractRoot);
     if (nested.length === 0) {
-      console.warn(
-        `[No-Intro] No .dat/.xml files inside pack ${zipPath}`,
-      );
+      console.warn(`[No-Intro] No .dat/.xml files inside pack ${zipPath}`);
       return null;
     }
     const files = await flattenDatFilesInto(nested, destDir);
-    console.info(
-      `[No-Intro] Synced ${files.length} DAT file(s) → ${destDir}`,
-    );
+    console.info(`[No-Intro] Synced ${files.length} DAT file(s) → ${destDir}`);
     return { destDir, files, source };
   } finally {
     await fs.rm(extractRoot, { recursive: true, force: true }).catch(() => {});

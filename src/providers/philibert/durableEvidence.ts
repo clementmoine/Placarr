@@ -57,10 +57,7 @@ export async function readPhilibertSearchEvidence(
     if (!isPhilibertSearchHits(row.yieldJson)) return null;
     return row.yieldJson;
   } catch (error) {
-    console.warn(
-      "[Philibert] Failed to read durable search evidence:",
-      error,
-    );
+    console.warn("[Philibert] Failed to read durable search evidence:", error);
     return null;
   }
 }

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, isAxiosError } from "@/lib/http/httpClient";
 import { prisma } from "@/lib/db/prisma";
 import levenshtein from "fast-levenshtein";
 import { retry } from "@/lib/http/retry";
@@ -68,7 +68,7 @@ import {
 import { areLikelySameProduct } from "@/core/identify/titleUtils";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 import { isWeakMetadataSearchFragment } from "@/core/enrich/titles/searchVariants";
-import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
+import { metadataHasDisplayImage } from "@/core/enrich/media/displayImage";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
@@ -256,7 +256,7 @@ function hasCachedCandidateSystemConflict(
 
 function isScreenScraperQuotaError(error: unknown): boolean {
   return (
-    axios.isAxiosError(error) &&
+    isAxiosError(error) &&
     (error.response?.status === 430 || error.response?.status === 429)
   );
 }
@@ -275,7 +275,7 @@ async function fetchScreenScraperGameById(
 
   try {
     const queryFn = () =>
-      axios.get<{ response: { jeu: SSGame } }>(
+      httpGet<{ response: { jeu: SSGame } }>(
         "https://api.screenscraper.fr/api2/jeuInfos.php",
         {
           params: {
@@ -697,7 +697,7 @@ async function searchScreenScraperGames(
 
   try {
     const queryFn = () =>
-      axios.get<{
+      httpGet<{
         response: { jeux?: SSGame[] | SSGame };
       }>("https://api.screenscraper.fr/api2/jeuRecherche.php", {
         params: {
@@ -746,10 +746,7 @@ type ScreenScraperResolverDeps = {
 
 function screenScraperTextValues(
   value:
-    | string
-    | { text?: string }
-    | Array<string | { text?: string }>
-    | undefined,
+    string | { text?: string } | Array<string | { text?: string }> | undefined,
 ): string[] {
   const values = Array.isArray(value) ? value : value == null ? [] : [value];
   return values
@@ -1377,9 +1374,7 @@ export function createScreenScraperResolver(deps: ScreenScraperResolverDeps) {
             new Set(
               gameData.noms.map((n) => repairCatalogColonSubstitute(n.text)),
             ),
-          ).filter(
-            (n) => n.toLowerCase().trim() !== title.toLowerCase().trim(),
-          )
+          ).filter((n) => n.toLowerCase().trim() !== title.toLowerCase().trim())
         : undefined;
       const regionalTitles = gameData.noms
         ? gameData.noms

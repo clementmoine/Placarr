@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { createGoogleBooksResolver } from "./resolver";
@@ -7,15 +7,16 @@ import {
   shouldRunBookBarcodeTeardown,
 } from "@/lib/dev/teardownUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 const fetchFromGoogleBooks = createGoogleBooksResolver();
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["books", "generic"];
 
-export const googlebooksModule: ProviderModule = {
+export const googlebooksModule = defineProvider({
   info: {
     id: "googlebooks",
     label: "Google Books",
@@ -30,6 +31,7 @@ export const googlebooksModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "key", env: ["GOOGLE_BOOKS_API_KEY"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     mappingProbeRetry: true,
@@ -113,7 +115,7 @@ export const googlebooksModule: ProviderModule = {
   collectMappingRawKeys: async () => {
     const apiKey = process.env.GOOGLE_BOOKS_API_KEY?.trim();
     try {
-      const res = await axios.get(
+      const res = await httpGet<{ items?: Array<{ volumeInfo?: JsonObject }> }>(
         "https://www.googleapis.com/books/v1/volumes",
         {
           params: {
@@ -124,11 +126,11 @@ export const googlebooksModule: ProviderModule = {
           timeout: 8000,
         },
       );
-      return Object.keys(res.data?.items?.[0]?.volumeInfo || {});
+      return Object.keys(res.data?.items?.[0]?.volumeInfo ?? {});
     } catch {
       return [];
     }
   },
-};
+});
 
 export { createGoogleBooksResolver };

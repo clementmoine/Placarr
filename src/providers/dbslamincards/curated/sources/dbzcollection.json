@@ -1,0 +1,100 @@
+{
+  "source": "dbzcollection.fr — Lamincards (FR idc=94, IT idc=74, ES idc=108)",
+  "observed": "2026-09-09",
+  "ingest": "FR : faces h400 + packshots. IT/ES : noms via fiche AJAX (faces = DBC).",
+  "sourceId": "dbzcollection",
+  "lang": "fr",
+  "line": "dbs/lamincards",
+  "origin": "http://www.dbzcollection.fr/2v2",
+  "collectionIdc": "94",
+  "sets": [
+    {
+      "ids": "353",
+      "setCode": "fr2008",
+      "label": "Lamincards France 2008 (part 1)",
+      "idc": "94",
+      "lang": "fr",
+      "listingPath": "/cartes.php?idc=94&ids=353",
+      "expectedCards": 192,
+      "cardsPerBooster": 6,
+      "note": "162 Regular + 30 Silver. Faces DBC déjà là — dbzc = dump + secours."
+    },
+    {
+      "ids": "465",
+      "setCode": "fror",
+      "label": "Lamincards Série Or France (part 2)",
+      "idc": "94",
+      "lang": "fr",
+      "listingPath": "/cartes.php?idc=94&ids=465",
+      "expectedCards": 200,
+      "cardsPerBooster": 5,
+      "note": "Regular + Gold. DBC quasi vide — dbzc = source faces primaire."
+    },
+    {
+      "ids": "304",
+      "setCode": "nero",
+      "label": "Serie Nero / Part 1 IT (2006)",
+      "idc": "74",
+      "lang": "it",
+      "namesOnly": true,
+      "listingPath": "/cartes.php?idc=74&ids=304",
+      "expectedCards": 150,
+      "note": "150 Regular. Faces DBC ; dbzc = noms AJAX."
+    },
+    {
+      "ids": "305",
+      "setCode": "argento",
+      "label": "Serie Argento / Part 2 IT (2006)",
+      "idc": "74",
+      "lang": "it",
+      "namesOnly": true,
+      "listingPath": "/cartes.php?idc=74&ids=305",
+      "expectedCards": 180,
+      "note": "150 Regular + 30 Silver (S#) → grouping DBC metalsil."
+    },
+    {
+      "ids": "308",
+      "setCode": "oro",
+      "label": "Serie Oro / Part 3 IT (2007)",
+      "idc": "74",
+      "lang": "it",
+      "namesOnly": true,
+      "listingPath": "/cartes.php?idc=74&ids=308",
+      "expectedCards": 200,
+      "note": "Regular + Gold (G#). DBC partiel."
+    },
+    {
+      "ids": "309",
+      "setCode": "platino",
+      "label": "Serie Platino / Part 4 IT (2007)",
+      "idc": "74",
+      "lang": "it",
+      "namesOnly": true,
+      "listingPath": "/cartes.php?idc=74&ids=309",
+      "expectedCards": 192,
+      "note": "DBC très partiel (~12 faces) — titres pour les tirages présents."
+    },
+    {
+      "ids": "314",
+      "setCode": "smeraldo",
+      "label": "Serie Smeraldo / Part 5 IT (GT)",
+      "idc": "74",
+      "lang": "it",
+      "namesOnly": true,
+      "listingPath": "/cartes.php?idc=74&ids=314",
+      "expectedCards": 200,
+      "note": "Faces DBC ; noms AJAX."
+    },
+    {
+      "ids": "423",
+      "setCode": "z2008",
+      "label": "Lamincards Espagne 2008 (primera)",
+      "idc": "108",
+      "lang": "es",
+      "namesOnly": true,
+      "listingPath": "/cartes.php?idc=108&ids=423",
+      "expectedCards": 162,
+      "note": "Certains Nom absents côté source — fallback #N."
+    }
+  ]
+}

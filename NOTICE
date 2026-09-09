@@ -1,0 +1,39 @@
+Placarr
+Copyright (C) 2025–2026 Clément Moine
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+See the file LICENSE for the full text of the GNU General Public License.
+
+---------------------------------------------------------------------------
+
+Foil CSS (simeydotme)
+---------------------
+
+Portions of the Pokémon foil CSS recipes are adapted from:
+
+  pokemon-cards-css (poke-holo) and pokemon-cards-151
+  Copyright (C) 2022 Simon Goellner (@simeydotme)
+  <https://github.com/simeydotme/pokemon-cards-css>
+  <https://github.com/simeydotme/pokemon-cards-151>
+  Licensed under the GNU General Public License v3.0
+
+Vendored reference trees (CSS only, no upstream foil PNGs) live under
+volatile staging (re-sync with `tsx src/providers/pokemontcglive/syncSimeyCss.ts`):
+
+  data/pokemon/staging/simey/poke-holo/   → public/css/cards/
+  data/pokemon/staging/simey/poke-151/    → public/css/cards/
+  (see each tree’s UPSTREAM_COMMIT for the pinned revision)
+
+Adapted into Placarr as `HoloShader` recipes (e.g. radiantHolo, regularHolo,
+reverseHolo). See docs/foil_css_sources.md.
+
+---------------------------------------------------------------------------
+
+Other third-party notices may appear alongside individual modules.
+Pokemon Company / The Pokémon Company International names, artwork, and
+game assets remain their respective owners; extracted foil textures are
+used only as local runtime data for personal collection tooling.

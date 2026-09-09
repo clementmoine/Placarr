@@ -135,9 +135,10 @@ describe("GET /api/admin/providers", () => {
         "furet",
         "gibert",
         "izneo",
+        "nautiljon",
       ]),
     );
-    expect(pageCount.configuredCount).toBe(10);
+    expect(pageCount.configuredCount).toBe(11);
     expect(pageCount.risk).toBe("ok");
   });
 

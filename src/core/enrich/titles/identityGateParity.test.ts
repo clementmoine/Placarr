@@ -97,9 +97,14 @@ describe("identity gate parity (merge ↔ catalog URL)", () => {
         catalogTitleAlignedWithItem(item, candidate, { shelfType: "games" }),
       ).toBe(false);
       expect(
-        isMetadataTitleAligned({ title: candidate }, [item], METADATA_TITLE_ALIGN_FLOOR, {
-          shelfType: "games",
-        }),
+        isMetadataTitleAligned(
+          { title: candidate },
+          [item],
+          METADATA_TITLE_ALIGN_FLOOR,
+          {
+            shelfType: "games",
+          },
+        ),
       ).toBe(false);
     }
   });

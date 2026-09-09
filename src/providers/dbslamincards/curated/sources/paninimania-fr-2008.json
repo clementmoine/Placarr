@@ -1,0 +1,67 @@
+{
+  "source": "Paninimania — DragonBall Z Lamincards France",
+  "url": "https://www.paninimania.com/?idf=15&idm=1290&pag=cid508_alb",
+  "observed": "2026-09-07",
+  "ingest": "packshots sealed seulement — pas de sleeve pack FR (1290_i4b = dos d’une carte)",
+  "sourceId": "paninimania",
+  "lang": "fr",
+  "line": "dbs/lamincards",
+  "year": 2008,
+  "publisher": "Edibas",
+  "range": {
+    "base": "1–162",
+    "specials": 29,
+    "shinySilver": [
+      "S8",
+      "S10",
+      "S13",
+      "S15",
+      "S19",
+      "S24",
+      "S25",
+      "S29",
+      "S34",
+      "S36",
+      "S37",
+      "S39",
+      "S40",
+      "S41",
+      "S45",
+      "S50",
+      "S51",
+      "S52",
+      "S54",
+      "S59",
+      "S60",
+      "S90",
+      "S103",
+      "S106",
+      "S108",
+      "S118",
+      "S125",
+      "S126",
+      "S157",
+      "S162"
+    ]
+  },
+  "images": {
+    "cover": "https://www.paninimania.com/files/15/6/?n=1290b.jpg",
+    "pack": "https://www.paninimania.com/files/15/6/?n=1290_i1b.jpg",
+    "cardExamples": [
+      "https://www.paninimania.com/files/15/6/?n=1290_i2b.jpg",
+      "https://www.paninimania.com/files/15/6/?n=1290_i5b.jpg",
+      "https://www.paninimania.com/files/15/6/?n=1290_i3b.jpg"
+    ],
+    "cardBackExample": "https://www.paninimania.com/files/15/6/?n=1290_i4b.jpg",
+    "albumBack": "https://www.paninimania.com/files/15/6/?n=1290_i6b.jpg"
+  },
+  "notIngested": [
+    "1290_i4b « Dos de Lamincards » — dos d’une carte unique, pas un sleeve pack FR"
+  ],
+  "sealedAttested": [
+    "Album français vide / incomplet / complet",
+    "Pochette de 6 lamincards",
+    "Pochette vide"
+  ],
+  "note": "Faces FR = DBC collection 300 (`fr2008`, 162+30 Silver). Série Or FR = collection 301 (`fror`) — placeholders DBC pour l’instant. Ne pas confondre avec `z2008` (Espagne)."
+}

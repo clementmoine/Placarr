@@ -1,6 +1,7 @@
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import { pricedOffers } from "@/core/catalog/priceOffers";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -16,8 +17,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   enrichBackMarketProductGallery,
@@ -57,10 +58,9 @@ function buildAttachments(
 ): MetadataAttachment[] | undefined {
   const urls = Array.from(
     new Set(
-      [
-        ...(product.imageUrls ?? []),
-        product.coverUrl,
-      ].filter((url): url is string => Boolean(url?.trim())),
+      [...(product.imageUrls ?? []), product.coverUrl].filter(
+        (url): url is string => Boolean(url?.trim()),
+      ),
     ),
   );
   if (urls.length === 0) return undefined;
@@ -168,8 +168,7 @@ async function resolveBackMarketProduct(
   ctx: Parameters<MetadataProviderAdapter["resolve"]>[0],
 ): Promise<BackMarketProduct | null> {
   throwIfAborted(ctx.signal);
-  const shelfType =
-    ctx.match?.shelfType || ctx.type || "hardware";
+  const shelfType = ctx.match?.shelfType || ctx.type || "hardware";
   if (shelfType !== "hardware" && shelfType !== "games") return null;
 
   const expectedNames = Array.from(
@@ -186,11 +185,10 @@ async function resolveBackMarketProduct(
 
   const pinned = pinnedProviderRecordUrl(ctx, PROVIDER_ID);
   if (pinned) {
-    const fromUrl = await fetchFromBackMarketProductUrl(
-      pinned,
-      expectedNames,
-      { shelfType, signal: ctx.signal },
-    );
+    const fromUrl = await fetchFromBackMarketProductUrl(pinned, expectedNames, {
+      shelfType,
+      signal: ctx.signal,
+    });
     if (fromUrl) {
       return enrichBackMarketProductGallery(fromUrl, { signal: ctx.signal });
     }
@@ -215,12 +213,23 @@ async function refreshBackMarketOffers(ctx: BarcodePriceRefreshContext) {
     new Set([ctx.primaryName, ...ctx.fallbackNames].filter(Boolean)),
   );
 
-  const pinnedUrl = pinnedProviderRecordUrl(ctx, PROVIDER_ID);
+  const fetchOpts = {
+    shelfType: ctx.shelfType,
+    ...(ctx.signal ? { signal: ctx.signal } : {}),
+    ...(ctx.evidenceOnly ? { evidenceOnly: true } : {}),
+  };
+
+  // Price refresh carries fiche URLs as `providerProductUrls` (metadata
+  // external links) — `providerRecordUrls` only exists on the adapter context.
+  const pinnedUrl = providerProductUrlsForKey(
+    PROVIDER_ID,
+    ctx.providerProductUrls,
+  )[0];
   if (pinnedUrl) {
     const pinned = await fetchPricesFromBackMarketProductUrl(
       pinnedUrl,
       expectedNames,
-      { shelfType: ctx.shelfType },
+      fetchOpts,
     );
     if (pinned?.priceUsed != null) {
       return pricedOffers(PRICE_SOURCE, [
@@ -231,8 +240,6 @@ async function refreshBackMarketOffers(ctx: BarcodePriceRefreshContext) {
           extra: {
             productName: pinned.productName ?? null,
             sourceUrl: pinned.sourceUrl ?? pinnedUrl,
-            grade: pinned.grade ?? null,
-            coverUrl: pinned.coverUrl ?? null,
           },
         },
       ]);
@@ -241,9 +248,11 @@ async function refreshBackMarketOffers(ctx: BarcodePriceRefreshContext) {
 
   for (const query of matchPriceSeekQueries(ctx)) {
     if (!query.trim()) continue;
-    const result = await fetchPricesFromBackMarket(query, expectedNames, {
-      shelfType: ctx.shelfType,
-    });
+    const result = await fetchPricesFromBackMarket(
+      query,
+      expectedNames,
+      fetchOpts,
+    );
     if (!result?.priceUsed) continue;
     return pricedOffers(PRICE_SOURCE, [
       {
@@ -253,8 +262,6 @@ async function refreshBackMarketOffers(ctx: BarcodePriceRefreshContext) {
         extra: {
           productName: result.productName ?? null,
           sourceUrl: result.sourceUrl ?? null,
-          grade: result.grade ?? null,
-          coverUrl: result.coverUrl ?? null,
         },
       },
     ]);
@@ -262,7 +269,7 @@ async function refreshBackMarketOffers(ctx: BarcodePriceRefreshContext) {
   return [];
 }
 
-export const backmarketModule: ProviderModule = {
+export const backmarketModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: "Back Market",
@@ -271,8 +278,10 @@ export const backmarketModule: ProviderModule = {
     // Prices stay on refreshBarcodePriceOffers — metadata chase must not wait.
     metadataCapabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     marketplaceSearchPriceSource: true,
+    evidenceOnlyPriceRefresh: true,
     requiresTitleAlignment: true,
     isSecondary: true,
     retailCatalogImageTitles: true,
@@ -346,10 +355,14 @@ export const backmarketModule: ProviderModule = {
       name: SAMPLE_QUERY,
     });
     return mappingRawKeysFromFetch(() =>
-      fetchFromBackMarket(ctx.name || SAMPLE_QUERY, [ctx.name || SAMPLE_QUERY], {
-        shelfType: "hardware",
-      }),
+      fetchFromBackMarket(
+        ctx.name || SAMPLE_QUERY,
+        [ctx.name || SAMPLE_QUERY],
+        {
+          shelfType: "hardware",
+        },
+      ),
     );
   },
   refreshBarcodePriceOffers: refreshBackMarketOffers,
-};
+});

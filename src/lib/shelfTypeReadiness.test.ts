@@ -7,7 +7,7 @@ import {
 } from "@/lib/shelfTypeReadiness";
 
 describe("shelfTypeReadiness", () => {
-  it("marks existing media types and hardware as ready", () => {
+  it("marks every type with a working identify path as ready", () => {
     for (const type of [
       "games",
       "movies",
@@ -15,19 +15,14 @@ describe("shelfTypeReadiness", () => {
       "books",
       "boardgames",
       "hardware",
+      // Cards resolve by print identity instead of a barcode.
+      "tcg",
+      // LEGO / toys — Brickset (EAN) + Rebrickable (set_num).
+      "toys",
     ]) {
       expect(shelfTypeReadiness(type)).toBe("ready");
       expect(isShelfTypeReady(type)).toBe(true);
       expect(isShelfTypeComingSoon(type)).toBe(false);
     }
-  });
-
-  it("blocks tcg and toys until identify is wired", () => {
-    expect(shelfTypeReadiness("tcg")).toBe("comingSoon");
-    expect(shelfTypeReadiness("toys")).toBe("comingSoon");
-    expect(isShelfTypeReady("tcg")).toBe(false);
-    expect(isShelfTypeReady("toys")).toBe(false);
-    expect(isShelfTypeComingSoon("tcg")).toBe(true);
-    expect(isShelfTypeComingSoon("toys")).toBe(true);
   });
 });

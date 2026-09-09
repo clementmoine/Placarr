@@ -1,0 +1,52 @@
+{
+  "source": "manga-sanctuary.com news 7397 (28/01/2008)",
+  "observed": "2026-08-29",
+  "page": "https://www.manga-sanctuary.com/news/7397/naruto-jcc.html",
+  "note": "Press packshots for Carddass FR S5 only. Larger JPG than carddass.fr GIFs (starters ~650×830, booster ~516×788). Logos (Naruto officiel, Bandai) skipped — not sealed SKUs. No S6 starter art on the page (Le Duel / Quartet announced in text only).",
+  "products": [
+    {
+      "slug": "starter-un-nouveau-depart",
+      "setCode": "s5",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Starter Un nouveau départ",
+      "printedRef": "05124",
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/Naruto%20jcc%20serie%205%20starter%20nouveau%20depart.jpg",
+      "staging": "staging/manga-sanctuary/starter-un-nouveau-depart.jpg",
+      "ingest": true,
+      "pixels": { "width": 649, "height": 833 }
+    },
+    {
+      "slug": "starter-la-quete",
+      "setCode": "s5",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Starter La quête",
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/Naruto%20jcc%20serie%205%20starter%20quete.jpg",
+      "staging": "staging/manga-sanctuary/starter-la-quete.jpg",
+      "ingest": true,
+      "pixels": { "width": 658, "height": 843 }
+    },
+    {
+      "slug": "booster-s5",
+      "setCode": "s5",
+      "kind": "booster",
+      "lang": "FR",
+      "title": "Booster Série 5",
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/Naruto%20jcc%20serie%205%20booster.jpg",
+      "staging": "staging/manga-sanctuary/booster-s5.jpg",
+      "ingest": true,
+      "pixels": { "width": 516, "height": 788 }
+    }
+  ],
+  "skip": [
+    {
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/Naruto%20logo%20officiel.jpg",
+      "reason": "Game wordmark, not a sealed product"
+    },
+    {
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/LOGOBAN.jpg",
+      "reason": "Bandai logo, not a sealed product"
+    }
+  ]
+}

@@ -76,14 +76,12 @@ describe("ebay refreshBarcodePriceOffers", () => {
   });
 
   it("returns priced offers from the first successful query", async () => {
-    mockedFetchPrices
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        priceUsed: 1200,
-        productName: "Les Trésors de Picsou N°63 - Magazine Disney",
-        sourceUrl: "https://www.ebay.fr/itm/123",
-        offerCount: 2,
-      });
+    mockedFetchPrices.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      priceUsed: 1200,
+      productName: "Les Trésors de Picsou N°63 - Magazine Disney",
+      sourceUrl: "https://www.ebay.fr/itm/123",
+      offerCount: 2,
+    });
 
     const offers = await ebayModule.refreshBarcodePriceOffers!(refreshCtx());
 

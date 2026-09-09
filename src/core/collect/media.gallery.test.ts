@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getGalleryImages, mergeCoverAttachmentsForPicker, orderedCoverAttachmentsForDisplay } from "./media";
+import {
+  getGalleryImages,
+  mergeCoverAttachmentsForPicker,
+  orderedCoverAttachmentsForDisplay,
+} from "./media";
 
 describe("orderedCoverAttachmentsForDisplay", () => {
   it("pins metadata.imageUrl first then keeps storage order", () => {
@@ -335,7 +339,7 @@ describe("orderedCoverAttachmentsForDisplay", () => {
   it("collapses duplicate local files referenced by multiple providers", () => {
     const item = {
       metadata: {
-        imageUrl: "/uploads/cover_crop.jpg",
+        imageUrl: "/uploads/cover_edited.jpg",
         attachments: [
           {
             type: "cover",

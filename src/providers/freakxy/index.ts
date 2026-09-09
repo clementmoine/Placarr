@@ -1,10 +1,14 @@
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
 import { probeBarcodesWithFallback, listProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  marketplaceContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import { fetchFromFreakxy } from "./fetch";
 
@@ -14,13 +18,14 @@ const FALLBACK_QUERIES = ["0045496365226", "045496360730", "Mario Kart Wii"];
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["games", "hardware", "generic"];
 
-export const freakxyModule: ProviderModule = {
+export const freakxyModule = defineProvider({
   info: {
     id: "freakxy",
     label: "Freakxy",
     types: ["games", "hardware"],
     capabilities: ["identify", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -70,10 +75,21 @@ export const freakxyModule: ProviderModule = {
       fetchFromFreakxy(ctx.barcode || FALLBACK_QUERIES[0]),
     );
   },
+  barcodeLookupSlots: { freakxy: () => [] },
   buildBarcodeSources(payload, ctx) {
     return [
       ...marketplaceContributions("Freakxy", payload.freakxy, ctx, ["games"]),
       ...typedOnlyContributions("Freakxy", payload.freakxy, ctx, ["hardware"]),
     ];
   },
-};
+});
+
+import type { NamedListing } from "@/core/identify/gameLookup";
+
+// This module owns the `freakxy` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    freakxy: NamedListing[];
+  }
+}

@@ -70,12 +70,16 @@ describe("provider mapping probes", () => {
         "bdphile",
         "bedetheque",
         "booknode",
+        "brickset",
         "canalbd",
         "cestlejeu",
         "chasseauxlivres",
         "chipweld",
         "chocobonplan",
         "coverproject",
+        "dbscg",
+        "dbsfw",
+        "dbslamincards",
         "decitre",
         "didacto",
         "ebay",
@@ -89,30 +93,48 @@ describe("provider mapping probes", () => {
         "hdjv",
         "icollect",
         "izneo",
+        "jikan",
         "latelierdesjeux",
         "launchbox",
         "ledenicheur",
         "lepassetemps",
         "lesgentlemendujeu",
+        "lorcanagg",
+        "lorcanajson",
+        "lorcast",
         "ludifolie",
         "ludocortex",
         "monsieurde",
         "myludo",
+        "narutocarddass",
+        "narutodatacarddass",
+        "narutokayou",
+        "narutomythos",
+        "narutoranks",
+        "narutoshippuden",
+        "narutoultra",
+        "nautiljon",
         "netgamesretro",
         "nointro",
         "okkazeo",
+        "onepiece",
         "philibert",
         "planetebd",
         "playin",
         "pricecharting",
+        "rebrickable",
         "scandex",
         "screenscraper",
         "senscritique",
         "smartoys",
+        "tcgdex",
         "thegamesdb",
         "tokyogamestory",
         "vivlio",
         "wikidata",
+        "yugioh",
+        "digimon",
+        "mtg",
       ].sort(),
     );
   });
@@ -121,8 +143,8 @@ describe("provider mapping probes", () => {
     // Regression: `ctx.name.trim()` threw when mappingProbe.context only set barcode
     // (Gibert and other Magento retailers) → map:error for the whole provider.
     expect(() => {
-      const name: string | undefined = undefined;
-      void name?.trim();
+      const probeContext: { name?: string } = {};
+      void probeContext.name?.trim();
     }).not.toThrow();
 
     const gibert = PROVIDER_MODULES.find((mdl) => mdl.info.id === "gibert");

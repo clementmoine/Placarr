@@ -2,7 +2,11 @@
  * Build, localize, rank, and filter attachments for metadata persistence.
  */
 import path from "path";
-import type { Attachment, AttachmentType, Type } from "@prisma/client";
+import type {
+  Attachment,
+  AttachmentType,
+  Type,
+} from "@/generated/prisma/browser";
 import {
   deriveAttachmentPlatformKeyFromUrl,
   shouldShowCoverAttachmentOnShelf,
@@ -11,7 +15,7 @@ import {
   type AttachmentImageMetrics,
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
-import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/galleryPreservation";
+import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/media/galleryPreservation";
 import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
 import {
   withProviderAttachmentTraits,
@@ -42,7 +46,10 @@ import {
   prepareDeferredAttachments,
   selectAttachmentsForLocalization,
 } from "@/core/enrich/media/attachmentLocalization";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
 
 export type StoreItemContext = {
   id: string;
@@ -321,11 +328,9 @@ export async function prepareMetadataGalleryForStore(input: {
         })()
       : rankedLocalizedAttachments
   ).filter((attachment) =>
-    attachmentTitleAllowedForItem(
-      formattedTitle || name,
-      attachment,
-      { mediaType: type },
-    ),
+    attachmentTitleAllowedForItem(formattedTitle || name, attachment, {
+      mediaType: type,
+    }),
   );
 
   const withOrphanUserPins = preserveGalleryAttachmentsOnRegression(
@@ -335,7 +340,6 @@ export async function prepareMetadataGalleryForStore(input: {
   );
   const finalStorableAttachments =
     await retargetUserHonorPinsInAttachmentGallery(withOrphanUserPins);
-
 
   return {
     attachmentsForRanking,

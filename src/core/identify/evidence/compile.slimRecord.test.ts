@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { compileAllBarcodeTypeResults } from "@/core/identify/lookup/sourceAssembly";
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 import { compileResultForType } from "./compile";
 
 const database = vi.hoisted(() => ({
@@ -64,7 +65,7 @@ describe("compileResultForType — slim RECORD", () => {
       cleanedBarcode: "0045496365226",
       type: "games",
       payload: {
-        ...createEmptyBarcodeLookupPayload(),
+        ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
         pc: {
           title: "Mario Kart Wii",
           platform: "Wii",
@@ -82,7 +83,7 @@ describe("compileResultForType — slim RECORD", () => {
       cleanedBarcode: "0045496365226",
       type: "games",
       payload: {
-        ...createEmptyBarcodeLookupPayload(),
+        ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
         pc: {
           title: "Mario Kart Wii",
           platform: "Wii",

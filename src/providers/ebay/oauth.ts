@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpPost } from "@/lib/http/httpClient";
 
 import {
   EBAY_BROWSE_OAUTH_SCOPE,
@@ -32,14 +32,18 @@ async function requestEbayAccessToken(
     grant_type: "client_credentials",
     scope,
   });
-  const res = await axios.post(EBAY_OAUTH_URL, body.toString(), {
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
+  const res = await httpPost<{ access_token?: string; expires_in?: number }>(
+    EBAY_OAUTH_URL,
+    body.toString(),
+    {
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      timeout: EBAY_REQUEST_TIMEOUT_MS,
+      validateStatus: () => true,
     },
-    timeout: EBAY_REQUEST_TIMEOUT_MS,
-    validateStatus: () => true,
-  });
+  );
   const token =
     res.status === 200
       ? (res.data?.access_token as string | undefined)

@@ -1,0 +1,162 @@
+{
+  "source": "Yahoo! Auctions JP (pasted listing photos)",
+  "observed": "2026-08-18",
+  "crawlLive": false,
+  "ingest": "curated-faces",
+  "lang": "ja",
+  "note": "Pasted auction + CDN URLs only — do not crawl search or seller stores. Listing HTML 200 from JP; live search 404 without a browser. Bytes live under curated/cards/{family}/{id}/ja/source.jpg so they survive without VPN. art.yahoo is a collector photo, below nikita/suruga/carddas. 忍-3 NFS 2003 / winter 2004 arts do not match FR NI-03 standing pose — not ingested as maki1. 忍-37 only in a 4-card lot — not cropped.",
+  "not": ["crawl", "data-carddass", "ni0003-from-nfs", "lot-uncropped"],
+  "faces": [
+    {
+      "printedRef": "忍-19",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うずまきナルト",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/d1240010966",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/user/6c6b918525f85b2bc969347b9db2f4447d839de81ce34256e830f63a0f38beb6/i-img1200x1200-17861018669415eoylnr78076.jpg",
+      "curated": "cards/ninja/ni0019/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "忍-20",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うちはサスケ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/n1236292271",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/2b68d60532fef404967acdb74f1e3efa310359caa008ec6db6af89042d52a968/i-img900x1200-178346353810143qxqbq241.jpg",
+      "curated": "cards/ninja/ni0020/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "術-14",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "無音殺人術",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/m1234689126",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0206/user/17b9efb1feb01e2d3a171a06932bd93cb83db9b34bc85368f68ea80cb8a503ce/i-img900x1200-17822711060890dkyjon36028.jpg",
+      "curated": "cards/jutsu/te0014/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "術-17",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "変わり身の術",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/q1192461006",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0107/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img831x1200-17523802762209u31xyd394.jpg",
+      "curated": "cards/jutsu/te0017/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "作-5",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "九尾の災厄",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/w1234622944",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0206/user/b6ae07056661c619bc3f31cf9e3f1ce54f399fb5877e53604fee01d0ceb3ee0f/i-img900x1200-17822231621873x2dahc11050.jpg",
+      "curated": "cards/mission/ta0005/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
+    },
+    {
+      "printedRef": "作-8",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "ハプニング",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/x1236113673",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img839x1200-17833211610865jzkxau35.jpg",
+      "curated": "cards/mission/ta0008/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "作-14",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "殺気！",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/k1192452552",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0107/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img839x1200-175238030041444curhj226537.jpg",
+      "curated": "cards/mission/ta0014/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "作-18",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "目覚めの朝",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/m1198509136",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0109/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img828x1200-17567179619245lbln7h34.jpg",
+      "curated": "cards/mission/ta0018/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
+    },
+    {
+      "printedRef": "作-21",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "戦い終えて",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/s1174314433",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0102/user/ac0052e2dc53ce0c0cb94a624cbd6ab243449009f6324556611baed410607527/i-img800x600-17401095093479te2skv18408.jpg",
+      "curated": "cards/mission/ta0021/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/l1239088161",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/13058f4ba4926a6a2c08355e8cc2eed180af8e605420bf2315bb6d4274f13fd5/i-img1075x1200-17854606556957qgakto36.jpg",
+      "curated": "cards/promo/opni0003/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "printedRef": "PR忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/e1192446937",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0107/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img825x1200-175238026860338n3fiw15953.jpg",
+      "curated": "cards/promo/prni0003/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2003
+    },
+    {
+      "printedRef": "忍-3",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/b1239481898",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/user/3e2b0f990a17565271dd4d2e2c7b0ef4aff3fdaac21009c168bca74d09024262/i-img1200x900-17857482221104s1hiqh81486.jpg",
+      "ingest": false,
+      "reason": "Printed 忍-3 NOT FOR SALE 2003 combat pose — not FR NI-03 standing art, not 2002 巻ノ壱. Do not file as ni0003 or ni0003-ps."
+    },
+    {
+      "printedRef": "忍-3",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/n1239077558",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/13058f4ba4926a6a2c08355e8cc2eed180af8e605420bf2315bb6d4274f13fd5/i-img1182x1200-17854601844521qkrrf656565.jpg",
+      "ingest": false,
+      "reason": "Printed 忍-3 BANDAI 2004 winter cloak — art does not match FR NI-03."
+    },
+    {
+      "printedRef": "忍-37",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "はたけカカシ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/j1235211033",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0206/user/e8d58f35e97c2be4c432d707ba0f091d0f91a4d07124dd29c1bd56447ad5d447/i-img1200x900-1782655462585816hyzhhk8.jpg",
+      "ingest": false,
+      "reason": "Lot photo (忍-37+38). Do not use an uncropped 2-up as the catalogue face."
+    }
+  ]
+}

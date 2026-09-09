@@ -1,0 +1,86 @@
+{
+ "source": "carddas.com — le site de jeu Naruto de Bandai, via son miroir Wayback",
+ "observed": "2026-08-20",
+ "ingest": "packshots des volumes 2, 3, 4, 13, 14, 15 (plus le 5 en source secondaire)",
+ "crawlLive": false,
+ "lang": "ja",
+ "url": "http://www.carddas.com/naruto/",
+ "note": "Déjà sur disque : `scrapeCarddasJp` miroite tout /naruto/ depuis la CDX Wayback, et le staging tient 1 043 images. Les packshots y étaient depuis le début, jamais lus — on cherchait des visuels sur le web alors qu'ils dormaient dans notre propre moisson.",
+ "whyItMatters": "Six des dix-sept volumes japonais n'avaient aucun visuel — 1, 2, 3, 13, 14, 15. Ce site couvre tout sauf le premier, et corrige le quatrième.",
+ "layout": {
+  "image/product/": "la ligne 巻ノ (2002-2007) — un fichier par volume, l'ordinal dans le nom",
+  "image/product/{15,16,17}/": "les derniers volumes, rangés en dossiers"
+ },
+ "shapeTellsRole": "Le rapport hauteur/largeur classe le fichier sans l'ouvrir : ~2,1 = sachet, ~1,5 = boîte, ~3,5 = distributeur, ~1,45 = carte. C'est ce qui a séparé `1st_box.jpg` (une boîte) des sachets.",
+ "attestation": "Trois recoupements indépendants pour l'ordinal → volume : l'étiquette `2nd.gif` se lit 巻ノ弐 ; `13th_logo.gif` se lit 巻ノ十三「苦難襲来！終末の器 編」 ; et les sachets des volumes 13, 14 et 15 impriment leur propre numéro. Les volumes 4, 16 et 17 concordent en outre avec la base produit sec.carddass.com.",
+ "resolutionCaveat": "Vignettes d'un site de 2003 : de 75×143 à 100×201. Retenues faute de mieux, et placées après la base produit (560×560) partout où celle-ci montre un emballage.",
+ "vol4Correction": "La fiche officielle du 巻ノ四 illustre le produit par six cartes étalées, sans emballage — même travers que les fiches 自販機. `4nd.gif` montre le sachet, et c'est lui qui sert désormais ce SKU booster.",
+ "products": [
+  {
+   "volume": 2,
+   "file": "image/product/2nd.jpg",
+   "size": "75x143"
+  },
+  {
+   "volume": 3,
+   "file": "image/product/3nd.jpg",
+   "size": "75x159"
+  },
+  {
+   "volume": 4,
+   "file": "image/product/4nd.gif",
+   "size": "75x144"
+  },
+  {
+   "volume": 13,
+   "file": "image/product/13th_pac.gif",
+   "size": "80x160"
+  },
+  {
+   "volume": 14,
+   "file": "image/product/14th_pac.gif",
+   "size": "75x160"
+  },
+  {
+   "volume": 15,
+   "file": "image/product/15/pac.gif",
+   "size": "100x201"
+  },
+  {
+   "volume": 5,
+   "file": "image/product/5nd.gif",
+   "size": "75x155",
+   "note": "Deuxième source seulement : Graded Card Center sert déjà ce volume en 756×1621. Gardé parce qu'il atteste la nomenclature — le sachet s'y lit 巻ノ五, comme sur la grande photo."
+  }
+ ],
+ "not": {
+  "volume1UnderProduct": "`image/product/1st_pac.gif` reste absent de la CDX — le sachet vit sous `image/new/1st_pac.gif` (branché 2026-08-29).",
+  "volumes6-12": "`6.gif`, `7th.jpg`, `8th.jpg`, `9th.gif`, `10th.gif`, `11th_pac.gif` existent aussi, mais ces volumes ont déjà mieux (Suruga, détourages, TV Tokyo, Graded Card Center).",
+  "volumes16-17": "`16/pac.gif` et `17/17th_pac_l.jpg` sont des sachets seuls, plus propres que la composite officielle — mais 100×212 contre 560×560. La base produit garde la main."
+ },
+ "releasePackshots": {
+  "observed": "2026-08-29",
+  "note": "Coffrets / feuilles / coins déjà dans le miroir, jamais branchés. Filenames Bandai (gokui=極意, yukihime=雪姫, kakucyou=拡張, spc2=スペシャルコンボ2).",
+  "wired": {
+    "booster-vol1-jp": "image/new/1st_pac.gif",
+    "jp-release-07": "image/new/gokui.gif",
+    "jp-release-12": "image/new/yukihime.gif",
+    "jp-release-18": "image/new/coin_plus1.gif",
+    "jp-release-21": "image/new/kakucyou.gif",
+    "jp-release-23": "image/product/shinobi.gif",
+    "jp-release-25": "image/product/ex_seat2_img.jpg",
+    "jp-release-27": "image/new/coin_2.gif",
+    "jp-release-29": "image/new/spc2_img.jpg"
+  },
+  "stillSansImage": [
+    "jp-release-15 忍兵法札絵巻 弐 — emaki2.gif ambigu (composite booster, pas jumbo attesté)",
+    "jp-release-17 ラムネ菓子 カードスタンド — pas de packshot dans le miroir",
+    "jp-release-20 スペシャルファイリングシート Vジャンプ — insert magazine, pas d'emballage site"
+  ]
+ },
+ "leads": {
+  "starterBoxes": "`st_box1.gif`..`st_box4.gif` et `1st_box.jpg` attestent au moins quatre スターターボックス ; le catalogue n'en porte qu'une (`jp-release-04`). Produits manquants, pas visuels manquants.",
+  "volumeSubtitles": "Les `*_logo.gif` portent le sous-titre de chaque volume — à confronter aux noms tenus dans `cardcheckbox-jp.json`."
+ },
+ "splitNote": "Le 第一幕 du 疾風伝 est parti le 2026-08-21 dans `narutoshippuden/curated/sources/carddas-jp-act1.json`."
+}

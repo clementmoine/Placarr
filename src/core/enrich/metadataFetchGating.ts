@@ -23,22 +23,19 @@ import {
 } from "@/core/enrich/titleMatching";
 import {
   isVideoGamePlatformKey,
-  detectVideoGamePlatformKey,
   videoGamePlatformTargetsPhysicalMedia,
 } from "@/core/identify/platforms/platforms";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
 import { throwIfAborted, isAbortError } from "@/lib/http/abort";
-import {
-  normalizeProductBarcode,
-  pickDiscoveredBarcode,
-} from "@/core/identify/normalize";
+import { pickDiscoveredBarcode } from "@/core/identify/normalize";
 import { bookIsbnBootstrapProviderIds } from "@/core/catalog/catalog";
 import {
   metadataResultsNeedGalleryEnrichment,
   metadataResultsHaveGameGallerySource,
-} from "@/core/enrich/galleryEnrichment";
-import { metadataHasDisplayImage } from "@/core/enrich/displayImage";
+} from "@/core/enrich/media/galleryEnrichment";
+import { metadataHasDisplayImage } from "@/core/enrich/media/displayImage";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 /**
  * Gating + shaping helpers for the generic metadata fetch orchestrator.
@@ -60,7 +57,9 @@ function metadataHasDescription(metadata: MetadataResult): boolean {
 }
 
 /** Provider already pinned a record — title recheck / fallback names won't help. */
-export function metadataResultIsPinnedForRecheck(result: MetadataResult): boolean {
+export function metadataResultIsPinnedForRecheck(
+  result: MetadataResult,
+): boolean {
   const externalIds = result.externalIds;
   if (
     !externalIds ||
@@ -164,8 +163,8 @@ export function stage1HasMetadataCapability(
       case "people":
         return Boolean(
           result.authors?.length ||
-            result.publishers?.length ||
-            result.facts?.some((fact) => fact.kind === "person"),
+          result.publishers?.length ||
+          result.facts?.some((fact) => fact.kind === "person"),
         );
       case "ageRating":
         return Boolean(
@@ -229,7 +228,9 @@ export async function bootstrapBookProvidersWithDiscoveredIsbn(
   }
 }
 
-export function normalizeMetadataPlatformKey(value?: string | null): string | null {
+export function normalizeMetadataPlatformKey(
+  value?: string | null,
+): string | null {
   if (!value?.trim()) return null;
   const trimmed = value.trim();
   if (isVideoGamePlatformKey(trimmed)) return trimmed;
@@ -281,10 +282,10 @@ export function metadataCapabilitiesOf(provider: ProviderInfo): Capability[] {
 function shouldAlwaysFetchGameGallerySource(provider: ProviderInfo): boolean {
   return Boolean(
     provider.gameMediaGallerySource ||
-      provider.bookGallerySource ||
-      (provider.isRealBoxCover &&
-        provider.capabilities.includes("cover") &&
-        provider.isSecondary),
+    provider.bookGallerySource ||
+    (provider.isRealBoxCover &&
+      provider.capabilities.includes("cover") &&
+      provider.isSecondary),
   );
 }
 
@@ -529,9 +530,14 @@ export async function supplementGameEditionProviderResults(
       const editionMetadata = byProvider.get(providerId) ?? null;
       if (
         editionMetadata &&
-        !isMetadataTitleAligned(editionMetadata, alignmentNames, 0.58, {
-          shelfType,
-        })
+        !isMetadataTitleAligned(
+          editionMetadata,
+          alignmentNames,
+          METADATA_TITLE_ALIGN_FLOOR,
+          {
+            shelfType,
+          },
+        )
       ) {
         return;
       }
@@ -553,9 +559,14 @@ export async function supplementGameEditionProviderResults(
 
       if (
         !baseResult ||
-        !isMetadataTitleAligned(baseResult, alignmentNames, 0.58, {
-          shelfType,
-        })
+        !isMetadataTitleAligned(
+          baseResult,
+          alignmentNames,
+          METADATA_TITLE_ALIGN_FLOOR,
+          {
+            shelfType,
+          },
+        )
       ) {
         return;
       }
@@ -592,9 +603,14 @@ export function alignedProviderResultsForFallback(
     );
     if (
       providerInfo?.requiresTitleAlignment &&
-      (!isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
-        shelfType,
-      }) ||
+      (!isMetadataTitleAligned(
+        metadata,
+        alignmentNames,
+        METADATA_TITLE_ALIGN_FLOOR,
+        {
+          shelfType,
+        },
+      ) ||
         isGenericTitleFragment(metadata.title, alignmentNames))
     ) {
       return [];
@@ -603,6 +619,8 @@ export function alignedProviderResultsForFallback(
   });
 }
 
-export function metadataProvidersReadyToResolve(providerIds: string[]): string[] {
+export function metadataProvidersReadyToResolve(
+  providerIds: string[],
+): string[] {
   return providerIds.filter((id) => !isMetadataProviderQuotaBlocked(id));
 }

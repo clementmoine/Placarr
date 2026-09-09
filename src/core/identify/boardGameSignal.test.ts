@@ -8,6 +8,7 @@ import {
   detectVideoGameSignal,
 } from "./boardGameSignal";
 import { createEmptyBarcodeLookupPayload } from "./lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 
 describe("detectVideoFormatSignal", () => {
   it("repère un format vidéo (LaserDisc/VHS/dessin animé)", () => {
@@ -115,7 +116,9 @@ describe("detectBoardGameSignal", () => {
 
 describe("collectPayloadListingNames", () => {
   it("gathers names from marketplace listings, board anchors and LeDenicheur", () => {
-    const payload = createEmptyBarcodeLookupPayload();
+    const payload = createEmptyBarcodeLookupPayload(
+      barcodeLookupSlotDefaults(),
+    );
     payload.amc = [{ name: "Mille Sabords FR Gigamic" }];
     payload.ebay = [{ name: "Jeu de société Mille Sabords" }];
     payload.philibert = { title: "Mille Sabords" };

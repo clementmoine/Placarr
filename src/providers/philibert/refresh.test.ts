@@ -28,6 +28,7 @@ import { PROVIDER_MODULES } from "@/core/catalog/catalog";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 
 const philibertModule = PROVIDER_MODULES.find(
   (module) => module.info.id === "philibert",
@@ -38,6 +39,10 @@ function refreshCtx(
 ): BarcodePriceRefreshContext {
   return {
     shelfType: "boardgames",
+    barcodes: ["3558380126133"],
+    primaryTitle: "Catan",
+    titles: ["Catan"],
+    acceptanceTitles: ["Catan"],
     cleanedBarcode: "3558380126133",
     primaryName: "Catan",
     fallbackNames: [],
@@ -56,7 +61,7 @@ describe("philibert extractScanPriceOffers", () => {
 
   it("keeps sourceUrl from the barcode DetailYield", () => {
     const payload: BarcodeLookupPayload = {
-      ...createEmptyBarcodeLookupPayload(),
+      ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
       philibert: {
         title: "Catan",
         priceCents: 4590,
@@ -65,7 +70,10 @@ describe("philibert extractScanPriceOffers", () => {
       },
     };
 
-    const offers = philibertModule.extractScanPriceOffers!(payload, "boardgames");
+    const offers = philibertModule.extractScanPriceOffers!(
+      payload,
+      "boardgames",
+    );
     expect(offers).toHaveLength(1);
     expect(offers[0]?.sourceUrl).toContain("philibertnet.com");
     expect(offers[0]?.priceCents).toBe(4590);
@@ -140,9 +148,8 @@ describe("philibert refreshBarcodePriceOffers", () => {
         "https://www.philibertnet.com/fr/kosmos/10772-catane-3558380126133.html",
     });
 
-    const offers = await philibertModule.refreshBarcodePriceOffers!(
-      refreshCtx(),
-    );
+    const offers =
+      await philibertModule.refreshBarcodePriceOffers!(refreshCtx());
 
     expect(fetchPhilibertBarcodeProduct).toHaveBeenCalledWith("3558380126133");
     expect(offers).toHaveLength(1);

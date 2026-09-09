@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 /**
  * MusicBrainz — base de données musicale ouverte et faisant autorité.
@@ -78,7 +78,7 @@ function aliasNamesFromMbPayload(payload: unknown): string[] {
 
 async function fetchMusicBrainzReleaseAliases(mbid: string): Promise<string[]> {
   try {
-    const res = await axios.get(`${MB_BASE}/release/${mbid}`, {
+    const res = await httpGet(`${MB_BASE}/release/${mbid}`, {
       params: { inc: "aliases", fmt: "json" },
       headers: { "User-Agent": USER_AGENT },
       timeout: 8000,
@@ -96,7 +96,7 @@ export async function fetchFromMusicBrainz(
   if (!clean) return null;
 
   try {
-    const res = await axios.get(`${MB_BASE}/release/`, {
+    const res = await httpGet<JsonObject>(`${MB_BASE}/release/`, {
       params: { query: `barcode:${clean}`, fmt: "json", limit: 5 },
       headers: { "User-Agent": USER_AGENT },
       timeout: 8000,

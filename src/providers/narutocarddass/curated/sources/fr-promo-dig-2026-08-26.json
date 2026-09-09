@@ -1,0 +1,146 @@
+{
+  "source": "fr-promo-dig",
+  "observed": "2026-08-26",
+  "ingest": "none",
+  "kind": "research-dig",
+  "scope": "Re-verify FR Carddass tournament/tin promos + US CCG PR locale gaps. No Kayou.",
+  "verdict": {
+    "pr095Fr": "CORRECTED 2026-08-29 — FR face + [ENTRAÎNEMENT UNIQUE] from eBay 115771696619 photo 2/7; title via user-physical-ccg",
+    "pr100Fr": "CORRECTED 2026-08-29 — Goat French Foil CDN face + title FR; bandeau [ASPIRATIONS]",
+    "frPrTitlesInDb": [
+      "naruto:pr-0011",
+      "naruto:pr-0016",
+      "naruto:pr-0095",
+      "naruto:pr-0096",
+      "naruto:pr-0100"
+    ],
+    "frPrTitlesInLedgerPendingRebuild": [],
+    "enPrTitlesInDb": 102,
+    "attestedPromosCoversForumList": true,
+    "twoWorlds": {
+      "carddassShuriken": "NI/TE/TA reprints with PROMO + 1–3 shuriken (tourney/CdF/ligue)",
+      "tinPr011016": "Carddass tin PR-011 Orochimaru / PR-016 Naruto — FR titles exist; not a full PR-001…100 FR line",
+      "usCcgPr": "Bandai USA promo set — EN checklist in catalog",
+      "uns3EuPackIn": "Day One=PR-095; duopack-s28=PR-096; Goat FR foil=PR-100; collectors WoF/TD=PR TBD"
+    }
+  },
+  "wayback": {
+    "cdxApi": "flaky this session (empty / timeout on broad prefix queries)",
+    "directSnapshotsOk": true,
+    "pages": [
+      {
+        "id": "tournois_preview_s5",
+        "url": "https://web.archive.org/web/20071113152243id_/http://www.carddass.fr/naruto/tournois_preview.htm",
+        "http": 200,
+        "promoImage": "images/cartes/promo/eventail_cartes_promo_naruto_v2.jpg",
+        "bytes": 31955,
+        "note": "Exemple promos tournois série 5 — fan L→R cited in attested-promos"
+      },
+      {
+        "id": "tournois_preview_s4",
+        "url": "https://web.archive.org/web/20071014022607id_/http://www.carddass.fr/naruto/tournois_preview.htm",
+        "http": 200,
+        "promoImage": "images/cartes/promo/cartes_preview_s4.jpg",
+        "bytes": 64713,
+        "note": "Avant-première S4 — NARUTO-FURIE + CLONE DE SABLE"
+      },
+      {
+        "id": "tournois_majeur",
+        "url": "https://web.archive.org/web/20071111162612id_/http://www.carddass.fr/naruto/tournois_majeur.htm",
+        "http": 200,
+        "promoImages": [
+          "images/cartes/promo/TECHNIQUE-030-CdF.jpg",
+          "images/cartes/promo/promos_CdF_07.gif",
+          "images/cartes/cartes_med/NINJA-023-mini.jpg",
+          "images/cartes/cartes_med/NINJA-095-med.jpg"
+        ],
+        "officialRewards": [
+          { "number": "te030", "role": "CdF champion 2007" },
+          { "number": "ni023", "role": "CdF top 8" },
+          { "number": "ni095", "role": "CdF participants" }
+        ]
+      }
+    ],
+    "stagingAlreadyHas": "data/naruto/carddass/staging/carddass-fr/images/cartes/promo/* (eventail v2, preview s4, CdF, tin content)"
+  },
+  "forum": {
+    "live": true,
+    "threads": [
+      {
+        "id": "ncf-t544",
+        "url": "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+        "note": "Crowdsourced early list; Kanéda points to tournois_majeur.htm"
+      },
+      {
+        "id": "ncf-t544p50",
+        "url": "https://narutocarddassfrance.1fr1.net/t544p50-les-cartes-promotionnelles",
+        "note": "Jabberwock « liste complète » circulation 2007 — matches attested-promos NI/TE/TA set; + upcoming TE-109 / TA Rouleau de la terre"
+      },
+      {
+        "id": "ncf-t1003",
+        "url": "https://narutocarddassfrance.1fr1.net/t1003-info-sur-les-cartes-promo-pr",
+        "note": "OP swapped IDs (PR-011=Naruto / PR-016=Orochimaru); foxheart: no full PR line via many tinboxes; grand distributeur = 1 promo/tin"
+      },
+      {
+        "id": "ncf-t1185",
+        "url": "https://narutocarddassfrance.1fr1.net/t1185-des-cartes-indites-dans-les-mangas-naruto",
+        "note": "Blister Kana 15 tomes — not tournament PR; closes tome-12 gap"
+      },
+      {
+        "id": "ncf-t1180",
+        "url": "https://narutocarddassfrance.1fr1.net/t1180-cartes-promo",
+        "note": "Shuriken = promo rarity marker; no new IDs"
+      }
+    ],
+    "jabberwockCirculationList": {
+      "3star": ["ni023", "ni095", "te030", "ni101"],
+      "2star": ["ni063", "ni092", "ni024", "te034", "te114", "te085"],
+      "1star": ["ni034", "ni065", "ni117", "te002", "te139", "ta074", "ta063", "te001"],
+      "upcomingThen": ["te109", "ta081"],
+      "vsAttested": "all present in curated/sources/attested-promos.json; attested also has tin pr011/pr016 + marketplace ta051"
+    },
+    "blisterKanaTome12": {
+      "status": "closed-name",
+      "nameForum": "Neji Hyuta (Rare)",
+      "printedNumber": null,
+      "note": "Katagena complete list in t1185 includes Tome 12. Number still TBD (S5 rare Neji — do not invent id)."
+    }
+  },
+  "dbSnapshot": {
+    "path": "data/naruto/carddass/catalog.sqlite",
+    "frPrTitles": {
+      "naruto:pr-0011": "Orochimaru",
+      "naruto:pr-0016": "Naruto Uzumaki",
+      "naruto:pr-0095": "Naruto Uzumaki",
+      "naruto:pr-0096": "4E Hokage",
+      "naruto:pr-0100": "Naruto Uzumaki"
+    },
+    "pr0095": {
+      "enTitle": "Naruto Uzumaki",
+      "frTitle": "Naruto Uzumaki",
+      "enArt": true,
+      "frArt": true,
+      "frEffect": "ENTRAÎNEMENT UNIQUE"
+    },
+    "pr0100": {
+      "enTitle": "Naruto Uzumaki",
+      "frTitle": "Naruto Uzumaki",
+      "enArt": true,
+      "frArt": true,
+      "frEffect": "ASPIRATIONS"
+    }
+  },
+  "doNot": [
+    "Invent FR prints for US PR-001…100 without hand/photo attestation",
+    "Merge Kayou PR lists",
+    "Treat blister Kana inédites as tournament shuriken promos",
+    "Trust t1003 OP ID swap over disk art / Coleka / Vinted PR-11 Orochimaru",
+    "Show EN promo under a FR language filter to fill gaps"
+  ],
+  "nextActions": [
+    "Optional: sharper collector paste for PR-100 FR (Goat CDN is 218×300)",
+    "Map blister tome 12 Neji → printed NI-xxx from photo or Coleka S5 rare",
+    "7ᵉ inédite + présentoir Kana photo still open (backlog § promos FR)",
+    "WoF / True Despair sealed photos → pin collectors PR ref"
+  ]
+}

@@ -1,0 +1,584 @@
+{
+  "source": "facebook-naruto-collection-france",
+  "observed": "2026-09-02",
+  "packshotAttestationsUpdated": "2026-09-02",
+  "kind": "research-dig",
+  "ingest": "2026-09-05 — SKUs DVD/UNS3 mintés (kana-dvd-naruto-vol{3,4,8,15}, kana-dvd-shippuden-vol21, xbox360-uns3) + packshots Amazon/Cdiscount wrappers. Vol. 15 = pool listé des 6 S6 FR confirmées (pas NI-236 seule). Manga Pack 1-2-3 (B085PJZSN6) = art canal avant-première S1 (pool 10 `*-prerelease`). Blisters Kana tomes 1–15 S6 toujours attestation-only.",
+  "group": {
+    "name": "Naruto Collection France",
+    "id": "805799330361374",
+    "url": "https://www.facebook.com/groups/805799330361374",
+    "created": "2021-04-15",
+    "membersApprox": 953,
+    "visibility": "private-findable",
+    "description": "Collectionneurs licence Naruto — entraide, échanges, ventes ([VENTE], [RECHERCHE], [QUESTION]).",
+    "adminVoice": "Victor Husson — même voix que la chaîne YouTube Collection Naruto (contact YT : Instagram carte_naruto_collection / Facebook Victor Husson)."
+  },
+  "confidence": {
+    "groupExists": "high — page publique + session membre 2026-09-02",
+    "victorIsCollectionNaruto": "high — cross-ref collection-naruto-youtube-2026-08-29.json + posts [Ma collection] / vidéos par série",
+    "s6PartialFrRelease": "medium-high — plusieurs posts Victor + confirmation Jordan Marquelet ; pas de checklist Bandai/Kana",
+    "perSkuCardList": "medium — packshots VF user 2026-09-02 : 4 DVD Naruto + 1 Shippuden + 2 jeux ; refs partielles (cartes empilées / dos non lus). EAN Kana encore absents."
+  },
+  "packshotAttestations": [
+    {
+      "id": "kana-dvd-naruto-vol3",
+      "product": "Naruto DVD vol. 3 (Kana)",
+      "labelText": "En cadeau 1 carte à jouer de la série 5",
+      "attestedBy": "user-packshot + Victor Husson FB album 2024-10-24",
+      "attestedAt": "2026-09-02",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916910254967&set=pcb.1619206362353996",
+      "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/",
+      "cardsVisible": [
+        { "number": "ta214", "name": "Naruto", "type": "tactics", "serie": 5, "identification": "face" }
+      ],
+      "cardsNotReadable": "autres cartes empilées sous TA-214 sur visuel packaging",
+      "fixedMapping": "partial — libellé 1 carte s5 ; pile promo non entièrement lisible"
+    },
+    {
+      "id": "kana-dvd-naruto-vol4",
+      "product": "Naruto DVD vol. 4 (Kana)",
+      "labelText": "En cadeau à l'intérieur 1 carte à jouer",
+      "attestedBy": "user-packshot",
+      "attestedAt": "2026-09-02",
+      "cardsVisible": [
+        { "number": "ni019", "name": "Naruto", "type": "ninja", "serie": 1, "identification": "face" }
+      ],
+      "cardsNotReadable": "cartes superposées — reste non identifiable clairement",
+      "crossRefYoutube": "Collection Naruto YT : vol.4 → 1× S1"
+    },
+    {
+      "id": "kana-dvd-naruto-vol8",
+      "product": "Naruto DVD vol. 8 (Kana)",
+      "labelText": "Cadeau : 2 cartes à jouer à l'intérieur",
+      "attestedBy": "user-packshot + Victor Husson FB album 2024-10-24",
+      "attestedAt": "2026-09-02",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916936921631&set=pcb.1619206362353996",
+      "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/",
+      "cardsVisible": [
+        { "number": "ni118", "name": "Naruto", "type": "ninja", "serie": 3, "identification": "face" },
+        { "number": "ni119", "name": "Sasuke", "type": "ninja", "serie": 3, "identification": "face" },
+        { "number": null, "type": "tactics", "identification": "face-only-no-name" },
+        { "number": null, "type": "technique", "identification": "face-only-no-name" }
+      ],
+      "note": "Libellé annonce 2 cartes ; visuel montre 4 faces (2 ninja lisibles + tactique + technique).",
+      "crossRefYoutube": "Collection Naruto YT : vol.8 → 2× S3"
+    },
+    {
+      "id": "kana-dvd-naruto-vol15-packshot",
+      "product": "Naruto DVD vol. 15 (Kana)",
+      "labelText": "Inédit une carte à jouer de la série 6",
+      "attestedBy": "user-packshot",
+      "attestedAt": "2026-09-02",
+      "cardsVisible": [
+        { "number": "ni236", "name": "Sasuke", "type": "ninja", "serie": 6, "identification": "face" },
+        { "number": "ni232", "name": "Shikamaru", "type": "ninja", "serie": 6, "identification": "face" },
+        { "number": null, "type": "tactics", "identification": "face-only-no-name" }
+      ],
+      "note": "Libellé singulier « une carte série 6 » vs pile promo 3 faces — croiser ouverture coffret scellé.",
+      "crossRefFb": "victor-ni236-dvd-vol15 — Victor : patch « carte à jouer de la série 6 à gagner »"
+    },
+    {
+      "id": "kana-dvd-shippuden-vol21-packshot",
+      "product": "Naruto Shippuden DVD vol. 21 — « La Guerre fait rage ! » (Kana)",
+      "labelText": "Inclus dans ce coffret une carte exclusive et inédite du jeu",
+      "attestedBy": "user-packshot + Victor Husson FB album 2024-10-24",
+      "attestedAt": "2026-09-02",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916976921627&set=pcb.1619206362353996",
+      "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/",
+      "cardsVisible": [
+        { "number": "pr100", "name": "Naruto Uzumaki", "type": "promo", "identification": "face+name-on-packshot" }
+      ],
+      "crossRefFb": "cyrielle-promo-shippuden-vol21 — Victor : exclusive coffret vol. 21"
+    },
+    {
+      "id": "game-xbox360-uns3-fr",
+      "product": "Xbox 360 Naruto Ultimate Ninja Storm 3 (VF)",
+      "labelText": "Inclus le costume de Sangoku à télécharger et une carte à collectionner",
+      "attestedBy": "user-packshot",
+      "attestedAt": "2026-09-02",
+      "inserts": [
+        "dlc Goku costume",
+        { "kind": "collector-card", "number": "pr095", "note": "Identifiée user 2026-09-02 — PR-095 (aligne costume Sangoku sur libellé)" }
+      ],
+      "locale": "fr-carddass"
+    },
+    {
+      "id": "game-ps2-ultimate-ninja-fr",
+      "product": "PlayStation 2 Naruto Ultimate Ninja (VF)",
+      "labelText": "Inclus un booster de la série 2",
+      "attestedBy": "user-packshot",
+      "attestedAt": "2026-09-02",
+      "inserts": [{ "kind": "booster", "serie": 2, "randomPool": true }],
+      "crossRefFb": "victor-reception-dvd-sealed — pack Micromania PS2 + booster S2 sous blister rigide (SKU promo distinct ?)"
+    },
+    {
+      "id": "duopack-s24-fr-organisation-pacifique",
+      "product": "Duo Pack / Bi Pack Sage's Legacy s24 (VF)",
+      "labelText": "2 boosters + 1 carte spéciale — NOUVELLE SERIE … · 1 CARTE SPECIALE OFFERTE",
+      "attestedBy": "user-packshot + Victor Husson FB album 2024-10-24",
+      "attestedAt": "2026-09-02",
+      "locale": "fr-carddass",
+      "serie": 24,
+      "inserts": [
+        { "kind": "booster", "serie": 24, "count": 2, "randomPool": true },
+        {
+          "kind": "window-promo",
+          "nameFr": "Organisation Pacifique",
+          "type": "mission",
+          "number": "m873",
+          "note": "Promo fenêtre duopack s24 — ref s24 Coleka M-873 (user 2026-09-02)."
+        }
+      ],
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916716921653&set=pcb.1619206362353996",
+      "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/"
+    },
+    {
+      "id": "duopack-s24-fr-loup-bicephale",
+      "product": "Duo Pack / Bi Pack Sage's Legacy s24 (VF)",
+      "labelText": "2 boosters + 1 carte spéciale — NOUVELLE SERIE … · 1 CARTE SPECIALE OFFERTE",
+      "attestedBy": "user-packshot + Victor Husson FB album 2024-10-24",
+      "attestedAt": "2026-09-02",
+      "locale": "fr-carddass",
+      "serie": 24,
+      "inserts": [
+        { "kind": "booster", "serie": 24, "count": 2, "randomPool": true },
+        {
+          "kind": "window-promo",
+          "nameFr": "Loup Bicéphale",
+          "type": "ninja",
+          "number": "n1379",
+          "note": "Promo fenêtre duopack s24 — ref s24 Coleka N-1379 (user 2026-09-02). MS-023 sur photo FB = erreur de lecture."
+        }
+      ],
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916756921649&set=pcb.1619206362353996",
+      "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/"
+    },
+    {
+      "id": "pr098-double-eclair-pourfendeur-binder",
+      "product": "Carte promo CCG PR-098 « Double éclair pourfendeur » (VF)",
+      "printedRef": "PR-098",
+      "nameFr": "Double éclair pourfendeur",
+      "type": "promo",
+      "editionMark": "Édition Limitée",
+      "attestedBy": "Victor Husson FB album 2024-10-24 — page classeur promo",
+      "attestedAt": "2026-09-02",
+      "locale": "fr-carddass",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916513588340&set=pcb.1619206362353996",
+      "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/",
+      "catalogStatus": "absent — pas dans attested-promos.json ni faces index FR (grep repo 2026-09-02)",
+      "notToConfuseWith": {
+        "te030": "L'éclair pourfendeur — TE-030 CdF champion 2007 (technique S1 tournoi, shuriken 3)"
+      },
+      "samePhotoVisible": [
+        { "printedRef": "PR-099", "nameFr": "Naruto Uzumaki", "note": "tenue film — aussi absent catalogue FR" },
+        { "printedRef": "PR-100", "nameFr": "Naruto Uzumaki", "note": "Sage Mode — déjà documenté DVD Shippuden vol. 21" },
+        { "printedRef": "PR-096", "nameFr": "4e Hokage", "note": "duopack-s28 fenêtre — déjà indexé" }
+      ],
+      "crossRefs": {
+        "colekaUsGaps": "coleka-us-promos.json — PR-094 / PR-097–099 non énumérés US ; PR-098 physique VF attestée ici",
+        "uns3EuPromos": "uns3-eu-promos-hunt.json — vague promo UNS3 EU partielle"
+      }
+    }
+  ],
+  "promoGapsFr": [
+    {
+      "printedRef": "PR-098",
+      "nameFr": "Double éclair pourfendeur",
+      "evidence": "pr098-double-eclair-pourfendeur-binder",
+      "channel": "unknown — classeur promo Victor ; pas de SKU scellé identifié sur photo",
+      "ingest": "attestation dig only — ne pas minter face sans scan dos + canal retail/tournoi"
+    },
+    {
+      "printedRef": "PR-099",
+      "nameFr": "Naruto Uzumaki",
+      "evidence": "pr098-double-eclair-pourfendeur-binder (même photo classeur)",
+      "channel": "unknown",
+      "ingest": "attestation dig only"
+    }
+  ],
+  "physicalMarkers": {
+    "madeInJapan": "Dos « MADE IN JAPAN » / BANDAI 2008 — tirage distinct du S5 retail « MADE IN BELGIUM » 2007.",
+    "blueBack": "Dos visuellement plus bleuté vs verdâtre belge — signal Victor sur communes S6 promo DVD.",
+    "dvdSticker": "Patch autocollant sur certains coffrets : « carte à jouer de la série 6 à gagner » (photo NI-236)."
+  },
+  "distributionChannels": [
+    {
+      "id": "kana-manga-blister-2008",
+      "product": "Manga Naruto Kana tomes 1–15 sous blister + 1 carte",
+      "fixedMapping": true,
+      "randomPool": false,
+      "primarySource": "forum narutocarddassfrance t1185 (2008) — corps perdu ; résumé dans docs/archive/naruto_promo_research.md §1",
+      "s6CardsClaimed": 7,
+      "note": "Canal documenté en 2008 ; pas re-vu dans le groupe FB. NI-236 listé tome 2 côté forum — conflit à résoudre avec DVD vol. 15 ci-dessous."
+    },
+    {
+      "id": "kana-dvd-naruto-vol15",
+      "product": "Coffret DVD Naruto vol. 15 (Kana)",
+      "fixedMapping": true,
+      "randomPool": false,
+      "evidence": "post Victor Husson [p'tite info] ~2023 + packshot VF user 2026-09-02",
+      "packshotRef": "kana-dvd-naruto-vol15-packshot",
+      "cards": [
+        {
+          "number": "ni236",
+          "name": "Sasuke",
+          "serie": 6,
+          "note": "Top 5 rareté collection FR selon Victor ; illustration = deck S5 « Un nouveau départ »."
+        },
+        {
+          "number": "ni232",
+          "name": "Shikamaru",
+          "serie": 6,
+          "note": "Visible sur packshot empilé — pas encore confirmé seul insert coffret ouvert."
+        },
+        {
+          "number": null,
+          "type": "tactics",
+          "serie": 6,
+          "note": "Face visible sur packshot — numéro illisible."
+        }
+      ],
+      "stickerText": "Inédit une carte à jouer de la série 6 (packshot) ; Victor cite aussi « carte à jouer de la série 6 à gagner »",
+      "permalink": "https://www.facebook.com/groups/805799330361374/permalink/1246941432913826/",
+      "permalinkNote": "Capturé 2026-09-02 via recherche q=serie+6 ; tag [p'tite info]."
+    },
+    {
+      "id": "kana-dvd-naruto-vol3",
+      "product": "Naruto DVD vol. 3 (Kana)",
+      "fixedMapping": "partial",
+      "randomPool": "unknown",
+      "packshotRef": "kana-dvd-naruto-vol3",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916910254967&set=pcb.1619206362353996",
+      "labelText": "En cadeau 1 carte à jouer de la série 5",
+      "cards": [{ "number": "ta214", "name": "Naruto", "type": "tactics", "serie": 5 }]
+    },
+    {
+      "id": "kana-dvd-naruto-vol4",
+      "product": "Naruto DVD vol. 4 (Kana)",
+      "fixedMapping": "partial",
+      "randomPool": false,
+      "packshotRef": "kana-dvd-naruto-vol4",
+      "labelText": "En cadeau à l'intérieur 1 carte à jouer",
+      "cards": [{ "number": "ni019", "name": "Naruto", "type": "ninja", "serie": 1 }]
+    },
+    {
+      "id": "kana-dvd-naruto-vol8",
+      "product": "Naruto DVD vol. 8 (Kana)",
+      "fixedMapping": "partial",
+      "randomPool": false,
+      "packshotRef": "kana-dvd-naruto-vol8",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916936921631&set=pcb.1619206362353996",
+      "labelText": "Cadeau : 2 cartes à jouer à l'intérieur",
+      "cards": [
+        { "number": "ni118", "name": "Naruto", "type": "ninja", "serie": 3 },
+        { "number": "ni119", "name": "Sasuke", "type": "ninja", "serie": 3 }
+      ],
+      "note": "Packshot montre aussi tactique + technique sans numéro — hors libellé « 2 cartes »."
+    },
+    {
+      "id": "kana-dvd-shippuden-coffret",
+      "product": "Coffret DVD Naruto Shippuden (Kana) — SKU exact TBD",
+      "fixedMapping": "unknown — « même coffret » pour les communes dos bleu MIJ",
+      "randomPool": false,
+      "evidence": "commentaire Victor sur fil Jordan Marquelet 2023-02-04",
+      "cards": [],
+      "cardProfile": "Communes S6 jamais sorties en retail FR ; plus rares que la plupart des holos selon Victor."
+    },
+    {
+      "id": "kana-dvd-unitaire-2007",
+      "product": "DVD Naruto unitaire VF (ressort Kana oct. 2007)",
+      "fixedMapping": "unknown",
+      "randomPool": "unknown — mata-web : « carte Bandai ou Panini »",
+      "primarySource": "mata-web 2007-10-04 — hors groupe FB",
+      "note": "Collection Naruto YT : vol.8 → 2× S3 ; vol.4 → 1× S1 ; vol.3 → TA-214 s5 (packshot 2026-09-02). Gros coffret → 1× S5 — voir collection-naruto-youtube-2026-08-29.json"
+    },
+    {
+      "id": "game-ps2-ultimate-ninja-booster-s2",
+      "product": "PlayStation 2 Naruto Ultimate Ninja (VF)",
+      "fixedMapping": false,
+      "randomPool": true,
+      "packshotRef": "game-ps2-ultimate-ninja-fr",
+      "inserts": [{ "kind": "booster", "serie": 2 }]
+    },
+    {
+      "id": "game-xbox360-uns3-collector-card",
+      "product": "Xbox 360 Naruto Ultimate Ninja Storm 3 (VF)",
+      "fixedMapping": true,
+      "randomPool": false,
+      "packshotRef": "game-xbox360-uns3-fr",
+      "labelText": "Inclus le costume de Sangoku à télécharger et une carte à collectionner",
+      "cards": [
+        {
+          "number": "pr095",
+          "type": "promo",
+          "note": "Carte à collectionner — confirmée user 2026-09-02 ; cohérent avec DLC costume Goku sur même SKU."
+        }
+      ],
+      "inserts": ["dlc Goku costume"],
+      "crossRefs": {
+        "uns3EuPromos": "src/providers/narutocarddass/curated/sources/uns3-eu-promos-hunt.json — PR-095 Day One / foil EU"
+      }
+    },
+    {
+      "id": "duopack-s24-fr-bipack-variants",
+      "product": "Duo Pack / Bi Pack Sage's Legacy s24 (VF) — 2 variantes promo fenêtre",
+      "fixedMapping": true,
+      "randomPool": "boosters only — promo fenêtre fixe par variante blister",
+      "evidence": "Victor Husson [vente] album FB 2024-10-24 + packshots user 2026-09-02",
+      "permalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/",
+      "variants": [
+        {
+          "id": "organisation-pacifique",
+          "windowPromo": { "nameFr": "Organisation Pacifique", "type": "mission", "number": "m873" },
+          "photoUrl": "https://www.facebook.com/photo/?fbid=1968916716921653&set=pcb.1619206362353996"
+        },
+        {
+          "id": "loup-bicephale",
+          "windowPromo": { "nameFr": "Loup Bicéphale", "type": "ninja", "number": "n1379" },
+          "photoUrl": "https://www.facebook.com/photo/?fbid=1968916756921649&set=pcb.1619206362353996"
+        }
+      ],
+      "labelText": "2 boosters Sage's Legacy + 1 carte spéciale offerte",
+      "pricedIndicativeEur": 75,
+      "note": "≠ duopack-s28 (PR-096 Storm 3). Croiser collection-naruto-youtube lateLineFr — SKU catalogue dédiés toujours absents (pas de mint sans EAN verso)."
+    },
+    {
+      "id": "kana-dvd-shippuden-vol21",
+      "product": "Naruto Shippuden DVD vol. 21 — « La Guerre fait rage ! » (Kana)",
+      "fixedMapping": true,
+      "randomPool": false,
+      "evidence": "commentaire Victor Husson fil Cyrielle Weber ~2023 + packshot VF user 2026-09-02",
+      "packshotRef": "kana-dvd-shippuden-vol21-packshot",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916976921627&set=pcb.1619206362353996",
+      "permalink": "https://www.facebook.com/groups/805799330361374/posts/1228068058134497/",
+      "labelText": "Inclus dans ce coffret une carte exclusive et inédite du jeu",
+      "cards": [
+        {
+          "number": "pr100",
+          "name": "Naruto Uzumaki",
+          "type": "promo",
+          "note": "Carte promo jeu — identifiée sur packshot coffret Shippuden vol. 21."
+        }
+      ],
+      "cardProfile": "PR-100 exclusive coffret DVD Shippuden vol. 21 — hors booster retail.",
+      "note": "Résout fil Cyrielle (carte inconnue) ; distinct du canal NI-236 vol. 15 Naruto classique."
+    },
+    {
+      "id": "tin-box-tempete-approche-holo",
+      "product": "Tin box promo — holo Tempête approche (s11)",
+      "fixedMapping": "unknown",
+      "randomPool": false,
+      "evidence": "commentaire Victor Husson sur fil Alex Blossom convention Mons ~2023",
+      "permalink": "https://www.facebook.com/groups/805799330361374/posts/1239180660356570/",
+      "cards": [],
+      "cardProfile": "Victor associe holo Tempête approche à une promo tin box — packaging VF à confirmer photo."
+    }
+  ],
+  "posts": [
+    {
+      "id": "victor-ni236-dvd-vol15",
+      "author": "Victor Husson",
+      "permalink": "https://www.facebook.com/groups/805799330361374/permalink/1246941432913826/",
+      "approxDate": "2023",
+      "tags": ["p'tite info"],
+      "groupSearch": "serie 6",
+      "summary": "NI-236 Sasuke = Série 6, pas S5. Uniquement dans coffret DVD Naruto vol. 15 avec autocollant « carte à jouer de la série 6 à gagner ». Illustration identique au deck S5 Un nouveau départ.",
+      "photos": ["carte NI-236 en protection", "DVD avec patch Série 6 à gagner"],
+      "reactions": "5 likes + 1 love ; fil commentaires (Guillaume Gonzalez, Sébastien Werlé ~2023)"
+    },
+    {
+      "id": "jordan-blue-back-made-in-japan",
+      "author": "Jordan Marquelet",
+      "permalink": "https://www.facebook.com/groups/805799330361374/permalink/1248487462759223",
+      "approxDate": "2023-02-04",
+      "tags": ["RECHERCHE", "QUESTION"],
+      "summary": "Carte au dos étrangement bleu — demande d'identification.",
+      "thread": [
+        {
+          "author": "Victor Husson",
+          "claim": "Communes les plus rares. Dos « made in japan » vs « made in belgium ». Petite quantité = cartes Série 6 jamais sorties officiellement en France, promo coffret DVD Naruto Shippuden. Autres cartes bleues = même coffret. Plus dures à trouver que la plupart des holos."
+        },
+        {
+          "author": "Jordan Marquelet",
+          "claim": "En a plusieurs ; acheté tous les DVD neufs avec bonus il y a plusieurs années."
+        },
+        {
+          "author": "Victor Husson",
+          "claim": "A la réponse pour la carte bleue ; DM pour decks qui l'intéressent."
+        }
+      ]
+    },
+    {
+      "id": "victor-reception-dvd-sealed",
+      "author": "Victor Husson",
+      "approxDate": "2023",
+      "tags": ["réception"],
+      "groupSearch": "made in japan",
+      "summary": "Achats scellés cartes Naruto — coffrets DVD + jeux vidéo. 4 DVD avec cartes s1–5 dont coffret Tsunade → cartes MIJ série 6. Coffret DVD avec carte Storm 3 Hokage. Jeux : Will of Fire + True Despair (promos Storm 3), Storm 3 blister + promo, Storm Génération card édition (booster+deck), pack Micromania PS2 Ultimate Ninja + booster série 2 sous blister rigide.",
+      "skuLeads": [
+        "DVD coffret Tsunade → cartes MIJ S6",
+        "DVD coffret → carte Storm 3 Naruto Hokage",
+        "Collector Will of Fire / True Despair → promos Storm 3",
+        "Jeu Storm 3 blister VF + carte promo",
+        "Collector Storm Génération card édition (booster + deck)",
+        "Pack promo Micromania PS2 Ultimate Ninja + booster S2"
+      ],
+      "permalink": null,
+      "permalinkNote": "Texte capturé via q=made+in+japan et q=chopé+un+maximum+d'items+scellé ; permalink post réception à capturer (timestamp recherche FB ne expose pas l'id)."
+    },
+    {
+      "id": "cyrielle-promo-shippuden-vol21",
+      "author": "Cyrielle Weber Joye",
+      "permalink": "https://www.facebook.com/groups/805799330361374/posts/1228068058134497/",
+      "approxDate": "2023",
+      "tags": ["QUESTION"],
+      "summary": "Identification carte promo inconnue retrouvée récemment.",
+      "resolvedByPackshot": "PR-100 Naruto Uzumaki — coffret Shippuden DVD vol. 21 « La Guerre fait rage ! »",
+      "thread": [
+        {
+          "author": "Victor Husson",
+          "claim": "Carte promotionnelle uniquement dans coffret DVD vol. 21 Naruto Shippuden. Souvent ~10 €, peut valoir jusqu'à 20 € (provenance hors booster)."
+        }
+      ]
+    },
+    {
+      "id": "alex-blossom-tinbox-holo-comment",
+      "author": "Alex Blossom",
+      "permalink": "https://www.facebook.com/groups/805799330361374/posts/1239180660356570/",
+      "approxDate": "2023-01",
+      "tags": ["PARTAGE/INFO"],
+      "summary": "Convention Mons — dédicaces Carole Baillien + DVD McDo sentimentalement important.",
+      "thread": [
+        {
+          "author": "Victor Husson",
+          "claim": "Cartes Naruto : holo Tempête approche avec promo tin box."
+        }
+      ]
+    },
+    {
+      "id": "victor-ma-collection-videos",
+      "author": "Victor Husson",
+      "permalink": "https://www.facebook.com/groups/805799330361374/permalink/1121246878816616/",
+      "approxDate": "2023",
+      "tags": ["Ma collection"],
+      "groupSearch": "display",
+      "summary": "Vidéos 1 par série + liste manquants : Manda NI-221 holo S5 ; Dédoublement TE-15 scellé S1. Recherche items absents des vidéos : display Sage's Legacy, duopack Storm 3, blisters S4/S5, displays deck S4/S5.",
+      "wantListItems": [
+        "display Sage's Legacy (s24)",
+        "duopack Storm 3 (s28)",
+        "blister série 4",
+        "blister série 5",
+        "display deck série 4",
+        "display deck série 5"
+      ],
+      "threadNotes": [
+        {
+          "author": "Dorine Thomas",
+          "claim": "Display Sage's Legacy n'existe peut-être pas en FR — à confirmer packshot."
+        }
+      ]
+    },
+    {
+      "id": "victor-vente-sealed-pricing",
+      "author": "Victor Husson",
+      "approxDate": "2023",
+      "tags": ["vente"],
+      "groupSearch": "display",
+      "summary": "Inventaire vente avec prix indicatifs FR scellé : mastersets s24/s11/s28 ; duopack Sage's Legacy s24 + plexi 75€ ; display deck s1 + carton Bandai 75€ ; display boosters s1 850€ ; booster s1 sous blister 10€. Mention booster s3 italien 3€ (IT, pas FR).",
+      "pricedSkus": [
+        { "item": "masterset classeur + série 24 + série 11", "priceEur": 855, "locale": "fr-carddass" },
+        { "item": "masterset classeur + série 28 + promo", "priceEur": 630, "locale": "fr-carddass" },
+        { "item": "duopack Sage's Legacy s24 + plexi", "priceEur": 75, "locale": "fr-carddass" },
+        { "item": "display deck série 1 + carton Bandai", "priceEur": 75, "locale": "fr-carddass" },
+        { "item": "display boosters série 1", "priceEur": 850, "locale": "fr-carddass" },
+        { "item": "booster série 1 sous blister", "priceEur": 10, "locale": "fr-carddass" },
+        { "item": "booster série 3 italien", "priceEur": 3, "locale": "it", "note": "explicitement italien — ne pas indexer FR" }
+      ],
+      "permalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/",
+      "approxDate": "2024-10",
+      "permalinkNote": "Post [vente] avec album photos duopacks s24 (variantes Organisation Pacifique / Loup Bicéphale) + autres scellés."
+    },
+    {
+      "id": "arnes-storm3-sealed-pricing",
+      "author": "Arnes Redzepi",
+      "permalink": "https://www.facebook.com/groups/805799330361374/posts/1242066306734672/",
+      "approxDate": "2023",
+      "tags": ["ESTIMATION VENTES"],
+      "summary": "Estimation kit Storm 3 sous blister (autocollant se décolle).",
+      "thread": [
+        {
+          "author": "Victor Husson",
+          "claim": "Storm 3 Will of Fire ~100€ (parfois 80€ Vinted) ; kit Storm 3 25–35€ ; collector Storm 2 scellé rare >50€."
+        }
+      ]
+    }
+  ],
+  "crossRefs": {
+    "youtube": "src/providers/narutocarddass/curated/sources/collection-naruto-youtube-2026-08-29.json",
+    "forumT1185MangaBlister": "docs/archive/naruto_promo_research.md §1 — 15 cartes tomes 1–15, 7 inédites S6",
+    "mangaSanctuaryS6Press": "manga-sanctuary news 7397 — starters Le Duel / Quartet annoncés, jamais fabriqués",
+    "setsJson": "src/providers/narutocarddass/curated/sources/sets.json s6.frenchArtefact"
+  },
+  "openConflicts": [
+    {
+      "id": "ni236-manga-t2-vs-dvd-vol15",
+      "a": "t1185 : NI-236 Sasuke = manga blister tome 2",
+      "b": "Victor FB ~2023 : NI-236 = coffret DVD Naruto vol. 15",
+      "action": "Vérifier si les deux canaux ont existé ou si l'un confond numéro tome/volume."
+    },
+    {
+      "id": "shippuden-coffret-vs-naruto-vol15",
+      "a": "Fil Jordan : communes MIJ = coffret DVD Naruto Shippuden",
+      "b": "Post NI-236 : coffret DVD Naruto vol. 15",
+      "action": "Identifier EAN/ref des deux SKU ; peut être deux lignes Kana distinctes."
+    },
+    {
+      "id": "shippuden-vol21-vs-naruto-vol15",
+      "a": "Post NI-236 : coffret DVD Naruto vol. 15 + patch série 6 (NI-236, NI-232…)",
+      "b": "Packshot Shippuden vol. 21 : PR-100 exclusive jeu",
+      "action": "Résolu — deux SKU Kana distincts ; ne pas fusionner."
+    },
+    {
+      "id": "vol15-label-singular-vs-packshot-stack",
+      "a": "Libellé vol. 15 : « une carte à jouer de la série 6 »",
+      "b": "Packshot empilé : NI-236 + NI-232 + tactique visible",
+      "action": "Ouvrir coffret scellé ou photo insert réel pour confirmer contenu fixe vs art promo."
+    },
+    {
+      "id": "sages-legacy-display-fr-existence",
+      "a": "Victor [Ma collection] recherche display Sage's Legacy s24",
+      "b": "Dorine Thomas commentaire : « display sage's legacy existe pas en fr »",
+      "action": "Duopack s24 FR confirmé (2 promos fenêtre) — distinct du display 24 boosters ; packshot display FR toujours absent."
+    }
+  ],
+  "groupSearchQueries": [
+    "serie 6",
+    "carte a jouer serie 6",
+    "p'tite info",
+    "made in japan",
+    "chopé un maximum d'items scellé",
+    "duopack Sage's Legacy 75",
+    "ni-236",
+    "vol 15",
+    "blister manga",
+    "coffret DVD",
+    "Victor Husson carddass"
+  ],
+  "doNot": [
+    "Indexer inserts DVD S6 comme starters Le Duel / Quartet",
+    "Passer printed:true sur langs.fr.s6 sans preuve retail booster/starter",
+    "Minter SKU DVD sans EAN + packshot + table cartes",
+    "Fusionner canal manga blister t1185 et canal DVD sans résoudre ni236-manga-t2-vs-dvd-vol15",
+    "Importer cotes € du groupe dans le catalogue"
+  ],
+  "nextPhysical": [
+    "EAN + scan dos cartes vol. 3 / 4 / 8 / 15 / Shippuden 21 (packshots face OK, dos MIJ/Belgium TBD)",
+    "Ouvrir ou photo insert réel vol. 15 — confirmer NI-232 + tactique vs seule NI-236",
+    "Scan dos PR-095 insert Xbox360 UNS3 VF (face confirmée user)",
+    "Canal retail/tournoi PR-098 Double éclair pourfendeur + PR-099 (classeur Victor) — faces visibles, provenance TBD",
+    "EAN coffret Tsunade MIJ S6 (Victor réception) — distinct vol. 15 classique",
+    "Croiser liste t1185 manga 15 cartes vs inserts DVD documentés",
+    "Wayback fiches manga-news / DVD Kana 2007–2008 pour bonus officiels"
+  ]
+}

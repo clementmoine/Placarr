@@ -1,0 +1,449 @@
+/**
+ * DBS Masters local catalogue — `data/dbs/cg/catalog.sqlite`.
+ * Bandai SAMPLE URLs stay in `print_assets` per locale; local faces are
+ * `cards/{set}/{fr|en}/{card}/art.webp` when the faces / arena steps have run.
+ */
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+
+import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
+import { packCardDir } from "@/lib/packPaths";
+import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
+import { finalizeSetOptions } from "@/providers/shared/cardCatalogue/sets";
+
+import { dataRoot } from "@/lib/runtimeData";
+
+import {
+  DBS_FACE_DECISION_FILE,
+  dbsFaceFileOf,
+  parseFaceDecision,
+  type DbsFaceRole,
+} from "./faceChoice";
+import { DBS_CG_GAME } from "./printIdentity";
+
+export const DBS_CG_SCHEMA_VERSION = "1";
+export const DBS_CG_PACK_ID = "dbs/cg";
+
+export type DbsPrintRow = {
+  printKey: string;
+  setCode: string;
+  number: string;
+  grouping?: string | null;
+  cardType?: string | null;
+  sourceUrl?: string | null;
+};
+
+export type DbsTitleRow = {
+  printKey: string;
+  lang: string;
+  fullName: string;
+  rarity?: string | null;
+  setName?: string | null;
+  color?: string | null;
+  character?: string | null;
+  power?: string | null;
+  awakenedName?: string | null;
+};
+
+export type DbsAssetRow = {
+  printKey: string;
+  lang: string;
+  imageUrl?: string | null;
+  backUrl?: string | null;
+};
+
+let activeDb: DatabaseSync | null = null;
+
+export function dbsCgDbPath(): string {
+  const override = process.env.PLACARR_DBSCG_DB?.trim();
+  if (override) return path.resolve(override);
+  return path.join(dataRoot(), DBS_CG_PACK_ID, "catalog.sqlite");
+}
+
+export function resetDbsCgDbCache(): void {
+  try {
+    activeDb?.close();
+  } catch {
+    /* ignore */
+  }
+  activeDb = null;
+}
+
+function createSchema(db: DatabaseSync): void {
+  db.exec(`
+    DROP TABLE IF EXISTS meta;
+    DROP TABLE IF EXISTS print_assets;
+    DROP TABLE IF EXISTS print_titles;
+    DROP TABLE IF EXISTS prints;
+
+    CREATE TABLE meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+
+    CREATE TABLE prints (
+      print_key TEXT PRIMARY KEY,
+      set_code TEXT NOT NULL,
+      number TEXT NOT NULL,
+      grouping TEXT,
+      card_type TEXT,
+      source_url TEXT
+    );
+
+    CREATE TABLE print_titles (
+      print_key TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      full_name TEXT NOT NULL,
+      rarity TEXT,
+      set_name TEXT,
+      color TEXT,
+      character TEXT,
+      power TEXT,
+      awakened_name TEXT,
+      PRIMARY KEY (print_key, lang),
+      FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
+    );
+
+    CREATE TABLE print_assets (
+      print_key TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      image_url TEXT,
+      back_url TEXT,
+      PRIMARY KEY (print_key, lang),
+      FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
+    );
+  `);
+}
+
+export function writeDbsCgIndex(input: {
+  prints: DbsPrintRow[];
+  titles?: DbsTitleRow[];
+  assets: DbsAssetRow[];
+  dbPath?: string;
+  meta?: Record<string, string>;
+}): { dbPath: string; printCount: number } {
+  const dbPath = input.dbPath ?? dbsCgDbPath();
+  resetDbsCgDbCache();
+  if (existsSync(dbPath)) {
+    try {
+      unlinkSync(dbPath);
+    } catch {
+      /* ignore */
+    }
+  }
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+
+  const db = new DatabaseSync(dbPath);
+  createSchema(db);
+
+  const insertPrint = db.prepare(`
+    INSERT INTO prints (print_key, set_code, number, grouping, card_type, source_url)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(print_key) DO UPDATE SET
+      set_code = excluded.set_code,
+      number = excluded.number,
+      grouping = excluded.grouping,
+      card_type = excluded.card_type,
+      source_url = excluded.source_url
+  `);
+  const insertTitle = db.prepare(`
+    INSERT INTO print_titles (
+      print_key, lang, full_name, rarity, set_name, color, character, power, awakened_name
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(print_key, lang) DO UPDATE SET
+      full_name = excluded.full_name,
+      rarity = excluded.rarity,
+      set_name = excluded.set_name,
+      color = excluded.color,
+      character = excluded.character,
+      power = excluded.power,
+      awakened_name = excluded.awakened_name
+  `);
+  const insertAsset = db.prepare(`
+    INSERT INTO print_assets (print_key, lang, image_url, back_url)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(print_key, lang) DO UPDATE SET
+      image_url = COALESCE(excluded.image_url, print_assets.image_url),
+      back_url = COALESCE(excluded.back_url, print_assets.back_url)
+  `);
+
+  db.exec("BEGIN");
+  try {
+    const metaInsert = db.prepare(
+      `INSERT INTO meta (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    );
+    metaInsert.run("schemaVersion", DBS_CG_SCHEMA_VERSION);
+    metaInsert.run("game", DBS_CG_GAME);
+    metaInsert.run("pack", DBS_CG_PACK_ID);
+    metaInsert.run("generatedAt", new Date().toISOString());
+    for (const [key, value] of Object.entries(input.meta ?? {})) {
+      metaInsert.run(key, value);
+    }
+
+    for (const print of input.prints) {
+      insertPrint.run(
+        print.printKey,
+        print.setCode,
+        print.number,
+        print.grouping ?? null,
+        print.cardType ?? null,
+        print.sourceUrl ?? null,
+      );
+    }
+    for (const title of input.titles ?? []) {
+      insertTitle.run(
+        title.printKey,
+        title.lang,
+        title.fullName,
+        title.rarity ?? null,
+        title.setName ?? null,
+        title.color ?? null,
+        title.character ?? null,
+        title.power ?? null,
+        title.awakenedName ?? null,
+      );
+    }
+    for (const asset of input.assets) {
+      insertAsset.run(
+        asset.printKey,
+        asset.lang,
+        asset.imageUrl ?? null,
+        asset.backUrl ?? null,
+      );
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    db.close();
+    throw error;
+  }
+
+  db.close();
+  return { dbPath, printCount: input.prints.length };
+}
+
+export function ensureDbsCgIndex(): DatabaseSync | null {
+  const dbPath = dbsCgDbPath();
+  if (!existsSync(dbPath)) return null;
+  if (activeDb) return activeDb;
+  try {
+    activeDb = new DatabaseSync(dbPath, { readOnly: true });
+    return activeDb;
+  } catch {
+    return null;
+  }
+}
+
+/** Locales this pack files faces for. Each has its own sources. */
+export const DBS_CG_FACE_LANGS = ["fr", "en"] as const;
+
+/** Catalogue folder for one print: `001` or `011-spr`. */
+export function dbsCgCardFolder(
+  print: Pick<DbsPrintRow, "number" | "grouping">,
+): string {
+  return print.grouping ? `${print.number}-${print.grouping}` : print.number;
+}
+
+/**
+ * The synced face for one printing *in its own language*.
+ *
+ * Locale is a parameter, not a constant: faces are filed per language
+ * (`cards/<set>/fr/…`, `cards/<set>/en/…`) because the sources differ by
+ * locale — dbscards and Bandai carry French, Deckplanet only English. Reading
+ * `fr` for every print is what put English faces on French cards.
+ */
+export function dbsCgLocalArtFilename(
+  print: Pick<DbsPrintRow, "setCode" | "number" | "grouping">,
+  lang = "fr",
+  role: DbsFaceRole = "art",
+): string | null {
+  const cardDir = packCardDir(DBS_CG_PACK_ID, {
+    set: print.setCode,
+    lang: lang.toLowerCase(),
+    card: dbsCgCardFolder(print),
+  });
+
+  /*
+    The ranking's own answer, written by the faces pass. Nothing is copied to a
+    generic `art.webp` any more: that name duplicated a file we already held and
+    froze a decision taken at download time. Reading the decision costs the same
+    one file access the old `existsSync` did.
+  */
+  const decision = path.join(cardDir, DBS_FACE_DECISION_FILE);
+  if (existsSync(decision)) {
+    try {
+      const named = parseFaceDecision(readFileSync(decision, "utf8"), role);
+      if (named && existsSync(path.join(cardDir, named))) return named;
+    } catch {
+      /* fall through to the scan */
+    }
+  }
+
+  /*
+    No decision recorded — a folder filled before this change, or one whose
+    pass was cut short. Take any source that is there rather than showing
+    nothing; the next pass will rank them properly.
+  */
+  try {
+    const found = readdirSync(cardDir)
+      .filter((name) => dbsFaceFileOf(name)?.role === role)
+      .sort();
+    if (found.length > 0) return found[0]!;
+  } catch {
+    /* no folder */
+  }
+
+  /*
+    Older layouts really did hold these names. Kept readable rather than
+    migrated: 628 Leader backs were written as `awakened.webp` before the role
+    was folded into the app's single `back` notion, and re-fetching them to
+    rename them would be work for nothing.
+  */
+  const legacy = role === "art" ? "art.webp" : "awakened.webp";
+  return existsSync(path.join(cardDir, legacy)) ? legacy : null;
+}
+
+/** The Leader's awakened side, when this print has one stored. */
+export function dbsCgLocalBackFilename(
+  print: Pick<DbsPrintRow, "setCode" | "number" | "grouping">,
+  lang = "fr",
+): string | null {
+  return dbsCgLocalArtFilename(print, lang, "back");
+}
+
+export function loadDbsCgIndex(): {
+  prints: DbsPrintRow[];
+  titles: DbsTitleRow[];
+  assets: DbsAssetRow[];
+} | null {
+  const db = ensureDbsCgIndex();
+  if (!db) return null;
+  try {
+    const prints = db
+      .prepare(
+        `SELECT print_key AS printKey, set_code AS setCode, number, grouping,
+                card_type AS cardType, source_url AS sourceUrl
+           FROM prints
+          ORDER BY set_code, number, grouping`,
+      )
+      .all() as DbsPrintRow[];
+    const titles = db
+      .prepare(
+        `SELECT print_key AS printKey, lang, full_name AS fullName, rarity,
+                set_name AS setName, color, character, power,
+                awakened_name AS awakenedName
+           FROM print_titles`,
+      )
+      .all() as DbsTitleRow[];
+    const assets = db
+      .prepare(
+        `SELECT print_key AS printKey, lang, image_url AS imageUrl,
+                back_url AS backUrl
+           FROM print_assets`,
+      )
+      .all() as DbsAssetRow[];
+    return { prints, titles, assets };
+  } catch {
+    return null;
+  }
+}
+
+function groupByPrintLang<T extends { printKey: string; lang: string }>(
+  rows: readonly T[],
+): Map<string, Map<string, T>> {
+  const map = new Map<string, Map<string, T>>();
+  for (const row of rows) {
+    const lang = row.lang.toLowerCase();
+    let inner = map.get(row.printKey);
+    if (!inner) {
+      inner = new Map();
+      map.set(row.printKey, inner);
+    }
+    inner.set(lang, row);
+  }
+  return map;
+}
+
+export function exportDbsCgCardsIndexJson(
+  prints: DbsPrintRow[],
+  titles: DbsTitleRow[] | undefined,
+  assets: DbsAssetRow[] | undefined,
+  outPath: string,
+): void {
+  const titlesByPrint = groupByPrintLang(titles ?? []);
+  const assetsByPrint = groupByPrintLang(assets ?? []);
+  const cards: CardsIndexV1["cards"] = {};
+  for (const print of prints) {
+    const titlesFor = titlesByPrint.get(print.printKey);
+    const assetsFor = assetsByPrint.get(print.printKey);
+    const displayTitle =
+      titlesFor?.get("fr") ??
+      (titlesFor ? [...titlesFor.values()][0] : undefined);
+    const card = dbsCgCardFolder(print);
+    const langs: Record<string, CardsIndexLangFiles> = {};
+    for (const lang of DBS_CG_FACE_LANGS) {
+      const art = dbsCgLocalArtFilename(print, lang);
+      const back = dbsCgLocalBackFilename(print, lang);
+      const imageUrl = assetsFor?.get(lang)?.imageUrl;
+      const name = titlesFor?.get(lang)?.fullName?.trim();
+      const files: CardsIndexLangFiles = {};
+      if (art) files.art = art;
+      if (back) files.back = back;
+      if (imageUrl) files.artUrl = imageUrl;
+      if (name) files.name = name;
+      if (Object.keys(files).length) langs[lang] = files;
+    }
+    cards[print.printKey] = {
+      set: print.setCode,
+      card,
+      langs,
+      ...(displayTitle?.fullName ? { name: displayTitle.fullName } : {}),
+      ...(displayTitle?.rarity ? { rarity: displayTitle.rarity } : {}),
+    };
+  }
+  const index: CardsIndexV1 = {
+    version: 1,
+    pack: DBS_CG_PACK_ID,
+    generatedAt: new Date().toISOString(),
+    cards,
+  };
+  // Same as Lorcana / One Piece: art without a JOIN title keeps a sibling name.
+  attachSiblingTitlesToCardsIndex(index);
+  mkdirSync(path.dirname(outPath), { recursive: true });
+  writeFileSync(`${outPath}`, `${JSON.stringify(index)}\n`);
+}
+
+/**
+ * Les extensions du catalogue, telles qu'un joueur les nomme.
+ *
+ * `set_name` vit sur le titre, pas sur le tirage : un même code peut donc
+ * porter plusieurs libellés selon la langue. On garde le premier non vide, et
+ * on retombe sur le code quand aucun titre ne l'a nommé — un set réel sans
+ * libellé vaut mieux qu'un set absent de la liste.
+ */
+export function listDbsCgPrintSets(): { id: string; label: string }[] {
+  const db = ensureDbsCgIndex();
+  if (!db) return [];
+  const rows = db
+    .prepare(
+      `SELECT p.set_code AS setCode,
+              MIN(NULLIF(TRIM(t.set_name), '')) AS setName
+         FROM prints p
+         LEFT JOIN print_titles t ON t.print_key = p.print_key
+        GROUP BY p.set_code`,
+    )
+    .all() as { setCode: string; setName: string | null }[];
+  // Nettoyage, homonymes et tri : communs à tous les catalogues.
+  return finalizeSetOptions(
+    rows.map((row) => ({ id: row.setCode, label: row.setName })),
+  );
+}

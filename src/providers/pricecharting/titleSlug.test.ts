@@ -39,14 +39,11 @@ describe("expandPriceChartingLookupTitles", () => {
 
   it("collapses decimal versions for PriceCharting slugs (2.0 → 20)", () => {
     expect(expandPriceChartingLookupTitles("Colin McRae Rally 2.0")).toEqual(
-      expect.arrayContaining([
-        "Colin McRae Rally 2.0",
-        "Colin McRae Rally 20",
-      ]),
+      expect.arrayContaining(["Colin McRae Rally 2.0", "Colin McRae Rally 20"]),
     );
-    expect(expandPriceChartingLookupTitles("Colin McRae Rally 2.0")).not.toEqual(
-      expect.arrayContaining(["Colin McRae Rally II.0"]),
-    );
+    expect(
+      expandPriceChartingLookupTitles("Colin McRae Rally 2.0"),
+    ).not.toEqual(expect.arrayContaining(["Colin McRae Rally II.0"]));
   });
 });
 

@@ -1,13 +1,12 @@
 "use client";
 
 import { z } from "zod";
-import type { ExploreItem } from "@/types/explore";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Search, Scan, Sparkles } from "lucide-react";
+import { Plus, Search, Scan } from "lucide-react";
 import { useCallback, useMemo, useState, useEffect, Suspense } from "react";
 import {
   useMutation,
@@ -49,11 +48,8 @@ import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { itemPath, shelfPath } from "@/lib/routing/slugs";
 import { syncItemQueries, syncShelfQueries } from "@/core/collect/queryCache";
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
-import axios from "axios";
-import { ExploreItemModal } from "@/components/modals/ExploreItemModal";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-import type { Shelf, Prisma } from "@prisma/client";
+import type { Shelf, Prisma } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 const shelfSchema = z.object({
@@ -100,10 +96,6 @@ function ShelvesComponent() {
     | undefined
   >(undefined);
 
-  const [selectedExploreItem, setSelectedExploreItem] =
-    useState<ExploreItem | null>(null);
-  const [exploreModalOpen, setExploreModalOpen] = useState(false);
-
   const q = searchParams.get("q") || "";
   const [searchQuery, setSearchQuery] = useState(q);
 
@@ -124,18 +116,6 @@ function ShelvesComponent() {
     queryFn: () => getItems(searchQuery),
     enabled: !!searchQuery,
     placeholderData: keepPreviousData,
-  });
-
-  // Search items in other users' public shelves
-  const { data: exploreItems } = useQuery({
-    queryKey: ["exploreItems", searchQuery],
-    queryFn: async () => {
-      const { data } = await axios.get(
-        `/api/explore?q=${encodeURIComponent(searchQuery)}`,
-      );
-      return data as ExploreItem[];
-    },
-    enabled: !!searchQuery,
   });
 
   const { mutate } = useMutation<
@@ -383,15 +363,6 @@ function ShelvesComponent() {
         />
       )}
 
-      <ExploreItemModal
-        isOpen={exploreModalOpen}
-        onClose={() => {
-          setExploreModalOpen(false);
-          setSelectedExploreItem(null);
-        }}
-        item={selectedExploreItem}
-      />
-
       {/* Content */}
       <div className=" overflow-y-auto">
         <div className="flex-1 p-4 md:p-6 pb-24 md:pb-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300">
@@ -565,51 +536,6 @@ function ShelvesComponent() {
                     </p>
                   )}
                 </div>
-
-                {/* Community Items Fallback */}
-                {exploreItems && exploreItems.length > 0 && (
-                  <div className="flex flex-col gap-3 mt-4">
-                    <h2 className="text-lg font-bold tracking-tight text-foreground dark:text-zinc-200 flex items-center gap-1.5 select-none animate-fade-in">
-                      <Sparkles className="size-4.5 text-amber-500" />
-                      Disponible chez d’autres collectionneurs
-                    </h2>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                      {exploreItems.map((item) => (
-                        <div
-                          key={item.id}
-                          className="relative group cursor-pointer animate-fade-in"
-                          onClick={() => {
-                            setSelectedExploreItem(item);
-                            setExploreModalOpen(true);
-                          }}
-                        >
-                          <ItemCard
-                            {...item}
-                            shelfType={item.shelf?.type}
-                            cardFormat={item.shelf?.cardFormat}
-                          />
-                          {/* Owner badge top left */}
-                          <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/85 backdrop-blur text-white shadow-sm border border-white/10 max-w-[80px] select-none pointer-events-none">
-                            <Avatar className="size-3.5 shrink-0 border border-white/20 select-none pointer-events-none">
-                              <AvatarImage
-                                src={item.user?.image || undefined}
-                                className="object-cover"
-                              />
-                              <AvatarFallback className="text-[6px] font-black text-amber-700 bg-white leading-none">
-                                {item.user?.name
-                                  ?.substring(0, 2)
-                                  .toUpperCase() || "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-[7px] font-black uppercase truncate">
-                              {item.user?.name || item.user?.email}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </>
             ) : (
               /* Landing State Additional Sections */

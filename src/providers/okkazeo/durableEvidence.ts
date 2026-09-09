@@ -39,7 +39,7 @@ function isOkkazeoSearchUrl(url: string): boolean {
       parsed.pathname.includes("/jeux/resultats") &&
       Boolean(
         parsed.searchParams.get("ean")?.trim() ||
-          parsed.searchParams.get("titre_jeu")?.trim(),
+        parsed.searchParams.get("titre_jeu")?.trim(),
       )
     );
   } catch {
@@ -81,9 +81,6 @@ export async function promoteOkkazeoSearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Okkazeo] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[Okkazeo] Failed to promote durable search evidence:", error);
   }
 }

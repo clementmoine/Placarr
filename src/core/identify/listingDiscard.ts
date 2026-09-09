@@ -32,12 +32,7 @@ function normalizeDiscardText(value: string): string {
 
 function joinAlternation(terms: readonly string[]): string {
   return [...terms]
-    .map((term) =>
-      term
-        .split(/\s+/)
-        .map(escapeRegExp)
-        .join("\\s+"),
-    )
+    .map((term) => term.split(/\s+/).map(escapeRegExp).join("\\s+"))
     .sort((a, b) => b.length - a.length)
     .join("|");
 }
@@ -72,9 +67,10 @@ function isMultiGameLotListing(normalized: string): boolean {
   if (!MULTI_GAME_LOT_PLATFORM_RE.test(normalized)) return false;
   PLATFORM_PHRASE_MATCHER.lastIndex = 0;
   const afterCount = normalized.replace(/^\D*\d+\s+jeux?\s+/i, "");
-  return PLATFORM_PHRASE_MATCHER.test(afterCount.split(/\s+/).slice(0, 4).join(" "));
+  return PLATFORM_PHRASE_MATCHER.test(
+    afterCount.split(/\s+/).slice(0, 4).join(" "),
+  );
 }
-
 
 /**
  * Packaging-pair listings discard only when the title is mostly accessories.
@@ -86,7 +82,10 @@ function packagingPairLacksProductIdentity(normalized: string): boolean {
   const remainder = normalized
     .replace(PACKAGING_TOKEN_RE, " ")
     .replace(PLATFORM_PHRASE_MATCHER, " ")
-    .replace(/\b(?:et|avec|sans|plus|complet|complete|neuf|loose|occasion)\b/gi, " ")
+    .replace(
+      /\b(?:et|avec|sans|plus|complet|complete|neuf|loose|occasion)\b/gi,
+      " ",
+    )
     .replace(/\+/g, " ")
     .replace(/\s+/g, " ")
     .trim();

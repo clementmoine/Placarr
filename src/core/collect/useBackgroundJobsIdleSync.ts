@@ -2,13 +2,12 @@ import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getBackgroundJobs } from "@/lib/api/backgroundJobs";
-import { METADATA_POLL_INTERVAL_MS } from "@/core/collect/enrichment";
+import { backgroundJobsRefetchInterval } from "@/core/collect/enrichment";
 import { clearFinishedMetadataRefreshStamps } from "@/core/collect/queryCache";
 
 /**
  * Polls background metadata jobs and refreshes open collection views once all
- * jobs finish. Always polls while enabled so a newly started refresh appears
- * in the header without waiting for another screen to invalidate the query.
+ * jobs finish. Idle polls are sparse; starting a refresh still invalidates.
  */
 export function useBackgroundJobsIdleSync(enabled: boolean) {
   const queryClient = useQueryClient();
@@ -18,7 +17,7 @@ export function useBackgroundJobsIdleSync(enabled: boolean) {
     queryKey: ["backgroundJobs"],
     queryFn: getBackgroundJobs,
     enabled,
-    refetchInterval: enabled ? METADATA_POLL_INTERVAL_MS : false,
+    refetchInterval: enabled ? backgroundJobsRefetchInterval : false,
     refetchIntervalInBackground: true,
   });
 

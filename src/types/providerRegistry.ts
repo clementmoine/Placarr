@@ -38,6 +38,29 @@ export interface ProviderInfo {
    */
   factLabel?: string;
   /**
+   * Le **jeu** que ce provider catalogue, tel qu'un joueur le nomme.
+   *
+   * `label` désigne la *source* — « LorcanaJSON », « TCGdex » — ce qui est juste
+   * pour une provenance de fait, et faux pour un choix de catalogue : on y
+   * cherche « Lorcana » ou « Pokémon », pas le nom du dépôt de données. Le
+   * provider possède son nom de jeu, plutôt qu'un aiguillage dans le cœur.
+   *
+   * Absent = `label` fait l'affaire (c'est déjà le nom du jeu).
+   */
+  catalogueLabel?: string;
+  /**
+   * Autres noms sous lesquels un collectionneur étiquette une étagère pour
+   * **ce** catalogue (« Naruto CCG », « JCC Naruto », « Ultra Challenge »).
+   *
+   * Servent uniquement à préremplir le sélecteur d'ajout de carte quand le nom
+   * d'étagère désigne clairement un jeu — un match ambigu ne force rien. Un
+   * objet `{ label, language }` fixe aussi la langue d'impression (ex. CCG
+   * anglais Shippuden ≠ Carddass FR, même provider).
+   */
+  catalogueAliases?: Array<
+    string | { label: string; language?: "fr" | "en" | "ja" | "it" | "de" }
+  >;
+  /**
    * This provider supplies authoritative *reference/catalog* prices (a price
    * database) rather than live marketplace listings — so its presence alone makes
    * cached pricing trustworthy. Lets the price-cache policy stay provider-blind.
@@ -53,6 +76,11 @@ export interface ProviderInfo {
    * accessories, wrong platform). Named offers need extra title filtering.
    */
   marketplaceSearchPriceSource?: boolean;
+  /**
+   * `refreshBarcodePriceOffers` honors `evidenceOnly` (ProviderEvidence replay,
+   * zero HTTP). Collect skips other price modules during evidence-only passes.
+   */
+  evidenceOnlyPriceRefresh?: boolean;
   /**
    * Provider supplies authoritative time-to-beat / playtime facts for games.
    */
@@ -177,6 +205,18 @@ export interface ProviderInfo {
    */
   rateLimited?: boolean;
   /**
+   * Minimum delay between two calls to this provider, from its documented rate
+   * limit. Implies a serial queue — declare it here rather than teaching core
+   * about provider ids.
+   */
+  minRequestIntervalMs?: number;
+  /**
+   * How many calls to this provider may be in flight at once. Defaults to 1 for
+   * scrapes, rate-limited providers and anything with a min interval; other
+   * API/local providers get `API_PROVIDER_CONCURRENCY`. Set it to pin a value.
+   */
+  maxConcurrentRequests?: number;
+  /**
    * Live scrape that reliably stalls (host unreachable / connection blocked /
    * bot-protected) with no canonical anchor to show for it, so it eats its full
    * request timeout on most calls. Skipped while recording network fixtures in
@@ -247,6 +287,13 @@ export interface ProviderInfo {
   /** Collector age-rating facts map to cover region (e.g. PEGI → EU). */
   collectorCoverRegionFromAgeRating?: boolean;
   /** Default cover region when inferring 3D roles from filename hints. */
+  /**
+   * Product images are served from the shop's own domain (not a CDN), so the
+   * host must be allowed for `next/image`. Declared here rather than listed in
+   * core — the middleware mirror is generated from the registry and pinned by
+   * `nextImageRemoteHosts.test.ts`.
+   */
+  scrapeCatalogImageBaseUrl?: string;
   coverDefaultRegion?: "fr" | "en" | "eu" | "us" | "jp" | "wor";
   /**
    * Friendlier mapping-audit message when a keyed provider is unconfigured
@@ -257,4 +304,13 @@ export interface ProviderInfo {
   websiteUrl?: string;
   /** API key / developer console URL linked from admin health cards. */
   apiKeyDashboardUrl?: string;
+  /**
+   * How this provider obtains durable data. Catalog providers use
+   * `local_catalog` / `scrape_cache` plus optional `ProviderModule.catalog`.
+   * Defaults to `api_live` in `materializeProviderInfo`.
+   * @see docs/provider_supply_modes.md
+   */
+  supplyMode?: ProviderSupplyMode;
 }
+
+export type ProviderSupplyMode = "api_live" | "scrape_cache" | "local_catalog";

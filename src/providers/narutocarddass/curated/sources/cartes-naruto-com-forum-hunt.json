@@ -1,0 +1,103 @@
+{
+  "source": "cartes-naruto.com forum + manga-news (Wayback)",
+  "observed": "2026-08-27",
+  "kind": "research-dig",
+  "ingest": "staging forum HTML + news ; pas de promotion sealed sans qty",
+  "baseUrl": "http://www.cartes-naruto.com/manga-forum.html",
+  "forums": {
+    "1": "News, Informations et Sorties — rumeurs, dates, spoilers, listes officielles",
+    "2": "Questions et problèmes de règles",
+    "3": "Construction et évaluation de deck",
+    "4": "Échanges et recherches de cartes [UltraJeux]",
+    "5": "Questions générales sur le site",
+    "6": "Divers et bazar",
+    "7": "Boîte à idées",
+    "8": "Mangas et dessins animés",
+    "9": "Créations graphiques",
+    "10": "News et mises à jour du site",
+    "11": "Forum Privé"
+  },
+  "cdxNote": "CDX viewtopic page0≈5000 + page1≈1221 (forums 4–9 surtout). Longs fils souvent 1–2 pages archivées.",
+  "cdxBatchScan": {
+    "date": "2026-08-26",
+    "window": "200709–200803",
+    "uniqueTopics": 663,
+    "byForum": { "1": 80, "2": 170, "3": 134, "4": 270, "10": 4, "11": 5 },
+    "s5KeywordHits": 20,
+    "artifact": "/tmp/cn-forum/s5-hits.json",
+    "verdict": "Aucun fil « Composition starters série 5 »."
+  },
+  "harvest2026_08_27": {
+    "t1057": {
+      "title": "Composition des starters série 4",
+      "cdxPages": ["0", "15", "30", "45", "75", "90", "105"],
+      "missingOffset": "60",
+      "staging": "data/naruto/carddass/staging/cartes-naruto-com/forum/viewtopic-1-1057/",
+      "finding": "OP pointe carddass liste_cartes_s4.htm — PAS de paste 40+40 qty dans les pages archivées. Discussion preview / meta. Listes qty = manga-news-65 uniquement."
+    },
+    "t1285": {
+      "title": "Date de la sortie de la série 5",
+      "cdxPages": ["30 only"],
+      "staging": "data/naruto/carddass/staging/cartes-naruto-com/forum/viewtopic-1-1285-30.html",
+      "finding": "Preview officieuse 27/10/2007 (Hantaro). Reste du fil (46+ pages live) non archivé — essais closest-snapshot = calendrier Wayback."
+    },
+    "t1827": {
+      "title": "Deck serie 5 [Résolu]",
+      "staging": "data/naruto/carddass/staging/cartes-naruto-com/forum/viewtopic-2-1827.html",
+      "finding": "Kage : carddass liste_cartes_s5 — * = La quête, ** = autre deck, unmarked = booster. Pas de liste 40."
+    },
+    "t1855": {
+      "title": "starter deck (forum-3)",
+      "cdx": "vide — non archivé"
+    },
+    "mangaNews": {
+      "52": "EN CCG S5 (bandaicg) — hors FR",
+      "53": "EN CCG S5 EU — hors FR",
+      "65": "S4 decks 40+40 qty (déjà ledger)",
+      "78": {
+        "title": "Sortie de la Série 5 Naruto !!!",
+        "date": "2007-11-14",
+        "staging": "staging/cartes-naruto-com/pages/manga-news-78-sortie-serie-5-naruto.html",
+        "media": "staging/.../news-78-media/ultrajeux-1044.jpg + 1045.jpg (packshots live)",
+        "finding": "Annonce sortie FR + 2 packshots UltraJeux (quête / nouveau départ) + lien shop VF-5. **Aucune liste de cartes** — contraste net avec #65 (S4) et #134 (S6)."
+      },
+      "134": "S6 decks avec listes qty (confirmé pattern : S5 = trou documentaire)"
+    }
+  },
+  "priorityThreads": [
+    {
+      "id": "f1-t1057",
+      "title": "Composition des starters série 4",
+      "value": "Attestation contexte S4 ; listes qty absentes du forum (→ news-65)",
+      "staging": "staging/cartes-naruto-com/forum/viewtopic-1-1057/"
+    },
+    {
+      "id": "f1-t1285",
+      "title": "Date de la sortie de la série 5",
+      "value": "Preview 27/10/2007 — fil quasi perdu Wayback",
+      "staging": "staging/cartes-naruto-com/forum/viewtopic-1-1285-30.html"
+    },
+    {
+      "id": "f2-t1827",
+      "title": "Deck serie 5 [Résolu]",
+      "value": "Légende * /** carddass confirmée par modé",
+      "staging": "staging/cartes-naruto-com/forum/viewtopic-2-1827.html"
+    },
+    {
+      "id": "f1-t1927",
+      "title": "[OCtGN Série 5 par Ketout and Mangekyou!]",
+      "value": "Deck OCTGN communautaire — pas usine"
+    },
+    {
+      "id": "f4-t2085",
+      "title": "ma liste (échanges)",
+      "value": "Mention « cartes du deck nouveau depart » — wishlist"
+    }
+  ],
+  "s5Gap": "Pattern documentaire clair : S4 (#65) et S6 (#134) ont des news « liste des decks » ; S5 (#78) n’a que packshots. Forum renvoie à carddass * /** sans qty. catalogue_s5.htm jamais capturé.",
+  "nextHarvest": [
+    "Photo / scan livret starter S5 (eBay/Vinted sealed ouvert)",
+    "Parence lot 2 starters — CDX toujours vide",
+    "Solliciter collectionneur FR / Discord (pas de source publique restante sur cartes-naruto.com)"
+  ]
+}

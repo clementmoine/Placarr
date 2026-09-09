@@ -2,17 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LibraryBig, Compass, Repeat, LayoutGrid } from "lucide-react";
+import { LibraryBig, LayoutGrid } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { useAccount } from "@/lib/client/hooks/useAccount";
 
 export function BottomNav() {
   const { t } = useLocale();
-  const { isAuthenticated, isGuest } = useAccount();
   const pathname = usePathname() || "";
-
-  if (!isAuthenticated || isGuest) return null;
 
   const navItems = [
     {
@@ -24,16 +20,6 @@ export function BottomNav() {
       href: "/items",
       label: t("navigation.items") || "Objets",
       icon: LayoutGrid,
-    },
-    {
-      href: "/explore",
-      label: t("navigation.explore") || "Exploration",
-      icon: Compass,
-    },
-    {
-      href: "/loans",
-      label: t("navigation.loans") || "Mes Prêts",
-      icon: Repeat,
     },
   ];
 

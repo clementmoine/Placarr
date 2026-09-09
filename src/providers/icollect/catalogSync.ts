@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import type { DatabaseSync } from "node:sqlite";
 
 import { createSerializeAsync } from "@/lib/async/serializeAsync";
@@ -120,7 +120,7 @@ function writeMetaInt(db: DatabaseSync, key: string, value: number): void {
 }
 
 export async function fetchICollectVideoGameSitemapUrls(): Promise<string[]> {
-  const response = await axios.get<string>(ICE_SITEMAP_MASTER, {
+  const response = await httpGet<string>(ICE_SITEMAP_MASTER, {
     headers: ICE_HEADERS,
     timeout: 20_000,
     validateStatus: (status) => status >= 200 && status < 400,
@@ -132,7 +132,7 @@ export async function ingestICollectSitemapByUrl(
   db: DatabaseSync,
   sitemapUrl: string,
 ): Promise<ICollectIngestStats> {
-  const response = await axios.get<string>(sitemapUrl, {
+  const response = await httpGet<string>(sitemapUrl, {
     headers: ICE_HEADERS,
     timeout: 120_000,
     validateStatus: (status) => status >= 200 && status < 400,

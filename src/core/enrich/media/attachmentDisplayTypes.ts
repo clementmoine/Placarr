@@ -1,7 +1,5 @@
-import type { AttachmentType } from "@prisma/client";
-import {
-  resolveAttachmentSemantics,
-} from "@/core/enrich/media/attachmentDisplayLabels";
+import type { AttachmentType } from "@/generated/prisma/browser";
+import { resolveAttachmentSemantics } from "@/core/enrich/media/attachmentDisplayLabels";
 import type { LocalePreferenceOptions } from "@/core/locale/preference";
 
 export interface AttachmentImageMetrics {
@@ -26,6 +24,11 @@ export type ScoredAttachmentInput = {
    * Display-only — formatted by `getAttachmentGalleryLabels`.
    */
   sourceNames?: string[] | null;
+  /**
+   * SteamGridDB-style cover sources — enables style/variant chip labels
+   * in `getAttachmentGalleryLabels` (stamped via provider traits).
+   */
+  gridStyleCoverLabelsSource?: boolean;
   /**
    * Provider-declared cover traits, stamped server-side (the scorer is client-safe
    * and cannot read the registry). `isFullWrapCoverSource` marks a full front+back
@@ -81,7 +84,9 @@ export interface AttachmentDisplayScoreDetails {
   format?: string;
 }
 
-export const DISPLAY_ATTACHMENT_BASE_SCORE: Partial<Record<AttachmentType, number>> = {
+export const DISPLAY_ATTACHMENT_BASE_SCORE: Partial<
+  Record<AttachmentType, number>
+> = {
   cover: 620,
   artwork: 430,
   image: 330,

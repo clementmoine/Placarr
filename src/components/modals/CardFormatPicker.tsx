@@ -7,7 +7,7 @@ import {
   getCardFormatsForPicker,
   type CardFormat,
 } from "@/lib/text/cardFormat";
-import type { Type } from "@prisma/client";
+import type { Type } from "@/generated/prisma/browser";
 
 const PREVIEW_BOX_PX = 36;
 

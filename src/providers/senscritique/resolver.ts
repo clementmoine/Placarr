@@ -2,7 +2,7 @@ import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
 } from "@/core/commerce/retailer/metadataLookup";
-import { formatScore } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
 import {
   resolveGameAttachmentPlatformKey,
   withMetadataPlatformKeys,
@@ -160,7 +160,7 @@ export function sensCritiqueAliases(
 
 export function mapSensCritiqueMetadata(
   product: SensCritiqueProduct,
-  ctx: {
+  _ctx: {
     platform?: string | null;
     shelfName?: string | null;
   } = {},

@@ -4,7 +4,10 @@ import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
-import { wrapMetadataProviderAdapter } from "@/core/enrich/providerQueue";
+import {
+  configureProviderQueue,
+  wrapMetadataProviderAdapter,
+} from "@/core/enrich/providerQueue";
 import { PROVIDER_MODULES } from "./registry";
 
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -23,8 +26,8 @@ import type {
 } from "@/types/providerModule";
 
 export function createMetadataAdapters(): MetadataProviderAdapter[] {
-  return PROVIDER_MODULES.filter(
-    (module): module is ProviderModule => Boolean(module?.info),
+  return PROVIDER_MODULES.filter((module): module is ProviderModule =>
+    Boolean(module?.info),
   ).flatMap((module) => {
     if (!module.createMetadataAdapter) return [];
     const adapter = module.createMetadataAdapter();
@@ -36,6 +39,14 @@ export function buildMetadataAdapterMap(): Map<
   string,
   MetadataProviderAdapter
 > {
+  // Composition root: the queue mechanics stay provider-blind, the registry
+  // says how fast each provider may be called.
+  for (const providerModule of PROVIDER_MODULES) {
+    if (providerModule?.info) {
+      configureProviderQueue(providerModule.info.id, providerModule.info);
+    }
+  }
+
   return new Map(
     createMetadataAdapters().map((adapter) => [
       adapter.id,

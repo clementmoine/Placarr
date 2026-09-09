@@ -1,4 +1,4 @@
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 import {
   isCoverCandidateKind,
   isPhysicalNonCoverKind,
@@ -8,15 +8,6 @@ import {
   localeBonusForAttachmentRole,
   regionRank,
 } from "@/core/locale/preference";
-import {
-  coverProvenanceRank,
-  resolveCoverProvenance,
-} from "@/core/enrich/media/coverProvenance";
-import {
-  coverUrlExpectsHighResolution,
-  isCoverResolutionAcceptable,
-  shortestImageEdge,
-} from "@/core/enrich/media/coverResolution";
 import { exposureScoreAdjustment } from "@/core/enrich/media/coverExposure";
 import {
   attachmentSemantics,
@@ -31,8 +22,6 @@ import {
 import {
   isDiscOrSupportCoverCandidate,
   platformAlignmentScore,
-  platformMatchRank,
-  platformMismatchRank,
 } from "@/core/enrich/media/attachmentPlatformGate";
 
 export function mergeRolesByRegion(
@@ -60,7 +49,9 @@ export function mergeRolesByRegion(
 const CROSS_SOURCE_CONSENSUS_BONUS = 40;
 const MAX_CONSENSUS_SOURCES = 4;
 
-export function normalizeAttachmentSource(source?: string | null): string | null {
+export function normalizeAttachmentSource(
+  source?: string | null,
+): string | null {
   if (!source) return null;
   // Image sources are provider ids; drop any "· region" / "/ variant" suffix so
   // the same provider is not double-counted.
@@ -176,7 +167,9 @@ export function buildAttachmentDisplayScoreDetails(
       }
     }
     if (/\bmedia\b(?!=)/.test(signal)) {
-      if (!(options?.preferDiscCover && isDiscOrSupportCoverCandidate(attachment))) {
+      if (!(
+        options?.preferDiscCover && isDiscOrSupportCoverCandidate(attachment)
+      )) {
         addSignal(-220, "back/disc media signal");
       }
     }

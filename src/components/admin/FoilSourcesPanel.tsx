@@ -1,0 +1,478 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2, Play, RefreshCw, ScrollText } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import type { FoilPackStatus } from "@/lib/admin/foilStatusTypes";
+import { getBackgroundJobs } from "@/lib/api/backgroundJobs";
+import type {
+  CatalogueExtractScope,
+  CatalogueExtractTarget,
+} from "@/lib/client/catalogueExtract";
+import {
+  cataloguePackInfo,
+  foilExtractNeedsApk,
+  resolveCataloguePackId,
+} from "@/lib/admin/cataloguePacks";
+
+type FoilLogResponse = {
+  pack: CatalogueExtractTarget;
+  exists: boolean;
+  size: number;
+  mtime: string | null;
+  launchedAt: string | null;
+  nextOffset: number;
+  text: string;
+  job: {
+    id: string;
+    status: string;
+    startedAt: string;
+    error?: string | null;
+  } | null;
+  error?: string;
+};
+
+function formatWhen(iso: string | null, fr: boolean): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(fr ? "fr-FR" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatMo(bytes: number): string {
+  if (bytes <= 0) return "";
+  return `${(bytes / (1024 * 1024)).toFixed(0)} Mo`;
+}
+
+async function fetchFoilStatus(): Promise<{
+  packs: FoilPackStatus[];
+  gaps: {
+    actionableCount: number;
+    items: Array<{
+      id: string;
+      section: string;
+      detail: string;
+      apkGated?: boolean;
+    }>;
+  } | null;
+}> {
+  const res = await fetch("/api/admin/foil-status");
+  const body = (await res.json()) as {
+    packs?: FoilPackStatus[];
+    gaps?: {
+      actionableCount: number;
+      items: Array<{
+        id: string;
+        section: string;
+        detail: string;
+        apkGated?: boolean;
+      }>;
+    };
+    error?: string;
+  };
+  if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+  return { packs: body.packs ?? [], gaps: body.gaps ?? null };
+}
+
+function statusLine(
+  status: FoilPackStatus | undefined,
+  jobRunning: boolean,
+  fr: boolean,
+): string {
+  if (!status) return "…";
+  const parts: string[] = [];
+  const catalogueOnly = !foilExtractNeedsApk(status.extractTarget);
+  if (catalogueOnly) {
+    if (status.extract.present) {
+      parts.push(
+        formatWhen(status.extract.newestAt, fr) ||
+          (fr ? "catalogue local" : "local catalogue"),
+      );
+    } else {
+      parts.push(fr ? "pas de catalogue" : "no catalogue");
+    }
+  } else if (status.apk.present) {
+    const apkBits = [
+      `${status.apk.files.length} APK`,
+      formatMo(status.apk.bytes),
+    ].filter(Boolean);
+    parts.push(apkBits.join(" · "));
+  } else {
+    parts.push(fr ? "pas d’APK" : "no APK");
+  }
+  if (!catalogueOnly) {
+    if (!status.extract.present) {
+      parts.push(fr ? "pas de sync" : "no sync");
+    } else {
+      const extractBits = [
+        status.extract.stale ? (fr ? "obsolète" : "stale") : null,
+        status.extract.shaders != null
+          ? `${status.extract.shaders} shaders`
+          : null,
+        formatWhen(status.extract.newestAt, fr) || null,
+      ].filter(Boolean);
+      parts.push(extractBits.join(" · ") || (fr ? "sync" : "sync"));
+    }
+  }
+  if (jobRunning) parts.push(fr ? "en cours" : "running");
+  return parts.join(" · ");
+}
+
+/**
+ * Map a playroom / catalogue pack id to the admin extract target.
+ */
+export function foilExtractTargetForPack(
+  packId: string | null | undefined,
+): CatalogueExtractTarget | null {
+  // Catalogue ids and extract targets are not the same vocabulary: the Naruto
+  // pack is `naruto/carddass`, the extract target is `naruto`. Go through the pack
+  // resolver so aliases (`carddass`, `cacg`, `pokemonpaper`…) map too.
+  // The server-side `normalizeCatalogueExtractTarget` cannot be reused here — it
+  // pulls `node:child_process` and this is a client component.
+  const pack = cataloguePackInfo(resolveCataloguePackId(packId));
+  return pack?.extractTarget ?? null;
+}
+
+/** Compact Logs / Sync bar for the active playroom pack. */
+export function FoilPackSources({
+  target,
+  locale,
+  layout = "block",
+}: {
+  target: CatalogueExtractTarget;
+  locale: string;
+  /** `toolbar` = status + boutons en ligne pour la barre Catalogue. */
+  layout?: "block" | "toolbar";
+}) {
+  const fr = locale === "fr";
+  const queryClient = useQueryClient();
+  const [enqueueing, setEnqueueing] = useState(false);
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [logText, setLogText] = useState("");
+  const [logJobStatus, setLogJobStatus] = useState<string | null>(null);
+  const [logLaunchedAt, setLogLaunchedAt] = useState<string | null>(null);
+  const [logActivityAt, setLogActivityAt] = useState<string | null>(null);
+  const [logLoading, setLogLoading] = useState(false);
+  const logPreRef = useRef<HTMLPreElement>(null);
+  const logOffsetRef = useRef(0);
+  const logPollLockRef = useRef<Promise<void>>(Promise.resolve());
+
+  const { data: backgroundJobs } = useQuery({
+    queryKey: ["backgroundJobs"],
+    queryFn: getBackgroundJobs,
+    refetchInterval: 2_000,
+    refetchIntervalInBackground: true,
+  });
+
+  const jobRunning = (backgroundJobs?.jobs ?? []).some(
+    (job) => job.kind === "foilExtract" && job.foilTarget === target,
+  );
+
+  const { data: statusPayload, refetch: refetchStatus } = useQuery({
+    queryKey: ["foilStatus"],
+    queryFn: fetchFoilStatus,
+    refetchInterval: jobRunning ? 4_000 : 30_000,
+    refetchOnWindowFocus: true,
+  });
+  const packs = statusPayload?.packs ?? [];
+  const gaps = statusPayload?.gaps ?? null;
+
+  const status = packs.find((pack) => pack.id === target);
+  const canExtract = status?.canExtract ?? true;
+  const busy = enqueueing || jobRunning;
+
+  useEffect(() => {
+    const el = logPreRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [logText]);
+
+  const openLogs = () => {
+    setLogsOpen(true);
+    setLogText("");
+    logOffsetRef.current = 0;
+    setLogJobStatus(null);
+    setLogLaunchedAt(null);
+    setLogActivityAt(null);
+  };
+
+  const pollLogs = useCallback(
+    (reset: boolean) => {
+      logPollLockRef.current = logPollLockRef.current.then(async () => {
+        setLogLoading(true);
+        try {
+          const after = reset ? 0 : logOffsetRef.current;
+          const res = await fetch(
+            `/api/admin/catalogue-logs?pack=${encodeURIComponent(target)}&after=${after}`,
+          );
+          const body = (await res.json()) as FoilLogResponse;
+          if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+          setLogJobStatus(body.job?.status ?? null);
+          setLogLaunchedAt(body.launchedAt ?? body.job?.startedAt ?? null);
+          setLogActivityAt(body.mtime);
+          if (reset) {
+            setLogText(body.text || (body.exists ? "" : "—"));
+          } else if (body.text) {
+            setLogText((prev) => (prev ? `${prev}${body.text}` : body.text));
+          }
+          // Only echo DB failure when it belongs to *this* log run (matched by
+          // jobId) and the file itself does not already record success/failure.
+          if (
+            body.job?.status === "failed" &&
+            body.job.error &&
+            !/── done\b/.test(body.text) &&
+            !/status=failed/.test(body.text) &&
+            !/── failed:/.test(body.text)
+          ) {
+            const failBlock = `\nstatus=failed\n${body.job.error}\n`;
+            setLogText((prev) => {
+              if (/── done\b/.test(prev) || prev.includes(body.job!.error!)) {
+                return prev;
+              }
+              return `${prev}${failBlock}`;
+            });
+          }
+          logOffsetRef.current = body.nextOffset;
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          setLogText((prev) => `${prev}\n${message}`);
+        } finally {
+          setLogLoading(false);
+        }
+      });
+      return logPollLockRef.current;
+    },
+    [target],
+  );
+
+  useEffect(() => {
+    if (!logsOpen) return;
+    void pollLogs(true);
+    const timer = setInterval(() => {
+      void pollLogs(false);
+    }, 1_500);
+    return () => clearInterval(timer);
+  }, [logsOpen, pollLogs]);
+
+  const runExtract = async (scope?: CatalogueExtractScope) => {
+    setEnqueueing(true);
+    try {
+      const { enqueueCatalogueExtract } =
+        await import("@/lib/client/catalogueExtract");
+      // Pokémon: catalogue = AssetManifests CDN (authoritative). Inventory is
+      // only APK∪Malie — used by auto-sync, not the admin button.
+      const effective =
+        scope ?? (target === "pokemon" ? "catalogue" : "inventory");
+      const done = await enqueueCatalogueExtract(target, effective);
+      toast.success(
+        done.hint || (fr ? "Sync en file d’attente" : "Sync queued"),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["backgroundJobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalogueCards"] });
+      void queryClient.invalidateQueries({ queryKey: ["catalogueProducts"] });
+      openLogs();
+      void refetchStatus();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(message);
+    } finally {
+      setEnqueueing(false);
+    }
+  };
+
+  return (
+    <>
+      {layout === "block" && gaps && gaps.actionableCount > 0 ? (
+        <details className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
+          <summary className="cursor-pointer font-medium text-amber-900 dark:text-amber-100">
+            {fr
+              ? `Intégration manuelle requise (${gaps.actionableCount})`
+              : `Manual integration needed (${gaps.actionableCount})`}
+          </summary>
+          <ul className="mt-2 max-h-40 list-disc space-y-1 overflow-y-auto pl-4 text-muted-foreground">
+            {gaps.items.slice(0, 40).map((item) => (
+              <li key={item.id}>
+                {item.apkGated ? "[apk] " : ""}
+                {item.detail}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-muted-foreground">
+            docs/foil_new_finish.md · docs/foil_apk_sources.md · admin
+            foil-status gaps
+          </p>
+        </details>
+      ) : null}
+      <div
+        className={
+          layout === "toolbar"
+            ? "flex flex-wrap items-center gap-1.5"
+            : "flex flex-wrap items-center justify-between gap-2"
+        }
+      >
+        <p
+          className={
+            layout === "toolbar"
+              ? "hidden max-w-[9rem] truncate text-xs text-muted-foreground xl:inline"
+              : "min-w-0 text-xs text-muted-foreground"
+          }
+          title={statusLine(status, jobRunning, fr)}
+        >
+          {statusLine(status, jobRunning, fr)}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1 px-2 text-xs"
+            onClick={openLogs}
+          >
+            {jobRunning ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <ScrollText className="h-3.5 w-3.5" />
+            )}
+            Logs
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-7 gap-1 px-2 text-xs"
+            disabled={busy || !canExtract}
+            onClick={() => {
+              if (target === "pokemon") setCatalogueOpen(true);
+              else void runExtract();
+            }}
+            title={
+              target === "pokemon"
+                ? fr
+                  ? "Tout le catalogue CDN (AssetManifests) — skip déjà présent"
+                  : "Full CDN catalogue (AssetManifests) — skips existing"
+                : !foilExtractNeedsApk(target)
+                  ? fr
+                    ? "Sync le catalogue local de cette ligne"
+                    : "Sync this line’s local catalogue"
+                  : fr
+                    ? "Sync foil (store APK si màj, puis web + cards + Unity)"
+                    : "Foil sync (store APK if newer, then web + cards + Unity)"
+            }
+          >
+            {busy ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Play className="h-3.5 w-3.5" />
+            )}
+            Sync
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={catalogueOpen} onOpenChange={setCatalogueOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {fr
+                ? "Scraper tout le catalogue CDN ?"
+                : "Scrape the full CDN catalogue?"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              {fr
+                ? "Les AssetManifests du CDN sont re-téléchargés, puis chaque bundle qu’ils déclarent est récupéré — environ 93 000 cartes sur 6 langues. C’est la source autoritative (pas seulement APK ∪ Malie)."
+                : "CDN AssetManifests are re-dumped, then every bundle they list is fetched — roughly 93,000 cards across 6 languages. This is the authoritative source (not just APK ∪ Malie)."}
+            </p>
+            <p>
+              {fr
+                ? "Les bundles déjà présents sont sautés. Le reste représente ~10 Go et plusieurs heures en séquentiel. Annulable depuis le menu des tâches."
+                : "Bundles already on disk are skipped. The rest is ~10 GB and several hours, sequentially. Cancellable from the jobs menu."}
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCatalogueOpen(false)}
+            >
+              {fr ? "Annuler" : "Cancel"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                setCatalogueOpen(false);
+                void runExtract("catalogue");
+              }}
+            >
+              {fr ? "Lancer" : "Run"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={logsOpen} onOpenChange={setLogsOpen}>
+        <DialogContent className="flex max-h-[85vh] flex-col gap-3 sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Logs · {target}
+              {logJobStatus ? (
+                <span className="text-sm font-normal text-muted-foreground">
+                  {logJobStatus}
+                </span>
+              ) : null}
+            </DialogTitle>
+          </DialogHeader>
+          <pre
+            ref={logPreRef}
+            className="min-h-60 flex-1 overflow-auto rounded-md border border-border/60 bg-muted/30 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground"
+          >
+            {logText || (logLoading ? "…" : "")}
+          </pre>
+          <div className="flex items-center justify-between gap-2">
+            <p className="min-w-0 text-[11px] text-muted-foreground">
+              {fr ? "Lancement" : "Launch"}{" "}
+              {formatWhen(logLaunchedAt, fr) || "—"}
+              <span className="text-border"> · </span>
+              {fr ? "Activité" : "Activity"}{" "}
+              {formatWhen(logActivityAt, fr) || "—"}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 shrink-0 p-0"
+              disabled={logLoading}
+              title={fr ? "Recharger" : "Reload"}
+              onClick={() => void pollLogs(true)}
+            >
+              {logLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

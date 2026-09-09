@@ -1,5 +1,11 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @import "tw-animate-css";
+
+/* UI only — auto-scan of the repo walked providers, venvs and `data/`. */
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+/* Cover aspect / max-width strings live here, not in app/components. */
+@source "../lib/text/cardFormat.ts";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -132,4 +138,33 @@
 @utility cv-card-shelf {
   content-visibility: auto;
   contain-intrinsic-size: auto 150px;
+}
+
+/* Custom properties the foil recipes lean on. Registered so they interpolate
+   if anything ever transitions them. Idle sheen is a fake hover on the shared
+   foil clock (`idlePointerFromSeconds`) — `--combined` travels on its own
+   course there, because x+y on the anti-diagonal cancels. Reduced motion is
+   handled at the subscription site. */
+@property --colorX {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --colorY {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --combined {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
+@property --opacity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
 }

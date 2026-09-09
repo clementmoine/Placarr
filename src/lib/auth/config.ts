@@ -1,8 +1,10 @@
 import bcrypt from "bcryptjs";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { UserRole } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
+import { clientIpFrom, consumeRateLimit } from "@/lib/http/rateLimit";
 
 if (!process.env.NEXTAUTH_SECRET) {
   throw new Error("Please provide NEXTAUTH_SECRET environment variable");
@@ -11,54 +13,39 @@ if (!process.env.NEXTAUTH_SECRET) {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      id: "guest",
-      name: "Guest",
-      credentials: {},
-      async authorize() {
-        // Find the guest user
-        const guestUser = await prisma.user.findUnique({
-          where: { email: process.env.GUEST_EMAIL || "guest@placarr.com" },
-        });
-
-        if (!guestUser) {
-          throw new Error(
-            "Guest user not found. Please run database seed first.",
-          );
-        }
-
-        return {
-          id: guestUser.id,
-          email: guestUser.email,
-          name: guestUser.name,
-          role: guestUser.role,
-        };
-      },
-    }),
-    CredentialsProvider({
-      id: "credentials",
-      name: "Credentials",
+      id: "app-password",
+      name: "App password",
       credentials: {
-        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+      async authorize(credentials, req) {
+        if (!credentials?.password) {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
+        // Mono-instance unlock: one password for the owner account. Throttle
+        // by address — there is no email to rotate against.
+        const perAddress = consumeRateLimit(
+          `login:ip:${clientIpFrom(new Headers(req?.headers ?? {}))}`,
+          { limit: 20, windowMs: 15 * 60 * 1000 },
+        );
+        if (!perAddress.allowed) {
+          console.warn("[Auth] Throttled app-password unlock attempt");
+          return null;
+        }
+
+        const owner = await prisma.user.findFirst({
+          where: { role: UserRole.admin },
+          orderBy: { createdAt: "asc" },
         });
 
-        if (!user || !user.password) {
+        if (!owner?.password) {
           return null;
         }
 
         const isCorrectPassword = await bcrypt.compare(
           credentials.password,
-          user.password,
+          owner.password,
         );
 
         if (!isCorrectPassword) {
@@ -66,10 +53,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+          id: owner.id,
+          email: owner.email,
+          name: owner.name,
+          role: owner.role,
         };
       },
     }),

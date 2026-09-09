@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 import { isBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import {
@@ -7,6 +7,7 @@ import {
   isExplicitUserCoverOverride,
 } from "@/core/collect/media";
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
+import { loanedAtInputValue } from "@/core/collect/itemLoan";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -15,7 +16,17 @@ export type ItemModalFormValues = {
   name: string;
   barcode?: string;
   description?: string;
+  /**
+   * Which variant of the object this copy is (a card's finish, say). Free text
+   * because the vocabulary is the provider's; the options come from the
+   * metadata's `variant-option` facts. See `@/core/enrich/variants`.
+   */
+  variant?: string | null;
   condition: Condition;
+  /** Who currently has this copy — empty means at home. */
+  loanedTo?: string;
+  /** `yyyy-mm-dd` for the date input, or empty. */
+  loanedAt?: string;
   imageUrl: string | File | null;
   backgroundImageUrl: string | File | null;
 };
@@ -84,7 +95,10 @@ function defaultFormValues(
     backgroundImageUrl: null,
     description: "",
     barcode: prefilledValues?.barcode || "",
+    variant: null,
     condition: "used",
+    loanedTo: "",
+    loanedAt: "",
   };
 }
 
@@ -153,10 +167,13 @@ export function buildItemModalSessionInit(input: {
       description:
         item.description || item.metadata?.description || defaults.description,
       condition: item.condition || defaults.condition,
+      variant: item.variant ?? defaults.variant ?? null,
       imageUrl: seededCoverUrl,
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,
+      loanedTo: item.loanedTo?.trim() || "",
+      loanedAt: loanedAtInputValue(item.loanedAt),
     };
 
     const metadata = filterMetadataForShelfPlatform(

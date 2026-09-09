@@ -39,6 +39,18 @@ export function getProviderModule(id: string): ProviderModule | undefined {
   return PROVIDER_MODULES.find((mdl) => mdl.info.id === id);
 }
 
+/** Modules that expose a local/scrape corpus refresh surface. */
+export function discoverCatalogProviderModules(): readonly ProviderModule[] {
+  return PROVIDER_MODULES.filter((mdl) => Boolean(mdl.catalog));
+}
+
+export function getCatalogProviderModule(
+  id: string,
+): ProviderModule | undefined {
+  const mdl = getProviderModule(id);
+  return mdl?.catalog ? mdl : undefined;
+}
+
 /** Provider that owns a custom cover download path for this remote URL. */
 export function providerModuleForCoverDownload(
   url: string,
@@ -291,6 +303,9 @@ export function providerProductUrlsFromMetadataFacts(
 
   for (const fact of linkFacts) {
     const url = fact.url!.trim();
+    // Attribution chips may point at registry websiteUrl (site root) — those
+    // must never drive URL-first price refresh.
+    if (!urlLooksLikeProductPagePath(url)) continue;
     for (const providerModule of PROVIDER_MODULES) {
       if (!factMatchesPriceProviderModule(fact, url, providerModule)) continue;
 
@@ -302,6 +317,17 @@ export function providerProductUrlsFromMetadataFacts(
   }
 
   return results;
+}
+
+/** Site roots / bare hosts are attribution chips, not product fiches. */
+function urlLooksLikeProductPagePath(url: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    const path = new URL(url).pathname.replace(/\/+$/, "");
+    return Boolean(path);
+  } catch {
+    return false;
+  }
 }
 
 // ── coalesced from src/core/catalog/materializeProviderInfo.ts ──
@@ -327,5 +353,6 @@ export function materializeProviderInfo(info: ProviderInfo): ProviderInfo {
     gridStyleCoverLabels: info.gridStyleCoverLabels ?? false,
     collectorCoverRegionFromAgeRating:
       info.collectorCoverRegionFromAgeRating ?? false,
+    supplyMode: info.supplyMode ?? "api_live",
   };
 }

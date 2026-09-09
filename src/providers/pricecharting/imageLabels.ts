@@ -16,11 +16,7 @@ const CATALOG_PRODUCT_PHOTO_RE =
   /\b(?:box(?:\s+view)?|console|dock|controller|cart(?:ridge)?|manual|insert|backside|system\s*only|loose)\b/;
 
 export type PriceChartingImageKind =
-  | "cover"
-  | "back"
-  | "spine"
-  | "disc"
-  | "product";
+  "cover" | "back" | "spine" | "disc" | "product";
 
 export function priceChartingImageKindFromLabel(
   label?: string | null,

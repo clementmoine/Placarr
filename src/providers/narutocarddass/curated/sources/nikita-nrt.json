@@ -1,0 +1,52 @@
+{
+  "source": "tcg-db.nikita.jp — NARUTOカードゲーム (nrt)",
+  "observed": "2026-08-17",
+  "url": "https://tcg-db.nikita.jp/cardlist/nrt/?mode=img",
+  "explist": "https://tcg-db.nikita.jp/explist/nrt/",
+  "ingest": "faces",
+  "line": "carddass-jp",
+  "lang": "ja",
+  "disk": "cards/{family}/{ni0001}/ja/",
+  "note": "Community JP Carddass scans. Site keys N/J/S/I/K = 忍/術/作/依/騎 → ni/te/ta/cl/ki, never EN CCG n/j. PRN=PR忍, PRS=PR作. K (騎士, テムジン) n'est plus sauté : cardcheckbox donne 騎-1〜6 (拡張ファイリングシート 2005-08) et 騎-7〜8 (巻ノ十三), et le site sert `K-007.jpg` — une seule entrée K au listing du 2026-08-18. Skip _2/_3 when the unsuffixed JPEG exists. Listed ~428 vs official 巻ノ壱…十七 titles (~998). Not Data Carddass. Not Bandai USA. La vue texte du même site est une base de jeu (symbole, coût, 戦闘力/支援力/負傷×2, 特徴, 戦闘属性, 目標/効果, réplique) : elle alimente `data/naruto/carddass/facts-ja.json` — pas `cards-index.json`, dont la forme `CardsIndexLangFiles` est partagée par tous les packs.",
+  "not": ["en-ccg", "data-carddass", "n001", "k007"],
+  "prefixes": {
+    "N": "ni",
+    "J": "te",
+    "S": "ta",
+    "I": "cl",
+    "PRN": "prni",
+    "PRS": "prta"
+  },
+  "views": {
+    "img": "https://tcg-db.nikita.jp/cardlist/nrt/?mode=img — les faces, déjà exploitées (art.nikita, 393 installées).",
+    "cardlist": "https://tcg-db.nikita.jp/cardlist/nrt — la vue texte : données de jeu, exploitée depuis le 2026-08-19 (`parseNikitaCardlist` → `facts-ja.json`).",
+    "facets": "?ctype= / ?exp= / ?color= / ?type= / ?btype= / ?name= — filtres par type, extension, symbole, trait, attribut, nom. `?ctype=騎士` a servi à confirmer 騎-7."
+  },
+  "cardlist2026_08_19": {
+    "rows": 428,
+    "joinedByDiskId": 393,
+    "unmapped": 0,
+    "duplicatesFolded": 32,
+    "withCost": 291,
+    "withCombat": 127,
+    "withTraits": 142,
+    "withEffect": 366,
+    "note": "428 lignes, 393 ids distincts : 32 numéros sont listés en double sous les seaux « ※確認中 » du site, mêmes stats. Le volume confirmé gagne, les autres libellés sont conservés en `alsoListedIn`. Le ref du 騎士 y est écrit en latin (`K-7`) alors que tous les autres sont en kanji — replié par `foldPrintedRef`."
+  },
+  "coverageVsPublished": {
+    "measured": "2026-08-19",
+    "siteHeader": "« NARUTOカードゲーム (428 枚) » — c'est la taille de LEUR base, pas celle du jeu.",
+    "publishedNumbers": 1169,
+    "nikitaHolds": 386,
+    "neverListed": 783,
+    "perFamily": {
+      "ni": "123 / 417",
+      "te": "128 / 361",
+      "ta": "119 / 337",
+      "cl": "15 / 46",
+      "ki": "1 / 8 (seul 騎-7 ; nos 8 viennent d'eBay)"
+    },
+    "firstGaps": "忍-3, 忍-17, 忍-19, 忍-20, 忍-22〜25, 忍-30, 忍-31 — les trous commencent dès le premier volume.",
+    "note": "nikita est une base communautaire incomplète, pas un catalogue de référence : elle couvre un tiers des numéros publiés par Bandai (plages dans cardcheckbox-jp.json). Nos 1 442 tirages JA la dépassent largement en entrées — ce qui manque chez nous, ce sont des images, pas des cartes."
+  }
+}

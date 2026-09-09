@@ -23,7 +23,7 @@
 
 # misc
 .DS_Store
-.cache/
+cache/
 *.pem
 
 # debug
@@ -34,6 +34,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 certs/
 
 # vercel
@@ -45,8 +46,8 @@ next-env.d.ts
 
 certificates
 
-# Serwist
-public/sw*
+# Leftover PWA workers from older builds — we do not ship a service worker.
+public/sw.js
 public/swe-worker*
 
 # Prisma / base locale — jamais versionner (données privées runtime)
@@ -57,20 +58,51 @@ prisma/*.backup*
 prisma/data-export.json
 prisma/*.dump
 prisma/*.sql.dump
+# Client généré (prisma generate / postinstall)
+/src/generated/prisma/
 
-# Médias téléchargés/uploadés à l'exécution (données runtime, pas du source)
-/public/uploads/**
-!/public/uploads/.gitkeep
+# Médias / foil / indexes runtime (jamais versionnés)
+# (chemins des .gitkeep ré-inclus explicitement : une négation sur un fichier
+# ne peut pas fonctionner si son répertoire parent reste exclu)
+/data/**
+!/data/uploads/
+!/data/uploads/.gitkeep
+!/data/indexes/
+!/data/indexes/title-idf/
+!/data/indexes/title-idf/.gitkeep
+
+# JSON / assets générés par les dumpers (Catalogue Extract)
+# Generated foil meta lives under data/ (see docs/data-layout.md)
 
 # Caches providers locaux (SQLite) et dumps DB éventuels
+# (indexes live under data/<domaine>/)
+
+# Legacy paths — must never return
+/public/uploads/**
+/public/foil
+/config/placarr/effects/**
+
 *.sqlite
 *.sqlite3
 *.sqlite-journal
 
 # Scripts et données de debug locaux
 /scratch/
+scripts/lorcana/.venv/
+scripts/pokemon/.venv/
+scripts/lorcana/bin/
+scripts/pokemon/bin/
+src/providers/lorcanatcg/unity/.venv/
+src/providers/pokemontcglive/unity/.venv/
+src/providers/lorcanatcg/unity/bin/
+src/providers/pokemontcglive/unity/bin/
 
 # Cursor IDE
 .cursor/
 # Outillage local Claude Code (preview/launch)
 /.claude/
+__pycache__/
+
+# Spool de sniffing / audit Live — contient des tokens OAuth, ne jamais committer
+.tmp-foil-audit/
+.tmp-rebase-aside/

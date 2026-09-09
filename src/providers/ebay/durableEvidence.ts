@@ -47,7 +47,10 @@ function isEbayBrowseSearchHits(
     if (!isOptionalString(record.itemWebUrl)) return false;
     if (!isImageBlock(record.image)) return false;
     if (!isPriceBlock(record.price)) return false;
-    if (record.thumbnailImages !== undefined && record.thumbnailImages !== null) {
+    if (
+      record.thumbnailImages !== undefined &&
+      record.thumbnailImages !== null
+    ) {
       if (!Array.isArray(record.thumbnailImages)) return false;
       if (!record.thumbnailImages.every(isImageBlock)) return false;
     }
@@ -61,8 +64,8 @@ function isEbayBrowseSearchUrl(url: string): boolean {
     if (!parsed.pathname.includes("/item_summary/search")) return false;
     return Boolean(
       parsed.searchParams.get("gtin")?.trim() ||
-        parsed.searchParams.get("q")?.trim() ||
-        parsed.searchParams.get("epid")?.trim(),
+      parsed.searchParams.get("q")?.trim() ||
+      parsed.searchParams.get("epid")?.trim(),
     );
   } catch {
     return (

@@ -1,0 +1,199 @@
+import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrints";
+/**
+ * Print search for the Fusion World local catalogue.
+ */
+import {
+  DBS_FW_EFFECT_PACK_ID,
+  DBS_FW_FINISHES,
+  DBS_FW_FULL_FOIL_MASK_URL,
+} from "@/effects/dbsfw";
+import {
+  isAnsweredQuery,
+  setScopedWhere,
+} from "@/providers/shared/cardCatalogue/sets";
+import type { PrintCandidate } from "@/types/providerModule";
+
+import { assetsCardUrl } from "@/lib/packAssetUrls";
+
+import {
+  DBS_FW_PACK_ID,
+  dbsFwCardFolder,
+  dbsFwLocalArtFilename,
+  dbsFwLocalBackFilename,
+  ensureDbsFwIndex,
+} from "./indexStore";
+import { dbsFwFactsFor } from "./factsStore";
+import type { DbsFwCardDetail } from "./parseCardDetail";
+import { DBS_FW_GAME, formatDbsFwReference } from "./printIdentity";
+
+const PLAIN_FINISH = "normal";
+const DBS_FINISHES = [PLAIN_FINISH, ...DBS_FW_FINISHES];
+
+export type DbsFwPrintDetail = {
+  printKey: string;
+  setCode: string;
+  number: string;
+  grouping: string | null;
+  lang: string;
+  fullName: string | null;
+  setName: string | null;
+  imageUrl: string | null;
+  /**
+   * Rareté, type, coût, puissance, traits et texte, relevés sur la fiche
+   * détaillée. Absent sur les huit numéros dont la page est un gabarit vide.
+   */
+  harvested?: DbsFwCardDetail | null;
+};
+
+/**
+ * The synced face, when the pack holds one.
+ *
+ * Worth preferring over `image_url`: the local file is 400x560 from dbscards,
+ * where Bandai's own cardlist image is smaller and carries the SAMPLE
+ * watermark. Read from the printing's own locale folder — English and Japanese
+ * are different printings and a card must show its own.
+ */
+function localFwFileUrl(
+  row: DbsFwPrintDetail,
+  resolve: (print: DbsFwPrintDetail, lang: string) => string | null,
+): string | null {
+  const lang = (row.lang || "en").toLowerCase();
+  const file = resolve(row, lang);
+  if (!file) return null;
+  return assetsCardUrl(
+    DBS_FW_PACK_ID,
+    { set: row.setCode, lang, card: dbsFwCardFolder(row) },
+    file,
+  );
+}
+
+function toCandidate(row: DbsFwPrintDetail): PrintCandidate {
+  const finishes = DBS_FINISHES;
+  const reference = formatDbsFwReference(row.setCode, row.number, row.grouping);
+  // Local first, Bandai's remote URL as the fallback for a print not synced.
+  const face = localFwFileUrl(row, dbsFwLocalArtFilename) ?? row.imageUrl;
+  const back = localFwFileUrl(row, dbsFwLocalBackFilename);
+  return {
+    printKey: row.printKey,
+    title: row.fullName?.trim() || reference,
+    reference,
+    setCode: row.setCode,
+    ...(row.harvested?.rarity ? { rarity: row.harvested.rarity } : {}),
+    ...(face ? { imageUrl: face } : {}),
+    ...(face ? { thumbnailUrl: face } : {}),
+    ...(back ? { cardBackUrl: back } : {}),
+    language: row.lang,
+    finishes,
+    plainFinishes: finishes.filter((finish) => finish === PLAIN_FINISH),
+    foilMaskUrl: DBS_FW_FULL_FOIL_MASK_URL,
+    effectPack: DBS_FW_EFFECT_PACK_ID,
+  };
+}
+
+const DETAIL_SQL = `SELECT p.print_key AS printKey,
+              p.set_code   AS setCode,
+              p.number     AS number,
+              p.grouping   AS grouping,
+              t.lang       AS lang,
+              t.full_name  AS fullName,
+              t.set_name   AS setName,
+              a.image_url  AS imageUrl
+         FROM prints p
+         LEFT JOIN print_titles t
+                ON t.print_key = p.print_key
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang`;
+
+export function searchDbsFwPrints(
+  query: string,
+  opts: { language?: string; limit?: number; setId?: string | null } = {},
+): PrintCandidate[] {
+  const trimmed = query.trim();
+  const setId = opts.setId?.trim().toLowerCase();
+  /*
+    Une extension seule est une question complète — « montre-moi ce set » — et
+    c'est ainsi qu'on le parcourt sans savoir quoi y chercher. Sans extension,
+    une requête vide reste sans réponse.
+  */
+  if (!isAnsweredQuery(trimmed, setId)) return [];
+  const db = ensureDbsFwIndex();
+  if (!db) return [];
+
+  const lang = (opts.language || "en").toLowerCase();
+  /*
+    Le plafond monte à `SET_ENUMERATION_LIMIT` pour la check-list, qui doit
+    énumérer un set entier : compté sur les deux cents premières lignes, un set
+    de 452 cartes annonçait une complétion fausse, et fausse par excès. Le
+    sélecteur, lui, ne demande jamais autant.
+  */
+  const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
+  const compact = trimmed.toLowerCase().replace(/[\s-]/g, "");
+  const like = `%${trimmed.toLowerCase()}%`;
+  const likeCompact = `%${compact}%`;
+
+  const scope = setScopedWhere({
+    setColumn: "p.set_code",
+    setId,
+    textClause: trimmed
+      ? `LOWER(t.full_name) LIKE ?
+           OR LOWER(p.number)    LIKE ?
+           OR LOWER(p.print_key) LIKE ?
+           OR LOWER(p.set_code || '-' || p.number) LIKE ?
+           OR (p.grouping IS NOT NULL AND LOWER(p.set_code || '-' || p.number || '_' || p.grouping) LIKE ?)`
+      : null,
+    textParams: [like, likeCompact, likeCompact, like, like],
+  });
+
+  const rows = db
+    .prepare(
+      `${DETAIL_SQL}
+        WHERE ${scope.where}
+        ORDER BY (t.lang = ?) DESC, p.set_code, p.number, p.grouping
+        LIMIT ?`,
+    )
+    .all(...scope.params, lang, limit * 3) as DbsFwPrintDetail[];
+
+  const seen = new Set<string>();
+  const out: PrintCandidate[] = [];
+  for (const row of rows) {
+    if (seen.has(row.printKey)) continue;
+    seen.add(row.printKey);
+    out.push(
+      toCandidate({
+        ...row,
+        harvested: dbsFwFactsFor(row.setCode, row.number),
+      }),
+    );
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+export function lookupDbsFwPrintDetail(
+  printKey: string,
+  opts: { language?: string } = {},
+): DbsFwPrintDetail | null {
+  const db = ensureDbsFwIndex();
+  if (!db) return null;
+  const lang = (opts.language || "en").toLowerCase();
+  const row = db
+    .prepare(
+      `${DETAIL_SQL}
+        WHERE p.print_key = ?
+        ORDER BY (t.lang = ?) DESC
+        LIMIT 1`,
+    )
+    .get(printKey, lang) as DbsFwPrintDetail | undefined;
+  if (!row) return null;
+  return { ...row, harvested: dbsFwFactsFor(row.setCode, row.number) };
+}
+
+export function lookupDbsFwPrint(
+  printKey: string,
+  opts: { language?: string } = {},
+): PrintCandidate | null {
+  const row = lookupDbsFwPrintDetail(printKey, opts);
+  if (!row) return null;
+  if (!row.printKey.startsWith(`${DBS_FW_GAME}:`)) return null;
+  return toCandidate(row);
+}

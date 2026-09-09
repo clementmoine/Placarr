@@ -1,12 +1,7 @@
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 export type MetadataObservationKind =
-  | "title"
-  | "image"
-  | "fact"
-  | "alias"
-  | "offer"
-  | "external-id";
+  "title" | "image" | "fact" | "alias" | "offer" | "external-id";
 
 export type ObservationSourceDocumentRole =
   | "reference_record"
@@ -33,10 +28,7 @@ export type ObservationEvidenceSignal =
   | "explicit_mismatch";
 
 export type ObservationEvidenceStrength =
-  | "reject"
-  | "weak"
-  | "normal"
-  | "strong";
+  "reject" | "weak" | "normal" | "strong";
 
 export type ObservationSearchUsage = "none" | "weak" | "normal" | "strong";
 
@@ -105,10 +97,7 @@ export interface ImageObservation extends MetadataObservationBase {
 }
 
 export type FactObservationRole =
-  | "structured_fact"
-  | "listing_fact"
-  | "inferred_fact"
-  | "user_fact";
+  "structured_fact" | "listing_fact" | "inferred_fact" | "user_fact";
 
 export interface FactObservation extends MetadataObservationBase {
   kind: "fact";
@@ -136,10 +125,7 @@ export interface AliasObservation extends MetadataObservationBase {
 }
 
 export type OfferObservationRole =
-  | "retail_offer"
-  | "marketplace_offer"
-  | "price_snapshot"
-  | "user_price";
+  "retail_offer" | "marketplace_offer" | "price_snapshot" | "user_price";
 
 export interface OfferObservation extends MetadataObservationBase {
   kind: "offer";

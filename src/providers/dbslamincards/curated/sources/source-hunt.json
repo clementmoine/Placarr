@@ -1,0 +1,76 @@
+{
+  "source": "Hunt archives / faces — Dragon Ball Lamincards (Edibas)",
+  "observed": "2026-09-07",
+  "ingest": "journal — faces via dragonball.center ; noms via dbzcollection (dbzcollection.json)",
+  "line": "dbs/lamincards",
+  "verdict": "Pas de CDN Edibas vivant avec dump carte-par-carte. Faces = Dragon Ball Center. Noms = dbzcollection.fr AJAX (FR idc=94, IT idc=74 Parts 1–5 ≈ Nero→Smeraldo, ES idc=108). Coleka r4591 = hub ~1790 refs mais listing EN tombe sur Verifica même via FlareSolverr. Paninimania FR = packshots, pas checklist. Wayback edibas.com = packshots marketing.",
+  "tried": [
+    {
+      "host": "dragonball.center",
+      "role": "catalogue fan — listing + objet + JPEG full",
+      "url": "https://dragonball.center/catalogo/fabricante/14/edibas",
+      "finding": "≈30 collections Edibas 2006–2014 + Diramix après. Listing `/coleccion/{id}/…/lamincards` expose objet ids **et** `visor('/files/module_dbc/objetos/{shard}/{hash}.jpg')` sur les tuiles — faces sans fiche objet. Serie Nero / Argento / Smeraldo / z2008 = quasi complets. Serie Oro / Platino = majorité placeholders (`_thumbs/objetos/imagen`) côté DBC. Fiches objet seules soft-wallent souvent (pas de galerie).",
+      "ingest": "dbcFaces — art.dbc.jpg (+ back.dbc.jpg quand 2ᵉ path)"
+    },
+    {
+      "host": "www.coleka.com",
+      "role": "scans collectionneur ~995×1393",
+      "url": "https://www.coleka.com/en/trading-cards/dragon-ball-cards/lamincards_r4591",
+      "finding": "Hub Lamincards 1790 refs ; sous-série Argento `_r13562` (152). Thumbs CDN OK sans auth (`thumbs.coleka.com/...webp` plein format si on retire `_WxH`). Listing HTML : mur Verifica / Turnstile — FlareSolverr health OK mais solution URL = `/verify/` (Challenge not detected). Réutiliser le pipeline Ultra quand le mur cède.",
+      "ingest": "none — ledger coleka-lamincards.json"
+    },
+    {
+      "host": "www.paninimania.com",
+      "role": "fiche FR 2008 + packshots",
+      "url": "https://www.paninimania.com/?idf=15&idm=1290&pag=cid508_alb",
+      "finding": "Edibas 1–162 + 29 spéciales ; brillantes argentées listées ; images `files/15/6/?n=1290_i{1-6}b.jpg` (pochette, exemples, dos cartes, dos album). Pas de checklist nommée.",
+      "ingest": "verso FR curé + attestation sealed"
+    },
+    {
+      "host": "www.edibas.com (Wayback)",
+      "role": "éditeur disparu",
+      "cdx": "`edibas.com/all/img/upl/source/s1/Italia/Collezioni/DragonBall%20Z/*` → une image marketing `3-imm grande.jpg` (2014). Lista avril 2007 = DBZ 1ʳᵉ série 150 cartes (déjà dans wayback-official-hunt Ultra).",
+      "finding": "Pas de dump face-par-face archivé sous ce préfixe.",
+      "ingest": "none"
+    },
+    {
+      "host": "www.lamincards.com (Wayback)",
+      "role": "marque",
+      "wayback": "https://web.archive.org/web/20071121020526id_/http://www.lamincards.com/",
+      "finding": "Homepage 2007 seulement — pas de galerie DBZ.",
+      "ingest": "none"
+    },
+    {
+      "host": "www.cromosrepes.com",
+      "role": "trocs ES",
+      "url": "https://www.cromosrepes.com/coleccion/cromos/DRAGON-BALL-Z-LAMINCARDS",
+      "finding": "Fiche 2008 Edibas (3 cartes/sobre) ; listings checklist existent pour d'autres séries mais pages login-wall pour les scans.",
+      "ingest": "none"
+    },
+    {
+      "host": "www.animecollection.fr",
+      "role": "forum FR",
+      "finding": "« Lamincards / Rami » = jargon Carddass JP Amada — pas Edibas PVC. Skip.",
+      "ingest": "none"
+    },
+    {
+      "host": "www.laststicker.com",
+      "role": "checklists",
+      "finding": "Hits « lamincard » génériques ; pas de checklist Edibas DBZ propre comme Ultra 589.",
+      "ingest": "none"
+    }
+  ],
+  "prioritySeries": [
+    "nero",
+    "argento",
+    "oro",
+    "platino",
+    "smeraldo",
+    "z2008"
+  ],
+  "not": [
+    "Bandai Masters / Fusion World",
+    "Diramix DBS Lamincard post-2015 (autre éditeur — brancher plus tard si besoin)",
+    "Panini DBS Lamincards 2019 (Espagne) — hors Edibas"
+  ]
+}

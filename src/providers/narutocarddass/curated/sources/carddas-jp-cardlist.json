@@ -1,0 +1,8064 @@
+{
+  "source": "www.carddas.com/naruto/cardlist/1st.shtml…17th.shtml (Wayback mirror in staging/carddas-jp)",
+  "observed": "2026-08-17",
+  "ingest": "titles",
+  "line": "carddass-jp",
+  "note": "Official JP Carddass CG 巻ノ壱…十七. Same game as FR/IT (忍=NI). Titles only — no faces. Skip d_cardlist (Data Carddass) and cardgame/product/5th.shtml (第五幕 ≠ 巻ノ五). 巻の四 spelling is the page's. Supplément 2026-09-01 : 忍-393…396 + 依-43 (スペシャルコンボシート2) via `cardlist/card_img/*_spc2.gif` ; 作-322 (巻ノ十六) absent du miroir Wayback — nom Suruga GL685035.",
+  "not": ["data-carddass", "en-ccg", "maku5"],
+  "counts": {
+    "cards": 1004,
+    "bySet": {
+      "maki1": 70,
+      "maki2": 57,
+      "maki3": 57,
+      "maki4": 57,
+      "maki5": 72,
+      "maki6": 57,
+      "maki7": 57,
+      "maki8": 57,
+      "maki9": 57,
+      "maki10": 57,
+      "maki11": 57,
+      "maki12": 57,
+      "maki13": 56,
+      "maki14": 57,
+      "maki15": 57,
+      "maki16": 59,
+      "maki17": 57
+    }
+  },
+  "cards": [
+    {
+      "printed": "忍-1",
+      "number": "ni0001",
+      "name": "うずまきナルト",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-2",
+      "number": "ni0002",
+      "name": "うちはサスケ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-3",
+      "number": "ni0003",
+      "name": "春野サクラ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-4",
+      "number": "ni0004",
+      "name": "山中いの",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-5",
+      "number": "ni0005",
+      "name": "奈良シカマル",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-6",
+      "number": "ni0006",
+      "name": "秋道チョウジ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-7",
+      "number": "ni0007",
+      "name": "木ノ葉丸",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-8",
+      "number": "ni0008",
+      "name": "イルカ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-9",
+      "number": "ni0009",
+      "name": "ミズキ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-10",
+      "number": "ni0010",
+      "name": "エビス",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-11",
+      "number": "ni0011",
+      "name": "はたけカカシ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-12",
+      "number": "ni0012",
+      "name": "猿飛アスマ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-13",
+      "number": "ni0013",
+      "name": "三代目火影",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-14",
+      "number": "ni0014",
+      "name": "鬼兄弟　業頭",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-15",
+      "number": "ni0015",
+      "name": "鬼兄弟　冥頭",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-16",
+      "number": "ni0016",
+      "name": "白",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-17",
+      "number": "ni0017",
+      "name": "白",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-18",
+      "number": "ni0018",
+      "name": "桃地再不斬",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-19",
+      "number": "ni0019",
+      "name": "うずまきナルト",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-20",
+      "number": "ni0020",
+      "name": "うちはサスケ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-21",
+      "number": "ni0021",
+      "name": "春野サクラ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-22",
+      "number": "ni0022",
+      "name": "イルカ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-23",
+      "number": "ni0023",
+      "name": "はたけカカシ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-24",
+      "number": "ni0024",
+      "name": "桃地再不斬",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-1",
+      "number": "te0001",
+      "name": "クナイ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-2",
+      "number": "te0002",
+      "name": "十字手裏剣",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-3",
+      "number": "te0003",
+      "name": "お色気の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-4",
+      "number": "te0004",
+      "name": "ハーレムの術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-5",
+      "number": "te0005",
+      "name": "多重影分身の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-6",
+      "number": "te0006",
+      "name": "八卦の封印式",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-7",
+      "number": "te0007",
+      "name": "写輪眼",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-8",
+      "number": "te0008",
+      "name": "遠眼鏡の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-9",
+      "number": "te0009",
+      "name": "千年殺し",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-10",
+      "number": "te0010",
+      "name": "火遁・豪火球の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-11",
+      "number": "te0011",
+      "name": "阿吽の暗殺術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-12",
+      "number": "te0012",
+      "name": "水分身の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-13",
+      "number": "te0013",
+      "name": "霧隠れの術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-14",
+      "number": "te0014",
+      "name": "無音殺人術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-15",
+      "number": "te0015",
+      "name": "分身の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-16",
+      "number": "te0016",
+      "name": "変化の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-17",
+      "number": "te0017",
+      "name": "変わり身の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-18",
+      "number": "te0018",
+      "name": "隠れ蓑の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-19",
+      "number": "te0019",
+      "name": "魔幻・奈烙見の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-20",
+      "number": "te0020",
+      "name": "縄抜けの術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-21",
+      "number": "te0021",
+      "name": "土遁・心中斬首の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-22",
+      "number": "te0022",
+      "name": "心転身の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-23",
+      "number": "te0023",
+      "name": "影真似の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "術-24",
+      "number": "te0024",
+      "name": "倍化の術",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-1",
+      "number": "ta0001",
+      "name": "ラーメン一楽",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-2",
+      "number": "ta0002",
+      "name": "落ちこぼれの夢",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-3",
+      "number": "ta0003",
+      "name": "木ノ葉の額あて",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-4",
+      "number": "ta0004",
+      "name": "優しき恩師",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-5",
+      "number": "ta0005",
+      "name": "九尾の災厄",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-6",
+      "number": "ta0006",
+      "name": "迷子ペット“トラ”捕獲任務",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-7",
+      "number": "ta0007",
+      "name": "イチャイチャパラダイス",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-8",
+      "number": "ta0008",
+      "name": "ハプニング",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-9",
+      "number": "ta0009",
+      "name": "孤独な復讐者",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-10",
+      "number": "ta0010",
+      "name": "スタミナ切れ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-11",
+      "number": "ta0011",
+      "name": "手配書",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-12",
+      "number": "ta0012",
+      "name": "最悪の依頼人",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-13",
+      "number": "ta0013",
+      "name": "ガトーカンパニー",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-14",
+      "number": "ta0014",
+      "name": "殺気！",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-15",
+      "number": "ta0015",
+      "name": "内なるサクラ",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-16",
+      "number": "ta0016",
+      "name": "立ち読み",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-17",
+      "number": "ta0017",
+      "name": "三人一組",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-18",
+      "number": "ta0018",
+      "name": "目覚めの朝",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-19",
+      "number": "ta0019",
+      "name": "失格",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-20",
+      "number": "ta0020",
+      "name": "忍者学校",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-21",
+      "number": "ta0021",
+      "name": "戦い終えて",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "作-22",
+      "number": "ta0022",
+      "name": "木ノ葉忍軍",
+      "setCode": "maki1",
+      "volume": "巻ノ壱",
+      "page": "cardlist/1st.shtml"
+    },
+    {
+      "printed": "忍-25",
+      "number": "ni0025",
+      "name": "うずまきナルト",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-26",
+      "number": "ni0026",
+      "name": "うちはサスケ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-27",
+      "number": "ni0027",
+      "name": "春野サクラ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-28",
+      "number": "ni0028",
+      "name": "犬塚キバ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-29",
+      "number": "ni0029",
+      "name": "油女シノ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-30",
+      "number": "ni0030",
+      "name": "日向ヒナタ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-31",
+      "number": "ni0031",
+      "name": "ロック・リー",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-32",
+      "number": "ni0032",
+      "name": "テンテン",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-33",
+      "number": "ni0033",
+      "name": "日向ネジ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-34",
+      "number": "ni0034",
+      "name": "木ノ葉丸",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-35",
+      "number": "ni0035",
+      "name": "嬉野カエデ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-36",
+      "number": "ni0036",
+      "name": "赤丸",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-37",
+      "number": "ni0037",
+      "name": "はたけカカシ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-38",
+      "number": "ni0038",
+      "name": "夕日紅",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-39",
+      "number": "ni0039",
+      "name": "マイト・ガイ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-40",
+      "number": "ni0040",
+      "name": "桃地再不斬",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-41",
+      "number": "ni0041",
+      "name": "ロック・リー",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-42",
+      "number": "ni0042",
+      "name": "日向ネジ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-43",
+      "number": "ni0043",
+      "name": "白",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-25",
+      "number": "te0025",
+      "name": "影分身の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-26",
+      "number": "te0026",
+      "name": "木ノ葉旋風",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-27",
+      "number": "te0027",
+      "name": "木ノ葉烈風",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-28",
+      "number": "te0028",
+      "name": "擬獣忍法・四脚の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-29",
+      "number": "te0029",
+      "name": "風魔手裏剣・影風車",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-30",
+      "number": "te0030",
+      "name": "雷切",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-31",
+      "number": "te0031",
+      "name": "首斬り包丁",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-32",
+      "number": "te0032",
+      "name": "水牢の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-33",
+      "number": "te0033",
+      "name": "水遁・水龍弾の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-34",
+      "number": "te0034",
+      "name": "水遁・大瀑布の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-35",
+      "number": "te0035",
+      "name": "千殺水翔",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-36",
+      "number": "te0036",
+      "name": "魔鏡氷晶",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-37",
+      "number": "te0037",
+      "name": "影手裏剣の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-38",
+      "number": "te0038",
+      "name": "霧瞬身の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-39",
+      "number": "te0039",
+      "name": "寄壊蟲の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-40",
+      "number": "te0040",
+      "name": "木登り修業",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-41",
+      "number": "te0041",
+      "name": "口寄せ・土遁・追牙の術",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "術-42",
+      "number": "te0042",
+      "name": "白眼",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-23",
+      "number": "ta0023",
+      "name": "分身合戦",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-24",
+      "number": "ta0024",
+      "name": "痛みに誓う決意",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-25",
+      "number": "ta0025",
+      "name": "ヒーロー登場！",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-26",
+      "number": "ta0026",
+      "name": "意外性No.1",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-27",
+      "number": "ta0027",
+      "name": "うちは一族の血",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-28",
+      "number": "ta0028",
+      "name": "臆病者",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-29",
+      "number": "ta0029",
+      "name": "一進一退",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-30",
+      "number": "ta0030",
+      "name": "カカシの読み",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-31",
+      "number": "ta0031",
+      "name": "薬草摘み",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-32",
+      "number": "ta0032",
+      "name": "真打ち",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-33",
+      "number": "ta0033",
+      "name": "公開処刑",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-34",
+      "number": "ta0034",
+      "name": "必要とされない存在",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-35",
+      "number": "ta0035",
+      "name": "紅き四つ葉のクローバーを探せ",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-36",
+      "number": "ta0036",
+      "name": "置いてけぼり",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-37",
+      "number": "ta0037",
+      "name": "的確な指示",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-38",
+      "number": "ta0038",
+      "name": "先代の教え",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-39",
+      "number": "ta0039",
+      "name": "小さな勇気",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-40",
+      "number": "ta0040",
+      "name": "シューティング・スター",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-41",
+      "number": "ta0041",
+      "name": "卍の陣",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "作-42",
+      "number": "ta0042",
+      "name": "蘇生",
+      "setCode": "maki2",
+      "volume": "巻ノ弐",
+      "page": "cardlist/2nd.shtml"
+    },
+    {
+      "printed": "忍-44",
+      "number": "ni0044",
+      "name": "三代目火影",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-45",
+      "number": "ni0045",
+      "name": "薬師カブト",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-46",
+      "number": "ni0046",
+      "name": "うずまきナルト",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-47",
+      "number": "ni0047",
+      "name": "うちはサスケ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-48",
+      "number": "ni0048",
+      "name": "春野サクラ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-49",
+      "number": "ni0049",
+      "name": "神月イズモ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-50",
+      "number": "ni0050",
+      "name": "はがねコテツ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-51",
+      "number": "ni0051",
+      "name": "飛竹トンボ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-52",
+      "number": "ni0052",
+      "name": "森乃イビキ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-53",
+      "number": "ni0053",
+      "name": "忍亀",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-54",
+      "number": "ni0054",
+      "name": "カラス",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-55",
+      "number": "ni0055",
+      "name": "ドス・キヌタ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-56",
+      "number": "ni0056",
+      "name": "ザク・アブミ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-57",
+      "number": "ni0057",
+      "name": "キン・ツチ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-58",
+      "number": "ni0058",
+      "name": "砂瀑の我愛羅",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-59",
+      "number": "ni0059",
+      "name": "カンクロウ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-60",
+      "number": "ni0060",
+      "name": "テマリ",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-43",
+      "number": "te0043",
+      "name": "影舞葉",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-44",
+      "number": "te0044",
+      "name": "風車",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-45",
+      "number": "te0045",
+      "name": "木ノ葉瞬身の術",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-46",
+      "number": "te0046",
+      "name": "幻術",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-47",
+      "number": "te0047",
+      "name": "魔幻・此処非の術",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-48",
+      "number": "te0048",
+      "name": "写輪眼",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-49",
+      "number": "te0049",
+      "name": "影分身の術",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-50",
+      "number": "te0050",
+      "name": "忍識札",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-51",
+      "number": "te0051",
+      "name": "千本",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-52",
+      "number": "te0052",
+      "name": "斬空波",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-53",
+      "number": "te0053",
+      "name": "響鳴穿",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-54",
+      "number": "te0054",
+      "name": "カマイタチの術",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-55",
+      "number": "te0055",
+      "name": "傀儡の術",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-56",
+      "number": "te0056",
+      "name": "第三の目",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-57",
+      "number": "te0057",
+      "name": "砂の盾",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-58",
+      "number": "te0058",
+      "name": "石つぶて",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-59",
+      "number": "te0059",
+      "name": "まきびし",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "術-60",
+      "number": "te0060",
+      "name": "カンニング",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-43",
+      "number": "ta0043",
+      "name": "極限状態での戦い",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-44",
+      "number": "ta0044",
+      "name": "任務拒否",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-45",
+      "number": "ta0045",
+      "name": "解放された封印",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-46",
+      "number": "ta0046",
+      "name": "予備試験",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-47",
+      "number": "ta0047",
+      "name": "口出し無用！",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-48",
+      "number": "ta0048",
+      "name": "受験規則",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-49",
+      "number": "ta0049",
+      "name": "不意打ち",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-50",
+      "number": "ta0050",
+      "name": "忍と言う名の道具",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-51",
+      "number": "ta0051",
+      "name": "名乗れ！現れた強敵たち ! !",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-52",
+      "number": "ta0052",
+      "name": "鬼人の最期",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-53",
+      "number": "ta0053",
+      "name": "ペーパーテスト",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-54",
+      "number": "ta0054",
+      "name": "カンニング阻止",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-55",
+      "number": "ta0055",
+      "name": "一喝",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-56",
+      "number": "ta0056",
+      "name": "通行証",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-57",
+      "number": "ta0057",
+      "name": "禁じ手",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-58",
+      "number": "ta0058",
+      "name": "失恋",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-59",
+      "number": "ta0059",
+      "name": "中忍選抜第一の試験",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "作-60",
+      "number": "ta0060",
+      "name": "凄惨な傷跡",
+      "setCode": "maki3",
+      "volume": "巻ノ参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "依-1",
+      "number": "cl0001",
+      "name": "イナリ",
+      "setCode": "maki3",
+      "volume": "巻の参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "依-2",
+      "number": "cl0002",
+      "name": "タズナ",
+      "setCode": "maki3",
+      "volume": "巻の参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "依-3",
+      "number": "cl0003",
+      "name": "ガトー",
+      "setCode": "maki3",
+      "volume": "巻の参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "依-4",
+      "number": "cl0004",
+      "name": "マダム・しじみ",
+      "setCode": "maki3",
+      "volume": "巻の参",
+      "page": "cardlist/3rd.shtml"
+    },
+    {
+      "printed": "忍-67",
+      "number": "ni0067",
+      "name": "うずまきナルト",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-68",
+      "number": "ni0068",
+      "name": "うちはサスケ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-69",
+      "number": "ni0069",
+      "name": "春野サクラ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-70",
+      "number": "ni0070",
+      "name": "山中いの",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-71",
+      "number": "ni0071",
+      "name": "奈良シカマル",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-72",
+      "number": "ni0072",
+      "name": "秋道チョウジ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-73",
+      "number": "ni0073",
+      "name": "たたみイワシ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-74",
+      "number": "ni0074",
+      "name": "モズク",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-75",
+      "number": "ni0075",
+      "name": "巨大蛇",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-76",
+      "number": "ni0076",
+      "name": "シグレ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-77",
+      "number": "ni0077",
+      "name": "バイウ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-78",
+      "number": "ni0078",
+      "name": "ミダレ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-79",
+      "number": "ni0079",
+      "name": "朧",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-80",
+      "number": "ni0080",
+      "name": "篝",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-81",
+      "number": "ni0081",
+      "name": "夢火",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-82",
+      "number": "ni0082",
+      "name": "暗部",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-83",
+      "number": "ni0083",
+      "name": "みたらしアンコ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-84",
+      "number": "ni0084",
+      "name": "大蛇丸",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-67",
+      "number": "te0067",
+      "name": "起爆札",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-68",
+      "number": "te0068",
+      "name": "チャクラ吸着",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-69",
+      "number": "te0069",
+      "name": "金縛りの術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-70",
+      "number": "te0070",
+      "name": "操糸の術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-71",
+      "number": "te0071",
+      "name": "火遁・鳳仙火の術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-72",
+      "number": "te0072",
+      "name": "操風車三ノ太刀",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-73",
+      "number": "te0073",
+      "name": "火遁・龍火の術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-74",
+      "number": "te0074",
+      "name": "口寄せの術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-75",
+      "number": "te0075",
+      "name": "如雨露千本",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-76",
+      "number": "te0076",
+      "name": "潜影蛇手",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-77",
+      "number": "te0077",
+      "name": "双蛇相殺の術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-78",
+      "number": "te0078",
+      "name": "砂縛柩",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-79",
+      "number": "te0079",
+      "name": "風遁・大突破",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-80",
+      "number": "te0080",
+      "name": "狐狸心中の術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-81",
+      "number": "te0081",
+      "name": "霞従者の術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-82",
+      "number": "te0082",
+      "name": "消写顔の術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-83",
+      "number": "te0083",
+      "name": "フォーメーションいのシカチョウ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "術-84",
+      "number": "te0084",
+      "name": "呪印術",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-67",
+      "number": "ta0067",
+      "name": "天の書",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-68",
+      "number": "ta0068",
+      "name": "ゴールの先に",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-69",
+      "number": "ta0069",
+      "name": "ダンゴにおしるこ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-70",
+      "number": "ta0070",
+      "name": "みたらしアンコ見参！",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-71",
+      "number": "ta0071",
+      "name": "呪印の暴走",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-72",
+      "number": "ta0072",
+      "name": "蘇れ写輪眼！",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-73",
+      "number": "ta0073",
+      "name": "死の森のサバイバル",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-74",
+      "number": "ta0074",
+      "name": "手打ち料",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-75",
+      "number": "ta0075",
+      "name": "観察者",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-76",
+      "number": "ta0076",
+      "name": "死のイメージ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-77",
+      "number": "ta0077",
+      "name": "忍歌『忍機』",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-78",
+      "number": "ta0078",
+      "name": "ラッキー！",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-79",
+      "number": "ta0079",
+      "name": "最速の到達者",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-80",
+      "number": "ta0080",
+      "name": "サクラの決意",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-81",
+      "number": "ta0081",
+      "name": "地の書",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-82",
+      "number": "ta0082",
+      "name": "食糧確保",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-83",
+      "number": "ta0083",
+      "name": "遠い約束",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "作-84",
+      "number": "ta0084",
+      "name": "ハラペコ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "依-5",
+      "number": "cl0005",
+      "name": "ゾウリ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "依-6",
+      "number": "cl0006",
+      "name": "ワラジ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "依-7",
+      "number": "cl0007",
+      "name": "ツナミ",
+      "setCode": "maki4",
+      "volume": "巻の四",
+      "page": "cardlist/4th.shtml"
+    },
+    {
+      "printed": "忍-85",
+      "number": "ni0085",
+      "name": "うずまきナルト",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-86",
+      "number": "ni0086",
+      "name": "うちはサスケ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-87",
+      "number": "ni0087",
+      "name": "春野サクラ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-88",
+      "number": "ni0088",
+      "name": "山中いの",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-89",
+      "number": "ni0089",
+      "name": "奈良シカマル",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-90",
+      "number": "ni0090",
+      "name": "秋道チョウジ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-91",
+      "number": "ni0091",
+      "name": "犬塚キバ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-92",
+      "number": "ni0092",
+      "name": "油女 シノ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-93",
+      "number": "ni0093",
+      "name": "日向ヒナタ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-94",
+      "number": "ni0094",
+      "name": "ロック・リー",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-95",
+      "number": "ni0095",
+      "name": "日向ネジ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-96",
+      "number": "ni0096",
+      "name": "テンテン",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-97",
+      "number": "ni0097",
+      "name": "スズメ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-98",
+      "number": "ni0098",
+      "name": "イヤシ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-99",
+      "number": "ni0099",
+      "name": "並足ライドウ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-100",
+      "number": "ni0100",
+      "name": "月光ハヤテ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-101",
+      "number": "ni0101",
+      "name": "自来也",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-102",
+      "number": "ni0102",
+      "name": "蝦蟇",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-103",
+      "number": "ni0103",
+      "name": "ドス･キヌタ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-104",
+      "number": "ni0104",
+      "name": "ザク･アブミ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-105",
+      "number": "ni0105",
+      "name": "キン・ツチ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-106",
+      "number": "ni0106",
+      "name": "赤胴ヨロイ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-107",
+      "number": "ni0107",
+      "name": "剣ミスミ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-108",
+      "number": "ni0108",
+      "name": "薬師カブト",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-85",
+      "number": "te0085",
+      "name": "うずまきナルト連弾",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-86",
+      "number": "te0086",
+      "name": "表蓮華",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-87",
+      "number": "te0087",
+      "name": "八門遁甲",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-88",
+      "number": "te0088",
+      "name": "兵糧丸",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-89",
+      "number": "te0089",
+      "name": "擬獣忍法・獣人分身",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-90",
+      "number": "te0090",
+      "name": "牙通牙",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-91",
+      "number": "te0091",
+      "name": "獅子連弾",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-92",
+      "number": "te0092",
+      "name": "五行封印",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-93",
+      "number": "te0093",
+      "name": "影千本",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-94",
+      "number": "te0094",
+      "name": "鈴の音",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-95",
+      "number": "te0095",
+      "name": "チャクラ吸引術",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-96",
+      "number": "te0096",
+      "name": "軟の改造",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-97",
+      "number": "te0097",
+      "name": "朧分身の術",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-98",
+      "number": "te0098",
+      "name": "土遁・土中映魚の術",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-99",
+      "number": "te0099",
+      "name": "砂の鎧",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-100",
+      "number": "te0100",
+      "name": "砂瀑送葬",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-101",
+      "number": "te0101",
+      "name": "心転身の術",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-102",
+      "number": "te0102",
+      "name": "肉弾戦車",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-103",
+      "number": "te0103",
+      "name": "柔拳",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-104",
+      "number": "te0104",
+      "name": "口寄せ・飛び道具",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "術-105",
+      "number": "te0105",
+      "name": "双昇龍",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-85",
+      "number": "ta0085",
+      "name": "咄嗟の機転",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-86",
+      "number": "ta0086",
+      "name": "そうならない法則",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-87",
+      "number": "ta0087",
+      "name": "第三の試験・予選",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-88",
+      "number": "ta0088",
+      "name": "立派な忍者",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-89",
+      "number": "ta0089",
+      "name": "イチャイチャバイオレンス",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-90",
+      "number": "ta0090",
+      "name": "コピー能力",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-91",
+      "number": "ta0091",
+      "name": "鋭い嗅覚",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-92",
+      "number": "ta0092",
+      "name": "死闘の行方",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-93",
+      "number": "ta0093",
+      "name": "捨てゴマ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-94",
+      "number": "ta0094",
+      "name": "闇の蠢動",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-95",
+      "number": "ta0095",
+      "name": "使用禁止",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-96",
+      "number": "ta0096",
+      "name": "音のスパイ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-97",
+      "number": "ta0097",
+      "name": "運命の組み合わせ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-98",
+      "number": "ta0098",
+      "name": "状況把握",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-99",
+      "number": "ta0099",
+      "name": "中忍試験規定",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-100",
+      "number": "ta0100",
+      "name": "電光掲示板",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-101",
+      "number": "ta0101",
+      "name": "重要なアドバイス",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-102",
+      "number": "ta0102",
+      "name": "塗り薬",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-103",
+      "number": "ta0103",
+      "name": "洞察眼",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-104",
+      "number": "ta0104",
+      "name": "宗家と分家",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-105",
+      "number": "ta0105",
+      "name": "報復",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-106",
+      "number": "ta0106",
+      "name": "上忍の介入",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "作-107",
+      "number": "ta0107",
+      "name": "力への誘い",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "依-8",
+      "number": "cl0008",
+      "name": "ゲンゾウ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "依-9",
+      "number": "cl0009",
+      "name": "カジ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "依-10",
+      "number": "cl0010",
+      "name": "アカネ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "依-11",
+      "number": "cl0011",
+      "name": "アゲハ",
+      "setCode": "maki5",
+      "volume": "巻ノ五",
+      "page": "cardlist/5th.shtml"
+    },
+    {
+      "printed": "忍-118",
+      "number": "ni0118",
+      "name": "うずまきナルト",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-119",
+      "number": "ni0119",
+      "name": "うちはサスケ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-120",
+      "number": "ni0120",
+      "name": "春野サクラ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-121",
+      "number": "ni0121",
+      "name": "エビス",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-122",
+      "number": "ni0122",
+      "name": "月光ハヤテ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-123",
+      "number": "ni0123",
+      "name": "はたけカカシ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-124",
+      "number": "ni0124",
+      "name": "猿飛アスマ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-125",
+      "number": "ni0125",
+      "name": "日向ハナビ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-126",
+      "number": "ni0126",
+      "name": "日向ヒアシ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-127",
+      "number": "ni0127",
+      "name": "自来也",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-128",
+      "number": "ni0128",
+      "name": "ガマブン太",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-129",
+      "number": "ni0129",
+      "name": "四代目火影",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-130",
+      "number": "ni0130",
+      "name": "バキ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-131",
+      "number": "ni0131",
+      "name": "シブキ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-132",
+      "number": "ni0132",
+      "name": "水煙",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-133",
+      "number": "ni0133",
+      "name": "ムラサメ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-134",
+      "number": "ni0134",
+      "name": "キリサメ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-135",
+      "number": "ni0135",
+      "name": "ヒサメ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-109",
+      "number": "te0109",
+      "name": "口寄せの術",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-110",
+      "number": "te0110",
+      "name": "おいろけの術",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-111",
+      "number": "te0111",
+      "name": "裏蓮華",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-112",
+      "number": "te0112",
+      "name": "黒板消し落とし",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-113",
+      "number": "te0113",
+      "name": "千年殺し",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-114",
+      "number": "te0114",
+      "name": "三日月の舞",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-115",
+      "number": "te0115",
+      "name": "水面歩行の業",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-116",
+      "number": "te0116",
+      "name": "響鳴スピーカー",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-117",
+      "number": "te0117",
+      "name": "水切りの刃",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-118",
+      "number": "te0118",
+      "name": "水の壁",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-119",
+      "number": "te0119",
+      "name": "水の鞭",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-120",
+      "number": "te0120",
+      "name": "英雄ノ水",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-121",
+      "number": "te0121",
+      "name": "伝書トンビ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-122",
+      "number": "te0122",
+      "name": "崖登りの業",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-123",
+      "number": "te0123",
+      "name": "風の刃",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-124",
+      "number": "te0124",
+      "name": "土遁の術",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-125",
+      "number": "te0125",
+      "name": "当て身",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "術-126",
+      "number": "te0126",
+      "name": "五行解印",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-115",
+      "number": "ta0115",
+      "name": "癒えぬ傷",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-116",
+      "number": "ta0116",
+      "name": "九尾の力",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-117",
+      "number": "ta0117",
+      "name": "英雄の残したもの",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-118",
+      "number": "ta0118",
+      "name": "ガマ仙人",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-119",
+      "number": "ta0119",
+      "name": "秘技伝授",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-120",
+      "number": "ta0120",
+      "name": "完全勝利",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-121",
+      "number": "ta0121",
+      "name": "任務続行",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-122",
+      "number": "ta0122",
+      "name": "温泉",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-123",
+      "number": "ta0123",
+      "name": "臆病者",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-124",
+      "number": "ta0124",
+      "name": "ひとかけらの勇気",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-125",
+      "number": "ta0125",
+      "name": "忍び寄る陰謀",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-126",
+      "number": "ta0126",
+      "name": "ダブルノックダウン",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-127",
+      "number": "ta0127",
+      "name": "エビス再び",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-128",
+      "number": "ta0128",
+      "name": "軍備縮小",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-129",
+      "number": "ta0129",
+      "name": "日向の天忍",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-130",
+      "number": "ta0130",
+      "name": "願いをこめた一輪",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-131",
+      "number": "ta0131",
+      "name": "再チャレンジ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "作-132",
+      "number": "ta0132",
+      "name": "里の恥",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "依-12",
+      "number": "cl0012",
+      "name": "ヒマツ",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "依-13",
+      "number": "cl0013",
+      "name": "シズク",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "依-14",
+      "number": "cl0014",
+      "name": "風の国の大名",
+      "setCode": "maki6",
+      "volume": "巻ノ六",
+      "page": "cardlist/6th.shtml"
+    },
+    {
+      "printed": "忍-136",
+      "number": "ni0136",
+      "name": "うずまきナルト",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-137",
+      "number": "ni0137",
+      "name": "うちはサスケ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-138",
+      "number": "ni0138",
+      "name": "奈良シカマル",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-139",
+      "number": "ni0139",
+      "name": "ロック・リー",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-140",
+      "number": "ni0140",
+      "name": "日向ネジ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-141",
+      "number": "ni0141",
+      "name": "日向ヒザシ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-142",
+      "number": "ni0142",
+      "name": "神月イズモ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-143",
+      "number": "ni0143",
+      "name": "はがねコテツ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-144",
+      "number": "ni0144",
+      "name": "不知火ゲンマ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-145",
+      "number": "ni0145",
+      "name": "砂瀑の我愛羅",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-146",
+      "number": "ni0146",
+      "name": "テマリ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-147",
+      "number": "ni0147",
+      "name": "風影",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-148",
+      "number": "ni0148",
+      "name": "鬼童丸",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-149",
+      "number": "ni0149",
+      "name": "次郎坊",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-150",
+      "number": "ni0150",
+      "name": "左近",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-151",
+      "number": "ni0151",
+      "name": "多由也",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-152",
+      "number": "ni0152",
+      "name": "薬師カブト",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-153",
+      "number": "ni0153",
+      "name": "九尾の狐",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-127",
+      "number": "te0127",
+      "name": "クナイ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-128",
+      "number": "te0128",
+      "name": "影分身の術",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-129",
+      "number": "te0129",
+      "name": "チャクラの解放",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-130",
+      "number": "te0130",
+      "name": "写輪眼",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-131",
+      "number": "te0131",
+      "name": "千鳥",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-132",
+      "number": "te0132",
+      "name": "掌仙術",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-133",
+      "number": "te0133",
+      "name": "死魂の術",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-134",
+      "number": "te0134",
+      "name": "涅槃精舎の術",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-135",
+      "number": "te0135",
+      "name": "四紫炎陣",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-136",
+      "number": "te0136",
+      "name": "巨大扇子",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-137",
+      "number": "te0137",
+      "name": "カマイタチの術",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-138",
+      "number": "te0138",
+      "name": "砂の繭",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-139",
+      "number": "te0139",
+      "name": "砂分身",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-140",
+      "number": "te0140",
+      "name": "影真似の術",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-141",
+      "number": "te0141",
+      "name": "呪印術",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-142",
+      "number": "te0142",
+      "name": "宗家の秘印",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-143",
+      "number": "te0143",
+      "name": "八卦掌回天",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "術-144",
+      "number": "te0144",
+      "name": "柔拳法・八卦六十四掌",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-133",
+      "number": "ta0133",
+      "name": "秘密の抜け道",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-134",
+      "number": "ta0134",
+      "name": "勝利の誓い",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-135",
+      "number": "ta0135",
+      "name": "変える力",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-136",
+      "number": "ta0136",
+      "name": "１６連コンボ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-137",
+      "number": "ta0137",
+      "name": "察知",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-138",
+      "number": "ta0138",
+      "name": "高速の体",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-139",
+      "number": "ta0139",
+      "name": "木の葉、舞い・・・！！",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-140",
+      "number": "ta0140",
+      "name": "不完全な発動",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-141",
+      "number": "ta0141",
+      "name": "策動するもの",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-142",
+      "number": "ta0142",
+      "name": "誘拐",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-143",
+      "number": "ta0143",
+      "name": "限界点の計測",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-144",
+      "number": "ta0144",
+      "name": "組み合わせの変更",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-145",
+      "number": "ta0145",
+      "name": "落ち込み",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-146",
+      "number": "ta0146",
+      "name": "本選開始！",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-147",
+      "number": "ta0147",
+      "name": "後遺症",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-148",
+      "number": "ta0148",
+      "name": "参った！",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-149",
+      "number": "ta0149",
+      "name": "隠された実力",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "作-150",
+      "number": "ta0150",
+      "name": "籠の中の鳥",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "依-15",
+      "number": "cl0015",
+      "name": "アミ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "依-16",
+      "number": "cl0016",
+      "name": "テウチ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "依-17",
+      "number": "cl0017",
+      "name": "アヤメ",
+      "setCode": "maki7",
+      "volume": "巻ノ七",
+      "page": "cardlist/7th.shtml"
+    },
+    {
+      "printed": "忍-154",
+      "number": "ni0154",
+      "name": "うずまきナルト",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-155",
+      "number": "ni0155",
+      "name": "うちはサスケ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-156",
+      "number": "ni0156",
+      "name": "油女シノ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-157",
+      "number": "ni0157",
+      "name": "山城アオバ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-158",
+      "number": "ni0158",
+      "name": "猿飛アスマ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-159",
+      "number": "ni0159",
+      "name": "油女ゲン",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-160",
+      "number": "ni0160",
+      "name": "山中いのいち",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-161",
+      "number": "ni0161",
+      "name": "奈良シカク",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-162",
+      "number": "ni0162",
+      "name": "秋道チョウザ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-163",
+      "number": "ni0163",
+      "name": "三代目火影",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-164",
+      "number": "ni0164",
+      "name": "猿猴王・猿魔",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-165",
+      "number": "ni0165",
+      "name": "パックン",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-166",
+      "number": "ni0166",
+      "name": "大蛇丸",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-167",
+      "number": "ni0167",
+      "name": "初代火影",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-168",
+      "number": "ni0168",
+      "name": "二代目火影",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-169",
+      "number": "ni0169",
+      "name": "風影",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-170",
+      "number": "ni0170",
+      "name": "カンクロウ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-171",
+      "number": "ni0171",
+      "name": "カラス",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-172",
+      "number": "ni0172",
+      "name": "はたけカカシ＆マイト・ガイ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-145",
+      "number": "te0145",
+      "name": "うずまきナルト二千連弾",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-146",
+      "number": "te0146",
+      "name": "分身体当たり",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-147",
+      "number": "te0147",
+      "name": "手裏剣影分身の術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-148",
+      "number": "te0148",
+      "name": "火遁・火龍炎弾",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-149",
+      "number": "te0149",
+      "name": "屍鬼封尽",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-150",
+      "number": "te0150",
+      "name": "草薙の剣",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-151",
+      "number": "te0151",
+      "name": "口寄せ・穢土転生",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-152",
+      "number": "te0152",
+      "name": "水遁・水陣壁",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-153",
+      "number": "te0153",
+      "name": "水遁・水衝破",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-154",
+      "number": "te0154",
+      "name": "寄壊蟲の術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-155",
+      "number": "te0155",
+      "name": "傀儡の術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-156",
+      "number": "te0156",
+      "name": "仕込み傀儡",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-157",
+      "number": "te0157",
+      "name": "幻術・黒暗行の術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-158",
+      "number": "te0158",
+      "name": "土遁・土流壁",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-159",
+      "number": "te0159",
+      "name": "木遁秘術・樹界降誕",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-160",
+      "number": "te0160",
+      "name": "心乱身の術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-161",
+      "number": "te0161",
+      "name": "影首縛りの術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "術-162",
+      "number": "te0162",
+      "name": "倍化の術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-151",
+      "number": "ta0151",
+      "name": "破られた封印",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-152",
+      "number": "ta0152",
+      "name": "ニクキュウ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-153",
+      "number": "ta0153",
+      "name": "最高のライバル",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-154",
+      "number": "ta0154",
+      "name": "嵐の如き戦い",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-155",
+      "number": "ta0155",
+      "name": "不吉な予感",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-156",
+      "number": "ta0156",
+      "name": "Aランク任務",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-157",
+      "number": "ta0157",
+      "name": "死闘の果てに",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-158",
+      "number": "ta0158",
+      "name": "受け継ぎ託す者",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-159",
+      "number": "ta0159",
+      "name": "禁術の研究",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-160",
+      "number": "ta0160",
+      "name": "木ノ葉崩し",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-161",
+      "number": "ta0161",
+      "name": "失われた術",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-162",
+      "number": "ta0162",
+      "name": "我愛羅という名",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-163",
+      "number": "ta0163",
+      "name": "基本小隊",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-164",
+      "number": "ta0164",
+      "name": "足止め",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-165",
+      "number": "ta0165",
+      "name": "愛情",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-166",
+      "number": "ta0166",
+      "name": "囮",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-167",
+      "number": "ta0167",
+      "name": "最強たるゆえん",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "作-168",
+      "number": "ta0168",
+      "name": "もう一人の追跡者",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "依-18",
+      "number": "cl0018",
+      "name": "コウジ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "依-19",
+      "number": "cl0019",
+      "name": "フタバ",
+      "setCode": "maki8",
+      "volume": "巻ノ八",
+      "page": "cardlist/8th.shtml"
+    },
+    {
+      "printed": "忍-186",
+      "number": "ni0186",
+      "name": "うずまきナルト＆イルカ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-187",
+      "number": "ni0187",
+      "name": "うずまきナルト",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-188",
+      "number": "ni0188",
+      "name": "うちはサスケ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-189",
+      "number": "ni0189",
+      "name": "春野サクラ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-190",
+      "number": "ni0190",
+      "name": "聖シモン",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-191",
+      "number": "ni0191",
+      "name": "暗部",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-192",
+      "number": "ni0192",
+      "name": "はたけカカシ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-193",
+      "number": "ni0193",
+      "name": "マイト・ガイ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-194",
+      "number": "ni0194",
+      "name": "猿飛アスマ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-195",
+      "number": "ni0195",
+      "name": "夕日紅",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-196",
+      "number": "ni0196",
+      "name": "犬塚ツメ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-197",
+      "number": "ni0197",
+      "name": "黒丸",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-198",
+      "number": "ni0198",
+      "name": "蝦蟇",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-199",
+      "number": "ni0199",
+      "name": "水戸門ホムラ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-200",
+      "number": "ni0200",
+      "name": "うたたねコハル",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-201",
+      "number": "ni0201",
+      "name": "綱手姫",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-202",
+      "number": "ni0202",
+      "name": "干柿鬼鮫",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-203",
+      "number": "ni0203",
+      "name": "うちはイタチ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-204",
+      "number": "ni0204",
+      "name": "うずまきナルト＆自来也",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-173",
+      "number": "te0173",
+      "name": "木ノ葉剛力旋風",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-174",
+      "number": "te0174",
+      "name": "ダイナミック・エントリー",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-175",
+      "number": "te0175",
+      "name": "蝦蟇口縛り",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-176",
+      "number": "te0176",
+      "name": "万華鏡写輪眼",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-177",
+      "number": "te0177",
+      "name": "月読",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-178",
+      "number": "te0178",
+      "name": "天照",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-179",
+      "number": "te0179",
+      "name": "氷遁・黒龍暴風雪",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-180",
+      "number": "te0180",
+      "name": "氷遁・ツバメ吹雪",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-181",
+      "number": "te0181",
+      "name": "氷遁・狼牙雪崩の術",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-182",
+      "number": "te0182",
+      "name": "氷遁・一角白鯨",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-183",
+      "number": "te0183",
+      "name": "蜘蛛縛り",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-184",
+      "number": "te0184",
+      "name": "鮫肌",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-185",
+      "number": "te0185",
+      "name": "水遁・水鮫弾の術",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-186",
+      "number": "te0186",
+      "name": "サクラ吹雪の術",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-187",
+      "number": "te0187",
+      "name": "幻術・樹縛封鎖",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-188",
+      "number": "te0188",
+      "name": "風遁・無限砂塵大突破",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-189",
+      "number": "te0189",
+      "name": "封印術・封火法印",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-190",
+      "number": "te0190",
+      "name": "チャクラ制御装置",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "術-191",
+      "number": "te0191",
+      "name": "忍拳刀",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-174",
+      "number": "ta0174",
+      "name": "取材旅行",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-175",
+      "number": "ta0175",
+      "name": "無関心",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-176",
+      "number": "ta0176",
+      "name": "重すぎる荷物",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-177",
+      "number": "ta0177",
+      "name": "悲劇の一族",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-178",
+      "number": "ta0178",
+      "name": "同胞殺し",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-179",
+      "number": "ta0179",
+      "name": "謎の小組織",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-180",
+      "number": "ta0180",
+      "name": "看破",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-181",
+      "number": "ta0181",
+      "name": "突然の来訪者",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-182",
+      "number": "ta0182",
+      "name": "圧倒的な実力差",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-183",
+      "number": "ta0183",
+      "name": "風影暗殺",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-184",
+      "number": "ta0184",
+      "name": "六角水晶",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-185",
+      "number": "ta0185",
+      "name": "戴冠式",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-186",
+      "number": "ta0186",
+      "name": "風雲姫の大冒険",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-187",
+      "number": "ta0187",
+      "name": "忍の三禁",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-188",
+      "number": "ta0188",
+      "name": "縮まらない差",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-189",
+      "number": "ta0189",
+      "name": "里の復旧",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "作-190",
+      "number": "ta0190",
+      "name": "祭り",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "依-25",
+      "number": "cl0025",
+      "name": "風花小雪",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "依-26",
+      "number": "cl0026",
+      "name": "エミ",
+      "setCode": "maki9",
+      "volume": "巻ノ九",
+      "page": "cardlist/9th.shtml"
+    },
+    {
+      "printed": "忍-205",
+      "number": "ni0205",
+      "name": "うずまきナルト",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-206",
+      "number": "ni0206",
+      "name": "春野サクラ＆山中いの",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-207",
+      "number": "ni0207",
+      "name": "木ノ葉丸",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-208",
+      "number": "ni0208",
+      "name": "ミタテ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-209",
+      "number": "ni0209",
+      "name": "縄樹",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-210",
+      "number": "ni0210",
+      "name": "ダン",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-211",
+      "number": "ni0211",
+      "name": "シズネ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-212",
+      "number": "ni0212",
+      "name": "トントン",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-213",
+      "number": "ni0213",
+      "name": "ガマ竜",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-214",
+      "number": "ni0214",
+      "name": "アニキ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-215",
+      "number": "ni0215",
+      "name": "ガンテツ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-216",
+      "number": "ni0216",
+      "name": "薬師カブト",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-217",
+      "number": "ni0217",
+      "name": "大蛇丸",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-218",
+      "number": "ni0218",
+      "name": "自来也",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-219",
+      "number": "ni0219",
+      "name": "綱手姫",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-220",
+      "number": "ni0220",
+      "name": "ガマブン太",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-221",
+      "number": "ni0221",
+      "name": "マンダ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-222",
+      "number": "ni0222",
+      "name": "カツユ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-223",
+      "number": "ni0223",
+      "name": "綱手姫＆シズネ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-192",
+      "number": "te0192",
+      "name": "デコピン",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-193",
+      "number": "te0193",
+      "name": "忍法・針地蔵",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-194",
+      "number": "te0194",
+      "name": "バカ力",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-195",
+      "number": "te0195",
+      "name": "火遁・蝦蟇油炎弾",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-196",
+      "number": "te0196",
+      "name": "チャクラのメス",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-197",
+      "number": "te0197",
+      "name": "巻きつき",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-198",
+      "number": "te0198",
+      "name": "無味無臭の薬",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-199",
+      "number": "te0199",
+      "name": "仕込み針",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-200",
+      "number": "te0200",
+      "name": "含み針",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-201",
+      "number": "te0201",
+      "name": "忍法・毒霧",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-202",
+      "number": "te0202",
+      "name": "忍法・創造再生",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-203",
+      "number": "te0203",
+      "name": "神経系の攻撃",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-204",
+      "number": "te0204",
+      "name": "口寄せの術",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-205",
+      "number": "te0205",
+      "name": "分裂",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-206",
+      "number": "te0206",
+      "name": "舌歯粘酸",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-207",
+      "number": "te0207",
+      "name": "治療系",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-208",
+      "number": "te0208",
+      "name": "地割れ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "術-209",
+      "number": "te0209",
+      "name": "土遁・黄泉沼",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-191",
+      "number": "ta0191",
+      "name": "集中",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-192",
+      "number": "ta0192",
+      "name": "キャッチボール",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-193",
+      "number": "ta0193",
+      "name": "三竦み",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-194",
+      "number": "ta0194",
+      "name": "５０％の確率",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-195",
+      "number": "ta0195",
+      "name": "就任要請",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-196",
+      "number": "ta0196",
+      "name": "死を呼ぶ首飾り",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-197",
+      "number": "ta0197",
+      "name": "モヤ忍三人衆",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-198",
+      "number": "ta0198",
+      "name": "すなっくイチャイチャ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-199",
+      "number": "ta0199",
+      "name": "交渉材料",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-200",
+      "number": "ta0200",
+      "name": "陰謀の足音",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-201",
+      "number": "ta0201",
+      "name": "朽ちぬ想い",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-202",
+      "number": "ta0202",
+      "name": "スロットマシン",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-203",
+      "number": "ta0203",
+      "name": "制止",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-204",
+      "number": "ta0204",
+      "name": "一服",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-205",
+      "number": "ta0205",
+      "name": "木ノ葉の大うん動会",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-206",
+      "number": "ta0206",
+      "name": "病みあがり",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "作-207",
+      "number": "ta0207",
+      "name": "暴発",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "依-27",
+      "number": "cl0027",
+      "name": "シュウ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "依-28",
+      "number": "cl0028",
+      "name": "センタ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "依-29",
+      "number": "cl0029",
+      "name": "ブンゾウ",
+      "setCode": "maki10",
+      "volume": "巻ノ十",
+      "page": "cardlist/10th.shtml"
+    },
+    {
+      "printed": "忍-234",
+      "number": "ni0234",
+      "name": "奈良シカマル＆秋道チョウジ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-235",
+      "number": "ni0235",
+      "name": "うずまきナルト",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-236",
+      "number": "ni0236",
+      "name": "うちはサスケ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-237",
+      "number": "ni0237",
+      "name": "春野サクラ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-238",
+      "number": "ni0238",
+      "name": "奈良シカマル",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-239",
+      "number": "ni0239",
+      "name": "秋道チョウジ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-240",
+      "number": "ni0240",
+      "name": "日向ネジ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-241",
+      "number": "ni0241",
+      "name": "犬塚キバ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-242",
+      "number": "ni0242",
+      "name": "赤丸",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-243",
+      "number": "ni0243",
+      "name": "不知火ゲンマ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-244",
+      "number": "ni0244",
+      "name": "並足ライドウ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-245",
+      "number": "ni0245",
+      "name": "たたみイワシ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-246",
+      "number": "ni0246",
+      "name": "シズネ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-247",
+      "number": "ni0247",
+      "name": "五代目火影",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-248",
+      "number": "ni0248",
+      "name": "森乃イダテ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-249",
+      "number": "ni0249",
+      "name": "緑青アオイ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-250",
+      "number": "ni0250",
+      "name": "鬼童丸",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-251",
+      "number": "ni0251",
+      "name": "次郎坊",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-252",
+      "number": "ni0252",
+      "name": "左近",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-253",
+      "number": "ni0253",
+      "name": "多由也",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-254",
+      "number": "ni0254",
+      "name": "君麻呂",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-214",
+      "number": "te0214",
+      "name": "第一段階の応用",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-215",
+      "number": "te0215",
+      "name": "雷神の剣",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-216",
+      "number": "te0216",
+      "name": "楊枝",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-217",
+      "number": "te0217",
+      "name": "操糸の術",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-218",
+      "number": "te0218",
+      "name": "空中ダイナミックマーキング",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-219",
+      "number": "te0219",
+      "name": "通牙",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-220",
+      "number": "te0220",
+      "name": "土遁結界・土牢堂無",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-221",
+      "number": "te0221",
+      "name": "土遁・土陵団子",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-222",
+      "number": "te0222",
+      "name": "土遁・土陸返し",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-223",
+      "number": "te0223",
+      "name": "忍法・蜘蛛巣開",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-224",
+      "number": "te0224",
+      "name": "忍法・蜘蛛粘金",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-225",
+      "number": "te0225",
+      "name": "四黒霧陣",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-226",
+      "number": "te0226",
+      "name": "封黒法印",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-227",
+      "number": "te0227",
+      "name": "結界法陣",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-228",
+      "number": "te0228",
+      "name": "肉弾針戦車",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-229",
+      "number": "te0229",
+      "name": "部分倍化の術",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-230",
+      "number": "te0230",
+      "name": "超倍化の術",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "術-231",
+      "number": "te0231",
+      "name": "柔拳",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-220",
+      "number": "ta0220",
+      "name": "奉納の儀",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-221",
+      "number": "ta0221",
+      "name": "ボス面",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-222",
+      "number": "ta0222",
+      "name": "自分ルール",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-223",
+      "number": "ta0223",
+      "name": "復讐の決意",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-224",
+      "number": "ta0224",
+      "name": "醒心丸",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-225",
+      "number": "ta0225",
+      "name": "死角",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-226",
+      "number": "ta0226",
+      "name": "呪印の力",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-227",
+      "number": "ta0227",
+      "name": "ゲーム",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-228",
+      "number": "ta0228",
+      "name": "緊急事態",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-229",
+      "number": "ta0229",
+      "name": "突然の遭遇",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-230",
+      "number": "ta0230",
+      "name": "三色の丸薬",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-231",
+      "number": "ta0231",
+      "name": "柔拳の真価",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-232",
+      "number": "ta0232",
+      "name": "シカマルの分析",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-233",
+      "number": "ta0233",
+      "name": "100倍の力",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-234",
+      "number": "ta0234",
+      "name": "サスケ奪還チーム",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "作-235",
+      "number": "ta0235",
+      "name": "最適なフォーメーション",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "依-30",
+      "number": "cl0030",
+      "name": "次郎長親分",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "依-31",
+      "number": "cl0031",
+      "name": "飛脚屋フクスケ",
+      "setCode": "maki11",
+      "volume": "巻ノ十一",
+      "page": "cardlist/11th.shtml"
+    },
+    {
+      "printed": "忍-255",
+      "number": "ni0255",
+      "name": "大蛇丸",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-256",
+      "number": "ni0256",
+      "name": "うずまきナルト",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-257",
+      "number": "ni0257",
+      "name": "うちはサスケ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-258",
+      "number": "ni0258",
+      "name": "ロック・リー",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-259",
+      "number": "ni0259",
+      "name": "うちはイタチ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-260",
+      "number": "ni0260",
+      "name": "うちはフガク",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-261",
+      "number": "ni0261",
+      "name": "うちはミコト",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-262",
+      "number": "ni0262",
+      "name": "ロック・リー＆マイト・ガイ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-263",
+      "number": "ni0263",
+      "name": "うちはサスケ＆うちはイタチ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-264",
+      "number": "ni0264",
+      "name": "奈良シカマル＆テマリ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-265",
+      "number": "ni0265",
+      "name": "右近",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-266",
+      "number": "ni0266",
+      "name": "君麻呂",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-267",
+      "number": "ni0267",
+      "name": "怒鬼",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-268",
+      "number": "ni0268",
+      "name": "砂瀑の我愛羅",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-269",
+      "number": "ni0269",
+      "name": "カンクロウ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-270",
+      "number": "ni0270",
+      "name": "テマリ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-271",
+      "number": "ni0271",
+      "name": "クロアリ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-272",
+      "number": "ni0272",
+      "name": "カラス＆クロアリ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-273",
+      "number": "ni0273",
+      "name": "双頭狼",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-232",
+      "number": "te0232",
+      "name": "木ノ葉大旋風",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-233",
+      "number": "te0233",
+      "name": "酔拳",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-234",
+      "number": "te0234",
+      "name": "自決",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-235",
+      "number": "te0235",
+      "name": "ダイナミックマーキング",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-236",
+      "number": "te0236",
+      "name": "牙狼牙",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-237",
+      "number": "te0237",
+      "name": "羅漢拳",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-238",
+      "number": "te0238",
+      "name": "蜘蛛戦弓・凄裂",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-239",
+      "number": "te0239",
+      "name": "多連拳",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-240",
+      "number": "te0240",
+      "name": "口寄せ・羅生門",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-241",
+      "number": "te0241",
+      "name": "寄生鬼壊の術",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-242",
+      "number": "te0242",
+      "name": "口寄せの術",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-243",
+      "number": "te0243",
+      "name": "魔境の乱",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-244",
+      "number": "te0244",
+      "name": "魔笛・夢幻音鎖",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-245",
+      "number": "te0245",
+      "name": "柳の舞",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-246",
+      "number": "te0246",
+      "name": "椿の舞",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-247",
+      "number": "te0247",
+      "name": "唐松の舞",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-248",
+      "number": "te0248",
+      "name": "最硬絶対防御・守鶴の盾",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-249",
+      "number": "te0249",
+      "name": "黒秘技機々一発",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-250",
+      "number": "te0250",
+      "name": "大カマイタチの術",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "術-251",
+      "number": "te0251",
+      "name": "影首縛りの術",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-236",
+      "number": "ta0236",
+      "name": "不意の遭遇",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-237",
+      "number": "ta0237",
+      "name": "だましのフェイク",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-238",
+      "number": "ta0238",
+      "name": "蘇える野獣",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-239",
+      "number": "ta0239",
+      "name": "人獣混合変化",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-240",
+      "number": "ta0240",
+      "name": "酒乱",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-241",
+      "number": "ta0241",
+      "name": "苦境",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-242",
+      "number": "ta0242",
+      "name": "夢の器",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-243",
+      "number": "ta0243",
+      "name": "かぐや一族",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-244",
+      "number": "ta0244",
+      "name": "異形の姿",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-245",
+      "number": "ta0245",
+      "name": "闇の中",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-246",
+      "number": "ta0246",
+      "name": "木ノ葉同盟国",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-247",
+      "number": "ta0247",
+      "name": "多忙",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-248",
+      "number": "ta0248",
+      "name": "強者の選別",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-249",
+      "number": "ta0249",
+      "name": "合流のサイン",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-250",
+      "number": "ta0250",
+      "name": "不治の病",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "作-251",
+      "number": "ta0251",
+      "name": "襲撃の延期",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "依-32",
+      "number": "cl0032",
+      "name": "うちはテヤキ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "依-33",
+      "number": "cl0033",
+      "name": "うちはウルチ",
+      "setCode": "maki12",
+      "volume": "巻ノ十二",
+      "page": "cardlist/12th.shtml"
+    },
+    {
+      "printed": "忍-288",
+      "number": "ni0288",
+      "name": "うずまきナルト",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-289",
+      "number": "ni0289",
+      "name": "うちはサスケ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-290",
+      "number": "ni0290",
+      "name": "春野サクラ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-291",
+      "number": "ni0291",
+      "name": "イルカ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-292",
+      "number": "ni0292",
+      "name": "シズネ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-293",
+      "number": "ni0293",
+      "name": "はたけカカシ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-294",
+      "number": "ni0294",
+      "name": "自来也",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-295",
+      "number": "ni0295",
+      "name": "砂瀑の我愛羅",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-296",
+      "number": "ni0296",
+      "name": "ふうまササメ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-297",
+      "number": "ni0297",
+      "name": "琴姫",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-298",
+      "number": "ni0298",
+      "name": "ハンザキ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-299",
+      "number": "ni0299",
+      "name": "カミキリ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-300",
+      "number": "ni0300",
+      "name": "ジグモ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-301",
+      "number": "ni0301",
+      "name": "カゲロウ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-302",
+      "number": "ni0302",
+      "name": "カゲロウ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-303",
+      "number": "ni0303",
+      "name": "ふうまアラシ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-304",
+      "number": "ni0304",
+      "name": "ふうまアラシ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-305",
+      "number": "ni0305",
+      "name": "君麻呂",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-306",
+      "number": "ni0306",
+      "name": "うずまきナルト＆春野サクラ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-255",
+      "number": "te0255",
+      "name": "螺旋丸",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-256",
+      "number": "te0256",
+      "name": "チャクラの糸",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-257",
+      "number": "te0257",
+      "name": "プラズマボール",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-258",
+      "number": "te0258",
+      "name": "トルネードライトニング",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-259",
+      "number": "te0259",
+      "name": "千鳥",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-260",
+      "number": "te0260",
+      "name": "ふうま忍剣・斬馬刀",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-261",
+      "number": "te0261",
+      "name": "ゲレルの力",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-262",
+      "number": "te0262",
+      "name": "ライジングサンダー",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-263",
+      "number": "te0263",
+      "name": "魔笛・幻武操曲",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-264",
+      "number": "te0264",
+      "name": "早蕨の舞",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-265",
+      "number": "te0265",
+      "name": "ふうま忍法・呪縛曼荼羅",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-266",
+      "number": "te0266",
+      "name": "治活再生の術",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-267",
+      "number": "te0267",
+      "name": "砂時雨",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-268",
+      "number": "te0268",
+      "name": "流砂瀑流",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-269",
+      "number": "te0269",
+      "name": "砂瀑大葬",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-270",
+      "number": "te0270",
+      "name": "獄砂埋葬",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-271",
+      "number": "te0271",
+      "name": "忍法・風蜘蛛",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-272",
+      "number": "te0272",
+      "name": "忍法・蟻地獄の術",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-273",
+      "number": "te0273",
+      "name": "蜉蝣忍法・泡沫",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-274",
+      "number": "te0274",
+      "name": "幻覚",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "術-275",
+      "number": "te0275",
+      "name": "変幻",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-255",
+      "number": "ta0255",
+      "name": "終末の谷",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-256",
+      "number": "ta0256",
+      "name": "チャクラの具現化",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-257",
+      "number": "ta0257",
+      "name": "別れの日",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-258",
+      "number": "ta0258",
+      "name": "予想外の攻撃",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-259",
+      "number": "ta0259",
+      "name": "もう一つの道",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-260",
+      "number": "ta0260",
+      "name": "大蛇丸の館",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-261",
+      "number": "ta0261",
+      "name": "繰り返す悲劇",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-262",
+      "number": "ta0262",
+      "name": "変幻自在",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-263",
+      "number": "ta0263",
+      "name": "情報収集",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-264",
+      "number": "ta0264",
+      "name": "移動要塞",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-265",
+      "number": "ta0265",
+      "name": "緊急治療",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-266",
+      "number": "ta0266",
+      "name": "醜悪な実験体",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "作-267",
+      "number": "ta0267",
+      "name": "決着の時",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "依-34",
+      "number": "cl0034",
+      "name": "カヒコ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "依-35",
+      "number": "cl0035",
+      "name": "エミナ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "依-36",
+      "number": "cl0036",
+      "name": "ネルグイ",
+      "setCode": "maki13",
+      "volume": "巻ノ十三",
+      "page": "cardlist/13th.shtml"
+    },
+    {
+      "printed": "忍-325",
+      "number": "ni0325",
+      "name": "うずまきナルト",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-326",
+      "number": "ni0326",
+      "name": "うちはサスケ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-327",
+      "number": "ni0327",
+      "name": "春野サクラ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-328",
+      "number": "ni0328",
+      "name": "犬塚キバ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-329",
+      "number": "ni0329",
+      "name": "油女シノ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-330",
+      "number": "ni0330",
+      "name": "日向ヒナタ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-331",
+      "number": "ni0331",
+      "name": "ロック・リー",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-332",
+      "number": "ni0332",
+      "name": "木ノ葉丸軍団",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-333",
+      "number": "ni0333",
+      "name": "はたけカカシ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-334",
+      "number": "ni0334",
+      "name": "五代目火影",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-335",
+      "number": "ni0335",
+      "name": "ミズキ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-336",
+      "number": "ni0336",
+      "name": "椿",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-337",
+      "number": "ni0337",
+      "name": "風神",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-338",
+      "number": "ni0338",
+      "name": "雷神",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-339",
+      "number": "ni0339",
+      "name": "砂瀑の我愛羅",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-340",
+      "number": "ni0340",
+      "name": "スズメバチ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-341",
+      "number": "ni0341",
+      "name": "ジバチ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-342",
+      "number": "ni0342",
+      "name": "クロバチ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-276",
+      "number": "te0276",
+      "name": "うずまきの陣",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-277",
+      "number": "te0277",
+      "name": "情報分析",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-278",
+      "number": "te0278",
+      "name": "封縛法陣",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-279",
+      "number": "te0279",
+      "name": "無限乱舞",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-280",
+      "number": "te0280",
+      "name": "ハヤブサ落とし",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-281",
+      "number": "te0281",
+      "name": "雷切一閃",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-282",
+      "number": "te0282",
+      "name": "大蛇丸の秘薬",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-283",
+      "number": "te0283",
+      "name": "獣化",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-284",
+      "number": "te0284",
+      "name": "怪力",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-285",
+      "number": "te0285",
+      "name": "蟲寄せの術",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-286",
+      "number": "te0286",
+      "name": "蟲壁の術",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-287",
+      "number": "te0287",
+      "name": "砂瀑浮遊",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-288",
+      "number": "te0288",
+      "name": "砂刃・双撃",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-289",
+      "number": "te0289",
+      "name": "心乱身の術",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-290",
+      "number": "te0290",
+      "name": "百列掌",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-291",
+      "number": "te0291",
+      "name": "守護八卦六十四掌",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-292",
+      "number": "te0292",
+      "name": "蜂千本の術",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-293",
+      "number": "te0293",
+      "name": "蜂爆弾の術",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-294",
+      "number": "te0294",
+      "name": "蜂蜜の術",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "術-295",
+      "number": "te0295",
+      "name": "口寄せの術",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-268",
+      "number": "ta0268",
+      "name": "大蛇丸の情報",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-269",
+      "number": "ta0269",
+      "name": "愚鈍な兄弟",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-270",
+      "number": "ta0270",
+      "name": "囚人捕獲任務",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-271",
+      "number": "ta0271",
+      "name": "台無し",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-272",
+      "number": "ta0272",
+      "name": "綱手の推察",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-273",
+      "number": "ta0273",
+      "name": "騙しあい",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-274",
+      "number": "ta0274",
+      "name": "潰えた野望",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-275",
+      "number": "ta0275",
+      "name": "厳戒施設の反乱",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-276",
+      "number": "ta0276",
+      "name": "狂気の片鱗",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-277",
+      "number": "ta0277",
+      "name": "食い物の恨み",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-278",
+      "number": "ta0278",
+      "name": "弟子入り",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-279",
+      "number": "ta0279",
+      "name": "赤面",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-280",
+      "number": "ta0280",
+      "name": "時間稼ぎ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-281",
+      "number": "ta0281",
+      "name": "蟲使い達の攻防",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-282",
+      "number": "ta0282",
+      "name": "月下の修業",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-283",
+      "number": "ta0283",
+      "name": "囚われのヒナタ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-284",
+      "number": "ta0284",
+      "name": "幻の微香虫を探せ",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "作-285",
+      "number": "ta0285",
+      "name": "巨大幼虫の巣",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "依-37",
+      "number": "cl0037",
+      "name": "微香虫",
+      "setCode": "maki14",
+      "volume": "巻ノ十四",
+      "page": "cardlist/14th.shtml"
+    },
+    {
+      "printed": "忍-344",
+      "number": "ni0344",
+      "name": "うずまきナルト",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-345",
+      "number": "ni0345",
+      "name": "春野サクラ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-346",
+      "number": "ni0346",
+      "name": "ロック・リー",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-347",
+      "number": "ni0347",
+      "name": "日向ネジ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-348",
+      "number": "ni0348",
+      "name": "テンテン",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-349",
+      "number": "ni0349",
+      "name": "マイト・ガイ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-350",
+      "number": "ni0350",
+      "name": "モンダイ・ガイ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-351",
+      "number": "ni0351",
+      "name": "ポッチャ・リー",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-352",
+      "number": "ni0352",
+      "name": "自来也",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-353",
+      "number": "ni0353",
+      "name": "大蛇丸",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-354",
+      "number": "ni0354",
+      "name": "綱手姫",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-355",
+      "number": "ni0355",
+      "name": "黒鋤雷牙",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-356",
+      "number": "ni0356",
+      "name": "蘭丸",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-357",
+      "number": "ni0357",
+      "name": "黒鋤衆",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-358",
+      "number": "ni0358",
+      "name": "サザナミ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-359",
+      "number": "ni0359",
+      "name": "ガツ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-360",
+      "number": "ni0360",
+      "name": "五寸釘",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-361",
+      "number": "ni0361",
+      "name": "木ノ葉丸軍団",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-362",
+      "number": "ni0362",
+      "name": "神月イズモ＆はがねコテツ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-363",
+      "number": "ni0363",
+      "name": "大蛇丸＆薬師カブト",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-364",
+      "number": "ni0364",
+      "name": "霧姫",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-305",
+      "number": "te0305",
+      "name": "分身回転カカト落とし",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-306",
+      "number": "te0306",
+      "name": "筋肉の記憶",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-307",
+      "number": "te0307",
+      "name": "スーパーエクセレントグレートハイパーアタック",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-308",
+      "number": "te0308",
+      "name": "居合い抜き",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-309",
+      "number": "te0309",
+      "name": "雷撃の鎧",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-310",
+      "number": "te0310",
+      "name": "岩雪崩",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-311",
+      "number": "te0311",
+      "name": "雷葬・いかづちの宴",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-312",
+      "number": "te0312",
+      "name": "いかづちの牙",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-313",
+      "number": "te0313",
+      "name": "雷球",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-314",
+      "number": "te0314",
+      "name": "雷龍の竜巻",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-315",
+      "number": "te0315",
+      "name": "黒竜巻",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-316",
+      "number": "te0316",
+      "name": "プリンプリンの術",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-317",
+      "number": "te0317",
+      "name": "柔拳",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-318",
+      "number": "te0318",
+      "name": "トンファー",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-319",
+      "number": "te0319",
+      "name": "鉄鎖",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-320",
+      "number": "te0320",
+      "name": "魚雷針",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "術-321",
+      "number": "te0321",
+      "name": "飛釘霧衝",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-286",
+      "number": "ta0286",
+      "name": "お弁当",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-287",
+      "number": "ta0287",
+      "name": "命のカレー",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-288",
+      "number": "ta0288",
+      "name": "伝説の発端",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-289",
+      "number": "ta0289",
+      "name": "完璧な変装術？",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-290",
+      "number": "ta0290",
+      "name": "敗戦の痛手",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-291",
+      "number": "ta0291",
+      "name": "木ノ葉無差別大乱戦",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-292",
+      "number": "ta0292",
+      "name": "節穴",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-293",
+      "number": "ta0293",
+      "name": "濡れ衣",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-294",
+      "number": "ta0294",
+      "name": "オッケー寺の決斗",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-295",
+      "number": "ta0295",
+      "name": "闇より来たる者",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-296",
+      "number": "ta0296",
+      "name": "絶縁",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-297",
+      "number": "ta0297",
+      "name": "適材適所",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-298",
+      "number": "ta0298",
+      "name": "方向オンチ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-299",
+      "number": "ta0299",
+      "name": "懸賞金の手配書",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-300",
+      "number": "ta0300",
+      "name": "臨時チーム",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-301",
+      "number": "ta0301",
+      "name": "タクラミ大サバイバル",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "作-302",
+      "number": "ta0302",
+      "name": "生者の葬式",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "依-38",
+      "number": "cl0038",
+      "name": "山椒ばあさん",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "依-39",
+      "number": "cl0039",
+      "name": "カラシ",
+      "setCode": "maki15",
+      "volume": "巻ノ十五",
+      "page": "cardlist/15th.shtml"
+    },
+    {
+      "printed": "忍-368",
+      "number": "ni0368",
+      "name": "初代火影",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-369",
+      "number": "ni0369",
+      "name": "二代目火影",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-370",
+      "number": "ni0370",
+      "name": "三代目火影",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-371",
+      "number": "ni0371",
+      "name": "四代目火影",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-372",
+      "number": "ni0372",
+      "name": "五代目火影",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-373",
+      "number": "ni0373",
+      "name": "うずまきナルト",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-374",
+      "number": "ni0374",
+      "name": "油女シノ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-375",
+      "number": "ni0375",
+      "name": "山中いの",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-376",
+      "number": "ni0376",
+      "name": "みたらしアンコ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-377",
+      "number": "ni0377",
+      "name": "はたけカカシ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-378",
+      "number": "ni0378",
+      "name": "ガマ吉＆ガマ竜",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-379",
+      "number": "ni0379",
+      "name": "ホクシン",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-380",
+      "number": "ni0380",
+      "name": "ナガレ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-381",
+      "number": "ni0381",
+      "name": "ホウキ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-382",
+      "number": "ni0382",
+      "name": "トキ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-383",
+      "number": "ni0383",
+      "name": "うちはサスケ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-384",
+      "number": "ni0384",
+      "name": "漁火",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-385",
+      "number": "ni0385",
+      "name": "アマチ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-386",
+      "number": "ni0386",
+      "name": "赤胴ヨロイ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-387",
+      "number": "ni0387",
+      "name": "剣ミスミ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-388",
+      "number": "ni0388",
+      "name": "ハッカク",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-324",
+      "number": "te0324",
+      "name": "多重影分身の術",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-325",
+      "number": "te0325",
+      "name": "潜影蛇手",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-326",
+      "number": "te0326",
+      "name": "解き放たれた力",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-327",
+      "number": "te0327",
+      "name": "噛み付き",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-328",
+      "number": "te0328",
+      "name": "雷切",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-329",
+      "number": "te0329",
+      "name": "火遁・龍火の術",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-330",
+      "number": "te0330",
+      "name": "軟の改造",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-331",
+      "number": "te0331",
+      "name": "チャクラ吸引術",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-332",
+      "number": "te0332",
+      "name": "水遁・大爆流の術",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-333",
+      "number": "te0333",
+      "name": "水遁・大砲弾",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-334",
+      "number": "te0334",
+      "name": "口寄せ・海坊主",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-335",
+      "number": "te0335",
+      "name": "魔幻・地獄業火の術",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-336",
+      "number": "te0336",
+      "name": "同化・砂縛柩",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-337",
+      "number": "te0337",
+      "name": "同化・砂瀑送葬",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-338",
+      "number": "te0338",
+      "name": "バックアップ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-339",
+      "number": "te0339",
+      "name": "森羅万象・同化の術",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-340",
+      "number": "te0340",
+      "name": "同化・岩石戦車",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "術-341",
+      "number": "te0341",
+      "name": "三節棍",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-305",
+      "number": "ta0305",
+      "name": "ハイテンション",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-306",
+      "number": "ta0306",
+      "name": "図星",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-307",
+      "number": "ta0307",
+      "name": "一文無し",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-308",
+      "number": "ta0308",
+      "name": "身を挺して",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-309",
+      "number": "ta0309",
+      "name": "料理勝負！",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-310",
+      "number": "ta0310",
+      "name": "星空の下",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-311",
+      "number": "ta0311",
+      "name": "神隠しの島",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-312",
+      "number": "ta0312",
+      "name": "海魔騒動",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-313",
+      "number": "ta0313",
+      "name": "呪印の疼き",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-314",
+      "number": "ta0314",
+      "name": "閉ざされた記憶",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-315",
+      "number": "ta0315",
+      "name": "白鷺の羽ばたく時",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-316",
+      "number": "ta0316",
+      "name": "白き呪い武者",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-317",
+      "number": "ta0317",
+      "name": "紛い物の術",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-318",
+      "number": "ta0318",
+      "name": "任務外の行動",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-319",
+      "number": "ta0319",
+      "name": "明日への船出",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-320",
+      "number": "ta0320",
+      "name": "火の伝承者たち",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-321",
+      "number": "ta0321",
+      "name": "風の伝承者たち",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "作-322",
+      "number": "ta0322",
+      "name": "熱血指導",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "依-40",
+      "number": "cl0040",
+      "name": "チシマ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "依-41",
+      "number": "cl0041",
+      "name": "紅明",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "依-42",
+      "number": "cl0042",
+      "name": "ヒトデ",
+      "setCode": "maki16",
+      "volume": "巻ノ十六",
+      "page": "cardlist/16th.shtml"
+    },
+    {
+      "printed": "忍-393",
+      "number": "ni0393",
+      "name": "うずまきナルト",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-393_spc2.gif"
+    },
+    {
+      "printed": "忍-394",
+      "number": "ni0394",
+      "name": "はたけカカシ",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-394_spc2.gif"
+    },
+    {
+      "printed": "忍-395",
+      "number": "ni0395",
+      "name": "ロック・リー",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-395_spc2.gif"
+    },
+    {
+      "printed": "忍-396",
+      "number": "ni0396",
+      "name": "春野サクラ",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/shinobi-396_spc2.gif"
+    },
+    {
+      "printed": "依-43",
+      "number": "cl0043",
+      "name": "ツキ・ヒカル",
+      "setCode": "spc2",
+      "volume": "スペシャルコンボシート2",
+      "page": "cardlist/card_img/irai-043_spc2.gif"
+    },
+    {
+      "printed": "忍-397",
+      "number": "ni0397",
+      "name": "うずまきナルト",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-398",
+      "number": "ni0398",
+      "name": "春野サクラ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-399",
+      "number": "ni0399",
+      "name": "ロック・リー",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-400",
+      "number": "ni0400",
+      "name": "はたけカカシ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-401",
+      "number": "ni0401",
+      "name": "チャム",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-402",
+      "number": "ni0402",
+      "name": "キッキィ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-403",
+      "number": "ni0403",
+      "name": "イシダテ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-404",
+      "number": "ni0404",
+      "name": "コンゴウ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-405",
+      "number": "ni0405",
+      "name": "カレンバナ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-406",
+      "number": "ni0406",
+      "name": "うずまきナルト＆うずまきナルト",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-407",
+      "number": "ni0407",
+      "name": "クニヒサ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-408",
+      "number": "ni0408",
+      "name": "海鮮アガリ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-409",
+      "number": "ni0409",
+      "name": "スマル",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-410",
+      "number": "ni0410",
+      "name": "ホクト",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-411",
+      "number": "ni0411",
+      "name": "ミヅラ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-412",
+      "number": "ni0412",
+      "name": "ナツヒ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-413",
+      "number": "ni0413",
+      "name": "アカホシ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-414",
+      "number": "ni0414",
+      "name": "うちはサスケ＆大蛇丸",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-415",
+      "number": "ni0415",
+      "name": "うちはサスケ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-416",
+      "number": "ni0416",
+      "name": "薬師カブト",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "忍-417",
+      "number": "ni0417",
+      "name": "幻幽丸",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-344",
+      "number": "te0344",
+      "name": "孔雀妙法・斬",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-345",
+      "number": "te0345",
+      "name": "孔雀妙法・獣",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-346",
+      "number": "te0346",
+      "name": "月光螺旋丸",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-347",
+      "number": "te0347",
+      "name": "木ノ葉雷拳",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-348",
+      "number": "te0348",
+      "name": "豪雷蓮鎖",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-349",
+      "number": "te0349",
+      "name": "金遁・たすけて〜の術",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-350",
+      "number": "te0350",
+      "name": "金分身の術",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-351",
+      "number": "te0351",
+      "name": "顔写しの術",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-352",
+      "number": "te0352",
+      "name": "孔雀妙法・翼",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-353",
+      "number": "te0353",
+      "name": "チャクラの捕食",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-354",
+      "number": "te0354",
+      "name": "チャクラの縄",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-355",
+      "number": "te0355",
+      "name": "忍法・壁抜けの術",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-356",
+      "number": "te0356",
+      "name": "師匠譲りの豪腕",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-357",
+      "number": "te0357",
+      "name": "尾行忍術",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-358",
+      "number": "te0358",
+      "name": "石化の一撃",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-359",
+      "number": "te0359",
+      "name": "金轟力",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-360",
+      "number": "te0360",
+      "name": "百花繚乱",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "術-361",
+      "number": "te0361",
+      "name": "五感錯騒",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-323",
+      "number": "ta0323",
+      "name": "大切な約束",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-324",
+      "number": "ta0324",
+      "name": "執筆活動",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-325",
+      "number": "ta0325",
+      "name": "星のかけら",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-326",
+      "number": "ta0326",
+      "name": "通じあう心",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-327",
+      "number": "ta0327",
+      "name": "サーカス団の買収",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-328",
+      "number": "ta0328",
+      "name": "大金持ち",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-329",
+      "number": "ta0329",
+      "name": "新たな器",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-330",
+      "number": "ta0330",
+      "name": "姑息な脅迫",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-331",
+      "number": "ta0331",
+      "name": "未来を手中に",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-332",
+      "number": "ta0332",
+      "name": "石化治療",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-333",
+      "number": "ta0333",
+      "name": "防毒マスク",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-334",
+      "number": "ta0334",
+      "name": "再出発",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-335",
+      "number": "ta0335",
+      "name": "地獄谷",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-336",
+      "number": "ta0336",
+      "name": "軽はずみ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "作-337",
+      "number": "ta0337",
+      "name": "恐るべき手練",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "依-44",
+      "number": "cl0044",
+      "name": "ツキ・ヒカル",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "依-45",
+      "number": "cl0045",
+      "name": "ツキ・ミチル",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    },
+    {
+      "printed": "依-46",
+      "number": "cl0046",
+      "name": "シャバダバ",
+      "setCode": "maki17",
+      "volume": "巻ノ十七",
+      "page": "cardlist/17th.shtml"
+    }
+  ]
+}

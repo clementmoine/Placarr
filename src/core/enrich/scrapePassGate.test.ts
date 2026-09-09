@@ -4,6 +4,7 @@ import {
   apiProvidersForMetadataPass,
   externalIdsFromStoredSources,
   metadataResultsHavePrimaryBookCover,
+  nonScrapeProviderIdsFromStoredSources,
   preferPinnedProviderIds,
   providerRecordUrlsFromStoredSources,
   scrapeProviderIdsFromStoredSources,
@@ -284,6 +285,16 @@ describe("scrapeProviderIdsFromStoredSources", () => {
   });
 });
 
+describe("nonScrapeProviderIdsFromStoredSources", () => {
+  it("keeps API / static providers already on the fiche", () => {
+    const ids = nonScrapeProviderIdsFromStoredSources({
+      facts: [{ source: "lorcanajson" }, { source: "Bedetheque" }],
+      attachments: [{ source: "lorcanajson" }],
+    });
+    expect(ids).toEqual(["lorcanajson"]);
+  });
+});
+
 describe("externalIdsFromStoredSources", () => {
   it("parses BDovore id_tome from stored fiche URLs", () => {
     expect(
@@ -372,11 +383,11 @@ describe("preferPinnedProviderIds", () => {
   });
 
   it("keeps original relative order within pin and seek groups", () => {
-    expect(
-      preferPinnedProviderIds(
-        ["a", "b", "c", "d"],
-        ["c", "a"],
-      ),
-    ).toEqual(["a", "c", "b", "d"]);
+    expect(preferPinnedProviderIds(["a", "b", "c", "d"], ["c", "a"])).toEqual([
+      "a",
+      "c",
+      "b",
+      "d",
+    ]);
   });
 });

@@ -1,4 +1,11 @@
-import type { Attachment, AttachmentType, Author, Metadata, PriceOffer, Publisher } from "@prisma/client";
+import type {
+  Attachment,
+  AttachmentType,
+  Author,
+  Metadata,
+  PriceOffer,
+  Publisher,
+} from "@/generated/prisma/browser";
 
 import {
   getCoverImage,
@@ -183,6 +190,7 @@ function enrichMetadataProviderLinks(
     priceOffers?: ProviderPriceOfferLinkInput[];
     itemBarcode?: string | null;
     itemTitle?: string | null;
+    itemTitles?: readonly string[] | null;
     shelfType?: string | null;
     platformKey?: string | null;
     catalogLink?: { url: string; providerLabel?: string } | null;
@@ -198,6 +206,7 @@ function enrichMetadataProviderLinks(
     priceOffers: input.priceOffers,
     itemBarcode: input.itemBarcode,
     itemTitle: input.itemTitle,
+    itemTitles: input.itemTitles,
     shelfType: input.shelfType,
     platformKey: input.platformKey ?? metadata.platformKey,
     catalogLink: input.catalogLink,
@@ -207,6 +216,7 @@ function enrichMetadataProviderLinks(
     input.itemBarcode,
     input.itemTitle,
     input.shelfType,
+    input.itemTitles,
   );
 
   // Marketplace covers persist as Attachment rows at price-offer write time —
@@ -246,6 +256,11 @@ function formatItemMetadata(
         priceOffers: mapStoredPriceOffers(metadata.priceOffers),
         itemBarcode: item?.barcode,
         itemTitle: item?.name,
+        itemTitles: [
+          item?.name,
+          formatted?.title,
+          ...(metadataAliases(formatted?.aliases ?? metadata.aliases) ?? []),
+        ].filter((value): value is string => Boolean(value?.trim())),
         shelfType: item?.shelfType,
         platformKey: formatted?.platformKey ?? shelfPlatformKey,
         catalogLink: item?.catalogLink,

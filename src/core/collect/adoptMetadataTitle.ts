@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/db/prisma";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  metadataAliases,
+  promoteTitleKeepingAliases,
+} from "@/core/enrich/aliases";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
+import type { Type } from "@/generated/prisma/browser";
 
 import { isBarcodePlaceholderItemName } from "./placeholderName";
 
@@ -51,6 +58,91 @@ export async function syncItemNameFromEnrichedMetadata(input: {
   if (!item) return false;
 
   return updateItemDisplayName(input.itemId, metadataTitle, item.shelfId);
+}
+
+/**
+ * Print shelves: a pasted code (`TFC#001`) is a lookup key, not the title.
+ * When enrich lands a printKey the item lacked, adopt the catalog title and
+ * persist the key so prices / foil resolve like a PrintPicker add.
+ *
+ * The previous collector code is kept as a metadata alias so `/tfc-2` URLs
+ * still resolve after the slug becomes the catalog title.
+ */
+export async function syncPrintItemIdentityFromMetadata(input: {
+  itemId: string;
+  shelfType: Type;
+  itemName: string;
+  metadataTitle?: string | null;
+  metadataPrintKey?: string | null;
+}): Promise<boolean> {
+  if (!usesPrintSearch(input.shelfType)) return false;
+
+  const metadataPrintKey = input.metadataPrintKey?.trim().toLowerCase() || null;
+  const printKey =
+    metadataPrintKey && parsePrintKey(metadataPrintKey)
+      ? metadataPrintKey
+      : null;
+  const metadataTitle = input.metadataTitle?.trim() || null;
+  if (!printKey && !metadataTitle) return false;
+
+  const item = await prisma.item.findUnique({
+    where: { id: input.itemId },
+    select: {
+      shelfId: true,
+      printKey: true,
+      name: true,
+      metadataId: true,
+      metadata: { select: { aliases: true, title: true } },
+    },
+  });
+  if (!item) return false;
+
+  const hadPrintKey = Boolean(item.printKey?.trim());
+  const data: { printKey?: string; name?: string; slug?: string } = {};
+  let lookupAlias: string | null = null;
+
+  if (printKey && !hadPrintKey) {
+    data.printKey = printKey;
+  }
+
+  const currentName = (item.name || input.itemName).trim();
+  if (
+    metadataTitle &&
+    metadataTitle.toLowerCase() !== currentName.toLowerCase() &&
+    !hadPrintKey
+  ) {
+    data.name = metadataTitle;
+    data.slug = await allocateUniqueItemSlug(item.shelfId, metadataTitle, {
+      excludeItemId: input.itemId,
+    });
+    lookupAlias = currentName || null;
+  }
+
+  if (Object.keys(data).length === 0) return false;
+
+  await prisma.item.update({
+    where: { id: input.itemId },
+    data,
+  });
+
+  if (lookupAlias && item.metadataId) {
+    const aliases = promoteTitleKeepingAliases(
+      {
+        title: metadataTitle,
+        aliases: metadataAliases(item.metadata?.aliases),
+      },
+      metadataTitle!,
+      [lookupAlias],
+    );
+    if (aliases?.length) {
+      await prisma.metadata.update({
+        where: { id: item.metadataId },
+        data: { aliases: JSON.stringify(aliases) },
+      });
+    }
+  }
+
+  return true;
 }
 
 /** @deprecated Use syncItemNameFromEnrichedMetadata */

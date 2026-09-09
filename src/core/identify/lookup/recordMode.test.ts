@@ -44,9 +44,8 @@ describe("barcode recordMode", () => {
 
   it("omits slow barcode lookup modules before tasks are built", async () => {
     process.env.BARCODE_RECORD_SLIM = "1";
-    const { createBarcodeLookupTaskBuilders } = await import(
-      "@/core/catalog/barcode"
-    );
+    const { createBarcodeLookupTaskBuilders } =
+      await import("@/core/catalog/barcode");
     const leDenicheurStarted = vi.fn(() => Promise.resolve(null));
     const freakxyStarted = vi.fn(() => Promise.resolve([]));
     const chasseStarted = vi.fn(() => Promise.resolve([]));

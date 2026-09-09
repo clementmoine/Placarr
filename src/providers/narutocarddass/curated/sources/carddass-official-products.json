@@ -1,0 +1,90 @@
+{
+ "source": "カードダスドットコム — sec.carddass.com, base produit officielle Bandai",
+ "observed": "2026-08-20",
+ "ingest": "none — packshots à verser",
+ "crawlLive": true,
+ "lang": "ja",
+ "url": "https://sec.carddass.com/club/products/?keyword=NARUTO",
+ "note": "Base produit officielle de Bandai, vivante. La recherche par mot-clé rend **56 produits Naruto** sur 6 pages ; 26 relèvent de notre ligne (les autres sont de la Miracle Battle Carddass, un autre jeu, ou des accessoires). Chaque fiche porte un titre officiel, une date de sortie et un visuel sur le CDN Akamai de Bandai. **26 sur 26 en ont un.**",
+ "whyItMatters": "Nos 31 SKU japonais scellés n'ont que 2 visuels : 29 sont entrés au catalogue sans image, sur la seule foi du relevé `cardcheckbox-jp.json`. Ce sont les packshots officiels qui manquaient.",
+ "reveals": "La ligne 疾風伝 (Shippuden) compte au moins **huit 幕** — du 第二幕 au 第八幕 — chacun avec sa ブースターパック, son 自販機ブースター et parfois un 構築済みスターター. Notre catalogue n'en connaissait presque rien : le pack `nrts` de nikita n'a que 13 faces.",
+ "modelGap": "Les titres officiels distinguent trois formats que nos specs confondent : **ブースターパック** (sachet), **自販機ブースター** (distributeur automatique) et **構築済みスターター** (deck construit). Les verser demande de décider si le distributeur est un SKU à part — c'est le même contenu dans un autre emballage.",
+ "imageHost": "bandai-a.akamaihd.net/bc/img/model/b/{id}_1.jpg",
+ "products": [
+  {
+   "jan": "4543112451613000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十七 ブースターパック「雄き獣の島 編」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000068847_1.jpg",
+   "released": "2006-09"
+  },
+  {
+   "jan": "4543112451491000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十七 自販機ブースター「雄き獣の島 編」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000068863_1.jpg",
+   "released": "2006-09"
+  },
+  {
+   "jan": "4543112312693000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十六 ブースターパック「火の継承者 編」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000069333_1.jpg",
+   "released": "2006-06"
+  },
+  {
+   "jan": "4543112312686000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十六 構築済みスターターセット「豪雷の書」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000069334_1.jpg",
+   "released": "2006-06"
+  },
+  {
+   "jan": "4543112312464000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十六 自販機ブースター「火の継承者 編」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000069368_1.jpg",
+   "released": "2006-06"
+  },
+  {
+   "jan": "4543112307668000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十二 ブースターパック「戦慄の刻印 編」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000070850_1.jpg",
+   "released": "2005-07"
+  },
+  {
+   "jan": "4543112307651000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十二 構築済みスターターBOX「呪印の書」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000070851_1.jpg",
+   "released": "2005-07"
+  },
+  {
+   "jan": "4543112307644000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十二 構築済みスターターBOX「木ノ葉の書」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000070852_1.jpg",
+   "released": "2005-07"
+  },
+  {
+   "jan": "4543112307453000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ十二 自販機ブースター「戦慄の刻印 編」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000070865_1.jpg",
+   "released": "2005-07"
+  },
+  {
+   "jan": "4543112199546000",
+   "title": "NARUTO-ナルト- CARD GAME　巻ノ四 「～死の森の試験！～ 編」",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000073689_1.jpg",
+   "released": "2003-08"
+  },
+  {
+   "jan": "4543112199201000",
+   "title": "NARUTO-ナルト- CARD GAME　秘技伝授スターターボックス ナルト書/サスケの書",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000073728_1.jpg",
+   "released": "2003-07"
+  }
+ ],
+ "keywordNote": "La recherche est **littérale**.  rend 56 produits,  en rend 58 : Bandai écrit certains titres en latin **pleine chasse** (ＮＡＲＵＴＯ), que la requête ASCII ne trouve pas. Les deux manquants étaient l'acte 5 du 疾風伝, booster et distributeur — précisément les actes que je notais comme absents de la base.",
+ "vendingImageCaveat": {
+  "on": "2026-08-20",
+  "finding": "Les fiches 自販機ブースター ne sont **pas illustrées par un emballage**, et pas de façon homogène : le 巻ノ十六 montre le **distributeur** lui-même, le 巻ノ十二 une **seule carte** (忍-256 うずまきナルト), le 疾風伝 acte 2 **deux cartes**.",
+  "why": "Un booster de distributeur n'a pas d'emballage de vente à photographier : l'éditeur montre donc la machine ou le contenu.",
+  "decision": "Les visuels sont **gardés** : ce sont les illustrations officielles de ces produits, pas des images d'un autre produit. Rien à voir avec le logo qui recopiait sa propre photo, ni avec une face posée sur la mauvaise carte. Mais il faut savoir qu'un `art.carddassofficial` sur un SKU `vending-*` peut montrer une carte plutôt qu'un paquet.",
+  "answersQuestion": "D'où la différence entre les deux JAN du 巻ノ十二 : `…307668000` (ブースターパック) montre le sachet, `…307453000` (自販機ブースター) montre une carte. Deux produits, deux JAN, deux illustrations de nature différente."
+ },
+ "splitNote": "Les 17 fiches du 疾風伝 sont parties le 2026-08-21 dans `narutoshippuden/curated/sources/` : un autre jeu, un autre pack."
+}

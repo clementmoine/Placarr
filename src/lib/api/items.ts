@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { Prisma, Item, Condition } from "@prisma/client";
+import type { Prisma, Item, Condition } from "@/generated/prisma/browser";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -167,10 +167,13 @@ export const getItems = (
 
 export interface ItemPrices {
   priceNew: number | null;
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
   /** Point price derived from catalog estimates — display fallback, shown as ~. */
   priceEstimated?: number | null;
+  /** FX ~ for the foil market bucket (TCG finishes). */
+  priceEstimatedFoil?: number | null;
   priceLastUpdated: string | null;
   priceSources?: string[];
   priceSourceDisplayNames?: string[];
@@ -209,6 +212,25 @@ export const getItemPrices = (
   if (shelfId) {
     url.searchParams.set("shelfId", shelfId);
   }
+  return axios.get(url.toString()).then((res) => res.data);
+};
+
+export type SealedContainmentSourceDto = {
+  slug: string;
+  name: string;
+  kind: string;
+  imageUrl?: string | null;
+  relation: "guaranteed" | "listed_pool" | "set_pool";
+};
+
+export const getItemSealedContainment = (
+  shelfId: string,
+  itemId: string,
+): Promise<{ sources: SealedContainmentSourceDto[] }> => {
+  const url = new URL(
+    `/api/shelves/${encodeURIComponent(shelfId)}/items/${encodeURIComponent(itemId)}/sealed-containment`,
+    window.location.origin,
+  );
   return axios.get(url.toString()).then((res) => res.data);
 };
 

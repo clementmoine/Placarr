@@ -18,11 +18,14 @@ describe("itemModalSession", () => {
   });
 
   it("builds a stable edit session key that ignores metadata refresh stamps", () => {
+    type ModalItem = NonNullable<
+      Parameters<typeof itemModalSessionKey>[0]["item"]
+    >;
     const item = {
       id: "item-1",
       metadataId: "meta-1",
       metadata: { lastFetched: new Date("2026-07-05T12:00:00.000Z") },
-    } as never;
+    } as unknown as ModalItem;
 
     expect(
       itemModalSessionKey({
@@ -40,7 +43,7 @@ describe("itemModalSession", () => {
         item: {
           ...item,
           metadata: { lastFetched: new Date("2026-07-05T13:00:00.000Z") },
-        } as never,
+        } as unknown as ModalItem,
         shelfId: "shelf-1",
       }),
     ).toBe("edit:item-1");
@@ -57,6 +60,8 @@ describe("itemModalSession", () => {
         storedName: "0721450083770",
         barcode: "0721450083770",
         condition: "used",
+        loanedTo: "Alice",
+        loanedAt: new Date(2026, 8, 1),
         metadata: {
           title: "Black Stories",
           aliases: "Black Stories",
@@ -66,6 +71,8 @@ describe("itemModalSession", () => {
     });
 
     expect(init.formValues.name).toBe("Black Stories");
+    expect(init.formValues.loanedTo).toBe("Alice");
+    expect(init.formValues.loanedAt).toBe("2026-09-01");
     expect(init.suggestions).toContain("Black Stories");
     expect(init.fetchedMetadata?.title).toBe("Black Stories");
     expect(init.asyncInit).toBeNull();

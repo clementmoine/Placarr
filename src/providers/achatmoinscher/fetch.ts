@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpHead, httpPost } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { decode as decodeHTMLEntities } from "html-entities";
@@ -62,7 +62,7 @@ export async function fetchFromAchatMoinsCher(
 
   try {
     console.log(`[AchatMoinsCher] Querying barcode scanner: ${cleanedBarcode}`);
-    const postRes = await axios.post(
+    const postRes = await httpPost(
       "https://www.achatmoinscher.com/scanner.php",
       `code=${cleanedBarcode}`,
       {
@@ -222,7 +222,7 @@ async function extractBestCover(
       continue;
     }
     try {
-      const res = await axios.head(url, {
+      const res = await httpHead(url, {
         headers: {
           "User-Agent": HEADERS["User-Agent"],
           Referer: "https://www.achatmoinscher.com/",
@@ -532,9 +532,7 @@ async function fetchAchatMoinsCherSearchHits(
   const searchUrl = achatMoinsCherSearchUrl(cleanedQuery);
   const fromEvidence = await readAchatMoinsCherSearchEvidence(searchUrl);
   if (fromEvidence) {
-    console.info(
-      `[AchatMoinsCher] Search evidence hit for "${cleanedQuery}"`,
-    );
+    console.info(`[AchatMoinsCher] Search evidence hit for "${cleanedQuery}"`);
     cacheAchatMoinsCherSearchHits(cleanedQuery, fromEvidence);
     return fromEvidence;
   }
@@ -651,7 +649,7 @@ export async function fetchPricesFromAchatMoinsCher(
       console.log(
         `[AchatMoinsCher Prices] Querying barcode scanner: ${cleanedBarcode}`,
       );
-      const postRes = await axios.post(
+      const postRes = await httpPost(
         "https://www.achatmoinscher.com/scanner.php",
         `code=${cleanedBarcode}`,
         {

@@ -1,0 +1,159 @@
+{
+  "source": "Scans fournis par le propriétaire du catalogue",
+  "observed": "2026-08-22",
+  "ingest": "art.reconstructed en affichage — pas un dump Coleka ni éditeur ; verso `back.reconstructed` quand fourni",
+  "sourceId": "reconstructed",
+  "lang": "fr",
+  "faces": [
+    {
+      "setCode": "nr",
+      "number": "0058",
+      "printed": "058",
+      "sourceFile": "curated/cards/nr/fr/0058/art.reconstructed.png",
+      "note": "Recto FR « HOKAGE LE 3E » — gabarit Coleka absent ; scan fourni (checklist Leboncoin / attestation manuelle)."
+    },
+    {
+      "setCode": "nr",
+      "number": "0068",
+      "printed": "068",
+      "sourceFile": "curated/cards/nr/fr/0068/art.reconstructed.png",
+      "note": "Recto FR « SECOND EXAMEN DES SURVIVANTS » — scan curé fourni (language-specific, pas d'emprunt EN)."
+    },
+    {
+      "setCode": "nr",
+      "number": "0003",
+      "printed": "003",
+      "sourceFile": "curated/cards/nr/fr/0003/art.reconstructed.png",
+      "note": "Recto FR « GROUPE 7 » (pièce puzzle n°3 — Kakashi/Sasuke). Même scan que la fiche Coleka i1188740 (base 3, pas GS03) ; language-specific, absent du listing Coleka base."
+    },
+    {
+      "setCode": "ff",
+      "number": "0002",
+      "printed": "FF02",
+      "sourceFile": "curated/cards/ff/fr/0002/art.reconstructed.png",
+      "note": "Recto FR « DEMON-RENARD » — holo FF language-specific ; remplace Coleka reflétée."
+    },
+    {
+      "setCode": "ff",
+      "number": "0002",
+      "lang": "en",
+      "printed": "FF02",
+      "sourceFile": "curated/cards/ff/en/0002/art.reconstructed.png",
+      "note": "Recto EN « FOX SPIRIT » — FF-2 « Naruto - Fox Spirit » de la checklist Inkworks ; scan fourni, holo photographiée."
+    },
+    {
+      "setCode": "sd",
+      "number": "0005",
+      "printed": "SD05",
+      "sourceFile": "curated/cards/sd/fr/0005/art.reconstructed.png",
+      "note": "Recto FR « HOKAGE LE 4E » — SD die-cut language-specific ; scan curé fourni."
+    },
+    {
+      "setCode": "sd",
+      "number": "0005",
+      "lang": "en",
+      "printed": "SD05",
+      "sourceFile": "curated/cards/sd/en/0005/art.reconstructed.png",
+      "backSourceFile": "curated/cards/sd/en/0005/back.reconstructed.png",
+      "note": "Recto + verso EN « FOURTH HOKAGE » — absent d'Arcade ; scan curé fourni."
+    },
+    {
+      "setCode": "sd",
+      "number": "0002",
+      "lang": "en",
+      "printed": "SD02",
+      "sourceFile": "curated/cards/sd/en/0002/art.reconstructed.png",
+      "backSourceFile": "curated/cards/sd/en/0002/back.reconstructed.png",
+      "note": "Recto + verso EN « SAKURA » — absent d'Arcade."
+    },
+    {
+      "setCode": "sd",
+      "number": "0003",
+      "lang": "en",
+      "printed": "SD03",
+      "sourceFile": "curated/cards/sd/en/0003/art.reconstructed.png",
+      "backSourceFile": "curated/cards/sd/en/0003/back.reconstructed.png",
+      "note": "Recto + verso EN « SASUKE » — absent d'Arcade."
+    },
+    {
+      "setCode": "sd",
+      "number": "0004",
+      "lang": "en",
+      "printed": "SD04",
+      "sourceFile": "curated/cards/sd/en/0004/art.reconstructed.png",
+      "backSourceFile": "curated/cards/sd/en/0004/back.reconstructed.png",
+      "note": "Recto + verso EN « KAKASHI » — remplace dump blogger ; absent d'Arcade."
+    },
+    {
+      "setCode": "sd",
+      "number": "0006",
+      "lang": "en",
+      "printed": "SD06",
+      "sourceFile": "curated/cards/sd/en/0006/art.reconstructed.png",
+      "backSourceFile": "curated/cards/sd/en/0006/back.reconstructed.png",
+      "note": "Recto + verso EN « SHIKAMARU » (fichier `sd_shaikarmu_en`) — absent d'Arcade."
+    },
+    {
+      "setCode": "sd",
+      "number": "0001",
+      "lang": "en",
+      "printed": "SD01",
+      "sourceFile": "curated/cards/sd/en/0001/art.reconstructed.png",
+      "note": "Recto EN « NARUTO » SD die-cut — remplace l'échantillon Inkworks 145×201 ; verso absent pour l'instant."
+    },
+    {
+      "setCode": "pn",
+      "number": "0001",
+      "lang": "en",
+      "printed": "PN-1",
+      "sourceFile": "curated/cards/pn/en/0001/art.reconstructed.png",
+      "backSourceFile": "curated/cards/pn/en/0001/back.reconstructed.png",
+      "note": "Promo US « GENERAL DISTRIBUTION » — scan eBay Browse 168447402726. Pas d'édition FR/IT ; les tuiles empruntent le recto EN."
+    },
+    {
+      "setCode": "pn",
+      "number": "t",
+      "lang": "en",
+      "printed": "PN-T",
+      "sourceFile": "curated/cards/pn/en/t/art.reconstructed.png",
+      "backSourceFile": "curated/cards/pn/en/t/back.reconstructed.png",
+      "note": "Promo US « TRADE SHOWS, SPECIAL OFFERS » (conventions) — scan eBay Browse 131295739285."
+    },
+    {
+      "setCode": "pn",
+      "number": "ga",
+      "lang": "en",
+      "printed": "PN-GA",
+      "sourceFile": "curated/cards/pn/en/ga/art.reconstructed.png",
+      "backSourceFile": "curated/cards/pn/en/ga/back.reconstructed.webp",
+      "note": "Promo US « GAMA SHOW » — scan eBay Browse 233533784889."
+    },
+    {
+      "setCode": "pn",
+      "number": "i",
+      "lang": "en",
+      "printed": "PN-i",
+      "sourceFile": "curated/cards/pn/en/i/art.reconstructed.png",
+      "backSourceFile": "curated/cards/pn/en/i/back.reconstructed.png",
+      "note": "Promo US exclusivité inkworks.com (Team 7) — scan eBay Browse 158128123948."
+    },
+    {
+      "setCode": "pn",
+      "number": "sd2006",
+      "lang": "en",
+      "printed": "PN-SD2006",
+      "sourceFile": "curated/cards/pn/en/sd2006/art.reconstructed.png",
+      "backSourceFile": "curated/cards/pn/en/sd2006/back.reconstructed.png",
+      "note": "Promo SDCC 2006 — recto Naruto + verso « THE NINJA ARE HERE ». Hors checklist Inkworks ; scan eBay 333930082993."
+    },
+    {
+      "setCode": "pn",
+      "number": "p",
+      "lang": "en",
+      "printed": "PN-P",
+      "sourceFile": "curated/cards/pn/en/p/art.reconstructed.png",
+      "backSourceFile": "curated/cards/pn/en/p/back.reconstructed.png",
+      "note": "Promo US « SDCC Passport Program for Viz Media » (nslists.com) — recto numéroté PR-001 signé VIZ Media, verso codé PN-P distribué par Inkworks/Panini. Hors checklist Inkworks ; scan fourni."
+    }
+  ]
+}

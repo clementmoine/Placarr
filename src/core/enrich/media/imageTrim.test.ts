@@ -1,9 +1,7 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import fs from "fs";
-import path from "path";
 
-import { trimLightImageMargins, cropImageIfNeeded } from "./imageTrim";
+import { suggestCropBox, trimLightImageMargins } from "./imageTrim";
 
 describe("trimLightImageMargins", () => {
   it("crops light margins around raster images", async () => {
@@ -37,6 +35,45 @@ describe("trimLightImageMargins", () => {
     const output = await trimLightImageMargins(input);
     const metadata = await sharp(output).metadata();
 
+    expect(metadata.width).toBe(70);
+    expect(metadata.height).toBe(50);
+  });
+
+  it("crops grey off-white scan beds with a lower luminance threshold", async () => {
+    const input = await sharp({
+      create: {
+        width: 120,
+        height: 100,
+        channels: 3,
+        background: "#ededed",
+      },
+    })
+      .composite([
+        {
+          input: await sharp({
+            create: {
+              width: 70,
+              height: 50,
+              channels: 3,
+              background: "#f97316",
+            },
+          })
+            .png()
+            .toBuffer(),
+          left: 25,
+          top: 20,
+        },
+      ])
+      .png()
+      .toBuffer();
+
+    const unchanged = await trimLightImageMargins(input);
+    expect(unchanged).toBe(input);
+
+    const output = await trimLightImageMargins(input, {
+      lightLuminanceThreshold: 220,
+    });
+    const metadata = await sharp(output).metadata();
     expect(metadata.width).toBe(70);
     expect(metadata.height).toBe(50);
   });
@@ -137,22 +174,10 @@ describe("trimLightImageMargins", () => {
   });
 });
 
-describe("cropImageIfNeeded", () => {
-  it("creates a _crop file only when cropping is detected and leaves original intact", async () => {
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    const testImageName = "test-crop-temp.png";
-    const testImagePath = path.join(uploadsDir, testImageName);
+describe("suggestCropBox", () => {
+  it("reports the rectangle to keep instead of cropping on its own", async () => {
     const input = await sharp({
-      create: {
-        width: 120,
-        height: 100,
-        channels: 3,
-        background: "#ffffff",
-      },
+      create: { width: 120, height: 100, channels: 3, background: "#ffffff" },
     })
       .composite([
         {
@@ -173,45 +198,51 @@ describe("cropImageIfNeeded", () => {
       .png()
       .toBuffer();
 
-    fs.writeFileSync(testImagePath, input);
+    const box = await suggestCropBox(input);
 
-    try {
-      const resultUrl = await cropImageIfNeeded(`/uploads/${testImageName}`, {
-        minMarginPixels: 10,
-      });
-      expect(resultUrl).toBe(`/uploads/test-crop-temp_crop.png`);
+    expect(box).toEqual({
+      left: 25,
+      top: 20,
+      width: 70,
+      height: 50,
+      imageWidth: 120,
+      imageHeight: 100,
+    });
+  });
 
-      expect(fs.existsSync(testImagePath)).toBe(true);
-      const croppedFilePath = path.join(uploadsDir, "test-crop-temp_crop.png");
-      expect(fs.existsSync(croppedFilePath)).toBe(true);
+  it("suggests nothing when the margins are thinner than asked", async () => {
+    const input = await sharp({
+      create: { width: 120, height: 100, channels: 3, background: "#ffffff" },
+    })
+      .composite([
+        {
+          input: await sharp({
+            create: {
+              width: 118,
+              height: 98,
+              channels: 3,
+              background: "#f97316",
+            },
+          })
+            .png()
+            .toBuffer(),
+          left: 1,
+          top: 1,
+        },
+      ])
+      .png()
+      .toBuffer();
 
-      const croppedMetadata = await sharp(croppedFilePath).metadata();
-      expect(croppedMetadata.width).toBe(70);
-      expect(croppedMetadata.height).toBe(50);
+    expect(await suggestCropBox(input, { minMarginPixels: 30 })).toBeNull();
+  });
 
-      const testImageNameNoCrop = "test-nocrop-temp.png";
-      const testImagePathNoCrop = path.join(uploadsDir, testImageNameNoCrop);
-      fs.writeFileSync(testImagePathNoCrop, input);
+  it("suggests nothing on an image with no neutral margin at all", async () => {
+    const input = await sharp({
+      create: { width: 80, height: 60, channels: 3, background: "#f97316" },
+    })
+      .png()
+      .toBuffer();
 
-      try {
-        const resultUrlNoCrop = await cropImageIfNeeded(
-          `/uploads/${testImageNameNoCrop}`,
-          { minMarginPixels: 100 },
-        );
-        expect(resultUrlNoCrop).toBe(`/uploads/${testImageNameNoCrop}`);
-        expect(fs.existsSync(testImagePathNoCrop)).toBe(true);
-        expect(
-          fs.existsSync(path.join(uploadsDir, "test-nocrop-temp_crop.png")),
-        ).toBe(false);
-      } finally {
-        if (fs.existsSync(testImagePathNoCrop)) {
-          fs.unlinkSync(testImagePathNoCrop);
-        }
-      }
-    } finally {
-      if (fs.existsSync(testImagePath)) fs.unlinkSync(testImagePath);
-      const croppedFilePath = path.join(uploadsDir, "test-crop-temp_crop.png");
-      if (fs.existsSync(croppedFilePath)) fs.unlinkSync(croppedFilePath);
-    }
+    expect(await suggestCropBox(input)).toBeNull();
   });
 });

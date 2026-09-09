@@ -1,4 +1,5 @@
 import { uploadImage } from "@/lib/api/upload";
+import { isServedLocalPath } from "@/lib/media/servedLocalPaths";
 import {
   remoteImageDisplaySrc,
   remoteImageNeedsProxy,
@@ -6,10 +7,6 @@ import {
 } from "@/core/enrich/media/remoteImageDisplay";
 
 export type FormImageValue = string | File | null | undefined;
-
-function isLocalUploadUrl(url: string): boolean {
-  return url.startsWith("/uploads/");
-}
 
 function isDataImageUrl(url: string): boolean {
   return /^data:image\/[a-zA-Z+]+;base64,/i.test(url);
@@ -82,7 +79,7 @@ async function dataUrlToUploadUrl(
 }
 
 /**
- * Persist a form image field: local `/uploads/` unchanged, `File` uploaded as-is,
+ * Persist a form image field: an already-served local path unchanged, `File` uploaded as-is,
  * referer-protected remote URLs fetched via the UI proxy then uploaded. Other remote
  * URLs are left for the API's server-side localizer.
  */
@@ -97,7 +94,7 @@ export async function localizeImageFieldForSubmit(
 
   const trimmed = value.trim();
   if (!trimmed) return null;
-  if (isLocalUploadUrl(trimmed)) return trimmed;
+  if (isServedLocalPath(trimmed)) return trimmed;
 
   if (isDataImageUrl(trimmed)) {
     return dataUrlToUploadUrl(trimmed, options);

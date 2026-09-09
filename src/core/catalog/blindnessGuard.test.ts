@@ -22,7 +22,73 @@ type ProviderLiteralInventory = Record<
 >;
 
 /** Empty = zero quoted provider ids outside `src/providers/` (+ tests). */
-const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {};
+const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
+  /*
+    Faux positif assumé, et le seul. `PACK_PRINT_GAME` associe un id de **pack**
+    au slug de jeu de ses `printKey` ; deux de ces slugs — `dbscg`, `dbsfw` —
+    s'écrivent comme l'id du provider correspondant. Ce ne sont pas des
+    références à un provider : cette table vit dans `providers/` exprès, pour
+    que `core/` n'ait jamais à nommer un TCG.
+
+    À ne pas confondre avec ce que le garde des imports frères interdit, lui,
+    pour de bon — voir `providers/shared/sharedBlindness.test.ts`.
+  */
+  "src/providers/shared/sealedProducts/ingest.ts": { dbscg: 2, dbsfw: 2 },
+  /*
+    Vague TCG locale (ADR-014) : l'id de **pack** catalogue / effets /
+    staging dbscards est volontairement le même slug que le provider
+    `createLocalTcgLine` (un dossier data = une ligne = un module). Ce n'est
+    pas du câblage core→provider — c'est le registre des packs et le lien
+    site→pack. Renommer les packs casserait `data/<pack>/`.
+  */
+  "src/lib/admin/cataloguePacks.ts": {
+    digimon: 9,
+    mtg: 9,
+    onepiece: 8,
+    yugioh: 8,
+  },
+  /*
+    Extract targets = pack ids pour Digimon / OPTCG / YGO / MTG (même collision
+    pack/provider que cataloguePacks). Un `case "digimon"` par ligne.
+  */
+  "src/lib/admin/catalogueExtractRunner.ts": {
+    digimon: 1,
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
+  "src/effects/digimon/index.ts": { digimon: 1 },
+  "src/effects/mtg/index.ts": { mtg: 1 },
+  "src/effects/onepiece/index.ts": { onepiece: 1 },
+  "src/effects/yugioh/index.ts": { yugioh: 1 },
+  "src/providers/shared/dbscards/sites.ts": {
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
+};
+
+/**
+ * Same idea for provider ids used as **unquoted object keys** (`philibert: …`).
+ * The quoted-literal sweep above cannot see those, which is how two tables of
+ * provider knowledge survived in core (the queue knobs, closed 2026-07-25, and
+ * the entries below). Shrink this to `{}`.
+ */
+const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
+  // `GameLookupInputs` still names two marketplace buckets, and picks a title
+  // from them in provider-preference order — tracked in docs/backlog.md.
+  "src/core/identify/gameLookup.ts": { ebay: 2, freakxy: 1 },
+  "src/core/identify/lookup/lookups.ts": { ebay: 1, freakxy: 1 },
+  // Alias map pack extract target → CataloguePackId (même collision pack/provider).
+  "src/lib/admin/cataloguePacks.ts": {
+    digimon: 1,
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
+};
+
+const SHARED_PROVIDER_DIR = path.join("src", "providers", "shared");
 
 const SOURCE_ROOTS = ["src", "scripts"];
 const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);
@@ -37,8 +103,23 @@ function listSourceFiles(dir: string, files: string[] = []): string[] {
     const relativePath = path.relative(process.cwd(), absolutePath);
 
     if (entry.isDirectory()) {
-      if (relativePath === "src/providers") continue;
-      if (relativePath.startsWith("src/providers/")) continue;
+      /*
+        `src/providers/shared/` est balayé comme le reste : c'est de
+        l'infrastructure, pas un provider. La distinction manquait, et c'est par
+        cet angle mort que du code partagé s'est mis à importer un provider
+        nommément et à brancher sur des ids de pack — ce que ce garde existe
+        précisément pour interdire ailleurs.
+      */
+      if (relativePath === "src/providers") {
+        listSourceFiles(path.join(absolutePath, "shared"), files);
+        continue;
+      }
+      if (
+        relativePath.startsWith("src/providers/") &&
+        !relativePath.startsWith(SHARED_PROVIDER_DIR)
+      ) {
+        continue;
+      }
       listSourceFiles(absolutePath, files);
       continue;
     }
@@ -70,6 +151,41 @@ function inventoryProviderLiterals(): ProviderLiteralInventory {
         "gi",
       );
       const matches = text.match(quotedLiteral);
+      if (matches?.length) {
+        fileHits[term] = matches.length;
+      }
+    }
+
+    if (Object.keys(fileHits).length > 0) {
+      inventory[relativePath] = fileHits;
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(inventory).sort(([a], [b]) => a.localeCompare(b)),
+  );
+}
+
+function inventoryProviderKeys(): ProviderLiteralInventory {
+  const inventory: ProviderLiteralInventory = {};
+  const sourceFiles = SOURCE_ROOTS.flatMap((sourceRoot) =>
+    listSourceFiles(path.join(process.cwd(), sourceRoot)),
+  );
+
+  for (const absolutePath of sourceFiles) {
+    const text = fs.readFileSync(absolutePath, "utf8");
+    const relativePath = path.relative(process.cwd(), absolutePath);
+    const fileHits: Partial<Record<ProviderTerm, number>> = {};
+
+    for (const term of PROVIDER_TERMS) {
+      // `foo:` in *key position* only — at the start of a line (optionally
+      // after `{` or `,`), so prose like "pnpm foo:build" and property reads
+      // are not counted. `?:` covers optional members.
+      const objectKey = new RegExp(
+        `(?:^|[{,])\\s*${escapeRegExp(term)}\\s*\\??\\s*:`,
+        "gm",
+      );
+      const matches = text.match(objectKey);
       if (matches?.length) {
         fileHits[term] = matches.length;
       }
@@ -122,6 +238,14 @@ describe("provider-blind core guard", () => {
     for (const id of registryIds) {
       expect(PROVIDER_TERMS).toContain(id);
     }
+  });
+
+  it("keeps provider ids out of core object keys too", () => {
+    const differences = diffInventory(
+      inventoryProviderKeys(),
+      ALLOWED_PROVIDER_KEYS,
+    );
+    expect(differences).toEqual([]);
   });
 
   it("keeps provider literals outside provider modules on a shrinking allowlist", () => {

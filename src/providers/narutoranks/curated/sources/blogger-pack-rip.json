@@ -1,0 +1,47 @@
+{
+  "source": "A Pack To Be Named Later — rip Dollar Tree, octobre 2010",
+  "url": "http://apacktobenamedlater.blogspot.com/2010/10/2006-paniniinkworks-naruto-ninja-ranks.html",
+  "observed": "2026-08-21",
+  "ingest": "green wrapper dump beside the official yellow wrap; SD-4 front + unique die-cut back. Not an official host.",
+  "line": "ninja-ranks",
+  "sourceId": "blogger",
+  "lang": "en",
+  "referer": "http://apacktobenamedlater.blogspot.com/2010/10/2006-paniniinkworks-naruto-ninja-ranks.html",
+  "assets": [
+    {
+      "file": "wrap-green.jpg",
+      "url": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhXdAh7dzeUJEOapT5iBRIcbn24nYIAeGHzwmxnuY7Mbyi3_gBnsMTnUmDGJT11JU-rRyGSCgqsfOiAlkcLStm2xjN0IEiJ5C3cYvF_6cl8jJqg7o3bDFb5UX_4nr3J_TcUYaa1nJN2Zg/s1600/",
+      "role": "product-art",
+      "slug": "booster",
+      "why": "Sealed US pack, metallic green wrap, same Team 7 key art as nnrwrapmed.jpg (yellow). Second of the four wrappers TDmonthly mentioned. Extra dump, not a second SKU."
+    },
+    {
+      "file": "sd-0004.jpg",
+      "url": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgi7NMXqiXOuqEhHKPw3vGiHK_dBBLEAprkBugyZ_HlXJPYhPDhxw-SKhXLGLq0eTlAK4XJiaIL36Q_QEYqMSSu5MIM8zseM2CgQJFeIXgD536G7pNg4E7RrnpbN_v_jBmNSGwj9IHF4g/s1600/",
+      "role": "card-art",
+      "printed": "SD-4",
+      "setCode": "sd",
+      "number": "0004",
+      "why": "Die-cut Super Deformed Kakashi. Checklist SD-4. No official sample for this print."
+    },
+    {
+      "file": "sd-0004-back.jpg",
+      "url": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj17v4QwyJFIG73oBrRY7owV8mAx9OF31kX3TxqgOa14ERNTW3TKKeis4YLnQQyk1MGyh8J36-j_VeHImkksxn-d7XYQsX5OoAGcL43mE5ENdrzvjWnd4DPT33JtPz01asSDb98F1dC-A/s1600/",
+      "role": "card-back",
+      "printed": "SD-4",
+      "setCode": "sd",
+      "number": "0004",
+      "why": "Printed code SD4 on the die-cut verso. Unique to this chase, not the pack sleeve — do not copy to cards/back.fr.webp."
+    }
+  ],
+  "notIngested": [
+    {
+      "file": "pack-grid.jpg",
+      "url": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_poVCEfFfZvcGq7LvfaX0H8MRTfyqT7q_qEf_vsUy3dXrwwE7mTTq0e5Yv0YTmAdW1sq1RI5ZjiWO3BX6SMdNmVrUvgCe_DClFM9wRiN-PHEBP0YkojDecmM3DjK45HXSyliWOFiJ5A/s1600/",
+      "reason": "3×3 collage of the opened pack. Not a single face."
+    },
+    {
+      "reason": "TDmonthly narutotin.jpg — visuel « TRADING CARD GAME » Team 7, pas un tin Inkworks. CDX *tin* vide. nslists tin is a NR + Way of the Ninja mix. Do not mint."
+    }
+  ]
+}

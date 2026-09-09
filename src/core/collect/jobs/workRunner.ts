@@ -1,4 +1,4 @@
-import type { Prisma, Type } from "@prisma/client";
+import type { Prisma, Type } from "@/generated/prisma/browser";
 
 import {
   adoptItemMetadataRefreshOnWorker,
@@ -10,7 +10,11 @@ import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
   isBackgroundWorkJobCancelled,
+  mergeCatalogueExtractCompletedStep,
+  touchBackgroundWorkJobLock,
+  type ApkStoreFetchJobPayload,
   type BackgroundWorkJobRow,
+  type CatalogueExtractJobPayload,
   type MetadataRefreshJobPayload,
   type PriceRefreshJobPayload,
 } from "@/core/collect/jobs/workQueue";
@@ -31,13 +35,32 @@ import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProvide
 import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesSiblingBarcodes";
 import { prisma } from "@/lib/db/prisma";
 import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
+import { parseCatalogueCheckpointStep } from "@/lib/admin/catalogueExtractCheckpoint";
+import {
+  catalogueExtractTimeoutMs,
+  normalizeCatalogueExtractScope,
+  normalizeCatalogueExtractTarget,
+  runCatalogueExtractCommand,
+} from "@/lib/admin/catalogueExtractRunner";
 import path from "path";
 
 const CANCEL_POLL_MS = 2_000;
+/** Foil CDN scrapes can run 15–40 min — refresh lock so stale recovery stays off. */
+const FOIL_LOCK_HEARTBEAT_MS = 60_000;
 /** Hard ceiling: spinner must not sit forever behind Flare scrapes. */
 const METADATA_JOB_TIMEOUT_MS = 90_000;
 /** Price scrapes must not monopolize every worker slot for minutes. */
 const PRICE_JOB_TIMEOUT_MS = 60_000;
+
+/** Admin Local indexes → full rebuild; tick / auto schedule → soft pass. */
+function catalogIndexJobIsAuto(payload: unknown): boolean {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const row = payload as Record<string, unknown>;
+    if (row.source === "admin") return false;
+    if (row.tick === true) return true;
+  }
+  return true;
+}
 
 function withTimeout<T>(
   promise: Promise<T>,
@@ -133,6 +156,7 @@ async function enqueuePricesAfterMetadata(itemId: string): Promise<void> {
         metadataFacts: context.metadataFacts,
         shelfType: context.shelfType,
         shelfName: context.shelfName,
+        printKey: context.printKey,
         force,
       } as unknown as Prisma.InputJsonValue,
     });
@@ -145,7 +169,9 @@ async function enqueuePricesAfterMetadata(itemId: string): Promise<void> {
 }
 
 /** Seed ISBN → series siblings EANs → soft price enqueue for newly barcoded. */
-async function attachSeriesBarcodesAfterMetadata(itemId: string): Promise<void> {
+async function attachSeriesBarcodesAfterMetadata(
+  itemId: string,
+): Promise<void> {
   try {
     const { attached } = await attachSeriesSiblingBarcodesFromProviders(itemId);
     for (const row of attached) {
@@ -231,6 +257,11 @@ export async function executeMetadataRefreshJob(
     if (adopted.signal.aborted && !stored) {
       abandoned = new BackgroundWorkAbandonedError("cancelled");
     }
+    if (!stored && !adopted.signal.aborted) {
+      console.warn(
+        `[MetadataRefresh] Empty store for item ${payload.itemId} lookup="${payload.lookupQuery}" (providers returned nothing durable)`,
+      );
+    }
   } catch (error) {
     if (!isAbortError(error)) {
       console.error(
@@ -261,21 +292,32 @@ export async function executeMetadataRefreshJob(
 export async function executePriceRefreshJob(
   payload: PriceRefreshJobPayload,
 ): Promise<void> {
-  const context: ItemPricesContext = {
-    id: payload.id,
-    barcode: payload.barcode,
-    name: payload.name,
-    metadataId: payload.metadataId,
-    metadataTitle: payload.metadataTitle,
-    metadataAliases: payload.metadataAliases,
-    metadataReleaseDate: payload.metadataReleaseDate,
-    metadataPlatformKey: payload.metadataPlatformKey,
-    metadataExternalIds: payload.metadataExternalIds,
-    metadataBarcodes: payload.metadataBarcodes,
-    metadataFacts: payload.metadataFacts as ItemPricesContext["metadataFacts"],
-    shelfType: payload.shelfType,
-    shelfName: payload.shelfName,
-  };
+  // Prefer live item row over the enqueue-time payload: older jobs omitted
+  // printKey, and metadata aliases (EN titles for Lorcast) can land after the
+  // price job was queued.
+  const item = await prisma.item.findUnique({
+    where: { id: payload.id },
+    include: { shelf: true, metadata: true },
+  });
+  const context: ItemPricesContext = item
+    ? itemPricesContextFromRecord(item)
+    : {
+        id: payload.id,
+        barcode: payload.barcode,
+        name: payload.name,
+        metadataId: payload.metadataId,
+        metadataTitle: payload.metadataTitle,
+        metadataAliases: payload.metadataAliases,
+        metadataReleaseDate: payload.metadataReleaseDate,
+        metadataPlatformKey: payload.metadataPlatformKey,
+        metadataExternalIds: payload.metadataExternalIds,
+        metadataBarcodes: payload.metadataBarcodes,
+        metadataFacts:
+          payload.metadataFacts as ItemPricesContext["metadataFacts"],
+        shelfType: payload.shelfType,
+        shelfName: payload.shelfName,
+        printKey: payload.printKey,
+      };
 
   const controller = new AbortController();
   try {
@@ -327,12 +369,264 @@ export async function executeBackgroundWorkJob(
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.icollectCatalogSync) {
-    const { runICollectCatalogSyncTick } = await import(
-      "@/providers/icollect/catalogSync"
+    const { refreshICollectCatalog } =
+      await import("@/providers/icollect/pipeline");
+    await refreshICollectCatalog({
+      auto: catalogIndexJobIsAuto(payload),
+    });
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.launchboxIndexSync) {
+    const { refreshLaunchBoxCatalog } =
+      await import("@/providers/launchbox/pipeline");
+    await refreshLaunchBoxCatalog();
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.nointroIndexSync) {
+    const { refreshNoIntroCatalog } =
+      await import("@/providers/nointro/pipeline");
+    await refreshNoIntroCatalog({
+      auto: catalogIndexJobIsAuto(payload),
+    });
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.catalogProviderSync) {
+    /*
+      Restreint ici comme les autres branches le font : `payload` est
+      volontairement `unknown` en tête de fonction, et chaque type de job dit
+      lui-même ce qu'il attend. La forme est documentée sur `workQueue` —
+      `{ providerId, auto?, only?, skip?, langs?, limit? }`.
+    */
+    const catalogPayload =
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : {};
+    const providerId =
+      typeof catalogPayload.providerId === "string"
+        ? catalogPayload.providerId.trim()
+        : "";
+    if (!providerId) throw new Error("catalogProviderSync requires providerId");
+    const { getCatalogProviderModule } = await import("@/core/catalog/catalog");
+    const { catalogRefreshOptsFromPayload } = await import(
+      "@/lib/admin/catalogRefreshOpts"
     );
-    await runICollectCatalogSyncTick();
+    const mdl = getCatalogProviderModule(providerId);
+    if (!mdl?.catalog) {
+      throw new Error(`No catalog hooks for provider ${providerId}`);
+    }
+    await mdl.catalog.refresh(catalogRefreshOptsFromPayload(catalogPayload));
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.catalogueExtract) {
+    await executeFoilExtractJob(job, payload as CatalogueExtractJobPayload);
+    return;
+  }
+
+  if (job.kind === BACKGROUND_WORK_KIND.apkStoreFetch) {
+    await executeApkStoreFetchJob(job, payload as ApkStoreFetchJobPayload);
     return;
   }
 
   throw new Error(`Unknown background work kind: ${job.kind}`);
+}
+
+/**
+ * Store APK fetch → on a new version, chain the pack's foil extract.
+ * Heartbeats like the foil job: a slow mirror download can outlive the
+ * default stale-running window.
+ */
+async function executeApkStoreFetchJob(
+  job: BackgroundWorkJobRow,
+  payload: ApkStoreFetchJobPayload,
+): Promise<void> {
+  const pack = String(payload?.pack ?? "").trim();
+  const { cataloguePackInfo } = await import("@/lib/admin/cataloguePacks");
+  const info = cataloguePackInfo(pack);
+  if (!info?.androidPackageId) {
+    throw new Error(`apkStoreFetch: no androidPackageId for pack ${pack}`);
+  }
+
+  const controller = new AbortController();
+  const cancelPoll = setInterval(() => {
+    void isBackgroundWorkJobCancelled(job.id).then((cancelled) => {
+      if (cancelled) controller.abort();
+    });
+  }, CANCEL_POLL_MS);
+  if (typeof cancelPoll.unref === "function") cancelPoll.unref();
+  const heartbeat = setInterval(() => {
+    void touchBackgroundWorkJobLock(job.id);
+  }, FOIL_LOCK_HEARTBEAT_MS);
+  if (typeof heartbeat.unref === "function") heartbeat.unref();
+
+  try {
+    const { fetchStoreApksForPack } = await import(
+      "@/lib/admin/apkStoreFetch"
+    );
+    const result = await fetchStoreApksForPack(pack, {
+      force: payload?.force,
+      signal: controller.signal,
+      onLog: (line) => process.stdout.write(`[ApkStore ${pack}] ${line}\n`),
+    });
+    if (result.status === "unavailable") {
+      throw new Error(`apkStoreFetch ${pack}: ${result.reason}`);
+    }
+    if (result.status === "updated") {
+      await enqueueBackgroundWorkJob({
+        kind: BACKGROUND_WORK_KIND.catalogueExtract,
+        userId: job.userId,
+        payload: { target: info.extractTarget },
+        replaceOpenForKind: true,
+        replaceOpenPayloadMatch: {
+          path: ["target"],
+          equals: info.extractTarget,
+        },
+      });
+      process.stdout.write(
+        `[ApkStore ${pack}] versionCode=${result.versionCode} → foil extract enqueued\n`,
+      );
+    }
+  } catch (error) {
+    if (
+      controller.signal.aborted ||
+      (await isBackgroundWorkJobCancelled(job.id))
+    ) {
+      return;
+    }
+    throw error;
+  } finally {
+    clearInterval(cancelPoll);
+    clearInterval(heartbeat);
+  }
+}
+
+async function stampFoilExtractFailure(
+  pack: string,
+  jobId: string,
+  message: string,
+): Promise<void> {
+  try {
+    const { appendCatalogueExtractLog, beginCatalogueExtractLog } =
+      await import("@/lib/admin/catalogueExtractLog");
+    const { readCatalogueExtractLog } =
+      await import("@/lib/admin/catalogueExtractLog");
+    const { isCatalogueExtractTarget } =
+      await import("@/lib/admin/catalogueExtractRunner");
+    if (!isCatalogueExtractTarget(pack)) return;
+    const typed = pack;
+    const existing = await readCatalogueExtractLog(typed, {
+      after: 0,
+      maxBytes: 64,
+    });
+    // Keep any scrape tail already on disk — only seed a fresh header when empty.
+    if (!existing.exists || existing.size === 0) {
+      await beginCatalogueExtractLog(typed, [`jobId=${jobId}`]);
+    }
+    await appendCatalogueExtractLog(typed, `status=failed`);
+    await appendCatalogueExtractLog(typed, message);
+  } catch {
+    /* log must not mask the real failure */
+  }
+}
+
+async function executeFoilExtractJob(
+  job: BackgroundWorkJobRow,
+  payload: CatalogueExtractJobPayload,
+): Promise<void> {
+  const rawTarget = String(payload?.target ?? "").trim();
+  const target = normalizeCatalogueExtractTarget(rawTarget);
+  if (!target) {
+    const message = `Invalid foil extract target: ${rawTarget || "(empty)"}`;
+    if (rawTarget) await stampFoilExtractFailure(rawTarget, job.id, message);
+    throw new Error(message);
+  }
+
+  const controller = new AbortController();
+  const cancelPoll = setInterval(() => {
+    void isBackgroundWorkJobCancelled(job.id).then((cancelled) => {
+      if (cancelled) controller.abort();
+    });
+  }, CANCEL_POLL_MS);
+  if (typeof cancelPoll.unref === "function") cancelPoll.unref();
+
+  const heartbeat = setInterval(() => {
+    void touchBackgroundWorkJobLock(job.id);
+  }, FOIL_LOCK_HEARTBEAT_MS);
+  if (typeof heartbeat.unref === "function") heartbeat.unref();
+  // Fresh lock immediately so a slow spawn is still covered.
+  void touchBackgroundWorkJobLock(job.id);
+
+  const logTail: string[] = [];
+  // The extract runs in-process and its Unity phases are CPU-synchronous: the
+  // interval above can starve for >30 min, which made the janitor abandon jobs
+  // that were still writing files. Log lines are emitted from inside the
+  // pipeline, so a throttled touch here beats even when timers cannot.
+  let lastLogTouch = 0;
+  let touchChain: Promise<unknown> = Promise.resolve();
+  const writeLog = (line: string) => {
+    const now = Date.now();
+    // Touch every ~15s on log activity (awaited chain — fire-and-forget was
+    // dropped under Prisma pool pressure during AssetManifest storms).
+    if (now - lastLogTouch >= FOIL_LOCK_HEARTBEAT_MS / 4) {
+      lastLogTouch = now;
+      touchChain = touchChain
+        .then(() => touchBackgroundWorkJobLock(job.id))
+        .catch(() => false);
+    }
+    logTail.push(line);
+    if (logTail.length > 40) logTail.shift();
+    // Do not use console.* here: runCatalogueExtractCommand tees console, and
+    // console → onLog → console would recurse until stack overflow.
+    if (logTail.length % 20 === 0) {
+      process.stdout.write(`[FoilExtract ${target}] ${line}\n`);
+    }
+    const step = parseCatalogueCheckpointStep(line);
+    if (step) {
+      void mergeCatalogueExtractCompletedStep(job.id, step);
+    }
+  };
+
+  try {
+    const explicitScope =
+      payload?.scope != null && String(payload.scope).trim() !== ""
+        ? normalizeCatalogueExtractScope(payload.scope)
+        : undefined;
+    await runCatalogueExtractCommand(target, {
+      signal: controller.signal,
+      timeoutMs: explicitScope
+        ? catalogueExtractTimeoutMs(target, explicitScope)
+        : undefined,
+      onLog: writeLog,
+      logHeader: [`jobId=${job.id}`],
+      scope: explicitScope,
+      completedSteps: Array.isArray(payload?.completedSteps)
+        ? payload.completedSteps.filter(
+            (value): value is string => typeof value === "string",
+          )
+        : undefined,
+      auto: payload?.auto === true,
+      forceApk: payload?.forceApk === true,
+    });
+  } catch (error) {
+    if (
+      controller.signal.aborted ||
+      (await isBackgroundWorkJobCancelled(job.id))
+    ) {
+      return;
+    }
+    const tail = logTail.slice(-8).join("\n");
+    const message = error instanceof Error ? error.message : String(error);
+    await stampFoilExtractFailure(
+      target,
+      job.id,
+      tail ? `${message}\n---\n${tail}` : message,
+    );
+    throw new Error(tail ? `${message}\n---\n${tail}` : message);
+  } finally {
+    clearInterval(cancelPoll);
+    clearInterval(heartbeat);
+  }
 }

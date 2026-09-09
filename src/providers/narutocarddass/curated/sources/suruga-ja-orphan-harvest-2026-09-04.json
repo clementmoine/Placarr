@@ -1,0 +1,28 @@
+{
+  "observed": "2026-09-04",
+  "listed": 534,
+  "orphanHits": 0,
+  "hits": [],
+  "sampleNonOrphan": [
+    {
+      "id": "GL637080",
+      "printed": "術-197"
+    },
+    {
+      "id": "GL238776",
+      "printed": "作-5"
+    },
+    {
+      "id": "GL637055",
+      "printed": "術-186"
+    },
+    {
+      "id": "GL406659",
+      "printed": "作-116"
+    },
+    {
+      "id": "GL759363",
+      "printed": "術-41"
+    }
+  ]
+}

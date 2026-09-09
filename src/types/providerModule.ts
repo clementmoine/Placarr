@@ -1,4 +1,4 @@
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -20,6 +20,14 @@ export type InferredImageAttachmentSemantics = {
 export type MatchContext = {
   /** Digits-only barcodes known for this item (EAN / UPC / ISBN…). Preferred first. */
   barcodes: string[];
+  /**
+   * Print identity for objects that never carry a barcode — a trading card is
+   * anchored by what is printed on it (game, set, collector number). Sits
+   * alongside `barcodes` rather than inside it: a print key is not a barcode,
+   * and a column that lies costs more than the extra field.
+   * See `@/core/identify/printKey`.
+   */
+  printKey?: string | null;
   /** Primary display title. */
   primaryTitle: string;
   /**
@@ -53,6 +61,8 @@ export type MetadataAdapterContext = {
   name: string;
   type?: string | null;
   barcode?: string | null;
+  /** Print identity for barcode-less objects. See {@link MatchContext.printKey}. */
+  printKey?: string | null;
   platform?: string | null;
   shelfName?: string | null;
   lookupQueries?: string[];
@@ -127,6 +137,11 @@ export type BarcodePriceRefreshContext = MatchContext & {
   isClassics: boolean;
   /** Job abort — stop launching further provider scrapes when set. */
   signal?: AbortSignal;
+  /**
+   * Rejoue uniquement ProviderEvidence frais (SearchYield / DetailYield) —
+   * aucun HTTP. Miss evidence ⇒ offre vide pour ce provider.
+   */
+  evidenceOnly?: boolean;
 };
 
 export type CatalogExternalLinkContext = {
@@ -151,6 +166,204 @@ export type DatabaseTitleSuggestionContext = {
   platform?: string | null;
 };
 
+export type PrintLookupContext = {
+  printKey: string;
+  /** Disambiguates the rare printed identifier covering two cards. */
+  name?: string | null;
+  language?: string | null;
+  signal?: AbortSignal;
+};
+
+export type PrintSearchContext = {
+  /** Raw user query. Providers normalize it themselves. */
+  query: string;
+  /** Preferred language for names and artwork, when the provider has several. */
+  language?: string | null;
+  limit?: number;
+  signal?: AbortSignal;
+  /**
+   * Restreint à une extension, telle que `listPrintSets` l'a annoncée.
+   *
+   * Avec elle, une requête **vide** est légitime : c'est ainsi qu'on parcourt
+   * un set sans savoir quoi y chercher. Un provider qui ne la gère pas rend une
+   * liste vide plutôt que d'ignorer la restriction et de répondre à côté.
+   */
+  setId?: string | null;
+};
+
+/** Une extension telle qu'un joueur la nomme, pour la choisir avant de chercher. */
+export type PrintSetOption = {
+  id: string;
+  label: string;
+  /**
+   * La **découpe** dont cette extension fait partie, quand un jeu en a
+   * plusieurs.
+   *
+   * Un même jeu peut avoir été découpé différemment selon le marché, et ces
+   * découpes ne se recouvrent pas : le Naruto Carddass compte dix-sept 巻ノ au
+   * Japon et vingt-huit séries en Europe, le 巻ノ十 recoupant les séries 4 et 5.
+   * Les fondre en une seule liste dirait qu'elles sont interchangeables ; n'en
+   * montrer qu'une à la fois cacherait l'autre. Nommer la découpe permet de les
+   * présenter côte à côte sans les confondre.
+   *
+   * Absent = le jeu n'a qu'une découpe, et il n'y a rien à distinguer.
+   */
+  group?: string;
+  /**
+   * Le rang de cette extension dans sa ligne, quand le libellé ne le porte pas.
+   *
+   * « Quest for Power » est la septième série, et son nom ne l'annonce pas :
+   * trié alphabétiquement il tombe sous Q. Ce rang est ce qui permet de ranger
+   * les extensions dans l'ordre où elles sont sorties, y compris quand elles
+   * sont nommées et non numérotées.
+   */
+  sortKey?: number;
+  /**
+   * Les langues dans lesquelles cette extension a **paru**.
+   *
+   * Ce n'est pas la langue des cartes qui la composent : le 巻ノ一 contient des
+   * numéros dont il existe une version française, mais aucun 巻ノ n'est jamais
+   * sorti en France — c'était une sortie japonaise. Choisir « français » doit
+   * donc faire disparaître les 巻ノ de la liste, pas les garder au prétexte que
+   * leurs cartes ont un nom français.
+   *
+   * Absent = on ne sait pas, et un filtre de langue ne masque rien.
+   */
+  languages?: string[];
+};
+
+/**
+ * One pickable printing. Everything here exists to let a human tell two prints
+ * of the same card apart, so the fields are the ones printed on the card or
+ * visible at a glance.
+ */
+export type PrintCandidate = {
+  /** Provider-neutral anchor. See `@/core/identify/printKey`. */
+  printKey: string;
+  /** `Elsa - Esprit de l'hiver`. */
+  title: string;
+  /** Where it comes from, as a collector reads it: `Premier Chapitre · 207`. */
+  reference: string;
+  /**
+   * L'extension seule, telle qu'un joueur la nomme — `Série 1 — Maître Hokage /
+   * Pays du Vent`, `Le Retour d'Ursula`.
+   *
+   * Distincte de `reference`, qui mêle l'extension et le numéro, et de
+   * `setCode`, qui est un identifiant. Sert à regrouper des tirages par
+   * extension sans découper une chaîne d'affichage : tous les catalogues ne
+   * mettent pas l'extension dans `reference`, et celui qui l'omet donnerait un
+   * faux groupe par carte.
+   */
+  setLabel?: string | null;
+  rarity?: string | null;
+  /**
+   * Quarters of a turn for faces that share the shelf card format but sit on
+   * their side (e.g. Pokémon BREAK = TCG 5:7 rotated → 7:5). Omit / 0 = upright.
+   */
+  faceQuarterTurns?: 0 | 1 | 2 | 3;
+  /**
+   * Native landscape scan in a portrait card slot — swap the display frame, do
+   * not rotate the artwork (Ninja Ranks NS, ROOKIES).
+   */
+  landscapeFace?: boolean;
+  /** Any locale art for this print is wider than tall. */
+  landscapePrint?: boolean;
+  /** Kayou HR/BP lenticular sprite — one panel shown at a time. */
+  lenticularGrid?: { cols: number; rows: number } | null;
+  /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
+  lenticularCropProfile?: string | null;
+  /** Kayou portrait scan gutter trim — single-face HR/MR/BP strips. */
+  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
+  /**
+   * Card family as the catalogue spells it (`Pokémon`, `Dresseur`, `Énergie`).
+   * A look is chosen per family as much as per rarity — a Dresseur wearing a
+   * Pokémon frame gets an energy badge and an HP bar it has no use for.
+   */
+  category?: string | null;
+  thumbnailUrl?: string | null;
+  imageUrl?: string | null;
+  language?: string | null;
+  /**
+   * Set / expansion code when the catalogue has one. Used to rank set-scoped
+   * card backs (`resolveCardBack`) without re-querying the provider.
+   */
+  setCode?: string | null;
+  /**
+   * Card-specific back / alt face URL (e.g. DBS leader morph). Becomes the
+   * default over set and pack backs when present. See `resolveCardBackUrl`.
+   */
+  cardBackUrl?: string | null;
+  /**
+   * Finishes this print exists in. The copy's own finish is chosen by the user
+   * at add time — it belongs to the item, never to the print.
+   */
+  finishes?: string[];
+  /**
+   * The subset of `finishes` that carries no visual effect — a plain print.
+   * Core cannot infer this: only the provider knows that Lorcana's `None` means
+   * "no foil" while every other value means there is something to render.
+   */
+  plainFinishes?: string[];
+  /**
+   * Which look each finish is drawn with, keyed by finish, valued by an id from
+   * the shader library in `core/render/holoShaders`.
+   *
+   * The publisher names its finishes and core cannot read those names: only the
+   * provider knows that Lorcana's `Silver` is the everyday foil while `Lava`
+   * belongs to Enchanted cards and looks nothing like it. A finish left out, or
+   * pointed at an id this build does not define, falls back to the everyday
+   * foil — never to no effect at all.
+   */
+  finishShaders?: Record<string, string>;
+  /** Effect pack id from `src/effects/<id>` — never a Unity material name. */
+  effectPack?: string | null;
+  /**
+   * Which look the varnish is drawn with, keyed by the publisher's own name for
+   * it. A second, independent axis: a card can be Enchanted *and* hot-foiled,
+   * and the two are stamped separately.
+   */
+  varnishShaders?: Record<string, string>;
+  /** The varnish this print carries, if any. Keys `varnishShaders`. */
+  varnishType?: string | null;
+  /**
+   * The hue the stamped coat throws, when the provider can say.
+   *
+   * Nothing derives it — not the ink, the rarity, the set or the varnish — so a
+   * provider that cannot supply it leaves it null and the coat renders without
+   * one, rather than with a guess.
+   */
+  varnishColor?: string | null;
+  /**
+   * A second stamped coat, for the prints that carry two — its own mask and
+   * its own hue, both independent of the first.
+   */
+  secondVarnishMaskUrl?: string | null;
+  secondVarnishColor?: string | null;
+  /**
+   * Artwork per finish, when the provider publishes a distinct file rather than
+   * expecting the effect to be composited. Preferred over the mask when present.
+   */
+  variantImageUrls?: Record<string, string>;
+  /**
+   * Foil mask URL per catalogue finish (e.g. Live `std` vs `ph`). When set,
+   * preferred over the single {@link foilMaskUrl} for that finish.
+   */
+  finishFoilMaskUrls?: Record<string, string>;
+  /** Where the holographic effect applies. See `HoloCardImage`. */
+  foilMaskUrl?: string | null;
+  /** Second, independent effect layer (varnish). */
+  varnishMaskUrl?: string | null;
+  /** Exact provider handles, so re-resolution never re-runs the search. */
+  externalIds?: Record<string, string>;
+  /**
+   * False when this language was never printed. Omitted / true = addable.
+   * Search hides `printed: false`; the catalogue may still show the slot.
+   */
+  printed?: boolean;
+  /** Stamped by core from the module's own id; modules must not set it. */
+  providerId?: string;
+};
+
 export type GameBarcodeEnrichmentDeps = {
   fetchReferencePriceByBarcode?: (
     barcode: string,
@@ -173,6 +386,36 @@ export type SeriesVolumeBarcode = {
   barcode: string;
   title: string;
   coverUrl?: string;
+};
+
+/** Finish + varnish pair a dumped foil material asks the playroom to illustrate. */
+export type FoilPlayroomNeed = {
+  finish: string | null;
+  varnish: string | null;
+};
+
+/**
+ * One catalog print that can stand in for a playroom tile when the collection
+ * has no adapted copy. `variant` is the finish the material expects.
+ *
+ * Mask URLs are optional but should be filled when the catalogue already knows
+ * them — the playroom must not wait on a second print-variant round-trip
+ * before Unity can start (Lorcana HotFoil / foilMask gate).
+ */
+export type FoilPlayroomCatalogSample = {
+  id: string;
+  name: string;
+  variant: string | null;
+  printKey: string;
+  shelfType: string;
+  imageUrl: string | null;
+  foilMaskUrl?: string | null;
+  varnishMaskUrl?: string | null;
+  secondVarnishMaskUrl?: string | null;
+  varnishType?: string | null;
+  varnishColor?: string | null;
+  secondVarnishColor?: string | null;
+  effectPack?: string | null;
 };
 
 export type SeriesVolumeBarcodeContext = {
@@ -205,6 +448,7 @@ export type BarcodeLookupDeps = {
     preferredPlatform?: string,
     isPal?: boolean,
     isClassics?: boolean,
+    options?: { mediaType?: string | null },
   ) => Promise<unknown>;
   fetchFromChasseAuxLivres: (
     barcode: string,
@@ -263,11 +507,7 @@ export interface ProviderHealthCheck {
 }
 
 export type TestProviderHandlerKind =
-  | "scraped-list"
-  | "prices"
-  | "metadata-barcode"
-  | "metadata"
-  | "cover";
+  "scraped-list" | "prices" | "metadata-barcode" | "metadata" | "cover";
 
 export interface TestProviderFormatContext {
   processScrapedNames: (
@@ -291,14 +531,21 @@ export interface TestProviderHandler {
   ) => Promise<unknown>;
 }
 
+/**
+ * Probe samples may be barcode-only (Magento retailers seek by EAN), so the
+ * name is optional here — the audit fills it in before calling an adapter.
+ */
+export type ProviderMappingProbeContext = Omit<MetadataAdapterContext, "name"> &
+  Partial<Pick<MetadataAdapterContext, "name">>;
+
 export interface ProviderMappingProbeSample {
   sampleInput: string;
-  context: MetadataAdapterContext;
+  context: ProviderMappingProbeContext;
 }
 
 export interface ProviderMappingProbe {
   sampleInput: string;
-  context: MetadataAdapterContext;
+  context: ProviderMappingProbeContext;
   fallbackBarcodes?: string[];
   catalog?: string;
   /**
@@ -310,11 +557,7 @@ export interface ProviderMappingProbe {
 }
 
 export type MappingProbeStatus =
-  | "ok"
-  | "partial"
-  | "empty"
-  | "blocked"
-  | "error";
+  "ok" | "partial" | "empty" | "blocked" | "error";
 
 export interface MappingProbeResult {
   rawKeys: string[];
@@ -327,9 +570,170 @@ export interface MappingProbeResult {
   statusHint?: MappingProbeStatus;
 }
 
+export interface ProviderCatalogStatus {
+  /** No usable index / cards yet. */
+  empty: boolean;
+  /** Older than configured max-age, missing, or schema outdated. */
+  stale: boolean;
+  /** Last successful sync/build, when known. */
+  lastSyncAt: string | null;
+}
+
+export type ProviderCatalogRefreshOpts = {
+  /** Background / Plex-like path — prefer cheap sync when the provider supports it. */
+  auto?: boolean;
+  signal?: AbortSignal;
+  /**
+   * Run only these pipeline steps (`--only a,b`). Pack CLIs that do not
+   * understand `--only` ignore unknown argv or no-op — callers should stick to
+   * steps declared on the pack (`extract.pipelineSteps`).
+   */
+  only?: readonly string[];
+  /** Extra steps to skip (`--skip a,b`), merged with autoSkip when `auto`. */
+  skip?: readonly string[];
+  /** Locale filter (`--langs fr,en`). */
+  langs?: readonly string[];
+  /** Cap for series / faces / listings (`--limit N`). */
+  limit?: number;
+};
+
+/**
+ * Optional local-corpus surface for providers that own refreshable data under
+ * `data/<pack>/`. Core/admin discover these via the registry — never by id.
+ * @see docs/provider_supply_modes.md
+ */
+export interface ProviderCatalogHooks {
+  /** Pack slug under `data/<pack>/` (may differ from provider id). */
+  dataPack: string;
+  status: () => ProviderCatalogStatus | Promise<ProviderCatalogStatus>;
+  refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
+}
+
 export interface ProviderModule {
   info: ProviderInfo;
+  /**
+   * Local / scrape-cache corpus: status + in-process refresh for Catalogue hub
+   * and auto-sync. Tambouille stays in the module.
+   */
+  catalog?: ProviderCatalogHooks;
   evidence?: ProviderEvidenceConfig;
+  /**
+   * Les extensions de ce catalogue, pour les proposer **avant** toute recherche.
+   *
+   * Sans ça, un sélecteur ne peut lister que ce que les résultats contiennent —
+   * donc rien tant qu'on n'a pas tapé, et jamais un set entier. Le provider les
+   * possède ; le cœur se contente de les demander.
+   */
+  /**
+   * Le logo d'une extension, pour un produit scellé de ce pack.
+   *
+   * Le code partagé de l'ingest **savait** quel pack allait chercher ses logos
+   * où : une branche par jeu, comparant l'id du pack, et deux imports de
+   * providers depuis `shared/`. Ajouter un catalogue obligeait donc à éditer du
+   * code commun pour lui faire une place.
+   *
+   * Le pack sait, lui, où vivent ses logos. Il répond `null` quand il n'en a
+   * pas — ce qui est le cas de la plupart.
+   */
+  /**
+   * Rafraîchit le relevé de logos de set du pack, avant l'ingest scellé.
+   *
+   * Étape à **effet de bord** : elle télécharge, donc elle appartient au pack
+   * qui sait où et à quel rythme. Le code partagé la déclenchait lui-même, une
+   * branche par jeu, ce qui l'obligeait à importer deux providers.
+   *
+   * Rend un message de progression, ou `null` s'il n'y a rien à dire.
+   */
+  refreshSetLogos?: (opts: {
+    force?: boolean;
+    /** Ne rien télécharger : lire ce qui est déjà là. */
+    offline?: boolean;
+  }) => Promise<string | null>;
+  /**
+   * L'extension du **catalogue** qu'un produit scellé désigne.
+   *
+   * Les boutiques et les catalogues ne nomment pas les extensions pareil : une
+   * boutique peut porter un sigle de trois lettres là où le catalogue de
+   * tirages porte un numéro. Sans traduction, un conseil d'achat ne rattache
+   * aucun produit à un set — mesuré, zéro option sur cent quarante et un SKU.
+   *
+   * Le pack sait faire la correspondance : il la fait déjà pour choisir le logo.
+   * Il la déclare ici plutôt que de la laisser deviner à qui lit l'URL de
+   * l'image, ce qui casserait silencieusement le jour où le chemin change.
+   *
+   * `null` quand rien ne correspond, ou quand **plusieurs** correspondent :
+   * rattacher un booster au mauvais set serait pire que de ne pas le rattacher.
+   */
+  resolveCatalogueSetId?: (input: {
+    setCode?: string | null;
+    slug?: string | null;
+    name?: string | null;
+  }) => string | null;
+  resolveSetLogo?: (input: {
+    setCode?: string | null;
+    /** Slug de la fiche produit, quand le logo s'y raccroche mieux. */
+    slug?: string | null;
+    name?: string | null;
+  }) => string | null;
+  /**
+   * Les langues dans lesquelles ce catalogue a été imprimé.
+   *
+   * Annoncées **avant** toute recherche, parce que la langue n'est pas qu'un
+   * filtre d'affichage : chez Naruto elle change la **découpe** proposée — les
+   * dix-sept 巻ノ japonais au lieu des séries européennes. La déduire des
+   * résultats arrivait donc trop tard, une extension japonaise n'étant offerte
+   * qu'après avoir déjà cherché en japonais.
+   *
+   * Codes courts en minuscules. Absent = le pack ne sait pas le dire, et le
+   * sélecteur retombe sur ce que les résultats montrent.
+   */
+  listPrintLanguages?: (type: string) => string[] | Promise<string[]>;
+  /**
+   * **Tous** les tirages d'une extension, sans plafond.
+   *
+   * `searchPrints` répond à « montre-moi quelques cartes » et se borne à
+   * quelques dizaines : c'est ce qu'il faut pour un sélecteur, jamais pour une
+   * check-list. Compter ce qui manque dans un set de 452 cartes sur les 200
+   * premières annoncerait une complétion fausse, et fausse **par excès** — le
+   * pire des deux sens.
+   *
+   * La langue borne le résultat : compléter une extension n'a de sens que dans
+   * une langue, ses tirages français et anglais n'étant pas la même collection.
+   *
+   * Absent = ce pack ne sait pas énumérer un set, et la check-list le dit au
+   * lieu de compter à moitié.
+   */
+  /**
+   * Les slugs de jeu que ce pack sert, tels qu'ils apparaissent dans le premier
+   * segment d'une `printKey`.
+   *
+   * `Shelf` ne porte qu'un `type`, et `tcg` est partagé par tous les jeux de
+   * cartes. Sans cette liste, la check-list d'une étagère additionnait les
+   * extensions de tous les autres jeux, et annonçait « 1 % » sur un
+   * dénominateur de trente mille cartes qu'elle ne contiendrait jamais.
+   *
+   * Absent = le pack ne dit pas quel jeu il sert, et on ne le retire d'aucune
+   * étagère : mieux vaut trop montrer que de taire un jeu qu'on y range.
+   */
+  printGames?: readonly string[];
+  listSetPrints?: (input: {
+    setId: string;
+    language?: string | null;
+  }) => PrintCandidate[] | Promise<PrintCandidate[]>;
+  /**
+   * Composition de booster + taux de tirage par rareté (`packsPerHit`).
+   *
+   * Attestation curated (slots éditeur + consensus openings). Absent = le
+   * conseil d'achat reste sur le modèle uniforme (honête mais trop optimiste
+   * pour les chase). Voir `boosterComposition.ts` / `docs/sealed_product_contents.md`.
+   */
+  loadBoosterComposition?: () =>
+    | import("@/providers/shared/sealedProducts/boosterComposition").BoosterCompositionFile
+    | null;
+  listPrintSets?: (
+    type: string,
+    language?: string | null,
+  ) => PrintSetOption[] | Promise<PrintSetOption[]>;
   createMetadataAdapter?: (
     deps?: Record<string, unknown>,
   ) => MetadataProviderAdapter | null;
@@ -340,6 +744,27 @@ export interface ProviderModule {
   suggestDatabaseTitles?: (
     ctx: DatabaseTitleSuggestionContext,
   ) => Promise<string[]>;
+  /**
+   * Print candidates for objects that cannot be scanned. A title alone does not
+   * identify a card — five Lorcana prints share the name "Chiot dalmatien" —
+   * so the user picks a print, not a title. Implemented by providers whose
+   * media type has no barcode to start from.
+   */
+  searchPrints?: (ctx: PrintSearchContext) => Promise<PrintCandidate[]>;
+  /**
+   * One printing by its key. Lets the app ask what a print *is* — its finishes,
+   * above all — without persisting a copy of the answer, which would drift and
+   * has to survive the fact pipeline's allow-lists to get stored at all.
+   */
+  lookupPrint?: (ctx: PrintLookupContext) => Promise<PrintCandidate | null>;
+  /**
+   * Catalog prints that actually carry each finish/varnish the foil playroom
+   * needs — so an empty collection does not leave Magma tiles blank, and we
+   * never fake Magma on a Silver mask.
+   */
+  suggestFoilPlayroomSamples?: (
+    needs: readonly FoilPlayroomNeed[],
+  ) => Promise<FoilPlayroomCatalogSample[]>;
   mappingProbe?: ProviderMappingProbe;
   runMappingProbe?: () => Promise<MappingProbeResult | null>;
   /**
@@ -348,7 +773,7 @@ export interface ProviderModule {
    * back to their default sample (backward compatible).
    */
   collectMappingRawKeys?: (
-    context?: MetadataAdapterContext,
+    context?: ProviderMappingProbeContext,
   ) => Promise<string[]>;
   healthCheck?: ProviderHealthCheck;
   /** When set, metadata fetch skips this provider while its quota cooldown is active. */
@@ -416,6 +841,12 @@ export interface ProviderModule {
    * tagged by media type. Plug-and-play replacement for the central assembler:
    * core iterates the registry instead of hard-coding each provider.
    */
+  /**
+   * Empty value for each barcode-lookup slot this provider owns, keyed by slot
+   * name. Declare it next to the matching `declare module` augmentation of
+   * `BarcodeLookupSlots` so the type and its default stay adjacent.
+   */
+  barcodeLookupSlots?: Record<string, () => unknown>;
   buildBarcodeSources?: (
     payload: BarcodeLookupPayload,
     ctx: BarcodeSourceContext,

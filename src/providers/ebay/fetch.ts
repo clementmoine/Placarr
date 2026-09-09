@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { priceListingMatchesAnyItemName } from "@/core/identify/titleUtils";
 
@@ -59,6 +59,8 @@ function isBarcodeLike(value: string) {
 
 export type EbayTitleMatchOptions = {
   shelfType?: string | null;
+  /** Reuse Browse SearchYield only — no live API. */
+  evidenceOnly?: boolean;
 };
 
 function matchesExpectedTitle(
@@ -129,7 +131,7 @@ async function searchEbayBrowse(
 ): Promise<EbayBrowseSearchResult> {
   const token = await getEbayBrowseAccessToken(credentials);
   if (!token) return { items: [], retryableFailure: false };
-  const res = await axios.get(EBAY_BROWSE_SEARCH_URL, {
+  const res = await httpGet<JsonObject>(EBAY_BROWSE_SEARCH_URL, {
     params: { limit: "10", ...params },
     headers: {
       Authorization: `Bearer ${token}`,
@@ -160,7 +162,8 @@ async function searchEbayBrowse(
 async function searchEbayBrowseCached(
   cacheKey: string,
   params: Record<string, string>,
-  credentials: EbayCredentials,
+  credentials: EbayCredentials | null,
+  options?: { evidenceOnly?: boolean },
 ): Promise<EbayBrowseSearchResult> {
   const cached = getCachedEbayBrowseSummaries(cacheKey);
   if (cached) {
@@ -173,6 +176,9 @@ async function searchEbayBrowseCached(
     console.info(`[eBay] Browse evidence hit for ${searchUrl}`);
     cacheEbayBrowseSummaries(cacheKey, fromEvidence);
     return { items: fromEvidence, retryableFailure: false };
+  }
+  if (options?.evidenceOnly || !credentials) {
+    return { items: [], retryableFailure: false };
   }
 
   const result = await searchEbayBrowse(params, credentials);
@@ -225,7 +231,7 @@ function mergeCatalogAndListings(
 async function fetchBrowseListingsByGtin(
   gtin: string,
   expectedNames: string[],
-  credentials: EbayCredentials,
+  credentials: EbayCredentials | null,
   options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
   const cacheKey = ebayBrowseGtinCacheKey(gtin);
@@ -233,6 +239,7 @@ async function fetchBrowseListingsByGtin(
     cacheKey,
     { gtin },
     credentials,
+    { evidenceOnly: options?.evidenceOnly },
   );
   return listingsToProducts(items, expectedNames, options);
 }
@@ -240,7 +247,7 @@ async function fetchBrowseListingsByGtin(
 async function fetchBrowseListingsByEpid(
   epid: string,
   expectedNames: string[],
-  credentials: EbayCredentials,
+  credentials: EbayCredentials | null,
   options?: EbayTitleMatchOptions,
 ): Promise<EbayProduct[]> {
   const cacheKey = ebayBrowseQueryCacheKey(`epid:${epid}`);
@@ -248,6 +255,7 @@ async function fetchBrowseListingsByEpid(
     cacheKey,
     { epid },
     credentials,
+    { evidenceOnly: options?.evidenceOnly },
   );
   return listingsToProducts(items, expectedNames, options);
 }
@@ -264,9 +272,12 @@ async function fetchEbayProductsByGtin(
   const cleaned = barcode.replace(/[^\d]/g, "").trim();
   if (!cleaned) return [];
   const credentials = getEbayEnv();
-  if (!credentials) return [];
+  if (!credentials && !options?.evidenceOnly) return [];
 
-  const catalog = await fetchFromEbayCatalog(cleaned, expectedNames, options);
+  // Catalog API is always live HTTP — skip under evidence-only reconfront.
+  const catalog = options?.evidenceOnly
+    ? []
+    : await fetchFromEbayCatalog(cleaned, expectedNames, options);
   let listings = await fetchBrowseListingsByGtin(
     cleaned,
     expectedNames,
@@ -332,7 +343,7 @@ export async function fetchEbayProductsByQuery(
   const cleaned = query.trim();
   if (!cleaned) return [];
   const credentials = getEbayEnv();
-  if (!credentials) return [];
+  if (!credentials && !options?.evidenceOnly) return [];
 
   const cached = getCachedEbaySearchProducts(cleaned);
   if (cached) {
@@ -346,6 +357,7 @@ export async function fetchEbayProductsByQuery(
       ebayBrowseQueryCacheKey(cleaned),
       { q: cleaned },
       credentials,
+      { evidenceOnly: options?.evidenceOnly },
     );
     const products = listingsToProducts(items, expectedNames, options);
     if (!retryableFailure) {
@@ -370,7 +382,7 @@ export async function fetchPricesFromEbay(
   const cleaned = query.trim();
   if (!cleaned) return null;
   const credentials = getEbayEnv();
-  if (!credentials) return null;
+  if (!credentials && !options?.evidenceOnly) return null;
 
   const cached = getCachedEbayPrices(cleaned);
   if (cached !== undefined) {
@@ -384,11 +396,14 @@ export async function fetchPricesFromEbay(
     const cacheKey = isBarcode
       ? ebayBrowseGtinCacheKey(digits)
       : ebayBrowseQueryCacheKey(cleaned);
-    const browseParams = isBarcode ? { gtin: digits } : { q: cleaned };
+    const browseParams: Record<string, string> = isBarcode
+      ? { gtin: digits }
+      : { q: cleaned };
     const { items, retryableFailure } = await searchEbayBrowseCached(
       cacheKey,
       browseParams,
       credentials,
+      { evidenceOnly: options?.evidenceOnly },
     );
     if (retryableFailure) return null;
 

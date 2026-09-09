@@ -1,0 +1,65 @@
+{
+  "source": "vinted.fr item 7633991617 (pasted CDN)",
+  "observed": "2026-08-29",
+  "note": "Pasted images1.vinted.net URLs only — do not crawl the seller dressing. Item = sealed IT S6 starter Il Fascino del Male (Ref. 93214). Photo 06 = avatar vendeur (silhouettes katana) — rejected. f800 signed; f1600 invalidates signature.",
+  "listing": "https://www.vinted.fr/items/7633991617-naruto-card-game-serie-6-rivalita-eterna-starter-deck-il-fascino-del-male-sealed",
+  "ingestCollection": false,
+  "products": [
+    {
+      "slug": "starter-il-fascino-del-male",
+      "setCode": "s6",
+      "kind": "deck",
+      "lang": "IT",
+      "role": "art",
+      "title": "Mazzo Il Fascino del Male — face (SERIE 6 / Rivalità Eterna)",
+      "printedRef": "93214",
+      "url": "https://images1.vinted.net/t/06_01c3c_UwFFb2P1BbB9rGkRYi6UU4hW/f800/1764022284.webp?s=18a252db45ccc75947dfc74f4f78f05ece074f22",
+      "staging": "staging/vinted/starter-il-fascino-del-male-01.webp",
+      "ingest": true,
+      "angle": "front",
+      "note": "Printed: DECK DI 40 CARTE CON 2 CARTE HOLO. Martina 1440 stays preferred art when both present."
+    },
+    {
+      "slug": "starter-il-fascino-del-male",
+      "setCode": "s6",
+      "kind": "deck",
+      "lang": "IT",
+      "role": "back",
+      "title": "Mazzo Il Fascino del Male — verso",
+      "printedRef": "93214",
+      "url": "https://images1.vinted.net/t/01_024dc_TPYhzjteYmLhDVeYAqwroYrH/f800/1764022284.webp?s=0dc238bf7bdcf0b569d887260238ac100970c5b7",
+      "staging": "staging/vinted/starter-il-fascino-del-male-02.webp",
+      "ingest": true,
+      "angle": "back",
+      "note": "Verso: 40 carte + regolamento + plancia + segnaturni + 5 monete; série 135 cartes; ISSN 18281001 / barcode 9771828100067."
+    }
+  ],
+  "extraAngles": [
+    {
+      "staging": "staging/vinted/starter-il-fascino-del-male-03.webp",
+      "url": "https://images1.vinted.net/t/06_005a2_s4HY15Az5QkQKc8R89H9K2Fv/f800/1764022284.webp?s=bca06905ae315198da33b148223061494eaf05a0",
+      "angle": "spine",
+      "ingest": false,
+      "note": "Tranche — STARTER DECK / IL FASCINO DEL MALE / Ref. 93214"
+    },
+    {
+      "staging": "staging/vinted/starter-il-fascino-del-male-04.webp",
+      "url": "https://images1.vinted.net/t/01_00215_Fo7hw1WPX5rx7drc5X1X28at/f800/1764022284.webp?s=5120b9401463cfe1c4d9e1382c31dd06c75b4271",
+      "angle": "spine-opposite",
+      "ingest": false
+    },
+    {
+      "staging": "staging/vinted/starter-il-fascino-del-male-05.webp",
+      "url": "https://images1.vinted.net/t/05_02462_MH8ewM6BUajs4wKk7gQ1Q575/f800/1764022284.webp?s=f081acb5678d1a2e39d7663e955dc29d6eacfa1c",
+      "angle": "top-edge",
+      "ingest": false
+    }
+  ],
+  "rejected": [
+    {
+      "staging": "staging/vinted/starter-il-fascino-del-male-06.webp",
+      "url": "https://images1.vinted.net/t/01_00679_MW1LyByEMN8HYrqZuAhNCpAk/f800/1766793541.webp?s=b590fbf7a0dd3d559e1c2d7af9979cfa80b31821",
+      "reason": "Seller avatar / silhouette katana — not product packaging"
+    }
+  ]
+}

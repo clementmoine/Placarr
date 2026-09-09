@@ -1,17 +1,23 @@
 /**
- * Remote cover acquisition: localize a remote image URL into `public/uploads`.
+ * Remote cover acquisition: localize a remote image URL into `data/uploads`.
  */
 import path from "path";
 import crypto from "crypto";
 import fs from "fs";
-import { PROVIDERS, providerModuleForCoverDownload } from "@/core/catalog/catalog";
+import {
+  PROVIDERS,
+  providerModuleForCoverDownload,
+} from "@/core/catalog/catalog";
 import { canonicalProviderIdForSource } from "@/core/catalog/sourceTraits";
 import { isMissingArtImageUrl } from "@/core/enrich/media/coverPlaceholder";
 import { isUnavailableCoverPlaceholderBuffer } from "@/core/enrich/media/coverPlaceholder.server";
 import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
 import { fetchRemoteImageBuffer } from "@/core/enrich/media/remoteFetch";
-import { providerOriginalImageUrl } from "@/core/enrich/imageUrls";
+import { providerOriginalImageUrl } from "@/core/enrich/media/imageUrls";
+import { ASSETS_URL_PREFIX } from "@/lib/packAssetUrls";
+import { FETCHED_IMAGE_MAX_SIDE, toUploadWebp } from "@/lib/media/losslessWebp";
+import { uploadsDir } from "@/lib/runtimeData";
 
 function providerMatchesImageUrl(
   provider: { coverUrlHost?: string | null },
@@ -56,10 +62,18 @@ const LOCAL_IMAGE_EXTENSIONS = [
   ".svg",
 ];
 
-async function existingLocalizedUploadForUrl(
+/**
+ * The local copy of a remote image when it is already on disk, `null` otherwise.
+ *
+ * Localized files are named `md5(sourceUrl)`, so a remote URL and its download
+ * are the same picture under two names. Anything that shows both — a gallery
+ * merging a stored attachment with a freshly fetched one, say — needs this to
+ * avoid listing one image twice.
+ */
+export async function existingLocalizedUploadForUrl(
   url: string,
 ): Promise<string | null> {
-  const targetDir = path.join(process.cwd(), "public", "uploads");
+  const targetDir = uploadsDir();
   const candidates = coverDownloadCandidates(url);
 
   for (const candidate of candidates) {
@@ -90,7 +104,17 @@ export async function downloadRemoteImage(
     return url;
   }
   if (url.startsWith("/")) {
-    return url.startsWith("/uploads/") ? url : null;
+    /**
+     * Already local, nothing to fetch. `/uploads/` is what we localised before;
+     * `/assets/` is a pack corpus the app serves from disk (`data/<pack>/`).
+     * A card picked from a local catalogue arrives with an `/assets/…` face —
+     * dropping it here left the item with no image at all, since a closed pack
+     * has no remote URL to fall back on.
+     */
+    return url.startsWith("/uploads/") ||
+      url.startsWith(`${ASSETS_URL_PREFIX}/`)
+      ? url
+      : null;
   }
   if (!url.startsWith("http")) {
     return null;
@@ -118,7 +142,7 @@ export async function downloadRemoteImage(
 
   try {
     const hash = crypto.createHash("md5").update(url).digest("hex");
-    const targetDir = path.join(process.cwd(), "public", "uploads");
+    const targetDir = uploadsDir();
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
     }
@@ -136,15 +160,16 @@ export async function downloadRemoteImage(
     }
 
     const parsedUrl = new URL(fetched.sourceUrl);
-    let ext = path.extname(parsedUrl.pathname);
-    if (
-      !ext ||
-      ![".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"].includes(
-        ext.toLowerCase(),
-      )
-    ) {
-      ext = ".jpg";
-    }
+    const sourceExt = path.extname(parsedUrl.pathname).toLowerCase();
+    /*
+      Vector stays vector: rasterising an SVG here would have to pick a size,
+      and it is already the smallest thing on disk. Everything else is stored
+      as WebP whatever it arrived as — keeping the source extension would
+      re-introduce PNG/JPEG on disk one provider fetch at a time
+      (see `toUploadWebp`).
+    */
+    const keepVerbatim = sourceExt === ".svg";
+    const ext = keepVerbatim ? ".svg" : ".webp";
 
     const filename = `${hash}${ext}`;
     const targetPath = path.join(targetDir, filename);
@@ -169,6 +194,22 @@ export async function downloadRemoteImage(
         minMarginPixels: options.minMarginPixels,
       });
     }
+    if (!keepVerbatim) {
+      try {
+        imageBuffer = await toUploadWebp(imageBuffer, {
+          maxSide: FETCHED_IMAGE_MAX_SIDE,
+        });
+      } catch (err) {
+        // An image sharp cannot re-encode is not worth losing: the fallback is
+        // to keep pointing at the remote URL rather than store something the
+        // app will fail to decode later.
+        console.warn(
+          `[ImageLocalizer] Could not encode ${fetched.sourceUrl} as WebP:`,
+          err instanceof Error ? err.message : String(err),
+        );
+        return persistRemoteFallback();
+      }
+    }
     fs.writeFileSync(targetPath, imageBuffer);
     console.log(
       `[ImageLocalizer] Downloaded ${fetched.sourceUrl} -> ${targetPath}`,
@@ -182,4 +223,3 @@ export async function downloadRemoteImage(
     return persistRemoteFallback();
   }
 }
-

@@ -1,4 +1,5 @@
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPrimaryBarcode } from "@/core/catalog/matchContext";
 import {
@@ -35,7 +36,6 @@ import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type { PriceChartingMetadata } from "@/core/identify/lookup/providerTypes";
-import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 
 export { fetchMetadataFromPriceCharting, fetchPricesFromPriceCharting };
 
@@ -126,8 +126,8 @@ export function buildPriceChartingRegionLinkFacts(
 ): MetadataFact[] {
   const urls = Array.from(
     new Set(
-      [pcMeta.url, pcMeta.siblingUrl].filter(
-        (url): url is string => Boolean(url?.includes("/game/")),
+      [pcMeta.url, pcMeta.siblingUrl].filter((url): url is string =>
+        Boolean(url?.includes("/game/")),
       ),
     ),
   );
@@ -164,7 +164,11 @@ function buildPriceChartingAttachments(
     title?: string;
   }> = [];
 
-  const push = (url: string | undefined, title?: string, imageIsPal?: boolean) => {
+  const push = (
+    url: string | undefined,
+    title?: string,
+    imageIsPal?: boolean,
+  ) => {
     if (!url || seen.has(url)) return;
     seen.add(url);
     const regionIsPal = imageIsPal ?? isPal;
@@ -193,9 +197,7 @@ function buildPriceChartingAttachments(
 }
 
 /** Stable record id for a PriceCharting `/game/{platform}/{slug}` fiche. */
-export function parsePriceChartingRecordIdFromUrl(
-  url: string,
-): string | null {
+export function parsePriceChartingRecordIdFromUrl(url: string): string | null {
   try {
     const parsed = new URL(url.trim());
     const host = parsed.hostname.replace(/^www\./i, "");
@@ -252,16 +254,16 @@ async function refreshPriceChartingOffers(ctx: BarcodePriceRefreshContext) {
   const storedUrls = providerProductUrlsForKey(
     "pricecharting",
     ctx.providerProductUrls,
-  ).filter(
-    (url) => url.includes("/game/") && !url.includes("search-products"),
-  );
+  ).filter((url) => url.includes("/game/") && !url.includes("search-products"));
   const orderedUrls = [...storedUrls].sort((left, right) => {
     const leftPal = priceChartingUrlIsPal(left) ? 1 : 0;
     const rightPal = priceChartingUrlIsPal(right) ? 1 : 0;
     return ctx.isPal ? rightPal - leftPal : leftPal - rightPal;
   });
   for (const url of orderedUrls) {
-    const fromUrl = await fetchPricesFromPriceChartingGameUrl(url);
+    const fromUrl = await fetchPricesFromPriceChartingGameUrl(url, {
+      ...(ctx.evidenceOnly ? { evidenceOnly: true } : {}),
+    });
     if (!fromUrl) continue;
     const productName =
       fromUrl.productName?.trim() ||
@@ -279,6 +281,10 @@ async function refreshPriceChartingOffers(ctx: BarcodePriceRefreshContext) {
     }
     return priceChartingScanOffers(fromUrl);
   }
+
+  // Evidence-only: never fall through to name-seek HTTP (SearchYield alone
+  // still needs a detail GET unless DetailYield is already pinned above).
+  if (ctx.evidenceOnly) return [];
 
   // Hardware shelves ("Consoles") are not a PriceCharting platform slug — omit
   // shelfName so we don't invent a platform gate; title residual uses mediaType.
@@ -298,15 +304,18 @@ async function refreshPriceChartingOffers(ctx: BarcodePriceRefreshContext) {
   return priceChartingScanOffers(result);
 }
 
-export const pricechartingModule: ProviderModule = {
+export const pricechartingModule = defineProvider({
   info: {
     id: "pricecharting",
     label: "PriceCharting",
+    minRequestIntervalMs: 500,
     referencePriceSource: true,
+    evidenceOnlyPriceRefresh: true,
     catalogDisplayTitleFallback: true,
     types: ["games", "hardware"],
     capabilities: ["identify", "price", "cover"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: false,
     isRealBoxCover: true,
     imageScoreAdjustment: 160,
@@ -314,8 +323,7 @@ export const pricechartingModule: ProviderModule = {
     // inferProviderIdFromMediaUrl when the attachment row lost its stamp.
     coverUrlHost: "images.pricecharting.com",
     websiteUrl: "https://www.pricecharting.com/",
-    notes:
-      "Prix de référence (jeux + systems/hardware PriceCharting).",
+    notes: "Prix de référence (jeux + systems/hardware PriceCharting).",
   },
   evidence: {
     label: "PriceCharting",
@@ -534,4 +542,4 @@ export const pricechartingModule: ProviderModule = {
     return priceChartingScanOffers(payload.pc.prices);
   },
   refreshBarcodePriceOffers: refreshPriceChartingOffers,
-};
+});

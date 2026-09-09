@@ -1,0 +1,259 @@
+{
+  "source": "火の国庵 (hinokunian.konohashigure.com) — site de référence japonais NARUTO",
+  "observed": "2026-08-20",
+  "ingest": "facts-hinokunian.json — moissonné le 2026-08-20",
+  "crawlLive": true,
+  "line": "carddass-jp + data-carddass",
+  "lang": "ja",
+  "url": "https://hinokunian.konohashigure.com/cardseal.html",
+  "encoding": "SHIFT_JIS (CP932) — déclaré dans le <meta>, à décoder avant toute lecture",
+  "note": "Trouvé en cherchant une source Data Carddass ; le site couvre bien plus. 53 pages de liste, une par sortie, pour toute la ligne japonaise : les 15 volumes 巻ノ壱→巻ノ十五, les starters nommés, les feuilles jumbo, COIN＋, le porte-cartes, plus les 4 vagues Data Carddass et des séries de stickers. Corroboration : la page 巻ノ壱 donne 70 références et `cardcheckbox-jp.json` annonce « 70+P » pour cette sortie — les deux relevés tombent d'accord.",
+  "shapes": {
+    "volumes": "Table HTML à trois colonnes : référence imprimée (忍-1), nom japonais (うずまきナルト), rareté (R ou vide). Propre et régulier.",
+    "cardbattle1": "Les cartes sont des <img> dont l'attribut alt porte tout : `DN-001T うずまきナルト -影分身の術-【ノーマル】` — numéro, personnage, technique, rareté.",
+    "cardbattle2-4": "Autre forme : lignes texte `002T うずまきナルト` sans le préfixe DN, avec des annotations 【2弾再録】 pour les réimpressions et des compteurs 【N種類】 par rareté.",
+    "warning": "La forme change d'une page à l'autre. Un parseur doit s'ancrer sur la référence et lire le reste par vocabulaire, jamais par position de colonne."
+  },
+  "rarities": ["ノーマル", "R", "激レア", "爆レア"],
+  "value": "C'est un relevé de titres et de raretés, pas de scans : les vignettes font 43×64. Il comble ce qui manque au catalogue japonais — les noms — sans rien apporter côté faces.",
+  "not": ["faces", "scans"],
+  "pages": [
+    {
+      "path": "cardbattle1.html",
+      "label": "第一弾"
+    },
+    {
+      "path": "cardbattle2.html",
+      "label": "第二弾"
+    },
+    {
+      "path": "cardbattle3.html",
+      "label": "第三弾"
+    },
+    {
+      "path": "cardbattle4.html",
+      "label": "第四弾"
+    },
+    {
+      "path": "cardcoin+.html",
+      "label": "COIN　＋"
+    },
+    {
+      "path": "carddassmasters.html",
+      "label": "激突！幻の地底遺跡だってばよ！"
+    },
+    {
+      "path": "cardetting1.html",
+      "label": "１"
+    },
+    {
+      "path": "cardetting2.html",
+      "label": "２"
+    },
+    {
+      "path": "cardetting3.html",
+      "label": "３"
+    },
+    {
+      "path": "cardetting4.html",
+      "label": "４"
+    },
+    {
+      "path": "cardgameanyaku.html",
+      "label": "スターターBOX「暗躍の書」"
+    },
+    {
+      "path": "cardgamehyouhouemaki2.html",
+      "label": "忍兵法札絵巻・弐"
+    },
+    {
+      "path": "cardgamekakuchouemaki.html",
+      "label": "拡張シート「忍兵法札絵巻」"
+    },
+    {
+      "path": "cardgamekakuchoufail1.html",
+      "label": "拡張ファイリングシート・１"
+    },
+    {
+      "path": "cardgamekakuchoufail2.html",
+      "label": "拡張ファイリングシート・２"
+    },
+    {
+      "path": "cardgamekonohaemaki.html",
+      "label": "ナルトカードスタンド「ナルト木ノ葉絵巻」"
+    },
+    {
+      "path": "cardgamemakino1.html",
+      "label": "巻ノ壱"
+    },
+    {
+      "path": "cardgamemakino10.html",
+      "label": "巻ノ十"
+    },
+    {
+      "path": "cardgamemakino11.html",
+      "label": "巻ノ十一"
+    },
+    {
+      "path": "cardgamemakino12.html",
+      "label": "巻ノ十二"
+    },
+    {
+      "path": "cardgamemakino13.html",
+      "label": "巻ノ十三"
+    },
+    {
+      "path": "cardgamemakino14.html",
+      "label": "巻ノ十四"
+    },
+    {
+      "path": "cardgamemakino15.html",
+      "label": "巻ノ十五"
+    },
+    {
+      "path": "cardgamemakino2.html",
+      "label": "巻ノ弐"
+    },
+    {
+      "path": "cardgamemakino3.html",
+      "label": "巻ノ参"
+    },
+    {
+      "path": "cardgamemakino4.html",
+      "label": "巻ノ四"
+    },
+    {
+      "path": "cardgamemakino5.html",
+      "label": "巻ノ五"
+    },
+    {
+      "path": "cardgamemakino6.html",
+      "label": "巻ノ六"
+    },
+    {
+      "path": "cardgamemakino7.html",
+      "label": "巻ノ七"
+    },
+    {
+      "path": "cardgamemakino8.html",
+      "label": "巻ノ八"
+    },
+    {
+      "path": "cardgamemakino9.html",
+      "label": "巻の九"
+    },
+    {
+      "path": "cardgameshinobitaizen.html",
+      "label": "忍兵法札大全"
+    },
+    {
+      "path": "cardgamestaetergamashukaku.html",
+      "label": "スターターBOX「蝦蟇の書・守鶴の書」"
+    },
+    {
+      "path": "cardgamestarter.html",
+      "label": "秘伝伝授スターター　ナルトの書・サスケの書"
+    },
+    {
+      "path": "cardgamestartergokui.html",
+      "label": "拡張シート「極意忍法帖」"
+    },
+    {
+      "path": "cardgamestarterjinrairekka.html",
+      "label": "スターターBOX「迅雷の書・烈火の書」"
+    },
+    {
+      "path": "cardgamestarterkonohajuin.html",
+      "label": "スターターBOX「木ノ葉の書・呪印の書」"
+    },
+    {
+      "path": "cardgamestarterraimeifuuun.html",
+      "label": "スターターBOX「雷鳴の書・風雲の書」"
+    },
+    {
+      "path": "cardgameyukihime.html",
+      "label": "拡張シート「雪姫忍法帖」"
+    },
+    {
+      "path": "cardicegrape.html",
+      "label": "グレープ味"
+    },
+    {
+      "path": "cardicegrapefruit.html",
+      "label": "グレープフルーツ味"
+    },
+    {
+      "path": "cardiceorange.html",
+      "label": "オレンジ味"
+    },
+    {
+      "path": "cardmizupita.html",
+      "label": "１"
+    },
+    {
+      "path": "cardninjutsutaizen.html",
+      "label": "忍術大全"
+    },
+    {
+      "path": "cardramenseal.html",
+      "label": "付属シール"
+    },
+    {
+      "path": "cardsealretsuden1.html",
+      "label": "１"
+    },
+    {
+      "path": "cardsealretsuden2.html",
+      "label": "２"
+    },
+    {
+      "path": "cardsealretsuden3.html",
+      "label": "３"
+    },
+    {
+      "path": "cardsealretsuden4.html",
+      "label": "４"
+    },
+    {
+      "path": "cardshinobihyouhou1.html",
+      "label": "忍兵法札絵巻"
+    },
+    {
+      "path": "cardsnack1.html",
+      "label": "巻ノ一"
+    },
+    {
+      "path": "cardsnack2.html",
+      "label": "巻ノ二"
+    },
+    {
+      "path": "cardsnack3.html",
+      "label": "巻ノ三"
+    }
+  ],
+  "harvest": {
+    "on": "2026-08-20",
+    "releases": 53,
+    "cards": 1808,
+    "failed": 0,
+    "distinctRefs": 1148,
+    "byPrefix": {
+      "忍": 652,
+      "術": 468,
+      "作": 447,
+      "依": 51,
+      "騎": 8,
+      "PR": 2,
+      "DN": 133,
+      "DT": 41,
+      "CAN": 6
+    },
+    "join": "981 réfs se rapprochent d'un tirage du catalogue, dont **120 qui n'avaient aucun titre japonais**. Les 167 restantes sont les DN/DT : la ligne arcade n'a pas encore de tirages frappés.",
+    "emptyPages": "19 pages rendent zéro carte, et c'est le bon résultat : ce sont les séries de stickers, de snacks et de glaces (シール烈伝, エッティング, スナック, アイス), qui ne portent aucune référence de cette forme."
+  },
+  "prefixesFound": {
+    "DT": "Quatrième vague arcade — la page écrit `DT-002T` là où les trois premières écrivent `DN-`. Relevé sur la page, pas déduit ; qu'il s'agisse d'un choix du site ou d'un vrai changement de préfixe reste à confirmer sur une carte.",
+    "CAN": "Porte-cartes 木ノ葉絵巻, `CAN-1`→`CAN-6`. Corrobore `cardcheckbox-jp.json`, qui annonçait déjà « CAN-1〜CAN-6 »."
+  },
+  "corroboration": "巻ノ壱 rend 70 références ; `cardcheckbox-jp.json` annonce « 70+P » pour cette sortie. Le porte-cartes rend 6 CAN ; le même relevé annonce CAN-1〜CAN-6."
+}

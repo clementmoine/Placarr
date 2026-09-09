@@ -6,14 +6,17 @@ import {
   AttachmentType,
   Metadata,
   Type,
-} from "@prisma/client";
+} from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import { barcodeListingMatchesItem } from "@/core/identify/titleUtils";
 import { inferImageAttachmentFromMediaUrl } from "@/core/catalog/catalog";
 import { inferProviderIdFromMediaUrl } from "@/core/catalog/sourceTraits";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
-import type { Item } from "@prisma/client";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
+import type { Item } from "@/generated/prisma/browser";
 
 function isDisplayImageAttachment(attachment: {
   type?: AttachmentType | string | null;
@@ -31,7 +34,6 @@ function hasMetadataImageCandidate(metadata: MetadataResult) {
   if (metadata.imageUrl) return true;
   return Boolean(metadata.attachments?.some(isDisplayImageAttachment));
 }
-
 
 export function metadataImageAttachmentSemantics(
   metadata: MetadataResult,
@@ -152,4 +154,3 @@ export function injectOrphanUserCoverAttachment(
     ...attachments,
   ];
 }
-

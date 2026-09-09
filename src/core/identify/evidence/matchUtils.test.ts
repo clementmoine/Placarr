@@ -6,10 +6,7 @@ import {
   __setTokenCorpusIndexForTests,
 } from "@/core/enrich/titles/tokenCorpusIndex";
 
-import {
-  isStrictTitleSubset,
-  titleSpecificityTokens,
-} from "./matchUtils";
+import { isStrictTitleSubset, titleSpecificityTokens } from "./matchUtils";
 
 describe("titleSpecificityTokens + corpus IDF", () => {
   afterEach(() => {

@@ -11,7 +11,6 @@ import {
 } from "./coverUrl";
 import {
   isCoverResolutionAcceptable,
-  readBufferImageMetrics,
   readFileImageMetrics,
   shortestImageEdge,
 } from "@/core/enrich/media/imageMetrics";
@@ -21,6 +20,7 @@ import { isUnavailableCoverPlaceholderBuffer } from "@/core/enrich/media/coverPl
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import { remoteImageProxyProviderFor } from "@/core/enrich/media/remoteProxy";
 import { getProviderModule } from "@/core/catalog/catalog";
+import { uploadsDir as runtimeUploadsDir } from "@/lib/runtimeData";
 
 const BOOKNODE_CDN_HOST = "cdn1.booknode.com/book_cover/";
 const LOCAL_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
@@ -36,7 +36,7 @@ function uploadHashForBooknode(url: string): string {
 }
 
 function uploadsDir(): string {
-  const targetDir = path.join(process.cwd(), "public", "uploads");
+  const targetDir = runtimeUploadsDir();
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }
@@ -277,8 +277,8 @@ function canKeepRemoteBooknodeFallback(
   const provider = remoteImageProxyProviderFor(url);
   if (!provider?.remoteImageFallback) return false;
   if (source) {
-    const module = getProviderModule(source);
-    if (module?.info.remoteImageFallback) return true;
+    const providerModule = getProviderModule(source);
+    if (providerModule?.info.remoteImageFallback) return true;
   }
   return isBooknodeCoverUrl(url);
 }

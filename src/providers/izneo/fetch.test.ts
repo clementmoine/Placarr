@@ -183,9 +183,7 @@ describe("searchIzneoSeries", () => {
     expect(hits[0]?.id).toBe("5841");
     expect(promoteIzneoSearchEvidence).toHaveBeenCalledWith(
       "https://www.izneo.com/search?q=Ast%C3%A9rix",
-      expect.arrayContaining([
-        expect.objectContaining({ id: "5841" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ id: "5841" })]),
     );
   });
 });

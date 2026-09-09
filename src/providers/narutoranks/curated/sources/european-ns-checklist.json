@@ -1,0 +1,57 @@
+{
+  "source": "Grille européenne 102 cartes — NS1–NS6 (Ninja Sensei)",
+  "observed": "2026-08-22",
+  "ingest": "titres EN ; insert absent de la checklist Inkworks US",
+  "lang": "en",
+  "line": "ninja-ranks",
+  "notUs": true,
+  "note": "Six foils « Ninja Sensei » (maîtres ninja). Présents sur Imadoki, Coleka et PaniniMania en Europe ; la feuille Inkworks US (100 cartes) ne les liste pas — à la place BL-1–3 et PN. On les modélise comme tirages EU-only : titres attestés, faces IT Imadoki, pas d'édition US.",
+  "attestedBy": [
+    "https://www.laststicker.ru/cards/panini_naruto_ninja_ranks/ — NS1 Kakashi … NS6 Ebisu",
+    "paninimania.com — grille « NS1 à NS6 » (janvier 2007, barcode 8018190028805)"
+  ],
+  "cards": [
+    {
+      "printed": "NS-1",
+      "setCode": "ns",
+      "number": "0001",
+      "name": "Kakashi",
+      "rarity": "Ninja Sensei"
+    },
+    {
+      "printed": "NS-2",
+      "setCode": "ns",
+      "number": "0002",
+      "name": "Kurenai",
+      "rarity": "Ninja Sensei"
+    },
+    {
+      "printed": "NS-3",
+      "setCode": "ns",
+      "number": "0003",
+      "name": "Guy",
+      "rarity": "Ninja Sensei"
+    },
+    {
+      "printed": "NS-4",
+      "setCode": "ns",
+      "number": "0004",
+      "name": "Asuma",
+      "rarity": "Ninja Sensei"
+    },
+    {
+      "printed": "NS-5",
+      "setCode": "ns",
+      "number": "0005",
+      "name": "Iruka",
+      "rarity": "Ninja Sensei"
+    },
+    {
+      "printed": "NS-6",
+      "setCode": "ns",
+      "number": "0006",
+      "name": "Ebisu",
+      "rarity": "Ninja Sensei"
+    }
+  ]
+}

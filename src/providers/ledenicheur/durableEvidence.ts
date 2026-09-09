@@ -37,11 +37,7 @@ function isPriceSummary(value: unknown): value is PriceSummary {
   const record = value as Record<string, unknown>;
   for (const key of ["regular", "alternative", "inStock"] as const) {
     const v = record[key];
-    if (
-      v != null &&
-      typeof v !== "number" &&
-      typeof v !== "string"
-    ) {
+    if (v != null && typeof v !== "number" && typeof v !== "string") {
       return false;
     }
   }

@@ -15,6 +15,7 @@ import { bdphileModule } from "@/providers/bdphile";
 import { bdfugueModule } from "@/providers/bdfugue";
 import { bggModule } from "@/providers/bgg";
 import { booknodeModule } from "@/providers/booknode";
+import { bricksetModule } from "@/providers/brickset";
 import { bedethequeModule } from "@/providers/bedetheque";
 import { canalbdModule } from "@/providers/canalbd";
 import { chocobonplanModule } from "@/providers/chocobonplan";
@@ -27,6 +28,12 @@ import { discogsModule } from "@/providers/discogs";
 import { ebayModule } from "@/providers/ebay";
 import { freakxyModule } from "@/providers/freakxy";
 import { fullsetModule } from "@/providers/fullset";
+import { lorcanajsonModule } from "@/providers/lorcanajson";
+import { lorcanaggModule } from "@/providers/lorcanagg";
+import { lorcastModule } from "@/providers/lorcast";
+import { lorcanatcgModule } from "@/providers/lorcanatcg";
+import { tcgdexModule } from "@/providers/tcgdex";
+import { pokemontcgliveModule } from "@/providers/pokemontcglive";
 import { furetModule } from "@/providers/furet";
 import { geedieModule } from "@/providers/geedie";
 import { gibertModule } from "@/providers/gibert";
@@ -35,9 +42,25 @@ import { howlongtobeatModule } from "@/providers/howlongtobeat";
 import { icollectModule } from "@/providers/icollect";
 import { igdbModule } from "@/providers/igdb";
 import { izneoModule } from "@/providers/izneo";
+import { jikanModule } from "@/providers/jikan";
 import { ledenicheurModule } from "@/providers/ledenicheur";
+import { nautiljonModule } from "@/providers/nautiljon";
 import { musicbrainzModule } from "@/providers/musicbrainz";
 import { nointroModule } from "@/providers/nointro";
+import { narutocarddassModule } from "@/providers/narutocarddass";
+import { narutoshippudenModule } from "@/providers/narutoshippuden";
+import { narutoranksModule } from "@/providers/narutoranks";
+import { narutoultraModule } from "@/providers/narutoultra";
+import { narutomythosModule } from "@/providers/narutomythos";
+import { narutokayouModule } from "@/providers/narutokayou";
+import { narutodatacarddassModule } from "@/providers/narutodatacarddass";
+import { onepieceModule } from "@/providers/onepiece";
+import { digimonModule } from "@/providers/digimon";
+import { yugiohModule } from "@/providers/yugioh";
+import { mtgModule } from "@/providers/mtg";
+import { dbscgModule } from "@/providers/dbscg";
+import { dbsfwModule } from "@/providers/dbsfw";
+import { dbslamincardsModule } from "@/providers/dbslamincards";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
@@ -52,6 +75,7 @@ import { SHOPIFY_RETAILER_MODULES } from "@/providers/shopify";
 import { wikidataModule } from "@/providers/wikidata";
 import { pricechartingModule } from "@/providers/pricecharting";
 import { rawgModule } from "@/providers/rawg";
+import { rebrickableModule } from "@/providers/rebrickable";
 import { scandexModule } from "@/providers/scandex";
 import { screenscraperModule } from "@/providers/screenscraper";
 import { senscritiqueModule } from "@/providers/senscritique";
@@ -86,10 +110,14 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   openlibraryModule,
   googlebooksModule,
   booknodeModule,
+  bricksetModule,
+  rebrickableModule,
   babelioModule,
   planetebdModule,
   vivlioModule,
   izneoModule,
+  nautiljonModule,
+  jikanModule,
   bedethequeModule,
   bdovoreModule,
   bdphileModule,
@@ -104,6 +132,26 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   playinModule,
   senscritiqueModule,
   fullsetModule,
+  lorcanajsonModule,
+  lorcanatcgModule,
+  narutocarddassModule,
+  narutoshippudenModule,
+  narutoranksModule,
+  narutoultraModule,
+  narutomythosModule,
+  narutokayouModule,
+  narutodatacarddassModule,
+  onepieceModule,
+  digimonModule,
+  yugiohModule,
+  mtgModule,
+  dbscgModule,
+  dbsfwModule,
+  dbslamincardsModule,
+  lorcanaggModule,
+  lorcastModule,
+  tcgdexModule,
+  pokemontcgliveModule,
   ...PRESTASHOP_RETAILER_MODULES,
   ...SHOPIFY_RETAILER_MODULES,
   chasseauxlivresModule,

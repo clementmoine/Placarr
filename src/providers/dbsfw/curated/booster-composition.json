@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "pack": "dbs/fw",
+  "updatedAt": "2026-08-27",
+  "notes": "Fusion World : 12 cartes + code digital / pack. Display 24 (Story Booster : 20 — bySet). Raretés lettres dans facts.json (C/UC/R/SR/L/SCR/PR). Taux SCR community-order ; pas d'officiel Bandai.",
+  "default": {
+    "source": "Bandai FW product pages (12/pack, display 24) + community SCR seeding (ordre de grandeur Masters-like)",
+    "verifiedAt": "2026-08-27",
+    "cardsPerPack": 12,
+    "packsPerDisplay": 24,
+    "displaysPerCase": 12,
+    "slots": [
+      {
+        "id": "unknown_fill",
+        "count": 12,
+        "kind": "shared",
+        "rarities": ["C", "UC", "R", "SR", "L", "SCR", "PR"]
+      }
+    ],
+    "rarityHits": {
+      "SR": {
+        "packsPerHit": 5,
+        "displaysPerHit": 0.2,
+        "confidence": "estimate",
+        "notes": "Ordre de grandeur type Masters SR — à resserrer avec openings FW.",
+        "aliases": ["Super Rare", "Super Rare[SR]"]
+      },
+      "L": {
+        "packsPerHit": 8,
+        "confidence": "estimate",
+        "notes": "Leader — souvent hors booster set (starters). Si tiré en booster, figure indicative.",
+        "aliases": ["Leader"]
+      },
+      "SCR": {
+        "packsPerHit": 144,
+        "displaysPerHit": 6,
+        "confidence": "estimate",
+        "source": "Ordre de grandeur ~1–2 SCR / casier (comme Masters) — non attesté set par set",
+        "aliases": ["Secret Rare", "Secret Rare[SCR]"]
+      }
+    }
+  }
+}

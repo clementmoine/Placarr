@@ -1,0 +1,43 @@
+{
+  "source": "slab-z.com",
+  "faces": {
+    "on": "2026-08-20",
+    "post": "https://www.slab-z.com/post/the-definitive-2002-naruto-card-game-vintage-guide-rookies-grails",
+    "ingest": "art.slabz.jpg",
+    "note": "URL CDN collées par l'utilisateur — même chemin que eBay, pas de crawl. Cinq scans à plat du 巻ノ壱, BANDAI 2002, ~865×1230, cadrés sur la carte.",
+    "cards": [
+      {
+        "disk": "ni0001",
+        "printed": "忍-1",
+        "name": "うずまきナルト",
+        "media": "2bc309_0633f2a9a8634b9289e2c058725b0a17"
+      },
+      {
+        "disk": "ni0002",
+        "printed": "忍-2",
+        "name": "うちはサスケ",
+        "media": "2bc309_74c257c309a94c7dbccbc38abf699a66"
+      },
+      {
+        "disk": "ni0003",
+        "printed": "忍-3",
+        "name": "春野サクラ",
+        "media": "2bc309_a77c8f8b704c44399381a7dd06ff0e97"
+      },
+      {
+        "disk": "ni0011",
+        "printed": "忍-11",
+        "name": "はたけカカシ",
+        "media": "2bc309_0a0de96e2a6b48a9a66bcd35d5ccac9d"
+      },
+      {
+        "disk": "prni0001",
+        "printed": "PR忍-1",
+        "name": "うずまきナルト",
+        "media": "2bc309_4b87f994086f4239babb6c5b620cae21"
+      }
+    ],
+    "why": "Ces cinq cartes avaient déjà une face, mais deux tenaient d'une vignette nikita de 339×500 — cinq fois moins de surface. Les photos de place de marché, elles, sont carrées (1080×1080) et laissent la moitié du cadre au fond : plus de pixels au total, moins sur la carte. D'où `slabz` placé devant `nikita` dans l'ordre japonais.",
+    "identification": "Chaque image a été ouverte et le numéro imprimé lu avant classement. À ne pas confondre avec le bonus PS1 : celui-ci porte BANDAI 2003 et NOT FOR SALE, avec une illustration différente pour les mêmes numéros."
+  }
+}

@@ -8,7 +8,10 @@ const PRODUCT_HTML_TTL_MS = 30 * 60 * 1000;
 
 type TimedEntry<T> = { expires: number; value: T };
 
-const searchHitsCache = new Map<string, TimedEntry<AchatMoinsCherSearchHit[]>>();
+const searchHitsCache = new Map<
+  string,
+  TimedEntry<AchatMoinsCherSearchHit[]>
+>();
 const productHtmlCache = new Map<string, TimedEntry<string>>();
 
 function normalizeSearchKey(query: string): string {

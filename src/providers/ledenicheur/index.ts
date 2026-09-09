@@ -1,4 +1,5 @@
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { rawProbe } from "@/lib/dev/mappingProbe";
 import {
@@ -12,7 +13,10 @@ import {
 } from "@/lib/dev/teardownUtils";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
-import { gatedContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  gatedContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import {
   fetchPricesFromLeDenicheur,
@@ -85,13 +89,14 @@ async function refreshLeDenicheurOffers(ctx: BarcodePriceRefreshContext) {
   return pricedOffers(PRICE_SOURCE, leDenicheurPriceOfferRows(result));
 }
 
-export const ledenicheurModule: ProviderModule = {
+export const ledenicheurModule = defineProvider({
   info: {
     id: "ledenicheur",
     label: "LeDénicheur",
     types: ["games", "movies", "musics", "books", "boardgames", "hardware"],
     capabilities: ["price", "identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     slowBarcodeLookup: true,
@@ -183,4 +188,4 @@ export const ledenicheurModule: ProviderModule = {
     itemBarcode,
     itemTitle,
   ) => leDenicheurProductUrlContradictsItem(url, itemBarcode, itemTitle),
-};
+});

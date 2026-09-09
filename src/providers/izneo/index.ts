@@ -18,8 +18,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectIzneoMappingRawKeys,
@@ -78,9 +78,7 @@ function formatRating(value: number, count?: number): string {
     : `${formatted}/5`;
 }
 
-function buildAttachments(
-  album: IzneoAlbum,
-): MetadataAttachment[] | undefined {
+function buildAttachments(album: IzneoAlbum): MetadataAttachment[] | undefined {
   if (!album.imageUrl) return undefined;
   return [
     {
@@ -266,7 +264,7 @@ async function refreshIzneoOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const izneoModule: ProviderModule = {
+export const izneoModule = defineProvider({
   info: {
     id: "izneo",
     label: "Izneo",
@@ -283,6 +281,7 @@ export const izneoModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -323,7 +322,7 @@ export const izneoModule: ProviderModule = {
         return mapIzneoMetadata(
           await resolveIzneoMetadata({
             name: String(ctx.name || "").trim() || undefined,
-            barcode: ctx.barcode,
+            barcode: ctx.barcode ?? undefined,
             lookupQueries: ctx.lookupQueries,
             signal: ctx.signal,
           }),
@@ -363,4 +362,4 @@ export const izneoModule: ProviderModule = {
     return collectIzneoMappingRawKeys(ctx.name);
   },
   refreshBarcodePriceOffers: refreshIzneoOffers,
-};
+});

@@ -1,0 +1,51 @@
+{
+  "source": "narutocardgamebrasil.blogspot.com — Rogue Card List, cited as Bandai Unlimited update 2013-01-04",
+  "url": "https://narutocardgamebrasil.blogspot.com/p/rogue-card-list.html",
+  "note": "Competitive legality (Proibidas / 1-of / 2-of), not a scan dump and not a card-back source. Uses printed Bandai codes including tin/US exclusives N-US / J-US / M-US. Storm 3 (May 2013) is absent — the list predates it. Do not ingest homepage PR photos as s28 faces: the March 2013 'promo inédita' is a 2008 Shonen Jump PR-032 on the magazine, not Series 28.",
+  "seriesTitles": {
+    "1": "The Path to Hokage",
+    "2": "Coils of the Snake",
+    "3": "Curse of the Sand",
+    "4": "Revenge and Rebirth",
+    "6": "Eternal Rivalry",
+    "10": "Lineage of the Legends",
+    "12": "A New Chronicle",
+    "13": "Fateful Reunion",
+    "14": "Emerging Alliance",
+    "15": "Foretold Prophecy",
+    "16": "Broken Promises",
+    "17": "Will of Fire",
+    "18": "Fangs of the Snake",
+    "19": "Path of Pain",
+    "20": "Tales of the Gallant Sage",
+    "21": "Shattered Truth",
+    "21.5": "Tournament Pack 3"
+  },
+  "usExclusivePrinted": [
+    "N-US118",
+    "N-US122",
+    "N-US123",
+    "N-US124",
+    "M-US093",
+    "J-US001"
+  ],
+  "usExclusiveNamed": [
+    { "printed": "N-US118", "name": "Kankuro", "setCode": "s10" },
+    { "printed": "N-US122", "name": "Naruto Uzumaki", "setCode": "tin1" },
+    { "printed": "N-US123", "name": "Sasuke Uchiha", "setCode": "s10" },
+    { "printed": "N-US124", "name": "Kimimaro", "setCode": "s10" },
+    { "printed": "M-US093", "name": "Ghost Panic", "setCode": "s10" },
+    { "printed": "J-US001", "name": "Shadow Clone Jutsu", "setCode": "s6" }
+  ],
+  "printedAlsoSeen": ["C-035"],
+  "storm3Post": {
+    "url": "https://narutocardgamebrasil.blogspot.com/",
+    "youtubeBoxOpening": "DCpEW7hH5qA",
+    "claimedIneditePromo": "PR-032",
+    "claimedInediteNote": "Naruto Goku gi — Shonen Jump Spring 2008, not Series 28"
+  },
+  "sidebarPromo": {
+    "ref": "PR-060",
+    "note": "Landscape Clash mission (PSN), not a Storm 3 booster card"
+  }
+}

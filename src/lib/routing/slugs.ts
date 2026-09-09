@@ -1,3 +1,4 @@
+import { parsePrintKey } from "@/core/identify/printKey";
 import {
   normalizeVolumeNumber,
   unpaddedVolumeNumbersInTitle,
@@ -110,9 +111,53 @@ function parseMetadataAliasLabels(raw?: string | null): string[] {
 }
 
 /** Slugs accepted for item URL resolution (stored slug, names, metadata labels). */
+/**
+ * Le slug d'une carte : sa **référence de collection**, pas son nom.
+ *
+ * Un nom n'identifie pas une carte. Sur une étagère Naruto, deux objets
+ * s'appellent « Naruto Uzumaki » — l'un est `pr-0016` en holo, l'autre
+ * `ni-0046` en normal. Le nommage par titre les rendait `naruto-uzumaki` et
+ * `naruto-uzumaki-copy-2`, ce qui n'est pas seulement peu lisible : `copy`
+ * **affirme** que le second est un exemplaire du premier, alors que ce sont
+ * deux cartes différentes.
+ *
+ * La référence est ce qu'un collectionneur lit sur le carton et ce qu'il tape :
+ * `ni-0046`. La finition ne s'y ajoute que là où elle départage — deux
+ * exemplaires du **même** tirage, eux, sont bien des copies et retombent sur le
+ * suffixe prévu pour ça.
+ *
+ * **La langue en fait partie**, ajoutée le 2026-08-21. Un tirage porte une seule
+ * clé pour toutes ses localisations — c'est ainsi que les sources le modèlent —
+ * si bien que l'Inari française et l'イナリ japonaise sortaient toutes deux
+ * `cl-0001-normal`, et que la seconde héritait de `-copy-2`. Le suffixe
+ * **affirmait** qu'elle dupliquait la première : le défaut même que le nommage
+ * par référence avait été écrit pour supprimer, déplacé de l'homonymie vers la
+ * langue. 898 clés Naruto et 19 673 clés Pokémon portent plusieurs langues.
+ *
+ * Elle est écrite **toujours**, pas seulement quand elle départage : sinon
+ * l'URL de la carte française changerait le jour où l'on ajoute la japonaise.
+ * Un slug ne doit pas dépendre de ce qu'on possède par ailleurs.
+ */
+export function printKeyItemSlug(
+  printKey?: string | null,
+  variant?: string | null,
+  language?: string | null,
+): string {
+  const identity = parsePrintKey(printKey);
+  if (!identity) return "";
+  const reference = slugify(`${identity.set}-${identity.number}`);
+  if (!reference) return "";
+  return [reference, slugify(language), slugify(variant)]
+    .filter(Boolean)
+    .join("-");
+}
+
 export function itemLookupSlugs(item: {
   name?: string | null;
   slug?: string | null;
+  printKey?: string | null;
+  variant?: string | null;
+  language?: string | null;
   metadata?: { title?: string | null; aliases?: string | null } | null;
 }): string[] {
   const slugs = new Set<string>();
@@ -125,6 +170,22 @@ export function itemLookupSlugs(item: {
     if (!label?.trim()) continue;
     const slug = slugifyItemName(label);
     if (slug) slugs.add(slug);
+  }
+  /*
+    Les formes par référence sont **reconnues** même quand le slug rangé est un
+    ancien slug par nom : c'est ce qui laisse les deux URL fonctionner sans
+    renommer quoi que ce soit en base, et donc sans casser un lien déjà partagé.
+  */
+  /*
+    Toutes les formes par référence sont reconnues, langue comprise ou non :
+    c'est ce qui laisse répondre les URL déjà partagées quand un item est
+    re-slugué, ici parce que la langue est entrée dans le slug.
+  */
+  for (const withLanguage of [item.language, null]) {
+    for (const withVariant of [item.variant, null]) {
+      const slug = printKeyItemSlug(item.printKey, withVariant, withLanguage);
+      if (slug) slugs.add(slug);
+    }
   }
   return [...slugs];
 }

@@ -1,0 +1,121 @@
+{
+  "source": "scifi-universe.com jeux/10095/naruto-jcc/gamme",
+  "observed": "2026-08-17",
+  "ingest": "packshots",
+  "line": "carddass-fr",
+  "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme",
+  "staging": "staging/scifi-universe/gamme.html",
+  "note": "Gamme lists S1–S4 only (no S5). Product pages all collapse to 11649 Pays du Vent. Edition images are ~200px (some served as GIF) — same class as the carddass.fr starter GIFs, larger than the 100px booster GIFs. Keep them as last-resort packshots; Tric Trac / Via / eBay / Manga-News still win when present. S1 booster 11651 is a generic game vignette, not a packshot. S3 15061 and S4 17700 are combined shots — do not attach to a single SKU.",
+  "products": [
+    {
+      "id": 11649,
+      "slug": "starter-pays-du-vent",
+      "kind": "deck",
+      "setCode": "s1",
+      "title": "Naruto JCC : Le Pays du Vent",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/11649/naruto-jcc-le-pays-du-vent",
+      "url": "https://www.scifi-universe.com/upload/editions/images/11000/11649-le-pays-du-vent.jpg",
+      "staging": "staging/scifi-universe/images/11649-le-pays-du-vent.jpg",
+      "pixels": { "width": 200, "height": 245 },
+      "ingest": true
+    },
+    {
+      "id": 11650,
+      "slug": "starter-maitre-hokage",
+      "kind": "deck",
+      "setCode": "s1",
+      "title": "Naruto JCC : Maître Hokage",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/11650/naruto-jcc-maitre-hokage",
+      "url": "https://www.scifi-universe.com/upload/editions/images/11000/11650-maitre-hokage.jpg",
+      "staging": "staging/scifi-universe/images/11650-maitre-hokage.jpg",
+      "pixels": { "width": 200, "height": 242 },
+      "ingest": true
+    },
+    {
+      "id": 11651,
+      "slug": "booster-s1",
+      "kind": "booster",
+      "setCode": "s1",
+      "title": "Naruto JCC : Booster Naruto",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/11651/naruto-jcc-booster-naruto",
+      "url": "https://www.scifi-universe.com/upload/medias/vignettes/10000/10095-naruto-jcc.jpg",
+      "ingest": false,
+      "reason": "Generic game vignette, not a booster packshot. editions/images 11651 500."
+    },
+    {
+      "id": 13243,
+      "slug": "booster-s2",
+      "kind": "booster",
+      "setCode": "s2",
+      "title": "Naruto JCC : Booster Naruto Série 2",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/13243/naruto-jcc-booster-naruto-serie-2",
+      "url": "https://www.scifi-universe.com/upload/editions/images/13000/13243-booster-naruto-serie-2.jpg",
+      "staging": "staging/scifi-universe/images/13243-booster-naruto-serie-2.jpg",
+      "pixels": { "width": 200, "height": 336 },
+      "ingest": true
+    },
+    {
+      "id": 13244,
+      "slug": "starter-sceller-le-malefice",
+      "kind": "deck",
+      "setCode": "s2",
+      "title": "Naruto JCC : Deck Sceller le Maléfice",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/13244/naruto-jcc-deck-sceller-le-malefice",
+      "url": "https://www.scifi-universe.com/upload/editions/images/13000/13244-deck-sceller-le-malefice.jpg",
+      "staging": "staging/scifi-universe/images/13244-deck-sceller-le-malefice.jpg",
+      "pixels": { "width": 200, "height": 268 },
+      "ingest": true
+    },
+    {
+      "id": 13245,
+      "slug": "starter-detruire-konoha",
+      "kind": "deck",
+      "setCode": "s2",
+      "title": "Naruto JCC : Deck Détruire Konoha",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/13245/naruto-jcc-deck-detruire-konoha",
+      "url": "https://www.scifi-universe.com/upload/editions/images/13000/13245-deck-detruire-konoha.jpg",
+      "staging": "staging/scifi-universe/images/13245-deck-detruire-konoha.jpg",
+      "pixels": { "width": 200, "height": 265 },
+      "ingest": true
+    },
+    {
+      "id": 15061,
+      "slug": "s3-combined",
+      "kind": "mixed",
+      "setCode": "s3",
+      "title": "Naruto JCC : Booster et Starter Naruto Série 3",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/15061/naruto-jcc-booster-et-starter-naruto-serie-3",
+      "url": "https://www.scifi-universe.com/upload/editions/images/15000/15061-booster-et-starter-naruto-serie-3.jpg",
+      "staging": "staging/scifi-universe/images/15061-booster-et-starter-naruto-serie-3.jpg",
+      "pixels": { "width": 200, "height": 320 },
+      "ingest": false,
+      "reason": "Combined booster + starters — do not mint a SKU."
+    },
+    {
+      "id": 16295,
+      "slug": "booster-s4",
+      "kind": "booster",
+      "setCode": "s4",
+      "title": "Naruto JCC : Booster Naruto Série 4",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/16295/naruto-jcc-booster-naruto-serie-4",
+      "url": "https://www.scifi-universe.com/upload/editions/images/16000/16295-booster-naruto-serie-4.jpg",
+      "staging": "staging/scifi-universe/images/16295-booster-naruto-serie-4.jpg",
+      "pixels": { "width": 200, "height": 300 },
+      "ingest": true
+    },
+    {
+      "id": 17700,
+      "slug": "s4-starters-combined",
+      "kind": "mixed",
+      "setCode": "s4",
+      "title": "Naruto JCC : Starters Naruto Série 4",
+      "page": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme/17700/naruto-jcc-starters-naruto-serie-4",
+      "url": "https://www.scifi-universe.com/upload/editions/images/17000/17700-starters-naruto-serie-4.jpg",
+      "staging": "staging/scifi-universe/images/17700-starters-naruto-serie-4.jpg",
+      "pixels": { "width": 200, "height": 300 },
+      "ingest": false,
+      "reason": "Combined S4 starters — do not attach to esprit-du-sable or invocation alone."
+    }
+  ],
+  "missing": ["s5"]
+}

@@ -8,6 +8,7 @@ const h = vi.hoisted(() => ({
   priceOffer: {
     findMany: vi.fn(),
   },
+  collectRefreshBarcodePriceOffers: vi.fn(),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -16,6 +17,15 @@ vi.mock("@/lib/db/prisma", () => ({
     priceOffer: h.priceOffer,
   },
 }));
+
+vi.mock("@/core/catalog/barcodePrices", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/core/catalog/barcodePrices")>();
+  return {
+    ...actual,
+    collectRefreshBarcodePriceOffers: h.collectRefreshBarcodePriceOffers,
+  };
+});
 
 import {
   alignBarcodePricesForItemNames,
@@ -147,6 +157,79 @@ describe("summarizeShelfItemPrices", () => {
   beforeEach(() => {
     h.barcodeCache.findMany.mockReset();
     h.priceOffer.findMany.mockReset();
+    h.collectRefreshBarcodePriceOffers.mockReset();
+    h.collectRefreshBarcodePriceOffers.mockResolvedValue([]);
+  });
+
+  it("fills TCG priceEstimated from evidence-only printKey sources", async () => {
+    h.barcodeCache.findMany.mockResolvedValue([]);
+    h.priceOffer.findMany.mockResolvedValue([]);
+    h.collectRefreshBarcodePriceOffers.mockResolvedValue([
+      {
+        source: "Collection Naruto",
+        condition: "estimated",
+        priceCents: 2000,
+        productName: "NI-019",
+      },
+    ]);
+
+    const map = await summarizeShelfItemPrices(
+      "tcg",
+      [
+        {
+          id: "item-ni019",
+          barcode: null,
+          name: "NI-019",
+          printKey: "naruto:ni-0019",
+        },
+      ],
+      "Naruto Carddass",
+    );
+
+    expect(h.collectRefreshBarcodePriceOffers).toHaveBeenCalledWith(
+      expect.objectContaining({
+        printKey: "naruto:ni-0019",
+        evidenceOnly: true,
+        shelfType: "tcg",
+      }),
+    );
+    expect(map.get("item-ni019")).toEqual({
+      priceNew: null,
+      priceUsed: null,
+      priceUsedCIB: null,
+      priceEstimated: 2000,
+      priceLastUpdated: null,
+    });
+  });
+
+  it("skips printKey estimate fill when priceEstimated already present", async () => {
+    h.barcodeCache.findMany.mockResolvedValue([]);
+    h.priceOffer.findMany.mockResolvedValue([
+      {
+        itemId: "item-ni019",
+        source: "Collection Naruto",
+        productName: "NI-019",
+        condition: "estimated",
+        priceCents: 1500,
+        observedAt: new Date("2026-09-01T12:00:00.000Z"),
+      },
+    ]);
+
+    const map = await summarizeShelfItemPrices(
+      "tcg",
+      [
+        {
+          id: "item-ni019",
+          barcode: null,
+          name: "NI-019",
+          printKey: "naruto:ni-0019",
+        },
+      ],
+      "Naruto Carddass",
+    );
+
+    expect(h.collectRefreshBarcodePriceOffers).not.toHaveBeenCalled();
+    expect(map.get("item-ni019")?.priceEstimated).toBe(1500);
   });
 
   it("falls back to item-scoped offers when barcode is missing", async () => {
@@ -492,6 +575,85 @@ describe("alignBarcodePricesForItemNames", () => {
     expect(aligned.priceUsedCIB).toBeNull();
     expect(aligned.priceNew).toBeNull();
     expect(aligned.priceObservations).toEqual([]);
+  });
+
+  it("keeps Lorcast FX ~estimate when EN catalog title misses the FR print", () => {
+    const aligned = alignBarcodePricesForItemNames(
+      "tcg",
+      ["Ariel - Sur des jambes humaines"],
+      cachedBarcodePrices({
+        priceNew: null,
+        priceUsed: null,
+        priceUsedCIB: null,
+        priceEstimated: 6,
+        priceLastUpdated: new Date("2026-07-31T12:00:00.000Z"),
+        priceSources: ["Lorcast"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "Lorcast",
+            productName: "Ariel - On Human Legs",
+            condition: "new",
+            priceCents: 7,
+            currency: "USD",
+            metadataScoped: true,
+            sourceUrl: "https://lorcast.com/cards/1/1",
+          }),
+          serializedPriceObservation({
+            source: "Lorcast",
+            productName: "Ariel - On Human Legs (foil)",
+            condition: "foil",
+            priceCents: 63,
+            currency: "USD",
+            metadataScoped: true,
+            sourceUrl: "https://lorcast.com/cards/1/1",
+          }),
+        ],
+      }),
+      "Lorcana",
+    );
+
+    expect(aligned.priceEstimated).toBe(6);
+    expect(aligned.priceNew).toBeNull();
+    expect(aligned.priceObservations).toHaveLength(2);
+  });
+
+  it("keeps Lorcast FX when FR/EN titles share no tokens (printKey match)", () => {
+    // Song cards: "Ce rêve bleu" ↔ "A Whole New World" — zero shared tokens.
+    // Legacy offers may lack metadataScoped in rawValue.
+    const aligned = alignBarcodePricesForItemNames(
+      "tcg",
+      ["Ce rêve bleu"],
+      cachedBarcodePrices({
+        priceNew: null,
+        priceUsed: null,
+        priceUsedCIB: null,
+        priceEstimated: 136,
+        priceLastUpdated: new Date("2026-07-31T12:00:00.000Z"),
+        priceSources: ["Lorcast"],
+        priceObservations: [
+          serializedPriceObservation({
+            source: "Lorcast",
+            productName: "A Whole New World",
+            condition: "new",
+            priceCents: 156,
+            currency: "USD",
+            sourceUrl: "https://lorcast.com/cards/1/195",
+          }),
+          serializedPriceObservation({
+            source: "Lorcast",
+            productName: "A Whole New World (foil)",
+            condition: "foil",
+            priceCents: 683,
+            currency: "USD",
+            sourceUrl: "https://lorcast.com/cards/1/195",
+          }),
+        ],
+      }),
+      "Lorcana",
+    );
+
+    expect(aligned.priceEstimated).toBe(136);
+    expect(aligned.priceObservations).toHaveLength(2);
   });
 
   it("keeps cached aggregates when every listing title is noisy", () => {
@@ -923,10 +1085,7 @@ describe("filterItemPriceOffers", () => {
 
     expect(
       filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
-    ).toEqual([
-      "PriceCharting:loose:8175",
-      "PriceCharting:cib:21364",
-    ]);
+    ).toEqual(["PriceCharting:loose:8175", "PriceCharting:cib:21364"]);
   });
 
   it("keeps Back Market refurbished hardware used near PriceCharting CIB", () => {
@@ -1071,10 +1230,7 @@ describe("filterItemPriceOffers", () => {
 
     expect(
       filtered.map((row) => `${row.source}:${row.condition}:${row.priceCents}`),
-    ).toEqual([
-      "PriceCharting:loose:16411",
-      "PriceCharting:cib:27806",
-    ]);
+    ).toEqual(["PriceCharting:loose:16411", "PriceCharting:cib:27806"]);
   });
 
   it("drops unnamed shop rows when a titled listing matches", () => {

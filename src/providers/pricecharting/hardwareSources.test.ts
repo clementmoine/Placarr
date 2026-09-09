@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 import { pricechartingModule } from "@/providers/pricecharting";
 
 describe("pricecharting hardware barcode sources", () => {
   it("routes PriceCharting hits to hardware when the shelf type is hardware", () => {
-    const payload = createEmptyBarcodeLookupPayload();
+    const payload = createEmptyBarcodeLookupPayload(
+      barcodeLookupSlotDefaults(),
+    );
     payload.pc = {
       title: "Playstation 3 System 60GB",
       platform: "Playstation 3",
@@ -25,16 +28,16 @@ describe("pricecharting hardware barcode sources", () => {
         label: "PriceCharting",
       }),
     ]);
-    expect(sources?.[0]?.products[0]?.name).toBe(
-      "Playstation 3 System 60GB",
-    );
+    expect(sources?.[0]?.products[0]?.name).toBe("Playstation 3 System 60GB");
     expect(sources?.[0]?.products[0]?.coverUrl).toBe(
       "https://example.com/ps3.jpg",
     );
   });
 
   it("leads hardware Game & Watch SKUs with the device name", () => {
-    const payload = createEmptyBarcodeLookupPayload();
+    const payload = createEmptyBarcodeLookupPayload(
+      barcodeLookupSlotDefaults(),
+    );
     payload.pc = {
       title: "Super Mario Bros",
       platform: "Game & Watch",
@@ -57,7 +60,9 @@ describe("pricecharting hardware barcode sources", () => {
   });
 
   it("keeps games routing when the shelf type is games", () => {
-    const payload = createEmptyBarcodeLookupPayload();
+    const payload = createEmptyBarcodeLookupPayload(
+      barcodeLookupSlotDefaults(),
+    );
     payload.pc = {
       title: "Mario Kart Wii",
       platform: "Wii",

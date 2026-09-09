@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_ITEM_COLLECTION_FILTERS,
+  defaultItemCollectionSort,
   filterCollectionItems,
   parseItemCollectionFilters,
+  parseItemCollectionSort,
   queryCollectionItems,
   sortCollectionItems,
   summarizeCollectionEstimatedValue,
@@ -24,6 +26,7 @@ function makeItem(
     shelfId: "shelf-1",
     description: null,
     barcode: null,
+    printKey: overrides.printKey ?? null,
     condition: overrides.condition ?? "new",
     metadataId: null,
     metadataRefreshStartedAt: null,
@@ -40,7 +43,6 @@ function makeItem(
       createdAt: new Date(),
       updatedAt: new Date(),
       userId: "user-1",
-      isPublic: false,
     },
     metadata: overrides.metadata,
     priceNew: overrides.priceNew ?? null,
@@ -141,6 +143,39 @@ describe("collectionQuery", () => {
     ).toEqual(["cheap", "mid", "best"]);
   });
 
+  it("sorts TCG prints by set then collector number", () => {
+    const items = [
+      makeItem({
+        id: "rof-1",
+        name: "Later set",
+        printKey: "lorcana:2-1",
+      }),
+      makeItem({
+        id: "tfc-20p",
+        name: "Promo",
+        printKey: "lorcana:1-20-p1",
+      }),
+      makeItem({
+        id: "tfc-2",
+        name: "Ariel",
+        printKey: "lorcana:1-2",
+      }),
+      makeItem({
+        id: "tfc-10",
+        name: "Ten",
+        printKey: "lorcana:1-10",
+      }),
+      makeItem({
+        id: "orphan",
+        name: "Sans clé",
+      }),
+    ];
+
+    expect(
+      sortCollectionItems(items, "print_asc", "tcg").map((item) => item.id),
+    ).toEqual(["tfc-2", "tfc-10", "tfc-20p", "rof-1", "orphan"]);
+  });
+
   it("parses filter params from the URL", () => {
     expect(
       parseItemCollectionFilters({
@@ -168,6 +203,15 @@ describe("collectionQuery", () => {
         get: (key) => (key === "condition" ? "mint" : null),
       }).condition,
     ).toBe("all");
+  });
+
+  it("defaults TCG shelves to print binder order", () => {
+    expect(defaultItemCollectionSort("tcg")).toBe("print_asc");
+    expect(defaultItemCollectionSort("games")).toBe("name_asc");
+    expect(parseItemCollectionSort(null, "tcg")).toBe("print_asc");
+    expect(parseItemCollectionSort(null, "games")).toBe("name_asc");
+    expect(parseItemCollectionSort("name_asc", "tcg")).toBe("name_asc");
+    expect(parseItemCollectionSort("price_desc", "tcg")).toBe("price_desc");
   });
 
   it("applies filters then sort", () => {

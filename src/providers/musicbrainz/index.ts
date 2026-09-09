@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import {
@@ -9,7 +9,7 @@ import {
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   createTeardownMetadataTask,
@@ -190,13 +190,14 @@ function createMusicBrainzAdapter(): MetadataProviderAdapter {
   };
 }
 
-export const musicbrainzModule: ProviderModule = {
+export const musicbrainzModule = defineProvider({
   info: {
     id: "musicbrainz",
     label: "MusicBrainz",
     types: ["musics"],
     capabilities: ["identify", "cover", "releaseDate", "people", "tracksCount"],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     websiteUrl: "https://musicbrainz.org/",
     notes: "Lookup par code-barre, sans clé.",
@@ -238,11 +239,14 @@ export const musicbrainzModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const res = await axios.get("https://musicbrainz.org/ws/2/release/", {
-        params: { query: "barcode:886443927087", fmt: "json", limit: 1 },
-        headers: { "User-Agent": "Placarr/1.0 (mapping-audit)" },
-        timeout: 8000,
-      });
+      const res = await httpGet<{ releases?: JsonObject[] }>(
+        "https://musicbrainz.org/ws/2/release/",
+        {
+          params: { query: "barcode:886443927087", fmt: "json", limit: 1 },
+          headers: { "User-Agent": "Placarr/1.0 (mapping-audit)" },
+          timeout: 8000,
+        },
+      );
       return Object.keys(res.data?.releases?.[0] || {});
     } catch {
       return [];
@@ -259,4 +263,4 @@ export const musicbrainzModule: ProviderModule = {
       },
     ];
   },
-};
+});

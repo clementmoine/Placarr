@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db/prisma";
 import { METADATA_REFRESH_ORPHAN_GRACE_MS } from "@/core/collect/enrichment";
-import { hasActiveBackgroundWorkJobForItem, cancelBackgroundWorkJobsForItem } from "@/core/collect/jobs/workQueue";
+import {
+  hasActiveBackgroundWorkJobForItem,
+  cancelBackgroundWorkJobsForItem,
+} from "@/core/collect/jobs/workQueue";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 
 export type ItemMetadataRefreshSession = {
@@ -72,7 +75,9 @@ export async function beginItemMetadataRefresh(
 export async function adoptItemMetadataRefreshOnWorker(
   itemId: string,
   generation: number,
-): Promise<(ItemMetadataRefreshSession & { controller: AbortController }) | null> {
+): Promise<
+  (ItemMetadataRefreshSession & { controller: AbortController }) | null
+> {
   const item = await prisma.item.findUnique({
     where: { id: itemId },
     select: {

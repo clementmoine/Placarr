@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import sharp from "sharp";
@@ -215,7 +215,7 @@ async function measurePhilibertImage(
   url: string,
 ): Promise<{ width: number; height: number } | null> {
   try {
-    const response = await axios.get<ArrayBuffer>(url, {
+    const response = await httpGet<ArrayBuffer>(url, {
       responseType: "arraybuffer",
       headers: { ...HEADERS, Accept: "image/*", Range: IMAGE_HEADER_RANGE },
       timeout: 8000,

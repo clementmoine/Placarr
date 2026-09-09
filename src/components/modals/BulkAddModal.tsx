@@ -20,19 +20,23 @@ import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DialogFooter } from "@/components/ui/dialog";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { isBookShelfType } from "@/core/identify/shelfLabels";
-import { itemConditionsForShelfType } from "@/core/collect/condition";
+import {
+  itemConditionsForShelfType,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
 import { saveItem, saveItemsBatch } from "@/lib/api/items";
 import { parseNameList } from "@/core/enrich/titles/parseNameList";
 import { syncItemQueries } from "@/core/collect/queryCache";
 import { cn } from "@/lib/shared/utils";
 import { cleanManualBarcode } from "@/components/ManualBarcodeEntry";
 
-import { Condition, type Shelf } from "@prisma/client";
+import { Condition, type Shelf } from "@/generated/prisma/browser";
 
 export type BulkAddTab = "names" | "series" | "scan";
 
@@ -67,6 +71,8 @@ export function BulkAddModal({
   const { t } = useLocale();
   const queryClient = useQueryClient();
   const isBookShelf = isBookShelfType(shelfType);
+  /** Nothing on these shelves has a barcode, so the scan tab has no input. */
+  const canScan = !usesPrintSearch(shelfType);
 
   const defaultTab = useMemo(() => {
     if (initialTab === "series" && !isBookShelf) return "names";
@@ -79,10 +85,7 @@ export function BulkAddModal({
   const [isScanning, setIsScanning] = useState(false);
   const [scannedRows, setScannedRows] = useState<ScannedRow[]>([]);
   const availableConditions = itemConditionsForShelfType(shelfType);
-  if (
-    condition === "loose" &&
-    !availableConditions.includes("loose")
-  ) {
+  if (condition === "loose" && !availableConditions.includes("loose")) {
     setCondition(Condition.used);
   }
 
@@ -206,7 +209,11 @@ export function BulkAddModal({
   );
 
   const scanCount = scannedRows.filter((row) => row.status === "done").length;
-  const scanTabActive = isOpen && tab === "scan";
+  // Guard the camera too: the tab can still be requested by `initialTab`.
+  const scanTabActive = isOpen && tab === "scan" && canScan;
+  /** Hide the switcher when names is the only available mode (e.g. TCG). */
+  const showTabList = isBookShelf || canScan;
+  const tabCount = 1 + (isBookShelf ? 1 : 0) + (canScan ? 1 : 0);
 
   return (
     <BaseModal
@@ -234,29 +241,33 @@ export function BulkAddModal({
         onValueChange={(value) => setTab(value as BulkAddTab)}
         className="flex flex-col flex-1 min-h-0 overflow-hidden"
       >
-        <div className="px-4 md:px-6 pt-4 shrink-0">
-          <TabsList
-            className={cn(
-              "w-full grid h-auto p-1",
-              isBookShelf ? "grid-cols-3" : "grid-cols-2",
-            )}
-          >
-            <TabsTrigger value="names" className="gap-1.5 py-2">
-              <List className="size-4" />
-              {t("items.bulkAdd.tabNames")}
-            </TabsTrigger>
-            {isBookShelf && (
-              <TabsTrigger value="series" className="gap-1.5 py-2">
-                <Layers className="size-4" />
-                {t("items.bulkAdd.tabSeries")}
+        {showTabList ? (
+          <div className="px-4 md:px-6 pt-4 shrink-0">
+            <TabsList
+              className={cn(
+                "w-full grid h-auto p-1",
+                tabCount === 3 ? "grid-cols-3" : "grid-cols-2",
+              )}
+            >
+              <TabsTrigger value="names" className="gap-1.5 py-2">
+                <List className="size-4" />
+                {t("items.bulkAdd.tabNames")}
               </TabsTrigger>
-            )}
-            <TabsTrigger value="scan" className="gap-1.5 py-2">
-              <ScanLine className="size-4" />
-              {t("items.bulkAdd.tabScan")}
-            </TabsTrigger>
-          </TabsList>
-        </div>
+              {isBookShelf && (
+                <TabsTrigger value="series" className="gap-1.5 py-2">
+                  <Layers className="size-4" />
+                  {t("items.bulkAdd.tabSeries")}
+                </TabsTrigger>
+              )}
+              {canScan && (
+                <TabsTrigger value="scan" className="gap-1.5 py-2">
+                  <ScanLine className="size-4" />
+                  {t("items.bulkAdd.tabScan")}
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
+        ) : null}
 
         <TabsContent
           value="names"
@@ -281,32 +292,34 @@ export function BulkAddModal({
               </p>
             </div>
 
-            <div className="space-y-2 shrink-0">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                {t("items.condition")}
-              </label>
-              <ToggleGroup
-                size="sm"
-                type="single"
-                variant="outline"
-                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                value={condition}
-                onValueChange={(value) => {
-                  if (value) setCondition(value as Condition);
-                }}
-              >
-                {availableConditions.map((entry) => (
-                  <ToggleGroupItem
-                    key={entry}
-                    value={entry}
-                    className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
-                  >
-                    <ConditionIcon condition={entry} />
-                    {t(`items.conditions.${entry}`)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
+            {shelfShowsItemCondition(shelfType) ? (
+              <div className="space-y-2 shrink-0">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  {t("items.condition")}
+                </label>
+                <ToggleGroup
+                  size="sm"
+                  type="single"
+                  variant="outline"
+                  className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                  value={condition}
+                  onValueChange={(value) => {
+                    if (value) setCondition(value as Condition);
+                  }}
+                >
+                  {availableConditions.map((entry) => (
+                    <ToggleGroupItem
+                      key={entry}
+                      value={entry}
+                      className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
+                    >
+                      <ConditionIcon condition={entry} />
+                      {t(`items.conditions.${entry}`)}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+            ) : null}
           </div>
 
           <DialogFooter className="pt-4 mt-2 border-t border-border/60 shrink-0 flex flex-row items-center justify-end gap-2">
@@ -373,32 +386,34 @@ export function BulkAddModal({
               />
             </div>
 
-            <div className="space-y-2 shrink-0">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                {t("items.condition")}
-              </label>
-              <ToggleGroup
-                size="sm"
-                type="single"
-                variant="outline"
-                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                value={condition}
-                onValueChange={(value) => {
-                  if (value) setCondition(value as Condition);
-                }}
-              >
-                {availableConditions.map((entry) => (
-                  <ToggleGroupItem
-                    key={entry}
-                    value={entry}
-                    className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
-                  >
-                    <ConditionIcon condition={entry} />
-                    {t(`items.conditions.${entry}`)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
+            {shelfShowsItemCondition(shelfType) ? (
+              <div className="space-y-2 shrink-0">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  {t("items.condition")}
+                </label>
+                <ToggleGroup
+                  size="sm"
+                  type="single"
+                  variant="outline"
+                  className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                  value={condition}
+                  onValueChange={(value) => {
+                    if (value) setCondition(value as Condition);
+                  }}
+                >
+                  {availableConditions.map((entry) => (
+                    <ToggleGroupItem
+                      key={entry}
+                      value={entry}
+                      className="flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg cursor-pointer"
+                    >
+                      <ConditionIcon condition={entry} />
+                      {t(`items.conditions.${entry}`)}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+            ) : null}
 
             {scannedRows.length > 0 && (
               <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border/60 divide-y divide-border/60">

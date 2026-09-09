@@ -1,7 +1,9 @@
 import levenshtein from "fast-levenshtein";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
-import { mergeAbortSignals } from "@/lib/http/abort";
+import { isAbortError, mergeAbortSignals } from "@/lib/http/abort";
+import { httpGet, httpPost } from "@/lib/http/httpClient";
+import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 
 import {
   howLongToBeatSearchEvidenceUrl,
@@ -341,14 +343,20 @@ async function fetchJson<T>(
   init: RequestInit,
   signal: AbortSignal,
 ): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
+  const options = {
+    headers: init.headers as Record<string, string> | undefined,
     signal,
-  });
-  if (!response.ok) {
+    timeout: HLTB_REQUEST_TIMEOUT_MS,
+    validateStatus: () => true,
+  };
+  const response =
+    (init.method ?? "GET").toUpperCase() === "POST"
+      ? await httpPost<T>(url, init.body, options)
+      : await httpGet<T>(url, options);
+  if (response.status < 200 || response.status >= 300) {
     throw new Error(`HTTP ${response.status}`);
   }
-  return (await response.json()) as T;
+  return response.data;
 }
 
 async function fetchJsonWithTimeout<T>(
@@ -377,12 +385,10 @@ async function fetchTextWithTimeout(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), HLTB_REQUEST_TIMEOUT_MS);
   try {
-    const response = await fetch(url, {
-      ...init,
+    return await fetchTextWithFlareFallback(url, {
+      headers: init.headers as Record<string, string> | undefined,
       signal: mergeAbortSignals(signal, controller.signal) ?? controller.signal,
     });
-    if (!response.ok) return null;
-    return await response.text();
   } finally {
     clearTimeout(timeout);
   }
@@ -547,10 +553,7 @@ export async function fetchFromHowLongToBeat(
       facts,
     };
   } catch (err) {
-    const isAbort =
-      (err instanceof DOMException && err.name === "AbortError") ||
-      (err instanceof Error && /aborted/i.test(err.message));
-    if (isAbort) {
+    if (isAbortError(err)) {
       console.warn(`[HowLongToBeat] Timeout fetching "${name}"`);
       return null;
     }

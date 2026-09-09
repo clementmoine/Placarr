@@ -22,6 +22,9 @@ vi.mock("./durableEvidence", () => ({
 
 import axios from "axios";
 
+import { resetCircuitBreakersForTests } from "@/lib/http/circuitBreaker";
+import { resetHostLimiterForTests } from "@/lib/http/hostLimiter";
+
 import {
   isPriceChartingQuotaBlocked,
   resetPriceChartingQuotaBlockForTests,
@@ -83,6 +86,8 @@ function detailResponse(html = DETAIL_HTML) {
 beforeEach(() => {
   mockedGet.mockReset();
   resetPriceChartingQuotaBlockForTests();
+  resetCircuitBreakersForTests();
+  resetHostLimiterForTests();
   vi.mocked(axios.isAxiosError).mockReturnValue(false);
   readPriceChartingPriceEvidence.mockReset();
   promotePriceChartingPriceEvidence.mockReset();
@@ -519,7 +524,10 @@ describe("enrichPriceChartingMetadataWithSiblingRegion", () => {
           },
         } as never;
       }
-      if (href.includes("search-products") && /White\+Wii\+System|White%20Wii%20System/i.test(href)) {
+      if (
+        href.includes("search-products") &&
+        /White\+Wii\+System|White%20Wii%20System/i.test(href)
+      ) {
         return {
           status: 200,
           data: `
@@ -1325,6 +1333,18 @@ describe("fetchPricesFromPriceCharting", () => {
     expect(mockedGet).not.toHaveBeenCalled();
     expect(promotePriceChartingPriceEvidence).not.toHaveBeenCalled();
   });
+
+  it("evidenceOnly skips HTTP when DetailYield is missing", async () => {
+    readPriceChartingPriceEvidence.mockResolvedValueOnce(null);
+
+    await expect(
+      fetchPricesFromPriceChartingGameUrl(
+        "https://www.pricecharting.com/game/pal-playstation-3/sony-playstation-3-slim-silver-console",
+        { evidenceOnly: true },
+      ),
+    ).resolves.toBeNull();
+    expect(mockedGet).not.toHaveBeenCalled();
+  });
   it("extrait les prix loose/CIB/new en centimes EUR", async () => {
     mockedGet.mockResolvedValue(detailResponse());
 
@@ -1470,10 +1490,9 @@ describe("Game & Watch barcode / offers path with &", () => {
     } as never);
 
     await expect(
-      resolvePriceChartingGamePathForTests(
-        "/offers?product=161681",
-        { "User-Agent": "test" },
-      ),
+      resolvePriceChartingGamePathForTests("/offers?product=161681", {
+        "User-Agent": "test",
+      }),
     ).resolves.toBe("/game/game-&-watch/super-mario-bros");
   });
 

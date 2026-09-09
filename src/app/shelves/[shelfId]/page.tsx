@@ -19,6 +19,7 @@ import {
   Compass,
   Plus,
   Wrench,
+  ListChecks,
   Pizza,
   Search,
   ChevronDown,
@@ -55,8 +56,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
+import { groupCopies } from "@/core/collect/groupCopies";
 import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
 import { ItemModal } from "@/components/modals/ItemModal";
+import { PrintPickerModal } from "@/components/modals/PrintPickerModal";
 import {
   BulkAddModal,
   type BulkAddTab,
@@ -75,7 +78,11 @@ import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
-import { syncItemQueries, syncShelfQueries, invalidateShelfQueries } from "@/core/collect/queryCache";
+import {
+  syncItemQueries,
+  syncShelfQueries,
+  invalidateShelfQueries,
+} from "@/core/collect/queryCache";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
   parseItemCollectionSort,
@@ -89,8 +96,9 @@ import { metadataBusyRefetchInterval } from "@/core/collect/enrichment";
 import type { ItemMetadataIdleFields } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
-import type { Shelf, Prisma, Item } from "@prisma/client";
+import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import type { ShelfWithItemCount } from "@/types/shelves";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import type { ItemWithMetadata } from "@/types/items";
 
 const itemSearchSchema = z.object({
@@ -107,6 +115,8 @@ type ShelfGridItemProps = {
   selectionMode: boolean;
   isSelected: boolean;
   canSelect: boolean;
+  /** How many copies this tile stands for. 1 means it stands for itself. */
+  copyCount: number;
   onSelect: (itemId: string, options?: { shiftKey?: boolean }) => void;
 };
 
@@ -118,6 +128,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
   selectionMode,
   isSelected,
   canSelect,
+  copyCount,
   onSelect,
 }: ShelfGridItemProps) {
   const { t } = useLocale();
@@ -125,6 +136,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
   const card = (
     <ItemCard
       {...item}
+      copyCount={copyCount}
       shelfType={shelf?.type}
       shelfName={shelf?.name}
       cardFormat={shelf?.cardFormat}
@@ -185,9 +197,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
         <button
           type="button"
           aria-pressed={isSelected}
-          onClick={(event) =>
-            onSelect(item.id, { shiftKey: event.shiftKey })
-          }
+          onClick={(event) => onSelect(item.id, { shiftKey: event.shiftKey })}
           className="block w-full text-left"
         >
           {card}
@@ -239,16 +249,6 @@ function ShelfComponent() {
 
   const queryClient = useQueryClient();
 
-  // L'état local suit le paramètre d'URL : ajusté pendant le render (pattern
-  // « adjust state when props change ») ; seule l'écriture du store externe
-  // react-hook-form reste dans un effect.
-  const paramsKey = searchParams.toString();
-  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
-  if (prevParamsKey !== paramsKey) {
-    setPrevParamsKey(paramsKey);
-    setSearchQuery(q);
-    setSortBy(parseItemCollectionSort(searchParams.get("sort")));
-  }
   useEffect(() => {
     form.setValue("search", q);
   }, [q, form]);
@@ -280,9 +280,7 @@ function ShelfComponent() {
       const items = (query.state.data as { items?: unknown[] } | undefined)
         ?.items;
       if (!Array.isArray(items)) return false;
-      return metadataBusyRefetchInterval(
-        items as ItemMetadataIdleFields[],
-      );
+      return metadataBusyRefetchInterval(items as ItemMetadataIdleFields[]);
     },
     refetchIntervalInBackground: true,
     placeholderData: (previousData) => {
@@ -313,6 +311,9 @@ function ShelfComponent() {
             updatedAt: new Date(),
             shelfId: shelfId,
             description: null,
+            printKey: null,
+            variant: null,
+            language: null,
             barcode: null,
             condition: "new",
             metadataId: null,
@@ -324,6 +325,17 @@ function ShelfComponent() {
       };
     },
   });
+
+  // L'état local suit le paramètre d'URL (+ type d'étagère pour le défaut TCG) :
+  // ajusté pendant le render (pattern « adjust state when props change »).
+  const paramsKey = searchParams.toString();
+  const sortSourceKey = `${paramsKey}|${shelf?.type ?? ""}`;
+  const [prevSortSourceKey, setPrevSortSourceKey] = useState(sortSourceKey);
+  if (prevSortSourceKey !== sortSourceKey) {
+    setPrevSortSourceKey(sortSourceKey);
+    setSearchQuery(q);
+    setSortBy(parseItemCollectionSort(searchParams.get("sort"), shelf?.type));
+  }
 
   useDocumentTitle(shelf?.name);
   useRefetchShelfItemsWhenMetadataIdle(queryClient, shelf?.items, shelfId);
@@ -350,10 +362,17 @@ function ShelfComponent() {
     mutationFn: saveItem,
     onSuccess: (item, variables) => {
       const isCreate = !("id" in variables && variables.id);
+      const itemShelfSlug =
+        "shelf" in item &&
+        item.shelf &&
+        typeof item.shelf === "object" &&
+        "slug" in item.shelf
+          ? (item.shelf.slug as string | null | undefined)
+          : undefined;
       void syncItemQueries(
         queryClient,
         item,
-        [item.shelfId, shelfId, item.shelf?.slug],
+        [item.shelfId, shelfId, itemShelfSlug],
         { isCreate },
       );
     },
@@ -372,6 +391,41 @@ function ShelfComponent() {
       shelfType: shelf.type,
     });
   }, [shelf, sortBy]);
+
+  /**
+   * Copies of the same object share a tile.
+   *
+   * `Item` stays one physical copy — each has its own condition, price and
+   * loan — so this is purely a display fold, applied after sorting so a group
+   * appears where its first copy did. See `docs/tcg_support.md` §4.
+   */
+  const groupedItems = useMemo(() => groupCopies(sortedItems), [sortedItems]);
+
+  /*
+    Ce que l'étagère tient déjà, pour que le sélecteur de tirages le dise avant
+    qu'on rachète en double. Dérivé des items de la page plutôt que refetché :
+    elle les a sous la main, et deux sources divergeraient dès le premier ajout.
+  */
+  /** Une étagère sans tirage n'a rien à compter : pas de check-list. */
+  const hasPrintItems = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).some(
+        (item) => item.printKey,
+      ),
+    [shelf?.items],
+  );
+
+  const ownedPrints = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[])
+        .filter((item) => item.printKey)
+        .map((item) => ({
+          printKey: item.printKey,
+          variant: item.variant,
+          language: item.language,
+        })),
+    [shelf?.items],
+  );
 
   const totalValue = useMemo(() => {
     if (!shelf?.items) return { total: 0, includesEstimates: false };
@@ -402,6 +456,15 @@ function ShelfComponent() {
     },
     [shelfMutate],
   );
+
+  /**
+   * Nothing on this shelf carries a barcode, so every scan affordance is dead
+   * weight here — worse, the scan FAB pre-fills the current shelf and would
+   * file a boxed product among the singles.
+   */
+  const isPrintSearchShelf = usesPrintSearch(shelf?.type);
+  /** Adding to a barcode-less shelf goes through the print picker instead. */
+  const usesPrintPicker = isPrintSearchShelf && !editingItemId;
 
   const handleItemModalSubmit = useCallback(
     async (item: Prisma.ItemCreateInput | Prisma.ItemUpdateInput) => {
@@ -675,14 +738,32 @@ function ShelfComponent() {
             onClose={handleModalClose}
             onSubmit={handleShelfModalSubmit}
           />
+          {/* Cards have no barcode: adding one starts from a print search,
+              not from the scan-oriented item form. Editing keeps the normal
+              form, which is about the copy rather than the printing. */}
           <ItemModal
             shelfId={resolvedShelfId}
             shelfType={shelf?.type}
             itemId={editingItemId}
-            isOpen={visibleModal === "item"}
+            isOpen={visibleModal === "item" && !usesPrintPicker}
             onClose={handleModalClose}
             onSubmit={handleItemModalSubmit}
           />
+          {shelf?.type && (
+            <PrintPickerModal
+              shelfId={resolvedShelfId}
+              shelfType={shelf.type}
+              shelfName={shelf?.name}
+              ownedPrints={ownedPrints}
+              isOpen={visibleModal === "item" && usesPrintPicker}
+              onClose={handleModalClose}
+              onAdded={() => {
+                void queryClient.invalidateQueries({
+                  queryKey: ["shelf", shelfId],
+                });
+              }}
+            />
+          )}
           {visibleModal === "bulk" && (
             <BulkAddModal
               shelfId={resolvedShelfId}
@@ -712,7 +793,7 @@ function ShelfComponent() {
       )}
 
       {/* Content */}
-      <div className="overflow-y-auto">
+      <div className="overflow-y-auto min-h-0 flex-1">
         <div
           className={cn(
             "flex-1 p-4 md:p-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300",
@@ -744,6 +825,29 @@ function ShelfComponent() {
                 )}
                 aria-hidden={selectionMode || undefined}
               >
+                {/*
+                  La check-list n'apparaît que là où elle a un sens : elle
+                  compte des tirages, et une étagère qui n'en porte aucun
+                  n'aurait rien à compter.
+                */}
+                {hasPrintItems && (
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
+                    tabIndex={selectionMode ? -1 : undefined}
+                  >
+                    <Link
+                      href={`/shelves/${encodeURIComponent(shelfId)}/checklist`}
+                    >
+                      <ListChecks className="size-4" />
+                      <span className="hidden sm:inline">
+                        {t("items.checklistOpen")}
+                      </span>
+                    </Link>
+                  </Button>
+                )}
+
                 <Button
                   variant="secondary"
                   className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
@@ -786,13 +890,15 @@ function ShelfComponent() {
                       <ListPlus className="size-4 mr-2" />
                       {t("items.bulkAdd.menuLabel")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("bulk", "scan")}
-                    >
-                      <ScanLine className="size-4 mr-2" />
-                      {t("items.bulkAdd.tabScan")}
-                    </DropdownMenuItem>
+                    {!isPrintSearchShelf && (
+                      <DropdownMenuItem
+                        className="cursor-pointer font-medium"
+                        onSelect={() => openModalFromAddMenu("bulk", "scan")}
+                      >
+                        <ScanLine className="size-4 mr-2" />
+                        {t("items.bulkAdd.tabScan")}
+                      </DropdownMenuItem>
+                    )}
                     {shelf?.type === "books" && (
                       <DropdownMenuItem
                         className="cursor-pointer font-medium"
@@ -835,12 +941,14 @@ function ShelfComponent() {
                                 handleSearchChange(e);
                               }}
                             />
-                            <ScannerButton
-                              className="absolute right-1 rounded-xl"
-                              onScan={(barcode) => {
-                                handleSearch({ search: barcode });
-                              }}
-                            />
+                            {!isPrintSearchShelf && (
+                              <ScannerButton
+                                className="absolute right-1 rounded-xl"
+                                onScan={(barcode) => {
+                                  handleSearch({ search: barcode });
+                                }}
+                              />
+                            )}
                           </div>
                         </FormControl>
                       </FormItem>
@@ -853,6 +961,7 @@ function ShelfComponent() {
             <div className="w-full sm:w-[220px] shrink-0">
               <ItemCollectionSortSelect
                 value={sortBy}
+                shelfType={shelf?.type}
                 onValueChange={(value) => {
                   setSortBy(value);
                   replaceCollectionParams({ sort: value });
@@ -880,7 +989,7 @@ function ShelfComponent() {
           </div>
           <LayoutGroup id="shelf-grid">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
-              {sortedItems.map((item, index) =>
+              {groupedItems.map(({ key, lead: item, copies }, index) =>
                 isLoading || !item.id ? (
                   <Skeleton
                     key={`skeleton-${index}`}
@@ -891,8 +1000,9 @@ function ShelfComponent() {
                   />
                 ) : (
                   <ShelfGridItem
-                    key={item.id}
+                    key={key}
                     item={item}
+                    copyCount={copies.length}
                     index={index}
                     shelf={shelf}
                     resolvedShelfId={resolvedShelfId}
@@ -906,26 +1016,23 @@ function ShelfComponent() {
 
               {/* Plus Add Item Card in the items grid — keep the slot while
                   selecting so layout animations do not reflow the whole grid. */}
-              {!isLoading &&
-                isAuthenticated &&
-                !isGuest &&
-                canEdit && (
-                  <motion.button
-                    layout={!selectionMode}
-                    layoutId="add-item-btn"
-                    onClick={() => handleModalOpen("item")}
-                    tabIndex={selectionMode ? -1 : undefined}
-                    aria-hidden={selectionMode || undefined}
-                    className={cn(
-                      "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
-                      selectionMode && "invisible pointer-events-none",
-                    )}
-                    style={{ aspectRatio: skeletonAspectRatio }}
-                  >
-                    <Plus className="size-5 text-primary" />
-                    <span>{t("items.addItem")}</span>
-                  </motion.button>
-                )}
+              {!isLoading && isAuthenticated && !isGuest && canEdit && (
+                <motion.button
+                  layout={!selectionMode}
+                  layoutId="add-item-btn"
+                  onClick={() => handleModalOpen("item")}
+                  tabIndex={selectionMode ? -1 : undefined}
+                  aria-hidden={selectionMode || undefined}
+                  className={cn(
+                    "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
+                    selectionMode && "invisible pointer-events-none",
+                  )}
+                  style={{ aspectRatio: skeletonAspectRatio }}
+                >
+                  <Plus className="size-5 text-primary" />
+                  <span>{t("items.addItem")}</span>
+                </motion.button>
+              )}
             </div>
           </LayoutGroup>
 
@@ -1024,7 +1131,25 @@ function ShelfComponent() {
         </div>
       )}
 
-      {!selectionMode && <ScanFAB />}
+      {!selectionMode &&
+        (isPrintSearchShelf ? (
+          /* Scanning is meaningless here, but the shortcut is not: the same
+             corner offers the flow that does work — searching a printing. */
+          <div className="fixed bottom-24 sm:bottom-6 right-6 z-40">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleModalOpen("item")}
+              aria-label={t("items.addItem")}
+              title={t("items.addItem")}
+              className="size-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center focus:outline-none cursor-pointer border border-primary-foreground/10"
+            >
+              <Plus className="size-6" />
+            </motion.button>
+          </div>
+        ) : (
+          <ScanFAB />
+        ))}
     </div>
   );
 }

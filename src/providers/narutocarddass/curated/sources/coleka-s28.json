@@ -1,0 +1,23 @@
+{
+  "source": "coleka.com — Cartes Naruto Série 28 (Bandai USA CCG Storm 3, FR scans)",
+  "observed": "2026-08-16",
+  "note": "User-supplied. The umbrella mixes ~7000 Carddass + CCG + promos — same trap as TCDB sid 118974. Listing for faces is _r16649 only. The rubrique webp is the Series 28 display packshot (box + booster), SKU display-s28, not a logo-only file. Coleka prints NI/JU/MI; disk n/j/m. Photos de collectionneur, not Bandai renders.",
+  "umbrella": {
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102",
+    "scrape": false,
+    "reason": "~7000 mixed cards"
+  },
+  "listing": {
+    "path": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-28_r16649",
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-28_r16649",
+    "scrape": true,
+    "disk": "cards/s28/fr/"
+  },
+  "displayPackshot": {
+    "url": "https://thumbs.coleka.com/media/rubrique/202012/05/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-carte-naruto-serie-28.webp",
+    "sku": "display-s28",
+    "staging": "staging/coleka-s28/set-cover.webp"
+  },
+  "ingestFaces": "s28/fr",
+  "ingestUmbrella": "none"
+}

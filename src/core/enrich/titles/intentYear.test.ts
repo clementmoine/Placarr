@@ -39,9 +39,9 @@ describe("title intent year", () => {
   it("extracts bare season years from annual sports titles", () => {
     expect(extractTitleSeasonYears("LNF Stars 2001")).toEqual([2001]);
     expect(extractTitleSeasonYears("Bundesliga Stars 2000")).toEqual([2000]);
-    expect(
-      extractTitleSeasonYears("King of Fighters 2000/2001"),
-    ).toEqual([2000, 2001]);
+    expect(extractTitleSeasonYears("King of Fighters 2000/2001")).toEqual([
+      2000, 2001,
+    ]);
     expect(extractTitleSeasonYears("Resident Evil 4")).toEqual([]);
     expect(extractTitleSeasonYears("Resident Evil 4 (2023)")).toEqual([2023]);
   });

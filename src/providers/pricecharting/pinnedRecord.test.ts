@@ -83,7 +83,7 @@ describe("pricecharting metadata adapter pinned fiche", () => {
       platform: "PAL Playstation 2",
     });
 
-    const adapter = pricechartingModule.createMetadataAdapter!();
+    const adapter = pricechartingModule.createMetadataAdapter!()!;
     const result = await adapter.resolve({
       name: "PlayStation 2 Slim Rose",
       barcode: "4948872411271",
@@ -115,7 +115,7 @@ describe("pricecharting metadata adapter pinned fiche", () => {
         "https://storage.googleapis.com/images.pricecharting.com/n64/1600.jpg",
     });
 
-    const adapter = pricechartingModule.createMetadataAdapter!();
+    const adapter = pricechartingModule.createMetadataAdapter!()!;
     await adapter.resolve({
       name: "Nintendo 64",
       barcode: "045496870423",
@@ -140,7 +140,7 @@ describe("pricecharting metadata adapter pinned fiche", () => {
         "https://storage.googleapis.com/images.pricecharting.com/blue/1600.jpg",
     });
 
-    const adapter = pricechartingModule.createMetadataAdapter!();
+    const adapter = pricechartingModule.createMetadataAdapter!()!;
     const result = await adapter.resolve({
       name: "New Nintendo 3DS XL Metallic Blue",
       type: "hardware",
@@ -159,8 +159,8 @@ describe("pricecharting metadata adapter pinned fiche", () => {
       expect.objectContaining({ mediaType: "hardware" }),
     );
     expect(result?.title).toBe("New Nintendo 3DS XL Metallic Blue");
-    expect(result?.facts?.some((fact) => fact.url?.includes("metallic-blue"))).toBe(
-      true,
-    );
+    expect(
+      result?.facts?.some((fact) => fact.url?.includes("metallic-blue")),
+    ).toBe(true);
   });
 });

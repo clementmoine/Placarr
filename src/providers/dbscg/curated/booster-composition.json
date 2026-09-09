@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "pack": "dbs/cg",
+  "updatedAt": "2026-08-27",
+  "notes": "Masters : Bandai publie le checklist set, pas le fill pack. Display 24, casier 12 displays. Taux SCR/SPR/GDR = consensus openings (pas officiel) ; varient par set.",
+  "default": {
+    "source": "https://progamingcrew.com/blogs/dragon-ball-super-card-game/dragon-ball-super-card-game-pull-rates-all-sets + community (bleedingcool / OG Cards) — box 24 packs, case 12 boxes",
+    "verifiedAt": "2026-08-27",
+    "notes": "Baseline community récent : ~5 SR + ~2 SPR / display ; ~1–2 SCR / casier ; GDR ~1 / 3 casiers. Pas une garantie.",
+    "cardsPerPack": 12,
+    "packsPerDisplay": 24,
+    "displaysPerCase": 12,
+    "slots": [
+      {
+        "id": "unknown_fill",
+        "count": 12,
+        "kind": "shared",
+        "rarities": [
+          "Common[C]",
+          "Uncommon[UC]",
+          "Rare[R]",
+          "Super Rare[SR]",
+          "Special Rare[SPR]",
+          "Secret Rare[SCR]",
+          "God Rare[GDR]"
+        ]
+      }
+    ],
+    "rarityHits": {
+      "Super Rare[SR]": {
+        "packsPerHit": 5,
+        "displaysPerHit": 0.2,
+        "confidence": "community",
+        "source": "~5 SR / display 24 packs",
+        "aliases": ["Super Rare", "SR"]
+      },
+      "Special Rare[SPR]": {
+        "packsPerHit": 12,
+        "displaysPerHit": 0.5,
+        "confidence": "community",
+        "source": "~2 SPR / display",
+        "aliases": ["Special Rare", "SPR"]
+      },
+      "Secret Rare[SCR]": {
+        "packsPerHit": 144,
+        "displaysPerHit": 6,
+        "confidence": "community",
+        "source": "~2 SCR / casier 12 displays (288 packs) → ~144 packs/hit ; certains sets 1 SCR/casier",
+        "notes": "Varie 1–4 SCR/casier selon le set. Une SCR précise × N_SCR.",
+        "aliases": ["Secret Rare", "SCR"]
+      },
+      "Special Leader Rare[SLR]": {
+        "packsPerHit": 144,
+        "displaysPerHit": 6,
+        "confidence": "estimate",
+        "notes": "Ordre de grandeur type SCR — à resserrer par set.",
+        "aliases": ["Special Leader Rare", "SLR"]
+      },
+      "Concept Rare[CR]": {
+        "packsPerHit": 288,
+        "displaysPerHit": 12,
+        "confidence": "estimate",
+        "aliases": ["Concept Rare", "CR"]
+      },
+      "God Rare[GDR]": {
+        "packsPerHit": 864,
+        "displaysPerHit": 36,
+        "confidence": "community",
+        "source": "~1 GDR / 3 casiers (12×24×3 = 864 packs)",
+        "notes": "Pas garanti dans un casier. Chase absolu → singles.",
+        "aliases": ["God Rare", "GDR"]
+      }
+    }
+  }
+}

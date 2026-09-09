@@ -1,0 +1,52 @@
+{
+  "source": "collectorscomet.com (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "titles",
+  "crawl": false,
+  "line": "en-ccg",
+  "note": "Multi-game marketplace (Duel Masters, Life TCG, Naruto CCG, …). Naruto hub lists Bandai USA s1–s28 + TP as 17.5/19.5/21.5/23.5 + a Promos drawer. Catalogue PNGs are 750×1050 — same pixels as Vintage / CCG Trader, not a new dump. Printed codes are real Bandai N/J/M/PR/NUS/PRUS/EX, not TCDB PTHN. Promos (142) still mix reprints, US stamps, EX, and tin missions (M-621). Hub claimed 47 listed collectables; do not crawl listings. Duel Masters images are Fandom; Naruto is images.collectorscomet.com. Promo set icon is a byte-identical copy of the s1 packshot.",
+  "urls": {
+    "browse": "https://collectorscomet.com/Naruto%20CCG",
+    "systems": "https://collectorscomet.com/ui-api/collectible-systems",
+    "editions": "https://collectorscomet.com/ui-api/collectible-editions?systemId=487badcb-5b06-4dcb-bea0-63ce23fb4290",
+    "products": "https://collectorscomet.com/ui-api/products?editionId=",
+    "images": "https://images.collectorscomet.com/"
+  },
+  "system": {
+    "id": "487badcb-5b06-4dcb-bea0-63ce23fb4290",
+    "name": "Naruto CCG",
+    "editions": 33,
+    "boosters": 28,
+    "tournamentPacks": 4,
+    "promos": 1,
+    "s1Cards": 127,
+    "promoCards": 142,
+    "hubListed": 47,
+    "shinobisDream": false,
+    "tins": false
+  },
+  "servedPixels": { "width": 750, "height": 1050 },
+  "setIconPixels": { "width": 803, "height": 471 },
+  "sample": {
+    "name": "Naruto Uzumaki (N-001)",
+    "printed": "N-001",
+    "diskHint": "n0001",
+    "set": "Set 1 - The Path to Hokage",
+    "setCode": "s1",
+    "imageBytes": 1163729,
+    "not": ["pthn001", "ni001", "ni0001"]
+  },
+  "traps": {
+    "promoGrabBag": 142,
+    "promoIconReusesS1Packshot": true,
+    "shopTitleTypos": [
+      "Battle For Destiny",
+      "Fortold Prophecy",
+      "Tales of the Galiant Sage",
+      "Shattered Truth",
+      "Broken Promise"
+    ],
+    "sameTrapAs": ["tcdb-en-ccg.json", "primal-tcg-marketplace.json"]
+  },
+  "not": ["carddass", "duel-masters", "kayou", "shinobis-dream"]
+}

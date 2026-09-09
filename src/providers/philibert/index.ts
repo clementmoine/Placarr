@@ -4,7 +4,6 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffer, pricedOffers } from "@/core/catalog/priceOffers";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
@@ -17,8 +16,8 @@ import type {
   BarcodeLookupType,
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchPhilibertBarcodeProduct,
@@ -120,7 +119,7 @@ async function refreshPhilibertOffers(
   return [];
 }
 
-export const philibertModule: ProviderModule = {
+export const philibertModule = defineProvider({
   info: {
     id: "philibert",
     label: "Philibert",
@@ -137,10 +136,12 @@ export const philibertModule: ProviderModule = {
       "players",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
     websiteUrl: "https://www.philibertnet.com/",
+    scrapeCatalogImageBaseUrl: "https://www.philibertnet.com",
     notes: "Fiches produit FR (description, couverture, prix, avis).",
   },
   evidence: {
@@ -156,15 +157,7 @@ export const philibertModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck("philibert", "Philibert", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.philibertnet.com/fr/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
+  healthCheckUrl: "https://www.philibertnet.com/fr/",
   testHandlers: {
     "philibert-metadata": {
       label: "Philibert - Metadata",
@@ -229,6 +222,7 @@ export const philibertModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchPhilibertProduct(hit.url));
   },
+  barcodeLookupSlots: { philibert: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.philibert;
     if (!hit?.title?.trim()) return [];
@@ -247,8 +241,8 @@ export const philibertModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload) {
-    if (!payload.philibert?.priceCents) return [];
     const hit = payload.philibert;
+    if (!hit?.priceCents) return [];
     const offer = pricedOffer(PRICE_SOURCE, "new", hit.priceCents, hit, {
       productName: hit.title,
       sourceUrl: hit.productUrl ?? undefined,
@@ -265,7 +259,7 @@ export const philibertModule: ProviderModule = {
     return offer ? [offer] : [];
   },
   refreshBarcodePriceOffers: refreshPhilibertOffers,
-};
+});
 
 export { createPhilibertResolver } from "./resolver";
 export {
@@ -273,3 +267,13 @@ export {
   searchPhilibert,
   searchPhilibertHits,
 } from "./fetch";
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `philibert` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    philibert: BarcodeMetadataHit | null;
+  }
+}

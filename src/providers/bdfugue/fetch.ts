@@ -2,10 +2,7 @@ import {
   barcodesEquivalent,
   normalizeProductBarcode,
 } from "@/core/identify/normalize";
-import {
-  retailerCatalogBarcodeGate,
-  retailerProductBarcodeConfirmed,
-} from "@/core/commerce/retailer/productUrl";
+import { retailerCatalogBarcodeGate } from "@/core/commerce/retailer/productUrl";
 import { acceptRetailerCatalogCandidate } from "@/core/commerce/retailer/metadataLookup";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { isAbortError } from "@/lib/http/abort";
@@ -91,7 +88,9 @@ export function bdfugueSearchUrl(query: string): string {
   return `${BDFUGUE_BASE_URL}/catalogsearch/result/?${params.toString()}`;
 }
 
-function parseEuroPriceCents(value?: string | number | null): number | undefined {
+function parseEuroPriceCents(
+  value?: string | number | null,
+): number | undefined {
   if (value == null) return undefined;
   if (typeof value === "number") {
     if (!Number.isFinite(value) || value <= 0) return undefined;
@@ -146,9 +145,7 @@ export function parseBdFugueFrenchDate(
   if (!cleaned) return undefined;
   if (/^\d{4}-\d{2}-\d{2}/.test(cleaned)) return cleaned.slice(0, 10);
 
-  const match = cleaned.match(
-    /(\d{1,2})\s+([A-Za-zÀ-ÿ.]+)\s+(\d{4})/i,
-  );
+  const match = cleaned.match(/(\d{1,2})\s+([A-Za-zÀ-ÿ.]+)\s+(\d{4})/i);
   if (!match) return cleaned;
   const day = match[1].padStart(2, "0");
   const monthKey = match[2]
@@ -490,9 +487,7 @@ export async function resolveBdFugueMetadata(input: {
           searchQuery: query,
           catalogTitle: hit.title,
           barcodeConfirmed: Boolean(
-            barcode &&
-              hit.barcode &&
-              barcodesEquivalent(hit.barcode, barcode),
+            barcode && hit.barcode && barcodesEquivalent(hit.barcode, barcode),
           ),
           itemBarcode: barcode,
         })

@@ -26,8 +26,8 @@ import type { ObservationEvidenceSignal } from "@/types/metadataObservation";
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchBdFugueByBarcode,
@@ -223,9 +223,7 @@ function mapBdFugueMetadata(
     regionalTitles: [{ region: "fr", text: product.title }],
     attachments: buildBdFugueAttachments(product),
     facts,
-    externalIds: product.barcode
-      ? { bdfugue: product.barcode }
-      : undefined,
+    externalIds: product.barcode ? { bdfugue: product.barcode } : undefined,
   };
 
   const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];
@@ -297,7 +295,7 @@ async function refreshBdFugueOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const bdfugueModule: ProviderModule = {
+export const bdfugueModule = defineProvider({
   info: {
     id: "bdfugue",
     label: "BD Fugue",
@@ -313,6 +311,7 @@ export const bdfugueModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",
@@ -389,6 +388,6 @@ export const bdfugueModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshBdFugueOffers,
-};
+});
 
 export { mapBdFugueMetadata };

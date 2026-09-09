@@ -1,0 +1,666 @@
+/*
+  La check-list se lit à l'écran **et** s'imprime. Le PDF est produit par
+  l'impression du navigateur, ce qui évite d'embarquer un moteur de rendu pour
+  un document qu'il sait déjà faire — mais ça déplace la responsabilité ici : ce
+  qui n'est pas prévu pour le papier n'y sera pas.
+*/
+
+.page {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.headBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.back:hover {
+  color: var(--foreground);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.select,
+.print,
+.exportMd {
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+}
+.print,
+.exportMd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.print:hover,
+.exportMd:hover {
+  background: var(--accent);
+}
+.exportMd:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle input {
+  accent-color: var(--primary);
+}
+.toggle:hover {
+  background: var(--accent);
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  margin-top: 0.25rem;
+}
+
+.totals {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  font-size: 0.9375rem;
+}
+
+.bar {
+  flex: 1;
+  min-width: 4rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--muted);
+  overflow: hidden;
+}
+.barFill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--primary);
+}
+
+.group {
+  margin-top: 2rem;
+  break-inside: avoid;
+}
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.75rem;
+}
+.groupCount {
+  border-radius: 9999px;
+  background: var(--muted);
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0;
+}
+
+.setList,
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.plainList {
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.setRow {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+.setHead {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+.setHead:disabled {
+  cursor: default;
+}
+.setHead:not(:disabled):hover {
+  background: var(--accent);
+}
+
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--muted-foreground);
+  transition: transform 0.15s ease;
+}
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.setLabel {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.setCount {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  flex: none;
+}
+.setPct {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  width: 2.75rem;
+  text-align: right;
+  flex: none;
+}
+.setHead .bar {
+  max-width: 8rem;
+}
+
+/* Repliées à l'écran, dépliées au clic — et toujours ouvertes au papier. */
+.missing {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 1rem 0.75rem;
+  columns: 2;
+  column-gap: 1.5rem;
+}
+.missingOpen {
+  display: block;
+}
+
+.missingRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.8125rem;
+  break-inside: avoid;
+}
+
+/* Une case à cocher dessinée, pas un input : elle est faite pour un stylo. */
+.checkbox {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 0.1875rem;
+}
+
+.checkboxOn {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--card);
+}
+
+.thumb,
+.thumbPlaceholder {
+  width: 1.75rem;
+  height: 2.45rem;
+  flex: none;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: var(--muted);
+}
+.thumbPlaceholder {
+  border: 1px solid var(--border);
+}
+
+.missingOwned .name,
+.missingOwned .ref {
+  color: var(--muted-foreground);
+}
+.missingOwned .thumb {
+  opacity: 0.55;
+}
+
+.ref {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  flex: none;
+  /* Une référence ne se coupe pas : « CL-003 » sur deux lignes ne se lit plus. */
+  white-space: nowrap;
+}
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+/*
+  Le prix unitaire décide « booster ou single » : Stitch à 2 € s'achète à la
+  carte, une Enchanted à 400 € non. Absent = pas de cote, pas zéro.
+*/
+.cardPrice {
+  flex: none;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+/* Icône seule — le titre porte la liste des produits (tooltip + aria). */
+.cardSources {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted-foreground);
+}
+.cardSourcesIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+.cardSourcesThumbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+.cardSourceThumb {
+  width: 1.1rem;
+  height: 1.5rem;
+  border-radius: 0.15rem;
+  object-fit: cover;
+  background: var(--muted);
+}
+
+.missingOwned .cardPrice,
+.missingOwned .cardSources {
+  display: none;
+}
+
+.hint,
+.empty,
+.loading {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+.hint {
+  margin-bottom: 0.5rem;
+}
+
+@media print {
+  /*
+    Le papier n'a ni bouton ni repli : tout ce qui manque doit être là, et rien
+    de ce qui sert à naviguer.
+  */
+  .actions,
+  .back,
+  .chevron,
+  .thumb,
+  .thumbPlaceholder,
+  .productThumb,
+  .productThumbPlaceholder,
+  .cardSourceThumb,
+  .adviceToggle,
+  .cardSources {
+    display: none !important;
+  }
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+  .missing {
+    display: block !important;
+    /*
+      Deux colonnes, pas trois : à trois, la référence et le nom se marchent
+      dessus sur les titres longs — « Doton technique de la décapitation » ne
+      tient pas dans un tiers de page.
+    */
+    columns: 2;
+    font-size: 0.75rem;
+  }
+  .setRow,
+  .group {
+    break-inside: avoid;
+  }
+  .setHead {
+    padding: 0.375rem 0;
+  }
+  /* La barre et le pourcentage restent : c'est l'état de la collection. */
+  .name {
+    white-space: normal;
+  }
+  .setRow {
+    border: none;
+    border-bottom: 1px solid #ddd;
+    border-radius: 0;
+    background: none;
+  }
+  .barFill {
+    background: #666;
+  }
+  .missingRow {
+    align-items: baseline;
+    padding: 0.125rem 0;
+  }
+  /*
+    Les navigateurs sautent souvent les `background` à l'impression : une case
+    « cochée » peinte en primary disparaissait. On dessine une coche en encre
+    (texte / bordure), pas un remplissage.
+  */
+  .checkbox {
+    position: relative;
+    border-color: #000;
+    background: none !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .checkboxOn::after {
+    content: "✓";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+  }
+}
+
+/* ── Conseil d'achat ─────────────────────────────────────────────────────── */
+
+.advice {
+  border-top: 1px solid var(--border);
+  background: var(--muted);
+  padding: 0.625rem 1rem 0.75rem;
+}
+
+.adviceSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.adviceSummaryPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.adviceSummaryLabel {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  flex: none;
+}
+
+.adviceBrief {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.adviceBriefText {
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adviceToggle {
+  margin-left: auto;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  flex: none;
+}
+.adviceToggle:hover {
+  color: var(--foreground);
+}
+
+.adviceDetail {
+  display: none;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.adviceDetailOpen {
+  display: block;
+}
+
+.adviceCols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 1.5rem;
+}
+@media (max-width: 40rem) {
+  .adviceCols {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .adviceToggle {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+  }
+}
+
+.adviceCol {
+  min-width: 0;
+}
+
+.adviceTitle {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.375rem;
+}
+
+.adviceTotal {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.adviceNote,
+.adviceWarn {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.125rem;
+}
+/* Ce qu'on ne sait pas chiffrer se voit : ce n'est pas gratuit. */
+.adviceWarn {
+  color: var(--destructive);
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+/*
+  Packshot scellé : un peu plus large qu'une face de carte (boîtes / sachets
+  sont souvent moins portrait), même hauteur pour aligner la liste.
+*/
+.productThumb,
+.productThumbPlaceholder {
+  width: 1.9rem;
+  height: 2.45rem;
+  flex: none;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: var(--muted);
+}
+.productThumbPlaceholder {
+  border: 1px solid var(--border);
+}
+
+.optionName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionGain {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+/* Un compte exact ne se lit pas comme une espérance. */
+.optionExact {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.optionMuted {
+  opacity: 0.65;
+}
+.optionOtherLang {
+  opacity: 0.72;
+}
+.optionOtherLang .optionName {
+  color: var(--muted-foreground);
+}
+.optionLang {
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 0.05rem 0.3rem;
+}
+
+.optionPrice {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.optionPerCard {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.badge {
+  flex: none;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media print {
+  /* Le conseil suit sur le papier : c'est ce qu'on emporte en boutique. */
+  .advice {
+    background: none;
+    padding: 0.5rem 0;
+    break-inside: avoid;
+  }
+  .adviceDetail {
+    display: block !important;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+  .badge {
+    background: none;
+    color: inherit;
+    border: 1px solid #999;
+  }
+}

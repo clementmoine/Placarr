@@ -59,6 +59,17 @@ function artPath(slug: string, lang: string): string {
   );
 }
 
+/** PNG header stubs (8 B) or truncated downloads must not block a re-fetch. */
+function artLooksComplete(dest: string): boolean {
+  if (!existsSync(dest)) return false;
+  try {
+    const buf = readFileSync(dest);
+    return buf.byteLength > 500;
+  } catch {
+    return false;
+  }
+}
+
 async function downloadImage(url: string, referer: string): Promise<Buffer | null> {
   try {
     const res = await httpGet<ArrayBuffer>(url, {
@@ -84,7 +95,7 @@ export async function harvestLorenzoneProductImages(opts: {
   let fail = 0;
   for (const product of ledger.products) {
     const dest = artPath(product.slug, product.lang);
-    if (!opts.force && existsSync(dest)) {
+    if (!opts.force && artLooksComplete(dest)) {
       skip += 1;
       continue;
     }

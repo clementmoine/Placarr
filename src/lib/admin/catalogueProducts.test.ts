@@ -44,6 +44,7 @@ describe("catalogue sealed rows", () => {
       expect.objectContaining({
         productKey: "lorcana::woody",
         kind: "booster",
+        lang: "fr",
         contentsKnown: false,
         printCount: 1,
         declaredCardCount: 446,
@@ -112,5 +113,6 @@ describe("catalogue sealed rows", () => {
     };
     const rows = buildCatalogueSealedRows("naruto/carddass", index);
     expect(rows.map((row) => row.slug)).toEqual(["booster-s1", "display-s28"]);
+    expect(rows.map((row) => row.lang)).toEqual(["fr", "en"]);
   });
 });

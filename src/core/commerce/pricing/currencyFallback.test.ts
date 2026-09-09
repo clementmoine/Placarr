@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 import {
+  displayEstimatedCentsFromOffers,
   fxFallbackEstimatedBuckets,
   fxFallbackEstimatedCents,
   summarizeObservedPrices,
@@ -156,5 +157,54 @@ describe("fxFallbackEstimatedCents", () => {
       "tcg",
     );
     expect(result.priceEstimated).toBe(500);
+  });
+});
+
+describe("displayEstimatedCentsFromOffers", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    resetCurrencyRateCache();
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ rates: { EUR: 0.5 } }),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("converts USD market offers to EUR when no native EUR exists", async () => {
+    const estimated = await displayEstimatedCentsFromOffers("tcg", [
+      offer({
+        source: "narutocardgame.gg",
+        priceCents: 1000,
+        currency: "USD",
+        condition: "new",
+      }),
+    ]);
+    expect(estimated).toBe(500);
+  });
+
+  it("keeps EUR catalog estimates over USD market", async () => {
+    const estimated = await displayEstimatedCentsFromOffers("tcg", [
+      offer({
+        source: "Collection Naruto",
+        priceCents: 250,
+        currency: "EUR",
+        condition: "estimated",
+      }),
+      offer({
+        source: "narutocardgame.gg",
+        priceCents: 1000,
+        currency: "USD",
+        condition: "new",
+      }),
+    ]);
+    expect(estimated).toBe(250);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

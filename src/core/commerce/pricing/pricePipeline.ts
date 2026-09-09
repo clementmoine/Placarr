@@ -437,6 +437,36 @@ export async function fxFallbackEstimatedBuckets(
 }
 
 /**
+ * Centimes à afficher (devise app = EUR) à partir d'offres printKey :
+ * 1. cotes catalogue `estimated` déjà en EUR (dig Collection Naruto…) ;
+ * 2. buckets marché euros natifs (`new` / foil) ;
+ * 3. sinon fallback FX sur les devises étrangères (gg / Lorcast USD → ~EUR).
+ */
+export async function displayEstimatedCentsFromOffers(
+  shelfType: string,
+  offers: readonly PriceObservation[],
+  options: { signal?: AbortSignal } = {},
+): Promise<number | null> {
+  const all = offers.filter(
+    (offer) => typeof offer.priceCents === "number" && offer.priceCents > 0,
+  );
+  const eurCatalog = all
+    .filter(
+      (offer) =>
+        offer.condition === "estimated" && isDisplayCurrency(offer.currency),
+    )
+    .map((offer) => offer.priceCents)
+    .sort((a, b) => a - b);
+  if (eurCatalog[0] != null) return eurCatalog[0];
+
+  const summary = summarizeObservedPrices(shelfType, all);
+  if (summary.priceNew != null) return summary.priceNew;
+  if (summary.priceFoil != null) return summary.priceFoil;
+
+  return fxFallbackEstimatedCents(shelfType, summary, all, options);
+}
+
+/**
  * Attach FX ~ fallback onto a barcode/item price result when native buckets
  * are empty. Preserves an existing `priceEstimated` (catalog cote) when set.
  */

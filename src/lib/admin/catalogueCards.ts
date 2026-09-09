@@ -11,7 +11,7 @@ import {
   type CardsIndexLangFiles,
   type CardsIndexV1,
 } from "@/effects/cardsIndex";
-import { assetsCardUrl } from "@/lib/packAssetUrls";
+import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
@@ -38,7 +38,6 @@ import {
   narutoCollectorNumberKey,
 } from "@/providers/narutocarddass/collectorIdentity";
 import { foldNarutoCardsIndex } from "@/providers/narutocarddass/foldNarutoIndex";
-import { parsePrintKey } from "@/core/identify/printKey";
 import {
   orientationFromIndexSlot,
   printIsLandscapeCard,
@@ -53,7 +52,7 @@ export type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 
 const NARUTO_UNIFIED_PACKS: readonly CataloguePackId[] = ["naruto/carddass"];
 
-/** Disk folder under `cards/{set}/{lang}/` — includes printKey grouping (`0120-a`). */
+/** Disk folder under `cards/{set}/{lang}/` — includes printKey grouping (`20-p1`). */
 export function catalogueDiskCard(
   pack: CataloguePackId,
   printKey: string,
@@ -61,8 +60,11 @@ export function catalogueDiskCard(
 ): string {
   // Carddass disk ids already embed the collector (`ni0001-ps`); don't double up.
   if (cataloguePackInfo(pack)?.narutoCollectorDisk) return entry.card;
-  const grouping = parsePrintKey(printKey)?.grouping?.trim().toLowerCase();
-  if (grouping) return `${entry.card}-${grouping}`;
+  // Same rule as the scrape writer. `entry.card` already embeds grouping
+  // (`1-c1`) after the Lorcana index export — appending again produced
+  // `1-c1-c1` URLs that 404'd valid JPEGs.
+  const disk = cardDiskIdFromPrintKey(printKey, "en");
+  if (disk) return disk.card;
   return entry.card;
 }
 

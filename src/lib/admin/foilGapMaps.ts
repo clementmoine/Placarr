@@ -62,7 +62,7 @@ export function simeyCssGaps(input: {
   );
 }
 
-/** Live leaf / sheet names that must appear in `LIVE_FINISH_CSS`. */
+/** Live leaves with a Simey-backed CSS look (others → flare by policy). */
 export function liveLeavesMissingCssMap(input: {
   foilNames: readonly string[];
   sheetAliases: readonly string[];

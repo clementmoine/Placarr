@@ -28,10 +28,12 @@ import {
   type SealedProductEntry,
 } from "./indexFormat";
 import {
+  refineSealedKind,
   sealedBehaviorForKind,
   sealedContentsKnown,
-  sealedKindForCategory,
+  sealedKindIsOpaqueContents,
 } from "./kinds";
+import { resolveSealedLang } from "./lang";
 import { resolveContentLayers } from "./contentLayers";
 import { mergeCuratedSealedContents } from "./curatedContents";
 
@@ -181,12 +183,16 @@ export function sealedProductFromStaging(input: {
   /** Dos de l'emballage, quand une source l'a photographié. */
   imageBack?: string | null;
 }): SealedProductEntry | null {
-  const kind = sealedKindForCategory(input.listing.category);
+  const kind = refineSealedKind({
+    category: input.listing.category,
+    slug: input.listing.slug,
+    name: input.page?.name ?? null,
+  });
   if (!kind) return null;
   const page = input.page ?? null;
   const prints = mapPrints(input.packId, page?.containsPrints);
   const preview =
-    page?.containsPrintsIsPreview ?? (kind === "booster" || kind === "display");
+    page?.containsPrintsIsPreview ?? sealedKindIsOpaqueContents(kind);
   const declaredCardCount = page?.declaredCardCount ?? null;
   const contents = resolveSealedContents({
     kind,
@@ -242,7 +248,10 @@ export function sealedProductFromStaging(input: {
         slug: input.listing.slug,
         name: page?.name,
       }) ?? null,
-    lang: page?.lang ?? null,
+    lang: resolveSealedLang({
+      lang: page?.lang ?? null,
+      slug: input.listing.slug,
+    }),
     releaseDate: page?.releaseDate ?? null,
     priceCents: sealedPriceCentsFromShop({
       price: page?.price,

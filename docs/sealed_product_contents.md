@@ -3,6 +3,43 @@
 Pour le conseil d'achat (« singles vs booster vs display »), **chaque** SKU de
 `products-index.json` doit décrire ce qu'il contient. Absent = non vérifié.
 
+## Kinds catalogue (`SealedKind`)
+
+Familles retail first-class (plus seulement booster / display / deck / coffret) :
+
+| Kind | Sens | Exemple |
+| --- | --- | --- |
+| `booster` | sachet unitaire | booster set |
+| `blister` | blister / fenêtre | `boosters-blister` |
+| `display` | boîte de N boosters | display 24 / 36 |
+| `case` | casier de **displays** | shipping case (curated / officiel) |
+| `blister_case` | carton de blisters | titres « Blister Carton » |
+| `deck` | starter unitaire | starter S1 |
+| `deck_bundle` | **plusieurs decks** dans un SKU | Naruto `pack-decouverte` |
+| `multipack` | N boosters ± promo | Naruto `duopack-s28`, OP double-packs |
+| `tin` / `etb` / `trove` / `quest` / … | familles boutique | ETB, Trove, Illumineer's Quest |
+| `puzzle` | merch + **promo insert** garanti | Glimmers of the Realm |
+| `coffret` | filet si inconnu | — |
+| `ephemera` | papier sans cartes | sell sheet |
+
+Hiérarchie d'emballage :
+
+```
+booster → blister → display → case
+              ↘ blister_case
+deck → deck_bundle
+multipack = N boosters (± promo), pas des decks
+```
+
+Pour un `case`, `packsContained` = **nombre de displays** (pas de boosters).
+Pour un `display` / `blister_case`, `packsContained` = nombre de sachets /
+blisters enfants. Ne pas confondre avec `displaysPerHit` (taux de chase dans
+`booster-composition`, pas un SKU).
+
+Voir `src/providers/shared/sealedProducts/kinds.ts`. Les index legacy
+`coffret` sont affinés à la lecture (`refineSealedKind`) et peuvent être
+réécrits via `rewriteSealedProductsIndex`.
+
 ## Champs obligatoires (présents, éventuellement `null`)
 
 | Champ | Sens | Exemple |

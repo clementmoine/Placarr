@@ -1,7 +1,5 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
-import { authOptions } from "@/lib/auth/config";
 import { resolveAssetsDiskRoot, splitAssetsPackPath } from "@/lib/packPaths";
 import {
   resolveUnderRoot,
@@ -10,13 +8,8 @@ import {
 
 type Ctx = { params: Promise<{ path?: string[] }> };
 
-/** Pack assets require a session (same policy as former ``/foil``). */
+/** Pack assets are public — the collection is browsable without unlock. */
 export async function GET(req: Request, ctx: Ctx) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
   const { path: segments } = await ctx.params;
   if (!segments?.length) {
     return new NextResponse("Not found", { status: 404 });

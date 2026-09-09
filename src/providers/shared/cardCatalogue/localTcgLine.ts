@@ -277,8 +277,14 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
   ): PrintCandidate | null => {
     const parsed = parsePrintKey(printKey);
     if (parsed?.game !== spec.printGame) return null;
+    /*
+      Sans langue demandée, le JOIN SQLite tombe sur la première locale
+      (souvent EN pour Ninja Ranks). On aligne sur `preferLang` — même règle
+      que searchPrints — pour que l'étagère FR affiche la face FR.
+    */
+    const lang = language?.trim() || preferLang;
     const row = index.lookupRow(printKey, {
-      ...(language ? { language } : {}),
+      ...(lang ? { language: lang } : {}),
     });
     return row ? candidateForRow(spec, index, row) : null;
   };

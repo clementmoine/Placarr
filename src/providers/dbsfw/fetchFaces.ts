@@ -53,7 +53,12 @@ import {
   type DbsFwFaceSource,
   type DbsFwStoredFace,
 } from "./faceChoice";
-import { DBS_FW_PACK_ID, dbsFwCardFolder, loadDbsFwIndex } from "./indexStore";
+import {
+  DBS_FW_PACK_ID,
+  dbsFwCardFolder,
+  exportDbsFwCardsIndexJson,
+  loadDbsFwIndex,
+} from "./indexStore";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -343,5 +348,15 @@ export async function fetchDbsFwFaces(
   }
 
   if (stats.throttled === 0) clearSoftbanState(cacheRoot, SOFTBAN_LEDGER);
+
+  // Like Masters / Lorcana: faces pass rewrites cards-index with local art.
+  const indexPath = dataPackPath(DBS_FW_PACK_ID, "cards-index.json");
+  exportDbsFwCardsIndexJson(
+    loaded.prints,
+    loaded.titles,
+    loaded.assets,
+    indexPath,
+  );
+  console.log(`── fw faces index → ${indexPath}`);
   return stats;
 }

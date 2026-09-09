@@ -1,8 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/http/httpClient", () => ({
-  httpGet: vi.fn(),
-}));
+vi.mock("@/lib/http/httpClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/http/httpClient")>();
+  return { ...actual, httpGet: vi.fn() };
+});
 
 import { httpGet } from "@/lib/http/httpClient";
 import { mapTcgdexMetadata, tcgdexModule, toPrintCandidate } from "./index";

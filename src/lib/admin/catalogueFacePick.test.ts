@@ -218,4 +218,20 @@ describe("catalogueFacePick", () => {
     expect(face.artLang).toBe("fr");
     expect(face.file).toBeNull();
   });
+
+  it("préfère AnimeCollection HD à Coleka sur la même locale (score)", () => {
+    expect(
+      catalogueFaceSlotScore({
+        art: "art.animecollection.jpg",
+        artW: 727,
+        artH: 1024,
+      }),
+    ).toBeGreaterThan(
+      catalogueFaceSlotScore({
+        art: "art.coleka.webp",
+        artW: 750,
+        artH: 1096,
+      }),
+    );
+  });
 });

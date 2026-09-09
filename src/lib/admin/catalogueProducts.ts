@@ -13,8 +13,12 @@ import {
   emptyProductsIndex,
   isProductsIndexV1,
   type ProductsIndexV1,
-  type SealedProductEntry,
 } from "@/providers/shared/sealedProducts/indexFormat";
+import {
+  SEALED_KIND_ORDER,
+  withRefinedSealedKind,
+} from "@/providers/shared/sealedProducts/kinds";
+import { resolveSealedLang } from "@/providers/shared/sealedProducts/lang";
 
 export type { CatalogueSealedRow } from "@/lib/admin/catalogueProductsTypes";
 
@@ -50,21 +54,13 @@ function loadIndex(pack: string): ProductsIndexV1 {
   return emptyProductsIndex(corpus);
 }
 
-const KIND_ORDER: Record<SealedProductEntry["kind"], number> = {
-  booster: 0,
-  display: 1,
-  deck: 2,
-  coffret: 3,
-  // Le papier promotionnel ferme la liste : c'est l'objet le plus périphérique.
-  ephemera: 4,
-};
-
 export function buildCatalogueSealedRows(
   pack: string,
   index: ProductsIndexV1,
 ): CatalogueSealedRow[] {
   const rows: CatalogueSealedRow[] = [];
-  for (const [productKey, entry] of Object.entries(index.products)) {
+  for (const [productKey, raw] of Object.entries(index.products)) {
+    const entry = withRefinedSealedKind(raw);
     const name = entry.name?.trim() || entry.slug;
     const printCount = entry.prints.length;
     const count =
@@ -78,6 +74,10 @@ export function buildCatalogueSealedRows(
       behavior: entry.behavior,
       name: entry.name,
       setCode: entry.setCode,
+      lang: resolveSealedLang({
+        lang: entry.lang,
+        slug: entry.slug,
+      }),
       image: entry.image,
       imageBack: entry.imageBack ?? null,
       setLogo: entry.setLogo ?? null,
@@ -91,7 +91,7 @@ export function buildCatalogueSealedRows(
     });
   }
   rows.sort((a, b) => {
-    const kind = KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+    const kind = SEALED_KIND_ORDER[a.kind] - SEALED_KIND_ORDER[b.kind];
     if (kind !== 0) return kind;
     return (a.setCode ?? a.slug).localeCompare(b.setCode ?? b.slug, undefined, {
       numeric: true,

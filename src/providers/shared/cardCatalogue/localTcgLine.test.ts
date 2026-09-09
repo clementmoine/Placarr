@@ -61,6 +61,48 @@ describe("localTcgLine face URLs", () => {
     );
   });
 
+  it("prefers defaultLanguage when lookupPrint is called without language", () => {
+    tmpDataRoot();
+    const packId = "naruto/ninja-ranks";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0003",
+        setCode: "nr",
+        number: "0003",
+        cardType: "nr",
+        titles: [
+          { lang: "en", fullName: "EN title" },
+          { lang: "fr", fullName: "FR title" },
+        ],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:nr-0003", lang: "en", art: "art.en.webp" },
+      { printKey: "naruto:nr-0003", lang: "fr", art: "art.fr.webp" },
+    ]);
+
+    const line = createLocalTcgLine({
+      providerId: "narutoranks",
+      providerLabel: "test",
+      catalogueLabel: "test",
+      factLabel: "test",
+      packId,
+      effectPackId: "naruto-ninja-ranks",
+      printGame: "naruto",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+    });
+
+    const hit = line.lookupPrint!("naruto:nr-0003");
+    expect(hit?.language).toBe("fr");
+    expect(hit?.title).toBe("FR title");
+    expect(hit?.imageUrl).toBe(
+      "/assets/naruto/ninja-ranks/cards/nr/fr/0003/art.fr.webp",
+    );
+  });
+
   it("borrows art from another locale when enabled", () => {
     tmpDataRoot();
     const packId = "naruto/ninja-ranks";

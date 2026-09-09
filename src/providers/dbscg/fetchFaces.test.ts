@@ -218,6 +218,38 @@ describe("exportDbsCgCardsIndexJson local art", () => {
     expect(entry?.langs.en?.name).toBe("Champa");
     expect(entry?.langs.en?.artUrl).toContain("/images/cardlist/cardimg/");
   });
+
+  it("fills a nameless locale from a sibling title with nameSource", () => {
+    const out = path.join(tmp, "cards-index.json");
+    exportDbsCgCardsIndexJson(
+      [print],
+      [{ printKey: "dbscg:bt1-001", lang: "en", fullName: "Champa" }],
+      [
+        asset,
+        {
+          printKey: "dbscg:bt1-001",
+          lang: "en",
+          imageUrl:
+            "https://www.dbs-cardgame.com/images/cardlist/cardimg/BT1-001.png",
+        },
+      ],
+      out,
+    );
+    const json = JSON.parse(readFileSync(out, "utf8")) as {
+      cards: Record<
+        string,
+        {
+          langs: {
+            fr?: { name?: string; nameSource?: string; artUrl?: string };
+            en?: { name?: string; nameSource?: string };
+          };
+        }
+      >;
+    };
+    expect(json.cards["dbscg:bt1-001"]?.langs.en?.name).toBe("Champa");
+    expect(json.cards["dbscg:bt1-001"]?.langs.fr?.name).toBe("Champa");
+    expect(json.cards["dbscg:bt1-001"]?.langs.fr?.nameSource).toBe("en");
+  });
 });
 
 describe("fetchDbsCgFaces", () => {

@@ -14,8 +14,9 @@ import {
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import type { CardsIndexLangFiles } from "@/effects/cardsIndex";
+import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardDir } from "@/lib/packPaths";
+import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
 import { finalizeSetOptions } from "@/providers/shared/cardCatalogue/sets";
 
 import { dataRoot } from "@/lib/runtimeData";
@@ -380,16 +381,7 @@ export function exportDbsCgCardsIndexJson(
 ): void {
   const titlesByPrint = groupByPrintLang(titles ?? []);
   const assetsByPrint = groupByPrintLang(assets ?? []);
-  const cards: Record<
-    string,
-    {
-      set: string;
-      card: string;
-      name?: string;
-      rarity?: string;
-      langs: Record<string, CardsIndexLangFiles>;
-    }
-  > = {};
+  const cards: CardsIndexV1["cards"] = {};
   for (const print of prints) {
     const titlesFor = titlesByPrint.get(print.printKey);
     const assetsFor = assetsByPrint.get(print.printKey);
@@ -418,11 +410,16 @@ export function exportDbsCgCardsIndexJson(
       ...(displayTitle?.rarity ? { rarity: displayTitle.rarity } : {}),
     };
   }
+  const index: CardsIndexV1 = {
+    version: 1,
+    pack: DBS_CG_PACK_ID,
+    generatedAt: new Date().toISOString(),
+    cards,
+  };
+  // Same as Lorcana / One Piece: art without a JOIN title keeps a sibling name.
+  attachSiblingTitlesToCardsIndex(index);
   mkdirSync(path.dirname(outPath), { recursive: true });
-  writeFileSync(
-    `${outPath}`,
-    `${JSON.stringify({ version: 1, pack: DBS_CG_PACK_ID, generatedAt: new Date().toISOString(), cards }, null, 0)}\n`,
-  );
+  writeFileSync(`${outPath}`, `${JSON.stringify(index)}\n`);
 }
 
 /**

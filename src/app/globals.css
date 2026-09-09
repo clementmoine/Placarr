@@ -4,6 +4,8 @@
 /* UI only — auto-scan of the repo walked providers, venvs and `data/`. */
 @source "../app/**/*.{ts,tsx}";
 @source "../components/**/*.{ts,tsx}";
+/* Cover aspect / max-width strings live here, not in app/components. */
+@source "../lib/text/cardFormat.ts";
 
 @custom-variant dark (&:is(.dark *));
 

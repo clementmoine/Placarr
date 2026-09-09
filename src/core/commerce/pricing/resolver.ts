@@ -34,6 +34,7 @@ import {
   toPriceObservations,
   withFxPriceEstimated,
   withPriceSourceTraits,
+  displayEstimatedCentsFromOffers,
 } from "@/core/commerce/pricing/pricePipeline";
 import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 
@@ -391,16 +392,21 @@ async function estimatedCentsForPrintKey(input: {
     isPal: false,
     isClassics: false,
   });
-  const cents = offers
+  const observations: PriceObservation[] = offers
     .filter(
       (offer) =>
-        offer.condition === "estimated" &&
-        typeof offer.priceCents === "number" &&
-        offer.priceCents > 0,
+        typeof offer.priceCents === "number" && offer.priceCents > 0,
     )
-    .map((offer) => offer.priceCents)
-    .sort((a, b) => a - b);
-  return cents[0] ?? null;
+    .map((offer) => ({
+      source: offer.source,
+      condition: offer.condition ?? null,
+      priceCents: offer.priceCents,
+      currency: offer.currency ?? null,
+      productName: offer.productName ?? null,
+      sourceUrl: offer.sourceUrl ?? null,
+      metadataScoped: offer.metadataScoped,
+    }));
+  return displayEstimatedCentsFromOffers(input.shelfType, observations);
 }
 
 async function fillShelfPrintKeyEstimates(

@@ -22,6 +22,7 @@ import {
 import {
   sealedBehaviorForKind,
   sealedContentsKnown,
+  sealedKindIsOpaqueContents,
   type SealedKind,
 } from "./kinds";
 import { resolveContentLayers } from "./contentLayers";
@@ -120,7 +121,7 @@ export function writeLocalSealedProducts(input: {
       installRole(destDir, "art", extra.source, extra.artPath);
       installRole(destDir, "back", extra.source, extra.imageBackPath);
     }
-    const preview = spec.kind === "booster" || spec.kind === "display";
+    const preview = sealedKindIsOpaqueContents(spec.kind);
     const contents = resolveSealedContents({
       kind: spec.kind,
       name: spec.name,

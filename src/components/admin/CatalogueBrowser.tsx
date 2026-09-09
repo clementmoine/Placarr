@@ -40,7 +40,13 @@ function catalogueIncompleteTags(
   fr: boolean,
 ): string[] {
   const tags: string[] = [];
-  if (!card.name?.trim()) tags.push(fr ? "sans nom" : "no name");
+  if (
+    !card.name?.trim() &&
+    card.kind !== "pack-back" &&
+    card.kind !== "set-back"
+  ) {
+    tags.push(fr ? "sans nom" : "no name");
+  }
   if (card.missingArt) tags.push(fr ? "sans image" : "no art");
   if (card.versoOnly) tags.push(fr ? "verso seul" : "back only");
   if (card.artFallbackFrom) {

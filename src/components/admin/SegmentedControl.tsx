@@ -21,7 +21,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role="tablist"
-      className="inline-flex rounded-lg border border-border/80 bg-muted/30 p-0.5"
+      className="inline-flex max-w-full rounded-lg border border-border/80 bg-muted/30 p-0.5"
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -34,7 +34,7 @@ export function SegmentedControl<T extends string>({
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
+              "shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors",
               selected
                 ? "bg-background font-medium text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",

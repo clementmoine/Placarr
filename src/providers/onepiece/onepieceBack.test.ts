@@ -7,10 +7,12 @@ import {
 } from "./onepieceBack";
 
 describe("onepieceBackCategorySlug", () => {
-  it("maps Leader / Event / Stage and ignores Character", () => {
+  it("stamps only Leader / DON!! — Event / Stage share the pack default", () => {
     expect(onepieceBackCategorySlug("Leader")).toBe("leader");
-    expect(onepieceBackCategorySlug("Event")).toBe("event");
-    expect(onepieceBackCategorySlug("Stage")).toBe("stage");
+    expect(onepieceBackCategorySlug("DON!!")).toBe("don");
+    expect(onepieceBackCategorySlug("DON")).toBe("don");
+    expect(onepieceBackCategorySlug("Event")).toBeNull();
+    expect(onepieceBackCategorySlug("Stage")).toBeNull();
     expect(onepieceBackCategorySlug("Character")).toBeNull();
     expect(onepieceBackCategorySlug(null)).toBeNull();
   });
@@ -22,22 +24,21 @@ describe("onepieceBackCategorySlug", () => {
 });
 
 describe("onepieceCardBackUrlForCategory", () => {
-  it("points at curated sleeve files under the pack", () => {
+  it("points at distinct curated sleeves only", () => {
     expect(onepieceCardBackUrlForCategory("Leader")).toBe(
       "/assets/onepiece/cards/back.leader.webp",
     );
-    expect(onepieceCardBackUrlForCategory("Event")).toBe(
-      "/assets/onepiece/cards/back.event.webp",
+    expect(onepieceCardBackUrlForCategory("DON!!")).toBe(
+      "/assets/onepiece/cards/back.don.webp",
     );
-    expect(onepieceCardBackUrlForCategory("Stage")).toBe(
-      "/assets/onepiece/cards/back.stage.webp",
-    );
+    expect(onepieceCardBackUrlForCategory("Event")).toBeNull();
+    expect(onepieceCardBackUrlForCategory("Stage")).toBeNull();
     expect(onepieceCardBackUrlForCategory("Character")).toBeNull();
   });
 });
 
 describe("stampOnepieceBack", () => {
-  it("stamps Leader and leaves Character on the pack default", () => {
+  it("stamps Leader / DON and leaves Character on the pack default", () => {
     const leader = stampOnepieceBack({
       printKey: "onepiece:op01-001",
       title: "Luffy",
@@ -49,6 +50,14 @@ describe("stampOnepieceBack", () => {
       "/assets/onepiece/cards/back.leader.webp",
     );
 
+    const don = stampOnepieceBack({
+      printKey: "onepiece:don-001",
+      title: "DON!!",
+      reference: "DON!!",
+      category: "DON!!",
+    });
+    expect(don.cardBackUrl).toBe("/assets/onepiece/cards/back.don.webp");
+
     const character = stampOnepieceBack({
       printKey: "onepiece:op01-002",
       title: "Zoro",
@@ -57,6 +66,14 @@ describe("stampOnepieceBack", () => {
       rarity: "Common",
     });
     expect(character.cardBackUrl).toBeUndefined();
+
+    const event = stampOnepieceBack({
+      printKey: "onepiece:op01-009",
+      title: "Event",
+      reference: "OP01-009",
+      category: "Event",
+    });
+    expect(event.cardBackUrl).toBeUndefined();
   });
 
   it("does not overwrite an existing print-scoped back", () => {

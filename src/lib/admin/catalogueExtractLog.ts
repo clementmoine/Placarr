@@ -40,32 +40,43 @@ export async function beginCatalogueExtractLog(
   return filePath;
 }
 
-export async function appendCatalogueExtractLog(
+/**
+ * Sync append so CPU-bound extract phases (Malie reparse, manifest load) still
+ * update the admin log / heartbeat while the event loop is starved. Async
+ * ``appendFile`` chains were silently lagging behind wall-clock progress.
+ */
+export function appendCatalogueExtractLogSync(
   pack: CatalogueExtractTarget,
   line: string,
-): Promise<void> {
+): void {
   const filePath = catalogueExtractLogPath(pack);
-  await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
   const text = line.endsWith("\n") ? line : `${line}\n`;
-  await fs.promises.appendFile(filePath, text, "utf8");
+  fs.appendFileSync(filePath, text, "utf8");
   try {
-    const stat = await fs.promises.stat(filePath);
+    const stat = fs.statSync(filePath);
     if (stat.size > MAX_LOG_BYTES) {
-      // Keep the tail — live viewers care about recent progress.
-      const handle = await fs.promises.open(filePath, "r");
+      const keep = Math.floor(MAX_LOG_BYTES / 2);
+      const start = Math.max(0, stat.size - keep);
+      const fd = fs.openSync(filePath, "r");
       try {
-        const keep = Math.floor(MAX_LOG_BYTES / 2);
-        const start = Math.max(0, stat.size - keep);
         const buf = Buffer.alloc(stat.size - start);
-        await handle.read(buf, 0, buf.length, start);
-        await fs.promises.writeFile(filePath, buf);
+        fs.readSync(fd, buf, 0, buf.length, start);
+        fs.writeFileSync(filePath, buf);
       } finally {
-        await handle.close();
+        fs.closeSync(fd);
       }
     }
   } catch {
     /* best-effort trim */
   }
+}
+
+export async function appendCatalogueExtractLog(
+  pack: CatalogueExtractTarget,
+  line: string,
+): Promise<void> {
+  appendCatalogueExtractLogSync(pack, line);
 }
 
 export type FoilExtractLogSlice = {

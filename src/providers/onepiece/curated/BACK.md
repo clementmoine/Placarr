@@ -1,28 +1,21 @@
 # One Piece Card Game — verso sleeve
 
-| Fichier curated | URL `/assets/onepiece/cards/…` | Source opecards.fr (2026-08-28 / 2026-09-04) |
-| --------------- | ------------------------------ | --------------------------------------------- |
-| `back.webp` | `back.webp` | `back-character.webp` — défaut pack |
-| `back.leader.webp` | `back.leader.webp` | `back-leader.webp` |
-| `back.event.webp` | `back.event.webp` | `back-event.webp` |
-| `back.stage.webp` | `back.stage.webp` | `back-stage.webp` |
+| Fichier curated | URL `/assets/onepiece/cards/…` | Source |
+| --------------- | ------------------------------ | ------ |
+| `back.webp` | `back.webp` | opecards `back-character.webp` — défaut pack (Character / Event / Stage) |
+| `back.leader.webp` | `back.leader.webp` | opecards `back-leader.webp` (rouge) |
+| `back.don.webp` | `back.don.webp` | opecards `back-don!!.webp` (crème) |
 
-Taille : 400×560 WebP. Leader a un motif distinct ; Event / Stage sont
-aujourd’hui **byte-identiques** à Character sur opecards (relevé 2026-09-04) —
-on les curate quand même pour le contrat catégorie → fichier.
-
-## Pourquoi pas Bandai
-
-Les cardlists officielles OPTCG (EN / FR / …) ne publient **pas** de dos sleeve générique
-(`card_back.png` / `back.webp` → 404). Même convention que Dragon Ball Super — voir
-[dragon_ball_super_card_game.md](../../../../docs/dragon_ball_super_card_game.md) §3.2.
-
-opecards.fr sert des versos par type (`back-character`, `back-event`, `back-stage`,
-`back-leader`). **`back-character`** reste le verso pack par défaut (majorité d’un
-booster). Leader / Event / Stage sont stampés sur le `PrintCandidate.cardBackUrl`
-selon la catégorie punk-records.
+Taille cible : 400×560 WebP. **Event / Stage** sont byte-identiques à Character sur opecards — pas de fichiers séparés ; le stamp laisse le défaut pack.
 
 ## Règle
 
-- Rejouer : Catalogue Sync copie curated → `data/onepiece/cards/back*.webp`.
-- Si Bandai publie un dos isolé, remplacer curated et noter l'URL ici.
+N’installer / n’estampiller un `back.<slug>` que si le motif est **distinct** du défaut.
+
+Découverte (famille TCG Cards, pas une liste magique) :
+
+1. HTML `/cards` (+ listes FR/EN/JA) → URLs lazyload `cards/common/back-*.webp` ou `cards/original/back.webp`
+2. Labels du filtre Types → probe CDN (`DON!!` → `back-don!!.webp`)
+3. `discoverDistinctBacks` / `harvestTcgCardsDistinctBacks` — même helper pour lorcards, dbscards, pkmcards, …
+
+- Rejouer : Catalogue Sync One Piece (ou `harvestTcgCardsDistinctBacks("opecards")`).

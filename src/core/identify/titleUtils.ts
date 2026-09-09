@@ -954,7 +954,15 @@ const PRODUCT_COMPARE_NOISE_TOKENS = new Set(
 
 const PLATFORM_PHRASE_MATCHER = createVideoGamePlatformMatcher("gi");
 
-function stripPlatformPhrasesForProductCompare(value: string): string {
+/**
+ * Drops registry-known platform phrases ("wii", "playstation 4", …) from an
+ * already-normalized title. The platform is carried as a separate compared fact
+ * (`platformKey`), so a platform word inside one source's title is identity
+ * noise — it biases title similarity down and splits clusters of the same
+ * product ("Zelda Twilight Princess" vs "The Legend of Zelda: Twilight
+ * Princess (Wii)").
+ */
+export function stripPlatformPhrasesForProductCompare(value: string): string {
   return value
     .replace(PLATFORM_PHRASE_MATCHER, " ")
     .replace(/\s+/g, " ")

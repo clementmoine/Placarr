@@ -512,7 +512,7 @@ applique le sampler state dumpé (Repeat + Bilinear sur les foils APK, mips
 là où `m_MipCount > 1`). Il ne connaît aucun shader par son nom — tout passe
 par la réflexion du programme (`getActiveUniform`). En produit, `FoilCardImage`
 choisit WebGL2 par défaut quand le matériau et le pool le permettent, sinon
-la pile CSS complète. Banc admin : `/admin?tab=tcg-effects` — backends
+la pile CSS complète. Banc admin : `/admin?tab=catalogue` — backends
 **Auto | Unity | Web**.
 
 Les recettes CSS (`effects/lorcana/cssRecipes`) servent partout où WebGL2 manque

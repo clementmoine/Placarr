@@ -25,12 +25,15 @@ export function createEmptyLocalTcgProvider(input: {
   runPipeline: (
     argv: readonly string[],
   ) => Promise<{ cards: number; products: number }>;
+  /** Same meaning as `cardCatalogueHooks` — e.g. skip sealed on auto refresh. */
+  autoSkip?: readonly string[];
 }): EmptyLocalTcgProvider {
   const line = createLocalTcgLine(input.lineSpec);
   const catalog = cardCatalogueHooks({
     packId: input.lineSpec.packId,
     dbPath: line.index.dbPath,
     runPipeline: input.runPipeline,
+    autoSkip: input.autoSkip,
   });
   return {
     line,

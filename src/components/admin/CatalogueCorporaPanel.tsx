@@ -84,7 +84,7 @@ export function corpusStatusLabel(
   return `${corpus.dataPack} · ${corpus.supplyMode} · ${state}${synced}`;
 }
 
-/** Refresh every catalog provider at once. Lives next to the tab bar. */
+/** Refresh every catalog provider at once (corpus panels / callers that need it). */
 export function RefreshAllCorporaButton({
   busy,
   disabled,

@@ -22,7 +22,12 @@ export type PokemonPaperFacesReport = {
 };
 
 export async function runPokemonPaperFacesHarvest(
-  opts: { force?: boolean; cardsRoot?: string } = {},
+  opts: {
+    force?: boolean;
+    cardsRoot?: string;
+    /** Default true for standalone harvest; extract runner rebuilds once after. */
+    rebuildIndex?: boolean;
+  } = {},
 ): Promise<PokemonPaperFacesReport> {
   console.log("── Pokémon paper faces — Coleka McDo FR");
   const coleka = await harvestColekaMcdoFaces({
@@ -74,10 +79,11 @@ export async function runPokemonPaperFacesHarvest(
   );
 
   // Rebuild only the live data root index (custom cardsRoot = tests).
-  const index = opts.cardsRoot
-    ? { cards: 0 }
-    : rebuildPokemonCardsIndex();
-  if (!opts.cardsRoot) {
+  const shouldRebuild = opts.rebuildIndex !== false && !opts.cardsRoot;
+  const index = shouldRebuild
+    ? rebuildPokemonCardsIndex()
+    : { cards: 0 };
+  if (shouldRebuild) {
     console.log(`── cards-index.json — ${index.cards} bundles`);
   }
 

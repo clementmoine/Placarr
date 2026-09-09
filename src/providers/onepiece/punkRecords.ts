@@ -214,6 +214,12 @@ export type PunkRecordsHarvest = {
   fail: number;
 };
 
+/**
+ * Revalidate punk-records indexes (LorcanaJSON / Pokémon CDN style).
+ *
+ * Always GETs upstream. Writes only when the payload moved (or `--force`).
+ * Skipping forever on a local staging file froze OPTCG on the first harvest.
+ */
 export async function harvestPunkRecords(
   opts: { force?: boolean; stagingDir?: string } = {},
 ): Promise<PunkRecordsHarvest> {
@@ -226,26 +232,31 @@ export async function harvestPunkRecords(
 
   for (const { punk, lang } of PUNK_RECORDS_LOCALES) {
     const dest = path.join(staging, `${lang}.cards_by_id.json`);
-    if (!opts.force && existsSync(dest) && readFileSync(dest).byteLength > 1000) {
-      skip += 1;
-      try {
-        cards += Object.keys(JSON.parse(readFileSync(dest, "utf8"))).length;
-      } catch {
-        /* ignore */
-      }
-      continue;
-    }
     const data = await downloadJson(punkRecordsRawUrl(punk));
     if (!data || typeof data !== "object") {
       fail += 1;
+      if (existsSync(dest)) {
+        try {
+          cards += Object.keys(JSON.parse(readFileSync(dest, "utf8"))).length;
+        } catch {
+          /* ignore */
+        }
+      }
       continue;
     }
-    writeFileSync(dest, `${JSON.stringify(data)}\n`, "utf8");
+    const next = `${JSON.stringify(data)}\n`;
+    const count = Object.keys(data as object).length;
+    const prior =
+      !opts.force && existsSync(dest) ? readFileSync(dest, "utf8") : null;
+    if (prior === next) {
+      skip += 1;
+      cards += count;
+      continue;
+    }
+    writeFileSync(dest, next, "utf8");
     ok += 1;
-    cards += Object.keys(data as object).length;
-    console.log(
-      `   punk-records ${lang} — ${Object.keys(data as object).length} cartes`,
-    );
+    cards += count;
+    console.log(`   punk-records ${lang} — ${count} cartes`);
   }
 
   return {

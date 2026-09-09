@@ -12,7 +12,9 @@ import {
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
 import { finalizeSetOptions } from "@/providers/shared/cardCatalogue/sets";
+import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { packCardDir } from "@/lib/packPaths";
@@ -211,43 +213,68 @@ export function exportDbsFwCardsIndexJson(
   assets: DbsFwAssetRow[] | undefined,
   outPath: string,
 ): void {
-  const titleByKey = new Map<string, DbsFwTitleRow>();
+  const titlesByPrint = new Map<string, Map<string, DbsFwTitleRow>>();
   for (const title of titles ?? []) {
-    titleByKey.set(title.printKey, title);
+    const lang = title.lang.trim().toLowerCase();
+    if (!lang) continue;
+    const inner = titlesByPrint.get(title.printKey) ?? new Map();
+    inner.set(lang, title);
+    titlesByPrint.set(title.printKey, inner);
   }
-  const assetByKey = new Map<string, DbsFwAssetRow>();
+  const assetsByPrint = new Map<string, Map<string, DbsFwAssetRow>>();
   for (const asset of assets ?? []) {
-    if (!asset.imageUrl) continue;
-    assetByKey.set(asset.printKey, asset);
+    const lang = asset.lang.trim().toLowerCase();
+    if (!lang) continue;
+    const inner = assetsByPrint.get(asset.printKey) ?? new Map();
+    inner.set(lang, asset);
+    assetsByPrint.set(asset.printKey, inner);
   }
-  const cards: Record<
-    string,
-    {
-      set: string;
-      card: string;
-      name?: string;
-      langs: Record<string, { artUrl: string }>;
-    }
-  > = {};
+
+  const cards: CardsIndexV1["cards"] = {};
   for (const print of prints) {
-    const title = titleByKey.get(print.printKey);
-    const asset = assetByKey.get(print.printKey);
-    const card = print.grouping
-      ? `${print.number}-${print.grouping}`
-      : print.number;
-    const lang = (asset?.lang ?? title?.lang ?? "en").toLowerCase();
+    const card = dbsFwCardFolder(print);
+    const titlesFor = titlesByPrint.get(print.printKey);
+    const assetsFor = assetsByPrint.get(print.printKey);
+    const langs = new Set<string>([
+      ...(titlesFor?.keys() ?? []),
+      ...(assetsFor?.keys() ?? []),
+      "en",
+      "ja",
+    ]);
+    const langFiles: Record<string, CardsIndexLangFiles> = {};
+    for (const lang of langs) {
+      const files: CardsIndexLangFiles = {};
+      const name = titlesFor?.get(lang)?.fullName?.trim();
+      const imageUrl = assetsFor?.get(lang)?.imageUrl?.trim();
+      const art = dbsFwLocalArtFilename(print, lang);
+      const back = dbsFwLocalBackFilename(print, lang);
+      if (name) files.name = name;
+      if (imageUrl) files.artUrl = imageUrl;
+      if (art) files.art = art;
+      if (back) files.back = back;
+      if (Object.keys(files).length) langFiles[lang] = files;
+    }
+    const display =
+      titlesFor?.get("en") ??
+      titlesFor?.get("ja") ??
+      (titlesFor ? [...titlesFor.values()][0] : undefined);
     cards[print.printKey] = {
       set: print.setCode,
       card,
-      langs: asset?.imageUrl ? { [lang]: { artUrl: asset.imageUrl } } : {},
-      ...(title?.fullName ? { name: title.fullName } : {}),
+      langs: langFiles,
+      ...(display?.fullName ? { name: display.fullName } : {}),
     };
   }
+
+  const index: CardsIndexV1 = {
+    version: 1,
+    pack: DBS_FW_PACK_ID,
+    generatedAt: new Date().toISOString(),
+    cards,
+  };
+  attachSiblingTitlesToCardsIndex(index);
   mkdirSync(path.dirname(outPath), { recursive: true });
-  writeFileSync(
-    `${outPath}`,
-    `${JSON.stringify({ version: 1, pack: DBS_FW_PACK_ID, generatedAt: new Date().toISOString(), cards }, null, 0)}\n`,
-  );
+  writeFileSync(`${outPath}`, `${JSON.stringify(index)}\n`);
 }
 
 /**

@@ -117,6 +117,6 @@ wrong `source` id.
 
 ## Catalogue admin vs metadata Refresh
 
-- **Catalogue** (`?tab=tcg-effects`) — local corpora (TCG packs + LaunchBox /
+- **Catalogue** (`?tab=catalogue`) — local corpora (TCG packs + LaunchBox /
   iCollect / No-Intro / …): refresh all, unit, auto.
 - **Refresh** tab — item **metadata** enrichment queue — unrelated.

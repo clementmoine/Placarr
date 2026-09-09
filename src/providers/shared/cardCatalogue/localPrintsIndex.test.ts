@@ -168,10 +168,12 @@ describe("createLocalPrintsIndex", () => {
 });
 
 describe("faces sans titre dans leur langue", () => {
-  it("les fait entrer dans l'index, avec l'image et sans nom", () => {
+  it("les fait entrer dans l'index, avec l'image et un nom sibling (nameSource)", () => {
     // Le cas réel : un scan de l'édition française sous des titres anglais.
     // Avant, la jointure par langue le faisait disparaître — 262 faces du
     // Carddass étaient ainsi perdues, présentes en base et nulle part visibles.
+    // Sans titre FR attesté, on montre le titre EN avec nameSource (pas
+    // nameLocaleFrom : le catalogue doit rester lisible).
     tmpDataRoot();
     const index = createLocalPrintsIndex("naruto/ninja-ranks");
     index.writePrints([
@@ -193,13 +195,19 @@ describe("faces sans titre dans leur langue", () => {
       JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
         cards: Record<
           string,
-          { langs: Record<string, { name?: string; art?: string }> }
+          {
+            langs: Record<
+              string,
+              { name?: string; art?: string; nameSource?: string }
+            >;
+          }
         >;
       }
     ).cards["naruto:nr-0040"];
     expect(entry.langs.en?.name).toBe("Rock Lee");
     expect(entry.langs.fr?.art).toBe("art.coleka.webp");
-    expect(entry.langs.fr?.name).toBeUndefined();
+    expect(entry.langs.fr?.name).toBe("Rock Lee");
+    expect(entry.langs.fr?.nameSource).toBe("en");
   });
 
   it("copie les titres EN vers les autres langues sans écraser l'attesté", () => {
@@ -270,12 +278,21 @@ describe("faces sans titre dans leur langue", () => {
       JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
         cards: Record<
           string,
-          { langs: Record<string, { name?: string; art?: string }> }
+          {
+            langs: Record<
+              string,
+              { name?: string; art?: string; nameSource?: string }
+            >;
+          }
         >;
       }
     ).cards["naruto:nr-0044"];
     expect(entry.langs.en?.name).toBe("Guy");
     expect(entry.langs.fr?.art).toBe("art.coleka.webp");
+    expect(entry.langs.fr?.name).toBe("Guy");
+    expect(entry.langs.fr?.nameSource).toBe("en");
     expect(entry.langs.it?.art).toBe("art.imadoki.jpg");
+    expect(entry.langs.it?.name).toBe("Guy");
+    expect(entry.langs.it?.nameSource).toBe("en");
   });
 });

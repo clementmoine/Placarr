@@ -11,9 +11,14 @@ import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
 } from "@/core/collect/jobs/workQueue";
-import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
+import {
+  catalogueApkPacks,
+  cataloguePackForExtractTarget,
+} from "@/lib/admin/cataloguePacks";
 
 const DEFAULT_CHECK_MS = 60 * 60 * 1000;
+/** APK store updates are rare — one probe a day per pack is plenty. */
+const DEFAULT_APK_STORE_CHECK_MS = 24 * 60 * 60 * 1000;
 
 type GlobalSyncState = {
   loopStarted?: boolean;
@@ -79,6 +84,54 @@ export async function maybeEnqueueAllStaleCatalogueSyncs(): Promise<number> {
   let n = 0;
   for (const mdl of discoverCatalogProviderModules()) {
     if (await maybeEnqueueCatalogueProviderSync(mdl.info.id)) n += 1;
+  }
+  n += await maybeEnqueueApkStoreFetches();
+  return n;
+}
+
+function apkStoreAutoEnabled(): boolean {
+  const raw = process.env.PLACARR_APK_STORE_AUTO?.trim().toLowerCase();
+  if (raw === "0" || raw === "false" || raw === "off") return false;
+  return isEnabled();
+}
+
+function apkStoreCheckIntervalMs(): number {
+  const raw = Number(process.env.PLACARR_APK_STORE_CHECK_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_APK_STORE_CHECK_MS;
+}
+
+/**
+ * Store APK freshness — enqueue the pack extract, which probes the store
+ * first. A newer APK runs the full extract; otherwise the job still refreshes
+ * the network catalogue (CDN / LorcanaJSON) and skips Unity.
+ */
+export async function maybeEnqueueApkStoreFetches(): Promise<number> {
+  if (!apkStoreAutoEnabled()) return 0;
+  const { readApkStoreMeta } = await import("@/lib/admin/apkStoreFetch");
+  let n = 0;
+  for (const pack of catalogueApkPacks()) {
+    const meta = await readApkStoreMeta(pack.id);
+    const checkedAt = Date.parse(meta?.checkedAt ?? "");
+    if (
+      Number.isFinite(checkedAt) &&
+      Date.now() - checkedAt < apkStoreCheckIntervalMs()
+    ) {
+      continue;
+    }
+    try {
+      await enqueueBackgroundWorkJob({
+        kind: BACKGROUND_WORK_KIND.catalogueExtract,
+        payload: { target: pack.extractTarget, auto: true },
+        replaceOpenForKind: true,
+        replaceOpenPayloadMatch: {
+          path: ["target"],
+          equals: pack.extractTarget,
+        },
+      });
+      n += 1;
+    } catch (error) {
+      console.warn(`[apk store] failed to enqueue ${pack.id}:`, error);
+    }
   }
   return n;
 }

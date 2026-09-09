@@ -5,12 +5,12 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import Header from "@/components/Header";
 import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
-import { TcgEffectsPanel } from "@/components/admin/TcgEffectsPanel";
 import {
   Card,
   CardContent,
@@ -54,6 +54,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RemoteImage } from "@/components/RemoteImage";
+
+/** Catalogue / foil playroom — heavy; only load when that admin tab is open. */
+const TcgEffectsPanel = dynamic(
+  () =>
+    import("@/components/admin/TcgEffectsPanel").then((m) => m.TcgEffectsPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3 p-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    ),
+  },
+);
 
 interface ApiStatus {
   providerId: string;
@@ -759,7 +774,7 @@ function AdminDashboardComponent() {
             activeTab === "catalogue" ? "space-y-3" : "space-y-6"
           }`}
         >
-          <TabsList className="grid w-full grid-cols-4 max-w-[920px]">
+          <TabsList className="grid w-full grid-cols-4 max-w-[900px]">
             <TabsTrigger value="providers" className="flex items-center gap-2">
               <Database className="size-4" />
               {locale === "fr" ? "Providers" : "Providers"}

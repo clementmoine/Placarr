@@ -14,6 +14,7 @@ import { DatabaseSync } from "node:sqlite";
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardsIndexPath, packCatalogDb } from "@/lib/packPaths";
 
+import { attachSiblingTitlesToCardsIndex } from "./attachIndexTitles";
 import { SET_ENUMERATION_LIMIT } from "./setPrints";
 import { finalizeSetOptions, isAnsweredQuery, setScopedWhere } from "./sets";
 
@@ -605,6 +606,8 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       generatedAt: new Date().toISOString(),
       cards,
     };
+    // Orphan art (title in another lang only) → show with nameSource, not blank.
+    attachSiblingTitlesToCardsIndex(index);
     writeFileSync(dest, `${JSON.stringify(index)}\n`);
     return { path: dest, cards: Object.keys(cards).length };
   };

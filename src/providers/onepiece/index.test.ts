@@ -25,6 +25,23 @@ describe("onepiece provider hooks", () => {
       onepieceModule.lookupPrint!({ printKey: "pokemon:sv1-001" }),
     ).resolves.toBeNull();
   });
+
+  it("skips sealed products on automatic catalogue refresh", async () => {
+    const ran: string[][] = [];
+    const { cardCatalogueHooks } = await import(
+      "@/providers/shared/cardCatalogue/pipeline"
+    );
+    const hooks = cardCatalogueHooks({
+      packId: "onepiece",
+      dbPath: () => "/tmp/missing-onepiece.sqlite",
+      runPipeline: async (argv) => {
+        ran.push([...argv]);
+      },
+      autoSkip: ["products"],
+    });
+    await hooks.refresh({ auto: true });
+    expect(ran[0]).toEqual(["--skip", "products"]);
+  });
 });
 
 describe("onepiece curated back", () => {
@@ -33,12 +50,7 @@ describe("onepiece curated back", () => {
       listCuratedBackSources(path.join(onepieceCuratedDir(), "cards")).map(
         (row) => row.destRel,
       ),
-    ).toEqual([
-      "back.event.webp",
-      "back.leader.webp",
-      "back.stage.webp",
-      "back.webp",
-    ]);
+    ).toEqual(["back.don.webp", "back.leader.webp", "back.webp"]);
   });
 
   it("registers a catalogue-only effect pack", () => {

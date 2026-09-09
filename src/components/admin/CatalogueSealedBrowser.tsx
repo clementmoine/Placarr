@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
 import type { CatalogueSealedRow } from "@/lib/admin/catalogueProductsTypes";
+import { printLanguageLabel } from "@/lib/shared/printLanguages";
+import { sealedKindLabel } from "@/providers/shared/sealedProducts/kinds";
 
 type CatalogueProductsResponse = {
   pack: CataloguePackId;
@@ -18,14 +20,6 @@ type CatalogueProductsResponse = {
 };
 
 const PAGE = 48;
-
-const KIND_FR: Record<CatalogueSealedRow["kind"], string> = {
-  booster: "Booster",
-  display: "Display",
-  deck: "Deck",
-  coffret: "Coffret",
-  ephemera: "Éphémère",
-};
 
 async function fetchPage(input: {
   pack: CataloguePackId;
@@ -136,7 +130,11 @@ export function CatalogueSealedBrowser({
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
-          {products.map((product) => (
+          {products.map((product) => {
+            const langLabel = product.lang?.trim()
+              ? printLanguageLabel(product.lang)
+              : null;
+            return (
             <figure key={product.productKey} className="flex flex-col gap-1">
               <div className="relative aspect-square overflow-hidden rounded-md bg-muted/40">
                 {product.image ? (
@@ -167,8 +165,9 @@ export function CatalogueSealedBrowser({
                 ) : null}
               </div>
               <figcaption className="text-[11px] leading-snug text-muted-foreground">
-                <span className="font-medium text-foreground/80">
-                  {fr ? KIND_FR[product.kind] : product.kind}
+                <span className="font-medium text-foreground/80" title={langLabel?.name}>
+                  {langLabel?.flag ? `${langLabel.flag} ` : ""}
+                  {sealedKindLabel(product.kind, fr ? "fr" : "en")}
                 </span>
                 {product.setCode ? (
                   <span className="ml-1 tabular-nums">{product.setCode}</span>
@@ -196,7 +195,8 @@ export function CatalogueSealedBrowser({
                 ) : null}
               </figcaption>
             </figure>
-          ))}
+            );
+          })}
         </div>
       )}
 

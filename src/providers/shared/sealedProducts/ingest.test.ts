@@ -4,6 +4,7 @@ import {
   sealedBehaviorForKind,
   sealedContentsKnown,
   sealedKindForCategory,
+  refineSealedKind,
 } from "./kinds";
 import {
   printKeyFromCollectorRef,
@@ -11,6 +12,11 @@ import {
   sealedProductFromStaging,
 } from "./ingest";
 import { sealedProductKey } from "./indexFormat";
+import {
+  inferSealedLangFromSlug,
+  normalizeSealedLang,
+  resolveSealedLang,
+} from "./lang";
 
 describe("sealedPriceCentsFromShop", () => {
   it("converts EUR shop strings to cents", () => {
@@ -28,21 +34,80 @@ describe("sealedPriceCentsFromShop", () => {
 });
 
 describe("sealed kinds", () => {
-  it("maps host categories onto the four catalogue objects", () => {
+  it("maps host categories onto catalogue kinds", () => {
     expect(sealedKindForCategory("boosters")).toBe("booster");
-    expect(sealedKindForCategory("boosters-blister")).toBe("booster");
+    expect(sealedKindForCategory("boosters-blister")).toBe("blister");
     expect(sealedKindForCategory("displays")).toBe("display");
     expect(sealedKindForCategory("decks")).toBe("deck");
     expect(sealedKindForCategory("commander-decks")).toBe("deck");
-    expect(sealedKindForCategory("elite-trainer")).toBe("coffret");
-    expect(sealedKindForCategory("trove-packs")).toBe("coffret");
-    expect(sealedKindForCategory("illumineers-quest")).toBe("coffret");
-    expect(sealedKindForCategory("puzzles")).toBeNull();
+    expect(sealedKindForCategory("elite-trainer")).toBe("etb");
+    expect(sealedKindForCategory("trove-packs")).toBe("trove");
+    expect(sealedKindForCategory("illumineers-quest")).toBe("quest");
+    expect(sealedKindForCategory("double-packs")).toBe("multipack");
+    expect(sealedKindForCategory("tripacks")).toBe("multipack");
+    expect(sealedKindForCategory("tins")).toBe("tin");
+    expect(sealedKindForCategory("minitins")).toBe("tin");
+    expect(sealedKindForCategory("pokebox")).toBe("collector_box");
+    expect(sealedKindForCategory("prerelease-packs")).toBe("prerelease");
+    expect(sealedKindForCategory("special-packs")).toBe("special");
+    expect(sealedKindForCategory("puzzles")).toBe("puzzle");
     expect(sealedKindForCategory("playmats")).toBeNull();
     expect(sealedBehaviorForKind("booster")).toBe("random_pack");
+    expect(sealedBehaviorForKind("blister")).toBe("mixed_bundle");
     expect(sealedBehaviorForKind("display")).toBe("pack_container");
+    expect(sealedBehaviorForKind("puzzle")).toBe("known_bundle");
+    expect(sealedBehaviorForKind("case")).toBe("pack_container");
+    expect(sealedBehaviorForKind("blister_case")).toBe("pack_container");
     expect(sealedBehaviorForKind("deck")).toBe("known_bundle");
+    expect(sealedBehaviorForKind("deck_bundle")).toBe("mixed_bundle");
+    expect(sealedBehaviorForKind("multipack")).toBe("mixed_bundle");
+    expect(sealedBehaviorForKind("trove")).toBe("mixed_bundle");
     expect(sealedBehaviorForKind("coffret")).toBe("mixed_bundle");
+  });
+
+  it("refines blister cartons, duopacks and multi-deck packs", () => {
+    expect(
+      refineSealedKind({
+        category: "boosters",
+        slug: "booster-blister-carton-set-12-woody",
+        name: "Booster Blister Carton Set 12",
+        kind: "booster",
+      }),
+    ).toBe("blister_case");
+    expect(
+      refineSealedKind({
+        category: "boosters-blister",
+        slug: "duopack-s28",
+        name: "Duopack Série 28",
+        kind: "coffret",
+      }),
+    ).toBe("multipack");
+    expect(
+      refineSealedKind({
+        category: "collector-boxes",
+        slug: "pack-decouverte",
+        name: "Pack Découverte",
+        kind: "coffret",
+      }),
+    ).toBe("deck_bundle");
+    // Lorcana « 2 Player Starter Set » is a collector/starter coffret — not
+    // Naruto-style multi-deck pack. Do not refine on bare `2-player` alone.
+    expect(
+      refineSealedKind({
+        category: "official-site",
+        slug: "2-player-starter-set-collector_box",
+        name: "Disney Lorcana TCG Coffret Démarrage 2 Joueurs",
+        kind: "collector_box",
+      }),
+    ).toBe("collector_box");
+    expect(
+      refineSealedKind({
+        category: "collector-boxes",
+        slug: "tin-box-hobby",
+        name: "Tin Box Hobby",
+        kind: "coffret",
+      }),
+    ).toBe("tin");
   });
 
   it("never treats a booster or display as known contents", () => {
@@ -62,6 +127,13 @@ describe("sealed kinds", () => {
     ).toBe(false);
     expect(
       sealedContentsKnown({
+        kind: "blister_case",
+        containsPrintsIsPreview: false,
+        printCount: 0,
+      }),
+    ).toBe(false);
+    expect(
+      sealedContentsKnown({
         kind: "deck",
         containsPrintsIsPreview: false,
         printCount: 19,
@@ -74,6 +146,25 @@ describe("sealed kinds", () => {
         printCount: 15,
       }),
     ).toBe(false);
+  });
+});
+
+describe("sealed lang", () => {
+  it("normalizes boutique codes and infers from slug", () => {
+    expect(normalizeSealedLang("FR")).toBe("fr");
+    expect(normalizeSealedLang("jp")).toBe("ja");
+    expect(inferSealedLangFromSlug("en-booster-set-1")).toBe("en");
+    expect(inferSealedLangFromSlug("japanese-display-op01")).toBe("ja");
+    expect(inferSealedLangFromSlug("display-s1-it")).toBe("it");
+    expect(
+      inferSealedLangFromSlug("display-24-boosters-set-8-le-regne-de-jafar"),
+    ).toBeNull();
+    expect(
+      resolveSealedLang({ lang: "EN", slug: "booster-woody" }),
+    ).toBe("en");
+    expect(
+      resolveSealedLang({ lang: null, slug: "en-floodborn-booster" }),
+    ).toBe("en");
   });
 });
 
@@ -354,17 +445,21 @@ describe("sealed ingest", () => {
     expect(entry?.setCode).toBe("PRE");
   });
 
-  it("drops a puzzle — not a card SKU", () => {
-    expect(
-      sealedProductFromStaging({
-        packId: "lorcana",
-        listing: {
-          slug: "puzzle-woody",
-          path: "/products/puzzles/puzzle-woody",
-          category: "puzzles",
-          image: null,
-        },
-      }),
-    ).toBeNull();
+  it("ingests a puzzle as known_bundle with promo-capable kind", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "puzzle-woody",
+        path: "/products/puzzles/puzzle-woody",
+        category: "puzzles",
+        image: null,
+      },
+    });
+    expect(entry).toMatchObject({
+      slug: "puzzle-woody",
+      kind: "puzzle",
+      behavior: "known_bundle",
+      category: "puzzles",
+    });
   });
 });

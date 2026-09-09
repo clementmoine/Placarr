@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       target === "pokemon"
         ? scope === "catalogue"
           ? "Catalogue complet en file d’attente : ~93k bundles, plusieurs heures. Tu peux quitter la page."
-          : "Extract Pokémon en file d’attente (worker). Tu peux quitter la page."
+          : "Sync Pokémon en file d’attente (worker). Tu peux quitter la page."
         : `Sync ${catalogueExtractLabel(target)} en file d’attente (worker). Tu peux quitter la page.`,
   });
 }

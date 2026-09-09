@@ -703,6 +703,11 @@ export type FoilPlayroomProps = {
   locale?: string;
   /** Franchise + ligne — left side of the sticky Catalogue bar. */
   chromeLeading?: ReactNode;
+  /**
+   * Controlled catalogue line. When set (Catalogue tab), pack switches are
+   * optimistic and must not wait for `?pack=` / searchParams.
+   */
+  cataloguePackId?: CataloguePackId;
 };
 
 function SimeyIsoCompareRow({
@@ -801,6 +806,7 @@ export function FoilPlayroom({
   packArts,
   locale = "fr",
   chromeLeading,
+  cataloguePackId: cataloguePackIdProp,
 }: FoilPlayroomProps) {
   const fr = locale === "fr";
   const router = useRouter();
@@ -817,12 +823,16 @@ export function FoilPlayroom({
   }, []);
 
   const packs = listEffectPacks();
-  const cataloguePackId: CataloguePackId =
+  const packFromUrl =
     resolveCataloguePackId(searchParams.get("pack")) ?? CATALOGUE_PACKS[0]!.id;
+  const cataloguePackId: CataloguePackId =
+    cataloguePackIdProp ?? packFromUrl;
+  /** URL still on the previous pack while the parent already switched. */
+  const urlPackInSync = packFromUrl === cataloguePackId;
   const catalogueInfo =
     cataloguePackInfo(cataloguePackId) ?? CATALOGUE_PACKS[0]!;
   const browseScope: CatalogueBrowseScope = resolveCatalogueScope(
-    searchParams.get("scope"),
+    urlPackInSync ? searchParams.get("scope") : null,
     catalogueInfo,
   );
   const showFoilPlayroom =
@@ -855,7 +865,9 @@ export function FoilPlayroom({
     [packArts, packId, packs],
   );
 
-  const layout = resolvePlayroomLayout(searchParams.get("view"));
+  const layout = resolvePlayroomLayout(
+    urlPackInSync ? searchParams.get("view") : null,
+  );
   const comparePair = resolveComparePair(searchParams.get("pair"));
   const [backend, setBackend] = useState<FoilBackendPreference>("auto");
   const [tilt, setTilt] = useState(true);
@@ -879,7 +891,7 @@ export function FoilPlayroom({
     return [...owned, ...rest];
   }, [materials, pack, artsFor]);
   const focusedMaterial = resolvePlayroomMaterial(
-    searchParams.get("material"),
+    urlPackInSync ? searchParams.get("material") : null,
     materialsOrdered,
   );
   const focusIndex = focusedMaterial

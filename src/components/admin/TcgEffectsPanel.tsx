@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -35,6 +35,9 @@ import {
  *
  * `?pack=` is always the line / data pack id (or a non-pack corpus provider).
  * Mount only when the Catalogue tab is open — the foil grid spins WebGL canvases.
+ *
+ * Pack selection is optimistic: the dropdown + browse grid switch on click,
+ * `router.replace` only syncs the URL afterward (no wait for searchParams).
  */
 export function TcgEffectsPanel({ locale }: { locale: string }) {
   const fr = locale === "fr";
@@ -98,13 +101,48 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     ) ?? null;
   const defaultPackId: CataloguePackId | null =
     franchises[0]?.lines[0]?.id ?? null;
+
+  /** Pending pack click — wins over URL until `?pack=` catches up. */
+  const [pendingPackId, setPendingPackId] = useState<CataloguePackId | null>(
+    null,
+  );
+  /** Pending non-pack corpus click (indexes). */
+  const [pendingCorpusId, setPendingCorpusId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pendingPackId != null && packFromUrl === pendingPackId) {
+      setPendingPackId(null);
+    }
+  }, [packFromUrl, pendingPackId]);
+
+  useEffect(() => {
+    if (
+      pendingCorpusId != null &&
+      (corpusFromUrl?.providerId === pendingCorpusId ||
+        corpusFromUrl?.dataPack === pendingCorpusId)
+    ) {
+      setPendingCorpusId(null);
+    }
+  }, [corpusFromUrl, pendingCorpusId]);
+
   const activePackId: CataloguePackId | null =
+    pendingPackId ??
     packFromUrl ??
-    (corpusFromUrl || (requested && corporaLoading) ? null : defaultPackId);
+    (pendingCorpusId || corpusFromUrl || (requested && corporaLoading)
+      ? null
+      : defaultPackId);
   const activeFranchise = activePackId
     ? catalogueFranchiseForPack(activePackId)
     : null;
-  const activeCorpus = corpusFromUrl;
+  const activeCorpus = pendingCorpusId
+    ? (otherCorpora.find(
+        (corpus) =>
+          corpus.providerId === pendingCorpusId ||
+          corpus.dataPack === pendingCorpusId,
+      ) ?? null)
+    : pendingPackId
+      ? null
+      : corpusFromUrl;
 
   const activeTopValue = activeFranchise
     ? `franchise:${activeFranchise.id}`
@@ -116,6 +154,14 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
 
   const selectPack = useCallback(
     (packId: string) => {
+      const resolved = resolveCataloguePackId(packId);
+      if (resolved) {
+        setPendingCorpusId(null);
+        setPendingPackId(resolved);
+      } else {
+        setPendingPackId(null);
+        setPendingCorpusId(packId);
+      }
       const params = new URLSearchParams(searchParams.toString());
       applyCataloguePackParams(params, packId);
       if (!params.get("tab")) params.set("tab", "catalogue");
@@ -207,6 +253,7 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
           packArts={catalog?.packArts}
           locale={locale}
           chromeLeading={nav}
+          cataloguePackId={activePackId}
         />
       ) : activeCorpus ? (
         <>

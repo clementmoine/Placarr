@@ -207,6 +207,7 @@ export function CatalogueBrowser({
 
   const {
     data,
+    isPending,
     isFetching,
     isError,
     error,
@@ -246,6 +247,7 @@ export function CatalogueBrowser({
   const availableLocales = data?.pages[0]?.availableLocales ?? [];
   const localeOptions =
     availableLocales.length > 0 ? availableLocales : [defaultLang];
+  const awaitingFirstPage = isPending || (isFetching && !data);
 
   useEffect(() => {
     if (availableLocales.length === 0) return;
@@ -369,7 +371,16 @@ export function CatalogueBrowser({
         </p>
       ) : null}
 
-      {!isFetching && cards.length === 0 ? (
+      {awaitingFirstPage ? (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+          {Array.from({ length: 12 }, (_, i) => (
+            <div
+              key={i}
+              className="aspect-[2/3] animate-pulse rounded-md bg-muted/60"
+            />
+          ))}
+        </div>
+      ) : !isFetching && cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {auditActive
             ? fr

@@ -62,6 +62,7 @@ export function CatalogueSealedBrowser({
 
   const {
     data,
+    isPending,
     isFetching,
     isError,
     error,
@@ -83,6 +84,7 @@ export function CatalogueSealedBrowser({
 
   const products = data?.pages.flatMap((page) => page.products) ?? [];
   const total = data?.pages[0]?.total ?? 0;
+  const awaitingFirstPage = isPending || (isFetching && !data);
 
   return (
     <div className="flex flex-col gap-3">
@@ -122,7 +124,16 @@ export function CatalogueSealedBrowser({
         </p>
       ) : null}
 
-      {!isFetching && products.length === 0 ? (
+      {awaitingFirstPage ? (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+          {Array.from({ length: 8 }, (_, i) => (
+            <div
+              key={i}
+              className="aspect-square animate-pulse rounded-md bg-muted/60"
+            />
+          ))}
+        </div>
+      ) : !isFetching && products.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {fr
             ? "Aucun produit scellé dans l’index. Lance une sync — le graphe boutique devient products-index.json."

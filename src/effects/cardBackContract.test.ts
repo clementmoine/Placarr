@@ -31,7 +31,6 @@ describe("effect pack card-back contract", () => {
     expect(naruto).toEqual([
       "naruto-carddass",
       "naruto-data-carddass",
-      "naruto-defi-ninja",
       "naruto-kayou",
       "naruto-mythos",
       "naruto-ninja-ranks",

@@ -42,6 +42,27 @@ import {
   NARUTO_INDICATIVE_PRICE_SOURCE,
   refreshNarutoIndicativePriceOffers,
 } from "./sources/collectionNarutoPriceOffers";
+import {
+  classicGgNumberToPrintKey,
+  GG_ARCHIVE_PRICE_SOURCE,
+  refreshGgArchivePriceOffers,
+} from "@/providers/shared/naruto/ggArchivePrices";
+import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import type { PriceOfferInput } from "@/core/enrich/evidence";
+
+/** Dig FR d'abord ; à défaut côtes classic-ccg gg (USD). */
+export async function refreshNarutoCarddassPriceOffers(
+  ctx: BarcodePriceRefreshContext,
+): Promise<PriceOfferInput[]> {
+  const indicative = await refreshNarutoIndicativePriceOffers(ctx);
+  if (indicative.length) return indicative;
+  return refreshGgArchivePriceOffers({
+    ctx,
+    packId: NARUTO_PACK_ID,
+    printGame: "naruto",
+    resolvePrintKey: (row) => classicGgNumberToPrintKey(row.number ?? ""),
+  });
+}
 
 const PROVIDER_ID = "narutocarddass";
 const PROVIDER_LABEL = "Naruto CCG (local)";
@@ -112,10 +133,10 @@ export const narutocarddassModule = defineProvider({
     /** Côtes dig Collection Naruto — référence quand le marché live est absent. */
     referencePriceSource: true,
     evidenceOnlyPriceRefresh: true,
-    sourceAliases: [NARUTO_INDICATIVE_PRICE_SOURCE],
+    sourceAliases: [NARUTO_INDICATIVE_PRICE_SOURCE, GG_ARCHIVE_PRICE_SOURCE],
     factLabel: NARUTO_INDICATIVE_PRICE_SOURCE,
     notes:
-      "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/carddass/`. Curated sous `src/providers/narutocarddass/curated/`. Sync : Catalogue Extract (admin / worker). Prix : Estimations Collection Naruto (YT 7r7) en référence checklist / étagères / fiche.",
+      "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/carddass/`. Curated sous `src/providers/narutocarddass/curated/`. Sync : Catalogue Extract (admin / worker). Prix : Estimations Collection Naruto (YT 7r7) + côtes narutocardgame.gg classic-ccg.",
   },
   catalog: narutocarddassCatalog,
   evidence: {
@@ -123,7 +144,8 @@ export const narutocarddassModule = defineProvider({
     // Its own catalogue, read from disk — no scrape guesswork to discount.
     sourceWeight: 0.9,
   },
-  refreshBarcodePriceOffers: refreshNarutoIndicativePriceOffers,  suggestDatabaseTitles: async ({ cleanedName }) => {
+  refreshBarcodePriceOffers: refreshNarutoCarddassPriceOffers,
+  suggestDatabaseTitles: async ({ cleanedName }) => {
     const cards = searchNarutoPrints(cleanedName, { limit: 10 });
     // Several prints share a name (`ni023` retail + promo): the picker is what
     // tells them apart, so suggest each distinct title once.

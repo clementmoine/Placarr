@@ -35,14 +35,29 @@ const TINY_PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 describe("lorenzone products ledger", () => {
   it("lists sealed Mythos SKUs with packshots", () => {
     const ledger = readLorenzoneProductsLedger();
-    expect(ledger.products.length).toBeGreaterThanOrEqual(3);
+    // LorenZone sealed inventory (2026-09): 2 KS1 displays + special packs +
+    // Itachi starters + 4 Team Sets + SS2 display + Akatsuki display×2 + Design A×2.
+    expect(ledger.products.length).toBe(15);
     expect(ledger.products.every((row) => row.imageUrl.startsWith("https://"))).toBe(
       true,
     );
-    const ks1Display = ledger.products.find((row) =>
-      row.slug.includes("konoha-shido"),
-    );
-    expect(ks1Display?.catalogueSetId).toBe("ks1");
+    expect(ledger.products.every((row) => Boolean(row.catalogueSetId))).toBe(true);
+    const slugs = new Set(ledger.products.map((row) => row.slug));
+    expect(slugs.has("display-konoha-shido-ch1-ed1-fr")).toBe(true);
+    expect(slugs.has("display-konoha-shido-ch1-ed2-fr")).toBe(true);
+    expect(slugs.has("team-set-konoha-shido-naruto")).toBe(true);
+    expect(slugs.has("team-set-konoha-shido-sakura")).toBe(true);
+    expect(slugs.has("team-set-konoha-shido-sasuke")).toBe(true);
+    expect(slugs.has("team-set-konoha-shido-kakashi")).toBe(true);
+    expect(slugs.has("special-pack-akatsuki-design-a-set3-ed1-fr")).toBe(true);
+    const bySet = new Map<string, number>();
+    for (const row of ledger.products) {
+      const id = row.catalogueSetId ?? "";
+      bySet.set(id, (bySet.get(id) ?? 0) + 1);
+    }
+    expect(bySet.get("ks1")).toBe(10);
+    expect(bySet.get("ss2")).toBe(1);
+    expect(bySet.get("ak3")).toBe(4);
   });
 
   it("writes products-index when packshots are staged", async () => {

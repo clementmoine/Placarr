@@ -44,7 +44,7 @@ const built = createEmptyLocalTcgProvider({
     setSortKey: mythosSetSortKey,
     normalizeSearchQuery: normalizeMythosSearchQuery,
     notes:
-      "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. KS1 LorenZone FR + SS2 Shinobi Shiren SAMPLE EN. Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
+      "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. Faces `art.official` (gallery API cards.narutotcgmythos.com, 636 cartes). LorenZone en secours. Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
   },
   runPipeline: async (argv) => {
     const { runNarutoMythosPackPipeline } = await import(
@@ -57,4 +57,22 @@ const built = createEmptyLocalTcgProvider({
 
 export const narutoMythosLine = built.line;
 export const narutoMythosCatalog = built.catalog;
-export const narutomythosModule = built.module;
+export const narutomythosModule = {
+  ...built.module,
+  info: {
+    ...built.module.info,
+    capabilities: [
+      ...new Set([...(built.module.info.capabilities ?? []), "price" as const]),
+    ],
+    referencePriceSource: true,
+    evidenceOnlyPriceRefresh: true,
+    sourceAliases: ["narutocardgame.gg"],
+    notes: `${built.module.info.notes ?? ""} Prix : côtes narutocardgame.gg (staging).`.trim(),
+  },
+  refreshBarcodePriceOffers: async (
+    ctx: import("@/types/providerModule").BarcodePriceRefreshContext,
+  ) => {
+    const { refreshMythosGgPriceOffers } = await import("./ggPriceOffers");
+    return refreshMythosGgPriceOffers(ctx);
+  },
+};

@@ -39,7 +39,8 @@ describe("buildMythosFromLedgers", () => {
     expect(report.prints).toBe(report.rows);
     expect(report.titles).toBe(report.rows);
     expect(report.skipped).toEqual([]);
-    expect(report.sets).toEqual(["ks1", "ss2"]);
+    expect(report.sets).toEqual(["ks1", "ks1e2", "ks1promo", "ss2"]);
+    expect(report.prints).toBe(636);
   });
 
   it("titre KS1 en français", () => {

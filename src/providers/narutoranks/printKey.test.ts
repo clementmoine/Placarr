@@ -60,12 +60,22 @@ describe("ninjaRanksPrintKey", () => {
     ).toEqual(["nr", "ff", "ns", "bl", "pn"]);
   });
 
-  it("normalizes GS/BL collector queries onto the bl print_key fragment", () => {
+  it("normalizes checklist pastes onto print_key fragments", () => {
+    expect(normalizeNinjaRanksSearchQuery("2")).toBe("nr-0002");
+    expect(normalizeNinjaRanksSearchQuery("72")).toBe("nr-0072");
+    expect(normalizeNinjaRanksSearchQuery("FF-1")).toBe("ff-0001");
+    expect(normalizeNinjaRanksSearchQuery("ff2")).toBe("ff-0002");
+    expect(normalizeNinjaRanksSearchQuery("FF02")).toBe("ff-0002");
+    expect(normalizeNinjaRanksSearchQuery("SD-5")).toBe("sd-0005");
+    expect(normalizeNinjaRanksSearchQuery("NW-9")).toBe("nw-0009");
+    expect(normalizeNinjaRanksSearchQuery("NS-2")).toBe("ns-0002");
     expect(normalizeNinjaRanksSearchQuery("GS1")).toBe("bl-0001");
     expect(normalizeNinjaRanksSearchQuery("GS-2")).toBe("bl-0002");
     expect(normalizeNinjaRanksSearchQuery("gs03")).toBe("bl-0003");
     expect(normalizeNinjaRanksSearchQuery("BL-1")).toBe("bl-0001");
+    expect(normalizeNinjaRanksSearchQuery("PN-i")).toBe("pn-i");
     expect(normalizeNinjaRanksSearchQuery("gs")).toBe("bl");
+    expect(normalizeNinjaRanksSearchQuery("ff")).toBe("ff");
     expect(normalizeNinjaRanksSearchQuery("Naruto")).toBe("Naruto");
   });
 });

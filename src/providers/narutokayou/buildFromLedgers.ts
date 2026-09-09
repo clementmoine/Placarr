@@ -20,6 +20,7 @@ import { canonicalizeKayouNumber } from "./kayouIdNormalize";
 import { enrichChecklistWithOfficialFaces } from "./kayouOfficialFaces";
 import { buildKayouOfficialChecklist } from "./kayouOfficialChecklist";
 import { mergeKayouChecklists } from "./mergeKayouChecklists";
+import { readNarutodbChecklist } from "./narutodbCrawl";
 import { NARUTO_KAYOU_PACK_ID, narutoKayouCuratedDir } from "./pack";
 import { kayouPrintKey } from "./printKey";
 
@@ -57,6 +58,8 @@ export function readKayouChecklist(): KayouChecklist {
   if (capsule) extras.push({ ledger: capsule, source: "capsulecorpgear" });
   const official = buildKayouOfficialChecklist();
   if (official) extras.push({ ledger: official, source: "kayouofficial" });
+  const narutodb = readNarutodbChecklist();
+  if (narutodb) extras.push({ ledger: narutodb, source: "narutodb" });
   let merged =
     extras.length > 0
       ? mergeKayouChecklists(primary, ...extras)

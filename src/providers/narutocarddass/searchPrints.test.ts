@@ -228,20 +228,29 @@ describe("chercher par clé de tirage", () => {
     expect(rows.every((row) => row.language === "fr")).toBe(true);
   });
 
-  it("lists only physically printed S6 FR inserts, not carddass.fr preprod", () => {
+  it("lists the 15 Kana manga promo cards on S6 FR (6 inédites + 9 S5 reprints)", () => {
     const rows = listNarutoSetPrints({ setId: "s6", language: "fr" });
     const keys = rows.map((row) => row.printKey).sort();
     expect(keys).toEqual(
-      expect.arrayContaining([
+      [
+        "naruto:ni-0206",
         "naruto:ni-0232",
         "naruto:ni-0236",
+        "naruto:ni-0239",
+        "naruto:ni-0240",
         "naruto:ni-0252",
         "naruto:ni-0253",
+        "naruto:ta-0214",
+        "naruto:ta-0219",
         "naruto:ta-0221",
         "naruto:ta-0226",
-      ]),
+        "naruto:ta-0227",
+        "naruto:te-0192",
+        "naruto:te-0205",
+        "naruto:te-0207",
+      ].sort(),
     );
-    expect(keys).toHaveLength(6);
+    expect(keys).toHaveLength(15);
     expect(rows.every((row) => row.language === "fr")).toBe(true);
     expect(keys).not.toContain("naruto:ni-0268");
     expect(keys).not.toContain("naruto:te-0191");

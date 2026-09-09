@@ -95,6 +95,24 @@ export const narutoKayouLine = built.line;
 export const narutoKayouCatalog = built.catalog;
 export const narutokayouModule = {
   ...built.module,
+  info: {
+    ...built.module.info,
+    capabilities: [
+      ...new Set([...(built.module.info.capabilities ?? []), "price" as const]),
+    ],
+    referencePriceSource: true,
+    evidenceOnlyPriceRefresh: true,
+    sourceAliases: ["narutocardgame.gg"],
+    notes: `${built.module.info.notes ?? ""} Prix : côtes narutocardgame.gg (staging).`.trim(),
+  },
+  refreshBarcodePriceOffers: async (
+    ...args: Parameters<
+      NonNullable<typeof built.module.refreshBarcodePriceOffers>
+    >
+  ) => {
+    const { refreshKayouGgPriceOffers } = await import("./ggPriceOffers");
+    return refreshKayouGgPriceOffers(...args);
+  },
   searchPrints: async (
     ...args: Parameters<NonNullable<typeof built.module.searchPrints>>
   ) => stampList(await built.module.searchPrints!(...args)),

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { assetsCardUrl, assetsPackFileUrl } from "@/lib/packAssetUrls";
 
 import {
   kayouOfficialIdSlug,
@@ -10,11 +10,18 @@ import {
 } from "./kayouOfficialId";
 import { NARUTO_KAYOU_PACK_ID, narutoKayouCuratedDir } from "./pack";
 
+/** Where the verso lives after hash classify (installOfficialCardBacks). */
+export type KayouOfficialCardBackPlacement =
+  | { kind: "default" }
+  | { kind: "tier"; slug: string }
+  | { kind: "print"; set: string; lang: string; card: string };
+
 export type KayouOfficialCardBackEntry = {
   idCode: string;
   url: string;
   seriesId: string;
   rarity: string;
+  placement?: KayouOfficialCardBackPlacement;
 };
 
 export type KayouOfficialCardBackManifest = {
@@ -115,12 +122,38 @@ export function resolveKayouOfficialCardBackSlug(
   return null;
 }
 
-/** `/assets/naruto/kayou/cards/back.<official-id>.webp` when harvested. */
+/**
+ * Resolve stamp URL from placement:
+ * tier → pack `back.<slug>.webp`; print → card-local `back.webp`;
+ * default → null (caller falls through to rarity / pack default).
+ */
 export function kayouCardBackUrlForOfficialReference(
   reference: string,
   rarity?: string | null,
 ): string | null {
   const slug = resolveKayouOfficialCardBackSlug(reference, rarity);
   if (!slug) return null;
-  return assetsPackFileUrl(NARUTO_KAYOU_PACK_ID, "cards", "official", `${slug}.webp`);
+  const manifest = readKayouOfficialCardBackManifest();
+  const entry = manifest?.cards[slug];
+  const placement = entry?.placement;
+  if (!placement || placement.kind === "default") return null;
+  if (placement.kind === "tier") {
+    return assetsPackFileUrl(
+      NARUTO_KAYOU_PACK_ID,
+      "cards",
+      `back.${placement.slug}.webp`,
+    );
+  }
+  if (placement.kind === "print") {
+    return assetsCardUrl(
+      NARUTO_KAYOU_PACK_ID,
+      {
+        set: placement.set,
+        lang: placement.lang,
+        card: placement.card,
+      },
+      "back.webp",
+    );
+  }
+  return null;
 }

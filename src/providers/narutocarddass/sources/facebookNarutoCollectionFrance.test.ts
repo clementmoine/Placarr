@@ -108,8 +108,9 @@ describe("facebook Naruto Collection France dig", () => {
       .toBe(true);
   });
 
-  it("does not authorize minting DVD SKUs without packshot", () => {
+  it("records DVD SKUs minted with packshots; blisters S6 still attestation-only", () => {
     expect(dig.doNot.join(" ")).toMatch(/EAN/i);
-    expect(dig.ingest).toMatch(/no mint/i);
+    expect(dig.ingest).toMatch(/mintés|minté/i);
+    expect(dig.ingest).toMatch(/Blisters Kana.*attestation-only/i);
   });
 });

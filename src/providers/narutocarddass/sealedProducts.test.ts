@@ -106,6 +106,17 @@ describe("Naruto sealed SKUs", async () => {
       "ps-yoyaku-tokuten",
       "tin-box",
       "tin-box-hobby",
+      "kana-dvd-naruto-vol3",
+      "kana-dvd-naruto-vol4",
+      "kana-dvd-naruto-vol8",
+      "kana-dvd-naruto-vol15",
+      "kana-dvd-shippuden-vol21",
+      "kana-manga-pack-1-2-3",
+      "xbox360-uns3",
+      "tin-unbound-power-naruto",
+      "tin-guardian-kakashi",
+      "tin-ultimate-ninja-way-gaara",
+      "tin-ultimate-battle-sasori",
       "display-s1-it",
       "starter-forza-della-foglia",
       "booster-s1-it",
@@ -253,7 +264,7 @@ describe("Naruto sealed SKUs", async () => {
     const duopack = NARUTO_SEALED_SKUS.find((row) => row.slug === "duopack-s28");
     expect(duopack).toMatchObject({
       setCode: "s28",
-      kind: "coffret",
+      kind: "multipack",
       lang: "FR",
       attested: true,
     });
@@ -1372,7 +1383,7 @@ describe("le logo du CCG anglais", () => {
       >;
     };
     const shippuden = Object.values(index.products).filter((p) => {
-      if (p.lang !== "EN" || !p.setCode) return false;
+      if ((p.lang ?? "").toLowerCase() !== "en" || !p.setCode) return false;
       const n = /^s(\d+)$/.exec(p.setCode);
       if (!n) return false;
       const series = Number(n[1]);
@@ -1384,7 +1395,7 @@ describe("le logo du CCG anglais", () => {
     ).toBe(true);
     const earlyOrTp = Object.values(index.products).filter(
       (p) =>
-        p.lang === "EN" &&
+        (p.lang ?? "").toLowerCase() === "en" &&
         (p.setCode === "s5" || p.setCode?.startsWith("tp")),
     );
     expect(earlyOrTp.length).toBeGreaterThanOrEqual(1);
@@ -1570,6 +1581,130 @@ describe("Naruto curated products-contents", () => {
     const inv = ledger.skus["starter-invocation"]!.guaranteedPrintKeys ?? [];
     expect(inv).not.toContain("naruto:ni-0001");
     expect(inv).toContain("naruto:ni-0156");
+    expect(
+      ledger.skus["starter-maitre-hokage"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0002", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0003", qty: 1, finish: "holo" },
+    ]);
+    expect(
+      ledger.skus["starter-pays-du-vent"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0001", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0008", qty: 1, finish: "holo" },
+    ]);
+    expect(
+      ledger.skus["starter-sceller-le-malefice"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0109", qty: 1, finish: "holo" },
+      { printKey: "naruto:te-0062", qty: 1, finish: "holo" },
+    ]);
+    expect(
+      ledger.skus["starter-detruire-konoha"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0084", qty: 1, finish: "holo" },
+      { printKey: "naruto:te-0076", qty: 1, finish: "holo" },
+    ]);
+    expect(
+      ledger.skus["starter-esprit-du-sable"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0145", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0177", qty: 1, finish: "holo" },
+    ]);
+    expect(
+      ledger.skus["starter-esprit-du-sable"]!.guaranteedPrints,
+    ).toEqual([
+      { printKey: "naruto:ni-0009", qty: 2 },
+      { printKey: "naruto:ni-0010", qty: 1 },
+      { printKey: "naruto:ni-0038", qty: 1 },
+      { printKey: "naruto:ni-0079", qty: 1 },
+      { printKey: "naruto:ni-0080", qty: 1 },
+      { printKey: "naruto:ni-0081", qty: 1 },
+      { printKey: "naruto:ni-0114", qty: 1 },
+      { printKey: "naruto:ni-0145", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0169", qty: 1 },
+      { printKey: "naruto:ni-0170", qty: 2 },
+      { printKey: "naruto:ni-0171", qty: 1 },
+      { printKey: "naruto:ni-0177", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0178", qty: 2 },
+      { printKey: "naruto:ni-0179", qty: 2 },
+      { printKey: "naruto:ni-0180", qty: 2 },
+      { printKey: "naruto:ta-0160", qty: 2 },
+      { printKey: "naruto:ta-0161", qty: 2 },
+      { printKey: "naruto:ta-0162", qty: 2 },
+      { printKey: "naruto:ta-0164", qty: 2 },
+      { printKey: "naruto:ta-0165", qty: 2 },
+      { printKey: "naruto:te-0138", qty: 2 },
+      { printKey: "naruto:te-0155", qty: 1 },
+      { printKey: "naruto:te-0166", qty: 2 },
+      { printKey: "naruto:te-0167", qty: 2 },
+      { printKey: "naruto:te-0168", qty: 1 },
+      { printKey: "naruto:te-0188", qty: 2 },
+    ]);
+    expect(
+      ledger.skus["starter-invocation"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0176", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0204", qty: 1, finish: "holo" },
+    ]);
+    expect(
+      ledger.skus["starter-invocation"]!.guaranteedPrints,
+    ).toEqual([
+      { printKey: "naruto:ni-0027", qty: 1 },
+      { printKey: "naruto:ni-0028", qty: 2 },
+      { printKey: "naruto:ni-0049", qty: 1 },
+      { printKey: "naruto:ni-0050", qty: 1 },
+      { printKey: "naruto:ni-0099", qty: 1 },
+      { printKey: "naruto:ni-0127", qty: 1 },
+      { printKey: "naruto:ni-0156", qty: 2 },
+      { printKey: "naruto:ni-0157", qty: 1 },
+      { printKey: "naruto:ni-0165", qty: 1 },
+      { printKey: "naruto:ni-0173", qty: 2 },
+      { printKey: "naruto:ni-0174", qty: 2 },
+      { printKey: "naruto:ni-0175", qty: 2 },
+      { printKey: "naruto:ni-0176", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0198", qty: 1 },
+      { printKey: "naruto:ni-0204", qty: 1, finish: "holo" },
+      { printKey: "naruto:ta-0118", qty: 2 },
+      { printKey: "naruto:ta-0152", qty: 2 },
+      { printKey: "naruto:ta-0154", qty: 2 },
+      { printKey: "naruto:ta-0155", qty: 2 },
+      { printKey: "naruto:ta-0156", qty: 2 },
+      { printKey: "naruto:te-0145", qty: 2 },
+      { printKey: "naruto:te-0146", qty: 2 },
+      { printKey: "naruto:te-0163", qty: 2 },
+      { printKey: "naruto:te-0164", qty: 1 },
+      { printKey: "naruto:te-0165", qty: 1 },
+      { printKey: "naruto:te-0169", qty: 2 },
+    ]);
+    expect(
+      ledger.skus["starter-apprentissage"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0115", qty: 1, finish: "holo" },
+      { printKey: "naruto:ni-0127", qty: 1, finish: "holo" },
+    ]);
+    expect(
+      ledger.skus["starter-puissances-cachees"]!.guaranteedPrints?.filter(
+        (row) => row.finish === "holo",
+      ),
+    ).toEqual([
+      { printKey: "naruto:ni-0117", qty: 1, finish: "holo" },
+      { printKey: "naruto:te-0144", qty: 1, finish: "holo" },
+    ]);
     const tin = ledger.skus["tin-box"]!;
     expect(tin.guaranteedPrintKeys).not.toContain("naruto:ni-0001");
     expect(tin.guaranteedPrintKeys).toEqual([...inv, "naruto:pr-0016"]);
@@ -1719,6 +1854,95 @@ describe("Naruto curated products-contents", () => {
     expect(ledger.skus["tin-box-hobby"]?.guaranteedPrintKeys).toEqual([
       "naruto:pr-0011",
       "naruto:pr-0016",
+    ]);
+    expect(ledger.skus["kana-dvd-naruto-vol3"]).toMatchObject({
+      behavior: "random_pack",
+      randomPoolScope: "set",
+      cardsPerPack: 1,
+      declaredCardCount: 1,
+      contentsKnown: false,
+      guaranteedPrintKeys: [],
+    });
+    expect(ledger.skus["kana-dvd-naruto-vol4"]).toMatchObject({
+      behavior: "random_pack",
+      randomPoolScope: "set",
+      cardsPerPack: 1,
+      declaredCardCount: 1,
+      contentsKnown: false,
+      guaranteedPrintKeys: [],
+    });
+    expect(ledger.skus["kana-dvd-naruto-vol8"]).toMatchObject({
+      behavior: "random_pack",
+      randomPoolScope: "set",
+      cardsPerPack: 2,
+      declaredCardCount: 2,
+      contentsKnown: false,
+      guaranteedPrintKeys: [],
+    });
+    expect(ledger.skus["kana-dvd-naruto-vol15"]).toMatchObject({
+      behavior: "random_pack",
+      randomPoolScope: "listed",
+      declaredCardCount: 1,
+      contentsKnown: false,
+      guaranteedPrintKeys: [],
+    });
+    expect(ledger.skus["kana-dvd-naruto-vol15"]?.randomPoolPrintKeys).toEqual([
+      "naruto:ta-0221",
+      "naruto:ni-0236",
+      "naruto:ni-0253",
+      "naruto:ni-0252",
+      "naruto:ni-0232",
+      "naruto:ta-0226",
+    ]);
+    expect(ledger.skus["kana-dvd-shippuden-vol21"]?.guaranteedPrintKeys).toEqual(
+      ["naruto:pr-0100"],
+    );
+    expect(ledger.skus["xbox360-uns3"]?.guaranteedPrintKeys).toEqual([
+      "naruto:pr-0095",
+    ]);
+    expect(ledger.skus["tin-unbound-power-naruto"]).toMatchObject({
+      behavior: "mixed_bundle",
+      contentsKnown: false,
+      guaranteedPrintKeys: [],
+    });
+    expect(ledger.skus["tin-guardian-kakashi"]).toMatchObject({
+      behavior: "mixed_bundle",
+      cardsPerPack: 10,
+      packsContained: 4,
+      packsBySet: { s8: 1, s11: 2, s12: 1 },
+      contentsKnown: false,
+    });
+    expect(ledger.skus["tin-ultimate-ninja-way-gaara"]).toMatchObject({
+      behavior: "mixed_bundle",
+      cardsPerPack: 10,
+      packsContained: 5,
+      packsBySet: { s4: 2, s5: 2, s6: 1 },
+      contentsKnown: false,
+    });
+    expect(ledger.skus["tin-ultimate-battle-sasori"]).toMatchObject({
+      behavior: "mixed_bundle",
+      cardsPerPack: 10,
+      packsContained: 4,
+      packsBySet: { s19: 2, s20: 2 },
+      contentsKnown: false,
+    });
+    expect(ledger.skus["kana-manga-pack-1-2-3"]).toMatchObject({
+      behavior: "random_pack",
+      randomPoolScope: "listed",
+      declaredCardCount: 1,
+      contentsKnown: false,
+    });
+    expect(ledger.skus["kana-manga-pack-1-2-3"]?.randomPoolPrintKeys).toEqual([
+      "naruto:ni-0025-prerelease",
+      "naruto:ni-0019-prerelease",
+      "naruto:ni-0047-prerelease",
+      "naruto:ni-0027-prerelease",
+      "naruto:ta-0005-prerelease",
+      "naruto:ta-0004-prerelease",
+      "naruto:te-0015-prerelease",
+      "naruto:te-0007-prerelease",
+      "naruto:te-0003-prerelease",
+      "naruto:te-0036-prerelease",
     ]);
     expect(ledger.skus["booster-vol1-jp"]).toMatchObject({
       cardsPerPack: 10,

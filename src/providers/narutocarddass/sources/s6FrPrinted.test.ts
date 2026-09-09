@@ -40,10 +40,13 @@ describe("s6 FR printed inserts", () => {
     ]);
   });
 
-  it("attests the t1185 inédites and keeps TE-191 out of S6", () => {
+  it("attests the Kana-official inédites and keeps TE-191 out of S6", () => {
+    expect(ledger.officialKana?.announced).toBe("2008-04-25");
     expect(isNarutoS6FrPrintedNumber("ni236")).toBe(true);
     expect(isNarutoS6FrPrintedNumber("ni0236")).toBe(true);
     expect(isNarutoS6FrPrintedNumber("ta221")).toBe(true);
+    expect(isNarutoS6FrPrintedNumber("ta214")).toBe(true);
+    expect(isNarutoS6FrPrintedNumber("ni240")).toBe(true);
     expect(isNarutoS6FrPrintedNumber("ni268")).toBe(false);
     expect(isNarutoS6FrPrintedNumber("te191")).toBe(false);
   });
@@ -55,7 +58,7 @@ describe("s6 FR printed inserts", () => {
     );
   });
 
-  it("writes s6 onto appearances.fr for ledger cards", () => {
+  it("writes s6 onto appearances.fr for inédites and Kana S5 reprints", () => {
     const root = mkdtempSync(path.join(tmpdir(), "naruto-s6-fr-"));
     dirs.push(root);
     const file = path.join(root, "appearances.json");
@@ -63,7 +66,10 @@ describe("s6 FR printed inserts", () => {
       file,
       `${JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
-        appearances: { ta0221: { ja: "maki11" } },
+        appearances: {
+          ta0221: { ja: "maki11" },
+          ta0214: { fr: "s5" },
+        },
       })}\n`,
     );
 
@@ -76,5 +82,6 @@ describe("s6 FR printed inserts", () => {
     };
     expect(raw.appearances.ta0221?.fr).toBe("s6");
     expect(raw.appearances.ta0221?.ja).toBe("maki11");
+    expect(raw.appearances.ta0214?.fr).toEqual(["s5", "s6"]);
   });
 });

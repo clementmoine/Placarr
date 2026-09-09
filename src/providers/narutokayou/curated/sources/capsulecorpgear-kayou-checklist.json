@@ -1,7 +1,7 @@
 {
   "source": "capsulecorpgear.com — Naruto Kayou card list",
   "url": "https://capsulecorpgear.com/naruto-kayou-card-list/",
-  "observed": "2026-09-04",
+  "observed": "2026-09-05",
   "ingest": "HTML `let cards = …` base64 fields + wp-content/uploads faces",
   "sets": [
     {

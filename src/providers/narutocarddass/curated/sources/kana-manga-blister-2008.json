@@ -1,0 +1,86 @@
+{
+  "source": "Kana mangakana.com + forums 2008 (blister manga → cartes Bandai)",
+  "observed": "2026-09-05",
+  "kind": "research-dig",
+  "verdict": "confirmed",
+  "summary": "L'opération « cartes exclusives Bandai dans les 15 premiers tomes Naruto » est une annonce **officielle Kana** (avril 2008), pas une rumeur forum. 1 carte / tome, 15 cartes dont 7 inédites. Les forums ne font que recopier la liste tome→carte.",
+  "officialAnnouncement": {
+    "publisher": "Éditions Kana",
+    "site": "mangakana.com",
+    "title": "Actualités Naruto — Opération cartes Bandai",
+    "startDate": "2008-04-25",
+    "claim": "Découvrez, dans les 15 premiers tomes de Naruto, des cartes exclusives* Bandai !! Une carte par tome, soit 15 cartes à collectionner dont 7 cartes inédites !",
+    "footnote": "Dans la limite des stocks disponibles.",
+    "wayback": "https://web.archive.org/web/20080507045935/http://www.mangakana.com:80/r-3_2490-actualite-naruto-.html",
+    "waybackTypoUrlAlso": "https://web.archive.org/web/20080423170002/http://www.mangakana.com:80/r-3_2490-acutalite-naruto-.html",
+    "staging": "staging/mangakana/r-3_2490-actualite-naruto-20080507.html",
+    "alsoMentions": "Vitrine Galeries Lafayette « ASIATIC » 23 avr–17 mai 2008 (cartes Bandai + DVD + mangas)."
+  },
+  "forumMirrors": [
+    {
+      "id": "t1192",
+      "forum": "narutoccgfrance.1fr1.net",
+      "url": "https://narutoccgfrance.1fr1.net/t1192-liste-des-15-cartes-disponibles-dans-les-mangas-naruto",
+      "author": "Katagena",
+      "posted": "2008-05-11",
+      "note": "Liste tome→carte complète ; renvoie à l'annonce Kana (« Eux-même l'avaient annoncé sur leur site ici »). Corps live encore lisible 2026-09-05."
+    },
+    {
+      "id": "t1185",
+      "forum": "narutocarddassfrance.1fr1.net",
+      "url": "https://narutocarddassfrance.1fr1.net/t1185-des-cartes-indites-dans-les-mangas-naruto",
+      "status": "SSL 526 / quasi mort 2026-09 — contenu résumé dans docs/archive/naruto_promo_research.md §1"
+    },
+    {
+      "id": "t347",
+      "forum": "tournoi-de-cartes.forumpro.fr",
+      "url": "https://tournoi-de-cartes.forumpro.fr/t347-cartes-inedites-chez-kana",
+      "posted": "2008-05-05",
+      "note": "Lien mangakana + images parence.info pour Tayuya/Sakon ; réponse francois76 : « tome 12 neji N°240 version 2008 » (candidat 7ᵉ inédite / Neji)."
+    }
+  ],
+  "tomeMapping": [
+    { "tome": 1, "name": "Devenir Chef", "number": "ta221", "kind": "inedite" },
+    { "tome": 2, "name": "Sasuke", "number": "ni236", "kind": "inedite" },
+    { "tome": 3, "name": "Sakura et Ino", "number": "ni206", "kind": "s5-reprint" },
+    { "tome": 4, "name": "Pichenette", "number": "te192", "kind": "s5-reprint" },
+    { "tome": 5, "name": "Promesse Eternelle", "number": "ta214", "kind": "s5-reprint" },
+    { "tome": 6, "name": "Tayuya", "number": "ni253", "kind": "inedite" },
+    { "tome": 7, "name": "Sakon", "number": "ni252", "kind": "inedite" },
+    { "tome": 8, "name": "Dédoublement", "number": "te205", "kind": "s5-reprint" },
+    { "tome": 9, "name": "Tentative désespérée", "number": "ta219", "kind": "s5-reprint" },
+    { "tome": 10, "name": "Shikamaru", "number": "ni232", "kind": "inedite" },
+    { "tome": 11, "name": "Chôji Akimichi", "number": "ni239", "kind": "s5-reprint" },
+    { "tome": 12, "name": "Neji Hyûga", "number": "ni240", "kind": "s5-reprint", "note": "Confirmé par filename officiel NINJA-240.jpg sur mangakana ; t347 « Neji N°240 version 2008 ». Catalogue Placarr : naruto:ni-0240 → set s5." },
+    { "tome": 13, "name": "Jeu de Hasard", "number": "ta227", "kind": "s5-reprint" },
+    { "tome": 14, "name": "Pouvoir de la Marque Maléfique", "number": "ta226", "kind": "inedite" },
+    { "tome": 15, "name": "Soin Typique", "number": "te207", "kind": "s5-reprint" }
+  ],
+  "collageImages": {
+    "note": "Filenames dans le HTML Wayback (hotlink mangakana.dlpdomain.com) — **CDX vide** : les JPG n'ont pas été archivés, seuls les noms restent. Mapping type-numéro = printKey.",
+    "baseUrl": "http://mangakana.dlpdomain.com/doc/Contents/2490/",
+    "waybackPage": "https://web.archive.org/web/20080507045935/http://www.mangakana.com:80/r-3_2490-actualite-naruto-.html",
+    "files": [
+      { "file": "TACTIQUE-214.jpg", "number": "ta214", "printKey": "naruto:ta-0214", "tomeHint": 5 },
+      { "file": "NINJA-236.jpg", "number": "ni236", "printKey": "naruto:ni-0236", "tomeHint": 2 },
+      { "file": "TACTIQUE-219.jpg", "number": "ta219", "printKey": "naruto:ta-0219", "tomeHint": 9 },
+      { "file": "NINJA-232.jpg", "number": "ni232", "printKey": "naruto:ni-0232", "tomeHint": 10 },
+      { "file": "NINJA-240.jpg", "number": "ni240", "printKey": "naruto:ni-0240", "tomeHint": 12 },
+      { "file": "NINJA-239.jpg", "number": "ni239", "printKey": "naruto:ni-0239", "tomeHint": 11 },
+      { "file": "NINJA-252.jpg", "number": "ni252", "printKey": "naruto:ni-0252", "tomeHint": 7 },
+      { "file": "NINJA-253.jpg", "number": "ni253", "printKey": "naruto:ni-0253", "tomeHint": 6 }
+    ],
+    "notShownOnCollage": ["ta221", "ni206", "te192", "te205", "ta226", "ta227", "te207"]
+  },
+  "vsVictorDvd": {
+    "claim": "JYwlXQQlooI ~12:19 — coffret DVD = « seul » canal S6 FR",
+    "resolution": "Canal manga **officiellement confirmé** (Kana). Victor documente un **autre** canal (DVD MIJ). Les deux coexistent ; « uniquement DVD » est trop fort. NI-236 apparaît dans les deux récits (tome 2 blister + DVD vol.15)."
+  },
+  "stillOpen": [
+    "Photo blister scellé manga + carte visible (objet physique 2026)",
+    "Annonce Kana ne dit pas « sous blister » explicitement dans le HTML archivé — les forums l'ajoutent",
+    "7ᵉ inédite : Kana annonce 7 ; collage + forums en montrent 6 clairement S6 + Neji NI-240 classé Rare/S5",
+    "JPG collage : non archivés Wayback (filenames HTML only)",
+    "Mint SKU scellés manga tome-par-tome (attestation-only jusqu'à packshot)"
+  ]
+}

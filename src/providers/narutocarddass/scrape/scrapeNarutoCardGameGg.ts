@@ -24,10 +24,13 @@ import {
   saveNarutoFace,
 } from "../narutoFaceBytes";
 import { NARUTO_PACK_ID } from "../packs";
-import { parseGgCardIndex, type GgCard } from "../parse/parseNarutoCardGameGg";
+import {
+  ggArchiveIndexUrl,
+  ggClassicImageUrl,
+  parseGgCardIndex,
+  type GgCard,
+} from "../parse/parseNarutoCardGameGg";
 
-const INDEX_URL = "https://narutocardgame.gg/archive/classic-ccg/cards";
-const IMAGE_BASE = "https://narutocardgame.gg/images/classic";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 const LANG = "en";
@@ -43,12 +46,12 @@ export function ggStagingDir(root?: string): string {
 }
 
 export async function fetchGgCardIndex(): Promise<GgCard[]> {
-  const response = await httpGet(INDEX_URL, {
+  const response = await httpGet(ggArchiveIndexUrl("classic-ccg"), {
     headers: { "User-Agent": UA },
     timeout: 60_000,
   });
   const html = String((response as { data?: unknown }).data ?? "");
-  return parseGgCardIndex(html);
+  return parseGgCardIndex(html, "classic-ccg");
 }
 
 /** `n` + 1 → `n0001`, la forme que le catalogue emploie. */
@@ -64,7 +67,7 @@ export function writeGgIndex(cards: readonly GgCard[], root?: string): string {
     file,
     `${JSON.stringify(
       {
-        source: INDEX_URL,
+        source: ggArchiveIndexUrl("classic-ccg"),
         observed: new Date().toISOString().slice(0, 10),
         cards: cards.length,
         rows: cards.map((card) => ({ ...card, number: ggDiskNumber(card) })),
@@ -110,14 +113,11 @@ export async function downloadGgFaces(input: {
       continue;
     }
     try {
-      const response = await httpGet(
-        `${IMAGE_BASE}/${card.prefix}${String(card.number).padStart(3, "0")}.jpg`,
-        {
+      const response = await httpGet(ggClassicImageUrl(card), {
           headers: { "User-Agent": UA },
           responseType: "arraybuffer",
           timeout: 30_000,
-        },
-      );
+        });
       const data = (response as { data?: ArrayBuffer }).data;
       if (!data) throw new Error("vide");
       const buf = Buffer.from(data);

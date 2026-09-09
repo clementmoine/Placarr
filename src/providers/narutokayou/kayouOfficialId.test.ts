@@ -31,6 +31,10 @@ describe("kayouOfficialIdToCcNumber", () => {
 
 describe("kayouOfficialIdToPrint", () => {
   it("maps Smriti product codes onto set + number", () => {
+    expect(kayouOfficialIdToPrint("NREA01-SR-018L2")).toEqual({
+      setCode: "nrea01",
+      number: "nrea01.sr.018l2",
+    });
     expect(kayouOfficialIdToPrint("NREA02-CR-001L5")).toEqual({
       setCode: "nrea02",
       number: "nrea02.cr.001l5",

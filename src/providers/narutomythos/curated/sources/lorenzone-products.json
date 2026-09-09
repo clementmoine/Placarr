@@ -1,8 +1,22 @@
 {
   "source": "LorenZone — produits scellés Naruto Mythos",
   "url": "https://lorenzone.fr",
-  "observed": "2026-08-28",
+  "observed": "2026-09-04",
+  "note": "Inventaire boutique FR (Shopify). Pas de booster à l’unité listé. Team Sets = tripacks. Special Pack / Box Set / Itachi = coffrets d’entrée. Akatsuki Design A = special pack set 3 (un design seulement chez LZ).",
   "products": [
+    {
+      "slug": "display-konoha-shido-ch1-ed1-fr",
+      "kind": "display",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Display — Konoha Shidō / 1er Chapitre ED.1",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 13990,
+      "packsContained": 24,
+      "cardsPerPack": 10,
+      "path": "https://lorenzone.fr/products/display-naruto-mythos-konoha-shido-1er-chapitre-fr",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/Display-KonohaShido1erChapitreEdition1.png?v=1772709792"
+    },
     {
       "slug": "display-konoha-shido-ch1-ed2-fr",
       "kind": "display",
@@ -12,8 +26,79 @@
       "lang": "fr",
       "priceCents": 10990,
       "packsContained": 24,
+      "cardsPerPack": 10,
       "path": "https://lorenzone.fr/products/display-naruto-mythos-konoha-shido-chapitre-1-edition-2-fr",
-      "imageUrl": "https://lorenzone.fr/cdn/shop/files/Display-KonohaShido1erChapitreedition2.png?v=1772710037"
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/Display-KonohaShido1erChapitreedition2.png?v=1772710037"
+    },
+    {
+      "slug": "special-pack-konoha-shido-ch1-fr",
+      "kind": "coffret",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Coffret — Konoha Shidō / 1er Chapitre (Special Pack)",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 2190,
+      "packsContained": 4,
+      "path": "https://lorenzone.fr/products/coffret-naruto-mythos-special-pack-1er-chapitre-fr",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/Coffret-SpecialPack1erChapitre_face.png?v=1768488317"
+    },
+    {
+      "slug": "special-pack-konoha-shido-1st-set-en",
+      "kind": "coffret",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Box Set — Konoha Shidō / 1st Set (Special Pack)",
+      "catalogueSetId": "ks1",
+      "lang": "en",
+      "priceCents": 2490,
+      "packsContained": 4,
+      "path": "https://lorenzone.fr/products/coffret-konoha-shido-1st-set",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/Coffret-SpecialPack1erChapitre_faceen.png?v=1769600329"
+    },
+    {
+      "slug": "starter-itachi-kisame-ch1-fr",
+      "kind": "coffret",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Coffret — Itachi & Kisame / 1er Chapitre",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 2190,
+      "path": "https://lorenzone.fr/products/coffret-naruto-itachi-uchiha-starter-pack-1er-chapitre-edition-2-konoha-shido",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/Coffret-Itachi1erChapitreFR.png?v=1771524381"
+    },
+    {
+      "slug": "starter-itachi-kisame-1st-set-en",
+      "kind": "coffret",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Box Set — Itachi & Kisame / 1st Set",
+      "catalogueSetId": "ks1",
+      "lang": "en",
+      "priceCents": 2190,
+      "path": "https://lorenzone.fr/products/naruto-itachi-kisame-box-set-1st-set-edition-2-konoha-shido-starter-pack",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/BoxSet-Itachi1stSetEN.png?v=1771524415"
+    },
+    {
+      "slug": "team-set-konoha-shido-naruto",
+      "kind": "deck",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Team Set — Konoha Shidō / Naruto Uzumaki",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 1590,
+      "packsContained": 3,
+      "path": "https://lorenzone.fr/products/team-set-konoha-shido-naruto-uzumaki",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/TeamSet-KonohaShidoNarutoUzumaki.png?v=1772652385"
+    },
+    {
+      "slug": "team-set-konoha-shido-sakura",
+      "kind": "deck",
+      "category": "Konoha Shidō — Chapitre 1",
+      "name": "Team Set — Konoha Shidō / Sakura Haruno",
+      "catalogueSetId": "ks1",
+      "lang": "fr",
+      "priceCents": 1590,
+      "packsContained": 3,
+      "path": "https://lorenzone.fr/products/team-set-konoha-shido-sakura-haruno",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/TeamSet-KonohaShidoSakuraHaruno.png?v=1772652194"
     },
     {
       "slug": "team-set-konoha-shido-sasuke",
@@ -23,8 +108,9 @@
       "catalogueSetId": "ks1",
       "lang": "fr",
       "priceCents": 1590,
+      "packsContained": 3,
       "path": "https://lorenzone.fr/products/team-set-konoha-shido-sasuke-uchiha",
-      "imageUrl": "https://lorenzone.fr/cdn/shop/files/TeamSet-KonohaShidoSasukeUchiha.png?v=1772652291"
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/TeamSet-KonohaShidoSasukeUchiha.png?v=1772652291"
     },
     {
       "slug": "team-set-konoha-shido-kakashi",
@@ -34,8 +120,9 @@
       "catalogueSetId": "ks1",
       "lang": "fr",
       "priceCents": 1590,
+      "packsContained": 3,
       "path": "https://lorenzone.fr/products/team-set-konoha-shido-kakashi-hatake",
-      "imageUrl": "https://lorenzone.fr/cdn/shop/files/TeamSet-KonohaShidoKakashiHatake.png?v=1772651858"
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/TeamSet-KonohaShidoKakashiHatake.png?v=1772651858"
     },
     {
       "slug": "display-shinobi-shiren-set2-ed1-en",
@@ -47,7 +134,7 @@
       "priceCents": 11490,
       "packsContained": 24,
       "path": "https://lorenzone.fr/products/display-naruto-mythos-shinobi-shiren-set-2-ed1-en",
-      "imageUrl": "https://lorenzone.fr/cdn/shop/files/Display-NarutoMythos-Set2-ShinobiShiren-ED1-EN-LorenZone.png?v=1776445757"
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/Display_Naruto_Mythos_TCG_Set_2_1st_edition_Shinobi_Shiren.png?v=1788351005"
     },
     {
       "slug": "display-akatsuki-set3-ed1-fr",
@@ -60,7 +147,7 @@
       "priceCents": 12000,
       "packsContained": 24,
       "path": "https://lorenzone.fr/products/display-naruto-mythos-akatsuki-set-3-ed1-fr",
-      "imageUrl": "https://lorenzone.fr/cdn/shop/files/display-naruto-mythos-akatsuki-chapitre-3-ed1-fr-lorenzone.png?v=1786781398"
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/display-naruto-mythos-akatsuki-chapitre-3-ed1-fr-lorenzone.png?v=1786781398"
     },
     {
       "slug": "display-akatsuki-set3-ed1-en",
@@ -73,7 +160,33 @@
       "priceCents": 12000,
       "packsContained": 24,
       "path": "https://lorenzone.fr/products/display-naruto-mythos-akatsuki-set-3-ed1-en",
-      "imageUrl": "https://lorenzone.fr/cdn/shop/files/display-naruto-mythos-akatsuki-set-3-ed1-en-lorenzone.png?v=1786781398"
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/display-naruto-mythos-akatsuki-set-3-ed1-en-lorenzone.png?v=1786781398"
+    },
+    {
+      "slug": "special-pack-akatsuki-design-a-set3-ed1-fr",
+      "kind": "coffret",
+      "category": "Akatsuki — Chapitre 3",
+      "name": "Coffret — Akatsuki Design A / Chapitre 3 ED.1",
+      "shopSku": "LZ-COFFRET-NM3-SPA-FR",
+      "catalogueSetId": "ak3",
+      "lang": "fr",
+      "priceCents": 2490,
+      "packsContained": 4,
+      "path": "https://lorenzone.fr/products/coffret-naruto-mythos-akatsuki-design-a-set-3-ed1-fr",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/coffret-naruto-mythos-akatsuki-design-a-chapitre-3-ed1-fr-lorenzone.png?v=1786781398"
+    },
+    {
+      "slug": "special-pack-akatsuki-design-a-set3-ed1-en",
+      "kind": "coffret",
+      "category": "Akatsuki — Set 3",
+      "name": "Box Set — Akatsuki Design A / Set 3 ED.1 (EN)",
+      "shopSku": "LZ-BOXSET-NM3-SPA-EN",
+      "catalogueSetId": "ak3",
+      "lang": "en",
+      "priceCents": 2490,
+      "packsContained": 4,
+      "path": "https://lorenzone.fr/products/box-set-naruto-mythos-akatsuki-design-a-set-3-ed1-en",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0776/0848/5206/files/box-set-naruto-mythos-akatsuki-design-a-set-3-ed1-en-lorenzone.png?v=1786781398"
     }
   ]
 }

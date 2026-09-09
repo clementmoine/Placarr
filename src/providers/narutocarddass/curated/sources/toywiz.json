@@ -1,7 +1,7 @@
 {
   "source": "toywiz.com (BigCommerce / tools.toywiz CDN pastes)",
-  "observed": "2026-08-29",
-  "note": "Pasted product CDN URLs only — do not crawl the shop. EN CCG single boosters (portrait packs, not open displays).",
+  "observed": "2026-09-05",
+  "note": "Pasted product CDN URLs only — do not crawl the shop. EN CCG boosters + collector tins (portrait packs / tins, not open displays).",
   "ingestCollection": false,
   "products": [
     {
@@ -67,6 +67,64 @@
       "upc": "045557235826",
       "pixels": { "width": 203, "height": 329 },
       "note": "Second face art on the same listing (inset), not verso. Do not promote over Sakura/Sai primary."
+    },
+    {
+      "slug": "tin-unbound-power-naruto",
+      "setCode": null,
+      "kind": "tin",
+      "lang": "EN",
+      "title": "Shippuden CCG — Unbound Power Naruto Uzumaki Collector Tin",
+      "listing": "https://toywiz.com/shippuden-card-game-unbound-power-naruto-uzumaki-collector-tin/",
+      "url": "https://cdn11.bigcommerce.com/s-0kvv9/images/stencil/1280x1280/products/200038/282898/unboundpowernarutotin__18269.1519947558.jpg?c=2",
+      "staging": "staging/toywiz/tin-unbound-power-naruto.jpg",
+      "ingest": true,
+      "upc": "045557239770",
+      "sku": "unboundpowernarutotin",
+      "released": "2009-09",
+      "note": "ToyWiz: 1 Alternate Designed Super Rare from previous sets + promo card + tin. Booster count not listed on page."
+    },
+    {
+      "slug": "tin-guardian-kakashi",
+      "setCode": null,
+      "kind": "tin",
+      "lang": "EN",
+      "title": "Shippuden CCG — Guardian of the Village Kakashi Hatake Collector Tin",
+      "listing": "https://toywiz.com/naruto-shippuden-card-game-guardian-of-the-village-kakashi-hatake-collector-tin/",
+      "url": "https://cdn11.bigcommerce.com/s-0kvv9/images/stencil/1280x1280/products/196857/279027/apizzeikf__44360.1616763898.jpg?c=2",
+      "staging": "staging/toywiz/tin-guardian-kakashi.jpg",
+      "ingest": true,
+      "upc": "843852024387",
+      "sku": "kakashitinset",
+      "released": "2009-02",
+      "note": "ToyWiz: 4 boosters (1× s8 Battle of Destiny, 2× s11 Approaching Wind, 1× s12 A New Chronicle) + 2 Rare Alternate Image cards."
+    },
+    {
+      "slug": "tin-ultimate-ninja-way-gaara",
+      "setCode": null,
+      "kind": "tin",
+      "lang": "EN",
+      "title": "Naruto CCG — Ultimate Ninja Way Gaara of the Desert Collector Tin",
+      "listing": "https://toywiz.com/naruto-card-game-ultimate-ninja-way-gaara-of-the-desert-collector-tin/",
+      "url": "https://cdn11.bigcommerce.com/s-0kvv9/images/stencil/1280x1280/products/231781/536295/narutoccgtingaara__52862.1611590514.jpg?c=2",
+      "staging": "staging/toywiz/tin-ultimate-ninja-way-gaara.jpg",
+      "ingest": true,
+      "upc": "843852011134",
+      "sku": "narutoccgtingaara",
+      "note": "ToyWiz: 5 boosters (2× s4 Revenge and Rebirth, 2× s5 Dream Legacy, 1× s6 Eternal Rivalry) + 3 Series 7 Quest for Power preview cards."
+    },
+    {
+      "slug": "tin-ultimate-battle-sasori",
+      "setCode": "tin2",
+      "kind": "tin",
+      "lang": "EN",
+      "title": "Shippuden CCG — Ultimate Battle Sasori Collector Tin (chibi)",
+      "listing": "https://toywiz.com/naruto-shippuden-card-game-ultimate-battle-sasori-collector-tin/",
+      "url": "https://cdn11.bigcommerce.com/s-0kvv9/images/stencil/1280x1280/products/119348/82301/naruto-shippuden-card-game-ultimate-battle-collector-chibi-tin-set-sasori-includes-promo-card-8__07014.1461295396.jpg?c=2",
+      "staging": "staging/toywiz/tin-ultimate-battle-sasori.jpg",
+      "ingest": true,
+      "upc": "643690287353",
+      "sku": "narutochibitingaara",
+      "note": "ToyWiz: chibi Ultimate Battle line (sets.json tin2). 2× s19 Path of Pain + 2× s20 Tales of the Gallant Sage + tin-specific promo."
     }
   ]
 }

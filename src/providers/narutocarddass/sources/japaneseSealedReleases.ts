@@ -28,6 +28,8 @@
  * quatre cases et aucune ne dit « feuille d'extension ». Le libellé japonais
  * est conservé tel quel dans `name`, il porte la vérité.
  */
+import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
+
 import ledger from "../curated/sources/cardcheckbox-jp.json";
 
 export type JapaneseReleaseRow = {
@@ -48,7 +50,7 @@ export type JapaneseReleaseRow = {
 
 export type JapaneseSealedSpec = {
   slug: string;
-  kind: "booster" | "display" | "deck" | "coffret";
+  kind: SealedKind;
   category: string;
   setCode: string | null;
   name: string;

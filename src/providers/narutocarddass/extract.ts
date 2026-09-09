@@ -40,6 +40,11 @@ import { scrapeVintageNarutoCcgFaces } from "./scrape/scrapeVintageNarutoCcg";
 import { installCarddasJpStagingFaces } from "./install/installCarddasJpStagingFaces";
 import { installCarddasDoubleIllustrationFaces } from "./install/installCarddasDoubleIllustrationFaces";
 import { installSlabzFaces } from "./install/installSlabzFaces";
+import { NARUTO_PACK_ID } from "./packs";
+import {
+  harvestGgArchiveCards,
+  harvestGgArchivePrices,
+} from "@/providers/shared/naruto/ggArchiveHarvest";
 import { scrapeNarutoCardGameGgCards } from "./scrape/scrapeNarutoCardGameGg";
 import { harvestCarddasVol1Faces } from "./harvest/harvestCarddasVol1Faces";
 import { probeSurugaVol1Listings } from "./probeSurugaVol1Listings";
@@ -274,6 +279,19 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         delayMs: shared.delayMs,
         limit: shared.limit,
       });
+      try {
+        const prices = await harvestGgArchivePrices({
+          packId: NARUTO_PACK_ID,
+          line: "classic-ccg",
+        });
+        console.log(
+          `── narutocardgame.gg classic prices — ${prices.rows} ligne(s)`,
+        );
+      } catch (err) {
+        console.warn(
+          `── narutocardgame.gg prices — ${err instanceof Error ? err.message : err}`,
+        );
+      }
     }
     if (wayback || uspromos) {
       await scrapeNarutoColekaUsPromoCards(shared);

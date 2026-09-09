@@ -1,50 +1,96 @@
 /**
- * Lire la base du CCG classique servie par narutocardgame.gg.
+ * Parser d’archives narutocardgame.gg (classic-ccg / kayou / mythos).
  *
- * Une seule page tient les 4 452 cartes, chacune liée à
- * `/archive/classic-ccg/{set}/{prefixe}{numero}-{slug}`. **Le set est dans
- * l'URL** : pas besoin d'ouvrir les fiches une à une, ce qui évite quatre mille
- * requêtes pour une information déjà servie.
- *
- * Mesuré le 2026-08-21 : 140 cartes qu'ils ont et que nous n'avons pas, dont
- * deux familles de préfixes qu'on ne connaît nulle part — `nc` (16) et `ex` (2).
- *
- * Attention à l'URL : `/cards` à la racine sert douze cartes d'échantillon du
- * **nouveau** jeu Bandai de 2027. Ce n'est pas cette base, et les confondre m'a
- * fait conclure à tort que le site n'avait rien.
+ * Une page d’index lie `/archive/{line}/{set-or-cards}/{id}-{slug}`.
  */
+export type GgArchiveLine = "classic-ccg" | "kayou" | "mythos";
 
 export type GgCard = {
-  /** `n`, `j`, `m`, `c`, `nus`, `pr`… tel que l'URL le porte. */
+  /** `n`, `j`, `nrz08`, `ks`… tel que l’URL le porte. */
   prefix: string;
   number: number;
-  /** Le slug du set dans l'URL : `the-path-to-hokage`. */
+  /** Segment set / dossier dans l’URL. */
   set: string;
-  /** Le slug du nom : `naruto-uzumaki`. */
+  /** Slug du nom. */
   slug: string;
+  /** Identifiant brut de l’URL (ex. `n001`, `nrz08-asp-001`, `ks-000`). */
+  rawId: string;
+  line: GgArchiveLine;
 };
 
-const CARD_HREF =
-  /href="\/archive\/classic-ccg\/([a-z0-9-]+)\/([a-z]+)(\d+)-([a-z0-9-]+)"/g;
+const CLASSIC_HREF =
+  /href="\/archive\/classic-ccg\/([a-z0-9-]+)\/([a-z]+)(\d+)-([a-z0-9-]+)"/gi;
+
+/** Kayou / Mythos : `/archive/{line}/cards/{id}-{slug}` (id contains hyphens). */
+const COMPOUND_CARD_HREF =
+  /href="\/archive\/(kayou|mythos)\/cards\/([a-z0-9-]+)"/gi;
 
 /**
- * Extrait les cartes de la page d'index.
- *
- * Les doublons sont écartés : la page lie deux fois certaines cartes, une fois
- * dans la grille et une fois ailleurs, et compter deux fois fausserait toute
- * comparaison avec notre catalogue.
+ * Split `nrz08-asp-001` → prefix `nrz08-asp`, number 1;
+ * `ks-000` → prefix `ks`, number 0.
  */
-export function parseGgCardIndex(html: string): GgCard[] {
+export function splitCompoundGgId(rawId: string): {
+  prefix: string;
+  number: number;
+} | null {
+  const m = /^(.+?)-(\d+)$/i.exec(rawId.trim());
+  if (!m) return null;
+  return { prefix: m[1]!.toLowerCase(), number: Number(m[2]) };
+}
+
+function parseClassic(html: string): GgCard[] {
   const seen = new Set<string>();
   const cards: GgCard[] = [];
-  for (const match of html.matchAll(CARD_HREF)) {
+  for (const match of html.matchAll(CLASSIC_HREF)) {
     const [, set, prefix, number, slug] = match;
-    const key = `${prefix}${number}`;
+    const key = `${prefix}${number}`.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    cards.push({ prefix, number: Number(number), set, slug });
+    cards.push({
+      prefix: prefix!.toLowerCase(),
+      number: Number(number),
+      set: set!,
+      slug: slug!,
+      rawId: `${prefix}${number}`.toLowerCase(),
+      line: "classic-ccg",
+    });
   }
   return cards;
+}
+
+function parseCompound(html: string, line: "kayou" | "mythos"): GgCard[] {
+  const seen = new Set<string>();
+  const cards: GgCard[] = [];
+  for (const match of html.matchAll(COMPOUND_CARD_HREF)) {
+    const [, lineHit, pathSlug] = match;
+    if (lineHit?.toLowerCase() !== line) continue;
+    // `nrz08-asp-001-naruto-uzumaki` → rawId `nrz08-asp-001`, slug `naruto-uzumaki`
+    const parts = /^(.+-\d+)-([a-z0-9-]+)$/i.exec(pathSlug!);
+    if (!parts) continue;
+    const rawId = parts[1]!.toLowerCase();
+    const slug = parts[2]!.toLowerCase();
+    if (seen.has(rawId)) continue;
+    seen.add(rawId);
+    const split = splitCompoundGgId(rawId);
+    if (!split) continue;
+    cards.push({
+      prefix: split.prefix,
+      number: split.number,
+      set: line,
+      slug,
+      rawId,
+      line,
+    });
+  }
+  return cards;
+}
+
+export function parseGgCardIndex(
+  html: string,
+  line: GgArchiveLine = "classic-ccg",
+): GgCard[] {
+  if (line === "classic-ccg") return parseClassic(html);
+  return parseCompound(html, line);
 }
 
 /** `the-path-to-hokage` → `The Path To Hokage`. */
@@ -55,21 +101,26 @@ export function ggSetLabel(slug: string): string {
     .join(" ");
 }
 
-/** `naruto-uzumaki` → `Naruto Uzumaki`. Le nom n'est que dans le slug. */
+/** `naruto-uzumaki` → `Naruto Uzumaki`. */
 export function ggCardName(slug: string): string {
   return ggSetLabel(slug);
 }
 
-/**
- * Ce que cette base ajoute au nôtre, sur le couple (préfixe, numéro).
- *
- * Rendre l'écart plutôt qu'une fusion : un préfixe inconnu est une famille dont
- * on ignore la règle de numérotation, et le verser sans l'avoir identifié
- * reviendrait à inventer des cartes.
- */
 export function ggCardsMissingFrom(
   cards: readonly GgCard[],
   held: ReadonlySet<string>,
 ): GgCard[] {
   return cards.filter((card) => !held.has(`${card.prefix}${card.number}`));
+}
+
+export function ggArchiveIndexUrl(line: GgArchiveLine): string {
+  return `https://narutocardgame.gg/archive/${line}/cards`;
+}
+
+export function ggArchivePricesUrl(line: GgArchiveLine): string {
+  return `https://narutocardgame.gg/archive/${line}/prices`;
+}
+
+export function ggClassicImageUrl(card: GgCard): string {
+  return `https://narutocardgame.gg/images/classic/${card.prefix}${String(card.number).padStart(3, "0")}.jpg`;
 }

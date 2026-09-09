@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "naruto/carddass",
-  "updatedAt": "2026-08-30",
+  "updatedAt": "2026-09-05",
   "byKind": {
     "booster": {
       "source": "carddass.fr / presse 2006–07 + NARUTO_BOOSTER_CARD_COUNT (hors JP 6)",
@@ -14,8 +14,8 @@
   },
   "skus": {
     "starter-maitre-hokage": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty + holos nommés user 2026-09-05",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -62,7 +62,7 @@
         "naruto:te-0048",
         "naruto:te-0049"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; holos = NI-002 + NI-003 (user 2026-09-05)",
       "guaranteedPrints": [
         {
           "printKey": "naruto:cl-0004",
@@ -70,11 +70,13 @@
         },
         {
           "printKey": "naruto:ni-0002",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0003",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0009",
@@ -215,8 +217,8 @@
       ]
     },
     "starter-pays-du-vent": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "poster papier S1–S4 (user 2026-08-30) + reconfirm liste user 2026-09-05 + carddass.fr catalogue qty + holos NI-001/NI-008 user 2026-09-05",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -263,7 +265,7 @@
         "naruto:te-0058",
         "naruto:te-0059"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; liste user 2026-09-05 identité+qty match ; holos = NI-001 + NI-008 (user 2026-09-05)",
       "guaranteedPrints": [
         {
           "printKey": "naruto:cl-0001",
@@ -271,7 +273,8 @@
         },
         {
           "printKey": "naruto:ni-0001",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0004",
@@ -287,7 +290,8 @@
         },
         {
           "printKey": "naruto:ni-0008",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0025",
@@ -416,8 +420,8 @@
       ]
     },
     "starter-sceller-le-malefice": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty + holos nommés user 2026-09-05",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -462,7 +466,7 @@
         "naruto:te-0086",
         "naruto:te-0088"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; holos = NI-109 + TE-062 (user 2026-09-05)",
       "guaranteedPrints": [
         {
           "printKey": "naruto:cl-0010",
@@ -518,7 +522,8 @@
         },
         {
           "printKey": "naruto:ni-0109",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0110",
@@ -570,7 +575,8 @@
         },
         {
           "printKey": "naruto:te-0062",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:te-0063",
@@ -607,8 +613,8 @@
       ]
     },
     "starter-detruire-konoha": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty + holos NI-084/TE-076 user 2026-09-05",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -653,7 +659,7 @@
         "naruto:te-0096",
         "naruto:te-0099"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 ; holos = NI-084 + TE-076 (user 2026-09-05)",
       "guaranteedPrints": [
         {
           "printKey": "naruto:cl-0007",
@@ -697,7 +703,8 @@
         },
         {
           "printKey": "naruto:ni-0084",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0106",
@@ -769,7 +776,8 @@
         },
         {
           "printKey": "naruto:te-0076",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:te-0078",
@@ -798,8 +806,8 @@
       ]
     },
     "starter-apprentissage": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis + holos NI-115/NI-127 user 2026-09-05 (Apprentissage)",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -839,7 +847,7 @@
         "naruto:te-0130",
         "naruto:te-0131"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster ; holos = NI-115 + NI-127 (user 2026-09-05 ; dit « Invocation » mais membership = Apprentissage)",
       "guaranteedPrints": [
         {
           "printKey": "naruto:ni-0049",
@@ -863,7 +871,8 @@
         },
         {
           "printKey": "naruto:ni-0115",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0116",
@@ -883,7 +892,8 @@
         },
         {
           "printKey": "naruto:ni-0127",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0136",
@@ -964,8 +974,8 @@
       ]
     },
     "starter-puissances-cachees": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty + holos TE-144/NI-117 user 2026-09-05",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -1005,7 +1015,7 @@
         "naruto:te-0143",
         "naruto:te-0144"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 ; holos = TE-144 + NI-117 (user 2026-09-05)",
       "guaranteedPrints": [
         {
           "printKey": "naruto:ni-0009",
@@ -1041,7 +1051,8 @@
         },
         {
           "printKey": "naruto:ni-0117",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0125",
@@ -1125,13 +1136,14 @@
         },
         {
           "printKey": "naruto:te-0144",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         }
       ]
     },
     "starter-esprit-du-sable": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "qty + holos user 2026-09-05 (L'esprit du sable) ; membership poster S1–S4",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -1167,7 +1179,7 @@
         "naruto:te-0168",
         "naruto:te-0188"
       ],
-      "notes": "poster membership + catalogue qty = 40/40; 2 holos non identifiés sur poster",
+      "notes": "qty exactes user 2026-09-05 = 40/40 ; holos = NI-145 + NI-177",
       "guaranteedPrints": [
         {
           "printKey": "naruto:ni-0009",
@@ -1199,7 +1211,8 @@
         },
         {
           "printKey": "naruto:ni-0145",
-          "qty": 2
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0169",
@@ -1215,11 +1228,12 @@
         },
         {
           "printKey": "naruto:ni-0177",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0178",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0179",
@@ -1276,8 +1290,8 @@
       ]
     },
     "starter-invocation": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty; holos non nommés sur poster → finish omis",
-      "verifiedAt": "2026-08-30",
+      "source": "qty + holos user 2026-09-05 (Invocation) ; membership poster S1–S4",
+      "verifiedAt": "2026-09-05",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -1313,7 +1327,7 @@
         "naruto:te-0165",
         "naruto:te-0169"
       ],
-      "notes": "poster membership + catalogue qty = 40/40; 2 holos non identifiés sur poster",
+      "notes": "qty exactes user 2026-09-05 = 40/40 ; holos = NI-176 + NI-204",
       "guaranteedPrints": [
         {
           "printKey": "naruto:ni-0027",
@@ -1365,7 +1379,8 @@
         },
         {
           "printKey": "naruto:ni-0176",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0198",
@@ -1373,7 +1388,8 @@
         },
         {
           "printKey": "naruto:ni-0204",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ta-0118",
@@ -1898,8 +1914,12 @@
       "verifiedAt": "2026-08-30",
       "cardsPerPack": 8,
       "packsContained": 2,
-      "packsBySet": { "s1": 2 },
-      "guaranteeSets": ["s1"],
+      "packsBySet": {
+        "s1": 2
+      },
+      "guaranteeSets": [
+        "s1"
+      ],
       "declaredCardCount": 96,
       "behavior": "mixed_bundle",
       "randomPoolScope": "set",
@@ -1917,7 +1937,10 @@
         "s1": 1,
         "s2": 1
       },
-      "guaranteeSets": ["s4", "promo"],
+      "guaranteeSets": [
+        "s4",
+        "promo"
+      ],
       "declaredCardCount": 57,
       "behavior": "mixed_bundle",
       "randomPoolScope": "set",
@@ -1960,7 +1983,7 @@
         },
         {
           "printKey": "naruto:ni-0028",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0049",
@@ -1980,7 +2003,7 @@
         },
         {
           "printKey": "naruto:ni-0156",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0157",
@@ -1992,19 +2015,20 @@
         },
         {
           "printKey": "naruto:ni-0173",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0174",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0175",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0176",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ni-0198",
@@ -2012,39 +2036,40 @@
         },
         {
           "printKey": "naruto:ni-0204",
-          "qty": 1
+          "qty": 1,
+          "finish": "holo"
         },
         {
           "printKey": "naruto:ta-0118",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ta-0152",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ta-0154",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ta-0155",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ta-0156",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:te-0145",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:te-0146",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:te-0163",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:te-0164",
@@ -2056,7 +2081,7 @@
         },
         {
           "printKey": "naruto:te-0169",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:pr-0016",
@@ -2077,7 +2102,9 @@
         "s4": 1,
         "s5": 1
       },
-      "guaranteeSets": ["promo"],
+      "guaranteeSets": [
+        "promo"
+      ],
       "declaredCardCount": 42,
       "behavior": "mixed_bundle",
       "randomPoolScope": "set",
@@ -2088,6 +2115,187 @@
         "naruto:pr-0016"
       ],
       "notes": "Canal hobby (magasins spécialisés). Officiel : 1 booster S1 + S2 + S3 + S4 + S5 + Naruto NI-PR16 + Orochimaru NI-PR11. Face catalogue = sleeve bleu reconstruit (wrappers/tin-box-hobby.png) ; contenu-tin-box / Tin-box-hobby.jpg archival. Sachets aléatoires via packsBySet — seules les 2 promos sont garanties. Distinct de tin-box Invocation 05129."
+    },
+    "kana-dvd-naruto-vol3": {
+      "source": "https://www.amazon.fr/Naruto-Edited-Vol-Hayato-Date/dp/B000VOHXFK + Collection Naruto YT / facebook dig (user 2026-09-05)",
+      "verifiedAt": "2026-09-05",
+      "notes": "Kana DVD Edited vol. 3 — **1 carte S5 aléatoire** (pool set). TA-214 = exemplaire packshot/FB, pas une garantie. Packshot Amazon wrappers/kana-dvd-naruto-vol3.jpg.",
+      "packsContained": 1,
+      "cardsPerPack": 1,
+      "behavior": "random_pack",
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": []
+    },
+    "kana-dvd-naruto-vol4": {
+      "source": "https://www.amazon.fr/dp/B000FQJMEO + facebook dig + Collection Naruto YT (vol.4 → 1× S1) + user 2026-09-05",
+      "verifiedAt": "2026-09-05",
+      "notes": "Kana digipack vol. 4 — **1 carte S1 aléatoire** (pool set). NI-019 packshot = exemplaire (≠ garantie ; ≠ prerelease manga).",
+      "packsContained": 1,
+      "cardsPerPack": 1,
+      "behavior": "random_pack",
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": []
+    },
+    "kana-dvd-naruto-vol8": {
+      "source": "https://www.amazon.fr/dp/B000MZGRXC + facebook dig + Collection Naruto YT (vol.8 → 2× S3) + user 2026-09-05",
+      "verifiedAt": "2026-09-05",
+      "notes": "Kana vol. 8 — **2 cartes S3 aléatoires** (pool set). NI-118/119 = exemplaires packshot, pas pool listé.",
+      "packsContained": 1,
+      "cardsPerPack": 2,
+      "behavior": "random_pack",
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 2,
+      "guaranteedPrintKeys": []
+    },
+    "kana-dvd-naruto-vol15": {
+      "source": "https://www.cdiscount.com/pdt2/0/0/0/1/4022x151588/3309450033000/rw/dvd-naruto-vol-15.jpg (EAN 3309450033000) + Victor FB (patch « carte série 6 ») + s6-fr-printed.json",
+      "verifiedAt": "2026-09-05",
+      "notes": "Kana vol. 15 — 1 carte parmi les 6 S6 FR confirmées (pas de retail booster S6). Libellé singulier ; NI-236 = exemple Victor, pas garantie fixe. Collage packshot (NI-232…) non inventorié. Canal manga Kana tomes 1–15 = **officiel** (mangakana avr. 2008) — dig kana-manga-blister-2008.json ; les deux canaux coexistent.",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "behavior": "random_pack",
+      "randomPoolScope": "listed",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": [],
+      "randomPoolPrintKeys": [
+        "naruto:ta-0221",
+        "naruto:ni-0236",
+        "naruto:ni-0253",
+        "naruto:ni-0252",
+        "naruto:ni-0232",
+        "naruto:ta-0226"
+      ]
+    },
+    "kana-dvd-shippuden-vol21": {
+      "source": "https://www.amazon.fr/Naruto-Shippuden-Vol-Hayato-Date/dp/B00CUPEA0Y + facebook dig (PR-100)",
+      "verifiedAt": "2026-09-05",
+      "notes": "Shippuden vol. 21 — promo exclusive PR-100 (Naruto Uzumaki).",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": [
+        "naruto:pr-0100"
+      ]
+    },
+    "xbox360-uns3": {
+      "source": "https://www.amazon.fr/Naruto-Shippuden-Ultimate-Ninja-Storm/dp/B008J19KEO + facebook dig (PR-095) + bannière packshot « TRADING CARD INSIDE »",
+      "verifiedAt": "2026-09-05",
+      "notes": "UNS3 Xbox 360 Day One EU — PR-095 (Naruto costume Sangoku). ASIN B008J19KEO / EAN 3391891967365.",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": [
+        "naruto:pr-0095"
+      ]
+    },
+    "tin-unbound-power-naruto": {
+      "source": "https://toywiz.com/shippuden-card-game-unbound-power-naruto-uzumaki-collector-tin/ (UPC 045557239770)",
+      "verifiedAt": "2026-09-05",
+      "notes": "EN CCG Unbound Power tin (2009-09). ToyWiz: 1 Alternate Designed Super Rare + promo + tin. Booster count non listé — pas de packsBySet. Promo / alt SR sans printKey attesté.",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": null,
+      "guaranteedPrintKeys": []
+    },
+    "tin-guardian-kakashi": {
+      "source": "https://toywiz.com/naruto-shippuden-card-game-guardian-of-the-village-kakashi-hatake-collector-tin/ (UPC 843852024387)",
+      "verifiedAt": "2026-09-05",
+      "notes": "EN CCG Guardian of the Village (Kakashi, 2009-02). 4 boosters US 10c : 1× s8 Battle of Destiny + 2× s11 Approaching Wind + 1× s12 A New Chronicle + 2 Rare Alternate Image (IDs non attestés).",
+      "cardsPerPack": 10,
+      "packsContained": 4,
+      "packsBySet": {
+        "s8": 1,
+        "s11": 2,
+        "s12": 1
+      },
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": null,
+      "guaranteedPrintKeys": []
+    },
+    "tin-ultimate-ninja-way-gaara": {
+      "source": "https://toywiz.com/naruto-card-game-ultimate-ninja-way-gaara-of-the-desert-collector-tin/ (UPC 843852011134)",
+      "verifiedAt": "2026-09-05",
+      "notes": "EN CCG Ultimate Ninja Way (Gaara). 5 boosters US 10c : 2× s4 Revenge and Rebirth + 2× s5 Dream Legacy + 1× s6 Eternal Rivalry + 3 Series 7 Quest for Power preview (IDs non attestés).",
+      "cardsPerPack": 10,
+      "packsContained": 5,
+      "packsBySet": {
+        "s4": 2,
+        "s5": 2,
+        "s6": 1
+      },
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": null,
+      "guaranteedPrintKeys": []
+    },
+    "tin-ultimate-battle-sasori": {
+      "source": "https://toywiz.com/naruto-shippuden-card-game-ultimate-battle-sasori-collector-tin/ (UPC 643690287353) + sets.json tin2",
+      "verifiedAt": "2026-09-05",
+      "notes": "EN CCG Ultimate Battle chibi (Sasori, tin2). 4 boosters US 10c : 2× s19 Path of Pain + 2× s20 Tales of the Gallant Sage + promo tin-specific (printKey non attesté).",
+      "cardsPerPack": 10,
+      "packsContained": 4,
+      "packsBySet": {
+        "s19": 2,
+        "s20": 2
+      },
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": null,
+      "guaranteedPrintKeys": []
+    },
+    "kana-manga-pack-1-2-3": {
+      "source": "https://www.amazon.fr/Pack-1-2-3-Naruto/dp/B085PJZSN6 (packshot 2020) + s1-fr-prerelease.json + Collection Naruto 7r7 / bandai-fr-serie-1-detaillee.json",
+      "verifiedAt": "2026-09-05",
+      "notes": "Canal avant-première manga S1 (~2005–2006) : 1 carte parmi 10 variantes `*-prerelease`. Packshot = Pack tomes 1+2+3 Kana Amazon B085PJZSN6 (réédition 10 avr. 2020, promo 9 €) — art catalogue uniquement ; **pas** d'insert Carddass attesté sur cet ASIN. Pool listé (pas 10 garanties). Blisters S6 tomes 1–15 = autre canal.",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "behavior": "random_pack",
+      "randomPoolScope": "listed",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": [],
+      "randomPoolPrintKeys": [
+        "naruto:ni-0025-prerelease",
+        "naruto:ni-0019-prerelease",
+        "naruto:ni-0047-prerelease",
+        "naruto:ni-0027-prerelease",
+        "naruto:ta-0005-prerelease",
+        "naruto:ta-0004-prerelease",
+        "naruto:te-0015-prerelease",
+        "naruto:te-0007-prerelease",
+        "naruto:te-0003-prerelease",
+        "naruto:te-0036-prerelease"
+      ]
     }
   }
 }

@@ -1,0 +1,29 @@
+{
+  "source": "kayouofficial tier back hash collapse",
+  "observed": "2026-09-05",
+  "aliases": {
+    "ar": "ar",
+    "cr": "ar",
+    "asp": "asp",
+    "shin-asp": "asp",
+    "bp": "bp",
+    "pu": "bp",
+    "hr": "hr",
+    "shin-ur": "hr",
+    "mr": "mr",
+    "ptr": "sr",
+    "sr": "sr",
+    "ssr": "sr",
+    "qr": "qr",
+    "se": "se",
+    "sp": "se",
+    "shin-mr": "shin-mr",
+    "shin-qr": "shin-qr",
+    "shin-xr": "shin-xr",
+    "ur": "ur",
+    "xr": "xr"
+  },
+  "skippedDefault": [
+    "r"
+  ]
+}

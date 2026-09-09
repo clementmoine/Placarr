@@ -101,7 +101,7 @@ describe("listKayouPerCardBackRows", () => {
 });
 
 describe("kayouOfficialCardBackManifest", () => {
-  it("resolves per-card URLs from reference suffixes", () => {
+  it("resolves print placement to card-local back.webp", () => {
     __setKayouOfficialCardBackManifestForTests(
       buildKayouOfficialCardBackManifest(
         [
@@ -110,6 +110,12 @@ describe("kayouOfficialCardBackManifest", () => {
             url: "https://cdn/b.png",
             seriesId: "series-8idoe481",
             rarity: "UR",
+            placement: {
+              kind: "print",
+              set: "nrea02",
+              lang: "en",
+              card: "nrea02.ur.015l3",
+            },
           },
         ],
         { observed: "2026-08-28", seriesIds: ["series-8idoe481"] },
@@ -117,9 +123,31 @@ describe("kayouOfficialCardBackManifest", () => {
     );
     expect(
       kayouCardBackUrlForOfficialReference("NREA02-UR-015L3", "UR"),
-    ).toBe("/assets/naruto/kayou/cards/official/nrea02-ur-015l3.webp");
-    expect(kayouCardBackUrlForOfficialReference("NR-UR-015L3", "UR")).toBe(
-      "/assets/naruto/kayou/cards/official/nrea02-ur-015l3.webp",
+    ).toBe(
+      "/assets/naruto/kayou/cards/nrea02/en/nrea02.ur.015l3/back.webp",
     );
+    expect(kayouCardBackUrlForOfficialReference("NR-UR-015L3", "UR")).toBe(
+      "/assets/naruto/kayou/cards/nrea02/en/nrea02.ur.015l3/back.webp",
+    );
+  });
+
+  it("resolves tier placement to pack back.<tier>.webp", () => {
+    __setKayouOfficialCardBackManifestForTests(
+      buildKayouOfficialCardBackManifest(
+        [
+          {
+            idCode: "NREA02-UR-001L3",
+            url: "https://cdn/a.png",
+            seriesId: "series-8idoe481",
+            rarity: "UR",
+            placement: { kind: "tier", slug: "ur" },
+          },
+        ],
+        { observed: "2026-08-28", seriesIds: ["series-8idoe481"] },
+      ),
+    );
+    expect(
+      kayouCardBackUrlForOfficialReference("NREA02-UR-001L3", "UR"),
+    ).toBe("/assets/naruto/kayou/cards/back.ur.webp");
   });
 });

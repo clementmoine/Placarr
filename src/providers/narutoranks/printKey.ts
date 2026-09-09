@@ -85,21 +85,43 @@ export function ninjaRanksSetSortKey(setCode: string): number | null {
 }
 
 /**
- * `GS1` / `GS-1` / `BL-1` → fragment de `print_key` (`bl-0001`) pour la
- * recherche SQL. `gs` seul → `bl` (tout le set).
+ * Références imprimées → fragment de `print_key` pour la recherche SQL.
+ *
+ * Checklist Inkworks / paste collectionneur : `2` → `nr-0002`, `FF-1` →
+ * `ff-0001`, `GS-1` / `BL-1` → `bl-0001`. Sans ça, `FF-1` ne matche jamais
+ * `naruto:ff-0001` (zéros), et `2` reste ambigu entre nr/ff/sd/nw/ns/bl.
  */
 export function normalizeNinjaRanksSearchQuery(query: string): string {
   const trimmed = query.trim();
   if (!trimmed) return query;
 
   if (/^gs$/i.test(trimmed)) return "bl";
+  if (/^(bl|ff|sd|nw|ns|nr|pn)$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
 
-  const insert = /^(gs|bl)[\s\-]*0*(\d+)$/i.exec(trimmed);
-  if (insert) {
-    const n = Number.parseInt(insert[2]!, 10);
+  if (/^\d+$/.test(trimmed)) {
+    const n = Number.parseInt(trimmed, 10);
     if (Number.isFinite(n) && n >= 1) {
-      return `bl-${String(n).padStart(4, "0")}`;
+      return `nr-${String(n).padStart(4, "0")}`;
     }
+  }
+
+  const insert =
+    /^(gs|bl|ff|sd|nw|ns|nr|pn)[\s\-]*0*([a-z][a-z0-9]*|\d+)$/i.exec(trimmed);
+  if (insert) {
+    let set = insert[1]!.toLowerCase();
+    if (set === "gs") set = "bl";
+    const raw = insert[2]!;
+    if (/^\d+$/.test(raw)) {
+      const n = Number.parseInt(raw, 10);
+      if (Number.isFinite(n) && n >= 1) {
+        return `${set}-${String(n).padStart(4, "0")}`;
+      }
+    }
+    // PN-i / PN-t / PN-ga / PN-sd2006 — keep the letter suffix as stored.
+    const suffix = raw.toLowerCase() === "i" ? "i" : raw.toLowerCase();
+    return `${set}-${suffix}`;
   }
 
   return query;

@@ -74,6 +74,12 @@ describe("narutokayou tier backs", () => {
             url: "https://cdn/b.png",
             seriesId: "series-8idoe481",
             rarity: "UR",
+            placement: {
+              kind: "print",
+              set: "nrea02",
+              lang: "en",
+              card: "nrea02.ur.015l3",
+            },
           },
         ],
         { observed: "2026-08-28", seriesIds: ["series-8idoe481"] },
@@ -91,7 +97,7 @@ describe("narutokayou tier backs", () => {
       effectPack: "naruto-kayou",
     });
     expect(stamped.cardBackUrl).toBe(
-      "/assets/naruto/kayou/cards/official/nrea02-ur-015l3.webp",
+      "/assets/naruto/kayou/cards/nrea02/en/nrea02.ur.015l3/back.webp",
     );
   });
 

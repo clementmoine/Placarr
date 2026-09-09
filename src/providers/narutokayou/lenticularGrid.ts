@@ -291,6 +291,7 @@ export function kayouLenticularCropProfileForPrintKey(
 /** Persist inferred grids + single-face scan crops on `cards-index.json`. */
 export async function markKayouLenticularGrids(
   packId: string = NARUTO_KAYOU_PACK_ID,
+  opts?: { onProgress?: (message: string) => void },
 ): Promise<{
   marked: number;
   cleared: number;
@@ -316,7 +317,12 @@ export async function markKayouLenticularGrids(
   let probed = 0;
   let missingArt = 0;
 
-  for (const entry of Object.values(index.cards)) {
+  const entries = Object.values(index.cards);
+  const total = entries.length;
+  opts?.onProgress?.(`lenticulaire — sondage ${total} tirage(s)…`);
+  let i = 0;
+  for (const entry of entries) {
+    i += 1;
     const needsProbe = entryIsPortraitKayouScan(entry);
 
     let probe: KayouArtProbe | null = null;
@@ -359,6 +365,12 @@ export async function markKayouLenticularGrids(
     } else if (entry.lenticularCropProfile) {
       delete entry.lenticularCropProfile;
       cropProfilesCleared += 1;
+    }
+
+    if (i % 500 === 0 || i === total) {
+      opts?.onProgress?.(
+        `lenticulaire — ${i}/${total} (${probed} sondée(s), ${marked} grille(s))`,
+      );
     }
   }
 

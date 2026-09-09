@@ -58,6 +58,7 @@ export function kayouOfficialSetLabel(setCode: string): string {
   const code = setCode.trim().toLowerCase();
   const labels: Record<string, string> = {
     ninjaagebox: "Ninja Age",
+    nrea01: "Earth Scroll (NREA01)",
     nrea02: "Earth Scroll (NREA02)",
     nri01: "Earth Scroll Box (NRI01)",
     nrsa01: "Chapter Jin Series 1 (NRSA01)",

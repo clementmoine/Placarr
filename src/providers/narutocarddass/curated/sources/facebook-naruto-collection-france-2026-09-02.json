@@ -3,7 +3,7 @@
   "observed": "2026-09-02",
   "packshotAttestationsUpdated": "2026-09-02",
   "kind": "research-dig",
-  "ingest": "attestation only — no faces, no mint DVD SKUs until EAN + packshot + card↔SKU table",
+  "ingest": "2026-09-05 — SKUs DVD/UNS3 mintés (kana-dvd-naruto-vol{3,4,8,15}, kana-dvd-shippuden-vol21, xbox360-uns3) + packshots Amazon/Cdiscount wrappers. Vol. 15 = pool listé des 6 S6 FR confirmées (pas NI-236 seule). Manga Pack 1-2-3 (B085PJZSN6) = art canal avant-première S1 (pool 10 `*-prerelease`). Blisters Kana tomes 1–15 S6 toujours attestation-only.",
   "group": {
     "name": "Naruto Collection France",
     "id": "805799330361374",

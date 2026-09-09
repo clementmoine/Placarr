@@ -17,6 +17,7 @@ import { narutoCuratedSourcesDir } from "../curatedPaths";
 type S6FrPrintedFile = {
   retailFr?: boolean;
   cards?: readonly { number?: string }[];
+  kanaBlisterS5Reprints?: readonly { number?: string }[];
 };
 
 type AppearancesFile = {
@@ -53,12 +54,26 @@ function loadFile(): S6FrPrintedFile {
   ) as S6FrPrintedFile;
 }
 
+/** Inédites S6 + reprints S5 de l'opération manga Kana (15 tomes). */
+function ledgerNumbers(file: S6FrPrintedFile): string[] {
+  const out: string[] = [];
+  for (const row of file.cards ?? []) {
+    const n = row.number?.trim();
+    if (n) out.push(n);
+  }
+  for (const row of file.kanaBlisterS5Reprints ?? []) {
+    const n = row.number?.trim();
+    if (n) out.push(n);
+  }
+  return out;
+}
+
 function loadKeys(): Set<string> {
   if (keys) return keys;
   const out = new Set<string>();
   try {
-    for (const row of loadFile().cards ?? []) {
-      const key = narutoCollectorKey(row.number ?? "");
+    for (const number of ledgerNumbers(loadFile())) {
+      const key = narutoCollectorKey(number);
       if (key) out.add(key);
     }
   } catch {
@@ -82,8 +97,7 @@ export function narutoS6FrPrintedDiskNumbers(): string[] {
   if (diskNumbers) return diskNumbers;
   const out = new Set<string>();
   try {
-    for (const row of loadFile().cards ?? []) {
-      const raw = row.number?.trim() ?? "";
+    for (const raw of ledgerNumbers(loadFile())) {
       if (!raw) continue;
       for (const form of numberForms(raw)) out.add(form.toLowerCase());
       const disk = narutoDiskCardId(raw);
@@ -102,7 +116,8 @@ export function isNarutoS6FrPrintedNumber(raw: string): boolean {
 }
 
 /**
- * Inserts Kana / DVD → `appearances.json` FR `s6`, sans minter le retail.
+ * Opération manga Kana (15) + inédites DVD → `appearances.json` FR `s6`.
+ * Les reprints gardent aussi `s5` (multi-set, comme NI-049).
  * @returns nombre de cartes FR dont la liste de sets a changé.
  */
 export function syncNarutoS6FrPrintedAppearances(packRoot: string): number {
@@ -121,8 +136,7 @@ export function syncNarutoS6FrPrintedAppearances(packRoot: string): number {
 
   let changed = 0;
   try {
-    for (const row of loadFile().cards ?? []) {
-      const raw = row.number?.trim() ?? "";
+    for (const raw of ledgerNumbers(loadFile())) {
       if (!raw) continue;
       const diskId =
         narutoDiskCardId(raw) ??

@@ -5,16 +5,22 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   statSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import {
+  installDistinctBacks,
+  type DistinctBackCandidate,
+} from "@/providers/shared/cardCatalogue/discoverDistinctBacks";
 
-import { kayouBackTierSlug } from "./kayouBackTier";
+import { kayouBackTierSlug, resetKayouBackAliasCache } from "./kayouBackTier";
 import {
   buildKayouOfficialCardBackManifest,
+  readKayouOfficialCardBackManifest,
   resetKayouOfficialCardBackManifestCache,
   type KayouOfficialCardBackEntry,
 } from "./kayouOfficialCardBacks";
@@ -166,6 +172,12 @@ export type KayouOfficialBackHarvest = {
   perCardInstalled: number;
   perCardSkipped: number;
   perCardFail: number;
+  /** After byte-hash collapse vs pack default. */
+  deduped: {
+    aliases: Record<string, string>;
+    installed: string[];
+    skippedDefault: string[];
+  };
 };
 
 export async function harvestKayouOfficialTierBacks(opts: {
@@ -224,38 +236,39 @@ export async function harvestKayouOfficialTierBacks(opts: {
     `${JSON.stringify(manifest, null, 2)}\n`,
   );
 
-  let installed = 0;
-  let skipped = 0;
   let fail = 0;
-  const conflicts = picks.filter((p) => p.conflict).length;
+  const urlConflicts = picks.filter((p) => p.conflict).length;
+  const tierCandidates: DistinctBackCandidate[] = [];
 
   for (const pick of picks) {
-    const dest = path.join(cardsDir, `back.${pick.tier}.png`);
-    if (!opts.force && existsSync(dest)) {
-      skipped += 1;
-      continue;
-    }
     const buf = await downloadPng(pick.url);
     if (!buf) {
       fail += 1;
-      report(`manqué back.${pick.tier}.png`);
+      report(`manqué CDN tier ${pick.tier}`);
       continue;
     }
-    writeFileSync(dest, buf);
-    installed += 1;
-    if (pick.conflict) {
-      report(
-        `back.${pick.tier}.png — conflit inter-séries, URL majoritaire (${pick.votes} cartes)`,
-      );
-    }
+    tierCandidates.push({ slug: pick.tier, bytes: buf });
   }
 
-  // Legacy single pack tile: alias R tier when present.
-  const rDest = path.join(cardsDir, "back.r.png");
-  const legacyDest = path.join(cardsDir, "back.png");
-  if (existsSync(rDest) && (opts.force || !existsSync(legacyDest))) {
-    writeFileSync(legacyDest, readFileSync(rDest));
+  // Pack default must exist before collapse (curated back.png / back.webp).
+  const defaultPath = ["back.png", "back.webp"]
+    .map((n) => path.join(cardsDir, n))
+    .find((p) => existsSync(p));
+  if (!defaultPath && tierCandidates.length > 0) {
+    // Bootstrap: use majority R if present, else first tier.
+    const r = tierCandidates.find((c) => c.slug === "r");
+    const seed = r ?? tierCandidates[0]!;
+    writeFileSync(path.join(cardsDir, "back.png"), seed.bytes);
+    report(`bootstrap pack back.png depuis tier ${seed.slug}`);
   }
+
+  const dedupedEarly = dedupeKayouCuratedTierBacks(cardsDir, tierCandidates);
+  const aliasPairs = Object.entries(dedupedEarly.aliases)
+    .filter(([from, to]) => from !== to)
+    .map(([from, to]) => `${from}→${to}`);
+  report(
+    `hash — distinct [${dedupedEarly.installed.join(", ") || "—"}], =défaut [${dedupedEarly.skippedDefault.join(", ") || "—"}]${aliasPairs.length ? `, alias [${aliasPairs.join(", ")}]` : ""}${urlConflicts ? ` · ${urlConflicts} tier(s) multi-URL amont` : ""}`,
+  );
 
   const perCardRows = listKayouPerCardBackRows(allRows);
   const officialDir = path.join(cardsDir, "official");
@@ -289,10 +302,30 @@ export async function harvestKayouOfficialTierBacks(opts: {
   }
 
   const observed = new Date().toISOString().slice(0, 10);
-  const cardManifest = buildKayouOfficialCardBackManifest(cardEntries, {
-    observed,
-    seriesIds,
-  });
+  // Keep narutodb / prior per-card entries; official harvest only covers
+  // heterogeneous tiers within the US store series list.
+  const prior = readKayouOfficialCardBackManifest();
+  const bySlug = new Map<string, KayouOfficialCardBackEntry>(
+    Object.entries(prior?.cards ?? {}),
+  );
+  for (const row of cardEntries) {
+    bySlug.set(kayouOfficialIdSlug(row.idCode), row);
+  }
+  const cardManifest = buildKayouOfficialCardBackManifest(
+    [...bySlug.values()],
+    {
+      observed,
+      seriesIds: [
+        ...new Set([
+          ...seriesIds,
+          ...[...bySlug.values()].map((e) => e.seriesId),
+        ]),
+      ],
+    },
+  );
+  if (prior?.source?.includes("narutodb")) {
+    cardManifest.source = prior.source;
+  }
   writeFileSync(
     path.join(narutoKayouCuratedDir(), "sources", "kayou-official-card-backs.json"),
     `${JSON.stringify(cardManifest, null, 2)}\n`,
@@ -303,14 +336,74 @@ export async function harvestKayouOfficialTierBacks(opts: {
     series: seriesIds.length,
     cards: allRows.length,
     tiers: picks.length,
-    installed,
-    skipped,
-    conflicts,
+    installed: dedupedEarly.installed.length,
+    skipped: 0,
+    conflicts: urlConflicts,
     fail,
     perCard: perCardRows.length,
     perCardInstalled,
     perCardSkipped,
     perCardFail,
+    deduped: dedupedEarly,
+  };
+}
+
+/**
+ * Collapse byte-identical tier sleeves; drop those matching pack `back.png`.
+ * Writes `kayou-back-aliases.json` for stamp lookup.
+ */
+export function dedupeKayouCuratedTierBacks(
+  cardsDir: string,
+  freshCandidates?: readonly DistinctBackCandidate[],
+): {
+  aliases: Record<string, string>;
+  installed: string[];
+  skippedDefault: string[];
+} {
+  const candidates: DistinctBackCandidate[] = [...(freshCandidates ?? [])];
+  if (!existsSync(cardsDir)) {
+    return { aliases: {}, installed: [], skippedDefault: [] };
+  }
+  if (!freshCandidates?.length) {
+    for (const name of readdirSync(cardsDir)) {
+      const m = /^back\.([a-z0-9][a-z0-9-]*)\.(png|webp)$/i.exec(name);
+      if (!m) continue;
+      const slug = m[1]!.toLowerCase();
+      candidates.push({
+        slug,
+        bytes: readFileSync(path.join(cardsDir, name)),
+      });
+    }
+  }
+  const defaultPath = ["back.png", "back.webp"]
+    .map((n) => path.join(cardsDir, n))
+    .find((p) => existsSync(p));
+  const defaultBytes = defaultPath ? readFileSync(defaultPath) : null;
+  const result = installDistinctBacks(candidates, {
+    cardsDir,
+    defaultBytes,
+    ext: "png",
+    force: true,
+    pruneDefaultDuplicates: true,
+  });
+  writeFileSync(
+    path.join(narutoKayouCuratedDir(), "sources", "kayou-back-aliases.json"),
+    `${JSON.stringify(
+      {
+        source: "kayouofficial tier back hash collapse",
+        observed: new Date().toISOString().slice(0, 10),
+        aliases: result.aliases,
+        skippedDefault: result.skippedDefault,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  resetKayouBackAliasCache();
+  return {
+    aliases: result.aliases,
+    installed: result.installed,
+    skippedDefault: result.skippedDefault,
   };
 }
 

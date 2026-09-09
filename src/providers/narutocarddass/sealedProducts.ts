@@ -239,7 +239,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
       photos LBC staging/leboncoin/pack-decouverte-* archival / verso.
     */
     slug: "pack-decouverte",
-    kind: "coffret",
+    kind: "deck_bundle",
     category: "collector-boxes",
     setCode: "s1",
     name: "Pack Découverte (Pays du Vent + Maître Hokage + 2 boosters S1)",
@@ -279,7 +279,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
       stagingFile sinon il bat Tric Trac au scorer (surface un peu plus grande).
     */
     slug: "tin-box",
-    kind: "coffret",
+    kind: "tin",
     category: "collector-boxes",
     setCode: null,
     name: "Coffret Métal",
@@ -299,7 +299,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
       Distinct de tin-box Invocation 05129 (ne pas fusionner malgré l’art tin).
     */
     slug: "tin-box-hobby",
-    kind: "coffret",
+    kind: "tin",
     category: "collector-boxes",
     setCode: null,
     name: "Tin Box Hobby",
@@ -308,6 +308,195 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     lang: "FR",
     // Total 42 (= 8×5 + 2) dans products-contents.
     declaredCardCount: null,
+  },
+  {
+    /*
+      Kana Home Video — DVD Edited vol. 3 (ép. 13–18). ASIN Amazon
+      B000VOHXFK. Insert : **1 carte S5 aléatoire** (TA-214 = exemplaire /
+      packshot, pas une garantie). Packshot Amazon → wrappers/….
+    */
+    slug: "kana-dvd-naruto-vol3",
+    kind: "special",
+    category: "dvd",
+    setCode: "s5",
+    name: "Naruto DVD Edited — Vol. 3 (Kana)",
+    stagingFile: "kana-dvd-naruto-vol3.jpg",
+    stagingKind: "wrappers",
+    lang: "FR",
+    declaredCardCount: 1,
+    attested: true,
+  },
+  {
+    /*
+      Kana — coffret digipack 3 DVD vol. 4. ASIN B000FQJMEO. Insert :
+      **1 carte S1 aléatoire** (NI-019 packshot/YT = exemplaire, ≠ garantie ;
+      ≠ prerelease manga). Dig FB + YT Collection Naruto.
+    */
+    slug: "kana-dvd-naruto-vol4",
+    kind: "special",
+    category: "dvd",
+    setCode: "s1",
+    name: "Naruto DVD — Vol. 4 digipack (Kana)",
+    stagingFile: "kana-dvd-naruto-vol4.jpg",
+    stagingKind: "wrappers",
+    lang: "FR",
+    declaredCardCount: 1,
+    attested: true,
+  },
+  {
+    /*
+      Kana — coffret 3 DVD vol. 8. ASIN B000MZGRXC. Libellé « 2 cartes » →
+      **2 cartes S3 aléatoires** (NI-118/119 = exemplaires packshot, pas
+      pool listé).
+    */
+    slug: "kana-dvd-naruto-vol8",
+    kind: "special",
+    category: "dvd",
+    setCode: "s3",
+    name: "Naruto DVD — Vol. 8 (Kana)",
+    stagingFile: "kana-dvd-naruto-vol8.jpg",
+    stagingKind: "wrappers",
+    lang: "FR",
+    declaredCardCount: 2,
+    attested: true,
+  },
+  {
+    /*
+      Kana — coffret 3 DVD vol. 15. EAN 3309450033000 (Cdiscount) /
+      ASIN B0034N7KR6. Canal promo S6 MIJ : **1 carte parmi les 6 S6 FR
+      confirmées** (s6-fr-printed.json) — libellé « une carte série 6 »,
+      pas NI-236 seule. Packshot = Cdiscount ; collage marketing (NI-232…)
+      ≠ inventaire ouvert.
+    */
+    slug: "kana-dvd-naruto-vol15",
+    kind: "special",
+    category: "dvd",
+    setCode: "s6",
+    name: "Naruto DVD — Vol. 15 (Kana)",
+    stagingFile: "kana-dvd-naruto-vol15.jpg",
+    stagingKind: "wrappers",
+    lang: "FR",
+    declaredCardCount: 1,
+    attested: true,
+  },
+  {
+    /*
+      Kana — Shippuden vol. 21 « La Guerre fait rage ! ». ASIN B00CUPEA0Y.
+      Promo exclusive PR-100 (packshot + dig FB).
+    */
+    slug: "kana-dvd-shippuden-vol21",
+    kind: "special",
+    category: "dvd",
+    setCode: "promo",
+    name: "Naruto Shippuden DVD — Vol. 21 (Kana)",
+    stagingFile: "kana-dvd-shippuden-vol21.jpg",
+    stagingKind: "wrappers",
+    lang: "FR",
+    declaredCardCount: 1,
+    attested: true,
+  },
+  {
+    /*
+      Canal avant-première Carddass S1 via mangas Kana (~2005–2006) :
+      10 variantes `*-prerelease` (s1-fr-prerelease.json). Packshot catalogue =
+      « Pack tome 1+2+3 » Amazon B085PJZSN6 (réédition 2020, 9 €) — **art
+      seulement** ; aucune carte Carddass attestée sur cet ASIN moderne.
+      Contenu = pool listé (1 insert / achat époque), pas 10 garanties.
+    */
+    slug: "kana-manga-pack-1-2-3",
+    kind: "special",
+    category: "manga",
+    setCode: "s1",
+    name: "Naruto manga Pack 1-2-3 (Kana) — avant-première Carddass",
+    stagingFile: "kana-manga-pack-1-2-3.jpg",
+    stagingKind: "wrappers",
+    lang: "FR",
+    declaredCardCount: 1,
+    attested: true,
+  },
+  {
+    /*
+      Xbox 360 UNS3 Day One EU — bannière « GOKU COSTUME DLC & TRADING
+      CARD INSIDE! ». ASIN Amazon B008J19KEO (listing DE/USK ; EAN
+      3391891967365). Insert PR-095 (dig FB + user 2026-09-02).
+    */
+    slug: "xbox360-uns3",
+    kind: "special",
+    category: "videogames",
+    setCode: "promo",
+    name: "Naruto Shippuden Ultimate Ninja Storm 3 (Xbox 360)",
+    stagingFile: "xbox360-uns3.jpg",
+    stagingKind: "wrappers",
+    lang: "FR",
+    declaredCardCount: 1,
+    attested: true,
+  },
+  {
+    /*
+      EN CCG Unbound Power tin — ToyWiz. UPC 045557239770 (2009-09).
+      1 Alternate Designed Super Rare + promo ; boosters non listés.
+    */
+    slug: "tin-unbound-power-naruto",
+    kind: "tin",
+    category: "tins",
+    setCode: null,
+    name: "Collector Tin — Unbound Power (Naruto Uzumaki)",
+    stagingFile: "tin-unbound-power-naruto.jpg",
+    stagingKind: "toywiz",
+    lang: "EN",
+    declaredCardCount: null,
+    released: "2009-09",
+    attested: true,
+  },
+  {
+    /*
+      EN CCG Guardian of the Village — Kakashi. UPC 843852024387 (2009-02).
+      4 boosters : 1× s8 + 2× s11 + 1× s12 + 2 Rare Alternate Image.
+    */
+    slug: "tin-guardian-kakashi",
+    kind: "tin",
+    category: "tins",
+    setCode: null,
+    name: "Collector Tin — Guardian of the Village (Kakashi Hatake)",
+    stagingFile: "tin-guardian-kakashi.jpg",
+    stagingKind: "toywiz",
+    lang: "EN",
+    declaredCardCount: null,
+    released: "2009-02",
+    attested: true,
+  },
+  {
+    /*
+      EN CCG Ultimate Ninja Way — Gaara. UPC 843852011134.
+      5 boosters : 2× s4 Revenge and Rebirth + 2× s5 Dream Legacy + 1× s6
+      Eternal Rivalry + 3 preview Series 7 Quest for Power.
+    */
+    slug: "tin-ultimate-ninja-way-gaara",
+    kind: "tin",
+    category: "tins",
+    setCode: null,
+    name: "Collector Tin — Ultimate Ninja Way (Gaara of the Desert)",
+    stagingFile: "tin-ultimate-ninja-way-gaara.jpg",
+    stagingKind: "toywiz",
+    lang: "EN",
+    declaredCardCount: null,
+    attested: true,
+  },
+  {
+    /*
+      EN CCG Ultimate Battle chibi — Sasori. UPC 643690287353.
+      Line tin2 (sets.json). 2× s19 Path of Pain + 2× s20 Gallant Sage + promo.
+    */
+    slug: "tin-ultimate-battle-sasori",
+    kind: "tin",
+    category: "tins",
+    setCode: "tin2",
+    name: "Collector Tin — Ultimate Battle (Sasori, chibi)",
+    stagingFile: "tin-ultimate-battle-sasori.jpg",
+    stagingKind: "toywiz",
+    lang: "EN",
+    declaredCardCount: null,
+    attested: true,
   },
   {
     slug: "display-s1-it",
@@ -674,17 +863,17 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
       + promo fenêtre PR-096 (4e Hokage). Pas Day One (PR-095). Packshot eBay
       face + Kinkai verso (EAN 3391891970488, BANDAI 2013 MADE IN ITALY).
       Math EU (≠ US 10×24) : sealed-contents + dig eu-ccg-pack-math.
-      `coffret` + mixed_bundle : promo fixe, sachets aléatoires.
+      `multipack` + mixed_bundle : promo fixe, sachets aléatoires.
     */
     slug: "duopack-s28",
-    kind: "coffret",
+    kind: "multipack",
     category: "boosters-blister",
     setCode: "s28",
     name: "Duopack Série 28 — Ultimate Ninja Storm 3 (2 boosters + PR-096)",
     stagingFile: "",
     lang: "FR",
     // Total 17 (= 8+8+1) vit dans sealed-contents — pas ici : `resolveSealedContents`
-    // prendrait 17 pour cardsPerPack sur un `coffret`.
+    // prendrait 17 pour cardsPerPack sur un `multipack`.
     declaredCardCount: null,
     attested: true,
   },

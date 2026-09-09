@@ -1,22 +1,740 @@
 {
   "source": "AnimeCollection — Naruto Ninja Ranks",
   "url": "http://www.animecollection.fr/cartes.php?idl=4&idc=87&ids=200",
-  "observed": "2026-08-21",
-  "ingest": "none — attestation de la ligne, pas de cartes",
+  "observed": "2026-09-05",
+  "ingest": "archive complète ids=200 — fronts h3000 (fallback h400) + dos AJAX → art/back.animecollection.jpg",
+  "sourceId": "animecollection",
   "lang": "fr",
   "line": "ninja-ranks",
   "publisher": "Panini",
   "product": "Ninja Ranks Premium Trading Cards",
-  "officialSite": "Inkworks (distributeur US exclusif) — ledger `inkworks.json`. Pas un mini-site panini.fr.",
+  "faceUrlTemplate": "http://www.animecollection.fr/cartes/87/200/h400_{acId}_carte.jpg",
+  "officialSite": "Inkworks (distributeur US exclusif) — ledger `inkworks.json`.",
   "also": [
-    "forum.animecollection.fr — sanji12, 2015-08-21 : « Ultra Challenge (lamincards), Ninja Ranks Premium Trading Cards, et des stickers True Spirit of the Ninja »",
-    "grille AC : 1–72 + FF + NW + SD + NS1–6 + GS1–3 (102). La checklist officielle US n’a pas les NS."
+    "grille AC : 1–72 + FF + NW + SD + NS1–6 + GS1–3 (102). La checklist officielle US n’a pas les NS.",
+    "Thumbs petits — le ranking face les laisse derrière Coleka / arcade."
   ],
   "not": [
     "Carddass NI/TE/TA",
     "CCG Bandai USA N/J/M",
-    "疾風伝 忍伝/術伝/作伝",
     "Ultra Challenge lamincards"
   ],
-  "whyItMatters": "Autre jeu, autre catalogue. Le pack `naruto/ninja-ranks` existe pour ne plus les chercher (ni les coller) dans le Carddass."
+  "whyItMatters": "Hole-fill FR pour la base 1–72 quand Coleka/arcade manquent.",
+  "faces": [
+    {
+      "printed": "GS1",
+      "set": "bl",
+      "number": "0001",
+      "acId": "7938",
+      "backImageId": "462"
+    },
+    {
+      "printed": "GS2",
+      "set": "bl",
+      "number": "0002",
+      "acId": "7939",
+      "backImageId": "463"
+    },
+    {
+      "printed": "GS3",
+      "set": "bl",
+      "number": "0003",
+      "acId": "7940",
+      "backImageId": "464"
+    },
+    {
+      "printed": "FF1",
+      "set": "ff",
+      "number": "0001",
+      "acId": "7911",
+      "backImageId": "435"
+    },
+    {
+      "printed": "FF2",
+      "set": "ff",
+      "number": "0002",
+      "acId": "7912",
+      "backImageId": "436"
+    },
+    {
+      "printed": "FF3",
+      "set": "ff",
+      "number": "0003",
+      "acId": "7913",
+      "backImageId": "437"
+    },
+    {
+      "printed": "FF4",
+      "set": "ff",
+      "number": "0004",
+      "acId": "7914",
+      "backImageId": "438"
+    },
+    {
+      "printed": "FF5",
+      "set": "ff",
+      "number": "0005",
+      "acId": "7915",
+      "backImageId": "439"
+    },
+    {
+      "printed": "FF6",
+      "set": "ff",
+      "number": "0006",
+      "acId": "7916",
+      "backImageId": "440"
+    },
+    {
+      "printed": "1",
+      "set": "nr",
+      "number": "0001",
+      "acId": "7839",
+      "backImageId": "363"
+    },
+    {
+      "printed": "2",
+      "set": "nr",
+      "number": "0002",
+      "acId": "7840",
+      "backImageId": "364"
+    },
+    {
+      "printed": "3",
+      "set": "nr",
+      "number": "0003",
+      "acId": "7841",
+      "backImageId": "365"
+    },
+    {
+      "printed": "4",
+      "set": "nr",
+      "number": "0004",
+      "acId": "7842",
+      "backImageId": "366"
+    },
+    {
+      "printed": "5",
+      "set": "nr",
+      "number": "0005",
+      "acId": "7843",
+      "backImageId": "367"
+    },
+    {
+      "printed": "6",
+      "set": "nr",
+      "number": "0006",
+      "acId": "7844",
+      "backImageId": "368"
+    },
+    {
+      "printed": "7",
+      "set": "nr",
+      "number": "0007",
+      "acId": "7845",
+      "backImageId": "369"
+    },
+    {
+      "printed": "8",
+      "set": "nr",
+      "number": "0008",
+      "acId": "7846",
+      "backImageId": "370"
+    },
+    {
+      "printed": "9",
+      "set": "nr",
+      "number": "0009",
+      "acId": "7847",
+      "backImageId": "371"
+    },
+    {
+      "printed": "10",
+      "set": "nr",
+      "number": "0010",
+      "acId": "7848",
+      "backImageId": "372"
+    },
+    {
+      "printed": "11",
+      "set": "nr",
+      "number": "0011",
+      "acId": "7849",
+      "backImageId": "373"
+    },
+    {
+      "printed": "12",
+      "set": "nr",
+      "number": "0012",
+      "acId": "7850",
+      "backImageId": "374"
+    },
+    {
+      "printed": "13",
+      "set": "nr",
+      "number": "0013",
+      "acId": "7851",
+      "backImageId": "375"
+    },
+    {
+      "printed": "14",
+      "set": "nr",
+      "number": "0014",
+      "acId": "7852",
+      "backImageId": "376"
+    },
+    {
+      "printed": "15",
+      "set": "nr",
+      "number": "0015",
+      "acId": "7853",
+      "backImageId": "377"
+    },
+    {
+      "printed": "16",
+      "set": "nr",
+      "number": "0016",
+      "acId": "7854",
+      "backImageId": "378"
+    },
+    {
+      "printed": "17",
+      "set": "nr",
+      "number": "0017",
+      "acId": "7855",
+      "backImageId": "379"
+    },
+    {
+      "printed": "18",
+      "set": "nr",
+      "number": "0018",
+      "acId": "7856",
+      "backImageId": "380"
+    },
+    {
+      "printed": "19",
+      "set": "nr",
+      "number": "0019",
+      "acId": "7857",
+      "backImageId": "381"
+    },
+    {
+      "printed": "20",
+      "set": "nr",
+      "number": "0020",
+      "acId": "7858",
+      "backImageId": "382"
+    },
+    {
+      "printed": "21",
+      "set": "nr",
+      "number": "0021",
+      "acId": "7859",
+      "backImageId": "383"
+    },
+    {
+      "printed": "22",
+      "set": "nr",
+      "number": "0022",
+      "acId": "7860",
+      "backImageId": "387"
+    },
+    {
+      "printed": "23",
+      "set": "nr",
+      "number": "0023",
+      "acId": "7861",
+      "backImageId": "384"
+    },
+    {
+      "printed": "24",
+      "set": "nr",
+      "number": "0024",
+      "acId": "7862",
+      "backImageId": "385"
+    },
+    {
+      "printed": "25",
+      "set": "nr",
+      "number": "0025",
+      "acId": "7863",
+      "backImageId": "386"
+    },
+    {
+      "printed": "26",
+      "set": "nr",
+      "number": "0026",
+      "acId": "7864",
+      "backImageId": "388"
+    },
+    {
+      "printed": "27",
+      "set": "nr",
+      "number": "0027",
+      "acId": "7865",
+      "backImageId": "389"
+    },
+    {
+      "printed": "28",
+      "set": "nr",
+      "number": "0028",
+      "acId": "7866",
+      "backImageId": "390"
+    },
+    {
+      "printed": "29",
+      "set": "nr",
+      "number": "0029",
+      "acId": "7867",
+      "backImageId": "391"
+    },
+    {
+      "printed": "30",
+      "set": "nr",
+      "number": "0030",
+      "acId": "7868",
+      "backImageId": "392"
+    },
+    {
+      "printed": "31",
+      "set": "nr",
+      "number": "0031",
+      "acId": "7869",
+      "backImageId": "393"
+    },
+    {
+      "printed": "32",
+      "set": "nr",
+      "number": "0032",
+      "acId": "7870",
+      "backImageId": "394"
+    },
+    {
+      "printed": "33",
+      "set": "nr",
+      "number": "0033",
+      "acId": "7871",
+      "backImageId": "395"
+    },
+    {
+      "printed": "34",
+      "set": "nr",
+      "number": "0034",
+      "acId": "7872",
+      "backImageId": "396"
+    },
+    {
+      "printed": "35",
+      "set": "nr",
+      "number": "0035",
+      "acId": "7873",
+      "backImageId": "397"
+    },
+    {
+      "printed": "36",
+      "set": "nr",
+      "number": "0036",
+      "acId": "7874",
+      "backImageId": "398"
+    },
+    {
+      "printed": "37",
+      "set": "nr",
+      "number": "0037",
+      "acId": "7875",
+      "backImageId": "399"
+    },
+    {
+      "printed": "38",
+      "set": "nr",
+      "number": "0038",
+      "acId": "7876",
+      "backImageId": "400"
+    },
+    {
+      "printed": "39",
+      "set": "nr",
+      "number": "0039",
+      "acId": "7877",
+      "backImageId": "401"
+    },
+    {
+      "printed": "40",
+      "set": "nr",
+      "number": "0040",
+      "acId": "7878",
+      "backImageId": "402"
+    },
+    {
+      "printed": "41",
+      "set": "nr",
+      "number": "0041",
+      "acId": "7879",
+      "backImageId": "403"
+    },
+    {
+      "printed": "42",
+      "set": "nr",
+      "number": "0042",
+      "acId": "7880",
+      "backImageId": "404"
+    },
+    {
+      "printed": "43",
+      "set": "nr",
+      "number": "0043",
+      "acId": "7881",
+      "backImageId": "405"
+    },
+    {
+      "printed": "44",
+      "set": "nr",
+      "number": "0044",
+      "acId": "7882",
+      "backImageId": "406"
+    },
+    {
+      "printed": "45",
+      "set": "nr",
+      "number": "0045",
+      "acId": "7883",
+      "backImageId": "407"
+    },
+    {
+      "printed": "46",
+      "set": "nr",
+      "number": "0046",
+      "acId": "7884",
+      "backImageId": "408"
+    },
+    {
+      "printed": "47",
+      "set": "nr",
+      "number": "0047",
+      "acId": "7885",
+      "backImageId": "409"
+    },
+    {
+      "printed": "48",
+      "set": "nr",
+      "number": "0048",
+      "acId": "7886",
+      "backImageId": "410"
+    },
+    {
+      "printed": "49",
+      "set": "nr",
+      "number": "0049",
+      "acId": "7887",
+      "backImageId": "411"
+    },
+    {
+      "printed": "50",
+      "set": "nr",
+      "number": "0050",
+      "acId": "7888",
+      "backImageId": "412"
+    },
+    {
+      "printed": "51",
+      "set": "nr",
+      "number": "0051",
+      "acId": "7889",
+      "backImageId": "413"
+    },
+    {
+      "printed": "52",
+      "set": "nr",
+      "number": "0052",
+      "acId": "7890",
+      "backImageId": "414"
+    },
+    {
+      "printed": "53",
+      "set": "nr",
+      "number": "0053",
+      "acId": "7891",
+      "backImageId": "415"
+    },
+    {
+      "printed": "54",
+      "set": "nr",
+      "number": "0054",
+      "acId": "7892",
+      "backImageId": "416"
+    },
+    {
+      "printed": "55",
+      "set": "nr",
+      "number": "0055",
+      "acId": "7893",
+      "backImageId": "417"
+    },
+    {
+      "printed": "56",
+      "set": "nr",
+      "number": "0056",
+      "acId": "7894",
+      "backImageId": "418"
+    },
+    {
+      "printed": "57",
+      "set": "nr",
+      "number": "0057",
+      "acId": "7895",
+      "backImageId": "419"
+    },
+    {
+      "printed": "58",
+      "set": "nr",
+      "number": "0058",
+      "acId": "7896",
+      "backImageId": "420"
+    },
+    {
+      "printed": "59",
+      "set": "nr",
+      "number": "0059",
+      "acId": "7897",
+      "backImageId": "421"
+    },
+    {
+      "printed": "60",
+      "set": "nr",
+      "number": "0060",
+      "acId": "7898",
+      "backImageId": "422"
+    },
+    {
+      "printed": "61",
+      "set": "nr",
+      "number": "0061",
+      "acId": "7899",
+      "backImageId": "427"
+    },
+    {
+      "printed": "62",
+      "set": "nr",
+      "number": "0062",
+      "acId": "7900",
+      "backImageId": "423"
+    },
+    {
+      "printed": "63",
+      "set": "nr",
+      "number": "0063",
+      "acId": "7901",
+      "backImageId": "424"
+    },
+    {
+      "printed": "64",
+      "set": "nr",
+      "number": "0064",
+      "acId": "7902",
+      "backImageId": "425"
+    },
+    {
+      "printed": "65",
+      "set": "nr",
+      "number": "0065",
+      "acId": "7903",
+      "backImageId": "426"
+    },
+    {
+      "printed": "66",
+      "set": "nr",
+      "number": "0066",
+      "acId": "7904",
+      "backImageId": "428"
+    },
+    {
+      "printed": "67",
+      "set": "nr",
+      "number": "0067",
+      "acId": "7905",
+      "backImageId": "429"
+    },
+    {
+      "printed": "68",
+      "set": "nr",
+      "number": "0068",
+      "acId": "7906",
+      "backImageId": "430"
+    },
+    {
+      "printed": "69",
+      "set": "nr",
+      "number": "0069",
+      "acId": "7907",
+      "backImageId": "431"
+    },
+    {
+      "printed": "70",
+      "set": "nr",
+      "number": "0070",
+      "acId": "7908",
+      "backImageId": "432"
+    },
+    {
+      "printed": "71",
+      "set": "nr",
+      "number": "0071",
+      "acId": "7909",
+      "backImageId": "433"
+    },
+    {
+      "printed": "72",
+      "set": "nr",
+      "number": "0072",
+      "acId": "7910",
+      "backImageId": "434"
+    },
+    {
+      "printed": "NS1",
+      "set": "ns",
+      "number": "0001",
+      "acId": "7932",
+      "backImageId": "456"
+    },
+    {
+      "printed": "NS2",
+      "set": "ns",
+      "number": "0002",
+      "acId": "7933",
+      "backImageId": "457"
+    },
+    {
+      "printed": "NS3",
+      "set": "ns",
+      "number": "0003",
+      "acId": "7934",
+      "backImageId": "458"
+    },
+    {
+      "printed": "NS4",
+      "set": "ns",
+      "number": "0004",
+      "acId": "7935",
+      "backImageId": "459"
+    },
+    {
+      "printed": "NS5",
+      "set": "ns",
+      "number": "0005",
+      "acId": "7936",
+      "backImageId": "460"
+    },
+    {
+      "printed": "NS6",
+      "set": "ns",
+      "number": "0006",
+      "acId": "7937",
+      "backImageId": "461"
+    },
+    {
+      "printed": "NW1",
+      "set": "nw",
+      "number": "0001",
+      "acId": "7917",
+      "backImageId": "441"
+    },
+    {
+      "printed": "NW2",
+      "set": "nw",
+      "number": "0002",
+      "acId": "7918",
+      "backImageId": "442"
+    },
+    {
+      "printed": "NW3",
+      "set": "nw",
+      "number": "0003",
+      "acId": "7919",
+      "backImageId": "443"
+    },
+    {
+      "printed": "NW4",
+      "set": "nw",
+      "number": "0004",
+      "acId": "7920",
+      "backImageId": "444"
+    },
+    {
+      "printed": "NW5",
+      "set": "nw",
+      "number": "0005",
+      "acId": "7921",
+      "backImageId": "445"
+    },
+    {
+      "printed": "NW6",
+      "set": "nw",
+      "number": "0006",
+      "acId": "7922",
+      "backImageId": "446"
+    },
+    {
+      "printed": "NW7",
+      "set": "nw",
+      "number": "0007",
+      "acId": "7923",
+      "backImageId": "447"
+    },
+    {
+      "printed": "NW8",
+      "set": "nw",
+      "number": "0008",
+      "acId": "7924",
+      "backImageId": "448"
+    },
+    {
+      "printed": "NW9",
+      "set": "nw",
+      "number": "0009",
+      "acId": "7925",
+      "backImageId": "449"
+    },
+    {
+      "printed": "SD1",
+      "set": "sd",
+      "number": "0001",
+      "acId": "7926",
+      "backImageId": "450"
+    },
+    {
+      "printed": "SD2",
+      "set": "sd",
+      "number": "0002",
+      "acId": "7927",
+      "backImageId": "451"
+    },
+    {
+      "printed": "SD3",
+      "set": "sd",
+      "number": "0003",
+      "acId": "7928",
+      "backImageId": "452"
+    },
+    {
+      "printed": "SD4",
+      "set": "sd",
+      "number": "0004",
+      "acId": "7929",
+      "backImageId": "453"
+    },
+    {
+      "printed": "SD5",
+      "set": "sd",
+      "number": "0005",
+      "acId": "7930",
+      "backImageId": "454"
+    },
+    {
+      "printed": "SD6",
+      "set": "sd",
+      "number": "0006",
+      "acId": "7931",
+      "backImageId": "455"
+    }
+  ],
+  "hdFaceUrlTemplate": "http://www.animecollection.fr/cartes/87/200/h3000_{acId}_carte.jpg"
 }

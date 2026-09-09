@@ -27,6 +27,20 @@ describe("kayouCardBackUrlForRarity", () => {
     );
   });
 
+  it("maps SSR/PTR onto the shared SR sleeve via aliases", () => {
+    expect(kayouBackTierSlug("SSR")).toBe("ssr");
+    expect(kayouCardBackUrlForRarity("naruto/kayou", "SSR")).toBe(
+      "/assets/naruto/kayou/cards/back.sr.webp",
+    );
+    expect(kayouCardBackUrlForRarity("naruto/kayou", "PTR")).toBe(
+      "/assets/naruto/kayou/cards/back.sr.webp",
+    );
+  });
+
+  it("does not stamp R when it matches the pack default", () => {
+    expect(kayouCardBackUrlForRarity("naruto/kayou", "R")).toBeNull();
+  });
+
   it("returns null when rarity is empty", () => {
     expect(kayouCardBackUrlForRarity("naruto/kayou", "")).toBeNull();
   });

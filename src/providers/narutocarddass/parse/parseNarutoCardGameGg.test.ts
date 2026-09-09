@@ -9,6 +9,7 @@ import {
   ggCardsMissingFrom,
   ggSetLabel,
   parseGgCardIndex,
+  splitCompoundGgId,
 } from "./parseNarutoCardGameGg";
 
 const HTML = `
@@ -27,21 +28,32 @@ describe("base narutocardgame.gg", () => {
         number: 1,
         set: "the-path-to-hokage",
         slug: "naruto-uzumaki",
+        rawId: "n001",
+        line: "classic-ccg",
       },
-      { prefix: "j", number: 1, set: "the-path-to-hokage", slug: "kunai" },
-      { prefix: "c", number: 1, set: "coils-of-the-snake", slug: "inari" },
+      {
+        prefix: "j",
+        number: 1,
+        set: "the-path-to-hokage",
+        slug: "kunai",
+        rawId: "j001",
+        line: "classic-ccg",
+      },
+      {
+        prefix: "c",
+        number: 1,
+        set: "coils-of-the-snake",
+        slug: "inari",
+        rawId: "c001",
+        line: "classic-ccg",
+      },
     ]);
   });
 
-  /*
-    La page lie certaines cartes deux fois. Les compter deux fois fausserait
-    toute comparaison avec notre catalogue.
-  */
   it("counts a card once, however many times the page links it", () => {
     expect(parseGgCardIndex(HTML)).toHaveLength(3);
   });
 
-  /** `/cards` à la racine est le jeu de 2027 : rien à en tirer ici. */
   it("ignores links that are not cards of this game", () => {
     expect(parseGgCardIndex('<a href="/cards">x</a>')).toEqual([]);
   });
@@ -51,16 +63,38 @@ describe("base narutocardgame.gg", () => {
     expect(ggCardName("naruto-uzumaki")).toBe("Naruto Uzumaki");
   });
 
-  /*
-    On rend l'écart, pas une fusion : `nc` et `ex` sont des familles dont on
-    ignore la règle de numérotation, et les verser sans les avoir identifiées
-    reviendrait à inventer des cartes.
-  */
   it("reports what we lack rather than merging it in", () => {
     const cards = parseGgCardIndex(HTML);
     expect(ggCardsMissingFrom(cards, new Set(["n1", "j1"]))).toEqual([
-      { prefix: "c", number: 1, set: "coils-of-the-snake", slug: "inari" },
+      {
+        prefix: "c",
+        number: 1,
+        set: "coils-of-the-snake",
+        slug: "inari",
+        rawId: "c001",
+        line: "classic-ccg",
+      },
     ]);
     expect(ggCardsMissingFrom(cards, new Set())).toHaveLength(3);
+  });
+
+  it("parses kayou compound ids", () => {
+    const html = `
+      <a href="/archive/kayou/cards/nrz08-asp-001-naruto-uzumaki">a</a>
+      <a href="/archive/kayou/cards/nrz08-asp-001-naruto-uzumaki">dup</a>
+      <a href="/archive/mythos/cards/ks-000-gold-naruto">m</a>
+    `;
+    expect(parseGgCardIndex(html, "kayou")).toEqual([
+      {
+        prefix: "nrz08-asp",
+        number: 1,
+        set: "kayou",
+        slug: "naruto-uzumaki",
+        rawId: "nrz08-asp-001",
+        line: "kayou",
+      },
+    ]);
+    expect(parseGgCardIndex(html, "mythos")[0]?.rawId).toBe("ks-000");
+    expect(splitCompoundGgId("ks-007")).toEqual({ prefix: "ks", number: 7 });
   });
 });

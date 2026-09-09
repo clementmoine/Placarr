@@ -7,7 +7,12 @@ import {
 } from "./kayouIdNormalize";
 import type { KayouChecklist, KayouChecklistCard, KayouChecklistSet } from "./kayouLedgerTypes";
 
-export type KayouMergeSource = "narutocards" | "capsulecorpgear" | "alertehit" | "kayouofficial";
+export type KayouMergeSource =
+  | "narutocards"
+  | "capsulecorpgear"
+  | "alertehit"
+  | "kayouofficial"
+  | "narutodb";
 
 function cardKey(setCode: string, number: string): string {
   return `${setCode.trim().toLowerCase()}:${canonicalizeKayouNumberForSet(setCode, number)}`;
@@ -139,7 +144,7 @@ export function mergeKayouChecklists(
     ].join(" + "),
     url: primary.url,
     observed: primary.observed,
-    ingest: "merged narutocards.ca + capsulecorpgear + alertehit",
+    ingest: "merged narutocards.ca + capsulecorpgear + kayouofficial + narutodb + alertehit",
     sets,
   };
 }

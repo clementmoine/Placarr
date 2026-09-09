@@ -1,0 +1,42 @@
+{
+  "source": "narutomythos.com — base de cartes fan (simulateur)",
+  "url": "https://www.narutomythos.com/fr/cards",
+  "api": "https://www.narutomythos.com/api/cards",
+  "observed": "2026-09-05",
+  "ingest": "observed — API JSON live (210 cartes KS) + WebP `/storage/{imageUrl|imageUrlFr}` ; pas encore branché en harvest",
+  "lang": "fr+en (+it/de/es UI)",
+  "line": "mythos",
+  "official": false,
+  "disclaimer": "Footer site : « application fan non officielle, non affiliée ni approuvée par Cicaboom ». Ne remplace pas narutotcgmythos.com ni LorenZone.",
+  "assets": {
+    "list": "GET /api/cards → { data: Card[] }",
+    "faceEn": "https://www.narutomythos.com/storage/{imageUrl}",
+    "faceFr": "https://www.narutomythos.com/storage/{imageUrlFr}",
+    "example": "https://www.narutomythos.com/storage/cards/fr/KS-001.webp"
+  },
+  "fields": [
+    "id (KS-001)",
+    "nameFr / nameEn",
+    "rarity",
+    "type",
+    "chakra",
+    "power",
+    "keywords",
+    "group",
+    "effectFr / effectEn",
+    "set",
+    "cardNumber",
+    "imageUrl",
+    "imageUrlFr"
+  ],
+  "coverage": {
+    "sets": ["KS (Konoha Shidō)"],
+    "cards": 210,
+    "note": "Set KS seulement au probe 2026-09-05 — pas de SS2 / Akatsuki dans l’API."
+  },
+  "vsOfficialGallery": "Galerie officielle : API https://cards.narutotcgmythos.com/api/cards?lang=fr → 636 cartes (KS1 ed1/ed2 + SS2). UI /fr/galerie encore banner maintenance mais données live. Preferer l’API officielle pour art.official ; ce site fan reste KS-only / non affilié.",
+  "also": [
+    "Checklist faces shop : lorenzone-ks1-checklist.json",
+    "Gallery officielle (bloquée) : narutotcgmythos-gallery.json"
+  ]
+}

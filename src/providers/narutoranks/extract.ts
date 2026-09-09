@@ -7,6 +7,10 @@ import {
   harvestArcadeGameCards,
   installArcadeGameCards,
 } from "./arcadeGameCards";
+import {
+  harvestAnimeCollectionRanksFaces,
+  installAnimeCollectionRanksFaces,
+} from "./animecollectionFaces";
 import { syncEbayNinjaRanksFromBrowseApi } from "./ebayAssets";
 import {
   buildNinjaRanksFromLedgers,
@@ -76,6 +80,13 @@ export async function runNarutoRanksPackPipeline(
         .join(", ")}`,
     );
   }
+  const ac = await harvestAnimeCollectionRanksFaces({
+    force,
+    refreshLedger: true,
+  });
+  console.log(
+    `── AnimeCollection — ${ac.cards} carte(s) : ${ac.ok} recto, ${ac.backsOk} verso, ${ac.skip + ac.backsSkip} déjà là, ${ac.fail + ac.backsFail} manqué${ac.fail + ac.backsFail === 1 ? "" : "s"}`,
+  );
   const imadoki = await harvestImadokiSheets({ force });
   console.log(
     `── Imadoki — ${imadoki.ok} planche(s), ${imadoki.skip} déjà là, ${imadoki.fail} manquée${imadoki.fail === 1 ? "" : "s"}`,
@@ -118,6 +129,14 @@ export async function runNarutoRanksPackPipeline(
       if (scans.faces || scans.backs || scans.missing.length) {
         console.log(
           `── Naruto Ninja Ranks — ${scans.faces} face(s) Coleka, ${scans.backs} verso(s)${scans.missing.length ? `, ${scans.missing.length} sans octets en staging` : ""}`,
+        );
+      }
+      // AC après Coleka : writeAssets écrase le pointeur d'index — AC est la
+      // source FR principale (HD + dos).
+      const acFaces = installAnimeCollectionRanksFaces(index);
+      if (acFaces.faces || acFaces.backs || acFaces.missing.length) {
+        console.log(
+          `── Naruto Ninja Ranks — ${acFaces.faces} face(s) AnimeCollection, ${acFaces.backs} verso(s)${acFaces.missing.length ? `, ${acFaces.missing.length} manquante(s)` : ""}`,
         );
       }
       const fan = installBloggerPackRip(index);

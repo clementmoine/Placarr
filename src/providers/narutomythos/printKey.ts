@@ -1,6 +1,10 @@
 import { buildPrintKey } from "@/core/identify/printKey";
 
 import { NARUTO_MYTHOS_PRINT_GAME } from "./pack";
+import {
+  NARUTO_MYTHOS_KS1E2_SET_CODE,
+  NARUTO_MYTHOS_KS1PROMO_SET_CODE,
+} from "./parseOfficialCards";
 
 /** Konoha Shidō — Chapitre 1 (1re édition FR). */
 export const NARUTO_MYTHOS_KS1_SET_CODE = "ks1";
@@ -9,8 +13,15 @@ export const NARUTO_MYTHOS_SS2_SET_CODE = "ss2";
 /** Akatsuki — Chapitre 3. */
 export const NARUTO_MYTHOS_AK3_SET_CODE = "ak3";
 
+export {
+  NARUTO_MYTHOS_KS1E2_SET_CODE,
+  NARUTO_MYTHOS_KS1PROMO_SET_CODE,
+};
+
 const SET_DENOMINATOR: Readonly<Record<string, number>> = {
   [NARUTO_MYTHOS_KS1_SET_CODE]: 130,
+  [NARUTO_MYTHOS_KS1E2_SET_CODE]: 130,
+  [NARUTO_MYTHOS_KS1PROMO_SET_CODE]: 130,
   [NARUTO_MYTHOS_SS2_SET_CODE]: 140,
   [NARUTO_MYTHOS_AK3_SET_CODE]: 140,
 };
@@ -56,13 +67,23 @@ export function formatMythosReference(
   const digits = n.replace(/^0+/, "") || "0";
   const padded = digits.padStart(3, "0");
   const base = `${padded}/${denominatorForSet(cardType)}`;
-  const g = grouping?.trim().toLowerCase();
-  if (g === "a") return `${base} A`;
-  if (g === "v") return `${base} V`;
-  if (g === "sg") return `${base} SG`;
-  if (g === "chibi") return `${base} Chibi`;
-  if (g === "pop") return `${base} POP`;
-  return base;
+  const g = grouping?.trim().toLowerCase() || "";
+  if (!g) return base;
+  if (g === "a" || g.startsWith("a")) return `${base} A`;
+  if (g === "v" || g.startsWith("v")) return `${base} V`;
+  if (g === "l" || g.startsWith("l")) return `${base} L`;
+  if (g === "s" && !g.startsWith("sv") && !g.startsWith("sp") && !g.startsWith("shinobi")) {
+    return `${base} S`;
+  }
+  if (g.startsWith("sv")) return `${base} SV`;
+  if (g === "sg" || g.startsWith("shinobi")) return `${base} SG`;
+  if (g.startsWith("chibi")) return `${base} Chibi`;
+  if (g.startsWith("pop")) return `${base} POP`;
+  if (g.startsWith("sp")) return `${base} SP`;
+  if (g === "h" || g.startsWith("gold") || g.includes("gold")) {
+    return `${base} ${g.toUpperCase()}`;
+  }
+  return `${base} ${g.toUpperCase()}`;
 }
 
 /** `001/130 A`, `1/140`, `MSS8`, `M8` → formes cherchables en base. */
@@ -92,6 +113,14 @@ export function mythosSetLabel(
       ? "Konoha Shidō — Chapter 1"
       : "Konoha Shidō — Chapitre 1";
   }
+  if (code === NARUTO_MYTHOS_KS1E2_SET_CODE) {
+    return lang === "en"
+      ? "Konoha Shidō — Chapter 1 (2nd ed.)"
+      : "Konoha Shidō — Chapitre 1 (2e éd.)";
+  }
+  if (code === NARUTO_MYTHOS_KS1PROMO_SET_CODE) {
+    return lang === "en" ? "Mythos Promo Cards" : "Cartes Promo Mythos";
+  }
   if (code === NARUTO_MYTHOS_SS2_SET_CODE) {
     return lang === "en" ? "Shinobi Shiren — Chapter 2" : "Shinobi Shiren — Chapitre 2";
   }
@@ -104,6 +133,8 @@ export function mythosSetLabel(
 export function mythosSetSortKey(setCode: string): number | null {
   const code = setCode.trim().toLowerCase();
   if (code === NARUTO_MYTHOS_KS1_SET_CODE) return 1;
+  if (code === NARUTO_MYTHOS_KS1E2_SET_CODE) return 1.5;
+  if (code === NARUTO_MYTHOS_KS1PROMO_SET_CODE) return 1.7;
   if (code === NARUTO_MYTHOS_SS2_SET_CODE) return 2;
   if (code === NARUTO_MYTHOS_AK3_SET_CODE) return 3;
   return null;

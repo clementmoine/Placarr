@@ -46,10 +46,11 @@ export function kayouFaceUrlCandidates(card: KayouChecklistCard): string[] {
   };
   const rank = (url: string): number => {
     if (url.includes("kayouofficial.com")) return 0;
-    if (url.includes("narutocards.ca")) return 1;
-    if (url.includes("capsulecorpgear.com")) return 2;
-    if (url.includes("hitmarket.fr")) return 3;
-    return 4;
+    if (url.includes("narutodb.com")) return 1;
+    if (url.includes("narutocards.ca")) return 2;
+    if (url.includes("capsulecorpgear.com")) return 3;
+    if (url.includes("hitmarket.fr")) return 4;
+    return 5;
   };
   if (card.faceUrl?.trim()) add(card.faceUrl);
   for (const alt of card.faceUrlAlternates ?? []) add(alt);
@@ -72,6 +73,7 @@ function artSourceId(card: KayouChecklistCard, chosenUrl: string | null): string
   const tagged = card.faceSource?.trim();
   if (tagged) return tagged;
   if (chosenUrl?.includes("kayouofficial.com")) return "kayouofficial";
+  if (chosenUrl?.includes("narutodb.com")) return "narutodb";
   if (chosenUrl?.includes("capsulecorpgear.com")) return "capsulecorpgear";
   if (chosenUrl?.includes("hitmarket.fr")) return "alertehit";
   return DEFAULT_SOURCE_ID;
@@ -114,7 +116,12 @@ export type KayouFaceHarvest = {
 };
 
 export async function harvestKayouFaces(
-  opts: { force?: boolean; stagingDir?: string; delayMs?: number } = {},
+  opts: {
+    force?: boolean;
+    stagingDir?: string;
+    delayMs?: number;
+    onProgress?: (message: string) => void;
+  } = {},
 ): Promise<KayouFaceHarvest> {
   const ledger = readKayouChecklist();
   const staging = opts.stagingDir ?? kayouFacesStagingDir();
@@ -124,12 +131,19 @@ export async function harvestKayouFaces(
   let skip = 0;
   let fail = 0;
   let cards = 0;
+  const total = ledger.sets.reduce((n, s) => n + s.cards.length, 0);
+  opts.onProgress?.(`faces staging — ${total} carte(s) checklist…`);
   for (const set of ledger.sets) {
     for (const card of set.cards) {
       cards += 1;
       const dest = path.join(staging, stagingName(set, card));
       if (!opts.force && existsSync(dest)) {
         skip += 1;
+        if (cards % 500 === 0 || cards === total) {
+          opts.onProgress?.(
+            `faces staging — ${cards}/${total} (${ok} new, ${skip} skip, ${fail} miss)`,
+          );
+        }
         continue;
       }
       let buf: Buffer | null = null;
@@ -151,6 +165,11 @@ export async function harvestKayouFaces(
       }
       if (opts.delayMs !== 0) {
         await new Promise((r) => setTimeout(r, opts.delayMs ?? 25));
+      }
+      if (cards % 50 === 0 || cards === total) {
+        opts.onProgress?.(
+          `faces staging — ${cards}/${total} (${ok} new, ${skip} skip, ${fail} miss)`,
+        );
       }
     }
   }

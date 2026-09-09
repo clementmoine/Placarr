@@ -38,6 +38,7 @@ import {
   type CatalogueBrowseScope,
   type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
+import { useOptimisticUrlValue } from "@/lib/client/useOptimisticUrlValue";
 import { hydrateFoilMetaFromAssets } from "@/lib/foilMetaLoad";
 import {
   peekPrintVariant,
@@ -49,6 +50,7 @@ import {
   type PrintVariantInfo,
   type VariantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
+
 import { Switch } from "@/components/ui/switch";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { cn } from "@/lib/shared/utils";
@@ -831,10 +833,46 @@ export function FoilPlayroom({
   const urlPackInSync = packFromUrl === cataloguePackId;
   const catalogueInfo =
     cataloguePackInfo(cataloguePackId) ?? CATALOGUE_PACKS[0]!;
-  const browseScope: CatalogueBrowseScope = resolveCatalogueScope(
+
+  const urlBrowseScope: CatalogueBrowseScope = resolveCatalogueScope(
     urlPackInSync ? searchParams.get("scope") : null,
     catalogueInfo,
   );
+  const {
+    value: browseScope,
+    setOptimistic: setBrowseScopeOptimistic,
+    clearOptimistic: clearBrowseScopeOptimistic,
+  } = useOptimisticUrlValue(urlBrowseScope);
+
+  const urlLayout = resolvePlayroomLayout(
+    urlPackInSync ? searchParams.get("view") : null,
+  );
+  const {
+    value: layout,
+    setOptimistic: setLayoutOptimistic,
+    clearOptimistic: clearLayoutOptimistic,
+  } = useOptimisticUrlValue(urlLayout);
+
+  const urlComparePair = resolveComparePair(
+    urlPackInSync ? searchParams.get("pair") : null,
+  );
+  const {
+    value: comparePair,
+    setOptimistic: setComparePairOptimistic,
+    clearOptimistic: clearComparePairOptimistic,
+  } = useOptimisticUrlValue(urlComparePair);
+
+  useLayoutEffect(() => {
+    clearBrowseScopeOptimistic();
+    clearLayoutOptimistic();
+    clearComparePairOptimistic();
+  }, [
+    cataloguePackId,
+    clearBrowseScopeOptimistic,
+    clearLayoutOptimistic,
+    clearComparePairOptimistic,
+  ]);
+
   const showFoilPlayroom =
     catalogueInfo.hasFoilEffects && browseScope === "foils";
   /** Effect-pack id (may differ from catalogue path, e.g. naruto/kayou → naruto-kayou). */
@@ -865,10 +903,6 @@ export function FoilPlayroom({
     [packArts, packId, packs],
   );
 
-  const layout = resolvePlayroomLayout(
-    urlPackInSync ? searchParams.get("view") : null,
-  );
-  const comparePair = resolveComparePair(searchParams.get("pair"));
   const [backend, setBackend] = useState<FoilBackendPreference>("auto");
   const [tilt, setTilt] = useState(true);
 
@@ -890,10 +924,20 @@ export function FoilPlayroom({
     }
     return [...owned, ...rest];
   }, [materials, pack, artsFor]);
-  const focusedMaterial = resolvePlayroomMaterial(
+  const urlFocusedMaterial = resolvePlayroomMaterial(
     urlPackInSync ? searchParams.get("material") : null,
     materialsOrdered,
   );
+  const {
+    value: focusedMaterial,
+    setOptimistic: setMaterialOptimistic,
+    clearOptimistic: clearMaterialOptimistic,
+  } = useOptimisticUrlValue(urlFocusedMaterial);
+
+  useLayoutEffect(() => {
+    clearMaterialOptimistic();
+  }, [cataloguePackId, clearMaterialOptimistic]);
+
   const focusIndex = focusedMaterial
     ? Math.max(0, materialsOrdered.indexOf(focusedMaterial))
     : 0;
@@ -919,6 +963,11 @@ export function FoilPlayroom({
 
   const selectScope = useCallback(
     (next: CatalogueBrowseScope) => {
+      setBrowseScopeOptimistic(next);
+      if (next !== "foils") {
+        setLayoutOptimistic("grid");
+        setMaterialOptimistic(null);
+      }
       replaceParams((params) => {
         if (next === "foils") {
           params.delete("scope");
@@ -933,11 +982,22 @@ export function FoilPlayroom({
         }
       });
     },
-    [replaceParams],
+    [
+      replaceParams,
+      setBrowseScopeOptimistic,
+      setLayoutOptimistic,
+      setMaterialOptimistic,
+    ],
   );
 
   const selectLayout = useCallback(
     (next: PlayroomLayout) => {
+      setLayoutOptimistic(next);
+      if (next === "grid") {
+        setMaterialOptimistic(null);
+      } else if (!focusedMaterial && materialsOrdered[0]) {
+        setMaterialOptimistic(materialsOrdered[0]);
+      }
       replaceParams((params) => {
         if (next === "grid") {
           params.delete("view");
@@ -953,11 +1013,19 @@ export function FoilPlayroom({
         }
       });
     },
-    [materialsOrdered, replaceParams],
+    [
+      focusedMaterial,
+      materialsOrdered,
+      replaceParams,
+      setLayoutOptimistic,
+      setMaterialOptimistic,
+    ],
   );
 
   const selectComparePair = useCallback(
     (next: ComparePair) => {
+      setComparePairOptimistic(next);
+      setLayoutOptimistic("compare");
       replaceParams((params) => {
         if (next === "unity") params.delete("pair");
         else params.set("pair", "simey");
@@ -966,11 +1034,15 @@ export function FoilPlayroom({
         }
       });
     },
-    [replaceParams],
+    [replaceParams, setComparePairOptimistic, setLayoutOptimistic],
   );
 
   const selectMaterial = useCallback(
     (name: string) => {
+      setMaterialOptimistic(name);
+      if (layout !== "compare") {
+        setLayoutOptimistic("focus");
+      }
       replaceParams((params) => {
         // Keep the comparison open when stepping through materials inside it.
         if (resolvePlayroomLayout(params.get("view")) !== "compare") {
@@ -979,7 +1051,7 @@ export function FoilPlayroom({
         params.set("material", name);
       });
     },
-    [replaceParams],
+    [layout, replaceParams, setLayoutOptimistic, setMaterialOptimistic],
   );
 
   const stepMaterial = useCallback(

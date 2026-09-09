@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { useOptimisticUrlValue } from "@/lib/client/useOptimisticUrlValue";
 import Header from "@/components/Header";
 import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
 import {
@@ -306,18 +307,28 @@ function AdminDashboardComponent() {
   const { t, locale } = useLocale();
 
   const tabFromUrl = searchParams.get("tab");
-  const activeTab =
+  const urlTab =
     tabFromUrl === "catalogue" ||
     tabFromUrl === "refresh" ||
     tabFromUrl === "playground" ||
     tabFromUrl === "providers"
       ? tabFromUrl
       : "providers";
+  const { value: activeTab, setOptimistic: setTabOptimistic } =
+    useOptimisticUrlValue(urlTab);
 
   const setTab = (value: string) => {
+    const next =
+      value === "catalogue" ||
+      value === "refresh" ||
+      value === "playground" ||
+      value === "providers"
+        ? value
+        : "providers";
+    setTabOptimistic(next);
     const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", value);
-    if (value !== "catalogue") params.delete("pack");
+    params.set("tab", next);
+    if (next !== "catalogue") params.delete("pack");
     router.replace(`/admin?${params.toString()}`, { scroll: false });
   };
 

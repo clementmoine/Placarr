@@ -54,7 +54,7 @@ Ne pas ajouter `frida-il2cpp-bridge` aux deps Placarr. Proxy mitm off pendant la
 | `src/app/api/admin/live-open`          | Admin bouton playroom → `openCardInLive`                        |
 | `scripts/pokemon/liveCardVerify.ts`    | Screenshot ↔ `cardTex` (complément)                             |
 | `src/effects/pokemon/resolveEffect.ts` | `printKey` → bundle                                             |
-| Admin                                  | `/admin?tab=tcg-effects` (`FoilPlayroom` / `packArts.bundleId`) |
+| Admin                                  | `/admin?tab=catalogue` (`FoilPlayroom` / `packArts.bundleId`) |
 
 ```bash
 pnpm foil:pokemon:live-card "Tropius" --set me5 --tilt

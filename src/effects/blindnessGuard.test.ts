@@ -27,7 +27,6 @@ const SKIP_DIR_PREFIXES = [
   "src/app/api/admin/foil-",
   "src/components/admin/Foil",
   "src/components/admin/TcgEffects",
-  "src/components/admin/WebAdb",
   "src/lib/admin/foilStatus",
   "src/lib/admin/catalogueExtractRunner.ts",
   "src/lib/admin/foilCatalogSync.ts",

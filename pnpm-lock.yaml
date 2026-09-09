@@ -68,15 +68,6 @@ importers:
       '@yudiel/react-qr-scanner':
         specifier: 2.6.0
         version: 2.6.0(@types/emscripten@1.40.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@yume-chan/adb':
-        specifier: ^2.6.2
-        version: 2.6.2
-      '@yume-chan/adb-credential-web':
-        specifier: ^2.1.0
-        version: 2.1.0
-      '@yume-chan/adb-daemon-webusb':
-        specifier: ^2.3.2
-        version: 2.3.2
       axios:
         specifier: 1.19.0
         version: 1.19.0
@@ -1962,9 +1953,6 @@ packages:
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
 
-  '@types/w3c-web-usb@1.0.14':
-    resolution: {integrity: sha512-Qu3Nn6JFuF4+sHKYl+IcX9vYiI40ogleXzFFSxoE1W94rG98o/kXs8uJ0QSfFzuwBCZWlGfUGpPkgwuuX4PchA==}
-
   '@typescript-eslint/eslint-plugin@8.67.0':
     resolution: {integrity: sha512-Un7Heoyj65NREbKAyIrFxeM143NZpExWmy1Nep4DLeQOeLlTeumPjoNKnBrU5D5moWXbPJgRa5Uwcdu0faVNGQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -2350,30 +2338,6 @@ packages:
     peerDependencies:
       react: ^17 || ^18 || ^19
       react-dom: ^17 || ^18 || ^19
-
-  '@yume-chan/adb-credential-web@2.1.0':
-    resolution: {integrity: sha512-ps5XWt+xxm6Mi9eF80ePprPJ/uRFMhfR437betQE8hixrjdZpkZgMlqZU6GlnuebMi0djrbP8GWB49jJekJVYA==}
-
-  '@yume-chan/adb-daemon-webusb@2.3.2':
-    resolution: {integrity: sha512-5ANaqsRJWFc5kKMnGALjYCrSXo5eC4u51dvYppvuBCLVjv12n7he2TPy5yEZ3XtlToRFS0kWCQC0XS8M60lRSA==}
-
-  '@yume-chan/adb@2.6.2':
-    resolution: {integrity: sha512-CWxM8A9jAoHWBRG6w8/c+Mu42kHZDd1Nb3G0Ou/lOC2OWMoY/+FQbEA89ma8e/rzLJBfoZRhPfSkqb55I9vM0w==}
-
-  '@yume-chan/async@4.1.3':
-    resolution: {integrity: sha512-0vzhNJMkWUPyjKzUK4rqHEeCU6YQtF78RsB1kFRB6Y2BLupmEQNxcSb0mjKabPL9jZpCCiLa5KL8oTOJClUVaw==}
-
-  '@yume-chan/event@2.0.0':
-    resolution: {integrity: sha512-z56MDOcX1QlgLUCuA6th3r10negVb7A3gzY//TwSC9ZOvzuRlrAqXcxZf1T3hHfNMk/NFO9RIgQgegXYSfaqLw==}
-
-  '@yume-chan/no-data-view@2.0.0':
-    resolution: {integrity: sha512-0GRJrrt6wtZlbiE92jocHOnaAvjQ+Y7xwwhwOPqLkwf90Kj1JIHJ5Zh4wJVQSQIkzfRSOpM+jeEQdC2K15snlA==}
-
-  '@yume-chan/stream-extra@2.6.1':
-    resolution: {integrity: sha512-GQ+Q0SQf9p6Fl7ZK0UO5vHVGBJgkTJm/WXKurUMpjHQV4VUpjZ2hrQ744aCfT7WwSol7Bz/uEiXWmk240Hr/hg==}
-
-  '@yume-chan/struct@2.3.2':
-    resolution: {integrity: sha512-afoCnSKV+5HRK7e4innVd9YTYDyNWdjA1CVQa1j8rWYnmr7HGZfdkHMQr+AESLk6GxWFMzOIPQIG6nYOTGMFIw==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -6629,8 +6593,6 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
-  '@types/w3c-web-usb@1.0.14': {}
-
   '@typescript-eslint/eslint-plugin@8.67.0(@typescript-eslint/parser@8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
@@ -6998,44 +6960,6 @@ snapshots:
       webrtc-adapter: 9.0.6
     transitivePeerDependencies:
       - '@types/emscripten'
-
-  '@yume-chan/adb-credential-web@2.1.0':
-    dependencies:
-      '@yume-chan/adb': 2.6.2
-
-  '@yume-chan/adb-daemon-webusb@2.3.2':
-    dependencies:
-      '@types/w3c-web-usb': 1.0.14
-      '@yume-chan/adb': 2.6.2
-      '@yume-chan/event': 2.0.0
-      '@yume-chan/stream-extra': 2.6.1
-      '@yume-chan/struct': 2.3.2
-
-  '@yume-chan/adb@2.6.2':
-    dependencies:
-      '@yume-chan/async': 4.1.3
-      '@yume-chan/event': 2.0.0
-      '@yume-chan/no-data-view': 2.0.0
-      '@yume-chan/stream-extra': 2.6.1
-      '@yume-chan/struct': 2.3.2
-
-  '@yume-chan/async@4.1.3': {}
-
-  '@yume-chan/event@2.0.0':
-    dependencies:
-      '@yume-chan/async': 4.1.3
-
-  '@yume-chan/no-data-view@2.0.0': {}
-
-  '@yume-chan/stream-extra@2.6.1':
-    dependencies:
-      '@yume-chan/async': 4.1.3
-      '@yume-chan/struct': 2.3.2
-
-  '@yume-chan/struct@2.3.2':
-    dependencies:
-      '@yume-chan/async': 4.1.3
-      '@yume-chan/no-data-view': 2.0.0
 
   acorn-jsx@5.3.2(acorn@8.18.0):
     dependencies:

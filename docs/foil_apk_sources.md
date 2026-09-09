@@ -27,7 +27,13 @@ Objectif : sync auto **sans téléphone**. Frida = QA seulement, jamais une sour
 
 ## Sync auto
 
-- Enqueue `foilExtract` sur staleness **sans** exiger un device.
+- **Store fetch sans téléphone** : première étape du job `foilExtract` (bouton Sync + auto-sync worker). Probe `versionCode`, télécharge le XAPK seulement s’il est plus récent que `apk-store-meta.json`, dépose base + splits (noms normalisés `base.apk` / `split_*.apk`) dans `data/<pack>/staging/apks/`, puis enchaîne l’extract. Auto-sync 1×/jour (`PLACARR_APK_STORE_CHECK_MS`, off via `PLACARR_APK_STORE_AUTO=0`) : nouvel APK → extract complet ; sinon → catalogue réseau (Malie / CDN / LorcanaJSON / web) **sans** Unity, graphe produits, faces papier ni audits. Un Sync manuel reste complet. Source de vérité package : `androidPackageId` (`cataloguePacks`). Pas d’ADB, pas d’upload manuel.
+- **Dumps Unity sautés** quand les artifacts disque (UV + dos Pokémon ; shaders / textures / manifest / dos Lorcana) sont déjà plus récents que les APKs — un re-run ne rescane pas l’APK pour rien.
+- **Pokémon CDN** : AssetManifests re-téléchargés seulement si `version` / `content_dir` / `content_base` / langs ont bougé (meta `.cdn-target.json`). Dump interrompu → reprise `skipExisting` des `manifest_*.json` déjà là. JSON compact + yield entre manifests (heartbeat). `shadersbundle` → frags / textures / material sheets skippés si déjà plus récents que le bundle.
+- **Malie** : cache `malie-identities.json.gz` + fingerprint des revisions — si rien n’a bougé, pas de reparse des ~1.4k DB. Progress via `console.log` (tee admin + heartbeat). Yield pendant un reparse forcé.
+- Miroirs (couverture vérifiée) : **APKPure** (Lorcana ; probe via FlareSolverr, binaire via `d.cdnpure.com` — `d.apkpure.com` 403 le TLS Node même avec cookies Flare) puis **APKCombo** (TCG Live absent d’APKPure ; URL R2 présignée sans bot wall). Uptodown écarté : token Cloudflare Turnstile requis au download.
+- Garde-fous : versionCode introuvable = `unavailable` (jamais de download deviné) ; le `manifest.json` du XAPK doit nommer le bon package ; réponse non-ZIP (challenge Cloudflare) rejetée. **Analyse ouverte** : pin de la signature éditeur (apksigner) avant extract — le miroir reste un tiers.
+- Provenance inconnue (pas de `versionCode` dans le meta) → le prochain passage store établit la baseline.
 - Lorcana sans APK : phases web + cards seulement (CLI skip Unity déjà).
 - Gaps admin taguent `apk-gated` quand WebGL / back / UV manquent faute d’APK.
 

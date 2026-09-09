@@ -101,6 +101,10 @@ export function preserveActiveMetadataRefreshStamp<
  *  run on the same event loop amplify Network Errors. */
 export const METADATA_POLL_INTERVAL_MS = 5000;
 
+/** Background-jobs menu: tight while work exists, sparse when idle. */
+export const BACKGROUND_JOBS_BUSY_POLL_MS = METADATA_POLL_INTERVAL_MS;
+export const BACKGROUND_JOBS_IDLE_POLL_MS = 45_000;
+
 export function collectionHasMetadataBusy(
   items: ItemEnrichmentFields[] | null | undefined,
 ): boolean {
@@ -111,4 +115,14 @@ export function metadataBusyRefetchInterval(
   items: ItemEnrichmentFields[] | null | undefined,
 ): number | false {
   return collectionHasMetadataBusy(items) ? METADATA_POLL_INTERVAL_MS : false;
+}
+
+/** React Query `refetchInterval` for `/api/background-jobs`. */
+export function backgroundJobsRefetchInterval(query: {
+  state: { data?: { count?: number } | undefined };
+}): number {
+  const count = query.state.data?.count ?? 0;
+  return count > 0
+    ? BACKGROUND_JOBS_BUSY_POLL_MS
+    : BACKGROUND_JOBS_IDLE_POLL_MS;
 }

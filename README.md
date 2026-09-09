@@ -25,7 +25,7 @@ The app uses **PostgreSQL**.
 pnpm install
 docker compose up -d db          # PostgreSQL on localhost:5432
 pnpm prisma migrate deploy       # apply migrations
-pnpm prisma db seed              # create admin/guest users (first run only)
+pnpm prisma db seed              # create owner account (first run only)
 pnpm dev                         # native compile (~1-2s)
 ```
 
@@ -42,7 +42,7 @@ What you may actually want to change:
 
 | Variable                            | Default                    | Why you would touch it                                                                                                                  |
 | ----------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `ADMIN_PASSWORD` / `GUEST_PASSWORD` | `admin` / `guest-password` | **Change these before exposing an instance** — the seed creates both accounts.                                                          |
+| `ADMIN_PASSWORD` | `admin` | **Change before exposing an instance** — unlocks write access; browsing is public. |
 | `FLARESOLVERR_URL`                  | unset                      | Enables the Cloudflare-protected retailers. Without it they are skipped.                                                                |
 | `WORKER_CONCURRENCY`                | `6`                        | Jobs the `pnpm worker` process runs at once. Automatically capped to 3 when FlareSolverr is configured — one browser, one serial queue. |
 | `BACKGROUND_IO_CONCURRENCY`         | `4`                        | In-process work the Next server does itself (a separate pool from the worker).                                                          |

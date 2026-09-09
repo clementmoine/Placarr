@@ -8,6 +8,7 @@
  */
 
 import type { ProductBehavior } from "./buyAdvice";
+import { sealedProductAllowed } from "./buyAdvice";
 
 export type SealedContainmentRelation =
   | "guaranteed"
@@ -19,6 +20,7 @@ export type SealedContainmentSource = {
   name: string;
   kind: string;
   imageUrl?: string | null;
+  language?: string | null;
   relation: SealedContainmentRelation;
 };
 
@@ -36,6 +38,8 @@ export type ContainmentProduct = {
   behavior: ProductBehavior | "no_cards";
   setId?: string | null;
   imageUrl?: string | null;
+  /** Locale du SKU (`fr`, `en`, …) — absente = langue inconnue (on garde). */
+  language?: string | null;
   /** `true` quand `guaranteedPrints` / preview ne sont pas le contenu réel. */
   printsArePreview?: boolean;
   /**
@@ -60,9 +64,23 @@ const RELATION_RANK: Record<SealedContainmentRelation, number> = {
 
 const KIND_RANK: Record<string, number> = {
   deck: 0,
-  coffret: 1,
-  booster: 2,
-  display: 3,
+  deck_bundle: 1,
+  tin: 2,
+  etb: 3,
+  trove: 4,
+  quest: 5,
+  multipack: 6,
+  collector_box: 7,
+  coffret: 8,
+  special: 9,
+  puzzle: 10,
+  prerelease: 11,
+  blister: 12,
+  booster: 13,
+  display: 14,
+  blister_case: 15,
+  case: 16,
+  ephemera: 17,
 };
 
 function normKey(value: string | null | undefined): string {
@@ -103,6 +121,7 @@ function asSource(
     name: product.name,
     kind: product.kind,
     imageUrl: product.imageUrl ?? null,
+    language: product.language ?? null,
     relation,
   };
 }
@@ -124,14 +143,23 @@ function packsForSet(
 /**
  * Produits scellés attestés pour un tirage, triés garanties → pool listé →
  * pool set, puis kind (deck avant booster avant display).
+ *
+ * `preferredLanguage` / `allowedLanguages` : même règle que buyAdvice
+ * (`sealedProductAllowed`) — SKU sans langue gardé ; mismatch exclu.
  */
 export function sealedContainmentForPrint(input: {
   printKey: string;
   setId?: string | null;
   products: readonly ContainmentProduct[];
+  preferredLanguage?: string | null;
+  allowedLanguages?: readonly string[] | null;
 }): SealedContainmentSource[] {
   const printKey = normKey(input.printKey);
   if (!printKey) return [];
+
+  const allowed =
+    input.allowedLanguages ??
+    (input.preferredLanguage ? [input.preferredLanguage] : null);
 
   const bySlug = new Map<string, SealedContainmentSource>();
 
@@ -150,6 +178,7 @@ export function sealedContainmentForPrint(input: {
 
   for (const product of input.products) {
     if (product.behavior === "no_cards") continue;
+    if (!sealedProductAllowed(product.language, allowed)) continue;
 
     const guaranteed = (product.guaranteedPrints ?? [])
       .map(normKey)
@@ -201,5 +230,13 @@ export function sealedContainmentForPrint(input: {
     }
   }
 
-  return [...bySlug.values()].sort(compareSources);
+  const preferred = normKey(input.preferredLanguage);
+  return [...bySlug.values()].sort((a, b) => {
+    if (preferred) {
+      const aMatch = normKey(a.language) === preferred ? 0 : 1;
+      const bMatch = normKey(b.language) === preferred ? 0 : 1;
+      if (aMatch !== bMatch) return aMatch - bMatch;
+    }
+    return compareSources(a, b);
+  });
 }

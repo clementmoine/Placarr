@@ -93,6 +93,21 @@ describe("sealedProductsLoad projections", () => {
       randomPoolPrints: [],
       setId: "s1",
       imageUrl: "/art.webp",
+      language: null,
+    });
+  });
+
+  it("passes language through to containment", () => {
+    const row = entry({
+      slug: "starter-en",
+      kind: "deck",
+      behavior: "known_bundle",
+      lang: "EN",
+      guaranteedPrints: [],
+    });
+    // Entry already normalized by load path; here lang is raw on SealedProductEntry.
+    expect(toContainmentProduct({ ...row, lang: "en" })).toMatchObject({
+      language: "en",
     });
   });
 
@@ -114,7 +129,11 @@ describe("sealedProductsLoad projections", () => {
     expect(toContainmentProduct(row).randomPoolPrints).toEqual([
       "lorcana:1-p1",
     ]);
-    expect(toBuyProduct(row).printsArePreview).toBe(false);
+    expect(toBuyProduct(row)).toMatchObject({
+      randomPoolScope: "listed",
+      randomPoolPrints: ["lorcana:1-p1"],
+      printsArePreview: false,
+    });
   });
 
   it("forwards packsBySet onto buy and containment projections", () => {

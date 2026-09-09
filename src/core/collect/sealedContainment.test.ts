@@ -108,6 +108,38 @@ describe("sealedContainmentForPrint", () => {
     expect(sources[0]?.relation).toBe("guaranteed");
   });
 
+  it("indexes a puzzle promo insert as guaranteed containment", () => {
+    const sources = sealedContainmentForPrint({
+      printKey: "lorcana:p2-36",
+      setId: "p2",
+      products: [
+        product({
+          slug: "puzzle-1000-pieces-mickey",
+          name: "Puzzle 1000 Pièce Lorcana - Mickey",
+          kind: "puzzle",
+          behavior: "known_bundle",
+          guaranteedPrints: ["lorcana:p2-36"],
+          imageUrl:
+            "https://static.lorcards.fr/products/fr/puzzles/puzzle-mickey.webp",
+        }),
+        product({
+          slug: "puzzle-1000-pieces-elsa",
+          name: "Puzzle 1000 Pièce Lorcana - Elsa",
+          kind: "puzzle",
+          behavior: "known_bundle",
+          guaranteedPrints: ["lorcana:p2-36"],
+        }),
+      ],
+    });
+    expect(sources).toHaveLength(2);
+    expect(sources.every((row) => row.relation === "guaranteed")).toBe(true);
+    expect(sources.every((row) => row.kind === "puzzle")).toBe(true);
+    expect(sources.map((row) => row.slug).sort()).toEqual([
+      "puzzle-1000-pieces-elsa",
+      "puzzle-1000-pieces-mickey",
+    ]);
+  });
+
   it("ignores no_cards and empty print keys", () => {
     expect(
       sealedContainmentForPrint({
@@ -185,5 +217,43 @@ describe("sealedContainmentForPrint", () => {
       "starter-b",
       "booster-s1",
     ]);
+  });
+
+  it("filters sealed SKUs by preferred language (keeps unknown lang)", () => {
+    const products: ContainmentProduct[] = [
+      product({
+        slug: "starter-fr",
+        name: "Starter FR",
+        kind: "deck",
+        behavior: "known_bundle",
+        language: "fr",
+        guaranteedPrints: ["x:1"],
+      }),
+      product({
+        slug: "starter-en",
+        name: "Starter EN",
+        kind: "deck",
+        behavior: "known_bundle",
+        language: "en",
+        guaranteedPrints: ["x:1"],
+      }),
+      product({
+        slug: "display-unk",
+        name: "Display",
+        kind: "display",
+        behavior: "pack_container",
+        language: null,
+        randomPoolScope: "set",
+        setId: "1",
+      }),
+    ];
+    const fr = sealedContainmentForPrint({
+      printKey: "x:1",
+      setId: "1",
+      products,
+      preferredLanguage: "fr",
+    });
+    expect(fr.map((row) => row.slug)).toEqual(["starter-fr", "display-unk"]);
+    expect(fr[0]?.language).toBe("fr");
   });
 });

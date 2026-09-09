@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useMemo, useRef, useState, type SyntheticEvent } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type SyntheticEvent,
+} from "react";
+import dynamic from "next/dynamic";
 import type { Item } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { Loader2 } from "lucide-react";
@@ -11,7 +19,6 @@ import {
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
 import { CardBackSkeleton } from "@/components/CardBackSkeleton";
-import { FoilCardImage } from "@/components/FoilCardImage";
 import {
   usePrintVariant,
   variantRendering,
@@ -23,11 +30,20 @@ import {
 } from "@/lib/client/hooks/useImageEdgeColors";
 
 import {
-  resolveDefaultCardBack,
-  sharedCardBackSkeletonUrl,
+  resolveSharedCardBackSkeleton,
 } from "@/core/render/foil";
-import "@/effects";
+import {
+  effectsRegistered,
+  ensureEffects,
+  subscribeEffectsReady,
+} from "@/effects/ensureEffects";
 import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
+
+const FoilCardImage = dynamic(
+  () =>
+    import("@/components/FoilCardImage").then((m) => m.FoilCardImage),
+  { ssr: false },
+);
 import { getAspectRatio, faceDisplayAspect } from "@/lib/text/cardFormat";
 import { OrientedMediaRotator } from "@/components/OrientedMediaFrame";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
@@ -36,6 +52,7 @@ import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import type { Condition } from "@/generated/prisma/browser";
 import { withoutCopyMarker } from "@/core/collect/groupCopies";
 import { shelfShowsItemCondition } from "@/core/collect/condition";
+import { isItemOnLoan } from "@/core/collect/itemLoan";
 import { cn } from "@/lib/shared/utils";
 
 function conditionBadgeClass(condition: Condition) {
@@ -92,6 +109,8 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
     prev.variant === next.variant &&
     prev.printKey === next.printKey &&
+    prev.loanedTo === next.loanedTo &&
+    prev.loanedAt === next.loanedAt &&
     prev.copyCount === next.copyCount &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
     (prev.metadata?.attachments?.length ?? 0) ===
@@ -133,16 +152,31 @@ function ItemCardInner(props: ItemCardProps) {
    * place a foil print looked foil.
    */
   const printVariant = usePrintVariant(props.printKey, shelfType);
-  const variantView = variantRendering(props.variant, printVariant, imageUrl);
-  const cardBackSkeletonUrl = sharedCardBackSkeletonUrl(
-    resolveDefaultCardBack({
-      printCardBackUrl: printVariant?.cardBackUrl,
-      printKey: props.printKey,
-      setCode: printVariant?.setCode,
-      effectPackId:
-        variantView.effectPackId ?? printVariant?.effectPack ?? null,
-    }),
+  // Re-render when packs land so resolveCss / card backs pick up recipes.
+  const effectsReady = useSyncExternalStore(
+    subscribeEffectsReady,
+    effectsRegistered,
+    () => false,
   );
+  useEffect(() => {
+    // Pack backs / resolveCss need the effect registry — warm as soon as the
+    // tile looks like a print (don't wait for the batched variant response).
+    if (props.printKey || printVariant?.effectPack || props.variant) {
+      void ensureEffects();
+    }
+  }, [props.printKey, printVariant?.effectPack, props.variant]);
+  const variantView = useMemo(
+    () => variantRendering(props.variant, printVariant, imageUrl),
+    [props.variant, printVariant, imageUrl, effectsReady],
+  );
+  const cardBackSkeletonUrl = resolveSharedCardBackSkeleton({
+    printCardBackUrl: printVariant?.cardBackUrl,
+    printKey: props.printKey,
+    setCode: printVariant?.setCode,
+    effectPackId:
+      variantView.effectPackId ?? printVariant?.effectPack ?? null,
+  });
+
   const foilMaskUrl = useMirroredCropMask(
     variantView.imageUrl,
     variantView.foilMaskUrl,
@@ -263,7 +297,8 @@ function ItemCardInner(props: ItemCardProps) {
       {(estimatedPrice !== null ||
         (condition && shelfShowsItemCondition(shelfType)) ||
         copyCount > 1 ||
-        (variantView.foilMaskUrl && props.variant)) && (
+        (variantView.foilMaskUrl && props.variant) ||
+        isItemOnLoan(props)) && (
         <div className="absolute top-2 right-2 z-20 pointer-events-none select-none flex flex-col items-end gap-1">
           {estimatedPrice !== null && (
             <span className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full bg-zinc-950/90 text-emerald-300 border border-emerald-400/30 shadow-sm">
@@ -279,6 +314,11 @@ function ItemCardInner(props: ItemCardProps) {
           {variantView.foilMaskUrl && props.variant && (
             <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
               ✦ {localizeFinishLabel(props.variant, t)}
+            </span>
+          )}
+          {isItemOnLoan(props) && (
+            <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-sky-400/35 bg-zinc-950/90 text-sky-200 shadow-sm max-w-[7.5rem] truncate">
+              → {props.loanedTo}
             </span>
           )}
           {condition && shelfShowsItemCondition(shelfType) && (

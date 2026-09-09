@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 
-import { requireGuestOrHigher } from "@/lib/auth";
+import {
+  canReadOwnedRow,
+  collectionUserIdFor,
+  getCollectionOwnerId,
+  requireGuestOrHigher,
+} from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
 import { isShelfTypeReady } from "@/lib/shelfTypeReadiness";
 
@@ -197,9 +202,12 @@ export async function GET(req: NextRequest) {
       const id = searchParams.get("id");
       const q = searchParams.get("q");
       const lite = searchParams.get("lite") === "1";
+      const scopeUserId = await collectionUserIdFor(auth.user);
+      const collectionOwnerId =
+        auth.user.role === "guest" ? scopeUserId : await getCollectionOwnerId();
 
       if (id) {
-        const resolvedId = await resolveShelfId(id, auth.user.id);
+        const resolvedId = await resolveShelfId(id, scopeUserId);
         if (q) {
           const searchTerm = q.trim();
           const shelf = await prisma.shelf.findUnique({
@@ -224,8 +232,7 @@ export async function GET(req: NextRequest) {
             );
           }
 
-          // Only allow if user is admin or the owner
-          if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+          if (!canReadOwnedRow(auth.user, shelf.userId, collectionOwnerId)) {
             return NextResponse.json(
               { error: "Access denied" },
               { status: 403 },
@@ -278,8 +285,7 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        // Only allow if user is admin or the owner
-        if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+        if (!canReadOwnedRow(auth.user, shelf.userId, collectionOwnerId)) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
@@ -312,7 +318,7 @@ export async function GET(req: NextRequest) {
 
         const shelves = await prisma.shelf.findMany({
           where: {
-            userId: auth.user.id,
+            userId: scopeUserId,
             OR: [
               { name: { contains: searchTerm, mode: "insensitive" } },
               {
@@ -341,7 +347,7 @@ export async function GET(req: NextRequest) {
 
       const shelves = await prisma.shelf.findMany({
         where: {
-          userId: auth.user.id,
+          userId: scopeUserId,
         },
         include: {
           _count: {
@@ -450,7 +456,6 @@ export async function PATCH(req: NextRequest) {
       color?: string | null;
       type?: Type;
       cardFormat?: string;
-      isPublic?: boolean;
     } = {};
     if (typeof body.name === "string") {
       data.name = body.name;
@@ -482,9 +487,6 @@ export async function PATCH(req: NextRequest) {
     }
     if (typeof body.cardFormat === "string" && body.cardFormat.trim()) {
       data.cardFormat = body.cardFormat.trim();
-    }
-    if (typeof body.isPublic === "boolean") {
-      data.isPublic = body.isPublic;
     }
 
     // Check if shelf exists and user has permission to update it

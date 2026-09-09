@@ -43,7 +43,6 @@ function makeItem(
       createdAt: new Date(),
       updatedAt: new Date(),
       userId: "user-1",
-      isPublic: false,
     },
     metadata: overrides.metadata,
     priceNew: overrides.priceNew ?? null,

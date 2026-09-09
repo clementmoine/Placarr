@@ -83,7 +83,7 @@ type SetAdvice = {
     expensiveCents: number;
     medianCents: number | null;
   };
-  /** `printKey` → centimes, pour afficher le prix à côté de chaque manquante. */
+  /** `printKey` → centimes EUR, pour afficher le prix à côté de chaque manquante. */
   prices: Record<string, number>;
   /** `printKey` → produits scellés qui garantissent la carte. */
   sealedSources: Record<string, SealedPrintSource[]>;
@@ -213,12 +213,12 @@ function Advice({
   const brief = briefParts.join(" · ");
 
   const listedOptions = (() => {
-    const useful = options.filter(
-      (option) =>
-        option.newCards > 0 ||
-        option.certainty === "exact" ||
-        option.certainty === "atLeast",
-    );
+    /*
+      Un known_bundle déjà couvert (DVD Vol.3 → TA-214 possédée) sort
+      `newCards: 0` + `certainty: exact` — ce n'est **pas** une option utile.
+      Ne garder que ce qui apporte au moins une carte neuve.
+    */
+    const useful = options.filter((option) => option.newCards > 0);
     if (plan.preferSingles) return useful.slice(0, 5);
     const head = recommended ? [recommended] : [];
     const rest = useful.filter((option) => option.slug !== recommended?.slug);

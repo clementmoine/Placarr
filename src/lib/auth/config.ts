@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { UserRole } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
 import { clientIpFrom, consumeRateLimit } from "@/lib/http/rateLimit";
@@ -12,73 +13,39 @@ if (!process.env.NEXTAUTH_SECRET) {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      id: "guest",
-      name: "Guest",
-      credentials: {},
-      async authorize() {
-        // Find the guest user
-        const guestUser = await prisma.user.findUnique({
-          where: { email: process.env.GUEST_EMAIL || "guest@placarr.com" },
-        });
-
-        if (!guestUser) {
-          throw new Error(
-            "Guest user not found. Please run database seed first.",
-          );
-        }
-
-        return {
-          id: guestUser.id,
-          email: guestUser.email,
-          name: guestUser.name,
-          role: guestUser.role,
-        };
-      },
-    }),
-    CredentialsProvider({
-      id: "credentials",
-      name: "Credentials",
+      id: "app-password",
+      name: "App password",
       credentials: {
-        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, req) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.password) {
           return null;
         }
 
-        const email = credentials.email.trim().toLowerCase();
-
-        // Per-account first: an attacker rotating addresses still hits this,
-        // and throttling one account cannot lock the whole instance out.
-        const perAccount = consumeRateLimit(`login:email:${email}`, {
-          limit: 10,
-          windowMs: 15 * 60 * 1000,
-        });
+        // Mono-instance unlock: one password for the owner account. Throttle
+        // by address — there is no email to rotate against.
         const perAddress = consumeRateLimit(
           `login:ip:${clientIpFrom(new Headers(req?.headers ?? {}))}`,
-          { limit: 30, windowMs: 15 * 60 * 1000 },
+          { limit: 20, windowMs: 15 * 60 * 1000 },
         );
-        if (!perAccount.allowed || !perAddress.allowed) {
-          console.warn(`[Auth] Throttled sign-in attempt for ${email}`);
+        if (!perAddress.allowed) {
+          console.warn("[Auth] Throttled app-password unlock attempt");
           return null;
         }
 
-        // Case-insensitive: registration stores lowercase, but rows created
-        // before that change kept whatever case the user typed.
-        const user = await prisma.user.findFirst({
-          where: {
-            email: { equals: email, mode: "insensitive" },
-          },
+        const owner = await prisma.user.findFirst({
+          where: { role: UserRole.admin },
+          orderBy: { createdAt: "asc" },
         });
 
-        if (!user || !user.password) {
+        if (!owner?.password) {
           return null;
         }
 
         const isCorrectPassword = await bcrypt.compare(
           credentials.password,
-          user.password,
+          owner.password,
         );
 
         if (!isCorrectPassword) {
@@ -86,10 +53,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+          id: owner.id,
+          email: owner.email,
+          name: owner.name,
+          role: owner.role,
         };
       },
     }),

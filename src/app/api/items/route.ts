@@ -2,7 +2,12 @@ import { Prisma, Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireGuestOrHigher } from "@/lib/auth";
+import {
+  canReadOwnedRow,
+  collectionUserIdFor,
+  getCollectionOwnerId,
+  requireGuestOrHigher,
+} from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
 
 import {
@@ -28,6 +33,7 @@ import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQue
 import { parsePrintKey } from "@/core/identify/printKey";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
+import { normalizeItemLoanInput } from "@/core/collect/itemLoan";
 import {
   buildExactBarcodeSearchCondition,
   buildItemSearchConditions,
@@ -94,9 +100,12 @@ export async function GET(req: NextRequest) {
     const excludeShelfTypes = parsedExcludeShelfTypes.values;
     const includeShelfTypes = parsedIncludeShelfTypes.values;
     const includeMetadata = searchParams.get("includeMetadata") !== "false"; // Par défaut true
+    const scopeUserId = await collectionUserIdFor(auth.user);
+    const collectionOwnerId =
+      auth.user.role === "guest" ? scopeUserId : await getCollectionOwnerId();
 
     if (id) {
-      const resolvedId = await resolveItemId(id, shelfId, auth.user.id);
+      const resolvedId = await resolveItemId(id, shelfId, scopeUserId);
       const item = await prisma.item.findUnique({
         where: { id: resolvedId },
         include: {
@@ -109,9 +118,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Item not found" }, { status: 404 });
       }
 
-      // L'item appartient à l'utilisateur, est admin, ou se trouve dans une
-      // étagère publique (consultation cross-user via collections partagées).
-      if (!isAdmin && item.userId !== auth.user.id && !item.shelf.isPublic) {
+      // Mono-instance: admin, owner, or guest browsing the owner's collection.
+      if (!canReadOwnedRow(auth.user, item.userId, collectionOwnerId)) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
@@ -147,10 +155,10 @@ export async function GET(req: NextRequest) {
 
     const whereClause: Prisma.ItemWhereInput = {};
 
-    // Les listes/recherches sont restreintes aux items de l'utilisateur
-    // (le cross-user public passe par /api/explore). L'admin voit tout.
+    // Lists are scoped to the caller's collection (guests → instance owner).
+    // Admins see everything.
     if (!isAdmin) {
-      whereClause.userId = auth.user.id;
+      whereClause.userId = scopeUserId;
     }
 
     if (q) {
@@ -170,7 +178,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (shelfId) {
-      whereClause.shelfId = await resolveShelfId(shelfId, auth.user.id);
+      whereClause.shelfId = await resolveShelfId(shelfId, scopeUserId);
     }
 
     if (excludeShelfTypes?.length || includeShelfTypes?.length) {
@@ -258,6 +266,8 @@ export async function POST(req: NextRequest) {
         condition,
         fetchMetadata = true,
         metadataPreview,
+        loanedTo: rawLoanedTo,
+        loanedAt: rawLoanedAt,
       } = body;
       if (typeof shelfId !== "string" || !shelfId.trim()) {
         return NextResponse.json(
@@ -353,6 +363,12 @@ export async function POST(req: NextRequest) {
         { print: { printKey, variant, language } },
       );
 
+      const loan =
+        normalizeItemLoanInput({
+          loanedTo: rawLoanedTo,
+          loanedAt: rawLoanedAt,
+        }) ?? { loanedTo: null, loanedAt: null };
+
       const item = await prisma.item.create({
         data: {
           shelfId: resolvedShelfId,
@@ -366,6 +382,8 @@ export async function POST(req: NextRequest) {
           variant,
           language,
           condition: resolvedCondition,
+          loanedTo: loan.loanedTo,
+          loanedAt: loan.loanedAt,
           userId: auth.user.id,
         },
         include: {
@@ -476,6 +494,8 @@ export async function PATCH(req: NextRequest) {
         shelfId?: string;
         slug?: string;
         metadataId?: null;
+        loanedTo?: string | null;
+        loanedAt?: Date | null;
       } = {};
 
       if (typeof raw.name === "string") data.name = raw.name;
@@ -520,6 +540,11 @@ export async function PATCH(req: NextRequest) {
           );
         }
         data.condition = resolvedCondition;
+      }
+      const loan = normalizeItemLoanInput(raw);
+      if (loan) {
+        data.loanedTo = loan.loanedTo;
+        data.loanedAt = loan.loanedAt;
       }
       if (typeof raw.shelfId === "string") {
         data.shelfId = await resolveShelfId(raw.shelfId, auth.user.id);

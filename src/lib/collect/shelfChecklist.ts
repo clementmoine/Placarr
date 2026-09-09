@@ -29,6 +29,8 @@ import {
   type CompletionPlan,
   type SealedPrintSource,
 } from "@/core/collect/buyAdvice";
+import { displayEstimatedCentsFromOffers } from "@/core/commerce/pricing/pricePipeline";
+import type { PriceObservation } from "@/core/commerce/pricing/priceTypes";
 import {
   readBoosterCompositionFile,
   resolveBoosterComposition,
@@ -65,6 +67,7 @@ export type ChecklistSetAdvice = {
   /**
    * Prix unitaire des manquantes (`printKey` → centimes). Absent = pas de cote
    * connue — la carte n'est pas gratuite, elle est juste hors cache.
+   * Toujours en devise d'affichage (EUR), y compris après fallback FX USD→EUR.
    */
   prices: Record<string, number>;
   /**
@@ -283,23 +286,35 @@ async function priceMissing(
   }
 
   for (const printKey of printKeys) {
+    const observations: PriceObservation[] = [];
     for (const pack of pricers) {
       try {
         const offers = await pack.refreshBarcodePriceOffers!(
           checklistPriceContext(shelfType, printKey, true),
         );
-        const cheapest = (offers ?? [])
-          .map((offer) => offer.priceCents)
-          .filter((cents): cents is number => typeof cents === "number")
-          .sort((a, b) => a - b)[0];
-        if (cheapest != null) {
-          prices.set(printKey, cheapest);
-          break;
+        for (const offer of offers ?? []) {
+          if (typeof offer.priceCents !== "number" || offer.priceCents <= 0) {
+            continue;
+          }
+          observations.push({
+            source: offer.source,
+            condition: offer.condition ?? null,
+            priceCents: offer.priceCents,
+            currency: offer.currency ?? null,
+            productName: offer.productName ?? null,
+            sourceUrl: offer.sourceUrl ?? null,
+            metadataScoped: offer.metadataScoped,
+          });
         }
       } catch {
         /* un pack muet n'empêche pas les autres de répondre */
       }
     }
+    const cents = await displayEstimatedCentsFromOffers(
+      shelfType,
+      observations,
+    );
+    if (cents != null) prices.set(printKey, cents);
   }
   return prices;
 }

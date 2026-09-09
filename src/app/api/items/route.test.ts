@@ -23,6 +23,22 @@ const h = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: h.requireGuestOrHigher,
+  collectionUserIdFor: async (user: { id: string; role: string }) =>
+    user.role === "guest" ? "owner-1" : user.id,
+  getCollectionOwnerId: async () => "owner-1",
+  canReadOwnedRow: (
+    auth: { id: string; role: string },
+    rowUserId: string,
+    collectionOwnerId: string | null,
+  ) => {
+    if (auth.role === "admin") return true;
+    if (auth.id === rowUserId) return true;
+    return (
+      auth.role === "guest" &&
+      collectionOwnerId != null &&
+      rowUserId === collectionOwnerId
+    );
+  },
 }));
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
@@ -165,12 +181,12 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     expect(res.status).toBe(401);
   });
 
-  it("403 sur l'item d'un autre user dans une étagère privée", async () => {
+  it("403 sur l'item d'un autre user", async () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findUnique.mockResolvedValue({
       id: "i1",
       userId: "u2",
-      shelf: { isPublic: false },
+      shelf: {},
     });
 
     const res = await GET(get("/api/items?id=i1"));
@@ -178,13 +194,13 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     expect(res.status).toBe(403);
   });
 
-  it("autorise l'item d'un autre user si l'étagère est publique", async () => {
-    h.requireGuestOrHigher.mockResolvedValue(USER);
+  it("autorise le guest sur la collection du propriétaire", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(GUEST);
     h.item.findUnique.mockResolvedValue({
       id: "i1",
-      userId: "u2",
+      userId: "owner-1",
       shelfId: "s1",
-      shelf: { isPublic: true },
+      shelf: {},
     });
 
     const res = await GET(get("/api/items?id=i1"));
@@ -208,6 +224,15 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     await GET(get("/api/items?includeMetadata=false"));
 
     expect(h.item.findMany.mock.calls[0][0].where.userId).toBe("u1");
+  });
+
+  it("le guest liste les items du propriétaire", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(GUEST);
+    h.item.findMany.mockResolvedValue([]);
+
+    await GET(get("/api/items?includeMetadata=false"));
+
+    expect(h.item.findMany.mock.calls[0][0].where.userId).toBe("owner-1");
   });
 
   it("admin voit tous les items (pas de filtre userId)", async () => {
@@ -445,6 +470,50 @@ describe("PATCH /api/items — autorisation", () => {
     );
     expect(invalid.status).toBe(400);
     expect(h.item.update).not.toHaveBeenCalled();
+  });
+
+  it("enregistre une note de prêt (à qui + quand)", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findUnique.mockResolvedValue({
+      userId: "u1",
+      shelfId: "s1",
+      shelf: { type: "games" },
+    });
+    h.item.update.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
+
+    const res = await PATCH(
+      withBody("PATCH", {
+        id: "i1",
+        loanedTo: "Alice",
+        loanedAt: "2026-09-01",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.item.update.mock.calls[0][0].data).toMatchObject({
+      loanedTo: "Alice",
+      loanedAt: expect.any(Date),
+    });
+  });
+
+  it("efface la note de prêt quand le destinataire est vide", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findUnique.mockResolvedValue({
+      userId: "u1",
+      shelfId: "s1",
+      shelf: { type: "games" },
+    });
+    h.item.update.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
+
+    const res = await PATCH(
+      withBody("PATCH", { id: "i1", loanedTo: "", loanedAt: "2026-09-01" }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.item.update.mock.calls[0][0].data).toMatchObject({
+      loanedTo: null,
+      loanedAt: null,
+    });
   });
 
   it("met à jour le titre dans les métadonnées de l'item si elles existent", async () => {

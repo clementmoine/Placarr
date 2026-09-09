@@ -1123,6 +1123,79 @@ describe("sealedSourcesByPrint", () => {
     expect(index.get("lorcana:1-5")?.map((s) => s.slug)).toEqual(["gift"]);
     expect(index.get("lorcana:1-99")).toBeUndefined();
   });
+
+  it("indexes listed random pools (manga prerelease, not set lottery)", () => {
+    const index = sealedSourcesByPrint([
+      {
+        slug: "kana-manga-pack-1-2-3",
+        name: "Pack manga",
+        kind: "special",
+        behavior: "random_pack",
+        setId: "s1",
+        randomPoolScope: "listed",
+        randomPoolPrints: [
+          "naruto:ni-0019-prerelease",
+          "naruto:ni-0025-prerelease",
+        ],
+        cardCount: 1,
+        imageUrl: "/assets/naruto/carddass/products/kana-manga/art.jpg",
+      },
+      {
+        slug: "booster-s1",
+        name: "Booster S1",
+        kind: "booster",
+        behavior: "random_pack",
+        setId: "s1",
+        packSize: 8,
+      },
+    ]);
+    expect(index.get("naruto:ni-0019-prerelease")?.map((s) => s.slug)).toEqual([
+      "kana-manga-pack-1-2-3",
+    ]);
+    expect(index.get("naruto:ni-0025-prerelease")?.[0]?.imageUrl).toContain(
+      "kana-manga",
+    );
+    expect(index.get("naruto:ni-0019")).toBeUndefined();
+  });
+});
+
+describe("buyOptionsForMissing listed pool", () => {
+  it("estimates new cards from the listed pool, not the whole set", () => {
+    const pool = [
+      "naruto:ni-0019-prerelease",
+      "naruto:ni-0025-prerelease",
+      "naruto:ni-0027-prerelease",
+      "naruto:ni-0047-prerelease",
+    ];
+    const [option] = buyOptionsForMissing({
+      missing: new Set([
+        "naruto:ni-0019-prerelease",
+        "naruto:ni-0025-prerelease",
+        "naruto:ni-9999",
+      ]),
+      poolSize: 194,
+      products: [
+        {
+          slug: "kana-manga-pack-1-2-3",
+          name: "Pack manga",
+          kind: "special",
+          behavior: "random_pack",
+          setId: "s1",
+          cardCount: 1,
+          randomPoolScope: "listed",
+          randomPoolPrints: pool,
+          language: "fr",
+        },
+      ],
+    });
+    // 2/4 of the pool still missing → E = 0.5 for one draw
+    expect(option).toMatchObject({
+      slug: "kana-manga-pack-1-2-3",
+      newCards: 0.5,
+      certainty: "expected",
+    });
+    expect(option?.basis).toMatch(/Pool listé/i);
+  });
 });
 
 describe("buyOptionsForMissing image", () => {

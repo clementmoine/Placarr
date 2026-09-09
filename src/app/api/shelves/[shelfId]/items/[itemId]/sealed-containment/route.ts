@@ -5,7 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { sealedContainmentForShelfPrint } from "@/lib/collect/itemSealedContainment";
 import { prisma } from "@/lib/db/prisma";
-import { requireGuestOrHigher } from "@/lib/auth";
+import {
+  canReadOwnedRow,
+  collectionUserIdFor,
+  getCollectionOwnerId,
+  requireGuestOrHigher,
+} from "@/lib/auth";
 import { resolveItemId, resolveShelfId } from "@/lib/routing/resolveIds";
 import type { MediaType } from "@/types/providerRegistry";
 
@@ -17,12 +22,15 @@ export async function GET(
   if (auth instanceof NextResponse) return auth;
 
   const { shelfId: rawShelf, itemId: rawItem } = await context.params;
-  const shelfId = await resolveShelfId(rawShelf);
+  const scopeUserId = await collectionUserIdFor(auth.user);
+  const collectionOwnerId =
+    auth.user.role === "guest" ? scopeUserId : await getCollectionOwnerId();
+  const shelfId = await resolveShelfId(rawShelf, scopeUserId);
   if (!shelfId) {
     return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
   }
 
-  const itemId = await resolveItemId(rawItem, shelfId, auth.user.id);
+  const itemId = await resolveItemId(rawItem, shelfId, scopeUserId);
   const item = await prisma.item.findUnique({
     where: { id: itemId },
     select: {
@@ -37,7 +45,7 @@ export async function GET(
   if (!item || item.shelfId !== shelfId) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
-  if (auth.user.role !== "admin" && item.userId !== auth.user.id) {
+  if (!canReadOwnedRow(auth.user, item.userId, collectionOwnerId)) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 

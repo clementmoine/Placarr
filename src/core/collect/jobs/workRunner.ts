@@ -12,6 +12,7 @@ import {
   isBackgroundWorkJobCancelled,
   mergeCatalogueExtractCompletedStep,
   touchBackgroundWorkJobLock,
+  type ApkStoreFetchJobPayload,
   type BackgroundWorkJobRow,
   type CatalogueExtractJobPayload,
   type MetadataRefreshJobPayload,
@@ -425,7 +426,81 @@ export async function executeBackgroundWorkJob(
     return;
   }
 
+  if (job.kind === BACKGROUND_WORK_KIND.apkStoreFetch) {
+    await executeApkStoreFetchJob(job, payload as ApkStoreFetchJobPayload);
+    return;
+  }
+
   throw new Error(`Unknown background work kind: ${job.kind}`);
+}
+
+/**
+ * Store APK fetch → on a new version, chain the pack's foil extract.
+ * Heartbeats like the foil job: a slow mirror download can outlive the
+ * default stale-running window.
+ */
+async function executeApkStoreFetchJob(
+  job: BackgroundWorkJobRow,
+  payload: ApkStoreFetchJobPayload,
+): Promise<void> {
+  const pack = String(payload?.pack ?? "").trim();
+  const { cataloguePackInfo } = await import("@/lib/admin/cataloguePacks");
+  const info = cataloguePackInfo(pack);
+  if (!info?.androidPackageId) {
+    throw new Error(`apkStoreFetch: no androidPackageId for pack ${pack}`);
+  }
+
+  const controller = new AbortController();
+  const cancelPoll = setInterval(() => {
+    void isBackgroundWorkJobCancelled(job.id).then((cancelled) => {
+      if (cancelled) controller.abort();
+    });
+  }, CANCEL_POLL_MS);
+  if (typeof cancelPoll.unref === "function") cancelPoll.unref();
+  const heartbeat = setInterval(() => {
+    void touchBackgroundWorkJobLock(job.id);
+  }, FOIL_LOCK_HEARTBEAT_MS);
+  if (typeof heartbeat.unref === "function") heartbeat.unref();
+
+  try {
+    const { fetchStoreApksForPack } = await import(
+      "@/lib/admin/apkStoreFetch"
+    );
+    const result = await fetchStoreApksForPack(pack, {
+      force: payload?.force,
+      signal: controller.signal,
+      onLog: (line) => process.stdout.write(`[ApkStore ${pack}] ${line}\n`),
+    });
+    if (result.status === "unavailable") {
+      throw new Error(`apkStoreFetch ${pack}: ${result.reason}`);
+    }
+    if (result.status === "updated") {
+      await enqueueBackgroundWorkJob({
+        kind: BACKGROUND_WORK_KIND.catalogueExtract,
+        userId: job.userId,
+        payload: { target: info.extractTarget },
+        replaceOpenForKind: true,
+        replaceOpenPayloadMatch: {
+          path: ["target"],
+          equals: info.extractTarget,
+        },
+      });
+      process.stdout.write(
+        `[ApkStore ${pack}] versionCode=${result.versionCode} → foil extract enqueued\n`,
+      );
+    }
+  } catch (error) {
+    if (
+      controller.signal.aborted ||
+      (await isBackgroundWorkJobCancelled(job.id))
+    ) {
+      return;
+    }
+    throw error;
+  } finally {
+    clearInterval(cancelPoll);
+    clearInterval(heartbeat);
+  }
 }
 
 async function stampFoilExtractFailure(
@@ -485,7 +560,22 @@ async function executeFoilExtractJob(
   void touchBackgroundWorkJobLock(job.id);
 
   const logTail: string[] = [];
+  // The extract runs in-process and its Unity phases are CPU-synchronous: the
+  // interval above can starve for >30 min, which made the janitor abandon jobs
+  // that were still writing files. Log lines are emitted from inside the
+  // pipeline, so a throttled touch here beats even when timers cannot.
+  let lastLogTouch = 0;
+  let touchChain: Promise<unknown> = Promise.resolve();
   const writeLog = (line: string) => {
+    const now = Date.now();
+    // Touch every ~15s on log activity (awaited chain — fire-and-forget was
+    // dropped under Prisma pool pressure during AssetManifest storms).
+    if (now - lastLogTouch >= FOIL_LOCK_HEARTBEAT_MS / 4) {
+      lastLogTouch = now;
+      touchChain = touchChain
+        .then(() => touchBackgroundWorkJobLock(job.id))
+        .catch(() => false);
+    }
     logTail.push(line);
     if (logTail.length > 40) logTail.shift();
     // Do not use console.* here: runCatalogueExtractCommand tees console, and
@@ -500,20 +590,25 @@ async function executeFoilExtractJob(
   };
 
   try {
+    const explicitScope =
+      payload?.scope != null && String(payload.scope).trim() !== ""
+        ? normalizeCatalogueExtractScope(payload.scope)
+        : undefined;
     await runCatalogueExtractCommand(target, {
       signal: controller.signal,
-      timeoutMs: catalogueExtractTimeoutMs(
-        target,
-        normalizeCatalogueExtractScope(payload?.scope),
-      ),
+      timeoutMs: explicitScope
+        ? catalogueExtractTimeoutMs(target, explicitScope)
+        : undefined,
       onLog: writeLog,
       logHeader: [`jobId=${job.id}`],
-      scope: normalizeCatalogueExtractScope(payload?.scope),
+      scope: explicitScope,
       completedSteps: Array.isArray(payload?.completedSteps)
         ? payload.completedSteps.filter(
             (value): value is string => typeof value === "string",
           )
         : undefined,
+      auto: payload?.auto === true,
+      forceApk: payload?.forceApk === true,
     });
   } catch (error) {
     if (

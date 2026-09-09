@@ -150,6 +150,7 @@ describe("workQueue", () => {
       BACKGROUND_WORK_KIND.metadataRefresh,
       BACKGROUND_WORK_KIND.priceRefresh,
       BACKGROUND_WORK_KIND.catalogueExtract,
+      BACKGROUND_WORK_KIND.apkStoreFetch,
     ]);
     expect(resolveWorkerKinds("catalog")).toEqual([
       BACKGROUND_WORK_KIND.icollectCatalogSync,
@@ -257,7 +258,7 @@ describe("workQueue", () => {
     );
   });
 
-  it("requeues a stale foil lock once, then abandons after max attempts", async () => {
+  it("requeues a stale foil lock until max attempts, then abandons", async () => {
     h.findMany.mockResolvedValueOnce([
       {
         id: "foil-1",
@@ -267,7 +268,7 @@ describe("workQueue", () => {
       {
         id: "foil-2",
         kind: BACKGROUND_WORK_KIND.catalogueExtract,
-        attempts: 2,
+        attempts: 5,
       },
       { id: "meta-1", kind: BACKGROUND_WORK_KIND.metadataRefresh, attempts: 1 },
     ]);

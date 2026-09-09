@@ -60,6 +60,8 @@ describe("itemModalSession", () => {
         storedName: "0721450083770",
         barcode: "0721450083770",
         condition: "used",
+        loanedTo: "Alice",
+        loanedAt: new Date(2026, 8, 1),
         metadata: {
           title: "Black Stories",
           aliases: "Black Stories",
@@ -69,6 +71,8 @@ describe("itemModalSession", () => {
     });
 
     expect(init.formValues.name).toBe("Black Stories");
+    expect(init.formValues.loanedTo).toBe("Alice");
+    expect(init.formValues.loanedAt).toBe("2026-09-01");
     expect(init.suggestions).toContain("Black Stories");
     expect(init.fetchedMetadata?.title).toBe("Black Stories");
     expect(init.asyncInit).toBeNull();

@@ -15,7 +15,7 @@ vi.mock("@/lib/db/prisma", () => ({
   },
 }));
 
-import { POST } from "./route";
+import { POST, GET } from "./route";
 import { resetRateLimitsForTests } from "@/lib/http/rateLimit";
 
 const VALID_PASSWORD = "correct-horse-battery";
@@ -145,6 +145,29 @@ describe("POST /api/auth/register", () => {
     );
 
     expect(res.status).toBe(500);
+  });
+});
+
+describe("GET /api/auth/register", () => {
+  it("signale open=false quand des comptes existent déjà", async () => {
+    delete process.env.ALLOW_REGISTRATION;
+    h.count.mockResolvedValue(2);
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toEqual({ open: false, bootstrap: false });
+  });
+
+  it("signale open=true en bootstrap", async () => {
+    delete process.env.ALLOW_REGISTRATION;
+    h.count.mockResolvedValue(0);
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(json).toEqual({ open: true, bootstrap: true });
   });
 });
 

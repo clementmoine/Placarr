@@ -88,6 +88,13 @@ export type BuyProduct = {
    * de check-list) n'entre pas dans les options — voir `allowedLanguages`.
    */
   language?: string | null;
+  /**
+   * Portée du tirage aléatoire. `listed` = carte(s) parmi `randomPoolPrints`
+   * (ex. avant-première manga Naruto), pas le set entier.
+   */
+  randomPoolScope?: "set" | "listed" | "none" | "unknown" | null;
+  /** Pool listé quand `randomPoolScope === "listed"`. */
+  randomPoolPrints?: readonly string[] | null;
 };
 
 export type BuyOption = {
@@ -335,6 +342,12 @@ export function projectBuyProductsBySet(input: {
         const setId = input.printSetIds.get(key);
         if (setId) candidates.add(setId);
       }
+      if (product.randomPoolScope === "listed") {
+        for (const key of product.randomPoolPrints ?? []) {
+          const setId = input.printSetIds.get(key);
+          if (setId) candidates.add(setId);
+        }
+      }
     }
     for (const setId of candidates) {
       const projected = projectBuyProductForSet(
@@ -528,7 +541,31 @@ function scoreBuyOptions(input: {
     let certainty: BuyOption["certainty"];
     let basis: string;
 
-    if (!random && listed.length > 0 && !product.printsArePreview) {
+    /*
+      Pool listé (1 carte parmi N variantes connues) : espérance = part des
+      manquantes dans le pool × tirages. Pas la formule set-entier des boosters.
+    */
+    if (random && product.randomPoolScope === "listed") {
+      const pool = product.randomPoolPrints ?? [];
+      const missingInPool = pool.filter((key) => input.missing.has(key)).length;
+      const draws =
+        product.cardCount != null && product.cardCount > 0
+          ? product.cardCount
+          : 1;
+      if (pool.length === 0) {
+        newCards = 0;
+        certainty = "unknown";
+        basis = "Pool listé vide — rien à estimer.";
+      } else {
+        newCards =
+          Math.round((missingInPool / pool.length) * draws * 10) / 10;
+        certainty = "expected";
+        basis = `Pool listé : ${draws} carte(s) parmi ${pool.length} (${missingInPool} manquante(s) dans le pool).`;
+      }
+      if (languageMismatch) {
+        basis += ` Produit en ${language} — ne complète pas une liste ${preferred}.`;
+      }
+    } else if (!random && listed.length > 0 && !product.printsArePreview) {
       /*
         Liste complète des **tirages distincts** → exact. `cardCount` peut être
         plus grand (copies en playset : 2× Haku) : ce n'est pas une lacune de
@@ -917,11 +954,14 @@ export type SealedPrintSource = {
 };
 
 /**
- * Index inverse : printKey → produits dont la liste garantie contient la carte.
+ * Index inverse : printKey → produits scellés « Inclus dans » pour la check-list.
  *
- * Un booster / display n'entre **pas** ici : leur loterie = le set entier, pas
- * une promesse carte par carte. L'UI montre ces sources à côté de chaque
- * manquante (« dans le starter X », « promo du coffret Y »).
+ * - Contenu fixe / mixtes : liste **garantie** (`prints`).
+ * - Pool **listé** (`randomPoolScope: listed`) : chaque clé du pool (manga
+ *   avant-première, etc.).
+ *
+ * Un booster / display à loterie **set** n'entre **pas** ici : leur pool = le
+ * set entier, pas une promesse carte par carte.
  */
 export function sealedSourcesByPrint(
   products: readonly BuyProduct[],
@@ -929,16 +969,20 @@ export function sealedSourcesByPrint(
   const out = new Map<string, SealedPrintSource[]>();
   for (const product of products) {
     if (product.printsArePreview) continue;
-    if (RANDOM.has(product.behavior)) continue;
-    const prints = product.prints ?? [];
-    if (prints.length === 0) continue;
     const source: SealedPrintSource = {
       slug: product.slug,
       name: product.name,
       kind: product.kind,
       imageUrl: product.imageUrl ?? null,
     };
-    for (const key of prints) {
+    const keys: string[] = [];
+    if (product.randomPoolScope === "listed") {
+      keys.push(...(product.randomPoolPrints ?? []));
+    } else if (!RANDOM.has(product.behavior)) {
+      keys.push(...(product.prints ?? []));
+    }
+    if (keys.length === 0) continue;
+    for (const key of keys) {
       const list = out.get(key) ?? [];
       if (!list.some((row) => row.slug === source.slug)) list.push(source);
       out.set(key, list);

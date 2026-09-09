@@ -190,6 +190,7 @@ describe("POST /api/items/batch", () => {
         data: expect.objectContaining({
           name: "Ariel - Sur une mission",
           printKey: "lorcana:1-1",
+          language: "fr",
         }),
       }),
     );

@@ -24,6 +24,12 @@ import type {
   SealedProductEntry,
   SealedPrintLink,
 } from "@/providers/shared/sealedProducts/indexFormat";
+import {
+  isSealedKind,
+  sealedBehaviorForKind,
+  withRefinedSealedKind,
+} from "@/providers/shared/sealedProducts/kinds";
+import { resolveSealedLang } from "@/providers/shared/sealedProducts/lang";
 import { dataRoot } from "@/lib/runtimeData";
 
 function printLinks(links: unknown): SealedPrintLink[] {
@@ -136,17 +142,19 @@ export function loadSealedProductEntries(
       const slug = String(row.slug ?? "");
       const rawName = String(row.name ?? "").trim();
       const declaredCardCount = (row.declaredCardCount as number | null) ?? null;
+      const rawKind = String(row.kind ?? "booster");
+      const kind = isSealedKind(rawKind) ? rawKind : "coffret";
       const contents = resolveSealedContents({
-        kind: String(row.kind ?? ""),
+        kind,
         name: rawName || null,
         slug,
         declaredCardCount,
       });
-      entries[key] = {
+      entries[key] = withRefinedSealedKind({
         slug,
         path: String(row.path ?? ""),
-        kind: String(row.kind ?? "booster") as never,
-        behavior: String(row.behavior ?? "random_pack") as never,
+        kind,
+        behavior: sealedBehaviorForKind(kind),
         category: String(row.category ?? ""),
         name: rawName || null,
         image: (row.image as string | null) ?? null,
@@ -154,7 +162,10 @@ export function loadSealedProductEntries(
         setLogo: (row.setLogo as string | null) ?? null,
         setCode: (row.setCode as string | null) ?? null,
         catalogueSetId: (row.catalogueSetId as string | null) ?? null,
-        lang: (row.lang as string | null) ?? null,
+        lang: resolveSealedLang({
+          lang: (row.lang as string | null) ?? null,
+          slug,
+        }),
         releaseDate: (row.releaseDate as string | null) ?? null,
         priceCents:
           typeof row.priceCents === "number" && row.priceCents > 0
@@ -178,7 +189,7 @@ export function loadSealedProductEntries(
         contentsKnown: Boolean(row.contentsKnown),
         containsPrintsIsPreview: Boolean(row.containsPrintsIsPreview),
         prints: printLinks(row.prints),
-      };
+      });
     }
     return dedupeSealedEntriesBySlug(
       mergeCuratedSealedContents(pack, entries),
@@ -192,6 +203,8 @@ export function toBuyProduct(entry: SealedProductEntry): BuyProduct {
   const guaranteed = printKeys(entry.guaranteedPrints);
   const preview = printKeys(entry.prints);
   const known = guaranteed.length > 0;
+  const randomPoolScope = entry.randomPoolScope ?? "unknown";
+  const randomPoolPrints = printKeys(entry.randomPoolPrints);
   return {
     slug: entry.slug,
     name: (entry.name ?? "").trim() || entry.slug.replace(/-/g, " "),
@@ -209,6 +222,11 @@ export function toBuyProduct(entry: SealedProductEntry): BuyProduct {
     imageUrl: entry.image,
     language: entry.lang,
     contentsKnown: entry.contentsKnown,
+    randomPoolScope,
+    randomPoolPrints:
+      randomPoolScope === "listed" && randomPoolPrints.length > 0
+        ? randomPoolPrints
+        : null,
   };
 }
 
@@ -223,6 +241,7 @@ export function toContainmentProduct(
     behavior: entry.behavior as ContainmentProduct["behavior"],
     setId: entry.catalogueSetId ?? entry.setCode,
     imageUrl: entry.image,
+    language: entry.lang,
     guaranteedPrints: guaranteed,
     packsBySet: entry.packsBySet ?? null,
     printsArePreview:

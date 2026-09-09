@@ -163,7 +163,12 @@ function scheduleMetadataRefreshByShelf(items: BatchItemRow[]): void {
 }
 
 async function createItemsInChunks(
-  rows: Array<{ name: string; printKey: string | null }>,
+  rows: Array<{
+    name: string;
+    printKey: string | null;
+    language?: string | null;
+    imageUrl?: string | null;
+  }>,
   data: {
     shelfId: string;
     userId: string;
@@ -179,6 +184,8 @@ async function createItemsInChunks(
       name: string;
       slug: string;
       printKey: string | null;
+      language: string | null;
+      imageUrl: string | null;
     }> = [];
     for (const row of chunk) {
       const slug = await allocateUniqueItemSlug(data.shelfId, row.name, {
@@ -186,7 +193,13 @@ async function createItemsInChunks(
         print: { printKey: row.printKey },
       });
       reservedSlugs.add(slug);
-      planned.push({ name: row.name, slug, printKey: row.printKey });
+      planned.push({
+        name: row.name,
+        slug,
+        printKey: row.printKey,
+        language: row.language?.trim().toLowerCase() || null,
+        imageUrl: row.imageUrl?.trim() || null,
+      });
     }
 
     const batch = await prisma.$transaction(
@@ -199,6 +212,8 @@ async function createItemsInChunks(
             condition: data.condition,
             userId: data.userId,
             printKey: row.printKey,
+            language: row.language,
+            imageUrl: row.imageUrl,
           },
           select: itemCreateSelect,
         }),
@@ -236,13 +251,21 @@ async function resolveBatchCreateRows(
   shelfType: Type,
   scope: PrintSearchOptions = {},
 ): Promise<
-  Array<{ name: string; printKey: string | null; lookupQuery: string }>
+  Array<{
+    name: string;
+    printKey: string | null;
+    lookupQuery: string;
+    language: string | null;
+    imageUrl: string | null;
+  }>
 > {
   if (!supportsPrintSearch(shelfType)) {
     return names.map((name) => ({
       name,
       printKey: null,
       lookupQuery: name,
+      language: null,
+      imageUrl: null,
     }));
   }
 
@@ -250,6 +273,8 @@ async function resolveBatchCreateRows(
     name: string;
     printKey: string | null;
     lookupQuery: string;
+    language: string | null;
+    imageUrl: string | null;
   }> = [];
   for (const query of names) {
     const hit = await resolveBatchPrintHit(query, shelfType, scope);
@@ -258,13 +283,23 @@ async function resolveBatchCreateRows(
         ? hit.printKey.trim().toLowerCase()
         : null;
     if (hit && printKey) {
+      const language =
+        (hit.language ?? scope.language)?.trim().toLowerCase() || null;
       rows.push({
         name: hit.title.trim() || query,
         printKey,
         lookupQuery: hit.title.trim() || query,
+        language,
+        imageUrl: hit.imageUrl?.trim() || hit.thumbnailUrl?.trim() || null,
       });
     } else {
-      rows.push({ name: query, printKey: null, lookupQuery: query });
+      rows.push({
+        name: query,
+        printKey: null,
+        lookupQuery: query,
+        language: null,
+        imageUrl: null,
+      });
     }
   }
   return rows;

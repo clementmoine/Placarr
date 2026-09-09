@@ -122,5 +122,6 @@ export async function sealedContainmentForShelfPrint(input: {
     printKey,
     setId,
     products,
+    preferredLanguage: input.language,
   });
 }

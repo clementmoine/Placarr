@@ -61,17 +61,28 @@ export function resolveSealedContents(input: {
   const packsFromText =
     packsContainedFromShopText(name) ?? packsContainedFromShopText(slug);
 
-  if (input.kind === "display") {
+  if (
+    input.kind === "display" ||
+    input.kind === "case" ||
+    input.kind === "blister_case"
+  ) {
     return {
       cardsPerPack: fromName ?? fromSlug,
       packsContained: packsFromText,
     };
   }
 
-  if (input.kind === "booster") {
+  if (input.kind === "booster" || input.kind === "blister") {
     return {
       cardsPerPack: fromName ?? fromSlug ?? declaredAsPack,
       packsContained: packsFromText ?? 1,
+    };
+  }
+
+  if (input.kind === "multipack") {
+    return {
+      cardsPerPack: fromName ?? fromSlug,
+      packsContained: packsFromText,
     };
   }
 

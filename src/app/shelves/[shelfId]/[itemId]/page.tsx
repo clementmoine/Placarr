@@ -24,6 +24,7 @@ import {
   Layers,
   Loader2,
   Sparkles,
+  HandHelping,
   type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -103,9 +104,8 @@ import { FoilCardImage } from "@/components/FoilCardImage";
 import { FlippableCard } from "@/components/FlippableCard";
 import {
   resolveDefaultCardBack,
-  sharedCardBackSkeletonUrl,
+  resolveSharedCardBackSkeleton,
 } from "@/core/render/foil";
-import "@/effects";
 import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
 import {
   stripEditSuffixFromUrl,
@@ -155,6 +155,7 @@ import {
   marketOfferConditionsForItem,
   shelfShowsItemCondition,
 } from "@/core/collect/condition";
+import { isItemOnLoan } from "@/core/collect/itemLoan";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 import { displayAliasesForItem } from "@/core/enrich/aliases";
 
@@ -1854,7 +1855,12 @@ export default function ItemDetailsPage() {
     effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
   });
   const cardBackUrl = cardBack?.url ?? null;
-  const cardBackSkeletonUrl = sharedCardBackSkeletonUrl(cardBack);
+  const cardBackSkeletonUrl = resolveSharedCardBackSkeleton({
+    printCardBackUrl: printVariant?.cardBackUrl,
+    printKey: item?.printKey,
+    setCode: printVariant?.setCode,
+    effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
+  });
   /**
    * Masks follow the artwork's own framing. Cropping the card left them cut for
    * the full print, so `object-contain` letterboxed the two differently and the
@@ -2514,9 +2520,9 @@ export default function ItemDetailsPage() {
                  * holographic layers instead.
                  */
                 style={{
-                  ...(displayQuarterTurns || landscapeFace
-                    ? { aspectRatio: coverOrientedAspect }
-                    : {}),
+                  // Always set aspect-ratio in style: Tailwind classes for
+                  // formats live in `cardFormat.ts` and can miss the CSS scan.
+                  aspectRatio: coverOrientedAspect,
                   ...(coverEdgeColors && !variantView.foilMaskUrl
                     ? { background: edgeGradient(coverEdgeColors) }
                     : {}),
@@ -2673,6 +2679,22 @@ export default function ItemDetailsPage() {
                       >
                         <Sparkles className="size-3" />
                         {localizeFinishLabel(resolvedVariant, t)}
+                      </Badge>
+                    )}
+                    {isItemOnLoan(item ?? {}) && (
+                      <Badge
+                        variant="outline"
+                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300 font-semibold px-2 py-0.5 flex gap-1 items-center"
+                      >
+                        <HandHelping className="size-3" />
+                        {item?.loanedAt
+                          ? t("items.loan.badgeWithDate", {
+                              name: item.loanedTo,
+                              date: new Date(item.loanedAt).toLocaleDateString(
+                                locale === "en" ? "en-GB" : "fr-FR",
+                              ),
+                            })
+                          : t("items.loan.badge", { name: item?.loanedTo })}
                       </Badge>
                     )}
                     {shelf?.type && (

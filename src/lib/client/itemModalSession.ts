@@ -7,6 +7,7 @@ import {
   isExplicitUserCoverOverride,
 } from "@/core/collect/media";
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
+import { loanedAtInputValue } from "@/core/collect/itemLoan";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -22,6 +23,10 @@ export type ItemModalFormValues = {
    */
   variant?: string | null;
   condition: Condition;
+  /** Who currently has this copy — empty means at home. */
+  loanedTo?: string;
+  /** `yyyy-mm-dd` for the date input, or empty. */
+  loanedAt?: string;
   imageUrl: string | File | null;
   backgroundImageUrl: string | File | null;
 };
@@ -92,6 +97,8 @@ function defaultFormValues(
     barcode: prefilledValues?.barcode || "",
     variant: null,
     condition: "used",
+    loanedTo: "",
+    loanedAt: "",
   };
 }
 
@@ -165,6 +172,8 @@ export function buildItemModalSessionInit(input: {
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,
+      loanedTo: item.loanedTo?.trim() || "",
+      loanedAt: loanedAtInputValue(item.loanedAt),
     };
 
     const metadata = filterMetadataForShelfPlatform(

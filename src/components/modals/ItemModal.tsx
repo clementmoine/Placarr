@@ -216,6 +216,9 @@ export function ItemModal({
 
     condition: z.nativeEnum(Condition),
 
+    loanedTo: z.string().trim().optional(),
+    loanedAt: z.string().trim().optional(),
+
     imageUrl: z
       .any()
       .refine(
@@ -261,6 +264,8 @@ export function ItemModal({
       barcode: prefilledValues?.barcode || "",
       variant: null,
       condition: "used",
+      loanedTo: "",
+      loanedAt: "",
     }),
     [shelfId, prefilledValues],
   );
@@ -420,6 +425,10 @@ export function ItemModal({
   const watchedCondition = useWatch({
     control: form.control,
     name: "condition",
+  });
+  const watchedLoanedTo = useWatch({
+    control: form.control,
+    name: "loanedTo",
   });
   const isNameMatchingSuggestion = useMemo(() => {
     if (!nameSuggestion) return false;
@@ -2018,6 +2027,76 @@ export function ItemModal({
                         </FormItem>
                       )}
                     />
+
+                    {/* Loan note — who has this copy and since when */}
+                    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-zinc-50/40 dark:bg-zinc-950/20 p-3 sm:p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                          {t("items.loan.title")}
+                        </p>
+                        {(watchedLoanedTo || "").trim() ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs font-semibold text-muted-foreground"
+                            onClick={() => {
+                              form.setValue("loanedTo", "", {
+                                shouldDirty: true,
+                              });
+                              form.setValue("loanedAt", "", {
+                                shouldDirty: true,
+                              });
+                            }}
+                          >
+                            {t("items.loan.clear")}
+                          </Button>
+                        ) : null}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-snug -mt-1">
+                        {t("items.loan.hint")}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <FormField
+                          control={form.control}
+                          name="loanedTo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[11px] font-semibold text-muted-foreground">
+                                {t("items.loan.to")}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder={t("items.loan.toPlaceholder")}
+                                  className="bg-background border-border/80 rounded-xl h-10"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="loanedAt"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[11px] font-semibold text-muted-foreground">
+                                {t("items.loan.since")}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="date"
+                                  className="bg-background border-border/80 rounded-xl h-10"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
 
                     {/* Condition — hidden for TCG (finish is the copy axis). */}
                     {shelfShowsItemCondition(activeShelfType) && (

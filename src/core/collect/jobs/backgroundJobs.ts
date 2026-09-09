@@ -24,6 +24,7 @@ export type BackgroundJobKind =
   | "metadataEnrich"
   | "priceRefresh"
   | "foilExtract"
+  | "apkStoreFetch"
   | "icollectCatalogSync"
   | "launchboxIndexSync"
   | "nointroIndexSync"
@@ -163,6 +164,7 @@ async function listCatalogIndexJobsForUser(
     BACKGROUND_WORK_KIND.launchboxIndexSync,
     BACKGROUND_WORK_KIND.nointroIndexSync,
     BACKGROUND_WORK_KIND.catalogProviderSync,
+    BACKGROUND_WORK_KIND.apkStoreFetch,
   ] as const;
 
   const jobs = await prisma.backgroundWorkJob.findMany({
@@ -185,7 +187,7 @@ async function listCatalogIndexJobsForUser(
   });
 
   const labels: Record<
-    Exclude<(typeof kinds)[number], "catalogProviderSync">,
+    Exclude<(typeof kinds)[number], "catalogProviderSync" | "apkStoreFetch">,
     string
   > = {
     [BACKGROUND_WORK_KIND.icollectCatalogSync]: "iCollect catalog",
@@ -194,6 +196,21 @@ async function listCatalogIndexJobsForUser(
   };
 
   return jobs.map((job) => {
+    if (job.kind === BACKGROUND_WORK_KIND.apkStoreFetch) {
+      const pack =
+        typeof (job.payload as { pack?: unknown })?.pack === "string"
+          ? (job.payload as { pack: string }).pack
+          : "apk";
+      return {
+        id: job.id,
+        name: pack,
+        slug: null,
+        kind: "apkStoreFetch" as const,
+        startedAt: job.lockedAt ?? job.createdAt,
+        cancellable: true,
+        shelf: null,
+      };
+    }
     if (job.kind === BACKGROUND_WORK_KIND.catalogProviderSync) {
       // Pas de registry ici : ce poll tourne souvent dans Next, et les lignes
       // sont de toute façon regroupées en « Données fournisseurs ».

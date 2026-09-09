@@ -13,6 +13,22 @@ function isTruthyEnv(value?: string | null): boolean {
   return raw === "1" || raw === "true" || raw === "yes";
 }
 
+/** Open only for bootstrap (no accounts yet) or when ALLOW_REGISTRATION is set. */
+export async function isRegistrationOpen(): Promise<{
+  open: boolean;
+  bootstrap: boolean;
+}> {
+  const userCount = await prisma.user.count();
+  const bootstrap = userCount === 0;
+  const open = bootstrap || isTruthyEnv(process.env.ALLOW_REGISTRATION);
+  return { open, bootstrap };
+}
+
+export async function GET() {
+  const status = await isRegistrationOpen();
+  return NextResponse.json(status);
+}
+
 export async function POST(req: Request) {
   try {
     // Account creation is cheap for the caller and expensive for the host
@@ -61,13 +77,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Self-hosted instances are often reachable from the internet, where open
-    // registration means strangers can create accounts and spend the owner's
-    // scraping budget. Registration stays open only until the first account
-    // exists (bootstrap), unless ALLOW_REGISTRATION says otherwise.
-    const userCount = await prisma.user.count();
-    const isBootstrap = userCount === 0;
-    if (!isBootstrap && !isTruthyEnv(process.env.ALLOW_REGISTRATION)) {
+    // Mono-instance: registration stays closed after bootstrap unless
+    // ALLOW_REGISTRATION reopens it (rare — usually seed/admin only).
+    const { open, bootstrap } = await isRegistrationOpen();
+    if (!open) {
       return NextResponse.json(
         { message: "Registration is closed" },
         { status: 403 },
@@ -98,7 +111,7 @@ export async function POST(req: Request) {
         // The very first account owns the instance: a Docker install with
         // ENABLE_SEED=0 would otherwise have no way to obtain an admin, since
         // every registration below is a plain `user`.
-        role: isBootstrap ? UserRole.admin : UserRole.user,
+        role: bootstrap ? UserRole.admin : UserRole.user,
       },
       select: {
         id: true,

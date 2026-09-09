@@ -50,9 +50,6 @@ services:
       # Pas de valeur par défaut : une instance exposée avec « admin » est une
       # instance compromise. Le seed tourne au boot et crée ce compte.
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?définis ADMIN_PASSWORD dans .env}
-      - GUEST_EMAIL=${GUEST_EMAIL:-guest@placarr.com}
-      - GUEST_NAME=${GUEST_NAME:-Guest}
-      - GUEST_PASSWORD=${GUEST_PASSWORD:?définis GUEST_PASSWORD dans .env}
       #- AVES_API_KEY=
       #- DATA_FOR_SEO_API_KEY=
       #- RAWG_API_KEY=

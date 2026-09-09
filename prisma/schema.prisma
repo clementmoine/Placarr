@@ -151,7 +151,6 @@ model Shelf {
   imageUrl   String?
   color      String?
   type       Type
-  isPublic   Boolean  @default(true)
   cardFormat String   @default("default")
   userId     String
   createdAt  DateTime @default(now())
@@ -237,12 +236,15 @@ model Item {
   backgroundImageUrl        String?
   metadataRefreshStartedAt  DateTime?
   metadataRefreshGeneration Int             @default(0)
+  // Personal loan note — who has this copy and since when. Both null = at home.
+  // Replaces the old multi-user LoanRequest flow on a mono-user instance.
+  loanedTo                  String?
+  loanedAt                  DateTime?
   user                      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   shelf                     Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   metadata                  Metadata?       @relation(fields: [metadataId], references: [id])
   fieldEvidence             FieldEvidence[]
   priceOffers               PriceOffer[]
-  loans                     LoanRequest[]
 
   @@index([shelfId])
   @@index([userId])
@@ -251,6 +253,7 @@ model Item {
   @@index([printKey])
   @@index([printKey, variant, language])
   @@index([slug])
+  @@index([loanedTo])
 }
 
 model RawName {
@@ -309,18 +312,16 @@ model UnresolvedBarcodeScan {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  name           String?
-  email          String?       @unique
-  image          String?
-  role           UserRole      @default(guest)
-  password       String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  items          Item[]
-  ownedLoans     LoanRequest[] @relation("OwnedLoans")
-  requestedLoans LoanRequest[] @relation("RequestedLoans")
-  shelves        Shelf[]
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  image     String?
+  role      UserRole @default(guest)
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     Item[]
+  shelves   Shelf[]
 }
 
 model Setting {
@@ -328,25 +329,6 @@ model Setting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model LoanRequest {
-  id          String   @id @default(cuid())
-  itemId      String
-  requesterId String
-  ownerId     String
-  status      String   @default("PENDING")
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  owner       User     @relation("OwnedLoans", fields: [ownerId], references: [id], onDelete: Cascade)
-  requester   User     @relation("RequestedLoans", fields: [requesterId], references: [id], onDelete: Cascade)
-  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@index([ownerId])
-  @@index([requesterId])
-  @@index([status])
 }
 
 /// Out-of-process work queue — claimed by `pnpm worker`, never run inside Next `after()`.

@@ -23,7 +23,7 @@ import {
 } from "@/lib/api/backgroundJobs";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { METADATA_POLL_INTERVAL_MS } from "@/core/collect/enrichment";
+import { backgroundJobsRefetchInterval } from "@/core/collect/enrichment";
 import { itemPath } from "@/lib/routing/slugs";
 import { cn } from "@/lib/shared/utils";
 
@@ -31,6 +31,7 @@ function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   if (job.kind === "metadataRefresh") return t("backgroundJobs.kindRefresh");
   if (job.kind === "priceRefresh") return t("backgroundJobs.kindPrice");
   if (job.kind === "foilExtract") return t("backgroundJobs.kindFoil");
+  if (job.kind === "apkStoreFetch") return t("backgroundJobs.kindApkStore");
   if (job.kind === "icollectCatalogSync")
     return t("backgroundJobs.kindCatalog");
   if (job.kind === "launchboxIndexSync")
@@ -68,9 +69,8 @@ export function BackgroundJobsMenu() {
     queryKey: ["backgroundJobs"],
     queryFn: getBackgroundJobs,
     enabled: !isGuest,
-    // Keep polling while idle so a just-started job appears without depending
-    // on every mutation remembering to invalidate this query.
-    refetchInterval: !isGuest ? METADATA_POLL_INTERVAL_MS : false,
+    // Busy → 5s; idle → 45s (mutations still invalidate for snappy start).
+    refetchInterval: !isGuest ? backgroundJobsRefetchInterval : false,
     refetchIntervalInBackground: true,
   });
 
@@ -185,7 +185,7 @@ export function BackgroundJobsMenu() {
                   </Link>
                 ) : (
                   <Link
-                    href="/admin?tab=tcg-effects"
+                    href="/admin?tab=catalogue"
                     className="block truncate text-sm font-semibold hover:text-primary"
                   >
                     {job.name}

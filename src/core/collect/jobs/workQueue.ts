@@ -11,6 +11,8 @@ export const BACKGROUND_WORK_KIND = {
   nointroIndexSync: "nointroIndexSync",
   /** Provider-blind catalog refresh — payload `{ providerId, auto? }`. */
   catalogProviderSync: "catalogProviderSync",
+  /** Legacy store-only job — new work goes through `catalogueExtract` (APK first). */
+  apkStoreFetch: "apkStoreFetch",
   /*
     The stored value stays `foilExtract` on purpose. This is a column in
     `BackgroundWorkJob`, and rows carrying it are queued or running right now —
@@ -29,6 +31,8 @@ export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.metadataRefresh,
   BACKGROUND_WORK_KIND.priceRefresh,
   BACKGROUND_WORK_KIND.catalogueExtract,
+  // Same pool as the extract it feeds — a fresh APK enqueues its foilExtract.
+  BACKGROUND_WORK_KIND.apkStoreFetch,
 ];
 
 /** Local index / catalog crawl — dedicated process (`pnpm worker:icollect`). */
@@ -125,6 +129,19 @@ export type CatalogueExtractJobPayload = {
    * `extract.pipelineSteps`.
    */
   completedSteps?: string[];
+  /** Auto-sync: probe the store APK, extract only when a newer one landed. */
+  auto?: boolean;
+  /** Re-download the store APK even when versionCode matches. */
+  forceApk?: boolean;
+};
+
+export type ApkStoreFetchJobPayload = {
+  /** Catalogue pack id with `androidPackageId` (pokemon / lorcana). */
+  pack: string;
+  /** Re-download even when the store version matches the tracked one. */
+  force?: boolean;
+  /** Enqueued by the auto-sync loop (vs admin button). */
+  auto?: boolean;
 };
 
 export type BackgroundWorkJobRow = {
@@ -559,12 +576,17 @@ export const DEFAULT_STALE_RUNNING_MS = 30 * 60 * 1000;
 /**
  * Foil extracts heartbeat every ~60s. No touch for this long ⇒ zombie lock
  * (worker died mid-spawn, or claim without execute).
- * 15 min leaves room for brief event-loop stalls (Unity typetree / GC) without
- * abandoning a live worker; a crashed process still clears within one window.
+ * 30 min leaves room for brief event-loop stalls (Unity typetree / GC / big
+ * AssetManifest batches) without abandoning a live worker; a crashed process
+ * still clears within one window.
  */
-export const FOIL_STALE_RUNNING_MS = 15 * 60 * 1000;
-/** After this many claims that went stale, abandon instead of infinite requeue. */
-export const FOIL_STALE_MAX_ATTEMPTS = 2;
+export const FOIL_STALE_RUNNING_MS = 30 * 60 * 1000;
+/**
+ * Soft recoveries (Unity stall, deploy restart) increment ``attempts`` on
+ * reclaim. Allow several before abandoning — a 40 min CDN Sync can trip the
+ * window more than once without being a true zombie.
+ */
+export const FOIL_STALE_MAX_ATTEMPTS = 5;
 
 export type StaleRecoveryResult = {
   requeued: number;

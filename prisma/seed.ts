@@ -224,46 +224,32 @@ async function main() {
     },
   });
 
-  const guestUser = await prisma.user.upsert({
-    where: { email: process.env.GUEST_EMAIL || "guest@placarr.com" },
-    update: {},
-    create: {
-      email: process.env.GUEST_EMAIL || "guest@placarr.com",
-      name: process.env.GUEST_NAME || "Guest",
-      role: UserRole.guest,
-      password: await bcrypt.hash(
-        process.env.GUEST_PASSWORD || "guest-password",
-        12,
-      ),
-    },
-  });
+  console.log({ adminUser });
 
-  console.log({ adminUser, guestUser });
-
+  // Demo shelves belong to the instance owner — anonymous visitors browse
+  // that collection read-only.
   console.log(`Seeding ${DEMO_SHELVES.length} demo shelves...`);
-  for (const user of [adminUser, guestUser]) {
-    for (const shelf of DEMO_SHELVES) {
-      const existing = await prisma.shelf.findFirst({
-        where: { name: shelf.name, userId: user.id },
+  for (const shelf of DEMO_SHELVES) {
+    const existing = await prisma.shelf.findFirst({
+      where: { name: shelf.name, userId: adminUser.id },
+    });
+    if (!existing) {
+      await prisma.shelf.create({
+        data: {
+          name: shelf.name,
+          type: shelf.type,
+          color: shelf.color,
+          userId: adminUser.id,
+        },
       });
-      if (!existing) {
-        await prisma.shelf.create({
-          data: {
-            name: shelf.name,
-            type: shelf.type,
-            color: shelf.color,
-            userId: user.id,
-          },
-        });
-      } else {
-        await prisma.shelf.update({
-          where: { id: existing.id },
-          data: {
-            type: shelf.type,
-            color: shelf.color,
-          },
-        });
-      }
+    } else {
+      await prisma.shelf.update({
+        where: { id: existing.id },
+        data: {
+          type: shelf.type,
+          color: shelf.color,
+        },
+      });
     }
   }
   console.log("Demo shelves seeded.");

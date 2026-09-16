@@ -16,6 +16,7 @@ describe("pokemonFaceSourceOf", () => {
     expect(pokemonFaceSourceOf("art.webp")).toBe("live");
     expect(pokemonFaceSourceOf("art.png")).toBe("live");
     expect(pokemonFaceSourceOf("art.coleka.webp")).toBe("coleka");
+    expect(pokemonFaceSourceOf("art.pokemoncom.png")).toBe("pokemoncom");
     expect(pokemonFaceSourceOf("art.tcgplayer.jpg")).toBe("tcgplayer");
     expect(pokemonFaceSourceOf("art.pokemontcg.png")).toBe("pokemontcg");
     expect(pokemonFaceSourceOf("art.pkmcards.webp")).toBe("pkmcards");
@@ -24,18 +25,29 @@ describe("pokemonFaceSourceOf", () => {
 });
 
 describe("pickBestPokemonFace", () => {
-  it("ranks live above coleka above tcgplayer", () => {
+  it("ranks live above pokemoncom above coleka", () => {
     expect(POKEMON_FACE_SOURCES[0]).toBe("live");
+    expect(POKEMON_FACE_SOURCES[1]).toBe("pokemoncom");
     expect(
       pickBestPokemonFace(
         [
           { source: "coleka", width: 0, height: 0 },
           { source: "live", width: 0, height: 0 },
-          { source: "tcgplayer", width: 0, height: 0 },
+          { source: "pokemoncom", width: 0, height: 0 },
         ],
         "fr",
       ),
     ).toBe("live");
+    expect(
+      pickBestPokemonFace(
+        [
+          { source: "tcgplayer", width: 0, height: 0 },
+          { source: "coleka", width: 0, height: 0 },
+          { source: "pokemoncom", width: 0, height: 0 },
+        ],
+        "en",
+      ),
+    ).toBe("pokemoncom");
     expect(
       pickBestPokemonFace(
         [

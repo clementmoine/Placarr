@@ -1,12 +1,13 @@
 /**
- * Paper-face harvest for Pokémon (Coleka McDo + TCGPlayer + pokemontcg.io +
- * pkmcards.fr). Catalogue Sync / CLI — take every available source face;
- * faceChoice ranks which one the UI shows.
+ * Paper-face harvest for Pokémon (official pokemon.com McDo tiles + Coleka +
+ * TCGPlayer + pokemontcg.io + pkmcards.fr). Catalogue Sync / CLI — take every
+ * available source face; faceChoice ranks which one the UI shows.
  */
 import { rebuildPokemonCardsIndex } from "@/providers/pokemontcglive/rebuildCardsIndex";
 
 import { harvestColekaMcdoFaces } from "./coleka/scrapeColekaPokemonFaces";
 import { fillPkmcardsFaces } from "./faces/fillPkmcards";
+import { fillPokemonComMcdoFaces } from "./faces/fillPokemonComMcdo";
 import { fillTcgplayerMcdo2023 } from "./faces/fillTcgplayer";
 import {
   fillPokemontcgIoFacesForSet,
@@ -14,6 +15,7 @@ import {
 } from "./faces/fillPokemontcgIo";
 
 export type PokemonPaperFacesReport = {
+  pokemoncom: Awaited<ReturnType<typeof fillPokemonComMcdoFaces>>;
   coleka: Awaited<ReturnType<typeof harvestColekaMcdoFaces>>;
   tcgplayer: Awaited<ReturnType<typeof fillTcgplayerMcdo2023>>;
   pokemontcg: Awaited<ReturnType<typeof fillPokemontcgIoFacesForSet>>[];
@@ -29,6 +31,17 @@ export async function runPokemonPaperFacesHarvest(
     rebuildIndex?: boolean;
   } = {},
 ): Promise<PokemonPaperFacesReport> {
+  console.log("── Pokémon paper faces — pokemon.com McDo (official tiles)");
+  const pokemoncom = await fillPokemonComMcdoFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+  });
+  for (const row of pokemoncom) {
+    console.log(
+      `   pokemon.com ${row.campaignId}: ${row.written} écrites / ${row.skipped} skip / ${row.failed} fail (${row.setId}/${row.lang})`,
+    );
+  }
+
   console.log("── Pokémon paper faces — Coleka McDo FR");
   const coleka = await harvestColekaMcdoFaces({
     force: opts.force,
@@ -88,6 +101,7 @@ export async function runPokemonPaperFacesHarvest(
   }
 
   return {
+    pokemoncom,
     coleka,
     tcgplayer,
     pokemontcg,

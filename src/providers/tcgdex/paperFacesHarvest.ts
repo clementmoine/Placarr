@@ -1,11 +1,12 @@
 /**
- * Paper-face harvest for Pokémon (official pokemon.com McDo tiles + Coleka +
+ * Paper-face harvest for Pokémon (mcdn encyclopédie + McDo tiles + Coleka +
  * TCGPlayer + pokemontcg.io + pkmcards.fr). Catalogue Sync / CLI — take every
  * available source face; faceChoice ranks which one the UI shows.
  */
 import { rebuildPokemonCardsIndex } from "@/providers/pokemontcglive/rebuildCardsIndex";
 
 import { harvestColekaMcdoFaces } from "./coleka/scrapeColekaPokemonFaces";
+import { fillMcdnGalleryFaces } from "./faces/fillMcdnFaces";
 import { fillPkmcardsFaces } from "./faces/fillPkmcards";
 import { fillPokemonComMcdoFaces } from "./faces/fillPokemonComMcdo";
 import { fillTcgplayerMcdo2023 } from "./faces/fillTcgplayer";
@@ -15,6 +16,7 @@ import {
 } from "./faces/fillPokemontcgIo";
 
 export type PokemonPaperFacesReport = {
+  mcdn: Awaited<ReturnType<typeof fillMcdnGalleryFaces>>;
   pokemoncom: Awaited<ReturnType<typeof fillPokemonComMcdoFaces>>;
   coleka: Awaited<ReturnType<typeof harvestColekaMcdoFaces>>;
   tcgplayer: Awaited<ReturnType<typeof fillTcgplayerMcdo2023>>;
@@ -31,6 +33,17 @@ export async function runPokemonPaperFacesHarvest(
     rebuildIndex?: boolean;
   } = {},
 ): Promise<PokemonPaperFacesReport> {
+  console.log("── Pokémon paper faces — mcdn encyclopédie (cms3/cms2)");
+  const mcdn = await fillMcdnGalleryFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+  });
+  for (const row of mcdn) {
+    console.log(
+      `   mcdn ${row.campaignId}: ${row.written} écrites / ${row.skipped} skip / ${row.failed} fail (${row.setId}/${row.lang} → ${row.galleryCode ?? "?"})`,
+    );
+  }
+
   console.log("── Pokémon paper faces — pokemon.com McDo (official tiles)");
   const pokemoncom = await fillPokemonComMcdoFaces({
     force: opts.force,
@@ -101,6 +114,7 @@ export async function runPokemonPaperFacesHarvest(
   }
 
   return {
+    mcdn,
     pokemoncom,
     coleka,
     tcgplayer,

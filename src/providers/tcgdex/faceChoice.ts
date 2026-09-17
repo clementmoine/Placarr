@@ -19,6 +19,7 @@ import {
 
 export const POKEMON_FACE_SOURCES = [
   "live",
+  "mcdn",
   "pokemoncom",
   "coleka",
   "tcgplayer",
@@ -28,13 +29,29 @@ export const POKEMON_FACE_SOURCES = [
 
 export type PokemonFaceSource = (typeof POKEMON_FACE_SOURCES)[number];
 
-/** Prefer Live, then official pokemon.com McDo tiles, then third-party. */
+/** Prefer Live, then encyclopédie mcdn, then McDo tiles, then third-party. */
 export const POKEMON_FACE_PRIORITY: Record<
   string,
   readonly PokemonFaceSource[]
 > = {
-  fr: ["live", "pokemoncom", "coleka", "tcgplayer", "pokemontcg", "pkmcards"],
-  en: ["live", "pokemoncom", "coleka", "tcgplayer", "pokemontcg", "pkmcards"],
+  fr: [
+    "live",
+    "mcdn",
+    "pokemoncom",
+    "coleka",
+    "tcgplayer",
+    "pokemontcg",
+    "pkmcards",
+  ],
+  en: [
+    "live",
+    "mcdn",
+    "pokemoncom",
+    "coleka",
+    "tcgplayer",
+    "pokemontcg",
+    "pkmcards",
+  ],
 };
 
 const choice = createCardFaceChoice<PokemonFaceSource>({

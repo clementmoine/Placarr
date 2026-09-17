@@ -1,0 +1,27 @@
+{
+  "source": "pokemon.com encyclopédie — mcdn cms3/full + cms2/web",
+  "observed": "2026-09-17",
+  "note": "cms3/full is HQ (~660×920) but sparse; cms2/web is complete (~245×342). Prefer cms3 then cms2. McDo Happy Meal tiles stay under pokemoncom-mcdo.json.",
+  "aliases": {
+    "30th": "30TH",
+    "me5-5": "30TH"
+  },
+  "campaigns": [
+    {
+      "id": "30th-fr",
+      "setId": "30th",
+      "galleryCode": "30TH",
+      "lang": "fr",
+      "localIds": "1-158",
+      "label": "30ᵉ Anniversaire (encyclopédie FR)"
+    },
+    {
+      "id": "30th-en",
+      "setId": "30th",
+      "galleryCode": "30TH",
+      "lang": "en",
+      "localIds": "1-158",
+      "label": "30th Celebration (encyclopédie EN)"
+    }
+  ]
+}

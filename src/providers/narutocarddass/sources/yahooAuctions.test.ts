@@ -22,6 +22,8 @@ describe("yahoo auction faces", () => {
       "作-21",
       "OP忍-3",
       "PR忍-3",
+      "PR作-11",
+      "PR作-12",
     ]);
     expect(
       yahooIngestFaces().every((row) => row.curated.endsWith("source.jpg")),
@@ -40,6 +42,8 @@ describe("yahoo auction faces", () => {
       "ta0021",
       "opni0003",
       "prni0003",
+      "prta0011",
+      "prta0012",
     ]);
     expect(
       yahooAuctionLedger().faces.some(

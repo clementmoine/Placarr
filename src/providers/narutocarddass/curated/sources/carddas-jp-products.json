@@ -1,11 +1,11 @@
 {
  "source": "carddas.com — le site de jeu Naruto de Bandai, via son miroir Wayback",
  "observed": "2026-08-20",
- "ingest": "packshots des volumes 2, 3, 4, 13, 14, 15 (plus le 5 en source secondaire)",
+ "ingest": "packshots des volumes 2–17 (tous les sachets attestés du miroir)",
  "crawlLive": false,
  "lang": "ja",
  "url": "http://www.carddas.com/naruto/",
- "note": "Déjà sur disque : `scrapeCarddasJp` miroite tout /naruto/ depuis la CDX Wayback, et le staging tient 1 043 images. Les packshots y étaient depuis le début, jamais lus — on cherchait des visuels sur le web alors qu'ils dormaient dans notre propre moisson.",
+ "note": "Déjà sur disque : `scrapeCarddasJp` miroite tout /naruto/ depuis la CDX Wayback, et le staging tient 1 043 images. Chaque dump reste `art.carddasjp` même quand Bandai / Suruga / détourage / TV Tokyo existe — productChoice décide.",
  "whyItMatters": "Six des dix-sept volumes japonais n'avaient aucun visuel — 1, 2, 3, 13, 14, 15. Ce site couvre tout sauf le premier, et corrige le quatrième.",
  "layout": {
   "image/product/": "la ligne 巻ノ (2002-2007) — un fichier par volume, l'ordinal dans le nom",
@@ -13,8 +13,8 @@
  },
  "shapeTellsRole": "Le rapport hauteur/largeur classe le fichier sans l'ouvrir : ~2,1 = sachet, ~1,5 = boîte, ~3,5 = distributeur, ~1,45 = carte. C'est ce qui a séparé `1st_box.jpg` (une boîte) des sachets.",
  "attestation": "Trois recoupements indépendants pour l'ordinal → volume : l'étiquette `2nd.gif` se lit 巻ノ弐 ; `13th_logo.gif` se lit 巻ノ十三「苦難襲来！終末の器 編」 ; et les sachets des volumes 13, 14 et 15 impriment leur propre numéro. Les volumes 4, 16 et 17 concordent en outre avec la base produit sec.carddass.com.",
- "resolutionCaveat": "Vignettes d'un site de 2003 : de 75×143 à 100×201. Retenues faute de mieux, et placées après la base produit (560×560) partout où celle-ci montre un emballage.",
- "vol4Correction": "La fiche officielle du 巻ノ四 illustre le produit par six cartes étalées, sans emballage — même travers que les fiches 自販機. `4nd.gif` montre le sachet, et c'est lui qui sert désormais ce SKU booster.",
+ "resolutionCaveat": "Vignettes d'un site de 2003 : de 75×143 à 100×201. productChoice préfère souvent la base produit (560×560) ou Suruga quand elles montrent un emballage.",
+ "vol4Correction": "La fiche officielle du 巻ノ四 illustre le produit par six cartes étalées, sans emballage — même travers que les fiches 自販機. `4nd.gif` montre le sachet, et c'est lui qui sert désormais ce SKU booster. L'officiel n'est pas archivé ici (mauvaise image produit).",
  "products": [
   {
    "volume": 2,
@@ -32,6 +32,35 @@
    "size": "75x144"
   },
   {
+   "volume": 5,
+   "file": "image/product/5nd.gif",
+   "size": "75x155"
+  },
+  {
+   "volume": 6,
+   "file": "image/product/6.gif"
+  },
+  {
+   "volume": 7,
+   "file": "image/product/7th.jpg"
+  },
+  {
+   "volume": 8,
+   "file": "image/product/8th.jpg"
+  },
+  {
+   "volume": 9,
+   "file": "image/product/9th.gif"
+  },
+  {
+   "volume": 10,
+   "file": "image/product/10th.gif"
+  },
+  {
+   "volume": 11,
+   "file": "image/product/11th_pac.gif"
+  },
+  {
    "volume": 13,
    "file": "image/product/13th_pac.gif",
    "size": "80x160"
@@ -47,16 +76,16 @@
    "size": "100x201"
   },
   {
-   "volume": 5,
-   "file": "image/product/5nd.gif",
-   "size": "75x155",
-   "note": "Deuxième source seulement : Graded Card Center sert déjà ce volume en 756×1621. Gardé parce qu'il atteste la nomenclature — le sachet s'y lit 巻ノ五, comme sur la grande photo."
+   "volume": 16,
+   "file": "image/product/16/pac.gif"
+  },
+  {
+   "volume": 17,
+   "file": "image/product/17/17th_pac_l.jpg"
   }
  ],
  "not": {
-  "volume1UnderProduct": "`image/product/1st_pac.gif` reste absent de la CDX — le sachet vit sous `image/new/1st_pac.gif` (branché 2026-08-29).",
-  "volumes6-12": "`6.gif`, `7th.jpg`, `8th.jpg`, `9th.gif`, `10th.gif`, `11th_pac.gif` existent aussi, mais ces volumes ont déjà mieux (Suruga, détourages, TV Tokyo, Graded Card Center).",
-  "volumes16-17": "`16/pac.gif` et `17/17th_pac_l.jpg` sont des sachets seuls, plus propres que la composite officielle — mais 100×212 contre 560×560. La base produit garde la main."
+  "volume1UnderProduct": "`image/product/1st_pac.gif` reste absent de la CDX — le sachet vit sous `image/new/1st_pac.gif` (branché 2026-08-29)."
  },
  "releasePackshots": {
   "observed": "2026-08-29",

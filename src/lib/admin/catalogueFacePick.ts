@@ -48,6 +48,8 @@ function catalogueFaceSourceRank(artFile: string): number {
   // AnimeCollection HD FR — source principale Ninja Ranks (au-dessus de Coleka).
   if (source === "animecollection") return 90;
   if (source === "inkworks" || source === "arcadegamecards") return 85;
+  // Official Bandai Carddass site dumps (ex. Bleach SCB FR via carddass.fr).
+  if (source === "carddass") return 80;
   if (source === "imadoki") return 55;
   if (source === "coleka") return 35;
   if (source === "blogger") return 30;

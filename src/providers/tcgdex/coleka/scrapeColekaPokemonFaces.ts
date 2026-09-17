@@ -11,7 +11,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { packStagingDir } from "@/lib/packPaths";
-import { fetchColekaListingHtml } from "@/providers/narutocarddass/sources/colekaListingFetch";
+import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 
 import {
   refreshPokemonFaceDecision,

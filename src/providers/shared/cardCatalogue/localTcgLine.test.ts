@@ -157,7 +157,7 @@ describe("localTcgLine face URLs", () => {
     );
   });
 
-  it("honours cardAssetUrl override (Carddass-like set/card/lang)", () => {
+  it("honours cardAssetUrl override (set/lang/card — disk order)", () => {
     tmpDataRoot();
     const packId = "naruto/shippuden";
     const index = createLocalPrintsIndex(packId);
@@ -186,11 +186,11 @@ describe("localTcgLine face URLs", () => {
       syncHint: "test",
       notes: "test",
       cardAssetUrl: (id, file) =>
-        `/assets/${packId}/cards/${id.set}/${id.card}/${id.lang}/${file}`,
+        `/assets/${packId}/cards/${id.set}/${id.lang}/${id.card}/${file}`,
     });
 
     expect(line.lookupPrint("naruto:msa-0026", "ja")?.imageUrl).toBe(
-      "/assets/naruto/shippuden/cards/msa/msa0026/ja/art.nikita.jpg",
+      "/assets/naruto/shippuden/cards/msa/ja/msa0026/art.nikita.jpg",
     );
   });
 });

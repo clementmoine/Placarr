@@ -15,11 +15,24 @@ import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
 /** Enough to fill a picker grid without turning a typo into a long scroll. */
 const MAX_LIMIT = 48;
 
+/**
+ * Offset ceiling — keeps a crafted `offset` from asking providers for an
+ * unbounded window (`offset + limit + 1`).
+ */
+const MAX_OFFSET = 5000;
+
 function parseLimit(raw: string | null): number | undefined {
   if (!raw) return undefined;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
   return Math.min(parsed, MAX_LIMIT);
+}
+
+function parseOffset(raw: string | null): number {
+  if (!raw) return 0;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.min(parsed, MAX_OFFSET);
 }
 
 /**
@@ -170,13 +183,23 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const candidates = await searchPrintCandidates(query ?? "", type, {
+    const pageSize = parseLimit(searchParams.get("limit")) ?? MAX_LIMIT;
+    const offset = parseOffset(searchParams.get("offset"));
+    /*
+      On demande une ligne de plus que la page : si elle arrive, il reste des
+      tirages après — le picker peut proposer un scroll infini sans second
+      aller-retour « est-ce qu'il y en a encore ? ».
+    */
+    const batch = await searchPrintCandidates(query ?? "", type, {
       language: searchParams.get("language"),
-      limit: parseLimit(searchParams.get("limit")),
+      limit: pageSize + 1,
+      offset,
       providerId: searchParams.get("catalogue"),
       setId: set,
       signal: req.signal,
     });
+    const hasMore = batch.length > pageSize;
+    const candidates = hasMore ? batch.slice(0, pageSize) : batch;
 
     /*
       Les catalogues sont listés par le serveur, avec leur libellé : le client
@@ -190,6 +213,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       supported: true,
       candidates,
+      hasMore,
       catalogues: await printSearchCatalogues(
         type,
         searchParams.get("language"),

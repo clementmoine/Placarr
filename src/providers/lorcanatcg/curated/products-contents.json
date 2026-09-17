@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "lorcana",
-  "updatedAt": "2026-09-05",
+  "updatedAt": "2026-09-14",
   "byKind": {
     "booster": {
       "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/boosters (12 cards / display 24 packs)",
@@ -17,6 +17,49 @@
       "packsContained": 24,
       "randomPoolScope": "none",
       "notes": "Booster display boxes include 24 booster packs (sauf Story FW etc. — hors Lorcana)."
+    },
+    "trove": {
+      "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/trove-packs/ (8 boosters × 12)",
+      "verifiedAt": "2026-09-09",
+      "packsContained": 8,
+      "cardsPerPack": 12,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Illumineer's Trove / Trésor : 8 boosters (locale FR/EN/DE/IT). Pas de liste de cartes inventoriée."
+    },
+    "blister_case": {
+      "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/boosters (display = 24 packs; sleeved carton = même structure)",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "cardsPerPack": 12,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Carton blister / sleeved display — loterie dans les 24 sachets enfants, pas ici."
+    },
+    "quest": {
+      "source": "Ravensburger Illumineer's Quest — structure mixed (decks + scénario)",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Listes decks / exclusives SKU par SKU quand attestées. Pas de pool set inventé."
+    },
+    "prerelease": {
+      "source": "Ravensburger prerelease / avant-première",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "unknown",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Contenu promo/spécial — pas un booster set standard."
+    },
+    "collector_box": {
+      "source": "Coffrets collection / gift — mixed (boosters ± promo)",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "packsContained + garanties SKU par SKU. Scope none = loterie dans les sachets enfants."
     }
   },
   "skus": {
@@ -167,30 +210,6 @@
       "cardsPerPack": null,
       "randomPoolScope": "none",
       "notes": "Display officiel 24 boosters × 12 cartes."
-    },
-    "booster-blister-carton-premier-chapitre-mickey-mouse": {
-      "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/boosters (12 cards / display 24 packs) ; sleeved = même contenu sachet",
-      "verifiedAt": "2026-08-26",
-      "cardsPerPack": 12,
-      "packsContained": 1,
-      "randomPoolScope": "set",
-      "notes": "Blister carton = booster 12 cartes du set (emballage différent)."
-    },
-    "booster-blister-carton-premier-chapitre-malefique": {
-      "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/boosters (12 cards / display 24 packs) ; sleeved = même contenu sachet",
-      "verifiedAt": "2026-08-26",
-      "cardsPerPack": 12,
-      "packsContained": 1,
-      "randomPoolScope": "set",
-      "notes": "Blister carton = booster 12 cartes du set (emballage différent)."
-    },
-    "booster-blister-carton-premier-chapitre-elsa": {
-      "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/boosters (12 cards / display 24 packs) ; sleeved = même contenu sachet",
-      "verifiedAt": "2026-08-26",
-      "cardsPerPack": 12,
-      "packsContained": 1,
-      "randomPoolScope": "set",
-      "notes": "Blister carton = booster 12 cartes du set (emballage différent)."
     },
     "starter-deck-ascension-des-floodborn-starter-merlin-tiana": {
       "source": "https://lorcanacollectors.com/lorcana-starter-decks/ merlin-tiana",
@@ -1354,12 +1373,12 @@
     },
     "coffret-quete-des-illumineurs-menace-des-profondeurs": {
       "source": "https://lorcanaplayer.com/set/deep-trouble/ + https://www.disneylorcana.com/en-GB/product/deep-trouble",
-      "notes": "2 decks jouables 60 (120) + scénario 50 non Standard. Garanties listées = 4 alt-art + prix Half Hexwell Crown. Listes complètes à venir.",
+      "notes": "2 decks jouables 60 (120) + scénario 50 non Standard. Garanties listées = 4 alt-art + prix Half Hexwell Crown. Listes complètes à venir. Listes decks 2×60 absentes — exclusives seules ; contentsKnown false.",
       "packsContained": null,
       "cardsPerPack": null,
       "behavior": "known_bundle",
       "randomPoolScope": "none",
-      "contentsKnown": true,
+      "contentsKnown": false,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:3-223",
@@ -1372,27 +1391,24 @@
       "declaredCardCount": 120
     },
     "coffret-quete-des-illumineurs-vol-au-palais": {
-      "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/gift-sets/disney-lorcana-tcg-illumineers-quest-palace-heist-11098525",
-      "notes": "2 decks 60 + scénario Jafar 50. Exclusives / listes complètes à cartographier — structure seule pour l'instant (pas de faux pool set).",
-      "packsContained": null,
-      "cardsPerPack": null,
-      "behavior": "known_bundle",
+      "source": "https://wiki.mushureport.com/wiki/Illumineer%27s_Quest_-_Palace_Heist (170 normal cards) + mushureport reveal",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle : 1 Jafar scenario deck 50 + 2 player decks 60 = 170 cartes normales (+ 4 oversized). Listes decks à cartographier.",
+      "behavior": "mixed_bundle",
       "randomPoolScope": "none",
       "contentsKnown": false,
       "containsPrintsIsPreview": false,
-      "guaranteedPrintKeys": [],
-      "verifiedAt": "2026-08-26"
+      "declaredCardCount": 170
     },
     "coffret-quete-des-illumineurs-equipe-miel-a-la-rescousse": {
-      "source": "Ravensburger 2026 product announcement (Great Hunny Rescue)",
-      "notes": "Quête Illumineurs à venir — contenu non attesté ; ne pas inventer de pool.",
-      "packsContained": null,
-      "behavior": "known_bundle",
+      "source": "https://www.disneylorcana.com/en-GB/product/great-hunny-rescue + TCGplayer early look",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle Ravensburger : 1 Vine scenario deck 50 + 10 Vine Tendril + 2 player decks 60 + 6 Encounter + 2 Prize packs ×2 = 190 cartes. Listes carte-par-carte non publiées.",
+      "behavior": "mixed_bundle",
       "randomPoolScope": "none",
       "contentsKnown": false,
       "containsPrintsIsPreview": false,
-      "guaranteedPrintKeys": [],
-      "verifiedAt": "2026-08-26"
+      "declaredCardCount": 190
     },
     "pack-avant-premiere-set-13-invasion-epineuse": {
       "source": "SKU naming / product type (not a chapter booster)",
@@ -1453,7 +1469,9 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
-      "guaranteedPrintKeys": ["lorcana:p2-36"]
+      "guaranteedPrintKeys": [
+        "lorcana:p2-36"
+      ]
     },
     "puzzle-1000-pieces-elsa": {
       "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/puzzles/disney-lorcana-tcg-glimmers-of-the-realm-sapphire-12001625",
@@ -1466,7 +1484,9 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
-      "guaranteedPrintKeys": ["lorcana:p2-36"]
+      "guaranteedPrintKeys": [
+        "lorcana:p2-36"
+      ]
     },
     "puzzle-1000-pieces-hades": {
       "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/puzzles/disney-lorcana-tcg-glimmers-of-the-realm-emerald-12001623",
@@ -1479,7 +1499,9 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
-      "guaranteedPrintKeys": ["lorcana:p2-36"]
+      "guaranteedPrintKeys": [
+        "lorcana:p2-36"
+      ]
     },
     "puzzle-1000-pieces-malefique-dragon": {
       "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/puzzles/ (Glimmers of the Realm — Ruby ink)",
@@ -1492,7 +1514,9 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
-      "guaranteedPrintKeys": ["lorcana:p2-36"]
+      "guaranteedPrintKeys": [
+        "lorcana:p2-36"
+      ]
     },
     "puzzle-1000-pieces-cruella-d-enfer": {
       "source": "https://www.themainstreetmouse.com/2025/09/29/new-disney-lorcana-inspired-puzzles-now-available/",
@@ -1505,7 +1529,207 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
-      "guaranteedPrintKeys": ["lorcana:p2-36"]
+      "guaranteedPrintKeys": [
+        "lorcana:p2-36"
+      ]
+    },
+    "scrooge-mcduck-gift-box-collector_box": {
+      "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box (alias locale scrooge-mcduck-gift-box-collector_box ← coffret-cadeau-balthazar-picsou)",
+      "verifiedAt": "2026-09-09",
+      "notes": "1 promo Scrooge S.H.U.S.H. Agent (glimmer) + 5 boosters × 12. Même produit retail que coffret-cadeau-balthazar-picsou (promo printKey catalogue partagé).",
+      "packsContained": 5,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "cardsPerPack": null,
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "lorcana:10-36-p3"
+      ]
+    },
+    "scrooge-mcduck-gift-box-collector_box-en": {
+      "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box (alias locale scrooge-mcduck-gift-box-collector_box-en ← coffret-cadeau-balthazar-picsou)",
+      "verifiedAt": "2026-09-09",
+      "notes": "1 promo Scrooge S.H.U.S.H. Agent (glimmer) + 5 boosters × 12. Même produit retail que coffret-cadeau-balthazar-picsou (promo printKey catalogue partagé).",
+      "packsContained": 5,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "cardsPerPack": null,
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "lorcana:10-36-p3"
+      ]
+    },
+    "scrooge-mcduck-gift-box-collector_box-de": {
+      "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box (alias locale scrooge-mcduck-gift-box-collector_box-de ← coffret-cadeau-balthazar-picsou)",
+      "verifiedAt": "2026-09-09",
+      "notes": "1 promo Scrooge S.H.U.S.H. Agent (glimmer) + 5 boosters × 12. Même produit retail que coffret-cadeau-balthazar-picsou (promo printKey catalogue partagé).",
+      "packsContained": 5,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "cardsPerPack": null,
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "lorcana:10-36-p3"
+      ]
+    },
+    "scrooge-mcduck-gift-box-collector_box-it": {
+      "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box (alias locale scrooge-mcduck-gift-box-collector_box-it ← coffret-cadeau-balthazar-picsou)",
+      "verifiedAt": "2026-09-09",
+      "notes": "1 promo Scrooge S.H.U.S.H. Agent (glimmer) + 5 boosters × 12. Même produit retail que coffret-cadeau-balthazar-picsou (promo printKey catalogue partagé).",
+      "packsContained": 5,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "cardsPerPack": null,
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "lorcana:10-36-p3"
+      ]
+    },
+    "elsa-gift-box-collector_box-en": {
+      "source": "https://bleedingcool.com/collectibles/new-disney-lorcana-fabled-gift-sets-coming-soon-from-ravensburger/ (alias locale elsa-gift-box-collector_box-en ← coffret-cadeau-fabuleux-elsa)",
+      "verifiedAt": "2026-09-09",
+      "notes": "1 promo Elsa The Fifth Spirit (glimmer) + 5 boosters random multi-sets. Même produit retail que coffret-cadeau-fabuleux-elsa (promo printKey catalogue partagé).",
+      "packsContained": 5,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "cardsPerPack": null,
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "lorcana:5-6-p3"
+      ]
+    },
+    "elsa-gift-box-collector_box-de": {
+      "source": "https://bleedingcool.com/collectibles/new-disney-lorcana-fabled-gift-sets-coming-soon-from-ravensburger/ (alias locale elsa-gift-box-collector_box-de ← coffret-cadeau-fabuleux-elsa)",
+      "verifiedAt": "2026-09-09",
+      "notes": "1 promo Elsa The Fifth Spirit (glimmer) + 5 boosters random multi-sets. Même produit retail que coffret-cadeau-fabuleux-elsa (promo printKey catalogue partagé).",
+      "packsContained": 5,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "cardsPerPack": null,
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "lorcana:5-6-p3"
+      ]
+    },
+    "elsa-gift-box-collector_box-it": {
+      "source": "https://bleedingcool.com/collectibles/new-disney-lorcana-fabled-gift-sets-coming-soon-from-ravensburger/ (alias locale elsa-gift-box-collector_box-it ← coffret-cadeau-fabuleux-elsa)",
+      "verifiedAt": "2026-09-09",
+      "notes": "1 promo Elsa The Fifth Spirit (glimmer) + 5 boosters random multi-sets. Même produit retail que coffret-cadeau-fabuleux-elsa (promo printKey catalogue partagé).",
+      "packsContained": 5,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "cardsPerPack": null,
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "lorcana:5-6-p3"
+      ]
+    },
+    "great-hunny-rescue-quest-en": {
+      "source": "https://www.disneylorcana.com/en-GB/product/great-hunny-rescue + TCGplayer early look",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle Ravensburger : 1 Vine scenario deck 50 + 10 Vine Tendril + 2 player decks 60 + 6 Encounter + 2 Prize packs ×2 = 190 cartes. Listes carte-par-carte non publiées.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 190
+    },
+    "great-hunny-rescue-quest-de": {
+      "source": "https://www.disneylorcana.com/en-GB/product/great-hunny-rescue + TCGplayer early look",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle Ravensburger : 1 Vine scenario deck 50 + 10 Vine Tendril + 2 player decks 60 + 6 Encounter + 2 Prize packs ×2 = 190 cartes. Listes carte-par-carte non publiées.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 190
+    },
+    "attack-of-the-vine-quest": {
+      "source": "https://www.disneylorcana.com/en-GB/product/great-hunny-rescue + TCGplayer early look",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle Ravensburger : 1 Vine scenario deck 50 + 10 Vine Tendril + 2 player decks 60 + 6 Encounter + 2 Prize packs ×2 = 190 cartes. Listes carte-par-carte non publiées.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 190
+    },
+    "attack-of-the-vine-quest-en": {
+      "source": "https://www.disneylorcana.com/en-GB/product/great-hunny-rescue + TCGplayer early look",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle Ravensburger : 1 Vine scenario deck 50 + 10 Vine Tendril + 2 player decks 60 + 6 Encounter + 2 Prize packs ×2 = 190 cartes. Listes carte-par-carte non publiées.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 190
+    },
+    "attack-of-the-vine-quest-de": {
+      "source": "https://www.disneylorcana.com/en-GB/product/great-hunny-rescue + TCGplayer early look",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle Ravensburger : 1 Vine scenario deck 50 + 10 Vine Tendril + 2 player decks 60 + 6 Encounter + 2 Prize packs ×2 = 190 cartes. Listes carte-par-carte non publiées.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 190
+    },
+    "palace-heist-quest-en": {
+      "source": "https://wiki.mushureport.com/wiki/Illumineer%27s_Quest_-_Palace_Heist (170 normal cards) + mushureport reveal",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle : 1 Jafar scenario deck 50 + 2 player decks 60 = 170 cartes normales (+ 4 oversized). Listes decks à cartographier.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 170
+    },
+    "palace-heist-quest-de": {
+      "source": "https://wiki.mushureport.com/wiki/Illumineer%27s_Quest_-_Palace_Heist (170 normal cards) + mushureport reveal",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle : 1 Jafar scenario deck 50 + 2 player decks 60 = 170 cartes normales (+ 4 oversized). Listes decks à cartographier.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 170
+    },
+    "reign-of-jafar-quest": {
+      "source": "https://wiki.mushureport.com/wiki/Illumineer%27s_Quest_-_Palace_Heist (170 normal cards) + mushureport reveal",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle : 1 Jafar scenario deck 50 + 2 player decks 60 = 170 cartes normales (+ 4 oversized). Listes decks à cartographier.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 170
+    },
+    "reign-of-jafar-quest-en": {
+      "source": "https://wiki.mushureport.com/wiki/Illumineer%27s_Quest_-_Palace_Heist (170 normal cards) + mushureport reveal",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle : 1 Jafar scenario deck 50 + 2 player decks 60 = 170 cartes normales (+ 4 oversized). Listes decks à cartographier.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 170
+    },
+    "reign-of-jafar-quest-de": {
+      "source": "https://wiki.mushureport.com/wiki/Illumineer%27s_Quest_-_Palace_Heist (170 normal cards) + mushureport reveal",
+      "verifiedAt": "2026-09-14",
+      "notes": "Structure officielle : 1 Jafar scenario deck 50 + 2 player decks 60 = 170 cartes normales (+ 4 oversized). Listes decks à cartographier.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 170
     }
   }
 }

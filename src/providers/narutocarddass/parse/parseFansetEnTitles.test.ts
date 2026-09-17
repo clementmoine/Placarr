@@ -18,7 +18,7 @@ function print(number: string, set = "fanset"): NarutoPrintRow {
 describe("fansetEnTitleCards", () => {
   it("covers validated C/N/M/J 5000+ fanset batches", () => {
     const cards = fansetEnTitleCards();
-    expect(cards).toHaveLength(115);
+    expect(cards).toHaveLength(119);
     expect(cards.find((r) => r.number === "c5003")?.name).toBe("Izuna Uchiha");
     expect(cards.find((r) => r.number === "n5000")?.name).toBe(
       "The Second Mizukage",

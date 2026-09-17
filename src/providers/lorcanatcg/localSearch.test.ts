@@ -41,11 +41,14 @@ describe.skipIf(!hasLocalCatalogue)("recherche Lorcana locale", () => {
   it("parcourt une extension sans mot-clé", () => {
     const sets = listLorcanaTcgSets("fr");
     expect(sets.length).toBeGreaterThan(0);
-    const browsed = searchLorcanaTcgRows("", { setId: sets[0]!.id, limit: 10 });
+    const chapter = sets.find((set) => /^\d+$/.test(set.id)) ?? sets[0]!;
+    const browsed = searchLorcanaTcgRows("", { setId: chapter.id, limit: 10 });
     expect(browsed.length).toBeGreaterThan(0);
     expect(
       browsed.every(
-        (row) => row.setCode?.toLowerCase() === sets[0]!.id.toLowerCase(),
+        (row) =>
+          row.setCode?.toLowerCase() === chapter.id.toLowerCase() &&
+          !row.promoGrouping?.trim(),
       ),
     ).toBe(true);
   });
@@ -62,6 +65,37 @@ describe.skipIf(!hasLocalCatalogue)("recherche Lorcana locale", () => {
       ([id, label]) => en.get(id) && en.get(id) !== label,
     );
     expect(differing.length).toBeGreaterThan(0);
+  });
+
+  /*
+    Les fills Lorcast et les promos JSON sont découpés en Promo Year N
+    (`p1`, `p2`…) plus Challenge / Coconut / etc. Un chapitre retail n'inclut
+    plus les `promo_grouping`.
+  */
+  it("découpe les promos en Promo Year N", () => {
+    const sets = listLorcanaTcgSets("fr");
+    const byId = new Map(sets.map((s) => [s.id, s]));
+    expect(byId.has("promo")).toBe(false);
+    const y1 = byId.get("p1");
+    expect(y1?.label).toMatch(/Promo Year 1/i);
+    expect(y1!.languages?.length).toBeGreaterThan(0);
+    const browsed = searchLorcanaTcgRows("", { setId: "p1", limit: 50 });
+    expect(browsed.length).toBeGreaterThan(0);
+    expect(
+      browsed.every((row) => row.promoGrouping?.trim().toUpperCase() === "P1"),
+    ).toBe(true);
+    expect(
+      browsed.some((row) => row.printKey === "lorcana:2-17-p1"),
+    ).toBe(true);
+  });
+
+  it("exclut les promos du parcours d'un chapitre retail", () => {
+    const browsed = searchLorcanaTcgRows("", { setId: "2", limit: 500 });
+    expect(browsed.length).toBeGreaterThan(0);
+    expect(browsed.every((row) => !row.promoGrouping?.trim())).toBe(true);
+    expect(
+      browsed.some((row) => row.printKey === "lorcana:2-17-p1"),
+    ).toBe(false);
   });
 
   /*

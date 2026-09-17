@@ -31,7 +31,7 @@ export const LORCANA_GAME = "lorcana";
 
 const BASE_URL = "https://lorcanajson.org/files/current";
 
-export const LORCANA_LANGUAGES = ["fr", "en", "de", "it"] as const;
+export const LORCANA_LANGUAGES = ["fr", "en"] as const;
 export type LorcanaLanguage = (typeof LORCANA_LANGUAGES)[number];
 
 export const LORCANA_DEFAULT_LANGUAGE: LorcanaLanguage = "fr";
@@ -788,6 +788,12 @@ export async function searchLorcanaCards(
   const setId = options.setId?.trim().toLowerCase();
   if (!normalized && !setId) return [];
 
+  const {
+    isLorcanaMainCatalogueSetCode,
+    lorcanaPromoChecklistSeries,
+    lorcanaPromoGroupingForSetId,
+  } = await import("@/providers/lorcanatcg/promoSeries");
+
   const indexes = await loadLorcanaIndexes(options.language, options);
   const catalog = buildSetCatalog(indexes);
   const collector = parseLorcanaCollectorQuery(normalized, catalog);
@@ -796,11 +802,24 @@ export async function searchLorcanaCards(
     { card: LorcanaCard; score: number; langRank: number }
   >();
 
+  const cardInSet = (card: LorcanaCard): boolean => {
+    if (!setId) return true;
+    const grouping = lorcanaPromoGroupingForSetId(setId);
+    if (grouping) {
+      return (card.promoGrouping ?? "").trim().toUpperCase() === grouping;
+    }
+    if (!isLorcanaMainCatalogueSetCode(setId)) return false;
+    return (
+      card.setCode.trim().toLowerCase() === setId &&
+      !card.promoGrouping?.trim()
+    );
+  };
+
   indexes.forEach((index, langRank) => {
     for (const card of index.cards) {
       // L'extension **borne** avant de scorer : une carte d'un autre set n'a
       // pas à concourir, si bien nommée soit-elle.
-      if (setId && card.setCode.trim().toLowerCase() !== setId) continue;
+      if (!cardInSet(card)) continue;
       const nameScore = scoreLorcanaCard(card, normalized);
       const collectorScore = collector
         ? scoreLorcanaCollectorMatch(card, collector)
@@ -848,10 +867,9 @@ export function lorcanaCollectorNumberLabel(card: LorcanaCard): string {
   return number;
 }
 
-/** Human-readable print reference, e.g. `Premier Chapitre · 1/204`. */
+/** Human-readable print reference — collector number only (`1/204`, `20/P1`). */
 export function lorcanaPrintLabel(card: LorcanaCard): string {
-  const set = card.setName ?? `Set ${card.setCode}`;
-  return `${set} · ${lorcanaCollectorNumberLabel(card)}`;
+  return lorcanaCollectorNumberLabel(card);
 }
 
 /**
@@ -866,23 +884,47 @@ export async function listLorcanaPrintSets(
   options: LorcanaSearchOptions = {},
 ): Promise<{ id: string; label: string; sortKey?: number }[]> {
   const indexes = await loadLorcanaIndexes(options.language, options);
+  const {
+    isLorcanaMainCatalogueSetCode,
+    lorcanaPromoChecklistSeries,
+  } = await import("@/providers/lorcanatcg/promoSeries");
   const byCode = new Map<string, string>();
+  const promoSeries = new Map<
+    string,
+    { id: string; code: string; label: string; sortKey: number }
+  >();
   for (const index of indexes) {
     for (const card of index.cards) {
+      if (card.promoGrouping?.trim()) {
+        const series = lorcanaPromoChecklistSeries(card.promoGrouping);
+        if (series && !promoSeries.has(series.id)) {
+          promoSeries.set(series.id, series);
+        }
+        continue;
+      }
       const code = card.setCode?.trim();
-      if (!code || byCode.has(code)) continue;
+      if (!code || !isLorcanaMainCatalogueSetCode(code) || byCode.has(code)) {
+        continue;
+      }
       byCode.set(code, card.setName?.trim() || code);
     }
   }
   const { finalizeSetOptions } = await import(
     "@/providers/shared/cardCatalogue/sets"
   );
-  return finalizeSetOptions(
-    [...byCode.entries()].map(([id, label]) => ({
+  const rows = [
+    ...[...byCode.entries()].map(([id, label]) => ({
       id,
       label,
       // Même règle que `lorcanaSetSortKey` (indexStore) — évite un import croisé.
       sortKey: /^\d+$/.test(id.trim()) ? Number(id.trim()) : null,
     })),
-  );
+    ...[...promoSeries.values()].map((series) => ({
+      id: series.id,
+      code: series.code,
+      label: series.label,
+      sortKey: series.sortKey,
+    })),
+  ];
+  return finalizeSetOptions(rows);
 }

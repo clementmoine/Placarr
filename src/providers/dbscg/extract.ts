@@ -6,7 +6,10 @@ import { buildDbsCgFacts } from "./buildMastersFacts";
 import { ensureArenaClone, installArenaFaces } from "./installArena";
 import { ensureDbsCgCuratedAssets } from "./installCurated";
 import type { DbsCardlistLocaleId } from "./parseCardlist";
-import { scrapeDbsCgCardlist } from "./scrapeCardlist";
+import {
+  mergeDbscardsTokensIntoCatalog,
+  scrapeDbsCgCardlist,
+} from "./scrapeCardlist";
 import { scrapeDbscardsIndex } from "@/providers/shared/dbscards/scrapeList";
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
@@ -132,6 +135,12 @@ export async function runDbsCgPackPipeline(
         console.log(
           `── dbscards ${lang} : ${result.cards} cartes sur ${result.pages} pages ` +
             `(${result.priced} cotées, ${result.withBack} avec verso)`,
+        );
+      }
+      const tokens = mergeDbscardsTokensIntoCatalog();
+      if (tokens.added) {
+        console.log(
+          `── jetons TK : +${tokens.added} → ${tokens.printCount} prints`,
         );
       }
     }

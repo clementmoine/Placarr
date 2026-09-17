@@ -18,9 +18,11 @@ import {
   type DbsCardlistLocaleId,
   type DbsParsedCard,
 } from "./parseCardlist";
+import { loadDbscardsTokenCards } from "./mergeDbscardsTokens";
 import {
   DBS_CG_PACK_ID,
   exportDbsCgCardsIndexJson,
+  loadDbsCgIndex,
   writeDbsCgIndex,
   type DbsAssetRow,
   type DbsPrintRow,
@@ -225,6 +227,16 @@ export async function scrapeDbsCgCardlist(
     return { printCount: 0, seriesCount: 0 };
   }
 
+  const tokens = loadDbscardsTokenCards();
+  if (tokens.length) {
+    const before = new Set(allCards.map((c) => c.printKey)).size;
+    allCards.push(...tokens);
+    const after = new Set(allCards.map((c) => c.printKey)).size;
+    console.log(
+      `── jetons dbscards : +${after - before} print(s) TK (${tokens.length} titre(s) FR/EN)`,
+    );
+  }
+
   const { prints, titles, assets } = rowsFromCards(allCards);
   const seriesCount = Object.values(seriesByLang).reduce((a, b) => a + b, 0);
   const { dbPath, printCount } = writeDbsCgIndex({
@@ -257,4 +269,61 @@ export async function scrapeDbsCgCardlist(
 export function indexDbsCgCards(cards: DbsParsedCard[], dbPath?: string) {
   const { prints, titles, assets } = rowsFromCards(cards);
   return writeDbsCgIndex({ prints, titles, assets, dbPath });
+}
+
+/**
+ * Ajoute les jetons dbscards (TK) à un index déjà écrit, sans re-scraper
+ * Bandai. Utile après un sync cardlist antérieur à ce merge.
+ */
+export function mergeDbscardsTokensIntoCatalog(): {
+  added: number;
+  printCount: number;
+} {
+  const current = loadDbsCgIndex();
+  if (!current?.prints.length) {
+    return { added: 0, printCount: 0 };
+  }
+  const tokens = loadDbscardsTokenCards();
+  if (!tokens.length) {
+    return { added: 0, printCount: current.prints.length };
+  }
+  const { prints: tokenPrints, titles: tokenTitles, assets: tokenAssets } =
+    rowsFromCards(tokens);
+  const known = new Set(current.prints.map((p) => p.printKey));
+  const prints: DbsPrintRow[] = [...current.prints];
+  const titles: DbsTitleRow[] = [...current.titles];
+  const assets: DbsAssetRow[] = [...current.assets];
+  let added = 0;
+  for (const print of tokenPrints) {
+    if (known.has(print.printKey)) continue;
+    known.add(print.printKey);
+    prints.push(print);
+    added += 1;
+  }
+  const titleKeys = new Set(titles.map((t) => `${t.printKey}:${t.lang}`));
+  for (const title of tokenTitles) {
+    const key = `${title.printKey}:${title.lang}`;
+    if (titleKeys.has(key)) continue;
+    titleKeys.add(key);
+    titles.push(title);
+  }
+  const assetKeys = new Set(assets.map((a) => `${a.printKey}:${a.lang}`));
+  for (const asset of tokenAssets) {
+    const key = `${asset.printKey}:${asset.lang}`;
+    if (assetKeys.has(key)) continue;
+    assetKeys.add(key);
+    assets.push(asset);
+  }
+  if (added === 0) {
+    return { added: 0, printCount: current.prints.length };
+  }
+  const { printCount } = writeDbsCgIndex({
+    prints,
+    titles,
+    assets,
+    meta: { tokensMerged: String(added) },
+  });
+  const indexPath = dataPackPath(DBS_CG_PACK_ID, "cards-index.json");
+  exportDbsCgCardsIndexJson(prints, titles, assets, indexPath);
+  return { added, printCount };
 }

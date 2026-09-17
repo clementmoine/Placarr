@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   goatCdnOriginal,
   goatIngestPackshots,
+  goatMintDisplayPackshots,
   goatPackshotLedger,
 } from "./goatPackshots";
 
-describe("Goat Coleka-gap display packshots", () => {
+describe("Goat EN display packshots", () => {
   it("drops /medium/ from listing thumbs", () => {
     expect(
       goatCdnOriginal(
@@ -24,9 +25,27 @@ describe("Goat Coleka-gap display packshots", () => {
     );
   });
 
-  it("ingests only the six Coleka-missing displays, never s1–s6", () => {
+  it("archives every CDN display-box as art.goat — Coleka gaps only mint SKUs", () => {
     const rows = goatIngestPackshots();
-    expect(rows.map((row) => row.setCode)).toEqual([
+    expect(rows.length).toBeGreaterThanOrEqual(20);
+    expect(rows.map((row) => row.setCode)).toContain("s1");
+    expect(rows.map((row) => row.setCode)).toContain("s12");
+    expect(rows.map((row) => row.setCode)).toContain("s16");
+    expect(rows.every((row) => row.slug === `display-${row.setCode}`)).toBe(
+      true,
+    );
+    expect(
+      rows.every((row) => row.staging.startsWith("staging/goat-en-boxes/")),
+    ).toBe(true);
+    expect(rows.find((row) => row.setCode === "s16")?.staging).toBe(
+      "staging/goat-en-boxes/s16.gif",
+    );
+    expect(rows.find((row) => row.setCode === "s16")?.title).toBe(
+      "Broken Promises",
+    );
+
+    const minted = goatMintDisplayPackshots();
+    expect(minted.map((row) => row.setCode)).toEqual([
       "s16",
       "s19",
       "s21",
@@ -34,26 +53,10 @@ describe("Goat Coleka-gap display packshots", () => {
       "s23",
       "s27",
     ]);
-    expect(rows.map((row) => row.slug)).toEqual([
-      "display-s16",
-      "display-s19",
-      "display-s21",
-      "display-s22",
-      "display-s23",
-      "display-s27",
-    ]);
-    expect(rows.find((row) => row.setCode === "s16")?.title).toBe(
-      "Broken Promises",
-    );
-    expect(rows.find((row) => row.setCode === "s16")?.staging).toBe(
-      "staging/goat-en-boxes/s16.gif",
-    );
-    expect(
-      rows.every((row) => row.staging.startsWith("staging/goat-en-boxes/")),
-    ).toBe(true);
-    expect(rows.some((row) => /^s[1-6]$/.test(row.setCode))).toBe(false);
+    expect(minted.some((row) => /^s[1-6]$/.test(row.setCode))).toBe(false);
+
     const ledger = goatPackshotLedger();
-    expect(ledger.sealed.boosterBoxes.packshots.ingest).toBe("coleka-gaps");
+    expect(ledger.sealed.boosterBoxes.packshots.ingest).toBe("all-cdn-displays");
     expect(ledger.ingest).toBe("faces");
     expect(
       ledger.sealed.boosterBoxes.products.filter(

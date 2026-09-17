@@ -1,7 +1,7 @@
 {
   "source": "Suruga-ya used category (user paste 2026-08-16)",
   "observed": "2026-08-16",
-  "ingest": "model-ready — en attente d'une source",
+  "ingest": "model-ready — faces under narutodatacarddass (TSV + CDN)",
   "crawl": false,
   "url": "https://www.suruga-ya.com/en/category/501080113",
   "shopTitle": "NARUTO DATA CARDDASS",
@@ -13,10 +13,11 @@
     "NARUTO DATA CARDDASS"
   ],
   "results": 180,
+  "listed": 108,
   "maker": "Bandai",
   "line": "data-carddass",
-  "note": "Bandai arcade Data Carddass (データカードダス), not the 2002 tabletop Carddass (NI/TE/TA / 忍術作戦) and not Bandai USA CCG (N/J/M). Cabinets scan a barcode on the card. First page of this used listing mixes DN-…T (ナルティメットカードバトル, 2005 — e.g. DN-032T dated 2005-10-01) and NM-… (ナルティメットミッション, 2007 — e.g. NM-049 猿飛アスマ). A third cabinet, ナルティメットクロス (2009), exists; not confirmed on this first page. Suruga EN titles are machine-translated junk. Do not crawl the 180 SKUs. Do not mint printKeys.",
-  "prefixesSeen": ["DN", "NM"],
+  "note": "Bandai arcade Data Carddass (データカードダス), not the 2002 tabletop Carddass (NI/TE/TA / 忍術作戦) and not Bandai USA CCG (N/J/M). Faces live under `narutodatacarddass` (same Suruga TSV+CDN contract as tabletop). Do not crawl live (Cloudflare). Do not mint printKeys into Carddass.",
+  "prefixesSeen": ["DN", "NM", "NF", "NX", "DMP", "DNP", "NC", "NFM"],
   "cabinets": [
     {
       "title": "ナルト ナルティメットカードバトル",
@@ -31,7 +32,7 @@
     {
       "title": "ナルト疾風伝 ナルティメットクロス",
       "year": 2009,
-      "prefix": null
+      "prefix": "NX"
     }
   ],
   "not": ["carddass", "en-ccg", "ni", "te", "ta", "n", "j", "m"],

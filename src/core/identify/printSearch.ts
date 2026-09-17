@@ -31,9 +31,24 @@ const PER_PROVIDER_LIMIT = 24;
  */
 const MAX_PER_PROVIDER_LIMIT = 200;
 
+/**
+ * Plafond quand on parcourt une extension entière (scroll infini du picker).
+ *
+ * Un set Masters / Pokémon dépasse largement 200 cartes ; le plafond générique
+ * coupait la liste en plein milieu. La check-list côté providers utilise déjà
+ * 5000 — même ordre de grandeur, sans importer leur constante (core reste
+ * aveugle aux modules).
+ */
+const MAX_SET_FETCH_LIMIT = 5000;
+
 export type PrintSearchOptions = {
   language?: string | null;
   limit?: number;
+  /**
+   * Saute les `offset` premiers tirages fusionnés. Sert au scroll infini du
+   * picker : chaque page redemande `offset + limit` au provider, puis on tranche.
+   */
+  offset?: number;
   signal?: AbortSignal;
   /** Restreint à une extension — permet une requête vide. */
   setId?: string | null;
@@ -193,16 +208,26 @@ export async function searchPrintCandidates(
   const modules = providersFor(type, options.providerId);
   if (modules.length === 0) return [];
 
+  const offset = Math.max(0, Math.floor(options.offset ?? 0));
+  const pageSize = Math.max(1, options.limit ?? DEFAULT_LIMIT);
+  /*
+    On demande au provider assez de lignes pour couvrir la page courante
+    (`offset + pageSize`). Avec `setId`, le plafond monte : un set de plusieurs
+    centaines de cartes doit pouvoir défiler jusqu'au bout.
+  */
+  const fetchCeiling = setId ? MAX_SET_FETCH_LIMIT : MAX_PER_PROVIDER_LIMIT;
+  const fetchLimit = Math.min(
+    Math.max(offset + pageSize, PER_PROVIDER_LIMIT),
+    fetchCeiling,
+  );
+
   const settled = await Promise.allSettled(
     modules.map(async (module) => {
       const found = await module.searchPrints!({
         query: trimmed ?? "",
         setId,
         language: options.language,
-        limit: Math.min(
-          Math.max(options.limit ?? PER_PROVIDER_LIMIT, PER_PROVIDER_LIMIT),
-          MAX_PER_PROVIDER_LIMIT,
-        ),
+        limit: fetchLimit,
         signal: options.signal,
       });
       return found.map((candidate) => ({
@@ -235,7 +260,7 @@ export async function searchPrintCandidates(
     }
   }
 
-  return merged.slice(0, options.limit ?? DEFAULT_LIMIT);
+  return merged.slice(offset, offset + pageSize);
 }
 
 /**

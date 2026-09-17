@@ -1,15 +1,8 @@
 /**
  * Le catalogue du 疾風伝, monté depuis ses propres registres.
  *
- * Les deux listes officielles — 第一幕…第四幕 et 忍伝-学 — vivaient dans le pack
- * Carddass, qui les fusionnait dans son index pour les refiltrer à la sortie :
- * du travail fait pour être jeté, et un pack incapable de se reconstruire seul.
- * Elles sont ici depuis le 2026-08-21, avec le jeu qu'elles décrivent.
- *
- * Ce module ne pose que ce que les registres attestent — référence, numéro,
- * titre japonais, acte. Les faces ne passent pas par lui : elles arrivent du
- * staging, et un tirage qu'aucun registre ne nomme garde donc sa face sans
- * recevoir de titre inventé.
+ * Les listes officielles — 第一幕…第四幕 et 忍伝-学 — plus le checklist
+ * noihjp pour 第五幕・第六幕. Les faces ne passent pas par lui.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -37,7 +30,11 @@ type Ledger = {
   cards: ShippudenLedgerRow[];
 };
 
-const LEDGER_FILES = ["carddas-jp-maku.json", "carddas-jp-gaku.json"] as const;
+const LEDGER_FILES = [
+  "carddas-jp-maku.json",
+  "carddas-jp-gaku.json",
+  "noihjp-maku5-6.json",
+] as const;
 
 /** La liste officielle des sorties, avec les plages de numéros de chacune. */
 const CHECKLIST_FILE = "cardcheckbox-shippuden.json";
@@ -157,15 +154,13 @@ export function buildShippudenFromLedgers(
     La liste officielle passe **après** les registres de titres, et elle tranche
     sur deux points qu'eux ne savent pas dire.
 
-    1. **Le set.** Les registres nomment les cartes des quatre premiers actes ;
+    1. **Le set.** Les registres nomment les cartes des six premiers actes ;
        la liste, elle, donne les plages de numéros de chaque sortie. Un tirage
-       connu par sa seule face — il y en avait quatre, `shi-0152` à `shi-0156` —
-       trouve ainsi son acte au lieu de rester en `unknown`.
+       connu par sa seule face trouve ainsi son acte au lieu de rester en
+       `unknown`.
 
-    2. **L'existence.** La liste atteste des numéros dont personne n'a encore
-       relevé le nom : tout le cinquième et le sixième acte, et le Coin+. On les
-       pose sans titre plutôt que de les taire — la référence identifie la
-       carte, et un tirage caché est un tirage inajoutable.
+    2. **L'existence.** La liste atteste aussi des numéros encore sans titre
+       (Coin+, trous). On les pose sans titre plutôt que de les taire.
 
     Les actes 7 et 8 n'y sont pas : la source note leurs plages 未確認. Une
     centaine de cartes existent donc sans numéro connu, et rien ici ne les

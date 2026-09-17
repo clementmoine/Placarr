@@ -8,7 +8,7 @@ import {
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 
 describe("s1FrPrerelease", () => {
-  it("mints distinct prerelease printKeys on s1", () => {
+  it("mints distinct prerelease printKeys", () => {
     expect(s1FrPrereleasePrintKey("ni019")).toBe("naruto:ni-0019-prerelease");
     expect(s1FrPrereleasePrintKey("ta005")).toBe("naruto:ta-0005-prerelease");
     expect(s1FrPrereleasePrintKey("te036-prerelease")).toBe(
@@ -61,7 +61,7 @@ describe("s1FrPrerelease", () => {
     expect(
       merged.prints.find((p) => p.printKey === "naruto:ni-0019-prerelease"),
     ).toMatchObject({
-      setCode: "s1",
+      setCode: "prerelease",
       number: "ni0019-prerelease",
       grouping: "prerelease",
     });
@@ -75,5 +75,31 @@ describe("s1FrPrerelease", () => {
     expect(merged.prints.find((p) => p.printKey === "naruto:ni-0019")).toEqual(
       existing,
     );
+  });
+
+  it("rememberships legacy s1 prerelease prints onto the prerelease series", () => {
+    const legacy: NarutoPrintRow = {
+      printKey: "naruto:ni-0019-prerelease",
+      setCode: "s1",
+      number: "ni0019-prerelease",
+      cardType: "ni",
+      grouping: "prerelease",
+    };
+    const merged = mergeS1FrPrerelease({
+      prints: [legacy],
+      titles: [
+        {
+          printKey: "naruto:ni-0019-prerelease",
+          lang: "fr",
+          fullName: "Naruto Uzumaki",
+          rarity: "prerelease",
+        },
+      ],
+      cards: [{ number: "ni019", name: "Naruto Uzumaki" }],
+    });
+    expect(merged.addedPrints).toEqual([]);
+    expect(
+      merged.prints.find((p) => p.printKey === "naruto:ni-0019-prerelease"),
+    ).toMatchObject({ setCode: "prerelease" });
   });
 });

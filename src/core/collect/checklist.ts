@@ -13,6 +13,8 @@
  * (extension, territoire).
  */
 
+import { parsePrintKey } from "@/core/identify/printKey";
+
 export type ChecklistPrint = {
   printKey: string;
   setId: string;
@@ -82,6 +84,9 @@ export type ShelfChecklist = {
  * Les providers rendent une référence qui se suffit hors contexte, nom de
  * l'extension compris. Dans une liste déjà titrée par ce nom, il le répète à
  * chaque ligne et mange la place du titre de la carte.
+ *
+ * Le libellé du sélecteur porte souvent un préfixe de code (`1 — Premier
+ * Chapitre`, `S1 — Série 1 — …`) : on essaie aussi le nom après le tiret.
  */
 export function referenceWithinSet(
   reference: string,
@@ -90,9 +95,45 @@ export function referenceWithinSet(
   const label = setLabel.trim();
   if (!label) return reference;
   const trimmed = reference.trim();
-  if (!trimmed.toLowerCase().startsWith(label.toLowerCase())) return reference;
-  // Le séparateur varie selon le pack : on retire ce qui n'est pas la référence.
-  return trimmed.slice(label.length).replace(/^[\s·\-—:]+/, "") || reference;
+  const candidates = [label];
+  const parts = label
+    .split(/\s*[—–]\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length > 1) {
+    candidates.push(parts[parts.length - 1]!);
+    candidates.push(parts.slice(1).join(" — "));
+  }
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    if (!trimmed.toLowerCase().startsWith(candidate.toLowerCase())) continue;
+    const stripped = trimmed
+      .slice(candidate.length)
+      .replace(/^[\s·\-—:]+/, "");
+    if (stripped) return stripped;
+  }
+  return reference;
+}
+
+/**
+ * Ordre dans un set : retail d'abord (par référence), puis les tirages à
+ * grouping (promos) en fin de liste, groupés alphabétiquement (P1 → P3 → …).
+ *
+ * Un tri purement numérique mélangeait `20/204` et `20/P1` au milieu du set.
+ */
+export function compareChecklistPrints(
+  a: ChecklistPrint,
+  b: ChecklistPrint,
+): number {
+  const ga = (parsePrintKey(a.printKey)?.grouping ?? "").toLowerCase();
+  const gb = (parsePrintKey(b.printKey)?.grouping ?? "").toLowerCase();
+  const aGrouped = ga ? 1 : 0;
+  const bGrouped = gb ? 1 : 0;
+  if (aGrouped !== bGrouped) return aGrouped - bGrouped;
+  if (ga !== gb) return ga.localeCompare(gb, "fr", { numeric: true });
+  const byRef = a.reference.localeCompare(b.reference, "fr", { numeric: true });
+  if (byRef !== 0) return byRef;
+  return a.printKey.localeCompare(b.printKey);
 }
 
 function percent(owned: number, total: number): number {
@@ -140,9 +181,7 @@ export function buildShelfChecklist(input: {
           owned: input.owned.has(print.printKey),
         };
       })
-      .sort((a, b) =>
-        a.reference.localeCompare(b.reference, "fr", { numeric: true }),
-      );
+      .sort(compareChecklistPrints);
     const missing = cards
       .filter((print) => !print.owned)
       .map(({ owned: _owned, ...print }) => print);

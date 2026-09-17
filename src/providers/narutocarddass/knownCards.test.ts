@@ -6,11 +6,45 @@ import path from "node:path";
 
 import {
   collectPhotoFallbackArt,
+  formatKnownCardsMarkdown,
   isCollectorPhotoFallbackFace,
   isUnpublishedHtmlRef,
   PHYSICAL_KNOWN_SOURCES,
+  type KnownCardsReport,
   type KnownSource,
 } from "./knownCards";
+
+describe("formatKnownCardsMarkdown", () => {
+  it("tolerates set rows without starters (tempete-class)", () => {
+    const report: KnownCardsReport = {
+      generatedAt: "2026-09-09T00:00:00.000Z",
+      sets: {
+        tempete: {
+          series: 11,
+          starters: undefined as unknown as string[],
+          colekaLabel: null,
+          released: true,
+        },
+      },
+      counts: {
+        "carddass-fr-checklist": 0,
+        "apache-index": 0,
+        "carddass-html": 0,
+        "manga-news": 0,
+        coleka: 0,
+        "local-index": 0,
+      },
+      total: 0,
+      missingArt: [],
+      unreleased: [],
+      unreleasedHtmlOnly: [],
+      unattested: [],
+      photoFallbackArt: [],
+      cards: [],
+    };
+    expect(formatKnownCardsMarkdown(report)).toContain("| `tempete` | — | — |");
+  });
+});
 
 describe("isUnpublishedHtmlRef", () => {
   it("flags lone carddass-html as unpublished (ta090-class)", () => {

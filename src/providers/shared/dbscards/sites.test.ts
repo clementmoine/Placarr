@@ -31,16 +31,16 @@ describe("TCG Cards family", () => {
     expect(TCGCARDS_SITES.fabcards.packId).toBeNull();
   });
 
-  it("never lists accessories, and never opens displays", () => {
+  it("never lists accessories, and opens displays for shop prices", () => {
     for (const site of Object.values(TCGCARDS_SITES)) {
       const listing = tcgCardsListingCategories(site);
       const detail = tcgCardsDetailCategories(site);
       expect(listing).not.toContain("playmats");
       expect(listing).not.toContain("card-sleeves");
       expect(listing).not.toContain("storage-boxes");
-      expect(detail).not.toContain("displays");
       if (listing.includes("displays")) {
-        expect(tcgCardsCategoryRole("displays")).toBe("index");
+        expect(detail).toContain("displays");
+        expect(tcgCardsCategoryRole("displays")).toBe("detail");
       }
       for (const category of listing) {
         expect(tcgCardsCategoryRole(category)).not.toBe("skip");

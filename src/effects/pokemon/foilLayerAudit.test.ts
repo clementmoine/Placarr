@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import { foilTextureFile } from "@/effects/foilTextureFile";
 
-import { POKEMON_FOIL_NAMES } from "./foilNames";
+import { listPokemonEffectFoilNames, POKEMON_FOIL_NAMES } from "./foilNames";
 import { liveFoilMaskForBundle } from "./liveFoilMasks";
 import {
   POKEMON_MAT_ALIASES,
@@ -128,7 +128,7 @@ describe("pokemon foil layer audit", () => {
   );
 
   it("pack lists every foil leaf + MAT aliases", () => {
-    for (const name of POKEMON_FOIL_NAMES) {
+    for (const name of listPokemonEffectFoilNames()) {
       expect(POKEMON_MATERIAL_NAMES).toContain(name);
     }
     for (const alias of Object.keys(POKEMON_MAT_ALIASES)) {

@@ -17,6 +17,7 @@ import {
 import {
   __resetTcgdexSetLogoIndexForTests,
   refreshTcgdexSetLogoIndex,
+  tcgdexLogoUrlForProduct,
   tcgdexLogoUrlForSetCode,
   tcgdexSetAssetUrl,
   type TcgdexSetLogoIndex,
@@ -121,6 +122,112 @@ describe("tcgdexLogoUrlForSetCode", () => {
     expect(tcgdexLogoUrlForSetCode("PRE", null)).toBeNull();
     expect(tcgdexLogoUrlForSetCode("ZZZ", FIXTURE)).toBeNull();
     expect(tcgdexLogoUrlForSetCode("CLASH", FIXTURE)).toBeNull();
+  });
+});
+
+describe("tcgdexLogoUrlForProduct", () => {
+  const catalog: TcgdexSetLogoIndex = {
+    ...FIXTURE,
+    sets: [
+      ...FIXTURE.sets,
+      {
+        id: "sv04",
+        name: "Faille Paradoxe",
+        officialAbbr: "PAR",
+        tcgOnline: null,
+        logo: "https://assets.tcgdex.net/fr/sv/sv04/logo.png",
+        symbol: null,
+      },
+      {
+        id: "sv08",
+        name: "Étincelles Déferlantes",
+        officialAbbr: "SSP",
+        tcgOnline: null,
+        logo: "https://assets.tcgdex.net/fr/sv/sv08/logo.png",
+        symbol: null,
+      },
+      {
+        id: "sv02",
+        name: "Évolutions à Paldea",
+        officialAbbr: "PAL",
+        tcgOnline: null,
+        logo: "https://assets.tcgdex.net/fr/sv/sv02/logo.png",
+        symbol: null,
+      },
+      {
+        id: "xy12",
+        name: "Évolutions",
+        officialAbbr: "EVO",
+        tcgOnline: null,
+        logo: "https://assets.tcgdex.net/fr/xy/xy12/logo.png",
+        symbol: null,
+      },
+      {
+        id: "bw1",
+        name: "Noir & Blanc",
+        officialAbbr: "BLW",
+        tcgOnline: null,
+        logo: "https://assets.tcgdex.net/fr/bw/bw1/logo.png",
+        symbol: null,
+      },
+      {
+        id: "sv10.5b",
+        name: "Foudre Noire",
+        officialAbbr: "BLK",
+        tcgOnline: null,
+        logo: "https://assets.tcgdex.net/fr/sv/sv10.5b/logo.png",
+        symbol: null,
+      },
+      {
+        id: "sv10.5w",
+        name: "Flamme Blanche",
+        officialAbbr: "WHT",
+        tcgOnline: null,
+        logo: "https://assets.tcgdex.net/fr/sv/sv10.5w/logo.png",
+        symbol: null,
+      },
+    ],
+  };
+
+  it("prefers setCode, then densest rightmost set name in the slug", () => {
+    expect(
+      tcgdexLogoUrlForProduct({ setCode: "PRE", index: catalog }),
+    ).toContain("sv08.5");
+    expect(
+      tcgdexLogoUrlForProduct({
+        slug: "boite-36-boosters-ecarlate-et-violet-etincelles-deferlantes",
+        index: catalog,
+      }),
+    ).toContain("sv08");
+    expect(
+      tcgdexLogoUrlForProduct({
+        slug: "boite-36-boosters-par-ecarlate-et-violet-faille-paradoxe",
+        index: catalog,
+      }),
+    ).toContain("sv04");
+    expect(
+      tcgdexLogoUrlForProduct({
+        slug: "pokebox-evolutions-de-paldea-miascarade-ex",
+        name: "Pokébox Évolutions à Paldea - Miascarade EX",
+        index: catalog,
+      }),
+    ).toContain("sv02");
+    expect(
+      tcgdexLogoUrlForProduct({
+        slug: "boite-36-boosters-noir-et-blanc",
+        index: catalog,
+      }),
+    ).toContain("bw1");
+  });
+
+  it("refuses a dual-set gift title instead of picking one side", () => {
+    expect(
+      tcgdexLogoUrlForProduct({
+        slug: "foudre-noire-flamme-blanche-collection-poster",
+        name: "Coffret Collection Poster EV10.5 Foudre Noire & Flamme Blanche",
+        index: catalog,
+      }),
+    ).toBeNull();
   });
 });
 

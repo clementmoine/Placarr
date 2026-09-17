@@ -14,8 +14,10 @@
  */
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import {
   ArrowLeft,
   ChevronRight,
@@ -23,6 +25,7 @@ import {
   Loader2,
   Package,
   Printer,
+  Search,
 } from "lucide-react";
 
 import { formatChecklistMarkdown } from "@/core/collect/checklistMarkdown";
@@ -116,6 +119,64 @@ function euros(cents: number): string {
     currency: "EUR",
     maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
   }).format(cents / 100);
+}
+
+/**
+ * Miniature → aperçu agrandi au survol (portail : évite le clip
+ * `overflow: hidden` des lignes de set / colonnes CSS).
+ */
+function HoverEnlargeImage({
+  src,
+  className,
+  variant = "card",
+}: {
+  src: string;
+  className: string;
+  variant?: "card" | "product";
+}) {
+  return (
+    <TooltipPrimitive.Root>
+      <TooltipPrimitive.Trigger asChild>
+        <img
+          src={src}
+          alt=""
+          className={className}
+          loading="lazy"
+          decoding="async"
+        />
+      </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Portal>
+        <TooltipPrimitive.Content
+          side="right"
+          sideOffset={10}
+          collisionPadding={12}
+          className={cn(
+            styles.thumbPopover,
+            variant === "product" && styles.thumbPopoverProduct,
+          )}
+        >
+          <img src={src} alt="" className={styles.thumbPopoverImg} />
+        </TooltipPrimitive.Content>
+      </TooltipPrimitive.Portal>
+    </TooltipPrimitive.Root>
+  );
+}
+
+function normalizeChecklistQuery(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
+function checklistTextMatches(
+  query: string,
+  ...parts: Array<string | null | undefined>
+): boolean {
+  if (!query) return true;
+  const haystack = normalizeChecklistQuery(parts.filter(Boolean).join(" "));
+  return haystack.includes(query);
 }
 
 function CompletionBar({ value }: { value: number }) {
@@ -234,12 +295,10 @@ function Advice({
           </span>
           <span className={styles.adviceBrief} title={brief}>
             {teaser?.imageUrl ? (
-              <img
+              <HoverEnlargeImage
                 src={teaser.imageUrl}
-                alt=""
                 className={styles.productThumb}
-                loading="lazy"
-                decoding="async"
+                variant="product"
               />
             ) : null}
             {recommended != null && (
@@ -365,12 +424,10 @@ function Advice({
                     )}
                   >
                     {option.imageUrl ? (
-                      <img
+                      <HoverEnlargeImage
                         src={option.imageUrl}
-                        alt=""
                         className={styles.productThumb}
-                        loading="lazy"
-                        decoding="async"
+                        variant="product"
                       />
                     ) : (
                       <span
@@ -444,20 +501,65 @@ function SetRow({
   advice,
   expandable,
   showOwned,
+  searchQuery,
+  forceExpand,
   t,
 }: {
   set: ChecklistSet;
   advice?: SetAdvice;
   expandable: boolean;
   showOwned: boolean;
+  searchQuery: string;
+  /**
+   * Impression : monter toutes les cartes dans le DOM. Sinon Masters (7k+)
+   * plantait la page en peignant chaque ligne repliée avec `display: none`.
+   */
+  forceExpand: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
+  const searching = Boolean(searchQuery);
+  const setMatches = searching
+    ? checklistTextMatches(searchQuery, set.label, set.group, set.id)
+    : false;
   const [open, setOpen] = useState(false);
-  const rows = showOwned
-    ? (set.cards ?? [
-        ...set.missing.map((row) => ({ ...row, owned: false })),
-      ])
-    : set.missing.map((row) => ({ ...row, owned: false }));
+  /*
+    Ne monter la liste que si le set est ouvert, en recherche, ou à
+    l'impression. Masters (~7k cartes) plantait en peignant chaque ligne
+    repliée (`display: none` ne retire pas les nœuds du DOM).
+  */
+  const shouldMountCards = forceExpand || open || searching;
+
+  const rows = useMemo(() => {
+    if (!shouldMountCards) return [];
+    /*
+      La recherche ne contourne pas le filtre « déjà sur l'étagère » :
+      sans la case, on ne voit / ne cherche que les manquantes.
+    */
+    const pool = showOwned
+      ? (set.cards ?? [
+          ...set.missing.map((row) => ({ ...row, owned: false as boolean })),
+        ])
+      : set.missing.map((row) => ({ ...row, owned: false as boolean }));
+    if (!searching || setMatches) return pool;
+    return pool.filter((card) =>
+      checklistTextMatches(
+        searchQuery,
+        card.reference,
+        card.title,
+        card.printKey,
+      ),
+    );
+  }, [
+    shouldMountCards,
+    set.cards,
+    set.missing,
+    showOwned,
+    searching,
+    searchQuery,
+    setMatches,
+  ]);
+
+  const listOpen = forceExpand || (searching ? rows.length > 0 : open);
   const prices = advice?.prices ?? {};
   const sealedSources = advice?.sealedSources ?? {};
   return (
@@ -465,13 +567,13 @@ function SetRow({
       <button
         type="button"
         className={styles.setHead}
-        onClick={() => expandable && setOpen((v) => !v)}
-        aria-expanded={expandable ? open : undefined}
-        disabled={!expandable}
+        onClick={() => expandable && !searching && setOpen((v) => !v)}
+        aria-expanded={expandable ? listOpen : undefined}
+        disabled={searching ? rows.length === 0 : !expandable}
       >
         {expandable && (
           <ChevronRight
-            className={cn(styles.chevron, open && styles.chevronOpen)}
+            className={cn(styles.chevron, listOpen && styles.chevronOpen)}
             aria-hidden
           />
         )}
@@ -488,10 +590,10 @@ function SetRow({
         l'impression** : une check-list papier qu'il faut déplier n'en est pas
         une.
       */}
-      {advice && open && <Advice advice={advice} t={t} />}
+      {advice && listOpen && !searching && <Advice advice={advice} t={t} />}
 
-      {rows.length > 0 && (
-        <ol className={cn(styles.missing, open && styles.missingOpen)}>
+      {listOpen && rows.length > 0 && (
+        <ol className={cn(styles.missing, styles.missingOpen)}>
           {rows.map((row) => {
             const priceCents = row.owned ? null : (prices[row.printKey] ?? null);
             const sources = row.owned
@@ -514,12 +616,9 @@ function SetRow({
                   aria-hidden
                 />
                 {row.thumbnailUrl ? (
-                  <img
+                  <HoverEnlargeImage
                     src={row.thumbnailUrl}
-                    alt=""
                     className={styles.thumb}
-                    loading="lazy"
-                    decoding="async"
                   />
                 ) : (
                   <span className={styles.thumbPlaceholder} aria-hidden />
@@ -540,13 +639,11 @@ function SetRow({
                       <span className={styles.cardSourcesThumbs}>
                         {sources.slice(0, 3).map((source) =>
                           source.imageUrl ? (
-                            <img
+                            <HoverEnlargeImage
                               key={source.slug}
                               src={source.imageUrl}
-                              alt=""
                               className={styles.cardSourceThumb}
-                              loading="lazy"
-                              decoding="async"
+                              variant="product"
                             />
                           ) : null,
                         )}
@@ -581,6 +678,26 @@ export default function ChecklistPage() {
     toggle pour revoir aussi ce qui est déjà sur l'étagère.
   */
   const [showOwned, setShowOwned] = useState(false);
+  const [search, setSearch] = useState("");
+  /** Déplie tous les sets le temps d'imprimer (sinon les cartes ne sont pas dans le DOM). */
+  const [printing, setPrinting] = useState(false);
+  const searchQuery = useMemo(
+    () => normalizeChecklistQuery(search),
+    [search],
+  );
+
+  useEffect(() => {
+    const onBefore = () => {
+      flushSync(() => setPrinting(true));
+    };
+    const onAfter = () => setPrinting(false);
+    window.addEventListener("beforeprint", onBefore);
+    window.addEventListener("afterprint", onAfter);
+    return () => {
+      window.removeEventListener("beforeprint", onBefore);
+      window.removeEventListener("afterprint", onAfter);
+    };
+  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["checklist", shelfId, language],
@@ -598,10 +715,48 @@ export default function ChecklistPage() {
     enabled: Boolean(shelfId),
   });
 
+  /*
+    Étagère vide : l'API n'a pas de langue dominante. On part sur la première
+    annoncée (souvent `fr` pour Masters) pour ne pas mélanger les territoires.
+  */
+  useEffect(() => {
+    if (language != null || !data?.languages?.length) return;
+    if (data.language) {
+      setLanguage(data.language);
+      return;
+    }
+    setLanguage(data.languages.includes("fr") ? "fr" : data.languages[0]!);
+  }, [data, language]);
+
   const adviceBySet = useMemo(
     () => new Map((data?.advice ?? []).map((row) => [row.setId, row])),
     [data?.advice],
   );
+
+  const filteredSets = useMemo(() => {
+    if (!data?.sets.length) return [];
+    if (!searchQuery) return data.sets;
+    return data.sets.filter((set) => {
+      if (
+        checklistTextMatches(searchQuery, set.label, set.group, set.id)
+      ) {
+        return true;
+      }
+      const pool = showOwned
+        ? set.cards?.length
+          ? set.cards
+          : set.missing
+        : set.missing;
+      return pool.some((card) =>
+        checklistTextMatches(
+          searchQuery,
+          card.reference,
+          card.title,
+          card.printKey,
+        ),
+      );
+    });
+  }, [data?.sets, searchQuery, showOwned]);
 
   const downloadMarkdown = useCallback(() => {
     if (!data) return;
@@ -645,6 +800,11 @@ export default function ChecklistPage() {
   }, [data]);
 
   return (
+    <TooltipPrimitive.Provider
+      delayDuration={220}
+      skipDelayDuration={0}
+      disableHoverableContent
+    >
     <main className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headBar}>
@@ -657,9 +817,20 @@ export default function ChecklistPage() {
           </Link>
 
           <div className={styles.actions}>
+            <label className={styles.search}>
+              <Search className={styles.searchIcon} aria-hidden />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t("items.checklistSearch")}
+                aria-label={t("items.checklistSearch")}
+                className={styles.searchInput}
+              />
+            </label>
             {(data?.languages.length ?? 0) > 1 && (
               <select
-                value={data?.language ?? ""}
+                value={language ?? data?.language ?? ""}
                 onChange={(event) => setLanguage(event.target.value)}
                 aria-label={t("items.checklistLanguage")}
                 className={styles.select}
@@ -695,7 +866,11 @@ export default function ChecklistPage() {
 
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => {
+                flushSync(() => setPrinting(true));
+                window.print();
+                setPrinting(false);
+              }}
               className={styles.print}
             >
               <Printer className="size-4" aria-hidden />
@@ -731,16 +906,26 @@ export default function ChecklistPage() {
         <p className={styles.empty}>{t("items.checklistEmpty")}</p>
       )}
 
-      {data && data.sets.length > 0 && (
+      {data && data.sets.length > 0 && filteredSets.length === 0 && searchQuery && (
+        <p className={styles.empty}>{t("items.checklistSearchNoResults")}</p>
+      )}
+
+      {data && filteredSets.length > 0 && (
         <section className={styles.group}>
           <ul className={styles.setList}>
-            {data.sets.map((set) => (
+            {filteredSets.map((set) => (
               <SetRow
                 key={set.id}
                 set={set}
                 advice={adviceBySet.get(set.id)}
-                expandable={set.missing.length > 0 || showOwned}
+                expandable={
+                  set.missing.length > 0 ||
+                  showOwned ||
+                  Boolean(searchQuery)
+                }
                 showOwned={showOwned}
+                searchQuery={searchQuery}
+                forceExpand={printing}
                 t={t}
               />
             ))}
@@ -753,22 +938,39 @@ export default function ChecklistPage() {
         absent n'est pas un set complet, et la check-list ne peut pas mesurer
         ce qu'elle ignore.
       */}
-      {(data?.setsWithoutCatalogue.length ?? 0) > 0 && (
+      {(data?.setsWithoutCatalogue.length ?? 0) > 0 &&
+        (!searchQuery ||
+          data!.setsWithoutCatalogue.some((set) =>
+            checklistTextMatches(searchQuery, set.label, set.id),
+          )) && (
         <section className={styles.group}>
           <h2 className={styles.groupTitle}>
             {t("items.checklistNoCatalogue")}
             <span className={styles.groupCount}>
-              {data!.setsWithoutCatalogue.length}
+              {
+                data!.setsWithoutCatalogue.filter(
+                  (set) =>
+                    !searchQuery ||
+                    checklistTextMatches(searchQuery, set.label, set.id),
+                ).length
+              }
             </span>
           </h2>
           <p className={styles.hint}>{t("items.checklistNoCatalogueHint")}</p>
           <ul className={styles.plainList}>
-            {data!.setsWithoutCatalogue.map((set) => (
-              <li key={set.id}>{set.label}</li>
-            ))}
+            {data!.setsWithoutCatalogue
+              .filter(
+                (set) =>
+                  !searchQuery ||
+                  checklistTextMatches(searchQuery, set.label, set.id),
+              )
+              .map((set) => (
+                <li key={set.id}>{set.label}</li>
+              ))}
           </ul>
         </section>
       )}
     </main>
+    </TooltipPrimitive.Provider>
   );
 }

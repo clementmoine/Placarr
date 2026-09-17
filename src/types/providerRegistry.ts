@@ -119,7 +119,7 @@ export interface ProviderInfo {
   auth: ProviderAuth;
   canonical: boolean;
   notes?: string;
-  defaultLanguage?: "fr" | "en" | "unknown";
+  defaultLanguage?: "fr" | "en" | "ja" | "unknown";
   isRealBoxCover?: boolean;
   /**
    * Numeric display-score adjustment applied to this provider's image

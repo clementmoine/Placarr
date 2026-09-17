@@ -85,11 +85,13 @@ dossier. printKey : `naruto:ni-0001` / `naruto:n-0001` / `naruto:nus-0097`
 `printed=false` (S6 FR) : visible au catalogue, absent du picker.
 Faces : **jamais ignorer un hôte** parce qu’une autre illustration est déjà là.
 Chaque dump reste `art.<source>.<ext>` ; `face.json` choisit l’affichage
-(pixels, tie-break par locale). `art.jpg` non sourcé restant = `legacy`
+(pixels, tie-break par locale). Même contrat pour tous les TCG / packs — pas
+seulement Carddass. `art.jpg` non sourcé restant = `legacy`
 (thumbs EN bizarres, photos collectionneur) — le reste a été reclasse.
 Produits scellés : même contrat sous `products/{slug}/{lang}/` (`art` +
-`logo`). Le wordmark de série est recopié dans chaque SKU (Pokémon / Lorcana
-déjà un logo par produit ; Naruto S1–S5 partagent un GIF — on duplique).
+`logo`) — tous les hôtes archivés, `productChoice` décide. Le wordmark de
+série est recopié dans chaque SKU (Pokémon / Lorcana déjà un logo par produit ;
+Naruto S1–S5 partagent un GIF — on duplique).
 Titres attestés sans face (BGG EN S1, Coleka FR, Slab-Z JA) : print +
 `langs.*.name` dans `cards-index.json`, pas de dossier vide.
 PR-096 a désormais une face FR (`art.leboncoin`) et EN (`art.drive` + `art.coleka`).
@@ -136,7 +138,7 @@ Voir [provider_supply_modes.md](provider_supply_modes.md) :
 | Artefact                              | Gap                                                                                                                                                                   |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `data/pokemon/cards-index.json`       | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + Catalogue Sync Pokémon                                                                                    |
-| `data/<pack>/products-index.json`     | TCG Cards : ingest au Sync. Naruto Carddass : packshots + merge `curated/products-contents.json`. Ninja Ranks : packshots Inkworks US + Panini EU (`ingestNinjaRanksSealedProducts`, écriture unique des deux éditions). |
+| `data/<pack>/products-index.json`     | Écriture via `persistSealedProductsIndex` (merge `curated/products-contents.json`). TCG Cards : ingest Sync. Carddass / Mythos / Ranks / … : writers dédiés. Lecture Catalogue : `loadSealedProductsIndex`. |
 | `data/<pack>/curated/products-contents.json` | Copie runtime de la graine git provider — ne pas éditer comme original |
 | `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés)                                                                                           |
 | `catalog.refresh` Pokémon/Lorcana     | Identités/scrape + faces index ; foil Unity = Catalogue Extract (admin / worker)                                                                                      |

@@ -11,6 +11,13 @@
       "right": "Cursed Warrior",
       "evidence": "La carte imprime « Cursed Warrior », 忍 849 火, avec le sous-titre « Land of Birds | Cursed Warrior | SURGE ». Vérifié sur deux images indépendantes : notre face `drive` et la photo de Goat elle-même (photos/372381/n849.jpg). Le nom « Ghost Samurai » vient du **texte d'effet** de la carte — « search your Deck for 1 \"Ghost Samurai\" Ninja card » — que la boutique a pris pour le nom.",
       "sideNote": "La vraie carte « Ghost Samurai » manque au catalogue comme chez Goat."
+    },
+    {
+      "number": "m0856",
+      "lang": "fr",
+      "wrong": "Déterrminé à Protéger",
+      "right": "Déterminé à Protéger",
+      "evidence": "Typo Coleka (triple r). EN = Determination to Protect ; orthographe FR correcte = Déterminé."
     }
   ]
 }

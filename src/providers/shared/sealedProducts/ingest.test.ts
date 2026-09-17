@@ -185,6 +185,9 @@ describe("sealed ingest", () => {
     expect(printKeyFromCollectorRef("dbscg", "bt23-033-pr")).toBe(
       "dbscg:bt23-033-pr",
     );
+    expect(printKeyFromCollectorRef("onepiece", "st25-001")).toBe(
+      "onepiece:st25-001",
+    );
     expect(printKeyFromCollectorRef("lorcana", "jessie")).toBeNull();
     // lorcards prints "241-204" for card 241 / 204 in the set — not set 241.
     expect(printKeyFromCollectorRef("lorcana", "241-204")).toBeNull();

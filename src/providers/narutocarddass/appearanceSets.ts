@@ -45,6 +45,12 @@ export function primaryAppearanceSet(
   if (clean.length === 0) return fallback;
   const retail = clean.filter((set) => /^s[1-5]$/.test(set));
   if (retail.length) return retail[0]!;
+  /*
+    EN CCG tin exclusives (N-US…) live on disk as one folder shared by retail
+    s6 and a tourney `-promo` stamp. Prefer s6 so `buildIndexFromDisk` attaches
+    `art.*` to `naruto:nus-####` — catalogue fallback then paints the promo stub.
+  */
+  if (clean.includes("s6")) return "s6";
   const nonVolume = clean.filter(
     (set) => set !== "s6" && !/^maki\d+$/i.test(set),
   );

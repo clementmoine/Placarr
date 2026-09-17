@@ -3,8 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PrintCatalogue } from "@/core/identify/printSearch";
 import type { ProviderModule } from "@/types/providerModule";
 
-const modules: ProviderModule[] = [];
-const catalogues: PrintCatalogue[] = [];
+const { modules, catalogues } = vi.hoisted(() => {
+  return {
+    modules: [] as ProviderModule[],
+    catalogues: [] as PrintCatalogue[],
+  };
+});
 
 vi.mock("@/core/catalog/registry", () => ({
   get PROVIDER_MODULES() {

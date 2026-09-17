@@ -8,7 +8,9 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
 }));
 
 const { fetchTextWithFlareFallback } = await import("@/lib/http/scrapeFetch");
-const { fetchColekaListingHtml } = await import("./colekaListingFetch");
+const { fetchColekaListingHtml } = await import(
+  "@/providers/shared/coleka/listingFetch"
+);
 
 const WALL = "<title>Vérification</title><p>/verify/?lang=fr</p>";
 const LISTING = `<html>${"x".repeat(500)}<a class="lib_has_2_lines">ok</a></html>`;
@@ -44,6 +46,26 @@ describe("fetchColekaListingHtml", () => {
     );
     expect(html).toBe(LISTING);
     expect(fetchTextWithFlareFallback).not.toHaveBeenCalled();
+  });
+
+  it("refetches a listing older than maxAgeMs", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "coleka-listing-"));
+    const dest = path.join(dir, "s1-listing-old.html");
+    writeFileSync(dest, LISTING, "utf8");
+    const past = Date.now() - 2 * 60 * 60 * 1000;
+    const { utimesSync } = await import("node:fs");
+    utimesSync(dest, past / 1000, past / 1000);
+    vi.mocked(fetchTextWithFlareFallback).mockResolvedValue(
+      `<html>${"y".repeat(500)}<a class="lib_has_2_lines">fresh</a></html>`,
+    );
+    const html = await fetchColekaListingHtml(
+      "https://www.coleka.com/x",
+      dest,
+      false,
+      { maxAgeMs: 60 * 60 * 1000 },
+    );
+    expect(html).toContain("fresh");
+    expect(fetchTextWithFlareFallback).toHaveBeenCalledOnce();
   });
 
   it("falls back to a good cached page when a refetch hits the verify wall", async () => {

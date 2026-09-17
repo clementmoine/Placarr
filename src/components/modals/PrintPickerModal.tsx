@@ -273,6 +273,8 @@ export function PrintPickerModal({
   const [query, setQuery] = useState("");
   const [candidates, setCandidates] = useState<PrintCandidateView[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [addingKey, setAddingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -345,14 +347,44 @@ export function PrintPickerModal({
     };
   }, [ownedPrints]);
 
-  /** Aborts the previous search so a slow response cannot overwrite a newer one. */
+  /** Aborts the previous first-page search so a slow response cannot overwrite a newer one. */
   const searchAbort = useRef<AbortController | null>(null);
+  /** Separate from search — load-more must not cancel a fresh query, and vice versa. */
+  const loadMoreAbort = useRef<AbortController | null>(null);
+  /** Sentinel for infinite scroll — observed against the modal's scroll pane. */
+  const loadMoreSentinelRef = useRef<HTMLLIElement | null>(null);
+  /** Guards against double-firing while a page is already in flight. */
+  const loadingMoreRef = useRef(false);
+  /** Source of truth for offset / dédup — pas le rendu Strict Mode de `setState`. */
+  const candidatesRef = useRef<PrintCandidateView[]>([]);
+  /**
+   * Latest search/load inputs for the IntersectionObserver callback.
+   *
+   * The observer must stay stable: recreating it on every `candidates.length`
+   * change was aborting the page-3 fetch mid-flight (BT1 stopped at 087 =
+   * exactly two pages of 48).
+   */
+  const scrollQueryRef = useRef({
+    hasMore: false,
+    isSearching: false,
+    trimmedQuery: "",
+    activeSetId: null as string | null,
+    candidatesLength: 0,
+    shelfType: "",
+    catalogue: ALL_CATALOGUES,
+    language: ALL_LANGUAGES,
+  });
 
   /** Reset on the way out, not in an effect watching `isOpen`. */
   const handleClose = useCallback(() => {
     searchAbort.current?.abort();
+    loadMoreAbort.current?.abort();
     setQuery("");
+    candidatesRef.current = [];
     setCandidates([]);
+    setHasMore(false);
+    setIsLoadingMore(false);
+    loadingMoreRef.current = false;
     setHasSearched(false);
     setError(null);
     setAddingKey(null);
@@ -524,14 +556,24 @@ export function PrintPickerModal({
     */
     if (!trimmedQuery && !activeSetId) {
       searchAbort.current?.abort();
+      loadMoreAbort.current?.abort();
+      candidatesRef.current = [];
+      setCandidates([]);
+      setHasMore(false);
+      setIsLoadingMore(false);
+      loadingMoreRef.current = false;
       return;
     }
 
     const timer = setTimeout(async () => {
       searchAbort.current?.abort();
+      loadMoreAbort.current?.abort();
+      loadingMoreRef.current = false;
       const controller = new AbortController();
       searchAbort.current = controller;
       setIsSearching(true);
+      setIsLoadingMore(false);
+      setHasMore(false);
       setError(null);
 
       try {
@@ -550,6 +592,7 @@ export function PrintPickerModal({
         const params = new URLSearchParams({
           type: shelfType,
           limit: String(SEARCH_RESULT_LIMIT),
+          offset: "0",
         });
         if (trimmedQuery) params.set("q", trimmedQuery);
         if (catalogue !== ALL_CATALOGUES) params.set("catalogue", catalogue);
@@ -566,23 +609,167 @@ export function PrintPickerModal({
         if (!response.ok) throw new Error(String(response.status));
         const data = (await response.json()) as {
           candidates?: PrintCandidateView[];
+          hasMore?: boolean;
           catalogues?: { id: string; label: string; languages?: string[] }[];
         };
         setCandidates(data.candidates ?? []);
+        candidatesRef.current = data.candidates ?? [];
+        setHasMore(Boolean(data.hasMore));
         if (data.catalogues?.length) setCatalogues(data.catalogues);
         setHasSearched(true);
       } catch (caught) {
         if ((caught as Error)?.name === "AbortError") return;
         setError(t("errors.genericMessage"));
+        candidatesRef.current = [];
         setCandidates([]);
+        setHasMore(false);
         setHasSearched(true);
       } finally {
-        if (!controller.signal.aborted) setIsSearching(false);
+        if (searchAbort.current === controller) setIsSearching(false);
       }
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
   }, [trimmedQuery, shelfType, catalogue, activeSetId, language, t]);
+
+  const loadMore = useCallback(async () => {
+    const q = scrollQueryRef.current;
+    if (
+      !q.hasMore ||
+      loadingMoreRef.current ||
+      q.isSearching ||
+      (!q.trimmedQuery && !q.activeSetId)
+    ) {
+      return;
+    }
+
+    loadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    loadMoreAbort.current?.abort();
+    const controller = new AbortController();
+    loadMoreAbort.current = controller;
+
+    const offset = candidatesRef.current.length;
+    try {
+      const params = new URLSearchParams({
+        type: q.shelfType,
+        limit: String(SEARCH_RESULT_LIMIT),
+        offset: String(offset),
+      });
+      if (q.trimmedQuery) params.set("q", q.trimmedQuery);
+      if (q.catalogue !== ALL_CATALOGUES) params.set("catalogue", q.catalogue);
+      if (q.activeSetId) params.set("set", q.activeSetId);
+      if (q.language !== ALL_LANGUAGES) params.set("language", q.language);
+      const response = await fetch(`/api/prints?${params.toString()}`, {
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const data = (await response.json()) as {
+        candidates?: PrintCandidateView[];
+        hasMore?: boolean;
+      };
+      const next = data.candidates ?? [];
+      if (next.length === 0) {
+        setHasMore(false);
+        return;
+      }
+      /*
+        Dédup **hors** du updater React : en Strict Mode l'updater tourne deux
+        fois, le second passage voyait déjà la page fusionnée, `appendedCount`
+        tombait à 0, et `hasMore` passait à false — scroll coupé après 2×48
+        (BT1-087, BT3-091, …).
+      */
+      const seen = new Set(
+        candidatesRef.current.map(
+          (row) => `${row.printKey}|${row.language ?? ""}`.toLowerCase(),
+        ),
+      );
+      const appended = next.filter((row) => {
+        const key = `${row.printKey}|${row.language ?? ""}`.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      if (appended.length === 0) {
+        setHasMore(false);
+        return;
+      }
+      const merged = [...candidatesRef.current, ...appended];
+      candidatesRef.current = merged;
+      setCandidates(merged);
+      setHasMore(Boolean(data.hasMore));
+    } catch (caught) {
+      if ((caught as Error)?.name === "AbortError") return;
+      setError(t("errors.genericMessage"));
+      setHasMore(false);
+    } finally {
+      if (loadMoreAbort.current === controller) {
+        setIsLoadingMore(false);
+        loadingMoreRef.current = false;
+      }
+    }
+  }, [t]);
+
+  scrollQueryRef.current = {
+    hasMore,
+    isSearching,
+    trimmedQuery,
+    activeSetId,
+    candidatesLength: candidatesRef.current.length,
+    shelfType,
+    catalogue,
+    language,
+  };
+
+  /*
+    Observer stable : on ne le recrée pas à chaque page. Recréer + abort partagé
+    coupait le chargement après deux pages (BT1 s'arrêtait à 087 = 2×48).
+  */
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore || isSearching) return;
+
+    const root =
+      sentinel.closest("[data-modal-scroll]") ??
+      (() => {
+        let node: Element | null = sentinel.parentElement;
+        while (node) {
+          const { overflowY } = getComputedStyle(node);
+          if (overflowY === "auto" || overflowY === "scroll") return node;
+          node = node.parentElement;
+        }
+        return null;
+      })();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void loadMore();
+        }
+      },
+      { root, rootMargin: "200px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isSearching, loadMore]);
+
+  /*
+    Après une page, le sentinel peut rester dans la zone visible (viewport
+    haut, peu de cartes) : sans re-check, le scroll infini s'arrête jusqu'au
+    prochain mouvement. On enchaîne tant qu'il intersecte.
+  */
+  useEffect(() => {
+    if (!hasMore || isSearching || isLoadingMore) return;
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel) return;
+    const root = sentinel.closest("[data-modal-scroll]");
+    const rootRect = root?.getBoundingClientRect();
+    const rect = sentinel.getBoundingClientRect();
+    const bottom = rootRect?.bottom ?? window.innerHeight;
+    if (rect.top <= bottom + 200) {
+      void loadMore();
+    }
+  }, [hasMore, isSearching, isLoadingMore, candidates.length, loadMore]);
 
   /**
    * Derived rather than cleared by an effect: an empty box shows nothing, and a
@@ -1112,6 +1299,22 @@ export function PrintPickerModal({
                 </li>
               );
             })}
+            {hasMore && (
+              <li
+                ref={loadMoreSentinelRef}
+                className="col-span-full flex items-center justify-center py-3"
+                aria-hidden={!isLoadingMore}
+              >
+                {isLoadingMore ? (
+                  <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin" />
+                    {t("items.printPicker.loadingMore")}
+                  </span>
+                ) : (
+                  <span className="h-1 w-1" />
+                )}
+              </li>
+            )}
           </ul>
         )}
       </div>

@@ -15,6 +15,34 @@ import { scrapeLorcanaCards } from "@/providers/lorcanatcg/scrapeCards";
 import { dumpLorcanaWeb } from "@/providers/lorcanatcg/dumpWeb";
 import { lorcanaUnityArtifactsFresh } from "@/providers/lorcanatcg/extractUnityApk";
 
+async function runOfficialSiteOnly(
+  force: boolean,
+): Promise<Record<string, unknown>> {
+  const { harvestOfficialLorcanaSite } = await import("./officialSite");
+  const { applyOfficialSiteLogos, upsertOfficialSiteProducts } =
+    await import("./officialSiteApply");
+  const harvested = await harvestOfficialLorcanaSite({
+    force,
+    onProgress: (message) => console.log(`   official — ${message}`),
+  });
+  console.log(
+    `── official site — ${harvested.pages} pages, ${harvested.logos} logos, ${harvested.packshots} packshots`,
+  );
+  const logos = applyOfficialSiteLogos();
+  const upserted = upsertOfficialSiteProducts({ setLogoIndex: logos.index });
+  console.log(
+    `── official upsert — logos +${logos.added}/${logos.updated}, produits ${upserted.written}`,
+  );
+  return {
+    provider: "lorcanaofficial",
+    ok: true,
+    officialPages: harvested.pages,
+    officialLogos: harvested.logos,
+    officialPackshots: harvested.packshots,
+    officialUpserted: upserted.written,
+  };
+}
+
 async function runLorcardsProducts(
   force: boolean,
   offline: boolean,
@@ -31,26 +59,12 @@ async function runLorcardsProducts(
 
   let official: Record<string, unknown> = {};
   if (!offline) {
-    const { harvestOfficialLorcanaSite } = await import("./officialSite");
-    const { applyOfficialSiteLogos, upsertOfficialSiteProducts } =
-      await import("./officialSiteApply");
-    const harvested = await harvestOfficialLorcanaSite({
-      force,
-      onProgress: (message) => console.log(`   official — ${message}`),
-    });
-    console.log(
-      `── official site — ${harvested.pages} pages, ${harvested.logos} logos, ${harvested.packshots} packshots`,
-    );
-    const logos = applyOfficialSiteLogos();
-    const upserted = upsertOfficialSiteProducts({ setLogoIndex: logos.index });
-    console.log(
-      `── official upsert — logos +${logos.added}/${logos.updated}, produits ${upserted.written}`,
-    );
+    const light = await runOfficialSiteOnly(force);
     official = {
-      officialPages: harvested.pages,
-      officialLogos: harvested.logos,
-      officialPackshots: harvested.packshots,
-      officialUpserted: upserted.written,
+      officialPages: light.officialPages,
+      officialLogos: light.officialLogos,
+      officialPackshots: light.officialPackshots,
+      officialUpserted: light.officialUpserted,
     };
   }
 
@@ -157,6 +171,8 @@ export async function runLorcanaFoilExtract(
       results.push(await dumpLorcanaWeb({ root: repo }));
     } else if (pid === "lorcanacards") {
       results.push(await runCardsScrape(repo, args.force));
+    } else if (pid === "lorcanaofficial") {
+      results.push(await runOfficialSiteOnly(args.force));
     } else if (pid === "lorcanaproducts") {
       results.push(await runLorcardsProducts(args.force, args.offline));
     } else if (pid === "lorcanamobile") {

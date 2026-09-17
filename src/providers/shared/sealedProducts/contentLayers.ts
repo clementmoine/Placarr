@@ -84,9 +84,22 @@ export function resolveContentLayers(input: {
         randomPoolPrints: [],
       };
     }
+    /*
+      ETB / tin / trove / multipack / collector sans liste : la loterie vit
+      dans les sachets enfants. `unknown` est réservé aux SKUs vraiment
+      opaques (quête / avant-première sans attestation).
+    */
+    const childLotteryKind =
+      input.kind === "etb" ||
+      input.kind === "tin" ||
+      input.kind === "trove" ||
+      input.kind === "multipack" ||
+      input.kind === "collector_box" ||
+      input.kind === "blister" ||
+      input.kind === "deck_bundle";
     return {
       guaranteedPrints: [],
-      randomPoolScope: "unknown",
+      randomPoolScope: childLotteryKind ? "none" : "unknown",
       randomPoolPrints: [],
     };
   }

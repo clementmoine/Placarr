@@ -1,7 +1,6 @@
 /**
  * Ligne TCG locale vide-mais-branchée — factory pour les catalogues qui
- * ouvrent un onglet avant la première moisson (phase 7 : OPTCG, Digimon,
- * Yu-Gi-Oh, MTG).
+ * ouvrent un onglet avant la première moisson (phase 7 : OPTCG, YGO, MTG).
  */
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 import {

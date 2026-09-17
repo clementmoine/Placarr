@@ -73,15 +73,15 @@ describe("enqueueCatalogueExtract", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: "Too many extracts" }), {
-          status: 429,
+        new Response(JSON.stringify({ error: "target must be …" }), {
+          status: 400,
           headers: { "Content-Type": "application/json" },
         }),
       ),
     );
 
     await expect(enqueueCatalogueExtract("lorcana")).rejects.toThrow(
-      "Too many extracts",
+      "target must be",
     );
   });
 });

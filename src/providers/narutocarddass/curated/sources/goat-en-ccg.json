@@ -271,12 +271,12 @@
       "stock": "all-out-of-stock",
       "ingest": "none",
       "packshots": {
-        "ingest": "coleka-gaps",
-        "sets": ["s16", "s19", "s21", "s22", "s23", "s27"],
-        "not": ["display-s1", "display-s6", "jp-box", "blister-case"]
+        "ingest": "all-cdn-displays",
+        "mintSku": ["s16", "s19", "s21", "s22", "s23", "s27"],
+        "not": ["jp-box", "blister-case", "placeholder", "rules-logo"]
       },
       "cdnOriginal": "drop /medium/ from listing thumbs",
-      "note": "34 SKUs on 2 pages (2026-08-16). Blister cases (15 packs) are not displays. Japanese 4/6 have no photo and are not EN s4/s6. Battle Boost listing art is a rules GIF, not a box. Shop typos: Galant=Gallant, Chosen Booster Booster, Broken Promise=Promises. Coleka already has better box+booster packshots for s13–s15, s17–s18, s20, s24–s26, s28. Goat box photos fill Coleka gaps s16, s19, s21–s23, s27 only — not s1–s6.",
+      "note": "34 SKUs on 2 pages (2026-08-16). Blister cases (15 packs) are not displays. Japanese 4/6 have no photo and are not EN s4/s6. Battle Boost listing art is a rules GIF, not a box. Shop typos: Galant=Gallant, Chosen Booster Booster, Broken Promise=Promises. Every CDN display-box is archived as art.goat; productChoice prefers Coleka when both exist. Only Coleka-missing boxes mint a display SKU (s16, s19, s21–s23, s27).",
       "absent": ["s3", "s25", "s26", "s28", "tournament-1"],
       "products": [
         {

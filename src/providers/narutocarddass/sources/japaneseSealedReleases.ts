@@ -68,21 +68,27 @@ export type JapaneseSealedSpec = {
   /** Attestée par un relevé curé : catalogable sans packshot. */
   attested: true;
   /**
-   * Visuel d'emballage, quand une source en publie un — Bandai d'abord, la
-   * base de rachat Suruga-ya à défaut.
-   *
-   * La base produit de Bandai ne remonte pas jusqu'au début de la ligne : sur
-   * les dix-sept volumes, quatre y ont une fiche avec packshot, deux autres
-   * viennent de Suruga.
+   * Visuel d'emballage primaire (éditeur > Suruga > détourage > carddas >
+   * TV Tokyo) — pour le stagingKind du spec. Les dumps parallèles vivent dans
+   * `packshots` ; productChoice décide l'affichage.
    */
   stagingFile?: string;
   /** Le dossier de staging d'où sort `stagingFile`. */
-  stagingKind?:
-    | "carddass-official"
-    | "carddas-jp"
-    | "suruga-kaitori"
-    | "jp-boosters"
-    | "tv-tokyo";
+  stagingKind?: JapanesePackshotKind;
+  /** Tous les dumps attestés — jamais un seul gagnant « parce que mieux ». */
+  packshots?: readonly JapanesePackshot[];
+};
+
+export type JapanesePackshotKind =
+  | "carddass-official"
+  | "carddas-jp"
+  | "suruga-kaitori"
+  | "jp-boosters"
+  | "tv-tokyo";
+
+export type JapanesePackshot = {
+  stagingFile: string;
+  kind: JapanesePackshotKind;
 };
 
 /**
@@ -93,7 +99,8 @@ export type JapaneseSealedSpec = {
  * Le 巻ノ四 en est **sorti** : sa fiche illustre le produit par six cartes
  * étalées, sans le moindre emballage. Le site de jeu en montre le sachet, et
  * un sachet de 75×144 vaut mieux qu'une planche de cartes en 560×560 sur un
- * SKU de type booster.
+ * SKU de type booster. L'officiel reste hors `packshots` pour ce volume —
+ * mauvaise image produit, pas « déjà mieux ailleurs ».
  */
 const OFFICIAL_BOOSTER_PACKSHOTS = new Set([12, 16, 17]);
 
@@ -106,16 +113,25 @@ const OFFICIAL_BOOSTER_PACKSHOTS = new Set([12, 16, 17]);
  * 巻ノ十三, et les sachets des volumes 13, 14 et 15 impriment leur propre
  * numéro. Les volumes 4, 16 et 17 concordent en outre avec la base produit.
  *
- * Visuels petits — de 75×143 à 100×201 — donc placés après la base produit.
+ * Visuels petits — de 75×143 à 100×201 — tous archivés ; productChoice préfère
+ * souvent Bandai / Suruga / détourage quand ils existent.
  */
 const CARDDAS_JP_BOOSTER_PACKSHOTS: Record<number, string> = {
   2: "image/product/2nd.jpg",
   3: "image/product/3nd.jpg",
   4: "image/product/4nd.gif",
   5: "image/product/5nd.gif",
+  6: "image/product/6.gif",
+  7: "image/product/7th.jpg",
+  8: "image/product/8th.jpg",
+  9: "image/product/9th.gif",
+  10: "image/product/10th.gif",
+  11: "image/product/11th_pac.gif",
   13: "image/product/13th_pac.gif",
   14: "image/product/14th_pac.gif",
   15: "image/product/15/pac.gif",
+  16: "image/product/16/pac.gif",
+  17: "image/product/17/17th_pac_l.jpg",
 };
 
 /**
@@ -162,11 +178,13 @@ const SURUGA_RELEASE_PACKSHOTS = new Set(["jp-release-04"]);
 const CURATED_BOOSTER_PACKSHOTS = new Set([6, 8]);
 
 /**
- * Volumes illustrés par les pages officielles de TV Tokyo, faute de mieux.
- * Visuels petits — 102×215 et 182×250 — et retenus seulement là où rien
- * d'autre n'existe.
+ * Volumes dont la vignette TV Tokyo (グッズねっと) est attestée sous
+ * `staging/tv-tokyo/booster-volN-jp.jpg`. Toujours moissonnée ; le choix
+ * d'affichage peut préférer Bandai / Suruga / carddas — on ne jette plus la source.
  */
-const TVTOKYO_BOOSTER_PACKSHOTS = new Set([10, 11]);
+const TVTOKYO_BOOSTER_PACKSHOTS = new Set([
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+]);
 
 /** Sorties sans numéro de volume dont le visuel est détouré à la main. */
 const CURATED_RELEASE_PACKSHOTS = new Set(["jp-release-09"]);
@@ -236,58 +254,77 @@ function categoryFor(kind: JapaneseSealedSpec["kind"]): string {
   return "collector-boxes";
 }
 
+function collectPackshots(input: {
+  volume: number | null;
+  slug: string;
+}): JapanesePackshot[] {
+  const { volume, slug } = input;
+  const out: JapanesePackshot[] = [];
+  const push = (shot: JapanesePackshot | null) => {
+    if (shot) out.push(shot);
+  };
+
+  push(
+    volume != null && OFFICIAL_BOOSTER_PACKSHOTS.has(volume)
+      ? {
+          stagingFile: `booster-vol${volume}-jp.jpg`,
+          kind: "carddass-official",
+        }
+      : null,
+  );
+  push(
+    volume != null && SURUGA_BOOSTER_PACKSHOTS.has(volume)
+      ? {
+          stagingFile: `booster-vol${volume}-jp.webp`,
+          kind: "suruga-kaitori",
+        }
+      : SURUGA_RELEASE_PACKSHOTS.has(slug)
+        ? { stagingFile: `${slug}.webp`, kind: "suruga-kaitori" }
+        : null,
+  );
+  push(
+    volume != null && CURATED_BOOSTER_PACKSHOTS.has(volume)
+      ? {
+          stagingFile: `booster-vol${volume}-jp.png`,
+          kind: "jp-boosters",
+        }
+      : CURATED_RELEASE_PACKSHOTS.has(slug)
+        ? { stagingFile: `${slug}.png`, kind: "jp-boosters" }
+        : null,
+  );
+  push(
+    volume != null && CARDDAS_JP_BOOSTER_PACKSHOTS[volume]
+      ? {
+          stagingFile: CARDDAS_JP_BOOSTER_PACKSHOTS[volume]!,
+          kind: "carddas-jp",
+        }
+      : CARDDAS_JP_RELEASE_PACKSHOTS[slug]
+        ? {
+            stagingFile: CARDDAS_JP_RELEASE_PACKSHOTS[slug]!,
+            kind: "carddas-jp",
+          }
+        : null,
+  );
+  push(
+    volume != null && TVTOKYO_BOOSTER_PACKSHOTS.has(volume)
+      ? {
+          stagingFile: `booster-vol${volume}-jp.jpg`,
+          kind: "tv-tokyo",
+        }
+      : null,
+  );
+  return out;
+}
+
 export function japaneseSealedReleases(): JapaneseSealedSpec[] {
   const rows = (ledger.releases ?? []) as JapaneseReleaseRow[];
   return rows.map((row, index) => {
     const kind = classifyJapaneseRelease(row);
     const volume = kanjiVolumeNumber(row.name ?? "");
-    const official =
-      volume != null && OFFICIAL_BOOSTER_PACKSHOTS.has(volume)
-        ? {
-            stagingFile: `booster-vol${volume}-jp.jpg`,
-            kind: "carddass-official" as const,
-          }
-        : null;
     const slug = slugify(row.name ?? "", index);
-    const suruga =
-      volume != null && SURUGA_BOOSTER_PACKSHOTS.has(volume)
-        ? {
-            stagingFile: `booster-vol${volume}-jp.webp`,
-            kind: "suruga-kaitori" as const,
-          }
-        : SURUGA_RELEASE_PACKSHOTS.has(slug)
-          ? { stagingFile: `${slug}.webp`, kind: "suruga-kaitori" as const }
-          : null;
-    const curated =
-      volume != null && CURATED_BOOSTER_PACKSHOTS.has(volume)
-        ? {
-            stagingFile: `booster-vol${volume}-jp.png`,
-            kind: "jp-boosters" as const,
-          }
-        : CURATED_RELEASE_PACKSHOTS.has(slug)
-          ? { stagingFile: `${slug}.png`, kind: "jp-boosters" as const }
-          : null;
-    const tvtokyo =
-      volume != null && TVTOKYO_BOOSTER_PACKSHOTS.has(volume)
-        ? {
-            stagingFile: `booster-vol${volume}-jp.jpg`,
-            kind: "tv-tokyo" as const,
-          }
-        : null;
-    const carddasJp =
-      volume != null && CARDDAS_JP_BOOSTER_PACKSHOTS[volume]
-        ? {
-            stagingFile: CARDDAS_JP_BOOSTER_PACKSHOTS[volume]!,
-            kind: "carddas-jp" as const,
-          }
-        : CARDDAS_JP_RELEASE_PACKSHOTS[slug]
-          ? {
-              stagingFile: CARDDAS_JP_RELEASE_PACKSHOTS[slug]!,
-              kind: "carddas-jp" as const,
-            }
-          : null;
-    // L'éditeur d'abord, puis le revendeur, le détourage, et la petite vignette.
-    const packshot = official ?? suruga ?? curated ?? carddasJp ?? tvtokyo;
+    const packshots = collectPackshots({ volume, slug });
+    // L'éditeur d'abord, puis le revendeur, le détourage, carddas, TV Tokyo.
+    const packshot = packshots[0];
     return {
       slug,
       kind,
@@ -299,6 +336,7 @@ export function japaneseSealedReleases(): JapaneseSealedSpec[] {
       declaredCardCount: null,
       setKinds: declaredKinds(row.kinds),
       attested: true as const,
+      packshots,
       ...(packshot
         ? { stagingFile: packshot.stagingFile, stagingKind: packshot.kind }
         : {}),

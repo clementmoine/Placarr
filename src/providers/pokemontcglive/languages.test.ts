@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   LIVE_LANG_TO_TCGDEX,
+  POKEMON_CATALOGUE_LANGUAGES,
+  POKEMON_CATALOGUE_LANGS_CSV,
   POKEMON_LIVE_DEFAULT_LANGUAGE,
   POKEMON_LIVE_LANGUAGES,
   POKEMON_LIVE_LANGS_CSV,
@@ -22,6 +24,11 @@ describe("pokemontcglive languages", () => {
       "ptbr",
     ]);
     expect(POKEMON_LIVE_LANGS_CSV).toBe("fr,en,de,it,es,ptbr");
+  });
+
+  it("catalogue ingest is original EN + FR only", () => {
+    expect([...POKEMON_CATALOGUE_LANGUAGES]).toEqual(["en", "fr"]);
+    expect(POKEMON_CATALOGUE_LANGS_CSV).toBe("en,fr");
   });
 
   it("defaults_scrape_to_fr_before_en_pass", () => {

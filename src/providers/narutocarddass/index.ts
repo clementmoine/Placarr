@@ -29,6 +29,7 @@ import {
   listNarutoSetPrints,
   lookupNarutoPrint,
   lookupNarutoPrintDetail,
+  NARUTO_CATALOGUE_LANGUAGES,
   searchNarutoPrints,
 } from "./searchPrints";
 import { narutoPrintFacts } from "./facts";
@@ -164,11 +165,10 @@ export const narutocarddassModule = defineProvider({
       setId,
     }),
   /*
-    Les quatre langues du jeu, telles que le catalogue les porte. Annoncées
-    d'avance : le japonais change la découpe, donc il faut pouvoir le choisir
-    avant de chercher.
+    Catalogue : original japonais + fr + en. L’italien retail (S1–S6) n’est
+    plus une langue proposée — scrapers IT restent disponibles via `--locale s6it`.
   */
-  listPrintLanguages: () => ["fr", "en", "ja", "it"],
+  listPrintLanguages: () => [...NARUTO_CATALOGUE_LANGUAGES],
   /*
     La langue choisit la **découpe**, pas seulement les libellés : le japonais
     compte en 巻ノ (dix-sept volumes 2002-2006), l'Europe en séries `s1`…`s28`,

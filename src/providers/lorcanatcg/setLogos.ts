@@ -264,11 +264,26 @@ function lorcanaSetRowLabels(
 }
 
 function uniqueSetNameTokens(index: LorcanaSetLogoIndex): Map<string, string> {
+  /*
+    « lorcana » / « disney » n'apparaissent que sur Cosmic Quest (set16) dans le
+    catalogue API — un Coffret 2 joueurs générique se prenait donc ce logo.
+  */
+  const franchise = new Set([
+    "lorcana",
+    "disney",
+    "ravensburger",
+    "trading",
+    "illumineurs",
+    "illumineer",
+    "card",
+    "cards",
+    "game",
+  ]);
   const owners = new Map<string, Set<string>>();
   for (const row of index.sets) {
     for (const label of lorcanaSetRowLabels(row)) {
       for (const token of normalizeLorcanaSetText(label).split(" ")) {
-        if (token.length < 6) continue;
+        if (token.length < 6 || franchise.has(token)) continue;
         const ids = owners.get(token) ?? new Set<string>();
         ids.add(row.id);
         owners.set(token, ids);
@@ -310,12 +325,22 @@ export function lorcanaSetRowForProduct(input: {
   const index = input.index;
   if (!index?.sets.length) return null;
 
-  const needles = new Set<string>();
   const setCode = input.setCode?.trim().toLowerCase();
   if (setCode) {
-    needles.add(setCode);
-    if (/^\d+$/.test(setCode)) needles.add(`set${setCode}`);
+    const codeNeedles = new Set<string>([setCode]);
+    if (/^\d+$/.test(setCode)) codeNeedles.add(`set${setCode}`);
+    const codeHits = index.sets.filter((row) =>
+      lorcanaSetLogoCodes(row).some((code) => codeNeedles.has(code)),
+    );
+    /*
+      Un `setCode` boutique unique fait foi. Sinon un titre mal collé
+      (« Set 13 » sur un pack Hyperia `SET14`) annulait le logo à tort.
+    */
+    if (codeHits.length === 1) return codeHits[0]!;
+    if (codeHits.length > 1) return null;
   }
+
+  const needles = new Set<string>();
   for (const id of lorcanaSetIdsInText(
     [input.setCode, input.slug, input.name].filter(Boolean).join(" "),
   )) {

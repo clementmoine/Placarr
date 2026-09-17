@@ -1,5 +1,5 @@
 /**
- * Suruga-ya used listings for JP Carddass tabletop (巻ノ… 忍/術/作/依).
+ * Suruga-ya used listings for JP Carddass tabletop (巻ノ… 忍/術/作/依/騎).
  *
  * Search HTML is behind Cloudflare; CDN JPEGs are not:
  *   https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg
@@ -27,7 +27,7 @@ const PRODUCT_HREF =
   /href="https:\/\/www\.suruga-ya\.jp\/product\/detail\/([A-Za-z0-9]+)"/gi;
 
 const PRINTED_RE =
-  /(PR[-]?忍|PR[-]?術|PR[-]?作|PR[-]?依|OP忍|[忍術作依])-(\d{1,4})(?:-([A-Za-z0-9]+))?/;
+  /(PR[-]?忍|PR[-]?術|PR[-]?作|PR[-]?依|PR[-]?騎|OP忍|[忍術作依騎])-(\d{1,4})(?:-([A-Za-z0-9]+))?/;
 
 const DATA_CARDDASS_RE = /データカードダス|\bDN-|\bNM-/i;
 
@@ -118,13 +118,42 @@ export function surugaPrintedToDiskId(printed: string): string | null {
   return narutoDiskCardId(folded);
 }
 
+const DOM_ITEM_RE =
+  /<a[^>]*href="[^"]*\/product\/detail\/([A-Za-z0-9]+)[^"]*"[^>]*>[\s\S]*?<h3 class="product-name">([^<]+)<\/h3>/gi;
+
+const ITEM_RE =
+  /item_id:\s*(?:common\.htmlDecode\(\s*)?['"]([A-Za-z0-9]+)['"]\s*\)?\s*,\s*item_name:\s*(?:common\.htmlDecode\(\s*)?['"]([^'"]+)['"]/gi;
+
 export function parseSurugaCarddassSearchHtml(
   html: string,
 ): SurugaCarddassListing[] {
   const seen = new Set<string>();
   const out: SurugaCarddassListing[] = [];
-  PRODUCT_HREF.lastIndex = 0;
+
+  DOM_ITEM_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
+  while ((m = DOM_ITEM_RE.exec(html))) {
+    const id = m[1]!.toUpperCase();
+    if (seen.has(id)) continue;
+    const title = decodeSurugaHtmlEntities(m[2]!);
+    const printed = parseSurugaCarddassPrinted(title);
+    if (!printed || DATA_CARDDASS_RE.test(title)) continue;
+    seen.add(id);
+    out.push({ id, printed });
+  }
+
+  ITEM_RE.lastIndex = 0;
+  while ((m = ITEM_RE.exec(html))) {
+    const id = m[1]!.toUpperCase();
+    if (seen.has(id)) continue;
+    const title = decodeSurugaHtmlEntities(m[2]!);
+    const printed = parseSurugaCarddassPrinted(title);
+    if (!printed || DATA_CARDDASS_RE.test(title)) continue;
+    seen.add(id);
+    out.push({ id, printed });
+  }
+
+  PRODUCT_HREF.lastIndex = 0;
   while ((m = PRODUCT_HREF.exec(html))) {
     const id = m[1]!.toUpperCase();
     if (seen.has(id)) continue;
@@ -187,6 +216,13 @@ export function parseSurugaCarddassListingsTsv(
     out.push({ id, printed });
   }
   return out;
+}
+
+export function formatSurugaCarddassListingsTsv(
+  listings: readonly SurugaCarddassListing[],
+): string {
+  const sorted = [...listings].sort((a, b) => a.id.localeCompare(b.id));
+  return sorted.map((row) => `${row.id}\t${row.printed}`).join("\n") + "\n";
 }
 
 export function loadSurugaCarddassCuratedListings(): SurugaCarddassListing[] {

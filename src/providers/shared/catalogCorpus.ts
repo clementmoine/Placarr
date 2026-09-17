@@ -9,7 +9,7 @@ import type { ProviderCatalogStatus } from "@/types/providerModule";
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 
-const DEFAULT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000;
 
 export function catalogMaxAgeMs(): number {
   const raw = Number(process.env.PLACARR_CATALOG_SYNC_MAX_AGE_MS);

@@ -4,9 +4,12 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import type { CuratedSealedContentsFile } from "@/providers/shared/sealedProducts/curatedContents";
+
 import { narutoCuratedProductsDir } from "./curatedPaths";
 import {
   NARUTO_SEALED_SKUS,
+  narutoCatalogueSealedSpecs,
   narutoSealedSpecs,
   NARUTO_SET_LOGOS,
   ingestNarutoSealedProducts,
@@ -56,13 +59,15 @@ function packshotKeys(index: { products: Record<string, unknown> }): string[] {
 
 const NARUTO_PACK_ROOT_FOR_TESTS = "data/naruto/carddass";
 
-const ATTESTED = narutoSealedSpecs().filter((spec) => spec.attested).length;
+const ATTESTED = narutoCatalogueSealedSpecs().filter(
+  (spec) => spec.attested,
+).length;
 
 /**
  * Packshots curés non-attestés toujours sur disque (ex. sleeve Hobby).
  * Même logique qu'`ATTESTED` : hors staging du tmp pack.
  */
-const CURATED_ALWAYS = narutoSealedSpecs().filter((spec) => {
+const CURATED_ALWAYS = narutoCatalogueSealedSpecs().filter((spec) => {
   if (spec.attested) return false;
   if (spec.stagingKind !== "wrappers" && spec.stagingKind !== "jp-boosters") {
     return false;
@@ -358,8 +363,10 @@ describe("Naruto sealed SKUs", async () => {
 
     const result = await ingestNarutoSealedProducts({ packRoot: root });
     expect(result.written).toBe(writtenFromStaging(2));
-    // Two staged packshots + curated-always + every `attested` SKU.
-    const nonAttested = NARUTO_SEALED_SKUS.filter((row) => !row.attested).length;
+    // Two staged packshots + curated-always + every catalogue `attested` SKU.
+    const nonAttested = narutoCatalogueSealedSpecs().filter(
+      (row) => !row.attested,
+    ).length;
     expect(result.skipped).toBe(nonAttested - 2 - CURATED_ALWAYS);
 
     const index = JSON.parse(
@@ -370,6 +377,7 @@ describe("Naruto sealed SKUs", async () => {
         {
           contentsKnown: boolean;
           prints: unknown[];
+          guaranteedPrints?: unknown[];
           image: string;
           setLogo: string | null;
           declaredCardCount: number | null;
@@ -379,9 +387,11 @@ describe("Naruto sealed SKUs", async () => {
     const booster = index.products["naruto/carddass::booster-s1"]!;
     const starter = index.products["naruto/carddass::starter-maitre-hokage"]!;
     expect(booster.contentsKnown).toBe(false);
-    expect(starter.contentsKnown).toBe(false);
+    // Ledger curated products-contents — S1–S4 starters inventoriés.
+    expect(starter.contentsKnown).toBe(true);
     expect(booster.prints).toEqual([]);
     expect(starter.prints).toEqual([]);
+    expect(starter.guaranteedPrints?.length).toBeGreaterThan(0);
     expect(booster.declaredCardCount).toBe(8);
     expect(starter.declaredCardCount).toBe(40);
     expect(booster.image).toBe(
@@ -727,7 +737,7 @@ describe("Naruto sealed SKUs", async () => {
     );
   });
 
-  it("files CardGameClub Italian SKUs on CACG, not Bandai CCG", async () => {
+  it("keeps Italian CACG SKUs off the catalogue index (JA+FR+EN contract)", async () => {
     const root = tmpPack();
     const shop = path.join(root, "staging", "cardgameclub");
     fs.mkdirSync(shop, { recursive: true });
@@ -735,41 +745,19 @@ describe("Naruto sealed SKUs", async () => {
     fs.writeFileSync(path.join(shop, "display-s1-it.png"), "png");
 
     const result = await ingestNarutoSealedProducts({ packRoot: root });
-    expect(result.written).toBe(writtenFromStaging(2));
+    // IT staged but not catalogued — only attested JA/FR/EN + curated.
+    expect(result.written).toBe(writtenFromStaging(0));
     const index = JSON.parse(
       fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
-    ) as {
-      products: Record<
-        string,
-        {
-          kind: string;
-          lang: string;
-          declaredCardCount: number | null;
-          contentsKnown: boolean;
-          image: string;
-          path: string;
-        }
-      >;
-    };
-    expect(packshotKeys(index).sort()).toEqual([
-      "naruto/carddass::booster-s1-it",
-      "naruto/carddass::display-s1-it",
-    ]);
-    const booster = index.products["naruto/carddass::booster-s1-it"]!;
-    const display = index.products["naruto/carddass::display-s1-it"]!;
-    expect(booster.lang).toBe("IT");
-    expect(booster.declaredCardCount).toBe(8);
-    expect(booster.contentsKnown).toBe(false);
-    expect(booster.image).toBe(
-      "/assets/naruto/carddass/products/booster-s1-it/it/art.cardgameclub.png",
-    );
-    expect(booster.path).toBe("staging/cardgameclub/booster-s1-it.png");
-    expect(display.kind).toBe("display");
-    expect(display.declaredCardCount).toBeNull();
-    expect(index.products["naruto/carddass::display-s13"]).toBeUndefined();
+    ) as { products: Record<string, unknown> };
+    expect(index.products["naruto/carddass::booster-s1-it"]).toBeUndefined();
+    expect(index.products["naruto/carddass::display-s1-it"]).toBeUndefined();
+    expect(
+      NARUTO_SEALED_SKUS.some((row) => row.slug === "booster-s1-it"),
+    ).toBe(true);
   });
 
-  it("files the Martina S6 IT starter as a 40-card deck, not a booster", async () => {
+  it("keeps Martina / eBay IT starters off the catalogue index", async () => {
     const root = tmpPack();
     const shop = path.join(root, "staging", "martina");
     fs.mkdirSync(shop, { recursive: true });
@@ -786,43 +774,15 @@ describe("Naruto sealed SKUs", async () => {
     );
 
     const result = await ingestNarutoSealedProducts({ packRoot: root });
-    expect(result.written).toBe(writtenFromStaging(1));
+    expect(result.written).toBe(writtenFromStaging(0));
     const index = JSON.parse(
       fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
-    ) as {
-      products: Record<
-        string,
-        {
-          kind: string;
-          lang: string;
-          setCode: string | null;
-          declaredCardCount: number | null;
-          contentsKnown: boolean;
-          path: string;
-          imageBack: string | null;
-        }
-      >;
-    };
-    const starter =
-      index.products["naruto/carddass::starter-il-fascino-del-male"]!;
-    expect(starter.kind).toBe("deck");
-    expect(starter.lang).toBe("IT");
-    expect(starter.setCode).toBe("s6");
-    expect(starter.declaredCardCount).toBe(40);
-    expect(starter.contentsKnown).toBe(false);
-    // Martina wins art priority over Vinted when both dumps exist.
-    expect(starter.path).toBe(
-      "staging/martina/starter-il-fascino-del-male.jpg",
-    );
-    expect(starter.imageBack).toContain(
-      "starter-il-fascino-del-male/it/back.vinted.webp",
-    );
+    ) as { products: Record<string, unknown> };
+    expect(
+      index.products["naruto/carddass::starter-il-fascino-del-male"],
+    ).toBeUndefined();
+    expect(index.products["naruto/carddass::booster-s6-it"]).toBeUndefined();
     expect(index.products["naruto/carddass::booster-s6"]).toBeUndefined();
-    const boosterIt = index.products["naruto/carddass::booster-s6-it"]!;
-    expect(boosterIt.kind).toBe("booster");
-    expect(boosterIt.lang).toBe("IT");
-    expect(boosterIt.setCode).toBe("s6");
-    expect(boosterIt.declaredCardCount).toBe(8);
   });
 
   it("publishes Tin Box verso from Leboncoin and prefers Tric Trac white-bg face", async () => {
@@ -862,8 +822,8 @@ describe("Naruto sealed SKUs", async () => {
     };
     const tin = index.products["naruto/carddass::tin-box"]!;
     expect(tin.name).toBe("Coffret Métal");
-    // declaredCardCount 57 is sealed-contents only (coffret ≠ pack size).
-    expect(tin.declaredCardCount).toBeNull();
+    // Curated products-contents : 40 deck + 8 + 8 + 1 promo.
+    expect(tin.declaredCardCount).toBe(57);
     expect(tin.path).toBe("staging/trictrac/tin-box.jpeg");
     expect(tin.imageBack).toContain("tin-box/fr/back.leboncoin.jpg");
     expect(index.products["naruto/carddass::tin-box-hobby"]!.path).toBe(
@@ -934,8 +894,8 @@ describe("Naruto sealed SKUs", async () => {
       >;
     };
     const duo = index.products["naruto/carddass::duopack-s28"]!;
-    // declaredCardCount 17 is sealed-contents only (coffret ≠ pack size).
-    expect(duo.declaredCardCount).toBeNull();
+    // Curated products-contents : 2×8 + promo PR-096.
+    expect(duo.declaredCardCount).toBe(17);
     expect(duo.path).toBe("staging/ebay/duopack-s28.webp");
     expect(duo.imageBack).toContain("duopack-s28/fr/back.kinkai.webp");
   });
@@ -969,7 +929,7 @@ describe("Naruto sealed SKUs", async () => {
     expect(booster.imageBack).toContain("booster-s28/fr/back.sunnystore.jpg");
   });
 
-  it("publishes ES Carddass Serie 3 booster from Sunny Store with verso", async () => {
+  it("keeps ES Carddass Serie 3 off the catalogue index (JA+FR+EN contract)", async () => {
     const root = tmpPack();
     const sunny = path.join(root, "staging", "sunnystore");
     fs.mkdirSync(sunny, { recursive: true });
@@ -980,24 +940,11 @@ describe("Naruto sealed SKUs", async () => {
     expect(result.written).toBe(writtenFromStaging(0));
     const index = JSON.parse(
       fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
-    ) as {
-      products: Record<
-        string,
-        {
-          lang: string;
-          declaredCardCount: number | null;
-          path: string;
-          imageBack: string | null;
-        }
-      >;
-    };
-    const booster = index.products["naruto/carddass::booster-s3-es"]!;
-    expect(booster.lang).toBe("ES");
-    expect(booster.declaredCardCount).toBe(8);
-    expect(booster.path).toBe("staging/sunnystore/booster-s3-es-01.jpg");
-    expect(booster.imageBack).toContain(
-      "booster-s3-es/es/back.sunnystore.jpg",
-    );
+    ) as { products: Record<string, unknown> };
+    expect(index.products["naruto/carddass::booster-s3-es"]).toBeUndefined();
+    expect(
+      NARUTO_SEALED_SKUS.some((row) => row.slug === "booster-s3-es"),
+    ).toBe(true);
   });
 
   it("publishes EN Tournament Pack 3 chibi from Sunny Store with verso", async () => {
@@ -1466,15 +1413,11 @@ describe("les faces qu'aucune source ne réclame plus", () => {
 describe("le badge de série par-delà les langues", () => {
   /*
     Les badges n'existent que dans deux langues — le français pour les séries
-    1 à 5, l'allemand pour les 6 à 9. Tant qu'on exigeait la langue exacte,
-    treize SKU restaient sans logo : les séries 1 à 5 en allemand et en
-    italien, la 6 en italien.
-
-    Un badge porte d'abord le **numéro** de la série, et il se lit pareil dans
-    toutes les langues. L'accent de « SÉRIE » ne vaut pas qu'on laisse un
-    produit nu.
+    1 à 5, l'allemand pour les 6 à 9. Le catalogue scellé est JA+FR+EN : les
+    SKU DE/IT ne sont plus indexés, mais le repli fr→de reste pour un set
+    FR/EN qui n'aurait pas de badge dans sa langue.
   */
-  it("sert le badge français aux séries italiennes et allemandes", async () => {
+  it("sert un badge à chaque SKU catalogue avec setCode s1–s5", async () => {
     const root = tmpPack();
     await ingestNarutoSealedProducts({ packRoot: root });
     const index = JSON.parse(
@@ -1486,31 +1429,24 @@ describe("le badge de série par-delà les langues", () => {
       >;
     };
     const rows = Object.values(index.products).filter(
-      (row) => row.setCode && /^s[1-9]$/.test(row.setCode),
+      (row) => row.setCode && /^s[1-5]$/.test(row.setCode),
     );
     expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((row) => ["JA", "FR", "EN"].includes(row.lang))).toBe(
+      true,
+    );
     expect(rows.filter((row) => !row.setLogo)).toEqual([]);
   });
 
-  /*
-    Le repli ne doit pas écraser ce qui existe : une série allemande qui a son
-    propre badge le garde. Sa langue est essayée avant les autres.
-  */
-  it("garde le badge allemand là où il existe", async () => {
-    const root = tmpPack();
-    await ingestNarutoSealedProducts({ packRoot: root });
-    const index = JSON.parse(
-      fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
-    ) as {
-      products: Record<
-        string,
-        { setCode: string | null; lang: string; setLogo: string | null }
-      >;
-    };
-    const de = Object.values(index.products).find(
-      (row) => row.setCode === "s7" && row.lang === "DE",
-    );
-    expect(de?.setLogo).toContain("/de/logo.badge.png");
+  it("garde les fichiers badge DE s6–s9 pour le repli de langue", () => {
+    for (const set of ["s6", "s7", "s8", "s9"] as const) {
+      expect(
+        fs.existsSync(
+          path.join(narutoCuratedProductsDir(), "series-badges", "de", `${set}.png`),
+        ),
+        set,
+      ).toBe(true);
+    }
   });
 });
 
@@ -1521,9 +1457,9 @@ describe("Naruto curated products-contents", () => {
   );
 
   it("keeps Carddass FR starter guarantees on NI/TE/TA/CL — not EN CCG N/J/M", () => {
-    const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8")) as {
-      skus: Record<string, { guaranteedPrintKeys?: string[] }>;
-    };
+    const ledger = JSON.parse(
+      fs.readFileSync(ledgerPath, "utf8"),
+    ) as CuratedSealedContentsFile;
     const carddass = /^naruto:(ni|te|ta|cl|pr)-/i;
     const polluted: string[] = [];
     for (const [slug, sku] of Object.entries(ledger.skus)) {
@@ -1539,17 +1475,10 @@ describe("Naruto curated products-contents", () => {
   });
 
   it("encodes poster S1–S4 membership with qty summing to 40 (no S1 pollution in Invocation)", () => {
-    const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8")) as {
-      skus: Record<
-        string,
-        {
-          contentsKnown?: boolean;
-          guaranteedPrintKeys?: string[];
-          guaranteedPrints?: { printKey: string; qty?: number }[];
-        }
-      >;
-    };
-    const s1to4 = [
+    const ledger = JSON.parse(
+      fs.readFileSync(ledgerPath, "utf8"),
+    ) as CuratedSealedContentsFile;
+    const s1to4Known = [
       "starter-pays-du-vent",
       "starter-maitre-hokage",
       "starter-sceller-le-malefice",
@@ -1559,13 +1488,31 @@ describe("Naruto curated products-contents", () => {
       "starter-esprit-du-sable",
       "starter-invocation",
     ] as const;
-    for (const slug of s1to4) {
+    for (const slug of s1to4Known) {
       const sku = ledger.skus[slug]!;
       const prints = sku.guaranteedPrints ?? [];
       const sum = prints.reduce((n, row) => n + (row.qty ?? 1), 0);
       expect(sum, slug).toBe(40);
       expect(sku.contentsKnown, slug).toBe(true);
     }
+    const detruire = ledger.skus["starter-detruire-konoha"]!;
+    expect(detruire.declaredCardCount).toBe(40);
+    expect(detruire.guaranteedPrintKeys).toContain("naruto:ta-0074");
+    expect(
+      detruire.guaranteedPrints?.find(
+        (row) => row.printKey === "naruto:ta-0074",
+      ),
+    ).toEqual({ printKey: "naruto:ta-0074", qty: 1 });
+    expect(
+      detruire.guaranteedPrints?.find(
+        (row) => row.printKey === "naruto:te-0074",
+      ),
+    ).toEqual({ printKey: "naruto:te-0074", qty: 1 });
+    expect(
+      detruire.guaranteedPrints?.find(
+        (row) => row.printKey === "naruto:ni-0075",
+      ),
+    ).toEqual({ printKey: "naruto:ni-0075", qty: 2 });
     const sceller = ledger.skus["starter-sceller-le-malefice"]!;
     for (const key of [
       "naruto:ni-0027",
@@ -1575,9 +1522,6 @@ describe("Naruto curated products-contents", () => {
     ]) {
       expect(sceller.guaranteedPrintKeys).toContain(key);
     }
-    expect(
-      ledger.skus["starter-detruire-konoha"]!.guaranteedPrintKeys,
-    ).toContain("naruto:ta-0074");
     const inv = ledger.skus["starter-invocation"]!.guaranteedPrintKeys ?? [];
     expect(inv).not.toContain("naruto:ni-0001");
     expect(inv).toContain("naruto:ni-0156");
@@ -1589,6 +1533,16 @@ describe("Naruto curated products-contents", () => {
       { printKey: "naruto:ni-0002", qty: 1, finish: "holo" },
       { printKey: "naruto:ni-0003", qty: 1, finish: "holo" },
     ]);
+    expect(
+      ledger.skus["starter-maitre-hokage"]!.guaranteedPrints?.find(
+        (row) => row.printKey === "naruto:ni-0035",
+      ),
+    ).toEqual({ printKey: "naruto:ni-0035", qty: 2 });
+    expect(
+      ledger.skus["starter-maitre-hokage"]!.guaranteedPrints?.find(
+        (row) => row.printKey === "naruto:ni-0047",
+      ),
+    ).toEqual({ printKey: "naruto:ni-0047", qty: 1 });
     expect(
       ledger.skus["starter-pays-du-vent"]!.guaranteedPrints?.filter(
         (row) => row.finish === "holo",
@@ -1690,6 +1644,16 @@ describe("Naruto curated products-contents", () => {
       { printKey: "naruto:te-0169", qty: 2 },
     ]);
     expect(
+      ledger.skus["starter-apprentissage"]!.guaranteedPrints?.find(
+        (row) => row.printKey === "naruto:ta-0116",
+      ),
+    ).toEqual({ printKey: "naruto:ta-0116", qty: 2 });
+    expect(
+      ledger.skus["starter-apprentissage"]!.guaranteedPrints?.find(
+        (row) => row.printKey === "naruto:te-0113",
+      ),
+    ).toEqual({ printKey: "naruto:te-0113", qty: 1 });
+    expect(
       ledger.skus["starter-apprentissage"]!.guaranteedPrints?.filter(
         (row) => row.finish === "holo",
       ),
@@ -1711,22 +1675,9 @@ describe("Naruto curated products-contents", () => {
   });
 
   it("wires US 10×24 for s24/s28 EN SKUs and EU 8×2 + PR-096 for FR duopack", () => {
-    const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8")) as {
-      skus: Record<
-        string,
-        {
-          cardsPerPack?: number | null;
-          packsContained?: number | null;
-          packsBySet?: Record<string, number> | null;
-          guaranteeSets?: string[] | null;
-          declaredCardCount?: number | null;
-          guaranteedPrintKeys?: string[];
-          behavior?: string;
-          notes?: string;
-          contentsKnown?: boolean;
-        }
-      >;
-    };
+    const ledger = JSON.parse(
+      fs.readFileSync(ledgerPath, "utf8"),
+    ) as CuratedSealedContentsFile;
     expect(ledger.skus["booster-s24-en"]).toMatchObject({
       cardsPerPack: 10,
       packsContained: 1,
@@ -1768,7 +1719,9 @@ describe("Naruto curated products-contents", () => {
       packsContained: 2,
       declaredCardCount: 17,
       behavior: "mixed_bundle",
+      contentsKnown: true,
       guaranteedPrintKeys: ["naruto:pr-0096"],
+      guaranteedProducts: [{ slug: "booster-s28", qty: 2 }],
     });
     expect(ledger.skus["duopack-s28"]?.notes).toContain("3391891970488");
     expect(ledger.skus["duopack-s28"]?.notes).toContain("7 + 1");
@@ -1819,7 +1772,7 @@ describe("Naruto curated products-contents", () => {
       guaranteeSets: ["s4", "promo"],
       declaredCardCount: 57,
       behavior: "mixed_bundle",
-      contentsKnown: false,
+      contentsKnown: true,
     });
     expect(ledger.skus["tin-box-hobby"]).toMatchObject({
       cardsPerPack: 8,
@@ -1828,17 +1781,35 @@ describe("Naruto curated products-contents", () => {
       guaranteeSets: ["promo"],
       declaredCardCount: 42,
       behavior: "mixed_bundle",
-      contentsKnown: false,
+      contentsKnown: true,
     });
     expect(ledger.skus["pack-decouverte"]).toMatchObject({
       declaredCardCount: 96,
       behavior: "mixed_bundle",
-      contentsKnown: false,
+      contentsKnown: true,
       cardsPerPack: 8,
       packsContained: 2,
       packsBySet: { s1: 2 },
     });
-    expect(ledger.skus["pack-decouverte"]?.notes).toMatch(/wrappers\/pack-decouverte/i);
+    expect(ledger.skus["pack-decouverte"]?.guaranteedProducts).toEqual([
+      { slug: "starter-pays-du-vent", qty: 1 },
+      { slug: "starter-maitre-hokage", qty: 1 },
+      { slug: "booster-s1", qty: 2 },
+    ]);
+    expect(ledger.skus["pack-decouverte"]?.guaranteedPrints?.length).toBeGreaterThan(70);
+    expect(ledger.skus["pack-decouverte"]?.notes).toMatch(/guaranteedProducts/i);
+    expect(ledger.skus["tin-box"]?.guaranteedProducts).toEqual([
+      { slug: "starter-invocation", qty: 1 },
+      { slug: "booster-s1", qty: 1 },
+      { slug: "booster-s2", qty: 1 },
+    ]);
+    expect(ledger.skus["tin-box-hobby"]?.guaranteedProducts).toEqual([
+      { slug: "booster-s1", qty: 1 },
+      { slug: "booster-s2", qty: 1 },
+      { slug: "booster-s3", qty: 1 },
+      { slug: "booster-s4", qty: 1 },
+      { slug: "booster-s5", qty: 1 },
+    ]);
     expect(ledger.skus["tin-box"]?.guaranteedPrintKeys).toContain(
       "naruto:ni-0156",
     );
@@ -1860,7 +1831,7 @@ describe("Naruto curated products-contents", () => {
       randomPoolScope: "set",
       cardsPerPack: 1,
       declaredCardCount: 1,
-      contentsKnown: false,
+      contentsKnown: true,
       guaranteedPrintKeys: [],
     });
     expect(ledger.skus["kana-dvd-naruto-vol4"]).toMatchObject({
@@ -1868,7 +1839,7 @@ describe("Naruto curated products-contents", () => {
       randomPoolScope: "set",
       cardsPerPack: 1,
       declaredCardCount: 1,
-      contentsKnown: false,
+      contentsKnown: true,
       guaranteedPrintKeys: [],
     });
     expect(ledger.skus["kana-dvd-naruto-vol8"]).toMatchObject({
@@ -1876,14 +1847,16 @@ describe("Naruto curated products-contents", () => {
       randomPoolScope: "set",
       cardsPerPack: 2,
       declaredCardCount: 2,
-      contentsKnown: false,
+      contentsKnown: true,
       guaranteedPrintKeys: [],
     });
     expect(ledger.skus["kana-dvd-naruto-vol15"]).toMatchObject({
       behavior: "random_pack",
       randomPoolScope: "listed",
       declaredCardCount: 1,
-      contentsKnown: false,
+      cardsPerPack: 1,
+      packsContained: 1,
+      contentsKnown: true,
       guaranteedPrintKeys: [],
     });
     expect(ledger.skus["kana-dvd-naruto-vol15"]?.randomPoolPrintKeys).toEqual([
@@ -1930,7 +1903,9 @@ describe("Naruto curated products-contents", () => {
       behavior: "random_pack",
       randomPoolScope: "listed",
       declaredCardCount: 1,
-      contentsKnown: false,
+      cardsPerPack: 1,
+      packsContained: 1,
+      contentsKnown: true,
     });
     expect(ledger.skus["kana-manga-pack-1-2-3"]?.randomPoolPrintKeys).toEqual([
       "naruto:ni-0025-prerelease",

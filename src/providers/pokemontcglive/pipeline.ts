@@ -8,16 +8,22 @@
  * in-process) — ce pipeline catalogue ne le lance pas.
  */
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
+import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 import { dataRoot } from "@/lib/runtimeData";
 
 import { indexLiveCards } from "./indexCards";
 import { rebuildPokemonCardsIndex } from "./rebuildCardsIndex";
 
 const POKEMON_PACK_ID = "pokemon";
+const POKEMON_PRODUCTS_CONTENTS = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../tcgdex/curated/products-contents.json",
+);
 
 function cardsDbPath(): string {
   const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
@@ -46,6 +52,10 @@ const hooks = cardCatalogueHooks({
       );
     }
     if (!skipProducts) {
+      installProviderProductsContents(
+        POKEMON_PACK_ID,
+        POKEMON_PRODUCTS_CONTENTS,
+      );
       await scrapeTcgCardsProducts("pkmcards", {});
     }
   },

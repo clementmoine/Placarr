@@ -1,8 +1,8 @@
 {
-  "note": "10 vraies variantes avant-première manga S1 FR (Kana ~2005–2006). PrintKeys distincts `naruto:{ni|te|ta}-####-prerelease`, set `s1`, grouping `prerelease`. Source : user 2026-09-03 + dig Collection Naruto 7r7 + Drive Bandai FR Série 1 détaillée. Estimation ~10 €.",
+  "note": "10 vraies variantes avant-première manga S1 FR (Kana ~2005–2006). PrintKeys distincts `naruto:{ni|te|ta}-####-prerelease`, set `prerelease` (série catalogue à part), grouping `prerelease`. Source : user 2026-09-03 + dig Collection Naruto 7r7 + Drive Bandai FR Série 1 détaillée. Estimation ~10 €.",
   "source": "https://www.youtube.com/watch?v=7r7LwtIENKs",
   "observed": "2026-09-03",
-  "setCode": "s1",
+  "setCode": "prerelease",
   "grouping": "prerelease",
   "cards": [
     { "number": "ni025", "name": "Naruto Uzumaki" },

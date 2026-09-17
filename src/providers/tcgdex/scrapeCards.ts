@@ -31,8 +31,8 @@ import { printKeyFromTcgdexIds } from "./fetch";
 
 const API_BASE = "https://api.tcgdex.net/v2";
 
-/** Les langues que le catalogue sert. Le reste de l'app est français d'abord. */
-export const TCGDEX_HARVEST_LANGUAGES = ["fr", "en"] as const;
+/** Catalogue Dex : original JA + FR si existe + EN si dispo. */
+export const TCGDEX_HARVEST_LANGUAGES = ["ja", "fr", "en"] as const;
 
 type RawSetBrief = {
   id?: string;

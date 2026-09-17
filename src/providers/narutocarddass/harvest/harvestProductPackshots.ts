@@ -14,6 +14,7 @@
  *   - `carddass-official/` ← `carddass-official-products.json` (fiches Bandai)
  *   - `comicplanet-de/`    ← `comicplanet-de.json` (packshots allemands)
  *   - `suruga-kaitori/`    ← `suruga-ya-kaitori-packshots.json` (photos de rachat)
+ *   - `tv-tokyo/`          ← `tvtokyo-goods.json` (vignettes グッズねっと, toutes)
  *
  * Ce qui est **fait à la main** ne passe pas par ici : badges de série, logo du
  * jeu, emballages photographiés, sachets détourés et retouches de cadrage
@@ -32,7 +33,17 @@ import tvtokyo from "../curated/sources/tvtokyo-goods.json";
 import { harvestBandaiPackshots } from "@/providers/shared/bandaiPackshots";
 
 import { NARUTO_PACK_ID } from "../packs";
-import { volumeOfficialProducts } from "../volumeOfficialProducts";
+import {
+  volumeNumber,
+  volumeOfficialProducts,
+  volumeProductFormat,
+} from "../volumeOfficialProducts";
+
+/**
+ * Sachets booster dont Bandai publie encore le packshot Akamai.
+ * Aligné sur `OFFICIAL_BOOSTER_PACKSHOTS` dans japaneseSealedReleases.ts.
+ */
+const OFFICIAL_BOOSTER_VOLS = new Set([12, 16, 17]);
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
@@ -80,7 +91,7 @@ async function download(
  * Le nom de fichier attendu par les specs, pour un JAN donné.
  * Les specs sont la seule autorité : les recalculer ici les ferait diverger.
  */
-function officialFilesByJan(): Map<string, string> {
+export function officialFilesByJan(): Map<string, string> {
   const out = new Map<string, string>();
   /*
     Les specs du 疾風伝 étaient dans cette liste. Elles sont parties avec leur
@@ -94,6 +105,18 @@ function officialFilesByJan(): Map<string, string> {
       ici, donc rien à indexer.
     */
     if (spec.jan) out.set(spec.jan, spec.stagingFile);
+  }
+  /*
+    Boosters 12/16/17 : même ledger Akamai, mais hors `volumeOfficialProducts`
+    (qui ne couvre que vending + starters). Sans cette map, un wipe de
+    `staging/carddass-official/` ne les remoissonnerait plus.
+  */
+  for (const row of official.products) {
+    const volume = volumeNumber(row.title);
+    if (volume == null || !OFFICIAL_BOOSTER_VOLS.has(volume)) continue;
+    if (volumeProductFormat(row.title)) continue;
+    if (!/ブースターパック/.test(row.title)) continue;
+    out.set(row.jan, `booster-vol${volume}-jp.jpg`);
   }
   return out;
 }
@@ -157,7 +180,11 @@ export async function harvestTvTokyo(
   let written = 0;
   let failed = 0;
   for (const row of tvtokyo.products) {
-    const dest = path.join(dir, `${row.slug}.jpg`);
+    const stagingName =
+      ("stagingFile" in row && typeof row.stagingFile === "string"
+        ? row.stagingFile
+        : null) || `${row.slug}.jpg`;
+    const dest = path.join(dir, stagingName);
     if (!opts.force && existsSync(dest)) continue;
     const url = `${tvtokyo.base}cardimg/${row.file}`;
     if (await download(url, dest, tvtokyo.base)) written += 1;

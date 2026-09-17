@@ -21,7 +21,7 @@ describe("probeSurugaVol1Listings", () => {
 
   it("writes printed codes from Byparr HTML when Cloudflare blocks direct GET", async () => {
     vi.mocked(fetchTextWithFlareFallback).mockImplementation(async (url) => {
-      if (url.endsWith("GL636810")) {
+      if (url.endsWith("GL636800")) {
         return "<title>NARUTO 巻ノ壱 忍-1 うずまきナルト</title>";
       }
       return null;
@@ -30,8 +30,8 @@ describe("probeSurugaVol1Listings", () => {
     dirs.push(root);
     const result = await probeSurugaVol1Listings({
       root,
-      start: 636_810,
-      end: 636_810,
+      start: 636_800,
+      end: 636_800,
       delayMs: 0,
       force: true,
     });
@@ -43,6 +43,6 @@ describe("probeSurugaVol1Listings", () => {
       ),
       "utf8",
     );
-    expect(tsv).toContain("GL636810\t忍-1");
+    expect(tsv).toContain("GL636800\t忍-1");
   });
 });

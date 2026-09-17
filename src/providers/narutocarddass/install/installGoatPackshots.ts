@@ -1,9 +1,9 @@
 /**
- * Download Goat Coleka-gap display boxes into
+ * Download Goat EN display boxes into
  * `data/naruto/carddass/staging/goat-en-boxes/`.
  *
  * JPEG, PNG, or GIF (s16 CDN is named .jpg but the bytes are GIF89a).
- * Faces stay out. s1–s6 / JP 4/6 / blisters are not in the ingest list.
+ * Faces stay out. Every CDN display-box is archived; productChoice decides.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";

@@ -8,6 +8,7 @@ export * from "./imageMetrics";
 export * from "./remoteFetch";
 export * from "./remoteProxy";
 export * from "./imageTrim";
+export * from "./studioMatteCrop";
 export * from "./galleries";
 export * from "./galleryEnrichment";
 export * from "./galleryPreservation";

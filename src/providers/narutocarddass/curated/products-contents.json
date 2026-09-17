@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "naruto/carddass",
-  "updatedAt": "2026-09-05",
+  "updatedAt": "2026-09-14",
   "byKind": {
     "booster": {
       "source": "carddass.fr / presse 2006–07 + NARUTO_BOOSTER_CARD_COUNT (hors JP 6)",
@@ -10,12 +10,20 @@
       "packsContained": 1,
       "randomPoolScope": "set",
       "notes": "FR/IT/ES booster = 8 cartes. SKU JP override à 6."
+    },
+    "display": {
+      "source": "Carddass / EN CCG display — packsContained SKU (US 24 / EU DE 30 / IT 24)",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Pas de packsContained global — locales différentes."
     }
   },
   "skus": {
     "starter-maitre-hokage": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty + holos nommés user 2026-09-05",
-      "verifiedAt": "2026-09-05",
+      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty + holos nommés user 2026-09-05 ; qty NI-035/NI-047 corrigées user 2026-09-13",
+      "verifiedAt": "2026-09-13",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -62,7 +70,7 @@
         "naruto:te-0048",
         "naruto:te-0049"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; holos = NI-002 + NI-003 (user 2026-09-05)",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; holos = NI-002 + NI-003 (user 2026-09-05) ; NI-035×2 / NI-047×1 (user 2026-09-13)",
       "guaranteedPrints": [
         {
           "printKey": "naruto:cl-0004",
@@ -112,7 +120,7 @@
         },
         {
           "printKey": "naruto:ni-0035",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0036",
@@ -128,7 +136,7 @@
         },
         {
           "printKey": "naruto:ni-0047",
-          "qty": 2
+          "qty": 1
         },
         {
           "printKey": "naruto:ni-0050",
@@ -613,8 +621,8 @@
       ]
     },
     "starter-detruire-konoha": {
-      "source": "poster papier S1–S4 (user 2026-08-30) + carddass.fr catalogue qty + holos NI-084/TE-076 user 2026-09-05",
-      "verifiedAt": "2026-09-05",
+      "source": "poster papier user (TA-074) + carddass.fr catalogue_s2 (2× NI-075 ; catalogue dit aussi 2× TE-074) + photos user 2026-09-16 (1× TE-074) + holos NI-084/TE-076",
+      "verifiedAt": "2026-09-16",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -659,7 +667,7 @@
         "naruto:te-0096",
         "naruto:te-0099"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 ; holos = NI-084 + TE-076 (user 2026-09-05)",
+      "notes": "Sum 40 : catalogue_s2 listait « 2 Incatation/Invocation » (TE-074) et omettait TA-074 Monnaie ; poster + photos user → TA-074 ×1 et TE-074 ×1 (pas ×2). Dig : curated/sources/detruire-konoha-qty-web-hunt-2026-09-13.json.",
       "guaranteedPrints": [
         {
           "printKey": "naruto:cl-0007",
@@ -687,7 +695,7 @@
         },
         {
           "printKey": "naruto:ni-0075",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ni-0076",
@@ -768,7 +776,7 @@
         },
         {
           "printKey": "naruto:te-0074",
-          "qty": 2
+          "qty": 1
         },
         {
           "printKey": "naruto:te-0075",
@@ -847,7 +855,7 @@
         "naruto:te-0130",
         "naruto:te-0131"
       ],
-      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster ; holos = NI-115 + NI-127 (user 2026-09-05 ; dit « Invocation » mais membership = Apprentissage)",
+      "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster ; holos = NI-115 + NI-127 (user 2026-09-05 ; dit « Invocation » mais membership = Apprentissage). Corrigé 2026-09-13: TA-116 ×2, TE-113 ×1 (user).",
       "guaranteedPrints": [
         {
           "printKey": "naruto:ni-0049",
@@ -925,7 +933,7 @@
         },
         {
           "printKey": "naruto:ta-0116",
-          "qty": 1
+          "qty": 2
         },
         {
           "printKey": "naruto:ta-0134",
@@ -949,7 +957,7 @@
         },
         {
           "printKey": "naruto:te-0113",
-          "qty": 2
+          "qty": 1
         },
         {
           "printKey": "naruto:te-0127",
@@ -1864,18 +1872,24 @@
     },
     "duopack-s28": {
       "source": "kinkai.fr/article/5274 verso (EAN 3391891970488) + eBay FR face + Namco/Cardport EU (eu-ccg-pack-math-2026-08-29)",
-      "verifiedAt": "2026-08-29",
+      "verifiedAt": "2026-09-09",
       "cardsPerPack": 8,
       "packsContained": 2,
       "declaredCardCount": 17,
       "behavior": "mixed_bundle",
       "randomPoolScope": "set",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "naruto:pr-0096"
       ],
-      "notes": "Verso imprimé FR : « Chaque pack booster contient : 8 cartes sélectionnées aléatoirement (7 + 1 carte spéciale) ». 2 sachets + promo fenêtre PR-096 (4e Hokage). 120 cartes série. EAN 3391891970488. BANDAI 2013 MADE IN ITALY / NAMCO BANDAI Games Europe (Cergy). Pas Day One PR-095. Sachets aléatoires — seule la promo est garantie."
+      "notes": "Verso imprimé FR : « Chaque pack booster contient : 8 cartes sélectionnées aléatoirement (7 + 1 carte spéciale) ». 2 sachets + promo fenêtre PR-096 (4e Hokage). 120 cartes série. EAN 3391891970488. BANDAI 2013 MADE IN ITALY / NAMCO BANDAI Games Europe (Cergy). Pas Day One PR-095. Sachets aléatoires — seule la promo est garantie. contentsKnown=true : 2× booster-s28 + promo fenêtre PR-096.",
+      "guaranteedProducts": [
+        {
+          "slug": "booster-s28",
+          "qty": 2
+        }
+      ]
     },
     "booster-s28": {
       "source": "sunnystore.es FR sealed booster face « 8 CARTES » + verso EAN 3391891969925 (2026-08-29)",
@@ -1910,8 +1924,8 @@
       "notes": "EN Bandai USA s5 Dream Legacy (≠ FR Carddass booster-s5). Verso: 6C+2U+1R ; Parallel Holo 1:1 ; Gold Foil 1:6. UPC 045557145996. Shop listing « 10 cartas » rejected — printed 9 wins."
     },
     "pack-decouverte": {
-      "source": "manga-sanctuary.com/news/7397 + Collection Naruto YT JYwlXQQlooI + Leboncoin packshot paste 2026-08-30",
-      "verifiedAt": "2026-08-30",
+      "source": "manga-sanctuary.com/news/7397 + Collection Naruto YT JYwlXQQlooI + Leboncoin packshot paste 2026-08-30 + composition starters pays-du-vent + maitre-hokage (poster S1) ; qty NI-035/NI-047 alignées Hokage user 2026-09-13",
+      "verifiedAt": "2026-09-13",
       "cardsPerPack": 8,
       "packsContained": 2,
       "packsBySet": {
@@ -1923,14 +1937,405 @@
       "declaredCardCount": 96,
       "behavior": "mixed_bundle",
       "randomPoolScope": "set",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
-      "guaranteedPrintKeys": [],
-      "notes": "1× starter Pays du Vent + 1× starter Maître Hokage + 2× booster S1 (8 cartes). Face = curated/products/wrappers/pack-decouverte.jpg ; LBC photos archival / verso. contentsKnown=false : printKeys starters via SKU starters, exemplaire scellé non inventorié."
+      "guaranteedPrintKeys": [
+        "naruto:cl-0001",
+        "naruto:cl-0004",
+        "naruto:ni-0001",
+        "naruto:ni-0002",
+        "naruto:ni-0003",
+        "naruto:ni-0004",
+        "naruto:ni-0005",
+        "naruto:ni-0006",
+        "naruto:ni-0008",
+        "naruto:ni-0009",
+        "naruto:ni-0010",
+        "naruto:ni-0013",
+        "naruto:ni-0017",
+        "naruto:ni-0018",
+        "naruto:ni-0025",
+        "naruto:ni-0027",
+        "naruto:ni-0028",
+        "naruto:ni-0029",
+        "naruto:ni-0030",
+        "naruto:ni-0031",
+        "naruto:ni-0032",
+        "naruto:ni-0033",
+        "naruto:ni-0034",
+        "naruto:ni-0035",
+        "naruto:ni-0036",
+        "naruto:ni-0037",
+        "naruto:ni-0038",
+        "naruto:ni-0039",
+        "naruto:ni-0047",
+        "naruto:ni-0049",
+        "naruto:ni-0050",
+        "naruto:ni-0051",
+        "naruto:ni-0052",
+        "naruto:ni-0053",
+        "naruto:ta-0001",
+        "naruto:ta-0004",
+        "naruto:ta-0006",
+        "naruto:ta-0007",
+        "naruto:ta-0008",
+        "naruto:ta-0015",
+        "naruto:ta-0017",
+        "naruto:ta-0020",
+        "naruto:ta-0022",
+        "naruto:ta-0024",
+        "naruto:ta-0026",
+        "naruto:ta-0029",
+        "naruto:ta-0036",
+        "naruto:ta-0037",
+        "naruto:ta-0039",
+        "naruto:ta-0041",
+        "naruto:ta-0045",
+        "naruto:ta-0046",
+        "naruto:ta-0049",
+        "naruto:ta-0057",
+        "naruto:te-0001",
+        "naruto:te-0002",
+        "naruto:te-0003",
+        "naruto:te-0006",
+        "naruto:te-0008",
+        "naruto:te-0010",
+        "naruto:te-0015",
+        "naruto:te-0016",
+        "naruto:te-0019",
+        "naruto:te-0020",
+        "naruto:te-0021",
+        "naruto:te-0025",
+        "naruto:te-0029",
+        "naruto:te-0038",
+        "naruto:te-0040",
+        "naruto:te-0046",
+        "naruto:te-0048",
+        "naruto:te-0049",
+        "naruto:te-0058",
+        "naruto:te-0059"
+      ],
+      "notes": "1× starter Pays du Vent + 1× starter Maître Hokage + 2× booster S1. guaranteedProducts = SKUs inclus ; guaranteedPrints = cartes des 2 decks (conseil d'achat). Face = curated/products/wrappers/pack-decouverte.jpg.",
+      "guaranteedPrints": [
+        {
+          "printKey": "naruto:cl-0001",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:cl-0004",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0001",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:ni-0002",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:ni-0003",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:ni-0004",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0005",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0006",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0008",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:ni-0009",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0010",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0013",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0017",
+          "qty": 2
+        },
+        {
+          "printKey": "naruto:ni-0018",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0025",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0027",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0028",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0029",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0030",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0031",
+          "qty": 2
+        },
+        {
+          "printKey": "naruto:ni-0032",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0033",
+          "qty": 2
+        },
+        {
+          "printKey": "naruto:ni-0034",
+          "qty": 2
+        },
+        {
+          "printKey": "naruto:ni-0035",
+          "qty": 2
+        },
+        {
+          "printKey": "naruto:ni-0036",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0037",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0038",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0039",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0047",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0049",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0050",
+          "qty": 2
+        },
+        {
+          "printKey": "naruto:ni-0051",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0052",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ni-0053",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0001",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0004",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0006",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0007",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0008",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0015",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0017",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0020",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0022",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0024",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0026",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0029",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0036",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0037",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0039",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0041",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0045",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0046",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0049",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:ta-0057",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0001",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0002",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0003",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0006",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0008",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0010",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0015",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0016",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0019",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0020",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0021",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0025",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0029",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0038",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0040",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0046",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0048",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0049",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0058",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:te-0059",
+          "qty": 1
+        }
+      ],
+      "guaranteedProducts": [
+        {
+          "slug": "starter-pays-du-vent",
+          "qty": 1
+        },
+        {
+          "slug": "starter-maitre-hokage",
+          "qty": 1
+        },
+        {
+          "slug": "booster-s1",
+          "qty": 2
+        }
+      ]
     },
     "tin-box": {
       "source": "leboncoin.fr/ad/jeux_jouets/3258840985 verso + carddass.fr news.htm tin promos (tin-box-verso-hunt-2026-08-29) + Collection Naruto YT JYwl/7r7 + attestation PR-016 dans le coffret GD",
-      "verifiedAt": "2026-08-30",
+      "verifiedAt": "2026-09-09",
       "cardsPerPack": 8,
       "packsContained": 2,
       "packsBySet": {
@@ -1944,7 +2349,7 @@
       "declaredCardCount": 57,
       "behavior": "mixed_bundle",
       "randomPoolScope": "set",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "naruto:ni-0027",
@@ -1975,7 +2380,7 @@
         "naruto:te-0169",
         "naruto:pr-0016"
       ],
-      "notes": "Verso imprimé : deck [INVOCATION] s4 (40) + booster s1 (8) + booster s2 (8) + 1 promo holo exclusive + tapis + 6 jetons + livret. Réf. 05129 / EAN 3296580051298 / BANDAI 2007 BE. Guarantees = deck Invocation + PR-016. packsBySet = loterie S1/S2 ; guaranteeSets = s4+promo (un NI du deck mal rangé S5 au catalogue ne doit pas accrocher le conseil S5). Variant Hobby = SKU tin-box-hobby.",
+      "notes": "Verso imprimé : deck [INVOCATION] s4 (40) + booster s1 (8) + booster s2 (8) + 1 promo holo exclusive + tapis + 6 jetons + livret. Réf. 05129 / EAN 3296580051298 / BANDAI 2007 BE. Guarantees = deck Invocation + PR-016. packsBySet = loterie S1/S2 ; guaranteeSets = s4+promo (un NI du deck mal rangé S5 au catalogue ne doit pas accrocher le conseil S5). Variant Hobby = SKU tin-box-hobby. contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
       "guaranteedPrints": [
         {
           "printKey": "naruto:ni-0027",
@@ -2088,11 +2493,25 @@
           "qty": 1,
           "finish": "holo"
         }
+      ],
+      "guaranteedProducts": [
+        {
+          "slug": "starter-invocation",
+          "qty": 1
+        },
+        {
+          "slug": "booster-s1",
+          "qty": 1
+        },
+        {
+          "slug": "booster-s2",
+          "qty": 1
+        }
       ]
     },
     "tin-box-hobby": {
       "source": "carddass.fr news.htm Wayback 2008-11-18 TIN BOX HOBBY NARUTO + contenu-tin-box.jpg (youtube-gaps-web-hunt / tin-box-verso-hunt)",
-      "verifiedAt": "2026-08-30",
+      "verifiedAt": "2026-09-09",
       "cardsPerPack": 8,
       "packsContained": 5,
       "packsBySet": {
@@ -2108,62 +2527,84 @@
       "declaredCardCount": 42,
       "behavior": "mixed_bundle",
       "randomPoolScope": "set",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "naruto:pr-0011",
         "naruto:pr-0016"
       ],
-      "notes": "Canal hobby (magasins spécialisés). Officiel : 1 booster S1 + S2 + S3 + S4 + S5 + Naruto NI-PR16 + Orochimaru NI-PR11. Face catalogue = sleeve bleu reconstruit (wrappers/tin-box-hobby.png) ; contenu-tin-box / Tin-box-hobby.jpg archival. Sachets aléatoires via packsBySet — seules les 2 promos sont garanties. Distinct de tin-box Invocation 05129."
+      "notes": "Canal hobby (magasins spécialisés). Officiel : 1 booster S1 + S2 + S3 + S4 + S5 + Naruto NI-PR16 + Orochimaru NI-PR11. Face catalogue = sleeve bleu reconstruit (wrappers/tin-box-hobby.png) ; contenu-tin-box / Tin-box-hobby.jpg archival. Sachets aléatoires via packsBySet — seules les 2 promos sont garanties. Distinct de tin-box Invocation 05129. contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
+      "guaranteedProducts": [
+        {
+          "slug": "booster-s1",
+          "qty": 1
+        },
+        {
+          "slug": "booster-s2",
+          "qty": 1
+        },
+        {
+          "slug": "booster-s3",
+          "qty": 1
+        },
+        {
+          "slug": "booster-s4",
+          "qty": 1
+        },
+        {
+          "slug": "booster-s5",
+          "qty": 1
+        }
+      ]
     },
     "kana-dvd-naruto-vol3": {
       "source": "https://www.amazon.fr/Naruto-Edited-Vol-Hayato-Date/dp/B000VOHXFK + Collection Naruto YT / facebook dig (user 2026-09-05)",
-      "verifiedAt": "2026-09-05",
-      "notes": "Kana DVD Edited vol. 3 — **1 carte S5 aléatoire** (pool set). TA-214 = exemplaire packshot/FB, pas une garantie. Packshot Amazon wrappers/kana-dvd-naruto-vol3.jpg.",
+      "verifiedAt": "2026-09-09",
+      "notes": "Kana DVD Edited vol. 3 — **1 carte S5 aléatoire** (pool set, setCode s5). TA-214 = exemplaire packshot/FB, pas une garantie. contentsKnown=true : composition inventoriée (1/set), pas de pool listé. Packshot Amazon wrappers/kana-dvd-naruto-vol3.jpg.",
       "packsContained": 1,
       "cardsPerPack": 1,
       "behavior": "random_pack",
       "randomPoolScope": "set",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
       "guaranteedPrintKeys": []
     },
     "kana-dvd-naruto-vol4": {
       "source": "https://www.amazon.fr/dp/B000FQJMEO + facebook dig + Collection Naruto YT (vol.4 → 1× S1) + user 2026-09-05",
-      "verifiedAt": "2026-09-05",
-      "notes": "Kana digipack vol. 4 — **1 carte S1 aléatoire** (pool set). NI-019 packshot = exemplaire (≠ garantie ; ≠ prerelease manga).",
+      "verifiedAt": "2026-09-09",
+      "notes": "Kana digipack vol. 4 — **1 carte S1 aléatoire** (pool set, setCode s1). NI-019 packshot = exemplaire (≠ garantie ; ≠ prerelease manga). contentsKnown=true : composition inventoriée (1/set).",
       "packsContained": 1,
       "cardsPerPack": 1,
       "behavior": "random_pack",
       "randomPoolScope": "set",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
       "guaranteedPrintKeys": []
     },
     "kana-dvd-naruto-vol8": {
       "source": "https://www.amazon.fr/dp/B000MZGRXC + facebook dig + Collection Naruto YT (vol.8 → 2× S3) + user 2026-09-05",
-      "verifiedAt": "2026-09-05",
-      "notes": "Kana vol. 8 — **2 cartes S3 aléatoires** (pool set). NI-118/119 = exemplaires packshot, pas pool listé.",
+      "verifiedAt": "2026-09-09",
+      "notes": "Kana vol. 8 — **2 cartes S3 aléatoires** (pool set, setCode s3). NI-118/119 = exemplaires packshot, pas pool listé. contentsKnown=true : composition inventoriée (2/set).",
       "packsContained": 1,
       "cardsPerPack": 2,
       "behavior": "random_pack",
       "randomPoolScope": "set",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 2,
       "guaranteedPrintKeys": []
     },
     "kana-dvd-naruto-vol15": {
       "source": "https://www.cdiscount.com/pdt2/0/0/0/1/4022x151588/3309450033000/rw/dvd-naruto-vol-15.jpg (EAN 3309450033000) + Victor FB (patch « carte série 6 ») + s6-fr-printed.json",
-      "verifiedAt": "2026-09-05",
-      "notes": "Kana vol. 15 — 1 carte parmi les 6 S6 FR confirmées (pas de retail booster S6). Libellé singulier ; NI-236 = exemple Victor, pas garantie fixe. Collage packshot (NI-232…) non inventorié. Canal manga Kana tomes 1–15 = **officiel** (mangakana avr. 2008) — dig kana-manga-blister-2008.json ; les deux canaux coexistent.",
-      "packsContained": null,
-      "cardsPerPack": null,
+      "verifiedAt": "2026-09-09",
+      "notes": "Kana vol. 15 — **1 carte** parmi les 6 S6 FR confirmées (pool listé). contentsKnown=true : composition inventoriée (1/6).",
+      "packsContained": 1,
+      "cardsPerPack": 1,
       "behavior": "random_pack",
       "randomPoolScope": "listed",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
       "guaranteedPrintKeys": [],
@@ -2274,13 +2715,13 @@
     },
     "kana-manga-pack-1-2-3": {
       "source": "https://www.amazon.fr/Pack-1-2-3-Naruto/dp/B085PJZSN6 (packshot 2020) + s1-fr-prerelease.json + Collection Naruto 7r7 / bandai-fr-serie-1-detaillee.json",
-      "verifiedAt": "2026-09-05",
-      "notes": "Canal avant-première manga S1 (~2005–2006) : 1 carte parmi 10 variantes `*-prerelease`. Packshot = Pack tomes 1+2+3 Kana Amazon B085PJZSN6 (réédition 10 avr. 2020, promo 9 €) — art catalogue uniquement ; **pas** d'insert Carddass attesté sur cet ASIN. Pool listé (pas 10 garanties). Blisters S6 tomes 1–15 = autre canal.",
-      "packsContained": null,
-      "cardsPerPack": null,
+      "verifiedAt": "2026-09-09",
+      "notes": "Canal avant-première manga S1 (~2005–2006) : **1 carte** tirée parmi 10 variantes `*-prerelease` (pool listé). Packshot catalogue = Pack tomes 1+2+3 Kana Amazon B085PJZSN6 (réédition 2020) — art uniquement. contentsKnown=true : composition inventoriée (1/10), pas 10 garanties. Blisters S6 tomes 1–15 = autre canal.",
+      "packsContained": 1,
+      "cardsPerPack": 1,
       "behavior": "random_pack",
       "randomPoolScope": "listed",
-      "contentsKnown": false,
+      "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
       "guaranteedPrintKeys": [],
@@ -2296,6 +2737,202 @@
         "naruto:te-0003-prerelease",
         "naruto:te-0036-prerelease"
       ]
+    },
+    "display-s1-it": {
+      "source": "curated/sources/cardgameclub.json — display = 24 buste IT",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false
+    },
+    "display-s2-it": {
+      "source": "curated/sources/cardgameclub.json — display = 24 buste IT",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false
+    },
+    "display-s7": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s8": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s9": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s10": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s11": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s12": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s13": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s14": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s15": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s16": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s17": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s18": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s19": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s20": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s21": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s22": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s23": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s25": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s26": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "display-s27": {
+      "source": "eu-ccg-pack-math / ToyWiz — US EN CCG display = 24 packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
     }
   }
 }

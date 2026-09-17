@@ -17,7 +17,10 @@ import { DatabaseSync } from "node:sqlite";
 import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardDir } from "@/lib/packPaths";
 import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
-import { finalizeSetOptions } from "@/providers/shared/cardCatalogue/sets";
+import {
+  finalizeSetOptions,
+  pickCatalogueSetNameByCount,
+} from "@/providers/shared/cardCatalogue/sets";
 
 import { dataRoot } from "@/lib/runtimeData";
 
@@ -433,17 +436,36 @@ export function exportDbsCgCardsIndexJson(
 export function listDbsCgPrintSets(): { id: string; label: string }[] {
   const db = ensureDbsCgIndex();
   if (!db) return [];
+  /*
+    On agrège par (set, nom) puis on choisit le nom **utilisable** le plus
+    fréquent. Un `MIN(set_name)` prenait `-` avant « Promotion Cartes », et le
+    set promo s'affichait « P ».
+  */
   const rows = db
     .prepare(
       `SELECT p.set_code AS setCode,
-              MIN(NULLIF(TRIM(t.set_name), '')) AS setName
+              NULLIF(TRIM(t.set_name), '') AS setName,
+              COUNT(*) AS n
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
-        GROUP BY p.set_code`,
+        GROUP BY p.set_code, NULLIF(TRIM(t.set_name), '')`,
     )
-    .all() as { setCode: string; setName: string | null }[];
-  // Nettoyage, homonymes et tri : communs à tous les catalogues.
+    .all() as { setCode: string; setName: string | null; n: number }[];
+
+  const namesBySet = new Map<
+    string,
+    { name?: string | null; count: number }[]
+  >();
+  for (const row of rows) {
+    const list = namesBySet.get(row.setCode) ?? [];
+    list.push({ name: row.setName, count: row.n });
+    namesBySet.set(row.setCode, list);
+  }
+
   return finalizeSetOptions(
-    rows.map((row) => ({ id: row.setCode, label: row.setName })),
+    [...namesBySet].map(([id, names]) => ({
+      id,
+      label: pickCatalogueSetNameByCount(names),
+    })),
   );
 }

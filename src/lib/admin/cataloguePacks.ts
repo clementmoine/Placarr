@@ -14,6 +14,11 @@ import {
   narutoCatalogueLineForSealed as narutoLineForSealed,
   type NarutoCardLine,
 } from "@/providers/narutocarddass/packs";
+import {
+  LECLERC_ACTIVE_OPS,
+  leclercFamilyMeta,
+} from "@/providers/leclerc/pack";
+import { leclercSetLabel } from "@/providers/leclerc/printKey";
 
 export const CATALOGUE_PACK_IDS = [
   "pokemon",
@@ -28,10 +33,17 @@ export const CATALOGUE_PACK_IDS = [
   "dbs/cg",
   "dbs/fw",
   "dbs/lamincards",
+  "dbs/jcc",
+  "dbs/heroes",
+  "bleach/scb",
   "onepiece",
-  "digimon",
   "yugioh",
   "mtg",
+  "leclerc/marvel21",
+  "leclerc/marvel22",
+  "leclerc/marvel23",
+  "leclerc/marvel24",
+  "leclerc/disney25",
 ] as const;
 export type CataloguePackId = (typeof CATALOGUE_PACK_IDS)[number];
 
@@ -58,20 +70,28 @@ export type CatalogueExtractTarget =
   | "dbs-cg"
   | "dbs-fw"
   | "dbs-lamincards"
+  | "dbs-jcc"
+  | "dbs-heroes"
+  | "bleach-scb"
   | "onepiece"
-  | "digimon"
   | "yugioh"
-  | "mtg";
+  | "mtg"
+  | "leclerc-marvel21"
+  | "leclerc-marvel22"
+  | "leclerc-marvel23"
+  | "leclerc-marvel24"
+  | "leclerc-disney25";
 
 export type CatalogueFranchiseId =
   | "pokemon"
   | "lorcana"
   | "naruto"
   | "dbs"
+  | "bleach"
   | "onepiece"
-  | "digimon"
   | "yugioh"
-  | "mtg";
+  | "mtg"
+  | "leclerc";
 
 /** Inventory / Lorcana — CDN scrape + extract within a dev session. */
 export const CATALOGUE_EXTRACT_TIMEOUT_MS = 40 * 60 * 1000;
@@ -160,7 +180,13 @@ export type CataloguePackInfo = {
    * Ranks). Without this, `pickLang` keeps a single row and hides FR / IT /
    * EN faces that live on other lang slots.
    */
-  expandLocales?: boolean;
+    expandLocales?: boolean;
+  /**
+   * With `expandLocales` + `catalogueLocales`, emit an empty tile for each
+   * declared locale missing on the print (Ninja Ranks FR gaps). Off by
+   * default so Lorcana/Pokémon do not invent empty FR/EN shells.
+   */
+  catalogueExpandMissingLocales?: boolean;
   /**
    * When `expandLocales` is on, emit a tile for every listed locale even when
    * `cards-index.json` has no lang slot yet (shown as missing art, not hidden).
@@ -275,6 +301,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     hasFoilMeta: true,
     androidPackageId: "com.pokemon.pokemontcgl",
     defaultScope: "foils",
+    /** Live CDN has de/it/es/ptbr — catalogue = EN pivot + FR only. */
+    catalogueLocales: ["fr", "en"],
     extractTarget: "pokemon",
     extractMarkers: [
       "foil/shaders",
@@ -303,11 +331,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     hasFoilEffects: true,
     hasFoilMeta: true,
     /**
-     * Index holds de/en/fr/it faces. Without expand, pickLang collapses to the
-     * UI preferLang — « All locales » never shows FR+EN together, and the
-     * language filter options shrink to the active lang only.
+     * Cards scrape is EN+FR. Without expand, pickLang collapses to the UI
+     * preferLang — « All locales » never shows FR+EN together.
      */
     expandLocales: true,
+    catalogueLocales: ["en", "fr"],
     androidPackageId: "com.ravensburger.disney.lorcana",
     defaultScope: "foils",
     extractTarget: "lorcana",
@@ -342,6 +370,13 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     sameNumberArtFallback: true,
     narutoCollectorDisk: true,
+    /**
+     * FR tiles often lack a recto while JA (or EN CCG) holds one. Keep expand
+     * to langs that exist on the print (unified pack) — do **not** declare
+     * `catalogueLocales` or we invent empty FR shells for EN-only CCG cards
+     * (« sans nom » with a borrowed face).
+     */
+    localeArt: { bestFaceAcrossLocales: true },
     extractTarget: "naruto",
     catalogueOnly: true,
     extractMarkers: [
@@ -353,8 +388,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
       prelude: [
-        "Naruto: Carddass FR+IT+JA + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
-        "scellés FR : packshots carddass.fr (boosters / starters / tin) → products-index.json",
+        "Naruto: Carddass JA+FR+EN + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
+        "scellés catalogue : JA+FR+EN seulement (IT/DE/ES hors products-index)",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
       pipelineSteps: [
@@ -437,6 +472,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     expandLocales: true,
     catalogueLocales: ["en", "fr", "it"],
+    /** FR Coleka gaps stay visible as empty shells. */
+    catalogueExpandMissingLocales: true,
     localeArt: { bestFaceAcrossLocales: true },
     extractTarget: "naruto-ranks",
     catalogueOnly: true,
@@ -474,6 +511,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Naruto Ultra Challenge",
     hasFoilEffects: false,
     defaultScope: "all",
+    /** Panini FR original. */
+    catalogueLocales: ["fr"],
     extractTarget: "naruto-ultra",
     catalogueOnly: true,
     extractMarkers: [
@@ -549,6 +588,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Naruto Kayou",
     hasFoilEffects: true,
     defaultScope: "foils",
+    /** EN gallery on disk today (CN originals when attested). */
+    catalogueLocales: ["en"],
     extractTarget: "naruto-kayou",
     catalogueOnly: true,
     extractMarkers: [
@@ -585,13 +626,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Naruto Data Carddass",
     hasFoilEffects: false,
     defaultScope: "all",
+    /** Arcade JP only. */
+    catalogueLocales: ["ja"],
     extractTarget: "naruto-data-carddass",
     catalogueOnly: true,
     extractMarkers: [
       "cards-index.json",
       "catalog.sqlite",
       "cards",
-      "cards/back.webp",
     ],
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
@@ -601,9 +643,9 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
-      "Bandai Data Carddass arcade (ナルティメット…), JP. Préfixes DN / NM / NX. Autre jeu que le Carddass de table.",
+      "Bandai Data Carddass arcade (ナルティメット…), JP. Préfixes DN / DT / NM / NF / NX (+ clear NC/NFC). Catalogue local depuis cardlists officiels.",
     blurbEn:
-      "Bandai Data Carddass arcade (Narultimate…), JP only. Prefixes DN / NM / NX. A different game from tabletop Carddass.",
+      "Bandai Data Carddass arcade (Narultimate…), JP only. Prefixes DN / DT / NM / NF / NX (+ clear NC/NFC). Local catalogue from official cardlists.",
   },
   {
     id: "dbs/cg",
@@ -621,6 +663,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Dragon Ball Masters",
     hasFoilEffects: false,
     defaultScope: "all",
+    catalogueLocales: ["fr", "en"],
     extractTarget: "dbs-cg",
     catalogueOnly: true,
     extractMarkers: [
@@ -698,6 +741,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Dragon Ball Lamincards",
     hasFoilEffects: false,
     defaultScope: "all",
+    /** Edibas IT original + FR when attested — drop ES catalogue tiles. */
+    catalogueLocales: ["it", "fr"],
     extractTarget: "dbs-lamincards",
     catalogueOnly: true,
     extractMarkers: [
@@ -721,6 +766,127 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Edibas Lamincards (clear PVC). Faces from Dragon Ball Center. Not Masters / Fusion World.",
   },
   {
+    id: "dbs/jcc",
+    franchiseId: "dbs",
+    franchiseLabelFr: "Dragon Ball",
+    franchiseLabelEn: "Dragon Ball",
+    lineLabelFr: "Carddass / JCC",
+    lineLabelEn: "Carddass / CCG",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
+    labelFr: "Dragon Ball Carddass / JCC",
+    labelEn: "Dragon Ball Carddass / CCG",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "dbs-jcc",
+    catalogueOnly: true,
+    expandLocales: true,
+    catalogueLocales: ["ja", "fr", "en"],
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Dragon Ball Carddass / JCC (Bandai) : dbzcollection FR + carddass.fr/dbz Wayback → data/dbs/jcc",
+        "Facettes ja/fr/en — titres/faces attestés seulement",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      pipelineSteps: ["dbzcollection", "carddass-fr", "faces"],
+    },
+    blurbFr:
+      "Carddass / JCC Bandai (2005–2009). D-1 à D-938, SP et promos. Multilingue ja/fr/en (FR seedé).",
+    blurbEn:
+      "Bandai Carddass / CCG (2005–2009). D-1–D-938, SP and promos. Multilingual ja/fr/en (FR seeded).",
+  },
+  {
+    id: "dbs/heroes",
+    franchiseId: "dbs",
+    franchiseLabelFr: "Dragon Ball",
+    franchiseLabelEn: "Dragon Ball",
+    lineLabelFr: "Heroes",
+    lineLabelEn: "Heroes",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
+    labelFr: "Dragon Ball Heroes",
+    labelEn: "Dragon Ball Heroes",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "dbs-heroes",
+    catalogueOnly: true,
+    catalogueLocales: ["ja"],
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Dragon Ball Heroes / Super DBH : carddass.com/dbh cardlist → data/dbs/heroes",
+        "Catalogue officiel JA (H/GM/JM/GDM + SDBH si branché)",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+      pipelineSteps: ["scrape", "faces"],
+    },
+    blurbFr:
+      "Dragon Ball Heroes (arcade Bandai). Cardlist officiel carddass.com — titres JA.",
+    blurbEn:
+      "Dragon Ball Heroes (Bandai arcade). Official carddass.com cardlist — JA titles.",
+  },
+  {
+    id: "bleach/scb",
+    franchiseId: "bleach",
+    franchiseLabelFr: "Bleach",
+    franchiseLabelEn: "Bleach",
+    lineLabelFr: "Soul Card Battle",
+    lineLabelEn: "Soul Card Battle",
+    lineFamily: {
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
+    },
+    labelFr: "Bleach Soul Card Battle",
+    labelEn: "Bleach Soul Card Battle",
+    hasFoilEffects: false,
+    defaultScope: "all",
+    extractTarget: "bleach-scb",
+    catalogueOnly: true,
+    expandLocales: true,
+    // JA (nikita) + FR (carddass.fr). Pas d'EN officiel SCB — le Bleach TCG
+    // Score US est un autre jeu (hors pack).
+    catalogueLocales: ["ja", "fr"],
+    extractMarkers: [
+      "cards-index.json",
+      "catalog.sqlite",
+      "cards",
+      "cards/back.webp",
+    ],
+    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Bleach Soul Card Battle (Carddass) : carddass.fr Wayback FR + JP ledger → data/bleach/scb",
+        "Facettes ja/fr — pas Union Arena, pas Score US TCG",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      pipelineSteps: ["ledgers", "faces"],
+    },
+    blurbFr:
+      "Soul Card Battle Bandai (Carddass). JA + FR. Pas Union Arena ni Score US.",
+    blurbEn:
+      "Bandai Soul Card Battle (Carddass). JA + FR. Not Union Arena or Score US TCG.",
+  },
+  {
     id: "onepiece",
     franchiseId: "onepiece",
     franchiseLabelFr: "One Piece",
@@ -733,6 +899,12 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "onepiece",
     catalogueOnly: true,
+    /**
+     * JA titles often land before JA faces; EN/FR Bandai art is already on disk.
+     * Borrow like Mythos until JA rectos are harvested.
+     */
+    catalogueLocales: ["ja", "fr", "en"],
+    localeArt: { bestFaceAcrossLocales: true },
     extractMarkers: [
       "cards-index.json",
       "catalog.sqlite",
@@ -742,7 +914,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
       prelude: [
-        "One Piece Card Game: punk-records (FR/EN) + faces Bandai + opecards.fr",
+        "One Piece Card Game: punk-records (JA/FR/EN) + faces Bandai + opecards.fr",
         "Titres et printKeys depuis buhbbl/punk-records ; images cardlist officiel",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
@@ -752,36 +924,47 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     blurbEn:
       "Bandai OPTCG catalogue — punk-records + official cardlist faces; sealed via opecards.fr.",
   },
-  {
-    id: "digimon",
-    franchiseId: "digimon",
-    franchiseLabelFr: "Digimon",
-    franchiseLabelEn: "Digimon",
-    lineLabelFr: "Card Game",
-    lineLabelEn: "Card Game",
-    labelFr: "Digimon Card Game",
-    labelEn: "Digimon Card Game",
-    hasFoilEffects: false,
-    defaultScope: "all",
-    extractTarget: "digimon",
-    catalogueOnly: true,
-    extractMarkers: [
-      "cards-index.json",
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
-    extract: {
-      prelude: [
-        "Digimon Card Game: bootstrap catalogue vide → data/digimon",
-        "Moisson digimoncard.io / apitcg à brancher",
+  ...LECLERC_ACTIVE_OPS.map((op) => {
+    const family = leclercFamilyMeta(op.family);
+    const label = leclercSetLabel(op.setCode);
+    return {
+      id: op.packId as CataloguePackId,
+      franchiseId: "leclerc" as const,
+      franchiseLabelFr: "Leclerc",
+      franchiseLabelEn: "Leclerc",
+      lineLabelFr: label,
+      lineLabelEn: label,
+      lineFamily: {
+        id: family.id,
+        labelFr: family.labelFr,
+        labelEn: family.labelEn,
+      },
+      labelFr: label,
+      labelEn: label,
+      hasFoilEffects: false,
+      defaultScope: "all" as const,
+      /** E.Leclerc FR ops. */
+      catalogueLocales: ["fr"] as const,
+      extractTarget: op.extractTarget as CatalogueExtractTarget,
+      catalogueOnly: true,
+      extractMarkers: [
+        "cards-index.json",
+        "catalog.sqlite",
+        "cards",
+        "cards/back.webp",
       ],
-      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
-    },
-    blurbFr: "Catalogue Digimon Card Game — onglet prêt, moisson à brancher.",
-    blurbEn: "Digimon Card Game catalogue — tab ready, ingest pending.",
-  },
+      emptyUnless: ["cards-index.json", "catalog.sqlite"],
+      extract: {
+        prelude: [
+          `Leclerc: seed checklist curated → data/${op.packId}`,
+          `Set ${op.setCode}`,
+        ],
+        timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      },
+      blurbFr: `Opération collector E.Leclerc — ${label}.`,
+      blurbEn: `E.Leclerc collector op — ${label}.`,
+    };
+  }),
   {
     id: "yugioh",
     franchiseId: "yugioh",
@@ -795,6 +978,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "yugioh",
     catalogueOnly: true,
+    catalogueLocales: ["fr", "en"],
+    localeArt: { bestFaceAcrossLocales: true },
     extractMarkers: [
       "cards-index.json",
       "catalog.sqlite",
@@ -804,14 +989,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
       prelude: [
-        "Yu-Gi-Oh!: bootstrap catalogue vide → data/yugioh",
-        "Moisson YGOPRODeck à brancher",
+        "Yu-Gi-Oh!: YGOPRODeck (EN/FR) + ScanFlip FR → data/yugioh",
+        "Faces locales YGOPRODeck ; ScanFlip CDN artUrl si pas encore téléchargé",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
-      "Catalogue Yu-Gi-Oh! — onglet prêt, moisson YGOPRODeck à brancher.",
-    blurbEn: "Yu-Gi-Oh! catalogue — tab ready, YGOPRODeck ingest pending.",
+      "Catalogue Yu-Gi-Oh! — YGOPRODeck + ScanFlip FR (CDN).",
+    blurbEn: "Yu-Gi-Oh! catalogue — YGOPRODeck + ScanFlip FR (CDN).",
   },
   {
     id: "mtg",
@@ -824,6 +1009,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Magic: The Gathering",
     hasFoilEffects: false,
     defaultScope: "all",
+    /** EN original + FR ; exclusives other-lang stay on disk, hidden in admin. */
+    catalogueLocales: ["en", "fr"],
     extractTarget: "mtg",
     catalogueOnly: true,
     extractMarkers: [
@@ -835,13 +1022,13 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
       prelude: [
-        "Magic: The Gathering: bootstrap catalogue vide → data/mtg",
-        "Moisson Scryfall à brancher",
+        "Magic: The Gathering: Scryfall bulk default_cards → data/mtg",
+        "Titres EN + artUrl CDN + dos classique ; scellé mtgcards.fr optionnel",
       ],
-      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      timeoutMs: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
     },
-    blurbFr: "Catalogue Magic — onglet prêt, moisson Scryfall à brancher.",
-    blurbEn: "Magic catalogue — tab ready, Scryfall ingest pending.",
+    blurbFr: "Catalogue Magic via Scryfall (bulk EN + faces CDN).",
+    blurbEn: "Magic catalogue via Scryfall (EN bulk + CDN faces).",
   },
 ];
 
@@ -935,7 +1122,7 @@ export function resolveCataloguePackId(
     naruto: "naruto/carddass",
     cacg: "naruto/carddass",
     narutocacg: "naruto/carddass",
-    jcc: "naruto/carddass",
+    // `jcc` seul est ambigu (dbs/jcc l'emporte plus bas) — pas d'alias ici.
     ccg: "naruto/carddass",
     enccg: "naruto/carddass",
     narutoen: "naruto/carddass",
@@ -957,16 +1144,35 @@ export function resolveCataloguePackId(
     dbsmasters: "dbs/cg",
     fusionworld: "dbs/fw",
     edibas: "dbs/lamincards",
-    dbslamincards: "dbs/lamincards",
     dbzlamincards: "dbs/lamincards",
+    jcc: "dbs/jcc",
+    cjc: "dbs/jcc",
+    dbjcc: "dbs/jcc",
+    dbzjcc: "dbs/jcc",
+    dbscjc: "dbs/jcc",
+    dragonballcarddass: "dbs/jcc",
+    dbcarddass: "dbs/jcc",
+    heroes: "dbs/heroes",
+    sdbh: "dbs/heroes",
+    dragonballheroes: "dbs/heroes",
+    bleach: "bleach/scb",
+    scb: "bleach/scb",
+    soulcardbattle: "bleach/scb",
     onepiece: "onepiece",
     optcg: "onepiece",
-    digimon: "digimon",
     yugioh: "yugioh",
     ygo: "yugioh",
     mtg: "mtg",
     magic: "mtg",
     scryfall: "mtg",
+    leclerc: "leclerc/marvel21",
+    leclercmarvel: "leclerc/marvel21",
+    leclercmarvel21: "leclerc/marvel21",
+    leclercmarvel22: "leclerc/marvel22",
+    leclercmarvel23: "leclerc/marvel23",
+    leclercmarvel24: "leclerc/marvel24",
+    leclercdisney: "leclerc/disney25",
+    leclercdisney25: "leclerc/disney25",
   };
   const mapped = aliases[wanted];
   if (mapped) return mapped;

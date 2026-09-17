@@ -21,17 +21,39 @@ export function manifestUrl(
   return `${base}${bucket}/manifest_${locale}_${bucket}`;
 }
 
+export function directoriesFromDirsManifest(dirsManifest: string): string[] {
+  if (!existsSync(dirsManifest)) return [];
+  try {
+    const raw = JSON.parse(readFileSync(dirsManifest, "utf8")) as {
+      keys?: { manifest?: { contentString?: string } };
+    };
+    const inner = JSON.parse(
+      raw.keys?.manifest?.contentString ?? "{}",
+    ) as { directories?: unknown[] };
+    return (inner.directories ?? []).map(String);
+  } catch {
+    return [];
+  }
+}
+
 export function resolveBuckets(
   bucketsArg: string | undefined,
   fallback: string,
   dirsManifest: string | undefined,
+  extraBuckets?: readonly string[],
 ): string[] {
-  if (!bucketsArg) return [fallback];
+  const extras = (extraBuckets ?? [])
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!bucketsArg) {
+    return extras.length ? [...new Set([fallback, ...extras])] : [fallback];
+  }
   if (bucketsArg.trim().toLowerCase() !== "all") {
-    return bucketsArg
+    const listed = bucketsArg
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+    return extras.length ? [...new Set([...listed, ...extras])] : listed;
   }
   if (!dirsManifest) {
     throw new Error("--buckets all requires --dirs-manifest");
@@ -41,14 +63,9 @@ export function resolveBuckets(
       `--dirs-manifest not found: ${dirsManifest} (expected staging/config-cache/asset-bundle-manifest_0.0.json)`,
     );
   }
-  const raw = JSON.parse(readFileSync(dirsManifest, "utf8")) as {
-    keys?: { manifest?: { contentString?: string } };
-  };
-  const inner = JSON.parse(
-    raw.keys?.manifest?.contentString ?? "{}",
-  ) as { directories?: unknown[] };
-  const dirs = (inner.directories ?? []).map(String);
-  return dirs.length ? dirs : [fallback];
+  const dirs = directoriesFromDirsManifest(dirsManifest);
+  const base = dirs.length ? dirs : [fallback];
+  return extras.length ? [...new Set([...base, ...extras])] : base;
 }
 
 async function fetchBytes(
@@ -73,6 +90,8 @@ export type DumpCdnManifestOpts = {
   out?: string;
   outDir?: string;
   dirsManifest?: string;
+  /** Probed / extra epochs merged into the bucket list (dated Live drops). */
+  extraBuckets?: readonly string[];
   skipExisting?: boolean;
   timeoutMs?: number;
 };
@@ -97,6 +116,7 @@ export async function dumpCdnManifests(
     opts.buckets,
     opts.bucket ?? "10101_0000",
     opts.dirsManifest,
+    opts.extraBuckets,
   );
   const locales = opts.locales
     ? opts.locales

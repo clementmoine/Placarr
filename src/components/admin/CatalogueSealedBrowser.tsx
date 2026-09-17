@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
+import { CatalogueSealedDetailDialog } from "@/components/admin/CatalogueSealedDetailDialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
 import type { CatalogueSealedRow } from "@/lib/admin/catalogueProductsTypes";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
@@ -25,6 +28,7 @@ async function fetchPage(input: {
   pack: CataloguePackId;
   offset: number;
   q: string;
+  contentsUnknown: boolean;
 }): Promise<CatalogueProductsResponse> {
   const params = new URLSearchParams({
     pack: input.pack,
@@ -32,6 +36,7 @@ async function fetchPage(input: {
     limit: String(PAGE),
   });
   if (input.q.trim()) params.set("q", input.q.trim());
+  if (input.contentsUnknown) params.set("contentsUnknown", "1");
   const res = await fetch(`/api/admin/catalogue-products?${params}`);
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -40,9 +45,29 @@ async function fetchPage(input: {
   return (await res.json()) as CatalogueProductsResponse;
 }
 
+function contentsCaption(product: CatalogueSealedRow, fr: boolean): string | null {
+  if (product.contentsKnown) {
+    return fr
+      ? `${product.printCount} cartes connues`
+      : `${product.printCount} known cards`;
+  }
+  if (
+    product.containsPrintsIsPreview &&
+    product.declaredCardCount != null
+  ) {
+    return fr
+      ? `aperçu ${product.printCount}/${product.declaredCardCount} · contenu inconnu`
+      : `preview ${product.printCount}/${product.declaredCardCount} · unknown`;
+  }
+  if (product.kind === "display") {
+    return fr ? "index — pas de fiche · contenu inconnu" : "index — no fiche · unknown";
+  }
+  return fr ? "contenu inconnu" : "unknown contents";
+}
+
 /**
  * Grid of sealed SKUs (products-index), for Catalogue → Scellés.
- * Packshots are remote CDN URLs — same as Bandai SAMPLE faces.
+ * Click a tile for the contents checklist dialog.
  */
 export function CatalogueSealedBrowser({
   packId,
@@ -54,6 +79,8 @@ export function CatalogueSealedBrowser({
   const fr = locale === "fr";
   const [query, setQuery] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
+  const [contentsUnknownOnly, setContentsUnknownOnly] = useState(false);
+  const [selected, setSelected] = useState<CatalogueSealedRow | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(query), 250);
@@ -70,9 +97,20 @@ export function CatalogueSealedBrowser({
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ["catalogueProducts", packId, debouncedQ],
+    queryKey: [
+      "catalogueProducts",
+      "v2",
+      packId,
+      debouncedQ,
+      contentsUnknownOnly,
+    ],
     queryFn: ({ pageParam }) =>
-      fetchPage({ pack: packId, offset: pageParam, q: debouncedQ }),
+      fetchPage({
+        pack: packId,
+        offset: pageParam,
+        q: debouncedQ,
+        contentsUnknown: contentsUnknownOnly,
+      }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((n, page) => n + page.products.length, 0);
@@ -100,10 +138,25 @@ export function CatalogueSealedBrowser({
             className="h-8 pl-8 text-sm"
           />
         </div>
+        <div className="flex h-8 items-center gap-2">
+          <Checkbox
+            id="catalogue-contents-unknown"
+            checked={contentsUnknownOnly}
+            onCheckedChange={(checked) =>
+              setContentsUnknownOnly(checked === true)
+            }
+          />
+          <Label
+            htmlFor="catalogue-contents-unknown"
+            className="cursor-pointer text-xs font-normal text-muted-foreground"
+          >
+            {fr ? "Contenu inconnu" : "Unknown contents"}
+          </Label>
+        </div>
         <p className="text-xs text-muted-foreground tabular-nums">
           {fr
-            ? `${products.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} SKU`
-            : `${products.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} SKUs`}
+            ? `${products.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} SKU${contentsUnknownOnly ? " à renseigner" : ""}`
+            : `${products.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} SKUs${contentsUnknownOnly ? " to research" : ""}`}
         </p>
         {isFetching ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
@@ -135,9 +188,13 @@ export function CatalogueSealedBrowser({
         </div>
       ) : !isFetching && products.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {fr
-            ? "Aucun produit scellé dans l’index. Lance une sync — le graphe boutique devient products-index.json."
-            : "No sealed SKUs in the index. Run a sync — the shop graph becomes products-index.json."}
+          {contentsUnknownOnly
+            ? fr
+              ? "Aucun SKU à contenu inconnu pour ce filtre."
+              : "No unknown-contents SKUs for this filter."
+            : fr
+              ? "Aucun produit scellé dans l’index. Lance une sync — le graphe boutique devient products-index.json."
+              : "No sealed SKUs in the index. Run a sync — the shop graph becomes products-index.json."}
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
@@ -145,67 +202,75 @@ export function CatalogueSealedBrowser({
             const langLabel = product.lang?.trim()
               ? printLanguageLabel(product.lang)
               : null;
+            const caption = contentsCaption(product, fr);
             return (
-            <figure key={product.productKey} className="flex flex-col gap-1">
-              <div className="relative aspect-square overflow-hidden rounded-md bg-muted/40">
-                {product.image ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={product.image}
-                    alt={product.label}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center px-1 text-center">
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      {fr ? "sans image" : "no art"}
+              <button
+                key={product.productKey}
+                type="button"
+                onClick={() => setSelected(product)}
+                className="flex flex-col gap-1 rounded-md text-left outline-none ring-offset-background transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div
+                  className={
+                    product.contentsKnown
+                      ? "relative aspect-square overflow-hidden rounded-md bg-muted/40"
+                      : "relative aspect-square overflow-hidden rounded-md bg-muted/40 ring-1 ring-amber-500/40"
+                  }
+                >
+                  {product.image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={product.image}
+                      alt={product.label}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center px-1 text-center">
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        {fr ? "sans image" : "no art"}
+                      </span>
+                    </div>
+                  )}
+                  {product.setLogo ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={product.setLogo}
+                      alt=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="pointer-events-none absolute left-1 top-1 max-h-6 max-w-[45%] object-contain drop-shadow-sm"
+                    />
+                  ) : null}
+                </div>
+                <span className="text-[11px] leading-snug text-muted-foreground">
+                  <span
+                    className="font-medium text-foreground/80"
+                    title={langLabel?.name}
+                  >
+                    {langLabel?.flag ? `${langLabel.flag} ` : ""}
+                    {sealedKindLabel(product.kind, fr ? "fr" : "en")}
+                  </span>
+                  {product.setCode ? (
+                    <span className="ml-1 tabular-nums">{product.setCode}</span>
+                  ) : null}
+                  <span className="block truncate">
+                    {product.name ?? product.slug}
+                  </span>
+                  {caption ? (
+                    <span
+                      className={
+                        product.contentsKnown
+                          ? "text-foreground/70"
+                          : "text-amber-700 dark:text-amber-400"
+                      }
+                    >
+                      {caption}
                     </span>
-                  </div>
-                )}
-                {product.setLogo ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={product.setLogo}
-                    alt=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    className="pointer-events-none absolute left-1 top-1 max-h-6 max-w-[45%] object-contain drop-shadow-sm"
-                  />
-                ) : null}
-              </div>
-              <figcaption className="text-[11px] leading-snug text-muted-foreground">
-                <span className="font-medium text-foreground/80" title={langLabel?.name}>
-                  {langLabel?.flag ? `${langLabel.flag} ` : ""}
-                  {sealedKindLabel(product.kind, fr ? "fr" : "en")}
+                  ) : null}
                 </span>
-                {product.setCode ? (
-                  <span className="ml-1 tabular-nums">{product.setCode}</span>
-                ) : null}
-                <span className="block truncate">
-                  {product.name ?? product.slug}
-                </span>
-                {product.contentsKnown ? (
-                  <span className="text-foreground/70">
-                    {fr
-                      ? `${product.printCount} cartes connues`
-                      : `${product.printCount} known cards`}
-                  </span>
-                ) : product.containsPrintsIsPreview &&
-                  product.declaredCardCount != null ? (
-                  <span className="text-foreground/70">
-                    {fr
-                      ? `aperçu ${product.printCount}/${product.declaredCardCount}`
-                      : `preview ${product.printCount}/${product.declaredCardCount}`}
-                  </span>
-                ) : product.kind === "display" ? (
-                  <span className="text-foreground/70">
-                    {fr ? "index — pas de fiche" : "index — no fiche"}
-                  </span>
-                ) : null}
-              </figcaption>
-            </figure>
+              </button>
             );
           })}
         </div>
@@ -227,6 +292,16 @@ export function CatalogueSealedBrowser({
           </Button>
         </div>
       ) : null}
+
+      <CatalogueSealedDetailDialog
+        packId={packId}
+        product={selected}
+        locale={locale}
+        open={selected != null}
+        onOpenChange={(next) => {
+          if (!next) setSelected(null);
+        }}
+      />
     </div>
   );
 }

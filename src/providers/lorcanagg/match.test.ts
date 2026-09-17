@@ -38,7 +38,7 @@ describe("dotggLookupFromPrintKey", () => {
     });
   });
 
-  it("routes promo groupings to Pn sets", () => {
+  it("routes promo groupings to market promo sets", () => {
     expect(dotggLookupFromPrintKey("lorcana:11-34-p3")).toEqual({
       setId: "P3",
       number: "34",
@@ -46,6 +46,22 @@ describe("dotggLookupFromPrintKey", () => {
     expect(dotggLookupFromPrintKey("lorcana:13-15-p4")).toEqual({
       setId: "P4",
       number: "15",
+    });
+    expect(dotggLookupFromPrintKey("lorcana:11-2-pd1")).toEqual({
+      setId: "PD1",
+      number: "2",
+    });
+    expect(dotggLookupFromPrintKey("lorcana:1-1-d23")).toEqual({
+      setId: "D23",
+      number: "1",
+    });
+    expect(dotggLookupFromPrintKey("lorcana:1-1-cc1")).toEqual({
+      setId: "CC1",
+      number: "1",
+    });
+    expect(dotggLookupFromPrintKey("lorcana:4-1-dis")).toEqual({
+      setId: "DIS",
+      number: "1",
     });
   });
 

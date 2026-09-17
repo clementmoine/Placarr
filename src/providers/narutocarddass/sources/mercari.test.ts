@@ -18,6 +18,7 @@ describe("mercari 忍-3 leads", () => {
       "忍-2（PS）",
       "忍-3（PS）",
       "忍-11（PS）",
+      "忍-332",
     ]);
     expect(mercariIngestFaces()[0]?.listing).toBe(
       "https://jp.mercari.com/item/m63902869042",
@@ -56,9 +57,22 @@ describe("mercari 忍-3 leads", () => {
     ]);
     expect(narutoDiskCardId("忍-1")).toBe("ni0001");
     expect(ps.every((row) => row.bandaiYear === 2003)).toBe(true);
-    // One listing, one photo each — the lot shows every card separately.
+    /*
+      One listing, one photo each — the lot shows every card separately.
+      Les photos vivent sur mercdn (plus de copie `curated` en git depuis le
+      2026-09 : la provenance est ce ledger + reconstructed-provenance.json).
+    */
     expect(new Set(ps.map((row) => row.listing)).size).toBe(1);
-    expect(new Set(ps.map((row) => row.curated)).size).toBe(4);
+    expect(new Set(ps.map((row) => row.url)).size).toBe(4);
+  });
+
+  it("ingests the 巻ノ十四 忍-332 orphan lead", () => {
+    const row = mercariIngestFaces().find(
+      (face) => face.printedRef === "忍-332",
+    );
+    expect(row).toMatchObject({ setCode: "maki14", lang: "ja" });
+    expect(row?.bandaiYear).toBe(2005);
+    expect(narutoDiskCardId("忍-332")).toBe("ni0332");
   });
 
   it("keeps one 忍-20 photo and says why the others lost", () => {

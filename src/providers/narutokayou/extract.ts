@@ -70,6 +70,9 @@ export async function runNarutoKayouPackPipeline(
     console.log(
       `── alertehit narutodex — ${ext.alertehit.images} image(s) hitmarket${ext.alertehit.changed ? ", index mis à jour" : ", inchangé"}`,
     );
+    console.log(
+      `── narutopia kayou — ${ext.narutopia.images} face(s) / ${ext.narutopia.pages} page(s)${ext.narutopia.changed ? ", index mis à jour" : ", inchangé"}`,
+    );
   }
   if (!skipNarutodb) {
     try {

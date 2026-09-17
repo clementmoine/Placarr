@@ -12,6 +12,7 @@ export type BackgroundJob = {
     | "metadataEnrich"
     | "priceRefresh"
     | "foilExtract"
+    | "apkStoreFetch"
     | "icollectCatalogSync"
     | "launchboxIndexSync"
     | "nointroIndexSync"

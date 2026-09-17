@@ -217,19 +217,18 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
 - **Conséquences** : barcode manga FR → Nautiljon ; titre série / consensus
   MAL → Jikan. Live Nautiljon exige Flare ; live Jikan dépend de la dispo MAL.
 
-## ADR-014 : Vague TCG — lignes locales vides (OPTCG / Digimon / YGO / MTG)
+## ADR-014 : Vague TCG — lignes locales vides (OPTCG / YGO / MTG)
 
 - **Date** : 2026-08-25
-- **Statut** : Accepté
+- **Statut** : Accepté (Digimon retiré 2026-09-16 — pas de collection Digimon)
 - **Contexte** : la standardisation TCG (`createLocalTcgLine` +
   `defineCatalogueOnlyPack` + `CATALOGUE_PACKS`) n'était testée que sur des
   lignes déjà peuplées (Naruto / DBS).
-- **Décision** : brancher quatre franchises (`onepiece`, `digimon`, `yugioh`,
-  `mtg`) comme catalogues locaux **vides mais câblés** — onglet Admin, CLI
-  bootstrap, effet catalogue-only, sans inventer de foil. Factory
-  `createEmptyLocalTcgProvider` pour le boilerplate. Moissons (apitcg,
-  digimoncard.io, YGOPRODeck, Scryfall) = étapes suivantes, pas un prérequis
-  pour ouvrir l'onglet.
+- **Décision** : brancher les franchises (`onepiece`, `yugioh`, `mtg`) comme
+  catalogues locaux **vides mais câblés** — onglet Admin, CLI bootstrap, effet
+  catalogue-only, sans inventer de foil. Factory `createEmptyLocalTcgProvider`
+  pour le boilerplate. Moissons (apitcg, YGOPRODeck, Scryfall) = étapes
+  suivantes, pas un prérequis pour ouvrir l'onglet.
 - **Conséquences** : un nouveau TCG n'attend plus d'avoir des cartes pour
   exister dans l'UI ; `pnpm <id>:sync` pose l'index vide + verso curé s'il y
   en a.

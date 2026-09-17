@@ -156,6 +156,16 @@ export function narutoSetLabel(
     if (lang === "it") return "Promo (fuori serie)";
     return "Promo (hors série)";
   }
+  if (code === "prerelease") {
+    if (lang === "en") return "Prerelease (manga)";
+    if (lang === "it") return "Prerelease (manga)";
+    return "Prerelease (manga)";
+  }
+  if (code === "prerelease") {
+    if (lang === "en") return "Prerelease (manga)";
+    if (lang === "it") return "Prerelease (manga)";
+    return "Prerelease (manga)";
+  }
   const entry = loadSets().sets?.[code];
   const cardIsEnCcg =
     Boolean(card) &&

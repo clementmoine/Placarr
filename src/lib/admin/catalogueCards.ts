@@ -60,12 +60,24 @@ export function catalogueDiskCard(
 ): string {
   // Carddass disk ids already embed the collector (`ni0001-ps`); don't double up.
   if (cataloguePackInfo(pack)?.narutoCollectorDisk) return entry.card;
-  // Same rule as the scrape writer. `entry.card` already embeds grouping
-  // (`1-c1`) after the Lorcana index export — appending again produced
-  // `1-c1-c1` URLs that 404'd valid JPEGs.
-  const disk = cardDiskIdFromPrintKey(printKey, "en");
-  if (disk) return disk.card;
-  return entry.card;
+  /*
+    Prefer the index folder when it already embeds more than parsePrintKey's
+    bare number. 疾風伝 stores `gaku0038` on disk / in `entry.card`, but the
+    printKey is `naruto:gaku-0038` → parse → `0038`, which 404s
+    (`…/ja/0038/` vs `…/ja/gaku0038/`). Lorcana `1-c1` matches parse and stays.
+  */
+  const fromEntry = entry.card?.trim();
+  const fromKey = cardDiskIdFromPrintKey(printKey, "en")?.card;
+  if (
+    fromEntry &&
+    fromKey &&
+    fromEntry !== fromKey &&
+    fromEntry.toLowerCase().endsWith(fromKey.toLowerCase())
+  ) {
+    return fromEntry;
+  }
+  if (fromKey) return fromKey;
+  return fromEntry ?? "";
 }
 
 function langSlotHasContent(files: CardsIndexLangFiles | undefined): boolean {
@@ -286,22 +298,34 @@ function localeSlots(
   preferLang: string | undefined,
   expand: boolean,
   catalogueLocales?: readonly string[],
+  opts: {
+    keepEmptyLangStub?: boolean;
+    inventEmptyLocales?: boolean;
+  } = {},
 ): Array<{ lang: string; files: CardsIndexLangFiles }> {
   const langs = Object.entries(entry.langs);
   if (langs.length === 0) {
     /*
       Declared `catalogueLocales` wins — 疾風伝 must not invent FR just because
-      the admin UI prefers French. Packs without a declaration still emit a
-      stub tile (promo / empty langs) so same-number fallback and missing-art
-      audits keep working.
+      the admin UI prefers French.
+
+      Same-number fallback (Naruto promo) still needs a stub tile. Identity-only
+      rows without a lang slot (Pokémon Live DE/IT/ES/ptbr stems, no face dump)
+      must not become preferLang « incomplets ».
     */
     if (catalogueLocales?.length) {
-      if (expand) {
+      if (expand && opts.inventEmptyLocales) {
         return catalogueLocales.map((lang) => ({ lang, files: {} }));
       }
-      return [{ lang: catalogueLocales[0]!, files: {} }];
+      if (opts.keepEmptyLangStub) {
+        return [{ lang: catalogueLocales[0]!, files: {} }];
+      }
+      return [];
     }
-    return [{ lang: preferLang ?? "fr", files: {} }];
+    if (opts.keepEmptyLangStub) {
+      return [{ lang: preferLang ?? "fr", files: {} }];
+    }
+    return [];
   }
   if (!expand) {
     const picked = pickLang(entry, preferLang);
@@ -311,10 +335,15 @@ function localeSlots(
     const byLang = new Map(
       langs.map(([lang, files]) => [lang, files ?? {}] as const),
     );
-    return catalogueLocales.map((lang) => ({
-      lang,
-      files: byLang.get(lang) ?? {},
-    }));
+    return catalogueLocales
+      .map((lang) => ({
+        lang,
+        files: byLang.get(lang) ?? {},
+      }))
+      .filter((slot) => {
+        if (opts.inventEmptyLocales) return true;
+        return Object.keys(slot.files).length > 0;
+      });
   }
   return langs
     .map(([lang, files]) => ({ lang, files: files ?? {} }))
@@ -377,6 +406,7 @@ export function buildCatalogueCardRows(
   const expandLocales =
     packInfo?.expandLocales === true || isNarutoUnifiedPack(pack);
   const catalogueLocales = packInfo?.catalogueLocales;
+  const inventEmptyLocales = packInfo?.catalogueExpandMissingLocales === true;
   const corpusPack = catalogueCorpusPack(pack);
   const bestFaceAcrossLocales =
     packInfo?.localeArt?.bestFaceAcrossLocales === true;
@@ -395,6 +425,7 @@ export function buildCatalogueCardRows(
         preferLang,
         true,
         catalogueLocales,
+        { keepEmptyLangStub: allowFallback, inventEmptyLocales },
       )) {
         const file = artFile(slot.files);
         if (!file) continue;
@@ -428,6 +459,7 @@ export function buildCatalogueCardRows(
       preferLang,
       expandLocales,
       catalogueLocales,
+      { keepEmptyLangStub: allowFallback, inventEmptyLocales },
     )) {
       const lang = slot.lang;
       if (isJpOnlyNarutoArtwork(entry.card) && lang.toLowerCase() !== "ja") {
@@ -449,11 +481,9 @@ export function buildCatalogueCardRows(
         bestFaceAcrossLocales,
       });
       const file = face.file;
-      const nameFiles =
-        slot.files.name?.trim() || !face.artLang
-          ? slot.files
-          : (entry.langs[face.artLang] ?? slot.files);
-      const names = catalogueNames(pack, printKey, entry, nameFiles);
+      // Names stay on the tile locale — borrowing a recto must not paste an EN
+      // title onto a FR shell (attested gap stays empty).
+      const names = catalogueNames(pack, printKey, entry, slot.files);
       const orient = orientationFromIndexSlot(entry, face.files);
       const landscapePrint = printIsLandscapeCard(entry);
       const artLocaleFrom =
@@ -815,7 +845,12 @@ export function matchesCataloguePreferredLang(
     return true;
   }
   // Neutral + expandLocales: one tile for the preferred lang (borrowed art OK).
-  if (opts.expandLocales) return row.lang.toLowerCase() === want;
+  if (opts.expandLocales) {
+    if (row.lang.toLowerCase() !== want) return false;
+    // Nameless empty invent shells (retail stub when promo holds the face).
+    if ((row.missingArt || row.versoOnly) && !row.name?.trim()) return false;
+    return true;
+  }
   // Neutral + pickLang: single tile already — keep even if lang ≠ UI language.
   return true;
 }
@@ -896,7 +931,7 @@ export function listCatalogueCards(
   input: ListCatalogueCardsInput,
 ): ListCatalogueCardsResult {
   const offset = Math.max(0, Math.floor(input.offset ?? 0));
-  const limit = Math.min(200, Math.max(1, Math.floor(input.limit ?? 48)));
+  const limit = Math.min(1000, Math.max(1, Math.floor(input.limit ?? 48)));
   let rows = rowsForPack(input.pack, input.preferLang);
   const availableLocales = catalogueAvailableLocales(input.pack, rows);
   const localeMode = input.locales ?? "preferred";

@@ -7,6 +7,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 
 import { upsertNarutoAppearances } from "../migrateCardLayout";
 import { narutoCardAbsDir } from "../narutoCardDisk";
@@ -215,23 +216,12 @@ async function downloadFace(url: string): Promise<Buffer | null> {
     candidates.push(url.replace("im_/", "id_/"));
   }
   for (const tryUrl of candidates) {
-    try {
-      const res = await httpGet<ArrayBuffer>(tryUrl, {
-        headers: {
-          "User-Agent": UA,
-          Accept: "image/jpeg,image/*,*/*;q=0.8",
-        },
-        responseType: "arraybuffer",
-        timeout: CARDGAMECLUB_IT_FACE_TIMEOUT_MS,
-        maxRedirects: 5,
-        validateStatus: (status) => status === 200,
-      });
-      const buf = Buffer.from(res.data as ArrayBuffer);
-      if (extFromMagic(buf) !== ".jpg") continue;
-      if (buf.byteLength >= MIN_FACE_BYTES) return buf;
-    } catch {
-      // try id_ fallback or next candidate
-    }
+    const buf = await downloadCardFaceBytes(tryUrl, {
+      minBytes: MIN_FACE_BYTES,
+      timeoutMs: CARDGAMECLUB_IT_FACE_TIMEOUT_MS,
+      maxRedirects: 5,
+    });
+    if (buf && extFromMagic(buf) === ".jpg") return buf;
   }
   return null;
 }

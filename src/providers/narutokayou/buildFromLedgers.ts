@@ -11,6 +11,8 @@ import {
   readCapsulecorpgearChecklist,
 } from "./kayouExternalCrawl";
 import { enrichChecklistWithAlertehitFaces } from "./alertehitNarutodexParse";
+import { enrichChecklistWithNarutopiaFaces } from "./narutopiaParse";
+import { readNarutopiaKayouImageIndex } from "./narutopiaCrawl";
 import type {
   KayouChecklist,
   KayouChecklistCard,
@@ -66,6 +68,8 @@ export function readKayouChecklist(): KayouChecklist {
       : primary;
   const alerte = readAlertehitImageIndex();
   if (alerte) merged = enrichChecklistWithAlertehitFaces(merged, alerte);
+  const narutopia = readNarutopiaKayouImageIndex();
+  if (narutopia) merged = enrichChecklistWithNarutopiaFaces(merged, narutopia);
   return enrichChecklistWithOfficialFaces(merged);
 }
 

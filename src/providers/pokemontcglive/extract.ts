@@ -45,7 +45,15 @@ import {
   resolveCdnTarget,
   writeSourcesReport,
 } from "@/providers/pokemontcglive/sources";
+import { fileURLToPath } from "node:url";
+
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
+import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
+
+const POKEMON_PRODUCTS_CONTENTS = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../tcgdex/curated/products-contents.json",
+);
 
 /**
  * Dump ``manifest_<locale>_<bucket>`` for every bucket × lang into
@@ -79,16 +87,35 @@ async function runManifestDump(
     shouldResumeCdnManifestDump,
     writeCdnManifestTargetMeta,
   } = await import("@/providers/pokemontcglive/cdnManifestTarget");
+  const { directoriesFromDirsManifest } = await import(
+    "@/providers/pokemontcglive/dumpCdnManifest"
+  );
+  const { probeLiveContentDirs } = await import(
+    "@/providers/pokemontcglive/cdnEpochProbe"
+  );
+  const knownDirs = directoriesFromDirsManifest(dirsManifest);
+  const probed = await probeLiveContentDirs({
+    contentBase: opts.contentBase,
+    knownDirs,
+  });
+  if (probed.probedOk.length) {
+    console.log(
+      `  CDN epoch probe: +${probed.probedOk.length} dated bucket(s) ` +
+        `(${probed.probedOk.slice(0, 6).join(", ")}${probed.probedOk.length > 6 ? "…" : ""})`,
+    );
+  }
+  const buckets = probed.dirs;
   const targetOpts = {
     outDir,
     version: opts.version,
     contentDir: opts.contentDir,
     contentBase: opts.contentBase,
     langs: opts.langs,
+    buckets,
   };
   if (!opts.force && shouldReuseCdnManifestDump(targetOpts)) {
     console.log(
-      `  AssetManifests reuse (CDN target unchanged: ver=${opts.version} dir=${opts.contentDir})`,
+      `  AssetManifests reuse (CDN target unchanged: ver=${opts.version} dir=${opts.contentDir} buckets=${buckets.length})`,
     );
     return 0;
   }
@@ -104,6 +131,7 @@ async function runManifestDump(
     contentDir: opts.contentDir,
     contentBase: opts.contentBase,
     langs: opts.langs,
+    buckets,
     complete: false,
   });
   const { dumpCdnManifests } = await import(
@@ -113,6 +141,7 @@ async function runManifestDump(
     contentBase: opts.contentBase,
     buckets: "all",
     dirsManifest,
+    extraBuckets: probed.probedOk,
     locales: opts.langs.join(","),
     outDir,
     skipExisting: resume,
@@ -124,6 +153,7 @@ async function runManifestDump(
       contentDir: opts.contentDir,
       contentBase: opts.contentBase,
       langs: opts.langs,
+      buckets,
       complete: true,
     });
     return 0;
@@ -134,6 +164,7 @@ async function runManifestDump(
     contentDir: opts.contentDir,
     contentBase: opts.contentBase,
     langs: opts.langs,
+    buckets,
     complete: false,
   });
   return result.written > 0 || resume ? 0 : 2;
@@ -213,6 +244,7 @@ export async function runUpdate(
   throwIfAborted();
   if (opts.skipProducts === false) {
     console.log("── products pkmcards.fr (papier scellé, famille TCG Cards)");
+    installProviderProductsContents("pokemon", POKEMON_PRODUCTS_CONTENTS);
     const products = await scrapeTcgCardsProducts("pkmcards", {
       onProgress: (message) => console.log(`   products — ${message}`),
     });
@@ -381,6 +413,26 @@ export async function runUpdate(
       `── catalogue CDN: ${catalogue.names.length} bundles` +
         ` sur ${catalogue.buckets.length} buckets × ${catalogue.locales.length} langues`,
     );
+    if (catalogue.buckets.length) {
+      console.log(`  buckets: ${catalogue.buckets.join(", ")}`);
+    }
+    const freshSets = new Set<string>();
+    for (const name of catalogue.names) {
+      const m = /^([a-z0-9.-]+)_[a-z]{2}_\d+$/i.exec(name);
+      if (m) freshSets.add(m[1]!.toLowerCase());
+    }
+    const inventorySets = new Set<string>();
+    for (const stem of inventory.stems) {
+      const m = /^([a-z0-9.-]+)_[a-z]{2}_\d+$/i.exec(stem);
+      if (m) inventorySets.add(m[1]!.toLowerCase());
+    }
+    const newSets = [...freshSets].filter((s) => !inventorySets.has(s)).sort();
+    if (newSets.length) {
+      console.log(
+        `  CDN sets absents de l'inventaire APK/Malie: ${newSets.length}` +
+          ` (${newSets.slice(0, 12).join(", ")}${newSets.length > 12 ? "…" : ""})`,
+      );
+    }
     if (!catalogue.names.length) {
       console.warn(
         "  aucun dump de manifeste sous staging/cdn-manifests —" +

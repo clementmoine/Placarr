@@ -17,7 +17,7 @@ import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrint
  * partage sa numérotation et reste dans l'autre pack. Les deux disent
  * « Shippuden » et n'ont pas une carte en commun.
  *
- * Japonais seul : 309 titres sur ces familles, tous en `ja`.
+ * Japonais : 425 titres sur ces familles (maku1–6 + gaku), tous en `ja`.
  *
  * **Ce n'est pas le jeu entier.** Ses produits scellés attestent huit actes ;
  * les listes officielles moissonnées s'arrêtent au 第四幕. La moitié des cartes
@@ -237,12 +237,12 @@ export function searchNarutoShippudenRows(
     .prepare(
       `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
               p.card_type AS cardType, p.grouping,
-              t.lang, t.full_name AS fullName, t.rarity,
+              COALESCE(t.lang, a.lang, 'ja') AS lang, t.full_name AS fullName, t.rarity,
               a.art, a.thumb
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN print_assets a
-                ON a.print_key = p.print_key AND a.lang = t.lang
+                ON a.print_key = p.print_key AND (a.lang = t.lang OR t.lang IS NULL)
         WHERE ${scope.where}
         ORDER BY (t.lang = ?) DESC, p.card_type, CAST(p.number AS INTEGER)
         LIMIT ?`,
@@ -267,12 +267,12 @@ export function exportNarutoShippudenCardsIndex(): {
   const rows = db
     .prepare(
       `SELECT p.print_key AS printKey, p.card_type AS cardType, p.number,
-              t.lang, t.full_name AS fullName, t.rarity,
+              COALESCE(t.lang, a.lang, 'ja') AS lang, t.full_name AS fullName, t.rarity,
               a.art, a.thumb
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN print_assets a
-                ON a.print_key = p.print_key AND a.lang = t.lang`,
+                ON a.print_key = p.print_key AND (a.lang = t.lang OR t.lang IS NULL)`,
     )
     .all() as {
     printKey: string;

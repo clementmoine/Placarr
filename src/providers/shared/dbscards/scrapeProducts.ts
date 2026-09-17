@@ -4,10 +4,10 @@
  *
  * Sequential — this host banned us for an evening when a pass went parallel
  * (same rule as `scrapeList`). Skip HTML already on disk unless `force`.
- * Accessories are never requested. Displays are listed, not opened.
- * Boosters are opened for the 15-tile preview the site already labels as
- * such — date, série, prix, and those tiles. The Bandai series is not
- * the pack; `completePrints` leaves that preview alone.
+ * Accessories are never requested. Displays are opened for prix / métadonnées
+ * (pas de grille cartes utile). Boosters are opened for the 15-tile preview
+ * the site already labels as such — date, série, prix, and those tiles. The
+ * Bandai series is not the pack; `completePrints` leaves that preview alone.
  *
  * One software family, many hosts: pack + site come from `sites.ts`.
  *
@@ -119,13 +119,13 @@ function writeReadme(dir: string, packId: string): void {
 Écrit par le **Sync admin** du pack (famille TCG Cards : dbscards, lorcards,
 pkmcards, opecards, …). **Pas un grab manuel.**
 
-- \`listings.json\` — SKU (displays en index seul ; pages \`/2\`, \`/3\`…).
-- \`products.json\` — fiches ouvertes + \`containsPrints\`.
+- \`listings.json\` — SKU (pages \`/2\`, \`/3\`…).
+- \`products.json\` — fiches ouvertes + \`containsPrints\` (+ prix displays).
 - HTML sous \`listings/\` et \`pages/\` — reprise sans re-télécharger.
 
 La grille fiche est un aperçu (15 tuiles), y compris sur un booster —
 le site le dit. Accessoires exclus. Pas de packshot CDN. Displays =
-index seul.
+fiche pour prix / métadonnées.
 `,
     "utf8",
   );
@@ -323,7 +323,7 @@ export async function scrapeDbscardsProducts(opts: {
     catalogCompleted,
     note:
       "Graphe produit→cartes (famille TCG Cards). Grille fiche = aperçu " +
-      "15 tuiles. Boosters = fiche + aperçu ; displays = index seul. " +
+      "15 tuiles. Boosters = fiche + aperçu ; displays = fiche (prix). " +
       (catalog
         ? "Decks / coffrets exclusifs complétés depuis catalog.sqlite. "
         : "Catalogue cartes non joint. ") +

@@ -88,6 +88,7 @@ prisma/*.sql.dump
 
 # Scripts et données de debug locaux
 /scratch/
+/tmp-ocr-run/
 scripts/lorcana/.venv/
 scripts/pokemon/.venv/
 scripts/lorcana/bin/

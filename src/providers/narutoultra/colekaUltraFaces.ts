@@ -18,7 +18,7 @@ import { DatabaseSync } from "node:sqlite";
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packCatalogDb, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
-import { fetchColekaListingHtml } from "@/providers/narutocarddass/sources/colekaListingFetch";
+import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 
 import { NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "./pack";
 import { NARUTO_ULTRA_SET_CODE, ultraChallengePrintKey } from "./printKey";

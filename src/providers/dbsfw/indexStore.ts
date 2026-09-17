@@ -13,7 +13,10 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
-import { finalizeSetOptions } from "@/providers/shared/cardCatalogue/sets";
+import {
+  finalizeSetOptions,
+  pickCatalogueSetNameByCount,
+} from "@/providers/shared/cardCatalogue/sets";
 import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
 
 import { dataRoot } from "@/lib/runtimeData";
@@ -370,17 +373,35 @@ export function loadDbsFwIndex(): {
 export function listDbsFwPrintSets(): { id: string; label: string }[] {
   const db = ensureDbsFwIndex();
   if (!db) return [];
+  /*
+    Même logique que Masters : ne pas laisser un `set_name` décoratif (`-`)
+    gagner un `MIN` lexicographique face au vrai libellé.
+  */
   const rows = db
     .prepare(
       `SELECT p.set_code AS setCode,
-              MIN(NULLIF(TRIM(t.set_name), '')) AS setName
+              NULLIF(TRIM(t.set_name), '') AS setName,
+              COUNT(*) AS n
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
-        GROUP BY p.set_code`,
+        GROUP BY p.set_code, NULLIF(TRIM(t.set_name), '')`,
     )
-    .all() as { setCode: string; setName: string | null }[];
-  // Nettoyage, homonymes et tri : communs à tous les catalogues.
+    .all() as { setCode: string; setName: string | null; n: number }[];
+
+  const namesBySet = new Map<
+    string,
+    { name?: string | null; count: number }[]
+  >();
+  for (const row of rows) {
+    const list = namesBySet.get(row.setCode) ?? [];
+    list.push({ name: row.setName, count: row.n });
+    namesBySet.set(row.setCode, list);
+  }
+
   return finalizeSetOptions(
-    rows.map((row) => ({ id: row.setCode, label: row.setName })),
+    [...namesBySet].map(([id, names]) => ({
+      id,
+      label: pickCatalogueSetNameByCount(names),
+    })),
   );
 }

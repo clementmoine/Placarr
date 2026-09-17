@@ -4,6 +4,7 @@
  *
  * Keys are Live-style bundle stems (`me5_fr_045`). Names come from
  * `catalog.sqlite` (`live_cards`) via shared `attachTitlesToCardsIndex`, then
+ * a soft TCGdex `prints.sqlite` pass for McDo / Black Star gaps, then
  * sibling-locale fill for any remaining empty slots.
  */
 import {
@@ -25,6 +26,10 @@ import {
   type ResolvedIndexTitle,
 } from "@/providers/shared/cardCatalogue/attachIndexTitles";
 import { resolvePokemonArtFilename } from "@/providers/tcgdex/faceChoice";
+import {
+  loadTcgdexNameLookup,
+  resolveTcgdexIndexName,
+} from "@/providers/tcgdex/lookupTitle";
 
 const BUNDLE_RE = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})(?:_[a-z]+)?$/i;
 
@@ -152,6 +157,26 @@ export function loadPokemonLiveNameLookup(dbPath: string): LiveNameLookup {
         list.push(normalized);
         bySetNum.set(key, list);
       }
+      /*
+        Alt / BSP stems keep the catalogue folder set in `bundle_stem`
+        (`svalt_de_001`) while `live_set` points at the base print (`sv1`).
+        Index both so EN/FR tiles of `svalt_001` find the DE identity row.
+      */
+      const stemMatch = BUNDLE_RE.exec(stem);
+      if (stemMatch) {
+        const stemSet = stemMatch[1]!.toLowerCase();
+        const stemNum = Number.parseInt(stemMatch[3]!, 10);
+        if (
+          stemSet &&
+          Number.isFinite(stemNum) &&
+          (stemSet !== liveSet || stemNum !== num)
+        ) {
+          const key = setNumKey(stemSet, stemNum);
+          const list = bySetNum.get(key) ?? [];
+          list.push(normalized);
+          bySetNum.set(key, list);
+        }
+      }
     }
   } finally {
     db.close();
@@ -167,8 +192,8 @@ function titleForLang(row: LiveNameRow, wantLang: string): string | null {
 
 /**
  * Resolve a catalogue tile title for `stem` (`set_lang_num`).
- * Prefer the live row for that exact stem; else same set+num (locale title,
- * then English as a showable fallback).
+ * Prefer the live row for that exact stem; else same catalogue set+num
+ * (including alt folders whose `live_set` is the base print), then English.
  */
 export function resolvePokemonIndexName(
   stem: string,
@@ -247,6 +272,9 @@ export function rebuildPokemonCardsIndex(opts?: {
   const catalogDb = opts?.root
     ? path.join(root, "data", "pokemon", "catalog.sqlite")
     : path.join(dataRoot(), "pokemon", "catalog.sqlite");
+  const printsDb = opts?.root
+    ? path.join(root, "data", "pokemon", "prints.sqlite")
+    : path.join(dataRoot(), "pokemon", "prints.sqlite");
 
   const index: CardsIndexV1 = {
     version: 1,
@@ -289,6 +317,10 @@ export function rebuildPokemonCardsIndex(opts?: {
   const names = loadPokemonLiveNameLookup(catalogDb);
   attachTitlesToCardsIndex(index, (printKey) =>
     resolvePokemonIndexName(printKey, names),
+  );
+  const tcgdexNames = loadTcgdexNameLookup(printsDb);
+  attachTitlesToCardsIndex(index, (printKey) =>
+    resolveTcgdexIndexName(printKey, tcgdexNames),
   );
   attachSiblingTitlesToCardsIndex(index);
 

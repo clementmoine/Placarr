@@ -13,6 +13,18 @@ import {
   harvestOfficialMythosFaces,
   installOfficialMythosFaces,
 } from "./officialFaces";
+import {
+  harvestMythosScanflip,
+  installMythosScanflipFaces,
+} from "./scanflipFaces";
+import {
+  harvestMythosNarutopia,
+  installMythosNarutopiaFaces,
+} from "./narutopiaFaces";
+import {
+  harvestMythosNarutomythosSite,
+  installMythosNarutomythosSiteFaces,
+} from "./siteFaces";
 import { ingestMythosSealedProducts } from "./sealedProducts";
 import { NARUTO_MYTHOS_PACK_ID, narutoMythosCuratedDir } from "./pack";
 
@@ -24,6 +36,9 @@ export async function runNarutoMythosPackPipeline(
   const skipGg = argv.includes("--skip-gg");
   const skipOfficial = argv.includes("--skip-official");
   const skipLorenzone = argv.includes("--skip-lorenzone");
+  const skipScanflip = argv.includes("--skip-scanflip");
+  const skipNarutopia = argv.includes("--skip-narutopia");
+  const skipNarutomythosSite = argv.includes("--skip-narutomythos-site");
   if (!skipGg) {
     try {
       const gg = await harvestGgArchiveCards({
@@ -60,10 +75,46 @@ export async function runNarutoMythosPackPipeline(
       `── LorenZone faces — ${harvested.ok} WebP, ${harvested.skip} déjà là, ${harvested.fail} manqué${harvested.fail === 1 ? "" : "s"}`,
     );
   }
+  if (!skipNarutopia) {
+    try {
+      const nt = await harvestMythosNarutopia();
+      console.log(`── Narutopia mythos S1 — ${nt.cards} carte(s) → ${nt.path}`);
+    } catch (err) {
+      console.warn(
+        `── Narutopia mythos S1 — échec : ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
+  if (!skipScanflip) {
+    try {
+      const sf = await harvestMythosScanflip();
+      console.log(`── ScanFlip mythos — ${sf.cards} carte(s) → ${sf.path}`);
+    } catch (err) {
+      console.warn(
+        `── ScanFlip mythos — échec : ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
+  if (!skipNarutomythosSite) {
+    try {
+      const nm = await harvestMythosNarutomythosSite();
+      console.log(
+        `── narutomythos.com cards — ${nm.cards} carte(s) → ${nm.path}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── narutomythos.com cards — échec : ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
   return runLocalTcgPipeline({
     packId: NARUTO_MYTHOS_PACK_ID,
     curatedDir: narutoMythosCuratedDir(),
     label: "Naruto Mythos",
+    writeLocaleSpecificFacesFromIndex: {
+      catalogueLocales: ["fr", "en"],
+      note: "Mythos FR/EN portent le texte localisé — ne pas emprunter le recto cross-langue.",
+    },
     seed: async (index) => {
       const built = buildMythosFromLedgers({ index });
       if (built.skipped.length) {
@@ -81,6 +132,24 @@ export async function runNarutoMythosPackPipeline(
         const faces = await installMythosFaces(index);
         console.log(
           `── Faces — LorenZone ${faces.faces}${faces.missing.length ? `, manquant(s) ${faces.missing.length}` : ""}`,
+        );
+      }
+      if (!skipFaces && !skipNarutopia) {
+        const faces = await installMythosNarutopiaFaces(index, { force });
+        console.log(
+          `── Faces — Narutopia ${faces.faces} (match ${faces.matched}, skip ${faces.skipped})`,
+        );
+      }
+      if (!skipFaces && !skipScanflip) {
+        const faces = await installMythosScanflipFaces(index, { force });
+        console.log(
+          `── Faces — ScanFlip ${faces.faces} (match ${faces.matched}, mint ${faces.minted}, skip ${faces.skipped})`,
+        );
+      }
+      if (!skipFaces && !skipNarutomythosSite) {
+        const faces = await installMythosNarutomythosSiteFaces(index, { force });
+        console.log(
+          `── Faces — narutomythos.com ${faces.faces} (match ${faces.matched}, skip ${faces.skipped})`,
         );
       }
       return { prints: built.prints, titles: built.titles };

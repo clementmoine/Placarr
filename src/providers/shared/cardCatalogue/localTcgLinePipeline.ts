@@ -24,6 +24,16 @@ export async function runLocalTcgPipeline(input: {
   seedProducts?: () =>
     | { written: number; skipped: number }
     | Promise<{ written: number; skipped: number }>;
+  /** Limit curated set backs when several packs share one curated tree. */
+  curatedIncludeSetCodes?: readonly string[];
+  /**
+   * After export, write `locale-specific-faces.json` for prints that already
+   * have art in ≥2 of these locales (stops cross-lang recto borrowing).
+   */
+  writeLocaleSpecificFacesFromIndex?: {
+    catalogueLocales: readonly string[];
+    note?: string;
+  };
 }): Promise<{ cards: number; products: number }> {
   const index = createLocalPrintsIndex(input.packId);
   if (input.seed) {
@@ -39,6 +49,33 @@ export async function runLocalTcgPipeline(input: {
     `── ${input.label} — ${written.cards} carte${written.cards === 1 ? "" : "s"} → ${written.path}`,
   );
 
+  if (input.writeLocaleSpecificFacesFromIndex) {
+    const { readFileSync } = await import("node:fs");
+    const { isCardsIndexV1 } = await import("@/effects/cardsIndex");
+    const {
+      buildLocaleSpecificFacesFromIndex,
+      writeLocaleSpecificFaces,
+    } = await import("@/lib/admin/localeSpecificFaces");
+    try {
+      const raw = JSON.parse(readFileSync(written.path, "utf8")) as unknown;
+      if (isCardsIndexV1(raw)) {
+        const doc = buildLocaleSpecificFacesFromIndex(
+          raw,
+          input.writeLocaleSpecificFacesFromIndex.catalogueLocales,
+          input.writeLocaleSpecificFacesFromIndex.note,
+        );
+        const out = writeLocaleSpecificFaces(input.packId, doc);
+        console.log(
+          `── ${input.label} — ${out.faces} recto(s) language-specific → ${out.path}`,
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `── ${input.label} — locale-specific-faces : ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
+
   const dims = await enrichCardsIndexArtDimensions(input.packId);
   if (dims.probed) {
     console.log(
@@ -53,6 +90,9 @@ export async function runLocalTcgPipeline(input: {
   await ensureCuratedPackAssets({
     packId: input.packId,
     curatedDir: input.curatedDir,
+    options: input.curatedIncludeSetCodes
+      ? { includeSetCodes: input.curatedIncludeSetCodes }
+      : undefined,
   });
 
   let products = 0;

@@ -47,7 +47,7 @@ export type LocalTcgLineSpec = {
   effectPackId: string;
   printGame: string;
   notes: string;
-  defaultLanguage: "fr" | "en" | "unknown";
+  defaultLanguage: "fr" | "en" | "ja" | "unknown";
   /** Ce que dit le health-check si la base n'est pas encore là. */
   syncHint: string;
   websiteUrl?: string;

@@ -11,8 +11,9 @@
  * sealed SKUs only. Pokémon also harvests pkmcards.fr `/cards` faces into
  * `art.pkmcards.*` (all tiles that map to a Live stem — not gap-only).
  *
- * Accessories are classified here and never requested. Displays are listed,
- * not opened. Boosters are opened for the labelled 15-tile preview.
+ * Accessories are classified here and never requested. Displays are opened
+ * for shop price + metadata (JSON-LD). Boosters are opened for the labelled
+ * 15-tile preview.
  */
 
 export type TcgCardsCategoryRole = "preview" | "detail" | "index" | "skip";
@@ -43,7 +44,7 @@ export const TCGCARDS_CATEGORY_ROLES: Readonly<
   tins: "detail",
   "prerelease-packs": "detail",
   puzzles: "detail",
-  displays: "index",
+  displays: "detail",
   accessories: "skip",
   binders: "skip",
   "binders-pages": "skip",

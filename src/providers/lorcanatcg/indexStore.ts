@@ -14,9 +14,13 @@ import { DatabaseSync } from "node:sqlite";
 import {
   finalizeSetOptions,
   isAnsweredQuery,
-  setScopedWhere,
   type SqlBindValue,
 } from "@/providers/shared/cardCatalogue/sets";
+import {
+  isLorcanaMainCatalogueSetCode,
+  lorcanaPromoChecklistSeries,
+  lorcanaSetScopeWhere,
+} from "./promoSeries";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { parsePrintKey } from "@/core/identify/printKey";
@@ -815,8 +819,7 @@ export function searchLorcanaTcgRows(
   const like = `%${trimmed}%`;
 
   const collector = collectorQueryClause(trimmed);
-  const scope = setScopedWhere({
-    setColumn: "p.set_code",
+  const scope = lorcanaSetScopeWhere({
     setId,
     textClause: trimmed
       ? `LOWER(t.full_name) LIKE ?
@@ -876,10 +879,19 @@ export function lorcanaSetSortKey(setCode: string): number | null {
  * langues rendait le premier par ordre alphabétique — donc « Archazia's Island »
  * à un utilisateur français, alors que la base tient « L'Isola di Archazia » et
  * « Contrées Inconnues » juste à côté.
+ *
+ * Chaque set porte aussi les **langues où des titres existent**. Les fills
+ * Lorcast (P2 / Coconut / C2…) n'ont souvent que l'`en` : sans ce champ, la
+ * check-list FR les rangeait en « Sans catalogue » — catalogue incomplet dans
+ * cette langue, pas une collection à 0 %.
+ *
+ * Les promos (grouping + fills Lorcast) sont **repliées** en séries
+ * `P1 — Promo Year 1`, `P2 — Promo Year 2`, … : la check-list ne les compte
+ * plus dans le chapitre retail.
  */
 export function listLorcanaTcgSets(
   language = "fr",
-): { id: string; label: string; sortKey?: number }[] {
+): { id: string; label: string; sortKey?: number; languages?: string[] }[] {
   const db = ensureLorcanaTcgIndex();
   if (!db) return [];
   const lang = language.trim().toLowerCase();
@@ -889,18 +901,76 @@ export function listLorcanaTcgSets(
               COALESCE(
                 MIN(CASE WHEN t.lang = ? THEN NULLIF(TRIM(t.set_name), '') END),
                 MIN(NULLIF(TRIM(t.set_name), ''))
-              ) AS setName
+              ) AS setName,
+              GROUP_CONCAT(DISTINCT LOWER(TRIM(t.lang))) AS langs
          FROM prints p
-         LEFT JOIN print_titles t ON t.print_key = p.print_key
+         JOIN print_titles t ON t.print_key = p.print_key
         WHERE p.set_code IS NOT NULL AND TRIM(p.set_code) <> ''
+          AND t.lang IS NOT NULL AND TRIM(t.lang) <> ''
+          AND NULLIF(TRIM(p.promo_grouping), '') IS NULL
         GROUP BY p.set_code`,
     )
-    .all(lang) as { setCode: string; setName: string | null }[];
-  return finalizeSetOptions(
-    rows.map((row) => ({
+    .all(lang) as {
+      setCode: string;
+      setName: string | null;
+      langs: string | null;
+    }[];
+
+  const promoRows = db
+    .prepare(
+      `SELECT UPPER(TRIM(p.promo_grouping)) AS grouping,
+              GROUP_CONCAT(DISTINCT LOWER(TRIM(t.lang))) AS langs
+         FROM prints p
+         JOIN print_titles t ON t.print_key = p.print_key
+        WHERE NULLIF(TRIM(p.promo_grouping), '') IS NOT NULL
+          AND t.lang IS NOT NULL AND TRIM(t.lang) <> ''
+        GROUP BY UPPER(TRIM(p.promo_grouping))`,
+    )
+    .all() as { grouping: string; langs: string | null }[];
+
+  const options: {
+    id: string;
+    code?: string;
+    label: string | null;
+    sortKey: number | null;
+    languages?: string[];
+  }[] = [];
+
+  for (const row of rows) {
+    if (!isLorcanaMainCatalogueSetCode(row.setCode)) continue;
+    const languages = (row.langs ?? "")
+      .split(",")
+      .map((code) => code.trim().toLowerCase())
+      .filter(Boolean);
+    options.push({
       id: row.setCode,
       label: row.setName,
       sortKey: lorcanaSetSortKey(row.setCode),
-    })),
-  );
+      ...(languages.length ? { languages } : {}),
+    });
+  }
+
+  const seenPromo = new Set<string>();
+  for (const row of promoRows) {
+    const series = lorcanaPromoChecklistSeries(row.grouping);
+    if (!series || seenPromo.has(series.id)) continue;
+    seenPromo.add(series.id);
+    const languages = (row.langs ?? "")
+      .split(",")
+      .map((code) => code.trim().toLowerCase())
+      .filter(Boolean);
+    /*
+      Plusieurs groupings peuvent théoriquement fusionner ; on unionne les
+      langues si on revisite le même id (défense).
+    */
+    options.push({
+      id: series.id,
+      code: series.code,
+      label: series.label,
+      sortKey: series.sortKey,
+      ...(languages.length ? { languages } : {}),
+    });
+  }
+
+  return finalizeSetOptions(options);
 }

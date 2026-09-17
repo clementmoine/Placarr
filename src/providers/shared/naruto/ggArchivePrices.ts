@@ -13,7 +13,7 @@ import { packStagingDir } from "@/lib/packPaths";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 
 import { GG_STAGING_FOLDER } from "./ggArchiveHarvest";
-import type { GgArchiveLine } from "@/providers/narutocarddass/parse/parseNarutoCardGameGg";
+import type { GgArchiveLine } from "./parseNarutoCardGameGg";
 
 export const GG_ARCHIVE_PRICE_SOURCE = "narutocardgame.gg";
 

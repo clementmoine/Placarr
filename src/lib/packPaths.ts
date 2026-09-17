@@ -8,7 +8,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-import { dataRoot, foilDataRoot, foilPackDir } from "./runtimeData";
+import { dataRoot, foilDataRoot } from "./runtimeData";
 import { assetsPackFileUrl } from "./packAssetUrls";
 
 export {
@@ -58,8 +58,27 @@ const PACK_DISK_ALIASES: Readonly<Record<string, string>> = {
   "naruto/en-ccg": "naruto/carddass",
 };
 
+/**
+ * Pack ids are relative under `data/` (`naruto/data-carddass`).
+ *
+ * Callers sometimes pass `path.join(dataRoot(), packId)` by mistake. On POSIX,
+ * `path.join(dataRoot(), absolutePackDir)` does **not** reset — it nests as
+ * `data/Users/…/data/<pack>/…`. Unwrap absolute paths that already sit under
+ * the data root so we never create that tree again.
+ */
 export function canonicalDataPack(pack: string): string {
-  return PACK_DISK_ALIASES[pack] ?? pack;
+  let id = pack.trim();
+  if (path.isAbsolute(id)) {
+    const root = dataRoot();
+    const rel = path.relative(root, path.resolve(id));
+    if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) {
+      throw new Error(
+        `pack id must be relative under data/ (e.g. "naruto/data-carddass"), got: ${pack}`,
+      );
+    }
+    id = rel.split(path.sep).join("/");
+  }
+  return PACK_DISK_ALIASES[id] ?? id;
 }
 
 export function packDataDir(pack: string): string {
@@ -72,7 +91,9 @@ export function packCardsDir(pack: string): string {
 }
 
 /** Render kit — `data/<pack>/foil` (shaders, FX textures, web). */
-export { foilPackDir };
+export function foilPackDir(pack: string): string {
+  return path.join(foilDataRoot(), canonicalDataPack(pack), "foil");
+}
 
 export function packStagingDir(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "staging");
@@ -293,15 +314,15 @@ export function packSharedMotifsPath(pack: string): string {
 
 /** Client-safe Live foil_mask overrides (beside catalog). */
 export function packLiveFoilMasksPath(pack: string): string {
-  return path.join(dataRoot(), pack, "liveFoilMasks.json");
+  return path.join(dataRoot(), canonicalDataPack(pack), "liveFoilMasks.json");
 }
 
 export function packLiveOwnedPath(pack: string): string {
-  return path.join(dataRoot(), pack, "liveOwned.json");
+  return path.join(dataRoot(), canonicalDataPack(pack), "liveOwned.json");
 }
 
 export function packReprintMetaPath(pack: string): string {
-  return path.join(dataRoot(), pack, "reprintMeta.json");
+  return path.join(dataRoot(), canonicalDataPack(pack), "reprintMeta.json");
 }
 
 export function packShadersDir(pack: string): string {

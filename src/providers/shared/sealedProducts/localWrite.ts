@@ -7,11 +7,11 @@
  * Wrapper, display, album : des **produits**. Une face de carte ne s'y
  * pose pas.
  */
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
-import { packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import { packSealedProductsDir } from "@/lib/packPaths";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
 
 import {
@@ -26,6 +26,7 @@ import {
   type SealedKind,
 } from "./kinds";
 import { resolveContentLayers } from "./contentLayers";
+import { persistSealedProductsIndex } from "./persistProductsIndex";
 
 export type LocalSealedWrite = {
   slug: string;
@@ -192,9 +193,7 @@ export function writeLocalSealedProducts(input: {
     index.products[sealedProductKey(input.packId, spec.slug)] = entry;
   }
 
-  const file = packProductsIndexPath(input.packId);
-  mkdirSync(path.dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+  const { file } = persistSealedProductsIndex(input.packId, index.products);
   return {
     pack: input.packId,
     written: Object.keys(index.products).length,

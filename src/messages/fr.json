@@ -472,7 +472,8 @@
       "catalogueAll": "Tous les catalogues",
       "catalogueLabel": "Catalogue",
       "setAll": "Toutes les extensions",
-      "setLabel": "Extension"
+      "setLabel": "Extension",
+      "loadingMore": "Chargement…"
     },
     "checklistTitle": "Check-list",
     "checklistSubtitle": "Ce qui existe, ce que vous avez, et ce qu'il reste à trouver.",
@@ -485,6 +486,8 @@
     "checklistExportMarkdown": "Markdown",
     "checklistLanguage": "Langue",
     "checklistShowOwned": "Afficher les cartes déjà en liste",
+    "checklistSearch": "Rechercher une carte ou une extension…",
+    "checklistSearchNoResults": "Aucune carte ne correspond à cette recherche.",
     "checklistEmpty": "Aucune carte identifiée sur cette étagère.",
     "checklistSingles": "À l'unité",
     "checklistSealed": "En scellé",

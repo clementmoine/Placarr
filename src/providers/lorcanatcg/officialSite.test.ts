@@ -130,12 +130,7 @@ describe("official site locales", () => {
     expect(page.sourceUrl).toContain("/en-US/product/");
   });
 
-  it("lists all catalogue locales for harvest", () => {
-    expect(OFFICIAL_SITE_LOCALES).toEqual([
-      "fr-FR",
-      "en-US",
-      "de-DE",
-      "it-IT",
-    ]);
+  it("lists catalogue locales for harvest (EN+FR only)", () => {
+    expect(OFFICIAL_SITE_LOCALES).toEqual(["fr-FR", "en-US"]);
   });
 });

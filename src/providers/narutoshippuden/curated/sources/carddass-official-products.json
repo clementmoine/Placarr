@@ -1,7 +1,7 @@
 {
  "source": "カードダスドットコム — sec.carddass.com, base produit officielle Bandai",
  "observed": "2026-08-20",
- "ingest": "none — packshots à verser",
+ "ingest": "packshots — poured (幕 + 忍者学校 gaku → staging/carddass-official + products)",
  "crawlLive": true,
  "lang": "ja",
  "url": "https://sec.carddass.com/club/products/?keyword=NARUTO",
@@ -112,6 +112,18 @@
    "title": "NARUTO-ナルト- 疾風伝 カードゲーム第２幕 ～“暁\"を追え!我愛羅奪還 編～ 自販機ブースター",
    "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067873_1.jpg",
    "released": "2007-05"
+  },
+  {
+   "jan": "4543112503947000",
+   "title": "NARUTO-ナルト- 疾風伝 忍者学校ルール スターティングパック",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067343_1.jpg",
+   "released": "2007-09"
+  },
+  {
+   "jan": "4543112504135000",
+   "title": "NARUTO-ナルト- 疾風伝 忍者学校ルール スターティングブースター",
+   "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000067341_1.jpg",
+   "released": "2007-09"
   }
  ],
  "keywordNote": "La recherche est **littérale**.  rend 56 produits,  en rend 58 : Bandai écrit certains titres en latin **pleine chasse** (ＮＡＲＵＴＯ), que la requête ASCII ne trouve pas. Les deux manquants étaient l'acte 5 du 疾風伝, booster et distributeur — précisément les actes que je notais comme absents de la base.",

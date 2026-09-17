@@ -254,6 +254,20 @@ export function narutoIndicativeQuoteForPrint(input: {
     return promoQuoteForNumber(input.number, sourceUrl, observed);
   }
 
+  /*
+    Manga prerelease prints live under setCode `prerelease` but dig prices
+    remain on the S1 bucket (`prereleaseEur`).
+  */
+  if (isPrereleasePrint(input.number)) {
+    const s1 = seriesBucket("s1");
+    if (s1 && typeof s1.prereleaseEur === "number") {
+      const cents = euroToCents(s1.prereleaseEur);
+      if (cents != null) {
+        return quoteFromCents(cents, sourceUrl, observed, "prerelease");
+      }
+    }
+  }
+
   if (narutoCatalogueLineForCard(input.number, input.setCode) !== "carddass-fr") {
     return null;
   }
@@ -263,16 +277,6 @@ export function narutoIndicativeQuoteForPrint(input: {
   const premium = premiumCents(series, input.number);
   if (premium != null) {
     return quoteFromCents(premium, sourceUrl, observed, "premium");
-  }
-
-  if (
-    isPrereleasePrint(input.number) &&
-    typeof series.prereleaseEur === "number"
-  ) {
-    const cents = euroToCents(series.prereleaseEur);
-    if (cents != null) {
-      return quoteFromCents(cents, sourceUrl, observed, "prerelease");
-    }
   }
 
   if (isHoloRarity(input.rarity) && typeof series.holoEur === "number") {

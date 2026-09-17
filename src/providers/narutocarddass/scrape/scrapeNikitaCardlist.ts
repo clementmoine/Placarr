@@ -16,6 +16,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 
 import { NARUTO_PACK_ID } from "../packs";
 import {
@@ -261,23 +262,13 @@ async function fetchPath(pathname: string): Promise<string | null> {
 }
 
 async function downloadFace(url: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: {
-        "User-Agent": UA,
-        Accept: "image/*,*/*",
-        Referer: NIKITA_NRT_ORIGIN,
-      },
-      responseType: "arraybuffer",
-      timeout: 30_000,
-      validateStatus: (status) => status === 200,
-    });
-    const buf = Buffer.from(res.data as ArrayBuffer);
-    if (extFromMagic(buf) === ".bin") return null;
-    return buf.byteLength >= 3_000 ? buf : null;
-  } catch {
-    return null;
-  }
+  const buf = await downloadCardFaceBytes(url, {
+    referer: NIKITA_NRT_ORIGIN,
+    minBytes: 3_000,
+    timeoutMs: 30_000,
+  });
+  if (!buf || extFromMagic(buf) === ".bin") return null;
+  return buf;
 }
 
 /**

@@ -119,6 +119,22 @@ const FIXTURE: LorcanaSetLogoIndex = {
         "https://api.lorcana.ravensburger.com/images/fr/gateway1/thumbnails/333.png",
       logo: "/assets/lorcana/products/sets/gateway1/logo.png",
     },
+    {
+      id: "set13",
+      name: "Invasion Épineuse",
+      aliases: ["Attack of the Vine"],
+      sourceUrl:
+        "https://example.test/set13.png",
+      logo: "/assets/lorcana/products/sets/set13/logo.png",
+    },
+    {
+      id: "set14",
+      name: "Hyperia City",
+      aliases: ["Hyperia City"],
+      sourceUrl:
+        "https://example.test/set14.png",
+      logo: "/assets/lorcana/products/sets/set14/logo.png",
+    },
   ],
 };
 
@@ -225,6 +241,25 @@ describe("lorcanaLogoUrlForSet", () => {
     ).toBe("1");
   });
 
+  it("keeps SET14 when the title wrongly says Set 13", () => {
+    expect(
+      lorcanaLogoUrlForSet({
+        setCode: "SET14",
+        slug: "pack-avant-premiere-set-14-hyperia-city",
+        name: "Pack Avant-Première Set 13 - Hyperia City",
+        index: FIXTURE,
+      }),
+    ).toBe("/assets/lorcana/products/sets/set14/logo.png");
+    expect(
+      lorcanaCatalogueSetIdForProduct({
+        setCode: "SET14",
+        slug: "pack-avant-premiere-set-14-hyperia-city",
+        name: "Pack Avant-Première Set 13 - Hyperia City",
+        index: FIXTURE,
+      }),
+    ).toBe("14");
+  });
+
   it("joins Rise of the Floodborn via the unique catalog word, even under ROTF", () => {
     expect(
       lorcanaLogoUrlForSet({
@@ -248,6 +283,29 @@ describe("lorcanaLogoUrlForSet", () => {
         index: FIXTURE,
       }),
     ).toBe("/assets/lorcana/products/sets/set2/logo.png");
+  });
+
+  it("does not pin a generic 2-player starter to Cosmic Quest via « lorcana »", () => {
+    const withCosmic: LorcanaSetLogoIndex = {
+      ...FIXTURE,
+      sets: [
+        ...FIXTURE.sets,
+        {
+          id: "set16",
+          name: "Disney Lorcana Trading Card Game Cosmic Quest",
+          aliases: ["Cosmic Quest"],
+          sourceUrl: "https://example.test/set16.png",
+          logo: "/assets/lorcana/products/sets/set16/logo.png",
+        },
+      ],
+    };
+    expect(
+      lorcanaLogoUrlForSet({
+        slug: "2-player-starter-set-collector_box",
+        name: "Disney Lorcana TCG Coffret Démarrage 2 Joueurs",
+        index: withCosmic,
+      }),
+    ).toBeNull();
   });
 
   it("stays empty on a shop abbr, a shared quest subtitle, or a missing index", () => {

@@ -8,8 +8,10 @@ import {
   listCuratedBackSources,
 } from "@/providers/shared/curatedCardsInstall";
 
+import { narutoDiskCardId } from "./collectorIdentity";
 import { narutoCuratedDir } from "./curatedPaths";
 import { listCuratedReconstructedFaces } from "./install/installReconstructed";
+import { mercariIngestFaces } from "./sources/mercari";
 
 function listRelFiles(dir: string, prefix = ""): string[] {
   if (!existsSync(dir)) return [];
@@ -65,7 +67,6 @@ describe("Naruto curated tree", () => {
     expect(dests).toEqual([
       "back.en.webp",
       "back.fr.webp",
-      "back.it.webp",
       "back.ja.webp",
     ]);
   });
@@ -75,14 +76,13 @@ describe("Naruto curated tree", () => {
     (2007-2009) vivait ici sous `shi/`, faute d'un pack à lui ; il est parti
     avec son jeu le 2026-08-21 et son propre test l'atteste à destination.
 
-    Ce qui reste doit rester **complet** : quatre versos, un par langue, et rien
-    d'autre — un cinquième signalerait un second jeu qui se réinstalle.
+    Ce qui reste doit rester **complet** : trois versos (JA+FR+EN), et rien
+    d'autre — un quatrième signalerait une langue hors contrat catalogue.
   */
-  it("ships nothing but the four Carddass versos", () => {
+  it("ships nothing but the three Carddass versos (JA+FR+EN)", () => {
     expect(listCuratedBackSources(cards).map((row) => row.destRel)).toEqual([
       "back.en.webp",
       "back.fr.webp",
-      "back.it.webp",
       "back.ja.webp",
     ]);
   });
@@ -112,7 +112,8 @@ describe("Naruto curated tree", () => {
         Les quatre du bonus PS1, restaurées depuis les photos Mercari : ce sont
         les seules reconstructions japonaises, et les seules dont l'original
         n'est pas un scan officiel abîmé mais une photo de collectionneur —
-        aucun scan à plat de ces cartes n'existe.
+        aucun scan à plat de ces cartes n'existe. Leur photo source n'est plus
+        copiée en git : c'est la ligne mercdn du ledger `mercari.json`.
       */
       "ninja/ni0001-ps/ja",
       "ninja/ni0002-ps/ja",
@@ -132,13 +133,24 @@ describe("Naruto curated tree", () => {
       "promo/pr0095/fr",
       "promo/pr0096/fr",
     ]);
+    /*
+      Chaque reconstruction reste auditable : soit la photo d'origine est à
+      côté (`source.jpg`), soit c'est une restauration Mercari dont la photo
+      vit sur mercdn — la ligne d'ingestion du ledger fait alors provenance.
+    */
+    const mercariDiskIds = new Set(
+      mercariIngestFaces().map((row) => narutoDiskCardId(row.printedRef)),
+    );
     for (const face of faces) {
       expect(path.basename(face.source)).toMatch(
         /^art\.reconstructed\.(png|webp)$/i,
       );
-      expect(
-        existsSync(path.join(path.dirname(face.source), "source.jpg")),
-      ).toBe(true);
+      const hasSourcePhoto = existsSync(
+        path.join(path.dirname(face.source), "source.jpg"),
+      );
+      if (!hasSourcePhoto) {
+        expect(mercariDiskIds.has(face.cardId), face.cardId).toBe(true);
+      }
     }
   });
 });

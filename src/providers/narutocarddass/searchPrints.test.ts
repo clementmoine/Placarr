@@ -203,11 +203,9 @@ describe("chercher par clé de tirage", () => {
     ).toBe(true);
   });
 
-  it("does not drop Italian titles behind the French row of the same print", () => {
+  it("no longer exposes Italian as a catalogue language", () => {
     const rows = listNarutoSetPrints({ setId: "s1", language: "it" });
-    expect(rows.length).toBeGreaterThan(50);
-    expect(rows.every((row) => row.language === "it")).toBe(true);
-    expect(rows.map((row) => row.printKey)).toContain("naruto:ni-0001");
+    expect(rows).toEqual([]);
   });
 
   /*
@@ -273,30 +271,37 @@ describe("chercher par clé de tirage", () => {
       false,
     );
     expect(listNarutoPrintSets().find((s) => s.id === "tempete")).toMatchObject({
-      label: "Série 11 — La Tempête Approche",
+      label: "S11 — Série 11 — La Tempête Approche",
       languages: ["fr"],
     });
     expect(listNarutoPrintSets("en").find((s) => s.id === "s1")).toMatchObject({
-      label: "Series 1 — The Path to Hokage",
+      label: "S1 — Series 1 — The Path to Hokage",
     });
     expect(listNarutoPrintSets("en").find((s) => s.id === "s6")).toMatchObject({
-      label: "Series 6 — Eternal Rivalry",
+      label: "S6 — Series 6 — Eternal Rivalry",
     });
     expect(listNarutoPrintSets("en").find((s) => s.id === "s24")).toMatchObject({
-      label: "Series 24 — Sage's Legacy",
+      label: "S24 — Series 24 — Sage's Legacy",
     });
     expect(listNarutoPrintSets("en").find((s) => s.id === "promo")).toMatchObject({
-      label: "Promo (off-series)",
+      label: "PROMO — Promo (off-series)",
     });
-    expect(listNarutoPrintSets("it").find((s) => s.id === "s1")).toMatchObject({
-      label: "Serie 1 — La Forza della Foglia",
+    expect(listNarutoPrintSets("fr").find((s) => s.id === "prerelease")).toMatchObject({
+      label: "PRERELEASE — Prerelease (manga)",
+      languages: ["fr"],
+      sortKey: 0,
     });
-    expect(listNarutoPrintSets("it").find((s) => s.id === "s6")).toMatchObject({
-      label: "Serie 6 — Rivalità Eterna",
-    });
-    expect(listNarutoPrintSets("it").find((s) => s.id === "s8")).toMatchObject({
-      label: "Serie 8 — Il Vento del Cambiamento",
-    });
+    expect(listNarutoPrintSets("it").find((s) => s.id === "s1")).toBeUndefined();
+  });
+
+  it("lists manga prerelease cards under the prerelease series, not S1", () => {
+    const prerelease = listNarutoSetPrints({ setId: "prerelease", language: "fr" });
+    expect(prerelease.length).toBe(10);
+    expect(prerelease.every((row) => row.printKey.endsWith("-prerelease"))).toBe(
+      true,
+    );
+    const s1 = listNarutoSetPrints({ setId: "s1", language: "fr" });
+    expect(s1.some((row) => row.printKey.endsWith("-prerelease"))).toBe(false);
   });
 
   /*
@@ -372,8 +377,8 @@ describe("parcourir la découpe japonaise", () => {
       Les séries 7 à 23 et 25–27 sont anglaises seules. Sage's Legacy (s24) et
       Storm 3 (s28) ont reçu une impression française tardive.
     */
-    expect(langs("s1")).toEqual(["en", "fr", "it"]);
-    expect(langs("s6")).toEqual(["en", "fr", "it"]);
+    expect(langs("s1")).toEqual(["en", "fr"]);
+    expect(langs("s6")).toEqual(["en", "fr"]);
     expect(langs("s7")).toEqual(["en"]);
     expect(langs("s24")).toEqual(["en", "fr"]);
     expect(langs("s28")).toEqual(["en", "fr"]);
@@ -418,7 +423,14 @@ describe("parcourir la découpe japonaise", () => {
     const eu = listNarutoPrintSets()
       .filter((s) => s.group === "Séries (Europe / US)")
       .map((s) => s.id);
-    expect(eu.slice(0, 5)).toEqual(["s1", "s2", "s3", "s4", "s5"]);
+    expect(eu.slice(0, 6)).toEqual([
+      "prerelease",
+      "s1",
+      "s2",
+      "s3",
+      "s4",
+      "s5",
+    ]);
   });
 
   it("orders the volumes by their number, not by their kanji", () => {

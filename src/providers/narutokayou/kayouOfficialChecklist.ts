@@ -32,7 +32,7 @@ export function buildKayouOfficialChecklist(
           slug: `kayouofficial-${mapped.setCode}`,
           code: mapped.setCode,
           label: kayouOfficialSetLabel(mapped.setCode),
-          url: series.url ?? catalog.url ?? "https://www.kayouofficial.com/",
+          url: series.url ?? "https://www.kayouofficial.com/",
           cards: [],
         };
         bySet.set(mapped.setCode, set);
@@ -62,7 +62,7 @@ export function buildKayouOfficialChecklist(
 
   return {
     source: "kayouofficial.com",
-    url: catalog.url ?? "https://www.kayouofficial.com/",
+    url: "https://www.kayouofficial.com/",
     sets,
   };
 }

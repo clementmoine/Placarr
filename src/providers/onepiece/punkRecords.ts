@@ -1,7 +1,7 @@
 /**
  * Catalogue OPTCG depuis punk-records (sortie vegapull, multi-langues).
  *
- * Télécharge `cards_by_id.json` FR/EN depuis GitHub → staging, pose les
+ * Télécharge `cards_by_id.json` JA/FR/EN depuis GitHub → staging, pose les
  * tirages (`onepiece:op01-001`) et les faces Bandai (`art.bandai.webp`).
  */
 import {
@@ -15,6 +15,7 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { toLosslessWebp } from "@/lib/media/losslessWebp";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type {
   LocalPrintAssetWrite,
   LocalPrintsIndex,
@@ -34,8 +35,9 @@ const SOURCE_ID = "bandai";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 
-/** Locales punk-records → lang Placarr. */
+/** Locales punk-records → lang Placarr (original JA + FR + EN). */
 export const PUNK_RECORDS_LOCALES = [
+  { punk: "japanese", lang: "ja" },
   { punk: "french", lang: "fr" },
   { punk: "english", lang: "en" },
 ] as const;
@@ -191,19 +193,11 @@ async function downloadImage(
   url: string,
   referer: string,
 ): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA, Referer: referer },
-      responseType: "arraybuffer",
-      timeout: 40_000,
-      validateStatus: (s: number) => s === 200,
-    });
-    const data = res.data;
-    if (!data || data.byteLength < 500) return null;
-    return Buffer.from(data);
-  } catch {
-    return null;
-  }
+  return downloadCardFaceBytes(url, {
+    referer,
+    minBytes: 500,
+    timeoutMs: 40_000,
+  });
 }
 
 export type PunkRecordsHarvest = {
@@ -310,11 +304,20 @@ export type OnepieceFacesInstall = {
  */
 export async function installOnepieceBandaiFaces(
   index: LocalPrintsIndex,
-  opts: { force?: boolean; stagingDir?: string; delayMs?: number } = {},
+  opts: {
+    force?: boolean;
+    stagingDir?: string;
+    delayMs?: number;
+    /** Restrict to these locale codes (`ja`, `fr`, `en`). */
+    langs?: readonly string[];
+  } = {},
 ): Promise<OnepieceFacesInstall> {
   const locales = loadPunkRecordsLocales(
     opts.stagingDir ?? onepiecePunkStagingDir(),
   );
+  const langFilter = opts.langs?.length
+    ? new Set(opts.langs.map((l) => l.trim().toLowerCase()).filter(Boolean))
+    : null;
   const byKeyLang = new Map<string, PunkRecordsCard>();
   for (const locale of locales) {
     for (const card of locale.cards) {
@@ -331,7 +334,12 @@ export async function installOnepieceBandaiFaces(
   let processed = 0;
   const assets: LocalPrintAssetWrite[] = [];
   const delayMs = opts.delayMs ?? 40;
-  const total = writes.reduce((n, row) => n + row.titles.length, 0);
+  const titleSlots = writes.flatMap((row) =>
+    row.titles
+      .filter((title) => !langFilter || langFilter.has(title.lang))
+      .map((title) => ({ row, title })),
+  );
+  const total = titleSlots.length;
   console.log(`   faces — ${total} slot${total === 1 ? "" : "s"} (tirages × langues)`);
 
   const maybeProgress = () => {
@@ -342,8 +350,7 @@ export async function installOnepieceBandaiFaces(
     }
   };
 
-  for (const row of writes) {
-    for (const title of row.titles) {
+  for (const { row, title } of titleSlots) {
       processed += 1;
       const disk = cardDiskIdFromPrintKey(row.printKey, title.lang);
       if (!disk) {
@@ -387,7 +394,9 @@ export async function installOnepieceBandaiFaces(
       }
       const referer = imgUrl.includes("fr.onepiece")
         ? "https://fr.onepiece-cardgame.com/cardlist/"
-        : "https://en.onepiece-cardgame.com/cardlist/";
+        : imgUrl.includes("en.onepiece")
+          ? "https://en.onepiece-cardgame.com/cardlist/"
+          : "https://www.onepiece-cardgame.com/cardlist/";
       const buf = await downloadImage(imgUrl, referer);
       if (!buf) {
         fail += 1;
@@ -411,7 +420,6 @@ export async function installOnepieceBandaiFaces(
       });
       maybeProgress();
       if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
-    }
   }
 
   if (assets.length) index.writeAssets(assets);

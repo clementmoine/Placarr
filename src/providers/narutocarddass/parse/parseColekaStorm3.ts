@@ -124,24 +124,11 @@ function cardTypeOfNumber(
   return null;
 }
 
+export { colekaHtmlIsVerifyWall } from "@/providers/shared/coleka/verifyWall";
+
 /** Listing thumbs are `_250x250.webp`; the full face is the same path without the size suffix. */
 export function colekaFullFaceUrl(thumbUrl: string): string {
   return thumbUrl.replace(/_\d+x\d+(?=\.(?:webp|jpe?g|png|gif)(?:\?|$))/i, "");
-}
-
-export function colekaHtmlIsVerifyWall(html: string): boolean {
-  // FR « Vérification », IT « Verifica », EN turnstile interstitial.
-  if (/<title>\s*V[eé]rifica(?:tion)?\b/i.test(html)) return true;
-  if (
-    /challenges\.cloudflare\.com\/turnstile/i.test(html) &&
-    !/class="[^"]*lib_has_2_lines/i.test(html)
-  ) {
-    return true;
-  }
-  return (
-    /\/verify\/\?lang=/i.test(html) &&
-    !/class="[^"]*lib_has_2_lines/i.test(html)
-  );
 }
 
 /**

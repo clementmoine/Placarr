@@ -367,6 +367,38 @@ describe("copyNarutoTitlesOntoGroupedPrints", () => {
     ).toMatchObject({ lang: "en", fullName: "Sasuke Uchiha" });
   });
 
+  it("copies retail EN onto a promo printKey when disk number has no -promo suffix", () => {
+    const merged = copyNarutoTitlesOntoGroupedPrints({
+      prints: [
+        {
+          printKey: "naruto:nus-0005",
+          setCode: "s6",
+          number: "nus0005",
+          cardType: "nus",
+          family: "ninja",
+        },
+        {
+          printKey: "naruto:nus-0005-promo",
+          setCode: "promo",
+          number: "nus0005",
+          cardType: "nus",
+          family: "ninja",
+          // Disk ingest historically left grouping null — printKey alone holds promo.
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:nus-0005",
+          lang: "en",
+          fullName: "Sakura Haruno",
+        },
+      ],
+    });
+    expect(
+      merged.titles.find((t) => t.printKey === "naruto:nus-0005-promo"),
+    ).toMatchObject({ lang: "en", fullName: "Sakura Haruno" });
+  });
+
   it("does not copy the retail FR name onto a PS1 bonus with its own art", () => {
     const merged = copyNarutoTitlesOntoGroupedPrints({
       prints: [

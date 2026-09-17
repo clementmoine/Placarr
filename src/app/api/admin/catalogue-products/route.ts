@@ -27,6 +27,9 @@ export async function GET(req: Request) {
   const offset = Number(url.searchParams.get("offset") ?? "0");
   const limit = Number(url.searchParams.get("limit") ?? "48");
   const q = url.searchParams.get("q") ?? undefined;
+  const contentsUnknown =
+    url.searchParams.get("contentsUnknown") === "1" ||
+    url.searchParams.get("contentsUnknown") === "true";
 
   return NextResponse.json(
     listCatalogueProducts({
@@ -34,6 +37,7 @@ export async function GET(req: Request) {
       offset: Number.isFinite(offset) ? offset : 0,
       limit: Number.isFinite(limit) ? limit : 48,
       q,
+      contentsUnknown: contentsUnknown || undefined,
     }),
   );
 }

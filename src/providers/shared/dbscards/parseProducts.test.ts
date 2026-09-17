@@ -87,12 +87,12 @@ describe("parseDbscardsProductListing", () => {
     ]);
   });
 
-  it("leaves displays on the listing", () => {
+  it("marks displays for detail archive (shop price)", () => {
     const rows = parseDbscardsProductListing(
       `<a href="/products/displays/boite-de-24-boosters-bt2-union-force">x</a>`,
       "displays",
     );
-    expect(rows[0]?.detailArchived).toBe(false);
+    expect(rows[0]?.detailArchived).toBe(true);
   });
 
   it("matches a packshot whose filename ends with the slug", () => {

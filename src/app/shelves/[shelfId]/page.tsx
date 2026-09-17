@@ -319,6 +319,8 @@ function ShelfComponent() {
             metadataId: null,
             metadataRefreshStartedAt: null,
             metadataRefreshGeneration: 0,
+            loanedTo: null,
+            loanedAt: null,
             userId: shelf?.userId || "",
           }),
         ),

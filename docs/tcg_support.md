@@ -34,6 +34,18 @@ Trois choses vérifiées sur les 6386 tirages FR + EN de Lorcana :
   numéro en FR et en EN (zéro divergence sur 3154 cartes communes). La langue
   décrit l'exemplaire possédé, pas la carte — cohérent avec le §4.
 
+**Règle catalogue (langues)** :
+
+1. **Original** — obligatoire (langue(s) d’origine du produit)
+2. **Français** — obligatoire **s’il existe** côté source (jamais inventé)
+3. **Anglais** — s’il est disponible
+
+Pas toutes les locales de la Terre. Même `printKey` ; jamais un dump EN-only
+« pour démarrer ». Ex. Magic = `en` (original) + `fr` ; Pokémon papier = `ja`
+(original TCGdex) + `fr` + `en` (faces Live en/fr) ; One Piece = `ja` +
+`fr` + `en` ; Lorcana = `en` + `fr` ; Naruto Carddass = `ja` + `fr` + `en`
+(plus d’italien catalogue). Absent upstream → absent (vide honnête).
+
 Contre-exemple assumé : Moana et Vaiana, deux cartes physiquement distinctes,
 sont toutes deux imprimées `26/P2 • 7`. L'ambiguïté est dans le monde réel, pas
 dans le modèle ; on la lève par le nom et on garde l'id provider dans
@@ -62,11 +74,16 @@ ment coûte toujours plus cher que la colonne en trop.
 | Lorcana                            | [Lorcana.gg](https://lorcana.gg/cards/) (DotGG)                         | EN catalogue          | ✅                                   | `cmPrice` / `cmFoilPrice`             | ✅ Cardmarket **EUR** (dump API)  | dump + printKey                                                                                       |
 | Lorcana                            | [Lorcast](https://lorcast.com/docs/api/cards)                           | ❌ EN seulement       | ✅ AVIF, sans masque                 | prix foil + non-foil                  | ✅ TCGplayer USD → EUR `~`        | aucune — sert aussi de **remplissage catalogue** (28 tirages que LorcanaJSON ignore, voir § 6 bis)    |
 | Magic                              | [Scryfall](https://scryfall.com/docs/api)                               | ✅ vérifié            | ✅                                   | ✅ `finishes: nonfoil/foil/etched`    | ✅                                | UA requis                                                                                             |
-| Yu-Gi-Oh                           | [YGOPRODeck](https://ygoprodeck.com/api-guide/)                         | ✅ noms               | EN                                   | sets + raretés                        | ✅                                | aucune                                                                                                |
-| Dragon Ball Super (Masters)        | Bandai europe-fr cardlist (`dbscg`) + Deckplanet                        | ✅ FR                 | ✅ dump 260×364 (SAMPLE en fallback) | `_SPR` / `_PR` + finish `foil` maison | ❌                                | scrape local — [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md)                       |
-| Dragon Ball Super (Fusion World)   | Bandai fw/en cardlist (`dbsfw`)                                         | EN (pas de `/fw/fr/`) | ✅ SAMPLE WebP                       | `_P1` + finish `foil` maison          | ❌                                | scrape local — même doc                                                                               |
+| Yu-Gi-Oh                           | [YGOPRODeck](https://ygoprodeck.com/api-guide/) + ScanFlip FR (`yugioh`) | ✅ EN + FR (API)      | ✅ YGOPRODeck + CDN ScanFlip (opt.)  | sets + raretés                        | ✅ YGOPRODeck                     | Konami Neuron sans API ; seed `data/yugioh/`                                                          |
+| Dragon Ball Super (Masters)        | Bandai europe-fr cardlist (`dbscg`) + Deckplanet                        | ✅ FR                 | ✅ dump 260×364 (SAMPLE en fallback) | `_SPR` / `_PR` + finish `foil` maison | ✅ dbscards Cardmarket **EUR** (dump local) | scrape local — [dragon_ball_super_card_game.md](dragon_ball_super_card_game.md)                       |
+| Dragon Ball Super (Fusion World)   | Bandai fw/en cardlist (`dbsfw`)                                         | EN (pas de `/fw/fr/`) | ✅ SAMPLE WebP                       | `_P1` + finish `foil` maison          | ✅ fw.dbscards Cardmarket **EUR** (dump local) | scrape local — même doc                                                                               |
+| Dragon Ball Carddass / JCC         | `dbsjcc` → `data/dbs/jcc/` (dbzcollection + carddass.fr/dbz + nikita DBC) | ja partiel + FR      | FR + JA (nikita)                     | —                                     | ❌                                | Original JA (D-) ; FR adaptation — printKey `dbsjcc:…`                                               |
+| Dragon Ball Heroes                 | `dbh` → `data/dbs/heroes/` (carddass.com/dbh)                           | JA officiel           | JA thumbnails                        | —                                     | ❌                                | Cardlist live Bandai — pas de trad EN inventée                                                        |
+| Bleach Soul Card Battle            | `bleachscb` → `data/bleach/scb/` (carddass.fr + nikita blc)              | ja + fr               | JA nikita + FR Wayback               | —                                     | ❌                                | Original JA (S-/B-/E-/Z-) ; FR lettres remappées — **pas** Union Arena                               |
 | One Piece, Dragon Ball FW (apitcg) | [apitcg.com](https://apitcg.com/)                                       | ?                     | SAMPLE Bandai                        | ✅                                    | ?                                 | clé — OPTCG [one_piece_tcg.md](one_piece_tcg.md) ; FW Placarr = `dbsfw` (cardlist Bandai, pas apitcg) |
 | One Piece, Gundam, etc.            | [Scrydex](https://scrydex.com/)                                         | ?                     | ?                                    | ✅                                    | ✅                                | **payant**                                                                                            |
+| Leclerc Marvel 2021–2024           | `leclercmarvel21`…`24` → `data/leclerc/marvel21`…                       | ✅ FR                 | **108** faces (+24 Fixeez m23/m24)   | Fixeez + finitions album              | ❌                                | Dumps Coleka `?nbpp=240` — [BACK.md](../src/providers/leclerc/curated/BACK.md) |
+| Leclerc Disney 2025                | `leclercdisney25` → `data/leclerc/disney25/`                             | ✅ FR                 | **108/108** faces Coleka             | Fixeez + finitions album              | ❌                                | Dump `?nbpp=240` ; checklist complète — [BACK.md](../src/providers/leclerc/curated/BACK.md) |
 | Naruto (CACG / multi-lignes)       | pas d’API catalogue (Coleka / nikita / TCDB)                            | FR partiel            | community                            | foil physique                         | estimates / eBay                  | pack `naruto` + sets `s*` + lang `fr                                                                  | en  | jap` — [naruto_carddass_tcg.md](naruto_carddass_tcg.md) |
 
 Ça tombe pile dans le registre existant : **un module par jeu**, chacun
@@ -296,6 +313,12 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   `["Silver"]` sont des cartes de sets numérotés (`5-1`, `5-2`…) réimprimées en
   promo, pas le set P2 lui-même. Le trou est donc **structurel**, pas un fetch
   périmé : re-tirer LorcanaJSON ne le comblera jamais.
+- **Check-list : Promo Year N.** Les tirages à `promo_grouping` `P1`/`P2`/`P3`…
+  sont **énumérés** en `P1 — Promo Year 1`, `P2 — Promo Year 2`, etc. `PD1` →
+  `PD1 — Product Year 1`. Les autres groupings (`C1`/`C2`, Coconut, D23…)
+  restent des séries à part. Les `printKey` et `set_code` SQLite ne bougent
+  pas — seule la liste d'extensions / le filtre set les replient. Un chapitre
+  `2` ne compte plus `17/P1` dans sa complétion.
 - **Lorcast n'a pas de champ de finition.** Ses 28 champs vont de `cost` à
   `purchase_uris` ; aucun ne dit le foil. Seule la forme des prix informe, et
   indirectement : sur le set 1, les 204 cartes ont `usd` **et** `usd_foil` ; sur

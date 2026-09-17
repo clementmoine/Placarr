@@ -18,10 +18,10 @@ import {
 } from "./buildFromLedgers";
 
 describe("registres du 疾風伝", () => {
-  const [maku, gaku] = readShippudenLedgers();
+  const [maku, gaku, noihjp] = readShippudenLedgers();
 
   it("ships 第一幕…四幕 titles on shi/mju/msa, and nothing else", () => {
-    expect(maku.cards.length).toBe(269);
+    expect(maku.cards.length).toBe(271);
     expect(maku.cards.find((row) => row.number === "shi0001")).toMatchObject({
       name: "うずまきナルト",
       setCode: "maku1",
@@ -43,6 +43,18 @@ describe("registres du 疾風伝", () => {
     expect(shippudenPrintKey("shi0107")).not.toBe("naruto:gaku-0001");
   });
 
+  it("names 第五幕・第六幕 from noihjp (shi/mju/msa)", () => {
+    expect(noihjp.cards.length).toBe(116);
+    expect(noihjp.cards.find((row) => row.number === "shi0144")).toMatchObject({
+      name: "九尾の狐",
+      setCode: "maku5",
+    });
+    expect(noihjp.cards.find((row) => row.number === "mju0128")).toMatchObject({
+      name: "模擬戦闘訓練",
+      setCode: "maku6",
+    });
+  });
+
   /*
     Le pack Carddass partage le slug `naruto` : seule la **famille** sépare les
     deux jeux, et `ni0001` comme `shi0001` sont tous deux うずまきナルト.
@@ -58,15 +70,9 @@ describe("registres du 疾風伝", () => {
   it("mints every ledger row — a skip means a number we cannot read", () => {
     const report = buildShippudenFromLedgers({ dryRun: true });
     expect(report.skipped).toEqual([]);
-    expect(report.rows).toBe(309);
-    expect(report.titles).toBe(309);
-    /*
-      `prints` dépasse les 309 titres depuis que la liste officielle atteste des
-      numéros que nul registre ne nomme — voir le bloc suivant. Ce test-ci ne
-      garde que la lecture des registres : chaque ligne se lit, aucune n'est
-      sautée.
-    */
-    expect(report.prints).toBeGreaterThanOrEqual(309);
+    expect(report.rows).toBe(427);
+    expect(report.titles).toBe(427);
+    expect(report.prints).toBeGreaterThanOrEqual(427);
   });
 });
 
@@ -131,9 +137,9 @@ describe("liste officielle des sorties", () => {
 
   it("mints the attested numbers no ledger names yet", () => {
     const report = buildShippudenFromLedgers({ dryRun: true });
-    // 309 titres relevés, 436 numéros attestés.
-    expect(report.titles).toBe(309);
+    // 427 titres (maku1–4 + gaku + noihjp maku5–6), 436 numéros attestés.
+    expect(report.titles).toBe(427);
     expect(report.prints).toBe(436);
-    expect(report.attested).toBe(436 - 309);
+    expect(report.attested).toBe(436 - 427);
   });
 });

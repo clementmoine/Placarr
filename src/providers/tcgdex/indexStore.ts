@@ -143,8 +143,8 @@ export function writeTcgdexSet(input: {
         set_id = excluded.set_id,
         local_id = excluded.local_id,
         provider_id = excluded.provider_id,
-        -- Une image déjà connue ne se perd pas parce qu'une langue l'omet.
-        image_base_url = COALESCE(excluded.image_base_url, prints.image_base_url)
+        -- Première image gagnante : une passe JA ne remplace pas une base EN/FR.
+        image_base_url = COALESCE(prints.image_base_url, excluded.image_base_url)
     `);
     const insertTitle = db.prepare(`
       INSERT INTO print_titles (print_key, lang, name, set_name, serie_name)

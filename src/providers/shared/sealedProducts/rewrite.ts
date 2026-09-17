@@ -2,8 +2,6 @@
  * Soft-migrate a products-index: promote kinds + normalize langs without
  * changing slugs / keys. Safe to re-run.
  */
-import { writeFileSync } from "node:fs";
-
 import {
   type ProductsIndexV1,
   type SealedProductEntry,
@@ -14,6 +12,8 @@ import {
   withRefinedSealedKind,
 } from "./kinds";
 import { resolveSealedLang } from "./lang";
+import { backfillSealedProductPackshots } from "./packshotUrl";
+import { persistSealedProductsIndexDoc } from "./persistProductsIndex";
 
 export function rewriteSealedProductEntry(
   entry: SealedProductEntry,
@@ -55,6 +55,7 @@ export function rewriteSealedProductsIndex(
     // Keep the existing product key — only fields migrate.
     products[key] = next;
   }
+  changed += backfillSealedProductPackshots(index.pack, products);
   return {
     index: {
       ...index,
@@ -66,10 +67,10 @@ export function rewriteSealedProductsIndex(
 }
 
 export function writeRewrittenSealedProductsIndex(
-  file: string,
+  packId: string,
   index: ProductsIndexV1,
-): { changed: number } {
+): { changed: number; file: string } {
   const { index: next, changed } = rewriteSealedProductsIndex(index);
-  writeFileSync(file, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-  return { changed };
+  const { file } = persistSealedProductsIndexDoc({ ...next, pack: packId });
+  return { changed, file };
 }

@@ -15,6 +15,7 @@ import {
 } from "./capsulecorpgearParse";
 import { narutoKayouCuratedDir } from "./pack";
 import type { KayouChecklist } from "./kayouLedgerTypes";
+import { runNarutopiaKayouCrawl } from "./narutopiaCrawl";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
@@ -66,6 +67,7 @@ function writeJson(file: string, value: unknown): void {
 export type KayouExternalCrawlReport = {
   capsulecorp: { sets: number; cards: number; changed: boolean };
   alertehit: { images: number; changed: boolean };
+  narutopia: { images: number; pages: number; changed: boolean };
 };
 
 export async function crawlCapsulecorpgearChecklist(): Promise<KayouChecklist> {
@@ -102,6 +104,13 @@ export async function runKayouExternalCatalogCrawl(): Promise<KayouExternalCrawl
   if (capsuleChanged) writeJson(capsulePath, capsule);
   if (alerteChanged) writeJson(alertePath, alerte);
 
+  let narutopia = { images: 0, pages: 0, changed: false };
+  try {
+    narutopia = await runNarutopiaKayouCrawl();
+  } catch {
+    narutopia = { images: 0, pages: 0, changed: false };
+  }
+
   return {
     capsulecorp: {
       sets: capsule.sets.length,
@@ -112,5 +121,6 @@ export async function runKayouExternalCatalogCrawl(): Promise<KayouExternalCrawl
       images: alerte.images.length,
       changed: alerteChanged,
     },
+    narutopia,
   };
 }

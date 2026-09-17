@@ -38,6 +38,8 @@
 .actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 
@@ -87,6 +89,36 @@
 }
 .toggle:hover {
   background: var(--accent);
+}
+
+.search {
+  position: relative;
+  flex: 1 1 14rem;
+  min-width: 10rem;
+  max-width: 22rem;
+}
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.searchInput {
+  width: 100%;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 0.75rem 0 2.25rem;
+  font-size: 0.875rem;
+}
+.searchInput:focus {
+  outline: 2px solid color-mix(in oklab, var(--primary) 45%, transparent);
+  outline-offset: 1px;
 }
 
 .title {
@@ -264,8 +296,57 @@
   object-fit: cover;
   background: var(--muted);
 }
+.thumb {
+  cursor: zoom-in;
+}
 .thumbPlaceholder {
   border: 1px solid var(--border);
+}
+
+/*
+  Aperçu agrandi au survol — rendu en portail (hors colonnes / overflow).
+  Désactivé sans pointeur précis : le tactile n'a pas de hover stable.
+*/
+.thumbPopover {
+  z-index: 60;
+  padding: 0;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 0.28);
+  animation: thumbPopoverIn 0.12s ease-out;
+  /* Le contenu n'attrape jamais le pointeur : quitter la miniature = fermer. */
+  pointer-events: none;
+}
+.thumbPopoverImg {
+  display: block;
+  width: auto;
+  height: 16rem;
+  max-width: min(11.5rem, 72vw);
+  object-fit: contain;
+  background: var(--muted);
+}
+.thumbPopoverProduct .thumbPopoverImg {
+  height: 13rem;
+  max-width: min(10rem, 72vw);
+}
+
+@keyframes thumbPopoverIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (hover: none) {
+  .thumbPopover {
+    display: none;
+  }
 }
 
 .missingOwned .name,
@@ -327,6 +408,7 @@
   border-radius: 0.15rem;
   object-fit: cover;
   background: var(--muted);
+  cursor: zoom-in;
 }
 
 .missingOwned .cardPrice,
@@ -362,8 +444,10 @@
   .productThumb,
   .productThumbPlaceholder,
   .cardSourceThumb,
+  .thumbPopover,
   .adviceToggle,
-  .cardSources {
+  .cardSources,
+  .search {
     display: none !important;
   }
   .page {
@@ -577,6 +661,9 @@
   border-radius: 0.2rem;
   object-fit: cover;
   background: var(--muted);
+}
+.productThumb {
+  cursor: zoom-in;
 }
 .productThumbPlaceholder {
   border: 1px solid var(--border);

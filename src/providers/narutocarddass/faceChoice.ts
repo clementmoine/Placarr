@@ -57,6 +57,14 @@ export const NARUTO_FACE_SOURCES = [
    */
   "rakuten",
   /**
+   * tv-tokyo.co.jp — pages officielles Naruto 2002 (Bandai/Pierrot/TV Tokyo).
+   * Variantes double illustration : `tvtokyo-a` / `tvtokyo-b` (fichiers *a.jpg /
+   * *b.jpg), même contrat que carddas-a/b.
+   */
+  "tvtokyo",
+  "tvtokyo-a",
+  "tvtokyo-b",
+  /**
    * narutocardgame.gg classic CCG archive — 350×490 EN faces. Fill holes only;
    * pixels keep larger Drive / Vintage dumps ahead.
    */
@@ -88,6 +96,9 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "carddass",
       "ultrajeux",
       "rakuten",
+      "tvtokyo",
+      "tvtokyo-a",
+      "tvtokyo-b",
       "coleka",
       "cardgameclub",
       "primegame",
@@ -138,6 +149,9 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "slabz",
       "chitoroshop",
       "rakuten",
+      "tvtokyo",
+      "tvtokyo-a",
+      "tvtokyo-b",
       "narutocardgamegg",
       "legacy",
       "fanset",
@@ -167,6 +181,9 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "slabz",
       "chitoroshop",
       "rakuten",
+      "tvtokyo",
+      "tvtokyo-a",
+      "tvtokyo-b",
       "narutocardgamegg",
       "legacy",
       "fanset",
@@ -197,6 +214,9 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "mercari",
       "yahoo",
       "rakuten",
+      "tvtokyo",
+      "tvtokyo-a",
+      "tvtokyo-b",
       "narutocardgamegg",
       "legacy",
       "fanset",

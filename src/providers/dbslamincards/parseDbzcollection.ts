@@ -1,12 +1,30 @@
 /**
  * Parse pages set dbzcollection.fr (Lamincards FR idc=94 / IT idc=74 / ES idc=108).
  *
- * FR : `bc_texte_numero` + `cartes/{idc}/{ids}/h100_{cardId}_carte.jpg`.
- * IT/ES : tuiles `title="Regular|Silver|Gold"` + même path image ; le numéro
- * et le Nom viennent de la fiche AJAX (`n° 1`, `S5`, `G7`).
+ * HTTP / URLs / decode : `shared/dbzcollection/site`. Ici : Regular/Silver/Gold
+ * + `namesOnly` IT/ES (`n° 1`, `S5`, `G7`).
  */
-export const DBZC_ORIGIN = "http://www.dbzcollection.fr/2v2";
+import {
+  dbzcSetListingUrl as dbzcSetListingUrlShared,
+  decodeDbzcEntities,
+  extractDbzcTableField,
+} from "@/providers/shared/dbzcollection/site";
+
+export {
+  DBZC_ORIGIN,
+  dbzcAbsoluteUrl,
+  dbzcCardInfoUrl,
+  decodeDbzcEntities,
+} from "@/providers/shared/dbzcollection/site";
+
 export const DBZC_COLLECTION_IDC = "94";
+
+export function dbzcSetListingUrl(
+  ids: string,
+  idc: string = DBZC_COLLECTION_IDC,
+): string {
+  return dbzcSetListingUrlShared(ids, idc);
+}
 
 export type DbzcCard = {
   printed: string;
@@ -146,52 +164,6 @@ export function parseDbzcListingTiles(html: string): DbzcListingTile[] {
   return tiles;
 }
 
-export function dbzcAbsoluteUrl(pathOrUrl: string): string {
-  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-  const p = pathOrUrl.startsWith("/") ? pathOrUrl.slice(1) : pathOrUrl;
-  return `${DBZC_ORIGIN}/${p}`;
-}
-
-export function dbzcSetListingUrl(
-  ids: string,
-  idc: string = DBZC_COLLECTION_IDC,
-): string {
-  return `${DBZC_ORIGIN}/cartes.php?idc=${idc.trim()}&ids=${ids}`;
-}
-
-export function dbzcCardInfoUrl(cardId: string): string {
-  return `${DBZC_ORIGIN}/traitements_ajax/get_infos_detail_carte.php?id=${cardId.trim()}`;
-}
-
-/** Decode HTML entities from the AJAX detail table. */
-export function decodeDbzcEntities(raw: string): string {
-  return raw
-    .replace(/&eacute;/gi, "é")
-    .replace(/&egrave;/gi, "è")
-    .replace(/&agrave;/gi, "à")
-    .replace(/&ocirc;/gi, "ô")
-    .replace(/&uuml;/gi, "ü")
-    .replace(/&deg;/gi, "°")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#(\d+);/g, (_, n: string) =>
-      String.fromCharCode(Number(n)),
-    )
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function fieldValue(html: string, label: string): string | null {
-  const re = new RegExp(
-    `apercu_td_intitule[^>]*>\\s*${label}\\s*:?\\s*<\\/td>\\s*<td class="apercu_td_valeur"[^>]*>([^<]*)<\\/td>`,
-    "i",
-  );
-  const m = html.match(re);
-  if (!m) return null;
-  const value = decodeDbzcEntities(m[1] ?? "");
-  return value || null;
-}
-
 /**
  * Numéro AJAX : `n° 1`, `S5`, `G7`, `65`.
  */
@@ -222,9 +194,13 @@ export function parseDbzcPrintedNumber(raw: string): {
  * Fiche AJAX : Nom / Numéro / Rareté.
  */
 export function parseDbzcCardInfo(html: string): DbzcCardInfo {
-  const name = fieldValue(html, "Nom");
-  const printedRaw = fieldValue(html, "Num&eacute;ro") ?? fieldValue(html, "Numéro");
-  const rarityRaw = fieldValue(html, "Raret&eacute;") ?? fieldValue(html, "Rareté");
+  const name = extractDbzcTableField(html, "Nom");
+  const printedRaw =
+    extractDbzcTableField(html, "Num&eacute;ro") ??
+    extractDbzcTableField(html, "Numéro");
+  const rarityRaw =
+    extractDbzcTableField(html, "Raret&eacute;") ??
+    extractDbzcTableField(html, "Rareté");
   const fromPrinted = printedRaw
     ? parseDbzcPrintedNumber(printedRaw)
     : { printed: null, grouping: null };

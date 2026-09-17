@@ -1,7 +1,7 @@
 {
  "source": "カードダスドットコム — sec.carddass.com, base produit officielle Bandai",
  "observed": "2026-08-20",
- "ingest": "none — packshots à verser",
+ "ingest": "packshots — poured (vending/starters + boosters 12·16·17 → staging/carddass-official + products/*/ja)",
  "crawlLive": true,
  "lang": "ja",
  "url": "https://sec.carddass.com/club/products/?keyword=NARUTO",

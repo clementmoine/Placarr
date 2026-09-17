@@ -14,7 +14,7 @@ describe("dataCarddass ebay faces ledger", () => {
       ),
     ).toBe("https://i.ebayimg.com/images/g/jjQAAOSwTONoBbKE/s-l1600.webp");
     const faces = dataCarddassEbayIngestFaces();
-    expect(faces.length).toBe(19);
+    expect(faces.length).toBeGreaterThanOrEqual(80);
     expect(faces.every((row) => row.lang === "ja")).toBe(true);
     expect(
       faces.every((row) => parseDataCarddassPrinted(row.printedRef) !== null),

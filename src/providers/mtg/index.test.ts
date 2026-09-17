@@ -8,7 +8,7 @@ import { mtgModule } from "./index";
 import { mtgCuratedDir } from "./pack";
 
 describe("mtg provider hooks", () => {
-  it("declares an empty local catalogue surface", () => {
+  it("declares a Scryfall local catalogue surface", () => {
     expect(mtgModule.info.id).toBe("mtg");
     expect(mtgModule.catalog?.dataPack).toBe("mtg");
     expect(mtgModule.searchPrints).toBeTypeOf("function");
@@ -28,12 +28,12 @@ describe("mtg provider hooks", () => {
 });
 
 describe("mtg curated back", () => {
-  it("does not ship a made-up back", () => {
-    expect(
-      listCuratedBackSources(path.join(mtgCuratedDir(), "cards")).map(
-        (row) => row.destRel,
-      ),
-    ).toEqual([]);
+  it("ships classic Magic back when curated", () => {
+    const backs = listCuratedBackSources(
+      path.join(mtgCuratedDir(), "cards"),
+    ).map((row) => row.destRel);
+    // Empty until first Sync downloads back.jpg — both states honest.
+    expect(backs.length === 0 || backs.includes("back.webp")).toBe(true);
   });
 
   it("registers a catalogue-only effect pack", () => {

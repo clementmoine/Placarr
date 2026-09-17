@@ -1,13 +1,17 @@
 /**
- * Placarr printKey grouping `pN` → set code promo `PN` (Lorcast / DotGG).
+ * Placarr printKey grouping → market promo set code (Lorcast / DotGG).
  *
- * Même forme des deux côtés : `lorcana:7-24b-p2` → set `P2`, numéro `24b`.
- * Une seule implémentation — les deux providers de prix Lorcana la partagent.
+ * - `pN` → `PN` (league / set promos)
+ * - letter sets encoded as grouping (`pd1`, `d23`, `cc1`, `dis`) → uppercased
+ *   (`PD1`, `D23`, `CC1`, `DIS`) — same codes on both market APIs
+ *
+ * Without this, `lorcana:11-1-pd1` would look up main-set `011|1` and take the
+ * wrong Cardmarket price.
  */
 export function lorcanaPromoSetFromGrouping(
   grouping: string | null | undefined,
 ): string | null {
-  if (!grouping) return null;
-  const match = /^p(\d+)$/i.exec(grouping.trim());
-  return match ? `P${match[1]}` : null;
+  const trimmed = grouping?.trim();
+  if (!trimmed) return null;
+  return trimmed.toUpperCase();
 }

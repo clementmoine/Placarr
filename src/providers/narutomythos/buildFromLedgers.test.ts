@@ -1,10 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
+
+import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import {
   buildMythosFromLedgers,
   MYTHOS_TITLE_LANG,
+  pruneMythosComingSoonPlaceholders,
+  pruneMythosUnattestedPrints,
+  readAllMythosChecklists,
   readMythosChecklist,
 } from "./buildFromLedgers";
+import { NARUTO_MYTHOS_PACK_ID } from "./pack";
 import {
   formatMythosReference,
   mythosPrintKey,
@@ -34,17 +44,139 @@ describe("checklist Mythos KS1", () => {
 });
 
 describe("buildMythosFromLedgers", () => {
-  it("aligne tirages et titres, sans écart", () => {
+  it("aligne tirages officiels + complément LorenZone (lg/sg…)", () => {
     const report = buildMythosFromLedgers({ dryRun: true });
     expect(report.prints).toBe(report.rows);
-    expect(report.titles).toBe(report.rows);
+    expect(report.titles).toBeGreaterThanOrEqual(report.rows);
     expect(report.skipped).toEqual([]);
-    expect(report.sets).toEqual(["ks1", "ks1e2", "ks1promo", "ss2"]);
-    expect(report.prints).toBe(636);
+    expect(report.sets).toEqual(
+      expect.arrayContaining(["ks1", "ks1e2", "ks1promo", "ss2"]),
+    );
+    // CICABOOM gallery = 636 ; LorenZone ajoute Legendary / SG / chibi SS2…
+    expect(report.prints).toBeGreaterThan(636);
+    expect(report.titles).toBeGreaterThan(report.prints);
   });
 
   it("titre KS1 en français", () => {
     expect(MYTHOS_TITLE_LANG).toBe("fr");
+  });
+
+  it("reprend le Legendary KS1 absente de l’API CICABOOM", () => {
+    const keys = new Set(
+      readAllMythosChecklists().flatMap((l) =>
+        l.cards.map(
+          (c) => `${l.set.code}:${c.number}:${c.grouping ?? ""}`,
+        ),
+      ),
+    );
+    expect(keys.has("ks1:lg01:")).toBe(true);
+    expect(keys.has("ks1:0104:v")).toBe(false); // Coming Soon LZ skipped
+  });
+
+  it("retire les Coming Soon ks1 quand le twin ks1promo existe", () => {
+    const previous = process.env.PLACARR_DATA_DIR;
+    const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-mythos-prune-"));
+    process.env.PLACARR_DATA_DIR = tmp;
+    try {
+      const index = createLocalPrintsIndex(NARUTO_MYTHOS_PACK_ID);
+      index.writePrints([
+        {
+          printKey: "mythos:ks1-0104-v",
+          setCode: "ks1",
+          number: "0104",
+          cardType: "ks1",
+          grouping: "v",
+          titles: [{ lang: "fr", fullName: "Coming Soon" }],
+        },
+        {
+          printKey: "mythos:ks1promo-0104-v",
+          setCode: "ks1promo",
+          number: "0104",
+          cardType: "ks1promo",
+          grouping: "v",
+          titles: [{ lang: "fr", fullName: "Tsunade" }],
+        },
+        {
+          printKey: "mythos:ks1-9999-v",
+          setCode: "ks1",
+          number: "9999",
+          cardType: "ks1",
+          grouping: "v",
+          titles: [{ lang: "fr", fullName: "Coming Soon" }],
+        },
+      ]);
+      expect(pruneMythosComingSoonPlaceholders(index)).toEqual([
+        "mythos:ks1-0104-v",
+      ]);
+      expect(index.lookupRow("mythos:ks1-0104-v")).toBeNull();
+      expect(index.lookupRow("mythos:ks1promo-0104-v")?.fullName).toBe(
+        "Tsunade",
+      );
+      // No twin yet → keep the honest placeholder.
+      expect(index.lookupRow("mythos:ks1-9999-v")?.fullName).toBe(
+        "Coming Soon",
+      );
+    } finally {
+      if (previous === undefined) delete process.env.PLACARR_DATA_DIR;
+      else process.env.PLACARR_DATA_DIR = previous;
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("retire les fantômes ScanFlip CFA/CH hors checklist", () => {
+    const previous = process.env.PLACARR_DATA_DIR;
+    const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-mythos-ghost-"));
+    process.env.PLACARR_DATA_DIR = tmp;
+    try {
+      const index = createLocalPrintsIndex(NARUTO_MYTHOS_PACK_ID);
+      // Seed a real attested key + a ScanFlip ghost.
+      const built = buildMythosFromLedgers({ index, dryRun: true });
+      expect(built.prints).toBeGreaterThan(600);
+      index.writePrints([
+        {
+          printKey: "mythos:ks1-0025",
+          setCode: "ks1",
+          number: "0025",
+          cardType: "ks1",
+          grouping: null,
+          sourceUrl: "https://www.narutotcgmythos.com/fr/galerie",
+          titles: [{ lang: "fr", fullName: "Kiba" }],
+        },
+        {
+          printKey: "mythos:ks1-0025-a",
+          setCode: "ks1",
+          number: "0025",
+          cardType: "ks1",
+          grouping: "a",
+          sourceUrl: "https://www.scanflip.fr/fr/naruto-mythos/cards",
+          titles: [{ lang: "fr", fullName: "Kiba", rarity: "Common Full Art" }],
+        },
+        {
+          printKey: "mythos:ks1-0025-chibi",
+          setCode: "ks1",
+          number: "0025",
+          cardType: "ks1",
+          grouping: "chibi",
+          sourceUrl: "https://www.scanflip.fr/fr/naruto-mythos/cards",
+          titles: [{ lang: "fr", fullName: "Kiba", rarity: "Common Holo" }],
+        },
+      ]);
+      const removed = pruneMythosUnattestedPrints(index);
+      expect(removed).toEqual(
+        expect.arrayContaining([
+          "mythos:ks1-0025-a",
+          "mythos:ks1-0025-chibi",
+        ]),
+      );
+      expect(removed).not.toContain("mythos:ks1-0025");
+      expect(index.lookupRow("mythos:ks1-0025")?.fullName).toBe("Kiba");
+      expect(index.lookupRow("mythos:ks1-0025-a")).toBeNull();
+      expect(index.lookupRow("mythos:ks1-0025-chibi")).toBeNull();
+    } finally {
+      if (previous === undefined) delete process.env.PLACARR_DATA_DIR;
+      else process.env.PLACARR_DATA_DIR = previous;
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
 

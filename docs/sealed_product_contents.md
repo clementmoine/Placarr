@@ -49,6 +49,7 @@ réécrits via `rewriteSealedProductsIndex`.
 | `packsBySet` | Sachets **par** extension (coffret multi-séries) | Coffret Métal → `{ "s1": 1, "s2": 1 }` ; sans ça un SKU à `setId` null n'entre dans aucun conseil d'achat |
 | `guaranteeSets` | Extensions où les **garanties** comptent | Coffret Métal → `["s4", "promo"]` — évite qu'un reprint catalogue accroche une autre série |
 | `guaranteedPrints` | Cartes **toujours** dans le produit | Liste d'un starter ; promo fixe d'un blister |
+| `guaranteedProducts` | SKUs scellés **toujours** inclus | Pack Découverte → 2 starters + 2× `booster-s1` |
 | `randomPoolScope` | D'où sort la loterie | `set` / `listed` / `none` / `unknown` |
 | `randomPoolPrints` | Pool explicite si `listed` | Judge pack, pool promo |
 
@@ -65,15 +66,45 @@ lorcards c'est souvent la taille du **set** (420), pas du sachet.
 | `pack_container` (display) | — | `none` ici ; la loterie est dans les N sachets (`packsContained`) |
 | `mixed_bundle` (trove, blister 3+1) | exclus / promo → `guaranteedPrints` | sachets enfants |
 
-## État mesuré (2026-08-26)
+## État mesuré (2026-09-14)
+
+| Pack | Boosters loterie | Displays / containers | Decks / known lists | Notes harmonisation |
+| --- | --- | --- | --- | --- |
+| Lorcana | **69/69** pool `set` · 12 | display **26/26** · 24 ; trove **45** · 8 ; **blister_case 30/30** · 24 | **23/23** starters ; Deep Trouble = exclusives only (`contentsKnown` false) ; quests structure attestée : Palace Heist **170** (50+2×60), Hunny Rescue **190** (50+10+120+6+4) | `byKind` blister_case / quest / prerelease / collector_box |
+| Pokémon | **193** pool `set` (pas de `cardsPerPack` inventé) | display **20/20** · 36 ; multipack **20/20** · 3 ; **ETB 58/58 `packsContained`** (SV/ME 9 · SM/SWSH 8 · spéciaux 10, Poképédia) | — | graine git `tcgdex/curated/products-contents.json` |
+| DBS CG | boutique + `byKind` | **34/34** · 24 ; BT24 blister carton **3** ; blisters Unison = **1** booster (unitaire) | **27/28** decks ; **TS01/TS02 = 15 fixes known** ; coffrets anniversaire 2020/2021/5th/2023/2024 déclarés 96/96/97/104/104 ; gift GC-01 **4** / GC-02 **5** / GE01 **7** packs | `byKind.blister_case` |
+| DBS FW | idem | **9/9** | **10/10** ; Premium Coll. 01 = 6 fixes ; 1st Anniv Set = 16 fixes | collector_box scope none |
+| One Piece | pool `set` | **25/25** · 24 ; multipack · 2 | **32** decks known qty (ST-14 + **ST-13/19/20/22–28 Tier One** + mirrors JA st21/29/30 + pré-release ST-04) ; stubs preview demoted | blister_case / tin / multipack |
+| DBS JCC | **8**/sachet | display pc **null** (honnête) | taille 32, **0** listes | inchangé |
+| Naruto Carddass | **49** · 8 | IT/EN displays **24** (SKU) | FR starters known | `byKind.display` + EN `packsContained: 24` |
+| Bleach SCB | **8** | — | **2/2** | — |
+
+## État mesuré (2026-09-13) — historique
+
+| Pack | Boosters `cardsPerPack` / loterie | Displays `packsContained` | Decks `contentsKnown` (liste) |
+| --- | --- | --- | --- |
+| Lorcana | **70 / 70** (`byKind` 12) | **15 / 15** (`byKind` 24) | **23 / 23** (ledger curated) |
+| Pokémon | ~0 / 193 (pas de taille inventée) | **20 / 20** (`byKind` 36) | — (peu de decks) |
+| DBS CG | boutique + `byKind` pool=`set` | **34 / 34** (`byKind` 24) | **27 / 28** decks known (SD01+BE20 qty Bandai Asia ; **SD08** taille 51, Pieces absentes) |
+| DBS FW | idem | **9 / 9** | **10 / 10** decks ; **53** SKUs known |
+| One Piece | `byKind` pool=`set` | `byKind` 24 | **38 / 58** decks known — ST-01–07/10/21 + ST-29–35 Tier One 収録枚数 ; **ST-36** membership only ; ST-14 sans table |
+| DBS JCC | **`byKind` 8** + pool=`set` | partiel | **0 / 17** — taille 32 attestée ; **pas de checklist starter** (dbzcollection / Wayback) |
+| Naruto Carddass | **FR/IT 8** (`byKind`) | partiel | **7 / 8** starters FR S1–S4 known (+ Détruire Konoha sum 41/`contentsKnown` false) ; S5 partial |
+| **Bleach SCB** | **`byKind` 8** (S1) | — | **2 / 2** starters Compagnons + Rivaux (S1) ; **S2+ FR/JP qty absentes** |
+| DBH | **`byKind` 3**/sachet (Extra/Selection) | BOX **20** packs | Namek : 6× UGMPS + avatar soft (`contentsKnown` false) ; Extra/Selection = pools |
+
+Rebuild CG/FW/OP : `pnpm exec tsx src/providers/shared/sealedProducts/rebuildFromStaging.ts`.
+Bleach sealed : Sync `bleach-scb` / `ingestBleachScbSealedProducts()`.
+
+## État mesuré (2026-08-26) — historique
 
 | Pack | Boosters avec `cardsPerPack` | Displays avec `packsContained` | Decks `contentsKnown` (liste exacte) |
 | --- | --- | --- | --- |
-| Lorcana | **70 / 70** (`byKind` 12) | **15 / 15** (`byKind` 24) | **23 / 23** (ledger curated) |
+| Lorcana | **70 / 70** (`byKind` 12) | **15 / 15** (`byKind` 24) | **23 / 23** (ledger curated) ; troves `byKind` 8 sachets ; gift EN/DE/IT aliasés FR |
 | Pokémon | ~0 / 193 (pas de taille sachet inventée ; faux 99+ corrigés) | **20 / 20** (`byKind` 36) | — (peu de decks) |
 | DBS CG | ~76 / 120 (texte boutique) | **34 / 34** (`byKind` 24) | **19 / 28** (ledger curated) |
 | DBS FW | ~49 / 61 | **9 / 9** (`byKind` 24) | **10 / 10** (ledger curated) |
-| Naruto Carddass | **FR/IT 8** (`byKind`) ; JP 6 (SKU) | partiel | **8 / 8** starters FR S1–S4 (`products-contents.json`, poster+catalogue qty) ; S5 partial / `contentsKnown: false` |
+| Naruto Carddass | **FR/IT 8** (`byKind`) ; JP 6 (SKU) | partiel | **8 / 8** starters FR S1–S4 + **`pack-decouverte`** + **Coffret Métal / Tin Hobby** (deck/promos + sachets) ; S5 partial ; IT/JP starters vides |
 
 
 Les tuiles « aperçu » lorcards / pkmcards (**15** cartes) ne sont **ni** une
@@ -121,9 +152,14 @@ dédié (sauf Naruto holo = officiel). Source slots : éditeur ou community.
 
 Ledger durable (survit au re-ingest) :
 
-`data/<pack>/curated/sealed-contents.json`
+- graine git : `src/providers/<id>/curated/products-contents.json`
+- runtime : `data/<pack>/curated/products-contents.json` (+ legacy `sealed-contents.json`)
 
-Fusion via `mergeCuratedSealedContents` (ingest + lecture check-list).
+**Porte unique** : `persistSealedProductsIndex` / `loadSealedProductsIndex`
+(`src/providers/shared/sealedProducts/persistProductsIndex.ts`) — merge curated
+à l'écriture **et** à la lecture (Catalogue, filet si un writer a oublié).
+Le conseil d'achat utilise déjà `mergeCuratedSealedContents` via
+`sealedProductsLoad`.
 
 ### Lorcana — fait 2026-08-26
 
@@ -131,7 +167,9 @@ Fusion via `mergeCuratedSealedContents` (ingest + lecture check-list).
 | --- | --- | --- |
 | Tous boosters (`byKind`) | `cardsPerPack=12`, pool `set` | [Ravensburger boosters](https://www.ravensburger.us/en-US/products/disney-lorcana/boosters) |
 | Tous displays (`byKind`) | `packsContained=24` | idem |
-| Illumineer's Trove / Trésor | `packsContained=8` | Ravensburger trove product pages |
+| Tous troves (`byKind`) | `packsContained=8` | [Ravensburger trove](https://www.ravensburger.us/en-US/products/disney-lorcana/trove-packs/) |
+| Illumineer's Trove / Trésor (SKU FR) | `packsContained=8` (redondant `byKind`) | Ravensburger trove product pages |
+| Gift Scrooge / Elsa (EN/DE/IT aliases) | même promo que FR | disneylorcana / Bleeding Cool |
 | Starters sets 1–10 | listes 60 printKeys + 1 booster | TheGamer / lorcanaplayer / SCG |
 | Gift sets (`coffret-cadeau`) | packs + promos vérifiés SKU | disneylorcana / Ravensburger / ScreenRant |
 | Collection starters / Stitch portfolio | 4 boosters + 1 promo | Ravensburger product pages |

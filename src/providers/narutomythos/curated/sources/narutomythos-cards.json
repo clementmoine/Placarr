@@ -2,8 +2,8 @@
   "source": "narutomythos.com — base de cartes fan (simulateur)",
   "url": "https://www.narutomythos.com/fr/cards",
   "api": "https://www.narutomythos.com/api/cards",
-  "observed": "2026-09-05",
-  "ingest": "observed — API JSON live (210 cartes KS) + WebP `/storage/{imageUrl|imageUrlFr}` ; pas encore branché en harvest",
+  "observed": "2026-09-13",
+  "ingest": "live — harvestMythosNarutomythosSite → narutomythos-cards-ledger.json ; install art.narutomythos.webp (FR+EN) sur printKeys existants. Sans watermark : préféré à ScanFlip quand pas d’art.official CICABOOM. Pas de mint.",
   "lang": "fr+en (+it/de/es UI)",
   "line": "mythos",
   "official": false,
@@ -30,13 +30,28 @@
     "imageUrlFr"
   ],
   "coverage": {
-    "sets": ["KS (Konoha Shidō)"],
+    "sets": [
+      "KS (Konoha Shidō)"
+    ],
     "cards": 210,
     "note": "Set KS seulement au probe 2026-09-05 — pas de SS2 / Akatsuki dans l’API."
   },
   "vsOfficialGallery": "Galerie officielle : API https://cards.narutotcgmythos.com/api/cards?lang=fr → 636 cartes (KS1 ed1/ed2 + SS2). UI /fr/galerie encore banner maintenance mais données live. Preferer l’API officielle pour art.official ; ce site fan reste KS-only / non affilié.",
   "also": [
     "Checklist faces shop : lorenzone-ks1-checklist.json",
-    "Gallery officielle (bloquée) : narutotcgmythos-gallery.json"
+    "Gallery officielle (bloquée) : narutotcgmythos-gallery.json",
+    "Marketplace prix : narutomythos-marketplace.json",
+    "Faces ledger : narutomythos-cards-ledger.json"
+  ],
+  "marketplace": {
+    "url": "https://www.narutomythos.com/fr/marketplace",
+    "api": "https://www.narutomythos.com/api/marketplace/listings?limit=100",
+    "ledger": "narutomythos-marketplace.json"
+  },
+  "facePriority": [
+    "art.official.webp (CICABOOM)",
+    "art.narutomythos.webp (fan, no watermark)",
+    "art.lorenzone.webp / art.narutopia.webp",
+    "art.scanflip.webp (watermarked CDN)"
   ]
 }

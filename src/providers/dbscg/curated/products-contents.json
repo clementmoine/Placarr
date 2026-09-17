@@ -1,0 +1,3575 @@
+{
+  "version": 1,
+  "pack": "dbs/cg",
+  "updatedAt": "2026-09-14",
+  "byKind": {
+    "display": {
+      "source": "Bandai Masters display (standard 24)",
+      "verifiedAt": "2026-08-26",
+      "packsContained": 24,
+      "randomPoolScope": "none"
+    },
+    "booster": {
+      "source": "Bandai Masters booster — pool = set catalogue",
+      "verifiedAt": "2026-09-13",
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "cardsPerPack from boutique when attested; never invent."
+    },
+    "blister_case": {
+      "source": "TCG Cards blister carton — container ; count SKU-attested",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "BT24 = 3-pack (docs). Unison Warrior cartons sans count attesté."
+    }
+  },
+  "skus": {
+    "booster-pack-de-tournoi-volume-13-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-711",
+        "dbscg:p-708",
+        "dbscg:p-707",
+        "dbscg:p-704"
+      ]
+    },
+    "booster-pack-de-tournoi-volume-13": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-712",
+        "dbscg:p-711",
+        "dbscg:p-710",
+        "dbscg:p-709",
+        "dbscg:p-708",
+        "dbscg:p-707",
+        "dbscg:p-706",
+        "dbscg:p-705",
+        "dbscg:p-704",
+        "dbscg:p-703",
+        "dbscg:p-702",
+        "dbscg:p-701",
+        "dbscg:p-700",
+        "dbscg:p-699",
+        "dbscg:p-698"
+      ]
+    },
+    "booster-pack-de-tournoi-volume-12": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:p-683",
+        "dbscg:p-687",
+        "dbscg:p-682",
+        "dbscg:p-688",
+        "dbscg:p-684",
+        "dbscg:p-685",
+        "dbscg:p-686",
+        "dbscg:p-681"
+      ]
+    },
+    "booster-pack-de-tournoi-volume-12-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-684",
+        "dbscg:p-683",
+        "dbscg:p-687",
+        "dbscg:p-681"
+      ]
+    },
+    "booster-deluxe-pack-2025-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 14.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 14,
+      "guaranteedPrintKeys": [
+        "dbscg:p-660",
+        "dbscg:p-664",
+        "dbscg:p-663",
+        "dbscg:p-661",
+        "dbscg:p-659",
+        "dbscg:p-662",
+        "dbscg:p-583",
+        "dbscg:p-575",
+        "dbscg:bt25-141",
+        "dbscg:bt24-130",
+        "dbscg:bt22-123",
+        "dbscg:bt24-038"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-10-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-652",
+        "dbscg:p-655",
+        "dbscg:p-648",
+        "dbscg:p-643"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-10": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-641",
+        "dbscg:p-643",
+        "dbscg:p-642",
+        "dbscg:p-651",
+        "dbscg:p-650",
+        "dbscg:p-649",
+        "dbscg:p-648",
+        "dbscg:p-646",
+        "dbscg:p-645",
+        "dbscg:p-655",
+        "dbscg:p-654",
+        "dbscg:p-653",
+        "dbscg:p-652",
+        "dbscg:p-647",
+        "dbscg:p-644"
+      ]
+    },
+    "booster-championship-2024-finals-zenkai-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "dbscg:bt21-133",
+        "dbscg:bt22-117",
+        "dbscg:bt21-102",
+        "dbscg:bt25-100",
+        "dbscg:bt22-086",
+        "dbscg:bt23-075",
+        "dbscg:bt24-059",
+        "dbscg:bt25-044",
+        "dbscg:bt21-037",
+        "dbscg:bt24-027",
+        "dbscg:bt25-006",
+        "dbscg:bt24-004"
+      ]
+    },
+    "booster-championship-2024-finals-zenkai-pack-finalist-version": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:bt22-117",
+        "dbscg:bt25-100",
+        "dbscg:bt23-075",
+        "dbscg:bt24-027",
+        "dbscg:bt24-004"
+      ]
+    },
+    "booster-championship-2024-finals-pack-finalist-version": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:p-561",
+        "dbscg:p-454",
+        "dbscg:p-407",
+        "dbscg:bt24-122",
+        "dbscg:bt18-107",
+        "dbscg:bt10-097",
+        "dbscg:db1-088",
+        "dbscg:bt3-063"
+      ]
+    },
+    "booster-championship-2024-finals-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:p-561",
+        "dbscg:p-454",
+        "dbscg:p-407",
+        "dbscg:bt24-122",
+        "dbscg:bt18-107",
+        "dbscg:bt10-097",
+        "dbscg:db1-088",
+        "dbscg:bt3-063"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-9-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-628",
+        "dbscg:p-639",
+        "dbscg:p-633",
+        "dbscg:p-625"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-9": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-625",
+        "dbscg:p-630",
+        "dbscg:p-635",
+        "dbscg:p-626",
+        "dbscg:p-639",
+        "dbscg:p-637",
+        "dbscg:p-640",
+        "dbscg:p-638",
+        "dbscg:p-632",
+        "dbscg:p-628",
+        "dbscg:p-636",
+        "dbscg:p-631",
+        "dbscg:p-629",
+        "dbscg:p-627",
+        "dbscg:p-634"
+      ]
+    },
+    "booster-deluxe-pack-2024-volume-2": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:p-618",
+        "dbscg:p-619",
+        "dbscg:p-621",
+        "dbscg:p-617",
+        "dbscg:p-622",
+        "dbscg:p-620"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-8-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-608",
+        "dbscg:p-603",
+        "dbscg:p-614",
+        "dbscg:p-613"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-8": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-616",
+        "dbscg:p-613",
+        "dbscg:p-609",
+        "dbscg:p-608",
+        "dbscg:p-612",
+        "dbscg:p-603",
+        "dbscg:p-606",
+        "dbscg:p-610",
+        "dbscg:p-605",
+        "dbscg:p-614",
+        "dbscg:p-611",
+        "dbscg:p-604",
+        "dbscg:p-615",
+        "dbscg:p-607",
+        "dbscg:p-602"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-7-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-586",
+        "dbscg:p-575",
+        "dbscg:p-583",
+        "dbscg:p-580"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-7": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-585",
+        "dbscg:p-579",
+        "dbscg:p-576",
+        "dbscg:p-572",
+        "dbscg:p-580",
+        "dbscg:p-584",
+        "dbscg:p-577",
+        "dbscg:p-573",
+        "dbscg:p-575",
+        "dbscg:p-586",
+        "dbscg:p-578",
+        "dbscg:p-581",
+        "dbscg:p-587",
+        "dbscg:p-574",
+        "dbscg:p-583"
+      ]
+    },
+    "championship-2023-finals-zenkai-premium-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "9 printKeys / declared 9.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 9,
+      "guaranteedPrintKeys": [
+        "dbscg:bt18-034",
+        "dbscg:p-473",
+        "dbscg:bt18-005",
+        "dbscg:bt21-103",
+        "dbscg:bt21-104",
+        "dbscg:bt21-074",
+        "dbscg:bt21-069",
+        "dbscg:bt22-035",
+        "dbscg:bt21-003"
+      ]
+    },
+    "championship-2023-finals-celebration-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:bt21-097",
+        "dbscg:p-442",
+        "dbscg:bt19-011",
+        "dbscg:p-331",
+        "dbscg:p-479",
+        "dbscg:bt11-130",
+        "dbscg:bt18-143",
+        "dbscg:bt11-005",
+        "dbscg:bt11-054",
+        "dbscg:p-427",
+        "dbscg:eb1-48",
+        "dbscg:eb1-37",
+        "dbscg:eb1-22",
+        "dbscg:bt16-124",
+        "dbscg:bt11-097"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-5": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-521",
+        "dbscg:p-526",
+        "dbscg:p-520",
+        "dbscg:p-535",
+        "dbscg:p-525",
+        "dbscg:p-531",
+        "dbscg:p-523",
+        "dbscg:p-524",
+        "dbscg:p-530",
+        "dbscg:p-529",
+        "dbscg:p-522",
+        "dbscg:p-533",
+        "dbscg:p-532",
+        "dbscg:p-528",
+        "dbscg:p-527"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-5-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-535",
+        "dbscg:p-524",
+        "dbscg:p-531",
+        "dbscg:p-532"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-4": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-502",
+        "dbscg:p-509",
+        "dbscg:p-511",
+        "dbscg:p-505",
+        "dbscg:p-503",
+        "dbscg:p-513",
+        "dbscg:p-512",
+        "dbscg:p-501",
+        "dbscg:p-504",
+        "dbscg:p-506",
+        "dbscg:p-507",
+        "dbscg:p-500",
+        "dbscg:p-498",
+        "dbscg:p-510",
+        "dbscg:p-499"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-4-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-512",
+        "dbscg:p-509",
+        "dbscg:p-505",
+        "dbscg:p-502"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-3": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-487",
+        "dbscg:p-483",
+        "dbscg:p-491",
+        "dbscg:p-486",
+        "dbscg:p-482",
+        "dbscg:p-479",
+        "dbscg:p-494",
+        "dbscg:p-492",
+        "dbscg:p-490",
+        "dbscg:p-484",
+        "dbscg:p-480",
+        "dbscg:p-493",
+        "dbscg:p-481",
+        "dbscg:p-485",
+        "dbscg:p-488"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-3-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-483",
+        "dbscg:p-493",
+        "dbscg:p-488",
+        "dbscg:p-479"
+      ]
+    },
+    "booster-z03-dash-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:p-473",
+        "dbscg:p-461",
+        "dbscg:p-468",
+        "dbscg:p-460",
+        "dbscg:p-459",
+        "dbscg:p-458",
+        "dbscg:p-475",
+        "dbscg:p-474",
+        "dbscg:p-472",
+        "dbscg:p-471",
+        "dbscg:p-470",
+        "dbscg:p-469",
+        "dbscg:p-467",
+        "dbscg:p-466",
+        "dbscg:p-465"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-2": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-446",
+        "dbscg:p-442",
+        "dbscg:p-450",
+        "dbscg:p-452",
+        "dbscg:p-439",
+        "dbscg:p-445",
+        "dbscg:p-440",
+        "dbscg:p-437",
+        "dbscg:p-447",
+        "dbscg:p-449",
+        "dbscg:p-448",
+        "dbscg:p-441",
+        "dbscg:p-438",
+        "dbscg:p-451",
+        "dbscg:p-444"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-2-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-446",
+        "dbscg:p-452",
+        "dbscg:p-445",
+        "dbscg:p-442"
+      ]
+    },
+    "booster-championship-2022-zenkai-selection-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "dbscg:bt19-036",
+        "dbscg:bt18-093",
+        "dbscg:bt19-037",
+        "dbscg:bt19-071",
+        "dbscg:bt18-124",
+        "dbscg:bt18-005"
+      ]
+    },
+    "booster-championship-2022-fusion-et-potara-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "dbscg:bt12-137",
+        "dbscg:bt19-084",
+        "dbscg:sd19-04",
+        "dbscg:sd18-02",
+        "dbscg:bt18-019",
+        "dbscg:bt11-012"
+      ]
+    },
+    "booster-championship-2022-celebration-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:eb1-51",
+        "dbscg:bt10-011",
+        "dbscg:bt9-133",
+        "dbscg:p-177",
+        "dbscg:bt15-042",
+        "dbscg:bt17-083",
+        "dbscg:bt17-004",
+        "dbscg:bt17-066",
+        "dbscg:db1-084",
+        "dbscg:eb1-64",
+        "dbscg:eb1-35",
+        "dbscg:p-257",
+        "dbscg:db3-133",
+        "dbscg:db2-072",
+        "dbscg:ex13-04"
+      ]
+    },
+    "booster-championship-pack-2022-volume-3": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-430",
+        "dbscg:p-431",
+        "dbscg:p-428",
+        "dbscg:p-429",
+        "dbscg:p-432"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-1-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-414",
+        "dbscg:p-407",
+        "dbscg:p-418",
+        "dbscg:p-410"
+      ]
+    },
+    "booster-pack-de-tournoi-zenkai-series-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-417",
+        "dbscg:p-410",
+        "dbscg:p-418",
+        "dbscg:p-414",
+        "dbscg:p-419",
+        "dbscg:p-411",
+        "dbscg:db3-124",
+        "dbscg:p-408",
+        "dbscg:bt15-096",
+        "dbscg:p-416",
+        "dbscg:p-415",
+        "dbscg:p-407",
+        "dbscg:p-413",
+        "dbscg:p-412",
+        "dbscg:p-409"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-8-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-388",
+        "dbscg:p-390",
+        "dbscg:p-389",
+        "dbscg:p-384"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-8": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-380",
+        "dbscg:p-383",
+        "dbscg:p-390",
+        "dbscg:db3-136",
+        "dbscg:p-384",
+        "dbscg:p-386",
+        "dbscg:p-385",
+        "dbscg:p-389",
+        "dbscg:p-392",
+        "dbscg:p-391",
+        "dbscg:p-393",
+        "dbscg:p-387",
+        "dbscg:p-388",
+        "dbscg:p-381",
+        "dbscg:p-382"
+      ]
+    },
+    "booster-championship-pack-2022-volume-2": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-423",
+        "dbscg:p-421",
+        "dbscg:p-424",
+        "dbscg:p-422",
+        "dbscg:p-420"
+      ]
+    },
+    "booster-championship-pack-2022-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-396",
+        "dbscg:p-398",
+        "dbscg:p-397",
+        "dbscg:p-395",
+        "dbscg:p-394"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-7-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-376",
+        "dbscg:p-373",
+        "dbscg:p-375",
+        "dbscg:p-368"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-7": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-364",
+        "dbscg:p-363",
+        "dbscg:p-376",
+        "dbscg:p-372",
+        "dbscg:p-365",
+        "dbscg:p-369",
+        "dbscg:p-370",
+        "dbscg:p-375",
+        "dbscg:p-373",
+        "dbscg:p-368",
+        "dbscg:p-367",
+        "dbscg:p-374",
+        "dbscg:p-371",
+        "dbscg:p-366",
+        "dbscg:db2-061"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-6-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-349",
+        "dbscg:p-352",
+        "dbscg:p-354",
+        "dbscg:p-347"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-6": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-354",
+        "dbscg:p-343",
+        "dbscg:p-347",
+        "dbscg:p-346",
+        "dbscg:p-351",
+        "dbscg:p-345",
+        "dbscg:p-350",
+        "dbscg:p-341",
+        "dbscg:p-353",
+        "dbscg:p-348",
+        "dbscg:p-352",
+        "dbscg:p-344",
+        "dbscg:p-342",
+        "dbscg:p-349",
+        "dbscg:bt7-083"
+      ]
+    },
+    "booster-championship-pack-2021-volume-3": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-359",
+        "dbscg:p-358",
+        "dbscg:p-357",
+        "dbscg:p-356",
+        "dbscg:p-355"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-5-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-314",
+        "dbscg:p-326",
+        "dbscg:p-327",
+        "dbscg:p-318"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-5": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:p-320",
+        "dbscg:p-314",
+        "dbscg:p-316",
+        "dbscg:bt11-030",
+        "dbscg:p-327",
+        "dbscg:p-321",
+        "dbscg:p-322",
+        "dbscg:p-319",
+        "dbscg:p-318",
+        "dbscg:p-315",
+        "dbscg:p-317",
+        "dbscg:p-326",
+        "dbscg:p-325",
+        "dbscg:p-323",
+        "dbscg:p-324"
+      ]
+    },
+    "booster-championship-pack-2021-volume-2": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-333",
+        "dbscg:p-334",
+        "dbscg:p-337",
+        "dbscg:p-335",
+        "dbscg:p-336"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-4": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:p-307",
+        "dbscg:p-299",
+        "dbscg:p-310",
+        "dbscg:p-300",
+        "dbscg:p-308",
+        "dbscg:p-293",
+        "dbscg:p-296",
+        "dbscg:p-305",
+        "dbscg:p-298",
+        "dbscg:p-303",
+        "dbscg:p-309",
+        "dbscg:p-297",
+        "dbscg:p-304",
+        "dbscg:p-301",
+        "dbscg:p-294"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-4-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-308",
+        "dbscg:p-299",
+        "dbscg:p-310",
+        "dbscg:p-300"
+      ]
+    },
+    "booster-championship-pack-2021-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-331",
+        "dbscg:p-330",
+        "dbscg:p-329",
+        "dbscg:p-328",
+        "dbscg:p-332"
+      ]
+    },
+    "booster-unison-warrior-series-vicious-rajuvenation-revival-pack": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "dbscg:p-269",
+        "dbscg:p-270",
+        "dbscg:p-271",
+        "dbscg:db1-102",
+        "dbscg:db2-108",
+        "dbscg:p-268"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-3-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-276",
+        "dbscg:p-274",
+        "dbscg:p-286",
+        "dbscg:p-284"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-3": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:p-274",
+        "dbscg:p-284",
+        "dbscg:p-285",
+        "dbscg:p-286",
+        "dbscg:p-275",
+        "dbscg:p-272",
+        "dbscg:p-273",
+        "dbscg:p-288",
+        "dbscg:p-287",
+        "dbscg:p-278",
+        "dbscg:p-281",
+        "dbscg:p-277",
+        "dbscg:p-279",
+        "dbscg:p-280",
+        "dbscg:p-289"
+      ]
+    },
+    "booster-championship-pack-2020-volume-2": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys / declared 10.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 10,
+      "guaranteedPrintKeys": [
+        "dbscg:p-233",
+        "dbscg:p-237",
+        "dbscg:p-236",
+        "dbscg:p-235",
+        "dbscg:p-234",
+        "dbscg:p-241",
+        "dbscg:p-239",
+        "dbscg:p-242",
+        "dbscg:p-240",
+        "dbscg:p-238"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-2": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:p-261",
+        "dbscg:p-257",
+        "dbscg:p-254",
+        "dbscg:p-250",
+        "dbscg:p-247",
+        "dbscg:p-246",
+        "dbscg:p-262",
+        "dbscg:p-253",
+        "dbscg:p-255",
+        "dbscg:p-260",
+        "dbscg:p-263",
+        "dbscg:p-258",
+        "dbscg:p-259",
+        "dbscg:p-256",
+        "dbscg:p-252"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-2-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-254",
+        "dbscg:p-250",
+        "dbscg:p-260",
+        "dbscg:p-261"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:p-220",
+        "dbscg:p-230",
+        "dbscg:p-219",
+        "dbscg:p-214",
+        "dbscg:p-222",
+        "dbscg:p-218",
+        "dbscg:p-217",
+        "dbscg:p-215",
+        "dbscg:p-221",
+        "dbscg:p-229",
+        "dbscg:p-216",
+        "dbscg:p-226",
+        "dbscg:p-223",
+        "dbscg:p-224",
+        "dbscg:p-228"
+      ]
+    },
+    "booster-pack-de-tournoi-unison-warrior-series-volume-1-winner": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:p-230",
+        "dbscg:p-221",
+        "dbscg:p-219",
+        "dbscg:p-214"
+      ]
+    },
+    "booster-championship-pack-2020-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys / declared 10.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 10,
+      "guaranteedPrintKeys": [
+        "dbscg:p-202",
+        "dbscg:p-201",
+        "dbscg:p-205",
+        "dbscg:p-209",
+        "dbscg:p-204",
+        "dbscg:p-207",
+        "dbscg:p-208",
+        "dbscg:p-203",
+        "dbscg:p-206",
+        "dbscg:p-210"
+      ]
+    },
+    "booster-pack-promotionnel-volume-7": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "9 printKeys / declared 9.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 9,
+      "guaranteedPrintKeys": [
+        "dbscg:p-198",
+        "dbscg:p-190",
+        "dbscg:p-191",
+        "dbscg:p-196",
+        "dbscg:p-188",
+        "dbscg:p-199",
+        "dbscg:p-197",
+        "dbscg:p-189",
+        "dbscg:p-187"
+      ]
+    },
+    "booster-pack-promotionnel-volume-6": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-164",
+        "dbscg:p-168",
+        "dbscg:p-167",
+        "dbscg:p-165",
+        "dbscg:p-166"
+      ]
+    },
+    "booster-championship-pack-2019": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-141",
+        "dbscg:p-140",
+        "dbscg:p-139",
+        "dbscg:p-138",
+        "dbscg:p-142"
+      ]
+    },
+    "booster-event-pack-02": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "dbscg:tb2-067",
+        "dbscg:tb3-065",
+        "dbscg:bt1-027",
+        "dbscg:bt3-017"
+      ]
+    },
+    "booster-pack-promotionnel-volume-5": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:p-132",
+        "dbscg:p-131",
+        "dbscg:p-129",
+        "dbscg:p-127",
+        "dbscg:p-126",
+        "dbscg:p-133",
+        "dbscg:p-130",
+        "dbscg:p-128"
+      ]
+    },
+    "booster-event-pack-special-anniversary-box": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "dbscg:bt1-110",
+        "dbscg:bt3-110",
+        "dbscg:bt1-101",
+        "dbscg:bt2-098",
+        "dbscg:bt1-080",
+        "dbscg:bt1-076",
+        "dbscg:bt2-058",
+        "dbscg:bt2-048",
+        "dbscg:p-047",
+        "dbscg:p-040",
+        "dbscg:bt2-010",
+        "dbscg:bt1-005"
+      ]
+    },
+    "booster-power-booster-world-martial-arts-tournament": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/20 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 20,
+      "guaranteedPrintKeys": [
+        "dbscg:p-158",
+        "dbscg:p-159",
+        "dbscg:p-161",
+        "dbscg:p-152",
+        "dbscg:p-150",
+        "dbscg:p-156",
+        "dbscg:p-162",
+        "dbscg:p-155",
+        "dbscg:p-151",
+        "dbscg:p-149",
+        "dbscg:p-148",
+        "dbscg:p-147",
+        "dbscg:p-157",
+        "dbscg:p-153",
+        "dbscg:p-144"
+      ]
+    },
+    "booster-pack-promotionnel-volume-4": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:p-101",
+        "dbscg:p-096",
+        "dbscg:p-102",
+        "dbscg:p-100",
+        "dbscg:p-099",
+        "dbscg:p-098",
+        "dbscg:p-097",
+        "dbscg:p-095"
+      ]
+    },
+    "booster-power-booster-miraculous-revival": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-123",
+        "dbscg:p-122",
+        "dbscg:p-121",
+        "dbscg:p-120",
+        "dbscg:p-119"
+      ]
+    },
+    "booster-dragon-ball-super-broly-pack-promo-cinema": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "2 printKeys / declared 2.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 2,
+      "guaranteedPrintKeys": [
+        "dbscg:p-091",
+        "dbscg:p-092"
+      ]
+    },
+    "booster-power-booster-colossal-warfare": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-116",
+        "dbscg:p-115",
+        "dbscg:p-114",
+        "dbscg:p-113",
+        "dbscg:p-112"
+      ]
+    },
+    "booster-pack-promotionnel-volume-3": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "14 printKeys / declared 14.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 14,
+      "guaranteedPrintKeys": [
+        "dbscg:p-084",
+        "dbscg:p-071",
+        "dbscg:p-077",
+        "dbscg:p-079",
+        "dbscg:p-073",
+        "dbscg:p-083",
+        "dbscg:p-080",
+        "dbscg:p-081",
+        "dbscg:p-072",
+        "dbscg:p-082",
+        "dbscg:p-078",
+        "dbscg:p-070",
+        "dbscg:p-069",
+        "dbscg:p-068"
+      ]
+    },
+    "booster-judge-pack-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/22 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 22,
+      "guaranteedPrintKeys": [
+        "dbscg:bt2-060",
+        "dbscg:bt2-010",
+        "dbscg:p-033",
+        "dbscg:bt1-080",
+        "dbscg:p-049",
+        "dbscg:p-036",
+        "dbscg:bt2-044",
+        "dbscg:bt3-110",
+        "dbscg:bt1-107",
+        "dbscg:bt3-105",
+        "dbscg:bt3-104",
+        "dbscg:bt2-104",
+        "dbscg:tb1-069",
+        "dbscg:bt3-067",
+        "dbscg:bt1-053"
+      ]
+    },
+    "booster-dragon-ball-super-card-game-championship-2018": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:p-067",
+        "dbscg:p-066",
+        "dbscg:p-064",
+        "dbscg:p-065",
+        "dbscg:p-063"
+      ]
+    },
+    "booster-pack-promotionnel-volume-2": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:p-055",
+        "dbscg:p-056",
+        "dbscg:p-053",
+        "dbscg:p-050",
+        "dbscg:p-049",
+        "dbscg:p-054",
+        "dbscg:p-051",
+        "dbscg:p-052"
+      ]
+    },
+    "booster-pack-promotionnel-volume-1": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/18 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:ex02-01",
+        "dbscg:ex01-02",
+        "dbscg:ex01-05",
+        "dbscg:p-044",
+        "dbscg:ex02-04",
+        "dbscg:ex01-06",
+        "dbscg:ex01-04",
+        "dbscg:ex02-02",
+        "dbscg:p-046",
+        "dbscg:p-045",
+        "dbscg:ex02-07",
+        "dbscg:ex02-06",
+        "dbscg:ex02-05",
+        "dbscg:ex01-03",
+        "dbscg:ex01-01"
+      ]
+    },
+    "booster-promotionnel-tournoi-officiel-volume-1-3": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/24 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 24,
+      "guaranteedPrintKeys": [
+        "dbscg:p-033",
+        "dbscg:p-019",
+        "dbscg:p-035",
+        "dbscg:p-015",
+        "dbscg:p-006",
+        "dbscg:p-003",
+        "dbscg:p-034",
+        "dbscg:p-017",
+        "dbscg:p-014",
+        "dbscg:p-002",
+        "dbscg:p-009",
+        "dbscg:p-004",
+        "dbscg:p-037",
+        "dbscg:p-036",
+        "dbscg:p-013"
+      ]
+    },
+    "sd23-starter-deck-final-radiance": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "19 printKeys / declared 19.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 19,
+      "guaranteedPrintKeys": [
+        "dbscg:ex06-02-pr",
+        "dbscg:bt18-127",
+        "dbscg:bt16-101",
+        "dbscg:bt16-124",
+        "dbscg:bt13-135",
+        "dbscg:bt12-128",
+        "dbscg:bt12-133",
+        "dbscg:bt11-130",
+        "dbscg:bt7-102",
+        "dbscg:bt6-036",
+        "dbscg:bt5-115",
+        "dbscg:sd23-01",
+        "dbscg:sd23-02",
+        "dbscg:sd23-03",
+        "dbscg:sd23-04",
+        "dbscg:sd23-05",
+        "dbscg:sd23-06",
+        "dbscg:sd23-07",
+        "dbscg:ex15-05"
+      ]
+    },
+    "be22-ultimate-deck-2023-ex22": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "13 printKeys / declared 13.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 13,
+      "guaranteedPrintKeys": [
+        "dbscg:ex22-01",
+        "dbscg:ex22-02",
+        "dbscg:ex22-03",
+        "dbscg:ex22-04",
+        "dbscg:ex22-05",
+        "dbscg:ex22-06",
+        "dbscg:ex22-07",
+        "dbscg:ex22-08",
+        "dbscg:ex22-09",
+        "dbscg:ex22-10",
+        "dbscg:ex22-11",
+        "dbscg:ex22-12",
+        "dbscg:ex22-13"
+      ]
+    },
+    "sd22-starter-deck-proud-warrior": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "19 printKeys / declared 19.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 19,
+      "guaranteedPrintKeys": [
+        "dbscg:eb1-48",
+        "dbscg:bt10-107",
+        "dbscg:bt5-101",
+        "dbscg:bt10-100",
+        "dbscg:bt10-099",
+        "dbscg:bt10-098",
+        "dbscg:bt10-097",
+        "dbscg:bt12-095",
+        "dbscg:bt10-094",
+        "dbscg:bt6-086",
+        "dbscg:db3-082",
+        "dbscg:bt7-076",
+        "dbscg:sd22-01",
+        "dbscg:sd22-02",
+        "dbscg:sd22-03",
+        "dbscg:sd22-04",
+        "dbscg:sd22-05",
+        "dbscg:sd22-06",
+        "dbscg:sd22-07"
+      ]
+    },
+    "sd21-starter-deck-ultimate-awakened-power": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "19 printKeys / declared 20.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 20,
+      "guaranteedPrintKeys": [
+        "dbscg:db2-131",
+        "dbscg:eb1-37",
+        "dbscg:db2-136",
+        "dbscg:tb1-079",
+        "dbscg:tb1-076",
+        "dbscg:bt5-075",
+        "dbscg:db2-067",
+        "dbscg:bt16-051",
+        "dbscg:tb1-027",
+        "dbscg:db1-023",
+        "dbscg:db2-008",
+        "dbscg:bt14-006",
+        "dbscg:sd21-01",
+        "dbscg:sd21-02",
+        "dbscg:sd21-03",
+        "dbscg:sd21-04",
+        "dbscg:sd21-05",
+        "dbscg:sd21-06",
+        "dbscg:sd21-07"
+      ]
+    },
+    "sd17-starter-deck-red-rage": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "17 printKeys / declared 18.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:bt11-005",
+        "dbscg:eb1-11",
+        "dbscg:sd2-03",
+        "dbscg:bt5-023",
+        "dbscg:sd2-02",
+        "dbscg:tb2-012",
+        "dbscg:bt3-012",
+        "dbscg:bt15-011",
+        "dbscg:bt15-009",
+        "dbscg:bt13-009",
+        "dbscg:bt3-005",
+        "dbscg:bt15-003",
+        "dbscg:sd17-01",
+        "dbscg:sd17-02",
+        "dbscg:sd17-03",
+        "dbscg:sd17-04",
+        "dbscg:sd17-05"
+      ]
+    },
+    "sd19-starter-deck-green-fusion": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "16 printKeys / declared 17.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 17,
+      "guaranteedPrintKeys": [
+        "dbscg:bt10-075",
+        "dbscg:eb1-37",
+        "dbscg:bt11-090",
+        "dbscg:bt11-081",
+        "dbscg:bt11-079",
+        "dbscg:bt11-078",
+        "dbscg:bt10-071",
+        "dbscg:bt10-067",
+        "dbscg:bt11-065",
+        "dbscg:db3-063",
+        "dbscg:bt11-063",
+        "dbscg:sd19-01",
+        "dbscg:sd19-02",
+        "dbscg:sd19-03",
+        "dbscg:sd19-04",
+        "dbscg:sd19-05"
+      ]
+    },
+    "sd20-starter-deck-yellow-transformation": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "17 printKeys / declared 17.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 17,
+      "guaranteedPrintKeys": [
+        "dbscg:bt15-107",
+        "dbscg:eb1-48",
+        "dbscg:bt3-104",
+        "dbscg:bt11-097",
+        "dbscg:bt3-095",
+        "dbscg:bt6-091",
+        "dbscg:db3-090",
+        "dbscg:bt3-090",
+        "dbscg:bt3-089",
+        "dbscg:tb2-064",
+        "dbscg:tb2-055",
+        "dbscg:tb2-054",
+        "dbscg:sd20-01",
+        "dbscg:sd20-02",
+        "dbscg:sd20-03",
+        "dbscg:sd20-04",
+        "dbscg:sd20-05"
+      ]
+    },
+    "sd18-starter-deck-blue-future": {
+      "source": "dbscards staging + catalog join (near-complete fiche)",
+      "verifiedAt": "2026-09-13",
+      "notes": "16/18 printKeys — near-complete Bandai/dbscards; missing reprints may remain.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 18,
+      "guaranteedPrintKeys": [
+        "dbscg:bt10-045",
+        "dbscg:bt11-054",
+        "dbscg:bt10-044",
+        "dbscg:eb1-22",
+        "dbscg:bt1-053",
+        "dbscg:bt5-050",
+        "dbscg:bt10-048",
+        "dbscg:bt10-047",
+        "dbscg:bt10-043",
+        "dbscg:bt10-042",
+        "dbscg:bt10-040",
+        "dbscg:sd18-01",
+        "dbscg:sd18-02",
+        "dbscg:sd18-03",
+        "dbscg:sd18-04",
+        "dbscg:sd18-05"
+      ]
+    },
+    "be20-ultimate-deck-2022-ex20-cell-return-of-the-ultimate-lifeform": {
+      "source": "https://www.dbs-cardgame.com/asia/product/dbs-es20.php",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste officielle Bandai Asia — structure 51 cartes (silver foil) + 1 booster B16 (loterie séparée).",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "packsContained": 1,
+      "guaranteedPrints": [
+        {
+          "printKey": "dbscg:ex20-01",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:ex20-02",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-03",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-04",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-05",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-06",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-07",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-08",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-09",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:ex20-10",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt2-084",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt5-075",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt9-099",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:bt10-075",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt11-063",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:xd3-02",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:xd3-04",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:xd3-09",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:xd3-10",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:eb1-37",
+          "qty": 2
+        }
+      ],
+      "guaranteedPrintKeys": [
+        "dbscg:ex20-01",
+        "dbscg:ex20-02",
+        "dbscg:ex20-03",
+        "dbscg:ex20-04",
+        "dbscg:ex20-05",
+        "dbscg:ex20-06",
+        "dbscg:ex20-07",
+        "dbscg:ex20-08",
+        "dbscg:ex20-09",
+        "dbscg:ex20-10",
+        "dbscg:bt2-084",
+        "dbscg:bt5-075",
+        "dbscg:bt9-099",
+        "dbscg:bt10-075",
+        "dbscg:bt11-063",
+        "dbscg:xd3-02",
+        "dbscg:xd3-04",
+        "dbscg:xd3-09",
+        "dbscg:xd3-10",
+        "dbscg:eb1-37"
+      ]
+    },
+    "sd16-darkness-reborn": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd16-01",
+        "dbscg:sd16-02",
+        "dbscg:sd16-03",
+        "dbscg:sd16-04",
+        "dbscg:sd16-05"
+      ]
+    },
+    "sd15-pride-of-the-saiyans": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd15-01",
+        "dbscg:sd15-02",
+        "dbscg:sd15-03",
+        "dbscg:sd15-04",
+        "dbscg:sd15-05"
+      ]
+    },
+    "sd14-saiyan-wonder": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "16 printKeys / declared 15.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "dbscg:bt10-143",
+        "dbscg:bt9-076",
+        "dbscg:bt7-102",
+        "dbscg:bt7-101",
+        "dbscg:bt7-100",
+        "dbscg:bt5-115",
+        "dbscg:bt5-112",
+        "dbscg:bt4-117",
+        "dbscg:bt4-104",
+        "dbscg:bt3-122",
+        "dbscg:bt1-005",
+        "dbscg:sd14-01",
+        "dbscg:sd14-02",
+        "dbscg:sd14-03",
+        "dbscg:sd14-04",
+        "dbscg:sd14-05"
+      ]
+    },
+    "sd13-clan-collusion": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd13-01",
+        "dbscg:sd13-02",
+        "dbscg:sd13-03",
+        "dbscg:sd13-04",
+        "dbscg:sd13-05"
+      ]
+    },
+    "sd12-spirit-of-potara": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd12-01",
+        "dbscg:sd12-02",
+        "dbscg:sd12-03",
+        "dbscg:sd12-04",
+        "dbscg:sd12-05"
+      ]
+    },
+    "sd11-instinct-surpassed": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd11-01",
+        "dbscg:sd11-02",
+        "dbscg:sd11-03",
+        "dbscg:sd11-04",
+        "dbscg:sd11-05"
+      ]
+    },
+    "xd03-the-ultimate-life-form": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys / declared 10.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 10,
+      "guaranteedPrintKeys": [
+        "dbscg:xd3-01",
+        "dbscg:xd3-02",
+        "dbscg:xd3-03",
+        "dbscg:xd3-04",
+        "dbscg:xd3-05",
+        "dbscg:xd3-06",
+        "dbscg:xd3-07",
+        "dbscg:xd3-08",
+        "dbscg:xd3-09",
+        "dbscg:xd3-10"
+      ]
+    },
+    "xd02-android-duality": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "19 printKeys / declared 19.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 19,
+      "guaranteedPrintKeys": [
+        "dbscg:bt8-054",
+        "dbscg:bt8-051",
+        "dbscg:bt2-048",
+        "dbscg:bt8-043",
+        "dbscg:bt8-042",
+        "dbscg:bt8-037",
+        "dbscg:bt8-036",
+        "dbscg:bt8-035",
+        "dbscg:bt8-034",
+        "dbscg:xd2-01",
+        "dbscg:xd2-02",
+        "dbscg:xd2-03",
+        "dbscg:xd2-04",
+        "dbscg:xd2-05",
+        "dbscg:xd2-06",
+        "dbscg:xd2-07",
+        "dbscg:xd2-08",
+        "dbscg:xd2-09",
+        "dbscg:xd2-10"
+      ]
+    },
+    "sd10-parasitic-overlord": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "dbscg:bt8-088",
+        "dbscg:bt8-086",
+        "dbscg:bt8-084",
+        "dbscg:bt8-083",
+        "dbscg:bt8-081",
+        "dbscg:bt8-021",
+        "dbscg:bt8-018",
+        "dbscg:bt8-016",
+        "dbscg:bt8-006",
+        "dbscg:bt8-004",
+        "dbscg:sd10-01",
+        "dbscg:sd10-02",
+        "dbscg:sd10-03",
+        "dbscg:sd10-04",
+        "dbscg:sd10-05"
+      ]
+    },
+    "sd09-the-saiyan-legacy": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "16 printKeys / declared 16.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 16,
+      "guaranteedPrintKeys": [
+        "dbscg:bt1-080",
+        "dbscg:bt3-062",
+        "dbscg:bt5-056",
+        "dbscg:bt5-023",
+        "dbscg:bt7-023",
+        "dbscg:bt1-014",
+        "dbscg:bt3-011",
+        "dbscg:bt4-010",
+        "dbscg:bt4-008",
+        "dbscg:bt6-006",
+        "dbscg:bt7-003",
+        "dbscg:sd9-01",
+        "dbscg:sd9-02",
+        "dbscg:sd9-03",
+        "dbscg:sd9-04",
+        "dbscg:sd9-05"
+      ]
+    },
+    "xd01-universe-6-assailants": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "13 printKeys / declared 13.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 13,
+      "guaranteedPrintKeys": [
+        "dbscg:bt5-101",
+        "dbscg:bt7-082",
+        "dbscg:bt7-041",
+        "dbscg:xd1-01",
+        "dbscg:xd1-02",
+        "dbscg:xd1-03",
+        "dbscg:xd1-04",
+        "dbscg:xd1-05",
+        "dbscg:xd1-06",
+        "dbscg:xd1-07",
+        "dbscg:xd1-08",
+        "dbscg:xd1-09",
+        "dbscg:xd1-10"
+      ]
+    },
+    "sd08-rising-broly": {
+      "source": "https://www.dbs-cardgame.com/asia/product/dbs-sd08.php",
+      "verifiedAt": "2026-09-13",
+      "notes": "Bandai Asia : 50 cartes + 1 Leader (51) ; 10 exclusives SD8. Liste Pieces absente de la fiche produit — preview boutique partielle uniquement.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "dbscg:p-107",
+        "dbscg:p-104",
+        "dbscg:p-103",
+        "dbscg:p-093",
+        "dbscg:p-106",
+        "dbscg:bt1-109",
+        "dbscg:bt1-107",
+        "dbscg:bt6-078",
+        "dbscg:bt6-076",
+        "dbscg:sd8-01",
+        "dbscg:sd8-02",
+        "dbscg:sd8-03",
+        "dbscg:sd8-04",
+        "dbscg:sd8-05",
+        "dbscg:sd8-06",
+        "dbscg:sd8-07",
+        "dbscg:sd8-08",
+        "dbscg:sd8-09",
+        "dbscg:sd8-10"
+      ]
+    },
+    "sd07-shenrons-advent": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd7-01",
+        "dbscg:sd7-02",
+        "dbscg:sd7-03",
+        "dbscg:sd7-04",
+        "dbscg:sd7-05"
+      ]
+    },
+    "sd06-resurrected-fusion": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd6-01",
+        "dbscg:sd6-02",
+        "dbscg:sd6-03",
+        "dbscg:sd6-04",
+        "dbscg:sd6-05"
+      ]
+    },
+    "sd05-the-crimson-saiyan": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd5-01",
+        "dbscg:sd5-02",
+        "dbscg:sd5-03",
+        "dbscg:sd5-04",
+        "dbscg:sd5-05"
+      ]
+    },
+    "sd04-the-guardian-of-namekians": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "dbscg:sd4-01",
+        "dbscg:sd4-02",
+        "dbscg:sd4-03",
+        "dbscg:sd4-04",
+        "dbscg:sd4-05"
+      ]
+    },
+    "sd03-dark-invasion": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "16 printKeys / declared 17.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 17,
+      "guaranteedPrintKeys": [
+        "dbscg:bt3-122",
+        "dbscg:bt3-121",
+        "dbscg:bt3-115",
+        "dbscg:bt3-113",
+        "dbscg:bt3-112",
+        "dbscg:bt3-062",
+        "dbscg:bt3-061",
+        "dbscg:bt3-058",
+        "dbscg:bt2-077",
+        "dbscg:bt2-072",
+        "dbscg:bt1-071",
+        "dbscg:sd3-01",
+        "dbscg:sd3-02",
+        "dbscg:sd3-03",
+        "dbscg:sd3-04",
+        "dbscg:sd3-05"
+      ]
+    },
+    "sd02-the-extreme-evolution": {
+      "source": "dbscards staging + catalog join (near-complete fiche)",
+      "verifiedAt": "2026-09-13",
+      "notes": "5/6 printKeys — near-complete Bandai/dbscards; missing reprints may remain.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "dbscg:sd2-01",
+        "dbscg:sd2-02",
+        "dbscg:sd2-03",
+        "dbscg:sd2-04",
+        "dbscg:sd2-05"
+      ]
+    },
+    "sd01-the-awakening": {
+      "source": "https://www.dbs-cardgame.com/asia/product/dbs-sd01.php",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste officielle Bandai Asia — 51 cartes (50 + 1 Leader) avec quantités Pieces.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "packsContained": 1,
+      "guaranteedPrints": [
+        {
+          "printKey": "dbscg:sd1-01",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:sd1-02",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:sd1-03",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:sd1-04",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:sd1-05",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt1-033",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:bt1-034",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt1-035",
+          "qty": 3
+        },
+        {
+          "printKey": "dbscg:bt1-037",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:bt1-039",
+          "qty": 3
+        },
+        {
+          "printKey": "dbscg:bt1-040",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:bt1-042",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt1-044",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:bt1-046",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:bt1-050",
+          "qty": 4
+        },
+        {
+          "printKey": "dbscg:bt1-054",
+          "qty": 2
+        },
+        {
+          "printKey": "dbscg:bt1-055",
+          "qty": 4
+        }
+      ],
+      "guaranteedPrintKeys": [
+        "dbscg:sd1-01",
+        "dbscg:sd1-02",
+        "dbscg:sd1-03",
+        "dbscg:sd1-04",
+        "dbscg:sd1-05",
+        "dbscg:bt1-033",
+        "dbscg:bt1-034",
+        "dbscg:bt1-035",
+        "dbscg:bt1-037",
+        "dbscg:bt1-039",
+        "dbscg:bt1-040",
+        "dbscg:bt1-042",
+        "dbscg:bt1-044",
+        "dbscg:bt1-046",
+        "dbscg:bt1-050",
+        "dbscg:bt1-054",
+        "dbscg:bt1-055"
+      ]
+    },
+    "premium-seventh-anniversary-box-2024": {
+      "source": "https://www.dbs-cardgame.com/asia/product/dbs-es24.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "PAB 2024 : 7 leaders spéciaux + 1 Premium 7th Leader (alt-art rare) + deck 24 (12×2) + 60 nouvelles (30×2) + 10 réimpressions.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 104
+    },
+    "premium-anniversary-box-2023": {
+      "source": "https://www.dbs-cardgame.com/asia/product/dbs-es23.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "PAB 2023 : Z-Card set 20 + Battle set 72 (36×2) + 2 SCR + 10 réimpressions (5×2). Aucun booster.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 104
+    },
+    "special-5th-anniversary-box": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-es21.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "5th Anniversary Set : 36 (18×2) silver + 2 boosters 5th Anniv (12 cartes) + 1 SCR (3 types) + 36 errata.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 97
+    },
+    "coffret-dragon-ball-super-card-game-theme-selection-vegeta": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-ts02.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Theme Selection : 15 réimpressions alt-art fixes, « contents are the same for any box » (Bandai).",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "dbscg:bt10-041",
+        "dbscg:bt10-068",
+        "dbscg:bt10-088",
+        "dbscg:bt10-105",
+        "dbscg:bt11-032",
+        "dbscg:bt11-052",
+        "dbscg:bt11-053",
+        "dbscg:bt11-066",
+        "dbscg:bt9-133",
+        "dbscg:db1-002",
+        "dbscg:db2-133",
+        "dbscg:db2-159",
+        "dbscg:db3-126",
+        "dbscg:eb1-07",
+        "dbscg:ex12-02"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "dbscg:bt10-041",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt10-068",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt10-088",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt10-105",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt11-032",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt11-052",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt11-053",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt11-066",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt9-133",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db1-002",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db2-133",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db2-159",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db3-126",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:eb1-07",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:ex12-02",
+          "qty": 1
+        }
+      ]
+    },
+    "coffret-dragon-ball-super-card-game-theme-selection-history-of-son-goku": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-ts01.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Theme Selection : 15 réimpressions alt-art fixes, « contents are the same for any box » (Bandai).",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "dbscg:bt10-060",
+        "dbscg:bt10-065",
+        "dbscg:bt10-066",
+        "dbscg:bt11-034",
+        "dbscg:bt11-074",
+        "dbscg:bt11-093",
+        "dbscg:bt13-012",
+        "dbscg:bt13-071",
+        "dbscg:bt14-029",
+        "dbscg:bt9-131",
+        "dbscg:db1-021",
+        "dbscg:db1-040",
+        "dbscg:db3-022",
+        "dbscg:db3-116",
+        "dbscg:db3-127"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "dbscg:bt10-060",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt10-065",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt10-066",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt11-034",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt11-074",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt11-093",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt13-012",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt13-071",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt14-029",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:bt9-131",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db1-021",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db1-040",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db3-022",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db3-116",
+          "qty": 1
+        },
+        {
+          "printKey": "dbscg:db3-127",
+          "qty": 1
+        }
+      ]
+    },
+    "special-anniversary-box-2021-gogeta-super-saiyan-4-version-3": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-es19.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Special Anniversary Box 2021 : set 70 (35×2) + 2 packs anniversaire ×5 + 4 Vault Power Up ×4. Boîte SS4 Gogeta.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 96
+    },
+    "special-anniversary-box-2021-dragons-malefiques-version-4": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-es19.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Special Anniversary Box 2021 (voir version Gogeta). Boîte Syn Shenron.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 96
+    },
+    "special-anniversary-box-2021-vegeta-version-2": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-es19.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Special Anniversary Box 2021 (voir version Gogeta). Boîte Vegeta.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 96
+    },
+    "ultimate-starter-box-vegeta-super-saiyan-4": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": null,
+      "guaranteedPrintKeys": [
+        "dbscg:ex16-01",
+        "dbscg:ex16-02",
+        "dbscg:ex16-03",
+        "dbscg:ex16-04",
+        "dbscg:ex16-05",
+        "dbscg:ex16-06",
+        "dbscg:ex16-07",
+        "dbscg:ex16-08",
+        "dbscg:ex16-09",
+        "dbscg:ex16-10"
+      ]
+    },
+    "special-anniversary-box-the-tournament-of-power-version-2": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-es13.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Special Anniversary Box 2020 (voir autre version). Version boîte 2/2.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 96
+    },
+    "ge01-coffret-gift-box-2018": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-ge01.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Gift Box GE01 : 6 boosters Series 5 + 1 Official Tournament Pack Vol.5 + 1 leader alt-art garanti.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 7
+    },
+    "premium-pack-pp14-bt23-perfect-combination": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/155 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 155,
+      "guaranteedPrintKeys": [
+        "dbscg:bt23-140",
+        "dbscg:bt23-138",
+        "dbscg:bt23-139",
+        "dbscg:bt23-033",
+        "dbscg:bt23-023",
+        "dbscg:bt23-011",
+        "dbscg:bt23-081",
+        "dbscg:bt23-085",
+        "dbscg:bt23-115",
+        "dbscg:bt23-022",
+        "dbscg:bt23-109",
+        "dbscg:bt23-015",
+        "dbscg:bt23-136",
+        "dbscg:bt23-055",
+        "dbscg:bt23-048"
+      ]
+    },
+    "premium-pack-pp13-bt22-critical-blow": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 14/156 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 156,
+      "guaranteedPrintKeys": [
+        "dbscg:bt22-140",
+        "dbscg:bt22-138",
+        "dbscg:bt22-139",
+        "dbscg:bt22-066",
+        "dbscg:bt22-067",
+        "dbscg:bt22-137",
+        "dbscg:bt22-009",
+        "dbscg:bt22-027",
+        "dbscg:bt22-021",
+        "dbscg:bt22-112",
+        "dbscg:bt22-132",
+        "dbscg:bt22-092",
+        "dbscg:bt22-127",
+        "dbscg:bt22-123"
+      ]
+    },
+    "premium-pack-pp12-bt21-wild-resurgence": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 13/163 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 163,
+      "guaranteedPrintKeys": [
+        "dbscg:bt21-147",
+        "dbscg:bt21-148",
+        "dbscg:bt21-149",
+        "dbscg:bt21-097",
+        "dbscg:bt21-111",
+        "dbscg:bt21-076",
+        "dbscg:bt21-079",
+        "dbscg:bt21-062",
+        "dbscg:bt21-051",
+        "dbscg:bt21-008",
+        "dbscg:bt21-110",
+        "dbscg:bt21-088",
+        "dbscg:bt21-052"
+      ]
+    },
+    "premium-pack-pp11-bt20-power-absorbed": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 12/162 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 162,
+      "guaranteedPrintKeys": [
+        "dbscg:bt20-147",
+        "dbscg:bt20-149",
+        "dbscg:bt20-148",
+        "dbscg:bt20-095",
+        "dbscg:bt20-099",
+        "dbscg:bt20-104",
+        "dbscg:bt20-130",
+        "dbscg:bt20-140",
+        "dbscg:bt20-064",
+        "dbscg:bt20-043",
+        "dbscg:bt20-077",
+        "dbscg:bt20-143"
+      ]
+    },
+    "premium-pack-pp10-bt19-fighters-ambition": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/165 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 165,
+      "guaranteedPrintKeys": [
+        "dbscg:bt19-152",
+        "dbscg:bt19-154",
+        "dbscg:bt19-145",
+        "dbscg:bt19-153",
+        "dbscg:bt19-149",
+        "dbscg:bt19-098",
+        "dbscg:bt19-011",
+        "dbscg:bt19-151",
+        "dbscg:bt19-147",
+        "dbscg:bt19-008",
+        "dbscg:bt19-019",
+        "dbscg:bt19-148",
+        "dbscg:bt19-049",
+        "dbscg:bt19-140",
+        "dbscg:bt19-084"
+      ]
+    },
+    "premium-pack-pp09-bt18-dawn-of-the-z-legends": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 14/163 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 163,
+      "guaranteedPrintKeys": [
+        "dbscg:bt1-111",
+        "dbscg:bt18-147",
+        "dbscg:bt18-006",
+        "dbscg:bt18-143",
+        "dbscg:bt18-069",
+        "dbscg:bt18-109",
+        "dbscg:bt18-107",
+        "dbscg:bt18-037",
+        "dbscg:bt18-113",
+        "dbscg:bt18-065",
+        "dbscg:bt18-038",
+        "dbscg:bt18-076",
+        "dbscg:bt18-020",
+        "dbscg:bt18-034"
+      ]
+    },
+    "premium-pack-pp08-bt17-ultimate-squad": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/73 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 73,
+      "guaranteedPrintKeys": [
+        "dbscg:bt17-146",
+        "dbscg:bt17-133",
+        "dbscg:bt17-004",
+        "dbscg:bt17-010",
+        "dbscg:bt17-009",
+        "dbscg:bt17-115",
+        "dbscg:bt17-111",
+        "dbscg:bt17-085",
+        "dbscg:bt17-021",
+        "dbscg:bt17-018",
+        "dbscg:bt17-017",
+        "dbscg:bt17-012",
+        "dbscg:bt17-119",
+        "dbscg:bt17-123",
+        "dbscg:bt17-120"
+      ]
+    },
+    "premium-pack-pp06-saiyan-showdown": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 12/165 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 165,
+      "guaranteedPrintKeys": [
+        "dbscg:bt15-152",
+        "dbscg:bt15-154",
+        "dbscg:bt15-016",
+        "dbscg:bt15-019",
+        "dbscg:bt15-066",
+        "dbscg:bt15-148",
+        "dbscg:bt15-143",
+        "dbscg:bt15-130",
+        "dbscg:bt15-119",
+        "dbscg:bt15-063",
+        "dbscg:bt15-139",
+        "dbscg:bt15-033"
+      ]
+    },
+    "premium-pack-pp05-bt14-cross-spirits": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/142 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 142,
+      "guaranteedPrintKeys": [
+        "dbscg:bt14-005",
+        "dbscg:bt14-094",
+        "dbscg:bt14-014",
+        "dbscg:bt14-135",
+        "dbscg:bt14-007",
+        "dbscg:bt14-071",
+        "dbscg:bt14-004",
+        "dbscg:bt14-129",
+        "dbscg:bt14-122",
+        "dbscg:bt14-077",
+        "dbscg:bt14-037",
+        "dbscg:bt14-093",
+        "dbscg:bt14-095",
+        "dbscg:bt14-033",
+        "dbscg:bt14-029"
+      ]
+    },
+    "ge05-saiyan-and-namekian-boost": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys / declared 10.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 10,
+      "guaranteedPrintKeys": [
+        "dbscg:ex17-04",
+        "dbscg:ex18-05",
+        "dbscg:ex17-02",
+        "dbscg:ex18-01",
+        "dbscg:ex17-05",
+        "dbscg:ex17-03",
+        "dbscg:ex17-01",
+        "dbscg:ex18-04",
+        "dbscg:ex18-03",
+        "dbscg:ex18-02"
+      ]
+    },
+    "uw04-supreme-rivalry": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 13/165 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 165,
+      "guaranteedPrintKeys": [
+        "dbscg:bt13-153",
+        "dbscg:bt13-152",
+        "dbscg:bt13-154",
+        "dbscg:bt13-036",
+        "dbscg:bt13-020",
+        "dbscg:bt13-030",
+        "dbscg:bt13-120",
+        "dbscg:bt13-123",
+        "dbscg:bt13-101",
+        "dbscg:bt13-073",
+        "dbscg:bt13-093",
+        "dbscg:bt13-063",
+        "dbscg:bt13-089"
+      ]
+    },
+    "premium-pack-pp03-bt12-vicious-rajuvenation": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 14/165 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 165,
+      "guaranteedPrintKeys": [
+        "dbscg:bt12-153",
+        "dbscg:bt12-154",
+        "dbscg:bt12-152",
+        "dbscg:bt12-057",
+        "dbscg:bt12-005",
+        "dbscg:bt12-108",
+        "dbscg:bt12-136",
+        "dbscg:bt12-029",
+        "dbscg:bt12-113",
+        "dbscg:bt12-068",
+        "dbscg:bt12-109",
+        "dbscg:bt12-124",
+        "dbscg:bt12-004",
+        "dbscg:bt12-045"
+      ]
+    },
+    "pp02-vemilion-bloodline": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 14/165 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 165,
+      "guaranteedPrintKeys": [
+        "dbscg:bt11-152",
+        "dbscg:bt11-154",
+        "dbscg:bt11-012",
+        "dbscg:bt11-066",
+        "dbscg:bt11-034",
+        "dbscg:bt11-112",
+        "dbscg:bt11-083",
+        "dbscg:bt11-052",
+        "dbscg:bt11-042",
+        "dbscg:bt11-126",
+        "dbscg:bt11-003",
+        "dbscg:bt11-131",
+        "dbscg:bt11-030",
+        "dbscg:bt11-099"
+      ]
+    },
+    "special-pack-ex13-agents-de-la-destruction": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/36 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 36,
+      "guaranteedPrintKeys": [
+        "dbscg:ex13-29",
+        "dbscg:ex13-26",
+        "dbscg:ex13-18",
+        "dbscg:ex13-19",
+        "dbscg:ex13-05",
+        "dbscg:ex13-30",
+        "dbscg:ex13-34",
+        "dbscg:ex13-20",
+        "dbscg:ex13-16",
+        "dbscg:ex13-15",
+        "dbscg:ex13-14",
+        "dbscg:ex13-08",
+        "dbscg:ex13-31",
+        "dbscg:ex13-11",
+        "dbscg:ex13-04"
+      ]
+    },
+    "premium-pack-pp01-bt10-rise-of-the-unison-warrior": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 14/165 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 165,
+      "guaranteedPrintKeys": [
+        "dbscg:bt10-154",
+        "dbscg:bt10-152",
+        "dbscg:bt10-148",
+        "dbscg:bt10-063",
+        "dbscg:bt10-062",
+        "dbscg:bt10-088",
+        "dbscg:bt10-150",
+        "dbscg:bt10-056",
+        "dbscg:bt10-140",
+        "dbscg:bt10-105",
+        "dbscg:bt10-075",
+        "dbscg:bt10-110",
+        "dbscg:bt10-095",
+        "dbscg:bt10-035"
+      ]
+    },
+    "sp09-universal-onslaught": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/151 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 151,
+      "guaranteedPrintKeys": [
+        "dbscg:bt9-136",
+        "dbscg:bt9-137",
+        "dbscg:bt9-135",
+        "dbscg:bt9-110",
+        "dbscg:bt9-101",
+        "dbscg:bt9-091",
+        "dbscg:bt9-125",
+        "dbscg:bt9-131",
+        "dbscg:bt9-096",
+        "dbscg:bt9-115",
+        "dbscg:bt9-103",
+        "dbscg:bt9-128",
+        "dbscg:bt9-126",
+        "dbscg:bt9-113",
+        "dbscg:bt9-104"
+      ]
+    },
+    "sp08-malicious-machinations": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 13/151 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 151,
+      "guaranteedPrintKeys": [
+        "dbscg:bt8-135",
+        "dbscg:bt8-137",
+        "dbscg:bt8-136",
+        "dbscg:bt8-122",
+        "dbscg:bt8-033",
+        "dbscg:bt8-110",
+        "dbscg:bt8-050",
+        "dbscg:bt8-109",
+        "dbscg:bt8-043",
+        "dbscg:bt8-022",
+        "dbscg:bt8-121",
+        "dbscg:bt8-070",
+        "dbscg:bt8-065"
+      ]
+    },
+    "ge04-premium-pack-anniversary": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "36 printKeys / declared 36.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 36,
+      "guaranteedPrintKeys": [
+        "dbscg:ex06-01",
+        "dbscg:ex06-02",
+        "dbscg:ex06-03",
+        "dbscg:ex06-04",
+        "dbscg:ex06-05",
+        "dbscg:ex06-06",
+        "dbscg:ex06-07",
+        "dbscg:ex06-08",
+        "dbscg:ex06-09",
+        "dbscg:ex06-10",
+        "dbscg:ex06-11",
+        "dbscg:ex06-12",
+        "dbscg:ex06-13",
+        "dbscg:ex06-14",
+        "dbscg:ex06-15",
+        "dbscg:ex06-16",
+        "dbscg:ex06-17",
+        "dbscg:ex06-18",
+        "dbscg:ex06-19",
+        "dbscg:ex06-20",
+        "dbscg:ex06-21",
+        "dbscg:ex06-22",
+        "dbscg:ex06-23",
+        "dbscg:ex06-24",
+        "dbscg:ex06-25",
+        "dbscg:ex06-26",
+        "dbscg:ex06-27",
+        "dbscg:ex06-28",
+        "dbscg:ex06-29",
+        "dbscg:ex06-30",
+        "dbscg:ex06-31",
+        "dbscg:ex06-32",
+        "dbscg:ex06-33",
+        "dbscg:ex06-34",
+        "dbscg:ex06-35",
+        "dbscg:ex06-36"
+      ]
+    },
+    "ge03-expansion-set-unity-of-saiyans-et-unity-of-destruction": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "dbscg:ex04-01",
+        "dbscg:ex04-02",
+        "dbscg:ex04-03",
+        "dbscg:ex04-04",
+        "dbscg:ex05-01",
+        "dbscg:ex05-02",
+        "dbscg:ex05-03",
+        "dbscg:ex05-04"
+      ]
+    },
+    "sp06-destroyer-kings": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/228 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 228,
+      "guaranteedPrintKeys": [
+        "dbscg:bt6-125",
+        "dbscg:bt6-016",
+        "dbscg:bt6-126",
+        "dbscg:bt6-046",
+        "dbscg:bt6-070",
+        "dbscg:bt6-058",
+        "dbscg:bt6-110",
+        "dbscg:bt6-060",
+        "dbscg:bt6-114",
+        "dbscg:bt6-073",
+        "dbscg:bt6-051",
+        "dbscg:bt6-036",
+        "dbscg:bt6-082",
+        "dbscg:bt6-091",
+        "dbscg:bt6-115"
+      ]
+    },
+    "ge02-premium-pack-clash-of-fates": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 78/85 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 85,
+      "guaranteedPrintKeys": [
+        "dbscg:p-025",
+        "dbscg:tb3-002-spr",
+        "dbscg:tb3-006-spr",
+        "dbscg:tb3-019-spr",
+        "dbscg:tb3-032-spr",
+        "dbscg:tb3-035-spr",
+        "dbscg:tb3-037-spr",
+        "dbscg:tb3-053-spr",
+        "dbscg:tb3-066-spr",
+        "dbscg:tb3-001",
+        "dbscg:tb3-002",
+        "dbscg:tb3-003",
+        "dbscg:tb3-004",
+        "dbscg:tb3-005",
+        "dbscg:tb3-006",
+        "dbscg:tb3-007",
+        "dbscg:tb3-008",
+        "dbscg:tb3-009",
+        "dbscg:tb3-010",
+        "dbscg:tb3-011",
+        "dbscg:tb3-012",
+        "dbscg:tb3-013",
+        "dbscg:tb3-014",
+        "dbscg:tb3-015",
+        "dbscg:tb3-016",
+        "dbscg:tb3-017",
+        "dbscg:tb3-018",
+        "dbscg:tb3-019",
+        "dbscg:tb3-020",
+        "dbscg:tb3-021",
+        "dbscg:tb3-022",
+        "dbscg:tb3-023",
+        "dbscg:tb3-024",
+        "dbscg:tb3-025",
+        "dbscg:tb3-026",
+        "dbscg:tb3-027",
+        "dbscg:tb3-028",
+        "dbscg:tb3-029",
+        "dbscg:tb3-030",
+        "dbscg:tb3-031",
+        "dbscg:tb3-032",
+        "dbscg:tb3-033",
+        "dbscg:tb3-034",
+        "dbscg:tb3-035",
+        "dbscg:tb3-036",
+        "dbscg:tb3-037",
+        "dbscg:tb3-038",
+        "dbscg:tb3-039",
+        "dbscg:tb3-040",
+        "dbscg:tb3-041",
+        "dbscg:tb3-042",
+        "dbscg:tb3-043",
+        "dbscg:tb3-044",
+        "dbscg:tb3-045",
+        "dbscg:tb3-046",
+        "dbscg:tb3-047",
+        "dbscg:tb3-048",
+        "dbscg:tb3-049",
+        "dbscg:tb3-050",
+        "dbscg:tb3-051",
+        "dbscg:tb3-052",
+        "dbscg:tb3-053",
+        "dbscg:tb3-054",
+        "dbscg:tb3-055",
+        "dbscg:tb3-056",
+        "dbscg:tb3-057",
+        "dbscg:tb3-058",
+        "dbscg:tb3-059",
+        "dbscg:tb3-060",
+        "dbscg:tb3-061",
+        "dbscg:tb3-062",
+        "dbscg:tb3-063",
+        "dbscg:tb3-064",
+        "dbscg:tb3-065",
+        "dbscg:tb3-066",
+        "dbscg:tb3-067",
+        "dbscg:tb3-068",
+        "dbscg:tb3-069"
+      ]
+    },
+    "sp05-miraculous-revival": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/222 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 222,
+      "guaranteedPrintKeys": [
+        "dbscg:bt5-120",
+        "dbscg:bt5-047",
+        "dbscg:bt5-043",
+        "dbscg:bt5-033",
+        "dbscg:bt5-042",
+        "dbscg:bt5-085",
+        "dbscg:bt5-038",
+        "dbscg:bt5-110",
+        "dbscg:bt5-083",
+        "dbscg:bt5-051",
+        "dbscg:bt5-020",
+        "dbscg:bt5-091",
+        "dbscg:bt5-111",
+        "dbscg:bt5-062",
+        "dbscg:bt5-004"
+      ]
+    },
+    "sp04-colossal-warfare": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/219 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 219,
+      "guaranteedPrintKeys": [
+        "dbscg:bt4-123",
+        "dbscg:bt4-075",
+        "dbscg:bt4-003",
+        "dbscg:bt4-124",
+        "dbscg:bt4-105",
+        "dbscg:bt4-074",
+        "dbscg:bt4-049",
+        "dbscg:bt4-107",
+        "dbscg:bt4-114",
+        "dbscg:bt4-056",
+        "dbscg:bt4-028",
+        "dbscg:bt4-006",
+        "dbscg:bt4-082",
+        "dbscg:bt4-084",
+        "dbscg:bt4-085"
+      ]
+    },
+    "special-pack-sp03-bt3-les-mondes-croises": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 11/435 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 435,
+      "guaranteedPrintKeys": [
+        "dbscg:bt3-123",
+        "dbscg:bt3-066",
+        "dbscg:bt3-063",
+        "dbscg:bt3-054",
+        "dbscg:bt3-033",
+        "dbscg:bt3-088",
+        "dbscg:bt3-099",
+        "dbscg:bt3-079",
+        "dbscg:bt3-007",
+        "dbscg:bt3-050",
+        "dbscg:bt3-059"
+      ]
+    },
+    "sp02-union-force": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 12/128 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 128,
+      "guaranteedPrintKeys": [
+        "dbscg:bt2-123",
+        "dbscg:bt2-012",
+        "dbscg:bt2-108",
+        "dbscg:bt2-084",
+        "dbscg:bt2-058",
+        "dbscg:bt2-054",
+        "dbscg:bt2-073",
+        "dbscg:bt2-025",
+        "dbscg:bt2-040",
+        "dbscg:bt2-006",
+        "dbscg:bt2-062",
+        "dbscg:bt2-042"
+      ]
+    },
+    "sp01-galactic-battle": {
+      "source": "staging dbscards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 13/119 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 119,
+      "guaranteedPrintKeys": [
+        "dbscg:bt1-073",
+        "dbscg:bt1-031",
+        "dbscg:bt1-086",
+        "dbscg:bt1-011",
+        "dbscg:bt1-053",
+        "dbscg:bt1-059",
+        "dbscg:bt1-083",
+        "dbscg:bt1-004",
+        "dbscg:bt1-055",
+        "dbscg:bt1-095",
+        "dbscg:bt1-014",
+        "dbscg:bt1-041",
+        "dbscg:p-001"
+      ]
+    },
+    "booster-blister-carton-bt24-beyond-generations": {
+      "source": "docs/collection_checklist.md — blister carton 3-pack BT24",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 3,
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "notes": "Carton de 3 blisters BT24 Beyond Generations."
+    },
+    "booster-carton-unison-warrior-series-boost-bt16-realm-of-the-gods-whis-beerus": {
+      "source": "lorcards (libellé « Booster Blister Carton », prix unitaire 5-10 €)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Blister unitaire : 1 booster sous carton, artwork variable. Pas un carton de displays.",
+      "behavior": "pack_container",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 1
+    },
+    "booster-carton-unison-warrior-series-boost-bt16-realm-of-the-gods-son-goku-ultra-instinct": {
+      "source": "lorcards (libellé « Booster Blister Carton », prix unitaire 5-10 €)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Blister unitaire : 1 booster sous carton, artwork variable. Pas un carton de displays.",
+      "behavior": "pack_container",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 1
+    },
+    "booster-carton-unison-warrior-series-boost-bt16-realm-of-the-gods-goku-black-rose": {
+      "source": "lorcards (libellé « Booster Blister Carton », prix unitaire 5-10 €)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Blister unitaire : 1 booster sous carton, artwork variable. Pas un carton de displays.",
+      "behavior": "pack_container",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 1
+    },
+    "booster-carton-unison-warrior-series-bt13-supreme-rivalry-androides-gohan-futur": {
+      "source": "lorcards (libellé « Booster Blister Carton », prix unitaire 5-10 €)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Blister unitaire : 1 booster sous carton, artwork variable. Pas un carton de displays.",
+      "behavior": "pack_container",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 1
+    },
+    "booster-carton-unison-warrior-series-bt11-vermilion-bloodline-son-goku-ss4": {
+      "source": "lorcards (libellé « Booster Blister Carton », prix unitaire 5-10 €)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Blister unitaire : 1 booster sous carton, artwork variable. Pas un carton de displays.",
+      "behavior": "pack_container",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 1
+    },
+    "booster-carton-unison-warrior-series-bt11-vermilion-bloodline-broly-sombre": {
+      "source": "lorcards (libellé « Booster Blister Carton », prix unitaire 5-10 €)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Blister unitaire : 1 booster sous carton, artwork variable. Pas un carton de displays.",
+      "behavior": "pack_container",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 1
+    },
+    "special-anniversary-box-2021-cell-forme-parfaite-version-1": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-es19.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Special Anniversary Box 2021 (voir version Gogeta). Boîte Cell.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 96
+    },
+    "special-anniversary-box": {
+      "source": "https://www.dbs-cardgame.com/us-en/product/dbs-es13.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Special Anniversary Box 2020 : set 70 (35×2) + 2 packs anniversaire ×5 + 4 Vault Power Up. Version boîte 1/2.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 96
+    },
+    "gc01-gift-collection-2023": {
+      "source": "Bandai GC-01 (4 Mythic Booster packs + deck case + sleeves)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Gift Collection GC-01 : 4 boosters Mythic Booster + accessoires.",
+      "behavior": "pack_container",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 4
+    },
+    "coffret-dragon-ball-super-card-game-gift-collection-gc-02": {
+      "source": "https://www.dbs-cardgame.com/asia/product/dbs-gc02.php",
+      "verifiedAt": "2026-09-14",
+      "notes": "Gift Collection 2022 : 5 boosters Fighter’s Ambition + 1 carte alt-art (3 types) + deck case + sleeves.",
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "packsContained": 5
+    }
+  }
+}

@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildShelfChecklist,
+  compareChecklistPrints,
   referenceWithinSet,
   type ChecklistPrint,
 } from "./checklist";
@@ -199,6 +200,18 @@ describe("la référence dans son set", () => {
     ).toBe("205/204");
   });
 
+  it("strips against a code-prefixed set label (checklist selector)", () => {
+    expect(
+      referenceWithinSet("Premier Chapitre · 211/204", "1 — Premier Chapitre"),
+    ).toBe("211/204");
+    expect(
+      referenceWithinSet(
+        "Série 1 — Maître Hokage / Pays du Vent · NI-019",
+        "S1 — Série 1 — Maître Hokage / Pays du Vent",
+      ),
+    ).toBe("NI-019");
+  });
+
   it("leaves alone a reference that does not start with it", () => {
     expect(referenceWithinSet("NI-046", "Série 1")).toBe("NI-046");
   });
@@ -206,5 +219,39 @@ describe("la référence dans son set", () => {
   /** Ne jamais rendre vide : une carte sans référence ne s'identifie plus. */
   it("never strips a reference down to nothing", () => {
     expect(referenceWithinSet("Série 1", "Série 1")).toBe("Série 1");
+  });
+});
+
+/*
+  Les promos d'un set (grouping dans le printKey) sortent après le retail —
+  utile à l'intérieur d'une série Promo Year N.
+*/
+describe("ordre retail puis promos", () => {
+  it("parks grouped prints after retail, grouping A→Z", () => {
+    const list = buildShelfChecklist({
+      sets: [{ id: "p1", label: "P1 — Promo Year 1" }],
+      prints: [
+        print("lorcana:1-20-p1", "p1", "20/P1"),
+        print("lorcana:1-21-p1", "p1", "21/P1"),
+        print("lorcana:1-1-p1", "p1", "1/P1"),
+        print("lorcana:1-5-p1", "p1", "5/P1"),
+      ],
+      owned: new Set(),
+    });
+    expect(list.sets[0]!.cards.map((c) => c.reference)).toEqual([
+      "1/P1",
+      "5/P1",
+      "20/P1",
+      "21/P1",
+    ]);
+  });
+
+  it("compareChecklistPrints is stable for plain retail", () => {
+    expect(
+      compareChecklistPrints(
+        print("lorcana:1-2", "1", "2/204"),
+        print("lorcana:1-10", "1", "10/204"),
+      ),
+    ).toBeLessThan(0);
   });
 });

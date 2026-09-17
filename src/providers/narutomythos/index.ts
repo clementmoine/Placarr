@@ -44,7 +44,7 @@ const built = createEmptyLocalTcgProvider({
     setSortKey: mythosSetSortKey,
     normalizeSearchQuery: normalizeMythosSearchQuery,
     notes:
-      "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. Faces `art.official` (gallery API cards.narutotcgmythos.com, 636 cartes). LorenZone en secours. Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
+      "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. Faces `art.official` (gallery API cards.narutotcgmythos.com). Complément sans watermark : narutomythos.com (`art.narutomythos`). LorenZone / Narutopia / ScanFlip en secours. Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
   },
   runPipeline: async (argv) => {
     const { runNarutoMythosPackPipeline } = await import(
@@ -66,13 +66,21 @@ export const narutomythosModule = {
     ],
     referencePriceSource: true,
     evidenceOnlyPriceRefresh: true,
-    sourceAliases: ["narutocardgame.gg"],
-    notes: `${built.module.info.notes ?? ""} Prix : côtes narutocardgame.gg (staging).`.trim(),
+    sourceAliases: ["narutocardgame.gg", "narutomythos.com"],
+    notes: `${built.module.info.notes ?? ""} Prix : côtes narutocardgame.gg (staging) + annonces narutomythos.com/marketplace (EUR).`.trim(),
   },
   refreshBarcodePriceOffers: async (
     ctx: import("@/types/providerModule").BarcodePriceRefreshContext,
   ) => {
-    const { refreshMythosGgPriceOffers } = await import("./ggPriceOffers");
-    return refreshMythosGgPriceOffers(ctx);
+    const [{ refreshMythosGgPriceOffers }, { refreshNarutomythosMarketplacePriceOffers }] =
+      await Promise.all([
+        import("./ggPriceOffers"),
+        import("./marketplacePriceOffers"),
+      ]);
+    const [gg, marketplace] = await Promise.all([
+      refreshMythosGgPriceOffers(ctx),
+      refreshNarutomythosMarketplacePriceOffers(ctx),
+    ]);
+    return [...gg, ...marketplace];
   },
 };

@@ -53,7 +53,10 @@ export async function ensureCuratedPackAssets(input: {
   packId: string;
   /** Racine `curated/` du provider — lui seul sait où elle est. */
   curatedDir: string;
-  options?: CuratedAssetsOptions;
+  options?: CuratedAssetsOptions & {
+    /** Only install these set sleeves (shared curated tree). */
+    includeSetCodes?: readonly string[];
+  };
   onProgress?: (message: string) => void;
 }): Promise<void> {
   const opts = input.options ?? {};
@@ -66,6 +69,7 @@ export async function ensureCuratedPackAssets(input: {
     destCardsDir: packCardsDir(input.packId),
     dryRun: opts.dryRun,
     force: opts.force,
+    includeSetCodes: opts.includeSetCodes,
   });
   for (const back of backs) {
     if (!back.installed) continue;

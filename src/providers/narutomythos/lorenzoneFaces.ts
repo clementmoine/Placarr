@@ -13,8 +13,8 @@ import path from "node:path";
 
 import sharp from "sharp";
 
-import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import {
@@ -27,8 +27,6 @@ import { NARUTO_MYTHOS_KS1_SET_CODE, mythosPrintKey } from "./printKey";
 
 const STAGING_FOLDER = "lorenzone-faces";
 const SOURCE_ID = "lorenzone";
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 
 export function mythosFacesStagingDir(): string {
   return path.join(packStagingDir(NARUTO_MYTHOS_PACK_ID), STAGING_FOLDER);
@@ -56,19 +54,11 @@ async function downloadImage(
   url: string,
   referer: string,
 ): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA, Referer: referer },
-      responseType: "arraybuffer",
-      timeout: 40_000,
-      validateStatus: (status: number) => status === 200,
-    });
-    const data = res.data;
-    if (!data || data.byteLength < 500) return null;
-    return Buffer.from(data);
-  } catch {
-    return null;
-  }
+  return downloadCardFaceBytes(url, {
+    referer,
+    minBytes: 500,
+    timeoutMs: 40_000,
+  });
 }
 
 /** Shopify often serves PNG/JPEG; always persist real WebP under `.webp`. */

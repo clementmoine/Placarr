@@ -1,10 +1,9 @@
 /**
  * Où vivent les faces du 疾風伝, et sous quel pack d'effets elles se rendent.
  *
- * Le rangement reprend celui du Carddass — `famille/carte/langue/fichier` —
- * parce qu'il est bon et que rien ne justifiait d'en inventer un autre pour ce
- * jeu. Ce qui change, c'est la **racine** : `naruto/shippuden` et non
- * `naruto/carddass`.
+ * Même ordre que {@link assetsCardUrl} / {@link packCardDir} :
+ * `cards/{famille}/{langue}/{diskId}/fichier` — ex. `gaku/ja/gaku0038/`.
+ * (Un ancien commentaire disait set/card/lang ; le disque n'a jamais suivi.)
  */
 import path from "node:path";
 
@@ -28,18 +27,48 @@ export function narutoShippudenCardFolder(cardType: string): string {
   return cardType.trim().toLowerCase();
 }
 
+/**
+ * `gaku` + `0038` / `gaku0038` / `38` → `gaku0038`.
+ *
+ * Sans le préfixe famille, l'URL catalogue tombait sur `…/ja/0038/` (404) alors
+ * que le fichier est `…/ja/gaku0038/art.suruga.jpg`.
+ */
+export function normalizeShippudenDiskId(
+  cardType: string,
+  number: string,
+): string {
+  const family = narutoShippudenCardFolder(cardType);
+  const raw = number.trim().toLowerCase();
+  if (!raw) return family;
+  const digits = raw.startsWith(family)
+    ? raw.slice(family.length)
+    : /^\d+$/.test(raw)
+      ? raw
+      : null;
+  if (digits != null && /^\d+$/.test(digits)) {
+    const n = digits.replace(/^0+/, "") || "0";
+    return `${family}${n.padStart(4, "0")}`;
+  }
+  return raw;
+}
+
+/**
+ * URL face — `number` peut être l'id disque (`gaku0038`) ou les seuls chiffres
+ * (`0038`) ; on normalise toujours avant de joindre le chemin.
+ */
 export function narutoShippudenAssetsCardUrl(
   cardType: string,
   number: string,
   lang: string,
   file: string,
 ): string {
+  const family = narutoShippudenCardFolder(cardType);
   return assetsPackFileUrl(
     NARUTO_SHIPPUDEN_PACK_ID,
     "cards",
-    narutoShippudenCardFolder(cardType),
-    number.trim().toLowerCase(),
+    family,
     lang?.trim().toLowerCase(),
+    normalizeShippudenDiskId(family, number),
     file,
   );
 }

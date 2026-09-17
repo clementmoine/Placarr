@@ -143,12 +143,24 @@ export async function installCuratedCardBacks(opts: {
   dryRun?: boolean;
   /** Rewrite a pack-level `back.webp` (Naruto EN sleeve → `back.en.webp`). */
   packBackDestName?: string;
+  /** Only install these set folders (and pack-level backs). */
+  includeSetCodes?: readonly string[];
 }): Promise<CuratedBackInstall[]> {
   warnMisplacedLangBacksUnder(opts.curatedCardsDir);
+  const allow = opts.includeSetCodes?.length
+    ? new Set(opts.includeSetCodes.map((s) => s.trim().toLowerCase()))
+    : null;
   const rows: CuratedBackInstall[] = [];
   for (const { src, destRel: rawDestRel } of listCuratedBackSources(
     opts.curatedCardsDir,
   )) {
+    if (allow) {
+      const setSeg = rawDestRel.includes("/")
+        ? rawDestRel.slice(0, rawDestRel.indexOf("/")).toLowerCase()
+        : null;
+      // Pack-level back.webp always kept; set backs filtered.
+      if (setSeg && !allow.has(setSeg)) continue;
+    }
     const destRel =
       opts.packBackDestName && rawDestRel === "back.webp"
         ? opts.packBackDestName

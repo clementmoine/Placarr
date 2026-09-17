@@ -85,7 +85,7 @@ export async function installAttestedArtMasks(
   opts: InstallAttestedArtMasksOptions = {},
 ): Promise<InstallAttestedArtMaskResult[]> {
   const packId = opts.packId ?? "lorcana";
-  const languages = opts.languages ?? ["en", "fr", "de", "it"];
+  const languages = opts.languages ?? ["en", "fr"];
   const cardsRoot = packCardsDir(packId);
   const results: InstallAttestedArtMaskResult[] = [];
 

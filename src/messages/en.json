@@ -472,7 +472,8 @@
       "catalogueAll": "All catalogues",
       "catalogueLabel": "Catalogue",
       "setAll": "All sets",
-      "setLabel": "Set"
+      "setLabel": "Set",
+      "loadingMore": "Loading more…"
     },
     "checklistTitle": "Checklist",
     "checklistSubtitle": "What exists, what you own, and what is left to find.",
@@ -485,6 +486,8 @@
     "checklistExportMarkdown": "Markdown",
     "checklistLanguage": "Language",
     "checklistShowOwned": "Show cards already on the shelf",
+    "checklistSearch": "Search for a card or set…",
+    "checklistSearchNoResults": "No cards match this search.",
     "checklistEmpty": "No identified card on this shelf.",
     "checklistSingles": "Singles",
     "checklistSealed": "Sealed",

@@ -26,6 +26,14 @@ import {
 } from "./indexStore";
 import type { DatabaseSync } from "node:sqlite";
 
+/** Langues catalogue (contrat JA original + FR + EN). Pas d’italien. */
+export const NARUTO_CATALOGUE_LANGUAGES = ["fr", "en", "ja"] as const;
+
+function isNarutoCatalogueLanguage(lang: string | null | undefined): boolean {
+  const code = (lang ?? "").trim().toLowerCase();
+  return (NARUTO_CATALOGUE_LANGUAGES as readonly string[]).includes(code);
+}
+
 function printedColumnSql(db: DatabaseSync): string {
   const cols = db.prepare("PRAGMA table_info(print_assets)").all() as {
     name: string;
@@ -499,8 +507,9 @@ function europeanSetLanguages(): Map<string, string[]> {
   /*
     Le français retail s'arrête à la Série 5 ; Sage's Legacy (s24), Storm 3
     (s28) et le deck Tempête approche ont une impression FR tardive. Les
-    séries 7–23 / 25–27 sont EN (ou IT) — des titres FR collés sur des
-    reprints partagés ne doivent pas rouvrir le filtre FR sur « Quest for Power ».
+    séries 7–23 / 25–27 sont EN — des titres FR collés sur des reprints
+    partagés ne doivent pas rouvrir le filtre FR sur « Quest for Power ».
+    L’italien n’est plus une langue de catalogue (filtré à l’assemblage).
   */
   const frenchLateSeries = new Set(["s24", "s28", RAMPAGE_TORNADO_SET]);
   const found = new Map<string, Set<string>>();
@@ -517,7 +526,7 @@ function europeanSetLanguages(): Map<string, string[]> {
     }[]) {
       const code = row.setCode?.trim();
       const lang = row.lang?.trim().toLowerCase();
-      if (!code || lang === "ja") continue;
+      if (!code || lang === "ja" || lang === "it") continue;
       if (lang === "fr") {
         if (unreleasedInFrench.has(code.toLowerCase())) continue;
         const series = /^s(\d+)$/i.exec(code);
@@ -558,6 +567,7 @@ export function listNarutoPrintSets(language?: string | null): {
   sortKey?: number;
 }[] {
   const labelLang = language?.trim().toLowerCase() || null;
+  if (labelLang && !isNarutoCatalogueLanguage(labelLang)) return [];
   /*
     Les deux découpes sont rendues **ensemble**, jamais l'une à la place de
     l'autre. Elles ne décrivent pas le même objet : le Japon compte dix-sept
@@ -591,7 +601,12 @@ export function listNarutoPrintSets(language?: string | null): {
       : `SELECT DISTINCT set_code AS setCode FROM prints`;
     for (const row of db.prepare(setSql).all() as { setCode: string }[]) {
       const code = row.setCode?.trim();
-      if (code && code !== "unknown" && !japaneseIds.has(code))
+      if (
+        code &&
+        code !== "unknown" &&
+        !japaneseIds.has(code) &&
+        !code.startsWith("maki")
+      )
         european.add(code);
     }
   }
@@ -601,6 +616,11 @@ export function listNarutoPrintSets(language?: string | null): {
       [...european].map((code) => ({
         id: code,
         label: narutoSetLabel(code, null, labelLang),
+        /**
+         * Deck FR Tempête : id disque `tempete`, code collectionneur S11
+         * (reprints de la s11 US) — pas TEMPETE en tête de liste.
+         */
+        ...(code === RAMPAGE_TORNADO_SET ? { code: "S11" } : {}),
         group: EUROPEAN_CUT,
         languages:
           narutoSetShippedLanguages(code) ?? europeanLanguages.get(code) ?? [],
@@ -611,11 +631,13 @@ export function listNarutoPrintSets(language?: string | null): {
           Le deck Tempête se range avec la s11 US dont il reprend les reprints.
         */
         sortKey:
-          code === RAMPAGE_TORNADO_SET
-            ? 11
-            : /^s(\d+)$/.exec(code)
-              ? Number(code.slice(1))
-              : null,
+          code === "prerelease"
+            ? 0
+            : code === RAMPAGE_TORNADO_SET
+              ? 11
+              : /^s(\d+)$/.exec(code)
+                ? Number(code.slice(1))
+                : null,
       })),
     ),
     ...finalizeSetOptions(
@@ -645,6 +667,7 @@ export function searchNarutoPrints(
   if (!isAnsweredQuery(trimmed, setId)) return [];
 
   const requestedLang = opts.language?.trim().toLowerCase() || "";
+  if (requestedLang && !isNarutoCatalogueLanguage(requestedLang)) return [];
   const lang = requestedLang || "fr";
   /*
     Le plafond monte à cinq mille pour la check-list, qui doit énumérer un set

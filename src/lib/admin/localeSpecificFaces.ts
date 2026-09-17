@@ -4,8 +4,16 @@
  * Lives next to `cards-index.json` as `locale-specific-faces.json`. Any catalogue
  * pack can opt in via `CataloguePackInfo.localeArt`; nothing here is TCG-specific.
  */
-import { existsSync, readFileSync, statSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import path from "node:path";
 
+import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { packLocaleSpecificFacesPath } from "@/lib/packPaths";
 
 export type LocaleSpecificFacesV1 = {
@@ -33,6 +41,64 @@ function isLocaleSpecificFacesV1(raw: unknown): raw is LocaleSpecificFacesV1 {
       typeof row.set === "string" &&
       typeof row.card === "string",
   );
+}
+
+function slotHasArt(
+  files: { art?: string | null; thumb?: string | null } | undefined,
+): boolean {
+  return Boolean(files?.art?.trim() || files?.thumb?.trim());
+}
+
+/**
+ * Prints that already have a recto in ≥2 catalogue locales — text/layout almost
+ * always differs (Mythos FR vs EN), so the catalogue must not borrow across langs.
+ */
+export function buildLocaleSpecificFacesFromIndex(
+  index: CardsIndexV1,
+  catalogueLocales: readonly string[],
+  note?: string,
+): LocaleSpecificFacesV1 {
+  const locales = catalogueLocales
+    .map((lang) => lang.trim().toLowerCase())
+    .filter(Boolean);
+  const faces: { set: string; card: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of Object.values(index.cards)) {
+    const hitCount = locales.length
+      ? locales.filter((lang) => slotHasArt(entry.langs[lang])).length
+      : Object.values(entry.langs).filter((files) => slotHasArt(files)).length;
+    if (hitCount < 2) continue;
+    const key = localeSpecificFaceKey(entry.set, entry.card);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    faces.push({ set: entry.set, card: entry.card });
+  }
+
+  faces.sort(
+    (a, b) =>
+      a.set.localeCompare(b.set) ||
+      a.card.localeCompare(b.card, undefined, { numeric: true }),
+  );
+
+  return {
+    version: 1,
+    note:
+      note ??
+      "Auto: recto présent dans ≥2 locales catalogue — ne pas emprunter cross-langue.",
+    faces,
+  };
+}
+
+export function writeLocaleSpecificFaces(
+  pack: string,
+  doc: LocaleSpecificFacesV1,
+): { path: string; faces: number } {
+  const dest = packLocaleSpecificFacesPath(pack);
+  mkdirSync(path.dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify(doc, null, 2)}\n`, "utf8");
+  cache.delete(pack);
+  return { path: dest, faces: doc.faces.length };
 }
 
 /** `null` when the pack has no ledger — every print is treated as language-neutral. */

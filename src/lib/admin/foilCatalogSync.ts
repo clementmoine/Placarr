@@ -13,7 +13,7 @@ import { dataRoot } from "@/lib/runtimeData";
 
 import { startCatalogueAutoSyncLoop } from "./catalogueAutoSync";
 
-const DEFAULT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000;
 
 function maxAgeMs(): number {
   const raw = Number(

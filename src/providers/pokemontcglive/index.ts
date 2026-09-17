@@ -19,7 +19,7 @@ import { pokemontcgliveCatalog } from "./pipeline";
 import {
   ensureTcgdexSetLogoIndex,
   loadTcgdexSetLogoIndex,
-  tcgdexLogoUrlForSetCode,
+  tcgdexLogoUrlForProduct,
 } from "@/providers/tcgdex/setLogos";
 
 const PROVIDER_ID = "pokemontcglive";
@@ -68,10 +68,10 @@ export const pokemontcgliveModule = defineProvider({
     auth: { kind: "none" },
     supplyMode: "local_catalog",
     canonical: false,
-    defaultLanguage: "en",
+    defaultLanguage: "fr",
     websiteUrl: "https://www.pokemon.com/us/pokemon-tcg/",
     notes:
-      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/` + `catalog.sqlite`. Langues Live : fr,en,de,it,es,ptbr (Dex : ptbr→pt-br). Art Live (`tcglive-front`) ; `tcgdex` reste le catalogue API. Produits papier scellés : pkmcards.fr (famille dbscards), étape Sync admin. Sync : Catalogue Extract (admin / worker).",
+      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/`. Faces Live : **en** + **fr**. Identité papier / titres : TCGdex **ja** (original) + fr + en (`prints.sqlite`). CDN Live parle aussi de/it/es/ptbr (stems). Produits scellés : pkmcards.fr. Sync : Catalogue Extract.",
   },
   catalog: pokemontcgliveCatalog,
   /*
@@ -87,8 +87,13 @@ export const pokemontcgliveModule = defineProvider({
     return `tcgdex set logos : ${withLogo} wordmarks / ${logos.sets.length} sets`;
   },
   printGames: [POKEMON_GAME],
-  resolveSetLogo: ({ setCode }) =>
-    tcgdexLogoUrlForSetCode(setCode, loadTcgdexSetLogoIndex()),
+  resolveSetLogo: ({ setCode, slug, name }) =>
+    tcgdexLogoUrlForProduct({
+      setCode,
+      slug,
+      name,
+      index: loadTcgdexSetLogoIndex(),
+    }),
   createMetadataAdapter: () => ({
     id: PROVIDER_ID,
     async resolve(ctx) {

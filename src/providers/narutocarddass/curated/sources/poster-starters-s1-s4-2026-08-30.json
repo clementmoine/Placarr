@@ -13,7 +13,12 @@
     "starter-pays-du-vent": { "sumQty": 40, "contentsKnown": true },
     "starter-maitre-hokage": { "sumQty": 40, "contentsKnown": true },
     "starter-sceller-le-malefice": { "sumQty": 40, "contentsKnown": true },
-    "starter-detruire-konoha": { "sumQty": 40, "contentsKnown": true },
+    "starter-detruire-konoha": {
+      "sumQty": 40,
+      "declaredCardCount": 40,
+      "contentsKnown": true,
+      "note": "2026-09-16 : TE-074 ×1 (photos) + TA-074 ×1 (poster) ; catalogue disait 2× TE-074 / pas de TA-074"
+    },
     "starter-apprentissage": { "sumQty": 40, "contentsKnown": true },
     "starter-puissances-cachees": { "sumQty": 40, "contentsKnown": true },
     "starter-esprit-du-sable": { "sumQty": 40, "contentsKnown": true },

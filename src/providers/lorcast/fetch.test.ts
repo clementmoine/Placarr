@@ -150,8 +150,9 @@ describe("lorcastPromoSetFromGrouping", () => {
     const { lorcastPromoSetFromGrouping } = await import("./fetch");
     expect(lorcastPromoSetFromGrouping("p2")).toBe("P2");
     expect(lorcastPromoSetFromGrouping("P3")).toBe("P3");
+    expect(lorcastPromoSetFromGrouping("pd1")).toBe("PD1");
+    expect(lorcastPromoSetFromGrouping("d23")).toBe("D23");
     expect(lorcastPromoSetFromGrouping(null)).toBeNull();
-    expect(lorcastPromoSetFromGrouping("pd1")).toBeNull();
   });
 });
 

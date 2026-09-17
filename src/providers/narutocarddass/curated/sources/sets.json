@@ -17,8 +17,16 @@
         "holos": 33,
         "nonHolo": 155,
         "prereleaseAlts": 10,
-        "note": "10 vraies variantes manga (user 2026-09-03), Estimation ~10 €. Total Drive encore 188 (marketing 184 + 4) — à recaler si le master-set compte les 10."
+        "note": "Les 10 variantes manga avant-première sont une série à part (`prerelease`), plus dans le master-set S1. Compteur historique conservé pour le dig YT."
       }
+    },
+    "prerelease": {
+      "series": null,
+      "starters": [],
+      "title": "Prerelease",
+      "enCcgTitle": "Prerelease",
+      "printedLanguages": ["fr"],
+      "note": "Avant-première manga S1 FR (Kana ~2005–2006) — 10 variantes `*-prerelease`. Canal distinct de la Série 1 retail et de `promo` (PR忍 / OP忍 / PS / tournoi)."
     },
     "s2": {
       "series": 2,
@@ -124,6 +132,8 @@
     "tempete": {
       "series": 11,
       "title": "Série 11 — La Tempête Approche",
+      "starters": [],
+      "colekaLabel": null,
       "printedLanguages": ["fr"],
       "released": true,
       "note": "Deck spécial FR 33 cartes (Coleka `_r16963`). Reprints s1–s11, pas Sage's Legacy ni Storm 3. Set id `tempete` (≠ EN Approaching Wind `s11`)."

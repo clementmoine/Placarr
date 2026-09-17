@@ -72,7 +72,7 @@ export const dbscgModule = createDbsCatalogModule({
   defaultLanguage: "fr",
   websiteUrl: "https://www.dbs-cardgame.com/europe-fr/cartes/",
   notes:
-    "Masters (cardlists Bandai europe-fr + us-en) → `data/dbs/cg/`. Noms FR et EN dans l’index. Faces Deckplanet EN / dbscards FR au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : Catalogue Extract (admin / worker). Fusion World = module `dbsfw`.",
+    "Masters (cardlists Bandai europe-fr + us-en) → `data/dbs/cg/`. Noms FR et EN dans l’index. Jetons TK (ex. Jeton Ombre) depuis dbscards — absents du site Bandai. Faces Deckplanet EN / dbscards FR au sync, SAMPLE Bandai en fallback. Dos sleeve dbscards. Sync : Catalogue Extract (admin / worker). Fusion World = module `dbsfw`.",
   syncHint: "Catalogue Sync (admin)",
   probePrintKey: PROBE_PRINT_KEY,
   probeCardName: PROBE_CARD_NAME,

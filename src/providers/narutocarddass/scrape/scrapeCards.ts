@@ -13,6 +13,7 @@ import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { httpGet } from "@/lib/http/httpClient";
+import { parsePrintKey } from "@/core/identify/printKey";
 
 import {
   exportNarutoCardsIndexJson,
@@ -38,7 +39,6 @@ import {
 } from "../sources/carteSemaine";
 import { applyOfficialNames, loadOfficialNames } from "../officialNames";
 import { mergeFoundCatalogueLedgers } from "../mergeAttestedLedgers";
-import { mergeColekaS6ItIntoIndex } from "./scrapeColekaS6It";
 import { mergeColekaUsPromosIntoIndex } from "../sources/colekaUsPromos";
 import { loadColekaCcgFrLedgers } from "./scrapeColekaStorm3";
 import { loadStorm3Ledger } from "./scrapeStorm3";
@@ -583,6 +583,11 @@ function ingestNarutoCardDir(input: {
   family: string;
   appearanceSets: readonly string[];
 }): void {
+  /*
+    Contrat catalogue JA+FR+EN : une locale `it/` orpheline sur disque ne doit
+    plus entrer dans `print_assets` (ni réapparaître via bestFaceAcrossLocales).
+  */
+  if (normalizeNarutoLang(input.lang) === "it") return;
   if (!fs.statSync(input.cardDir).isDirectory()) return;
   const files = fs.readdirSync(input.cardDir);
   const art = pickArtForNarutoCardDir(input.cardDir, files, input.lang);
@@ -613,6 +618,7 @@ function ingestNarutoCardDir(input: {
     ),
     preferNarutoAppearanceSet(existing?.setCode, appearanceSet),
   );
+  const groupingFromKey = parsePrintKey(printKey)?.grouping ?? null;
   input.prints.set(printKey, {
     printKey,
     setCode,
@@ -620,7 +626,8 @@ function ingestNarutoCardDir(input: {
     number: existing?.number ?? input.diskId,
     cardType: existing?.cardType ?? cardTypeFromCollectorNumber(input.diskId),
     family: existing?.family ?? input.family,
-    grouping: existing?.grouping ?? parsed.grouping,
+    grouping:
+      existing?.grouping ?? parsed.grouping ?? groupingFromKey ?? null,
   });
   input.assets.push({
     printKey,
@@ -1027,7 +1034,7 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
 }
 
 const FOUND_TITLE_SOURCE =
-  "carddass-official + manga-news-cache + attested-promos + s1-fr-prerelease + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + coleka-us-promos + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocards-ca + narutocards-net + cardgameclub-it + ebay-it + user-physical + leboncoin";
+  "carddass-official + manga-news-cache + attested-promos + s1-fr-prerelease + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + coleka-us-promos + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocardgame-gg + narutocards-ca + narutocards-net + user-physical + leboncoin";
 
 function assembleNarutoCatalogue(
   prints: NarutoPrintRow[],
@@ -1039,15 +1046,10 @@ function assembleNarutoCatalogue(
     prints: withPromos.prints,
     titles: withPromos.titles,
   });
-  const withS6It = mergeColekaS6ItIntoIndex({
-    prints: withPrerelease.prints,
-    titles: withPrerelease.titles,
-    root,
-  });
   const carteSemaine = writeCarteSemaineReport(root);
   const withSemaine = mergeCarteSemaineIntoIndex({
-    prints: withS6It.prints,
-    titles: withS6It.titles,
+    prints: withPrerelease.prints,
+    titles: withPrerelease.titles,
     report: carteSemaine,
     root,
   });
@@ -1083,15 +1085,20 @@ function assembleNarutoCatalogue(
     (print) => !isShippuden(print.cardType),
   );
   const keptKeys = new Set(keptPrints.map((print) => print.printKey));
-  const keptTitles = withUsPromos.titles.filter((title) =>
-    keptKeys.has(title.printKey),
+  /*
+    Contrat catalogue : original (ja) + fr + en. L’italien a existé en retail
+    (S1–S6) mais n’est plus une langue de catalogue — on le filtre ici pour
+    qu’aucun relevé / titre résiduel ne réapparaisse à la reconstruction.
+  */
+  const keptTitles = withUsPromos.titles.filter(
+    (title) =>
+      keptKeys.has(title.printKey) &&
+      title.lang.trim().toLowerCase() !== "it",
   );
   return {
     prints: keptPrints,
     titles: keptTitles,
     attestedPromosAdded: withPromos.addedPrints,
-    s6ItAdded: withS6It.addedPrints,
-    s6ItNamed: withS6It.titled,
     carteSemaine,
     hinokunianTitled: found.hinokunianTitled,
     carteSemaineNamed: withSemaine.named,
@@ -1185,8 +1192,6 @@ export async function scrapeNarutoCards(
         thumbMapped: String(thumbMapped),
         tinPromos: tinPromos.installed.join(","),
         attestedPromosAdded: String(assembled.attestedPromosAdded.length),
-        s6ItAdded: String(assembled.s6ItAdded.length),
-        s6ItNamed: String(assembled.s6ItNamed.length),
         carteSemaineNamed: String(assembled.carteSemaineNamed.length),
         carteSemaineAdded: String(assembled.carteSemaineAdded.length),
         bggEnS1Added: String(assembled.found.bggAdded.length),
@@ -1522,7 +1527,9 @@ export async function scrapeNarutoCards(
   const printList = [...prints.values()].sort((a, b) =>
     a.printKey.localeCompare(b.printKey),
   );
-  const assetList = [...assetsByKey.values()];
+  const assetList = [...assetsByKey.values()].filter(
+    (a) => a.lang.trim().toLowerCase() !== "it",
+  );
   const thumbMapped = mapSiteMedThumbsOntoAssets(root, printList, assetList);
 
   console.log("── index catalog.sqlite + cards-index.json");
@@ -1534,11 +1541,6 @@ export async function scrapeNarutoCards(
   if (assembled.attestedPromosAdded.length) {
     console.log(
       `── attested promos: ${assembled.attestedPromosAdded.length} printKeys sans face encore`,
-    );
-  }
-  if (assembled.s6ItAdded.length || assembled.s6ItNamed.length) {
-    console.log(
-      `── S6 IT : ${assembled.s6ItAdded.length} printKeys, ${assembled.s6ItNamed.length} noms italiens`,
     );
   }
   if (

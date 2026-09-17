@@ -23,7 +23,13 @@ import { fetchContentBase } from "./gameSettings";
 export const UPDATER_NOTES_URL =
   "https://cdn.studio-prod.pokemon.com/rainier/updater/StandaloneOSX/ReleaseNotes/notes_en.json";
 
-export const VERSION_RE = /Version\s+(\d+\.\d+\.\d+)\s*\((\d+)\)/i;
+/**
+ * Updater notes historically shipped ``Version 1.40.0 (1208333)``.
+ * From 1.42+ the build paren is often omitted (``Version 1.42.0`` only) —
+ * requiring it forced ``default-fallback`` onto a dead CDN path.
+ */
+export const VERSION_RE =
+  /Version\s+(\d+\.\d+\.\d+)(?:\s*\((\d+)\))?/i;
 
 export const SOURCE_MATRIX = [
   {
@@ -232,10 +238,13 @@ export async function resolveCdnTarget(cache: string): Promise<CdnTarget> {
   try {
     [ver, build] = await discoverVersionFromUpdater();
     verSrc = "updater-notes";
-  } catch {
-    ver = DEFAULT_VERSION;
-    build = null;
-    verSrc = "default-fallback";
+  } catch (err) {
+    // Silent fallback previously scraped a dead CDN tree while reporting ok.
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Pokémon Live CDN version discovery failed (${detail}). ` +
+        `Refusing default-fallback to ${DEFAULT_VERSION} — fix updater notes parse or network.`,
+    );
   }
   const resolvedBase = await fetchContentBase({ version: ver });
   const [contentDir, dirSrc] = await pickContentDir({

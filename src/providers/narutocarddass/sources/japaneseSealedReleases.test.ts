@@ -139,9 +139,11 @@ describe("les visuels officiels Bandai", () => {
     ainsi, et aplatir le chemin ne retrouverait pas le fichier.
   */
   it("comble avec le site de jeu les volumes que personne d'autre ne montre", () => {
-    const carddas = rows.filter((r) => r.stagingKind === "carddas-jp");
-    expect(carddas.map((r) => r.slug).sort()).toEqual([
+    const carddasPrimary = rows.filter((r) => r.stagingKind === "carddas-jp");
+    expect(carddasPrimary.map((r) => r.slug).sort()).toEqual([
       "booster-vol1-jp",
+      "booster-vol10-jp",
+      "booster-vol11-jp",
       "booster-vol13-jp",
       "booster-vol14-jp",
       "booster-vol15-jp",
@@ -169,12 +171,6 @@ describe("les visuels officiels Bandai", () => {
     );
   });
 
-  /*
-    Là où Bandai ne publie plus, la base de rachat Suruga-ya prend le relais —
-    volumes 7 et 9, et la boîte starter 秘技伝授. Le visuel de l'éditeur passe
-    avant celui d'un revendeur, d'où deux sources distinctes plutôt qu'un
-    mélange.
-  */
   it("complète avec Suruga là où l'éditeur ne publie plus", () => {
     const suruga = rows.filter((r) => r.stagingKind === "suruga-kaitori");
     expect(suruga.map((r) => r.slug).sort()).toEqual([
@@ -183,6 +179,23 @@ describe("les visuels officiels Bandai", () => {
       "jp-release-04",
     ]);
     expect(suruga.every((r) => r.stagingFile === `${r.slug}.webp`)).toBe(true);
+  });
+
+  it("garde carddas + TV Tokyo en dumps parallèles même quand Suruga est primaire", () => {
+    const vol7 = rows.find((r) => r.slug === "booster-vol7-jp");
+    expect(vol7?.stagingKind).toBe("suruga-kaitori");
+    expect(vol7?.packshots?.map((p) => p.kind)).toEqual([
+      "suruga-kaitori",
+      "carddas-jp",
+      "tv-tokyo",
+    ]);
+    const vol6 = rows.find((r) => r.slug === "booster-vol6-jp");
+    expect(vol6?.stagingKind).toBe("jp-boosters");
+    expect(vol6?.packshots?.map((p) => p.kind)).toEqual([
+      "jp-boosters",
+      "carddas-jp",
+      "tv-tokyo",
+    ]);
   });
 
   it("laisse ラムネ / Vジャンプ / 絵巻 弐 sans visuel plutôt que d'en inventer un", () => {

@@ -10,7 +10,7 @@ import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { packApksDir } from "@/lib/packPaths";
-import { POKEMON_LIVE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
+import { POKEMON_CATALOGUE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
 import { catalogueExtractSkipArgs } from "@/lib/admin/catalogueExtractCheckpoint";
 import {
   CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
@@ -139,7 +139,13 @@ export function lorcanaExtractProviders(opts: {
   skipProducts?: boolean;
 }): string[] {
   const providers = ["lorcanaweb", "lorcanacards"];
-  if (!opts.skipProducts) providers.push("lorcanaproducts");
+  if (!opts.skipProducts) {
+    providers.push("lorcanaproducts");
+  } else {
+    // Auto without a new APK skips the heavy lorcards.fr graph, but still
+    // harvests Disney official logos / missing SKUs so new sets appear.
+    providers.push("lorcanaofficial");
+  }
   if (opts.hasApk && !opts.skipUnity) providers.push("lorcanamobile");
   return providers;
 }
@@ -192,12 +198,16 @@ export async function resolveCatalogueExtractPlan(
       prelude.push(
         "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
       );
+    } else {
+      prelude.push(
+        "auto: logos / SKU manquants via www.disneylorcana.com (sans graphe lorcards.fr)",
+      );
     }
     return { target, argv, prelude };
   }
 
   if (target === "pokemon") {
-    const argv = ["--langs", POKEMON_LIVE_LANGS_CSV, ...skipArgs];
+    const argv = ["--langs", POKEMON_CATALOGUE_LANGS_CSV, ...skipArgs];
     if (opts.skipProducts) argv.push("--skip-products");
     else argv.push("--products");
     if (opts.skipAudits) {
@@ -210,6 +220,7 @@ export async function resolveCatalogueExtractPlan(
             ...resumePrelude,
             "Pokémon: catalogue CDN (AssetManifests, 14 buckets) → tous les bundles listés",
             "chaque bundle porte son bucket : aucune sonde de dossiers",
+            "langs catalogue = en,fr (Live DE/IT/ES/ptbr hors tuiles admin)",
           ]
         : [
             ...resumePrelude,
@@ -228,7 +239,7 @@ export async function resolveCatalogueExtractPlan(
       prelude.push("faces papier skipped (auto catalogue)");
     }
     if (scope === "catalogue") argv.push("--refresh-manifests");
-    prelude.push(`langs=${POKEMON_LIVE_LANGS_CSV}`, `scope=${scope}`);
+    prelude.push(`langs=${POKEMON_CATALOGUE_LANGS_CSV}`, `scope=${scope}`);
     return { target, argv, prelude };
   }
 
@@ -386,6 +397,25 @@ async function invokePackPipeline(
       await runDbsLamincardsPackPipeline(argv);
       return;
     }
+    case "dbs-jcc": {
+      const { runDbsJccPackPipeline } = await import(
+        "@/providers/dbsjcc/extract"
+      );
+      await runDbsJccPackPipeline(argv);
+      return;
+    }
+    case "dbs-heroes": {
+      const { runDbhPackPipeline } = await import("@/providers/dbh/extract");
+      await runDbhPackPipeline(argv);
+      return;
+    }
+    case "bleach-scb": {
+      const { runBleachScbPackPipeline } = await import(
+        "@/providers/bleachscb/extract"
+      );
+      await runBleachScbPackPipeline(argv);
+      return;
+    }
     case "onepiece": {
       const { runOnepiecePackPipeline } = await import(
         "@/providers/onepiece/extract"
@@ -393,9 +423,15 @@ async function invokePackPipeline(
       await runOnepiecePackPipeline(argv);
       return;
     }
-    case "digimon": {
-      const { runDigimonPackPipeline } = await import("@/providers/digimon/extract");
-      await runDigimonPackPipeline(argv);
+    case "leclerc-marvel21":
+    case "leclerc-marvel22":
+    case "leclerc-marvel23":
+    case "leclerc-marvel24":
+    case "leclerc-disney25": {
+      const { runLeclercExtractTargetPipeline } = await import(
+        "@/providers/leclerc/extract"
+      );
+      await runLeclercExtractTargetPipeline(target, argv);
       return;
     }
     case "yugioh": {

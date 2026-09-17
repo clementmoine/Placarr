@@ -530,4 +530,9 @@ describe("tcgdex language mapping", () => {
     expect(tcgdexLanguageFromLiveOrDex("ja")).toBe("ja");
     expect(tcgdexLanguageFromLiveOrDex("xx")).toBeNull();
   });
+
+  it("harvests paper catalogue as JA original + FR + EN", async () => {
+    const { TCGDEX_HARVEST_LANGUAGES } = await import("./scrapeCards");
+    expect([...TCGDEX_HARVEST_LANGUAGES]).toEqual(["ja", "fr", "en"]);
+  });
 });

@@ -24,6 +24,7 @@ describe("parseSurugaCarddassPrinted", () => {
   it.each([
     ["依-12 ヒマツ", "依-12"],
     ["忍-85[ウルトラレア]", "忍-85"],
+    ["騎-2[レア]：ハイド", "騎-2"],
     ["PR忍-1-R", "PR忍-1-R"],
     ["NM-049", null],
     ["DN-032T", null],
@@ -67,6 +68,7 @@ describe("surugaPrintedToDiskId", () => {
     expect(surugaPrintedToDiskId("術-1")).toBe("te0001");
     expect(surugaPrintedToDiskId("作-248")).toBe("ta0248");
     expect(surugaPrintedToDiskId("依-12")).toBe("cl0012");
+    expect(surugaPrintedToDiskId("騎-2")).toBe("ki0002");
     expect(surugaPrintedToDiskId("PR忍-1-R")).toBe("prni0001-R");
   });
 
@@ -159,8 +161,8 @@ describe("suruga-ya-carddass ledger", () => {
     expect(ledger.not).toContain("data-carddass");
     expect(ledger.not).toContain("en-ccg");
     const listings = loadSurugaCarddassCuratedListings();
-    // 618 = 614 + la moisson orphelins JA du 2026-09-04 (忍-391/392, PR作, 作-321).
-    expect(listings.length).toBe(618);
+    expect(listings.length).toBe(1216);
+    expect(listings.some((row) => row.id === "GU112665")).toBe(true);
     expect(listings.some((row) => row.id === "GL398669")).toBe(true);
     expect(listings.some((row) => row.id === "GL685033")).toBe(true);
     expect(listings.some((row) => row.id === "GL685034")).toBe(true);
@@ -168,6 +170,6 @@ describe("suruga-ya-carddass ledger", () => {
     expect(listings.some((row) => row.id === "GL636976")).toBe(true);
     expect(listings.some((row) => /DN-|NM-/.test(row.printed))).toBe(false);
     expect(foldSurugaCarddassListings(listings).length).toBeGreaterThan(300);
-    expect(listings.some((row) => row.printed === "忍-3")).toBe(false);
+    expect(listings.some((row) => row.printed === "忍-3")).toBe(true);
   });
 });

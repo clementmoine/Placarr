@@ -1,0 +1,1179 @@
+{
+  "source": "tcg-db.nikita.jp/cardlist/blc",
+  "lang": "ja",
+  "observed": "2026-09-16",
+  "url": "https://tcg-db.nikita.jp/cardlist/blc/",
+  "count": 130,
+  "cards": [
+    {
+      "printed": "S-002",
+      "set": "s",
+      "number": "002",
+      "nameJa": "黒崎 一護",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-002.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "S-012",
+      "set": "s",
+      "number": "012",
+      "nameJa": "石田 雨竜",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-012.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "S-014",
+      "set": "s",
+      "number": "014",
+      "nameJa": "朽木 白哉",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-014.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "S-026",
+      "set": "s",
+      "number": "026",
+      "nameJa": "朽木 ルキア",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-026.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "S-031",
+      "set": "s",
+      "number": "031",
+      "nameJa": "茶渡 泰虎",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-031.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "S-032",
+      "set": "s",
+      "number": "032",
+      "nameJa": "井上 織姫",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-032.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "B-001",
+      "set": "b",
+      "number": "001",
+      "nameJa": "正面斬り",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-001.jpg",
+      "type": "バトル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "B-010",
+      "set": "b",
+      "number": "010",
+      "nameJa": "ストレート",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-010.jpg",
+      "type": "バトル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "B-012",
+      "set": "b",
+      "number": "012",
+      "nameJa": "助けに来ましたよーん♪",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-012.jpg",
+      "type": "バトル",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "E007",
+      "set": "e",
+      "number": "007",
+      "nameJa": "義魂丸",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-007.jpg",
+      "type": "イベント",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "E008",
+      "set": "e",
+      "number": "008",
+      "nameJa": "出動 浦原商店！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-008.jpg",
+      "type": "イベント",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "E013",
+      "set": "e",
+      "number": "013",
+      "nameJa": "メガネミシン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-013.jpg",
+      "type": "イベント",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "E014",
+      "set": "e",
+      "number": "014",
+      "nameJa": "撒き餌",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-014.jpg",
+      "type": "イベント",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "E015",
+      "set": "e",
+      "number": "015",
+      "nameJa": "証明するだけだ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-015.jpg",
+      "type": "イベント",
+      "note": "nikita · 1.THE DEATH AND THE STRAWBERRY"
+    },
+    {
+      "printed": "S-039",
+      "set": "s",
+      "number": "039",
+      "nameJa": "石田 雨竜",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-039.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 2.THE BLADE AND ME"
+    },
+    {
+      "printed": "B-021",
+      "set": "b",
+      "number": "021",
+      "nameJa": "刀刃破壊",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-021.jpg",
+      "type": "バトル",
+      "note": "nikita · 2.THE BLADE AND ME"
+    },
+    {
+      "printed": "B-023",
+      "set": "b",
+      "number": "023",
+      "nameJa": "パンチ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-023.jpg",
+      "type": "バトル",
+      "note": "nikita · 2.THE BLADE AND ME"
+    },
+    {
+      "printed": "S-066",
+      "set": "s",
+      "number": "066",
+      "nameJa": "井上 織姫",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-066.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "S-076",
+      "set": "s",
+      "number": "076",
+      "nameJa": "綾瀬川 弓親",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-076.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "S-081",
+      "set": "s",
+      "number": "081",
+      "nameJa": "コン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-081.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "S-099",
+      "set": "s",
+      "number": "099",
+      "nameJa": "藍染 惣右介",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-099.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "B-035",
+      "set": "b",
+      "number": "035",
+      "nameJa": "ぶった斬り",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-035.jpg",
+      "type": "バトル",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "B-050",
+      "set": "b",
+      "number": "050",
+      "nameJa": "延びろ！！『鬼灯丸』！！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-050.jpg",
+      "type": "バトル",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "B-053",
+      "set": "b",
+      "number": "053",
+      "nameJa": "羽搏きなさい！！『劈烏』！！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-053.jpg",
+      "type": "バトル",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "E044",
+      "set": "e",
+      "number": "044",
+      "nameJa": "待ち伏せ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-044.jpg",
+      "type": "イベント",
+      "note": "nikita · 3.INTRUDERZ"
+    },
+    {
+      "printed": "S-102",
+      "set": "s",
+      "number": "102",
+      "nameJa": "黒崎 一護",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-102.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-104",
+      "set": "s",
+      "number": "104",
+      "nameJa": "朽木 ルキア",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-104.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-105",
+      "set": "s",
+      "number": "105",
+      "nameJa": "石田 雨竜",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-105.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-120",
+      "set": "s",
+      "number": "120",
+      "nameJa": "茶渡 泰虎",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-120.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-121",
+      "set": "s",
+      "number": "121",
+      "nameJa": "コン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-121.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-122",
+      "set": "s",
+      "number": "122",
+      "nameJa": "夜一",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-122.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-126",
+      "set": "s",
+      "number": "126",
+      "nameJa": "山田 花太郎",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-126.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-128",
+      "set": "s",
+      "number": "128",
+      "nameJa": "黒崎 一護",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-128.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-129",
+      "set": "s",
+      "number": "129",
+      "nameJa": "黒崎 一護",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-129.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-132",
+      "set": "s",
+      "number": "132",
+      "nameJa": "石田 雨竜",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-132.jpg",
+      "type": "バンカイソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-134",
+      "set": "s",
+      "number": "134",
+      "nameJa": "石田 雨竜",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-134.jpg",
+      "type": "バンカイソウル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "B-014",
+      "set": "b",
+      "number": "014",
+      "nameJa": "疾ッ！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-014_2.jpg",
+      "type": "バトル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "B-018",
+      "set": "b",
+      "number": "018",
+      "nameJa": "爆弾返し",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-018_2.jpg",
+      "type": "バトル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "B-026",
+      "set": "b",
+      "number": "026",
+      "nameJa": "滅却の矢",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-026_2.jpg",
+      "type": "バトル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "B-055",
+      "set": "b",
+      "number": "055",
+      "nameJa": "飛廉脚",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-055.jpg",
+      "type": "バトル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "B-056",
+      "set": "b",
+      "number": "056",
+      "nameJa": "煌然の矢",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-056.jpg",
+      "type": "バトル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "B-065",
+      "set": "b",
+      "number": "065",
+      "nameJa": "弾け！！『飛梅』！！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-065.jpg",
+      "type": "バトル",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "E003",
+      "set": "e",
+      "number": "003",
+      "nameJa": "捂魂手甲",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-003_2.jpg",
+      "type": "イベント",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "E050",
+      "set": "e",
+      "number": "050",
+      "nameJa": "拘突",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-050.jpg",
+      "type": "イベント",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "E051",
+      "set": "e",
+      "number": "051",
+      "nameJa": "全員イノシシ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-051.jpg",
+      "type": "イベント",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "E060",
+      "set": "e",
+      "number": "060",
+      "nameJa": "虚の仮面",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-060.jpg",
+      "type": "イベント",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "E061",
+      "set": "e",
+      "number": "061",
+      "nameJa": "飛翔",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-061.jpg",
+      "type": "イベント",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "E066",
+      "set": "e",
+      "number": "066",
+      "nameJa": "散霊手套",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-066.jpg",
+      "type": "イベント",
+      "note": "nikita · 4.Secret of the Moon"
+    },
+    {
+      "printed": "S-151",
+      "set": "s",
+      "number": "151",
+      "nameJa": "ドン・観音寺",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-151.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "S-170",
+      "set": "s",
+      "number": "170",
+      "nameJa": "茶渡 泰虎",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-170.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "S-181",
+      "set": "s",
+      "number": "181",
+      "nameJa": "雛森 桃",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-181.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "B-076",
+      "set": "b",
+      "number": "076",
+      "nameJa": "二連観音寺弾！！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-076.jpg",
+      "type": "バトル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "B-077",
+      "set": "b",
+      "number": "077",
+      "nameJa": "閃花",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-077.jpg",
+      "type": "バトル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "B-079",
+      "set": "b",
+      "number": "079",
+      "nameJa": "縛道の六十一 六杖光牢",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-079.jpg",
+      "type": "バトル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "B-084",
+      "set": "b",
+      "number": "084",
+      "nameJa": "尽敵螫殺『雀蜂』",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-084.jpg",
+      "type": "バトル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "B-086",
+      "set": "b",
+      "number": "086",
+      "nameJa": "鳴け『清虫』",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-086.jpg",
+      "type": "バトル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "B-087",
+      "set": "b",
+      "number": "087",
+      "nameJa": "清虫ニ式『紅飛蝗』",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-087.jpg",
+      "type": "バトル",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "E068",
+      "set": "e",
+      "number": "068",
+      "nameJa": "父さんスライディング",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-068.jpg",
+      "type": "イベント",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "E075",
+      "set": "e",
+      "number": "075",
+      "nameJa": "呑もう！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-075.jpg",
+      "type": "イベント",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "E083",
+      "set": "e",
+      "number": "083",
+      "nameJa": "誇りのために",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-083.jpg",
+      "type": "イベント",
+      "note": "nikita · 5.Blazing Souls"
+    },
+    {
+      "printed": "S-202",
+      "set": "s",
+      "number": "202",
+      "nameJa": "朽木 白哉",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-202.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-204",
+      "set": "s",
+      "number": "204",
+      "nameJa": "檜佐木 修兵",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-204.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-208",
+      "set": "s",
+      "number": "208",
+      "nameJa": "松本 乱菊",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-208.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-211",
+      "set": "s",
+      "number": "211",
+      "nameJa": "日番谷 冬獅郎",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-211.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-212",
+      "set": "s",
+      "number": "212",
+      "nameJa": "斑目 一角",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-212.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-214",
+      "set": "s",
+      "number": "214",
+      "nameJa": "大前田 希千代",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-214.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-230",
+      "set": "s",
+      "number": "230",
+      "nameJa": "黒崎 一護",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-230.jpg",
+      "type": "バンカイソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-233",
+      "set": "s",
+      "number": "233",
+      "nameJa": "日番谷 冬獅郎",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-233.jpg",
+      "type": "バンカイソウル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "B-095",
+      "set": "b",
+      "number": "095",
+      "nameJa": "今一度問おう",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-095.jpg",
+      "type": "バトル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "B-096",
+      "set": "b",
+      "number": "096",
+      "nameJa": "千本桜景巌 終景・白帝剣",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-096.jpg",
+      "type": "バトル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "B-098",
+      "set": "b",
+      "number": "098",
+      "nameJa": "斬撃",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-098.jpg",
+      "type": "バトル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "B-108",
+      "set": "b",
+      "number": "108",
+      "nameJa": "咆哮",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-108.jpg",
+      "type": "バトル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "B-113",
+      "set": "b",
+      "number": "113",
+      "nameJa": "十一番隊の誇り",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-113.jpg",
+      "type": "バトル",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "E092",
+      "set": "e",
+      "number": "092",
+      "nameJa": "被害状況報告",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-092.jpg",
+      "type": "イベント",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "E093",
+      "set": "e",
+      "number": "093",
+      "nameJa": "敵として処理する",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-093.jpg",
+      "type": "イベント",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "E094",
+      "set": "e",
+      "number": "094",
+      "nameJa": "服着ろ―――！！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-094.jpg",
+      "type": "イベント",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "E103",
+      "set": "e",
+      "number": "103",
+      "nameJa": "見事だ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-103.jpg",
+      "type": "イベント",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "E108",
+      "set": "e",
+      "number": "108",
+      "nameJa": "中央四十六室全滅",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-108.jpg",
+      "type": "イベント",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "E110",
+      "set": "e",
+      "number": "110",
+      "nameJa": "偽りの死体",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-110.jpg",
+      "type": "イベント",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "Z023",
+      "set": "z",
+      "number": "023",
+      "nameJa": "氷輪丸",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/Z-023.jpg",
+      "type": "斬魄刀",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "Z024",
+      "set": "z",
+      "number": "024",
+      "nameJa": "双魚理",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/Z-024.jpg",
+      "type": "斬魄刀",
+      "note": "nikita · 6.THE BLACK MOON RISING"
+    },
+    {
+      "printed": "S-235",
+      "set": "s",
+      "number": "235",
+      "nameJa": "黒崎 一護",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-235.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "S-240",
+      "set": "s",
+      "number": "240",
+      "nameJa": "兕丹坊",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-240.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "S-259",
+      "set": "s",
+      "number": "259",
+      "nameJa": "志波 空鶴＆兕丹坊",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-259.jpg",
+      "type": "ペアメインソウル",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "S-268",
+      "set": "s",
+      "number": "268",
+      "nameJa": "卯ノ花 烈",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-268.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "B-120",
+      "set": "b",
+      "number": "120",
+      "nameJa": "射殺せ『神鎗』",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-120.jpg",
+      "type": "バトル",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "B-121",
+      "set": "b",
+      "number": "121",
+      "nameJa": "ありがとだべ！！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-121.jpg",
+      "type": "バトル",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "B-128",
+      "set": "b",
+      "number": "128",
+      "nameJa": "何様！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-128.jpg",
+      "type": "バトル",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "Z026",
+      "set": "z",
+      "number": "026",
+      "nameJa": "流刃若火",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/Z-026.jpg",
+      "type": "斬魄刀",
+      "note": "nikita · 7.No One Stand On the Sky"
+    },
+    {
+      "printed": "S-293",
+      "set": "s",
+      "number": "293",
+      "nameJa": "車谷 善之介",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-293.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 8.RETURNING SOULs"
+    },
+    {
+      "printed": "B-141",
+      "set": "b",
+      "number": "141",
+      "nameJa": "黒い月牙天衝",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-141.jpg",
+      "type": "バトル",
+      "note": "nikita · 8.RETURNING SOULs"
+    },
+    {
+      "printed": "E141",
+      "set": "e",
+      "number": "141",
+      "nameJa": "強行突破",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-141.jpg",
+      "type": "イベント",
+      "note": "nikita · 8.RETURNING SOULs"
+    },
+    {
+      "printed": "E145",
+      "set": "e",
+      "number": "145",
+      "nameJa": "さよなら",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-145.jpg",
+      "type": "イベント",
+      "note": "nikita · 8.RETURNING SOULs"
+    },
+    {
+      "printed": "S-356",
+      "set": "s",
+      "number": "356",
+      "nameJa": "阿散井 恋次",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-356.jpg",
+      "type": "バンカイソウル",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "B-163",
+      "set": "b",
+      "number": "163",
+      "nameJa": "追随",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-163.jpg",
+      "type": "バトル",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "B-165",
+      "set": "b",
+      "number": "165",
+      "nameJa": "眼力",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-165.jpg",
+      "type": "バトル",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "B-166",
+      "set": "b",
+      "number": "166",
+      "nameJa": "逃さん",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-166.jpg",
+      "type": "バトル",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "B-175",
+      "set": "b",
+      "number": "175",
+      "nameJa": "スネークウィップ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-175.jpg",
+      "type": "バトル",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "E159",
+      "set": "e",
+      "number": "159",
+      "nameJa": "てめーはツイてねえ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-159.jpg",
+      "type": "イベント",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "E160",
+      "set": "e",
+      "number": "160",
+      "nameJa": "一閃の衝撃",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-160.jpg",
+      "type": "イベント",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "E163",
+      "set": "e",
+      "number": "163",
+      "nameJa": "闇夜からの襲撃",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-163.jpg",
+      "type": "イベント",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "E166",
+      "set": "e",
+      "number": "166",
+      "nameJa": "四散する桜",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-166.jpg",
+      "type": "イベント",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "E167",
+      "set": "e",
+      "number": "167",
+      "nameJa": "高みの見物",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-167.jpg",
+      "type": "イベント",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "E172",
+      "set": "e",
+      "number": "172",
+      "nameJa": "現世での再会",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-172.jpg",
+      "type": "イベント",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "E173",
+      "set": "e",
+      "number": "173",
+      "nameJa": "暴走する水圧",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-173.jpg",
+      "type": "イベント",
+      "note": "nikita · 9.RETURNING SOULs2"
+    },
+    {
+      "printed": "S-366",
+      "set": "s",
+      "number": "366",
+      "nameJa": "井上 織姫",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-366.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "S-387",
+      "set": "s",
+      "number": "387",
+      "nameJa": "ジャイ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-387.jpg",
+      "type": "メインソウル",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "B-178",
+      "set": "b",
+      "number": "178",
+      "nameJa": "我が名は『斬月』！！！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-178.jpg",
+      "type": "バトル",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "B-189",
+      "set": "b",
+      "number": "189",
+      "nameJa": "狒狒王蛇尾丸",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-189.jpg",
+      "type": "バトル",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "B-199",
+      "set": "b",
+      "number": "199",
+      "nameJa": "ダークワンの強攻",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-199.jpg",
+      "type": "バトル",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "E178",
+      "set": "e",
+      "number": "178",
+      "nameJa": "滅却師の誇り",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-178.jpg",
+      "type": "イベント",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "E182",
+      "set": "e",
+      "number": "182",
+      "nameJa": "桜花演舞",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-182.jpg",
+      "type": "イベント",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "E184",
+      "set": "e",
+      "number": "184",
+      "nameJa": "切なる願い",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-184.jpg",
+      "type": "イベント",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "E188",
+      "set": "e",
+      "number": "188",
+      "nameJa": "おかえりなさーーい♪",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-188.jpg",
+      "type": "イベント",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "E190",
+      "set": "e",
+      "number": "190",
+      "nameJa": "死神代行戦闘許可証",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-190.jpg",
+      "type": "イベント",
+      "note": "nikita · 10.GET BACK FROM THE STORM"
+    },
+    {
+      "printed": "E197",
+      "set": "e",
+      "number": "197",
+      "nameJa": "深夜の線路にて",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-197.jpg",
+      "type": "イベント",
+      "note": "nikita · 11.THE Approaching Danger"
+    },
+    {
+      "printed": "E203",
+      "set": "e",
+      "number": "203",
+      "nameJa": "着地成功",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-203.jpg",
+      "type": "イベント",
+      "note": "nikita · 11.THE Approaching Danger"
+    },
+    {
+      "printed": "A-029",
+      "set": "ability",
+      "number": "029",
+      "nameJa": "良い太刀筋",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/A-029.jpg",
+      "type": "アビリティ",
+      "note": "nikita · 11.THE Approaching Danger"
+    },
+    {
+      "printed": "S-500",
+      "set": "s",
+      "number": "500",
+      "nameJa": "朽木 ルキア",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-500.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · 12.Night of Sledgehammer"
+    },
+    {
+      "printed": "E239",
+      "set": "e",
+      "number": "239",
+      "nameJa": "刀を納めろ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-239.jpg",
+      "type": "イベント",
+      "note": "nikita · 13.Turn the True Power On"
+    },
+    {
+      "printed": "S-197",
+      "set": "s",
+      "number": "197",
+      "nameJa": "雛森 桃",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-197.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · コインプラス2"
+    },
+    {
+      "printed": "S-198",
+      "set": "s",
+      "number": "198",
+      "nameJa": "日番谷 冬獅郎",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-198.jpg",
+      "type": "アシストソウル",
+      "note": "nikita · コインプラス2"
+    },
+    {
+      "printed": "PZ-004",
+      "set": "promo",
+      "number": "004",
+      "nameJa": "斬月",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/PZ-004.jpg",
+      "type": "斬魄刀",
+      "note": "nikita · プロモーションカード"
+    },
+    {
+      "printed": "J-011",
+      "set": "j",
+      "number": "011",
+      "nameJa": "女性死神協会",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/J-011.jpg",
+      "type": "メインソウル",
+      "note": "nikita · プロモーションカード"
+    },
+    {
+      "printed": "J-014",
+      "set": "j",
+      "number": "014",
+      "nameJa": "FLAME BRINGER",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/J-014.jpg",
+      "type": "メインソウル",
+      "note": "nikita · プロモーションカード"
+    },
+    {
+      "printed": "S-658",
+      "set": "s",
+      "number": "658",
+      "nameJa": "ウルキオラ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-658.jpg",
+      "type": "メインソウル",
+      "note": "nikita · ※確認中"
+    },
+    {
+      "printed": "S-687",
+      "set": "s",
+      "number": "687",
+      "nameJa": "アーロニーロ・アルルエリ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-687.jpg",
+      "type": "ブラストソウル",
+      "note": "nikita · ※確認中"
+    },
+    {
+      "printed": "B-298",
+      "set": "b",
+      "number": "298",
+      "nameJa": "水天逆巻け「捩花」",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-298.jpg",
+      "type": "バトル",
+      "note": "nikita · ※確認中"
+    },
+    {
+      "printed": "B-306",
+      "set": "b",
+      "number": "306",
+      "nameJa": "御静粛に願います",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/B-306.jpg",
+      "type": "バトル",
+      "note": "nikita · ※確認中"
+    },
+    {
+      "printed": "A-022",
+      "set": "ability",
+      "number": "022",
+      "nameJa": "イラッシャイマセ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/A-022.jpg",
+      "type": "アビリティ",
+      "note": "nikita · ※確認中"
+    }
+  ]
+}

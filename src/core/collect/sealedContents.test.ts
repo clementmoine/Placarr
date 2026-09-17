@@ -24,6 +24,17 @@ describe("sealedContents", () => {
     expect(packsContainedFromShopText("booster-premier-chapitre")).toBeNull();
   });
 
+  it("reads multipack counts from tripack / double-pack / lot N", () => {
+    expect(packsContainedFromShopText("Coffret Tripack Fable Nebuleuse")).toBe(
+      3,
+    );
+    expect(
+      packsContainedFromShopText("coffret-tripack-mascarade-crepusculaire"),
+    ).toBe(3);
+    expect(packsContainedFromShopText("Double Pack OP01")).toBe(2);
+    expect(packsContainedFromShopText("Lot 10 Mini Tin Mew")).toBe(10);
+  });
+
   it("resolves booster contents from name, not set-sized declared counts", () => {
     expect(
       resolveSealedContents({

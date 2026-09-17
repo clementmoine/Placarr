@@ -1,12 +1,36 @@
 import { describe, expect, it } from "vitest";
 
-import { finalizeSetOptions, isAnsweredQuery, setScopedWhere } from "./sets";
+import {
+  finalizeSetOptions,
+  isAnsweredQuery,
+  pickCatalogueSetName,
+  pickCatalogueSetNameByCount,
+  setScopedWhere,
+} from "./sets";
 
 /*
   Ces trois traitements avaient été écrits une fois par pack — cinq fois pour la
   clause SQL, sept pour le tri — et avaient déjà divergé : l'un laissait passer
   un set nommé `-`, l'autre rendait deux entrées rigoureusement identiques.
 */
+describe("pickCatalogueSetName", () => {
+  it("ignore un tiret décoratif face au vrai libellé promo", () => {
+    expect(pickCatalogueSetName(["-", "Promotion Cartes", "Promotion Cartes"])).toBe(
+      "Promotion Cartes",
+    );
+    expect(
+      pickCatalogueSetNameByCount([
+        { name: "-", count: 1 },
+        { name: "Promotion Cartes", count: 889 },
+      ]),
+    ).toBe("Promotion Cartes");
+  });
+
+  it("rend null quand aucun nom n'est utilisable", () => {
+    expect(pickCatalogueSetName(["-", " ", null])).toBeNull();
+  });
+});
+
 describe("finalizeSetOptions", () => {
   it("retombe sur le code quand le nom ne se choisit pas", () => {
     expect(finalizeSetOptions([{ id: "fb01", label: "-" }])).toEqual([
@@ -18,20 +42,43 @@ describe("finalizeSetOptions", () => {
   });
 
   /*
-    Deux codes peuvent porter le même nom — un booster réédité. Deux entrées
-    identiques dans une liste ne se départagent pas ; on ajoute le code, et
-    seulement à celles qui se ressemblent.
+    Le code d'abord : BT1 / TB1 / FB01 se lisent sur la carte, et plusieurs
+    extensions DBS partagent aujourd'hui le même titre marketing — sans
+    préfixe, la liste était illisible. Deux noms identiques n'ont plus besoin
+    d'une parenthèse en fin de ligne.
   */
-  it("départage les homonymes, et eux seuls", () => {
+  it("préfixe le code set sur chaque libellé", () => {
+    const rows = finalizeSetOptions([
+      { id: "bt1", label: "Série 1 Booster ～GALACTIC BATTLE～" },
+      { id: "tb1", label: "Tournament of Power" },
+      { id: "fb01", label: "Awakened Pulse" },
+    ]);
+    expect(rows.map((row) => row.label)).toEqual([
+      "BT1 — Série 1 Booster ～GALACTIC BATTLE～",
+      "FB01 — Awakened Pulse",
+      "TB1 — Tournament of Power",
+    ]);
+  });
+
+  it("ne double pas un code déjà présent en tête de libellé", () => {
+    expect(
+      finalizeSetOptions([{ id: "bt1", label: "BT1 — Galactic Battle" }]),
+    ).toEqual([{ id: "bt1", label: "BT1 — Galactic Battle" }]);
+    expect(
+      finalizeSetOptions([{ id: "promo", label: "Promo (off-series)" }]),
+    ).toEqual([{ id: "promo", label: "PROMO — Promo (off-series)" }]);
+  });
+
+  it("départage les homonymes par le préfixe, sans parenthèse", () => {
     const rows = finalizeSetOptions([
       { id: "fb02", label: "Blazing Aura" },
       { id: "fs01", label: "Blazing Aura" },
       { id: "fb01", label: "Awakened Pulse" },
     ]);
     expect(rows.map((row) => row.label)).toEqual([
-      "Awakened Pulse",
-      "Blazing Aura (FB02)",
-      "Blazing Aura (FS01)",
+      "FB01 — Awakened Pulse",
+      "FB02 — Blazing Aura",
+      "FS01 — Blazing Aura",
     ]);
   });
 
@@ -41,16 +88,33 @@ describe("finalizeSetOptions", () => {
       { id: "s2", label: "Série 2" },
       { id: "e", label: "Épée" },
     ]);
-    // « Série 2 » avant « Série 10 », et l'accent ne rejette pas en fin de liste.
+    // « S2 » avant « S10 », et l'accent ne rejette pas en fin de liste.
     expect(rows.map((row) => row.label)).toEqual([
-      "Épée",
-      "Série 2",
-      "Série 10",
+      "E — Épée",
+      "S2 — Série 2",
+      "S10 — Série 10",
     ]);
   });
 
   it("ignore les lignes sans identifiant", () => {
     expect(finalizeSetOptions([{ id: "  ", label: "Fantôme" }])).toEqual([]);
+  });
+
+  it("accepte un code affiché distinct de l'id disque", () => {
+    expect(
+      finalizeSetOptions([
+        {
+          id: "tempete",
+          code: "S11",
+          label: "Série 11 — La Tempête Approche",
+        },
+      ]),
+    ).toEqual([
+      {
+        id: "tempete",
+        label: "S11 — Série 11 — La Tempête Approche",
+      },
+    ]);
   });
 });
 

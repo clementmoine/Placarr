@@ -46,6 +46,26 @@ describe("catalogueFacePick", () => {
     expect(face.file).toBe("art.arcadegamecards.jpg");
   });
 
+  it("préfère Carddass officiel à Coleka à résolution proche", () => {
+    const entry = {
+      set: "a",
+      card: "001",
+      langs: {
+        fr: { art: "art.carddass.jpg", artW: 400, artH: 560 },
+        ja: { art: "art.coleka.webp", artW: 420, artH: 580 },
+      },
+    };
+    const face = resolveCatalogueFace({
+      entry,
+      tileLang: "fr",
+      tileFiles: entry.langs.fr!,
+      catalogueLocales: ["ja", "fr"],
+      languageSpecific: false,
+      bestFaceAcrossLocales: true,
+    });
+    expect(face.file).toBe("art.carddass.jpg");
+  });
+
   it("emprunte la meilleure face cross-locale quand le tirage est neutre", () => {
     const entry = {
       set: "sd",

@@ -25,10 +25,25 @@ export function cardsPerPackFromShopText(
 export function packsContainedFromShopText(
   text: string | null | undefined,
 ): number | null {
-  const match = /\b(\d{1,3})[\s-]*boosters?\b/i.exec(text ?? "");
-  if (!match) return null;
-  const packs = Number(match[1]);
-  return packs > 0 && packs <= 100 ? packs : null;
+  const raw = text ?? "";
+  const boosters = /\b(\d{1,3})[\s-]*boosters?\b/i.exec(raw);
+  if (boosters) {
+    const packs = Number(boosters[1]);
+    if (packs > 0 && packs <= 100) return packs;
+  }
+  // Tripack / double-pack / « lot 10 » — attestés par le libellé, pas inventés.
+  if (/\btri[\s-]?packs?\b/i.test(raw) || /\bcoffret-tripack\b/i.test(raw)) {
+    return 3;
+  }
+  if (/\bdouble[\s-]?packs?\b/i.test(raw) || /\bduopacks?\b/i.test(raw)) {
+    return 2;
+  }
+  const lot = /\blot[\s_-]*(\d{1,3})\b/i.exec(raw);
+  if (lot) {
+    const packs = Number(lot[1]);
+    if (packs > 0 && packs <= 100) return packs;
+  }
+  return null;
 }
 
 export type SealedContents = {

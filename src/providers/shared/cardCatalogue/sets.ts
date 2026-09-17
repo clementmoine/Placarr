@@ -4,8 +4,7 @@
  * Chaque pack lit ses sets à sa façon — une table `sets`, un `set_name` porté
  * par le titre, un relevé curé — et c'est légitime : la donnée n'est pas rangée
  * pareil. Ce qui vient **après** l'est : écarter ce qui ne se choisit pas,
- * départager les homonymes, trier. Écrit une fois par pack, ça avait déjà
- * divergé sur les trois points.
+ * préfixer le code, trier. Écrit une fois par pack, ça avait déjà divergé.
  *
  * Rien ici ne connaît de catalogue : on reçoit des paires, on rend des paires.
  */
@@ -29,12 +28,89 @@ export type SetOption = {
 
 /** Un libellé sans lettre ni chiffre ne se choisit pas — le catalogue Dragon
  * Ball en porte un noté `-`. Le code, lui, désigne toujours quelque chose. */
-function isUsableLabel(label: string): boolean {
+export function isUsableSetLabel(label: string): boolean {
   return /[\p{L}\p{N}]/u.test(label);
+}
+
+/**
+ * Parmi les `set_name` portés par les titres d'une extension, garde le plus
+ * fréquent **utilisable**.
+ *
+ * `MIN(set_name)` prenait `-` avant « Promotion Cartes » (ordre lexicographique),
+ * et la liste d'extensions affichait alors juste « P ».
+ */
+export function pickCatalogueSetName(
+  names: readonly (string | null | undefined)[],
+): string | null {
+  return pickCatalogueSetNameByCount(
+    names.map((name) => ({ name, count: 1 })),
+  );
+}
+
+export function pickCatalogueSetNameByCount(
+  rows: readonly { name?: string | null; count: number }[],
+): string | null {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const name = (row.name ?? "").trim();
+    if (!isUsableSetLabel(name)) continue;
+    const n = Math.max(0, row.count);
+    if (n <= 0) continue;
+    counts.set(name, (counts.get(name) ?? 0) + n);
+  }
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const [name, count] of counts) {
+    if (count > bestCount) {
+      best = name;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+/**
+ * `BT1 — Galactic Battle` : le code d'abord, toujours.
+ *
+ * Les collectionneurs cherchent BT1 / TB1 / FB01 avant le titre marketing, et
+ * plusieurs extensions DBS portent aujourd'hui le même `set_name` erroné —
+ * sans le préfixe, la liste était illisible. Si le libellé est déjà le code
+ * (ou `CODE — …`), on ne le double pas.
+ *
+ * `code` override : quand l'id disque ≠ le code lu (ex. deck FR `tempete` →
+ * `S11`), on préfixe le code affiché sans renommer l'id.
+ */
+function labelWithSetCode(
+  id: string,
+  label: string,
+  codeOverride?: string | null,
+): string {
+  const code = (codeOverride?.trim() || id).toUpperCase();
+  const trimmed = label.trim();
+  if (!isUsableSetLabel(trimmed)) return code;
+  const upper = trimmed.toUpperCase();
+  if (upper === code) return code;
+  /*
+    Uniquement un séparateur typographique après le code — pas un simple
+    espace : « Promo (hors série) » commence par les lettres de `promo`, et
+    un test trop large laissait le libellé sans préfixe.
+  */
+  if (
+    /^[—–-]/.test(trimmed.slice(code.length).trimStart()) &&
+    upper.startsWith(code)
+  ) {
+    return trimmed;
+  }
+  return `${code} — ${trimmed}`;
 }
 
 export type FinalizeSetOptionsInput = {
   id: string;
+  /**
+   * Code affiché en tête de libellé (`S11 — …`). Défaut = `id` en majuscules.
+   * Utile quand l'id disque n'est pas le code collectionneur (deck FR `tempete`).
+   */
+  code?: string | null;
   /** La découpe dont ce set fait partie — voir `PrintSetOption.group`. */
   group?: string | null;
   /** Les langues dans lesquelles ce set a paru — voir `PrintSetOption`. */
@@ -57,14 +133,13 @@ export type FinalizeSetOptionsInput = {
 };
 
 /**
- * Nettoie, départage et trie.
+ * Nettoie et trie.
  *
  * - un libellé inutilisable retombe sur le code, en majuscules ;
- * - deux sets qui portent le **même** nom — un booster réédité, par exemple —
- *   se voient ajouter leur code, et eux seuls : deux entrées identiques dans
- *   une liste ne se départagent pas ;
+ * - tout set porte son code en préfixe (`BT1 — …`) : c'est ce qu'on lit sur
+ *   la carte, et ça départage les homonymes sans parenthèse en fin de ligne ;
  * - le tri suit `sortKey` quand le pack en donne un, sinon il est numérique et
- *   français, pour que « Série 2 » précède « Série 10 ».
+ *   français, pour que « BT2 — … » précède « BT10 — … ».
  */
 export function finalizeSetOptions(
   rows: readonly FinalizeSetOptionsInput[],
@@ -76,24 +151,18 @@ export function finalizeSetOptions(
     const label = (row.label ?? "").trim();
     named.push({
       id,
-      label: isUsableLabel(label) ? label : id.toUpperCase(),
+      label: labelWithSetCode(
+        id,
+        isUsableSetLabel(label) ? label : id,
+        row.code,
+      ),
       sortKey: row.sortKey ?? null,
       ...(row.group ? { group: row.group } : {}),
       ...(row.languages?.length ? { languages: [...row.languages] } : {}),
     });
   }
 
-  const seen = new Map<string, number>();
-  for (const row of named) {
-    seen.set(row.label, (seen.get(row.label) ?? 0) + 1);
-  }
-
   return named
-    .map((row) =>
-      (seen.get(row.label) ?? 0) > 1
-        ? { ...row, label: `${row.label} (${row.id.toUpperCase()})` }
-        : row,
-    )
     .sort((a, b) => {
       if (a.sortKey !== b.sortKey) {
         if (a.sortKey === null) return 1;

@@ -11,6 +11,7 @@ import {
 import {
   gamesInShelf,
   resolveChecklistCatalogueIds,
+  sealedProductModulesForShelf,
 } from "@/lib/collect/shelfChecklist";
 import { loadContainmentProducts } from "@/lib/collect/sealedProductsLoad";
 import type { ProviderModule } from "@/types/providerModule";
@@ -90,23 +91,11 @@ export async function sealedContainmentForShelfPrint(input: {
     catalogueIds,
   });
 
-  const sealedModules =
-    catalogueIds.size > 0
-      ? PROVIDER_MODULES.filter(
-          (pack) =>
-            pack.info.types.includes(input.shelfType) &&
-            catalogueIds.has(pack.info.id),
-        )
-      : PROVIDER_MODULES.filter((pack) => {
-          if (!pack.info.types.includes(input.shelfType)) return false;
-          if (
-            games.size > 0 &&
-            !(pack.printGames ?? []).some((game) => games.has(game))
-          ) {
-            return false;
-          }
-          return true;
-        });
+  const sealedModules = sealedProductModulesForShelf({
+    type: input.shelfType,
+    games,
+    catalogueIds,
+  });
 
   const products = sealedModules.flatMap((pack) =>
     loadContainmentProducts(pack.catalog?.dataPack),

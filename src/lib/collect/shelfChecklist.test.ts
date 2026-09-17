@@ -17,6 +17,7 @@ import {
   cataloguesInShelf,
   gamesInShelf,
   resolveChecklistCatalogueIds,
+  sealedProductModulesForShelf,
 } from "./shelfChecklist";
 
 describe("le jeu d'une étagère se lit dans ses cartes", () => {
@@ -121,5 +122,33 @@ describe("le catalogue d'une étagère se lit dans ses sets", () => {
       owned: new Set(),
     });
     expect(ids.size).toBe(0);
+  });
+});
+
+describe("sealedProductModulesForShelf", () => {
+  it("pulls the Lorcana data sibling when only lorcanajson is selected", () => {
+    const sealed = sealedProductModulesForShelf({
+      type: "tcg",
+      games: new Set(["lorcana"]),
+      catalogueIds: new Set(["lorcanajson"]),
+    });
+    const ids = sealed.map((pack) => pack.info.id);
+    expect(ids).toContain("lorcanajson");
+    expect(ids).toContain("lorcanatcg");
+    expect(
+      sealed.some((pack) => pack.catalog?.dataPack === "lorcana"),
+    ).toBe(true);
+  });
+
+  it("does not pull Carddass sealed into a Ninja Ranks-only allowlist", () => {
+    const sealed = sealedProductModulesForShelf({
+      type: "tcg",
+      games: new Set(["naruto"]),
+      catalogueIds: new Set(["narutoranks"]),
+    });
+    const ids = sealed.map((pack) => pack.info.id);
+    expect(ids).toContain("narutoranks");
+    expect(ids).not.toContain("narutocarddass");
+    expect(ids).not.toContain("narutoultra");
   });
 });

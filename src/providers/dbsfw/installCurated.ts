@@ -16,6 +16,7 @@ import {
   installFullFoilMask,
   type CuratedAssetsOptions,
 } from "@/providers/shared/cardCatalogue/curatedAssets";
+import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 
 import { DBS_FW_PACK_ID } from "./indexStore";
 
@@ -34,6 +35,10 @@ export function installDbsFwFullFoilMask(
 export function ensureDbsFwCuratedAssets(
   opts?: CuratedAssetsOptions,
 ): Promise<void> {
+  installProviderProductsContents(
+    DBS_FW_PACK_ID,
+    path.join(dbsFwCuratedDir(), "products-contents.json"),
+  );
   return ensureCuratedPackAssets({
     packId: DBS_FW_PACK_ID,
     curatedDir: dbsFwCuratedDir(),

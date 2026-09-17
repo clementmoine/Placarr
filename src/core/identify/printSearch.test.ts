@@ -22,7 +22,7 @@ function candidate(overrides: Partial<PrintCandidate> = {}): PrintCandidate {
   return {
     printKey: "lorcana:1-207",
     title: "Elsa - Esprit de l'hiver",
-    reference: "Premier Chapitre · 207",
+    reference: "207/204",
     rarity: "Enchantée",
     ...overrides,
   };
@@ -198,6 +198,54 @@ describe("searchPrintCandidates", () => {
 
     const found = await searchPrintCandidates("e", "tcg", { limit: 5 });
     expect(found).toHaveLength(5);
+  });
+
+  it("pages past the first window with offset", async () => {
+    const searchPrints = vi.fn(
+      async ({ limit }: { limit?: number }) =>
+        Array.from({ length: limit ?? 0 }, (_, index) =>
+          candidate({ printKey: `lorcana:1-${index + 1}` }),
+        ),
+    );
+    modules.push(fakeModule("lorcanajson", ["tcg"], searchPrints));
+
+    const page = await searchPrintCandidates("e", "tcg", {
+      limit: 5,
+      offset: 10,
+    });
+
+    expect(searchPrints).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 24 }),
+    );
+    expect(page.map((row) => row.printKey)).toEqual([
+      "lorcana:1-11",
+      "lorcana:1-12",
+      "lorcana:1-13",
+      "lorcana:1-14",
+      "lorcana:1-15",
+    ]);
+  });
+
+  it("raises the per-provider ceiling when browsing a set", async () => {
+    const searchPrints = vi.fn(
+      async ({ limit }: { limit?: number }) =>
+        Array.from({ length: Math.min(limit ?? 0, 250) }, (_, index) =>
+          candidate({ printKey: `lorcana:1-${index + 1}` }),
+        ),
+    );
+    modules.push(fakeModule("lorcanajson", ["tcg"], searchPrints));
+
+    const page = await searchPrintCandidates("", "tcg", {
+      setId: "1",
+      limit: 48,
+      offset: 200,
+    });
+
+    expect(searchPrints).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 248 }),
+    );
+    expect(page).toHaveLength(48);
+    expect(page[0]?.printKey).toBe("lorcana:1-201");
   });
 
   it("passes the language and abort signal down to the provider", async () => {

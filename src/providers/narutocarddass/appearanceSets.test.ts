@@ -24,6 +24,11 @@ describe("primaryAppearanceSet", () => {
   it("ignore les 巻ノ face à une série européenne", () => {
     expect(primaryAppearanceSet(["maki3", "s1", "s5"])).toBe("s1");
   });
+
+  it("prefers s6 over promo for shared EN CCG / tin folders", () => {
+    expect(primaryAppearanceSet(["promo", "s6"])).toBe("s6");
+    expect(primaryAppearanceSet(["s6", "promo"])).toBe("s6");
+  });
 });
 
 describe("appearanceValueForJson", () => {

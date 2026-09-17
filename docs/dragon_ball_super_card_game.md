@@ -207,8 +207,10 @@ watermark** Masters.
 | Coleka                                                                                                                             | Photos marketplace                                      | Comme Naruto : preuve / reconstruct, pas catalogue                                                                                                                                                                                                                      |
 | Limitless / meta sites                                                                                                             | Decks tournoi                                           | Pas une API collection                                                                                                                                                                                                                                                  |
 
-**Prix EUR** : dbscards agrège Cardmarket ; pas d’équivalent TCGdex gratuit
-sondé pour DBS.
+**Prix EUR** : module `dbsmarket` — dumps listes
+`data/dbs/cg/dbscards-{fr,en}.json` + `data/dbs/fw/dbscards-en.json`
+(agrégat Cardmarket). Match par `printKey` ; SPR aliasé vers `_PR` quand
+Bandai a classé le parallel ainsi. Pas d’équivalent TCGdex gratuit sondé.
 
 **Identité print** : codes `BT1-001`, `FB01-053`, suffixes `_p1` / `_f` /
 rareté (`R`, `SCR`). Langue = exemplaire (FR Masters vs EN cardlist), pas la
@@ -225,6 +227,7 @@ clé — à caler sur `printKey` ([tcg_support.md](tcg_support.md) §1).
 - Faces FR = dbscards / Bandai (étape `faces`, HTTP). Faces EN = clone TCG Arena rangé sous `data/dbs/cg/cards/{set}/en/{card}/` (étape `arena`). Leader `_b` → `awakened.webp`, pas le dos sleeve.
 - Dos sleeve = dbscards `original/back.webp` (curated).
 - Foil : tag `foil` + house `flare`, pas de mask Bandai.
+- **Prix** : provider `dbsmarket` (dumps locaux listes Cardmarket EUR).
 - Fusion World = **autre** module (`src/providers/dbsfw/`, `data/dbs/fw`,
   Catalogue Sync). Catalogue : onglets Dragon Ball → Masters | Fusion World.
 - Graphe produit→cartes : Sync admin (Masters / Fusion World). Hors de

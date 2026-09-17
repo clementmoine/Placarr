@@ -33,7 +33,13 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     À ne pas confondre avec ce que le garde des imports frères interdit, lui,
     pour de bon — voir `providers/shared/sharedBlindness.test.ts`.
   */
-  "src/providers/shared/sealedProducts/ingest.ts": { dbscg: 2, dbsfw: 2 },
+  "src/providers/shared/sealedProducts/ingest.ts": {
+    dbscg: 2,
+    dbsfw: 2,
+    onepiece: 2,
+    dbsjcc: 1,
+  },
+  "src/providers/shared/sealedProducts/rebuildFromStaging.ts": { onepiece: 2 },
   /*
     Vague TCG locale (ADR-014) : l'id de **pack** catalogue / effets /
     staging dbscards est volontairement le même slug que le provider
@@ -42,22 +48,19 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     site→pack. Renommer les packs casserait `data/<pack>/`.
   */
   "src/lib/admin/cataloguePacks.ts": {
-    digimon: 9,
     mtg: 9,
     onepiece: 8,
     yugioh: 8,
   },
   /*
-    Extract targets = pack ids pour Digimon / OPTCG / YGO / MTG (même collision
-    pack/provider que cataloguePacks). Un `case "digimon"` par ligne.
+    Extract targets = pack ids pour OPTCG / YGO / MTG (même collision
+    pack/provider que cataloguePacks). Un `case` par ligne.
   */
   "src/lib/admin/catalogueExtractRunner.ts": {
-    digimon: 1,
     mtg: 1,
     onepiece: 1,
     yugioh: 1,
   },
-  "src/effects/digimon/index.ts": { digimon: 1 },
   "src/effects/mtg/index.ts": { mtg: 1 },
   "src/effects/onepiece/index.ts": { onepiece: 1 },
   "src/effects/yugioh/index.ts": { yugioh: 1 },
@@ -66,6 +69,8 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     onepiece: 1,
     yugioh: 1,
   },
+  // Pack id = provider id (même collision OPTCG).
+  "src/providers/shared/sealedProducts/langCoverage.ts": { onepiece: 1 },
 };
 
 /**
@@ -81,11 +86,17 @@ const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
   "src/core/identify/lookup/lookups.ts": { ebay: 1, freakxy: 1 },
   // Alias map pack extract target → CataloguePackId (même collision pack/provider).
   "src/lib/admin/cataloguePacks.ts": {
-    digimon: 1,
     mtg: 1,
     onepiece: 1,
     yugioh: 1,
+    leclercmarvel21: 1,
+    leclercmarvel22: 1,
+    leclercmarvel23: 1,
+    leclercmarvel24: 1,
+    leclercdisney25: 1,
   },
+  // Pack id = provider id for OPTCG (`PACK_PRINT_GAME` map).
+  "src/providers/shared/sealedProducts/ingest.ts": { onepiece: 1 },
 };
 
 const SHARED_PROVIDER_DIR = path.join("src", "providers", "shared");

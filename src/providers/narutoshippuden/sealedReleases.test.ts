@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   shippudenAct,
   shippudenFormat,
+  shippudenSchoolLine,
   shippudenSealedReleases,
 } from "./sealedReleases";
 
@@ -32,6 +33,18 @@ describe("shippudenFormat", () => {
     expect(shippudenFormat("第八幕 自販機ブースター")).toBe("vending");
     expect(shippudenFormat("第七幕 構築済みスターターセット")).toBe("starter");
     expect(shippudenFormat("カードゲーム Coin＋")).toBe("coin");
+  });
+
+  it("lit le pack d'école comme starter, le booster d'école comme booster", () => {
+    expect(
+      shippudenFormat("疾風伝 忍者学校ルール スターティングパック"),
+    ).toBe("starter");
+    expect(
+      shippudenFormat("疾風伝 忍者学校ルール スターティングブースター"),
+    ).toBe("booster");
+    expect(shippudenSchoolLine("疾風伝 忍者学校ルール スターティングパック")).toBe(
+      true,
+    );
   });
 });
 
@@ -113,8 +126,30 @@ describe("shippudenSealedReleases", () => {
     expect(
       rows.find((r) => r.slug === "booster-shippuden-act2-jp")?.setCode,
     ).toBe("maku2");
-    expect(rows.every((r) => !r.setCode || r.setCode.startsWith("maku"))).toBe(
-      true,
-    );
+    expect(
+      rows.every(
+        (r) =>
+          !r.setCode ||
+          r.setCode.startsWith("maku") ||
+          r.setCode === "gaku",
+      ),
+    ).toBe(true);
+  });
+
+  it("porte la ligne 忍者学校 (gaku) absente des titres 第N幕", () => {
+    expect(
+      rows.find((r) => r.slug === "starter-shippuden-gaku-jp"),
+    ).toMatchObject({
+      setCode: "gaku",
+      format: "starter",
+      jan: "4543112503947000",
+    });
+    expect(
+      rows.find((r) => r.slug === "booster-shippuden-gaku-jp"),
+    ).toMatchObject({
+      setCode: "gaku",
+      format: "booster",
+      jan: "4543112504135000",
+    });
   });
 });

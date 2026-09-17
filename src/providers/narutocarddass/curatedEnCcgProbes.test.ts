@@ -109,8 +109,8 @@ describe("EN CCG source ledgers", () => {
     expect(goat.sealed.boosterBoxes.id).toBe(3970);
     expect(goat.sealed.boosterBoxes.pages).toBe(2);
     expect(goat.sealed.boosterBoxes.ingest).toBe("none");
-    expect(goat.sealed.boosterBoxes.packshots.ingest).toBe("coleka-gaps");
-    expect(goat.sealed.boosterBoxes.packshots.sets).toEqual([
+    expect(goat.sealed.boosterBoxes.packshots.ingest).toBe("all-cdn-displays");
+    expect(goat.sealed.boosterBoxes.packshots.mintSku).toEqual([
       "s16",
       "s19",
       "s21",
@@ -565,7 +565,17 @@ describe("EN CCG source ledgers", () => {
     expect(surugaDataCarddass.ingest).toContain("model-ready");
     expect(surugaDataCarddass.crawl).toBe(false);
     expect(surugaDataCarddass.line).toBe("data-carddass");
-    expect(surugaDataCarddass.prefixesSeen).toEqual(["DN", "NM"]);
+    expect(surugaDataCarddass.prefixesSeen).toEqual([
+      "DN",
+      "NM",
+      "NF",
+      "NX",
+      "DMP",
+      "DNP",
+      "NC",
+      "NFM",
+    ]);
+    expect(surugaDataCarddass.listed).toBe(108);
     expect(surugaDataCarddass.not).toContain("carddass");
     expect(surugaDataCarddass.not).toContain("en-ccg");
     expect(surugaDataCarddass.decisionReversed.movedTo).toContain(
@@ -576,7 +586,7 @@ describe("EN CCG source ledgers", () => {
     expect(surugaCarddass.lang).toBe("ja");
     expect(surugaCarddass.sampleProduct).toContain("GL636976");
     expect(surugaCarddass.not).toContain("data-carddass");
-    expect(surugaCarddass.listed).toBe(457);
+    expect(surugaCarddass.listed).toBe(1216);
     expect(urls).toContain(
       "https://www.slab-z.com/post/the-definitive-2002-naruto-card-game-vintage-guide-rookies-grails",
     );
@@ -645,7 +655,7 @@ describe("EN CCG source ledgers", () => {
     expect(carddasCom.officialSite.ingestFaces).toBe("none");
     expect(carddasCom.officialSite.promoteStagingHoles).toBe(true);
     expect(carddasJpCardlist.ingest).toBe("titles");
-    expect(carddasJpCardlist.counts.cards).toBe(1004);
+    expect(carddasJpCardlist.counts.cards).toBe(1010);
     expect(carddasJpCardlist.not).toContain("data-carddass");
     expect(carddasJpPromo.ingest).toBe("titles");
     expect(carddasJpPromo.counts.cards).toBe(61);

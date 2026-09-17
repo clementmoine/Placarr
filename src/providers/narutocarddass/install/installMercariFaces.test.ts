@@ -27,11 +27,8 @@ afterEach(() => {
 });
 
 describe("installMercariFaces", () => {
-  it("copies curated source.jpg as art.mercari for 巻ノ壱 忍-3", async () => {
+  it("fetches mercdn url as art.mercari for 巻ノ壱 忍-3", async () => {
     const packRoot = tmp();
-    const curatedRoot = tmp();
-    const srcDir = path.join(curatedRoot, "cards", "ninja", "ni0003", "ja");
-    mkdirSync(srcDir, { recursive: true });
     const jpeg = await sharp({
       create: {
         width: 40,
@@ -42,12 +39,12 @@ describe("installMercariFaces", () => {
     })
       .jpeg()
       .toBuffer();
-    writeFileSync(path.join(srcDir, "source.jpg"), jpeg);
 
     const result = await installMercariFaces({
       packRoot,
-      curatedRoot,
       force: true,
+      fetchImage: async (url) =>
+        url.includes("m63902869042") ? jpeg : null,
     });
     expect(result.written).toContain("ni0003/ja");
     const dest = path.join(

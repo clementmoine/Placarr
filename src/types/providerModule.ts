@@ -242,17 +242,16 @@ export type PrintCandidate = {
   printKey: string;
   /** `Elsa - Esprit de l'hiver`. */
   title: string;
-  /** Where it comes from, as a collector reads it: `Premier Chapitre · 207`. */
+  /** Collector reference as shown next to the title: `207/204`, `NI-019`, `21/P1`. */
   reference: string;
   /**
    * L'extension seule, telle qu'un joueur la nomme — `Série 1 — Maître Hokage /
    * Pays du Vent`, `Le Retour d'Ursula`.
    *
-   * Distincte de `reference`, qui mêle l'extension et le numéro, et de
-   * `setCode`, qui est un identifiant. Sert à regrouper des tirages par
-   * extension sans découper une chaîne d'affichage : tous les catalogues ne
-   * mettent pas l'extension dans `reference`, et celui qui l'omet donnerait un
-   * faux groupe par carte.
+   * Distincte de `reference` (numéro / code imprimé) et de `setCode`
+   * (identifiant). Sert à regrouper des tirages par extension. La check-list
+   * retire un éventuel préfixe d'extension encore présent dans `reference`
+   * quand le bloc porte déjà ce libellé.
    */
   setLabel?: string | null;
   rarity?: string | null;

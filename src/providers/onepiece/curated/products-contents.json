@@ -1,0 +1,5055 @@
+{
+  "version": 1,
+  "pack": "onepiece",
+  "updatedAt": "2026-09-14",
+  "byKind": {
+    "display": {
+      "source": "Bandai OPTCG display (standard 24)",
+      "verifiedAt": "2026-09-13",
+      "packsContained": 24,
+      "randomPoolScope": "none"
+    },
+    "booster": {
+      "source": "Bandai OPTCG booster — pool = set",
+      "verifiedAt": "2026-09-13",
+      "packsContained": 1,
+      "randomPoolScope": "set"
+    },
+    "multipack": {
+      "source": "opecards double-packs",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 2,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false
+    },
+    "tin": {
+      "source": "opecards tins — mixed",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "packsContained non attesté globalement."
+    },
+    "blister_case": {
+      "source": "opecards booster blister carton",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false
+    },
+    "collector_box": {
+      "source": "opecards collector boxes",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false
+    }
+  },
+  "skus": {
+    "booster-eb03-one-piece-heroines-edition": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 10/90 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 90,
+      "guaranteedPrintKeys": [
+        "onepiece:eb03-053",
+        "onepiece:eb03-026",
+        "onepiece:eb03-055",
+        "onepiece:eb03-061",
+        "onepiece:eb03-024",
+        "onepiece:eb03-045",
+        "onepiece:eb03-003",
+        "onepiece:eb03-031",
+        "onepiece:eb03-018",
+        "onepiece:eb03-042"
+      ]
+    },
+    "japanese-booster-eb03-one-piece-heroines-edition": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "Liste partielle 15/80 — preview boutique.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 80,
+      "guaranteedPrintKeys": [
+        "onepiece:eb03-053",
+        "onepiece:eb03-026",
+        "onepiece:eb03-024",
+        "onepiece:eb03-061",
+        "onepiece:eb03-045",
+        "onepiece:eb03-062",
+        "onepiece:eb03-003",
+        "onepiece:eb03-034",
+        "onepiece:eb03-031",
+        "onepiece:eb03-013",
+        "onepiece:eb03-057",
+        "onepiece:eb03-018",
+        "onepiece:eb03-008",
+        "onepiece:eb03-042",
+        "onepiece:eb03-041"
+      ]
+    },
+    "booster-en-online-regional-participation-pack-2025-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-089",
+        "onepiece:p-085",
+        "onepiece:op07-047",
+        "onepiece:eb01-003"
+      ]
+    },
+    "booster-en-event-pack-volume-7": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-092",
+        "onepiece:p-091",
+        "onepiece:p-090",
+        "onepiece:p-088"
+      ]
+    },
+    "booster-en-offline-regional-participation-pack-2025-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-089",
+        "onepiece:p-085",
+        "onepiece:op07-047",
+        "onepiece:eb01-003"
+      ]
+    },
+    "en-booster-judge-pack-volume-6": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:op10-113",
+        "onepiece:op09-035",
+        "onepiece:op10-011",
+        "onepiece:op04-092",
+        "onepiece:op10-025",
+        "onepiece:op07-076",
+        "onepiece:op10-065",
+        "onepiece:op07-040",
+        "onepiece:op10-109",
+        "onepiece:op10-020",
+        "onepiece:op04-096",
+        "onepiece:op10-057"
+      ]
+    },
+    "booster-pack-de-tournoi-2025-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op08-062",
+        "onepiece:st19-002",
+        "onepiece:eb02-019",
+        "onepiece:eb02-055"
+      ]
+    },
+    "booster-en-booster-tournament-pack-2025-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op08-062",
+        "onepiece:eb02-055",
+        "onepiece:eb02-019",
+        "onepiece:st19-002"
+      ]
+    },
+    "booster-en-booster-winner-pack-2025-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:eb02-019",
+        "onepiece:op08-062",
+        "onepiece:eb02-055",
+        "onepiece:st19-002"
+      ]
+    },
+    "booster-pack-winner-2025-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op08-062",
+        "onepiece:st19-002",
+        "onepiece:eb02-019",
+        "onepiece:eb02-055"
+      ]
+    },
+    "booster-fete-decks-debutants-st23-st28-participation": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op06-101",
+        "onepiece:op10-085",
+        "onepiece:op09-069",
+        "onepiece:eb01-027",
+        "onepiece:st16-005",
+        "onepiece:op09-002"
+      ]
+    },
+    "booster-fete-decks-debutants-st23-st28-winner": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op06-101",
+        "onepiece:op10-085",
+        "onepiece:op09-069",
+        "onepiece:eb01-027",
+        "onepiece:st16-005",
+        "onepiece:op09-002"
+      ]
+    },
+    "booster-en-online-regional-participation-pack-2025-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op09-106",
+        "onepiece:eb01-043",
+        "onepiece:p-078",
+        "onepiece:op07-021"
+      ]
+    },
+    "booster-pack-de-tournoi-2025-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op04-092",
+        "onepiece:op08-110",
+        "onepiece:eb01-015",
+        "onepiece:op09-011"
+      ]
+    },
+    "booster-en-booster-tournament-pack-2025-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op08-110",
+        "onepiece:op04-092",
+        "onepiece:eb01-015",
+        "onepiece:op09-011"
+      ]
+    },
+    "booster-en-booster-winner-pack-2025-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op04-092",
+        "onepiece:op09-011",
+        "onepiece:eb01-015",
+        "onepiece:op08-110"
+      ]
+    },
+    "booster-pack-winner-2025-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op04-092",
+        "onepiece:eb01-015",
+        "onepiece:op09-011",
+        "onepiece:op08-110"
+      ]
+    },
+    "en-booster-event-pack-volume-6": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-083",
+        "onepiece:p-077",
+        "onepiece:p-070",
+        "onepiece:p-079"
+      ]
+    },
+    "en-booster-judge-pack-volume-5": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:op09-034",
+        "onepiece:st17-003",
+        "onepiece:st11-003",
+        "onepiece:op07-048",
+        "onepiece:op10-076",
+        "onepiece:op07-101",
+        "onepiece:op09-088",
+        "onepiece:eb01-049",
+        "onepiece:op06-061",
+        "onepiece:op10-106",
+        "onepiece:op05-008",
+        "onepiece:op09-011"
+      ]
+    },
+    "booster-en-offline-regional-participation-pack-2025-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op09-106",
+        "onepiece:eb01-043",
+        "onepiece:p-078",
+        "onepiece:op07-021",
+        "onepiece:p-089",
+        "onepiece:p-085"
+      ]
+    },
+    "booster-dash-pack-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:p-035",
+        "onepiece:p-034",
+        "onepiece:p-031",
+        "onepiece:p-028",
+        "onepiece:p-009",
+        "onepiece:p-008"
+      ]
+    },
+    "booster-pack-d-evenement-de-sortie-st-15-st-20": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-116",
+        "onepiece:p-045",
+        "onepiece:op07-040",
+        "onepiece:op02-034",
+        "onepiece:op02-022",
+        "onepiece:st06-006"
+      ]
+    },
+    "booster-dash-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-044",
+        "onepiece:st07-010",
+        "onepiece:st02-007",
+        "onepiece:st01-007",
+        "onepiece:st04-005",
+        "onepiece:st06-004"
+      ]
+    },
+    "booster-pack-winner-d-evenement-de-sortie-st-15-st-20": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-116",
+        "onepiece:p-045",
+        "onepiece:op07-040",
+        "onepiece:op02-034",
+        "onepiece:op02-022",
+        "onepiece:st06-006"
+      ]
+    },
+    "booster-pack-de-tournoi-2025-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op06-047",
+        "onepiece:op07-080",
+        "onepiece:op06-076",
+        "onepiece:eb01-014"
+      ]
+    },
+    "booster-pack-winner-2025-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:eb01-014",
+        "onepiece:op06-047",
+        "onepiece:op06-076",
+        "onepiece:op07-080"
+      ]
+    },
+    "booster-en-booster-tournament-pack-2025-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op06-047",
+        "onepiece:op07-080",
+        "onepiece:op06-076",
+        "onepiece:eb01-014"
+      ]
+    },
+    "booster-en-booster-winner-pack-2025-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:eb01-014",
+        "onepiece:op06-047",
+        "onepiece:op06-076",
+        "onepiece:op07-080"
+      ]
+    },
+    "booster-pack-de-bienvenue-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op06-115",
+        "onepiece:op08-082",
+        "onepiece:op05-076",
+        "onepiece:op08-047",
+        "onepiece:op05-037",
+        "onepiece:p-023"
+      ]
+    },
+    "booster-welcome-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op05-030",
+        "onepiece:op05-070",
+        "onepiece:op05-105",
+        "onepiece:op04-087",
+        "onepiece:op05-042",
+        "onepiece:op05-004"
+      ]
+    },
+    "booster-en-booster-tournament-pack-2024-oct-dec": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-112",
+        "onepiece:op07-100",
+        "onepiece:op07-053",
+        "onepiece:op04-010"
+      ]
+    },
+    "en-booster-judge-pack-volume-4": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:op05-010",
+        "onepiece:st03-014",
+        "onepiece:eb01-023",
+        "onepiece:op05-101",
+        "onepiece:op05-088",
+        "onepiece:op06-036",
+        "onepiece:op07-010",
+        "onepiece:op06-082",
+        "onepiece:op04-021",
+        "onepiece:st13-012",
+        "onepiece:op06-074",
+        "onepiece:st05-002"
+      ]
+    },
+    "booster-en-booster-winner-pack-2024-oct-dec": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op04-010",
+        "onepiece:op07-053",
+        "onepiece:op03-112",
+        "onepiece:op07-100"
+      ]
+    },
+    "en-booster-event-pack-volume-5": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op05-067",
+        "onepiece:op06-101",
+        "onepiece:p-065",
+        "onepiece:p-069"
+      ]
+    },
+    "booster-en-offline-regional-participation-pack-2024-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op07-091",
+        "onepiece:op01-015",
+        "onepiece:op02-063",
+        "onepiece:op06-110"
+      ]
+    },
+    "en-booster-event-pack-volume-4": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-038",
+        "onepiece:p-064",
+        "onepiece:p-044",
+        "onepiece:p-063"
+      ]
+    },
+    "en-booster-cs-2024-top-player-pack-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op08-020",
+        "onepiece:op07-064",
+        "onepiece:op01-077",
+        "onepiece:op06-092",
+        "onepiece:op06-025",
+        "onepiece:op05-102"
+      ]
+    },
+    "en-booster-cs-2024-event-pack-finalist-ver": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "8 printKeys / declared 8. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 8,
+      "guaranteedPrintKeys": [
+        "onepiece:p-046",
+        "onepiece:p-042",
+        "onepiece:p-038",
+        "onepiece:st03-008",
+        "onepiece:p-044",
+        "onepiece:p-064",
+        "onepiece:op05-036",
+        "onepiece:p-063"
+      ]
+    },
+    "en-booster-cs-2024-celebration-pack": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-012",
+        "onepiece:p-017",
+        "onepiece:st04-003",
+        "onepiece:op03-033",
+        "onepiece:op03-044",
+        "onepiece:p-019",
+        "onepiece:op03-116",
+        "onepiece:st03-003",
+        "onepiece:st02-013",
+        "onepiece:op05-106",
+        "onepiece:op03-088",
+        "onepiece:op01-041"
+      ]
+    },
+    "en-booster-cs-2024-event-pack": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "9 printKeys / declared 9. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 9,
+      "guaranteedPrintKeys": [
+        "onepiece:op07-109",
+        "onepiece:p-064",
+        "onepiece:p-042",
+        "onepiece:p-046",
+        "onepiece:st03-008",
+        "onepiece:p-038",
+        "onepiece:p-044",
+        "onepiece:op05-036",
+        "onepiece:p-063"
+      ]
+    },
+    "en-booster-cs-2024-top-player-pack": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op01-077",
+        "onepiece:op07-064",
+        "onepiece:op08-020",
+        "onepiece:op05-102",
+        "onepiece:op06-092",
+        "onepiece:op06-025"
+      ]
+    },
+    "booster-tournament-pack-volume-7": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op05-106",
+        "onepiece:op01-041",
+        "onepiece:p-019",
+        "onepiece:p-017"
+      ]
+    },
+    "booster-winner-pack-volume-7": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-017",
+        "onepiece:p-019",
+        "onepiece:op05-106",
+        "onepiece:op01-041"
+      ]
+    },
+    "booster-judge-pack-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:op05-067",
+        "onepiece:op04-035",
+        "onepiece:st06-008",
+        "onepiece:op05-015",
+        "onepiece:op01-039",
+        "onepiece:op03-104",
+        "onepiece:op05-102",
+        "onepiece:op05-073",
+        "onepiece:op01-075",
+        "onepiece:op04-043",
+        "onepiece:op04-089",
+        "onepiece:op05-014"
+      ]
+    },
+    "booster-en-offline-regional-participation-pack-2024-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-041",
+        "onepiece:p-001",
+        "onepiece:st03-008",
+        "onepiece:p-003"
+      ]
+    },
+    "booster-tournament-pack-volume-6": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-044",
+        "onepiece:op03-116",
+        "onepiece:op03-088",
+        "onepiece:op03-033"
+      ]
+    },
+    "booster-winner-pack-volume-6": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-116",
+        "onepiece:op03-044",
+        "onepiece:op03-033",
+        "onepiece:op03-088"
+      ]
+    },
+    "en-booster-event-pack-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:p-042",
+        "onepiece:p-046",
+        "onepiece:st03-008",
+        "onepiece:op05-036"
+      ]
+    },
+    "booster-en-offline-regional-participation-pack-2024-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-015",
+        "onepiece:op03-102",
+        "onepiece:op03-089",
+        "onepiece:st02-008"
+      ]
+    },
+    "booster-tournament-pack-volume-5": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-012",
+        "onepiece:st04-003",
+        "onepiece:st02-013",
+        "onepiece:st03-003"
+      ]
+    },
+    "booster-winner-pack-volume-5": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-012",
+        "onepiece:st04-003",
+        "onepiece:st03-003",
+        "onepiece:st02-013"
+      ]
+    },
+    "booster-sealed-battle-kit-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys / declared 10. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 10,
+      "guaranteedPrintKeys": [
+        "onepiece:p-047",
+        "onepiece:p-048",
+        "onepiece:p-054",
+        "onepiece:p-049",
+        "onepiece:p-050",
+        "onepiece:p-051",
+        "onepiece:p-052",
+        "onepiece:p-056",
+        "onepiece:p-055",
+        "onepiece:p-053"
+      ]
+    },
+    "booster-judge-pack-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-070",
+        "onepiece:op01-077",
+        "onepiece:op03-008",
+        "onepiece:op02-040",
+        "onepiece:op03-081",
+        "onepiece:op03-112",
+        "onepiece:op02-108",
+        "onepiece:op03-057",
+        "onepiece:st04-005",
+        "onepiece:st02-014",
+        "onepiece:op03-016",
+        "onepiece:op03-121"
+      ]
+    },
+    "booster-tournament-pack-volume-4": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:st03-005",
+        "onepiece:op01-035",
+        "onepiece:st01-011",
+        "onepiece:st06-006"
+      ]
+    },
+    "booster-winner-pack-volume-4": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:st03-005",
+        "onepiece:st01-011",
+        "onepiece:st06-006",
+        "onepiece:op01-035"
+      ]
+    },
+    "booster-judge-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys / declared 10. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 10,
+      "guaranteedPrintKeys": [
+        "onepiece:op02-059",
+        "onepiece:op01-073",
+        "onepiece:op02-042",
+        "onepiece:op01-006",
+        "onepiece:op02-098",
+        "onepiece:op02-008",
+        "onepiece:op02-073",
+        "onepiece:op01-035",
+        "onepiece:st06-010",
+        "onepiece:op01-100"
+      ]
+    },
+    "booster-event-pack-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:p-033",
+        "onepiece:p-034",
+        "onepiece:p-027",
+        "onepiece:op01-101",
+        "onepiece:op02-106",
+        "onepiece:op01-052"
+      ]
+    },
+    "booster-tournament-pack-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:st02-007",
+        "onepiece:st01-007",
+        "onepiece:st04-010",
+        "onepiece:st03-007"
+      ]
+    },
+    "booster-winner-pack-volume-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "4 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-007",
+        "onepiece:st02-007",
+        "onepiece:st04-010",
+        "onepiece:st03-007"
+      ]
+    },
+    "booster-promotion-pack-2023-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:op01-079",
+        "onepiece:op01-039",
+        "onepiece:op02-018",
+        "onepiece:op01-093",
+        "onepiece:st06-002"
+      ]
+    },
+    "booster-ch2023-offline-regional-participation-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-004",
+        "onepiece:op02-098",
+        "onepiece:st07-008",
+        "onepiece:op02-035",
+        "onepiece:st03-014",
+        "onepiece:st04-008"
+      ]
+    },
+    "booster-event-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:p-028",
+        "onepiece:p-031",
+        "onepiece:p-032",
+        "onepiece:p-030",
+        "onepiece:p-029"
+      ]
+    },
+    "booster-ch2023-online-regional-participation-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-004",
+        "onepiece:op02-098",
+        "onepiece:st07-008",
+        "onepiece:st04-008",
+        "onepiece:op02-035",
+        "onepiece:st03-014"
+      ]
+    },
+    "booster-tournament-pack-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "3 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op01-033",
+        "onepiece:op01-021",
+        "onepiece:st04-011"
+      ]
+    },
+    "booster-winner-pack-volume-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "3 printKeys / declared 4. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 4,
+      "guaranteedPrintKeys": [
+        "onepiece:op01-021",
+        "onepiece:st04-011",
+        "onepiece:op01-033"
+      ]
+    },
+    "booster-tournament-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:p-007",
+        "onepiece:p-006",
+        "onepiece:p-008",
+        "onepiece:p-009",
+        "onepiece:p-010"
+      ]
+    },
+    "booster-winner-pack-volume-1": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:p-007",
+        "onepiece:p-006",
+        "onepiece:p-008",
+        "onepiece:p-009",
+        "onepiece:p-010"
+      ]
+    },
+    "booster-blister-carton-op01-romance-dawn": {
+      "source": "kind=blister_case — container opaque (1 tile staging ≠ contenu)",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "pack_container",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "notes": "Ancien known_bundle 1 printKey rejeté — carton blister, pas un known."
+    },
+    "booster-promotion-pack-2022": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:p-001",
+        "onepiece:p-002",
+        "onepiece:p-003",
+        "onepiece:p-004",
+        "onepiece:p-005"
+      ]
+    },
+    "st36-deck-pour-debutant-eustass-captain-kidd-jaune": {
+      "source": "https://pokecazilla.com/column/op-starterdeck-202607-info/ + Bandai st36 (51/15 — pas de table 収録枚数 Tier One)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Membership 15 uniques corrigée (preview OP16 erronée). Qty Pieces absentes — contentsKnown=false. Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op10-099",
+        "onepiece:st36-001",
+        "onepiece:st36-002",
+        "onepiece:st36-003",
+        "onepiece:st36-004",
+        "onepiece:st36-005",
+        "onepiece:op10-103",
+        "onepiece:op10-109",
+        "onepiece:op10-111",
+        "onepiece:op10-114",
+        "onepiece:op12-113",
+        "onepiece:op13-116",
+        "onepiece:op10-101",
+        "onepiece:p-085",
+        "onepiece:p-088"
+      ]
+    },
+    "st35-deck-pour-debutant-rouge-noir-sabo": {
+      "source": "https://tier-one-onepiece.jp/blog/st35-card-list/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op13-004",
+        "onepiece:st35-001",
+        "onepiece:st35-002",
+        "onepiece:st35-003",
+        "onepiece:st35-004",
+        "onepiece:st35-005",
+        "onepiece:op12-090",
+        "onepiece:op12-093",
+        "onepiece:op13-005",
+        "onepiece:op13-008",
+        "onepiece:op13-017",
+        "onepiece:op13-081",
+        "onepiece:p-105",
+        "onepiece:op12-098",
+        "onepiece:op13-019"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op13-004",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st35-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st35-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st35-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st35-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st35-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:op12-090",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-093",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op13-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op13-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op13-017",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op13-081",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:p-105",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-098",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op13-019",
+          "qty": 4
+        }
+      ]
+    },
+    "st34-deck-pour-debutant-charlotte-katakuri-violet": {
+      "source": "https://tier-one-onepiece.jp/blog/st34-card-list/ (buyer-corrected ST34-001 ×2)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51 (ST34-001 ×2 attesté acheteur). Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op11-062",
+        "onepiece:st34-001",
+        "onepiece:st34-002",
+        "onepiece:st34-003",
+        "onepiece:st34-004",
+        "onepiece:st34-005",
+        "onepiece:eb03-032",
+        "onepiece:eb03-035",
+        "onepiece:op11-065",
+        "onepiece:op11-066",
+        "onepiece:op11-068",
+        "onepiece:op11-071",
+        "onepiece:p-090",
+        "onepiece:op11-079",
+        "onepiece:op11-081"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op11-062",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st34-001",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st34-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st34-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st34-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st34-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:eb03-032",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:eb03-035",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-065",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-066",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-068",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-071",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:p-090",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-079",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-081",
+          "qty": 4
+        }
+      ]
+    },
+    "st33-deck-pour-debutant-kuzan-bleu": {
+      "source": "https://tier-one-onepiece.jp/blog/st33-card-list/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op12-040",
+        "onepiece:st33-001",
+        "onepiece:st33-002",
+        "onepiece:st33-003",
+        "onepiece:st33-004",
+        "onepiece:st33-005",
+        "onepiece:eb04-026",
+        "onepiece:op12-043",
+        "onepiece:op12-045",
+        "onepiece:op12-046",
+        "onepiece:op12-047",
+        "onepiece:op12-050",
+        "onepiece:op12-052",
+        "onepiece:eb04-028",
+        "onepiece:op12-057"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op12-040",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st33-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st33-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st33-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st33-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st33-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:eb04-026",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-043",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-045",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-046",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-047",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-050",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-052",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:eb04-028",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-057",
+          "qty": 4
+        }
+      ]
+    },
+    "st31-deck-pour-debutant-monkey-d-luffy-rouge": {
+      "source": "https://tier-one-onepiece.jp/blog/st31-card-list/ (Bandai 51 / 15 types)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Remplace preview OP16 erronée. Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st21-001",
+        "onepiece:st31-001",
+        "onepiece:st31-002",
+        "onepiece:st31-003",
+        "onepiece:st31-004",
+        "onepiece:st31-005",
+        "onepiece:op01-016",
+        "onepiece:op11-003",
+        "onepiece:op11-009",
+        "onepiece:op11-012",
+        "onepiece:op14-015",
+        "onepiece:st23-004",
+        "onepiece:p-101",
+        "onepiece:op04-016",
+        "onepiece:op13-021"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st21-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st31-001",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st31-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st31-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st31-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st31-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:op01-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op11-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op14-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st23-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:p-101",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op04-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op13-021",
+          "qty": 4
+        }
+      ]
+    },
+    "st32-deck-pour-debutant-roronoa-zoro-vert": {
+      "source": "https://tier-one-onepiece.jp/blog/st32-card-list/ + Kawamatsu OP12-023 (Pokecazilla; Tier One typo OP10-036×2)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One qty Σ=51; Kawamatsu = OP12-023 (pas OP10-036 Perona). Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op12-020",
+        "onepiece:st32-001",
+        "onepiece:st32-002",
+        "onepiece:st32-003",
+        "onepiece:st32-004",
+        "onepiece:st32-005",
+        "onepiece:op10-036",
+        "onepiece:op12-023",
+        "onepiece:op12-026",
+        "onepiece:op12-027",
+        "onepiece:op12-028",
+        "onepiece:op12-031",
+        "onepiece:op15-036",
+        "onepiece:st24-005",
+        "onepiece:op12-039"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op12-020",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st32-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st32-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st32-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st32-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st32-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:op10-036",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-023",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-026",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-027",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-028",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-031",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op15-036",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st24-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op12-039",
+          "qty": 4
+        }
+      ]
+    },
+    "st30-deck-de-demarrage-ex-luffy-et-ace": {
+      "source": "https://tier-one-onepiece.jp/blog/st30-card-list/ (Bandai 51 / 17 types)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. declaredCardCount corrigé 34→51. Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st30-001",
+        "onepiece:st30-002",
+        "onepiece:st30-003",
+        "onepiece:st30-004",
+        "onepiece:st30-005",
+        "onepiece:st30-006",
+        "onepiece:st30-007",
+        "onepiece:st30-008",
+        "onepiece:st30-009",
+        "onepiece:st30-010",
+        "onepiece:st30-011",
+        "onepiece:st30-012",
+        "onepiece:st30-013",
+        "onepiece:st30-014",
+        "onepiece:st30-015",
+        "onepiece:st30-016",
+        "onepiece:st30-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st30-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st30-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-011",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-012",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-017",
+          "qty": 4
+        }
+      ]
+    },
+    "st29-deck-de-demarrage-egg-head": {
+      "source": "https://tier-one-onepiece.jp/blog/st29-card-list/ (+ Gamepedia cross-check; Bandai 51 types)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51 (Bandai: Constructed Deck 51 + DON!! hors liste). Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st29-001",
+        "onepiece:st29-002",
+        "onepiece:st29-003",
+        "onepiece:st29-004",
+        "onepiece:st29-005",
+        "onepiece:st29-006",
+        "onepiece:st29-007",
+        "onepiece:st29-008",
+        "onepiece:st29-009",
+        "onepiece:st29-010",
+        "onepiece:st29-011",
+        "onepiece:st29-012",
+        "onepiece:st29-013",
+        "onepiece:st29-014",
+        "onepiece:st29-015",
+        "onepiece:st29-016",
+        "onepiece:st29-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st29-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st29-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-008",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-009",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-017",
+          "qty": 4
+        }
+      ]
+    },
+    "st25-deck-pour-debutant-baggy": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st25-001",
+        "onepiece:st25-003",
+        "onepiece:st25-004",
+        "onepiece:op09-042",
+        "onepiece:p-084",
+        "onepiece:op09-057",
+        "onepiece:op09-056",
+        "onepiece:op09-055",
+        "onepiece:op09-054",
+        "onepiece:op09-053",
+        "onepiece:op09-051",
+        "onepiece:op09-045",
+        "onepiece:op09-043",
+        "onepiece:st25-005",
+        "onepiece:st25-002"
+      ]
+    },
+    "st24-deck-pour-debutant-jewelry-bonney": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st24-004",
+        "onepiece:st24-002",
+        "onepiece:op07-019",
+        "onepiece:op07-037",
+        "onepiece:op07-036",
+        "onepiece:op07-034",
+        "onepiece:op07-033",
+        "onepiece:op07-031",
+        "onepiece:op07-025",
+        "onepiece:op07-023",
+        "onepiece:op07-021",
+        "onepiece:eb01-015",
+        "onepiece:st24-005",
+        "onepiece:st24-003",
+        "onepiece:st24-001"
+      ]
+    },
+    "st26-deck-pour-debutant-monkey-d-luffy": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:op09-061",
+        "onepiece:st26-005",
+        "onepiece:st26-003",
+        "onepiece:st26-002",
+        "onepiece:op09-078",
+        "onepiece:op09-077",
+        "onepiece:op09-076",
+        "onepiece:op09-070",
+        "onepiece:op05-065",
+        "onepiece:st26-004",
+        "onepiece:st26-001",
+        "onepiece:op05-070",
+        "onepiece:op05-066",
+        "onepiece:op09-063",
+        "onepiece:st14-010"
+      ]
+    },
+    "st28-deck-pour-debutant-yamato": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:op06-104",
+        "onepiece:op06-022",
+        "onepiece:st28-005",
+        "onepiece:st28-004",
+        "onepiece:op06-112",
+        "onepiece:op06-110",
+        "onepiece:op06-109",
+        "onepiece:op06-103",
+        "onepiece:op06-100",
+        "onepiece:op09-035",
+        "onepiece:st13-016",
+        "onepiece:st28-003",
+        "onepiece:st28-002",
+        "onepiece:st28-001",
+        "onepiece:op07-116"
+      ]
+    },
+    "st27-deck-pour-debutant-marshall-d-teach": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st27-003",
+        "onepiece:st27-005",
+        "onepiece:op09-081",
+        "onepiece:op09-099",
+        "onepiece:op09-095",
+        "onepiece:op09-091",
+        "onepiece:op09-090",
+        "onepiece:op09-089",
+        "onepiece:op09-088",
+        "onepiece:op09-086",
+        "onepiece:op10-084",
+        "onepiece:op09-083",
+        "onepiece:st27-004",
+        "onepiece:st27-002",
+        "onepiece:st27-001"
+      ]
+    },
+    "st23-deck-pour-debutant-shanks": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st23-001",
+        "onepiece:st23-002",
+        "onepiece:op09-001",
+        "onepiece:st23-003",
+        "onepiece:op09-020",
+        "onepiece:op09-016",
+        "onepiece:op09-015",
+        "onepiece:op09-014",
+        "onepiece:op09-013",
+        "onepiece:op09-012",
+        "onepiece:op09-011",
+        "onepiece:op09-010",
+        "onepiece:op09-006",
+        "onepiece:st23-005",
+        "onepiece:st23-004"
+      ]
+    },
+    "deck-de-demarrage-ex-st21-gear-5th": {
+      "source": "https://tier-one-onepiece.jp/blog/st21_cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st21-001",
+        "onepiece:st21-002",
+        "onepiece:st21-003",
+        "onepiece:st21-004",
+        "onepiece:st21-005",
+        "onepiece:st21-006",
+        "onepiece:st21-007",
+        "onepiece:st21-008",
+        "onepiece:st21-009",
+        "onepiece:st21-010",
+        "onepiece:st21-011",
+        "onepiece:st21-012",
+        "onepiece:st21-013",
+        "onepiece:st21-014",
+        "onepiece:st21-015",
+        "onepiece:st21-016",
+        "onepiece:st21-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st21-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st21-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-017",
+          "qty": 2
+        }
+      ]
+    },
+    "st19-deck-pour-debutant-noir-smoker": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:op02-093",
+        "onepiece:st19-003",
+        "onepiece:st19-004",
+        "onepiece:op02-098",
+        "onepiece:op03-089",
+        "onepiece:st19-005",
+        "onepiece:st19-002",
+        "onepiece:st19-001",
+        "onepiece:op02-117",
+        "onepiece:op02-116",
+        "onepiece:op02-113",
+        "onepiece:op02-109",
+        "onepiece:op02-108",
+        "onepiece:op02-106",
+        "onepiece:op03-079"
+      ]
+    },
+    "st16-deck-pour-debutant-vert-uta": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st16-004",
+        "onepiece:st11-001",
+        "onepiece:st16-001",
+        "onepiece:p-061",
+        "onepiece:p-060",
+        "onepiece:p-059",
+        "onepiece:p-058",
+        "onepiece:p-057",
+        "onepiece:p-029",
+        "onepiece:st16-005",
+        "onepiece:st11-005",
+        "onepiece:st11-004",
+        "onepiece:st16-003",
+        "onepiece:st11-003",
+        "onepiece:st16-002"
+      ]
+    },
+    "st15-deck-pour-debutant-rouge-edward-newgate": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st15-005",
+        "onepiece:st15-004",
+        "onepiece:op02-001",
+        "onepiece:st15-002",
+        "onepiece:op02-018",
+        "onepiece:op02-008",
+        "onepiece:st15-003",
+        "onepiece:op03-003",
+        "onepiece:st15-001",
+        "onepiece:op02-023",
+        "onepiece:op02-019",
+        "onepiece:op03-010",
+        "onepiece:op03-009",
+        "onepiece:op03-007",
+        "onepiece:op03-006"
+      ]
+    },
+    "st20-deck-pour-debutant-jaune-charlotte-katakuri": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st20-005",
+        "onepiece:st20-001",
+        "onepiece:op03-115",
+        "onepiece:op03-112",
+        "onepiece:op03-110",
+        "onepiece:st20-004",
+        "onepiece:st20-003",
+        "onepiece:st20-002",
+        "onepiece:op03-121",
+        "onepiece:op03-118",
+        "onepiece:op03-107",
+        "onepiece:op03-106",
+        "onepiece:op03-099",
+        "onepiece:st07-014",
+        "onepiece:st07-005"
+      ]
+    },
+    "st17-deck-pour-debutant-bleu-don-qui-jote-doflamingo": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st17-004",
+        "onepiece:op01-060",
+        "onepiece:st17-002",
+        "onepiece:op01-086",
+        "onepiece:op01-073",
+        "onepiece:p-030",
+        "onepiece:st17-005",
+        "onepiece:st17-003",
+        "onepiece:st17-001",
+        "onepiece:op02-057",
+        "onepiece:op02-054",
+        "onepiece:st03-008",
+        "onepiece:st03-005",
+        "onepiece:st03-004",
+        "onepiece:st03-002"
+      ]
+    },
+    "st18-deck-pour-debutant-violet-monkey-d-luffy": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:op05-060",
+        "onepiece:p-041",
+        "onepiece:st18-005",
+        "onepiece:st18-004",
+        "onepiece:st18-001",
+        "onepiece:op05-076",
+        "onepiece:op05-067",
+        "onepiece:st18-003",
+        "onepiece:st18-002",
+        "onepiece:op05-072",
+        "onepiece:op05-070",
+        "onepiece:op05-068",
+        "onepiece:op05-066",
+        "onepiece:op05-063",
+        "onepiece:op05-061"
+      ]
+    },
+    "starter-deck-19-smoker": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:st19-003",
+        "onepiece:st19-004",
+        "onepiece:st19-005",
+        "onepiece:st19-002",
+        "onepiece:st19-001"
+      ]
+    },
+    "starter-deck-16-uta": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "9 printKeys / declared 9. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 9,
+      "guaranteedPrintKeys": [
+        "onepiece:st16-004",
+        "onepiece:st16-001",
+        "onepiece:op04-092",
+        "onepiece:p-059",
+        "onepiece:p-058",
+        "onepiece:p-057",
+        "onepiece:st16-005",
+        "onepiece:st16-003",
+        "onepiece:st16-002"
+      ]
+    },
+    "starter-deck-20-charlotte-katakuri": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:st20-005",
+        "onepiece:st20-001",
+        "onepiece:st20-004",
+        "onepiece:st20-003",
+        "onepiece:st20-002"
+      ]
+    },
+    "starter-deck-15-edward-newgate": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:st15-005",
+        "onepiece:st15-002",
+        "onepiece:st15-004",
+        "onepiece:st15-003",
+        "onepiece:st15-001"
+      ]
+    },
+    "starter-deck-17-donquixote-doflamingo": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:st17-004",
+        "onepiece:st17-002",
+        "onepiece:st17-003",
+        "onepiece:st17-005",
+        "onepiece:st17-001"
+      ]
+    },
+    "starter-deck-18-monkey-d-luffy": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "5 printKeys / declared 5. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 5,
+      "guaranteedPrintKeys": [
+        "onepiece:st18-001",
+        "onepiece:st18-004",
+        "onepiece:st18-005",
+        "onepiece:st18-003",
+        "onepiece:st18-002"
+      ]
+    },
+    "starter-deck-14-3d2y": {
+      "source": "https://tier-one-onepiece.jp/blog/st14_cardlists/ (収録枚数) + https://onepiece-cardgame.com/products/decks/st14.php (50+1 leader, 17 types)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数 Σ=51 — 1 leader + 50 deck ; SR ST14-003/006 ×2, events/stage ×2, autres commons ×4.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st14-001",
+        "onepiece:st14-002",
+        "onepiece:st14-003",
+        "onepiece:st14-004",
+        "onepiece:st14-005",
+        "onepiece:st14-006",
+        "onepiece:st14-007",
+        "onepiece:st14-008",
+        "onepiece:st14-009",
+        "onepiece:st14-010",
+        "onepiece:st14-011",
+        "onepiece:st14-012",
+        "onepiece:st14-013",
+        "onepiece:st14-014",
+        "onepiece:st14-015",
+        "onepiece:st14-016",
+        "onepiece:st14-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st14-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st14-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st14-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-006",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st14-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-012",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st14-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st14-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st14-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st14-017",
+          "qty": 2
+        }
+      ]
+    },
+    "starter-deck-12-zoro-and-sanji": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "1 printKeys / declared 1. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": [
+        "onepiece:st12-008"
+      ]
+    },
+    "starter-deck-11-uta": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st11-002",
+        "onepiece:st11-001",
+        "onepiece:st11-005",
+        "onepiece:op02-045",
+        "onepiece:op02-043",
+        "onepiece:op02-041",
+        "onepiece:op02-040",
+        "onepiece:op02-039",
+        "onepiece:op02-037",
+        "onepiece:op02-035",
+        "onepiece:op02-034",
+        "onepiece:op02-033",
+        "onepiece:op02-028",
+        "onepiece:st11-004",
+        "onepiece:st11-003"
+      ]
+    },
+    "starter-deck-10-the-three-captains": {
+      "source": "https://tier-one-onepiece.jp/blog/st10-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=53 = Bandai Constructed 51 + Alternative Leader ×2. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 53,
+      "guaranteedPrintKeys": [
+        "onepiece:st10-001",
+        "onepiece:st10-002",
+        "onepiece:st10-003",
+        "onepiece:st10-004",
+        "onepiece:st10-005",
+        "onepiece:st10-006",
+        "onepiece:st10-007",
+        "onepiece:st10-008",
+        "onepiece:st10-009",
+        "onepiece:st10-010",
+        "onepiece:st10-011",
+        "onepiece:st10-012",
+        "onepiece:st10-013",
+        "onepiece:st10-014",
+        "onepiece:st10-015",
+        "onepiece:st10-016",
+        "onepiece:st10-017",
+        "onepiece:op01-016",
+        "onepiece:op01-025"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st10-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st10-002",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st10-003",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st10-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st10-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st10-006",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st10-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st10-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st10-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st10-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st10-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st10-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st10-013",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st10-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st10-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st10-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st10-017",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:op01-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op01-025",
+          "qty": 4
+        }
+      ]
+    },
+    "starter-deck-08-monkey-d-luffy": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st08-001",
+        "onepiece:st08-002",
+        "onepiece:st08-005",
+        "onepiece:st08-010",
+        "onepiece:st08-015",
+        "onepiece:st08-014",
+        "onepiece:st08-013",
+        "onepiece:st08-012",
+        "onepiece:st08-011",
+        "onepiece:st08-009",
+        "onepiece:st08-008",
+        "onepiece:st08-007",
+        "onepiece:st08-006",
+        "onepiece:st08-004",
+        "onepiece:st08-003"
+      ]
+    },
+    "starter-deck-09-yamato": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "15 printKeys / declared 15. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 15,
+      "guaranteedPrintKeys": [
+        "onepiece:st09-001",
+        "onepiece:st09-005",
+        "onepiece:st09-010",
+        "onepiece:st09-015",
+        "onepiece:st09-014",
+        "onepiece:st09-013",
+        "onepiece:st09-012",
+        "onepiece:st09-011",
+        "onepiece:st09-009",
+        "onepiece:st09-008",
+        "onepiece:st09-007",
+        "onepiece:st09-006",
+        "onepiece:st09-004",
+        "onepiece:st09-003",
+        "onepiece:st09-002"
+      ]
+    },
+    "starter-deck-07-big-mom-pirates": {
+      "source": "https://tier-one-onepiece.jp/blog/st07-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st07-001",
+        "onepiece:st07-002",
+        "onepiece:st07-003",
+        "onepiece:st07-004",
+        "onepiece:st07-005",
+        "onepiece:st07-006",
+        "onepiece:st07-007",
+        "onepiece:st07-008",
+        "onepiece:st07-009",
+        "onepiece:st07-010",
+        "onepiece:st07-011",
+        "onepiece:st07-012",
+        "onepiece:st07-013",
+        "onepiece:st07-014",
+        "onepiece:st07-015",
+        "onepiece:st07-016",
+        "onepiece:st07-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st07-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st07-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st07-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st07-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st07-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-009",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st07-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st07-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st07-017",
+          "qty": 2
+        }
+      ]
+    },
+    "starter-deck-06-absolute-justice": {
+      "source": "https://tier-one-onepiece.jp/blog/st06-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st06-001",
+        "onepiece:st06-002",
+        "onepiece:st06-003",
+        "onepiece:st06-004",
+        "onepiece:st06-005",
+        "onepiece:st06-006",
+        "onepiece:st06-007",
+        "onepiece:st06-008",
+        "onepiece:st06-009",
+        "onepiece:st06-010",
+        "onepiece:st06-011",
+        "onepiece:st06-012",
+        "onepiece:st06-013",
+        "onepiece:st06-014",
+        "onepiece:st06-015",
+        "onepiece:st06-016",
+        "onepiece:st06-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st06-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st06-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st06-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st06-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-008",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st06-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-012",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st06-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st06-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st06-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st06-017",
+          "qty": 2
+        }
+      ]
+    },
+    "starter-deck-05-one-piece-film-edition": {
+      "source": "https://tier-one-onepiece.jp/blog/st05-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51 (corrigé ST06-011/013 → ST05-011/013 d'après corps de page). Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st05-001",
+        "onepiece:st05-002",
+        "onepiece:st05-003",
+        "onepiece:st05-004",
+        "onepiece:st05-005",
+        "onepiece:st05-006",
+        "onepiece:st05-007",
+        "onepiece:st05-008",
+        "onepiece:st05-009",
+        "onepiece:st05-010",
+        "onepiece:st05-011",
+        "onepiece:st05-012",
+        "onepiece:st05-013",
+        "onepiece:st05-014",
+        "onepiece:st05-015",
+        "onepiece:st05-016",
+        "onepiece:st05-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st05-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st05-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st05-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st05-006",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st05-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-008",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st05-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st05-011",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st05-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st05-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st05-017",
+          "qty": 4
+        }
+      ]
+    },
+    "starter-deck-01-straw-hat-crew": {
+      "source": "https://tier-one-onepiece.jp/blog/st01-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-001",
+        "onepiece:st01-002",
+        "onepiece:st01-003",
+        "onepiece:st01-004",
+        "onepiece:st01-005",
+        "onepiece:st01-006",
+        "onepiece:st01-007",
+        "onepiece:st01-008",
+        "onepiece:st01-009",
+        "onepiece:st01-010",
+        "onepiece:st01-011",
+        "onepiece:st01-012",
+        "onepiece:st01-013",
+        "onepiece:st01-014",
+        "onepiece:st01-015",
+        "onepiece:st01-016",
+        "onepiece:st01-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st01-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st01-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-011",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-012",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-013",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-017",
+          "qty": 2
+        }
+      ]
+    },
+    "starter-deck-03-the-seven-warlords-of-the-sea": {
+      "source": "https://tier-one-onepiece.jp/blog/st03-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st03-001",
+        "onepiece:st03-002",
+        "onepiece:st03-003",
+        "onepiece:st03-004",
+        "onepiece:st03-005",
+        "onepiece:st03-006",
+        "onepiece:st03-007",
+        "onepiece:st03-008",
+        "onepiece:st03-009",
+        "onepiece:st03-010",
+        "onepiece:st03-011",
+        "onepiece:st03-012",
+        "onepiece:st03-013",
+        "onepiece:st03-014",
+        "onepiece:st03-015",
+        "onepiece:st03-016",
+        "onepiece:st03-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st03-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st03-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-009",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-017",
+          "qty": 2
+        }
+      ]
+    },
+    "starter-deck-02-worst-generation": {
+      "source": "https://tier-one-onepiece.jp/blog/st02-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st02-001",
+        "onepiece:st02-002",
+        "onepiece:st02-003",
+        "onepiece:st02-004",
+        "onepiece:st02-005",
+        "onepiece:st02-006",
+        "onepiece:st02-007",
+        "onepiece:st02-008",
+        "onepiece:st02-009",
+        "onepiece:st02-010",
+        "onepiece:st02-011",
+        "onepiece:st02-012",
+        "onepiece:st02-013",
+        "onepiece:st02-014",
+        "onepiece:st02-015",
+        "onepiece:st02-016",
+        "onepiece:st02-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st02-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st02-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-009",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-013",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-017",
+          "qty": 2
+        }
+      ]
+    },
+    "starter-deck-04-animal-kingdom-pirates": {
+      "source": "https://tier-one-onepiece.jp/blog/st04-cardlists/",
+      "verifiedAt": "2026-09-13",
+      "notes": "Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st04-001",
+        "onepiece:st04-002",
+        "onepiece:st04-003",
+        "onepiece:st04-004",
+        "onepiece:st04-005",
+        "onepiece:st04-006",
+        "onepiece:st04-007",
+        "onepiece:st04-008",
+        "onepiece:st04-009",
+        "onepiece:st04-010",
+        "onepiece:st04-011",
+        "onepiece:st04-012",
+        "onepiece:st04-013",
+        "onepiece:st04-014",
+        "onepiece:st04-015",
+        "onepiece:st04-016",
+        "onepiece:st04-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st04-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st04-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-008",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-017",
+          "qty": 4
+        }
+      ]
+    },
+    "premium-card-collection-best-selection-vol-3": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:p-072",
+        "onepiece:p-075",
+        "onepiece:p-074",
+        "onepiece:op06-090",
+        "onepiece:st13-012",
+        "onepiece:op05-004",
+        "onepiece:op08-040",
+        "onepiece:st05-002",
+        "onepiece:p-073",
+        "onepiece:st04-002",
+        "onepiece:op04-032",
+        "onepiece:op06-016"
+      ]
+    },
+    "premium-card-collection-best-selection-vol-2": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:st03-013",
+        "onepiece:op06-104",
+        "onepiece:op06-038",
+        "onepiece:op05-019",
+        "onepiece:st06-008",
+        "onepiece:op05-114",
+        "onepiece:op05-005",
+        "onepiece:st04-017",
+        "onepiece:op03-055",
+        "onepiece:op04-095",
+        "onepiece:op01-114",
+        "onepiece:st02-004"
+      ]
+    },
+    "premium-card-collection-live-action-edition": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "9 printKeys / declared 9. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 9,
+      "guaranteedPrintKeys": [
+        "onepiece:p-056",
+        "onepiece:p-053",
+        "onepiece:p-047",
+        "onepiece:p-055",
+        "onepiece:p-048",
+        "onepiece:p-050",
+        "onepiece:p-049",
+        "onepiece:p-051",
+        "onepiece:p-052"
+      ]
+    },
+    "premium-card-collection-best-selection": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:op02-036",
+        "onepiece:st03-017",
+        "onepiece:op02-117",
+        "onepiece:op01-057",
+        "onepiece:op01-029",
+        "onepiece:st04-016",
+        "onepiece:op02-005",
+        "onepiece:op03-121",
+        "onepiece:op02-106",
+        "onepiece:op04-105",
+        "onepiece:st05-014",
+        "onepiece:st03-012"
+      ]
+    },
+    "premium-card-collection-one-piece-film-red-edition": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:p-022",
+        "onepiece:st01-006",
+        "onepiece:st01-007",
+        "onepiece:st01-013",
+        "onepiece:op01-017",
+        "onepiece:st01-011",
+        "onepiece:p-016",
+        "onepiece:st01-004",
+        "onepiece:op01-005",
+        "onepiece:st01-002",
+        "onepiece:op01-014",
+        "onepiece:op01-021"
+      ]
+    },
+    "premium-card-collection-bandai-card-games-fest-23-24-edition": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "12 printKeys / declared 12. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 12,
+      "guaranteedPrintKeys": [
+        "onepiece:p-001",
+        "onepiece:st01-011",
+        "onepiece:op03-116",
+        "onepiece:st06-006",
+        "onepiece:op01-035",
+        "onepiece:st04-011",
+        "onepiece:op01-033",
+        "onepiece:st04-008",
+        "onepiece:st03-007",
+        "onepiece:op03-088",
+        "onepiece:p-030",
+        "onepiece:op03-102"
+      ]
+    },
+    "premium-card-collection-uta": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "6 printKeys / declared 6. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 6,
+      "guaranteedPrintKeys": [
+        "onepiece:op01-005",
+        "onepiece:p-011",
+        "onepiece:st08-002",
+        "onepiece:p-031",
+        "onepiece:op02-120",
+        "onepiece:st05-004"
+      ]
+    },
+    "premium-card-collection-25th-edition": {
+      "source": "staging opecards-products + catalog join",
+      "verifiedAt": "2026-09-13",
+      "notes": "10 printKeys / declared 10. Preview/stub — contentsKnown demoted until full qty.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": true,
+      "declaredCardCount": 10,
+      "guaranteedPrintKeys": [
+        "onepiece:p-001",
+        "onepiece:op01-001",
+        "onepiece:op01-016",
+        "onepiece:st01-006",
+        "onepiece:st01-008",
+        "onepiece:op01-013",
+        "onepiece:op01-022",
+        "onepiece:st01-002",
+        "onepiece:st01-010",
+        "onepiece:st01-005"
+      ]
+    },
+    "st13-ultra-deck-the-three-brothers": {
+      "source": "https://tier-one-onepiece.jp/blog/st13_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records. Bonus pack (1 parallèle aléatoire) en sus du deck.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 53,
+      "guaranteedPrintKeys": [
+        "onepiece:st13-001",
+        "onepiece:st13-002",
+        "onepiece:st13-003",
+        "onepiece:st13-004",
+        "onepiece:st13-005",
+        "onepiece:st13-006",
+        "onepiece:st13-007",
+        "onepiece:st13-008",
+        "onepiece:st13-009",
+        "onepiece:st13-010",
+        "onepiece:st13-011",
+        "onepiece:st13-012",
+        "onepiece:st13-013",
+        "onepiece:st13-014",
+        "onepiece:st13-015",
+        "onepiece:st13-016",
+        "onepiece:st13-017",
+        "onepiece:st13-018",
+        "onepiece:st13-019"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st13-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st13-002",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st13-003",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st13-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st13-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-008",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st13-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-011",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st13-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-013",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st13-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st13-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-017",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st13-018",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st13-019",
+          "qty": 4
+        }
+      ]
+    },
+    "japanese-starter-deck-st19-smoker": {
+      "source": "https://tier-one-onepiece.jp/blog/st19_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op02-093",
+        "onepiece:op02-098",
+        "onepiece:op02-106",
+        "onepiece:op02-108",
+        "onepiece:op02-109",
+        "onepiece:op02-113",
+        "onepiece:op02-116",
+        "onepiece:op02-117",
+        "onepiece:op03-079",
+        "onepiece:op03-089",
+        "onepiece:st19-001",
+        "onepiece:st19-002",
+        "onepiece:st19-003",
+        "onepiece:st19-004",
+        "onepiece:st19-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op02-093",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op02-098",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op02-106",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op02-108",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op02-109",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op02-113",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op02-116",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op02-117",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-079",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-089",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st19-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st19-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st19-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st19-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st19-005",
+          "qty": 4
+        }
+      ]
+    },
+    "japanese-starter-deck-st20-charlotte-katakuri": {
+      "source": "https://tier-one-onepiece.jp/blog/st20_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op03-099",
+        "onepiece:op03-106",
+        "onepiece:op03-107",
+        "onepiece:op03-110",
+        "onepiece:op03-112",
+        "onepiece:op03-115",
+        "onepiece:op03-118",
+        "onepiece:op03-121",
+        "onepiece:st07-005",
+        "onepiece:st07-014",
+        "onepiece:st20-001",
+        "onepiece:st20-002",
+        "onepiece:st20-003",
+        "onepiece:st20-004",
+        "onepiece:st20-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op03-099",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op03-106",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-107",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-110",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-112",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-115",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-118",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op03-121",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st07-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st20-001",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st20-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st20-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st20-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st20-005",
+          "qty": 2
+        }
+      ]
+    },
+    "japanese-starter-deck-st22-edward-and-ace": {
+      "source": "https://tier-one-onepiece.jp/blog/st22-cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records. Typo Tier One corrigé : Izo = ST22-002 (table dit 001). Bonus pack (1 parallèle aléatoire) en sus du deck.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st22-001",
+        "onepiece:st22-002",
+        "onepiece:st22-003",
+        "onepiece:st22-004",
+        "onepiece:st22-005",
+        "onepiece:st22-006",
+        "onepiece:st22-007",
+        "onepiece:st22-008",
+        "onepiece:st22-009",
+        "onepiece:st22-010",
+        "onepiece:st22-011",
+        "onepiece:st22-012",
+        "onepiece:st22-013",
+        "onepiece:st22-014",
+        "onepiece:st22-015",
+        "onepiece:st22-016",
+        "onepiece:st22-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st22-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st22-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st22-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st22-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st22-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st22-011",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st22-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st22-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st22-017",
+          "qty": 2
+        }
+      ]
+    },
+    "japanese-starter-deck-st23-shanks": {
+      "source": "https://tier-one-onepiece.jp/blog/st23_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op09-001",
+        "onepiece:op09-006",
+        "onepiece:op09-010",
+        "onepiece:op09-011",
+        "onepiece:op09-012",
+        "onepiece:op09-013",
+        "onepiece:op09-014",
+        "onepiece:op09-015",
+        "onepiece:op09-016",
+        "onepiece:op09-020",
+        "onepiece:st23-001",
+        "onepiece:st23-002",
+        "onepiece:st23-003",
+        "onepiece:st23-004",
+        "onepiece:st23-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op09-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op09-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-020",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st23-001",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st23-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st23-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st23-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st23-005",
+          "qty": 4
+        }
+      ]
+    },
+    "japanese-starter-deck-st24-jewelry-bonney": {
+      "source": "https://tier-one-onepiece.jp/blog/st24_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records. Table Tier One inverse 004/005 ; Punk Records: ST24-004=Law&Bepo (SR ×2), ST24-005=X.Drake (C ×4).",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:eb01-015",
+        "onepiece:op07-019",
+        "onepiece:op07-021",
+        "onepiece:op07-023",
+        "onepiece:op07-025",
+        "onepiece:op07-031",
+        "onepiece:op07-033",
+        "onepiece:op07-034",
+        "onepiece:op07-036",
+        "onepiece:op07-037",
+        "onepiece:st24-001",
+        "onepiece:st24-002",
+        "onepiece:st24-003",
+        "onepiece:st24-004",
+        "onepiece:st24-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:eb01-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-019",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op07-021",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-023",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-025",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-031",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-033",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-034",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-036",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-037",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st24-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st24-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st24-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st24-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st24-005",
+          "qty": 4
+        }
+      ]
+    },
+    "japanese-starter-deck-st25-buggy": {
+      "source": "https://tier-one-onepiece.jp/blog/st25_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op09-042",
+        "onepiece:op09-043",
+        "onepiece:op09-045",
+        "onepiece:op09-051",
+        "onepiece:op09-053",
+        "onepiece:op09-054",
+        "onepiece:op09-055",
+        "onepiece:op09-056",
+        "onepiece:op09-057",
+        "onepiece:p-084",
+        "onepiece:st25-001",
+        "onepiece:st25-002",
+        "onepiece:st25-003",
+        "onepiece:st25-004",
+        "onepiece:st25-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op09-042",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op09-043",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-045",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-051",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-053",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-054",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-055",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-056",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-057",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:p-084",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st25-001",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st25-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st25-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st25-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st25-005",
+          "qty": 4
+        }
+      ]
+    },
+    "japanese-starter-deck-st26-monkey-d-luffy": {
+      "source": "https://tier-one-onepiece.jp/blog/st26_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op05-065",
+        "onepiece:op05-066",
+        "onepiece:op05-070",
+        "onepiece:op09-061",
+        "onepiece:op09-063",
+        "onepiece:op09-070",
+        "onepiece:op09-076",
+        "onepiece:op09-077",
+        "onepiece:op09-078",
+        "onepiece:st14-010",
+        "onepiece:st26-001",
+        "onepiece:st26-002",
+        "onepiece:st26-003",
+        "onepiece:st26-004",
+        "onepiece:st26-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op05-065",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op05-066",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op05-070",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-061",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op09-063",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-070",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-076",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-077",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-078",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st14-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st26-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st26-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st26-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st26-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st26-005",
+          "qty": 2
+        }
+      ]
+    },
+    "japanese-starter-deck-st27-marshall-d-teach": {
+      "source": "https://tier-one-onepiece.jp/blog/st27_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records. Table Tier One dit OP09-084 (=Devon) ; Punk Records: Wolf réimprimé = OP10-084.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op09-081",
+        "onepiece:op09-083",
+        "onepiece:op09-086",
+        "onepiece:op09-088",
+        "onepiece:op09-089",
+        "onepiece:op09-090",
+        "onepiece:op09-091",
+        "onepiece:op09-095",
+        "onepiece:op09-099",
+        "onepiece:op10-084",
+        "onepiece:st27-001",
+        "onepiece:st27-002",
+        "onepiece:st27-003",
+        "onepiece:st27-004",
+        "onepiece:st27-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op09-081",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op09-083",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-086",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-088",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-089",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-090",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-091",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-095",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-099",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op10-084",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st27-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st27-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st27-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st27-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st27-005",
+          "qty": 2
+        }
+      ]
+    },
+    "japanese-starter-deck-st28-yamato": {
+      "source": "https://tier-one-onepiece.jp/blog/st28_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Tier One 収録枚数, clés validées via Punk Records. Table Tier One dit leader OP09-042 (=Buggy) ; leader réel = OP06-022 Yamato (prose + Punk Records).",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:op06-022",
+        "onepiece:op06-100",
+        "onepiece:op06-103",
+        "onepiece:op06-104",
+        "onepiece:op06-109",
+        "onepiece:op06-110",
+        "onepiece:op06-112",
+        "onepiece:op07-116",
+        "onepiece:op09-035",
+        "onepiece:st13-016",
+        "onepiece:st28-001",
+        "onepiece:st28-002",
+        "onepiece:st28-003",
+        "onepiece:st28-004",
+        "onepiece:st28-005"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:op06-022",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:op06-100",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op06-103",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op06-104",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op06-109",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op06-110",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op06-112",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op07-116",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:op09-035",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st13-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st28-001",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st28-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st28-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st28-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st28-005",
+          "qty": 2
+        }
+      ]
+    },
+    "japanese-starter-deck-ex-st21-gear-5th": {
+      "source": "https://tier-one-onepiece.jp/blog/st21_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Même composition que `deck-de-demarrage-ex-st21-gear-5th` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st21-001",
+        "onepiece:st21-002",
+        "onepiece:st21-003",
+        "onepiece:st21-004",
+        "onepiece:st21-005",
+        "onepiece:st21-006",
+        "onepiece:st21-007",
+        "onepiece:st21-008",
+        "onepiece:st21-009",
+        "onepiece:st21-010",
+        "onepiece:st21-011",
+        "onepiece:st21-012",
+        "onepiece:st21-013",
+        "onepiece:st21-014",
+        "onepiece:st21-015",
+        "onepiece:st21-016",
+        "onepiece:st21-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st21-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st21-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-017",
+          "qty": 2
+        }
+      ]
+    },
+    "japanese-starter-deck-st29-egghead": {
+      "source": "https://tier-one-onepiece.jp/blog/st29-card-list/ (+ Gamepedia cross-check; Bandai 51 types)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Même composition que `st29-deck-de-demarrage-egg-head` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51 (Bandai: Constructed Deck 51 + DON!! hors liste). Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st29-001",
+        "onepiece:st29-002",
+        "onepiece:st29-003",
+        "onepiece:st29-004",
+        "onepiece:st29-005",
+        "onepiece:st29-006",
+        "onepiece:st29-007",
+        "onepiece:st29-008",
+        "onepiece:st29-009",
+        "onepiece:st29-010",
+        "onepiece:st29-011",
+        "onepiece:st29-012",
+        "onepiece:st29-013",
+        "onepiece:st29-014",
+        "onepiece:st29-015",
+        "onepiece:st29-016",
+        "onepiece:st29-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st29-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st29-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-008",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-009",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st29-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st29-017",
+          "qty": 4
+        }
+      ]
+    },
+    "japanese-starter-deck-ex-st30-luffy-and-ace": {
+      "source": "https://tier-one-onepiece.jp/blog/st30-card-list/ (Bandai 51 / 17 types)",
+      "verifiedAt": "2026-09-14",
+      "notes": "Même composition que `st30-deck-de-demarrage-ex-luffy-et-ace` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51. declaredCardCount corrigé 34→51. Dig: curated/sources/st29-35-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st30-001",
+        "onepiece:st30-002",
+        "onepiece:st30-003",
+        "onepiece:st30-004",
+        "onepiece:st30-005",
+        "onepiece:st30-006",
+        "onepiece:st30-007",
+        "onepiece:st30-008",
+        "onepiece:st30-009",
+        "onepiece:st30-010",
+        "onepiece:st30-011",
+        "onepiece:st30-012",
+        "onepiece:st30-013",
+        "onepiece:st30-014",
+        "onepiece:st30-015",
+        "onepiece:st30-016",
+        "onepiece:st30-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st30-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st30-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-011",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-012",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st30-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st30-017",
+          "qty": 4
+        }
+      ]
+    },
+    "starter-deck-ex-st21-gear-5th": {
+      "source": "https://tier-one-onepiece.jp/blog/st21_cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Même composition que `deck-de-demarrage-ex-st21-gear-5th` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st21-001",
+        "onepiece:st21-002",
+        "onepiece:st21-003",
+        "onepiece:st21-004",
+        "onepiece:st21-005",
+        "onepiece:st21-006",
+        "onepiece:st21-007",
+        "onepiece:st21-008",
+        "onepiece:st21-009",
+        "onepiece:st21-010",
+        "onepiece:st21-011",
+        "onepiece:st21-012",
+        "onepiece:st21-013",
+        "onepiece:st21-014",
+        "onepiece:st21-015",
+        "onepiece:st21-016",
+        "onepiece:st21-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st21-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st21-002",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st21-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st21-017",
+          "qty": 2
+        }
+      ]
+    },
+    "super-pre-release-starter-deck-04-animal-kingdom-pirates": {
+      "source": "https://tier-one-onepiece.jp/blog/st04-cardlists/",
+      "verifiedAt": "2026-09-14",
+      "notes": "Même composition que `starter-deck-04-animal-kingdom-pirates` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st04-001",
+        "onepiece:st04-002",
+        "onepiece:st04-003",
+        "onepiece:st04-004",
+        "onepiece:st04-005",
+        "onepiece:st04-006",
+        "onepiece:st04-007",
+        "onepiece:st04-008",
+        "onepiece:st04-009",
+        "onepiece:st04-010",
+        "onepiece:st04-011",
+        "onepiece:st04-012",
+        "onepiece:st04-013",
+        "onepiece:st04-014",
+        "onepiece:st04-015",
+        "onepiece:st04-016",
+        "onepiece:st04-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st04-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st04-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-008",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st04-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st04-017",
+          "qty": 4
+        }
+      ]
+    }
+  }
+}

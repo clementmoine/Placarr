@@ -1,11 +1,16 @@
 {
   "source": "Mercari / Rakuma / eBay pasted 忍-3 leads",
-  "observed": "2026-08-18",
+  "observed": "2026-09-14",
   "crawlLive": false,
   "ingest": "curated-faces",
   "lang": "ja",
-  "note": "Pasted listing URLs only — do not crawl Mercari search or seller stores. Bytes for the 巻ノ壱 face live under curated/cards/ninja/ni0003/ja/source.jpg (mercdn dies without a JP session). Titles that say 忍-3 / Sakura No.3 are usually OP忍-3 (2005 opening promo, shy cherry-blossom art). 巻ノ壱 忍-3 is BANDAI 2002, standing hand-on-hip, same pose as FR NI-03. Les quatre 忍-n（PS） viennent du lot m28811788058 : le vendeur photographie chaque carte séparément, ce qui en fait la seule source connue de leurs faces.",
-  "not": ["crawl", "opni-as-ni0003", "lot-uncropped", "shops-og-image"],
+  "note": "Pasted listing URLs only — do not crawl Mercari search or seller stores. Ingest rows use live mercdn `url` (install fetches). Optional `curated` is offline fallback only. Titles that say 忍-3 / Sakura No.3 are usually OP忍-3 (2005 opening promo, shy cherry-blossom art). 巻ノ壱 忍-3 is BANDAI 2002, standing hand-on-hip, same pose as FR NI-03. Les quatre 忍-n（PS） viennent du lot m28811788058 : photos individuelles _3/_5/_7/_9.",
+  "not": [
+    "crawl",
+    "opni-as-ni0003",
+    "lot-uncropped",
+    "shops-og-image"
+  ],
   "shops": {
     "verified": "2026-08-31, produit 2JShoKKprWw8zNuAiktPqA (呪印術 術-84)",
     "note": "Pages jp.mercari.com/shops/product/<id> : l'og:image ET l'unique image du HTML initial sont une version MARKETING générée par Mercari Shops — photo vendeur paddée sur fond menthe avec logo トレカ et watermark boutique (la carte n'occupe que ~50 % du cadre). Les photos vendeur brutes (fond blanc, plein cadre) ne sont pas dans le HTML : elles arrivent via la galerie JS. Ne jamais enregistrer l'og:image ; prendre les photos de la galerie (même hôte assets.mercari-shops-static.com/-/large/plain/<id>, autre id)."
@@ -18,7 +23,6 @@
       "title": "春野サクラ",
       "listing": "https://jp.mercari.com/item/m63902869042",
       "url": "https://static.mercdn.net/item/detail/orig/photos/m63902869042_1.jpg",
-      "curated": "cards/ninja/ni0003/ja/source.jpg",
       "ingest": true,
       "bandaiYear": 2002,
       "note": "Related item next to a pasted OP忍-3 Mercari listing. Printed 忍-3 (no OP/PR prefix), BANDAI 2002 MADE IN JAPAN, standing pose matching FR NI-03."
@@ -98,7 +102,6 @@
       "title": "うちはサスケ",
       "listing": "https://jp.mercari.com/item/m31428055920",
       "url": "https://static.mercdn.net/item/detail/orig/photos/m31428055920_1.jpg",
-      "curated": "cards/ninja/ni0020/ja/source.mercari.jpg",
       "ingest": true,
       "bandaiYear": 2002,
       "pixels": {
@@ -134,7 +137,6 @@
       "title": "うずまきナルト",
       "listing": "https://jp.mercari.com/item/m28811788058",
       "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_3.jpg",
-      "curated": "cards/ninja/ni0001-ps/ja/source.jpg",
       "ingest": true,
       "bandaiYear": 2003,
       "pixels": {
@@ -150,7 +152,6 @@
       "title": "うちはサスケ",
       "listing": "https://jp.mercari.com/item/m28811788058",
       "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_5.jpg",
-      "curated": "cards/ninja/ni0002-ps/ja/source.jpg",
       "ingest": true,
       "bandaiYear": 2003,
       "pixels": {
@@ -166,7 +167,6 @@
       "title": "春野サクラ",
       "listing": "https://jp.mercari.com/item/m28811788058",
       "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_7.jpg",
-      "curated": "cards/ninja/ni0003-ps/ja/source.jpg",
       "ingest": true,
       "bandaiYear": 2003,
       "pixels": {
@@ -182,7 +182,6 @@
       "title": "はたけカカシ",
       "listing": "https://jp.mercari.com/item/m28811788058",
       "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_9.jpg",
-      "curated": "cards/ninja/ni0011-ps/ja/source.jpg",
       "ingest": true,
       "bandaiYear": 2003,
       "pixels": {
@@ -190,6 +189,17 @@
         "height": 1080
       },
       "note": "予約特典 du jeu PS「忍の里の陣取り合戦」. Photo individuelle du lot des 4 (10 photos : 1 = groupe, puis recto/verso par carte). Sous pochette, de face, plein cadre. Lu sur la carte : 5/3 · 3/2 · coût 4 · 幻, pied « 忍-N · NOT FOR SALE · BANDAI 2003 MADE IN JAPAN ». Le numéro est partagé avec la carte de booster mais l'illustration est inédite — （PS） est ce qui les sépare, et `narutoDiskCardId` le rend en `-ps`."
+    },
+    {
+      "printedRef": "忍-332",
+      "lang": "ja",
+      "setCode": "maki14",
+      "title": "木ノ葉丸軍団",
+      "listing": "https://jp.mercari.com/item/m53370794755",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m53370794755_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "note": "Mercdn live fetch. Printed 忍-332 BANDAI 2005 MADE IN JAPAN, 木ノ葉丸軍団 (Konohamaru/Udon/Moegi). JA orphan hole — Suruga CDN missing."
     }
   ]
 }

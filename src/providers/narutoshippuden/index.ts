@@ -62,7 +62,7 @@ const line = createLocalTcgLine({
   setLabel: shippudenSetLabel,
   setSortKey: shippudenActNumber,
   normalizeSearchQuery: (query) => diskIdFromPrintedReference(query) ?? query,
-  // Arbre Carddass-like : `{set}/{card}/{lang}/`, pas `{set}/{lang}/{card}/`.
+  // Disque = `{set}/{lang}/{diskId}/` (ex. `gaku/ja/gaku0038/`).
   cardAssetUrl: (id, file) =>
     narutoShippudenAssetsCardUrl(id.set, id.card, id.lang, file),
   notes:

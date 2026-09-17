@@ -42,6 +42,8 @@ export type CreatePrintKeyPriceModuleSpec<TCard> = {
    * cache ProviderEvidence, aucun HTTP sur miss).
    */
   evidenceOnlyPriceRefresh?: boolean;
+  /** Defaults to `api_live` (DotGG / Lorcast). Local dumps use `scrape_cache`. */
+  supplyMode?: ProviderModule["info"]["supplyMode"];
   mappingProbe: {
     sampleInput: string;
     /** `name` requis — alimente aussi le contexte prix du probe. */
@@ -180,7 +182,7 @@ export function createPrintKeyPriceModule<TCard>(
       types: ["tcg"],
       capabilities: ["price"],
       auth: { kind: "none" },
-      supplyMode: "api_live",
+      supplyMode: spec.supplyMode ?? "api_live",
       canonical: false,
       ...(spec.websiteUrl ? { websiteUrl: spec.websiteUrl } : {}),
       notes: spec.notes,

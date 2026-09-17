@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
-import { consumeRateLimit } from "@/lib/http/rateLimit";
 import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
@@ -21,18 +20,14 @@ export const maxDuration = 60;
  * Admin: enqueue a durable catalogue extract on the interactive worker.
  * Survives leaving the admin page — progress shows in the header
  * background-jobs menu. In-process Node (no CLI).
+ *
+ * No per-user extract throttle: each Sync is cheap to enqueue; the worker
+ * serialises / concurrency-caps runs. Re-clicking the same target replaces
+ * that pack's open job only (`replaceOpenPayloadMatch`).
  */
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
-
-  const throttle = consumeRateLimit(`foil-extract:${auth.user.id}`, {
-    limit: 3,
-    windowMs: 60_000,
-  });
-  if (!throttle.allowed) {
-    return NextResponse.json({ error: "Too many extracts" }, { status: 429 });
-  }
 
   const body = (await req.json()) as { target?: string; scope?: string };
   const target = normalizeCatalogueExtractTarget(

@@ -60,4 +60,18 @@ describe("resolveContentLayers", () => {
     });
     expect(layers.randomPoolScope).toBe("none");
   });
+
+  it("treats opaque ETB/tin/multipack as child-pack lottery (scope none)", () => {
+    for (const kind of ["etb", "tin", "multipack", "collector_box"] as const) {
+      const layers = resolveContentLayers({
+        kind,
+        behavior: "mixed_bundle",
+        prints: [],
+        contentsKnown: false,
+        containsPrintsIsPreview: false,
+      });
+      expect(layers.randomPoolScope).toBe("none");
+      expect(layers.guaranteedPrints).toEqual([]);
+    }
+  });
 });

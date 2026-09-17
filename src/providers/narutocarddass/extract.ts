@@ -40,6 +40,7 @@ import { scrapeVintageNarutoCcgFaces } from "./scrape/scrapeVintageNarutoCcg";
 import { installCarddasJpStagingFaces } from "./install/installCarddasJpStagingFaces";
 import { installCarddasDoubleIllustrationFaces } from "./install/installCarddasDoubleIllustrationFaces";
 import { installSlabzFaces } from "./install/installSlabzFaces";
+import { installTvTokyoFaces } from "./install/installTvTokyoFaces";
 import { NARUTO_PACK_ID } from "./packs";
 import {
   harvestGgArchiveCards,
@@ -222,7 +223,7 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     const uspromos = locales.some((locale) =>
       ["uspromos", "us-promos", "coleka-us-promos"].includes(locale),
     );
-    // Default `--locale fr` still finishes Storm 3 + S6 IT after Wayback.
+    // Default `--locale fr` still finishes Storm 3 after Wayback (pas l'IT).
     if (wayback || storm3) {
       await scrapeNarutoStorm3Cards(shared);
       await scrapeNarutoColekaStorm3Cards(shared);
@@ -230,7 +231,9 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     if (wayback || sages) {
       await scrapeNarutoColekaSagesLegacyCards(shared);
     }
-    if (wayback || s6it) {
+    // IT (Rivalità / CardGameClub / Primegame) — opt-in only, hors contrat
+    // langues (original JA + FR + EN). Ne plus tourner avec le défaut `--locale fr`.
+    if (s6it) {
       await scrapeNarutoColekaS6ItCards(shared);
       await scrapeCardgameclubItFaces({
         force: shared.force,
@@ -408,6 +411,7 @@ async function runScrape(argv: readonly string[]): Promise<void> {
       await installLeboncoinFaces({ force: shared.force });
       await installRakutenFaces({ force: shared.force });
       await installSlabzFaces({ force: shared.force });
+      await installTvTokyoFaces({ force: shared.force });
       await installGoatLocalePromoFaces({ force: shared.force });
       await installCarddasJpStagingFaces({ force: shared.force });
       await installCarddasDoubleIllustrationFaces({ force: shared.force });
@@ -500,6 +504,16 @@ export async function runNarutoPackPipeline(
         ) {
           console.log(
             `── Slabz faces : ${slabzFaces.written.length} écrits, ${slabzFaces.skipped.length} sautés, ${slabzFaces.failed.length} échecs`,
+          );
+        }
+        const tvtokyoFaces = await installTvTokyoFaces({ force });
+        if (
+          tvtokyoFaces.written.length ||
+          tvtokyoFaces.skipped.length ||
+          tvtokyoFaces.failed.length
+        ) {
+          console.log(
+            `── TV Tokyo faces : ${tvtokyoFaces.written.length} écrits, ${tvtokyoFaces.skipped.length} sautés, ${tvtokyoFaces.failed.length} échecs`,
           );
         }
         const carddasDoubles = await installCarddasDoubleIllustrationFaces({

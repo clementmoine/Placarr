@@ -304,9 +304,9 @@ describe("card mapping", () => {
     expect(lorcanaCollectorNumberLabel(puppy!)).toBe("4a");
     expect(lorcanaCollectorNumberLabel(genie!)).toBe("20/P1");
     expect(lorcanaCollectorNumberLabel(simba!)).toBe("20/204");
-    expect(lorcanaPrintLabel(puppy!)).toBe("Les Terres d'Encre · 4a");
-    expect(lorcanaPrintLabel(genie!)).toBe("Premier Chapitre · 20/P1");
-    expect(lorcanaPrintLabel(simba!)).toBe("Premier Chapitre · 20/204");
+    expect(lorcanaPrintLabel(puppy!)).toBe("4a");
+    expect(lorcanaPrintLabel(genie!)).toBe("20/P1");
+    expect(lorcanaPrintLabel(simba!)).toBe("20/204");
   });
 
   it("parses set size from fullIdentifier and ignores promo tails", () => {

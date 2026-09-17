@@ -81,6 +81,9 @@ const PREFIX_FAMILY: ReadonlyArray<readonly [string, NarutoCollectorFamily]> = [
   ["PR騎", "promo"],
   ["PR-騎", "promo"],
   ["OP忍", "promo"],
+  ["作戦", "mission"],
+  ["依頼人", "client"],
+  ["騎士", "knight"],
   ["忍", "ninja"],
   ["術", "jutsu"],
   ["作", "mission"],
@@ -132,7 +135,7 @@ const FAMILY_SEARCH_PREFIXES: Record<NarutoCollectorFamily, readonly string[]> =
 /** JP 幕 / 忍者学校 — own disk folder, not NI/N/J/M voisinage. */
 export const ALT_LINE_DISK_PREFIXES = new Set(["shi", "gaku", "mju", "msa"]);
 
-const LANG_ORDER = ["fr", "en", "it", "ja", "jp"] as const;
+const LANG_ORDER = ["fr", "en", "ja", "jp"] as const;
 
 const FAMILY_FOLDERS: readonly NarutoCollectorFamily[] = [
   "ninja",
@@ -288,7 +291,7 @@ export function canonicalNarutoDiskPrefix(printedPrefix: string): string {
   if (printedPrefix === "術") return "te";
   if (printedPrefix === "作" || printedPrefix === "作戦") return "ta";
   if (printedPrefix === "依" || printedPrefix === "依頼人") return "cl";
-  if (printedPrefix === "騎") return "ki";
+  if (printedPrefix === "騎" || printedPrefix === "騎士") return "ki";
   if (/^pr[-]?忍$/i.test(printedPrefix)) return "prni";
   if (/^op忍$/i.test(printedPrefix)) return "opni";
   if (/^pr[-]?術$/i.test(printedPrefix)) return "prte";
@@ -529,7 +532,7 @@ export function compareNarutoCollectors(a: string, b: string): number {
   return (ia.grouping ?? "").localeCompare(ib.grouping ?? "");
 }
 
-const SERIES_SET = /^(s\d+|promo|ns|spc|maki\d+|maku\d+)$/i;
+const SERIES_SET = /^(s\d+|promo|prerelease|ns|spc|maki\d+|maku\d+)$/i;
 
 /** `ni001` → `naruto:ni-0001`. Distinct from `naruto:n-0001`. */
 export function mintNarutoPrintKey(

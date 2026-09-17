@@ -147,12 +147,14 @@ export function mergePrimegameItIntoIndex(input: {
   let merged = 0;
   for (const card of input.cards) {
     const printKey = mintNarutoPrintKey(card.number);
+    // Numéro non-collector (rubrique primegame inconnue) : rien à minter.
+    if (!printKey) continue;
     if (!printByKey.has(printKey)) {
       printByKey.set(printKey, {
         printKey,
-        card: card.number,
-        set: cardTypeFromCollectorNumber(card.number),
-        rarity: null,
+        setCode: card.setCode,
+        number: card.number,
+        cardType: cardTypeFromCollectorNumber(card.number),
       });
     }
     const titleKey = `${printKey}:it`;
@@ -162,7 +164,7 @@ export function mergePrimegameItIntoIndex(input: {
       printKey,
       lang: "it",
       fullName: card.name,
-      setCode: card.setCode,
+      nameSource: "primegame-it",
     });
     merged += 1;
   }

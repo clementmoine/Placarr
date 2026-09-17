@@ -54,16 +54,18 @@ describe("eBay listing packshots", () => {
     expect(ledger.ingestCollection).toBe(false);
   });
 
-  it("keeps the hand-pasted Italian scans as faces, not packshots", () => {
-    const italian = ebayIngestFaces().filter((row) => row.lang === "it");
+  it("keeps Italian scans in the research ledger, not as ingestible faces", () => {
+    const italian = ebayPackshotLedger().faces.filter((row) => row.lang === "it");
     const byRef = new Map(italian.map((row) => [row.printedRef, row]));
-    // The five pasted one by one, before the store batch.
+    // The five pasted one by one, before the store batch — ledger only.
     expect(byRef.get("NI-01")?.imageId).toBe("jw4AAOSwIQdZEbr1");
     expect(byRef.get("NI-02")?.imageId).toBe("iZoAAOSwDiBZEbxd");
     expect(byRef.get("NI-03")?.imageId).toBe("ydcAAOSwUjthy9R2");
     expect(byRef.get("NI-19")?.imageId).toBe("KGoAAOSwrhBZEb16");
     expect(byRef.get("NI-20")?.imageId).toBe("gPYAAOSwNDFf8LI9");
     expect(byRef.get("NI-01")?.staging).toBe("staging/ebay/ni0001-it.webp");
+    expect(italian.every((row) => row.ingest === false)).toBe(true);
+    expect(ebayIngestFaces().every((row) => row.lang !== "it")).toBe(true);
     // s-l1600 is the working large size whatever the container; eBay serves
     // webp on some listings and jpg on others (the 騎 scans are jpg).
     expect(
@@ -71,11 +73,17 @@ describe("eBay listing packshots", () => {
     ).toBe(true);
   });
 
-  it("joins the whole Italian batch on numbers we already mint", () => {
-    const italian = ebayIngestFaces().filter((row) => row.lang === "it");
+  it("joins the whole Italian batch on numbers we already mint (ledger, not disk)", () => {
+    // Former ingest batch (now catalogue-gated) — not the S-promo / TE-05 rejects.
+    const italian = ebayPackshotLedger().faces.filter(
+      (row) =>
+        row.lang === "it" &&
+        typeof row.reason === "string" &&
+        row.reason.includes("Catalogue contract"),
+    );
     const byRef = new Map(italian.map((row) => [row.printedRef, row]));
     expect(italian.length).toBeGreaterThanOrEqual(45);
-    // Every ingested Italian row resolves, and no number is claimed twice.
+    // Every Italian row resolves, and no number is claimed twice.
     const ids = italian.map((row) => narutoDiskCardId(row.printedRef));
     expect(ids.every((id) => id !== null)).toBe(true);
     expect(new Set(ids).size).toBe(ids.length);

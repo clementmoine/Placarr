@@ -16,12 +16,7 @@ export const OFFICIAL_SITE_ORIGIN = "https://www.disneylorcana.com";
 /** Default locale (legacy FR harvest paths). */
 export const OFFICIAL_SITE_LOCALE = "fr-FR";
 /** Locales whose card catalogues we also want sealed SKUs for. */
-export const OFFICIAL_SITE_LOCALES = [
-  "fr-FR",
-  "en-US",
-  "de-DE",
-  "it-IT",
-] as const;
+export const OFFICIAL_SITE_LOCALES = ["fr-FR", "en-US"] as const;
 export type OfficialSiteLocale = (typeof OFFICIAL_SITE_LOCALES)[number];
 export const OFFICIAL_SITE_UA = "Placarr-lorcana-official/1.0";
 const STAGING_FOLDER = "official-site";

@@ -5,20 +5,14 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
-  readFileSync,
   readdirSync,
-  writeFileSync,
+  readFileSync,
 } from "node:fs";
 import path from "node:path";
 
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { packSealedProductsDir } from "@/lib/packPaths";
 import {
-  packProductsIndexPath,
-  packSealedProductsDir,
-} from "@/lib/packPaths";
-import {
-  emptyProductsIndex,
-  isProductsIndexV1,
   sealedProductKey,
   type ProductsIndexV1,
   type SealedProductEntry,
@@ -29,6 +23,11 @@ import {
   sealedKindIsOpaqueContents,
 } from "@/providers/shared/sealedProducts/kinds";
 import { resolveContentLayers } from "@/providers/shared/sealedProducts/contentLayers";
+import {
+  loadSealedProductsIndex,
+  persistSealedProductsIndexDoc,
+} from "@/providers/shared/sealedProducts/persistProductsIndex";
+import { backfillSealedProductSetLogos } from "@/providers/shared/sealedProducts/backfillLogos";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
 
 import {
@@ -38,6 +37,8 @@ import {
   type OfficialProductPage,
 } from "./officialSite";
 import {
+  lorcanaCatalogueSetIdForProduct,
+  lorcanaLogoUrlForSet,
   lorcanaSetLogoAssetUrl,
   loadLorcanaSetLogoIndex,
   lorcanaSetLogoCachePath,
@@ -49,19 +50,6 @@ import {
 } from "./setLogos";
 
 const SOURCE = "disneysite";
-
-function loadProductsIndex(packId: string): ProductsIndexV1 {
-  const file = packProductsIndexPath(packId);
-  if (existsSync(file)) {
-    try {
-      const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
-      if (isProductsIndexV1(raw)) return raw;
-    } catch {
-      /* fall through */
-    }
-  }
-  return emptyProductsIndex(packId);
-}
 
 /**
  * Remplace / complète les logos API par les wordmarks marketing (plus grands,
@@ -235,7 +223,7 @@ export function upsertOfficialSiteProducts(opts: {
 
   const logoIndex =
     opts.setLogoIndex ?? loadLorcanaSetLogoIndex(lorcanaSetLogoCachePath());
-  const index = loadProductsIndex(packId);
+  const index = loadSealedProductsIndex(packId);
   let written = 0;
   let skipped = 0;
 
@@ -279,12 +267,31 @@ export function upsertOfficialSiteProducts(opts: {
           existing.name = cleanTitle;
           touched = true;
         }
-        if (!existing.setLogo && page.setId) {
-          const setRow = logoIndex?.sets.find((s) => s.id === page.setId);
-          if (setRow?.logo) {
-            existing.setLogo = setRow.logo;
-            if (!existing.catalogueSetId && /^set(\d+)$/.test(page.setId)) {
-              existing.catalogueSetId = page.setId.replace(/^set/, "");
+        if (!existing.setLogo) {
+          const fromSet = page.setId
+            ? logoIndex?.sets.find((s) => s.id === page.setId)?.logo
+            : null;
+          const fromResolve = lorcanaLogoUrlForSet({
+            setCode: page.setId,
+            slug: page.slug,
+            name: page.title,
+            index: logoIndex,
+          });
+          const logo = fromSet ?? fromResolve ?? page.logoUrl ?? null;
+          if (logo) {
+            existing.setLogo = logo;
+            if (!existing.catalogueSetId) {
+              const numbered = page.setId?.match(/^set(\d+)$/);
+              if (numbered) existing.catalogueSetId = numbered[1]!;
+              else {
+                const resolved = lorcanaCatalogueSetIdForProduct({
+                  setCode: page.setId,
+                  slug: page.slug,
+                  name: page.title,
+                  index: logoIndex,
+                });
+                if (resolved) existing.catalogueSetId = resolved;
+              }
             }
             touched = true;
           }
@@ -306,6 +313,24 @@ export function upsertOfficialSiteProducts(opts: {
       const setRow = page.setId
         ? logoIndex?.sets.find((s) => s.id === page.setId)
         : null;
+      const setLogo =
+        setRow?.logo ??
+        lorcanaLogoUrlForSet({
+          setCode: page.setId,
+          slug: page.slug,
+          name: page.title,
+          index: logoIndex,
+        }) ??
+        page.logoUrl ??
+        null;
+      const catalogueSetId =
+        page.setId?.match(/^set(\d+)$/)?.[1] ??
+        lorcanaCatalogueSetIdForProduct({
+          setCode: page.setId,
+          slug: page.slug,
+          name: page.title,
+          index: logoIndex,
+        });
       const name =
         page.title?.trim() ||
         shot.alt?.trim() ||
@@ -340,9 +365,9 @@ export function upsertOfficialSiteProducts(opts: {
         name,
         image: assetsPackFileUrl(packId, "products", productSlug, lang, artFile),
         imageBack: null,
-        setLogo: setRow?.logo ?? null,
+        setLogo,
         setCode: page.setId?.toUpperCase() ?? null,
-        catalogueSetId: page.setId?.match(/^set(\d+)$/)?.[1] ?? null,
+        catalogueSetId,
         lang,
         releaseDate: null,
         priceCents: null,
@@ -362,10 +387,10 @@ export function upsertOfficialSiteProducts(opts: {
     }
   }
 
+  written += backfillSealedProductSetLogos(packId, index.products);
+
   index.generatedAt = new Date().toISOString();
-  const file = packProductsIndexPath(packId);
-  mkdirSync(path.dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+  persistSealedProductsIndexDoc(index, { alreadyMerged: false });
   return { written, skipped };
 }
 

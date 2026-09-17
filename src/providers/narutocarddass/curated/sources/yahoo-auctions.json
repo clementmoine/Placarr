@@ -157,6 +157,28 @@
       "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0206/user/e8d58f35e97c2be4c432d707ba0f091d0f91a4d07124dd29c1bd56447ad5d447/i-img1200x900-1782655462585816hyzhhk8.jpg",
       "ingest": false,
       "reason": "Lot photo (忍-37+38). Do not use an uncropped 2-up as the catalogue face."
+    },
+    {
+      "printedRef": "PR作-11",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "存在の証明",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z671389014",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e700dc25be20783b6c6ade78876f41b1e296d143/i-img900x1200-17880071711860dnjrq.jpg",
+      "curated": "cards/promo/prta0011/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
+    },
+    {
+      "printedRef": "PR作-12",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "最後の一撃",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z670666630",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/8966afbc02f5808c4eb5c7d05dd7351c31d4bfb2/i-img904x1200-1787916060732w8d2ci.jpg",
+      "curated": "cards/promo/prta0012/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
     }
   ]
 }

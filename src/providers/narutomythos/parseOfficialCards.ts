@@ -34,7 +34,10 @@ export type MythosOfficialPrint = {
   number: string;
   grouping: string | null;
   printed: string;
+  /** Preferred display name (preferLang, usually FR). */
   name: string;
+  /** Every API lang that shipped a non-placeholder title. */
+  titles: { lang: string; fullName: string }[];
   rarity: string | null;
   faceUrl: string | null;
   edition: string;
@@ -182,6 +185,7 @@ export function mapOfficialMythosCard(
     grouping,
     printed,
     name,
+    titles: [],
     rarity: String(card.Rarity ?? "").trim() || null,
     faceUrl,
     edition: String(card.Edition ?? "").trim(),
@@ -190,7 +194,7 @@ export function mapOfficialMythosCard(
   };
 }
 
-/** Prefer FR name/image; fill holes from EN (and other langs). */
+/** Keep every API language; fill holes from other langs without collapsing. */
 export function mergeOfficialMythosLangRows(
   byLang: Readonly<Record<string, readonly OfficialMythosApiCard[]>>,
   preferLang: string = "fr",
@@ -208,19 +212,34 @@ export function mergeOfficialMythosLangRows(
       if (!mapped) continue;
       const key = `${mapped.setCode}:${mapped.number}:${mapped.grouping ?? ""}`;
       const prev = byKey.get(key);
+      const langName = isPlaceholderName(mapped.name, mapped.sku)
+        ? null
+        : mapped.name;
       if (!prev) {
+        mapped.titles = langName ? [{ lang, fullName: langName }] : [];
+        if (!langName) mapped.name = mapped.sku;
         byKey.set(key, mapped);
         continue;
       }
+      if (langName && !prev.titles.some((t) => t.lang === lang)) {
+        prev.titles.push({ lang, fullName: langName });
+      }
       if (
         isPlaceholderName(prev.name, prev.sku) &&
-        !isPlaceholderName(mapped.name, mapped.sku)
+        langName
       ) {
-        prev.name = mapped.name;
+        prev.name = langName;
       }
       if (!prev.faceUrl && mapped.faceUrl) prev.faceUrl = mapped.faceUrl;
       if (!prev.rarity && mapped.rarity) prev.rarity = mapped.rarity;
     }
+  }
+
+  // Prefer-lang title as canonical `name` when present.
+  for (const row of byKey.values()) {
+    const preferred = row.titles.find((t) => t.lang === prefer);
+    if (preferred) row.name = preferred.fullName;
+    else if (row.titles[0]) row.name = row.titles[0].fullName;
   }
 
   return [...byKey.values()].sort((a, b) => {

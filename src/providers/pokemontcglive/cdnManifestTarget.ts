@@ -15,6 +15,8 @@ export type CdnManifestTargetMeta = {
   dumpedAt: string;
   /** false = dump interrupted; omit/true = safe to reuse in full. */
   complete?: boolean;
+  /** Sorted CDN buckets included in the dump (primary + dated epochs). */
+  buckets?: string[];
 };
 
 export function cdnManifestTargetFingerprint(opts: {
@@ -22,13 +24,19 @@ export function cdnManifestTargetFingerprint(opts: {
   contentDir: string;
   contentBase: string;
   langs: readonly string[];
+  buckets?: readonly string[];
 }): string {
   const langs = [...opts.langs].map((l) => l.trim().toLowerCase()).filter(Boolean).sort();
+  const buckets = [...(opts.buckets ?? [])]
+    .map((b) => b.trim())
+    .filter(Boolean)
+    .sort();
   return [
     opts.version.trim(),
     opts.contentDir.trim(),
     opts.contentBase.trim().replace(/\/+$/, ""),
     langs.join(","),
+    buckets.join(","),
   ].join("|");
 }
 
@@ -58,6 +66,7 @@ export function writeCdnManifestTargetMeta(
   meta: Omit<CdnManifestTargetMeta, "dumpedAt"> & {
     dumpedAt?: string;
     complete?: boolean;
+    buckets?: readonly string[];
   },
 ): string {
   mkdirSync(outDir, { recursive: true });
@@ -69,6 +78,7 @@ export function writeCdnManifestTargetMeta(
     langs: [...meta.langs],
     dumpedAt: meta.dumpedAt ?? new Date().toISOString(),
     complete: meta.complete !== false,
+    buckets: meta.buckets ? [...meta.buckets] : undefined,
   };
   writeFileSync(dest, `${JSON.stringify(body, null, 2)}\n`, "utf8");
   return dest;
@@ -88,10 +98,17 @@ function fingerprintMatches(
     contentDir: string;
     contentBase: string;
     langs: readonly string[];
+    buckets?: readonly string[];
   },
 ): boolean {
   return (
-    cdnManifestTargetFingerprint(meta) === cdnManifestTargetFingerprint(opts)
+    cdnManifestTargetFingerprint({
+      version: meta.version,
+      contentDir: meta.contentDir,
+      contentBase: meta.contentBase,
+      langs: meta.langs,
+      buckets: meta.buckets,
+    }) === cdnManifestTargetFingerprint(opts)
   );
 }
 
@@ -104,6 +121,7 @@ export function shouldReuseCdnManifestDump(opts: {
   contentDir: string;
   contentBase: string;
   langs: readonly string[];
+  buckets?: readonly string[];
 }): boolean {
   const meta = readCdnManifestTargetMeta(opts.outDir);
   if (!meta || meta.complete === false) return false;
@@ -121,6 +139,7 @@ export function shouldResumeCdnManifestDump(opts: {
   contentDir: string;
   contentBase: string;
   langs: readonly string[];
+  buckets?: readonly string[];
 }): boolean {
   const files = countCdnManifestJsonFiles(opts.outDir);
   if (files === 0) return false;

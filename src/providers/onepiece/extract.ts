@@ -1,12 +1,14 @@
 /**
  * One Piece Card Game pack extract — Catalogue Sync / worker (in-process).
  *
- * 1. punk-records (FR+EN) → titres + printKeys
+ * 1. punk-records (JA original + FR + EN) → titres + printKeys
  * 2. faces Bandai (img_url) → art.bandai.webp
  * 3. opecards.fr → produits scellés
  */
 import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
+import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
+import path from "node:path";
 
 import { harvestOpecardsDistinctBacks } from "./opecardsBacks";
 import { ONEPIECE_PACK_ID, onepieceCuratedDir } from "./pack";
@@ -15,6 +17,11 @@ import {
   installOnepieceBandaiFaces,
   seedOnepieceFromPunkRecords,
 } from "./punkRecords";
+
+const ONEPIECE_PRODUCTS_CONTENTS = path.join(
+  onepieceCuratedDir(),
+  "products-contents.json",
+);
 
 export async function runOnepiecePackPipeline(
   argv: readonly string[] = [],
@@ -64,6 +71,7 @@ export async function runOnepiecePackPipeline(
     },
     seedProducts: async () => {
       if (skipProducts) return { written: 0, skipped: 0 };
+      installProviderProductsContents(ONEPIECE_PACK_ID, ONEPIECE_PRODUCTS_CONTENTS);
       const products = await scrapeTcgCardsProducts("opecards", {
         force,
         offline,

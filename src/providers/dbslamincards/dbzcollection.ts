@@ -1,8 +1,8 @@
 /**
  * Moisson dbzcollection.fr — faces h400 + packshots (FR) et noms AJAX (IT/ES).
  *
- * FR idc=94 : faces `art.dbzcollection.jpg` + scellés.
- * IT idc=74 / ES idc=108 : `namesOnly` — titres via fiche Nom, faces = DBC.
+ * HTTP CMS : `shared/dbzcollection/site`. Ici : FR idc=94 faces + scellés ;
+ * IT idc=74 / ES idc=108 `namesOnly` (titres AJAX, faces DBC).
  */
 import {
   copyFileSync,
@@ -14,11 +14,18 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import {
+  downloadDbzcImage,
+  fetchDbzcText,
+  loadDbzcListingHtml,
+} from "@/providers/shared/dbzcollection/site";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
-import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
+import {
+  writeLocalSealedProducts,
+  type LocalSealedWrite,
+} from "@/providers/shared/sealedProducts/localWrite";
 
 import {
   DBS_LAMINCARDS_PACK_ID,
@@ -45,8 +52,6 @@ import {
 const LEDGER_FILE = "dbzcollection.json";
 const STAGING_FOLDER = "dbzcollection";
 const SOURCE_ID = "dbzcollection";
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 const DELAY_MS = 100;
 
 export type DbzcSetSpec = {
@@ -106,42 +111,6 @@ function setStagingDir(setCode: string, root?: string): string {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
-}
-
-async function fetchText(
-  url: string,
-  opts: { minLength?: number } = {},
-): Promise<string | null> {
-  const minLength = opts.minLength ?? 400;
-  try {
-    const res = await httpGet<string>(url, {
-      headers: { "User-Agent": UA, Accept: "text/html" },
-      responseType: "text",
-      timeout: 40_000,
-      validateStatus: (status: number) => status === 200,
-    });
-    return typeof res.data === "string" && res.data.length >= minLength
-      ? res.data
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-async function downloadImage(url: string, referer: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA, Referer: referer },
-      responseType: "arraybuffer",
-      timeout: 40_000,
-      validateStatus: (status: number) => status === 200,
-    });
-    const data = res.data;
-    if (!data || data.byteLength < 400) return null;
-    return Buffer.from(data);
-  } catch {
-    return null;
-  }
 }
 
 function parseSeriesFilter(argv: readonly string[]): Set<string> | null {
@@ -213,16 +182,13 @@ async function harvestSet(
   const lang = setLang(set, ledger);
   const listingUrl = dbzcSetListingUrl(set.ids, idc);
   const listingDest = path.join(staging, "listing.html");
-  let html: string | null = null;
-  if (!opts.force && existsSync(listingDest)) {
-    html = readFileSync(listingDest, "utf8");
-  }
-  if (!html || html.length < 400) {
-    html = await fetchText(listingUrl);
-    if (!html) return { cards: 0, packs: 0, ok: 0, skip: 0, fail: 1 };
-    writeFileSync(listingDest, html, "utf8");
-    await sleep(DELAY_MS);
-  }
+  const html = await loadDbzcListingHtml({
+    listingUrl,
+    dest: listingDest,
+    force: opts.force,
+    delayMs: DELAY_MS,
+  });
+  if (!html) return { cards: 0, packs: 0, ok: 0, skip: 0, fail: 1 };
 
   if (set.namesOnly) {
     return harvestNamesOnlySet(set, html, listingUrl, lang, staging, opts);
@@ -283,7 +249,7 @@ async function harvestSet(
     }
 
     if (opts.force || !hasFace) {
-      const buf = await downloadImage(
+      const buf = await downloadDbzcImage(
         dbzcAbsoluteUrl(card.facePath),
         listingUrl,
       );
@@ -300,7 +266,7 @@ async function harvestSet(
         ? (existing.characterName as string).trim()
         : "";
     if (opts.force || !characterName) {
-      const infoHtml = await fetchText(dbzcCardInfoUrl(card.cardId), {
+      const infoHtml = await fetchDbzcText(dbzcCardInfoUrl(card.cardId), {
         minLength: 80,
       });
       await sleep(DELAY_MS);
@@ -344,7 +310,7 @@ async function harvestSet(
       skip += 1;
       continue;
     }
-    const buf = await downloadImage(dbzcAbsoluteUrl(pack.facePath), listingUrl);
+    const buf = await downloadDbzcImage(dbzcAbsoluteUrl(pack.facePath), listingUrl);
     if (!buf) {
       fail += 1;
       continue;
@@ -436,7 +402,7 @@ async function harvestNamesOnlySet(
       skip += 1;
       continue;
     }
-    const infoHtml = await fetchText(dbzcCardInfoUrl(tile.cardId), {
+    const infoHtml = await fetchDbzcText(dbzcCardInfoUrl(tile.cardId), {
       minLength: 80,
     });
     await sleep(DELAY_MS);
@@ -758,8 +724,7 @@ export function ingestDbzcollectionSealedProducts(
     (s) => !s.namesOnly,
   );
   const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
-  const products: Parameters<typeof writeLocalSealedProducts>[0]["products"] =
-    [];
+  const products: LocalSealedWrite[] = [];
 
   for (const set of sets) {
     const packsDir = path.join(setStagingDir(set.setCode, stagingRoot), "packs");

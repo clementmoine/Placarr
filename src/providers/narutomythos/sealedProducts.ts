@@ -4,15 +4,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { httpGet } from "@/lib/http/httpClient";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
 import { NARUTO_MYTHOS_PACK_ID, narutoMythosCuratedDir } from "./pack";
 
 const LEDGER_FILE = "lorenzone-products.json";
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 
 export type LorenzoneProductEntry = {
   slug: string;
@@ -71,18 +69,11 @@ function artLooksComplete(dest: string): boolean {
 }
 
 async function downloadImage(url: string, referer: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA, Referer: referer },
-      responseType: "arraybuffer",
-      timeout: 60_000,
-      validateStatus: (status) => status === 200,
-    });
-    const buf = Buffer.from(res.data);
-    return buf.byteLength > 500 ? buf : null;
-  } catch {
-    return null;
-  }
+  return downloadCardFaceBytes(url, {
+    referer,
+    minBytes: 501,
+    timeoutMs: 60_000,
+  });
 }
 
 export async function harvestLorenzoneProductImages(opts: {

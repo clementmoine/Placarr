@@ -42,6 +42,11 @@ export async function installEbayFaces(
       continue;
     }
     const lang = row.lang.toLowerCase();
+    // Catalogue = JA + FR + EN. Les scans IT restent au ledger, pas sur disque.
+    if (lang === "it") {
+      skipped.push(`${diskId}/it`);
+      continue;
+    }
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
       path.join(cardsDir, "ninja", diskId, lang);

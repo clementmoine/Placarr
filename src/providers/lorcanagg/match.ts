@@ -2,8 +2,8 @@
  * Map Placarr Lorcana printKeys onto DotGG (lorcana.gg) setId + collector number.
  *
  * Main sets are zero-padded to 3 digits (`1` → `001`). Promo groupings
- * (`-p3`) become the DotGG set (`P3`) with the collector number alone —
- * same shape as Lorcast's promo path.
+ * (`-p3`, `-pd1`, `-d23`, …) become the DotGG set (`P3`, `PD1`, `D23`) with
+ * the collector number alone — same shape as Lorcast's promo path.
  */
 import { parsePrintKey } from "@/core/identify/printKey";
 import { lorcanaPromoSetFromGrouping } from "@/providers/shared/lorcanaPromoSet";

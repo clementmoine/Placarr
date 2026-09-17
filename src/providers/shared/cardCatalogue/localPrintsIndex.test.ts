@@ -165,6 +165,31 @@ describe("createLocalPrintsIndex", () => {
     expect(entry.langs.fr?.art).toBe("art.coleka.webp");
     expect(entry.langs.fr?.back).toBe("back.coleka.webp");
   });
+
+  it("exporte card avec grouping (mythos 0141-l)", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/mythos");
+    index.writePrints([
+      {
+        printKey: "mythos:ss2-0141-l",
+        setCode: "ss2",
+        number: "0141",
+        cardType: "ss2",
+        grouping: "l",
+        titles: [{ lang: "en", fullName: "Tsunade" }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "mythos:ss2-0141-l", lang: "en", art: "art.lorenzone.webp" },
+    ]);
+    const written = index.exportIndex();
+    const entry = (
+      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
+        cards: Record<string, { card: string }>;
+      }
+    ).cards["mythos:ss2-0141-l"];
+    expect(entry.card).toBe("0141-l");
+  });
 });
 
 describe("faces sans titre dans leur langue", () => {

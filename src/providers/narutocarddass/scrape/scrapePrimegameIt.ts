@@ -11,6 +11,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 
 import { upsertNarutoAppearances } from "../migrateCardLayout";
 import { narutoCardAbsDir } from "../narutoCardDisk";
@@ -169,19 +170,12 @@ async function fetchSinglesPage(
 }
 
 async function downloadFace(url: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA, Accept: "image/*,*/*;q=0.8" },
-      responseType: "arraybuffer",
-      timeout: 20_000,
-      validateStatus: (status) => status === 200,
-    });
-    const buf = Buffer.from(res.data as ArrayBuffer);
-    if (extFromMagic(buf) === ".bin") return null;
-    return buf.byteLength >= MIN_FACE_BYTES ? buf : null;
-  } catch {
-    return null;
-  }
+  const buf = await downloadCardFaceBytes(url, {
+    minBytes: MIN_FACE_BYTES,
+    timeoutMs: 20_000,
+  });
+  if (!buf || extFromMagic(buf) === ".bin") return null;
+  return buf;
 }
 
 async function crawlExpansion(

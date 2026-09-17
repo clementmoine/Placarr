@@ -7,17 +7,20 @@
  * remplacent rien, mais elles couvrent ce qu'on n'a pas du tout, et le
  * classement par pixels les reléguera partout ailleurs.
  *
- * Rien n'est versé au catalogue ici : on écrit dans les dossiers carte et le
- * relevé, comme toutes les moissons de ce pack. Ce que la base ajoute — 140
- * cartes, dont deux familles de préfixes inconnues — se décide après.
+ * Les noms (slug URL → Title Case) ne sont fusionnés que pour combler un
+ * trou EN : Goat / Bandai / etc. gardent la priorité.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
-import { narutoFamilyForPrefix } from "../collectorIdentity";
+import {
+  mintNarutoPrintKey,
+  narutoFamilyForPrefix,
+} from "../collectorIdentity";
+import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import {
   existingNarutoArtForSource,
   extFromMagic,
@@ -26,6 +29,7 @@ import {
 import { NARUTO_PACK_ID } from "../packs";
 import {
   ggArchiveIndexUrl,
+  ggCardName,
   ggClassicImageUrl,
   parseGgCardIndex,
   type GgCard,
@@ -142,6 +146,85 @@ export async function downloadGgFaces(input: {
     });
   }
   return { written, skipped, failed };
+}
+
+export type GgClassicTitleRow = Omit<GgCard, "number"> & {
+  /** Disk id already padded (`nc0001`) when loaded from staging. */
+  number: string;
+};
+
+export function loadGgClassicTitleLedger(
+  packDir?: string,
+): GgClassicTitleRow[] {
+  const file = path.join(
+    packDir ?? path.join(dataRoot(), NARUTO_PACK_ID),
+    "staging",
+    GG_STAGING,
+    "cards.json",
+  );
+  if (!existsSync(file)) return [];
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as {
+      rows?: Array<Partial<GgClassicTitleRow>>;
+    };
+    const rows = Array.isArray(raw.rows) ? raw.rows : [];
+    return rows.filter((row): row is GgClassicTitleRow => {
+      return (
+        typeof row?.prefix === "string" &&
+        typeof row?.slug === "string" &&
+        typeof row?.number === "string" &&
+        row.slug.trim().length > 0 &&
+        row.number.trim().length > 0
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fill EN titles from narutocardgame.gg slugs when the print already exists
+ * and has no EN name. Never mints prints; never overwrites attested names.
+ */
+export function mergeGgClassicTitlesIntoIndex(input: {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+  packDir?: string;
+  cards?: readonly GgClassicTitleRow[];
+}): {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+  titled: string[];
+} {
+  const cards = input.cards ?? loadGgClassicTitleLedger(input.packDir);
+  const prints = [...input.prints];
+  const titles = [...input.titles];
+  const printKeys = new Set(
+    prints.map((p) => p.printKey),
+  );
+  const titledEn = new Set(
+    titles
+      .filter((t) => t.lang.toLowerCase() === "en" && t.fullName.trim())
+      .map((t) => t.printKey),
+  );
+  const titled: string[] = [];
+  for (const row of cards) {
+    const printKey = mintNarutoPrintKey(row.number);
+    if (!printKey || !printKeys.has(printKey)) continue;
+    if (titledEn.has(printKey)) continue;
+    const name = ggCardName(row.slug).trim();
+    if (!name) continue;
+    titles.push({
+      printKey,
+      lang: "en",
+      fullName: name,
+      nameSource: "narutocardgamegg",
+    });
+    titledEn.add(printKey);
+    titled.push(printKey);
+  }
+  titled.sort((a, b) => a.localeCompare(b));
+  return { prints, titles, titled };
 }
 
 export type ScrapeNarutoCardGameGgOptions = {

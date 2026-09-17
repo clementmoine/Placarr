@@ -9,6 +9,10 @@ import {
   YUGIOH_PRINT_GAME,
   YUGIOH_PROVIDER_ID,
 } from "./pack";
+import {
+  formatYugiohReference,
+  normalizeYugiohSearchQuery,
+} from "./printKey";
 
 export {
   YUGIOH_EFFECT_PACK_ID,
@@ -27,11 +31,15 @@ const built = createEmptyLocalTcgProvider({
     packId: YUGIOH_PACK_ID,
     effectPackId: YUGIOH_EFFECT_PACK_ID,
     printGame: YUGIOH_PRINT_GAME,
+    /** TCG original language is English; FR via YGOPRODeck + ScanFlip. */
     defaultLanguage: "en",
+    listSetLanguages: ["en", "fr"],
+    formatReference: (set, number) => formatYugiohReference(set, number),
+    normalizeSearchQuery: normalizeYugiohSearchQuery,
     syncHint: "Catalogue Sync (admin)",
-    websiteUrl: "https://ygoprodeck.com/",
+    websiteUrl: "https://www.db.yugioh-card.com/yugiohdb/",
     notes:
-      "Yu-Gi-Oh! TCG → `data/yugioh/`. Catalogue local vide (YGOPRODeck à brancher). Catalogue-only.",
+      "Yu-Gi-Oh! TCG → `data/yugioh/`. YGOPRODeck (EN+FR names, images) + ScanFlip FR (codes LDD-F…). Konami Neuron sans API publique.",
   },
   runPipeline: async (argv) => {
     const { runYugiohPackPipeline } = await import(

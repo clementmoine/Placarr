@@ -26,9 +26,13 @@
  * (`booster-s1-it`, not `booster-s1`). Shop GTINs on CardGameClub are reused
  * ISSN-shaped junk — not barcodes. One S1 mazzo was pasted; do not invent a second.
  * JP 巻ノ五 (`booster-vol5-jp`, set `maki5`) is 6 cards — not FR/IT 8, not
- * Shippuden 第五幕, not `booster-s5`. Goat 3970 fills Coleka-missing EN
- * displays (s16, s19, s21–s23, s27) only — never `display-s1`…`s6`.
+ * Shippuden 第五幕, not `booster-s5`. Goat 3970 dumps every CDN display as
+ * `art.goat` ; only Coleka-missing boxes mint a SKU (s16, s19, s21–s23, s27).
  * SciFi-Universe 200px edition thumbs are last-resort FR packshots.
+ *
+ * **Catalogue sealed** = JA+FR+EN only (même contrat que les faces). Les SKU
+ * IT/DE/ES restent dans `NARUTO_SEALED_SKUS` pour moisson / recherche, mais
+ * n'entrent pas dans `products-index.json`.
  */
 import {
   copyFileSync,
@@ -37,7 +41,6 @@ import {
   readdirSync,
   statSync,
   unlinkSync,
-  writeFileSync,
 } from "node:fs";
 import path from "node:path";
 
@@ -55,7 +58,7 @@ import { cardgameclubIngestPackshots } from "./sources/cardgameclubPackshots";
 import { colekaEnCcgNewDisplays } from "./sources/colekaEnCcgCovers";
 import { ebayIngestPackshots } from "./sources/ebayPackshots";
 import { rakutenIngestPackshots } from "./sources/rakutenPackshots";
-import { goatIngestPackshots } from "./sources/goatPackshots";
+import { goatIngestPackshots, goatMintDisplayPackshots } from "./sources/goatPackshots";
 import { gradedcardcenterIngestPackshots } from "./sources/gradedcardcenterPackshots";
 import { germanSealedReleases } from "./sources/germanSealedReleases";
 import { japaneseSealedReleases } from "./sources/japaneseSealedReleases";
@@ -63,7 +66,12 @@ import { volumeOfficialProducts } from "./volumeOfficialProducts";
 import { psYoyakuIngestPackshots } from "./sources/psYoyakuPackshots";
 import { narutoCuratedDir, narutoCuratedProductsDir } from "./curatedPaths";
 import { NARUTO_PACK_ID } from "./packs";
-import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
+import {
+  installProviderProductsContents,
+  mergeCuratedSealedContents,
+} from "@/providers/shared/sealedProducts/curatedContents";
+import { persistSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
+import { isCatalogueProductLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
 import { mangaNewsIngestPackshots } from "./sources/mangaNewsPackshots";
 import { mangaSanctuaryIngestPackshots } from "./sources/mangaSanctuaryPackshots";
 import {
@@ -169,6 +177,16 @@ export type NarutoSealedSpec = {
    * japonais, dont personne n'a photographié les emballages.
    */
   attested?: boolean;
+  /** Sachets dans ce produit (display EN = 24) — overlay curated peut aussi le poser. */
+  packsContained?: number | null;
+  /**
+   * Dumps parallèles (JP multi-hôtes, etc.). Toujours archivés à côté du
+   * stagingKind primaire ; productChoice choisit l'affichage.
+   */
+  packshots?: readonly {
+    stagingFile: string;
+    stagingKind: NonNullable<NarutoSealedSpec["stagingKind"]>;
+  }[];
 };
 
 /**
@@ -660,7 +678,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     declaredCardCount: 6,
   },
   ...colekaEnCcgNewDisplays().map((row) => enCcgDisplay(row.set, row.title)),
-  ...goatIngestPackshots().map((row) => enCcgDisplay(row.setCode, row.title)),
+  ...goatMintDisplayPackshots().map((row) => enCcgDisplay(row.setCode, row.title)),
   ...bandaiFrUsDriveNewEnDisplays().map((row) => ({
     ...enCcgDisplay(row.set, row.title),
     // Drive album is the attestation; Coleka cover path is empty for s7–s12.
@@ -902,6 +920,8 @@ function enCcgDisplay(set: string, _title: string): NarutoSealedSpec {
     stagingKind: "coleka-en-covers",
     lang: "EN",
     declaredCardCount: null,
+    // US Bandai CCG booster box = 24 packs (eu-ccg-pack-math / ToyWiz).
+    packsContained: 24,
   };
 }
 
@@ -1071,6 +1091,14 @@ export function narutoSealedSpecs(): NarutoSealedSpec[] {
       ...(release.stagingFile && release.stagingKind
         ? { stagingKind: release.stagingKind }
         : {}),
+      ...(release.packshots?.length
+        ? {
+            packshots: release.packshots.map((shot) => ({
+              stagingFile: shot.stagingFile,
+              stagingKind: shot.kind,
+            })),
+          }
+        : {}),
       lang: release.lang,
       declaredCardCount: release.declaredCardCount,
       setKinds: release.setKinds,
@@ -1079,6 +1107,26 @@ export function narutoSealedSpecs(): NarutoSealedSpec[] {
     });
   }
   return out;
+}
+
+/**
+ * Langues scellées du **catalogue** Carddass — aligné faces JA+FR+EN.
+ * IT / DE / ES restent listés dans `NARUTO_SEALED_SKUS` pour la moisson.
+ */
+export const NARUTO_CATALOGUE_SEALED_LANGS = new Set(["JA", "FR", "EN"]);
+
+export function isNarutoCatalogueSealedLang(
+  lang: string | null | undefined,
+): boolean {
+  // Legacy harvest rows omit lang → treat as FR (carddass.fr default).
+  return isCatalogueProductLang(lang ?? "fr", ["ja", "fr", "en"]);
+}
+
+/** Specs qui entrent dans `products-index.json` / Catalogue → Scellés. */
+export function narutoCatalogueSealedSpecs(): NarutoSealedSpec[] {
+  return narutoSealedSpecs().filter((spec) =>
+    isNarutoCatalogueSealedLang(spec.lang),
+  );
 }
 
 function collectSpecArtDumps(
@@ -1203,11 +1251,32 @@ function collectArtDumps(
   for (const dump of collectSpecArtDumps(packRoot, spec)) {
     bySource.set(dump.source, dump);
   }
+  // Dumps parallèles déclarés sur le spec (JP multi-hôtes) — même contrat
+  // que TV Tokyo : on archive tout, le moteur choisit.
+  for (const shot of spec.packshots ?? []) {
+    for (const dump of collectSpecArtDumps(packRoot, {
+      ...spec,
+      stagingFile: shot.stagingFile,
+      stagingKind: shot.stagingKind,
+    })) {
+      bySource.set(dump.source, dump);
+    }
+  }
   for (const row of shopPackshotRows()) {
     if (row.slug !== spec.slug) continue;
     const hit = dumpIfPresent(packRoot, row.staging);
     if (hit) bySource.set(hit.source, hit);
   }
+  /*
+    TV Tokyo : toujours proposer le dump s'il est en staging, même quand le
+    stagingKind primaire est Bandai/Suruga/carddas. Source rare — on archive
+    tout ; productChoice décide de l'affichage.
+  */
+  const tvTokyo = dumpIfPresent(
+    packRoot,
+    path.join("staging", "tv-tokyo", `${spec.slug}.jpg`),
+  );
+  if (tvTokyo) bySource.set(tvTokyo.source, tvTokyo);
   return [...bySource.values()];
 }
 
@@ -1513,7 +1582,7 @@ export async function ingestSealedLine(opts: {
       releaseDate: spec.released ?? null,
       priceCents: null,
       cardsPerPack: contents.cardsPerPack,
-      packsContained: contents.packsContained,
+      packsContained: spec.packsContained ?? contents.packsContained,
       guaranteedPrints: layers.guaranteedPrints,
       randomPoolScope: layers.randomPoolScope,
       randomPoolPrints: layers.randomPoolPrints,
@@ -1526,8 +1595,11 @@ export async function ingestSealedLine(opts: {
   }
 
   removeLegacyFlatProductFiles(destRoot);
-  const file = path.join(opts.packRoot, "products-index.json");
-  writeFileSync(file, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+  index.products = mergeCuratedSealedContents(opts.packId, index.products);
+  const { file } = persistSealedProductsIndex(opts.packId, index.products, {
+    alreadyMerged: true,
+    file: path.join(opts.packRoot, "products-index.json"),
+  });
   return {
     pack: opts.packId,
     written: Object.keys(index.products).length,
@@ -1555,6 +1627,6 @@ export async function ingestNarutoSealedProducts(opts?: {
   return ingestSealedLine({
     packId: NARUTO_PACK_ID,
     packRoot,
-    specs: narutoSealedSpecs(),
+    specs: narutoCatalogueSealedSpecs(),
   });
 }

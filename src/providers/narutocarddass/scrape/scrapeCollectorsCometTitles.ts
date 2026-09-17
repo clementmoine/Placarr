@@ -89,7 +89,7 @@ export type ScrapeCollectorsCometOptions = {
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await httpGet<T>(url, {
     headers: { "User-Agent": UA, Accept: "application/json" },
-    timeoutMs: 30_000,
+    timeout: 30_000,
   });
   return res.data;
 }

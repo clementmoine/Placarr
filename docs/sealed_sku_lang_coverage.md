@@ -1,50 +1,45 @@
 # Couverture langue : cartes vs SKUs scellés
 
-Mesuré localement après rewrite kinds/langs. **Pas de miroir FR** — les trous
-restent des trous jusqu’à un harvest attesté.
+Contrat catalogue (partout) : **original + FR (s’il existe) + EN**.
+Pas DE / IT / ES / ptbr sauf quand c’est **l’original** (Ninja Ranks IT,
+Lamincards IT, …). Voir `isCatalogueLang` /
+`isCatalogueProductLang`.
 
-## État (post kinds first-class)
+Mesuré localement. **Pas de miroir FR** — les trous restent des trous jusqu’à
+un harvest attesté.
 
-| Pack | Langues cartes (index) | Langues SKU | Trous typiques |
+## État
+
+| Pack | Langues cartes (catalogue) | Langues SKU catalogue | Notes |
 | --- | --- | --- | --- |
-| Lorcana | de / en / fr / it | surtout `fr` (+ peu d’`en`) | de, it, en (volume) |
-| Pokémon | fr / en / de / it / es / ptbr | presque seulement `fr` (pkmcards) | en, de, it, es, ptbr |
-| DBS CG | fr / en | `fr` (+ displays sans lang) | en |
-| DBS FW | en / ja | `en` | ja |
-| One Piece | en / fr (+ jp faces) | en / fr / ja (meilleur graph TCG Cards) | audit fin |
-| Naruto Carddass | multi | multi (modèle cible) | — |
+| Lorcana | en / fr | en / fr (DE/IT masqués + plus moissonnés) | site officiel `fr-FR`+`en-US` only |
+| Pokémon | fr / en (Live) | fr (pkmcards) | Live DE/IT/ES/ptbr hors tuiles admin |
+| DBS CG | fr / en | fr | |
+| DBS FW | en / ja | en | |
+| One Piece | ja / fr / en | en / fr / ja | |
+| Naruto Carddass | ja / fr / en | JA / FR / EN | IT/DE/ES hors products-index |
+| Ninja Ranks | en / fr / **it** | EN / fr | IT = original Imadoki |
+| MTG | en / fr | fr | exclusives other-lang sur disque, masquées admin |
 
-Kinds désormais first-class à l’index (`etb`, `trove`, `multipack`,
-`blister_case`, `deck_bundle`, …) via `rewriteSealedProductsIndex`.
+Kinds first-class à l’index (`etb`, `trove`, `multipack`, …) via
+`rewriteSealedProductsIndex`.
 
 ## Prochaines sources réelles (pas de clone)
 
 ### Lorcana
-- Site officiel `disneylorcana.com` — crawl `en-US` / `de-DE` / `it-IT` déjà
-  câblé (`OFFICIAL_SITE_LOCALES`). Relancer une sync catalogue pour peupler
-  les packshots non-FR (slugs `…-en` / `…-de` / `…-it`).
+- Site officiel : locales **fr-FR** + **en-US** seulement (`OFFICIAL_SITE_LOCALES`).
 
 ### One Piece
 - `opecards.fr` déjà multi-lang (`en-` / `japanese-` / …).
-- Audit : croiser `sealedLangCoverageForPack("onepiece")` après chaque ingest ;
-  kinds `multipack` / `tin` déjà promu depuis les catégories host.
+- Audit : `sealedLangCoverageForPack("onepiece")` après chaque ingest.
 
 ### DBS CG / Fusion World
-- Hosts TCG Cards : `dbscards.fr` (FR), `fw.dbscards.fr` (EN index).
-- Site Bandai officiel :
-  - Masters / CG : `https://www.dbs-cardgame.com/` (locales régionales)
-  - Fusion World : `https://www.dbs-cardgame.com/fw/en/products/…` et
-    `…/fw/jp/products/…` (boosters JA attestés)
-- Prochain chantier : harvest produit Bandai **par locale** (slug×lang), sans
-  inventer un SKU EN à partir d’une fiche FR.
+- Hosts TCG Cards + Bandai par locale — une fiche = une preuve.
 
 ### Pokémon
-- `pkmcards.fr` = graph FR only — ne fermera jamais les langues Live.
-- Sources régionales à câbler (curated ledger + packshots attestés) :
-  - [Product gallery Pokémon.com US](https://www.pokemon.com/us/pokemon-tcg/product-gallery)
-  - Sites éditeur / distributeur par territoire (ETB DE, ES, …) — une fiche
-    produit = une preuve ; pas de miroir du squelette FR.
-- Ne pas importer les compendia Live digitaux comme scellés papier.
+- `pkmcards.fr` = graph FR only.
+- Sources régionales EN (pokemon.com US gallery) quand on voudra fermer le trou
+  scellé EN — pas DE/IT/ES sauf original attesté (n/a papier Live).
 
 ## Outil
 

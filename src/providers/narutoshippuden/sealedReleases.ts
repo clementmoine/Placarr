@@ -71,12 +71,20 @@ export function shippudenAct(title: string): number | null {
   return match ? (ACT_DIGITS[match[1]!] ?? null) : null;
 }
 
+/** Ligne 忍者学校ルール (set `gaku`) — pas de 幕 dans le titre Bandai. */
+export function shippudenSchoolLine(title: string): boolean {
+  return /忍者学校/.test(title);
+}
+
 /**
  * Le format, lu dans le titre officiel. `自販機` (distributeur) est testé avant
  * `ブースター` : les deux mots cohabitent dans « 自販機ブースター ».
+ * `スターティングパック` (école) avant le défaut booster : ce n'est pas un
+ * `スターター` / `構築済み`, mais c'est bien un deck d'entrée.
  */
 export function shippudenFormat(title: string): ShippudenFormat {
   if (/自販機/.test(title)) return "vending";
+  if (/スターティングパック/.test(title)) return "starter";
   if (/構築済み|スターター/.test(title)) return "starter";
   if (/Coin/i.test(title)) return "coin";
   return "booster";
@@ -130,11 +138,14 @@ export function shippudenSealedReleases(): ShippudenSealedSpec[] {
     if (!/疾風伝/.test(row.title)) continue;
     const format = shippudenFormat(row.title);
     const act = shippudenAct(row.title);
-    if (format !== "coin" && act == null) continue;
+    const school = shippudenSchoolLine(row.title);
+    if (format !== "coin" && act == null && !school) continue;
     const slug =
       format === "coin"
         ? "coin-plus-shippuden-jp"
-        : `${format === "vending" ? "vending" : format}-shippuden-act${act}-jp`;
+        : school
+          ? `${format === "vending" ? "vending" : format}-shippuden-gaku-jp`
+          : `${format === "vending" ? "vending" : format}-shippuden-act${act}-jp`;
     // Bandai liste deux fois le troisième acte ; le premier JAN gagne.
     if (seen.has(slug)) continue;
     seen.add(slug);
@@ -143,7 +154,7 @@ export function shippudenSealedReleases(): ShippudenSealedSpec[] {
       slug,
       kind,
       category: categoryFor(kind),
-      setCode: act == null ? null : `maku${act}`,
+      setCode: school ? "gaku" : act == null ? null : `maku${act}`,
       name: row.title,
       lang: "JA",
       released: row.released,

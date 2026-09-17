@@ -3,6 +3,8 @@
  * Pokémon Company global beta announcement).
  *
  * Bundle stem: `{set}_{lang}_{num}` — Brazilian Portuguese is `ptbr`, not `pt`.
+ * CDN still serves all six; catalogue ingest is narrower — see
+ * {@link POKEMON_CATALOGUE_LANGUAGES}.
  */
 export const POKEMON_LIVE_LANGUAGES = [
   "fr",
@@ -14,6 +16,19 @@ export const POKEMON_LIVE_LANGUAGES = [
 ] as const;
 
 export type PokemonLiveLanguage = (typeof POKEMON_LIVE_LANGUAGES)[number];
+
+/**
+ * Catalogue languages for **Live face dump** / cards-index walk:
+ * Live has no JA — keep EN (Live pivot) + FR.
+ * Paper **original JA** lives in TCGdex `prints.sqlite` (`TCGDEX_HARVEST_LANGUAGES`).
+ */
+export const POKEMON_CATALOGUE_LANGUAGES = ["en", "fr"] as const;
+
+export type PokemonCatalogueLanguage =
+  (typeof POKEMON_CATALOGUE_LANGUAGES)[number];
+
+/** Comma form for catalogue extract ``--langs`` (EN+FR only). */
+export const POKEMON_CATALOGUE_LANGS_CSV = POKEMON_CATALOGUE_LANGUAGES.join(",");
 
 export const POKEMON_LIVE_DEFAULT_LANGUAGE: PokemonLiveLanguage = "fr";
 

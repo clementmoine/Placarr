@@ -140,7 +140,10 @@ export function BaseModal({
               {children}
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto p-5 md:p-6 min-h-0 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+            <div
+              data-modal-scroll
+              className="flex-1 overflow-y-auto p-5 md:p-6 min-h-0 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent"
+            >
               {children}
             </div>
           ))}

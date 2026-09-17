@@ -27,7 +27,7 @@ describe("collection-naruto youtube dig", () => {
     expect(dig.doNot.join(" ")).toMatch(/display-s1/);
     const pack = NARUTO_SEALED_SKUS.find((r) => r.slug === "pack-decouverte");
     expect(pack).toMatchObject({
-      kind: "coffret",
+      kind: "deck_bundle",
       setCode: "s1",
       attested: true,
       stagingFile: "pack-decouverte.jpg",
@@ -37,7 +37,7 @@ describe("collection-naruto youtube dig", () => {
     expect(
       NARUTO_SEALED_SKUS.find((r) => r.slug === "tin-box-hobby"),
     ).toMatchObject({
-      kind: "coffret",
+      kind: "tin",
       stagingFile: "tin-box-hobby.png",
       stagingKind: "wrappers",
       name: "Tin Box Hobby",

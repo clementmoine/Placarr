@@ -1,5 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/http/httpClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/http/httpClient")>();
+  return {
+    ...actual,
+    httpGet: vi.fn(() => Promise.resolve({ status: 404, data: null })),
+    httpPost: vi.fn(() => Promise.resolve({ status: 404, data: null })),
+    httpHead: vi.fn(() => Promise.resolve({ status: 404, data: null })),
+  };
+});
+
 import {
   buildBarcodeRecordEnrichmentDeps,
   filterBarcodeLookupTasksForRecord,

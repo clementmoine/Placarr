@@ -1,6 +1,6 @@
 /**
- * Data Carddass — pas de SKU scellé retail attesté dans ce pass.
- * Les cartes viennent de la borne / boosters arcade ; packshots à coller plus tard.
+ * Data Carddass — pas de SKU scellé retail attesté (cartes borne / boosters arcade).
+ * Packshots produit à coller quand une source retail fiable apparaît.
  */
 export function ingestDataCarddassSealedProducts(): {
   written: number;

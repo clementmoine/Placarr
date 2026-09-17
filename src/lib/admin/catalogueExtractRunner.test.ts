@@ -139,13 +139,14 @@ describe("catalogueExtractRunner targets", () => {
     );
   });
 
-  it("Lorcana auto catalogue omits Unity and products", async () => {
+  it("Lorcana auto catalogue omits Unity and products but keeps official logos", async () => {
     const cmd = await resolveCatalogueExtractPlan("lorcana", {
       skipUnity: true,
       skipProducts: true,
     });
     expect(cmd.argv).toContain("lorcanaweb");
     expect(cmd.argv).toContain("lorcanacards");
+    expect(cmd.argv).toContain("lorcanaofficial");
     expect(cmd.argv).not.toContain("lorcanamobile");
     expect(cmd.argv).not.toContain("lorcanaproducts");
     expect(cmd.prelude.some((line) => /skip Unity/i.test(line))).toBe(true);
@@ -169,11 +170,11 @@ describe("catalogueExtractRunner targets", () => {
     );
   });
 
-  it("pokemon inventory scrape unions APK/Malie then CDN (all Live langs)", async () => {
+  it("pokemon inventory scrape unions APK/Malie then CDN (catalogue langs)", async () => {
     const cmd = await resolveCatalogueExtractPlan("pokemon");
     expect(cmd.target).toBe("pokemon");
     expect(cmd.argv).toEqual(
-      expect.arrayContaining(["--langs", "fr,en,de,it,es,ptbr"]),
+      expect.arrayContaining(["--langs", "en,fr"]),
     );
     expect(cmd.argv).toContain("--products");
     expect(cmd.argv).not.toContain("--no-job");
@@ -236,7 +237,7 @@ describe("store APK prefix on extract", () => {
   it("omits Lorcana Unity and products when auto-sync skips them", () => {
     expect(
       lorcanaExtractProviders({ hasApk: true, skipUnity: true, skipProducts: true }),
-    ).toEqual(["lorcanaweb", "lorcanacards"]);
+    ).toEqual(["lorcanaweb", "lorcanacards", "lorcanaofficial"]);
     expect(lorcanaExtractProviders({ hasApk: true })).toEqual([
       "lorcanaweb",
       "lorcanacards",

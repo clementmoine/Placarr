@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import comicplanet from "../curated/sources/comicplanet-de.json";
 import official from "../curated/sources/carddass-official-products.json";
 import suruga from "../curated/sources/suruga-ya-kaitori-packshots.json";
-import { volumeOfficialProducts } from "../volumeOfficialProducts";
+import tvtokyo from "../curated/sources/tvtokyo-goods.json";
+import { volumeNumber, volumeOfficialProducts } from "../volumeOfficialProducts";
+
+import { officialFilesByJan } from "./harvestProductPackshots";
 
 /*
   `staging/` doit se reconstruire depuis un relevé. Ces tests ne téléchargent
@@ -39,6 +42,24 @@ describe("chaque visuel de staging a son relevé", () => {
     }
   });
 
+  it("remoissonne aussi les sachets booster 12/16/17 (pas seulement vending)", () => {
+    const byJan = officialFilesByJan();
+    const boosterFiles = [...byJan.values()].filter((f) =>
+      /^booster-vol(12|16|17)-jp\.jpg$/.test(f),
+    );
+    expect(boosterFiles.sort()).toEqual([
+      "booster-vol12-jp.jpg",
+      "booster-vol16-jp.jpg",
+      "booster-vol17-jp.jpg",
+    ]);
+    for (const row of official.products) {
+      const volume = volumeNumber(row.title);
+      if (volume == null || ![12, 16, 17].includes(volume)) continue;
+      if (!/ブースターパック/.test(row.title)) continue;
+      expect(byJan.get(row.jan)).toBe(`booster-vol${volume}-jp.jpg`);
+    }
+  });
+
   it("nomme chaque packshot allemand d'après son slug", () => {
     for (const row of comicplanet.products) {
       expect(row.slug).toMatch(/^(booster|display)-s\d{1,2}-de$/);
@@ -52,5 +73,22 @@ describe("chaque visuel de staging a son relevé", () => {
       expect(row.id).toMatch(/^\d{9,}$/);
       expect(row.slug.length).toBeGreaterThan(0);
     }
+  });
+
+  it("moissonne toutes les vignettes TV Tokyo vol.1–11 (plus variantes)", () => {
+    const vols = new Set(
+      tvtokyo.products
+        .map((row) => row.volumeNumber)
+        .filter((n): n is number => typeof n === "number" && n > 0),
+    );
+    expect([...vols].sort((a, b) => a - b)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    ]);
+    expect(tvtokyo.products.some((row) => row.file === "card_package5s.jpg")).toBe(
+      true,
+    );
+    expect(tvtokyo.products.some((row) => row.file === "card_package6s.jpg")).toBe(
+      true,
+    );
   });
 });

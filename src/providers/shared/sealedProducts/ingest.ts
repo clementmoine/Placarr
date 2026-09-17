@@ -4,14 +4,13 @@
  * Staging stays the scrape cache. The index is what Catalogue reads — same
  * idea as `cards-index.json`. Packshots stay remote URLs.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { providerModuleForPack } from "@/providers/shared/packOwner";
 
 import { buildPrintKey } from "@/core/identify/printKey";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
-import { packProductsIndexPath } from "@/lib/packPaths";
 import { foilPackDataDir } from "@/lib/runtimeData";
 import type {
   DbscardsProductListingRow,
@@ -36,6 +35,8 @@ import {
 import { resolveSealedLang } from "./lang";
 import { resolveContentLayers } from "./contentLayers";
 import { mergeCuratedSealedContents } from "./curatedContents";
+import { backfillSealedProductSetLogos } from "./backfillLogos";
+import { persistSealedProductsIndex } from "./persistProductsIndex";
 
 /**
  * printKey game slug for a data pack. Lives here (providers/) so core never
@@ -49,14 +50,16 @@ const PACK_PRINT_GAME: Readonly<Record<string, string>> = {
   pokemon: "pokemon",
   "naruto/carddass": "naruto",
   "naruto/en-ccg": "naruto",
+  onepiece: "onepiece",
+  "dbs/jcc": "dbsjcc",
 };
 
 export function printGameForPack(packId: string): string | null {
   return PACK_PRINT_GAME[packId] ?? null;
 }
 
-/** `bt13-135` / `fs10-01-p1` / `bt23-033-pr` — Bandai collector refs only. */
-const BANDAI_PRINT_GAMES = new Set(["dbscg", "dbsfw"]);
+/** `bt13-135` / `fs10-01-p1` / `st25-001` — Bandai-style collector refs. */
+const BANDAI_PRINT_GAMES = new Set(["dbscg", "dbsfw", "onepiece"]);
 
 /** `bt13-135` / `fs10-01-p1` → printKey when the game uses that shape. */
 export function printKeyFromCollectorRef(
@@ -331,10 +334,11 @@ export async function ingestSealedProducts(
   }
 
   index.products = mergeCuratedSealedContents(packId, index.products);
+  backfillSealedProductSetLogos(packId, index.products);
 
-  const file = packProductsIndexPath(packId);
-  mkdirSync(path.dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+  const { file } = persistSealedProductsIndex(packId, index.products, {
+    alreadyMerged: true,
+  });
   return {
     pack: packId,
     written: Object.keys(index.products).length,

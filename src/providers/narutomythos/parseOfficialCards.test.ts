@@ -123,6 +123,30 @@ describe("mapOfficialMythosCard", () => {
 });
 
 describe("mergeOfficialMythosLangRows", () => {
+  it("garde FR + EN au lieu de collapser sur un seul titre", () => {
+    const fr: OfficialMythosApiCard = {
+      SKU: "M3",
+      ID: "147/140",
+      Rarity: "Mythos",
+      Edition: "1st edition",
+      Set: "Set 2: Shinobi Shiren",
+      Title: "Naruto Uzumaki",
+      Version: "Vainqueur",
+      Image: "https://cdn/fr.webp",
+    };
+    const en: OfficialMythosApiCard = {
+      ...fr,
+      Title: "Naruto Uzumaki",
+      Version: "Winner",
+      Image: "https://cdn/en.webp",
+    };
+    const merged = mergeOfficialMythosLangRows({ fr: [fr], en: [en] });
+    expect(merged).toHaveLength(1);
+    expect(merged[0]!.name).toContain("Vainqueur");
+    expect(merged[0]!.titles.map((t) => t.lang).sort()).toEqual(["en", "fr"]);
+    expect(merged[0]!.faceUrl).toBe("https://cdn/fr.webp");
+  });
+
   it("complète un titre FR vide depuis EN", () => {
     const fr: OfficialMythosApiCard = {
       SKU: "M3",
@@ -142,6 +166,9 @@ describe("mergeOfficialMythosLangRows", () => {
     const merged = mergeOfficialMythosLangRows({ fr: [fr], en: [en] });
     expect(merged).toHaveLength(1);
     expect(merged[0]!.name).toContain("Naruto Uzumaki");
+    expect(merged[0]!.titles).toEqual([
+      { lang: "en", fullName: "Naruto Uzumaki — Winner" },
+    ]);
     expect(merged[0]!.faceUrl).toBe("https://cdn/fr.webp");
   });
 });

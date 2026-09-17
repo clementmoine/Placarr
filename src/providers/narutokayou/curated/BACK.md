@@ -22,6 +22,6 @@ Harvest brut : `curated/cards/official/<slug>.png`. Install :
 | `cards/back.png` (pack) | `cards/back.webp` | tuile « Dos · pack » |
 
 Ledgers : `kayou-official-tier-backs.json`, `kayou-official-card-backs.json`,
-`kayou-back-aliases.json`.
+`kayou-back-aliases.json`. Faces checklist FR : [Narutopia](https://narutopia.fr/liste-de-cartes-kayou/) → `narutopia-kayou-images.json` (enrich, pas de mint).
 
 `stampKayouBack()` : placement official → sinon tier canonique → sinon défaut pack.

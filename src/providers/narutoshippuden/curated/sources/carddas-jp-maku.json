@@ -3,7 +3,7 @@
   "observed": "2026-08-17",
   "ingest": "titles",
   "line": "carddass-jp-maku",
-  "note": "Official NARUTO疾風伝カードゲーム 第一幕…四幕. CGI shi/ju/sa → disk shi/mju/msa (never NI, never CCG J). shi-107…118 filled from cardlist_gaku.shtml (same 幕 numbers). 忍伝-学 is carddas-jp-gaku.json. Skip NM/DN. 第五幕… archive is JS-only. Titles only.",
+  "note": "Official NARUTO疾風伝カードゲーム 第一幕…四幕. CGI shi/ju/sa → disk shi/mju/msa (never NI, never CCG J). shi-107…118 filled from cardlist_gaku.shtml (same 幕 numbers). 忍伝-学 is carddas-jp-gaku.json. Skip NM/DN. 第五幕・第六幕 titles live in noihjp-maku5-6.json (carddas.com archive for those acts is JS-only).",
   "not": ["data-carddass", "maki5", "en-ccg", "j001", "gaku"],
   "counts": {
     "cards": 269,
@@ -672,6 +672,13 @@
       "name": "ゼツ",
       "setCode": "maku2",
       "fileStem": "shi-059"
+    },
+    {
+      "printed": "SHI-060",
+      "number": "shi0060",
+      "name": "うちはサスケ＆大蛇丸",
+      "setCode": "maku2",
+      "fileStem": "shi-060"
     },
     {
       "printed": "SHI-061",
@@ -1421,6 +1428,13 @@
       "name": "はたけカカシ＆マイト・ガイ",
       "setCode": "maku4",
       "fileStem": "shi-119"
+    },
+    {
+      "printed": "SHI-120",
+      "number": "shi0120",
+      "name": "うずまきナルト 九尾",
+      "setCode": "maku4",
+      "fileStem": "shi-120"
     },
     {
       "printed": "SHI-121",

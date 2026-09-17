@@ -52,7 +52,16 @@ describe("parseCarddasJpCardlistHtml", () => {
 describe("carddasJpCardlistCards", () => {
   it("ships the official 巻ノ壱…十七 titles, not Data Carddass", () => {
     const cards = carddasJpCardlistCards();
-    expect(cards.length).toBe(1004);
+    expect(cards.length).toBe(1010);
+    expect(cards.find((row) => row.number === "ni0390")?.name).toBe(
+      "マイト・ガイ",
+    );
+    expect(cards.find((row) => row.number === "ni0391")?.name).toBe(
+      "四代目火影＆ガマブン太",
+    );
+    expect(cards.find((row) => row.number === "ni0392")?.name).toBe(
+      "うずまきナルト＆ロック・リー",
+    );
     expect(cards.find((row) => row.number === "ni0393")?.name).toBe(
       "うずまきナルト",
     );

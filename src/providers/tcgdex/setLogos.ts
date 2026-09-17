@@ -139,6 +139,103 @@ export function tcgdexLogoUrlForSetCode(
   return hits[0]!.logo ?? hits[0]!.symbol ?? null;
 }
 
+const SET_NAME_SKIP = new Set([
+  "le",
+  "la",
+  "les",
+  "l",
+  "the",
+  "un",
+  "une",
+  "a",
+  "an",
+  "et",
+  "and",
+  "de",
+  "des",
+  "du",
+  "d",
+]);
+
+/** Fold accents / `&` so « Noir & Blanc » meets slug `noir-et-blanc`. */
+export function normalizeTcgdexSetText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " et ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export function tcgdexSetNameWords(name: string): string[] {
+  return normalizeTcgdexSetText(name)
+    .split(/\s+/)
+    .filter((word) => word.length >= 3 && !SET_NAME_SKIP.has(word));
+}
+
+/**
+ * Logo for a sealed SKU: abbr first, then unique set-name words in slug/title.
+ *
+ * Displays often have no `setCode` — only `boite-36-…-faille-paradoxe`. Prefer
+ * the set whose **significant** name words all appear, then the densest match,
+ * then the rightmost one (series block « Écarlate et Violet » before the set).
+ * Dual products (« Foudre Noire & Flamme Blanche ») stay empty.
+ */
+export function tcgdexLogoUrlForProduct(input: {
+  setCode?: string | null;
+  slug?: string | null;
+  name?: string | null;
+  index?: TcgdexSetLogoIndex | null;
+}): string | null {
+  const byCode = tcgdexLogoUrlForSetCode(input.setCode, input.index);
+  if (byCode) return byCode;
+  const index = input.index;
+  if (!index?.sets.length) return null;
+
+  const hay = normalizeTcgdexSetText(
+    [input.slug, input.name].filter(Boolean).join(" "),
+  );
+  if (!hay) return null;
+
+  type Hit = { row: TcgdexSetLogoRow; wordCount: number; lastPos: number };
+  const hits: Hit[] = [];
+  for (const row of index.sets) {
+    if (!row.logo && !row.symbol) continue;
+    const name = row.name?.trim();
+    if (!name) continue;
+    const words = tcgdexSetNameWords(name);
+    if (words.length === 0) continue;
+    if (!words.every((word) => hay.includes(word))) continue;
+    const lastPos = Math.max(...words.map((word) => hay.lastIndexOf(word)));
+    hits.push({ row, wordCount: words.length, lastPos });
+  }
+  if (hits.length === 0) return null;
+
+  const nameHay = normalizeTcgdexSetText(input.name ?? "");
+  if (
+    nameHay &&
+    (input.name?.includes("&") || /\s+et\s+/i.test(input.name ?? ""))
+  ) {
+    const inName = hits.filter((hit) => {
+      const words = tcgdexSetNameWords(hit.row.name ?? "");
+      return words.length >= 2 && words.every((word) => nameHay.includes(word));
+    });
+    if (new Set(inName.map((hit) => hit.row.id)).size > 1) return null;
+  }
+
+  hits.sort(
+    (a, b) => b.wordCount - a.wordCount || b.lastPos - a.lastPos,
+  );
+  const best = hits[0]!;
+  const tied = hits.filter(
+    (hit) =>
+      hit.wordCount === best.wordCount && hit.lastPos === best.lastPos,
+  );
+  if (new Set(tied.map((hit) => hit.row.id)).size > 1) return null;
+  return best.row.logo ?? best.row.symbol ?? null;
+}
+
 function mapRow(
   brief: RawListItem,
   detail: RawSetDetail | null,

@@ -529,14 +529,20 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
            back = COALESCE(excluded.back, print_assets.back),
            source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
       );
+      const printExists = db.prepare(
+        `SELECT 1 AS ok FROM prints WHERE print_key = ? LIMIT 1`,
+      );
       db.exec("BEGIN IMMEDIATE");
       try {
         for (const row of rows) {
           const art = row.art?.trim() || null;
           const back = row.back?.trim() || null;
           if (!art && !back) continue;
+          const printKey = row.printKey?.trim().toLowerCase();
+          if (!printKey) continue;
+          if (!printExists.get(printKey)) continue;
           upsert.run(
-            row.printKey,
+            printKey,
             row.lang?.trim().toLowerCase(),
             art,
             back,
@@ -563,9 +569,12 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
 
     const cards: Record<string, CardsIndexEntry> = {};
     for (const row of rows) {
+      const diskCard = row.grouping
+        ? `${row.number}-${row.grouping}`
+        : row.number;
       const entry = (cards[row.printKey] ??= {
         set: row.cardType,
-        card: row.number,
+        card: diskCard,
         langs: {},
       });
       if (!row.lang) continue;
@@ -586,9 +595,12 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       .all() as LocalPrintSearchRow[];
     for (const row of orphans) {
       if (!row.lang || (!row.art && !row.thumb && !row.back)) continue;
+      const diskCard = row.grouping
+        ? `${row.number}-${row.grouping}`
+        : row.number;
       const entry = (cards[row.printKey] ??= {
         set: row.cardType,
-        card: row.number,
+        card: diskCard,
         langs: {},
       });
       const slot = entry.langs[row.lang] ?? {};

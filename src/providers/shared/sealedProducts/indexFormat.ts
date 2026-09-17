@@ -14,6 +14,14 @@ export type SealedPrintLink = {
   finish?: string;
 };
 
+/** SKU scellé inclus dans un autre (pack découverte, tin, …). */
+export type SealedProductLink = {
+  /** Slug catalogue (`booster-s1`, `starter-pays-du-vent`, …). */
+  slug: string;
+  /** Exemplaires inclus (défaut 1). */
+  qty?: number;
+};
+
 /** D'où sort la loterie — détail dans `contentLayers.ts`. */
 export type RandomPoolScope = "set" | "listed" | "none" | "unknown";
 
@@ -89,6 +97,12 @@ export type SealedProductEntry = {
    * Ne jamais y mettre un aperçu boutique (15 tuiles).
    */
   guaranteedPrints: SealedPrintLink[];
+  /**
+   * Produits scellés **toujours** inclus (autre SKU du même pack) — ex.
+   * Pack Découverte = 2 starters + 2 boosters. Distinct des printKeys
+   * décomposés pour le conseil d'achat.
+   */
+  guaranteedProducts?: SealedProductLink[];
   /**
    * D'où sort la loterie — voir `contentLayers.ts` / docs/sealed_product_contents.md.
    * `set` sur un booster classique est une **hypothèse** jusqu'à vérification

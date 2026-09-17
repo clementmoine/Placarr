@@ -30,7 +30,8 @@ type S1FrPrereleaseFile = {
 };
 
 const GROUPING = "prerelease";
-const SET_CODE = "s1";
+/** Catalogue series of its own — not Série 1 retail, not `promo`. */
+const SET_CODE = "prerelease";
 
 export function s1FrPrereleasePath(): string {
   return path.join(narutoCuratedSourcesDir(), "s1-fr-prerelease.json");
@@ -61,7 +62,7 @@ export function s1FrPrereleasePrintKey(number: string): string | null {
 }
 
 /**
- * Ensure every attested S1 manga prerelease has an `s1` print + FR title.
+ * Ensure every attested manga prerelease has a `prerelease` print + FR title.
  * Art can arrive later under `cards/ninja|…/{id}-prerelease/fr/`.
  */
 export function mergeS1FrPrerelease(input: {
@@ -100,7 +101,16 @@ export function mergeS1FrPrerelease(input: {
     const grouping =
       parseNarutoCollector(number)?.grouping?.toLowerCase() ?? GROUPING;
 
-    if (!printByKey.has(printKey) && !printByCanonical.has(printKey)) {
+    const existingPrint =
+      printByKey.get(printKey) ?? printByCanonical.get(printKey);
+    if (existingPrint) {
+      if (existingPrint.setCode !== SET_CODE) {
+        existingPrint.setCode = SET_CODE;
+      }
+      if (existingPrint.grouping !== grouping) {
+        existingPrint.grouping = grouping;
+      }
+    } else {
       const print: NarutoPrintRow = {
         printKey,
         setCode: SET_CODE,

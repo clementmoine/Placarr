@@ -72,6 +72,29 @@ describe("shouldReuseCdnManifestDump", () => {
     ).toBe(false);
   });
 
+  it("refetches when a new dated CDN bucket appears", () => {
+    const outDir = mkdtempSync(path.join(tmpdir(), "cdn-manifest-buckets-"));
+    writeCdnManifestTargetMeta(outDir, {
+      version: "1.42",
+      contentDir: "10101_0000",
+      contentBase: "https://cdn.example/base/",
+      langs: ["en"],
+      buckets: ["10101_0000"],
+      complete: true,
+    });
+    writeFileSync(path.join(outDir, "manifest_en_10101_0000.json"), "{}");
+    expect(
+      shouldReuseCdnManifestDump({
+        outDir,
+        version: "1.42",
+        contentDir: "10101_0000",
+        contentBase: "https://cdn.example/base/",
+        langs: ["en"],
+        buckets: ["10101_0000", "20260915_1700"],
+      }),
+    ).toBe(false);
+  });
+
   it("does not full-reuse an interrupted dump", () => {
     const outDir = mkdtempSync(path.join(tmpdir(), "cdn-manifest-incomplete-"));
     writeCdnManifestTargetMeta(outDir, {

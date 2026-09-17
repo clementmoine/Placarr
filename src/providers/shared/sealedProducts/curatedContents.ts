@@ -23,6 +23,7 @@ import type {
   RandomPoolScope,
   SealedPrintLink,
   SealedProductEntry,
+  SealedProductLink,
 } from "./indexFormat";
 
 /** Une ligne de contenu garanti (playset + finish optionnel). */
@@ -35,6 +36,11 @@ export type CuratedGuaranteedPrint = {
    * Absent = non attesté.
    */
   finish?: string;
+};
+
+export type CuratedGuaranteedProduct = {
+  slug: string;
+  qty?: number;
 };
 
 export type CuratedSealedSku = {
@@ -65,6 +71,11 @@ export type CuratedSealedSku = {
   guaranteedPrintKeys?: readonly string[];
   /** Contenu garanti structuré (qty + finish). Gagne sur `guaranteedPrintKeys`. */
   guaranteedPrints?: readonly CuratedGuaranteedPrint[];
+  /**
+   * SKU scellés inclus (Pack Découverte → starters + boosters).
+   * La checklist Catalogue les affiche en miniatures produit.
+   */
+  guaranteedProducts?: readonly CuratedGuaranteedProduct[];
   randomPoolScope?: RandomPoolScope;
   randomPoolPrintKeys?: readonly string[];
   /** Quand le produit est un starter + booster, etc. */
@@ -86,7 +97,10 @@ export type CuratedSealedContentsFile = {
       SealedProductEntry["kind"],
       Omit<
         CuratedSealedSku,
-        "guaranteedPrintKeys" | "guaranteedPrints" | "randomPoolPrintKeys"
+        | "guaranteedPrintKeys"
+        | "guaranteedPrints"
+        | "guaranteedProducts"
+        | "randomPoolPrintKeys"
       >
     >
   >;
@@ -144,7 +158,8 @@ export function readCuratedSealedContents(
 function linksFromKeys(
   keys: readonly string[] | undefined,
 ): SealedPrintLink[] | null {
-  if (!keys) return null;
+  // Empty `[]` must not wipe ingest lists (legacy stubs used to do that).
+  if (keys == null || keys.length === 0) return null;
   return keys.map((printKey) => ({
     name: printKey,
     slug: printKey,
@@ -167,6 +182,22 @@ function linksFromGuaranteed(
   }));
 }
 
+function productLinksFromCurated(
+  rows: readonly CuratedGuaranteedProduct[] | undefined,
+): SealedProductLink[] | null {
+  if (!rows?.length) return null;
+  return rows
+    .map((row) => {
+      const slug = row.slug?.trim();
+      if (!slug) return null;
+      return {
+        slug,
+        ...(row.qty != null && row.qty > 0 ? { qty: Math.floor(row.qty) } : {}),
+      };
+    })
+    .filter((row): row is SealedProductLink => row != null);
+}
+
 function applyPatch(
   entry: SealedProductEntry,
   patch: CuratedSealedSku,
@@ -175,6 +206,8 @@ function applyPatch(
     linksFromGuaranteed(patch.guaranteedPrints) ??
     linksFromKeys(patch.guaranteedPrintKeys);
   const pool = linksFromKeys(patch.randomPoolPrintKeys);
+  const products = productLinksFromCurated(patch.guaranteedProducts);
+  const hasProductBundle = Boolean(products && products.length > 0);
   return {
     ...entry,
     cardsPerPack:
@@ -196,19 +229,20 @@ function applyPatch(
         ? patch.declaredCardCount
         : entry.declaredCardCount,
     guaranteedPrints: guaranteed ?? entry.guaranteedPrints,
+    guaranteedProducts: products ?? entry.guaranteedProducts,
     randomPoolPrints: pool ?? entry.randomPoolPrints,
     randomPoolScope: patch.randomPoolScope ?? entry.randomPoolScope,
     behavior: patch.behavior ?? entry.behavior,
     contentsKnown:
       patch.contentsKnown !== undefined
         ? patch.contentsKnown
-        : guaranteed && guaranteed.length > 0
+        : (guaranteed && guaranteed.length > 0) || hasProductBundle
           ? true
           : entry.contentsKnown,
     containsPrintsIsPreview:
       patch.containsPrintsIsPreview !== undefined
         ? patch.containsPrintsIsPreview
-        : guaranteed && guaranteed.length > 0
+        : (guaranteed && guaranteed.length > 0) || hasProductBundle
           ? false
           : entry.containsPrintsIsPreview,
   };

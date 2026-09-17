@@ -13,7 +13,7 @@ vi.mock("@/lib/http/httpClient", () => ({
 
 import { httpGet } from "@/lib/http/httpClient";
 
-import { harvestPunkRecords } from "./punkRecords";
+import { harvestPunkRecords, PUNK_RECORDS_LOCALES } from "./punkRecords";
 
 const mockedGet = vi.mocked(httpGet);
 
@@ -50,9 +50,10 @@ describe("harvestPunkRecords", () => {
 
     const result = await harvestPunkRecords({ stagingDir: staging });
     expect(mockedGet).toHaveBeenCalled();
+    // fr + en already on disk and unchanged → skip; other locales written.
     expect(result.skip).toBe(2);
-    expect(result.ok).toBe(0);
-    expect(result.cards).toBe(2);
+    expect(result.ok).toBe(PUNK_RECORDS_LOCALES.length - 2);
+    expect(result.cards).toBe(PUNK_RECORDS_LOCALES.length);
   });
 
   it("writes when upstream gained a card", async () => {
@@ -95,9 +96,9 @@ describe("harvestPunkRecords", () => {
     });
 
     const result = await harvestPunkRecords({ stagingDir: staging });
-    expect(result.ok).toBe(2);
+    expect(result.ok).toBe(PUNK_RECORDS_LOCALES.length);
     expect(result.skip).toBe(0);
-    expect(result.cards).toBe(4);
+    expect(result.cards).toBe(PUNK_RECORDS_LOCALES.length * 2);
     const fr = JSON.parse(
       readFileSync(path.join(staging, "fr.cards_by_id.json"), "utf8"),
     ) as Record<string, unknown>;

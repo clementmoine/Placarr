@@ -412,11 +412,13 @@ export function formatKnownCardsMarkdown(report: KnownCardsReport): string {
     "",
     "| Set | Starters officiels | Libellé Coleka |",
     "|-----|--------------------|----------------|",
-    ...Object.entries(report.sets).map(
-      ([code, info]) =>
-        `| \`${code}\` | ${info.starters.join(" & ") || "—"} | ${info.colekaLabel ?? "—"}` +
-        `${info.released === false ? " _(annulée)_" : ""} |`,
-    ),
+    ...Object.entries(report.sets).map(([code, info]) => {
+      const starters = (info.starters ?? []).filter(Boolean).join(" & ") || "—";
+      return (
+        `| \`${code}\` | ${starters} | ${info.colekaLabel ?? "—"}` +
+        `${info.released === false ? " _(annulée)_" : ""} |`
+      );
+    }),
     "",
     "## Couverture par source",
     "",

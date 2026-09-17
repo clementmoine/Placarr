@@ -17,6 +17,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import {
@@ -102,19 +103,11 @@ async function fetchText(url: string): Promise<string | null> {
 }
 
 async function downloadImage(url: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA, Referer: DBC_ORIGIN + "/" },
-      responseType: "arraybuffer",
-      timeout: 40_000,
-      validateStatus: (status: number) => status === 200,
-    });
-    const data = res.data;
-    if (!data || data.byteLength < 500) return null;
-    return Buffer.from(data);
-  } catch {
-    return null;
-  }
+  return downloadCardFaceBytes(url, {
+    referer: `${DBC_ORIGIN}/`,
+    minBytes: 500,
+    timeoutMs: 40_000,
+  });
 }
 
 function parseSeriesFilter(argv: readonly string[]): Set<string> | null {

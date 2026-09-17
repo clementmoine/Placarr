@@ -30,6 +30,8 @@ import { freakxyModule } from "@/providers/freakxy";
 import { fullsetModule } from "@/providers/fullset";
 import { lorcanajsonModule } from "@/providers/lorcanajson";
 import { lorcanaggModule } from "@/providers/lorcanagg";
+import { dbsmarketModule } from "@/providers/dbscards";
+import { leclercModules } from "@/providers/leclerc";
 import { lorcastModule } from "@/providers/lorcast";
 import { lorcanatcgModule } from "@/providers/lorcanatcg";
 import { tcgdexModule } from "@/providers/tcgdex";
@@ -55,12 +57,14 @@ import { narutomythosModule } from "@/providers/narutomythos";
 import { narutokayouModule } from "@/providers/narutokayou";
 import { narutodatacarddassModule } from "@/providers/narutodatacarddass";
 import { onepieceModule } from "@/providers/onepiece";
-import { digimonModule } from "@/providers/digimon";
 import { yugiohModule } from "@/providers/yugioh";
 import { mtgModule } from "@/providers/mtg";
 import { dbscgModule } from "@/providers/dbscg";
 import { dbsfwModule } from "@/providers/dbsfw";
 import { dbslamincardsModule } from "@/providers/dbslamincards";
+import { dbsjccModule } from "@/providers/dbsjcc";
+import { dbhModule } from "@/providers/dbh";
+import { bleachscbModule } from "@/providers/bleachscb";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
@@ -142,12 +146,16 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   narutokayouModule,
   narutodatacarddassModule,
   onepieceModule,
-  digimonModule,
   yugiohModule,
   mtgModule,
   dbscgModule,
   dbsfwModule,
   dbslamincardsModule,
+  dbsjccModule,
+  dbhModule,
+  bleachscbModule,
+  dbsmarketModule,
+  ...leclercModules,
   lorcanaggModule,
   lorcastModule,
   tcgdexModule,

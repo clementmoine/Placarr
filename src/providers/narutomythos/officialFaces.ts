@@ -13,6 +13,7 @@ import sharp from "sharp";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import { mythosOfficialChecklistPath } from "./buildFromLedgers";
@@ -27,7 +28,7 @@ import { mythosPrintKey } from "./printKey";
 const API = "https://cards.narutotcgmythos.com/api/cards";
 const STAGING_FOLDER = "official-faces";
 const SOURCE_ID = "official";
-const LANGS = ["fr", "en", "it", "es"] as const;
+const LANGS = ["fr", "en"] as const;
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 
@@ -98,6 +99,7 @@ export function writeOfficialMythosChecklist(
         number: c.number,
         grouping: c.grouping,
         name: c.name,
+        titles: c.titles,
         rarity: c.rarity,
         faceUrl: c.faceUrl,
         sku: c.sku,
@@ -123,6 +125,7 @@ export function readOfficialMythosChecklist(): MythosOfficialPrint[] {
         number: string;
         grouping: string | null;
         name: string;
+        titles?: { lang: string; fullName: string }[];
         rarity: string | null;
         faceUrl?: string | null;
         sku?: string;
@@ -141,6 +144,11 @@ export function readOfficialMythosChecklist(): MythosOfficialPrint[] {
         grouping: c.grouping,
         printed: c.printed,
         name: c.name,
+        titles: c.titles?.length
+          ? c.titles
+          : c.name
+            ? [{ lang: titleLangForSet(set.code), fullName: c.name }]
+            : [],
         rarity: c.rarity,
         faceUrl: c.faceUrl ?? null,
         edition: c.edition ?? "",
@@ -153,22 +161,11 @@ export function readOfficialMythosChecklist(): MythosOfficialPrint[] {
 }
 
 async function downloadImage(url: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: {
-        "User-Agent": UA,
-        Referer: "https://www.narutotcgmythos.com/",
-      },
-      responseType: "arraybuffer",
-      timeout: 40_000,
-      validateStatus: (status: number) => status === 200,
-    });
-    const data = res.data;
-    if (!data || data.byteLength < 500) return null;
-    return Buffer.from(data);
-  } catch {
-    return null;
-  }
+  return downloadCardFaceBytes(url, {
+    referer: "https://www.narutotcgmythos.com/",
+    minBytes: 500,
+    timeoutMs: 40_000,
+  });
 }
 
 export type OfficialFaceHarvest = {

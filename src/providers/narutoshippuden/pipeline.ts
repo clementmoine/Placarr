@@ -42,6 +42,18 @@ const hooks = cardCatalogueHooks({
     );
     const ledgers = buildShippudenFromLedgers();
 
+    const { installShippudenMercariFaces } = await import(
+      /* webpackIgnore: true */
+      "./install/installMercariFaces"
+    );
+    const mercari = await installShippudenMercariFaces();
+
+    const { installShippudenSurugaFaces } = await import(
+      /* webpackIgnore: true */
+      "./install/installSurugaFaces"
+    );
+    const suruga = await installShippudenSurugaFaces();
+
     const { installCuratedCardBacks, curatedCardsDir } = await import(
       /* webpackIgnore: true */
       "@/providers/shared/curatedCardsInstall"
@@ -64,6 +76,12 @@ const hooks = cardCatalogueHooks({
       destCardsDir: packCardsDir(NARUTO_SHIPPUDEN_PACK_ID),
     });
 
+    const { harvestShippudenOfficialPackshots } = await import(
+      /* webpackIgnore: true */
+      "./harvestOfficialPackshots"
+    );
+    const packshots = await harvestShippudenOfficialPackshots();
+
     const { ingestNarutoShippudenSealedProducts } = await import(
       /* webpackIgnore: true */
       "./sealedProducts"
@@ -75,7 +93,7 @@ const hooks = cardCatalogueHooks({
       "./indexStore"
     );
     exportNarutoShippudenCardsIndex();
-    return { ...migrated, ledgers, sealed };
+    return { ...migrated, ledgers, mercari, suruga, packshots, sealed };
   },
 });
 

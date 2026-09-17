@@ -131,6 +131,66 @@ function providersForShelf(input: {
   return byCatalogue.length > 0 ? byCatalogue : scoped;
 }
 
+/**
+ * Modules qui portent les SKU scellés pour le conseil d'achat.
+ *
+ * L'énumérateur de sets (le provider JSON upstream) n'a souvent **pas** de
+ * `dataPack` : les produits vivent chez le sibling catalogue. Bornés
+ * uniquement aux `catalogueIds`, on chargeait zéro booster. On ajoute donc
+ * les packs **données seules** (dataPack, sans listPrintSets) qui partagent
+ * un `printGames` avec les catalogues retenus — sans élargir aux autres
+ * catalogues Naruto (Carddass vs Ninja Ranks ont chacun listPrintSets).
+ */
+export function sealedProductModulesForShelf(input: {
+  type: MediaType;
+  games: ReadonlySet<string>;
+  catalogueIds: ReadonlySet<string>;
+}): ProviderModule[] {
+  const typeOk = (pack: ProviderModule) =>
+    pack.info.types.includes(input.type);
+
+  if (input.catalogueIds.size === 0) {
+    return PROVIDER_MODULES.filter((pack) => {
+      if (!typeOk(pack)) return false;
+      if (
+        input.games.size > 0 &&
+        !(pack.printGames ?? []).some((game) => input.games.has(game))
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  const selected = PROVIDER_MODULES.filter((pack) =>
+    input.catalogueIds.has(pack.info.id),
+  );
+  const selectedGames = new Set(
+    selected.flatMap((pack) => pack.printGames ?? []),
+  );
+
+  const byId = new Map<string, ProviderModule>();
+  for (const pack of PROVIDER_MODULES) {
+    if (!typeOk(pack)) continue;
+    if (input.catalogueIds.has(pack.info.id)) {
+      byId.set(pack.info.id, pack);
+      continue;
+    }
+    /*
+      Sibling data-only : le catalogue Lorcana a le dossier `lorcana/`, pas la
+      liste d'extensions. Un second catalogue qui sait aussi lister (Carddass)
+      reste hors allowlist.
+    */
+    if (!pack.catalog?.dataPack) continue;
+    if (typeof pack.listPrintSets === "function") continue;
+    if (!(pack.printGames ?? []).some((game) => selectedGames.has(game))) {
+      continue;
+    }
+    byId.set(pack.info.id, pack);
+  }
+  return [...byId.values()];
+}
+
 /** Les jeux qu'une étagère contient, lus dans les clés de ses tirages. */
 export function gamesInShelf(printKeys: Iterable<string>): Set<string> {
   const games = new Set<string>();
@@ -421,23 +481,11 @@ export async function buildChecklistForShelf(input: {
     aussi les scellés à ce catalogue — un display Ultra Challenge n'aide pas
     à finir les NW.
   */
-  const sealedModules =
-    catalogueIds.size > 0
-      ? PROVIDER_MODULES.filter(
-          (pack) =>
-            pack.info.types.includes(input.shelfType) &&
-            catalogueIds.has(pack.info.id),
-        )
-      : PROVIDER_MODULES.filter((pack) => {
-          if (!pack.info.types.includes(input.shelfType)) return false;
-          if (
-            games.size > 0 &&
-            !(pack.printGames ?? []).some((game) => games.has(game))
-          ) {
-            return false;
-          }
-          return true;
-        });
+  const sealedModules = sealedProductModulesForShelf({
+    type: input.shelfType,
+    games,
+    catalogueIds,
+  });
   for (const pack of sealedModules) {
     for (const product of loadBuyProducts(pack.catalog?.dataPack)) {
       allSealed.push(product);

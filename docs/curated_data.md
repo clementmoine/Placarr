@@ -11,6 +11,12 @@ source officielle rejouable — vit sous `src/providers/<id>/curated/` et est
 **commité**. Le curated est installé ou lu au refresh du pack ; `data/` ne
 contient jamais d'original à la main.
 
+**Garder toutes les sources.** Faces et packshots : chaque hôte attesté
+s'installe en `art.<source>.*` (cartes) ou `art.<source>.*` (produits). On ne
+skippe que si *cette* source est déjà sur disque — jamais « on a déjà mieux
+ailleurs ». `faceChoice` / `productChoice` choisissent l'affichage. Resume ≠
+suppression d'un dump concurrent.
+
 Trois sous-rôles constatés, un provider ne prend que ceux dont il a besoin :
 
 | Provider          | `cards/`                | `products/` | `sources/` | `BACK.md` |
@@ -78,12 +84,15 @@ Schéma : `version: 1`, `skus[slug].guaranteedPrints[]` (`printKey`, `qty?`,
 
 Au refresh / ingest sealed : `installProviderProductsContents` copie vers
 `data/<pack>/curated/products-contents.json` (+ miroir legacy
-`sealed-contents.json`) ; `mergeCuratedSealedContents` applique sur
-`products-index.json`. **Ne jamais** éditer uniquement sous `data/` — la
-graine git est la source de vérité.
+`sealed-contents.json`) ; **`persistSealedProductsIndex`** (writers) et
+**`loadSealedProductsIndex`** (Catalogue / filet lecture) appellent
+`mergeCuratedSealedContents`. **Ne jamais** écrire `products-index.json` à la
+main sans passer par `persistSealedProductsIndex` — et **ne jamais** éditer
+uniquement sous `data/` : la graine git est la source de vérité.
 
 Exemple Carddass : `src/providers/narutocarddass/curated/products-contents.json`
-(posters S1–S4 + catalogues qty).
+(posters S1–S4 + catalogues qty). Lorcana :
+`src/providers/lorcanatcg/curated/products-contents.json`.
 
 ## `curated/sources/` — ledgers d'attestation
 

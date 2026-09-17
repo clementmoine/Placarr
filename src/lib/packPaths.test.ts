@@ -1,14 +1,43 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   assetsCardUrl,
+  canonicalDataPack,
   cardDiskIdFromBundleStem,
   cardDiskIdFromPrintKey,
+  packCatalogDb,
+  packDataDir,
   pokemonCardTextureUrl,
   pokemonFaceFileFromTex,
 } from "./packPaths";
 
 describe("packPaths", () => {
+  let previousData: string | undefined;
+  let tmpData = "";
+
+  afterEach(() => {
+    if (previousData === undefined) delete process.env.PLACARR_DATA_DIR;
+    else process.env.PLACARR_DATA_DIR = previousData;
+    if (tmpData) rmSync(tmpData, { recursive: true, force: true });
+    tmpData = "";
+  });
+
+  it("unwraps absolute pack dirs under data/ instead of nesting data/Users/…", () => {
+    previousData = process.env.PLACARR_DATA_DIR;
+    tmpData = mkdtempSync(path.join(tmpdir(), "placarr-packpaths-"));
+    process.env.PLACARR_DATA_DIR = tmpData;
+
+    const abs = path.join(tmpData, "naruto", "data-carddass");
+    expect(canonicalDataPack(abs)).toBe("naruto/data-carddass");
+    expect(packDataDir(abs)).toBe(abs);
+    expect(packCatalogDb(abs)).toBe(path.join(abs, "catalog.sqlite"));
+    expect(packDataDir(abs)).not.toContain(`${path.sep}Users${path.sep}`);
+  });
+
   it("maps Lorcana printKey to set/lang/card", () => {
     expect(cardDiskIdFromPrintKey("lorcana:q2-14", "fr")).toEqual({
       set: "q2",

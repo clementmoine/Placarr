@@ -11,6 +11,8 @@
  * files — see `pickPreferredFaceArtFilename` — but never replace them on disk:
  * the official face stays as the authentic source, and the collector photo
  * stays beside the PNG as `source.jpg` so the reconstruction remains auditable.
+ * Exception: the Mercari restorations (PS1 bonus) whose photo lives on mercdn —
+ * their provenance is the ingest row in `sources/mercari.json`.
  *
  * Normalisation applied: crop the fully-opaque bounding box (Figma exports a
  * 1px transparent bleed), scale to the official 843x1206, flatten to opaque.
@@ -381,7 +383,8 @@ export async function installNarutoReconstructed(opts?: {
           method:
             "AI restoration of an authenticated collector photo, then Figma retouching",
           sourcePhotos:
-            "source.jpg next to art.reconstructed.png under curated/cards/{family}/{id}/{lang}/",
+            "source.jpg next to art.reconstructed.png under curated/cards/{family}/{id}/{lang}/ " +
+            "(Mercari restorations: the mercdn ingest row in sources/mercari.json)",
           note:
             "Displayed in place of the official face. The official file is kept on " +
             "disk and remains the authentic source; every field was proofread " +

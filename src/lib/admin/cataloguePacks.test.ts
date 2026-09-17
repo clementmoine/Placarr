@@ -58,10 +58,17 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("fusionworld")).toBe("dbs/fw");
     expect(resolveCataloguePackId("edibas")).toBe("dbs/lamincards");
     expect(resolveCataloguePackId("dbzlamincards")).toBe("dbs/lamincards");
+    expect(resolveCataloguePackId("jcc")).toBe("dbs/jcc");
+    expect(resolveCataloguePackId("cjc")).toBe("dbs/jcc");
+    expect(resolveCataloguePackId("dbzjcc")).toBe("dbs/jcc");
     expect(resolveCataloguePackId("optcg")).toBe("onepiece");
     expect(resolveCataloguePackId("ygo")).toBe("yugioh");
     expect(resolveCataloguePackId("magic")).toBe("mtg");
     expect(resolveCataloguePackId("scryfall")).toBe("mtg");
+    expect(resolveCataloguePackId("leclerc")).toBe("leclerc/marvel21");
+    expect(resolveCataloguePackId("leclercmarvel")).toBe("leclerc/marvel21");
+    expect(resolveCataloguePackId("leclercmarvel24")).toBe("leclerc/marvel24");
+    expect(resolveCataloguePackId("leclercdisney")).toBe("leclerc/disney25");
     expect(resolveCataloguePackId("nope")).toBeNull();
   });
 
@@ -81,8 +88,9 @@ describe("cataloguePacks", () => {
       "lorcana",
       "naruto",
       "dbs",
+      "bleach",
       "onepiece",
-      "digimon",
+      "leclerc",
       "yugioh",
       "mtg",
     ]);
@@ -102,6 +110,33 @@ describe("cataloguePacks", () => {
       "dbs/cg",
       "dbs/fw",
       "dbs/lamincards",
+      "dbs/jcc",
+      "dbs/heroes",
+    ]);
+    const leclerc = catalogueFranchises().find((row) => row.id === "leclerc");
+    expect(leclerc?.lines.map((line) => line.id)).toEqual([
+      "leclerc/marvel21",
+      "leclerc/marvel22",
+      "leclerc/marvel23",
+      "leclerc/marvel24",
+      "leclerc/disney25",
+    ]);
+    expect(
+      catalogueLineFamilies(leclerc!.lines).map((family) => ({
+        id: family.id,
+        lines: family.lines.map((line) => line.id),
+      })),
+    ).toEqual([
+      {
+        id: "marvel",
+        lines: [
+          "leclerc/marvel21",
+          "leclerc/marvel22",
+          "leclerc/marvel23",
+          "leclerc/marvel24",
+        ],
+      },
+      { id: "disney", lines: ["leclerc/disney25"] },
     ]);
     expect(catalogueCorpusPack("naruto/en-ccg")).toBe("naruto/carddass");
     expect(cataloguePackInfo("naruto/en-ccg")).toBeNull();
@@ -141,8 +176,21 @@ describe("cataloguePacks", () => {
         lines: family.lines.map((line) => line.id),
       })),
     ).toEqual([
-      { id: "bandai", lines: ["dbs/cg", "dbs/fw"] },
+      { id: "bandai", lines: ["dbs/cg", "dbs/fw", "dbs/jcc", "dbs/heroes"] },
       { id: "edibas", lines: ["dbs/lamincards"] },
+    ]);
+  });
+
+  it("registers Bleach Soul Card Battle franchise", () => {
+    const bleach = catalogueFranchises().find((row) => row.id === "bleach");
+    expect(bleach?.lines.map((line) => line.id)).toEqual(["bleach/scb"]);
+    expect(resolveCataloguePackId("bleach")).toBe("bleach/scb");
+    expect(resolveCataloguePackId("heroes")).toBe("dbs/heroes");
+    expect(resolveCataloguePackId("soulcardbattle")).toBe("bleach/scb");
+    // JA + FR only — Score US Bleach TCG is a different game, not EN SCB.
+    expect(cataloguePackInfo("bleach/scb")?.catalogueLocales).toEqual([
+      "ja",
+      "fr",
     ]);
   });
 
@@ -262,6 +310,13 @@ describe("cataloguePacks", () => {
     expect(resolveCatalogueScope(null, naruto)).toBe("all");
   });
 
+  it("carddass borrows faces across locales like ranks", () => {
+    const naruto = cataloguePackInfo("naruto/carddass")!;
+    expect(naruto.localeArt?.bestFaceAcrossLocales).toBe(true);
+    // Inventing fr/en/ja/it shells made EN-only CCG cards look « sans nom ».
+    expect(naruto.catalogueLocales).toBeUndefined();
+  });
+
   it("defaults pokemon/lorcana/kayou to foils", () => {
     const pokemon = cataloguePackInfo("pokemon")!;
     expect(resolveCatalogueScope(null, pokemon)).toBe("foils");
@@ -347,19 +402,24 @@ describe("Naruto catalogue lines", () => {
       },
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
-    expect(rows.map((row) => `${row.card}:${row.lang}`)).toEqual([
-      "ni001:fr",
-      "ni001:ja",
-      "n001:en",
-      "n1621:fr",
-      "n1621:en",
-    ]);
+    // Expand = langs present on the print; JA borrows FR recto via bestFace.
     expect(
-      rows.find((row) => row.card === "n1621" && row.lang === "en")?.artUrl,
-    ).toBe("/assets/naruto/carddass/cards/ninja/n1621/en/art.jpg");
+      rows
+        .filter((row) => row.card === "ni001")
+        .map((row) => `${row.card}:${row.lang}`),
+    ).toEqual(["ni001:fr", "ni001:ja"]);
     expect(
       rows.find((row) => row.card === "ni001" && row.lang === "ja")?.name,
     ).toBe("うずまきナルト");
+    expect(
+      rows.find((row) => row.card === "ni001" && row.lang === "ja")?.artUrl,
+    ).toContain("/ninja/ni0001/fr/");
+    expect(
+      rows.find((row) => row.card === "n1621" && row.lang === "en")?.artUrl,
+    ).toBe("/assets/naruto/carddass/cards/ninja/n1621/en/art.jpg");
+    expect(rows.some((row) => row.card === "n001" && row.lang === "en")).toBe(
+      true,
+    );
   });
 
   it("does not show a borrowed sibling name on a locale tile", () => {
@@ -560,8 +620,16 @@ describe("same-number art fallback (Naruto)", () => {
     };
     const rows = mergeNarutoCatalogueFaces(
       buildCatalogueCardRows("naruto/carddass", index),
-    );
-    expect(rows.map((row) => row.card)).toEqual([
+    ).filter((row) => row.lang === "fr" || row.lang === "en");
+    // Prefer the locale that holds the name/art for each print (dedupe shells).
+    const byCard = new Map<string, (typeof rows)[number]>();
+    for (const row of rows) {
+      const prev = byCard.get(row.card);
+      if (!prev || (row.name && !prev.name) || (row.artUrl && !prev.artUrl)) {
+        byCard.set(row.card, row);
+      }
+    }
+    expect([...byCard.keys()]).toEqual([
       "ni001",
       "n001",
       "te001",
@@ -569,8 +637,8 @@ describe("same-number art fallback (Naruto)", () => {
       "ta081",
       "m081",
     ]);
-    expect(rows[0]?.label).toMatch(/^NI-001/);
-    expect(rows[1]?.label).toMatch(/^N-001/);
+    expect(byCard.get("ni001")?.label).toMatch(/^NI-001/);
+    expect(byCard.get("n001")?.label).toMatch(/^N-001/);
   });
 
   it("inherits retail face onto promo stub until official art exists", () => {
@@ -637,9 +705,9 @@ describe("same-number art fallback (Naruto)", () => {
         },
       },
     };
-    const rows = buildCatalogueCardRows("naruto/carddass", index, "fr").filter(
-      (row) => !row.kind || row.kind === "face",
-    );
+    const rows = buildCatalogueCardRows("naruto/carddass", index, "fr")
+      .filter((row) => !row.kind || row.kind === "face")
+      .filter((row) => row.lang === "fr");
     expect(rows.map((row) => row.label.replace(/ — .*$/, ""))).toEqual([
       "NI-063",
       "TE-085",
@@ -668,9 +736,36 @@ describe("same-number art fallback (Naruto)", () => {
     };
     const rows = buildCatalogueCardRows("pokemon", index);
     const stub = rows.find((r) => r.printKey === "pokemon:sv2-001");
-    expect(stub?.missingArt).toBe(true);
-    expect(stub?.artUrl).toBe("");
-    expect(stub?.artFallbackFrom).toBeUndefined();
+    expect(stub).toBeUndefined();
+    expect(rows.find((r) => r.printKey === "pokemon:sv1-001")?.artFallbackFrom).toBeUndefined();
+  });
+
+  it("does not invent FR incompletes for Pokémon Live stems without a lang slot", () => {
+    const index = {
+      version: 1 as const,
+      pack: "pokemon",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        bw1_fr_001: {
+          set: "bw1",
+          card: "001",
+          name: "Serpifeu",
+          langs: { fr: { art: "art.webp", name: "Serpifeu" } },
+        },
+        bw1_de_001: {
+          set: "bw1",
+          card: "001",
+          name: "Serpifeu",
+          langs: {},
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("pokemon", index, "fr");
+    expect(rows.map((r) => r.printKey)).toEqual(["bw1_fr_001"]);
+    const incomplete = rows.filter((row) =>
+      matchesCatalogueAuditFilter(row, { incompleteOnly: true }),
+    );
+    expect(incomplete).toEqual([]);
   });
 
   it("does not double printKey grouping on Lorcana promo disk ids", () => {
@@ -681,6 +776,12 @@ describe("same-number art fallback (Naruto)", () => {
     expect(
       catalogueDiskCard("lorcana", "lorcana:1-20-p1", { card: "20-p1" }),
     ).toBe("20-p1");
+    // 疾風伝: index folder embeds the family (`gaku0038`); printKey alone is `0038`.
+    expect(
+      catalogueDiskCard("naruto/shippuden", "naruto:gaku-0038", {
+        card: "gaku0038",
+      }),
+    ).toBe("gaku0038");
     const index = {
       version: 1 as const,
       pack: "lorcana",
@@ -966,6 +1067,31 @@ describe("same-number art fallback (Naruto)", () => {
       "en",
       "ja",
     ]);
+    expect(cataloguePackInfo("onepiece")?.catalogueLocales).toEqual([
+      "ja",
+      "fr",
+      "en",
+    ]);
+    expect(cataloguePackInfo("pokemon")?.catalogueLocales).toEqual([
+      "fr",
+      "en",
+    ]);
+    expect(cataloguePackInfo("lorcana")?.catalogueLocales).toEqual([
+      "en",
+      "fr",
+    ]);
+    expect(cataloguePackInfo("mtg")?.catalogueLocales).toEqual(["en", "fr"]);
+    expect(cataloguePackInfo("dbs/cg")?.catalogueLocales).toEqual([
+      "fr",
+      "en",
+    ]);
+    expect(cataloguePackInfo("dbs/lamincards")?.catalogueLocales).toEqual([
+      "it",
+      "fr",
+    ]);
+    expect(cataloguePackInfo("onepiece")?.localeArt?.bestFaceAcrossLocales).toBe(
+      true,
+    );
     const listed = listCatalogueCards({
       pack: "naruto/ninja-ranks",
       limit: 1,
@@ -1086,7 +1212,7 @@ describe("same-number art fallback (Naruto)", () => {
       pack: "naruto/mythos",
       locales: "preferred",
       preferLang: "fr",
-      limit: 500,
+      limit: 2000,
     });
     // KS1 (fr) + SS2 (en titles) + pack back — filter used to hide all SS2.
     expect(listed.total).toBeGreaterThan(300);

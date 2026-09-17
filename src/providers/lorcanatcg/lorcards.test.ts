@@ -17,13 +17,14 @@ describe("lorcards site", () => {
     );
   });
 
-  it("opens boosters, blisters, decks, boxes, troves and puzzles, not displays", () => {
+  it("opens boosters, blisters, decks, boxes, troves, puzzles and displays", () => {
     expect(LORCARDS_LISTING_CATEGORIES).toContain("displays");
-    expect(LORCARDS_DETAIL_CATEGORIES).not.toContain("displays");
+    expect(LORCARDS_DETAIL_CATEGORIES).toContain("displays");
     expect(LORCARDS_DETAIL_CATEGORIES).toEqual(
       expect.arrayContaining([
         "boosters",
         "boosters-blister",
+        "displays",
         "decks",
         "collector-boxes",
         "illumineers-quest",

@@ -22,6 +22,9 @@ export type DataCarddassChecklistCard = {
   number: string;
   name: string;
   nameJa?: string | null;
+  rarity?: string | null;
+  /** CODE128 payload (data segment) from nao-yoshi / cabinet reader tables. */
+  barcodeData?: string | null;
   note?: string;
 };
 
@@ -69,13 +72,16 @@ export function buildDataCarddassFromLedgers(
         ? {
             set: card.set.trim().toLowerCase() as
               | "dn"
+              | "dt"
               | "nm"
+              | "nc"
               | "nf"
               | "nx"
               | "dnp"
               | "dmp"
               | "nfp"
-              | "nfm",
+              | "nfm"
+              | "nfc",
             number: card.number.trim().toLowerCase(),
             printed: card.printed,
           }
@@ -97,13 +103,13 @@ export function buildDataCarddassFromLedgers(
       cardType: parsed.set,
       grouping: null,
       sourceUrl: ledger.url,
-      titles: [
-        {
-          lang: DATA_CARDDASS_TITLE_LANG,
-          fullName: name,
-          rarity: null,
-        },
-      ],
+        titles: [
+          {
+            lang: DATA_CARDDASS_TITLE_LANG,
+            fullName: name,
+            rarity: card.rarity?.trim() || null,
+          },
+        ],
     });
   }
 

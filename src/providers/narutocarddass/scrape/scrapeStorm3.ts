@@ -10,6 +10,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 
 import { NARUTO_EN_PACK_ID, NARUTO_PACK_ID } from "../packs";
 import { narutoCardAbsDir } from "../narutoCardDisk";
@@ -121,18 +122,7 @@ async function fetchHtml(
 }
 
 async function downloadFace(url: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA },
-      responseType: "arraybuffer",
-      timeout: 30_000,
-      validateStatus: (status) => status === 200,
-    });
-    const buf = Buffer.from(res.data as ArrayBuffer);
-    return buf.byteLength >= 8_000 ? buf : null;
-  } catch {
-    return null;
-  }
+  return downloadCardFaceBytes(url, { minBytes: 8_000, timeoutMs: 30_000 });
 }
 
 export async function scrapeNarutoStorm3Cards(

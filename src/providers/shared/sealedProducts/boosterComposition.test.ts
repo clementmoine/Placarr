@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import composition from "@/providers/lorcanajson/curated/booster-composition.json";
-import narutoComposition from "@/providers/narutocarddass/curated/booster-composition.json";
-import dbscgComposition from "@/providers/dbscg/curated/booster-composition.json";
-import dbsfwComposition from "@/providers/dbsfw/curated/booster-composition.json";
-import pokemonComposition from "@/providers/tcgdex/curated/booster-composition.json";
+import composition from "@/providers/lorcana/lorcanajson/curated/booster-composition.json";
+import narutoComposition from "@/providers/naruto/narutocarddass/curated/booster-composition.json";
+import dbscgComposition from "@/providers/dragonball/dbscg/curated/booster-composition.json";
+import dbsfwComposition from "@/providers/dragonball/dbsfw/curated/booster-composition.json";
+import pokemonComposition from "@/providers/pokemon/tcgdex/curated/booster-composition.json";
 
 import {
   normalizeRarityKey,

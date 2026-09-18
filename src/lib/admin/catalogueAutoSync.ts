@@ -50,12 +50,21 @@ function checkIntervalMs(): number {
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_CHECK_MS;
 }
 
+/**
+ * Finished catalogues stay on disk until a human forces refresh — auto-sync
+ * must not wake them from `status().stale` alone.
+ */
+export function catalogSkipsAutoSync(lifecycle: string | undefined): boolean {
+  return lifecycle === "finished";
+}
+
 export async function maybeEnqueueCatalogueProviderSync(
   providerId: string,
 ): Promise<boolean> {
   if (!isEnabled()) return false;
   const mdl = getCatalogProviderModule(providerId);
   if (!mdl?.catalog) return false;
+  if (catalogSkipsAutoSync(mdl.info.catalogLifecycle)) return false;
   const status = await mdl.catalog.status();
   if (!status.stale) return false;
 

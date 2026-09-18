@@ -64,11 +64,6 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
   "src/effects/mtg/index.ts": { mtg: 1 },
   "src/effects/onepiece/index.ts": { onepiece: 1 },
   "src/effects/yugioh/index.ts": { yugioh: 1 },
-  "src/providers/shared/dbscards/sites.ts": {
-    mtg: 1,
-    onepiece: 1,
-    yugioh: 1,
-  },
   // Pack id = provider id (même collision OPTCG).
   "src/providers/shared/sealedProducts/langCoverage.ts": { onepiece: 1 },
 };

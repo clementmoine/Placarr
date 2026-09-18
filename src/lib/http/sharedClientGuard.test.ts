@@ -32,7 +32,7 @@ describe("shared HTTP client", () => {
   });
 
   it("forbids naked fetch() in providers except the documented CDN allowlist", () => {
-    const allowFetch = new Set(["src/providers/pokemontcglive/cdn.ts"]);
+    const allowFetch = new Set(["src/providers/pokemon/live/cdn/index.ts"]);
     /** CallExpression-like `fetch(` — pas `git fetch`, `forceFetch`, commentaires. */
     const nakedFetchCall = /(?<![\w.$])fetch\s*\(/;
     const offenders = walk("src/providers")

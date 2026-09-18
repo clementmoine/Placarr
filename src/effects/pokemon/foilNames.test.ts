@@ -21,6 +21,11 @@ describe("foilManifestToShader", () => {
     ["HoloFoil_SWSecret_J", "SwSecret"],
     ["swsecret", "SwSecret"],
     ["HoloFoil_Cracked_Ice_Amplify_J", "CrackedIce"],
+    ["PikachuFoil", "AceFoil"],
+    ["TPCi/Cards3D/HoloFoil/PikachuFoil", "AceFoil"],
+    ["ClassicFoil", "FlatSilver"],
+    ["RGBFoil", "Rainbow"],
+    ["Celebrations", "25thConfetti"],
     ["", null],
     ["UnknownFoil_XYZ", null],
   ] as const)("%s → %s", (input, expected) => {

@@ -10,7 +10,7 @@ import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { packApksDir } from "@/lib/packPaths";
-import { POKEMON_CATALOGUE_LANGS_CSV } from "@/providers/pokemontcglive/languages";
+import { POKEMON_CATALOGUE_LANGS_CSV } from "@/providers/pokemon/live/cdn/languages";
 import { catalogueExtractSkipArgs } from "@/lib/admin/catalogueExtractCheckpoint";
 import {
   CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
@@ -319,7 +319,7 @@ async function invokePackPipeline(
   switch (target) {
     case "pokemon": {
       const { runPokemonFoilExtract } = await import(
-        "@/providers/pokemontcglive/extract"
+        "@/providers/pokemon/live/extract"
       );
       await runPokemonFoilExtract(argv, { repo: root, signal });
       return;
@@ -333,49 +333,49 @@ async function invokePackPipeline(
     }
     case "naruto": {
       const { runNarutoPackPipeline } = await import(
-        "@/providers/narutocarddass/extract"
+        "@/providers/naruto/narutocarddass/extract"
       );
       await runNarutoPackPipeline(argv);
       return;
     }
     case "naruto-shippuden": {
       const { runNarutoShippudenPackPipeline } = await import(
-        "@/providers/narutoshippuden/extract"
+        "@/providers/naruto/narutoshippuden/extract"
       );
       await runNarutoShippudenPackPipeline();
       return;
     }
     case "naruto-ranks": {
       const { runNarutoRanksPackPipeline } = await import(
-        "@/providers/narutoranks/extract"
+        "@/providers/naruto/narutoranks/extract"
       );
       await runNarutoRanksPackPipeline(argv);
       return;
     }
     case "naruto-ultra": {
       const { runNarutoUltraPackPipeline } = await import(
-        "@/providers/narutoultra/extract"
+        "@/providers/naruto/narutoultra/extract"
       );
       await runNarutoUltraPackPipeline(argv);
       return;
     }
     case "naruto-mythos": {
       const { runNarutoMythosPackPipeline } = await import(
-        "@/providers/narutomythos/extract"
+        "@/providers/naruto/narutomythos/extract"
       );
       await runNarutoMythosPackPipeline(argv);
       return;
     }
     case "naruto-kayou": {
       const { runNarutoKayouPackPipeline } = await import(
-        "@/providers/narutokayou/extract"
+        "@/providers/naruto/narutokayou/extract"
       );
       await runNarutoKayouPackPipeline(argv);
       return;
     }
     case "naruto-data-carddass": {
       const { runNarutoDataCarddassPackPipeline } = await import(
-        "@/providers/narutodatacarddass/extract"
+        "@/providers/naruto/narutodatacarddass/extract"
       );
       await runNarutoDataCarddassPackPipeline(argv);
       return;

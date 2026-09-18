@@ -133,6 +133,7 @@ const providerInfoSchema = z.looseObject({
   ]),
   canonical: z.boolean(),
   supplyMode: z.enum(["api_live", "scrape_cache", "local_catalog"]).optional(),
+  catalogLifecycle: z.enum(["living", "finished"]).optional(),
   defaultLanguage: z.enum(["fr", "en", "unknown"]).optional(),
   bookCoverPriority: z.enum(["primary", "secondary"]).optional(),
   coverDefaultRegion: z.enum(["fr", "en", "eu", "us", "jp", "wor"]).optional(),

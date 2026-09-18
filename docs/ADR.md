@@ -165,7 +165,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   `lorcastPromoSetFromGrouping`).
 - **Décision** : factory `createPrintKeyPriceModule` /
   `createPrintKeyPriceRefresh` dans `src/providers/shared/` ; helper
-  `lorcanaPromoSetFromGrouping` partagé. TCGdex garde son module catalogue et
+  `lorcanaPromoSetFromGrouping` dans `lorcana/shared/`. TCGdex garde son module catalogue et
   n'emprunte que le refresh prix.
 - **Conséquences** : ajouter un provider de prix printKey-only = un fichier
   court ; une seule source de vérité pour les promos Lorcana.
@@ -181,7 +181,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   (Masters enrichit les titres ; FW range rareté/type dans `facts.json`).
   Forcer `LocalPrintsIndex` aurait exigé une migration de données.
 - **Décision** : `createDbsCatalogModule` + `bandaiCollector` partagés
-  (`src/providers/shared/dbs/`) ; deux modules conservés ; schémas et
+  (`src/providers/dragonball/shared/dbs/`) ; deux modules conservés ; schémas et
   `searchPrints` restent chez chaque provider.
 - **Conséquences** : surface provider ~80 → ~80 lignes centrées sur le
   resolve metadata ; le parseur Bandai n'a plus qu'une source.
@@ -324,7 +324,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
 - **Décision** : dossier `sources/` pour les collecteurs externes (Coleka,
   eBay, Mercari, Manga-News, ledgers scellés…). Racine = contrat
   (`index`, `pipeline`, `cli`, `facts`, `packs`, `searchPrints`…). Voir
-  `src/providers/narutocarddass/README.md`. Pas de découpage `domains/` global
+  `src/providers/naruto/narutocarddass/README.md`. Pas de découpage `domains/` global
   (hors périmètre plan).
 - **Conséquences** : un nouvel arrivant trouve d'abord le contrat, puis les
   sources ; imports relatifs mis à jour ; `narutoranks` pointe vers
@@ -368,7 +368,28 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
 - **Conséquences** : extract foil = Catalogue Sync / worker in-process uniquement
   (pas de CLI dans le container Docker) ; venv unity obsolète.
 
+## ADR-022 — Soft-nest, lifecycle catalogue, dual living, multi-covers
+
+- **Contexte** : densifier les micro-fichiers TCG, ranger par domaine sans
+  `domains/`, formaliser living vs finished, et aligner les covers catalogue
+  sur le modèle item classique (galerie d'attachments).
+- **Décision** :
+  1. **Soft-nest** optionnel : `providers/pokemon/{tcgdex,live}/`,
+     `providers/commerce/…` — ids registry **inchangés** ; discovery via
+     `PROVIDER_MODULES` + path, pas de rename d'id.
+  2. **`catalogLifecycle: "living" | "finished"`** sur `ProviderInfo`.
+     Auto-sync lit le trait (skip `finished`) — jamais une allowlist d'ids.
+  3. **Dual living** : owner `local_catalog` (browse / foil) + provider
+     `api_live` / scrape en parallèle → consensus. Deux modules, pas un hybride.
+  4. **Multi-face covers** : chaque `art.<source>.*` sur disque → une
+     `MetadataAttachment` (`coverProvenance: "catalog"`) ; défaut =
+     `face.json` / faceChoice ; ItemModal pin user comme pour ScreenScraper.
+     Core reste aveugle aux hosts mcdn/coleka.
+- **Conséquences** : voir `docs/provider_supply_modes.md` ; densification
+  `faces.ts` / dossiers d'action live ; Nest commerce / Naruto en phases
+  suivantes.
+
 ---
 
-_Les ADR suivants documentent les décisions au fil de l’exécution (réorga
+_Les ADR suivants documentent les décisions au fil de l'exécution (réorga
 2026-08, sortie UnityPy, …)._

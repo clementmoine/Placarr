@@ -90,9 +90,9 @@ Au refresh / ingest sealed : `installProviderProductsContents` copie vers
 main sans passer par `persistSealedProductsIndex` — et **ne jamais** éditer
 uniquement sous `data/` : la graine git est la source de vérité.
 
-Exemple Carddass : `src/providers/narutocarddass/curated/products-contents.json`
+Exemple Carddass : `src/providers/naruto/narutocarddass/curated/products-contents.json`
 (posters S1–S4 + catalogues qty). Lorcana :
-`src/providers/lorcanatcg/curated/products-contents.json`.
+`src/providers/lorcana/lorcanatcg/curated/products-contents.json`.
 
 ## `curated/sources/` — ledgers d'attestation
 

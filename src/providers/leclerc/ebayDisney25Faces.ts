@@ -21,8 +21,8 @@ import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPri
 import {
   ebayBrowseItemId,
   fetchEbayBrowseItem,
-} from "@/providers/ebay/browseItem";
-import { bestEbayCoverUrl } from "@/providers/ebay/coverUrl";
+} from "@/providers/commerce/ebay/browseItem";
+import { bestEbayCoverUrl } from "@/providers/commerce/ebay/coverUrl";
 
 import { leclercCuratedDir } from "./curatedPaths";
 import { leclercOpForSetCode } from "./pack";

@@ -119,10 +119,7 @@ const applyWebpack = (config, { dev, isServer, nextRuntime }) => {
       "**/.git/**",
       "**/.next/**",
       "**/data/**",
-      "**/scripts/lorcana/.venv/**",
-      "**/scripts/pokemon/.venv/**",
-      "**/src/providers/lorcanatcg/unity/.venv/**",
-      "**/src/providers/pokemontcglive/unity/.venv/**",
+      "**/src/providers/**/unity/.venv/**",
       "**/src/effects/**/cards.json",
       "**/src/effects/**/manifest.json",
     ];

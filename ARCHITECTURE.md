@@ -27,7 +27,7 @@ Ce fichier répond à une seule question : **par où commencer la lecture ?**
    ici côté câblage.
 5. **Un provider minimal** :
    - distant / scrape : `src/providers/bedetheque/` (`defineProvider`) ;
-   - catalogue local TCG : `src/providers/narutoranks/index.ts`
+   - catalogue local TCG : `src/providers/naruto/narutoranks/index.ts`
      (`createLocalTcgLine`).
 
 Ensuite seulement : `src/core/enrich/index.ts` (consensus, covers) et

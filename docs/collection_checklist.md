@@ -37,7 +37,7 @@ un catalogue local et les items possédés**.
 
 ## Ce qui existe déjà et sert de base
 
-`src/providers/narutocarddass/buildCoverageChecklist.ts` — _« Cross-source coverage
+`src/providers/naruto/narutocarddass/pipeline/coverage.ts` — _« Cross-source coverage
 checklist for Naruto CACG FR »_, lancé par `Catalogue Sync -- --only
 checklist`. Il croise déjà les sources et produit un état de couverture.
 
@@ -106,7 +106,7 @@ tirages, la seconde est un objet unique.
   `staging/manga-news/Naruto-Deck-Serie-{1..5}.html` et `-Nouvelle-Serie.html`.
 - **DBS / Lorcana / Pokémon papier / One Piece** — même logiciel
   (dbscards, fw.dbscards, lorcards, pkmcards, opecards, …). Un registre
-  `src/providers/shared/dbscards/sites.ts`, un crawl. Accessoires exclus.
+  `src/providers/dragonball/shared/dbscards/sites.ts`, un crawl. Accessoires exclus.
   Sync admin pour les packs déjà ouverts (y compris One Piece /
   `scrapeTcgCardsProducts("opecards")` via Catalogue Extract).
 - **Jeux vidéo** — l'équivalent n'est pas le produit scellé mais l'**édition**

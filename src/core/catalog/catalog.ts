@@ -354,5 +354,6 @@ export function materializeProviderInfo(info: ProviderInfo): ProviderInfo {
     collectorCoverRegionFromAgeRating:
       info.collectorCoverRegionFromAgeRating ?? false,
     supplyMode: info.supplyMode ?? "api_live",
+    catalogLifecycle: info.catalogLifecycle,
   };
 }

@@ -323,7 +323,7 @@ Exemple face :
 - [x] Promos FR = même id + **shuriken 1–3** — checklist complète **ouverte**.
 - [x] Scan GitHub/Reddit/RetroTCG — pas de dump FR GitHub ; EN partiel.
 - [x] **Wayback CDX** : `carddass.fr` + `bandaicg.com` (2026-08-12) — §4bis.
-- [x] Pipeline scrape local : Catalogue Sync (`src/providers/narutocarddass/`) — CDX → JPEG → `data/naruto/carddass/catalog.sqlite` + `cards/`.
+- [x] Pipeline scrape local : Catalogue Sync (`src/providers/naruto/narutocarddass/`) — CDX → JPEG → `data/naruto/carddass/catalog.sqlite` + `cards/`.
 - [x] Checklist croisée Manga-News S1–S5 ↔ index : `Catalogue Sync -- --only checklist` → `data/naruto/carddass/logs/coverage.{json,md}` + cache HTML `staging/manga-news/` (layout Lorcana/Pokémon : pas de dossier `checklist/`).
 - [x] Mapper Manga-News noms + rareté → `print_titles` + `cards-index.json` (`name` / `rarity`) via cache HTML + `Catalogue Sync -- --index-only` (**719**/742 titrés).
 - [x] Mapper thumbs site `cartes_med` → **move** réel `cards/…/thumb.jpg` ; staging = uniquement non utilisés (inspectable).

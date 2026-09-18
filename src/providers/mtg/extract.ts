@@ -10,15 +10,15 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet, HTTP_DEFAULT_USER_AGENT } from "@/lib/http/httpClient";
-import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
+import { scrapeTcgCardsProducts } from "@/providers/dragonball/shared/dbscards/scrapeProducts";
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 
 import { MTG_PACK_ID, mtgCuratedDir } from "./pack";
-import { ensureScryfallBulkFile } from "./scryfallBulk";
+import { ensureScryfallBulkFile } from "./harvest/scryfallBulk";
 import {
   applyMtgScryfallArtUrls,
   seedMtgFromScryfallBulk,
-} from "./seedFromScryfall";
+} from "./harvest/seedFromScryfall";
 
 /** Classic Magic sleeve — Scryfall card_back_id 0aeebaf5-… */
 const MAGIC_CARD_BACK_URL =
@@ -45,7 +45,7 @@ async function ensureClassicCardBack(force: boolean): Promise<boolean> {
 }
 
 async function findOfflineBulk(): Promise<string | null> {
-  const { scryfallStagingDir } = await import("./scryfallBulk");
+  const { scryfallStagingDir } = await import("./harvest/scryfallBulk");
   const { readdirSync } = await import("node:fs");
   const dir = scryfallStagingDir();
   if (!existsSync(dir)) return null;

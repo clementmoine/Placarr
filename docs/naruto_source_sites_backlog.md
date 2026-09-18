@@ -33,7 +33,7 @@ seulement, pas suppression de données.
 | [carddass.fr racine](https://web.archive.org/web/20111228103710/http://www.carddass.fr/)              | Hub multi-jeux 2011. Naruto = `/naruto/` (déjà dumpé).                                                                                                                                                                           |
 | [nikita `?mode=img`](https://tcg-db.nikita.jp/cardlist/nrt/?mode=img)                                 | Vue faces du jeu `nrt` (pas seulement `/explist/nrt/`).                                                                                                                                                                          |
 
-Corpus miné : `docs/naruto_*.md`, `src/providers/narutocarddass/curated/sources/*.json`,
+Corpus miné : `docs/naruto_*.md`, `src/providers/naruto/narutocarddass/curated/sources/*.json`,
 mémoires Claude (promo, liveinternet, Coleka, S6 IT), ce trip Cursor, share
 ChatGPT [6a7c988f](https://chatgpt.com/share/6a7c988f-d050-83eb-8092-32606c2748b2).
 Gemini / Codex : aucun hôte Naruto supplémentaire.

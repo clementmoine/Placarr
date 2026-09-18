@@ -24,6 +24,8 @@ describe("liveSetDisplayName", () => {
     expect(liveSetDisplayName("bw10", "fr")).toBe("Glaciation Plasma");
     expect(liveSetDisplayName("xy12", "fr")).toBe("Évolutions");
     expect(liveSetDisplayName("me5", "fr")).toBe("Nuit Noire");
+    expect(liveSetDisplayName("me5-5", "fr")).toBe("30ᵉ Anniversaire");
+    expect(liveSetDisplayName("me5-5", "en")).toBe("30th Celebration");
   });
 
   it("falls back to era family", () => {

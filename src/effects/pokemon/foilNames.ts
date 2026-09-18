@@ -34,6 +34,11 @@ const FOIL_SHEET_ALIAS_FRAG: Record<string, string> = {
   flatsilvercc: "FlatSilver",
   rainbow02: "Rainbow",
   swsecret02: "SwSecret",
+  /** me5-5 / me5-5c 30th Celebration promo MATs — own .frag stems not dumped yet. */
+  pikachufoil: "AceFoil",
+  classicfoil: "FlatSilver",
+  rgbfoil: "Rainbow",
+  celebrations: "25thConfetti",
 };
 
 function scanShaderStems(): string[] {

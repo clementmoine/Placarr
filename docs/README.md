@@ -45,9 +45,9 @@ data/indexes/title-idf/
 Scripts catalogues / indexes locaux :
 
 ```
-src/providers/lorcanatcg/     → Catalogue Extract (admin / worker)
-src/providers/pokemontcglive/ → Catalogue Extract (admin / worker)
-src/providers/narutocarddass/      → Catalogue Extract (admin / worker)
+src/providers/lorcana/lorcanatcg/     → Catalogue Extract (admin / worker)
+src/providers/pokemon/live/ → Catalogue Extract (admin / worker)
+src/providers/naruto/narutocarddass/      → Catalogue Extract (admin / worker)
 src/providers/{icollect,launchbox,nointro}/pipeline.ts
   → admin Local indexes / worker catalog
 ```

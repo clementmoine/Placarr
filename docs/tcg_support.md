@@ -275,7 +275,7 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   imprimés : six promos P2 — dont les deux _Mickey Mouse – True Friend_, `15` et
   la promo puzzle `36` —, quatre C2, et les dix-huit cartes du **Format
   Coconut**, un set promo entier. Aucun ne se voyait dans l'appli, et rien ne le
-  signalait. Lorcast les publie ; `lorcanatcg/lorcastFill.ts` les verse en
+  signalait. Lorcast les publie ; `lorcanatcg/scrape/lorcastFill.ts` les verse en
   **remplissage seul**, sans jamais contredire un fait de LorcanaJSON. Restent
   ouverts `25/P1` et `5/C1`, attestés par dotgg seul.
 - **La référence imprimée ne se cherchait pas.** Taper `36/P2` rendait zéro, et
@@ -567,8 +567,8 @@ Le client officiel des cartes physiques expose 23 shaders
 - Sync : Catalogue Extract Pokémon (admin / worker)
 - Store : `data/pokemon/foil/` → `/foil/pokemon/…`
 - JSON : `src/effects/pokemon/cards.json` (généré)
-- Catalogue : TCGdex (`src/providers/tcgdex`) ; série digitale Pocket (`tcgp`) exclue (`digitalOnly.ts`)
-- Join identité : `data/pokemon/live-cards.sqlite` — le provider `pokemontcglive` (`src/providers/pokemontcglive/index.ts`, supplyMode `local_catalog`, hook `catalog`) ingère le catalogue local Live ; TCGdex reste le catalogue API.
+- Catalogue : TCGdex (`src/providers/pokemon/tcgdex`) ; série digitale Pocket (`tcgp`) exclue (`digitalOnly.ts`)
+- Join identité : `data/pokemon/live-cards.sqlite` — le provider `pokemontcglive` (`src/providers/pokemon/live/index.ts`, supplyMode `local_catalog`, hook `catalog`) ingère le catalogue local Live ; TCGdex reste le catalogue API.
 
 **Médias sur `PrintCandidate`** (TCGdex + Live) :
 

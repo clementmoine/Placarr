@@ -97,7 +97,7 @@ const eslintConfig = [
   {
     // Exemption assumée : scrape CDN UnityFS séquentiel maison (canary,
     // soft-ban CloudFront dédié) — ne pas migrer vers @/lib/http.
-    files: ["src/providers/pokemontcglive/cdn.ts"],
+    files: ["src/providers/pokemon/live/cdn.ts"],
     rules: {
       "no-restricted-syntax": "off",
       "no-restricted-imports": "off",

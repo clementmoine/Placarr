@@ -15,7 +15,7 @@ import {
   applyYugiohScanflipArtUrls,
   harvestYugiohScanflip,
   installYugiohScanflip,
-} from "./scanflipInstall";
+} from "./install/scanflip";
 import {
   harvestYugiohYgoprodeck,
   installYugiohYgoprodeck,

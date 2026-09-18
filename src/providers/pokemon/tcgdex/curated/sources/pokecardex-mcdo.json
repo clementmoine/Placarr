@@ -1,0 +1,45 @@
+{
+  "source": "PokéCardex — scans McDonald's (BunnyCDN)",
+  "observed": "2026-09-18",
+  "note": "Scans HQ (`pokecardex-scans.b-cdn.net/sets/{code}/{FR|US}/{n}.jpg?class=original`). Numéros non paddés (1…15). Coleka reste en photo ; le faceChoice privilégie les scans.",
+  "scansOrigin": "https://pokecardex-scans.b-cdn.net",
+  "seriesPage": "https://www.pokecardex.com/series/{code}",
+  "campaigns": [
+    {
+      "id": "m23-fr",
+      "seriesCode": "M23",
+      "setId": "2023sv",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 15,
+      "label": "Promo McDonald's 2023 FR (PokéCardex M23)"
+    },
+    {
+      "id": "m23-en",
+      "seriesCode": "M23",
+      "setId": "2023sv",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 15,
+      "label": "McDonald's Collection 2023 EN (PokéCardex M23)"
+    },
+    {
+      "id": "m24-fr",
+      "seriesCode": "M24",
+      "setId": "2024sv",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 15,
+      "label": "Promo McDonald's 2024 FR (PokéCardex M24)"
+    },
+    {
+      "id": "m24-en",
+      "seriesCode": "M24",
+      "setId": "2024sv",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 15,
+      "label": "McDonald's Collection 2024 EN (PokéCardex M24)"
+    }
+  ]
+}

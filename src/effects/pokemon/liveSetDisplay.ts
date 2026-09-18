@@ -56,6 +56,15 @@ const LIVE_SET_TITLES: Readonly<Record<string, SetTitle>> = {
   me1: { fr: "Méga-Évolution", en: "Mega Evolution" },
   me2: { fr: "Flammes Fantasmagoriques", en: "Phantasmal Flames" },
   me5: { fr: "Nuit Noire", en: "Darkest Hour" },
+  "me5-5": { fr: "30ᵉ Anniversaire", en: "30th Celebration" },
+  "me5-5c": {
+    fr: "30ᵉ Anniversaire (classiques)",
+    en: "30th Celebration Classic",
+  },
+  "me5-5m": {
+    fr: "30ᵉ Anniversaire (mini)",
+    en: "30th Celebration Mini",
+  },
   mebsp: { fr: "Promo Méga-Évolution", en: "Mega Evolution Promo" },
   mealt: { fr: "Méga-Évolution (alt)", en: "Mega Evolution (alt)" },
 

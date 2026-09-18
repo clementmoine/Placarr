@@ -220,7 +220,7 @@ clé — à caler sur `printKey` ([tcg_support.md](tcg_support.md) §1).
 
 ## 6. Implications Placarr
 
-**Livré (Masters)** — `src/providers/dbscg/` + pack `src/effects/dbscg/` (`dbs-cg`) :
+**Livré (Masters)** — `src/providers/dragonball/dbscg/` + pack `src/effects/dbscg/` (`dbs-cg`) :
 
 - Catalogue local `data/dbs/cg/catalog.sqlite` via POST cardlists **europe-fr** et **us-en** (Catalogue Sync, `--langs fr,en` par défaut). Noms FR et EN dans `cards-index.json` (`langs.fr.name` / `langs.en.name`).
 - printKey `dbscg:bt1-001` ; parallels `_SPR` / `_PR` → grouping (`dbscg:bt1-011-spr`).
@@ -228,7 +228,7 @@ clé — à caler sur `printKey` ([tcg_support.md](tcg_support.md) §1).
 - Dos sleeve = dbscards `original/back.webp` (curated).
 - Foil : tag `foil` + house `flare`, pas de mask Bandai.
 - **Prix** : provider `dbsmarket` (dumps locaux listes Cardmarket EUR).
-- Fusion World = **autre** module (`src/providers/dbsfw/`, `data/dbs/fw`,
+- Fusion World = **autre** module (`src/providers/dragonball/dbsfw/`, `data/dbs/fw`,
   Catalogue Sync). Catalogue : onglets Dragon Ball → Masters | Fusion World.
 - Graphe produit→cartes : Sync admin (Masters / Fusion World). Hors de
   la boucle horaire — l'hôte tarpitte. HTML déjà là = reprise. Pas de

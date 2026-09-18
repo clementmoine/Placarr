@@ -16,8 +16,8 @@ import type {
   DbscardsProductListingRow,
   DbscardsProductPage,
   DbscardsProductPrintLink,
-} from "@/providers/shared/dbscards/parseProducts";
-import { tcgCardsSiteForPack } from "@/providers/shared/dbscards/sites";
+} from "@/providers/dragonball/shared/dbscards/parseProducts";
+import { tcgCardsSiteForPack } from "@/providers/dragonball/shared/dbscards/sites";
 
 import {
   emptyProductsIndex,

@@ -295,7 +295,7 @@ describe("cataloguePacks", () => {
   it("keeps Catalogue pack helpers free of node: (admin client bundle)", () => {
     const files = [
       "src/lib/admin/cataloguePacks.ts",
-      "src/providers/narutocarddass/packs.ts",
+      "src/providers/naruto/narutocarddass/packs.ts",
     ];
     for (const rel of files) {
       const src = readFileSync(path.join(process.cwd(), rel), "utf8");

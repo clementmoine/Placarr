@@ -1,0 +1,973 @@
+{
+  "observed": "2026-09-12",
+  "category": "501080113",
+  "url": "https://www.suruga-ya.jp/search?category=501080113&search_word=",
+  "liveCount": 585,
+  "inTsv": 573,
+  "missingCount": 12,
+  "missing": [
+    {
+      "id": "G8904124",
+      "title": "CAN-001[プロモ]：うずまきナルト（未開封）",
+      "printed": "CAN-001"
+    },
+    {
+      "id": "GG357395",
+      "title": "NXP-SP II[プロモ]：うちはサスケ",
+      "printed": "NXP-SPII"
+    },
+    {
+      "id": "GU608646",
+      "title": "NFM-SP[R]：撃破”暁”",
+      "printed": null
+    },
+    {
+      "id": "GU743791",
+      "title": "VJCF-2009[プロモーションカード]：うちはサスケ（Bランク）",
+      "printed": "VJCF-2009"
+    },
+    {
+      "id": "G8904080",
+      "title": "NC-005：ロック・リー",
+      "printed": "NC-005"
+    },
+    {
+      "id": "G8904087",
+      "title": "NC-012：桃地再不斬",
+      "printed": "NC-012"
+    },
+    {
+      "id": "G8904092",
+      "title": "NC-017：犬塚キバ",
+      "printed": "NC-017"
+    },
+    {
+      "id": "G8904094",
+      "title": "NC-019：マイト・ガイ",
+      "printed": "NC-019"
+    },
+    {
+      "id": "G8904096",
+      "title": "NC-021：三代目火影",
+      "printed": "NC-021"
+    },
+    {
+      "id": "G8904103",
+      "title": "NC-028：奈良シカマル(疾風伝)",
+      "printed": "NC-028"
+    },
+    {
+      "id": "G6835705",
+      "title": "NXP-SP I[プロモ]：うずまきナルト",
+      "printed": "NXP-SPI"
+    },
+    {
+      "id": "GL411724",
+      "title": "NX-SP I[プロモ]：うずまきナルト（Bランク）",
+      "printed": "NX-SPI"
+    }
+  ],
+  "missingClusters": [
+    {
+      "from": "G8904087",
+      "to": "G8904096",
+      "count": 4,
+      "members": [
+        {
+          "id": "G8904087",
+          "printed": "NC-012",
+          "title": "NC-012：桃地再不斬"
+        },
+        {
+          "id": "G8904092",
+          "printed": "NC-017",
+          "title": "NC-017：犬塚キバ"
+        },
+        {
+          "id": "G8904094",
+          "printed": "NC-019",
+          "title": "NC-019：マイト・ガイ"
+        },
+        {
+          "id": "G8904096",
+          "printed": "NC-021",
+          "title": "NC-021：三代目火影"
+        }
+      ]
+    },
+    {
+      "from": "G6835705",
+      "to": "G6835705",
+      "count": 1,
+      "members": [
+        {
+          "id": "G6835705",
+          "printed": "NXP-SPI",
+          "title": "NXP-SP I[プロモ]：うずまきナルト"
+        }
+      ]
+    },
+    {
+      "from": "G8904080",
+      "to": "G8904080",
+      "count": 1,
+      "members": [
+        {
+          "id": "G8904080",
+          "printed": "NC-005",
+          "title": "NC-005：ロック・リー"
+        }
+      ]
+    },
+    {
+      "from": "G8904103",
+      "to": "G8904103",
+      "count": 1,
+      "members": [
+        {
+          "id": "G8904103",
+          "printed": "NC-028",
+          "title": "NC-028：奈良シカマル(疾風伝)"
+        }
+      ]
+    },
+    {
+      "from": "G8904124",
+      "to": "G8904124",
+      "count": 1,
+      "members": [
+        {
+          "id": "G8904124",
+          "printed": "CAN-001",
+          "title": "CAN-001[プロモ]：うずまきナルト（未開封）"
+        }
+      ]
+    },
+    {
+      "from": "GG357395",
+      "to": "GG357395",
+      "count": 1,
+      "members": [
+        {
+          "id": "GG357395",
+          "printed": "NXP-SPII",
+          "title": "NXP-SP II[プロモ]：うちはサスケ"
+        }
+      ]
+    },
+    {
+      "from": "GU608646",
+      "to": "GU608646",
+      "count": 1,
+      "members": [
+        {
+          "id": "GU608646",
+          "printed": null,
+          "title": "NFM-SP[R]：撃破”暁”"
+        }
+      ]
+    },
+    {
+      "from": "GU743791",
+      "to": "GU743791",
+      "count": 1,
+      "members": [
+        {
+          "id": "GU743791",
+          "printed": "VJCF-2009",
+          "title": "VJCF-2009[プロモーションカード]：うちはサスケ（Bランク）"
+        }
+      ]
+    },
+    {
+      "from": "GL411724",
+      "to": "GL411724",
+      "count": 1,
+      "members": [
+        {
+          "id": "GL411724",
+          "printed": "NX-SPI",
+          "title": "NX-SP I[プロモ]：うずまきナルト（Bランク）"
+        }
+      ]
+    }
+  ],
+  "cdnHolesNotInTsv": [
+    "GL411724",
+    "GU613897",
+    "GG594293",
+    "GG594294",
+    "GG594295",
+    "GG594296"
+  ],
+  "detailProbe": [
+    {
+      "id": "GG594293",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NX-CAM001[デザインレア]：うずまきナルト"
+    },
+    {
+      "id": "GG594294",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NX-CAM002[デザインレア]：うちはサスケ"
+    },
+    {
+      "id": "GG594295",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NX-CAM003[デザインレア]：はたけカカシ"
+    },
+    {
+      "id": "GG594296",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス/デザインレア/メイン＆アシスト/ナルティメットクロス 第4章 ～1億枚突破記念弾～ NX-CAM004[デザインレア]：黄色い閃光"
+    },
+    {
+      "id": "GL411724",
+      "status": 302,
+      "inTsv": false,
+      "title": ""
+    },
+    {
+      "id": "GU613897",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス/SR/メイン＆アシスト/ナルティメットクロス 第5章 ～10周年SP弾～ NX-SPIII[SR]：はたけカカシ"
+    },
+    {
+      "id": "G8904080",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NC-005：ロック・リー"
+    },
+    {
+      "id": "G8904087",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NC-012：桃地再不斬"
+    },
+    {
+      "id": "G8904092",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NC-017：犬塚キバ"
+    },
+    {
+      "id": "G8904094",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NC-019：マイト・ガイ"
+    },
+    {
+      "id": "G8904096",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NC-021：三代目火影"
+    },
+    {
+      "id": "G8904103",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NC-028：奈良シカマル(疾風伝)"
+    },
+    {
+      "id": "G8904124",
+      "status": 302,
+      "inTsv": false,
+      "title": ""
+    },
+    {
+      "id": "G6835705",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NXP-SP I[プロモ]：うずまきナルト"
+    },
+    {
+      "id": "GG357395",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス NXP-SP II[プロモ]：うちはサスケ"
+    },
+    {
+      "id": "GU608646",
+      "status": 200,
+      "inTsv": false,
+      "title": "NARUTOデータカードダス/R/極秘任務/ナルティメットフォーメーション NFM-SP[R]：撃破”暁”"
+    },
+    {
+      "id": "GU743791",
+      "status": 302,
+      "inTsv": false,
+      "title": ""
+    }
+  ],
+  "ncNeighborhoodMissingCdn": [
+    "G8904076",
+    "G8904077",
+    "G8904078",
+    "G8904079",
+    "G8904080",
+    "G8904081",
+    "G8904082",
+    "G8904083",
+    "G8904084",
+    "G8904085",
+    "G8904087",
+    "G8904088",
+    "G8904089",
+    "G8904090",
+    "G8904092",
+    "G8904093",
+    "G8904094",
+    "G8904095",
+    "G8904096",
+    "G8904098",
+    "G8904099",
+    "G8904100",
+    "G8904101",
+    "G8904102",
+    "G8904103",
+    "G8904104",
+    "G8904105",
+    "G8904106",
+    "G8904107",
+    "G8904109",
+    "G8904111",
+    "G8904117",
+    "G8904119",
+    "G8904123",
+    "G8904124"
+  ],
+  "gg594camMissingCdn": [
+    "GG594293",
+    "GG594294",
+    "GG594295",
+    "GG594296",
+    "GG594297",
+    "GG594298",
+    "GG594299",
+    "GG594300",
+    "GG594301",
+    "GG594302",
+    "GG594303",
+    "GG594304",
+    "GG594305",
+    "GG594306",
+    "GG594307",
+    "GG594308",
+    "GG594309",
+    "GG594310"
+  ],
+  "probeRows": [
+    {
+      "id": "G8904076",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-001：うずまきナルト",
+      "printed": "NC-001",
+      "inTsv": false
+    },
+    {
+      "id": "G8904077",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-002：うずまきナルト",
+      "printed": "NC-002",
+      "inTsv": false
+    },
+    {
+      "id": "G8904078",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-003：うちはサスケ",
+      "printed": "NC-003",
+      "inTsv": false
+    },
+    {
+      "id": "G8904079",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-004：うちはサスケ",
+      "printed": "NC-004",
+      "inTsv": false
+    },
+    {
+      "id": "G8904080",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-005：ロック・リー",
+      "printed": "NC-005",
+      "inTsv": false
+    },
+    {
+      "id": "G8904081",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-006：砂瀑の我愛羅",
+      "printed": "NC-006",
+      "inTsv": false
+    },
+    {
+      "id": "G8904082",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-007：奈良シカマル",
+      "printed": "NC-007",
+      "inTsv": false
+    },
+    {
+      "id": "G8904083",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-008：日向ネジ",
+      "printed": "NC-008",
+      "inTsv": false
+    },
+    {
+      "id": "G8904084",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-009：はたけカカシ",
+      "printed": "NC-009",
+      "inTsv": false
+    },
+    {
+      "id": "G8904085",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-010：大蛇丸",
+      "printed": "NC-010",
+      "inTsv": false
+    },
+    {
+      "id": "G8904087",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-012：桃地再不斬",
+      "printed": "NC-012",
+      "inTsv": false
+    },
+    {
+      "id": "G8904088",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-013：日向ヒナタ",
+      "printed": "NC-013",
+      "inTsv": false
+    },
+    {
+      "id": "G8904089",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-014：テンテン",
+      "printed": "NC-014",
+      "inTsv": false
+    },
+    {
+      "id": "G8904090",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-015：秋道チョウジ",
+      "printed": "NC-015",
+      "inTsv": false
+    },
+    {
+      "id": "G8904092",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-017：犬塚キバ",
+      "printed": "NC-017",
+      "inTsv": false
+    },
+    {
+      "id": "G8904093",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-018：油女シノ",
+      "printed": "NC-018",
+      "inTsv": false
+    },
+    {
+      "id": "G8904094",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-019：マイト・ガイ",
+      "printed": "NC-019",
+      "inTsv": false
+    },
+    {
+      "id": "G8904095",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-020：自来也",
+      "printed": "NC-020",
+      "inTsv": false
+    },
+    {
+      "id": "G8904096",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-021：三代目火影",
+      "printed": "NC-021",
+      "inTsv": false
+    },
+    {
+      "id": "G8904098",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-023：干柿鬼鮫",
+      "printed": "NC-023",
+      "inTsv": false
+    },
+    {
+      "id": "G8904099",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-024：綱手",
+      "printed": "NC-024",
+      "inTsv": false
+    },
+    {
+      "id": "G8904100",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-025：うずまきナルト(疾風伝)",
+      "printed": "NC-025",
+      "inTsv": false
+    },
+    {
+      "id": "G8904101",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-026：サソリ",
+      "printed": "NC-026",
+      "inTsv": false
+    },
+    {
+      "id": "G8904102",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-027：デイダラ",
+      "printed": "NC-027",
+      "inTsv": false
+    },
+    {
+      "id": "G8904103",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-028：奈良シカマル(疾風伝)",
+      "printed": "NC-028",
+      "inTsv": false
+    },
+    {
+      "id": "G8904104",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-029：テマリ(疾風伝)",
+      "printed": "NC-029",
+      "inTsv": false
+    },
+    {
+      "id": "G8904105",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-030：カンクロウ(疾風伝)",
+      "printed": "NC-030",
+      "inTsv": false
+    },
+    {
+      "id": "G8904106",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-031：チヨ",
+      "printed": "NC-031",
+      "inTsv": false
+    },
+    {
+      "id": "G8904107",
+      "status": 200,
+      "title": "NARUTOデータカードダス NC-032：テンテン(疾風伝)",
+      "printed": "NC-032",
+      "inTsv": false
+    },
+    {
+      "id": "G8904109",
+      "status": 200,
+      "title": "NARUTOデータカードダス NM-005：うちはサスケ",
+      "printed": "NM-005",
+      "inTsv": false
+    },
+    {
+      "id": "G8904111",
+      "status": 200,
+      "title": "NARUTOデータカードダス NM-011：砂瀑の我愛羅",
+      "printed": "NM-011",
+      "inTsv": false
+    },
+    {
+      "id": "G8904117",
+      "status": 200,
+      "title": "NARUTOデータカードダス NM-050：みたらしアンコ",
+      "printed": "NM-050",
+      "inTsv": false
+    },
+    {
+      "id": "G8904119",
+      "status": 200,
+      "title": "NARUTOデータカードダス NM-064：春野サクラ",
+      "printed": "NM-064",
+      "inTsv": false
+    },
+    {
+      "id": "G8904123",
+      "status": 200,
+      "title": "NARUTOデータカードダス NM-123：テマリ",
+      "printed": "NM-123",
+      "inTsv": false
+    },
+    {
+      "id": "G8904124",
+      "status": 302,
+      "title": "",
+      "printed": null,
+      "note": "redirect https://www.suruga-ya.jp/product/detail/G8904124?branch_number=0080"
+    },
+    {
+      "id": "GG594293",
+      "status": 200,
+      "title": "NARUTOデータカードダス NX-CAM001[デザインレア]：うずまきナルト",
+      "printed": "NX-CAM001",
+      "inTsv": false
+    },
+    {
+      "id": "GG594294",
+      "status": 200,
+      "title": "NARUTOデータカードダス NX-CAM002[デザインレア]：うちはサスケ",
+      "printed": "NX-CAM002",
+      "inTsv": false
+    },
+    {
+      "id": "GG594295",
+      "status": 200,
+      "title": "NARUTOデータカードダス NX-CAM003[デザインレア]：はたけカカシ",
+      "printed": "NX-CAM003",
+      "inTsv": false
+    },
+    {
+      "id": "GG594296",
+      "status": 200,
+      "title": "NARUTOデータカードダス/デザインレア/メイン＆アシスト/ナルティメットクロス 第4章 ～1億枚突破記念弾～ NX-CAM004[デザインレア]：黄色い閃光",
+      "printed": "NX-CAM004",
+      "inTsv": false
+    },
+    {
+      "id": "GG594297",
+      "status": 200,
+      "title": "生写真(男性)/俳優 伊崎龍次郎/上半身・衣装黄・ソファ座り・左向き・左手口元・歯見せ/恋するおやすみコール「3人のミキト」購入者特典イベント「伊崎龍次郎のパジャマミーティング」ブロマイド",
+      "printed": null,
+      "inTsv": false
+    },
+    {
+      "id": "GG594300",
+      "status": 200,
+      "title": "生写真(男性)/俳優 伊崎龍次郎/膝上・衣装黄・ソファ寝そべり・右手頭・左手クッション・目線カメラ/恋するおやすみコール「3人のミキト」購入者特典イベント「伊崎龍次郎のパジャマミーティング」ブロマイド",
+      "printed": null,
+      "inTsv": false
+    },
+    {
+      "id": "GG594310",
+      "status": 200,
+      "title": "生写真(男性)/俳優 伊崎龍次郎/全身・衣装黄・床座り・右手置き・左手顔・目線洗濯機/恋するおやすみコール「3人のミキト」購入者特典イベント「伊崎龍次郎のパジャマミーティング」ブロマイド",
+      "printed": null,
+      "inTsv": false
+    },
+    {
+      "id": "GL411724",
+      "status": 302,
+      "title": "",
+      "printed": null,
+      "note": "redirect https://www.suruga-ya.jp/product/detail/GL411724?branch_number=0077"
+    },
+    {
+      "id": "GU613897",
+      "status": 200,
+      "title": "NARUTOデータカードダス/SR/メイン＆アシスト/ナルティメットクロス 第5章 ～10周年SP弾～ NX-SPIII[SR]：はたけカカシ",
+      "printed": "NX-SPIII",
+      "inTsv": false
+    },
+    {
+      "id": "G6835705",
+      "status": 200,
+      "title": "NARUTOデータカードダス NXP-SP I[プロモ]：うずまきナルト",
+      "printed": "NXP-SPI",
+      "inTsv": false
+    },
+    {
+      "id": "GG357395",
+      "status": 200,
+      "title": "NARUTOデータカードダス NXP-SP II[プロモ]：うちはサスケ",
+      "printed": "NXP-SPII",
+      "inTsv": false
+    },
+    {
+      "id": "GU608646",
+      "status": 200,
+      "title": "NARUTOデータカードダス/R/極秘任務/ナルティメットフォーメーション NFM-SP[R]：撃破”暁”",
+      "printed": "NFM-SP",
+      "inTsv": false
+    },
+    {
+      "id": "GU743791",
+      "status": 302,
+      "title": "",
+      "printed": null,
+      "note": "redirect https://www.suruga-ya.jp/product/detail/GU743791?branch_number=0077"
+    }
+  ],
+  "confirmedMissingClusters": [
+    {
+      "from": "G8904076",
+      "to": "G8904124",
+      "count": 35,
+      "members": [
+        {
+          "id": "G8904076",
+          "printed": "NC-001",
+          "title": "NARUTOデータカードダス NC-001：うずまきナルト"
+        },
+        {
+          "id": "G8904077",
+          "printed": "NC-002",
+          "title": "NARUTOデータカードダス NC-002：うずまきナルト"
+        },
+        {
+          "id": "G8904078",
+          "printed": "NC-003",
+          "title": "NARUTOデータカードダス NC-003：うちはサスケ"
+        },
+        {
+          "id": "G8904079",
+          "printed": "NC-004",
+          "title": "NARUTOデータカードダス NC-004：うちはサスケ"
+        },
+        {
+          "id": "G8904080",
+          "printed": "NC-005",
+          "title": "NARUTOデータカードダス NC-005：ロック・リー"
+        },
+        {
+          "id": "G8904081",
+          "printed": "NC-006",
+          "title": "NARUTOデータカードダス NC-006：砂瀑の我愛羅"
+        },
+        {
+          "id": "G8904082",
+          "printed": "NC-007",
+          "title": "NARUTOデータカードダス NC-007：奈良シカマル"
+        },
+        {
+          "id": "G8904083",
+          "printed": "NC-008",
+          "title": "NARUTOデータカードダス NC-008：日向ネジ"
+        },
+        {
+          "id": "G8904084",
+          "printed": "NC-009",
+          "title": "NARUTOデータカードダス NC-009：はたけカカシ"
+        },
+        {
+          "id": "G8904085",
+          "printed": "NC-010",
+          "title": "NARUTOデータカードダス NC-010：大蛇丸"
+        },
+        {
+          "id": "G8904087",
+          "printed": "NC-012",
+          "title": "NARUTOデータカードダス NC-012：桃地再不斬"
+        },
+        {
+          "id": "G8904088",
+          "printed": "NC-013",
+          "title": "NARUTOデータカードダス NC-013：日向ヒナタ"
+        },
+        {
+          "id": "G8904089",
+          "printed": "NC-014",
+          "title": "NARUTOデータカードダス NC-014：テンテン"
+        },
+        {
+          "id": "G8904090",
+          "printed": "NC-015",
+          "title": "NARUTOデータカードダス NC-015：秋道チョウジ"
+        },
+        {
+          "id": "G8904092",
+          "printed": "NC-017",
+          "title": "NARUTOデータカードダス NC-017：犬塚キバ"
+        },
+        {
+          "id": "G8904093",
+          "printed": "NC-018",
+          "title": "NARUTOデータカードダス NC-018：油女シノ"
+        },
+        {
+          "id": "G8904094",
+          "printed": "NC-019",
+          "title": "NARUTOデータカードダス NC-019：マイト・ガイ"
+        },
+        {
+          "id": "G8904095",
+          "printed": "NC-020",
+          "title": "NARUTOデータカードダス NC-020：自来也"
+        },
+        {
+          "id": "G8904096",
+          "printed": "NC-021",
+          "title": "NARUTOデータカードダス NC-021：三代目火影"
+        },
+        {
+          "id": "G8904098",
+          "printed": "NC-023",
+          "title": "NARUTOデータカードダス NC-023：干柿鬼鮫"
+        },
+        {
+          "id": "G8904099",
+          "printed": "NC-024",
+          "title": "NARUTOデータカードダス NC-024：綱手"
+        },
+        {
+          "id": "G8904100",
+          "printed": "NC-025",
+          "title": "NARUTOデータカードダス NC-025：うずまきナルト(疾風伝)"
+        },
+        {
+          "id": "G8904101",
+          "printed": "NC-026",
+          "title": "NARUTOデータカードダス NC-026：サソリ"
+        },
+        {
+          "id": "G8904102",
+          "printed": "NC-027",
+          "title": "NARUTOデータカードダス NC-027：デイダラ"
+        },
+        {
+          "id": "G8904103",
+          "printed": "NC-028",
+          "title": "NARUTOデータカードダス NC-028：奈良シカマル(疾風伝)"
+        },
+        {
+          "id": "G8904104",
+          "printed": "NC-029",
+          "title": "NARUTOデータカードダス NC-029：テマリ(疾風伝)"
+        },
+        {
+          "id": "G8904105",
+          "printed": "NC-030",
+          "title": "NARUTOデータカードダス NC-030：カンクロウ(疾風伝)"
+        },
+        {
+          "id": "G8904106",
+          "printed": "NC-031",
+          "title": "NARUTOデータカードダス NC-031：チヨ"
+        },
+        {
+          "id": "G8904107",
+          "printed": "NC-032",
+          "title": "NARUTOデータカードダス NC-032：テンテン(疾風伝)"
+        },
+        {
+          "id": "G8904109",
+          "printed": "NM-005",
+          "title": "NARUTOデータカードダス NM-005：うちはサスケ"
+        },
+        {
+          "id": "G8904111",
+          "printed": "NM-011",
+          "title": "NARUTOデータカードダス NM-011：砂瀑の我愛羅"
+        },
+        {
+          "id": "G8904117",
+          "printed": "NM-050",
+          "title": "NARUTOデータカードダス NM-050：みたらしアンコ"
+        },
+        {
+          "id": "G8904119",
+          "printed": "NM-064",
+          "title": "NARUTOデータカードダス NM-064：春野サクラ"
+        },
+        {
+          "id": "G8904123",
+          "printed": "NM-123",
+          "title": "NARUTOデータカードダス NM-123：テマリ"
+        },
+        {
+          "id": "G8904124",
+          "printed": "CAN-001",
+          "title": "CAN-001[プロモ]：うずまきナルト（未開封）"
+        }
+      ]
+    },
+    {
+      "from": "GG594293",
+      "to": "GG594296",
+      "count": 4,
+      "members": [
+        {
+          "id": "GG594293",
+          "printed": "NX-CAM001",
+          "title": "NARUTOデータカードダス NX-CAM001[デザインレア]：うずまきナルト"
+        },
+        {
+          "id": "GG594294",
+          "printed": "NX-CAM002",
+          "title": "NARUTOデータカードダス NX-CAM002[デザインレア]：うちはサスケ"
+        },
+        {
+          "id": "GG594295",
+          "printed": "NX-CAM003",
+          "title": "NARUTOデータカードダス NX-CAM003[デザインレア]：はたけカカシ"
+        },
+        {
+          "id": "GG594296",
+          "printed": "NX-CAM004",
+          "title": "NARUTOデータカードダス/デザインレア/メイン＆アシスト/ナルティメットクロス 第4章 ～1億枚突破記念弾～ NX-CAM004[デザインレア]：黄色い閃光"
+        }
+      ]
+    },
+    {
+      "from": "G6835705",
+      "to": "G6835705",
+      "count": 1,
+      "members": [
+        {
+          "id": "G6835705",
+          "printed": "NXP-SPI",
+          "title": "NARUTOデータカードダス NXP-SP I[プロモ]：うずまきナルト"
+        }
+      ]
+    },
+    {
+      "from": "GG357395",
+      "to": "GG357395",
+      "count": 1,
+      "members": [
+        {
+          "id": "GG357395",
+          "printed": "NXP-SPII",
+          "title": "NARUTOデータカードダス NXP-SP II[プロモ]：うちはサスケ"
+        }
+      ]
+    },
+    {
+      "from": "GL411724",
+      "to": "GL411724",
+      "count": 1,
+      "members": [
+        {
+          "id": "GL411724",
+          "printed": "NX-SPI",
+          "title": "NX-SP I[プロモ]：うずまきナルト（Bランク）"
+        }
+      ]
+    },
+    {
+      "from": "GU608646",
+      "to": "GU608646",
+      "count": 1,
+      "members": [
+        {
+          "id": "GU608646",
+          "printed": "NFM-SP",
+          "title": "NARUTOデータカードダス/R/極秘任務/ナルティメットフォーメーション NFM-SP[R]：撃破”暁”"
+        }
+      ]
+    },
+    {
+      "from": "GU613897",
+      "to": "GU613897",
+      "count": 1,
+      "members": [
+        {
+          "id": "GU613897",
+          "printed": "NX-SPIII",
+          "title": "NARUTOデータカードダス/SR/メイン＆アシスト/ナルティメットクロス 第5章 ～10周年SP弾～ NX-SPIII[SR]：はたけカカシ"
+        }
+      ]
+    }
+  ]
+}

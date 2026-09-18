@@ -18,12 +18,11 @@ import { describe, expect, it } from "vitest";
  *
  * Le garde de cécité de `core/` ne pouvait rien voir : il saute `src/providers/`
  * en entier, et ne repère de toute façon qu'un id **exactement** entre
- * guillemets — `"@/providers/lorcanatcg/setLogos"` lui échappe deux fois.
+ * guillemets — `"@/providers/lorcana/lorcanatcg/sources/setLogos"` lui échappe deux fois.
  *
- * **La liste est vide depuis le 2026-08-21**, et doit le rester. Un pack fournit
- * son comportement, le code partagé l'appelle : un crochet déclaré au contrat
- * plutôt qu'un import. Rouvrir une exception, c'est réintroduire l'édition du
- * code partagé à chaque nouveau pack.
+ * La famille TCG Cards vit dans `shared/tcgcards/` (plus sous dragonball) —
+ * l'ingest scellé n'importe plus de franchise. Liste vide = plancher ; **ne
+ * pas réintroduire** d'import `@/providers/<franchise>/`.
  */
 const ALLOWED_SIBLING_IMPORTS: Readonly<Record<string, readonly string[]>> = {};
 

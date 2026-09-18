@@ -108,7 +108,7 @@ liste.
 Le worker de développement tourne sous `tsx watch`, qui surveille `src/` (le
 script n'exclut que `data/`, `.next/` et `node_modules/`). Une session
 d'édition a redémarré le worker à répétition ; à chaque fois il a relancé le
-pipeline **depuis le début**, et l'enfant `tsx src/providers/dbscg/cli.ts`
+pipeline **depuis le début**, et l'enfant `tsx src/providers/dragonball/dbscg/cli.ts`
 précédent a survécu en orphelin.
 
 Résultat entre 15:36 et 18:32 : au moins six pipelines complets empilés, chacun

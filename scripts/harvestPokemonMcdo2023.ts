@@ -4,9 +4,9 @@ import path from "node:path";
 import {
   harvestColekaMcdoBranch,
   readColekaMcdoFrLedger,
-} from "../src/providers/tcgdex/coleka/scrapeColekaPokemonFaces";
-import { fillTcgplayerMcdo2023 } from "../src/providers/tcgdex/faces/fillTcgplayer";
-import { rebuildPokemonCardsIndex } from "../src/providers/pokemontcglive/rebuildCardsIndex";
+} from "../src/providers/pokemon/tcgdex/coleka/scrapeColekaPokemonFaces";
+import { fillTcgplayerMcdo2023 } from "../src/providers/pokemon/tcgdex/faces";
+import { rebuildPokemonCardsIndex } from "../src/providers/pokemon/live/rebuildCardsIndex";
 
 async function main() {
   const fr = readColekaMcdoFrLedger().branches.find((b) => b.id === "m23fr");

@@ -7,7 +7,7 @@ import path from "node:path";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { MTG_PACK_ID } from "./pack";
-import { loadMtgFinishesMap } from "./seedFromScryfall";
+import { loadMtgFinishesMap } from "./harvest/seedFromScryfall";
 
 let finishesCache: ReturnType<typeof loadMtgFinishesMap> | null = null;
 let artCache: Record<string, string> | null = null;

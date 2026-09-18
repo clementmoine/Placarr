@@ -17,9 +17,9 @@ const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);
 const SKIP_DIR_PREFIXES = [
   "src/effects/",
   "src/providers/",
-  "src/providers/lorcanatcg/",
-  "src/providers/pokemontcglive/",
-  "src/providers/narutocarddass/",
+  "src/providers/lorcana/lorcanatcg/",
+  "src/providers/pokemon/live/",
+  "src/providers/naruto/narutocarddass/",
   "src/providers/icollect/",
   "src/providers/launchbox/",
   "src/providers/nointro/",

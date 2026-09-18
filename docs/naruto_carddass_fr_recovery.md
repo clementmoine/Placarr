@@ -14,7 +14,7 @@ staging `data/naruto/carddass/staging/` (README).
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **`cards/{family}/{id}/{lang}/`**                                 | Faces **utilisées** (art, `art.corrected`, `art.reconstructed`, thumb)  |
 | **`staging/carddass-fr/`**                                        | Miroir site non utilisé + pages/PDF/CDX (inspectable)                   |
-| **`src/providers/narutocarddass/curated/cards/{family}/{id}/{lang}/`** | Reconstruct hand-made (`art.reconstructed.png`) + preuve (`source.jpg`) |
+| **`src/providers/naruto/narutocarddass/curated/cards/{family}/{id}/{lang}/`** | Reconstruct hand-made (`art.reconstructed.png`) + preuve (`source.jpg`) |
 | **`staging/bandaicg-en/`**, **`carddas-jp/`**                     | Autres lignes (≠ CACG FR)                                               |
 
 Med / tin **mappés** quittent staging (**move**). Re-scrape **ne re-télécharge
@@ -136,6 +136,6 @@ Spotlights stratégie (pas promos tournoi). Staging :
 | `logs/carte-semaine.{md,json}` | Focus + IDs extraits des archives CdF          |
 | `logs/coverage.*`              | MN ↔ index                                     |
 | `staging/README.md`            | Layout staging                                 |
-| `src/providers/narutocarddass/`     | Pipeline + curated                             |
+| `src/providers/naruto/narutocarddass/`     | Pipeline + curated                             |
 
 _Dernière màj : 2026-08-13 — carte-semaine → noms/stubs catalogue._

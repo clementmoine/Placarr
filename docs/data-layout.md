@@ -72,7 +72,7 @@ data/
   launchbox|icollect/
   # nointro/ prévu — provider + index SQLite existent, rien de synchronisé sur disque
   indexes/title-idf/               # vide tant que `pnpm title-idf:update` n'a pas tourné
-  logs/                            # artefacts d'audit foil (writer : src/providers/pokemontcglive/liveCard.ts)
+  logs/                            # artefacts d'audit foil (writer : src/providers/pokemon/live/liveCard.ts)
 ```
 
 `naruto` = franchise ; **`naruto/carddass`** = Carddass + CCG (plus d’onglet Bandai CCG). **`naruto/shippuden`**, **`naruto/ninja-ranks`**, **`naruto/ultra-challenge`** = autres jeux, autres packs. Layout Carddass :
@@ -97,7 +97,7 @@ Titres attestés sans face (BGG EN S1, Coleka FR, Slab-Z JA) : print +
 PR-096 a désormais une face FR (`art.leboncoin`) et EN (`art.drive` + `art.coleka`).
 Les 101 promos US Coleka `_r38199` (`PR-001`–`100` + `005R`–`009R`) vivent sous
 `cards/promo/pr0nnn/en/` — pas l’ombrelle `_r4102`, pas les tins FR.
-Provider : `src/providers/narutocarddass/`. Sync : Catalogue Extract (admin /
+Provider : `src/providers/naruto/narutocarddass/`. Sync : Catalogue Extract (admin /
 worker) — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.md).
 Dos = langue : `cards/back.{fr|en|it|ja}.webp` depuis
 `curated/cards/back.{lang}.png`. Pas de `back.webp` sans langue sur Naruto.
@@ -111,7 +111,7 @@ dbsfw, narutoshippuden, narutoranks, narutoultra) — jamais installé vers
 Fusion World (`dbsfw:st01-001`, parallels `_P1`) ; **`dbs/lamincards`** =
 Edibas Lamincards PVC (`dbslamincards:nero-0001`, …). Faces = Dragon Ball Center
 (`art.dbc.jpg`) ; versos pack `back.it` / `back.fr` ; journal
-`providers/dbslamincards/curated/sources/source-hunt.json`. Identité Masters = cardlists
+`providers/dragonball/dbslamincards/curated/sources/source-hunt.json`. Identité Masters = cardlists
 Bandai **FR** (`/europe-fr/cartes/`) et **EN** (`/us-en/cardlist/`), fusionnées
 sur printKey ; `cards-index.json` porte `langs.fr.name` et `langs.en.name`.
 Faces Masters FR = dbscards / Bandai au sync HTTP. Faces Masters EN = clone
@@ -184,7 +184,7 @@ Provider ingest lives under `src/providers/<id>/` (see
 | `scripts/buildTitleIdfIndex.ts`          | Title IDF corpus | `title-idf:update`           |
 
 Pack extracts: in-process via `catalogueExtractRunner` (admin Catalogue Sync /
-worker). Audits locaux optionnels : `tsx src/providers/pokemontcglive/audit*.ts`.
+worker). Audits locaux optionnels : `tsx src/providers/pokemon/live/audit*.ts`.
 Foil gaps: admin `/api/admin/foil-status` → `computeFoilGaps()` (`src/lib/admin/foilGaps.ts`).
 Unity extract: Node in-process via Catalogue Sync / worker (ADR-021 A–E). Voir
 [unity_without_python.md](unity_without_python.md).

@@ -43,7 +43,7 @@ Omukade `AccessHelper` (bonus) : login PTC browser-like —
 `POST …/oauth2/token` avec `code` + `code_verifier`.
 
 Placarr a déjà le chemin **CDN public** + decode partiel des `card-database-*`
-(`src/providers/pokemontcglive/*`, Catalogue Sync). Ce doc consolide
+(`src/providers/pokemon/live/*`, Catalogue Sync). Ce doc consolide
 ptcgl.dev / DESIGN + sniffs MuMu.
 
 ---

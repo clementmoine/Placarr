@@ -94,6 +94,10 @@ export type LocalTcgLineSpec = {
    */
   borrowFaceAcrossLocales?: boolean;
   /**
+   * Closed historical line → skip Plex-like auto-sync. Default unset (= living).
+   */
+  catalogLifecycle?: "living" | "finished";
+  /**
    * Post-process a candidate after disk faces are resolved (e.g. OPTCG
    * category sleeve backs). Default: identity.
    */
@@ -330,6 +334,9 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       nameDatabase: true,
       auth: { kind: "none" },
       supplyMode: "local_catalog",
+      ...(spec.catalogLifecycle
+        ? { catalogLifecycle: spec.catalogLifecycle }
+        : {}),
       canonical: false,
       defaultLanguage: spec.defaultLanguage,
       ...(spec.websiteUrl ? { websiteUrl: spec.websiteUrl } : {}),

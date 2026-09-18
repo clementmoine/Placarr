@@ -1,0 +1,102 @@
+{
+  "source": "chasse Wayback aux sites officiels — Naruto Ultra Challenge (Panini, 2007)",
+  "observed": "2026-08-21",
+  "ingest": "none",
+  "line": "ultra-challenge",
+  "why": "Trouver le mini-site éditeur, pas une base de fans. Ce journal dit ce qui a été fouillé pour ne pas recommencer à l’aveugle.",
+  "productAttestedElsewhere": {
+    "animecollection": "http://www.animecollection.fr/cartes.php?idl=4&idc=113&ids=254 — « Les ultra cards Naruto sortent en France en Septembre 2007 par l’éditeur Panini. 100 cartes + 1 checklist recto verso. Infos des épisodes 1 à 70. »",
+    "coleka": "https://www.coleka.com/it/carte-collezionabili/carte-panini/naruto-ultra-challenge_r18770 — 101 cartes, rubrique Panini",
+    "laststicker": "https://www.laststicker.com/cards/panini_naruto_ultra_cards/ — « Panini Naruto Ultra Challenge », 2007, 100 cartes"
+  },
+  "verdict": "Aucun mini-site produit Ultra Challenge n’est archivé. Les hôtes officiels Panini / Edibas / lamincards de 2006–2008 existent, mais ils n’hébergent pas cette collection.",
+  "tried": [
+    {
+      "host": "lamincards.com",
+      "why": "Le forum AnimeCollection et Coleka appellent le produit « lamincards ».",
+      "cdx": "Captures homepage dès 2007-11-21 (547 octets) puis 2008. `index.html` 2007-03-03 (997 octets) n’est plus servie (404 Wayback).",
+      "finding": "Parké. Capture 2007-11-21 = frameset vers `searchportal.information.com`. Pas un catalogue Panini.",
+      "wayback": "https://web.archive.org/web/20071121020526id_/http://www.lamincards.com/"
+    },
+    {
+      "host": "www.edibas.com",
+      "why": "Edibas Collections (Turin) est l’éditeur italien historique des Lamincards (Pokémon, Dragon Ball…). Site officiel encore capturé en 2007.",
+      "cdx": "`/edibas_it/collezionabili_lista.aspx` 2007-04-03, shop, calendriers, posters.",
+      "finding": "Catalogue lamincards d’avril 2007 = Dragon Ball Z 1ʳᵉ série (150 cartes), zéro Naruto. Homepage sept. 2007 : « France / GB / España / Deutschland — Coming soon », pas de fiche Ultra Challenge.",
+      "waybackLista": "https://web.archive.org/web/20070403094745id_/http://www.edibas.com/edibas_it/collezionabili_lista.aspx",
+      "waybackHome": "https://web.archive.org/web/20070922102822id_/http://www.edibas.com/"
+    },
+    {
+      "host": "www.panini.fr",
+      "why": "Éditeur FR annoncé par AnimeCollection.",
+      "cdx": "Homepage 2006 = 302 uniquement (janv.–août). Filtre `*naruto*` / `*ultra*` / `*lamin*` : zéro URL.",
+      "finding": "Pas de mini-site collection archivé sous ce domaine."
+    },
+    {
+      "host": "www.paninicomics.fr",
+      "why": "Cible réelle probable des 302 `panini.fr` 2006.",
+      "cdx": "Homepages 2006–2007 présentes. Filtre `*naruto*` / `*ultra*` / `*lamin*` : zéro URL.",
+      "finding": "Site comics vivant à l’époque, sans chemin Naruto Ultra archivé."
+    },
+    {
+      "host": "www.paninicomics.it/narutocardgame/",
+      "why": "Mini-site Panini Comics Italie, lien « Minisito: Naruto Card Game » encore visible sur une capture 2011.",
+      "cdx": "2007-01-12 `200` sur `/narutocardgame/` ; 2008-11-14 `/narutocardgame/index.htm`.",
+      "finding": "C’est le TCG italien (Carddass localisé Panini), pas Ultra Challenge. Hors pack.",
+      "wayback": "https://web.archive.org/web/20070112082012/http://www.paninicomics.it/narutocardgame/"
+    },
+    {
+      "host": "www.mynaruto.net",
+      "why": "Portail Naruto de The Licensing Machine (division Panini UK Ltd), logo Panini Interactive, contact `naruto@thelicensingmachine.com`, événement au Museo della Figurina (Modène) le 16/12/2006.",
+      "cdx": "IT / DE / ES : Characters.ashx + EpisodeGuide.ashx (guides perso / épisodes). FR / EN / UK : zéro préfixe. Filtre URL `product|card|sticker|ultra|ninja|lamin` : zéro.",
+      "finding": "Site officiel Panini licence / TV, pas un cardlist Ultra Challenge.",
+      "waybackHome": "https://web.archive.org/web/20061208220340id_/http://www.mynaruto.net/"
+    },
+    {
+      "host": "www.panini.es / panini.it / paninigroup.com",
+      "why": "Filiales et groupe.",
+      "finding": "`panini.es/*naruto*` vide. `panini.it/*lamin*` vide (déjà noté pour le TCG IT dans `narutocarddass` `it-de-source-hunt.json`). `paninigroup.com/*naruto*` vide."
+    },
+    {
+      "host": "www.panini.co.uk / figurine.panini.it / edibas.fr / lamincards.fr / kana.fr / naruto.fr",
+      "why": "Relance 2026-08-21 soir — hôtes collectables / licence FR-UK jamais filtrés de la même façon.",
+      "cdx": "`panini.co.uk/*naruto*`, `figurine.panini.it/*naruto*`, `kana.fr/*naruto*`, `edibas.fr` prefix, `lamincards.fr` prefix : vides. `naruto.fr` : homepage 2004 puis blog parké 2022, zéro chemin cartes.",
+      "finding": "Toujours pas de mini-site Ultra Challenge."
+    }
+  ],
+  "closestOfficial": {
+    "what": "mynaruto.net (Panini UK / Licensing Machine, 2006) et paninicomics.it/narutocardgame/ (TCG IT). Ni l’un ni l’autre n’est Ultra Challenge.",
+    "doNotIngestAsThisLine": true
+  },
+  "fanNotOfficial": [
+    "Coleka `_r18770`",
+    "LastSticker `panini_naruto_ultra_cards`",
+    "AnimeCollection `ids=254`",
+    "Vintage Naruto « French » / skip `french-panini` — faces Panini/Ultra, pas un site éditeur"
+  ],
+  "not": [
+    "Edibas Dragon Ball lamincards",
+    "Inkworks Ninja Ranks / Way of the Ninja / Secret Weapons",
+    "Panini Comics IT Naruto Card Game",
+    "Panini FR shop 2022+ (Hokage TC, Aventures d’un ninja)"
+  ],
+  "albumPrintedUrl": {
+    "on": "2026-08-21",
+    "tried": [
+      "Coleka `_r18770` / `album_i886778` (recto album : `www.paninigroup.com`, pas de verso)",
+      "LastSticker `panini_naruto_ultra_cards` (Cloudflare, checklist fan)",
+      "recherches album / classeur / « www.panini » sur l’objet 2007",
+      "AnimeCollection packagings/113/254 (thumbs h100 : pochette FR + album spirale — trop petits pour lire une URL imprimée)",
+      "Sell sheet / Wayne’s / paniniusa.com (2026-08-21 soir) : piste US Ninja Ranks, pas Ultra. Aucune URL imprimée Ultra."
+    ],
+    "finding": "Recto album Coleka : `www.paninigroup.com`. Ce domaine n’a pas de chemin Naruto archivé. Le verso / la checklist restent la piste physique.",
+    "fanPackagingNotOfficialHost": "AC pochette FR « 8 CARTES ». Coleka `album_i886778` = scan collectionneur du recto, dump `art.coleka`. Affichage = upscales Figma `art.reconstructed` (recto, verso, pochette). Ne pas en faire des faces de cartes."
+  },
+  "fanImageHosts": {
+    "note": "Scans / photos utilisateurs. Pas CDN Panini.",
+    "animecollection": "animecollection.fr/cartes/113/254/h400_*_carte.jpg — 100 faces (284×400) mappées 1–100 + checklist 9877 non versée.",
+    "coleka": "thumbs.coleka.com (même schéma que Ninja Ranks, uploads utilisateurs).",
+    "laststicker": "403 Cloudflare depuis fetch ; checklist fan."
+  },
+  "whyItMatters": "L’éditeur est Panini France, 2007. Le site produit n’a pas été crawlé, ou n’a jamais existé hors paper/album. Prochaine piste : un exemplaire physique, pas un autre tour de CDX sur les mêmes hôtes."
+}

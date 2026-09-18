@@ -9,9 +9,9 @@ import { fileURLToPath } from "node:url";
 
 import { packDataDir } from "@/lib/packPaths";
 import { providerModuleForPack } from "@/providers/shared/packOwner";
-import { loadDbscardsCatalogIndex } from "@/providers/shared/dbscards/catalogIndex";
-import { completeProductContainsPrints } from "@/providers/shared/dbscards/completePrints";
-import type { DbscardsProductPage } from "@/providers/shared/dbscards/parseProducts";
+import { loadDbscardsCatalogIndex } from "@/providers/dragonball/shared/dbscards/catalogIndex";
+import { completeProductContainsPrints } from "@/providers/dragonball/shared/dbscards/completePrints";
+import type { DbscardsProductPage } from "@/providers/dragonball/shared/dbscards/parseProducts";
 import {
   ingestSealedProducts,
   printGameForPack,

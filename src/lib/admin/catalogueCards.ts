@@ -15,7 +15,7 @@ import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
-} from "@/providers/narutocarddass/narutoCardPath";
+} from "@/providers/naruto/narutocarddass/narutoCardPath";
 import {
   assetsPackBackUrl,
   assetsPackTierBackUrl,
@@ -36,8 +36,8 @@ import {
   formatNarutoReference,
   isJpOnlyNarutoArtwork,
   narutoCollectorNumberKey,
-} from "@/providers/narutocarddass/collectorIdentity";
-import { foldNarutoCardsIndex } from "@/providers/narutocarddass/foldNarutoIndex";
+} from "@/providers/naruto/narutocarddass/collectorIdentity";
+import { foldNarutoCardsIndex } from "@/providers/naruto/narutocarddass/foldNarutoIndex";
 import {
   orientationFromIndexSlot,
   printIsLandscapeCard,

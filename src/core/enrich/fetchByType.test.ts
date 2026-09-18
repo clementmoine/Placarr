@@ -317,15 +317,15 @@ vi.mock("@/providers/steamgriddb", async (importOriginal) => {
     fetchFromSteamGridDB: h.fetchFromSteamGridDB,
   };
 });
-vi.mock("@/providers/pricecharting", async (importOriginal) => {
+vi.mock("@/providers/commerce/pricecharting", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("@/providers/pricecharting")>();
+    await importOriginal<typeof import("@/providers/commerce/pricecharting")>();
   return {
     ...actual,
     fetchMetadataFromPriceCharting: h.fetchMetadataFromPriceCharting,
   };
 });
-vi.mock("@/providers/pricecharting/fetch", () => ({
+vi.mock("@/providers/commerce/pricecharting/fetch", () => ({
   fetchMetadataFromPriceChartingByName: h.fetchMetadataFromPriceChartingByName,
 }));
 vi.mock("@/providers/coverproject", async (importOriginal) => {

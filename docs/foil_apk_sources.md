@@ -37,7 +37,7 @@ Objectif : sync auto **sans téléphone**. Frida = QA seulement, jamais une sour
 - Lorcana sans APK : phases web + cards seulement (CLI skip Unity déjà).
 - Gaps admin taguent `apk-gated` quand WebGL / back / UV manquent faute d’APK.
 
-Voir aussi : [foil_effects.md](foil_effects.md), [backlog.md](backlog.md) §Foil, `src/providers/pokemontcglive/sources.ts`.
+Voir aussi : [foil_effects.md](foil_effects.md), [backlog.md](backlog.md) §Foil, `src/providers/pokemon/live/cdn/sources.ts`.
 
 **One Piece** : pas de client / APK foil connu — voir [one_piece_tcg.md](one_piece_tcg.md).
 

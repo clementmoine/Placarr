@@ -311,6 +311,17 @@ export interface ProviderInfo {
    * @see docs/provider_supply_modes.md
    */
   supplyMode?: ProviderSupplyMode;
+  /**
+   * Catalogue corpus lifecycle. Auto-sync reads this trait — never provider ids.
+   * - `living`: new prints / APK / API still arrive → stale auto-enqueue OK.
+   * - `finished`: closed historical line → skip Plex-like auto-sync (manual OK).
+   * Unset = treat as living when `supplyMode` implies a catalog.
+   * @see docs/provider_supply_modes.md
+   */
+  catalogLifecycle?: ProviderCatalogLifecycle;
 }
 
 export type ProviderSupplyMode = "api_live" | "scrape_cache" | "local_catalog";
+
+/** Closed historical corpus vs still-updating catalogue. */
+export type ProviderCatalogLifecycle = "living" | "finished";

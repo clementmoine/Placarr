@@ -7,7 +7,7 @@ en notant aussi bien les trouvailles que les **impasses vérifiées** — pour n
 refouiller deux fois le même terrain.
 
 Voir aussi : [naruto_carddass_fr_recovery.md](naruto_carddass_fr_recovery.md),
-`src/providers/narutocarddass/curated/sources/attested-promos.json`.
+`src/providers/naruto/narutocarddass/curated/sources/attested-promos.json`.
 
 ---
 

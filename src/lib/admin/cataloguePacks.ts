@@ -13,7 +13,7 @@ import {
   narutoCatalogueLineForCard as narutoLineForCard,
   narutoCatalogueLineForSealed as narutoLineForSealed,
   type NarutoCardLine,
-} from "@/providers/narutocarddass/packs";
+} from "@/providers/naruto/narutocarddass/packs";
 import {
   LECLERC_ACTIVE_OPS,
   leclercFamilyMeta,

@@ -7,7 +7,7 @@ Envoyé à Didero (suggestions@lorcanajson.org), 29/07/2026.
 - `hot_foil_color` + `second_hot_foil_color` → liste `foilEffectColors`
 - `second_foil_top_layer_mask_url` → `images.varnishMask2`
 
-Le sidecar `src/providers/lorcanajson/catalog.ts` (SSO Ravensburger) a été
+Le sidecar `src/providers/lorcana/lorcanajson/catalog.ts` (SSO Ravensburger) a été
 retiré : ces champs viennent maintenant de `allCards.json`.
 
 ---

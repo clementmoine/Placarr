@@ -90,10 +90,10 @@ Sur l'ensemble des cinq packs, dix rôles identiques totalisent **6 377 lignes**
 
 C'est l'inversion la plus coûteuse, et la cause directe du problème 3.
 
-`src/providers/shared/dbscards/scrapeProducts.ts` :
+`src/providers/dragonball/shared/dbscards/scrapeProducts.ts` :
 
 ```
-import { … } from "@/providers/lorcanatcg/setLogos";   // ligne 26
+import { … } from "@/providers/lorcana/lorcanatcg/setLogos";   // ligne 26
 if (opts.packId === "pokemon") { … }                    // ligne 348
 if (opts.packId === "lorcana") { … }                    // ligne 357
 ```
@@ -102,7 +102,7 @@ if (opts.packId === "lorcana") { … }                    // ligne 357
 table pack → provider écrite en dur (`"dbs/cg"`, `"dbs/fw"`, `lorcana`,
 `pokemon`, `"naruto/carddass"`) et un `input.packId === "pokemon"`.
 
-`src/providers/shared/dbscards/sites.ts` : les quatre packs énumérés.
+`src/providers/dragonball/shared/dbscards/sites.ts` : les quatre packs énumérés.
 
 Du code partagé ne devrait rien savoir de qui l'appelle. Ici, **ajouter un pack
 oblige à éditer le code partagé** — et importer un provider depuis `shared` crée
@@ -211,7 +211,7 @@ dans `providers/` exprès, pour que `core/` n'ait jamais à nommer un TCG.
 **`providers/shared/sharedBlindness.test.ts`** — nouveau, et c'est celui qui
 mord : il interdit à `shared/` d'importer un provider frère. Le garde de `core/`
 ne pouvait pas le faire, car il ne repère qu'un id **exactement** entre
-guillemets — `"@/providers/lorcanatcg/setLogos"` lui échappe deux fois.
+guillemets — `"@/providers/lorcana/lorcanatcg/setLogos"` lui échappe deux fois.
 
 Il a trouvé du premier coup une fuite que mon `grep` avait ratée : un
 `await import("@/providers/prestashop/fetch")` **dynamique** dans

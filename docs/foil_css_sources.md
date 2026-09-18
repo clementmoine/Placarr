@@ -184,7 +184,7 @@ Voir `LIVE_FINISH_CSS` + `holoShadersSimey.ts` / ports Radiant & co dans
 | [pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | `…/simey/poke-holo/` | `UPSTREAM_COMMIT` |
 | [pokemon-cards-151](https://github.com/simeydotme/pokemon-cards-151) | `…/simey/poke-151/` | `UPSTREAM_COMMIT` |
 
-Refresh : `tsx src/providers/pokemontcglive/syncSimeyCss.ts`.
+Refresh : `tsx src/providers/pokemon/live/foil/syncSimeyCss.ts`.
 
 ---
 

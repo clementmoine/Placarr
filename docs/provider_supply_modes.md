@@ -48,6 +48,38 @@ when they claim `cover`. Gap fixed 2026-08-30: local TCG line ships
 
 Default when unset after materialize: `api_live`.
 
+## `catalogLifecycle` (on `ProviderInfo`)
+
+| Value      | Meaning                                                         | Auto-sync                         |
+| ---------- | --------------------------------------------------------------- | --------------------------------- |
+| `living`   | New prints / APK / API still arrive                             | Enqueue when `status().stale`     |
+| `finished` | Closed historical line (no new official product expected)       | **Skip** auto-enqueue; manual OK  |
+
+Unset ⇒ treated as living for auto-sync. **Never** branch on provider ids in
+core / admin — read the trait only (`catalogSkipsAutoSync`).
+
+Examples: Pokémon Live / TCGdex / Lorcana = `living`; Naruto Carddass /
+疾風伝 / Ultra / Ranks = `finished`.
+
+## Dual living (local + remote)
+
+A still-updating game may own **two** providers:
+
+| Role            | Typical `supplyMode` | Example                          |
+| --------------- | -------------------- | -------------------------------- |
+| Corpus owner    | `local_catalog`      | `pokemontcglive` → `data/pokemon/` |
+| Live enrichment | `api_live` / scrape  | `tcgdex` API + paper faces       |
+
+Same `printGames` (e.g. `["pokemon"]`), distinct ids, consensus on enrich —
+**not** one hybrid module.
+
+## Catalogue covers = classic item model
+
+Local card dirs often hold several arts (`art.webp`, `art.mcdn.png`, …).
+Providers emit **one `MetadataAttachment` per art file**; default `imageUrl` =
+`face.json` / faceChoice winner. Enrich + ItemModal behave like ScreenScraper
+galleries. Admin card browser keeps a single vignette for perf.
+
 ## Data vs curated
 
 | Content                                                                     | Location                                                             |
@@ -74,22 +106,26 @@ lists in core.
 
 ## Recommended layout
 
+Prefer **action-named** modules (capability), not a plateau of `build*` / `fold*`
+verbs at the pack root. Canon: [Naruto Carddass](../src/providers/naruto/narutocarddass/README.md)
+and the franchise map in [providers/naruto/README.md](../src/providers/naruto/README.md).
+
 ```
-src/providers/<id>/
-  index.ts       # ProviderModule
-  pipeline.ts    # catalog.refresh implementation (when distinct)
-  extract.ts     # Catalogue Sync / worker pack extract (in-process)
-  indexStore.ts  # sqlite helpers
-  curated/
-    cards/       # same tree as data/<pack>/cards — mirrored at refresh
-    products/    # hand packshots / badges
-    products-contents.json  # sealed contents seed (optional)
-    booster-composition.json  # optional chase rates
-    sources/     # ledgers / digs (JSON)
+src/providers/<id>/   # or soft-nest providers/<franchise>/<id>/
+  index.ts            # ProviderModule (thin)
+  extract.ts          # Catalogue Sync orchestrator
+  search.ts           # print search / candidates
+  sealed.ts           # sealed SKUs (when any)
+  install/            # faces | packshots | curated → data/
+  sources/            # ledgers / collectors (action buckets)
+  scrape/ | parse/    # host families (not one file per shop)
+  pipeline/           # coverage | ledgers | migrate | audit
+  indexStore.ts       # sqlite helpers
+  curated/            # DATA only (JSON / faces) — not code modules
 ```
 
 Repo-wide tools stay under `scripts/` (`backgroundWorker`, shared media audits).
-Local indexes (iCollect / LaunchBox / No-Intro): `pipeline.ts` + admin
+Local indexes (iCollect / LaunchBox / No-Intro): `pipeline` + admin
 **Local indexes** / worker catalog — no CLI.
 
 ## Ultimate catalog provider checklist

@@ -235,7 +235,9 @@ export async function syncCroppedCoverAttachment(
           PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
         );
         if (catalogUrl) {
-          const twin = candidates.find((candidate) => candidate.url === catalogUrl);
+          const twin = candidates.find(
+            (candidate) => candidate.url === catalogUrl,
+          );
           catalogTwinId = twin?.id ?? null;
           catalogTwinUrl = catalogUrl;
         }
@@ -359,7 +361,8 @@ export async function syncCroppedCoverAttachment(
     }
   }
 
-  const retargeted = await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
+  const retargeted =
+    await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
   for (const attachment of retargeted) {
     const previous = galleryAfter.find((row) => row.id === attachment.id);
     if (!previous || previous.url === attachment.url) continue;

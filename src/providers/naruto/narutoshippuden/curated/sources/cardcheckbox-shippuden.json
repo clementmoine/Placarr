@@ -1,0 +1,97 @@
+{
+  "source": "cardcheckbox.com — Carddass NARUTO 疾風伝 CARD GAME",
+  "url": "https://cardcheckbox.com/a06a-bandai-4/cdds-narutospd-cg.html",
+  "observed": "2026-08-21",
+  "ingest": "plages de numéros par sortie",
+  "lang": "ja",
+  "sibling": "https://cardcheckbox.com/a06a-bandai-3/cdds-naruto-cg.html — le Carddass 2002-2006, autre jeu, autre pack",
+  "whyItMatters": "Le catalogue ne portait que les quatre premiers actes : les listes de cartes moissonnées sur carddas.com s'arrêtaient là. Cette page atteste les plages jusqu'au sixième acte, plus le Coin+ et la ligne 忍者学校, et range les quatre tirages qui n'avaient pas de set.",
+  "numberingNote": "Comme sur la page du Carddass, seuls les NOUVEAUX numéros sont listés : les réimpressions d'un starter portent leur numéro d'origine.",
+  "unresolved": "Les actes 7 et 8 annoncent 58+P+再録 et 48+P mais leurs plages sont notées 未確認 — la source elle-même ne les a pas. Environ 106 cartes existent donc sans numérotation connue.",
+  "conflictingSource": "card.g1.xrea.com/t2/tbc28ns2.html donne un décompte par sortie qui diverge sur trois lignes (第三幕 58 contre 66, 忍者学校ルール 61 contre 52, 第一幕 79 contre 78). Non retenu : il donne des totaux, jamais des plages, donc rien de vérifiable carte par carte.",
+  "releases": [
+    {
+      "setCode": "maku1",
+      "name": "第一幕 砂隠れに迫る脅威!編",
+      "released": "2007-02-15",
+      "kinds": "78+P",
+      "shi": [1, 42],
+      "mju": [1, 25],
+      "msa": [1, 11]
+    },
+    {
+      "setCode": "maku2",
+      "name": "第二幕 “暁”を追え!我愛羅奪還編",
+      "released": "2007-05-18",
+      "kinds": "58+P",
+      "shi": [43, 66],
+      "mju": [26, 51],
+      "msa": [12, 19]
+    },
+    {
+      "setCode": "coin",
+      "name": "Coin＋",
+      "released": "2007-06",
+      "kinds": "8",
+      "shi": [67, 74]
+    },
+    {
+      "setCode": "maku3",
+      "name": "第三幕 激しき野望!傀儡演舞編",
+      "released": "2007-07-28",
+      "kinds": "66+P+再録",
+      "shi": [75, 106],
+      "mju": [52, 77],
+      "msa": [20, 27]
+    },
+    {
+      "setCode": "gaku",
+      "name": "忍者学校ルール スターティングブースター＆スターティングパック",
+      "released": "2007-09",
+      "kinds": "52+P",
+      "gaku": [1, 40],
+      "shi": [107, 118]
+    },
+    {
+      "setCode": "maku4",
+      "name": "第四幕 天地橋決戦!“根”から来た男編",
+      "released": "2007-10-25",
+      "kinds": "58+P",
+      "shi": [119, 143],
+      "mju": [78, 102],
+      "msa": [28, 35]
+    },
+    {
+      "setCode": "maku5",
+      "name": "第五幕 再会、忌まわしき写輪眼編",
+      "released": "2008-01-25",
+      "kinds": "58+P",
+      "shi": [144, 168],
+      "mju": [103, 127],
+      "msa": [36, 43]
+    },
+    {
+      "setCode": "maku6",
+      "name": "第六幕 友との絆!断ち切れない想い編",
+      "released": "2008-03-19",
+      "kinds": "58+P",
+      "shi": [169, 193],
+      "mju": [128, 152],
+      "msa": [44, 51]
+    },
+    {
+      "setCode": "maku7",
+      "name": "第七幕 赤き烈風の絆編",
+      "released": "2008-07",
+      "kinds": "58+P+再録",
+      "numberingUnknown": true
+    },
+    {
+      "setCode": "maku8",
+      "name": "第八幕 新術炸裂!伝説を越える力編",
+      "released": "2008-11",
+      "kinds": "48+P",
+      "numberingUnknown": true
+    }
+  ]
+}

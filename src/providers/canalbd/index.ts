@@ -19,8 +19,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectCanalbdMappingRawKeys,
@@ -188,6 +188,7 @@ export function mapCanalbdMetadata(
         ? ["structured_data", "barcode_match"]
         : ["structured_data", "title_match"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -240,7 +241,7 @@ async function refreshCanalbdOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const canalbdModule: ProviderModule = {
+export const canalbdModule = defineProvider({
   info: {
     id: "canalbd",
     label: "Canal BD",
@@ -257,6 +258,7 @@ export const canalbdModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -283,9 +285,7 @@ export const canalbdModule: ProviderModule = {
       if (!/canalbd\.net$/i.test(parsed.hostname.replace(/^www\./i, ""))) {
         return null;
       }
-      return (
-        parsed.pathname.match(/\/articles\/[^/]*-(\d+)\/?/i)?.[1] ?? null
-      );
+      return parsed.pathname.match(/\/articles\/[^/]*-(\d+)\/?/i)?.[1] ?? null;
     } catch {
       return null;
     }
@@ -305,7 +305,7 @@ export const canalbdModule: ProviderModule = {
         return mapCanalbdMetadata(
           await resolveCanalbdMetadata({
             name: String(ctx.name || "").trim() || undefined,
-            barcode: ctx.barcode,
+            barcode: ctx.barcode ?? undefined,
             lookupQueries: ctx.lookupQueries,
             signal: ctx.signal,
           }),
@@ -338,12 +338,10 @@ export const canalbdModule: ProviderModule = {
   },
   runMappingProbe: async () =>
     metadataProbe(
-      mapCanalbdMetadata(
-        await resolveCanalbdMetadata({ name: SAMPLE_QUERY }),
-      ),
+      mapCanalbdMetadata(await resolveCanalbdMetadata({ name: SAMPLE_QUERY })),
     ),
   collectMappingRawKeys: async (context) => {
     const ctx = probeContextOrDefault(context, { name: SAMPLE_QUERY });
     return collectCanalbdMappingRawKeys(ctx.name);
   },
-};
+});

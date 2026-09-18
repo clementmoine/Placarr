@@ -2,10 +2,7 @@ import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
 import { priceListingSharesItemIdentity } from "@/core/commerce/retailer/titleMatch";
 
-import {
-  cacheBackMarketHtml,
-  getCachedBackMarketHtml,
-} from "./cache";
+import { cacheBackMarketHtml, getCachedBackMarketHtml } from "./cache";
 import {
   promoteBackMarketSearchEvidence,
   readBackMarketSearchEvidence,
@@ -77,7 +74,9 @@ export function parseBackMarketProductUuidFromUrl(
   return match?.[1]?.toLowerCase() ?? null;
 }
 
-function eurosToCents(amount: string | number | null | undefined): number | null {
+function eurosToCents(
+  amount: string | number | null | undefined,
+): number | null {
   if (amount == null) return null;
   const raw =
     typeof amount === "number"
@@ -87,11 +86,7 @@ function eurosToCents(amount: string | number | null | undefined): number | null
   return Math.round(raw * 100);
 }
 
-function resolveNuxtValue(
-  data: unknown[],
-  idx: unknown,
-  depth = 0,
-): unknown {
+function resolveNuxtValue(data: unknown[], idx: unknown, depth = 0): unknown {
   if (!Number.isInteger(idx) || typeof idx !== "number") return idx;
   if (idx < 0 || idx >= data.length || depth > 8) return null;
   const val = data[idx];
@@ -104,14 +99,13 @@ function resolveNuxtValue(
     return val;
   }
   if (Array.isArray(val)) {
-    if (
-      typeof val[0] === "string" &&
-      NUXT_REACTIVE_MARKERS.has(val[0])
-    ) {
+    if (typeof val[0] === "string" && NUXT_REACTIVE_MARKERS.has(val[0])) {
       return null;
     }
     return val.map((entry) =>
-      Number.isInteger(entry) ? resolveNuxtValue(data, entry, depth + 1) : entry,
+      Number.isInteger(entry)
+        ? resolveNuxtValue(data, entry, depth + 1)
+        : entry,
     );
   }
   if (typeof val === "object") {
@@ -160,10 +154,7 @@ function productHrefFromLink(link: unknown): string | null {
   return `${BACKMARKET_BASE}/${locale}/p/${slug}/${uuid}`;
 }
 
-function gradeNameFromRaw(
-  data: unknown[],
-  gradeRaw: unknown,
-): string | null {
+function gradeNameFromRaw(data: unknown[], gradeRaw: unknown): string | null {
   if (Number.isInteger(gradeRaw)) {
     const resolved = resolveNuxtValue(data, gradeRaw);
     if (resolved && typeof resolved === "object") {
@@ -668,10 +659,7 @@ export async function enrichBackMarketProductGallery(
   );
   if (!html) return product;
 
-  return withProductGallery(
-    product,
-    parseBackMarketProductGallery(html, uuid),
-  );
+  return withProductGallery(product, parseBackMarketProductGallery(html, uuid));
 }
 
 function pricesFromHit(hit: BackMarketHit): BackMarketPrices {
@@ -701,19 +689,27 @@ function pickBestHit(
   );
 }
 
+type BackMarketFetchOptions = {
+  shelfType?: string | null;
+  signal?: AbortSignal;
+  /** Reuse ProviderEvidence only — no HTML GET. */
+  evidenceOnly?: boolean;
+};
+
 /**
  * SearchYield: durable cards first, else GET + parse + promote.
  * Process-local HTML cache still covers same-job meta/price reuse.
  */
 async function loadBackMarketSearchHits(
   searchUrl: string,
-  options: { signal?: AbortSignal } = {},
+  options: BackMarketFetchOptions = {},
 ): Promise<BackMarketHit[]> {
   const fromEvidence = await readBackMarketSearchEvidence(searchUrl);
   if (fromEvidence) {
     console.info(`[Back Market] Search evidence hit for ${searchUrl}`);
     return fromEvidence;
   }
+  if (options.evidenceOnly) return [];
 
   const html = await fetchBackMarketHtml(searchUrl, options);
   if (!html) return [];
@@ -730,7 +726,7 @@ async function loadBackMarketSearchHits(
 export async function fetchFromBackMarket(
   query: string,
   expectedNames: string[] = [],
-  options: { shelfType?: string | null; signal?: AbortSignal } = {},
+  options: BackMarketFetchOptions = {},
 ): Promise<BackMarketProduct | null> {
   const cleaned = query.replace(/\s+/g, " ").trim();
   if (!cleaned) return null;
@@ -751,10 +747,13 @@ export async function fetchFromBackMarket(
 export async function fetchFromBackMarketProductUrl(
   productUrl: string,
   expectedNames: string[] = [],
-  options: { shelfType?: string | null; signal?: AbortSignal } = {},
+  options: BackMarketFetchOptions = {},
 ): Promise<BackMarketProduct | null> {
   const uuid = parseBackMarketProductUuidFromUrl(productUrl);
   if (!uuid) return null;
+
+  // No durable DetailYield for BM PDPs yet — evidence-only skips the GET.
+  if (options.evidenceOnly) return null;
 
   // Product pages share the same Nuxt payload shape for the focused listing.
   const html = await fetchBackMarketHtml(
@@ -768,11 +767,7 @@ export async function fetchFromBackMarketProductUrl(
   const searchHits = parseBackMarketSearchHits(html).filter(
     (hit) => parseBackMarketProductUuidFromUrl(hit.sourceUrl) === uuid,
   );
-  const fromSearch = pickBestHit(
-    searchHits,
-    expectedNames,
-    options.shelfType,
-  );
+  const fromSearch = pickBestHit(searchHits, expectedNames, options.shelfType);
   const fromPage = parseBackMarketProductPage(html, uuid);
   const best = fromSearch ?? fromPage;
   if (!best) return null;
@@ -790,16 +785,13 @@ export async function fetchFromBackMarketProductUrl(
     return null;
   }
 
-  return withProductGallery(
-    best,
-    parseBackMarketProductGallery(html, uuid),
-  );
+  return withProductGallery(best, parseBackMarketProductGallery(html, uuid));
 }
 
 export async function fetchPricesFromBackMarket(
   query: string,
   expectedNames: string[] = [],
-  options: { shelfType?: string | null; signal?: AbortSignal } = {},
+  options: BackMarketFetchOptions = {},
 ): Promise<BackMarketPrices | null> {
   const product = await fetchFromBackMarket(query, expectedNames, options);
   return product ? pricesFromHit(product) : null;
@@ -808,7 +800,7 @@ export async function fetchPricesFromBackMarket(
 export async function fetchPricesFromBackMarketProductUrl(
   productUrl: string,
   expectedNames: string[] = [],
-  options: { shelfType?: string | null; signal?: AbortSignal } = {},
+  options: BackMarketFetchOptions = {},
 ): Promise<BackMarketPrices | null> {
   const product = await fetchFromBackMarketProductUrl(
     productUrl,

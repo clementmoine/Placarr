@@ -1,0 +1,26 @@
+{
+  "note": "Optional same-card links. Neighbourhood in the grid is numeration only — a pair here is a named attestation, never a silent merge of printKeys or folders. Empty until a source names the match.",
+  "pairs": [
+    {
+      "a": "ni0001",
+      "b": "n0001",
+      "names": ["Naruto Uzumaki"],
+      "source": "physical-compare",
+      "note": "Same portrait, Lightning, quote. Link only — keys stay naruto:ni-0001 and naruto:n-0001."
+    },
+    {
+      "a": "te0001",
+      "b": "j0001",
+      "names": ["Kunai"],
+      "source": "physical-compare",
+      "note": "Same jutsu 1. Link only."
+    },
+    {
+      "a": "ta0081",
+      "b": "m0081",
+      "names": ["Livre de la Terre", "Earth Scroll"],
+      "source": "physical-compare",
+      "note": "TA-81 / 作-81 / M-081. Link only."
+    }
+  ]
+}

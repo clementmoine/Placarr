@@ -1,6 +1,12 @@
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { normalizeForTokens } from "@/core/identify/titleUtils";
 import {
+  createTermMatcher,
+  LISTING_BOARDGAME_CATEGORY_TERMS,
+  LISTING_FILM_CONTENT_TERMS,
+  LISTING_LABELLED_FORMAT_DEFINITIONS,
+} from "@/core/identify/listingTerms";
+import {
   detectVideoGamePlatformKey,
   videoGamePlatformListingTypeSignal,
 } from "@/core/identify/platforms/platforms";
@@ -17,26 +23,31 @@ import type { MetadataObservation } from "@/types/metadataObservation";
  * game) cannot hijack the type. See scoreTypeCandidate.
  */
 
-// High-precision category phrases (accents stripped by normalizeForTokens).
-const CATEGORY_PATTERNS = [
-  /\bjeux?\s+de\s+societe\b/,
-  /\bjeux?\s+de\s+plateau\b/,
-  /\bboard\s?games?\b/,
-];
+// Vocabulary lives in listingTerms; the matchers are derived from it so there
+// is no second, hand-written copy of the same phrases as regexes.
+const CATEGORY_MATCHER = createTermMatcher(
+  LISTING_BOARDGAME_CATEGORY_TERMS,
+  "i",
+);
 
 const CATEGORY_STRENGTH = 1;
 
-// Video-only formats / film content cues: a LaserDisc, VHS or "dessin animé" is a
-// MOVIE, never a music CD — so the same harvested listings can disambiguate a
-// film that a coincidental same-named soundtrack album would otherwise win.
-// (DVD/Blu-ray are intentionally excluded — too ambiguous with games.)
-const VIDEO_FORMAT_PATTERNS = [
-  /\blaser\s?disc\b/,
-  /\bvhs\b/,
-  /\bdessin\s+anime\b/,
-  /\blong\s+metrage\b/,
-  /\bvostfr\b/,
-];
+// Video-only carriers + film content cues: a LaserDisc, VHS or "dessin animé"
+// is a MOVIE, never a music CD — so the same harvested listings can
+// disambiguate a film that a coincidental same-named soundtrack would win.
+// DVD/Blu-ray are intentionally excluded here (too ambiguous with games), which
+// is why this uses the labelled carriers minus those two rather than every
+// physical format.
+const VIDEO_FORMAT_MATCHER = createTermMatcher(
+  [
+    ...LISTING_LABELLED_FORMAT_DEFINITIONS.filter(
+      (format) =>
+        format.displayLabel === "LaserDisc" || format.displayLabel === "VHS",
+    ).map((format) => format.term),
+    ...LISTING_FILM_CONTENT_TERMS,
+  ],
+  "i",
+);
 const VIDEO_FORMAT_STRENGTH = 1;
 
 function normalizeName(value: string): string {
@@ -56,7 +67,7 @@ export function detectVideoFormatSignal(names: string[]): number {
     if (!raw) continue;
     const normalized = normalizeName(raw);
     if (!normalized) continue;
-    if (VIDEO_FORMAT_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    if (VIDEO_FORMAT_MATCHER.test(normalized)) {
       return VIDEO_FORMAT_STRENGTH;
     }
   }
@@ -89,18 +100,14 @@ export function detectVideoGameSignal(names: string[]): number {
 // matching shelf), which the cleaned title no longer carries since the format
 // word is stripped. DVD/Blu-ray are kept here (unlike the type signal) because
 // at shelf-suggestion time the media type is already decided.
-const MEDIA_FORMAT_LABELS: Array<[RegExp, string]> = [
-  [/\blaser\s?disc\b/, "LaserDisc"],
-  [/\bvhs\b/, "VHS"],
-  [/\bblu\s?-?\s?ray\b/, "Blu-ray"],
-  [/\bdvd\b/, "DVD"],
-];
-
 /** The physical format named by the listings ("LaserDisc", "VHS"…), or null. */
 export function detectMediaFormat(names: string[]): string | null {
   const normalized = names.map((name) => normalizeName(name)).filter(Boolean);
-  for (const [pattern, label] of MEDIA_FORMAT_LABELS) {
-    if (normalized.some((name) => pattern.test(name))) return label;
+  for (const format of LISTING_LABELLED_FORMAT_DEFINITIONS) {
+    const matcher = createTermMatcher([format.term], "i");
+    if (normalized.some((name) => matcher.test(name))) {
+      return format.displayLabel ?? null;
+    }
   }
   return null;
 }
@@ -118,7 +125,7 @@ export function detectBoardGameSignal(names: string[]): number {
     if (!raw) continue;
     const normalized = normalizeName(raw);
     if (!normalized) continue;
-    if (CATEGORY_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    if (CATEGORY_MATCHER.test(normalized)) {
       return CATEGORY_STRENGTH;
     }
   }
@@ -170,11 +177,7 @@ export function collectPayloadShelfHints(
   const push = (value?: string | null) => {
     const trimmed = value?.trim();
     if (!trimmed) return;
-    if (
-      hints.some(
-        (hint) => hint.toLowerCase() === trimmed.toLowerCase(),
-      )
-    ) {
+    if (hints.some((hint) => hint.toLowerCase() === trimmed.toLowerCase())) {
       return;
     }
     hints.push(trimmed);
@@ -194,8 +197,7 @@ export function shelfHintObservationsFromHints(
 ): MetadataObservation[] {
   return hints.map((hint) => {
     const isFormatHint =
-      mediaFormat != null &&
-      hint.toLowerCase() === mediaFormat.toLowerCase();
+      mediaFormat != null && hint.toLowerCase() === mediaFormat.toLowerCase();
     return {
       kind: "fact" as const,
       role: "listing_fact" as const,
@@ -206,10 +208,7 @@ export function shelfHintObservationsFromHints(
         providerId: "marketplace",
         providerLabel: "Marketplace",
         sourceDocumentRole: "structured_data" as const,
-        evidenceSignals: [
-          "structured_data" as const,
-          "barcode_match" as const,
-        ],
+        evidenceSignals: ["structured_data" as const, "barcode_match" as const],
       },
       usage: makeObservationUsage({
         displayCandidate: false,

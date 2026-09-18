@@ -1,0 +1,15 @@
+{
+  "source": "Observation directe des exemplaires physiques, par le propriétaire du catalogue",
+  "observed": "2026-08-21",
+  "note": "Les tirages que Lorcast bouche arrivent sans finition : Lorcast n'a aucun champ pour ça, et LorcanaJSON ne publie pas les sets promo. Un exemplaire en main tranche ce que ni l'un ni l'autre ne dit. Chaque entrée nomme une carte de référence plutôt qu'un type : ce qui a été observé, c'est « la même finition que celle-ci », et c'est cette relation qu'on garde. Le type se résout au build depuis la référence, et la suit si LorcanaJSON la corrige.",
+  "whyItMatters": "Sans ça, ces tirages s'affichent plats alors qu'ils sont foil en vrai. Inventer le type serait pire que le vide — mais une attestation de première main n'est pas une invention.",
+  "entries": [
+    {
+      "printKey": "lorcana:p2-36",
+      "card": "Mickey Mouse – True Friend, 36/P2",
+      "sameFinishAs": "lorcana:6-25-p2",
+      "reference": "Lilo – Escape Artist, 25/P2",
+      "note": "Corroboré par le visuel : les deux portent le même cadre doré pleine page semé d'étoiles blanches, que ne partage aucune autre promo P2 — 15/P2, l'autre impression de la même carte, a le cadre noir standard et reste donc sans finition."
+    }
+  ]
+}

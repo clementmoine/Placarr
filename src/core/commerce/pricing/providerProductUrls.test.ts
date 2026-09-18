@@ -76,6 +76,27 @@ describe("providerProductUrlsFromMetadataFacts", () => {
     expect(providerProductUrlsFromMetadataFacts(facts)).toEqual([]);
   });
 
+  it("ignores attribution websiteUrl chips (site roots are not product fiches)", () => {
+    const facts: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "LorcanaJSON",
+        value: "Voir la fiche",
+        url: "https://lorcanajson.org/",
+        source: "lorcanajson",
+      },
+      {
+        kind: "external-link",
+        label: "NetGamesRetro",
+        value: "Voir la fiche",
+        url: "https://www.netgamesretro.com",
+        source: "netgamesretro",
+      },
+    ];
+
+    expect(providerProductUrlsFromMetadataFacts(facts)).toEqual([]);
+  });
+
   it("dedupes repeated URLs for the same provider", () => {
     const facts: MetadataFact[] = [
       {

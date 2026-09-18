@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 import { collectScanPriceOffers } from "@/core/catalog/barcodePrices";
 
 describe("collectScanPriceOffers", () => {
   it("collects game reference prices from the lookup payload", () => {
-    const payload = createEmptyBarcodeLookupPayload();
+    const payload = createEmptyBarcodeLookupPayload(
+      barcodeLookupSlotDefaults(),
+    );
     payload.pc = {
       title: "Mario Kart Wii",
       prices: {
@@ -32,7 +35,9 @@ describe("collectScanPriceOffers", () => {
   });
 
   it("collects retailer prices captured during identification", () => {
-    const payload = createEmptyBarcodeLookupPayload();
+    const payload = createEmptyBarcodeLookupPayload(
+      barcodeLookupSlotDefaults(),
+    );
     payload.amc = [
       { name: "Death Note Tome 1", priceNew: 999, priceUsed: 499 },
     ];

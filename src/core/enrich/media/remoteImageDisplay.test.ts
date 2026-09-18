@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isLocalFoilImageSrc,
   isLocalUploadImageSrc,
+  isTcgdexAssetImageSrc,
   remoteImageDisplaySrc,
   remoteImageNeedsProxy,
   remoteImageProxyPath,
@@ -18,9 +20,23 @@ describe("remoteImageDisplay", () => {
     expect(remoteImageNeedsProxy("https://i.ebayimg.com/x.jpg")).toBe(false);
   });
 
-  it("skips the Next optimizer for local uploads and proxied CDNs", () => {
+  it("skips the Next optimizer for local uploads, foil packs, TCGdex, and proxied CDNs", () => {
     expect(isLocalUploadImageSrc("/uploads/cover.webp")).toBe(true);
+    expect(isLocalFoilImageSrc("/assets/pokemon/textures/x.png")).toBe(true);
+    expect(
+      isTcgdexAssetImageSrc(
+        "https://assets.tcgdex.net/fr/sv/sv03.5/006/low.webp",
+      ),
+    ).toBe(true);
     expect(remoteImageShouldSkipOptimizer("/uploads/cover.webp")).toBe(true);
+    expect(
+      remoteImageShouldSkipOptimizer("/assets/pokemon/textures/x.png"),
+    ).toBe(true);
+    expect(
+      remoteImageShouldSkipOptimizer(
+        "https://assets.tcgdex.net/fr/sv/sv03.5/006/low.webp",
+      ),
+    ).toBe(true);
     expect(remoteImageShouldSkipOptimizer(booknodeFull)).toBe(true);
     expect(
       remoteImageShouldSkipOptimizer(

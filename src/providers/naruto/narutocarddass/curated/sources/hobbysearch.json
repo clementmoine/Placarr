@@ -1,0 +1,10 @@
+{
+  "source": "HobbySearch 1999.co.jp (VPN JP 2026-08-18)",
+  "observed": "2026-08-18",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "search": "https://www.1999.co.jp/search?searchkey=NARUTO カードゲーム カードダス",
+  "note": "HTML 200 from JP but the result chrome is the generic category hub (figures / gunpla / rail). 0 product tiles, 0 /info.aspx ids. Earlier FR-IP probe had the query only in <title>. Still empty as a card source. Do not paginate.",
+  "not": ["crawl", "data-carddass", "en-ccg"]
+}

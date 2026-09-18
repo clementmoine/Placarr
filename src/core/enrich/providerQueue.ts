@@ -7,7 +7,7 @@ import type {
   MetadataProviderAdapter,
 } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
-import type { MediaType } from "@/types/providerRegistry";
+import type { MediaType, ProviderInfo } from "@/types/providerRegistry";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 
 class ProviderQueue {
@@ -37,19 +37,55 @@ class ProviderQueue {
 
 const DEFAULT_PROVIDER_CONCURRENCY = 1;
 
-const PROVIDER_CONCURRENCY: Record<string, number> = {
-  launchbox: 2,
-  coverproject: 2,
+/**
+ * Parallel calls allowed to an API/local provider that declares neither a rate
+ * limit nor a min interval. Keeping every provider at 1 made a same-type batch
+ * serialize on each provider's queue once the pools were split (#2).
+ */
+export const API_PROVIDER_CONCURRENCY = 3;
+
+export type ProviderQueueSettings = {
+  concurrency: number;
+  minIntervalMs: number;
 };
 
-const PROVIDER_MIN_INTERVAL_MS: Record<string, number> = {
-  screenscraper: 1_100,
-  igdb: 250,
-  thegamesdb: 250,
-  howlongtobeat: 500,
-  rawg: 250,
-  pricecharting: 500,
-};
+/**
+ * Queue shape for a provider, derived from its own registry traits — core
+ * never learns provider ids. Anything that can be rate-limited stays serial:
+ * a declared interval, the `rateLimited` flag, or a scrape (be polite, and
+ * FlareSolverr is serial upstream anyway).
+ */
+export function providerQueueSettings(
+  info: Pick<
+    ProviderInfo,
+    "auth" | "rateLimited" | "minRequestIntervalMs" | "maxConcurrentRequests"
+  >,
+): ProviderQueueSettings {
+  const minIntervalMs = info.minRequestIntervalMs ?? 0;
+  const mustSerialize =
+    minIntervalMs > 0 ||
+    Boolean(info.rateLimited) ||
+    info.auth.kind === "scrape";
+  const concurrency =
+    info.maxConcurrentRequests ??
+    (mustSerialize ? DEFAULT_PROVIDER_CONCURRENCY : API_PROVIDER_CONCURRENCY);
+  return { concurrency: Math.max(1, concurrency), minIntervalMs };
+}
+
+const providerQueues = new Map<string, ProviderQueue>();
+const providerSettings = new Map<string, ProviderQueueSettings>();
+
+/**
+ * Register a provider's queue shape. Called once per provider from the adapter
+ * bootstrap; unregistered ids fall back to a serial queue.
+ */
+export function configureProviderQueue(
+  providerId: string,
+  info: Parameters<typeof providerQueueSettings>[0],
+): void {
+  providerSettings.set(providerId, providerQueueSettings(info));
+  providerQueues.delete(providerId);
+}
 
 /**
  * Cross-provider fan-out for one enrich. Background runs out-of-process
@@ -74,15 +110,14 @@ function resolveProviderTimeoutMs(isBackground?: boolean): number {
     : PROVIDER_RESOLVE_TIMEOUT_INTERACTIVE_MS;
 }
 
-const providerQueues = new Map<string, ProviderQueue>();
-
 function getProviderQueue(providerId: string): ProviderQueue {
   const existing = providerQueues.get(providerId);
   if (existing) return existing;
 
+  const settings = providerSettings.get(providerId);
   const queue = new ProviderQueue(
-    PROVIDER_CONCURRENCY[providerId] ?? DEFAULT_PROVIDER_CONCURRENCY,
-    PROVIDER_MIN_INTERVAL_MS[providerId] ?? 0,
+    settings?.concurrency ?? DEFAULT_PROVIDER_CONCURRENCY,
+    settings?.minIntervalMs ?? 0,
   );
   providerQueues.set(providerId, queue);
   return queue;
@@ -157,9 +192,7 @@ async function resolveProviderWithTimeout(
     recordProviderResolve({
       providerId: adapter.id,
       mediaType,
-      durationMs: timedOut
-        ? timeoutMs
-        : Math.max(0, Date.now() - startedAt),
+      durationMs: timedOut ? timeoutMs : Math.max(0, Date.now() - startedAt),
       hit,
     });
   }
@@ -206,11 +239,7 @@ export async function resolveMetadataProvidersInOrder(
         return { providerId, value: null as MetadataResult | null };
       }
       try {
-        const value = await resolveProviderWithTimeout(
-          adapter,
-          ctx,
-          mediaType,
-        );
+        const value = await resolveProviderWithTimeout(adapter, ctx, mediaType);
         byProvider.set(providerId, value);
         if (options?.onProviderResult) {
           const callback = options.onProviderResult;
@@ -259,8 +288,7 @@ export async function resolveMetadataProvidersInOrder(
       providerId,
       byProvider.has(providerId)
         ? byProvider.get(providerId)!
-        : (results.find((row) => row.providerId === providerId)?.value ??
-          null),
+        : (results.find((row) => row.providerId === providerId)?.value ?? null),
     );
   }
 
@@ -269,4 +297,5 @@ export async function resolveMetadataProvidersInOrder(
 
 export function resetMetadataProviderQueuesForTests(): void {
   providerQueues.clear();
+  providerSettings.clear();
 }

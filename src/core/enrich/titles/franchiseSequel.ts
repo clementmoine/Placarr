@@ -158,4 +158,3 @@ export function franchiseSequelNumbersConflict(
   const requestedSet = new Set(requested);
   return !catalog.some((number) => requestedSet.has(number));
 }
-

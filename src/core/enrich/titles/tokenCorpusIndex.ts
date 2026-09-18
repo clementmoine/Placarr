@@ -9,6 +9,7 @@ import {
   buildTokenDocumentFrequency,
   type CorpusTokenStats,
 } from "@/core/enrich/titles/tokenCorpusIdf";
+import { titleIdfDir } from "@/lib/runtimeData";
 
 export const TOKEN_CORPUS_INDEX_SCHEMA_VERSION = 1;
 
@@ -25,10 +26,7 @@ let loadedPath: string | null = null;
 let loadedMtimeMs: number | null = null;
 
 function cacheDir(): string {
-  return (
-    process.env.TOKEN_CORPUS_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "title-idf")
-  );
+  return titleIdfDir();
 }
 
 export function tokenCorpusIndexPath(): string {
@@ -53,9 +51,7 @@ export function serializeTokenCorpusStats(
   };
 }
 
-export function parseTokenCorpusStats(
-  raw: unknown,
-): CorpusTokenStats | null {
+export function parseTokenCorpusStats(raw: unknown): CorpusTokenStats | null {
   if (!raw || typeof raw !== "object") return null;
   const file = raw as Partial<TokenCorpusIndexFile>;
   if (file.schemaVersion !== TOKEN_CORPUS_INDEX_SCHEMA_VERSION) return null;
@@ -120,7 +116,7 @@ export async function loadTokenCorpusIndex(
 
 /**
  * Lazy open of the prebuilt index. Reloads when the file mtime changes so a
- * background `title-idf:build-index` is visible without process restart.
+ * background `title-idf:update` is visible without process restart.
  * Missing / corrupt file ⇒ null (safe: unknown tokens stay as signal).
  */
 export function getGlobalCorpusTokenStats(): CorpusTokenStats | null {

@@ -9,6 +9,44 @@ import {
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import { normalizeRomChecksums } from "@/core/enrich/romChecksums";
 import { isAbortError } from "@/lib/http/abort";
+import { existingLocalizedUploadForUrl } from "@/core/enrich/media/imageDownload";
+
+import type { MetadataResult } from "@/types/metadataProvider";
+
+/**
+ * Point every image at its local copy when one is already on disk.
+ *
+ * A localized file is named `md5(sourceUrl)`, so the provider URL and its
+ * download are the same picture under two names — and a client merging this
+ * response with what it already stored would list that picture twice. Answering
+ * with one URL per image is also simply more accurate: the file we have is the
+ * file we will serve.
+ */
+async function withLocalizedImageUrls(
+  metadata: MetadataResult | null | undefined,
+): Promise<MetadataResult | null | undefined> {
+  if (!metadata) return metadata;
+
+  const localize = async (url?: string | null) =>
+    url && /^https?:\/\//i.test(url)
+      ? ((await existingLocalizedUploadForUrl(url)) ?? url)
+      : url;
+
+  const attachments = metadata.attachments
+    ? await Promise.all(
+        metadata.attachments.map(async (attachment) => ({
+          ...attachment,
+          url: (await localize(attachment.url)) ?? attachment.url,
+        })),
+      )
+    : undefined;
+
+  return {
+    ...metadata,
+    imageUrl: (await localize(metadata.imageUrl)) ?? metadata.imageUrl,
+    ...(attachments ? { attachments } : {}),
+  };
+}
 
 export async function GET(req: NextRequest) {
   // Proxy vers des API tierces (souvent payantes) → auth obligatoire.
@@ -63,7 +101,7 @@ export async function GET(req: NextRequest) {
             name: shelfName,
           })
         : metadata;
-    return NextResponse.json(filtered);
+    return NextResponse.json(await withLocalizedImageUrls(filtered));
   } catch (error) {
     if (isAbortError(error)) {
       return NextResponse.json(null);

@@ -1,4 +1,3 @@
-import type { AttachmentType } from "@prisma/client";
 import {
   isCoverCandidateKind,
   isPhysicalNonCoverKind,
@@ -12,7 +11,6 @@ import {
 import {
   attachmentSemantics,
   COVER_FRIENDLY_TYPES,
-  type AttachmentDisplayScoreOptions,
   type ScoredAttachmentInput,
 } from "@/core/enrich/media/attachmentDisplayTypes";
 
@@ -64,7 +62,9 @@ export function isRemoteAttachmentUrl(url?: string | null): boolean {
   return Boolean(url && /^https?:\/\//i.test(url));
 }
 
-export function detectPlatformKeysInText(text: string): Set<VideoGamePlatformKey> {
+export function detectPlatformKeysInText(
+  text: string,
+): Set<VideoGamePlatformKey> {
   const keys = new Set<VideoGamePlatformKey>();
   const direct = detectVideoGamePlatformKey(text);
   if (direct) keys.add(direct);
@@ -177,7 +177,9 @@ export function isAttachmentCoverPlatformMismatch(
   return !detected.has(requestedPlatformKey);
 }
 
-export function isCoverGalleryAttachment(attachment: ScoredAttachmentInput): boolean {
+export function isCoverGalleryAttachment(
+  attachment: ScoredAttachmentInput,
+): boolean {
   return COVER_FRIENDLY_TYPES.has(attachment.type);
 }
 

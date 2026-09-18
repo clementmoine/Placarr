@@ -298,7 +298,10 @@ describe("attachmentDisplayScore", () => {
 
   it("priorise System Only quand preferSystemOnlyCover (console loose)", () => {
     const metrics = new Map([
-      ["/uploads/system-only.jpg", { width: 1200, height: 900, format: "jpeg" }],
+      [
+        "/uploads/system-only.jpg",
+        { width: 1200, height: 900, format: "jpeg" },
+      ],
       ["/uploads/box.jpg", { width: 800, height: 1100, format: "jpeg" }],
     ]);
 
@@ -891,9 +894,9 @@ describe("attachmentDisplayScore", () => {
       url: "/uploads/xbox.jpg",
       platformKey: "xbox-360",
     };
-    expect(shouldShowCoverAttachmentOnShelf(xboxCover, "ps3", [xboxCover])).toBe(
-      false,
-    );
+    expect(
+      shouldShowCoverAttachmentOnShelf(xboxCover, "ps3", [xboxCover]),
+    ).toBe(false);
   });
 
   it("keeps strict retail covers without a platform tag in the gallery", () => {
@@ -1005,9 +1008,9 @@ describe("attachmentDisplayScore", () => {
       { requestedPlatformKey: "gb", uiLocale: "fr" },
     );
 
-    expect(ranked.slice(0, 2).every((attachment) => attachment.role === "fr")).toBe(
-      true,
-    );
+    expect(
+      ranked.slice(0, 2).every((attachment) => attachment.role === "fr"),
+    ).toBe(true);
     expect(ranked[2]?.url).toBe("/uploads/lb-eu.jpg");
   });
 
@@ -1020,7 +1023,9 @@ describe("attachmentDisplayScore", () => {
       title: "Angry Birds Star Wars",
       strictShelfPlatformCoverSource: true,
     };
-    expect(shouldShowCoverAttachmentOnShelf(cover, "psvita", [cover])).toBe(true);
+    expect(shouldShowCoverAttachmentOnShelf(cover, "psvita", [cover])).toBe(
+      true,
+    );
     expect(
       rankCoverGalleryAttachments([cover], undefined, {
         requestedPlatformKey: "psvita",

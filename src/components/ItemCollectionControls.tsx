@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/shared/utils";
 import {
-  ITEM_COLLECTION_SORT_OPTIONS,
+  itemCollectionSortOptions,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -19,6 +19,8 @@ type ItemCollectionSortSelectProps = {
   onValueChange: (value: ItemCollectionSort) => void;
   className?: string;
   placeholderKey?: string;
+  /** When set, binder (set → number) sorts appear for print shelves only. */
+  shelfType?: string | null;
 };
 
 export function ItemCollectionSortSelect({
@@ -26,8 +28,10 @@ export function ItemCollectionSortSelect({
   onValueChange,
   className,
   placeholderKey = "sorting.title",
+  shelfType,
 }: ItemCollectionSortSelectProps) {
   const { t } = useLocale();
+  const options = itemCollectionSortOptions(shelfType);
 
   return (
     <Select
@@ -43,7 +47,7 @@ export function ItemCollectionSortSelect({
         <SelectValue placeholder={t(placeholderKey)} />
       </SelectTrigger>
       <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg">
-        {ITEM_COLLECTION_SORT_OPTIONS.map((option) => (
+        {options.map((option) => (
           <SelectItem key={option} value={option} className="cursor-pointer">
             {t(`sorting.${option}`)}
           </SelectItem>

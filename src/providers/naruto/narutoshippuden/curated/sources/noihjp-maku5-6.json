@@ -1,0 +1,828 @@
+{
+  "source": "http://naruto.noihjp.com/Goods/Carddas/Shippuden/CardGame/05.php + 06.php",
+  "observed": "2026-09-12",
+  "ingest": "titles",
+  "line": "noihjp-maku5-6",
+  "note": "Fan checklist for 第五幕・第六幕 (JA titles). Disk families shi/mju/msa. Official carddas.com HTML for these acts is JS-only / Wayback-gappy. mju-124 glyph uncertain (廓庵入鄽垂手). shi-191 titled as printed mystery ？？？？？.",
+  "counts": {
+    "cards": 116,
+    "bySet": {
+      "maku5": 58,
+      "maku6": 58
+    }
+  },
+  "cards": [
+    {
+      "printed": "SHI-144",
+      "number": "shi0144",
+      "name": "九尾の狐",
+      "setCode": "maku5",
+      "fileStem": "shi-144"
+    },
+    {
+      "printed": "SHI-145",
+      "number": "shi0145",
+      "name": "うずまきナルト",
+      "setCode": "maku5",
+      "fileStem": "shi-145"
+    },
+    {
+      "printed": "SHI-146",
+      "number": "shi0146",
+      "name": "春野サクラ",
+      "setCode": "maku5",
+      "fileStem": "shi-146"
+    },
+    {
+      "printed": "SHI-147",
+      "number": "shi0147",
+      "name": "うちはサスケ",
+      "setCode": "maku5",
+      "fileStem": "shi-147"
+    },
+    {
+      "printed": "SHI-148",
+      "number": "shi0148",
+      "name": "サイ",
+      "setCode": "maku5",
+      "fileStem": "shi-148"
+    },
+    {
+      "printed": "SHI-149",
+      "number": "shi0149",
+      "name": "ヤマト",
+      "setCode": "maku5",
+      "fileStem": "shi-149"
+    },
+    {
+      "printed": "SHI-150",
+      "number": "shi0150",
+      "name": "うずまきナルト&サイ",
+      "setCode": "maku5",
+      "fileStem": "shi-150"
+    },
+    {
+      "printed": "SHI-151",
+      "number": "shi0151",
+      "name": "犬塚キバ",
+      "setCode": "maku5",
+      "fileStem": "shi-151"
+    },
+    {
+      "printed": "SHI-152",
+      "number": "shi0152",
+      "name": "油女シノ",
+      "setCode": "maku5",
+      "fileStem": "shi-152"
+    },
+    {
+      "printed": "SHI-153",
+      "number": "shi0153",
+      "name": "日向ヒナタ",
+      "setCode": "maku5",
+      "fileStem": "shi-153"
+    },
+    {
+      "printed": "SHI-154",
+      "number": "shi0154",
+      "name": "日向ヒアシ",
+      "setCode": "maku5",
+      "fileStem": "shi-154"
+    },
+    {
+      "printed": "SHI-155",
+      "number": "shi0155",
+      "name": "暗部",
+      "setCode": "maku5",
+      "fileStem": "shi-155"
+    },
+    {
+      "printed": "SHI-156",
+      "number": "shi0156",
+      "name": "赤丸",
+      "setCode": "maku5",
+      "fileStem": "shi-156"
+    },
+    {
+      "printed": "SHI-157",
+      "number": "shi0157",
+      "name": "水戸門ホムラ",
+      "setCode": "maku5",
+      "fileStem": "shi-157"
+    },
+    {
+      "printed": "SHI-158",
+      "number": "shi0158",
+      "name": "うたたねコハル",
+      "setCode": "maku5",
+      "fileStem": "shi-158"
+    },
+    {
+      "printed": "SHI-159",
+      "number": "shi0159",
+      "name": "温泉ギャル",
+      "setCode": "maku5",
+      "fileStem": "shi-159"
+    },
+    {
+      "printed": "SHI-160",
+      "number": "shi0160",
+      "name": "我愛羅",
+      "setCode": "maku5",
+      "fileStem": "shi-160"
+    },
+    {
+      "printed": "SHI-161",
+      "number": "shi0161",
+      "name": "カンクロウ",
+      "setCode": "maku5",
+      "fileStem": "shi-161"
+    },
+    {
+      "printed": "SHI-162",
+      "number": "shi0162",
+      "name": "山椒魚",
+      "setCode": "maku5",
+      "fileStem": "shi-162"
+    },
+    {
+      "printed": "SHI-163",
+      "number": "shi0163",
+      "name": "エビゾウ",
+      "setCode": "maku5",
+      "fileStem": "shi-163"
+    },
+    {
+      "printed": "SHI-164",
+      "number": "shi0164",
+      "name": "サソリ",
+      "setCode": "maku5",
+      "fileStem": "shi-164"
+    },
+    {
+      "printed": "SHI-165",
+      "number": "shi0165",
+      "name": "デイダラ",
+      "setCode": "maku5",
+      "fileStem": "shi-165"
+    },
+    {
+      "printed": "SHI-166",
+      "number": "shi0166",
+      "name": "大蛇丸",
+      "setCode": "maku5",
+      "fileStem": "shi-166"
+    },
+    {
+      "printed": "SHI-167",
+      "number": "shi0167",
+      "name": "薬師カブト",
+      "setCode": "maku5",
+      "fileStem": "shi-167"
+    },
+    {
+      "printed": "SHI-168",
+      "number": "shi0168",
+      "name": "うちはサスケ",
+      "setCode": "maku5",
+      "fileStem": "shi-168"
+    },
+    {
+      "printed": "JU-103",
+      "number": "mju0103",
+      "name": "青春フルパワー!",
+      "setCode": "maku5",
+      "fileStem": "ju-103"
+    },
+    {
+      "printed": "JU-104",
+      "number": "mju0104",
+      "name": "メンバー捜し",
+      "setCode": "maku5",
+      "fileStem": "ju-104"
+    },
+    {
+      "printed": "JU-105",
+      "number": "mju0105",
+      "name": "妖狐の衣",
+      "setCode": "maku5",
+      "fileStem": "ju-105"
+    },
+    {
+      "printed": "JU-106",
+      "number": "mju0106",
+      "name": "木ノ葉大旋光",
+      "setCode": "maku5",
+      "fileStem": "ju-106"
+    },
+    {
+      "printed": "JU-107",
+      "number": "mju0107",
+      "name": "圧縮されたチャクラ",
+      "setCode": "maku5",
+      "fileStem": "ju-107"
+    },
+    {
+      "printed": "JU-108",
+      "number": "mju0108",
+      "name": "絵本",
+      "setCode": "maku5",
+      "fileStem": "ju-108"
+    },
+    {
+      "printed": "JU-109",
+      "number": "mju0109",
+      "name": "作り笑い",
+      "setCode": "maku5",
+      "fileStem": "ju-109"
+    },
+    {
+      "printed": "JU-110",
+      "number": "mju0110",
+      "name": "悪口雑言",
+      "setCode": "maku5",
+      "fileStem": "ju-110"
+    },
+    {
+      "printed": "JU-111",
+      "number": "mju0111",
+      "name": "超獣偽画・鷹",
+      "setCode": "maku5",
+      "fileStem": "ju-111"
+    },
+    {
+      "printed": "JU-112",
+      "number": "mju0112",
+      "name": "超獣偽画・蛇",
+      "setCode": "maku5",
+      "fileStem": "ju-112"
+    },
+    {
+      "printed": "JU-113",
+      "number": "mju0113",
+      "name": "極秘指令書",
+      "setCode": "maku5",
+      "fileStem": "ju-113"
+    },
+    {
+      "printed": "JU-114",
+      "number": "mju0114",
+      "name": "草薙の剣",
+      "setCode": "maku5",
+      "fileStem": "ju-114"
+    },
+    {
+      "printed": "JU-115",
+      "number": "mju0115",
+      "name": "潜影多蛇手",
+      "setCode": "maku5",
+      "fileStem": "ju-115"
+    },
+    {
+      "printed": "JU-116",
+      "number": "mju0116",
+      "name": "三重羅生門",
+      "setCode": "maku5",
+      "fileStem": "ju-116"
+    },
+    {
+      "printed": "JU-117",
+      "number": "mju0117",
+      "name": "千鳥流し",
+      "setCode": "maku5",
+      "fileStem": "ju-117"
+    },
+    {
+      "printed": "JU-118",
+      "number": "mju0118",
+      "name": "バディシステム",
+      "setCode": "maku5",
+      "fileStem": "ju-118"
+    },
+    {
+      "printed": "JU-119",
+      "number": "mju0119",
+      "name": "鎖鎌",
+      "setCode": "maku5",
+      "fileStem": "ju-119"
+    },
+    {
+      "printed": "JU-120",
+      "number": "mju0120",
+      "name": "譲れぬ想い",
+      "setCode": "maku5",
+      "fileStem": "ju-120"
+    },
+    {
+      "printed": "JU-121",
+      "number": "mju0121",
+      "name": "操具・天鎖災",
+      "setCode": "maku5",
+      "fileStem": "ju-121"
+    },
+    {
+      "printed": "JU-122",
+      "number": "mju0122",
+      "name": "黒秘技・機々一発",
+      "setCode": "maku5",
+      "fileStem": "ju-122"
+    },
+    {
+      "printed": "JU-123",
+      "number": "mju0123",
+      "name": "解毒薬",
+      "setCode": "maku5",
+      "fileStem": "ju-123"
+    },
+    {
+      "printed": "JU-124",
+      "number": "mju0124",
+      "name": "火影式耳順術・廓庵入鄽垂手",
+      "setCode": "maku5",
+      "fileStem": "ju-124"
+    },
+    {
+      "printed": "JU-125",
+      "number": "mju0125",
+      "name": "八卦破山撃",
+      "setCode": "maku5",
+      "fileStem": "ju-125"
+    },
+    {
+      "printed": "JU-126",
+      "number": "mju0126",
+      "name": "木遁・木錠壁",
+      "setCode": "maku5",
+      "fileStem": "ju-126"
+    },
+    {
+      "printed": "JU-127",
+      "number": "mju0127",
+      "name": "木遁・四柱家",
+      "setCode": "maku5",
+      "fileStem": "ju-127"
+    },
+    {
+      "printed": "SA-036",
+      "number": "msa0036",
+      "name": "競争",
+      "setCode": "maku5",
+      "fileStem": "sa-036"
+    },
+    {
+      "printed": "SA-037",
+      "number": "msa0037",
+      "name": "思わぬ再会",
+      "setCode": "maku5",
+      "fileStem": "sa-037"
+    },
+    {
+      "printed": "SA-038",
+      "number": "msa0038",
+      "name": "謎の襲撃者",
+      "setCode": "maku5",
+      "fileStem": "sa-038"
+    },
+    {
+      "printed": "SA-039",
+      "number": "msa0039",
+      "name": "力試し",
+      "setCode": "maku5",
+      "fileStem": "sa-039"
+    },
+    {
+      "printed": "SA-040",
+      "number": "msa0040",
+      "name": "内輪揉め",
+      "setCode": "maku5",
+      "fileStem": "sa-040"
+    },
+    {
+      "printed": "SA-041",
+      "number": "msa0041",
+      "name": "木ノ葉病院",
+      "setCode": "maku5",
+      "fileStem": "sa-041"
+    },
+    {
+      "printed": "SA-042",
+      "number": "msa0042",
+      "name": "冷やかな視線",
+      "setCode": "maku5",
+      "fileStem": "sa-042"
+    },
+    {
+      "printed": "SA-043",
+      "number": "msa0043",
+      "name": "裸の付き合い",
+      "setCode": "maku5",
+      "fileStem": "sa-043"
+    },
+    {
+      "printed": "SHI-169",
+      "number": "shi0169",
+      "name": "うずまきナルト",
+      "setCode": "maku6",
+      "fileStem": "shi-169"
+    },
+    {
+      "printed": "SHI-170",
+      "number": "shi0170",
+      "name": "うちはサスケ",
+      "setCode": "maku6",
+      "fileStem": "shi-170"
+    },
+    {
+      "printed": "SHI-171",
+      "number": "shi0171",
+      "name": "サイ",
+      "setCode": "maku6",
+      "fileStem": "shi-171"
+    },
+    {
+      "printed": "SHI-172",
+      "number": "shi0172",
+      "name": "春野サクラ",
+      "setCode": "maku6",
+      "fileStem": "shi-172"
+    },
+    {
+      "printed": "SHI-173",
+      "number": "shi0173",
+      "name": "サソリ",
+      "setCode": "maku6",
+      "fileStem": "shi-173"
+    },
+    {
+      "printed": "SHI-174",
+      "number": "shi0174",
+      "name": "奈良シカマル",
+      "setCode": "maku6",
+      "fileStem": "shi-174"
+    },
+    {
+      "printed": "SHI-175",
+      "number": "shi0175",
+      "name": "はたけカカシ",
+      "setCode": "maku6",
+      "fileStem": "shi-175"
+    },
+    {
+      "printed": "SHI-176",
+      "number": "shi0176",
+      "name": "うちはイタチ",
+      "setCode": "maku6",
+      "fileStem": "shi-176"
+    },
+    {
+      "printed": "SHI-177",
+      "number": "shi0177",
+      "name": "ヤマト",
+      "setCode": "maku6",
+      "fileStem": "shi-177"
+    },
+    {
+      "printed": "SHI-178",
+      "number": "shi0178",
+      "name": "マイト・ガイ",
+      "setCode": "maku6",
+      "fileStem": "shi-178"
+    },
+    {
+      "printed": "SHI-179",
+      "number": "shi0179",
+      "name": "干柿鬼鮫",
+      "setCode": "maku6",
+      "fileStem": "shi-179"
+    },
+    {
+      "printed": "SHI-180",
+      "number": "shi0180",
+      "name": "ゼツ",
+      "setCode": "maku6",
+      "fileStem": "shi-180"
+    },
+    {
+      "printed": "SHI-181",
+      "number": "shi0181",
+      "name": "デイダラ",
+      "setCode": "maku6",
+      "fileStem": "shi-181"
+    },
+    {
+      "printed": "SHI-182",
+      "number": "shi0182",
+      "name": "我愛羅",
+      "setCode": "maku6",
+      "fileStem": "shi-182"
+    },
+    {
+      "printed": "SHI-183",
+      "number": "shi0183",
+      "name": "トビ",
+      "setCode": "maku6",
+      "fileStem": "shi-183"
+    },
+    {
+      "printed": "SHI-184",
+      "number": "shi0184",
+      "name": "バキ",
+      "setCode": "maku6",
+      "fileStem": "shi-184"
+    },
+    {
+      "printed": "SHI-185",
+      "number": "shi0185",
+      "name": "テマリ",
+      "setCode": "maku6",
+      "fileStem": "shi-185"
+    },
+    {
+      "printed": "SHI-186",
+      "number": "shi0186",
+      "name": "薬師カブト",
+      "setCode": "maku6",
+      "fileStem": "shi-186"
+    },
+    {
+      "printed": "SHI-187",
+      "number": "shi0187",
+      "name": "自来也",
+      "setCode": "maku6",
+      "fileStem": "shi-187"
+    },
+    {
+      "printed": "SHI-188",
+      "number": "shi0188",
+      "name": "綱手",
+      "setCode": "maku6",
+      "fileStem": "shi-188"
+    },
+    {
+      "printed": "SHI-189",
+      "number": "shi0189",
+      "name": "大蛇丸",
+      "setCode": "maku6",
+      "fileStem": "shi-189"
+    },
+    {
+      "printed": "SHI-190",
+      "number": "shi0190",
+      "name": "木ノ葉丸",
+      "setCode": "maku6",
+      "fileStem": "shi-190"
+    },
+    {
+      "printed": "SHI-191",
+      "number": "shi0191",
+      "name": "？？？？？",
+      "setCode": "maku6",
+      "fileStem": "shi-191"
+    },
+    {
+      "printed": "SHI-192",
+      "number": "shi0192",
+      "name": "春野サクラ&綱手",
+      "setCode": "maku6",
+      "fileStem": "shi-192"
+    },
+    {
+      "printed": "SHI-193",
+      "number": "shi0193",
+      "name": "うずまきナルト",
+      "setCode": "maku6",
+      "fileStem": "shi-193"
+    },
+    {
+      "printed": "JU-128",
+      "number": "mju0128",
+      "name": "模擬戦闘訓練",
+      "setCode": "maku6",
+      "fileStem": "ju-128"
+    },
+    {
+      "printed": "JU-129",
+      "number": "mju0129",
+      "name": "トンファー",
+      "setCode": "maku6",
+      "fileStem": "ju-129"
+    },
+    {
+      "printed": "JU-130",
+      "number": "mju0130",
+      "name": "ダイナミック・アクション",
+      "setCode": "maku6",
+      "fileStem": "ju-130"
+    },
+    {
+      "printed": "JU-131",
+      "number": "mju0131",
+      "name": "螺旋丸",
+      "setCode": "maku6",
+      "fileStem": "ju-131"
+    },
+    {
+      "printed": "JU-132",
+      "number": "mju0132",
+      "name": "無造作な一撃",
+      "setCode": "maku6",
+      "fileStem": "ju-132"
+    },
+    {
+      "printed": "JU-133",
+      "number": "mju0133",
+      "name": "尾行",
+      "setCode": "maku6",
+      "fileStem": "ju-133"
+    },
+    {
+      "printed": "JU-134",
+      "number": "mju0134",
+      "name": "瞬時の拘束",
+      "setCode": "maku6",
+      "fileStem": "ju-134"
+    },
+    {
+      "printed": "JU-135",
+      "number": "mju0135",
+      "name": "写輪眼",
+      "setCode": "maku6",
+      "fileStem": "ju-135"
+    },
+    {
+      "printed": "JU-136",
+      "number": "mju0136",
+      "name": "火遁・豪火球の術",
+      "setCode": "maku6",
+      "fileStem": "ju-136"
+    },
+    {
+      "printed": "JU-137",
+      "number": "mju0137",
+      "name": "雷切",
+      "setCode": "maku6",
+      "fileStem": "ju-137"
+    },
+    {
+      "printed": "JU-138",
+      "number": "mju0138",
+      "name": "構成員リスト",
+      "setCode": "maku6",
+      "fileStem": "ju-138"
+    },
+    {
+      "printed": "JU-139",
+      "number": "mju0139",
+      "name": "偽の死体",
+      "setCode": "maku6",
+      "fileStem": "ju-139"
+    },
+    {
+      "printed": "JU-140",
+      "number": "mju0140",
+      "name": "草薙の剣",
+      "setCode": "maku6",
+      "fileStem": "ju-140"
+    },
+    {
+      "printed": "JU-141",
+      "number": "mju0141",
+      "name": "威圧写輪眼",
+      "setCode": "maku6",
+      "fileStem": "ju-141"
+    },
+    {
+      "printed": "JU-142",
+      "number": "mju0142",
+      "name": "脱皮",
+      "setCode": "maku6",
+      "fileStem": "ju-142"
+    },
+    {
+      "printed": "JU-143",
+      "number": "mju0143",
+      "name": "卓越した分析力",
+      "setCode": "maku6",
+      "fileStem": "ju-143"
+    },
+    {
+      "printed": "JU-144",
+      "number": "mju0144",
+      "name": "掌仙術",
+      "setCode": "maku6",
+      "fileStem": "ju-144"
+    },
+    {
+      "printed": "JU-145",
+      "number": "mju0145",
+      "name": "砂の腕",
+      "setCode": "maku6",
+      "fileStem": "ju-145"
+    },
+    {
+      "printed": "JU-146",
+      "number": "mju0146",
+      "name": "砂の大盾",
+      "setCode": "maku6",
+      "fileStem": "ju-146"
+    },
+    {
+      "printed": "JU-147",
+      "number": "mju0147",
+      "name": "痛天脚",
+      "setCode": "maku6",
+      "fileStem": "ju-147"
+    },
+    {
+      "printed": "JU-148",
+      "number": "mju0148",
+      "name": "火影の首飾り",
+      "setCode": "maku6",
+      "fileStem": "ju-148"
+    },
+    {
+      "printed": "JU-149",
+      "number": "mju0149",
+      "name": "チャクラ糸",
+      "setCode": "maku6",
+      "fileStem": "ju-149"
+    },
+    {
+      "printed": "JU-150",
+      "number": "mju0150",
+      "name": "発信機",
+      "setCode": "maku6",
+      "fileStem": "ju-150"
+    },
+    {
+      "printed": "JU-151",
+      "number": "mju0151",
+      "name": "木分身の術",
+      "setCode": "maku6",
+      "fileStem": "ju-151"
+    },
+    {
+      "printed": "JU-152",
+      "number": "mju0152",
+      "name": "木遁・四柱牢",
+      "setCode": "maku6",
+      "fileStem": "ju-152"
+    },
+    {
+      "printed": "SA-044",
+      "number": "msa0044",
+      "name": "木ノ葉学園",
+      "setCode": "maku6",
+      "fileStem": "sa-044"
+    },
+    {
+      "printed": "SA-045",
+      "number": "msa0045",
+      "name": "再会・・・!",
+      "setCode": "maku6",
+      "fileStem": "sa-045"
+    },
+    {
+      "printed": "SA-046",
+      "number": "msa0046",
+      "name": "パイプ役",
+      "setCode": "maku6",
+      "fileStem": "sa-046"
+    },
+    {
+      "printed": "SA-047",
+      "number": "msa0047",
+      "name": "目的の為に",
+      "setCode": "maku6",
+      "fileStem": "sa-047"
+    },
+    {
+      "printed": "SA-048",
+      "number": "msa0048",
+      "name": "復讐の対象",
+      "setCode": "maku6",
+      "fileStem": "sa-048"
+    },
+    {
+      "printed": "SA-049",
+      "number": "msa0049",
+      "name": "ある夏の日",
+      "setCode": "maku6",
+      "fileStem": "sa-049"
+    },
+    {
+      "printed": "SA-050",
+      "number": "msa0050",
+      "name": "さりげない一言",
+      "setCode": "maku6",
+      "fileStem": "sa-050"
+    },
+    {
+      "printed": "SA-051",
+      "number": "msa0051",
+      "name": "ハラペコ",
+      "setCode": "maku6",
+      "fileStem": "sa-051"
+    }
+  ]
+}

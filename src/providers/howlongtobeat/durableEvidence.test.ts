@@ -45,9 +45,9 @@ describe("howlongtobeat durableEvidence", () => {
       query: "Hades",
       platform: "Nintendo Switch",
     });
-    await expect(
-      readHowLongToBeatSearchEvidence(searchUrl),
-    ).resolves.toEqual(hits);
+    await expect(readHowLongToBeatSearchEvidence(searchUrl)).resolves.toEqual(
+      hits,
+    );
 
     putProviderEvidence.mockResolvedValueOnce(undefined);
     await promoteHowLongToBeatSearchEvidence(searchUrl, hits);

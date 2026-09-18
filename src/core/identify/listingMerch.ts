@@ -87,7 +87,9 @@ export function listingLooksLikeConsoleSystemProduct(name: string): boolean {
  * Pad-only / pad-primary titles ("Joy-Con Gray", "Manette DualSense PS5",
  * "GameCube Controller") stay controller products.
  */
-export function listingLooksLikePlatformControllerBundle(name: string): boolean {
+export function listingLooksLikePlatformControllerBundle(
+  name: string,
+): boolean {
   if (!listingLooksLikeControllerProduct(name)) return false;
   if (listingLooksLikeConsoleSystemProduct(name)) return true;
 

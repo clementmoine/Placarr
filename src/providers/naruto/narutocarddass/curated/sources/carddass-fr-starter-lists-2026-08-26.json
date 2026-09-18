@@ -1,0 +1,47 @@
+{
+  "source": "carddass-fr-starter-lists",
+  "observed": "2026-08-26",
+  "kind": "research-dig",
+  "ingest": "guaranteedPrintKeys → data/naruto/carddass/curated/sealed-contents.json",
+  "officialPages": {
+    "staging": "data/naruto/carddass/staging/carddass-fr/pages/",
+    "catalogue": [
+      "naruto__catalogue_s1.htm",
+      "naruto__catalogue_s2.htm",
+      "naruto__catalogue_s3.htm",
+      "naruto__catalogue_s4.htm"
+    ],
+    "listeCartes": [
+      "naruto__liste_cartes_s1.htm",
+      "naruto__liste_cartes_s2.htm",
+      "naruto__liste_cartes_s3.htm",
+      "naruto__liste_cartes_s5.htm"
+    ],
+    "legend": {
+      "*": "premier starter de la série",
+      "**": "second starter"
+    }
+  },
+  "verdict": {
+    "s1-s4": "catalogues quantitatifs → contentsKnown pour 8 starters FR (S1–S4).",
+    "s5": "liste_cartes_s5.htm * /** seulement (pas de catalogue_s5 Wayback). Marqueurs 27 / 23 ; UltraJeux « 25 exclusives » sans noms. cartes-naruto : news S4 decks (#65) archivée, **pas** d’équivalent S5 dans CDX. Hunt 2026-08-26 → contentsKnown=false (s5-starter-contents-hunt-2026-08-26.json).",
+    "it": "Forza della Foglia = nom de SET IT S1, pas un alias du starter FR. Mazzo 40 attesté shop — liste absente.",
+    "jp": "dream-hobby / cardcheckbox : 40枚 + kinds (ex. 豪雷 32種) — pas de listes 忍-."
+  },
+  "typosOfficial": {
+    "Mouilinet à double tranchant": "Moulinet à triple tranchant (TE-72)",
+    "Incatation/Invocation": "Incantation (TE-74)",
+    "La pilule des mille aiguilles": "La pluie des milles aiguilles (TE-75)",
+    "Tombo Tobitake": "Tonbo Tobitake",
+    "Hisahi Hyûga": "Hiashi Hyûga (NI-126)",
+    "Hûyga": "Hyûga",
+    "Distortion": "Distorsion (TE-168)"
+  },
+  "notDone": [
+    "catalogue_s5.htm (jamais capturé CDX)",
+    "listes IT Forza / Fascino",
+    "listes JP 構築済み (忍-…)",
+    "completer S5 communes / quantités (livret photo / Parence CDX / sealed ouvert)",
+    "retenter CDX parence.com lot 2 starters S5"
+  ]
+}

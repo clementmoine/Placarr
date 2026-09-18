@@ -1,0 +1,99 @@
+{
+  "source": "Mercari pasted 疾風伝 leads (忍伝 / 術伝 / 作伝)",
+  "observed": "2026-09-14",
+  "crawlLive": false,
+  "ingest": "curated-faces",
+  "lang": "ja",
+  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches). Optional `curated` is offline fallback only.",
+  "not": [
+    "crawl",
+    "shops-og-image",
+    "lot-uncropped"
+  ],
+  "faces": [
+    {
+      "listingUrl": "https://jp.mercari.com/item/m14226337376",
+      "printedRef": "忍伝-1",
+      "title": "NARUTO ナルト カードゲーム うずまきナルト 忍伝-001",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m14226337376_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m57682837920",
+      "printedRef": "忍伝-38",
+      "title": "2枚セット NARUTO 疾風伝 カードゲーム 忍伝-038 春野サクラ 字レア",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m57682837920_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m80869530849",
+      "printedRef": "忍伝-43",
+      "title": "ナルト疾風伝カードゲーム うずまきナルト　忍伝-043",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m80869530849_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m96224620260",
+      "printedRef": "忍伝-47",
+      "title": "ナルト疾風伝カードゲーム 目的の為に　忍伝-047",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m96224620260_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m93858526279",
+      "printedRef": "忍伝-60",
+      "title": "NARUTO ナルト カード うちはサスケ＆大蛇丸 忍伝-060",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m93858526279_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m70939336148",
+      "printedRef": "忍伝-107",
+      "title": "NARUTO カード うずまきナルト 忍伝-107",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m70939336148_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m83978980829",
+      "printedRef": "忍伝-108",
+      "title": "NARUTO 疾風伝 カードゲーム 春野サクラ 忍伝-108",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m83978980829_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m46150316967",
+      "printedRef": "忍伝-120",
+      "title": "ナルト疾風伝 カードゲーム うずまきナルト 九尾 忍伝-120 シークレット",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m46150316967_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m70719383654",
+      "printedRef": "忍伝-170",
+      "title": "NARUTO ナルト カード うちはサスケ 忍伝-170",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m70719383654_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m51872454587",
+      "printedRef": "忍伝-176",
+      "title": "絶版　NARUTO疾風伝 カードゲーム うちはイタチ 忍伝-176 ナルト",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m51872454587_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m87721683207",
+      "printedRef": "忍伝-197",
+      "title": "NARUTO疾風伝カードゲーム うずまきナルト 忍伝-197",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m87721683207_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m15225089660",
+      "printedRef": "忍伝-215",
+      "title": "NARUTO ナルト 疾風伝 カードゲーム うちはサスケ 忍伝-215",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m15225089660_1.jpg"
+    }
+  ]
+}

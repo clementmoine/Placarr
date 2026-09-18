@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 import { freakxyModule } from "@/providers/freakxy";
 
 describe("freakxy hardware barcode sources", () => {
   it("routes Freakxy hits to hardware when the shelf type is hardware", () => {
-    const payload = createEmptyBarcodeLookupPayload();
+    const payload = createEmptyBarcodeLookupPayload(
+      barcodeLookupSlotDefaults(),
+    );
     payload.freakxy = [
       {
         name: "Manette DualSense Midnight Black",

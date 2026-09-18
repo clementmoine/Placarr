@@ -1,5 +1,6 @@
 import { detectPlatformKey } from "@/core/identify/query";
 import { getCoverProjectPlatformSpecs } from "@/core/identify/platforms/platforms";
+import { httpHead } from "@/lib/http/httpClient";
 
 const CDN_BASE = "https://coverproject.sfo2.cdn.digitaloceanspaces.com";
 const CDN_REFERER = "https://www.thecoverproject.net/";
@@ -72,17 +73,17 @@ export function buildCoverProjectCdnCandidates(
 
 async function cdnAssetExists(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, {
-      method: "HEAD",
+    const response = await httpHead(url, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         Referer: CDN_REFERER,
         Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
       },
-      signal: AbortSignal.timeout(8000),
+      timeout: 8000,
+      validateStatus: () => true,
     });
-    return response.ok;
+    return response.status >= 200 && response.status < 300;
   } catch {
     return false;
   }

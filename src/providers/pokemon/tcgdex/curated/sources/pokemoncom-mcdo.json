@@ -1,0 +1,26 @@
+{
+  "source": "pokemon.com mcdn — Happy Meal news galleries",
+  "observed": "2026-09-16",
+  "note": "Official marketing tiles (cms2 misc/_tiles/happy-meal), not encyclopédie cms3/cards/full. FR face tiles not published on CDN at observation time — EN only.",
+  "baseUrl": "https://mcdn.pokemon.com/pokemon-prod/image/upload/v1/live/static-assets/content-assets",
+  "campaigns": [
+    {
+      "id": "mcdo-2023-en",
+      "setId": "2023sv",
+      "lang": "en",
+      "cardCount": 15,
+      "pathTemplate": "cms2/img/misc/_tiles/happy-meal/2023/inline/full/{nn}-en.png",
+      "newsUrl": "https://www.pokemon.com/us/news/pokemon-tcg-match-battle-returns-to-mcdonalds-happy-meals",
+      "label": "Match Battle Returns — McDonald's Collection 2023 EN"
+    },
+    {
+      "id": "mcdo-2025-en",
+      "setId": "2024sv",
+      "lang": "en",
+      "cardCount": 15,
+      "pathTemplate": "cms2/img/misc/_tiles/happy-meal/2025/01/inline/full/{nn}-en.png",
+      "newsUrl": "https://www.pokemon.com/us/news/mcdonalds-pokemon-happy-meals-collaboration",
+      "label": "Dragon Discovery — McDonald's Collection 2024 EN"
+    }
+  ]
+}

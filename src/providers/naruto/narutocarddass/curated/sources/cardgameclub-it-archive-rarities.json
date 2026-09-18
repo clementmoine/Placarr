@@ -1,0 +1,831 @@
+{
+  "source": "cardgame-club.it — captures Wayback de 2020",
+  "observed": "2026-08-20",
+  "ingest": "rarities",
+  "lang": "it",
+  "note": "La boutique est morte (migrée sur Shopify, plus une seule carte à l'unité). Ses pages de liste survivent dans l'archive, et seules les captures de **2020** portent la charge JSON d'analytics qui nomme chaque produit : `CL05 Zori comune -MINT-`. Les captures de 2022-2023, postérieures à une refonte, n'en ont plus.",
+  "yield": "118 produits, séries 2, 3 et 5 uniquement — pas de pagination archivée, une seule page par série. **Zéro titre nouveau** : les 118 ont déjà leur nom au catalogue. Ce que l'archive apporte, c'est la **rareté**, dont le catalogue italien n'avait aucune valeur (0 sur 410).",
+  "vocabulary": "comune, non comune, rara foil, ultra rara foil, epica foil — le foil est un axe à part, accolé à la rareté par la boutique.",
+  "not": ["titles", "faces"],
+  "cards": [
+    {
+      "disk": "cl0005",
+      "printed": "CL-5",
+      "name": "Zori",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "cl0006",
+      "printed": "CL-6",
+      "name": "Waraji",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "cl0007",
+      "printed": "CL-7",
+      "name": "Tsunami",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "cl0008",
+      "printed": "CL-8",
+      "name": "Genzo",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "cl0009",
+      "printed": "CL-9",
+      "name": "Kaji",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "cl0010",
+      "printed": "CL-10",
+      "name": "Akane",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "cl0011",
+      "printed": "CL-11",
+      "name": "Ageha",
+      "rarity": "non comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "cl0014",
+      "printed": "CL-14",
+      "name": "Daimyo del paese del vento",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "cl0015",
+      "printed": "CL-15",
+      "name": "Ami",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "cl0016",
+      "printed": "CL-16",
+      "name": "Teuchi",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "cl0017",
+      "printed": "CL-17",
+      "name": "Ayame",
+      "rarity": "ultra rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "cl0027",
+      "printed": "CL-27",
+      "name": "Shu",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "cl0028",
+      "printed": "CL-28",
+      "name": "Senta",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "cl0029",
+      "printed": "CL-29",
+      "name": "Bunzo",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "cl0030",
+      "printed": "CL-30",
+      "name": "Boss Jirocho",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "cl0031",
+      "printed": "CL-31",
+      "name": "Fukusuke il Corriere",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0008",
+      "printed": "NI-8",
+      "name": "Iruka",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0009",
+      "printed": "NI-9",
+      "name": "Mizuki",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0014",
+      "printed": "NI-14",
+      "name": "Gozu dei fratelli Diavolo",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0015",
+      "printed": "NI-15",
+      "name": "Meizu dei fratelli Diavolo",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0017",
+      "printed": "NI-17",
+      "name": "Haku",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0027",
+      "printed": "NI-27",
+      "name": "Sakura Haruno",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0028",
+      "printed": "NI-28",
+      "name": "Kiba Inuzuka",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0029",
+      "printed": "NI-29",
+      "name": "Shino Aburame",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0031",
+      "printed": "NI-31",
+      "name": "Rock Lee",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0032",
+      "printed": "NI-32",
+      "name": "Tenten",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0034",
+      "printed": "NI-34",
+      "name": "Konohamaru",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0040",
+      "printed": "NI-40",
+      "name": "Zabusa Momochi",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0054",
+      "printed": "NI-54",
+      "name": "Karasu",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0061",
+      "printed": "NI-61",
+      "name": "Naruto Uzumaki",
+      "rarity": "rara foil",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0062",
+      "printed": "NI-62",
+      "name": "Sasuke Uchiha",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0064",
+      "printed": "NI-64",
+      "name": "Kakashi Hatake",
+      "rarity": "ultra rara foil",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0065",
+      "printed": "NI-65",
+      "name": "Moegi",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0066",
+      "printed": "NI-66",
+      "name": "Udon",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0067",
+      "printed": "NI-67",
+      "name": "Naruto Uzumaki",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0068",
+      "printed": "NI-68",
+      "name": "Sasuke Uchiha",
+      "rarity": "rara foil",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0069",
+      "printed": "NI-69",
+      "name": "Sakura Haruno",
+      "rarity": "non comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0100",
+      "printed": "NI-100",
+      "name": "Hayate Gekko",
+      "rarity": "rara foil",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0101",
+      "printed": "NI-101",
+      "name": "Jiraiya",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0102",
+      "printed": "NI-102",
+      "name": "Gama",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0103",
+      "printed": "NI-103",
+      "name": "Dosu Kinuta",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0104",
+      "printed": "NI-104",
+      "name": "Zaku Abumi",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0105",
+      "printed": "NI-105",
+      "name": "Kin Tsuchi",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0106",
+      "printed": "NI-106",
+      "name": "Yoroi Akado",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0107",
+      "printed": "NI-107",
+      "name": "Misumi Tsurugi",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0108",
+      "printed": "NI-108",
+      "name": "Kabuto Yakushi",
+      "rarity": "non comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0109",
+      "printed": "NI-109",
+      "name": "Kakashi Hatake",
+      "rarity": "rara foil",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0110",
+      "printed": "NI-110",
+      "name": "Gai Maito",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0111",
+      "printed": "NI-111",
+      "name": "Akamaru",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0112",
+      "printed": "NI-112",
+      "name": "Gaara",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0113",
+      "printed": "NI-113",
+      "name": "Kankuro",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0114",
+      "printed": "NI-114",
+      "name": "Temari",
+      "rarity": "comune",
+      "serie": "Serie 2 Le Spire del Serpente"
+    },
+    {
+      "disk": "ni0115",
+      "printed": "NI-115",
+      "name": "Naruto Uzumaki",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0116",
+      "printed": "NI-116",
+      "name": "Sasuke Uchiha",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0117",
+      "printed": "NI-117",
+      "name": "Gaara del Deserto",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0118",
+      "printed": "NI-118",
+      "name": "Naruto Uzumaki",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0120",
+      "printed": "NI-120",
+      "name": "Sakura Haruno",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0121",
+      "printed": "NI-121",
+      "name": "Ebisu",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0122",
+      "printed": "NI-122",
+      "name": "Hayate Gekko",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0123",
+      "printed": "NI-123",
+      "name": "Kakashi Hatake",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0124",
+      "printed": "NI-124",
+      "name": "Asuma Sarutobi",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0125",
+      "printed": "NI-125",
+      "name": "Hanabi Hyuga",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0126",
+      "printed": "NI-126",
+      "name": "Hiashi Hyuga",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0127",
+      "printed": "NI-127",
+      "name": "Jiraiya",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0128",
+      "printed": "NI-128",
+      "name": "Gamabunta",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0129",
+      "printed": "NI-129",
+      "name": "Quarto Hokage",
+      "rarity": "rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0130",
+      "printed": "NI-130",
+      "name": "Baki",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0136",
+      "printed": "NI-136",
+      "name": "Naruto Uzumaki",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0137",
+      "printed": "NI-137",
+      "name": "Sasuke Uchiha",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0138",
+      "printed": "NI-138",
+      "name": "Shikamaru Nara",
+      "rarity": "epica foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0139",
+      "printed": "NI-139",
+      "name": "Rock Lee",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0140",
+      "printed": "NI-140",
+      "name": "Neji Hyuga",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0141",
+      "printed": "NI-141",
+      "name": "Hizashi Hyuga",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0142",
+      "printed": "NI-142",
+      "name": "Izumo Kamizuki",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0143",
+      "printed": "NI-143",
+      "name": "Kotetsu Hagane",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0144",
+      "printed": "NI-144",
+      "name": "Genma Shiranui",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0146",
+      "printed": "NI-146",
+      "name": "Temari",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0147",
+      "printed": "NI-147",
+      "name": "Kazekage",
+      "rarity": "comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0148",
+      "printed": "NI-148",
+      "name": "Kidomaru",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0149",
+      "printed": "NI-149",
+      "name": "Jirobo",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0150",
+      "printed": "NI-150",
+      "name": "Sakon",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0151",
+      "printed": "NI-151",
+      "name": "Tayuya",
+      "rarity": "non comune",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0152",
+      "printed": "NI-152",
+      "name": "Kabuto Yakushi",
+      "rarity": "ultra rara foil",
+      "serie": "Serie 3 La Maledizione della Sabbia"
+    },
+    {
+      "disk": "ni0159",
+      "printed": "NI-159",
+      "name": "Gen Aburame",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0160",
+      "printed": "NI-160",
+      "name": "Inoichi Yamanaka",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0161",
+      "printed": "NI-161",
+      "name": "Shikaku Nara",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0162",
+      "printed": "NI-162",
+      "name": "Choza Akimichi",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0191",
+      "printed": "NI-191",
+      "name": "Forze Speciali",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0196",
+      "printed": "NI-196",
+      "name": "Tsume Inuzuka",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0197",
+      "printed": "NI-197",
+      "name": "Kuromaru",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0205",
+      "printed": "NI-205",
+      "name": "Naruto Uzumaki",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0206",
+      "printed": "NI-206",
+      "name": "Sakura Haruno &amp; Ino Yamanaka",
+      "rarity": "non comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0207",
+      "printed": "NI-207",
+      "name": "Konohamaru",
+      "rarity": "non comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0208",
+      "printed": "NI-208",
+      "name": "Mitate",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0209",
+      "printed": "NI-209",
+      "name": "Nawaki",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0210",
+      "printed": "NI-210",
+      "name": "Dan",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0211",
+      "printed": "NI-211",
+      "name": "Shizune",
+      "rarity": "non comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0212",
+      "printed": "NI-212",
+      "name": "Tonton",
+      "rarity": "non comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0213",
+      "printed": "NI-213",
+      "name": "Gamatatsu",
+      "rarity": "non comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0214",
+      "printed": "NI-214",
+      "name": "Capo",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0215",
+      "printed": "NI-215",
+      "name": "Gantetsu",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0216",
+      "printed": "NI-216",
+      "name": "Kabuto Yakushi",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0217",
+      "printed": "NI-217",
+      "name": "Orochimaru",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0218",
+      "printed": "NI-218",
+      "name": "Jiraiya",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0219",
+      "printed": "NI-219",
+      "name": "Principessa Tsunade",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0220",
+      "printed": "NI-220",
+      "name": "Gamabunta",
+      "rarity": "ultra rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0221",
+      "printed": "NI-221",
+      "name": "Manda",
+      "rarity": "ultra rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0222",
+      "printed": "NI-222",
+      "name": "Katsuyu",
+      "rarity": "ultra rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0223",
+      "printed": "NI-223",
+      "name": "Principessa Tsunade &amp; Shizune",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0224",
+      "printed": "NI-224",
+      "name": "Naruto Uzumaki",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0225",
+      "printed": "NI-225",
+      "name": "Sasuke Uchiha",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0226",
+      "printed": "NI-226",
+      "name": "Kiba Inuzuka &amp; Akamaru",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0227",
+      "printed": "NI-227",
+      "name": "Shikamaru Nara",
+      "rarity": "non comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0228",
+      "printed": "NI-228",
+      "name": "Choji Akimichi",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0229",
+      "printed": "NI-229",
+      "name": "Kakashi Hatake",
+      "rarity": "rara foil",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0230",
+      "printed": "NI-230",
+      "name": "Hinata Hyuga",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    },
+    {
+      "disk": "ni0231",
+      "printed": "NI-231",
+      "name": "Neji Hyuga",
+      "rarity": "comune",
+      "serie": "Serie 5 L'Eredita' del Sogno"
+    }
+  ]
+}

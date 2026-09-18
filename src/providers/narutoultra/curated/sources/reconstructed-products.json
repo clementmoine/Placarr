@@ -1,0 +1,34 @@
+{
+  "source": "Upscales Figma / IA à partir de photos d’objets Ultra Challenge",
+  "observed": "2026-08-22",
+  "ingest": "sealed SKUs displayed as art.reconstructed — Coleka dump stays beside the album. No card titles from the verso checklist: the upscale garbles some numbers.",
+  "line": "ultra-challenge",
+  "sourceId": "reconstructed",
+  "lang": "fr",
+  "method": "Collector photo → Figma AI upscale. Same contract as Carddass art.reconstructed: hand-made, not a publisher host.",
+  "products": [
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Naruto Ultra Challenge collector's album",
+      "art": "art.reconstructed.png",
+      "back": "back.reconstructed.png",
+      "declaredCardCount": null,
+      "note": "Verso = checklist 100 cartes (25 personnages × 4 pastilles). Ne pas en extraire les titres tant que les numéros upscalés ne sont pas relus sur l’objet."
+    },
+    {
+      "slug": "booster",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Naruto Ultra Challenge booster pack",
+      "art": "art.reconstructed.png",
+      "declaredCardCount": 8,
+      "note": "Pochette FR : 8 cartes (packaging AnimeCollection). Pas un wrap Inkworks Ninja Ranks."
+    }
+  ],
+  "notIngested": [
+    "100 card titles from the album verso — upscale OCR is not an official checklist.",
+    "Coleka / AnimeCollection card thumbs — still no printKey mapping."
+  ]
+}

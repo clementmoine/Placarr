@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import {
   regionRank,
@@ -48,6 +48,17 @@ export interface DiscogsResult {
   genres?: string[];
   styles?: string[];
 }
+
+/** Fields of the Discogs release endpoint this provider reads. */
+type DiscogsReleaseResponse = {
+  country?: unknown;
+  images?: unknown;
+  formats?: unknown;
+  community?: { have?: unknown; want?: unknown };
+  artists?: unknown;
+  labels?: unknown;
+  notes?: unknown;
+};
 
 export type DiscogsSearchHit = {
   id?: number;
@@ -187,11 +198,14 @@ export async function fetchFromDiscogs(
   }
 
   try {
-    const res = await axios.get(`${DISCOGS_BASE}/database/search`, {
-      params: { barcode: clean, per_page: 10, ...auth },
-      headers: { "User-Agent": USER_AGENT },
-      timeout: 8000,
-    });
+    const res = await httpGet<{ results?: DiscogsSearchHit[] }>(
+      `${DISCOGS_BASE}/database/search`,
+      {
+        params: { barcode: clean, per_page: 10, ...auth },
+        headers: { "User-Agent": USER_AGENT },
+        timeout: 8000,
+      },
+    );
 
     const results = res.data?.results;
     if (!Array.isArray(results) || results.length === 0) return null;
@@ -220,7 +234,7 @@ export async function fetchFromDiscogs(
 
     if (typeof best.id === "number" && Number.isFinite(best.id)) {
       try {
-        const releaseRes = await axios.get(
+        const releaseRes = await httpGet<DiscogsReleaseResponse>(
           `${DISCOGS_BASE}/releases/${best.id}`,
           {
             params: auth,

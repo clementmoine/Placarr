@@ -4,19 +4,23 @@
  * backpack glyph, etc.). Pixel statistics only — no provider id literals.
  */
 
+import { SERVED_LOCAL_PREFIXES } from "@/lib/media/servedLocalPaths";
+
 const MISSING_ART_URL =
   /no[-_]?image|image[-_]?not[-_]?available|no[-_]?art(?:work)?|missing[-_]?cover/i;
 
 /**
  * URL path/name signals "catalog has no artwork" — not a corrupt download.
- * Also rejects provider-relative paths stored as site-root URLs (only `/uploads/`
- * are valid localized assets on this app).
+ * Also rejects provider-relative paths stored as site-root URLs.
  */
 export function isMissingArtImageUrl(url?: string | null): boolean {
   if (!url?.trim()) return false;
   const pathOnly = url.split("?")[0]?.split("#")[0] ?? "";
   if (MISSING_ART_URL.test(pathOnly)) return true;
-  if (pathOnly.startsWith("/") && !pathOnly.startsWith("/uploads/")) {
+  if (
+    pathOnly.startsWith("/") &&
+    !SERVED_LOCAL_PREFIXES.some((prefix) => pathOnly.startsWith(prefix))
+  ) {
     return true;
   }
   return false;

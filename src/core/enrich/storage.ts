@@ -4,8 +4,8 @@ import {
   Metadata,
   Publisher,
   Type,
-} from "@prisma/client";
-import type { Item } from "@prisma/client";
+} from "@/generated/prisma/browser";
+import type { Item } from "@/generated/prisma/browser";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { prisma } from "@/lib/db/prisma";
 import { dedupeFacts, metadataFieldEvidence } from "@/core/enrich/facts";
@@ -25,6 +25,9 @@ import {
   mergeMetadataFactsForStorage,
   parseMetadataFactsJson,
 } from "@/core/enrich/metadataFactsMerge";
+import { metadataAliases } from "@/core/enrich/aliases";
+import { providerProductUrlsFromMetadataFacts } from "@/core/catalog/catalog";
+import { reconfrontItemPricesFromDurableEvidence } from "@/core/commerce/pricing/reconfrontFromEvidence";
 import { downloadRemoteImage } from "@/core/enrich/media/imageDownload";
 import { metadataImageAttachmentSemantics } from "@/core/enrich/media/metadataCoverBootstrap";
 import { cloneMetadataForImageLocalization } from "@/core/enrich/media/attachmentLocalization";
@@ -47,7 +50,7 @@ export {
   MAX_ATTACHMENTS_TO_LOCALIZE,
   selectAttachmentsForLocalization,
 } from "@/core/enrich/media/attachmentLocalization";
-export { isMissingMusicGallery } from "@/core/enrich/galleries";
+export { isMissingMusicGallery } from "@/core/enrich/media/galleries";
 export { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
 export {
   canKeepRemoteImageOnDownloadFailure,
@@ -71,7 +74,7 @@ export {
 export {
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
-} from "@/core/enrich/imageUrls";
+} from "@/core/enrich/media/imageUrls";
 
 export type StoreMetadataOptions = {
   /** Persist remote URLs immediately; localize images in a background job. */
@@ -316,12 +319,11 @@ export async function storeMetadata(
           priority: 100,
         });
 
-  const previousEvidence =
-    item?.metadata?.id
-      ? await prisma.fieldEvidence.findMany({
-          where: { metadataId: item.metadata.id },
-        })
-      : [];
+  const previousEvidence = item?.metadata?.id
+    ? await prisma.fieldEvidence.findMany({
+        where: { metadataId: item.metadata.id },
+      })
+    : [];
 
   const evidence = mergeFieldEvidenceForStorage(
     previousEvidence.map((row) => ({
@@ -406,6 +408,33 @@ export async function storeMetadata(
       `[Metadata] Field-evidence fact projection failed for item ${itemId}:`,
       error,
     );
+  }
+
+  // Soft bag grew (aliases / catalog title) — re-pick prices from durable
+  // SearchYield / DetailYield only (zero HTTP). Best-effort; never blocks store.
+  const softAliases = metadataAliases(metadata.aliases) ?? [];
+  const softTitle = metadata.title?.trim() || formattedMetadata.title?.trim();
+  if (softAliases.length > 0 || softTitle) {
+    const itemName = item?.name?.trim() || name.trim();
+    void reconfrontItemPricesFromDurableEvidence({
+      itemId,
+      metadataId: storedMetadata.id,
+      shelfType: type,
+      shelfName: item?.shelf?.name,
+      itemName,
+      metadataTitle: softTitle,
+      aliases: softAliases,
+      barcode: item?.barcode,
+      platformKey: requestedPlatformKey,
+      providerProductUrls: providerProductUrlsFromMetadataFacts(
+        metadata.facts ?? parseMetadataFactsJson(storedMetadata.facts),
+      ),
+    }).catch((error) => {
+      console.warn(
+        `[Metadata] Evidence-only price reconfront failed for item ${itemId}:`,
+        error,
+      );
+    });
   }
 
   return storedMetadata;

@@ -1,15 +1,31 @@
 import { scoreMetadataDisplayTitle } from "@/core/enrich/titles/displayScore";
 import type { Locale } from "@/types/i18n";
 
-export const LOCALE_REGION_ORDER = [
-  "fr",
-  "eu",
-  "wor",
-  "uk",
-  "us",
-  "jp",
+/**
+ * The display-region taxonomy, defined once. These are cover/edition regions in
+ * the console-region convention — not ISO country codes: `wor` (worldwide /
+ * textless) and `eu` have no ISO equivalent, and providers emit real ISO codes
+ * on top of them (see LOCALE_REGION_ALIASES below).
+ *
+ * `userVisible: false` keeps a region out of the suggestions shown to a user
+ * while still ranking it for internal picks.
+ */
+const DISPLAY_REGIONS = [
+  { code: "fr", userVisible: true },
+  { code: "eu", userVisible: true },
+  { code: "wor", userVisible: true },
+  { code: "uk", userVisible: true },
+  { code: "us", userVisible: true },
+  // Japanese editions carry romaji/JP titles — right to rank, wrong to suggest
+  // to a FR/EN user as the product's name.
+  { code: "jp", userVisible: false },
 ] as const;
 
+export const LOCALE_REGION_ORDER = DISPLAY_REGIONS.map(
+  (region) => region.code,
+) as readonly (typeof DISPLAY_REGIONS)[number]["code"][];
+
+/** Same set, reordered for an English UI. Pinned as a permutation by tests. */
 export const LOCALE_REGION_ORDER_EN = [
   "us",
   "uk",
@@ -19,11 +35,18 @@ export const LOCALE_REGION_ORDER_EN = [
   "jp",
 ] as const;
 
+/** Regions whose evidence may be surfaced as a title suggestion. */
+export const USER_VISIBLE_REGIONS: ReadonlySet<string> = new Set(
+  DISPLAY_REGIONS.filter((region) => region.userVisible).map(
+    (region) => region.code,
+  ),
+);
+
 export const LOCALE_LANGUAGE_ORDER = ["fr", "en"] as const;
 
 export const LOCALE_LANGUAGE_ORDER_EN = ["en", "fr"] as const;
 
-export type LocaleRegion = (typeof LOCALE_REGION_ORDER)[number];
+export type LocaleRegion = (typeof DISPLAY_REGIONS)[number]["code"];
 export type LocaleLanguage = (typeof LOCALE_LANGUAGE_ORDER)[number];
 
 export type LocalePreferenceOptions = {

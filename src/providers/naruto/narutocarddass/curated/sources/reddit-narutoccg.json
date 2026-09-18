@@ -1,0 +1,205 @@
+{
+  "source": "reddit.com/r/Narutoccg",
+  "observed": "2026-08-26",
+  "ingest": "none",
+  "crawl": false,
+  "access": {
+    "liveWww": "browser OK; WebFetch/curl JSON 403",
+    "archiveApi": "arctic-shift.photon-reddit.com (posts/comments search by id)",
+    "note": "Do not crawl the subreddit. Index threads by user paste or Arctic Shift lookup only. Never ingest phone photos as catalogue faces without a pasted CDN pattern."
+  },
+  "note": "Sub is mostly Bandai USA CCG (N/J/M), but EU collectors also post Amigo/Carddass DE/FR/IT « old layout » (series 1–9). Keep the two lines separate.",
+  "subreddit": "https://www.reddit.com/r/Narutoccg/",
+  "twoLines": {
+    "carddassEuAmigo": "JP-layout / blue-back family in FR·DE·IT·ES — Amigo logo on DE. Series count debated (IT stops ~8; DE claims 9).",
+    "bandaiUsaCcgLocale": "US layout + local language (DE/FR/EN-EU print). Includes Sage's Legacy DE and UNS3 pack-in PR-095/096/100 EURO foil."
+  },
+  "threads": [
+    {
+      "id": "1vjw5hb",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1vjw5hb/question_about_rules_effect_vs_cost/",
+      "title": "Question about rules: effect vs cost",
+      "kind": "rules",
+      "line": "en-ccg",
+      "cited": {
+        "printed": "N-1080",
+        "diskHint": "n1080",
+        "name": "Sasuke",
+        "phrase": "because of your effects"
+      },
+      "photo": {
+        "host": "preview.redd.it",
+        "file": "b564se44zdih1.jpg",
+        "note": "Phone crop of the EN CCG card. Not a face dump — Vintage/Goat already serve n1080."
+      },
+      "ruling": "Cost is part of the effect. Timing / You can / In that case (older); bracket timing then text before ':' (later sets). If the card is negated you cannot pay the cost.",
+      "ingestPhoto": false
+    },
+    {
+      "id": "1ucmepn",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1ucmepn/so_got_in_to_collecting_again_my_german_naruto/",
+      "title": "So got in to collecting again. My German Naruto Collection.",
+      "kind": "showcase-eu-checklist-ask",
+      "line": "carddass-eu-amigo",
+      "author": "ComprehensiveOne1884",
+      "gallery": 18,
+      "asked": "list of european cards; believes 9 series in old layout",
+      "visual": {
+        "logo": "Amigo (DE distributor)",
+        "sample": "Team 7 parallel / fiery foil binder page (Naruto×3, Sasuke×3, Sakura×3)",
+        "note": "CACG EU look — not Bandai USA PR line. Do not file under uns3-eu-promos."
+      },
+      "commentsGold": [
+        "IT collector: 35 complete decks; Italy stopped at series 8; wants DE/FR foils IT lacks",
+        "OP research: 3 versions JP / EN-US / EU multilingual; EU covers original Naruto era",
+        "langs seen on market: DE, IT, FR, EN, ES — mostly FR+DE on eBay",
+        "Guinness DE complete set — 4 Instagram reels (watch, do not scrape)"
+      ],
+      "instagramWatch": [
+        "https://www.instagram.com/reel/DJcXoE6SJNl/",
+        "https://www.instagram.com/reel/DJdA3TXgeRH/",
+        "https://www.instagram.com/reel/DJmCs3MgmGi/",
+        "https://www.instagram.com/reel/DJpF1KpOgne/"
+      ],
+      "ingestPhoto": false
+    },
+    {
+      "id": "1my0f03",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1my0f03/europe_version_of_naruto_ccg/",
+      "title": "Europe Version of Naruto CCG",
+      "kind": "checklist-ask",
+      "line": "carddass-eu-amigo",
+      "note": "DE OP: EU vs US differ in card size and set cuts; EU « Series 1 » mixes early US sets. Same ask as 1ucmepn — checklist gap.",
+      "ingestPhoto": false
+    },
+    {
+      "id": "1vk1j0c",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1vk1j0c/got_a_bunch_of_german_sages_legacy_where_to_sell/",
+      "title": "Got a bunch of German Sage's Legacy, where to sell?",
+      "kind": "sale-list-titles",
+      "line": "en-ccg-de",
+      "attests": [
+        {
+          "ref": "PR-095",
+          "printKey": "naruto:pr-0095",
+          "enNameEffect": "Naruto Uzumaki [Unique Training]",
+          "deNamePrinted": "Naruto Uzumaki",
+          "qty": 3,
+          "note": "DE title = character name only in seller table; effect DE not quoted."
+        }
+      ],
+      "also": "52 DE-titled Sage's Legacy / mid-set singles (useful later for langs.de stubs)",
+      "ingestPhoto": false
+    },
+    {
+      "id": "1v67qcf",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1v67qcf/psa_now_accepts_naruto_pr095_foil_submissions/",
+      "title": "PSA Now Accepts Naruto PR-095 Foil Submissions",
+      "kind": "market-attest",
+      "line": "en-ccg-eu",
+      "attests": [
+        {
+          "ref": "PR-095",
+          "variant": "Foil Europe Version",
+          "psa": "foil accepted; non-foil not accepted"
+        }
+      ],
+      "gallery": 2,
+      "ingestPhoto": false
+    },
+    {
+      "id": "ugdgqq",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/ugdgqq/okay_so_the_naruto_pr_095_promo_european_costs/",
+      "title": "Okay so the Naruto PR 095 Promo european costs more because it's foiled.. is it the same for the 4th Hokage PR 096 Promo?",
+      "kind": "market-attest",
+      "line": "en-ccg-de",
+      "attests": [
+        {
+          "ref": "PR-095",
+          "variant": "european foil",
+          "note": "Community treats EU PR-095 as the foil / chase cut."
+        },
+        {
+          "ref": "PR-096",
+          "lang": "de",
+          "finish": "foil",
+          "note": "OP holds German 4th Hokage PR-096 foil — DE print exists (Goat had no DE SKU slug)."
+        }
+      ],
+      "ingestPhoto": false
+    },
+    {
+      "id": "1uthhv7",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1uthhv7/is_this_card_really_valuable/",
+      "title": "Is this card really valuable?",
+      "kind": "market-attest",
+      "line": "en-ccg-de",
+      "selftext": "naruto x goku card … german Language",
+      "attests": [
+        {
+          "ref": "PR-095",
+          "lang": "de",
+          "art": "Goku outfit",
+          "note": "Comments call it Goku Naruto; EN market ~$200–300, DE less."
+        }
+      ],
+      "status": "post body removed by Reddit filters; Arctic Shift still has gallery ids",
+      "ingestPhoto": false
+    },
+    {
+      "id": "1gv4o5o",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1gv4o5o/can_someone_tell_me_how_much_my_german_cards_are/",
+      "title": "Can someone tell me how much my German cards are approximately worth? The Naruto Son Goku cards are the European foil version…",
+      "kind": "market-attest",
+      "line": "en-ccg-de",
+      "attests": [{ "ref": "PR-095", "variant": "European foil", "lang": "de" }],
+      "ingestPhoto": false
+    },
+    {
+      "id": "xaxwh9",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/xaxwh9/would_anyone_here_be_interested_in_this_ninja/",
+      "title": "Would anyone here be interested in this ninja storm promo? It's the Euro Foil edition.",
+      "kind": "market-attest",
+      "line": "en-ccg-eu",
+      "attests": [{ "channel": "UNS3 promo", "variant": "Euro Foil", "ref": "TBD-from-photo" }],
+      "photo": "https://i.redd.it/kz0ryu46k4n91.jpg",
+      "ingestPhoto": false,
+      "note": "Likely PR-095/096/100 — need visual ID before minting."
+    },
+    {
+      "id": "1vkzduh",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1vkzduh/naruto_promo_card_foil/",
+      "title": "Naruto promo card: foil?",
+      "kind": "channel-photo",
+      "line": "en-ccg-eu",
+      "channel": "videogame collector's edition pack-in",
+      "note": "Photos may pin WoF / True Despair / Day One which PR — visual ID still needed.",
+      "gallery": 2,
+      "ingestPhoto": false
+    },
+    {
+      "id": "1j7bs5c",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1j7bs5c/naruto_ccg_englishfrench_sealed_products_for_sale/",
+      "title": "Naruto ccg english/french sealed products for sale",
+      "kind": "sealed-watch",
+      "line": "en-ccg-fr",
+      "lists": ["10× french storm 3 blisters", "EU printed english sage's legacy boosters"],
+      "note": "Matches our duopack-s28 / s28 FR sealed market; not a new SKU by itself.",
+      "ingestPhoto": false
+    }
+  ],
+  "findings2026-08-26": {
+    "pr095De": "attested (sale list + Goku DE posts + European foil market name)",
+    "pr096De": "attested foil (ugdgqq)",
+    "pr095EuropeFoil": "PSA + community treat as distinct chase cut",
+    "amigoChecklistGap": "still open — collectors ask for EU series lists; IT≠DE series count",
+    "accessUnlocked": "Arctic Shift replaces blocked Reddit JSON for research digs"
+  },
+  "stillWanted": [
+    "inventory-sheets (chase-only candidate: sheets-naruto-cards-complete.json — still need a real full checklist sheet)",
+    "visual-id xaxwh9 + 1vkzduh galleries → which PR",
+    "DE effect title for PR-095 (not in seller table)",
+    "Amigo DE series checklist cross-check vs comicplanet-de / FR Carddass"
+  ],
+  "not": ["carddass-crawl", "chrono-clash", "kayou", "live-subreddit-scrape"]
+}

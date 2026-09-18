@@ -1,0 +1,107 @@
+{
+  "source": "www.carddas.com/naruto — official JP Carddass CG (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "url": "https://www.carddas.com/naruto/",
+  "live": {
+    "www.carddas.com/naruto": 404,
+    "www.carddass.com/naruto": 404,
+    "www.carddas.com": { "status": 200, "body": "<html></html>" },
+    "www.carddass.com": "302 → https://sec.carddass.com/club/",
+    "vpnTokyo2026-08-18": {
+      "www.carddas.com/naruto": 404,
+      "www.carddass.com/naruto": 404,
+      "www.carddass.jp": "NXDOMAIN"
+    }
+  },
+  "note": "Official Bandai JP site for NARUTOカードゲーム (巻ノ壱… + later 第五幕). Same tabletop game as FR/IT Carddass, not Bandai USA CCG and not Data Carddass. Live /naruto/ is gone (2026-08-16). The corpus is Wayback — already mirrored by scrapeCarddasJp into staging/carddas-jp/. carddas.com (one s) is the richer host; carddass.com is the alias. Faces on the official CDX are sparse specials (`cardlist/card_img/*_spc2`) plus a few 幕 `ju-*_dN` GIFs — copy into `cards/{family}/{ni0001}/ja/art.carddas.*` even when another dump is already there (`installCarddasJpStagingFaces`). Numbered `card/001.gif` is unmapped chrome. 5th.shtml is Shippuden 第五幕 (2008, 8 cards/pack), not 巻ノ五 (NA-B5, 6 cards). carddas.com.tw/naruto is Data Carddass TW. carddass.fr is the FR official, already the FR face source. Do not crawl the empty live host.",
+  "wayback": {
+    "primaryCdx": "www.carddas.com/naruto/*",
+    "aliasCdx": "www.carddass.com/naruto/*",
+    "productSnapshot": "https://web.archive.org/web/20160304124212/http://www.carddass.com/naruto/product/",
+    "pipeline": "scrapeCarddasJp.ts — Admin Sync locale ja",
+    "staging": "staging/carddas-jp/"
+  },
+  "traps": [
+    {
+      "path": "5th.shtml",
+      "is": "第五幕 2008",
+      "not": ["maki5", "booster-s5", "booster-vol5-jp"]
+    },
+    { "host": "carddas.com.tw", "is": "data-carddass" },
+    { "host": "carddass.fr", "is": "carddass-fr" },
+    {
+      "host": "sec.carddass.com/club",
+      "is": "modern Carddass Club, not this TCG"
+    }
+  ],
+  "officialSite": {
+    "stagingHost": "staging/carddas-jp/www.carddas.com/naruto/",
+    "ingestFaces": "none",
+    "promoteStagingHoles": true,
+    "originalCg": {
+      "title": "NARUTO-ナルト-カードゲーム",
+      "cardlist": [
+        "1st.shtml",
+        "2nd.shtml",
+        "3rd.shtml",
+        "4th.shtml",
+        "5th.shtml",
+        "6th.shtml",
+        "7th.shtml",
+        "8th.shtml",
+        "9th.shtml",
+        "10th.shtml",
+        "11th.shtml",
+        "12th.shtml",
+        "13th.shtml",
+        "14th.shtml",
+        "15th.shtml",
+        "16th.shtml",
+        "17th.shtml"
+      ],
+      "volumes": "巻ノ壱…十七",
+      "attestedText": [
+        {
+          "path": "product/14-ex2.shtml",
+          "text": "巻ノ十四 自販機ブースター/ブースターパック（全57種）"
+        },
+        { "path": "product/16.shtml", "text": "巻ノ十六" },
+        { "path": "product/17.shtml", "text": "巻ノ十七" }
+      ]
+    },
+    "shippudenCg": {
+      "title": "NARUTO-ナルト-疾風伝カードゲーム",
+      "productDir": "cardgame/product/",
+      "acts": [
+        { "file": "3rd.shtml", "title": "第三幕 「激しき野望！傀儡演舞 編」" },
+        {
+          "file": "5th.shtml",
+          "title": "第五幕 「再会、忌まわしき写輪眼！ 編」",
+          "released": "2008-01-25",
+          "types": "57+1",
+          "boosterCards": 8,
+          "vendingCards": 4,
+          "not": ["maki5", "booster-vol5-jp", "booster-s5"]
+        },
+        {
+          "file": "6th.shtml",
+          "title": "第六幕 「友との絆！断ち切れない想い 編」"
+        },
+        {
+          "file": "8th.shtml",
+          "title": "第八幕 「新術炸裂！ 伝説を超える力 編」"
+        }
+      ],
+      "unverifiedAlts": ["1st.shtml", "2nd.shtml", "4th.shtml", "7th.shtml"]
+    },
+    "dataCarddass": {
+      "dir": "d_cardlist/",
+      "line": "data-carddass",
+      "scrape": false
+    }
+  },
+  "not": ["en-ccg", "data-carddass", "carddass-fr-faces"]
+}

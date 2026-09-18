@@ -54,9 +54,9 @@ describe("providerRuntimeStats", () => {
       });
     }
 
-    expect(
-      providerResolvePriorityScore("fast-useful"),
-    ).toBeGreaterThan(providerResolvePriorityScore("slow-useless"));
+    expect(providerResolvePriorityScore("fast-useful")).toBeGreaterThan(
+      providerResolvePriorityScore("slow-useless"),
+    );
 
     expect(
       orderProviderIdsForResolve(["slow-useless", "fast-useful", "other"]),

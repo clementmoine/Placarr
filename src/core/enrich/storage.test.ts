@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
 import {
@@ -142,7 +142,7 @@ describe("planCroppedCoverAttachmentSync", () => {
         [
           {
             id: "att-a",
-            url: "/uploads/cover-a_crop.jpg",
+            url: "/uploads/cover-a_edited.jpg",
             source: "steamgriddb",
           },
           {
@@ -151,14 +151,14 @@ describe("planCroppedCoverAttachmentSync", () => {
             source: "steamgriddb",
           },
         ],
-        "/uploads/cover-b_crop.jpg",
-        "/uploads/cover-a_crop.jpg",
+        "/uploads/cover-b_edited.jpg",
+        "/uploads/cover-a_edited.jpg",
       ),
     ).toEqual([
       {
         action: "update",
         attachmentId: "att-b",
-        url: "/uploads/cover-b_crop.jpg",
+        url: "/uploads/cover-b_edited.jpg",
       },
     ]);
   });
@@ -169,7 +169,7 @@ describe("planCroppedCoverAttachmentSync", () => {
         [
           {
             id: "att-a",
-            url: "/uploads/cover-a_crop.jpg",
+            url: "/uploads/cover-a_edited.jpg",
             source: "steamgriddb",
           },
           {
@@ -178,10 +178,12 @@ describe("planCroppedCoverAttachmentSync", () => {
             source: "steamgriddb",
           },
         ],
-        "/uploads/new-local_crop.jpg",
-        "/uploads/cover-a_crop.jpg",
+        "/uploads/new-local_edited.jpg",
+        "/uploads/cover-a_edited.jpg",
       ),
-    ).toEqual([{ action: "create-user", url: "/uploads/new-local_crop.jpg" }]);
+    ).toEqual([
+      { action: "create-user", url: "/uploads/new-local_edited.jpg" },
+    ]);
   });
 
   it("only updates the matching provider row when re-cropping the same cover", () => {
@@ -194,14 +196,14 @@ describe("planCroppedCoverAttachmentSync", () => {
             source: "steamgriddb",
           },
         ],
-        "/uploads/cover-a_crop.jpg",
+        "/uploads/cover-a_edited.jpg",
         "/uploads/cover-a.jpg",
       ),
     ).toEqual([
       {
         action: "update",
         attachmentId: "att-a",
-        url: "/uploads/cover-a_crop.jpg",
+        url: "/uploads/cover-a_edited.jpg",
       },
     ]);
   });
@@ -212,12 +214,12 @@ describe("planCroppedCoverAttachmentSync", () => {
         [
           {
             id: "att-amc",
-            url: "/uploads/amc-switch_crop.jpg",
+            url: "/uploads/amc-switch_edited.jpg",
             source: "achatmoinscher",
           },
         ],
-        "/uploads/amc-switch_crop.jpg",
-        "/uploads/amc-switch_crop.jpg",
+        "/uploads/amc-switch_edited.jpg",
+        "/uploads/amc-switch_edited.jpg",
       ),
     ).toEqual([{ action: "noop" }]);
   });
@@ -228,7 +230,7 @@ describe("planCroppedCoverAttachmentSync", () => {
         [
           {
             id: "att-ebay",
-            url: "/uploads/ebay_crop.jpg",
+            url: "/uploads/ebay_edited.jpg",
             source: "ebay",
           },
           {
@@ -242,14 +244,14 @@ describe("planCroppedCoverAttachmentSync", () => {
             source: "user",
           },
         ],
-        "/uploads/ebay_crop.jpg",
-        "/uploads/ebay_crop.jpg",
+        "/uploads/ebay_edited.jpg",
+        "/uploads/ebay_edited.jpg",
       ),
     ).toEqual([
       {
         action: "update",
         attachmentId: "att-user",
-        url: "/uploads/ebay_crop.jpg",
+        url: "/uploads/ebay_edited.jpg",
       },
     ]);
   });
@@ -264,7 +266,7 @@ describe("planCroppedCoverAttachmentSync", () => {
             source: null,
           },
         ],
-        "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_crop.jpg",
+        "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_edited.jpg",
         null,
         "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg",
       ),
@@ -272,7 +274,7 @@ describe("planCroppedCoverAttachmentSync", () => {
       {
         action: "update",
         attachmentId: "att-ngr",
-        url: "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_crop.jpg",
+        url: "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_edited.jpg",
       },
     ]);
   });
@@ -308,7 +310,7 @@ describe("formatMetadataFromStorage attachment traits", () => {
           duration: null,
           role: null,
           coverProvenance: null,
-platformKey: null,
+          platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -609,14 +611,14 @@ describe("keepSourcelessCoverOnlyWithoutCatalogTwin", () => {
 
   it("keeps a sourceless cover when no catalog twin exists", () => {
     const gallery = [
-      { type: "cover" as AttachmentType, url: "/uploads/only.jpg", source: null },
+      {
+        type: "cover" as AttachmentType,
+        url: "/uploads/only.jpg",
+        source: null,
+      },
     ];
     expect(
-      keepSourcelessCoverOnlyWithoutCatalogTwin(
-        gallery[0],
-        gallery,
-        new Map(),
-      ),
+      keepSourcelessCoverOnlyWithoutCatalogTwin(gallery[0], gallery, new Map()),
     ).toBe(true);
   });
 });

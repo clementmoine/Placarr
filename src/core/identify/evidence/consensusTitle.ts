@@ -248,4 +248,3 @@ export function selectConsensusTitle(
   }
   return best?.title ?? null;
 }
-

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
@@ -34,7 +34,7 @@ async function fetchCoverFromCoverProjectSearch(
   for (const q of queries) {
     try {
       const searchUrl = `https://www.thecoverproject.net/search_simple.php?name=${encodeURIComponent(q)}`;
-      const res = await axios.get<string>(searchUrl, {
+      const res = await httpGet<string>(searchUrl, {
         headers: SEARCH_HEADERS,
         timeout: 12000,
       });

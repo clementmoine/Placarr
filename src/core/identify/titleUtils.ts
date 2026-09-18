@@ -33,12 +33,12 @@ import {
   BOARDGAME_CATEGORY_CHROME_RE,
   BUNDLE_PERIPHERAL_RE,
   listingLooksLikeGameAccessory,
-  listingLooksLikeMerchAccessory,
   listingLooksLikeNonBookProduct,
 } from "@/core/identify/listingMerch";
 import {
   foldHardwareCapacityUnitsInTitle,
   IDENTITY_FUNCTION_WORDS,
+  IDENTITY_MEDIA_CATEGORY_TOKENS,
   IDENTITY_PLATFORM_NOISE_TOKENS,
   IDENTITY_VOLUME_STOP_WORDS,
 } from "@/core/enrich/titles/identityNoise";
@@ -169,7 +169,7 @@ const EDITION_SUFFIX_PATTERNS = new Set<string>([
 // Noise terms valid as leading prefixes but meaningful as a trailing title
 // word ("… The Arcade Game"). Short function-word connectors (pour/for) stay
 // stripable as suffixes.
-const SUFFIX_EXCLUDED_NOISE = new Set(
+const SUFFIX_EXCLUDED_NOISE = new Set<string>(
   LISTING_NOISE_TERMS.filter((term) => {
     if (/\s/.test(term) || term.length > 4) return false;
     return !IDENTITY_FUNCTION_WORDS.has(term);
@@ -196,12 +196,7 @@ function stripListingMetadataSegments(value: string): string {
 
 function joinTermAlternation(terms: readonly string[]): string {
   return [...terms]
-    .map((term) =>
-      term
-        .split(/\s+/)
-        .map(escapeRegExp)
-        .join("\\s+"),
-    )
+    .map((term) => term.split(/\s+/).map(escapeRegExp).join("\\s+"))
     .filter(Boolean)
     .sort((a, b) => b.length - a.length)
     .join("|");
@@ -233,9 +228,7 @@ const PUBLISHER_ALT = joinTermAlternation(LISTING_PUBLISHER_SUFFIX_TERMS);
  */
 function stripLeadingPublisherChrome(value: string): string {
   if (!PUBLISHER_ALT) return value;
-  const match = value.match(
-    new RegExp(`^(?:${PUBLISHER_ALT})\\s+(.+)$`, "i"),
-  );
+  const match = value.match(new RegExp(`^(?:${PUBLISHER_ALT})\\s+(.+)$`, "i"));
   if (!match?.[1]) return value;
   const rest = match[1].trim();
   const tokens = rest.split(/\s+/).filter(Boolean);
@@ -278,10 +271,7 @@ function stripListingChromeNoise(value: string): string {
         "",
       )
       .replace(
-        new RegExp(
-          `(?:\\s+(?:${BOARDGAME_CATEGORY_CHROME_RE.source}))+$`,
-          "i",
-        ),
+        new RegExp(`(?:\\s+(?:${BOARDGAME_CATEGORY_CHROME_RE.source}))+$`, "i"),
         "",
       )
       .replace(LEADING_AGE_ADJECTIVE_RE, "")
@@ -327,10 +317,7 @@ function stripListingChromeNoise(value: string): string {
     )
     .replace(
       TRAILING_FORMAT_CARRIER_ALT
-        ? new RegExp(
-            `\\s+\\b(?:${TRAILING_FORMAT_CARRIER_ALT})\\b\\s*$`,
-            "i",
-          )
+        ? new RegExp(`\\s+\\b(?:${TRAILING_FORMAT_CARRIER_ALT})\\b\\s*$`, "i")
         : /$a/,
       "",
     )
@@ -458,9 +445,8 @@ export function cleanTitleForDisplay(
   );
 
   // Match 4-digit years at the end (optionally preceded by typical separators or publishers)
-  const publisherYearAlt = LISTING_PUBLISHER_SUFFIX_TERMS.map(escapeRegExp).join(
-    "|",
-  );
+  const publisherYearAlt =
+    LISTING_PUBLISHER_SUFFIX_TERMS.map(escapeRegExp).join("|");
   const yearSuffixRegex = new RegExp(
     `\\s*(?:[\\-–|/()\\[\\]]|\\b(?:${publisherYearAlt}))\\s*\\b(?:19|20)\\d{2}\\b\\s*$`,
     "i",
@@ -535,9 +521,7 @@ export function cleanTitleForDisplay(
   } while (cleaned !== prev);
 
   // Clean any remaining leading/trailing punctuation and double whitespaces
-  cleaned = stripEdgePunctuation(cleaned)
-    .replace(/\s+/g, " ")
-    .trim();
+  cleaned = stripEdgePunctuation(cleaned).replace(/\s+/g, " ").trim();
 
   return cleaned || name;
 }
@@ -801,10 +785,7 @@ export function priceListingMatchesAnyItemName(
 const PRICE_LISTING_LEADING_TOKENS = new Set([
   ...IDENTITY_FUNCTION_WORDS,
   ...IDENTITY_PLATFORM_NOISE_TOKENS,
-  "jeu",
-  "game",
-  "jeux",
-  "video",
+  ...IDENTITY_MEDIA_CATEGORY_TOKENS,
   "edition",
   "ed",
 ]);
@@ -973,7 +954,15 @@ const PRODUCT_COMPARE_NOISE_TOKENS = new Set(
 
 const PLATFORM_PHRASE_MATCHER = createVideoGamePlatformMatcher("gi");
 
-function stripPlatformPhrasesForProductCompare(value: string): string {
+/**
+ * Drops registry-known platform phrases ("wii", "playstation 4", …) from an
+ * already-normalized title. The platform is carried as a separate compared fact
+ * (`platformKey`), so a platform word inside one source's title is identity
+ * noise — it biases title similarity down and splits clusters of the same
+ * product ("Zelda Twilight Princess" vs "The Legend of Zelda: Twilight
+ * Princess (Wii)").
+ */
+export function stripPlatformPhrasesForProductCompare(value: string): string {
   return value
     .replace(PLATFORM_PHRASE_MATCHER, " ")
     .replace(/\s+/g, " ")
@@ -1041,7 +1030,10 @@ function listingAddsDistinctSpinoffLead(
   listingNorm: string,
 ): boolean {
   if (!listingNorm.startsWith(`${itemNorm} `)) return false;
-  const extras = listingNorm.slice(itemNorm.length + 1).split(/\s+/).filter(Boolean);
+  const extras = listingNorm
+    .slice(itemNorm.length + 1)
+    .split(/\s+/)
+    .filter(Boolean);
   const firstExtra = extras[0];
   if (!firstExtra || firstExtra.length < 4) return false;
   // Marketplace region/condition noise ("version française", "PAL", …) is not a
@@ -1051,13 +1043,15 @@ function listingAddsDistinctSpinoffLead(
   if (EDITION_SUFFIX_PATTERNS.has(firstExtra)) return false;
   if (getSequelIndicators(firstExtra).size > 0) return false;
 
-  const moreIdentity = extras.slice(1).some(
-    (token) =>
-      token.length >= 3 &&
-      !PRODUCT_COMPARE_NOISE_TOKENS.has(token) &&
-      !EDITION_SUFFIX_PATTERNS.has(token) &&
-      getSequelIndicators(token).size === 0,
-  );
+  const moreIdentity = extras
+    .slice(1)
+    .some(
+      (token) =>
+        token.length >= 3 &&
+        !PRODUCT_COMPARE_NOISE_TOKENS.has(token) &&
+        !EDITION_SUFFIX_PATTERNS.has(token) &&
+        getSequelIndicators(token).size === 0,
+    );
 
   // Short leading marker + model/code ("Super Vehicle-001") = same SKU alias,
   // not a spinoff. Short marker alone ("Super") = series line. Longer first
@@ -1082,7 +1076,9 @@ export function listingIsDistinctProductSpinoff(
     .replace(/[:;|/]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const longer = normalizeForTokens(cleanSearchQuery(longerTitle) || longerTitle)
+  const longer = normalizeForTokens(
+    cleanSearchQuery(longerTitle) || longerTitle,
+  )
     .replace(/[:;|/]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -1101,7 +1097,10 @@ function normalizeTitleForProductCompare(value: string): string {
   );
 }
 
-function productCompareTokenSets(a: string, b: string): {
+function productCompareTokenSets(
+  a: string,
+  b: string,
+): {
   onlyA: string[];
   onlyB: string[];
   shared: string[];
@@ -1122,16 +1121,13 @@ function productCompareTokenSets(a: string, b: string): {
   const aTokens = new Set(aCompare.split(/[^a-z0-9]+/).filter(Boolean));
   const bTokens = new Set(bCompare.split(/[^a-z0-9]+/).filter(Boolean));
   const onlyA = [...aTokens].filter(
-    (token) =>
-      significantProductCompareToken(token) && !bTokens.has(token),
+    (token) => significantProductCompareToken(token) && !bTokens.has(token),
   );
   const onlyB = [...bTokens].filter(
-    (token) =>
-      significantProductCompareToken(token) && !aTokens.has(token),
+    (token) => significantProductCompareToken(token) && !aTokens.has(token),
   );
   const shared = [...aTokens].filter(
-    (token) =>
-      significantProductCompareToken(token) && bTokens.has(token),
+    (token) => significantProductCompareToken(token) && bTokens.has(token),
   );
   return { onlyA, onlyB, shared };
 }
@@ -1212,8 +1208,12 @@ function aliasesLookLikeRegionalTitlePair(
   }
   // Sequel digits are length-1 so they never enter `exclusives.shared` — read
   // them from the raw normalized titles instead.
-  const aTokens = normalizeTitleForProductCompare(primary).split(/\s+/).filter(Boolean);
-  const bTokens = normalizeTitleForProductCompare(alias).split(/\s+/).filter(Boolean);
+  const aTokens = normalizeTitleForProductCompare(primary)
+    .split(/\s+/)
+    .filter(Boolean);
+  const bTokens = normalizeTitleForProductCompare(alias)
+    .split(/\s+/)
+    .filter(Boolean);
   const sharedRaw = aTokens.filter((token) => bTokens.includes(token));
   if (sharedRaw.some((token) => /^\d+$/.test(token))) return false;
   return true;
@@ -1361,12 +1361,10 @@ export function areLikelySameProduct(a: string, b: string): boolean {
   const aTokens = new Set(aCompare.split(/[^a-z0-9]+/).filter(Boolean));
   const bTokens = new Set(bCompare.split(/[^a-z0-9]+/).filter(Boolean));
   const onlyA = [...aTokens].filter(
-    (token) =>
-      significantProductCompareToken(token) && !bTokens.has(token),
+    (token) => significantProductCompareToken(token) && !bTokens.has(token),
   );
   const onlyB = [...bTokens].filter(
-    (token) =>
-      significantProductCompareToken(token) && !aTokens.has(token),
+    (token) => significantProductCompareToken(token) && !aTokens.has(token),
   );
   const artBookLike =
     /\b(?:book|livre|tome|edition|making|art|creation|histoire|manga|bd)\b/i.test(

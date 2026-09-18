@@ -3,7 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { isCorpusGenericToken, buildTokenDocumentFrequency } from "./tokenCorpusIdf";
+import {
+  isCorpusGenericToken,
+  buildTokenDocumentFrequency,
+} from "./tokenCorpusIdf";
 import {
   __resetTokenCorpusIndexForTests,
   __setTokenCorpusIndexForTests,
@@ -68,7 +71,9 @@ describe("tokenCorpusIndex", () => {
   });
 
   it("missing file yields null — unknown tokens stay signal", async () => {
-    expect(await loadTokenCorpusIndex(path.join(tmpRoot, "missing.json"))).toBeNull();
+    expect(
+      await loadTokenCorpusIndex(path.join(tmpRoot, "missing.json")),
+    ).toBeNull();
   });
 
   it("resolveCorpusTokenStats prefers global durable DF over thin batch", () => {

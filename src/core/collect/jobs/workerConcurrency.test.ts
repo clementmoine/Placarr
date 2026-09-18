@@ -4,9 +4,10 @@ import { resolveInteractiveWorkerConcurrency } from "./workerConcurrency";
 
 describe("resolveInteractiveWorkerConcurrency", () => {
   it("defaults to 6 without FlareSolverr", () => {
-    expect(
-      resolveInteractiveWorkerConcurrency({}),
-    ).toEqual({ concurrency: 6, cappedForFlare: false });
+    expect(resolveInteractiveWorkerConcurrency({})).toEqual({
+      concurrency: 6,
+      cappedForFlare: false,
+    });
   });
 
   it("defaults to 2 when FlareSolverr is configured", () => {

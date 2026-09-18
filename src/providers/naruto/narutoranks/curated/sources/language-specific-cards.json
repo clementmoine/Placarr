@@ -1,0 +1,118 @@
+{
+  "observed": "2026-08-22",
+  "note": "Quelles cartes changent réellement selon l'édition, et lesquelles sont les mêmes. Relevé en lisant le texte imprimé sur les scans, carte par carte — pas déduit d'un nom de checklist. Clés machine : `data/naruto/ninja-ranks/locale-specific-faces.json` (consommé par le catalogue via `CataloguePackInfo.localeArt`).",
+  "methodTried": {
+    "what": "Corréler la face française et la face italienne du même numéro pour repérer mécaniquement les différences.",
+    "verdict": "Ne marche pas. Rotation neutralisée, les 49 paires comparables s'étalent régulièrement de +0,24 à +0,74 (médiane +0,43) sans aucun décrochement : à cet écart de qualité — 239×331 contre 1057×1500, avec reflets et cadrages différents — la corrélation ne distingue pas un texte traduit du bruit photographique. Écrit ici pour qu'on ne la retente pas."
+  },
+  "languageSpecific": [
+    {
+      "number": "0001",
+      "en": "Title Card",
+      "fr": "Et voici les ninjas !",
+      "it": null,
+      "why": "Carte titre — texte entièrement traduit sur le recto."
+    },
+    { "number": "0002", "en": "GROUP 7", "fr": "GROUPE 7", "it": "GRUPPO 7" },
+    { "number": "0003", "en": "GROUP 7", "fr": "GROUPE 7", "it": "GRUPPO 7" },
+    { "number": "0044", "en": "GUY", "fr": "GAÏ", "it": null, "why": "Graphie du nom sur le bandeau seulement — illustration identique ; le catalogue peut emprunter le scan arcade EN (voir `languageNeutral`)." },
+    {
+      "number": "0068",
+      "en": "Second Exam Survivors",
+      "fr": "SECOND EXAMEN DES SURVIVANTS",
+      "it": "SOPRAVVISSUTI AL SECONDO ESAME"
+    },
+    {
+      "number": "0066",
+      "en": "KONOHAMARU'S GROUP",
+      "fr": "GROUPE DE KONOHAMARU",
+      "it": "IL GRUPPO DI KONOHAMARU",
+      "why": "Bandeau titre imprimé sur le recto — pas d'emprunt arcade EN sur la tuile FR."
+    },
+    {
+      "number": "0058",
+      "en": "Third Hokage",
+      "fr": "Hokage le 3e",
+      "it": null,
+      "why": "Traduction attestée sur la checklist française (Leboncoin, carte 72)."
+    },
+    { "number": "0071", "en": "Map", "fr": "CARTE", "it": null },
+    {
+      "number": "0072",
+      "en": "Checklist",
+      "fr": "CHECKLIST REGULAR (contenu en français)",
+      "it": null,
+      "why": "La carte liste les 72 titres ; son contenu est donc entièrement traduit."
+    },
+    {
+      "setCode": "ff",
+      "number": "0002",
+      "en": "Naruto - Fox Spirit",
+      "fr": "DEMON-RENARD",
+      "it": "VOLPE A 9 CODE",
+      "why": "Bandeau holo FF traduit sur le recto — pas d'emprunt cross-locale sur la tuile FR."
+    },
+    {
+      "setCode": "sd",
+      "number": "0001",
+      "why": "Die-cut SD US (Inkworks) ≠ EU (Panini) — silhouette et cadrage ; pas d'emprunt cross-locale."
+    },
+    {
+      "setCode": "sd",
+      "number": "0002",
+      "why": "Die-cut SD US ≠ EU — pas d'emprunt cross-locale (rectos EN reconstruits ≠ Coleka FR)."
+    },
+    {
+      "setCode": "sd",
+      "number": "0003",
+      "why": "Die-cut SD US ≠ EU — pas d'emprunt cross-locale."
+    },
+    {
+      "setCode": "sd",
+      "number": "0004",
+      "why": "Die-cut SD US ≠ EU — pas d'emprunt cross-locale."
+    },
+    {
+      "setCode": "sd",
+      "number": "0005",
+      "en": "Fourth Hokage",
+      "fr": "HOKAGE LE 4E",
+      "it": null,
+      "why": "Bandeau traduit + die-cut US ≠ EU — pas d'emprunt cross-locale."
+    },
+    {
+      "setCode": "sd",
+      "number": "0006",
+      "why": "Die-cut SD US ≠ EU — pas d'emprunt cross-locale."
+    }
+  ],
+  "languageNeutral": [
+    {
+      "number": "0067",
+      "printed": "ROOKIES",
+      "why": "L'édition française garde le mot anglais — vérifié sur le scan. Un nom descriptif ne suffit donc pas à présumer une traduction."
+    },
+    {
+      "number": "0040",
+      "printed": "ROCK LEE",
+      "why": "Nom de personnage en latin et katakana, identique d'une édition à l'autre."
+    },
+    {
+      "number": "0044",
+      "printed": "GUY / GAÏ",
+      "why": "Seul le bandeau latin change (GUY vs GAÏ) ; katakana et illustration identiques — scan arcade EN préférable au Coleka FR reflété."
+    }
+  ],
+  "frenchTitlesFound": {
+    "where": "La carte 72 elle-même — la checklist française imprime le nom français de chaque carte.",
+    "samples": {
+      "1": "Et voici les ninjas !",
+      "2": "Groupe 7 puzzle",
+      "24": "Iruka",
+      "44": "Gaï",
+      "45": "Gaï-Rock Lee",
+      "53": "Orochimaru"
+    },
+    "why": "Transcrit dans `french-titles.json` : 1–54 depuis la checklist Coleka, 55–72 depuis une photo Leboncoin du bas de la carte 72 (`leboncoin-checklist.json`). Les 72 titres de base sont couverts."
+  }
+}

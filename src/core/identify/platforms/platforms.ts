@@ -344,11 +344,7 @@ export const VIDEO_GAME_PLATFORMS = [
       "neo geo cd",
       "neogeo cd",
     ],
-    launchBoxNames: [
-      "SNK Neo Geo AES",
-      "SNK Neo Geo MVS",
-      "SNK Neo Geo CD",
-    ],
+    launchBoxNames: ["SNK Neo Geo AES", "SNK Neo Geo MVS", "SNK Neo Geo CD"],
     theGamesDbId: 24,
     screenScraperSystemId: 142,
   },
@@ -607,9 +603,7 @@ export function detectVideoGamePlatformKey(
  * Hardware residual matching can then treat regional SKUs (Genesis ≡ Mega Drive)
  * as the same console without inventing FR↔EN word lists.
  */
-export function canonicalizeVideoGamePlatformAliasSpan(
-  title: string,
-): string {
+export function canonicalizeVideoGamePlatformAliasSpan(title: string): string {
   const trimmed = title.trim();
   if (!trimmed) return title;
 
@@ -673,10 +667,7 @@ export function videoGamePlatformTermAlternation(): string {
 }
 
 export function createVideoGamePlatformMatcher(flags = "gi"): RegExp {
-  return new RegExp(
-    `\\b(?:${videoGamePlatformTermAlternation()})\\b`,
-    flags,
-  );
+  return new RegExp(`\\b(?:${videoGamePlatformTermAlternation()})\\b`, flags);
 }
 
 /**
@@ -694,9 +685,7 @@ export function createTrailingVideoGamePlatformSuffixMatcher(
 }
 
 /** Sequel number immediately before a platform tag ("Borderlands 3 PS4"). */
-export function createSequelNumberBeforePlatformMatcher(
-  flags = "gi",
-): RegExp {
+export function createSequelNumberBeforePlatformMatcher(flags = "gi"): RegExp {
   return new RegExp(
     `\\b(\\d{1,2})\\s+(?:(?:sur|on|for)\\s+)?(?:${videoGamePlatformTermAlternation()})\\b`,
     flags,

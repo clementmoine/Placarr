@@ -1,9 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
 import { providerIdForSourceToken } from "@/core/catalog/catalog";
 import {
-  isLegacyPicClickPriceSource,
   normalizeLegacyPriceOffer,
   needsLegacyPriceOfferNormalization,
 } from "@/core/commerce/pricing/normalizeLegacyPriceOffer";
@@ -42,6 +41,8 @@ export type PriceOfferInput = {
   offerCount?: number | null;
   rawValue?: unknown;
   observedAt?: Date;
+  /** Catalog / printKey match — skip marketplace title filters on persist. */
+  metadataScoped?: boolean;
 };
 
 function scopeWhere(scope: EvidenceScope) {
@@ -178,6 +179,25 @@ export type MergedPriceOffer = {
   observedAt: Date;
 };
 
+/** Persist the catalog-match flag inside rawValue (no dedicated DB column). */
+export function stampMetadataScopedRawValue(
+  rawValue: unknown,
+  metadataScoped: boolean,
+): unknown {
+  if (!metadataScoped) return rawValue ?? null;
+  if (rawValue && typeof rawValue === "object" && !Array.isArray(rawValue)) {
+    return { ...(rawValue as Record<string, unknown>), metadataScoped: true };
+  }
+  return { metadataScoped: true, value: rawValue ?? null };
+}
+
+export function metadataScopedFromRawValue(rawValue: unknown): boolean {
+  if (!rawValue || typeof rawValue !== "object" || Array.isArray(rawValue)) {
+    return false;
+  }
+  return (rawValue as { metadataScoped?: unknown }).metadataScoped === true;
+}
+
 const offerKey = (offer: {
   source?: string | null;
   condition?: string | null;
@@ -228,6 +248,10 @@ export async function mergePriceOffers(
       continue;
     }
     const normalized = normalizeLegacyPriceOffer(offer);
+    const rawValue = stampMetadataScopedRawValue(
+      normalized.rawValue ?? offer.rawValue ?? null,
+      offer.metadataScoped === true,
+    );
     byKey.set(offerKey(normalized), {
       source: normalized.source,
       productName: normalized.productName ?? null,
@@ -240,7 +264,7 @@ export async function mergePriceOffers(
       sourceUrl: normalized.sourceUrl ?? null,
       availability: normalized.availability ?? null,
       offerCount: normalized.offerCount ?? null,
-      rawValue: normalized.rawValue ?? null,
+      rawValue,
       observedAt: normalized.observedAt ?? new Date(),
     });
   }
@@ -265,7 +289,9 @@ export async function reconcileLegacyPriceOfferSources(
   scope: EvidenceScope,
 ): Promise<void> {
   if (!hasScope(scope)) return;
-  const existing = await prisma.priceOffer.findMany({ where: scopeWhere(scope) });
+  const existing = await prisma.priceOffer.findMany({
+    where: scopeWhere(scope),
+  });
   if (!existing.some(needsLegacyPriceOfferNormalization)) return;
   await mergePriceOffers(scope, []);
 }

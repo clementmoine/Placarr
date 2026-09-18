@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "pack": "dbs/heroes",
+  "updatedAt": "2026-09-13",
+  "byKind": {
+    "booster": {
+      "source": "dragon-ball-official.com news Extra Booster Pack 3 + retail BOX listings",
+      "verifiedAt": "2026-09-13",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "SDBH Extra / Selection boosters : 3 cartes / sachet (attestation Bandai / retail). Pool = set produit. Pas de checklist carte-par-carte ici."
+    },
+    "display": {
+      "source": "retail BOX Extra Booster / Selection Pack (20 packs)",
+      "verifiedAt": "2026-09-13",
+      "packsContained": 20,
+      "cardsPerPack": null,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "BOX typique = 20 packs × 3 cartes. SKUs individuels à rattacher quand le catalogue produits Heroes est moissonné."
+    },
+    "deck": {
+      "source": "carddass.com/dbh goods — Starter Pack Namek (2023-04-20)",
+      "verifiedAt": "2026-09-13",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Starter Pack « ナメック星の激闘編 » listé sur le site officiel ; composition exacte non encore attestée ici."
+    }
+  },
+  "skus": {
+    "extra-booster-pack": {
+      "source": "https://dragon-ball-official.com/news/01_2004.html (EBP3) + retail EBP1/2",
+      "verifiedAt": "2026-09-13",
+      "notes": "Famille Extra Booster Pack (1/2/3) — 3 cartes / pack, ~40 types. SKU slug provisoire jusqu'à inventaire catalogue.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-box": {
+      "source": "retail BOX Extra Booster Pack (20 packs)",
+      "verifiedAt": "2026-09-13",
+      "notes": "BOX 20 packs × 3 cartes.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "booster-selection-pack": {
+      "source": "retail Selection Pack / Booster Selection Pack (BPSE checklist listings)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Selection Pack : 3 cartes / pack, BOX 20 packs ; pool ~30 types (rééditions + 2 BPSE). Liste BPSE attestée côté retail, pas encore mappée printKeys Heroes.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "starter-pack-namek-battle": {
+      "source": "https://xn--dbh-cj4e260f.xyz/startar-ugmps-list/ + retail «6 battle + 1 avatar» + carddass.com product page",
+      "verifiedAt": "2026-09-13",
+      "notes": "Pack fixe 7 cartes : UGMPS-01…06 ×1 attestés ; +1 avatar (ID soft, pas UGMPS-07 certain). contentsKnown=false jusqu'à printKey avatar. Dig: curated/sources/namek-starter-ugmps-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "declaredCardCount": 7,
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "dbh:ugmps-01",
+        "dbh:ugmps-02",
+        "dbh:ugmps-03",
+        "dbh:ugmps-04",
+        "dbh:ugmps-05",
+        "dbh:ugmps-06"
+      ],
+      "guaranteedPrints": [
+        { "printKey": "dbh:ugmps-01", "qty": 1 },
+        { "printKey": "dbh:ugmps-02", "qty": 1 },
+        { "printKey": "dbh:ugmps-03", "qty": 1 },
+        { "printKey": "dbh:ugmps-04", "qty": 1 },
+        { "printKey": "dbh:ugmps-05", "qty": 1 },
+        { "printKey": "dbh:ugmps-06", "qty": 1 }
+      ]
+    }
+  }
+}

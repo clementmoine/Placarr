@@ -12,8 +12,7 @@ export function asSeedableMetadataPreview(
   }
 
   const record = value as Record<string, unknown>;
-  const title =
-    typeof record.title === "string" ? record.title.trim() : "";
+  const title = typeof record.title === "string" ? record.title.trim() : "";
   const imageUrl =
     typeof record.imageUrl === "string" ? record.imageUrl.trim() : "";
   const attachments = Array.isArray(record.attachments)

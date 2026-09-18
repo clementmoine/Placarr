@@ -347,7 +347,8 @@ describe("searchPrestashopHits SearchYield durable", () => {
         }),
       ],
     );
-    const promotedUrl = promotePrestashopSearchEvidence.mock.calls[0]?.[1] as string;
+    const promotedUrl = promotePrestashopSearchEvidence.mock
+      .calls[0]?.[1] as string;
     expect(promotedUrl).toContain("s=Catan");
   });
 });

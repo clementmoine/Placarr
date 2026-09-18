@@ -1,4 +1,3 @@
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
@@ -8,16 +7,18 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
+import { defineProvider } from "@/providers/shared/defineProvider";
+import {
+  pinnedProviderRecordId,
+  pinnedProviderRecordUrl,
+} from "@/providers/shared/pinnedRecord";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import type {
-  MetadataProviderAdapter,
-  ProviderModule,
-} from "@/types/providerModule";
+import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import {
   fetchBdphileIssueById,
@@ -25,10 +26,6 @@ import {
   fetchBdphileMetadata,
   type BdphileIssue,
 } from "./fetch";
-import {
-  pinnedProviderRecordId,
-  pinnedProviderRecordUrl,
-} from "@/providers/shared/pinnedRecord";
 
 export {
   composeBdphileIssueTitle,
@@ -210,13 +207,14 @@ function mapBdphileMetadata(issue: BdphileIssue | null): MetadataResult | null {
   };
 }
 
-export const bdphileModule: ProviderModule = {
+export const bdphileModule = defineProvider({
   info: {
     id: "bdphile",
     label: "BDphile",
     types: ["books"],
     capabilities: ["identify", "cover", "releaseDate", "description", "price"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -280,15 +278,7 @@ export const bdphileModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck("bdphile", "BDphile", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.bdphile.fr/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
+  // Label custom (« Revue ») — pas le défaut « Metadata ».
   testHandlers: {
     "bdphile-metadata": {
       label: "BDphile - Revue",
@@ -310,4 +300,4 @@ export const bdphileModule: ProviderModule = {
     });
     return mappingRawKeysFromFetch(() => fetchBdphileMetadata(ctx.name));
   },
-};
+});

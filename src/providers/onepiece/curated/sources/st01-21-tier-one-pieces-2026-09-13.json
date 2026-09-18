@@ -1,0 +1,736 @@
+{
+  "source": "st01-21-tier-one-pieces",
+  "observed": "2026-09-13",
+  "kind": "research-dig",
+  "question": "Backfill Pieces qty for OPTCG ST-01–07, ST-10, ST-21 from Tier One",
+  "verdict": {
+    "ingested": {
+      "st01": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st01-cardlists/",
+        "slug": "starter-deck-01-straw-hat-crew"
+      },
+      "st02": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st02-cardlists/",
+        "slug": "starter-deck-02-worst-generation"
+      },
+      "st03": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st03-cardlists/",
+        "slug": "starter-deck-03-the-seven-warlords-of-the-sea"
+      },
+      "st04": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st04-cardlists/",
+        "slug": "starter-deck-04-animal-kingdom-pirates"
+      },
+      "st05": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st05-cardlists/",
+        "slug": "starter-deck-05-one-piece-film-edition"
+      },
+      "st06": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st06-cardlists/",
+        "slug": "starter-deck-06-absolute-justice"
+      },
+      "st07": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st07-cardlists/",
+        "slug": "starter-deck-07-big-mom-pirates"
+      },
+      "st10": {
+        "sum": 53,
+        "url": "https://tier-one-onepiece.jp/blog/st10-cardlists/",
+        "slug": "starter-deck-10-the-three-captains"
+      },
+      "st21": {
+        "sum": 51,
+        "url": "https://tier-one-onepiece.jp/blog/st21_cardlists/",
+        "slug": "deck-de-demarrage-ex-st21-gear-5th"
+      }
+    },
+    "st05Fix": "ST06-011/ST06-013 in qty table → ST05-011/ST05-013 (card body)",
+    "st10": "Σ=53 (51 deck + 2 alt leaders) per Bandai product page",
+    "st14": "404 on Tier One — skipped"
+  },
+  "decks": {
+    "st01": {
+      "url": "https://tier-one-onepiece.jp/blog/st01-cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST01-001"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-002"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-003"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-004"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-005"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-006"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-007"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-008"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-009"
+        },
+        {
+          "qty": 4,
+          "id": "ST01-010"
+        },
+        {
+          "qty": 2,
+          "id": "ST01-011"
+        },
+        {
+          "qty": 2,
+          "id": "ST01-012"
+        },
+        {
+          "qty": 2,
+          "id": "ST01-013"
+        },
+        {
+          "qty": 2,
+          "id": "ST01-014"
+        },
+        {
+          "qty": 2,
+          "id": "ST01-015"
+        },
+        {
+          "qty": 2,
+          "id": "ST01-016"
+        },
+        {
+          "qty": 2,
+          "id": "ST01-017"
+        }
+      ]
+    },
+    "st02": {
+      "url": "https://tier-one-onepiece.jp/blog/st02-cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST02-001"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-002"
+        },
+        {
+          "qty": 2,
+          "id": "ST02-003"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-004"
+        },
+        {
+          "qty": 2,
+          "id": "ST02-005"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-006"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-007"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-008"
+        },
+        {
+          "qty": 2,
+          "id": "ST02-009"
+        },
+        {
+          "qty": 2,
+          "id": "ST02-010"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-011"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-012"
+        },
+        {
+          "qty": 2,
+          "id": "ST02-013"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-014"
+        },
+        {
+          "qty": 2,
+          "id": "ST02-015"
+        },
+        {
+          "qty": 4,
+          "id": "ST02-016"
+        },
+        {
+          "qty": 2,
+          "id": "ST02-017"
+        }
+      ]
+    },
+    "st03": {
+      "url": "https://tier-one-onepiece.jp/blog/st03-cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST03-001"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-002"
+        },
+        {
+          "qty": 2,
+          "id": "ST03-003"
+        },
+        {
+          "qty": 2,
+          "id": "ST03-004"
+        },
+        {
+          "qty": 2,
+          "id": "ST03-005"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-006"
+        },
+        {
+          "qty": 2,
+          "id": "ST03-007"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-008"
+        },
+        {
+          "qty": 2,
+          "id": "ST03-009"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-010"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-011"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-012"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-013"
+        },
+        {
+          "qty": 2,
+          "id": "ST03-014"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-015"
+        },
+        {
+          "qty": 4,
+          "id": "ST03-016"
+        },
+        {
+          "qty": 2,
+          "id": "ST03-017"
+        }
+      ]
+    },
+    "st04": {
+      "url": "https://tier-one-onepiece.jp/blog/st04-cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST04-001"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-002"
+        },
+        {
+          "qty": 2,
+          "id": "ST04-003"
+        },
+        {
+          "qty": 2,
+          "id": "ST04-004"
+        },
+        {
+          "qty": 2,
+          "id": "ST04-005"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-006"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-007"
+        },
+        {
+          "qty": 2,
+          "id": "ST04-008"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-009"
+        },
+        {
+          "qty": 2,
+          "id": "ST04-010"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-011"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-012"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-013"
+        },
+        {
+          "qty": 2,
+          "id": "ST04-014"
+        },
+        {
+          "qty": 2,
+          "id": "ST04-015"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-016"
+        },
+        {
+          "qty": 4,
+          "id": "ST04-017"
+        }
+      ]
+    },
+    "st05": {
+      "url": "https://tier-one-onepiece.jp/blog/st05-cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST05-001"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-002"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-003"
+        },
+        {
+          "qty": 2,
+          "id": "ST05-004"
+        },
+        {
+          "qty": 2,
+          "id": "ST05-005"
+        },
+        {
+          "qty": 2,
+          "id": "ST05-006"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-007"
+        },
+        {
+          "qty": 2,
+          "id": "ST05-008"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-009"
+        },
+        {
+          "qty": 2,
+          "id": "ST05-010"
+        },
+        {
+          "qty": 2,
+          "id": "ST05-011",
+          "fix": "tier-one-typo"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-012"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-013",
+          "fix": "tier-one-typo"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-014"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-015"
+        },
+        {
+          "qty": 2,
+          "id": "ST05-016"
+        },
+        {
+          "qty": 4,
+          "id": "ST05-017"
+        }
+      ]
+    },
+    "st06": {
+      "url": "https://tier-one-onepiece.jp/blog/st06-cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST06-001"
+        },
+        {
+          "qty": 2,
+          "id": "ST06-002"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-003"
+        },
+        {
+          "qty": 2,
+          "id": "ST06-004"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-005"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-006"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-007"
+        },
+        {
+          "qty": 2,
+          "id": "ST06-008"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-009"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-010"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-011"
+        },
+        {
+          "qty": 2,
+          "id": "ST06-012"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-013"
+        },
+        {
+          "qty": 2,
+          "id": "ST06-014"
+        },
+        {
+          "qty": 2,
+          "id": "ST06-015"
+        },
+        {
+          "qty": 4,
+          "id": "ST06-016"
+        },
+        {
+          "qty": 2,
+          "id": "ST06-017"
+        }
+      ]
+    },
+    "st07": {
+      "url": "https://tier-one-onepiece.jp/blog/st07-cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST07-001"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-002"
+        },
+        {
+          "qty": 2,
+          "id": "ST07-003"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-004"
+        },
+        {
+          "qty": 2,
+          "id": "ST07-005"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-006"
+        },
+        {
+          "qty": 2,
+          "id": "ST07-007"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-008"
+        },
+        {
+          "qty": 2,
+          "id": "ST07-009"
+        },
+        {
+          "qty": 2,
+          "id": "ST07-010"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-011"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-012"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-013"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-014"
+        },
+        {
+          "qty": 4,
+          "id": "ST07-015"
+        },
+        {
+          "qty": 2,
+          "id": "ST07-016"
+        },
+        {
+          "qty": 2,
+          "id": "ST07-017"
+        }
+      ]
+    },
+    "st10": {
+      "url": "https://tier-one-onepiece.jp/blog/st10-cardlists/",
+      "sum": 53,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST10-001"
+        },
+        {
+          "qty": 1,
+          "id": "ST10-002"
+        },
+        {
+          "qty": 1,
+          "id": "ST10-003"
+        },
+        {
+          "qty": 4,
+          "id": "ST10-004"
+        },
+        {
+          "qty": 2,
+          "id": "ST10-005"
+        },
+        {
+          "qty": 2,
+          "id": "ST10-006"
+        },
+        {
+          "qty": 4,
+          "id": "ST10-007"
+        },
+        {
+          "qty": 4,
+          "id": "ST10-008"
+        },
+        {
+          "qty": 4,
+          "id": "ST10-009"
+        },
+        {
+          "qty": 2,
+          "id": "ST10-010"
+        },
+        {
+          "qty": 4,
+          "id": "ST10-011"
+        },
+        {
+          "qty": 4,
+          "id": "ST10-012"
+        },
+        {
+          "qty": 2,
+          "id": "ST10-013"
+        },
+        {
+          "qty": 4,
+          "id": "ST10-014"
+        },
+        {
+          "qty": 2,
+          "id": "ST10-015"
+        },
+        {
+          "qty": 2,
+          "id": "ST10-016"
+        },
+        {
+          "qty": 2,
+          "id": "ST10-017"
+        },
+        {
+          "qty": 4,
+          "id": "OP01-016"
+        },
+        {
+          "qty": 4,
+          "id": "OP01-025"
+        }
+      ]
+    },
+    "st21": {
+      "url": "https://tier-one-onepiece.jp/blog/st21_cardlists/",
+      "sum": 51,
+      "rows": [
+        {
+          "qty": 1,
+          "id": "ST21-001"
+        },
+        {
+          "qty": 2,
+          "id": "ST21-002"
+        },
+        {
+          "qty": 2,
+          "id": "ST21-003"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-004"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-005"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-006"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-007"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-008"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-009"
+        },
+        {
+          "qty": 2,
+          "id": "ST21-010"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-011"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-012"
+        },
+        {
+          "qty": 4,
+          "id": "ST21-013"
+        },
+        {
+          "qty": 2,
+          "id": "ST21-014"
+        },
+        {
+          "qty": 2,
+          "id": "ST21-015"
+        },
+        {
+          "qty": 2,
+          "id": "ST21-016"
+        },
+        {
+          "qty": 2,
+          "id": "ST21-017"
+        }
+      ]
+    }
+  }
+}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { LoginForm } from "./login-form";
 import {
@@ -17,6 +17,22 @@ import {
 
 export default function LoginPage() {
   const { t } = useLocale();
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/register")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { open?: boolean } | null) => {
+        if (!cancelled && data?.open) setRegistrationOpen(true);
+      })
+      .catch(() => {
+        /* keep closed on error */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="flex h-screen p-4 w-screen flex-col items-center justify-center">
@@ -24,11 +40,11 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
-              {t("auth.loginTitle")} 👋
+              {t("auth.unlockTitle")}
             </CardTitle>
 
             <CardDescription className="text-center">
-              {t("auth.loginDescription")}
+              {t("auth.unlockDescription")}
             </CardDescription>
           </CardHeader>
 
@@ -44,17 +60,19 @@ export default function LoginPage() {
             </Suspense>
           </CardContent>
 
-          <CardFooter className="flex flex-wrap items-center justify-center gap-2">
-            <div className="text-sm text-muted-foreground">
-              {t("auth.dontHaveAccount")}{" "}
-              <Link
-                href="/auth/register"
-                className="text-primary underline-offset-4 hover:underline"
-              >
-                {t("auth.registerButton")}
-              </Link>
-            </div>
-          </CardFooter>
+          {registrationOpen && (
+            <CardFooter className="flex flex-wrap items-center justify-center gap-2">
+              <div className="text-sm text-muted-foreground">
+                {t("auth.dontHaveAccount")}{" "}
+                <Link
+                  href="/auth/register"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {t("auth.registerButton")}
+                </Link>
+              </div>
+            </CardFooter>
+          )}
         </Card>
       </div>
     </div>

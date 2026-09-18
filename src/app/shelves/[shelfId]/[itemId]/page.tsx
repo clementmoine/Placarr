@@ -23,6 +23,8 @@ import {
   Gauge,
   Layers,
   Loader2,
+  Sparkles,
+  HandHelping,
   type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -33,6 +35,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type SyntheticEvent,
   type TouchEvent,
 } from "react";
@@ -59,14 +62,15 @@ import {
   getItem,
   saveItem,
   refreshItemMetadata,
+  getItemSealedContainment,
   type ItemPrices,
+  type SealedContainmentSourceDto,
 } from "@/lib/api/items";
-import { cancelBackgroundJob, upsertBackgroundJobInCache } from "@/lib/api/backgroundJobs";
 import {
-  getHeroImage,
-  getGalleryImages,
-} from "@/core/collect/media";
-import { findAttachmentForUrl } from "@/core/enrich/media/coverUrl";
+  cancelBackgroundJob,
+  upsertBackgroundJobInCache,
+} from "@/lib/api/backgroundJobs";
+import { getHeroImage, getGalleryImages } from "@/core/collect/media";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
@@ -78,11 +82,11 @@ import {
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
-} from "@/core/enrich/galleries";
+} from "@/core/enrich/media/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
-import type { Shelf, Prisma, Item } from "@prisma/client";
+import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useDocumentTitle } from "@/lib/client/hooks/useDocumentTitle";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -96,7 +100,39 @@ import {
 import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
-import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
+import { FoilCardImage } from "@/components/FoilCardImage";
+import { FlippableCard } from "@/components/FlippableCard";
+import {
+  resolveDefaultCardBack,
+  resolveSharedCardBackSkeleton,
+} from "@/core/render/foil";
+import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
+import {
+  stripEditSuffixFromUrl,
+  urlsReferToSameLocalizedImage,
+} from "@/core/enrich/media/coverUrl";
+import { resolveStoredVariant } from "@/core/enrich/variants";
+import {
+  edgeGradient,
+  useImageEdgeColors,
+} from "@/lib/client/hooks/useImageEdgeColors";
+import {
+  usePrintVariant,
+  variantRendering,
+} from "@/lib/client/hooks/usePrintVariant";
+import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
+import {
+  getDetailCoverClass,
+  getAspectRatio,
+  faceDisplayAspect,
+} from "@/lib/text/cardFormat";
+import { AmbientBackdrop } from "@/components/AmbientBackdrop";
+import { CardBackSkeleton } from "@/components/CardBackSkeleton";
+import {
+  cardFaceRadius,
+  OrientedMediaRotator,
+} from "@/components/OrientedMediaFrame";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
 import {
   itemPath,
@@ -106,6 +142,7 @@ import {
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
 import { seriesSiblings } from "@/core/enrich/titles/series";
 import { FRANCHISE_FACT_KIND } from "@/core/enrich/facts/franchiseFact";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import {
   invalidateItemQueries,
   patchCachedItem,
@@ -114,7 +151,11 @@ import {
 } from "@/core/collect/queryCache";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { getItemValueEstimate } from "@/core/collect/value";
-import { marketOfferConditionsForItem } from "@/core/collect/condition";
+import {
+  marketOfferConditionsForItem,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
+import { isItemOnLoan } from "@/core/collect/itemLoan";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 import { displayAliasesForItem } from "@/core/enrich/aliases";
 
@@ -216,8 +257,57 @@ function RelatedItemsRow({
   );
 }
 
+/** Packshots des produits scellés qui contiennent ce tirage. */
+function IncludedInRow({
+  title,
+  sources,
+  checklistHref,
+}: {
+  title: string;
+  sources: SealedContainmentSourceDto[];
+  checklistHref: string;
+}) {
+  if (sources.length === 0) return null;
+  return (
+    <div className="mt-8 flex flex-col gap-3">
+      <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
+        {title}
+      </h3>
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+        {sources.slice(0, 12).map((source) => (
+          <Link
+            key={source.slug}
+            href={`${checklistHref}?product=${encodeURIComponent(source.slug)}`}
+            className="group w-28 sm:w-32 shrink-0 flex flex-col gap-2"
+          >
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-border/70 bg-card/50 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
+              {source.imageUrl ? (
+                <RemoteImage
+                  src={source.imageUrl}
+                  alt={source.name}
+                  fill
+                  sizes="128px"
+                  className="object-contain p-1.5"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-medium text-muted-foreground">
+                  {source.kind}
+                </div>
+              )}
+            </div>
+            <span className="line-clamp-2 text-center text-[11px] font-medium leading-snug text-foreground/90 group-hover:text-primary">
+              {source.name}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ItemDiscoverySection({
   isPending,
+  includedIn,
   seriesVolumes,
   franchiseName,
   franchiseItems,
@@ -227,6 +317,7 @@ function ItemDiscoverySection({
   t,
 }: {
   isPending: boolean;
+  includedIn: SealedContainmentSourceDto[];
   seriesVolumes: ItemWithMetadata[];
   franchiseName: string | null;
   franchiseItems: ItemWithMetadata[];
@@ -236,13 +327,23 @@ function ItemDiscoverySection({
   t: (key: string, values?: Record<string, string>) => string;
 }) {
   if (isPending) return null;
+  const hasIncluded = includedIn.length > 0;
   const hasSeries = seriesVolumes.length > 0;
   const hasFranchise = Boolean(franchiseName) && franchiseItems.length > 0;
   const hasOther = otherItems.length > 0;
-  if (!hasSeries && !hasFranchise && !hasOther) return null;
+  if (!hasIncluded && !hasSeries && !hasFranchise && !hasOther) return null;
+
+  const checklistHref = `${shelfPath(shelf || { id: shelfId })}/checklist`;
 
   return (
     <div className="mt-8 flex flex-col gap-1 w-full">
+      {hasIncluded && (
+        <IncludedInRow
+          title={t("items.includedIn")}
+          sources={includedIn}
+          checklistHref={checklistHref}
+        />
+      )}
       {hasSeries && (
         <RelatedItemsRow
           title={t("items.otherVolumes")}
@@ -501,9 +602,14 @@ function priceObservationConditions(
   shelfType?: string | null,
   prices?: {
     priceUsedCIB?: number | null;
+    priceObservations?: Array<{ condition?: string | null }> | null;
   } | null,
+  options?: {
+    variant?: string | null;
+    plainFinishes?: readonly (string | null | undefined)[] | null;
+  },
 ) {
-  return marketOfferConditionsForItem(condition, shelfType, prices);
+  return marketOfferConditionsForItem(condition, shelfType, prices, options);
 }
 
 function isPrimaryInfoFact(fact: DetailFact) {
@@ -1108,6 +1214,7 @@ export default function ItemDetailsPage() {
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">(
     "contain",
   );
+  const [coverFaceReady, setCoverFaceReady] = useState(false);
   // Garde « une seule tentative » : jamais rendu → ref, pas un state (évite
   // un setState synchrone dans l'effect de refresh).
   const autoMetadataRefreshAttemptedRef = useRef(false);
@@ -1162,11 +1269,17 @@ export default function ItemDetailsPage() {
     // while this item is still being enriched (no metadataId yet) — survives a
     // page refresh since the state is derived from the persisted item.
     refetchInterval: (query) =>
-      metadataBusyRefetchInterval(
-        query.state.data ? [query.state.data] : null,
-      ),
+      metadataBusyRefetchInterval(query.state.data ? [query.state.data] : null),
     refetchIntervalInBackground: true,
   });
+
+  const { data: sealedContainment } = useQuery({
+    queryKey: ["shelf", shelfId, "items", item?.id, "sealed-containment"],
+    queryFn: () => getItemSealedContainment(shelfId, item!.id),
+    enabled: Boolean(item?.id && item.printKey),
+    staleTime: 60_000,
+  });
+  const includedInSources = sealedContainment?.sources ?? [];
 
   const isMetadataBusy = isItemMetadataBusy(item);
   const hasNoMetadata =
@@ -1179,6 +1292,14 @@ export default function ItemDetailsPage() {
   const metadataRefreshToastArmedRef = useRef(false);
 
   useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
+
+  // Collector-code bookmarks (`/tfc-2`) resolve after title adoption — rewrite
+  // the address bar to the canonical catalog slug once the item is known.
+  useEffect(() => {
+    if (!item?.id || !item.slug || !shelf) return;
+    if (itemId === item.id || itemId === item.slug) return;
+    router.replace(itemPath(shelf, item));
+  }, [item, itemId, router, shelf]);
 
   useEffect(() => {
     if (!item?.id) return;
@@ -1262,18 +1383,22 @@ export default function ItemDetailsPage() {
     if (!item?.id) return null;
     if (
       item.priceNew == null &&
+      item.priceFoil == null &&
       item.priceUsed == null &&
       item.priceUsedCIB == null &&
       item.priceEstimated == null &&
+      item.priceEstimatedFoil == null &&
       !item.priceObservations?.length
     ) {
       return null;
     }
     return {
       priceNew: item.priceNew ?? null,
+      priceFoil: item.priceFoil ?? null,
       priceUsed: item.priceUsed ?? null,
       priceUsedCIB: item.priceUsedCIB ?? null,
       priceEstimated: item.priceEstimated ?? null,
+      priceEstimatedFoil: item.priceEstimatedFoil ?? null,
       priceLastUpdated: item.priceLastUpdated ?? null,
       priceSources: item.priceSources,
       priceSourceDisplayNames: item.priceSourceDisplayNames,
@@ -1717,42 +1842,79 @@ export default function ItemDetailsPage() {
 
   const coverImage = item?.imageUrl ?? null;
 
-  const coverSourceChip = useMemo(() => {
-    if (!item || !coverImage) return null;
-    const displayLocale: AttachmentDisplayLocale =
-      locale === "en" ? "en" : "fr";
-    const match = findAttachmentForUrl(getGalleryImages(item), coverImage);
-    if (!match) return null;
-    const gallery = getAttachmentGalleryLabels(
-      {
-        type: match.type,
-        role: match.role,
-        title: match.title,
-        source: match.source,
-        providerLabel: match.providerLabel,
-        sourceNames: match.sourceNames,
-        gridStyleCoverLabelsSource: match.gridStyleCoverLabelsSource,
-      },
-      displayLocale,
-    );
-    return {
-      sourceNames: gallery.sourceNames,
-      detail: gallery.detail,
-    };
-  }, [item, coverImage, locale]);
+  /**
+   * A foil copy is drawn with the holographic layers; a plain one is not. The
+   * provider says which finishes carry an effect and supplies the masks.
+   */
+  const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
+  const variantView = variantRendering(item?.variant, printVariant, coverImage);
+  const cardBack = resolveDefaultCardBack({
+    printCardBackUrl: printVariant?.cardBackUrl,
+    printKey: item?.printKey,
+    setCode: printVariant?.setCode,
+    effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
+  });
+  const cardBackUrl = cardBack?.url ?? null;
+  const cardBackSkeletonUrl = resolveSharedCardBackSkeleton({
+    printCardBackUrl: printVariant?.cardBackUrl,
+    printKey: item?.printKey,
+    setCode: printVariant?.setCode,
+    effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
+  });
+  /**
+   * Masks follow the artwork's own framing. Cropping the card left them cut for
+   * the full print, so `object-contain` letterboxed the two differently and the
+   * shimmer sat off the foil areas.
+   */
+  const heroArtworkUrl = variantView.imageUrl ?? coverImage;
+  const foilMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.foilMaskUrl,
+  );
+  const varnishMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.varnishMaskUrl,
+  );
+  const secondVarnishMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.secondVarnishMaskUrl,
+  );
+  /**
+   * Shown on the fiche only once the provider still offers it. A variant the
+   * catalogue has dropped is not a fact worth stating.
+   */
+  const resolvedVariant = resolveStoredVariant(
+    item?.variant,
+    printVariant?.finishes,
+  );
+
+  /**
+   * Colours of the two cover edges that border the empty space. A contained
+   * cover leaves bands on one axis; filled with the artwork's own edge colours
+   * they read as the image continuing, rather than as a plate it sits on.
+   */
+  const {
+    colors: coverEdgeColors,
+    measure: measureCoverEdges,
+    reset: resetCoverEdgeColors,
+  } = useImageEdgeColors();
 
   // Réinitialisation quand la cover change — ajustée pendant le render.
   const [prevCoverImage, setPrevCoverImage] = useState(coverImage);
   if (prevCoverImage !== coverImage) {
     setPrevCoverImage(coverImage);
     setCoverImageFit("contain");
+    setCoverFaceReady(false);
+    resetCoverEdgeColors();
   }
 
   const handleCoverImageLoad = useCallback(
-    (_event: SyntheticEvent<HTMLImageElement>) => {
+    (event: SyntheticEvent<HTMLImageElement>) => {
+      setCoverFaceReady(true);
       setCoverImageFit("contain");
+      measureCoverEdges(event.currentTarget);
     },
-    [],
+    [measureCoverEdges],
   );
 
   const galleryImages = useMemo(() => {
@@ -1760,13 +1922,15 @@ export default function ItemDetailsPage() {
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
     const allImages = getGalleryImages(item);
-    // Exclude the cover, including its uncropped twin: the cover is a "_crop"
-    // derivative of a gallery image, so its source image must not show again.
-    const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
-    const coverKey = coverImage ? stripCrop(coverImage) : null;
+    // Exclude the cover, including its unedited twin: the cover is a derivative
+    // of a gallery image, so its source must not show again. Through the shared
+    // helper — a local copy of the rule went stale the moment the suffix moved.
+    const coverKey = coverImage ? stripEditSuffixFromUrl(coverImage) : null;
     return allImages
       .filter(
-        (img) => img.url !== coverImage && stripCrop(img.url) !== coverKey,
+        (img) =>
+          img.url !== coverImage &&
+          stripEditSuffixFromUrl(img.url) !== coverKey,
       )
       .slice(0, 24)
       .map((img) => {
@@ -1799,15 +1963,38 @@ export default function ItemDetailsPage() {
   const itemDisplayName = item?.name;
   useDocumentTitle(itemDisplayName);
 
+  /** Série · Extension · n° — picker shows this; keep it next to the title too. */
+  const printReferenceLine = useMemo(() => {
+    if (shelf?.type !== "tcg") return null;
+    const facts = normalizeFacts(item?.metadata?.facts);
+    const byLabel = (label: string) =>
+      facts.find((fact) => fact.label === label)?.value?.trim() || null;
+    const parts = [
+      byLabel("Série"),
+      byLabel("Extension"),
+      byLabel("Numéro"),
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : null;
+  }, [item?.metadata?.facts, shelf?.type]);
+
   const displayAliases = useMemo(() => {
     return displayAliasesForItem({
       name: itemDisplayName,
       metadataTitle: item?.metadata?.title,
       aliases: item?.metadata?.aliases,
+      attachments: item?.metadata?.attachments,
     });
-  }, [item?.metadata?.aliases, item?.metadata?.title, itemDisplayName]);
+  }, [
+    item?.metadata?.aliases,
+    item?.metadata?.attachments,
+    item?.metadata?.title,
+    itemDisplayName,
+  ]);
 
   const seriesVolumes = useMemo(() => {
+    // Volume consensus is a books concept — collector codes like `TFC#001`
+    // look like "Tome #001" and would invent a phantom series on TCG shelves.
+    if (usesPrintSearch(shelf?.type)) return [];
     if (!shelf?.items || !item || !resolvedItemId) return [];
     const seriesTitle = item.storedName ?? item.name ?? "";
     const entries = (shelf.items as unknown as ItemWithMetadata[]).map(
@@ -1819,7 +2006,8 @@ export default function ItemDetailsPage() {
     return seriesSiblings(seriesTitle, entries).filter(
       (entry) => entry.id !== resolvedItemId,
     );
-  }, [shelf?.items, item, resolvedItemId]);
+    // `shelf` whole: the compiler tracks the object, not the `.items` read.
+  }, [shelf, item, resolvedItemId]);
 
   // Franchise grouping comes only from the provider-sourced franchise fact, never
   // from title heuristics.
@@ -1847,7 +2035,7 @@ export default function ItemDetailsPage() {
         );
       },
     );
-  }, [shelf?.items, franchiseName, seriesVolumes, resolvedItemId]);
+  }, [shelf, franchiseName, seriesVolumes, resolvedItemId]);
 
   // Generic "other items" excludes the more specific groups above, so each sibling
   // shows up once in its most meaningful section.
@@ -1863,9 +2051,45 @@ export default function ItemDetailsPage() {
     );
   }, [shelf, resolvedItemId, seriesVolumes, franchiseItems]);
 
+  const artOrient = useArtFaceOrientation(
+    coverImage,
+    printVariant ?? undefined,
+  );
+  const faceQuarterTurns = artOrient.faceQuarterTurns;
+  const landscapeFace = artOrient.landscapeFace;
+  const displayQuarterTurns = landscapeFace ? 0 : faceQuarterTurns;
   const coverAspectRatio = useMemo(() => {
-    return getDetailCoverClass(shelf?.cardFormat, shelf?.type);
-  }, [shelf?.cardFormat, shelf?.type]);
+    const base = getDetailCoverClass(shelf?.cardFormat, shelf?.type);
+    if (!displayQuarterTurns && !landscapeFace) return base;
+    // Aspect comes from inline style when the print sits on its side.
+    return base
+      .replace(/\baspect-\[[^\]]+\]\b/g, "")
+      .replace(/\baspect-square\b/g, "")
+      .replace(/\baspect-video\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }, [shelf?.cardFormat, shelf?.type, displayQuarterTurns, landscapeFace]);
+  const coverOrientedAspect = useMemo(
+    () =>
+      faceDisplayAspect(getAspectRatio(shelf?.cardFormat, shelf?.type), {
+        faceQuarterTurns,
+        landscapeFace,
+      }),
+    [shelf?.cardFormat, shelf?.type, faceQuarterTurns, landscapeFace],
+  );
+  /**
+   * The backdrop turns with the card only when it *is* the card. A Location has
+   * no background of its own, so the hero falls back to its own face — a
+   * portrait scan whose art is sideways — and the banner lay on its side. A
+   * real landscape background, or any other artwork, must be left alone.
+   */
+  const heroQuarterTurns =
+    heroImage &&
+    heroArtworkUrl &&
+    urlsReferToSameLocalizedImage(heroImage, heroArtworkUrl) &&
+    !landscapeFace
+      ? faceQuarterTurns
+      : 0;
 
   const description = useMemo(() => {
     return item?.description || item?.metadata?.description;
@@ -1876,16 +2100,21 @@ export default function ItemDetailsPage() {
   }, [description]);
 
   const copyValue = useMemo(() => {
-    if (!prices || !item?.condition) return null;
+    if (!prices) return null;
+    if (shelf?.type !== "tcg" && !item?.condition) return null;
     return getItemValueEstimate({
-      condition: item.condition,
+      condition: item?.condition,
       shelfType: shelf?.type,
+      variant: item?.variant,
+      plainFinishes: printVariant?.plainFinishes,
       priceNew: prices.priceNew,
+      priceFoil: prices.priceFoil,
       priceUsed: prices.priceUsed,
       priceUsedCIB: prices.priceUsedCIB,
       priceEstimated: prices.priceEstimated,
+      priceEstimatedFoil: prices.priceEstimatedFoil,
     });
-  }, [prices, item, shelf?.type]);
+  }, [prices, item, shelf?.type, printVariant?.plainFinishes]);
 
   const formattedCopyValue = useMemo(() => {
     if (copyValue === null) return null;
@@ -1901,6 +2130,10 @@ export default function ItemDetailsPage() {
       item?.condition,
       shelf?.type,
       prices,
+      {
+        variant: item?.variant,
+        plainFinishes: printVariant?.plainFinishes,
+      },
     );
     const observations = prices?.priceObservations || [];
     const relevantObservations = observations.filter(
@@ -1955,7 +2188,13 @@ export default function ItemDetailsPage() {
         (Boolean(stampedReferenceOnly) ||
           (prices?.isReferencePriceOnly ?? false)),
     };
-  }, [item?.condition, prices, shelf?.type]);
+  }, [
+    item?.condition,
+    item?.variant,
+    prices,
+    shelf?.type,
+    printVariant?.plainFinishes,
+  ]);
 
   const { usefulFacts, providerLinkFacts } = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -2167,9 +2406,9 @@ export default function ItemDetailsPage() {
       {/* Netflix-style Ambient Backdrop */}
       {heroImage && (
         <div className="absolute top-0 left-0 right-0 h-[65vh] md:h-[75vh] pointer-events-none -z-10 overflow-hidden select-none">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-[0.50] transition-all duration-1000 ease-out"
-            style={{ backgroundImage: `url(${heroImage})` }}
+          <AmbientBackdrop
+            imageUrl={heroImage}
+            quarterTurns={heroQuarterTurns}
           />
           {/* Dark overlay to ensure text readability */}
           <div className="absolute inset-0 bg-zinc-950/10 dark:bg-zinc-950/40" />
@@ -2264,49 +2503,115 @@ export default function ItemDetailsPage() {
               <div
                 onClick={() => coverImage && setZoomImageUrl(coverImage)}
                 className={cn(
-                  "relative mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none transition-all duration-300",
+                  // Clips again now that nothing leans out of it — see the
+                  // `tilt={false}` below.
+                  "relative mx-auto md:mx-0 overflow-hidden rounded-2xl shrink-0 select-none transition-all duration-300",
                   coverImage
-                    ? "cursor-pointer group/cover bg-white"
+                    ? // No plate behind the cover: card art is opaque and edge
+                      // to edge, so a white slab only framed it. Anything else
+                      // gets its own edges bled outwards, see `style` below.
+                      "cursor-pointer group/cover"
                     : "bg-zinc-950/20",
                   coverAspectRatio,
                 )}
+                /**
+                 * Bleed the cover's own edges into the letterbox. Skipped for a
+                 * foil card, which fills its frame edge to edge and has the
+                 * holographic layers instead.
+                 */
+                style={{
+                  // Always set aspect-ratio in style: Tailwind classes for
+                  // formats live in `cardFormat.ts` and can miss the CSS scan.
+                  aspectRatio: coverOrientedAspect,
+                  ...(coverEdgeColors && !variantView.foilMaskUrl
+                    ? { background: edgeGradient(coverEdgeColors) }
+                    : {}),
+                }}
               >
+                {/* Bleeding the cover's own edges wins; the back only fills a
+                    frame that has nothing else behind it. */}
+                {!(coverEdgeColors && !variantView.foilMaskUrl) && (
+                  <CardBackSkeleton
+                    url={cardBackSkeletonUrl}
+                    faceQuarterTurns={displayQuarterTurns}
+                    orientedAspect={coverOrientedAspect}
+                  />
+                )}
                 {coverImage ? (
                   <>
-                    <RemoteImage
-                      src={coverImage}
-                      alt={itemDisplayName ?? ""}
-                      width={768}
-                      height={1152}
-                      sizes="(max-width: 768px) 240px, 480px"
-                      priority
-                      onLoad={handleCoverImageLoad}
-                      className={cn(
-                        "w-full h-full transition-transform duration-500",
-                        coverImageFit === "contain"
-                          ? "object-contain"
-                          : "object-cover group-hover/cover:scale-105",
+                    <OrientedMediaRotator
+                      faceQuarterTurns={displayQuarterTurns}
+                      orientedAspect={coverOrientedAspect}
+                    >
+                      {variantView.foilMaskUrl ? (
+                        <FoilCardImage
+                          effectPack={variantView.effectPackId}
+                          printKey={item?.printKey}
+                          title={itemDisplayName}
+                          imageUrl={variantView.imageUrl ?? coverImage}
+                          alt={itemDisplayName ?? ""}
+                          finish={variantView.finish}
+                          varnishType={variantView.varnishType}
+                          cssFinishShaderId={variantView.shader?.id ?? null}
+                          cssVarnishShaderId={variantView.varnish?.id ?? null}
+                          lenticularGrid={variantView.lenticularGrid}
+                          lenticularCropProfile={variantView.lenticularCropProfile}
+                          scanCrop={variantView.scanCrop}
+                          maskUrl={foilMaskUrl}
+                          varnishMaskUrl={varnishMaskUrl}
+                          varnishColor={variantView.varnishColor}
+                          secondVarnishMaskUrl={secondVarnishMaskUrl}
+                          secondVarnishColor={variantView.secondVarnishColor}
+                          /**
+                           * Flat here, exactly as in the grid. This cover sits in
+                           * a page of text, and a card that tips whenever the
+                           * cursor passes on its way to the metadata is restless
+                           * rather than alive. The sheen still drifts on its own,
+                           * so the print still reads as foil — and the click
+                           * opens the fullscreen card, which is where the
+                           * perspective, the lean and the turn belong.
+                           */
+                          tilt={false}
+                        />
+                      ) : (
+                        <RemoteImage
+                          src={coverImage}
+                          alt={itemDisplayName ?? ""}
+                          width={768}
+                          height={1152}
+                          sizes="(max-width: 768px) 240px, 480px"
+                          loading="eager"
+                          fetchPriority="high"
+                          onLoad={handleCoverImageLoad}
+                          className={cn(
+                            "w-full h-full transition-opacity duration-150 transition-transform duration-500",
+                            coverImageFit === "contain"
+                              ? "object-contain"
+                              : "object-cover group-hover/cover:scale-105",
+                            cardBackSkeletonUrl &&
+                              !coverFaceReady &&
+                              "opacity-0",
+                          )}
+                        />
                       )}
-                    />
-                    {/* Hover Zoom Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+                    </OrientedMediaRotator>
+                    {/* Hover Zoom Overlay — decorative, and the click is the
+                        container's, so it must not swallow the pointer: the holo
+                        layers below track pointer position to place their sheen. */}
+                    <div
+                      className={cn(
+                        "pointer-events-none absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20",
+                        // Darkening fights the shimmer it appears with, so a foil
+                        // copy keeps the affordance and loses the scrim.
+                        variantView.foilMaskUrl
+                          ? "bg-transparent"
+                          : "bg-black/40",
+                      )}
+                    >
                       <div className="bg-white/20 hover:bg-white/35 text-white backdrop-blur-md p-2.5 rounded-full border border-white/20 shadow-md active:scale-95 transition-all">
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    {coverSourceChip &&
-                      (coverSourceChip.sourceNames.length > 0 ||
-                        coverSourceChip.detail) && (
-                        <div
-                          className="absolute top-2 right-2 z-30"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <AttachmentSourceChip
-                            sourceNames={coverSourceChip.sourceNames}
-                            detail={coverSourceChip.detail}
-                          />
-                        </div>
-                      )}
                   </>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-950 text-muted-foreground p-6 gap-3 min-h-[300px]">
@@ -2324,6 +2629,11 @@ export default function ItemDetailsPage() {
                   <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground dark:text-white leading-none">
                     {itemDisplayName}
                   </h1>
+                  {printReferenceLine && (
+                    <p className="text-sm md:text-base font-semibold text-muted-foreground tracking-tight">
+                      {printReferenceLine}
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {isMetadataBusy && (
                       <Badge
@@ -2350,13 +2660,41 @@ export default function ItemDetailsPage() {
                         {year}
                       </Badge>
                     )}
-                    {item?.condition && (
+                    {item?.condition &&
+                      shelfShowsItemCondition(shelf?.type) && (
+                        <Badge
+                          variant="outline"
+                          className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
+                        >
+                          <ConditionIcon condition={item.condition} />
+                          {t(`items.conditions.${item.condition}`)}
+                        </Badge>
+                      )}
+                    {/* Finish is the TCG copy axis (foil vs plain); condition is
+                        hidden for cards — see shelfShowsItemCondition. */}
+                    {resolvedVariant && (
                       <Badge
                         variant="outline"
                         className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
                       >
-                        <ConditionIcon condition={item.condition} />
-                        {t(`items.conditions.${item.condition}`)}
+                        <Sparkles className="size-3" />
+                        {localizeFinishLabel(resolvedVariant, t)}
+                      </Badge>
+                    )}
+                    {isItemOnLoan(item ?? {}) && (
+                      <Badge
+                        variant="outline"
+                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300 font-semibold px-2 py-0.5 flex gap-1 items-center"
+                      >
+                        <HandHelping className="size-3" />
+                        {item?.loanedAt
+                          ? t("items.loan.badgeWithDate", {
+                              name: item.loanedTo,
+                              date: new Date(item.loanedAt).toLocaleDateString(
+                                locale === "en" ? "en-GB" : "fr-FR",
+                              ),
+                            })
+                          : t("items.loan.badge", { name: item?.loanedTo })}
                       </Badge>
                     )}
                     {shelf?.type && (
@@ -2671,7 +3009,7 @@ export default function ItemDetailsPage() {
                   <div
                     key={idx}
                     onClick={() => setZoomImageUrl(img.url)}
-                    className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden border border-border dark:border-zinc-800/80 bg-zinc-100/30 dark:bg-zinc-950/30 hover:border-zinc-350 dark:hover:border-zinc-700/80 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden bg-zinc-100/30 dark:bg-zinc-950/30 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
                     <RemoteImage
                       src={img.url}
@@ -2686,7 +3024,10 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    <div className="absolute top-2 right-2 z-30" onClick={(event) => event.stopPropagation()}>
+                    <div
+                      className="absolute top-2 right-2 z-30"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <AttachmentSourceChip
                         sourceNames={img.gallerySourceNames ?? []}
                         detail={img.galleryDetail}
@@ -2700,6 +3041,7 @@ export default function ItemDetailsPage() {
 
           <ItemDiscoverySection
             isPending={isPending}
+            includedIn={includedInSources}
             seriesVolumes={seriesVolumes}
             franchiseName={franchiseName}
             franchiseItems={franchiseItems}
@@ -2718,19 +3060,148 @@ export default function ItemDetailsPage() {
           if (!open) setZoomImageUrl(null);
         }}
       >
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none flex flex-col items-center justify-center backdrop-blur-xl">
+        {/* Transparent: the blur alone separates the card from the page, and a
+            black plate fought the holographic sheen it was meant to showcase. */}
+        {/*
+          Full-viewport shell, not a shrink-wrapped box: clicking the dimmed
+          edge must close. Radix's content owns `pointer-events: auto` inline and
+          used to swallow those clicks before they reached the overlay — so the
+          shell itself is the dismiss target, and the card stops propagation.
+        */}
+        <DialogContent
+          showClose={false}
+          onClick={() => setZoomImageUrl(null)}
+          className="fixed inset-0 top-0 left-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center rounded-none border-none bg-transparent p-0 shadow-none sm:max-w-none"
+        >
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
-          <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
-            {zoomImageUrl && (
-              <RemoteImage
-                src={zoomImageUrl}
-                alt="Zoom"
-                width={1920}
-                height={1920}
-                className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
-              />
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setZoomImageUrl(null);
+            }}
+            aria-label={t("common.close")}
+            className="absolute top-4 right-4 z-50 rounded-full bg-black/60 p-2 text-white opacity-90 shadow-md backdrop-blur-sm transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/40"
+          >
+            <X className="size-4" />
+          </button>
+          {zoomImageUrl &&
+            /* Fullscreen is where a foil card is worth looking at, so the
+               holographic layers belong here above all — but only for the
+               cover itself: zooming a gallery image shows that image. */
+            /* A card is a physical object whether or not its print is foil, so
+               the whole treatment — the card shape, the perspective, the lean,
+               and the turn when a back is known — hangs on it being a card,
+               not on it shimmering. `printKey` is what makes it one. */
+            (item?.printKey &&
+            urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
+              /**
+               * Sized from its *width*, so the card can never be wider than
+               * the screen.
+               *
+               * Driven from the height (`h-[80vh] aspect-[5/7]`) it was 464px
+               * wide inside a 375px iPhone — 44px off each edge, corners and
+               * card number cut away. Deriving the height from the width
+               * instead keeps the 5:7 exact at every size: the width takes
+               * whichever is smaller, the room on screen or what 80dvh of
+               * height would allow.
+               *
+               * Measured against the **viewport**, not the parent. `min(100%,
+               * …)` looks tidier and is circular: this dialog is shrink-to-fit,
+               * so its width comes from its content while the content's came
+               * from its width — the same card measured 480px wide one moment
+               * and 331px the next.
+               *
+               * `dvh`, not `vh`: on iOS `vh` measures the viewport with the
+               * URL bar hidden, so 80vh is taller than what can actually be
+               * seen and the card slid under the browser chrome. The `2rem`
+               * is padding on both sides.
+               *
+               * The height budget is spent through the *same* oriented ratio
+               * the box is given, so a sideways print (or a shelf format that
+               * is not 5:7 at all) cannot drift from it.
+               */
+              <div
+                className="animate-zoom-in"
+                style={
+                  {
+                    // The card's own corner, quoted against this (oriented)
+                    // box. FlippableCard clips to the same shape; this is what
+                    // its `rounded-[inherit]` chain starts from.
+                    borderRadius: cardFaceRadius(displayQuarterTurns),
+                    aspectRatio: coverOrientedAspect,
+                    width: `min(calc(100vw - 2rem), calc(80dvh * ${coverOrientedAspect}))`,
+                  } as CSSProperties
+                }
+                onClick={(event) => event.stopPropagation()}
+              >
+                <FlippableCard
+                  backUrl={cardBackUrl}
+                  backAlt={`${itemDisplayName ?? ""} — dos`}
+                  flipLabel={t("items.flipCard")}
+                  tiltPromptLabel={t("items.tiltPrompt")}
+                  faceQuarterTurns={displayQuarterTurns}
+                  orientedAspect={coverOrientedAspect}
+                  faceTabLabel={t("items.cardFace")}
+                  backTabLabel={t("items.cardBack")}
+                >
+                  <OrientedMediaRotator
+                    faceQuarterTurns={displayQuarterTurns}
+                    orientedAspect={coverOrientedAspect}
+                  >
+                    <FoilCardImage
+                      effectPack={variantView.effectPackId}
+                      printKey={item?.printKey}
+                      title={itemDisplayName}
+                      imageUrl={variantView.imageUrl ?? zoomImageUrl}
+                      alt="Zoom"
+                      finish={variantView.finish}
+                      varnishType={variantView.varnishType}
+                      cssFinishShaderId={variantView.shader?.id ?? null}
+                      cssVarnishShaderId={variantView.varnish?.id ?? null}
+                      lenticularGrid={variantView.lenticularGrid}
+                      lenticularCropProfile={variantView.lenticularCropProfile}
+                      scanCrop={variantView.scanCrop}
+                      /* The wrapper leans the whole card so the back turns with
+                         it; this keeps only the light on its own surface. */
+                      tilt={false}
+                      trackPointer
+                      /* The mirrored masks were cut for the hero's framing. They
+                       only fit here if this is the same file — zooming the
+                       uncropped original of a cropped cover is not. */
+                      maskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? foilMaskUrl
+                          : variantView.foilMaskUrl
+                      }
+                      varnishMaskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? varnishMaskUrl
+                          : variantView.varnishMaskUrl
+                      }
+                      varnishColor={variantView.varnishColor}
+                      secondVarnishMaskUrl={secondVarnishMaskUrl}
+                      secondVarnishColor={variantView.secondVarnishColor}
+                    />
+                  </OrientedMediaRotator>
+                </FlippableCard>
+              </div>
+            ) : (
+              <div onClick={(event) => event.stopPropagation()}>
+                <RemoteImage
+                  src={zoomImageUrl}
+                  alt="Zoom"
+                  width={1920}
+                  height={1920}
+                  // `dvh` for the same reason as the card branch above: on iOS
+                  // `vh` measures the viewport with the URL bar hidden, so a
+                  // tall gallery image ran under the browser chrome.
+                  className="max-w-full max-h-[80dvh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
+                />
+              </div>
+            ))}
         </DialogContent>
       </Dialog>
     </div>

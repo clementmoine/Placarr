@@ -1,6 +1,5 @@
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
-import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
@@ -17,8 +16,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import { matchBarcodes } from "@/core/catalog/matchContext";
 
 import { fetchBooknodeMetadata, getBooknodeSuggestions } from "./fetch";
@@ -339,7 +338,7 @@ export function mapBooknodeMetadata(
   };
 }
 
-export const booknodeModule: ProviderModule = {
+export const booknodeModule = defineProvider({
   info: {
     id: "booknode",
     label: "Booknode",
@@ -356,6 +355,7 @@ export const booknodeModule: ProviderModule = {
       "pageCount",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -381,7 +381,9 @@ export const booknodeModule: ProviderModule = {
       if (!/booknode\.com$/i.test(parsed.hostname.replace(/^www\./i, ""))) {
         return null;
       }
-      return parsed.pathname.match(/(?:_|media\/)(\d+)(?:[/?#]|$)/)?.[1] ?? null;
+      return (
+        parsed.pathname.match(/(?:_|media\/)(\d+)(?:[/?#]|$)/)?.[1] ?? null
+      );
     } catch {
       return null;
     }
@@ -455,4 +457,4 @@ export const booknodeModule: ProviderModule = {
     return downloadBooknodeCoverImage(url, options);
   },
   refreshBarcodePriceOffers: refreshBooknodeOffers,
-};
+});

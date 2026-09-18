@@ -4,7 +4,7 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataResult } from "@/types/metadataProvider";
 import {
   resolveGameAttachmentPlatformKey,
@@ -47,19 +47,22 @@ function galleryToMetadata(
           platformKey ??
           undefined,
       })),
-      externalIds: gallery.productId ? { geedie: gallery.productId } : undefined,
+      externalIds: gallery.productId
+        ? { geedie: gallery.productId }
+        : undefined,
     },
     platformKey,
   );
 }
 
-export const geedieModule: ProviderModule = {
+export const geedieModule = defineProvider({
   info: {
     id: "geedie",
     label: "Geedie",
     types: ["games"],
     capabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "en",
     isSecondary: true,
@@ -141,4 +144,4 @@ export const geedieModule: ProviderModule = {
       fetchFromGeedie(ctx.name, ctx.platform ?? undefined),
     );
   },
-};
+});

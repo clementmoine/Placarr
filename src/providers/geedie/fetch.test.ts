@@ -359,7 +359,8 @@ describe("geedie fetch", () => {
         [
           {
             title: "PS5 Lollipop Chainsaw RePOP Japanese",
-            productUrl: "https://geedie.lt/en/ps5-lollipop-chainsaw-repop-japanese",
+            productUrl:
+              "https://geedie.lt/en/ps5-lollipop-chainsaw-repop-japanese",
             thumbnailUrl: "https://geedie.lt/storage/products/jp/cover.webp",
           },
           {
@@ -434,7 +435,8 @@ describe("geedie fetch", () => {
       {
         title: "PS5 Lollipop Chainsaw RePOP",
         productUrl: `https://geedie.lt/en/ps5-lollipop-chainsaw-repop-${barcode}`,
-        thumbnailUrl: "https://geedie.lt/storage/products/ps5-lollipop/cover.webp",
+        thumbnailUrl:
+          "https://geedie.lt/storage/products/ps5-lollipop/cover.webp",
       },
     ]);
     mockedGet.mockImplementation(async (url: string) => {
@@ -465,9 +467,9 @@ describe("geedie fetch", () => {
     );
 
     expect(gallery?.title).toContain("Lollipop");
-    expect(mockedGet.mock.calls.every(([url]) => !String(url).includes("search="))).toBe(
-      true,
-    );
+    expect(
+      mockedGet.mock.calls.every(([url]) => !String(url).includes("search=")),
+    ).toBe(true);
     expect(promoteGeedieSearchEvidence).not.toHaveBeenCalled();
   });
 

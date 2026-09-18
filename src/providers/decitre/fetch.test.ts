@@ -195,9 +195,7 @@ describe("decitre fetch", () => {
     const metadata = mapDecitreMetadata(product);
     expect(metadata?.title).toBe("Ecris notre histoire");
     expect(metadata?.pageCount).toBe(334);
-    expect(metadata?.facts?.some((f) => f.kind === "external-link")).toBe(
-      true,
-    );
+    expect(metadata?.facts?.some((f) => f.kind === "external-link")).toBe(true);
     expect(metadata?.observations?.length).toBeGreaterThan(0);
     expect(metadata?.externalIds?.decitre).toBe(SAMPLE_EAN);
   });

@@ -53,7 +53,8 @@ describe("OpenLibrary resolver", () => {
 
     expect(mockedGet).toHaveBeenCalledWith(
       "https://openlibrary.org/search.json?q=Super%20Picsou%20Geant%20n%C2%B001",
-      { timeout: 12000 },
+      // The shared client also attaches the ambient job signal.
+      expect.objectContaining({ timeout: 12000 }),
     );
   });
 });

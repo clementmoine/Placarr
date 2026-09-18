@@ -1,0 +1,99 @@
+{
+  "source": "Dragon Ball Center — catalogues Edibas Lamincards",
+  "url": "https://dragonball.center/catalogo/fabricante/14/edibas",
+  "observed": "2026-09-07",
+  "ingest": "listing + objet → art.dbc.jpg / back.dbc.jpg",
+  "sourceId": "dbc",
+  "line": "dbs/lamincards",
+  "licenseNote": "Site affiche CC-BY-NC-SA sur les fiches collection.",
+  "origin": "https://dragonball.center",
+  "series": [
+    {
+      "setCode": "nero",
+      "label": "Serie Nero (2006)",
+      "lang": "it",
+      "collectionId": 178,
+      "slug": "dragon-ball-lamincards-serie-nero",
+      "listingPath": "/catalogo/coleccion/178/dragon-ball-lamincards-serie-nero/1317/lamincards",
+      "expectedCards": 150,
+      "enabled": true
+    },
+    {
+      "setCode": "argento",
+      "label": "Serie Argento (2006)",
+      "lang": "it",
+      "collectionId": 182,
+      "slug": "dragon-ball-z-lamincards-serie-argento",
+      "listingPath": "/catalogo/coleccion/182/dragon-ball-z-lamincards-serie-argento/1128/lamincards-pequenas",
+      "expectedCards": 150,
+      "note": "Sous-cat grandes (1350) = même numérotation, format XXL — non ingéré pour l’instant.",
+      "enabled": true
+    },
+    {
+      "setCode": "oro",
+      "label": "Serie Oro (2006)",
+      "lang": "it",
+      "collectionId": 183,
+      "slug": "dragon-ball-z-lamincards-serie-oro",
+      "listingPath": "/catalogo/coleccion/183/dragon-ball-z-lamincards-serie-oro/2245/lamincards-serie-oro",
+      "expectedCards": 150,
+      "note": "Listing racine mélange base + superpotenziate (~202 liens) — le parse ne garde que `lamincard-N`. DBC n’a de scan full que pour ~22/150 (placeholders `imagen`).",
+      "enabled": true
+    },
+    {
+      "setCode": "platino",
+      "label": "Serie Platino (2007)",
+      "lang": "it",
+      "collectionId": 184,
+      "slug": "dragon-ball-z-lamincards-serie-platino",
+      "listingPath": "/catalogo/coleccion/184/dragon-ball-z-lamincards-serie-platino/1351/lamincards",
+      "expectedCards": 150,
+      "note": "Listing DBC ~120 numéros ; scans full ~12. Reste = placeholder.",
+      "enabled": true
+    },
+    {
+      "setCode": "smeraldo",
+      "label": "GT Serie Smeraldo (2007)",
+      "lang": "it",
+      "collectionId": 186,
+      "slug": "dragon-ball-gt-lamincards-serie-smeraldo",
+      "listingPath": "/catalogo/coleccion/186/dragon-ball-gt-lamincards-serie-smeraldo/923/lamincards-esquina-redonda",
+      "expectedCards": 162,
+      "note": "Autres sous-cats = coins semi-droits + superpotenziate — plus tard.",
+      "enabled": true
+    },
+    {
+      "setCode": "z2008",
+      "label": "Dragon Ball Z Lamincards (2008, ES primera)",
+      "lang": "es",
+      "collectionId": 58,
+      "slug": "dragon-ball-z-lamincards",
+      "listingPath": "/catalogo/coleccion/58/dragon-ball-z-lamincards/2022/primera-edicion",
+      "expectedCards": 162,
+      "note": "Édition Espagne — pas la FR. Gardée pour comparaison ; faces FR = fr2008.",
+      "enabled": true
+    },
+    {
+      "setCode": "fr2008",
+      "label": "Lamincards France 2008 (part 1)",
+      "lang": "fr",
+      "collectionId": 300,
+      "slug": "dragon-ball-z-lamincards",
+      "listingPath": "/catalogo/coleccion/300/dragon-ball-z-lamincards",
+      "expectedCards": 192,
+      "note": "DBC Francia : 162 base + ~30 Silver. Numérotation FR (≠ IT). paninimania cid508.",
+      "enabled": true
+    },
+    {
+      "setCode": "fror",
+      "label": "Lamincards Série Or France (2009)",
+      "lang": "fr",
+      "collectionId": 301,
+      "slug": "dragon-ball-z-lamincards-serie-or",
+      "listingPath": "/catalogo/coleccion/301/dragon-ball-z-lamincards-serie-or",
+      "expectedCards": 212,
+      "note": "Part 2 FR (Gold). DBC surtout placeholders — harvest ce qui existe.",
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "source": "dbzcollection.fr",
+  "sourceId": "dbzcollection",
+  "lang": "fr",
+  "origin": "http://www.dbzcollection.fr/2v2",
+  "collectionIdc": "1",
+  "collectionName": "Cartes À Jouer Et À Collectionner (JCC Bandai France)",
+  "period": "2005-2009",
+  "publisher": "Bandai France",
+  "dimensions": "59x86 mm",
+  "sets": [
+    {
+      "ids": "1",
+      "setCode": "part1",
+      "label": "Part 1",
+      "listingPath": "cartes.php?idc=1&ids=1",
+      "expectedCards": 134,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2005-12-01",
+      "note": "134 cartes (D-1 à D-134 : 85 communes, 30 rares, 19 holos). Thème Freezer."
+    },
+    {
+      "ids": "5",
+      "setCode": "part2",
+      "label": "Part 2",
+      "listingPath": "cartes.php?idc=1&ids=5",
+      "expectedCards": 121,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2006-04-01",
+      "note": "121 cartes (D-123 à D-295 : 81 communes, 25 rares, 15 holos)."
+    },
+    {
+      "ids": "12",
+      "setCode": "part3",
+      "label": "Part 3",
+      "listingPath": "cartes.php?idc=1&ids=12",
+      "expectedCards": 119,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2006-08-01",
+      "note": "119 cartes (D-123 à D-369 : 79 communes, 19 rares, 21 holos). Thème Cell."
+    },
+    {
+      "ids": "14",
+      "setCode": "part4",
+      "label": "Part 4",
+      "listingPath": "cartes.php?idc=1&ids=14",
+      "expectedCards": 134,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2006-11-01",
+      "note": "134 cartes (117 numéros : 89 communes, 23 rares, 22 holos). Apparition des pouvoirs cachés scouter."
+    },
+    {
+      "ids": "15",
+      "setCode": "part5",
+      "label": "Part 5",
+      "listingPath": "cartes.php?idc=1&ids=15",
+      "expectedCards": 163,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2007-03-01",
+      "note": "163 cartes (113 numéros : 113 communes, 25 rares, 25 holos). Thème Buu."
+    },
+    {
+      "ids": "16",
+      "setCode": "part6",
+      "label": "Part 6",
+      "listingPath": "cartes.php?idc=1&ids=16",
+      "expectedCards": 122,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2007-07-01",
+      "note": "122 cartes (84 numéros : 66 communes, 26 rares, 30 holos). Rééditions avec zone scouter."
+    },
+    {
+      "ids": "17",
+      "setCode": "part7",
+      "label": "Part 7",
+      "listingPath": "cartes.php?idc=1&ids=17",
+      "expectedCards": 140,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2007-11-01",
+      "note": "140 cartes (92 numéros : 77 communes, 32 rares, 31 holos)."
+    },
+    {
+      "ids": "228",
+      "setCode": "part8",
+      "label": "Part 8",
+      "listingPath": "cartes.php?idc=1&ids=228",
+      "expectedCards": 148,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2008-04-01",
+      "note": "148 cartes (95 numéros : 74 communes, 41 rares, 33 holos)."
+    },
+    {
+      "ids": "319",
+      "setCode": "part9",
+      "label": "Part 9",
+      "listingPath": "cartes.php?idc=1&ids=319",
+      "expectedCards": 118,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2008-09-01",
+      "note": "118 cartes (100 numéros : 93 communes, 25 holos). Rééditions correctives."
+    },
+    {
+      "ids": "393",
+      "setCode": "part10",
+      "label": "Part 10",
+      "listingPath": "cartes.php?idc=1&ids=393",
+      "expectedCards": 158,
+      "cardsPerBooster": 8,
+      "cardsPerStarter": 32,
+      "releaseDate": "2009-01-01",
+      "note": "158 cartes (104 numéros : 49 communes, 54 rares, 55 holos). Dernière série régulière."
+    },
+    {
+      "ids": "21",
+      "setCode": "promo",
+      "label": "Part Promo",
+      "listingPath": "cartes.php?idc=1&ids=21",
+      "expectedCards": 36,
+      "note": "36 cartes promotionnelles (1 à 3 boules)."
+    },
+    {
+      "ids": "22",
+      "setCode": "sp",
+      "label": "Cartes Hors-Série",
+      "listingPath": "cartes.php?idc=1&ids=22",
+      "expectedCards": 5,
+      "note": "5 cartes spéciales hors-série (D-86, SP-01, SP-04, SP-22, SP-25)."
+    }
+  ]
+}

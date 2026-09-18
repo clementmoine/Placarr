@@ -105,7 +105,7 @@ export function BaseModal({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className={cn(
-          "flex flex-col p-0 overflow-hidden bg-zinc-50/98 dark:bg-zinc-950/98 backdrop-blur-md text-foreground gap-0 border border-border/80 dark:border-zinc-850/80 rounded-2xl shadow-2xl",
+          "flex flex-col p-0 overflow-hidden bg-zinc-50/98 dark:bg-zinc-950/98 backdrop-blur-md text-foreground gap-0 border border-border/80 dark:border-zinc-800/80 rounded-2xl shadow-2xl",
           sizeClasses[size],
           className,
         )}
@@ -140,7 +140,10 @@ export function BaseModal({
               {children}
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto p-5 md:p-6 min-h-0 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+            <div
+              data-modal-scroll
+              className="flex-1 overflow-y-auto p-5 md:p-6 min-h-0 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent"
+            >
               {children}
             </div>
           ))}

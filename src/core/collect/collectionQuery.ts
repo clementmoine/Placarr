@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 import { isItemCondition } from "@/core/collect/condition";
 import {
@@ -8,11 +8,15 @@ import {
 import { getItemRatingScore10 } from "@/core/collect/rating";
 import type { MetadataFact } from "@/types/metadataProvider";
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
+import { comparePrintKeys } from "@/core/identify/printKey";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import type { ItemWithMetadata } from "@/types/items";
 
 export type ItemCollectionSort =
   | "name_asc"
   | "name_desc"
+  | "print_asc"
+  | "print_desc"
   | "added_desc"
   | "added_asc"
   | "release_desc"
@@ -34,7 +38,7 @@ export const DEFAULT_ITEM_COLLECTION_FILTERS: ItemCollectionFilters = {
   pricedOnly: false,
 };
 
-export const ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
+const BASE_ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
   "name_asc",
   "name_desc",
   "added_desc",
@@ -47,6 +51,32 @@ export const ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
   "price_asc",
 ];
 
+/** All known sort keys (including print binder order). */
+export const ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
+  "print_asc",
+  "print_desc",
+  ...BASE_ITEM_COLLECTION_SORT_OPTIONS,
+];
+
+/**
+ * Sort menu for a shelf: binder order (set → number) only when the shelf
+ * identifies by print, otherwise the usual media sorts.
+ */
+export function itemCollectionSortOptions(
+  shelfType?: string | null,
+): ItemCollectionSort[] {
+  if (usesPrintSearch(shelfType)) {
+    return ["print_asc", "print_desc", ...BASE_ITEM_COLLECTION_SORT_OPTIONS];
+  }
+  return BASE_ITEM_COLLECTION_SORT_OPTIONS;
+}
+
+/** Default binder order on TCG; A–Z everywhere else. */
+export function defaultItemCollectionSort(
+  shelfType?: string | null,
+): ItemCollectionSort {
+  return usesPrintSearch(shelfType) ? "print_asc" : "name_asc";
+}
 export const ITEM_COLLECTION_RATING_MIN_OPTIONS = [6, 7, 8, 9] as const;
 
 function metadataFacts(
@@ -72,10 +102,13 @@ function itemValueEstimate(
   return getItemValueEstimate({
     condition: item.condition,
     shelfType: shelfType ?? item.shelf?.type,
+    variant: item.variant,
     priceNew: item.priceNew,
+    priceFoil: item.priceFoil,
     priceUsed: item.priceUsed,
     priceUsedCIB: item.priceUsedCIB,
     priceEstimated: item.priceEstimated,
+    priceEstimatedFoil: item.priceEstimatedFoil,
   });
 }
 
@@ -119,6 +152,14 @@ export function sortCollectionItems(
     switch (sortBy) {
       case "name_desc":
         return compareTitlesForSort(a.name, b.name, "desc");
+      case "print_asc": {
+        const print = comparePrintKeys(a.printKey, b.printKey);
+        return print || compareTitlesForSort(a.name, b.name);
+      }
+      case "print_desc": {
+        const print = comparePrintKeys(b.printKey, a.printKey);
+        return print || compareTitlesForSort(a.name, b.name, "desc");
+      }
       case "added_desc":
         return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -219,6 +260,7 @@ export function sumCollectionEstimatedValue(
 
 export function parseItemCollectionSort(
   value: string | null | undefined,
+  shelfType?: string | null,
 ): ItemCollectionSort {
   if (
     value &&
@@ -226,7 +268,7 @@ export function parseItemCollectionSort(
   ) {
     return value as ItemCollectionSort;
   }
-  return "name_asc";
+  return defaultItemCollectionSort(shelfType);
 }
 
 export function parseItemCollectionFilters(searchParams: {

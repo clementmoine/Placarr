@@ -1,17 +1,24 @@
-import { Prisma, Type } from "@prisma/client";
+import { Prisma, Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireGuestOrHigher } from "@/lib/auth";
+import {
+  canReadOwnedRow,
+  collectionUserIdFor,
+  getCollectionOwnerId,
+  requireGuestOrHigher,
+} from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
 
-import { cropImageIfNeeded } from "@/core/enrich/media/imageTrim";
 import {
   downloadRemoteImage,
   syncCroppedCoverAttachment,
   storeMetadata,
 } from "@/core/enrich/storage";
-import { presentItemFromStorage, itemDetailMetadataInclude } from "@/core/collect/present";
+import {
+  presentItemFromStorage,
+  itemDetailMetadataInclude,
+} from "@/core/collect/present";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { asSeedableMetadataPreview } from "@/core/collect/seedMetadataPreview";
 import {
@@ -23,8 +30,10 @@ import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
+import { parsePrintKey } from "@/core/identify/printKey";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
+import { normalizeItemLoanInput } from "@/core/collect/itemLoan";
 import {
   buildExactBarcodeSearchCondition,
   buildItemSearchConditions,
@@ -91,16 +100,17 @@ export async function GET(req: NextRequest) {
     const excludeShelfTypes = parsedExcludeShelfTypes.values;
     const includeShelfTypes = parsedIncludeShelfTypes.values;
     const includeMetadata = searchParams.get("includeMetadata") !== "false"; // Par défaut true
+    const scopeUserId = await collectionUserIdFor(auth.user);
+    const collectionOwnerId =
+      auth.user.role === "guest" ? scopeUserId : await getCollectionOwnerId();
 
     if (id) {
-      const resolvedId = await resolveItemId(id, shelfId, auth.user.id);
+      const resolvedId = await resolveItemId(id, shelfId, scopeUserId);
       const item = await prisma.item.findUnique({
         where: { id: resolvedId },
         include: {
           shelf: true,
-          metadata: includeMetadata
-            ? itemDetailMetadataInclude
-            : false,
+          metadata: includeMetadata ? itemDetailMetadataInclude : false,
         },
       });
 
@@ -108,9 +118,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Item not found" }, { status: 404 });
       }
 
-      // L'item appartient à l'utilisateur, est admin, ou se trouve dans une
-      // étagère publique (consultation cross-user via collections partagées).
-      if (!isAdmin && item.userId !== auth.user.id && !item.shelf.isPublic) {
+      // Mono-instance: admin, owner, or guest browsing the owner's collection.
+      if (!canReadOwnedRow(auth.user, item.userId, collectionOwnerId)) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
@@ -146,10 +155,10 @@ export async function GET(req: NextRequest) {
 
     const whereClause: Prisma.ItemWhereInput = {};
 
-    // Les listes/recherches sont restreintes aux items de l'utilisateur
-    // (le cross-user public passe par /api/explore). L'admin voit tout.
+    // Lists are scoped to the caller's collection (guests → instance owner).
+    // Admins see everything.
     if (!isAdmin) {
-      whereClause.userId = auth.user.id;
+      whereClause.userId = scopeUserId;
     }
 
     if (q) {
@@ -169,7 +178,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (shelfId) {
-      whereClause.shelfId = await resolveShelfId(shelfId, auth.user.id);
+      whereClause.shelfId = await resolveShelfId(shelfId, scopeUserId);
     }
 
     if (excludeShelfTypes?.length || includeShelfTypes?.length) {
@@ -207,6 +216,7 @@ export async function GET(req: NextRequest) {
                   id: item.id,
                   name: item.name,
                   barcode: item.barcode,
+                  printKey: item.printKey,
                   metadataId: item.metadataId,
                   metadataRefreshStartedAt: item.metadataRefreshStartedAt,
                   metadata: presented.metadata as MetadataResult | null,
@@ -250,9 +260,14 @@ export async function POST(req: NextRequest) {
         imageUrl,
         backgroundImageUrl,
         barcode,
+        printKey: rawPrintKey,
+        variant: rawVariant,
+        language: rawLanguage,
         condition,
         fetchMetadata = true,
         metadataPreview,
+        loanedTo: rawLoanedTo,
+        loanedAt: rawLoanedAt,
       } = body;
       if (typeof shelfId !== "string" || !shelfId.trim()) {
         return NextResponse.json(
@@ -272,6 +287,31 @@ export async function POST(req: NextRequest) {
       const normalizedBarcode = normalizeProductBarcode(
         typeof barcode === "string" ? barcode : null,
       );
+      // Cards are anchored by their printing rather than a barcode. Store only
+      // a key that parses: an unusable one would never resolve again, and would
+      // be indistinguishable from a real anchor at read time.
+      const printKey =
+        typeof rawPrintKey === "string" && parsePrintKey(rawPrintKey)
+          ? rawPrintKey.trim().toLowerCase()
+          : null;
+      // Free text on purpose: the vocabulary is the provider's, not ours. It is
+      // validated against the metadata's declared options at read time, so an
+      // unknown value degrades to "no variant" rather than being rejected here.
+      const variant =
+        typeof rawVariant === "string" && rawVariant.trim()
+          ? rawVariant.trim()
+          : null;
+      /*
+        La langue de **cet exemplaire**, pas du tirage : une clé vaut pour
+        toutes les localisations d'une carte, et sans cette colonne l'Inari
+        française et l'イナリ japonaise étaient le même objet. Code court en
+        minuscules, comme les sources le donnent ; absent = inconnu, jamais
+        « la langue par défaut ».
+      */
+      const language =
+        typeof rawLanguage === "string" && rawLanguage.trim()
+          ? rawLanguage.trim().toLowerCase()
+          : null;
       let resolvedName = typeof name === "string" ? name.trim() : "";
       if (!resolvedName) {
         if (normalizedBarcode) {
@@ -307,13 +347,11 @@ export async function POST(req: NextRequest) {
       let localImageUrl = imageUrl;
       let localBackgroundImageUrl = backgroundImageUrl;
 
+      // No automatic crop: it rewrote the stored URL to a derived `_edited` file,
+      // which detached the cover from its gallery attachment (losing source and
+      // region) and could never be undone. Framing is the collector's call.
       if (imageUrl) {
         localImageUrl = await downloadRemoteImage(imageUrl);
-        if (localImageUrl) {
-          localImageUrl = await cropImageIfNeeded(localImageUrl, {
-            minMarginPixels: 30,
-          });
-        }
       }
       if (backgroundImageUrl) {
         localBackgroundImageUrl = await downloadRemoteImage(backgroundImageUrl);
@@ -322,7 +360,14 @@ export async function POST(req: NextRequest) {
       const itemSlug = await allocateUniqueItemSlug(
         resolvedShelfId,
         resolvedName,
+        { print: { printKey, variant, language } },
       );
+
+      const loan =
+        normalizeItemLoanInput({
+          loanedTo: rawLoanedTo,
+          loanedAt: rawLoanedAt,
+        }) ?? { loanedTo: null, loanedAt: null };
 
       const item = await prisma.item.create({
         data: {
@@ -333,7 +378,12 @@ export async function POST(req: NextRequest) {
           imageUrl: localImageUrl,
           backgroundImageUrl: localBackgroundImageUrl,
           barcode: normalizedBarcode ?? barcode,
+          printKey,
+          variant,
+          language,
           condition: resolvedCondition,
+          loanedTo: loan.loanedTo,
+          loanedAt: loan.loanedAt,
           userId: auth.user.id,
         },
         include: {
@@ -419,8 +469,7 @@ export async function PATCH(req: NextRequest) {
     try {
       const searchParams = req.nextUrl.searchParams;
       const body = await req.json();
-      const { id, refreshMetadata, lookupQuery, currentShelfId, ...raw } =
-        body;
+      const { id, refreshMetadata, lookupQuery, currentShelfId, ...raw } = body;
       const requestId = typeof id === "string" ? id : searchParams.get("id");
       const sourceShelfId =
         typeof currentShelfId === "string"
@@ -440,13 +489,23 @@ export async function PATCH(req: NextRequest) {
         imageUrl?: string | null;
         backgroundImageUrl?: string | null;
         barcode?: string | null;
+        variant?: string | null;
         condition?: NonNullable<ReturnType<typeof parseItemCondition>>;
         shelfId?: string;
         slug?: string;
         metadataId?: null;
+        loanedTo?: string | null;
+        loanedAt?: Date | null;
       } = {};
 
       if (typeof raw.name === "string") data.name = raw.name;
+      if ("variant" in raw) {
+        const next =
+          typeof raw.variant === "string" && raw.variant.trim()
+            ? raw.variant.trim()
+            : null;
+        data.variant = next;
+      }
       if (
         "description" in raw &&
         (typeof raw.description === "string" || raw.description === null)
@@ -481,6 +540,11 @@ export async function PATCH(req: NextRequest) {
           );
         }
         data.condition = resolvedCondition;
+      }
+      const loan = normalizeItemLoanInput(raw);
+      if (loan) {
+        data.loanedTo = loan.loanedTo;
+        data.loanedAt = loan.loanedAt;
       }
       if (typeof raw.shelfId === "string") {
         data.shelfId = await resolveShelfId(raw.shelfId, auth.user.id);
@@ -539,11 +603,6 @@ export async function PATCH(req: NextRequest) {
         const selectedImageUrl =
           typeof data.imageUrl === "string" ? data.imageUrl : null;
         data.imageUrl = await downloadRemoteImage(data.imageUrl);
-        if (data.imageUrl) {
-          data.imageUrl = await cropImageIfNeeded(data.imageUrl, {
-            minMarginPixels: 30,
-          });
-        }
         // Always sync — even when the URL is unchanged — so a source=user pin
         // realigns to the cover the collector just confirmed (e.g. re-selecting
         // the stored marketplace pin while display was stuck on another image).

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "pack": "dbs/jcc",
+  "updatedAt": "2026-09-14",
+  "byKind": {
+    "booster": {
+      "source": "dbzcollection ledger cardsPerBooster=8 + Bandai JCC retail",
+      "verifiedAt": "2026-09-13",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "Loterie = set Part N. Listes starters exactes absentes de dbzcollection — contentsKnown reste false jusqu'à checklist attestée."
+    },
+    "display": {
+      "source": "dbzcollection starter box / display JCC",
+      "verifiedAt": "2026-09-13",
+      "packsContained": null,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "packsContained renseigné SKU par SKU quand attesté (ex. starter box)."
+    },
+    "deck": {
+      "source": "Bandai JCC starter (32 cartes typiques — ledger cardsPerStarter)",
+      "verifiedAt": "2026-09-13",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "behavior": "known_bundle",
+      "contentsKnown": false,
+      "notes": "Taille 32 attestée ; liste carte-par-carte manquante (pas d'invention)."
+    }
+  },
+  "skus": {}
+}

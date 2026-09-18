@@ -1,0 +1,43 @@
+{
+  "source": "it-s7-s8-packshot-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "ebay.json → booster-s7-it, booster-s8-it ; display-s7-it REMOVED (false box)",
+  "found": [
+    {
+      "sku": "booster-s7-it",
+      "listing": "https://www.ebay.it/itm/224431161004",
+      "imageId": "3vsAAOSwevBfxmm~",
+      "title": "Naruto TCG - Booster Serie 7 - Sete di Potere - ITA Sealed"
+    },
+    {
+      "sku": "booster-s8-it",
+      "listing": "https://www.ebay.it/itm/224431160868",
+      "imageId": "zdwAAOSwoJBfxmp3",
+      "title": "Naruto TCG - Booster Serie 8 - Il Vento del Cambiamento - ITA Sealed"
+    }
+  ],
+  "rejected": [
+    {
+      "was": "display-s7-it",
+      "listing": "https://www.ebay.it/itm/296500692655",
+      "imageId": "GpIAAOSwCExmavbm",
+      "reason": "Seller title « Booster Box » / « 24 buste » but photo 1 is the Serie 7 bustina (Ref. 93246, « BOOSTER DI 8 CARTE CON 1 CARTA HOLO ») — same product type as booster-s7-it. Photos 02–03 also bustina close-ups. Staging kept archival under display-s7-it*.webp with ingest:false.",
+      "fixedAt": "2026-08-29"
+    }
+  ],
+  "attestations": {
+    "madhouseS7": {
+      "url": "https://www.madhouse.it/naruto-naruto-card-game-serie-7-sete-di-potere-booster-pack-italiano.1.0.1518.gp.70130.uw",
+      "code": "PAN93246-1",
+      "claims": ["1 Booster da 8 Carte"],
+      "image": "none (Cloudflare / no packshot on fiche)"
+    },
+    "cardgameclubMath": "S1–S3 IT : busta 8, display 24 — display S7 still unproven without a real box packshot"
+  },
+  "notFound": [
+    "display-s7-it closed-box packshot (remint only with real box photo)",
+    "display-s8-it (Il Vento del Cambiamento box)",
+    "booster/display S4–S5 IT sealed packshots this pass (Madhouse S4 en stock texte-only)"
+  ]
+}

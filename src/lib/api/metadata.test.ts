@@ -18,11 +18,18 @@ describe("getMetadataPreview", () => {
   });
 
   it("includes crc/md5/sha1 query params when romChecksums are set", async () => {
-    await getMetadataPreview("Completely Unrelated", "games", null, "gb", null, {
-      crc: "46df91ad",
-      md5: "aabb",
-      sha1: "ccdd",
-    });
+    await getMetadataPreview(
+      "Completely Unrelated",
+      "games",
+      null,
+      "gb",
+      null,
+      {
+        crc: "46df91ad",
+        md5: "aabb",
+        sha1: "ccdd",
+      },
+    );
     expect(h.get).toHaveBeenCalledWith(
       "/api/metadata",
       expect.objectContaining({

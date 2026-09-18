@@ -1,0 +1,1500 @@
+{
+  "source": "Google Drive Bandai (FR/US) + linked Docs + Kayou folder",
+  "observed": "2026-08-29",
+  "hub": {
+    "url": "https://drive.google.com/drive/folders/1V1bqHi6SpJznGids8-o8Y9vQ2gb8aV07",
+    "folderId": "1V1bqHi6SpJznGids8-o8Y9vQ2gb8aV07",
+    "title": "Bandai (FR/US)"
+  },
+  "branches": {
+    "fr": {
+      "folderId": "1IXPXo_Xpz80GM5BUOHPxSbNilWHvx0Er",
+      "docs": [
+        {
+          "id": "1GCnKtgeGR0JHxUrKgBFkA6UMHFqSb5N4onwKuZ_CMYo",
+          "title": "Série 1",
+          "staging": "staging/bandai-fr-us-drive/docs/serie-1.txt"
+        },
+        {
+          "id": "1ugevbW9XwrK1_ui0Zo1UF6W2Nl95vvE67KgcQAEX-os",
+          "title": "Série 1 détaillée",
+          "staging": "staging/bandai-fr-us-drive/docs/serie-1-detaillee.txt",
+          "curated": "bandai-fr-serie-1-detaillee.json"
+        }
+      ]
+    },
+    "us": {
+      "folderId": "1XzpFJ9rABWoTUKa3_YT6uIiJgvYbWoBa",
+      "folders": {
+        "Decks": {
+          "id": "1TlTdksN1Uy-7Tlsn53KzLDAUEUBfvBZI",
+          "empty": true
+        },
+        "Tin box": {
+          "id": "11SiFRZVEHLFRS7rzbJkZejCZhqr9MTxW",
+          "empty": true
+        },
+        "Liste de Cartes": {
+          "id": "1fTODYrwK8rLd2OaFRKqv4o2KE7LTARHB",
+          "docId": "1pK0sfBuSMVKS9eA9GE6gO5ML-jeHso5X7CvBhu4gLFc",
+          "staging": "staging/bandai-fr-us-drive/docs/liste-cartes-us.txt",
+          "note": "Pointer Goat CrystalCommerce only — no checklist body"
+        },
+        "Blisters US": {
+          "id": "1G7KQYt51pTIQ7Hwt4JLSw1kFd4YCwUXFBBdweQXvj9E"
+        },
+        "Boosters US": {
+          "id": "15O2Zec7Dw--G7OaTelNdblCyWtXzi5lMq1n6SlPyvXU"
+        },
+        "Displays US": {
+          "id": "11AYhnk6KSuY55yNjipmvZ2aKNyUkn2gEBmKir5OpbZg"
+        }
+      }
+    }
+  },
+  "relatedOutsideHub": {
+    "kayou": {
+      "folderId": "14XOoBV1Wn6Nhxzs3m9t6uB2YUGDMv7W3",
+      "staging": "staging/kayou-drive/",
+      "not": [
+        "carddass",
+        "en-ccg"
+      ],
+      "note": "Kayou Mythos / rarity PDFs + Items doc — do not merge into Carddass catalogue"
+    },
+    "paniniNinjaRanks": {
+      "docId": "1xVCrjZUdD3z4fZzoLXLu671cJsTKsxQKfAjC2yzjhdA",
+      "staging": "staging/panini-ninja-ranks/",
+      "not": [
+        "carddass",
+        "en-ccg"
+      ]
+    }
+  },
+  "note": "US Docs are image albums (EN CCG sealed). FR Docs are S1 checklist + marketing maths. Decks/Tin folders empty on Drive. Packshots extracted from DOCX word/media; primary = largest image per series section.",
+  "products": [
+    {
+      "kind": "booster",
+      "setCode": null,
+      "title": null,
+      "slug": "battle-boost",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/battle-boost-01.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/battle-boost-01.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "special / non-series row"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s1",
+      "title": "The Path to Hokage",
+      "slug": "booster-s1-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s1.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s1.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "FR slug collision risk — need explicit -en SKU before ingest"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s10",
+      "title": "Lineage of the Legends",
+      "slug": "booster-s10-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s10.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s10.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s10-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s11",
+      "title": "Approching Wind",
+      "slug": "booster-s11-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s11.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s11.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s12",
+      "title": "A New Chronicle",
+      "slug": "booster-s12-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s12.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s12.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s12-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s13",
+      "title": "Fateful Reunion",
+      "slug": "booster-s13-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s13.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s13.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s13-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s14",
+      "title": "Emerging Alliance",
+      "slug": "booster-s14",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s14.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s14.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s15",
+      "title": "Foretold Prophecy",
+      "slug": "booster-s15-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s15.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s15.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s16",
+      "title": "Broken Promise",
+      "slug": "booster-s16-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s16.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s16.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s16-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s17",
+      "title": "Will of Fire",
+      "slug": "booster-s17-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s17.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s17.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s17.5",
+      "title": "Tournament Pack 1",
+      "slug": "booster-s17.5-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s17.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s17.5.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s18",
+      "title": "Fangs of the Snake",
+      "slug": "booster-s18-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s18.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s18.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s19",
+      "title": "Path of Pain",
+      "slug": "booster-s19-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s19.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s19.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s19.5",
+      "title": "Tournament Pack 2",
+      "slug": "booster-s19.5-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s19.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s19.5.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s2",
+      "title": "Coils of the Snake",
+      "slug": "booster-s2-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s2.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s2.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "FR slug collision risk — need explicit -en SKU before ingest"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s20",
+      "title": "Tales of the Gallant Sage",
+      "slug": "booster-s20-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s20.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s20.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s21",
+      "title": "Shattered Truth",
+      "slug": "booster-s21-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s21.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s21.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s21.5",
+      "title": "Tournament Pack 3",
+      "slug": "booster-tp3",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s21.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s21.5.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s22",
+      "title": "Weapons of War",
+      "slug": "booster-s22-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s22.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s22.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s23",
+      "title": "Invasion",
+      "slug": "booster-s23-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s23.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s23.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s23.5",
+      "title": "Tournament Pack 4",
+      "slug": "booster-s23.5-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s23.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s23.5.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s24",
+      "title": "Sage's Legacy",
+      "slug": "booster-s24-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s24.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s24.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s25",
+      "title": "Kage Summit",
+      "slug": "booster-s25-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s25.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s25.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s26",
+      "title": "Avenger's Wrath",
+      "slug": "booster-s26-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s26.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s26.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s27",
+      "title": "Hero's Ascension",
+      "slug": "booster-s27-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s27.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s27.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s28",
+      "title": "Ninja Storm 3",
+      "slug": "booster-s28-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s28.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s28.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s3",
+      "title": "Curse of the Sand",
+      "slug": "booster-s3-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s3.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s3.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "FR slug collision risk — need explicit -en SKU before ingest"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s4",
+      "title": "Revenge and Rebirth",
+      "slug": "booster-s4-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s4.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s4.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s4-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "FR slug collision risk — need explicit -en SKU before ingest"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s5",
+      "title": "Dream Legacy",
+      "slug": "booster-s5-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s5.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s6",
+      "title": "Eternal Rivalry",
+      "slug": "booster-s6-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s6.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s6.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s6-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "FR slug collision risk — need explicit -en SKU before ingest"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s7",
+      "title": "Quest for Power",
+      "slug": "booster-s7-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s7.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s7.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s8",
+      "title": "Battle of Destiny",
+      "slug": "booster-s8-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s8.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s8.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s8-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "booster",
+      "setCode": "s9",
+      "title": "The Chosen",
+      "slug": "booster-s9-en",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s9.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/boosters/s9.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN booster not yet minted as SKU (parked)"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s1",
+      "title": "The Path to Hokage",
+      "slug": "blister-s1",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s1.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s1.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s10",
+      "title": "Lineage of the Legends",
+      "slug": "blister-s10",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s10.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s10.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s11",
+      "title": "Approching Wind",
+      "slug": "blister-s11",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s11.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s11.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s12",
+      "title": "A New Chronicle",
+      "slug": "blister-s12",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s12.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s12.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s13",
+      "title": "Fateful Reunion",
+      "slug": "blister-s13",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s13.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s13.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s14",
+      "title": "Emerging Alliance",
+      "slug": "blister-s14",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s14.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s14.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s15",
+      "title": "Foretold Prophecy",
+      "slug": "blister-s15",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s15.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s15.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s16",
+      "title": "Broken Promise",
+      "slug": "blister-s16",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s16.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s16.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s17",
+      "title": "Will of Fire",
+      "slug": "blister-s17",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s17.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s17.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s18",
+      "title": "Fangs of the Snake",
+      "slug": "blister-s18",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s18.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s18.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s19",
+      "title": "Path of Pain",
+      "slug": "blister-s19",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s19.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s19.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s2",
+      "title": "Coils of the Snake",
+      "slug": "blister-s2",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s2.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s2.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s20",
+      "title": "Tales of the Gallant Sage",
+      "slug": "blister-s20",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s20.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s20.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s21",
+      "title": "Shattered Truth",
+      "slug": "blister-s21",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s21.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s21.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s22",
+      "title": "Weapons of War",
+      "slug": "blister-s22",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s22.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s22.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s23",
+      "title": "Invasion",
+      "slug": "blister-s23",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s23.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s23.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s24",
+      "title": "Sage's Legacy",
+      "slug": "blister-s24",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s24.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s24.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s25",
+      "title": "Kage Summit",
+      "slug": "blister-s25",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s25.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s25.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s26",
+      "title": "Avenger's Wrath",
+      "slug": "blister-s26",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s26.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s26.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s27",
+      "title": "Hero's Ascension",
+      "slug": "blister-s27",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s27.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s27.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s28",
+      "title": "Ninja Storm 3",
+      "slug": "blister-s28",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s28.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s28.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s3",
+      "title": "Curse of the Sand",
+      "slug": "blister-s3",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s3.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s3.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s4",
+      "title": "Revenge and Rebirth",
+      "slug": "blister-s4",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s4.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s4.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s4-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s5",
+      "title": "Dream Legacy",
+      "slug": "blister-s5",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s5.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s6",
+      "title": "Eternal Rivalry",
+      "slug": "blister-s6",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s6.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s6.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s7",
+      "title": "Quest for Power",
+      "slug": "blister-s7",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s7.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s7.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s8",
+      "title": "Battle of Destiny",
+      "slug": "blister-s8",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s8.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s8.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": "s9",
+      "title": "The Chosen",
+      "slug": "blister-s9",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s9.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s9.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/s9-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": null,
+      "title": null,
+      "slug": "tripack-chibi",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripack-chibi-01.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripack-chibi-01.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": null,
+      "title": null,
+      "slug": "tripack-s7",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripack-s7-01.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripack-s7-01.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripack-s7-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": null,
+      "title": null,
+      "slug": "tripack-s8",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripack-s8-01.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripack-s8-01.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "blister",
+      "setCode": null,
+      "title": null,
+      "slug": "tripacks",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripacks-01.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/blisters/tripacks-01.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "EN blister inventory — no blister SKUs minted yet"
+    },
+    {
+      "kind": "display",
+      "setCode": null,
+      "title": null,
+      "slug": "display-decks",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/display-decks-01.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/display-decks-01.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "special / non-series row"
+    },
+    {
+      "kind": "display",
+      "setCode": "s1",
+      "title": "The Path to Hokage",
+      "slug": "display-s1",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s1.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s1.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s1-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Never mint display-s1…s6 (FR Carddass collision)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s10",
+      "title": "Lineage of the Legends",
+      "slug": "display-s10",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s10.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s10.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s10-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s11",
+      "title": "Approching Wind",
+      "slug": "display-s11",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s11.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s11.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s11-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s12",
+      "title": "A New Chronicle",
+      "slug": "display-s12",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s12.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s12.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s12-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s13",
+      "title": "Fateful Reunion",
+      "slug": "display-s13",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s13.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s13.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s13-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s14",
+      "title": "Emerging Alliance",
+      "slug": "display-s14",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s14.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s14.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s14-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s15",
+      "title": "Foretold Prophecy",
+      "slug": "display-s15",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s15.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s15.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s15-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s16",
+      "title": "Broken Promise",
+      "slug": "display-s16",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s16.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s16.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s16-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s17",
+      "title": "Will of Fire",
+      "slug": "display-s17",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s17.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s17.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s17-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s17.5",
+      "title": "Tournament Pack 1",
+      "slug": null,
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s17.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s17.5.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Tournament pack display — no catalogue SKU yet"
+    },
+    {
+      "kind": "display",
+      "setCode": "s18",
+      "title": "Fangs of the Snake",
+      "slug": "display-s18",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s18.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s18.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s18-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s19",
+      "title": "Path of Pain",
+      "slug": "display-s19",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s19.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s19.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s19-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s19.5",
+      "title": "Tournament Pack 2",
+      "slug": null,
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s19.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s19.5.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s19.5-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Tournament pack display — no catalogue SKU yet"
+    },
+    {
+      "kind": "display",
+      "setCode": "s2",
+      "title": "Coils of the Snake",
+      "slug": "display-s2",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s2.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s2.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s2-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Never mint display-s1…s6 (FR Carddass collision)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s20",
+      "title": "Tales of the Gallant Sage",
+      "slug": "display-s20",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s20.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s20.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s20-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s21",
+      "title": "Shattered Truth",
+      "slug": "display-s21",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s21.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s21.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s21-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s21.5",
+      "title": "Tournament Pack 3",
+      "slug": null,
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s21.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s21.5.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s21.5-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Tournament pack display — no catalogue SKU yet"
+    },
+    {
+      "kind": "display",
+      "setCode": "s22",
+      "title": "Weapons of War",
+      "slug": "display-s22",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s22.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s22.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s22-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s23",
+      "title": "Invasion",
+      "slug": "display-s23",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s23.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s23.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s23-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s23.5",
+      "title": "Tournament Pack 4",
+      "slug": null,
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s23.5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s23.5.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s23.5-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Tournament pack display — no catalogue SKU yet"
+    },
+    {
+      "kind": "display",
+      "setCode": "s24",
+      "title": "Sage's Legacy",
+      "slug": "display-s24",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s24.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s24.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s24-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s25",
+      "title": "Kage Summit",
+      "slug": "display-s25",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s25.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s25.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s25-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s26",
+      "title": "Avenger's Wrath",
+      "slug": "display-s26",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s26.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s26.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s26-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s27",
+      "title": "Hero's Ascension",
+      "slug": "display-s27",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s27.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s27.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s27-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s28",
+      "title": "Ninja Storm 3",
+      "slug": "display-s28",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s28.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s28.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s28-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s3",
+      "title": "Curse of the Sand",
+      "slug": "display-s3",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s3.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s3.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s3-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Never mint display-s1…s6 (FR Carddass collision)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s4",
+      "title": "Revenge and Rebirth",
+      "slug": "display-s4",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s4.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s4.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s4-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Never mint display-s1…s6 (FR Carddass collision)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s5",
+      "title": "Dream Legacy",
+      "slug": "display-s5",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s5.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s5.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s5-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Never mint display-s1…s6 (FR Carddass collision)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s6",
+      "title": "Eternal Rivalry",
+      "slug": "display-s6",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s6.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s6.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s6-02.png"
+      ],
+      "ingest": false,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Never mint display-s1…s6 (FR Carddass collision)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s7",
+      "title": "Quest for Power",
+      "slug": "display-s7",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s7.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s7.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s7-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s8",
+      "title": "Battle of Destiny",
+      "slug": "display-s8",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s8.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s8.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s8-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    },
+    {
+      "kind": "display",
+      "setCode": "s9",
+      "title": "The Chosen",
+      "slug": "display-s9",
+      "staging": "staging/bandai-fr-us-drive/packshots-by-sku/displays/s9.png",
+      "variants": [
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s9.png",
+        "staging/bandai-fr-us-drive/packshots-by-sku/displays/s9-02.png"
+      ],
+      "ingest": true,
+      "lang": "EN",
+      "line": "en-ccg",
+      "note": "Attach when display SKU exists (coleka/goat mint s13+; s7–s12 may be absent)"
+    }
+  ],
+  "inventorySummary": {
+    "productRows": 98,
+    "ingestTrue": 27,
+    "byKind": {
+      "booster": 33,
+      "blister": 32,
+      "display": 33
+    }
+  },
+  "not": [
+    "mint-display-s1-s6",
+    "kayou-into-carddass",
+    "panini-into-carddass",
+    "invent-s5-starter-composition"
+  ]
+}

@@ -67,7 +67,7 @@ services:
       sh -c "corepack enable &&
              pnpm install --frozen-lockfile &&
              pnpm prisma generate &&
-             pnpm worker"
+             pnpm worker:dev"
     env_file:
       - .env
     environment:
@@ -91,7 +91,7 @@ services:
       sh -c "corepack enable &&
              pnpm install --frozen-lockfile &&
              pnpm prisma generate &&
-             pnpm worker:icollect"
+             pnpm worker:icollect:dev"
     env_file:
       - .env
     environment:

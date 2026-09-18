@@ -1,0 +1,15 @@
+{
+  "source": "vintagenaruto.com browse bundle → api.ccgtrader.co.uk assets",
+  "observed": "2026-08-17",
+  "ingest": "faces",
+  "line": "en-ccg",
+  "lang": "en",
+  "servedPixels": { "width": 750, "height": 1050 },
+  "urls": {
+    "browse": "https://vintagenaruto.com/browse",
+    "asset": "https://api.ccgtrader.co.uk/_/assets/{id}"
+  },
+  "note": "Vintage Naruto SPA embeds Bandai USA CCG checklists (s1–s28 + TP/tins/promos) with CCG Trader Directus asset ids. Raw `/_/assets/{id}` is 750×1050; `?key=card-large` 422s. Map names to printed N/J/M/C via narutocards.ca + Goat + Bandai lists — Vintage displayNumber is 1/122, not N-001. Skip shinobis-dream (set 29 custom). French rows on the same site are Panini/Ultra, not Carddass NI/TE/TA. Do not ingest those.",
+  "skip": ["shinobis-dream", "band-of-the-hawk", "french-panini"],
+  "not": ["carddass", "it-carddass", "ja-carddass"]
+}

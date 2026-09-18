@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { MetadataAttachment } from "@/types/metadataProvider";
+
 import {
   resolveGameAttachmentPlatformKey,
   solePlatformKeyFromNames,
@@ -40,7 +42,9 @@ describe("platformKeyStamp", () => {
   });
 
   it("stamps attachments missing platformKey but skips strict shelf-platform sources", () => {
-    const attachments = stampAttachmentsMissingPlatformKey(
+    const attachments = stampAttachmentsMissingPlatformKey<
+      MetadataAttachment & { strictShelfPlatformCoverSource?: boolean }
+    >(
       [
         {
           type: "cover",
@@ -65,7 +69,9 @@ describe("platformKeyStamp", () => {
   });
 
   it("does not stamp shelf platform when title names another console", () => {
-    const attachments = stampAttachmentsMissingPlatformKey(
+    const attachments = stampAttachmentsMissingPlatformKey<
+      MetadataAttachment & { strictShelfPlatformCoverSource?: boolean }
+    >(
       [
         {
           type: "cover",
@@ -152,9 +158,9 @@ describe("platformKeyStamp", () => {
   });
 
   it("returns a key only when platform names are unambiguous", () => {
-    expect(
-      solePlatformKeyFromNames(["PlayStation Vita", "PS Vita"]),
-    ).toBe("psvita");
+    expect(solePlatformKeyFromNames(["PlayStation Vita", "PS Vita"])).toBe(
+      "psvita",
+    );
     expect(
       solePlatformKeyFromNames(["PlayStation 4", "PlayStation Vita"]),
     ).toBeUndefined();

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "pack": "naruto/carddass",
+  "updatedAt": "2026-08-27",
+  "notes": "Booster FR/IT : 8 cartes dont 1 holo (annonce Kana 2008, S1–S6). JP : 6 cartes — bySet/overrides à préciser. Pas de taux chase multi-paliers : rareté FR binaire commune/holo/promo.",
+  "default": {
+    "source": "Annonce Kana 2008 (8 cartes / 1 holo) + catalogue local print_titles",
+    "verifiedAt": "2026-08-27",
+    "notes": "Chaque booster apporte exactement 1 holo en moyenne (slot dédié). Une holo précise ≈ N_holo du set.",
+    "cardsPerPack": 8,
+    "packsPerDisplay": null,
+    "displaysPerCase": null,
+    "slots": [
+      {
+        "id": "non_holo",
+        "count": 7,
+        "kind": "dedicated",
+        "rarities": ["commune", "common", "Common", "C"]
+      },
+      {
+        "id": "holo",
+        "count": 1,
+        "kind": "dedicated",
+        "rarities": ["holo", "Super Rare", "SR", "rara foil", "ultra rara foil"]
+      }
+    ],
+    "rarityHits": {
+      "holo": {
+        "packsPerHit": 1,
+        "confidence": "official",
+        "source": "Kana / emballage : 1 holo par booster FR",
+        "notes": "Toute holo du set ; une précise = 1 × N_holo.",
+        "aliases": [
+          "Super Rare",
+          "super rare",
+          "SR",
+          "rara foil",
+          "ultra rara foil",
+          "epica foil",
+          "STSR"
+        ]
+      }
+    }
+  }
+}

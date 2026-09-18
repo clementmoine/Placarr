@@ -1,0 +1,156 @@
+{
+  "source": "Inkworks — page produit officielle Naruto: Ninja Ranks (Panini US, 2006)",
+  "observed": "2026-08-21",
+  "ingest": "sealed SKUs + two attested sample faces. Full JPEG dump stays in staging/; marketing leftover is not promoted.",
+  "line": "ninja-ranks",
+  "lang": "EN",
+  "released": "2006-03",
+  "setCode": "nr",
+  "sourceId": "inkworks",
+  "productPage": "http://www.inkworks.com/products/naruto/ninjaranks/naruto.html",
+  "waybackProduct": "https://web.archive.org/web/20060617232154id_/http://inkworks.com/products/naruto/ninjaranks/naruto.html",
+  "imageDir": "http://www.inkworks.com/images/productsimg/naruto/ninjaranks/",
+  "skus": [
+    {
+      "slug": "booster",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Naruto: Ninja Ranks booster pack",
+      "art": "nnrwrapmed.jpg",
+      "declaredCardCount": 9,
+      "note": "Official copy: nine premium cards, SRP $1.99. Sell sheet UPC 0-80557-20552-3 (item 20555)."
+    },
+    {
+      "slug": "display",
+      "kind": "display",
+      "category": "displays",
+      "name": "Naruto: Ninja Ranks display box",
+      "art": "nnrboxsmed2.jpg",
+      "declaredCardCount": null,
+      "note": "Official copy: 24 packs per display, 10 displays per case. Sell sheet UPC box 0-80557-20553-0; case 0-80557-20555-4 has no packshot — do not mint a case SKU."
+    },
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Naruto: Ninja Ranks collector album",
+      "art": "nnralbumssm.jpg",
+      "declaredCardCount": null,
+      "note": "Official copy: six-color screenprint, foam padded, three-ring. SRP $19.95. Sell sheet UPC 0-80557-20551-6 (item 20550); album case 0-80557-20550-9, 12 albums / case."
+    }
+  ],
+  "logo": {
+    "file": "narutosjlogomed.jpg",
+    "role": "setLogo"
+  },
+  "sampleCards": [
+    {
+      "file": "nnrsd1med2.jpg",
+      "printed": "SD-1",
+      "setCode": "sd",
+      "number": "0001",
+      "why": "Publisher filename nnrsd1. Checklist SD-1 is Naruto Super Deformed. Die-cut sample on the official page."
+    },
+    {
+      "file": "nnrg71med2.jpg",
+      "printed": "BL-1",
+      "setCode": "bl",
+      "number": "0001",
+      "why": "Official copy: Group 7 = three box loaders. Filename g71. Checklist BL-1 is Naruto. Sample shows Naruto with the GROUP SEVEN seal."
+    }
+  ],
+  "notIngested": [
+    {
+      "file": "nnrsetssm.jpg",
+      "reason": "Card-stack packshot, not a SKU."
+    },
+    {
+      "file": "nnrcard1sm.jpg",
+      "reason": "Team 7 key art with a Ninja Ranks pill, not a numbered face."
+    },
+    {
+      "file": "nnrcard1med.jpg",
+      "reason": "Same key art, larger."
+    },
+    {
+      "file": "nnrpism.jpg",
+      "reason": "Team 7 prism promo art, no printed number to map."
+    },
+    {
+      "file": "nnrpimed2.jpg",
+      "reason": "Same prism, larger."
+    },
+    {
+      "file": "paninilogosm.jpg",
+      "reason": "Publisher mark, not the set wordmark."
+    }
+  ],
+  "sellSheet": {
+    "what": "Dealer sell sheet 8.5×11, Panini / Inkworks, Coming March 2006. Printed marketing, not a fan checklist.",
+    "dealerPhotos": "https://tvmoviecards.com/products/naruto-ninja-ranks-trading-card-dealer-sell-sheet-promo-sale-2008",
+    "printedUrls": ["www.inkworks.com", "www.paniniusa.com"],
+    "itemNo": { "cards": "20555", "album": "20550" },
+    "upc": {
+      "pack": "080557205523",
+      "display": "080557205530",
+      "case": "080557205554",
+      "album": "080557205516",
+      "albumCase": "080557205509"
+    },
+    "doNot": [
+      "Mint a case SKU from the case UPC — still no packshot.",
+      "Ingest the dealer JPEG of the sheet as card faces (samples #5 and Naruto profile are too small / photos of print).",
+      "Treat the four wrappers claim as four SKUs — this sheet does not show four distinct pack arts. Official wrap is yellow; a green physical wrap is dumped as art.blogger beside it, not a second SKU."
+    ]
+  },
+  "captures": {
+    "nnrwrapmed.jpg": {
+      "timestamp": "20060624044103",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/nnrwrapmed.jpg"
+    },
+    "nnrboxsmed2.jpg": {
+      "timestamp": "20060624044142",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/nnrboxsmed2.jpg"
+    },
+    "nnralbumssm.jpg": {
+      "timestamp": "20060624044136",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/nnralbumssm.jpg"
+    },
+    "narutosjlogomed.jpg": {
+      "timestamp": "20060515115846",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/narutosjlogomed.jpg"
+    },
+    "nnrsd1med2.jpg": {
+      "timestamp": "20060624044051",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/nnrsd1med2.jpg"
+    },
+    "nnrg71med2.jpg": {
+      "timestamp": "20060624044038",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/nnrg71med2.jpg"
+    },
+    "nnrsetssm.jpg": {
+      "timestamp": "20060624044004",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/nnrsetssm.jpg"
+    },
+    "nnrcard1sm.jpg": {
+      "timestamp": "20060624044037",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/nnrcard1sm.jpg"
+    },
+    "nnrcard1med.jpg": {
+      "timestamp": "20060619125351",
+      "original": "http://www.inkworks.com/images/productsimg/naruto/ninjaranks/nnrcard1med.jpg"
+    },
+    "nnrpism.jpg": {
+      "timestamp": "20060506035328",
+      "original": "http://www.inkworks.com/images/productsimg/naruto/ninjaranks/nnrpism.jpg"
+    },
+    "nnrpimed2.jpg": {
+      "timestamp": "20060507080548",
+      "original": "http://www.inkworks.com/images/productsimg/naruto/ninjaranks/nnrpimed2.jpg"
+    },
+    "paninilogosm.jpg": {
+      "timestamp": "20060624044154",
+      "original": "http://inkworks.com/images/productsimg/naruto/ninjaranks/paninilogosm.jpg"
+    }
+  }
+}

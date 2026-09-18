@@ -3,12 +3,11 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
 
 import { fetchSensCritiqueProduct, searchSensCritique } from "./fetch";
@@ -19,7 +18,7 @@ import {
 
 const fetchFromSensCritique = createSensCritiqueResolver();
 
-export const senscritiqueModule: ProviderModule = {
+export const senscritiqueModule = defineProvider({
   info: {
     id: "senscritique",
     label: "SensCritique",
@@ -33,6 +32,7 @@ export const senscritiqueModule: ProviderModule = {
       "screenshots",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -59,28 +59,11 @@ export const senscritiqueModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck(
-    "senscritique",
-    "SensCritique",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl(
-        "https://gql.senscritique.com/graphql?query=%7B__typename%7D",
-      );
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "GraphQL endpoint unreachable",
-      };
-    },
-  ),
-  testHandlers: {
-    "senscritique-metadata": {
-      label: "SensCritique - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromSensCritique({ name: query, type: "games" }),
-    },
-  },
+  // Ping GraphQL (pas le site marketing) — défaut healthCheck via healthCheckUrl.
+  healthCheckUrl:
+    "https://gql.senscritique.com/graphql?query=%7B__typename%7D",
+  metadataSearch: (query) =>
+    fetchFromSensCritique({ name: query, type: "games" }),
   buildTeardownMetadataTasks(ctx) {
     return [
       ...teardownMetadataWhen(
@@ -159,7 +142,7 @@ export const senscritiqueModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchSensCritiqueProduct(hit.id));
   },
-};
+});
 
 export {
   createSensCritiqueResolver,

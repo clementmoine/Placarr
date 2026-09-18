@@ -1,0 +1,689 @@
+{
+  "version": 1,
+  "pack": "pokemon",
+  "updatedAt": "2026-09-14",
+  "byKind": {
+    "display": {
+      "source": "slug / boutique FR « boite-36-boosters-… » (20/20 displays)",
+      "verifiedAt": "2026-08-26",
+      "packsContained": 36,
+      "randomPoolScope": "none",
+      "notes": "Display Pokémon FR mesuré = 36 boosters. cardsPerPack booster = variable par ère — pas de byKind inventé."
+    },
+    "booster": {
+      "source": "pkmcards / TCG Live — pool = set ; cardsPerPack variable par ère (jamais inventé)",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Pas de cardsPerPack byKind (SV≠SWSH≠GO)."
+    },
+    "multipack": {
+      "source": "Libellé tripack / double-pack (pkmcards FR)",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 3,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Tripack = 3 boosters (slug coffret-tripack / collection-autocollant). Double-pack override SKU si besoin."
+    },
+    "etb": {
+      "source": "Elite Trainer Box — mixed (boosters + accessoires)",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "packsContained ère-dépendant (SV≈9 / SWSH≈8) — SKU par SKU seulement."
+    },
+    "tin": {
+      "source": "Tin / mini-tin Pokémon — mixed",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "packsContained variable (souvent 2–3) — pas de byKind inventé."
+    },
+    "collector_box": {
+      "source": "Coffrets collection / UPC / poster — mixed",
+      "verifiedAt": "2026-09-14",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false
+    }
+  },
+  "skus": {
+    "booster-fable-nebuleuse-pechaminus": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=99 rejetté (improbable pour un sachet)."
+    },
+    "booster-fable-nebuleuse-fortusimia": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=99 rejetté (improbable pour un sachet)."
+    },
+    "booster-fable-nebuleuse-felicanis": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=99 rejetté (improbable pour un sachet)."
+    },
+    "booster-fable-nebuleuse-favianos": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=99 rejetté (improbable pour un sachet)."
+    },
+    "booster-pokemon-go": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=88 rejetté (improbable pour un sachet)."
+    },
+    "booster-celebrations": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=36 rejetté (improbable pour un sachet)."
+    },
+    "booster-epee-et-bouclier-destinees-radieuses-salarsen-chromatique": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=73 rejetté (improbable pour un sachet)."
+    },
+    "booster-epee-et-bouclier-destinees-radieuses-lanssorien-chromatique": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=73 rejetté (improbable pour un sachet)."
+    },
+    "booster-epee-et-bouclier-destinees-radieuses-dracaufeu-gigamax": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=73 rejetté (improbable pour un sachet)."
+    },
+    "booster-epee-et-bouclier-destinees-radieuses-corvaillus-chromatique": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=73 rejetté (improbable pour un sachet)."
+    },
+    "booster-la-voie-du-maitre-torgamord-gigamax": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=80 rejetté (improbable pour un sachet)."
+    },
+    "booster-la-voie-du-maitre-ixon": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=80 rejetté (improbable pour un sachet)."
+    },
+    "booster-la-voie-du-maitre-gardevoir": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=80 rejetté (improbable pour un sachet)."
+    },
+    "booster-la-voie-du-maitre-charmilly-gigamax": {
+      "source": "Correction : declaredCardCount boutique = taille de set, pas le sachet",
+      "verifiedAt": "2026-08-26",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "notes": "Ancien cardsPerPack=80 rejetté (improbable pour un sachet)."
+    },
+    "coffret-dresseur-elite-alliance-infaillible": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-astres-radieux": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-aventures-ensemble-zoroark-de-n": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-celebrations": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-clash-des-rebelles": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-couronne-stellaire-terapagos-teracristal": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-crz-zenith-supreme-lucario": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-destinees-de-paldea": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-destinees-occultes": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-destinees-radieuses-evoli": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-duo-de-choc": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-ecarlate-et-violet-151-ronflex": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-ecarlate-et-violet-evolutions-prismatiques-evoli": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-eclipse-cosmique": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-epee-et-bouclier-zacian": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-epee-et-bouclier-zamazenta": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-etincelles-deferlantes-pikachu-teracristal-stellaire": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-ev10-rivalites-destinees": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-evolution-celeste-nymphali-mentali-givrali-aquali": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-evolution-celeste-phyllali-noctali-voltali-pyroli": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-fable-nebuleuse-felicanis-fortusimia-favianos": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-faille-paradoxe-garde-de-fer": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-faille-paradoxe-rugit-lune": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-flamme-blanche-reshiram": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-flammes-fantasmagoriques-mega-dracaufeu-ex": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-flammes-obsidiennes-salameche": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-forces-temporelles-serpente-eau": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-forces-temporelles-vert-de-fer": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-foudre-noire-zekrom": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-harmonie-des-esprits": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-la-voie-du-maitre-dracaufeu-vmax": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-legendes-brillantes-ho-oh": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-lumiere-interdite": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-majeste-des-dragons": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-mascarade-crepusculaire-ogerpon": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-mega-evolution-chaos-ascendant": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-mega-evolution-equilibre-parfait": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-mega-evolution-gardevoir": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-mega-evolution-heros-transcendants": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-mega-evolution-lucario": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-origine-perdue": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-pal-evolutions-a-paldea-poussacha-coiffeton-chochodile": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-poing-de-fusion": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-pokemon-go-mewtwo": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 10,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 10 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-regne-de-glace-cavalier-d-effroi": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-regne-de-glace-cavalier-du-froid": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-soleil-lune-tempete-celeste": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-soleil-lune-tonnerre-perdu": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-soleil-lune-ultra-prisme-necrozma-ailes-de-l-aurore": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-soleil-lune-ultra-prisme-necrozma-criniere-du-couchant": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-stars-etincelantes": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-styles-de-combat-shifours-mille-poings": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-styles-de-combat-shifours-poing-final": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-sv01-ecarlate-et-violet-koraidon": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-sv01-ecarlate-et-violet-miraidon": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 9,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 9 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-tempete-argentee": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-tenebres-embrasees-ethernatos": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    },
+    "coffret-dresseur-elite-voltage-eclatant-pikachu-gigamax": {
+      "source": "Poképédia « Nombre de boosters » (ETB SV/ME=9, SM/SWSH=8, sets spéciaux=10) + Marriland ETB review",
+      "verifiedAt": "2026-09-14",
+      "packsContained": 8,
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "ETB : 8 boosters + accessoires (ère attestée)."
+    }
+  }
+}

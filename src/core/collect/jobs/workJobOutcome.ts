@@ -1,6 +1,4 @@
-import {
-  BACKGROUND_WORK_STATUS,
-} from "@/core/collect/jobs/workQueue";
+import { BACKGROUND_WORK_STATUS } from "@/core/collect/jobs/workQueue";
 import { prisma } from "@/lib/db/prisma";
 
 /** Job was claimed but must not run (cancelled / superseded generation). */
@@ -29,10 +27,7 @@ export async function abandonBackgroundWorkJob(
     where: {
       id: jobId,
       status: {
-        in: [
-          BACKGROUND_WORK_STATUS.pending,
-          BACKGROUND_WORK_STATUS.running,
-        ],
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
       },
     },
     data: {

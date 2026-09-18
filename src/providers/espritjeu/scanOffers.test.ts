@@ -5,6 +5,7 @@ import {
   createEmptyBarcodeLookupPayload,
   type BarcodeLookupPayload,
 } from "@/core/identify/lookup/payload";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
 
 const espritjeuModule = PROVIDER_MODULES.find(
   (module) => module.info.id === "espritjeu",
@@ -13,7 +14,7 @@ const espritjeuModule = PROVIDER_MODULES.find(
 describe("espritjeu extractScanPriceOffers", () => {
   it("emits a new offer with the barcode productUrl as sourceUrl", () => {
     const payload: BarcodeLookupPayload = {
-      ...createEmptyBarcodeLookupPayload(),
+      ...createEmptyBarcodeLookupPayload(barcodeLookupSlotDefaults()),
       espritjeu: {
         title: "Black Stories",
         priceCents: 990,

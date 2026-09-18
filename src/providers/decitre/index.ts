@@ -22,14 +22,12 @@ import type {
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import type {
-  ObservationEvidenceSignal,
-} from "@/types/metadataObservation";
+import type { ObservationEvidenceSignal } from "@/types/metadataObservation";
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchDecitreByBarcode,
@@ -72,7 +70,9 @@ function buildDecitreAttachments(
   ];
 }
 
-function mapDecitreMetadata(product: DecitreProduct | null): MetadataResult | null {
+function mapDecitreMetadata(
+  product: DecitreProduct | null,
+): MetadataResult | null {
   if (!product?.title) return null;
 
   const facts: MetadataFact[] = [
@@ -167,9 +167,7 @@ function mapDecitreMetadata(product: DecitreProduct | null): MetadataResult | nu
     regionalTitles: [{ region: "fr", text: product.title }],
     attachments: buildDecitreAttachments(product),
     facts,
-    externalIds: product.barcode
-      ? { decitre: product.barcode }
-      : undefined,
+    externalIds: product.barcode ? { decitre: product.barcode } : undefined,
   };
 
   const evidenceSignals: ObservationEvidenceSignal[] = ["structured_data"];
@@ -241,7 +239,7 @@ async function refreshDecitreOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const decitreModule: ProviderModule = {
+export const decitreModule = defineProvider({
   info: {
     id: "decitre",
     label: "Decitre",
@@ -256,6 +254,7 @@ export const decitreModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",
@@ -329,6 +328,6 @@ export const decitreModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshDecitreOffers,
-};
+});
 
 export { mapDecitreMetadata };

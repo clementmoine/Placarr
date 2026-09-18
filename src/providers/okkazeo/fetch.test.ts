@@ -170,9 +170,7 @@ describe("searchOkkazeoHits", () => {
       },
     ]);
 
-    await expect(
-      searchOkkazeoHits("", "3421272109517"),
-    ).resolves.toEqual([
+    await expect(searchOkkazeoHits("", "3421272109517")).resolves.toEqual([
       {
         url: "https://www.okkazeo.com/jeux/10267/mille-sabords",
         gameId: "10267",

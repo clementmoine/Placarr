@@ -1,0 +1,57 @@
+{
+  "source": "Fril / ラクマ (Rakuma) — singles JA adressées par ref imprimée",
+  "observed": "2026-08-19",
+  "ingest": "faces",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "search": "https://fril.jp/s?query=%E3%83%8A%E3%83%AB%E3%83%88%20%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0%20%E5%BF%8D",
+  "itemUrl": "https://item.fril.jp/{32-hex}",
+  "imageUrl": "https://img.fril.jp/img/{listing}/l/{photo}.jpg",
+  "note": "Découvert le 2026-08-19 en remontant une annonce テムジン 騎-7. Mesure : une recherche « ナルト カードゲーム 忍 » rend 40 annonces par page dont **25 portent la ref imprimée ET le nom du personnage dans le titre** (忍-153 九尾の狐 UR, 忍-316 はたけカカシ SR, 忍-45 薬師カブト BANDAI 2003…). Les recherches par famille (忍- / 術- / 作-) répondent toutes. C'est la piste JA la plus profonde trouvée à ce jour, devant アヴァロン (39 fiches) : le titre est adressable, la photo est en `/l/` (grand format). Ingesteur livré le 2026-08-19 (`parseFrilListing.ts` + `scrapeFrilShop.ts`, étape `scrape` du CLI) : 5 requêtes par famille, 3 pages max, une requête à la fois avec délai — pas un crawl.",
+  "why": "Le trou JA reste le plus gros du catalogue (694 tirages nommés sans face). Les hôtes d'archive sont épuisés ; les places de marché sont ce qui reste, et Fril est la seule où la ref imprimée est dans le titre à cette échelle.",
+  "not": [
+    "crawl-boutique",
+    "lots-multi-cartes",
+    "shippuden-maku",
+    "road-to-ninja"
+  ],
+  "trapsBeforeIngesting": [
+    "Lots : « 5枚セット 忍-220 221 222 », « 忍-25～27 », « レアカード6枚まとめ売り » — une photo de plusieurs cartes n'est la face d'aucune.",
+    "Ligne 疾風伝 : 忍伝-145, PR忍伝-1/7 = maku, pas le tabletop 巻ノ.",
+    "Promos d'autres produits : « ROAD TO NINJA … P NR 11 » n'est pas un tirage Carddass.",
+    "Photos de vendeur filigranées (« Hobby & Collector » sur Fril + Mercari + buyee, même boutique) — dernier recours, sous nikita / carddas / suruga.",
+    "Le compte affiché (200 / 900) est une taille de page, pas un total : mesurer par pagination avant d'annoncer une couverture."
+  ],
+  "next": "Même forme que scrapeAvalonShop : une recherche bornée, parse du titre (ref + nom), rejet des lots et de la ligne maku, install en `art.fril` de dernier recours.",
+  "result2026_08_19": {
+    "queries": 5,
+    "maxPages": 3,
+    "listingsKept": 154,
+    "distinctIds": 119,
+    "rejected": 446,
+    "downloaded": 119,
+    "failed": 0,
+    "onlyFaceOnCard": 43,
+    "jaCoverage": "734 → 781 faces (51,4 % → 54,3 %)"
+  },
+  "guards": {
+    "lots": "まとめ / セット / 2枚 et plus / plages 忍-25～27 / ref suivie de nombres nus (忍-220 221 222). `1枚` reste un single.",
+    "otherLines": "疾風伝, 忍伝, 術伝, データカードダス, ミラクルバトル, ウエハース, Kayou, ROAD TO NINJA, ナルティメット, Boruto.",
+    "severalRefs": "Deux refs distinctes dans un titre = lot.",
+    "publishedRange": "Un numéro hors de ce que Bandai a publié (忍 1-417, 術 1-361, 作 1-337, 依 1-46, 騎 1-8 selon cardcheckbox) ne mint rien : c'est une coquille de vendeur. Les séquences promo (PR忍, OP忍) n'ont pas de maximum publié et passent.",
+    "duoCards": "`＆` n'est pas un signal de lot : 忍-264 est imprimé 奈良シカマル&テマリ, une seule carte."
+  },
+  "minting": "Une ref dans les bornes publiées que le catalogue ne tenait pas devient un tirage — 5 cartes sont apparues ainsi le 2026-08-19 (忍-181, 忍-343, 忍-367, 忍-391/392, 術-303). C'est voulu : elles existent, elles n'étaient nulle part ailleurs.",
+  "corrections": [
+    {
+      "on": "2026-08-20",
+      "listing": "https://item.fril.jp/b77716d69243bedbddd23556be599854",
+      "title": "ナルトカードゲーム　依頼人　風花小雪　文字泊　忍-25",
+      "wasFiledAs": "ni0025 (忍-25)",
+      "actually": "cl0025 (依-25) — 風花小雪, set 雪の国, BANDAI 2004. Le numéro 依-25 est lisible en bas à gauche de la photo.",
+      "why": "Le titre se contredit : il nomme la famille 依頼人 et le personnage 風花小雪, puis écrit 忍-25. Le parseur prenait le numéro au mot.",
+      "fix": "`frilFamilyClash` refuse désormais un titre dont le mot de famille et le numéro désignent deux familles. Cette annonce est donc rejetée à la lecture ; la face a été replacée à la main sous cl0025, seul visuel connu de ce tirage."
+    }
+  ]
+}

@@ -156,11 +156,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         attachment,
         options?.requestedPlatformKey,
       ),
-      localeRankValue: coverLocaleRank(
-        semantics,
-        attachment.role,
-        options,
-      ),
+      localeRankValue: coverLocaleRank(semantics, attachment.role, options),
       provenanceRank: coverProvenanceRank(
         resolveCoverProvenance({
           provenance: attachment.coverProvenance,

@@ -83,6 +83,17 @@ export type ScrapeCatalogModuleFactoryDeps<
   defaultCapabilities: Capability[];
   defaultSample: { name: string; barcode: string };
   createResolver: (config: T) => CatalogResolver;
+  /**
+   * Dit si une erreur est un **refus d'accès** de la plateforme.
+   *
+   * La fabrique attrapait l'erreur puis allait chercher chez PrestaShop, par un
+   * `await import()` dynamique, la classe qui répond à cette question — du code
+   * partagé important un provider, et invisible à tout balayage d'imports
+   * statiques. La plateforme sait reconnaître son propre refus ; elle le dit.
+   *
+   * Absent = aucune erreur n'est traitée comme un blocage.
+   */
+  isAccessDenied?: (error: unknown) => boolean;
   searchProduct: (
     config: T,
     name: string,
@@ -244,6 +255,7 @@ export function createScrapeCatalogModule<
         types: config.types,
         capabilities,
         auth: { kind: "scrape" },
+        supplyMode: "scrape_cache",
         canonical: false,
         websiteUrl: config.baseUrl,
         notes: `Recherche ${deps.platformLabel} par EAN (${config.label}).`,
@@ -354,11 +366,11 @@ export function createScrapeCatalogModule<
               : undefined,
           });
         } catch (error) {
-          const { PrestashopAccessDeniedError } = await import(
-            "@/providers/prestashop/fetch"
-          );
-          if (error instanceof PrestashopAccessDeniedError) {
-            return probeErrorResult(error.message, "blocked");
+          if (deps.isAccessDenied?.(error)) {
+            return probeErrorResult(
+              error instanceof Error ? error.message : String(error),
+              "blocked",
+            );
           }
           throw error;
         }

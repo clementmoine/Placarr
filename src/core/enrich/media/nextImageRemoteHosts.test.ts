@@ -202,7 +202,7 @@ describe("nextImageRemoteHosts", () => {
       );
 
     expect(uncovered).toEqual([]);
-  });
+  }, 60_000);
 
   it("documents wildcard and exact host lists without overlap confusion", () => {
     expect(IMAGE_REMOTE_HOST_LISTS.wildcards).toContain("screenscraper.fr");

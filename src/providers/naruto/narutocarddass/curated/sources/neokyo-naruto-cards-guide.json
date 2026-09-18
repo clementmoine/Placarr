@@ -1,0 +1,18 @@
+{
+  "source": "Neokyo proxy-shopping blog (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "ingest": "none",
+  "crawl": false,
+  "url": "https://neokyo.com/blog/naruto-cards-guide-rare-valuable-cards-and-how-to-identify-them/",
+  "published": "2026-02-05",
+  "updated": "2026-07-16",
+  "line": "mixed",
+  "note": "English proxy-buy pitch. Lumps Carddass vending, magazine 非売品, movie bonuses, and « NARUTO Card Game » into one pile. The headline claim « NARUTO cards are not a TCG » is false for Bandai Carddass CG (2002) and Bandai USA CCG (2006–2013). « Almost all manufactured only in Japan » is false (FR/IT Carddass, EN CCG). Identification tip « No.1/120 + CARDDASS on the back » is generic merch Carddass numbering, not 忍/NI printKeys. No checklist, no packshots, no printKeys. Do not use as a catalogue source.",
+  "falseClaims": [
+    "not-a-tcg",
+    "japan-only",
+    "no-official-tournaments",
+    "no-unified-rules"
+  ],
+  "not": ["carddass-checklist", "en-ccg-checklist", "data-carddass"]
+}

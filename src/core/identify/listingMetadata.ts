@@ -48,10 +48,7 @@ function escapeRegExp(value: string): string {
 
 const PLATFORM_ALT = [...VIDEO_GAME_PLATFORM_TERMS]
   .map((term) =>
-    normalizeMetadataSegment(term)
-      .split(/\s+/)
-      .map(escapeRegExp)
-      .join("\\s+"),
+    normalizeMetadataSegment(term).split(/\s+/).map(escapeRegExp).join("\\s+"),
   )
   .filter(Boolean)
   .sort((a, b) => b.length - a.length)

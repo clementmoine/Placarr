@@ -1,0 +1,93 @@
+{
+  "source": "ebay-tin-metal-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "query": "boite metal naruto (user paste 11 listings)",
+  "ingest": "display-s28-fr via ebay.json ; EN Shippuden tins staged archival only",
+  "staging": "staging/ebay/tin-metal-hunt/",
+  "verdict": "Aucune tin Carddass FR scellée parmi les 11 (Invocation / Hobby déjà au catalogue via d'autres sources). La recherche « boîte métal » ramène surtout les tins EN Shippuden CCG + 1 display FR Storm 3 + 1 starter JP Carddass EX.",
+  "listings": [
+    {
+      "id": "267023381039",
+      "line": "en-ccg",
+      "title": "SERIES 6 Fierce Ambitions TIN A — Naruto saves Gaara (1 of 3) sealed",
+      "not": ["carddass-fr", "tin-box", "tin-box-hobby"]
+    },
+    {
+      "id": "267023312877",
+      "line": "en-ccg",
+      "title": "Ultimate Ninja Way Tin 1 of 4 — Naruto sealed (5 boosters + sneak + platinum)",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "267023384216",
+      "line": "en-ccg",
+      "title": "Shippuden tin Naruto/Sasuke (window card)",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "256672029687",
+      "line": "en-ccg",
+      "title": "Shippuden tin Naruto/Sasuke water art",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "267023347713",
+      "line": "en-ccg",
+      "title": "Shippuden tin Naruto Rasengan window",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "267023415249",
+      "line": "en-ccg",
+      "title": "Shippuden tin Jiraiya & 4th Hokage",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "267023387645",
+      "line": "en-ccg",
+      "title": "Shippuden tin Naruto & Deidara",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "267039897489",
+      "line": "en-ccg",
+      "title": "Shippuden tin Kakashi",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "267039902010",
+      "line": "en-ccg",
+      "title": "Shippuden tin Sasuke Chidori",
+      "not": ["carddass-fr"]
+    },
+    {
+      "id": "166839041461",
+      "line": "jp-carddass-ex",
+      "title": "Carddass EX Jinrai no Sho starter BOX (2004 MADE IN JAPAN) — cardboard, not FR tin",
+      "not": ["carddass-fr-tin", "en-ccg"]
+    },
+    {
+      "id": "285342890666",
+      "line": "eu-ccg-fr",
+      "title": "Display Ultimate Ninja Storm 3 FR sealed",
+      "sold": "2024-07-17",
+      "ean": "3391891969949",
+      "printed": "BANDAI 2013 MADE IN ITALY ; Namco Bandai Games Europe Cergy",
+      "sku": "display-s28-fr",
+      "staging": [
+        "staging/ebay/display-s28-fr.jpg",
+        "staging/ebay/display-s28-fr-side.jpg",
+        "staging/ebay/display-s28-fr-bottom.jpg"
+      ],
+      "ingest": true,
+      "note": "Ferme le gap « pas de packshot display FR s28 ». Ne pas retagger display-s28 EN. Packs/box : titre vendeur 24 — pas lu sur flanc."
+    }
+  ],
+  "stillMissing": ["tin-box Invocation alternate art if any", "Carddass FR metal tin other than 05129 / Hobby"],
+  "doNot": [
+    "Minter un 3e SKU tin FR depuis ces tins EN",
+    "Confondre display-s28-fr avec tin métal Carddass",
+    "Retagger display-s28 EN en FR"
+  ]
+}

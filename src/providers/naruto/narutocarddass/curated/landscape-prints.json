@@ -1,0 +1,16 @@
+{
+  "note": "Cartes physiquement PAYSAGE dont la face affichée est un fichier portrait (scan couché). Le probe pixel (enrichCardsIndexArtDimensions) ne mesure que la face choisie et ne peut donc pas les voir — d'où ce relevé éditorial, appliqué au runtime (printOrientation) même si un rebuild perd le flag de l'index.",
+  "observed": "2026-08-30",
+  "prints": [
+    {
+      "printKey": "naruto:pr-0060",
+      "name": "Clash",
+      "evidence": "Dump Coleka 771×557 (paysage, carte lue à l'endroit) à côté de la face affichée Drive 750×1050 (même carte couchée). Déjà noté dans en-ccg-series.json : « Landscape Clash mission (PSN) ».",
+      "display": "faceQuarterTurns 1 tant que la face choisie reste le scan Drive portrait",
+      "lang": "en",
+      "artW": 750,
+      "artH": 1050
+    }
+  ],
+  "todo": "Si la face EN bascule un jour sur un scan nativement paysage (Coleka), retirer le quart de tour — le probe pixel prendra le relais (landscapeFace)."
+}

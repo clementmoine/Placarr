@@ -1,0 +1,34 @@
+{
+  "source": "narutomythos.com — marketplace fan (annonces agrégées)",
+  "url": "https://www.narutomythos.com/fr/marketplace",
+  "api": "https://www.narutomythos.com/api/marketplace/listings?limit=100",
+  "cardsUrlFr": "https://www.narutomythos.com/fr/cards",
+  "cardsUrlEn": "https://www.narutomythos.com/en/cards",
+  "cardsApi": "https://www.narutomythos.com/api/cards",
+  "observed": "2026-09-13",
+  "ingest": "live — refreshBarcodePriceOffers lit les annonces ACTIVE EUR ; map cardId → printKey officiel (pas de mint catalogue)",
+  "official": false,
+  "disclaimer": "Footer site : application fan non officielle. Annonces souvent des liens Vinted / eBay / Leboncoin. Ne remplace pas les côtes narutocardgame.gg ni la gallery CICABOOM.",
+  "fields": [
+    "id",
+    "cardId (KS-106-A, KS-M08, KS-133-ES, …)",
+    "status",
+    "condition",
+    "finish",
+    "language",
+    "price",
+    "currency",
+    "externalUrl",
+    "platform",
+    "card.nameFr / nameEn"
+  ],
+  "price": {
+    "condition": "used",
+    "currency": "EUR",
+    "policy": "lowest ACTIVE listing per printKey; metadataScoped"
+  },
+  "also": [
+    "Cards DB (KS names/faces, fan): narutomythos-cards.json",
+    "GG staging cotes: via ggPriceOffers.ts"
+  ]
+}

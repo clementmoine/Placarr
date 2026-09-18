@@ -70,8 +70,7 @@ function isPackagingNoiseToken(
 export function significantTokens(tokens: string[]): string[] {
   return tokens.filter(
     (token) =>
-      !FUNCTION_WORDS.has(token.toLowerCase()) &&
-      !/^t\d+[a-z]*$/i.test(token),
+      !FUNCTION_WORDS.has(token.toLowerCase()) && !/^t\d+[a-z]*$/i.test(token),
   );
 }
 
@@ -88,7 +87,10 @@ export function identityTokens(
   // Game/media shelves: drop trailing marketplace platform SKUs before
   // tokenizing so "AES+" in "… sur NEOGEO AES+" is not unexplained identity.
   if (shelfType !== "hardware") {
-    withoutVolume = withoutVolume.replace(TRAILING_PLATFORM_SUFFIX_MATCHER, " ");
+    withoutVolume = withoutVolume.replace(
+      TRAILING_PLATFORM_SUFFIX_MATCHER,
+      " ",
+    );
   }
   for (const marker of VOLUME_MARKER_RES) {
     withoutVolume = withoutVolume.replace(marker, " ");
@@ -102,7 +104,6 @@ export function identityTokens(
     .replace(/&/g, " and ")
     .split(/[^a-z0-9]+/)
     .filter(
-      (token) =>
-        token.length >= 1 && !isPackagingNoiseToken(token, shelfType),
+      (token) => token.length >= 1 && !isPackagingNoiseToken(token, shelfType),
     );
 }

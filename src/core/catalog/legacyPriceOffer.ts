@@ -9,8 +9,8 @@ import {
   needsLegacyPriceOfferNormalization,
   normalizeLegacyPriceOffer as normalizeEbayLegacyPriceOffer,
   type NormalizablePriceOffer,
-} from "@/providers/ebay/normalizeLegacyPriceOffer";
-import { enrichPriceChartingOfferProductName } from "@/providers/pricecharting/offerProductName";
+} from "@/providers/commerce/ebay/normalizeLegacyPriceOffer";
+import { enrichPriceChartingOfferProductName } from "@/providers/commerce/pricecharting/fetch";
 
 export {
   ebayItemUrlFromPicClickUrl,

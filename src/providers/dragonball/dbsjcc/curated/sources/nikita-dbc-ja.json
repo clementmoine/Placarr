@@ -1,0 +1,227 @@
+{
+  "source": "tcg-db.nikita.jp/cardlist/dbc",
+  "lang": "ja",
+  "observed": "2026-09-16",
+  "url": "https://tcg-db.nikita.jp/cardlist/dbc/",
+  "count": 31,
+  "note": "Partial nikita checklist — join onto FR D-/SP- printKeys; never invent missing JA names.",
+  "cards": [
+    {
+      "printed": "D-5",
+      "number": "d0005",
+      "nameJa": "ウーロン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-005.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-15",
+      "number": "d0015",
+      "nameJa": "ドラキュラマン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-015.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-17",
+      "number": "d0017",
+      "nameJa": "謎の武闘家",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-017.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-22",
+      "number": "d0022",
+      "nameJa": "ヤジロベー",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-022.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-25",
+      "number": "d0025",
+      "nameJa": "ハッチャン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-025.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-34",
+      "number": "d0034",
+      "nameJa": "亀仙人(武天老師)",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-034.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-50",
+      "number": "d0050",
+      "nameJa": "界王様",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-050.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-52",
+      "number": "d0052",
+      "nameJa": "栽培マン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-052.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-57",
+      "number": "d0057",
+      "nameJa": "フリーザ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-057.jpg",
+      "setLabel": "カードゲーム1"
+    },
+    {
+      "printed": "D-139",
+      "number": "d0139",
+      "nameJa": "ブリーフ博士",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-139.jpg",
+      "setLabel": "カードゲーム2"
+    },
+    {
+      "printed": "D-141",
+      "number": "d0141",
+      "nameJa": "ウパ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-141.jpg",
+      "setLabel": "カードゲーム2"
+    },
+    {
+      "printed": "D-170",
+      "number": "d0170",
+      "nameJa": "サタン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-170.jpg",
+      "setLabel": "カードゲーム2"
+    },
+    {
+      "printed": "D-232",
+      "number": "d0232",
+      "nameJa": "キビト",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-232.jpg",
+      "setLabel": "カードゲーム3"
+    },
+    {
+      "printed": "D-233",
+      "number": "d0233",
+      "nameJa": "界王神のジジイ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-233.jpg",
+      "setLabel": "カードゲーム3"
+    },
+    {
+      "printed": "D-257",
+      "number": "d0257",
+      "nameJa": "バブルス",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-257.jpg",
+      "setLabel": "カードゲーム3"
+    },
+    {
+      "printed": "D-291",
+      "number": "d0291",
+      "nameJa": "亀仙人",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-291.jpg",
+      "setLabel": "カードゲーム4"
+    },
+    {
+      "printed": "D-326",
+      "number": "d0326",
+      "nameJa": "18号",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-326.jpg",
+      "setLabel": "カードゲーム4"
+    },
+    {
+      "printed": "D-336",
+      "number": "d0336",
+      "nameJa": "アナウンサー",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-336.jpg",
+      "setLabel": "カードゲーム4"
+    },
+    {
+      "printed": "D-337",
+      "number": "d0337",
+      "nameJa": "パイクーハン",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-337.jpg",
+      "setLabel": "カードゲーム4"
+    },
+    {
+      "printed": "D-349",
+      "number": "d0349",
+      "nameJa": "根性の一声",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-349.jpg",
+      "setLabel": "カードゲーム4"
+    },
+    {
+      "printed": "D-357",
+      "number": "d0357",
+      "nameJa": "天下一武道会！",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-357.jpg",
+      "setLabel": "カードゲーム4"
+    },
+    {
+      "printed": "D-370",
+      "number": "d0370",
+      "nameJa": "孫悟空",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-370.jpg",
+      "setLabel": "カードゲーム5"
+    },
+    {
+      "printed": "D-371",
+      "number": "d0371",
+      "nameJa": "亀仙人",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-371.jpg",
+      "setLabel": "カードゲーム5"
+    },
+    {
+      "printed": "D-703",
+      "number": "d0703",
+      "nameJa": "涙の決断",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-703.jpg",
+      "setLabel": "カードゲーム8"
+    },
+    {
+      "printed": "D-738",
+      "number": "d0738",
+      "nameJa": "デンデ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-738.jpg",
+      "setLabel": "カードゲーム9"
+    },
+    {
+      "printed": "D-740",
+      "number": "d0740",
+      "nameJa": "界王",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-740.jpg",
+      "setLabel": "カードゲーム9"
+    },
+    {
+      "printed": "D-784",
+      "number": "d0784",
+      "nameJa": "瞬間移動かめはめ波",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-784.jpg",
+      "setLabel": "カードゲーム9"
+    },
+    {
+      "printed": "D-810",
+      "number": "d0810",
+      "nameJa": "暗い激情",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-810.jpg",
+      "setLabel": "カードゲーム9"
+    },
+    {
+      "printed": "D-852",
+      "number": "d0852",
+      "nameJa": "ブルマ",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-852.jpg",
+      "setLabel": "カードゲーム10"
+    },
+    {
+      "printed": "D-863",
+      "number": "d0863",
+      "nameJa": "南の界王",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-863.jpg",
+      "setLabel": "カードゲーム10"
+    },
+    {
+      "printed": "D-893",
+      "number": "d0893",
+      "nameJa": "ドクター・ウイロー",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/dbc/D-893.jpg",
+      "setLabel": "カードゲーム10"
+    }
+  ]
+}

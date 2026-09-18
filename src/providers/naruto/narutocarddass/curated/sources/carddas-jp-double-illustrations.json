@@ -1,0 +1,61 @@
+{
+  "source": "Constat 2026-08-30 — cardlist officielle carddas.com + deux annonces eBay vues à l'écran (relevé utilisateur)",
+  "observed": "2026-08-30",
+  "ingest": "GIF doubles découpés le 2026-08-30 : chaque carte tient ses deux faces `art.carddas-a.png` (haut) et `art.carddas-b.png` (bas), sources déclarées `carddas-a`/`carddas-b` dans faceChoice. Le GIF d'origine reste en staging/carddas-jp. te0358/te0348 affichent la variante A ; te0192 garde art.suruga.jpg en affichage.",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "finding": "Trois GIF de la cardlist officielle sont double-hauteur (185×~550 au lieu de 185×269) et statiques (1 frame) : la même carte deux fois, illustration différente, texte/coût/rareté/symbole identiques.",
+  "cards": [
+    {
+      "printed": "術-192",
+      "number": "te0192",
+      "artA": "art.carddas-a.png",
+      "artB": "art.carddas-b.png",
+      "name": "デコピン",
+      "volume": "巻ノ十",
+      "gif": "cardlist/card_img/jutsu-192_10.gif (185×550)",
+      "variants": ["Tsunade envoyant l'adversaire au tapis", "gros plan Tsunade, doigt tendu"]
+    },
+    {
+      "printed": "術-348",
+      "number": "te0348",
+      "artA": "art.carddas-a.png",
+      "artB": "art.carddas-b.png",
+      "name": "豪雷蓮鎖",
+      "volume": "巻ノ十七",
+      "gif": "cardlist/card_img/jutsu-348_17.gif (185×548)",
+      "variants": ["Rock Lee, coup de pied ascendant (haut)", "Rock Lee, autre posture (bas)"]
+    },
+    {
+      "printed": "術-358",
+      "number": "te0358",
+      "artA": "art.carddas-a.png",
+      "artB": "art.carddas-b.png",
+      "name": "石化の一撃",
+      "volume": "巻ノ十七",
+      "gif": "cardlist/card_img/jutsu-358_17.gif (185×548)",
+      "variants": [
+        "Ishidate, main-griffe à l'œil jaune (haut)",
+        "victime pétrifiée au premier plan, Ishidate derrière (bas)"
+      ]
+    }
+  ],
+  "physicalAttestation": [
+    {
+      "listing": "https://www.ebay.com/itm/196876600789",
+      "title": "Ishidate Jyutsu-358 NARUTO Card Game 2006 BANDAI",
+      "shows": "術-358 variante haut (main + œil jaune)",
+      "checked": "visuellement par l'utilisateur, 2026-08-30 — eBay bloque le crawl (403)"
+    },
+    {
+      "listing": "https://www.ebay.com/itm/235079156804",
+      "title": "Naruto No. 358 NARUTO Card Game TCG BANDAI",
+      "shows": "術-358 variante bas (victime devant, Ishidate derrière)",
+      "checked": "visuellement par l'utilisateur, 2026-08-30 — idem"
+    }
+  ],
+  "hypothesis": "Les deux illustrations correspondent aux deux produits du volume — 自販機ブースター 100¥ (JAN 4543112451491) vs ブースターパック 161¥ (JAN 4543112451613, les deux au catalogue Bandai/carddass pour 巻ノ十七). Le mécanisme est déjà attesté au 巻ノ十六 (dream-hobby.json : SR/R différentes entre distributeur et pack). Attribution variante ↔ produit NON prouvée : aucun emballage visible sur les annonces.",
+  "not": ["lenticulaire", "gif-animé", "difference-de-rareté"],
+  "todo": "Trancher variante ↔ produit si une annonce montre le sachet (JAN) ; renommer alors carddas-a/b en fonction du produit attesté."
+}

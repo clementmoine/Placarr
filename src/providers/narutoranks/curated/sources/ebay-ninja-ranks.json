@@ -1,0 +1,80 @@
+{
+  "source": "eBay Browse API — annonces collées, pas de crawl HTML",
+  "observed": "2026-08-22",
+  "ingest": "staging `art.ebay` pour le sell sheet dealer ; attestation pour les annonces pick-a-card",
+  "marketplaceId": "EBAY_US",
+  "note": "Placarr lit les annonces via `fetchEbayBrowseItem` (OAuth Browse). FlareSolverr n'est pas utilisé sur eBay. L'API ne renvoie que la galerie officielle (souvent 1–2 JPEG) — pas les centaines de vignettes d'une annonce pick-a-card morte.",
+  "listings": [
+    {
+      "legacyItemId": "293490000296",
+      "listing": "https://www.ebay.com/itm/293490000296",
+      "role": "pick-a-card",
+      "state": "expired",
+      "finding": "Browse getItem 404 sur EBAY_US/FR/GB (2026-08-22). L'annonce « PICK CHOOSE YOUR CARDS » citée en session est terminée ou hors périmètre Browse."
+    },
+    {
+      "legacyItemId": "127955574207",
+      "variationId": "429137825416",
+      "listing": "https://www.ebay.com/itm/127955574207",
+      "role": "pick-a-card",
+      "state": "live",
+      "ingest": "attestation-only",
+      "note": "Successeur probable du pick-a-card. L'API ne sert que deux photos de galerie — pas une face par carte."
+    },
+    {
+      "legacyItemId": "403984180609",
+      "listing": "https://www.ebay.com/itm/403984180609",
+      "role": "dealer-sell-sheet",
+      "state": "live",
+      "ingest": "staging",
+      "stagingPrefix": "sell-sheet",
+      "note": "Flyer recto/verso dealer Inkworks/Panini (~2006). Atteste les UPC déjà dans inkworks-products.json. Ne monte pas en faces de cartes.",
+      "finding": "Vérifié sur les deux JPEG de la galerie (2026-08-23) : feuillet US Letter 1235x1600 (ratio 0,77 — une carte fait ~0,71), recto « THE NINJA ARE HERE! / COMING MARCH 2006 », verso catalogue revendeur (item 20555, UPC case/box/pack, SRP, 10 boxes/case, 24 packs/box, 9 cartes/pack, album 20550). nslists.com le range dans sa section promo — c'est le « Coming March 2006 (dealer sell sheet) » — mais c'est du papier promotionnel, pas un tirage : la série promo reste à six (PN-1, PN-T, PN-GA, PN-i, PN-SD2006, PN-P). Tout ce qu'il atteste est déjà ingéré : les tailles de sets (72 base, NW9 1:7, FF6 1:11, SD6 1:11, BL3 1/boîte) via inkworks.json, les UPC via inkworks-products.json."
+    },
+    {
+      "legacyItemId": "168447402726",
+      "listing": "https://www.ebay.com/itm/168447402726",
+      "role": "pn-promo-face",
+      "printKey": "naruto:pn-0001",
+      "state": "live",
+      "ingest": "attestation-only",
+      "note": "Recto PN-1 « GENERAL DISTRIBUTION » — galerie Browse → curated/cards/pn/en/0001/art.reconstructed.png"
+    },
+    {
+      "legacyItemId": "131295739285",
+      "listing": "https://www.ebay.com/itm/131295739285",
+      "role": "pn-promo-face",
+      "printKey": "naruto:pn-t",
+      "state": "live",
+      "ingest": "attestation-only",
+      "note": "Recto PN-T conventions — galerie Browse → curated/cards/pn/en/t/art.reconstructed.png"
+    },
+    {
+      "legacyItemId": "233533784889",
+      "listing": "https://www.ebay.com/itm/233533784889",
+      "role": "pn-promo-face",
+      "printKey": "naruto:pn-ga",
+      "state": "live",
+      "ingest": "attestation-only",
+      "note": "Recto PN-GA GAMA — galerie Browse → curated/cards/pn/en/ga/art.reconstructed.png"
+    },
+    {
+      "legacyItemId": "158128123948",
+      "listing": "https://www.ebay.com/itm/158128123948",
+      "role": "pn-promo-face",
+      "printKey": "naruto:pn-i",
+      "state": "live",
+      "ingest": "attestation-only",
+      "note": "Recto PN-i inkworks.com — galerie Browse → curated/cards/pn/en/i/art.reconstructed.png"
+    },
+    {
+      "legacyItemId": "333930082993",
+      "listing": "https://www.ebay.com/itm/333930082993",
+      "role": "pn-promo-face",
+      "printKey": "naruto:pn-sd2006",
+      "state": "live",
+      "ingest": "attestation-only",
+      "note": "Recto + verso PN-SD2006 SDCC 2006 — galerie → curated/cards/pn/en/sd2006/art.reconstructed.png + back.reconstructed.png"
+    }
+  ]
+}

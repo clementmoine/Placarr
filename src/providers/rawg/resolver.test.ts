@@ -50,11 +50,7 @@ describe("readRawgCatalogAliases", () => {
           { name: "Pocket Monsters Pikachu" },
         ],
       }),
-    ).toEqual([
-      "Pokémon Yellow",
-      "Pokemon Jaune",
-      "Pocket Monsters Pikachu",
-    ]);
+    ).toEqual(["Pokémon Yellow", "Pokemon Jaune", "Pocket Monsters Pikachu"]);
   });
 });
 
@@ -107,7 +103,10 @@ describe("RAWG fact sanitizers", () => {
 
   it("drops itch.io stores on a cartridge shelf", () => {
     expect(
-      filterRawgStoresForShelf(["itch.io", "Nintendo eShop"], "Nintendo Gameboy"),
+      filterRawgStoresForShelf(
+        ["itch.io", "Nintendo eShop"],
+        "Nintendo Gameboy",
+      ),
     ).toEqual(["Nintendo eShop"]);
   });
 

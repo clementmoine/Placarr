@@ -22,8 +22,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectFuretMappingRawKeys,
@@ -156,6 +156,7 @@ export function mapFuretMetadata(
         ? ["structured_data", "barcode_match"]
         : ["structured_data"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -211,7 +212,7 @@ async function refreshFuretOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const furetModule: ProviderModule = {
+export const furetModule = defineProvider({
   info: {
     id: "furet",
     label: "Furet du Nord",
@@ -226,6 +227,7 @@ export const furetModule: ProviderModule = {
       "pageCount",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",
@@ -264,19 +266,15 @@ export const furetModule: ProviderModule = {
     } satisfies MetadataProviderAdapter;
   },
   refreshBarcodePriceOffers: refreshFuretOffers,
-  healthCheck: createMetadataHealthCheck(
-    "furet",
-    "Furet du Nord",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://www.furet.com/");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
+  healthCheck: createMetadataHealthCheck("furet", "Furet du Nord", async () => {
+    const start = Date.now();
+    const isUp = await pingUrl("https://www.furet.com/");
+    return {
+      ok: isUp,
+      latency: Date.now() - start,
+      error: isUp ? null : "Host unreachable",
+    };
+  }),
   testHandlers: {
     "furet-barcode": {
       label: "Furet du Nord - Barcode",
@@ -307,4 +305,4 @@ export const furetModule: ProviderModule = {
     });
     return collectFuretMappingRawKeys(ctx.barcode || SAMPLE_BARCODE);
   },
-};
+});

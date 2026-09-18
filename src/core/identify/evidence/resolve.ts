@@ -17,9 +17,7 @@ import {
   barcodeEvidenceTitleObservationScore,
   compareBarcodeEvidenceByImageObservationRank,
 } from "./observations";
-import {
-  VIDEO_GAME_PLATFORM_TOKEN_TERMS,
-} from "@/core/identify/platforms/platforms";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/core/identify/platforms/platforms";
 import { isbnCoverUrlForBarcode } from "@/core/catalog/catalog";
 import {
   areEvidenceSameProduct,
@@ -49,6 +47,7 @@ import {
   mergeDuplicateMatches,
   pickPreferredClusterDisplayName,
 } from "./matchUtils";
+import { regionRank, USER_VISIBLE_REGIONS } from "@/core/locale/preference";
 
 export async function buildDatabaseEvidence(
   names: string[],
@@ -92,7 +91,6 @@ export async function buildDatabaseEvidence(
 
 const RESOLVER_GENERIC_TOKENS = new Set([
   ...GENERIC_TITLE_TOKENS,
-  "video",
   ...LISTING_PUBLISHER_BRAND_TOKENS,
   ...HARDWARE_CONTROLLER_FAMILY_TOKENS,
   ...LISTING_DISCARD_PACKAGING_NOUNS.filter(
@@ -213,12 +211,6 @@ export function pickRepresentativeEvidence(
     evidence.filter((item) => item.isCanonical && item.region),
     canonicalEvidence,
   );
-  const regionOrder = ["fr", "eu", "wor", "uk", "us", "jp"];
-  const regionRank = (region?: string | null) => {
-    const index = regionOrder.indexOf((region || "").toLowerCase());
-    return index === -1 ? regionOrder.length : index;
-  };
-
   if (canonicalRegionalEvidence.length > 0) {
     return canonicalRegionalEvidence.slice().sort((a, b) => {
       const regionDiff = regionRank(a.region) - regionRank(b.region);
@@ -268,9 +260,7 @@ function filterOverlyGenericCanonicalEvidence(
 ): ProductEvidence[] {
   // Prefer durable RawName DF index when present; else titles on this barcode.
   const corpusStats = resolveCorpusTokenStats(
-    buildTokenDocumentFrequency(
-      allCanonicalEvidence.map((item) => item.title),
-    ),
+    buildTokenDocumentFrequency(allCanonicalEvidence.map((item) => item.title)),
   );
   const filtered = candidates.filter((candidate) => {
     return !allCanonicalEvidence.some((other) => {
@@ -289,8 +279,6 @@ function filterOverlyGenericCanonicalEvidence(
 
   return filtered.length > 0 ? filtered : candidates;
 }
-
-const USER_VISIBLE_REGIONS = new Set(["fr", "eu", "wor", "uk", "us"]);
 
 export function filterDisplayEvidenceForSuggestions(
   evidence: ProductEvidence[],

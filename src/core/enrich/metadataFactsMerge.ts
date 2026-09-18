@@ -59,12 +59,13 @@ function incomingHasSameSourceFact(
 ): boolean {
   const sourceKey = normalizeProviderSourceKey(fact.source ?? fact.label ?? "");
   if (!sourceKey) return false;
+  const label = (fact.label ?? "").trim().toLowerCase();
   return incoming.some(
     (candidate) =>
       candidate.kind === fact.kind &&
-      normalizeProviderSourceKey(
-        candidate.source ?? candidate.label ?? "",
-      ) === sourceKey,
+      (candidate.label ?? "").trim().toLowerCase() === label &&
+      normalizeProviderSourceKey(candidate.source ?? candidate.label ?? "") ===
+        sourceKey,
   );
 }
 

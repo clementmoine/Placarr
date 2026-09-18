@@ -1,0 +1,11 @@
+{
+  "source": "Live CDN orphans — art on disk, no Malie/TCGdex title",
+  "observed": "2026-09-17",
+  "note": "sm4_en_125 is a gold Secret Rare Metal Energy (125/111, Crimson Invasion symbol) present on the Live CDN but missing from Malie card-database and TCGdex sm4 (set ends at 124 / Water Energy). Name follows Live Basic {T} Energy convention used for sm4_en_124.",
+  "titles": {
+    "sm4_en_125": {
+      "en": "Basic {M} Energy",
+      "fr": "Énergie Métal"
+    }
+  }
+}

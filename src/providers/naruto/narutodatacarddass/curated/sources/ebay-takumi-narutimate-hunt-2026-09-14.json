@@ -1,0 +1,61 @@
+{
+  "source": "ebay-takumi-narutimate-hunt",
+  "observed": "2026-09-14",
+  "kind": "research-dig",
+  "queryUser": "https://www.ebay.com/sch/i.html?_ssn=takumisouljapan&store_name=japangoodsstoretakumi&_oac=1&_nkw=narutimate",
+  "queryWorked": "https://www.ebay.fr/sch/i.html?_ssn=takumisouljapan&store_name=japangoodsstoretakumi&_oac=1&_nkw=narutimate&_ipg=240 (+_pgn=2)",
+  "seller": {
+    "user": "takumisouljapan",
+    "store": "japangoodsstoretakumi"
+  },
+  "note": "ebay.com via Flare renvoie 0 résultats (page coquille). ebay.fr store search = ~350 itms sur 2 pages. Titres omettent souvent le suffixe T (DN-105 → DN-105T via resolveAgainstKnown).",
+  "counts": {
+    "rawListingsParsed": 264,
+    "resolvedUnique": 253,
+    "alreadyInLedger": 12,
+    "addedNeedArt": 21,
+    "addedProvenanceIngestFalse": 220,
+    "skipped": 3
+  },
+  "needArtPrinted": [
+    "DN-164T",
+    "DN-195T",
+    "NF-107",
+    "NF-130",
+    "NF-135",
+    "NF-230",
+    "NF-251",
+    "NF-273",
+    "NF-294",
+    "NF-5",
+    "NFP-10",
+    "NM-108",
+    "NM-129",
+    "NM-134",
+    "NM-150",
+    "NM-151",
+    "NM-173",
+    "NM-57",
+    "NM-99",
+    "NX-15",
+    "NX-17"
+  ],
+  "skipped": [
+    {
+      "printedRef": "DN-0",
+      "title": "suivre Carte Gaara Naruto Narutimate Battle Shippuden japonaise BANDAI TCG Jump DN-0...",
+      "why": "unknown dn:000"
+    },
+    {
+      "printedRef": "DNP-30J",
+      "title": "suivre Uzumaki Naruto Narutimate Mission Card Promo BANDAI Japanese TCG Jump DNP-030J",
+      "why": "unknown dnp:030j"
+    },
+    {
+      "printedRef": "NM-312",
+      "title": "suivre Neji Naruto Narutimate Formation Card Holo BANDAI 2007 NM-312 Japan Japanese",
+      "why": "unknown nm:312"
+    }
+  ],
+  "ingest": "faces → curated/sources/ebay.json ; install art.ebay only when ingest:true (trous sans face)"
+}

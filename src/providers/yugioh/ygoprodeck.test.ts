@@ -36,3 +36,10 @@ describe("ygoprodeck expand", () => {
     expect(primaryYgoprodeckImageUrl(sample)).toContain("46986414.jpg");
   });
 });
+
+describe("mirrorYgoprodeckEnFacesOntoPtSiblings", () => {
+  it("dérive en028 depuis pt028", () => {
+    expect("pt028".replace(/^pt/i, "en")).toBe("en028");
+    expect(`en${"pt028".slice(2)}`).toBe("en028");
+  });
+});

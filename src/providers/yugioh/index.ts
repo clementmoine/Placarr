@@ -33,6 +33,7 @@ const built = createEmptyLocalTcgProvider({
     printGame: YUGIOH_PRINT_GAME,
     /** TCG original language is English; FR via YGOPRODeck + ScanFlip. */
     defaultLanguage: "en",
+    catalogLifecycle: "living",
     listSetLanguages: ["en", "fr"],
     formatReference: (set, number) => formatYugiohReference(set, number),
     normalizeSearchQuery: normalizeYugiohSearchQuery,

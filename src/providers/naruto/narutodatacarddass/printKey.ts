@@ -136,6 +136,13 @@ export const DATA_CARDDASS_SETS = {
     labelEn: "CAN Promo",
     year: 2007,
   },
+  /** V-Jump Card Festa (`VJCF-…`, année en numéro). */
+  vjcf: {
+    code: "vjcf",
+    labelJa: "Vジャンプカードフェスタ",
+    labelEn: "V-Jump Card Festa",
+    year: 2009,
+  },
 } as const;
 
 export type DataCarddassSetCode = keyof typeof DATA_CARDDASS_SETS;
@@ -181,9 +188,9 @@ export function parseDataCarddassPrinted(raw: string): {
       printed: `NXP-SP-${roman}`,
     };
   }
-  // Longest prefixes first (NX-CAM before NX, NFP before NF, …).
+  // Longest prefixes first (NX-CAM before NX, VJCF before …, NFP before NF, …).
   const m = trimmed.match(
-    /^(NXPF|NX-CAM|NXCAM|NX-MAC|NXMAC|NFP|NFM|NFC|NFF|NXP|DNP|DMP|CAN|DN|DT|NM|NC|NF|NX)[-]?(\d+)(?:[-]?([A-Za-z]))?$/i,
+    /^(NXPF|NX-CAM|NXCAM|NX-MAC|NXMAC|VJCF|NFP|NFM|NFC|NFF|NXP|DNP|DMP|CAN|DN|DT|NM|NC|NF|NX)[-]?(\d+)(?:[-]?([A-Za-z]))?$/i,
   );
   if (!m) return null;
   const rawPrefix = m[1]!.toLowerCase().replace(/-/g, "");
@@ -195,7 +202,9 @@ export function parseDataCarddassPrinted(raw: string): {
       ? `NX-CAM-${num}${suffix.toUpperCase()}`
       : rawPrefix === "can"
         ? `CAN-${num}${suffix.toUpperCase()}`
-        : trimmed.toUpperCase();
+        : rawPrefix === "vjcf"
+          ? `VJCF-${num}${suffix.toUpperCase()}`
+          : trimmed.toUpperCase();
   return {
     set: rawPrefix as DataCarddassSetCode,
     number: `${num}${suffix}`,

@@ -69,6 +69,9 @@ export function enrichChecklistWithOfficialFaces(
         typeof card.frontHeight === "number" &&
         card.frontWidth > card.frontHeight;
       if (!prev || land) byNumber.set(number, front);
+      // XR L5 front = same illustration as PL5 parallel (Capsule watermark dump).
+      const pl5 = number.match(/^(cc\.xr\.\d+)l5$/);
+      if (pl5) byNumber.set(`${pl5[1]}pl5`, front);
     }
   }
   if (!byNumber.size) return checklist;
@@ -108,11 +111,13 @@ export function kayouFaceUrlCandidates(card: KayouChecklistCard): string[] {
   };
   const rank = (url: string): number => {
     if (url.includes("kayouofficial.com")) return 0;
-    if (url.includes("narutodb.com")) return 1;
-    if (url.includes("narutocards.ca")) return 2;
-    if (url.includes("capsulecorpgear.com")) return 3;
-    if (url.includes("hitmarket.fr")) return 4;
-    return 5;
+    if (url.includes("narutopia.fr")) return 1;
+    if (url.includes("wixstatic.com")) return 2;
+    if (url.includes("narutodb.com")) return 3;
+    if (url.includes("narutocards.ca")) return 4;
+    if (url.includes("capsulecorpgear.com")) return 5;
+    if (url.includes("hitmarket.fr")) return 6;
+    return 7;
   };
   if (card.faceUrl?.trim()) add(card.faceUrl);
   for (const alt of card.faceUrlAlternates ?? []) add(alt);
@@ -135,6 +140,8 @@ function artSourceId(card: KayouChecklistCard, chosenUrl: string | null): string
   const tagged = card.faceSource?.trim();
   if (tagged) return tagged;
   if (chosenUrl?.includes("kayouofficial.com")) return "kayouofficial";
+  if (chosenUrl?.includes("narutopia.fr")) return "narutopia";
+  if (chosenUrl?.includes("wixstatic.com")) return "wixstatic";
   if (chosenUrl?.includes("narutodb.com")) return "narutodb";
   if (chosenUrl?.includes("capsulecorpgear.com")) return "capsulecorpgear";
   if (chosenUrl?.includes("hitmarket.fr")) return "alertehit";

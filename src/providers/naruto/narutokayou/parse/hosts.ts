@@ -471,6 +471,34 @@ export function narutopiaKayouLookupKeys(code: string): string[] {
   if (cleaned.startsWith("CC-")) {
     keys.add(cleaned.replace(/^CC-/, "NRCC-"));
   }
+  /*
+    Héritage XR on Narutopia: `NRCC-XR-006` (base), `NRCC-XR-006P` (numérotée),
+    `NRCC-XR-001Y` (alt). Placarr uses Capsule `cc.xr.006l5` / `cc.xr.006pl5` /
+    `cc.xr.001yl5` — bridge the suffixes so clean Narutopia scans replace
+    watermarked capsulecorpgear dumps.
+  */
+  const xr = cleaned.match(/^NRCC-XR-(\d{3})([PY])?$/i);
+  if (xr) {
+    const n = xr[1]!;
+    const suf = (xr[2] || "").toUpperCase();
+    const ccBase = `cc.xr.${n.toLowerCase()}`;
+    if (suf === "P") {
+      keys.add(`${ccBase}pl5`);
+      keys.add(`CC-XR-${n}PL5`);
+      keys.add(`NRCC-XR-${n}PL5`);
+    } else if (suf === "Y") {
+      keys.add(`${ccBase}yl5`);
+      keys.add(`CC-XR-${n}YL5`);
+      keys.add(`NRCC-XR-${n}YL5`);
+    } else {
+      keys.add(`${ccBase}l5`);
+      keys.add(`${ccBase}pl5`);
+      keys.add(`CC-XR-${n}L5`);
+      keys.add(`CC-XR-${n}PL5`);
+      keys.add(`NRCC-XR-${n}L5`);
+      keys.add(`NRCC-XR-${n}PL5`);
+    }
+  }
   return [...keys];
 }
 
@@ -542,14 +570,25 @@ export function enrichChecklistWithNarutopiaFaces(
       const alts = new Set(card.faceUrlAlternates ?? []);
       if (card.faceUrl?.trim()) {
         alts.add(card.faceUrl);
-        alts.add(hit.faceUrl);
+      }
+      alts.add(hit.faceUrl);
+      const src = (card.faceSource ?? "").toLowerCase();
+      // Promote Narutopia over watermarked shop dumps; keep official.
+      const promote =
+        !card.faceUrl?.trim() ||
+        src === "capsulecorpgear" ||
+        src === "alertehit";
+      if (!promote) {
+        return {
+          ...card,
+          faceUrlAlternates: [...alts].filter((u) => u !== card.faceUrl),
+        };
       }
       return {
         ...card,
-        faceUrlAlternates: [...alts],
-        ...(card.faceUrl
-          ? {}
-          : { faceUrl: hit.faceUrl, faceSource: "narutopia" }),
+        faceUrl: hit.faceUrl,
+        faceSource: "narutopia",
+        faceUrlAlternates: [...alts].filter((u) => u !== hit!.faceUrl),
       };
     }),
   }));

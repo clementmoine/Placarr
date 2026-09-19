@@ -15,7 +15,7 @@
   "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
   "servedPixels": { "width": 349, "height": 512 },
   "note": "Restock Flare 2026-09-14 sur category JP 501080113 (pages 1–24, ~291 ids live) : **0 nouveau** vs TSV 958. Stock vivant ⊂ ledger. Install Suruga : 0 write / 891 skip / 45 CDN fail. Pages EN Wayback + scans G8903… toujours la base.",
-  "prefixesSeen": ["DN", "NM", "NF", "NX", "DMP", "DNP", "NC", "NFM", "NFP", "NFF", "NFC", "NXPF", "NX-MAC", "NX-CAM", "NX-SP", "NXP-SP", "CAN"],
+  "prefixesSeen": ["DN", "NM", "NF", "NX", "DMP", "DNP", "NC", "NFM", "NFP", "NFF", "NFC", "NXPF", "NX-MAC", "NX-CAM", "NX-SP", "NXP-SP", "CAN", "VJCF"],
   "cabinets": [
     {
       "title": "ナルト ナルティメットカードバトル",

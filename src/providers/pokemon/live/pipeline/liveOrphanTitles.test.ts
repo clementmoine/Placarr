@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  loadLiveOrphanTitles,
   resolveLiveOrphanIndexName,
   type LiveOrphanTitleRow,
 } from "./liveOrphanTitles";
@@ -26,5 +27,12 @@ describe("resolveLiveOrphanIndexName", () => {
 
   it("returns null for unknown stems", () => {
     expect(resolveLiveOrphanIndexName("sm4_en_124", SAMPLE)).toBeNull();
+  });
+});
+
+describe("loadLiveOrphanTitles", () => {
+  it("lit le ledger sous pokemon/live (pas pokemontcglive)", () => {
+    const titles = loadLiveOrphanTitles();
+    expect(titles.sm4_en_125?.en).toBe("Basic {M} Energy");
   });
 });

@@ -1,10 +1,10 @@
 {
   "source": "chitoroshop.com — Naruto Data Carddass singles (Shopify products.json)",
-  "observed": "2026-09-12",
+  "observed": "2026-09-19",
   "ingest": "faces",
   "crawl": false,
-  "note": "Boutique FR Shopify. Collection paginée limit=250. Titres EN « Name DN-038T | … ». Images /cdn/shop/files/*.jpg. NX-0271 slug → NX-271. Refresh via harvestChitoroshop (--crawl-chito).",
-  "listed": 119,
+  "note": "Boutique FR/EE Shopify. Collection FR + recherche EE « Narutimeti kaardilahing » (et.chitoroshop.com, 66 résultats / 3 pages, 2026-09-19). Images /cdn/shop/files/*.jpg. NX-0271 slug → NX-271. Refresh via harvestChitoroshop (--crawl-chito).",
+  "listed": 168,
   "faces": [
     {
       "printed": "DN-3T",
@@ -956,6 +956,398 @@
       "productUrl": "https://chitoroshop.com/products/first-hokage-nx-323-foil-narutimate-cross",
       "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T120816.041.jpg",
       "title": "First Hokage NX-323 (Foil) | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NM-047",
+      "handle": "tayuya-nm-047-r-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/tayuya-nm-047-r-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T121124.479.jpg",
+      "title": "Tayuya NM-047 (R) | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NF-056",
+      "handle": "sakura-nf-056-narutimate-formation",
+      "productUrl": "https://chitoroshop.com/products/sakura-nf-056-narutimate-formation",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T150106.545.jpg",
+      "title": "Sakura NF-056 | Narutimate Formation",
+      "ingest": true
+    },
+    {
+      "printed": "NM-035",
+      "handle": "sandaime-nm-035-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/sandaime-nm-035-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T115846.595.jpg",
+      "title": "Sandaime NM-035 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NF-058",
+      "handle": "sakura-nf-058-narutimate-formation",
+      "productUrl": "https://chitoroshop.com/products/sakura-nf-058-narutimate-formation",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T151100.364.jpg",
+      "title": "Sakura NF-058 | Narutimate Formation",
+      "ingest": true
+    },
+    {
+      "printed": "DN-016T",
+      "handle": "nara-shikamaru-dn-016t-narutimet-card-battle",
+      "productUrl": "https://chitoroshop.com/products/nara-shikamaru-dn-016t-narutimet-card-battle",
+      "url": "https://chitoroshop.com/cdn/shop/files/CartesDragonBall_8_9361284d-d964-4948-aec1-8882ce204121.jpg",
+      "title": "Nara Shikamaru DN-016T | Narutimet Card Battle",
+      "ingest": true
+    },
+    {
+      "printed": "NX-071",
+      "handle": "asuma-sarutobi-nx-071-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/asuma-sarutobi-nx-071-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-10T115918.983.jpg",
+      "title": "Asuma Sarutobi NX-071 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-035",
+      "handle": "temari-nx-035-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/temari-nx-035-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T000153.571.jpg",
+      "title": "Temari NX-035 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-029",
+      "handle": "third-hokage-nx-029-r-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/third-hokage-nx-029-r-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T001200.699.jpg",
+      "title": "Third Hokage NX-029 (R) | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-031",
+      "handle": "tsunade-nx-031-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/tsunade-nx-031-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T000710.283.jpg",
+      "title": "Tsunade NX-031 (R) | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "DN-053T",
+      "handle": "gaara-dn-053t-foil-narutimet-card-battle",
+      "productUrl": "https://chitoroshop.com/products/gaara-dn-053t-foil-narutimet-card-battle",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T121650.312.jpg",
+      "title": "Gaara DN-053T (Foil) | Narutimet Card Battle",
+      "ingest": true
+    },
+    {
+      "printed": "NX-016",
+      "handle": "jiraya-nx-016-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/jiraya-nx-016-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T113344.314.jpg",
+      "title": "Jiraya  NX-016 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-046",
+      "handle": "sasori-nx-046-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/sasori-nx-046-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T104740.288.jpg",
+      "title": "Sasori NX-046 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-030",
+      "handle": "tsunade-nx-030-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/tsunade-nx-030-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T101854.617.jpg",
+      "title": "Tsunade NX-030 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-004",
+      "handle": "naruto-nx-004-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/naruto-nx-004-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T112753.309.jpg",
+      "title": "Naruto NX-004 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-011",
+      "handle": "sai-nx-011-foil-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/sai-nx-011-foil-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T114317.272.jpg",
+      "title": "Sai NX-011 (Foil) | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-042",
+      "handle": "kisame-nx-042-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/kisame-nx-042-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T103752.117.jpg",
+      "title": "Kisame NX-042 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-014",
+      "handle": "kakashi-nx-014-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/kakashi-nx-014-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T112933.551.jpg",
+      "title": "Kakashi NX-014 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-045",
+      "handle": "sasori-nx-045-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/sasori-nx-045-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T104346.661.jpg",
+      "title": "Sasori NX-045 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-019",
+      "handle": "shikamaru-nx-019-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/shikamaru-nx-019-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T112536.839.jpg",
+      "title": "Shikamaru NX-019 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-026",
+      "handle": "tenten-nx-026-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/tenten-nx-026-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T114104.312.jpg",
+      "title": "Tenten NX-026 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-025",
+      "handle": "tenten-nx-025-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/tenten-nx-025-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T114021.315.jpg",
+      "title": "Tenten NX-025 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-038",
+      "handle": "kankuro-nx-038-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/kankuro-nx-038-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T104212.393.jpg",
+      "title": "Kankuro NX-038 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-020",
+      "handle": "sarutobi-asuma-nx-020-r-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/sarutobi-asuma-nx-020-r-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T114710.410.jpg",
+      "title": "Sarutobi Asuma NX-020 (R) | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-010",
+      "handle": "sai-nx-010-r-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/sai-nx-010-r-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T101445.290_d309d11d-680b-426c-aa5d-3ce5bef718d3.jpg",
+      "title": "Sai NX-010 (R) | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-013",
+      "handle": "yamato-nx-013-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/yamato-nx-013-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T102502.400_8141f0bf-f75e-43bc-acdd-43f4a3f56314.jpg",
+      "title": "Yamato NX-013 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-039",
+      "handle": "chiyo-nx-039-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/chiyo-nx-039-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T104006.398.jpg",
+      "title": "Chiyo NX-039 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NX-023",
+      "handle": "neji-hyuga-nx-023-narutimate-cross",
+      "productUrl": "https://chitoroshop.com/products/neji-hyuga-nx-023-narutimate-cross",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T113722.311.jpg",
+      "title": "Neji Hyuga NX-023 | Narutimate Cross",
+      "ingest": true
+    },
+    {
+      "printed": "NM-086",
+      "handle": "kisame-nm-086-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/kisame-nm-086-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T120138.443.jpg",
+      "title": "Kisame NM-086 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-040",
+      "handle": "tsunade-nm-040-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/tsunade-nm-040-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T114649.441.jpg",
+      "title": "Tsunade NM-040 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-046",
+      "handle": "kidoumaru-nm-046-r-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/kidoumaru-nm-046-r-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T120455.879.jpg",
+      "title": "Kidoumaru NM-046 (R) | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-029",
+      "handle": "kankurou-nm-029-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/kankurou-nm-029-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T114417.463.jpg",
+      "title": "Kankurou NM-029 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-041",
+      "handle": "tsunade-nm-041-r-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/tsunade-nm-041-r-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T114540.918.jpg",
+      "title": "Tsunade NM-041 (R) | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NF-065",
+      "handle": "gaara-nf-065-foil-narutimate-formation",
+      "productUrl": "https://chitoroshop.com/products/gaara-nf-065-foil-narutimate-formation",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-09-08T123114.876.jpg",
+      "title": "Gaara NF-065 (Foil) | Narutimate Formation",
+      "ingest": true
+    },
+    {
+      "printed": "NM-058",
+      "handle": "gaara-nm-058-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/gaara-nm-058-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T115153.483.jpg",
+      "title": "Gaara NM-058 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-053",
+      "handle": "naruto-nm-053-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/naruto-nm-053-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T114809.470.jpg",
+      "title": "Naruto NM-053 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-097",
+      "handle": "sasuke-nm-097-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/sasuke-nm-097-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T113715.908.jpg",
+      "title": "Sasuke NM-097 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-006",
+      "handle": "sasuke-nm-006-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/sasuke-nm-006-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T114025.468.jpg",
+      "title": "Sasuke NM-006 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-098",
+      "handle": "sasuke-nm-098-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/sasuke-nm-098-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T115335.444.jpg",
+      "title": "Sasuke NM-098 | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NM-049",
+      "handle": "asuma-nm-049-r-narutimate-mission",
+      "productUrl": "https://chitoroshop.com/products/asuma-nm-049-r-narutimate-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T121313.445.jpg",
+      "title": "Asuma NM-049 (R) | Narutimate Mission",
+      "ingest": true
+    },
+    {
+      "printed": "NF-075",
+      "handle": "neji-nf-075-narutimate-formation",
+      "productUrl": "https://chitoroshop.com/products/neji-nf-075-narutimate-formation",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T144400.438.jpg",
+      "title": "Neji NF-075 (Foil) | Narutimate Formation",
+      "ingest": true
+    },
+    {
+      "printed": "NF-074",
+      "handle": "shino-nf-074-narutimate-formation",
+      "productUrl": "https://chitoroshop.com/products/shino-nf-074-narutimate-formation",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T153107.470.jpg",
+      "title": "Shino NF-074 | Narutimate Formation",
+      "ingest": true
+    },
+    {
+      "printed": "DN-043T",
+      "handle": "jiraiya-dn-043t-narutimet-card-battle",
+      "productUrl": "https://chitoroshop.com/products/jiraiya-dn-043t-narutimet-card-battle",
+      "url": "https://chitoroshop.com/cdn/shop/files/N001_2.png",
+      "title": "Jiraiya DN-043T | Narutimet Card Battle",
+      "ingest": true
+    },
+    {
+      "printed": "NF-099",
+      "handle": "tsunade-nf-099-r-narutimate-formation",
+      "productUrl": "https://chitoroshop.com/products/tsunade-nf-099-r-narutimate-formation",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T144913.481.jpg",
+      "title": "Tsunade NF-099 (R) | Narutimate Formation",
+      "ingest": true
+    },
+    {
+      "printed": "DN-024T",
+      "handle": "kakashi-hatake-dn-024t-narutimet-card-battle",
+      "productUrl": "https://chitoroshop.com/products/kakashi-hatake-dn-024t-narutimet-card-battle",
+      "url": "https://chitoroshop.com/cdn/shop/files/N001_1.png",
+      "title": "Kakashi Hatake DN-024T | Narutimet Card Battle",
+      "ingest": true
+    },
+    {
+      "printed": "NF-059",
+      "handle": "rock-lee-nf-059-foil-narutimate-formation",
+      "productUrl": "https://chitoroshop.com/products/rock-lee-nf-059-foil-narutimate-formation",
+      "url": "https://chitoroshop.com/cdn/shop/files/OnePieceTCG-2026-08-25T144558.474.jpg",
+      "title": "Rock Lee NF-059 (Foil) | Narutimate Formation",
+      "ingest": true
+    },
+    {
+      "printed": "DN-014T",
+      "handle": "gaara-in-the-desert-dn-014t-narutimet-card-battle",
+      "productUrl": "https://chitoroshop.com/products/gaara-in-the-desert-dn-014t-narutimet-card-battle",
+      "url": "https://chitoroshop.com/cdn/shop/files/N001_4.png",
+      "title": "Gaara of the Desert DN-014T | Narutimet Card Battle",
+      "ingest": true
+    },
+    {
+      "printed": "DN-003T",
+      "handle": "naruto-dn-003t-narutimet-card-battle",
+      "productUrl": "https://chitoroshop.com/products/naruto-dn-003t-narutimet-card-battle",
+      "url": "https://chitoroshop.com/cdn/shop/files/N001-2024-05-17T222539.409.png",
+      "title": "Naruto DN-003T | Narutimet Card Battle",
+      "ingest": true
+    },
+    {
+      "printed": "DN-052T",
+      "handle": "hatake-kakashi-dn-052t-narutimet-card-battle",
+      "productUrl": "https://chitoroshop.com/products/hatake-kakashi-dn-052t-narutimet-card-battle",
+      "url": "https://chitoroshop.com/cdn/shop/files/N001_20_83eaf2c1-0ce7-404b-bef1-c88acf2508d9.png",
+      "title": "Hatake Kakashi DN-052T | Narutimet Card Battle",
+      "ingest": true
+    },
+    {
+      "printed": "CAN-001",
+      "handle": "uzumaki-naruto-can-001-narutimet-mission",
+      "productUrl": "https://chitoroshop.com/products/uzumaki-naruto-can-001-narutimet-mission",
+      "url": "https://chitoroshop.com/cdn/shop/files/N001_19_454e2a59-e938-4b0c-9818-52088f6e2ff0.png",
+      "title": "Uzumaki Naruto CAN-001 (3D Card) | Narutimet Mission",
       "ingest": true
     }
   ]

@@ -118,6 +118,11 @@ import {
         number: "001",
         printed: "CAN-001",
       });
+      expect(parseDataCarddassPrinted("VJCF-2009")).toEqual({
+        set: "vjcf",
+        number: "2009",
+        printed: "VJCF-2009",
+      });
       expect(dataCarddassPrintKey("dn", "032t")).toBe("datacarddass:dn-032t");
       expect(formatDataCarddassReference("dn", "032t")).toBe("DN-32T");
       expect(formatDataCarddassReference("nf", "141")).toBe("NF-141");

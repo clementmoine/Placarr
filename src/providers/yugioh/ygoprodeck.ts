@@ -7,6 +7,7 @@
  * ScanFlip FR codes (LDD-F000) remain separate printKeys.
  */
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -16,6 +17,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardDir, packStagingDir } from "@/lib/packPaths";
+import { dataRoot } from "@/lib/runtimeData";
 import {
   downloadCardFaceBytes,
   installCardFace,
@@ -364,5 +366,71 @@ export async function installYugiohYgoprodeck(
     titles = w.titles;
   }
   if (assets.length) index.writeAssets(assets);
+
+  // OTS PT rows often lack ScanFlip CDN; mirror EN sibling art onto FR.
+  const mirrored = mirrorYgoprodeckEnFacesOntoPtSiblings(index);
+  faces += mirrored;
+
   return { prints, titles, faces };
+}
+
+/**
+ * `OP07-EN028` and `OP07-PT028` share art. ScanFlip may seed the PT print
+ * with a Portuguese title but `imageCdn: null` — copy the EN ygoprodeck face.
+ */
+export function mirrorYgoprodeckEnFacesOntoPtSiblings(
+  index: LocalPrintsIndex,
+): number {
+  const db = index.ensure();
+  if (!db) return 0;
+  const cardsRoot = path.join(dataRoot(), YUGIOH_PACK_ID, "cards");
+  if (!existsSync(cardsRoot)) return 0;
+
+  const rows = db
+    .prepare(
+      `SELECT t.print_key AS printKey, p.set_code AS setCode, p.number AS number
+         FROM print_titles t
+         JOIN prints p ON p.print_key = t.print_key
+        WHERE t.lang = 'fr'
+          AND p.number LIKE 'pt%'
+          AND NOT EXISTS (
+                SELECT 1 FROM print_assets a
+                 WHERE a.print_key = t.print_key AND a.lang = 'fr' AND a.art IS NOT NULL
+              )`,
+    )
+    .all() as Array<{ printKey: string; setCode: string; number: string }>;
+
+  const assets: LocalPrintAssetWrite[] = [];
+  let mirrored = 0;
+  for (const row of rows) {
+    const setCode = row.setCode.trim().toLowerCase();
+    const ptNum = row.number.trim().toLowerCase();
+    if (!ptNum.startsWith("pt")) continue;
+    const enNum = `en${ptNum.slice(2)}`;
+    const enArt = path.join(
+      cardsRoot,
+      setCode,
+      "en",
+      enNum,
+      "art.ygoprodeck.webp",
+    );
+    if (!existsSync(enArt)) continue;
+    const destDir = packCardDir(YUGIOH_PACK_ID, {
+      set: setCode,
+      lang: "fr",
+      card: ptNum,
+    });
+    mkdirSync(destDir, { recursive: true });
+    const artName = "art.ygoprodeck.webp";
+    copyFileSync(enArt, path.join(destDir, artName));
+    assets.push({
+      printKey: row.printKey,
+      lang: "fr",
+      art: artName,
+      sourceUrl: enArt,
+    });
+    mirrored += 1;
+  }
+  if (assets.length) index.writeAssets(assets);
+  return mirrored;
 }

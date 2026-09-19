@@ -1,7 +1,7 @@
 {
   "source": "narutodb.com",
   "url": "https://narutodb.com/",
-  "observed": "2026-09-16",
+  "observed": "2026-09-19",
   "sets": [
     {
       "slug": "narutodb-nrea01",
@@ -3598,16 +3598,22 @@
           "number": "nrsa02.pr.005",
           "name": "Naruto Uzumaki",
           "rarity": "PR",
-          "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA02-PR-005-front.png",
-          "faceSource": "narutodb"
+          "faceUrl": "https://static.wixstatic.com/media/8126a8_5dc89cc6d6294faea93e74e5096f9b11~mv2.jpg/v1/fill/w_1006,h_1416,al_c,q_85,usm_0.66_1.00_0.01/8126a8_5dc89cc6d6294faea93e74e5096f9b11~mv2.jpg",
+          "faceSource": "wixstatic",
+          "faceUrlAlternates": [
+            "https://cdn.narutodb.com/storage/cards/official/NRSA02-PR-005-front.png"
+          ]
         },
         {
           "printed": "NRSA02-PR-006",
           "number": "nrsa02.pr.006",
           "name": "Kakashi Hatake",
           "rarity": "PR",
-          "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA02-PR-006-front.png",
-          "faceSource": "narutodb"
+          "faceUrl": "https://static.wixstatic.com/media/8126a8_3d711d3a6f254b439b1ade75e4eaed12~mv2.jpg/v1/fill/w_1006,h_1416,al_c,q_85,usm_0.66_1.00_0.01/8126a8_3d711d3a6f254b439b1ade75e4eaed12~mv2.jpg",
+          "faceSource": "wixstatic",
+          "faceUrlAlternates": [
+            "https://cdn.narutodb.com/storage/cards/official/NRSA02-PR-006-front.png"
+          ]
         },
         {
           "printed": "NRSA02-PTR-001L3",

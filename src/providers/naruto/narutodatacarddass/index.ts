@@ -42,6 +42,7 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: NARUTO_DATA_CARDDASS_EFFECT_PACK_ID,
     printGame: NARUTO_DATA_CARDDASS_PRINT_GAME,
     defaultLanguage: "ja",
+    catalogLifecycle: "finished",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://www.suruga-ya.com/en/category/501080113",
     formatReference: formatDataCarddassReference,

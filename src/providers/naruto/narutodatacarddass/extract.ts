@@ -25,6 +25,7 @@ import {
   installDataCarddassReconstructedFaces,
   installDataCarddassSurugaFaces,
   installDataCarddassTvTokyoFaces,
+  settleDataCarddassFaces,
 } from "./install/faces";
 import {
   NARUTO_DATA_CARDDASS_PACK_ID,
@@ -200,6 +201,12 @@ export async function runNarutoDataCarddassPackPipeline(
       if (arcadeFaces.faces || arcadeFaces.missing.length) {
         console.log(
           `── Data Carddass arcade : ${arcadeFaces.faces} face(s)${arcadeFaces.missing.length ? `, ${arcadeFaces.missing.length} manquante(s)` : ""}`,
+        );
+      }
+      const settled = await settleDataCarddassFaces({ index });
+      if (settled.settled) {
+        console.log(
+          `── Data Carddass faceChoice : ${settled.settled} face(s) tranchée(s), ${settled.assets} index`,
         );
       }
       return { prints: built.prints, titles: built.titles };

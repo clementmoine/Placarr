@@ -130,6 +130,14 @@ import {
     });
   });
 
+  describe("narutopiaKayouLookupKeys", () => {
+    it("bridge NRCC-XR-006 → cc.xr.006pl5", () => {
+      const keys = narutopiaKayouLookupKeys("NRCC-XR-006");
+      expect(keys).toContain("cc.xr.006pl5");
+      expect(keys).toContain("cc.xr.006l5");
+    });
+  });
+
   describe("enrichChecklistWithNarutopiaFaces", () => {
     it("fills missing faces from Narutopia index", () => {
       const index = buildNarutopiaKayouImageIndex([

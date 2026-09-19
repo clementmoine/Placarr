@@ -46,6 +46,7 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: NARUTO_KAYOU_EFFECT_PACK_ID,
     printGame: NARUTO_KAYOU_PRINT_GAME,
     defaultLanguage: "en",
+    catalogLifecycle: "living",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://www.narutocards.ca/",
     formatReference: formatKayouReference,

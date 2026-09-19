@@ -23,7 +23,7 @@ export type OfficialDcdCard = {
 };
 
 const PRINTED_RE =
-  /^(NXPF|NX-CAM|NX-MAC|NFP|NFM|NFC|NFF|NXP|DNP|DMP|CAN|DN|DT|NM|NC|NF|NX)-?(\d+)(?:-?([A-Za-z]))?$/i;
+  /^(NXPF|NX-CAM|NX-MAC|VJCF|NFP|NFM|NFC|NFF|NXP|DNP|DMP|CAN|DN|DT|NM|NC|NF|NX)-?(\d+)(?:-?([A-Za-z]))?$/i;
 
 function toHalfWidth(s: string): string {
   return s.replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
@@ -500,7 +500,7 @@ const DOM_ITEM_RE =
 
 /** Boutique titles may space the hyphen (`NM - 031`, `DN - 035 T`). Handles fullwidth letters. */
 const PRINTED_IN_TITLE =
-  /(?:[\b\s]|^)((?:NFP|NFM|NFC|NFF|NXPF|NX-CAM|NXCAM|NX-MAC|NXP|DNP|DMP|CAN|DN|DT|NM|NC|NF|NX|ＮＦM|ＮＦF|ＮＦP|ＮＦ|ＮＭ|ＤＮ)\s*-?\s*\d+\s*[A-Za-z]?)(?:[\b\s：:\[\]]|$)/i;
+  /(?:[\b\s]|^)((?:NFP|NFM|NFC|NFF|NXPF|NX-CAM|NXCAM|NX-MAC|VJCF|NXP|DNP|DMP|CAN|DN|DT|NM|NC|NF|NX|ＮＦM|ＮＦF|ＮＦP|ＮＦ|ＮＭ|ＤＮ)\s*-?\s*\d+\s*[A-Za-z]?)(?:[\b\s：:\[\]]|$)/i;
 
 const SP_IN_TITLE =
   /\b((?:NXP|NX)-?\s*SP-?\s*(?:III|II|I)|NFM-?\s*SP)\b/i;

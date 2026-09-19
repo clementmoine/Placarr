@@ -17,6 +17,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { packStagingDir } from "@/lib/packPaths";
 
 import {
@@ -727,34 +728,69 @@ export function writeOfficialDataCarddassChecklist(opts?: {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** JP category — same shelf as `SURUGA_DCD_CATEGORY` (EN). Cloudflare → Flare. */
+const SURUGA_DCD_JP_CATEGORY =
+  "https://www.suruga-ya.jp/search?category=501080113";
+
 async function fetchSurugaHtml(url: string): Promise<string> {
-  const res = await httpGet<string>(url, {
+  const html = await fetchTextWithFlareFallback(url, {
     headers: {
       "User-Agent": SURUGA_UA,
       "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+      Accept: "text/html,*/*",
       Referer: "https://www.suruga-ya.jp/",
     },
-    responseType: "text",
-    timeout: 15_000,
-    maxRedirects: 0,
-    validateStatus: (s) => s >= 200 && s < 400,
+    timeout: 25_000,
+    flareMaxTimeoutMs: 60_000,
   });
+  return html ?? "";
+}
 
-  if (res.status >= 300 && res.status < 400 && res.headers.location) {
-    const fixedLoc = encodeURI(res.headers.location);
-    const res2 = await httpGet<string>(fixedLoc, {
-      headers: {
-        "User-Agent": SURUGA_UA,
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-        Referer: "https://www.suruga-ya.jp/",
-      },
-      responseType: "text",
-      timeout: 15_000,
-      validateStatus: (s) => s === 200,
-    });
-    return res2.data;
+async function harvestSurugaDcdPages(
+  label: string,
+  urlForPage: (page: number) => string,
+  maxPages: number,
+): Promise<number> {
+  let added = 0;
+  for (let page = 1; page <= maxPages; page++) {
+    const url = urlForPage(page);
+    try {
+      console.log(`[suruga-dcd] ${label} page ${page}...`);
+      const html = await fetchSurugaHtml(url);
+      if (!html || html.includes("Just a moment...")) {
+        console.warn(
+          `[suruga-dcd] Cloudflare challenge on ${label} page ${page}, stopping.`,
+        );
+        break;
+      }
+      const resMerge = mergeSurugaHtmlIntoListingsTsv(html);
+      added += resMerge.added;
+      console.log(
+        `[suruga-dcd] ${label} page ${page}: listings ${resMerge.after} (+${resMerge.added})`,
+      );
+      const hasNext =
+        html.includes(`page=${page + 1}`) ||
+        html.includes(`page=${page + 1}&`) ||
+        /rel=["']next["']/i.test(html);
+      // Deux pages sans nouveau SKU → le rayon est déjà dans le TSV.
+      if (resMerge.added === 0 && page > 1) {
+        console.log(`[suruga-dcd] No new listings on ${label} page ${page}, stop.`);
+        break;
+      }
+      if (!hasNext) {
+        console.log(`[suruga-dcd] No next page for ${label}.`);
+        break;
+      }
+      await sleep(400);
+    } catch (err: unknown) {
+      console.error(
+        `[suruga-dcd] Error on ${label} page ${page}:`,
+        err instanceof Error ? err.message : err,
+      );
+      break;
+    }
   }
-  return res.data;
+  return added;
 }
 
 export async function harvestSurugaDcd(
@@ -769,41 +805,28 @@ export async function harvestSurugaDcd(
 ): Promise<void> {
   let grandTotalAdded = 0;
 
+  // Bare category first (user shelf) — covers whatever search_word would miss.
+  console.log(`\n=== Harvesting Suruga DCD category 501080113 ===`);
+  grandTotalAdded += await harvestSurugaDcdPages(
+    "category",
+    (page) =>
+      page <= 1
+        ? SURUGA_DCD_JP_CATEGORY
+        : `${SURUGA_DCD_JP_CATEGORY}&page=${page}`,
+    maxPagesPerQuery,
+  );
+
   for (const q of queries) {
     const encoded = encodeURIComponent(q);
     console.log(`\n=== Harvesting query: "${q}" ===`);
-    let queryAdded = 0;
-
-    for (let page = 1; page <= maxPagesPerQuery; page++) {
-      const url = `https://www.suruga-ya.jp/search?category=501080113&search_word=${encoded}&page=${page}`;
-      try {
-        console.log(`[suruga-dcd] Fetching "${q}" page ${page}...`);
-        const html = await fetchSurugaHtml(url);
-
-        if (!html || html.includes("Just a moment...")) {
-          console.warn(`[suruga-dcd] Cloudflare challenge on page ${page}, stopping.`);
-          break;
-        }
-
-        const resMerge = mergeSurugaHtmlIntoListingsTsv(html);
-        queryAdded += resMerge.added;
-        grandTotalAdded += resMerge.added;
-        console.log(
-          `[suruga-dcd] Page ${page}: total listings now ${resMerge.after} (+${resMerge.added} new)`,
-        );
-
-        if (!html.includes(`page=${page + 1}`)) {
-          console.log(`[suruga-dcd] No next page link found for "${q}".`);
-          break;
-        }
-
-        await sleep(500);
-      } catch (err: any) {
-        console.error(`[suruga-dcd] Error on page ${page}:`, err?.message ?? err);
-        break;
-      }
-    }
-    console.log(`[suruga-dcd] Query "${q}" finished: added ${queryAdded} new listings.`);
+    const queryAdded = await harvestSurugaDcdPages(
+      `"${q}"`,
+      (page) =>
+        `${SURUGA_DCD_JP_CATEGORY}&search_word=${encoded}&page=${page}`,
+      maxPagesPerQuery,
+    );
+    grandTotalAdded += queryAdded;
+    console.log(`[suruga-dcd] Query "${q}" finished: added ${queryAdded}.`);
   }
 
   console.log(`\n[suruga-dcd] Grand total new listings added: ${grandTotalAdded}`);

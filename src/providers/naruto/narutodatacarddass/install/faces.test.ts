@@ -327,3 +327,74 @@ import { parseDataCarddassPrinted } from "../printKey";
     });
   });
 }
+
+// —— settleDataCarddassFaces ——
+{
+  describe("settleDataCarddassFaces", () => {
+    it("pointe l'index vers Suruga quand eBay est plus grand mais mal cadré", async () => {
+      const { settleDataCarddassFaces } = await import("./faces");
+      const sharp = (await import("sharp")).default;
+      const dataDir = mkdtempSync(path.join(tmpdir(), "dcd-settle-data-"));
+      const previousData = process.env.PLACARR_DATA_DIR;
+      process.env.PLACARR_DATA_DIR = dataDir;
+      try {
+        const packRoot = path.join(dataDir, NARUTO_DATA_CARDDASS_PACK_ID);
+        const cardDir = path.join(packRoot, "cards", "dmp", "ja", "016");
+        mkdirSync(cardDir, { recursive: true });
+        await sharp({
+          create: {
+            width: 349,
+            height: 512,
+            channels: 3,
+            background: { r: 40, g: 80, b: 160 },
+          },
+        })
+          .jpeg()
+          .toFile(path.join(cardDir, "art.suruga.jpg"));
+        await sharp({
+          create: {
+            width: 1200,
+            height: 1600,
+            channels: 3,
+            background: { r: 200, g: 180, b: 40 },
+          },
+        })
+          .webp()
+          .toFile(path.join(cardDir, "art.ebay.webp"));
+
+        const index = createLocalPrintsIndex(NARUTO_DATA_CARDDASS_PACK_ID);
+        index.writePrints([
+          {
+            printKey: "datacarddass:dmp-016",
+            setCode: "dmp",
+            number: "016",
+            cardType: "dmp",
+            grouping: null,
+            category: null,
+            titles: [{ lang: "ja", fullName: "うずまきナルト" }],
+          },
+        ]);
+        index.writeAssets([
+          {
+            printKey: "datacarddass:dmp-016",
+            lang: "ja",
+            art: "art.ebay.webp",
+          },
+        ]);
+
+        const report = await settleDataCarddassFaces({ packRoot, index });
+        expect(report.settled).toBe(1);
+        expect(index.lookupRow("datacarddass:dmp-016")?.art).toBe(
+          "art.suruga.jpg",
+        );
+        expect(
+          readFileSync(path.join(cardDir, "face.json"), "utf8"),
+        ).toContain("art.suruga.jpg");
+      } finally {
+        if (previousData === undefined) delete process.env.PLACARR_DATA_DIR;
+        else process.env.PLACARR_DATA_DIR = previousData;
+        rmSync(dataDir, { recursive: true, force: true });
+      }
+    });
+  });
+}

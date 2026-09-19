@@ -919,3 +919,73 @@ export async function installDataCarddassReconstructedFaces(
 
   return { written, skipped, failed };
 }
+
+// ─── Settle display face (faceChoice → index) ──────────────────────────────
+
+function listDataCarddassCardDirs(cardsRoot: string): Array<{
+  abs: string;
+  set: string;
+  lang: string;
+  number: string;
+}> {
+  if (!existsSync(cardsRoot)) return [];
+  const out: Array<{
+    abs: string;
+    set: string;
+    lang: string;
+    number: string;
+  }> = [];
+  for (const set of readdirSync(cardsRoot)) {
+    if (set.startsWith(".") || !isDataCarddassSetCode(set)) continue;
+    const setDir = path.join(cardsRoot, set);
+    if (!statSync(setDir).isDirectory()) continue;
+    for (const lang of readdirSync(setDir)) {
+      if (lang.startsWith(".")) continue;
+      const langDir = path.join(setDir, lang);
+      if (!statSync(langDir).isDirectory()) continue;
+      for (const number of readdirSync(langDir)) {
+        if (number.startsWith(".")) continue;
+        const abs = path.join(langDir, number);
+        if (!statSync(abs).isDirectory()) continue;
+        out.push({ abs, set, lang, number });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * After host dumps are installed side-by-side, pick the display face
+ * (`promoteNarutoFace` / JA shop-scan pool) and point `print_assets.art` at it.
+ * Without this, the last installer to call `writeAssets` wins the catalogue.
+ */
+export async function settleDataCarddassFaces(
+  options: {
+    packRoot?: string;
+    index?: ReturnType<typeof createLocalPrintsIndex>;
+  } = {},
+): Promise<{ settled: number; assets: number }> {
+  const { promoteNarutoFace } = await import(
+    "@/providers/naruto/narutocarddass/disk"
+  );
+  const packRoot =
+    options.packRoot ?? path.join(dataRoot(), NARUTO_DATA_CARDDASS_PACK_ID);
+  const cardsRoot = path.join(packRoot, "cards");
+  const assets: AssetRow[] = [];
+  let settled = 0;
+
+  for (const hit of listDataCarddassCardDirs(cardsRoot)) {
+    const named = await promoteNarutoFace(hit.abs, hit.lang);
+    if (!named) continue;
+    settled += 1;
+    const printKey = dataCarddassPrintKey(hit.set, hit.number);
+    if (!printKey) continue;
+    assets.push({ printKey, lang: hit.lang, art: named });
+  }
+
+  let written = 0;
+  if (options.index && assets.length) {
+    written = options.index.writeAssets(assets).assets;
+  }
+  return { settled, assets: written };
+}

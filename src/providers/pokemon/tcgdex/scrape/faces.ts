@@ -1,6 +1,6 @@
 /**
  * Pokémon paper-face fillers — one action file for all catalogue face sources
- * (mcdn encyclopédie, McDo tiles, TCGPlayer, pokemontcg.io, pkmcards).
+ * (TCGdex CDN, mcdn encyclopédie, McDo tiles, TCGPlayer, pokemontcg.io, pkmcards).
  *
  * Ranking / default UI face stays in `disk/faceChoice.ts` (shared with Live index).
  */
@@ -17,18 +17,23 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
-import type { DbscardsIndexEntry } from "@/providers/dragonball/shared/dbscards/list";
+import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
 import {
   PKMCARDS_CARD_SITE,
   pkmcardsIndexPath,
   scrapeDbscardsIndex,
-} from "@/providers/dragonball/shared/dbscards/scrapeList";
+} from "@/providers/shared/tcgcards/scrapeList";
 
+import { tcgdexImageCandidates } from "@/core/enrich/media/tcgdexAssetUrls";
 import {
   pokemonFaceFilename,
   refreshPokemonFaceDecision,
 } from "../disk/faceChoice";
 import { pokemonPaperCardDir } from "../disk/paperCardDisk";
+import {
+  listTcgdexPrintsWithImages,
+  type TcgdexPrintRow,
+} from "../indexStore";
 
 /** TCGdex REST root (absorbed from former api.ts stub). */
 const API_BASE = "https://api.tcgdex.net/v2";
@@ -377,6 +382,25 @@ async function download(url: string): Promise<Buffer | null> {
   }
 }
 
+/** Shorter timeout for bulk catalogue face fill (many 404s on missing locales). */
+async function downloadTcgdexFace(url: string): Promise<Buffer | null> {
+  try {
+    const res = await httpGet<ArrayBuffer>(url, {
+      headers: { "User-Agent": UA },
+      responseType: "arraybuffer",
+      timeout: 12_000,
+      // CDN catalogue — parallel fill; hostLimiter would serialize ~8 req/s.
+      minIntervalMs: 0,
+      noDedup: true,
+      validateStatus: (s) => s === 200,
+    });
+    if (!res.data || res.data.byteLength < 500) return null;
+    return Buffer.from(res.data);
+  } catch {
+    return null;
+  }
+}
+
 export type PokemontcgFillReport = {
   setId: string;
   stem: string | null;
@@ -525,7 +549,7 @@ export async function fillTcgplayerFacesForSet(opts: {
       continue;
     }
 
-    const tcgdexId = `${opts.setId}-${localId}`;
+    const tcgdexId = `${opts.setId}-${/^[a-z]$/i.test(localId) ? localId.toUpperCase() : localId}`;
     let productId: number | null = null;
     try {
       const raw = (await fetchCard(tcgdexId)) as {
@@ -1099,4 +1123,188 @@ export async function fillMcdnGalleryFaces(
     );
   }
   return reports;
+}
+
+// —— fillTcgdexCatalogueFaces.ts ——
+
+/**
+ * Bulk TCGdex CDN faces → `art.tcgdex.png` under cards/{set}/{lang}/{num}/.
+ *
+ * Reads `prints.sqlite` image bases, localizes the CDN segment per language,
+ * downloads `high.png` (fallback `low.webp`, then EN). Skip-existing so Sync
+ * stays cheap after the first pass. McDo / mcdn / Coleka keep higher priority
+ * in faceChoice — this fills the catalogue gaps when a CDN base exists.
+ */
+
+export type TcgdexCatalogueFaceTarget = {
+  setId: string;
+  localId: string;
+  imageBaseUrl: string;
+};
+
+export type TcgdexCatalogueFillReport = {
+  langs: string[];
+  prints: number;
+  tried: number;
+  written: number;
+  skipped: number;
+  failed: number;
+};
+
+function candidateTcgdexFaceUrls(
+  imageBaseUrl: string,
+  lang: string,
+): string[] {
+  const raw = imageBaseUrl.trim().replace(/\/+$/, "");
+  const locale = lang.trim().toLowerCase() || "fr";
+  // Probe the requested locale (rewrite en→fr for the HEAD). Never fall back
+  // to another locale when writing into that lang folder — EN scans must not
+  // land under cards/.../fr/.
+  const rewritten = raw.replace(
+    /^(https?:\/\/assets\.tcgdex\.net\/)([a-z]{2}(?:-[a-z]+)?)(\/)/i,
+    `$1${locale}$3`,
+  );
+  const bases = [rewritten, raw].filter((b, i, arr) => {
+    if (!b || arr.indexOf(b) !== i) return false;
+    const match = /assets\.tcgdex\.net\/([a-z]{2})\//i.exec(b);
+    return !match || match[1]!.toLowerCase() === locale;
+  });
+  const urls: string[] = [];
+  for (const base of bases) {
+    for (const url of tcgdexImageCandidates(base, "high")) {
+      if (!urls.includes(url)) urls.push(url);
+    }
+  }
+  return urls;
+}
+
+function extFromUrl(url: string): "png" | "webp" | "jpg" {
+  const pathPart = url.split("?")[0] ?? url;
+  const m = /\.(png|webp|jpe?g)$/i.exec(pathPart);
+  if (!m) return "png";
+  const ext = m[1]!.toLowerCase();
+  if (ext === "jpeg" || ext === "jpg") return "jpg";
+  if (ext === "webp") return "webp";
+  return "png";
+}
+
+function existingTcgdexArt(cardDir: string): string | null {
+  for (const ext of ["png", "webp", "jpg"] as const) {
+    const name = pokemonFaceFilename("tcgdex", "art", ext);
+    if (existsSync(path.join(cardDir, name))) return name;
+  }
+  return null;
+}
+
+export async function fillTcgdexCatalogueFaces(
+  opts: {
+    force?: boolean;
+    cardsRoot?: string;
+    /** Default `fr` (checklist principale). Pass `["fr","en"]` for both. */
+    langs?: readonly string[];
+    prints?: readonly TcgdexCatalogueFaceTarget[];
+    downloadImage?: (url: string) => Promise<Buffer | null>;
+    /** Parallel downloads (default 6). */
+    concurrency?: number;
+    onProgress?: (done: number, total: number) => void;
+  } = {},
+): Promise<TcgdexCatalogueFillReport> {
+  const langs = (opts.langs ?? ["fr"])
+    .map((l) => l.trim().toLowerCase())
+    .filter(Boolean);
+  const prints: TcgdexCatalogueFaceTarget[] =
+    opts.prints?.map((p) => ({
+      setId: p.setId,
+      localId: p.localId,
+      imageBaseUrl: p.imageBaseUrl,
+    })) ??
+    listTcgdexPrintsWithImages()
+      .filter((row): row is TcgdexPrintRow & { imageBaseUrl: string } =>
+        Boolean(row.imageBaseUrl?.trim()),
+      )
+      .map((row) => ({
+        setId: row.setId,
+        localId: row.localId,
+        imageBaseUrl: row.imageBaseUrl.trim(),
+      }));
+
+  const report: TcgdexCatalogueFillReport = {
+    langs: [...langs],
+    prints: prints.length,
+    tried: 0,
+    written: 0,
+    skipped: 0,
+    failed: 0,
+  };
+  if (langs.length === 0 || prints.length === 0) return report;
+
+  type Job = { print: TcgdexCatalogueFaceTarget; lang: string };
+  const jobs: Job[] = [];
+  for (const print of prints) {
+    for (const lang of langs) jobs.push({ print, lang });
+  }
+
+  const downloadImage = opts.downloadImage ?? downloadTcgdexFace;
+  const concurrency = Math.max(1, Math.min(opts.concurrency ?? 6, 16));
+  let cursor = 0;
+  let done = 0;
+  const tallies = { written: 0, skipped: 0, failed: 0 };
+
+  async function runOne(job: Job): Promise<void> {
+    const cardDir = pokemonPaperCardDir({
+      setId: job.print.setId,
+      lang: job.lang,
+      localId: job.print.localId,
+      cardsRoot: opts.cardsRoot,
+    });
+    if (!opts.force && existingTcgdexArt(cardDir)) {
+      tallies.skipped += 1;
+      refreshPokemonFaceDecision(cardDir, job.lang);
+      return;
+    }
+
+    const urls = candidateTcgdexFaceUrls(job.print.imageBaseUrl, job.lang);
+    let buf: Buffer | null = null;
+    let usedUrl: string | null = null;
+    for (const url of urls) {
+      buf = await downloadImage(url);
+      if (buf) {
+        usedUrl = url;
+        break;
+      }
+    }
+    if (!buf || !usedUrl) {
+      tallies.failed += 1;
+      return;
+    }
+
+    const ext = extFromUrl(usedUrl);
+    const dest = path.join(
+      cardDir,
+      pokemonFaceFilename("tcgdex", "art", ext),
+    );
+    mkdirSync(cardDir, { recursive: true });
+    writeFileSync(dest, buf);
+    refreshPokemonFaceDecision(cardDir, job.lang);
+    tallies.written += 1;
+  }
+
+  async function worker(): Promise<void> {
+    while (true) {
+      const idx = cursor++;
+      if (idx >= jobs.length) return;
+      await runOne(jobs[idx]!);
+      done += 1;
+      opts.onProgress?.(done, jobs.length);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, jobs.length) }, () => worker()),
+  );
+  report.tried = jobs.length;
+  report.written = tallies.written;
+  report.skipped = tallies.skipped;
+  report.failed = tallies.failed;
+  return report;
 }

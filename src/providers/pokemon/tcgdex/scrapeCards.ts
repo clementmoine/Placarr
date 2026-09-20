@@ -20,14 +20,17 @@
 import { httpGet } from "@/lib/http/httpClient";
 
 import {
+  patchTcgdexSetCounts,
   pruneTcgdexSets,
   tcgdexHarvestedSets,
+  tcgdexSetIdsNeedingFrImageRefresh,
   writeTcgdexSet,
   type TcgdexPrintRow,
   type TcgdexTitleRow,
 } from "./indexStore";
 import { digitalOnlySetIds } from "./digitalOnly";
-import { printKeyFromTcgdexIds } from "./fetch";
+import { printKeyFromTcgdexIds, tcgdexCardDisplayName } from "./fetch";
+import { canonicalTcgdexSetId, normalizeTcgdexLocalId } from "./localSetIds";
 
 const API_BASE = "https://api.tcgdex.net/v2";
 
@@ -102,16 +105,23 @@ export async function harvestTcgdexCatalogue(
   const digitalOnlySkipped: string[] = [];
 
   /*
-    Une étagère tient du carton. Les sets 100 % numériques — Pokémon TCG Pocket
-    — n'entrent pas au catalogue : c'est la règle du projet, et la recherche
-    distante les écartait déjà. Les écarter **à la moisson** plutôt qu'à la
-    lecture évite de stocker ce qu'on refuse de servir, et surtout évite qu'un
-    futur chemin de lecture oublie le filtre.
+    Une étagère tient du carton. Les sets exclus — Pocket (jamais imprimé) et
+    misc/Jumbo (faces déjà sur le tirage standard) — n'entrent pas au catalogue.
+    La recherche distante les écartait déjà. Les écarter **à la moisson** plutôt
+    qu'à la lecture évite de stocker ce qu'on refuse de servir, et surtout évite
+    qu'un futur chemin de lecture oublie le filtre.
   */
   const digital = await digitalOnlySetIds();
   // Ce qu'une passe antérieure aurait laissé entrer avant que le filtre existe.
   const pruned = pruneTcgdexSets([...digital]);
   if (pruned > 0) report(`${pruned} tirages numériques retirés du catalogue`);
+
+  const needFrImages = new Set(tcgdexSetIdsNeedingFrImageRefresh());
+  if (needFrImages.size > 0) {
+    report(
+      `${needFrImages.size} sets FR à re-moissonner (images encore EN/vides)`,
+    );
+  }
 
   for (const language of languages) {
     const index = await fetchJson<RawSetBrief[]>(
@@ -123,10 +133,42 @@ export async function harvestTcgdexCatalogue(
     }
     report(`${language} : ${index.length} sets annoncés`);
 
+    /*
+      Les briefs `/sets` portent déjà `cardCount.official`. Une moisson ancienne
+      a pu laisser `official_count` NULL : les labels retombaient sur `total`
+      (158/158 au lieu de 158/128). On resynchronise les tailles sans retélécharger
+      les cartes.
+    */
+    const countPatches = index.flatMap((brief) => {
+      const remoteSetId = brief.id?.trim();
+      if (!remoteSetId) return [];
+      const setId = canonicalTcgdexSetId(remoteSetId) ?? remoteSetId;
+      const official = brief.cardCount?.official;
+      const total = brief.cardCount?.total;
+      if (official == null && total == null) return [];
+      return [
+        {
+          setId,
+          lang: language,
+          officialCount:
+            typeof official === "number" && Number.isFinite(official)
+              ? official
+              : null,
+          totalCount:
+            typeof total === "number" && Number.isFinite(total) ? total : null,
+        },
+      ];
+    });
+    const patched = patchTcgdexSetCounts(countPatches);
+    if (patched > 0) {
+      report(`${language} : ${patched} tailles official/total à jour`);
+    }
+
     let seen = 0;
     for (const brief of index) {
-      const setId = brief.id?.trim();
-      if (!setId) continue;
+      const remoteSetId = brief.id?.trim();
+      if (!remoteSetId) continue;
+      const setId = canonicalTcgdexSetId(remoteSetId) ?? remoteSetId;
       if (opts.limit && seen >= opts.limit) break;
       seen += 1;
 
@@ -135,27 +177,41 @@ export async function harvestTcgdexCatalogue(
         déjà toutes les cartes n'est pas redemandé — c'est ce qui fait la
         différence entre un rattrapage et un recommencement. Un jeu qui sort
         encore ajoute des sets ; les anciens, eux, ne bougent plus.
+
+        Exception FR : l'API gagne parfois les `image` après coup. Si le set FR
+        n'a encore aucune URL `/fr/` alors que l'EN est rempli, on re-télécharge
+        pour promouvoir les faces FR (upsert préfère déjà `/fr/`).
       */
-      if (digital.has(setId.toLowerCase())) {
-        digitalOnlySkipped.push(`${language}:${setId}`);
+      if (digital.has(remoteSetId.toLowerCase()) || digital.has(setId)) {
+        digitalOnlySkipped.push(`${language}:${remoteSetId}`);
         continue;
       }
 
       const announced = brief.cardCount?.total ?? 0;
-      const already = held.get(`${setId}|${language}`) ?? 0;
-      if (!opts.force && announced > 0 && already >= announced) {
+      const already =
+        held.get(`${setId}|${language}`) ??
+        held.get(`${remoteSetId}|${language}`) ??
+        0;
+      const refreshFrImages =
+        language === "fr" && needFrImages.has(setId.toLowerCase());
+      if (
+        !opts.force &&
+        announced > 0 &&
+        already >= announced &&
+        !refreshFrImages
+      ) {
         skipped += 1;
         continue;
       }
 
       if (delayMs > 0) await sleep(delayMs);
       const detail = await fetchJson<RawSetDetail>(
-        `${API_BASE}/${language}/sets/${encodeURIComponent(setId)}`,
+        `${API_BASE}/${language}/sets/${encodeURIComponent(remoteSetId)}`,
       );
       const cards = detail?.cards ?? [];
       if (cards.length === 0) {
         // L'API annonce un compte et ne rend rien : trou côté source, pas ici.
-        emptyAtSource.push(`${language}:${setId}`);
+        emptyAtSource.push(`${language}:${remoteSetId}`);
         continue;
       }
 
@@ -166,7 +222,7 @@ export async function harvestTcgdexCatalogue(
 
       for (const card of cards) {
         const providerId = card.id?.trim();
-        const localId = card.localId?.trim();
+        const localId = normalizeTcgdexLocalId(card.localId);
         const name = card.name?.trim();
         if (!providerId || !localId || !name) continue;
         const printKey = printKeyFromTcgdexIds(setId, localId);
@@ -181,7 +237,7 @@ export async function harvestTcgdexCatalogue(
         titleRows.push({
           printKey,
           lang: language,
-          name,
+          name: tcgdexCardDisplayName(name, localId),
           setName,
           serieName,
         });
@@ -195,7 +251,7 @@ export async function harvestTcgdexCatalogue(
           davantage adressables par le chemin distant : c'est une limite du
           modèle d'identité, pas de cette moisson.
         */
-        unkeyable.push(`${language}:${setId}`);
+        unkeyable.push(`${language}:${remoteSetId}`);
         continue;
       }
 
@@ -207,6 +263,7 @@ export async function harvestTcgdexCatalogue(
           serieName,
           releasedAt: detail?.releaseDate?.trim() || null,
           totalCount: detail?.cardCount?.total ?? printRows.length,
+          officialCount: detail?.cardCount?.official ?? null,
         },
         prints: printRows,
         titles: titleRows,

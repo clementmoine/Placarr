@@ -25,6 +25,7 @@ import {
   fillMcdnFacesForSet,
   fillPkmcardsFaces,
   fillPokemonComMcdoCampaign,
+  fillTcgdexCatalogueFaces,
   fillTcgplayerFacesForSet,
   parseMcdnLocalIds,
   parsePkmcardsPokemonSlug,
@@ -349,6 +350,7 @@ describe("pokemonFaceSourceOf", () => {
     expect(pokemonFaceSourceOf("art.pokemoncom.png")).toBe("pokemoncom");
     expect(pokemonFaceSourceOf("art.pokecardex.jpg")).toBe("pokecardex");
     expect(pokemonFaceSourceOf("art.mcdn.png")).toBe("mcdn");
+    expect(pokemonFaceSourceOf("art.tcgdex.png")).toBe("tcgdex");
     expect(pokemonFaceSourceOf("art.tcgplayer.jpg")).toBe("tcgplayer");
     expect(pokemonFaceSourceOf("art.pokemontcg.png")).toBe("pokemontcg");
     expect(pokemonFaceSourceOf("art.pkmcards.webp")).toBe("pkmcards");
@@ -357,12 +359,13 @@ describe("pokemonFaceSourceOf", () => {
 });
 
 describe("pickBestPokemonFace", () => {
-  it("ranks live above mcdn above pokemoncom above pokecardex above coleka", () => {
+  it("ranks live above mcdn above pokemoncom above pokecardex above coleka above tcgdex", () => {
     expect(POKEMON_FACE_SOURCES[0]).toBe("live");
     expect(POKEMON_FACE_SOURCES[1]).toBe("mcdn");
     expect(POKEMON_FACE_SOURCES[2]).toBe("pokemoncom");
     expect(POKEMON_FACE_SOURCES[3]).toBe("pokecardex");
     expect(POKEMON_FACE_SOURCES[4]).toBe("coleka");
+    expect(POKEMON_FACE_SOURCES[5]).toBe("tcgdex");
     expect(
       pickBestPokemonFace(
         [
@@ -407,12 +410,100 @@ describe("pickBestPokemonFace", () => {
     expect(
       pickBestPokemonFace(
         [
+          { source: "tcgplayer", width: 0, height: 0 },
+          { source: "tcgdex", width: 0, height: 0 },
+        ],
+        "en",
+      ),
+    ).toBe("tcgdex");
+    expect(
+      pickBestPokemonFace(
+        [
           { source: "pokemontcg", width: 0, height: 0 },
           { source: "tcgplayer", width: 0, height: 0 },
         ],
         "en",
       ),
     ).toBe("tcgplayer");
+  });
+});
+
+describe("fillTcgdexCatalogueFaces", () => {
+  it("writes localized art.tcgdex.png and skips on second pass", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "poke-tcgdex-faces-"));
+    const seen: string[] = [];
+    const report = await fillTcgdexCatalogueFaces({
+      cardsRoot: root,
+      langs: ["fr"],
+      concurrency: 2,
+      prints: [
+        {
+          setId: "base1",
+          localId: "4",
+          imageBaseUrl: "https://assets.tcgdex.net/en/base/base1/4",
+        },
+      ],
+      downloadImage: async (url) => {
+        seen.push(url);
+        if (url.includes("/fr/") && url.endsWith("/high.webp")) {
+          return Buffer.alloc(600, 1);
+        }
+        return null;
+      },
+    });
+    expect(report.written).toBe(1);
+    expect(report.failed).toBe(0);
+    expect(seen[0]).toBe(
+      "https://assets.tcgdex.net/fr/base/base1/4/high.webp",
+    );
+    const dest = path.join(root, "base1", "fr", "004", "art.tcgdex.webp");
+    expect(existsSync(dest)).toBe(true);
+
+    const second = await fillTcgdexCatalogueFaces({
+      cardsRoot: root,
+      langs: ["fr"],
+      prints: [
+        {
+          setId: "base1",
+          localId: "4",
+          imageBaseUrl: "https://assets.tcgdex.net/en/base/base1/4",
+        },
+      ],
+      downloadImage: async () => {
+        throw new Error("should not download");
+      },
+    });
+    expect(second.skipped).toBe(1);
+    expect(second.written).toBe(0);
+  });
+
+  it("does not copy a JA CDN face into the FR folder", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "poke-tcgdex-ja-"));
+    const seen: string[] = [];
+    const report = await fillTcgdexCatalogueFaces({
+      cardsRoot: root,
+      langs: ["fr"],
+      prints: [
+        {
+          setId: "S10P",
+          localId: "001",
+          imageBaseUrl: "https://assets.tcgdex.net/ja/S/S10P/001",
+        },
+      ],
+      downloadImage: async (url) => {
+        seen.push(url);
+        if (url.includes("/ja/") && url.endsWith("/high.webp")) {
+          return Buffer.alloc(600, 2);
+        }
+        return null;
+      },
+    });
+    expect(report.written).toBe(0);
+    expect(report.failed).toBe(1);
+    expect(seen.every((u) => u.includes("/fr/"))).toBe(true);
+    expect(
+      existsSync(path.join(root, "s10p", "fr", "001", "art.tcgdex.webp")),
+    ).toBe(false);
   });
 });
 

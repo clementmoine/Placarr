@@ -6,7 +6,12 @@ vi.mock("@/lib/http/httpClient", async (importOriginal) => {
 });
 
 import { httpGet } from "@/lib/http/httpClient";
-import { mapTcgdexMetadata, tcgdexModule, toPrintCandidate } from "./index";
+import {
+  mapTcgdexMetadata,
+  tcgdexModule,
+  toChecklistPrintCandidate,
+  toPrintCandidate,
+} from "./index";
 import { mapTcgdexCard } from "./fetch";
 import { pickTcgdexPlayroomSamples } from "./playroomSamples";
 
@@ -112,6 +117,85 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     );
   });
 
+  it("checklist candidate prefers local paper art over CDN", () => {
+    const card = mapTcgdexCard(detailPayload(), "fr");
+    expect(card).not.toBeNull();
+    const light = toChecklistPrintCandidate(card!);
+    expect(light.printKey).toBe("pokemon:sv03.5-006");
+    // Live/paper dump under sv3-5 wins over assets.tcgdex.net.
+    expect(light.thumbnailUrl).toContain("/assets/pokemon/cards/");
+    expect(light.finishShaders).toBeUndefined();
+    expect(light.foilMaskUrl).toBeUndefined();
+  });
+
+  it("checklist falls back to TCGdex FR CDN (then EN via display chain)", () => {
+    const card = mapTcgdexCard(
+      {
+        ...detailPayload(),
+        id: "ex5-53",
+        localId: "53",
+        name: "Balbuto",
+        image: "https://assets.tcgdex.net/en/ex/ex5/53",
+        set: { id: "ex5", name: "EX Légendes Oubliées" },
+        variants: {
+          firstEdition: false,
+          holo: false,
+          normal: true,
+          reverse: false,
+          wPromo: false,
+        },
+      },
+      "fr",
+    );
+    expect(card).not.toBeNull();
+    const orphan = {
+      ...card!,
+      printKey: "pokemon:ex5-53-no-local",
+      setId: "ex5",
+    };
+    const light = toChecklistPrintCandidate(orphan);
+    expect(light.thumbnailUrl).toBe(
+      "https://assets.tcgdex.net/fr/ex/ex5/53/low.webp",
+    );
+  });
+
+  it("checklist candidate falls back to Live disk when TCGdex has no face", () => {
+    const card = mapTcgdexCard(
+      {
+        ...detailPayload(),
+        id: "30th-c-001",
+        localId: "001",
+        name: "Dracaufeu",
+        image: undefined,
+        set: {
+          id: "30th-c",
+          name: "Collection Classique 30ᵉ Anniversaire",
+        },
+        variants: {
+          firstEdition: false,
+          holo: true,
+          normal: false,
+          reverse: false,
+          wPromo: false,
+        },
+      },
+      "fr",
+    );
+    expect(card).not.toBeNull();
+    expect(card!.imageUrl).toBeNull();
+    // Force catalogue printKey (API id remaps to me05.5c).
+    const classic = {
+      ...card!,
+      printKey: "pokemon:me05.5c-001",
+      setId: "me05.5c",
+    };
+    const light = toChecklistPrintCandidate(classic);
+    expect(light.thumbnailUrl).toBe(
+      "/assets/pokemon/cards/me5-5c/fr/002/art.webp",
+    );
+    expect(light.finishShaders).toBeUndefined();
+  });
+
   it("keeps TCGdex low.webp as picker thumb when Live art is absent", () => {
     const card = mapTcgdexCard(
       {
@@ -139,7 +223,7 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
       "https://assets.tcgdex.net/fr/base/base1/4/low.webp",
     );
     expect(candidate.imageUrl).toBe(
-      "https://assets.tcgdex.net/fr/base/base1/4/high.png",
+      "https://assets.tcgdex.net/fr/base/base1/4/high.webp",
     );
   });
 

@@ -23,6 +23,7 @@ export const POKEMON_FACE_SOURCES = [
   "pokemoncom",
   "pokecardex",
   "coleka",
+  "tcgdex",
   "tcgplayer",
   "pokemontcg",
   "pkmcards",
@@ -32,7 +33,8 @@ export type PokemonFaceSource = (typeof POKEMON_FACE_SOURCES)[number];
 
 /**
  * Prefer Live, then encyclopédie mcdn, then official McDo tiles, then
- * PokéCardex scans (HQ), then Coleka photos, then marketplace CDNs.
+ * PokéCardex scans (HQ), then Coleka photos, then TCGdex catalogue CDN,
+ * then marketplace CDNs.
  */
 export const POKEMON_FACE_PRIORITY: Record<
   string,
@@ -44,6 +46,7 @@ export const POKEMON_FACE_PRIORITY: Record<
     "pokemoncom",
     "pokecardex",
     "coleka",
+    "tcgdex",
     "tcgplayer",
     "pokemontcg",
     "pkmcards",
@@ -54,6 +57,7 @@ export const POKEMON_FACE_PRIORITY: Record<
     "pokemoncom",
     "pokecardex",
     "coleka",
+    "tcgdex",
     "tcgplayer",
     "pokemontcg",
     "pkmcards",

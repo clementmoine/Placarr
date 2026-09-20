@@ -1,35 +1,50 @@
 /**
- * Sets that were never printed — Pokémon TCG Pocket.
+ * Sets that do not belong on a Placarr cardboard shelf.
  *
- * Placarr catalogues objects someone can hold. A Pocket print has a TCGdex
- * entry, a rarity and a price-less card face, but no copy of it exists on
- * cardboard, so offering one as something to add to a shelf is offering a
- * thing that cannot be owned.
+ * - **tcgp** — Pokémon TCG Pocket: never printed.
+ * - **misc** — TCGdex « Autre » (today: Cartes Jumbo): oversized promos whose
+ *   faces already exist on the matching standard print. Harvesting them would
+ *   duplicate art; listing them as « Sans catalogue » is a false gap.
  *
- * The set list is read from TCGdex's own serie rather than written down here:
- * Pocket ships a new set every few weeks, and a hardcoded list would quietly
- * start letting them through.
+ * Serie membership is read from TCGdex rather than written down here: Pocket
+ * ships often, and misc may grow, without us editing a magic id list.
  */
 import { httpGet } from "@/lib/http/httpClient";
 
 const API_BASE = "https://api.tcgdex.net/v2";
 
-/** TCGdex serie id for Pokémon TCG Pocket. */
+/** TCGdex serie ids whose sets we never catalogue. */
+export const EXCLUDED_CATALOGUE_SERIES = ["tcgp", "misc"] as const;
+
+/** @deprecated Prefer {@link EXCLUDED_CATALOGUE_SERIES}; Pocket was the first. */
 export const DIGITAL_ONLY_SERIE = "tcgp";
 
 type RawSerie = { sets?: { id?: unknown }[] };
 
 let cached: Promise<ReadonlySet<string>> | null = null;
 
-async function loadDigitalOnlySetIds(): Promise<ReadonlySet<string>> {
-  const response = await httpGet<RawSerie>(
-    `${API_BASE}/en/series/${DIGITAL_ONLY_SERIE}`,
-    { timeout: 15_000 },
+async function loadExcludedSetIds(): Promise<ReadonlySet<string>> {
+  const batches = await Promise.all(
+    EXCLUDED_CATALOGUE_SERIES.map(async (serie) => {
+      try {
+        const response = await httpGet<RawSerie>(
+          `${API_BASE}/en/series/${serie}`,
+          { timeout: 15_000 },
+        );
+        return (response.data?.sets ?? [])
+          .map((set) =>
+            typeof set?.id === "string" ? set.id.toLowerCase() : null,
+          )
+          .filter((id): id is string => Boolean(id));
+      } catch {
+        return [] as string[];
+      }
+    }),
   );
-  const ids = (response.data?.sets ?? [])
-    .map((set) => (typeof set?.id === "string" ? set.id.toLowerCase() : null))
-    .filter((id): id is string => Boolean(id));
-  if (ids.length === 0) throw new Error("tcgdex: empty digital-only serie");
+  const ids = batches.flat();
+  if (ids.length === 0) {
+    throw new Error("tcgdex: empty excluded-catalogue series");
+  }
   return new Set(ids);
 }
 
@@ -39,7 +54,7 @@ async function loadDigitalOnlySetIds(): Promise<ReadonlySet<string>> {
  * because TCGdex was briefly unreachable.
  */
 export async function digitalOnlySetIds(): Promise<ReadonlySet<string>> {
-  cached ??= loadDigitalOnlySetIds().catch(() => {
+  cached ??= loadExcludedSetIds().catch(() => {
     cached = null;
     return new Set<string>();
   });

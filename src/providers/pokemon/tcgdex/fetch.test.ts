@@ -18,6 +18,7 @@ import {
   tcgdexIdFromPrintKey,
   printKeySetSegment,
   tcgdexImageUrl,
+  tcgdexLocalizedImageBase,
   tcgdexLanguageFromLiveOrDex,
   tcgdexPrintLabel,
   tcgdexQueryHints,
@@ -122,10 +123,43 @@ beforeEach(() => {
 });
 
 describe("tcgdexImageUrl", () => {
-  it("appends the high PNG quality suffix", () => {
+  it("prefers high.webp then falls back via candidates", () => {
     expect(
       tcgdexImageUrl("https://assets.tcgdex.net/fr/sv/sv03.5/006", "high"),
+    ).toBe("https://assets.tcgdex.net/fr/sv/sv03.5/006/high.webp");
+    expect(
+      tcgdexImageUrl("https://assets.tcgdex.net/fr/sv/sv03.5/006", "low"),
+    ).toBe("https://assets.tcgdex.net/fr/sv/sv03.5/006/low.webp");
+    expect(
+      tcgdexImageUrl(
+        "https://assets.tcgdex.net/fr/sv/sv03.5/006",
+        "high",
+        "png",
+      ),
     ).toBe("https://assets.tcgdex.net/fr/sv/sv03.5/006/high.png");
+  });
+});
+
+describe("tcgdexLocalizedImageBase", () => {
+  it("rewrites the CDN locale to the checklist language", () => {
+    expect(
+      tcgdexLocalizedImageBase(
+        "https://assets.tcgdex.net/en/ex/ex5/53",
+        "fr",
+      ),
+    ).toBe("https://assets.tcgdex.net/fr/ex/ex5/53");
+    expect(
+      tcgdexLocalizedImageBase(
+        "https://assets.tcgdex.net/fr/ex/ex5/53",
+        "en",
+      ),
+    ).toBe("https://assets.tcgdex.net/en/ex/ex5/53");
+  });
+
+  it("leaves non-CDN bases alone", () => {
+    expect(
+      tcgdexLocalizedImageBase("https://cdn.example/card.png", "fr"),
+    ).toBe("https://cdn.example/card.png");
   });
 });
 
@@ -154,12 +188,10 @@ describe("sets dont l'id porte un tiret", () => {
     expect(printKeyFromTcgdexIds("sv03.5", "006")).toBe("pokemon:sv03.5-006");
   });
 
-  it("mints the Trainer Kits that had no key at all", () => {
-    expect(printKeyFromTcgdexIds("tk-xy-latia", "1")).toBe(
-      "pokemon:tk.xy.latia-1",
-    );
-    expect(printKeyFromTcgdexIds("p-a", "12")).toBe("pokemon:p.a-12");
-    expect(printKeyFromTcgdexIds("2018sm-fr", "3")).toBe("pokemon:2018sm.fr-3");
+  it("mints Unown ! / ? that the alnum segment pattern used to drop", () => {
+    expect(printKeyFromTcgdexIds("exu", "!")).toBe("pokemon:exu-!");
+    expect(printKeyFromTcgdexIds("exu", "?")).toBe("pokemon:exu-?");
+    expect(printKeyFromTcgdexIds("exu", "%3F")).toBe("pokemon:exu-?");
   });
 
   /*
@@ -175,6 +207,16 @@ describe("sets dont l'id porte un tiret", () => {
     expect(tcgdexIdCandidatesFromPrintKey("pokemon:tk.xy.latia-1")).toEqual([
       "tk.xy.latia-1",
       "tk-xy-latia-1",
+    ]);
+  });
+
+  it("prefers the TCGdex API card id when the local set was remapped", () => {
+    expect(printKeyFromTcgdexIds("30th", "023")).toBe("pokemon:me05.5-023");
+    expect(printKeyFromTcgdexIds("me05.5", "023")).toBe("pokemon:me05.5-023");
+    expect(tcgdexIdCandidatesFromPrintKey("pokemon:me05.5-023")).toEqual([
+      "30th-023",
+      "me05.5-023",
+      "me05-5-023",
     ]);
   });
 
@@ -262,7 +304,7 @@ describe("mapTcgdexCard", () => {
       printKey: "pokemon:sv03.5-006",
       setId: "sv03.5",
       finishes: ["holo"],
-      imageUrl: "https://assets.tcgdex.net/fr/sv/sv03.5/006/high.png",
+      imageUrl: "https://assets.tcgdex.net/fr/sv/sv03.5/006/high.webp",
       cmPriceCents: null,
       cmFoilPriceCents: 885,
     });
@@ -289,13 +331,13 @@ describe("mapTcgdexBrief", () => {
     );
     expect(card?.printKey).toBe("pokemon:swsh10.5-010");
     expect(card?.imageUrl).toBe(
-      "https://assets.tcgdex.net/fr/swsh/swsh10.5/010/high.png",
+      "https://assets.tcgdex.net/fr/swsh/swsh10.5/010/high.webp",
     );
   });
 });
 
 describe("tcgdexPrintLabel", () => {
-  it("prefixes the serie when it differs from the expansion", () => {
+  it("is collector number only (set/serie stay on the catalogue heading)", () => {
     const card = mapTcgdexCard(
       {
         id: "sm9-14",
@@ -320,15 +362,50 @@ describe("tcgdexPrintLabel", () => {
         serieName: "Soleil et Lune",
         serieId: "sm",
       }),
-    ).toBe("Soleil et Lune · Duo de Choc · 14");
+    ).toBe("014");
   });
 
-  it("falls back to set id when the expansion name is missing", () => {
+  it("uses localId/total when official count is known", () => {
     const brief = mapTcgdexBrief(
       { id: "sm9-14", localId: "14", name: "Dracaufeu" },
       "fr",
     )!;
-    expect(tcgdexPrintLabel(brief)).toBe("sm9 · 14");
+    expect(tcgdexPrintLabel(brief)).toBe("014");
+    expect(
+      tcgdexPrintLabel({ ...brief, setOfficialCount: 108 }),
+    ).toBe("014/108");
+    expect(
+      tcgdexPrintLabel({
+        ...brief,
+        localId: "10",
+        setOfficialCount: 15,
+      }),
+    ).toBe("010/015");
+  });
+
+  it("keeps Unown forms readable (A, !, ?)", () => {
+    const brief = mapTcgdexBrief(
+      { id: "exu-A", localId: "A", name: "Zarbi" },
+      "fr",
+    )!;
+    expect(brief.name).toBe("Zarbi A");
+    expect(
+      tcgdexPrintLabel({ ...brief, setOfficialCount: 28 }),
+    ).toBe("A/028");
+    expect(
+      tcgdexPrintLabel({
+        ...brief,
+        localId: "?",
+        name: "Zarbi ?",
+        setOfficialCount: 28,
+      }),
+    ).toBe("?/028");
+    expect(
+      mapTcgdexBrief(
+        { id: "exu-%3F", localId: "%3F", name: "Zarbi" },
+        "fr",
+      )?.printKey,
+    ).toBe("pokemon:exu-?");
   });
 });
 
@@ -352,9 +429,7 @@ describe("searchTcgdexCards / fetchTcgdexCardByPrintKey", () => {
     expect(results[0]?.printKey).toBe("pokemon:sv03.5-006");
     expect(results[0]?.finishes).toEqual(["holo"]);
     expect(results[0]?.serieName).toBe("Écarlate et Violet");
-    expect(tcgdexPrintLabel(results[0]!)).toBe(
-      "Écarlate et Violet · 151 · 006/165",
-    );
+    expect(tcgdexPrintLabel(results[0]!)).toBe("006/165");
     expect(httpGet).toHaveBeenCalledTimes(2);
   });
 
@@ -499,24 +574,31 @@ describe("tcgdexQueryHints", () => {
 });
 
 describe("digitalOnlySetIds", () => {
-  it("reads the Pocket sets off TCGdex instead of listing them here", async () => {
+  it("reads Pocket + misc (Jumbo) off TCGdex instead of listing them here", async () => {
     __resetDigitalOnlyCacheForTests();
-    httpGet.mockResolvedValueOnce({
-      data: { sets: [{ id: "A1" }, { id: "A1a" }, { id: "P-A" }] },
-    });
+    httpGet
+      .mockResolvedValueOnce({
+        data: { sets: [{ id: "A1" }, { id: "A1a" }, { id: "P-A" }] },
+      })
+      .mockResolvedValueOnce({
+        data: { sets: [{ id: "jumbo" }] },
+      });
 
     const ids = await digitalOnlySetIds();
-    expect([...ids].sort()).toEqual(["a1", "a1a", "p-a"]);
-    expect(httpGet.mock.calls[0]?.[0]).toContain("/series/tcgp");
+    expect([...ids].sort()).toEqual(["a1", "a1a", "jumbo", "p-a"]);
+    expect(httpGet.mock.calls.map((call) => String(call[0]))).toEqual([
+      expect.stringContaining("/series/tcgp"),
+      expect.stringContaining("/series/misc"),
+    ]);
 
-    // Cached: a second search must not pay for the serie again.
+    // Cached: a second search must not pay for the series again.
     await digitalOnlySetIds();
-    expect(httpGet).toHaveBeenCalledTimes(1);
+    expect(httpGet).toHaveBeenCalledTimes(2);
   });
 
   it("filters nothing when TCGdex is unreachable", async () => {
     __resetDigitalOnlyCacheForTests();
-    httpGet.mockRejectedValueOnce(new Error("offline"));
+    httpGet.mockRejectedValue(new Error("offline"));
 
     expect([...(await digitalOnlySetIds())]).toEqual([]);
     __seedDigitalOnlyCacheForTests([]);

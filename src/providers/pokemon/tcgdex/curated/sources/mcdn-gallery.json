@@ -4,6 +4,7 @@
   "note": "cms3/full is HQ (~660×920) but sparse; cms2/web is complete (~245×342). Prefer cms3 then cms2. McDo Happy Meal tiles stay under pokemoncom-mcdo.json.",
   "aliases": {
     "me5-5": "30TH",
+    "me05.5": "30TH",
     "30th": "30TH"
   },
   "campaigns": [

@@ -7,10 +7,27 @@
  * this module only supplies catalogue metadata, covers, and market prices.
  */
 import { httpGet } from "@/lib/http/httpClient";
+import {
+  tcgdexImageUrl,
+} from "@/core/enrich/media/tcgdexAssetUrls";
 
 import { buildPrintKey, parsePrintKey } from "@/core/identify/printKey";
 import { digitalOnlySetIds } from "./digitalOnly";
+import {
+  canonicalTcgdexSetId,
+  normalizeTcgdexLocalId,
+  tcgdexApiCardIdCandidates,
+  tcgdexApiSetId,
+} from "./localSetIds";
 import { tcgdexSetSerie } from "./setMeta";
+
+/** Append TCGdex CDN quality suffix — see `tcgdexAssetUrls` for fallback chain. */
+export {
+  tcgdexDisplayCandidates,
+  tcgdexImageCandidates,
+  tcgdexImageUrl,
+  nextTcgdexDisplayUrl,
+} from "@/core/enrich/media/tcgdexAssetUrls";
 
 /** TCGdex REST root (former api.ts stub absorbed here). */
 const API_BASE = "https://api.tcgdex.net/v2";
@@ -106,7 +123,7 @@ export type TcgdexCard = {
   finishes: string[];
   /** CDN base without quality suffix (`…/006`). */
   imageBaseUrl: string | null;
-  /** Prefer `high.png` when the CDN base is known. */
+  /** Prefer `high.webp` (then png/jpg via display fallback) when the CDN base is known. */
   imageUrl: string | null;
   thumbnailUrl: string | null;
   /** Cardmarket EUR cents — non-foil / normal listing. */
@@ -216,15 +233,25 @@ function firstPositiveCents(...values: unknown[]): number | null {
   return null;
 }
 
-/** Append TCGdex CDN quality suffix (`high.png` / `low.webp`). */
-export function tcgdexImageUrl(
+/**
+ * Aligne la locale CDN sur la langue de la fiche / check-list.
+ *
+ * La moisson stocke souvent `/en/…`. Sur une étagère FR on réécrit vers `/fr/`
+ * (ex. `ex5-53` a bien un scan FR). Si le fichier 404, `tcgdexDisplayCandidates`
+ * enchaîne sur EN. L'art disque FR (PokéCardex) reste prioritaire en check-list.
+ */
+export function tcgdexLocalizedImageBase(
   imageBase: string | null | undefined,
-  quality: "high" | "low" = "high",
-  extension: "png" | "webp" = "png",
+  language: string | null | undefined,
 ): string | null {
-  if (!imageBase?.trim()) return null;
-  const base = imageBase.trim().replace(/\/+$/, "");
-  return `${base}/${quality}.${extension}`;
+  const base = imageBase?.trim();
+  if (!base) return null;
+  const lang = (language ?? "").trim().toLowerCase();
+  if (!lang) return base;
+  return base.replace(
+    /^(https?:\/\/assets\.tcgdex\.net\/)([a-z]{2}(?:-[a-z]+)?)(\/)/i,
+    `$1${lang}$3`,
+  );
 }
 
 function finishesFromVariants(
@@ -333,10 +360,14 @@ export function printKeyFromTcgdexIds(
   setId: string,
   localId: string,
 ): string | null {
+  const local = canonicalTcgdexSetId(setId);
+  if (!local) return null;
+  const number = normalizeTcgdexLocalId(localId);
+  if (!number) return null;
   return buildPrintKey({
     game: POKEMON_GAME,
-    set: printKeySetSegment(setId),
-    number: localId,
+    set: printKeySetSegment(local),
+    number,
   });
 }
 
@@ -366,12 +397,14 @@ export function tcgdexIdFromPrintKey(
 export function tcgdexIdCandidatesFromPrintKey(
   printKey: string | null | undefined,
 ): string[] {
-  const literal = tcgdexIdFromPrintKey(printKey);
-  if (!literal) return [];
   const identity = parsePrintKey(printKey);
-  if (!identity?.set.includes(".")) return [literal];
-  const decoded = `${identity.set.replace(/\./g, "-")}-${identity.number}`;
-  return decoded === literal ? [literal] : [literal, decoded];
+  if (!identity || identity.game !== POKEMON_GAME) return [];
+  if (identity.grouping) return [];
+  /*
+    Prefer the remote card id (`30th-023`) when the printKey set was
+    remapped locally (`me05.5`), then the literal / dash-decoded forms.
+  */
+  return tcgdexApiCardIdCandidates(identity.set, identity.number);
 }
 
 export function mapTcgdexCard(
@@ -379,12 +412,13 @@ export function mapTcgdexCard(
   language: TcgdexLanguage,
 ): TcgdexCard | null {
   const providerId = text(raw.id);
-  const localId = text(raw.localId);
+  const localId = normalizeTcgdexLocalId(text(raw.localId));
   const name = text(raw.name);
   if (!providerId || !localId || !name) return null;
 
-  const setId =
+  const remoteSetId =
     text(raw.set?.id) ?? providerId.split("-").slice(0, -1).join("-");
+  const setId = canonicalTcgdexSetId(remoteSetId);
   if (!setId) return null;
 
   const printKey = printKeyFromTcgdexIds(setId, localId);
@@ -405,7 +439,7 @@ export function mapTcgdexCard(
     setTotalCount: positiveInt(raw.set?.cardCount?.total),
     localId,
     language,
-    name,
+    name: tcgdexCardDisplayName(name, localId),
     rarity: text(raw.rarity),
     stage: text(raw.stage),
     category: text(raw.category),
@@ -416,8 +450,8 @@ export function mapTcgdexCard(
     illustrator: text(raw.illustrator),
     finishes,
     imageBaseUrl,
-    imageUrl: tcgdexImageUrl(imageBaseUrl, "high", "png"),
-    thumbnailUrl: tcgdexImageUrl(imageBaseUrl, "low", "webp"),
+    imageUrl: tcgdexImageUrl(imageBaseUrl, "high"),
+    thumbnailUrl: tcgdexImageUrl(imageBaseUrl, "low"),
     cmPriceCents: prices.cmPriceCents,
     cmFoilPriceCents: prices.cmFoilPriceCents,
     cardmarketProductId: prices.cardmarketProductId,
@@ -430,12 +464,13 @@ export function mapTcgdexBrief(
   language: TcgdexLanguage,
 ): TcgdexCard | null {
   const providerId = text(raw.id);
-  const localId = text(raw.localId);
+  const localId = normalizeTcgdexLocalId(text(raw.localId));
   const name = text(raw.name);
   if (!providerId || !localId || !name) return null;
 
   const dash = providerId.lastIndexOf("-");
-  const setId = dash > 0 ? providerId.slice(0, dash) : null;
+  const remoteSetId = dash > 0 ? providerId.slice(0, dash) : null;
+  const setId = canonicalTcgdexSetId(remoteSetId);
   if (!setId) return null;
 
   const printKey = printKeyFromTcgdexIds(setId, localId);
@@ -453,7 +488,7 @@ export function mapTcgdexBrief(
     setTotalCount: null,
     localId,
     language,
-    name,
+    name: tcgdexCardDisplayName(name, localId),
     rarity: null,
     stage: null,
     category: null,
@@ -464,8 +499,8 @@ export function mapTcgdexBrief(
     illustrator: null,
     finishes: [],
     imageBaseUrl,
-    imageUrl: tcgdexImageUrl(imageBaseUrl, "high", "png"),
-    thumbnailUrl: tcgdexImageUrl(imageBaseUrl, "low", "webp"),
+    imageUrl: tcgdexImageUrl(imageBaseUrl, "high"),
+    thumbnailUrl: tcgdexImageUrl(imageBaseUrl, "low"),
     cmPriceCents: null,
     cmFoilPriceCents: null,
     cardmarketProductId: null,
@@ -501,22 +536,56 @@ export async function attachTcgdexSerieNames(
   });
 }
 
+/**
+ * Human-readable print reference — collector number only (`014`, `006/165`).
+ *
+ * Same contract as Lorcana / Naruto: set (and serie) live on the catalogue
+ * heading / `setLabel`, not inlined into every card line. Embedding them here
+ * made checklist markdown repeat `Collection McDonald's · Collection
+ * McDonald's 2023 · 4` under an already-titled set.
+ */
 export function tcgdexPrintLabel(card: TcgdexCard): string {
-  const set = card.setName ?? card.setId;
-  const parts: string[] = [];
-  if (card.serieName && card.serieName.toLowerCase() !== set.toLowerCase()) {
-    parts.push(card.serieName);
-  }
-  parts.push(set);
-  parts.push(tcgdexCollectorNumberLabel(card));
-  return parts.join(" · ");
+  return tcgdexCollectorNumberLabel(card);
 }
 
-/** Printed collector number, with set size when known (`11/108`). */
+/**
+ * « Zarbi » × 28 formes : le localId (A…Z, !, ?) est ce qui départage. TCGdex
+ * ne le met pas dans le nom — on l'ajoute pour la check-list / la recherche.
+ */
+export function tcgdexCardDisplayName(name: string, localId: string): string {
+  const trimmed = name.trim();
+  const form = normalizeTcgdexLocalId(localId);
+  if (!trimmed || !form) return trimmed;
+  if (!/^(zarbi|unown)$/i.test(trimmed)) return trimmed;
+  const shown =
+    form === "!" || form === "?" ? form : form.toUpperCase();
+  if (trimmed.endsWith(` ${shown}`) || trimmed.endsWith(` ${form}`)) {
+    return trimmed;
+  }
+  return `${trimmed} ${shown}`;
+}
+
+/**
+ * Printed collector number, with set size when known (`004/015`, `006/165`).
+ *
+ * Numeric segments are zero-padded to the printed width (at least 3 digits, or
+ * the official set size's digit count) — same look as the card corner / Coleka.
+ */
 export function tcgdexCollectorNumberLabel(card: TcgdexCard): string {
+  const id = normalizeTcgdexLocalId(card.localId);
   const total = card.setOfficialCount;
-  if (total != null) return `${card.localId}/${total}`;
-  return card.localId;
+  const shown = /^\d+$/.test(id)
+    ? id
+    : /^[a-z]$/i.test(id)
+      ? id.toUpperCase()
+      : id;
+  if (total == null) {
+    return /^\d+$/.test(id) ? id.padStart(3, "0") : shown;
+  }
+  const totalStr = String(total);
+  const width = Math.max(3, totalStr.length);
+  const left = /^\d+$/.test(id) ? id.padStart(width, "0") : shown;
+  return `${left}/${totalStr.padStart(width, "0")}`;
 }
 
 type FetchOptions = {
@@ -618,6 +687,40 @@ function sameNumber(localId: string, wanted: string): boolean {
 }
 
 /**
+ * Les extensions d'une locale — index léger `/sets` (id + name).
+ *
+ * Sert le sélecteur d'étagère en complément du catalogue local : un set déjà
+ * annoncé par TCGdex apparaît même si la moisson `prints.sqlite` n'a pas encore
+ * tiré ses cartes.
+ */
+export async function listTcgdexRemoteSets(
+  options: FetchOptions = {},
+): Promise<{ id: string; label: string }[]> {
+  const language = resolveLanguage(options.language);
+  try {
+    const response = await httpGet<
+      { id?: string; name?: string; cardCount?: { total?: number } }[]
+    >(`${API_BASE}/${language}/sets`, {
+      signal: options.signal,
+      timeout: 20_000,
+    });
+    const rows = Array.isArray(response.data) ? response.data : [];
+    const digital = await digitalOnlySetIds();
+    const out: { id: string; label: string }[] = [];
+    for (const row of rows) {
+      const remoteId = row.id?.trim();
+      if (!remoteId || digital.has(remoteId.toLowerCase())) continue;
+      const id = canonicalTcgdexSetId(remoteId) ?? remoteId;
+      const label = row.name?.trim() || id;
+      out.push({ id, label });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Les cartes d'une extension, pour la parcourir sans mot-clé.
  *
  * L'API cherche par **nom** ; un set se lit ailleurs, sur `/sets/{id}`, dont la
@@ -629,9 +732,11 @@ async function fetchTcgdexSetCards(
   language: TcgdexLanguage,
   signal?: AbortSignal,
 ): Promise<RawCardBrief[]> {
+  const apiId = tcgdexApiSetId(setId) ?? setId.trim();
+  if (!apiId) return [];
   try {
     const response = await httpGet<{ cards?: RawCardBrief[] }>(
-      `${API_BASE}/${language}/sets/${encodeURIComponent(setId)}`,
+      `${API_BASE}/${language}/sets/${encodeURIComponent(apiId)}`,
       { signal, timeout: 15_000 },
     );
     return Array.isArray(response.data?.cards) ? response.data.cards : [];

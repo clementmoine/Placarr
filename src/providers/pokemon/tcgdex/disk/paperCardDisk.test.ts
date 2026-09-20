@@ -28,6 +28,21 @@ describe("localPokemonCatalogueArtUrl", () => {
       localPokemonCatalogueArtUrl("pokemon:2023sv-4", "fr", root),
     ).toBe("/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp");
   });
+
+  it("joins Classic Collection via Live stem + remapped number", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "poke-me055c-"));
+    // Live me5-5c #2 = Charizard — TCGdex me05.5c-001 must not hit /001 (Pikachu).
+    const liveDir = path.join(root, "me5-5c", "fr", "002");
+    mkdirSync(liveDir, { recursive: true });
+    writeFileSync(path.join(liveDir, "art.webp"), "charizard");
+    const wrong = path.join(root, "me5-5c", "fr", "001");
+    mkdirSync(wrong, { recursive: true });
+    writeFileSync(path.join(wrong, "art.webp"), "pikachu");
+
+    expect(
+      localPokemonCatalogueArtUrl("pokemon:me05.5c-001", "fr", root),
+    ).toBe("/assets/pokemon/cards/me5-5c/fr/002/art.webp");
+  });
 });
 
 describe("buildPokemonDiskArtAttachments", () => {

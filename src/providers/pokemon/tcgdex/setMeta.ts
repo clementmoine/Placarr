@@ -8,6 +8,7 @@
 import { httpGet } from "@/lib/http/httpClient";
 
 import type { TcgdexLanguage } from "./fetch";
+import { tcgdexApiSetId } from "./localSetIds";
 
 const API_BASE = "https://api.tcgdex.net/v2";
 
@@ -41,11 +42,11 @@ async function loadSetSerie(
   language: TcgdexLanguage,
   signal?: AbortSignal,
 ): Promise<TcgdexSetSerie> {
-  const id = setId.trim();
-  if (!id) return { serieId: null, serieName: null };
+  const apiId = tcgdexApiSetId(setId) ?? setId.trim();
+  if (!apiId) return { serieId: null, serieName: null };
   try {
     const response = await httpGet<RawSetDetail>(
-      `${API_BASE}/${language}/sets/${encodeURIComponent(id)}`,
+      `${API_BASE}/${language}/sets/${encodeURIComponent(apiId)}`,
       { signal, timeout: 15_000 },
     );
     const serie = response.data?.serie;

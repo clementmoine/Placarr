@@ -48,7 +48,7 @@ export function tcgdexCatalogStatus(): ProviderCatalogStatus {
   const lastSyncAt = printsLastSyncAt();
   if (!lastSyncAt) {
     // DB exists from an old harvest without stamp → stale so auto-sync picks
-    // up new sets (e.g. 30th) instead of sitting forever on aged data.
+    // up new sets (e.g. me05.5) instead of sitting forever on aged data.
     return { empty: false, stale: true, lastSyncAt: null };
   }
   const t = Date.parse(lastSyncAt);

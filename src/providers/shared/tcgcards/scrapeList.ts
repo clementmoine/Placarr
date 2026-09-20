@@ -65,6 +65,54 @@ export const PKMCARDS_CARD_SITE: DbscardsSite = {
   },
 };
 
+/** Yu-Gi-Oh! FR faces / prices from ygocards.fr (same tile markup). */
+export const YGOCARDS_CARD_SITE: DbscardsSite = {
+  id: "ygocards",
+  origin: "https://www.ygocards.fr",
+  lists: {
+    fr: "/cards/liste-cartes-francaises",
+  },
+};
+
+/** Magic FR faces / prices from mtgcards.fr (same tile markup). */
+export const MTGCARDS_CARD_SITE: DbscardsSite = {
+  id: "mtgcards",
+  origin: "https://www.mtgcards.fr",
+  lists: {
+    fr: "/cards/liste-cartes-francaises",
+  },
+};
+
+export function ygocardsIndexPath(lang = "fr"): string {
+  return path.join(
+    foilPackDataDir("yugioh"),
+    `ygocards-${lang.toLowerCase()}.json`,
+  );
+}
+
+export function mtgcardsIndexPath(lang = "fr"): string {
+  return path.join(
+    foilPackDataDir("mtg"),
+    `mtgcards-${lang.toLowerCase()}.json`,
+  );
+}
+
+export function opecardsIndexPath(lang = "fr"): string {
+  return path.join(
+    foilPackDataDir("onepiece"),
+    `opecards-${lang.toLowerCase()}.json`,
+  );
+}
+
+/** Card-list site row for opecards.fr (OPTCG — same tile markup). */
+export const OPECARDS_CARD_SITE: DbscardsSite = {
+  id: "opecards",
+  origin: "https://www.opecards.fr",
+  lists: {
+    fr: "/cards/liste-cartes-francaises",
+  },
+};
+
 export type ScrapeDbscardsIndexResult = {
   lang: string;
   cards: number;

@@ -66,6 +66,28 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
   "src/effects/yugioh/index.ts": { yugioh: 1 },
   // Pack id = provider id (même collision OPTCG).
   "src/providers/shared/sealedProducts/langCoverage.ts": { onepiece: 1 },
+  /*
+    TCG Cards site table — `packId` is the data pack slug, identical to the
+    provider id for MTG / OPTCG / YGO (same collision as cataloguePacks).
+  */
+  "src/providers/shared/tcgcards/sites.ts": {
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
+  /*
+    List dump paths / face install — foilPackDataDir("yugioh"|"mtg"|"onepiece")
+    is the catalogue pack slug (same collision as sites.ts).
+  */
+  "src/providers/shared/tcgcards/scrapeList.ts": {
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
+  "src/providers/shared/tcgcards/fillCardsFrFaces.ts": {
+    mtg: 1,
+    yugioh: 1,
+  },
 };
 
 /**

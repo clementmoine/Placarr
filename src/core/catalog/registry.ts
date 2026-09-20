@@ -57,8 +57,11 @@ import { narutomythosModule } from "@/providers/naruto/narutomythos";
 import { narutokayouModule } from "@/providers/naruto/narutokayou";
 import { narutodatacarddassModule } from "@/providers/naruto/narutodatacarddass";
 import { onepieceModule } from "@/providers/onepiece";
+import { opemarketModule } from "@/providers/onepiece/opemarket";
 import { yugiohModule } from "@/providers/yugioh";
+import { ygomarketModule } from "@/providers/yugioh/ygomarket";
 import { mtgModule } from "@/providers/mtg";
+import { mtgmarketModule } from "@/providers/mtg/mtgmarket";
 import { dbscgModule } from "@/providers/dragonball/dbscg";
 import { dbsfwModule } from "@/providers/dragonball/dbsfw";
 import { dbslamincardsModule } from "@/providers/dragonball/dbslamincards";
@@ -155,6 +158,9 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   dbhModule,
   bleachscbModule,
   dbsmarketModule,
+  ygomarketModule,
+  mtgmarketModule,
+  opemarketModule,
   ...leclercModules,
   lorcanaggModule,
   lorcastModule,

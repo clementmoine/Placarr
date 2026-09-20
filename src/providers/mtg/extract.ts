@@ -4,14 +4,19 @@
  * 1. Download `all_cards` bulk (cached under staging/scryfall/)
  * 2. Seed printKeys + **every paper lang** titles + finishes + per-lang artUrl
  * 3. Classic card back → curated/cards/back.webp
- * 4. Optional mtgcards.fr sealed (`--skip-products` by default on auto)
+ * 4. mtgcards.fr sealed SKUs + optional FR shop faces (TCG Cards family)
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet, HTTP_DEFAULT_USER_AGENT } from "@/lib/http/httpClient";
-import { scrapeTcgCardsProducts } from "@/providers/dragonball/shared/dbscards/scrapeProducts";
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
+import { ensureCardsFrListDump } from "@/providers/shared/tcgcards/ensureListDump";
+import { fillMtgcardsFaces } from "@/providers/shared/tcgcards/fillCardsFrFaces";
+import {
+  MTGCARDS_CARD_SITE,
+  mtgcardsIndexPath,
+} from "@/providers/shared/tcgcards/scrapeList";
 
 import { MTG_PACK_ID, mtgCuratedDir } from "./pack";
 import { ensureScryfallBulkFile } from "./harvest/scryfallBulk";
@@ -19,6 +24,7 @@ import {
   applyMtgScryfallArtUrls,
   seedMtgFromScryfallBulk,
 } from "./harvest/seedFromScryfall";
+import { scrapeMtgcardsProducts } from "./sources/mtgcards";
 
 /** Classic Magic sleeve — Scryfall card_back_id 0aeebaf5-… */
 const MAGIC_CARD_BACK_URL =
@@ -79,6 +85,17 @@ export async function runMtgPackPipeline(
     argv.includes("--skip-products") || skipToken(argv, "products");
   const skipBacks =
     argv.includes("--skip-backs") || skipToken(argv, "backs");
+  const skipMtgcardsFaces = !argv.includes("--mtgcards-faces");
+  const skipMtgcardsList =
+    argv.includes("--skip-mtgcards-list") || skipToken(argv, "mtgcards-list");
+  const maxPagesRaw = (() => {
+    const i = argv.indexOf("--max-pages");
+    return i >= 0 ? Number(argv[i + 1]) : undefined;
+  })();
+  const faceLimitRaw = (() => {
+    const i = argv.indexOf("--limit");
+    return i >= 0 ? Number(argv[i + 1]) : undefined;
+  })();
 
   let bulkPath: string | null = null;
   if (!offline) {
@@ -112,11 +129,36 @@ export async function runMtgPackPipeline(
       console.log(
         `── Scryfall seed — ${seeded.prints} tirages, ${seeded.titles} titres, ${seeded.langs} langues, ${seeded.artUrls} artUrl, ${seeded.skipped} ignorés`,
       );
+      if (!skipMtgcardsList && !offline) {
+        const list = await ensureCardsFrListDump({
+          packId: MTG_PACK_ID,
+          site: MTGCARDS_CARD_SITE,
+          indexPath: mtgcardsIndexPath("fr"),
+          force,
+          maxPages: Number.isFinite(maxPagesRaw) ? maxPagesRaw : undefined,
+          label: "mtgcards.fr",
+        });
+        console.log(
+          `── mtgcards.fr list — ${list.cards} tuiles, ${list.priced} cotes, ${list.pages} pages → ${list.file}`,
+        );
+      }
+      if (!skipMtgcardsFaces && !offline) {
+        const shop = await fillMtgcardsFaces({
+          index,
+          force,
+          refreshIndex: false,
+          maxPages: Number.isFinite(maxPagesRaw) ? maxPagesRaw : undefined,
+          limit: Number.isFinite(faceLimitRaw) ? faceLimitRaw : undefined,
+        });
+        console.log(
+          `── mtgcards.fr faces — ${shop.written} écrites, ${shop.skipped} déjà là, ${shop.unmapped} sans clé, ${shop.unknownPrint} hors catalogue, ${shop.failed} échecs (${shop.indexCards} tuiles)`,
+        );
+      }
       return seeded;
     },
     seedProducts: async () => {
       if (skipProducts) return { written: 0, skipped: 0 };
-      const products = await scrapeTcgCardsProducts("mtgcards", {
+      const products = await scrapeMtgcardsProducts({
         force,
         offline,
         onProgress: (message) => console.log(`   products — ${message}`),

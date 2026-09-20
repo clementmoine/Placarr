@@ -36,8 +36,8 @@ export function dbscardsGroupingFromSkuSuffix(
 }
 
 /**
- * Fusion World parallel level from the tile slug (`p1` / `p2`).
- * Base cards (no plus / alt-art) return null.
+ * Fusion World / One Piece parallel level from the tile slug (`p1` / `p2`).
+ * Base cards (no plus / alt-art / parallèle) return null.
  */
 export function dbscardsFwParallelFromSlug(
   slug: string | null | undefined,
@@ -46,6 +46,8 @@ export function dbscardsFwParallelFromSlug(
   const bare = dbscardsBareSlug(slug);
   if (/plus-plus/i.test(bare)) return "p2";
   if (/-plus-|alt-art/i.test(bare)) return "p1";
+  // opecards.fr — « (Parallèle) » / « Parallèle SP » in the slug.
+  if (/parallele/i.test(bare)) return "p1";
   return null;
 }
 
@@ -98,6 +100,7 @@ function putCard(
   index: DbscardsPriceIndex,
   printKey: string,
   card: DbscardsPriceCard,
+  opts?: { preferHigherPrice?: boolean },
 ): void {
   const prev = index[printKey];
   if (!prev) {
@@ -105,6 +108,14 @@ function putCard(
     return;
   }
   if (langScore(card.lang) > langScore(prev.lang)) {
+    index[printKey] = card;
+    return;
+  }
+  if (
+    opts?.preferHigherPrice &&
+    langScore(card.lang) === langScore(prev.lang) &&
+    card.priceCents > prev.priceCents
+  ) {
     index[printKey] = card;
   }
 }
@@ -165,6 +176,45 @@ export function priceIndexFromDbscardsTiles(
       const prKey = buildPrintKey({ ...identity, grouping: "pr" });
       if (prKey) putCard(index, prKey, { ...card, printKey: prKey });
     }
+  }
+  return index;
+}
+
+/**
+ * Same as {@link priceIndexFromDbscardsTiles} but the caller supplies the
+ * printKey (YGO / Magic slug shapes are not Bandai `set-number`).
+ */
+export function priceIndexFromMappedTiles(
+  tiles: readonly DbscardsTile[],
+  opts: {
+    origin: string;
+    printKeyOf: (tile: DbscardsTile) => string | null;
+    /**
+     * Same printKey, several rarities on *cards.fr — keep the higher EUR
+     * quote so checklist value isn't crushed by a 0,02 € common.
+     */
+    preferHigherPrice?: boolean;
+  },
+): DbscardsPriceIndex {
+  const index: DbscardsPriceIndex = {};
+  for (const tile of tiles) {
+    const cents = euroToCents(tile.price);
+    if (cents == null) continue;
+    const key = opts.printKeyOf(tile);
+    if (!key) continue;
+    putCard(
+      index,
+      key,
+      {
+        printKey: key,
+        name: tile.name.trim() || key,
+        priceCents: cents,
+        currency: (tile.currency?.trim() || "EUR").toUpperCase(),
+        sourceUrl: cardUrl(opts.origin, tile.slug),
+        lang: tile.lang,
+      },
+      { preferHigherPrice: opts.preferHigherPrice ?? true },
+    );
   }
   return index;
 }

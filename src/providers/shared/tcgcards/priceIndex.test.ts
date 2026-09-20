@@ -7,6 +7,7 @@ import {
   lookupDbscardsPrice,
   mergeDbscardsPriceIndexes,
   priceIndexFromDbscardsTiles,
+  priceIndexFromMappedTiles,
 } from "./priceIndex";
 import type { DbscardsTile } from "./tile";
 
@@ -53,6 +54,12 @@ describe("dbscardsFwParallelFromSlug", () => {
       ),
     ).toBe("p2");
     expect(dbscardsFwParallelFromSlug("en-st01-001-l-son-goten")).toBeNull();
+  });
+
+  it("maps opecards parallèle slugs to p1", () => {
+    expect(
+      dbscardsFwParallelFromSlug("op17-001-l-parallele-edward-newgate"),
+    ).toBe("p1");
   });
 });
 
@@ -157,6 +164,35 @@ describe("priceIndexFromDbscardsTiles", () => {
     );
     expect(index[`${FUSION_GAME}:st01-001`]?.priceCents).toBe(95);
     expect(index[`${FUSION_GAME}:st01-001-p1`]?.priceCents).toBe(15500);
+  });
+});
+
+describe("priceIndexFromMappedTiles", () => {
+  it("keeps the higher EUR quote when several rarities share a printKey", () => {
+    const index = priceIndexFromMappedTiles(
+      [
+        tile({
+          slug: "ra03001-c-cheap",
+          name: "Cheap",
+          price: 0.02,
+          lang: "fr",
+        }),
+        tile({
+          slug: "ra03001-sr-dear",
+          name: "Dear",
+          price: 4.5,
+          lang: "fr",
+        }),
+      ],
+      {
+        origin: "https://www.ygocards.fr",
+        printKeyOf: () => "yugioh:ra03-fr001",
+      },
+    );
+    expect(index["yugioh:ra03-fr001"]).toMatchObject({
+      priceCents: 450,
+      name: "Dear",
+    });
   });
 });
 

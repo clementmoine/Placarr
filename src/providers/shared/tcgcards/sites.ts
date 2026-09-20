@@ -88,11 +88,11 @@ export type TcgCardsSite = {
   stagingFolder: string;
   /**
    * Nav `/products/{slug}` slugs published on the host (measured 2026-08-16,
-   * revu le 2026-08-19). C'est le seul point de ces crawls qui ne se découvre
-   * pas tout seul : les cartes viennent du `<select>` de séries des sites
-   * Bandai, les produits d'une liste écrite ici. Un slug oublié est invisible,
-   * sans erreur — `prerelease-packs` chez lorcards cachait ainsi deux packs
-   * avant-première (Set 13, Set 14).
+   * revu le 2026-08-19 ; listes `/cards` mtg/ygo 2026-09-19). C'est le seul
+   * point de ces crawls qui ne se découvre pas tout seul : les cartes viennent
+   * du `<select>` de séries des sites Bandai, les produits d'une liste écrite
+   * ici. Un slug oublié est invisible, sans erreur — `prerelease-packs` chez
+   * lorcards cachait ainsi deux packs avant-première (Set 13, Set 14).
    *
    * Pour la revoir : `TCGCARDS_CATEGORY_ROLES` classe les slugs connus, et
    * tout slug inconnu vaut `skip`. Un slug vu sur un site et typé autrement que
@@ -189,6 +189,9 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
       "double-packs",
       "tins",
     ],
+    lists: {
+      fr: "/cards/liste-cartes-francaises",
+    },
   },
   ygocards: {
     id: "ygocards",
@@ -196,6 +199,9 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     packId: "yugioh",
     stagingFolder: "ygocards-products",
     categories: ["boosters", "displays"],
+    lists: {
+      fr: "/cards/liste-cartes-francaises",
+    },
   },
   mtgcards: {
     id: "mtgcards",
@@ -203,6 +209,9 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     packId: "mtg",
     stagingFolder: "mtgcards-products",
     categories: ["commander-decks", "prerelease-packs"],
+    lists: {
+      fr: "/cards/liste-cartes-francaises",
+    },
   },
   fabcards: {
     id: "fabcards",

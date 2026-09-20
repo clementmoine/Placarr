@@ -733,6 +733,7 @@ const SURUGA_DCD_JP_CATEGORY =
   "https://www.suruga-ya.jp/search?category=501080113";
 
 async function fetchSurugaHtml(url: string): Promise<string> {
+  // Suruga always serves Cloudflare on direct GET — skip straight to Flare.
   const html = await fetchTextWithFlareFallback(url, {
     headers: {
       "User-Agent": SURUGA_UA,
@@ -741,7 +742,8 @@ async function fetchSurugaHtml(url: string): Promise<string> {
       Referer: "https://www.suruga-ya.jp/",
     },
     timeout: 25_000,
-    flareMaxTimeoutMs: 60_000,
+    flareMaxTimeoutMs: 90_000,
+    skipDirect: true,
   });
   return html ?? "";
 }
@@ -803,6 +805,12 @@ export async function harvestSurugaDcd(
   ],
   maxPagesPerQuery = 26,
 ): Promise<void> {
+  if (!process.env.FLARESOLVERR_URL?.trim()) {
+    throw new Error(
+      "FLARESOLVERR_URL requis pour le crawl Suruga (Cloudflare) — ex. http://127.0.0.1:8191",
+    );
+  }
+
   let grandTotalAdded = 0;
 
   // Bare category first (user shelf) — covers whatever search_word would miss.

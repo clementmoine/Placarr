@@ -5,9 +5,14 @@
  * 2. faces Bandai (img_url) → art.bandai.webp
  * 3. opecards.fr → produits scellés
  */
-import { scrapeTcgCardsProducts } from "@/providers/shared/dbscards/scrapeProducts";
+import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
+import { ensureCardsFrListDump } from "@/providers/shared/tcgcards/ensureListDump";
+import {
+  OPECARDS_CARD_SITE,
+  opecardsIndexPath,
+} from "@/providers/shared/tcgcards/scrapeList";
 import path from "node:path";
 
 import { harvestOpecardsDistinctBacks } from "./opecardsBacks";
@@ -34,6 +39,12 @@ export async function runOnepiecePackPipeline(
     argv.includes("--skip-products") || skipToken(argv, "products");
   const skipBacks =
     argv.includes("--skip-backs") || skipToken(argv, "backs");
+  const skipOpecardsList =
+    argv.includes("--skip-opecards-list") || skipToken(argv, "opecards-list");
+  const maxPagesRaw = (() => {
+    const i = argv.indexOf("--max-pages");
+    return i >= 0 ? Number(argv[i + 1]) : undefined;
+  })();
 
   if (!offline) {
     const harvested = await harvestPunkRecords({ force });
@@ -65,6 +76,19 @@ export async function runOnepiecePackPipeline(
         });
         console.log(
           `── faces Bandai — ${faces.faces} écrites, ${faces.skip} déjà là, ${faces.fail} manquée${faces.fail === 1 ? "" : "s"}`,
+        );
+      }
+      if (!skipOpecardsList && !offline) {
+        const list = await ensureCardsFrListDump({
+          packId: ONEPIECE_PACK_ID,
+          site: OPECARDS_CARD_SITE,
+          indexPath: opecardsIndexPath("fr"),
+          force,
+          maxPages: Number.isFinite(maxPagesRaw) ? maxPagesRaw : undefined,
+          label: "opecards.fr",
+        });
+        console.log(
+          `── opecards.fr list — ${list.cards} tuiles, ${list.priced} cotes, ${list.pages} pages → ${list.file}`,
         );
       }
       return seeded;

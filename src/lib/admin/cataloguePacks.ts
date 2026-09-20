@@ -920,9 +920,9 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
-      "Catalogue OPTCG Bandai — punk-records + faces cardlist ; scellé opecards.fr.",
+      "Catalogue OPTCG Bandai — punk-records + faces cardlist ; scellé + cotes opecards.fr.",
     blurbEn:
-      "Bandai OPTCG catalogue — punk-records + official cardlist faces; sealed via opecards.fr.",
+      "Bandai OPTCG catalogue — punk-records + official cardlist faces; sealed + prices via opecards.fr.",
   },
   ...LECLERC_ACTIVE_OPS.map((op) => {
     const family = leclercFamilyMeta(op.family);
@@ -991,12 +991,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       prelude: [
         "Yu-Gi-Oh!: YGOPRODeck (EN/FR) + ScanFlip FR → data/yugioh",
         "Faces locales YGOPRODeck ; ScanFlip CDN artUrl si pas encore téléchargé",
+        "Scellé ygocards.fr (boosters + displays) ; liste prix + faces boutique : --ygocards-faces",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
-      "Catalogue Yu-Gi-Oh! — YGOPRODeck + ScanFlip FR (CDN).",
-    blurbEn: "Yu-Gi-Oh! catalogue — YGOPRODeck + ScanFlip FR (CDN).",
+      "Catalogue Yu-Gi-Oh! — YGOPRODeck + ScanFlip FR ; scellé + cotes ygocards.fr.",
+    blurbEn:
+      "Yu-Gi-Oh! catalogue — YGOPRODeck + ScanFlip FR; sealed + prices via ygocards.fr.",
   },
   {
     id: "mtg",
@@ -1022,13 +1024,16 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["cards-index.json", "catalog.sqlite"],
     extract: {
       prelude: [
-        "Magic: The Gathering: Scryfall bulk default_cards → data/mtg",
-        "Titres EN + artUrl CDN + dos classique ; scellé mtgcards.fr optionnel",
+        "Magic: The Gathering: Scryfall bulk all_cards → data/mtg",
+        "Titres multi-lang + artUrl CDN + dos classique ; scellé mtgcards.fr",
+        "Liste prix FR ; faces boutique : --mtgcards-faces",
       ],
       timeoutMs: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
     },
-    blurbFr: "Catalogue Magic via Scryfall (bulk EN + faces CDN).",
-    blurbEn: "Magic catalogue via Scryfall (EN bulk + CDN faces).",
+    blurbFr:
+      "Catalogue Magic via Scryfall ; scellé + cotes mtgcards.fr (commander / avant-première).",
+    blurbEn:
+      "Magic catalogue via Scryfall; sealed + prices via mtgcards.fr (commander / prerelease).",
   },
 ];
 

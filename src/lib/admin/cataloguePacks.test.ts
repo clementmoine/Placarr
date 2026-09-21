@@ -16,6 +16,7 @@ import {
   mergeNarutoCatalogueFaces,
   catalogueBackLangFromTierSlug,
   packFaceAssetUrl,
+  restrictRowsToCatalogueLocales,
 } from "@/lib/admin/catalogueCards";
 import {
   applyCataloguePackParams,
@@ -70,6 +71,17 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("leclercmarvel24")).toBe("leclerc/marvel24");
     expect(resolveCataloguePackId("leclercdisney")).toBe("leclerc/disney25");
     expect(resolveCataloguePackId("nope")).toBeNull();
+  });
+
+  it("marks arcade / Leclerc as no retail sealed SKUs", () => {
+    expect(cataloguePackInfo("naruto/data-carddass")?.hasSealedProducts).toBe(
+      false,
+    );
+    expect(cataloguePackInfo("leclerc/disney25")?.hasSealedProducts).toBe(
+      false,
+    );
+    expect(cataloguePackInfo("dbs/heroes")?.hasSealedProducts).not.toBe(false);
+    expect(cataloguePackInfo("onepiece")?.hasSealedProducts).not.toBe(false);
   });
 
   /*
@@ -672,6 +684,46 @@ describe("same-number art fallback (Naruto)", () => {
     expect(promo?.thumbUrl).toBe(retail?.thumbUrl);
   });
 
+  it("prefers S1 FR retail over JA scan hung on a manga prerelease stub", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:ni-0019": {
+          set: "ninja",
+          card: "ni0019",
+          name: "Naruto Uzumaki",
+          langs: {
+            fr: { name: "Naruto Uzumaki", art: "art.carddass.jpg" },
+            ja: { name: "うずまきナルト", art: "art.suruga.jpg" },
+          },
+        },
+        "naruto:ni-0019-prerelease": {
+          set: "prerelease",
+          card: "ni0019-prerelease",
+          name: "Naruto Uzumaki",
+          rarity: "prerelease",
+          langs: {
+            fr: { name: "Naruto Uzumaki" },
+            ja: { name: "うずまきナルト", art: "art.suruga.jpg" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index, "fr");
+    const retail = rows.find(
+      (r) => r.printKey === "naruto:ni-0019" && r.lang === "fr",
+    );
+    const pre = rows.find(
+      (r) => r.printKey === "naruto:ni-0019-prerelease" && r.lang === "fr",
+    );
+    expect(retail?.artUrl).toContain("/ninja/ni0019/fr/art.carddass.jpg");
+    expect(pre?.artFallbackFrom).toBe("naruto:ni-0019");
+    expect(pre?.artUrl).toBe(retail?.artUrl);
+    expect(pre?.artLocaleFrom).toBeUndefined();
+  });
+
   it("does not pair a tourney reprint with its booster number in the grid", () => {
     const index = {
       version: 1 as const,
@@ -1057,7 +1109,7 @@ describe("same-number art fallback (Naruto)", () => {
     expect(missingName.map((row) => row.printKey)).toEqual(["dbscg:noname"]);
   });
 
-  it("expose les locales du pack pour le sélecteur admin", () => {
+  it("expose les locales du pack pour le sélecteur admin", async () => {
     expect(cataloguePackInfo("naruto/ninja-ranks")?.catalogueLocales).toEqual([
       "en",
       "fr",
@@ -1073,6 +1125,7 @@ describe("same-number art fallback (Naruto)", () => {
       "en",
     ]);
     expect(cataloguePackInfo("pokemon")?.catalogueLocales).toEqual([
+      "ja",
       "fr",
       "en",
     ]);
@@ -1092,14 +1145,47 @@ describe("same-number art fallback (Naruto)", () => {
     expect(cataloguePackInfo("onepiece")?.localeArt?.bestFaceAcrossLocales).toBe(
       true,
     );
-    const listed = listCatalogueCards({
+    const listed = await listCatalogueCards({
       pack: "naruto/ninja-ranks",
       limit: 1,
     });
     expect(listed.availableLocales).toEqual(["en", "fr", "it"]);
   });
 
-  it("filtre aussi les dos language-specific (tier back.ja)", () => {
+  it("Pokémon « toutes locales » ignores Live DE/IT/ES/ptbr outside catalogueLocales", () => {
+    /*
+      Live indexes six langs as separate printKeys. The admin surface is
+      ja/fr/en — « Toutes locales » must not count the other CDN langs (they
+      inflated « sans prix » while the language dropdown never offered them).
+    */
+    const base = {
+      printKey: "x",
+      set: "me5",
+      card: "001",
+      label: "Tropius",
+      name: "Tropius",
+      artUrl: null as string | null,
+      missingArt: false,
+      hasFoil: false,
+      kind: "card" as const,
+    };
+    const rows = [
+      { ...base, printKey: "me5_fr_001", lang: "fr" },
+      { ...base, printKey: "me5_en_001", lang: "en" },
+      { ...base, printKey: "me5_de_001", lang: "de" },
+      { ...base, printKey: "me5_it_001", lang: "it" },
+      { ...base, printKey: "back", lang: "—" },
+    ];
+    const filtered = restrictRowsToCatalogueLocales(rows, ["ja", "fr", "en"]);
+    expect(filtered.map((r) => r.lang)).toEqual(["fr", "en", "—"]);
+    expect(cataloguePackInfo("pokemon")?.catalogueLocales).toEqual([
+      "ja",
+      "fr",
+      "en",
+    ]);
+  });
+
+  it("filtre aussi les dos language-specific (tier back.ja)", async () => {
     expect(catalogueBackLangFromTierSlug("ja")).toBe("ja");
     expect(catalogueBackLangFromTierSlug("hr")).toBe("—");
     const jaBack = {
@@ -1117,7 +1203,7 @@ describe("same-number art fallback (Naruto)", () => {
     expect(matchesCataloguePreferredLang(jaBack, "fr")).toBe(false);
     expect(matchesCataloguePreferredLang(shared, "fr")).toBe(true);
 
-    const listed = listCatalogueCards({
+    const listed = await listCatalogueCards({
       pack: "naruto/shippuden",
       locales: "preferred",
       preferLang: "ja",
@@ -1203,12 +1289,12 @@ describe("same-number art fallback (Naruto)", () => {
     expect(rows[1]?.artUrl).toContain("/ks1/fr/0120-a/");
   });
 
-  it("Mythos preferred FR liste aussi Shinobi Shiren (SAMPLE EN)", () => {
+  it("Mythos preferred FR liste aussi Shinobi Shiren (SAMPLE EN)", async () => {
     expect(cataloguePackInfo("naruto/mythos")?.catalogueLocales).toEqual([
       "fr",
       "en",
     ]);
-    const listed = listCatalogueCards({
+    const listed = await listCatalogueCards({
       pack: "naruto/mythos",
       locales: "preferred",
       preferLang: "fr",
@@ -1224,11 +1310,11 @@ describe("same-number art fallback (Naruto)", () => {
     ).toBe(true);
   });
 
-  it("疾風伝 n'expose pas de locale FR (japonais seul)", () => {
+  it("疾風伝 n'expose pas de locale FR (japonais seul)", async () => {
     expect(cataloguePackInfo("naruto/shippuden")?.catalogueLocales).toEqual([
       "ja",
     ]);
-    const listed = listCatalogueCards({
+    const listed = await listCatalogueCards({
       pack: "naruto/shippuden",
       locales: "preferred",
       preferLang: "fr",
@@ -1241,8 +1327,8 @@ describe("same-number art fallback (Naruto)", () => {
     expect(listed.cards.some((row) => row.lang === "ja")).toBe(true);
   });
 
-  it("preferred FR n'efface pas les faces neutres ; FW sans localeArt = lang-specific", () => {
-    const fr = listCatalogueCards({
+  it("preferred FR n'efface pas les faces neutres ; FW sans localeArt = lang-specific", async () => {
+    const fr = await listCatalogueCards({
       pack: "dbs/fw",
       locales: "preferred",
       preferLang: "fr",
@@ -1256,7 +1342,7 @@ describe("same-number art fallback (Naruto)", () => {
     expect(fr.total).toBeGreaterThan(100);
     expect(fr.cards.every((row) => row.lang !== "fr")).toBe(true);
 
-    const en = listCatalogueCards({
+    const en = await listCatalogueCards({
       pack: "dbs/fw",
       locales: "preferred",
       preferLang: "en",
@@ -1295,7 +1381,7 @@ describe("same-number art fallback (Naruto)", () => {
     ]);
   });
 
-  it("filtre sur la locale préférée pour Ninja Ranks (évite 3× le même libellé)", () => {
+  it("filtre sur la locale préférée pour Ninja Ranks (évite 3× le même libellé)", async () => {
     const index = {
       version: 1 as const,
       pack: "naruto/ninja-ranks",
@@ -1318,7 +1404,7 @@ describe("same-number art fallback (Naruto)", () => {
     const frOnly = rows.filter((r) => r.lang === "fr");
     expect(frOnly).toHaveLength(1);
     expect(frOnly[0]?.printKey).toBe("naruto:sd-0006");
-    const listed = listCatalogueCards({
+    const listed = await listCatalogueCards({
       pack: "naruto/ninja-ranks",
       locales: "preferred",
       preferLang: "fr",

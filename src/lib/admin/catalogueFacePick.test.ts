@@ -46,24 +46,34 @@ describe("catalogueFacePick", () => {
     expect(face.file).toBe("art.arcadegamecards.jpg");
   });
 
-  it("préfère Carddass officiel à Coleka à résolution proche", () => {
+  it("garde Carddass FR face à un scan JA haute-résolution (language-specific)", () => {
     const entry = {
-      set: "a",
-      card: "001",
+      set: "ninja",
+      card: "ni0002",
       langs: {
-        fr: { art: "art.carddass.jpg", artW: 400, artH: 560 },
-        ja: { art: "art.coleka.webp", artW: 420, artH: 580 },
+        fr: { art: "art.carddass.jpg", artW: 350, artH: 496 },
+        ja: { art: "art.chitoroshop.jpg", artW: 1414, artH: 2000 },
       },
     };
-    const face = resolveCatalogueFace({
+    const stolen = resolveCatalogueFace({
       entry,
       tileLang: "fr",
       tileFiles: entry.langs.fr!,
-      catalogueLocales: ["ja", "fr"],
       languageSpecific: false,
       bestFaceAcrossLocales: true,
     });
-    expect(face.file).toBe("art.carddass.jpg");
+    expect(stolen.artLang).toBe("ja");
+    expect(stolen.file).toBe("art.chitoroshop.jpg");
+
+    const kept = resolveCatalogueFace({
+      entry,
+      tileLang: "fr",
+      tileFiles: entry.langs.fr!,
+      languageSpecific: true,
+      bestFaceAcrossLocales: true,
+    });
+    expect(kept.artLang).toBe("fr");
+    expect(kept.file).toBe("art.carddass.jpg");
   });
 
   it("emprunte la meilleure face cross-locale quand le tirage est neutre", () => {
@@ -253,5 +263,26 @@ describe("catalogueFacePick", () => {
         artH: 1096,
       }),
     );
+  });
+
+  it("garde le Coleka FR sur N-412 quand l'index n'a pas artW/artH (ne pas laisser drive voler)", () => {
+    const entry = {
+      set: "ninja",
+      card: "n0412",
+      langs: {
+        fr: { name: "Natsuhi", art: "art.coleka.webp" },
+        en: { name: "Natsuhi", art: "art.drive.webp" },
+      },
+    };
+    const face = resolveCatalogueFace({
+      entry,
+      tileLang: "fr",
+      tileFiles: entry.langs.fr!,
+      catalogueLocales: ["ja", "fr", "en"],
+      languageSpecific: false,
+      bestFaceAcrossLocales: true,
+    });
+    expect(face.artLang).toBe("fr");
+    expect(face.file).toBe("art.coleka.webp");
   });
 });

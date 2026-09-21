@@ -1,0 +1,44 @@
+{
+  "source": "ebay.com hmzkhyt / japanesemarketshop",
+  "observed": "2026-09-21",
+  "crawlLive": false,
+  "ingest": "faces",
+  "lang": "ja",
+  "note": "Paste-only from user-supplied SRP (_ipg=240). Shippuden JA orphans only. Do not crawl the store.",
+  "not": [
+    "crawl",
+    "bulk-store-scrape"
+  ],
+  "faces": [
+    {
+      "printedRef": "術伝-061",
+      "diskId": "mju0061",
+      "title": "Naruto Card Game JutsuDen-061 Super Rare Mangekyō Sharingan",
+      "listingUrl": "https://www.ebay.com/itm/387247811599",
+      "url": "https://i.ebayimg.com/images/g/fDYAAOSwIuhmp-QY/s-l1600.webp",
+      "imageId": "fDYAAOSwIuhmp-QY",
+      "ingest": true,
+      "note": "hmzkhyt — 術伝-061 万華鏡写輪眼 verified on photo 2026-09-21"
+    },
+    {
+      "printedRef": "忍伝-学036",
+      "diskId": "gaku0036",
+      "title": "Naruto Shippuden Card Game Ninden-gaku036 Hashirama Senju — seller title; printed 忍伝-学036 初代火影 (≠ 忍伝-036 大蛇丸)",
+      "listingUrl": "https://www.ebay.com/itm/388364710680",
+      "url": "https://i.ebayimg.com/images/g/uAwAAOSw6UBoFwFd/s-l1600.webp",
+      "imageId": "uAwAAOSw6UBoFwFd",
+      "ingest": true,
+      "note": "hmzkhyt — 忍伝-学036 初代火影 verified on photo 2026-09-21 (name+art; ≠ shi0036)"
+    },
+    {
+      "printedRef": "忍伝-学039",
+      "diskId": "gaku0039",
+      "title": "Naruto Shippuden Card Game Ninden-gaku039 Hinata Hyūga — seller title; printed 忍伝-学039 (≠ 忍伝-039 パックン)",
+      "listingUrl": "https://www.ebay.com/itm/205464289882",
+      "url": "https://i.ebayimg.com/images/g/nIcAAOSwh65oFwGL/s-l1600.webp",
+      "imageId": "nIcAAOSwh65oFwGL",
+      "ingest": true,
+      "note": "hmzkhyt — 忍伝-学039 日向ヒナタ verified on photo 2026-09-21 (name+art; ≠ shi0039)"
+    }
+  ]
+}

@@ -23,6 +23,11 @@ import {
   type NarutoPrintRow,
 } from "../indexStore";
 import { NARUTO_EN_PACK_ID } from "../identity";
+import {
+  buildLocaleSpecificFacesFromIndex,
+  writeLocaleSpecificFaces,
+} from "@/lib/admin/localeSpecificFaces";
+import { isCardsIndexV1 } from "@/effects/cardsIndex";
 import { hinokunianJaNames } from "./catalogues";
 import { nikitaFactsJaNames } from "./catalogues";
 import { loadSurugaResolvedJaNames } from "./marketplace";
@@ -1034,7 +1039,7 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
 }
 
 const FOUND_TITLE_SOURCE =
-  "carddass-official + manga-news-cache + attested-promos + s1-fr-prerelease + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + coleka-us-promos + slab-z-ja + carddas-jp + carddas-jp-promo + carddas-jp-maku + goat-en + narutocardgame-gg + narutocards-ca + narutocards-net + user-physical + leboncoin";
+  "carddass-official + manga-news-cache + attested-promos + s1-fr-prerelease + carte-semaine + bandaicg-en + bgg-en-s1 + coleka-fr + coleka-us-promos + slab-z-ja + carddas-jp + carddas-jp-promo + carddas20-pro + noihjp-carddass + carddas-jp-maku + goat-en + narutocardgame-gg + narutocards-ca + narutocards-net + user-physical + leboncoin";
 
 function assembleNarutoCatalogue(
   prints: NarutoPrintRow[],
@@ -1156,6 +1161,34 @@ function indexNarutoEnPackFromDisk(): void {
   );
 }
 
+/**
+ * FR/JA/EN Carddass rectos carry different printed text. Without this ledger,
+ * `bestFaceAcrossLocales` lets a high-res JA shop scan steal the FR tile
+ * (NI-001/002 → art.suruga ; 忍-2（PS） chitoroshop vit sous `ni0002-ps`). JA-only orphans stay neutral so
+ * empty FR shells can still borrow.
+ */
+function writeCarddassLocaleSpecificFaces(indexPath: string): number {
+  try {
+    const raw = JSON.parse(fs.readFileSync(indexPath, "utf8")) as unknown;
+    if (!isCardsIndexV1(raw)) return 0;
+    const doc = buildLocaleSpecificFacesFromIndex(
+      raw,
+      ["fr", "ja", "en"],
+      "Carddass FR/JA/EN — recto localisé, ne pas emprunter cross-langue.",
+    );
+    const out = writeLocaleSpecificFaces(NARUTO_PACK_ID, doc);
+    console.log(
+      `── locale-specific-faces: ${out.faces} dual-locale → ${out.path}`,
+    );
+    return out.faces;
+  } catch (err) {
+    console.warn(
+      `── locale-specific-faces: ${err instanceof Error ? err.message : err}`,
+    );
+    return 0;
+  }
+}
+
 export async function scrapeNarutoCards(
   options: ScrapeNarutoOptions = {},
 ): Promise<void> {
@@ -1207,6 +1240,7 @@ export async function scrapeNarutoCards(
       indexPath,
       assembled.titles,
     );
+    const localeSpecificFaces = writeCarddassLocaleSpecificFaces(indexPath);
     indexNarutoEnPackFromDisk();
     console.log(
       JSON.stringify(
@@ -1226,6 +1260,7 @@ export async function scrapeNarutoCards(
           physicalAdded: assembled.found.physicalAdded.length,
           hinokunianJaNamed: assembled.hinokunianTitled.length,
           titlesCorrected: assembled.found.titlesCorrected.length,
+          localeSpecificFaces,
           dbPath,
           indexPath,
         },
@@ -1584,6 +1619,7 @@ export async function scrapeNarutoCards(
     indexPath,
     assembled.titles,
   );
+  const localeSpecificFaces = writeCarddassLocaleSpecificFaces(indexPath);
   indexNarutoEnPackFromDisk();
 
   const siteByKind: Record<string, number> = {};
@@ -1604,6 +1640,7 @@ export async function scrapeNarutoCards(
     migratedVc,
     foldedUnsourced,
     tinPromos,
+    localeSpecificFaces,
     site: {
       downloaded: siteOk,
       skipped: siteSkip,

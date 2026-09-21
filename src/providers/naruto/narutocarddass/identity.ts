@@ -150,6 +150,10 @@ const PREFIX_FAMILY: ReadonlyArray<readonly [string, NarutoCollectorFamily]> = [
   ["prki", "promo"],
   ["prus", "promo"],
   ["opni", "promo"],
+  // Porte-cartes 木ノ葉絵巻 (`CAN-1`〜`CAN-6`) — not Data Carddass `CAN-001`.
+  ["can", "promo"],
+  // コイン PLUS / PLUS 2 (`COIN-1`〜`COIN-16`) — tabletop Carddass, not arcade.
+  ["coin", "promo"],
   ["shi", "ninja"],
   ["mju", "jutsu"],
   ["msa", "mission"],
@@ -183,7 +187,7 @@ const FAMILY_SEARCH_PREFIXES: Record<NarutoCollectorFamily, readonly string[]> =
     mission: ["ta", "st", "m", "mi"],
     client: ["cl", "c"],
     knight: ["ki"],
-    promo: ["pr", "ps", "prus"],
+    promo: ["pr", "ps", "prus", "can", "coin"],
   };
 
 /** JP 幕 / 忍者学校 — own disk folder, not NI/N/J/M voisinage. */
@@ -238,6 +242,8 @@ const DISK_PREFIX_ORDER = [
   "prta",
   "prcl",
   "prki",
+  "can",
+  "coin",
 ] as const;
 
 const PREFIX_RE = new RegExp(
@@ -295,13 +301,32 @@ export function parseNarutoCollector(raw: string): NarutoCollectorId | null {
   if (DATA_CARDDASS_PRINTED_RE.test(raw.trim().replace(/\s+/g, ""))) {
     return null;
   }
-  const trimmed = foldPrintedNarutoRef(raw);
-  const m = PREFIX_RE.exec(trimmed);
+  const folded = foldPrintedNarutoRef(raw);
+  /*
+    Data Carddass arcade also prints `CAN-001` (exactly 3 digits). The Carddass
+    porte-cartes only minted `CAN-1`〜`CAN-6`. Do not use `0*\d{3}` — that also
+    matches our disk id `can0005` (00 + 005).
+  */
+  if (/^CAN[-]?0\d{2}$/i.test(folded)) return null;
+  const m = PREFIX_RE.exec(folded);
   if (!m) return null;
   let printedPrefix = m[1]!;
   let grouping: string | null = m[3] ?? null;
   const family = familyForPrefix(printedPrefix);
   if (!family) return null;
+  const number = Number(m[2]);
+  if (
+    canonicalNarutoDiskPrefix(printedPrefix) === "can" &&
+    (number < 1 || number > 6)
+  ) {
+    return null;
+  }
+  if (
+    canonicalNarutoDiskPrefix(printedPrefix) === "coin" &&
+    (number < 1 || number > 16)
+  ) {
+    return null;
+  }
   if (grouping?.toLowerCase() === "us") {
     const usPrefix = CCG_US_PREFIX[canonicalNarutoDiskPrefix(printedPrefix)];
     if (usPrefix) {
@@ -311,7 +336,7 @@ export function parseNarutoCollector(raw: string): NarutoCollectorId | null {
   }
   return {
     family,
-    number: Number(m[2]),
+    number,
     grouping,
     printedPrefix,
   };
@@ -390,6 +415,8 @@ const PROMO_SEQUENCE_PREFIXES = new Set([
   "prta",
   "prcl",
   "prki",
+  "can",
+  "coin",
 ]);
 
 /**
@@ -441,8 +468,12 @@ export function narutoCollectorKey(raw: string): string | null {
   return id.grouping ? `${prefix}:${n}:${id.grouping}` : `${prefix}:${n}`;
 }
 
-/** Illustration inédite, jamais imprimée hors Japon (bonus PS1 `忍-n（PS）`). */
-const JP_ONLY_ARTWORK_GROUPINGS = new Set(["ps"]);
+/**
+ * Illustration / tirage jamais imprimé hors Japon.
+ * - `ps` : bonus PS1 忍-n（PS） (書き下ろし)
+ * - `a` / `b` : doubles JP (`術-259-a`/`-b`, 雪姫 `忍-1-a`, …) — pas de carton FR/IT/EN
+ */
+const JP_ONLY_ARTWORK_GROUPINGS = new Set(["ps", "a", "b"]);
 
 /** Tirage dont le recto n'existe que sur carton japonais — pas de tuile FR/IT/EN. */
 export function isJpOnlyNarutoArtwork(cardOrNumber: string): boolean {
@@ -473,24 +504,120 @@ export function narutoCollectorSearchNeedles(raw: string): string[] {
   for (const p of prefixes) {
     for (const n of nums) out.push(`${p}${n}`);
   }
+  // JA listings write `PR忍-284` for disk `ni0284-promo`. Without the retail
+  // `-promo` needle, search only hits dedicated `prni*`, never the stamp.
+  const retailPromo = JA_PR_PREFIX_TO_RETAIL[prefix];
+  if (retailPromo && !id.grouping) {
+    for (const n of nums) out.push(`${retailPromo}${n}-promo`);
+  }
   return out;
 }
 
-/** `ni0063` / `ni063` → `NI-063`. `nus0097` / `n0097-us` → `N-US097`. */
+/**
+ * Disk prefix → what is printed on the Japanese card / shop listing.
+ * Google / Suruga / Mercari / carddas20 all index `忍-349`, never `NI-349`.
+ * Latin disk ids (`ni0349`) stay the sort / path axis; this is display only.
+ */
+const DISK_TO_JA_PRINTED: Readonly<Record<string, string>> = {
+  ni: "忍",
+  te: "術",
+  ta: "作",
+  cl: "依",
+  ki: "騎",
+  prni: "PR忍",
+  prte: "PR術",
+  prta: "PR作",
+  prcl: "PR依",
+  prki: "PR騎",
+  opni: "OP忍",
+  // Printed on the card in Latin (`CAN-5`), same as shop listings.
+  can: "CAN",
+  coin: "COIN",
+  shi: "忍伝",
+  mju: "術伝",
+  msa: "作伝",
+  gaku: "忍伝-学",
+};
+
+/**
+ * JA shops / Google list tourney `-promo` stamps as `PR忍-284`, not
+ * `忍-284 · promo`. Disk stays `ni0284-promo`; this is display only.
+ * Dedicated `prni*` already map via `DISK_TO_JA_PRINTED`.
+ */
+const JA_TOURNEY_PROMO_PRINTED: Readonly<Record<string, string>> = {
+  ni: "PR忍",
+  te: "PR術",
+  ta: "PR作",
+  cl: "PR依",
+  ki: "PR騎",
+};
+
+/** Inverse of `JA_TOURNEY_PROMO_PRINTED` — search `PR忍-284` → `ni0284-promo`. */
+const JA_PR_PREFIX_TO_RETAIL: Readonly<Record<string, string>> = {
+  prni: "ni",
+  prte: "te",
+  prta: "ta",
+  prcl: "cl",
+  prki: "ki",
+};
+
+function isJaNarutoDisplayLang(lang?: string | null): boolean {
+  const normalized = (lang ?? "").trim().toLowerCase();
+  return normalized === "ja" || normalized === "jp";
+}
+
+/**
+ * `ni0063` / `ni063` → `NI-063`. `nus0097` / `n0097-us` → `N-US097`.
+ * With `lang: "ja"` on a Carddass JP numeration: `ni0349` → `忍-349`
+ * (what collectors type into Google), not the latin transliteration.
+ * JA tourney stamps (`ni0284-promo`) read `PR忍-284`, same as shop listings.
+ */
 export function formatNarutoReference(
   _setCode: string,
   number: string,
+  lang?: string | null,
 ): string {
   const id = parseNarutoCollector(number);
   if (!id) return number;
   const prefix = canonicalNarutoDiskPrefix(id.printedPrefix);
+  const grouping = id.grouping;
+  const jaPrefix = isJaNarutoDisplayLang(lang)
+    ? DISK_TO_JA_PRINTED[prefix]
+    : undefined;
+  if (jaPrefix) {
+    // Listings drop leading zeros (`忍-3`, `PR忍-1`); 忍者学校 keeps 3 digits
+    // like 疾風伝 (`忍伝-学007`).
+    const digits =
+      prefix === "gaku"
+        ? String(id.number).padStart(3, "0")
+        : String(id.number);
+    const ref = `${jaPrefix}-${digits}`;
+    if (!grouping) return ref;
+    const g = grouping.toLowerCase();
+    // Bonus PS1 cards are printed `忍-1（PS）`, not `忍-1-ps`.
+    if (g === "ps") return `${jaPrefix}-${digits}（PS）`;
+    if (g === "promo") {
+      const tourney = JA_TOURNEY_PROMO_PRINTED[prefix];
+      if (tourney) return `${tourney}-${digits}`;
+      return `${ref} · promo`;
+    }
+    if (g === "prerelease") return `${ref} · prerelease`;
+    return `${ref}-${grouping}`;
+  }
+  // Porte-cartes prints `CAN-5` (no zero pad) — same as JA shops / Google.
+  if (prefix === "can") {
+    return `CAN-${id.number}`;
+  }
+  // コイン PLUS prints `COIN-1` … `COIN-16`.
+  if (prefix === "coin") {
+    return `COIN-${id.number}`;
+  }
   const width = id.number >= 1000 ? 4 : 3;
   const digits = String(id.number).padStart(width, "0");
   const us = CCG_US_PRINTED[prefix];
   if (us) return `${us}${digits}`;
   if (prefix === "prus") return `PR-US${digits}`;
   const ref = `${prefix.toUpperCase()}-${digits}`;
-  const grouping = id.grouping;
   if (!grouping) return ref;
   if (grouping.toLowerCase() === "promo") return `${ref} · promo`;
   if (grouping.toLowerCase() === "prerelease") return `${ref} · prerelease`;
@@ -940,7 +1067,7 @@ export function narutoPrintFacts(
       // table, and the printed number is the first thing a collector reads.
       kind: "format",
       label: "Numéro",
-      value: formatNarutoReference(row.setCode, row.number),
+      value: formatNarutoReference(row.setCode, row.number, row.lang),
       source: providerId,
       confidence: 0.95,
       priority: 45,
@@ -1201,11 +1328,12 @@ export function loadOfficialNames(): OfficialNames {
  * hors du Japon.
  *
  * Le nom officiel se cherche par numéro, suffixe retiré. Pour un `-promo` c'est
- * juste : un retirage marqué PROMO est bien la même carte. Pour `-ps` c'est
- * faux, et ça leur collait le nom **français** de la carte de base — « Naruto
- * Uzumaki » sur une carte qu'aucun francophone n'a jamais pu tenir.
+ * juste : un retirage marqué PROMO est bien la même carte. Pour `-ps` / `-a` /
+ * `-b` c'est faux : illustration ou feuille JP distincte, jamais sortie en FR —
+ * et ça leur collait le nom **français** de la carte de base (« Les mille
+ * oiseaux » sur TE-259-b, etc.).
  */
-const NEW_ARTWORK_GROUPINGS = new Set(["ps"]);
+const NEW_ARTWORK_GROUPINGS = new Set(["ps", "a", "b"]);
 
 /**
  * `naruto:s5-ni232` → `ni232`, suffixe retiré pour aller chercher le nom

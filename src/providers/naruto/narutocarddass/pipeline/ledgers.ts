@@ -31,7 +31,11 @@ import type {
 import { mergeBandaicgEnNamesIntoIndex } from "../parse/bandai";
 import { mergeBggEnCcgS1IntoIndex } from "../parse/bandai";
 import { mergeCarddasJpNamesIntoIndex } from "../parse/bandai";
-import { mergeCarddasJpPromoIntoIndex } from "../parse/bandai";
+import {
+  mergeCarddas20ProIntoIndex,
+  mergeCarddasJpPromoIntoIndex,
+  mergeNoihjpCarddassIntoIndex,
+} from "../parse/bandai";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
 import { parseEnCcgPrintedRef } from "../parse/bandai";
 import { mergeGoatEnCcgIntoIndex } from "../scrape/catalogues";
@@ -81,6 +85,10 @@ export type FoundCatalogueMerge = {
   jpTitled: string[];
   jpPromoAdded: string[];
   jpPromoTitled: string[];
+  carddas20Added: string[];
+  carddas20Titled: string[];
+  noihjpAdded: string[];
+  noihjpTitled: string[];
   goatAdded: string[];
   goatTitled: string[];
   ggClassicTitled: string[];
@@ -470,7 +478,8 @@ function printGrouping(print: NarutoPrintRow): string | null {
 }
 
 function isJpOnlyNarutoPrint(print: NarutoPrintRow): boolean {
-  if (print.grouping?.trim().toLowerCase() === "ps") return true;
+  const g = print.grouping?.trim().toLowerCase();
+  if (g === "ps" || g === "a" || g === "b") return true;
   return isJpOnlyNarutoArtwork(print.number);
 }
 
@@ -516,7 +525,14 @@ export function copyNarutoTitlesOntoGroupedPrints(input: {
         const name = title.fullName?.trim();
         if (!name) continue;
         for (const variant of variants) {
-          if (isJpOnlyNarutoPrint(variant)) continue;
+          // JP-only art (`-ps`, `-a`) may share the Japanese character name with
+          // the retail sheet, but never borrow FR/IT/EN checklist names.
+          if (
+            isJpOnlyNarutoPrint(variant) &&
+            title.lang.toLowerCase() !== "ja"
+          ) {
+            continue;
+          }
           if (
             fillTitle(
               titles,
@@ -652,7 +668,11 @@ export function mergeFoundCatalogueLedgers(input: {
   const tvtokyo = mergeTvTokyoJaNamesIntoIndex(slab);
   const jp = mergeCarddasJpNamesIntoIndex(tvtokyo);
   const jpPromo = mergeCarddasJpPromoIntoIndex(jp);
-  const goat = mergeGoatEnCcgIntoIndex(jpPromo);
+  // Fan memo after official promo.shtml — fills CAN / leftover name stubs only.
+  const carddas20 = mergeCarddas20ProIntoIndex(jpPromo);
+  // noihjp Carddass volumes + COIN＋ — fills COIN-9/11 names and volume holes.
+  const noihjp = mergeNoihjpCarddassIntoIndex(carddas20);
+  const goat = mergeGoatEnCcgIntoIndex(noihjp);
   // After Goat: slug-derived EN names only fill empty holes (NC / EX / …).
   const ggClassic = mergeGgClassicTitlesIntoIndex(goat);
   const narutocards = mergeNarutoCardsCaLedgerIntoIndex(ggClassic);
@@ -693,6 +713,10 @@ export function mergeFoundCatalogueLedgers(input: {
     jpTitled: jp.titled,
     jpPromoAdded: jpPromo.addedPrints,
     jpPromoTitled: jpPromo.titled,
+    carddas20Added: carddas20.addedPrints,
+    carddas20Titled: carddas20.titled,
+    noihjpAdded: noihjp.addedPrints,
+    noihjpTitled: noihjp.titled,
     goatAdded: goat.addedPrints,
     goatTitled: goat.titled,
     ggClassicTitled: ggClassic.titled,

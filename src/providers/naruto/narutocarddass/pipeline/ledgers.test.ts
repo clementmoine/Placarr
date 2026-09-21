@@ -419,6 +419,85 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
       ).toBeUndefined();
     });
 
+    it("copies JA onto 雪姫 -a / double -b but never FR", () => {
+      const merged = copyNarutoTitlesOntoGroupedPrints({
+        prints: [
+          {
+            printKey: "naruto:ni-0001",
+            setCode: "s1",
+            number: "ni0001",
+            cardType: "ni",
+            family: "ninja",
+          },
+          {
+            printKey: "naruto:ni-0001-a",
+            setCode: "promo",
+            number: "ni0001-a",
+            cardType: "ni",
+            family: "ninja",
+            grouping: "a",
+          },
+          {
+            printKey: "naruto:te-0259",
+            setCode: "s5",
+            number: "te0259",
+            cardType: "te",
+            family: "jutsu",
+          },
+          {
+            printKey: "naruto:te-0259-b",
+            setCode: "s5",
+            number: "te0259-b",
+            cardType: "te",
+            family: "jutsu",
+            grouping: "b",
+          },
+        ],
+        titles: [
+          {
+            printKey: "naruto:ni-0001",
+            lang: "fr",
+            fullName: "Naruto Uzumaki",
+          },
+          {
+            printKey: "naruto:ni-0001",
+            lang: "ja",
+            fullName: "うずまきナルト",
+          },
+          {
+            printKey: "naruto:te-0259",
+            lang: "fr",
+            fullName: "Les mille oiseaux",
+          },
+          {
+            printKey: "naruto:te-0259",
+            lang: "ja",
+            fullName: "千鳥",
+          },
+        ],
+      });
+      expect(
+        merged.titles.find(
+          (t) => t.printKey === "naruto:ni-0001-a" && t.lang === "fr",
+        ),
+      ).toBeUndefined();
+      expect(
+        merged.titles.find(
+          (t) => t.printKey === "naruto:ni-0001-a" && t.lang === "ja",
+        ),
+      ).toMatchObject({ fullName: "うずまきナルト" });
+      expect(
+        merged.titles.find(
+          (t) => t.printKey === "naruto:te-0259-b" && t.lang === "fr",
+        ),
+      ).toBeUndefined();
+      expect(
+        merged.titles.find(
+          (t) => t.printKey === "naruto:te-0259-b" && t.lang === "ja",
+        ),
+      ).toMatchObject({ fullName: "千鳥" });
+    });
+
     it("does not copy a Carddass NI name onto an EN CCG N print", () => {
       const merged = copyNarutoTitlesOntoGroupedPrints({
         prints: [

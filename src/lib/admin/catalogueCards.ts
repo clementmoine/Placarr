@@ -15,7 +15,7 @@ import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
-} from "@/providers/naruto/narutocarddass/narutoCardPath";
+} from "@/providers/naruto/narutocarddass/disk";
 import {
   assetsPackBackUrl,
   assetsPackTierBackUrl,
@@ -23,12 +23,12 @@ import {
   listPackTierBackSlugs,
   packCardsIndexPath,
 } from "@/lib/packPaths";
+import { tryBuildIdentityCatalogueRows } from "@/lib/admin/catalogueIdentityBrowse";
 import {
   catalogueCorpusPack,
   cataloguePackInfo,
   type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
-import type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
 import {
   canonicalizeNarutoPrintKey,
   compareNarutoCollectors,
@@ -36,19 +36,81 @@ import {
   formatNarutoReference,
   isJpOnlyNarutoArtwork,
   narutoCollectorNumberKey,
-} from "@/providers/naruto/narutocarddass/collectorIdentity";
-import { foldNarutoCardsIndex } from "@/providers/naruto/narutocarddass/foldNarutoIndex";
-import {
-  orientationFromIndexSlot,
-  printIsLandscapeCard,
-} from "@/lib/text/artFaceOrientation";
+  parseNarutoCollector,
+} from "@/providers/naruto/narutocarddass/identity";
+import { foldNarutoCardsIndex } from "@/providers/naruto/narutocarddass/pipeline";
+import { formatShippudenReference } from "@/providers/naruto/narutoshippuden/search";
+import { printIsLandscapeCard } from "@/lib/text/artFaceOrientation";
+import { orientationFromIndexSlot } from "@/lib/text/artFaceOrientationLenticular";
 import { resolveCatalogueFace } from "@/lib/admin/catalogueFacePick";
 import {
   isLocaleSpecificFace,
   loadLocaleSpecificFaces,
 } from "@/lib/admin/localeSpecificFaces";
+import { catalogueCardPriceQuoteByPrintKey } from "@/lib/admin/catalogueCardPrices";
 
-export type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
+/** Client-safe catalogue browse row (API + UI). */
+export type CatalogueCardRow = {
+  printKey: string;
+  set: string;
+  card: string;
+  lang: string;
+  /** Empty when the print is catalogued without a face yet. */
+  artUrl: string;
+  /** When mapped (e.g. Naruto site med), prefer for grid previews. */
+  thumbUrl?: string;
+  hasFoil: boolean;
+  label: string;
+  name?: string;
+  /** Other locale names, so search finds the card from either catalogue. */
+  aka?: string[];
+  rarity?: string;
+  /** True when index has the print/name but no art/thumb file yet. */
+  missingArt?: boolean;
+  /** Grid preview uses `back` because no recto is catalogued for this locale. */
+  versoOnly?: boolean;
+  /**
+   * When `artUrl` comes from another print of the same collector number
+   * (e.g. promo stub → retail S1 face) until official art exists.
+   */
+  artFallbackFrom?: string;
+  /**
+   * When `artUrl` comes from another locale of the same print (neutral recto
+   * borrowed across `catalogueLocales`). Verso stays on `lang`.
+   */
+  artLocaleFrom?: string;
+  /**
+   * Recto carries locale-printed text (or the pack has no cross-locale borrow).
+   * Preferred lang filter keeps these only for matching `lang`; neutral faces
+   * stay visible under every language.
+   */
+  languageSpecific?: boolean;
+  /** When `name` was copied from another locale (approximate title). */
+  nameLocaleFrom?: string;
+  /** Non-attested title pipeline, e.g. slug parse. */
+  nameSource?: string;
+  /** Synthetic pack/set back tiles in the catalogue grid. */
+  kind?: "face" | "pack-back" | "set-back";
+  /** False = unprinted locale (shown in catalogue, hidden from add). */
+  printed?: boolean;
+  /** Native landscape scan — wider tile, no pixel rotation. */
+  landscapeFace?: boolean;
+  /** Portrait scan of a landscape print — rotate 90° in the frame. */
+  faceQuarterTurns?: 0 | 1 | 2 | 3;
+  /** Any locale art for this print is wider than tall. */
+  landscapePrint?: boolean;
+  /** Kayou HR/BP sprite sheet — cols×rows. */
+  lenticularGrid?: { cols: number; rows: number };
+  /** Cardmarket / *cards.fr EUR cents when a reference pricer knows this print. */
+  priceCents?: number | null;
+  /**
+   * Thirty-day Cardmarket move (EUR cents, signed) when the *cards.fr dump
+   * quotes one — null = unknown, not « flat ».
+   */
+  priceDeltaCents?: number | null;
+  /** Symfony item id on the *cards.fr shop tile, when the dump carries it. */
+  shopItemId?: string | null;
+};
 
 const NARUTO_UNIFIED_PACKS: readonly CataloguePackId[] = ["naruto/carddass"];
 
@@ -154,9 +216,23 @@ type ArtDonor = {
   thumb?: string;
 };
 
-function donorScore(set: string, file: string): number {
+function donorScore(set: string, file: string, card?: string): number {
   let score = 0;
-  if (set.toLowerCase() !== "promo") score += 100;
+  const setLc = set.toLowerCase();
+  if (setLc !== "promo" && setLc !== "prerelease") score += 100;
+  /*
+    Same-art reprints (prerelease / tourney / cdf) must not outrank the retail
+    sheet when both somehow have a face — the grid should show the booster art.
+  */
+  const grouping = parseNarutoCollector(card ?? "")?.grouping?.toLowerCase();
+  if (!grouping) score += 50;
+  else if (
+    grouping === "prerelease" ||
+    grouping === "promo" ||
+    grouping === "cdf"
+  ) {
+    score -= 20;
+  }
   if (/\.reconstructed\./i.test(file)) score += 30;
   else if (/\.corrected\./i.test(file)) score += 20;
   return score;
@@ -231,6 +307,7 @@ function catalogueNames(
   printKey: string,
   entry: CardsIndexEntry,
   files: CardsIndexLangFiles | undefined,
+  lang?: string,
 ): { name?: string; aka?: string[]; label: string } {
   const localeScoped = files !== undefined;
   const localName = files?.nameLocaleFrom?.trim()
@@ -253,9 +330,17 @@ function catalogueNames(
     cataloguePackInfo(pack)?.narutoCollectorDisk === true &&
     Boolean(narutoCollectorNumberKey(entry.card));
   const diskCard = catalogueDiskCard(pack, printKey, entry);
-  const printed = useNarutoRef
-    ? formatNarutoReference(entry.set, entry.card)
-    : `${entry.set} · ${diskCard}`;
+  /*
+    疾風伝 : afficher la ref imprimée (`忍伝-学007`), pas `gaku · gaku0007` —
+    c'est ce qu'on tape sur Suruga / carddas20.
+    Carddass JA : `忍-349`, pas `NI-349` — même raison (Google / boutiques).
+  */
+  const printed =
+    pack === "naruto/shippuden"
+      ? formatShippudenReference(entry.set, entry.card)
+      : useNarutoRef
+        ? formatNarutoReference(entry.set, entry.card, lang)
+        : `${entry.set} · ${diskCard}`;
   const label = preferred ? `${printed} — ${preferred}` : printed;
   return {
     ...(preferred ? { name: preferred } : {}),
@@ -442,8 +527,8 @@ export function buildCatalogueCardRows(
         const prev = donorsByNumber.get(key);
         if (
           !prev ||
-          donorScore(candidate.set, candidate.file) >
-            donorScore(prev.set, prev.file)
+          donorScore(candidate.set, candidate.file, candidate.card) >
+            donorScore(prev.set, prev.file, prev.card)
         ) {
           donorsByNumber.set(key, candidate);
         }
@@ -472,6 +557,55 @@ export function buildCatalogueCardRows(
             entry.card,
           )
         : true;
+      const names = catalogueNames(pack, printKey, entry, slot.files, lang);
+      const diskCard = catalogueDiskCard(pack, printKey, entry);
+      const identityBase = {
+        printKey,
+        set: entry.set,
+        card: entry.card,
+        hasFoil,
+        label: names.label,
+        languageSpecific,
+        ...(names.name ? { name: names.name } : {}),
+        ...(names.aka ? { aka: names.aka } : {}),
+        ...(entry.rarity ? { rarity: entry.rarity } : {}),
+        ...(slot.files.printed === false ? { printed: false } : {}),
+        ...(entry.lenticularGrid ? { lenticularGrid: entry.lenticularGrid } : {}),
+        ...(slot.files.nameSource ? { nameSource: slot.files.nameSource } : {}),
+      };
+
+      /*
+        Same-art reprints (prerelease / promo / cdf) often hang a JA shop scan
+        on the stub while the FR booster face lives on the retail printKey.
+        Prefer that same-lang retail donor *before* bestFaceAcrossLocales, or
+        the FR tile shows « art JA » for a card that is the same FR print.
+      */
+      const tileOwnArt = artFile(slot.files);
+      if (!tileOwnArt && allowFallback) {
+        const donor = donorsByNumber.get(donorMapKey(entry.card, lang));
+        if (donor && donor.printKey !== printKey) {
+          const donorDisk = {
+            set: donor.set,
+            lang: donor.lang,
+            card: catalogueDiskCard(pack, donor.printKey, {
+              card: donor.card,
+            }),
+          };
+          const artUrl = packFaceAssetUrl(pack, donorDisk, donor.file);
+          const thumbUrl = donor.thumb
+            ? packFaceAssetUrl(pack, donorDisk, donor.thumb)
+            : undefined;
+          rows.push({
+            ...identityBase,
+            lang,
+            artUrl,
+            ...(thumbUrl ? { thumbUrl } : {}),
+            artFallbackFrom: donor.printKey,
+          });
+          continue;
+        }
+      }
+
       const face = resolveCatalogueFace({
         entry,
         tileLang: lang,
@@ -483,32 +617,19 @@ export function buildCatalogueCardRows(
       const file = face.file;
       // Names stay on the tile locale — borrowing a recto must not paste an EN
       // title onto a FR shell (attested gap stays empty).
-      const names = catalogueNames(pack, printKey, entry, slot.files);
       const orient = orientationFromIndexSlot(entry, face.files);
       const landscapePrint = printIsLandscapeCard(entry);
       const artLocaleFrom =
         file && face.artLang.toLowerCase() !== lang.toLowerCase()
           ? face.artLang
           : undefined;
-      const diskCard = catalogueDiskCard(pack, printKey, entry);
       const identity = {
-        printKey,
-        set: entry.set,
-        card: entry.card,
-        hasFoil,
-        label: names.label,
-        languageSpecific,
-        ...(names.name ? { name: names.name } : {}),
-        ...(names.aka ? { aka: names.aka } : {}),
-        ...(entry.rarity ? { rarity: entry.rarity } : {}),
-        ...(slot.files.printed === false ? { printed: false } : {}),
+        ...identityBase,
         ...(orient.landscapeFace ? { landscapeFace: true } : {}),
         ...(orient.faceQuarterTurns
           ? { faceQuarterTurns: orient.faceQuarterTurns }
           : {}),
         ...(landscapePrint ? { landscapePrint: true } : {}),
-        ...(entry.lenticularGrid ? { lenticularGrid: entry.lenticularGrid } : {}),
-        ...(slot.files.nameSource ? { nameSource: slot.files.nameSource } : {}),
       };
 
       if (!file) {
@@ -540,16 +661,16 @@ export function buildCatalogueCardRows(
           ? donorsByNumber.get(donorMapKey(entry.card, lang))
           : undefined;
         if (donor && donor.printKey !== printKey) {
-          const diskId = {
+          const donorDisk = {
             set: donor.set,
             lang: donor.lang,
             card: catalogueDiskCard(pack, donor.printKey, {
               card: donor.card,
             }),
           };
-          const artUrl = packFaceAssetUrl(pack, diskId, donor.file);
+          const artUrl = packFaceAssetUrl(pack, donorDisk, donor.file);
           const thumbUrl = donor.thumb
-            ? packFaceAssetUrl(pack, diskId, donor.thumb)
+            ? packFaceAssetUrl(pack, donorDisk, donor.thumb)
             : undefined;
           rows.push({
             ...identity,
@@ -754,6 +875,9 @@ function cachedFaces(
   pack: CataloguePackId,
   preferLang?: string,
 ): CatalogueCardRow[] {
+  const identity = tryBuildIdentityCatalogueRows(pack);
+  if (identity) return identity;
+
   const mtimeMs = indexMtimeMs(pack);
   const cacheKey = `${pack}|${preferLang ?? ""}`;
   const hit = cache.get(cacheKey);
@@ -862,6 +986,7 @@ export function matchesCatalogueAuditFilter(
     incompleteOnly?: boolean;
     missingArtOnly?: boolean;
     missingNameOnly?: boolean;
+    missingPriceOnly?: boolean;
   },
 ): boolean {
   if (!isFaceRow(row)) return false;
@@ -871,6 +996,9 @@ export function matchesCatalogueAuditFilter(
   }
   if (filter.missingArtOnly) checks.push(Boolean(row.missingArt));
   if (filter.missingNameOnly) checks.push(!row.name?.trim());
+  if (filter.missingPriceOnly) {
+    checks.push(!(typeof row.priceCents === "number" && row.priceCents > 0));
+  }
   return checks.some(Boolean);
 }
 
@@ -884,6 +1012,8 @@ export type ListCatalogueCardsInput = {
   missingArtOnly?: boolean;
   /** When true, only rows without a locale name. */
   missingNameOnly?: boolean;
+  /** When true, only face rows with no positive reference price. */
+  missingPriceOnly?: boolean;
   offset?: number;
   limit?: number;
   /** Substring match on printKey / set / card / label. */
@@ -927,9 +1057,25 @@ export function catalogueAvailableLocales(
   return measured;
 }
 
-export function listCatalogueCards(
+/**
+ * « Toutes locales » = declared admin surface, not every lang on disk.
+ * Pokémon Live still indexes de/it/es/ptbr as separate printKeys.
+ */
+export function restrictRowsToCatalogueLocales(
+  rows: readonly CatalogueCardRow[],
+  catalogueLocales: readonly string[] | undefined,
+): CatalogueCardRow[] {
+  if (!catalogueLocales?.length) return [...rows];
+  const allow = new Set(catalogueLocales.map((lang) => lang.toLowerCase()));
+  return rows.filter((row) => {
+    const lang = row.lang.trim().toLowerCase();
+    return lang === "—" || allow.has(lang);
+  });
+}
+
+export async function listCatalogueCards(
   input: ListCatalogueCardsInput,
-): ListCatalogueCardsResult {
+): Promise<ListCatalogueCardsResult> {
   const offset = Math.max(0, Math.floor(input.offset ?? 0));
   const limit = Math.min(1000, Math.max(1, Math.floor(input.limit ?? 48)));
   let rows = rowsForPack(input.pack, input.preferLang);
@@ -954,7 +1100,15 @@ export function listCatalogueCards(
   const packInfo = cataloguePackInfo(input.pack);
   const expandsLocales =
     packInfo?.expandLocales === true || isNarutoUnifiedPack(input.pack);
-  if (localeMode === "preferred" && preferLang) {
+  if (localeMode === "all") {
+    /*
+      Declared catalogueLocales are the admin surface (Pokémon = ja/fr/en).
+      Live still indexes de/it/es/ptbr as separate printKeys — without this
+      filter, « Toutes locales » counted every CDN lang and inflated
+      « sans prix » while the dropdown only offered catalogue locales.
+    */
+    rows = restrictRowsToCatalogueLocales(rows, packInfo?.catalogueLocales);
+  } else if (localeMode === "preferred" && preferLang) {
     rows = rows.filter((row) =>
       matchesCataloguePreferredLang(row, preferLang!, {
         expandLocales: expandsLocales,
@@ -993,12 +1147,76 @@ export function listCatalogueCards(
       return qKey != null && qKey === catalogueCollectorKey(row.card);
     });
   }
+
+  const corpus = catalogueCorpusPack(input.pack);
+  if (input.missingPriceOnly) {
+    const faceKeys = [
+      ...new Set(rows.filter(isFaceRow).map((row) => row.printKey)),
+    ];
+    const priceByKey = await catalogueCardPriceQuoteByPrintKey(
+      corpus,
+      faceKeys,
+    );
+    rows = rows.map((row) => attachPriceQuote(row, priceByKey));
+    rows = rows.filter((row) =>
+      matchesCatalogueAuditFilter(row, { missingPriceOnly: true }),
+    );
+    return {
+      pack: input.pack,
+      total: rows.length,
+      offset,
+      limit,
+      cards: rows.slice(offset, offset + limit),
+      availableLocales,
+    };
+  }
+
+  const page = rows.slice(offset, offset + limit);
+  const pageKeys = [
+    ...new Set(page.filter(isFaceRow).map((row) => row.printKey)),
+  ];
+  const priceByKey = await catalogueCardPriceQuoteByPrintKey(
+    corpus,
+    pageKeys,
+  );
   return {
     pack: input.pack,
     total: rows.length,
     offset,
     limit,
-    cards: rows.slice(offset, offset + limit),
+    cards: page.map((row) => attachPriceQuote(row, priceByKey)),
     availableLocales,
+  };
+}
+
+function attachPriceQuote(
+  row: CatalogueCardRow,
+  priceByKey: ReadonlyMap<
+    string,
+    {
+      priceCents: number;
+      priceDeltaCents?: number | null;
+      shopItemId?: string | null;
+    }
+  >,
+): CatalogueCardRow {
+  if (!isFaceRow(row)) {
+    return {
+      ...row,
+      priceCents: null,
+      priceDeltaCents: null,
+      shopItemId: null,
+    };
+  }
+  const quote = priceByKey.get(row.printKey);
+  const cents = quote?.priceCents;
+  return {
+    ...row,
+    priceCents: cents != null && cents > 0 ? cents : null,
+    priceDeltaCents:
+      quote?.priceDeltaCents != null && Number.isFinite(quote.priceDeltaCents)
+        ? quote.priceDeltaCents
+        : null,
+    shopItemId: quote?.shopItemId?.trim() || null,
   };
 }

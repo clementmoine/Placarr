@@ -3615,6 +3615,142 @@
       "staging": "staging/ebay/ni0391-ja.webp",
       "ingest": true,
       "note": "cardjpstore listing — card prints 忍-391 四代目火影＆ガマブン太 BANDAI 2005."
+    },
+    {
+      "printedRef": "作-288",
+      "lang": "ja",
+      "title": "No.288 Jiraiya/Orochimaru/Tsunade",
+      "listing": "https://www.ebay.com/itm/176395192183",
+      "imageId": "yfYAAOSwjiRmUyVj",
+      "url": "https://i.ebayimg.com/images/g/yfYAAOSwjiRmUyVj/s-l1600.webp",
+      "staging": "staging/ebay/ta0288-ja-cardjpstore.webp",
+      "ingest": true,
+      "note": "cardjpstore (tokyotcgstore) — printed code read from listing photo 2026-09-20 face-gap run."
+    },
+    {
+      "printedRef": "術-346",
+      "lang": "ja",
+      "title": "No.346 Rasengan",
+      "listing": "https://www.ebay.com/itm/176034045645",
+      "imageId": "ZecAAOSw1vtlVI77",
+      "url": "https://i.ebayimg.com/images/g/ZecAAOSw1vtlVI77/s-l1600.webp",
+      "staging": "staging/ebay/te0346-ja-cardjpstore.webp",
+      "ingest": true,
+      "note": "cardjpstore (tokyotcgstore) — printed code read from listing photo 2026-09-20 face-gap run."
+    },
+    {
+      "printedRef": "忍-345",
+      "diskId": "ni0345",
+      "title": "Naruto Trading Card Game Japanese TCG Sakura Haruno Shinobi-345",
+      "listing": "https://www.ebay.com/itm/386863871772",
+      "url": "https://i.ebayimg.com/images/g/pSkAAOSwSq1l9ks7/s-l1600.webp",
+      "imageId": "pSkAAOSwSq1l9ks7",
+      "ingest": true,
+      "lang": "ja",
+      "note": "Furinkazan shop — 忍-345 verified"
+    },
+    {
+      "printedRef": "作-320",
+      "diskId": "ta0320",
+      "lang": "ja",
+      "title": "No.320 Memorial Rare Naruto Sasuke Sakura — 火の伝承者たち",
+      "listing": "https://www.ebay.com/itm/176423947251",
+      "imageId": "%7Ep0AAOSwNHdma8ag",
+      "url": "https://i.ebayimg.com/images/g/%7Ep0AAOSwNHdma8ag/s-l1600.webp",
+      "staging": "staging/ebay/ta0320-ja-cardjpstore.webp",
+      "ingest": true,
+      "note": "cardjpstore — 作-320 MEMORIAL verified on photo 2026-09-21"
+    },
+    {
+      "printedRef": "作-271",
+      "diskId": "ta0271",
+      "setCode": "maki14",
+      "lang": "ja",
+      "title": "Uzumaki Naruto Card Game No. 271 BANDAI 2004 — seller mislabel; printed 作-271 台無し",
+      "listing": "https://www.ebay.com/itm/395097006484",
+      "imageId": "zHoAAOSwziRljpqN",
+      "url": "https://i.ebayimg.com/images/g/zHoAAOSwziRljpqN/s-l1600.webp",
+      "staging": "staging/ebay/ta0271-ja-takumi.webp",
+      "ingest": true,
+      "note": "takumisouljapan / JAPAN goods store TAKUMI — title says No.271 Naruto but photo is 作-271 台無し (巻ノ十四). ≠ 忍-271. Verified on photo 2026-09-21."
+    },
+    {
+      "printedRef": "作-190",
+      "diskId": "ta0190",
+      "setCode": "maki9",
+      "lang": "ja",
+      "title": "Naruto Card Game Saku-190 Super Rare Naruto Uzumaki — 祭り",
+      "listing": "https://www.ebay.com/itm/388319591786",
+      "imageId": "heQAAOSwi0BoCyKp",
+      "url": "https://i.ebayimg.com/images/g/heQAAOSwi0BoCyKp/s-l1600.webp",
+      "staging": "staging/ebay/ta0190-ja-hmzkhyt.webp",
+      "ingest": true,
+      "note": "hmzkhyt / japanesemarketshop — Saku-190 = 作-190 祭り (巻ノ九) verified on photo 2026-09-21. JA already has shop scans; art.ebay as secondary marketplace dump."
+    },
+    {
+      "printedRef": "術-291",
+      "diskId": "te0291",
+      "setCode": "maki14",
+      "lang": "ja",
+      "title": "Naruto Card Game Jutsu-291 Super Rare Hinata Hyūga — 守護八卦六十四掌",
+      "listing": "https://www.ebay.com/itm/205444167720",
+      "imageId": "umUAAOSwzCRoCeVC",
+      "url": "https://i.ebayimg.com/images/g/umUAAOSwzCRoCeVC/s-l1600.webp",
+      "staging": "staging/ebay/te0291-ja-hmzkhyt.webp",
+      "ingest": true,
+      "note": "hmzkhyt — 術-291 verified on photo 2026-09-21. JA orphan from full store inventory (_ipg=240)."
+    },
+    {
+      "printedRef": "作-306",
+      "diskId": "ta0306",
+      "setCode": "maki16",
+      "lang": "ja",
+      "title": "Naruto Card Game Saku-306 Sakura Haruno & Ino Yamanaka — 図星",
+      "listing": "https://www.ebay.com/itm/205454240221",
+      "imageId": "ZPAAAOSwF21oEHJN",
+      "url": "https://i.ebayimg.com/images/g/ZPAAAOSwF21oEHJN/s-l1600.webp",
+      "staging": "staging/ebay/ta0306-ja-hmzkhyt.webp",
+      "ingest": true,
+      "note": "hmzkhyt — 作-306 図星 verified on photo 2026-09-21. JA orphan from full store inventory (_ipg=240)."
+    },
+    {
+      "printedRef": "忍-398",
+      "diskId": "ni0398",
+      "setCode": "maki17",
+      "lang": "ja",
+      "title": "春野サクラ",
+      "listing": "",
+      "imageId": "cOsAAOSw7TJoEHHK",
+      "url": "https://i.ebayimg.com/images/g/cOsAAOSw7TJoEHHK/s-l1600.webp",
+      "staging": "staging/ebay/ni0398-ja.webp",
+      "ingest": true,
+      "note": "CDN pasted 2026-09-21 (itm unknown). Pied 忍-398 BANDAI 2006 劇場版 — 巻ノ十七. Pair with 忍-397 on sec.carddass.com 自販機ブースター JAN 4543112451491000 (packshot vending-vol17-jp)."
+    },
+    {
+      "printedRef": "忍-400",
+      "diskId": "ni0400",
+      "setCode": "maki17",
+      "lang": "ja",
+      "title": "はたけカカシ",
+      "listing": "https://www.ebay.com/itm/166675116904",
+      "imageId": "NrsAAOSwyeBmBTR7",
+      "url": "https://i.ebayimg.com/images/g/NrsAAOSwyeBmBTR7/s-l1600.webp",
+      "staging": "staging/ebay/ni0400-ja.webp",
+      "ingest": true,
+      "note": "JA orphan. Pied 忍-400 BANDAI 2006 劇場版 — 巻ノ十七. ≪限界以上の働き≫."
+    },
+    {
+      "printedRef": "作-334",
+      "diskId": "ta0334",
+      "setCode": "maki17",
+      "lang": "ja",
+      "title": "Naruto Uzumaki Mission-334 — 再出発",
+      "listing": "https://www.ebay.com/itm/196782007384",
+      "imageId": "uXkAAOSwHBJnKcf-",
+      "url": "https://i.ebayimg.com/images/g/uXkAAOSwHBJnKcf-/s-l1600.webp",
+      "staging": "staging/ebay/ta0334-ja-ottermart.webp",
+      "ingest": true,
+      "note": "OtterMart-Japan. JA orphan. Pied 作-334 BANDAI 2006 劇場版 — 巻ノ十七. 再出発 verified on photo 1 of 6."
     }
   ],
   "italianStore": {
@@ -3635,5 +3771,28 @@
     "setCodeLeftNull": "Les noms de sets italiens sont notés tels quels mais ne fixent pas de `setCode` : l'ordre des séries IT n'est pas vérifié (TE-173 sort en « Vendetta e Redenzione » alors que TE-144 sort en « Maledizione della Sabbia »). Le numéro suffit à joindre ; l'appartenance de série reste à qualifier.",
     "openQuestion": "Quatre promos à numéro en S — NI-S12, NI-S02, NI-S15, ST-S04 — forment une séquence promo italienne que notre modèle ne connaît pas. Rejetées, pas inventées.",
     "sellerTypo": "Deux annonces disent TE-05 pour deux cartes différentes (« Tecnica Superiore » et « Tecnica delle Lame di Vento »). La seconde est rejetée : on ne devine pas laquelle est mal étiquetée."
+  },
+  "sellerWatchCardjp": {
+    "observed": "2026-09-20",
+    "user": "tokyotcgstore",
+    "store": "cardjpstore",
+    "url": "https://www.ebay.com/str/cardjpstore",
+    "note": "Paste-only dig for missing JA faces. Do not crawl the store."
+  },
+  "sellerWatchTakumi": {
+    "observed": "2026-09-21",
+    "user": "takumisouljapan",
+    "store": "japangoodsstoretakumi",
+    "url": "https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=takumisouljapan&store_cat=0&store_name=japangoodsstoretakumi&_oac=1&_nkw=naruto%20card%20game",
+    "note": "User-named store. Search `_nkw=naruto card game` returned 0 hits (2026-09-21). Paste-only — do not crawl. Single pasted listing itm/395097006484 → 作-271."
+  },
+  "sellerWatchHmzkhyt": {
+    "observed": "2026-09-21",
+    "user": "hmzkhyt",
+    "store": "japanesemarketshop",
+    "url": "https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hmzkhyt&store_cat=0&store_name=japanesemarketshop&_oac=1&_nkw=naruto+card+game&_dmd=1&rt=nc&_ipg=240",
+    "urlPage2": "https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hmzkhyt&store_cat=0&store_name=japanesemarketshop&_oac=1&_nkw=naruto+card+game&_dmd=1&rt=nc&_ipg=240&_pgn=2",
+    "note": "User-named store. Full title inventory 2026-09-21: 289 results across 2×240 pages (287 unique itms). Buckets ~73 Carddass / 117 Miracle / 87 Data Carddass / 5 Shippuden / 5 other. Carddass JA orphans ingested: 術-291, 作-306 (+ prior 作-190). Paste-only — do not write a crawler; titles pasted from user-supplied SRP URLs. Shippuden JA orphans also ingested via narutoshippuden/ebay-hmzkhyt.json: 術伝-061, 忍伝-学036, 忍伝-学039.",
+    "inventory": "data/staging/face-gap-run-2026-09-21/hmzkhyt/analysis.json"
   }
 }

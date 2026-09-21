@@ -400,6 +400,24 @@ import type { NarutoPrintDetail } from "./search";
       expect(narutoCollectorSearchNeedles("mju0062")).not.toContain("j0062");
       expect(narutoCollectorSearchNeedles("msa0044")).not.toContain("m0044");
     });
+
+    it("resolves JA PR忍 listings onto both dedicated prni and retail -promo", () => {
+      expect(narutoCollectorSearchNeedles("PR忍-284")).toEqual(
+        expect.arrayContaining([
+          "prni284",
+          "prni0284",
+          "ni284-promo",
+          "ni0284-promo",
+        ]),
+      );
+      expect(narutoCollectorSearchNeedles("PR忍-1")).toEqual(
+        expect.arrayContaining(["prni0001", "ni0001-promo"]),
+      );
+      // Grouped foil (`PR忍-1-R`) stays on the dedicated sequence only.
+      expect(narutoCollectorSearchNeedles("PR忍-1-R")).not.toContain(
+        "ni0001-promo",
+      );
+    });
   });
 
   describe("canonicalizeNarutoPrintKey", () => {
@@ -444,11 +462,31 @@ import type { NarutoPrintDetail } from "./search";
       expect(parseNarutoCollector("NM-049")).toBeNull();
       expect(parseNarutoCollector("DN-032T")).toBeNull();
     });
+
+    it("garde CAN-001 arcade hors Carddass, et mint CAN-1〜6 porte-cartes", () => {
+      expect(parseNarutoCollector("CAN-001")).toBeNull();
+      expect(narutoDiskCardId("CAN-5")).toBe("can0005");
+      expect(narutoDiskCardId("CAN-6")).toBe("can0006");
+      expect(narutoDiskCardId("CAN-7")).toBeNull();
+      expect(mintNarutoPrintKey("CAN-5")).toBe("naruto:can-0005");
+    });
+
+    it("mint COIN-1〜16 dans Carddass (コイン PLUS), pas l'arcade", () => {
+      expect(narutoDiskCardId("COIN-1")).toBe("coin0001");
+      expect(narutoDiskCardId("COIN-16")).toBe("coin0016");
+      expect(narutoDiskCardId("COIN-17")).toBeNull();
+      expect(mintNarutoPrintKey("COIN-8")).toBe("naruto:coin-0008");
+      expect(formatNarutoReference("promo", "coin0001", "ja")).toBe("COIN-1");
+    });
   });
 
   describe("isJpOnlyNarutoArtwork", () => {
-    it("marque les bonus PS1, pas le retail ni les promos", () => {
+    it("marque les bonus PS1 et les doubles -a/-b JP, pas le retail ni les promos", () => {
       expect(isJpOnlyNarutoArtwork("ni0001-ps")).toBe(true);
+      expect(isJpOnlyNarutoArtwork("ni0001-a")).toBe(true);
+      expect(isJpOnlyNarutoArtwork("te0259-a")).toBe(true);
+      expect(isJpOnlyNarutoArtwork("te0259-b")).toBe(true);
+      expect(isJpOnlyNarutoArtwork("te0269-b")).toBe(true);
       expect(isJpOnlyNarutoArtwork("ni0001")).toBe(false);
       expect(isJpOnlyNarutoArtwork("ni0023-promo")).toBe(false);
     });
@@ -594,10 +632,10 @@ import type { NarutoPrintDetail } from "./search";
 
   /*
     Le nom officiel se cherche par numéro, suffixe retiré — juste pour un
-    `-promo`, qui est un retirage de la même carte. Faux pour `-ps` : le bonus de
-    précommande du jeu PS1 porte les numéros 忍-1/2/3/11 avec une illustration
-    **inédite**, et n'est jamais sorti hors du Japon. Il recevait le nom français
-    de la carte qu'il n'est pas.
+    `-promo`, qui est un retirage de la même carte. Faux pour `-ps` / `-a` :
+    illustration ou feuille JP distincte, jamais sortie en FR. Ils recevaient
+    le nom français de la carte qu'ils ne sont pas (ex. « Naruto Uzumaki » sur
+    NI-001-a 雪姫).
   */
   describe("un suffixe qui désigne une autre carte n'emprunte rien", () => {
     const print = (number: string) =>
@@ -612,6 +650,19 @@ import type { NarutoPrintDetail } from "./search";
 
     it("refuses to for the PS1 bonus, whose art is its own", () => {
       for (const n of ["ni0001-ps", "ni0002-ps", "ni0003-ps", "ni0011-ps"]) {
+        expect(collectorNumberOf(print(n)), n).toBeNull();
+      }
+    });
+
+    it("refuses to for JP -a/-b doubles / 雪姫 (no FR carton)", () => {
+      for (const n of [
+        "ni0001-a",
+        "ni0002-a",
+        "te0259-a",
+        "te0259-b",
+        "te0269-b",
+        "sa0257-a",
+      ]) {
         expect(collectorNumberOf(print(n)), n).toBeNull();
       }
     });

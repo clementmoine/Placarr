@@ -6,33 +6,32 @@ import {
 } from "./localeSpecificFaces";
 
 describe("localeSpecificFaces", () => {
-  it("marks prints that already have art in two catalogue locales", () => {
+  it("marks Carddass FR+JA dual faces so catalogue won't borrow JA onto FR", () => {
     const doc = buildLocaleSpecificFacesFromIndex(
       {
         version: 1,
-        pack: "naruto/mythos",
-        generatedAt: "2026-09-16",
+        pack: "naruto/carddass",
+        generatedAt: "2026-09-21",
         cards: {
-          "mythos:ks1-0001": {
-            set: "ks1",
-            card: "0001",
+          "naruto:ni-0001": {
+            set: "ninja",
+            card: "ni0001",
             langs: {
-              fr: { art: "art.narutomythos.webp" },
-              en: { art: "art.narutomythos.webp" },
+              fr: { art: "art.carddass.jpg" },
+              ja: { art: "art.suruga.jpg" },
             },
           },
-          "mythos:ss2-0001": {
-            set: "ss2",
-            card: "0001",
+          "naruto:ni-0349": {
+            set: "ninja",
+            card: "ni0349",
             langs: {
-              en: { art: "art.official.webp" },
+              ja: { art: "art.suruga.jpg" },
             },
           },
         },
       },
-      ["fr", "en"],
+      ["fr", "ja", "en"],
     );
-    expect(doc.faces).toEqual([{ set: "ks1", card: "0001" }]);
-    expect(localeSpecificFaceKey("ks1", "0001")).toBe(`ks1\u00000001`);
+    expect(doc.faces).toEqual([{ set: "ninja", card: "ni0001" }]);
   });
 });

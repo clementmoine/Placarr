@@ -1,0 +1,154 @@
+{
+  "source": "ebay.com/str/cardjpstore (tokyotcgstore)",
+  "observed": "2026-09-20",
+  "crawlLive": false,
+  "ingest": "faces",
+  "lang": "ja",
+  "note": "Paste-only dig against missing Shippuden faces. Do not crawl the store.",
+  "not": [
+    "crawl",
+    "bulk-store-scrape"
+  ],
+  "faces": [
+    {
+      "printedRef": "忍伝-136",
+      "diskId": "shi0136",
+      "title": "No.136 Orochimaru UR Naruto Card Game Shippuden Bandai Japanese Image 1 of 2",
+      "listingUrl": "https://www.ebay.com/itm/176009071589",
+      "url": "https://i.ebayimg.com/images/g/EqsAAOSwus5lRfI0/s-l1600.webp",
+      "imageId": "EqsAAOSwus5lRfI0",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-145",
+      "diskId": "shi0145",
+      "title": "No.145 Uzumaki Naruto UR Naruto Card Game Shippuden Bandai Japan",
+      "listingUrl": "https://www.ebay.com/itm/176395190841",
+      "url": "https://i.ebayimg.com/images/g/15cAAOSwtYVmUyU4/s-l1600.webp",
+      "imageId": "15cAAOSwtYVmUyU4",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-57",
+      "diskId": "shi0057",
+      "title": "No.057 Deidara Naruto Shippuden Card Game",
+      "listingUrl": "https://www.ebay.com/itm/178045396666",
+      "url": "https://i.ebayimg.com/images/g/xTUAAeSwoJhp3LfF/s-l1600.webp",
+      "imageId": "xTUAAeSwoJhp3LfF",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "術伝-29",
+      "diskId": "mju0029",
+      "title": "No.029 Gai Asakujaku UR Naruto Card Game Shippuden Bandai Japan",
+      "listingUrl": "https://www.ebay.com/itm/176395191579",
+      "url": "https://i.ebayimg.com/images/g/CrMAAOSwCGJmUyVP/s-l1600.webp",
+      "imageId": "CrMAAOSwCGJmUyVP",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-42",
+      "diskId": "shi0042",
+      "title": "Gaara No.042 SR Naruto Card Game Shippuden",
+      "listingUrl": "https://www.ebay.com/itm/176199547715",
+      "url": "https://i.ebayimg.com/images/g/53kAAOSw1h5lrm~Z/s-l1600.webp",
+      "imageId": "53kAAOSw1h5lrm~Z",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-192",
+      "diskId": "shi0192",
+      "title": "No.192 Haruno Sakura & Tsunade Naruto Card Game Shippuden Rare Card",
+      "listingUrl": "https://www.ebay.com/itm/178021128377",
+      "url": "https://i.ebayimg.com/images/g/adYAAeSwZrlp0ONZ/s-l1600.webp",
+      "imageId": "adYAAeSwZrlp0ONZ",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-44",
+      "diskId": "shi0044",
+      "title": "No.044 Sakura Haruno Rare Naruto Card Game Shippuden Bandai Japanese",
+      "listingUrl": "https://www.ebay.com/itm/175964928044",
+      "url": "https://i.ebayimg.com/images/g/dSwAAOSwKollK5sn/s-l1600.webp",
+      "imageId": "dSwAAOSwKollK5sn",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-127",
+      "diskId": "shi0127",
+      "title": "No.127 Yamato UR Naruto Card Game Shippuden Bandai Japanese",
+      "listingUrl": "https://www.ebay.com/itm/176009071705",
+      "url": "https://i.ebayimg.com/images/g/vEsAAOSw3hBlRfJC/s-l1600.webp",
+      "imageId": "vEsAAOSw3hBlRfJC",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-58",
+      "diskId": "shi0058",
+      "title": "No.058 Sasori UR Naruto Card Game Shippuden Bandai Japan",
+      "listingUrl": "https://www.ebay.com/itm/175979276803",
+      "url": "https://i.ebayimg.com/images/g/o6UAAOSw8OtlNJCJ/s-l1600.webp",
+      "imageId": "o6UAAOSw8OtlNJCJ",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-10",
+      "diskId": "shi0010",
+      "title": "No.010 Deidara UR Naruto Card Game Shippuden Bandai Japan",
+      "listingUrl": "https://www.ebay.com/itm/176395191135",
+      "url": "https://i.ebayimg.com/images/g/vPYAAOSwS4dmUyU~/s-l1600.webp",
+      "imageId": "vPYAAOSwS4dmUyU~",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-92",
+      "diskId": "shi0092",
+      "title": "No.092 Chiyo UR Naruto Card Game Shippuden Bandai Japanese",
+      "listingUrl": "https://www.ebay.com/itm/176009071844",
+      "url": "https://i.ebayimg.com/images/g/aB4AAOSwXO9lRfJa/s-l1600.webp",
+      "imageId": "aB4AAOSwXO9lRfJa",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-118",
+      "diskId": "shi0118",
+      "title": "No.118 Orochimaru Naruto Card Game Shippuden",
+      "listingUrl": "https://www.ebay.com/itm/176661018292",
+      "url": "https://i.ebayimg.com/images/g/uvMAAOSwr1xnJzYb/s-l1600.webp",
+      "imageId": "uvMAAOSwr1xnJzYb",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-11",
+      "diskId": "shi0011",
+      "title": "No.011 Sasori UR Naruto Card Game Shippuden Bandai Japan",
+      "listingUrl": "https://www.ebay.com/itm/175979276842",
+      "url": "https://i.ebayimg.com/images/g/40UAAOSw2k5lNJCR/s-l1600.webp",
+      "imageId": "40UAAOSw2k5lNJCR",
+      "ingest": true,
+      "note": "cardjpstore — title+name aligned; sample 忍伝-136 verified on photo"
+    },
+    {
+      "printedRef": "忍伝-187",
+      "diskId": "shi0187",
+      "title": "No.187 Jiraiya Vol.6 Holo Rare NARUTO Card Game 2008",
+      "listingUrl": "https://www.ebay.com/itm/177842394813",
+      "url": "https://i.ebayimg.com/images/g/vcIAAeSwjdlphuJQ/s-l1600.webp",
+      "imageId": "vcIAAeSwjdlphuJQ",
+      "ingest": true,
+      "note": "cardjpstore — 忍伝-187 自来也 verified on photo 2026-09-21"
+    }
+  ]
+}

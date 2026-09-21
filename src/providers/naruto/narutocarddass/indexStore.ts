@@ -279,6 +279,11 @@ export function writeNarutoCcgIndex(input: {
       ça, la seule piste est une base vide.
     */
     const known = new Set(folded.prints.map((p) => p.printKey));
+    const jpOnlyPrintKeys = new Set(
+      folded.prints
+        .filter((p) => isJpOnlyNarutoArtwork(p.number))
+        .map((p) => p.printKey),
+    );
     const orphans = [
       ...folded.titles
         .filter((t) => !known.has(t.printKey))
@@ -295,9 +300,21 @@ export function writeNarutoCcgIndex(input: {
     }
     for (const t of folded.titles) {
       if (t.nameLocaleFrom?.trim()) continue;
+      if (
+        jpOnlyPrintKeys.has(t.printKey) &&
+        t.lang.toLowerCase() !== "ja"
+      ) {
+        continue;
+      }
       insertTitle.run(t.printKey, t.lang, t.fullName, t.rarity ?? null);
     }
     for (const a of folded.assets) {
+      if (
+        jpOnlyPrintKeys.has(a.printKey) &&
+        a.lang.toLowerCase() !== "ja"
+      ) {
+        continue;
+      }
       insertAsset.run(
         a.printKey,
         a.lang,
@@ -401,6 +418,12 @@ export function exportNarutoCardsIndexJson(
   for (const a of folded.assets) {
     const entry = index.cards[a.printKey];
     if (!entry) continue;
+    if (
+      isJpOnlyNarutoArtwork(entry.card) &&
+      a.lang.toLowerCase() !== "ja"
+    ) {
+      continue;
+    }
     const lang = entry.langs[a.lang] ?? {};
     if (a.art) lang.art = a.art;
     if (a.thumb) lang.thumb = a.thumb;

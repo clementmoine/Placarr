@@ -2204,18 +2204,6 @@
       "reason": "Catalogue contract: IT faces not ingested (JA+FR+EN only). Kept as research ledger."
     },
     {
-      "printedRef": "NI-386",
-      "lang": "it",
-      "title": "Yoroi Akado",
-      "listing": "https://www.ebay.it/itm/287018511110",
-      "imageId": "4mkAAOSwgzJjys4~",
-      "url": "https://i.ebayimg.com/images/g/4mkAAOSwgzJjys4~/s-l1600.webp",
-      "staging": "staging/ebay/ni0386-it.webp",
-      "ingest": false,
-      "note": "Vendeur errecards (Ravenna) — collage eBay.it 2026-09-02 batch 3 (store actif).",
-      "reason": "Catalogue contract: IT faces not ingested (JA+FR+EN only). Kept as research ledger."
-    },
-    {
       "printedRef": "TE-60",
       "lang": "it",
       "title": "Copiare",
@@ -3394,46 +3382,74 @@
     {
       "printedRef": "依-38",
       "lang": "ja",
-      "title": "Naruto Card Game 依-38",
-      "listing": "https://www.ebay.fr/itm/255804334099",
-      "imageId": "GrsAAOSw4XhjYGOu",
-      "url": "https://i.ebayimg.com/images/g/GrsAAOSw4XhjYGOu/s-l1600.webp",
-      "staging": "staging/ebay/cl0038-ja.webp",
+      "title": "山椒ばあさん",
+      "listing": "https://www.ebay.com/itm/196788193952",
+      "imageId": "f50AAOSw7e5nLGPz",
+      "url": "https://i.ebayimg.com/images/g/f50AAOSw7e5nLGPz/s-l1600.webp",
+      "staging": "staging/ebay/cl0038-ja.jpg",
       "ingest": true,
-      "note": "ebay dig JA orphan pass2 2026-09-04"
+      "note": "Upgrade 2026-09-25 over dark ebay.fr pad photo. Pied 依-38 BANDAI 2006 — 山椒ばあさん. OtterMart 196788193952 1600² ruler crop → art.ebay.jpg.",
+      "setCode": "maki17",
+      "disk": "cl0038",
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 942,
+        "height": 1342
+      }
     },
     {
       "printedRef": "依-39",
       "lang": "ja",
-      "title": "Naruto Card Game 依-39",
-      "listing": "https://www.ebay.fr/itm/255804337008",
-      "imageId": "494AAOSwIGdjYGP7",
-      "url": "https://i.ebayimg.com/images/g/494AAOSwIGdjYGP7/s-l1600.webp",
-      "staging": "staging/ebay/cl0039-ja.webp",
+      "title": "からし",
+      "listing": "https://www.ebay.com/itm/196788195560",
+      "imageId": "m3EAAOSwHwlnLGQX",
+      "url": "https://i.ebayimg.com/images/g/m3EAAOSwHwlnLGQX/s-l1600.webp",
+      "staging": "staging/ebay/cl0039-ja.jpg",
       "ingest": true,
-      "note": "ebay dig JA orphan pass2 2026-09-04"
+      "note": "Upgrade 2026-09-25 over dark ebay.fr pad photo. Pied 依-39 BANDAI 2006 — からし. OtterMart 196788195560 1600² ruler crop → art.ebay.jpg.",
+      "setCode": "maki17",
+      "disk": "cl0039",
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 942,
+        "height": 1342
+      }
     },
     {
       "printedRef": "依-40",
       "lang": "ja",
-      "title": "Naruto Card Game 依-40",
-      "listing": "https://www.ebay.fr/itm/265965461143",
-      "imageId": "geIAAOSwWbRjYGSV",
-      "url": "https://i.ebayimg.com/images/g/geIAAOSwWbRjYGSV/s-l1600.webp",
-      "staging": "staging/ebay/cl0040-ja.webp",
+      "title": "チシマ",
+      "listing": "https://www.ebay.com/itm/196788197395",
+      "imageId": "bjgAAOSwzoFnLGQ6",
+      "url": "https://i.ebayimg.com/images/g/bjgAAOSwzoFnLGQ6/s-l1600.webp",
+      "staging": "staging/ebay/cl0040-ja.jpg",
       "ingest": true,
-      "note": "ebay dig JA orphan pass2 2026-09-04"
+      "note": "Upgrade 2026-09-25 over dark ebay.fr pad photo. Pied 依-40 BANDAI 2006 — チシマ. OtterMart 196788197395 1600² ruler crop → art.ebay.jpg.",
+      "setCode": "maki17",
+      "disk": "cl0040",
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 942,
+        "height": 1346
+      }
     },
     {
       "printedRef": "依-46",
       "lang": "ja",
-      "title": "Naruto Card Game 依-46",
-      "listing": "https://www.ebay.fr/itm/255804343353",
-      "imageId": "ShEAAOSwGwNjYGTM",
-      "url": "https://i.ebayimg.com/images/g/ShEAAOSwGwNjYGTM/s-l1600.webp",
-      "staging": "staging/ebay/cl0046-ja.webp",
+      "title": "シャバダバ",
+      "listing": "https://www.ebay.com/itm/196788202469",
+      "imageId": "ixgAAOSw-kpnLGTx",
+      "url": "https://i.ebayimg.com/images/g/ixgAAOSw-kpnLGTx/s-l1600.webp",
+      "staging": "staging/ebay/cl0046-ja.jpg",
       "ingest": true,
-      "note": "ebay dig JA orphan pass2 2026-09-04"
+      "note": "Upgrade 2026-09-25 over dark ebay.fr pad photo. Pied 依-46 BANDAI 2006 — シャバダバ. OtterMart 196788202469 1600² ruler crop → art.ebay.jpg.",
+      "setCode": "maki17",
+      "disk": "cl0046",
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 937,
+        "height": 1336
+      }
     },
     {
       "printedRef": "PR忍-2",
@@ -3548,24 +3564,36 @@
     {
       "printedRef": "依-44",
       "lang": "ja",
-      "title": "Hikaru Tsuki Client-44 NARUTO Card Game 2006 BANDAI Carddass",
+      "setCode": "maki17",
+      "title": "ツキ・ヒカル",
       "listing": "https://www.ebay.com/itm/196788200834",
       "imageId": "Z0QAAOSwU9ZnLGSm",
       "url": "https://i.ebayimg.com/images/g/Z0QAAOSwU9ZnLGSm/s-l1600.webp",
-      "staging": "staging/ebay/cl0044-ja.webp",
+      "staging": "staging/ebay/cl0044-ja.jpg",
       "ingest": true,
-      "note": "ebay.com dig JA orphan Client-N 2026-09-04"
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 935,
+        "height": 1344
+      },
+      "note": "Recrop 2026-09-25. Prior art.ebay.webp was raw OtterMart 1600² ruler pad. Pied 依-44 BANDAI 2006 — ツキ・ヒカル. Tight crop → art.ebay.jpg."
     },
     {
       "printedRef": "依-45",
       "lang": "ja",
-      "title": "Michiru Tsuki Client-45 NARUTO Card Game 2006 BANDAI Carddass",
+      "setCode": "maki17",
+      "title": "ツキ・ミチル",
       "listing": "https://www.ebay.com/itm/196788201757",
       "imageId": "IyoAAOSww2lnLGTO",
       "url": "https://i.ebayimg.com/images/g/IyoAAOSww2lnLGTO/s-l1600.webp",
-      "staging": "staging/ebay/cl0045-ja.webp",
+      "staging": "staging/ebay/cl0045-ja.jpg",
       "ingest": true,
-      "note": "ebay.com dig JA orphan Client-N 2026-09-04"
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 939,
+        "height": 1341
+      },
+      "note": "Recrop 2026-09-25. Prior art.ebay.webp was raw OtterMart 1600² ruler pad. Pied 依-45 BANDAI 2006 — ツキ・ミチル. Tight crop → art.ebay.jpg."
     },
     {
       "printedRef": "OP忍-3",
@@ -3748,9 +3776,766 @@
       "listing": "https://www.ebay.com/itm/196782007384",
       "imageId": "uXkAAOSwHBJnKcf-",
       "url": "https://i.ebayimg.com/images/g/uXkAAOSwHBJnKcf-/s-l1600.webp",
-      "staging": "staging/ebay/ta0334-ja-ottermart.webp",
+      "staging": "staging/ebay/ta0334-ja.jpg",
       "ingest": true,
-      "note": "OtterMart-Japan. JA orphan. Pied 作-334 BANDAI 2006 劇場版 — 巻ノ十七. 再出発 verified on photo 1 of 6."
+      "pixels": {
+        "width": 959,
+        "height": 1374
+      },
+      "note": "OtterMart-Japan. JA orphan. Pied 作-334 BANDAI 2006 劇場版 — 巻ノ十七. 再出発. Recrop 2026-09-25: prior art.ebay.webp was raw 1600² ruler pad → art.ebay.jpg 959×1374."
+    },
+    {
+      "printedRef": "術-361",
+      "lang": "ja",
+      "title": "Gokansakusou Jyutsu-351 (seller mislabel) — actually 五感錯騒 術-361",
+      "listing": "https://www.ebay.com/itm/196874943420",
+      "url": "https://i.ebayimg.com/images/g/J1gAAOSwzPlnUcJ8/s-l1600.webp",
+      "ingest": false,
+      "reason": "Seller title says Jyutsu-351; printed number + name are 術-361 五感錯騒. te0361 already has cleaner art.ebay.webp (1200×1600, no ruler). Do not overwrite with this listing photo."
+    },
+    {
+      "printedRef": "術-355",
+      "lang": "ja",
+      "title": "Rock Lee Jyutsu-355 忍法・壁抜けの術",
+      "listing": "https://www.ebay.com/itm/196874940946",
+      "imageId": "HIQAAOSw5nlnUcHf",
+      "url": "https://i.ebayimg.com/images/g/HIQAAOSw5nlnUcHf/s-l1600.webp",
+      "ingest": true,
+      "note": "User paste 2026-09-24 OtterMart. Cropped from ruler photo → art.ebay (face winner over yahoo sleeved crop)."
+    },
+    {
+      "printedRef": "術-352",
+      "lang": "ja",
+      "title": "Akahoshi Jyutsu-352 孔雀妙法・翼",
+      "listing": "https://www.ebay.com/itm/196874937568",
+      "imageId": "TtcAAOSwsQtnUcFr",
+      "url": "https://i.ebayimg.com/images/g/TtcAAOSwsQtnUcFr/s-l1600.webp",
+      "ingest": false,
+      "reason": "OtterMart ruler photo. Existing staging/ebay/te0352-ja.webp (1200×1600) already better — kept as face."
+    },
+    {
+      "printedRef": "術-354",
+      "lang": "ja",
+      "title": "Sumaru Jyutsu-354 チャクラの縄",
+      "listing": "https://www.ebay.com/itm/196874940554",
+      "imageId": "oR4AAOSwz8xnUcG5",
+      "url": "https://i.ebayimg.com/images/g/oR4AAOSwz8xnUcG5/s-l1600.webp",
+      "ingest": false,
+      "reason": "OtterMart ruler photo. Superseded by Furinkazan listing 387018156162 (cleaner 1200×1600)."
+    },
+    {
+      "printedRef": "術-354",
+      "lang": "ja",
+      "title": "Sumaru Jyutsu-354 チャクラの縄",
+      "listing": "https://www.ebay.com/itm/387018156162",
+      "imageId": "190AAOSw8gpmSkrJ",
+      "url": "https://i.ebayimg.com/images/g/190AAOSw8gpmSkrJ/s-l1600.webp",
+      "ingest": true,
+      "note": "User paste 2026-09-24 Furinkazan. Full-frame 1200×1600 → art.ebay.jpg face for te0354."
+    },
+    {
+      "printedRef": "術-344",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "Hoshigakure Jyutsu-344 孔雀妙法・斬",
+      "listing": "https://www.ebay.com/itm/196874914816",
+      "imageId": "VMAAAOSwYaVnUbz3",
+      "url": "https://i.ebayimg.com/images/g/VMAAAOSwYaVnUbz3/s-l1600.webp",
+      "staging": "staging/ebay/te0344-ja-ottermart.jpg",
+      "ingest": true,
+      "note": "User paste 2026-09-24 OtterMart. Pied 術-344 BANDAI 2006. JA orphan. Crop réglet hors cadre → staging jpg 950×1355."
+    },
+    {
+      "printedRef": "術-344",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "Jutsu-344 From Japan BANDAI 2006",
+      "listing": "https://www.ebay.com/itm/395393649757",
+      "imageId": "qTYAAOSwcOlmPJL6",
+      "url": "https://i.ebayimg.com/images/g/qTYAAOSwcOlmPJL6/s-l1600.webp",
+      "ingest": false,
+      "note": "User paste 2026-09-24 azuki-animate-japan. Même 術-344 mais CDN max 418×557 + lot multi-cartes (17 imgs). Skip — OtterMart crop installé."
+    },
+    {
+      "printedRef": "術-321",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "Gosunkugi Jyutsu-321 飛釘霧衝",
+      "listing": "https://www.ebay.com/itm/196874796152",
+      "imageId": "0fUAAOSwybZnUbJn",
+      "url": "https://i.ebayimg.com/images/g/0fUAAOSwybZnUbJn/s-l1600.webp",
+      "ingest": false,
+      "note": "User paste 2026-09-24 OtterMart. Pied 術-321 OK. Skip — art.ebay.webp déjà en disc (1200×1600 plein cadre, sans réglet)."
+    },
+    {
+      "printedRef": "術-320",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "Torpedo needle 320 魚雷針",
+      "listing": "https://www.ebay.com/itm/124833867821",
+      "imageId": "-OwAAOSwIihhBopU",
+      "url": "https://i.ebayimg.com/images/g/-OwAAOSwIihhBopU/s-l1600.webp",
+      "staging": "staging/ebay/te0320-ja.jpg",
+      "ingest": true,
+      "note": "User paste 2026-09-24. Pied 術-320 BANDAI 2006 — 巻ノ十五. JA orphan. Crop fond noir → staging jpg."
+    },
+    {
+      "printedRef": "術-319",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "Tenten Jyutsu-319 鉄鎖",
+      "listing": "https://www.ebay.com/itm/196876564515",
+      "imageId": "t30AAOSwx7RnUqQX",
+      "url": "https://i.ebayimg.com/images/g/t30AAOSwx7RnUqQX/s-l1600.webp",
+      "staging": "staging/ebay/te0319-ja-ottermart.jpg",
+      "ingest": true,
+      "note": "User paste 2026-09-24 OtterMart. Pied 術-319. Crop réglet → staging. Preferé au yahoo 414×1080."
+    },
+    {
+      "printedRef": "術-318",
+      "lang": "ja",
+      "title": "KOMPASS Jutsu-318 Tonfa",
+      "listing": "https://www.ebay.com/itm/166865231889",
+      "imageId": "RagAAOSwgYRmkRtx",
+      "url": "https://i.ebayimg.com/images/g/RagAAOSwgYRmkRtx/s-l1600.webp",
+      "ingest": false,
+      "note": "skip: existing art.ebay.webp 1200x1600 cleaner than listing 1080sq (same 術-318 Tonfa)"
+    },
+    {
+      "printedRef": "術-316",
+      "lang": "ja",
+      "title": "Konohamaru Jyutsu-316 NARUTO Card Game 2006",
+      "listing": "https://www.ebay.com/itm/196874794387",
+      "imageId": "CtcAAOSwh9pnUbHx",
+      "url": "https://i.ebayimg.com/images/g/CtcAAOSwh9pnUbHx/s-l1600.webp",
+      "ingest": false,
+      "note": "skip: OtterMart ruler pad ~943px crop; existing art.ebay.webp 1200x1600 full-bleed better (same 術-316 プリンプリンの術)"
+    },
+    {
+      "printedRef": "術-311",
+      "lang": "ja",
+      "title": "Raiga Kurosuki Jyutsu-311 雷葬・いかづちの宴",
+      "listing": "https://www.ebay.com/itm/196874792582",
+      "imageId": "XD8AAOSw7qlnUbGd",
+      "url": "https://i.ebayimg.com/images/g/XD8AAOSw7qlnUbGd/s-l1600.webp",
+      "ingest": false,
+      "note": "skip: OtterMart ruler pad ~967px crop; existing art.ebay.webp 1200x1600 better (same 術-311)"
+    },
+    {
+      "printedRef": "術-307",
+      "lang": "ja",
+      "title": "NARUTO CARD GAME Japanese Ninjya 307",
+      "listing": "https://www.ebay.com/itm/197168871373",
+      "imageId": "r78AAOSwIRln7E3x",
+      "url": "https://i.ebayimg.com/images/g/r78AAOSwIRln7E3x/s-l1600.webp",
+      "ingest": false,
+      "note": "skip: same 術-307 1200x1600; existing art.ebay.webp larger/cleaner (スーパーエクセレントグレートハイパーアタック)"
+    },
+    {
+      "printedRef": "術-306",
+      "lang": "ja",
+      "title": "Rock Lee Jyutsu-306 筋肉の記憶",
+      "listing": "https://www.ebay.com/itm/196874772825",
+      "imageId": "gsQAAOSwLh9nUbDR",
+      "url": "https://i.ebayimg.com/images/g/gsQAAOSwLh9nUbDR/s-l1600.webp",
+      "ingest": false,
+      "note": "skip: OtterMart ruler pad ~945px crop; existing art.ebay.webp 1200x1600 better (same 術-306)"
+    },
+    {
+      "printedRef": "術-286",
+      "lang": "ja",
+      "title": "Shino Aburame Jyutsu-286 蟲壁の術",
+      "listing": "https://www.ebay.com/itm/196874756523",
+      "imageId": "l64AAOSwF25nUa1-",
+      "url": "https://i.ebayimg.com/images/g/l64AAOSwF25nUa1-/s-l1600.webp",
+      "ingest": false,
+      "note": "skip: OtterMart ruler pad ~946px crop; existing art.ebay.webp 1200x1600 better (same 術-286)"
+    },
+    {
+      "printedRef": "術-108",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "白眼",
+      "listing": "https://www.ebay.com/itm/205448125076",
+      "imageId": "LWoAAOSwmbZoDHnJ",
+      "url": "https://i.ebayimg.com/images/g/LWoAAOSwmbZoDHnJ/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 1217,
+        "height": 1600
+      },
+      "note": "JA promo gokui fill. Pied 術-108 BANDAI 2003 — 白眼. face.json forced to ebay over 80px tvtokyo (shop-pool)."
+    },
+    {
+      "printedRef": "術-107",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "無音殺人術",
+      "listing": "https://www.ebay.com/itm/166865217632",
+      "imageId": "aXcAAOSw11dmkRkv",
+      "url": "https://i.ebayimg.com/images/g/aXcAAOSw11dmkRkv/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 697,
+        "height": 987
+      },
+      "note": "JA promo gokui fill. Pied 術-107 BANDAI 2003 — 無音殺人術. Crop from 1080sq; face.json forced over 80px tvtokyo."
+    },
+    {
+      "printedRef": "忍-408",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "海鮮アガリ",
+      "listing": "https://www.ebay.com/itm/386994600342",
+      "imageId": "nLEAAOSwwbRmPfFI",
+      "url": "https://i.ebayimg.com/images/g/nLEAAOSwwbRmPfFI/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1600
+      },
+      "note": "JA orphan fill. Pied 忍-408 BANDAI 2006 — 巻ノ十七 海鮮アガリ. Sleeved photo 1200x1600."
+    },
+    {
+      "printedRef": "NI-407",
+      "lang": "it",
+      "setCode": "s8",
+      "title": "Kunihisa",
+      "listing": "https://www.ebay.com/itm/253573512971",
+      "imageId": "NuwAAOSwWHZa2fZX",
+      "url": "https://i.ebayimg.com/images/g/NuwAAOSwWHZa2fZX/s-l1600.webp",
+      "ingest": false,
+      "bandaiYear": 2009,
+      "pixels": {
+        "width": 847,
+        "height": 1221
+      },
+      "note": "Panini IT orphan fill (JA missing). Pied NI-407 BANDAI 2009 MADE IN CHINA — KUNIHISA / Paese del Fuoco. Crop from red-bg listing photo (cafr→ebay.com).",
+      "reason": "Catalogue contract: IT faces not auto-ingested (JA+FR+EN). Manual orphan disk fill under /it/ — all langs were empty for ni0407."
+    },
+    {
+      "printedRef": "忍-407",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "クニヒサ",
+      "listing": "https://www.ebay.com/itm/386994604585",
+      "imageId": "41gAAOSwoKlmPfF9",
+      "url": "https://i.ebayimg.com/images/g/41gAAOSwoKlmPfF9/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1600
+      },
+      "note": "JA orphan fill. Pied 忍-407 BANDAI 2006 MADE IN JAPAN — 巻ノ十七 クニヒサ. Sleeved photo 1200x1600 (Furinkazan). Prior IT Panini fill kept under /it/."
+    },
+    {
+      "printedRef": "忍-397",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "うずまきナルト",
+      "listing": "https://www.ebay.com/itm/205454235229",
+      "imageId": "rnQAAOSw-ndoEHGp",
+      "url": "https://i.ebayimg.com/images/g/rnQAAOSw-ndoEHGp/s-l1600.webp",
+      "ingest": false,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1217,
+        "height": 1600
+      },
+      "note": "skip: 1217x1600 hmzkhyt photo softer/heavier foil glare (sharp~223) vs existing art.yahoo.jpg 875x1200 (sharp~464). Pied 忍-397 BANDAI 2006 劇場版 — same うずまきナルト."
+    },
+    {
+      "printedRef": "忍-402",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "キッキイ",
+      "listing": "https://www.ebay.com/itm/396563913957",
+      "imageId": "E9QAAOSwczhoFdx2",
+      "url": "https://i.ebayimg.com/images/g/E9QAAOSwczhoFdx2/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 593,
+        "height": 861
+      },
+      "note": "JA orphan fill. Pied 忍-402 BANDAI 2006 — キッキィ サーカス獣. User clean of azuki stand photo (was skip @318×563) → art.ebay 593×861.",
+      "staging": "staging/ebay/ni0402-ja-clean.png"
+    },
+    {
+      "printedRef": "忍-401",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "チャム",
+      "listing": "https://www.ebay.com/itm/387744013893",
+      "imageId": "s8QAAOSwIJVnZBDz",
+      "url": "https://i.ebayimg.com/images/g/s8QAAOSwIJVnZBDz/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1600
+      },
+      "note": "JA orphan fill. Pied 忍-401 BANDAI 2006 劇場版 — 巻ノ十七 チャム. Sleeved photo 1200x1600 (Furinkazan)."
+    },
+    {
+      "printedRef": "忍-398",
+      "lang": "ja",
+      "title": "春野サクラ",
+      "listing": "https://www.ebay.com/itm/205454235521",
+      "imageId": "cOsAAOSw7TJoEHHK",
+      "url": "https://i.ebayimg.com/images/g/cOsAAOSw7TJoEHHK/s-l1600.webp",
+      "ingest": false,
+      "pixels": {
+        "width": 1217,
+        "height": 1600
+      },
+      "note": "skip: byte-identical to existing art.ebay.webp 1217x1600 already on disk for ni0398."
+    },
+    {
+      "printedRef": "忍-379",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "ホクシン",
+      "listing": "https://www.ebay.com/itm/395074466931",
+      "imageId": "r8AAAOSwPPplgWx4",
+      "url": "https://i.ebayimg.com/images/g/r8AAAOSwPPplgWx4/s-l1600.webp",
+      "ingest": false,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 391,
+        "height": 531
+      },
+      "note": "skip: byte-identical to existing art.mercari.webp 391x531. Other gallery shots ~398–443×531 (no better) or unrelated One Piece seller stock."
+    },
+    {
+      "printedRef": "忍-380",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "ナガレ",
+      "listing": "https://www.ebay.com/itm/387756659405",
+      "imageId": "IyYAAOSwFjtnZBBv",
+      "url": "https://i.ebayimg.com/images/g/IyYAAOSwFjtnZBBv/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1600
+      },
+      "note": "JA orphan fill. Pied 忍-380 BANDAI 2006 — 巻ノ十六 ナガレ. Sleeved photo 1200x1600 (Furinkazan)."
+    },
+    {
+      "printedRef": "忍-349",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "マイト・ガイ",
+      "listing": "https://www.ebay.com/itm/175979281396",
+      "imageId": "w~UAAOSwDlJlNJDY",
+      "url": "https://i.ebayimg.com/images/g/w~UAAOSwDlJlNJDY/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1600
+      },
+      "note": "Upgrade over art.mercari.jpg 810×1080. Pied 忍-349 BANDAI 2006 — マイト・ガイ SR foil. 1200×1600."
+    },
+    {
+      "printedRef": "忍-386",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "赤胴ヨロイ",
+      "listing": "https://www.ebay.com/itm/264519780790",
+      "imageId": "TSwAAOSwjqJdvc~Z",
+      "url": "https://i.ebayimg.com/images/g/TSwAAOSwjqJdvc~Z/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1600
+      },
+      "note": "JA orphan fill. Pied 忍-386 BANDAI 2006 — 赤胴ヨロイ. Single photo 1200x1600 (ebay.fr→.com). Original URL ebay.fr/itm/264519780790."
+    },
+    {
+      "printedRef": "NI-386",
+      "lang": "it",
+      "setCode": "maki16",
+      "title": "Yoroi Akado",
+      "listing": "https://www.ebay.com/itm/253573268704",
+      "imageId": "~UUAAOSwNvxa2c6O",
+      "url": "https://i.ebayimg.com/images/g/~UUAAOSwNvxa2c6O/s-l1600.webp",
+      "staging": "staging/ebay/ni0386-it.webp",
+      "ingest": false,
+      "bandaiYear": 2009,
+      "pixels": {
+        "width": 918,
+        "height": 1292
+      },
+      "note": "Panini IT locale fill (JA already on disk). Pied NI-386 BANDAI 2009 MADE IN CHINA — YOROI AKADO / Villaggio del Suono. Crop 918×1292 from red-bg listing (ebay.it→.com 253573268704). Prior errecards collage 287018511110 staging kept as research CDN.",
+      "reason": "Catalogue contract: IT faces not auto-ingested (JA+FR+EN). Manual disk fill under /it/."
+    },
+    {
+      "printedRef": "作-289",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "完璧な変装術？",
+      "listing": "https://www.ebay.com/itm/235079158227",
+      "imageId": "FJgAAOSwbHxkprUl",
+      "url": "https://i.ebayimg.com/images/g/FJgAAOSwbHxkprUl/s-l1600.webp",
+      "ingest": false,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1600
+      },
+      "note": "skip: fabric-mat photo crops to ~1031×1496; existing art.ebay.webp already 1200×1600 full-bleed (ebay.fr 255786718568)."
+    },
+    {
+      "printedRef": "作-270",
+      "lang": "ja",
+      "setCode": "maki14",
+      "title": "囚人捕獲任務",
+      "listing": "https://www.ebay.com/itm/388324674568",
+      "imageId": "e9MAAOSwM6RoDHXS",
+      "url": "https://i.ebayimg.com/images/g/e9MAAOSwM6RoDHXS/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 1250,
+        "height": 1600
+      },
+      "note": "Upgrade over art.mercari.jpg 1080² + art.fril.jpg 640². Pied 作-270 BANDAI 2005 — 囚人捕獲任務 SR foil. 1250×1600."
+    },
+    {
+      "printedRef": "作-311",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "神隠しの島",
+      "listing": "https://www.ebay.com/itm/405915275101",
+      "imageId": "xTMAAOSwjt9oO7qc",
+      "url": "https://i.ebayimg.com/images/g/xTMAAOSwjt9oO7qc/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 956,
+        "height": 1374
+      },
+      "note": "JA orphan fill. Pied 作-311 BANDAI 2006 — 巻ノ十六 神隠しの島. Crop from stand photo 1600² (seller title mislabeled No.311 Naruto)."
+    },
+    {
+      "printedRef": "作-309",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "料理勝負！",
+      "listing": "https://www.ebay.com/itm/395458222590",
+      "imageId": "3NsAAOSwlm5mZSTy",
+      "url": "https://i.ebayimg.com/images/g/3NsAAOSwlm5mZSTy/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 421,
+        "height": 561
+      },
+      "note": "JA orphan fill (low-res). Pied 作-309 — 料理勝負！ Stand photo; s-l1600 caps at 421×561."
+    },
+    {
+      "printedRef": "作-309",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "料理勝負！",
+      "listing": "https://www.ebay.com/itm/196779560290",
+      "imageId": "xBMAAOSwYPlnKNqf",
+      "url": "https://i.ebayimg.com/images/g/xBMAAOSwYPlnKNqf/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1042,
+        "height": 1446
+      },
+      "note": "Upgrade over prior art.ebay.webp 421×561 (395458222590). Pied 作-309 BANDAI 2006 — 料理勝負！ Crop from OtterMart 1600² ruler photo."
+    },
+    {
+      "printedRef": "作-314",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "閉ざされた記憶",
+      "listing": "https://media.karousell.com/media/photos/products/2025/10/1/15_1759331276_ec3e66ec.jpg",
+      "url": "https://media.karousell.com/media/photos/products/2025/10/1/15_1759331276_ec3e66ec.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 682,
+        "height": 988
+      },
+      "note": "JA orphan fill. Pied 作-314 ●● BANDAI 2006 — 巻ノ十六 閉ざされた記憶 (holo). Crop from Carousell 1080² CDN; stored as art.ebay (marketplace peer — no carousell face source yet)."
+    },
+    {
+      "printedRef": "作-316",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "白き呪い武者",
+      "listing": "https://www.ebay.com/itm/196782429949",
+      "imageId": "gSoAAOSw0QBnKf-D",
+      "url": "https://i.ebayimg.com/images/g/gSoAAOSw0QBnKf-D/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1048,
+        "height": 1441
+      },
+      "note": "Upgrade art.mercari.jpg A (full-body) over prior 481×702 mercari dual crop. Pied 作-316 BANDAI 2006. OtterMart 1600² ruler crop → art.mercari; art.ebay.jpg B portrait kept."
+    },
+    {
+      "printedRef": "作-327",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "サーカス団の買収",
+      "listing": "https://www.ebay.com/itm/395447212987",
+      "imageId": "sgUAAOSwPpxmXovB",
+      "url": "https://i.ebayimg.com/images/g/sgUAAOSwPpxmXovB/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 358,
+        "height": 512
+      },
+      "note": "JA orphan fill (low-res). Pied 作-327 BANDAI 2006 — サーカス団の買収. Stand photo; s-l1600 caps at 421×561; crop → art.ebay."
+    },
+    {
+      "printedRef": "術-65",
+      "lang": "ja",
+      "setCode": "maki3",
+      "title": "煙玉",
+      "listing": "https://www.ebay.com/itm/196875072801",
+      "imageId": "ba1fa0ba1fa09db37bdc27bec2d7c3f3b5a739",
+      "url": "https://i.pinimg.com/originals/ba/1f/a0/ba1fa09db37bdc27bec2d7c3f3b5a739.jpg",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 963,
+        "height": 1401
+      },
+      "note": "JA orphan fill. Pied 術-65 BANDAI 2003. OtterMart ruler crop via Pinterest pin/917960336547266117 → art.ebay."
+    },
+    {
+      "printedRef": "術-287",
+      "lang": "ja",
+      "setCode": "maki14",
+      "title": "砂瀑浮遊",
+      "listing": "https://www.ebay.com/itm/196874759158",
+      "imageId": "c1acc3c1acc3959e995b9c8a4e1119cfc48fab",
+      "url": "https://i.pinimg.com/originals/c1/ac/c3/c1acc3959e995b9c8a4e1119cfc48fab.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 951,
+        "height": 1381
+      },
+      "note": "JA orphan fill. Pied 術-287 BANDAI 2005. OtterMart ruler crop via Pinterest pin/917960336547259890 → art.ebay."
+    },
+    {
+      "printedRef": "術-337",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "同化・砂瀑送葬",
+      "listing": "https://www.ebay.com/itm/196874912141",
+      "imageId": "56e50b56e50b4c4752a615b6de60f31c39e952",
+      "url": "https://i.pinimg.com/originals/56/e5/0b/56e50b4c4752a615b6de60f31c39e952.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 939,
+        "height": 1390
+      },
+      "note": "JA orphan fill. Pied 術-337 BANDAI 2006. OtterMart ruler crop via Pinterest pin/917960336547262216 → art.ebay."
+    },
+    {
+      "printedRef": "術-338",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "バックアップ",
+      "listing": "https://www.ebay.com/itm/196874912995",
+      "imageId": "42ba4b42ba4b20b8a6a8580a582d29bfaf7c25",
+      "url": "https://i.pinimg.com/originals/42/ba/4b/42ba4b20b8a6a8580a582d29bfaf7c25.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 944,
+        "height": 1389
+      },
+      "note": "JA orphan fill. Pied 術-338 BANDAI 2006. OtterMart ruler crop via Pinterest pin/917960336547262227 → art.ebay."
+    },
+    {
+      "printedRef": "術-349",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "金遁・たすけて〜の術",
+      "listing": "https://www.ebay.com/itm/196874915954",
+      "imageId": "3490f43490f4c5fdf77981672a58e71fc29e7e",
+      "url": "https://i.pinimg.com/originals/34/90/f4/3490f4c5fdf77981672a58e71fc29e7e.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1006,
+        "height": 1388
+      },
+      "note": "JA orphan fill. Pied 術-349 BANDAI 2006. OtterMart ruler crop via Pinterest pin/917960336547262306 → art.ebay."
+    },
+    {
+      "printedRef": "忍-404",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "コンゴウ",
+      "listing": "file:///Users/clement.moine/Downloads/NI-404J.png",
+      "url": "file:///Users/clement.moine/Downloads/NI-404J.png",
+      "staging": "staging/ebay/ni0404-ja-clean.png",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 627,
+        "height": 907
+      },
+      "note": "JA orphan fill. Pied 忍-404 BANDAI 2006 — コンゴウ. User clean → art.ebay."
+    },
+    {
+      "printedRef": "作-253",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "一人一殺",
+      "listing": "file:///Users/clement.moine/Downloads/TA-253J.png",
+      "url": "file:///Users/clement.moine/Downloads/TA-253J.png",
+      "staging": "staging/ebay/ta0253-ja-clean.png",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 658,
+        "height": 937
+      },
+      "note": "Upgrade over soft art.mercari.jpg 1080² (sharp~14). Pied 作-253 BANDAI 2005 — 一人一殺. User clean 658×937 (sharp~26) → art.ebay."
+    },
+    {
+      "printedRef": "作-279",
+      "lang": "ja",
+      "setCode": "maki14",
+      "disk": "ta0279-a",
+      "title": "赤面",
+      "listing": "https://www.ebay.com/itm/196781940461",
+      "imageId": "a3MAAOSwy6JnKcIA",
+      "url": "https://i.ebayimg.com/images/g/a3MAAOSwy6JnKcIA/s-l1600.webp",
+      "staging": "staging/ebay/ta0279-a-ja.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 964,
+        "height": 1381
+      },
+      "note": "Upgrade 絵違い ta0279-a over truncated Suruga CDN GU866763 (1024×660 mid-crop missing 作戦/pied). Pied 作-279 BANDAI 2005 — 赤面 close-up. OtterMart 1600² ruler crop → art.ebay; dropped art.suruga so JA face picks full card."
+    },
+    {
+      "printedRef": "作-319",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "明日への船出",
+      "listing": "https://www.ebay.com/itm/196781956452",
+      "imageId": "v3EAAOSwrsNnKcQ6",
+      "url": "https://i.ebayimg.com/images/g/v3EAAOSwrsNnKcQ6/s-l1600.webp",
+      "staging": "staging/ebay/ta0319-ja.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 964,
+        "height": 1378
+      },
+      "note": "JA orphan fill. Pied 作-319 BANDAI 2006 — 明日への船出. OtterMart 1600² ruler crop → art.ebay."
+    },
+    {
+      "printedRef": "作-324",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "執筆活動",
+      "listing": "https://www.ebay.com/itm/196779562732",
+      "imageId": "LF8AAOSwFvVnKNsg",
+      "url": "https://i.ebayimg.com/images/g/LF8AAOSwFvVnKNsg/s-l1600.webp",
+      "staging": "staging/ebay/ta0324-ja.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 969,
+        "height": 1370
+      },
+      "note": "JA orphan fill. Pied 作-324 BANDAI 2006 — 執筆活動. OtterMart 1600² ruler crop → art.ebay."
+    },
+    {
+      "printedRef": "作-329",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "新たな器",
+      "listing": "https://www.ebay.com/itm/196779564981",
+      "imageId": "V4YAAOSw2cZnKNtt",
+      "url": "https://i.ebayimg.com/images/g/V4YAAOSw2cZnKNtt/s-l1600.webp",
+      "staging": "staging/ebay/ta0329-ja.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 972,
+        "height": 1373
+      },
+      "note": "JA orphan fill. Pied 作-329 BANDAI 2006 — 新たな器. OtterMart store Mission- SRP → art.ebay."
+    },
+    {
+      "printedRef": "作-331",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "未来を手中に",
+      "listing": "https://www.ebay.com/itm/196781960891",
+      "imageId": "LUgAAOSwvk1nKcRi",
+      "url": "https://i.ebayimg.com/images/g/LUgAAOSwvk1nKcRi/s-l1600.webp",
+      "staging": "staging/ebay/ta0331-ja.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 968,
+        "height": 1376
+      },
+      "note": "JA orphan fill. Pied 作-331 BANDAI 2006 — 未来を手中に. OtterMart store Mission- SRP → art.ebay."
+    },
+    {
+      "printedRef": "作-336",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "軽はずみ",
+      "listing": "https://www.ebay.com/itm/196782005945",
+      "imageId": "cfUAAOSwvGFnKcdz",
+      "url": "https://i.ebayimg.com/images/g/cfUAAOSwvGFnKcdz/s-l1600.webp",
+      "staging": "staging/ebay/ta0336-ja.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 971,
+        "height": 1361
+      },
+      "note": "JA orphan fill. Pied 作-336 BANDAI 2006 — 軽はずみ. OtterMart store Mission- SRP → art.ebay."
+    },
+    {
+      "printedRef": "作-282",
+      "lang": "ja",
+      "setCode": "maki14",
+      "disk": "ta0282",
+      "title": "月下の修業",
+      "listing": "https://www.ebay.com/itm/196781944587",
+      "imageId": "wa8AAOSwQ-1nKcJb",
+      "url": "https://i.ebayimg.com/images/g/wa8AAOSwQ-1nKcJb/s-l1600.webp",
+      "staging": "staging/ebay/ta0282-ja.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 954,
+        "height": 1382
+      },
+      "note": "Upgrade main over incomplete art.fril.jpg + tiny Suruga GL406716 348×512. Pied 作-282 BANDAI 2005 — 月下の修業 (Hinata). OtterMart 196781944587 ruler crop → art.ebay; dropped tiny suruga so JA face picks full card. 絵違い ta0282-a still GU866764 mid-crop 1024×660 — no full photo found 2026-09-25."
     }
   ],
   "italianStore": {
@@ -3792,7 +4577,15 @@
     "store": "japanesemarketshop",
     "url": "https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hmzkhyt&store_cat=0&store_name=japanesemarketshop&_oac=1&_nkw=naruto+card+game&_dmd=1&rt=nc&_ipg=240",
     "urlPage2": "https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hmzkhyt&store_cat=0&store_name=japanesemarketshop&_oac=1&_nkw=naruto+card+game&_dmd=1&rt=nc&_ipg=240&_pgn=2",
-    "note": "User-named store. Full title inventory 2026-09-21: 289 results across 2×240 pages (287 unique itms). Buckets ~73 Carddass / 117 Miracle / 87 Data Carddass / 5 Shippuden / 5 other. Carddass JA orphans ingested: 術-291, 作-306 (+ prior 作-190). Paste-only — do not write a crawler; titles pasted from user-supplied SRP URLs. Shippuden JA orphans also ingested via narutoshippuden/ebay-hmzkhyt.json: 術伝-061, 忍伝-学036, 忍伝-学039.",
-    "inventory": "data/staging/face-gap-run-2026-09-21/hmzkhyt/analysis.json"
+    "note": "User-named store. Full title inventory 2026-09-21: 289 results across 2×240 pages (287 unique itms). Buckets ~73 Carddass / 117 Miracle / 87 Data Carddass / 5 Shippuden / 5 other. Carddass JA orphans ingested: 術-291, 作-306 (+ prior 作-190). Paste-only — do not write a crawler; titles pasted from user-supplied SRP URLs. Shippuden JA orphans also ingested via narutoshippuden/ebay-hmzkhyt.json: 術伝-061, 忍伝-学036, 忍伝-学039. Face-gap dig staging purged 2026-09-23 (absorbed or unused)."
+  },
+  "sellerWatchOtterMart": {
+    "observed": "2026-09-25",
+    "user": "ottermart-japan",
+    "store": "ottermartjapan",
+    "url": "https://www.ebay.com/sch/i.html?_ssn=ottermart-japan&store_name=ottermartjapan&_nkw=NARUTO+Card+Game&_ipg=240",
+    "missionUrl": "https://www.ebay.com/sch/i.html?_ssn=ottermart-japan&_nkw=Mission-&_ipg=120",
+    "note": "Consistent 1600² white+ruler photos — always crop before art.ebay. 2026-09-25: Mission- SRP filled JA orphans 作-319/324/329/331/336 (+ prior 279-a / 依-44/45 recrops / 作-334 recrop). Still missing from store: 作-326/337, 忍-417, 術-253/290. Prefer paste/SRP harvest over a crawler; compare pixel area vs shop scans before replacing Suruga/Nikita. Client- SRP 2026-09-25: upgraded 依-38/39/40/46 over dark ebay.fr pads.",
+    "clientUrl": "https://www.ebay.com/sch/i.html?_ssn=ottermart-japan&_nkw=Client-+NARUTO+Card+Game&_ipg=120"
   }
 }

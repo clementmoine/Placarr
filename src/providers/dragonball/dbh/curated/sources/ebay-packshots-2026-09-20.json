@@ -1,0 +1,26 @@
+{
+  "source": "ebay.com listing photos (manual packshot harvest)",
+  "observed": "2026-09-20",
+  "notes": "Item 325367937821 — Extra Booster Pack 1 pack + open display (UI Goku). Listing HTML 403 from CLI; ID via packshot.",
+  "count": 1,
+  "items": [
+    {
+      "itemId": "325367937821",
+      "title": "SDBH Extra Booster Pack 1 (pack + BOX display)",
+      "productUrl": "https://www.ebay.com/itm/325367937821",
+      "slugs": ["extra-booster-pack-1", "extra-booster-pack-1-box"],
+      "art": [
+        "products/extra-booster-pack-1.jpg",
+        "products/extra-booster-pack-1-box.jpg"
+      ],
+      "originImages": [
+        "https://i.ebayimg.com/images/g/c5YAAOSwQlRjO4mP/s-l1600.webp",
+        "https://i.ebayimg.com/images/g/pd0AAOSwfp9jO4mQ/s-l1600.webp"
+      ],
+      "mirror": [
+        "products/ebay/extra-booster-pack-1.jpg",
+        "products/ebay/extra-booster-pack-1-box.jpg"
+      ]
+    }
+  ]
+}

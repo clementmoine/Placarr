@@ -6,10 +6,9 @@ README.md
 .next
 .git
 
-# Données runtime — vivent dans des volumes, jamais dans l'image.
-public/uploads
-.cache
-config
+# Données runtime — vivent dans des volumes / bind mounts, jamais dans l'image.
+cache
+data
 
 # Secrets — l'environnement est fourni au runtime par compose.
 .env

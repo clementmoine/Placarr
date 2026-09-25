@@ -1,0 +1,42 @@
+{
+  "source": "Rakuten Suruga-ya shop category ナルティメット",
+  "observed": "2026-09-14",
+  "crawlLive": false,
+  "ingest": "faces",
+  "url": "https://item.rakuten.co.jp/surugaya-a-too/c/0000003082/",
+  "note": "Flare category crawl of Suruga-ya Rakuten shop ナルティメット (~505 listings across pages). ~165 unique resolved Data Carddass prints; almost all already have Suruga/eBay/Mercari art. The only art holes (DN-174T, NM-023, NXPF-002) map to Suruga SKUs G8903813 / G8903911 / GL411555 — Rakuten thumbs are no_photo, Suruga product pages are no_photo, CDN pics/game/*.jpg 404. No faces installed from this crawl.",
+  "counts": {
+    "listings": 505,
+    "uniquePrinted": 165,
+    "alreadyHaveArt": 162,
+    "artHoles": 3,
+    "holesFilled": 0
+  },
+  "artHoles": [
+    {
+      "printedRef": "DN-174T",
+      "title": "NARUTOデータカードダス DN-174T[R]：ロック・リー",
+      "rakutenUrl": "https://item.rakuten.co.jp/surugaya-a-too/831599-1/",
+      "surugaId": "G8903813",
+      "surugaUrl": "https://www.suruga-ya.jp/product/detail/G8903813",
+      "status": "no_photo_rakuten_and_suruga_cdn404"
+    },
+    {
+      "printedRef": "NM-023",
+      "title": "NARUTOデータカードダス NM-023[R]：日向ヒナタ",
+      "rakutenUrl": "https://item.rakuten.co.jp/surugaya-a-too/831697-1/",
+      "surugaId": "G8903911",
+      "surugaUrl": "https://www.suruga-ya.jp/product/detail/G8903911",
+      "status": "no_photo_rakuten_and_suruga_cdn404"
+    },
+    {
+      "printedRef": "NXPF-002",
+      "title": "NARUTOデータカードダス/プロモ/メイン＆アシスト/ポケットファイルダス ナルティメットクロス NXpf-002[プロモ]：うちはサスケ",
+      "rakutenUrl": "https://item.rakuten.co.jp/surugaya-a-too/112948293-1/",
+      "surugaId": "GL411555",
+      "surugaUrl": "https://www.suruga-ya.jp/product/detail/GL411555",
+      "status": "no_photo_rakuten_and_suruga_cdn404"
+    }
+  ],
+  "faces": []
+}

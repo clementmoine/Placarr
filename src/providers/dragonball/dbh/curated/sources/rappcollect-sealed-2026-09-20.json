@@ -1,0 +1,52 @@
+{
+  "source": "rappcollect.com Shopify product pages (manual packshot harvest)",
+  "observed": "2026-09-20",
+  "notes": "BOX / pack+display shots when toy-let only ships pack faces or when volumes were unminted.",
+  "count": 5,
+  "items": [
+    {
+      "handle": "super-dragon-ball-heroes-big-bang-mission-1-booster-box",
+      "title": "Super Dragon Ball Heroes Big Bang Mission Ver 1 Booster Box (20 packs)",
+      "productUrl": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-1-booster-box",
+      "slugs": ["big-bang-booster-pack-1", "big-bang-booster-pack-1-box"],
+      "art": [
+        "products/rappcollect/big-bang-mission-ver-1.jpg",
+        "products/rappcollect/big-bang-mission-ver-1-box.jpg"
+      ]
+    },
+    {
+      "handle": "super-dragon-ball-heroes-big-bang-mission-2-booster-box",
+      "title": "Super Dragon Ball Heroes Big Bang Mission Ver 2 Booster Box (20 packs)",
+      "productUrl": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-2-booster-box",
+      "slugs": ["big-bang-booster-pack-2", "big-bang-booster-pack-2-box"],
+      "art": [
+        "products/rappcollect/big-bang-mission-ver-2.jpg",
+        "products/rappcollect/big-bang-mission-ver-2-box.jpg"
+      ]
+    },
+    {
+      "handle": "super-dragon-ball-heroes-big-bang-mission-ver-5-booster-box-20-packs",
+      "title": "Super Dragon Ball Heroes Big Bang Mission Ver 5 Booster Box (20 packs)",
+      "productUrl": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-ver-5-booster-box-20-packs",
+      "slugs": ["big-bang-booster-pack-5-box"],
+      "art": ["products/rappcollect/big-bang-mission-ver-5-box.jpg"]
+    },
+    {
+      "handle": "super-dragon-ball-heroes-big-bang-mission-ver-8-booster-box-20-packs",
+      "title": "Super Dragon Ball Heroes Big Bang Mission Ver 8 Booster Box (20 packs)",
+      "productUrl": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-ver-8-booster-box-20-packs",
+      "slugs": ["big-bang-booster-pack-8", "big-bang-booster-pack-8-box"],
+      "art": [
+        "products/rappcollect/big-bang-mission-ver-8.jpg",
+        "products/rappcollect/big-bang-mission-ver-8-box.jpg"
+      ]
+    },
+    {
+      "handle": "super-dragon-ball-heroes-big-bang-mission-ver-9-booster-box-20-packs",
+      "title": "Super Dragon Ball Heroes Big Bang Mission Ver 9 Booster Box (20 packs)",
+      "productUrl": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-ver-9-booster-box-20-packs",
+      "slugs": ["big-bang-booster-pack-9-box"],
+      "art": ["products/rappcollect/big-bang-mission-ver-9-box.jpg"]
+    }
+  ]
+}

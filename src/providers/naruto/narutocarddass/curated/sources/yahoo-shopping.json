@@ -1,0 +1,21 @@
+{
+  "source": "Yahoo! Shopping search (VPN JP 2026-08-18)",
+  "observed": "2026-08-18",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "search": "https://shopping.yahoo.co.jp/search?p=NARUTO カードゲーム 巻ノ壱",
+  "note": "Search HTML 200 from JP. Hits are Suruga-ya's Yahoo storefront — same GL ids as suruga-ya-carddass.json (GL636820/826/828/840…). Not a second dump. Do not crawl Shopping or PayPay. Sample titles are 巻ノ壱 singles already on the Suruga TSV.",
+  "sameAs": "suruga-ya-carddass.json",
+  "sampleStore": "https://store.shopping.yahoo.co.jp/suruga-ya/gl636826.html",
+  "sampleIds": [
+    "GL636820",
+    "GL636826",
+    "GL636828",
+    "GL636840",
+    "GL406639",
+    "GL406721"
+  ],
+  "not": ["crawl", "paypay-fleamarket", "data-carddass"]
+}

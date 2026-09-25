@@ -1,23 +1,25 @@
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import { fetchFromHowLongToBeat } from "./fetch";
 import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 
 export { fetchFromHowLongToBeat } from "./fetch";
 
-export const howlongtobeatModule: ProviderModule = {
+export const howlongtobeatModule = defineProvider({
   info: {
     id: "howlongtobeat",
     label: "HowLongToBeat",
+    minRequestIntervalMs: 500,
     types: ["games"],
     capabilities: ["identify", "duration"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: true,
     imageScoreAdjustment: -500,
     websiteUrl: "https://howlongtobeat.com/",
@@ -35,6 +37,7 @@ export const howlongtobeatModule: ProviderModule = {
       )) as MetadataResult | null;
     },
   }),
+  // Label admin « How Long to Beat » (≠ info.label compact).
   healthCheck: createMetadataHealthCheck(
     "howlongtobeat",
     "How Long to Beat",
@@ -48,6 +51,7 @@ export const howlongtobeatModule: ProviderModule = {
       };
     },
   ),
+  // Handler id historique `hltb-metadata`.
   testHandlers: {
     "hltb-metadata": {
       label: "How Long to Beat - Metadata",
@@ -79,4 +83,4 @@ export const howlongtobeatModule: ProviderModule = {
       fetchFromHowLongToBeat(ctx.name, ctx.platform ?? undefined),
     );
   },
-};
+});

@@ -145,8 +145,12 @@ export function planCroppedCoverAttachmentSync(
 
 /**
  * When a scan/create cover was client-localized to a UUID `/uploads` path, enrichment
- * later stores the same art under a provider-stamped hash path. Remap the pin to that
- * catalog row so the detail chip keeps ScreenScraper / Booknode instead of an orphan.
+ * later stores the same art under a provider-stamped hash path — or a pack
+ * `/assets/…` face. Remap the pin to that catalog row so the detail chip keeps
+ * ScreenScraper / Booknode / catalogue art instead of an orphan upload.
+ *
+ * Prefer durable pack assets (`/assets/…`) over another `/uploads/` twin: the
+ * catalogue face can be upgraded in place; a baked upload cannot.
  */
 export function pickVisuallyMatchingCatalogCoverUrl(
   pinHash: string,
@@ -158,6 +162,7 @@ export function pickVisuallyMatchingCatalogCoverUrl(
   }>,
   maxDistance: number = 8,
 ): string | null {
+  let bestUpload: string | null = null;
   for (const candidate of candidates) {
     const sourceKey = (candidate.source || "")
       .split(/[·/]/)[0]
@@ -166,11 +171,15 @@ export function pickVisuallyMatchingCatalogCoverUrl(
     if (sourceKey === "user") continue;
     if (!isCoverEligibleAttachmentType(candidate.type)) continue;
     if (!candidate.hash) continue;
-    if (hammingDistance(pinHash, candidate.hash) <= maxDistance) {
-      return candidate.url;
+    if (hammingDistance(pinHash, candidate.hash) > maxDistance) continue;
+    if (candidate.url.startsWith("/assets/")) return candidate.url;
+    if (!bestUpload && candidate.url.startsWith("/uploads/")) {
+      bestUpload = candidate.url;
+    } else if (!bestUpload) {
+      bestUpload = candidate.url;
     }
   }
-  return null;
+  return bestUpload;
 }
 
 export async function syncCroppedCoverAttachment(
@@ -235,7 +244,9 @@ export async function syncCroppedCoverAttachment(
           PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
         );
         if (catalogUrl) {
-          const twin = candidates.find((candidate) => candidate.url === catalogUrl);
+          const twin = candidates.find(
+            (candidate) => candidate.url === catalogUrl,
+          );
           catalogTwinId = twin?.id ?? null;
           catalogTwinUrl = catalogUrl;
         }
@@ -243,13 +254,22 @@ export async function syncCroppedCoverAttachment(
     }
 
     if (catalogTwinId && catalogTwinUrl) {
-      if (catalogTwinUrl !== plan.url) {
+      // Never rewrite a pack `/assets/…` face onto a UUID upload — that froze
+      // catalogue upgrades and left twin bytes under public/uploads.
+      if (
+        catalogTwinUrl.startsWith("/assets/") ||
+        !plan.url.startsWith("/uploads/")
+      ) {
+        preferredImageUrl = catalogTwinUrl;
+      } else if (catalogTwinUrl !== plan.url) {
         await prisma.attachment.update({
           where: { id: catalogTwinId },
           data: { url: plan.url },
         });
+        preferredImageUrl = plan.url;
+      } else {
+        preferredImageUrl = plan.url;
       }
-      preferredImageUrl = plan.url;
       continue;
     }
 
@@ -359,7 +379,8 @@ export async function syncCroppedCoverAttachment(
     }
   }
 
-  const retargeted = await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
+  const retargeted =
+    await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
   for (const attachment of retargeted) {
     const previous = galleryAfter.find((row) => row.id === attachment.id);
     if (!previous || previous.url === attachment.url) continue;

@@ -32,6 +32,19 @@ describe("parseCatalogEstimatePricing", () => {
     });
   });
 
+  it("parses single euro point estimates", () => {
+    expect(parseCatalogEstimatePricing("5 €")).toEqual({
+      minCents: 500,
+      maxCents: 500,
+      displayValue: "5 €",
+    });
+    expect(parseCatalogEstimatePricing("0,10 €")).toEqual({
+      minCents: 10,
+      maxCents: 10,
+      displayValue: "0,10 €",
+    });
+  });
+
   it("ignores absent catalog estimates", () => {
     expect(parseCatalogEstimatePricing("non coté")).toBeNull();
     expect(parseCatalogEstimatePricing("non côté")).toBeNull();
@@ -62,7 +75,9 @@ describe("priceObservationsFromMetadataFacts", () => {
     ]);
 
     expect(observations).toHaveLength(3);
-    expect(observations.find((entry) => entry.condition === "estimated")).toMatchObject({
+    expect(
+      observations.find((entry) => entry.condition === "estimated"),
+    ).toMatchObject({
       source: "bedetheque",
       metadataScoped: true,
       catalogEstimateMinCents: 500,
@@ -92,12 +107,12 @@ describe("priceObservationsFromMetadataFacts", () => {
         },
       ]),
     ).toEqual([]);
-    expect(observations.find((entry) => entry.condition === "new")?.priceCents).toBe(
-      730,
-    );
-    expect(observations.find((entry) => entry.condition === "used")?.priceCents).toBe(
-      1100,
-    );
+    expect(
+      observations.find((entry) => entry.condition === "new")?.priceCents,
+    ).toBe(730);
+    expect(
+      observations.find((entry) => entry.condition === "used")?.priceCents,
+    ).toBe(1100);
   });
 });
 

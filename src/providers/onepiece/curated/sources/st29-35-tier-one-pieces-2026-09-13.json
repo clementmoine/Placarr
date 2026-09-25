@@ -1,0 +1,71 @@
+{
+  "source": "st29-35-tier-one-pieces",
+  "observed": "2026-09-13",
+  "kind": "research-dig",
+  "question": "Per-card qty (Pieces) for OPTCG starters ST-29–36 — Bandai product pages only state 51 cards / N types.",
+  "verdict": {
+    "bandaiOfficial": "No Pieces tables on EN/JP/Asia product pages (51 + DON!! only).",
+    "ingest": {
+      "st29": "Tier One 収録枚数 Σ=51 → contentsKnown",
+      "st30": "Tier One Σ=51 → contentsKnown (declaredCardCount 34→51)",
+      "st31": "Tier One Σ=51 → contentsKnown (replaced wrong OP16 preview keys)",
+      "st32": "Tier One Σ=51 + Kawamatsu OP12-023 (Tier One listed OP10-036 twice; Pokecazilla confirms OP12-023)",
+      "st33": "Tier One Σ=51 → contentsKnown",
+      "st34": "Tier One Σ=51 (ST34-001 ×2 buyer-corrected on page) → contentsKnown",
+      "st35": "Tier One Σ=51 → contentsKnown",
+      "st36": "Membership 15 from Pokecazilla/Bandai; no 収録枚数 table → contentsKnown false"
+    },
+    "stillBlocked": ["SD08 DBS CG Pieces", "ST-36 qty", "older ST without Tier One pass this dig"]
+  },
+  "sources": [
+    {
+      "id": "tier-one-st29",
+      "url": "https://tier-one-onepiece.jp/blog/st29-card-list/",
+      "finding": "Full 収録枚数 table 17 rows Σ=51"
+    },
+    {
+      "id": "tier-one-st30",
+      "url": "https://tier-one-onepiece.jp/blog/st30-card-list/",
+      "finding": "Full 収録枚数 table 17 rows Σ=51"
+    },
+    {
+      "id": "tier-one-st31",
+      "url": "https://tier-one-onepiece.jp/blog/st31-card-list/",
+      "finding": "Full 収録枚数 table 15 rows Σ=51 (leader ST21-001 reprint)"
+    },
+    {
+      "id": "tier-one-st32",
+      "url": "https://tier-one-onepiece.jp/blog/st32-card-list/",
+      "finding": "Qty table; Kawamatsu row wrongly OP10-036 (same as Perona)"
+    },
+    {
+      "id": "pokecazilla-st31-36",
+      "url": "https://pokecazilla.com/column/op-starterdeck-202607-info/",
+      "finding": "Membership lists for ST-31–36; Kawamatsu = OP12-023; ST-36 15 types without qty"
+    },
+    {
+      "id": "tier-one-st33",
+      "url": "https://tier-one-onepiece.jp/blog/st33-card-list/",
+      "finding": "Full 収録枚数 Σ=51"
+    },
+    {
+      "id": "tier-one-st34",
+      "url": "https://tier-one-onepiece.jp/blog/st34-card-list/",
+      "finding": "Full 収録枚数 Σ=51; editor note ST34-001 4→2 after buyer report"
+    },
+    {
+      "id": "tier-one-st35",
+      "url": "https://tier-one-onepiece.jp/blog/st35-card-list/",
+      "finding": "Full 収録枚数 Σ=51"
+    },
+    {
+      "id": "tier-one-st36",
+      "url": "https://tier-one-onepiece.jp/blog/st36-card-list/",
+      "finding": "No 収録枚数 table (membership only elsewhere)"
+    }
+  ],
+  "notFound": [
+    "Bandai Pieces HTML for ST-29–36",
+    "Counted public unboxing for ST-36 summing to 51"
+  ]
+}

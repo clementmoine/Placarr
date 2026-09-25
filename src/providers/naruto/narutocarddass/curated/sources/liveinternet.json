@@ -1,0 +1,61 @@
+{
+  "source": "liveinternet.ru/community/naruto_boys Wayback hub (not attachment brute-force)",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "line": "carddass-fr",
+  "url": "https://www.liveinternet.ru/community/naruto_boys/",
+  "note": "Fans rehosted carddass.fr 350×495 JPEGs in 2007. Four named attachments on the 2008-05-25 hub match official SHA1 (NINJA089/142/155, TACTIQUE151). Those prints already have art.carddass. S5 holes (NINJA-232/236/252/253, TACTIQUE-221/226) are not on the archived hub/blog pages. Post permalinks (e.g. post50678084) 404 on that capture; CDX of post* was empty/503. Do not invent {id}_{ts}_{NOM}.jpg. Do not bypass Yandex CAPTCHA. Next: another Wayback hub timestamp that inlines more x_gaara_x posts.",
+  "wayback": {
+    "hub": {
+      "timestamp": "20080525102318",
+      "staging": "staging/liveinternet/community-20080525.html"
+    },
+    "blog": [
+      {
+        "timestamp": "20080531225202",
+        "path": "blog/page1.html",
+        "staging": "staging/liveinternet/blog-page1-20080531.html"
+      },
+      {
+        "timestamp": "20080531125452",
+        "path": "blog/page2.html",
+        "staging": "staging/liveinternet/blog-page2-20080531.html"
+      }
+    ]
+  },
+  "postsFromHub": [
+    {
+      "id": "51201930",
+      "user": "x_gaara_x",
+      "file": "2304553_1190302197_TACTIQUE151.jpg",
+      "number": "ta151"
+    },
+    {
+      "id": "50678084",
+      "user": "x_gaara_x",
+      "file": "1769199_1189880530_NINJA155.jpg",
+      "number": "ni155"
+    },
+    {
+      "id": "45965091",
+      "user": "1721044",
+      "file": "24378384_1185733071_NINJA089.jpg",
+      "number": "ni089"
+    },
+    {
+      "id": "45965041",
+      "user": "1721044",
+      "file": "24377177_1185732051_NINJA142.jpg",
+      "number": "ni142"
+    }
+  ],
+  "holesNotOnArchivedHub": [
+    "ni232",
+    "ni236",
+    "ni252",
+    "ni253",
+    "ta221",
+    "ta226"
+  ],
+  "skip": ["brute-force-attach-ids", "yandex-captcha", "live-community-crawl"]
+}

@@ -70,6 +70,49 @@ describe("preferRequestedDisplayTitle", () => {
     expect(result.imageUrl).toBeUndefined();
     expect(result.attachments).toBeUndefined();
   });
+
+  it("keeps the catalog card title when the request was a collector code", () => {
+    const metadata: MetadataResult = {
+      title: "Ariel - Sur des jambes humaines",
+      externalIds: { printKey: "lorcana:1-1", lorcanajson: "1" },
+      imageUrl: "https://example.test/ariel.jpg",
+    };
+    const result = preferRequestedDisplayTitle(metadata, "TFC#001", {
+      shelfType: "tcg",
+    });
+    expect(result.title).toBe("Ariel - Sur des jambes humaines");
+    expect(result.imageUrl).toBe("https://example.test/ariel.jpg");
+  });
+});
+
+describe("mergeMetadata print lookup covers", () => {
+  it("keeps catalog cover when requested title is a collector code", () => {
+    const merged = mergeMetadata(
+      "tcg",
+      [
+        {
+          providerId: "lorcanajson",
+          metadata: {
+            title: "Ariel - Chanteuse exceptionnelle",
+            imageUrl: "https://example.test/ariel-2.jpg",
+            externalIds: { printKey: "lorcana:1-2", lorcanajson: "2" },
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/ariel-2.jpg",
+                source: "lorcanajson",
+              },
+            ],
+          },
+        },
+      ],
+      { requestedTitle: "TFC#002" },
+    );
+
+    expect(merged.title).toBe("Ariel - Chanteuse exceptionnelle");
+    expect(merged.imageUrl).toBe("https://example.test/ariel-2.jpg");
+    expect(merged.externalIds?.printKey).toBe("lorcana:1-2");
+  });
 });
 
 describe("mergeMetadata generic function", () => {

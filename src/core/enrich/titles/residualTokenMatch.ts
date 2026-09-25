@@ -58,7 +58,9 @@ export function hardwareRequestEditionFranchiseTokens(
   let firstMatchedIdx = -1;
   for (let i = 0; i < requestTokens.length; i++) {
     if (
-      matched.some((m) => tokensEquivalentForShelf(requestTokens[i]!, m, "hardware"))
+      matched.some((m) =>
+        tokensEquivalentForShelf(requestTokens[i]!, m, "hardware"),
+      )
     ) {
       firstMatchedIdx = i;
       break;
@@ -99,10 +101,7 @@ export function consumeEquivalentTokens(
     const adjacentIdx = remaining.findIndex(
       (token, index) =>
         index + 1 < remaining.length &&
-        titleTokensEquivalent(
-          `${token}${remaining[index + 1]}`,
-          needle,
-        ),
+        titleTokensEquivalent(`${token}${remaining[index + 1]}`, needle),
     );
     if (adjacentIdx >= 0) {
       matched.push(needle);

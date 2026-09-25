@@ -1,5 +1,5 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
-import type { Item, Shelf } from "@prisma/client";
+import type { Item, Shelf } from "@/generated/prisma/browser";
 
 import {
   itemMatchesSearchQuery,
@@ -8,9 +8,19 @@ import {
 import { METADATA_REFRESH_STAMP_PRESERVE_MS } from "@/core/collect/enrichment";
 import { upsertBackgroundJobInCache } from "@/lib/api/backgroundJobs";
 
-type ItemPatch = Partial<Item> & {
+type ItemPatch = Partial<
+  Omit<
+    Item,
+    "metadataRefreshStartedAt" | "createdAt" | "updatedAt" | "priceLastUpdated"
+  >
+> & {
   id: Item["id"];
-  shelf?: { id?: Shelf["id"] | null } | null;
+  /** ISO strings from JSON caches are fine — Prisma model uses Date. */
+  metadataRefreshStartedAt?: Date | string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  priceLastUpdated?: Date | string | null;
+  shelf?: { id?: Shelf["id"] | null; slug?: string | null } | null;
   metadata?: {
     title?: string | null;
     aliases?: string[] | string | null;
@@ -403,10 +413,7 @@ export function invalidateShelfQueries(
       if (typeof data.id === "string" && uniqueShelfIds.includes(data.id)) {
         return true;
       }
-      if (
-        typeof data.slug === "string" &&
-        uniqueShelfIds.includes(data.slug)
-      ) {
+      if (typeof data.slug === "string" && uniqueShelfIds.includes(data.slug)) {
         return true;
       }
       return false;
@@ -471,7 +478,9 @@ export async function syncItemQueries(
           ? "metadataRefresh"
           : "metadataEnrich",
         startedAt: item.metadataRefreshStartedAt
-          ? new Date(item.metadataRefreshStartedAt as string | Date).toISOString()
+          ? new Date(
+              item.metadataRefreshStartedAt as string | Date,
+            ).toISOString()
           : new Date(
               (item.createdAt as string | Date | undefined) ?? Date.now(),
             ).toISOString(),
@@ -515,9 +524,7 @@ export function clearFinishedMetadataRefreshStamps(
   queryClient: QueryClient,
   activeJobItemIds: ReadonlySet<string>,
 ) {
-  const clearIfFinished = <T extends Record<string, unknown>>(
-    entry: T,
-  ): T => {
+  const clearIfFinished = <T extends Record<string, unknown>>(entry: T): T => {
     const itemId = entry.id;
     const stamp = entry.metadataRefreshStartedAt;
     if (typeof itemId !== "string" || !stamp) return entry;
@@ -543,13 +550,10 @@ export function clearFinishedMetadataRefreshStamps(
     },
   );
 
-  queryClient.setQueriesData(
-    { queryKey: ["item"] },
-    (current) => {
-      if (!isRecord(current) || typeof current.id !== "string") return current;
-      return clearIfFinished(current);
-    },
-  );
+  queryClient.setQueriesData({ queryKey: ["item"] }, (current) => {
+    if (!isRecord(current) || typeof current.id !== "string") return current;
+    return clearIfFinished(current);
+  });
 
   queryClient.setQueriesData(
     {

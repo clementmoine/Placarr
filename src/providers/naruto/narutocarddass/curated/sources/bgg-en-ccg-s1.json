@@ -1,0 +1,945 @@
+{
+  "source": "BoardGameGeek filepage 20590 — narutotcglist.xls (collector chat 2026-08-16)",
+  "observed": "2026-08-16",
+  "ingest": "titles",
+  "note": "2006 community checklist for Bandai USA CCG Series 1 only. One sheet, titled Path to Hokage; the uploader said later expansions would be appended — they never were (OLE last-saved 2006-12-06). Printed codes are N/J/M, not TCDB PTH* and not Carddass NI/TE. No art in the workbook — ingest titles + print stubs only (`naruto:n-0001`), never `cards/s1/en/`. EN CCG Series 1 is not Carddass FR Série 1. BGG file downloads are tokenized; keep the filepage, never a /file/download_redirect/ URL. Names keep the sheet's typos (Transfrmation, Disquise, Exaustion, Crass-Shaped, Missiong, Shurinken). N-028 Symbol is the letter R — a sheet error, not an element.",
+  "urls": {
+    "filepage": "https://boardgamegeek.com/filepage/20590/narutotcglistxls",
+    "boardgame": "https://boardgamegeek.com/boardgame/22910/naruto-collectible-card-game"
+  },
+  "file": {
+    "name": "narutotcglist.xls",
+    "bytes": 30720,
+    "oleCreated": "2006-12-04",
+    "oleLastSaved": "2006-12-06",
+    "oleAuthor": "CC",
+    "bggUploader": "dexblair",
+    "sheet": "Path to Hokage",
+    "staging": "staging/bgg/narutotcglist.xls"
+  },
+  "set": {
+    "series": 1,
+    "title": "The Path to Hokage",
+    "year": 2006,
+    "lang": "EN"
+  },
+  "legend": {
+    "rarity": ["C", "ST", "U", "R", "SR"],
+    "symbol": ["Earth", "Fire", "Lightning", "Water", "Wind"],
+    "type": ["N", "J", "M"]
+  },
+  "counts": {
+    "cards": 127,
+    "N": 43,
+    "J": 42,
+    "M": 42,
+    "rarity": {
+      "C": 70,
+      "U": 25,
+      "ST": 12,
+      "R": 13,
+      "SR": 7
+    }
+  },
+  "tcdbSid": 116757,
+  "tcdbCards": 127,
+  "observedSheetErrors": [
+    {
+      "ref": "N-028",
+      "field": "symbol",
+      "value": "R",
+      "note": "R is a rarity letter, not an element"
+    }
+  ],
+  "cards": [
+    {
+      "type": "N",
+      "number": "001",
+      "rarity": "C",
+      "name": "Naruto Uzumaki",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "002",
+      "rarity": "U",
+      "name": "Sasuke Uchiha",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "003",
+      "rarity": "U",
+      "name": "Sakura Haruno",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "004",
+      "rarity": "C",
+      "name": "Ino Yamanaka",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "005",
+      "rarity": "C",
+      "name": "Shikamaru Nara",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "006",
+      "rarity": "C",
+      "name": "Choji Akimichi",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "007",
+      "rarity": "C",
+      "name": "Konohamaru",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "008",
+      "rarity": "C",
+      "name": "Iruka Umino",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "009",
+      "rarity": "C",
+      "name": "Mizuki",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "010",
+      "rarity": "C",
+      "name": "Ebisu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "011",
+      "rarity": "U",
+      "name": "Kakashi Hatake",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "012",
+      "rarity": "C",
+      "name": "Asuma Sarutobi",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "013",
+      "rarity": "U",
+      "name": "Third Hokage",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "014",
+      "rarity": "C",
+      "name": "Demon Brothers:Gouzu",
+      "symbol": "Water"
+    },
+    {
+      "type": "N",
+      "number": "015",
+      "rarity": "C",
+      "name": "Demon Brothers:Meizu",
+      "symbol": "Water"
+    },
+    {
+      "type": "N",
+      "number": "016",
+      "rarity": "ST",
+      "name": "Haku",
+      "symbol": "Water"
+    },
+    {
+      "type": "N",
+      "number": "017",
+      "rarity": "U",
+      "name": "Haku",
+      "symbol": "Water"
+    },
+    {
+      "type": "N",
+      "number": "018",
+      "rarity": "C",
+      "name": "Zabuza Momochi",
+      "symbol": "Water"
+    },
+    {
+      "type": "N",
+      "number": "019",
+      "rarity": "SR",
+      "name": "Naruto Uzumaki",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "020",
+      "rarity": "SR",
+      "name": "Sasuke Uchiha",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "021",
+      "rarity": "SR",
+      "name": "Sakura Haruno",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "022",
+      "rarity": "R",
+      "name": "Iruka Umino",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "023",
+      "rarity": "R",
+      "name": "Kakashi Hatake",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "024",
+      "rarity": "R",
+      "name": "Zabuza Momochi",
+      "symbol": "Water"
+    },
+    {
+      "type": "N",
+      "number": "025",
+      "rarity": "C",
+      "name": "Naruto Uzumaki",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "026",
+      "rarity": "C",
+      "name": "Sasuke Uchiha",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "027",
+      "rarity": "C",
+      "name": "Sakura Haruno",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "028",
+      "rarity": "C",
+      "name": "Kiba Inuzuka",
+      "symbol": "R"
+    },
+    {
+      "type": "N",
+      "number": "029",
+      "rarity": "C",
+      "name": "Shino Aburame",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "030",
+      "rarity": "U",
+      "name": "Hinata Hyuga",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "031",
+      "rarity": "C",
+      "name": "Rock Lee",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "032",
+      "rarity": "C",
+      "name": "Tenten",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "033",
+      "rarity": "C",
+      "name": "Neji Hyuga",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "034",
+      "rarity": "C",
+      "name": "Konohamaru",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "035",
+      "rarity": "C",
+      "name": "Kaede Ureshino",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "036",
+      "rarity": "C",
+      "name": "Akamaru",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "037",
+      "rarity": "U",
+      "name": "Kakashi Hatake",
+      "symbol": "Fire"
+    },
+    {
+      "type": "N",
+      "number": "038",
+      "rarity": "U",
+      "name": "Kurenai Yuhi",
+      "symbol": "Wind"
+    },
+    {
+      "type": "N",
+      "number": "039",
+      "rarity": "U",
+      "name": "Might Guy",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "040",
+      "rarity": "U",
+      "name": "Zabuza Momochi",
+      "symbol": "Water"
+    },
+    {
+      "type": "N",
+      "number": "041",
+      "rarity": "R",
+      "name": "Rock Lee",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "N",
+      "number": "042",
+      "rarity": "ST",
+      "name": "Neji Hyuga",
+      "symbol": "Earth"
+    },
+    {
+      "type": "N",
+      "number": "043",
+      "rarity": "SR",
+      "name": "Haku",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "001",
+      "rarity": "C",
+      "name": "Kunai",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "002",
+      "rarity": "C",
+      "name": "Crass-Shaped Shuriken",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "003",
+      "rarity": "C",
+      "name": "Sexy Jutsu",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "004",
+      "rarity": "U",
+      "name": "Harem Jutsu",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "005",
+      "rarity": "R",
+      "name": "Multi Shadow Clone Jutsu",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "006",
+      "rarity": "C",
+      "name": "8 Trigram Divination Seal Spell Formula",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "007",
+      "rarity": "R",
+      "name": "Sharingan Eye",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "008",
+      "rarity": "ST",
+      "name": "Crystal Ball Jutsu",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "009",
+      "rarity": "C",
+      "name": "A Thousand Years of Death",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "010",
+      "rarity": "U",
+      "name": "Fire Style: Fire Ball Jutsu",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "011",
+      "rarity": "ST",
+      "name": "Shared-instinct Assassination Jutsu",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "012",
+      "rarity": "ST",
+      "name": "Water Clone Jutsu",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "013",
+      "rarity": "U",
+      "name": "Hidden Mist Jutsu",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "014",
+      "rarity": "R",
+      "name": "Silent Killing Jutsu",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "015",
+      "rarity": "C",
+      "name": "Clone Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "016",
+      "rarity": "C",
+      "name": "Transfrmation Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "017",
+      "rarity": "C",
+      "name": "Substitution Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "018",
+      "rarity": "C",
+      "name": "Disquise Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "019",
+      "rarity": "U",
+      "name": "Evil Illusion: Death Mirage Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "020",
+      "rarity": "C",
+      "name": "Escape Jutsu",
+      "symbol": "Earth"
+    },
+    {
+      "type": "J",
+      "number": "021",
+      "rarity": "C",
+      "name": "Earth Style: Headhunter Jutsu",
+      "symbol": "Earth"
+    },
+    {
+      "type": "J",
+      "number": "022",
+      "rarity": "C",
+      "name": "Mind Transfer Jutsu",
+      "symbol": "Earth"
+    },
+    {
+      "type": "J",
+      "number": "023",
+      "rarity": "ST",
+      "name": "Shadow Possession Jutsu",
+      "symbol": "Earth"
+    },
+    {
+      "type": "J",
+      "number": "024",
+      "rarity": "C",
+      "name": "Expansion Jutsu",
+      "symbol": "Earth"
+    },
+    {
+      "type": "J",
+      "number": "025",
+      "rarity": "ST",
+      "name": "Shadow Clone Jutsu",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "026",
+      "rarity": "U",
+      "name": "Leaf Hurricane",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "027",
+      "rarity": "C",
+      "name": "Leaf Whirlwind",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "J",
+      "number": "028",
+      "rarity": "C",
+      "name": "Ninja Art of Beast Mimicry: All-Fours Jutsu",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "029",
+      "rarity": "ST",
+      "name": "Demon Wind Shurinken: Windmill of Shadows",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "030",
+      "rarity": "SR",
+      "name": "Lightning Blade",
+      "symbol": "Fire"
+    },
+    {
+      "type": "J",
+      "number": "031",
+      "rarity": "ST",
+      "name": "Guillotine Sword",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "032",
+      "rarity": "C",
+      "name": "Water Prison Jutsu",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "033",
+      "rarity": "C",
+      "name": "Water Style: Water Dragon Jutsu",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "034",
+      "rarity": "R",
+      "name": "Water Style: Giant Vortex Jutsu",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "035",
+      "rarity": "U",
+      "name": "A Thousand Needles of Death",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "036",
+      "rarity": "SR",
+      "name": "Crystal Ice Mirror",
+      "symbol": "Water"
+    },
+    {
+      "type": "J",
+      "number": "037",
+      "rarity": "C",
+      "name": "Shadow Shuriken Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "038",
+      "rarity": "C",
+      "name": "Sprinting in the Mist Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "039",
+      "rarity": "U",
+      "name": "Parasitic Insect Jutsu",
+      "symbol": "Wind"
+    },
+    {
+      "type": "J",
+      "number": "040",
+      "rarity": "C",
+      "name": "Tree-Climbing Jutsu",
+      "symbol": "Earth"
+    },
+    {
+      "type": "J",
+      "number": "041",
+      "rarity": "C",
+      "name": "Summoning Earth Style: Fanged Pursuit Jutsu",
+      "symbol": "Earth"
+    },
+    {
+      "type": "J",
+      "number": "042",
+      "rarity": "R",
+      "name": "Byakugan",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "001",
+      "rarity": "C",
+      "name": "Ichiraku Noodle Shop",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "002",
+      "rarity": "C",
+      "name": "An Outcast's Dream",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "003",
+      "rarity": "U",
+      "name": "Leaf Headband",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "004",
+      "rarity": "ST",
+      "name": "A kind Teacher",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "005",
+      "rarity": "SR",
+      "name": "Disaster of the Nine-Tailed Fox Spirit",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "006",
+      "rarity": "C",
+      "name": "Mission the Capturing of the Missiong Pet \"Tora\"",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "007",
+      "rarity": "C",
+      "name": "Make-Out Paradise",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "008",
+      "rarity": "U",
+      "name": "An Accident",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "009",
+      "rarity": "C",
+      "name": "Lone Avenger",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "010",
+      "rarity": "U",
+      "name": "Exaustion of Stamina",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "011",
+      "rarity": "C",
+      "name": "Bingo Book",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "012",
+      "rarity": "C",
+      "name": "The Worst Client",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "013",
+      "rarity": "C",
+      "name": "Gato Transport",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "014",
+      "rarity": "U",
+      "name": "Intent to Kill",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "015",
+      "rarity": "U",
+      "name": "Inner Sakura",
+      "symbol": "Wind"
+    },
+    {
+      "type": "M",
+      "number": "016",
+      "rarity": "C",
+      "name": "Browsing in a Bookstore",
+      "symbol": "Wind"
+    },
+    {
+      "type": "M",
+      "number": "017",
+      "rarity": "C",
+      "name": "Three Man Squads",
+      "symbol": "Wind"
+    },
+    {
+      "type": "M",
+      "number": "018",
+      "rarity": "R",
+      "name": "One Morning",
+      "symbol": "Wind"
+    },
+    {
+      "type": "M",
+      "number": "019",
+      "rarity": "C",
+      "name": "Failure",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "020",
+      "rarity": "C",
+      "name": "Ninja Academy",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "021",
+      "rarity": "R",
+      "name": "After the Battle",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "022",
+      "rarity": "C",
+      "name": "Leaf Ninja Forces",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "023",
+      "rarity": "C",
+      "name": "Battle of Clones",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "024",
+      "rarity": "C",
+      "name": "Oath of Pain",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "025",
+      "rarity": "U",
+      "name": "The Hero Appears!",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "026",
+      "rarity": "C",
+      "name": "The Most Unpredictable Ninja",
+      "symbol": "Lightning"
+    },
+    {
+      "type": "M",
+      "number": "027",
+      "rarity": "C",
+      "name": "Blood of the Uchiha Clan",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "028",
+      "rarity": "ST",
+      "name": "Coward",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "029",
+      "rarity": "C",
+      "name": "Seesaw Battle",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "030",
+      "rarity": "R",
+      "name": "Kakashi's Foresight",
+      "symbol": "Fire"
+    },
+    {
+      "type": "M",
+      "number": "031",
+      "rarity": "R",
+      "name": "Gathering Herbs",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "032",
+      "rarity": "U",
+      "name": "The Worst for Last",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "033",
+      "rarity": "C",
+      "name": "Public Execution",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "034",
+      "rarity": "C",
+      "name": "Unwanted Child",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "035",
+      "rarity": "C",
+      "name": "Look for the Red Four-Leafed Clover",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "036",
+      "rarity": "C",
+      "name": "Left Behind",
+      "symbol": "Wind"
+    },
+    {
+      "type": "M",
+      "number": "037",
+      "rarity": "C",
+      "name": "Specific Instruction",
+      "symbol": "Wind"
+    },
+    {
+      "type": "M",
+      "number": "038",
+      "rarity": "C",
+      "name": "Teachings of the Previous Hokage",
+      "symbol": "Water"
+    },
+    {
+      "type": "M",
+      "number": "039",
+      "rarity": "C",
+      "name": "Small Act of Courage",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "040",
+      "rarity": "ST",
+      "name": "Shooting Star",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "041",
+      "rarity": "C",
+      "name": "Manji Battle Formation",
+      "symbol": "Earth"
+    },
+    {
+      "type": "M",
+      "number": "042",
+      "rarity": "U",
+      "name": "Revival",
+      "symbol": "Earth"
+    }
+  ]
+}

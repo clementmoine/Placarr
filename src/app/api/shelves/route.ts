@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Type } from "@prisma/client";
+import { Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 
-import { requireGuestOrHigher } from "@/lib/auth";
+import {
+  canReadOwnedRow,
+  collectionUserIdFor,
+  getCollectionOwnerId,
+  requireGuestOrHigher,
+} from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
 import { isShelfTypeReady } from "@/lib/shelfTypeReadiness";
 
@@ -30,7 +35,6 @@ import { reconcileOrphanedMetadataRefreshesForUser } from "@/core/collect/jobs/m
 import type { Locale } from "@/types/i18n";
 import type { ShelfBestItem } from "@/types/shelves";
 
-
 async function formatShelfWithItemPrices<
   T extends {
     type: string;
@@ -54,6 +58,8 @@ async function formatShelfWithItemPrices<
       name: item.name,
       metadataTitle: item.metadata?.title ?? null,
       aliases: metadataAliases(item.metadata?.aliases) ?? null,
+      printKey:
+        typeof item.printKey === "string" ? item.printKey : null,
     })),
     shelf.name,
   );
@@ -75,14 +81,13 @@ async function formatShelfWithItemPrices<
             id: item.id,
             name: item.name,
             barcode: item.barcode,
+            printKey:
+              typeof item.printKey === "string" ? item.printKey : null,
             metadataId: item.metadataId,
             metadataRefreshStartedAt:
               "metadataRefreshStartedAt" in item
                 ? (item.metadataRefreshStartedAt as
-                    | Date
-                    | string
-                    | null
-                    | undefined)
+                    Date | string | null | undefined)
                 : undefined,
             metadata: presented.metadata as MetadataResult | null | undefined,
           },
@@ -96,13 +101,16 @@ async function formatShelfWithItemPrices<
         ...prices,
       };
     }),
+    { shelfType: shelf.type },
   ) as Array<
     PresentedItem<PresentableItemInput> & {
       id: string;
       priceNew: number | null;
+      priceFoil?: number | null;
       priceUsed: number | null;
       priceUsedCIB: number | null;
       priceEstimated?: number | null;
+      priceEstimatedFoil?: number | null;
       priceLastUpdated: Date | string | null;
     }
   >;
@@ -194,9 +202,12 @@ export async function GET(req: NextRequest) {
       const id = searchParams.get("id");
       const q = searchParams.get("q");
       const lite = searchParams.get("lite") === "1";
+      const scopeUserId = await collectionUserIdFor(auth.user);
+      const collectionOwnerId =
+        auth.user.role === "guest" ? scopeUserId : await getCollectionOwnerId();
 
       if (id) {
-        const resolvedId = await resolveShelfId(id, auth.user.id);
+        const resolvedId = await resolveShelfId(id, scopeUserId);
         if (q) {
           const searchTerm = q.trim();
           const shelf = await prisma.shelf.findUnique({
@@ -221,8 +232,7 @@ export async function GET(req: NextRequest) {
             );
           }
 
-          // Only allow if user is admin or the owner
-          if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+          if (!canReadOwnedRow(auth.user, shelf.userId, collectionOwnerId)) {
             return NextResponse.json(
               { error: "Access denied" },
               { status: 403 },
@@ -275,8 +285,7 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        // Only allow if user is admin or the owner
-        if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+        if (!canReadOwnedRow(auth.user, shelf.userId, collectionOwnerId)) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
@@ -309,7 +318,7 @@ export async function GET(req: NextRequest) {
 
         const shelves = await prisma.shelf.findMany({
           where: {
-            userId: auth.user.id,
+            userId: scopeUserId,
             OR: [
               { name: { contains: searchTerm, mode: "insensitive" } },
               {
@@ -333,14 +342,12 @@ export async function GET(req: NextRequest) {
           },
         });
 
-        return NextResponse.json(
-          lite ? shelves : await withBestItems(shelves),
-        );
+        return NextResponse.json(lite ? shelves : await withBestItems(shelves));
       }
 
       const shelves = await prisma.shelf.findMany({
         where: {
-          userId: auth.user.id,
+          userId: scopeUserId,
         },
         include: {
           _count: {
@@ -399,7 +406,7 @@ export async function POST(req: NextRequest) {
         slug: slugify(name),
         imageUrl,
         color,
-        type,
+        type: type as Type,
         ...(typeof cardFormat === "string" && cardFormat.trim()
           ? { cardFormat: cardFormat.trim() }
           : {}),
@@ -449,7 +456,6 @@ export async function PATCH(req: NextRequest) {
       color?: string | null;
       type?: Type;
       cardFormat?: string;
-      isPublic?: boolean;
     } = {};
     if (typeof body.name === "string") {
       data.name = body.name;
@@ -481,9 +487,6 @@ export async function PATCH(req: NextRequest) {
     }
     if (typeof body.cardFormat === "string" && body.cardFormat.trim()) {
       data.cardFormat = body.cardFormat.trim();
-    }
-    if (typeof body.isPublic === "boolean") {
-      data.isPublic = body.isPublic;
     }
 
     // Check if shelf exists and user has permission to update it

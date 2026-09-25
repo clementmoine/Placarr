@@ -59,10 +59,7 @@ export function titleSeasonYearsConflict(
 
 /** Removes `(YYYY)` disambiguators; leaves the playable title for provider search. */
 export function stripTitleIntentYear(title: string): string {
-  return title
-    .replace(PAREN_YEAR_RE, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return title.replace(PAREN_YEAR_RE, " ").replace(/\s+/g, " ").trim();
 }
 
 export function yearFromReleaseDate(
@@ -86,9 +83,7 @@ export function titleIntentYearAlignment(
   if (intentYear == null) return "unknown";
   const releaseYear = yearFromReleaseDate(releaseDate);
   if (releaseYear == null) return "unknown";
-  return Math.abs(releaseYear - intentYear) <= tolerance
-    ? "match"
-    : "mismatch";
+  return Math.abs(releaseYear - intentYear) <= tolerance ? "match" : "mismatch";
 }
 
 /** Soft score delta when ranking two release dates against a title intent year. */

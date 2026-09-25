@@ -1,0 +1,1358 @@
+{
+  "source": "deckcardmania.com — Dragon Ball set fiches (idf=3, grandes séries / SP / promo / Super Séries)",
+  "observed": "2026-09-24",
+  "ingest": "set-fiches",
+  "crawl": true,
+  "note": "Fiches set (pas un dump face-par-face). Packshot files/3/{idm}b.jpg + galerie _iNb.jpg. Listes Cartes Rares / Holographiques (D-###) pour JCC FR. Faces sample uniquement quand title/alt nomme clairement une carte (Carte SP01 / D-###). Super Séries / DBS CG / Zenzu = ledger only (hors corpus dbsjcc).",
+  "hub": "https://www.deckcardmania.com/?pag=cid508&idf=3&idd=125",
+  "listed": 24,
+  "albums": [
+    {
+      "idm": 4,
+      "title": "DragonBall - Super Série 3 - Gohan contre attaque - Cartes",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=4",
+      "setHint": null,
+      "line": "super-serie",
+      "bandaiRange": null,
+      "releaseText": "janvier 2010",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/4b.jpg",
+      "gallery": [
+        {
+          "title": "Booster de 8 cartes",
+          "url": "https://www.deckcardmania.com/files/3/4_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/4_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 6,
+      "title": "DragonBall - Super Série 2 - Prince Vegeta - Cartes à jouer",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=6",
+      "setHint": null,
+      "line": "super-serie",
+      "bandaiRange": null,
+      "releaseText": "octobre 2009",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/6b.jpg",
+      "gallery": []
+    },
+    {
+      "idm": 7,
+      "title": "DragonBall - Super Série 1 - Goku - Cartes à jouer",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=7",
+      "setHint": null,
+      "line": "super-serie",
+      "bandaiRange": null,
+      "releaseText": "juillet 2009",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/7b.jpg",
+      "gallery": [
+        {
+          "title": "Dos de carte",
+          "url": "https://www.deckcardmania.com/files/3/7_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/7_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte",
+          "url": "https://www.deckcardmania.com/files/3/7_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/7_i2s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte 2",
+          "url": "https://www.deckcardmania.com/files/3/7_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/7_i3s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte Holographique",
+          "url": "https://www.deckcardmania.com/files/3/7_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/7_i4s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Carte 189-1",
+          "url": "https://www.deckcardmania.com/files/3/7_i5b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/7_i5s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Carte 189-2",
+          "url": "https://www.deckcardmania.com/files/3/7_i6b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/7_i6s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 81,
+      "title": "DragonBall - Série 10 - Guerriers Légendaires - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=81",
+      "setHint": "part10",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "avril 2009",
+      "rares": [
+        "D-545",
+        "D-582",
+        "D-599",
+        "D-622",
+        "D-667",
+        "D-684",
+        "D-753",
+        "D-763",
+        "D-857",
+        "D-873",
+        "D-876",
+        "D-878",
+        "D-880",
+        "D-882",
+        "D-883",
+        "D-885",
+        "D-890",
+        "D-900",
+        "D-902",
+        "D-906",
+        "D-911",
+        "D-912",
+        "D-916",
+        "D-917",
+        "D-921",
+        "D-923",
+        "D-926",
+        "D-934"
+      ],
+      "holos": [
+        "D-575",
+        "D-578",
+        "D-591",
+        "D-680",
+        "D-751",
+        "D-757",
+        "D-815",
+        "D-828",
+        "D-840",
+        "D-841",
+        "D-851",
+        "D-859",
+        "D-864",
+        "D-868",
+        "D-881",
+        "D-887",
+        "D-891",
+        "D-895",
+        "D-898",
+        "D-899",
+        "D-901",
+        "D-904",
+        "D-907",
+        "D-908",
+        "D-910",
+        "D-920",
+        "D-929",
+        "D-932"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/81b.jpg",
+      "gallery": [
+        {
+          "title": "Cartes N°: D 874-3 Holo",
+          "url": "https://www.deckcardmania.com/files/3/81_i10b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i10s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D 875-1",
+          "url": "https://www.deckcardmania.com/files/3/81_i11b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i11s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D 875-2",
+          "url": "https://www.deckcardmania.com/files/3/81_i12b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i12s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Pochette",
+          "url": "https://www.deckcardmania.com/files/3/81_i13b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i13s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D 933-1",
+          "url": "https://www.deckcardmania.com/files/3/81_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D 933-2",
+          "url": "https://www.deckcardmania.com/files/3/81_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i2s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D 933-3 Holo",
+          "url": "https://www.deckcardmania.com/files/3/81_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i3s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D-891-1",
+          "url": "https://www.deckcardmania.com/files/3/81_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i4s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D-891-2",
+          "url": "https://www.deckcardmania.com/files/3/81_i5b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i5s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D868-1",
+          "url": "https://www.deckcardmania.com/files/3/81_i6b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i6s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D868-2",
+          "url": "https://www.deckcardmania.com/files/3/81_i7b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i7s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D 874-1",
+          "url": "https://www.deckcardmania.com/files/3/81_i8b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i8s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Cartes N°: D 874-2 Holo",
+          "url": "https://www.deckcardmania.com/files/3/81_i9b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/81_i9s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 84,
+      "title": "DragonBall Z - Zenzu Blast - Anglais",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=84",
+      "setHint": null,
+      "line": "other",
+      "bandaiRange": null,
+      "releaseText": "2002",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/84b.jpg",
+      "gallery": [
+        {
+          "title": "Pochette",
+          "url": "https://www.deckcardmania.com/files/3/84_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/84_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Dos de carte",
+          "url": "https://www.deckcardmania.com/files/3/84_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/84_i2s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte",
+          "url": "https://www.deckcardmania.com/files/3/84_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/84_i3s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte brillante",
+          "url": "https://www.deckcardmania.com/files/3/84_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/84_i4s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte preview",
+          "url": "https://www.deckcardmania.com/files/3/84_i5b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/84_i5s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Boite",
+          "url": "https://www.deckcardmania.com/files/3/84_i6b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/84_i6s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 85,
+      "title": "DragonBall - Série SP - Cartes à jouer et à Collectionner",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=85",
+      "setHint": "sp",
+      "line": "jcc-sp",
+      "bandaiRange": null,
+      "releaseText": "25 decembre 2007",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/85b.jpg",
+      "gallery": [
+        {
+          "title": "Carte SP04",
+          "url": "https://www.deckcardmania.com/files/3/85_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/85_i1s.jpg",
+          "kind": "named",
+          "printed": "SP-4",
+          "number": "sp0004"
+        },
+        {
+          "title": "Détail du symbole",
+          "url": "https://www.deckcardmania.com/files/3/85_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/85_i2s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Carte SP01",
+          "url": "https://www.deckcardmania.com/files/3/85_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/85_i3s.jpg",
+          "kind": "named",
+          "printed": "SP-1",
+          "number": "sp0001"
+        },
+        {
+          "title": "Carte SP22",
+          "url": "https://www.deckcardmania.com/files/3/85_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/85_i4s.jpg",
+          "kind": "named",
+          "printed": "SP-22",
+          "number": "sp0022"
+        },
+        {
+          "title": "Carte SP25",
+          "url": "https://www.deckcardmania.com/files/3/85_i5b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/85_i5s.jpg",
+          "kind": "named",
+          "printed": "SP-25",
+          "number": "sp0025"
+        },
+        {
+          "title": "Carte D-86",
+          "url": "https://www.deckcardmania.com/files/3/85_i6b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/85_i6s.jpg",
+          "kind": "named",
+          "printed": "D-86",
+          "number": "d0086"
+        }
+      ]
+    },
+    {
+      "idm": 86,
+      "title": "DragonBall - Série Promo - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=86",
+      "setHint": "promo",
+      "line": "jcc-promo",
+      "bandaiRange": null,
+      "releaseText": "1989",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/86b.jpg",
+      "gallery": [
+        {
+          "title": "Exemple de carte",
+          "url": "https://www.deckcardmania.com/files/3/86_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/86_i1s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Détail du symbole",
+          "url": "https://www.deckcardmania.com/files/3/86_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/86_i2s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 110,
+      "title": "DragonBall - Série 8 - Nouvelle Epreuve - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=110",
+      "setHint": "part8",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "9 juillet 2008",
+      "rares": [
+        "D-633",
+        "D-730",
+        "D-731",
+        "D-739",
+        "D-742",
+        "D-747",
+        "D-749",
+        "D-764",
+        "D-768",
+        "D-769",
+        "D-770",
+        "D-771",
+        "D-772",
+        "D-773",
+        "D-776",
+        "D-777",
+        "D-778",
+        "D-780",
+        "D-785",
+        "D-791",
+        "D-814"
+      ],
+      "holos": [
+        "D-736",
+        "D-745",
+        "D-746",
+        "D-751",
+        "D-753",
+        "D-756",
+        "D-757",
+        "D-761",
+        "D-763",
+        "D-767",
+        "D-775",
+        "D-779",
+        "D-781",
+        "D-794",
+        "D-806",
+        "D-821",
+        "D-832"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/110b.jpg",
+      "gallery": [
+        {
+          "title": "Pochette",
+          "url": "https://www.deckcardmania.com/files/3/110_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/110_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 111,
+      "title": "DragonBall - Série 7 - Origine - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=111",
+      "setHint": "part7",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "28 janvier 2008",
+      "rares": [
+        "D-534",
+        "D-594",
+        "D-600",
+        "D-601",
+        "D-624",
+        "D-665",
+        "D-681",
+        "D-683",
+        "D-686",
+        "D-689",
+        "D-694",
+        "D-696",
+        "D-698",
+        "D-703",
+        "D-712",
+        "D-723",
+        "D-726",
+        "D-822",
+        "D-824",
+        "D-836",
+        "D-846"
+      ],
+      "holos": [
+        "D-581",
+        "D-595",
+        "D-642",
+        "D-652",
+        "D-655",
+        "D-658",
+        "D-667",
+        "D-671",
+        "D-682",
+        "D-684",
+        "D-685",
+        "D-699",
+        "D-711",
+        "D-713",
+        "D-834",
+        "D-845",
+        "D-849"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/111b.jpg",
+      "gallery": [
+        {
+          "title": "Pochette",
+          "url": "https://www.deckcardmania.com/files/3/111_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/111_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 112,
+      "title": "DragonBall - Série 6 - Fusion - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=112",
+      "setHint": "part6",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "septembre 2007",
+      "rares": [
+        "D-524",
+        "D-546",
+        "D-550",
+        "D-551",
+        "D-555",
+        "D-559",
+        "D-560",
+        "D-597",
+        "D-598",
+        "D-607",
+        "D-611",
+        "D-618",
+        "D-620",
+        "D-625",
+        "D-628",
+        "D-629",
+        "D-635",
+        "D-817"
+      ],
+      "holos": [
+        "D-528",
+        "D-532",
+        "D-537",
+        "D-543",
+        "D-545",
+        "D-557",
+        "D-575",
+        "D-578",
+        "D-582",
+        "D-590",
+        "D-591",
+        "D-604",
+        "D-616",
+        "D-638",
+        "D-643",
+        "D-816",
+        "D-837",
+        "D-838"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/112b.jpg",
+      "gallery": [
+        {
+          "title": "Pochette",
+          "url": "https://www.deckcardmania.com/files/3/112_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/112_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 113,
+      "title": "DragonBall - Série 5 - Planète - Résistance - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=113",
+      "setHint": "part5",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "16 avril 2007",
+      "rares": [
+        "D-464",
+        "D-504",
+        "D-505",
+        "D-509",
+        "D-511",
+        "D-529",
+        "D-530",
+        "D-536",
+        "D-538",
+        "D-548",
+        "D-554",
+        "D-588",
+        "D-589"
+      ],
+      "holos": [
+        "D-447",
+        "D-450",
+        "D-454",
+        "D-461",
+        "D-467",
+        "D-483",
+        "D-491",
+        "D-493",
+        "D-496",
+        "D-498",
+        "D-499",
+        "D-500",
+        "D-502",
+        "D-516",
+        "D-544",
+        "D-547"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/113b.jpg",
+      "gallery": [
+        {
+          "title": "Booster de 8 cartes",
+          "url": "https://www.deckcardmania.com/files/3/113_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/113_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Deck Planète",
+          "url": "https://www.deckcardmania.com/files/3/113_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/113_i2s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Deck Résistance",
+          "url": "https://www.deckcardmania.com/files/3/113_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/113_i3s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 117,
+      "title": "DragonBall - Série 4 - Vaincre la Menace - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=117",
+      "setHint": "part4",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "1 octobre 2006",
+      "rares": [
+        "D-346",
+        "D-347",
+        "D-403",
+        "D-404",
+        "D-406",
+        "D-407",
+        "D-408",
+        "D-410",
+        "D-411",
+        "D-412",
+        "D-486",
+        "D-492",
+        "D-495",
+        "D-501",
+        "D-518",
+        "D-519",
+        "D-520",
+        "D-521",
+        "D-522",
+        "D-523"
+      ],
+      "holos": [
+        "D-77",
+        "D-80",
+        "D-134",
+        "D-369",
+        "D-395",
+        "D-396",
+        "D-397",
+        "D-398",
+        "D-399",
+        "D-400",
+        "D-417",
+        "D-418",
+        "D-419",
+        "D-420",
+        "D-424",
+        "D-425",
+        "D-437",
+        "D-438",
+        "D-462",
+        "D-463"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/117b.jpg",
+      "gallery": [
+        {
+          "title": "Pochette",
+          "url": "https://www.deckcardmania.com/files/3/117_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/117_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Deck Vaincre la Menace",
+          "url": "https://www.deckcardmania.com/files/3/117_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/117_i2s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Deck Force du Mal",
+          "url": "https://www.deckcardmania.com/files/3/117_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/117_i3s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des Cartes",
+          "url": "https://www.deckcardmania.com/files/3/117_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/117_i4s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 118,
+      "title": "DragonBall - Série 3 - Championnat du Monde - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=118",
+      "setHint": "part3",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "3 septembre 2006",
+      "rares": [
+        "D-221",
+        "D-223",
+        "D-244",
+        "D-271",
+        "D-284",
+        "D-285",
+        "D-286",
+        "D-299",
+        "D-304",
+        "D-310",
+        "D-312",
+        "D-313",
+        "D-358",
+        "D-359",
+        "D-360",
+        "D-361",
+        "D-362",
+        "D-363",
+        "D-364"
+      ],
+      "holos": [
+        "D-219",
+        "D-222",
+        "D-235",
+        "D-259",
+        "D-260",
+        "D-278",
+        "D-289",
+        "D-290",
+        "D-298",
+        "D-306",
+        "D-308",
+        "D-311",
+        "D-314",
+        "D-338",
+        "D-339",
+        "D-344",
+        "D-365",
+        "D-366",
+        "D-367",
+        "D-368",
+        "D-369"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/118b.jpg",
+      "gallery": [
+        {
+          "title": "Booster",
+          "url": "https://www.deckcardmania.com/files/3/118_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/118_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des Cartes",
+          "url": "https://www.deckcardmania.com/files/3/118_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/118_i2s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de Carte",
+          "url": "https://www.deckcardmania.com/files/3/118_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/118_i3s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 119,
+      "title": "DragonBall - Série 2 - L' Eveil de Gohan - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=119",
+      "setHint": "part2",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "28 avril 2006",
+      "rares": [
+        "D-144",
+        "D-147",
+        "D-161",
+        "D-164",
+        "D-177",
+        "D-178",
+        "D-184",
+        "D-186",
+        "D-188",
+        "D-202",
+        "D-203",
+        "D-204",
+        "D-205",
+        "D-206",
+        "D-207",
+        "D-208",
+        "D-240",
+        "D-245",
+        "D-246",
+        "D-264",
+        "D-280",
+        "D-281",
+        "D-282",
+        "D-283"
+      ],
+      "holos": [
+        "D-156",
+        "D-162",
+        "D-165",
+        "D-167",
+        "D-174",
+        "D-182",
+        "D-183",
+        "D-190",
+        "D-209",
+        "D-210",
+        "D-211",
+        "D-212",
+        "D-230",
+        "D-241",
+        "D-287",
+        "D-288"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/119b.jpg",
+      "gallery": [
+        {
+          "title": "Booster",
+          "url": "https://www.deckcardmania.com/files/3/119_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/119_i1s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des Cartes",
+          "url": "https://www.deckcardmania.com/files/3/119_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/119_i2s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte",
+          "url": "https://www.deckcardmania.com/files/3/119_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/119_i3s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 120,
+      "title": "DragonBall - Série 1 - Super-Saiyans - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=120",
+      "setHint": "part1",
+      "line": "jcc-serie",
+      "bandaiRange": "D1 à D134",
+      "releaseText": "decembre 2005",
+      "rares": [
+        "D-12",
+        "D-26",
+        "D-27",
+        "D-28",
+        "D-34",
+        "D-35",
+        "D-43",
+        "D-48",
+        "D-54",
+        "D-60",
+        "D-62",
+        "D-65",
+        "D-67",
+        "D-75",
+        "D-76",
+        "D-82",
+        "D-83",
+        "D-85",
+        "D-86",
+        "D-90",
+        "D-98",
+        "D-100",
+        "D-101",
+        "D-104",
+        "D-105",
+        "D-107",
+        "D-116",
+        "D-117",
+        "D-118",
+        "D-120"
+      ],
+      "holos": [
+        "D-30",
+        "D-45",
+        "D-46",
+        "D-49",
+        "D-51",
+        "D-56",
+        "D-77",
+        "D-80",
+        "D-96",
+        "D-108",
+        "D-111",
+        "D-119",
+        "D-121",
+        "D-122",
+        "D-130",
+        "D-131",
+        "D-132",
+        "D-133",
+        "D-134"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/120b.jpg",
+      "gallery": [
+        {
+          "title": "Dos de cards",
+          "url": "https://www.deckcardmania.com/files/3/120_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/120_i1s.jpg",
+          "kind": "dos",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de cards",
+          "url": "https://www.deckcardmania.com/files/3/120_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/120_i2s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de cards 2",
+          "url": "https://www.deckcardmania.com/files/3/120_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/120_i3s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de cards Holographique",
+          "url": "https://www.deckcardmania.com/files/3/120_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/120_i4s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des Cartes",
+          "url": "https://www.deckcardmania.com/files/3/120_i5b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/120_i5s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 148,
+      "title": "DragonBall - Série 9 - Héros - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=148",
+      "setHint": "part9",
+      "line": "jcc-serie",
+      "bandaiRange": null,
+      "releaseText": "octobre 2008",
+      "rares": [],
+      "holos": [
+        "D-45",
+        "D-46",
+        "D-49",
+        "D-67",
+        "D-80",
+        "D-100",
+        "D-101",
+        "D-104",
+        "D-107",
+        "D-108",
+        "D-111",
+        "D-143",
+        "D-162",
+        "D-223",
+        "D-260",
+        "D-338",
+        "D-396",
+        "D-398",
+        "D-415",
+        "D-461",
+        "D-467",
+        "D-680",
+        "D-834"
+      ],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/148b.jpg",
+      "gallery": []
+    },
+    {
+      "idm": 150,
+      "title": "DragonBall - Super Série 4 Puissance des Saiyans - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=150",
+      "setHint": null,
+      "line": "super-serie",
+      "bandaiRange": null,
+      "releaseText": "mai 2010",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/150b.jpg",
+      "gallery": [
+        {
+          "title": "Liste des cartes N° 1",
+          "url": "https://www.deckcardmania.com/files/3/150_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/150_i1s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des cartes N° 2",
+          "url": "https://www.deckcardmania.com/files/3/150_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/150_i2s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des cartes N° 3",
+          "url": "https://www.deckcardmania.com/files/3/150_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/150_i3s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des cartes N° 4",
+          "url": "https://www.deckcardmania.com/files/3/150_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/150_i4s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Liste des cartes N° 5",
+          "url": "https://www.deckcardmania.com/files/3/150_i5b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/150_i5s.jpg",
+          "kind": "liste",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 246,
+      "title": "DragonBall - Super Série 6 - Redoutable Maijn Buu - Cartes",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=246",
+      "setHint": null,
+      "line": "super-serie",
+      "bandaiRange": null,
+      "releaseText": "octobre 2010",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/246b.jpg",
+      "gallery": [
+        {
+          "title": "Exemple de Carte",
+          "url": "https://www.deckcardmania.com/files/3/246_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/246_i1s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 247,
+      "title": "DragonBall - Super Série 5 - Premiers combats - Cartes",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=247",
+      "setHint": null,
+      "line": "super-serie",
+      "bandaiRange": null,
+      "releaseText": "8 juin 2010",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/247b.jpg",
+      "gallery": [
+        {
+          "title": "Exemple de Carte",
+          "url": "https://www.deckcardmania.com/files/3/247_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/247_i1s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Deck de 32 cartes",
+          "url": "https://www.deckcardmania.com/files/3/247_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/247_i2s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 248,
+      "title": "DragonBall - Tim box 2010 - Cartes Promo -",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=248",
+      "setHint": null,
+      "line": "other",
+      "bandaiRange": "EX:001, EX:002, EX:003, EX:004, EX:009",
+      "releaseText": "2010",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/248b.jpg",
+      "gallery": [
+        {
+          "title": "Exemple de Carte",
+          "url": "https://www.deckcardmania.com/files/3/248_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/248_i1s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 512,
+      "title": "DragonBall Super Card Game - Galactic Battle - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=512",
+      "setHint": null,
+      "line": "dbs-cg",
+      "bandaiRange": null,
+      "releaseText": "23 mars 2018",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/512b.jpg",
+      "gallery": [
+        {
+          "title": "Deck de démarrage",
+          "url": "https://www.deckcardmania.com/files/3/512_i10b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i10s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte exclu deck",
+          "url": "https://www.deckcardmania.com/files/3/512_i11b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i11s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Carte promo P1",
+          "url": "https://www.deckcardmania.com/files/3/512_i12b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i12s.jpg",
+          "kind": "other",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de pochette 1",
+          "url": "https://www.deckcardmania.com/files/3/512_i1b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i1s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de pochette 2",
+          "url": "https://www.deckcardmania.com/files/3/512_i2b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i2s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de pochette 3",
+          "url": "https://www.deckcardmania.com/files/3/512_i3b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i3s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de pochette 4",
+          "url": "https://www.deckcardmania.com/files/3/512_i4b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i4s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte commune 1",
+          "url": "https://www.deckcardmania.com/files/3/512_i5b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i5s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte commune 2",
+          "url": "https://www.deckcardmania.com/files/3/512_i6b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i6s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte peu commune",
+          "url": "https://www.deckcardmania.com/files/3/512_i7b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i7s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte rare",
+          "url": "https://www.deckcardmania.com/files/3/512_i8b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i8s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        },
+        {
+          "title": "Exemple de carte super rare",
+          "url": "https://www.deckcardmania.com/files/3/512_i9b.jpg",
+          "thumbUrl": "https://www.deckcardmania.com/files/3/512_i9s.jpg",
+          "kind": "exemple",
+          "printed": null,
+          "number": null
+        }
+      ]
+    },
+    {
+      "idm": 517,
+      "title": "DragonBall Super Card Game - Union Force - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=517",
+      "setHint": null,
+      "line": "dbs-cg",
+      "bandaiRange": null,
+      "releaseText": "27 avril 2018",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/517b.jpg",
+      "gallery": []
+    },
+    {
+      "idm": 558,
+      "title": "DragonBall Super Card Game - Colossal Warfare - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=558",
+      "setHint": null,
+      "line": "dbs-cg",
+      "bandaiRange": null,
+      "releaseText": "14 octobre 2018",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/558b.jpg",
+      "gallery": []
+    },
+    {
+      "idm": 559,
+      "title": "DragonBall Super Card Game - Les Mondes Croisés - Français",
+      "albumUrl": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=559",
+      "setHint": null,
+      "line": "dbs-cg",
+      "bandaiRange": null,
+      "releaseText": "13 juillet 2018",
+      "rares": [],
+      "holos": [],
+      "packshotUrl": "https://www.deckcardmania.com/files/3/559b.jpg",
+      "gallery": []
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "source": "it-sealed-sku-hunt",
+  "observed": "2026-09-03",
+  "kind": "research-dig",
+  "ingest": "emporiodimilo.json → starter-tradimento, starter-lealta ; rename all IT sealed names to Serie N — itTitle",
+  "found": [
+    {
+      "sku": "starter-tradimento",
+      "setCode": "s5",
+      "shop": "emporiodimilo.it",
+      "printedRef": "93176",
+      "title": "Mazzo Tradimento — L'Eredità del Sogno",
+      "image": "https://www.emporiodimilo.it/wp-content/uploads/2024/10/DSC01769.jpg"
+    },
+    {
+      "sku": "starter-lealta",
+      "setCode": "s5",
+      "shop": "emporiodimilo.it",
+      "printedRef": "93176",
+      "title": "Mazzo Lealtà — L'Eredità del Sogno",
+      "image": "https://www.emporiodimilo.it/wp-content/uploads/2024/10/DSC01767.jpg"
+    }
+  ],
+  "renamed": [
+    "display-s1-it → Display Serie 1 — La Forza della Foglia",
+    "booster-s1-it → Booster Serie 1 — La Forza della Foglia",
+    "display-s2-it → Display Serie 2 — Le Spire del Serpente",
+    "booster-s2-it → Booster Serie 2 — Le Spire del Serpente",
+    "booster-s3-it → Booster Serie 3 — La Maledizione della Sabbia",
+    "booster-s6-it → Booster Serie 6 — Rivalità Eterna",
+    "booster-s7-it → Booster Serie 7 — Sete di Potere",
+    "booster-s8-it → Booster Serie 8 — Il Vento del Cambiamento"
+  ],
+  "notFound": [
+    "booster-s4-it packshot (Madhouse PAN93167-1 text-only, no product image)",
+    "booster-s5-it packshot",
+    "display-s3-it / display-s4-it / display-s5-it / display-s6-it / display-s8-it",
+    "display-s7-it closed-box (still rejected — photo was bustina)",
+    "mazzi S2 / S3 / S4 (Possessione / Evocazione unattested visually this pass)",
+    "2e mazzo S6 (do not invent)"
+  ],
+  "probed": {
+    "cardgameclub": "display-s3 handle na03mal-ibu24di still 404",
+    "ebay.it sold+live": "0 sealed hits for Vendetta / Eredità / Maledizione set titles",
+    "emporiodimilo search": "only the two Serie 5 starters",
+    "madhouse.it": "S2/S4/S7 booster SKUs in stock text — Cloudflare, no packshot CDN"
+  }
+}

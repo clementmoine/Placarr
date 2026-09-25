@@ -12,7 +12,7 @@ import {
   LISTING_PUBLISHER_SUFFIX_TERMS,
   LISTING_REGION_TERMS,
 } from "@/core/identify/listingTerms";
-import { VIDEO_GAME_PLATFORM_TERMS } from "@/core/identify/platforms/platforms";
+import { VIDEO_GAME_PLATFORM_TERMS } from "@/core/identify/platforms/platformList";
 import {
   ERA_ADJECTIVE_SEGMENT_RE,
   MEDIA_CATEGORY_SEGMENT_RE,
@@ -48,10 +48,7 @@ function escapeRegExp(value: string): string {
 
 const PLATFORM_ALT = [...VIDEO_GAME_PLATFORM_TERMS]
   .map((term) =>
-    normalizeMetadataSegment(term)
-      .split(/\s+/)
-      .map(escapeRegExp)
-      .join("\\s+"),
+    normalizeMetadataSegment(term).split(/\s+/).map(escapeRegExp).join("\\s+"),
   )
   .filter(Boolean)
   .sort((a, b) => b.length - a.length)

@@ -97,4 +97,3 @@ export function supplementGameEditionMetadata(
     externalIds: { ...base.externalIds, ...edition.externalIds },
   };
 }
-

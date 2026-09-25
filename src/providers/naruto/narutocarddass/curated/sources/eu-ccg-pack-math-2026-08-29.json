@@ -1,0 +1,146 @@
+{
+  "source": "eu-ccg-pack-math",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "sealed-contents.json — US SKUs 10×24 ; FR duopack-s28 = 8×2 + PR-096",
+  "verdict": {
+    "us": "Bandai USA CCG (ToyWiz / Potomac / Hill's) : 10 cartes / sachet, 24 sachets / display. Attesté s24 (Sage's Legacy) et s28 (Storm 3).",
+    "eu": "Namco Bandai Europe (presse Storm Generations UK, 2012) : booster = 8 cartes. Cardport DE Sage's Legacy display : 30 sachets × 8 = 240 cartes (même total que US 24×10). EAN EU 329658…",
+    "fr": "Ligne tardive dos noir (s24 / s28) = localisation EU du CCG USA. Duopack Kinkai verso + booster Sunny Store face « 8 CARTES » (EAN sachet 3391891969925 / duopack 3391891970488) — attestation FR écrite. Display FR Storm 3 : SKU `display-s28-fr` (eBay itm/285342890666, EAN 3391891969949, MADE IN ITALY) — packshot face+flanc+bas. ≠ display-s28 EN 24×10. Packs/box FR : titre vendeur 24, non imprimé sur photos — ouvert."
+  },
+  "sources": [
+    {
+      "id": "toywiz-s24",
+      "url": "https://toywiz.com/naruto-shippuden-card-game-sages-legacy-booster-pack/",
+      "claims": ["10 cards per pack", "Contains 24 packs per box"],
+      "region": "US"
+    },
+    {
+      "id": "toywiz-s28",
+      "url": "https://toywiz.com/naruto-shippuden-card-game-ultimate-ninja-storm-3-booster-pack/",
+      "claims": ["Contains 10 cards per pack", "UPC 045557236489"],
+      "region": "US",
+      "set": "s28",
+      "upc": "045557236489",
+      "staging": "staging/toywiz/booster-s28-en.jpg",
+      "note": "Thumb archival — face+verso preferred from sunnystore USA listing"
+    },
+    {
+      "id": "sunnystore-booster-s28-en",
+      "url": "https://sunnystore.es/en/products/naruto-ccg-bandai-ultimate-ninja-storm-3-sealed-booster-pack-usa-version",
+      "claims": [
+        "IDIOMA: INGLÉS (USA VERSION)",
+        "EACH PACK INCLUDES: 10 randomly selected cards (6C/2U/1R/1 special insert…)",
+        "UPC 045557236489",
+        "MADE IN SINGAPORE"
+      ],
+      "region": "US/EN",
+      "set": "s28",
+      "staging": [
+        "staging/sunnystore/booster-s28-en-01.jpg",
+        "staging/sunnystore/booster-s28-en-02.jpg"
+      ]
+    },
+    {
+      "id": "potomac-s28",
+      "url": "https://www.potomacdist.com/detail.asp?itemid=narutouns3bb",
+      "claims": ["Each pack contains 10 cards", "Each box contains 24 packs"],
+      "region": "US",
+      "upc": "045557236496"
+    },
+    {
+      "id": "namco-uk-storm-generations-press",
+      "url": "https://spong.com/press_release/26364/Exclusive-Card-Edition-Of-Naruto-Shippuden-Ultimate-Ninja-Storm-Generations-Available-At-Launch",
+      "claims": ["The booster pack contains 8 cards inside", "120 cards in total", "Europe 30 March 2012"],
+      "region": "EU",
+      "set": "s24 / Sage's Legacy era"
+    },
+    {
+      "id": "cardport-de-sages-legacy",
+      "url": "https://www.cardport.de/naruto-shippuden-serie-1-booster-de.html",
+      "claims": ["30 Booster à 8 zufälligen Sammelkarten", "EAN 3296580933273"],
+      "region": "DE/EU",
+      "set": "s24"
+    },
+    {
+      "id": "ebay-fr-duopack-s28",
+      "url": "https://www.ebay.fr/itm/287499390775",
+      "claims": ["2 boosters FR + fenêtre PR-096", "texte sachet FR visible sur packshot"],
+      "region": "FR",
+      "set": "s28"
+    },
+    {
+      "id": "kinkai-duopack-s28-verso",
+      "url": "https://kinkai.fr/article/5274",
+      "claims": [
+        "Chaque pack booster contient : 8 cartes sélectionnées aléatoirement (7 + 1 carte spéciale)",
+        "120 cartes Ultimate Ninja Storm 3",
+        "EAN 3391891970488",
+        "BANDAI 2013 MADE IN ITALY",
+        "NAMCO BANDAI Games Europe Cergy"
+      ],
+      "region": "FR",
+      "set": "s28",
+      "staging": "staging/kinkai/duopack-s28-02.webp"
+    },
+    {
+      "id": "sunnystore-booster-s28-fr",
+      "url": "https://sunnystore.es/en/products/naruto-ccg-ultimate-ninja-storm-3-sealed-booster-pack-frances",
+      "claims": [
+        "LANGUAGE: FRENCH sealed single booster",
+        "Face printed « 8 CARTES »",
+        "EAN 3391891969925"
+      ],
+      "region": "FR",
+      "set": "s28",
+      "staging": [
+        "staging/sunnystore/booster-s28-01.jpg",
+        "staging/sunnystore/booster-s28-02.jpg"
+      ]
+    }
+  ],
+  "skuMapping": {
+    "booster-s24-en": { "lang": "EN", "cardsPerPack": 10, "packsContained": 1 },
+    "booster-s24": {
+      "lang": "FR",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "note": "Packshot EN ToyWiz fallback ; math EU 8"
+    },
+    "display-s24": { "lang": "EN", "cardsPerPack": 10, "packsContained": 24 },
+    "display-s24-fr": {
+      "lang": "FR",
+      "cardsPerPack": 8,
+      "packsContained": 24,
+      "note": "Packshot Coleka EN fallback ; 24 = compte boîte US sur la photo ; DE Cardport 30×8 ouvert"
+    },
+    "display-s28": { "lang": "EN", "cardsPerPack": 10, "packsContained": 24 },
+    "booster-s28-en": {
+      "lang": "EN",
+      "cardsPerPack": 10,
+      "packsContained": 1,
+      "upc": "045557236489",
+      "note": "Sunny Store USA face+verso — ≠ FR booster-s28 (8) ; ≠ display UPC 045557236496 ; MADE IN SINGAPORE"
+    },
+    "duopack-s28": {
+      "lang": "FR",
+      "cardsPerPack": 8,
+      "packsContained": 2,
+      "declaredCardCount": 17,
+      "ean": "3391891970488",
+      "guaranteedPrintKeys": ["naruto:pr-0096"],
+      "note": "mixed_bundle : 2 sachets aléatoires EU (7+1) + 1 promo fixe ; verso Kinkai"
+    },
+    "booster-s28": {
+      "lang": "FR",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "ean": "3391891969925",
+      "note": "Sunny Store sealed FR single — face « 8 CARTES » ; EAN ≠ duopack"
+    }
+  },
+  "notDone": [
+    "Packshot booster FR s24 (remplacer fallback ToyWiz EN)",
+    "Packshot display FR / EAN FR pour confirmer 30×8 vs 24×10 sur boîte FR (SKU display-s24-fr existe avec cover EN)"
+  ]
+}

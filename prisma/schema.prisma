@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -39,6 +39,10 @@ enum AttachmentType {
   image
   logo
   audio
+  // Not a picture of the object: the alpha layer saying where a card's
+  // holographic effect applies. Every gallery filters attachments through an
+  // allow-list of display types, so this one stays out of them by construction.
+  foilMask
 }
 
 model Attachment {
@@ -147,7 +151,6 @@ model Shelf {
   imageUrl   String?
   color      String?
   type       Type
-  isPublic   Boolean  @default(true)
   cardFormat String   @default("default")
   userId     String
   createdAt  DateTime @default(now())
@@ -197,33 +200,60 @@ model Metadata {
 }
 
 model Item {
-  id                 String          @id @default(cuid())
-  name               String
-  slug               String?
-  description        String?
-  imageUrl           String?
-  barcode            String?
-  condition          Condition
-  metadataId         String?
-  shelfId            String
-  userId             String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  backgroundImageUrl String?
-  metadataRefreshStartedAt DateTime?
-  metadataRefreshGeneration Int @default(0)
-  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shelf              Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
-  metadata           Metadata?       @relation(fields: [metadataId], references: [id])
-  fieldEvidence      FieldEvidence[]
-  priceOffers        PriceOffer[]
-  loans              LoanRequest[]
+  id                        String          @id @default(cuid())
+  name                      String
+  slug                      String?
+  description               String?
+  imageUrl                  String?
+  barcode                   String?
+  // Identity anchor for objects that never carry a barcode — a trading card is
+  // identified by what is printed on it (`lorcana:9-1`). Kept separate from
+  // `barcode` on purpose: a column holding something that is not a barcode
+  // costs more in the long run than the extra column. See core/identify/printKey.
+  printKey                  String?
+  // Which variant of the object this copy is: a card's finish (foil, reverse),
+  // eventually a game's completeness. Deliberately generic and free text —
+  // every media type has variants and the vocabulary belongs to the provider,
+  // not to an enum here. Distinct from `condition`, which describes the copy's
+  // health rather than which thing it is. Options come from the metadata's
+  // `variant-option` facts. See core/enrich/variants.
+  variant                   String?
+  // Which language this copy is printed in, as a lowercase code (`fr`, `ja`).
+  // Part of what the copy IS, not of the print's identity: providers give one
+  // key per card and several localizations under it — TCGdex answers `2011bw-1`
+  // for both Snivy and Vipélierre. 898 Naruto keys and 19673 Pokémon keys carry
+  // titles in more than one language, and without this column the French and
+  // the Japanese copy of the same number were indistinguishable — same slug,
+  // and the second one got a `-copy-N` suffix claiming it duplicated the first.
+  // Null means unknown, never "the default one".
+  language                  String?
+  condition                 Condition
+  metadataId                String?
+  shelfId                   String
+  userId                    String
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  backgroundImageUrl        String?
+  metadataRefreshStartedAt  DateTime?
+  metadataRefreshGeneration Int             @default(0)
+  // Personal loan note — who has this copy and since when. Both null = at home.
+  // Replaces the old multi-user LoanRequest flow on a mono-user instance.
+  loanedTo                  String?
+  loanedAt                  DateTime?
+  user                      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shelf                     Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  metadata                  Metadata?       @relation(fields: [metadataId], references: [id])
+  fieldEvidence             FieldEvidence[]
+  priceOffers               PriceOffer[]
 
   @@index([shelfId])
   @@index([userId])
   @@index([metadataId])
   @@index([barcode])
+  @@index([printKey])
+  @@index([printKey, variant, language])
   @@index([slug])
+  @@index([loanedTo])
 }
 
 model RawName {
@@ -237,30 +267,30 @@ model RawName {
 }
 
 model BarcodeCache {
-  id               Int             @id @default(autoincrement())
-  barcode          String          @unique
-  provider         String
-  platformKey      String?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  shelfType        String?
-  mediaFormat      String?
+  id                       Int             @id @default(autoincrement())
+  barcode                  String          @unique
+  provider                 String
+  platformKey              String?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+  shelfType                String?
+  mediaFormat              String?
   // The compile step's final, structured title decision, persisted verbatim so a
   // cache read reuses it instead of lossily re-deriving (which stripped integral
   // edition terms like "Gottlieb Pinball Classics" → "Gottlieb Pinball"). Null on
   // pre-migration rows, which fall back to re-derivation.
-  cleanName        String?
-  displayName      String?
-  edition          String?
-  priceLastUpdated DateTime?
-  priceNew         Int?
-  priceUsed        Int?
-  priceUsedCIB     Int?
-  observations           Json?
+  cleanName                String?
+  displayName              String?
+  edition                  String?
+  priceLastUpdated         DateTime?
+  priceNew                 Int?
+  priceUsed                Int?
+  priceUsedCIB             Int?
+  observations             Json?
   observationSchemaVersion String?
-  rawNames         RawName[]
-  fieldEvidence    FieldEvidence[]
-  priceOffers      PriceOffer[]
+  rawNames                 RawName[]
+  fieldEvidence            FieldEvidence[]
+  priceOffers              PriceOffer[]
 }
 
 model UnresolvedBarcodeScan {
@@ -282,18 +312,16 @@ model UnresolvedBarcodeScan {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  name           String?
-  email          String?       @unique
-  image          String?
-  role           UserRole      @default(guest)
-  password       String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  items          Item[]
-  ownedLoans     LoanRequest[] @relation("OwnedLoans")
-  requestedLoans LoanRequest[] @relation("RequestedLoans")
-  shelves        Shelf[]
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  image     String?
+  role      UserRole @default(guest)
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     Item[]
+  shelves   Shelf[]
 }
 
 model Setting {
@@ -301,25 +329,6 @@ model Setting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model LoanRequest {
-  id          String   @id @default(cuid())
-  itemId      String
-  requesterId String
-  ownerId     String
-  status      String   @default("PENDING")
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  owner       User     @relation("OwnedLoans", fields: [ownerId], references: [id], onDelete: Cascade)
-  requester   User     @relation("RequestedLoans", fields: [requesterId], references: [id], onDelete: Cascade)
-  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@index([ownerId])
-  @@index([requesterId])
-  @@index([status])
 }
 
 /// Out-of-process work queue — claimed by `pnpm worker`, never run inside Next `after()`.

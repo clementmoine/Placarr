@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 import {
   makeObservationUsage,
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -18,7 +18,7 @@ import type {
   ObservationEvidenceSignal,
 } from "@/types/metadataObservation";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import {
   createTeardownMetadataTask,
@@ -359,7 +359,7 @@ function createDiscogsAdapter(): MetadataProviderAdapter {
   };
 }
 
-export const discogsModule: ProviderModule = {
+export const discogsModule = defineProvider({
   info: {
     id: "discogs",
     label: "Discogs",
@@ -370,6 +370,7 @@ export const discogsModule: ProviderModule = {
       env: ["DISCOGS_CONSUMER_KEY", "DISCOGS_CONSUMER_SECRET"],
       free: true,
     },
+    supplyMode: "api_live",
     canonical: true,
     musicGallerySource: true,
     // The Discogs release image is the definitive album cover — trust it as-is.
@@ -421,19 +422,10 @@ export const discogsModule: ProviderModule = {
     const barcode = (context?.barcode || "4988601467124").replace(/[^\d]/g, "");
     if (!barcode) return [];
     try {
-      const res = await axios.get("https://api.discogs.com/database/search", {
-        params: { barcode, per_page: 1, ...auth },
-        headers: {
-          "User-Agent": "Placarr/1.0 +https://github.com/clementmoine/Placarr",
-        },
-        timeout: 8000,
-      });
-      const id = res.data?.results?.[0]?.id;
-      if (!id) return Object.keys(res.data?.results?.[0] || {});
-      const release = await axios.get(
-        `https://api.discogs.com/releases/${id}`,
+      const res = await httpGet<{ results?: JsonObject[] }>(
+        "https://api.discogs.com/database/search",
         {
-          params: auth,
+          params: { barcode, per_page: 1, ...auth },
           headers: {
             "User-Agent":
               "Placarr/1.0 +https://github.com/clementmoine/Placarr",
@@ -441,11 +433,21 @@ export const discogsModule: ProviderModule = {
           timeout: 8000,
         },
       );
+      const id = res.data?.results?.[0]?.id;
+      if (!id) return Object.keys(res.data?.results?.[0] || {});
+      const release = await httpGet(`https://api.discogs.com/releases/${id}`, {
+        params: auth,
+        headers: {
+          "User-Agent": "Placarr/1.0 +https://github.com/clementmoine/Placarr",
+        },
+        timeout: 8000,
+      });
       return Object.keys(release.data || {});
     } catch {
       return [];
     }
   },
+  barcodeLookupSlots: { discogs: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.discogs;
     if (!hit?.title) return [];
@@ -457,4 +459,14 @@ export const discogsModule: ProviderModule = {
       },
     ];
   },
-};
+});
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `discogs` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    discogs: BarcodeMetadataHit | null;
+  }
+}

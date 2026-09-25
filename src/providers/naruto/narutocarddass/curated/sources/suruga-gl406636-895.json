@@ -1,0 +1,129 @@
+{
+  "source": "Suruga-ya.jp product detail GL406636 … GL406895 (user paste 2026-09-21)",
+  "observed": "2026-09-21",
+  "ingest": "research+staging",
+  "lang": "ja",
+  "range": {
+    "from": "GL406636",
+    "to": "GL406895"
+  },
+  "coverage": {
+    "tsvListings": 260,
+    "uniqueDisks": 253,
+    "surugaFacesOnDisk": 253,
+    "faceless": 0,
+    "duplicatePrintedPairs": 7
+  },
+  "note": "Entire range already in suruga-ya-carddass-listings.tsv. Every unique printed disk already has art.suruga.jpg. Seven printed-ref pairs are CDN-distinct 絵違い — staged only, no invented -R, catalogue faces unchanged.",
+  "not": [
+    "invent-R",
+    "overwrite-catalogue-suruga"
+  ],
+  "families": {
+    "prta": 1,
+    "prni": 2,
+    "ta": 82,
+    "te": 87,
+    "ni": 74,
+    "cl": 8,
+    "ki": 6
+  },
+  "variants": [
+    {
+      "productId": "GL406696",
+      "printed": "作-229",
+      "diskId": "ta0229",
+      "role": "catalogue",
+      "note": "MD5 matches art.suruga.jpg — Sound Four Tayuya+Sakon art."
+    },
+    {
+      "productId": "GL406697",
+      "printed": "作-229",
+      "diskId": "ta0229",
+      "surugaTag": "絵違い",
+      "role": "stage",
+      "note": "Same title 突然の遭遇 — Kidomaru+Jirobo art instead."
+    },
+    {
+      "productId": "GL406760",
+      "printed": "術-199",
+      "diskId": "te0199",
+      "role": "catalogue"
+    },
+    {
+      "productId": "GL406761",
+      "printed": "術-199",
+      "diskId": "te0199",
+      "surugaTag": "絵違い",
+      "role": "stage"
+    },
+    {
+      "productId": "GL406763",
+      "printed": "術-203",
+      "diskId": "te0203",
+      "role": "catalogue"
+    },
+    {
+      "productId": "GL406762",
+      "printed": "術-203",
+      "diskId": "te0203",
+      "surugaTag": "絵違い",
+      "role": "stage"
+    },
+    {
+      "productId": "GL406770",
+      "printed": "術-223",
+      "diskId": "te0223",
+      "role": "catalogue",
+      "note": "Harvest title 忍法・蜘蛛巣開(絵違い) on sibling GL406769 — catalogue face is this id."
+    },
+    {
+      "productId": "GL406769",
+      "printed": "術-223",
+      "diskId": "te0223",
+      "surugaTag": "絵違い",
+      "role": "stage"
+    },
+    {
+      "productId": "GL406774",
+      "printed": "術-230",
+      "diskId": "te0230",
+      "role": "catalogue"
+    },
+    {
+      "productId": "GL406775",
+      "printed": "術-230",
+      "diskId": "te0230",
+      "surugaTag": "絵違い",
+      "role": "stage"
+    },
+    {
+      "productId": "GL406778",
+      "printed": "術-236",
+      "diskId": "te0236",
+      "role": "catalogue"
+    },
+    {
+      "productId": "GL406779",
+      "printed": "術-236",
+      "diskId": "te0236",
+      "surugaTag": "絵違い",
+      "role": "stage"
+    },
+    {
+      "productId": "GL406789",
+      "printed": "術-259-a",
+      "diskId": "te0259-a",
+      "role": "catalogue",
+      "note": "Pixel-matched to art.tvtokyo.jpg on te0259-a. Installed art.suruga.jpg; TSV printed updated 術-259 → 術-259-a."
+    },
+    {
+      "productId": "GL406790",
+      "printed": "術-259-b",
+      "diskId": "te0259-b",
+      "role": "catalogue",
+      "note": "Pixel-matched to te0259-b. Installed art.suruga.jpg; TSV 術-259 → 術-259-b. Base te0259 keeps its own 2006 Suruga face."
+    }
+  ],
+  "staging": "data/naruto/carddass/staging/suruga/gl406-636-895-dups/"
+}

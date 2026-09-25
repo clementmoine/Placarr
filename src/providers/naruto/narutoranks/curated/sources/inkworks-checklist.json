@@ -1,0 +1,692 @@
+{
+  "source": "http://www.inkworks.com/products/naruto/ninjaranks/narutocklist.htm",
+  "wayback": "https://web.archive.org/web/20060624043930id_/http://inkworks.com/products/naruto/ninjaranks/narutocklist.htm",
+  "observed": "2026-08-21",
+  "ingest": "titles",
+  "lang": "en",
+  "line": "ninja-ranks",
+  "note": "Checklist officielle Inkworks, juin 2006. Titres EN tels qu'écrits (y compris « Rock lee » et l'espace de Gaara-Temari). Pas de faces. L'album collector n'est pas une carte. Les NS1–6 / GS européennes d'AnimeCollection ne sont pas sur cette feuille US : NS est modélisé à part (`european-ns-checklist.json`, EU-only).",
+  "not": [
+    "ns",
+    "gs",
+    "way-of-the-ninja",
+    "secret-weapons",
+    "ultra-challenge",
+    "carddass"
+  ],
+  "counts": {
+    "cards": 100,
+    "base": 72,
+    "ff": 6,
+    "sd": 6,
+    "nw": 9,
+    "bl": 3,
+    "pn": 4
+  },
+  "sets": {
+    "nr": {
+      "label": "Base set",
+      "inkworks": "72 cartes numérotées 1–72 sans préfixe sur l'édition US ; c'est le cœur du produit « Ninja Ranks »"
+    },
+    "ff": {
+      "label": "Friends and Foes",
+      "printed": "FF-1…FF-6",
+      "inkworks": "Insert duotones personnages adversaires / alliés"
+    },
+    "sd": {
+      "label": "Super Deformed",
+      "printed": "SD-1…SD-6",
+      "inkworks": "Insert chibi"
+    },
+    "nw": {
+      "label": "Ninja Warriors",
+      "printed": "NW-1…NW-9",
+      "inkworks": "Insert personnages en posture de combat"
+    },
+    "ns": {
+      "label": "Ninja Sensei",
+      "printed": "NS-1…NS-6",
+      "note": "Insert EU — absent de la feuille Inkworks US ; voir `european-ns-checklist.json`"
+    },
+    "bl": {
+      "label": "Box Loader",
+      "printed": "BL-1…BL-3",
+      "inkworks": "Cartes chargeur de display (loader) — Panini Online les appelle aussi « Group Seven »"
+    },
+    "pn": {
+      "label": "Promo",
+      "printed": "PN-1, PN-T, PN-GA, PN-i",
+      "inkworks": "Cartes promotionnelles non tirées en booster"
+    }
+  },
+  "cards": [
+    {
+      "printed": "1",
+      "setCode": "nr",
+      "number": "0001",
+      "name": "Title Card"
+    },
+    {
+      "printed": "2",
+      "setCode": "nr",
+      "number": "0002",
+      "name": "Group 7 puzzle"
+    },
+    {
+      "printed": "3",
+      "setCode": "nr",
+      "number": "0003",
+      "name": "Group 7 puzzle"
+    },
+    {
+      "printed": "4",
+      "setCode": "nr",
+      "number": "0004",
+      "name": "Naruto-Sakura-Sasuke-Kakashi"
+    },
+    {
+      "printed": "5",
+      "setCode": "nr",
+      "number": "0005",
+      "name": "Naruto-Sakura-Sasuke"
+    },
+    {
+      "printed": "6",
+      "setCode": "nr",
+      "number": "0006",
+      "name": "Naruto-Sasuke-Sakura"
+    },
+    {
+      "printed": "7",
+      "setCode": "nr",
+      "number": "0007",
+      "name": "Sakura-Kakashi"
+    },
+    {
+      "printed": "8",
+      "setCode": "nr",
+      "number": "0008",
+      "name": "Naruto"
+    },
+    {
+      "printed": "9",
+      "setCode": "nr",
+      "number": "0009",
+      "name": "Naruto"
+    },
+    {
+      "printed": "10",
+      "setCode": "nr",
+      "number": "0010",
+      "name": "Naruto"
+    },
+    {
+      "printed": "11",
+      "setCode": "nr",
+      "number": "0011",
+      "name": "Naruto"
+    },
+    {
+      "printed": "12",
+      "setCode": "nr",
+      "number": "0012",
+      "name": "Sakura"
+    },
+    {
+      "printed": "13",
+      "setCode": "nr",
+      "number": "0013",
+      "name": "Sakura"
+    },
+    {
+      "printed": "14",
+      "setCode": "nr",
+      "number": "0014",
+      "name": "Sakura"
+    },
+    {
+      "printed": "15",
+      "setCode": "nr",
+      "number": "0015",
+      "name": "Sakura"
+    },
+    {
+      "printed": "16",
+      "setCode": "nr",
+      "number": "0016",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "17",
+      "setCode": "nr",
+      "number": "0017",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "18",
+      "setCode": "nr",
+      "number": "0018",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "19",
+      "setCode": "nr",
+      "number": "0019",
+      "name": "Sasuke"
+    },
+    {
+      "printed": "20",
+      "setCode": "nr",
+      "number": "0020",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "21",
+      "setCode": "nr",
+      "number": "0021",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "22",
+      "setCode": "nr",
+      "number": "0022",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "23",
+      "setCode": "nr",
+      "number": "0023",
+      "name": "Kakashi"
+    },
+    {
+      "printed": "24",
+      "setCode": "nr",
+      "number": "0024",
+      "name": "Iruka"
+    },
+    {
+      "printed": "25",
+      "setCode": "nr",
+      "number": "0025",
+      "name": "Shikamaru-Choji-Ino"
+    },
+    {
+      "printed": "26",
+      "setCode": "nr",
+      "number": "0026",
+      "name": "Shikamaru"
+    },
+    {
+      "printed": "27",
+      "setCode": "nr",
+      "number": "0027",
+      "name": "Choji"
+    },
+    {
+      "printed": "28",
+      "setCode": "nr",
+      "number": "0028",
+      "name": "Ino"
+    },
+    {
+      "printed": "29",
+      "setCode": "nr",
+      "number": "0029",
+      "name": "Asuma"
+    },
+    {
+      "printed": "30",
+      "setCode": "nr",
+      "number": "0030",
+      "name": "Sasuke-Ino"
+    },
+    {
+      "printed": "31",
+      "setCode": "nr",
+      "number": "0031",
+      "name": "Kiba-Shino-Hinata"
+    },
+    {
+      "printed": "32",
+      "setCode": "nr",
+      "number": "0032",
+      "name": "Shino"
+    },
+    {
+      "printed": "33",
+      "setCode": "nr",
+      "number": "0033",
+      "name": "Kiba"
+    },
+    {
+      "printed": "34",
+      "setCode": "nr",
+      "number": "0034",
+      "name": "Akamaru"
+    },
+    {
+      "printed": "35",
+      "setCode": "nr",
+      "number": "0035",
+      "name": "Hinata"
+    },
+    {
+      "printed": "36",
+      "setCode": "nr",
+      "number": "0036",
+      "name": "Kurenai"
+    },
+    {
+      "printed": "37",
+      "setCode": "nr",
+      "number": "0037",
+      "name": "Kiba-Akamaru"
+    },
+    {
+      "printed": "38",
+      "setCode": "nr",
+      "number": "0038",
+      "name": "Tenten-Neji-Rock Lee"
+    },
+    {
+      "printed": "39",
+      "setCode": "nr",
+      "number": "0039",
+      "name": "Rock Lee"
+    },
+    {
+      "printed": "40",
+      "setCode": "nr",
+      "number": "0040",
+      "name": "Rock Lee"
+    },
+    {
+      "printed": "41",
+      "setCode": "nr",
+      "number": "0041",
+      "name": "Neji"
+    },
+    {
+      "printed": "42",
+      "setCode": "nr",
+      "number": "0042",
+      "name": "Neji"
+    },
+    {
+      "printed": "43",
+      "setCode": "nr",
+      "number": "0043",
+      "name": "Tenten"
+    },
+    {
+      "printed": "44",
+      "setCode": "nr",
+      "number": "0044",
+      "name": "Guy"
+    },
+    {
+      "printed": "45",
+      "setCode": "nr",
+      "number": "0045",
+      "name": "Guy-Rock Lee"
+    },
+    {
+      "printed": "46",
+      "setCode": "nr",
+      "number": "0046",
+      "name": "Gaara-Temari- Kankuro"
+    },
+    {
+      "printed": "47",
+      "setCode": "nr",
+      "number": "0047",
+      "name": "Temari"
+    },
+    {
+      "printed": "48",
+      "setCode": "nr",
+      "number": "0048",
+      "name": "Gaara"
+    },
+    {
+      "printed": "49",
+      "setCode": "nr",
+      "number": "0049",
+      "name": "Gaara"
+    },
+    {
+      "printed": "50",
+      "setCode": "nr",
+      "number": "0050",
+      "name": "Kankuro"
+    },
+    {
+      "printed": "51",
+      "setCode": "nr",
+      "number": "0051",
+      "name": "Baki"
+    },
+    {
+      "printed": "52",
+      "setCode": "nr",
+      "number": "0052",
+      "name": "Orochimaru"
+    },
+    {
+      "printed": "53",
+      "setCode": "nr",
+      "number": "0053",
+      "name": "Orochimaru"
+    },
+    {
+      "printed": "54",
+      "setCode": "nr",
+      "number": "0054",
+      "name": "Kabuto"
+    },
+    {
+      "printed": "55",
+      "setCode": "nr",
+      "number": "0055",
+      "name": "Zaku"
+    },
+    {
+      "printed": "56",
+      "setCode": "nr",
+      "number": "0056",
+      "name": "Kin"
+    },
+    {
+      "printed": "57",
+      "setCode": "nr",
+      "number": "0057",
+      "name": "Dosu"
+    },
+    {
+      "printed": "58",
+      "setCode": "nr",
+      "number": "0058",
+      "name": "Third Hokage"
+    },
+    {
+      "printed": "59",
+      "setCode": "nr",
+      "number": "0059",
+      "name": "Zabuza"
+    },
+    {
+      "printed": "60",
+      "setCode": "nr",
+      "number": "0060",
+      "name": "Haku"
+    },
+    {
+      "printed": "61",
+      "setCode": "nr",
+      "number": "0061",
+      "name": "Haku"
+    },
+    {
+      "printed": "62",
+      "setCode": "nr",
+      "number": "0062",
+      "name": "Ibiki"
+    },
+    {
+      "printed": "63",
+      "setCode": "nr",
+      "number": "0063",
+      "name": "Anko"
+    },
+    {
+      "printed": "64",
+      "setCode": "nr",
+      "number": "0064",
+      "name": "Hayate"
+    },
+    {
+      "printed": "65",
+      "setCode": "nr",
+      "number": "0065",
+      "name": "Ebisu"
+    },
+    {
+      "printed": "66",
+      "setCode": "nr",
+      "number": "0066",
+      "name": "Konohamaru's-Group"
+    },
+    {
+      "printed": "67",
+      "setCode": "nr",
+      "number": "0067",
+      "name": "Rookies"
+    },
+    {
+      "printed": "68",
+      "setCode": "nr",
+      "number": "0068",
+      "name": "Second Exam Survivors"
+    },
+    {
+      "printed": "69",
+      "setCode": "nr",
+      "number": "0069",
+      "name": "Asuma-Kurenai-Kakashi"
+    },
+    {
+      "printed": "70",
+      "setCode": "nr",
+      "number": "0070",
+      "name": "Kakashi-Zabuza"
+    },
+    {
+      "printed": "71",
+      "setCode": "nr",
+      "number": "0071",
+      "name": "Map"
+    },
+    {
+      "printed": "72",
+      "setCode": "nr",
+      "number": "0072",
+      "name": "Checklist"
+    },
+    {
+      "printed": "FF-1",
+      "setCode": "ff",
+      "number": "0001",
+      "name": "Guy - Kakashi",
+      "rarity": "Friends and Foes"
+    },
+    {
+      "printed": "FF-2",
+      "setCode": "ff",
+      "number": "0002",
+      "name": "Naruto - Fox Spirit",
+      "rarity": "Friends and Foes"
+    },
+    {
+      "printed": "FF-3",
+      "setCode": "ff",
+      "number": "0003",
+      "name": "Naruto - Sakura",
+      "rarity": "Friends and Foes"
+    },
+    {
+      "printed": "FF-4",
+      "setCode": "ff",
+      "number": "0004",
+      "name": "Sasuke - Naruto",
+      "rarity": "Friends and Foes"
+    },
+    {
+      "printed": "FF-5",
+      "setCode": "ff",
+      "number": "0005",
+      "name": "Sakura - Ino",
+      "rarity": "Friends and Foes"
+    },
+    {
+      "printed": "FF-6",
+      "setCode": "ff",
+      "number": "0006",
+      "name": "Itachi - Sasuke",
+      "rarity": "Friends and Foes"
+    },
+    {
+      "printed": "SD-1",
+      "setCode": "sd",
+      "number": "0001",
+      "name": "Naruto",
+      "rarity": "Super Deformed"
+    },
+    {
+      "printed": "SD-2",
+      "setCode": "sd",
+      "number": "0002",
+      "name": "Sakura",
+      "rarity": "Super Deformed"
+    },
+    {
+      "printed": "SD-3",
+      "setCode": "sd",
+      "number": "0003",
+      "name": "Sasuke",
+      "rarity": "Super Deformed"
+    },
+    {
+      "printed": "SD-4",
+      "setCode": "sd",
+      "number": "0004",
+      "name": "Kakashi",
+      "rarity": "Super Deformed"
+    },
+    {
+      "printed": "SD-5",
+      "setCode": "sd",
+      "number": "0005",
+      "name": "Fourth Hokage",
+      "rarity": "Super Deformed"
+    },
+    {
+      "printed": "SD-6",
+      "setCode": "sd",
+      "number": "0006",
+      "name": "Shikamaru",
+      "rarity": "Super Deformed"
+    },
+    {
+      "printed": "NW-1",
+      "setCode": "nw",
+      "number": "0001",
+      "name": "Naruto",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-2",
+      "setCode": "nw",
+      "number": "0002",
+      "name": "Sakura",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-3",
+      "setCode": "nw",
+      "number": "0003",
+      "name": "Sasuke",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-4",
+      "setCode": "nw",
+      "number": "0004",
+      "name": "Kakashi",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-5",
+      "setCode": "nw",
+      "number": "0005",
+      "name": "Haku",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-6",
+      "setCode": "nw",
+      "number": "0006",
+      "name": "Gaara",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-7",
+      "setCode": "nw",
+      "number": "0007",
+      "name": "Neji",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-8",
+      "setCode": "nw",
+      "number": "0008",
+      "name": "Orochimaru",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "NW-9",
+      "setCode": "nw",
+      "number": "0009",
+      "name": "Rock lee",
+      "rarity": "Ninja Warriors"
+    },
+    {
+      "printed": "BL-1",
+      "setCode": "bl",
+      "number": "0001",
+      "name": "Naruto",
+      "rarity": "Box Loader"
+    },
+    {
+      "printed": "BL-2",
+      "setCode": "bl",
+      "number": "0002",
+      "name": "Sakura",
+      "rarity": "Box Loader"
+    },
+    {
+      "printed": "BL-3",
+      "setCode": "bl",
+      "number": "0003",
+      "name": "Sasuke",
+      "rarity": "Box Loader"
+    },
+    {
+      "printed": "PN-1",
+      "setCode": "pn",
+      "number": "0001",
+      "name": "GENERAL DISTRIBUTION",
+      "rarity": "Promo"
+    },
+    {
+      "printed": "PN-T",
+      "setCode": "pn",
+      "number": "t",
+      "name": "TRADE SHOWS, SPECIAL OFFERS",
+      "rarity": "Promo"
+    },
+    {
+      "printed": "PN-GA",
+      "setCode": "pn",
+      "number": "ga",
+      "name": "GAMA SHOW",
+      "rarity": "Promo"
+    },
+    {
+      "printed": "PN-i",
+      "setCode": "pn",
+      "number": "i",
+      "name": "FREE CARD OFFER ON INKWORKS.COM",
+      "rarity": "Promo"
+    }
+  ]
+}

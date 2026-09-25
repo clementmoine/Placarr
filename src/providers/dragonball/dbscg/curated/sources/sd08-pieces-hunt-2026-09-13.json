@@ -1,0 +1,29 @@
+{
+  "source": "sd08-rising-broly-pieces-hunt",
+  "observed": "2026-09-13",
+  "kind": "research-dig",
+  "question": "Bandai Asia Pieces table for DBS CG SD08 Rising Broly?",
+  "verdict": {
+    "contentsKnown": false,
+    "declaredCardCount": 51,
+    "finding": "Live Asia/Europe product pages and Wayback snapshots never published a Pieces qty table (unlike SD01). Cardlist = exclusives SD8-01…10 only."
+  },
+  "sources": [
+    {
+      "id": "asia-product",
+      "url": "https://www.dbs-cardgame.com/asia/product/dbs-sd08.php",
+      "finding": "50 + 1 Leader, 10 exclusives — no Pieces"
+    },
+    {
+      "id": "europe-product",
+      "url": "https://www.dbs-cardgame.com/europe-en/product/dbs-sd08.php",
+      "finding": "Same — no Pieces"
+    },
+    {
+      "id": "asia-cardlist",
+      "url": "https://www.dbs-cardgame.com/asia/cardlist/?category=428308&search=true",
+      "finding": "Membership exclusives only"
+    }
+  ],
+  "notFound": ["Pieces HTML", "sealed unboxing summing to 51 with per-card qty"]
+}

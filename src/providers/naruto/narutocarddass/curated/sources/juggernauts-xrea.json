@@ -1,0 +1,82 @@
+{
+  "source": "JUGGERNAUTS TCG catalog — card.g1.xrea.com (VPN JP probe 2026-08-18)",
+  "observed": "2026-08-18",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "url": "http://card.g1.xrea.com/t2/tbc28nrt.html",
+  "english": "http://card.g1.xrea.com/en/fn09nrte.html",
+  "updated": "2020-04-18",
+  "author": "DOP",
+  "note": "Rules + sealed SKU table for the JP tabletop game (巻ノ壱…十七). No card scans. Jumbo / reprint / starter-book SKUs below are not makiN set folders. Combo sheets mix Data Carddass — skip those faces. Not EN CCG.",
+  "not": ["data-carddass", "en-ccg", "n001", "faces"],
+  "formats": {
+    "starter": { "cards": 40, "yen": [800, 1000, 1050] },
+    "boosterEx": { "cards": 6, "yen": [150, 158] },
+    "carddass100": { "cards": 4, "yen": 100 },
+    "reprintBooster": { "cards": 12, "yen": [300, 315] },
+    "jumbo": { "cards": 4, "yen": 100 }
+  },
+  "skuNotInSetsJson": [
+    {
+      "name": "秘儀伝授スターター",
+      "released": "2003-07",
+      "kind": "constructed-starter",
+      "books": ["ナルトの書", "サスケの書"],
+      "note": "Dream-hobby writes 秘伝伝授. xrea: 31 cards/800¥ vs later 40-card starters."
+    },
+    {
+      "name": "極意忍法帳",
+      "released": "2003-12",
+      "kind": "jumbo-carddass",
+      "count": 52
+    },
+    {
+      "name": "忍法法札絵巻",
+      "released": "2004-03",
+      "kind": "reprint-booster",
+      "count": 72,
+      "note": "Reprints 巻ノ壱–四. 12 cards/pack."
+    },
+    {
+      "name": "雪姫忍法帳",
+      "released": "2004-09",
+      "kind": "jumbo-carddass",
+      "count": 52
+    },
+    {
+      "name": "忍法法札絵巻2",
+      "released": "2005-02",
+      "kind": "reprint-booster",
+      "count": 124,
+      "also": "ジャンボカードダス 忍兵法札絵巻 弐"
+    },
+    {
+      "name": "拡張ファイリングシート",
+      "released": "2005-08",
+      "kind": "jumbo-carddass",
+      "count": 36
+    },
+    {
+      "name": "拡張ファイリングシート2",
+      "released": "2006-01",
+      "kind": "jumbo-carddass",
+      "count": 36
+    },
+    {
+      "name": "ナルティメットカードバトルスペシャルコンボシート",
+      "released": "2006-03",
+      "kind": "jumbo-carddass",
+      "count": 45,
+      "skip": "data-carddass-mix"
+    },
+    {
+      "name": "ナルティメットカードバトルスペシャルコンボシート2",
+      "released": "2006-07",
+      "kind": "jumbo-carddass",
+      "count": 45,
+      "skip": "data-carddass-mix"
+    }
+  ]
+}

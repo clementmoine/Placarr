@@ -118,9 +118,7 @@ export function parseFuretSearchHits(html: string): FuretSearchHit[] {
     const title =
       cleanHtmlText(match[3].replace(/<[^>]+>/g, " ")) ||
       cleanHtmlText(
-        match[1]
-          .match(/\/livres\/(.+)-\d{10,13}/i)?.[1]
-          ?.replace(/-/g, " "),
+        match[1].match(/\/livres\/(.+)-\d{10,13}/i)?.[1]?.replace(/-/g, " "),
       );
     if (!title || title.length < 2) continue;
     if (/^(tout voir|types de|accueil)$/i.test(title)) continue;
@@ -137,7 +135,8 @@ export function parseFuretProductPage(
   sourceUrl: string,
 ): FuretProduct | null {
   const schema = bookSchema(html);
-  const productUrl = absoluteUrlFromBase(FURET_BASE_URL, sourceUrl) || sourceUrl;
+  const productUrl =
+    absoluteUrlFromBase(FURET_BASE_URL, sourceUrl) || sourceUrl;
 
   const title =
     firstSchemaStringValue(schema?.name) ||
@@ -146,7 +145,9 @@ export function parseFuretProductPage(
         .match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]
         ?.replace(/\s*[|\-–—]\s*Furet du Nord\s*$/i, ""),
     ) ||
-    cleanHtmlText(html.match(/class=["'][^"']*product-title[^"']*["'][^>]*>([^<]+)/i)?.[1]);
+    cleanHtmlText(
+      html.match(/class=["'][^"']*product-title[^"']*["'][^>]*>([^<]+)/i)?.[1],
+    );
   if (!title) return null;
 
   const description = firstSchemaStringValue(schema?.description);
@@ -295,8 +296,7 @@ export async function fetchFuretByBarcode(
   const hits = await searchFuretHits(normalized, options);
   const preferred =
     hits.find(
-      (hit) =>
-        hit.barcode && barcodesEquivalent(hit.barcode, normalized),
+      (hit) => hit.barcode && barcodesEquivalent(hit.barcode, normalized),
     ) ||
     hits.find((hit) =>
       retailerProductBarcodeConfirmed(hit.productUrl, hit.barcode, normalized),
@@ -340,9 +340,7 @@ export async function resolveFuretMetadata(input: {
           searchQuery: query,
           catalogTitle: hit.title,
           barcodeConfirmed: Boolean(
-            barcode &&
-              hit.barcode &&
-              barcodesEquivalent(hit.barcode, barcode),
+            barcode && hit.barcode && barcodesEquivalent(hit.barcode, barcode),
           ),
           itemBarcode: barcode,
         })
@@ -376,8 +374,6 @@ export async function collectFuretMappingRawKeys(
   barcode: string,
 ): Promise<string[]> {
   const hits = await searchFuretHits(barcode);
-  const product = hits[0]
-    ? await fetchFuretProduct(hits[0].productUrl)
-    : null;
+  const product = hits[0] ? await fetchFuretProduct(hits[0].productUrl) : null;
   return collectObjectMappingSignals({ hits: hits.slice(0, 3), product });
 }

@@ -1,0 +1,253 @@
+{
+  "source": "www.carddas.com/naruto/cardgame/product/cardlist_gaku.shtml (Wayback staging, cp932)",
+  "observed": "2026-08-17",
+  "ingest": "titles",
+  "line": "carddass-jp-gaku",
+  "note": "Official printed 忍伝-学001…040 (忍者学校ルール). Not 幕 shi-107, not Data Carddass NM. Titles only.",
+  "not": ["data-carddass", "shi107", "en-ccg"],
+  "counts": {
+    "cards": 40
+  },
+  "cards": [
+    {
+      "printed": "忍伝-学001",
+      "number": "gaku0001",
+      "name": "うずまきナルト",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学002",
+      "number": "gaku0002",
+      "name": "ガマ吉",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学003",
+      "number": "gaku0003",
+      "name": "たたみイワシ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学004",
+      "number": "gaku0004",
+      "name": "並足ライドウ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学005",
+      "number": "gaku0005",
+      "name": "卯月夕顔",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学006",
+      "number": "gaku0006",
+      "name": "四代目火影",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学007",
+      "number": "gaku0007",
+      "name": "ガマブン太",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学008",
+      "number": "gaku0008",
+      "name": "うちはサスケ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学009",
+      "number": "gaku0009",
+      "name": "モズク",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学010",
+      "number": "gaku0010",
+      "name": "うちはミコト",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学011",
+      "number": "gaku0011",
+      "name": "うちはフガク",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学012",
+      "number": "gaku0012",
+      "name": "不知火ゲンマ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学013",
+      "number": "gaku0013",
+      "name": "はたけカカシ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学014",
+      "number": "gaku0014",
+      "name": "三代目火影",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学015",
+      "number": "gaku0015",
+      "name": "赤胴ヨロイ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学016",
+      "number": "gaku0016",
+      "name": "剣ミスミ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学017",
+      "number": "gaku0017",
+      "name": "鬼童丸",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学018",
+      "number": "gaku0018",
+      "name": "次郎坊",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学019",
+      "number": "gaku0019",
+      "name": "左近",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学020",
+      "number": "gaku0020",
+      "name": "多由也",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学021",
+      "number": "gaku0021",
+      "name": "薬師カブト",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学022",
+      "number": "gaku0022",
+      "name": "二代目火影",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学023",
+      "number": "gaku0023",
+      "name": "春野サクラ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学024",
+      "number": "gaku0024",
+      "name": "我愛羅",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学025",
+      "number": "gaku0025",
+      "name": "カンクロウ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学026",
+      "number": "gaku0026",
+      "name": "テマリ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学027",
+      "number": "gaku0027",
+      "name": "油女ゲン",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学028",
+      "number": "gaku0028",
+      "name": "夕日紅",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学029",
+      "number": "gaku0029",
+      "name": "四代目風影",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学030",
+      "number": "gaku0030",
+      "name": "奈良シカマル",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学031",
+      "number": "gaku0031",
+      "name": "森野イビキ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学032",
+      "number": "gaku0032",
+      "name": "山中いのいち",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学033",
+      "number": "gaku0033",
+      "name": "奈良シカク",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学034",
+      "number": "gaku0034",
+      "name": "秋道チョウザ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学035",
+      "number": "gaku0035",
+      "name": "日向ヒアシ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学036",
+      "number": "gaku0036",
+      "name": "初代火影",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学037",
+      "number": "gaku0037",
+      "name": "犬塚キバ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学038",
+      "number": "gaku0038",
+      "name": "油女シノ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学039",
+      "number": "gaku0039",
+      "name": "日向ヒナタ",
+      "setCode": "gaku"
+    },
+    {
+      "printed": "忍伝-学040",
+      "number": "gaku0040",
+      "name": "木ノ葉丸",
+      "setCode": "gaku"
+    }
+  ]
+}

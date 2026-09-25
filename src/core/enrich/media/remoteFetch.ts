@@ -1,9 +1,7 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
-import {
-  coverUrlExpectsHighResolution,
-} from "@/core/enrich/media/coverResolution";
+import { coverUrlExpectsHighResolution } from "@/core/enrich/media/coverResolution";
 import {
   flareSolverrCookiesFor,
   flareSolverrDownloadImages,
@@ -26,10 +24,10 @@ export type RemoteImageFetchResult = {
 
 export type FetchRemoteImageOptions = {
   /**
- * UI proxy may serve a tiny mod11 fallback when /full/ JPEGs are blocked.
- * Localization keeps this false so /full/ URLs are not persisted as CDN thumbs.
- */
-allowSubThresholdFallback?: boolean;
+   * UI proxy may serve a tiny mod11 fallback when /full/ JPEGs are blocked.
+   * Localization keeps this false so /full/ URLs are not persisted as CDN thumbs.
+   */
+  allowSubThresholdFallback?: boolean;
 };
 
 function sleep(ms: number) {
@@ -40,7 +38,7 @@ async function tryFetchUrl(
   url: string,
   extraHeaders: Record<string, string> = {},
 ): Promise<RemoteImageFetchResult | null> {
-  const response = await axios.get(url, {
+  const response = await httpGet<ArrayBuffer>(url, {
     responseType: "arraybuffer",
     timeout: 15_000,
     headers: {

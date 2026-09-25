@@ -1,0 +1,30 @@
+{
+  "source": "coleka.com — Carte Naruto US Promotionnelles (Bandai USA CCG, EN scans)",
+  "observed": "2026-08-21",
+  "note": "User-supplied `_r38199`. EN CCG PR-nnn (+ five foil R reprints). Disk pr0001 / pr0005-R, never Carddass tin FR. Drive Enhanced Promos already covers most EN scans at 750×1050; Coleka is a second dump (art.coleka, ~557×774). Do not scrape the umbrella `_r4102`. Do not mint a sealed SKU from the rubrique cover.",
+  "umbrella": {
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102",
+    "scrape": false,
+    "reason": "~7000 mixed cards"
+  },
+  "listing": {
+    "path": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/carte-naruto-us-promotionnelles_r38199",
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/carte-naruto-us-promotionnelles_r38199",
+    "id": "r38199",
+    "scrape": true,
+    "lang": "en",
+    "set": "promo",
+    "count": 101,
+    "pages": 3,
+    "enumerated": "PR-001–093, PR-095, PR-096, PR-100 + PR-005R–009R (no 094 / 097–099)",
+    "disk": "cards/promo/pr0nnn/en/"
+  },
+  "pr096": {
+    "printedRef": "PR-096",
+    "page": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/carte-naruto-us-promotionnelles/the-4-th-hokage_i1624567",
+    "lang": "en",
+    "name": "The 4th Hokage"
+  },
+  "ingestFaces": "promo/en",
+  "ingestUmbrella": "none"
+}

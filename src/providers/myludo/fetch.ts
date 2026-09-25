@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 
@@ -98,7 +98,7 @@ function parseSessionCookie(setCookie: string | string[] | undefined): string {
 }
 
 async function bootstrapMyLudoSession(): Promise<MyLudoSession> {
-  const response = await axios.get(`${BASE_URL}/`, {
+  const response = await httpGet(`${BASE_URL}/`, {
     headers: {
       ...HEADERS,
       Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -217,7 +217,7 @@ async function fetchMyLudoApi<T>(
 ): Promise<T | null> {
   try {
     const session = await getMyLudoSession();
-    const response = await axios.get(`${BASE_URL}${path}`, {
+    const response = await httpGet(`${BASE_URL}${path}`, {
       params,
       headers: {
         ...HEADERS,

@@ -1,0 +1,28 @@
+{
+  "source": "Suruga-ya — base de rachat (kaitori)",
+  "observed": "2026-08-20",
+  "ingest": "packshots",
+  "lang": "ja",
+  "access": "Le site est derrière Cloudflare et répond 403 depuis ce conteneur. Son **CDN ne l'est pas** : `https://cdn.suruga-ya.jp/database/pics_webp/game/{id}.jpg.webp` répond directement. Les identifiants viennent d'URL collées ; le motif se déduit ensuite, ce qui a été vérifié sur 620003411 avant confirmation.",
+  "identification": "Chaque image a été ouverte, et pour les deux boosters le bandeau du bas a été agrandi ×4 avant de trancher : le numéro de volume y est minuscule, et c'est exactement là qu'une lecture pressée se trompe.",
+  "products": [
+    {
+      "id": "620011196",
+      "slug": "jp-release-04",
+      "reads": "秘技伝授 STARTER BOX サスケの書 — カードダスEX, 1箱40枚入り, 全27種, 800円, BANDAI 2003 MADE IN JAPAN"
+    },
+    {
+      "id": "620003223",
+      "slug": "booster-vol7-jp",
+      "reads": "巻ノ七 — 全57種, 6枚入り"
+    },
+    {
+      "id": "620003411",
+      "slug": "booster-vol9-jp",
+      "reads": "巻ノ九 — 全57種, BANDAI 2004 MADE IN JAPAN"
+    }
+  ],
+  "caveat": "La photo de `jp-release-04` montre le **サスケの書**, alors que la sortie couvre aussi le **ナルトの書** : deux livres sous un seul SKU. À séparer le jour où on aura les deux visuels, comme c'est déjà fait pour les deux starters du volume 12.",
+  "priority": "`suruga` passe après `carddassofficial` dans l'ordre japonais : le visuel de l'éditeur avant celui d'un revendeur.",
+  "not": ["cards"]
+}

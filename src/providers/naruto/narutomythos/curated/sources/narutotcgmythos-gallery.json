@@ -1,0 +1,58 @@
+{
+  "source": "narutotcgmythos.com — Card Gallery officielle CICABOOM",
+  "url": "https://www.narutotcgmythos.com/fr/galerie",
+  "alsoUrl": [
+    "https://www.narutotcgmythos.com/card-gallery",
+    "https://www.narutotcgmythos.com/it/card-gallery"
+  ],
+  "observed": "2026-09-05",
+  "ingest": "ready — harvest `art.official` via extract Mythos (`harvestOfficialMythosFaces`)",
+  "lang": "en+fr+it+es",
+  "line": "mythos",
+  "api": {
+    "direct": "https://cards.narutotcgmythos.com/api/cards?lang={en|fr|it|es}",
+    "proxy": "https://services.agenziamarketingcarpi.it/proxy/naruto/proxy.php?lang={lang}",
+    "widgetUses": "proxy (API_BASE dans le custom widget Duda)",
+    "shape": "[{ Title, Cards: Card[] }]",
+    "countPerLang": 636,
+    "image": "https://cards.narutotcgmythos.com/storage/cards/{…}.webp (champ Image ; une URL par langue)"
+  },
+  "coverage": {
+    "Set 1: Konoha Shidō | 1st edition": 186,
+    "Set 1: Konoha Shidō | 2nd edition": 187,
+    "Set 1: Konoha Shidō | (edition vide)": 21,
+    "Set 2: Shinobi Shiren | 1st edition": 242
+  },
+  "cardFields": [
+    "ID",
+    "Uid",
+    "SKU",
+    "CardVersion",
+    "Langs",
+    "Rarity",
+    "CardType",
+    "Illustration",
+    "Stamp",
+    "Edition",
+    "Set",
+    "Variant",
+    "Title",
+    "Version",
+    "Chakra",
+    "Power",
+    "Points",
+    "Keyword1",
+    "Keyword2",
+    "Group",
+    "Text",
+    "Obtain",
+    "Image",
+    "Order"
+  ],
+  "note": "Dos pack déjà curated (`BACK.md`). Faces shop LorenZone = fallback historique. Preferer `cards.narutotcgmythos.com` pour art.official dès qu’un harvest est branché. Le bandeau maintenance est cosmétique (Alice/dev widget 2026-08).",
+  "also": [
+    "websiteUrl provider = https://www.narutotcgmythos.com/",
+    "Produits scellés : lorenzone-products.json",
+    "DB fan (non officielle, KS only) : narutomythos-cards.json"
+  ]
+}

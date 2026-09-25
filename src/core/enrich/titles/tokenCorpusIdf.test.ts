@@ -37,7 +37,9 @@ describe("tokenCorpusIdf", () => {
   it("keeps unknown / low-DF tokens as signal", () => {
     const stats = buildTokenDocumentFrequency(titles);
     expect(isCorpusGenericToken("zxqwv", stats)).toBe(false);
-    expect(tokenIdf("zxqwv", stats)).toBeGreaterThan(tokenIdf("blister", stats));
+    expect(tokenIdf("zxqwv", stats)).toBeGreaterThan(
+      tokenIdf("blister", stats),
+    );
   });
 
   it("returns non-generic on empty corpus", () => {

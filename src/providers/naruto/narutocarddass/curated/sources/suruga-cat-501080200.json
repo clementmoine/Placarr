@@ -1,0 +1,79 @@
+{
+  "id": "suruga-cat-501080200-naruto",
+  "source": "https://www.suruga-ya.jp/search?category=501080200&search_word=%E3%83%8A%E3%83%AB%E3%83%88&adult_s=2&rankBy=relavancy%28int%29&searchbox=1",
+  "observed": "2026-09-21",
+  "reportedTotal": 1582,
+  "harvestedIds": 1574,
+  "pages": 66,
+  "verdict": "Carddass/Shippuden vs our TSVs is essentially complete. Of 5 'new' Carddass product IDs, 3 have Suruga title↔CDN identity mismatch (plastic/portrait cards, not installable as 忍/作), 1 is a real alternate scan of 術-143, 1 CDN 404. COIN-2/4/6 already ledgered. ~731 noise IDs.",
+  "vsKnownTsv": {
+    "alreadyKnown": 809,
+    "newIdsTotal": 765,
+    "newCarddassListings": 5,
+    "newShippuden": 0,
+    "newCoinNotInTsv": 3
+  },
+  "buckets": {
+    "carddass": 666,
+    "shippuden": 145,
+    "coin": 3,
+    "promoTitled": 2,
+    "dataCarddass": 2
+  },
+  "newCarddassListings": [
+    {
+      "productId": "GG074545",
+      "titleClaim": "忍-8 イルカ(絵違い)",
+      "cdnShows": "Sakura plastic/portrait (SAKURA banner)",
+      "action": "reject — title/CDN mismatch"
+    },
+    {
+      "productId": "GL787343",
+      "titleClaim": "作-248 自販機版 強者の選別",
+      "cdnShows": "Itachi plastic/portrait (ITACHI banner)",
+      "action": "reject — title/CDN mismatch"
+    },
+    {
+      "productId": "GL817008",
+      "titleClaim": "忍-91 犬塚キバ",
+      "cdnShows": "Gaara plastic/portrait (GĀARA banner)",
+      "action": "reject — title/CDN mismatch"
+    },
+    {
+      "productId": "GU836055",
+      "titleClaim": "術-143 八卦掌回天",
+      "cdnShows": "real 術-143 Carddass (larger jpeg than on-disk)",
+      "action": "optional art upgrade only — already faced"
+    },
+    {
+      "productId": "GU850660",
+      "titleClaim": "術-115 水面歩行の業",
+      "cdnShows": "404",
+      "action": "skip — keep art.tvtokyo.jpg"
+    }
+  ],
+  "coin": [
+    {
+      "productId": "GG594471",
+      "printed": "COIN-4",
+      "status": "already in suruga-coin-plus.json + face"
+    },
+    {
+      "productId": "GL124600",
+      "printed": "COIN-2",
+      "status": "already in suruga-coin-plus.json + face"
+    },
+    {
+      "productId": "GG594473",
+      "printed": "COIN-6",
+      "status": "already in suruga-coin-plus.json + face"
+    }
+  ],
+  "excludedNoise": [
+    "Data Carddass DN-*",
+    "other anime TCG in cat 501080200",
+    "non-carddass Naruto merch",
+    "plastic/portrait cards mis-titled as Carddass refs"
+  ],
+  "artifacts": "data/naruto/carddass/staging/suruga/cat-501080200/"
+}

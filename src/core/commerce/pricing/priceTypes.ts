@@ -1,5 +1,16 @@
 import type { ProviderProductUrlRef } from "@/types/providerModule";
 
+export type { ProviderProductUrlRef };
+
+export function providerProductUrlsForKey(
+  providerKey: string,
+  refs: readonly ProviderProductUrlRef[] | undefined,
+): string[] {
+  return (refs ?? [])
+    .filter((entry) => entry.providerKey === providerKey)
+    .map((entry) => entry.url);
+}
+
 export type PriceObservation = {
   source: string;
   productName?: string | null;
@@ -37,14 +48,19 @@ export type SerializedPriceObservation = {
 
 export type BarcodePricesResult = {
   priceNew: number | null;
+  /** EUR average of market `foil` observations (TCG finishes). */
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
   /**
    * Point price derived from catalog estimates (cote « de 5 à 10 € » →
    * médian 7,50 €). Lowest-priority value: display and totals only fall
    * back to it when no observed price exists, and mark it as an estimate.
+   * For TCG this is the non-foil (or sole) FX / catalog ~.
    */
   priceEstimated?: number | null;
+  /** FX ~ for the foil market bucket when no native EUR foil exists. */
+  priceEstimatedFoil?: number | null;
   priceLastUpdated: Date | null;
   priceSources: string[];
   /** Display labels aligned with `priceSources` (registry-derived, server-stamped). */
@@ -72,6 +88,8 @@ export type RefreshBarcodePricesInput = {
   externalIds?: Record<string, string | null | undefined>;
   /** Product-page URLs from metadata facts, keyed by provider id. */
   providerProductUrls?: readonly ProviderProductUrlRef[];
+  /** Print identity for barcode-less objects when known alongside a barcode. */
+  printKey?: string | null;
   /** Abort in-flight marketplace scrapes (worker job timeout). */
   signal?: AbortSignal;
 };
@@ -89,19 +107,29 @@ export type RefreshItemPricesInput = {
   itemId: string;
   metadataId?: string | null;
   providerProductUrls?: readonly ProviderProductUrlRef[];
+  /** Print identity for barcode-less TCG items. */
+  printKey?: string | null;
   /** Abort in-flight marketplace scrapes (worker job timeout). */
   signal?: AbortSignal;
 };
 
 export type ShelfItemPriceFields = {
   priceNew: number | null;
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
+  /** FX / catalog ~ fallback when native EUR buckets are empty. */
+  priceEstimated?: number | null;
+  /** FX ~ for foil when no native EUR foil (TCG). */
+  priceEstimatedFoil?: number | null;
   priceLastUpdated: Date | null;
 };
 
 export type CacheSummaryFields = {
   priceNew: number | null;
+  /** Foil price (TCG). Optional like the sibling types above: most shelf types
+   *  never carry one, but the pipeline reads it and the cache stores it. */
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
   priceLastUpdated: Date | null;

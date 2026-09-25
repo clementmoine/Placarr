@@ -1,0 +1,21 @@
+{
+  "source": "martinasfumetti.it product 159103",
+  "observed": "2026-08-17",
+  "note": "Shop title is generic « rivalità eterna serie 6 ». The photo is the Italian S6 starter Il Fascino del Male (Sound Four / Orochimaru), 40 cards / 2 holo, réf. 93214 — not a booster. Search for naruto only hits the manga category besides this SKU. Do not invent the second S6 starter.",
+  "ingestCatalog": false,
+  "products": [
+    {
+      "slug": "starter-il-fascino-del-male",
+      "setCode": "s6",
+      "kind": "deck",
+      "lang": "IT",
+      "title": "Naruto Card Game — Il Fascino del Male (Rivalità Eterna, serie 6)",
+      "printedRef": "93214",
+      "page": "https://martinasfumetti.it/Libri-vari/159103-Naruto-Card-Game-rivalit---eterna-serie-6-NUOVO-ed--Bandai-Gd09.html",
+      "url": "https://martinasfumetti.it/141556-product_main_2x/Naruto-Card-Game-rivalit---eterna-serie-6-NUOVO-ed--Bandai-Gd09.jpg",
+      "staging": "staging/martina/starter-il-fascino-del-male.jpg",
+      "ingest": true,
+      "pixels": { "width": 1440, "height": 1440 }
+    }
+  ]
+}

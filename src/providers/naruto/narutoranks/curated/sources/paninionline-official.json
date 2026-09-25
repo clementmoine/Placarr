@@ -1,0 +1,31 @@
+{
+  "source": "paninionline.com — fiches produit officielles, via Internet Archive",
+  "urls": [
+    "https://web.archive.org/web/20071116204809/http://www.paninionline.com/collectibles/institutional/ea/usa/scheda_prodotto.asp?idEdit=1446",
+    "https://web.archive.org/web/20090228081052/http://www.paninionline.com/collectibles/institutional/ea/usa/scheda_prodotto.asp?idEdit=1442"
+  ],
+  "observed": "2026-08-22",
+  "ingest": "none — attestation, pas de visuel exploitable",
+  "note": "La fiche 1446 publie la checklist officielle complète en texte : 72 cartes de base, FF1-6, SD1-6, NW1-9, BL1-3 et les quatre promos. La 1442 porte le descriptif marketing (« THE NINJA ARE HERE! ») et une couverture `001097_cover.jpg`.",
+  "whyItMatters": "Seconde attestation indépendante de la checklist, et par l'éditeur. Comparée mot à mot à `inkworks-checklist.json` : **72 sur 72 identiques**, zéro écart. La feuille Inkworks du Wayback n'est donc pas une transcription isolée.",
+  "learned": [
+    {
+      "what": "`BL` s'appelle « Group Seven » chez l'éditeur",
+      "why": "Ce qui explique le `GS` des sources européennes : GS = Group Seven, le même ensemble, avec la pastille « 7 » sur la carte. La correspondance GS↔BL, d'abord déduite en comparant les visuels, est ainsi attestée."
+    },
+    {
+      "what": "La carte 71 s'appelle « Map »",
+      "why": "Une carte à texte, donc probablement traduite selon l'édition — à ranger avec 1, 2, 3, 68 et 72 parmi les cartes spécifiques à une langue."
+    },
+    {
+      "what": "SD3 = Sasuke et SD4 = Kakashi",
+      "why": "Ce qui confirme que l'inversion vient bien du vendeur arcadegamecards, et non de notre checklist."
+    }
+  ],
+  "notIngested": [
+    {
+      "what": "La couverture `001097_cover.jpg`",
+      "reason": "Vignette de catalogue Panini, pas un packshot de SKU : les trois produits ont déjà leurs visuels fournis par le propriétaire."
+    }
+  ]
+}

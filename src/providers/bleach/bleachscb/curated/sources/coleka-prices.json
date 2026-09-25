@@ -1,0 +1,21 @@
+{
+  "source": "coleka.com deals ajax (bleach/scb)",
+  "sourceId": "coleka-deals",
+  "packId": "bleach/scb",
+  "fetchedAt": "2026-09-24T20:50:39.749Z",
+  "rubriques": [
+    {
+      "id": "37171",
+      "label": "Bleach Serie 1 FR",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 71
+    }
+  ],
+  "offerCount": 0,
+  "uniqueItems": 0,
+  "withQuotation": 0,
+  "withPrintKey": 0,
+  "cards": []
+}

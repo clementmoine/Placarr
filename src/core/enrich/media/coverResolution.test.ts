@@ -25,9 +25,7 @@ describe("coverUrlExpectsHighResolution", () => {
 
 describe("isCoverResolutionAcceptable", () => {
   it("accepts catalog thumbs below the former 280px floor", () => {
-    expect(isCoverResolutionAcceptable({ width: 180, height: 293 })).toBe(
-      true,
-    );
+    expect(isCoverResolutionAcceptable({ width: 180, height: 293 })).toBe(true);
   });
 
   it("accepts unknown metrics", () => {

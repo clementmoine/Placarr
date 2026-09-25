@@ -1,20 +1,21 @@
 /**
  * Local image-asset processing: metrics, perceptual hash, dedupe, flat filters.
  */
-import path from "path";
 import fs from "fs";
 import sharp from "sharp";
-import type { AttachmentType } from "@prisma/client";
-import {
-  type AttachmentImageMetrics,
-} from "@/core/enrich/media/attachmentDisplayScore";
+import type { AttachmentType } from "@/generated/prisma/browser";
+import { type AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/imageMetrics";
 import { isPlaceholderCoverImage } from "@/core/enrich/media/coverPlaceholder";
 import { isUnavailableCoverPlaceholderBuffer } from "@/core/enrich/media/coverPlaceholder.server";
-import { isCoverEligibleAttachmentType, urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
+import {
+  isCoverEligibleAttachmentType,
+  urlsReferToSameLocalizedImage,
+} from "@/core/enrich/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 import { measureCoverExposureFromBuffer } from "@/core/enrich/media/coverExposure.server";
 import { regionRank } from "@/core/locale/preference";
+import { localMediaFilePath } from "@/lib/media/localMediaPath";
 
 export function hammingDistance(a: string, b: string): number {
   let count = 0;
@@ -99,7 +100,7 @@ export async function perceptualHashForAsset(
   if (cached) return cached;
 
   const task = (async () => {
-    const filePath = resolvePublicAssetPath(url);
+    const filePath = localMediaFilePath(url);
     if (!filePath || !fs.existsSync(filePath)) return null;
     try {
       const { data, info } = await sharp(filePath)
@@ -167,17 +168,22 @@ export async function dedupeLocalizedAttachmentsByContent<
         )
       );
     },
-    (item) => item.source ?? "merged",
+    (item) => {
+      const source = item.source ?? "merged";
+      // Language / region roles must not collapse into one cover: Lorcana FR/EN/DE
+      // share nearly identical art (only the text plate changes) and the Affiche
+      // picker needs every printing. Foil masks are language-independent alpha
+      // and still dedupe per provider.
+      if (item.type === "foilMask") return source;
+      const role = item.role?.trim().toLowerCase() ?? "";
+      return role ? `${source}::${role}` : source;
+    },
   )
     .map((attachment) =>
       retargetUserHonorPinIfCatalogTwin(attachment, attachments, hashByUrl),
     )
     .filter((attachment, _index, gallery) =>
-      keepSourcelessCoverOnlyWithoutCatalogTwin(
-        attachment,
-        gallery,
-        hashByUrl,
-      ),
+      keepSourcelessCoverOnlyWithoutCatalogTwin(attachment, gallery, hashByUrl),
     );
 }
 
@@ -224,7 +230,11 @@ export async function retargetUserHonorPinsInAttachmentGallery<
     source?: string | null;
   },
 >(attachments: T[]): Promise<T[]> {
-  if (!attachments.some((attachment) => attachmentSourceKey(attachment.source) === "user")) {
+  if (
+    !attachments.some(
+      (attachment) => attachmentSourceKey(attachment.source) === "user",
+    )
+  ) {
     return attachments;
   }
   const hashByUrl = new Map<string, string>();
@@ -307,12 +317,8 @@ export function shouldReadImageMetricsForAttachment(
   );
 }
 
-function resolvePublicAssetPath(url: string): string | null {
-  if (!url || !url.startsWith("/")) return null;
-  const cleanPath = url.split("?")[0]?.replace(/^\/+/, "");
-  if (!cleanPath) return null;
-  const safePath = cleanPath.replace(/\.\.(\/|\\)/g, "");
-  return path.join(process.cwd(), "public", safePath);
+function resolveLocalMediaFilePath(url: string): string | null {
+  return localMediaFilePath(url);
 }
 
 export async function readAttachmentImageMetrics(
@@ -323,7 +329,7 @@ export async function readAttachmentImageMetrics(
   if (cached) return cached;
 
   const task = (async () => {
-    const filePath = resolvePublicAssetPath(url);
+    const filePath = resolveLocalMediaFilePath(url);
     if (!filePath || !fs.existsSync(filePath)) return null;
     try {
       const buffer = fs.readFileSync(filePath);
@@ -360,7 +366,7 @@ async function isFlatImageAsset(url: string): Promise<boolean> {
   if (cached) return cached;
 
   const task = (async () => {
-    const filePath = resolvePublicAssetPath(url);
+    const filePath = resolveLocalMediaFilePath(url);
     if (!filePath || !fs.existsSync(filePath)) return false;
     try {
       const buffer = fs.readFileSync(filePath);

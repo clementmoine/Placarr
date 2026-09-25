@@ -1,0 +1,436 @@
+{
+  "source": "cartes-naruto.com manga-news-65",
+  "observed": "2026-08-26",
+  "kind": "sealed-attestation",
+  "ingest": "none — cross-check S4 only; catalogue_s4 reste primaire",
+  "wayback": {
+    "timestamp": "20070913085039",
+    "url": "https://web.archive.org/web/20070913085039/http://www.cartes-naruto.com/manga-news-65-liste-des-cartes-des-decks-serie-4.html",
+    "staging": "staging/cartes-naruto-com/pages/manga-news-65-liste-des-cartes-des-decks-serie-4.html",
+    "published": "2007-06-09",
+    "author": "hug007"
+  },
+  "starters": {
+    "starter-invocation": {
+      "declaredCardCount": 40,
+      "lines": [
+        {
+          "qty": 1,
+          "nameFr": "Sakura Haruno",
+          "printKey": "naruto:ni-0189",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Kiba Inuzuka",
+          "printKey": "naruto:ni-0028",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Izumo Kamizuki",
+          "printKey": "naruto:ni-0049",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Kotetsu Hagane",
+          "printKey": "naruto:ni-0050",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Raido Namiashi",
+          "printKey": null,
+          "mapStatus": "unmapped"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Jiraya",
+          "printKey": "naruto:ni-0101",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Shino Aburame",
+          "printKey": "naruto:ni-0156",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Aoba Yamashiro",
+          "printKey": "naruto:ni-0157",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Pakkun",
+          "printKey": "naruto:ni-0165",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Naruto Uzumaki",
+          "printKey": "naruto:ni-0154",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Sasuke Uchiwa",
+          "printKey": "naruto:ni-0155",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Gama Kitchi",
+          "printKey": "naruto:ni-0175",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Gama Bunta",
+          "printKey": "naruto:ni-0176",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Crapaud",
+          "printKey": "naruto:ni-0198",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Naruto Uzumaki et Jiraya",
+          "printKey": "naruto:ni-0204",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "L'ermite des crapauds",
+          "printKey": "naruto:ta-0118",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Coussinets",
+          "printKey": "naruto:ta-0152",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Tel une tempête",
+          "printKey": "naruto:ta-0154",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Sinistre préssentiment",
+          "printKey": "naruto:ta-0155",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Une mission de type A",
+          "printKey": "naruto:ta-0156",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "La Naru tornade des 2000 poings",
+          "printKey": null,
+          "mapStatus": "unmapped"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Le lancer de clone",
+          "printKey": null,
+          "mapStatus": "unmapped"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Invocation",
+          "printKey": "naruto:te-0163",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "La lame meurtrière du crapaud",
+          "printKey": "naruto:te-0164",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Bombes Aqueuses",
+          "printKey": "naruto:te-0165",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Coup de boule",
+          "printKey": "naruto:te-0169",
+          "mapStatus": "ok"
+        }
+      ],
+      "crossCheck": {
+        "cardCopies": 40,
+        "mappedCopies": 35,
+        "unmapped": [
+          {
+            "qty": 1,
+            "nameFr": "Raido Namiashi",
+            "printKey": null,
+            "mapStatus": "unmapped"
+          },
+          {
+            "qty": 2,
+            "nameFr": "La Naru tornade des 2000 poings",
+            "printKey": null,
+            "mapStatus": "unmapped"
+          },
+          {
+            "qty": 2,
+            "nameFr": "Le lancer de clone",
+            "printKey": null,
+            "mapStatus": "unmapped"
+          }
+        ],
+        "ledgerUnique": 32,
+        "newsUnique": 23,
+        "setEqual": false,
+        "onlyLedger": [
+          "naruto:ni-0001",
+          "naruto:ni-0002",
+          "naruto:ni-0003",
+          "naruto:ni-0019",
+          "naruto:ni-0020",
+          "naruto:ni-0029",
+          "naruto:ni-0091",
+          "naruto:ni-0092",
+          "naruto:ni-0099",
+          "naruto:ni-0102",
+          "naruto:ni-0128",
+          "naruto:te-0005",
+          "naruto:te-0012",
+          "naruto:te-0109",
+          "naruto:te-0109-promo",
+          "naruto:te-0145"
+        ],
+        "onlyNews": [
+          "naruto:ni-0154",
+          "naruto:ni-0155",
+          "naruto:ni-0156",
+          "naruto:ni-0176",
+          "naruto:ni-0189",
+          "naruto:ni-0198",
+          "naruto:te-0163"
+        ]
+      }
+    },
+    "starter-esprit-du-sable": {
+      "declaredCardCount": 40,
+      "labelTypo": "news écrit « esprit du vent »",
+      "lines": [
+        {
+          "qty": 1,
+          "nameFr": "L'esprit du sable",
+          "printKey": "naruto:ni-0177",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Gaara",
+          "printKey": "naruto:ni-0145",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Mizuki",
+          "printKey": "naruto:ni-0009",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Ebisu",
+          "printKey": "naruto:ni-0010",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Yuhi Kurenai",
+          "printKey": "naruto:ni-0195",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Oboro",
+          "printKey": "naruto:ni-0079",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Kagari",
+          "printKey": "naruto:ni-0080",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Mubi",
+          "printKey": "naruto:ni-0081",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Temari",
+          "printKey": "naruto:ni-0060",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Kazekage",
+          "printKey": "naruto:ni-0169",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Kankuro",
+          "printKey": "naruto:ni-0170",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Karasu",
+          "printKey": "naruto:ni-0171",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Gaara",
+          "printKey": "naruto:ni-0145",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Gaara (forme possédée)",
+          "printKey": "naruto:ni-0179",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Yashamaru",
+          "printKey": "naruto:ni-0180",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Cocon de sable",
+          "printKey": "naruto:te-0138",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "Technique du marionnettiste",
+          "printKey": "naruto:te-0155",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Les shurikens de sable",
+          "printKey": null,
+          "mapStatus": "unmapped"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Le sommeil du tanuki",
+          "printKey": "naruto:te-0167",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 1,
+          "nameFr": "\"Renkûdan! Distortion de l'air!\"",
+          "printKey": null,
+          "mapStatus": "unmapped"
+        },
+        {
+          "qty": 2,
+          "nameFr": "La déferlante de sable",
+          "printKey": "naruto:te-0188",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "La destruction de Konoha",
+          "printKey": "naruto:ta-0160",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Une technique oubliée",
+          "printKey": "naruto:ta-0161",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Son nom est Gaara",
+          "printKey": "naruto:ta-0162",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Retardé",
+          "printKey": "naruto:ta-0164",
+          "mapStatus": "ok"
+        },
+        {
+          "qty": 2,
+          "nameFr": "Amour",
+          "printKey": "naruto:ta-0165",
+          "mapStatus": "ok"
+        }
+      ],
+      "crossCheck": {
+        "cardCopies": 40,
+        "mappedCopies": 37,
+        "unmapped": [
+          {
+            "qty": 2,
+            "nameFr": "Les shurikens de sable",
+            "printKey": null,
+            "mapStatus": "unmapped"
+          },
+          {
+            "qty": 1,
+            "nameFr": "\"Renkûdan! Distortion de l'air!\"",
+            "printKey": null,
+            "mapStatus": "unmapped"
+          }
+        ],
+        "ledgerUnique": 29,
+        "newsUnique": 23,
+        "setEqual": false,
+        "onlyLedger": [
+          "naruto:ni-0038",
+          "naruto:ni-0054",
+          "naruto:ni-0058",
+          "naruto:ni-0059",
+          "naruto:ni-0112",
+          "naruto:ni-0113",
+          "naruto:ni-0117",
+          "naruto:ni-0117-promo",
+          "naruto:ni-0147",
+          "naruto:te-0055",
+          "naruto:te-0166",
+          "naruto:te-0168"
+        ],
+        "onlyNews": [
+          "naruto:ni-0169",
+          "naruto:ni-0170",
+          "naruto:ni-0171",
+          "naruto:ni-0179",
+          "naruto:ni-0195",
+          "naruto:te-0155"
+        ]
+      }
+    }
+  },
+  "note": "Republication communautaire avec packshots carddass.fr. 40 copies × 2 starters. Cross-check vs catalogue_s4 : cohérent sur les noms S4 (5 typos PDF non listés : Raîdo, Naru tornade…). Écarts printKey = communes cross-set / promos dans le parse catalogue, pas contradiction news."
+}

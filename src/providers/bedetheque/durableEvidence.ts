@@ -56,10 +56,7 @@ export async function readBedethequeSeriesEvidence(
     if (!isBedethequeSeriesHits(row.yieldJson)) return null;
     return row.yieldJson;
   } catch (error) {
-    console.warn(
-      "[Bedetheque] Failed to read durable series evidence:",
-      error,
-    );
+    console.warn("[Bedetheque] Failed to read durable series evidence:", error);
     return null;
   }
 }

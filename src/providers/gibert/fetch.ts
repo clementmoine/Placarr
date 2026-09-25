@@ -1,9 +1,5 @@
-import {
-  normalizeProductBarcode,
-} from "@/core/identify/normalize";
-import {
-  retailerProductBarcodeConfirmed,
-} from "@/core/commerce/retailer/productUrl";
+import { normalizeProductBarcode } from "@/core/identify/normalize";
+import { retailerProductBarcodeConfirmed } from "@/core/commerce/retailer/productUrl";
 import { acceptRetailerCatalogCandidate } from "@/core/commerce/retailer/metadataLookup";
 import { isAbortError, throwIfAborted } from "@/lib/http/abort";
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
@@ -79,10 +75,7 @@ function parseEuroCents(value?: string | number | null): number | undefined {
 }
 
 function attributeValue(html: string, label: string): string | undefined {
-  const re = new RegExp(
-    `${label}\\s*</[^>]+>\\s*<[^>]+>([^<]+)`,
-    "i",
-  );
+  const re = new RegExp(`${label}\\s*</[^>]+>\\s*<[^>]+>([^<]+)`, "i");
   return cleanHtmlText(html.match(re)?.[1]);
 }
 
@@ -127,9 +120,7 @@ export function parseGibertProductPage(
   const blocks = parseJsonLdBlocks(html);
   const product =
     blocks.find((block) =>
-      schemaTypes(block["@type"]).some((type) =>
-        /product|book/i.test(type),
-      ),
+      schemaTypes(block["@type"]).some((type) => /product|book/i.test(type)),
     ) || null;
 
   const title =
@@ -142,7 +133,9 @@ export function parseGibertProductPage(
   if (!title) return null;
 
   const barcode =
-    normalizeProductBarcode(firstSchemaStringValue(product?.gtin13 || product?.isbn)) ||
+    normalizeProductBarcode(
+      firstSchemaStringValue(product?.gtin13 || product?.isbn),
+    ) ||
     normalizeProductBarcode(attributeValue(html, "EAN") || "") ||
     normalizeProductBarcode(attributeValue(html, "ISBN") || "") ||
     normalizeProductBarcode(productUrl.match(/(\d{13})/)?.[1] || "") ||
@@ -316,8 +309,6 @@ export async function collectGibertMappingRawKeys(
   const trimmed = String(query || "").trim();
   if (!trimmed) return [];
   const hits = await searchGibertHits(trimmed);
-  const product = hits[0]
-    ? await fetchGibertProduct(hits[0].productUrl)
-    : null;
+  const product = hits[0] ? await fetchGibertProduct(hits[0].productUrl) : null;
   return collectObjectMappingSignals({ hits: hits.slice(0, 3), product });
 }

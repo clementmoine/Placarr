@@ -1,6 +1,9 @@
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
+// Foil meta fs reader + shader stem scan (Node tests / scripts).
+import "@/lib/foilMetaLoad.server";
+
 // Charge .env dans process.env (Vitest ne le fait pas tout seul).
 // Indispensable en mode RECORD pour que les providers utilisent les clés d'API,
 // et pour que la redaction des secrets (httpReplay) connaisse les valeurs à

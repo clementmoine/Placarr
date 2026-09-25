@@ -1,4 +1,4 @@
-import { Type } from "@prisma/client";
+import { Type } from "@/generated/prisma/browser";
 
 export type ShelfTypeReadiness = "ready" | "comingSoon";
 
@@ -9,8 +9,8 @@ const SHELF_TYPE_READINESS: Record<Type, ShelfTypeReadiness> = {
   books: "ready",
   boardgames: "ready",
   hardware: "ready",
-  tcg: "comingSoon",
-  toys: "comingSoon",
+  tcg: "ready",
+  toys: "ready",
 };
 
 export function shelfTypeReadiness(type: string): ShelfTypeReadiness {

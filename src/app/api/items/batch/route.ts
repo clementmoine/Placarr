@@ -1,4 +1,4 @@
-import { Condition, type Prisma, Type } from "@prisma/client";
+import { Condition, type Prisma, Type } from "@/generated/prisma/browser";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireGuestOrHigher } from "@/lib/auth";
@@ -11,6 +11,13 @@ import {
 } from "@/core/collect/jobs/scheduleMetadataRefresh";
 import { stampItemMetadataRefresh } from "@/core/collect/jobs/metadataRefreshSession";
 import { ITEM_CONDITIONS } from "@/core/collect/condition";
+import {
+  resolveUniquePrintCandidate,
+  supportsPrintSearch,
+  type PrintSearchOptions,
+} from "@/core/identify/printSearch";
+import { parsePrintKey } from "@/core/identify/printKey";
+import { shelfPrintSearchScope } from "@/lib/collect/shelfPrintSearchScope";
 
 const VALID_CONDITIONS = new Set<string>(ITEM_CONDITIONS);
 const CREATE_CHUNK_SIZE = 100;
@@ -156,7 +163,12 @@ function scheduleMetadataRefreshByShelf(items: BatchItemRow[]): void {
 }
 
 async function createItemsInChunks(
-  names: string[],
+  rows: Array<{
+    name: string;
+    printKey: string | null;
+    language?: string | null;
+    imageUrl?: string | null;
+  }>,
   data: {
     shelfId: string;
     userId: string;
@@ -166,19 +178,32 @@ async function createItemsInChunks(
   const created: CreatedBatchItem[] = [];
   const reservedSlugs = new Set<string>();
 
-  for (let offset = 0; offset < names.length; offset += CREATE_CHUNK_SIZE) {
-    const chunk = names.slice(offset, offset + CREATE_CHUNK_SIZE);
-    const rows: Array<{ name: string; slug: string }> = [];
-    for (const name of chunk) {
-      const slug = await allocateUniqueItemSlug(data.shelfId, name, {
+  for (let offset = 0; offset < rows.length; offset += CREATE_CHUNK_SIZE) {
+    const chunk = rows.slice(offset, offset + CREATE_CHUNK_SIZE);
+    const planned: Array<{
+      name: string;
+      slug: string;
+      printKey: string | null;
+      language: string | null;
+      imageUrl: string | null;
+    }> = [];
+    for (const row of chunk) {
+      const slug = await allocateUniqueItemSlug(data.shelfId, row.name, {
         reserved: reservedSlugs,
+        print: { printKey: row.printKey },
       });
       reservedSlugs.add(slug);
-      rows.push({ name, slug });
+      planned.push({
+        name: row.name,
+        slug,
+        printKey: row.printKey,
+        language: row.language?.trim().toLowerCase() || null,
+        imageUrl: row.imageUrl?.trim() || null,
+      });
     }
 
     const batch = await prisma.$transaction(
-      rows.map((row) =>
+      planned.map((row) =>
         prisma.item.create({
           data: {
             shelfId: data.shelfId,
@@ -186,6 +211,9 @@ async function createItemsInChunks(
             slug: row.slug,
             condition: data.condition,
             userId: data.userId,
+            printKey: row.printKey,
+            language: row.language,
+            imageUrl: row.imageUrl,
           },
           select: itemCreateSelect,
         }),
@@ -195,6 +223,86 @@ async function createItemsInChunks(
   }
 
   return created;
+}
+
+/**
+ * Prefer the shelf catalogue (picker defaults / owned sets), then fall back to
+ * a global unique hit — so `3` on Ultra Challenge links UC, while `stitch`
+ * can still resolve outside that catalogue when unambiguous.
+ */
+async function resolveBatchPrintHit(
+  query: string,
+  shelfType: Type,
+  scope: PrintSearchOptions,
+) {
+  if (scope.providerId) {
+    const scoped = await resolveUniquePrintCandidate(query, shelfType, scope);
+    if (scoped) return scoped;
+  }
+  return resolveUniquePrintCandidate(query, shelfType);
+}
+
+/**
+ * On print shelves, pasted codes (`TFC#001`) resolve to the catalog title +
+ * printKey before insert. Unresolved lines stay as typed (honest empty later).
+ */
+async function resolveBatchCreateRows(
+  names: string[],
+  shelfType: Type,
+  scope: PrintSearchOptions = {},
+): Promise<
+  Array<{
+    name: string;
+    printKey: string | null;
+    lookupQuery: string;
+    language: string | null;
+    imageUrl: string | null;
+  }>
+> {
+  if (!supportsPrintSearch(shelfType)) {
+    return names.map((name) => ({
+      name,
+      printKey: null,
+      lookupQuery: name,
+      language: null,
+      imageUrl: null,
+    }));
+  }
+
+  const rows: Array<{
+    name: string;
+    printKey: string | null;
+    lookupQuery: string;
+    language: string | null;
+    imageUrl: string | null;
+  }> = [];
+  for (const query of names) {
+    const hit = await resolveBatchPrintHit(query, shelfType, scope);
+    const printKey =
+      hit?.printKey && parsePrintKey(hit.printKey)
+        ? hit.printKey.trim().toLowerCase()
+        : null;
+    if (hit && printKey) {
+      const language =
+        (hit.language ?? scope.language)?.trim().toLowerCase() || null;
+      rows.push({
+        name: hit.title.trim() || query,
+        printKey,
+        lookupQuery: hit.title.trim() || query,
+        language,
+        imageUrl: hit.imageUrl?.trim() || hit.thumbnailUrl?.trim() || null,
+      });
+    } else {
+      rows.push({
+        name: query,
+        printKey: null,
+        lookupQuery: query,
+        language: null,
+        imageUrl: null,
+      });
+    }
+  }
+  return rows;
 }
 
 export async function POST(req: NextRequest) {
@@ -248,16 +356,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const createdItems = await createItemsInChunks(normalizedNames, {
+    const ownedOnShelf = supportsPrintSearch(shelf.type)
+      ? await prisma.item.findMany({
+          where: { shelfId: resolvedShelfId, printKey: { not: null } },
+          select: { printKey: true, language: true },
+          take: 200,
+        })
+      : [];
+    const printScope = supportsPrintSearch(shelf.type)
+      ? await shelfPrintSearchScope({
+          type: shelf.type,
+          shelfName: shelf.name,
+          owned: ownedOnShelf,
+        })
+      : {};
+    const createRows = await resolveBatchCreateRows(
+      normalizedNames,
+      shelf.type,
+      printScope,
+    );
+    const createdItems = await createItemsInChunks(createRows, {
       shelfId: resolvedShelfId,
       userId: auth.user.id,
       condition,
     });
 
     scheduleBatchItemMetadataRefresh(
-      createdItems.map((item) => ({
+      createdItems.map((item, index) => ({
         itemId: item.id,
-        lookupQuery: item.name,
+        lookupQuery: createRows[index]?.lookupQuery ?? item.name,
       })),
       shelf,
     );

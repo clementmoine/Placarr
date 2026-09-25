@@ -1,0 +1,7085 @@
+{
+  "source": "nao-yoshi.seesaa.net",
+  "sourceId": "nao-yoshi-seesaa",
+  "origin": "https://nao-yoshi.seesaa.net",
+  "harvestedAt": "2026-09-24T10:22:56.967Z",
+  "articles": [
+    {
+      "id": "387082531",
+      "cabinet": "dn",
+      "label": "Card Battle DN-001–107 + DNP",
+      "url": "https://nao-yoshi.seesaa.net/article/387082531.html",
+      "rows": 113
+    },
+    {
+      "id": "387082805",
+      "cabinet": "dn",
+      "label": "Card Battle DN-108–250",
+      "url": "https://nao-yoshi.seesaa.net/article/387082805.html",
+      "rows": 144
+    },
+    {
+      "id": "387083049",
+      "cabinet": "nm",
+      "label": "Mission NM + DMP",
+      "url": "https://nao-yoshi.seesaa.net/article/387083049.html",
+      "rows": 235
+    },
+    {
+      "id": "387083386",
+      "cabinet": "nf",
+      "label": "Formation NF + NFP",
+      "url": "https://nao-yoshi.seesaa.net/article/387083386.html",
+      "rows": 254
+    },
+    {
+      "id": "387083772",
+      "cabinet": "nx",
+      "label": "Cross NX + NXP / NX-MAC",
+      "url": "https://nao-yoshi.seesaa.net/article/387083772.html",
+      "rows": 257
+    }
+  ],
+  "rows": [
+    {
+      "printed": "DMP-001",
+      "nameJa": "うずまきナルト(白)",
+      "rarity": null,
+      "barcodeData": "NR29M33T0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-002",
+      "nameJa": "春野サクラ(白)",
+      "rarity": null,
+      "barcodeData": "NR27V23Y5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-003",
+      "nameJa": "うちはイタチ",
+      "rarity": null,
+      "barcodeData": "NR25K23V1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-004",
+      "nameJa": "君麻呂",
+      "rarity": null,
+      "barcodeData": "NR20P98Y2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-006",
+      "nameJa": "うずまきナルト疾風伝(白)",
+      "rarity": null,
+      "barcodeData": "NR27S88I8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-007",
+      "nameJa": "砂瀑の我愛羅疾風伝(白)",
+      "rarity": null,
+      "barcodeData": "NR24O14Q0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-008",
+      "nameJa": "春野サクラ疾風伝(白)",
+      "rarity": null,
+      "barcodeData": "NR26F27L0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-009",
+      "nameJa": "大蛇丸(白)",
+      "rarity": null,
+      "barcodeData": "NR6JL9I59",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-010",
+      "nameJa": "奈良シカマル疾風伝(白)",
+      "rarity": null,
+      "barcodeData": "NR24J42W4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-011",
+      "nameJa": "サソリ疾風伝(白)",
+      "rarity": null,
+      "barcodeData": "NR24E77F8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-012",
+      "nameJa": "?????（四代目）",
+      "rarity": null,
+      "barcodeData": "NR27J93D6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-013",
+      "nameJa": "?????（四代目）",
+      "rarity": null,
+      "barcodeData": "NR26Z75X8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-014",
+      "nameJa": "うちはイタチ(白)",
+      "rarity": null,
+      "barcodeData": "NR3XH4J94",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DMP-016",
+      "nameJa": "うずまきナルト（疾風伝）",
+      "rarity": null,
+      "barcodeData": "NR28R35B1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "DN-001T",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR5AH0016",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-002T",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR0AS0041",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-003T",
+      "nameJa": "うずまきナルト",
+      "rarity": "激レア",
+      "barcodeData": "NR6AS0149",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-004T",
+      "nameJa": "うずまきナルト",
+      "rarity": "爆レア",
+      "barcodeData": "NR7AY0191",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-005T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR2BD0255",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-006T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR4BK0296",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-007T",
+      "nameJa": "うちはサスケ",
+      "rarity": "激レア",
+      "barcodeData": "NR5BP0315",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-008T",
+      "nameJa": "うちはサスケ",
+      "rarity": "爆レア",
+      "barcodeData": "NR4BR0398",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-009T",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR8CO0491",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-010T",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR7CE0512",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-011T",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": "NR1CW0576",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-012T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "N",
+      "barcodeData": "NR5DD0684",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-013T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "R",
+      "barcodeData": "NR6DQ0719",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-014T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "激レア",
+      "barcodeData": "NR4DI0762",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-015T",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR9FN0829",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-016T",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR0FV0861",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-017T",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NR6FE0907",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-018T",
+      "nameJa": "日向ネジ",
+      "rarity": "N",
+      "barcodeData": "NR1GF0946",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-019T",
+      "nameJa": "日向ネジ",
+      "rarity": "R",
+      "barcodeData": "NR6GY1004",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-020T",
+      "nameJa": "春野サクラ",
+      "rarity": "N",
+      "barcodeData": "NR6HE1090",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-021T",
+      "nameJa": "春野サクラ",
+      "rarity": "R",
+      "barcodeData": "NR6HH1155",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-022T",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR3IM1218",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-023T",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR8IS1259",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-024T",
+      "nameJa": "はたけカカシ",
+      "rarity": "激レア",
+      "barcodeData": "NR7IQ1297",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-025T",
+      "nameJa": "大蛇丸",
+      "rarity": "N",
+      "barcodeData": "NR6JI1374",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-026T",
+      "nameJa": "大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NR4JH1395",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-027T",
+      "nameJa": "白",
+      "rarity": "N",
+      "barcodeData": "NR7KY1455",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-028T",
+      "nameJa": "白",
+      "rarity": "R",
+      "barcodeData": "NR8KR1494",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-029T",
+      "nameJa": "桃地再不斬",
+      "rarity": "N",
+      "barcodeData": "NR6LJ1575",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-030T",
+      "nameJa": "桃地再不斬",
+      "rarity": "R",
+      "barcodeData": "NR6LR1618",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-031T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR4MG1692",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-032T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR2MJ1738",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-033T",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NR9NQ1837",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-034T",
+      "nameJa": "秋道チョウジ",
+      "rarity": "N",
+      "barcodeData": "NR7OC1895",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-035T",
+      "nameJa": "山中いの",
+      "rarity": "N",
+      "barcodeData": "NR8PG1929",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-036T",
+      "nameJa": "犬塚キバ",
+      "rarity": "N",
+      "barcodeData": "NR7QK2019",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-037T",
+      "nameJa": "油女シノ",
+      "rarity": "N",
+      "barcodeData": "NR6RP2042",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-038T",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NR4SG2101",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-039T",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR2TW2186",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-040T",
+      "nameJa": "マイト・ガイ",
+      "rarity": "N",
+      "barcodeData": "NR7UX2262",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-041T",
+      "nameJa": "マイト・ガイ",
+      "rarity": "N",
+      "barcodeData": "NR3UC2306",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-042T",
+      "nameJa": "薬師カブト",
+      "rarity": "N",
+      "barcodeData": "NR8CD2893",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-043T",
+      "nameJa": "自来也",
+      "rarity": "激レア",
+      "barcodeData": "NR6VH2381",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-044T",
+      "nameJa": "桃地再不斬",
+      "rarity": "激レア",
+      "barcodeData": "NR9LV1677",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-045T",
+      "nameJa": "カンクロウ",
+      "rarity": "R",
+      "barcodeData": "NR4SV2144",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-046T",
+      "nameJa": "テマリ",
+      "rarity": "R",
+      "barcodeData": "NR4TA2223",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-047T",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NR5FT7I82",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-048T",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NR0IF9E27",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-049T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR8MK3V26",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-050T",
+      "nameJa": "自来也",
+      "rarity": "N",
+      "barcodeData": "NR7VG6G54",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-051T",
+      "nameJa": "九尾のナルト",
+      "rarity": "激レア",
+      "barcodeData": "NR1AZ4F84",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-052T",
+      "nameJa": "はたけカカシ",
+      "rarity": "激レア",
+      "barcodeData": "NR1IY3S23",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-053T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "激レア",
+      "barcodeData": "NR4DP5H28",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-054T",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR4AY7U55",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-055T",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR5BN1R56",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-056T",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": "NR4CR7C34",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-057T",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NR8FS5M38",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-058T",
+      "nameJa": "日向ネジ",
+      "rarity": "R",
+      "barcodeData": "NR6GV0960",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-059T",
+      "nameJa": "桃地再不斬",
+      "rarity": "R",
+      "barcodeData": "NR4LS8H49",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-060T",
+      "nameJa": "テマリ",
+      "rarity": "R",
+      "barcodeData": "NR6TS2S89",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-061T",
+      "nameJa": "大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NR5JO8U88",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-063T",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR4IE5W38",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-064T",
+      "nameJa": "白",
+      "rarity": "N",
+      "barcodeData": "NR4KC2C30",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-065T",
+      "nameJa": "自来也",
+      "rarity": "N",
+      "barcodeData": "NR5VV6V25",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-066T",
+      "nameJa": "大蛇丸",
+      "rarity": "爆レア",
+      "barcodeData": "NR4JU4T44",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-067T",
+      "nameJa": "うちはイタチ",
+      "rarity": "爆レア",
+      "barcodeData": "NR6XY5K55",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-068T",
+      "nameJa": "うちはサスケ",
+      "rarity": "激レア",
+      "barcodeData": "NR3BQ7X57",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-069T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "激レア",
+      "barcodeData": "NR2DO2F54",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-070T",
+      "nameJa": "白",
+      "rarity": "激レア",
+      "barcodeData": "NR5KE3F56",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-071T",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR9AE4G39",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-072T",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR0BK2Q22",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-073T",
+      "nameJa": "春野サクラ",
+      "rarity": "R",
+      "barcodeData": "NR5HT5P86",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-074T",
+      "nameJa": "白",
+      "rarity": "R",
+      "barcodeData": "NR0KN3D24",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-075T",
+      "nameJa": "桃地再不斬",
+      "rarity": "R",
+      "barcodeData": "NR5LC2Y15",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-076T",
+      "nameJa": "カンクロウ",
+      "rarity": "R",
+      "barcodeData": "NR5SR8V78",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-077T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NR5YA6Z41",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-078T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NR8YE4G35",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-079T",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR4CK5M88",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-080T",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR9TW5D25",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-081T",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NR8XT8H88",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-082T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NR9YI2R69",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-083T",
+      "nameJa": "うずまきナルト",
+      "rarity": "激レア",
+      "barcodeData": "NR5AT6K20",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-084T",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR7AR8D58",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-085T",
+      "nameJa": "碧い魔獣",
+      "rarity": "R",
+      "barcodeData": "NR5GJ8H23",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-086T",
+      "nameJa": "碧い魔獣",
+      "rarity": "N",
+      "barcodeData": "NR8GB7K32",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-087T",
+      "nameJa": "奈良シカマル",
+      "rarity": "激レア",
+      "barcodeData": "NR7FX4R05",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-088T",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR1FG4I43",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-089T",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR1BH6A51",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-090T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR2BK3Z89",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-091T",
+      "nameJa": "春野サクラ",
+      "rarity": "N",
+      "barcodeData": "NR9HR6O53",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-092T",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR6CP6Y00",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-093T",
+      "nameJa": "日向ネジ",
+      "rarity": "R",
+      "barcodeData": "NR9GQ6F49",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-094T",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NR0NS1W15",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-095T",
+      "nameJa": "山中いの",
+      "rarity": "R",
+      "barcodeData": "NR4PY1H82",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-096T",
+      "nameJa": "秋道チョウジ",
+      "rarity": "N",
+      "barcodeData": "NR4OF5F77",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-097T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "R",
+      "barcodeData": "NR1MO5U53",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-098T",
+      "nameJa": "油女シノ",
+      "rarity": "N",
+      "barcodeData": "NR6RH5E73",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-099T",
+      "nameJa": "マイト・ガイ",
+      "rarity": "R",
+      "barcodeData": "NR1UE2R54",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-100T",
+      "nameJa": "うちはイタチ",
+      "rarity": "爆レア",
+      "barcodeData": "NR4XG7N85",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-101T",
+      "nameJa": "うちはイタチ",
+      "rarity": "R",
+      "barcodeData": "NR5XN3Q09",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-102T",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NR1XV8W18",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-103T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NR9YL5B54",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-104T",
+      "nameJa": "桃地再不斬",
+      "rarity": "R",
+      "barcodeData": "NR8LJ3A91",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-105T",
+      "nameJa": "白",
+      "rarity": "N",
+      "barcodeData": "NR5KG5G56",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-106T",
+      "nameJa": "自来也",
+      "rarity": "N",
+      "barcodeData": "NR2VB9J38",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-107T",
+      "nameJa": "九尾のナルト",
+      "rarity": "N",
+      "barcodeData": "NR6AO3F28",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DN-108T",
+      "nameJa": "うずまきナルト",
+      "rarity": "激レア",
+      "barcodeData": "NR9AB4Y86",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-109T",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR3AA3W54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-110T",
+      "nameJa": "自来也",
+      "rarity": "爆レア",
+      "barcodeData": "NR4VY8K73",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-111T",
+      "nameJa": "三代目火影",
+      "rarity": "爆レア",
+      "barcodeData": "NR4WX4B24",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-112T",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NR6WT6W49",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-113T",
+      "nameJa": "うちはサスケ",
+      "rarity": "激レア",
+      "barcodeData": "NR3BT5S04",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-114T",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR3BV3L52",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-115T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR1BE7H14",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-116T",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NR7IA4X25",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-117T",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR9IX2S66",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-118T",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR2FF5H10",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-119T",
+      "nameJa": "シズネ",
+      "rarity": "R",
+      "barcodeData": "NR5BQ2864",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-120T",
+      "nameJa": "シズネ",
+      "rarity": "N",
+      "barcodeData": "NR8BE8C65",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-121T",
+      "nameJa": "ロック・リー",
+      "rarity": "激レア",
+      "barcodeData": "NR1CV2Z60",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-122T",
+      "nameJa": "マイト・ガイ",
+      "rarity": "R",
+      "barcodeData": "NR2UR1F65",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-123T",
+      "nameJa": "犬塚キバ",
+      "rarity": "R",
+      "barcodeData": "NR5QN1N47",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-124T",
+      "nameJa": "犬塚キバ",
+      "rarity": "N",
+      "barcodeData": "NR8QL6O16",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-125T",
+      "nameJa": "テンテン",
+      "rarity": "R",
+      "barcodeData": "NR3NA2P58",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-126T",
+      "nameJa": "日向ネジ",
+      "rarity": "N",
+      "barcodeData": "NR3GG8F53",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-127T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR9MU5F54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-128T",
+      "nameJa": "秋道チョウジ",
+      "rarity": "N",
+      "barcodeData": "NR4OX3D21",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-129T",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR2TX4T45",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-130T",
+      "nameJa": "桃地再不斬",
+      "rarity": "N",
+      "barcodeData": "NR1LD1T26",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-131T",
+      "nameJa": "白",
+      "rarity": "R",
+      "barcodeData": "NR6KF2R21",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-132T",
+      "nameJa": "薬師カブト",
+      "rarity": "N",
+      "barcodeData": "NR9CX6U05",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-133T",
+      "nameJa": "うちはイタチ",
+      "rarity": "激レア",
+      "barcodeData": "NR7XJ3U12",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-134T",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NR6XJ5Y56",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-135T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NR7YZ2Y20",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-136T",
+      "nameJa": "九尾のナルト",
+      "rarity": "R",
+      "barcodeData": "NR7AL5D16",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-137T",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR4BH0P24",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-138T",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NR2FC6E14",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-139T",
+      "nameJa": "うちはイタチ",
+      "rarity": "R",
+      "barcodeData": "NR8XM2I63",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-140T",
+      "nameJa": "暗部のカカシ",
+      "rarity": "R",
+      "barcodeData": "NR1DF5F39",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-141T",
+      "nameJa": "うずまきナルト",
+      "rarity": "爆レア",
+      "barcodeData": "NR4AM5B55",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-142T",
+      "nameJa": "うずまきナルト",
+      "rarity": null,
+      "barcodeData": "NR8AF5R87",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-143T",
+      "nameJa": "碧い魔獣",
+      "rarity": null,
+      "barcodeData": "NR9GN5Y50",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-144T",
+      "nameJa": "うちはサスケ",
+      "rarity": "激レア",
+      "barcodeData": "NR2BL1N33",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-145T",
+      "nameJa": "うちはサスケ",
+      "rarity": null,
+      "barcodeData": "NR6BK9W57",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-146T",
+      "nameJa": "三代目火影",
+      "rarity": "R",
+      "barcodeData": "NR7WS1Y55",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-147T",
+      "nameJa": "暗部のカカシ",
+      "rarity": "R",
+      "barcodeData": "NR3DT1D25",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-148T",
+      "nameJa": "暗部のカカシ",
+      "rarity": null,
+      "barcodeData": "NR6DR3A57",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-149T",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NR7IU7F54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-150T",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": "NR3VN4Y52",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-151T",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NR0ZV0H15",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-152T",
+      "nameJa": "綱手",
+      "rarity": null,
+      "barcodeData": "NR1ZR5U57",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-153T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "R",
+      "barcodeData": "NR9MN8S55",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-154T",
+      "nameJa": "宗家ヒナタ",
+      "rarity": "R",
+      "barcodeData": "NR8HI1B16",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-155T",
+      "nameJa": "宗家のヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR9MN8S55",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-156T",
+      "nameJa": "日向ネジ",
+      "rarity": "激レア",
+      "barcodeData": "NR6GS7S72",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-157T",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": "NR8CR8Y24",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-158T",
+      "nameJa": "マイト・ガイ",
+      "rarity": "R",
+      "barcodeData": "NR6UV1C19",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-159T",
+      "nameJa": "マイト・ガイ",
+      "rarity": null,
+      "barcodeData": "NR4UD8H32",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-160T",
+      "nameJa": "秋道チョウジ",
+      "rarity": "R",
+      "barcodeData": "NR8OD6S44",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-161T",
+      "nameJa": "奈良シカマル",
+      "rarity": null,
+      "barcodeData": "NR7FD0G54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-162T",
+      "nameJa": "春野サクラ",
+      "rarity": "R",
+      "barcodeData": "NR3HU3B10",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-163T",
+      "nameJa": "山中いの",
+      "rarity": null,
+      "barcodeData": "NR1PJ3U95",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-164T",
+      "nameJa": "テンテン",
+      "rarity": "R",
+      "barcodeData": "NR5NW6O39",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-165T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": null,
+      "barcodeData": "NR6DE5E17",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-166T",
+      "nameJa": "カンクロウ",
+      "rarity": null,
+      "barcodeData": "NR8SD9B68",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-167T",
+      "nameJa": "テマリ",
+      "rarity": null,
+      "barcodeData": "NR5TS4I54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-168T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "激レア",
+      "barcodeData": "NR3YC8K29",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-169T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": null,
+      "barcodeData": "NR6YP2E33",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-170T",
+      "nameJa": "大蛇丸",
+      "rarity": "激レア",
+      "barcodeData": "NR1JP5L57",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-171T",
+      "nameJa": "大蛇丸",
+      "rarity": null,
+      "barcodeData": "NR9JH1381",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-172T",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR6AU8N48",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-173T",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR5AD8J20",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-174T",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": "NR5CJ5R43",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-175T",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": "NR2CX1R59",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-176T",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR0CE8V12",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-177T",
+      "nameJa": "春野サクラ",
+      "rarity": "激レア",
+      "barcodeData": "NR4HI8F02",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-178T",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NR5IH4E52",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-179T",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR6IJ8T25",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-180T",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR6IZ5N54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-181T",
+      "nameJa": "三代目火影",
+      "rarity": "激レア",
+      "barcodeData": "NR7WC5G17",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-182T",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NR8WU5P56",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-183T",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR3FH5O56",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-184T",
+      "nameJa": "日向ネジ",
+      "rarity": "R",
+      "barcodeData": "NR7GN1U55",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-185T",
+      "nameJa": "日向ネジ",
+      "rarity": "R",
+      "barcodeData": "NR7GW4W81",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-186T",
+      "nameJa": "日向ネジ",
+      "rarity": "R",
+      "barcodeData": "NR2GZ6R86",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-187T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "激レア",
+      "barcodeData": "NR2ML6J27",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-188T",
+      "nameJa": "宗家のヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR7HK2F25",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-189T",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NR7NE4K64",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-190T",
+      "nameJa": "山中いの",
+      "rarity": "N",
+      "barcodeData": "NR5PH2T61",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-191T",
+      "nameJa": "犬塚キバ",
+      "rarity": "N",
+      "barcodeData": "NR9QO9P65",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-192T",
+      "nameJa": "油女シノ",
+      "rarity": "R",
+      "barcodeData": "NR3RU7W91",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-193T",
+      "nameJa": "マイト・ガイ",
+      "rarity": "激レア",
+      "barcodeData": "NR9UF2D08",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-194T",
+      "nameJa": "シズネ",
+      "rarity": "N",
+      "barcodeData": "NR6BS4J52",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-195T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "N",
+      "barcodeData": "NR5DU8T46",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-196T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "N",
+      "barcodeData": "NR4DZ4H54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-197T",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NR8ST1R54",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-198T",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR1TZ5F72",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-199T",
+      "nameJa": "桃地再不斬",
+      "rarity": "N",
+      "barcodeData": "NR5LM4Z62",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-200T",
+      "nameJa": "うちはサスケ",
+      "rarity": "爆レア",
+      "barcodeData": "NR4BG2L89",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-201T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR0BF4N37",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-202T",
+      "nameJa": "大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NR6JL9I59",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-203T",
+      "nameJa": "封印された大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NR7FY5C21",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-204T",
+      "nameJa": "封印された大蛇丸",
+      "rarity": "N",
+      "barcodeData": "NR5FG5W38",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-205T",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NR8XK6P47",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-206T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NR6YO1F25",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-207T",
+      "nameJa": "綱手",
+      "rarity": "爆レア",
+      "barcodeData": "NR4ZU9Q86",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-208T",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NR8ZY6R51",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-209T",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NR5ZK5R94",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-210T",
+      "nameJa": "うちはサスケ",
+      "rarity": "爆レア",
+      "barcodeData": "NR7BU2G74",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-211T",
+      "nameJa": "うずまきナルト",
+      "rarity": "爆レア",
+      "barcodeData": "NR8AR5G58",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-212T",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR3AF0I53",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-213T",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR7BD7V99",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-214T",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR7AW6F65",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-215T",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR1AW5R16",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-216T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR1BL4K58",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-217T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR6BA4J42",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-218T",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR5BD9Y21",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-219T",
+      "nameJa": "春野サクラ",
+      "rarity": "N",
+      "barcodeData": "NR7HG8U57",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-220T",
+      "nameJa": "はたけカカシ",
+      "rarity": "激レア",
+      "barcodeData": "NR3IU5D32",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-221T",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NR5IW6G98",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-222T",
+      "nameJa": "三代目火影",
+      "rarity": "R",
+      "barcodeData": "NR9WD2T88",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-223T",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR2CS3W55",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-224T",
+      "nameJa": "マイト・ガイ",
+      "rarity": "R",
+      "barcodeData": "NR8UR5H27",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-225T",
+      "nameJa": "日向ネジ",
+      "rarity": "激レア",
+      "barcodeData": "NR0GX5B55",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-226T",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR7MH4R61",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-227T",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR5FR4Y25",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-228T",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NR4NR8I35",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-229T",
+      "nameJa": "秋道チョウジ",
+      "rarity": "N",
+      "barcodeData": "NR5OV8R28",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-230T",
+      "nameJa": "山中いの",
+      "rarity": "N",
+      "barcodeData": "NR6PT4B43",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-231T",
+      "nameJa": "犬塚キバ",
+      "rarity": "N",
+      "barcodeData": "NR4QM5K28",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-232T",
+      "nameJa": "油女シノ",
+      "rarity": "N",
+      "barcodeData": "NR5RJ4X76",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-233T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "激レア",
+      "barcodeData": "NR5DM6R17",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-234T",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "R",
+      "barcodeData": "NR3DK3B81",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-235T",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NR7SC6H27",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-236T",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR7TQ1C56",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-237T",
+      "nameJa": "大蛇丸",
+      "rarity": "N",
+      "barcodeData": "NR7JK5K26",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-238T",
+      "nameJa": "封印された大蛇丸",
+      "rarity": "N",
+      "barcodeData": "NR9JH1381",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-239T",
+      "nameJa": "薬師カブト",
+      "rarity": "R",
+      "barcodeData": "NR7CC2R16",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-240T",
+      "nameJa": "桃地再不斬",
+      "rarity": "N",
+      "barcodeData": "NR3LB6G58",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-241T",
+      "nameJa": "白",
+      "rarity": "N",
+      "barcodeData": "NR1KH2W77",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-242T",
+      "nameJa": "うちはイタチ",
+      "rarity": "R",
+      "barcodeData": "NR2XB6D35",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-243T",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NR3XU4L21",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-244T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NR5YX1R56",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-245T",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NR9YD5V06",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-246T",
+      "nameJa": "綱手",
+      "rarity": "激レア",
+      "barcodeData": "NR2ZM8I75",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-247T",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NR6ZJ7A15",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-248T",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NR4ZF2Y04",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DN-249T",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NR1ZG2W48",
+      "cabinet": "dn",
+      "articleId": "387082805"
+    },
+    {
+      "printed": "DNP-001",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR0AS0041",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DNP-002",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR4BK0296",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DNP-003",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR9FN0829",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DNP-004",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR8IS1259",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DNP-006",
+      "nameJa": "うずまきナルト(忍兵法大全)",
+      "rarity": null,
+      "barcodeData": "NR1AZ4F84",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DNP-008",
+      "nameJa": "うずまきナルト(WJ_50)",
+      "rarity": null,
+      "barcodeData": "NR6AG2U93",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "DNP-009",
+      "nameJa": "うちはサスケ(VJ_1)",
+      "rarity": null,
+      "barcodeData": "NR9BE6O10",
+      "cabinet": "dn",
+      "articleId": "387082531"
+    },
+    {
+      "printed": "NF-002",
+      "nameJa": "九尾ナルト（四本目）",
+      "rarity": null,
+      "barcodeData": "NF8JV9V00",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-003",
+      "nameJa": "うずまきナルト",
+      "rarity": null,
+      "barcodeData": "NF5PX4963",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-004",
+      "nameJa": "うちはサスケ",
+      "rarity": null,
+      "barcodeData": "NF1AC1U28",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-006",
+      "nameJa": "春野サクラ（疾風伝）",
+      "rarity": null,
+      "barcodeData": "NF1RH8C98",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-007",
+      "nameJa": "春野サクラ",
+      "rarity": null,
+      "barcodeData": "NF4BD2T29",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-008",
+      "nameJa": "ロック･リー（疾風伝）",
+      "rarity": "R",
+      "barcodeData": "NF2HD9H15",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-010",
+      "nameJa": "奈良シカマル（疾風伝）",
+      "rarity": "SR",
+      "barcodeData": "NF2DM0T57",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-011",
+      "nameJa": "奈良シカク",
+      "rarity": "R",
+      "barcodeData": "NF3XN6J83",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-012",
+      "nameJa": "我愛羅（疾風伝）",
+      "rarity": "NR",
+      "barcodeData": "NF2RL0X83",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-013",
+      "nameJa": "我愛羅",
+      "rarity": null,
+      "barcodeData": "NF7ZP2T22",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-015",
+      "nameJa": "はたけカカシ",
+      "rarity": "SR",
+      "barcodeData": "NF8GC9N58",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-017",
+      "nameJa": "マイト・ガイ",
+      "rarity": "SR",
+      "barcodeData": "NF1AY0117",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-019",
+      "nameJa": "日向ネジ（疾風伝）",
+      "rarity": "R",
+      "barcodeData": "NF7XY8W70",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-020",
+      "nameJa": "秋道チョウザ",
+      "rarity": "R",
+      "barcodeData": "NF6KJ0961",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-021",
+      "nameJa": "山中いのいち",
+      "rarity": "R",
+      "barcodeData": "NF2HW3N15",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-023",
+      "nameJa": "油女ゲン",
+      "rarity": "R",
+      "barcodeData": "NF8DF1Y14",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-024",
+      "nameJa": "自来也",
+      "rarity": "SR",
+      "barcodeData": "NF5ZY9A07",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-025",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-026",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NF2LR1Z49",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-027",
+      "nameJa": "シズネ",
+      "rarity": "N",
+      "barcodeData": "NF7EU6G04",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-029",
+      "nameJa": "大蛇丸",
+      "rarity": "SR",
+      "barcodeData": "NF5TD1E22",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-031",
+      "nameJa": "桃地再不斬",
+      "rarity": null,
+      "barcodeData": "NF2HV2X74",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-032",
+      "nameJa": "デイダラ",
+      "rarity": "NR",
+      "barcodeData": "NF9FX3X21",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-033",
+      "nameJa": "うちはイタチ",
+      "rarity": "UR",
+      "barcodeData": "NF4HE0B51",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-034",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "UR",
+      "barcodeData": "NF8HW8258",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-035",
+      "nameJa": "初代火影",
+      "rarity": "R",
+      "barcodeData": "NF4WK6B54",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-036",
+      "nameJa": "二代目火影",
+      "rarity": "R",
+      "barcodeData": "NF6GN4N25",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-037",
+      "nameJa": "三代目火影",
+      "rarity": "R",
+      "barcodeData": "NF7RR8812",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-038",
+      "nameJa": "カンクロウ",
+      "rarity": null,
+      "barcodeData": "NF4FC1B86",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-039",
+      "nameJa": "テマリ",
+      "rarity": null,
+      "barcodeData": "NF1MR1Y90",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-040",
+      "nameJa": "みたらしアンコ",
+      "rarity": null,
+      "barcodeData": "NF0BT9W89",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-041",
+      "nameJa": "日向ヒナタ",
+      "rarity": null,
+      "barcodeData": "NF1WE8V26",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-042",
+      "nameJa": "日向ヒアシ",
+      "rarity": null,
+      "barcodeData": "NF1EX5R87",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-043",
+      "nameJa": "左近",
+      "rarity": null,
+      "barcodeData": "NF3DV8804",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-044",
+      "nameJa": "君麻呂",
+      "rarity": "R",
+      "barcodeData": "NF9TA7K93",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-045",
+      "nameJa": "木ノ葉丸軍団（疾風伝）",
+      "rarity": null,
+      "barcodeData": "NF2EF7B41",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-046",
+      "nameJa": "次郎坊",
+      "rarity": null,
+      "barcodeData": "NF0ZU4E18",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-047",
+      "nameJa": "鬼童丸",
+      "rarity": null,
+      "barcodeData": "NF8LT0480",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-049",
+      "nameJa": "猿飛アスマ",
+      "rarity": null,
+      "barcodeData": "NF8VB8C96",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-050",
+      "nameJa": "夕日紅",
+      "rarity": null,
+      "barcodeData": "NF5FY6Y43",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-051",
+      "nameJa": "ヤマト",
+      "rarity": "R",
+      "barcodeData": "NF1LA9148",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-052",
+      "nameJa": "九尾の妖狐",
+      "rarity": "NR",
+      "barcodeData": "NF6NH9399",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-054",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NF3BX5395",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-055",
+      "nameJa": "うちはサスケ（疾風伝）",
+      "rarity": "NR",
+      "barcodeData": "NF3TJ2J55",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-059",
+      "nameJa": "ロック･リー（疾風伝）",
+      "rarity": "SR",
+      "barcodeData": "NF0FE5161",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-061",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NF1NL0191",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-065",
+      "nameJa": "我愛羅（疾風伝）",
+      "rarity": "SR",
+      "barcodeData": "NF1VC0C36",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-067",
+      "nameJa": "我愛羅",
+      "rarity": "R",
+      "barcodeData": "NF1TM4P00",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-068",
+      "nameJa": "パックン",
+      "rarity": "R",
+      "barcodeData": "NF9UA4U31",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-070",
+      "nameJa": "マイトガイ",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-071",
+      "nameJa": "秋道チョウジ（疾風伝）",
+      "rarity": "R",
+      "barcodeData": "NF7DM4G49",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-075",
+      "nameJa": "日向ネジ（疾風伝）",
+      "rarity": "SR",
+      "barcodeData": "NF4TG2Y29",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-081",
+      "nameJa": "テンテン",
+      "rarity": "R",
+      "barcodeData": "NF3CZ4D14",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-083",
+      "nameJa": "サソリ",
+      "rarity": "UR",
+      "barcodeData": "NF1HX0880",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-084",
+      "nameJa": "うちはイタチ",
+      "rarity": "SR",
+      "barcodeData": "NF8DA1L32",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-085",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "SR",
+      "barcodeData": "NF4WW1E89",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-093",
+      "nameJa": "君麻呂",
+      "rarity": "R",
+      "barcodeData": "NF2CW2054",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-094",
+      "nameJa": "うちはサスケ（疾風伝）",
+      "rarity": "JR",
+      "barcodeData": "NF3LA3E37",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-095",
+      "nameJa": "大蛇丸",
+      "rarity": "UR",
+      "barcodeData": "NF1XV7Z23",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-098",
+      "nameJa": "ガマ吉",
+      "rarity": "R",
+      "barcodeData": "NF9CW0442",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-099",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NF3KG1052",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-102",
+      "nameJa": "うずまきナルト(疾風伝)",
+      "rarity": "R",
+      "barcodeData": "NF7GH3E72",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-103",
+      "nameJa": "ヤマト",
+      "rarity": "SR",
+      "barcodeData": "NF1DF0053",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-107",
+      "nameJa": "春野サクラ",
+      "rarity": "SR",
+      "barcodeData": "NF6RC8V99",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-110",
+      "nameJa": "我愛羅(疾風伝)",
+      "rarity": "R",
+      "barcodeData": "NF1PH1Z73",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-111",
+      "nameJa": "我愛羅(疾風伝)",
+      "rarity": "SR",
+      "barcodeData": "NF4MT7X69",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-114",
+      "nameJa": "サイ",
+      "rarity": "R",
+      "barcodeData": "NF1YR3W36",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-115",
+      "nameJa": "はたけカカシ",
+      "rarity": "UR",
+      "barcodeData": "NF3JT0K82",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-116",
+      "nameJa": "デイダラ",
+      "rarity": "UR",
+      "barcodeData": "NF1GN7096",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-125",
+      "nameJa": "日向ネジ（疾風伝）",
+      "rarity": "R",
+      "barcodeData": "NF1XB5E81",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-128",
+      "nameJa": "テンテン（疾風伝）",
+      "rarity": "R",
+      "barcodeData": "NF9UT0F36",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-129",
+      "nameJa": "カンクロウ(疾風伝)",
+      "rarity": "R",
+      "barcodeData": "NF3HU8Z05",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-130",
+      "nameJa": "カンクロウ",
+      "rarity": "SR",
+      "barcodeData": "NF2HA0076",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-133",
+      "nameJa": "テマリ(疾風伝)",
+      "rarity": "R",
+      "barcodeData": "NF6PD1389",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-135",
+      "nameJa": "サソリ",
+      "rarity": "R",
+      "barcodeData": "NF4UG8J48",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-136",
+      "nameJa": "バキ",
+      "rarity": "R",
+      "barcodeData": "NF7CA0991",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-137",
+      "nameJa": "サソリ（ ）",
+      "rarity": "NR",
+      "barcodeData": "NF6FK8T66",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-138",
+      "nameJa": "春野サクラ(疾風伝)",
+      "rarity": "NR",
+      "barcodeData": "NF6KJ2070",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-139",
+      "nameJa": "九尾ナルト（三本目）",
+      "rarity": "BR",
+      "barcodeData": "NF4NT4B39",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-143",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "SR",
+      "barcodeData": "NF4LY2D43",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-144",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NF4PV9671",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-147",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": "NF0KD4935",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-152",
+      "nameJa": "サイ",
+      "rarity": null,
+      "barcodeData": "NF4NZ1J38",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-153",
+      "nameJa": "イシダテ",
+      "rarity": "R",
+      "barcodeData": "NF0BH0196",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-156",
+      "nameJa": "春野サクラ(疾風伝)",
+      "rarity": "R",
+      "barcodeData": "NF2TD0D27",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-164",
+      "nameJa": "はたけカカシ",
+      "rarity": "SR",
+      "barcodeData": "NF8BV5Y31",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-168",
+      "nameJa": "日向ネジ(疾風伝)",
+      "rarity": "R",
+      "barcodeData": "NF9UN5U62",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-171",
+      "nameJa": "ロック･リー(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF5GF2104",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-178",
+      "nameJa": "カンクロウ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF4YE2883",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-181",
+      "nameJa": "テマリ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF0HB5L65",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-183",
+      "nameJa": "猿魔",
+      "rarity": "SR",
+      "barcodeData": "NF6ED3P56",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-184",
+      "nameJa": "初代火影",
+      "rarity": "R",
+      "barcodeData": "NF1JF6726",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-185",
+      "nameJa": "ガマブン太",
+      "rarity": "SR",
+      "barcodeData": "NF7PG3142",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-186",
+      "nameJa": "カツユ",
+      "rarity": "SR",
+      "barcodeData": "NF1ZC1673",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-188",
+      "nameJa": "マンダ",
+      "rarity": "SR",
+      "barcodeData": "NF1CK6K68",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-189",
+      "nameJa": "ゼツ",
+      "rarity": "NR",
+      "barcodeData": "NF0ME5X61",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-190",
+      "nameJa": "うちはイタチ",
+      "rarity": "NR",
+      "barcodeData": "NF7GF9U35",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-192",
+      "nameJa": "デイダラ",
+      "rarity": "R",
+      "barcodeData": "NF3BK3C36",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-193",
+      "nameJa": "暁結集",
+      "rarity": "暁",
+      "barcodeData": "NF8FL6405",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-194",
+      "nameJa": "チヨ",
+      "rarity": "R",
+      "barcodeData": "NF2AP3K31",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-195",
+      "nameJa": "トビ",
+      "rarity": "UR",
+      "barcodeData": "NF1DW3G41",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-196",
+      "nameJa": "サソリ(傀儡体)",
+      "rarity": "UR",
+      "barcodeData": "NF5MU2L75",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-197",
+      "nameJa": "サソリ",
+      "rarity": "R",
+      "barcodeData": "NF3MJ1H04",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-199",
+      "nameJa": "うずまきナルト(疾風伝)",
+      "rarity": "NR",
+      "barcodeData": "NF3NB6V78",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-200",
+      "nameJa": "ナルト(疾風伝)",
+      "rarity": "NR",
+      "barcodeData": "NF5AN7A76",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-201",
+      "nameJa": "うちはサスケ(疾風伝)",
+      "rarity": "絆",
+      "barcodeData": "NF9HG2559",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-202",
+      "nameJa": "テムジン",
+      "rarity": null,
+      "barcodeData": "NF0WD5765",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-207",
+      "nameJa": "我愛羅(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF5JR5937",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-208",
+      "nameJa": "我愛羅(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF0CM7V29",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-210",
+      "nameJa": "卯月夕顔",
+      "rarity": "R",
+      "barcodeData": "NF6VA5342",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-212",
+      "nameJa": "九尾ナルト(二本目)",
+      "rarity": "R",
+      "barcodeData": "NF2BT3542",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-213",
+      "nameJa": "マイトガイ",
+      "rarity": "SR",
+      "barcodeData": "NF0UU8X69",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-214",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "SR",
+      "barcodeData": "NF5LR9T81",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-216",
+      "nameJa": "山中いの(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF8PZ0V41",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-217",
+      "nameJa": "犬塚キバ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF0BZ8435",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-220",
+      "nameJa": "日向ネジ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF1KG6N21",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-221",
+      "nameJa": "ロック･リー(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF0LC7H87",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-222",
+      "nameJa": "ロック･リー(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF4YT2U75",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-223",
+      "nameJa": "ロック･リー(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF4PD0468",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-224",
+      "nameJa": "テンテン(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF8EC7J60",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-227",
+      "nameJa": "テマリ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF4CA8R54",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-228",
+      "nameJa": "うちはイタチ",
+      "rarity": null,
+      "barcodeData": "NF1GH4514",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-229",
+      "nameJa": "サソリ(傀儡体)",
+      "rarity": "SR",
+      "barcodeData": "NF7YZ4G99",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-230",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "UR",
+      "barcodeData": "NF8ZL7J29",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-231",
+      "nameJa": "トビ",
+      "rarity": "UR",
+      "barcodeData": "NF6UH8W29",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-232",
+      "nameJa": "ヤマト",
+      "rarity": "UR",
+      "barcodeData": "NF8PF4211",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-233",
+      "nameJa": "デイダラ",
+      "rarity": "N",
+      "barcodeData": "NF5LX1T19",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-234",
+      "nameJa": "ゼツ",
+      "rarity": "R",
+      "barcodeData": "NF3JF3N80",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-235",
+      "nameJa": "チヨ",
+      "rarity": "SR",
+      "barcodeData": "NF2TC6W73",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-236",
+      "nameJa": "サソリ(傀儡体)",
+      "rarity": "SR",
+      "barcodeData": "NF3MU1812",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-237",
+      "nameJa": "チヨ",
+      "rarity": "N",
+      "barcodeData": "NF3LC3526",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-238",
+      "nameJa": "サソリ",
+      "rarity": "N",
+      "barcodeData": "NF5YP2D93",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-240",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NF9GG4373",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-241",
+      "nameJa": "二代目火影",
+      "rarity": "R",
+      "barcodeData": "NF4VM2N32",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-243",
+      "nameJa": "みたらしアンコ",
+      "rarity": null,
+      "barcodeData": "NF6MD2256",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-244",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": "NF9YV2328",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-247",
+      "nameJa": "四代目火影",
+      "rarity": "NR",
+      "barcodeData": "NF7AV6209",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-248",
+      "nameJa": "うちはサスケ(疾風伝)",
+      "rarity": "NR",
+      "barcodeData": "NF2LV3F12",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-250",
+      "nameJa": "うちはサスケ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF4VM7U20",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-252",
+      "nameJa": "サソリ(傀儡体)",
+      "rarity": null,
+      "barcodeData": "NF2PD1F48",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-258",
+      "nameJa": "我愛羅(疾風伝)",
+      "rarity": "UR",
+      "barcodeData": "NF3NB3Y00",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-259",
+      "nameJa": "ヤマト",
+      "rarity": "SR",
+      "barcodeData": "NF9BP6A18",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-268",
+      "nameJa": "ロック・リー(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF3DY7563",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-275",
+      "nameJa": "カンクロウ",
+      "rarity": null,
+      "barcodeData": "NF3VK3584",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-278",
+      "nameJa": "テマリ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF0CW3A40",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-279",
+      "nameJa": "トビ",
+      "rarity": "R",
+      "barcodeData": "NF1BJ2K96",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-280",
+      "nameJa": "サソリ",
+      "rarity": "SR",
+      "barcodeData": "NF8HC8Y64",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-282",
+      "nameJa": "サソリ",
+      "rarity": "R",
+      "barcodeData": "NF6WZ6X19",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-283",
+      "nameJa": "ディダラ",
+      "rarity": "SR",
+      "barcodeData": "NF6XK4M86",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-284",
+      "nameJa": "サソリ",
+      "rarity": "R",
+      "barcodeData": "NF6JB1T72",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-285",
+      "nameJa": "三代目火影",
+      "rarity": null,
+      "barcodeData": "NF5KF0T10",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-286",
+      "nameJa": "初代火影",
+      "rarity": "SR",
+      "barcodeData": "NF7AU8W73",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-287",
+      "nameJa": "初代火影",
+      "rarity": "SR",
+      "barcodeData": "NF4WX4B39",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-288",
+      "nameJa": "二代目火影",
+      "rarity": "SR",
+      "barcodeData": "NF3FT8Y45",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-289",
+      "nameJa": "綱手",
+      "rarity": null,
+      "barcodeData": "NF6CU7250",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-290",
+      "nameJa": "大蛇丸",
+      "rarity": "UR",
+      "barcodeData": "NF3ZN1C29",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-294",
+      "nameJa": "奈良シカマル(疾風伝)",
+      "rarity": "SR",
+      "barcodeData": "NF3WA3B60",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-295",
+      "nameJa": "うずまきナルト(疾風伝)",
+      "rarity": "NR",
+      "barcodeData": "NF5FT2V56",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-299",
+      "nameJa": "うちはサスケ=NF-200",
+      "rarity": "NR",
+      "barcodeData": "NF2MX9207",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NF-304",
+      "nameJa": "我愛羅(疾風伝)=NF-258",
+      "rarity": null,
+      "barcodeData": "NF3NB3Y00",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFM-001",
+      "nameJa": "デイダラ",
+      "rarity": null,
+      "barcodeData": "NF3RY0681",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFM-002",
+      "nameJa": "春野サクラ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF4NY0B50",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFM-003",
+      "nameJa": "うずまきナルト(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF1AT0J13",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFM-004",
+      "nameJa": "我愛羅(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF1PH1Z73",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFM-005",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NF7VP7604",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-001",
+      "nameJa": "うずまきナルト(=NM-054)",
+      "rarity": null,
+      "barcodeData": "NR25W48F3",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-004",
+      "nameJa": "四代目火影",
+      "rarity": null,
+      "barcodeData": "NF7UX9161",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-009",
+      "nameJa": "うずまきナルト（疾風伝）",
+      "rarity": null,
+      "barcodeData": "NF4LV2963",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-010",
+      "nameJa": "サイ",
+      "rarity": null,
+      "barcodeData": "NF7MG0L71",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-011",
+      "nameJa": "春野サクラ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF2VV9K65",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-012",
+      "nameJa": "ロック・リー(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF9EX3Y83",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-013",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NF9AF9E01",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-014",
+      "nameJa": "うちはサスケ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF9BN8D46",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-015",
+      "nameJa": "うちはサスケ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF3BL8D23",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-017",
+      "nameJa": "ナルト(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF7DX3D78",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-018",
+      "nameJa": "うずまきナルト(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF2TF1402",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-019",
+      "nameJa": "「絆」うちはサスケ(疾風伝)",
+      "rarity": null,
+      "barcodeData": "NF0ZY8G89",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NFP-021",
+      "nameJa": "ナルティメットクロス専用スペシャルフォーマンセル",
+      "rarity": null,
+      "barcodeData": "NX2ZF8P95",
+      "cabinet": "nf",
+      "articleId": "387083386"
+    },
+    {
+      "printed": "NM-001",
+      "nameJa": "うずまきナルト疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR27G50U5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-002",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR28I90W8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-003",
+      "nameJa": "うずまきナルト疾風伝(白)",
+      "rarity": "SR",
+      "barcodeData": "NR21X99P5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-004",
+      "nameJa": "うずまきナルト疾風伝(白)",
+      "rarity": "UR",
+      "barcodeData": "NR22M37I9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-005",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR27B35W2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-006",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR29J97L8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-007",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR23X41B6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-008",
+      "nameJa": "うちはサスケ",
+      "rarity": "SR",
+      "barcodeData": "NR24K20Q0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-009",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR20G02W5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-010",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": "NR24J98Z5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-011",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "N",
+      "barcodeData": "NR29W71S4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-012",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "SR",
+      "barcodeData": "NR21B24V5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-013",
+      "nameJa": "奈良シカマル疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR25P34R8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-014",
+      "nameJa": "日向ネジ",
+      "rarity": "N",
+      "barcodeData": "NR20Y50M3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-015",
+      "nameJa": "日向ネジ",
+      "rarity": "R",
+      "barcodeData": "NR27N61S6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-016",
+      "nameJa": "春野サクラ疾風伝(白)",
+      "rarity": "UR",
+      "barcodeData": "NR28N18L9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-017",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR24I10I5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-018",
+      "nameJa": "はたけカカシ",
+      "rarity": "SR",
+      "barcodeData": "NR25F82L4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-019",
+      "nameJa": "大蛇丸",
+      "rarity": "N",
+      "barcodeData": "NR21E42J6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-020",
+      "nameJa": "白",
+      "rarity": "N",
+      "barcodeData": "NR28T14W1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-021",
+      "nameJa": "桃地再不斬",
+      "rarity": "N",
+      "barcodeData": "NR25E40C7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-022",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR23C80T8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-023",
+      "nameJa": "日向ヒナタ",
+      "rarity": "R",
+      "barcodeData": "NR24E94T0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-024",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NR25W68G2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-025",
+      "nameJa": "秋道チョウジ",
+      "rarity": "N",
+      "barcodeData": "NR27Y39F6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-026",
+      "nameJa": "山中いの",
+      "rarity": "N",
+      "barcodeData": "NR24Y34H2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-027",
+      "nameJa": "犬塚キバ",
+      "rarity": "N",
+      "barcodeData": "NR29R86E4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-028",
+      "nameJa": "油女シノ",
+      "rarity": "N",
+      "barcodeData": "NR23K46K0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-029",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NR21U70C3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-030",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR24V85U7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-031",
+      "nameJa": "マイト・ガイ",
+      "rarity": "N",
+      "barcodeData": "NR24D65S2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-032",
+      "nameJa": "自来也",
+      "rarity": "N",
+      "barcodeData": "NR23R01X2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-033",
+      "nameJa": "自来也",
+      "rarity": "SR",
+      "barcodeData": "NR23H34R4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-034",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NR23L23J2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-035",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NR26W25J0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-036",
+      "nameJa": "うちはイタチ",
+      "rarity": "SR",
+      "barcodeData": "NR27X89Z2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-037",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NR29L98V7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-038",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NR26P43P4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-039",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NR28R32M9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-040",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NR24M56Z4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-041",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NR21V66M7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-042",
+      "nameJa": "シズネ",
+      "rarity": "N",
+      "barcodeData": "NR24S02A4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-043",
+      "nameJa": "薬師カブト",
+      "rarity": "N",
+      "barcodeData": "NR28U96D4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-044",
+      "nameJa": "碧い魔獣",
+      "rarity": "N",
+      "barcodeData": "NR25D64J7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-045",
+      "nameJa": "次郎坊",
+      "rarity": "R",
+      "barcodeData": "NR29U26U9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-046",
+      "nameJa": "鬼童丸",
+      "rarity": "R",
+      "barcodeData": "NR25E03C8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-047",
+      "nameJa": "多由也",
+      "rarity": "R",
+      "barcodeData": "NR23H88I5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-048",
+      "nameJa": "左近",
+      "rarity": "R",
+      "barcodeData": "NR26P48E5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-049",
+      "nameJa": "猿飛アスマ",
+      "rarity": "R",
+      "barcodeData": "NR20F73X9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-050",
+      "nameJa": "みたらしアンコ",
+      "rarity": "N",
+      "barcodeData": "NR27S67L6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-051",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR27O38V7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-052",
+      "nameJa": "春野サクラ疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR29T14T9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-053",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR21U45L8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-054",
+      "nameJa": "うずまきナルト",
+      "rarity": "UR",
+      "barcodeData": "NR25W48F3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-055",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR22J34D7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-056",
+      "nameJa": "うちはサスケ",
+      "rarity": "UR",
+      "barcodeData": "NR25G36I0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-057",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR27C94V9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-058",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "N",
+      "barcodeData": "NR28M33V4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-059",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "R",
+      "barcodeData": "NR28B34H2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-060",
+      "nameJa": "砂瀑の我愛羅疾風伝(白)",
+      "rarity": "SR",
+      "barcodeData": "NR25W69C8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-061",
+      "nameJa": "奈良シカマル疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR20G97N0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-062",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NR22L93V1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-063",
+      "nameJa": "日向ネジ",
+      "rarity": "N",
+      "barcodeData": "NR21Z09O4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-064",
+      "nameJa": "春野サクラ疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR21Q49V2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-065",
+      "nameJa": "春野サクラ",
+      "rarity": "R",
+      "barcodeData": "NR29I45W0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-066",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR26T62M4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-067",
+      "nameJa": "大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NR29Z20G4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-068",
+      "nameJa": "桃地再不斬",
+      "rarity": "N",
+      "barcodeData": "NR22U89U3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-069",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR28O51Y5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-070",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NR27R65U2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-071",
+      "nameJa": "秋道チョウジ",
+      "rarity": "N",
+      "barcodeData": "NR20G62P3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-072",
+      "nameJa": "山中いの",
+      "rarity": "N",
+      "barcodeData": "NR26F23G1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-073",
+      "nameJa": "犬塚キバ",
+      "rarity": "N",
+      "barcodeData": "NR26M55S5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-074",
+      "nameJa": "油女シノ",
+      "rarity": "N",
+      "barcodeData": "NR22X34C6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-075",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NR20Q26N3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-076",
+      "nameJa": "カンクロウ疾風伝(白)",
+      "rarity": "SR",
+      "barcodeData": "NR23Q87V6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-077",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR25Q64F6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-078",
+      "nameJa": "テマリ疾風伝(白)",
+      "rarity": "SR",
+      "barcodeData": "NR24M68J5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-079",
+      "nameJa": "マイト・ガイ",
+      "rarity": "N",
+      "barcodeData": "NR23K06U0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-080",
+      "nameJa": "マイト・ガイ",
+      "rarity": "N",
+      "barcodeData": "NR26F67Y5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-081",
+      "nameJa": "マイト・ガイ",
+      "rarity": "R",
+      "barcodeData": "NR24R57Y6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-082",
+      "nameJa": "自来也",
+      "rarity": "N",
+      "barcodeData": "NR23H63Y5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-083",
+      "nameJa": "三代目火影",
+      "rarity": "SR",
+      "barcodeData": "NR21E84K8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-084",
+      "nameJa": "うちはイタチ",
+      "rarity": "SR",
+      "barcodeData": "NR29L17O3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-085",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NR23U17K2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-086",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "SR",
+      "barcodeData": "NR28N95N0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-087",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NR20Z52U1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-088",
+      "nameJa": "薬師カブト",
+      "rarity": "N",
+      "barcodeData": "NR24E13I0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-089",
+      "nameJa": "暗部のカカシ",
+      "rarity": "R",
+      "barcodeData": "NR23J14F8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-090",
+      "nameJa": "次郎坊",
+      "rarity": "R",
+      "barcodeData": "NR28X99K7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-091",
+      "nameJa": "鬼童丸",
+      "rarity": "R",
+      "barcodeData": "NR27I76Q2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-092",
+      "nameJa": "君麻呂",
+      "rarity": "R",
+      "barcodeData": "NR20P71G7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-093",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR22V71Z9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-094",
+      "nameJa": "うずまきナルト",
+      "rarity": "SR",
+      "barcodeData": "NR26O05T5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-095",
+      "nameJa": "うずまきナルト疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR25Q56N4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-096",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR23Y57Y0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-097",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR27S88A7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-098",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NR26U31U5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-099",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR27Q34D7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-100",
+      "nameJa": "ロック・リー",
+      "rarity": "N",
+      "barcodeData": "NR22Y22L4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-101",
+      "nameJa": "ロック・リー疾風伝(白)",
+      "rarity": "R",
+      "barcodeData": "NR20Z78U0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-102",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "N",
+      "barcodeData": "NR20F44O5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-103",
+      "nameJa": "砂瀑の我愛羅疾風伝(白)",
+      "rarity": "R",
+      "barcodeData": "NR22M25B2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-104",
+      "nameJa": "チヨ疾風伝(白)",
+      "rarity": "SR",
+      "barcodeData": "NR24N62G6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-105",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NR22I04V2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-106",
+      "nameJa": "日向ネジ疾風伝(白)",
+      "rarity": "R",
+      "barcodeData": "NR27F00Z9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-107",
+      "nameJa": "春野サクラ疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR22Q88D8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-108",
+      "nameJa": "春野サクラ",
+      "rarity": "R",
+      "barcodeData": "NR25I20F8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-109",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NR29B07D5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-110",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NR22D70A1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-111",
+      "nameJa": "大蛇丸",
+      "rarity": "UR",
+      "barcodeData": "NR29E15T3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-112",
+      "nameJa": "白",
+      "rarity": "N",
+      "barcodeData": "NR22P87I4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-113",
+      "nameJa": "桃地再不斬",
+      "rarity": "R",
+      "barcodeData": "NR20F57O9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-114",
+      "nameJa": "日向ヒナタ",
+      "rarity": "N",
+      "barcodeData": "NR23Z91G7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-115",
+      "nameJa": "テンテン疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR26O38S0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-116",
+      "nameJa": "秋道チョウジ",
+      "rarity": "SR",
+      "barcodeData": "NR27V47O2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-117",
+      "nameJa": "山中いの",
+      "rarity": "N",
+      "barcodeData": "NR21J76I2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-118",
+      "nameJa": "犬塚キバ",
+      "rarity": "N",
+      "barcodeData": "NR23P19X4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-119",
+      "nameJa": "油女シノ",
+      "rarity": "N",
+      "barcodeData": "NR22J25A1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-120",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NR20Y67V9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-121",
+      "nameJa": "カンクロウ疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR28P20A5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-122",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NR25R05S9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-123",
+      "nameJa": "テマリ疾風伝(白)",
+      "rarity": "N",
+      "barcodeData": "NR29C51Y5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-124",
+      "nameJa": "マイト・ガイ",
+      "rarity": "N",
+      "barcodeData": "NR28V14C5",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-125",
+      "nameJa": "自来也",
+      "rarity": "SR",
+      "barcodeData": "NR21N66Z6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-126",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NR25N32J9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-127",
+      "nameJa": "うちはイタチ",
+      "rarity": "R",
+      "barcodeData": "NR24S30C1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-128",
+      "nameJa": "サソリ疾風伝(白)",
+      "rarity": "UR",
+      "barcodeData": "NR25A43Y0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-129",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NR21D29O1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-130",
+      "nameJa": "デイダラ疾風伝(白)",
+      "rarity": "SR",
+      "barcodeData": "NR26Q58T1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-131",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NR23Y93M9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-132",
+      "nameJa": "綱手",
+      "rarity": "SR",
+      "barcodeData": "NR27S27O9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-133",
+      "nameJa": "多由也",
+      "rarity": "R",
+      "barcodeData": "NR20O63U2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-134",
+      "nameJa": "左近",
+      "rarity": "R",
+      "barcodeData": "NR23C05M8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-135",
+      "nameJa": "初代火影",
+      "rarity": "NR",
+      "barcodeData": "NR22U59Y9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-136",
+      "nameJa": "二代目火影",
+      "rarity": "NR",
+      "barcodeData": "NR23N68U4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-137",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NR24E55E9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-138",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NR21N09N6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-140",
+      "nameJa": "うずまきナルト",
+      "rarity": "NR",
+      "barcodeData": "NR21C88Y3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-141",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NR22Q14L1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-142",
+      "nameJa": "うちはサスケ",
+      "rarity": "SR",
+      "barcodeData": "NR22E62S0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-144",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": "NR21J70P1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-146",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "UR",
+      "barcodeData": "NR25D75V7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-150",
+      "nameJa": "日向ネジ",
+      "rarity": "SR",
+      "barcodeData": "NR25Z11Z9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-161",
+      "nameJa": "カンクロウ",
+      "rarity": "R",
+      "barcodeData": "NR23Y72M2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-164",
+      "nameJa": "マイト・ガイ",
+      "rarity": "R",
+      "barcodeData": "NR26H36F8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-165",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": "NR29C76Z6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-166",
+      "nameJa": "三代目火影",
+      "rarity": "SR",
+      "barcodeData": "NR25A42B7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-168",
+      "nameJa": "うちはイタチ",
+      "rarity": "NR",
+      "barcodeData": "NR23U46X1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-169",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "UR",
+      "barcodeData": "NR29Q31G6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-173",
+      "nameJa": "暗部のカカシ",
+      "rarity": "R",
+      "barcodeData": "NR20E53U8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-174",
+      "nameJa": "碧い魔獣",
+      "rarity": "R",
+      "barcodeData": "NR22K18G1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-179",
+      "nameJa": "君麻呂",
+      "rarity": "SR",
+      "barcodeData": "NR26O93A2",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-180",
+      "nameJa": "木ノ葉丸軍団",
+      "rarity": "R",
+      "barcodeData": "NR22S85T4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-182",
+      "nameJa": "初代火影",
+      "rarity": "SR",
+      "barcodeData": "NR21O46T6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-183",
+      "nameJa": "二代目火影",
+      "rarity": "SR",
+      "barcodeData": "NR24P64U4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-184",
+      "nameJa": "猿飛アスマ",
+      "rarity": "R",
+      "barcodeData": "NR28R82Z7",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-185",
+      "nameJa": "夕日紅",
+      "rarity": "R",
+      "barcodeData": "NR21R20I0",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-186",
+      "nameJa": "みたらしアンコ",
+      "rarity": "R",
+      "barcodeData": "NR28B57N3",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-187",
+      "nameJa": "うずまきナルト",
+      "rarity": "SC",
+      "barcodeData": "NR22U71I8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-188",
+      "nameJa": "うちはサスケ疾風伝（白）",
+      "rarity": "呪印",
+      "barcodeData": "NF4VM7U20",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-190",
+      "nameJa": "うずまきナルト",
+      "rarity": "SR",
+      "barcodeData": "NR25V81O8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-192",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-194",
+      "nameJa": "ロック・リー",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-196",
+      "nameJa": "砂瀑の我愛羅",
+      "rarity": "NR",
+      "barcodeData": "NR26H44L8",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-200",
+      "nameJa": "はたけカカシ",
+      "rarity": "SR",
+      "barcodeData": "NR26L79J9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-201",
+      "nameJa": "大蛇丸",
+      "rarity": "UR",
+      "barcodeData": "NR26L56Z9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-202",
+      "nameJa": "白",
+      "rarity": "SR",
+      "barcodeData": "NR23G09O6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-203",
+      "nameJa": "桃地再不斬",
+      "rarity": "SR",
+      "barcodeData": "NR22D98Z9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-206",
+      "nameJa": "秋道チョウジ",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-210",
+      "nameJa": "マイト・ガイ",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-213",
+      "nameJa": "自来也",
+      "rarity": "SR",
+      "barcodeData": "NR29T12A6",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-214",
+      "nameJa": "三代目火影",
+      "rarity": "R",
+      "barcodeData": "NR27Q19F1",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-215",
+      "nameJa": "三代目火影",
+      "rarity": "UR",
+      "barcodeData": "NR27L46B4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-216",
+      "nameJa": "デイダラ",
+      "rarity": "NR",
+      "barcodeData": "NR25E77Z9",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-217",
+      "nameJa": "サソリ",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-224",
+      "nameJa": "次郎坊",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-226",
+      "nameJa": "鬼童丸",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-228",
+      "nameJa": "多由也",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-230",
+      "nameJa": "左近",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-231",
+      "nameJa": "君麻呂",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NM-237",
+      "nameJa": "みたらしアンコ",
+      "rarity": "R",
+      "barcodeData": "NR25H47H4",
+      "cabinet": "nm",
+      "articleId": "387083049"
+    },
+    {
+      "printed": "NX-001",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NX5VC3336",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-002",
+      "nameJa": "うずまきナルト",
+      "rarity": "SR",
+      "barcodeData": "NX2CZ5D89",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-003",
+      "nameJa": "うずまきナルト(九尾ナルト四本目)",
+      "rarity": "NR",
+      "barcodeData": "NX5XB5P84",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-004",
+      "nameJa": "うずまきナルト(第一部)",
+      "rarity": "N",
+      "barcodeData": "NX0TW5B68",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-005",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NX3FB7E44",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-006",
+      "nameJa": "うちはサスケ",
+      "rarity": "NR",
+      "barcodeData": "NX7ND7H48",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-007",
+      "nameJa": "うちはサスケ(第一部)",
+      "rarity": "N",
+      "barcodeData": "NX3DK1B27",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-008",
+      "nameJa": "春野サクラ",
+      "rarity": "N",
+      "barcodeData": "NX2BH8N54",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-009",
+      "nameJa": "春野サクラ(第一部)",
+      "rarity": "N",
+      "barcodeData": "NX4WV0E62",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-010",
+      "nameJa": "サイ",
+      "rarity": "R",
+      "barcodeData": "NX3YZ5L19",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-011",
+      "nameJa": "サイ",
+      "rarity": "SR",
+      "barcodeData": "NX6TF0C16",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-012",
+      "nameJa": "ヤマト",
+      "rarity": "SR",
+      "barcodeData": "NX6GB3A97",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-013",
+      "nameJa": "ヤマト",
+      "rarity": "N",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-014",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NX9DF3L49",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-015",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NX4NH7Z05",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-016",
+      "nameJa": "自来也",
+      "rarity": "N",
+      "barcodeData": "NX9PD7A31",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-017",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": "NX1AZ7122",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-018",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NX1LE8N65",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-019",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-020",
+      "nameJa": "猿飛アスマ",
+      "rarity": "R",
+      "barcodeData": "NX5WT1X04",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-021",
+      "nameJa": "ロック･リー",
+      "rarity": "N",
+      "barcodeData": "NX0XH2734",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-022",
+      "nameJa": "ロック･リー(第一部)",
+      "rarity": "N",
+      "barcodeData": "NX8PL0110",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-023",
+      "nameJa": "日向ネジ",
+      "rarity": "N",
+      "barcodeData": "NX8VY9W43",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-024",
+      "nameJa": "日向ネジ(第一部)",
+      "rarity": "N",
+      "barcodeData": "NX9BP4379",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-025",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NX1WG7H69",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-026",
+      "nameJa": "テンテン(第一部)",
+      "rarity": "N",
+      "barcodeData": "NX2JE1P21",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-027",
+      "nameJa": "マイト･ガイ",
+      "rarity": "N",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-028",
+      "nameJa": "マイト･ガイ",
+      "rarity": "R",
+      "barcodeData": "NX4PT2743",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-029",
+      "nameJa": "三代目火影",
+      "rarity": "R",
+      "barcodeData": "NX6WA3E46",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-030",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NX3JT5L36",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-031",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NX5MZ3B01",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-032",
+      "nameJa": "シズネ",
+      "rarity": "N",
+      "barcodeData": "NX1JE1762",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-033",
+      "nameJa": "我愛羅",
+      "rarity": "N",
+      "barcodeData": "NX6CC3K70",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-034",
+      "nameJa": "我愛羅",
+      "rarity": "R",
+      "barcodeData": "NX6RV4787",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-035",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NX2XD4J42",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-036",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NX4CD1838",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-037",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NX9NA4U12",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-038",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NX6NF0107",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-039",
+      "nameJa": "チヨ(体術)",
+      "rarity": "N",
+      "barcodeData": "NX4HN4E14",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-040",
+      "nameJa": "うちはイタチ",
+      "rarity": "SR",
+      "barcodeData": "NX6RC3432",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-041",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NX4AN4B32",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-042",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NX9UC8U56",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-043",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NX7RA6A62",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-044",
+      "nameJa": "デイダラ",
+      "rarity": "R",
+      "barcodeData": "NX8JK1L89",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-045",
+      "nameJa": "サソリ(ヒルコ)",
+      "rarity": "N",
+      "barcodeData": "NX4MC0V40",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-046",
+      "nameJa": "サソリ(ヒルコ)",
+      "rarity": "N",
+      "barcodeData": "NX8FE6W65",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-047",
+      "nameJa": "飛段",
+      "rarity": "SR",
+      "barcodeData": "NX0EU4F42",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-048",
+      "nameJa": "角都",
+      "rarity": "SR",
+      "barcodeData": "NX0NK5772",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-049",
+      "nameJa": "大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NX2RU3P23",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-050",
+      "nameJa": "薬師カブト",
+      "rarity": "R",
+      "barcodeData": "NX4KZ0C36",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-051",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NX0DR4C74",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-052",
+      "nameJa": "うずまきナルト",
+      "rarity": "SR",
+      "barcodeData": "NX8BL4253",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-053",
+      "nameJa": "うずまきナルト(第一部)",
+      "rarity": "R",
+      "barcodeData": "NX0LU6M99",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-054",
+      "nameJa": "うちはサスケ",
+      "rarity": "SR",
+      "barcodeData": "NX0JZ7V64",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-055",
+      "nameJa": "うちはサスケ(第一部)",
+      "rarity": "R",
+      "barcodeData": "NX1GY9R80",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-056",
+      "nameJa": "春野サクラ",
+      "rarity": "R",
+      "barcodeData": "NX0HY7209",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-057",
+      "nameJa": "春野サクラ",
+      "rarity": "N",
+      "barcodeData": "NX0JA0F13",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-058",
+      "nameJa": "サイ",
+      "rarity": "N",
+      "barcodeData": "NX3RJ9T33",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-059",
+      "nameJa": "サイ",
+      "rarity": "R",
+      "barcodeData": "NX2YP0D01",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-060",
+      "nameJa": "ヤマト",
+      "rarity": "N",
+      "barcodeData": "NX1EG8L85",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-061",
+      "nameJa": "ヤマト",
+      "rarity": "R",
+      "barcodeData": "NX0ZB0D50",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-062",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NX2RZ2U10",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-063",
+      "nameJa": "自来也",
+      "rarity": "N",
+      "barcodeData": "NX9LC7D37",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-064",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NX6UW5H08",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-065",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NX4GC3J86",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-066",
+      "nameJa": "秋道チョウジ",
+      "rarity": "R",
+      "barcodeData": "NX6RM4113",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-068",
+      "nameJa": "山中いの",
+      "rarity": "R",
+      "barcodeData": "NX7EF9628",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-070",
+      "nameJa": "猿飛アスマ",
+      "rarity": "N",
+      "barcodeData": "NX1MF1G59",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-071",
+      "nameJa": "猿飛アスマ",
+      "rarity": "SR",
+      "barcodeData": "NX9RG7327",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-072",
+      "nameJa": "ロック･リー",
+      "rarity": "N",
+      "barcodeData": "NX8YY1956",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-073",
+      "nameJa": "ロック･リー",
+      "rarity": "R",
+      "barcodeData": "NX3JV9459",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-074",
+      "nameJa": "日向ネジ",
+      "rarity": "N",
+      "barcodeData": "NX9AL9P39",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-075",
+      "nameJa": "テンテン",
+      "rarity": "N",
+      "barcodeData": "NX7PB2R01",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-076",
+      "nameJa": "マイト･ガイ",
+      "rarity": "N",
+      "barcodeData": "NX5CY3755",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-077",
+      "nameJa": "夕日紅",
+      "rarity": "N",
+      "barcodeData": "NX8DP8562",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-078",
+      "nameJa": "初代火影",
+      "rarity": "SR",
+      "barcodeData": "NX7MB3428",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-079",
+      "nameJa": "二代目火影",
+      "rarity": "SR",
+      "barcodeData": "NX7HX5P80",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-080",
+      "nameJa": "三代目火影",
+      "rarity": "SR",
+      "barcodeData": "NX0FP5C29",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-081",
+      "nameJa": "黄色い閃光",
+      "rarity": "SR",
+      "barcodeData": "NX9UW8846",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-082",
+      "nameJa": "綱手",
+      "rarity": "R",
+      "barcodeData": "NX2ZJ6N15",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-084",
+      "nameJa": "我愛羅",
+      "rarity": "N",
+      "barcodeData": "NX5LV4V06",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-085",
+      "nameJa": "テマリ",
+      "rarity": "N",
+      "barcodeData": "NX7ER9B60",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-087",
+      "nameJa": "カンクロウ",
+      "rarity": "N",
+      "barcodeData": "NX2LZ3R61",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-089",
+      "nameJa": "チヨ(傀儡)",
+      "rarity": "R",
+      "barcodeData": "NX6JN1220",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-090",
+      "nameJa": "うちはイタチ",
+      "rarity": "R",
+      "barcodeData": "NX4ZZ4038",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-091",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NX9WR6K78",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-092",
+      "nameJa": "サソリ(ヒルコ)",
+      "rarity": "N",
+      "barcodeData": "NX8HN2R67",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-093",
+      "nameJa": "デイダラ",
+      "rarity": "NR",
+      "barcodeData": "NX5XK4E46",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-094",
+      "nameJa": "サソリ(暁服)",
+      "rarity": "NR",
+      "barcodeData": "NX3VG5P78",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-095",
+      "nameJa": "飛段",
+      "rarity": "R",
+      "barcodeData": "NX0BD9G86",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-096",
+      "nameJa": "角都",
+      "rarity": "R",
+      "barcodeData": "NX0EA2W32",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-097",
+      "nameJa": "地陸",
+      "rarity": "N",
+      "barcodeData": "NX6XG2605",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-098",
+      "nameJa": "二位ユギト",
+      "rarity": "N",
+      "barcodeData": "NX2BH7997",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-099",
+      "nameJa": "薬師カブト",
+      "rarity": "N",
+      "barcodeData": "NX6LE1D39",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-100",
+      "nameJa": "薬師カブト",
+      "rarity": "N",
+      "barcodeData": "NX5KP2F83",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-101",
+      "nameJa": "うずまきナルト",
+      "rarity": "N",
+      "barcodeData": "NX5VC3336",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-102",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NX4JR7110",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-103",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NX2CZ5D89",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-104",
+      "nameJa": "うずまきナルト",
+      "rarity": "SR",
+      "barcodeData": "NF7AB5P93",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-105",
+      "nameJa": "うちはサスケ",
+      "rarity": "N",
+      "barcodeData": "NX3FB7E44",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-106",
+      "nameJa": "うちはサスケ",
+      "rarity": "NR",
+      "barcodeData": "NX5TA9369",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-107",
+      "nameJa": "春野サクラ",
+      "rarity": "N",
+      "barcodeData": "NX6KT5N98",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-108",
+      "nameJa": "サイ",
+      "rarity": "N",
+      "barcodeData": "NX2YP0D01",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-109",
+      "nameJa": "サイ",
+      "rarity": "SR",
+      "barcodeData": "NX5TR3772",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-110",
+      "nameJa": "ヤマト",
+      "rarity": "R",
+      "barcodeData": "NX6GB3A97",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-111",
+      "nameJa": "ヤマト",
+      "rarity": "SR",
+      "barcodeData": "NX8MX6394",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-112",
+      "nameJa": "はたけカカシ",
+      "rarity": "N",
+      "barcodeData": "NX4NH7Z05",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-113",
+      "nameJa": "はたけカカシ",
+      "rarity": "SR",
+      "barcodeData": "NX3NA6H16",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-114",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": "NF2XY4203",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-115",
+      "nameJa": "奈良シカマル",
+      "rarity": "N",
+      "barcodeData": "NX1LE8N65",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-116",
+      "nameJa": "秋道チョウジ",
+      "rarity": "N",
+      "barcodeData": "NX6RM4113",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-117",
+      "nameJa": "山中いの",
+      "rarity": "N",
+      "barcodeData": "NX7EF9628",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-118",
+      "nameJa": "猿飛アスマ",
+      "rarity": "N",
+      "barcodeData": "NX5WT1X04",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-119",
+      "nameJa": "マイト･ガイ",
+      "rarity": "N",
+      "barcodeData": "NF0UU8X69",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-120",
+      "nameJa": "夕日紅",
+      "rarity": "N",
+      "barcodeData": "NF4TB3D90",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-121",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NX3JT5L36",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-122",
+      "nameJa": "綱手",
+      "rarity": "N",
+      "barcodeData": "NF4HG3U36",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-123",
+      "nameJa": "我愛羅",
+      "rarity": "N",
+      "barcodeData": "NX6RV4787",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-124",
+      "nameJa": "我愛羅",
+      "rarity": "SR",
+      "barcodeData": "NX4EP6Y91",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-125",
+      "nameJa": "初代火影",
+      "rarity": "N",
+      "barcodeData": "NF1JF6726",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-126",
+      "nameJa": "初代火影",
+      "rarity": "R",
+      "barcodeData": "NF2JL3838",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-127",
+      "nameJa": "二代目火影",
+      "rarity": "R",
+      "barcodeData": "NF3FT8Y45",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-128",
+      "nameJa": "三代目火影",
+      "rarity": "N",
+      "barcodeData": "NF0VE1354",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-129",
+      "nameJa": "うちはイタチ",
+      "rarity": "N",
+      "barcodeData": "NF1GH4514",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-130",
+      "nameJa": "うちはイタチ",
+      "rarity": "R",
+      "barcodeData": "NX2HD7W50",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-131",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "N",
+      "barcodeData": "NX7EN0T86",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-132",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "R",
+      "barcodeData": "NF8TV1L37",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-133",
+      "nameJa": "デイダラ",
+      "rarity": "SR",
+      "barcodeData": "NX2NX1G69",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-134",
+      "nameJa": "デイダラ",
+      "rarity": "SR",
+      "barcodeData": "NX5JJ4D57",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-135",
+      "nameJa": "サソリ(ヒルコ)",
+      "rarity": "N",
+      "barcodeData": "NX1TA5M41",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-136",
+      "nameJa": "サソリ(ヒルコ)",
+      "rarity": "R",
+      "barcodeData": "NF5FY6F64",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-137",
+      "nameJa": "飛段",
+      "rarity": "R",
+      "barcodeData": "NX0EU4F42",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-138",
+      "nameJa": "角都",
+      "rarity": "R",
+      "barcodeData": "NX0NK5772",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-139",
+      "nameJa": "大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NX2RU3P23",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-140",
+      "nameJa": "大蛇丸",
+      "rarity": "NR",
+      "barcodeData": "NX1HK4R56",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-141",
+      "nameJa": "薬師カブト",
+      "rarity": "N",
+      "barcodeData": "NX4KZ0C36",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-143",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NXWGRWWDO",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-144",
+      "nameJa": "うずまきナルト",
+      "rarity": "NR",
+      "barcodeData": "NXFK7SGSN",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-147",
+      "nameJa": "うちはサスケ",
+      "rarity": "NR",
+      "barcodeData": "NX2BGPFDX",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-152",
+      "nameJa": "サイ",
+      "rarity": "R",
+      "barcodeData": "NXAP6N8EZ",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-154",
+      "nameJa": "ヤマト",
+      "rarity": "R",
+      "barcodeData": "NXKY7IUSL",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-156",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NXDHCPTJV",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-159",
+      "nameJa": "奈良シカマル",
+      "rarity": "SR",
+      "barcodeData": "NX89M3UD3",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-167",
+      "nameJa": "犬塚キバ",
+      "rarity": "R",
+      "barcodeData": "NXQ9BGP6S",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-168",
+      "nameJa": "油女シノ",
+      "rarity": "R",
+      "barcodeData": "NX1JHF9L7",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-169",
+      "nameJa": "日向ヒナタ",
+      "rarity": "R",
+      "barcodeData": "NX5POGFJO",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-171",
+      "nameJa": "初代火影",
+      "rarity": "R",
+      "barcodeData": "NXZN0L8A5",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-174",
+      "nameJa": "綱手",
+      "rarity": "SR",
+      "barcodeData": "NXMYD1UQC",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-175",
+      "nameJa": "我愛羅",
+      "rarity": "SR",
+      "barcodeData": "NXX5F0YF4",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-179",
+      "nameJa": "うちはイタチ",
+      "rarity": "SR",
+      "barcodeData": "NXAZSAR7X",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-182",
+      "nameJa": "デイダラ",
+      "rarity": "R",
+      "barcodeData": "NXD3TXQ99",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-183",
+      "nameJa": "サソリ",
+      "rarity": "R",
+      "barcodeData": "NXBVKRWJ7",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-185",
+      "nameJa": "鬼灯水月",
+      "rarity": "R",
+      "barcodeData": "NXP72ERWV",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-186",
+      "nameJa": "重吾(状態１)",
+      "rarity": "R",
+      "barcodeData": "NX3H0QSEM",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-187",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NXNGEG2SK",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-188",
+      "nameJa": "香燐",
+      "rarity": "R",
+      "barcodeData": "NXZ1WZKUP",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-191",
+      "nameJa": "卑留呼",
+      "rarity": "SR",
+      "barcodeData": "NXPMX0HZP",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-194",
+      "nameJa": "うずまきナルト",
+      "rarity": "R",
+      "barcodeData": "NXMVID25A",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-197",
+      "nameJa": "うちはサスケ",
+      "rarity": "R",
+      "barcodeData": "NXIC8E1BM",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-199",
+      "nameJa": "うちはサスケ",
+      "rarity": "NR",
+      "barcodeData": "NXD817CV3",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-200",
+      "nameJa": "ディダラ",
+      "rarity": "NR",
+      "barcodeData": "NX3UP0D46",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-201",
+      "nameJa": "春野サクラ",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-202",
+      "nameJa": "チヨ",
+      "rarity": "R",
+      "barcodeData": "NXQIA4I04",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-208",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NXNTEHFLC",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-209",
+      "nameJa": "はたけカカシ",
+      "rarity": "R",
+      "barcodeData": "NXA5NEHTM",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-211",
+      "nameJa": "自来也",
+      "rarity": "R",
+      "barcodeData": "NX4NX38JJ",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-213",
+      "nameJa": "奈良シカマル",
+      "rarity": "R",
+      "barcodeData": "NXKJBGY9A",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-214",
+      "nameJa": "秋道チョウジ",
+      "rarity": "R",
+      "barcodeData": "NXVOUWQLU",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-215",
+      "nameJa": "山中いの",
+      "rarity": "R",
+      "barcodeData": "NXUFOCJKW",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-216",
+      "nameJa": "猿飛アスマ",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-221",
+      "nameJa": "神月イズモ",
+      "rarity": null,
+      "barcodeData": "NXQA4KOAJ",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-225",
+      "nameJa": "我愛羅",
+      "rarity": "R",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-227",
+      "nameJa": "うちはイタチ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-228",
+      "nameJa": "干柿鬼鮫",
+      "rarity": "SR",
+      "barcodeData": "NXLZWO60I",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-230",
+      "nameJa": "デイダラ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-231",
+      "nameJa": "サソリ",
+      "rarity": "SR",
+      "barcodeData": "NX7PV339Z",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-232",
+      "nameJa": "トビ(暁服)",
+      "rarity": "SR",
+      "barcodeData": "NXKIWH6KR",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-233",
+      "nameJa": "飛段",
+      "rarity": "R",
+      "barcodeData": "NXR8EUCY8",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-234",
+      "nameJa": "角都",
+      "rarity": "R",
+      "barcodeData": "NXXKB2BZ9",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-236",
+      "nameJa": "大蛇丸",
+      "rarity": "R",
+      "barcodeData": "NXN8TUZ7Q",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-240",
+      "nameJa": "重吾(状態Ⅰ)",
+      "rarity": "SR",
+      "barcodeData": "NXGODUP3A",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-241",
+      "nameJa": "地陸",
+      "rarity": null,
+      "barcodeData": "NXHPIXQGH",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-244",
+      "nameJa": "うずまきナルト",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-245",
+      "nameJa": "うずまきナルト",
+      "rarity": "NR",
+      "barcodeData": "NX2FYI46P",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-246",
+      "nameJa": "うちはサスケ",
+      "rarity": null,
+      "barcodeData": "NXHKBWIN2",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-248",
+      "nameJa": "うちはサスケ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-249",
+      "nameJa": "うちはサスケ",
+      "rarity": "SR",
+      "barcodeData": "NX32XVAX2",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-250",
+      "nameJa": "春野サクラ",
+      "rarity": "SR",
+      "barcodeData": "NXDA1MQWP",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-256",
+      "nameJa": "はたけカカシ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-258",
+      "nameJa": "自来也",
+      "rarity": "SR",
+      "barcodeData": "NXNXT4IU8",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-259",
+      "nameJa": "うずまきナルト",
+      "rarity": "NR",
+      "barcodeData": "NX4TGT1OF",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-263",
+      "nameJa": "日向ネジ",
+      "rarity": "SR",
+      "barcodeData": "NXQOB1XX6",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-264",
+      "nameJa": "日向ヒナタ",
+      "rarity": "SR",
+      "barcodeData": "NXPCFJG0F",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-270",
+      "nameJa": "初代火影",
+      "rarity": "NR",
+      "barcodeData": "NXAI2DP49",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-271",
+      "nameJa": "二代目火影",
+      "rarity": "NR",
+      "barcodeData": "NX64A29OA",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-272",
+      "nameJa": "三代目火影",
+      "rarity": "NR",
+      "barcodeData": "NX7U6OVDR",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-273",
+      "nameJa": "四代目火影",
+      "rarity": "NR",
+      "barcodeData": "NXFOAYWXA",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-276",
+      "nameJa": "綱手",
+      "rarity": "NR",
+      "barcodeData": "NX4Z0ZE4F",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-281",
+      "nameJa": "ペイン",
+      "rarity": "SR",
+      "barcodeData": "NXRPJN0ON",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-282",
+      "nameJa": "うちはイタチ",
+      "rarity": "NR",
+      "barcodeData": "NXLPD5002",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-283",
+      "nameJa": "うちはイタチ",
+      "rarity": null,
+      "barcodeData": "NXZ1ISFHQ",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-284",
+      "nameJa": "うちはイタチ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-289",
+      "nameJa": "サソリ",
+      "rarity": "SR",
+      "barcodeData": "NX3IW5ENN",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-290",
+      "nameJa": "大蛇丸",
+      "rarity": "SR",
+      "barcodeData": "NXV12Z7Y3",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-291",
+      "nameJa": "鬼灯水月",
+      "rarity": "SR",
+      "barcodeData": "NX22I0Z7X",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-296",
+      "nameJa": "うずまきナルト",
+      "rarity": "NR",
+      "barcodeData": "NXUD05VU7",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-297",
+      "nameJa": "うずまきナルト",
+      "rarity": "NR",
+      "barcodeData": "NXYT2OFW3",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-298",
+      "nameJa": "四代目火影",
+      "rarity": "WNR",
+      "barcodeData": "NXGOAL4PA",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-301",
+      "nameJa": "うちはサスケ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-302",
+      "nameJa": "うずまきナルト",
+      "rarity": "WNR",
+      "barcodeData": "NXY7GX6DN",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-303",
+      "nameJa": "春野サクラ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-304",
+      "nameJa": "サイ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-305",
+      "nameJa": "ヤマト",
+      "rarity": "SR",
+      "barcodeData": "NXRNEHKA9",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-307",
+      "nameJa": "はたけカカシ",
+      "rarity": "SR",
+      "barcodeData": "NXDM6H7TH",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-308",
+      "nameJa": "はたけカカシ",
+      "rarity": "NR",
+      "barcodeData": "NXVIY9RBO",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-310",
+      "nameJa": "自来也",
+      "rarity": "SR",
+      "barcodeData": "NXI0YAQFY",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-323",
+      "nameJa": "初代火影",
+      "rarity": "SR",
+      "barcodeData": "NXA085LF7",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-324",
+      "nameJa": "二代目火影",
+      "rarity": "SR",
+      "barcodeData": "NXFG8SJOC",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-325",
+      "nameJa": "三代目火影",
+      "rarity": "SR",
+      "barcodeData": "NXNWM8PM5",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-327",
+      "nameJa": "黄色い閃光",
+      "rarity": "NR",
+      "barcodeData": "NXRZNI5ZO",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-328",
+      "nameJa": "綱手",
+      "rarity": "SR",
+      "barcodeData": "NX7F8LEU2",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-330",
+      "nameJa": "ペイン",
+      "rarity": "SR",
+      "barcodeData": "NXJ7JUVXA",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-331",
+      "nameJa": "ペイン",
+      "rarity": "NR",
+      "barcodeData": "NX8XYDB3S",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-334",
+      "nameJa": "うちはイタチ",
+      "rarity": "NR",
+      "barcodeData": "NXUF39ASB",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-335",
+      "nameJa": "うちはサスケ",
+      "rarity": "WNR",
+      "barcodeData": "NXVHWXOJA",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-338",
+      "nameJa": "デイダラ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-340",
+      "nameJa": "トビ(暁服)",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-341",
+      "nameJa": "ゼツ",
+      "rarity": "SR",
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-CAM001",
+      "nameJa": "うずまきナルト",
+      "rarity": null,
+      "barcodeData": "NX0D4W4YB",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-CAM002",
+      "nameJa": "うちはサスケ",
+      "rarity": null,
+      "barcodeData": "NXO909DVG",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-CAM003",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NXY0O9K09",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-CAM004",
+      "nameJa": "黄色い閃光",
+      "rarity": null,
+      "barcodeData": "NXYQYHM75",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-MAC001",
+      "nameJa": "うずまきナルト",
+      "rarity": null,
+      "barcodeData": "NF0LB7400",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-MAC002",
+      "nameJa": "春野サクラ",
+      "rarity": null,
+      "barcodeData": "NF1KG5972",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-MAC003",
+      "nameJa": "うちはサスケ",
+      "rarity": null,
+      "barcodeData": "NR23N77E2",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NX-MAC004",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NF7BB1917",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXP-002",
+      "nameJa": "うちはサスケ",
+      "rarity": null,
+      "barcodeData": "NX7NN1J49",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXP-003",
+      "nameJa": "うずまきナルト",
+      "rarity": null,
+      "barcodeData": "NX7BM1V67",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXP-004",
+      "nameJa": "うちはイタチ",
+      "rarity": null,
+      "barcodeData": null,
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXP-005",
+      "nameJa": "うずまきナルト",
+      "rarity": null,
+      "barcodeData": "NXOUBSTJF",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXP-006",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NX2P7UZMY",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXP-007",
+      "nameJa": "うずまきナルト(オータムカップ参加賞)",
+      "rarity": null,
+      "barcodeData": "NXK1CH8DC",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXP-009",
+      "nameJa": "四代目火影(スーパーアシスト)",
+      "rarity": null,
+      "barcodeData": "NX41T8M62",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-001",
+      "nameJa": "うずまきナルト",
+      "rarity": null,
+      "barcodeData": "NX5AD6Y73",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-002",
+      "nameJa": "うちはサスケ",
+      "rarity": null,
+      "barcodeData": "NX5NW8D21",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-003",
+      "nameJa": "春野サクラ",
+      "rarity": null,
+      "barcodeData": "NX3TF0984",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-004",
+      "nameJa": "はたけカカシ",
+      "rarity": null,
+      "barcodeData": "NX4EZ9F27",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-005",
+      "nameJa": "奈良シカマル",
+      "rarity": null,
+      "barcodeData": "NX4PM5400",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-006",
+      "nameJa": "我愛羅",
+      "rarity": null,
+      "barcodeData": "NX1AW7Y04",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-007",
+      "nameJa": "うちはイタチ",
+      "rarity": null,
+      "barcodeData": "NX9VC0C43",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    },
+    {
+      "printed": "NXPF-008",
+      "nameJa": "デイダラ",
+      "rarity": null,
+      "barcodeData": "NX0AT5A29",
+      "cabinet": "nx",
+      "articleId": "387083772"
+    }
+  ]
+}

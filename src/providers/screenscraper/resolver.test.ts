@@ -209,8 +209,7 @@ describe("buildScreenScraperObservations", () => {
         externalIds: { screenscraper: "14825" },
       },
       {
-        sourceUrl:
-          "https://www.screenscraper.fr/gameinfos.php?gameid=14825",
+        sourceUrl: "https://www.screenscraper.fr/gameinfos.php?gameid=14825",
         hasBarcodeMatch: true,
         hasPlatformMatch: true,
       },
@@ -679,6 +678,16 @@ describe("hydrateScreenScraperLookupFromGameCache", () => {
         },
       ],
     };
+
+    const { getCachedScreenScraperGame } = await import("./cache");
+    const game = await getCachedScreenScraperGame(16056);
+    if (!game) {
+      // Disk cache is optional in CI / fresh checkouts — passthrough only.
+      await expect(
+        hydrateScreenScraperLookupFromGameCache(lookup),
+      ).resolves.toBe(lookup);
+      return;
+    }
 
     const merged = await hydrateScreenScraperLookupFromGameCache(lookup);
 

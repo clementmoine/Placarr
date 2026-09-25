@@ -223,10 +223,7 @@ export function parseSmartoysSearchHits(html: string): SmartoysSearchHit[] {
   return hits;
 }
 
-function smartoysHitRankScore(
-  hit: SmartoysSearchHit,
-  names: string[],
-): number {
+function smartoysHitRankScore(hit: SmartoysSearchHit, names: string[]): number {
   const titles = [hit.title, titleFromSmartoysProductUrl(hit.url)]
     .map((title) => title.trim())
     .filter(Boolean);

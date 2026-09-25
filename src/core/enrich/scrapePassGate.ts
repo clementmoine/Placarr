@@ -1,5 +1,6 @@
 import { PROVIDER_MODULES, PROVIDERS } from "@/core/catalog/catalog";
 import { canonicalProviderIdForSource } from "@/core/catalog/sourceTraits";
+import { parsePrintKey } from "@/core/identify/printKey";
 import type { Capability, MediaType } from "@/types/providerRegistry";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -29,12 +30,38 @@ export function scrapeProviderIdsFromStoredSources(input: {
   fieldEvidence?: Array<{ source?: string | null }> | null;
   attachments?: Array<{ source?: string | null }> | null;
 }): string[] {
+  return ficheProviderIdsFromStoredSources(input, "scrape");
+}
+
+/**
+ * Non-scrape (API / static) providers already on the fiche — refresh should
+ * re-query them even when Tier 0+1 capabilities look "complete" (e.g. LorcanaJSON
+ * after a multi-lang aliases gap-fill).
+ */
+export function nonScrapeProviderIdsFromStoredSources(input: {
+  facts?: Array<{ source?: string | null }> | null;
+  fieldEvidence?: Array<{ source?: string | null }> | null;
+  attachments?: Array<{ source?: string | null }> | null;
+}): string[] {
+  return ficheProviderIdsFromStoredSources(input, "non-scrape");
+}
+
+function ficheProviderIdsFromStoredSources(
+  input: {
+    facts?: Array<{ source?: string | null }> | null;
+    fieldEvidence?: Array<{ source?: string | null }> | null;
+    attachments?: Array<{ source?: string | null }> | null;
+  },
+  kind: "scrape" | "non-scrape",
+): string[] {
   const ids = new Set<string>();
   const consider = (source?: string | null) => {
     const id = canonicalProviderIdForSource(source);
     if (!id) return;
     const provider = PROVIDERS.find((entry) => entry.id === id);
-    if (provider?.auth.kind === "scrape") ids.add(provider.id);
+    if (!provider) return;
+    const isScrape = provider.auth.kind === "scrape";
+    if (kind === "scrape" ? isScrape : !isScrape) ids.add(provider.id);
   };
 
   for (const fact of input.facts ?? []) consider(fact.source);
@@ -65,22 +92,22 @@ export function externalIdsFromStoredSources(input: {
   const considerUrl = (url?: string | null, sourceHint?: string | null) => {
     if (!url?.trim()) return;
     const hintId = canonicalProviderIdForSource(sourceHint);
-    for (const module of PROVIDER_MODULES) {
-      if (!module.parseMetadataRecordIdFromUrl) continue;
-      if (hintId && module.info.id !== hintId) continue;
-      const recordId = module.parseMetadataRecordIdFromUrl(url.trim());
+    for (const providerModule of PROVIDER_MODULES) {
+      if (!providerModule.parseMetadataRecordIdFromUrl) continue;
+      if (hintId && providerModule.info.id !== hintId) continue;
+      const recordId = providerModule.parseMetadataRecordIdFromUrl(url.trim());
       if (recordId) {
-        ids[module.info.id] = recordId;
+        ids[providerModule.info.id] = recordId;
         return;
       }
     }
     // No source hint: try every parser (host-scoped inside each module).
     if (hintId) return;
-    for (const module of PROVIDER_MODULES) {
-      if (!module.parseMetadataRecordIdFromUrl) continue;
-      const recordId = module.parseMetadataRecordIdFromUrl(url.trim());
+    for (const providerModule of PROVIDER_MODULES) {
+      if (!providerModule.parseMetadataRecordIdFromUrl) continue;
+      const recordId = providerModule.parseMetadataRecordIdFromUrl(url.trim());
       if (recordId) {
-        ids[module.info.id] = recordId;
+        ids[providerModule.info.id] = recordId;
         return;
       }
     }
@@ -133,16 +160,16 @@ export function providerRecordUrlsFromStoredSources(input: {
     const trimmed = url.trim();
     const hintId = canonicalProviderIdForSource(sourceHint);
 
-    const tryParse = (module: (typeof PROVIDER_MODULES)[number]) => {
-      if (!module.parseMetadataRecordIdFromUrl) return false;
-      if (!module.parseMetadataRecordIdFromUrl(trimmed)) return false;
-      urls[module.info.id] = trimmed;
+    const tryParse = (providerModule: (typeof PROVIDER_MODULES)[number]) => {
+      if (!providerModule.parseMetadataRecordIdFromUrl) return false;
+      if (!providerModule.parseMetadataRecordIdFromUrl(trimmed)) return false;
+      urls[providerModule.info.id] = trimmed;
       return true;
     };
 
     if (hintId) {
       const hinted = PROVIDER_MODULES.find(
-        (module) => module.info.id === hintId,
+        (providerModule) => providerModule.info.id === hintId,
       );
       if (hinted && tryParse(hinted)) return;
       const provider = PROVIDERS.find((entry) => entry.id === hintId);
@@ -162,8 +189,8 @@ export function providerRecordUrlsFromStoredSources(input: {
       return;
     }
 
-    for (const module of PROVIDER_MODULES) {
-      if (tryParse(module)) return;
+    for (const providerModule of PROVIDER_MODULES) {
+      if (tryParse(providerModule)) return;
     }
   };
 
@@ -254,17 +281,39 @@ export function metadataPassCapabilitiesIncomplete(options: {
 }
 
 /**
+ * Disk corpora for a print's game (`supplyMode: local_catalog` + `printGames`).
+ * Refresh must always re-hit these: a cover already on the fiche does not mean
+ * the pack face is still the preferred art on disk (`face.json` moves).
+ */
+export function localCatalogProviderIdsForPrintKey(
+  printKey?: string | null,
+): string[] {
+  const game = parsePrintKey(printKey)?.game;
+  if (!game) return [];
+  return PROVIDER_MODULES.filter(
+    (mdl) =>
+      mdl.info.supplyMode === "local_catalog" &&
+      (mdl.printGames ?? []).some(
+        (printGame) => printGame.toLowerCase() === game,
+      ),
+  ).map((mdl) => mdl.info.id);
+}
+
+/**
  * Non-scrape (Tier 0+1 API/local) provider ids to resolve.
  *
  * - Capability gaps → full candidate set.
- * - Already complete from seed/prior results → **only** fiche-pinned non-scrape
- *   ids ∩ candidates (refresh known API pins; never re-swarm IGDB/SS/…).
+ * - Already complete from seed/prior results → fiche-pinned non-scrape ids ∩
+ *   candidates, **plus** local_catalog packs for the printKey game (cheap disk
+ *   re-read — never skip catalogue art updates).
  */
 export function apiProvidersForMetadataPass(options: {
   type: MediaType;
   activeResults: MetadataResult[];
   candidateApiProviderIds: readonly string[];
   pinnedNonScrapeProviderIds?: readonly string[];
+  /** When set, local_catalog providers for that game stay in the pass. */
+  printKey?: string | null;
   hasCapability: MetadataCapabilityProbe;
 }): string[] {
   const candidates = options.candidateApiProviderIds;
@@ -274,7 +323,10 @@ export function apiProvidersForMetadataPass(options: {
     return [...candidates];
   }
 
-  const pinned = new Set(options.pinnedNonScrapeProviderIds ?? []);
+  const pinned = new Set([
+    ...(options.pinnedNonScrapeProviderIds ?? []),
+    ...localCatalogProviderIdsForPrintKey(options.printKey),
+  ]);
   if (pinned.size === 0) return [];
 
   return candidates.filter((id) => pinned.has(id));
@@ -296,6 +348,8 @@ export function scrapeProvidersForMetadataPass(options: {
   existingScrapeProviderIds?: readonly string[];
   candidateScrapeProviderIds: readonly string[];
   hasCapability: MetadataCapabilityProbe;
+  /** Stored fiche already complete (see `isLightRefreshEligible`). */
+  lightRefresh?: boolean;
 }): string[] {
   const candidates = options.candidateScrapeProviderIds;
   if (candidates.length === 0) return [];
@@ -303,6 +357,10 @@ export function scrapeProvidersForMetadataPass(options: {
   if (metadataPassCapabilitiesIncomplete(options)) {
     return [...candidates];
   }
+
+  // Nothing left to seek and nothing stale — not even the pinned fiches are
+  // worth a round-trip on this pass.
+  if (options.lightRefresh) return [];
 
   const pinned = new Set(options.existingScrapeProviderIds ?? []);
   if (pinned.size === 0) return [];
@@ -320,6 +378,7 @@ export function shouldRunScrapeMetadataPass(options: {
   existingScrapeProviderIds?: readonly string[];
   candidateScrapeProviderIds: readonly string[];
   hasCapability: MetadataCapabilityProbe;
+  lightRefresh?: boolean;
 }): boolean {
   return scrapeProvidersForMetadataPass(options).length > 0;
 }

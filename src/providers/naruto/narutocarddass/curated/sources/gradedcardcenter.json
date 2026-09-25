@@ -1,0 +1,35 @@
+{
+  "source": "gradedcardcenter.com — user paste 2026-08-16",
+  "observed": "2026-08-16",
+  "note": "One pasted auction: JP Carddass 巻ノ五 booster, face + back. Same game as FR/IT Carddass, not Bandai CCG and not FR Série 5. Official carddas.com 5th.shtml is Shippuden 第五幕 (2008, 8 cards) — a later line; do not file this pack there. GCC « Unlimited » is marketplace jargon, not printed. Only this item URL — do not crawl /item/. Front packshot is the catalogue image; verso stays staging (JAN + NA-B5). JAN is attested on the wrapper, not wired to barcode identify.",
+  "ingestCatalog": false,
+  "products": [
+    {
+      "slug": "booster-vol5-jp",
+      "setCode": "maki5",
+      "kind": "booster",
+      "lang": "JA",
+      "title": "Booster 巻ノ五 — 実力伯仲！予選死闘編",
+      "printedRef": "NA-B5",
+      "year": 2004,
+      "cardsPerPack": 6,
+      "listedTypes": 70,
+      "barcode": "4543112200365",
+      "url": "https://gradedcardcenter.com/item/f96806f8-6e60-4dcd-9acd-8592855db527",
+      "recto": {
+        "id": "item_recto_MBFCqKzG6LDJwmCWOP7Un",
+        "url": "https://cdn.gradedcardcenter.com/item_recto_MBFCqKzG6LDJwmCWOP7Un",
+        "staging": "staging/gradedcardcenter/booster-vol5-jp.jpg",
+        "pixels": { "width": 756, "height": 1621 }
+      },
+      "verso": {
+        "id": "item_verso_cmXWHyO66GQ69MEEJz399",
+        "url": "https://cdn.gradedcardcenter.com/item_verso_cmXWHyO66GQ69MEEJz399",
+        "staging": "staging/gradedcardcenter/booster-vol5-jp-back.jpg",
+        "pixels": { "width": 770, "height": 1624 }
+      },
+      "staging": "staging/gradedcardcenter/booster-vol5-jp.jpg",
+      "ingest": true
+    }
+  ]
+}

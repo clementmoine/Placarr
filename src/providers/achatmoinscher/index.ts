@@ -1,8 +1,12 @@
 import { normalizeProductBarcode } from "@/core/identify/normalize";
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
-import { marketplaceContributions, typedOnlyContributions } from "@/core/identify/lookup/sourceContribution";
+import {
+  marketplaceContributions,
+  typedOnlyContributions,
+} from "@/core/identify/lookup/sourceContribution";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import {
   makeObservationUsage,
@@ -206,7 +210,7 @@ function buildAchatMoinsCherObservations(
   return observations;
 }
 
-export const achatmoinscherModule: ProviderModule = {
+export const achatmoinscherModule = defineProvider({
   info: {
     id: "achatmoinscher",
     label: "AchatMoinsCher",
@@ -217,6 +221,7 @@ export const achatmoinscherModule: ProviderModule = {
     // would scrape AchatMoinsCher even when title + cover are already present.
     metadataCapabilities: ["identify", "cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isSecondary: true,
@@ -353,4 +358,4 @@ export const achatmoinscherModule: ProviderModule = {
     ]);
   },
   refreshBarcodePriceOffers: refreshAchatMoinsCherOffers,
-};
+});

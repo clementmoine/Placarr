@@ -10,20 +10,15 @@ import {
   rankCoverGalleryAttachments,
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { refineCatalogDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
-import {
-  aliasesExcludingTitle,
-  collectMergedSearchAliases,
-  promoteTitleKeepingAliases,
-} from "@/core/enrich/aliases";
+import { promoteTitleKeepingAliases } from "@/core/enrich/aliases";
+import { collectMergedSearchAliases } from "@/core/enrich/aliasesSearch";
 import {
   dedupeFieldEvidence,
   dedupeFacts,
-  metadataFieldEvidence,
   isTimeToBeatFamilyFact,
 } from "@/core/enrich/facts";
 import {
   dedupeProviderExternalLinkFacts,
-  externalLinkFactsFromFieldEvidence,
   appendMissingProviderExternalLinkFacts,
 } from "@/core/enrich/providerExternalLinks";
 import {
@@ -39,6 +34,7 @@ import {
   requestedTitleCoversCurrentTitle,
   scoreMetadataDisplayTitle,
 } from "@/core/enrich/titles/displayScore";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import {
   pickBestLocalizedDescription,
   pickBestRegionalTitle,
@@ -48,11 +44,10 @@ import {
   pickDiscoveredBarcode,
 } from "@/core/identify/normalize";
 import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
-import { listingLooksLikeMerchAccessory } from "@/core/identify/titleUtils";
 import { isRetailerCoverUrlAlignedWithTitle } from "@/core/commerce/retailer/coverUrlMatch";
 import { isHowLongToBeatFactSource } from "@/core/catalog/sourceTraits";
-import { AttachmentType } from "@prisma/client";
-import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { AttachmentType } from "@/generated/prisma/browser";
+import type { MetadataResult } from "@/types/metadataProvider";
 import {
   orderResultsByObservationStrength,
   pickBestMetadataFactsFromObservations,
@@ -70,6 +65,7 @@ export {
   pickBestMetadataObservationTitle,
   pickBestMetadataObservationImageUrl,
 } from "@/core/enrich/mergeObservationRanking";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 function dedupePeople(
   people: Array<{ name: string; imageUrl?: string | null }>,
@@ -136,13 +132,29 @@ export function preferRequestedDisplayTitle(
     return metadata;
   }
 
+  // Print shelves: the "requested" string is often a collector code (`TFC#001`),
+  // not a display title. A catalog printKey means the provider hit the right
+  // printing — keep its name (do not overwrite Ariel with TFC#001).
   if (
-    !isMetadataTitleAligned({ title: currentTitle }, [requestedTitle], 0.58, {
-      shelfType: options?.shelfType,
-    })
+    usesPrintSearch(options?.shelfType) ||
+    Boolean(metadata.externalIds?.printKey?.trim())
+  ) {
+    return metadata;
+  }
+
+  if (
+    !isMetadataTitleAligned(
+      { title: currentTitle },
+      [requestedTitle],
+      METADATA_TITLE_ALIGN_FLOOR,
+      {
+        shelfType: options?.shelfType,
+      },
+    )
   ) {
     // Provider hit a different product (e.g. Pokémon OLED for a Zelda OLED
-    // request). Keep the catalog name, drop covers that belong to the wrong SKU.
+    // request). Prefer the collector's requested name and drop covers that
+    // belong to the wrong SKU.
     return stripCoversMisalignedWithRequestedTitle(
       {
         ...metadata,
@@ -185,7 +197,7 @@ export function preferRequestedDisplayTitle(
 function metadataHasCover(metadata: MetadataResult): boolean {
   return Boolean(
     metadata.imageUrl ||
-      metadata.attachments?.some((attachment) => attachment.type === "cover"),
+    metadata.attachments?.some((attachment) => attachment.type === "cover"),
   );
 }
 
@@ -196,6 +208,15 @@ function providerMetadataAlignsForGallery(
 ): boolean {
   const requested = requestedTitle?.trim();
   if (!requested) return true;
+
+  // Print lookup codes (`TFC#002`) do not align with catalog titles; the cover
+  // still belongs to the resolved printing when printKey is present.
+  if (
+    usesPrintSearch(shelfType) ||
+    Boolean(metadata.externalIds?.printKey?.trim())
+  ) {
+    return true;
+  }
 
   const catalogTitle = metadata.title?.trim();
   if (!catalogTitle) return false;
@@ -210,9 +231,14 @@ function providerMetadataAlignsForGallery(
   // Pass shelfType so hardware residual accepts finish synonyms
   // ("Slim Rose" ↔ "System [Pink]") the same way merge title gates do.
   if (
-    isMetadataTitleAligned(metadata, alignmentNames, 0.58, {
-      shelfType,
-    })
+    isMetadataTitleAligned(
+      metadata,
+      alignmentNames,
+      METADATA_TITLE_ALIGN_FLOOR,
+      {
+        shelfType,
+      },
+    )
   ) {
     return true;
   }
@@ -342,7 +368,7 @@ export function mergeMetadata(
             !isMetadataTitleAligned(
               { title: r.metadata.title },
               [options.requestedTitle!.trim()],
-              0.58,
+              METADATA_TITLE_ALIGN_FLOOR,
               { shelfType: mediaType },
             )
           ) {

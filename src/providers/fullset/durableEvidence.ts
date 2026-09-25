@@ -95,9 +95,6 @@ export async function promoteFullSetSearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[FullSet] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[FullSet] Failed to promote durable search evidence:", error);
   }
 }

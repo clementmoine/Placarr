@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "pack": "pokemon",
+  "updatedAt": "2026-08-27",
+  "notes": "Ère Scarlet & Violet (SV+) : 10 cartes jouables + Energy + code. Display 36. Pré-SV / 151 / Prismatic = autres ossatures — bySet à enrichir. Taux = moyennes community (pas TPC officiel).",
+  "default": {
+    "source": "https://pullmarket.io/learn/pokemon-pack-pull-rates + TCGplayer / community SV-era averages",
+    "verifiedAt": "2026-08-27",
+    "notes": "IR ~1/11, SIR ~1/60 (bande 32–86), Hyper ~1/100, Double Rare ~1/5, Ultra ~1/9. SIR très variable selon le set.",
+    "cardsPerPack": 10,
+    "packsPerDisplay": 36,
+    "displaysPerCase": null,
+    "slots": [
+      {
+        "id": "common",
+        "count": 4,
+        "kind": "dedicated",
+        "rarities": ["Common", "Commune"]
+      },
+      {
+        "id": "uncommon",
+        "count": 3,
+        "kind": "dedicated",
+        "rarities": ["Uncommon", "Peu Commune"]
+      },
+      {
+        "id": "reverse",
+        "count": 2,
+        "kind": "shared",
+        "rarities": [
+          "Rare",
+          "Illustration rare",
+          "Special illustration rare",
+          "ACE SPEC Rare"
+        ]
+      },
+      {
+        "id": "rare_holo",
+        "count": 1,
+        "kind": "shared",
+        "rarities": [
+          "Rare",
+          "Double rare",
+          "Ultra Rare",
+          "Hyper rare",
+          "Holo Rare"
+        ]
+      }
+    ],
+    "rarityHits": {
+      "Double rare": {
+        "packsPerHit": 5,
+        "displaysPerHit": 0.14,
+        "confidence": "community",
+        "aliases": ["Double Rare", "DoubleRare", "Rare Holo EX"]
+      },
+      "Ultra Rare": {
+        "packsPerHit": 9,
+        "displaysPerHit": 0.25,
+        "confidence": "community",
+        "aliases": ["RareUltra", "Ultra rare"]
+      },
+      "Illustration rare": {
+        "packsPerHit": 11,
+        "displaysPerHit": 0.3,
+        "confidence": "community",
+        "source": "SV-era ~1 IR / 10–12 packs",
+        "aliases": ["Illustration Rare", "IllustrationRare"]
+      },
+      "Special illustration rare": {
+        "packsPerHit": 60,
+        "displaysPerHit": 1.67,
+        "confidence": "community",
+        "source": "SV-era bande ~1/32–1/86 ; médiane indicative 60",
+        "notes": "Très variable (Prismatic vs Surging Sparks). Prefer singles pour une SIR précise.",
+        "aliases": [
+          "Special Illustration Rare",
+          "SpecialIllustrationRare",
+          "Illustration spéciale rare",
+          "Secret Illustration Rare"
+        ]
+      },
+      "Hyper rare": {
+        "packsPerHit": 100,
+        "displaysPerHit": 2.8,
+        "confidence": "community",
+        "aliases": ["Hyper Rare", "HyperRare", "Rare Secret", "Secret Rare"]
+      },
+      "ACE SPEC Rare": {
+        "packsPerHit": 11,
+        "confidence": "community",
+        "notes": "Sets qui en contiennent (~1/11).",
+        "aliases": ["ACE SPEC", "Ace", "HIGH-TECG rare"]
+      }
+    }
+  }
+}

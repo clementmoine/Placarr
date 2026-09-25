@@ -38,7 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { hasGameMediaGalleryAttachment } from "@/core/enrich/galleries";
+import { hasGameMediaGalleryAttachment } from "@/core/enrich/media/galleries";
 
 type RefreshableType =
   | "games"
@@ -50,12 +50,7 @@ type RefreshableType =
   | "tcg"
   | "toys";
 type RefreshState =
-  | "idle"
-  | "queued"
-  | "running"
-  | "success"
-  | "empty"
-  | "error";
+  "idle" | "queued" | "running" | "success" | "empty" | "error";
 
 interface AdminRefreshItem {
   id: string;

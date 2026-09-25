@@ -1,0 +1,106 @@
+{
+  "source": "narutocards.ca — Bandai CCG checklists (observed 2026-08-17)",
+  "url": "https://www.narutocards.ca/",
+  "observed": "2026-08-17",
+  "ingest": "titles",
+  "line": "en-ccg",
+  "officialCdn": false,
+  "note": "Fan catalog (Bandai CCG + Kayou). Titles only — no faces, no Kayou, no unofficial set 29 (Band of the Hawk / Shinobi's Dream). N-US / J-US / M-US stay prefix nus/jus/mus (`nus0122`), never collapsed onto n122. Fill after official Bandai + Goat. A TP/tin row is not enough to mint a new print key (N-1715…): overlay if the print already exists. Presence on a fan checklist or in a fanset dump is not proof the card never existed.",
+  "skip": ["kayou", "bandai-ccg-29", "shinobis-dream"],
+  "sets": [
+    { "slug": "bandai-ccg-01", "setCode": "s1", "title": "The Path to Hokage" },
+    { "slug": "bandai-ccg-02", "setCode": "s2", "title": "Coils of the Snake" },
+    { "slug": "bandai-ccg-03", "setCode": "s3", "title": "Curse of the Sand" },
+    {
+      "slug": "bandai-ccg-04",
+      "setCode": "s4",
+      "title": "Revenge and Rebirth"
+    },
+    { "slug": "bandai-ccg-05", "setCode": "s5", "title": "Dream Legacy" },
+    {
+      "slug": "bandai-ccg-06",
+      "setCode": "s6",
+      "title": "Eternal Rivalry",
+      "not": "carddass-it-s6"
+    },
+    { "slug": "bandai-ccg-07", "setCode": "s7", "title": "Quest for Power" },
+    { "slug": "bandai-ccg-08", "setCode": "s8", "title": "Battle of Destiny" },
+    { "slug": "bandai-ccg-09", "setCode": "s9", "title": "The Chosen" },
+    {
+      "slug": "bandai-ccg-10",
+      "setCode": "s10",
+      "title": "Lineage of the Legends"
+    },
+    { "slug": "bandai-ccg-11", "setCode": "s11", "title": "Approaching Wind" },
+    { "slug": "bandai-ccg-12", "setCode": "s12", "title": "A New Chronicle" },
+    { "slug": "bandai-ccg-13", "setCode": "s13", "title": "Fateful Reunion" },
+    { "slug": "bandai-ccg-14", "setCode": "s14", "title": "Emerging Alliance" },
+    { "slug": "bandai-ccg-15", "setCode": "s15", "title": "Foretold Prophecy" },
+    { "slug": "bandai-ccg-16", "setCode": "s16", "title": "Broken Promises" },
+    { "slug": "bandai-ccg-17", "setCode": "s17", "title": "Will of Fire" },
+    {
+      "slug": "bandai-ccg-18",
+      "setCode": "s18",
+      "title": "Fangs of the Snake"
+    },
+    { "slug": "bandai-ccg-19", "setCode": "s19", "title": "Path of Pain" },
+    {
+      "slug": "bandai-ccg-20",
+      "setCode": "s20",
+      "title": "Tales of the Gallant Sage"
+    },
+    { "slug": "bandai-ccg-21", "setCode": "s21", "title": "Shattered Truth" },
+    { "slug": "bandai-ccg-22", "setCode": "s22", "title": "Weapons of War" },
+    { "slug": "bandai-ccg-23", "setCode": "s23", "title": "Invasion" },
+    { "slug": "bandai-ccg-24", "setCode": "s24", "title": "Sage's Legacy" },
+    { "slug": "bandai-ccg-25", "setCode": "s25", "title": "Kage Summit" },
+    { "slug": "bandai-ccg-26", "setCode": "s26", "title": "Avenger's Wrath" },
+    { "slug": "bandai-ccg-27", "setCode": "s27", "title": "Hero's Ascension" },
+    {
+      "slug": "bandai-ccg-28",
+      "setCode": "s28",
+      "title": "Ultimate Ninja Storm 3"
+    },
+    {
+      "slug": "bandai-ccg-tp1",
+      "setCode": "tp1",
+      "title": "Tournament Pack 1"
+    },
+    {
+      "slug": "bandai-ccg-tp2",
+      "setCode": "tp2",
+      "title": "Tournament Pack 2"
+    },
+    {
+      "slug": "bandai-ccg-tp3",
+      "setCode": "tp3",
+      "title": "Tournament Pack 3"
+    },
+    {
+      "slug": "bandai-ccg-tp4",
+      "setCode": "tp4",
+      "title": "Tournament Pack 4"
+    },
+    { "slug": "bandai-ccg-tin1", "setCode": "tin1", "title": "Rebirth Tin" },
+    {
+      "slug": "bandai-ccg-tin2",
+      "setCode": "tin2",
+      "title": "Ultimate Battle Tin"
+    },
+    {
+      "slug": "bandai-ccg-tin3",
+      "setCode": "tin3",
+      "title": "Untouchables Tin"
+    },
+    {
+      "slug": "bandai-ccg-tin4",
+      "setCode": "tin4",
+      "title": "Fierce Ambitions Tin"
+    },
+    {
+      "slug": "bandai-ccg-promo",
+      "setCode": "promo",
+      "title": "Naruto CCG Promos"
+    }
+  ]
+}

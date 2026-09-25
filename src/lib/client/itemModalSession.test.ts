@@ -18,11 +18,14 @@ describe("itemModalSession", () => {
   });
 
   it("builds a stable edit session key that ignores metadata refresh stamps", () => {
+    type ModalItem = NonNullable<
+      Parameters<typeof itemModalSessionKey>[0]["item"]
+    >;
     const item = {
       id: "item-1",
       metadataId: "meta-1",
       metadata: { lastFetched: new Date("2026-07-05T12:00:00.000Z") },
-    } as never;
+    } as unknown as ModalItem;
 
     expect(
       itemModalSessionKey({
@@ -40,7 +43,7 @@ describe("itemModalSession", () => {
         item: {
           ...item,
           metadata: { lastFetched: new Date("2026-07-05T13:00:00.000Z") },
-        } as never,
+        } as unknown as ModalItem,
         shelfId: "shelf-1",
       }),
     ).toBe("edit:item-1");
@@ -57,6 +60,8 @@ describe("itemModalSession", () => {
         storedName: "0721450083770",
         barcode: "0721450083770",
         condition: "used",
+        loanedTo: "Alice",
+        loanedAt: new Date(2026, 8, 1),
         metadata: {
           title: "Black Stories",
           aliases: "Black Stories",
@@ -66,9 +71,33 @@ describe("itemModalSession", () => {
     });
 
     expect(init.formValues.name).toBe("Black Stories");
+    expect(init.formValues.loanedTo).toBe("Alice");
+    expect(init.formValues.loanedAt).toBe("2026-09-01");
     expect(init.suggestions).toContain("Black Stories");
     expect(init.fetchedMetadata?.title).toBe("Black Stories");
     expect(init.asyncInit).toBeNull();
+  });
+
+  it("queues printKey-scoped preview for edit sessions so Images can list catalogue faces", () => {
+    const init = buildItemModalSessionInit({
+      shelfId: "shelf-naruto",
+      activeShelfForMedia: { type: "tcg", name: "Naruto" },
+      item: {
+        id: "item-1",
+        shelfId: "shelf-naruto",
+        name: "Haku",
+        storedName: "Haku",
+        printKey: "naruto:ni-0017",
+        condition: "used",
+        metadata: {
+          title: "Haku",
+          imageUrl:
+            "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+        },
+      } as never,
+    });
+
+    expect(init.asyncInit).toEqual({ kind: "preview", name: "Haku" });
   });
 
   it("queues barcode lookup for prefilled scan sessions", () => {

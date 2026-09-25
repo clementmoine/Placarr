@@ -1,0 +1,101 @@
+{
+  "source": "coleka.com deals ajax (naruto/carddass)",
+  "sourceId": "coleka-deals",
+  "packId": "naruto/carddass",
+  "fetchedAt": "2026-09-24T20:37:25.994Z",
+  "rubriques": [
+    {
+      "id": "4108",
+      "label": "Carddass FR s1",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 184
+    },
+    {
+      "id": "4109",
+      "label": "Carddass FR s2",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 156
+    },
+    {
+      "id": "4110",
+      "label": "Carddass FR s3",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 128
+    },
+    {
+      "id": "4111",
+      "label": "Carddass FR s4",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 126
+    },
+    {
+      "id": "4112",
+      "label": "Carddass FR s5",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 147
+    },
+    {
+      "id": "41388",
+      "label": "Carddass S6 IT",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 135
+    },
+    {
+      "id": "15466",
+      "label": "Sage's Legacy s24 FR",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 120
+    },
+    {
+      "id": "16649",
+      "label": "Storm 3 s28 FR",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": null
+    },
+    {
+      "id": "16963",
+      "label": "Rampage Tornado deck",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 33
+    },
+    {
+      "id": "38199",
+      "label": "US EN promos",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": 101
+    },
+    {
+      "id": "36959",
+      "label": "Hero's Ascension s27 EN",
+      "offerCount": 0,
+      "uniqueItems": 0,
+      "withQuotation": 0,
+      "listedCount": null
+    }
+  ],
+  "offerCount": 0,
+  "uniqueItems": 0,
+  "withQuotation": 0,
+  "withPrintKey": 0,
+  "cards": []
+}

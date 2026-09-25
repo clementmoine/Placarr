@@ -15,6 +15,7 @@ import { bdphileModule } from "@/providers/bdphile";
 import { bdfugueModule } from "@/providers/bdfugue";
 import { bggModule } from "@/providers/bgg";
 import { booknodeModule } from "@/providers/booknode";
+import { bricksetModule } from "@/providers/brickset";
 import { bedethequeModule } from "@/providers/bedetheque";
 import { canalbdModule } from "@/providers/canalbd";
 import { chocobonplanModule } from "@/providers/chocobonplan";
@@ -24,9 +25,19 @@ import { coverprojectModule } from "@/providers/coverproject";
 import { decitreModule } from "@/providers/decitre";
 import { deezerModule } from "@/providers/deezer";
 import { discogsModule } from "@/providers/discogs";
-import { ebayModule } from "@/providers/ebay";
+import { ebayModule } from "@/providers/commerce/ebay";
 import { freakxyModule } from "@/providers/freakxy";
 import { fullsetModule } from "@/providers/fullset";
+import { lorcanajsonModule } from "@/providers/lorcana/lorcanajson";
+import { lorcanaggModule } from "@/providers/lorcana/lorcanagg";
+import { lormarketModule } from "@/providers/lorcana/lormarket";
+import { dbsmarketModule } from "@/providers/dragonball/dbscards";
+import { leclercModules } from "@/providers/leclerc";
+import { lorcastModule } from "@/providers/lorcana/lorcast";
+import { lorcanatcgModule } from "@/providers/lorcana/lorcanatcg";
+import { tcgdexModule } from "@/providers/pokemon/tcgdex";
+import { pkmmarketModule } from "@/providers/pokemon/pkmmarket";
+import { pokemontcgliveModule } from "@/providers/pokemon/live";
 import { furetModule } from "@/providers/furet";
 import { geedieModule } from "@/providers/geedie";
 import { gibertModule } from "@/providers/gibert";
@@ -35,9 +46,30 @@ import { howlongtobeatModule } from "@/providers/howlongtobeat";
 import { icollectModule } from "@/providers/icollect";
 import { igdbModule } from "@/providers/igdb";
 import { izneoModule } from "@/providers/izneo";
+import { jikanModule } from "@/providers/jikan";
 import { ledenicheurModule } from "@/providers/ledenicheur";
+import { nautiljonModule } from "@/providers/nautiljon";
 import { musicbrainzModule } from "@/providers/musicbrainz";
 import { nointroModule } from "@/providers/nointro";
+import { narutocarddassModule } from "@/providers/naruto/narutocarddass";
+import { narutoshippudenModule } from "@/providers/naruto/narutoshippuden";
+import { narutoranksModule } from "@/providers/naruto/narutoranks";
+import { narutoultraModule } from "@/providers/naruto/narutoultra";
+import { narutomythosModule } from "@/providers/naruto/narutomythos";
+import { narutokayouModule } from "@/providers/naruto/narutokayou";
+import { narutodatacarddassModule } from "@/providers/naruto/narutodatacarddass";
+import { onepieceModule } from "@/providers/onepiece";
+import { opemarketModule } from "@/providers/onepiece/opemarket";
+import { yugiohModule } from "@/providers/yugioh";
+import { ygomarketModule } from "@/providers/yugioh/ygomarket";
+import { mtgModule } from "@/providers/mtg";
+import { mtgmarketModule } from "@/providers/mtg/mtgmarket";
+import { dbscgModule } from "@/providers/dragonball/dbscg";
+import { dbsfwModule } from "@/providers/dragonball/dbsfw";
+import { dbslamincardsModule } from "@/providers/dragonball/dbslamincards";
+import { dbsjccModule } from "@/providers/dragonball/dbsjcc";
+import { dbhModule } from "@/providers/dragonball/dbh";
+import { bleachscbModule } from "@/providers/bleach/bleachscb";
 import { omdbModule } from "@/providers/omdb";
 import { googlebooksModule } from "@/providers/googlebooks";
 import { openlibraryModule } from "@/providers/openlibrary";
@@ -50,8 +82,9 @@ import { playinModule } from "@/providers/playin";
 import { PRESTASHOP_RETAILER_MODULES } from "@/providers/prestashop";
 import { SHOPIFY_RETAILER_MODULES } from "@/providers/shopify";
 import { wikidataModule } from "@/providers/wikidata";
-import { pricechartingModule } from "@/providers/pricecharting";
+import { pricechartingModule } from "@/providers/commerce/pricecharting";
 import { rawgModule } from "@/providers/rawg";
+import { rebrickableModule } from "@/providers/rebrickable";
 import { scandexModule } from "@/providers/scandex";
 import { screenscraperModule } from "@/providers/screenscraper";
 import { senscritiqueModule } from "@/providers/senscritique";
@@ -86,10 +119,14 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   openlibraryModule,
   googlebooksModule,
   booknodeModule,
+  bricksetModule,
+  rebrickableModule,
   babelioModule,
   planetebdModule,
   vivlioModule,
   izneoModule,
+  nautiljonModule,
+  jikanModule,
   bedethequeModule,
   bdovoreModule,
   bdphileModule,
@@ -104,6 +141,35 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   playinModule,
   senscritiqueModule,
   fullsetModule,
+  lorcanajsonModule,
+  lorcanatcgModule,
+  narutocarddassModule,
+  narutoshippudenModule,
+  narutoranksModule,
+  narutoultraModule,
+  narutomythosModule,
+  narutokayouModule,
+  narutodatacarddassModule,
+  onepieceModule,
+  yugiohModule,
+  mtgModule,
+  dbscgModule,
+  dbsfwModule,
+  dbslamincardsModule,
+  dbsjccModule,
+  dbhModule,
+  bleachscbModule,
+  dbsmarketModule,
+  ygomarketModule,
+  mtgmarketModule,
+  opemarketModule,
+  pkmmarketModule,
+  lormarketModule,
+  ...leclercModules,
+  lorcanaggModule,
+  lorcastModule,
+  tcgdexModule,
+  pokemontcgliveModule,
   ...PRESTASHOP_RETAILER_MODULES,
   ...SHOPIFY_RETAILER_MODULES,
   chasseauxlivresModule,

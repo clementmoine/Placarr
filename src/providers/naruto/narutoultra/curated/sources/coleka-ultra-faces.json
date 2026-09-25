@@ -1,0 +1,16 @@
+{
+  "source": "Coleka — Naruto Ultra Challenge (scans collectionneur)",
+  "url": "https://www.coleka.com/en/trading-cards/panini-cards/naruto-ultra-challenge_r18770",
+  "observed": "2026-08-27",
+  "ingest": "faces ≈995×1393 → art.coleka.webp (listing EN via FlareSolverr)",
+  "sourceId": "coleka",
+  "lang": "fr",
+  "line": "ultra-challenge",
+  "listingPath": "/en/trading-cards/panini-cards/naruto-ultra-challenge_r18770",
+  "note": "Branche EN comme Ninja Ranks : FR/IT hit le mur Verifica plus vite. Deux signaux Ref. + numéro dans le fichier. Préféré aux h400 AnimeCollection.",
+  "notIngested": [
+    "Album — déjà via coleka-album.json / reconstructed products",
+    "Versos — non listés sur le listing cartes",
+    "38 gabarits « pas encore photographiée » (436×600, slug `naruto-ultra-challenge` répété — dont la 100) : refusés au parse, affichage = AnimeCollection h400"
+  ]
+}

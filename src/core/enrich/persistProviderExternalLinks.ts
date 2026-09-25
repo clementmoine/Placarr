@@ -1,12 +1,14 @@
 import { cleanCode } from "@/core/identify/query";
 import { prisma } from "@/lib/db/prisma";
 import { reconcileLegacyPriceOfferSources } from "@/core/enrich/evidence";
+import { metadataAliases } from "@/core/enrich/aliases";
 import {
   appendMissingProviderExternalLinkFacts,
   coverAttachmentsFromPriceOffers,
   dedupeProviderExternalLinkFacts,
   externalLinkFactsFromFieldEvidence,
   mirrorSourceUrlFactsAsExternalLinks,
+  normalizeItemIdentityTitles,
   purgeContradictedProviderExternalLinks,
   reconcileExternalLinksFromPriceOffers,
   type ProviderMetadataLinkInput,
@@ -82,6 +84,8 @@ export async function persistProviderExternalLinksForMetadata(
   input: {
     itemBarcode?: string | null;
     itemTitle?: string | null;
+    /** Soft aliases / extra identity titles (merged with metadata aliases). */
+    itemTitles?: readonly string[] | null;
     shelfType?: string | null;
     providerInputs?: readonly ProviderMetadataLinkInput[];
     priceOffers?: ReadonlyArray<{
@@ -95,9 +99,15 @@ export async function persistProviderExternalLinksForMetadata(
 ): Promise<MetadataFact[] | null> {
   const row = await prisma.metadata.findUnique({
     where: { id: metadataId },
-    select: { facts: true },
+    select: { facts: true, title: true, aliases: true },
   });
   if (!row) return null;
+
+  const itemTitles = normalizeItemIdentityTitles(input.itemTitle, [
+    ...(input.itemTitles ?? []),
+    ...(row.title?.trim() ? [row.title.trim()] : []),
+    ...(metadataAliases(row.aliases) ?? []),
+  ]);
 
   const existing = parseStoredFacts(row.facts);
   let next = purgeContradictedProviderExternalLinks(
@@ -105,6 +115,7 @@ export async function persistProviderExternalLinksForMetadata(
     input.itemBarcode,
     input.itemTitle,
     input.shelfType,
+    itemTitles,
   );
   next = await purgeValidatedRetailerExternalLinks(
     next,
@@ -127,6 +138,7 @@ export async function persistProviderExternalLinksForMetadata(
       input.itemBarcode,
       input.itemTitle,
       input.shelfType,
+      itemTitles,
     );
   }
   if (input.fieldEvidence?.length) {
@@ -143,6 +155,7 @@ export async function persistProviderExternalLinksForMetadata(
     input.itemBarcode,
     input.itemTitle,
     input.shelfType,
+    itemTitles,
   );
 
   const deduped = dedupeFacts(dedupeProviderExternalLinkFacts(next));

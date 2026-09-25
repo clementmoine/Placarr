@@ -19,6 +19,10 @@ describe("providerSourceTraits", () => {
     expect(canonicalProviderIdForSource("bgg")).toBe("boardgamegeek");
   });
 
+  it("canonicalise l'ancien id narutoccg vers narutocarddass", () => {
+    expect(canonicalProviderIdForSource("narutoccg")).toBe("narutocarddass");
+  });
+
   it("ignore la casse et les suffixes · région / variante", () => {
     expect(canonicalProviderIdForSource("ScreenScraper")).toBe("screenscraper");
     expect(canonicalProviderIdForSource("screenscraper · fr")).toBe(

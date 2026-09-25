@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "pack": "dbs/fw",
+  "pack": "dragonball/fw",
   "updatedAt": "2026-08-27",
   "notes": "Fusion World : 12 cartes + code digital / pack. Display 24 (Story Booster : 20 — bySet). Raretés lettres dans facts.json (C/UC/R/SR/L/SCR/PR). Taux SCR community-order ; pas d'officiel Bandai.",
   "default": {

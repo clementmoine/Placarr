@@ -24,6 +24,10 @@ export type SetOption = {
    * par libellé la range sous Q, entre « Path of Pain » et « Revenge ».
    */
   sortKey?: number;
+  /** Symbole set (check-list) — voir `PrintSetOption.iconUrl`. */
+  iconUrl?: string;
+  /** Fallbacks symbole — voir `PrintSetOption.iconUrls`. */
+  iconUrls?: string[];
 };
 
 /** Un libellé sans lettre ni chiffre ne se choisit pas — le catalogue Dragon
@@ -130,14 +134,24 @@ export type FinalizeSetOptionsInput = {
    * sa place.
    */
   sortKey?: number | null;
+  /**
+   * Défaut `true` : `CODE — titre` (DBS, Lorcana…).
+   * `false` : le pack a déjà composé le libellé (ex. Pokémon `bloc — extension`).
+   */
+  prefixCode?: boolean;
+  /** Symbole set — voir `PrintSetOption.iconUrl`. */
+  iconUrl?: string | null;
+  /** Fallbacks symbole — voir `PrintSetOption.iconUrls`. */
+  iconUrls?: readonly string[] | null;
 };
 
 /**
  * Nettoie et trie.
  *
  * - un libellé inutilisable retombe sur le code, en majuscules ;
- * - tout set porte son code en préfixe (`BT1 — …`) : c'est ce qu'on lit sur
- *   la carte, et ça départage les homonymes sans parenthèse en fin de ligne ;
+ * - par défaut, tout set porte son code en préfixe (`BT1 — …`) : c'est ce
+ *   qu'on lit sur la carte, et ça départage les homonymes sans parenthèse en
+ *   fin de ligne — sauf `prefixCode: false` (libellé déjà composé par le pack) ;
  * - le tri suit `sortKey` quand le pack en donne un, sinon il est numérique et
  *   français, pour que « BT2 — … » précède « BT10 — … ».
  */
@@ -149,16 +163,24 @@ export function finalizeSetOptions(
     const id = row.id?.trim();
     if (!id) continue;
     const label = (row.label ?? "").trim();
+    const usable = isUsableSetLabel(label) ? label : id;
     named.push({
       id,
-      label: labelWithSetCode(
-        id,
-        isUsableSetLabel(label) ? label : id,
-        row.code,
-      ),
+      label:
+        row.prefixCode === false
+          ? usable
+          : labelWithSetCode(id, usable, row.code),
       sortKey: row.sortKey ?? null,
       ...(row.group ? { group: row.group } : {}),
       ...(row.languages?.length ? { languages: [...row.languages] } : {}),
+      ...(row.iconUrl?.trim() ? { iconUrl: row.iconUrl.trim() } : {}),
+      ...(row.iconUrls?.length
+        ? {
+            iconUrls: [...row.iconUrls]
+              .map((u) => u.trim())
+              .filter(Boolean),
+          }
+        : {}),
     });
   }
 
@@ -171,12 +193,14 @@ export function finalizeSetOptions(
       }
       return a.label.localeCompare(b.label, "fr", { numeric: true });
     })
-    .map(({ id, label, group, languages, sortKey }) => ({
+    .map(({ id, label, group, languages, sortKey, iconUrl, iconUrls }) => ({
       id,
       label,
       ...(group ? { group } : {}),
       ...(languages ? { languages } : {}),
       ...(sortKey != null ? { sortKey } : {}),
+      ...(iconUrl ? { iconUrl } : {}),
+      ...(iconUrls?.length ? { iconUrls } : {}),
     }));
 }
 
@@ -232,4 +256,72 @@ export function isAnsweredQuery(
   setId?: string | null,
 ): boolean {
   return Boolean(query?.trim() || setId?.trim());
+}
+
+/**
+ * Union locale ∪ distante pour le sélecteur d'extensions.
+ *
+ * Un catalogue local non vide ne doit **pas** masquer un set déjà annoncé
+ * ailleurs (API / logos) — sinon une moisson périmée bloque les sorties
+ * récentes (`me05.5`, nouvel set Lorcana…). Local gagne sur le libellé quand
+ * les deux ont le même id.
+ */
+export function mergePrintSetOptions(
+  ...lists: readonly (readonly SetOption[] | null | undefined)[]
+): SetOption[] {
+  const byId = new Map<string, SetOption>();
+  for (const list of lists) {
+    if (!list?.length) continue;
+    for (const row of list) {
+      const id = row.id?.trim();
+      if (!id) continue;
+      const label = (row.label ?? "").trim();
+      if (!isUsableSetLabel(label) && !isUsableSetLabel(id)) continue;
+      const prev = byId.get(id);
+      if (!prev) {
+        byId.set(id, {
+          id,
+          label: isUsableSetLabel(label) ? label : id,
+          ...(row.group ? { group: row.group } : {}),
+          ...(row.languages?.length ? { languages: [...row.languages] } : {}),
+          ...(row.sortKey != null ? { sortKey: row.sortKey } : {}),
+          ...(row.iconUrl?.trim() ? { iconUrl: row.iconUrl.trim() } : {}),
+          ...(row.iconUrls?.length
+            ? {
+                iconUrls: row.iconUrls
+                  .map((u) => u.trim())
+                  .filter(Boolean),
+              }
+            : {}),
+        });
+        continue;
+      }
+      // First usable label wins (local first in call order) — do not let a
+      // longer remote `CODE — …` overwrite a composed local libellé.
+      if (!isUsableSetLabel(prev.label) && isUsableSetLabel(label)) {
+        prev.label = label;
+      }
+      if (!prev.group && row.group) prev.group = row.group;
+      if (!prev.languages?.length && row.languages?.length) {
+        prev.languages = [...row.languages];
+      }
+      if (prev.sortKey == null && row.sortKey != null) {
+        prev.sortKey = row.sortKey;
+      }
+      if (!prev.iconUrl?.trim() && row.iconUrl?.trim()) {
+        prev.iconUrl = row.iconUrl.trim();
+      }
+      if (!prev.iconUrls?.length && row.iconUrls?.length) {
+        prev.iconUrls = row.iconUrls.map((u) => u.trim()).filter(Boolean);
+      }
+    }
+  }
+  return [...byId.values()].sort((a, b) => {
+    if (a.sortKey != null || b.sortKey != null) {
+      if (a.sortKey == null) return 1;
+      if (b.sortKey == null) return -1;
+      if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
+    }
+    return a.label.localeCompare(b.label, "fr", { numeric: true });
+  });
 }

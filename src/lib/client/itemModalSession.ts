@@ -201,9 +201,16 @@ export function buildItemModalSessionInit(input: {
       nameSuggestion: titleSuggestions[0] ?? null,
       fetchedMetadata: metadata ?? null,
       lastInitializedShelfId: formValues.shelfId,
-      asyncInit:
-        !metadata && item.barcode?.trim()
-          ? { kind: "barcode", barcode: item.barcode.trim() }
+      // Print-bound edits re-resolve by printKey so the Images picker can list
+      // every local_catalog face for that print (not a stale single winner, and
+      // not a cross-game name hit).
+      asyncInit: item.printKey?.trim()
+        ? {
+            kind: "preview" as const,
+            name: formValues.name.trim() || storedName,
+          }
+        : !metadata && item.barcode?.trim()
+          ? { kind: "barcode" as const, barcode: item.barcode.trim() }
           : null,
     };
   }

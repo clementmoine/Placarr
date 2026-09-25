@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-09-03T21:07:38.799Z",
+ "generatedAt": "2026-09-21T20:55:29.978Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{family}/{id}/{lang}/ (Mercari restorations: the mercdn ingest row in sources/mercari.json)",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
@@ -233,6 +233,78 @@
    "cropped": false
   },
   {
+   "cardId": "ni0280",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0280/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0280/ja/art.reconstructed.webp",
+   "from": {
+    "width": 631,
+    "height": 920
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0281",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0281/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0281/ja/art.reconstructed.webp",
+   "from": {
+    "width": 633,
+    "height": 910
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0282",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0282/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0282/ja/art.reconstructed.webp",
+   "from": {
+    "width": 644,
+    "height": 940
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0283",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0283/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0283/ja/art.reconstructed.webp",
+   "from": {
+    "width": 669,
+    "height": 965
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0309",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0309/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0309/ja/art.reconstructed.webp",
+   "from": {
+    "width": 557,
+    "height": 810
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0369",
+   "set": "ninja",
+   "lang": "ja",
+   "source": "cards/ninja/ni0369/ja/art.reconstructed.png",
+   "dest": "cards/ninja/ni0369/ja/art.reconstructed.webp",
+   "from": {
+    "width": 696,
+    "height": 931
+   },
+   "cropped": true
+  },
+  {
    "cardId": "pr0095",
    "set": "promo",
    "lang": "fr",
@@ -257,6 +329,18 @@
    "cropped": true
   },
   {
+   "cardId": "pr0100",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/promo/pr0100/fr/art.reconstructed.png",
+   "dest": "cards/promo/pr0100/fr/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1210
+   },
+   "cropped": false
+  },
+  {
    "cardId": "ta0221",
    "set": "mission",
    "lang": "fr",
@@ -279,6 +363,18 @@
     "height": 1076
    },
    "cropped": false
+  },
+  {
+   "cardId": "ta0330",
+   "set": "mission",
+   "lang": "ja",
+   "source": "cards/mission/ta0330/ja/art.reconstructed.png",
+   "dest": "cards/mission/ta0330/ja/art.reconstructed.webp",
+   "from": {
+    "width": 572,
+    "height": 833
+   },
+   "cropped": true
   },
   {
    "cardId": "te0212",

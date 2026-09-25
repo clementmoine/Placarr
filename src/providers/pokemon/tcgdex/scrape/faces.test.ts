@@ -229,6 +229,38 @@ describe("fillPkmcardsFaces", () => {
     expect(report.failed).toBe(2);
     expect(existsSync(path.join(already, "art.pkmcards.webp"))).toBe(true);
   });
+
+  it("émet un heartbeat progress pendant le parcours", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "pkm-fill-prog-"));
+    mkdirSync(path.join(root, "me5"), { recursive: true });
+    const entries = Array.from({ length: 5 }, (_, i) => ({
+      itemId: String(i + 1),
+      slug: `me5-fr-${String(i + 1).padStart(3, "0")}-x`,
+      ref: null,
+      sku: null,
+      name: "X",
+      lang: "fr",
+      priceText: null,
+      price: null,
+      currency: null,
+      priceDeltaText: null,
+      priceDelta: null,
+      imageFront: `https://example.test/${i + 1}.webp`,
+      imageBack: null,
+    }));
+    const lines: string[] = [];
+    await fillPkmcardsFaces({
+      cardsRoot: root,
+      entries,
+      downloadDelayMs: 0,
+      progressEvery: 2,
+      onProgress: (message) => lines.push(message),
+    });
+    expect(lines[0]).toMatch(/pkmcards fr: 5 tuiles/);
+    expect(lines.some((l) => l.includes("2/5:"))).toBe(true);
+    expect(lines.some((l) => l.includes("4/5:"))).toBe(true);
+    expect(lines.at(-1)).toMatch(/5\/5:/);
+  });
 });
 
 // —— fillPokemonComMcdo.test.ts ——

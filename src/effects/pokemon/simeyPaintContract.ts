@@ -100,7 +100,7 @@ export const SIMEY_MATERIALS_BRIEFS: readonly SimeyMaterialsBrief[] = [
     slots: {
       face: "ok",
       foil: "ok", // Cosmos: no per-card foil; Galaxy: Live etch as --foil
-      mask: "ok", // Galaxy star carve = Live; Cosmos full-card
+      mask: "ok", // Galaxy: Simey unmasked shine (no Live star carve); Cosmos full-card
       glitter: "ok",
       sharedFx: "ok", // simey_cosmos-* + simey_glitter + Live spectrum
     },

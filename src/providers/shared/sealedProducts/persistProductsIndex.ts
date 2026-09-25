@@ -1,21 +1,14 @@
 /**
- * Une seule porte pour lire / écrire `products-index.json`.
+ * Une seule porte pour lire / écrire l'index scellé.
  *
- * La graine git (`curated/products-contents.json`) est la vérité inventaire ;
- * l'index disque est le cache catalogue. Sans merge à **chaque** write (et
- * en filet à la lecture), un upsert site officiel / localWrite / Naruto
- * obsolète laissait des starters « contenu inconnu » alors que le ledger
- * les connaissait — et le Catalogue (lecture brute) divergeait du conseil
- * d'achat (lecture déjà mergée).
- *
- * Même filet pour les packshots : une réinsertion SKU sans `image` alors que
- * `products/{slug}/{lang}/art.*` existe ne doit plus produire de tuiles
- * « sans image ».
+ * Lecture : `catalog.sqlite` (tables `products` / `product_contents`) en
+ * priorité, sinon `products-index.json`. La graine git
+ * (`curated/products-contents.json`) reste mergée à chaque load.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { packProductsIndexPath } from "@/lib/packPaths";
+import { packCatalogDb, packProductsIndexPath } from "@/lib/packPaths";
 
 import { mergeCuratedSealedContents } from "./curatedContents";
 import {
@@ -24,16 +17,22 @@ import {
   type ProductsIndexV1,
   type SealedProductEntry,
 } from "./indexFormat";
+import { backfillSealedProductSetLogos } from "./backfillLogos";
 import { backfillSealedProductPackshots } from "./packshotUrl";
+import {
+  loadProductsIndexFromSqlite,
+  writeProductsIndexToSqlite,
+} from "./productsSqlite";
 
 export type PersistSealedProductsIndexOpts = {
   /** Déjà mergé (évite un double merge si l'appelant a préparé l'index). */
   alreadyMerged?: boolean;
   /**
-   * Destination explicite (tests / ingest avec `packRoot` hors `dataRoot`).
-   * Défaut : {@link packProductsIndexPath}.
+   * Destination JSON explicite (tests). Défaut : pas d'écriture JSON.
    */
   file?: string;
+  /** Force writing `products-index.json` next to the pack (legacy projection). */
+  writeJsonProjection?: boolean;
   packDir?: string;
   productsDir?: string;
 };
@@ -44,6 +43,9 @@ function finalizeSealedProducts(
   opts?: { productsDir?: string },
 ): Record<string, SealedProductEntry> {
   backfillSealedProductPackshots(packId, products, opts);
+  // Logos : même filet que les packshots — un index écrit avant que le
+  // résolveur soit branché (ou avant le relevé TCGdex) ne reste pas nu.
+  backfillSealedProductSetLogos(packId, products);
   return products;
 }
 
@@ -53,14 +55,17 @@ function finalizeSealedProducts(
  * éventuellement stale.
  */
 export function loadSealedProductsIndex(packId: string): ProductsIndexV1 {
-  const file = packProductsIndexPath(packId);
-  let index = emptyProductsIndex(packId);
-  if (existsSync(file)) {
-    try {
-      const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
-      if (isProductsIndexV1(raw)) index = raw;
-    } catch {
-      /* keep empty */
+  const fromSqlite = loadProductsIndexFromSqlite(packId);
+  let index = fromSqlite ?? emptyProductsIndex(packId);
+  if (!fromSqlite) {
+    const file = packProductsIndexPath(packId);
+    if (existsSync(file)) {
+      try {
+        const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
+        if (isProductsIndexV1(raw)) index = raw;
+      } catch {
+        /* keep empty */
+      }
     }
   }
   const products = mergeCuratedSealedContents(packId, index.products);
@@ -72,8 +77,8 @@ export function loadSealedProductsIndex(packId: string): ProductsIndexV1 {
 }
 
 /**
- * Merge curated + backfill packshots puis écrit `data/<pack>/products-index.json`.
- * Point unique pour tous les writers d'index scellé.
+ * Merge curated + backfill packshots puis écrit `catalog.sqlite` (tables
+ * products / product_contents). JSON projection only if `writeJsonProjection`.
  */
 export function persistSealedProductsIndex(
   packId: string,
@@ -93,10 +98,16 @@ export function persistSealedProductsIndex(
     generatedAt: new Date().toISOString(),
     products: finalizeSealedProducts(packId, merged, { productsDir }),
   };
+  const dbPath = opts.packDir
+    ? path.join(opts.packDir, "catalog.sqlite")
+    : undefined;
+  writeProductsIndexToSqlite(packId, index, { dbPath });
   const file = opts.file ?? packProductsIndexPath(packId);
-  mkdirSync(path.dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(index, null, 2)}\n`, "utf8");
-  return { file, index };
+  if (opts.writeJsonProjection || opts.file) {
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+  }
+  return { file: dbPath ?? packCatalogDb(packId), index };
 }
 
 /** Persiste un index déjà assemblé (garde `pack` / version). */

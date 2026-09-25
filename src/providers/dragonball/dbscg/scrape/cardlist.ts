@@ -1,5 +1,5 @@
 /**
- * Scrape Bandai FR + EN cardlists → `data/dbs/cg/catalog.sqlite`.
+ * Scrape Bandai FR + EN cardlists → `data/dragonball/cg/catalog.sqlite`.
  *
  * Category ids differ per locale — each list is fetched on its own and
  * merged on printKey. Titles and SAMPLE URLs stay per language. Local
@@ -21,7 +21,6 @@ import {
 import { loadDbscardsTokenCards } from "./mergeDbscardsTokens";
 import {
   DBS_CG_PACK_ID,
-  exportDbsCgCardsIndexJson,
   loadDbsCgIndex,
   writeDbsCgIndex,
   type DbsAssetRow,
@@ -254,11 +253,10 @@ export async function scrapeDbsCgCardlist(
       ),
     },
   });
-  const indexPath = dataPackPath(DBS_CG_PACK_ID, "cards-index.json");
-  exportDbsCgCardsIndexJson(prints, titles, assets, indexPath);
+  const indexPath = dataPackPath(DBS_CG_PACK_ID, "scrape-summary.json");
   mkdirSync(path.dirname(dbPath), { recursive: true });
   writeFileSync(
-    path.join(path.dirname(indexPath), "scrape-summary.json"),
+    indexPath,
     `${JSON.stringify({ printCount, seriesCount, seriesByLang, langs, at: new Date().toISOString() })}\n`,
   );
   console.log(`── index ${printCount} prints → ${dbPath}`);
@@ -323,7 +321,5 @@ export function mergeDbscardsTokensIntoCatalog(): {
     assets,
     meta: { tokensMerged: String(added) },
   });
-  const indexPath = dataPackPath(DBS_CG_PACK_ID, "cards-index.json");
-  exportDbsCgCardsIndexJson(prints, titles, assets, indexPath);
   return { added, printCount };
 }

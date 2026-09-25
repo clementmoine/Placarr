@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 
 import { BaseModal } from "@/components/modals/BaseModal";
+import {
+  printPickerActiveSearchQuery,
+  printPickerListLines,
+} from "@/components/modals/printPickerListMode";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { RemoteImage } from "@/components/RemoteImage";
@@ -14,6 +18,10 @@ import {
   type PrintVariantInfo,
 } from "@/lib/client/hooks/usePrintVariant";
 import { inferPrintPickerDefaults } from "@/lib/collect/inferPrintPickerDefaults";
+import {
+  getCachedPrintCatalogues,
+  loadPrintCatalogues,
+} from "@/lib/client/printCataloguesCache";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import {
@@ -25,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { cn } from "@/lib/shared/utils";
 import "@/effects";
@@ -222,6 +231,7 @@ function PrintPickerTileArt({
         imageUrl={art}
         alt={candidate.title}
         finish={view.finish}
+        materialName={view.materialName}
         varnishType={view.varnishType}
         cssFinishShaderId={view.shader?.id ?? null}
         cssVarnishShaderId={view.varnish?.id ?? null}
@@ -275,7 +285,6 @@ export function PrintPickerModal({
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [addingKey, setAddingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [language, setLanguage] = useState<string>(ALL_LANGUAGES);
@@ -295,8 +304,10 @@ export function PrintPickerModal({
       }[];
       languages?: string[];
     }[]
-  >([]);
-  const [isMultiple, setIsMultiple] = useState(false);
+  >(() => getCachedPrintCatalogues(shelfType) ?? []);
+  const [isCataloguesLoading, setIsCataloguesLoading] = useState(
+    () => !getCachedPrintCatalogues(shelfType)?.length,
+  );
   /**
    * Ce qui est coché, **avec les données de chaque ligne**.
    *
@@ -313,6 +324,9 @@ export function PrintPickerModal({
     done: number;
     total: number;
   } | null>(null);
+  /** Guided list step when the search box holds 2+ lines. */
+  const [listIndex, setListIndex] = useState(0);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   /** Une seule application des défauts par ouverture. */
   const shelfDefaultsApplied = useRef(false);
@@ -376,7 +390,7 @@ export function PrintPickerModal({
   });
 
   /** Reset on the way out, not in an effect watching `isOpen`. */
-  const handleClose = useCallback(() => {
+  const performClose = useCallback(() => {
     searchAbort.current?.abort();
     loadMoreAbort.current?.abort();
     setQuery("");
@@ -387,86 +401,134 @@ export function PrintPickerModal({
     loadingMoreRef.current = false;
     setHasSearched(false);
     setError(null);
-    setAddingKey(null);
     setSelected(new Map());
     setLanguage(ALL_LANGUAGES);
     setCatalogue(ALL_CATALOGUES);
     setSetId(null);
     setProgress(null);
+    setListIndex(0);
+    setConfirmCloseOpen(false);
+    setIsCataloguesLoading(false);
     shelfDefaultsApplied.current = false;
     onClose();
   }, [onClose]);
 
-  const trimmedQuery = query.trim();
+  const listLines = useMemo(() => printPickerListLines(query), [query]);
+  const isListMode = listLines.length >= 2;
+  const activeListIndex = isListMode
+    ? Math.max(0, Math.min(listIndex, listLines.length - 1))
+    : 0;
+  const activeSearchQuery = printPickerActiveSearchQuery(
+    query,
+    activeListIndex,
+  );
+  const trimmedQuery = activeSearchQuery;
+
+  const needsCloseConfirm =
+    selected.size > 0 || (isListMode && listLines.length >= 2);
+
+  const requestClose = useCallback((): boolean => {
+    if (progress) return false;
+    if (needsCloseConfirm) {
+      setConfirmCloseOpen(true);
+      return false;
+    }
+    return true;
+  }, [progress, needsCloseConfirm]);
 
   /*
-    Les catalogues et leurs extensions sont chargés **à l'ouverture**, pas
-    dérivés des résultats : c'est ce qui permet de choisir « la Série 1 » avant
-    d'avoir la moindre idée de quoi y chercher. Dérivée des résultats, la liste
-    était vide tant qu'on n'avait rien tapé, puis ne montrait que les extensions
-    tombées dans la page — jamais un set entier.
+    Catalogues are prefetched from the shelf page into a shared client cache.
+    On open we hydrate from cache (no skeleton) and only fetch when cold or
+    when language changes the announced set tree (Naruto JP vs EU).
   */
   useEffect(() => {
     if (!isOpen) {
       shelfDefaultsApplied.current = false;
       return;
     }
+    const langKey = language === ALL_LANGUAGES ? null : language;
+    const cachedExact = getCachedPrintCatalogues(shelfType, langKey);
+    const cachedAny = getCachedPrintCatalogues(shelfType, null);
+
+    const applyDefaultsOnce = (
+      rows: readonly {
+        id: string;
+        label: string;
+        aliases?: { label: string; language?: string }[];
+        defaultLanguage?: string | null;
+        sets?: {
+          id: string;
+          label: string;
+          group?: string;
+          languages?: string[];
+        }[];
+        languages?: string[];
+      }[],
+    ) => {
+      if (shelfDefaultsApplied.current) return;
+      const defaults = inferPrintPickerDefaults(
+        shelfName,
+        rows,
+        ownedPrints ?? [],
+      );
+      shelfDefaultsApplied.current = true;
+      if (defaults.catalogueId) setCatalogue(defaults.catalogueId);
+      if (defaults.language) setLanguage(defaults.language);
+      if (defaults.setId) setSetId(defaults.setId);
+    };
+
+    if (cachedExact?.length) {
+      setCatalogues(cachedExact);
+      setIsCataloguesLoading(false);
+      applyDefaultsOnce(cachedExact);
+      return;
+    }
+
+    // Warm unscoped tree → show it now; refresh language-scoped tree in background.
+    if (cachedAny?.length) {
+      setCatalogues(cachedAny);
+      setIsCataloguesLoading(false);
+      applyDefaultsOnce(cachedAny);
+      if (langKey) {
+        void loadPrintCatalogues(shelfType, langKey)
+          .then((rows) => {
+            if (rows.length) setCatalogues(rows);
+          })
+          .catch(() => {
+            /* keep unscoped tree */
+          });
+      }
+      return;
+    }
+
     const controller = new AbortController();
+    setIsCataloguesLoading(true);
     void (async () => {
       try {
-        /*
-          La langue part avec la demande : chez Naruto elle change la **découpe**
-          annoncée — les dix-sept 巻ノ japonais au lieu des séries européennes —
-          et pas seulement les libellés. Sans elle, choisir « japonais » ne
-          donnait jamais accès aux volumes.
-        */
-        const response = await fetch(
-          `/api/prints?type=${encodeURIComponent(shelfType)}${
-            language !== ALL_LANGUAGES
-              ? `&language=${encodeURIComponent(language)}`
-              : ""
-          }`,
-          { signal: controller.signal },
+        const rows = await loadPrintCatalogues(
+          shelfType,
+          langKey,
+          controller.signal,
         );
-        if (!response.ok) return;
-        const data = (await response.json()) as {
-          catalogues?: {
-            id: string;
-            label: string;
-            aliases?: { label: string; language?: string }[];
-            defaultLanguage?: string | null;
-            sets?: {
-              id: string;
-              label: string;
-              group?: string;
-              languages?: string[];
-            }[];
-            languages?: string[];
-          }[];
-        };
-        if (!data.catalogues?.length) return;
-        setCatalogues(data.catalogues);
-
-        /*
-          Une seule fois par ouverture : le nom d'étagère ne doit pas écraser
-          un choix manuel si on recharge les catalogues (changement de langue).
-        */
-        if (shelfDefaultsApplied.current) return;
-        const defaults = inferPrintPickerDefaults(
-          shelfName,
-          data.catalogues,
-          ownedPrints ?? [],
-        );
-        shelfDefaultsApplied.current = true;
-        if (defaults.catalogueId) setCatalogue(defaults.catalogueId);
-        if (defaults.language) setLanguage(defaults.language);
-        if (defaults.setId) setSetId(defaults.setId);
+        if (!rows.length) return;
+        setCatalogues(rows);
+        applyDefaultsOnce(rows);
       } catch {
-        // Le sélecteur reste au minimum ; la recherche, elle, marche toujours.
+        // Filters stay minimal; search still works.
+      } finally {
+        if (!controller.signal.aborted) setIsCataloguesLoading(false);
       }
     })();
     return () => controller.abort();
   }, [isOpen, shelfType, language, shelfName, ownedPrints]);
+
+  useEffect(() => {
+    if (!isListMode) {
+      setListIndex(0);
+      return;
+    }
+    setListIndex((i) => Math.min(i, listLines.length - 1));
+  }, [isListMode, listLines.length]);
 
   /*
     Les extensions que la langue choisie laisse voir.
@@ -885,27 +947,6 @@ export function PrintPickerModal({
     [shelfId],
   );
 
-  const addRow = useCallback(
-    async (
-      candidate: PrintCandidateView,
-      finish: string | null,
-      rowKey: string,
-    ) => {
-      setAddingKey(rowKey);
-      setError(null);
-      try {
-        await postRow(candidate, finish);
-        onAdded();
-        handleClose();
-      } catch {
-        setError(t("errors.genericMessage"));
-      } finally {
-        setAddingKey(null);
-      }
-    },
-    [postRow, onAdded, handleClose, t],
-  );
-
   const toggleRow = useCallback((row: PickerFinishRow) => {
     setSelected((current) => {
       const next = new Map(current);
@@ -940,83 +981,120 @@ export function PrintPickerModal({
       setSelected(new Map());
       return;
     }
-    handleClose();
-  }, [activeSelection, postRow, onAdded, handleClose, t]);
+    performClose();
+  }, [activeSelection, postRow, onAdded, performClose, t]);
+
+  const advanceList = useCallback(
+    (delta: number) => {
+      if (!isListMode) return;
+      const next = activeListIndex + delta;
+      if (next < 0) return;
+      if (next >= listLines.length) {
+        // Finished the list — clear the box, keep selection for "Add".
+        setQuery("");
+        setListIndex(0);
+        return;
+      }
+      setListIndex(next);
+    },
+    [isListMode, activeListIndex, listLines.length],
+  );
+
+  const goNextListStep = useCallback(() => {
+    // Unique hit → pre-check if nothing from this result page is selected yet.
+    if (visibleRows.length === 1) {
+      const only = visibleRows[0]!;
+      setSelected((current) => {
+        if (current.has(only.rowKey)) return current;
+        const next = new Map(current);
+        next.set(only.rowKey, only);
+        return next;
+      });
+    }
+    advanceList(1);
+  }, [visibleRows, advanceList]);
+
+  const allVisibleSelected =
+    visibleRows.length > 0 &&
+    visibleRows.every((row) => selected.has(row.rowKey));
 
   return (
+    <>
     <BaseModal
       isOpen={isOpen}
-      onClose={handleClose}
+      onClose={performClose}
+      onDismissRequest={requestClose}
       size="lg"
       title={t("items.printPicker.title")}
       description={t("items.printPicker.description")}
       footer={
         <div className="flex w-full items-center justify-end gap-2">
-          {isMultiple && activeSelection.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setSelected(new Map())}
-              disabled={Boolean(progress)}
-              className="rounded-xl h-10 px-4 text-sm font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-60"
-            >
-              {t("items.printPicker.clearSelection")}
-            </button>
-          )}
           <button
             type="button"
-            onClick={handleClose}
+            onClick={() => {
+              if (requestClose()) performClose();
+            }}
             disabled={Boolean(progress)}
             className="rounded-xl h-10 px-4 text-sm font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-60"
           >
             {t("common.cancel")}
           </button>
-          {isMultiple && (
-            <button
-              type="button"
-              onClick={() => void addSelected()}
-              disabled={activeSelection.length === 0 || Boolean(progress)}
-              className="inline-flex items-center gap-2 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
-            >
-              {progress && <Loader2 className="size-4 animate-spin" />}
-              {progress
-                ? t("items.printPicker.addingProgress", {
-                    done: progress.done,
-                    total: progress.total,
-                  })
-                : t("items.printPicker.addSelected", {
-                    count: activeSelection.length,
-                  })}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => void addSelected()}
+            disabled={activeSelection.length === 0 || Boolean(progress)}
+            className="inline-flex items-center gap-2 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
+          >
+            {progress && <Loader2 className="size-4 animate-spin" />}
+            {progress
+              ? t("items.printPicker.addingProgress", {
+                  done: progress.done,
+                  total: progress.total,
+                })
+              : t("items.printPicker.addSelected", {
+                  count: activeSelection.length,
+                })}
+          </button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-start gap-2">
           <div className="relative min-w-[12rem] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
+            <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
+            <textarea
               autoFocus
-              type="text"
+              rows={isListMode ? Math.min(4, listLines.length) : 1}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("items.printPicker.searchPlaceholder")}
-              className="w-full rounded-xl border border-border bg-background py-2.5 pl-9 pr-9 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+              className={cn(
+                "w-full resize-y rounded-xl border border-border bg-background py-2.5 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary/40",
+                isListMode ? "pr-16 min-h-[2.75rem]" : "pr-9 min-h-[2.75rem]",
+              )}
             />
-            {isSearching && (
-              <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            {isListMode && (
+              <span className="pointer-events-none absolute right-3 top-2.5 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-muted-foreground">
+                {activeListIndex + 1}/{listLines.length}
+              </span>
+            )}
+            {isSearching && !isListMode && (
+              <Loader2 className="absolute right-3 top-3 size-4 animate-spin text-muted-foreground" />
             )}
           </div>
 
           {/*
-            Trois portées, trois contrôles. Le catalogue et l'extension tenaient
-            dans une seule liste tant qu'elle restait courte ; à 399 entrées
-            elle ne se parcourt plus. Les séparer coûte un clic de plus et rend
-            la seconde liste **courte** — celle du seul jeu qu'on regarde.
-
-            La langue vient en tête : elle réduit la liste des jeux, qui réduit
-            celle des extensions.
+            Trois portées, trois contrôles. Affichés dès l'ouverture (skeleton)
+            pour ne pas attendre le fetch catalogues avant de voir les filtres.
           */}
+          {isCataloguesLoading ? (
+            <>
+              <Skeleton className="h-[42px] w-[11rem] rounded-xl" />
+              <Skeleton className="h-[42px] w-[13rem] rounded-xl" />
+              <Skeleton className="h-[42px] w-[15rem] rounded-xl" />
+            </>
+          ) : (
+            <>
           {languages.length > 1 && (
             <Select
               value={activeLanguage}
@@ -1126,57 +1204,71 @@ export function PrintPickerModal({
               </SelectContent>
             </Select>
           )}
+            </>
+          )}
         </div>
 
-        {/*
-          Le mode reste visible même sans résultat : c'est un réglage de la
-          modale, pas une action sur la liste, et le voir disparaître au
-          changement de recherche donnerait l'impression de l'avoir perdu.
-        */}
-        <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-xl border border-border p-0.5">
-            {[false, true].map((mode) => (
-              <button
-                key={String(mode)}
-                type="button"
-                onClick={() => {
-                  setIsMultiple(mode);
-                  if (!mode) setSelected(new Map());
-                }}
-                className={cn(
-                  "rounded-[10px] px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer",
-                  isMultiple === mode
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {mode
-                  ? t("items.printPicker.selectionMultiple")
-                  : t("items.printPicker.selectionSingle")}
-              </button>
-            ))}
+        {isListMode && (
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+              {t("items.printPicker.listStepHint", {
+                line: listLines[activeListIndex] ?? "",
+                index: activeListIndex + 1,
+                total: listLines.length,
+              })}
+            </p>
+            <button
+              type="button"
+              disabled={activeListIndex === 0 || Boolean(progress)}
+              onClick={() => advanceList(-1)}
+              className="rounded-xl h-9 px-3 text-xs font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-50"
+            >
+              {t("items.printPicker.listPrev")}
+            </button>
+            <button
+              type="button"
+              disabled={Boolean(progress)}
+              onClick={() => advanceList(1)}
+              className="rounded-xl h-9 px-3 text-xs font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-50"
+            >
+              {t("items.printPicker.listSkip")}
+            </button>
+            <button
+              type="button"
+              disabled={Boolean(progress)}
+              onClick={goNextListStep}
+              className="rounded-xl h-9 px-3 text-xs font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
+            >
+              {activeListIndex + 1 >= listLines.length
+                ? t("items.printPicker.listDone")
+                : t("items.printPicker.listNext")}
+            </button>
           </div>
-          {isMultiple && visibleRows.length > 0 && (
+        )}
+
+        {visibleRows.length > 0 && (
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() =>
                 setSelected((current) => {
-                  /*
-                    S'ajoute à ce qui est déjà coché ailleurs : « tout
-                    sélectionner » porte sur ce qu'on voit, il n'annule pas un
-                    choix fait sous un autre filtre.
-                  */
                   const next = new Map(current);
-                  for (const row of visibleRows) next.set(row.rowKey, row);
+                  if (allVisibleSelected) {
+                    for (const row of visibleRows) next.delete(row.rowKey);
+                  } else {
+                    for (const row of visibleRows) next.set(row.rowKey, row);
+                  }
                   return next;
                 })
               }
               className="text-xs font-bold text-muted-foreground underline-offset-2 hover:underline cursor-pointer"
             >
-              {t("items.printPicker.selectAll")}
+              {allVisibleSelected
+                ? t("items.printPicker.clearSelection")
+                : t("items.printPicker.selectAll")}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {error && (
           <p className="text-sm font-medium text-destructive">{error}</p>
@@ -1204,7 +1296,6 @@ export function PrintPickerModal({
         {visibleRows.length > 0 && (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {visibleRows.map((row) => {
-              const isAdding = addingKey === row.rowKey;
               const printKey = row.printKey.trim().toLowerCase();
               const hasExact = owned.exact.has(
                 ownedRowKey(printKey, row.finish, row.language ?? null),
@@ -1215,17 +1306,12 @@ export function PrintPickerModal({
                 <li key={row.rowKey}>
                   <button
                     type="button"
-                    disabled={Boolean(addingKey) || Boolean(progress)}
-                    aria-pressed={isMultiple ? isChecked : undefined}
-                    onClick={() =>
-                      isMultiple
-                        ? toggleRow(row)
-                        : void addRow(row, row.finish, row.rowKey)
-                    }
+                    disabled={Boolean(progress)}
+                    aria-pressed={isChecked}
+                    onClick={() => toggleRow(row)}
                     className={cn(
                       "group flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-2 text-left transition-all",
                       "hover:border-primary/60 hover:shadow-md disabled:opacity-60",
-                      isAdding && "border-primary",
                       isChecked && "border-primary ring-2 ring-primary/40",
                     )}
                   >
@@ -1246,11 +1332,6 @@ export function PrintPickerModal({
                           ✦ {localizeFinishLabel(row.finish, t)}
                         </span>
                       )}
-                      {/*
-                        Deux états distincts : ce tirage-là est déjà rangé, ou
-                        bien c'est une autre finition de la même carte — ce
-                        second cas n'empêche rien, il informe.
-                      */}
                       {(hasExact || hasOtherFinish) && (
                         <span
                           className={cn(
@@ -1265,24 +1346,17 @@ export function PrintPickerModal({
                             : t("items.printPicker.ownedOtherFinish")}
                         </span>
                       )}
-                      {isMultiple && (
-                        <span
-                          aria-hidden
-                          className={cn(
-                            "pointer-events-none absolute top-1.5 right-1.5 z-10 grid size-5 place-items-center rounded-md border text-[11px] font-black",
-                            isChecked
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border bg-background/95 text-transparent",
-                          )}
-                        >
-                          ✓
-                        </span>
-                      )}
-                      {isAdding && (
-                        <div className="absolute inset-0 z-20 grid place-items-center rounded-lg bg-background/70">
-                          <Loader2 className="size-5 animate-spin" />
-                        </div>
-                      )}
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "pointer-events-none absolute top-1.5 right-1.5 z-10 grid size-5 place-items-center rounded-md border text-[11px] font-black",
+                          isChecked
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background/95 text-transparent",
+                        )}
+                      >
+                        ✓
+                      </span>
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-xs font-bold">{row.title}</p>
@@ -1319,5 +1393,23 @@ export function PrintPickerModal({
         )}
       </div>
     </BaseModal>
+
+    <BaseModal
+      isOpen={confirmCloseOpen}
+      onClose={() => setConfirmCloseOpen(false)}
+      size="sm"
+      title={t("items.printPicker.closeConfirmTitle")}
+      description={t("items.printPicker.closeConfirmDescription")}
+      cancelLabel={t("items.printPicker.closeConfirmStay")}
+      onCancel={() => setConfirmCloseOpen(false)}
+      deleteLabel={t("items.printPicker.closeConfirmLeave")}
+      onDelete={() => {
+        setConfirmCloseOpen(false);
+        performClose();
+      }}
+    >
+      {null}
+    </BaseModal>
+    </>
   );
 }

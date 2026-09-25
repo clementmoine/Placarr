@@ -111,6 +111,19 @@ export async function yieldMalieEventLoop(): Promise<void> {
 
 export const MALIE_IDENTITIES_CACHE = "malie-identities.json.gz";
 export const MALIE_CACHE_META = "malie-cache-meta.json";
+export const MALIE_BUNDLE_STEMS = "malie-bundle-stems.txt";
+export const MALIE_CATALOGUE_SETNUM = "cdn-catalogue-setnum.txt";
+
+/**
+ * Durable Malie inventory lives under pack ``logs/`` so ``malie-databases/``
+ * can be purged after bootstrap. ``outDir`` is usually ``…/staging``.
+ */
+export function malieDurableDir(outDir: string): string {
+  if (path.basename(outDir) === "staging") {
+    return path.join(path.dirname(outDir), "logs");
+  }
+  return outDir;
+}
 
 export type MalieCacheMeta = {
   fingerprint: string;
@@ -143,24 +156,6 @@ export function malieCacheMetaPath(outDir: string): string {
   return path.join(outDir, MALIE_CACHE_META);
 }
 
-export function readMalieCacheMeta(outDir: string): MalieCacheMeta | null {
-  const file = malieCacheMetaPath(outDir);
-  if (!existsSync(file)) return null;
-  try {
-    const parsed = JSON.parse(readFileSync(file, "utf8")) as MalieCacheMeta;
-    if (
-      typeof parsed.fingerprint !== "string" ||
-      !Array.isArray(parsed.langs) ||
-      typeof parsed.identities !== "number"
-    ) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 export function writeMalieIdentitiesCache(
   outDir: string,
   identities: readonly LiveCardIdentity[],
@@ -168,39 +163,66 @@ export function writeMalieIdentitiesCache(
     cachedAt?: string;
   },
 ): void {
-  mkdirSync(outDir, { recursive: true });
-  writeFileSync(
-    malieIdentitiesCachePath(outDir),
-    gzipSync(Buffer.from(JSON.stringify(identities), "utf8")),
-  );
-  const body: MalieCacheMeta = {
-    fingerprint: meta.fingerprint,
-    langs: [...meta.langs],
-    identities: identities.length,
-    bundleStems: meta.bundleStems,
-    setnums: meta.setnums,
-    cachedAt: meta.cachedAt ?? new Date().toISOString(),
-  };
-  writeFileSync(
-    malieCacheMetaPath(outDir),
-    `${JSON.stringify(body, null, 2)}\n`,
-    "utf8",
-  );
+  const durable = malieDurableDir(outDir);
+  for (const dir of new Set([durable, outDir])) {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      malieIdentitiesCachePath(dir),
+      gzipSync(Buffer.from(JSON.stringify(identities), "utf8")),
+    );
+    const body: MalieCacheMeta = {
+      fingerprint: meta.fingerprint,
+      langs: [...meta.langs],
+      identities: identities.length,
+      bundleStems: meta.bundleStems,
+      setnums: meta.setnums,
+      cachedAt: meta.cachedAt ?? new Date().toISOString(),
+    };
+    writeFileSync(
+      malieCacheMetaPath(dir),
+      `${JSON.stringify(body, null, 2)}\n`,
+      "utf8",
+    );
+  }
 }
 
 export function readMalieIdentitiesCache(
   outDir: string,
 ): LiveCardIdentity[] | null {
-  const file = malieIdentitiesCachePath(outDir);
-  if (!existsSync(file)) return null;
-  try {
-    const text = gunzipSync(readFileSync(file)).toString("utf8");
-    const parsed = JSON.parse(text) as unknown;
-    if (!Array.isArray(parsed)) return null;
-    return parsed as LiveCardIdentity[];
-  } catch {
-    return null;
+  for (const dir of [malieDurableDir(outDir), outDir]) {
+    const file = malieIdentitiesCachePath(dir);
+    if (!existsSync(file)) continue;
+    try {
+      const text = gunzipSync(readFileSync(file)).toString("utf8");
+      const parsed = JSON.parse(text) as unknown;
+      if (!Array.isArray(parsed)) continue;
+      return parsed as LiveCardIdentity[];
+    } catch {
+      /* try next */
+    }
   }
+  return null;
+}
+
+export function readMalieCacheMeta(outDir: string): MalieCacheMeta | null {
+  for (const dir of [malieDurableDir(outDir), outDir]) {
+    const file = malieCacheMetaPath(dir);
+    if (!existsSync(file)) continue;
+    try {
+      const parsed = JSON.parse(readFileSync(file, "utf8")) as MalieCacheMeta;
+      if (
+        typeof parsed.fingerprint !== "string" ||
+        !Array.isArray(parsed.langs) ||
+        typeof parsed.identities !== "number"
+      ) {
+        continue;
+      }
+      return parsed;
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
 }
 
 /**
@@ -648,8 +670,68 @@ export async function bootstrapMalieCatalogue(opts: {
       (skipExisting ? " (skip unchanged revisions)" : " (force refetch)"),
   );
 
-  const cataloguePath = path.join(outDir, "cdn-catalogue-setnum.txt");
-  const stemsPath = path.join(outDir, "malie-bundle-stems.txt");
+  const cataloguePath = path.join(outDir, MALIE_CATALOGUE_SETNUM);
+  const stemsPath = path.join(outDir, MALIE_BUNDLE_STEMS);
+  const durable = malieDurableDir(outDir);
+  const durableCataloguePath = path.join(durable, MALIE_CATALOGUE_SETNUM);
+  const durableStemsPath = path.join(durable, MALIE_BUNDLE_STEMS);
+
+  // Cache hit from durable logs — even when malie-databases/ was purged.
+  if (skipExisting) {
+    const meta = readMalieCacheMeta(outDir);
+    const cached = readMalieIdentitiesCache(outDir);
+    const stemsFile = existsSync(durableStemsPath)
+      ? durableStemsPath
+      : existsSync(stemsPath)
+        ? stemsPath
+        : null;
+    const catFile = existsSync(durableCataloguePath)
+      ? durableCataloguePath
+      : existsSync(cataloguePath)
+        ? cataloguePath
+        : null;
+    if (
+      meta &&
+      cached &&
+      meta.fingerprint === fingerprint &&
+      stemsFile &&
+      catFile
+    ) {
+      const bundleStems = loadMalieBundleStems(outDir);
+      const setnums = readFileSync(catFile, "utf8")
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith("#"));
+      const report: MalieBootstrapReport = {
+        langs: [...opts.langs],
+        databaseFiles: keys.length,
+        fetched: 0,
+        skipped: keys.length,
+        identities: cached.length,
+        bundleStems: bundleStems.length,
+        setnums: setnums.length,
+        outDir,
+        cataloguePath: catFile,
+        stemsPath: stemsFile,
+      };
+      writeFileSync(
+        path.join(outDir, "malie-bootstrap-report.json"),
+        `${JSON.stringify(report, null, 2)}\n`,
+        "utf8",
+      );
+      log(
+        `  Malie cache hit: skipped=${keys.length}` +
+          ` identities=${cached.length} stems=${bundleStems.length}` +
+          ` (durable inventory; no DB reparse)`,
+      );
+      return {
+        report,
+        identities: cached,
+        bundleStems,
+        setnums,
+      };
+    }
+  }
 
   if (
     skipExisting &&
@@ -666,11 +748,14 @@ export async function bootstrapMalieCatalogue(opts: {
       meta &&
       cached &&
       meta.fingerprint === fingerprint &&
-      existsSync(stemsPath) &&
-      existsSync(cataloguePath)
+      (existsSync(stemsPath) || existsSync(durableStemsPath)) &&
+      (existsSync(cataloguePath) || existsSync(durableCataloguePath))
     ) {
       const bundleStems = loadMalieBundleStems(outDir);
-      const setnums = readFileSync(cataloguePath, "utf8")
+      const catFile = existsSync(cataloguePath)
+        ? cataloguePath
+        : durableCataloguePath;
+      const setnums = readFileSync(catFile, "utf8")
         .split(/\r?\n/)
         .map((l) => l.trim())
         .filter((l) => l && !l.startsWith("#"));
@@ -683,8 +768,8 @@ export async function bootstrapMalieCatalogue(opts: {
         bundleStems: bundleStems.length,
         setnums: setnums.length,
         outDir,
-        cataloguePath,
-        stemsPath,
+        cataloguePath: catFile,
+        stemsPath: existsSync(stemsPath) ? stemsPath : durableStemsPath,
       };
       writeFileSync(
         path.join(outDir, "malie-bootstrap-report.json"),
@@ -709,7 +794,7 @@ export async function bootstrapMalieCatalogue(opts: {
         ? "identities.gz missing/unreadable"
         : meta.fingerprint !== fingerprint
           ? "fingerprint mismatch"
-          : !existsSync(stemsPath) || !existsSync(cataloguePath)
+          : !existsSync(stemsPath) && !existsSync(durableStemsPath)
             ? "stems/catalogue missing"
             : "unknown";
     log(
@@ -811,8 +896,13 @@ export async function bootstrapMalieCatalogue(opts: {
 
   const bundleStems = [...stemSet].sort();
   const setnums = [...setnumSet].sort();
-  writeFileSync(cataloguePath, `${setnums.join("\n")}\n`, "utf8");
-  writeFileSync(stemsPath, `${bundleStems.join("\n")}\n`, "utf8");
+  const stemsBody = `${bundleStems.join("\n")}\n`;
+  const setnumsBody = `${setnums.join("\n")}\n`;
+  writeFileSync(cataloguePath, setnumsBody, "utf8");
+  writeFileSync(stemsPath, stemsBody, "utf8");
+  mkdirSync(durable, { recursive: true });
+  writeFileSync(durableCataloguePath, setnumsBody, "utf8");
+  writeFileSync(durableStemsPath, stemsBody, "utf8");
 
   const report: MalieBootstrapReport = {
     langs: [...opts.langs],
@@ -848,12 +938,15 @@ export async function bootstrapMalieCatalogue(opts: {
 
 /** Load stems written by a previous bootstrap (no network). */
 export function loadMalieBundleStems(outDir: string): string[] {
-  const stemsPath = path.join(outDir, "malie-bundle-stems.txt");
-  if (!existsSync(stemsPath)) return [];
-  return readFileSync(stemsPath, "utf8")
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith("#"));
+  for (const dir of [malieDurableDir(outDir), outDir]) {
+    const stemsPath = path.join(dir, MALIE_BUNDLE_STEMS);
+    if (!existsSync(stemsPath)) continue;
+    return readFileSync(stemsPath, "utf8")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#"));
+  }
+  return [];
 }
 
 /** Keep only ``{set}_{lang}_{num}`` stems for the requested Live langs. */

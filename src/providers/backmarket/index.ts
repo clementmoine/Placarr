@@ -1,7 +1,7 @@
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import { pricedOffers } from "@/core/catalog/priceOffers";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,

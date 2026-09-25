@@ -37,7 +37,7 @@ import axios from "axios";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { flareSolverrCookiesFor } from "@/lib/http/flareSolverr";
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
-import { packApksDir } from "@/lib/packPaths";
+import { packApksDir, packLogsDir } from "@/lib/packPaths";
 
 const execFileAsync = promisify(execFile);
 
@@ -202,9 +202,9 @@ export function parseApkComboDownload(
 }
 
 /**
- * Download when the store version is provably newer than what the store
- * itself installed. Unknown provenance (no versionCode) ⇒ fetch once to
- * establish the tracked baseline.
+ * Download when the store version is provably newer than what we already
+ * promoted. Matching ``versionCode`` → skip even if staging ``.apk`` files
+ * were purged after extract (catalogue contract).
  */
 export function shouldDownloadStoreApk(
   meta: ApkStoreMeta | null,
@@ -212,34 +212,57 @@ export function shouldDownloadStoreApk(
   options: { force?: boolean; hasApks: boolean },
 ): boolean {
   if (options.force) return true;
-  if (!options.hasApks) return true;
   if (typeof meta?.versionCode !== "number") return true;
-  return latest.versionCode > meta.versionCode;
+  if (latest.versionCode > meta.versionCode) return true;
+  // Same (or newer local) versionCode: no re-download. ``hasApks`` is ignored
+  // so a post-promote staging purge does not force a 155 MB store fetch.
+  void options.hasApks;
+  return false;
 }
 
+/** Durable store version meta — `data/<pack>/logs/apk-store-meta.json`. */
 export function apkStoreMetaPath(pack: string): string {
+  return path.join(packLogsDir(pack), "apk-store-meta.json");
+}
+
+/** Legacy staging path (pre–promote→ledger). */
+function legacyApkStoreMetaPath(pack: string): string {
   return path.join(packApksDir(pack), "apk-store-meta.json");
 }
 
 export async function readApkStoreMeta(
   pack: string,
 ): Promise<ApkStoreMeta | null> {
-  try {
-    const raw = await readFile(apkStoreMetaPath(pack), "utf8");
-    const parsed = JSON.parse(raw) as ApkStoreMeta;
-    if (parsed && typeof parsed.packageId === "string") return parsed;
-    return null;
-  } catch {
-    return null;
+  for (const file of [apkStoreMetaPath(pack), legacyApkStoreMetaPath(pack)]) {
+    try {
+      const raw = await readFile(file, "utf8");
+      const parsed = JSON.parse(raw) as ApkStoreMeta;
+      if (parsed && typeof parsed.packageId === "string") {
+        if (file === legacyApkStoreMetaPath(pack)) {
+          await writeApkStoreMeta(pack, parsed);
+        }
+        return parsed;
+      }
+    } catch {
+      /* try next */
+    }
   }
+  return null;
 }
 
 export async function writeApkStoreMeta(
   pack: string,
   meta: ApkStoreMeta,
 ): Promise<void> {
-  await mkdir(packApksDir(pack), { recursive: true });
-  await writeFile(apkStoreMetaPath(pack), JSON.stringify(meta, null, 2));
+  const dest = apkStoreMetaPath(pack);
+  await mkdir(path.dirname(dest), { recursive: true });
+  await writeFile(dest, JSON.stringify(meta, null, 2));
+  // Drop staging copy once durable under logs/.
+  try {
+    await unlink(legacyApkStoreMetaPath(pack));
+  } catch {
+    /* absent */
+  }
 }
 
 /**

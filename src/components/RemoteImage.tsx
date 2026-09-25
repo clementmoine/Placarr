@@ -1,7 +1,14 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, SyntheticEvent } from "react";
 import Image from "next/image";
 
 import { cn } from "@/lib/shared/utils";
+import {
+  nextTcgdexDisplayUrl,
+  tcgdexDisplayCandidates,
+} from "@/core/enrich/media/tcgdexAssetUrls";
 import {
   remoteImageDisplaySrc,
   remoteImageShouldSkipOptimizer,
@@ -69,28 +76,47 @@ export function RemoteImage({
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   onError?: (event: SyntheticEvent<HTMLImageElement>) => void;
 }) {
-  const displaySrc = remoteImageDisplaySrc(src);
+  const chain = useMemo(() => tcgdexDisplayCandidates(src), [src]);
+  const [activeSrc, setActiveSrc] = useState(chain[0] ?? src);
+
+  useEffect(() => {
+    setActiveSrc(chain[0] ?? src);
+  }, [chain, src]);
+
+  const handleError = useCallback(
+    (event: SyntheticEvent<HTMLImageElement>) => {
+      const next = nextTcgdexDisplayUrl(activeSrc, chain);
+      if (next && next !== activeSrc) {
+        setActiveSrc(next);
+        return;
+      }
+      onError?.(event);
+    },
+    [activeSrc, chain, onError],
+  );
+
+  const displaySrc = remoteImageDisplaySrc(activeSrc);
   const unoptimized =
-    remoteImageShouldSkipOptimizer(src) ||
+    remoteImageShouldSkipOptimizer(activeSrc) ||
     remoteImageShouldSkipOptimizer(displaySrc);
   // `priority` alone leaves loading unset; Next 16 LCP warning needs eager.
   const resolvedLoading = loading ?? (priority ? "eager" : undefined);
   const resolvedFetchPriority =
     fetchPriority ?? (priority ? "high" : undefined);
 
-  if (isBlobImageSrc(src)) {
+  if (isBlobImageSrc(activeSrc)) {
     return (
       // Aperçus locaux blob:/data: — hors optimiseur next/image.
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={src}
+        src={activeSrc}
         alt={alt}
         className={className}
         style={style}
         loading={resolvedLoading}
         fetchPriority={resolvedFetchPriority}
         onLoad={onLoad}
-        onError={onError}
+        onError={handleError}
         draggable={false}
       />
     );
@@ -111,7 +137,7 @@ export function RemoteImage({
         className={className}
         style={style}
         onLoad={onLoad}
-        onError={onError}
+        onError={handleError}
         draggable={false}
       />
     );
@@ -129,7 +155,7 @@ export function RemoteImage({
       className={cn(aspectRatioClassName(className), className)}
       style={style}
       onLoad={onLoad}
-      onError={onError}
+      onError={handleError}
       draggable={false}
     />
   );

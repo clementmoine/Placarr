@@ -4,7 +4,7 @@
   "ingest": "FR : faces h400 + packshots. IT/ES : noms via fiche AJAX (faces = DBC).",
   "sourceId": "dbzcollection",
   "lang": "fr",
-  "line": "dbs/lamincards",
+  "line": "dragonball/lamincards",
   "origin": "http://www.dbzcollection.fr/2v2",
   "collectionIdc": "94",
   "sets": [

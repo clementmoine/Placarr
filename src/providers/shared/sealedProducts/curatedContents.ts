@@ -207,7 +207,15 @@ function applyPatch(
     linksFromKeys(patch.guaranteedPrintKeys);
   const pool = linksFromKeys(patch.randomPoolPrintKeys);
   const products = productLinksFromCurated(patch.guaranteedProducts);
-  const hasProductBundle = Boolean(products && products.length > 0);
+  const hasProductBundle = Boolean(
+    (products && products.length > 0) ||
+      (!products && entry.guaranteedProducts?.length),
+  );
+  const hasPrintInventory = Boolean(
+    (guaranteed && guaranteed.length > 0) ||
+      (!guaranteed && entry.guaranteedPrints?.length),
+  );
+  const inventoryKnown = hasProductBundle || hasPrintInventory;
   return {
     ...entry,
     cardsPerPack:
@@ -233,18 +241,16 @@ function applyPatch(
     randomPoolPrints: pool ?? entry.randomPoolPrints,
     randomPoolScope: patch.randomPoolScope ?? entry.randomPoolScope,
     behavior: patch.behavior ?? entry.behavior,
-    contentsKnown:
-      patch.contentsKnown !== undefined
+    contentsKnown: inventoryKnown
+      ? true
+      : patch.contentsKnown !== undefined
         ? patch.contentsKnown
-        : (guaranteed && guaranteed.length > 0) || hasProductBundle
-          ? true
-          : entry.contentsKnown,
-    containsPrintsIsPreview:
-      patch.containsPrintsIsPreview !== undefined
+        : entry.contentsKnown,
+    containsPrintsIsPreview: inventoryKnown
+      ? false
+      : patch.containsPrintsIsPreview !== undefined
         ? patch.containsPrintsIsPreview
-        : (guaranteed && guaranteed.length > 0) || hasProductBundle
-          ? false
-          : entry.containsPrintsIsPreview,
+        : entry.containsPrintsIsPreview,
   };
 }
 

@@ -1,10 +1,33 @@
 import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
-import type { FoilPackId, FoilPackStatus } from "./foilStatusTypes";
 import { CATALOGUE_PACKS, type CatalogueExtractTarget } from "./cataloguePacks";
 
-export type { FoilPackId, FoilPackStatus } from "./foilStatusTypes";
+export type FoilPackId = CatalogueExtractTarget;
+
+export type FoilPackStatus = {
+  id: FoilPackId;
+  label: string;
+  /** Staging folder under data/ (`<pack>/staging`, packs may nest: naruto/carddass). */
+  staging: string;
+  apk: {
+    present: boolean;
+    files: { name: string; bytes: number }[];
+    bytes: number;
+    newestAt: string | null;
+  };
+  extract: {
+    present: boolean;
+    /** Shader count under data/<pack>/foil/shaders when available. */
+    shaders: number | null;
+    newestAt: string | null;
+    /** APK newer than extract — re-run recommended. */
+    stale: boolean;
+  };
+  /** Host extract can run without a fresh pull. */
+  canExtract: boolean;
+  extractTarget: CatalogueExtractTarget;
+};
 
 async function safeStat(filePath: string) {
   try {
@@ -98,7 +121,7 @@ export async function readFoilPackStatuses(opts: {
   const packs: Array<{
     id: FoilPackId;
     label: string;
-    /** On-disk data pack (may nest: naruto/carddass, dbs/cg). */
+    /** On-disk data pack (may nest: naruto/carddass, dragonball/cg). */
     dataPack: string;
     staging: string;
     extractTarget: CatalogueExtractTarget;

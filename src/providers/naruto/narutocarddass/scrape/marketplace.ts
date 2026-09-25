@@ -19,7 +19,8 @@ import {
 } from "../identity";
 import { narutoCardAbsDir } from "../disk";
 import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../disk";
-import { NARUTO_PACK_ID, NARUTO_EN_PACK_ID } from "../identity";
+import { NARUTO_PACK_ID, NARUTO_LEGACY_EN_CCG_DISK } from "../identity";
+import { loadNarutoCardsIndexFromSqlite } from "../indexStore";
 import {
   FRIL_ORIGIN,
   frilRefWithinPublishedRange,
@@ -42,6 +43,7 @@ import {
   parseChitoroTitle,
   resolveChitoroIdentity,
   resolveChitoroNameFamily,
+  chitoroPsDiskOverride,
   type ChitoroIdentity,
   AVALON_LANG,
   AVALON_ORIGIN,
@@ -64,6 +66,7 @@ import { japaneseReleaseBands } from "../sources/sealed";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import { upsertNarutoAppearances } from "../pipeline";
 import ledger from "../curated/sources/ultrajeux-s5.json";
+import { promoteAndPurgeNarutoDig } from "@/providers/naruto/shared/promoteNarutoDig";
 
 // ─── shared helpers ─────────────────────────────────────────────────────
 
@@ -711,7 +714,8 @@ export async function downloadChitoroFaces(input: {
   for (const row of input.rows) {
     const src = row.images[0];
     if (!src) continue;
-    const cardId = `${row.family}${String(row.number).padStart(4, "0")}`;
+    const retailId = `${row.family}${String(row.number).padStart(4, "0")}`;
+    const cardId = chitoroPsDiskOverride(retailId) ?? retailId;
     const diskFolder = narutoFamilyForPrefix(row.family);
     if (!diskFolder) continue;
     const dir = path.join(
@@ -760,18 +764,14 @@ type EnTitleRow = {
   fullName: string;
 };
 
-/** EN CCG titles from cards-index → chitoro name index (`n`→`ni`, …). */
+/** EN CCG titles from catalog.sqlite → chitoro name index (`n`→`ni`, …). */
 export function loadEnTitleRowsFromIndex(root: string): EnTitleRow[] {
-  const file = path.join(root, "cards-index.json");
-  if (!existsSync(file)) return [];
-  const raw = JSON.parse(readFileSync(file, "utf8")) as {
-    cards?: Record<
-      string,
-      { card?: string; langs?: { en?: { name?: string | null } } }
-    >;
-  };
+  const index = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID, {
+    dbPath: path.join(root, "catalog.sqlite"),
+  });
+  if (!index) return [];
   const rows: EnTitleRow[] = [];
-  for (const entry of Object.values(raw.cards ?? {})) {
+  for (const entry of Object.values(index.cards)) {
     const name = entry.langs?.en?.name?.trim();
     const card = entry.card?.trim();
     if (!name || !card) continue;
@@ -1069,7 +1069,7 @@ export function loadStorm3Ledger(packDir?: string): Storm3Card[] {
     ? [storm3LedgerPath(packDir)]
     : [
         storm3LedgerPath(path.join(dataRoot(), NARUTO_PACK_ID)),
-        storm3LedgerPath(path.join(dataRoot(), NARUTO_EN_PACK_ID)),
+        storm3LedgerPath(path.join(dataRoot(), NARUTO_LEGACY_EN_CCG_DISK)),
       ];
   for (const file of files) {
     const cards = readStorm3LedgerFile(file);
@@ -1333,5 +1333,12 @@ export async function scrapeUltrajeuxS5Holes(
       failed,
     }),
   );
+  if (!opts.force && failed.length === 0 && downloaded + skipped > 0) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_PACK_ID,
+      artefactId: "faces:ultrajeux-s5",
+      stagingRel: "ultrajeux",
+    });
+  }
   return { downloaded, skipped, failed };
 }

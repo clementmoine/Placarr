@@ -1,5 +1,5 @@
 import { BOARDGAME_CATEGORY_CHROME_RE } from "@/core/identify/listingMerch";
-import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/core/identify/platforms/platforms";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/core/identify/platforms/platformList";
 
 export type GameEditionDefinition = {
   label: string;

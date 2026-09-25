@@ -3,14 +3,14 @@
  *
  * Bandai's cardlist does not publish a sleeve back. The pack back is the
  * Masters 7-ball verso from dbscards (`original/back.webp`), installed under
- * `data/dbs/cg/cards/back.webp`. There is no Unity / mask dump, so shiny
+ * `data/dragonball/cg/cards/back.webp`. There is no Unity / mask dump, so shiny
  * finishes use a house look on a full-face plate — same honesty as Naruto.
  */
 import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 export const DBS_CG_EFFECT_PACK_ID = "dbs-cg";
 
-const ASSET_BASE = "/assets/dbs/cg";
+const ASSET_BASE = "/assets/dragonball/cg";
 
 export const DBS_CG_FULL_FOIL_MASK_URL = `${ASSET_BASE}/full_foil_mask.webp`;
 

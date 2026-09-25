@@ -2,7 +2,7 @@ import {
   detectVideoGamePlatformKey,
   isVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 
 /**
  * Platform key from a shelf label (canonical detection only — aliases live on

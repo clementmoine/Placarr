@@ -24,12 +24,13 @@
       "contentsKnown": false
     },
     "tin": {
-      "source": "opecards tins — mixed",
-      "verifiedAt": "2026-09-14",
+      "source": "https://en.onepiece-cardgame.com/products/other/ts01.php + ts02.php (Tin Pack Set Vol.1/2)",
+      "verifiedAt": "2026-09-20",
+      "packsContained": 2,
       "randomPoolScope": "none",
       "behavior": "mixed_bundle",
       "contentsKnown": false,
-      "notes": "packsContained non attesté globalement."
+      "notes": "Tin Pack Set TS-01/TS-02 : 2 boosters + DON!!/promo (Bandai officiel)."
     },
     "blister_case": {
       "source": "opecards booster blister carton",
@@ -5051,5 +5052,302 @@
         }
       ]
     }
+    },
+    "super-pre-release-starter-deck-01-straw-hat-crew": {
+      "source": "https://tier-one-onepiece.jp/blog/st01-cardlists/",
+      "verifiedAt": "2026-09-20",
+      "notes": "Même composition que `starter-deck-01-straw-hat-crew` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st01-001",
+        "onepiece:st01-002",
+        "onepiece:st01-003",
+        "onepiece:st01-004",
+        "onepiece:st01-005",
+        "onepiece:st01-006",
+        "onepiece:st01-007",
+        "onepiece:st01-008",
+        "onepiece:st01-009",
+        "onepiece:st01-010",
+        "onepiece:st01-011",
+        "onepiece:st01-012",
+        "onepiece:st01-013",
+        "onepiece:st01-014",
+        "onepiece:st01-015",
+        "onepiece:st01-016",
+        "onepiece:st01-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st01-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st01-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-003",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-005",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-009",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st01-011",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-012",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-013",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-016",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st01-017",
+          "qty": 2
+        }
+      ]
+    },
+    "super-pre-release-starter-deck-02-worst-generation": {
+      "source": "https://tier-one-onepiece.jp/blog/st02-cardlists/",
+      "verifiedAt": "2026-09-20",
+      "notes": "Même composition que `starter-deck-02-worst-generation` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st02-001",
+        "onepiece:st02-002",
+        "onepiece:st02-003",
+        "onepiece:st02-004",
+        "onepiece:st02-005",
+        "onepiece:st02-006",
+        "onepiece:st02-007",
+        "onepiece:st02-008",
+        "onepiece:st02-009",
+        "onepiece:st02-010",
+        "onepiece:st02-011",
+        "onepiece:st02-012",
+        "onepiece:st02-013",
+        "onepiece:st02-014",
+        "onepiece:st02-015",
+        "onepiece:st02-016",
+        "onepiece:st02-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st02-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st02-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-004",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-007",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-009",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-010",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-013",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-014",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-015",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st02-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st02-017",
+          "qty": 2
+        }
+      ]
+    },
+    "super-pre-release-starter-deck-03-the-seven-warlords-of-the-sea": {
+      "source": "https://tier-one-onepiece.jp/blog/st03-cardlists/",
+      "verifiedAt": "2026-09-20",
+      "notes": "Même composition que `starter-deck-03-the-seven-warlords-of-the-sea` (édition JA / pré-release du même deck). Tier One 収録枚数 Σ=51. Dig: curated/sources/st01-21-tier-one-pieces-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 51,
+      "guaranteedPrintKeys": [
+        "onepiece:st03-001",
+        "onepiece:st03-002",
+        "onepiece:st03-003",
+        "onepiece:st03-004",
+        "onepiece:st03-005",
+        "onepiece:st03-006",
+        "onepiece:st03-007",
+        "onepiece:st03-008",
+        "onepiece:st03-009",
+        "onepiece:st03-010",
+        "onepiece:st03-011",
+        "onepiece:st03-012",
+        "onepiece:st03-013",
+        "onepiece:st03-014",
+        "onepiece:st03-015",
+        "onepiece:st03-016",
+        "onepiece:st03-017"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "onepiece:st03-001",
+          "qty": 1
+        },
+        {
+          "printKey": "onepiece:st03-002",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-003",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-004",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-005",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-006",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-007",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-008",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-009",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-010",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-011",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-012",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-013",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-014",
+          "qty": 2
+        },
+        {
+          "printKey": "onepiece:st03-015",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-016",
+          "qty": 4
+        },
+        {
+          "printKey": "onepiece:st03-017",
+          "qty": 2
+        }
+      ]
   }
 }

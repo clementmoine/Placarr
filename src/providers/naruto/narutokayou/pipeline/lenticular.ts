@@ -2,7 +2,7 @@
  * Kayou lenticular grids, landscape pivots, and seam probes.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -22,7 +22,11 @@ import {
   kayouScanIsAttestedLenticularStrip,
   kayouScanIsPortraitStrip,
 } from "@/core/render/kayouScanFormat";
-import { packCardDir, packCardsIndexPath } from "@/lib/packPaths";
+import { packCardDir } from "@/lib/packPaths";
+import {
+  loadCardsIndexDoc,
+  persistCardsIndexDoc,
+} from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 import { resetCardsIndexOrientationCache } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
 
 import { NARUTO_KAYOU_PACK_ID } from "../pack";
@@ -282,16 +286,19 @@ function firstArtDimensions(
   return null;
 }
 
+function requireKayouCardsIndex(packId: string): CardsIndexV1 {
+  const raw = loadCardsIndexDoc(packId);
+  if (!raw || !isCardsIndexV1(raw)) {
+    throw new Error(`cards-index doc manquant ou invalide : ${packId}`);
+  }
+  return raw;
+}
+
 /** Re-apply after `enrichCardsIndexArtDimensions` — pixels alone miss NRZ08 HR. */
 export function markKayouRotatedLandscapePrints(
   packId: string = NARUTO_KAYOU_PACK_ID,
 ): { marked: number; cleared: number } {
-  const dest = packCardsIndexPath(packId);
-  const raw = JSON.parse(readFileSync(dest, "utf8")) as unknown;
-  if (!isCardsIndexV1(raw)) {
-    throw new Error(`cards-index invalide : ${dest}`);
-  }
-  const index = raw as CardsIndexV1;
+  const index = requireKayouCardsIndex(packId);
   let marked = 0;
   let cleared = 0;
 
@@ -322,7 +329,7 @@ export function markKayouRotatedLandscapePrints(
     }
   }
 
-  writeFileSync(dest, `${JSON.stringify(index)}\n`);
+  persistCardsIndexDoc(packId, index);
   resetCardsIndexOrientationCache();
   return { marked, cleared };
 }
@@ -687,10 +694,8 @@ export function kayouLenticularGridForPrintKey(
 ): LenticularGrid | null {
   const key = printKey.trim().toLowerCase();
   try {
-    const raw = JSON.parse(
-      readFileSync(packCardsIndexPath(packId), "utf8"),
-    ) as unknown;
-    if (!isCardsIndexV1(raw)) return null;
+    const raw = loadCardsIndexDoc(packId);
+    if (!raw || !isCardsIndexV1(raw)) return null;
     const entry = raw.cards[key];
     if (!entry) return null;
     if (entry.lenticularGrid) return entry.lenticularGrid;
@@ -706,10 +711,8 @@ export function kayouScanCropForPrintKey(
 ): LenticularPanelCrop | null {
   const key = printKey.trim().toLowerCase();
   try {
-    const raw = JSON.parse(
-      readFileSync(packCardsIndexPath(packId), "utf8"),
-    ) as unknown;
-    if (!isCardsIndexV1(raw)) return null;
+    const raw = loadCardsIndexDoc(packId);
+    if (!raw || !isCardsIndexV1(raw)) return null;
     const entry = raw.cards[key];
     if (!entry) return null;
     return inferKayouScanCrop(entry);
@@ -724,10 +727,8 @@ export function kayouLenticularCropProfileForPrintKey(
 ): string | null {
   const key = printKey.trim().toLowerCase();
   try {
-    const raw = JSON.parse(
-      readFileSync(packCardsIndexPath(packId), "utf8"),
-    ) as unknown;
-    if (!isCardsIndexV1(raw)) return null;
+    const raw = loadCardsIndexDoc(packId);
+    if (!raw || !isCardsIndexV1(raw)) return null;
     const entry = raw.cards[key];
     if (!entry) return null;
     if (entry.lenticularCropProfile) return entry.lenticularCropProfile;
@@ -738,7 +739,7 @@ export function kayouLenticularCropProfileForPrintKey(
   }
 }
 
-/** Persist inferred grids + single-face scan crops on `cards-index.json`. */
+/** Persist inferred grids + single-face scan crops on pack_documents. */
 export async function markKayouLenticularGrids(
   packId: string = NARUTO_KAYOU_PACK_ID,
   opts?: { onProgress?: (message: string) => void },
@@ -752,12 +753,7 @@ export async function markKayouLenticularGrids(
   probed: number;
   missingArt: number;
 }> {
-  const dest = packCardsIndexPath(packId);
-  const raw = JSON.parse(readFileSync(dest, "utf8")) as unknown;
-  if (!isCardsIndexV1(raw)) {
-    throw new Error(`cards-index invalide : ${dest}`);
-  }
-  const index = raw as CardsIndexV1;
+  const index = requireKayouCardsIndex(packId);
   let marked = 0;
   let cleared = 0;
   let scanCropsMarked = 0;
@@ -824,7 +820,7 @@ export async function markKayouLenticularGrids(
     }
   }
 
-  writeFileSync(dest, `${JSON.stringify(index)}\n`);
+  persistCardsIndexDoc(packId, index);
   resetCardsIndexOrientationCache();
   return {
     marked,

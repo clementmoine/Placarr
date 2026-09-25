@@ -2,10 +2,16 @@
  * Texture2D bytes from UnityFS typetree + ``.resS`` (ADR-021 phase B).
  *
  * Hardcoded Texture2D readers in npm libs break on Unity 2022.3; typetree +
- * stream path is stable. ASTC decode via ``@arkntools/unity-js-tools``.
+ * stream path is stable. Compressed formats via ``@arkntools/unity-js-tools``
+ * (ASTC / ETC1 / BC1) — Live CDN ships ETC for some shared plates
+ * (``TEX_StitchedRings``), Mac/desktop dumps use DXT1 for the same asset.
  */
 
-import { decodeAstc } from "@arkntools/unity-js-tools";
+import {
+  decodeAstc,
+  decodeBc1,
+  decodeEtc1,
+} from "@arkntools/unity-js-tools";
 
 import {
   iterClassTrees,
@@ -16,8 +22,12 @@ import {
   type UnityTypeTree,
 } from "@/lib/unity/loadUnityFs";
 
-/** Unity ``TextureFormat`` values we decode (Live CDN = ASTC_RGB_8x8 = 51). */
+/** Unity ``TextureFormat`` values we decode. */
 export const TextureFormat = {
+  /** BC1 / S3TC — Mac Live shadersbundle. */
+  DXT1: 10,
+  /** ETC1 RGB — Android Live CDN shadersbundle. */
+  ETC_RGB4: 34,
   ASTC_RGB_4x4: 48,
   ASTC_RGB_5x5: 49,
   ASTC_RGB_6x6: 50,
@@ -52,6 +62,15 @@ export function astcBlockSize(format: number): number | null {
   return ASTC_BLOCK[format] ?? null;
 }
 
+/** True when {@link decodeTextureFormat} can expand this Unity format id. */
+export function canDecodeTextureFormat(format: number): boolean {
+  return (
+    format === TextureFormat.DXT1 ||
+    format === TextureFormat.ETC_RGB4 ||
+    ASTC_BLOCK[format] != null
+  );
+}
+
 /** WebGL2 compressed-texture enum name for an ASTC format id. */
 export function webglAstcFormat(format: number): string | null {
   const block = ASTC_BLOCK[format];
@@ -66,7 +85,7 @@ export type DecodedTexture2D = {
   format: number;
   /** sRGB when ``m_ColorSpace === 1``. */
   srgb: boolean;
-  /** RGBA8, Unity/top-left (after BGRA swap + vertical flip to match UnityPy/Pillow). */
+  /** RGBA8, Unity/top-left (vertical flip; ASTC also BGRA→RGBA). */
   rgba: Buffer;
 };
 
@@ -121,15 +140,31 @@ export function decodeTextureFormat(
   format: number,
   name = "",
 ): Buffer {
+  // ETC1 / BC1: arkntools already returns RGBA8 — flip only.
+  if (format === TextureFormat.ETC_RGB4) {
+    return flipRgbaVertical(
+      Buffer.from(decodeEtc1(data, width, height)),
+      width,
+      height,
+    );
+  }
+  if (format === TextureFormat.DXT1) {
+    return flipRgbaVertical(
+      Buffer.from(decodeBc1(data, width, height)),
+      width,
+      height,
+    );
+  }
   const block = ASTC_BLOCK[format];
   if (block == null) {
     throw new Error(`Texture2D format ${format} not implemented (${name})`);
   }
+  // ASTC: arkntools ``decodeTexture`` convention is BGRA.
   const decoded = Buffer.from(decodeAstc(data, width, height, block, block));
   return flipRgbaVertical(bgraToRgba(decoded), width, height);
 }
 
-/** Decode one Texture2D typetree; null when ASTC/resS path fails. */
+/** Decode one Texture2D typetree; null when format/resS path fails. */
 export function decodeTextureTree(
   tree: UnityTypeTree,
   loaded: LoadedUnityFs,
@@ -142,6 +177,7 @@ export function decodeTextureTree(
   const height = Number(tree.m_Height ?? 0);
   const format = Number(tree.m_TextureFormat ?? 0);
   if (!name || width <= 0 || height <= 0) return null;
+  if (!canDecodeTextureFormat(format)) return null;
 
   const stream = streamInfo(tree);
   let payload: Uint8Array | null = null;
@@ -153,7 +189,6 @@ export function decodeTextureTree(
     payload = inlineImageData(tree);
   }
   if (!payload?.byteLength) return null;
-  if (!ASTC_BLOCK[format]) return null;
 
   try {
     return {
@@ -191,6 +226,8 @@ type UnityTextureObject = {
 };
 
 const FORMAT_BY_NAME: Record<string, number> = {
+  DXT1: TextureFormat.DXT1,
+  ETC_RGB4: TextureFormat.ETC_RGB4,
   ASTC_RGB_4x4: TextureFormat.ASTC_RGB_4x4,
   ASTC_RGB_5x5: TextureFormat.ASTC_RGB_5x5,
   ASTC_RGB_6x6: TextureFormat.ASTC_RGB_6x6,
@@ -233,9 +270,9 @@ export function pixelsFromTextureObject(
 }
 
 /**
- * ASTC via inline/resS + ``@arkntools/unity-js-tools``; other formats via
- * unityfs-js ``decodeRgba``. Never call ``decodeRgba`` for known ASTC
- * (TextureDecoderPool is stubbed → log spam + fail).
+ * Compressed formats via typetree + ``@arkntools/unity-js-tools``; other
+ * formats fall back to unityfs-js ``decodeRgba``. Never call ``decodeRgba``
+ * for formats we expand ourselves (TextureDecoderPool is stubbed → spam).
  */
 export async function rgbaFromTexture2DObject(
   tex: UnityTextureObject,
@@ -252,7 +289,7 @@ export async function rgbaFromTexture2DObject(
     width > 0 &&
     height > 0 &&
     format != null &&
-    ASTC_BLOCK[format]
+    canDecodeTextureFormat(format)
   ) {
     try {
       return {
@@ -265,7 +302,7 @@ export async function rgbaFromTexture2DObject(
     }
   }
 
-  if (format != null && ASTC_BLOCK[format]) {
+  if (format != null && canDecodeTextureFormat(format)) {
     return null;
   }
 

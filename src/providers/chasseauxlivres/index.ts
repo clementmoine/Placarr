@@ -9,10 +9,6 @@ import {
 } from "@/core/commerce/retailer/productUrl";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { throwIfAborted } from "@/lib/http/abort";
-import {
-  CHASSE_AUX_LIVRES_CATALOG_BY_TYPE,
-  catalogForShelfType,
-} from "@/core/catalog/shelfCatalogSlug";
 import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
 import { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/commerce/retailer/catalogTitleAlignment";
 import {
@@ -28,8 +24,27 @@ import {
 import { createTeardownBarcodeTask } from "@/lib/dev/teardownUtils";
 import { scopedContribution } from "@/core/identify/lookup/sourceContribution";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
+
+/** Shelf type -> Chasse aux Livres catalog slug. */
+export const CHASSE_AUX_LIVRES_CATALOG_BY_TYPE = {
+  books: "fr",
+  movies: "dvd",
+  musics: "music",
+  games: "videogames",
+  /** Consoles / manettes live in the same CAL videogames catalog as games. */
+  hardware: "videogames",
+  boardgames: "toys",
+} as const;
+
+export function catalogForShelfType(type: string | null): string {
+  return (
+    CHASSE_AUX_LIVRES_CATALOG_BY_TYPE[
+      type as keyof typeof CHASSE_AUX_LIVRES_CATALOG_BY_TYPE
+    ] ?? "fr"
+  );
+}
 import { pricedOffers } from "@/core/catalog/priceOffers";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 
 export { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/commerce/retailer/catalogTitleAlignment";
 

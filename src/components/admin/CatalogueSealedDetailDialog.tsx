@@ -17,7 +17,7 @@ import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
 import type {
   CatalogueSealedDetail,
   CatalogueSealedRow,
-} from "@/lib/admin/catalogueProductsTypes";
+} from "@/lib/admin/catalogueProducts";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { sealedKindLabel } from "@/providers/shared/sealedProducts/kinds";
 
@@ -56,7 +56,7 @@ export function CatalogueSealedDetailDialog({
   const productKey = product?.productKey ?? null;
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ["catalogueProductDetail", "v3", packId, productKey],
+    queryKey: ["catalogueProductDetail", "v4", packId, productKey],
     queryFn: () => fetchDetail(packId, productKey!),
     enabled: open && Boolean(productKey),
   });
@@ -127,11 +127,35 @@ export function CatalogueSealedDetailDialog({
                   ) : null}
                 </p>
                 <p className="truncate font-mono text-[11px]">{detail.slug}</p>
+                {detail.priceCents != null && detail.priceCents > 0 ? (
+                  <p className="font-medium tabular-nums text-foreground/90">
+                    {new Intl.NumberFormat(fr ? "fr-FR" : "en-GB", {
+                      style: "currency",
+                      currency: "EUR",
+                    }).format(detail.priceCents / 100)}
+                  </p>
+                ) : (
+                  <p className="text-amber-700 dark:text-amber-400">
+                    {fr ? "Sans prix dans l’index" : "No price in the index"}
+                  </p>
+                )}
                 {detail.contentsKnown ? (
                   <p className="font-medium text-emerald-700 dark:text-emerald-400">
                     {fr
                       ? "Contenu inventorié — checklist fiable"
                       : "Contents known — trusted checklist"}
+                  </p>
+                ) : detail.structureAttested ? (
+                  <p className="font-medium text-emerald-700 dark:text-emerald-400">
+                    {detail.behavior === "known_bundle" ||
+                    (detail.behavior === "mixed_bundle" &&
+                      detail.packsContained == null)
+                      ? fr
+                        ? "Structure attestée — taille fixe (liste carte-à-carte partielle ou absente)"
+                        : "Structure attested — fixed size (card list partial or missing)"
+                      : fr
+                        ? "Structure attestée — loterie / sachets (pas de liste carte-à-carte)"
+                        : "Structure attested — lottery / packs (no card-by-card list)"}
                   </p>
                 ) : (
                   <p className="font-medium text-amber-700 dark:text-amber-400">
@@ -211,6 +235,7 @@ export function CatalogueSealedDetailDialog({
             ) : null}
 
             {!detail.contentsKnown &&
+            !detail.structureAttested &&
             detail.guaranteedPrints.length === 0 &&
             detail.randomPoolPrints.length === 0 ? (
               <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
@@ -221,6 +246,17 @@ export function CatalogueSealedDetailDialog({
                   : detail.containsPrintsIsPreview
                     ? "Shop preview tiles are not a checklist. Inventory in products-contents / curated."
                     : "No card list for this SKU. Inventory it to power purchase advice."}
+              </p>
+            ) : null}
+
+            {!detail.contentsKnown &&
+            detail.structureAttested &&
+            detail.containsPrintsIsPreview &&
+            detail.prints.length > 0 ? (
+              <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                {fr
+                  ? "Tuiles boutique = aperçu marketing (ignorées pour la checklist). Le pool / les sachets ci-dessous font foi."
+                  : "Shop tiles are marketing preview (ignored for the checklist). Pool / packs below are authoritative."}
               </p>
             ) : null}
 

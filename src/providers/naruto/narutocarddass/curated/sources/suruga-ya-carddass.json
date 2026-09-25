@@ -14,7 +14,7 @@
     "height": 512
   },
   "listings": "suruga-ya-carddass-listings.tsv",
-  "listed": 1216,
+  "listed": 1214,
   "note": "Tabletop Carddass CG (忍/術/作/依), same game as FR/IT. Search HTML is Cloudflare; CDN JPEGs are not. Harvested 457 used singles from the 巻ノ search (468 hits, sealed/chrome dropped). Skip Data Carddass (DN/NM) — that shop category is suruga-ya-data-carddass.json. Do not mint EN CCG n/j. Always keep art.suruga.* even when nikita (or any other dump) is already in the folder.",
   "not": [
     "data-carddass",

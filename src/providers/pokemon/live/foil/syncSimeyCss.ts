@@ -1,9 +1,8 @@
 /**
- * Refresh simeydotme foil CSS into `data/pokemon/staging/simey/` (volatile).
+ * Refresh simeydotme foil CSS into `data/pokemon/foil/simey/` (porting reference).
  *
- * Not served at runtime — porting reference + foil-status gap audit only.
- * Recipes live in `holoShadersSimey.ts`. Same spirit as CDN/APK staging:
- * re-check upstream HEAD when refreshing.
+ * Not served at runtime — foil-status gap audit + porting recipes only.
+ * Recipes live in `holoShadersSimey.ts`. Re-check upstream HEAD when refreshing.
  *
  * Also vendors lang-agnostic shared FX from poke-holo / poke-151 `public/img`
  * into `data/pokemon/foil/textures/simey_*` (served at runtime).
@@ -280,7 +279,7 @@ function main() {
   }
 
   console.log(
-    `simey staging → ${pokemonSimeyStagingDir()} (ok=${ok} refreshed=${refreshed})`,
+    `simey foil CSS → ${pokemonSimeyStagingDir()} (ok=${ok} refreshed=${refreshed})`,
   );
 }
 

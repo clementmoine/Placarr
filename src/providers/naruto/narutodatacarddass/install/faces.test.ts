@@ -251,7 +251,10 @@ import { parseDataCarddassPrinted } from "../printKey";
       ).toBe("https://i.ebayimg.com/images/g/jjQAAOSwTONoBbKE/s-l1600.webp");
       const faces = dataCarddassEbayIngestFaces();
       expect(faces.length).toBeGreaterThanOrEqual(80);
-      expect(faces.every((row) => row.lang === "ja")).toBe(true);
+      // NFP promos may omit lang on paste; everything else stays JA.
+      expect(
+        faces.every((row) => row.lang == null || row.lang === "ja"),
+      ).toBe(true);
       expect(
         faces.every((row) => parseDataCarddassPrinted(row.printedRef) !== null),
       ).toBe(true);

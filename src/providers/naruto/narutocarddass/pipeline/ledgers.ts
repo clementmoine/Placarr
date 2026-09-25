@@ -533,6 +533,13 @@ export function copyNarutoTitlesOntoGroupedPrints(input: {
           ) {
             continue;
           }
+          // S1 manga prerelease is FR-only — do not hang JA/EN names on the stub.
+          if (
+            printGrouping(variant) === "prerelease" &&
+            title.lang.toLowerCase() !== "fr"
+          ) {
+            continue;
+          }
           if (
             fillTitle(
               titles,

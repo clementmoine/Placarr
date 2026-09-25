@@ -8,13 +8,27 @@
  *
  * Logo URLs on the API are a CDN *base* (`…/logo`). The file is `…/logo.png`
  * — not `…/logo/high.png` (that 404s). Same for `symbol`.
+ *
+ * Durable store: ``catalog.sqlite`` ``pack_documents`` key ``tcgdex-set-logos``
+ * (staging JSON is legacy fallback, purged on write).
  */
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import { runWithConcurrency } from "@/lib/async";
 import { httpGet } from "@/lib/http/httpClient";
 import { foilPackDataDir } from "@/lib/runtimeData";
+import {
+  readPackDocument,
+  writePackDocument,
+} from "@/providers/shared/sealedProducts/productsSqlite";
 
 import { digitalOnlySetIds } from "./digitalOnly";
 import { canonicalTcgdexSetId, tcgdexApiSetId } from "./localSetIds";
@@ -26,6 +40,10 @@ const API_BASE = "https://api.tcgdex.net/v2";
 const LANGUAGE = "fr";
 const CACHE_VERSION = 2;
 const DETAIL_CONCURRENCY = 6;
+
+export const TCGDEX_SET_LOGOS_DOC_KEY = "tcgdex-set-logos";
+const SQLITE_MEMORY_FILE = ":sqlite:";
+const POKEMON_PACK = "pokemon";
 
 export type TcgdexSetLogoRow = {
   id: string;
@@ -67,8 +85,9 @@ let memory: {
 } | null = null;
 
 export function tcgdexSetLogoCachePath(): string {
+  // Legacy staging path — read for one-shot migrate, never the SSOT.
   return path.join(
-    foilPackDataDir("pokemon"),
+    foilPackDataDir(POKEMON_PACK),
     "staging",
     "tcgdex-set-logos.json",
   );
@@ -84,14 +103,46 @@ export function __seedTcgdexSetLogoIndexForTests(
   memory = { file: ":test:", index, mtimeMs: 0 };
 }
 
-/** TCGdex set logo/symbol base → actual PNG. Do not use `/high.png`. */
-export function tcgdexSetAssetUrl(
-  base: string | null | undefined,
-): string | null {
-  if (!base?.trim()) return null;
-  const trimmed = base.trim().replace(/\/+$/, "");
-  if (/\.(png|webp|jpe?g)$/i.test(trimmed)) return trimmed;
-  return `${trimmed}.png`;
+function purgeLegacyStagingFile(): void {
+  const file = tcgdexSetLogoCachePath();
+  if (!existsSync(file)) return;
+  try {
+    unlinkSync(file);
+  } catch {
+    /* keep */
+  }
+}
+
+/** Persist to catalog.sqlite (or explicit test file via ``dest``). */
+export function persistTcgdexSetLogoIndex(
+  index: TcgdexSetLogoIndex,
+  opts?: { dest?: string; dbPath?: string },
+): void {
+  if (opts?.dest) {
+    mkdirSync(path.dirname(opts.dest), { recursive: true });
+    writeFileSync(opts.dest, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+    let mtimeMs = 0;
+    try {
+      mtimeMs = statSync(opts.dest).mtimeMs;
+    } catch {
+      mtimeMs = Date.now();
+    }
+    memory = { file: opts.dest, index, mtimeMs };
+    return;
+  }
+  writePackDocument(POKEMON_PACK, TCGDEX_SET_LOGOS_DOC_KEY, index, {
+    dbPath: opts?.dbPath,
+  });
+  purgeLegacyStagingFile();
+  memory = { file: SQLITE_MEMORY_FILE, index, mtimeMs: Date.now() };
+}
+
+function readIndexFromSqlite(dbPath?: string): TcgdexSetLogoIndex | null {
+  const raw = readPackDocument<unknown>(POKEMON_PACK, TCGDEX_SET_LOGOS_DOC_KEY, {
+    dbPath,
+  });
+  if (!isValidIndex(raw)) return null;
+  return normalizeIndex(raw);
 }
 
 function text(value: unknown): string | null {
@@ -129,8 +180,7 @@ function normalizeIndex(index: TcgdexSetLogoIndex): TcgdexSetLogoIndex {
     version: CACHE_VERSION,
     sets: index.sets.map((row) => ({
       ...row,
-      localizedAbbr:
-        (row as TcgdexSetLogoRow).localizedAbbr ?? null,
+      localizedAbbr: (row as TcgdexSetLogoRow).localizedAbbr ?? null,
     })),
   };
 }
@@ -145,25 +195,56 @@ function readIndexFile(file: string): TcgdexSetLogoIndex | null {
   }
 }
 
+/**
+ * Load logo index — sqlite first, then one-shot migrate from staging JSON.
+ * Pass ``file`` only in tests (file-backed cache).
+ */
 export function loadTcgdexSetLogoIndex(
-  file = tcgdexSetLogoCachePath(),
+  file?: string,
 ): TcgdexSetLogoIndex | null {
   if (memory && memory.file === ":test:") {
     return memory.index;
   }
-  let mtimeMs = 0;
-  try {
-    mtimeMs = statSync(file).mtimeMs;
-  } catch {
-    mtimeMs = 0;
+  if (file) {
+    let mtimeMs = 0;
+    try {
+      mtimeMs = statSync(file).mtimeMs;
+    } catch {
+      mtimeMs = 0;
+    }
+    if (memory && memory.file === file && memory.mtimeMs === mtimeMs) {
+      return memory.index;
+    }
+    const index = readIndexFile(file);
+    if (index) memory = { file, index, mtimeMs };
+    else memory = null;
+    return index;
   }
-  if (memory && memory.file === file && memory.mtimeMs === mtimeMs) {
+  if (memory && memory.file === SQLITE_MEMORY_FILE) {
     return memory.index;
   }
-  const index = readIndexFile(file);
-  if (index) memory = { file, index, mtimeMs };
-  else memory = null;
-  return index;
+  const fromDb = readIndexFromSqlite();
+  if (fromDb) {
+    memory = { file: SQLITE_MEMORY_FILE, index: fromDb, mtimeMs: Date.now() };
+    return fromDb;
+  }
+  const staging = readIndexFile(tcgdexSetLogoCachePath());
+  if (staging) {
+    persistTcgdexSetLogoIndex(staging);
+    return staging;
+  }
+  memory = null;
+  return null;
+}
+
+/** TCGdex set logo/symbol base → actual PNG. Do not use `/high.png`. */
+export function tcgdexSetAssetUrl(
+  base: string | null | undefined,
+): string | null {
+  if (!base?.trim()) return null;
+  const trimmed = base.trim().replace(/\/+$/, "");
+  if (/\.(png|webp|jpe?g)$/i.test(trimmed)) return trimmed;
+  return `${trimmed}.png`;
 }
 
 function codesOf(row: TcgdexSetLogoRow): string[] {
@@ -697,9 +778,8 @@ export async function refreshTcgdexSetLogoIndex(opts?: {
   force?: boolean;
   dest?: string;
 }): Promise<TcgdexSetLogoIndex> {
-  const dest = opts?.dest ?? tcgdexSetLogoCachePath();
   if (!opts?.force) {
-    const existing = loadTcgdexSetLogoIndex(dest);
+    const existing = loadTcgdexSetLogoIndex(opts?.dest);
     if (existing && existing.sets.length > 0) return existing;
   }
 
@@ -733,19 +813,11 @@ export async function refreshTcgdexSetLogoIndex(opts?: {
     fetchedAt: new Date().toISOString(),
     sets: rows.filter((row): row is TcgdexSetLogoRow => Boolean(row)),
   };
-  mkdirSync(path.dirname(dest), { recursive: true });
-  writeFileSync(dest, `${JSON.stringify(index, null, 2)}\n`, "utf8");
-  let mtimeMs = 0;
-  try {
-    mtimeMs = statSync(dest).mtimeMs;
-  } catch {
-    mtimeMs = Date.now();
-  }
-  memory = { file: dest, index, mtimeMs };
+  persistTcgdexSetLogoIndex(index, { dest: opts?.dest });
   return index;
 }
 
-/** Refresh for a Pokémon extract. Failure → keep the on-disk cache if any. */
+/** Refresh for a Pokémon extract. Failure → keep the on-disk / sqlite cache if any. */
 export async function ensureTcgdexSetLogoIndex(opts?: {
   force?: boolean;
   dest?: string;
@@ -753,6 +825,6 @@ export async function ensureTcgdexSetLogoIndex(opts?: {
   try {
     return await refreshTcgdexSetLogoIndex(opts);
   } catch {
-    return loadTcgdexSetLogoIndex(opts?.dest ?? tcgdexSetLogoCachePath());
+    return loadTcgdexSetLogoIndex(opts?.dest);
   }
 }

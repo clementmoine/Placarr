@@ -1,7 +1,7 @@
 /**
  * Lecture des faits Dragon Ball Super CG bâtis depuis le dépôt Masters.
  *
- * `data/dbs/cg/facts.json` porte ce que le catalogue ne savait pas dire :
+ * `data/dragonball/cg/facts.json` porte ce que le catalogue ne savait pas dire :
  * le **texte de la carte**, les traits, l'ère, les mots-clés, les coûts, le
  * verso des Leaders, le statut tournoi (119 bannies, 34 limitées) et les
  * errata. Relevé du 2026-08-19 : 7 667 tirages sur leur propre ligne, 363 qui
@@ -24,7 +24,7 @@ export type DbsCgFactsPayload = {
 };
 
 const store = createFactsStore<DbsCgFactsEntry>({
-  packSegments: ["dbs", "cg"],
+  packSegments: ["dragonball", "cg"],
   // Les Masters ont leur propre normalisation de numéro, déjà éprouvée.
   keyFor: (setCode, number) => normalizeDbsCgNumber(`${setCode}-${number}`),
 });

@@ -1,8 +1,17 @@
-import { describe, expect, it } from "vitest";
-import { enrichChecklistWithOfficialFaces, uprightKayouHorizontalScan } from "./faces";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { enrichChecklistWithOfficialFaces, harvestKayouFaces, kayouFacesContentHash, uprightKayouHorizontalScan } from "./faces";
 import type { KayouChecklist } from "../identity";
 import { listKayouLenticularPlayroomSamples } from "../playroomSamples";
 import type { KayouOfficialCatalog } from "./crawl";
+import {
+  packCatalogIngestLedgerPath,
+  writeCatalogIngestLedger,
+  emptyCatalogIngestLedger,
+} from "@/providers/shared/catalogIngestLedger";
+import { NARUTO_KAYOU_PACK_ID } from "../pack";
 
 // —— kayouOfficialFaces ——
 {
@@ -83,6 +92,66 @@ import type { KayouOfficialCatalog } from "./crawl";
         "https://capsulecorpgear.com/wp-content/uploads/CC-MR-P001-H-yoccg.jpg",
       );
       expect(out).toBe(buf);
+    });
+  });
+
+  describe("kayouFacesContentHash / harvest skip", () => {
+    const roots: string[] = [];
+    afterEach(() => {
+      for (const root of roots.splice(0)) {
+        rmSync(root, { recursive: true, force: true });
+      }
+      vi.unstubAllEnvs();
+    });
+
+    const miniChecklist: KayouChecklist = {
+      source: "test",
+      url: "https://example/",
+      sets: [
+        {
+          slug: "s1",
+          code: "s1",
+          label: "S1",
+          url: "https://example/",
+          cards: [
+            {
+              printed: "001",
+              number: "001",
+              name: "Naruto",
+              rarity: "C",
+              faceUrl: "https://example/1.webp",
+            },
+          ],
+        },
+      ],
+    };
+
+    it("is stable for equal checklists", () => {
+      const a = kayouFacesContentHash(miniChecklist);
+      const b = kayouFacesContentHash(miniChecklist);
+      expect(a).toBe(b);
+      expect(a).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it("harvestKayouFaces skips when ingest ledger is fresh", async () => {
+      const root = mkdtempSync(path.join(os.tmpdir(), "kayou-fresh-"));
+      roots.push(root);
+      vi.stubEnv("PLACARR_DATA_DIR", root);
+      const contentHash = kayouFacesContentHash(miniChecklist);
+      const ledgerPath = packCatalogIngestLedgerPath(NARUTO_KAYOU_PACK_ID);
+      mkdirSync(path.dirname(ledgerPath), { recursive: true });
+      const ledger = emptyCatalogIngestLedger();
+      ledger.entries["kayou:kayou-faces"] = {
+        artefactId: "kayou:kayou-faces",
+        contentHash,
+        promotedAt: "2026-01-01T00:00:00.000Z",
+      };
+      writeCatalogIngestLedger(ledgerPath, ledger);
+
+      const out = await harvestKayouFaces({ checklist: miniChecklist });
+      expect(out.skippedFresh).toBe(true);
+      expect(out.skip).toBe(1);
+      expect(out.ok).toBe(0);
     });
   });
 }

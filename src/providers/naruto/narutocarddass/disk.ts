@@ -22,6 +22,7 @@ import {
   type FaceDecision,
   type StoredFace as SharedStoredFace,
 } from "@/providers/shared/cardFaces";
+import ledgerDoubleIllustrations from "./curated/sources/carddas-jp-double-illustrations.json";
 import {
   appearanceSetsOf,
   isNarutoFamilyFolder,
@@ -149,6 +150,11 @@ export const NARUTO_FACE_SOURCES = [
   "ultrajeux",
   "nikita",
   "suruga",
+  /**
+   * tcgrepublic.com — boutique JP, scans à plat ~350×512 (même gabarit Suruga).
+   * Pasted product pages only — do not crawl search.
+   */
+  "tcgrepublic",
   "avalon",
   "fril",
   "coleka",
@@ -209,11 +215,43 @@ export type NarutoFaceSource = (typeof NARUTO_FACE_SOURCES)[number];
  * Coleka; on FR we keep the publisher-grade pool instead (carddass /
  * ultrajeux / rakuten NOPAD). Pixels still decide inside that pool.
  *
+ * JA shop scans (Suruga / Nikita / Chitoroshop / slab-z…) are tight card
+ * crops. eBay / Mercari / Fril dumps are often table photos or mis-framed and
+ * would win on raw pixels (ex. DMP-016 : Suruga 349×512 vs eBay 1200×1600;
+ * 忍-368 : Suruga 348×512 vs Fril 1080×1080). When any shop scan is held, JA
+ * stays in that pool — Fril is marketplace, not shop.
+ *
  * `fanset` is an unconfirmed remake or custom. Keep the file, never compare
  * it to the original, and never let pixel size beat another dump.
  */
 export const NARUTO_FR_PUBLISHER_SOURCES: ReadonlySet<NarutoFaceSource> =
   new Set(["carddass", "ultrajeux", "rakuten"]);
+
+/**
+ * Flat JP catalogue / shop scans — preferred over marketplace dumps on JA.
+ *
+ * `slabz` (guide collector, ~865×1230) is intentionally **out** of this pool:
+ * when a nikita/suruga/… scan is present it must win even if smaller (ex. 忍-1
+ * nikita 341×500 vs slabz 880×1206). Alone, slabz still beats marketplace via
+ * the full JA priority list + pixels.
+ */
+export const NARUTO_JA_SHOP_SCAN_SOURCES: ReadonlySet<NarutoFaceSource> =
+  new Set([
+    "nikita",
+    "chitoroshop",
+    "suruga",
+    "tcgrepublic",
+    "avalon",
+    // fril / ラクマ = photos vendeur (souvent carrées, glare) — hors pool shop.
+    // slabz = guide collector hors pool (voir comment ci-dessus).
+    "carddas",
+    "carddas-a",
+    "carddas-b",
+    "zabuza",
+    "tvtokyo",
+    "tvtokyo-a",
+    "tvtokyo-b",
+  ]);
 
 export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
   {
@@ -234,6 +272,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "drive",
       "nikita",
       "suruga",
+      "tcgrepublic",
       "avalon",
       "fril",
       "chitoroshop",
@@ -265,6 +304,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "ultrajeux",
       "nikita",
       "suruga",
+      "tcgrepublic",
       "avalon",
       "fril",
       "carddas",
@@ -297,6 +337,7 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "stop2shop",
       "nikita",
       "suruga",
+      "tcgrepublic",
       "avalon",
       "fril",
       "carddas",
@@ -314,12 +355,14 @@ export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
       "fanset",
     ],
     ja: [
-      // Devant nikita, dont les vignettes plafonnent à 340×500.
-      "slabz",
-      "chitoroshop",
+      // nikita avant slabz : le pool shop exclut slabz, donc égalité rare —
+      // l'ordre sert surtout quand seul slabz + marketplace restent.
       "nikita",
+      "chitoroshop",
       "suruga",
+      "tcgrepublic",
       "avalon",
+      "slabz",
       "fril",
       "carddas",
       "carddas-a",
@@ -352,6 +395,12 @@ const choice = createCardFaceChoice<NarutoFaceSource>({
   sources: NARUTO_FACE_SOURCES,
   priority: NARUTO_FACE_PRIORITY,
   coverProvenance: "catalog",
+  /*
+    JA shop thumbs (tvtokyo ~80×114) sit under the scorer's 0.2 MP floor with
+    nikita/suruga (~340×500). Without this, the aspect-ratio bonus made the
+    padded thumb win over the real scan — same sealed-packshot failure mode.
+  */
+  areaDecidesBelow: 200_000,
 });
 
 export const NARUTO_FACE_ROLES = CARD_FACE_ROLES;
@@ -364,16 +413,57 @@ export const narutoFaceFilename = choice.faceFilename;
 export const narutoFaceFileOf = choice.faceFileOf;
 export const recordNarutoFaceDecision = choice.recordFaceDecision;
 
+/**
+ * Illustration B dumps (`carddas-b` / `tvtokyo-b`) are a second print of the
+ * same number — never the primary face. Without this, a larger B scan steals
+ * display from A (ex. 作-257 Chitoroshop 1414×2000 vs Suruga 350×512).
+ */
+const ILLUSTRATION_B_FACE_SOURCES: ReadonlySet<NarutoFaceSource> = new Set([
+  "carddas-b",
+  "tvtokyo-b",
+]);
+
+/** `art.chitoroshop.jpg` on ta0257 — ledger artB, not a named *-b source. */
+const ILLUSTRATION_B_ART_BY_DISK = new Map(
+  (ledgerDoubleIllustrations.cards as { number: string; artB: string }[]).map(
+    (card) => [card.number.trim().toLowerCase(), card.artB],
+  ),
+);
+
+function illustrationBArtFileForCardDir(cardDir: string): string | null {
+  const diskId = path.basename(path.dirname(cardDir)).toLowerCase();
+  return ILLUSTRATION_B_ART_BY_DISK.get(diskId) ?? null;
+}
+
 export function pickBestNarutoDumpFace(
   faces: readonly NarutoStoredFace[],
   lang = "fr",
 ): NarutoFaceSource | null {
   let pool = faces;
-  if (lang.toLowerCase() === "fr") {
+  const locale = lang.toLowerCase();
+  if (locale === "fr") {
     const official = faces.filter((face) =>
       NARUTO_FR_PUBLISHER_SOURCES.has(face.source),
     );
     if (official.length) pool = official;
+  } else if (locale === "ja") {
+    const shop = faces.filter((face) =>
+      NARUTO_JA_SHOP_SCAN_SOURCES.has(face.source),
+    );
+    if (shop.length) pool = shop;
+  }
+  const withoutB = pool.filter(
+    (face) => !ILLUSTRATION_B_FACE_SOURCES.has(face.source),
+  );
+  if (withoutB.length) pool = withoutB;
+  // Unsplit double-height GIF (`art.carddas.gif` 185×548) must not beat the
+  // cropped A half (`art.carddas-a.png` 185×274) once both halves are on disk.
+  const hasCarddasHalves = pool.some(
+    (face) => face.source === "carddas-a" || face.source === "carddas-b",
+  );
+  if (hasCarddasHalves) {
+    const withoutUnsplit = pool.filter((face) => face.source !== "carddas");
+    if (withoutUnsplit.length) pool = withoutUnsplit;
   }
   const attested = pool.filter((face) => face.source !== "fanset");
   if (attested.length) return choice.pickBestFace(attested, lang);
@@ -637,9 +727,12 @@ export async function promoteNarutoFace(
     return corrected;
   }
   const { default: sharp } = await import("sharp");
+  const artBFile = illustrationBArtFileForCardDir(cardDir);
   const stored: NarutoStoredFace[] = [];
   for (const name of files) {
     if (SPECIAL_FACE.test(name)) continue;
+    // Ledger art B stays on disk for the finish selector, never as primary.
+    if (artBFile && name === artBFile) continue;
     const source = narutoFaceSourceOf(name);
     if (!source) continue;
     try {

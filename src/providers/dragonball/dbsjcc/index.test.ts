@@ -10,7 +10,7 @@ import { dbsJccCuratedDir } from "./pack";
 describe("dbsjcc provider hooks", () => {
   it("declares an empty local catalogue surface under Dragon Ball", () => {
     expect(dbsjccModule.info.id).toBe("dbsjcc");
-    expect(dbsjccModule.catalog?.dataPack).toBe("dbs/jcc");
+    expect(dbsjccModule.catalog?.dataPack).toBe("dragonball/jcc");
     expect(dbsjccModule.searchPrints).toBeTypeOf("function");
     expect(dbsjccModule.lookupPrint).toBeTypeOf("function");
     expect(dbsjccModule.info.nameDatabase).toBe(true);
@@ -65,12 +65,12 @@ describe("dbsjcc provider hooks", () => {
 });
 
 describe("dbsjcc curated back", () => {
-  it("ships the French JCC Shenron sleeve", () => {
+  it("ships FR Shenron + nikita EN/JA sleeves", () => {
     expect(
       listCuratedBackSources(
         path.join(dbsJccCuratedDir(), "cards"),
       ).map((row) => row.destRel),
-    ).toEqual(["back.webp"]);
+    ).toEqual(["back.en.webp", "back.ja.webp", "back.webp"]);
   });
 
   it("registers a catalogue-only effect pack", () => {

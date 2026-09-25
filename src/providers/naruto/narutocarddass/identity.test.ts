@@ -2,7 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { mkdirSync, writeFileSync, mkdtempSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, narutoPrintFacts, narutoSetLabel } from "./identity";
+import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel } from "./identity";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import type { NarutoPrintDetail } from "./search";
 
@@ -809,13 +809,10 @@ import type { NarutoPrintDetail } from "./search";
 
       const changed = syncOfficialFrChecklistAppearances(root);
       expect(changed).toBeGreaterThan(0);
-      expect(existsSync(file)).toBe(true);
 
-      const raw = JSON.parse(readFileSync(file, "utf8")) as {
-        appearances: Record<string, Record<string, string | string[]>>;
-      };
-      expect(raw.appearances.ni0049?.fr).toEqual(["s1", "s5"]);
-      expect(raw.appearances.ni0049?.ja).toBe("maki3");
+      const raw = loadNarutoAppearancesFile(root);
+      expect(raw?.appearances.ni0049?.fr).toEqual(["s1", "s5"]);
+      expect(raw?.appearances.ni0049?.ja).toBe("maki3");
     });
   });
 }

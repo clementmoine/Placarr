@@ -7,7 +7,7 @@ import type {
   ProviderInfo,
 } from "@/types/providerRegistry";
 import { isMetadataProviderQuotaBlocked } from "@/core/enrich/selection";
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { runWithConcurrency } from "@/lib/async";
 import { metadataProviderResolverMap } from "@/core/catalog/bootstrap";
 import type {
   MetadataAdapterContext,

@@ -199,11 +199,11 @@ describe("shouldDownloadStoreApk", () => {
       expected: true,
     },
     {
-      name: "no APKs on disk → download even if meta claims current",
+      name: "same versionCode after staging APK purge → up to date",
       meta: meta(100),
       hasApks: false,
       force: false,
-      expected: true,
+      expected: false,
     },
     {
       name: "force → always download",

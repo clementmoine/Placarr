@@ -15,7 +15,7 @@ import { httpGet, httpPost } from "@/lib/http/httpClient";
 const ROOT = path.resolve(__dirname, "../../../../..");
 const TOKENS = path.join(ROOT, ".tmp-foil-audit/live-unity/mitm/tokens.json");
 const OUT_JSON = path.join(ROOT, "data/pokemon/liveOwned.json");
-const SQLITE = path.join(ROOT, "data/pokemon/catalog.sqlite");
+const SQLITE = path.join(ROOT, "data/pokemon/live.sqlite");
 const KEY = "421d8904-0236-4ab4-94f5-a8a84aeb3f7b";
 const CLIENT = "tpci-tcg-app";
 const BASE = "https://api.studio-prod.pokemon.com";

@@ -12,7 +12,7 @@
  * `puzzle` is merch with a **guaranteed promo insert** (not accessories).
  * `ephemera` is printed matter with **no cards** (sell sheet, poster).
  */
-import { tcgCardsCategoryRole } from "@/providers/dragonball/shared/dbscards/sites";
+import { tcgCardsCategoryRole } from "@/providers/shared/tcgcards/sites";
 
 export const SEALED_KINDS = [
   "booster",

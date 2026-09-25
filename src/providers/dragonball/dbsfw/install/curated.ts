@@ -1,5 +1,5 @@
 /**
- * Assets curés du pack `dbs/fw` : verso et plaque de foil. *
+ * Assets curés du pack `dragonball/fw` : verso et plaque de foil. *
  * Le verso est celui des Masters, faute d'avoir vérifié le verso physique
  * de Fusion World — un placeholder assumé, pas une mesure.
  *

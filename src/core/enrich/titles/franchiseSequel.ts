@@ -9,7 +9,7 @@ import {
 } from "@/core/enrich/titles/volumeNumber";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
 import { normalizeForTokens } from "@/core/enrich/titles/normalize";
-import { createSequelNumberBeforePlatformMatcher } from "@/core/identify/platforms/platforms";
+import { createSequelNumberBeforePlatformMatcher } from "@/core/identify/platforms/platformList";
 
 const SEQUEL_NUMBER_BEFORE_PLATFORM_MATCHER =
   createSequelNumberBeforePlatformMatcher("gi");

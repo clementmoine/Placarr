@@ -14,13 +14,18 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { hashCatalogArtefactBytes } from "@/providers/shared/catalogIngestLedger";
 import {
   writeLocalSealedProducts,
   type LocalSealedWrite,
 } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { inkworksSealedSpecs } from "./sources/faces";
+import {
+  inkworksProductsPath,
+  inkworksSealedSpecs,
+  inkworksStagingDir,
+} from "./sources/faces";
 import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
 
 const LEDGER_FILE = "panini-eu-products.json";
@@ -112,9 +117,18 @@ export function ingestNinjaRanksSealedProducts(
 } {
   const inkworks = inkworksSealedSpecs(opts);
   const eu = paniniEuSealedSpecs(opts);
+  const stagingPath = opts.stagingDir ?? inkworksStagingDir();
+  const contentHash = hashCatalogArtefactBytes(
+    readFileSync(inkworksProductsPath()),
+  );
   return writeLocalSealedProducts({
     packId: NARUTO_RANKS_PACK_ID,
     source: inkworks.source,
     products: [...inkworks.products, ...eu],
+    purgeStaging: {
+      artefactId: "sealed:inkworks",
+      stagingPath,
+      contentHash,
+    },
   });
 }

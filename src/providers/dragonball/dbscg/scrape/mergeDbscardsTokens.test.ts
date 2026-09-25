@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { DbscardsIndexEntry } from "@/providers/dragonball/shared/dbscards/list";
+import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
 
 import {
   normalizeDbscardsTkRef,

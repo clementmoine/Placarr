@@ -20,6 +20,12 @@ import type {
   LocalPrintWrite,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import {
+  catalogArtefactIsFresh,
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+} from "@/providers/shared/catalogIngestLedger";
+import {
   downloadDbzcImage,
   fetchDbzcText,
   loadDbzcListingHtml,
@@ -56,6 +62,7 @@ import {
 const LEDGER_FILE = "dbzcollection.json";
 const STAGING_FOLDER = "dbzcollection";
 const SOURCE_ID = "dbzcollection";
+const ARTEFACT_ID = "jcc:dbzcollection";
 const DELAY_MS = 60;
 
 export type DbzcSetSpec = {
@@ -89,6 +96,11 @@ export function readDbzcollectionLedger(): DbzcLedger {
 
 export function dbzcollectionStagingDir(): string {
   return path.join(packStagingDir(DBS_JCC_PACK_ID), STAGING_FOLDER);
+}
+
+/** Stable hash from curated dbzc sets ledger — survives staging purge. */
+export function jccDbzcollectionContentHash(): string {
+  return hashCatalogArtefactBytes(readFileSync(dbzcollectionLedgerPath()));
 }
 
 function setStagingDir(setCode: string, root?: string): string {
@@ -501,6 +513,18 @@ export async function harvestDbzcollection(
     argv?: readonly string[];
   } = {},
 ): Promise<DbzcHarvest> {
+  const contentHash = jccDbzcollectionContentHash();
+  if (
+    !opts.force &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(packCatalogIngestLedgerPath(DBS_JCC_PACK_ID)),
+      ARTEFACT_ID,
+      contentHash,
+    )
+  ) {
+    return { sets: 0, cards: 0, packs: 0, ok: 0, skip: 0, fail: 0 };
+  }
+
   const ledger = readDbzcollectionLedger();
   const sets = enabledDbzcSets(ledger, opts.argv ?? []);
   const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
@@ -581,9 +605,22 @@ export function installDbzcollectionFaces(
   index: LocalPrintsIndex,
   opts: { stagingDir?: string; argv?: readonly string[] } = {},
 ): DbzcFaceInstall {
+  const contentHash = jccDbzcollectionContentHash();
+  const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
+  if (
+    !opts.stagingDir &&
+    !existsSync(stagingRoot) &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(packCatalogIngestLedgerPath(DBS_JCC_PACK_ID)),
+      ARTEFACT_ID,
+      contentHash,
+    )
+  ) {
+    return { prints: 0, titles: 0, faces: 0, dumps: 0, missing: [] };
+  }
+
   const ledger = readDbzcollectionLedger();
   const sets = enabledDbzcSets(ledger, opts.argv ?? []);
-  const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
 
   let prints = 0;
   let titles = 0;
@@ -690,9 +727,22 @@ type PackManifest = {
 export function ingestDbzcollectionSealedProducts(
   opts: { stagingDir?: string; argv?: readonly string[] } = {},
 ): { written: number; skipped: number } {
+  const contentHash = jccDbzcollectionContentHash();
+  const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
+  if (
+    !opts.stagingDir &&
+    !existsSync(stagingRoot) &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(packCatalogIngestLedgerPath(DBS_JCC_PACK_ID)),
+      ARTEFACT_ID,
+      contentHash,
+    )
+  ) {
+    return { written: 0, skipped: 0 };
+  }
+
   const ledger = readDbzcollectionLedger();
   const sets = enabledDbzcSets(ledger, opts.argv ?? []);
-  const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
   const products: LocalSealedWrite[] = [];
 
   for (const set of sets) {

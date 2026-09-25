@@ -12,6 +12,7 @@ type MetadataLookupParams = {
   platform?: string | null;
   shelfName?: string | null;
   romChecksums?: RomChecksums | null;
+  printKey?: string | null;
 };
 
 function metadataQueryParams({
@@ -21,11 +22,13 @@ function metadataQueryParams({
   platform,
   shelfName,
   romChecksums,
+  printKey,
 }: MetadataLookupParams): Record<string, string> {
   const params: Record<string, string> = { name, type };
   if (barcode) params.barcode = barcode;
   if (platform) params.platform = platform;
   if (shelfName) params.shelfName = shelfName;
+  if (printKey) params.printKey = printKey;
   if (romChecksums?.crc) params.crc = romChecksums.crc;
   if (romChecksums?.md5) params.md5 = romChecksums.md5;
   if (romChecksums?.sha1) params.sha1 = romChecksums.sha1;
@@ -49,6 +52,7 @@ export async function getMetadataPreview(
   platform?: string | null,
   shelfName?: string | null,
   romChecksums?: RomChecksums | null,
+  printKey?: string | null,
 ): Promise<MetadataResult | null> {
   try {
     const { data } = await axios.get("/api/metadata", {
@@ -59,6 +63,7 @@ export async function getMetadataPreview(
         platform,
         shelfName,
         romChecksums,
+        printKey,
       }),
       timeout: METADATA_PREVIEW_TIMEOUT_MS,
     });

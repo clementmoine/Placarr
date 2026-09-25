@@ -36,7 +36,7 @@ describe("dbsCgIndexNumbers", () => {
   it("normalise les numéros du pack", () => {
     const numbers = dbsCgIndexNumbers({
       version: 1,
-      pack: "dbs/cg",
+      pack: "dragonball/cg",
       generatedAt: "",
       cards: {
         "dbscg:bt1-001": { set: "bt1", card: "001" },

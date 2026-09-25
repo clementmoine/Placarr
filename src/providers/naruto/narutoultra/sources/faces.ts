@@ -18,6 +18,12 @@ import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPri
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
+import { hashCatalogArtefactBytes } from "@/providers/shared/catalogIngestLedger";
+import {
+  hashNarutoCuratedJson,
+  narutoDigArtefactFresh,
+  promoteAndPurgeNarutoDig,
+} from "@/providers/naruto/shared/promoteNarutoDig";
 
 import { NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "../pack";
 import {
@@ -50,6 +56,18 @@ const COLEKA_ULTRA_UA =
 
 const AC_LEDGER_FILE = "animecollection.json";
 const AC_STAGING_FOLDER = "animecollection-faces";
+const AC_ARTEFACT = "faces:animecollection-ultra";
+
+export function animeCollectionUltraFacesContentHash(): string {
+  const ledger = readAnimeCollectionFacesLedger();
+  return hashNarutoCuratedJson({
+    faces: ledger.faces.map((f) => ({
+      acId: f.acId,
+      printed: f.printed,
+      number: f.number,
+    })),
+  });
+}
 
 export type AnimeCollectionFaceRow = {
   printed: string;
@@ -150,6 +168,24 @@ export async function harvestAnimeCollectionFaces(
   opts: { force?: boolean; stagingDir?: string } = {},
 ): Promise<AnimeCollectionHarvest> {
   const ledger = readAnimeCollectionFacesLedger();
+  const contentHash = animeCollectionUltraFacesContentHash();
+  if (
+    !opts.stagingDir &&
+    narutoDigArtefactFresh({
+      packId: NARUTO_ULTRA_PACK_ID,
+      artefactId: AC_ARTEFACT,
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    return {
+      cards: ledger.faces.length,
+      ok: 0,
+      skip: ledger.faces.length,
+      fail: 0,
+    };
+  }
+
   const staging = opts.stagingDir ?? animeCollectionFacesStagingDir();
   mkdirSync(staging, { recursive: true });
 
@@ -244,6 +280,14 @@ export function installAnimeCollectionFaces(
   }
 
   if (assets.length) index.writeAssets(assets);
+  if (missing.length === 0 && assets.length > 0 && !opts.stagingDir) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_ULTRA_PACK_ID,
+      artefactId: AC_ARTEFACT,
+      stagingRel: AC_STAGING_FOLDER,
+      contentHash: animeCollectionUltraFacesContentHash(),
+    });
+  }
   return { faces: assets.length, missing };
 }
 
@@ -258,7 +302,15 @@ export function installAnimeCollectionFaces(
 
 const COLEKA_ULTRA_STAGING_FOLDER = "coleka-ultra-faces";
 const COLEKA_ULTRA_LEDGER_FILE = "coleka-ultra-faces.json";
+const COLEKA_ULTRA_ARTEFACT = "faces:coleka-ultra";
 const COLEKA_ULTRA_REFERER = `${COLEKA_ULTRA_ORIGIN}${COLEKA_ULTRA_LISTING_PATH}`;
+
+export function colekaUltraFacesContentHash(): string {
+  return hashNarutoCuratedJson({
+    ledger: readColekaUltraFacesLedger(),
+    pages: colekaUltraListingPageUrls(),
+  });
+}
 
 export type ColekaUltraFacesLedger = {
   source: string;
@@ -318,6 +370,26 @@ export type ColekaUltraHarvest = {
 export async function harvestColekaUltraFaces(
   opts: { force?: boolean; stagingDir?: string } = {},
 ): Promise<ColekaUltraHarvest> {
+  const contentHash = colekaUltraFacesContentHash();
+  if (
+    !opts.stagingDir &&
+    narutoDigArtefactFresh({
+      packId: NARUTO_ULTRA_PACK_ID,
+      artefactId: COLEKA_ULTRA_ARTEFACT,
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    return {
+      pages: 0,
+      cards: 0,
+      ok: 0,
+      skip: 0,
+      fail: 0,
+      rejected: [],
+    };
+  }
+
   const staging = opts.stagingDir ?? colekaUltraFacesStagingDir();
   mkdirSync(staging, { recursive: true });
   const seen = new Map<string, ColekaUltraCard>();
@@ -467,6 +539,14 @@ export function installColekaUltraFaces(
     lang,
     [...new Set(placeholderNumbers)],
   );
+  if (missing.length === 0 && assets.length > 0 && !opts.stagingDir) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_ULTRA_PACK_ID,
+      artefactId: COLEKA_ULTRA_ARTEFACT,
+      stagingRel: COLEKA_ULTRA_STAGING_FOLDER,
+      contentHash: colekaUltraFacesContentHash(),
+    });
+  }
   return { faces: assets.length, missing, purgedPlaceholders };
 }
 
@@ -520,6 +600,18 @@ export async function harvestColekaAlbum(
   opts: { force?: boolean } = {},
 ): Promise<{ ok: number; skip: number; fail: number }> {
   const ledger = readColekaAlbumLedger();
+  const contentHash = hashCatalogArtefactBytes(readFileSync(colekaAlbumPath()));
+  if (
+    narutoDigArtefactFresh({
+      packId: NARUTO_ULTRA_PACK_ID,
+      artefactId: "sealed:coleka-album",
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    return { ok: 0, skip: 1, fail: 0 };
+  }
+
   const destRoot = colekaAlbumStagingDir();
   mkdirSync(destRoot, { recursive: true });
   const dest = path.join(destRoot, ledger.sku.file);
@@ -568,5 +660,10 @@ export function ingestColekaAlbum(opts: { stagingDir?: string } = {}): {
         artPath: path.join(staging, ledger.sku.file),
       },
     ],
+    purgeStaging: {
+      artefactId: "sealed:coleka-album",
+      stagingPath: staging,
+      contentHash: hashCatalogArtefactBytes(readFileSync(colekaAlbumPath())),
+    },
   });
 }

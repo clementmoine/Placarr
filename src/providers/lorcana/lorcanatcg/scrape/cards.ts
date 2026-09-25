@@ -284,7 +284,6 @@ export async function scrapeLorcanaCards(
   const root = opts.root ?? path.resolve(dataRoot(), "..");
   const skipExisting = !opts.force;
   const cardsDir = path.join(root, "data/lorcana/cards");
-  const indexPath = path.join(root, "data/lorcana/cards-index.json");
   const dbPath = path.join(root, "data/lorcana/catalog.sqlite");
 
   console.log(`Loading Lorcana indexes (${SCRAPE_LANGUAGES.join(" + ")})…`);
@@ -472,18 +471,11 @@ export async function scrapeLorcanaCards(
     titles,
     assets: [...assetsByKey.values()],
   });
-  const payload = exportLorcanaCardsIndexJson(dbPath);
-  if (!payload) {
-    throw new Error("Failed to export cards-index from sqlite");
+  if (!exportLorcanaCardsIndexJson(dbPath)) {
+    throw new Error("Failed to read Lorcana catalogue from sqlite after write");
   }
 
   const legacy = cleanupLegacyPrintRootAssets(cardsDir);
-
-  await fs.promises.mkdir(path.dirname(indexPath), { recursive: true });
-  await fs.promises.writeFile(
-    indexPath,
-    `${JSON.stringify(payload, null, 2)}\n`,
-  );
 
   console.log(
     JSON.stringify(

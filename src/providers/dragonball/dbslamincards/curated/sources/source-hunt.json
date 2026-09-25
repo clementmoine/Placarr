@@ -2,7 +2,7 @@
   "source": "Hunt archives / faces — Dragon Ball Lamincards (Edibas)",
   "observed": "2026-09-07",
   "ingest": "journal — faces via dragonball.center ; noms via dbzcollection (dbzcollection.json)",
-  "line": "dbs/lamincards",
+  "line": "dragonball/lamincards",
   "verdict": "Pas de CDN Edibas vivant avec dump carte-par-carte. Faces = Dragon Ball Center. Noms = dbzcollection.fr AJAX (FR idc=94, IT idc=74 Parts 1–5 ≈ Nero→Smeraldo, ES idc=108). Coleka r4591 = hub ~1790 refs mais listing EN tombe sur Verifica même via FlareSolverr. Paninimania FR = packshots, pas checklist. Wayback edibas.com = packshots marketing.",
   "tried": [
     {

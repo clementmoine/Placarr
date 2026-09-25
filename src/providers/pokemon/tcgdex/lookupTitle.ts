@@ -1,8 +1,8 @@
 /**
- * Set+num title lookup against local `prints.sqlite` (TCGdex harvest).
+ * Set+num title lookup against local `catalog.sqlite` (TCGdex harvest).
  *
  * Used by Live cards-index rebuild to name McDo / Black Star tiles that are
- * absent or gappy in `catalog.sqlite` live_cards. Matching is numeric on
+ * absent or gappy in `live.sqlite` `live_cards`. Matching is numeric on
  * `local_id` (folder `001` ↔ `1` / `BW29` / `SM108`).
  */
 import { existsSync } from "node:fs";

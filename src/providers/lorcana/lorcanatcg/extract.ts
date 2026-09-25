@@ -33,6 +33,16 @@ async function runOfficialSiteOnly(
   console.log(
     `── official upsert — logos +${logos.added}/${logos.updated}, produits ${upserted.written}`,
   );
+  const { promoteOfficialSiteAndPurgeStaging } = await import(
+    "./scrape/officialSite"
+  );
+  if (
+    promoteOfficialSiteAndPurgeStaging({
+      pages: harvested.pagesParsed,
+    })
+  ) {
+    console.log("── official site — staging purgé (ledger frais)");
+  }
   return {
     provider: "lorcanaofficial",
     ok: true,
@@ -57,6 +67,33 @@ async function runLorcardsProducts(
       `${result.printsLinked} liens carte (${result.fetched} GET)`,
   );
 
+  let listDump: Record<string, unknown> = {};
+  if (!offline) {
+    const { ensureCardsFrListDump } = await import(
+      "@/providers/shared/tcgcards/ensureListDump"
+    );
+    const {
+      LORCARDS_CARD_SITE,
+      lorcardsIndexPath,
+    } = await import("@/providers/shared/tcgcards/scrapeList");
+    const list = await ensureCardsFrListDump({
+      packId: "lorcana",
+      site: LORCARDS_CARD_SITE,
+      indexPath: lorcardsIndexPath("fr"),
+      force,
+      label: "lorcards.fr",
+    });
+    console.log(
+      `── lorcards.fr list — ${list.cards} tuiles, ${list.priced} cotes, ${list.pages} pages → ${list.file}`,
+    );
+    listDump = {
+      listCards: list.cards,
+      listPriced: list.priced,
+      listPages: list.pages,
+      listFile: list.file,
+    };
+  }
+
   let official: Record<string, unknown> = {};
   if (!offline) {
     const light = await runOfficialSiteOnly(force);
@@ -68,7 +105,13 @@ async function runLorcardsProducts(
     };
   }
 
-  return { provider: "lorcanaproducts", ok: true, ...result, ...official };
+  return {
+    provider: "lorcanaproducts",
+    ok: true,
+    ...result,
+    ...listDump,
+    ...official,
+  };
 }
 
 async function runCardsScrape(

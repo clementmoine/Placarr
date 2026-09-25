@@ -34,7 +34,6 @@ const SKIP_DIR_PREFIXES = [
   "src/lib/admin/foilGapMaps.ts",
   "src/lib/admin/cataloguePacks.ts",
   "src/lib/admin/catalogueCards.ts",
-  "src/lib/admin/catalogueCardsTypes.ts",
   "src/app/api/admin/catalogue-",
   "src/components/admin/Catalogue",
   "src/lib/foilMetaLoad.ts",

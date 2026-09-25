@@ -29,6 +29,10 @@ import {
 } from "lucide-react";
 
 import { formatChecklistMarkdown } from "@/core/collect/checklistMarkdown";
+import {
+  nextTcgdexDisplayUrl,
+  tcgdexDisplayCandidates,
+} from "@/core/enrich/media/tcgdexAssetUrls";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { cn } from "@/lib/shared/utils";
@@ -46,6 +50,8 @@ type ChecklistSet = {
   id: string;
   label: string;
   group?: string | null;
+  iconUrl?: string | null;
+  iconUrls?: string[] | null;
   total: number;
   owned: number;
   completion: number;
@@ -124,6 +130,8 @@ function euros(cents: number): string {
 /**
  * Miniature → aperçu agrandi au survol (portail : évite le clip
  * `overflow: hidden` des lignes de set / colonnes CSS).
+ *
+ * TCGdex CDN : enchaîne webp→png→jpg puis low↔high si le 1ʳᵉ URL 404.
  */
 function HoverEnlargeImage({
   src,
@@ -134,15 +142,27 @@ function HoverEnlargeImage({
   className: string;
   variant?: "card" | "product";
 }) {
+  const chain = useMemo(() => tcgdexDisplayCandidates(src), [src]);
+  const [current, setCurrent] = useState(chain[0] ?? src);
+
+  useEffect(() => {
+    setCurrent(chain[0] ?? src);
+  }, [chain, src]);
+
+  const advance = useCallback(() => {
+    setCurrent((prev) => nextTcgdexDisplayUrl(prev, chain) ?? prev);
+  }, [chain]);
+
   return (
     <TooltipPrimitive.Root>
       <TooltipPrimitive.Trigger asChild>
         <img
-          src={src}
+          src={current}
           alt=""
           className={className}
           loading="lazy"
           decoding="async"
+          onError={advance}
         />
       </TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
@@ -155,7 +175,12 @@ function HoverEnlargeImage({
             variant === "product" && styles.thumbPopoverProduct,
           )}
         >
-          <img src={src} alt="" className={styles.thumbPopoverImg} />
+          <img
+            src={current}
+            alt=""
+            className={styles.thumbPopoverImg}
+            onError={advance}
+          />
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>
@@ -562,6 +587,21 @@ function SetRow({
   const listOpen = forceExpand || (searching ? rows.length > 0 : open);
   const prices = advice?.prices ?? {};
   const sealedSources = advice?.sealedSources ?? {};
+  const iconCandidates = useMemo(() => {
+    const out: string[] = [];
+    for (const url of set.iconUrls ?? []) {
+      const trimmed = url?.trim();
+      if (trimmed && !out.includes(trimmed)) out.push(trimmed);
+    }
+    const primary = set.iconUrl?.trim();
+    if (primary && !out.includes(primary)) out.unshift(primary);
+    return out;
+  }, [set.iconUrl, set.iconUrls]);
+  const [iconIndex, setIconIndex] = useState(0);
+  useEffect(() => {
+    setIconIndex(0);
+  }, [iconCandidates.join("\0")]);
+  const iconSrc = iconCandidates[iconIndex] ?? null;
   return (
     <li className={styles.setRow}>
       <button
@@ -577,6 +617,25 @@ function SetRow({
             aria-hidden
           />
         )}
+        {iconSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element -- CDN set glyph; chain on 404
+          <img
+            src={iconSrc}
+            alt=""
+            className={styles.setIcon}
+            width={24}
+            height={24}
+            loading="lazy"
+            decoding="async"
+            onError={() => {
+              if (iconIndex + 1 < iconCandidates.length) {
+                setIconIndex((i) => i + 1);
+              } else {
+                setIconIndex(iconCandidates.length);
+              }
+            }}
+          />
+        ) : null}
         <span className={styles.setLabel}>{set.label}</span>
         <span className={styles.setCount}>
           {t("items.checklistOwnedOf", { owned: set.owned, total: set.total })}

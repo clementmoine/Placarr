@@ -376,6 +376,7 @@ function ItemCardInner(props: ItemCardProps) {
                 imageUrl={variantView.imageUrl ?? displayImageUrl}
                 alt={name}
                 finish={variantView.finish}
+                materialName={variantView.materialName}
                 varnishType={variantView.varnishType}
                 cssFinishShaderId={variantView.shader?.id ?? null}
                 cssVarnishShaderId={variantView.varnish?.id ?? null}

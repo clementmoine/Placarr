@@ -224,6 +224,13 @@
   transform: rotate(90deg);
 }
 
+.setIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  object-fit: contain;
+}
+
 .setLabel {
   flex: 1;
   min-width: 0;

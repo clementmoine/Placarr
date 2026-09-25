@@ -5,7 +5,7 @@ import {
   createEmptyBarcodeLookupPayload,
   type BarcodeLookupPayload,
 } from "@/core/identify/lookup/payload";
-import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodePrices";
 
 const okkazeoModule = PROVIDER_MODULES.find(
   (module) => module.info.id === "okkazeo",

@@ -5,9 +5,11 @@
   "license": "GPL-3.0-or-later",
   "scripts": {
     "dev:ssl": "next dev --experimental-https",
-    "dev:app": "next dev --webpack",
+    "dev:app": "next dev --turbopack",
+    "dev:app:webpack": "next dev --webpack",
     "dev": "concurrently -k -n next,worker,icollect -c cyan,magenta,yellow \"pnpm dev:app\" \"pnpm worker:dev\" \"pnpm worker:icollect:dev\"",
-    "dev:turbo": "concurrently -k -n next,worker,icollect -c cyan,magenta,yellow \"next dev --turbopack\" \"pnpm worker:dev\" \"pnpm worker:icollect:dev\"",
+    "dev:webpack": "concurrently -k -n next,worker,icollect -c cyan,magenta,yellow \"pnpm dev:app:webpack\" \"pnpm worker:dev\" \"pnpm worker:icollect:dev\"",
+    "dev:turbo": "pnpm dev",
     "dev:docker": "docker compose -f compose.dev.yml up",
     "dev:docker:down": "docker compose -f compose.dev.yml down",
     "worker": "WORKER_CONCURRENCY=6 tsx scripts/backgroundWorker.ts",

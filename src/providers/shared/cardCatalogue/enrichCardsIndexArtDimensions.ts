@@ -1,26 +1,28 @@
-import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { readFileImageMetrics } from "@/core/enrich/media/imageMetrics";
 import { parsePrintKey } from "@/core/identify/printKey";
-import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { isCardsIndexV1 } from "@/effects/cardsIndex";
-import { packCardDir, packCardsIndexPath } from "@/lib/packPaths";
+import { packCardDir } from "@/lib/packPaths";
+import {
+  loadCardsIndexDoc,
+  persistCardsIndexDoc,
+} from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 
 /**
- * Probe on-disk face files and persist `artW` / `artH` (+ `landscapePrint`)
- * into `cards-index.json` so catalogue + print lookup know orientation without
- * a curated ledger.
+ * Probe on-disk face files for orientation. Soft no-op when no CardsIndex
+ * doc remains in sqlite (identity lives elsewhere).
  */
 export async function enrichCardsIndexArtDimensions(
   packId: string,
 ): Promise<{ probed: number; landscapePrints: number }> {
-  const dest = packCardsIndexPath(packId);
-  const raw = JSON.parse(readFileSync(dest, "utf8")) as unknown;
-  if (!isCardsIndexV1(raw)) {
-    throw new Error(`cards-index invalide : ${dest}`);
+  const index = loadCardsIndexDoc(packId);
+  if (!index) {
+    return { probed: 0, landscapePrints: 0 };
   }
-  const index = raw as CardsIndexV1;
+  if (!isCardsIndexV1(index)) {
+    throw new Error(`cards-index doc invalide : ${packId}`);
+  }
   let probed = 0;
   let landscapePrints = 0;
 
@@ -60,6 +62,6 @@ export async function enrichCardsIndexArtDimensions(
     }
   }
 
-  writeFileSync(dest, `${JSON.stringify(index)}\n`);
+  persistCardsIndexDoc(packId, index);
   return { probed, landscapePrints };
 }

@@ -60,7 +60,7 @@ export const dbsfwModule = createDbsCatalogModule({
   defaultLanguage: "en",
   websiteUrl: "https://www.dbs-cardgame.com/fw/en/cardlist/",
   notes:
-    "Fusion World (fw/en cardlist, pas de locale FR) → `data/dbs/fw/`. Faces Bandai (SAMPLE). Dos sleeve placeholder Masters. Sync : Catalogue Extract (admin / worker).",
+    "Fusion World (fw/en cardlist, pas de locale FR) → `data/dragonball/fw/`. Faces Bandai (SAMPLE). Dos sleeve placeholder Masters. Sync : Catalogue Extract (admin / worker).",
   syncHint: "Catalogue Sync (admin)",
   probePrintKey: PROBE_PRINT_KEY,
   probeCardName: PROBE_CARD_NAME,

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import os from "node:os";
 import path from "node:path";
 import { packProductsIndexPath } from "@/lib/packPaths";
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { ingestNinjaRanksSealedProducts, readPaniniEuProductsLedger } from "./sealed";
 import { NARUTO_RANKS_PACK_ID } from "./pack";
 import { readInkworksProductsLedger } from "./sources/faces";
@@ -63,25 +64,7 @@ import { readInkworksProductsLedger } from "./sources/faces";
       });
       expect(report).toMatchObject({ written: 6, skipped: 0 });
 
-      const index = JSON.parse(
-        readFileSync(packProductsIndexPath(NARUTO_RANKS_PACK_ID), "utf8"),
-      ) as {
-        products: Record<
-          string,
-          {
-            slug: string;
-            kind: string;
-            image: string;
-            imageBack: string | null;
-            lang: string;
-            setCode: string | null;
-            catalogueSetId: string | null;
-            cardsPerPack: number | null;
-            packsContained: number | null;
-            priceCents: number | null;
-          }
-        >;
-      };
+      const index = loadSealedProductsIndex(NARUTO_RANKS_PACK_ID);
       expect(Object.keys(index.products).sort()).toEqual([
         "naruto/ninja-ranks::booster",
         "naruto/ninja-ranks::booster-eu",
@@ -153,9 +136,7 @@ import { readInkworksProductsLedger } from "./sources/faces";
         curatedProductsDir: curated,
       });
       expect(report.written).toBe(5);
-      const index = JSON.parse(
-        readFileSync(packProductsIndexPath(NARUTO_RANKS_PACK_ID), "utf8"),
-      ) as { products: Record<string, unknown> };
+      const index = loadSealedProductsIndex(NARUTO_RANKS_PACK_ID);
       expect(index.products["naruto/ninja-ranks::booster-eu"]).toBeUndefined();
       expect(index.products["naruto/ninja-ranks::booster"]).toBeDefined();
     });

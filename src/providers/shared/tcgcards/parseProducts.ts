@@ -45,6 +45,16 @@ export type DbscardsProductPrintLink = {
   ref: string | null;
   sku: string | null;
   name: string;
+  /** Shop tile recto (`data-src`), when the fiche shows one. */
+  image?: string | null;
+};
+
+export type DbscardsContainedProduct = {
+  /** Product slug (`booster-flamme-blanche-reshiram`). */
+  slug: string;
+  path: string;
+  /** Copies in the bundle (badge `item-image-multiple-number-value`, default 1). */
+  qty: number;
 };
 
 export type DbscardsProductPage = {
@@ -63,6 +73,11 @@ export type DbscardsProductPage = {
   containsPrints: DbscardsProductPrintLink[];
   containsPrintsIsPreview: boolean;
   relatedProducts: string[];
+  /**
+   * « Composition du produit » — SKUs enfants attestés (coffret → boosters),
+   * distinct de `relatedProducts` (associés + bruit).
+   */
+  containedProducts: DbscardsContainedProduct[];
   tables: Record<string, Record<string, string[]>>;
 };
 
@@ -294,6 +309,7 @@ function printLinks(html: string): DbscardsProductPrintLink[] {
       ref: tile.ref,
       sku: tile.sku,
       name: tile.name,
+      ...(tile.imageFront ? { image: tile.imageFront } : {}),
     });
   }
   return out;
@@ -309,6 +325,58 @@ function relatedProducts(html: string, selfPath: string): string[] {
     if (!slug || /^\d+$/.test(slug)) continue;
     seen.add(path);
     out.push(path);
+  }
+  return out;
+}
+
+/**
+ * Section « Composition du produit » — children with qty badges.
+ * Stops at the next `<h2>` so associés / prix charts stay out.
+ */
+const COMPOSITION_HEADING =
+  /<h2[^>]*>\s*Composition du produit\s*<\/h2>/i;
+const NEXT_H2 = /<h2\b/i;
+/** Main tile link; qty badge lives inside the same `<a>` when present. */
+const COMPOSITION_CHILD =
+  /<a\b[^>]*\bhref="(\/products\/[a-z0-9-]+\/([^"?#]+))"[^>]*>([\s\S]*?)<\/a>/gi;
+const COMPOSITION_QTY =
+  /item-image-multiple-number-value[^>]*>(\d+)/i;
+
+/** @internal exported for unit tests */
+export function parseContainedProducts(
+  html: string,
+  selfPath: string,
+): DbscardsContainedProduct[] {
+  const head = COMPOSITION_HEADING.exec(html);
+  if (!head || head.index == null) return [];
+  const from = head.index + head[0].length;
+  const rest = html.slice(from);
+  const next = NEXT_H2.exec(rest);
+  const section = next ? rest.slice(0, next.index) : rest;
+
+  const out: DbscardsContainedProduct[] = [];
+  const seen = new Set<string>();
+  for (const match of section.matchAll(COMPOSITION_CHILD)) {
+    const path = match[1]!;
+    if (path === selfPath) continue;
+    const slug = (match[2] ?? "").trim();
+    if (!slug || /^\d+$/.test(slug) || seen.has(slug)) continue;
+    const body = match[3] ?? "";
+    /*
+      Only composition tiles carry the multiple badge (or a packshot).
+      Footer CardNexus links reuse `/products/`-less URLs — ignored by regex.
+    */
+    if (
+      !/item-image|item-main-link|lazyload/i.test(match[0]!) &&
+      !COMPOSITION_QTY.test(body)
+    ) {
+      continue;
+    }
+    const qtyRaw = COMPOSITION_QTY.exec(body)?.[1];
+    const qty = qtyRaw ? Number.parseInt(qtyRaw, 10) : 1;
+    if (!Number.isFinite(qty) || qty < 1) continue;
+    seen.add(slug);
+    out.push({ slug, path, qty });
   }
   return out;
 }
@@ -356,6 +424,7 @@ export function parseDbscardsProductPage(
     containsPrintsIsPreview:
       declared != null && containsPrints.length < declared,
     relatedProducts: relatedProducts(html, path),
+    containedProducts: parseContainedProducts(html, path),
     tables,
   };
 }

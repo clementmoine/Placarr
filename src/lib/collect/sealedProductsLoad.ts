@@ -2,91 +2,31 @@
  * Charge les produits scellés d'un dataPack pour le conseil d’achat et
  * « Inclus dans ».
  *
- * Une seule lecture de `products-index.json` + merge curated ; deux projections
- * ({@link BuyProduct} vs {@link ContainmentProduct}) pour ne pas mélanger
- * garanties-only (buyAdvice) et pool set (fiche carte).
+ * Lecture via {@link loadSealedProductsIndex} (sqlite puis JSON fallback) ;
+ * deux projections ({@link BuyProduct} vs {@link ContainmentProduct}).
  */
-import { readFileSync, existsSync } from "node:fs";
-import path from "node:path";
-
 import {
   withContainerPackSizes,
   type BuyProduct,
   type ProductBehavior,
 } from "@/core/collect/buyAdvice";
-import { resolveSealedContents } from "@/core/collect/sealedContents";
 import type {
   ContainmentProduct,
 } from "@/core/collect/sealedContainment";
-import { mergeCuratedSealedContents } from "@/providers/shared/sealedProducts/curatedContents";
 import type {
-  RandomPoolScope,
   SealedProductEntry,
   SealedPrintLink,
 } from "@/providers/shared/sealedProducts/indexFormat";
 import {
-  isSealedKind,
   sealedBehaviorForKind,
   withRefinedSealedKind,
 } from "@/providers/shared/sealedProducts/kinds";
-import { resolveSealedLang } from "@/providers/shared/sealedProducts/lang";
-import { dataRoot } from "@/lib/runtimeData";
-
-function printLinks(links: unknown): SealedPrintLink[] {
-  if (!Array.isArray(links)) return [];
-  return links.map((link) => {
-    const row = link as Record<string, unknown>;
-    const printKey = (row.printKey as string | null) ?? null;
-    const qty =
-      typeof row.qty === "number" && row.qty > 0 ? row.qty : undefined;
-    const finish =
-      typeof row.finish === "string" && row.finish.trim()
-        ? row.finish.trim()
-        : undefined;
-    return {
-      name: String(row.name ?? row.printKey ?? ""),
-      slug: String(row.slug ?? row.printKey ?? ""),
-      ref: (row.ref as string | null) ?? null,
-      printKey,
-      ...(qty != null ? { qty } : {}),
-      ...(finish ? { finish } : {}),
-    };
-  });
-}
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 
 function printKeys(links: readonly SealedPrintLink[]): string[] {
   return links
     .map((row) => row.printKey)
     .filter((key): key is string => Boolean(key));
-}
-
-function packsBySetFromRow(
-  value: unknown,
-): Record<string, number> | null | undefined {
-  if (value == null) return value as null | undefined;
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const out: Record<string, number> = {};
-  for (const [setId, packs] of Object.entries(
-    value as Record<string, unknown>,
-  )) {
-    const key = setId.trim();
-    if (!key) continue;
-    if (typeof packs === "number" && packs > 0 && Number.isFinite(packs)) {
-      out[key] = packs;
-    }
-  }
-  return Object.keys(out).length > 0 ? out : null;
-}
-
-function guaranteeSetsFromRow(
-  value: unknown,
-): string[] | null | undefined {
-  if (value == null) return value as null | undefined;
-  if (!Array.isArray(value)) return null;
-  const out = value
-    .map((row) => (typeof row === "string" ? row.trim() : ""))
-    .filter(Boolean);
-  return out.length > 0 ? out : null;
 }
 
 function sealedEntryRank(
@@ -125,75 +65,21 @@ export function dedupeSealedEntriesBySlug(
   return [...best.values()].map((row) => row.entry);
 }
 
-/** Entrées mergées (index + curated sealed-contents). */
+/** Entrées mergées (index sqlite / JSON fallback + curated sealed-contents). */
 export function loadSealedProductEntries(
   pack: string | null | undefined,
 ): SealedProductEntry[] {
   if (!pack) return [];
-  const file = path.join(dataRoot(), ...pack.split("/"), "products-index.json");
-  if (!existsSync(file)) return [];
   try {
-    const parsed = JSON.parse(readFileSync(file, "utf8")) as {
-      products?: Record<string, Record<string, unknown>>;
-    };
-    const raw = parsed.products ?? {};
-    const entries: Record<string, SealedProductEntry> = {};
-    for (const [key, row] of Object.entries(raw)) {
-      const slug = String(row.slug ?? "");
-      const rawName = String(row.name ?? "").trim();
-      const declaredCardCount = (row.declaredCardCount as number | null) ?? null;
-      const rawKind = String(row.kind ?? "booster");
-      const kind = isSealedKind(rawKind) ? rawKind : "coffret";
-      const contents = resolveSealedContents({
-        kind,
-        name: rawName || null,
-        slug,
-        declaredCardCount,
-      });
-      entries[key] = withRefinedSealedKind({
-        slug,
-        path: String(row.path ?? ""),
-        kind,
-        behavior: sealedBehaviorForKind(kind),
-        category: String(row.category ?? ""),
-        name: rawName || null,
-        image: (row.image as string | null) ?? null,
-        imageBack: (row.imageBack as string | null) ?? null,
-        setLogo: (row.setLogo as string | null) ?? null,
-        setCode: (row.setCode as string | null) ?? null,
-        catalogueSetId: (row.catalogueSetId as string | null) ?? null,
-        lang: resolveSealedLang({
-          lang: (row.lang as string | null) ?? null,
-          slug,
-        }),
-        releaseDate: (row.releaseDate as string | null) ?? null,
-        priceCents:
-          typeof row.priceCents === "number" && row.priceCents > 0
-            ? row.priceCents
-            : null,
-        cardsPerPack:
-          typeof row.cardsPerPack === "number" && row.cardsPerPack > 0
-            ? row.cardsPerPack
-            : contents.cardsPerPack,
-        packsContained:
-          typeof row.packsContained === "number" && row.packsContained > 0
-            ? row.packsContained
-            : contents.packsContained,
-        packsBySet: packsBySetFromRow(row.packsBySet),
-        guaranteeSets: guaranteeSetsFromRow(row.guaranteeSets),
-        guaranteedPrints: printLinks(row.guaranteedPrints),
-        randomPoolScope: (row.randomPoolScope as RandomPoolScope) ?? "unknown",
-        randomPoolPrints: printLinks(row.randomPoolPrints),
-        declaredCardCount,
-        setCardCount: (row.setCardCount as number | null) ?? null,
-        contentsKnown: Boolean(row.contentsKnown),
-        containsPrintsIsPreview: Boolean(row.containsPrintsIsPreview),
-        prints: printLinks(row.prints),
+    const index = loadSealedProductsIndex(pack);
+    const refined: Record<string, SealedProductEntry> = {};
+    for (const [key, entry] of Object.entries(index.products)) {
+      refined[key] = withRefinedSealedKind({
+        ...entry,
+        behavior: entry.behavior ?? sealedBehaviorForKind(entry.kind),
       });
     }
-    return dedupeSealedEntriesBySlug(
-      mergeCuratedSealedContents(pack, entries),
-    );
+    return dedupeSealedEntriesBySlug(refined);
   } catch {
     return [];
   }

@@ -2,7 +2,7 @@
  * Les tirages du 疾風伝, sous la forme que le sélecteur d'ajout attend.
  *
  * La référence se lit comme sur la carte : `忍伝-43`, `術伝-65`, `作伝-26`,
- * `忍伝-学-1`. C'est ce préfixe qui distingue ce jeu du Carddass, dont les
+ * `忍伝-学007`. C'est ce préfixe qui distingue ce jeu du Carddass, dont les
  * cartes portent `忍-43` sans le 伝 — et les deux numérotations repartant de 1,
  * il n'y a rien d'autre pour les départager à l'œil.
  */
@@ -19,27 +19,58 @@ import {
   type ShippudenSearchRow,
 } from "./indexStore";
 
-/** Le préfixe imprimé de chaque famille. */
+/**
+ * Préfixe imprimé canonique (affichage + ledger Bandai / Suruga titre).
+ * 忍者学校 : `忍伝-学007` — tiret avant 学, zéros, pas de tiret avant le n°.
+ */
 const PRINTED_PREFIX: Readonly<Record<string, string>> = {
   shi: "忍伝",
   mju: "術伝",
   msa: "作伝",
   gaku: "忍伝-学",
+  prshi: "PR忍伝",
+  prmsa: "PR作伝",
+  prgaku: "PR学",
 };
 
-/** `shi0043` → `忍伝-43`. Le zéro de tête ne s'imprime pas. */
+/**
+ * Variantes acceptées à la saisie (carddas20 `忍伝学-001`, recherche Suruga
+ * `忍伝学`, tiret optionnel avant le n°). Plus long d'abord pour ne pas
+ * laisser `忍伝` avaler `忍伝-学` / `忍伝学`, ni `作伝` avaler `PR作伝`.
+ */
+const PRINTED_PARSE_ORDER: ReadonlyArray<{
+  family: keyof typeof PRINTED_PREFIX;
+  prefixes: readonly string[];
+}> = [
+  { family: "prgaku", prefixes: ["PR学"] },
+  { family: "prmsa", prefixes: ["PR作伝"] },
+  { family: "prshi", prefixes: ["PR忍伝"] },
+  { family: "gaku", prefixes: ["忍伝-学", "忍伝学"] },
+  { family: "mju", prefixes: ["術伝"] },
+  { family: "msa", prefixes: ["作伝"] },
+  { family: "shi", prefixes: ["忍伝"] },
+];
+
+/** `shi0043` → `忍伝-43` ; `gaku0007` → `忍伝-学007` ; `prmsa0005` → `PR作伝-5`. */
 export function formatShippudenReference(
   cardType: string,
   number: string,
 ): string {
-  const prefix =
-    PRINTED_PREFIX[cardType.toLowerCase()] ?? cardType.toUpperCase();
-  const digits = number.replace(/^[a-z]+/i, "").replace(/^0+/, "");
-  return `${prefix}-${digits || number}`;
+  const family = cardType.toLowerCase();
+  const rawDigits = number.replace(/^[a-z]+/i, "").replace(/^0+/, "");
+  const digits = rawDigits || number.replace(/^[a-z]+/i, "") || number;
+  if (family === "gaku") {
+    return `忍伝-学${digits.padStart(3, "0")}`;
+  }
+  if (family === "prgaku") {
+    return `PR学-${digits.padStart(3, "0")}`;
+  }
+  const prefix = PRINTED_PREFIX[family] ?? cardType.toUpperCase();
+  return `${prefix}-${digits}`;
 }
 
 /**
- * `忍伝-43` → `shi0043`. La référence telle qu'elle est **imprimée**.
+ * `忍伝-43` / `忍伝学007` → `shi0043` / `gaku0007`.
  *
  * C'est ce qu'un joueur a sous les yeux, donc ce qu'il tape ; sans cette
  * traduction la recherche ne voyait que l'identifiant disque, et chercher sa
@@ -52,9 +83,11 @@ export function formatShippudenReference(
 export function diskIdFromPrintedReference(query: string): string | null {
   const text = query.trim();
   if (!text) return null;
-  for (const [family, prefix] of Object.entries(PRINTED_PREFIX)) {
-    const m = new RegExp(`^${prefix}[\\s-]*(\\d{1,4})$`).exec(text);
-    if (m) return `${family}${m[1].padStart(4, "0")}`;
+  for (const { family, prefixes } of PRINTED_PARSE_ORDER) {
+    for (const prefix of prefixes) {
+      const m = new RegExp(`^${prefix}[\\s-]*(\\d{1,4})$`).exec(text);
+      if (m) return `${family}${m[1]!.padStart(4, "0")}`;
+    }
   }
   return null;
 }

@@ -13,6 +13,8 @@ import {
 import { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import carddasJpCardlist from "../curated/sources/carddas-jp-cardlist.json";
 import promoLedger from "../curated/sources/carddas-jp-promo.json";
+import carddas20ProLedger from "../curated/sources/carddas20-pro.json";
+import noihjpCarddassLedger from "../curated/sources/noihjp-carddass.json";
 import { narutoDumpFaceRank } from "../disk";
 import bggEnCcgS1 from "../curated/sources/bgg-en-ccg-s1.json";
 
@@ -638,6 +640,36 @@ export function mergeCarddasJpPromoIntoIndex(input: {
   titles: NarutoTitleRow[];
 }) {
   return mergeJaRows(input, carddasJpPromoCards());
+}
+
+/**
+ * Fan checklist http://carddas20.com/memo/pro.html — titles / existence only.
+ * Runs after official `carddas-jp-promo` so it only fills holes (CAN-1…6, …).
+ */
+export function carddas20ProCards(): CarddasJpExtraRow[] {
+  return carddas20ProLedger.cards as CarddasJpExtraRow[];
+}
+
+export function mergeCarddas20ProIntoIndex(input: {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+}) {
+  return mergeJaRows(input, carddas20ProCards());
+}
+
+/**
+ * Fan catalogue http://naruto.noihjp.com/Goods/Carddas/ — titles / existence.
+ * After carddas20: fills COIN-9/11 names and leftover volume holes.
+ */
+export function noihjpCarddassCards(): CarddasJpExtraRow[] {
+  return noihjpCarddassLedger.cards as CarddasJpExtraRow[];
+}
+
+export function mergeNoihjpCarddassIntoIndex(input: {
+  prints: NarutoPrintRow[];
+  titles: NarutoTitleRow[];
+}) {
+  return mergeJaRows(input, noihjpCarddassCards());
 }
 
 // ─── parseCarddassAsset ──────────────────────────────────────────────────────────

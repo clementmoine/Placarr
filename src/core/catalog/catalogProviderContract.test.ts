@@ -37,13 +37,25 @@ describe("provider catalog contract", () => {
       "lorcana",
       "pokemon",
       "naruto/carddass",
-      "dbs/cg",
-      "dbs/fw",
+      "dragonball/cg",
+      "dragonball/fw",
       "launchbox",
       "icollect",
       "nointro",
     ]) {
       expect(packs.has(pack), pack).toBe(true);
+    }
+  });
+
+  it("living dual TCG owners expose catalog.refresh (auto-sync surface)", () => {
+    const byId = new Map(
+      discoverCatalogProviderModules().map((m) => [m.info.id, m]),
+    );
+    for (const id of ["tcgdex", "pokemontcglive", "lorcanatcg", "mtg"]) {
+      const mdl = byId.get(id);
+      expect(mdl, id).toBeTruthy();
+      expect(mdl!.info.catalogLifecycle ?? "living").not.toBe("finished");
+      expect(typeof mdl!.catalog?.refresh).toBe("function");
     }
   });
 

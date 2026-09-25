@@ -23,6 +23,10 @@ import { foilPackDataDir } from "@/lib/runtimeData";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
 import { refreshPackSetLogos } from "@/providers/shared/packOwner";
 import { ingestSealedProducts } from "@/providers/shared/sealedProducts/ingest";
+import {
+  promoteAndPurgeTcgCardsProductsStaging,
+  tcgCardsProductsSkipCrawl,
+} from "@/providers/shared/tcgcards/productsStagingLifecycle";
 
 import { loadDbscardsCatalogIndex } from "./catalogIndex";
 import {
@@ -83,6 +87,9 @@ export type ScrapeDbscardsProductsResult = {
   /** Products whose preview was unioned with a Bandai series. */
   catalogCompleted: number;
   dir: string;
+  /** True when crawl skipped — durable products.json ledger-fresh. */
+  skippedFresh?: boolean;
+  stagingPurged?: boolean;
 };
 
 async function readHtml(opts: {
@@ -181,6 +188,34 @@ export async function scrapeDbscardsProducts(opts: {
     opts.packId,
     opts.stagingFolder ?? family?.stagingFolder ?? "dbscards-products",
   );
+  const stagingFolder =
+    opts.stagingFolder ?? family?.stagingFolder ?? "dbscards-products";
+  const skip = tcgCardsProductsSkipCrawl({
+    packId: opts.packId,
+    stagingFolder,
+    force,
+  });
+  if (skip.skip && skip.dir) {
+    opts.onProgress?.(
+      `produits ${opts.packId}: ledger frais → skip crawl (durable)`,
+    );
+    await ingestSealedProducts(opts.packId);
+    const purged = promoteAndPurgeTcgCardsProductsStaging({
+      packId: opts.packId,
+      stagingFolder,
+      stagingDir: dir,
+    });
+    return {
+      listed: skip.meta?.listingCount ?? 0,
+      detail: skip.meta?.productCount ?? 0,
+      printsLinked: skip.meta?.printsLinked ?? 0,
+      fetched: 0,
+      catalogCompleted: 0,
+      dir: skip.dir,
+      skippedFresh: true,
+      stagingPurged: purged.purged,
+    };
+  }
   mkdirSync(dir, { recursive: true });
   const catalog = opts.catalog ?? null;
   const indexLang = (opts.indexLang ?? family?.indexLang ?? "fr").toLowerCase();
@@ -353,6 +388,11 @@ export async function scrapeDbscardsProducts(opts: {
   });
   if (logoNote) opts.onProgress?.(logoNote);
   await ingestSealedProducts(opts.packId);
+  const purged = promoteAndPurgeTcgCardsProductsStaging({
+    packId: opts.packId,
+    stagingFolder,
+    stagingDir: dir,
+  });
 
   return {
     listed: listings.length,
@@ -361,6 +401,7 @@ export async function scrapeDbscardsProducts(opts: {
     fetched,
     catalogCompleted,
     dir,
+    stagingPurged: purged.purged,
   };
 }
 
@@ -377,6 +418,11 @@ export async function scrapeTcgCardsProducts(
     limit?: number;
     catalog?: DbscardsCatalogIndex | null;
     onProgress?: (message: string) => void;
+    /**
+     * Optional curated sealed-contents ledger installed before ingest so every
+     * pack shares the same scrape→install→ingest path.
+     */
+    curatedContentsPath?: string;
   } = {},
 ): Promise<ScrapeDbscardsProductsResult> {
   const site = tcgCardsSite(siteId);
@@ -384,6 +430,12 @@ export async function scrapeTcgCardsProducts(
     throw new Error(
       `tcgcards: ${siteId} has no pack yet — register a packId before crawling`,
     );
+  }
+  if (opts.curatedContentsPath) {
+    const { installProviderProductsContents } = await import(
+      "@/providers/shared/sealedProducts/curatedContents"
+    );
+    installProviderProductsContents(site.packId, opts.curatedContentsPath);
   }
   const catalog =
     opts.catalog !== undefined

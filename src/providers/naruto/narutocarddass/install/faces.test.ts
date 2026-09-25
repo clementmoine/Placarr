@@ -266,6 +266,12 @@ import sharp from "sharp";
       expect(driveEnhancedFolders().map((row) => row.setCode)).toContain("tp4");
       expect(driveEnhancedFolders().map((row) => row.setCode)).toContain("promo");
     });
+
+    it("content hash is observed|folderId for harvest skip after purge", () => {
+      const hash = `${driveLedger.observed}|${driveLedger.folderId}`;
+      expect(hash).toMatch(/^\d{4}-\d{2}-\d{2}\|/);
+      expect(driveLedger.folderId.length).toBeGreaterThan(10);
+    });
   });
 
   describe("installNarutoCcgDriveFansetFallbacks", () => {
@@ -316,20 +322,28 @@ import sharp from "sharp";
 // —— installCarddasDoubleIllustrationFaces ——
 {
   describe("carddas double illustrations", () => {
-    it("lists three GIF basenames recoverable from carddas staging", () => {
-      expect(ledger.cards).toHaveLength(3);
+    it("lists three official GIF doubles plus shop-attested 作-257", () => {
       expect(ledger.cards.map((c) => c.number)).toEqual([
         "te0192",
         "te0348",
         "te0358",
+        "ta0257",
+        "ta0316",
       ]);
       expect(
-        ledger.cards.map((c) => carddasDoubleGifBasename(c.gif)),
+        ledger.cards
+          .filter((c) => c.gif)
+          .map((c) => carddasDoubleGifBasename(c.gif!)),
       ).toEqual([
         "jutsu-192_10.gif",
         "jutsu-348_17.gif",
         "jutsu-358_17.gif",
       ]);
+      expect(ledger.cards.find((c) => c.number === "ta0257")).toMatchObject({
+        artA: "art.suruga.jpg",
+        artB: "art.chitoroshop.jpg",
+        gif: null,
+      });
     });
   });
 }

@@ -27,7 +27,7 @@ import {
   paperCard,
   resolveEffectForPrintKey,
 } from "@/effects/pokemon/resolveEffect";
-import { remapCollectorNumberForLive } from "@/effects/pokemon/collectorRemap";
+import { remapCollectorNumberForLive } from "@/effects/pokemon/liveJoin";
 import { liveSetCandidatesFromTcgdexSet } from "@/effects/pokemon/liveSetId";
 
 // Server-side: installs the SQLite lookups over the client-safe stubs.

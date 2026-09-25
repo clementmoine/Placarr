@@ -9,9 +9,9 @@ import { fileURLToPath } from "node:url";
 
 import { packDataDir } from "@/lib/packPaths";
 import { providerModuleForPack } from "@/providers/shared/packOwner";
-import { loadDbscardsCatalogIndex } from "@/providers/dragonball/shared/dbscards/catalogIndex";
-import { completeProductContainsPrints } from "@/providers/dragonball/shared/dbscards/completePrints";
-import type { DbscardsProductPage } from "@/providers/dragonball/shared/dbscards/parseProducts";
+import { loadDbscardsCatalogIndex } from "@/providers/shared/tcgcards/catalogIndex";
+import { completeProductContainsPrints } from "@/providers/shared/tcgcards/completePrints";
+import type { DbscardsProductPage } from "@/providers/shared/tcgcards/parseProducts";
 import {
   ingestSealedProducts,
   printGameForPack,
@@ -32,10 +32,18 @@ type Sku = {
 
 function findProductsJson(packId: string): string | null {
   const staging = path.join(packDataDir(packId), "staging");
-  if (!existsSync(staging)) return null;
-  for (const name of readdirSync(staging)) {
-    const p = path.join(staging, name, "products.json");
-    if (existsSync(p)) return p;
+  if (existsSync(staging)) {
+    for (const name of readdirSync(staging)) {
+      const p = path.join(staging, name, "products.json");
+      if (existsSync(p)) return p;
+    }
+  }
+  const logs = path.join(packDataDir(packId), "logs");
+  if (existsSync(logs)) {
+    for (const name of readdirSync(logs)) {
+      const p = path.join(logs, name, "products.json");
+      if (existsSync(p)) return p;
+    }
   }
   return null;
 }
@@ -191,15 +199,15 @@ async function main() {
     randomPoolScope: "set" as const,
   };
 
-  rebuildPack("dbs/cg", { display: display24, booster: boosterSet }, "fr");
-  rebuildPack("dbs/fw", { display: display24, booster: boosterSet }, "en");
+  rebuildPack("dragonball/cg", { display: display24, booster: boosterSet }, "fr");
+  rebuildPack("dragonball/fw", { display: display24, booster: boosterSet }, "en");
   rebuildPack(
     "onepiece",
     { display: display24, booster: boosterSet },
     "fr",
   );
 
-  for (const pack of ["dbs/cg", "dbs/fw", "onepiece"] as const) {
+  for (const pack of ["dragonball/cg", "dragonball/fw", "onepiece"] as const) {
     const r = await ingestSealedProducts(pack);
     console.log("ingest", r);
   }

@@ -12,6 +12,8 @@ export type SealedPrintLink = {
    * Finish on the same printKey (`holo`, …) — never encoded in the key itself.
    */
   finish?: string;
+  /** Boutique tile art when `printKey` is still unresolved. */
+  image?: string | null;
 };
 
 /** SKU scellé inclus dans un autre (pack découverte, tin, …). */

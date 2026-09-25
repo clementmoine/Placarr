@@ -53,9 +53,20 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ItemModal } from "@/components/modals/ItemModal";
+import nextDynamic from "next/dynamic";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { ItemCard } from "@/components/ItemCard";
+
+const ItemModal = nextDynamic(
+  () =>
+    import("@/components/modals/ItemModal").then((m) => m.ItemModal),
+  { ssr: false },
+);
+const FoilCardImage = nextDynamic(
+  () =>
+    import("@/components/FoilCardImage").then((m) => m.FoilCardImage),
+  { ssr: false },
+);
 
 import { getShelf } from "@/lib/api/shelves";
 import {
@@ -70,7 +81,7 @@ import {
   cancelBackgroundJob,
   upsertBackgroundJobInCache,
 } from "@/lib/api/backgroundJobs";
-import { getHeroImage, getGalleryImages } from "@/core/collect/media";
+import { getHeroImageLight, getGalleryImagesLight } from "@/core/collect/mediaDisplay";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
@@ -100,7 +111,6 @@ import {
 import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
-import { FoilCardImage } from "@/components/FoilCardImage";
 import { FlippableCard } from "@/components/FlippableCard";
 import {
   resolveDefaultCardBack,
@@ -1836,7 +1846,7 @@ export default function ItemDetailsPage() {
 
   const heroImage = useMemo(() => {
     return (
-      item?.backgroundImageUrl || (item ? getHeroImage(item, locale) : null)
+      item?.backgroundImageUrl || (item ? getHeroImageLight(item) : null)
     );
   }, [item, locale]);
 
@@ -1921,7 +1931,7 @@ export default function ItemDetailsPage() {
     if (!item) return [];
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
-    const allImages = getGalleryImages(item);
+    const allImages = getGalleryImagesLight(item);
     // Exclude the cover, including its unedited twin: the cover is a derivative
     // of a gallery image, so its source must not show again. Through the shared
     // helper — a local copy of the rule went stale the moment the suffix moved.
@@ -2551,6 +2561,7 @@ export default function ItemDetailsPage() {
                           imageUrl={variantView.imageUrl ?? coverImage}
                           alt={itemDisplayName ?? ""}
                           finish={variantView.finish}
+                          materialName={variantView.materialName}
                           varnishType={variantView.varnishType}
                           cssFinishShaderId={variantView.shader?.id ?? null}
                           cssVarnishShaderId={variantView.varnish?.id ?? null}
@@ -3156,6 +3167,7 @@ export default function ItemDetailsPage() {
                       imageUrl={variantView.imageUrl ?? zoomImageUrl}
                       alt="Zoom"
                       finish={variantView.finish}
+                      materialName={variantView.materialName}
                       varnishType={variantView.varnishType}
                       cssFinishShaderId={variantView.shader?.id ?? null}
                       cssVarnishShaderId={variantView.varnish?.id ?? null}

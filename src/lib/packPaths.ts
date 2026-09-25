@@ -99,7 +99,8 @@ export function packStagingDir(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "staging");
 }
 
-/** Uploaded / pulled APKs — `data/<pack>/staging/apks`. */
+/** Uploaded / pulled APK binaries — `data/<pack>/staging/apks` (purged after promote).
+ * Store version meta lives under `logs/apk-store-meta.json` (see apkStoreFetch). */
 export function packApksDir(pack: string): string {
   return path.join(packStagingDir(pack), "apks");
 }
@@ -109,19 +110,27 @@ export function packUnityDataDir(pack: string): string {
   return path.join(packStagingDir(pack), "unity-data");
 }
 
-/** Simey CSS trees — `data/<pack>/staging/simey` (volatile; not served). */
+/**
+ * Simey CSS trees — `data/<pack>/foil/simey/` (porting reference; not served).
+ * Shared FX textures live next door under `foil/textures/simey_*`.
+ */
 export type PokemonSimeyTreeId = "poke-holo" | "poke-151";
 
-/** Staging Simey pour un pack (défaut Pokémon — seul consommateur aujourd'hui). */
+/** Foil-side Simey CSS dump for a pack (défaut Pokémon). */
+export function packSimeyDir(pack = "pokemon"): string {
+  return path.join(foilPackDir(pack), "simey");
+}
+
+/** @deprecated Prefer {@link packSimeyDir} — kept for call-site renames. */
 export function packSimeyStagingDir(pack = "pokemon"): string {
-  return path.join(packStagingDir(pack), "simey");
+  return packSimeyDir(pack);
 }
 
 export function packSimeyTreeDir(
   tree: PokemonSimeyTreeId,
   pack = "pokemon",
 ): string {
-  return path.join(packSimeyStagingDir(pack), tree);
+  return path.join(packSimeyDir(pack), tree);
 }
 
 /** CSS cards dir for gap audit — empty / missing when not synced. */
@@ -132,9 +141,9 @@ export function packSimeyCssCardsDir(
   return path.join(packSimeyTreeDir(tree, pack), "public", "css", "cards");
 }
 
-/** @deprecated Prefer {@link packSimeyStagingDir}. */
+/** @deprecated Prefer {@link packSimeyDir}. */
 export function pokemonSimeyStagingDir(): string {
-  return packSimeyStagingDir("pokemon");
+  return packSimeyDir("pokemon");
 }
 
 /** @deprecated Prefer {@link packSimeyTreeDir}. */

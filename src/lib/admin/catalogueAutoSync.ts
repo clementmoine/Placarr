@@ -9,12 +9,14 @@ import {
 } from "@/core/catalog/catalog";
 import {
   BACKGROUND_WORK_KIND,
+  BACKGROUND_WORK_STATUS,
   enqueueBackgroundWorkJob,
 } from "@/core/collect/jobs/workQueue";
 import {
   catalogueApkPacks,
   cataloguePackForExtractTarget,
 } from "@/lib/admin/cataloguePacks";
+import { prisma } from "@/lib/db/prisma";
 
 const DEFAULT_CHECK_MS = 60 * 60 * 1000;
 /** APK store updates are rare — one probe a day per pack is plenty. */
@@ -58,6 +60,105 @@ export function catalogSkipsAutoSync(lifecycle: string | undefined): boolean {
   return lifecycle === "finished";
 }
 
+function providerIdFromPayload(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const id = (payload as { providerId?: unknown }).providerId;
+  return typeof id === "string" && id.trim() ? id.trim() : null;
+}
+
+/**
+ * Among open syncs for one provider, keep a single job: prefer `running`, else
+ * the oldest pending. Everything else is noise from auto-sync re-enqueue.
+ */
+export function duplicateCatalogProviderSyncIdsToCancel(
+  jobs: readonly {
+    id: string;
+    status: string;
+    providerId: string;
+    createdAt: Date;
+  }[],
+): string[] {
+  const byProvider = new Map<
+    string,
+    { id: string; status: string; providerId: string; createdAt: Date }[]
+  >();
+  for (const job of jobs) {
+    if (!job.providerId) continue;
+    const list = byProvider.get(job.providerId) ?? [];
+    list.push(job);
+    byProvider.set(job.providerId, list);
+  }
+  const cancel: string[] = [];
+  for (const group of byProvider.values()) {
+    if (group.length <= 1) continue;
+    const sorted = [...group].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+    const running = sorted.find(
+      (job) => job.status === BACKGROUND_WORK_STATUS.running,
+    );
+    const keepId = running?.id ?? sorted[0]!.id;
+    for (const job of sorted) {
+      if (job.id !== keepId) cancel.push(job.id);
+    }
+  }
+  return cancel;
+}
+
+/** Drop piled-up auto-sync twins so the activity menu stays honest. */
+export async function collapseDuplicateCatalogProviderSyncJobs(): Promise<number> {
+  const open = await prisma.backgroundWorkJob.findMany({
+    where: {
+      kind: BACKGROUND_WORK_KIND.catalogProviderSync,
+      status: {
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+      },
+    },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, status: true, payload: true, createdAt: true },
+  });
+  const typed = open.flatMap((job) => {
+    const providerId = providerIdFromPayload(job.payload);
+    if (!providerId) return [];
+    return [
+      {
+        id: job.id,
+        status: job.status,
+        providerId,
+        createdAt: job.createdAt,
+      },
+    ];
+  });
+  const cancelIds = duplicateCatalogProviderSyncIdsToCancel(typed);
+  if (cancelIds.length === 0) return 0;
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where: { id: { in: cancelIds } },
+    data: {
+      status: BACKGROUND_WORK_STATUS.cancelled,
+      finishedAt: new Date(),
+      lockedAt: null,
+      lockedBy: null,
+    },
+  });
+  return result.count;
+}
+
+async function hasOpenCatalogProviderSync(
+  providerId: string,
+): Promise<boolean> {
+  const existing = await prisma.backgroundWorkJob.findFirst({
+    where: {
+      kind: BACKGROUND_WORK_KIND.catalogProviderSync,
+      status: {
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+      },
+      payload: { path: ["providerId"], equals: providerId },
+    },
+    select: { id: true },
+  });
+  return Boolean(existing);
+}
+
 export async function maybeEnqueueCatalogueProviderSync(
   providerId: string,
 ): Promise<boolean> {
@@ -74,10 +175,15 @@ export async function maybeEnqueueCatalogueProviderSync(
   state.syncScheduled[providerId] = true;
 
   try {
+    // One open job per provider — the hourly loop used to re-enqueue while
+    // dbsfw/dbscg stayed stale, and the menu capped the pile at « 40 en file ».
+    if (await hasOpenCatalogProviderSync(providerId)) return false;
+
     await enqueueBackgroundWorkJob({
       kind: BACKGROUND_WORK_KIND.catalogProviderSync,
       payload: { providerId, auto: true },
-      replaceOpenForKind: false,
+      // Do not replaceOpen: that would cancel a job that started running
+      // between the check and create. Duplicates are collapsed on the next tick.
     });
     return true;
   } catch (error) {
@@ -90,6 +196,16 @@ export async function maybeEnqueueCatalogueProviderSync(
 
 export async function maybeEnqueueAllStaleCatalogueSyncs(): Promise<number> {
   if (!isEnabled()) return 0;
+  try {
+    const collapsed = await collapseDuplicateCatalogProviderSyncJobs();
+    if (collapsed > 0) {
+      console.warn(
+        `[catalogue sync] collapsed ${collapsed} duplicate catalogProviderSync job(s)`,
+      );
+    }
+  } catch (error) {
+    console.warn("[catalogue sync] duplicate collapse failed:", error);
+  }
   let n = 0;
   for (const mdl of discoverCatalogProviderModules()) {
     if (await maybeEnqueueCatalogueProviderSync(mdl.info.id)) n += 1;

@@ -68,7 +68,7 @@ import {
  *    Le probe pixel ne mesure que la face choisie : il ne peut pas voir qu'un
  *    fichier portrait contient une carte couchée, et son repli sans dimensions
  *    répondrait `landscapeFace` — faux pour un scan couché.
- * 2. Le probe pixel de `cards-index.json` (`artW`/`artH` + `landscapePrint`),
+ * 2. Le probe pixel éditorial (`artW`/`artH` + `landscapePrint`),
  *    partagé avec les autres packs locaux, pour tout le reste.
  */
 
@@ -471,8 +471,9 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     // A print with no title yet still deserves to be pickable: the reference
     // alone identifies it, and hiding it would make the card unaddable.
     title:
-      row.fullName?.trim() || formatNarutoReference(row.setCode, row.number),
-    reference: formatNarutoReference(row.setCode, row.number),
+      row.fullName?.trim() ||
+      formatNarutoReference(row.setCode, row.number, row.lang),
+    reference: formatNarutoReference(row.setCode, row.number, row.lang),
     // `CL-001` ne dit pas la série ; le sélecteur de catalogue en a besoin.
     setLabel: narutoSetLabel(row.setCode, row.number),
     ...(row.rarity ? { rarity: row.rarity } : {}),

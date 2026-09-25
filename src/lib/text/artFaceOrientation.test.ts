@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   mergeArtFaceOrientation,
-  orientationFromIndexSlot,
-  orientationFromLenticularGrid,
   resolveArtFaceOrientation,
 } from "@/lib/text/artFaceOrientation";
+import {
+  orientationFromIndexSlot,
+  orientationFromLenticularGrid,
+} from "@/lib/text/artFaceOrientationLenticular";
 
 describe("resolveArtFaceOrientation", () => {
   it("does not rotate a portrait scan unless the print is landscape", () => {

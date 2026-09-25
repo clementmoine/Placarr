@@ -7,8 +7,8 @@ under [`shared/`](./shared/) (not `providers/shared/`).
 
 | Folder | Registry id | `catalogLifecycle` | Role |
 | ------ | ----------- | ------------------ | ---- |
-| [`dbscg/`](./dbscg/) | `dbscg` | living | DBS Masters (Bandai cardlists → `data/dbs/cg/`) |
-| [`dbsfw/`](./dbsfw/) | `dbsfw` | living | DBS Fusion World (fw/en → `data/dbs/fw/`) |
+| [`dbscg/`](./dbscg/) | `dbscg` | living | DBS Masters (Bandai cardlists → `data/dragonball/cg/`) |
+| [`dbsfw/`](./dbsfw/) | `dbsfw` | living | DBS Fusion World (fw/en → `data/dragonball/fw/`) |
 | [`dbscards/`](./dbscards/) | `dbsmarket` | living | Prix-only Cardmarket dumps (dbscards.fr) |
 | [`dbh/`](./dbh/) | `dbh` | living | Dragon Ball Heroes / SDBH (JA carddass.com) |
 | [`dbsjcc/`](./dbsjcc/) | `dbsjcc` | finished | Bandai FR JCC / Carddass (2005–2009) |

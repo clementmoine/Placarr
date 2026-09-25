@@ -71,18 +71,34 @@ describe("aspectCorrectSquareCcUv", () => {
   it("corrige les deux samples SunPillar Northern Cross", () => {
     const source = `
     u_xlat1.xy = vs_TEXCOORD0.xy * vec2(3.0, 3.0) + u_xlat1.xy;
-    u_xlat16_1.x = texture(_Tex_CC, u_xlat1.xy).x;
+    u_xlat16_1.x = texture(_CCPatternTex, u_xlat1.xy).x;
     u_xlat13.xz = vs_TEXCOORD0.xy * vec2(3.0, 3.0) + u_xlat13.xz;
-    u_xlat16_13.x = texture(_Tex_CC, u_xlat13.xz).y;
+    u_xlat16_13.x = texture(_CCPatternTex, u_xlat13.xz).y;
 `;
     const patched = aspectCorrectSquareCcUv(source);
     const needle = `vs_TEXCOORD0.xy * vec2(${3.0 * LIVE_CARD_ASPECT}, 3)`;
     expect(patched.split(needle)).toHaveLength(3);
   });
 
-  it("no-op sans _Tex_CC", () => {
+  it("no-op sans _Tex_CC / _CCPatternTex", () => {
     const source = "vs_TEXCOORD0.xy * vec2(1.25, 1.25);";
     expect(aspectCorrectSquareCcUv(source)).toBe(source);
+  });
+
+  it("corrige PikachuFoil / FlatSilver _CCPatternTex (StitchedRings, Poké Ball)", () => {
+    const source = `
+    u_xlat21.xy = vs_TEXCOORD0.xy * vec2(1.5, 1.5) + u_xlat21.xy;
+    u_xlat16_2.xyz = texture(_CCPatternTex, u_xlat21.xy).xyz;
+    u_xlat3.xy = vs_TEXCOORD0.xy * vec2(6.0, 6.0) + vec2(u_xlat31);
+    u_xlat16_3.xyz = texture(_TexDots, u_xlat3.xy).xyz;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${1.5 * LIVE_CARD_ASPECT}, 1.5)`,
+    );
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${6.0 * LIVE_CARD_ASPECT}, 6)`,
+    );
   });
 });
 

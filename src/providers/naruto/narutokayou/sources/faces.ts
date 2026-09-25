@@ -13,6 +13,11 @@ import { httpGet } from "@/lib/http/httpClient";
 import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import {
+  hashNarutoCuratedJson,
+  narutoDigArtefactFresh,
+  promoteAndPurgeNarutoDig,
+} from "@/providers/naruto/shared/promoteNarutoDig";
 
 import {
   canonicalizeKayouNumber,
@@ -92,7 +97,23 @@ export function enrichChecklistWithOfficialFaces(
 // ─── narutocardsFaces ───
 
 const STAGING_FOLDER = "kayou-faces";
+const KAYOU_FACES_ARTEFACT = "kayou:kayou-faces";
 const DEFAULT_SOURCE_ID = "narutocards";
+
+/** Stable SSOT hash — checklist card ids + face URLs (force = re-harvest). */
+export function kayouFacesContentHash(checklist: KayouChecklist): string {
+  return hashNarutoCuratedJson(
+    checklist.sets.map((s) => ({
+      code: s.code,
+      cards: s.cards.map((c) => ({
+        number: c.number,
+        faceUrl: c.faceUrl ?? null,
+        alts: c.faceUrlAlternates ?? [],
+      })),
+    })),
+  );
+}
+
 export function kayouFacesStagingDir(): string {
   return path.join(packStagingDir(NARUTO_KAYOU_PACK_ID), STAGING_FOLDER);
 }
@@ -182,6 +203,8 @@ export type KayouFaceHarvest = {
   ok: number;
   skip: number;
   fail: number;
+  /** Ledger frais — pas de re-download staging. */
+  skippedFresh?: boolean;
 };
 
 export async function harvestKayouFaces(
@@ -194,6 +217,22 @@ export async function harvestKayouFaces(
   },
 ): Promise<KayouFaceHarvest> {
   const ledger = opts.checklist;
+  const total = ledger.sets.reduce((n, s) => n + s.cards.length, 0);
+  const contentHash = kayouFacesContentHash(ledger);
+  if (
+    narutoDigArtefactFresh({
+      packId: NARUTO_KAYOU_PACK_ID,
+      artefactId: KAYOU_FACES_ARTEFACT,
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    opts.onProgress?.(
+      `faces staging — ledger frais (${KAYOU_FACES_ARTEFACT}) → skip harvest`,
+    );
+    return { cards: total, ok: 0, skip: total, fail: 0, skippedFresh: true };
+  }
+
   const staging = opts.stagingDir ?? kayouFacesStagingDir();
   mkdirSync(staging, { recursive: true });
 
@@ -201,7 +240,6 @@ export async function harvestKayouFaces(
   let skip = 0;
   let fail = 0;
   let cards = 0;
-  const total = ledger.sets.reduce((n, s) => n + s.cards.length, 0);
   opts.onProgress?.(`faces staging — ${total} carte(s) checklist…`);
   for (const set of ledger.sets) {
     for (const card of set.cards) {
@@ -251,11 +289,12 @@ export type KayouFaceInstall = { faces: number; missing: string[] };
 
 export function installKayouFaces(
   index: LocalPrintsIndex,
-  opts: { checklist: KayouChecklist; stagingDir?: string; lang?: string },
+  opts: { checklist: KayouChecklist; stagingDir?: string; lang?: string; force?: boolean },
 ): KayouFaceInstall {
   const ledger = opts.checklist;
   const staging = opts.stagingDir ?? kayouFacesStagingDir();
   const lang = (opts.lang ?? KAYOU_TITLE_LANG).toLowerCase();
+  const contentHash = kayouFacesContentHash(ledger);
   const missing: string[] = [];
   const assets: {
     printKey: string;
@@ -263,6 +302,17 @@ export function installKayouFaces(
     art: string;
     sourceUrl: string;
   }[] = [];
+
+  if (
+    narutoDigArtefactFresh({
+      packId: NARUTO_KAYOU_PACK_ID,
+      artefactId: KAYOU_FACES_ARTEFACT,
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    return { faces: 0, missing: [] };
+  }
 
   if (!existsSync(staging)) {
     return {
@@ -308,5 +358,13 @@ export function installKayouFaces(
   }
 
   if (assets.length) index.writeAssets(assets);
+  if (missing.length === 0 && assets.length > 0 && !opts.stagingDir) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_KAYOU_PACK_ID,
+      artefactId: KAYOU_FACES_ARTEFACT,
+      stagingRel: STAGING_FOLDER,
+      contentHash,
+    });
+  }
   return { faces: assets.length, missing };
 }

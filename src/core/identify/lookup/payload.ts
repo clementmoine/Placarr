@@ -4,7 +4,7 @@ import type {
   LeDenicheurPrices,
   PriceChartingMetadata,
 } from "@/core/identify/lookup/providerTypes";
-import { scrapeCatalogRetailerLookupEntries } from "@/core/catalog/scrapeRetailers";
+import { scrapeCatalogRetailerLookupEntries } from "@/core/catalog/catalog";
 import { detectPlatformKey } from "@/core/identify/query";
 import type { MediaType } from "@/types/providerRegistry";
 

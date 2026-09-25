@@ -1,4 +1,4 @@
-import { getEffectPack } from "./registry";
+import { getEffectPack } from "./backend";
 
 /** How specific a proposed card back is — drives default ranking. */
 export type CardBackScope = "print" | "set" | "pack";

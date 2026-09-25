@@ -11,10 +11,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { packLogsDir } from "@/lib/packPaths";
-import {
-  dataPackPath,
-  statusFromLastRun,
-} from "@/providers/shared/catalogCorpus";
+import { statusFromLastRun } from "@/providers/shared/catalogCorpus";
 import type {
   ProviderCatalogRefreshOpts,
   ProviderCatalogStatus,
@@ -109,9 +106,7 @@ export function cardCatalogueHooks(
   input: CardCatalogueHooksInput,
 ): CardCatalogueHooks {
   const status = () => {
-    const empty =
-      !existsSync(input.dbPath()) &&
-      !existsSync(dataPackPath(input.packId, "cards-index.json"));
+    const empty = !existsSync(input.dbPath());
     return statusFromLastRun({ dataPack: input.packId, empty });
   };
 

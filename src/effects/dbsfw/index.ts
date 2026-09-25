@@ -8,7 +8,7 @@ import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 export const DBS_FW_EFFECT_PACK_ID = "dbs-fw";
 
-const ASSET_BASE = "/assets/dbs/fw";
+const ASSET_BASE = "/assets/dragonball/fw";
 
 export const DBS_FW_FULL_FOIL_MASK_URL = `${ASSET_BASE}/full_foil_mask.webp`;
 

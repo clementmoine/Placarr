@@ -4,7 +4,7 @@ import { isCatalogTitleAnchorProvider } from "@/core/catalog/evidence";
 import { buildProductEvidence } from "@/core/identify/evidence/parse";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
-import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodePrices";
 
 import { icollectModule } from "./index";
 

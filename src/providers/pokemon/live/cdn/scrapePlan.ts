@@ -41,12 +41,12 @@ import {
 
 import {
   buildCdnCatalogue,
-  emptyCdnCatalogue,
   intersectWantedWithManifest,
   loadCdnManifestDump,
   type CdnCatalogue,
   type CdnManifestDump,
 } from "./cdnManifest";
+import { loadCdnCatalogueFromDurable } from "./durableCdnCatalogue";
 
 export type ScrapePlan = {
   names: string[];
@@ -115,14 +115,26 @@ export function loadCdnManifestDumps(
  */
 export function loadCdnCatalogue(
   cacheRoot: string,
-  opts: { langs: readonly string[]; includeThumbnails?: boolean },
+  opts: {
+    langs: readonly string[];
+    includeThumbnails?: boolean;
+    /** When set, durable fallback must match this CDN target fingerprint. */
+    fingerprint?: string | null;
+  },
 ): CdnCatalogue {
   const dumps = loadCdnManifestDumps(cacheRoot, opts);
-  if (!dumps.length) return emptyCdnCatalogue();
-  return buildCdnCatalogue(dumps, {
-    langs: opts.langs,
-    includeThumbnails: opts.includeThumbnails,
-  });
+  if (dumps.length) {
+    return buildCdnCatalogue(dumps, {
+      langs: opts.langs,
+      includeThumbnails: opts.includeThumbnails,
+    });
+  }
+  // Staging manifests purged → compact catalogue under pack logs/.
+  const packRoot =
+    path.basename(cacheRoot) === "staging"
+      ? path.dirname(cacheRoot)
+      : cacheRoot;
+  return loadCdnCatalogueFromDurable(packRoot, opts.fingerprint);
 }
 
 /**

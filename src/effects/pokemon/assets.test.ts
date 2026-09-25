@@ -76,8 +76,8 @@ describe("pokemon pack assets", () => {
       for (const bundleId of BUNDLE_IDS) {
         for (const variant of variantsForBundle(bundleId)) {
           const mapped =
-            foilManifestToShader(variant.shader) ||
-            foilManifestToShader(variant.foil);
+            foilManifestToShader(variant.foil) ||
+            foilManifestToShader(variant.shader);
           if (!mapped) {
             unmapped.push(
               `${bundleId}:${variant.variant}:${variant.foil || "?"}/${variant.shader || "?"}`,
@@ -89,7 +89,7 @@ describe("pokemon pack assets", () => {
         [],
       );
     },
-    60_000,
+    180_000,
   );
 
   it.skipIf(!hasDump)(

@@ -20,7 +20,7 @@
 2. Ne pas charger les `.css` upstream au runtime : on **adapte** dans
    `HoloShader` (comme les recettes Lorcana dumpées).
 3. Assets officiels : faces sous `data/<pack>/cards/`, kit rendu sous `data/<pack>/foil/` → URL `/assets/<pack>/…`.
-4. Trees simey = staging volatile `data/pokemon/staging/simey/`
+4. Trees simey = foil reference `data/pokemon/foil/simey/` (textures = `foil/textures/simey_*`)
    (Simey CSS sync) — **même rôle** que le dump web Lorcana.
 5. **Pokémon CSS :** (a) **recette** = compositing Simey (staging) ;
    (b) **données** = faces + masks + textures FX **Live multi-locale**

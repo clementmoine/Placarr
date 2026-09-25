@@ -39,7 +39,7 @@ export type FactsStore<TEntry> = {
 };
 
 export function createFactsStore<TEntry>(input: {
-  /** Segments du pack sous la racine de données : `["dbs", "cg"]`. */
+  /** Segments du pack sous la racine de données : `["dragonball", "cg"]`. */
   packSegments: readonly string[];
   /**
    * De `(set, numéro)` à la clé du fichier. Rendre `null` écarte la recherche

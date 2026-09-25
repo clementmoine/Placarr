@@ -28,6 +28,7 @@ import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
 
 export const LORCANA_TCG_SCHEMA_VERSION = "2";
+export const LORCANA_PACK_ID = "lorcana";
 
 export type LorcanaTcgAssetFiles = {
   art?: string | null;
@@ -794,6 +795,45 @@ export function lookupLorcanaTcgSearchRow(
   } finally {
     db.close();
   }
+}
+
+/**
+ * Toutes les lignes titre d'une langue — admin Catalogue (= checklist).
+ */
+export function listLorcanaTcgRowsForLanguage(
+  language = "en",
+): LorcanaTcgSearchRow[] {
+  const db = ensureLorcanaTcgIndex();
+  if (!db) return [];
+  const lang = language.trim().toLowerCase() || "en";
+  return db
+    .prepare(
+      `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+              p.variant, p.promo_grouping AS promoGrouping,
+              p.provider_id AS providerId, p.cost,
+              p.artists_json AS artistsJson,
+              p.foil_types_json AS foilTypesJson,
+              p.varnish_type AS varnishType,
+              p.cardmarket_url AS cardmarketUrl,
+              p.foil_effect_colors_json AS foilEffectColorsJson,
+              p.lore, p.strength, p.willpower, p.inkwell,
+              p.set_card_count AS setCardCount,
+              t.lang, t.full_name AS fullName, t.name, t.version,
+              t.set_name AS setName, t.rarity, t.card_type AS cardType,
+              t.color, t.story, t.flavor_text AS flavorText,
+              t.subtypes_json AS subtypesJson, t.search_name AS searchName,
+              t.image_url AS imageUrl, t.thumbnail_url AS thumbnailUrl,
+              t.full_foil_url AS fullFoilUrl,
+              t.foil_mask_url AS foilMaskUrl,
+              t.varnish_mask_url AS varnishMaskUrl,
+              t.second_varnish_mask_url AS secondVarnishMaskUrl
+         FROM prints p
+         JOIN print_titles t
+           ON t.print_key = p.print_key AND t.lang = ?
+        ORDER BY CAST(p.set_code AS INTEGER), CAST(p.number AS INTEGER),
+                 p.set_code, p.number`,
+    )
+    .all(lang) as LorcanaTcgSearchRow[];
 }
 
 export function searchLorcanaTcgRows(

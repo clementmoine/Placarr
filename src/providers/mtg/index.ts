@@ -30,6 +30,7 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: MTG_EFFECT_PACK_ID,
     printGame: MTG_PRINT_GAME,
     defaultLanguage: "fr",
+    catalogLifecycle: "living",
     syncHint: "Catalogue Sync (admin) — Scryfall all_cards",
     websiteUrl: "https://scryfall.com/",
     notes:
@@ -37,6 +38,13 @@ const built = createEmptyLocalTcgProvider({
     formatReference: formatMtgReference,
     borrowFaceAcrossLocales: true,
     decorateCandidate: (base) => decorateMtgCandidate(base),
+    listRemotePrintSets: async () => {
+      const { listScryfallRemoteSets } = await import(
+        /* webpackIgnore: true */
+        "./harvest/listScryfallSets"
+      );
+      return listScryfallRemoteSets();
+    },
   },
   autoSkip: ["products"],
   runPipeline: async (argv) => {

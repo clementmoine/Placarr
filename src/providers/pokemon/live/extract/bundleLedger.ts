@@ -9,14 +9,22 @@
  *
  * This ledger is that missing cache key.
  *
- * **Adoption caveat.** A bundle with no ledger entry counts as fresh and is
- * adopted at the catalogue's current hash, flagged ``assumed``. Without that,
- * the first run after this shipped would re-download every file already on
- * disk. Adopted rows assert nothing about what is actually stored; only rows
- * written by a real download are verified.
+ * **Verified** = real CDN download (no ``assumed``). **Assumed** = on-disk
+ * file adopted without a re-fetch. Assumed rows stay ``fresh`` (no re-download)
+ * while the file exists; after extract OK they are promoted to verified so
+ * ``purgeVerifiedCdnBundles`` can drop staging.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmdirSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 
@@ -38,7 +46,18 @@ export type BundleLedger = {
 };
 
 export function bundleLedgerPath(cacheRoot: string): string {
-  return path.join(cacheRoot, "cdn-bundle-versions.json.gz");
+  // Durable under pack logs/. Fall back to legacy staging locations.
+  const inLogs = path.join(cacheRoot, "logs", "cdn-bundle-versions.json.gz");
+  const legacyRoot = path.join(cacheRoot, "cdn-bundle-versions.json.gz");
+  const legacyStaging = path.join(
+    cacheRoot,
+    "staging",
+    "cdn-bundle-versions.json.gz",
+  );
+  if (existsSync(inLogs)) return inLogs;
+  if (existsSync(legacyStaging)) return legacyStaging;
+  if (existsSync(legacyRoot)) return legacyRoot;
+  return inLogs;
 }
 
 export function emptyBundleLedger(): BundleLedger {
@@ -65,7 +84,8 @@ export function saveBundleLedger(
   cacheRoot: string,
   ledger: BundleLedger,
 ): string {
-  const file = bundleLedgerPath(cacheRoot);
+  // Always write durable path under pack logs/.
+  const file = path.join(cacheRoot, "logs", "cdn-bundle-versions.json.gz");
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(
     file,
@@ -74,11 +94,83 @@ export function saveBundleLedger(
   return file;
 }
 
+/**
+ * After extract succeeded: drop staging bundles whose ledger hash is verified
+ * (not merely ``assumed``). Next scrape skips re-download when freshness=fresh
+ * even if the file is gone. Removes the directory when nothing remains.
+ */
+export function purgeVerifiedCdnBundles(
+  cacheRoot: string,
+  bundlesDir: string,
+): { purged: number; kept: number; removedDir?: boolean } {
+  if (!existsSync(bundlesDir)) return { purged: 0, kept: 0 };
+  const ledger = loadBundleLedger(cacheRoot);
+  let purged = 0;
+  let kept = 0;
+  for (const name of readdirSync(bundlesDir)) {
+    const abs = path.join(bundlesDir, name);
+    try {
+      if (!statSync(abs).isFile()) {
+        kept += 1;
+        continue;
+      }
+    } catch {
+      continue;
+    }
+    const row = ledger.entries[name.toLowerCase()];
+    if (row?.hash && !row.assumed) {
+      try {
+        unlinkSync(abs);
+        purged += 1;
+      } catch {
+        kept += 1;
+      }
+    } else {
+      kept += 1;
+    }
+  }
+  return {
+    purged,
+    kept,
+    removedDir: removeDirIfEmpty(bundlesDir),
+  };
+}
+
+/** Drop a staging dir that has no remaining files (ignore ``.DS_Store``). */
+export function removeDirIfEmpty(dir: string): boolean {
+  if (!existsSync(dir)) return false;
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return false;
+  }
+  for (const name of entries) {
+    if (name === ".DS_Store") {
+      try {
+        unlinkSync(path.join(dir, name));
+      } catch {
+        return false;
+      }
+      continue;
+    }
+    return false;
+  }
+  try {
+    rmdirSync(dir);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export type BundleFreshness = "fresh" | "stale" | "unknown";
 
 /**
- * ``unknown`` — no expected hash (catalogue not in play) or no ledger row yet;
- * callers treat it as fresh and adopt. ``stale`` is the only refetch signal.
+ * ``unknown`` — no expected hash (catalogue not in play) or no ledger row yet.
+ * ``stale`` — hash moved upstream (re-download). Matching hash is ``fresh``
+ * even for legacy ``assumed`` rows — on-disk bytes are reused, never re-fetched
+ * solely to clear ``assumed``.
  */
 export function bundleFreshness(
   ledger: BundleLedger,
@@ -89,6 +181,26 @@ export function bundleFreshness(
   const row = ledger.entries[name.toLowerCase()];
   if (!row?.hash) return "unknown";
   return row.hash === expectedHash ? "fresh" : "stale";
+}
+
+/**
+ * After extract succeeded: drop the ``assumed`` flag so staging purge can
+ * remove on-disk bundles that were only adopted (local file reused, treatments
+ * done). Does not touch hashes.
+ */
+export function promoteAssumedBundlesToVerified(
+  cacheRoot: string,
+): { promoted: number } {
+  const ledger = loadBundleLedger(cacheRoot);
+  let promoted = 0;
+  for (const row of Object.values(ledger.entries)) {
+    if (row.assumed) {
+      delete row.assumed;
+      promoted += 1;
+    }
+  }
+  if (promoted > 0) saveBundleLedger(cacheRoot, ledger);
+  return { promoted };
 }
 
 export function recordBundleVersion(

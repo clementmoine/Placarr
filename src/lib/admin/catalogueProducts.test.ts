@@ -12,48 +12,109 @@ import {
   buildCatalogueSealedRows,
   getCatalogueProductDetail,
   getCatalogueProductDetailAsync,
+  listCatalogueProducts,
   resetCatalogueProductsCache,
+  resolveSealedLotterySetId,
   resolveSealedSetLotteryPool,
 } from "./catalogueProducts";
 import type { ProductsIndexV1 } from "@/providers/shared/sealedProducts/indexFormat";
 
-vi.mock("@/providers/shared/packOwner", () => ({
-  providerModuleForPack: vi.fn(() => ({
-    listSetPrints: ({ setId }: { setId: string }) =>
-      setId === "s5"
-        ? [
+vi.mock("@/providers/shared/packOwner", () => {
+  const listSetPrints = ({
+    setId,
+    language,
+  }: {
+    setId: string;
+    language?: string | null;
+  }) => {
+    if (setId === "s5") {
+      return [
+        {
+          printKey: "naruto:ta-0214",
+          title: "Exemple S5",
+          reference: "TA-214",
+        },
+        {
+          printKey: "naruto:ni-0200",
+          title: "Autre S5",
+          reference: "NI-200",
+        },
+      ];
+    }
+    if (setId === "s1") {
+      return [
+        {
+          printKey: "naruto:ni-0047",
+          title: "Sasuke Uchiwa",
+          reference: "NI-047",
+        },
+        {
+          printKey: "naruto:ni-0047-prerelease",
+          title: "Sasuke Uchiwa",
+          reference: "NI-047 · prerelease",
+        },
+        {
+          printKey: "naruto:ni-0019-prerelease",
+          title: "Prerelease only",
+          reference: "NI-019 · prerelease",
+        },
+      ];
+    }
+    if (setId === "13") {
+      return [
+        {
+          printKey: "lorcana:13-1",
+          title: "Chapter 13 sample",
+          reference: "13-1",
+          language: "fr",
+        },
+        {
+          printKey: "lorcana:13-2",
+          title: "Chapter 13 JA only",
+          reference: "13-2",
+          language: "ja",
+        },
+      ].filter((row) => !language || row.language === language);
+    }
+    if (setId === "me04") {
+      return [
+        {
+          printKey: "pokemon:me04-001",
+          title: "CRI card",
+          reference: "me04-001",
+        },
+      ];
+    }
+    if (setId === "s") {
+      // Bleach: titles JA-only — lang filter empty, fallback without lang fills.
+      return language
+        ? []
+        : [
             {
-              printKey: "naruto:ta-0214",
-              title: "Exemple S5",
-              reference: "TA-214",
+              printKey: "bleach:s-001",
+              title: "Ichigo",
+              reference: "S-001",
             },
-            {
-              printKey: "naruto:ni-0200",
-              title: "Autre S5",
-              reference: "NI-200",
-            },
-          ]
-        : setId === "s1"
-          ? [
-              {
-                printKey: "naruto:ni-0047",
-                title: "Sasuke Uchiwa",
-                reference: "NI-047",
-              },
-              {
-                printKey: "naruto:ni-0047-prerelease",
-                title: "Sasuke Uchiwa",
-                reference: "NI-047 · prerelease",
-              },
-              {
-                printKey: "naruto:ni-0019-prerelease",
-                title: "Prerelease only",
-                reference: "NI-019 · prerelease",
-              },
-            ]
-          : [],
-  })),
-}));
+          ];
+    }
+    return [];
+  };
+  const resolveCatalogueSetId = ({ setCode }: { setCode?: string | null }) => {
+    if (setCode === "CRI") return "me04";
+    if (setCode === "ATV") return "13";
+    return null;
+  };
+  const owner = { listSetPrints, resolveCatalogueSetId };
+  return {
+    providerModulesForPack: vi.fn(() => []),
+    providerModuleForPack: vi.fn(() => owner),
+    providerModuleProviding: vi.fn((_packId: string, hook: string) =>
+      hook === "listSetPrints" || hook === "resolveCatalogueSetId"
+        ? owner
+        : undefined,
+    ),
+  };
+});
 
 const roots: string[] = [];
 afterEach(() => {
@@ -126,11 +187,193 @@ describe("catalogue sealed rows", () => {
         kind: "booster",
         lang: "fr",
         contentsKnown: false,
+        structureAttested: false,
         printCount: 1,
         declaredCardCount: 446,
-        label: "WIL · Booster Woody · 1/446",
+        priceCents: null,
+        label: "WIL · Booster Woody · ~446",
       }),
     ]);
+  });
+
+  it("exposes priceCents and filters missingPrice", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "cat-sealed-price-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const packDir = path.join(root, "lorcana");
+    mkdirSync(packDir, { recursive: true });
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "lorcana",
+      generatedAt: "2026-09-20T00:00:00.000Z",
+      products: {
+        "lorcana::priced": baseEntry({
+          slug: "priced",
+          kind: "booster",
+          behavior: "random_pack",
+          name: "Priced",
+          setCode: "TFC",
+          priceCents: 479,
+          randomPoolScope: "set",
+          packsContained: 1,
+          cardsPerPack: 12,
+        }),
+        "lorcana::free": baseEntry({
+          slug: "free",
+          kind: "booster",
+          behavior: "random_pack",
+          name: "Free",
+          setCode: "TFC",
+          priceCents: null,
+          randomPoolScope: "set",
+          packsContained: 1,
+          cardsPerPack: 12,
+        }),
+      },
+    };
+    writeFileSync(
+      path.join(packDir, "products-index.json"),
+      `${JSON.stringify(index, null, 2)}\n`,
+    );
+    resetCatalogueProductsCache();
+    const all = listCatalogueProducts({ pack: "lorcana", limit: 20 });
+    expect(all.products).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slug: "priced", priceCents: 479 }),
+        expect.objectContaining({ slug: "free", priceCents: null }),
+      ]),
+    );
+    const missing = listCatalogueProducts({
+      pack: "lorcana",
+      limit: 20,
+      missingPrice: true,
+    });
+    expect(missing.total).toBe(1);
+    expect(missing.products[0]?.slug).toBe("free");
+  });
+
+  it("labels a structure-attested Lorcana booster by pack size, not shop preview", () => {
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "lorcana",
+      generatedAt: "2026-08-16T00:00:00.000Z",
+      products: {
+        "lorcana::woody": baseEntry({
+          slug: "woody",
+          kind: "booster",
+          behavior: "random_pack",
+          category: "boosters",
+          name: "Booster Woody",
+          setCode: "WIL",
+          cardsPerPack: 12,
+          packsContained: 1,
+          randomPoolScope: "set",
+          declaredCardCount: 446,
+          containsPrintsIsPreview: true,
+          prints: [
+            { name: "Jessie", slug: "jessie", ref: null, printKey: null },
+          ],
+        }),
+      },
+    };
+    const rows = buildCatalogueSealedRows("lorcana", index);
+    expect(rows[0]).toMatchObject({
+      structureAttested: true,
+      contentsKnown: false,
+      label: "WIL · Booster Woody · 12",
+    });
+  });
+
+  it("labels a structure-attested Pokémon booster by set pool, not shop preview", () => {
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "pokemon",
+      generatedAt: "2026-08-16T00:00:00.000Z",
+      products: {
+        "pokemon::asr": baseEntry({
+          slug: "asr",
+          kind: "booster",
+          behavior: "random_pack",
+          category: "boosters",
+          name: "Booster Astres Radieux",
+          setCode: "ASR",
+          cardsPerPack: null,
+          packsContained: 1,
+          randomPoolScope: "set",
+          declaredCardCount: 246,
+          containsPrintsIsPreview: true,
+          prints: [
+            { name: "Tile", slug: "tile", ref: null, printKey: null },
+          ],
+        }),
+      },
+    };
+    const rows = buildCatalogueSealedRows("pokemon", index);
+    expect(rows[0]).toMatchObject({
+      structureAttested: true,
+      contentsKnown: false,
+      label: "ASR · Booster Astres Radieux · set~246",
+    });
+  });
+
+  it("attests a constructed deck by declared size without inventory", () => {
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "naruto/carddass",
+      generatedAt: "2026-08-16T00:00:00.000Z",
+      products: {
+        "naruto/carddass::starter-maki12": baseEntry({
+          slug: "starter-maki12",
+          kind: "deck",
+          behavior: "known_bundle",
+          category: "decks",
+          name: "Starter BOX 呪印の書",
+          setCode: "maki12",
+          cardsPerPack: null,
+          packsContained: null,
+          randomPoolScope: "none",
+          declaredCardCount: 40,
+          contentsKnown: false,
+          prints: [],
+        }),
+      },
+    };
+    const rows = buildCatalogueSealedRows("naruto/carddass", index);
+    expect(rows[0]).toMatchObject({
+      structureAttested: true,
+      contentsKnown: false,
+      label: "maki12 · Starter BOX 呪印の書 · 0/40",
+    });
+  });
+
+  it("attests a Shippuden starter by deck kind without declared size", () => {
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "naruto/shippuden",
+      generatedAt: "2026-08-16T00:00:00.000Z",
+      products: {
+        "naruto/shippuden::starter-gaku": baseEntry({
+          slug: "starter-gaku",
+          kind: "deck",
+          behavior: "known_bundle",
+          category: "decks",
+          name: "スターティングパック",
+          setCode: "gaku",
+          cardsPerPack: null,
+          packsContained: null,
+          randomPoolScope: "unknown",
+          declaredCardCount: null,
+          contentsKnown: false,
+          prints: [],
+        }),
+      },
+    };
+    const rows = buildCatalogueSealedRows("naruto/shippuden", index);
+    expect(rows[0]).toMatchObject({
+      structureAttested: true,
+      contentsKnown: false,
+      label: "gaku · スターティングパック · deck",
+    });
   });
 
   it("lists FR boosters and EN displays in the same Carddass catalogue", () => {
@@ -446,5 +689,70 @@ describe("catalogue sealed rows", () => {
       existing: [],
     });
     expect(pool.map((row) => row.printKey)).toEqual(["naruto:ni-0047"]);
+  });
+
+  it("prefers catalogueSetId over shop setCode for lottery expansion", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "placarr-cat-lorcana-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const packDir = path.join(root, "lorcana");
+    mkdirSync(packDir, { recursive: true });
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "lorcana",
+      generatedAt: "2026-09-09T00:00:00.000Z",
+      products: {
+        "lorcana::booster-atv": baseEntry({
+          slug: "booster-atv",
+          kind: "booster",
+          behavior: "random_pack",
+          name: "Booster ATV",
+          setCode: "ATV",
+          catalogueSetId: "13",
+          lang: "fr",
+          contentsKnown: true,
+          cardsPerPack: 12,
+          packsContained: 1,
+          declaredCardCount: 12,
+          randomPoolScope: "set",
+          randomPoolPrints: [],
+        }),
+      },
+    };
+    writeFileSync(
+      path.join(packDir, "products-index.json"),
+      `${JSON.stringify(index, null, 2)}\n`,
+    );
+    resetCatalogueProductsCache();
+    const detail = await getCatalogueProductDetailAsync(
+      "lorcana",
+      "lorcana::booster-atv",
+    );
+    expect(detail?.randomPoolPrints.map((row) => row.printKey)).toEqual([
+      "lorcana:13-1",
+    ]);
+  });
+
+  it("resolves shop abbr via resolveCatalogueSetId when catalogueSetId missing", () => {
+    expect(
+      resolveSealedLotterySetId({
+        packId: "pokemon",
+        setCode: "CRI",
+        catalogueSetId: null,
+        slug: "booster-cri",
+        name: "Chaos Ascendant",
+      }),
+    ).toBe("me04");
+  });
+
+  it("falls back to any-language titles when lang filter empties the set pool", async () => {
+    const pool = await resolveSealedSetLotteryPool({
+      packId: "bleach/scb",
+      setCode: "s",
+      lang: "fr",
+      scope: "set",
+      existing: [],
+    });
+    expect(pool.map((row) => row.printKey)).toEqual(["bleach:s-001"]);
   });
 });

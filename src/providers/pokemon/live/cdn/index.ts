@@ -849,7 +849,11 @@ export async function scrape(
   const signal = opts.signal;
   const cacheRoot =
     opts.cacheRoot ??
-    (path.basename(outDir) === "cdn-bundles" ? path.dirname(outDir) : null);
+    (path.basename(outDir) === "cdn-bundles"
+      ? path.basename(path.dirname(outDir)) === "staging"
+        ? path.dirname(path.dirname(outDir))
+        : path.dirname(outDir)
+      : null);
 
   mkdirSync(outDir, { recursive: true });
   let results: BundleResult[] = [];
@@ -1029,11 +1033,15 @@ export async function scrape(
       const freshness = ledger
         ? bundleFreshness(ledger, name, wantHash)
         : "unknown";
+      // Ledger frais + staging déjà purgé → 0 re-download (octets durables ailleurs).
+      if (!existsSync(dest) && freshness === "fresh") {
+        return { name, ok: true, skipped: true, bytes: 0 };
+      }
       if (existsSync(dest)) {
         const st = statSync(dest);
         if (st.size > 0 && freshness !== "stale") {
-          // Never seen before but already on disk: adopt at the current hash
-          // rather than refetch 42k files the first time this ledger runs.
+          // On-disk + hash OK (or unknown): reuse bytes — never re-fetch solely
+          // to clear assumed. Adopt unknown rows as assumed until extract promotes.
           if (ledger && freshness === "unknown" && wantHash) {
             recordBundleVersion(ledger, name, wantHash, {
               bucket: opts.bucketOf?.get(name.toLowerCase()) ?? null,
@@ -1573,7 +1581,7 @@ export async function main(argv: string[] | null = null): Promise<number> {
     try {
       // Imported here, not at the top: `gameSettings` imports `CDN_HOST` from
       // this module, so a static import would close the cycle.
-      const { fetchContentBase } = await import("./gameSettings");
+      const { fetchContentBase } = await import("../gameSettings");
       const resolved = await fetchContentBase({ version: args.version });
       contentBase = resolved.contentBase;
       console.log(`  content base (${resolved.source}): ${contentBase}`);

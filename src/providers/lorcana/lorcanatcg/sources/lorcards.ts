@@ -9,13 +9,12 @@ import { fileURLToPath } from "node:url";
 import {
   scrapeTcgCardsProducts,
   type ScrapeDbscardsProductsResult,
-} from "@/providers/dragonball/shared/dbscards/scrapeProducts";
+} from "@/providers/shared/tcgcards/scrapeProducts";
 import {
   tcgCardsDetailCategories,
   tcgCardsListingCategories,
   tcgCardsSite,
-} from "@/providers/dragonball/shared/dbscards/sites";
-import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
+} from "@/providers/shared/tcgcards/sites";
 
 export const LORCARDS_SITE = tcgCardsSite("lorcards");
 export const LORCARDS_LISTING_CATEGORIES =
@@ -37,6 +36,8 @@ export async function scrapeLorcardsProducts(opts: {
   limit?: number;
   onProgress?: (message: string) => void;
 }): Promise<ScrapeDbscardsProductsResult> {
-  installProviderProductsContents("lorcana", LORCANA_PRODUCTS_CONTENTS);
-  return scrapeTcgCardsProducts("lorcards", opts);
+  return scrapeTcgCardsProducts("lorcards", {
+    ...opts,
+    curatedContentsPath: LORCANA_PRODUCTS_CONTENTS,
+  });
 }

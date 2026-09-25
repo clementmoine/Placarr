@@ -8,10 +8,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { buildPrintKey } from "@/core/identify/printKey";
-import { packCardsIndexPath } from "@/lib/packPaths";
 import { isCatalogueLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
+import { artUrlsPath, type MtgArtUrlMap, isUsableMtgArtUrl } from "../artUrls";
 import { MTG_PACK_ID } from "../pack";
 import { mtgPrintIdentity } from "../printKey";
 import {
@@ -21,9 +21,7 @@ import {
 } from "./scryfallBulk";
 
 export type MtgFinishesMap = Record<string, string[]>;
-
-/** printKey → lang → CDN face URL */
-export type MtgArtUrlMap = Record<string, Record<string, string>>;
+export type { MtgArtUrlMap };
 
 /** Magic oracle / primary language is English. */
 export const MTG_ORIGINAL_LANGS = ["en"] as const;
@@ -62,15 +60,7 @@ export function finishesPath(): string {
   );
 }
 
-export function artUrlsPath(): string {
-  return path.join(
-    process.cwd(),
-    "data",
-    MTG_PACK_ID,
-    "curated",
-    "art-urls.json",
-  );
-}
+export { artUrlsPath };
 
 export function loadMtgFinishesMap(): MtgFinishesMap {
   const p = finishesPath();
@@ -148,9 +138,9 @@ export function mergeScryfallCardIntoSeed(
   }
 
   const art = scryfallFrontImageUrl(card);
-  if (art) {
+  if (isUsableMtgArtUrl(art)) {
     const slot = (artByKey[printKey] ??= {});
-    slot[lang] = art;
+    slot[lang] = art!;
   }
   return "kept";
 }
@@ -225,6 +215,9 @@ export async function seedMtgFromScryfallBulk(
 
   const unique = [...byKey.values()];
   const written = index.writePrints(unique);
+  // Scryfall renames The List collector numbers (CMM-40 → TCMM-40, …). Upsert
+  // alone leaves the old printKey as a title-only ghost with no artUrl.
+  index.prunePrintsExcept(new Set(unique.map((row) => row.printKey)));
 
   const finDir = path.dirname(finishesPath());
   mkdirSync(finDir, { recursive: true });
@@ -245,37 +238,20 @@ export async function seedMtgFromScryfallBulk(
   };
 }
 
-/** Patch `cards-index.json` langs.*.artUrl from the seed map. */
+/**
+ * Art URLs are written to curated/art-urls.json during seed; browse joins
+ * that ledger (see catalogueBrowse). Returns how many lang slots are on disk.
+ */
 export function applyMtgScryfallArtUrls(): { patched: number } {
   if (!existsSync(artUrlsPath())) return { patched: 0 };
-  const raw = JSON.parse(readFileSync(artUrlsPath(), "utf8")) as Record<
-    string,
-    Record<string, string> | string
-  >;
-  const indexPath = packCardsIndexPath(MTG_PACK_ID);
-  if (!existsSync(indexPath)) return { patched: 0 };
-  const index = JSON.parse(readFileSync(indexPath, "utf8")) as {
-    cards: Record<
-      string,
-      { langs?: Record<string, { art?: string; artUrl?: string; name?: string }> }
-    >;
-  };
-  let patched = 0;
-  for (const [printKey, langsOrUrl] of Object.entries(raw)) {
-    const entry = index.cards[printKey];
-    if (!entry?.langs) continue;
-    const byLang: Record<string, string> =
-      typeof langsOrUrl === "string" ? { en: langsOrUrl } : langsOrUrl;
-    for (const [lang, url] of Object.entries(byLang)) {
-      if (!url?.trim()) continue;
-      const slot = entry.langs[lang] ?? {};
-      if (slot.art?.trim()) continue; // local file wins
-      if (slot.artUrl === url) continue;
-      slot.artUrl = url;
-      entry.langs[lang] = slot;
-      patched += 1;
+  try {
+    const map = JSON.parse(readFileSync(artUrlsPath(), "utf8")) as MtgArtUrlMap;
+    let patched = 0;
+    for (const byLang of Object.values(map)) {
+      patched += Object.keys(byLang).length;
     }
+    return { patched };
+  } catch {
+    return { patched: 0 };
   }
-  writeFileSync(indexPath, JSON.stringify(index, null, 2) + "\n");
-  return { patched };
 }

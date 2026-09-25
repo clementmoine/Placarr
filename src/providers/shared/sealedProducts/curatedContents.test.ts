@@ -192,9 +192,9 @@ describe("mergeCuratedSealedContents", () => {
   });
 
   it("does not wipe ingest guaranteedPrints with empty curated keys", () => {
-    stubPack("dbs/cg", {
+    stubPack("dragonball/cg", {
       version: 1,
-      pack: "dbs/cg",
+      pack: "dragonball/cg",
       updatedAt: "2026-09-13",
       skus: {
         "sd01-the-awakening": {
@@ -213,7 +213,7 @@ describe("mergeCuratedSealedContents", () => {
         printKey: "dbscg:sd1-01",
       },
     ];
-    const merged = mergeCuratedSealedContents("dbs/cg", {
+    const merged = mergeCuratedSealedContents("dragonball/cg", {
       a: entry({
         slug: "sd01-the-awakening",
         kind: "deck",

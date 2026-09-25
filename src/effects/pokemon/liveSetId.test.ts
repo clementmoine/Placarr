@@ -35,6 +35,10 @@ describe("liveSetIdFromTcgdexSet", () => {
     ["swshp", "swshbsp"],
     ["smp", "smbsp"],
     ["swsh10.5tg", "swsh10a"],
+    ["me05.5", "me5-5"],
+    ["me05.5c", "me5-5c"],
+    ["30th", "me5-5"],
+    ["30th-c", "me5-5c"],
   ] as const)("%s → %s", (input, expected) => {
     expect(liveSetIdFromTcgdexSet(input)).toBe(expected);
   });
@@ -42,6 +46,13 @@ describe("liveSetIdFromTcgdexSet", () => {
   it("returns sibling Live slices for Generations / Legendary Treasures", () => {
     expect(liveSetCandidatesFromTcgdexSet("g1")).toEqual(["xy9-5", "xy9-5r"]);
     expect(liveSetCandidatesFromTcgdexSet("bw11")).toEqual(["bw11", "bw11r"]);
+  });
+
+  it("maps 30ᵉ Anniversaire (me05.5) to Live me5-5 (+ mini sibling)", () => {
+    expect(liveSetCandidatesFromTcgdexSet("me05.5")).toEqual([
+      "me5-5",
+      "me5-5m",
+    ]);
   });
 
   it("returns null for empty input", () => {

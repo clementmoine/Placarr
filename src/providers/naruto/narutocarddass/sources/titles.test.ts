@@ -19,6 +19,7 @@ import yahooShopping from "../curated/sources/yahoo-shopping.json";
 import dig_youtubeGapsWebHunt from "../curated/sources/youtube-gaps-web-hunt-2026-08-29.json";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_SEALED_SKUS } from "../sealed";
+import { loadNarutoAppearancesFile } from "../identity";
 import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrPrintedNumber, narutoS6FrPrintedDiskNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
 
 // —— carteSemaine ——
@@ -262,14 +263,11 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
 
       const changed = syncNarutoS6FrPrintedAppearances(root);
       expect(changed).toBeGreaterThan(0);
-      expect(existsSync(file)).toBe(true);
 
-      const raw = JSON.parse(readFileSync(file, "utf8")) as {
-        appearances: Record<string, Record<string, string | string[]>>;
-      };
-      expect(raw.appearances.ta0221?.fr).toBe("s6");
-      expect(raw.appearances.ta0221?.ja).toBe("maki11");
-      expect(raw.appearances.ta0214?.fr).toEqual(["s5", "s6"]);
+      const raw = loadNarutoAppearancesFile(root);
+      expect(raw?.appearances.ta0221?.fr).toBe("s6");
+      expect(raw?.appearances.ta0221?.ja).toBe("maki11");
+      expect(raw?.appearances.ta0214?.fr).toEqual(["s5", "s6"]);
     });
   });
 }

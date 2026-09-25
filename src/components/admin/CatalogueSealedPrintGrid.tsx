@@ -9,7 +9,7 @@ import {
   variantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
 import { cn } from "@/lib/shared/utils";
-import type { CatalogueSealedContainedProduct } from "@/lib/admin/catalogueProductsTypes";
+import type { CatalogueSealedContainedProduct } from "@/lib/admin/catalogueProducts";
 import type { SealedPrintLink } from "@/providers/shared/sealedProducts/indexFormat";
 import {
   ensureEffects,
@@ -55,7 +55,7 @@ function SealedPrintThumb({
     [finishHint, printVariant, effectsReady],
   );
 
-  const art = view.imageUrl;
+  const art = view.imageUrl || print.image?.trim() || null;
   const label =
     print.name?.trim() ||
     printKey ||

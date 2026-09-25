@@ -14,7 +14,6 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPrintKey, parsePrintKey } from "@/core/identify/printKey";
-import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { dataRoot } from "@/lib/runtimeData";
 import type { MetadataFact } from "@/types/metadataProvider";
 import { pickPreferredFaceArtFilename } from "./parse/bandai";
@@ -23,18 +22,23 @@ import {
   type MangaNewsCardType,
 } from "./parse/catalogues";
 import { listNarutoCardDirs } from "./disk";
-import { type NarutoPrintRow, type NarutoTitleRow } from "./indexStore";
+import { type NarutoPrintRow, type NarutoTitleRow, loadNarutoCardsIndexFromSqlite } from "./indexStore";
 import { loadAttestedPromos } from "./sources/promos";
 import {
   NARUTO_INDICATIVE_PRICE_SOURCE,
   narutoIndicativeQuoteForPrint,
 } from "./sources/prices";
+import {
+  readPackDocument,
+  writePackDocument,
+} from "@/providers/shared/sealedProducts/productsSqlite";
 
 // --- packs (client-safe leaf; re-exported for identity action API) ---
 
 import {
   NARUTO_PACK_ID,
   NARUTO_EN_PACK_ID,
+  NARUTO_LEGACY_EN_CCG_DISK,
   type NarutoCardLine,
   isNarutoDataCarddassPrintedRef,
   narutoCatalogueLineForCard,
@@ -45,6 +49,7 @@ import {
 export {
   NARUTO_PACK_ID,
   NARUTO_EN_PACK_ID,
+  NARUTO_LEGACY_EN_CCG_DISK,
   type NarutoCardLine,
   isNarutoDataCarddassPrintedRef,
   narutoCatalogueLineForCard,
@@ -1158,7 +1163,7 @@ export function narutoPrintFacts(
 // --- from appearanceSets.ts ---
 
 /**
- * Valeurs d'`appearances.json` : une série, ou plusieurs quand la checklist
+ * Valeurs d'`pack_documents.appearances` : une série, ou plusieurs quand la checklist
  * papier (ou le disque) place la même carte dans plusieurs extensions.
  */
 
@@ -1219,7 +1224,7 @@ export function primaryAppearanceSet(
   return nonS6[0] ?? clean[0]!;
 }
 
-/** Valeur à persister dans appearances.json (scalaire si une seule série). */
+/** Valeur à persister dans appearances (scalaire si une seule série). */
 export function appearanceValueForJson(
   sets: readonly string[],
 ): NarutoAppearanceValue {
@@ -1403,14 +1408,49 @@ export type NarutoAppearancesFile = {
   appearances: Record<string, NarutoLangAppearances>;
 };
 
+const APPEARANCES_DOC_KEY = "appearances";
+
+export function narutoAppearancesDbPath(packRoot: string): string {
+  return path.join(packRoot, "catalog.sqlite");
+}
+
+/** Sqlite `pack_documents` first; legacy `appearances.json` read fallback. */
+export function loadNarutoAppearancesFile(
+  packRoot: string,
+): NarutoAppearancesFile | null {
+  const fromDb = readPackDocument<NarutoAppearancesFile>(
+    NARUTO_PACK_ID,
+    APPEARANCES_DOC_KEY,
+    { dbPath: narutoAppearancesDbPath(packRoot) },
+  );
+  if (fromDb?.appearances) return fromDb;
+  const file = path.join(packRoot, "appearances.json");
+  if (!existsSync(file)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as NarutoAppearancesFile;
+    return raw?.appearances ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeNarutoAppearancesFile(
+  packRoot: string,
+  doc: NarutoAppearancesFile,
+): void {
+  writePackDocument(NARUTO_PACK_ID, APPEARANCES_DOC_KEY, doc, {
+    dbPath: narutoAppearancesDbPath(packRoot),
+  });
+}
+
 // --- from officialFrChecklist.ts ---
 
 /**
  * Checklist papier Bandai FR S1–S5 → appartenances multi-séries sur le disque.
  *
  * Source : `curated/sources/carddass-fr-checklist.json`.
- * Cible : `data/…/appearances.json` (plusieurs sets par langue quand Bandai
- * liste le même numéro dans plusieurs séries).
+ * Cible : `pack_documents.appearances` dans `catalog.sqlite` (plusieurs sets
+ * par langue quand Bandai liste le même numéro dans plusieurs séries).
  */
 
 
@@ -1498,25 +1538,16 @@ export function officialFrChecklistSetsForNumber(number: string): string[] {
 }
 
 /**
- * Fusionne la checklist papier dans `appearances.json` du pack.
+ * Fusionne la checklist papier dans `pack_documents.appearances` du pack.
  * @returns nombre de cartes FR dont la liste de sets a changé.
  */
 export function syncOfficialFrChecklistAppearances(packRoot: string): number {
-  const file = path.join(packRoot, "appearances.json");
-  let appearances: Record<
+  const existing = loadNarutoAppearancesFile(packRoot);
+  const appearances: Record<
     string,
     Record<string, string | readonly string[]>
-  > = {};
-  let generatedAt = new Date().toISOString();
-  if (existsSync(file)) {
-    try {
-      const raw = JSON.parse(readFileSync(file, "utf8")) as NarutoAppearancesFile;
-      appearances = { ...(raw.appearances ?? {}) };
-      generatedAt = raw.generatedAt ?? generatedAt;
-    } catch {
-      /* rebuild */
-    }
-  }
+  > = { ...(existing?.appearances ?? {}) };
+  const generatedAt = existing?.generatedAt ?? new Date().toISOString();
 
   let changed = 0;
   for (const [checklistId, sets] of loadChecklistSetsById()) {
@@ -1536,17 +1567,10 @@ export function syncOfficialFrChecklistAppearances(packRoot: string): number {
     if (appearanceSetsOf(langs.fr).join(",") !== before) changed += 1;
   }
 
-  writeFileSync(
-    file,
-    `${JSON.stringify(
-      {
-        generatedAt,
-        appearances,
-      } satisfies NarutoAppearancesFile,
-      null,
-      2,
-    )}\n`,
-  );
+  writeNarutoAppearancesFile(packRoot, {
+    generatedAt,
+    appearances,
+  });
   return changed;
 }
 
@@ -1886,11 +1910,12 @@ export function buildNarutoKnownCards(): KnownCardsReport {
     if (row.inMangaNews) attest(attested, row.number, "manga-news");
   }
 
-  const indexPath = path.join(packRoot(), "cards-index.json");
-  if (!existsSync(indexPath)) {
-    throw new Error(`Missing ${indexPath} — run the scrape first`);
+  const index = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
+  if (!index) {
+    throw new Error(
+      `Missing catalog.sqlite under ${packRoot()} — run the scrape first`,
+    );
   }
-  const index = JSON.parse(readFileSync(indexPath, "utf8")) as CardsIndexV1;
   for (const entry of Object.values(index.cards)) {
     const base = String(entry.card).replace(/-cdf$/i, "");
     const m = /^(ni|te|ta|cl|pr)(\d+)$/i.exec(base);

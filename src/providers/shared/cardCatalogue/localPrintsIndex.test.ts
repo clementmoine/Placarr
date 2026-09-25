@@ -27,7 +27,7 @@ describe("createLocalPrintsIndex", () => {
     const written = index.bootstrapEmpty();
     expect(written.cards).toBe(0);
     expect(fs.existsSync(index.dbPath())).toBe(true);
-    expect(JSON.parse(fs.readFileSync(written.path, "utf8"))).toMatchObject({
+    expect(written.index).toMatchObject({
       version: 1,
       pack: "naruto/ninja-ranks",
       cards: {},
@@ -154,16 +154,9 @@ describe("createLocalPrintsIndex", () => {
       },
     ]);
     const written = index.exportIndex();
-    const entry = (
-      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
-        cards: Record<
-          string,
-          { langs: Record<string, { art?: string; back?: string }> }
-        >;
-      }
-    ).cards["naruto:nr-0072"];
-    expect(entry.langs.fr?.art).toBe("art.coleka.webp");
-    expect(entry.langs.fr?.back).toBe("back.coleka.webp");
+    const entry = written!.index.cards["naruto:nr-0072"];
+    expect(entry?.langs.fr?.art).toBe("art.coleka.webp");
+    expect(entry?.langs.fr?.back).toBe("back.coleka.webp");
   });
 
   it("exporte card avec grouping (mythos 0141-l)", () => {
@@ -183,12 +176,8 @@ describe("createLocalPrintsIndex", () => {
       { printKey: "mythos:ss2-0141-l", lang: "en", art: "art.lorenzone.webp" },
     ]);
     const written = index.exportIndex();
-    const entry = (
-      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
-        cards: Record<string, { card: string }>;
-      }
-    ).cards["mythos:ss2-0141-l"];
-    expect(entry.card).toBe("0141-l");
+    const entry = written!.index.cards["mythos:ss2-0141-l"];
+    expect(entry?.card).toBe("0141-l");
   });
 });
 
@@ -216,23 +205,11 @@ describe("faces sans titre dans leur langue", () => {
 
     const written = index.exportIndex();
     expect(written).not.toBeNull();
-    const entry = (
-      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
-        cards: Record<
-          string,
-          {
-            langs: Record<
-              string,
-              { name?: string; art?: string; nameSource?: string }
-            >;
-          }
-        >;
-      }
-    ).cards["naruto:nr-0040"];
-    expect(entry.langs.en?.name).toBe("Rock Lee");
-    expect(entry.langs.fr?.art).toBe("art.coleka.webp");
-    expect(entry.langs.fr?.name).toBe("Rock Lee");
-    expect(entry.langs.fr?.nameSource).toBe("en");
+    const entry = written!.index.cards["naruto:nr-0040"];
+    expect(entry?.langs.en?.name).toBe("Rock Lee");
+    expect(entry?.langs.fr?.art).toBe("art.coleka.webp");
+    expect(entry?.langs.fr?.name).toBe("Rock Lee");
+    expect(entry?.langs.fr?.nameSource).toBe("en");
   });
 
   it("copie les titres EN vers les autres langues sans écraser l'attesté", () => {
@@ -299,25 +276,41 @@ describe("faces sans titre dans leur langue", () => {
     ]);
 
     const written = index.exportIndex();
-    const entry = (
-      JSON.parse(fs.readFileSync(written!.path, "utf8")) as {
-        cards: Record<
-          string,
-          {
-            langs: Record<
-              string,
-              { name?: string; art?: string; nameSource?: string }
-            >;
-          }
-        >;
-      }
-    ).cards["naruto:nr-0044"];
-    expect(entry.langs.en?.name).toBe("Guy");
-    expect(entry.langs.fr?.art).toBe("art.coleka.webp");
-    expect(entry.langs.fr?.name).toBe("Guy");
-    expect(entry.langs.fr?.nameSource).toBe("en");
-    expect(entry.langs.it?.art).toBe("art.imadoki.jpg");
+    const entry = written!.index.cards["naruto:nr-0044"];
+    expect(entry?.langs.en?.name).toBe("Guy");
+    expect(entry?.langs.fr?.art).toBe("art.coleka.webp");
+    expect(entry?.langs.fr?.name).toBe("Guy");
+    expect(entry?.langs.fr?.nameSource).toBe("en");
+    expect(entry?.langs.it?.art).toBe("art.imadoki.jpg");
     expect(entry.langs.it?.name).toBe("Guy");
     expect(entry.langs.it?.nameSource).toBe("en");
+  });
+
+  it("prunePrintsExcept drops renamed/removed collector numbers", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("mtg");
+    index.writePrints([
+      {
+        printKey: "mtg:plst-cmm40",
+        setCode: "plst",
+        number: "cmm40",
+        cardType: "plst",
+        titles: [{ lang: "en", fullName: "Clue" }],
+      },
+      {
+        printKey: "mtg:plst-tcmm40",
+        setCode: "plst",
+        number: "tcmm40",
+        cardType: "plst",
+        titles: [{ lang: "en", fullName: "Clue" }],
+      },
+    ]);
+    expect(index.lookupRow("mtg:plst-cmm40")?.fullName).toBe("Clue");
+
+    expect(
+      index.prunePrintsExcept(new Set(["mtg:plst-tcmm40"])),
+    ).toEqual({ removed: 1 });
+    expect(index.lookupRow("mtg:plst-cmm40")).toBeNull();
+    expect(index.lookupRow("mtg:plst-tcmm40")?.fullName).toBe("Clue");
   });
 });

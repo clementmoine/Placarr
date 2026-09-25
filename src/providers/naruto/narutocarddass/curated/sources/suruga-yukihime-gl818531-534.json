@@ -1,0 +1,69 @@
+{
+  "source": "Suruga-ya.jp product detail GL818531–534 (user paste 2026-09-21)",
+  "observed": "2026-09-21",
+  "ingest": "faces",
+  "lang": "ja",
+  "line": "carddass-jp",
+  "sheet": "拡張シート「雪姫忍法帖」",
+  "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "note": "Team 7 reprints with 劇場版 2004 snow-cloak art. Same printed 忍-n as 巻ノ壱 but distinct quote/copyright (©劇場版NARUTO製作委員会 2004). Minted as 忍-n-a / ni000n-a (like 術-259-a) — does not overwrite maki1 faces. TSV uses 忍-n-a so Suruga fold cannot land on ni000n.",
+  "not": [
+    "overwrite-maki1-suruga",
+    "ps-yoyaku",
+    "invent-R"
+  ],
+  "related": {
+    "GL410641": "Same 忍-11 yukihime art (earlier Suruga id). Staged under ps-yoyaku-gl410/; catalogue face is GL818534 → ni0011-a.",
+    "GL734891": "忍-11（PS） 2003 NFS — different card; see suruga-ps-gl410638-641.json",
+    "facts-ja": "ni0001 variants[] already attested the 風雲姫 quote reprint"
+  },
+  "faces": [
+    {
+      "productId": "GL818531",
+      "printed": "忍-1-a",
+      "diskId": "ni0001-a",
+      "title": "うずまきナルト",
+      "surugaTitle": "拡張シート雪姫忍法帖 忍-1[ノーマル]：うずまきナルト",
+      "bandaiYear": 2004,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL818531",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl818531.jpg",
+      "ingest": true,
+      "note": "Movie cloak / snow — quote 風雲姫は、オレが守るんだってばよ！！"
+    },
+    {
+      "productId": "GL818532",
+      "printed": "忍-2-a",
+      "diskId": "ni0002-a",
+      "title": "うちはサスケ",
+      "surugaTitle": "拡張シート雪姫忍法帖 忍-2[ノーマル]：うちはサスケ",
+      "bandaiYear": 2004,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL818532",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl818532.jpg",
+      "ingest": true
+    },
+    {
+      "productId": "GL818533",
+      "printed": "忍-3-a",
+      "diskId": "ni0003-a",
+      "title": "春野サクラ",
+      "surugaTitle": "拡張シート雪姫忍法帖 忍-3[ノーマル]：春野サクラ",
+      "bandaiYear": 2004,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL818533",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl818533.jpg",
+      "ingest": true
+    },
+    {
+      "productId": "GL818534",
+      "printed": "忍-11-a",
+      "diskId": "ni0011-a",
+      "title": "はたけカカシ",
+      "surugaTitle": "拡張シート雪姫忍法帖 忍-11[ノーマル]：はたけカカシ",
+      "bandaiYear": 2004,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL818534",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl818534.jpg",
+      "ingest": true,
+      "note": "Same printing family as GL410641."
+    }
+  ],
+  "staging": "data/naruto/carddass/staging/suruga/gl818531-534/"
+}

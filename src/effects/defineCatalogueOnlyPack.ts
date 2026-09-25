@@ -11,8 +11,10 @@
  * blindness guard (`blindnessGuard.test.ts`) keeps pack literals out of
  * `core/`.
  */
-import { registerEffectPack } from "@/core/render/foil/registry";
-import { applyHouseFoilFallback } from "@/core/render/foil/houseFoilFallback";
+import {
+  applyHouseFoilFallback,
+  registerEffectPack,
+} from "@/core/render/foil/backend";
 import type { EffectPackModule } from "@/core/render/foil/types";
 
 export type CatalogueOnlyPackOptions = {

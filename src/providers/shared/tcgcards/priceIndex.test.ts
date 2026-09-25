@@ -194,6 +194,30 @@ describe("priceIndexFromMappedTiles", () => {
       name: "Dear",
     });
   });
+
+  it("indexes shop itemId and 30-day priceDelta as cents", () => {
+    const index = priceIndexFromMappedTiles(
+      [
+        tile({
+          itemId: "90441",
+          slug: "asc-fr-276-pikachu",
+          name: "Pikachu",
+          price: 1.5,
+          priceDelta: -0.25,
+          lang: "fr",
+        }),
+      ],
+      {
+        origin: "https://www.pkmcards.fr",
+        printKeyOf: () => "pokemon:asc-276",
+      },
+    );
+    expect(index["pokemon:asc-276"]).toMatchObject({
+      priceCents: 150,
+      shopItemId: "90441",
+      priceDeltaCents: -25,
+    });
+  });
 });
 
 describe("lookupDbscardsPrice / merge", () => {

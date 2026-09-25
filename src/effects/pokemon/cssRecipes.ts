@@ -2,7 +2,8 @@
  * Pokémon CSS foil — branch **every** Simey rarity recipe we have onto a Live
  * leaf (and catalogue bucket). Prefer staging Simey look ids (`exFullArt`,
  * `illustrationRare`, …) tels quels; keep Live-tuned ports only where foil_mask
- * routing needs them (`sunPillar`+Cc, `flatSilver`+pokéball, `radiantHolo` etch).
+ * routing needs them (`sunPillar`+Cc, `flatSilver`+pokéball, `radiantHolo` etch,
+ * `pikachuFoil` rings without etch).
  * WebGL stays Live Unity. Unknown future leaf → {@link DEFAULT_FINISH_CSS_ID}.
  */
 
@@ -22,7 +23,7 @@ import {
 } from "@/core/render/holoShadersSimey";
 
 import { foilManifestToShader } from "./foilNames";
-import { HOUSE_FOIL_FALLBACK_CSS_ID } from "@/core/render/foil/houseFoilFallback";
+import { HOUSE_FOIL_FALLBACK_CSS_ID } from "@/core/render/foil/backend";
 
 /** Everyday reverse / parallel sheen — simey `reverse-holo.css`. */
 export const REVERSE_FINISH_CSS_ID: SimeyHoloShaderId = "reverseHolo";
@@ -47,13 +48,18 @@ export const LIVE_FINISH_CSS: Readonly<Record<string, CssLookId>> = {
   SwSecret: "secretRare",
   SwSecreT02: "secretRare",
   Cosmos: "cosmosHolo",
-  Galaxy: "amazingRare",
+  Galaxy: "galaxyHolo",
   FlatSilver: "flatSilver", // reverse-holo + Live mask routing
   FlatSilver_CC: "pokeBallHolo",
   SvUltra: "vFullArt",
   SvHolo: "vStar",
-  SwHolo: "vRegular",
+  SwHolo: "regularHolo",
   AceFoil: "vMax",
+  // me5-5 / 30th Celebration leaves (CDN shadersbundle 1.42+)
+  PikachuFoil: "pikachuFoil",
+  ClassicFoil: "classicFoil",
+  RGBFoil: "rainbowHolo",
+  Celebrations: "trainerGalleryHolo",
   // poke-151
   AngledPillars: "exFullArt",
   SunPillar: "sunPillar", // ex-regular Live paint + CastAndCure
@@ -61,12 +67,14 @@ export const LIVE_FINISH_CSS: Readonly<Record<string, CssLookId>> = {
   SvUltraScodix: "hyperRare",
   SvUltraGoldRainbow: "hyperRare",
   // Remaining Live leaves → closest Simey rarity we have
-  SunBeam: "regularHolo",
+  // SunBeam ≈ V-style beams; SwHolo ≈ classic diagonal holo bars.
+  SunBeam: "vRegular",
   SunLava: "shinyV",
   Thatch: "trainerGalleryHolo",
   Tinsel: "shinyRare",
   Squares: "shinyV",
   Stamped: "shinyRare",
+  /** @deprecated dump stem — prefer Celebrations */
   "25thConfetti": "trainerGalleryHolo",
   SolidColor: "reverseHolo",
 };
@@ -107,7 +115,7 @@ const CATALOGUE: Readonly<Record<string, CssLookId>> = {
   "live-ph": REVERSE_FINISH_CSS_ID,
   cosmos: "cosmosHolo",
   rainbow: "rainbowHolo",
-  amazing: "amazingRare",
+  amazing: "galaxyHolo",
   secret: "secretRare",
   shiny: "shinyRare",
   v: "vRegular",

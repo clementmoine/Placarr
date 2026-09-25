@@ -4,7 +4,10 @@
  * Faces : Dragon Ball Center + dbzcollection.fr (FR part 1 / Série Or).
  * Scellés : packshots dbzcollection.
  */
+import path from "node:path";
+
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
+import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 
 import { harvestDbcFaces, installDbcFaces } from "./install/dbcFaces";
 import {
@@ -27,6 +30,11 @@ export async function runDbsLamincardsPackPipeline(
   const dbzc = await harvestDbzcollection({ force, argv });
   console.log(
     `── dbzc — ${dbzc.sets} set(s), ${dbzc.cards} carte(s), ${dbzc.packs} SKU : ${dbzc.ok} DL, ${dbzc.skip} déjà là, ${dbzc.fail} manqué${dbzc.fail === 1 ? "" : "s"}`,
+  );
+
+  installProviderProductsContents(
+    DBS_LAMINCARDS_PACK_ID,
+    path.join(dbsLamincardsCuratedDir(), "products-contents.json"),
   );
 
   return runLocalTcgPipeline({

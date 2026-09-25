@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   DBSCARDS_SITES,
   dbscardsListPageUrl,
-} from "@/providers/dragonball/shared/dbscards/list";
-import { dbscardsPrintRef } from "@/providers/dragonball/shared/dbscards/tile";
+} from "@/providers/shared/tcgcards/list";
+import { dbscardsPrintRef } from "@/providers/shared/tcgcards/tile";
 
 import {
   DBS_FW_FACE_SOURCES,

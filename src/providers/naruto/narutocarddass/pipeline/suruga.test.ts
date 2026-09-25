@@ -6,6 +6,7 @@ import { carddasJpCardlistCards } from "../parse/bandai";
 
 vi.mock("@/lib/http/scrapeFetch", () => ({
   fetchTextWithFlareFallback: vi.fn(),
+  fetchGetWithFlareFallback: vi.fn(),
 }));
 
 // —— probeSurugaVol1Listings ——

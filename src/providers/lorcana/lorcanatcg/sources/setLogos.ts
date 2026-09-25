@@ -7,15 +7,31 @@
  * Bytes land under `data/lorcana/products/sets/{id}/logo.png` and are served
  * as `/assets/lorcana/products/sets/{id}/logo.png`. Join at ingest is unique
  * or empty — never a coin-flip between two chapters.
+ *
+ * Index durable: ``catalog.sqlite`` ``pack_documents`` key ``lorcana-set-logos``
+ * (staging JSON is legacy fallback, purged on write).
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import { assetsPackFileUrl, packSealedProductsDir } from "@/lib/packPaths";
 import { foilPackDataDir } from "@/lib/runtimeData";
 import { httpGet } from "@/lib/http/httpClient";
+import {
+  readPackDocument,
+  writePackDocument,
+} from "@/providers/shared/sealedProducts/productsSqlite";
 
 export const LORCANA_SET_LOGO_CACHE_VERSION = 3;
+export const LORCANA_SET_LOGOS_DOC_KEY = "lorcana-set-logos";
+const SQLITE_MEMORY_FILE = ":sqlite:";
+const LORCANA_PACK = "lorcana";
 /** Catalogue FR — thumbs + titres officiels. */
 export const LORCANA_CATALOG_URL =
   "https://api.lorcana.ravensburger.com/v3/catalog/fr";
@@ -49,6 +65,7 @@ export type LorcanaSetLogoIndex = {
 
 let memory: { file: string; index: LorcanaSetLogoIndex } | null = null;
 
+/** Legacy staging path — read for one-shot migrate, never the SSOT. */
 export function lorcanaSetLogoCachePath(root?: string): string {
   return path.join(
     resolveDataBase(root),
@@ -80,6 +97,16 @@ function resolveDataBase(root?: string): string {
   return path.dirname(foilPackDataDir("lorcana"));
 }
 
+function purgeLegacyStagingFile(root?: string): void {
+  const file = lorcanaSetLogoCachePath(root);
+  if (!existsSync(file)) return;
+  try {
+    unlinkSync(file);
+  } catch {
+    /* keep */
+  }
+}
+
 function isValidIndex(raw: unknown): raw is LorcanaSetLogoIndex {
   if (!raw || typeof raw !== "object") return false;
   const row = raw as LorcanaSetLogoIndex;
@@ -98,16 +125,65 @@ function readIndexFile(file: string): LorcanaSetLogoIndex | null {
   }
 }
 
+function readIndexFromSqlite(dbPath?: string): LorcanaSetLogoIndex | null {
+  const raw = readPackDocument<unknown>(LORCANA_PACK, LORCANA_SET_LOGOS_DOC_KEY, {
+    dbPath,
+  });
+  return isValidIndex(raw) ? raw : null;
+}
+
+/** Persist to catalog.sqlite (or explicit test file via ``file`` / ``dest``). */
+export function persistLorcanaSetLogoIndex(
+  index: LorcanaSetLogoIndex,
+  fileOrOpts?: string | { dest?: string; dbPath?: string; root?: string },
+): void {
+  if (typeof fileOrOpts === "string") {
+    writeIndexFile(fileOrOpts, index);
+    return;
+  }
+  if (fileOrOpts?.dest) {
+    writeIndexFile(fileOrOpts.dest, index);
+    return;
+  }
+  writePackDocument(LORCANA_PACK, LORCANA_SET_LOGOS_DOC_KEY, index, {
+    dbPath: fileOrOpts?.dbPath,
+  });
+  purgeLegacyStagingFile(fileOrOpts?.root);
+  memory = { file: SQLITE_MEMORY_FILE, index };
+}
+
+/**
+ * Load logo index — sqlite first, then one-shot migrate from staging JSON.
+ * Pass ``file`` only in tests (file-backed cache).
+ */
 export function loadLorcanaSetLogoIndex(
   file?: string,
 ): LorcanaSetLogoIndex | null {
-  const dest = file ?? lorcanaSetLogoCachePath();
-  if (memory && (memory.file === dest || memory.file === ":test:")) {
+  if (memory && memory.file === ":test:") {
     return memory.index;
   }
-  const index = readIndexFile(dest);
-  if (index) memory = { file: dest, index };
-  return index;
+  if (file) {
+    if (memory && memory.file === file) return memory.index;
+    const index = readIndexFile(file);
+    if (index) memory = { file, index };
+    else memory = null;
+    return index;
+  }
+  if (memory && memory.file === SQLITE_MEMORY_FILE) {
+    return memory.index;
+  }
+  const fromDb = readIndexFromSqlite();
+  if (fromDb) {
+    memory = { file: SQLITE_MEMORY_FILE, index: fromDb };
+    return fromDb;
+  }
+  const staging = readIndexFile(lorcanaSetLogoCachePath());
+  if (staging) {
+    persistLorcanaSetLogoIndex(staging);
+    return staging;
+  }
+  memory = null;
+  return null;
 }
 
 function extFromUrl(url: string): string {
@@ -419,14 +495,6 @@ function writeIndexFile(file: string, index: LorcanaSetLogoIndex): void {
   memory = { file, index };
 }
 
-/** Persiste un index déjà fusionné (ex. logos site officiel). */
-export function persistLorcanaSetLogoIndex(
-  index: LorcanaSetLogoIndex,
-  file?: string,
-): void {
-  writeIndexFile(file ?? lorcanaSetLogoCachePath(), index);
-}
-
 async function downloadSetLogo(
   row: Omit<LorcanaSetLogoRow, "logo">,
   logosDir: string,
@@ -462,7 +530,6 @@ export async function installLorcanaSetLogos(
     logosDir?: string;
   } = {},
 ): Promise<LorcanaSetLogoIndex> {
-  const dest = opts.dest ?? lorcanaSetLogoCachePath(opts.root);
   const logosDir = opts.logosDir ?? lorcanaSetLogosDir(opts.root);
   const sets: LorcanaSetLogoRow[] = [];
   for (const row of rows) {
@@ -475,7 +542,11 @@ export async function installLorcanaSetLogos(
     fetchedAt: new Date().toISOString(),
     sets,
   };
-  writeIndexFile(dest, index);
+  if (opts.dest) {
+    writeIndexFile(opts.dest, index);
+  } else {
+    persistLorcanaSetLogoIndex(index, { root: opts.root });
+  }
   return index;
 }
 
@@ -487,9 +558,8 @@ export async function refreshLorcanaSetLogoIndex(opts?: {
   catalog?: unknown;
   catalogEn?: unknown;
 }): Promise<LorcanaSetLogoIndex> {
-  const dest = opts?.dest ?? lorcanaSetLogoCachePath(opts?.root);
   if (!opts?.force && opts?.catalog === undefined) {
-    const existing = loadLorcanaSetLogoIndex(dest);
+    const existing = loadLorcanaSetLogoIndex(opts?.dest);
     if (existing && existing.sets.some((row) => row.logo)) return existing;
   }
   const raw =
@@ -526,8 +596,6 @@ export async function ensureLorcanaSetLogoIndex(opts?: {
   try {
     return await refreshLorcanaSetLogoIndex(opts);
   } catch {
-    return loadLorcanaSetLogoIndex(
-      opts?.dest ?? lorcanaSetLogoCachePath(opts?.root),
-    );
+    return loadLorcanaSetLogoIndex(opts?.dest);
   }
 }

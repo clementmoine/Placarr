@@ -18,6 +18,7 @@ import {
   harvestBloggerPackRip,
   installBloggerPackRip,
 } from "./sources/faces";
+import { harvestColekaRanksPrices } from "./harvest/colekaPrices";
 import {
   buildNinjaRanksFromLedgers,
   buildEuropeanNsFromLedger,
@@ -45,6 +46,16 @@ export async function runNarutoRanksPackPipeline(
   console.log(
     `── Coleka — ${coleka.pages} page(s) lue(s), ${coleka.cards} carte(s) retenue(s) : ${coleka.ok} recto, ${coleka.backOk} verso, ${coleka.skip + coleka.backSkip} déjà là, ${coleka.fail + coleka.backFail} manqué${coleka.fail + coleka.backFail === 1 ? "" : "s"}`,
   );
+  try {
+    const colekaPrices = await harvestColekaRanksPrices();
+    console.log(
+      `── Coleka deals prices — ${colekaPrices.ledger.withPrintKey} printKey (cote ${colekaPrices.ledger.withQuotation})`,
+    );
+  } catch (err) {
+    console.warn(
+      `── Coleka deals prices — ${err instanceof Error ? err.message : err}`,
+    );
+  }
   const ebay = await syncEbayNinjaRanksFromBrowseApi({ force });
   if (ebay.fetched || ebay.expired.length || ebay.images) {
     console.log(

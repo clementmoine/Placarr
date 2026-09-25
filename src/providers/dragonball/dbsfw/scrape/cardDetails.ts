@@ -21,13 +21,14 @@ import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
+import { dbsFwCardFolder, loadDbsFwIndex } from "../indexStore";
 import {
   dbsFwCardDetailUrl,
   parseDbsFwCardDetail,
   type DbsFwCardDetail,
 } from "../parse/cardDetail";
 
-export const DBS_FW_PACK_ID = "dbs/fw";
+export const DBS_FW_PACK_ID = "dragonball/fw";
 export const DBS_FW_FACTS_FILE = "facts.json";
 
 const UA =
@@ -124,12 +125,19 @@ export async function scrapeDbsFwCardDetails(
   const root = packRoot(opts.root);
   const locale = opts.locale ?? "en";
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
-  const indexPath = path.join(root, "cards-index.json");
-  if (!existsSync(indexPath)) {
-    throw new Error(`cards-index.json absent: ${indexPath}`);
+  const loaded = loadDbsFwIndex();
+  if (!loaded?.prints.length) {
+    throw new Error(`catalog.sqlite absent ou vide: ${root}`);
   }
-  const index = JSON.parse(readFileSync(indexPath, "utf8")) as CardsIndexV1;
-  let numbers = dbsFwDetailNumbers(index);
+  let numbers = [
+    ...new Set(
+      loaded.prints.map((p) =>
+        `${p.setCode}-${dbsFwCardFolder(p)}`
+          .replace(/-p\d+$/i, "")
+          .toUpperCase(),
+      ),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
 
   const held = opts.force ? null : loadDbsFwFacts(opts.root);
   const cards: Record<string, DbsFwCardDetail> = { ...(held?.cards ?? {}) };

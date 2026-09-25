@@ -3,7 +3,7 @@ import enCcgSeries from "../curated/sources/en-ccg-series.json";
 import tcdb from "../curated/sources/tcdb-en-ccg.json";
 import { mintNarutoPrintKey, parseNarutoCollector } from "../identity";
 import { canonicalizeCarddassUrl, siteRelPathFromOriginal } from "../scrape/scrapeCards";
-import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaicgEnCardlistCards, mergeBandaicgEnNamesIntoIndex, parseBandaicgCardlistHtml, bggEnCcgPrinted, bggEnCcgS1Cards, bggEnCcgS1Ledger, mergeBggEnCcgS1IntoIndex, parseCarddasJpAssetPath, carddasJpStagingFaceToDiskId, carddasJpStagingFaceInstallTarget, carddasJpCardlistCards, carddasJpVolumeSetCode, mergeCarddasJpNamesIntoIndex, parseCarddasJpCardlistHtml, carddasJpPromoCards, mergeCarddasJpPromoIntoIndex, NARUTO_GAME, carddassFaceFilename, parseCarddassAssetPath, parseCarddassMedThumbFilename, pickLatestCdxRow, faceArtRank, pickPreferredFaceArtFilename, waybackRawUrl, parseEnCcgPrintedRef } from "./bandai";
+import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaicgEnCardlistCards, mergeBandaicgEnNamesIntoIndex, parseBandaicgCardlistHtml, bggEnCcgPrinted, bggEnCcgS1Cards, bggEnCcgS1Ledger, mergeBggEnCcgS1IntoIndex, parseCarddasJpAssetPath, carddasJpStagingFaceToDiskId, carddasJpStagingFaceInstallTarget, carddasJpCardlistCards, carddasJpVolumeSetCode, mergeCarddasJpNamesIntoIndex, parseCarddasJpCardlistHtml, carddas20ProCards, carddasJpPromoCards, mergeCarddas20ProIntoIndex, mergeCarddasJpPromoIntoIndex, noihjpCarddassCards, mergeNoihjpCarddassIntoIndex, NARUTO_GAME, carddassFaceFilename, parseCarddassAssetPath, parseCarddassMedThumbFilename, pickLatestCdxRow, faceArtRank, pickPreferredFaceArtFilename, waybackRawUrl, parseEnCcgPrintedRef } from "./bandai";
 
 // —— parseBandaicgAsset ——
 {
@@ -545,6 +545,94 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
       expect(
         merged.titles.find((t) => t.printKey === "naruto:ni-0001")?.fullName,
       ).toBe("うずまきナルト");
+    });
+  });
+
+  describe("carddas20ProCards", () => {
+    it("ships fan promo titles including CAN porte-cartes, not faces", () => {
+      const cards = carddas20ProCards();
+      expect(cards.length).toBe(67);
+      expect(cards.find((row) => row.printed === "CAN-1")?.name).toBe(
+        "うずまきナルト＆うちはサスケ",
+      );
+      expect(cards.find((row) => row.printed === "CAN-1")?.number).toBe(
+        "can0001",
+      );
+      expect(cards.some((row) => row.number.startsWith("nm"))).toBe(false);
+    });
+  });
+
+  describe("mergeCarddas20ProIntoIndex", () => {
+    it("mints missing CAN-1 after official promo and does not overwrite names", () => {
+      const afterOfficial = mergeCarddasJpPromoIntoIndex({
+        prints: [],
+        titles: [],
+      });
+      const merged = mergeCarddas20ProIntoIndex({
+        prints: afterOfficial.prints,
+        titles: [
+          ...afterOfficial.titles,
+          {
+            printKey: "naruto:can-0002",
+            lang: "ja",
+            fullName: "KEEP",
+          },
+        ],
+      });
+      expect(merged.addedPrints).toContain("naruto:can-0001");
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:can-0002")?.fullName,
+      ).toBe("KEEP");
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:can-0001")?.fullName,
+      ).toBe("うずまきナルト＆うちはサスケ");
+    });
+  });
+
+  describe("noihjpCarddassCards", () => {
+    it("ships COIN＋ names including Suruga gaps 9 and 11", () => {
+      const cards = noihjpCarddassCards();
+      expect(cards.length).toBeGreaterThan(1000);
+      expect(cards.find((row) => row.printed === "COIN-9")?.name).toBe(
+        "うずまきナルト＆ガマブン太",
+      );
+      expect(cards.find((row) => row.printed === "COIN-11")?.name).toBe(
+        "日向ネジ＆テンテン",
+      );
+      expect(cards.find((row) => row.printed === "COIN-9")?.number).toBe(
+        "coin0009",
+      );
+    });
+  });
+
+  describe("mergeNoihjpCarddassIntoIndex", () => {
+    it("mints COIN-9/11 titles without overwriting existing JA", () => {
+      const merged = mergeNoihjpCarddassIntoIndex({
+        prints: [
+          {
+            printKey: "naruto:coin-0001",
+            setCode: "promo",
+            number: "coin0001",
+            cardType: "coin",
+            family: "promo",
+          },
+        ],
+        titles: [
+          {
+            printKey: "naruto:coin-0001",
+            lang: "ja",
+            fullName: "KEEP",
+          },
+        ],
+      });
+      expect(merged.addedPrints).toContain("naruto:coin-0009");
+      expect(merged.addedPrints).toContain("naruto:coin-0011");
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:coin-0001")?.fullName,
+      ).toBe("KEEP");
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:coin-0009")?.fullName,
+      ).toBe("うずまきナルト＆ガマブン太");
     });
   });
 }

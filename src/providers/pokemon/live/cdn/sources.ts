@@ -282,12 +282,18 @@ export async function writeSourcesReport(
       contentBase: target.content_base,
     }),
     matrix: SOURCE_MATRIX,
-    adbRequiredFor: ["config-cache refresh (until config API is known)"],
+    adbRequiredFor: [
+      "optional config-cache enrichment (historical dirs beyond epoch-probe lookback; APK-only stems)",
+    ],
     apkRequiredFor: ["schema reverse if CDN/Unity layout changes"],
     cdnSufficientFor: [
       "card bundles",
       "shadersbundle",
       "named foil motif bundles (subset)",
+      "AssetManifest dump cold-start (primary + dated epoch probe)",
+    ],
+    malieSufficientFor: [
+      "live.sqlite identities / scrape inventory without ADB config-cache",
     ],
   };
   const dest = out ?? path.join(cache, "sources-report.json");

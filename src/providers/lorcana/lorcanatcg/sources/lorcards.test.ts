@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dbscardsProductListingUrl } from "@/providers/dragonball/shared/dbscards/parseProducts";
+import { dbscardsProductListingUrl } from "@/providers/shared/tcgcards/parseProducts";
 
 import {
   LORCARDS_DETAIL_CATEGORIES,

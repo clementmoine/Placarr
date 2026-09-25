@@ -43,7 +43,7 @@ describe("catalogueExtractRunner targets", () => {
     expect(normalizeCatalogueExtractTarget("naruto/carddass")).toBe("naruto");
     expect(normalizeCatalogueExtractTarget("naruto/ccg")).toBe("naruto");
     expect(normalizeCatalogueExtractTarget("naruto/en-ccg")).toBe("naruto");
-    expect(normalizeCatalogueExtractTarget("dbs/cg")).toBe("dbs-cg");
+    expect(normalizeCatalogueExtractTarget("dragonball/cg")).toBe("dbs-cg");
     expect(normalizeCatalogueExtractTarget("fusionworld")).toBe("dbs-fw");
     expect(normalizeCatalogueExtractTarget("edibas")).toBe("dbs-lamincards");
     expect(normalizeCatalogueExtractTarget("dbzlamincards")).toBe(

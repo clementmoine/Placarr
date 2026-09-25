@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "pack": "dbs/jcc",
-  "updatedAt": "2026-09-14",
+  "pack": "dragonball/jcc",
+  "updatedAt": "2026-09-20",
   "byKind": {
     "booster": {
       "source": "dbzcollection ledger cardsPerBooster=8 + Bandai JCC retail",
@@ -29,6 +29,14 @@
       "behavior": "known_bundle",
       "contentsKnown": false,
       "notes": "Taille 32 attestée ; liste carte-par-carte manquante (pas d'invention)."
+    },
+    "ephemera": {
+      "source": "D-tecteur / poster JCC — pas de cartes",
+      "verifiedAt": "2026-09-20",
+      "behavior": "no_cards",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Accessoire / print — structure « pas de cartes », pas contenu inconnu."
     }
   },
   "skus": {}

@@ -55,17 +55,14 @@ export function resolveBuckets(
       .filter(Boolean);
     return extras.length ? [...new Set([...listed, ...extras])] : listed;
   }
-  if (!dirsManifest) {
-    throw new Error("--buckets all requires --dirs-manifest");
+  // ``all``: prefer ADB asset-bundle-manifest dirs; cold-start = fallback ∪ extras
+  // (CDN epoch probe) when the manifest is absent.
+  if (dirsManifest && existsSync(dirsManifest)) {
+    const dirs = directoriesFromDirsManifest(dirsManifest);
+    const base = dirs.length ? dirs : [fallback];
+    return extras.length ? [...new Set([...base, ...extras])] : base;
   }
-  if (!existsSync(dirsManifest)) {
-    throw new Error(
-      `--dirs-manifest not found: ${dirsManifest} (expected staging/config-cache/asset-bundle-manifest_0.0.json)`,
-    );
-  }
-  const dirs = directoriesFromDirsManifest(dirsManifest);
-  const base = dirs.length ? dirs : [fallback];
-  return extras.length ? [...new Set([...base, ...extras])] : base;
+  return extras.length ? [...new Set([fallback, ...extras])] : [fallback];
 }
 
 async function fetchBytes(

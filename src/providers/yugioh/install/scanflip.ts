@@ -9,7 +9,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { packCardDir, packCardsIndexPath, packStagingDir } from "@/lib/packPaths";
+import { packCardDir, packLogsDir, packStagingDir } from "@/lib/packPaths";
 import { installCardFace } from "@/providers/shared/cardCatalogue/faceInstall";
 import type {
   LocalPrintAssetWrite,
@@ -22,6 +22,11 @@ import {
   type ScanflipCardRow,
   type ScanflipExplorerSpec,
 } from "@/providers/shared/scanflip/client";
+import {
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 
 import { YUGIOH_PACK_ID } from "../pack";
 import {
@@ -51,8 +56,13 @@ const SCANFLIP_EXPLORER: ScanflipExplorerSpec = {
 
 const LEDGER = "cards-fr.json";
 const SCANFLIP_REFERER = "https://www.scanflip.fr/fr/yugioh/cards";
+const SCANFLIP_ARTEFACT = "yugioh:scanflip-fr";
 
 export function yugiohScanflipLedgerPath(): string {
+  return path.join(packLogsDir(YUGIOH_PACK_ID), "scanflip", LEDGER);
+}
+
+function legacyYugiohScanflipLedgerPath(): string {
   return path.join(packStagingDir(YUGIOH_PACK_ID), "scanflip", LEDGER);
 }
 
@@ -88,12 +98,48 @@ export async function harvestYugiohScanflip(opts: {
 }
 
 function loadLedger(): ScanflipCardRow[] {
-  const p = yugiohScanflipLedgerPath();
-  if (!existsSync(p)) return [];
-  const raw = JSON.parse(readFileSync(p, "utf8")) as {
-    cards?: ScanflipCardRow[];
-  };
-  return raw.cards ?? [];
+  for (const p of [
+    yugiohScanflipLedgerPath(),
+    legacyYugiohScanflipLedgerPath(),
+  ]) {
+    if (!existsSync(p)) continue;
+    try {
+      const raw = JSON.parse(readFileSync(p, "utf8")) as {
+        cards?: ScanflipCardRow[];
+      };
+      const cards = raw.cards ?? [];
+      if (p === legacyYugiohScanflipLedgerPath() && cards.length) {
+        mkdirSync(path.dirname(yugiohScanflipLedgerPath()), { recursive: true });
+        writeFileSync(yugiohScanflipLedgerPath(), readFileSync(p));
+      }
+      return cards;
+    } catch {
+      /* try next */
+    }
+  }
+  return [];
+}
+
+/** After install OK: durable under logs/ + purge staging scanflip/. */
+export function promoteAndPurgeYugiohScanflipStaging(): {
+  purged: boolean;
+  contentHash: string | null;
+} {
+  const durable = yugiohScanflipLedgerPath();
+  const legacy = legacyYugiohScanflipLedgerPath();
+  if (!existsSync(durable) && existsSync(legacy)) {
+    mkdirSync(path.dirname(durable), { recursive: true });
+    writeFileSync(durable, readFileSync(legacy));
+  }
+  if (!existsSync(durable)) return { purged: false, contentHash: null };
+  const contentHash = hashCatalogArtefactBytes(readFileSync(durable));
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(YUGIOH_PACK_ID),
+    artefactId: SCANFLIP_ARTEFACT,
+    contentHash,
+    stagingPath: path.join(packStagingDir(YUGIOH_PACK_ID), "scanflip"),
+  });
+  return { purged: true, contentHash };
 }
 
 export async function installYugiohScanflip(
@@ -170,39 +216,8 @@ export async function installYugiohScanflip(
 }
 
 /**
- * Inject ScanFlip CDN URLs into `cards-index.json` for FR slots without a
- * local face — MTG-style, no download. Local `art` still wins.
+ * ScanFlip CDN URLs — catalogue identity is sqlite; no cards-index patch.
  */
 export function applyYugiohScanflipArtUrls(): { patched: number } {
-  const cards = loadLedger();
-  if (!cards.length) return { patched: 0 };
-  const indexPath = packCardsIndexPath(YUGIOH_PACK_ID);
-  if (!existsSync(indexPath)) return { patched: 0 };
-  const index = JSON.parse(readFileSync(indexPath, "utf8")) as {
-    cards: Record<
-      string,
-      { langs?: Record<string, { art?: string; artUrl?: string; name?: string }> }
-    >;
-  };
-  let patched = 0;
-  for (const card of cards) {
-    const parsed = parseYugiohPrintedCode(card.code);
-    if (!parsed) continue;
-    const printKey = yugiohPrintKey(parsed.set, parsed.number);
-    if (!printKey) continue;
-    const faceUrl = scanflipFaceUrl(card);
-    if (!faceUrl) continue;
-    const entry = index.cards[printKey];
-    if (!entry) continue;
-    const slot = entry.langs?.fr ?? {};
-    if (slot.art?.trim()) continue;
-    if (slot.artUrl === faceUrl) continue;
-    slot.artUrl = faceUrl;
-    entry.langs = { ...(entry.langs ?? {}), fr: slot };
-    patched += 1;
-  }
-  if (patched) {
-    writeFileSync(indexPath, `${JSON.stringify(index)}\n`, "utf8");
-  }
-  return { patched };
+  return { patched: 0 };
 }

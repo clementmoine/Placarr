@@ -1,5 +1,5 @@
 /**
- * Fusion World local catalogue — `data/dbs/fw/catalog.sqlite`.
+ * Fusion World local catalogue — `data/dragonball/fw/catalog.sqlite`.
  * Faces stay on Bandai's FW CDN (SAMPLE watermark); we index metadata.
  */
 import {
@@ -30,7 +30,7 @@ import {
 import { DBS_FW_GAME } from "./identity";
 
 export const DBS_FW_SCHEMA_VERSION = "1";
-export const DBS_FW_PACK_ID = "dbs/fw";
+export const DBS_FW_PACK_ID = "dragonball/fw";
 
 export type DbsFwPrintRow = {
   printKey: string;
@@ -214,7 +214,8 @@ export function exportDbsFwCardsIndexJson(
   prints: DbsFwPrintRow[],
   titles: DbsFwTitleRow[] | undefined,
   assets: DbsFwAssetRow[] | undefined,
-  outPath: string,
+  /** Test-only disk dump. Production browse uses catalog.sqlite. */
+  outPath?: string | null,
 ): void {
   const titlesByPrint = new Map<string, Map<string, DbsFwTitleRow>>();
   for (const title of titles ?? []) {
@@ -276,8 +277,10 @@ export function exportDbsFwCardsIndexJson(
     cards,
   };
   attachSiblingTitlesToCardsIndex(index);
-  mkdirSync(path.dirname(outPath), { recursive: true });
-  writeFileSync(`${outPath}`, `${JSON.stringify(index)}\n`);
+  if (outPath) {
+    mkdirSync(path.dirname(outPath), { recursive: true });
+    writeFileSync(`${outPath}`, `${JSON.stringify(index)}\n`);
+  }
 }
 
 /**
@@ -290,6 +293,39 @@ export function dbsFwCardFolder(
   print: Pick<DbsFwPrintRow, "number" | "grouping">,
 ): string {
   return print.grouping ? `${print.number}-${print.grouping}` : print.number;
+}
+
+export const DBS_FW_FACE_LANGS = ["en", "ja"] as const;
+
+export type DbsFwBrowseRow = {
+  printKey: string;
+  setCode: string;
+  number: string;
+  grouping: string | null;
+  lang: string;
+  fullName: string | null;
+  imageUrl: string | null;
+};
+
+/** Toutes les lignes titre d'une langue — admin Catalogue (= checklist). */
+export function listDbsFwRowsForLanguage(language = "en"): DbsFwBrowseRow[] {
+  const db = ensureDbsFwIndex();
+  if (!db) return [];
+  const lang = language.trim().toLowerCase() || "en";
+  return db
+    .prepare(
+      `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+              p.grouping, t.lang, t.full_name AS fullName,
+              a.image_url AS imageUrl
+         FROM prints p
+         JOIN print_titles t
+           ON t.print_key = p.print_key AND t.lang = ?
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang
+        ORDER BY LOWER(p.set_code), CAST(p.number AS INTEGER), p.number,
+                 COALESCE(p.grouping, '')`,
+    )
+    .all(lang) as DbsFwBrowseRow[];
 }
 
 /**

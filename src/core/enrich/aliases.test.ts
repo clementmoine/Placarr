@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   aliasesExcludingTitle,
   catalogAliasesFromNames,
-  collectMergedSearchAliases,
   promoteTitleKeepingAliases,
 } from "@/core/enrich/aliases";
+import { collectMergedSearchAliases } from "@/core/enrich/aliasesSearch";
 
 describe("catalogAliasesFromNames", () => {
   it("keeps official alternates distinct from the display title", () => {

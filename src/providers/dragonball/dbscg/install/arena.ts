@@ -1,5 +1,5 @@
 /**
- * TCG Arena / Deckplanet English dump → `data/dbs/cg/cards/{set}/en/{card}/`.
+ * TCG Arena / Deckplanet English dump → `data/dragonball/cg/cards/{set}/en/{card}/`.
  *
  * The bytes already live in
  * https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena
@@ -16,13 +16,14 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
+  renameSync,
+  rmSync,
   statSync,
 } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
 import { packCardDir, packStagingDir } from "@/lib/packPaths";
-import { dataPackPath } from "@/providers/shared/catalogCorpus";
 
 import {
   dbsFaceFilename,
@@ -33,8 +34,6 @@ import { promoteBestFace } from "../disk/fetchFaces";
 import {
   DBS_CG_PACK_ID,
   dbsCgCardFolder,
-  exportDbsCgCardsIndexJson,
-  loadDbsCgIndex,
 } from "../indexStore";
 import {
   formatDbsCollectorNumber,
@@ -172,10 +171,55 @@ function runGit(args: string[]): void {
   }
 }
 
+/** Usable dump: a real git clone, or a bare `assets/` tree without `.git`. */
+export function arenaStagingUsable(root = arenaStagingDir()): boolean {
+  return (
+    existsSync(path.join(root, ".git")) || existsSync(arenaAssetsDir(root))
+  );
+}
+
+/**
+ * Incomplete clones (e.g. only `src/` after a cancelled clone) block
+ * `git clone` with "destination path already exists". Wipe those before
+ * recloning — never touch a usable `.git` or `assets/` tree.
+ */
+export function wipeUnusableArenaStaging(root = arenaStagingDir()): boolean {
+  if (!existsSync(root) || arenaStagingUsable(root)) return false;
+  console.warn(
+    `── arena : staging inutilisable sous ${root}, on efface pour reclôner`,
+  );
+  rmSync(root, { recursive: true, force: true });
+  return true;
+}
+
 export type EnsureArenaCloneOptions = {
   /** Skip git; succeed only if `assets/` is already on disk. */
   offline?: boolean;
 };
+
+/**
+ * Clone into a sibling temp dir, then replace `dest`. Avoids git's
+ * "destination path already exists" when a previous run left junk (or an
+ * empty dir) under the final staging name.
+ */
+export function cloneArenaInto(dest: string): void {
+  const parent = path.dirname(dest);
+  mkdirSync(parent, { recursive: true });
+  const tmp = path.join(
+    parent,
+    `${DBS_CG_ARENA_STAGING_NAME}.partial-${process.pid}`,
+  );
+  if (existsSync(tmp)) rmSync(tmp, { recursive: true, force: true });
+  console.log(`── arena : git clone --depth 1 ${DBS_CG_ARENA_REPO}`);
+  try {
+    runGit(["clone", "--depth", "1", DBS_CG_ARENA_REPO, tmp]);
+    if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
+    renameSync(tmp, dest);
+  } catch (error) {
+    if (existsSync(tmp)) rmSync(tmp, { recursive: true, force: true });
+    throw error;
+  }
+}
 
 export function ensureArenaClone(opts: EnsureArenaCloneOptions = {}): boolean {
   const dest = arenaStagingDir();
@@ -188,6 +232,7 @@ export function ensureArenaClone(opts: EnsureArenaCloneOptions = {}): boolean {
     return false;
   }
   mkdirSync(path.dirname(dest), { recursive: true });
+  wipeUnusableArenaStaging(dest);
   if (existsSync(path.join(dest, ".git"))) {
     console.log("── arena : git fetch (dump TCG Arena)");
     try {
@@ -204,8 +249,7 @@ export function ensureArenaClone(opts: EnsureArenaCloneOptions = {}): boolean {
     console.log("── arena : dump local sans .git, on range tel quel");
     return true;
   }
-  console.log(`── arena : git clone --depth 1 ${DBS_CG_ARENA_REPO}`);
-  runGit(["clone", "--depth", "1", DBS_CG_ARENA_REPO, dest]);
+  cloneArenaInto(dest);
   return existsSync(assets);
 }
 
@@ -281,18 +325,6 @@ export async function installArenaFaces(
 
   for (const cardDir of cardDirs) {
     await promoteArenaCard(cardDir);
-  }
-
-  const loaded = loadDbsCgIndex();
-  if (loaded) {
-    const indexPath = dataPackPath(DBS_CG_PACK_ID, "cards-index.json");
-    exportDbsCgCardsIndexJson(
-      loaded.prints,
-      loaded.titles,
-      loaded.assets,
-      indexPath,
-    );
-    console.log(`── arena index → ${indexPath}`);
   }
 
   console.log(`── arena ok=${stats.ok} skip=${stats.skip} dos=${stats.backs}`);

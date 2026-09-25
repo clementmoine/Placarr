@@ -17,6 +17,11 @@ import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /**
+   * Called when the user tries to dismiss (backdrop, Escape, X). Return
+   * `false` to keep the dialog open (e.g. confirm before losing selection).
+   */
+  onDismissRequest?: () => boolean;
   title?: React.ReactNode;
   description?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl" | "xl-auto" | "full";
@@ -44,6 +49,7 @@ interface BaseModalProps {
 export function BaseModal({
   isOpen,
   onClose,
+  onDismissRequest,
   title,
   description,
   size = "md",
@@ -76,8 +82,22 @@ export function BaseModal({
     onClose();
   };
 
+  const tryDismiss = (): boolean => {
+    if (onDismissRequest && !onDismissRequest()) return false;
+    handleClose();
+    return true;
+  };
+
   const handleOpenChange = (open: boolean) => {
-    if (!open) handleClose();
+    if (!open) tryDismiss();
+  };
+
+  const blockDismissEvent = (
+    event: { preventDefault: () => void },
+  ): void => {
+    if (onDismissRequest && !onDismissRequest()) {
+      event.preventDefault();
+    }
   };
 
   const hasHiddenClass = (className?: string) => {
@@ -109,6 +129,9 @@ export function BaseModal({
           sizeClasses[size],
           className,
         )}
+        onPointerDownOutside={blockDismissEvent}
+        onInteractOutside={blockDismissEvent}
+        onEscapeKeyDown={blockDismissEvent}
       >
         {(title || description) && (
           <DialogHeader

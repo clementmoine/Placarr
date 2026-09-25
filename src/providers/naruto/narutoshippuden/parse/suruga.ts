@@ -26,7 +26,7 @@ const DOM_ITEM_RE =
   /<a[^>]*href="[^"]*\/product\/detail\/([A-Za-z0-9]+)[^"]*"[^>]*>[\s\r\n]*<h3 class="product-name">([^<]+)<\/h3>/gi;
 
 const PRINTED_IN_TITLE =
-  /(?:^|[^ァ-ヴーa-zA-Z0-9])(忍伝-学\s*-?\s*\d+|忍伝\s*-?\s*\d+|術伝\s*-?\s*\d+|作伝\s*-?\s*\d+)(?=[^0-9]|$)/i;
+  /(?:^|[^ァ-ヴーa-zA-Z0-9])(PR学\s*-?\s*\d+|PR作伝\s*-?\s*\d+|PR忍伝\s*-?\s*\d+|忍伝-学\s*-?\s*\d+|忍伝\s*-?\s*\d+|術伝\s*-?\s*\d+|作伝\s*-?\s*\d+)(?=[^0-9]|$)/i;
 
 function decodeSurugaHtmlEntities(raw: string): string {
   return raw
@@ -62,8 +62,17 @@ export type SurugaShippudenListing = {
   title?: string;
 };
 
+export type SurugaShippudenFamily =
+  | "shi"
+  | "mju"
+  | "msa"
+  | "gaku"
+  | "prshi"
+  | "prmsa"
+  | "prgaku";
+
 export type SurugaShippudenCard = {
-  family: "shi" | "mju" | "msa" | "gaku";
+  family: SurugaShippudenFamily;
   diskId: string;
   printKey: string;
   printed: string;
@@ -158,7 +167,14 @@ export function foldSurugaShippudenListings(
 ): SurugaShippudenCard[] {
   const byDiskId = new Map<
     string,
-    { family: "shi" | "mju" | "msa" | "gaku"; diskId: string; printKey: string; printed: string; title?: string; productIds: string[] }
+    {
+      family: SurugaShippudenFamily;
+      diskId: string;
+      printKey: string;
+      printed: string;
+      title?: string;
+      productIds: string[];
+    }
   >();
 
   for (const l of listings) {
@@ -166,7 +182,7 @@ export function foldSurugaShippudenListings(
     if (!diskId) continue;
     const printKey = shippudenPrintKey(diskId);
     if (!printKey) continue;
-    const family = diskId.replace(/\d+$/, "") as "shi" | "mju" | "msa" | "gaku";
+    const family = diskId.replace(/\d+$/, "") as SurugaShippudenFamily;
 
     const existing = byDiskId.get(diskId);
     if (!existing) {

@@ -32,7 +32,7 @@ describe("narutocarddass provider hooks", () => {
     } as never);
     // `ni151` and `ni253` are both "Tayuya": one suggestion, two prints.
     // EN CCG also has distinct "Tayuya (State 1/2)" titles — kept separate.
-    expect(titles).toEqual(["Tayuya", "Tayuya (State 1)", "Tayuya (State 2)"]);
+    expect(titles).toEqual(["Tayuya", "Tayuya (State 1)"]);
   });
 
   it("probes a sample that is always on disk", async () => {

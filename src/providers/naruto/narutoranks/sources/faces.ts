@@ -26,6 +26,12 @@ import {
 } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import {
+  hashNarutoCuratedFile,
+  hashNarutoCuratedJson,
+  narutoDigArtefactFresh,
+  promoteAndPurgeNarutoDig,
+} from "@/providers/naruto/shared/promoteNarutoDig";
+import {
   ebayBrowseItemId,
   fetchEbayBrowseItem,
 } from "@/providers/commerce/ebay/browseItem";
@@ -93,6 +99,18 @@ export { COLEKA_NINJA_RANKS_LANG };
 
 const AC_LEDGER_FILE = "animecollection.json";
 const AC_STAGING_FOLDER = "animecollection-faces";
+const AC_ARTEFACT = "faces:animecollection-ranks";
+
+export function animeCollectionRanksContentHash(): string {
+  const ledger = readAnimeCollectionRanksLedger();
+  return hashNarutoCuratedJson({
+    faces: (ledger.faces ?? []).map((f) => ({
+      acId: f.acId,
+      printed: f.printed,
+      backImageId: f.backImageId ?? null,
+    })),
+  });
+}
 
 const AC_ORIGIN = "http://www.animecollection.fr";
 const AC_SET_PATH = "87/200";
@@ -278,6 +296,28 @@ export type AnimeCollectionRanksHarvest = {
 export async function harvestAnimeCollectionRanksFaces(
   opts: { force?: boolean; refreshLedger?: boolean } = {},
 ): Promise<AnimeCollectionRanksHarvest> {
+  const contentHash = animeCollectionRanksContentHash();
+  if (
+    narutoDigArtefactFresh({
+      packId: NARUTO_RANKS_PACK_ID,
+      artefactId: AC_ARTEFACT,
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    const ledger = readAnimeCollectionRanksLedger();
+    const n = ledger.faces?.length ?? 0;
+    return {
+      cards: n,
+      ok: 0,
+      skip: n,
+      fail: 0,
+      backsOk: 0,
+      backsSkip: n,
+      backsFail: 0,
+    };
+  }
+
   const ledger = readAnimeCollectionRanksLedger();
   const referer = ledger.url;
   let faces = ledger.faces ?? [];
@@ -450,6 +490,14 @@ export function installAnimeCollectionRanksFaces(
     });
   }
   if (assets.length) index.writeAssets(assets);
+  if (missing.length === 0 && faceCount > 0) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_RANKS_PACK_ID,
+      artefactId: AC_ARTEFACT,
+      stagingRel: AC_STAGING_FOLDER,
+      contentHash: animeCollectionRanksContentHash(),
+    });
+  }
   return { faces: faceCount, backs: backCount, missing };
 }
 
@@ -924,6 +972,13 @@ export function installColekaNinjaRanks(
   const assets = [...assetsByKey.values()];
   if (assets.length) index.writeAssets(assets);
   purgeColekaRejectedFaces(index, ledger);
+  if (missing.length === 0 && assets.length > 0 && !opts.stagingDir) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_RANKS_PACK_ID,
+      artefactId: "faces:coleka-ranks",
+      stagingRel: COLEKA_STAGING_FOLDER,
+    });
+  }
   return {
     faces: assets.filter((a) => a.art).length,
     backs: assets.filter((a) => a.back).length,
@@ -1145,6 +1200,19 @@ export async function harvestInkworksOfficialAssets(
   opts: { force?: boolean } = {},
 ): Promise<{ ok: number; skip: number; fail: number }> {
   const ledger = readInkworksProductsLedger();
+  const contentHash = hashNarutoCuratedFile(inkworksProductsPath());
+  if (
+    narutoDigArtefactFresh({
+      packId: NARUTO_RANKS_PACK_ID,
+      artefactId: "sealed:inkworks",
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    const n = inkworksHarvestList(ledger).length;
+    return { ok: 0, skip: n, fail: 0 };
+  }
+
   const destRoot = inkworksStagingDir();
   mkdirSync(destRoot, { recursive: true });
   let ok = 0;
@@ -1788,6 +1856,14 @@ export async function installImadokiSheets(
 
 const ARCADE_STAGING_FOLDER = "arcadegamecards";
 const ARCADE_LEDGER_FILE = "arcadegamecards.json";
+const ARCADE_ARTEFACT = "faces:arcadegamecards-ranks";
+
+export function arcadeGameCardsContentHash(): string {
+  return hashNarutoCuratedJson({
+    aliases: readArcadeGameCardsLedger().vendorTitleAliases ?? [],
+    urls: arcadeListingUrls(),
+  });
+}
 
 export function arcadeStagingDir(): string {
   return path.join(packStagingDir(NARUTO_RANKS_PACK_ID), ARCADE_STAGING_FOLDER);
@@ -1866,6 +1942,28 @@ export type ArcadeHarvest = {
 export async function harvestArcadeGameCards(
   opts: { force?: boolean } = {},
 ): Promise<ArcadeHarvest> {
+  const contentHash = arcadeGameCardsContentHash();
+  if (
+    narutoDigArtefactFresh({
+      packId: NARUTO_RANKS_PACK_ID,
+      artefactId: ARCADE_ARTEFACT,
+      contentHash,
+      force: opts.force,
+    })
+  ) {
+    return {
+      pages: 0,
+      cards: 0,
+      ok: 0,
+      skip: 0,
+      fail: 0,
+      backOk: 0,
+      backSkip: 0,
+      backFail: 0,
+      rejected: [],
+    };
+  }
+
   const dir = arcadeStagingDir();
   mkdirSync(dir, { recursive: true });
   const nameCheck = createArcadeNameCheck();
@@ -2044,6 +2142,14 @@ export function installArcadeGameCards(
 
   const assets = [...assetsByKey.values()];
   if (assets.length) index.writeAssets(assets);
+  if (missing.length === 0 && assets.length > 0) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_RANKS_PACK_ID,
+      artefactId: ARCADE_ARTEFACT,
+      stagingRel: ARCADE_STAGING_FOLDER,
+      contentHash: arcadeGameCardsContentHash(),
+    });
+  }
   return {
     faces: assets.length,
     backs: assets.filter((a) => a.back).length,

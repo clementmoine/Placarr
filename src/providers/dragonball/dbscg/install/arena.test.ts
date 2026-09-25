@@ -15,7 +15,12 @@ import { packCardDir } from "@/lib/packPaths";
 
 import { dbsFaceFilename } from "../disk/faceChoice";
 import { DBS_CG_PACK_ID, resetDbsCgDbCache } from "../indexStore";
-import { installArenaFaces, parseArenaFaceFilename } from "./arena";
+import {
+  arenaStagingUsable,
+  installArenaFaces,
+  parseArenaFaceFilename,
+  wipeUnusableArenaStaging,
+} from "./arena";
 
 let tinyWebpCache: Buffer | null = null;
 
@@ -73,6 +78,47 @@ describe("parseArenaFaceFilename", () => {
   });
 });
 
+describe("wipeUnusableArenaStaging", () => {
+  let tmp: string;
+
+  beforeEach(() => {
+    tmp = mkdtempSync(path.join(os.tmpdir(), "dbscg-arena-wipe-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("removes a leftover incomplete clone (no .git, no assets)", () => {
+    const root = path.join(tmp, "dragon-ball-masters-arena");
+    mkdirSync(path.join(root, "src"), { recursive: true });
+    writeFileSync(path.join(root, "src", "cards2.json"), "{}");
+    expect(arenaStagingUsable(root)).toBe(false);
+    expect(wipeUnusableArenaStaging(root)).toBe(true);
+    expect(existsSync(root)).toBe(false);
+  });
+
+  it("keeps a dump that already has assets/", () => {
+    const root = path.join(tmp, "dragon-ball-masters-arena");
+    mkdirSync(path.join(root, "assets", "BT1"), { recursive: true });
+    writeFileSync(path.join(root, "assets", "BT1", "BT1-001.webp"), "x");
+    expect(arenaStagingUsable(root)).toBe(true);
+    expect(wipeUnusableArenaStaging(root)).toBe(false);
+    expect(existsSync(path.join(root, "assets", "BT1", "BT1-001.webp"))).toBe(
+      true,
+    );
+  });
+
+  it("keeps a real git clone even without assets yet", () => {
+    const root = path.join(tmp, "dragon-ball-masters-arena");
+    mkdirSync(path.join(root, ".git"), { recursive: true });
+    writeFileSync(path.join(root, ".git", "HEAD"), "ref: refs/heads/main\n");
+    expect(arenaStagingUsable(root)).toBe(true);
+    expect(wipeUnusableArenaStaging(root)).toBe(false);
+    expect(existsSync(path.join(root, ".git", "HEAD"))).toBe(true);
+  });
+});
+
 describe("installArenaFaces", () => {
   let tmp: string;
   let prevData: string | undefined;
@@ -83,7 +129,7 @@ describe("installArenaFaces", () => {
     prevData = process.env.PLACARR_DATA_DIR;
     prevDb = process.env.PLACARR_DBSCG_DB;
     process.env.PLACARR_DATA_DIR = tmp;
-    process.env.PLACARR_DBSCG_DB = path.join(tmp, "dbs/cg/catalog.sqlite");
+    process.env.PLACARR_DBSCG_DB = path.join(tmp, "dragonball/cg/catalog.sqlite");
     resetDbsCgDbCache();
   });
 

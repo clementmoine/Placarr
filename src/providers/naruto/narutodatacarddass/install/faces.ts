@@ -20,11 +20,19 @@ import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
 import { dataRoot } from "@/lib/runtimeData";
 import { curatedDestStale } from "@/providers/shared/curatedCardsInstall";
+import {
+  catalogArtefactIsFresh,
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 import type {
   createLocalPrintsIndex,
   LocalPrintsIndex,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { downloadMercariOrigPhoto } from "@/providers/naruto/shared/mercariCdn";
+import { narutoDigFolderFingerprint } from "@/providers/naruto/shared/promoteNarutoDig";
 
 import { readDataCarddassChecklist } from "../pipeline/ledgers";
 import {
@@ -72,6 +80,52 @@ type InstallReport = {
   skipped: string[];
   failed: string[];
 };
+
+function curatedSourceBytes(file: string): Buffer {
+  return readFileSync(
+    path.join(narutoDataCarddassCuratedDir(), "sources", file),
+  );
+}
+
+export function dataCarddassChitoroshopContentHash(): string {
+  return hashCatalogArtefactBytes(curatedSourceBytes("chitoroshop.json"));
+}
+
+export function dataCarddassEbayContentHash(): string {
+  return hashCatalogArtefactBytes(curatedSourceBytes("ebay.json"));
+}
+
+export function dataCarddassSurugaContentHash(): string {
+  return hashCatalogArtefactBytes(
+    curatedSourceBytes("suruga-ya-data-carddass-listings.tsv"),
+  );
+}
+
+function dataCarddassArtefactFresh(
+  artefactId: string,
+  contentHash: string,
+): boolean {
+  return catalogArtefactIsFresh(
+    readCatalogIngestLedger(
+      packCatalogIngestLedgerPath(NARUTO_DATA_CARDDASS_PACK_ID),
+    ),
+    artefactId,
+    contentHash,
+  );
+}
+
+function promoteDataCarddassStaging(input: {
+  artefactId: string;
+  contentHash: string;
+  stagingPath: string;
+}): void {
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(NARUTO_DATA_CARDDASS_PACK_ID),
+    artefactId: input.artefactId,
+    contentHash: input.contentHash,
+    stagingPath: input.stagingPath,
+  });
+}
 
 // ─── shared helpers ────────────────────────────────────────────────────────
 
@@ -232,6 +286,15 @@ export type InstallDataCarddassEbayFacesOptions = {
 export async function installDataCarddassEbayFaces(
   options: InstallDataCarddassEbayFacesOptions = {},
 ): Promise<InstallReport> {
+  const contentHash = dataCarddassEbayContentHash();
+  const stagingRoot = path.join(
+    packStagingDir(NARUTO_DATA_CARDDASS_PACK_ID),
+    "ebay",
+  );
+  if (!options.force && dataCarddassArtefactFresh("faces:ebay-dcd", contentHash)) {
+    return { written: [], skipped: ["ledger-fresh"], failed: [] };
+  }
+
   const packRoot =
     options.packRoot ?? path.join(dataRoot(), NARUTO_DATA_CARDDASS_PACK_ID);
   const written: string[] = [];
@@ -284,6 +347,13 @@ export async function installDataCarddassEbayFaces(
   if (options.index && assets.length) {
     options.index.writeAssets(assets);
   }
+  if (failed.length === 0 && (written.length > 0 || skipped.length > 0)) {
+    promoteDataCarddassStaging({
+      artefactId: "faces:ebay-dcd",
+      contentHash,
+      stagingPath: stagingRoot,
+    });
+  }
   return { written, skipped, failed };
 }
 
@@ -298,12 +368,20 @@ export type InstallDataCarddassChitoroshopFacesOptions = {
 export async function installDataCarddassChitoroshopFaces(
   options: InstallDataCarddassChitoroshopFacesOptions = {},
 ): Promise<InstallReport> {
-  const packRoot =
-    options.packRoot ?? path.join(dataRoot(), NARUTO_DATA_CARDDASS_PACK_ID);
+  const contentHash = dataCarddassChitoroshopContentHash();
   const staging = path.join(
     packStagingDir(NARUTO_DATA_CARDDASS_PACK_ID),
     "chitoroshop",
   );
+  if (
+    !options.force &&
+    dataCarddassArtefactFresh("faces:chitoroshop", contentHash)
+  ) {
+    return { written: [], skipped: ["ledger-fresh"], failed: [] };
+  }
+
+  const packRoot =
+    options.packRoot ?? path.join(dataRoot(), NARUTO_DATA_CARDDASS_PACK_ID);
   mkdirSync(staging, { recursive: true });
 
   const written: string[] = [];
@@ -366,6 +444,13 @@ export async function installDataCarddassChitoroshopFaces(
 
   if (options.index && assets.length) {
     options.index.writeAssets(assets);
+  }
+  if (failed.length === 0 && (written.length > 0 || skipped.length > 0)) {
+    promoteDataCarddassStaging({
+      artefactId: "faces:chitoroshop",
+      contentHash,
+      stagingPath: staging,
+    });
   }
   return { written, skipped, failed };
 }
@@ -433,6 +518,18 @@ export async function installDataCarddassTvTokyoFaces(
 
   if (options.index && assets.length) {
     options.index.writeAssets(assets);
+  }
+
+  if (
+    !options.force &&
+    failed.length === 0 &&
+    written.length + skipped.length > 0
+  ) {
+    promoteDataCarddassStaging({
+      artefactId: "faces:tvtokyo-dcd",
+      contentHash: narutoDigFolderFingerprint(staging),
+      stagingPath: staging,
+    });
   }
 
   return { written, skipped, failed };
@@ -579,10 +676,18 @@ export async function installDataCarddassSurugaFaces(
   skipped: string[];
   failed: string[];
 }> {
+  const contentHash = dataCarddassSurugaContentHash();
   const staging = path.join(
     packStagingDir(NARUTO_DATA_CARDDASS_PACK_ID),
     "suruga-ya-data-carddass",
   );
+  if (
+    !options.force &&
+    dataCarddassArtefactFresh("faces:suruga-dcd", contentHash)
+  ) {
+    return { listed: 0, written: [], skipped: ["ledger-fresh"], failed: [] };
+  }
+
   mkdirSync(staging, { recursive: true });
 
   let cards = foldSurugaDataCarddassListings(
@@ -712,6 +817,14 @@ export async function installDataCarddassSurugaFaces(
 
   if (options.index && assets.length) {
     options.index.writeAssets(assets);
+  }
+
+  if (failed.length === 0 && (written.length > 0 || skipped.length > 0)) {
+    promoteDataCarddassStaging({
+      artefactId: "faces:suruga-dcd",
+      contentHash,
+      stagingPath: staging,
+    });
   }
 
   return { listed: cards.length, written, skipped, failed };

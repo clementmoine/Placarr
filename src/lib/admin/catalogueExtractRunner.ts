@@ -326,7 +326,7 @@ async function invokePackPipeline(
     }
     case "lorcana": {
       const { runLorcanaFoilExtract } = await import(
-        "@/providers/lorcanatcg/extract"
+        "@/providers/lorcana/lorcanatcg/extract"
       );
       await runLorcanaFoilExtract(argv, { repo: root, signal });
       return;
@@ -381,37 +381,37 @@ async function invokePackPipeline(
       return;
     }
     case "dbs-cg": {
-      const { runDbsCgPackPipeline } = await import("@/providers/dbscg/extract");
+      const { runDbsCgPackPipeline } = await import("@/providers/dragonball/dbscg/extract");
       await runDbsCgPackPipeline(argv);
       return;
     }
     case "dbs-fw": {
-      const { runDbsFwPackPipeline } = await import("@/providers/dbsfw/extract");
+      const { runDbsFwPackPipeline } = await import("@/providers/dragonball/dbsfw/extract");
       await runDbsFwPackPipeline(argv);
       return;
     }
     case "dbs-lamincards": {
       const { runDbsLamincardsPackPipeline } = await import(
-        "@/providers/dbslamincards/extract"
+        "@/providers/dragonball/dbslamincards/extract"
       );
       await runDbsLamincardsPackPipeline(argv);
       return;
     }
     case "dbs-jcc": {
       const { runDbsJccPackPipeline } = await import(
-        "@/providers/dbsjcc/extract"
+        "@/providers/dragonball/dbsjcc/extract"
       );
       await runDbsJccPackPipeline(argv);
       return;
     }
     case "dbs-heroes": {
-      const { runDbhPackPipeline } = await import("@/providers/dbh/extract");
+      const { runDbhPackPipeline } = await import("@/providers/dragonball/dbh/extract");
       await runDbhPackPipeline(argv);
       return;
     }
     case "bleach-scb": {
       const { runBleachScbPackPipeline } = await import(
-        "@/providers/bleachscb/extract"
+        "@/providers/bleach/bleachscb/extract"
       );
       await runBleachScbPackPipeline(argv);
       return;

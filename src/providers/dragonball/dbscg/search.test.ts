@@ -32,7 +32,7 @@ describe("searchDbsCgPrints", () => {
     process.env.PLACARR_DBSCG_DB = dbPath;
     /*
       Point the pack assets at the empty temp root too. Without it the test
-      reads the real `data/dbs/cg/cards`, so it passed only while that folder
+      reads the real `data/dragonball/cg/cards`, so it passed only while that folder
       happened to hold no synced face — the first faces run turned it red by
       doing exactly what it is supposed to do.
     */
@@ -88,7 +88,7 @@ describe("bilingual titles", () => {
     process.env.PLACARR_DBSCG_DB = dbPath;
     /*
       Point the pack assets at the empty temp root too. Without it the test
-      reads the real `data/dbs/cg/cards`, so it passed only while that folder
+      reads the real `data/dragonball/cg/cards`, so it passed only while that folder
       happened to hold no synced face — the first faces run turned it red by
       doing exactly what it is supposed to do.
     */
@@ -131,18 +131,18 @@ describe("bilingual titles", () => {
       would have gone red the other way on a clean checkout. The file it needs
       is created here instead.
     */
-    const dir = path.join(tmp, "dbs", "cg", "cards", "bt1", "en", "001");
+    const dir = path.join(tmp, "dragonball", "cg", "cards", "bt1", "en", "001");
     mkdirSync(dir, { recursive: true });
     writeFileSync(path.join(dir, "back.dbscards.webp"), "");
     const en = lookupDbsCgPrint("dbscg:bt1-001", { language: "en" });
     expect(en?.cardBackUrl).toBe(
-      "/assets/dbs/cg/cards/bt1/en/001/back.dbscards.webp",
+      "/assets/dragonball/cg/cards/bt1/en/001/back.dbscards.webp",
     );
   });
 });
 
 /**
- * The pack downloads faces to `data/dbs/cg/cards/…` but the candidate used to
+ * The pack downloads faces to `data/dragonball/cg/cards/…` but the candidate used to
  * hand out Bandai's remote URL regardless, so every card was served at 260x363
  * while a 400x560 file sat unused on disk.
  */
@@ -152,7 +152,7 @@ describe("face preference", () => {
     // The URL names the source that won, not a generic copy of it: nothing is
     // duplicated to `art.webp` any more.
     expect(candidate?.imageUrl).toMatch(
-      /^\/assets\/dbs\/cg\/cards\/bt1\/fr\/001\/art\.[a-z]+\.webp$/,
+      /^\/assets\/dragonball\/cg\/cards\/bt1\/fr\/001\/art\.[a-z]+\.webp$/,
     );
     expect(candidate?.thumbnailUrl).toBe(candidate?.imageUrl);
   });

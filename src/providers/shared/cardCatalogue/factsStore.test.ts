@@ -17,7 +17,7 @@ type Entry = { text: string };
 function packWithFacts(payload: unknown): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "facts-store-"));
   roots.push(root);
-  const dir = path.join(root, "dbs", "fw");
+  const dir = path.join(root, "dragonball", "fw");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "facts.json"), JSON.stringify(payload));
   return root;
@@ -30,7 +30,7 @@ function packWithFacts(payload: unknown): string {
 describe("createFactsStore", () => {
   const store = () =>
     createFactsStore<Entry>({
-      packSegments: ["dbs", "fw"],
+      packSegments: ["dragonball", "fw"],
       keyFor: (setCode, number) =>
         `${setCode}-${number}`.replace(/[-_]p\d+$/i, "").toUpperCase(),
     });

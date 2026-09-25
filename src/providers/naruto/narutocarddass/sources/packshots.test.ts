@@ -196,10 +196,11 @@ import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, 
       expect(byRef.get("NI-01")?.staging).toBe("staging/ebay/ni0001-it.webp");
       expect(italian.every((row) => row.ingest === false)).toBe(true);
       expect(ebayIngestFaces().every((row) => row.lang !== "it")).toBe(true);
-      // s-l1600 is the working large size whatever the container; eBay serves
-      // webp on some listings and jpg on others (the 騎 scans are jpg).
+      // eBay CDN large size — pinimg / local paste faces use other hosts.
       expect(
-        ebayIngestFaces().every((row) => /\/s-l1600\.(webp|jpg)$/.test(row.url)),
+        ebayIngestFaces()
+          .filter((row) => /ebayimg\.com/i.test(row.url))
+          .every((row) => /\/s-l1600\.(webp|jpg)$/.test(row.url)),
       ).toBe(true);
     });
 
@@ -294,6 +295,70 @@ import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, 
       expect(ledger.sellerWatch.store).toBe("gametradestore");
       expect(ledger.sellerWatch.url).toContain("_ssn=primegame");
       expect(ledger.note).toContain("do not crawl");
+    });
+
+    it("attributes TAKUMI No.271 to 作-271, not 忍-271, and does not crawl the store", () => {
+      const ledger = ebayPackshotLedger();
+      const row = ebayIngestFaces().find((f) => f.printedRef === "作-271");
+      expect(row?.diskId).toBe("ta0271");
+      expect(row?.setCode).toBe("maki14");
+      expect(row?.listing).toBe("https://www.ebay.com/itm/395097006484");
+      expect(row?.imageId).toBe("zHoAAOSwziRljpqN");
+      expect(row?.note).toMatch(/≠ 忍-271/);
+      expect(ledger.sellerWatchTakumi.user).toBe("takumisouljapan");
+      expect(ledger.sellerWatchTakumi.note).toMatch(/Do not crawl/i);
+      expect(ledger.sellerWatchTakumi.note).toMatch(/0 hits/);
+    });
+
+    it("attributes hmzkhyt Saku-190 to 作-190 and does not crawl the store", () => {
+      const ledger = ebayPackshotLedger();
+      const row = ebayIngestFaces().find((f) => f.printedRef === "作-190");
+      expect(row?.diskId).toBe("ta0190");
+      expect(row?.setCode).toBe("maki9");
+      expect(row?.listing).toBe("https://www.ebay.com/itm/388319591786");
+      expect(row?.imageId).toBe("heQAAOSwi0BoCyKp");
+      expect(ledger.sellerWatchHmzkhyt.user).toBe("hmzkhyt");
+      expect(ledger.sellerWatchHmzkhyt.store).toBe("japanesemarketshop");
+      expect(ledger.sellerWatchHmzkhyt.note).toMatch(/Paste-only/i);
+    });
+
+    it("ingests hmzkhyt Carddass JA orphans 術-291 and 作-306 from full SRP", () => {
+      const te = ebayIngestFaces().find((f) => f.printedRef === "術-291");
+      const ta = ebayIngestFaces().find((f) => f.printedRef === "作-306");
+      expect(te?.diskId).toBe("te0291");
+      expect(te?.listing).toBe("https://www.ebay.com/itm/205444167720");
+      expect(te?.imageId).toBe("umUAAOSwzCRoCeVC");
+      expect(ta?.diskId).toBe("ta0306");
+      expect(ta?.listing).toBe("https://www.ebay.com/itm/205454240221");
+      expect(ta?.imageId).toBe("ZPAAAOSwF21oEHJN");
+      expect(ebayPackshotLedger().sellerWatchHmzkhyt.url).toContain("_ipg=240");
+    });
+
+    it("ingests JA orphan 忍-398 from pasted CDN (pair with 397 on maki17 vending)", () => {
+      const row = ebayIngestFaces().find((f) => f.printedRef === "忍-398");
+      expect(row?.diskId).toBe("ni0398");
+      expect(row?.setCode).toBe("maki17");
+      expect(row?.imageId).toBe("cOsAAOSw7TJoEHHK");
+      expect(row?.url).toBe(
+        "https://i.ebayimg.com/images/g/cOsAAOSw7TJoEHHK/s-l1600.webp",
+      );
+      expect(row?.note).toMatch(/4543112451491000/);
+    });
+
+    it("ingests JA orphan 忍-400 from pasted eBay listing", () => {
+      const row = ebayIngestFaces().find((f) => f.printedRef === "忍-400");
+      expect(row?.diskId).toBe("ni0400");
+      expect(row?.setCode).toBe("maki17");
+      expect(row?.listing).toBe("https://www.ebay.com/itm/166675116904");
+      expect(row?.imageId).toBe("NrsAAOSwyeBmBTR7");
+    });
+
+    it("ingests JA orphan 作-334 from OtterMart listing", () => {
+      const row = ebayIngestFaces().find((f) => f.printedRef === "作-334");
+      expect(row?.diskId).toBe("ta0334");
+      expect(row?.setCode).toBe("maki17");
+      expect(row?.listing).toBe("https://www.ebay.com/itm/196782007384");
+      expect(row?.imageId).toBe("uXkAAOSwHBJnKcf-");
     });
   });
 }

@@ -1,20 +1,21 @@
 /**
  * Per-pack ledger of prints whose **recto** carries locale-specific printed text.
  *
- * Lives next to `cards-index.json` as `locale-specific-faces.json`. Any catalogue
- * pack can opt in via `CataloguePackInfo.localeArt`; nothing here is TCG-specific.
+ * SSOT: `locale_specific_faces` in `catalog.sqlite`. JSON file is legacy
+ * fallback only. Any catalogue pack can opt in via `CataloguePackInfo.localeArt`.
  */
 import {
   existsSync,
-  mkdirSync,
   readFileSync,
   statSync,
-  writeFileSync,
 } from "node:fs";
-import path from "node:path";
 
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { packLocaleSpecificFacesPath } from "@/lib/packPaths";
+import {
+  loadLocaleSpecificFacesFromSqlite,
+  writeLocaleSpecificFacesToSqlite,
+} from "@/providers/shared/sealedProducts/productsSqlite";
 
 export type LocaleSpecificFacesV1 = {
   version: 1;
@@ -94,15 +95,19 @@ export function writeLocaleSpecificFaces(
   pack: string,
   doc: LocaleSpecificFacesV1,
 ): { path: string; faces: number } {
-  const dest = packLocaleSpecificFacesPath(pack);
-  mkdirSync(path.dirname(dest), { recursive: true });
-  writeFileSync(dest, `${JSON.stringify(doc, null, 2)}\n`, "utf8");
+  const written = writeLocaleSpecificFacesToSqlite(pack, doc.faces);
   cache.delete(pack);
-  return { path: dest, faces: doc.faces.length };
+  return { path: written.dbPath, faces: written.faces };
 }
 
 /** `null` when the pack has no ledger — every print is treated as language-neutral. */
 export function loadLocaleSpecificFaces(pack: string): Set<string> | null {
+  const fromSqlite = loadLocaleSpecificFacesFromSqlite(pack);
+  if (fromSqlite) {
+    cache.set(pack, { mtimeMs: Date.now(), keys: fromSqlite });
+    return fromSqlite;
+  }
+
   const dest = packLocaleSpecificFacesPath(pack);
   if (!existsSync(dest)) return null;
   const mtimeMs = statSync(dest).mtimeMs;
@@ -120,15 +125,16 @@ export function loadLocaleSpecificFaces(pack: string): Set<string> | null {
   return keys;
 }
 
-export function resetLocaleSpecificFacesCache(): void {
-  cache.clear();
-}
-
 export function isLocaleSpecificFace(
-  ledger: Set<string> | null,
+  keys: Set<string> | null,
   set: string,
   card: string,
 ): boolean {
-  if (!ledger) return false;
-  return ledger.has(localeSpecificFaceKey(set, card));
+  if (!keys) return false;
+  return keys.has(localeSpecificFaceKey(set, card));
+}
+
+/** Test seam. */
+export function clearLocaleSpecificFacesCache(): void {
+  cache.clear();
 }

@@ -7,6 +7,10 @@
  * déjà là. Resume = `artName` présent sur disque. Le classement d'affichage
  * appartient à `faceChoice` / le moteur de pack, pas à cet helper.
  *
+ * Durabilité : avant d'appeler cet helper, les harvests consultent
+ * {@link catalogUrlRequiresLocalConservation}. URL durableCdn peut rester
+ * distante en base ; URL éphémère → conservation locale obligatoire ici.
+ *
  * Le mapping ledger → printKey reste chez le provider (c'est son identité) ;
  * seul le tuyau octets → disque est commun. Les pipelines réellement plus
  * riches (dbscg/dbsfw `fetchFaces` : fallback multi-URL + détection throttle)
@@ -18,10 +22,26 @@ import path from "node:path";
 import sharp from "sharp";
 
 import { httpGet } from "@/lib/http/httpClient";
+import {
+  catalogUrlMayStayRemote,
+  catalogUrlRequiresLocalConservation,
+} from "@/providers/shared/catalogDurableCdn";
 
 /** UA navigateur partagé pour les téléchargements de faces. */
 export const CARD_FACE_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
+
+/** Réexport contrat — harvests décident remote vs local avant install. */
+export {
+  catalogUrlMayStayRemote,
+  catalogUrlRequiresLocalConservation,
+};
+
+/**
+ * Après promote d'un fichier staging → data/ : enregistre le hash puis purge.
+ * Skip re-fetch au sync suivant si {@link catalogArtefactIsFresh}.
+ */
+export { recordCatalogPromoteAndPurgeStaging, catalogArtefactIsFresh } from "@/providers/shared/catalogIngestLedger";
 
 export type DownloadCardFaceOptions = {
   referer?: string;

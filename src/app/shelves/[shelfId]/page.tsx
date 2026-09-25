@@ -58,17 +58,45 @@ import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
 import { groupCopies } from "@/core/collect/groupCopies";
 import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
-import { ItemModal } from "@/components/modals/ItemModal";
-import { PrintPickerModal } from "@/components/modals/PrintPickerModal";
-import {
-  BulkAddModal,
-  type BulkAddTab,
-} from "@/components/modals/BulkAddModal";
-import { BulkMoveModal } from "@/components/modals/BulkMoveModal";
-import { BulkDeleteModal } from "@/components/modals/BulkDeleteModal";
+import dynamic from "next/dynamic";
+import type { BulkAddTab } from "@/components/modals/BulkAddModal";
 import { ScannerButton } from "@/components/ScannerButton";
-import { ShelfModal } from "@/components/modals/ShelfModal";
 import { ScanFAB } from "@/components/ScanFAB";
+
+const ItemModal = dynamic(
+  () =>
+    import("@/components/modals/ItemModal").then((m) => m.ItemModal),
+  { ssr: false },
+);
+const PrintPickerModal = dynamic(
+  () =>
+    import("@/components/modals/PrintPickerModal").then(
+      (m) => m.PrintPickerModal,
+    ),
+  { ssr: false },
+);
+const BulkAddModal = dynamic(
+  () =>
+    import("@/components/modals/BulkAddModal").then((m) => m.BulkAddModal),
+  { ssr: false },
+);
+const BulkMoveModal = dynamic(
+  () =>
+    import("@/components/modals/BulkMoveModal").then((m) => m.BulkMoveModal),
+  { ssr: false },
+);
+const BulkDeleteModal = dynamic(
+  () =>
+    import("@/components/modals/BulkDeleteModal").then(
+      (m) => m.BulkDeleteModal,
+    ),
+  { ssr: false },
+);
+const ShelfModal = dynamic(
+  () =>
+    import("@/components/modals/ShelfModal").then((m) => m.ShelfModal),
+  { ssr: false },
+);
 
 import { saveItem, refreshItemsBatch } from "@/lib/api/items";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
@@ -99,6 +127,8 @@ import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import type { ShelfWithItemCount } from "@/types/shelves";
 import { usesPrintSearch } from "@/lib/printSearchTypes";
+import { prefetchPrintCatalogues } from "@/lib/client/printCataloguesCache";
+import { itemsAddLabelKey, itemsCountNounKey } from "@/core/identify/shelfLabels";
 import type { ItemWithMetadata } from "@/types/items";
 
 const itemSearchSchema = z.object({
@@ -467,6 +497,13 @@ function ShelfComponent() {
   const isPrintSearchShelf = usesPrintSearch(shelf?.type);
   /** Adding to a barcode-less shelf goes through the print picker instead. */
   const usesPrintPicker = isPrintSearchShelf && !editingItemId;
+  const addItemLabel = t(itemsAddLabelKey(shelf?.type));
+
+  // Warm print catalogues before the user opens the picker — filters ready, no skeleton.
+  useEffect(() => {
+    if (!isPrintSearchShelf || !shelf?.type) return;
+    prefetchPrintCatalogues(shelf.type);
+  }, [isPrintSearchShelf, shelf?.type]);
 
   const handleItemModalSubmit = useCallback(
     async (item: Prisma.ItemCreateInput | Prisma.ItemUpdateInput) => {
@@ -862,37 +899,46 @@ function ShelfComponent() {
                   </span>
                 </Button>
 
-                <DropdownMenu
-                  open={addMenuOpen}
-                  onOpenChange={setAddMenuOpen}
-                  modal={false}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
-                      tabIndex={selectionMode ? -1 : undefined}
-                    >
-                      <Plus className="size-4" />
-                      {t("items.addItem")}
-                      <ChevronDown className="size-4 opacity-80" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl">
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("item")}
-                    >
-                      <Plus className="size-4 mr-2" />
-                      {t("items.addItem")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("bulk", "names")}
-                    >
-                      <ListPlus className="size-4 mr-2" />
-                      {t("items.bulkAdd.menuLabel")}
-                    </DropdownMenuItem>
-                    {!isPrintSearchShelf && (
+                {isPrintSearchShelf ? (
+                  <Button
+                    className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                    onClick={() => openModalFromAddMenu("item")}
+                    tabIndex={selectionMode ? -1 : undefined}
+                  >
+                    <Plus className="size-4" />
+                    {addItemLabel}
+                  </Button>
+                ) : (
+                  <DropdownMenu
+                    open={addMenuOpen}
+                    onOpenChange={setAddMenuOpen}
+                    modal={false}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                        tabIndex={selectionMode ? -1 : undefined}
+                      >
+                        <Plus className="size-4" />
+                        {addItemLabel}
+                        <ChevronDown className="size-4 opacity-80" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-xl">
+                      <DropdownMenuItem
+                        className="cursor-pointer font-medium"
+                        onSelect={() => openModalFromAddMenu("item")}
+                      >
+                        <Plus className="size-4 mr-2" />
+                        {addItemLabel}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer font-medium"
+                        onSelect={() => openModalFromAddMenu("bulk", "names")}
+                      >
+                        <ListPlus className="size-4 mr-2" />
+                        {t("items.bulkAdd.menuLabel")}
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         className="cursor-pointer font-medium"
                         onSelect={() => openModalFromAddMenu("bulk", "scan")}
@@ -900,18 +946,20 @@ function ShelfComponent() {
                         <ScanLine className="size-4 mr-2" />
                         {t("items.bulkAdd.tabScan")}
                       </DropdownMenuItem>
-                    )}
-                    {shelf?.type === "books" && (
-                      <DropdownMenuItem
-                        className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("bulk", "series")}
-                      >
-                        <Layers className="size-4 mr-2" />
-                        {t("items.bulkSeries.menuLabel")}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {shelf?.type === "books" && (
+                        <DropdownMenuItem
+                          className="cursor-pointer font-medium"
+                          onSelect={() =>
+                            openModalFromAddMenu("bulk", "series")
+                          }
+                        >
+                          <Layers className="size-4 mr-2" />
+                          {t("items.bulkSeries.menuLabel")}
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             )}
           </div>
@@ -976,7 +1024,7 @@ function ShelfComponent() {
           <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
             <h2 className="text-xl font-semibold">
               {sortedItems.length || 0}{" "}
-              {sortedItems.length === 1 ? "item" : "items"}
+              {t(itemsCountNounKey(shelf?.type, sortedItems.length || 0))}
             </h2>
 
             {totalValue.total > 0 && (
@@ -1032,7 +1080,7 @@ function ShelfComponent() {
                   style={{ aspectRatio: skeletonAspectRatio }}
                 >
                   <Plus className="size-5 text-primary" />
-                  <span>{t("items.addItem")}</span>
+                  <span>{addItemLabel}</span>
                 </motion.button>
               )}
             </div>
@@ -1142,8 +1190,8 @@ function ShelfComponent() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleModalOpen("item")}
-              aria-label={t("items.addItem")}
-              title={t("items.addItem")}
+              aria-label={addItemLabel}
+              title={addItemLabel}
               className="size-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center focus:outline-none cursor-pointer border border-primary-foreground/10"
             >
               <Plus className="size-6" />

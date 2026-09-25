@@ -1,17 +1,13 @@
 import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrints";
 /**
- * Catalogue Pokémon **local**, sous `data/pokemon/prints.sqlite`.
+ * Catalogue Pokémon **local**, sous `data/pokemon/catalog.sqlite`.
  *
- * Pourquoi un fichier à part, alors que les autres packs mettent leurs tirages
- * dans `catalog.sqlite` : ce nom est déjà pris côté Pokémon par le magasin du
- * client TCG Live (`live_cards`, `card_foil`), et son écrivain **réécrit le
- * fichier entier** à chaque synchro — temporaire puis remplacement. Des tables
- * de tirages posées là disparaîtraient à la moisson suivante, sans un bruit.
+ * Même contrat que les autres packs TCG. Le dump TCG Live (`live_cards`,
+ * `card_foil`) vit à part dans `live.sqlite` — son écrivain réécrit le fichier
+ * entier à chaque synchro, donc il ne partage pas ce fichier.
  *
- * Les deux magasins ne disent d'ailleurs pas la même chose : celui de Live dit
- * *comment une carte brille*, celui-ci dit *ce qu'elle est*. C'est ce second
- * qui manquait — l'identité des cartes venait de l'API tcgdex, en distant, et
- * une recherche par nom devait donc sortir sur le réseau.
+ * Les deux magasins ne disent d'ailleurs pas la même chose : Live dit
+ * *comment une carte brille*, celui-ci dit *ce qu'elle est*.
  *
  * Une entrée par **carte et par langue** : le même tirage s'appelle
  * « Mystherbe » en français et « Oddish » en anglais, et les deux se cherchent.
@@ -27,7 +23,10 @@ import {
   setScopedWhere,
 } from "@/providers/shared/cardCatalogue/sets";
 
-import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonIdentityDbPath,
+} from "@/providers/pokemon/paths";
 
 export type TcgdexPrintRow = {
   printKey: string;
@@ -75,7 +74,8 @@ export type TcgdexSearchRow = {
 };
 
 export function tcgdexDbPath(): string {
-  return path.join(dataRoot(), "pokemon", "prints.sqlite");
+  ensurePokemonDbLayout();
+  return pokemonIdentityDbPath();
 }
 
 let activeDb: DatabaseSync | null = null;

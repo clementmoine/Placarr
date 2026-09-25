@@ -9,11 +9,6 @@ import {
   cataloguePackInfo,
   type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
-import type {
-  CatalogueSealedContainedProduct,
-  CatalogueSealedDetail,
-  CatalogueSealedRow,
-} from "@/lib/admin/catalogueProductsTypes";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { isCatalogueProductLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
 import {
@@ -21,23 +16,76 @@ import {
   type SealedPrintLink,
   type SealedProductEntry,
   sealedProductKey,
+  type RandomPoolScope,
 } from "@/providers/shared/sealedProducts/indexFormat";
 import {
   SEALED_KIND_ORDER,
   withRefinedSealedKind,
+  type SealedBehavior,
+  type SealedKind,
 } from "@/providers/shared/sealedProducts/kinds";
 import { resolveSealedLang } from "@/providers/shared/sealedProducts/lang";
 import { curatedProductsContentsPath } from "@/providers/shared/sealedProducts/curatedContents";
+import { sealedStructureAttested } from "@/providers/shared/sealedProducts/contentLayers";
 import { resolveSealedPackshotUrl } from "@/providers/shared/sealedProducts/packshotUrl";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
-import { providerModuleForPack } from "@/providers/shared/packOwner";
+import { providerModuleProviding } from "@/providers/shared/packOwner";
 
-export type {
-  CatalogueSealedContainedProduct,
-  CatalogueSealedDetail,
-  CatalogueSealedRow,
-} from "@/lib/admin/catalogueProductsTypes";
+export type CatalogueSealedRow = {
+  productKey: string;
+  slug: string;
+  kind: SealedKind;
+  behavior: SealedBehavior;
+  name: string | null;
+  setCode: string | null;
+  /** ISO-ish locale from the products-index (`fr`, `EN`, `ptbr`, …). */
+  lang: string | null;
+  image: string | null;
+  /** Dos de l'emballage, quand une source l'a photographié. Rare. */
+  imageBack: string | null;
+  setLogo: string | null;
+  declaredCardCount: number | null;
+  printCount: number;
+  contentsKnown: boolean;
+  containsPrintsIsPreview: boolean;
+  /**
+   * Quantité / pool attestés (booster 12 + set, display 24…) — pas la
+   * checklist carte-à-carte (`contentsKnown`).
+   */
+  structureAttested: boolean;
+  cardsPerPack: number | null;
+  packsContained: number | null;
+  randomPoolScope: RandomPoolScope;
+  /** Boutique / dump (*cards.fr…) — `null` = pas encore coté. */
+  priceCents: number | null;
+  label: string;
+};
 
+/** Produit scellé résolu pour la checklist (packshot + qty). */
+export type CatalogueSealedContainedProduct = {
+  slug: string;
+  qty: number;
+  name: string | null;
+  image: string | null;
+  kind: SealedKind;
+  productKey: string;
+  contentsKnown: boolean;
+};
+
+/** Full SKU payload for the Scellés content dialog (checklist). */
+export type CatalogueSealedDetail = CatalogueSealedRow & {
+  cardsPerPack: number | null;
+  packsContained: number | null;
+  packsBySet: Record<string, number> | null;
+  setCardCount: number | null;
+  randomPoolScope: RandomPoolScope;
+  /** SKUs scellés inclus (starters / boosters d'un pack multi-produits). */
+  guaranteedProducts: CatalogueSealedContainedProduct[];
+  guaranteedPrints: SealedPrintLink[];
+  randomPoolPrints: SealedPrintLink[];
+  /** Shop / curated union list — preview tiles when `containsPrintsIsPreview`. */
+  prints: SealedPrintLink[];
+};
 
 type PackCache = {
   mtimeMs: number;
@@ -76,8 +124,10 @@ export type ListCatalogueProductsInput = {
   offset?: number;
   limit?: number;
   q?: string;
-  /** Checklist queue: SKUs whose card list is not yet trusted. */
+  /** Checklist queue: SKUs without a trusted card list **and** without attested structure. */
   contentsUnknown?: boolean;
+  /** Audit queue: SKUs with no positive `priceCents` in the products-index. */
+  missingPrice?: boolean;
 };
 
 export type ListCatalogueProductsResult = {
@@ -110,10 +160,76 @@ function rowFromEntry(
   );
   const printCount =
     guaranteedCount > 0 ? guaranteedCount : entry.prints.length;
-  const count =
-    entry.declaredCardCount != null
-      ? `${printCount}/${entry.declaredCardCount}`
-      : String(printCount);
+  const structureAttested = sealedStructureAttested({
+    kind: entry.kind,
+    behavior: entry.behavior,
+    contentsKnown: entry.contentsKnown,
+    cardsPerPack: entry.cardsPerPack,
+    packsContained: entry.packsContained,
+    randomPoolScope: entry.randomPoolScope,
+    guaranteedPrintCount: guaranteedCount,
+    declaredCardCount: entry.declaredCardCount,
+  });
+  /*
+    Opaque random packs / containers: prefer attested structure in the
+    tile count (12 · pool set) over shop preview fractions (15/222).
+  */
+  let count: string;
+  if (entry.contentsKnown || guaranteedCount > 0) {
+    count =
+      entry.declaredCardCount != null
+        ? `${printCount}/${entry.declaredCardCount}`
+        : String(printCount);
+  } else if (
+    structureAttested &&
+    entry.behavior === "pack_container" &&
+    entry.packsContained != null
+  ) {
+    count = String(entry.packsContained);
+  } else if (
+    structureAttested &&
+    entry.cardsPerPack != null &&
+    entry.randomPoolScope === "set"
+  ) {
+    count = String(entry.cardsPerPack);
+  } else if (
+    structureAttested &&
+    entry.randomPoolScope === "set"
+  ) {
+    // Pokémon etc. — pool known, pack size not attested → set size hint only.
+    count =
+      entry.declaredCardCount != null
+        ? `set~${entry.declaredCardCount}`
+        : "set";
+  } else if (
+    structureAttested &&
+    entry.packsContained != null &&
+    entry.cardsPerPack != null
+  ) {
+    count = `${entry.packsContained}×${entry.cardsPerPack}`;
+  } else if (
+    structureAttested &&
+    entry.packsContained != null &&
+    entry.packsContained > 1
+  ) {
+    count = String(entry.packsContained);
+  } else if (structureAttested && entry.behavior === "known_bundle") {
+    count =
+      entry.declaredCardCount != null
+        ? `${printCount}/${entry.declaredCardCount}`
+        : printCount > 0
+          ? String(printCount)
+          : "deck";
+  } else if (entry.declaredCardCount != null && !entry.containsPrintsIsPreview) {
+    count = `${printCount}/${entry.declaredCardCount}`;
+  } else if (entry.containsPrintsIsPreview) {
+    count =
+      entry.declaredCardCount != null
+        ? `~${entry.declaredCardCount}`
+        : "—";
+  } else {
+    count = String(printCount);
+  }
   const image = corpusPack
     ? resolveSealedPackshotUrl({
         packId: corpusPack,
@@ -137,6 +253,14 @@ function rowFromEntry(
     printCount,
     contentsKnown: entry.contentsKnown,
     containsPrintsIsPreview: entry.containsPrintsIsPreview,
+    structureAttested,
+    cardsPerPack: entry.cardsPerPack,
+    packsContained: entry.packsContained,
+    randomPoolScope: entry.randomPoolScope,
+    priceCents:
+      typeof entry.priceCents === "number" && entry.priceCents > 0
+        ? entry.priceCents
+        : null,
     label: entry.setCode
       ? `${entry.setCode} · ${name} · ${count}`
       : `${name} · ${count}`,
@@ -184,25 +308,13 @@ function rowsForPack(pack: CataloguePackId): CatalogueSealedRow[] {
  * PrintKeys with a **grouping** (ex. `…-prerelease`) are channel alts, not the
  * anonymous set lottery — those belong in a `listed` pool (manga pack, …).
  */
-export async function resolveSealedSetLotteryPool(input: {
-  packId: string;
-  setCode: string | null | undefined;
-  lang: string | null | undefined;
-  scope: string | null | undefined;
-  existing: readonly SealedPrintLink[];
-}): Promise<SealedPrintLink[]> {
-  if (input.existing.length > 0) return [...input.existing];
-  if (input.scope !== "set") return [...input.existing];
-  const setId = input.setCode?.trim();
-  if (!setId) return [];
-  const owner = providerModuleForPack(input.packId);
-  if (!owner?.listSetPrints) return [];
-  const rows = await Promise.resolve(
-    owner.listSetPrints({
-      setId,
-      language: input.lang,
-    }),
-  );
+function mapLotteryRows(
+  rows: readonly {
+    printKey: string;
+    title?: string | null;
+    reference?: string | null;
+  }[],
+): SealedPrintLink[] {
   return rows
     .filter((row) => {
       const id = parsePrintKey(row.printKey);
@@ -214,6 +326,58 @@ export async function resolveSealedSetLotteryPool(input: {
       ref: row.reference?.trim() || null,
       printKey: row.printKey,
     }));
+}
+
+export async function resolveSealedSetLotteryPool(input: {
+  packId: string;
+  setCode: string | null | undefined;
+  lang: string | null | undefined;
+  scope: string | null | undefined;
+  existing: readonly SealedPrintLink[];
+}): Promise<SealedPrintLink[]> {
+  if (input.existing.length > 0) return [...input.existing];
+  if (input.scope !== "set") return [...input.existing];
+  const setId = input.setCode?.trim();
+  if (!setId) return [];
+  const owner = providerModuleProviding(input.packId, "listSetPrints");
+  if (!owner?.listSetPrints) return [];
+  const lang = input.lang?.trim() || null;
+  const rows = await Promise.resolve(
+    owner.listSetPrints({
+      setId,
+      language: lang,
+    }),
+  );
+  const mapped = mapLotteryRows(rows);
+  if (mapped.length > 0 || !lang) return mapped;
+  /*
+    Titres souvent JA-only (Bleach SCB, …) alors que le SKU boutique est FR :
+    un filtre langue strict viderait le pool alors que le set existe.
+  */
+  const fallback = await Promise.resolve(
+    owner.listSetPrints({ setId, language: null }),
+  );
+  return mapLotteryRows(fallback);
+}
+
+/** Shop abbr / setCode → id catalogue (logos / resolveCatalogueSetId). */
+export function resolveSealedLotterySetId(input: {
+  packId: string;
+  setCode: string | null | undefined;
+  catalogueSetId: string | null | undefined;
+  slug?: string | null;
+  name?: string | null;
+}): string | null {
+  const fromEntry =
+    input.catalogueSetId?.trim() || input.setCode?.trim() || null;
+  if (input.catalogueSetId?.trim()) return input.catalogueSetId.trim();
+  const owner = providerModuleProviding(input.packId, "resolveCatalogueSetId");
+  const resolved = owner?.resolveCatalogueSetId?.({
+    setCode: input.setCode,
+    slug: input.slug,
+    name: input.name,
+  });
+  return resolved?.trim() || fromEntry;
 }
 
 function buildGuaranteedProducts(
@@ -262,9 +426,16 @@ export async function getCatalogueProductDetailAsync(
     Object.values(index.products).map((row) => [row.slug, row] as const),
   );
   const row = rowFromEntry(key, entry, corpus);
-  const randomPoolPrints = await resolveSealedSetLotteryPool({
+  const lotterySetId = resolveSealedLotterySetId({
     packId: corpus,
     setCode: entry.setCode,
+    catalogueSetId: entry.catalogueSetId,
+    slug: entry.slug,
+    name: entry.name,
+  });
+  const randomPoolPrints = await resolveSealedSetLotteryPool({
+    packId: corpus,
+    setCode: lotterySetId,
     lang: row.lang,
     scope: entry.randomPoolScope,
     existing: entry.randomPoolPrints,
@@ -319,7 +490,10 @@ export function listCatalogueProducts(
   const limit = Math.min(200, Math.max(1, Math.floor(input.limit ?? 48)));
   let rows = rowsForPack(input.pack);
   if (input.contentsUnknown) {
-    rows = rows.filter((row) => !row.contentsKnown);
+    rows = rows.filter((row) => !row.contentsKnown && !row.structureAttested);
+  }
+  if (input.missingPrice) {
+    rows = rows.filter((row) => row.priceCents == null);
   }
   const q = input.q?.trim().toLowerCase();
   if (q) {

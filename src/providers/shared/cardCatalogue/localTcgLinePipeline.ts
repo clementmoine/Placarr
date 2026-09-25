@@ -1,10 +1,10 @@
 /**
- * Passe d'un catalogue local : schéma + index JSON + versos curés.
+ * Passe d'un catalogue local : schéma sqlite (+ faces language-specific).
  *
  * Sans `seed`, le pack s'ouvre à zéro carte — un onglet vrai, pas un trou.
  * Avec `seed`, on pose d'abord les tirages attestés (titres, pas des faces
- * inventées), puis on exporte. `seedProducts` pose le scellé à part : un
- * wrapper n'est pas une carte.
+ * inventées). `seedProducts` pose le scellé à part : un wrapper n'est pas une
+ * carte.
  */
 import { enrichCardsIndexArtDimensions } from "./enrichCardsIndexArtDimensions";
 import {
@@ -27,7 +27,7 @@ export async function runLocalTcgPipeline(input: {
   /** Limit curated set backs when several packs share one curated tree. */
   curatedIncludeSetCodes?: readonly string[];
   /**
-   * After export, write `locale-specific-faces.json` for prints that already
+   * After export, record locale-specific faces for prints that already
    * have art in ≥2 of these locales (stops cross-lang recto borrowing).
    */
   writeLocaleSpecificFacesFromIndex?: {
@@ -50,25 +50,20 @@ export async function runLocalTcgPipeline(input: {
   );
 
   if (input.writeLocaleSpecificFacesFromIndex) {
-    const { readFileSync } = await import("node:fs");
-    const { isCardsIndexV1 } = await import("@/effects/cardsIndex");
     const {
       buildLocaleSpecificFacesFromIndex,
       writeLocaleSpecificFaces,
     } = await import("@/lib/admin/localeSpecificFaces");
     try {
-      const raw = JSON.parse(readFileSync(written.path, "utf8")) as unknown;
-      if (isCardsIndexV1(raw)) {
-        const doc = buildLocaleSpecificFacesFromIndex(
-          raw,
-          input.writeLocaleSpecificFacesFromIndex.catalogueLocales,
-          input.writeLocaleSpecificFacesFromIndex.note,
-        );
-        const out = writeLocaleSpecificFaces(input.packId, doc);
-        console.log(
-          `── ${input.label} — ${out.faces} recto(s) language-specific → ${out.path}`,
-        );
-      }
+      const doc = buildLocaleSpecificFacesFromIndex(
+        written.index,
+        input.writeLocaleSpecificFacesFromIndex.catalogueLocales,
+        input.writeLocaleSpecificFacesFromIndex.note,
+      );
+      const out = writeLocaleSpecificFaces(input.packId, doc);
+      console.log(
+        `── ${input.label} — ${out.faces} recto(s) language-specific → ${out.path}`,
+      );
     } catch (err) {
       console.warn(
         `── ${input.label} — locale-specific-faces : ${err instanceof Error ? err.message : err}`,

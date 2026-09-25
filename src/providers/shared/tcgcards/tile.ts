@@ -42,10 +42,47 @@ import { decode } from "html-entities";
 const LOCALE_PREFIX = /^(?:en|fr|jp|ja)-(?=[a-z]+\d|[a-z]+-\d)/i;
 
 export function dbscardsSlugToPrintRef(slug: string): string | null {
-  const bare = slug.trim().replace(LOCALE_PREFIX, "");
+  const trimmed = decodeURIComponent(slug.trim());
+  /*
+    Lorcana: `223-204-fr-12-jessie-…` → set 12, number 223 → `12-223`.
+  */
+  const lorcana =
+    /^(\d+)-\d+-(?:fr|en|de|it|es|pt)-(\d+)-/i.exec(trimmed);
+  if (lorcana) {
+    return `${lorcana[2]!.toLowerCase()}-${lorcana[1]!.toLowerCase()}`;
+  }
+  /*
+    Pokémon *cards.fr puts the locale **between** set and number
+    (`asc-fr-276-pikachu`). Bandai puts it at the front (`en-bt25-009-…`).
+    Trying the mid-locale shape first keeps both families honest.
+  */
+  const pokeMidLocale =
+    /^([a-z0-9]+)-(?:fr|en|de|it|es|pt|ja|jp|ptbr|pt-br)-(\d+[a-z]*)-/i.exec(
+      trimmed,
+    );
+  if (pokeMidLocale) {
+    return `${pokeMidLocale[1]!.toLowerCase()}-${pokeMidLocale[2]!.toLowerCase()}`;
+  }
+  /*
+    Yu-Gi-Oh: `cyac-fr042-str-…` → `cyac-fr042` (set + locale+number).
+  */
+  const ygo =
+    /^([a-z0-9]+)-((?:fr|en|de|it)\d{3,})(?:-|$)/i.exec(trimmed);
+  if (ygo) {
+    return `${ygo[1]!.toLowerCase()}-${ygo[2]!.toLowerCase()}`;
+  }
+  /*
+    Named Lorcana slugs without the numeric set (`les-terres-d'encres-218-…`)
+    fall through — the title line (`218/204 • FR • 3`) carries the set.
+    Bare `set-number` only when the set looks like a code (digit, or ≤3 letters
+    like Bandai `p-082`), not a title word (`disney-100-18-p1-…`).
+  */
+  const bare = trimmed.replace(LOCALE_PREFIX, "");
   const match = /^([a-z0-9]+)-(\d+[a-z]*)-/i.exec(bare);
   if (!match) return null;
-  return `${match[1]!.toLowerCase()}-${match[2]!.toLowerCase()}`;
+  const set = match[1]!.toLowerCase();
+  if (!/\d/.test(set) && set.length > 3) return null;
+  return `${set}-${match[2]!.toLowerCase()}`;
 }
 
 /**
@@ -61,9 +98,19 @@ export function dbscardsPrintRef(tile: {
   sku?: string | null;
   slug: string;
 }): string | null {
-  const fromSku = /^([a-z0-9]+)-(\d+[a-z]*)-/i.exec(tile.sku ?? "");
+  /*
+    Bandai: `BT31-001-UC` (rarity suffix). Pokémon / Lorcana title: `ASC-276`
+    / `3-218` (no rarity segment). YGO: `CYAC-FR042` (lang glued to number).
+  */
+  const sku = tile.sku ?? "";
+  const fromSku = /^([a-z0-9]+)-(\d+[a-z]*)(?:-|$)/i.exec(sku);
   if (fromSku) {
     return `${fromSku[1]!.toLowerCase()}-${fromSku[2]!.toLowerCase()}`;
+  }
+  const fromYgoSku =
+    /^([a-z0-9]+)-((?:fr|en|de|it|es|pt)\d+[a-z]*)(?:-|$)/i.exec(sku);
+  if (fromYgoSku) {
+    return `${fromYgoSku[1]!.toLowerCase()}-${fromYgoSku[2]!.toLowerCase()}`;
   }
   return dbscardsSlugToPrintRef(tile.slug);
 }
@@ -99,7 +146,24 @@ export type DbscardsTile = {
 
 const TILE_SPLIT = /<div[^>]*\bdata-item="(\d+)"[^>]*>/gi;
 const SLUG = /href="\/cards\/([^"#?]+)"[^>]*title="/i;
+/** Bandai rarity-qualified: `BT31-001-UC`. */
 const SKU_FROM_TITLE = /title="[^"]*?\b([A-Z0-9]+-\d+[A-Z]*-[A-Z]+)\b/;
+/**
+ * Pokémon printed collector line in the same title attr:
+ * `ASC - 276/217 Pikachu` → sku `ASC-276`.
+ */
+const POKE_SKU_FROM_TITLE =
+  /title="[^"]*?\b([A-Z0-9]+)\s*-\s*(\d+[A-Za-z]*)\/\d+\b/;
+/**
+ * Lorcana: `218/204 • FR • 3 Balthazar…` → sku `3-218`.
+ */
+const LORCANA_SKU_FROM_TITLE =
+  /title="[^"]*?(\d+)\/\d+\s*[•·]\s*[A-Za-z]{2}\s*[•·]\s*(\d+)\b/;
+/**
+ * Yu-Gi-Oh: `CYAC-FR042 Luluwalilith…` → sku `CYAC-FR042`.
+ */
+const YGO_SKU_FROM_TITLE =
+  /title="[^"]*?\b([A-Z0-9]{2,}-[A-Z]{2}\d{3,}[A-Z]*)\b/;
 const NAME = /<h3[^>]*class="[^"]*item-name[^"]*"[^>]*>([\s\S]*?)<\/h3>/i;
 const LANG = /\blang="([a-z]{2})"/i;
 /**
@@ -171,9 +235,38 @@ function sideImages(html: string): {
 }
 
 function parseTile(itemId: string, body: string): DbscardsTile | null {
-  const slug = SLUG.exec(body)?.[1];
-  if (!slug) return null;
-  const sku = SKU_FROM_TITLE.exec(body)?.[1]?.toUpperCase() ?? null;
+  const rawSlug = SLUG.exec(body)?.[1];
+  if (!rawSlug) return null;
+  let slug = rawSlug;
+  try {
+    slug = decodeURIComponent(rawSlug);
+  } catch {
+    /* keep raw */
+  }
+  const bandaiSku = SKU_FROM_TITLE.exec(body)?.[1]?.toUpperCase() ?? null;
+  const pokeTitle = POKE_SKU_FROM_TITLE.exec(body);
+  const pokeSku = pokeTitle
+    ? `${pokeTitle[1]!.toUpperCase()}-${pokeTitle[2]!.toUpperCase()}`
+    : null;
+  /*
+    pkmcards.fr list titles often omit `ASC - 276/217` — only the slug carries
+    the collector code (`pbl-fr-001-…`). Without a slug fallback every Pokémon
+    tile landed with sku/ref null even though the face URL was fine.
+  */
+  const pokeSlug =
+    /^([a-z0-9]+)-(?:fr|en|de|it|es|pt|ja|jp|ptbr|pt-br)-(\d+[a-z]*)-/i.exec(
+      slug,
+    );
+  const pokeSkuFromSlug = pokeSlug
+    ? `${pokeSlug[1]!.toUpperCase()}-${pokeSlug[2]!.toUpperCase()}`
+    : null;
+  const lorcanaTitle = LORCANA_SKU_FROM_TITLE.exec(body);
+  const lorcanaSku = lorcanaTitle
+    ? `${lorcanaTitle[2]!}-${lorcanaTitle[1]!}`
+    : null;
+  const ygoSku = YGO_SKU_FROM_TITLE.exec(body)?.[1]?.toUpperCase() ?? null;
+  const sku =
+    bandaiSku ?? pokeSku ?? pokeSkuFromSlug ?? lorcanaSku ?? ygoSku;
   const nameMatch = NAME.exec(body);
   const priceText = (() => {
     const match = PRICE.exec(body);

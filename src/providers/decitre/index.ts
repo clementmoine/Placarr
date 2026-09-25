@@ -5,7 +5,7 @@ import {
   retailerProductBarcodeConfirmed,
   retailerProductUrlBarcodeConflicts,
 } from "@/core/commerce/retailer/productUrl";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {

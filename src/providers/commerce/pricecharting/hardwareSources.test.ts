@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
-import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodePrices";
 import { pricechartingModule } from "@/providers/commerce/pricecharting";
 
 describe("pricecharting hardware barcode sources", () => {

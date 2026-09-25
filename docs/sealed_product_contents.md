@@ -185,5 +185,5 @@ Le conseil d'achat utilise déjà `mergeCuratedSealedContents` via
 | --- | --- | --- |
 | `naruto/carddass` | `data/naruto/carddass/curated/sealed-contents.json` | Boosters FR/IT=8, JP=6 ; CCG US s24/s28 = 10×24 ; FR `duopack-s28` = 8×2 + PR-096 (EU) ; **S1–S4 starters known** ; S5 * /** + UltraJeux ; IT/JP structure 40 sans listes |
 | `pokemon` | `data/pokemon/curated/sealed-contents.json` | Displays=36 ; pas de `cardsPerPack` booster inventé |
-| `dbs/cg` / `dbs/fw` | `data/dbs/*/curated/sealed-contents.json` | Decks connus persistés ; displays=24 |
+| `dragonball/cg` / `dragonball/fw` | `data/dragonball/*/curated/sealed-contents.json` | Decks connus persistés ; displays=24 |
 

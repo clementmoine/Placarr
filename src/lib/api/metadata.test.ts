@@ -44,4 +44,27 @@ describe("getMetadataPreview", () => {
       }),
     );
   });
+
+  it("includes printKey when provided", async () => {
+    await getMetadataPreview(
+      "Haku",
+      "tcg",
+      null,
+      null,
+      "Naruto",
+      null,
+      "naruto:ni-0017",
+    );
+    expect(h.get).toHaveBeenCalledWith(
+      "/api/metadata",
+      expect.objectContaining({
+        params: expect.objectContaining({
+          name: "Haku",
+          type: "tcg",
+          shelfName: "Naruto",
+          printKey: "naruto:ni-0017",
+        }),
+      }),
+    );
+  });
 });

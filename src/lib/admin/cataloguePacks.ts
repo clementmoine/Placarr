@@ -1,5 +1,5 @@
 /**
- * Admin Catalogue packs — local `data/<pack>/` corpora (cards-index + optional foil kit).
+ * Admin Catalogue packs — local `data/<pack>/` corpora (`catalog.sqlite` + optional foil kit).
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
  * Dragon Ball has Masters + Fusion World + Lamincards (Edibas). Naruto has several lines (Carddass,
@@ -30,11 +30,11 @@ export const CATALOGUE_PACK_IDS = [
   "naruto/mythos",
   "naruto/kayou",
   "naruto/data-carddass",
-  "dbs/cg",
-  "dbs/fw",
-  "dbs/lamincards",
-  "dbs/jcc",
-  "dbs/heroes",
+  "dragonball/cg",
+  "dragonball/fw",
+  "dragonball/lamincards",
+  "dragonball/jcc",
+  "dragonball/heroes",
   "bleach/scb",
   "onepiece",
   "yugioh",
@@ -86,7 +86,7 @@ export type CatalogueFranchiseId =
   | "pokemon"
   | "lorcana"
   | "naruto"
-  | "dbs"
+  | "dragonball"
   | "bleach"
   | "onepiece"
   | "yugioh"
@@ -161,6 +161,13 @@ export type CataloguePackInfo = {
   labelEn: string;
   /** Materials / WebGL playroom (Pokémon + Lorcana). */
   hasFoilEffects: boolean;
+  /**
+   * Retail sealed SKUs expected in `products-index`.
+   * `false` = arcade / stickers / no attested retail sealed — Catalogue
+   * shows an honest empty message instead of « Lance une sync ».
+   * Default `true` when omitted.
+   */
+  hasSealedProducts?: boolean;
   /** Default scope when opening the pack. */
   defaultScope: CatalogueBrowseScope;
   /**
@@ -176,7 +183,7 @@ export type CataloguePackInfo = {
    */
   narutoCollectorDisk?: boolean;
   /**
-   * One grid tile per locale in `cards-index.json` (Naruto Carddass, Ninja
+   * One grid tile per locale in the identity corpus (Naruto Carddass, Ninja
    * Ranks). Without this, `pickLang` keeps a single row and hides FR / IT /
    * EN faces that live on other lang slots.
    */
@@ -189,13 +196,13 @@ export type CataloguePackInfo = {
   catalogueExpandMissingLocales?: boolean;
   /**
    * When `expandLocales` is on, emit a tile for every listed locale even when
-   * `cards-index.json` has no lang slot yet (shown as missing art, not hidden).
+   * identity corpus has no lang slot yet (shown as missing art, not hidden).
    */
   catalogueLocales?: readonly string[];
   /**
    * How catalogue tiles pick rectos across locales. Versos stay on the tile
    * locale; a missing back is honest. Any pack can opt in — see
-   * `locale-specific-faces.json` next to `cards-index.json`.
+   * `locale-specific-faces.json` next to `catalog.sqlite`.
    */
   localeArt?: {
     /** Neutral prints borrow the best recto among `catalogueLocales`. */
@@ -301,18 +308,23 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     hasFoilMeta: true,
     androidPackageId: "com.pokemon.pokemontcgl",
     defaultScope: "foils",
-    /** Live CDN has de/it/es/ptbr — catalogue = EN pivot + FR only. */
-    catalogueLocales: ["fr", "en"],
+    /**
+     * TCGdex corpus = JA original + FR + EN. Live may still dump de/it/es/ptbr
+     * stems — restrictRowsToCatalogueLocales keeps « Toutes locales » honest.
+     */
+    expandLocales: true,
+    catalogueLocales: ["ja", "fr", "en"],
     extractTarget: "pokemon",
     extractMarkers: [
       "foil/shaders",
       "foil/textures",
       "foil/materialSheets.json",
       "catalog.sqlite",
+      "live.sqlite",
       "liveFoilMasks.json",
       "cards.json",
     ],
-    emptyUnless: ["foil/shaders", "catalog.sqlite"],
+    emptyUnless: ["foil/shaders", "catalog.sqlite", "live.sqlite"],
     extract: {
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
       timeoutMsByScope: { catalogue: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS },
@@ -344,10 +356,9 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "foil/textures",
       "foil/web",
       "foil/manifest.json",
-      "cards-index.json",
       "catalog.sqlite",
     ],
-    emptyUnless: ["cards-index.json", "foil/web"],
+    emptyUnless: ["catalog.sqlite", "foil/web"],
     extract: {
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
@@ -380,12 +391,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "naruto",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Naruto: Carddass JA+FR+EN + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
@@ -437,12 +447,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "naruto-shippuden",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Naruto 疾風伝 : registres officiels + verso curé → data/naruto/shippuden",
@@ -478,12 +487,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "naruto-ranks",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Naruto Ninja Ranks : checklist Inkworks + packshots officiels + dumps fan → data/naruto/ninja-ranks",
@@ -516,12 +524,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "naruto-ultra",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Naruto Ultra Challenge : album + pochette (upscales) ; cartes encore vides → data/naruto/ultra-challenge",
@@ -555,12 +562,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "naruto-mythos",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Naruto Mythos (CICABOOM) : Konoha Shidō + Shinobi Shiren / Akatsuki sealed → data/naruto/mythos",
@@ -593,12 +599,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "naruto-kayou",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Naruto Kayou : narutocards + CapsuleCorp + kayouofficial Smriti → data/naruto/kayou",
@@ -625,17 +630,18 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Naruto Data Carddass",
     labelEn: "Naruto Data Carddass",
     hasFoilEffects: false,
+    /** Arcade / borne — pas de retail scellé attesté. */
+    hasSealedProducts: false,
     defaultScope: "all",
     /** Arcade JP only. */
     catalogueLocales: ["ja"],
     extractTarget: "naruto-data-carddass",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Naruto Data Carddass (arcade DN/NM/NX) → data/naruto/data-carddass",
@@ -648,8 +654,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Bandai Data Carddass arcade (Narultimate…), JP only. Prefixes DN / DT / NM / NF / NX (+ clear NC/NFC). Local catalogue from official cardlists.",
   },
   {
-    id: "dbs/cg",
-    franchiseId: "dbs",
+    id: "dragonball/cg",
+    franchiseId: "dragonball",
     franchiseLabelFr: "Dragon Ball",
     franchiseLabelEn: "Dragon Ball",
     lineLabelFr: "Masters",
@@ -667,15 +673,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "dbs-cg",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
-        "Dragon Ball Masters: cardlists Bandai FR+EN + clone TCG Arena → data/dbs/cg",
+        "Dragon Ball Masters: cardlists Bandai FR+EN + clone TCG Arena → data/dragonball/cg",
         "noms FR et EN dans l’index ; faces HTTP (FR dbscards / Bandai) séquentielles ; dump EN déjà rangé ignoré — --force pour écraser",
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
       ],
@@ -688,8 +693,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Bandai Masters catalogue — Deckplanet faces on sync, SAMPLE fallback",
   },
   {
-    id: "dbs/fw",
-    franchiseId: "dbs",
+    id: "dragonball/fw",
+    franchiseId: "dragonball",
     franchiseLabelFr: "Dragon Ball",
     franchiseLabelEn: "Dragon Ball",
     lineLabelFr: "Fusion World",
@@ -708,15 +713,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "dbs-fw",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
-        "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dbs/fw",
+        "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dragonball/fw",
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
@@ -726,8 +730,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     blurbEn: "Bandai Fusion World catalogue — SAMPLE faces, no foil dump",
   },
   {
-    id: "dbs/lamincards",
-    franchiseId: "dbs",
+    id: "dragonball/lamincards",
+    franchiseId: "dragonball",
     franchiseLabelFr: "Dragon Ball",
     franchiseLabelEn: "Dragon Ball",
     lineLabelFr: "Lamincards",
@@ -746,15 +750,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "dbs-lamincards",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
-        "Dragon Ball Lamincards (Edibas, PVC) : DBC → data/dbs/lamincards",
+        "Dragon Ball Lamincards (Edibas, PVC) : DBC → data/dragonball/lamincards",
         "Séries Nero / Argento / Oro / Platino / Smeraldo / z2008 — Coleka en secours plus tard",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
@@ -766,8 +769,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Edibas Lamincards (clear PVC). Faces from Dragon Ball Center. Not Masters / Fusion World.",
   },
   {
-    id: "dbs/jcc",
-    franchiseId: "dbs",
+    id: "dragonball/jcc",
+    franchiseId: "dragonball",
     franchiseLabelFr: "Dragon Ball",
     franchiseLabelEn: "Dragon Ball",
     lineLabelFr: "Carddass / JCC",
@@ -786,15 +789,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     expandLocales: true,
     catalogueLocales: ["ja", "fr", "en"],
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
-        "Dragon Ball Carddass / JCC (Bandai) : dbzcollection FR + carddass.fr/dbz Wayback → data/dbs/jcc",
+        "Dragon Ball Carddass / JCC (Bandai) : dbzcollection FR + carddass.fr/dbz Wayback → data/dragonball/jcc",
         "Facettes ja/fr/en — titres/faces attestés seulement",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
@@ -806,8 +808,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Bandai Carddass / CCG (2005–2009). D-1–D-938, SP and promos. Multilingual ja/fr/en (FR seeded).",
   },
   {
-    id: "dbs/heroes",
-    franchiseId: "dbs",
+    id: "dragonball/heroes",
+    franchiseId: "dragonball",
     franchiseLabelFr: "Dragon Ball",
     franchiseLabelEn: "Dragon Ball",
     lineLabelFr: "Heroes",
@@ -825,15 +827,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     catalogueOnly: true,
     catalogueLocales: ["ja"],
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
-        "Dragon Ball Heroes / Super DBH : carddass.com/dbh cardlist → data/dbs/heroes",
+        "Dragon Ball Heroes / Super DBH : carddass.com/dbh cardlist → data/dragonball/heroes",
         "Catalogue officiel JA (H/GM/JM/GDM + SDBH si branché)",
       ],
       timeoutMs: CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
@@ -867,12 +868,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     // Score US est un autre jeu (hors pack).
     catalogueLocales: ["ja", "fr"],
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Bleach Soul Card Battle (Carddass) : carddass.fr Wayback FR + JP ledger → data/bleach/scb",
@@ -903,15 +903,15 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
      * JA titles often land before JA faces; EN/FR Bandai art is already on disk.
      * Borrow like Mythos until JA rectos are harvested.
      */
+    expandLocales: true,
     catalogueLocales: ["ja", "fr", "en"],
     localeArt: { bestFaceAcrossLocales: true },
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "One Piece Card Game: punk-records (JA/FR/EN) + faces Bandai + opecards.fr",
@@ -942,18 +942,19 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       labelFr: label,
       labelEn: label,
       hasFoilEffects: false,
+      /** Albums / stickers Leclerc — hors catalogue TCG scellé. */
+      hasSealedProducts: false,
       defaultScope: "all" as const,
       /** E.Leclerc FR ops. */
       catalogueLocales: ["fr"] as const,
       extractTarget: op.extractTarget as CatalogueExtractTarget,
       catalogueOnly: true,
       extractMarkers: [
-        "cards-index.json",
         "catalog.sqlite",
         "cards",
         "cards/back.webp",
       ],
-      emptyUnless: ["cards-index.json", "catalog.sqlite"],
+      emptyUnless: ["catalog.sqlite"],
       extract: {
         prelude: [
           `Leclerc: seed checklist curated → data/${op.packId}`,
@@ -978,19 +979,23 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "yugioh",
     catalogueOnly: true,
+    expandLocales: true,
     catalogueLocales: ["fr", "en"],
-    localeArt: { bestFaceAcrossLocales: true },
+    /**
+     * YGO printings are language-specific (frame text + often regional codes).
+     * Do **not** borrow EN rectos onto FR tiles — missing FR art stays empty.
+     * Opt-in `bestFaceAcrossLocales` is for exceptional packs (OPTCG, Mythos…).
+     */
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Yu-Gi-Oh!: YGOPRODeck (EN/FR) + ScanFlip FR → data/yugioh",
-        "Faces locales YGOPRODeck ; ScanFlip CDN artUrl si pas encore téléchargé",
+        "Faces locales only (no cross-locale borrow); ygocards.fr sleeve → cards/back.webp",
         "Scellé ygocards.fr (boosters + displays) ; liste prix + faces boutique : --ygocards-faces",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
@@ -1016,12 +1021,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "mtg",
     catalogueOnly: true,
     extractMarkers: [
-      "cards-index.json",
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
     ],
-    emptyUnless: ["cards-index.json", "catalog.sqlite"],
+    emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Magic: The Gathering: Scryfall bulk all_cards → data/mtg",
@@ -1127,7 +1131,7 @@ export function resolveCataloguePackId(
     naruto: "naruto/carddass",
     cacg: "naruto/carddass",
     narutocacg: "naruto/carddass",
-    // `jcc` seul est ambigu (dbs/jcc l'emporte plus bas) — pas d'alias ici.
+    // `jcc` seul est ambigu (dragonball/jcc l'emporte plus bas) — pas d'alias ici.
     ccg: "naruto/carddass",
     enccg: "naruto/carddass",
     narutoen: "naruto/carddass",
@@ -1143,23 +1147,20 @@ export function resolveCataloguePackId(
     kayou: "naruto/kayou",
     datacarddass: "naruto/data-carddass",
     narultimate: "naruto/data-carddass",
-    dbs: "dbs/cg",
-    dragonball: "dbs/cg",
-    masters: "dbs/cg",
-    dbsmasters: "dbs/cg",
-    fusionworld: "dbs/fw",
-    edibas: "dbs/lamincards",
-    dbzlamincards: "dbs/lamincards",
-    jcc: "dbs/jcc",
-    cjc: "dbs/jcc",
-    dbjcc: "dbs/jcc",
-    dbzjcc: "dbs/jcc",
-    dbscjc: "dbs/jcc",
-    dragonballcarddass: "dbs/jcc",
-    dbcarddass: "dbs/jcc",
-    heroes: "dbs/heroes",
-    sdbh: "dbs/heroes",
-    dragonballheroes: "dbs/heroes",
+    dragonball: "dragonball/cg",
+    masters: "dragonball/cg",
+    fusionworld: "dragonball/fw",
+    edibas: "dragonball/lamincards",
+    dbzlamincards: "dragonball/lamincards",
+    jcc: "dragonball/jcc",
+    cjc: "dragonball/jcc",
+    dbjcc: "dragonball/jcc",
+    dbzjcc: "dragonball/jcc",
+    dragonballcarddass: "dragonball/jcc",
+    dbcarddass: "dragonball/jcc",
+    heroes: "dragonball/heroes",
+    sdbh: "dragonball/heroes",
+    dragonballheroes: "dragonball/heroes",
     bleach: "bleach/scb",
     scb: "bleach/scb",
     soulcardbattle: "bleach/scb",

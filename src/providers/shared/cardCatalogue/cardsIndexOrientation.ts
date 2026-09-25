@@ -1,29 +1,22 @@
-import { readFileSync } from "node:fs";
-
 import { isCardsIndexV1, type CardsIndexV1 } from "@/effects/cardsIndex";
 import {
   artSlotIsLandscape,
-  orientationFromIndexSlot,
   printIsLandscapeCard,
   resolveArtFaceOrientation,
   type ArtFaceOrientation,
 } from "@/lib/text/artFaceOrientation";
-import { packCardsIndexPath } from "@/lib/packPaths";
+import { orientationFromIndexSlot } from "@/lib/text/artFaceOrientationLenticular";
+import { loadCardsIndexDoc } from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 
 const cache = new Map<string, CardsIndexV1>();
 
 function loadPackIndex(packId: string): CardsIndexV1 | null {
   const cached = cache.get(packId);
   if (cached) return cached;
-  const dest = packCardsIndexPath(packId);
-  try {
-    const raw = JSON.parse(readFileSync(dest, "utf8")) as unknown;
-    if (!isCardsIndexV1(raw)) return null;
-    cache.set(packId, raw);
-    return raw;
-  } catch {
-    return null;
-  }
+  const raw = loadCardsIndexDoc(packId);
+  if (!raw || !isCardsIndexV1(raw)) return null;
+  cache.set(packId, raw);
+  return raw;
 }
 
 export function artOrientationForPackPrint(

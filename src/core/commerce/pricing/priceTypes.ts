@@ -1,5 +1,16 @@
 import type { ProviderProductUrlRef } from "@/types/providerModule";
 
+export type { ProviderProductUrlRef };
+
+export function providerProductUrlsForKey(
+  providerKey: string,
+  refs: readonly ProviderProductUrlRef[] | undefined,
+): string[] {
+  return (refs ?? [])
+    .filter((entry) => entry.providerKey === providerKey)
+    .map((entry) => entry.url);
+}
+
 export type PriceObservation = {
   source: string;
   productName?: string | null;

@@ -10,6 +10,7 @@ import {
 } from "@/components/admin/FoilPlayroom";
 import {
   CorpusPanel,
+  RefreshAllCorporaButton,
   useCatalogueCorpora,
 } from "@/components/admin/CatalogueCorporaPanel";
 import {
@@ -213,26 +214,35 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
     return [...fromCollection, ...fromCatalog];
   }, [catalog?.samples, items]);
 
-  const nav = topTabs.length ? (
-    <CatalogueNav
-      topTabs={topTabs}
-      topValue={activeTopValue}
-      onTopChange={selectTop}
-      lines={activeFranchise?.lines ?? []}
-      packId={activePackId}
-      onPackChange={selectPack}
-      locale={locale}
-    />
-  ) : (
-    <span className="text-sm text-muted-foreground">
-      {corporaLoading
-        ? fr
-          ? "Chargement…"
-          : "Loading…"
-        : fr
-          ? "Aucun corpus"
-          : "No corpora"}
-    </span>
+  const nav = (
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
+      {topTabs.length ? (
+        <CatalogueNav
+          topTabs={topTabs}
+          topValue={activeTopValue}
+          onTopChange={selectTop}
+          lines={activeFranchise?.lines ?? []}
+          packId={activePackId}
+          onPackChange={selectPack}
+          locale={locale}
+        />
+      ) : (
+        <span className="text-sm text-muted-foreground">
+          {corporaLoading
+            ? fr
+              ? "Chargement…"
+              : "Loading…"
+            : fr
+              ? "Aucun corpus"
+              : "No corpora"}
+        </span>
+      )}
+      <RefreshAllCorporaButton
+        busy={busy}
+        disabled={corporaLoading || corpora.length === 0}
+        onRefresh={refresh}
+      />
+    </div>
   );
 
   if (!activePackId && !activeCorpus && (itemsLoading || catalogLoading)) {

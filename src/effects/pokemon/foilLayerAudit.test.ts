@@ -91,7 +91,7 @@ describe("pokemon foil layer audit", () => {
 
   it.skipIf(!hasDump)("SunPillar / FlatSilver_CC CC layers wired", () => {
     const sun = paperMaterial("SunPillar")!;
-    expect(sun.textures._Tex_CC?.file).toContain("FX_T_Northern_Cross");
+    expect(sun.textures._CCPatternTex?.file).toContain("FX_T_Northern_Cross");
     expect(sun.floats._UseCCFoil).toBe(0);
     expect(
       paperMaterial("SunPillar", { foilMask: "CastAndCure" })!.floats
@@ -100,7 +100,7 @@ describe("pokemon foil layer audit", () => {
 
     const cc = paperMaterial("FlatSilver_CC")!;
     expect(cc.fragment).toBe("FlatSilver.frag");
-    expect(cc.textures._Tex_CC?.file).toContain("TEX_CC_PB");
+    expect(cc.textures._CCPatternTex?.file).toContain("TEX_CC_PB");
     expect(cc.floats._UseCCFoil).toBe(1);
   });
 

@@ -28,7 +28,7 @@ import { PROVIDER_MODULES } from "@/core/catalog/catalog";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
-import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodePrices";
 
 const philibertModule = PROVIDER_MODULES.find(
   (module) => module.info.id === "philibert",

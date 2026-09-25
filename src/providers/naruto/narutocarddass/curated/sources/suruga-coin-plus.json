@@ -1,0 +1,189 @@
+{
+  "source": "Suruga-ya.jp product detail GG594465–GG594481 (user paste 2026-09-21)",
+  "observed": "2026-09-21",
+  "ingest": "faces",
+  "lang": "ja",
+  "line": "carddass-jp",
+  "note": "コイン PLUS / PLUS 2 are tabletop Carddass (not Data Carddass). CDN JPEGs at cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg. GG594469 COIN-2 CDN 404 — replaced by GL124600 (2026-09-21). COIN-9 = GG936720 (Suruga CDN). COIN-11 = Mercari m15022716387_2 (no Suruga CDN found). GG594465–467 are retail UR rares already on disk.",
+  "faces": [
+    {
+      "productId": "GG594465",
+      "printedRef": "術-211",
+      "title": "千鳥",
+      "setCode": "maki10",
+      "ingest": true,
+      "note": "Already art.suruga on disk (same 350×512)."
+    },
+    {
+      "productId": "GG594466",
+      "printedRef": "術-328",
+      "title": "雷切",
+      "setCode": "maki15",
+      "ingest": true,
+      "note": "Already art.suruga on disk."
+    },
+    {
+      "productId": "GG594467",
+      "printedRef": "忍-365",
+      "title": "うちはイタチ",
+      "setCode": "maki15",
+      "ingest": true,
+      "note": "Already art.suruga on disk."
+    },
+    {
+      "productId": "GG594468",
+      "printedRef": "COIN-1",
+      "title": "うずまきナルト",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GL124600",
+      "printedRef": "COIN-2",
+      "title": "うちはサスケ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl124600.jpg",
+      "listing": "https://www.suruga-ya.jp/product/detail/GL124600",
+      "pixels": {
+        "width": 351,
+        "height": 512
+      },
+      "note": "Replaces GG594469 (CDN 404) + weak art.carddas 125×94 product thumb."
+    },
+    {
+      "productId": "GG594469",
+      "printedRef": "COIN-2",
+      "title": "うちはサスケ",
+      "setCode": "promo",
+      "ingest": false,
+      "cdnMissing": true,
+      "reason": "CDN jpg 404. Replaced by GL124600."
+    },
+    {
+      "productId": "GG594470",
+      "printedRef": "COIN-3",
+      "title": "春野サクラ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GG594471",
+      "printedRef": "COIN-4",
+      "title": "奈良シカマル",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GG594472",
+      "printedRef": "COIN-5",
+      "title": "ロック・リー",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GG594473",
+      "printedRef": "COIN-6",
+      "title": "はたけカカシ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GG594474",
+      "printedRef": "COIN-7",
+      "title": "白",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GG594475",
+      "printedRef": "COIN-8",
+      "title": "うちはイタチ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GG936720",
+      "printedRef": "COIN-9",
+      "title": "うずまきナルト＆ガマブン太",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gg936720.jpg",
+      "listing": "https://www.suruga-ya.jp/product/detail/GG936720",
+      "pixels": {
+        "width": 350,
+        "height": 512
+      },
+      "note": "Suruga product outside GG594468–481 block. CDN 350×512 confirmed COIN-9 printed."
+    },
+    {
+      "productId": "GG594476",
+      "printedRef": "COIN-10",
+      "title": "うちはサスケ＆春野サクラ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2006
+    },
+    {
+      "productId": "m15022716387",
+      "printedRef": "COIN-11",
+      "title": "日向ネジ＆テンテン",
+      "setCode": "promo",
+      "ingest": false,
+      "bandaiYear": 2006,
+      "listing": "https://jp.mercari.com/item/m15022716387",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m15022716387_2.jpg?1715254104",
+      "reason": "No Suruga CDN. Face ingested via mercari.json as art.mercari (789×1080 physical photo)."
+    },
+    {
+      "productId": "GG594477",
+      "printedRef": "COIN-12",
+      "title": "はたけカカシ＆イルカ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2006
+    },
+    {
+      "productId": "GG594478",
+      "printedRef": "COIN-13",
+      "title": "猿飛アスマ＆夕日紅",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2006
+    },
+    {
+      "productId": "GG594479",
+      "printedRef": "COIN-14",
+      "title": "自来也＆綱手姫",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2006
+    },
+    {
+      "productId": "GG594480",
+      "printedRef": "COIN-15",
+      "title": "パックン＆トントン",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2006
+    },
+    {
+      "productId": "GG594481",
+      "printedRef": "COIN-16",
+      "title": "桃地再不斬＆白",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2006
+    }
+  ],
+  "gaps": []
+}

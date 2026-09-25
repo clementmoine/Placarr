@@ -108,7 +108,11 @@ export async function POST(req: NextRequest) {
         source: "admin",
         ...refreshOpts,
       } as unknown as Prisma.InputJsonValue,
-      replaceOpenForKind: false,
+      replaceOpenForKind: true,
+      replaceOpenPayloadMatch: {
+        path: ["providerId"],
+        equals: mdl.info.id,
+      },
     });
     jobs.push({
       providerId: mdl.info.id,

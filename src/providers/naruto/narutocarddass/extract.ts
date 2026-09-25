@@ -56,6 +56,7 @@ import {
   harvestGgArchivePrices,
 } from "@/providers/naruto/shared/gg/ggArchiveHarvest";
 import { scrapeNarutoCardGameGgCards } from "./scrape/catalogues";
+import { harvestColekaCarddassPrices } from "./harvest/colekaPrices";
 import { harvestCarddasVol1Faces } from "./harvest";
 import { probeSurugaVol1Listings } from "./pipeline/suruga";
 import { probeSurugaMissingVol1 } from "./pipeline/suruga";
@@ -65,6 +66,7 @@ import {
   driveStagingHubPopulated,
 } from "./harvest";
 import { ingestNarutoCcgDriveLocalExport } from "./pipeline/drive";
+import driveLedger from "./curated/sources/naruto-ccg-drive.json";
 import {
   installCardgameclubPackshots,
   installEbayPackshots,
@@ -297,6 +299,16 @@ async function runScrape(argv: readonly string[]): Promise<void> {
           `── narutocardgame.gg prices — ${err instanceof Error ? err.message : err}`,
         );
       }
+      try {
+        const colekaPrices = await harvestColekaCarddassPrices();
+        console.log(
+          `── Coleka deals prices — ${colekaPrices.ledger.withPrintKey}/${colekaPrices.ledger.uniqueItems} printKey (cote ${colekaPrices.ledger.withQuotation})`,
+        );
+      } catch (err) {
+        console.warn(
+          `── Coleka deals prices — ${err instanceof Error ? err.message : err}`,
+        );
+      }
     }
     if (wayback || uspromos) {
       await scrapeNarutoColekaUsPromoCards(shared);
@@ -319,20 +331,42 @@ async function runScrape(argv: readonly string[]): Promise<void> {
           `── Drive hub déjà en staging (${driveStagingHubFileCount()} fichiers) — skip harvest HTTP (--force pour re-télécharger)`,
         );
       } else {
-        const harvest = await harvestNarutoCcgDriveStaging({
-          force: shared.force,
-          delayMs: shared.delayMs,
-          concurrency: shared.concurrency,
-          limit: shared.limit,
-        });
+        const {
+          catalogArtefactIsFresh,
+          packCatalogIngestLedgerPath,
+          readCatalogIngestLedger,
+        } = await import("@/providers/shared/catalogIngestLedger");
+        const driveContentHash = `${driveLedger.observed}|${driveLedger.folderId}`;
+        const driveLedgerState = readCatalogIngestLedger(
+          packCatalogIngestLedgerPath(NARUTO_PACK_ID),
+        );
         if (
-          harvest.downloaded.length ||
-          harvest.skipped.length ||
-          harvest.failed.length
+          !shared.force &&
+          catalogArtefactIsFresh(
+            driveLedgerState,
+            "drive:naruto-ccg",
+            driveContentHash,
+          )
         ) {
           console.log(
-            `── Drive staging : ${harvest.downloaded.length} DL, ${harvest.skipped.length} déjà là, ${harvest.failed.length} échecs`,
+            "── Drive hub — ledger frais, staging purgé → skip harvest HTTP",
           );
+        } else {
+          const harvest = await harvestNarutoCcgDriveStaging({
+            force: shared.force,
+            delayMs: shared.delayMs,
+            concurrency: shared.concurrency,
+            limit: shared.limit,
+          });
+          if (
+            harvest.downloaded.length ||
+            harvest.skipped.length ||
+            harvest.failed.length
+          ) {
+            console.log(
+              `── Drive staging : ${harvest.downloaded.length} DL, ${harvest.skipped.length} déjà là, ${harvest.failed.length} échecs`,
+            );
+          }
         }
       }
       if (!stagingOnly) {

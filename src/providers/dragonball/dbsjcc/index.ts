@@ -39,9 +39,10 @@ const built = createEmptyLocalTcgProvider({
     packId: DBS_JCC_PACK_ID,
     effectPackId: DBS_JCC_EFFECT_PACK_ID,
     printGame: DBS_JCC_PRINT_GAME,
+    catalogLifecycle: "finished",
     /** Original JP Card Game + FR adaptation — JA titles from attested nikita ledger (partial). */
     defaultLanguage: "ja",
-    listSetLanguages: ["ja", "fr"],
+    listSetLanguages: ["ja", "fr", "en"],
     normalizeSearchQuery: (query: string) => {
       const parsed = parseDbsjccNumber(query);
       return parsed ?? query;
@@ -49,7 +50,7 @@ const built = createEmptyLocalTcgProvider({
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "http://www.dbzcollection.fr/2v2/cartes.php?idc=1",
     notes:
-      "Bandai Card Game / JCC (2005–2009) → `data/dbs/jcc/`. Original JA (nikita DBC, partiel) + FR (dbzcollection + carddass.fr/dbz). EN : ledger attesté seulement.",
+      "Bandai Card Game / JCC (2005–2009) → `data/dragonball/jcc/`. Original JA (nikita DBC titres + Chitoroshop faces) + FR (dbzcollection + carddass.fr/dbz). EN : titres Chitoroshop attestés.",
   },
   runPipeline: async (argv) => {
     const { runDbsJccPackPipeline } = await import(

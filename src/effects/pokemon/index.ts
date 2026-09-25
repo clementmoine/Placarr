@@ -10,7 +10,7 @@
  */
 
 import type { EffectPackModule } from "@/core/render/foil/types";
-import { registerEffectPack } from "@/core/render/foil/registry";
+import { registerEffectPack } from "@/core/render/foil/backend";
 
 import { resolveCssRecipe } from "./cssRecipes";
 import { liveFoilMaskForBundle, isLiveFoilMaskOverride } from "./liveFoilMasks";
@@ -28,6 +28,7 @@ import {
   resolveEffectForPaperCard,
   resolveEffectForPrintKey,
 } from "./resolveEffect";
+import { isLiveSyntheticFinish } from "./liveFinishVariants";
 
 export const POKEMON_EFFECT_PACK_ID = "pokemon";
 export const POKEMON_ASSET_BASE = "/assets/pokemon";
@@ -67,7 +68,17 @@ export {
   isLiveSyntheticFinish,
   unreachableLiveKeys,
 } from "./liveFinishVariants";
-export { joinLiveForPrint, type LiveJoinResult } from "./liveJoin";
+export {
+  faceQuarterTurnsForPokemonPrint,
+  isOwnedPlayroomBundle,
+  joinLiveForPrint,
+  listReprintMetaSets,
+  ownedBundlesForShader,
+  remapCollectorNumberForLive,
+  reprintMetaForTcgdexSet,
+  SM115_SHINY_VAULT_LIVE_OFFSET,
+  type LiveJoinResult,
+} from "./liveJoin";
 export {
   lookupByBundle,
   lookupByName,
@@ -83,25 +94,16 @@ export {
   TCGDEX_TO_LIVE_SETS,
 } from "./setAliases";
 export {
-  remapCollectorNumberForLive,
-  SM115_SHINY_VAULT_LIVE_OFFSET,
-} from "./collectorRemap";
-export {
   liveSetCandidatesForResolve,
   liveSetCandidatesFromTcgdexSet,
   mechanicalReprintFallbackStems,
 } from "./liveSetId";
-export { listReprintMetaSets, reprintMetaForTcgdexSet } from "./reprintMeta";
 export {
   playroomArtForMaterial,
   listPlayroomArtsForMaterial,
   PLAYROOM_FACES_PER_MATERIAL,
 } from "./playroomArt";
 export type { PlayroomArt } from "./playroomArt";
-export {
-  ownedBundlesForShader,
-  isOwnedPlayroomBundle,
-} from "./liveOwnedBundles";
 
 function foilMaskForBundle(
   bundleId: string | null | undefined,
@@ -159,7 +161,8 @@ export const pokemonPaperEffectPack: EffectPackModule = {
   // CSS = Live plates (fallback when WebGL unavailable) — `docs/foil_effects.md`.
   resolveCss: (finish, varnish, opts) => {
     let foilMask = opts?.foilMask ?? null;
-    if (!foilMask && opts?.printKey) {
+    let finishForCss = finish;
+    if (opts?.printKey) {
       const resolved = resolveEffectForPrintKey(
         opts.printKey,
         finish,
@@ -167,12 +170,20 @@ export const pokemonPaperEffectPack: EffectPackModule = {
         opts.title,
       );
       if (resolved) {
-        foilMask = foilMaskForBundle(resolved.bundle, {
-          variant: resolved.variant,
-        });
+        foilMask =
+          opts.foilMask ??
+          foilMaskForBundle(resolved.bundle, {
+            variant: resolved.variant,
+          });
+        // Synthetic live-std / live-ph are catalogue buckets, not Live leaves.
+        // Resolve CSS from the leaf (PikachuFoil, Rainbow, …) or the look is the
+        // generic regularHolo bars instead of the print's shader.
+        if (finish && isLiveSyntheticFinish(finish) && resolved.shader) {
+          finishForCss = resolved.shader;
+        }
       }
     }
-    return resolveCssRecipe(finish, varnish, { foilMask });
+    return resolveCssRecipe(finishForCss, varnish, { foilMask });
   },
   listMaterials: () => listPokemonMaterialNames(),
   material: (name) => paperMaterial(name),

@@ -16,18 +16,17 @@ import { httpGet } from "@/lib/http/httpClient";
 import { parsePrintKey } from "@/core/identify/printKey";
 
 import {
-  exportNarutoCardsIndexJson,
-  NARUTO_PACK_ID,
+  loadNarutoCardsIndexFromSqlite,
   writeNarutoCcgIndex,
   type NarutoAssetRow,
   type NarutoPrintRow,
 } from "../indexStore";
-import { NARUTO_EN_PACK_ID } from "../identity";
+import { NARUTO_PACK_ID, NARUTO_LEGACY_EN_CCG_DISK } from "../identity";
 import {
   buildLocaleSpecificFacesFromIndex,
   writeLocaleSpecificFaces,
 } from "@/lib/admin/localeSpecificFaces";
-import { isCardsIndexV1 } from "@/effects/cardsIndex";
+import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { hinokunianJaNames } from "./catalogues";
 import { nikitaFactsJaNames } from "./catalogues";
 import { loadSurugaResolvedJaNames } from "./marketplace";
@@ -72,6 +71,7 @@ import { promoteAllNarutoFaces, promoteNarutoFace } from "../disk";
 import { narutoCardAbsDir, listNarutoCardDirs } from "../disk";
 import {
   appearanceSetsOf,
+  loadNarutoAppearancesFile,
   mergeAppearanceValues,
   primaryAppearanceSet,
   type NarutoLangAppearances,
@@ -546,14 +546,7 @@ export function migrateNarutoVcBacksToCorrectedArt(root: string): number {
 }
 
 function loadAppearances(root: string): Record<string, NarutoLangAppearances> {
-  try {
-    const raw = JSON.parse(
-      fs.readFileSync(path.join(root, "appearances.json"), "utf8"),
-    ) as { appearances?: Record<string, NarutoLangAppearances> };
-    return raw.appearances ?? {};
-  } catch {
-    return {};
-  }
+  return loadNarutoAppearancesFile(root)?.appearances ?? {};
 }
 
 function pickArtForNarutoCardDir(
@@ -649,7 +642,7 @@ export function buildIndexFromDisk(root: string): {
   assets: NarutoAssetRow[];
 } {
   /*
-    Checklist papier FR → multi-set dans appearances.json **avant** lecture.
+    Checklist papier FR → multi-set dans pack_documents.appearances **avant** lecture.
     Si Bandai liste NI-049 en S1 et S5, le disque doit le dire aussi — pas un
     OR SQL au moment de la search.
   */
@@ -991,7 +984,7 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
   );
   const storm3En = [
     ...loadStorm3Ledger(root),
-    ...loadStorm3Ledger(path.join(dataRoot(), NARUTO_EN_PACK_ID)),
+    ...loadStorm3Ledger(path.join(dataRoot(), NARUTO_LEGACY_EN_CCG_DISK)),
   ].filter(
     (card, i, all) => all.findIndex((c) => c.number === card.number) === i,
   );
@@ -1018,7 +1011,7 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
   }
   const colekaCcgFr = [
     ...loadColekaCcgFrLedgers(root),
-    ...loadColekaCcgFrLedgers(path.join(dataRoot(), NARUTO_EN_PACK_ID)),
+    ...loadColekaCcgFrLedgers(path.join(dataRoot(), NARUTO_LEGACY_EN_CCG_DISK)),
   ].filter(
     (card, i, all) => all.findIndex((c) => c.number === card.number) === i,
   );
@@ -1112,53 +1105,9 @@ function assembleNarutoCatalogue(
   };
 }
 
+/** EN CCG leftovers under `data/naruto/en-ccg/` are merged by layout migrate — no second index. */
 function indexNarutoEnPackFromDisk(): void {
-  // EN faces and sealed SKUs live on the carddass pack after layout migrate.
-  const root = path.join(dataRoot(), NARUTO_EN_PACK_ID);
-  const cardsDir = path.join(root, "cards");
-  if (!fs.existsSync(cardsDir)) return;
-  const leftover = listNarutoCardDirs(cardsDir).filter((hit) => {
-    try {
-      return fs.readdirSync(hit.abs).some((name) => !name.startsWith("."));
-    } catch {
-      return false;
-    }
-  });
-  if (leftover.length === 0) {
-    console.log(JSON.stringify({ enCcgIndex: "merged-into-carddass" }));
-    return;
-  }
-  const { prints, assets } = buildIndexFromDisk(root);
-  const titles = titlesForNarutoPrints(prints, root);
-  const { dbPath, printCount } = writeNarutoCcgIndex({
-    prints,
-    titles,
-    assets,
-    pack: NARUTO_EN_PACK_ID,
-    dbPath: path.join(root, "catalog.sqlite"),
-    meta: {
-      source: "disk",
-      titleSource: "stop2shop + coleka-s24 + coleka-s28",
-      titleCount: String(titles.length),
-    },
-  });
-  const indexPath = path.join(root, "cards-index.json");
-  exportNarutoCardsIndexJson(
-    prints,
-    assets,
-    indexPath,
-    titles,
-    NARUTO_EN_PACK_ID,
-  );
-  console.log(
-    JSON.stringify({
-      enCcgIndex: true,
-      printCount,
-      titleCount: titles.length,
-      dbPath,
-      indexPath,
-    }),
-  );
+  console.log(JSON.stringify({ enCcgIndex: "merged-into-carddass" }));
 }
 
 /**
@@ -1167,12 +1116,10 @@ function indexNarutoEnPackFromDisk(): void {
  * (NI-001/002 → art.suruga ; 忍-2（PS） chitoroshop vit sous `ni0002-ps`). JA-only orphans stay neutral so
  * empty FR shells can still borrow.
  */
-function writeCarddassLocaleSpecificFaces(indexPath: string): number {
+function writeCarddassLocaleSpecificFaces(index: CardsIndexV1): number {
   try {
-    const raw = JSON.parse(fs.readFileSync(indexPath, "utf8")) as unknown;
-    if (!isCardsIndexV1(raw)) return 0;
     const doc = buildLocaleSpecificFacesFromIndex(
-      raw,
+      index,
       ["fr", "ja", "en"],
       "Carddass FR/JA/EN — recto localisé, ne pas emprunter cross-langue.",
     );
@@ -1233,14 +1180,10 @@ export async function scrapeNarutoCards(
         migratedVcBacks: String(migratedVc),
       },
     });
-    const indexPath = path.join(root, "cards-index.json");
-    exportNarutoCardsIndexJson(
-      assembled.prints,
-      assets,
-      indexPath,
-      assembled.titles,
-    );
-    const localeSpecificFaces = writeCarddassLocaleSpecificFaces(indexPath);
+    const builtIndex = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
+    const localeSpecificFaces = builtIndex
+      ? writeCarddassLocaleSpecificFaces(builtIndex)
+      : 0;
     indexNarutoEnPackFromDisk();
     console.log(
       JSON.stringify(
@@ -1262,7 +1205,6 @@ export async function scrapeNarutoCards(
           titlesCorrected: assembled.found.titlesCorrected.length,
           localeSpecificFaces,
           dbPath,
-          indexPath,
         },
         null,
         2,
@@ -1567,7 +1509,7 @@ export async function scrapeNarutoCards(
   );
   const thumbMapped = mapSiteMedThumbsOntoAssets(root, printList, assetList);
 
-  console.log("── index catalog.sqlite + cards-index.json");
+  console.log("── index catalog.sqlite");
   const assembled = assembleNarutoCatalogue(
     printList,
     titlesForNarutoPrints(printList, root),
@@ -1612,14 +1554,10 @@ export async function scrapeNarutoCards(
       migratedVcBacks: String(migratedVc),
     },
   });
-  const indexPath = path.join(root, "cards-index.json");
-  exportNarutoCardsIndexJson(
-    assembled.prints,
-    assetList,
-    indexPath,
-    assembled.titles,
-  );
-  const localeSpecificFaces = writeCarddassLocaleSpecificFaces(indexPath);
+  const builtIndex = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
+  const localeSpecificFaces = builtIndex
+    ? writeCarddassLocaleSpecificFaces(builtIndex)
+    : 0;
   indexNarutoEnPackFromDisk();
 
   const siteByKind: Record<string, number> = {};
@@ -1657,7 +1595,6 @@ export async function scrapeNarutoCards(
       note: "cardAssets = NI/TE/TA/CL under cards/; staging = leftovers only (unused med, packshots, chrome)",
     },
     dbPath,
-    indexPath,
     cardsDir,
   };
   fs.writeFileSync(

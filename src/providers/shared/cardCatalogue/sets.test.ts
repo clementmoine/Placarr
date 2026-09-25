@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   finalizeSetOptions,
   isAnsweredQuery,
+  mergePrintSetOptions,
   pickCatalogueSetName,
   pickCatalogueSetNameByCount,
   setScopedWhere,
@@ -163,6 +164,23 @@ describe("finalizeSetOptions — rang donné par le pack", () => {
     const [sans] = finalizeSetOptions([{ id: "b", label: "B" }]);
     expect("sortKey" in sans).toBe(false);
   });
+
+  it("laisse le pack composer le libellé sans préfixe code", () => {
+    expect(
+      finalizeSetOptions([
+        {
+          id: "sv08.5",
+          label: "Écarlate et Violet — Évolutions Prismatiques",
+          prefixCode: false,
+        },
+      ]),
+    ).toEqual([
+      {
+        id: "sv08.5",
+        label: "Écarlate et Violet — Évolutions Prismatiques",
+      },
+    ]);
+  });
 });
 
 describe("setScopedWhere", () => {
@@ -222,5 +240,39 @@ describe("isAnsweredQuery", () => {
     expect(isAnsweredQuery("   ", "  ")).toBe(false);
     expect(isAnsweredQuery("elsa", null)).toBe(true);
     expect(isAnsweredQuery("", "s1")).toBe(true);
+  });
+});
+
+describe("mergePrintSetOptions", () => {
+  it("ajoute un set distant absent du local (ex. me05.5)", () => {
+    const merged = mergePrintSetOptions(
+      [{ id: "sv08", label: "Étincelles Surgissantes" }],
+      [{ id: "me05.5", label: "30ᵉ Anniversaire" }],
+    );
+    expect(merged.map((s) => s.id).sort()).toEqual(["me05.5", "sv08"]);
+  });
+
+  it("préfère le libellé local quand l'id existe déjà", () => {
+    const merged = mergePrintSetOptions(
+      [{ id: "sv08", label: "Étincelles Surgissantes" }],
+      [{ id: "sv08", label: "Surging Sparks" }],
+    );
+    expect(merged).toEqual([
+      { id: "sv08", label: "Étincelles Surgissantes" },
+    ]);
+  });
+
+  it("préfère le libellé local même s'il est plus court", () => {
+    const merged = mergePrintSetOptions(
+      [{ id: "me01", label: "Méga-Évolution" }],
+      [{ id: "me01", label: "ME01 — Mega Evolution" }],
+    );
+    expect(merged).toEqual([{ id: "me01", label: "Méga-Évolution" }]);
+  });
+
+  it("ignore les listes vides / null", () => {
+    expect(
+      mergePrintSetOptions(null, undefined, [], [{ id: "a", label: "A" }]),
+    ).toEqual([{ id: "a", label: "A" }]);
   });
 });

@@ -96,16 +96,17 @@ describe("cdnManifest", () => {
     expect(cat.names).toEqual(["mebsp_de_046"]);
   });
 
-  it("keeps_crc_and_drops_non_card_assets", () => {
+  it("keeps_crc_and_hashes_shared_assets_outside_card_names", () => {
     const cat = buildCdnCatalogue(
       [
         dump(
           "10101_0000",
           "fr",
-          ["xy8_fr_012", "xy8_fr_012_t", "shadersbundle"],
+          ["xy8_fr_012", "xy8_fr_012_t", "shadersbundle", "attack_fire"],
           [
-            { name: "xy8_fr_012", crc: 42 },
-            { name: "shadersbundle", crc: 7 },
+            { name: "xy8_fr_012", crc: 42, hash: "h-card" },
+            { name: "shadersbundle", crc: 7, hash: "h-shaders" },
+            { name: "attack_fire", crc: 9, hash: "h-fire" },
           ],
         ),
       ],
@@ -113,8 +114,10 @@ describe("cdnManifest", () => {
     );
     expect(cat.names).toEqual(["xy8_fr_012"]);
     expect(cat.crcOf.get("xy8_fr_012")).toBe(42);
-    expect(cat.crcOf.has("shadersbundle")).toBe(false);
+    expect(cat.hashOf.get("shadersbundle")).toBe("h-shaders");
+    expect(cat.hashOf.get("attack_fire")).toBe("h-fire");
+    expect(cat.bucketOf.get("shadersbundle")).toBe("10101_0000");
     // assetCount counts everything the manifest listed, cards or not.
-    expect(cat.assetCount).toBe(3);
+    expect(cat.assetCount).toBe(4);
   });
 });

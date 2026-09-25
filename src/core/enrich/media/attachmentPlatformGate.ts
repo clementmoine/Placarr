@@ -7,7 +7,7 @@ import {
   getPlatformKeyByScreenScraperSystemId,
   isVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 import {
   attachmentSemantics,
   COVER_FRIENDLY_TYPES,

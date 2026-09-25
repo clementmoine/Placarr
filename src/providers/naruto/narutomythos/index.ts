@@ -37,12 +37,20 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: NARUTO_MYTHOS_EFFECT_PACK_ID,
     printGame: NARUTO_MYTHOS_PRINT_GAME,
     defaultLanguage: "fr",
+    catalogLifecycle: "living",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://www.narutotcgmythos.com/",
     formatReference: formatMythosReference,
     setLabel: mythosSetLabel,
     setSortKey: mythosSetSortKey,
     normalizeSearchQuery: normalizeMythosSearchQuery,
+    listRemotePrintSets: async () => {
+      const { listMythosRemoteSets } = await import(
+        /* webpackIgnore: true */
+        "./listRemoteSets"
+      );
+      return listMythosRemoteSets();
+    },
     notes:
       "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. Faces `art.official` (gallery API cards.narutotcgmythos.com). Complément sans watermark : narutomythos.com (`art.narutomythos`). LorenZone / Narutopia / ScanFlip en secours. Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
   },

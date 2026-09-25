@@ -24,7 +24,7 @@ import {
 import type { PriceChartingMetadata } from "@/core/identify/lookup/providerTypes";
 import type { BarcodeLookupTaskBuilder } from "@/core/catalog/barcode";
 import type { BarcodeLookupType } from "@/types/providerModule";
-import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodePrices";
 
 type BarcodeLookupTaskBuilders = Record<
   BarcodeLookupType,

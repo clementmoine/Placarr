@@ -12,7 +12,7 @@ import {
   detectVideoGamePlatformKey,
   getVideoGamePlatform,
   normalizeVideoGamePlatformText,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 
 export type MerchShelfContext = {
   shelfType?: string | null;

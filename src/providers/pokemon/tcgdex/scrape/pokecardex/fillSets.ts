@@ -22,6 +22,7 @@ import { ensureTcgdexIndex } from "../../indexStore";
 import { loadTcgdexSetLogoIndex } from "../../setLogos";
 import {
   loadPokecardexSeriesAliases,
+  loadPokecardexNoScanSetIds,
   isPokecardexSeriesCode,
   pokecardexAliasCodeForSet,
 } from "./seriesCodes";
@@ -169,6 +170,7 @@ export function listPokecardexRetailFillTargets(opts?: {
   const lang = (opts?.language ?? "fr").trim().toLowerCase() || "fr";
   const aliases = loadPokecardexSeriesAliases();
   const aliasIds = new Set(Object.keys(aliases).map((id) => id.toLowerCase()));
+  const noScans = loadPokecardexNoScanSetIds();
 
   const rows = db
     .prepare(
@@ -205,6 +207,8 @@ export function listPokecardexRetailFillTargets(opts?: {
   for (const [setId, entry] of bySet) {
     // McDo : autre fill (`fillMcdo`) avec les bons codes `M23` / `MC*`.
     if (/^\d{4}/.test(setId)) continue;
+    // Pas de dossier scan intl (ex. Shining Legends / sm3.5).
+    if (noScans.has(setId)) continue;
     const code = pokecardexSeriesCodeForSet(setId, aliases);
     if (!code) continue;
     const curated = aliasIds.has(setId);

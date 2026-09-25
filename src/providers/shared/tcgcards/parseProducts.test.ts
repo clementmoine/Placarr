@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   dbscardsListingRowFromPath,
   dbscardsProductListingUrl,
+  parseContainedProducts,
   parseDbscardsProductListing,
   parseDbscardsProductPage,
   tcgCardsStaticProductImage,
@@ -173,11 +174,48 @@ describe("parseDbscardsProductPage", () => {
     expect(page.declaredCardCount).toBe(446);
     expect(page.containsPrints).toHaveLength(2);
     expect(page.containsPrintsIsPreview).toBe(true);
-    expect(page.containsPrints[0]?.slug).toBe(
-      "223-204-fr-12-jessie-cowgirl-energique",
-    );
+    expect(page.containsPrints[0]).toMatchObject({
+      slug: "223-204-fr-12-jessie-cowgirl-energique",
+      ref: "12-223",
+      sku: "12-223",
+      image: "https://static.lorcards.fr/cards/fr/wil/jessie.webp",
+    });
+    expect(page.containsPrints[1]?.ref).toBe("12-230");
     expect(page.relatedProducts).toEqual([
       "/products/boosters/booster-set-12-contrees-inconnues-merida",
     ]);
+    expect(page.containedProducts).toEqual([]);
+  });
+});
+
+describe("parseContainedProducts", () => {
+  it("reads qty badges from Composition du produit (pkmcards poster)", () => {
+    const html = fixture("pkmcards-product-composition.html");
+    const path =
+      "/products/collector-boxes/foudre-noire-flamme-blanche-collection-poster";
+    expect(parseContainedProducts(html, path)).toEqual([
+      {
+        slug: "booster-flamme-blanche-reshiram",
+        path: "/products/boosters/booster-flamme-blanche-reshiram",
+        qty: 2,
+      },
+      {
+        slug: "booster-foudre-noire-zekrom",
+        path: "/products/boosters/booster-foudre-noire-zekrom",
+        qty: 2,
+      },
+    ]);
+    const page = parseDbscardsProductPage(html, path, "collector-boxes");
+    expect(page.containedProducts).toHaveLength(2);
+    expect(page.containedProducts[0]?.qty).toBe(2);
+  });
+
+  it("stays empty when the section is absent", () => {
+    expect(
+      parseContainedProducts(
+        fixture("dbscards-product-booster.html"),
+        "/products/boosters/booster-b02-union-force",
+      ),
+    ).toEqual([]);
   });
 });

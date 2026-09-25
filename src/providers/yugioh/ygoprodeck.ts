@@ -11,12 +11,13 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
-import { packCardDir, packStagingDir } from "@/lib/packPaths";
+import { packCardDir, packLogsDir, packStagingDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import {
   downloadCardFaceBytes,
@@ -27,6 +28,11 @@ import type {
   LocalPrintsIndex,
   LocalPrintWrite,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import {
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 
 import { YUGIOH_PACK_ID } from "./pack";
 import {
@@ -86,6 +92,11 @@ export type YgoprodeckLedger = {
 };
 
 export function ygoprodeckLedgerPath(): string {
+  return path.join(packLogsDir(YUGIOH_PACK_ID), "ygoprodeck", "cards-tcg.json");
+}
+
+/** Legacy staging path (pre–promote→ledger). */
+function legacyYgoprodeckLedgerPath(): string {
   return path.join(
     packStagingDir(YUGIOH_PACK_ID),
     "ygoprodeck",
@@ -248,6 +259,13 @@ export async function harvestYugiohYgoprodeck(opts: {
   const out = ygoprodeckLedgerPath();
   mkdirSync(path.dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(ledger)}\n`, "utf8");
+  const contentHash = hashCatalogArtefactBytes(readFileSync(out));
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(YUGIOH_PACK_ID),
+    artefactId: "yugioh:ygoprodeck-tcg",
+    contentHash,
+    stagingPath: path.join(packStagingDir(YUGIOH_PACK_ID), "ygoprodeck"),
+  });
   return {
     path: out,
     en: enCards.length,
@@ -257,9 +275,24 @@ export async function harvestYugiohYgoprodeck(opts: {
 }
 
 function loadLedger(): YgoprodeckLedger | null {
-  const p = ygoprodeckLedgerPath();
-  if (!existsSync(p)) return null;
-  return JSON.parse(readFileSync(p, "utf8")) as YgoprodeckLedger;
+  for (const p of [ygoprodeckLedgerPath(), legacyYgoprodeckLedgerPath()]) {
+    if (!existsSync(p)) continue;
+    try {
+      const ledger = JSON.parse(readFileSync(p, "utf8")) as YgoprodeckLedger;
+      if (p === legacyYgoprodeckLedgerPath()) {
+        mkdirSync(path.dirname(ygoprodeckLedgerPath()), { recursive: true });
+        writeFileSync(
+          ygoprodeckLedgerPath(),
+          `${JSON.stringify(ledger)}\n`,
+          "utf8",
+        );
+      }
+      return ledger;
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
 }
 
 export async function installYugiohYgoprodeck(

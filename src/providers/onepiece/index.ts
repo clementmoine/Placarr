@@ -31,11 +31,19 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: ONEPIECE_EFFECT_PACK_ID,
     printGame: ONEPIECE_PRINT_GAME,
     defaultLanguage: "fr",
+    catalogLifecycle: "living",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://en.onepiece-cardgame.com/cardlist/",
     formatReference: formatOnepieceReference,
     borrowFaceAcrossLocales: true,
     decorateCandidate: (candidate) => stampOnepieceBack(candidate),
+    listRemotePrintSets: async () => {
+      const { listOnepieceRemoteSets } = await import(
+        /* webpackIgnore: true */
+        "./punkRecords"
+      );
+      return listOnepieceRemoteSets();
+    },
     notes:
       "Bandai OPTCG → `data/onepiece/`. Titres FR/EN via punk-records (vegapull) ; faces cardlist Bandai (`art.bandai.webp`) ; scellé opecards.fr. Pas de client Unity foil Bandai → face plate.",
   },

@@ -171,4 +171,38 @@ describe("preserveGalleryAttachmentsOnRegression", () => {
       ],
     ]);
   });
+
+  it("does not revive foreign-game covers on a printKey-bound refresh", () => {
+    const previous = [
+      storedAttachment(
+        "cover",
+        "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+        { source: "narutocarddass" },
+      ),
+      storedAttachment("cover", "https://lorcana.example/haku.jpg", {
+        source: "lorcanajson",
+      }),
+    ];
+    const next = [
+      {
+        type: "cover" as const,
+        url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+        source: "narutocarddass",
+      },
+      {
+        type: "cover" as const,
+        url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.coleka.webp",
+        source: "narutocarddass",
+      },
+    ];
+
+    expect(
+      preserveGalleryAttachmentsOnRegression(
+        previous,
+        next,
+        undefined,
+        "naruto:ni-0017",
+      ).map((attachment) => attachment.source),
+    ).toEqual(["narutocarddass", "narutocarddass"]);
+  });
 });

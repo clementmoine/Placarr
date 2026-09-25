@@ -39,15 +39,17 @@ import {
   canonicalizeNarutoPrintKey,
   isNarutoFamilyFolder,
   isNarutoSeriesSetCode,
+  loadNarutoAppearancesFile,
   mergeAppearanceValues,
   mintNarutoPrintKey,
   narutoCardDiskFolder,
   narutoCatalogueLineForCard,
   narutoDiskCardId,
-  NARUTO_EN_PACK_ID,
+  NARUTO_LEGACY_EN_CCG_DISK,
   NARUTO_PACK_ID,
   parseNarutoCollector,
   preferNarutoAppearanceSet,
+  writeNarutoAppearancesFile,
   type NarutoAppearanceValue,
   type NarutoAppearancesFile,
   type NarutoLangAppearances,
@@ -633,7 +635,7 @@ function mergeEnCcgProducts(carddassRoot: string, enRoot: string): number {
   const srcPath = path.join(enRoot, "products-index.json");
   if (!existsSync(srcPath)) return 0;
   const dest = loadProductsIndex(destPath, NARUTO_PACK_ID);
-  const src = loadProductsIndex(srcPath, NARUTO_EN_PACK_ID);
+  const src = loadProductsIndex(srcPath, NARUTO_PACK_ID);
   const destSlugs = new Set(
     Object.values(dest.products).map((entry) => entry.slug.trim()),
   );
@@ -642,7 +644,7 @@ function mergeEnCcgProducts(carddassRoot: string, enRoot: string): number {
     if (dest.products[key]) continue;
     const slug = entry.slug.trim();
     /*
-      Même SKU sous `naruto/en-ccg::display-s24` et `naruto/carddass::…` :
+      Même SKU sous une ancienne clé `naruto/en-ccg::…` et `naruto/carddass::…` :
       un seul conseil d'achat, une seule clé React.
     */
     if (slug && destSlugs.has(slug)) continue;
@@ -661,18 +663,10 @@ export function upsertNarutoAppearances(
   root: string,
   rows: readonly { diskId: string; lang: string; appearanceSet: string }[],
 ): void {
-  const file = path.join(root, "appearances.json");
-  let appearances: Record<string, NarutoLangAppearances> = {};
-  if (existsSync(file)) {
-    try {
-      const raw = JSON.parse(
-        readFileSync(file, "utf8"),
-      ) as NarutoAppearancesFile;
-      appearances = raw.appearances ?? {};
-    } catch {
-      /* rebuild */
-    }
-  }
+  const existing = loadNarutoAppearancesFile(root);
+  const appearances: Record<string, NarutoLangAppearances> = {
+    ...(existing?.appearances ?? {}),
+  };
   for (const row of rows) {
     const set = row.appearanceSet.trim().toLowerCase();
     const lang = row.lang.trim().toLowerCase();
@@ -689,17 +683,10 @@ export function upsertNarutoAppearances(
     );
     appearances[row.diskId] = langs;
   }
-  writeFileSync(
-    file,
-    `${JSON.stringify(
-      {
-        generatedAt: new Date().toISOString(),
-        appearances,
-      } satisfies NarutoAppearancesFile,
-      null,
-      2,
-    )}\n`,
-  );
+  writeNarutoAppearancesFile(root, {
+    generatedAt: new Date().toISOString(),
+    appearances,
+  });
 }
 
 export function migrateNarutoCardLayout(opts?: {
@@ -713,7 +700,8 @@ export function migrateNarutoCardLayout(opts?: {
   productsMerged: number;
 } {
   const carddassRoot = opts?.carddassRoot ?? physicalPackDir(NARUTO_PACK_ID);
-  const enRoot = opts?.enCcgRoot ?? physicalPackDir(NARUTO_EN_PACK_ID);
+  const enRoot =
+    opts?.enCcgRoot ?? physicalPackDir(NARUTO_LEGACY_EN_CCG_DISK);
   const destCards = path.join(carddassRoot, "cards");
   const enCards = path.join(enRoot, "cards");
 
@@ -758,20 +746,7 @@ export function migrateNarutoCardLayout(opts?: {
 
   const productsMerged = mergeEnCcgProducts(carddassRoot, enRoot);
 
-  const appearancesPath = path.join(carddassRoot, "appearances.json");
-  let previous: Record<string, NarutoLangAppearances> = {};
-  if (existsSync(appearancesPath)) {
-    try {
-      previous =
-        (
-          JSON.parse(
-            readFileSync(appearancesPath, "utf8"),
-          ) as NarutoAppearancesFile
-        ).appearances ?? {};
-    } catch {
-      previous = {};
-    }
-  }
+  const previous = loadNarutoAppearancesFile(carddassRoot)?.appearances ?? {};
   const mergedAppearances: Record<string, NarutoLangAppearances> = {
     ...previous,
   };
@@ -784,22 +759,16 @@ export function migrateNarutoCardLayout(opts?: {
     }
     mergedAppearances[diskId] = slot;
   }
-  writeFileSync(
-    appearancesPath,
-    `${JSON.stringify(
-      {
-        generatedAt: new Date().toISOString(),
-        appearances: remapNarutoAppearanceDiskIds(mergedAppearances),
-      } satisfies NarutoAppearancesFile,
-      null,
-      2,
-    )}\n`,
-  );
+  const appearancesDoc = {
+    generatedAt: new Date().toISOString(),
+    appearances: remapNarutoAppearanceDiskIds(mergedAppearances),
+  } satisfies NarutoAppearancesFile;
+  writeNarutoAppearancesFile(carddassRoot, appearancesDoc);
 
   return {
     carddassMoved: carddass.moved,
     enMoved,
-    appearancesPath,
+    appearancesPath: path.join(carddassRoot, "catalog.sqlite"),
     backs,
     productsMerged,
   };

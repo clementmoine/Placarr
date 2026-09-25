@@ -16,7 +16,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
-import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { packCardsDir } from "@/lib/packPaths";
 import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
 import {
   PKMCARDS_CARD_SITE,
@@ -34,6 +34,7 @@ import {
   listTcgdexPrintsWithImages,
   type TcgdexPrintRow,
 } from "../indexStore";
+import { loadTcgdexSetLogoIndex } from "../setLogos";
 
 /** TCGdex REST root (absorbed from former api.ts stub). */
 const API_BASE = "https://api.tcgdex.net/v2";
@@ -280,16 +281,8 @@ function tcgdexIdCandidates(id: string): string[] {
 }
 
 function loadLogoSets(): LogoSet[] {
-  const file = path.join(packStagingDir("pokemon"), "tcgdex-set-logos.json");
-  if (!existsSync(file)) return [];
-  try {
-    const raw = JSON.parse(readFileSync(file, "utf8")) as {
-      sets?: LogoSet[];
-    };
-    return Array.isArray(raw.sets) ? raw.sets : [];
-  } catch {
-    return [];
-  }
+  const index = loadTcgdexSetLogoIndex();
+  return (index?.sets ?? []) as LogoSet[];
 }
 
 /**
@@ -820,6 +813,10 @@ export async function fillPkmcardsFaces(opts: {
   /** Skip network scrape; use this index file (tests). */
   indexFile?: string;
   entries?: readonly DbscardsIndexEntry[];
+  /** Heartbeat pendant les ~17k tuiles (défaut console via harvest). */
+  onProgress?: (message: string) => void;
+  /** Log toutes les N tuiles scannées (défaut 500). */
+  progressEvery?: number;
 } = {}): Promise<FillPkmcardsReport> {
   const lang = (opts.lang ?? "fr").toLowerCase();
   const cardsRoot = opts.cardsRoot ?? packCardsDir("pokemon");
@@ -855,57 +852,81 @@ export async function fillPkmcardsFaces(opts: {
   };
 
   const delay = opts.downloadDelayMs ?? 80;
+  const progressEvery = Math.max(1, opts.progressEvery ?? 500);
   let processed = 0;
+  const total = entries.length;
 
-  for (const entry of entries) {
+  const emitProgress = (scanned: number) => {
+    opts.onProgress?.(
+      `pkmcards ${scanned}/${total}: ${report.written} écrites / ${report.skipped} skip / ${report.unmapped} hors map / ${report.failed} fail`,
+    );
+  };
+
+  if (total > 0) {
+    opts.onProgress?.(
+      `pkmcards ${lang}: ${total} tuiles (heartbeat /${progressEvery})…`,
+    );
+  }
+
+  for (let i = 0; i < entries.length; i++) {
     if (opts.limit != null && processed >= opts.limit) break;
+    const entry = entries[i]!;
     const parsed = parsePkmcardsPokemonSlug(entry.slug);
     if (!parsed) {
       report.unmapped += 1;
-      continue;
+    } else {
+      const liveStem = resolvePkmcardsAbbrToLiveStem(
+        parsed.setAbbr,
+        cardsRoot,
+        abbrMap,
+      );
+      if (!liveStem) {
+        report.unmapped += 1;
+      } else {
+        const tileLang = parsed.lang || lang;
+        const cardDir = pokemonPaperCardDir({
+          setId: liveStem,
+          lang: tileLang,
+          localId: parsed.number,
+          cardsRoot,
+        });
+        const dest = path.join(
+          cardDir,
+          pokemonFaceFilename("pkmcards", "art", "webp"),
+        );
+        // Per-source skip — same as dbscards: other faces on disk do not block.
+        if (!opts.force && existsSync(dest)) {
+          report.skipped += 1;
+        } else {
+          const url = entry.imageFront?.trim();
+          if (!url) {
+            report.failed += 1;
+          } else {
+            report.tried += 1;
+            processed += 1;
+            if (delay > 0 && report.tried > 1) await sleep(delay);
+            const buf = await download(url);
+            if (!buf) {
+              report.failed += 1;
+            } else {
+              mkdirSync(cardDir, { recursive: true });
+              writeFileSync(dest, buf);
+              refreshPokemonFaceDecision(cardDir, tileLang);
+              report.written += 1;
+            }
+          }
+        }
+      }
     }
-    const liveStem = resolvePkmcardsAbbrToLiveStem(
-      parsed.setAbbr,
-      cardsRoot,
-      abbrMap,
-    );
-    if (!liveStem) {
-      report.unmapped += 1;
-      continue;
+
+    const scanned = i + 1;
+    if (
+      scanned === 1 ||
+      scanned === total ||
+      scanned % progressEvery === 0
+    ) {
+      emitProgress(scanned);
     }
-    const tileLang = parsed.lang || lang;
-    const cardDir = pokemonPaperCardDir({
-      setId: liveStem,
-      lang: tileLang,
-      localId: parsed.number,
-      cardsRoot,
-    });
-    const dest = path.join(
-      cardDir,
-      pokemonFaceFilename("pkmcards", "art", "webp"),
-    );
-    // Per-source skip — same as dbscards: other faces on disk do not block.
-    if (!opts.force && existsSync(dest)) {
-      report.skipped += 1;
-      continue;
-    }
-    const url = entry.imageFront?.trim();
-    if (!url) {
-      report.failed += 1;
-      continue;
-    }
-    report.tried += 1;
-    processed += 1;
-    if (delay > 0 && report.tried > 1) await sleep(delay);
-    const buf = await download(url);
-    if (!buf) {
-      report.failed += 1;
-      continue;
-    }
-    mkdirSync(cardDir, { recursive: true });
-    writeFileSync(dest, buf);
-    refreshPokemonFaceDecision(cardDir, tileLang);
-    report.written += 1;
   }
 
   return report;

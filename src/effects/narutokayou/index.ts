@@ -7,7 +7,7 @@
 import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 import type { FoilCssRecipe } from "@/core/render/foil/types";
 import { resolveFixedLenticularPanelCrops } from "@/core/render/kayouLenticularArt";
-import { orientationFromLenticularGrid } from "@/lib/text/artFaceOrientation";
+import { orientationFromLenticularGrid } from "@/lib/text/artFaceOrientationLenticular";
 
 import {
   kayouLenticularFinishShader,

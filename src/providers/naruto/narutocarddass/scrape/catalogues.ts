@@ -14,6 +14,10 @@ import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 import goatLedger from "../curated/sources/goat-en-ccg.json";
 import { NARUTO_PACK_ID } from "../identity";
+import {
+  readPackDocument,
+  writePackDocument,
+} from "@/providers/shared/sealedProducts/productsSqlite";
 import { narutoCardAbsDir } from "../disk";
 import { upsertNarutoAppearances } from "../pipeline";
 import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../disk";
@@ -1958,6 +1962,7 @@ export const NARUTO_STAGING_NIKITA_NRT_LIST = path.join(
   "nikita-nrt",
 );
 export const NARUTO_JA_FACTS_FILE = "facts-ja.json";
+const NARUTO_JA_FACTS_DOC_KEY = "facts-ja";
 /** The 疾風伝 game on the same site — 忍伝 / 術伝 / 作伝, our `shi` / `mju` / `msa`. */
 export const NIKITA_SHIPPUDEN_PATH = "/cardlist/nrts";
 
@@ -1986,6 +1991,13 @@ export function narutoJaFactsPath(root?: string): string {
 }
 
 export function loadNarutoJaFacts(root?: string): NarutoJaFactsFile | null {
+  const pack = root ?? path.join(dataRoot(), NARUTO_PACK_ID);
+  const fromDb = readPackDocument<NarutoJaFactsFile>(
+    NARUTO_PACK_ID,
+    NARUTO_JA_FACTS_DOC_KEY,
+    { dbPath: path.join(pack, "catalog.sqlite") },
+  );
+  if (fromDb?.version === 1 && fromDb.cards) return fromDb;
   try {
     const raw = JSON.parse(
       readFileSync(narutoJaFactsPath(root), "utf8"),
@@ -1996,7 +2008,7 @@ export function loadNarutoJaFacts(root?: string): NarutoJaFactsFile | null {
   }
 }
 
-/** Names only — combat stats stay in `facts-ja.json`, not `cards-index.json`. */
+/** Names only — combat stats stay in pack_documents / facts-ja, not cards-index. */
 export function nikitaFactsJaNames(
   root?: string,
 ): { diskHint: string; name: string }[] {
@@ -2120,7 +2132,7 @@ export async function scrapeNikitaCardlistFacts(
   const staging = path.join(root, NARUTO_STAGING_NIKITA_NRT_LIST);
   mkdirSync(staging, { recursive: true });
 
-  console.log("── JA nikita cardlist → facts-ja.json");
+  console.log("── JA nikita cardlist → pack_documents.facts-ja");
   const html = opts.html ?? (await fetchCardlist());
   if (!html) {
     console.warn("── JA nikita cardlist : page absente, on s'arrête là");
@@ -2137,8 +2149,8 @@ export async function scrapeNikitaCardlistFacts(
     count: Object.keys(cards).length,
     cards,
   };
-  const dest = narutoJaFactsPath(opts.root);
-  writeFileSync(dest, `${JSON.stringify(file, null, 2)}\n`, "utf8");
+  const dbPath = path.join(root, "catalog.sqlite");
+  writePackDocument(NARUTO_PACK_ID, NARUTO_JA_FACTS_DOC_KEY, file, { dbPath });
   console.log(
     JSON.stringify({
       nikitaCardlist: true,
@@ -2147,7 +2159,7 @@ export async function scrapeNikitaCardlistFacts(
       unmapped: rows.filter((row) => !row.number).length,
     }),
   );
-  return { parsed: rows.length, joined: file.count, file: dest };
+  return { parsed: rows.length, joined: file.count, file: dbPath };
 }
 
 async function fetchPath(pathname: string): Promise<string | null> {

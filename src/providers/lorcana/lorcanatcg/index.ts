@@ -8,12 +8,14 @@ import type {
   MetadataAdapterContext,
 } from "@/types/providerModule";
 import { defineProvider } from "@/providers/shared/defineProvider";
+import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 
 import {
   ensureLorcanaTcgIndex,
   lookupLorcanaTcgPrint,
   lookupLorcanaTcgTitle,
   lorcanaTcgDbPath,
+  searchLorcanaTcgRows,
 } from "./indexStore";
 import { lorcanatcgCatalog } from "./pipeline";
 import {
@@ -149,6 +151,26 @@ export const lorcanatcgModule = defineProvider({
       slug,
       name,
       index: loadLorcanaSetLogoIndex(),
+    }),
+  /*
+    Owner du `dataPack` lorcana : la check-list scellés (pool set) passe par
+    ici, pas par lorcanajson (pas de dataPack). Même base locale que la recherche.
+  */
+  listSetPrints: async ({ setId, language }) =>
+    enumerateSetPrints({
+      setId,
+      language,
+      search: (opts) =>
+        searchLorcanaTcgRows(opts.query, {
+          language: opts.language,
+          limit: opts.limit,
+          setId: opts.setId,
+        }).map((row) => ({
+          printKey: row.printKey,
+          title: row.fullName,
+          reference: `${row.setCode}-${row.number}`,
+          language: row.lang,
+        })),
     }),
   printGames: ["lorcana"],
   resolveSetLogo: ({ setCode, slug, name }) =>

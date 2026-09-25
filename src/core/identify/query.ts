@@ -1,11 +1,11 @@
 import {
   detectVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { LISTING_PHYSICAL_SHELF_FORMAT_TERMS } from "@/core/identify/listingTerms";
 
-export type { VideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+export type { VideoGamePlatformKey } from "@/core/identify/platforms/platformList";
 
 export function cleanCode(barcode?: string | null): string {
   if (!barcode) return "";

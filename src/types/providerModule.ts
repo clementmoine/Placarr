@@ -230,6 +230,16 @@ export type PrintSetOption = {
    * Absent = on ne sait pas, et un filtre de langue ne masque rien.
    */
   languages?: string[];
+  /**
+   * Petite icône d'extension (symbole set), devant le libellé en check-list.
+   * Pas le wordmark marketing — le glyphe lu sur la carte (`PRE`, `SSP`…).
+   */
+  iconUrl?: string;
+  /**
+   * Chaîne de secours si `iconUrl` 404 (formats / CDN / abbr divergents).
+   * Le premier élément est en général égal à `iconUrl`.
+   */
+  iconUrls?: string[];
 };
 
 /**

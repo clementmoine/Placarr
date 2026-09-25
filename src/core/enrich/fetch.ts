@@ -10,7 +10,7 @@ import {
   orderProviderIdsForResolve,
   recordContributionsFromMergedMetadata,
 } from "@/core/enrich/providerRuntimeStats";
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { runWithConcurrency } from "@/lib/async";
 import { metadataProviderResolverMap } from "@/core/catalog/bootstrap";
 import { loadBarcodeAlternateNames } from "@/core/identify/alternateNames";
 import { cleanCode } from "@/core/identify/query";
@@ -343,6 +343,7 @@ export async function fetchMetadata(
       activeResults: seededActiveResults,
       candidateApiProviderIds: apiProviders.map((p) => p.id),
       pinnedNonScrapeProviderIds,
+      printKey: options?.printKey,
       hasCapability: stage1HasMetadataCapability,
     }),
   );

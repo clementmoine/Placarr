@@ -1,15 +1,12 @@
 /**
- * Paginated browse of local `data/<pack>/cards-index.json` for the admin Catalogue.
- * Server / scripts only (fs). Reads the file directly so syncs invalidate via mtime.
+ * Paginated browse of local catalogue corpora for the admin Catalogue.
+ * Server / scripts only (fs). Identity = sqlite via
+ * {@link tryBuildIdentityCatalogueRows} — no `cards-index.json` fallback.
  */
-import { readFileSync, statSync } from "node:fs";
-
-import {
-  emptyCardsIndex,
-  isCardsIndexV1,
-  type CardsIndexEntry,
-  type CardsIndexLangFiles,
-  type CardsIndexV1,
+import type {
+  CardsIndexEntry,
+  CardsIndexLangFiles,
+  CardsIndexV1,
 } from "@/effects/cardsIndex";
 import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 import {
@@ -21,9 +18,8 @@ import {
   assetsPackTierBackUrl,
   assetsSetBackUrl,
   listPackTierBackSlugs,
-  packCardsIndexPath,
 } from "@/lib/packPaths";
-import { tryBuildIdentityCatalogueRows } from "@/lib/admin/catalogueIdentityBrowse";
+import { tryBuildIdentityCatalogueRows, clearIdentityCatalogueBrowseCache } from "@/lib/admin/catalogueIdentityBrowse";
 import {
   catalogueCorpusPack,
   cataloguePackInfo,
@@ -207,6 +203,20 @@ function isNarutoUnifiedPack(pack: CataloguePackId): boolean {
   return NARUTO_UNIFIED_PACKS.includes(pack);
 }
 
+/**
+ * S1 manga prerelease is a French-channel alt (~10 €) — no JA/EN/IT print.
+ * Stubs must not invent JA tiles (with borrowed retail art) from sibling titles.
+ */
+function isNarutoMangaPrerelease(entry: {
+  set: string;
+  card: string;
+}): boolean {
+  if (entry.set.toLowerCase() === "prerelease") return true;
+  return (
+    parseNarutoCollector(entry.card)?.grouping?.toLowerCase() === "prerelease"
+  );
+}
+
 type ArtDonor = {
   printKey: string;
   set: string;
@@ -238,15 +248,8 @@ function donorScore(set: string, file: string, card?: string): number {
   return score;
 }
 
-type PackCache = {
-  mtimeMs: number;
-  rows: CatalogueCardRow[];
-};
-
-const cache = new Map<string, PackCache>();
-
 export function resetCatalogueCardsCache(): void {
-  cache.clear();
+  clearIdentityCatalogueBrowseCache();
 }
 
 /** Card-local face file under `cards/{set}/{lang}/{card}/`. */
@@ -357,27 +360,6 @@ function backFile(files: CardsIndexLangFiles): string | null {
   return files.back?.trim() || null;
 }
 
-function indexMtimeMs(pack: string): number {
-  try {
-    return statSync(packCardsIndexPath(catalogueCorpusPack(pack))).mtimeMs;
-  } catch {
-    return 0;
-  }
-}
-
-function loadIndex(pack: CataloguePackId): CardsIndexV1 {
-  const corpus = catalogueCorpusPack(pack);
-  try {
-    const raw = JSON.parse(
-      readFileSync(packCardsIndexPath(corpus), "utf8"),
-    ) as unknown;
-    if (isCardsIndexV1(raw)) return raw;
-  } catch {
-    /* missing / invalid */
-  }
-  return emptyCardsIndex(corpus);
-}
-
 function localeSlots(
   entry: CardsIndexEntry,
   preferLang: string | undefined,
@@ -477,7 +459,48 @@ function collapseNarutoIdentityRows(
     list.sort((a, b) => catalogueRowScore(b) - catalogueRowScore(a));
     collapsed.push(list[0]!);
   }
-  return [...passthrough, ...collapsed].sort(compareNarutoCatalogueRows);
+  return collapseNarutoAbBareJaRows(
+    [...passthrough, ...collapsed].sort(compareNarutoCatalogueRows),
+  );
+}
+
+/**
+ * JP 巻ノ doubles are two arts of one printed number (○ / ● marks on the
+ * carton; TV Tokyo / Suruga label them `-a` / `-b`). The unsuffixed JA row is
+ * a host leftover whose recto always matches one of those two — keep FR/EN
+ * bare (EU carton), drop bare JA only when both siblings are present.
+ * 雪姫 (`ni0001-a` without `-b`) is untouched: retail bare ≠ `-a`.
+ */
+function collapseNarutoAbBareJaRows(
+  rows: CatalogueCardRow[],
+): CatalogueCardRow[] {
+  const groupingsByNumber = new Map<string, Set<string>>();
+  for (const row of rows) {
+    if (row.kind && row.kind !== "face") continue;
+    const numberKey = narutoCollectorNumberKey(row.card);
+    if (!numberKey) continue;
+    const grouping =
+      parseNarutoCollector(row.card)?.grouping?.toLowerCase() ?? "";
+    const set = groupingsByNumber.get(numberKey) ?? new Set<string>();
+    set.add(grouping);
+    groupingsByNumber.set(numberKey, set);
+  }
+  const hideBareJa = new Set<string>();
+  for (const [numberKey, groupings] of groupingsByNumber) {
+    if (groupings.has("a") && groupings.has("b")) {
+      hideBareJa.add(numberKey);
+    }
+  }
+  if (hideBareJa.size === 0) return rows;
+  return rows.filter((row) => {
+    if (row.kind && row.kind !== "face") return true;
+    if (row.lang.toLowerCase() !== "ja") return true;
+    const grouping =
+      parseNarutoCollector(row.card)?.grouping?.toLowerCase() ?? "";
+    if (grouping) return true;
+    const numberKey = narutoCollectorNumberKey(row.card);
+    return numberKey == null || !hideBareJa.has(numberKey);
+  });
 }
 
 /** Build browse rows from an in-memory index (also used by unit tests). */
@@ -548,6 +571,12 @@ export function buildCatalogueCardRows(
     )) {
       const lang = slot.lang;
       if (isJpOnlyNarutoArtwork(entry.card) && lang.toLowerCase() !== "ja") {
+        continue;
+      }
+      if (
+        isNarutoMangaPrerelease(entry) &&
+        lang.toLowerCase() !== "fr"
+      ) {
         continue;
       }
       const languageSpecific = bestFaceAcrossLocales
@@ -873,18 +902,13 @@ export function withCatalogueBackRows(
 
 function cachedFaces(
   pack: CataloguePackId,
-  preferLang?: string,
+  _preferLang?: string,
 ): CatalogueCardRow[] {
-  const identity = tryBuildIdentityCatalogueRows(pack);
-  if (identity) return identity;
-
-  const mtimeMs = indexMtimeMs(pack);
-  const cacheKey = `${pack}|${preferLang ?? ""}`;
-  const hit = cache.get(cacheKey);
-  if (hit && hit.mtimeMs === mtimeMs) return hit.rows;
-  const faces = buildCatalogueCardRows(pack, loadIndex(pack), preferLang);
-  cache.set(cacheKey, { mtimeMs, rows: faces });
-  return faces;
+  /*
+    Null identity = missing/empty catalog.sqlite for this pack — honest empty,
+    never a silent cards-index.json projection.
+  */
+  return tryBuildIdentityCatalogueRows(pack) ?? [];
 }
 
 function withNarutoUnifiedBacks(faces: CatalogueCardRow[]): CatalogueCardRow[] {

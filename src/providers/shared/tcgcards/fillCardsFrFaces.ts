@@ -15,8 +15,7 @@ import {
 } from "@/providers/shared/cardCatalogue/faceInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import {
-  mtgcardsSlugToPrintKey,
-  ygocardsTileToPrintKey,
+  cardsFrShopPrintKey,
 } from "@/providers/shared/tcgcards/cardsFrPrintRef";
 import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
 import {
@@ -26,6 +25,7 @@ import {
   scrapeDbscardsIndex,
   ygocardsIndexPath,
 } from "@/providers/shared/tcgcards/scrapeList";
+import { tcgCardsSite } from "@/providers/shared/tcgcards/sites";
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -75,6 +75,10 @@ async function fillCardsFrFaces(opts: {
   const indexFile =
     host === "ygocards" ? ygocardsIndexPath("fr") : mtgcardsIndexPath("fr");
   const site = host === "ygocards" ? YGOCARDS_CARD_SITE : MTGCARDS_CARD_SITE;
+  const printGame = tcgCardsSite(host).printGame;
+  if (!printGame) {
+    throw new Error(`tcgcards: ${host} has no printGame`);
+  }
 
   if (
     opts.refreshIndex ||
@@ -121,10 +125,14 @@ async function fillCardsFrFaces(opts: {
 
   for (const tile of entries) {
     if (report.tried >= limit) break;
-    const printKey =
-      host === "ygocards"
-        ? ygocardsTileToPrintKey(tile)
-        : mtgcardsSlugToPrintKey(tile.slug);
+    const printKey = cardsFrShopPrintKey({
+      game: printGame,
+      print: {
+        slug: tile.slug,
+        ref: tile.ref,
+        image: tile.imageFront,
+      },
+    });
     if (!printKey) {
       report.unmapped += 1;
       continue;

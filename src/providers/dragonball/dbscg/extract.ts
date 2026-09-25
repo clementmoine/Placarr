@@ -10,8 +10,8 @@ import {
   mergeDbscardsTokensIntoCatalog,
   scrapeDbsCgCardlist,
 } from "./scrape/cardlist";
-import { scrapeDbscardsIndex } from "@/providers/dragonball/shared/dbscards/scrapeList";
-import { scrapeTcgCardsProducts } from "@/providers/dragonball/shared/dbscards/scrapeProducts";
+import { scrapeDbscardsIndex } from "@/providers/shared/tcgcards/scrapeList";
+import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
 
 import { DBS_CG_PACK_ID } from "./indexStore";
@@ -171,6 +171,36 @@ export async function runDbsCgPackPipeline(
         // traits, ère, coûts, verso, statut tournoi et errata. Les visuels
         // seuls laissaient tout ça sur le disque sans jamais l'ouvrir.
         buildDbsCgFacts();
+        const {
+          packCatalogIngestLedgerPath,
+          recordCatalogPromoteAndPurgeStaging,
+        } = await import("@/providers/shared/catalogIngestLedger");
+        const { arenaStagingDir } = await import("./install/arena");
+        const staging = arenaStagingDir();
+        // Prefer git HEAD (stable across re-install); fallback to prior ledger.
+        let contentHash: string | null = null;
+        try {
+          const { execFileSync } = await import("node:child_process");
+          contentHash = execFileSync("git", ["-C", staging, "rev-parse", "HEAD"], {
+            encoding: "utf8",
+          }).trim();
+        } catch {
+          const prior = (
+            await import("@/providers/shared/catalogIngestLedger")
+          ).readCatalogIngestLedger(
+            packCatalogIngestLedgerPath(DBS_CG_PACK_ID),
+          ).entries["dbs-cg:arena-clone"]?.contentHash;
+          contentHash = prior ?? null;
+        }
+        if (contentHash) {
+          recordCatalogPromoteAndPurgeStaging({
+            ledgerPath: packCatalogIngestLedgerPath(DBS_CG_PACK_ID),
+            artefactId: "dbs-cg:arena-clone",
+            contentHash,
+            stagingPath: staging,
+          });
+          console.log("── arena staging — purgé (faces + facts promus)");
+        }
       }
     }
     if (step === "faces") {

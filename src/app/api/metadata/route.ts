@@ -5,6 +5,7 @@ import {
   getMetadata,
   getDatabaseSuggestions,
   filterMetadataForShelfPlatform,
+  filterMetadataForPrintKey,
 } from "@/core/enrich";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import { normalizeRomChecksums } from "@/core/enrich/romChecksums";
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
     const barcode = searchParams.get("barcode");
     const platform = searchParams.get("platform");
     const shelfName = searchParams.get("shelfName");
+    const printKey = searchParams.get("printKey");
     const suggestions = searchParams.get("suggestions") === "true";
     const romChecksums = normalizeRomChecksums({
       crc: searchParams.get("crc") || searchParams.get("crc32"),
@@ -93,14 +95,16 @@ export async function GET(req: NextRequest) {
       shelfName,
       queuePriority: "high",
       romChecksums,
+      printKey,
     });
-    const filtered =
+    const filteredShelf =
       metadata && shelfName
         ? filterMetadataForShelfPlatform(metadata, {
             type,
             name: shelfName,
           })
         : metadata;
+    const filtered = filterMetadataForPrintKey(filteredShelf, printKey);
     return NextResponse.json(await withLocalizedImageUrls(filtered));
   } catch (error) {
     if (isAbortError(error)) {

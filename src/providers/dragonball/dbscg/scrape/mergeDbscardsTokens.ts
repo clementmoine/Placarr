@@ -10,8 +10,8 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { foilPackDataDir } from "@/lib/runtimeData";
-import { dbscardsIndexPath } from "@/providers/dragonball/shared/dbscards/scrapeList";
-import type { DbscardsIndexEntry } from "@/providers/dragonball/shared/dbscards/list";
+import { dbscardsIndexPath } from "@/providers/shared/tcgcards/scrapeList";
+import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
 
 import type { DbsParsedCard } from "../parse/cardlist";
 import {

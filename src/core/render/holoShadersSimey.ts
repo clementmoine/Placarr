@@ -8,7 +8,7 @@
  * CSS hue ramps stay only where Live has no drawable plate (regular bars,
  * reverse light mask, sunpillar-style diagonals without a spectrum slot).
  *
- * Staging reference CSS: `data/pokemon/staging/simey/{poke-holo,poke-151}/`
+ * Foil reference CSS: `data/pokemon/foil/simey/{poke-holo,poke-151}/`
  * (sync Simey CSS (local tool)). Not loaded in the browser.
  * Leafs with no simey analogue (Thatch, Tinsel, Squares, SunBeam/SunLava,
  * Stamped, Confetti, SolidColor) stay on APK recipes in `holoShadersPokemon.ts`.
@@ -92,8 +92,9 @@ const PT = "var(--pointer-from-top, 0.5)";
 
 const COSMOS_SPOT = `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(180, 100%, 89%, 0.5) 5%, hsla(180, 14%, 57%, 0.3) 40%, hsl(0, 0%, 0%) 130%)`;
 
-/** Amazing-rare invert spot (poke-holo `amazing-rare.css`). */
-const GALAXY_INVERT_SPOT = `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(150, 20%, 10%, 1) 10%, hsla(177, 22%, 80%, 0.1) 50%, hsla(0, 0%, 95%, 0.98) 90%)`;
+/** Amazing-rare invert spot — lightened vs poke-holo’s near-black core
+ * (`hsla(…, 10%)` + color-burn stamped Galaxy CSS black on orange art). */
+const GALAXY_INVERT_SPOT = `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(150, 25%, 55%, 0.55) 10%, hsla(177, 40%, 85%, 0.35) 45%, hsla(0, 0%, 98%, 0.9) 90%)`;
 
 const GALAXY_FOIL_SPOT = `radial-gradient(farthest-corner circle at ${PX} ${PY}, hsla(50, 20%, 90%, 0.95) 10%, rgba(181, 139, 164, 0.5) 50%, hsl(0, 0%, 0%) 60%)`;
 
@@ -557,24 +558,24 @@ const SIMEY_SHADERS: Readonly<Record<SimeyHoloShaderId, HoloShader>> = {
   /**
    * Galaxy / Amazing Rare — poke-holo `amazing-rare.css`.
    * Shine glitter×2 + invert spot; :before Live etch as `--foil`; :after
-   * Live vertical spectrum (sunpillar role) at saturation. Star carve = Live.
+   * Live vertical spectrum (sunpillar role) at saturation.
+   *
+   * Do **not** carve with `T_Holofoil_Galaxy_Stars` on this dark invert spot:
+   * the plate is near-black-in-alpha, so masking the `hsla(…, 10%)` core
+   * stamped opaque black star dots over the art. Simey leaves shine unmasked
+   * (`mask-image: none` on :before/:after); Live stars stay WebGL-only.
    */
   amazingRare: L("amazingRare", {
     backgroundImage: `${GLITTER}, ${GLITTER}, ${GALAXY_INVERT_SPOT}`,
     backgroundRepeat: "repeat, repeat, no-repeat",
     backgroundSize: `${GSIZE} ${GSIZE}, ${GSIZE} ${GSIZE}, cover`,
     backgroundPosition: "40% 45%, 55% 55%, center",
-    backgroundBlendMode: "soft-light, color-burn",
-    mixBlendMode: "normal",
-    opacity: 1,
-    filter: `brightness(${lit(1, 0.1)}) contrast(1) saturate(0.9)`,
+    backgroundBlendMode: "soft-light, soft-light",
+    mixBlendMode: "soft-light",
+    opacity: 0.85,
+    filter: `brightness(${lit(1.05, 0.1)}) contrast(1) saturate(0.95)`,
     pointerFalloff: false,
     overlay: "amazingRareFoil",
-    carve: {
-      url: `${T}/T_Holofoil_Galaxy_Stars.webp`,
-      size: "300px 300px",
-      repeat: "repeat",
-    },
   }),
 
   amazingRareFoil: L("amazingRareFoil", {

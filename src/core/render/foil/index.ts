@@ -39,27 +39,24 @@ export {
   subscribeFoilPool,
 } from "./pool";
 
-export { hotFoilStampUniforms } from "./hotFoilStamp";
-
-export { getEffectPack, listEffectPacks, registerEffectPack } from "./registry";
-
-export { selectFoilBackend } from "./selectBackend";
 export {
   applyHouseFoilFallback,
+  getEffectPack,
+  hotFoilStampUniforms,
   HOUSE_FOIL_FALLBACK_CSS_ID,
-} from "./houseFoilFallback";
-
-export {
+  listEffectPacks,
   pickDefaultCardBack,
   rankCardBacks,
+  registerEffectPack,
   resolveCardBackCandidates,
   resolveCardBackUrl,
   resolveDefaultCardBack,
   resolveSharedCardBackSkeleton,
+  selectFoilBackend,
   sharedCardBackSkeletonUrl,
   type CardBackCandidate,
   type CardBackScope,
-} from "./resolveBack";
+} from "./backend";
 export { foilRenderScale, FOIL_SHARP_WIDTH_PX } from "./capabilities";
 export { subscribeFoilFrame, foilClockSeconds } from "./clock";
 export {

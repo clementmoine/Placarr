@@ -20,6 +20,7 @@ import { ONEPIECE_PACK_ID, onepieceCuratedDir } from "./pack";
 import {
   harvestPunkRecords,
   installOnepieceBandaiFaces,
+  promoteAndPurgePunkRecordsStaging,
   seedOnepieceFromPunkRecords,
 } from "./punkRecords";
 
@@ -68,6 +69,12 @@ export async function runOnepiecePackPipeline(
       console.log(
         `── punk-records seed — ${seeded.prints} tirage${seeded.prints === 1 ? "" : "s"}, ${seeded.titles} titre${seeded.titles === 1 ? "" : "s"}`,
       );
+      if (seeded.prints > 0) {
+        const purged = promoteAndPurgePunkRecordsStaging();
+        if (purged.purged) {
+          console.log("── punk-records staging — purgé (indexes → logs/)");
+        }
+      }
       if (!skipFaces) {
         console.log("── faces Bandai — téléchargement / pose en cours…");
         const faces = await installOnepieceBandaiFaces(index, {

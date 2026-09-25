@@ -24,20 +24,24 @@ type ProviderLiteralInventory = Record<
 /** Empty = zero quoted provider ids outside `src/providers/` (+ tests). */
 const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
   /*
-    Faux positif assumé, et le seul. `PACK_PRINT_GAME` associe un id de **pack**
-    au slug de jeu de ses `printKey` ; deux de ces slugs — `dbscg`, `dbsfw` —
-    s'écrivent comme l'id du provider correspondant. Ce ne sont pas des
-    références à un provider : cette table vit dans `providers/` exprès, pour
-    que `core/` n'ait jamais à nommer un TCG.
+    Faux positif assumé. Les slugs de **printKey** (`dbscg`, `dbsfw`,
+    `onepiece`, …) s'écrivent comme l'id du provider correspondant. Ce ne
+    sont pas des références à un provider : la table `printGame` vit sur
+    `tcgcards/sites.ts` (+ Bandai set dans `cardsFrPrintRef`, + extras Naruto
+    dans ingest) exprès, pour que `core/` n'ait jamais à nommer un TCG.
 
     À ne pas confondre avec ce que le garde des imports frères interdit, lui,
     pour de bon — voir `providers/shared/sharedBlindness.test.ts`.
   */
   "src/providers/shared/sealedProducts/ingest.ts": {
-    dbscg: 2,
-    dbsfw: 2,
-    onepiece: 2,
     dbsjcc: 1,
+  },
+  "src/providers/shared/tcgcards/cardsFrPrintRef.ts": {
+    dbscg: 1,
+    dbsfw: 1,
+    onepiece: 1,
+    mtg: 1,
+    yugioh: 1,
   },
   "src/providers/shared/sealedProducts/rebuildFromStaging.ts": { onepiece: 2 },
   /*
@@ -67,13 +71,16 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
   // Pack id = provider id (même collision OPTCG).
   "src/providers/shared/sealedProducts/langCoverage.ts": { onepiece: 1 },
   /*
-    TCG Cards site table — `packId` is the data pack slug, identical to the
-    provider id for MTG / OPTCG / YGO (same collision as cataloguePacks).
+    TCG Cards site table — `packId` / `printGame` are data-pack / printKey
+    slugs, identical to the provider id for MTG / OPTCG / YGO / Lorcana /
+    Pokémon (same collision as cataloguePacks).
   */
   "src/providers/shared/tcgcards/sites.ts": {
-    mtg: 1,
-    onepiece: 1,
-    yugioh: 1,
+    dbscg: 1,
+    dbsfw: 1,
+    mtg: 2,
+    onepiece: 2,
+    yugioh: 2,
   },
   /*
     List dump paths / face install — foilPackDataDir("yugioh"|"mtg"|"onepiece")
@@ -112,8 +119,6 @@ const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
     leclercmarvel24: 1,
     leclercdisney25: 1,
   },
-  // Pack id = provider id for OPTCG (`PACK_PRINT_GAME` map).
-  "src/providers/shared/sealedProducts/ingest.ts": { onepiece: 1 },
 };
 
 const SHARED_PROVIDER_DIR = path.join("src", "providers", "shared");

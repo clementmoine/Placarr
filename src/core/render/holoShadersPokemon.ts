@@ -603,6 +603,10 @@ export const POKEMON_HOLO_SHADER_IDS = [
   "angledPillarsCoat",
   "stamped",
   "confetti25th",
+  "pikachuFoil",
+  "classicFoil",
+  "galaxyHolo",
+  "galaxyHoloCoat",
 ] as const;
 
 export type PokemonHoloShaderId = (typeof POKEMON_HOLO_SHADER_IDS)[number];
@@ -1815,6 +1819,103 @@ const POKEMON_SHADERS: Readonly<Record<PokemonHoloShaderId, HoloShader>> = {
       opacity: 0.5,
       contrast: [1.1, 0.4],
       saturate: [1.2, 0.75],
+    },
+  ),
+
+  /**
+   * me5-5 PikachuFoil — spectrum + RGB dots + celebration confetti.
+   * Live `_CCPatternTex` (TEX_StitchedRings) stays WebGL-only: painted as a
+   * CSS plate it reads as giant Poké-Ball discs (dark cores of the radial tile).
+   */
+  pikachuFoil: look(
+    "pikachuFoil",
+    [
+      spectrum("T_Holofoil_Pikachu_Spectrum"),
+      tooth("T_Holofoil_Pikachu_Dot", "120px 120px"),
+      tooth("FX_T_Celeb_Confetti", "200px 200px"),
+      shine("FX_T_Highlight_Over", "220% 220%"),
+    ],
+    {
+      blend: "overlay, soft-light, soft-light",
+      mix: "overlay",
+      opacity: 0.55,
+      contrast: [1.1, 0.4],
+      saturate: [1.25, 0.75],
+      pointerFalloff: false,
+    },
+  ),
+
+  /**
+   * me5-5c ClassicFoil — Live `_Tex_Spectrum` / `_Tex_Starry` / `_Tex_Glitter`
+   * / thin bar shine. Stars are RGB on black → `screen` so the field stays
+   * bright (painting as soft-light would stamp black).
+   */
+  classicFoil: look(
+    "classicFoil",
+    [
+      spectrum("FX_T_Spectrum_Rainbow"),
+      tooth("T_Holofoil_Star_Classic", "160px 160px"),
+      tooth("T_Holofoil_Noise_Pixel", "110px 110px"),
+      shine("T_Holofoil_Mask_Bar_Thin_Single", "220% 220%"),
+    ],
+    {
+      blend: "overlay, screen, soft-light",
+      mix: "color-dodge",
+      opacity: 0.5,
+      contrast: [1.08, 0.35],
+      saturate: [1.2, 0.65],
+      brightness: [1.05, 0.2],
+      pointerFalloff: false,
+    },
+  ),
+
+  /**
+   * Live Galaxy — vertical spectrum + glitter dodge, then a *bright* star coat
+   * carved by `T_Holofoil_Galaxy_Stars` (alpha dots / RGB crosses).
+   * Never carve a dark invert with that plate — that stamped black circles.
+   */
+  galaxyHolo: {
+    ...look(
+      "galaxyHolo",
+      [
+        spectrum("FX_T_Spectrum_Bands_Vertical", "240% 100%"),
+        tooth("FX_T_SVUltra_Glitter", "200px 200px"),
+        shine("FX_T_Highlight_Over", "200% 200%"),
+      ],
+      {
+        blend: "soft-light, overlay",
+        mix: "color-dodge",
+        opacity: 0.45,
+        contrast: [1.05, 0.35],
+        saturate: [1.15, 0.55],
+        brightness: [1.05, 0.2],
+        pointerFalloff: false,
+      },
+    ),
+    overlay: "galaxyHoloCoat",
+  },
+
+  galaxyHoloCoat: look(
+    "galaxyHoloCoat",
+    [
+      // Bright fill — star carve punches circular / cross sparkles of light.
+      band(
+        "radial-gradient(farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%), hsla(48, 50%, 96%, 0.95) 6%, hsla(175, 45%, 88%, 0.55) 38%, hsla(0, 0%, 100%, 0) 72%)",
+        "100% 100%",
+        "still",
+      ),
+      tooth("simey_glitter", "150px 150px"),
+      shine("FX_T_Highlight_Over", "220% 220%"),
+    ],
+    {
+      blend: "screen, soft-light",
+      mix: "lighten",
+      opacity: 0.75,
+      contrast: [1.05, 0.25],
+      saturate: [1.1, 0.35],
+      brightness: [1.1, 0.15],
+      carve: carve("T_Holofoil_Galaxy_Stars", "260px 260px"),
+      pointerFalloff: false,
     },
   ),
 };

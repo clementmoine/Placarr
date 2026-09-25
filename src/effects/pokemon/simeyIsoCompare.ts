@@ -42,9 +42,9 @@ function toIso(anchor: SimeyDemoAnchor): SimeyIsoTarget {
 /** @deprecated Prefer iterating {@link simeyAnchorForLeaf} / anchors map. */
 export const SIMEY_ISO_BY_LEAF: Readonly<Record<string, SimeyIsoTarget>> =
   Object.fromEntries(
-    Object.keys(LIVE_FINISH_CSS).map((leaf) => {
-      const a = simeyAnchorForLeaf(leaf)!;
-      return [leaf, toIso(a)];
+    Object.keys(LIVE_FINISH_CSS).flatMap((leaf) => {
+      const a = simeyAnchorForLeaf(leaf);
+      return a ? [[leaf, toIso(a)] as const] : [];
     }),
   );
 
@@ -70,7 +70,7 @@ export function simeyDemoUrl(target: SimeyIsoTarget): string {
 }
 
 export function simeyStagingCssPath(target: SimeyIsoTarget): string {
-  return `data/pokemon/staging/simey/${target.tree}/public/css/cards/${target.stem}.css`;
+  return `data/pokemon/foil/simey/${target.tree}/public/css/cards/${target.stem}.css`;
 }
 
 export function liveLeavesMissingSimeyIso(): string[] {

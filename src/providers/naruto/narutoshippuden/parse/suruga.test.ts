@@ -10,6 +10,16 @@ import { foldSurugaShippudenListings, loadSurugaShippudenCuratedListings, parseC
       expect(parseSurugaShippudenPrintedFromTitle("術伝-053[ノーマル]：千年殺し")).toBe("術伝-053");
       expect(parseSurugaShippudenPrintedFromTitle("作伝-049[レア]：ある夏の日")).toBe("作伝-049");
       expect(parseSurugaShippudenPrintedFromTitle("忍伝 - 081 [レア]：日向ヒナタ")).toBe("忍伝-081");
+      expect(
+        parseSurugaShippudenPrintedFromTitle(
+          "PR作伝-5[プロモーショカード]：究極連係",
+        ),
+      ).toBe("PR作伝-5");
+      expect(
+        parseSurugaShippudenPrintedFromTitle(
+          "PR忍伝-6[プロモーショカード]：うちはサスケ",
+        ),
+      ).toBe("PR忍伝-6");
       // Ignores unrelated products
       expect(parseSurugaShippudenPrintedFromTitle("忍界5-17[R]：次郎坊")).toBeNull();
       expect(parseSurugaShippudenPrintedFromTitle("NARUTO-ナルト- 疾風伝 アクリルイラスト")).toBeNull();

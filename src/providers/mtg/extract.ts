@@ -19,7 +19,7 @@ import {
 } from "@/providers/shared/tcgcards/scrapeList";
 
 import { MTG_PACK_ID, mtgCuratedDir } from "./pack";
-import { ensureScryfallBulkFile } from "./harvest/scryfallBulk";
+import { ensureScryfallBulkFile, recordScryfallBulkPromotedAndPurge } from "./harvest/scryfallBulk";
 import {
   applyMtgScryfallArtUrls,
   seedMtgFromScryfallBulk,
@@ -98,11 +98,23 @@ export async function runMtgPackPipeline(
   })();
 
   let bulkPath: string | null = null;
+  let bulkUpdatedAt: string | null = null;
+  let skipScryfallSeed = false;
   if (!offline) {
     console.log(`── Scryfall — bulk ${BULK_TYPE} (en original + fr, exclusives hors EN/FR)…`);
     const bulk = await ensureScryfallBulkFile(BULK_TYPE, { force });
-    bulkPath = bulk.path;
-    console.log(`── Scryfall — ${bulk.path} (updated ${bulk.updatedAt})`);
+    bulkUpdatedAt = bulk.updatedAt;
+    if (bulk.skippedFresh && !bulk.path) {
+      skipScryfallSeed = true;
+      console.log(
+        `── Scryfall — ledger frais (${bulk.updatedAt}) ; staging purgé, seed sauté`,
+      );
+    } else if (!bulk.path) {
+      throw new Error(`Scryfall bulk ${BULK_TYPE} : chemin absent`);
+    } else {
+      bulkPath = bulk.path;
+      console.log(`── Scryfall — ${bulk.path} (updated ${bulk.updatedAt})`);
+    }
     if (!skipBacks) {
       const wrote = await ensureClassicCardBack(force);
       console.log(
@@ -125,10 +137,24 @@ export async function runMtgPackPipeline(
     curatedDir: mtgCuratedDir(),
     label: "Magic: The Gathering",
     seed: async (index) => {
+      if (skipScryfallSeed) {
+        console.log("── Scryfall seed — skip (catalogue déjà à jour)");
+        return { prints: 0, titles: 0, langs: 0, artUrls: 0, skipped: 0 };
+      }
       const seeded = await seedMtgFromScryfallBulk(index, bulkPath!);
       console.log(
         `── Scryfall seed — ${seeded.prints} tirages, ${seeded.titles} titres, ${seeded.langs} langues, ${seeded.artUrls} artUrl, ${seeded.skipped} ignorés`,
       );
+      if (bulkPath && bulkUpdatedAt) {
+        recordScryfallBulkPromotedAndPurge({
+          type: BULK_TYPE,
+          updatedAt: bulkUpdatedAt,
+          stagingPath: bulkPath,
+        });
+        console.log(
+          `── Scryfall — ledger + purge staging (${bulkUpdatedAt})`,
+        );
+      }
       if (!skipMtgcardsList && !offline) {
         const list = await ensureCardsFrListDump({
           packId: MTG_PACK_ID,
@@ -171,7 +197,9 @@ export async function runMtgPackPipeline(
   });
 
   const arts = applyMtgScryfallArtUrls();
-  console.log(`── Scryfall — ${arts.patched} artUrl CDN injectés dans cards-index`);
+  console.log(
+    `── Scryfall — ${arts.patched} artUrl CDN dans curated/art-urls.json (browse join)`,
+  );
 
   return result;
 }

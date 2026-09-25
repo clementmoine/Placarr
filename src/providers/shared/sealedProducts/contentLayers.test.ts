@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveContentLayers } from "./contentLayers";
+import {
+  resolveContentLayers,
+  sealedStructureAttested,
+} from "./contentLayers";
 
 const link = (printKey: string) => ({
   name: printKey,
@@ -73,5 +76,168 @@ describe("resolveContentLayers", () => {
       expect(layers.randomPoolScope).toBe("none");
       expect(layers.guaranteedPrints).toEqual([]);
     }
+  });
+});
+
+describe("sealedStructureAttested", () => {
+  it("accepts Lorcana-style boosters (cardsPerPack + set pool)", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "booster",
+        behavior: "random_pack",
+        contentsKnown: false,
+        cardsPerPack: 12,
+        packsContained: 1,
+        randomPoolScope: "set",
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts Pokémon-style boosters (set pool without cardsPerPack)", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "booster",
+        behavior: "random_pack",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: 1,
+        randomPoolScope: "set",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects boosters without a pack size", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "booster",
+        behavior: "random_pack",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: 1,
+        randomPoolScope: "unknown",
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts displays with packsContained", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "display",
+        behavior: "pack_container",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: 24,
+        randomPoolScope: "none",
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts troves with packsContained", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "trove",
+        behavior: "mixed_bundle",
+        contentsKnown: false,
+        cardsPerPack: 12,
+        packsContained: 8,
+        randomPoolScope: "none",
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts constructed decks by declared size without inventory", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "deck",
+        behavior: "known_bundle",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: null,
+        randomPoolScope: "none",
+        declaredCardCount: 40,
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts constructed decks by kind even without declared size", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "deck",
+        behavior: "known_bundle",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: null,
+        randomPoolScope: "unknown",
+        declaredCardCount: null,
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects opaque known_bundle non-decks without size", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "special",
+        behavior: "known_bundle",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: null,
+        randomPoolScope: "unknown",
+        declaredCardCount: null,
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts fixed promo sets (cards + declared, no packs)", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        contentsKnown: false,
+        cardsPerPack: 4,
+        packsContained: null,
+        randomPoolScope: "unknown",
+        declaredCardCount: 4,
+      }),
+    ).toBe(true);
+  });
+
+  it("accepts quests / mixed bundles by declared size alone", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "quest",
+        behavior: "mixed_bundle",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: null,
+        randomPoolScope: "none",
+        declaredCardCount: 170,
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects opaque collector boxes with no size or packs", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: null,
+        randomPoolScope: "unknown",
+      }),
+    ).toBe(false);
+  });
+
+  it("attests ephemera / no_cards as structure without inventing cards", () => {
+    expect(
+      sealedStructureAttested({
+        kind: "ephemera",
+        behavior: "no_cards",
+        contentsKnown: false,
+        cardsPerPack: null,
+        packsContained: null,
+        randomPoolScope: "none",
+      }),
+    ).toBe(true);
   });
 });

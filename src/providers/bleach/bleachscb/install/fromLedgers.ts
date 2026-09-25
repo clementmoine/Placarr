@@ -22,6 +22,7 @@ import {
   harvestColekaBleachS1,
   installColekaBleachFaces,
 } from "../harvest/coleka";
+import { harvestColekaBleachS1Prices } from "../harvest/colekaPrices";
 import { harvestBleachJaFromNikita } from "../harvest/nikita";
 import type { BleachScbCard } from "../parse/carddassFr";
 import { buildBleachFrLedger } from "../parse/carddassFr";
@@ -43,11 +44,18 @@ export async function harvestBleachScbLedgers(): Promise<{
   fr: number;
   ja: number;
   coleka: number;
+  colekaPrices: number;
 }> {
   const { cards: fr } = buildBleachFrLedger();
   const { cards: ja } = await harvestBleachJaFromNikita();
   const { cards: coleka } = await harvestColekaBleachS1();
-  return { fr: fr.length, ja: ja.length, coleka: coleka.length };
+  const { ledger: prices } = await harvestColekaBleachS1Prices();
+  return {
+    fr: fr.length,
+    ja: ja.length,
+    coleka: coleka.length,
+    colekaPrices: prices.withPrintKey,
+  };
 }
 
 /**

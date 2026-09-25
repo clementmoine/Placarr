@@ -1,7 +1,8 @@
 /**
  * One data pack (`naruto/carddass`) for Carddass FR/IT/JA and Bandai USA CCG.
  * PrintKeys stay `naruto:…` — the game slug is not the folder.
- * `naruto/en-ccg` is a disk / URL alias, not a second catalogue.
+ * There is **no** separate disk pack for EN CCG — only a verso / sealed *line*
+ * (`NarutoCardLine` `"en-ccg"`). URL aliases `naruto/en-ccg` → carddass.
  *
  * Client-safe (no `node:*`): `cataloguePacks` is imported by the admin
  * Catalogue tab. Disk roots stay in `indexStore` / callers.
@@ -11,7 +12,16 @@
  * (`narutodatacarddass`) — never a Carddass line.
  */
 export const NARUTO_PACK_ID = "naruto/carddass";
-export const NARUTO_EN_PACK_ID = "naruto/en-ccg";
+/**
+ * @deprecated Always {@link NARUTO_PACK_ID}. EN CCG is a line inside Carddass,
+ * not a pack id. Prefer `NARUTO_PACK_ID` for new code.
+ */
+export const NARUTO_EN_PACK_ID = NARUTO_PACK_ID;
+/**
+ * Leftover folder under `data/` from before the merge. Migrate then delete.
+ * Not a catalogue pack id — do not pass through `canonicalDataPack`.
+ */
+export const NARUTO_LEGACY_EN_CCG_DISK = "naruto/en-ccg";
 
 /**
  * Les deux lignes qui cohabitent dans le pack Carddass.

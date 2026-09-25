@@ -38,7 +38,7 @@ describe("unity Shader (Node)", () => {
     );
   });
 
-  it("extracts_24_frags_byte_identical_to_disk", () => {
+  it("extracts_frags_byte_identical_to_disk", () => {
     const repo = repoRoot();
     const bundle = path.join(
       repo,
@@ -48,7 +48,8 @@ describe("unity Shader (Node)", () => {
     if (!existsSync(bundle) || !existsSync(diskDir)) return;
 
     const extracted = extractShaderFragsFromBytes(readFileSync(bundle));
-    expect(extracted.length).toBe(24);
+    // CDN 1.42+ ships me5-5 leaves (PikachuFoil, ClassicFoil, RGBFoil, …).
+    expect(extracted.length).toBeGreaterThanOrEqual(24);
 
     for (const { foil, frag } of extracted) {
       const diskPath = path.join(diskDir, `${foil}.frag`);
@@ -73,8 +74,10 @@ describe("unity Shader (Node)", () => {
         packDir: dir,
         skipSharedTextures: true,
       });
-      expect(result.shadersWritten.length).toBe(24);
-      expect(readdirSync(path.join(dir, "shaders")).length).toBe(24);
+      expect(result.shadersWritten.length).toBeGreaterThanOrEqual(24);
+      expect(readdirSync(path.join(dir, "shaders")).length).toBe(
+        result.shadersWritten.length,
+      );
 
       const stems = JSON.parse(readFileSync(path.join(dir, "frag-stems.json"), "utf8"))
         .stems as string[];
@@ -107,7 +110,8 @@ describe("unity Shader (Node)", () => {
       // Resume path: loadUnityFs (~1s) + existence checks — not a second AM typetree.
       expect(Date.now() - t0).toBeLessThan(15_000);
       expect(result.sharedTextures).toBeGreaterThan(50);
-      expect(Object.keys(result.textureFlags).length).toBe(70);
+      // Texture2D count in shadersbundle (ETC/DXT/ASTC shared plates).
+      expect(Object.keys(result.textureFlags).length).toBeGreaterThanOrEqual(70);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

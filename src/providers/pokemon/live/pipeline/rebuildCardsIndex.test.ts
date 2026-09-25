@@ -33,7 +33,7 @@ describe("rebuildPokemonCardsIndex", () => {
     writeFileSync(path.join(cardDir, "mask.webp"), "x");
     writeFileSync(path.join(cardDir, "mask-ph.webp"), "x");
 
-    const result = rebuildPokemonCardsIndex();
+    const result = rebuildPokemonCardsIndex({ writeJson: true });
     expect(result.skipped).toBe(false);
     expect(result.cards).toBe(1);
     expect(result.named).toBe(0);
@@ -62,7 +62,7 @@ describe("rebuildPokemonCardsIndex", () => {
     writeFileSync(path.join(cardDir, "art.coleka.webp"), "coleka");
     writeFileSync(path.join(cardDir, "art.webp"), "live");
 
-    const result = rebuildPokemonCardsIndex();
+    const result = rebuildPokemonCardsIndex({ writeJson: true });
     expect(result.cards).toBe(1);
     const raw = JSON.parse(readFileSync(result.path, "utf8")) as {
       cards: Record<string, { langs: Record<string, { art?: string }> }>;
@@ -75,7 +75,7 @@ describe("rebuildPokemonCardsIndex", () => {
       path.join(os.tmpdir(), "placarr-poke-index-empty-"),
     );
     process.env.PLACARR_DATA_DIR = tmp;
-    const result = rebuildPokemonCardsIndex();
+    const result = rebuildPokemonCardsIndex({ writeJson: true });
     expect(result.skipped).toBe(true);
     expect(result.cards).toBe(0);
     expect(result.named).toBe(0);
@@ -130,7 +130,7 @@ describe("rebuildPokemonCardsIndex", () => {
     ).run("bwp-BW29", "en", "Reshiram");
     db.close();
 
-    const result = rebuildPokemonCardsIndex();
+    const result = rebuildPokemonCardsIndex({ writeJson: true });
     expect(result.cards).toBe(2);
     expect(result.named).toBe(2);
     const raw = JSON.parse(readFileSync(result.path, "utf8")) as {
@@ -156,7 +156,7 @@ describe("rebuildPokemonCardsIndex", () => {
     writeFileSync(path.join(frDir, "art.webp"), "fr");
     writeFileSync(path.join(enDir, "art.webp"), "en");
 
-    const dbPath = path.join(tmp, "pokemon", "catalog.sqlite");
+    const dbPath = path.join(tmp, "pokemon", "live.sqlite");
     mkdirSync(path.dirname(dbPath), { recursive: true });
     const db = new DatabaseSync(dbPath);
     db.exec(`
@@ -188,7 +188,7 @@ describe("rebuildPokemonCardsIndex", () => {
     );
     db.close();
 
-    const result = rebuildPokemonCardsIndex();
+    const result = rebuildPokemonCardsIndex({ writeJson: true });
     expect(result.cards).toBe(2);
     expect(result.named).toBe(2);
 
@@ -236,7 +236,7 @@ describe("resolvePokemonIndexName", () => {
     const lookup = loadPokemonLiveNameLookup(
       (() => {
         const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-poke-alt-"));
-        const dbPath = path.join(tmp, "catalog.sqlite");
+        const dbPath = path.join(tmp, "live.sqlite");
         const db = new DatabaseSync(dbPath);
         db.exec(`
           CREATE TABLE live_cards (
@@ -286,7 +286,7 @@ describe("resolvePokemonIndexName", () => {
 
   it("loadPokemonLiveNameLookup is empty when sqlite is missing", () => {
     const lookup = loadPokemonLiveNameLookup(
-      path.join(os.tmpdir(), "placarr-no-such-catalog.sqlite"),
+      path.join(os.tmpdir(), "placarr-no-such-live.sqlite"),
     );
     expect(lookup.byStem.size).toBe(0);
   });

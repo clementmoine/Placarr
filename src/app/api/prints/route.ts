@@ -10,7 +10,7 @@ import {
 import { isAbortError } from "@/lib/http/abort";
 import { localizeMaskImage } from "@/core/enrich/media/maskDownload";
 import { localizePrintMasks } from "@/core/enrich/media/localizePrintMasks";
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { runWithConcurrency } from "@/lib/async";
 
 /** Enough to fill a picker grid without turning a typo into a long scroll. */
 const MAX_LIMIT = 48;

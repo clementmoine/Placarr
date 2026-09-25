@@ -21,12 +21,26 @@ import Header from "@/components/Header";
 import { ShelfCard } from "@/components/ShelfCard";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShelfModal } from "@/components/modals/ShelfModal";
+import dynamic from "next/dynamic";
 import { ScanFAB } from "@/components/ScanFAB";
 import { ScannerButton } from "@/components/ScannerButton";
-import { QuickScanModal } from "@/components/modals/QuickScanModal";
-import { ItemModal } from "@/components/modals/ItemModal";
 import { ManualBarcodeEntry } from "@/components/ManualBarcodeEntry";
+
+const ShelfModal = dynamic(
+  () =>
+    import("@/components/modals/ShelfModal").then((m) => m.ShelfModal),
+  { ssr: false },
+);
+const QuickScanModal = dynamic(
+  () =>
+    import("@/components/modals/QuickScanModal").then((m) => m.QuickScanModal),
+  { ssr: false },
+);
+const ItemModal = dynamic(
+  () =>
+    import("@/components/modals/ItemModal").then((m) => m.ItemModal),
+  { ssr: false },
+);
 import {
   Dialog,
   DialogContent,

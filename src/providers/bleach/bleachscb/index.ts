@@ -37,6 +37,7 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: BLEACH_SCB_EFFECT_PACK_ID,
     printGame: BLEACH_SCB_PRINT_GAME,
     defaultLanguage: "ja",
+    catalogLifecycle: "finished",
     listSetLanguages: ["ja", "fr"],
     searchPreferLanguage: "ja",
     formatReference: (set, number) => formatBleachScbReference(set, number),

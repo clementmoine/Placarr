@@ -5,15 +5,10 @@
  * must close these holes with attested sources (see
  * `docs/sealed_sku_lang_coverage.md`).
  */
-import { existsSync, readFileSync } from "node:fs";
-
-import { packCardsIndexPath, packProductsIndexPath } from "@/lib/packPaths";
-import { isCardsIndexV1 } from "@/effects/cardsIndex";
-import {
-  isProductsIndexV1,
-  type ProductsIndexV1,
-} from "@/providers/shared/sealedProducts/indexFormat";
+import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { normalizeSealedLang } from "@/providers/shared/sealedProducts/lang";
+import type { ProductsIndexV1 } from "@/providers/shared/sealedProducts/indexFormat";
 
 export type SealedLangCoverage = {
   pack: string;
@@ -24,22 +19,16 @@ export type SealedLangCoverage = {
 };
 
 function measureCardLangs(pack: string): string[] {
-  const file = packCardsIndexPath(pack);
-  if (!existsSync(file)) return [];
-  try {
-    const raw = JSON.parse(readFileSync(file, "utf8")) as unknown;
-    if (!isCardsIndexV1(raw)) return [];
-    const langs = new Set<string>();
-    for (const entry of Object.values(raw.cards)) {
-      for (const lang of Object.keys(entry.langs ?? {})) {
-        const n = normalizeSealedLang(lang);
-        if (n) langs.add(n);
-      }
+  const langs = new Set<string>();
+  const index = createLocalPrintsIndex(pack);
+  if (!index.hasIdentityCorpus()) return [];
+  for (const lang of ["fr", "en", "ja", "it", "de", "es"] as const) {
+    if (index.listRowsForLanguage(lang).some((row) => row.fullName || row.art)) {
+      const n = normalizeSealedLang(lang);
+      if (n) langs.add(n);
     }
-    return [...langs].sort();
-  } catch {
-    return [];
   }
+  return [...langs].sort();
 }
 
 function measureSkuLangs(index: ProductsIndexV1): string[] {
@@ -52,13 +41,11 @@ function measureSkuLangs(index: ProductsIndexV1): string[] {
 }
 
 export function sealedLangCoverageForPack(pack: string): SealedLangCoverage | null {
-  const productsFile = packProductsIndexPath(pack);
-  if (!existsSync(productsFile)) return null;
   try {
-    const raw = JSON.parse(readFileSync(productsFile, "utf8")) as unknown;
-    if (!isProductsIndexV1(raw)) return null;
+    const loaded = loadSealedProductsIndex(pack);
+    if (Object.keys(loaded.products).length === 0) return null;
     const cardLangs = measureCardLangs(pack);
-    const skuLangs = measureSkuLangs(raw);
+    const skuLangs = measureSkuLangs(loaded);
     const missingSkuLangs = cardLangs.filter((lang) => !skuLangs.includes(lang));
     return { pack, cardLangs, skuLangs, missingSkuLangs };
   } catch {
@@ -66,12 +53,12 @@ export function sealedLangCoverageForPack(pack: string): SealedLangCoverage | nu
   }
 }
 
-/** Packs that publish both cards-index and products-index. */
+/** Packs that publish both card identity and sealed SKUs. */
 export const SEALED_LANG_COVERAGE_PACKS = [
   "lorcana",
   "pokemon",
-  "dbs/cg",
-  "dbs/fw",
+  "dragonball/cg",
+  "dragonball/fw",
   "onepiece",
   "naruto/carddass",
 ] as const;

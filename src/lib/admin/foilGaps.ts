@@ -27,7 +27,7 @@ import {
   pokemonSimeyCssCardsDir,
 } from "@/lib/packPaths";
 import { foilPackDir } from "@/lib/runtimeData";
-import { lorcanaTcgDbPath } from "@/providers/lorcanatcg/indexStore";
+import { lorcanaTcgDbPath } from "@/providers/lorcana/lorcanatcg/indexStore";
 
 import {
   extraLiveFragStems,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import "@/effects";
-import { listEffectPacks } from "@/core/render/foil/registry";
+import { listEffectPacks } from "@/core/render/foil/backend";
 
 describe("effect pack card-back contract", () => {
   it("requires every registered pack to declare a non-empty cardBackUrl under /assets/<id>/cards/", () => {

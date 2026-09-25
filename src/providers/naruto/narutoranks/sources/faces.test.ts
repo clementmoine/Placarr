@@ -5,7 +5,10 @@ import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { ebayBrowseItemId } from "@/providers/commerce/ebay/browseItem";
 import { packCardsDir, packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import {
+  animeCollectionRanksContentHash,
+  arcadeGameCardsContentHash,
   bloggerPackRipSkippedReasons,
   installBloggerPackRip,
   readBloggerPackRipLedger,
@@ -22,6 +25,10 @@ import {
 } from "./faces";
 import { buildNinjaRanksFromLedgers } from "../pipeline/ledgers";
 import { NARUTO_RANKS_PACK_ID } from "../pack";
+import {
+  catalogArtefactIsFresh,
+  emptyCatalogIngestLedger,
+} from "@/providers/shared/catalogIngestLedger";
 
 // —— animecollectionFaces ——
 {
@@ -171,14 +178,7 @@ import { NARUTO_RANKS_PACK_ID } from "../pack";
       expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(false);
 
       const exported = index.exportIndex();
-      const entry = (
-        JSON.parse(fs.readFileSync(exported!.path, "utf8")) as {
-          cards: Record<
-            string,
-            { langs: Record<string, { art?: string; back?: string }> }
-          >;
-        }
-      ).cards["naruto:nr-0003"];
+      const entry = exported!.index.cards["naruto:nr-0003"]!;
       expect(entry.langs.fr?.back).toBe("back.coleka.webp");
       expect(entry.langs.fr?.art).toBeUndefined();
     });
@@ -247,11 +247,7 @@ import { NARUTO_RANKS_PACK_ID } from "../pack";
       expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(true);
 
       const exported = index.exportIndex();
-      const entry = (
-        JSON.parse(fs.readFileSync(exported!.path, "utf8")) as {
-          cards: Record<string, { langs: Record<string, { art?: string }> }>;
-        }
-      ).cards["naruto:ff-0002"];
+      const entry = exported!.index.cards["naruto:ff-0002"]!;
       expect(entry.langs.fr?.art).toBeUndefined();
     });
 
@@ -298,11 +294,7 @@ import { NARUTO_RANKS_PACK_ID } from "../pack";
       installColekaNinjaRanks(index, { stagingDir: path.join(os.tmpdir(), "missing") });
 
       const exported = index.exportIndex();
-      const entry = (
-        JSON.parse(fs.readFileSync(exported!.path, "utf8")) as {
-          cards: Record<string, { langs: Record<string, { art?: string }> }>;
-        }
-      ).cards["naruto:bl-0003"];
+      const entry = exported!.index.cards["naruto:bl-0003"]!;
       expect(entry.langs.fr?.art).toBeUndefined();
       expect(entry.langs.en?.art).toBe("art.imadoki.jpg");
       expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(true);
@@ -452,11 +444,7 @@ import { NARUTO_RANKS_PACK_ID } from "../pack";
       expect(existsSync(path.join(boosterDir, "art.inkworks.jpg"))).toBe(true);
       expect(existsSync(path.join(boosterDir, "art.blogger.jpg"))).toBe(true);
 
-      const products = JSON.parse(
-        readFileSync(packProductsIndexPath(NARUTO_RANKS_PACK_ID), "utf8"),
-      ) as {
-        products: Record<string, { image: string; slug: string }>;
-      };
+      const products = loadSealedProductsIndex(NARUTO_RANKS_PACK_ID);
       expect(Object.keys(products.products).sort()).toEqual([
         "naruto/ninja-ranks::booster",
         "naruto/ninja-ranks::collector-album",
@@ -503,6 +491,45 @@ import { NARUTO_RANKS_PACK_ID } from "../pack";
       expect(
         existsSync(path.join(packCardsDir(NARUTO_RANKS_PACK_ID), "back.fr.webp")),
       ).toBe(false);
+    });
+  });
+}
+
+// —— dig contentHash (Sync skip after purge) ——
+{
+  describe("animeCollectionRanksContentHash", () => {
+    it("is stable and marks ledger fresh", () => {
+      const a = animeCollectionRanksContentHash();
+      const b = animeCollectionRanksContentHash();
+      expect(a).toBe(b);
+      expect(a).toMatch(/^[a-f0-9]{64}$/);
+      const ledger = emptyCatalogIngestLedger();
+      ledger.entries["faces:animecollection-ranks"] = {
+        artefactId: "faces:animecollection-ranks",
+        contentHash: a,
+        promotedAt: "2026-01-01T00:00:00.000Z",
+      };
+      expect(
+        catalogArtefactIsFresh(ledger, "faces:animecollection-ranks", b),
+      ).toBe(true);
+    });
+  });
+
+  describe("arcadeGameCardsContentHash", () => {
+    it("is stable and marks ledger fresh", () => {
+      const a = arcadeGameCardsContentHash();
+      const b = arcadeGameCardsContentHash();
+      expect(a).toBe(b);
+      expect(a).toMatch(/^[a-f0-9]{64}$/);
+      const ledger = emptyCatalogIngestLedger();
+      ledger.entries["faces:arcadegamecards-ranks"] = {
+        artefactId: "faces:arcadegamecards-ranks",
+        contentHash: a,
+        promotedAt: "2026-01-01T00:00:00.000Z",
+      };
+      expect(
+        catalogArtefactIsFresh(ledger, "faces:arcadegamecards-ranks", b),
+      ).toBe(true);
     });
   });
 }

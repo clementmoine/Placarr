@@ -5,6 +5,7 @@
  * tirages (`onepiece:op01-001`) et les faces Bandai (`art.bandai.webp`).
  */
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -14,7 +15,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { toLosslessWebp } from "@/lib/media/losslessWebp";
-import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { packCardsDir, packLogsDir, packStagingDir } from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type {
   LocalPrintAssetWrite,
@@ -22,6 +23,11 @@ import type {
   LocalPrintWrite,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
+import {
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 
 import { ONEPIECE_PACK_ID } from "./pack";
 import {
@@ -31,6 +37,7 @@ import {
 } from "./printIdentity";
 
 const STAGING_FOLDER = "punk-records";
+const ARTEFACT_ID = "onepiece:punk-records";
 const SOURCE_ID = "bandai";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
@@ -61,6 +68,56 @@ function punkRecordsRawUrl(punkLocale: string): string {
 
 export function onepiecePunkStagingDir(): string {
   return path.join(packStagingDir(ONEPIECE_PACK_ID), STAGING_FOLDER);
+}
+
+export function onepiecePunkDurableDir(): string {
+  return path.join(packLogsDir(ONEPIECE_PACK_ID), STAGING_FOLDER);
+}
+
+/** Prefer staging (fresh harvest), else durable logs copy. */
+export function resolvePunkRecordsDir(): string {
+  const staging = onepiecePunkStagingDir();
+  if (existsSync(path.join(staging, "fr.cards_by_id.json"))) return staging;
+  const durable = onepiecePunkDurableDir();
+  if (existsSync(path.join(durable, "fr.cards_by_id.json"))) return durable;
+  return staging;
+}
+
+export function ensurePunkRecordsDurable(stagingDir?: string): string {
+  const staging = stagingDir ?? onepiecePunkStagingDir();
+  const durable = onepiecePunkDurableDir();
+  mkdirSync(durable, { recursive: true });
+  for (const { lang } of PUNK_RECORDS_LOCALES) {
+    const name = `${lang}.cards_by_id.json`;
+    const src = path.join(staging, name);
+    if (!existsSync(src)) continue;
+    copyFileSync(src, path.join(durable, name));
+  }
+  return durable;
+}
+
+export function punkRecordsContentHash(dir?: string): string | null {
+  const root = dir ?? resolvePunkRecordsDir();
+  const fr = path.join(root, "fr.cards_by_id.json");
+  if (!existsSync(fr)) return null;
+  return hashCatalogArtefactBytes(readFileSync(fr));
+}
+
+/** After seed OK: durable JSON under logs/ + purge staging. */
+export function promoteAndPurgePunkRecordsStaging(opts?: {
+  stagingDir?: string;
+}): { purged: boolean; contentHash: string | null } {
+  const staging = opts?.stagingDir ?? onepiecePunkStagingDir();
+  const contentHash = punkRecordsContentHash(staging) ?? punkRecordsContentHash();
+  if (!contentHash) return { purged: false, contentHash: null };
+  ensurePunkRecordsDurable(staging);
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(ONEPIECE_PACK_ID),
+    artefactId: ARTEFACT_ID,
+    contentHash,
+    stagingPath: staging,
+  });
+  return { purged: true, contentHash };
 }
 
 function decodeHtmlName(raw: string): string {
@@ -263,7 +320,7 @@ export async function harvestPunkRecords(
 }
 
 export function loadPunkRecordsLocales(
-  stagingDir = onepiecePunkStagingDir(),
+  stagingDir = resolvePunkRecordsDir(),
 ): PunkRecordsLocaleIndex[] {
   const out: PunkRecordsLocaleIndex[] = [];
   for (const { lang } of PUNK_RECORDS_LOCALES) {
@@ -275,6 +332,43 @@ export function loadPunkRecordsLocales(
     out.push({ lang, cards });
   }
   return out;
+}
+
+/**
+ * Sets from punk-records staging (or a light FR fetch) — shelf picker must
+ * see extensions before the local sqlite harvest catches up.
+ */
+export async function listOnepieceRemoteSets(opts?: {
+  stagingDir?: string;
+  signal?: AbortSignal;
+}): Promise<{ id: string; label: string }[]> {
+  let locales = loadPunkRecordsLocales(
+    opts?.stagingDir ?? resolvePunkRecordsDir(),
+  );
+  if (!locales.length) {
+    try {
+      const res = await httpGet<unknown>(punkRecordsRawUrl("french"), {
+        headers: { "User-Agent": UA, Accept: "application/json" },
+        timeout: 20_000,
+        signal: opts?.signal,
+      });
+      const cards = parsePunkRecordsCardsById(res.data);
+      if (cards.length) locales = [{ lang: "fr", cards }];
+    } catch {
+      return [];
+    }
+  }
+  const byId = new Map<string, string>();
+  for (const locale of locales) {
+    for (const card of locale.cards) {
+      const identity = onepiecePrintIdentity(card.cardId);
+      if (!identity?.set) continue;
+      const id = identity.set.trim().toLowerCase();
+      if (!id || byId.has(id)) continue;
+      byId.set(id, id.toUpperCase());
+    }
+  }
+  return [...byId.entries()].map(([id, label]) => ({ id, label }));
 }
 
 export function seedOnepieceFromPunkRecords(

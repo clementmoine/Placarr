@@ -47,7 +47,7 @@ import {
 } from "@/providers/pokemon/live/cdn/sources";
 import { fileURLToPath } from "node:url";
 
-import { scrapeTcgCardsProducts } from "@/providers/dragonball/shared/dbscards/scrapeProducts";
+import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 
 const POKEMON_PRODUCTS_CONTENTS = path.join(
@@ -75,11 +75,12 @@ async function runManifestDump(
     "config-cache",
     "asset-bundle-manifest_0.0.json",
   );
-  if (!fs.existsSync(dirsManifest)) {
+  const hasDirsManifest = fs.existsSync(dirsManifest);
+  if (!hasDirsManifest) {
     console.warn(
-      `  missing ${dirsManifest} — cannot list CDN buckets (need APK config-cache)`,
+      `  missing asset-bundle-manifest — cold-start via CDN epoch probe` +
+        ` (ADB config-cache optional enrichment)`,
     );
-    return 1;
   }
   const outDir = path.join(opts.staging, "cdn-manifests");
   const {
@@ -93,7 +94,9 @@ async function runManifestDump(
   const { probeLiveContentDirs } = await import(
     "@/providers/pokemon/live/cdn/cdnEpochProbe"
   );
-  const knownDirs = directoriesFromDirsManifest(dirsManifest);
+  const knownDirs = hasDirsManifest
+    ? directoriesFromDirsManifest(dirsManifest)
+    : [];
   const probed = await probeLiveContentDirs({
     contentBase: opts.contentBase,
     knownDirs,
@@ -119,6 +122,26 @@ async function runManifestDump(
     );
     return 0;
   }
+  const { pokemonCdnManifestsLedgerFresh } = await import(
+    "@/providers/pokemon/live/extract/liveStagingPurge"
+  );
+  const { cdnManifestTargetFingerprint } = await import(
+    "@/providers/pokemon/live/cdn/cdnManifestTarget"
+  );
+  const { loadDurableCdnCatalogue } = await import(
+    "@/providers/pokemon/live/cdn/durableCdnCatalogue"
+  );
+  const fingerprint = cdnManifestTargetFingerprint(targetOpts);
+  if (
+    !opts.force &&
+    pokemonCdnManifestsLedgerFresh("pokemon", fingerprint) &&
+    loadDurableCdnCatalogue(path.join(opts.staging, ".."))
+  ) {
+    console.log(
+      `  AssetManifests reuse via ingest ledger (staging purged; ver=${opts.version})`,
+    );
+    return 0;
+  }
   const resume =
     !opts.force && shouldResumeCdnManifestDump(targetOpts);
   if (resume) {
@@ -140,7 +163,7 @@ async function runManifestDump(
   const result = await dumpCdnManifests({
     contentBase: opts.contentBase,
     buckets: "all",
-    dirsManifest,
+    dirsManifest: hasDirsManifest ? dirsManifest : undefined,
     extraBuckets: probed.probedOk,
     locales: opts.langs.join(","),
     outDir,
@@ -318,10 +341,10 @@ export async function runUpdate(
 
   let liveCardsIndex: Record<string, unknown> | null = null;
   if (identityRows.length) {
-    console.log("── index catalog.sqlite (Malie ∪ APK)");
+    console.log("── index live.sqlite (Malie ∪ APK)");
     liveCardsIndex = writeLiveCardsSqlite(
       identityRows,
-      path.join(cache, "catalog.sqlite"),
+      path.join(cache, "live.sqlite"),
     ) as unknown as Record<string, unknown>;
     const foilMasks = writeLiveFoilMasksJson(
       identityRows,
@@ -389,6 +412,7 @@ export async function runUpdate(
   throwIfAborted();
   let scrapeReport: Record<string, unknown> | null = null;
   let catalogue: ReturnType<typeof loadCdnCatalogue> | null = null;
+  let catalogueFingerprint: string | null = null;
   if (opts.fromManifest) {
     if (opts.refreshManifests) {
       console.log("── dump AssetManifests (14 buckets × langs)");
@@ -405,9 +429,31 @@ export async function runUpdate(
     }
     // Manifest dumps + dirs live under staging/ (post data-layout migrate).
     console.log("── load CDN catalogue from AssetManifest dumps");
+    const {
+      cdnManifestTargetFingerprint: fpOf,
+      readCdnManifestTargetMeta,
+    } = await import("@/providers/pokemon/live/cdn/cdnManifestTarget");
+    const manifestMeta = readCdnManifestTargetMeta(
+      path.join(staging, "cdn-manifests"),
+    );
+    catalogueFingerprint = manifestMeta
+      ? fpOf({
+          version: manifestMeta.version,
+          contentDir: manifestMeta.contentDir,
+          contentBase: manifestMeta.contentBase,
+          langs: manifestMeta.langs,
+          buckets: manifestMeta.buckets,
+        })
+      : fpOf({
+          version: target.version,
+          contentDir: target.content_dir,
+          contentBase: target.content_base ?? "",
+          langs: opts.langs,
+        });
     catalogue = loadCdnCatalogue(staging, {
       langs: opts.langs,
       includeThumbnails: Boolean(opts.includeFoilT),
+      fingerprint: catalogueFingerprint,
     });
     console.log(
       `── catalogue CDN: ${catalogue.names.length} bundles` +
@@ -579,11 +625,72 @@ export async function runUpdate(
     summary.ok = false;
   }
 
+  if (summary.ok) {
+    try {
+      const { promoteAndPurgeLiveStaging } = await import("./liveStagingPurge");
+      let apkVersionHash: string | null = null;
+      const apkMetaCandidates = [
+        path.join(cache, "logs", "apk-store-meta.json"),
+        path.join(staging, "apks", "apk-store-meta.json"),
+      ];
+      for (const apkMetaPath of apkMetaCandidates) {
+        if (!fs.existsSync(apkMetaPath)) continue;
+        try {
+          const meta = JSON.parse(fs.readFileSync(apkMetaPath, "utf8")) as {
+            versionCode?: number;
+          };
+          if (typeof meta.versionCode === "number") {
+            apkVersionHash = `versionCode:${meta.versionCode}`;
+            break;
+          }
+        } catch {
+          /* try next */
+        }
+      }
+      const purged = promoteAndPurgeLiveStaging({
+        cacheRoot: cache,
+        stagingDir: staging,
+        catalogue,
+        manifestFingerprint: catalogueFingerprint,
+        apkVersionHash,
+      });
+      if (purged.cdnBundles.promoted > 0) {
+        console.log(
+          `── cdn-bundles: ${purged.cdnBundles.promoted} assumed → verified (extract OK, pas de re-DL)`,
+        );
+      }
+      console.log(
+        `── cdn-bundles purge (ledger verified): ${purged.cdnBundles.purged} removed, ${purged.cdnBundles.kept} kept` +
+          (purged.orphans ? ` (+${purged.orphans} orphans)` : ""),
+      );
+      if (purged.durableCatalogue) {
+        console.log("── cdn-manifests → logs durable catalogue + staging purge");
+      }
+      if (purged.malieDatabases) {
+        console.log("── malie-databases purge (inventory durable under logs/)");
+      }
+      if (purged.apks.purgedApks > 0 || purged.apks.keptMeta) {
+        console.log(
+          `── apks purge: ${purged.apks.purgedApks} .apk removed` +
+            (purged.apks.keptMeta ? " (meta → logs/)" : ""),
+        );
+      }
+      if (purged.configCachePurged) {
+        console.log("── config-cache purge (cold-start = Malie + epoch probe)");
+      }
+      (summary as { liveStagingPurge?: unknown }).liveStagingPurge = purged;
+    } catch (err) {
+      console.warn(
+        `[cdn] purge skipped: ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
+
   writeLastRun(repo, "pokemon", { provider: "tcglive-update", ...summary });
 
   // Rebuild per-print foil index from cards.json (same DB as live_cards).
   try {
-    const { buildCardFoilIndex } = await import("./indexCardFoil");
+    const { buildCardFoilIndex } = await import("../foil/indexCardFoil");
     const foil = buildCardFoilIndex();
     console.log(
       `card_foil: ${foil.rows} rows from ${foil.bundles} bundles → ${foil.path}`,

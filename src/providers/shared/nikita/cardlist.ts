@@ -24,6 +24,11 @@ export function nikitaFaceUrl(game: string, printedRef: string): string {
   return `${NIKITA_TCG_DB_ORIGIN}/img/card/${game}/${printedRef}.jpg`;
 }
 
+/** Pack sleeve shared by JA (and EN reprints of the same line). */
+export function nikitaCardBackUrl(game: string): string {
+  return `${NIKITA_TCG_DB_ORIGIN}/img/card/${game}/back.jpg`;
+}
+
 /** Une ligne brute de la cardlist — ref imprimée telle que le site l'écrit. */
 export type NikitaCardlistRow = {
   /** Ref imprimée en majuscules (`S-001`, `D-5`, `PZ-12`…). */

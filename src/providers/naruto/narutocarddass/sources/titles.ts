@@ -13,16 +13,20 @@ import fs, {
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
-import { appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues } from "../identity";
-import type { NarutoLangAppearances } from "../identity";
 import {
+  appearanceSetsOf,
+  appearanceValueForJson,
+  canonicalizeNarutoPrintKey,
+  loadNarutoAppearancesFile,
+  mergeAppearanceValues,
+  mintNarutoPrintKey,
+  narutoCollectorKey,
+  narutoDiskCardId,
   narutoLedgerNumber,
   narutoNumbersEqual,
-  canonicalizeNarutoPrintKey,
-  mintNarutoPrintKey,
-  narutoDiskCardId,
   parseNarutoCollector,
-  narutoCollectorKey,
+  writeNarutoAppearancesFile,
+  type NarutoLangAppearances,
 } from "../identity";
 import { narutoCuratedSourcesDir } from "../install/curated";
 import { isImplausibleNarutoTitle } from "../pipeline";
@@ -578,11 +582,6 @@ type S6FrPrintedFile = {
   kanaBlisterS5Reprints?: readonly { number?: string }[];
 };
 
-type AppearancesFile = {
-  generatedAt: string;
-  appearances: Record<string, NarutoLangAppearances>;
-};
-
 let keys: Set<string> | null = null;
 let diskNumbers: string[] | null = null;
 
@@ -674,23 +673,16 @@ export function isNarutoS6FrPrintedNumber(raw: string): boolean {
 }
 
 /**
- * Opération manga Kana (15) + inédites DVD → `appearances.json` FR `s6`.
+ * Opération manga Kana (15) + inédites DVD → appearances FR `s6` (sqlite).
  * Les reprints gardent aussi `s5` (multi-set, comme NI-049).
  * @returns nombre de cartes FR dont la liste de sets a changé.
  */
 export function syncNarutoS6FrPrintedAppearances(packRoot: string): number {
-  const file = path.join(packRoot, "appearances.json");
-  let appearances: Record<string, NarutoLangAppearances> = {};
-  let generatedAt = new Date().toISOString();
-  if (existsSync(file)) {
-    try {
-      const raw = JSON.parse(readFileSync(file, "utf8")) as AppearancesFile;
-      appearances = { ...(raw.appearances ?? {}) };
-      generatedAt = raw.generatedAt ?? generatedAt;
-    } catch {
-      /* rebuild */
-    }
-  }
+  const existing = loadNarutoAppearancesFile(packRoot);
+  const appearances: Record<string, NarutoLangAppearances> = {
+    ...(existing?.appearances ?? {}),
+  };
+  const generatedAt = existing?.generatedAt ?? new Date().toISOString();
 
   let changed = 0;
   try {
@@ -712,17 +704,10 @@ export function syncNarutoS6FrPrintedAppearances(packRoot: string): number {
     return 0;
   }
 
-  writeFileSync(
-    file,
-    `${JSON.stringify(
-      {
-        generatedAt,
-        appearances,
-      } satisfies AppearancesFile,
-      null,
-      2,
-    )}\n`,
-  );
+  writeNarutoAppearancesFile(packRoot, {
+    generatedAt,
+    appearances,
+  });
   return changed;
 }
 

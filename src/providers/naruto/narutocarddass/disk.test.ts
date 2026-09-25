@@ -55,6 +55,58 @@ import sharp from "sharp";
       ).toBe("carddas-a");
     });
 
+    it("never lets illustration B steal primary display on raw pixels", () => {
+      // 作-257 : Chitoroshop = art B (Sasuke portant Naruto), Suruga = art A
+      // (pluie, GL124344). B is 15× larger — without the filter it wins.
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "suruga",
+              file: "art.suruga.jpg",
+              width: 350,
+              height: 512,
+            },
+            {
+              source: "carddas-b",
+              file: "art.carddas-b.jpg",
+              width: 1414,
+              height: 2000,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("suruga");
+    });
+
+    it("prefers cropped carddas-a over the unsplit double-height GIF", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "carddas",
+              file: "art.carddas.gif",
+              width: 185,
+              height: 548,
+            },
+            {
+              source: "carddas-a",
+              file: "art.carddas-a.png",
+              width: 185,
+              height: 274,
+            },
+            {
+              source: "carddas-b",
+              file: "art.carddas-b.png",
+              width: 185,
+              height: 274,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("carddas-a");
+    });
+
     it("counts unsourced art.jpg as legacy, not a named dump", () => {
       expect(narutoFaceSourceOf("art.jpg")).toBe("legacy");
       expect(narutoFaceSourceOf("art.png")).toBe("legacy");
@@ -81,6 +133,9 @@ import sharp from "sharp";
     it("prefers the locale dump on a size tie (filename order only)", () => {
       expect(narutoDumpFaceRank("art.nikita.jpg", "ja")).toBeGreaterThan(
         narutoDumpFaceRank("art.suruga.jpg", "ja"),
+      );
+      expect(narutoDumpFaceRank("art.nikita.jpg", "ja")).toBeGreaterThan(
+        narutoDumpFaceRank("art.slabz.jpg", "ja"),
       );
       expect(narutoDumpFaceRank("art.vintage.jpg", "en")).toBeGreaterThan(
         narutoDumpFaceRank("art.goat.jpg", "en"),
@@ -164,6 +219,102 @@ import sharp from "sharp";
       ).toBe("nikita");
     });
 
+    it("does not let a tvtokyo thumb beat a nikita scan on aspect ratio", () => {
+      /*
+        Mesuré 2026-09-21 sur ni0162/ja : tvtokyo 80×114 scorait 665 contre
+        659 pour nikita 339×500 — le bonus de ratio sous 0.2 MP. areaDecidesBelow
+        fait gagner la surface (nikita), puis la priorité si égalité.
+      */
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "tvtokyo",
+              file: "art.tvtokyo.jpg",
+              width: 80,
+              height: 114,
+            },
+            {
+              source: "nikita",
+              file: "art.nikita.jpg",
+              width: 339,
+              height: 500,
+            },
+            {
+              source: "suruga",
+              file: "art.suruga.jpg",
+              width: 350,
+              height: 512,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("suruga");
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "tvtokyo",
+              file: "art.tvtokyo.jpg",
+              width: 80,
+              height: 114,
+            },
+            {
+              source: "nikita",
+              file: "art.nikita.jpg",
+              width: 339,
+              height: 500,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("nikita");
+    });
+
+    it("keeps JA nikita over a larger slabz collector scan", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "nikita",
+              file: "art.nikita.jpg",
+              width: 341,
+              height: 500,
+            },
+            {
+              source: "slabz",
+              file: "art.slabz.jpg",
+              width: 880,
+              height: 1206,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("nikita");
+    });
+
+    it("still uses slabz when no JP catalogue scan is present", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "slabz",
+              file: "art.slabz.jpg",
+              width: 880,
+              height: 1206,
+            },
+            {
+              source: "fril",
+              file: "art.fril.jpg",
+              width: 1080,
+              height: 1080,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("slabz");
+    });
+
     it("keeps the FR publisher raw over a larger Coleka photo", () => {
       expect(
         pickBestNarutoDumpFace(
@@ -184,6 +335,82 @@ import sharp from "sharp";
           "fr",
         ),
       ).toBe("carddass");
+    });
+
+    it("keeps a smaller JA Suruga crop over a larger eBay marketplace dump", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "suruga",
+              file: "art.suruga.jpg",
+              width: 349,
+              height: 512,
+            },
+            {
+              source: "ebay",
+              file: "art.ebay.webp",
+              width: 1200,
+              height: 1600,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("suruga");
+    });
+
+    it("keeps JA Suruga over a larger Fril seller photo", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "suruga",
+              file: "art.suruga.jpg",
+              width: 348,
+              height: 512,
+            },
+            {
+              source: "fril",
+              file: "art.fril.jpg",
+              width: 1080,
+              height: 1080,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("suruga");
+    });
+
+    it("still uses Fril on JA when no shop scan is held", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "fril",
+              file: "art.fril.jpg",
+              width: 1080,
+              height: 1080,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("fril");
+    });
+
+    it("still uses eBay on JA when no shop scan is held", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "ebay",
+              file: "art.ebay.webp",
+              width: 1200,
+              height: 1600,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("ebay");
     });
 
     it("lets a larger Rakuten NOPAD beat a watermarked carddass raw on FR", () => {

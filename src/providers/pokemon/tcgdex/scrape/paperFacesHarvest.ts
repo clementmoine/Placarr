@@ -12,6 +12,7 @@
 import { rebuildPokemonCardsIndex } from "@/providers/pokemon/live/pipeline/rebuildCardsIndex";
 
 import { harvestColekaMcdoFaces } from "./coleka/scrapeColekaPokemonFaces";
+import { harvestColekaMcdoPrices } from "./coleka/colekaPrices";
 import {
   fillMcdnGalleryFaces,
   fillPkmcardsFaces,
@@ -139,6 +140,16 @@ export async function runPokemonPaperFacesHarvest(
       `   Coleka ${row.branch}: ${row.written} écrites / ${row.skipped} skip / ${row.failed} fail (${row.cards} cartes, ${row.pages} pages)`,
     );
   }
+  try {
+    const colekaPrices = await harvestColekaMcdoPrices();
+    console.log(
+      `   Coleka deals prices: ${colekaPrices.ledger.withPrintKey} printKey (cote ${colekaPrices.ledger.withQuotation})`,
+    );
+  } catch (err) {
+    console.warn(
+      `   Coleka deals prices: ${err instanceof Error ? err.message : err}`,
+    );
+  }
 
   console.log("── Pokémon paper faces — TCGPlayer McDo 2023 EN");
   const tcgplayer = await fillTcgplayerMcdo2023({
@@ -172,6 +183,7 @@ export async function runPokemonPaperFacesHarvest(
     force: opts.force,
     cardsRoot: opts.cardsRoot,
     lang: "fr",
+    onProgress: (message) => console.log(`   ${message}`),
   });
   console.log(
     `   pkmcards: ${pkmcards.written} écrites / ${pkmcards.skipped} skip / ${pkmcards.unmapped} hors map / ${pkmcards.failed} fail (${pkmcards.indexCards} tuiles)`,

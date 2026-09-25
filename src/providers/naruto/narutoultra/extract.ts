@@ -11,6 +11,7 @@ import {
   installAnimeCollectionFaces,
   installColekaUltraFaces,
 } from "./sources/faces";
+import { harvestColekaUltraPrices } from "./harvest/colekaPrices";
 import { ingestUltraSealedProducts } from "./sealed";
 import { NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "./pack";
 
@@ -29,6 +30,16 @@ export async function runNarutoUltraPackPipeline(
   if (colekaFaces.rejected.length) {
     console.log(
       `── Coleka faces — ${colekaFaces.rejected.length} fiche(s) refusée(s)`,
+    );
+  }
+  try {
+    const colekaPrices = await harvestColekaUltraPrices();
+    console.log(
+      `── Coleka deals prices — ${colekaPrices.ledger.withPrintKey} printKey (cote ${colekaPrices.ledger.withQuotation})`,
+    );
+  } catch (err) {
+    console.warn(
+      `── Coleka deals prices — ${err instanceof Error ? err.message : err}`,
     );
   }
   const acFaces = await harvestAnimeCollectionFaces({ force });

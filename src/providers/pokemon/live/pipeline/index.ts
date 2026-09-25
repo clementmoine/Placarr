@@ -12,23 +12,26 @@ import { fileURLToPath } from "node:url";
 
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
-import { scrapeTcgCardsProducts } from "@/providers/dragonball/shared/dbscards/scrapeProducts";
+import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonLiveDbPath,
+  POKEMON_PACK_ID,
+} from "@/providers/pokemon/paths";
 
 import { indexLiveCards } from "./indexCards";
 import { rebuildPokemonCardsIndex } from "./rebuildCardsIndex";
 
-const POKEMON_PACK_ID = "pokemon";
 const POKEMON_PRODUCTS_CONTENTS = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../tcgdex/curated/products-contents.json",
 );
 
 function cardsDbPath(): string {
-  const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
-  if (override) return path.resolve(override);
-  return path.join(dataRoot(), POKEMON_PACK_ID, "catalog.sqlite");
+  ensurePokemonDbLayout();
+  return pokemonLiveDbPath();
 }
 
 const hooks = cardCatalogueHooks({

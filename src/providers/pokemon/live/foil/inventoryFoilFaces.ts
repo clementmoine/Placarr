@@ -17,7 +17,7 @@ import {
   playroomArtForMaterial,
   playroomSeedFoilNames,
 } from "@/effects/pokemon/playroomArt";
-import { ownedBundlesForShader } from "@/effects/pokemon/liveOwnedBundles";
+import { ownedBundlesForShader } from "@/effects/pokemon/liveJoin";
 import { packLiveOwnedPath } from "@/lib/packPaths";
 
 // Server-side: installs the SQLite lookups over the client-safe stubs.

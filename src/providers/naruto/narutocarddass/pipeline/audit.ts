@@ -27,7 +27,7 @@ import {
   type NarutoFaceSource,
 } from "../disk";
 import type { NarutoLangAppearances } from "../identity";
-import { NARUTO_PACK_ID } from "../identity";
+import { loadNarutoAppearancesFile, NARUTO_PACK_ID } from "../identity";
 
 // --- from auditFaceCollisions.ts ---
 
@@ -274,14 +274,7 @@ function sha1(abs: string): string {
 }
 
 function loadAppearances(root: string): Record<string, NarutoLangAppearances> {
-  try {
-    const raw = JSON.parse(
-      readFileSync(path.join(root, "appearances.json"), "utf8"),
-    ) as { appearances?: Record<string, NarutoLangAppearances> };
-    return raw.appearances ?? {};
-  } catch {
-    return {};
-  }
+  return loadNarutoAppearancesFile(root)?.appearances ?? {};
 }
 
 function retargetDecision(cardDir: string, from: string, to: string): void {

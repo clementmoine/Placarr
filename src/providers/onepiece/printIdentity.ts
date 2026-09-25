@@ -9,7 +9,7 @@ import {
   formatBandaiCollectorNumber,
   parseBandaiCollectorNumber,
   type BandaiCollectorNumber,
-} from "@/providers/shared/dbs/bandaiCollector";
+} from "@/providers/dragonball/shared/dbs/bandaiCollector";
 
 import { ONEPIECE_PRINT_GAME } from "./pack";
 

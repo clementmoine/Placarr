@@ -39,6 +39,10 @@ export type ChecklistSetInput = {
    * il est sorti.
    */
   sortKey?: number | null;
+  /** Symbole set devant le libellé — voir `PrintSetOption.iconUrl`. */
+  iconUrl?: string | null;
+  /** Fallbacks symbole — voir `PrintSetOption.iconUrls`. */
+  iconUrls?: string[] | null;
 };
 
 export type ChecklistCard = ChecklistPrint & {

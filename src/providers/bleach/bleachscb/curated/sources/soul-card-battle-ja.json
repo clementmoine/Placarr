@@ -1,9 +1,9 @@
 {
   "source": "tcg-db.nikita.jp/cardlist/blc",
   "lang": "ja",
-  "observed": "2026-09-16",
+  "observed": "2026-09-24",
   "url": "https://tcg-db.nikita.jp/cardlist/blc/",
-  "count": 130,
+  "count": 131,
   "cards": [
     {
       "printed": "S-002",
@@ -1075,6 +1075,15 @@
       "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/S-500.jpg",
       "type": "ブラストソウル",
       "note": "nikita · 12.Night of Sledgehammer"
+    },
+    {
+      "printed": "E238",
+      "set": "e",
+      "number": "238",
+      "nameJa": "限定解除",
+      "faceUrlJa": "https://tcg-db.nikita.jp/img/card/blc/E-238.jpg",
+      "type": "イベント",
+      "note": "nikita · 13.Turn the True Power On"
     },
     {
       "printed": "E239",

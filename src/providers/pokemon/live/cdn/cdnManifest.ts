@@ -34,6 +34,12 @@ export function isCardBundleAssetName(name: string): boolean {
   return CARD_BUNDLE_NAME_RE.test(name.trim());
 }
 
+/** Shared UnityFS (shaders / attack plates) — hashed for scrape skip + purge. */
+export function isSharedCdnAssetName(name: string): boolean {
+  const key = name.trim().toLowerCase();
+  return key === "shadersbundle" || key.startsWith("attack_");
+}
+
 /** Keep hi-res card bundles; drop ``_t`` thumbnails unless asked. */
 export function filterCardBundleNames(
   assetNames: readonly string[],
@@ -180,13 +186,15 @@ export function buildCdnCatalogue(
     for (const raw of dump.assets) {
       const name = raw.trim();
       const key = name.toLowerCase();
-      if (!kept.has(key)) continue;
+      const shared = isSharedCdnAssetName(name);
+      if (!kept.has(key) && !shared) continue;
       bucketOf.set(key, dump.bucket);
       const crc = crcByName.get(key);
       if (crc != null) crcOf.set(key, crc);
       const hash = hashByName.get(key);
       if (hash) hashOf.set(key, hash);
-      if (!seen.has(key)) {
+      // Card scrape list stays card-only; shared hashes still land in hashOf.
+      if (!shared && !seen.has(key)) {
         seen.add(key);
         names.push(name);
       }

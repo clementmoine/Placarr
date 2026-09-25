@@ -319,14 +319,24 @@ const colekaStorm3_PREFIX_TO_TYPE = {
 
 /**
  * `NI-1650` / `JU-1002` / `MI-976` → `n1650` / `j1002` / `m976`.
+ * Short deals forms `Ni 1579` / `J 986` need a separator (space/hyphen) so
+ * disk ids like `n1650` stay rejected.
  * Returns null for Carddass `TE`/`TA`/`CL` so a grab-bag listing cannot leak.
  */
 export function colekaEuPrefixToCollector(raw: string): string | null {
-  const m = /^(NI|JU|MI)[\s-]*(\d{3,4})$/i.exec(raw.trim());
-  if (!m) return null;
-  const letter =
-    colekaStorm3_PREFIX_TO_TYPE[m[1]!.toLowerCase() as keyof typeof colekaStorm3_PREFIX_TO_TYPE];
-  return `${letter}${m[2]}`;
+  const trimmed = raw.trim();
+  const long = /^(NI|JU|MI)[\s-]*(\d{3,4})$/i.exec(trimmed);
+  if (long) {
+    const letter =
+      colekaStorm3_PREFIX_TO_TYPE[
+        long[1]!.toLowerCase() as keyof typeof colekaStorm3_PREFIX_TO_TYPE
+      ];
+    return `${letter}${long[2]}`;
+  }
+  const short = /^(N|J|M)[\s-]+(\d{3,4})$/i.exec(trimmed);
+  if (!short) return null;
+  const letter = short[1]!.toLowerCase() as "n" | "j" | "m";
+  return `${letter}${short[2]}`;
 }
 
 /**

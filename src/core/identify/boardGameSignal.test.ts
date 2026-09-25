@@ -8,7 +8,7 @@ import {
   detectVideoGameSignal,
 } from "./boardGameSignal";
 import { createEmptyBarcodeLookupPayload } from "./lookup/payload";
-import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodePrices";
 
 describe("detectVideoFormatSignal", () => {
   it("repère un format vidéo (LaserDisc/VHS/dessin animé)", () => {

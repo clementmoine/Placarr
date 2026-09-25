@@ -148,6 +148,53 @@ describe("dbscardsSlugToPrintRef", () => {
 
   it("keeps a two-digit number as printed", () => {
     expect(dbscardsSlugToPrintRef("ex10-05-ex-docteur-willow")).toBe("ex10-05");
+    expect(
+      dbscardsSlugToPrintRef(
+        "asc-fr-276-mega-evolution-heros-transcendants-pikachu",
+      ),
+    ).toBe("asc-276");
+    expect(
+      dbscardsPrintRef({
+        sku: "ASC-276",
+        slug: "asc-fr-276-mega-evolution-heros-transcendants-pikachu",
+      }),
+    ).toBe("asc-276");
+    /*
+      pkmcards list tiles often have no `ASC - 276/217` in the title — sku is
+      null on disk until we rebuild from the mid-locale slug.
+    */
+    expect(
+      dbscardsPrintRef({
+        sku: null,
+        slug: "pbl-fr-001-mega-evolution-nuit-noire-tropius",
+      }),
+    ).toBe("pbl-001");
+  });
+
+  it("reads Lorcana number-total-lang-set slugs and YGO lang+number", () => {
+    expect(
+      dbscardsSlugToPrintRef("223-204-fr-12-jessie-cowgirl-energique"),
+    ).toBe("12-223");
+    expect(
+      dbscardsPrintRef({
+        sku: "12-223",
+        slug: "223-204-fr-12-jessie-cowgirl-energique",
+      }),
+    ).toBe("12-223");
+    expect(dbscardsSlugToPrintRef("cyac-fr042-luluwalilith-despian")).toBe(
+      "cyac-fr042",
+    );
+    expect(
+      dbscardsPrintRef({
+        sku: "CYAC-FR042",
+        slug: "cyac-fr042-luluwalilith-despian",
+      }),
+    ).toBe("cyac-fr042");
+    expect(
+      dbscardsSlugToPrintRef(
+        "disney-100-18-p1-mickey-mouse-visage-amica",
+      ),
+    ).toBeNull();
   });
 });
 

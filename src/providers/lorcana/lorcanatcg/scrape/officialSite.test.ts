@@ -5,10 +5,13 @@ import {
   inferOfficialSetId,
   inferPackshotKind,
   OFFICIAL_SITE_LOCALES,
+  officialSiteContentHashFromPages,
   officialSiteLocaleToLang,
   parseOfficialProductMenu,
   parseOfficialProductPage,
+  type OfficialProductPage,
 } from "./officialSite";
+import { catalogArtefactIsFresh, emptyCatalogIngestLedger } from "@/providers/shared/catalogIngestLedger";
 
 const MENU_HTML = `
 <div class="links">
@@ -132,5 +135,41 @@ describe("official site locales", () => {
 
   it("lists catalogue locales for harvest (EN+FR only)", () => {
     expect(OFFICIAL_SITE_LOCALES).toEqual(["fr-FR", "en-US"]);
+  });
+});
+
+describe("officialSiteContentHashFromPages", () => {
+  it("is stable and marks ledger fresh", () => {
+    const pages: OfficialProductPage[] = [
+      {
+        slug: "hyperia-city",
+        title: "Hyperia",
+        logoUrl: "https://example.com/logo.png",
+        logoAlt: "logo",
+        setId: "set14",
+        packshots: [
+          {
+            url: "https://example.com/fr_trove.png",
+            alt: "trove",
+            kind: "coffret",
+          },
+        ],
+        sourceUrl: "https://www.disneylorcana.com/fr-FR/product/hyperia-city",
+        lang: "fr",
+      },
+    ];
+    const a = officialSiteContentHashFromPages(pages);
+    const b = officialSiteContentHashFromPages(pages);
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[a-f0-9]{64}$/);
+    const ledger = emptyCatalogIngestLedger();
+    ledger.entries["lorcana:official-site"] = {
+      artefactId: "lorcana:official-site",
+      contentHash: a,
+      promotedAt: "2026-01-01T00:00:00.000Z",
+    };
+    expect(catalogArtefactIsFresh(ledger, "lorcana:official-site", b)).toBe(
+      true,
+    );
   });
 });

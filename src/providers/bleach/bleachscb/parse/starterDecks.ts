@@ -34,7 +34,7 @@ export function parseBleachStarterLines(block: string): BleachStarterLine[] {
 
 /**
  * Split S1 catalogue HTML into Compagnons / Rivaux decks.
- * Source: `data/staging/carddass-wayback-scout/pages/bleach-s1.html`.
+ * Source: `curated/sources/wayback/bleach-s1.html` (Wayback carddass.fr S1).
  */
 export function parseBleachS1StarterDecks(html: string): BleachStarterDeck[] {
   const normalized = html

@@ -10,6 +10,10 @@ import { pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
 import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonLiveDbPath,
+} from "@/providers/pokemon/paths";
 
 type RawVariant = {
   cardTex?: string;
@@ -29,9 +33,8 @@ function sourcePath(): string {
 }
 
 function dbPath(): string {
-  const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
-  if (override) return path.resolve(override);
-  return path.join(dataRoot(), "pokemon", "catalog.sqlite");
+  ensurePokemonDbLayout();
+  return pokemonLiveDbPath();
 }
 
 export function buildCardFoilIndex(opts?: {

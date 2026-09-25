@@ -20,7 +20,7 @@ import {
 import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
-import type { CatalogueCardRow } from "@/lib/admin/catalogueCardsTypes";
+import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 
 type CatalogueCardsResponse = {
   pack: CataloguePackId;
@@ -151,6 +151,7 @@ async function fetchPage(input: {
   allLocales: boolean;
   missingArtOnly: boolean;
   missingNameOnly: boolean;
+  missingPriceOnly: boolean;
 }): Promise<CatalogueCardsResponse> {
   const params = new URLSearchParams({
     pack: input.pack,
@@ -162,12 +163,40 @@ async function fetchPage(input: {
   if (input.preferLang) params.set("lang", input.preferLang);
   if (input.missingArtOnly) params.set("missingArt", "1");
   if (input.missingNameOnly) params.set("missingName", "1");
+  if (input.missingPriceOnly) params.set("missingPrice", "1");
   const res = await fetch(`/api/admin/catalogue-cards?${params}`);
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error || `HTTP ${res.status}`);
   }
   return (await res.json()) as CatalogueCardsResponse;
+}
+
+function formatCardPriceCents(
+  cents: number | null | undefined,
+  fr: boolean,
+): string | null {
+  if (cents == null || !(cents > 0)) return null;
+  return new Intl.NumberFormat(fr ? "fr-FR" : "en-GB", {
+    style: "currency",
+    currency: "EUR",
+  }).format(cents / 100);
+}
+
+/** Signed 30-day move — compact `↑0,25 €` / `↓0,25 €`, null when unknown. */
+function formatCardPriceDeltaCents(
+  deltaCents: number | null | undefined,
+  fr: boolean,
+): string | null {
+  if (deltaCents == null || !Number.isFinite(deltaCents) || deltaCents === 0) {
+    return null;
+  }
+  const abs = new Intl.NumberFormat(fr ? "fr-FR" : "en-GB", {
+    style: "currency",
+    currency: "EUR",
+    signDisplay: "never",
+  }).format(Math.abs(deltaCents) / 100);
+  return `${deltaCents > 0 ? "↑" : "↓"}${abs}`;
 }
 
 /**
@@ -188,6 +217,7 @@ export function CatalogueBrowser({
   const [langFilter, setLangFilter] = useState<string>(defaultLang);
   const [missingArtOnly, setMissingArtOnly] = useState(false);
   const [missingNameOnly, setMissingNameOnly] = useState(false);
+  const [missingPriceOnly, setMissingPriceOnly] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(query), 250);
@@ -198,9 +228,10 @@ export function CatalogueBrowser({
     setLangFilter(defaultLang);
     setMissingArtOnly(false);
     setMissingNameOnly(false);
+    setMissingPriceOnly(false);
   }, [packId, defaultLang]);
 
-  const auditActive = missingArtOnly || missingNameOnly;
+  const auditActive = missingArtOnly || missingNameOnly || missingPriceOnly;
 
   const allLocales = langFilter === ALL_LOCALES;
   const preferLang = allLocales ? defaultLang : langFilter;
@@ -217,11 +248,13 @@ export function CatalogueBrowser({
   } = useInfiniteQuery({
     queryKey: [
       "catalogueCards",
+      "v3-price-delta",
       packId,
       debouncedQ,
       langFilter,
       missingArtOnly,
       missingNameOnly,
+      missingPriceOnly,
     ],
     queryFn: ({ pageParam }) =>
       fetchPage({
@@ -232,6 +265,7 @@ export function CatalogueBrowser({
         allLocales,
         missingArtOnly,
         missingNameOnly,
+        missingPriceOnly,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -281,7 +315,11 @@ export function CatalogueBrowser({
         </div>
         <p className="text-xs text-muted-foreground tabular-nums">
           {auditActive
-            ? missingArtOnly && missingNameOnly
+            ? missingPriceOnly && !missingArtOnly && !missingNameOnly
+              ? fr
+                ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} sans prix`
+                : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} missing price`
+              : missingArtOnly && missingNameOnly
               ? fr
                 ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} incomplets`
                 : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} incomplete`
@@ -289,9 +327,13 @@ export function CatalogueBrowser({
                 ? fr
                   ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} sans image`
                   : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} missing art`
-                : fr
-                  ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} sans nom`
-                  : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} missing name`
+                : missingNameOnly
+                  ? fr
+                    ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} sans nom`
+                    : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} missing name`
+                  : fr
+                    ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} filtrés`
+                    : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} filtered`
             : fr
               ? `${cards.length.toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")} cartes`
               : `${cards.length.toLocaleString("en-GB")} / ${total.toLocaleString("en-GB")} cards`}
@@ -352,6 +394,21 @@ export function CatalogueBrowser({
             {fr ? "Sans nom" : "Missing name"}
           </Label>
         </div>
+        <div className="flex h-8 items-center gap-2">
+          <Checkbox
+            id="catalogue-missing-card-price"
+            checked={missingPriceOnly}
+            onCheckedChange={(checked) =>
+              setMissingPriceOnly(checked === true)
+            }
+          />
+          <Label
+            htmlFor="catalogue-missing-card-price"
+            className="cursor-pointer text-xs font-normal text-muted-foreground"
+          >
+            {fr ? "Sans prix" : "Missing price"}
+          </Label>
+        </div>
         {isFetching ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
         ) : null}
@@ -395,6 +452,11 @@ export function CatalogueBrowser({
           {cards.map((card) => {
             const debugTags = catalogueCaptionTags(card, fr);
             const highlightIncomplete = auditActive;
+            const priceLabel = formatCardPriceCents(card.priceCents, fr);
+            const deltaLabel = formatCardPriceDeltaCents(
+              card.priceDeltaCents,
+              fr,
+            );
             return (
               <figure
                 key={`${card.printKey}:${card.lang}`}
@@ -410,6 +472,32 @@ export function CatalogueBrowser({
                   {card.lang && card.lang !== "—" ? (
                     <span className="ml-1 font-medium uppercase text-foreground/80">
                       {` ${card.lang}`}
+                    </span>
+                  ) : null}
+                  {priceLabel ? (
+                    <span className="ml-1 tabular-nums text-foreground/80">
+                      · {priceLabel}
+                      {deltaLabel ? (
+                        <span
+                          className={
+                            (card.priceDeltaCents ?? 0) > 0
+                              ? " text-emerald-700/90 dark:text-emerald-400/90"
+                              : " text-rose-700/90 dark:text-rose-400/90"
+                          }
+                          title={
+                            fr
+                              ? "Variation Cardmarket 30 jours"
+                              : "Cardmarket 30-day move"
+                          }
+                        >
+                          {" "}
+                          {deltaLabel}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : card.kind !== "pack-back" && card.kind !== "set-back" ? (
+                    <span className="ml-1 text-amber-700/90 dark:text-amber-400/90">
+                      · {fr ? "sans prix" : "no price"}
                     </span>
                   ) : null}
                   {card.hasFoil ? (

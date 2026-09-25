@@ -11,7 +11,7 @@ import {
   pickPlatformKeyFromEvidence,
   rejectedObservationsFromProductEvidence,
 } from "./observations";
-import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/core/identify/platforms/platforms";
+import { VIDEO_GAME_PLATFORM_TOKEN_TERMS } from "@/core/identify/platforms/platformList";
 import { isReferencePriceSource } from "@/core/catalog/catalog";
 import {
   areEvidenceSameProduct,

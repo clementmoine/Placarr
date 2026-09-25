@@ -10,7 +10,7 @@ import {
 import { hostKeyOf } from "@/lib/http/hostLimiter";
 import { httpGet } from "@/lib/http/httpClient";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
-import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
+import { yieldToEventLoop } from "@/lib/async";
 
 export type ScrapeFetchResponse = {
   status: number;
@@ -180,6 +180,8 @@ export async function fetchTextWithFlareFallback(
   options: AxiosRequestConfig & {
     flareMaxTimeoutMs?: number;
     signal?: AbortSignal;
+    /** Skip direct GET and go straight to the challenge solver. */
+    skipDirect?: boolean;
   } = {},
 ): Promise<string | null> {
   const response = await fetchGetWithFlareFallback(url, {

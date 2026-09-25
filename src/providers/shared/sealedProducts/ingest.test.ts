@@ -170,8 +170,8 @@ describe("sealed lang", () => {
 
 describe("sealed ingest", () => {
   it("builds a product key that is not a printKey", () => {
-    expect(sealedProductKey("dbs/cg", "sd23-starter-deck-final-radiance")).toBe(
-      "dbs/cg::sd23-starter-deck-final-radiance",
+    expect(sealedProductKey("dragonball/cg", "sd23-starter-deck-final-radiance")).toBe(
+      "dragonball/cg::sd23-starter-deck-final-radiance",
     );
   });
 
@@ -227,6 +227,7 @@ describe("sealed ingest", () => {
         ],
         containsPrintsIsPreview: true,
         relatedProducts: [],
+        containedProducts: [],
         tables: {},
       },
     });
@@ -274,6 +275,7 @@ describe("sealed ingest", () => {
         containsPrints: [],
         containsPrintsIsPreview: true,
         relatedProducts: [],
+        containedProducts: [],
         tables: {},
       },
     });
@@ -328,6 +330,7 @@ describe("sealed ingest", () => {
         containsPrints: [],
         containsPrintsIsPreview: true,
         relatedProducts: [],
+        containedProducts: [],
         tables: {},
       },
       /*
@@ -346,7 +349,7 @@ describe("sealed ingest", () => {
 
   it("marks a completed DBS starter as known contents", () => {
     const entry = sealedProductFromStaging({
-      packId: "dbs/cg",
+      packId: "dragonball/cg",
       listing: {
         slug: "sd23-starter-deck-final-radiance",
         path: "/products/decks/sd23-starter-deck-final-radiance",
@@ -377,6 +380,7 @@ describe("sealed ingest", () => {
         ],
         containsPrintsIsPreview: false,
         relatedProducts: [],
+        containedProducts: [],
         tables: {},
       },
     });
@@ -430,6 +434,7 @@ describe("sealed ingest", () => {
         containsPrints: [],
         containsPrintsIsPreview: true,
         relatedProducts: [],
+        containedProducts: [],
         tables: {},
       },
       /*
@@ -446,6 +451,202 @@ describe("sealed ingest", () => {
       "https://assets.tcgdex.net/fr/sv/sv08.5/logo.png",
     );
     expect(entry?.setCode).toBe("PRE");
+  });
+
+  it("resolves Pokémon shop preview tiles to TCGdex printKeys + keeps tile art", () => {
+    const entry = sealedProductFromStaging({
+      packId: "pokemon",
+      listing: {
+        slug: "booster-mega-evolution-heros-transcendants",
+        path: "/products/boosters/booster-mega-evolution-heros-transcendants",
+        category: "boosters",
+        image: null,
+      },
+      page: {
+        path: "/products/boosters/booster-mega-evolution-heros-transcendants",
+        slug: "booster-mega-evolution-heros-transcendants",
+        category: "boosters",
+        name: "Booster ME02.5 Héros Transcendants",
+        image: null,
+        sku: null,
+        price: "9.99",
+        currency: "EUR",
+        setCode: "ASC",
+        lang: "FR",
+        releaseDate: null,
+        declaredCardCount: 217,
+        containsPrints: [
+          {
+            slug: "asc-fr-276-mega-evolution-heros-transcendants-pikachu",
+            path: "/cards/asc-fr-276-mega-evolution-heros-transcendants-pikachu",
+            ref: "asc-276",
+            sku: "ASC-276",
+            name: "Pikachu",
+            image:
+              "https://static.pkmcards.fr/cards/fr/asc/image-cartes-a-collectionner-pokemon-card-game-tcg-pkmcards-asc-fr-276-mega-evolution-heros-transcendants-pikachu.webp",
+          },
+        ],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+      resolveCatalogueSetId: ({ setCode }) =>
+        setCode?.toUpperCase() === "ASC" ? "me02.5" : null,
+    });
+    expect(entry?.prints[0]).toMatchObject({
+      name: "Pikachu",
+      ref: "asc-276",
+      printKey: "pokemon:me02.5-276",
+      image:
+        "https://static.pkmcards.fr/cards/fr/asc/image-cartes-a-collectionner-pokemon-card-game-tcg-pkmcards-asc-fr-276-mega-evolution-heros-transcendants-pikachu.webp",
+    });
+  });
+
+  it("resolves Lorcana + Yu-Gi-Oh shop preview tiles to printKeys + tile art", () => {
+    const lorcana = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "booster-set-12-contrees-inconnues-woody",
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        image: null,
+      },
+      page: {
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        slug: "booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        name: "Booster Set 12 Woody",
+        image: null,
+        sku: null,
+        price: "4.90",
+        currency: "EUR",
+        setCode: "WIL",
+        lang: "FR",
+        releaseDate: null,
+        declaredCardCount: 446,
+        containsPrints: [
+          {
+            slug: "223-204-fr-12-jessie-cowgirl-energique",
+            path: "/cards/223-204-fr-12-jessie-cowgirl-energique",
+            ref: "12-223",
+            sku: "12-223",
+            name: "Jessie, Cowgirl énergique",
+            image: "https://static.lorcards.fr/cards/fr/wil/jessie.webp",
+          },
+        ],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+      resolveCatalogueSetId: ({ setCode }) =>
+        setCode?.trim() === "12" ? "12" : null,
+    });
+    expect(lorcana?.prints[0]).toMatchObject({
+      ref: "12-223",
+      printKey: "lorcana:12-223",
+      image: "https://static.lorcards.fr/cards/fr/wil/jessie.webp",
+    });
+
+    const ygo = sealedProductFromStaging({
+      packId: "yugioh",
+      listing: {
+        slug: "booster-acces-a-la-cyber-tempete",
+        path: "/products/boosters/booster-acces-a-la-cyber-tempete",
+        category: "boosters",
+        image: null,
+      },
+      page: {
+        path: "/products/boosters/booster-acces-a-la-cyber-tempete",
+        slug: "booster-acces-a-la-cyber-tempete",
+        category: "boosters",
+        name: "Booster Accès à la Cyber Tempête",
+        image: null,
+        sku: null,
+        price: "4.99",
+        currency: "EUR",
+        setCode: "CYAC",
+        lang: "FR",
+        releaseDate: null,
+        declaredCardCount: null,
+        containsPrints: [
+          {
+            slug: "cyac-fr042-str-acces-a-la-cyber-tempete-luluwalilith-despian",
+            path: "/cards/cyac-fr042-str-acces-a-la-cyber-tempete-luluwalilith-despian",
+            ref: "cyac-fr042",
+            sku: "CYAC-FR042",
+            name: "Luluwalilith Despian",
+            image:
+              "https://static.ygocards.fr/cards/fr/cyac/image-cartes-a-collectionner-yugioh-card-game-tcg-cyac-fr042-str.webp",
+          },
+        ],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+    });
+    expect(ygo?.prints[0]).toMatchObject({
+      ref: "cyac-fr042",
+      printKey: "yugioh:cyac-fr042",
+      image:
+        "https://static.ygocards.fr/cards/fr/cyac/image-cartes-a-collectionner-yugioh-card-game-tcg-cyac-fr042-str.webp",
+    });
+  });
+
+  it("maps Composition du produit into guaranteedProducts + packsContained", () => {
+    const entry = sealedProductFromStaging({
+      packId: "pokemon",
+      listing: {
+        slug: "foudre-noire-flamme-blanche-collection-poster",
+        path: "/products/collector-boxes/foudre-noire-flamme-blanche-collection-poster",
+        category: "collector-boxes",
+        image: null,
+      },
+      page: {
+        path: "/products/collector-boxes/foudre-noire-flamme-blanche-collection-poster",
+        slug: "foudre-noire-flamme-blanche-collection-poster",
+        category: "collector-boxes",
+        name: "Coffret Collection Poster EV10.5 Foudre Noire & Flamme Blanche",
+        image: null,
+        sku: null,
+        price: "34.99",
+        currency: "EUR",
+        setCode: null,
+        lang: "FR",
+        releaseDate: "18/07/2025",
+        declaredCardCount: null,
+        containsPrints: [],
+        containsPrintsIsPreview: false,
+        relatedProducts: [],
+        containedProducts: [
+          {
+            slug: "booster-flamme-blanche-reshiram",
+            path: "/products/boosters/booster-flamme-blanche-reshiram",
+            qty: 2,
+          },
+          {
+            slug: "booster-foudre-noire-zekrom",
+            path: "/products/boosters/booster-foudre-noire-zekrom",
+            qty: 2,
+          },
+        ],
+        tables: {},
+      },
+    });
+    expect(entry).toMatchObject({
+      kind: "collector_box",
+      behavior: "mixed_bundle",
+      packsContained: 4,
+      contentsKnown: true,
+      containsPrintsIsPreview: false,
+      priceCents: 3499,
+      guaranteedProducts: [
+        { slug: "booster-flamme-blanche-reshiram", qty: 2 },
+        { slug: "booster-foudre-noire-zekrom", qty: 2 },
+      ],
+    });
   });
 
   it("ingests a puzzle as known_bundle with promo-capable kind", () => {

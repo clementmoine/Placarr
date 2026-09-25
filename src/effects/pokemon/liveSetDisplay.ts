@@ -160,8 +160,8 @@ export function liveSerieDisplayName(
  * Face caption without opaque bundle codes.
  * e.g. `Florizarre Radieux · Épée & Bouclier · Pokémon GO n°4`
  *
- * Prefixes the era when the expansion name alone would hide it (same idea as
- * `tcgdexPrintLabel`: serie · extension · number).
+ * Unlike print `reference` (collector number only), the playroom caption keeps
+ * era + expansion when the set name alone would hide the serie.
  */
 export function formatPlayroomFaceCaption(
   cardName: string,

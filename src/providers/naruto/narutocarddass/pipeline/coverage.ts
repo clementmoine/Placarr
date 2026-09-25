@@ -19,6 +19,8 @@ import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 import universe from "../curated/sources/cardcheckbox-jp.json";
 import { NARUTO_PACK_ID, apacheIndexPath } from "../identity";
+import { loadNarutoCardsIndexFromSqlite } from "../indexStore";
+import { loadNarutoJaFacts } from "../scrape/catalogues";
 import {
   MANGA_NEWS_DECKS,
   htmlToChecklistText,
@@ -471,16 +473,17 @@ export function writeNarutoCompleteness(root?: string): {
   report: NarutoCompleteness;
 } {
   const packRoot = path.join(root ?? dataRoot(), NARUTO_PACK_ID);
-  const index = JSON.parse(
-    readFileSync(path.join(packRoot, "cards-index.json"), "utf8"),
-  ) as CardsIndexV1;
-  const factsPath = path.join(packRoot, "facts-ja.json");
-  const facts = existsSync(factsPath)
-    ? (JSON.parse(readFileSync(factsPath, "utf8")) as {
-        cards: Record<string, unknown>;
-      })
-    : null;
-  const report = buildNarutoCompleteness(index, facts);
+  const index = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
+  if (!index) {
+    throw new Error(
+      `Missing ${path.join(packRoot, "catalog.sqlite")} — run scrape / index first`,
+    );
+  }
+  const facts = loadNarutoJaFacts(packRoot);
+  const report = buildNarutoCompleteness(
+    index,
+    facts ? { cards: facts.cards } : null,
+  );
   const logs = path.join(packRoot, "logs");
   mkdirSync(logs, { recursive: true });
   const jsonPath = path.join(logs, "completeness.json");
@@ -600,11 +603,12 @@ function loadLocalNumbers(): {
   promo: string[];
   s6: string[];
 } {
-  const indexPath = path.join(packRoot(), "cards-index.json");
-  if (!existsSync(indexPath)) {
-    throw new Error(`Missing ${indexPath} — run scrape / index first`);
+  const index = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
+  if (!index) {
+    throw new Error(
+      `Missing catalog.sqlite under ${packRoot()} — run scrape / index first`,
+    );
   }
-  const index = JSON.parse(readFileSync(indexPath, "utf8")) as CardsIndexV1;
   const byNumber = new Map<string, string[]>();
   const promo: string[] = [];
   const s6: string[] = [];

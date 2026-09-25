@@ -22,7 +22,7 @@ import {
   ebayBrowseItemId,
   fetchEbayBrowseItem,
 } from "@/providers/commerce/ebay/browseItem";
-import { bestEbayCoverUrl } from "@/providers/commerce/ebay/coverUrl";
+import { bestEbayCoverUrl } from "@/providers/commerce/ebay/ebayConfig";
 
 import { leclercCuratedDir } from "./curatedPaths";
 import { leclercOpForSetCode } from "./pack";

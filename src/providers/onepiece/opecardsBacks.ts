@@ -7,8 +7,8 @@
 import path from "node:path";
 
 import { packCardsDir } from "@/lib/packPaths";
-import { harvestTcgCardsDistinctBacks } from "@/providers/shared/dbscards/harvestCommonBacks";
-import { tcgCardsStaticOrigin } from "@/providers/shared/dbscards/parseCommonBacks";
+import { harvestTcgCardsDistinctBacks } from "@/providers/shared/tcgcards/harvestCommonBacks";
+import { tcgCardsStaticOrigin } from "@/providers/shared/tcgcards/parseCommonBacks";
 
 import { ONEPIECE_PACK_ID, onepieceCuratedDir } from "./pack";
 

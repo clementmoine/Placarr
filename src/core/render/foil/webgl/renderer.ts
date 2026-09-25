@@ -16,7 +16,7 @@ import type {
   FoilTextureBinding,
   FoilWrap,
 } from "@/core/render/foil/types";
-import { hotFoilStampUniforms } from "@/core/render/foil/hotFoilStamp";
+import { hotFoilStampUniforms } from "@/core/render/foil/backend";
 import { cameraPosFromTilt, lightDirectionFromTilt } from "./lightDirection";
 
 import type {
@@ -160,12 +160,13 @@ export function restoreOpaqueFoilOutput(source: string): string {
 }
 
 /**
- * Square / isotropic motifs (`TEX_CC_PB`, stars, confetti dots, Radiant cross
- * lattice, …) are authored for equal UV scales. Live frags use `vec2(s, s)`,
- * which stretches them tall on the portrait card. CSS tiles in square pixels;
- * scale.x *= aspect so WebGL matches that isotropy.
+ * Square / isotropic motifs (`TEX_CC_PB`, `TEX_StitchedRings`, stars, confetti
+ * dots, Radiant cross lattice, …) are authored for equal UV scales. Live frags
+ * use `vec2(s, s)`, which stretches them tall on the portrait card. CSS tiles
+ * in square pixels; scale.x *= aspect so WebGL matches that isotropy.
  *
- * - `_Tex_CC` / stars / dots: equal `vs_TEXCOORD0` tilings near `texture(…)`.
+ * - `_Tex_CC` / `_CCPatternTex` / stars / dots: equal `vs_TEXCOORD0` tilings
+ *   near `texture(…)`.
  * - `_CrossTexture` / Squares direction: lattice math sits between scale and
  *   sample — rewrite every equal `vs_TEXCOORD0.xy * vec2(s,s)` in those frags.
  */
@@ -174,7 +175,9 @@ export function aspectCorrectSquareMotifUv(
   aspect: number = LIVE_CARD_ASPECT,
 ): string {
   if (!(aspect > 0)) return source;
-  const hasCc = source.includes("_Tex_CC");
+  // FlatSilver / PikachuFoil GLES dumps rename MAT `_Tex_CC` → `_CCPatternTex`.
+  const hasCc =
+    source.includes("_Tex_CC") || source.includes("_CCPatternTex");
   const hasStarDot =
     source.includes("_StarsTexture") ||
     source.includes("_TexDots") ||
@@ -183,7 +186,8 @@ export function aspectCorrectSquareMotifUv(
   const hasSquareDir = source.includes("_T_Direction_RGB_Random");
   if (!hasCc && !hasStarDot && !hasCross && !hasSquareDir) return source;
 
-  const motifSampler = "_Tex_CC(?!_)|_StarsTexture|_TexDots|_T_noise_dots";
+  const motifSampler =
+    "_Tex_CC(?!_)|_CCPatternTex|_StarsTexture|_TexDots|_T_noise_dots";
 
   // Equal vec2 → earliest texture(motif) within the next 1–3 lines.
   // Non-greedy so two back-to-back CC samples (SunPillar) each match once.

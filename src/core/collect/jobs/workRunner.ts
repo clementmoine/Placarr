@@ -23,6 +23,7 @@ import {
   isCoverResolutionAcceptable,
   readFileImageMetrics,
 } from "@/core/enrich/media/imageMetrics";
+import { localMediaFilePath } from "@/lib/media/localMediaPath";
 import { fetchAndStoreMetadata } from "@/core/enrich";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import {
@@ -42,7 +43,6 @@ import {
   normalizeCatalogueExtractTarget,
   runCatalogueExtractCommand,
 } from "@/lib/admin/catalogueExtractRunner";
-import path from "path";
 
 const CANCEL_POLL_MS = 2_000;
 /** Foil CDN scrapes can run 15–40 min — refresh lock so stale recovery stays off. */
@@ -109,7 +109,7 @@ async function prepareItemForMetadataRefresh(input: {
   });
   if (itemForCoverReset?.imageUrl?.startsWith("/uploads/")) {
     const metrics = await readFileImageMetrics(
-      path.join(process.cwd(), "public", itemForCoverReset.imageUrl),
+      localMediaFilePath(itemForCoverReset.imageUrl) ?? "",
     );
     if (!isCoverResolutionAcceptable(metrics)) {
       await prisma.item.update({

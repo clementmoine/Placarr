@@ -36,6 +36,9 @@ export async function GET(req: Request) {
   const missingNameOnly =
     url.searchParams.get("missingName") === "1" ||
     url.searchParams.get("missingName") === "true";
+  const missingPriceOnly =
+    url.searchParams.get("missingPrice") === "1" ||
+    url.searchParams.get("missingPrice") === "true";
   const offset = Number(url.searchParams.get("offset") ?? "0");
   const limit = Number(url.searchParams.get("limit") ?? "48");
   const q = url.searchParams.get("q") ?? undefined;
@@ -46,12 +49,13 @@ export async function GET(req: Request) {
       ? localesParam
       : undefined;
 
-  const result = listCatalogueCards({
+  const result = await listCatalogueCards({
     pack,
     foilOnly,
     incompleteOnly,
     missingArtOnly,
     missingNameOnly,
+    missingPriceOnly,
     offset: Number.isFinite(offset) ? offset : 0,
     limit: Number.isFinite(limit) ? limit : 48,
     q,

@@ -44,7 +44,7 @@ const built = createEmptyLocalTcgProvider({
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://www.carddass.com/dbh/cardlist/",
     notes:
-      "Dragon Ball Heroes / Super DBH → `data/dbs/heroes/`. Cardlist officiel JA carddass.com. Pas de trad EN inventée.",
+      "Dragon Ball Heroes / Super DBH → `data/dragonball/heroes/`. Cardlist officiel JA carddass.com. Pas de trad EN inventée.",
   },
   runPipeline: async (argv) => {
     const { runDbhPackPipeline } = await import(

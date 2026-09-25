@@ -263,6 +263,8 @@ import { COLEKA_CARDDASS_FR_SERIES, colekaCarddassFrListingPageUrls, colekaCardd
       expect(colekaEuPrefixToCollector("JU-895")).toBe("j895");
       expect(colekaEuPrefixToCollector("MI-855")).toBe("m855");
       expect(colekaEuPrefixToCollector("NI-1621")).toBe("n1621");
+      expect(colekaEuPrefixToCollector("Ni 1579")).toBe("n1579");
+      expect(colekaEuPrefixToCollector("J 986")).toBe("j986");
       expect(colekaEuPrefixToCollector("TE-109")).toBeNull();
       expect(colekaEuPrefixToCollector("n1650")).toBeNull();
       expect(colekaEuPrefixToCollector("SALE-DE001")).toBeNull();

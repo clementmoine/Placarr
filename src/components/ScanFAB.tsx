@@ -21,9 +21,17 @@ import { itemPath } from "@/lib/routing/slugs";
 import { syncItemQueries } from "@/core/collect/queryCache";
 import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
 import { BarcodeScanCapture } from "@/components/BarcodeScanCapture";
-import { ItemModal } from "./modals/ItemModal";
-import { QuickScanModal } from "./modals/QuickScanModal";
+import dynamic from "next/dynamic";
 import type { MetadataResult } from "@/types/metadataProvider";
+
+const ItemModal = dynamic(
+  () => import("./modals/ItemModal").then((m) => m.ItemModal),
+  { ssr: false },
+);
+const QuickScanModal = dynamic(
+  () => import("./modals/QuickScanModal").then((m) => m.QuickScanModal),
+  { ssr: false },
+);
 
 export function ScanFAB() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);

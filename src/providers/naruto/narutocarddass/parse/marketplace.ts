@@ -130,6 +130,20 @@ export function parseAvalonNarutoListing(html: string): AvalonCard[] {
  * chaînes.
  */
 
+/**
+ * Produits Chitoroshop dont le scan est une 書き下ろし PS (NOT FOR SALE · 2003)
+ * alors que le titre boutique tombe sur le numéro booster. Mesuré : `ni0002`
+ * était `art.chitoroshop` du 忍-2（PS） (fúma shuriken).
+ */
+const CHITORO_PS_DISK_OVERRIDES: Readonly<Record<string, string>> = {
+  ni0002: "ni0002-ps",
+};
+
+/** `ni0002` → `ni0002-ps` when the shop face is the PS bonus art. */
+export function chitoroPsDiskOverride(retailDiskId: string): string | null {
+  return CHITORO_PS_DISK_OVERRIDES[retailDiskId.trim().toLowerCase()] ?? null;
+}
+
 /** Famille américaine → famille japonaise. Même carte, deux numérotations. */
 const JAPANESE_FAMILY: Readonly<Record<string, string>> = {
   n: "ni",
@@ -573,7 +587,7 @@ const PRODUCT_HREF =
   /href="https:\/\/www\.suruga-ya\.jp\/product\/detail\/([A-Za-z0-9]+)"/gi;
 
 const PRINTED_RE =
-  /(PR[-]?忍|PR[-]?術|PR[-]?作|PR[-]?依|PR[-]?騎|OP忍|[忍術作依騎])-(\d{1,4})(?:-([A-Za-z0-9]+))?/;
+  /(PR[-]?忍|PR[-]?術|PR[-]?作|PR[-]?依|PR[-]?騎|OP忍|COIN|[忍術作依騎])-(\d{1,4})(?:-([A-Za-z0-9]+))?/;
 
 const DATA_CARDDASS_RE = /データカードダス|\bDN-|\bNM-/i;
 

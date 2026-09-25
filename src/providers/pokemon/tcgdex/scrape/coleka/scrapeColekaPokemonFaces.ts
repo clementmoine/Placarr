@@ -4,6 +4,7 @@
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   writeFileSync,
 } from "node:fs";
@@ -12,6 +13,12 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { packStagingDir } from "@/lib/packPaths";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
+import {
+  catalogArtefactIsFresh,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 
 import {
   refreshPokemonFaceDecision,
@@ -45,6 +52,7 @@ export type ColekaMcdoBranch = {
 
 export type ColekaMcdoLedger = {
   source: string;
+  observed?: string;
   branches: ColekaMcdoBranch[];
 };
 
@@ -72,8 +80,118 @@ export function readColekaMcdoEnLedger(): ColekaMcdoLedger {
   ) as ColekaMcdoLedger;
 }
 
+export function colekaMcdoArtefactId(branchId: string): string {
+  return `pokemon:coleka-mcdo:${branchId}`;
+}
+
+export function colekaMcdoBranchContentHash(
+  branch: ColekaMcdoBranch,
+  observed: string,
+): string {
+  return [
+    observed.trim(),
+    branch.id,
+    branch.setId,
+    branch.lang,
+    String(branch.listedCount),
+    branch.listingPath ?? "",
+  ].join("|");
+}
+
+/** Count ``art.coleka.*`` already promoted under cards/{set}/{lang}/. */
+export function countColekaMcdoFacesOnDisk(
+  branch: ColekaMcdoBranch,
+  cardsRoot?: string,
+): number {
+  const setDir = path.join(
+    cardsRoot ?? path.join(process.cwd(), "data", "pokemon", "cards"),
+    branch.setId,
+    branch.lang,
+  );
+  if (!existsSync(setDir)) return 0;
+  let n = 0;
+  for (const localId of readdirSync(setDir)) {
+    const cardDir = path.join(setDir, localId);
+    try {
+      if (
+        readdirSync(cardDir).some((f) =>
+          f.toLowerCase().startsWith("art.coleka."),
+        )
+      ) {
+        n += 1;
+      }
+    } catch {
+      /* skip */
+    }
+  }
+  return n;
+}
+
+export function colekaMcdoBranchFacesComplete(
+  branch: ColekaMcdoBranch,
+  cardsRoot?: string,
+): boolean {
+  if (branch.listedCount <= 0) return false;
+  return countColekaMcdoFacesOnDisk(branch, cardsRoot) >= branch.listedCount;
+}
+
+/**
+ * When faces are on disk under cards/, ledger + purge the staging audit copy.
+ */
+export function promoteAndPurgeColekaMcdoStaging(opts: {
+  branch: ColekaMcdoBranch;
+  observed: string;
+  stagingRoot?: string;
+  cardsRoot?: string;
+  packId?: string;
+}): boolean {
+  if (!colekaMcdoBranchFacesComplete(opts.branch, opts.cardsRoot)) return false;
+  const staging =
+    opts.stagingRoot ??
+    path.join(
+      packStagingDir(opts.packId ?? "pokemon"),
+      `coleka-mcdo-${opts.branch.id}`,
+    );
+  const contentHash = colekaMcdoBranchContentHash(opts.branch, opts.observed);
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(opts.packId ?? "pokemon"),
+    artefactId: colekaMcdoArtefactId(opts.branch.id),
+    contentHash,
+    stagingPath: staging,
+  });
+  return true;
+}
+
+/** Purge every FR/EN McDo branch whose faces are already complete. */
+export function promoteAndPurgeAllColekaMcdoStaging(opts: {
+  cardsRoot?: string;
+  packId?: string;
+} = {}): { purged: string[] } {
+  const purged: string[] = [];
+  for (const ledger of [readColekaMcdoFrLedger(), readColekaMcdoEnLedger()]) {
+    const observed = ledger.observed ?? "unknown";
+    for (const branch of ledger.branches) {
+      if (!branch.scrape) continue;
+      if (
+        promoteAndPurgeColekaMcdoStaging({
+          branch,
+          observed,
+          cardsRoot: opts.cardsRoot,
+          packId: opts.packId,
+        })
+      ) {
+        purged.push(branch.id);
+      }
+    }
+  }
+  return { purged };
+}
+
 function extFromUrl(url: string): string {
-  const ext = path.extname(new URL(url).pathname).replace(/^\./, "").toLowerCase();
+  const ext = path
+    .extname(new URL(url).pathname)
+    .replace(/^\./, "")
+    .toLowerCase();
   return ext || "webp";
 }
 
@@ -103,6 +221,7 @@ export type ColekaPokemonHarvestReport = {
   written: number;
   skipped: number;
   failed: number;
+  stagingPurged?: boolean;
 };
 
 export async function harvestColekaMcdoBranch(
@@ -111,6 +230,7 @@ export async function harvestColekaMcdoBranch(
     force?: boolean;
     cardsRoot?: string;
     stagingRoot?: string;
+    observed?: string;
   } = {},
 ): Promise<ColekaPokemonHarvestReport> {
   const report: ColekaPokemonHarvestReport = {
@@ -122,6 +242,28 @@ export async function harvestColekaMcdoBranch(
     failed: 0,
   };
   if (!branch.scrape || !branch.listingPath) return report;
+
+  const observed = opts.observed ?? "unknown";
+  const contentHash = colekaMcdoBranchContentHash(branch, observed);
+  const ledgerPath = packCatalogIngestLedgerPath("pokemon");
+  if (
+    !opts.force &&
+    colekaMcdoBranchFacesComplete(branch, opts.cardsRoot) &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(ledgerPath),
+      colekaMcdoArtefactId(branch.id),
+      contentHash,
+    )
+  ) {
+    report.skipped = branch.listedCount;
+    report.stagingPurged = promoteAndPurgeColekaMcdoStaging({
+      branch,
+      observed,
+      stagingRoot: opts.stagingRoot,
+      cardsRoot: opts.cardsRoot,
+    });
+    return report;
+  }
 
   const staging =
     opts.stagingRoot ??
@@ -173,15 +315,21 @@ export async function harvestColekaMcdoBranch(
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(dest, buf);
     refreshPokemonFaceDecision(cardDir, branch.lang);
-    // staging copy for audit
+    // staging copy for audit (purged after promote when complete)
     writeFileSync(
-      path.join(
-        staging,
-        `${pokemonCardFolderId(card.localId)}.${ext}`,
-      ),
+      path.join(staging, `${pokemonCardFolderId(card.localId)}.${ext}`),
       buf,
     );
     report.written += 1;
+  }
+
+  if (colekaMcdoBranchFacesComplete(branch, opts.cardsRoot)) {
+    report.stagingPurged = promoteAndPurgeColekaMcdoStaging({
+      branch,
+      observed,
+      stagingRoot: staging,
+      cardsRoot: opts.cardsRoot,
+    });
   }
 
   return report;
@@ -195,17 +343,20 @@ export async function harvestColekaMcdoFaces(
   } = {},
 ): Promise<ColekaPokemonHarvestReport[]> {
   const lang = opts.lang ?? "all";
-  const branches: ColekaMcdoBranch[] = [];
-  if (lang === "fr" || lang === "all") {
-    branches.push(...readColekaMcdoFrLedger().branches);
-  }
-  if (lang === "en" || lang === "all") {
-    branches.push(...readColekaMcdoEnLedger().branches);
-  }
   const out: ColekaPokemonHarvestReport[] = [];
-  for (const branch of branches) {
-    if (!branch.scrape) continue;
-    out.push(await harvestColekaMcdoBranch(branch, opts));
-  }
+  const run = async (ledger: ColekaMcdoLedger) => {
+    const observed = ledger.observed ?? "unknown";
+    for (const branch of ledger.branches) {
+      if (!branch.scrape) continue;
+      out.push(
+        await harvestColekaMcdoBranch(branch, {
+          ...opts,
+          observed,
+        }),
+      );
+    }
+  };
+  if (lang === "fr" || lang === "all") await run(readColekaMcdoFrLedger());
+  if (lang === "en" || lang === "all") await run(readColekaMcdoEnLedger());
   return out;
 }

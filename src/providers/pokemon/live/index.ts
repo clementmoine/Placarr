@@ -1,6 +1,6 @@
 /**
  * Pokémon TCG Live — official local ingest (CDN / APK → data/pokemon).
- * Identity join: `catalog.sqlite`. Catalogue tiers remains `tcgdex`.
+ * Live join store: `live.sqlite`. Catalogue identity remains TCGdex (`catalog.sqlite`).
  */
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -13,6 +13,10 @@ import type {
   MetadataAdapterContext,
 } from "@/types/providerModule";
 import { defineProvider } from "@/providers/shared/defineProvider";
+import {
+  ensurePokemonDbLayout,
+  pokemonLiveDbPath,
+} from "@/providers/pokemon/paths";
 
 import {
   buildPokemonLiveAttachments,
@@ -23,6 +27,7 @@ import { pokemontcgliveCatalog } from "./pipeline";
 import {
   ensureTcgdexSetLogoIndex,
   loadTcgdexSetLogoIndex,
+  tcgdexCatalogueSetIdForProduct,
   tcgdexLogoUrlForProduct,
 } from "@/providers/pokemon/tcgdex/setLogos";
 
@@ -31,9 +36,8 @@ const PROVIDER_LABEL = "Pokémon TCG Live (local)";
 const POKEMON_GAME = "pokemon";
 
 export function pokemonLiveCardsDbPath(): string {
-  const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
-  if (override) return path.resolve(override);
-  return path.join(dataRoot(), "pokemon", "catalog.sqlite");
+  ensurePokemonDbLayout();
+  return pokemonLiveDbPath();
 }
 
 function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
@@ -77,7 +81,7 @@ export const pokemontcgliveModule = defineProvider({
     defaultLanguage: "fr",
     websiteUrl: "https://www.pokemon.com/us/pokemon-tcg/",
     notes:
-      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/`. Faces Live : **en** + **fr**. Identité papier / titres : TCGdex **ja** (original) + fr + en (`prints.sqlite`). CDN Live parle aussi de/it/es/ptbr (stems). Produits scellés : pkmcards.fr. Sync : Catalogue Extract.",
+      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/`. Faces Live : **en** + **fr**. Identité / titres : TCGdex **ja** (original) + fr + en (`catalog.sqlite`). Live join / foil : `live.sqlite`. CDN Live parle aussi de/it/es/ptbr (stems). Produits scellés : pkmcards.fr. Sync : Catalogue Extract.",
   },
   catalog: pokemontcgliveCatalog,
   /*
@@ -95,6 +99,13 @@ export const pokemontcgliveModule = defineProvider({
   printGames: [POKEMON_GAME],
   resolveSetLogo: ({ setCode, slug, name }) =>
     tcgdexLogoUrlForProduct({
+      setCode,
+      slug,
+      name,
+      index: loadTcgdexSetLogoIndex(),
+    }),
+  resolveCatalogueSetId: ({ setCode, slug, name }) =>
+    tcgdexCatalogueSetIdForProduct({
       setCode,
       slug,
       name,

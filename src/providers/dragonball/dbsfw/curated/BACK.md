@@ -3,7 +3,7 @@
 | Fichier curated | `src/providers/dragonball/dbsfw/curated/cards/back.webp`                                         |
 | --------------- | ------------------------------------------------------------------------------------- |
 | Fichier data    | `cards/back.webp` (copie)                                                             |
-| URL             | `/assets/dbs/fw/cards/back.webp`                                                      |
+| URL             | `/assets/dragonball/fw/cards/back.webp`                                                      |
 | Taille          | 400×560 WebP                                                                          |
 | Source          | même octet que Masters : [dbscards.fr](https://www.dbscards.fr/) `original/back.webp` |
 

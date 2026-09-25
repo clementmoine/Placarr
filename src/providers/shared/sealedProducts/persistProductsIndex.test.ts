@@ -72,15 +72,12 @@ describe("persistSealedProductsIndex", () => {
         })}\n`,
       );
 
-      const { file } = persistSealedProductsIndex("lorcana", {
+      const { index } = persistSealedProductsIndex("lorcana", {
         "lorcana::starter": entry({ slug: "starter" }),
       });
-      const onDisk = JSON.parse(readFileSync(file, "utf8")) as {
-        products: Record<string, SealedProductEntry>;
-      };
-      expect(onDisk.products["lorcana::starter"]?.contentsKnown).toBe(true);
+      expect(index.products["lorcana::starter"]?.contentsKnown).toBe(true);
       expect(
-        onDisk.products["lorcana::starter"]?.guaranteedPrints?.[0]?.printKey,
+        index.products["lorcana::starter"]?.guaranteedPrints?.[0]?.printKey,
       ).toBe("lorcana:1-1");
 
       const loaded = loadSealedProductsIndex("lorcana");
@@ -127,7 +124,7 @@ describe("persistSealedProductsIndex", () => {
         "/assets/naruto/carddass/products/booster-s24/fr/art.toywiz.jpg",
       );
 
-      const { file } = persistSealedProductsIndex("naruto/carddass", {
+      const { index } = persistSealedProductsIndex("naruto/carddass", {
         "naruto/carddass::booster-s24": entry({
           slug: "booster-s24",
           kind: "booster",
@@ -137,10 +134,11 @@ describe("persistSealedProductsIndex", () => {
           lang: "fr",
         }),
       });
-      const onDisk = JSON.parse(readFileSync(file, "utf8")) as {
-        products: Record<string, SealedProductEntry>;
-      };
-      expect(onDisk.products["naruto/carddass::booster-s24"]?.image).toBe(
+      expect(index.products["naruto/carddass::booster-s24"]?.image).toBe(
+        "/assets/naruto/carddass/products/booster-s24/fr/art.toywiz.jpg",
+      );
+      const reloaded = loadSealedProductsIndex("naruto/carddass");
+      expect(reloaded.products["naruto/carddass::booster-s24"]?.image).toBe(
         "/assets/naruto/carddass/products/booster-s24/fr/art.toywiz.jpg",
       );
     });

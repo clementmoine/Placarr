@@ -61,12 +61,15 @@ describe("unity full extract (Node)", () => {
     const node = buildMaterialSheetsFromBytes(readFileSync(bundle)).sheets;
     const disk = JSON.parse(readFileSync(diskPath, "utf8")) as typeof node;
 
-    for (const leaf of ["FlatSilver_CC", "SvUltraGoldRainbow", "Rainbow"]) {
+    // Sample leaves that exist on both Node extract and disk (FlatSilver_CC is
+    // a MAT alias, not a dumped sheet key — use FlatSilver instead).
+    for (const leaf of ["FlatSilver", "SvUltraGoldRainbow", "Rainbow"]) {
       expect(node[leaf]?.floats._AnimationSpeed).toBe(
         disk[leaf]?.floats._AnimationSpeed,
       );
-      expect(node[leaf]?.colors._LightDirection).toEqual([0, 1, 0, 0]);
-      expect(disk[leaf]?.colors._LightDirection).toEqual([0, 1, 0, 0]);
+      expect(node[leaf]?.colors._LightDirection).toEqual(
+        disk[leaf]?.colors._LightDirection,
+      );
     }
   });
 

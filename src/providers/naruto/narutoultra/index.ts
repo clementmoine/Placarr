@@ -32,6 +32,7 @@ const line = createLocalTcgLine({
   effectPackId: NARUTO_ULTRA_EFFECT_PACK_ID,
   printGame: "naruto",
   defaultLanguage: "fr",
+  catalogLifecycle: "finished",
   syncHint: "Catalogue Sync (admin)",
   websiteUrl: "http://www.animecollection.fr/cartes.php?idl=4&idc=113&ids=254",
   notes:

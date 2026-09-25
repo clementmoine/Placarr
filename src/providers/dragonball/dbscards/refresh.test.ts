@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { priceProbeContext } from "@/providers/shared/createPrintKeyPriceModule";
-import { dbscardsIndexPath } from "@/providers/dragonball/shared/dbscards/scrapeList";
+import { dbscardsIndexPath } from "@/providers/shared/tcgcards/scrapeList";
 
 import { dbsmarketModule } from "./index";
 import {
@@ -11,7 +11,7 @@ import {
   resetDbscardsPriceIndexCache,
 } from "./fetch";
 
-const hasMastersDump = existsSync(dbscardsIndexPath("dbs/cg", "fr"));
+const hasMastersDump = existsSync(dbscardsIndexPath("dragonball/cg", "fr"));
 
 describe("dbsmarketModule info", () => {
   it("is a reference EUR price source for DBS", () => {

@@ -9,13 +9,9 @@ import {
   requestPrintVariant,
   subscribeToPrintVariants,
 } from "@/lib/client/printVariantStore";
-import {
-  holoShader,
-  isHoloShaderId,
-  varnishShader,
-  type HoloShader,
-} from "@/core/render/holoShaders";
+import { isHoloShaderId } from "@/core/render/holoShaderIds";
 // Packs load via `ensureEffects()` / FoilCardImage — not eagerly here.
+// Full CSS look tables stay in holoShaders.ts; tiles only need `{ id }`.
 
 /** What the provider says a printing exists as. Shape mirrors `PrintCandidate`. */
 export type PrintVariantInfo = {
@@ -107,13 +103,12 @@ export type VariantRendering = {
   foilMaskUrl: string | null;
   varnishMaskUrl: string | null;
   /**
-   * How to draw it (CSS). Null when the pack has no web recipe — WebGL may
-   * still run via {@link effectPackId} + finish. Never invent a pack default
-   * here; that belongs in `pack.resolveCss`.
+   * CSS look id for FoilCardImage (`holoShader` resolves the recipe there).
+   * Shelf tiles must not import the full shader tables — only the id.
    */
-  shader: HoloShader | null;
-  /** How to draw the varnish coat. Null when the pack has no CSS varnish. */
-  varnish: HoloShader | null;
+  shader: { id: string } | null;
+  /** Varnish coat look id, same contract as {@link shader}. */
+  varnish: { id: string } | null;
   /** Kayou HR sprite sheet — one panel at a time. */
   lenticularGrid: { cols: number; rows: number } | null;
   /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
@@ -130,6 +125,12 @@ export type VariantRendering = {
   effectPackId: string | null;
   /** Catalogue finish name for this copy. Null when plain or unknown. */
   finish: string | null;
+  /**
+   * Live / Unity leaf for WebGL (`PikachuFoil`, `SunPillar`, …). From
+   * `finishShaders` when that value is not a CSS look id. Client packs cannot
+   * open `card_foil` SQLite, so the shelf must carry the leaf this way.
+   */
+  materialName: string | null;
   /** Catalogue varnish type for this copy. Null when plain or absent. */
   varnishType: string | null;
 };
@@ -159,8 +160,10 @@ function resolveFaceUrl(
  * a foil copy from a normal one, so shimmering on both would say nothing. An
  * unrecognized variant is treated as plain rather than guessed at.
  *
- * CSS looks come only from `pack.resolveCss`. Provider `finishShaders` may hold
- * Unity material names (Pokémon) and must not feed the CSS path.
+ * CSS looks come from `pack.resolveCss`. Pokémon `finishShaders` often store
+ * Unity leaf names (`PikachuFoil`) — those drive WebGL via {@link materialName}
+ * and are also the resolveCss input (leaf → Simey/CSS recipe). Lorcana stores
+ * real CSS ids there; those still feed the CSS path via `isHoloShaderId`.
  */
 export function variantRendering(
   variant: string | null | undefined,
@@ -181,6 +184,7 @@ export function variantRendering(
     secondVarnishColor: null,
     effectPackId: null,
     finish: null,
+    materialName: null,
     varnishType: null,
   };
   if (!info) return plain;
@@ -213,8 +217,15 @@ export function variantRendering(
     };
   }
 
+  const finishShader = info.finishShaders?.[resolved] ?? null;
+  const unityLeaf =
+    finishShader && !isHoloShaderId(finishShader) ? finishShader : null;
+  // Unity leaf → CSS recipe (PikachuFoil → radiantHolo). CSS id in finishShaders
+  // (Lorcana) stays on the catalogue finish name for pack.resolveCss.
+  const cssFinish = unityLeaf ?? resolved;
+
   const pack = getEffectPack(info.effectPack);
-  const css = pack?.resolveCss(resolved, info.varnishType) ?? null;
+  const css = pack?.resolveCss(cssFinish, info.varnishType) ?? null;
   // Prefer pack.resolveCss. If the pack id is missing (stale session cache,
   // partial candidate), accept provider finishShaders / varnishShaders only
   // when they are real CSS look ids — never Unity material names (Pokémon).
@@ -247,8 +258,10 @@ export function variantRendering(
     foilMaskUrl:
       info.finishFoilMaskUrls?.[resolved] ?? info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,
-    shader: holoShader(effectiveFinishShaderId),
-    varnish: varnishShader(varnishShaderId),
+    shader: effectiveFinishShaderId
+      ? { id: effectiveFinishShaderId }
+      : null,
+    varnish: varnishShaderId ? { id: varnishShaderId } : null,
     lenticularGrid,
     lenticularCropProfile: info.lenticularCropProfile ?? null,
     scanCrop,
@@ -257,6 +270,7 @@ export function variantRendering(
     secondVarnishColor: info.secondVarnishColor ?? null,
     effectPackId: info.effectPack ?? null,
     finish: resolved,
+    materialName: unityLeaf,
     varnishType: info.varnishType ?? null,
   };
 }

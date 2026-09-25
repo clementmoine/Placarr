@@ -5,7 +5,7 @@
  * Ce qui change d'une ligne à l'autre (id, pack, dos, notes) reste chez le
  * provider. Ce qui ne change pas : schéma, recherche, sonde, santé.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
@@ -15,10 +15,15 @@ import {
   assetsCardUrl,
   type CardDiskId,
 } from "@/lib/packAssetUrls";
+import { packCardsDir } from "@/lib/packPaths";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import {
+  mergePrintSetOptions,
+  type SetOption,
+} from "@/providers/shared/cardCatalogue/sets";
 import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
-import type { MetadataResult } from "@/types/metadataProvider";
+import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
   PrintCandidate,
@@ -97,6 +102,13 @@ export type LocalTcgLineSpec = {
    * Closed historical line → skip Plex-like auto-sync. Default unset (= living).
    */
   catalogLifecycle?: "living" | "finished";
+  /**
+   * Sets announced remotely (API / bulk index) but not yet in the local DB.
+   * Merged into `listPrintSets` so a stale harvest cannot hide new extensions.
+   */
+  listRemotePrintSets?: (language?: string | null) => Promise<
+    readonly SetOption[]
+  >;
   /**
    * Post-process a candidate after disk faces are resolved (e.g. OPTCG
    * category sleeve backs). Default: identity.
@@ -294,9 +306,69 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
   };
 
   /**
+   * Standard `{set}/{lang}/{card}/` layout only — custom `cardAssetUrl` packs
+   * (family trees, …) keep a single winner URL from `lookupPrint`.
+   */
+  const diskArtAttachmentsForHit = (
+    row: LocalPrintSearchRow,
+    title: string,
+  ): { attachments: MetadataAttachment[]; defaultUrl: string | null } => {
+    if (spec.cardAssetUrl) {
+      return { attachments: [], defaultUrl: null };
+    }
+    const faces = resolveFaceFiles(index, spec, row);
+    if (!faces.art && !faces.thumb && !faces.back) {
+      return { attachments: [], defaultUrl: null };
+    }
+    const card = row.grouping?.trim()
+      ? `${row.number.trim().toLowerCase()}-${row.grouping.trim().toLowerCase()}`
+      : row.number.trim().toLowerCase();
+    const diskId: CardDiskId = {
+      set: row.cardType.trim().toLowerCase(),
+      lang: faces.diskLang,
+      card,
+    };
+    const cardDir = path.join(
+      packCardsDir(spec.packId),
+      diskId.set,
+      diskId.lang,
+      diskId.card,
+    );
+    if (!existsSync(cardDir)) return { attachments: [], defaultUrl: null };
+    const arts = readdirSync(cardDir).filter((name) => {
+      const low = name.toLowerCase();
+      return low.startsWith("art.") && !low.includes("reconstructed");
+    });
+    if (arts.length === 0) return { attachments: [], defaultUrl: null };
+    const defaultArt =
+      (faces.art && arts.includes(faces.art) ? faces.art : null) ?? arts[0]!;
+    const ordered = [
+      defaultArt,
+      ...arts.filter((file) => file !== defaultArt),
+    ];
+    const attachments: MetadataAttachment[] = ordered.map((file) => {
+      const sourceHint = file.replace(/^art\./i, "").replace(/\.[^.]+$/, "");
+      return {
+        type: "cover",
+        url: assetsCardUrl(spec.packId, diskId, file),
+        title: title.trim() || sourceHint,
+        role: `${spec.printGame}-face-${sourceHint || "art"}`,
+        source: spec.providerId,
+        coverProvenance: "catalog",
+      };
+    });
+    return {
+      attachments,
+      defaultUrl: assetsCardUrl(spec.packId, diskId, defaultArt),
+    };
+  };
+
+  /**
    * Bridge print corpus → enrich cover. Same face URL as `lookupPrint` /
    * PrintCandidate — no second path (admin JSON is only a browse projection).
    * Foreign printGame → null (never name-fallback).
+   * When the card folder holds several `art.*` dumps, emit them all so the
+   * Images picker can propose same-print catalogue faces.
    */
   const resolveFromLocal = (
     ctx: MetadataAdapterContext,
@@ -307,9 +379,20 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     if (parsePrintKey(printKey)?.game !== spec.printGame) return null;
     const hit = lookupPrint(printKey, null);
     if (!hit?.title?.trim()) return null;
+    const title = hit.title.trim();
+    const row = index.lookupRow(printKey, {
+      language: preferLang || undefined,
+    });
+    const disk = row
+      ? diskArtAttachmentsForHit(row, title)
+      : { attachments: [] as MetadataAttachment[], defaultUrl: null };
+    const imageUrl = disk.defaultUrl || hit.imageUrl || undefined;
     return {
-      title: hit.title.trim(),
-      ...(hit.imageUrl ? { imageUrl: hit.imageUrl } : {}),
+      title,
+      ...(imageUrl ? { imageUrl } : {}),
+      ...(disk.attachments.length > 0
+        ? { attachments: disk.attachments }
+        : {}),
       externalIds: {
         [spec.providerId]: printKey,
         printKey,
@@ -364,13 +447,23 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     listPrintLanguages: () =>
       spec.listPrintLanguages?.() ?? distinctPrintLanguages(index.dbPath()),
     printGames: [spec.printGame],
-    listPrintSets: (_type, language) =>
-      index.listSets({
+    listPrintSets: async (_type, language) => {
+      const local = index.listSets({
         setLabel: (code) =>
           spec.setLabel?.(code, language) ?? code.trim().toUpperCase(),
         setSortKey: spec.setSortKey,
-        ...(spec.listSetLanguages ? { languages: spec.listSetLanguages } : {}),
-      }),
+        ...(spec.listSetLanguages
+          ? { languages: [...spec.listSetLanguages] }
+          : {}),
+      });
+      if (!spec.listRemotePrintSets) return local;
+      try {
+        const remote = await spec.listRemotePrintSets(language);
+        return mergePrintSetOptions(local, remote);
+      } catch {
+        return local;
+      }
+    },
     listSetPrints: ({ setId, language }) =>
       enumerateSetPrints({
         setId,

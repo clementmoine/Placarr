@@ -64,6 +64,7 @@ function product(
     declaredCardCount: null,
     containsPrintsIsPreview: false,
     relatedProducts: [],
+    containedProducts: [],
     tables: {},
     ...partial,
   };

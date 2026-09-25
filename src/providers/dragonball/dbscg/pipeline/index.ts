@@ -1,5 +1,5 @@
 /**
- * Crochets de catalogue du pack `dbs/cg`.
+ * Crochets de catalogue du pack `dragonball/cg`.
  *
  * Le corps est commun à tous les packs de cartes — voir
  * `shared/cardCatalogue/pipeline`. Ne reste ici que ce qui est propre au pack :
@@ -16,7 +16,7 @@ const hooks = cardCatalogueHooks({
   runPipeline: async (argv) => {
     const { runDbsCgPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./extract"
+      "../extract"
     );
     return runDbsCgPackPipeline(argv);
   },

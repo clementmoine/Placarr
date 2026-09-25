@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { providerProductUrlsFromMetadataFacts } from "@/core/catalog/catalog";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import type { MetadataFact } from "@/types/metadataProvider";
 
 describe("providerProductUrlsFromMetadataFacts", () => {

@@ -1,5 +1,5 @@
 /**
- * Scrape Bandai Fusion World cardlist → `data/dbs/fw/catalog.sqlite`.
+ * Scrape Bandai Fusion World cardlist → `data/dragonball/fw/catalog.sqlite`.
  *
  * Faces are not downloaded here: the index stores the official card WebP URLs
  * (SAMPLE watermark), and `fetchFaces` fills the local copies from dbscards.
@@ -9,6 +9,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { retry } from "@/lib/http/retry";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
 
 import {
@@ -23,7 +24,6 @@ import {
 } from "../parse/cardlist";
 import {
   DBS_FW_PACK_ID,
-  exportDbsFwCardsIndexJson,
   writeDbsFwIndex,
   type DbsFwAssetRow,
   type DbsFwPrintRow,
@@ -94,14 +94,18 @@ async function fetchHtml(
   url: string,
   referer = DBS_FW_INDEX_URL,
 ): Promise<string> {
-  const response = await httpGet<string>(url, {
-    headers: { ...HEADERS, Referer: referer },
-    timeout: SEARCH_TIMEOUT_MS,
-    responseType: "text",
-  });
-  return typeof response.data === "string"
-    ? response.data
-    : String(response.data);
+  // Bandai drops keep-alive mid-scrape (ECONNRESET / socket hang up). Three
+  // attempts with jitter beat failing a whole locale after 10 series.
+  return retry(async () => {
+    const response = await httpGet<string>(url, {
+      headers: { ...HEADERS, Referer: referer },
+      timeout: SEARCH_TIMEOUT_MS,
+      responseType: "text",
+    });
+    return typeof response.data === "string"
+      ? response.data
+      : String(response.data);
+  }, 3, 800);
 }
 
 export async function scrapeDbsFwCardlist(
@@ -163,11 +167,9 @@ export async function scrapeDbsFwCardlist(
     assets,
     meta: { locales: locales.join(","), seriesCount: String(seriesCount) },
   });
-  const indexPath = dataPackPath(DBS_FW_PACK_ID, "cards-index.json");
-  exportDbsFwCardsIndexJson(printRows, titles, assets, indexPath);
   mkdirSync(path.dirname(dbPath), { recursive: true });
   writeFileSync(
-    path.join(path.dirname(indexPath), "scrape-summary.json"),
+    path.join(path.dirname(dbPath), "scrape-summary.json"),
     `${JSON.stringify({ printCount, seriesCount, locales, at: new Date().toISOString() })}\n`,
   );
   console.log(

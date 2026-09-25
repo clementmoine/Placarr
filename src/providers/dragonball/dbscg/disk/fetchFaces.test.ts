@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -115,7 +116,7 @@ describe("exportDbsCgCardsIndexJson local art", () => {
     prevData = process.env.PLACARR_DATA_DIR;
     prevDb = process.env.PLACARR_DBSCG_DB;
     process.env.PLACARR_DATA_DIR = tmp;
-    process.env.PLACARR_DBSCG_DB = path.join(tmp, "dbs/cg/catalog.sqlite");
+    process.env.PLACARR_DBSCG_DB = path.join(tmp, "dragonball/cg/catalog.sqlite");
     resetDbsCgDbCache();
   });
 
@@ -262,7 +263,7 @@ describe("fetchDbsCgFaces", () => {
     prevData = process.env.PLACARR_DATA_DIR;
     prevDb = process.env.PLACARR_DBSCG_DB;
     process.env.PLACARR_DATA_DIR = tmp;
-    process.env.PLACARR_DBSCG_DB = path.join(tmp, "dbs/cg/catalog.sqlite");
+    process.env.PLACARR_DBSCG_DB = path.join(tmp, "dragonball/cg/catalog.sqlite");
     resetDbsCgDbCache();
     writeDbsCgIndex({
       prints: [{ printKey: "dbscg:bt1-001", setCode: "bt1", number: "001" }],
@@ -313,14 +314,9 @@ describe("fetchDbsCgFaces", () => {
     expect(String(mockedGet.mock.calls[0]?.[0])).toContain(
       "static.dbscards.fr",
     );
-    const index = JSON.parse(
-      readFileSync(path.join(tmp, "dbs/cg/cards-index.json"), "utf8"),
-    ) as {
-      cards: Record<string, { langs: { fr?: { art?: string } } }>;
-    };
-    expect(index.cards["dbscg:bt1-001"]?.langs.fr?.art).toBe(
-      "art.dbscards.webp",
-    );
+    expect(
+      existsSync(path.join(tmp, "dragonball/cg/cards/bt1/fr/001/art.dbscards.webp")),
+    ).toBe(true);
   });
 
   it("re-asks only for the sources it does not hold yet", async () => {
@@ -438,7 +434,7 @@ describe("fetchDbsCgFaces", () => {
     });
     await fetchDbsCgFaces({ delayMs: 0, concurrency: 1, langs: ["fr"] });
     expect(
-      softbanRemainingMs(path.join(tmp, "dbs/cg"), Date.now(), "faces"),
+      softbanRemainingMs(path.join(tmp, "dragonball/cg"), Date.now(), "faces"),
     ).toBeGreaterThan(0);
 
     // A second run must not touch the banned host at all while it cools down.

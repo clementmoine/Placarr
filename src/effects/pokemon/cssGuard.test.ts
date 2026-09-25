@@ -181,6 +181,45 @@ describe("pokemon CSS foil fallback", () => {
       expect(css.varnishShaderId, finish).toBe(expectHouseEtch ? "etch" : null);
     }
   });
+
+  it("maps PikachuFoil to the Live rings recipe (visible without etch)", () => {
+    const css = resolveCssRecipe("PikachuFoil", null);
+    expect(css.finishShaderId).toBe("pikachuFoil");
+    expect(css.varnishShaderId).toBeNull();
+    const look = pokemonHoloShader("pikachuFoil");
+    expect(look.backgroundImage).toContain("T_Holofoil_Pikachu_Spectrum");
+    expect(look.backgroundImage).toContain("T_Holofoil_Pikachu_Dot");
+    expect(look.backgroundImage).toContain("FX_T_Celeb_Confetti");
+    // StitchedRings is WebGL CC only — CSS plate reads as Poké-Ball discs.
+    expect(look.backgroundImage).not.toContain("TEX_StitchedRings");
+    expect(look.backgroundImage).not.toContain("TEX_CC_PB");
+  });
+
+  it("maps ClassicFoil to Live star / rainbow dump plates (not flatSilver)", () => {
+    const css = resolveCssRecipe("ClassicFoil", null);
+    expect(css.finishShaderId).toBe("classicFoil");
+    const look = pokemonHoloShader("classicFoil");
+    expect(look.backgroundImage).toContain("FX_T_Spectrum_Rainbow");
+    expect(look.backgroundImage).toContain("T_Holofoil_Star_Classic");
+    expect(look.backgroundImage).toContain("T_Holofoil_Noise_Pixel");
+    expect(look.backgroundImage).toContain("T_Holofoil_Mask_Bar_Thin_Single");
+    expect(look.mixBlendMode).toBe("color-dodge");
+  });
+
+  it("resolves live-std CSS from the Live leaf when printKey is known", async () => {
+    /*
+      Synthetic finishes are catalogue buckets. Without the leaf, live-std was
+      regularHolo bars — wrong for me5-5 PikachuFoil.
+    */
+    await import("./cardFoilIndex");
+    const pack = getEffectPack(POKEMON_EFFECT_PACK_ID)!;
+    const bare = pack.resolveCss("live-std", null);
+    expect(bare.finishShaderId).toBe("regularHolo");
+    const withKey = pack.resolveCss("live-std", null, {
+      printKey: "pokemon:me05.5-023",
+    });
+    expect(withKey.finishShaderId).toBe("pikachuFoil");
+  });
 });
 
 describe("pokemon textured recipes", () => {
@@ -272,13 +311,13 @@ describe("pokemon textured recipes", () => {
       }
     }
     // And the ones that need a stencil actually carry one.
-    for (const id of [
-      "amazingRare",
-      "crackedIce",
-      "sunPillarCcGlitter",
-    ] as const) {
+    // amazingRare: no Galaxy_Stars carve on its (historically dark) invert.
+    // galaxyHoloCoat: stars carve a *bright* fill → light circles, not black.
+    for (const id of ["crackedIce", "sunPillarCcGlitter", "galaxyHoloCoat"] as const) {
       expect(holoShader(id)!.carve?.url, id).toBeTruthy();
     }
+    expect(holoShader("amazingRare")!.carve).toBeUndefined();
+    expect(holoShader("galaxyHolo")!.carve).toBeUndefined();
     expect(holoShader("cosmosHolo")!.carve).toBeUndefined();
     expect(holoShader("cosmosHolo")!.backgroundImage).toContain(
       "simey_cosmos-bottom",
@@ -447,22 +486,24 @@ describe("every look answers the light", () => {
 });
 
 describe("simey catalogue foils", () => {
-  it("ships Cosmos / Galaxy on Simey staging ports (not pokemon forks)", () => {
+  it("ships Cosmos / Galaxy on Live-tuned CSS (Galaxy leaves Simey amazing-rare)", () => {
     expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmosHolo");
     expect(resolveCssRecipe("cosmos", null).finishShaderId).toBe("cosmosHolo");
-    expect(resolveCssRecipe("Galaxy", null).finishShaderId).toBe("amazingRare");
-    expect(resolveCssRecipe("amazing", null).finishShaderId).toBe(
-      "amazingRare",
-    );
+    expect(resolveCssRecipe("Galaxy", null).finishShaderId).toBe("galaxyHolo");
+    expect(resolveCssRecipe("amazing", null).finishShaderId).toBe("galaxyHolo");
     const cosmos = holoShader("cosmosHolo")!;
     expect(cosmos.mixBlendMode).toBe("color-dodge");
     expect(cosmos.overlay).toBe("cosmosHoloCoat");
     expect(holoShader(cosmos.overlay!)!.overlay).toBe("cosmosHoloTop");
-    const galaxy = holoShader("amazingRare")!;
-    expect(galaxy.backgroundBlendMode).toBe("soft-light, color-burn");
-    expect(galaxy.overlay).toBe("amazingRareFoil");
-    expect(holoShader(galaxy.overlay!)!.mixBlendMode).toBe("lighten");
-    expect(holoShader(galaxy.overlay!)!.overlay).toBe("amazingRareCoat");
+    const galaxy = holoShader("galaxyHolo")!;
+    expect(galaxy.mixBlendMode).toBe("color-dodge");
+    expect(galaxy.backgroundImage).toContain("FX_T_Spectrum_Bands_Vertical");
+    expect(galaxy.backgroundImage).not.toContain("Galaxy_Stars");
+    expect(galaxy.overlay).toBe("galaxyHoloCoat");
+    const coat = holoShader("galaxyHoloCoat")!;
+    expect(coat.carve?.url).toContain("T_Holofoil_Galaxy_Stars");
+    expect(coat.mixBlendMode).toBe("lighten");
+    expect(coat.backgroundImage).not.toContain("Galaxy_Stars");
   });
 
   it("ships regularHolo / reverseHolo from the vendored poke-holo recipes", () => {
@@ -561,9 +602,7 @@ describe("pokemon CSS opacity dose", () => {
     expect(resolveCssRecipe("SvUltraScodix", null).finishShaderId).toBe(
       "hyperRare",
     );
-    expect(resolveCssRecipe("SunBeam", null).finishShaderId).toBe(
-      "regularHolo",
-    );
+    expect(resolveCssRecipe("SunBeam", null).finishShaderId).toBe("vRegular");
     expect(resolveCssRecipe("CrackedIce", null).finishShaderId).toBe(
       "illustrationRare",
     );
@@ -572,7 +611,7 @@ describe("pokemon CSS opacity dose", () => {
     );
     expect(simeyHoloShader("secretRare").overlay).toBe("secretRareCoat");
     expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmosHolo");
-    expect(resolveCssRecipe("Galaxy", null).finishShaderId).toBe("amazingRare");
+    expect(resolveCssRecipe("Galaxy", null).finishShaderId).toBe("galaxyHolo");
     expect(holoShader("cosmosHolo")!.overlay).toBe("cosmosHoloCoat");
     expect(holoShader("amazingRare")!.overlay).toBe("amazingRareFoil");
     expect(pokemonHoloShader("flatSilver").overlay).toBe("flatSilverCoat");
@@ -581,7 +620,7 @@ describe("pokemon CSS opacity dose", () => {
       "rainbowHolo",
     );
     expect(resolveCssRecipe("Cosmos", null).finishShaderId).toBe("cosmosHolo");
-    expect(resolveCssRecipe("SwHolo", null).finishShaderId).toBe("vRegular");
+    expect(resolveCssRecipe("SwHolo", null).finishShaderId).toBe("regularHolo");
   });
 
   it("SunPillar CSS mirrors poke-151 ex-regular composition with Live paint", () => {

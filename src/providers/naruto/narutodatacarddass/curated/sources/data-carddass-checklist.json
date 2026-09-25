@@ -1,6 +1,6 @@
 {
   "source": "carddass.com mission (miroir) + fudanin formation/cross (Wayback) + hinokunian DN/DT + ebay seed",
-  "observed": "2026-09-19",
+  "observed": "2026-09-24",
   "url": "http://www.carddass.com/naruto/mission/cardlist/battle_card.shtml",
   "line": "data-carddass",
   "note": "Catalogue officiel assemblé 2026-09-09. NX hors chapitre 1 encore partiel (Wayback popups). SKU scellés retail non attestés.",
@@ -104,15 +104,15 @@
   "byPrefix": {
     "DMP": 22,
     "DN": 303,
-    "DNP": 37,
+    "DNP": 38,
     "DT": 41,
     "NC": 32,
-    "NF": 346,
+    "NF": 363,
     "NFC": 20,
     "NFF": 1,
     "NFM": 5,
     "NFP": 21,
-    "NM": 263,
+    "NM": 265,
     "NX": 355,
     "NXP": 8,
     "NXPF": 8
@@ -3561,6 +3561,14 @@
       "note": "ebay mikanshop seed"
     },
     {
+      "printed": "DNP-30",
+      "set": "dnp",
+      "number": "030",
+      "name": "suivre Naruto Promo Card 2006 Jump Festa DNP-030 DMP-000 Narultimate Mission Data Card",
+      "nameJa": "suivre Naruto Promo Card 2006 Jump Festa DNP-030 DMP-000 Narultimate Mission Data Card",
+      "note": "ebay mikanshop seed"
+    },
+    {
       "printed": "DNP-9",
       "set": "dnp",
       "number": "009",
@@ -5047,6 +5055,14 @@
       "barcodeData": "NF3KG1052"
     },
     {
+      "printed": "NF-1",
+      "set": "nf",
+      "number": "001",
+      "name": "suivre Naruto Data Carddass Narutimate Formation NF-001 Naruto Uzumaki",
+      "nameJa": "suivre Naruto Data Carddass Narutimate Formation NF-001 Naruto Uzumaki",
+      "note": "ebay mikanshop seed"
+    },
+    {
       "printed": "NF-100",
       "set": "nf",
       "number": "100",
@@ -5570,6 +5586,14 @@
       "name": "奈良シカマル",
       "nameJa": "奈良シカマル",
       "note": "fudanin formation/nf4.php"
+    },
+    {
+      "printed": "NF-16",
+      "set": "nf",
+      "number": "016",
+      "name": "suivre Naruto Card Might Guy NF-016 Ninja Very Rare BANDAI Japan Anime F/S",
+      "nameJa": "suivre Naruto Card Might Guy NF-016 Ninja Very Rare BANDAI Japan Anime F/S",
+      "note": "ebay mikanshop seed"
     },
     {
       "printed": "NF-160",
@@ -6817,6 +6841,22 @@
       "barcodeData": "NF2MX9207"
     },
     {
+      "printed": "NF-3",
+      "set": "nf",
+      "number": "003",
+      "name": "suivre NARUTO Uzumaki Naruto Formation NF 003",
+      "nameJa": "suivre NARUTO Uzumaki Naruto Formation NF 003",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-30",
+      "set": "nf",
+      "number": "030",
+      "name": "suivre Naruto Data Carddass Narutimate Formation NF-030 Haku",
+      "nameJa": "suivre Naruto Data Carddass Narutimate Formation NF-030 Haku",
+      "note": "ebay mikanshop seed"
+    },
+    {
       "printed": "NF-300",
       "set": "nf",
       "number": "300",
@@ -6896,6 +6936,14 @@
       "name": "マイト・ガイ",
       "nameJa": "マイト・ガイ",
       "note": "fudanin formation/nf7.php"
+    },
+    {
+      "printed": "NF-31",
+      "set": "nf",
+      "number": "031",
+      "name": "suivre ZABUZA MOMOCHI Naruto Card Very Rare BANDAI Japanese Japan NF-031",
+      "nameJa": "suivre ZABUZA MOMOCHI Naruto Card Very Rare BANDAI Japanese Japan NF-031",
+      "note": "ebay mikanshop seed"
     },
     {
       "printed": "NF-310",
@@ -7186,11 +7234,107 @@
       "note": "fudanin formation/nf7.php"
     },
     {
+      "printed": "NF-44",
+      "set": "nf",
+      "number": "044",
+      "name": "suivre Naruto Shippuden Ultimate Formation NF-044 Kimimaro",
+      "nameJa": "suivre Naruto Shippuden Ultimate Formation NF-044 Kimimaro",
+      "note": "ebay mikanshop seed"
+    },
+    {
       "printed": "NF-5",
       "set": "nf",
       "number": "005",
       "name": "Carte de formation Sakura Naruto Narutimate Shippuden Japanese TCG Jump NF-005",
       "nameJa": "Carte de formation Sakura Naruto Narutimate Shippuden Japanese TCG Jump NF-005",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-51",
+      "set": "nf",
+      "number": "051",
+      "name": "suivre NARUTO Naruto Formation Uzumaki Naruto NF 051",
+      "nameJa": "suivre NARUTO Naruto Formation Uzumaki Naruto NF 051",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-52",
+      "set": "nf",
+      "number": "052",
+      "name": "suivre Naruto Ultimate Formation Card Naruto Uzumaki Shinobi W NF-052 BANDAI Japan",
+      "nameJa": "suivre Naruto Ultimate Formation Card Naruto Uzumaki Shinobi W NF-052 BANDAI Japan",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-53",
+      "set": "nf",
+      "number": "053",
+      "name": "suivre Naruto Data Carddass Narutimate Formation NF-053 Naruto Uzumaki",
+      "nameJa": "suivre Naruto Data Carddass Narutimate Formation NF-053 Naruto Uzumaki",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-54",
+      "set": "nf",
+      "number": "054",
+      "name": "suivre NARUTO Naruto Formation Uzumaki Naruto NF 054",
+      "nameJa": "suivre NARUTO Naruto Formation Uzumaki Naruto NF 054",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-62",
+      "set": "nf",
+      "number": "062",
+      "name": "suivre Shikamaru Nara Naruto Card Very Rare BANDAI Japanese Japan NF-062 F/S",
+      "nameJa": "suivre Shikamaru Nara Naruto Card Very Rare BANDAI Japanese Japan NF-062 F/S",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-63",
+      "set": "nf",
+      "number": "063",
+      "name": "suivre Naruto Data Carddass Narutimate Formation NF-063 Shikamaru Nara",
+      "nameJa": "suivre Naruto Data Carddass Narutimate Formation NF-063 Shikamaru Nara",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-71",
+      "set": "nf",
+      "number": "071",
+      "name": "suivre Naruto Data Carddass Narutimate Formation NF-071 Rare Chōji Akimichi",
+      "nameJa": "suivre Naruto Data Carddass Narutimate Formation NF-071 Rare Chōji Akimichi",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-78",
+      "set": "nf",
+      "number": "078",
+      "name": "suivre kankuro Naruto Card Very Rare BANDAI Japanese Japan NF-078 F/S",
+      "nameJa": "suivre kankuro Naruto Card Very Rare BANDAI Japanese Japan NF-078 F/S",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-9",
+      "set": "nf",
+      "number": "009",
+      "name": "suivre Naruto Data Carddass Narutimate Formation NF-009 Shikamaru Nara",
+      "nameJa": "suivre Naruto Data Carddass Narutimate Formation NF-009 Shikamaru Nara",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-92",
+      "set": "nf",
+      "number": "092",
+      "name": "suivre Sakon Naruto Card Very Rare BANDAI Japanese Japan NF-092 F/S",
+      "nameJa": "suivre Sakon Naruto Card Very Rare BANDAI Japanese Japan NF-092 F/S",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NF-94",
+      "set": "nf",
+      "number": "094",
+      "name": "suivre NARUTO Ultimate Formation NF-094 Orochimaru Holo Card Japanese Bandai",
+      "nameJa": "suivre NARUTO Ultimate Formation NF-094 Orochimaru Holo Card Japanese Bandai",
       "note": "ebay mikanshop seed"
     },
     {
@@ -9786,6 +9930,14 @@
       "note": "carddass.com mission/tokunin.php"
     },
     {
+      "printed": "NM-23",
+      "set": "nm",
+      "number": "023",
+      "name": "suivre Naruto Data Carddass Narutimate Mission NM-023 Rare Hinata Hyūga",
+      "nameJa": "suivre Naruto Data Carddass Narutimate Mission NM-023 Rare Hinata Hyūga",
+      "note": "ebay mikanshop seed"
+    },
+    {
       "printed": "NM-230",
       "set": "nm",
       "number": "230",
@@ -9883,6 +10035,14 @@
       "number": "053",
       "name": "Uzumaki Naruto Narutimate Mission Card BANDAI 2007 Japan Japanese Anime NM-053",
       "nameJa": "Uzumaki Naruto Narutimate Mission Card BANDAI 2007 Japan Japanese Anime NM-053",
+      "note": "ebay mikanshop seed"
+    },
+    {
+      "printed": "NM-54",
+      "set": "nm",
+      "number": "054",
+      "name": "suivre NM-054 Uzumaki Naruto Rare Naruto Data Carddass Ultimate Mission",
+      "nameJa": "suivre NM-054 Uzumaki Naruto Rare Naruto Data Carddass Ultimate Mission",
       "note": "ebay mikanshop seed"
     },
     {
@@ -13452,6 +13612,6 @@
     "m",
     "ultimate-ninja-mission-physical"
   ],
-  "naoYoshiAppliedAt": "2026-09-19T18:08:44.196Z",
+  "naoYoshiAppliedAt": "2026-09-24T10:22:56.970Z",
   "naoYoshiSource": "nao-yoshi.seesaa.net"
 }

@@ -464,9 +464,14 @@ import { NARUTO_RANKS_PACK_ID } from "../pack";
       process.cwd(),
       "data/naruto/ninja-ranks/staging/coleka-ninja-ranks",
     );
-    const listings = readdirSync(stagingDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && /^listing-\d+\.html$/.test(entry.name))
-      .map((entry) => path.join(stagingDir, entry.name));
+    const listings = existsSync(stagingDir)
+      ? readdirSync(stagingDir, { withFileTypes: true })
+          .filter(
+            (entry) =>
+              entry.isFile() && /^listing-\d+\.html$/.test(entry.name),
+          )
+          .map((entry) => path.join(stagingDir, entry.name))
+      : [];
 
     it.skipIf(listings.length === 0)(
       "accepte 59 base + 30 inserts EU photographiés",

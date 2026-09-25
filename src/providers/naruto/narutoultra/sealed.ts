@@ -9,10 +9,15 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { hashCatalogArtefactBytes } from "@/providers/shared/catalogIngestLedger";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { colekaAlbumStagingDir, readColekaAlbumLedger } from "./sources/faces";
+import {
+  colekaAlbumPath,
+  colekaAlbumStagingDir,
+  readColekaAlbumLedger,
+} from "./sources/faces";
 import { NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "./pack";
 import { NARUTO_ULTRA_SET_CODE } from "./printKey";
 
@@ -68,13 +73,19 @@ export function ingestUltraSealedProducts(
   const coleka = readColekaAlbumLedger();
   const curated = opts.curatedProductsDir ?? ultraCuratedProductsDir();
   const lang = reconstructed.lang?.trim().toLowerCase();
-  const colekaArt = path.join(
-    opts.colekaStagingDir ?? colekaAlbumStagingDir(),
-    coleka.sku.file,
-  );
+  const colekaStaging = opts.colekaStagingDir ?? colekaAlbumStagingDir();
+  const colekaArt = path.join(colekaStaging, coleka.sku.file);
   const colekaDump = existsSync(colekaArt)
     ? [{ source: coleka.sourceId, artPath: colekaArt }]
     : [];
+  const contentHash = hashCatalogArtefactBytes(
+    readFileSync(colekaAlbumPath()),
+  );
+  const purgeStaging = {
+    artefactId: "sealed:coleka-album",
+    stagingPath: colekaStaging,
+    contentHash,
+  };
 
   const products = reconstructed.products.flatMap((sku) => {
     const artPath = curatedFile(curated, sku.slug, lang, sku.art);
@@ -105,6 +116,7 @@ export function ingestUltraSealedProducts(
       packId: NARUTO_ULTRA_PACK_ID,
       source: reconstructed.sourceId,
       products,
+      purgeStaging,
     });
   }
 
@@ -125,5 +137,6 @@ export function ingestUltraSealedProducts(
         artPath: existsSync(colekaArt) ? colekaArt : null,
       },
     ],
+    purgeStaging,
   });
 }

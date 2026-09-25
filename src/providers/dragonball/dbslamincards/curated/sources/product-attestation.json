@@ -2,7 +2,7 @@
   "source": "Attestation produit — Dragon Ball Lamincards (Edibas)",
   "observed": "2026-09-07",
   "ingest": "none",
-  "line": "dbs/lamincards",
+  "line": "dragonball/lamincards",
   "why": "Nommer correctement la ligne avant la moisson : « Lamincards » est la marque Edibas (Turin), pas un surnom. Plusieurs séries DBZ/GT, pas un unique set.",
   "brand": {
     "name": "Lamincards",

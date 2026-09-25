@@ -4,10 +4,12 @@
  * Sources:
  * - YGOPRODeck API — EN (+ FR names) TCG printings (LOB-EN…) + images
  * - ScanFlip FR (`scanflip.fr/fr/yugioh/cards`) — regional FR codes (LDD-F…)
- * - ygocards.fr — sealed SKUs + optional FR shop faces (TCG Cards family)
+ * - ygocards.fr — pack sleeve (`cards/original/back.webp`), sealed SKUs,
+ *   optional FR shop faces (`--ygocards-faces`)
  *
- * Full catalogue is large — use `--max-cards` / `--max-pages` / `--skip-faces` /
- * `--limit` for smoke runs. Konami Neuron has no public API.
+ * Faces stay locale-specific (no cross-locale borrow). Full catalogue is large —
+ * use `--max-cards` / `--max-pages` / `--skip-faces` / `--skip-backs` / `--limit`
+ * for smoke runs. Konami Neuron has no public API.
  */
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 import { ensureCardsFrListDump } from "@/providers/shared/tcgcards/ensureListDump";
@@ -22,8 +24,10 @@ import {
   applyYugiohScanflipArtUrls,
   harvestYugiohScanflip,
   installYugiohScanflip,
+  promoteAndPurgeYugiohScanflipStaging,
 } from "./install/scanflip";
 import { scrapeYgocardsProducts } from "./sources/ygocards";
+import { harvestYgocardsDistinctBacks } from "./ygocardsBacks";
 import {
   harvestYugiohYgoprodeck,
   installYugiohYgoprodeck,
@@ -58,12 +62,27 @@ export async function runYugiohPackPipeline(
   const skipYgocardsFaces = !argv.includes("--ygocards-faces");
   const skipYgocardsList =
     argv.includes("--skip-ygocards-list") || skipToken(argv, "ygocards-list");
+  const skipBacks =
+    argv.includes("--skip-backs") || skipToken(argv, "backs");
   const maxPagesRaw = argValue(argv, "--max-pages");
   const maxCardsRaw = argValue(argv, "--max-cards");
   const limitRaw = argValue(argv, "--limit");
   const maxPages = maxPagesRaw ? Number(maxPagesRaw) : undefined;
   const maxCards = maxCardsRaw ? Number(maxCardsRaw) : undefined;
   const limit = limitRaw ? Number(limitRaw) : undefined;
+
+  if (!offline && !skipBacks) {
+    try {
+      const backs = await harvestYgocardsDistinctBacks({ force });
+      console.log(
+        `── ygocards backs — observés ${backs.observedCount}, défaut=${backs.defaultSlug ?? "—"}, installés [${backs.installed.join(", ") || "—"}], skip défaut [${backs.skippedDefault.join(", ") || "—"}], CDN miss [${backs.missing.join(", ") || "—"}]`,
+      );
+    } catch (err) {
+      console.warn(
+        `── ygocards backs — échec : ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
 
   if (!skipYgoprodeck) {
     try {
@@ -129,6 +148,12 @@ export async function runYugiohPackPipeline(
         console.log(
           `── YGO ScanFlip — ${installed.prints} prints, ${installed.titles} titres, ${installed.faces} faces`,
         );
+        if (installed.prints > 0) {
+          const purged = promoteAndPurgeYugiohScanflipStaging();
+          if (purged.purged) {
+            console.log("── ScanFlip staging — purgé (ledger → logs/)");
+          }
+        }
       }
 
       if (!skipYgocardsList && !offline) {

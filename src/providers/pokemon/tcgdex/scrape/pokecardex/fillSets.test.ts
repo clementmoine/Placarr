@@ -15,6 +15,11 @@ describe("pokecardexSeriesCodeForSet", () => {
     expect(pokecardexSeriesCodeForSet("basep")).toBe("WBP");
   });
 
+  it("maps Call of Legends and SM Black Star to intl scan folders", () => {
+    expect(pokecardexSeriesCodeForSet("col1")).toBe("CL");
+    expect(pokecardexSeriesCodeForSet("smp")).toBe("PRSM");
+  });
+
   it("uses hyphenated PokéCardex codes for trainer kits", () => {
     expect(pokecardexSeriesCodeForSet("tk-ex-latia")).toBe("TK1-LA");
     expect(pokecardexSeriesCodeForSet("tk-ex-latio")).toBe("TK1-LO");
@@ -56,5 +61,12 @@ describe("listPokecardexRetailFillTargets", () => {
     );
     expect(ids.some((id) => /^\d{4}/.test(id))).toBe(false);
     expect(ids).toContain("tk-ex-latia");
+  });
+
+  it("skips Shining Legends (no intl PokéCardex scans)", () => {
+    const ids = listPokecardexRetailFillTargets({ language: "fr" }).map(
+      (t) => t.setId,
+    );
+    expect(ids).not.toContain("sm3.5");
   });
 });

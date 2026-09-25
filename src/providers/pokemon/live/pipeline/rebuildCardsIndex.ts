@@ -3,8 +3,8 @@
  * catalogue faces under `data/pokemon/cards/{set}/{lang}/{card}/`.
  *
  * Keys are Live-style bundle stems (`me5_fr_045`). Names come from
- * `catalog.sqlite` (`live_cards`) via shared `attachTitlesToCardsIndex`, then
- * a soft TCGdex `prints.sqlite` pass for McDo / Black Star gaps, then a tiny
+ * `live.sqlite` (`live_cards`) via shared `attachTitlesToCardsIndex`, then
+ * a soft TCGdex `catalog.sqlite` pass for McDo / Black Star gaps, then a tiny
  * curated Live-orphan ledger, then sibling-locale fill for remaining slots.
  */
 import {
@@ -20,6 +20,11 @@ import { DatabaseSync } from "node:sqlite";
 import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardsDir, packCardsIndexPath } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonIdentityDbPath,
+  pokemonLiveDbPath,
+} from "@/providers/pokemon/paths";
 import {
   attachSiblingTitlesToCardsIndex,
   attachTitlesToCardsIndex,
@@ -106,7 +111,7 @@ function setNumKey(liveSet: string, num: number): string {
   return `${liveSet.toLowerCase()}\0${num}`;
 }
 
-/** Read identity titles from catalog.sqlite (soft-empty when missing). */
+/** Read Live titles from live.sqlite (soft-empty when missing). */
 export function loadPokemonLiveNameLookup(dbPath: string): LiveNameLookup {
   const byStem = new Map<string, LiveNameRow>();
   const bySetNum = new Map<string, LiveNameRow[]>();
@@ -260,9 +265,11 @@ export function resolvePokemonIndexName(
   return null;
 }
 
-/** Walk `data/pokemon/cards` → write `cards-index.json`. Soft no-op if empty. */
+/** Walk `data/pokemon/cards` → optional legacy JSON (tests only). Identity is sqlite. */
 export function rebuildPokemonCardsIndex(opts?: {
   root?: string;
+  /** Write `cards-index.json` — off by default; production uses catalog.sqlite. */
+  writeJson?: boolean;
 }): RebuildPokemonCardsIndexResult {
   const root = opts?.root ?? repoFromDataRoot();
   const cardsDir = packCardsDir("pokemon");
@@ -273,11 +280,17 @@ export function rebuildPokemonCardsIndex(opts?: {
     ? path.join(root, "data", "pokemon", "cards-index.json")
     : packCardsIndexPath("pokemon");
   const catalogDb = opts?.root
-    ? path.join(root, "data", "pokemon", "catalog.sqlite")
-    : path.join(dataRoot(), "pokemon", "catalog.sqlite");
+    ? path.join(root, "data", "pokemon", "live.sqlite")
+    : (() => {
+        ensurePokemonDbLayout();
+        return pokemonLiveDbPath();
+      })();
   const printsDb = opts?.root
-    ? path.join(root, "data", "pokemon", "prints.sqlite")
-    : path.join(dataRoot(), "pokemon", "prints.sqlite");
+    ? path.join(root, "data", "pokemon", "catalog.sqlite")
+    : (() => {
+        ensurePokemonDbLayout();
+        return pokemonIdentityDbPath();
+      })();
 
   const index: CardsIndexV1 = {
     version: 1,
@@ -338,8 +351,10 @@ export function rebuildPokemonCardsIndex(opts?: {
     }
   }
 
-  mkdirSync(path.dirname(out), { recursive: true });
-  writeFileSync(out, `${JSON.stringify(index)}\n`, "utf8");
+  if (opts?.writeJson) {
+    mkdirSync(path.dirname(out), { recursive: true });
+    writeFileSync(out, `${JSON.stringify(index)}\n`, "utf8");
+  }
   return {
     path: out,
     cards: Object.keys(index.cards).length,

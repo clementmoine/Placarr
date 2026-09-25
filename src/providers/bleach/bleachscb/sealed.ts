@@ -1,9 +1,9 @@
 /**
  * Bleach SCB sealed SKUs — starters Compagnons / Rivaux + booster S1.
- * Decklists: carddass.fr catalogue S1 (Wayback staging HTML).
+ * Decklists: carddass.fr catalogue S1 (Wayback HTML under curated/sources/wayback).
+ * Packshots: curated → products/ directly; pack `staging/carddass-fr` purged after pose.
  */
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -11,6 +11,14 @@ import {
 } from "node:fs";
 import path from "node:path";
 
+import { packStagingDir } from "@/lib/packPaths";
+import {
+  catalogArtefactIsFresh,
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 import {
   writeLocalSealedProducts,
   type LocalSealedWrite,
@@ -27,11 +35,21 @@ import {
 const SOURCE =
   "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)";
 const VERIFIED = "2026-09-13";
+const SEALED_ARTEFACT = "sealed:carddass-fr";
+const SEALED_STAGING_REL = "carddass-fr";
+
+const CURATED_ART: Record<string, string> = {
+  "starter-compagnons": "compagnons_catalogue.gif",
+  "starter-rivaux": "rivaux_catalogue.jpg",
+  "booster-s1-shinigami-and-ichigo": "booster_s1_05211.jpg",
+};
 
 function stagingS1Html(): string | null {
   const p = path.join(
-    process.cwd(),
-    "data/staging/carddass-wayback-scout/pages/bleach-s1.html",
+    bleachScbCuratedDir(),
+    "sources",
+    "wayback",
+    "bleach-s1.html",
   );
   if (!existsSync(p)) return null;
   return readFileSync(p, "latin1");
@@ -40,6 +58,25 @@ function stagingS1Html(): string | null {
 function curatedProductArt(name: string): string | null {
   const p = path.join(bleachScbCuratedDir(), "products", name);
   return existsSync(p) ? p : null;
+}
+
+function bleachSealedStagingDir(): string {
+  return path.join(packStagingDir(BLEACH_SCB_PACK_ID), SEALED_STAGING_REL);
+}
+
+/** Stable SSOT — curated packshot bytes (force = re-install). */
+export function bleachScbSealedContentHash(): string {
+  const parts: Buffer[] = [];
+  for (const name of Object.values(CURATED_ART)) {
+    const abs = curatedProductArt(name);
+    if (abs) parts.push(readFileSync(abs));
+  }
+  const contentsPath = path.join(
+    bleachScbCuratedDir(),
+    "products-contents.json",
+  );
+  if (existsSync(contentsPath)) parts.push(readFileSync(contentsPath));
+  return hashCatalogArtefactBytes(Buffer.concat(parts));
 }
 
 /** Build + write `products-contents.json` from S1 HTML decklists. */
@@ -118,7 +155,9 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
   return file;
 }
 
-export function ingestBleachScbSealedProducts(): {
+export function ingestBleachScbSealedProducts(
+  opts: { force?: boolean } = {},
+): {
   pack: string;
   written: number;
   skipped: number;
@@ -130,25 +169,34 @@ export function ingestBleachScbSealedProducts(): {
     path.join(bleachScbCuratedDir(), "products-contents.json"),
   );
 
-  const stagingDir = path.join(
-    process.cwd(),
-    "data",
-    "bleach",
-    "scb",
-    "staging",
-    "carddass-fr",
-  );
-  mkdirSync(stagingDir, { recursive: true });
+  const contentHash = bleachScbSealedContentHash();
+  const stagingPath = bleachSealedStagingDir();
+  if (
+    !opts.force &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(packCatalogIngestLedgerPath(BLEACH_SCB_PACK_ID)),
+      SEALED_ARTEFACT,
+      contentHash,
+    )
+  ) {
+    // Already durable — drop any leftover staging copies.
+    if (existsSync(stagingPath)) {
+      recordCatalogPromoteAndPurgeStaging({
+        ledgerPath: packCatalogIngestLedgerPath(BLEACH_SCB_PACK_ID),
+        artefactId: SEALED_ARTEFACT,
+        contentHash,
+        stagingPath,
+      });
+    }
+    return {
+      pack: BLEACH_SCB_PACK_ID,
+      written: 0,
+      skipped: Object.keys(CURATED_ART).length,
+      file: "",
+    };
+  }
 
   const products: LocalSealedWrite[] = [];
-
-  const artMap: Record<string, string | null> = {
-    "starter-compagnons": curatedProductArt("compagnons_catalogue.gif"),
-    "starter-rivaux": curatedProductArt("rivaux_catalogue.jpg"),
-    "booster-s1-shinigami-and-ichigo": curatedProductArt(
-      "booster_s1_05211.jpg",
-    ),
-  };
 
   const meta: Array<{
     slug: string;
@@ -181,10 +229,9 @@ export function ingestBleachScbSealedProducts(): {
   ];
 
   for (const row of meta) {
-    const art = artMap[row.slug];
+    const artName = CURATED_ART[row.slug];
+    const art = artName ? curatedProductArt(artName) : null;
     if (!art) continue;
-    const dest = path.join(stagingDir, path.basename(art));
-    if (!existsSync(dest)) copyFileSync(art, dest);
     products.push({
       slug: row.slug,
       kind: row.kind,
@@ -192,14 +239,14 @@ export function ingestBleachScbSealedProducts(): {
       name: row.name,
       source: "carddass-fr",
       setCode: "s1",
-      catalogueSetId: "s1",
+      catalogueSetId: "s",
       lang: "fr",
       releaseDate: "2008",
       declaredCardCount: row.cardsPerPack,
       cardsPerPack: row.kind === "booster" ? 8 : row.cardsPerPack,
       packsContained: 1,
       path: SOURCE,
-      artPath: dest,
+      artPath: art,
     });
   }
 
@@ -211,9 +258,15 @@ export function ingestBleachScbSealedProducts(): {
       file: "",
     };
   }
+
   return writeLocalSealedProducts({
     packId: BLEACH_SCB_PACK_ID,
     source: "carddass-fr",
     products,
+    purgeStaging: {
+      artefactId: SEALED_ARTEFACT,
+      stagingPath,
+      contentHash,
+    },
   });
 }

@@ -1,5 +1,6 @@
 import { PROVIDER_MODULES, PROVIDERS } from "@/core/catalog/catalog";
 import { canonicalProviderIdForSource } from "@/core/catalog/sourceTraits";
+import { parsePrintKey } from "@/core/identify/printKey";
 import type { Capability, MediaType } from "@/types/providerRegistry";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -280,17 +281,39 @@ export function metadataPassCapabilitiesIncomplete(options: {
 }
 
 /**
+ * Disk corpora for a print's game (`supplyMode: local_catalog` + `printGames`).
+ * Refresh must always re-hit these: a cover already on the fiche does not mean
+ * the pack face is still the preferred art on disk (`face.json` moves).
+ */
+export function localCatalogProviderIdsForPrintKey(
+  printKey?: string | null,
+): string[] {
+  const game = parsePrintKey(printKey)?.game;
+  if (!game) return [];
+  return PROVIDER_MODULES.filter(
+    (mdl) =>
+      mdl.info.supplyMode === "local_catalog" &&
+      (mdl.printGames ?? []).some(
+        (printGame) => printGame.toLowerCase() === game,
+      ),
+  ).map((mdl) => mdl.info.id);
+}
+
+/**
  * Non-scrape (Tier 0+1 API/local) provider ids to resolve.
  *
  * - Capability gaps → full candidate set.
- * - Already complete from seed/prior results → **only** fiche-pinned non-scrape
- *   ids ∩ candidates (refresh known API pins; never re-swarm IGDB/SS/…).
+ * - Already complete from seed/prior results → fiche-pinned non-scrape ids ∩
+ *   candidates, **plus** local_catalog packs for the printKey game (cheap disk
+ *   re-read — never skip catalogue art updates).
  */
 export function apiProvidersForMetadataPass(options: {
   type: MediaType;
   activeResults: MetadataResult[];
   candidateApiProviderIds: readonly string[];
   pinnedNonScrapeProviderIds?: readonly string[];
+  /** When set, local_catalog providers for that game stay in the pass. */
+  printKey?: string | null;
   hasCapability: MetadataCapabilityProbe;
 }): string[] {
   const candidates = options.candidateApiProviderIds;
@@ -300,7 +323,10 @@ export function apiProvidersForMetadataPass(options: {
     return [...candidates];
   }
 
-  const pinned = new Set(options.pinnedNonScrapeProviderIds ?? []);
+  const pinned = new Set([
+    ...(options.pinnedNonScrapeProviderIds ?? []),
+    ...localCatalogProviderIdsForPrintKey(options.printKey),
+  ]);
   if (pinned.size === 0) return [];
 
   return candidates.filter((id) => pinned.has(id));

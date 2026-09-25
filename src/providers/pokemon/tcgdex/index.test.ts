@@ -106,9 +106,10 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     expect(metadata?.facts?.find((f) => f.label === "PV")?.value).toBe("330");
     expect(metadata?.externalIds?.tcgdex).toBe("sv03.5-006");
     expect(metadata?.externalIds?.printKey).toBe("pokemon:sv03.5-006");
-    expect(metadata?.attachments?.some((a) => a.role === "tcgdex-scan")).toBe(
-      true,
-    );
+    // Local paper/Live face wins over remote TCGdex CDN when dumped.
+    expect(
+      metadata?.attachments?.some((a) => a.role?.startsWith("pokemon-face-")),
+    ).toBe(true);
     expect(metadata?.attachments?.some((a) => a.role === "tcglive-front")).toBe(
       false,
     );

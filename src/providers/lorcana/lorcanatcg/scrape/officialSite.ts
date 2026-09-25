@@ -9,8 +9,15 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
-import { packStagingDir } from "@/lib/packPaths";
+import { packLogsDir, packStagingDir } from "@/lib/packPaths";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
+import {
+  catalogArtefactIsFresh,
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 
 export const OFFICIAL_SITE_ORIGIN = "https://www.disneylorcana.com";
 /** Default locale (legacy FR harvest paths). */
@@ -20,6 +27,7 @@ export const OFFICIAL_SITE_LOCALES = ["fr-FR", "en-US"] as const;
 export type OfficialSiteLocale = (typeof OFFICIAL_SITE_LOCALES)[number];
 export const OFFICIAL_SITE_UA = "Placarr-lorcana-official/1.0";
 const STAGING_FOLDER = "official-site";
+const OFFICIAL_SITE_ARTEFACT_ID = "lorcana:official-site";
 
 const LOCALE_TO_LANG: Readonly<Record<string, string>> = {
   "fr-FR": "fr",
@@ -109,6 +117,69 @@ export function officialSiteProductUrl(
 
 export function officialSiteStagingDir(packId = "lorcana"): string {
   return path.join(packStagingDir(packId), STAGING_FOLDER);
+}
+
+/** Durable pages ledger — outside staging so purge does not erase it. */
+export function officialSiteDurablePagesPath(packId = "lorcana"): string {
+  return path.join(packLogsDir(packId), "official-site-pages.json");
+}
+
+export function officialSiteContentHashFromPages(
+  pages: readonly OfficialProductPage[],
+): string {
+  const lines: string[] = [];
+  for (const page of pages) {
+    if (page.logoUrl) lines.push(`logo|${page.slug}|${page.logoUrl}`);
+    for (const shot of page.packshots) {
+      lines.push(`shot|${page.slug}|${shot.kind ?? "?"}|${shot.url}`);
+    }
+  }
+  lines.sort();
+  return hashCatalogArtefactBytes(lines.join("\n"));
+}
+
+export function persistOfficialSitePagesDurable(
+  payload: unknown,
+  packId = "lorcana",
+): string {
+  const dest = officialSiteDurablePagesPath(packId);
+  mkdirSync(path.dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  return dest;
+}
+
+export function promoteOfficialSiteAndPurgeStaging(opts: {
+  packId?: string;
+  pages?: readonly OfficialProductPage[];
+  force?: boolean;
+} = {}): boolean {
+  const packId = opts.packId ?? "lorcana";
+  const staging = officialSiteStagingDir(packId);
+  const pages =
+    opts.pages ??
+    readOfficialSiteLedger(staging)?.pages ??
+    readOfficialSiteLedger(undefined, packId)?.pages ??
+    [];
+  if (!pages.length) return false;
+  const contentHash = officialSiteContentHashFromPages(pages);
+  if (
+    !opts.force &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(packCatalogIngestLedgerPath(packId)),
+      OFFICIAL_SITE_ARTEFACT_ID,
+      contentHash,
+    ) &&
+    !existsSync(staging)
+  ) {
+    return false;
+  }
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(packId),
+    artefactId: OFFICIAL_SITE_ARTEFACT_ID,
+    contentHash,
+    stagingPath: staging,
+  });
+  return true;
 }
 
 function decodeEntities(value: string): string {
@@ -401,8 +472,35 @@ export async function harvestOfficialLorcanaSite(opts: {
   limit?: number;
   locales?: readonly string[];
   onProgress?: (message: string) => void;
+  packId?: string;
 } = {}): Promise<OfficialSiteHarvest> {
-  const staging = opts.stagingDir ?? officialSiteStagingDir();
+  const packId = opts.packId ?? "lorcana";
+  const staging = opts.stagingDir ?? officialSiteStagingDir(packId);
+
+  if (!opts.force) {
+    const durable = readOfficialSiteLedger(undefined, packId);
+    if (durable?.pages.length) {
+      const contentHash = officialSiteContentHashFromPages(durable.pages);
+      if (
+        catalogArtefactIsFresh(
+          readCatalogIngestLedger(packCatalogIngestLedgerPath(packId)),
+          OFFICIAL_SITE_ARTEFACT_ID,
+          contentHash,
+        )
+      ) {
+        opts.onProgress?.("ledger frais — skip harvest HTTP");
+        return {
+          menu: durable.menu.length,
+          pages: durable.pages.length,
+          logos: 0,
+          packshots: 0,
+          fail: 0,
+          pagesParsed: durable.pages,
+        };
+      }
+    }
+  }
+
   const pagesDir = path.join(staging, "pages");
   const logosDir = path.join(staging, "logos");
   const shotsDir = path.join(staging, "packshots");
@@ -543,22 +641,16 @@ export async function harvestOfficialLorcanaSite(opts: {
   }
 
   const menu = [...menuBySlug.values()];
+  const payload = {
+    source: officialSiteHomeUrl(),
+    locales,
+    fetchedAt: new Date().toISOString(),
+    menu,
+    pages: pagesParsed,
+  };
   const ledgerPath = path.join(staging, "pages.json");
-  writeFileSync(
-    ledgerPath,
-    `${JSON.stringify(
-      {
-        source: officialSiteHomeUrl(),
-        locales,
-        fetchedAt: new Date().toISOString(),
-        menu,
-        pages: pagesParsed,
-      },
-      null,
-      2,
-    )}\n`,
-    "utf8",
-  );
+  writeFileSync(ledgerPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  persistOfficialSitePagesDurable(payload, packId);
 
   return {
     menu: menu.length,
@@ -571,27 +663,36 @@ export async function harvestOfficialLorcanaSite(opts: {
 }
 
 export function readOfficialSiteLedger(
-  stagingDir = officialSiteStagingDir(),
+  stagingDir?: string,
+  packId = "lorcana",
 ): {
   menu: OfficialMenuEntry[];
   pages: OfficialProductPage[];
 } | null {
-  const file = path.join(stagingDir, "pages.json");
-  if (!existsSync(file)) return null;
-  try {
-    const raw = JSON.parse(readFileSync(file, "utf8")) as {
-      menu?: OfficialMenuEntry[];
-      pages?: OfficialProductPage[];
-    };
-    const pages = (raw.pages ?? []).map((page) => ({
-      ...page,
-      lang: page.lang ?? "fr",
-    }));
-    return {
-      menu: raw.menu ?? [],
-      pages,
-    };
-  } catch {
-    return null;
+  const candidates = [
+    stagingDir ? path.join(stagingDir, "pages.json") : null,
+    path.join(officialSiteStagingDir(packId), "pages.json"),
+    officialSiteDurablePagesPath(packId),
+  ].filter(Boolean) as string[];
+
+  for (const file of candidates) {
+    if (!existsSync(file)) continue;
+    try {
+      const raw = JSON.parse(readFileSync(file, "utf8")) as {
+        menu?: OfficialMenuEntry[];
+        pages?: OfficialProductPage[];
+      };
+      const pages = (raw.pages ?? []).map((page) => ({
+        ...page,
+        lang: page.lang ?? "fr",
+      }));
+      return {
+        menu: raw.menu ?? [],
+        pages,
+      };
+    } catch {
+      /* try next */
+    }
   }
+  return null;
 }

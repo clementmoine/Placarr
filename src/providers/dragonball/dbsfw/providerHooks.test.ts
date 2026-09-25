@@ -12,7 +12,7 @@ describe("dbsfw provider hooks", () => {
     expect(dbsfwModule.evidence?.label).toBeTruthy();
     expect(dbsfwModule.info.nameDatabase).toBe(true);
     expect(dbsfwModule.info.types).toEqual(["tcg"]);
-    expect(dbsfwModule.catalog?.dataPack).toBe("dbs/fw");
+    expect(dbsfwModule.catalog?.dataPack).toBe("dragonball/fw");
   });
 
   it("lookupPrint ignores Masters printKeys", async () => {

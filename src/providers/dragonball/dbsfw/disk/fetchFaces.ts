@@ -1,5 +1,5 @@
 /**
- * Fusion World faces → `data/dbs/fw/cards/{set}/{lang}/{card}/art.<source>.webp`.
+ * Fusion World faces → `data/dragonball/fw/cards/{set}/{lang}/{card}/art.<source>.webp`.
  *
  * The pack had no faces pass at all: 3946 printings, every one of them served
  * straight from Bandai's remote URL, and not one image on disk. dbscards runs
@@ -34,8 +34,8 @@ import {
   lookupDbscardsEntry,
   type DbscardsIndex,
   type DbscardsIndexEntry,
-} from "@/providers/dragonball/shared/dbscards/list";
-import { dbscardsIndexPath } from "@/providers/dragonball/shared/dbscards/scrapeList";
+} from "@/providers/shared/tcgcards/list";
+import { dbscardsIndexPath } from "@/providers/shared/tcgcards/scrapeList";
 import {
   clearSoftbanState,
   isSoftbanStatus,
@@ -56,7 +56,6 @@ import {
 import {
   DBS_FW_PACK_ID,
   dbsFwCardFolder,
-  exportDbsFwCardsIndexJson,
   loadDbsFwIndex,
 } from "../indexStore";
 
@@ -349,14 +348,5 @@ export async function fetchDbsFwFaces(
 
   if (stats.throttled === 0) clearSoftbanState(cacheRoot, SOFTBAN_LEDGER);
 
-  // Like Masters / Lorcana: faces pass rewrites cards-index with local art.
-  const indexPath = dataPackPath(DBS_FW_PACK_ID, "cards-index.json");
-  exportDbsFwCardsIndexJson(
-    loaded.prints,
-    loaded.titles,
-    loaded.assets,
-    indexPath,
-  );
-  console.log(`── fw faces index → ${indexPath}`);
   return stats;
 }

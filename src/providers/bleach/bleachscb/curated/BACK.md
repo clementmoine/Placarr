@@ -28,7 +28,7 @@ Coleka (fallback faces) : https://www.coleka.com/fr/cartes-de-collection/cartes-
 
 ## Scellé (2026-09-13)
 
-Source : Wayback `carddass.fr/bleach/catalogue_S1_Bleach.html` (`data/staging/…/bleach-s1.html`).
+Source : Wayback `carddass.fr/bleach/catalogue_S1_Bleach.html` (`curated/sources/wayback/bleach-s1.html`).
 
 | SKU | Contenu |
 | --- | --- |

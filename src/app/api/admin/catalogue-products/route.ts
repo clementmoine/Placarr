@@ -30,6 +30,9 @@ export async function GET(req: Request) {
   const contentsUnknown =
     url.searchParams.get("contentsUnknown") === "1" ||
     url.searchParams.get("contentsUnknown") === "true";
+  const missingPrice =
+    url.searchParams.get("missingPrice") === "1" ||
+    url.searchParams.get("missingPrice") === "true";
 
   return NextResponse.json(
     listCatalogueProducts({
@@ -38,6 +41,7 @@ export async function GET(req: Request) {
       limit: Number.isFinite(limit) ? limit : 48,
       q,
       contentsUnknown: contentsUnknown || undefined,
+      missingPrice: missingPrice || undefined,
     }),
   );
 }

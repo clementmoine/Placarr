@@ -7,17 +7,21 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { providerModuleForPack } from "@/providers/shared/packOwner";
+import { providerModuleProviding } from "@/providers/shared/packOwner";
 
-import { buildPrintKey } from "@/core/identify/printKey";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
 import { foilPackDataDir } from "@/lib/runtimeData";
 import type {
   DbscardsProductListingRow,
   DbscardsProductPage,
   DbscardsProductPrintLink,
-} from "@/providers/dragonball/shared/dbscards/parseProducts";
-import { tcgCardsSiteForPack } from "@/providers/dragonball/shared/dbscards/sites";
+} from "@/providers/shared/tcgcards/parseProducts";
+import {
+  cardsFrShopPrintKey,
+  printKeyFromBandaiCollectorRef,
+} from "@/providers/shared/tcgcards/cardsFrPrintRef";
+import { tcgCardsSiteForPack } from "@/providers/shared/tcgcards/sites";
+import { resolveTcgCardsProductsDir } from "@/providers/shared/tcgcards/productsStagingLifecycle";
 
 import {
   emptyProductsIndex,
@@ -39,50 +43,34 @@ import { backfillSealedProductSetLogos } from "./backfillLogos";
 import { persistSealedProductsIndex } from "./persistProductsIndex";
 
 /**
- * printKey game slug for a data pack. Lives here (providers/) so core never
- * names a TCG provider. Only Bandai-shaped collector refs become printKeys
- * today — lorcards `241-204` is card/set-size, not `lorcana:241-204`.
+ * printKey game slug for a data pack. *cards.fr rows declare `printGame` on
+ * the site table; this map covers packs outside that family (Naruto lines).
  */
-const PACK_PRINT_GAME: Readonly<Record<string, string>> = {
-  "dbs/cg": "dbscg",
-  "dbs/fw": "dbsfw",
-  lorcana: "lorcana",
-  pokemon: "pokemon",
+const PACK_PRINT_GAME_EXTRA: Readonly<Record<string, string>> = {
   "naruto/carddass": "naruto",
   "naruto/en-ccg": "naruto",
-  onepiece: "onepiece",
-  "dbs/jcc": "dbsjcc",
+  "dragonball/jcc": "dbsjcc",
 };
 
 export function printGameForPack(packId: string): string | null {
-  return PACK_PRINT_GAME[packId] ?? null;
+  const fromSite = tcgCardsSiteForPack(packId)?.printGame;
+  if (fromSite) return fromSite;
+  return PACK_PRINT_GAME_EXTRA[packId] ?? null;
 }
 
-/** `bt13-135` / `fs10-01-p1` / `st25-001` — Bandai-style collector refs. */
-const BANDAI_PRINT_GAMES = new Set(["dbscg", "dbsfw", "onepiece"]);
-
-/** `bt13-135` / `fs10-01-p1` → printKey when the game uses that shape. */
+/** @deprecated Prefer {@link printKeyFromBandaiCollectorRef} — same Bandai path. */
 export function printKeyFromCollectorRef(
   game: string,
   ref: string | null | undefined,
 ): string | null {
-  if (!BANDAI_PRINT_GAMES.has(game)) return null;
-  if (!ref) return null;
-  const parts = ref.trim().toLowerCase().split("-").filter(Boolean);
-  if (parts.length < 2) return null;
-  if (parts.length === 2) {
-    return buildPrintKey({ game, set: parts[0]!, number: parts[1]! });
-  }
-  return buildPrintKey({
-    game,
-    set: parts[0]!,
-    number: parts[1]!,
-    grouping: parts.slice(2).join(""),
-  });
+  return printKeyFromBandaiCollectorRef(game, ref);
 }
 
 function packStagingProductsDir(packId: string, stagingFolder: string): string {
-  return path.join(foilPackDataDir(packId), "staging", stagingFolder);
+  return (
+    resolveTcgCardsProductsDir(packId, stagingFolder) ??
+    path.join(foilPackDataDir(packId), "staging", stagingFolder)
+  );
 }
 
 function readJson(file: string): unknown | null {
@@ -111,13 +99,20 @@ function productPages(raw: unknown): DbscardsProductPage[] {
   if (!raw || typeof raw !== "object") return [];
   const products = (raw as { products?: unknown }).products;
   if (!Array.isArray(products)) return [];
-  return products.filter(
-    (row): row is DbscardsProductPage =>
-      !!row &&
-      typeof row === "object" &&
-      typeof (row as DbscardsProductPage).slug === "string" &&
-      typeof (row as DbscardsProductPage).category === "string",
-  );
+  return products
+    .filter(
+      (row): row is DbscardsProductPage =>
+        !!row &&
+        typeof row === "object" &&
+        typeof (row as DbscardsProductPage).slug === "string" &&
+        typeof (row as DbscardsProductPage).category === "string",
+    )
+    .map((row) => ({
+      ...row,
+      containedProducts: Array.isArray(row.containedProducts)
+        ? row.containedProducts
+        : [],
+    }));
 }
 
 /**
@@ -145,6 +140,11 @@ export function sealedPriceCentsFromShop(input: {
 function mapPrints(
   packId: string,
   links: readonly DbscardsProductPrintLink[] | undefined,
+  resolveCatalogueSetId?: (input: {
+    setCode?: string | null;
+    slug?: string | null;
+    name?: string | null;
+  }) => string | null,
 ): SealedPrintLink[] {
   const game = printGameForPack(packId);
   const out: SealedPrintLink[] = [];
@@ -157,7 +157,19 @@ function mapPrints(
       name: link.name,
       slug: link.slug,
       ref: link.ref,
-      printKey: game ? printKeyFromCollectorRef(game, link.ref) : null,
+      printKey: game
+        ? cardsFrShopPrintKey({
+            game,
+            print: {
+              slug: link.slug,
+              ref: link.ref,
+              image: link.image,
+              name: link.name,
+            },
+            resolveCatalogueSetId,
+          })
+        : null,
+      ...(link.image ? { image: link.image } : {}),
     });
   }
   return out;
@@ -193,7 +205,11 @@ export function sealedProductFromStaging(input: {
   });
   if (!kind) return null;
   const page = input.page ?? null;
-  const prints = mapPrints(input.packId, page?.containsPrints);
+  const prints = mapPrints(
+    input.packId,
+    page?.containsPrints,
+    input.resolveCatalogueSetId,
+  );
   const preview =
     page?.containsPrintsIsPreview ?? sealedKindIsOpaqueContents(kind);
   const declaredCardCount = page?.declaredCardCount ?? null;
@@ -216,6 +232,19 @@ export function sealedProductFromStaging(input: {
     contentsKnown,
     containsPrintsIsPreview: preview,
   });
+  const contained = page?.containedProducts ?? [];
+  const guaranteedProducts =
+    contained.length > 0
+      ? contained.map((row) => ({
+          slug: row.slug,
+          ...(row.qty > 1 ? { qty: row.qty } : {}),
+        }))
+      : undefined;
+  const packsFromComposition =
+    contained.length > 0
+      ? contained.reduce((sum, row) => sum + row.qty, 0)
+      : null;
+  const hasProductBundle = Boolean(guaranteedProducts?.length);
   return {
     slug: input.listing.slug,
     path: input.listing.path || page?.path || "",
@@ -261,13 +290,14 @@ export function sealedProductFromStaging(input: {
       currency: page?.currency,
     }),
     cardsPerPack: contents.cardsPerPack,
-    packsContained: contents.packsContained,
+    packsContained: packsFromComposition ?? contents.packsContained,
+    ...(guaranteedProducts ? { guaranteedProducts } : {}),
     guaranteedPrints: layers.guaranteedPrints,
     randomPoolScope: layers.randomPoolScope,
     randomPoolPrints: layers.randomPoolPrints,
     declaredCardCount,
-    containsPrintsIsPreview: preview,
-    contentsKnown,
+    containsPrintsIsPreview: hasProductBundle ? false : preview,
+    contentsKnown: hasProductBundle ? true : contentsKnown,
     prints,
   };
 }
@@ -304,9 +334,16 @@ export async function ingestSealedProducts(
     vivent ses logos de set ; le registre est chargé d'un bloc, donc tous les
     résolveurs sont là dès qu'un seul l'est.
   */
-  const owner = providerModuleForPack(packId);
-  const resolveSetLogo = owner?.resolveSetLogo;
-  const resolveCatalogueSetId = owner?.resolveCatalogueSetId;
+  /*
+    Plusieurs modules peuvent partager le dataPack (Pokémon Live + TCGdex) :
+    prendre le hook où il est déclaré, pas le premier du registre.
+  */
+  const resolveSetLogo = providerModuleProviding(packId, "resolveSetLogo")
+    ?.resolveSetLogo;
+  const resolveCatalogueSetId = providerModuleProviding(
+    packId,
+    "resolveCatalogueSetId",
+  )?.resolveCatalogueSetId;
 
   const index: ProductsIndexV1 = emptyProductsIndex(packId);
   let skipped = 0;
@@ -334,6 +371,7 @@ export async function ingestSealedProducts(
   }
 
   index.products = mergeCuratedSealedContents(packId, index.products);
+  backfillPacksBySetFromGuaranteedProducts(index.products);
   backfillSealedProductSetLogos(packId, index.products);
 
   const { file } = persistSealedProductsIndex(packId, index.products, {
@@ -345,4 +383,33 @@ export async function ingestSealedProducts(
     skipped,
     file,
   };
+}
+
+/**
+ * Coffret multi-set (Foudre + Flamme) : `packsBySet` from child boosters'
+ * `catalogueSetId` / `setCode` once the full index exists.
+ */
+export function backfillPacksBySetFromGuaranteedProducts(
+  products: Record<string, SealedProductEntry>,
+): void {
+  const bySlug = new Map(
+    Object.values(products).map((entry) => [entry.slug, entry] as const),
+  );
+  for (const entry of Object.values(products)) {
+    const links = entry.guaranteedProducts;
+    if (!links?.length) continue;
+    if (entry.packsBySet && Object.keys(entry.packsBySet).length > 0) continue;
+    const packsBySet: Record<string, number> = {};
+    for (const link of links) {
+      const child = bySlug.get(link.slug);
+      const setId =
+        child?.catalogueSetId?.trim() || child?.setCode?.trim() || null;
+      if (!setId) continue;
+      const qty = link.qty != null && link.qty > 0 ? Math.floor(link.qty) : 1;
+      packsBySet[setId] = (packsBySet[setId] ?? 0) + qty;
+    }
+    if (Object.keys(packsBySet).length > 0) {
+      entry.packsBySet = packsBySet;
+    }
+  }
 }

@@ -15,6 +15,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { downloadMercariOrigPhoto } from "@/providers/naruto/shared/mercariCdn";
+import { promoteAndPurgeNarutoDig } from "@/providers/naruto/shared/promoteNarutoDig";
 
 import { narutoShippudenCuratedDir } from "../assets";
 import {
@@ -296,9 +297,14 @@ export async function installShippudenSurugaFaces(
       try {
         db.prepare(
           `INSERT INTO prints (print_key, card_type, number, set_code)
-           VALUES (?, ?, ?, 'unknown')
+           VALUES (?, ?, ?, ?)
            ON CONFLICT(print_key) DO NOTHING`,
-        ).run(card.printKey, card.family, card.diskId);
+        ).run(
+          card.printKey,
+          card.family,
+          card.diskId,
+          card.family.startsWith("pr") ? "promo" : "unknown",
+        );
 
         if (card.title) {
           const parsedName = parseCardNameFromSurugaTitle(card.title);
@@ -348,6 +354,19 @@ export async function installShippudenSurugaFaces(
     )}\n`,
     "utf8",
   );
+
+  if (
+    !options.force &&
+    options.limit == null &&
+    failed.length === 0 &&
+    cards.length > 0
+  ) {
+    promoteAndPurgeNarutoDig({
+      packId: NARUTO_SHIPPUDEN_PACK_ID,
+      artefactId: "faces:suruga-shippuden",
+      stagingRel: "suruga-ya-shippuden",
+    });
+  }
 
   return {
     listed: cards.length,

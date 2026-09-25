@@ -1,8 +1,10 @@
 {
   "source": "https://pokecardex-scans.b-cdn.net/sets/{code}/FR/{n}.jpg",
-  "notes": "TCGdex id → PokéCardex nom_court when officialAbbr ≠ scan code (kits are hyphenated: TK1A → TK1-LA).",
+  "notes": "TCGdex id → PokéCardex nom_court when officialAbbr ≠ scan code (kits are hyphenated: TK1A → TK1-LA). Promo Black Star intl = PR* (PRSM), not SMP/XYP (those are JP). col1 officialAbbr COL ≠ CL.",
   "aliases": {
     "basep": "WBP",
+    "col1": "CL",
+    "smp": "PRSM",
     "pop1": "POP1",
     "pop2": "POP2",
     "pop3": "POP3",
@@ -31,5 +33,8 @@
     "tk-xy-p": "TK9-P",
     "tk-sm-r": "TK10-R",
     "tk-sm-l": "TK10-L"
+  },
+  "noScans": {
+    "sm3.5": "Shining Legends / Légendes Irisées — absent du CDN intl PokéCardex (pas de SLG ni SM35)."
   }
 }

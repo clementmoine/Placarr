@@ -409,6 +409,8 @@ export async function buildChecklistForShelf(input: {
     label: string;
     group?: string | null;
     sortKey?: number | null;
+    iconUrl?: string | null;
+    iconUrls?: string[] | null;
   }[] = [];
   /** Langues de cartes par extension — borne les conseils scellés. */
   const setCardLanguages = new Map<string, string[]>();
@@ -448,6 +450,8 @@ export async function buildChecklistForShelf(input: {
         label: set.label,
         group: set.group ?? null,
         sortKey: set.sortKey ?? null,
+        iconUrl: set.iconUrl?.trim() || null,
+        iconUrls: set.iconUrls?.map((u) => u.trim()).filter(Boolean) ?? null,
       });
       if (set.languages?.length) {
         setCardLanguages.set(

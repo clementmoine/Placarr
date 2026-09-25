@@ -19,7 +19,7 @@ import {
 import {
   canonicalizeVideoGamePlatformAliasSpan,
   detectVideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 import type { ResidualIdentityResult } from "@/core/enrich/titles/residualIdentityTypes";
 import {
   identityTokens,

@@ -172,7 +172,7 @@ describe("variantRendering", () => {
     );
   });
 
-  it("gives Pokémon Simey regular-holo for catalogue holo, never a Lorcana look", () => {
+  it("gives Pokémon Live-leaf CSS + materialName from finishShaders", () => {
     const pokemon = {
       finishes: ["holo"],
       plainFinishes: [],
@@ -183,10 +183,11 @@ describe("variantRendering", () => {
     };
     const rendering = variantRendering("holo", pokemon, BASE);
     /*
-      Catalogue `holo` without a Live leaf → Simey `regularHolo`. Unity names in
-      finishShaders are not CSS look ids.
+      Unity leaf in finishShaders → CSS recipe for that leaf (sunPillar) and
+      WebGL materialName. Client cannot open card_foil SQLite.
     */
-    expect(rendering.shader?.id).toBe("regularHolo");
+    expect(rendering.shader?.id).toBe("sunPillar");
+    expect(rendering.materialName).toBe("SunPillar");
     expect(JSON.stringify(rendering.shader)).not.toContain("/assets/lorcana/");
     expect(rendering.foilMaskUrl).toBe("/uploads/mask.jpg");
     expect(rendering.effectPackId).toBe("pokemon");
@@ -195,6 +196,25 @@ describe("variantRendering", () => {
     // material names, not Lorcana textures).
     const stale = { ...pokemon, effectPack: undefined };
     expect(variantRendering("holo", stale, BASE).shader?.id).toBe("flare");
+    expect(variantRendering("holo", stale, BASE).materialName).toBe(
+      "SunPillar",
+    );
+  });
+
+  it("maps 30th live-std finishShaders leaf to PikachuFoil", () => {
+    const rendering = variantRendering(
+      "live-std",
+      {
+        finishes: ["live-std"],
+        plainFinishes: [],
+        effectPack: "pokemon",
+        finishShaders: { "live-std": "PikachuFoil" },
+        foilMaskUrl: "/uploads/mask.jpg",
+      },
+      BASE,
+    );
+    expect(rendering.materialName).toBe("PikachuFoil");
+    expect(rendering.shader?.id).toBe("pikachuFoil");
   });
 
   it("uses house flare when shiny finish has no pack and no CSS finishShaders", () => {

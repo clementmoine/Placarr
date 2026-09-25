@@ -9,7 +9,7 @@ import { listEffectPacks } from "@/effects";
 import "@/effects/pokemon/cardFoilIndex";
 import "@/lib/foilMetaLoad.server";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { runWithConcurrency } from "@/lib/async";
 import type { FoilPlayroomNeed } from "@/types/providerModule";
 
 /**

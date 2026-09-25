@@ -56,10 +56,13 @@ import { buildShippudenFromLedgers, readShippudenChecklist, readShippudenLedgers
       Le pack Carddass partage le slug `naruto` : seule la **famille** sépare les
       deux jeux, et `ni0001` comme `shi0001` sont tous deux うずまきナルト.
     */
-    it("mints only its own four families", () => {
+    it("mints only its own families (retail + PR)", () => {
       expect(shippudenPrintKey("shi0001")).toBe("naruto:shi-0001");
       expect(shippudenPrintKey("mju0062")).toBe("naruto:mju-0062");
       expect(shippudenPrintKey("msa0026")).toBe("naruto:msa-0026");
+      expect(shippudenPrintKey("prmsa0005")).toBe("naruto:prmsa-0005");
+      expect(shippudenPrintKey("prshi0006")).toBe("naruto:prshi-0006");
+      expect(shippudenPrintKey("prgaku0001")).toBe("naruto:prgaku-0001");
       expect(shippudenPrintKey("ni0001")).toBeNull();
       expect(shippudenPrintKey("te0014")).toBeNull();
     });
@@ -67,9 +70,9 @@ import { buildShippudenFromLedgers, readShippudenChecklist, readShippudenLedgers
     it("mints every ledger row — a skip means a number we cannot read", () => {
       const report = buildShippudenFromLedgers({ dryRun: true });
       expect(report.skipped).toEqual([]);
-      expect(report.rows).toBe(427);
-      expect(report.titles).toBe(427);
-      expect(report.prints).toBeGreaterThanOrEqual(427);
+      expect(report.rows).toBe(451);
+      expect(report.titles).toBe(451);
+      expect(report.prints).toBeGreaterThanOrEqual(451);
     });
   });
 
@@ -134,10 +137,11 @@ import { buildShippudenFromLedgers, readShippudenChecklist, readShippudenLedgers
 
     it("mints the attested numbers no ledger names yet", () => {
       const report = buildShippudenFromLedgers({ dryRun: true });
-      // 427 titres (maku1–4 + gaku + noihjp maku5–6), 436 numéros attestés.
-      expect(report.titles).toBe(427);
-      expect(report.prints).toBe(436);
-      expect(report.attested).toBe(436 - 427);
+      // 451 titres (maku1–4 + gaku + noihjp maku5–6 + carddas20 promo),
+      // 460 numéros (titres + plages checklist encore sans nom).
+      expect(report.titles).toBe(451);
+      expect(report.prints).toBe(460);
+      expect(report.attested).toBe(460 - 451);
     });
   });
 }

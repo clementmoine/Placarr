@@ -1,8 +1,8 @@
 # Dragon Ball Super Card Game — recherche images & sources
 
 > Statut : **Catalogue franchise** (2026-08-14). Admin Catalogue → **Dragon Ball**
-> avec onglets **Masters** | **Fusion World**. Providers `dbscg` (`data/dbs/cg`,
-> Catalogue Sync) et `dbsfw` (`data/dbs/fw`, Catalogue Sync). Packs foil
+> avec onglets **Masters** | **Fusion World**. Providers `dbscg` (`data/dragonball/cg`,
+> Catalogue Sync) et `dbsfw` (`data/dragonball/fw`, Catalogue Sync). Packs foil
 > `dbs-cg` / `dbs-fw`. Faces Masters FR = dbscards/Bandai ; faces EN = clone
 > TCG Arena (Deckplanet), rangées sous `cards/…/en/`. Naruto suivra le même
 > schéma (CCG | Panini). Journal d’audit des **faces** ci-dessous.
@@ -198,7 +198,7 @@ watermark** Masters.
 | Source                                                                                                                             | Rôle probable                                           | Note                                                                                                                                                                                                                                                                    |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[apitcg.com](https://docs.apitcg.com/)**                                                                                         | API (`dragon-ball-fusion` côté FW, à confirmer Masters) | Clé gratuite ; déjà dans [tcg_support.md](tcg_support.md) §2 — **à sonder** (langues, SAMPLE ou pas, parallels)                                                                                                                                                         |
-| **[vitorjcorreia/Dragon-Ball-Masters-Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena)**                          | Dump TCG Arena / Deckplanet (`assets/{SET}/{id}.webp`)  | **Clone** → `data/dbs/cg/staging/dragon-ball-masters-arena/`, rangé sous `cards/{set}/en/`. English only. Leader `_b` → `awakened.webp`.                                                                                                                                |
+| **[vitorjcorreia/Dragon-Ball-Masters-Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena)**                          | Dump TCG Arena / Deckplanet (`assets/{SET}/{id}.webp`)  | **Clone** → `data/dragonball/cg/staging/dragon-ball-masters-arena/`, rangé sous `cards/{set}/en/`. English only. Leader `_b` → `awakened.webp`.                                                                                                                                |
 | **[Drive « DBS Proxies »](https://drive.google.com/drive/folders/1dSiMMzwGuXlyJoBAdcrBfUGVzH-aWqHC)**                              | Proxies r/DBS_CardGame                                  | **Sondé 2026-08-14.** `BT1-001.png` = octet-pour-octet la cardlist Bandai **EN** (`/images/cardlist/cardimg/`, 260×364, SAMPLE, texte EN). Pas de FR, pas plus grand que Bandai, figé ~BT15 (2021). **Inutile** — on a déjà l’URL officielle.                           |
 | **[Drive « DBSCG Scans »](https://drive.google.com/drive/folders/1UWy7VQ6TdzDDuu-6EAEt8Z8hu0gGG2Tb)**                              | Scans physiques (u/CMANsurvives)                        | **Sondé 2026-08-14.** Vrai papier, EN, **sans SAMPLE**, ~741×1037 (~1,8 Mo). Corpus minuscule : 13 faces (BT1/7/10/11 + EX08) + `cardback.png` (dos 7 boules, 740×1037). Pas un catalogue ; dos sleeve déjà covered par dbscards 400×560 (plus propre). **Pas ingéré.** |
 | **[Template Card Conjurer](https://www.reddit.com/r/DBS_CardGame/comments/1lznuui/custom_card_template_for_dbs_masters_on_card/)** | Frames fan pour cartes custom                           | **Sondé 2026-08-14.** Fichier `DBS Battlecard.cct` (rakan121ksa2). 5 cadres Battle 645×900 + icônes energy/combo. `masks: []`. Pas de Leader, pas de dos, pas de faces officielles. **Hors catalogue / hors foil.**                                                     |
@@ -208,7 +208,7 @@ watermark** Masters.
 | Limitless / meta sites                                                                                                             | Decks tournoi                                           | Pas une API collection                                                                                                                                                                                                                                                  |
 
 **Prix EUR** : module `dbsmarket` — dumps listes
-`data/dbs/cg/dbscards-{fr,en}.json` + `data/dbs/fw/dbscards-en.json`
+`data/dragonball/cg/dbscards-{fr,en}.json` + `data/dragonball/fw/dbscards-en.json`
 (agrégat Cardmarket). Match par `printKey` ; SPR aliasé vers `_PR` quand
 Bandai a classé le parallel ainsi. Pas d’équivalent TCGdex gratuit sondé.
 
@@ -222,13 +222,13 @@ clé — à caler sur `printKey` ([tcg_support.md](tcg_support.md) §1).
 
 **Livré (Masters)** — `src/providers/dragonball/dbscg/` + pack `src/effects/dbscg/` (`dbs-cg`) :
 
-- Catalogue local `data/dbs/cg/catalog.sqlite` via POST cardlists **europe-fr** et **us-en** (Catalogue Sync, `--langs fr,en` par défaut). Noms FR et EN dans `cards-index.json` (`langs.fr.name` / `langs.en.name`).
+- Catalogue local `data/dragonball/cg/catalog.sqlite` via POST cardlists **europe-fr** et **us-en** (Catalogue Sync, `--langs fr,en` par défaut). Noms FR et EN dans `cards-index.json` (`langs.fr.name` / `langs.en.name`).
 - printKey `dbscg:bt1-001` ; parallels `_SPR` / `_PR` → grouping (`dbscg:bt1-011-spr`).
-- Faces FR = dbscards / Bandai (étape `faces`, HTTP). Faces EN = clone TCG Arena rangé sous `data/dbs/cg/cards/{set}/en/{card}/` (étape `arena`). Leader `_b` → `awakened.webp`, pas le dos sleeve.
+- Faces FR = dbscards / Bandai (étape `faces`, HTTP). Faces EN = clone TCG Arena rangé sous `data/dragonball/cg/cards/{set}/en/{card}/` (étape `arena`). Leader `_b` → `awakened.webp`, pas le dos sleeve.
 - Dos sleeve = dbscards `original/back.webp` (curated).
 - Foil : tag `foil` + house `flare`, pas de mask Bandai.
 - **Prix** : provider `dbsmarket` (dumps locaux listes Cardmarket EUR).
-- Fusion World = **autre** module (`src/providers/dragonball/dbsfw/`, `data/dbs/fw`,
+- Fusion World = **autre** module (`src/providers/dragonball/dbsfw/`, `data/dragonball/fw`,
   Catalogue Sync). Catalogue : onglets Dragon Ball → Masters | Fusion World.
 - Graphe produit→cartes : Sync admin (Masters / Fusion World). Hors de
   la boucle horaire — l'hôte tarpitte. HTML déjà là = reprise. Pas de
@@ -252,7 +252,7 @@ Reste ouvert :
 - [ ] Dos FW physique vs placeholder Masters.
 - [ ] dbscards comme fallback visuel (ToS) vs rester sur Bandai SAMPLE.
 - [ ] Client FW Digital : textures dumpables ?
-- [x] Provider Fusion World (`dbsfw` / `data/dbs/fw/`, Catalogue Sync).
+- [x] Provider Fusion World (`dbsfw` / `data/dragonball/fw/`, Catalogue Sync).
 - [x] Catalogue admin : franchise Dragon Ball → Masters | Fusion World.
 - [x] Graphe produit→cartes : Sync admin (hors boucle horaire).
 

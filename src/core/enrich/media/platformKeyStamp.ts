@@ -3,7 +3,7 @@ import {
   detectVideoGamePlatformKey,
   isVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 import type {
   MetadataAttachment,
   MetadataResult,

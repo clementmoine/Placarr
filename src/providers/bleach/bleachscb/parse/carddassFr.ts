@@ -19,13 +19,18 @@ export type BleachScbCard = {
   note?: string;
 };
 
+/** Durable Wayback scout — under provider curated (not `data/staging/`). */
 const SCOUT_BLEACH = path.join(
-  process.cwd(),
-  "data/staging/carddass-wayback-scout/carddass_fr_bleach_.json",
+  bleachScbCuratedDir(),
+  "sources",
+  "wayback",
+  "carddass_fr_bleach_.json",
 );
 const LISTE_HTML = path.join(
-  process.cwd(),
-  "data/staging/carddass-wayback-scout/pages/bleach-liste.html",
+  bleachScbCuratedDir(),
+  "sources",
+  "wayback",
+  "bleach-liste.html",
 );
 
 const TYPE_FROM_DIR: Record<string, string> = {

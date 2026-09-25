@@ -16,7 +16,6 @@ import {
   tcgCardsListingCategories,
   tcgCardsSite,
 } from "@/providers/shared/tcgcards/sites";
-import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 
 export const MTGCARDS_SITE = tcgCardsSite("mtgcards");
 export const MTGCARDS_LISTING_CATEGORIES =
@@ -38,6 +37,8 @@ export async function scrapeMtgcardsProducts(opts: {
   limit?: number;
   onProgress?: (message: string) => void;
 }): Promise<ScrapeDbscardsProductsResult> {
-  installProviderProductsContents("mtg", MTG_PRODUCTS_CONTENTS);
-  return scrapeTcgCardsProducts("mtgcards", opts);
+  return scrapeTcgCardsProducts("mtgcards", {
+    ...opts,
+    curatedContentsPath: MTG_PRODUCTS_CONTENTS,
+  });
 }

@@ -30,11 +30,13 @@ import { freakxyModule } from "@/providers/freakxy";
 import { fullsetModule } from "@/providers/fullset";
 import { lorcanajsonModule } from "@/providers/lorcana/lorcanajson";
 import { lorcanaggModule } from "@/providers/lorcana/lorcanagg";
+import { lormarketModule } from "@/providers/lorcana/lormarket";
 import { dbsmarketModule } from "@/providers/dragonball/dbscards";
 import { leclercModules } from "@/providers/leclerc";
 import { lorcastModule } from "@/providers/lorcana/lorcast";
 import { lorcanatcgModule } from "@/providers/lorcana/lorcanatcg";
 import { tcgdexModule } from "@/providers/pokemon/tcgdex";
+import { pkmmarketModule } from "@/providers/pokemon/pkmmarket";
 import { pokemontcgliveModule } from "@/providers/pokemon/live";
 import { furetModule } from "@/providers/furet";
 import { geedieModule } from "@/providers/geedie";
@@ -161,6 +163,8 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   ygomarketModule,
   mtgmarketModule,
   opemarketModule,
+  pkmmarketModule,
+  lormarketModule,
   ...leclercModules,
   lorcanaggModule,
   lorcastModule,

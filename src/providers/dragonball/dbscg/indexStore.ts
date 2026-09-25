@@ -1,5 +1,5 @@
 /**
- * DBS Masters local catalogue — `data/dbs/cg/catalog.sqlite`.
+ * DBS Masters local catalogue — `data/dragonball/cg/catalog.sqlite`.
  * Bandai SAMPLE URLs stay in `print_assets` per locale; local faces are
  * `cards/{set}/{fr|en}/{card}/art.webp` when the faces / arena steps have run.
  */
@@ -33,7 +33,7 @@ import {
 import { DBS_CG_GAME } from "./identity";
 
 export const DBS_CG_SCHEMA_VERSION = "1";
-export const DBS_CG_PACK_ID = "dbs/cg";
+export const DBS_CG_PACK_ID = "dragonball/cg";
 
 export type DbsPrintRow = {
   printKey: string;
@@ -249,6 +249,40 @@ export function ensureDbsCgIndex(): DatabaseSync | null {
 /** Locales this pack files faces for. Each has its own sources. */
 export const DBS_CG_FACE_LANGS = ["fr", "en"] as const;
 
+export type DbsCgBrowseRow = {
+  printKey: string;
+  setCode: string;
+  number: string;
+  grouping: string | null;
+  lang: string;
+  fullName: string | null;
+  rarity: string | null;
+  imageUrl: string | null;
+};
+
+/**
+ * Toutes les lignes titre d'une langue — admin Catalogue (= checklist).
+ */
+export function listDbsCgRowsForLanguage(language = "fr"): DbsCgBrowseRow[] {
+  const db = ensureDbsCgIndex();
+  if (!db) return [];
+  const lang = language.trim().toLowerCase() || "fr";
+  return db
+    .prepare(
+      `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+              p.grouping, t.lang, t.full_name AS fullName, t.rarity,
+              a.image_url AS imageUrl
+         FROM prints p
+         JOIN print_titles t
+           ON t.print_key = p.print_key AND t.lang = ?
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang
+        ORDER BY LOWER(p.set_code), CAST(p.number AS INTEGER), p.number,
+                 COALESCE(p.grouping, '')`,
+    )
+    .all(lang) as DbsCgBrowseRow[];
+}
+
 /** Catalogue folder for one print: `001` or `011-spr`. */
 export function dbsCgCardFolder(
   print: Pick<DbsPrintRow, "number" | "grouping">,
@@ -380,7 +414,8 @@ export function exportDbsCgCardsIndexJson(
   prints: DbsPrintRow[],
   titles: DbsTitleRow[] | undefined,
   assets: DbsAssetRow[] | undefined,
-  outPath: string,
+  /** Test-only disk dump. Production browse uses catalog.sqlite. */
+  outPath?: string | null,
 ): void {
   const titlesByPrint = groupByPrintLang(titles ?? []);
   const assetsByPrint = groupByPrintLang(assets ?? []);
@@ -421,8 +456,10 @@ export function exportDbsCgCardsIndexJson(
   };
   // Same as Lorcana / One Piece: art without a JOIN title keeps a sibling name.
   attachSiblingTitlesToCardsIndex(index);
-  mkdirSync(path.dirname(outPath), { recursive: true });
-  writeFileSync(`${outPath}`, `${JSON.stringify(index)}\n`);
+  if (outPath) {
+    mkdirSync(path.dirname(outPath), { recursive: true });
+    writeFileSync(`${outPath}`, `${JSON.stringify(index)}\n`);
+  }
 }
 
 /**

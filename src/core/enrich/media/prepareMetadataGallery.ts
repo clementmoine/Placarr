@@ -1,7 +1,6 @@
 /**
  * Build, localize, rank, and filter attachments for metadata persistence.
  */
-import path from "path";
 import type {
   Attachment,
   AttachmentType,
@@ -25,6 +24,7 @@ import {
 } from "@/core/catalog/sourceTraits";
 import { resolveCoverAttachmentRole } from "@/core/enrich/media/coverPerspective";
 import { prisma } from "@/lib/db/prisma";
+import { localMediaFilePath } from "@/lib/media/localMediaPath";
 import {
   readFileImageMetrics,
   isCoverResolutionAcceptable,
@@ -57,6 +57,8 @@ export type StoreItemContext = {
   name?: string | null;
   imageUrl?: string | null;
   backgroundImageUrl?: string | null;
+  /** Catalog print identity — scopes gallery preservation to that game. */
+  printKey?: string | null;
   updatedAt?: Date | string | null;
   shelf?: { name: string; type: Type } | null;
   metadata?: {
@@ -272,7 +274,7 @@ export async function prepareMetadataGalleryForStore(input: {
     previousLocalCoverRaw &&
     isCoverResolutionAcceptable(
       await readFileImageMetrics(
-        path.join(process.cwd(), "public", previousLocalCoverRaw),
+        localMediaFilePath(previousLocalCoverRaw) ?? "",
       ),
     )
       ? previousLocalCoverRaw
@@ -337,6 +339,9 @@ export async function prepareMetadataGalleryForStore(input: {
     item?.metadata?.attachments ?? undefined,
     injectOrphanUserCoverAttachment(item, storableAttachments),
     requestedPlatformKey ?? undefined,
+    item?.printKey ??
+      metadata.externalIds?.printKey ??
+      null,
   );
   const finalStorableAttachments =
     await retargetUserHonorPinsInAttachmentGallery(withOrphanUserPins);

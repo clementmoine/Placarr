@@ -36,7 +36,7 @@ import {
   withPriceSourceTraits,
   displayEstimatedCentsFromOffers,
 } from "@/core/commerce/pricing/pricePipeline";
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { runWithConcurrency } from "@/lib/async";
 
 export type {
   PriceObservation,

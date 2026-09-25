@@ -22,9 +22,9 @@ const SEGMENT_SEPARATOR = "-";
 /**
  * Segments must stay free of both separators (`:` / `-`), otherwise a key
  * could not be parsed back. Collector numbers and set codes are alphanumeric
- * (plus `.` for TCGdex set codes like `sv03.5`).
+ * (plus `.` for TCGdex set codes like `sv03.5`, and `!` / `?` for Unown forms).
  */
-const SEGMENT_PATTERN = /^[a-z0-9.]+$/;
+const SEGMENT_PATTERN = /^[a-z0-9.!?]+$/;
 
 export type PrintIdentity = {
   /** Game slug, e.g. the Lorcana slug. Not a provider id. */

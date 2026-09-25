@@ -1,24 +1,72 @@
 {
   "source": "Coleka — hub Dragon Ball Lamincards",
-  "url": "https://www.coleka.com/en/trading-cards/dragon-ball-cards/lamincards_r4591",
-  "observed": "2026-09-07",
-  "ingest": "none — mur Verifica sur listing (Flare → /verify/)",
+  "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-dragon-ball/lamincards_r4591",
+  "observed": "2026-09-21",
+  "ingest": "deals prices — leaf rubriques only (never hub _r4591)",
   "sourceId": "coleka",
-  "line": "dbs/lamincards",
+  "line": "dragonball/lamincards",
   "hubRef": "r4591",
   "approxRefs": 1790,
-  "note": "Même pattern que Ultra Challenge (`thumbs.coleka.com` → retirer `_250x250` pour le plein format). Brancher harvest quand le listing EN passe le mur.",
-  "subseriesSample": [
+  "note": "Hub mixes series (same # across Argento/Oro/FR…). Harvest deals via harvest/colekaPrices.ts → coleka-prices.json. Leaves without catalogue setCode left unmapped.",
+  "priceLeaves": [
     {
-      "label": "Argento Series 2006",
-      "ref": "r13562",
-      "path": "/en/trading-cards/dragon-ball-cards/lamincards/lamincards-dragon-ball-argento-series-2006_r13562",
-      "cardsBanner": 152
+      "setCode": "argento",
+      "rubriqueId": "13562",
+      "path": "/fr/cartes-de-collection/cartes-dragon-ball/lamincards/lamincards-dragon-ball-serie-argento-2006_r13562",
+      "listedCount": 152
     },
     {
-      "label": "Lamincards Dragon Ball 2009",
-      "path": "/en/trading-cards/dragon-ball-cards/lamincards/lamincards-dragon-ball-2009",
-      "note": "Refs type `078 Gold` — utile pour titres personnage"
+      "setCode": "oro",
+      "rubriqueId": "13565",
+      "path": "/fr/cartes-de-collection/cartes-dragon-ball/lamincards/lamincards-dragon-ball-serie-oro-2007_r13565",
+      "listedCount": 151
+    },
+    {
+      "setCode": "platino",
+      "rubriqueId": "13561",
+      "path": "/fr/cartes-de-collection/cartes-dragon-ball/lamincards/lamincards-dragon-ball-serie-platino-2007_r13561",
+      "listedCount": 193
+    },
+    {
+      "setCode": "fr2008",
+      "rubriqueId": "7090",
+      "path": "/fr/cartes-de-collection/cartes-dragon-ball/lamincards/lamincards-dragon-ball-2008_r7090",
+      "listedCount": 193,
+      "note": "Silver parallels: same ref_item, title contains Silver → grouping s"
+    },
+    {
+      "setCode": "fror",
+      "rubriqueId": "7091",
+      "path": "/fr/cartes-de-collection/cartes-dragon-ball/lamincards/lamincards-dragon-ball-serie-or-2009_r7091",
+      "listedCount": 213,
+      "note": "Gold parallels: title contains Gold → grouping g"
+    }
+  ],
+  "unmappedLeaves": [
+    {
+      "label": "Dragon Ball Super Ultra Power",
+      "rubriqueId": "23318",
+      "reason": "no catalogue setCode"
+    },
+    {
+      "label": "Lamincards Dragon Ball GT",
+      "rubriqueId": "20735",
+      "reason": "count 300 ≠ smeraldo 200 — do not guess"
+    },
+    {
+      "label": "Lamincard Dragon Ball Super 2018",
+      "rubriqueId": "19229",
+      "reason": "no catalogue setCode"
+    },
+    {
+      "label": "Energia Secreta 2008",
+      "rubriqueId": "13567",
+      "reason": "≠ z2008 (162) — ES variant not in catalogue"
+    },
+    {
+      "label": "Série X - Metal 2006",
+      "rubriqueId": "13560",
+      "reason": "≠ nero (150) — do not guess"
     }
   ],
   "cdnOk": {

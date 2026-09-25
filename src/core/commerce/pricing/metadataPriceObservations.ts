@@ -11,6 +11,10 @@ import {
   type SerializedPriceObservation,
 } from "./resolver";
 
+export type { CatalogEstimateObservationDisplay } from "./catalogEstimateDisplay";
+export { formatCatalogEstimateObservationRange } from "./catalogEstimateDisplay";
+
+
 function parseEuroAmountCents(token: string): number | null {
   const amount = Number.parseFloat(token.replace(",", "."));
   if (!Number.isFinite(amount) || amount <= 0) return null;
@@ -344,8 +348,6 @@ function mergeSourceLists(
 
   return { sources, labels };
 }
-
-export { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 
 function hasCatalogEstimateOffers(offers: PriceObservation[]): boolean {
   return offers.some(

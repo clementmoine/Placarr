@@ -6,12 +6,18 @@ import {
   isScanflipFinishOnlyRarity,
   mapNarutopiaMythosHeading,
   mapScanflipMythosCard,
+  mythosLorenzoneFacesContentHash,
+  mythosOfficialFacesContentHash,
   mythosScanflipTitle,
   narutomythosStorageUrl,
   printKeyForNarutomythosSiteCardId,
   printKeysForNarutomythosSiteCardId,
   resolveNarutomythosSiteCardAgainstIndex,
 } from "./faces";
+import {
+  catalogArtefactIsFresh,
+  emptyCatalogIngestLedger,
+} from "@/providers/shared/catalogIngestLedger";
 
 // —— scanflipFaces ——
 {
@@ -261,6 +267,48 @@ import {
     it("refuses unknown suffixes instead of guessing", () => {
       expect(printKeyForNarutomythosSiteCardId("KS-010-GOLD")).toBeNull();
       expect(printKeyForNarutomythosSiteCardId("XY-001")).toBeNull();
+    });
+  });
+}
+
+// —— lorenzoneFaces ledger ——
+{
+  describe("mythosLorenzoneFacesContentHash", () => {
+    it("is stable across calls and marks ledger fresh", () => {
+      const a = mythosLorenzoneFacesContentHash();
+      const b = mythosLorenzoneFacesContentHash();
+      expect(a).toBe(b);
+      expect(a).toMatch(/^[a-f0-9]{64}$/);
+      const ledger = emptyCatalogIngestLedger();
+      ledger.entries["mythos:lorenzone-faces"] = {
+        artefactId: "mythos:lorenzone-faces",
+        contentHash: a,
+        promotedAt: "2026-01-01T00:00:00.000Z",
+      };
+      expect(
+        catalogArtefactIsFresh(ledger, "mythos:lorenzone-faces", b),
+      ).toBe(true);
+      expect(
+        catalogArtefactIsFresh(ledger, "mythos:lorenzone-faces", "other"),
+      ).toBe(false);
+    });
+  });
+
+  describe("mythosOfficialFacesContentHash", () => {
+    it("is stable across calls and marks ledger fresh", () => {
+      const a = mythosOfficialFacesContentHash();
+      const b = mythosOfficialFacesContentHash();
+      expect(a).toBe(b);
+      expect(a).toMatch(/^[a-f0-9]{64}$/);
+      const ledger = emptyCatalogIngestLedger();
+      ledger.entries["mythos:official-faces"] = {
+        artefactId: "mythos:official-faces",
+        contentHash: a,
+        promotedAt: "2026-01-01T00:00:00.000Z",
+      };
+      expect(
+        catalogArtefactIsFresh(ledger, "mythos:official-faces", b),
+      ).toBe(true);
     });
   });
 }

@@ -1,5 +1,6 @@
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { mergePrintSetOptions } from "@/providers/shared/cardCatalogue/sets";
 import { lorcanaTcgDbPath } from "@/providers/lorcana/lorcanatcg/indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
@@ -697,7 +698,8 @@ export const lorcanajsonModule = defineProvider({
   listPrintLanguages: () => distinctPrintLanguages(lorcanaTcgDbPath()),
   listPrintSets: async (_type, language) => {
     const local = listLorcanaTcgSets(language ?? undefined);
-    return local.length > 0 ? local : listLorcanaPrintSets();
+    const remote = await listLorcanaPrintSets();
+    return mergePrintSetOptions(local, remote);
   },
   /*
     L'énumération lit la base locale, plafond levé — la check-list compte, elle

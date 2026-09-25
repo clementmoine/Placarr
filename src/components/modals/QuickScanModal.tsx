@@ -27,7 +27,7 @@ import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getMetadataPreview } from "@/lib/api/metadata";
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { runWithConcurrency } from "@/lib/async";
 import { getShelves } from "@/lib/api/shelves";
 import { getCoverImage } from "@/core/collect/media";
 import { RemoteImage } from "@/components/RemoteImage";

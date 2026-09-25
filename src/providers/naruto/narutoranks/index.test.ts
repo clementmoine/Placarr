@@ -1,12 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
+import { emptyCardsIndex } from "@/effects/cardsIndex";
 import { narutoRanksEffectPack } from "@/effects/narutoranks";
 import { listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
+import {
+  loadCardsIndexDoc,
+  persistCardsIndexDoc,
+} from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 import { enrichCardsIndexArtDimensions } from "@/providers/shared/cardCatalogue/enrichCardsIndexArtDimensions";
 import { resetCardsIndexOrientationCache } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
+import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { narutoranksModule } from "./index";
 import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
+
+/** Rebuild thin cards-index from sqlite identity when the doc was never migrated. */
+function ensureRanksCardsIndexFromPrints(): boolean {
+  if (loadCardsIndexDoc(NARUTO_RANKS_PACK_ID)) return true;
+  const prints = createLocalPrintsIndex(NARUTO_RANKS_PACK_ID);
+  if (!prints.hasIdentityCorpus()) return false;
+
+  const index = emptyCardsIndex(NARUTO_RANKS_PACK_ID);
+  for (const lang of ["fr", "it", "en"] as const) {
+    for (const row of prints.listRowsForLanguage(lang)) {
+      const art = row.art?.trim();
+      if (!art) continue;
+      const key = row.printKey.trim().toLowerCase();
+      const entry = index.cards[key] ?? {
+        set:
+          row.cardType.trim().toLowerCase() ||
+          row.setCode.trim().toLowerCase(),
+        card: row.grouping
+          ? `${row.number}-${row.grouping}`
+          : row.number.trim().toLowerCase(),
+        langs: {},
+      };
+      entry.langs[lang] = { ...(entry.langs[lang] ?? {}), art };
+      index.cards[key] = entry;
+    }
+  }
+  if (Object.keys(index.cards).length === 0) return false;
+  persistCardsIndexDoc(NARUTO_RANKS_PACK_ID, index);
+  return true;
+}
 
 // —— index ——
 {
@@ -40,6 +76,8 @@ import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
     });
 
     it("déduit paysage / rotation depuis les dimensions du scan", async () => {
+      if (!ensureRanksCardsIndexFromPrints()) return;
+
       await enrichCardsIndexArtDimensions(NARUTO_RANKS_PACK_ID);
       resetCardsIndexOrientationCache();
 

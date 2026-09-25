@@ -7,7 +7,7 @@ import { dbsCgFactsFor, resetDbsCgFactsCache } from "./factsStore";
 
 function packWith(cards: Record<string, unknown>): string {
   const root = mkdtempSync(path.join(os.tmpdir(), "dbscg-facts-"));
-  const dir = path.join(root, "dbs", "cg");
+  const dir = path.join(root, "dragonball", "cg");
   mkdirSync(dir, { recursive: true });
   writeFileSync(
     path.join(dir, "facts.json"),

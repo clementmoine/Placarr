@@ -1,6 +1,6 @@
 import { createPrintKeyPriceModule } from "@/providers/shared/createPrintKeyPriceModule";
 
-import type { DbscardsPriceCard } from "@/providers/dragonball/shared/dbscards/priceIndex";
+import type { DbscardsPriceCard } from "@/providers/shared/tcgcards/priceIndex";
 
 import { fetchDbscardsCardForPrintKey } from "./fetch";
 

@@ -104,12 +104,30 @@ export function opecardsIndexPath(lang = "fr"): string {
   );
 }
 
+/** Card-list dump for lorcards.fr (Lorcana — same tile markup). */
+export function lorcardsIndexPath(lang = "fr"): string {
+  return path.join(
+    foilPackDataDir("lorcana"),
+    `lorcards-${lang.toLowerCase()}.json`,
+  );
+}
+
 /** Card-list site row for opecards.fr (OPTCG — same tile markup). */
 export const OPECARDS_CARD_SITE: DbscardsSite = {
   id: "opecards",
   origin: "https://www.opecards.fr",
   lists: {
     fr: "/cards/liste-cartes-francaises",
+  },
+};
+
+/** Card-list site row for lorcards.fr. */
+export const LORCARDS_CARD_SITE: DbscardsSite = {
+  id: "lorcards",
+  origin: "https://www.lorcards.fr",
+  lists: {
+    fr: "/cards/liste-cartes-francaises",
+    en: "/cards/liste-cartes-anglaises",
   },
 };
 
@@ -130,7 +148,7 @@ const sleep = (ms: number) =>
   });
 
 export async function scrapeDbscardsIndex(opts: {
-  /** Where the file lands, e.g. `dbs/cg` or `dbs/fw`. */
+  /** Where the file lands, e.g. `dragonball/cg` or `dragonball/fw`. */
   packId: string;
   /** Which locale's list to read. Each site publishes one per language. */
   lang?: string;

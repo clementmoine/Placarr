@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { compileAllBarcodeTypeResults } from "@/core/identify/lookup/sourceAssembly";
 import { createEmptyBarcodeLookupPayload } from "@/core/identify/lookup/payload";
-import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodeLookupSlots";
+import { barcodeLookupSlotDefaults } from "@/core/catalog/barcodePrices";
 import { compileResultForType } from "./compile";
 
 const database = vi.hoisted(() => ({

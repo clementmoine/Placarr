@@ -16,7 +16,7 @@ import {
   LISTING_DISCARD_PACKAGING_NOUNS,
 } from "@/core/identify/listingTerms";
 import { SITE_TAGLINE_RE } from "@/core/identify/listingChrome";
-import { createVideoGamePlatformMatcher } from "@/core/identify/platforms/platforms";
+import { createVideoGamePlatformMatcher } from "@/core/identify/platforms/platformList";
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

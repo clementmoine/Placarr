@@ -704,6 +704,11 @@ export async function installCarddasDoubleIllustrationFaces(
   const failed: string[] = [];
   for (const row of carddasDoubleIllustrations.cards) {
     const diskId = String(row.number).trim().toLowerCase();
+    // Shop-attested dual arts (作-257) have no official double GIF to crop.
+    if (!row.gif) {
+      skipped.push(`${diskId}:no-gif`);
+      continue;
+    }
     const gifName = carddasDoubleGifBasename(row.gif);
     const gifAbs = findStagingGif(staging, gifName);
     if (!gifAbs) {
@@ -763,7 +768,9 @@ const CARDDAS_JP_LANG = "ja";
 
 /** Double-height GIFs install via `installCarddasDoubleIllustrationFaces` only. */
 const DOUBLE_GIF_BASENAMES = new Set(
-  carddasDoubleIllustrations.cards.map((row) => carddasDoubleGifBasename(row.gif)),
+  carddasDoubleIllustrations.cards
+    .map((row) => (row.gif ? carddasDoubleGifBasename(row.gif) : ""))
+    .filter(Boolean),
 );
 
 export type InstallCarddasJpStagingFacesOptions = {
@@ -1079,6 +1086,34 @@ export async function installNarutoCcgDriveFaces(
     failed: [],
     unparsed: [],
   };
+
+  const driveContentHash = `${driveLedger.observed}|${driveLedger.folderId}`;
+  const stagingRoot = path.join(packRootDir, NARUTO_STAGING_DRIVE);
+  if (!options.force) {
+    const {
+      catalogArtefactIsFresh,
+      packCatalogIngestLedgerPath,
+      readCatalogIngestLedger,
+    } = await import("@/providers/shared/catalogIngestLedger");
+    const ledger = readCatalogIngestLedger(
+      packCatalogIngestLedgerPath(NARUTO_PACK_ID),
+    );
+    if (
+      catalogArtefactIsFresh(ledger, "drive:naruto-ccg", driveContentHash) &&
+      !existsSync(path.join(stagingRoot, "hub"))
+    ) {
+      console.log(
+        "── Drive Enhanced — ledger frais, staging purgé → skip install",
+      );
+      return {
+        written: [],
+        skipped: ["ledger-fresh"],
+        failed: [],
+        unparsed: [],
+      };
+    }
+  }
+
   const setFilter = options.sets?.length
     ? new Set(options.sets.map((s) => s.trim().toLowerCase()))
     : null;
@@ -1105,6 +1140,32 @@ export async function installNarutoCcgDriveFaces(
       unparsed: stats.unparsed.length,
     }),
   );
+
+  // Promote OK → durable ledger + purge staging (re-fetch only if Drive hub changes).
+  if (
+    !options.force &&
+    options.limit == null &&
+    stats.failed.length === 0 &&
+    winners.length > 0
+  ) {
+    const {
+      packCatalogIngestLedgerPath,
+      recordCatalogPromoteAndPurgeStaging,
+    } = await import("@/providers/shared/catalogIngestLedger");
+    recordCatalogPromoteAndPurgeStaging({
+      ledgerPath: packCatalogIngestLedgerPath(NARUTO_PACK_ID),
+      artefactId: "drive:naruto-ccg",
+      contentHash: driveContentHash,
+      stagingPath: stagingRoot,
+    });
+    console.log(
+      JSON.stringify({
+        narutoCcgDrivePurged: true,
+        contentHash: driveContentHash,
+      }),
+    );
+  }
+
   return stats;
 }
 

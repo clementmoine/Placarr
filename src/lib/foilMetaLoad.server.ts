@@ -16,15 +16,21 @@ import {
 import {
   installFoilMetaFileReader,
   installFoilMetaFileWriter,
+  resetFoilMetaCache,
 } from "@/lib/foilMetaLoad";
 import { packShadersDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
+import { exportLorcanaCardsIndexJson } from "@/providers/lorcana/lorcanatcg/indexStore";
 
 function absPath(relativeUnderData: string): string {
   return path.join(dataRoot(), ...relativeUnderData.split("/").filter(Boolean));
 }
 
 installFoilMetaFileReader((relativeUnderData, fallback) => {
+  if (relativeUnderData === "lorcana/cards-index.json") {
+    const fromDb = exportLorcanaCardsIndexJson();
+    return (fromDb ?? fallback) as typeof fallback;
+  }
   const filePath = absPath(relativeUnderData);
   if (!fs.existsSync(filePath)) return fallback;
   try {

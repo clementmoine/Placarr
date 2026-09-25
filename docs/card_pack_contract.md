@@ -74,8 +74,8 @@ fichier déplacé, aucun téléchargement.
 
 | pack            | colonnes                                                   |
 | --------------- | ---------------------------------------------------------- |
-| dbs/cg          | `image_url, back_url`                                      |
-| dbs/fw          | `image_url`                                                |
+| dragonball/cg          | `image_url, back_url`                                      |
+| dragonball/fw          | `image_url`                                                |
 | lorcana         | `art, thumb, foil_mask, varnish_mask, second_varnish_mask` |
 | naruto/carddass | `art, thumb, back, source_url, wayback_timestamp`          |
 
@@ -97,7 +97,7 @@ source a servie (voir §4).
 | pokemon         | 214 355  | ~94 000 `art.webp`      | 1 (dump Live)   |
 | lorcana         | 37 898   | ~19 000 `art/thumb.jpg` | 1 (dump Unity)  |
 | naruto/carddass | 844      | ~830                    | 1, sauf 16      |
-| dbs/cg          | 40 849   | 24 754                  | **3**           |
+| dragonball/cg          | 40 849   | 24 754                  | **3**           |
 
 Nuance mesurée : le gros des fichiers Pokémon et Lorcana n'est **pas** des
 faces, ce sont des couches de rendu (`mask.webp`, `etch.webp`,

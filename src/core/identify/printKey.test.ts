@@ -9,10 +9,19 @@ import {
 } from "./printKey";
 
 describe("buildPrintKey", () => {
-  it("builds a key from what is printed on the card", () => {
-    expect(buildPrintKey({ game: "lorcana", set: "9", number: "1" })).toBe(
-      "lorcana:9-1",
+  it("accepts Unown punctuation collector numbers", () => {
+    expect(buildPrintKey({ game: "pokemon", set: "exu", number: "!" })).toBe(
+      "pokemon:exu-!",
     );
+    expect(buildPrintKey({ game: "pokemon", set: "exu", number: "?" })).toBe(
+      "pokemon:exu-?",
+    );
+    expect(parsePrintKey("pokemon:exu-?")).toEqual({
+      game: "pokemon",
+      set: "exu",
+      number: "?",
+      grouping: null,
+    });
   });
 
   it("keeps the variant letter inside the collector number", () => {

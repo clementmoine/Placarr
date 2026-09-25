@@ -29,6 +29,14 @@ describe("liveFoilMaskFromMap", () => {
     expect(liveFoilMaskFromMap(CHARKOS, "me5_fr_045")).toBe("CastAndCure");
   });
 
+  it("falls back to EN Live stem when playroom uses a FR dump stem", () => {
+    const enOnly = { "me5_en_045::std": "CastAndCure" };
+    expect(
+      liveFoilMaskFromMap(enOnly, "me5_fr_045", { variant: "std" }),
+    ).toBe("CastAndCure");
+    expect(liveFoilMaskFromMap(enOnly, "me5_fr_045")).toBe("CastAndCure");
+  });
+
   it("distingue Poké Ball vs Master Ball sur le même stem", () => {
     expect(
       liveFoilMaskFromMap(BOTH_LAMINATES, "rsv10-5_de_001", { variant: "sph" }),

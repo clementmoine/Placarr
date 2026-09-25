@@ -9,7 +9,7 @@ import {
 import {
   detectVideoGamePlatformKey,
   videoGamePlatformListingTypeSignal,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 import { makeObservationUsage } from "@/core/enrich/observations";
 import type { MetadataObservation } from "@/types/metadataObservation";
 

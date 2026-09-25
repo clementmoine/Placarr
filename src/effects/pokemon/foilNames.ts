@@ -34,11 +34,15 @@ const FOIL_SHEET_ALIAS_FRAG: Record<string, string> = {
   flatsilvercc: "FlatSilver",
   rainbow02: "Rainbow",
   swsecret02: "SwSecret",
-  /** me5-5 / me5-5c 30th Celebration promo MATs — own .frag stems not dumped yet. */
-  pikachufoil: "AceFoil",
-  classicfoil: "FlatSilver",
-  rgbfoil: "Rainbow",
-  celebrations: "25thConfetti",
+  /** Legacy dump stem — CDN now ships `Celebrations.frag`. */
+  "25thconfetti": "Celebrations",
+  "25thconfetti_j": "Celebrations",
+  "25thconfettij": "Celebrations",
+  /** Pre-me5-5 dump aliases — real leaves now in shadersbundle. */
+  pikachufoil: "PikachuFoil",
+  classicfoil: "ClassicFoil",
+  rgbfoil: "RGBFoil",
+  celebrations: "Celebrations",
 };
 
 function scanShaderStems(): string[] {
@@ -102,7 +106,6 @@ export function foilManifestToShader(
   if (!raw) return null;
   const names = listPokemonFoilNames();
   const foilSet = new Set(names);
-  if (foilSet.has(raw)) return raw;
 
   let n = raw.replace(/^TPCi\/Cards3D\/(?:HoloFoil|Standard)\//, "");
   n = n.replace(/^Cards\/(?:Foil|Standard)\//, "");
@@ -110,9 +113,23 @@ export function foilManifestToShader(
 
   const nLower = n.toLowerCase();
   const nCompact = nLower.replace(/_/g, "");
+  // Aliases before exact match so deprecated dump stems (25thConfetti_J) and
+  // MAT sheet names (FlatSilver_CC) land on the live .frag leaf.
   const aliasFrag =
-    FOIL_SHEET_ALIAS_FRAG[nLower] ?? FOIL_SHEET_ALIAS_FRAG[nCompact];
+    FOIL_SHEET_ALIAS_FRAG[nLower] ??
+    FOIL_SHEET_ALIAS_FRAG[nCompact] ??
+    (() => {
+      for (const [alias, frag] of Object.entries(FOIL_SHEET_ALIAS_FRAG)) {
+        if (nLower.startsWith(`${alias}_`) || nCompact.startsWith(alias)) {
+          return frag;
+        }
+      }
+      return undefined;
+    })();
   if (aliasFrag) return aliasFrag;
+
+  if (foilSet.has(raw)) return raw;
+  if (foilSet.has(n)) return n;
 
   for (const name of names) {
     const nameLower = name.toLowerCase();

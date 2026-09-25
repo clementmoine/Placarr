@@ -3,8 +3,8 @@
 > **Archivé le 2026-08-24** — Les problèmes encore ouverts sont versés au backlog, couverts par le programme de réorganisation en cours.
 
 Mesuré le 2026-08-20, sur les cinq packs de cartes existants : Naruto Carddass,
-Pokémon TCG Live, Dragon Ball Masters (`dbs/cg`), Dragon Ball Fusion World
-(`dbs/fw`), Lorcana.
+Pokémon TCG Live, Dragon Ball Masters (`dragonball/cg`), Dragon Ball Fusion World
+(`dragonball/fw`), Lorcana.
 
 Objectif de l'audit : savoir ce qu'il en coûte aujourd'hui d'ajouter un jeu d'une
 autre licence, ou un sous-catalogue comme Masters / Fusion World.
@@ -38,8 +38,8 @@ L'adoption est réelle mais partielle : 4 à 8 fichiers par provider importent
 `shared`. `tcgdex` : **zéro**.
 
 **Signe encourageant** : plus un pack est récent, plus il est léger dans
-l'aiguillage admin. Dans `lib/admin/cataloguePacks.ts` (329 lignes) — `dbs/fw`
-est mentionné **3 fois**, `dbs/cg` 5, Lorcana 14, **Naruto 37**. Le motif s'est
+l'aiguillage admin. Dans `lib/admin/cataloguePacks.ts` (329 lignes) — `dragonball/fw`
+est mentionné **3 fois**, `dragonball/cg` 5, Lorcana 14, **Naruto 37**. Le motif s'est
 amélioré tout seul ; il n'a simplement jamais été formalisé.
 
 ## Problème 1 — des jumeaux copiés-collés
@@ -90,7 +90,7 @@ Sur l'ensemble des cinq packs, dix rôles identiques totalisent **6 377 lignes**
 
 C'est l'inversion la plus coûteuse, et la cause directe du problème 3.
 
-`src/providers/dragonball/shared/dbscards/scrapeProducts.ts` :
+`src/providers/shared/tcgcards/scrapeProducts.ts` :
 
 ```
 import { … } from "@/providers/lorcana/lorcanatcg/setLogos";   // ligne 26
@@ -99,10 +99,10 @@ if (opts.packId === "lorcana") { … }                    // ligne 357
 ```
 
 `src/providers/shared/sealedProducts/ingest.ts` : même import lorcana, plus une
-table pack → provider écrite en dur (`"dbs/cg"`, `"dbs/fw"`, `lorcana`,
+table pack → provider écrite en dur (`"dragonball/cg"`, `"dragonball/fw"`, `lorcana`,
 `pokemon`, `"naruto/carddass"`) et un `input.packId === "pokemon"`.
 
-`src/providers/dragonball/shared/dbscards/sites.ts` : les quatre packs énumérés.
+`src/providers/shared/tcgcards/sites.ts` : les quatre packs énumérés.
 
 Du code partagé ne devrait rien savoir de qui l'appelle. Ici, **ajouter un pack
 oblige à éditer le code partagé** — et importer un provider depuis `shared` crée
@@ -125,7 +125,7 @@ pour ne pas rougir d'un coup.
 
 ## Problème 3 — vingt points de contact pour un pack
 
-Fichiers hors du provider à toucher pour exister, mesuré sur `dbs/fw` :
+Fichiers hors du provider à toucher pour exister, mesuré sur `dragonball/fw` :
 
 | Catégorie                         | Fichiers                                                                                          |
 | --------------------------------- | ------------------------------------------------------------------------------------------------- |

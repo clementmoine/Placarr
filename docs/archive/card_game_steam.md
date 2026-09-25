@@ -18,7 +18,7 @@ Une ancienne page Steam Workshop correspond à un mod Tabletop Simulator :
 
 Fichier fourni
 
-Copie locale (gitignored) : `data/dbs/cg/staging/tts/WorkshopUpload`
+Copie locale (gitignored) : `data/dragonball/cg/staging/tts/WorkshopUpload`
 (353 Ko, save TTS 11/2/2018). **14 decks** (Beerus, Broly, Cell, Ginyu, Goku GT,
 Goku SSB, Golden Freezer, Metal Cooler, Mira, Univers 2/7, Vegeta SSB, Vegeto,
 Buu) — planches TTS, pas un fichier par carte.

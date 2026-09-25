@@ -276,3 +276,42 @@ describe("localTcgLine metadata adapter", () => {
     expect(await adapter!.resolve({ name: "Inari" })).toBeNull();
   });
 });
+
+describe("localTcgLine listPrintSets remote merge", () => {
+  it("union locale ∪ remote so a stale DB cannot hide a new set", async () => {
+    tmpDataRoot();
+    const packId = "mtg";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "mtg:mh2-1",
+        setCode: "mh2",
+        number: "1",
+        cardType: "mh2",
+        titles: [{ lang: "en", fullName: "Card" }],
+      },
+    ]);
+    const line = createLocalTcgLine({
+      providerId: "mtg",
+      providerLabel: "MTG",
+      catalogueLabel: "MTG",
+      factLabel: "MTG",
+      packId,
+      effectPackId: "mtg",
+      printGame: "mtg",
+      defaultLanguage: "en",
+      syncHint: "test",
+      notes: "test",
+      listRemotePrintSets: async () => [
+        { id: "mh3", label: "Modern Horizons 3" },
+      ],
+    });
+    const module = line.attachCatalog({
+      dataPack: packId,
+      status: async () => ({ empty: false, stale: false, lastSyncAt: null }),
+      refresh: async () => {},
+    });
+    const sets = await module.listPrintSets!("tcg", "en");
+    expect(sets.map((s) => s.id).sort()).toEqual(["mh2", "mh3"]);
+  });
+});

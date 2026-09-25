@@ -1,0 +1,226 @@
+{
+  "source": "tcgrepublic.com — boutique JP (pasted product pages)",
+  "observed": "2026-09-21",
+  "crawlLive": false,
+  "ingest": "faces",
+  "lang": "ja",
+  "note": "Pasted product + media URLs only — do not crawl search or category pages. Scans ~350×512, gabarit shop (Suruga-like). Source `tcgrepublic` dans le pool JA shop.",
+  "not": [
+    "crawl",
+    "search"
+  ],
+  "faces": [
+    {
+      "printedRef": "PR忍-13",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト",
+      "listing": "https://tcgrepublic.com/product/product_page_2000514958.html",
+      "url": "https://tcgrepublic.com/media/binary/000/534/345/534345.jpg",
+      "ingest": true,
+      "bandaiYear": 2004,
+      "pixels": {
+        "width": 349,
+        "height": 512
+      },
+      "note": "V Jump × ナルティメットヒーロー2 promo. Pied PR忍-13 BANDAI 2004 MADE IN JAPAN. JA orphan hole (name only in index)."
+    },
+    {
+      "printedRef": "PR術-1",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "雷切弐連突",
+      "listing": "https://tcgrepublic.com/product/product_page_2000571112.html",
+      "url": "https://tcgrepublic.com/media/binary/000/591/987/591987.jpg",
+      "ingest": true,
+      "bandaiYear": 2004,
+      "pixels": {
+        "width": 348,
+        "height": 512
+      },
+      "note": "V Jump × ナルティメットヒーロー2 promo (Kakashi). Pied PR術-1 BANDAI 2004. JA orphan hole (name only in index)."
+    },
+    {
+      "printedRef": "忍-318",
+      "lang": "ja",
+      "setCode": "jp-release-23",
+      "title": "Hiruzen Sarutobi 三代目火影",
+      "listing": "https://tcgrepublic.com/product/product_page_2000619919.html",
+      "url": "https://tcgrepublic.com/media/binary/000/645/027/645027.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 696,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "PR作-10",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "雪姫忍法帳",
+      "listing": "https://tcgrepublic.com/product/product_page_2000521183.html",
+      "url": "https://tcgrepublic.com/media/binary/000/540/139/540139.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 348,
+        "height": 512
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "術-149",
+      "lang": "ja",
+      "setCode": "maki8",
+      "title": "屍鬼封尽",
+      "listing": "https://tcgrepublic.com/product/product_page_2000622681.html",
+      "url": "https://tcgrepublic.com/media/binary/000/648/007/648007.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 701,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "忍-321",
+      "lang": "ja",
+      "setCode": "jp-release-23",
+      "title": "Tsunade 綱手姫",
+      "listing": "https://tcgrepublic.com/product/product_page_2000718262.html",
+      "url": "https://tcgrepublic.com/media/binary/000/751/898/751898.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 696,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (missing)."
+    },
+    {
+      "printedRef": "忍-314",
+      "lang": "ja",
+      "setCode": "jp-release-23",
+      "title": "卯月夕顔",
+      "listing": "https://tcgrepublic.com/product/product_page_2000619915.html",
+      "url": "https://tcgrepublic.com/media/binary/000/645/023/645023.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 696,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "忍-320",
+      "lang": "ja",
+      "setCode": "jp-release-23",
+      "title": "Orochimaru 大蛇丸",
+      "listing": "https://tcgrepublic.com/product/product_page_2000619914.html",
+      "url": "https://tcgrepublic.com/media/binary/000/645/022/645022.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 696,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (missing)."
+    },
+    {
+      "printedRef": "術-38",
+      "lang": "ja",
+      "setCode": "maki2",
+      "title": "魔鏡氷晶",
+      "listing": "https://tcgrepublic.com/product/product_page_2000525559.html",
+      "url": "https://tcgrepublic.com/media/binary/000/544/368/544368.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 704,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "作-5",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "九尾の災厄",
+      "listing": "https://tcgrepublic.com/product/product_page_2000700900.html",
+      "url": "https://tcgrepublic.com/media/binary/000/732/033/732033.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 351,
+        "height": 512
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "忍-58",
+      "lang": "ja",
+      "setCode": "maki3",
+      "title": "Gaara 砂漠の我愛羅",
+      "listing": "https://tcgrepublic.com/product/product_page_2000583147.html",
+      "url": "https://tcgrepublic.com/media/binary/000/604/121/604121.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 354,
+        "height": 512
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "忍-313",
+      "lang": "ja",
+      "setCode": "jp-release-23",
+      "title": "みたらしアンコ",
+      "listing": "https://tcgrepublic.com/product/product_page_2000619921.html",
+      "url": "https://tcgrepublic.com/media/binary/000/645/029/645029.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 696,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "忍-322",
+      "lang": "ja",
+      "setCode": "jp-release-23",
+      "title": "白",
+      "listing": "https://tcgrepublic.com/product/product_page_2000619922.html",
+      "url": "https://tcgrepublic.com/media/binary/000/645/030/645030.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 696,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (missing)."
+    },
+    {
+      "printedRef": "忍-94",
+      "lang": "ja",
+      "setCode": "maki5",
+      "title": "Rock Lee ロック・リー",
+      "listing": "https://tcgrepublic.com/product/product_page_2000619917.html",
+      "url": "https://tcgrepublic.com/media/binary/000/645/025/645025.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 696,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    },
+    {
+      "printedRef": "術-34",
+      "lang": "ja",
+      "setCode": "maki2",
+      "title": "水遁・大瀑布の術",
+      "listing": "https://tcgrepublic.com/product/product_page_2000622682.html",
+      "url": "https://tcgrepublic.com/media/binary/000/648/008/648008.jpg",
+      "ingest": true,
+      "pixels": {
+        "width": 701,
+        "height": 1024
+      },
+      "note": "Batch paste 2026-09-21 (have)."
+    }
+  ]
+}

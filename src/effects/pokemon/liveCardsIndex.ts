@@ -1,8 +1,8 @@
 /**
  * Local SQLite index of TCG Live card-database identity rows.
- * Built by Catalogue Extract → ``data/pokemon/catalog.sqlite``.
+ * Built by Catalogue Extract → ``data/pokemon/live.sqlite``.
  *
- * Join aid only — TCGdex remains the product catalogue.
+ * Join aid only — TCGdex remains the product catalogue (`catalog.sqlite`).
  *
  * Do not import this from client modules. Client packs use
  * {@link ./liveCardsLookups} stubs; this file installs the real impl when
@@ -10,10 +10,12 @@
  * background workers run via tsx outside Next's react-server resolution.
  */
 import { existsSync, statSync } from "node:fs";
-import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonLiveDbPath,
+} from "@/providers/pokemon/paths";
 
 import { installLiveCardsLookups, type LiveCardRow } from "./liveCardsLookups";
 
@@ -41,9 +43,8 @@ let cachedMtimeMs: number | null = null;
 let cachedDb: DatabaseSync | null = null;
 
 export function liveCardsDbPath(): string {
-  const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
-  if (override) return path.resolve(override);
-  return path.join(dataRoot(), "pokemon", "catalog.sqlite");
+  ensurePokemonDbLayout();
+  return pokemonLiveDbPath();
 }
 
 function openDb(dbPath = liveCardsDbPath()): DatabaseSync | null {

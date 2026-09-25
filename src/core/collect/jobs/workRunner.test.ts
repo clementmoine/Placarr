@@ -49,8 +49,8 @@ vi.mock("@/lib/admin/catalogueExtractRunner", () => ({
       return "lorcana";
     }
     if (value === "naruto") return "naruto";
-    if (value === "dbs-cg" || value === "dbs/cg") return "dbs-cg";
-    if (value === "dbs-fw" || value === "dbs/fw") return "dbs-fw";
+    if (value === "dbs-cg" || value === "dragonball/cg") return "dbs-cg";
+    if (value === "dbs-fw" || value === "dragonball/fw") return "dbs-fw";
     return null;
   },
   runCatalogueExtractCommand: vi.fn().mockResolvedValue(undefined),

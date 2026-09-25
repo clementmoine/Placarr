@@ -15,7 +15,7 @@ import {
   variantsForBundle,
 } from "./cardFoilLookups";
 import { foilManifestToShader, type PokemonPaperFoilName } from "./foilNames";
-import { remapCollectorNumberForLive } from "./collectorRemap";
+import { remapCollectorNumberForLive } from "./liveJoin";
 import { lookupByName, lookupBySetNum } from "./liveCardsLookups";
 import {
   liveSetCandidatesForResolve,
@@ -140,7 +140,9 @@ export function isPaperFoilVariant(
 ): boolean {
   if (!variant) return false;
   const shader =
-    foilManifestToShader(variant.shader) || foilManifestToShader(variant.foil);
+    // `foil` is the Live leaf; `shader` is a derived stem that can lag after
+    // alias fixes (e.g. PikachuFoil was baked as AceFoil until the .frag landed).
+    foilManifestToShader(variant.foil) || foilManifestToShader(variant.shader);
   return Boolean(shader && shader !== "NonFoil" && paperMaterial(shader));
 }
 
@@ -195,7 +197,9 @@ function resolutionFromVariant(
   source: PaperEffectResolution["source"] = "tcglive-bundle",
 ): PaperEffectResolution | null {
   const shader =
-    foilManifestToShader(variant.shader) || foilManifestToShader(variant.foil);
+    // `foil` is the Live leaf; `shader` is a derived stem that can lag after
+    // alias fixes (e.g. PikachuFoil was baked as AceFoil until the .frag landed).
+    foilManifestToShader(variant.foil) || foilManifestToShader(variant.shader);
   if (!shader || shader === "NonFoil" || !paperMaterial(shader)) return null;
   return {
     shader,

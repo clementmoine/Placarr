@@ -28,17 +28,26 @@ import { buildLorcanaManifest } from "@/providers/lorcana/lorcanatcg/extract/mat
 import {
   dumpLorcanaCardBack,
 } from "@/providers/lorcana/lorcanatcg/extract/textures";
-import { primaryUnityBundlePath } from "@/providers/lorcana/lorcanatcg/extract/unityApk";
 import { LORCANA_UNITY_REVISION } from "@/providers/lorcana/lorcanatcg/extract/unityRevision";
 import { foilPackDir, repoRoot } from "@/providers/shared/foilPaths";
+
+const UNITY_BUNDLE_NAMES = ["data.unity3d", "datapack.unity3d"] as const;
+
+function unityBundleIfPresent(dataDir: string): string | null {
+  for (const name of UNITY_BUNDLE_NAMES) {
+    const candidate = path.join(dataDir, name);
+    if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
+  }
+  return null;
+}
 
 describe("lorcana unity extract (Node)", () => {
   it("shader_frags_match_disk_set", async () => {
     const repo = repoRoot();
     const dataDir = path.join(repo, "data/lorcana/staging/unity-data");
     const diskShaders = path.join(foilPackDir(repo, "lorcana"), "shaders");
-    const bundle = primaryUnityBundlePath(dataDir);
-    if (!existsSync(bundle) || !existsSync(diskShaders)) return;
+    const bundle = unityBundleIfPresent(dataDir);
+    if (!bundle || !existsSync(diskShaders)) return;
 
     const tmpShaders = mkdtempSync(path.join(tmpdir(), "lorcana-shaders-"));
     try {
@@ -70,8 +79,8 @@ describe("lorcana unity extract (Node)", () => {
     const repo = repoRoot();
     const dataDir = path.join(repo, "data/lorcana/staging/unity-data");
     const diskManifest = path.join(foilPackDir(repo, "lorcana"), "manifest.json");
-    const bundle = primaryUnityBundlePath(dataDir);
-    if (!existsSync(bundle) || !existsSync(diskManifest)) return;
+    const bundle = unityBundleIfPresent(dataDir);
+    if (!bundle || !existsSync(diskManifest)) return;
 
     const tmpShaders = mkdtempSync(path.join(tmpdir(), "lorcana-shaders-"));
     try {
@@ -130,8 +139,8 @@ describe("lorcana unity extract (Node)", () => {
   it("streamed_astc_texture_decodes_without_decodeRgba", async () => {
     const repo = repoRoot();
     const dataDir = path.join(repo, "data/lorcana/staging/unity-data");
-    const bundle = primaryUnityBundlePath(dataDir);
-    if (!existsSync(bundle)) return;
+    const bundle = unityBundleIfPresent(dataDir);
+    if (!bundle) return;
 
     const bytes = readFileSync(bundle);
     const am = await resolveAssetManager(bytes, {
@@ -167,8 +176,8 @@ describe("lorcana unity extract (Node)", () => {
   it("card_back_from_sprite_atlas", async () => {
     const repo = repoRoot();
     const dataDir = path.join(repo, "data/lorcana/staging/unity-data");
-    const bundle = primaryUnityBundlePath(dataDir);
-    if (!existsSync(bundle)) return;
+    const bundle = unityBundleIfPresent(dataDir);
+    if (!bundle) return;
 
     const tmp = mkdtempSync(path.join(tmpdir(), "lorcana-back-"));
     try {

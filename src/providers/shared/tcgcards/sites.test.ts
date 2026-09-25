@@ -101,7 +101,7 @@ describe("TCG Cards family", () => {
   it("resolves a crawled pack back to its TCG Cards host", () => {
     expect(tcgCardsSiteForPack("lorcana")?.id).toBe("lorcards");
     expect(tcgCardsSiteForPack("pokemon")?.id).toBe("pkmcards");
-    expect(tcgCardsSiteForPack("dbs/cg")?.id).toBe("masters");
+    expect(tcgCardsSiteForPack("dragonball/cg")?.id).toBe("masters");
     expect(tcgCardsSiteForPack("naruto/carddass")).toBeNull();
   });
 });

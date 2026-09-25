@@ -30,7 +30,7 @@ import "@/effects/pokemon/cardFoilIndex";
 import { getEffectPack } from "@/core/render/foil";
 import { holoShader } from "@/core/render/holoShaders";
 import { POKEMON_FOIL_NAMES } from "@/effects/pokemon/foilNames";
-import { ownedBundlesForShader } from "@/effects/pokemon/liveOwnedBundles";
+import { ownedBundlesForShader } from "@/effects/pokemon/liveJoin";
 
 /** Per-print plates — the card's own art and masks, never shared motifs. */
 const PER_PRINT = /CardColorDiffuse|WhitePlateMask|CardEtch|ColdFoilMask/;

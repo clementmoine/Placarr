@@ -10,7 +10,7 @@ import {
   isIdentityPlatformNoiseToken,
 } from "@/core/enrich/titles/identityNoise";
 import { VOLUME_NUMBER_SUFFIX_PATTERN } from "@/core/enrich/titles/volumeNumber";
-import { createTrailingVideoGamePlatformSuffixMatcher } from "@/core/identify/platforms/platforms";
+import { createTrailingVideoGamePlatformSuffixMatcher } from "@/core/identify/platforms/platformList";
 
 /** Closed taxonomy from shared identity volume stops (parution). */
 const VOLUME_MARKER_TOKENS = IDENTITY_VOLUME_STOP_WORDS;

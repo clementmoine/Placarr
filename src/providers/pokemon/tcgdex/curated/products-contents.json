@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "pokemon",
-  "updatedAt": "2026-09-14",
+  "updatedAt": "2026-09-20",
   "byKind": {
     "display": {
       "source": "slug / boutique FR « boite-36-boosters-… » (20/20 displays)",
@@ -35,12 +35,13 @@
       "notes": "packsContained ère-dépendant (SV≈9 / SWSH≈8) — SKU par SKU seulement."
     },
     "tin": {
-      "source": "Tin / mini-tin Pokémon — mixed",
-      "verifiedAt": "2026-09-14",
+      "source": "https://www.pokemon.com/uk/pokemon-tcg/product-gallery/scarlet-violet-prismatic-evolutions-mini-tin (2 boosters)",
+      "verifiedAt": "2026-09-20",
+      "packsContained": 2,
       "randomPoolScope": "none",
       "behavior": "mixed_bundle",
       "contentsKnown": false,
-      "notes": "packsContained variable (souvent 2–3) — pas de byKind inventé."
+      "notes": "Mini Tin / Pokébox = 2 boosters (pokemon.com). Poké Ball Tin (3) = override SKU si présent."
     },
     "collector_box": {
       "source": "Coffrets collection / UPC / poster — mixed",

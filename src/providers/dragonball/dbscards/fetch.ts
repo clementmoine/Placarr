@@ -1,8 +1,8 @@
 /**
  * Load local dbscards list dumps into a printKey price index.
  *
- * Masters: `data/dbs/cg/dbscards-{fr,en}.json` — prefer FR.
- * Fusion World: `data/dbs/fw/dbscards-en.json` (no FR list on the site).
+ * Masters: `data/dragonball/cg/dbscards-{fr,en}.json` — prefer FR.
+ * Fusion World: `data/dragonball/fw/dbscards-en.json` (no FR list on the site).
  *
  * Local files only — no HTTP. Refresh still honours `evidenceOnly` by
  * returning empty when the dump is absent (other price providers may run).
@@ -12,19 +12,19 @@ import { existsSync, readFileSync } from "node:fs";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { DBS_CG_GAME } from "@/providers/dragonball/dbscg/identity";
 import { DBS_FW_GAME } from "@/providers/dragonball/dbsfw/identity";
-import { DBSCARDS_SITES } from "@/providers/dragonball/shared/dbscards/list";
+import { DBSCARDS_SITES } from "@/providers/shared/tcgcards/list";
 import {
   lookupDbscardsPrice,
   mergeDbscardsPriceIndexes,
   priceIndexFromDbscardsTiles,
   type DbscardsPriceCard,
   type DbscardsPriceIndex,
-} from "@/providers/dragonball/shared/dbscards/priceIndex";
-import { dbscardsIndexPath } from "@/providers/dragonball/shared/dbscards/scrapeList";
-import type { DbscardsTile } from "@/providers/dragonball/shared/dbscards/tile";
+} from "@/providers/shared/tcgcards/priceIndex";
+import { dbscardsIndexPath } from "@/providers/shared/tcgcards/scrapeList";
+import type { DbscardsTile } from "@/providers/shared/tcgcards/tile";
 
-const DBS_CG_PACK = "dbs/cg";
-const DBS_FW_PACK = "dbs/fw";
+const DBS_CG_PACK = "dragonball/cg";
+const DBS_FW_PACK = "dragonball/fw";
 
 /** In-process cache — checklist refresh hits the same dump for every card. */
 let memoryIndex: DbscardsPriceIndex | null = null;

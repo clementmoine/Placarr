@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
+import { bleachScbCuratedDir } from "../pack";
 import {
   bleachPrintedToPrintKey,
   parseBleachS1StarterDecks,
@@ -25,8 +26,10 @@ describe("bleachscb parseStarterDecks", () => {
 
   it("extracts Compagnons + Rivaux from Wayback S1 HTML when present", () => {
     const htmlPath = path.join(
-      process.cwd(),
-      "data/staging/carddass-wayback-scout/pages/bleach-s1.html",
+      bleachScbCuratedDir(),
+      "sources",
+      "wayback",
+      "bleach-s1.html",
     );
     if (!existsSync(htmlPath)) return;
     const html = readFileSync(htmlPath, "latin1");

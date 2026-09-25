@@ -15,7 +15,10 @@
       "name": "デコピン",
       "volume": "巻ノ十",
       "gif": "cardlist/card_img/jutsu-192_10.gif (185×550)",
-      "variants": ["Tsunade envoyant l'adversaire au tapis", "gros plan Tsunade, doigt tendu"]
+      "variants": [
+        "Tsunade envoyant l'adversaire au tapis",
+        "gros plan Tsunade, doigt tendu"
+      ]
     },
     {
       "printed": "術-348",
@@ -25,7 +28,10 @@
       "name": "豪雷蓮鎖",
       "volume": "巻ノ十七",
       "gif": "cardlist/card_img/jutsu-348_17.gif (185×548)",
-      "variants": ["Rock Lee, coup de pied ascendant (haut)", "Rock Lee, autre posture (bas)"]
+      "variants": [
+        "Rock Lee, coup de pied ascendant (haut)",
+        "Rock Lee, autre posture (bas)"
+      ]
     },
     {
       "printed": "術-358",
@@ -39,6 +45,34 @@
         "Ishidate, main-griffe à l'œil jaune (haut)",
         "victime pétrifiée au premier plan, Ishidate derrière (bas)"
       ]
+    },
+    {
+      "printed": "作-257",
+      "number": "ta0257",
+      "artA": "art.suruga.jpg",
+      "artB": "art.chitoroshop.jpg",
+      "name": "別れの日",
+      "volume": "巻ノ十三",
+      "gif": null,
+      "variants": [
+        "Naruto / Sasuke face-à-face sous la pluie (haut — Suruga GL124344)",
+        "Sasuke portant Naruto inconscient (bas — Chitoroshop)"
+      ],
+      "attestedBy": "https://www.suruga-ya.jp/product/detail/GL124344 — TV Tokyo s257a/s257b (thumbs 80×117)"
+    },
+    {
+      "printed": "作-316",
+      "number": "ta0316",
+      "artA": "art.mercari.jpg",
+      "artB": "art.ebay.jpg",
+      "name": "白き呪い武者",
+      "volume": "巻ノ十六",
+      "gif": null,
+      "variants": [
+        "武者 full-body, naginata, night forest (left — mercari m87650669099)",
+        "武者 mask portrait close-up (right — same listing)"
+      ],
+      "attestedBy": "https://jp.mercari.com/item/m87650669099 — VER違い２枚セット; A upgraded via ebay.com/itm/196782429949 (OtterMart)."
     }
   ],
   "physicalAttestation": [
@@ -56,6 +90,10 @@
     }
   ],
   "hypothesis": "Les deux illustrations correspondent aux deux produits du volume — 自販機ブースター 100¥ (JAN 4543112451491) vs ブースターパック 161¥ (JAN 4543112451613, les deux au catalogue Bandai/carddass pour 巻ノ十七). Le mécanisme est déjà attesté au 巻ノ十六 (dream-hobby.json : SR/R différentes entre distributeur et pack). Attribution variante ↔ produit NON prouvée : aucun emballage visible sur les annonces.",
-  "not": ["lenticulaire", "gif-animé", "difference-de-rareté"],
+  "not": [
+    "lenticulaire",
+    "gif-animé",
+    "difference-de-rareté"
+  ],
   "todo": "Trancher variante ↔ produit si une annonce montre le sachet (JAN) ; renommer alors carddas-a/b en fonction du produit attesté."
 }

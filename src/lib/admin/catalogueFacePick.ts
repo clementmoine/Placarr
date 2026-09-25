@@ -62,10 +62,21 @@ export function catalogueFaceSlotScore(files: CardsIndexLangFiles): number {
   if (!art) return -1;
   const w = files.artW ?? 0;
   const h = files.artH ?? 0;
-  const area = w > 0 && h > 0 ? w * h : 1;
-  let score = Math.floor(area * (catalogueFaceSourceRank(art) / 50));
+  const rank = catalogueFaceSourceRank(art);
+  /*
+    Unknown pixel size: compare source rank alone. Using `area = 1` collapsed
+    every rank < 50 (notably Coleka = 35) to score 0, so a default-ranked dump
+    like `art.drive.webp` (50) always stole the tile — even when FR already had
+    a larger Coleka scan that simply lacked artW/artH in the index.
+  */
+  let score =
+    w > 0 && h > 0 ? Math.floor(w * h * (rank / 50)) : rank;
   if (!files.art && files.thumb) score = Math.floor(score * 0.5);
   return score;
+}
+
+function slotHasArtDims(files: CardsIndexLangFiles): boolean {
+  return (files.artW ?? 0) > 0 && (files.artH ?? 0) > 0;
 }
 
 export function pickBestCatalogueFaceSlot(
@@ -110,13 +121,15 @@ export function resolveCatalogueFace(input: {
   bestFaceAcrossLocales: boolean;
 }): ResolvedCatalogueFace {
   const tileArt = catalogueFaceArtFile(input.tileFiles);
+  const tileFace = (): ResolvedCatalogueFace => ({
+    artLang: input.tileLang,
+    files: input.tileFiles,
+    file: tileArt,
+    thumb: catalogueFaceThumbFile(input.tileFiles),
+  });
+
   if (input.languageSpecific || !input.bestFaceAcrossLocales) {
-    return {
-      artLang: input.tileLang,
-      files: input.tileFiles,
-      file: tileArt,
-      thumb: catalogueFaceThumbFile(input.tileFiles),
-    };
+    return tileFace();
   }
 
   const best = pickBestCatalogueFaceSlot(
@@ -124,19 +137,26 @@ export function resolveCatalogueFace(input: {
     input.catalogueLocales,
     input.tileLang,
   );
-  if (best && catalogueFaceArtFile(best.files)) {
-    return {
-      artLang: best.lang,
-      files: best.files,
-      file: catalogueFaceArtFile(best.files),
-      thumb: catalogueFaceThumbFile(best.files),
-    };
+  const bestArt = best ? catalogueFaceArtFile(best.files) : null;
+  if (!best || !bestArt) return tileFace();
+
+  if (tileArt) {
+    const tileScore = catalogueFaceSlotScore(input.tileFiles);
+    const bestScore = catalogueFaceSlotScore(best.files);
+    /*
+      Rank-only comparisons (neither side probed) must not steal a locale's own
+      face — see N-412 FR Coleka vs EN drive without artW/artH.
+    */
+    if (!slotHasArtDims(input.tileFiles) && !slotHasArtDims(best.files)) {
+      return tileFace();
+    }
+    if (bestScore <= tileScore) return tileFace();
   }
 
   return {
-    artLang: input.tileLang,
-    files: input.tileFiles,
-    file: tileArt,
-    thumb: catalogueFaceThumbFile(input.tileFiles),
+    artLang: best.lang,
+    files: best.files,
+    file: bestArt,
+    thumb: catalogueFaceThumbFile(best.files),
   };
 }

@@ -11,6 +11,8 @@ import bggEnCcgS1 from "../curated/sources/bgg-en-ccg-s1.json";
 import carddasCom from "../curated/sources/carddas-com-naruto.json";
 import carddasJpCardlist from "../curated/sources/carddas-jp-cardlist.json";
 import carddasJpPromo from "../curated/sources/carddas-jp-promo.json";
+import carddas20Pro from "../curated/sources/carddas20-pro.json";
+import noihjpCarddass from "../curated/sources/noihjp-carddass.json";
 import cardgameclubItCardlist from "../curated/sources/cardgameclub-it-cardlist.json";
 import chatLinks from "../curated/sources/chat-links-2026-08-16.json";
 import colekaHoloType from "../curated/sources/coleka-holo-type.json";
@@ -291,6 +293,7 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         "knight/ki0008/ja",
         "mission/ta0221/fr",
         "mission/ta0226/fr",
+        "mission/ta0330/ja",
         /*
           Les quatre du bonus PS1, restaurées depuis les photos Mercari : ce sont
           les seules reconstructions japonaises, et les seules dont l'original
@@ -310,26 +313,46 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         "ninja/ni0252/fr",
         "ninja/ni0253/fr",
         /*
+          Sound Four 状態2 (巻ノ十二) : lot Mercari m43793500398 + scans
+          NI-280J…NI-283J (Downloads) 2026-09-21. 280 = crop groupe (pas de solo).
+        */
+        "ninja/ni0280/ja",
+        "ninja/ni0281/ja",
+        "ninja/ni0282/ja",
+        "ninja/ni0283/ja",
+        /*
+          忍-309 : orphan JA (Suruga CDN manquant). Photo Mercari m62332171948_6
+          + restauration Gemini 2026-09-21.
+        */
+        "ninja/ni0309/ja",
+        "ninja/ni0369/ja",
+        /*
           PR-95 / PR-96 : reconstructions FR du 2026-09-04, source.jpg à côté —
           aucun scan à plat de ces promos n'était détenu.
+          PR-100 : Gemini FR à partir des faces EN Coleka + Drive
+          (`source.coleka.jpg` + `source.drive.jpg`).
         */
         "promo/pr0095/fr",
         "promo/pr0096/fr",
+        "promo/pr0100/fr",
       ]);
       /*
         Chaque reconstruction reste auditable : soit la photo d'origine est à
-        côté (`source.jpg`), soit c'est une restauration Mercari dont la photo
-        vit sur mercdn — la ligne d'ingestion du ledger fait alors provenance.
+        côté (`source.jpg` ou `source.<tag>.jpg`), soit c'est une restauration
+        Mercari dont la photo vit sur mercdn — la ligne d'ingestion du ledger
+        fait alors provenance.
       */
       const mercariDiskIds = new Set(
         mercariIngestFaces().map((row) => narutoDiskCardId(row.printedRef)),
       );
+      const sourcePhotoRe = /^source(\.[a-z0-9]+)?\.(jpe?g|png|webp)$/i;
       for (const face of faces) {
         expect(path.basename(face.source)).toMatch(
           /^art\.reconstructed\.(png|webp)$/i,
         );
-        const hasSourcePhoto = existsSync(
-          path.join(path.dirname(face.source), "source.jpg"),
+        const dir = path.dirname(face.source);
+        const hasSourcePhoto = readdirSync(dir).some((name) =>
+          sourcePhotoRe.test(name),
         );
         if (!hasSourcePhoto) {
           expect(mercariDiskIds.has(face.cardId), face.cardId).toBe(true);
@@ -880,7 +903,7 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       expect(surugaCarddass.lang).toBe("ja");
       expect(surugaCarddass.sampleProduct).toContain("GL636976");
       expect(surugaCarddass.not).toContain("data-carddass");
-      expect(surugaCarddass.listed).toBe(1216);
+      expect(surugaCarddass.listed).toBe(1214);
       expect(urls).toContain(
         "https://www.slab-z.com/post/the-definitive-2002-naruto-card-game-vintage-guide-rookies-grails",
       );
@@ -954,6 +977,21 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       expect(carddasJpPromo.ingest).toBe("titles");
       expect(carddasJpPromo.counts.cards).toBe(61);
       expect(carddasJpPromo.not).toContain("ni001");
+      expect(carddas20Pro.ingest).toBe("titles");
+      expect(carddas20Pro.counts.cards).toBe(67);
+      expect(carddas20Pro.not).toContain("faces");
+      expect(carddas20Pro.cards.some((row) => row.printed === "CAN-1")).toBe(
+        true,
+      );
+      expect(carddas20Pro.shippuden.every((row) => row.ingest === false)).toBe(
+        true,
+      );
+      expect(noihjpCarddass.ingest).toBe("titles");
+      expect(noihjpCarddass.counts.coins).toBe(16);
+      expect(noihjpCarddass.not).toContain("faces");
+      expect(
+        noihjpCarddass.cards.some((row) => row.printed === "COIN-9"),
+      ).toBe(true);
       expect(bandaicgEnCardlist.ingest).toBe("titles");
       expect(bandaicgEnCardlist.counts.cards).toBeGreaterThan(1500);
       expect(bandaicgEnCardlist.not).toContain("carddass");

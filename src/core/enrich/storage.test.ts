@@ -82,6 +82,26 @@ describe("pickVisuallyMatchingCatalogCoverUrl", () => {
       ]),
     ).toBeNull();
   });
+
+  it("prefers a pack /assets/ face over a twin baked under /uploads/", () => {
+    const artHash = bits("1010101010101010");
+    expect(
+      pickVisuallyMatchingCatalogCoverUrl(artHash, [
+        {
+          url: "/uploads/same-as-catalog.webp",
+          type: "cover",
+          source: "narutocarddass",
+          hash: artHash,
+        },
+        {
+          url: "/assets/naruto/carddass/cards/ninja/ni0001/fr/art.webp",
+          type: "cover",
+          source: "narutocarddass",
+          hash: artHash,
+        },
+      ]),
+    ).toBe("/assets/naruto/carddass/cards/ninja/ni0001/fr/art.webp");
+  });
 });
 
 describe("retargetUserHonorPinIfCatalogTwin", () => {

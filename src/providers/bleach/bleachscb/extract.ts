@@ -16,7 +16,7 @@ export async function runBleachScbPackPipeline(
   const skipFaces = argv.includes("--skip-faces");
   const harvested = await harvestBleachScbLedgers();
   console.log(
-    `── Bleach SCB ledgers — FR ${harvested.fr}, JA ${harvested.ja} (nikita), Coleka ${harvested.coleka}`,
+    `── Bleach SCB ledgers — FR ${harvested.fr}, JA ${harvested.ja} (nikita), Coleka ${harvested.coleka}, deals ${harvested.colekaPrices}`,
   );
 
   return runLocalTcgPipeline({

@@ -13,6 +13,10 @@ import path from "node:path";
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
 import { packSealedProductsDir } from "@/lib/packPaths";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
+import {
+  packCatalogIngestLedgerPath,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 
 import {
   emptyProductsIndex,
@@ -101,6 +105,20 @@ export function writeLocalSealedProducts(input: {
   /** Marque le dump : `art.inkworks.jpg`. */
   source: string;
   products: readonly LocalSealedWrite[];
+  /**
+   * When true, SKUs without `artPath` still land in the index (`image: null`)
+   * instead of being skipped — for attested retail lines pending packshots.
+   */
+  allowMissingArt?: boolean;
+  /**
+   * After a successful write (≥1 SKU), promote → ledger → purge staging.
+   * Rule: installed bytes must not remain under pack `staging/`.
+   */
+  purgeStaging?: {
+    artefactId: string;
+    stagingPath: string;
+    contentHash: string;
+  };
 }): WriteLocalSealedResult {
   const index = emptyProductsIndex(input.packId);
   const destRoot = packSealedProductsDir(input.packId);
@@ -112,7 +130,7 @@ export function writeLocalSealedProducts(input: {
     const destDir = path.join(destRoot, spec.slug, langFolder);
     const source = spec.source ?? input.source;
     const artFile = installRole(destDir, "art", source, spec.artPath);
-    if (!artFile) {
+    if (!artFile && !input.allowMissingArt) {
       skipped += 1;
       continue;
     }
@@ -149,13 +167,15 @@ export function writeLocalSealedProducts(input: {
       behavior,
       category: spec.category,
       name: spec.name,
-      image: assetsPackFileUrl(
-        input.packId,
-        "products",
-        spec.slug,
-        langFolder,
-        artFile,
-      ),
+      image: artFile
+        ? assetsPackFileUrl(
+            input.packId,
+            "products",
+            spec.slug,
+            langFolder,
+            artFile,
+          )
+        : null,
       imageBack: backFile
         ? assetsPackFileUrl(
             input.packId,
@@ -193,10 +213,19 @@ export function writeLocalSealedProducts(input: {
     index.products[sealedProductKey(input.packId, spec.slug)] = entry;
   }
 
+  const written = Object.keys(index.products).length;
   const { file } = persistSealedProductsIndex(input.packId, index.products);
+  if (written > 0 && input.purgeStaging) {
+    recordCatalogPromoteAndPurgeStaging({
+      ledgerPath: packCatalogIngestLedgerPath(input.packId),
+      artefactId: input.purgeStaging.artefactId,
+      contentHash: input.purgeStaging.contentHash,
+      stagingPath: input.purgeStaging.stagingPath,
+    });
+  }
   return {
     pack: input.packId,
-    written: Object.keys(index.products).length,
+    written,
     skipped,
     file,
   };

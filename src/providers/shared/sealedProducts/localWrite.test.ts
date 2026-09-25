@@ -1,7 +1,6 @@
 import {
   existsSync,
   mkdtempSync,
-  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -9,9 +8,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import { packSealedProductsDir } from "@/lib/packPaths";
 
 import { writeLocalSealedProducts } from "./localWrite";
+import { loadSealedProductsIndex } from "./persistProductsIndex";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -81,14 +81,7 @@ describe("writeLocalSealedProducts", () => {
         ),
       ),
     ).toBe(true);
-    const index = JSON.parse(
-      readFileSync(packProductsIndexPath("naruto/ninja-ranks"), "utf8"),
-    ) as {
-      products: Record<
-        string,
-        { kind: string; image: string; setLogo: string }
-      >;
-    };
+    const index = loadSealedProductsIndex("naruto/ninja-ranks");
     const entry = index.products["naruto/ninja-ranks::booster"];
     expect(entry.kind).toBe("booster");
     expect(entry.image).toBe(
@@ -98,6 +91,41 @@ describe("writeLocalSealedProducts", () => {
       "/assets/naruto/ninja-ranks/products/booster/en/logo.inkworks.jpg",
     );
     expect(index.products["naruto/ninja-ranks::missing"]).toBeUndefined();
+  });
+
+  it("purges staging after a successful write when purgeStaging is set", () => {
+    tmpDataRoot();
+    const staging = mkdtempSync(path.join(os.tmpdir(), "sealed-purge-"));
+    roots.push(staging);
+    const wrapper = path.join(staging, "wrap.jpg");
+    writeFileSync(wrapper, TINY);
+    writeFileSync(path.join(staging, "extra.jpg"), TINY);
+
+    const report = writeLocalSealedProducts({
+      packId: "bleach/scb",
+      source: "carddass-fr",
+      products: [
+        {
+          slug: "booster",
+          kind: "booster",
+          category: "boosters",
+          name: "Booster",
+          setCode: "s1",
+          lang: "fr",
+          releaseDate: "2008",
+          declaredCardCount: 8,
+          artPath: wrapper,
+        },
+      ],
+      purgeStaging: {
+        artefactId: "sealed:carddass-fr",
+        stagingPath: staging,
+        contentHash: "test-hash",
+      },
+    });
+
+    expect(report.written).toBe(1);
+    expect(existsSync(staging)).toBe(false);
   });
 
   it("does not treat a product dump as a card face", () => {
@@ -163,9 +191,7 @@ describe("writeLocalSealedProducts", () => {
     );
     expect(existsSync(path.join(dest, "art.reconstructed.jpg"))).toBe(true);
     expect(existsSync(path.join(dest, "art.coleka.jpg"))).toBe(true);
-    const index = JSON.parse(
-      readFileSync(packProductsIndexPath("naruto/ultra-challenge"), "utf8"),
-    ) as { products: Record<string, { image: string }> };
+    const index = loadSealedProductsIndex("naruto/ultra-challenge");
     expect(index.products["naruto/ultra-challenge::booster"]?.image).toBe(
       "/assets/naruto/ultra-challenge/products/booster/fr/art.reconstructed.jpg",
     );

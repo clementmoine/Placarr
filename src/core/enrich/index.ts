@@ -19,6 +19,11 @@ import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
 import { isMediaType } from "@/core/enrich/selection";
 import { filterMetadataForShelfPlatform } from "@/core/collect/media";
 export { filterMetadataForShelfPlatform };
+export {
+  filterMetadataForPrintKey,
+  filterAttachmentsForPrintKey,
+} from "@/core/collect/printKeyGallery.server";
+export { metadataForPrintKeyImagePicker } from "@/core/collect/printKeyGallery";
 import {
   assertRefreshCanPersist,
   type ItemMetadataRefreshSession,

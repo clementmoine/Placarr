@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { pokecardexScanUrl } from "./scanUrl";
+import { pokecardexScanLocalId, pokecardexScanUrl } from "./scanUrl";
 
 describe("pokecardexScanUrl", () => {
   it("builds unpadded FR/US original scan URLs", () => {
@@ -25,5 +25,19 @@ describe("pokecardexScanUrl", () => {
         imageClass: "hd",
       }),
     ).toBe("https://pokecardex-scans.b-cdn.net/sets/M23/FR/1.jpg?class=hd");
+  });
+
+  it("maps Black Star promo collector ids to bare decimals", () => {
+    expect(pokecardexScanLocalId("SM01")).toBe("1");
+    expect(pokecardexScanLocalId("SM100")).toBe("100");
+    expect(
+      pokecardexScanUrl({
+        seriesCode: "PRSM",
+        zone: "FR",
+        localId: "SM01",
+      }),
+    ).toBe(
+      "https://pokecardex-scans.b-cdn.net/sets/PRSM/FR/1.jpg?class=original",
+    );
   });
 });

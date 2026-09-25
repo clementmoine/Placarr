@@ -6,7 +6,7 @@
  * same honesty model as Pokémon CSS.
  */
 
-import { HOUSE_FOIL_FALLBACK_CSS_ID } from "@/core/render/foil/houseFoilFallback";
+import { HOUSE_FOIL_FALLBACK_CSS_ID } from "@/core/render/foil/backend";
 import { HOLO_SHADER_IDS, type HoloShaderId } from "@/core/render/holoShaders";
 
 /** Where transcribed CSS foil textures live for this pack. */

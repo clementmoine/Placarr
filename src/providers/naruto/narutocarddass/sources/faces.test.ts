@@ -10,6 +10,7 @@ import { rakutenFaceLedger, rakutenIngestFaces, rakutenIngestPackshots, bandaiFr
 
 vi.mock("@/lib/http/scrapeFetch", () => ({
   fetchTextWithFlareFallback: vi.fn(),
+  fetchGetWithFlareFallback: vi.fn(),
 }));
 
 // —— mercari ——
@@ -30,6 +31,43 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
         "忍-3（PS）",
         "忍-11（PS）",
         "忍-332",
+        "忍-309",
+        "PR作-11",
+        "忍-349",
+        "CAN-2",
+        "CAN-5",
+        "忍-338",
+        "忍-363",
+        "忍-370",
+        "忍-379",
+        "COIN-11",
+        "PR忍-19",
+        "CAN-1",
+        "OP忍-5",
+        "忍-276",
+        "作-253",
+        "PR忍-7",
+        "忍-281",
+        "忍-282",
+        "忍-283",
+        "忍-371",
+        "忍-415",
+        "忍-369",
+        "作-299",
+        "術-356",
+        "忍-356",
+        "術-345",
+        "術-329",
+        "術-325",
+        "術-327",
+        "術-319",
+        "術-310",
+        "術-252",
+        "忍-415",
+        "忍-403",
+        "忍-371",
+        "作-310",
+        "作-316",
       ]);
       expect(mercariIngestFaces()[0]?.listing).toBe(
         "https://jp.mercari.com/item/m63902869042",
@@ -126,6 +164,33 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
         "PR忍-3",
         "PR作-11",
         "PR作-12",
+        "PR作-29",
+        "CAN-3",
+        "CAN-4",
+        "CAN-5",
+        "CAN-6",
+        "PR作-26",
+        "CAN-1",
+        "忍-399",
+        "忍-405",
+        "忍-410",
+        "忍-406",
+        "作-330",
+        "作-333",
+        "作-335",
+        "PR忍-4",
+        "忍-1",
+        "PR忍-8",
+        "忍-331",
+        "忍-397",
+        "忍-413",
+        "忍-416",
+        "PR忍-14",
+        "PR忍-18",
+        "術-319",
+        "術-355",
+        "術-359",
+        "術-350",
       ]);
       expect(
         yahooIngestFaces().every((row) => row.curated.endsWith("source.jpg")),
@@ -146,6 +211,33 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
         "prni0003",
         "prta0011",
         "prta0012",
+        "prta0029",
+        "can0003",
+        "can0004",
+        "can0005",
+        "can0006",
+        "prta0026",
+        "can0001",
+        "ni0399",
+        "ni0405",
+        "ni0410",
+        "ni0406",
+        "ta0330",
+        "ta0333",
+        "ta0335",
+        "prni0004",
+        "ni0001",
+        "prni0008",
+        "ni0331",
+        "ni0397",
+        "ni0413",
+        "ni0416",
+        "prni0014",
+        "prni0018",
+        "te0319",
+        "te0355",
+        "te0359",
+        "te0350",
       ]);
       expect(
         yahooAuctionLedger().faces.some(
@@ -155,6 +247,35 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
       expect(yahooIngestFaces().some((row) => row.printedRef === "忍-3")).toBe(
         false,
       );
+      // Seller title PR忍-1 ≠ printed 忍-1 (巻ノ壱). Suruga path ≠ PR忍-1-R.
+      expect(
+        yahooAuctionLedger().faces.some(
+          (row) => row.printedRef === "PR忍-1" && row.ingest === false,
+        ),
+      ).toBe(true);
+      expect(
+        yahooAuctionLedger().faces.some(
+          (row) => row.printedRef === "PR忍-1-R" && row.ingest === false,
+        ),
+      ).toBe(true);
+      expect(
+        yahooIngestFaces().find((row) => row.printedRef === "忍-1")?.listing,
+      ).toBe("https://paypayfleamarket.yahoo.co.jp/item/z680858402");
+      expect(
+        yahooIngestFaces().filter((row) =>
+          (row.listing ?? "").includes("z647535466"),
+        ).map((row) => row.printedRef),
+      ).toEqual([
+        "忍-399",
+        "忍-405",
+        "忍-410",
+        "忍-406",
+        "作-330",
+        "作-333",
+        "作-335",
+        "術-355",
+        "術-359",
+      ]);
     });
   });
 }

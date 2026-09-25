@@ -12,7 +12,7 @@ describe("dbscg provider hooks", () => {
     expect(dbscgModule.evidence?.label).toBeTruthy();
     expect(dbscgModule.info.nameDatabase).toBe(true);
     expect(dbscgModule.info.types).toEqual(["tcg"]);
-    expect(dbscgModule.catalog?.dataPack).toBe("dbs/cg");
+    expect(dbscgModule.catalog?.dataPack).toBe("dragonball/cg");
   });
 
   it("exposes a search and a print-key handler to the admin test panel", () => {

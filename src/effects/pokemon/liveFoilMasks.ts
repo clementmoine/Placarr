@@ -32,6 +32,23 @@ function normalizeVariant(variant: string | null | undefined): string | null {
   return v || null;
 }
 
+/**
+ * Live identity sqlite is often EN-keyed (`me5_en_045`) while playroom / FR
+ * dumps use the local stem (`me5_fr_045`). Foil mask is print-level, not
+ * locale-level — try sibling locales when the exact stem misses.
+ */
+function siblingLocaleStems(stem: string): string[] {
+  const m = /^(.+)_([a-z]{2})_(\d+[a-z0-9]*)$/i.exec(stem);
+  if (!m) return [];
+  const [, set, lang, num] = m;
+  const out: string[] = [];
+  for (const alt of ["en", "fr", "de", "ja", "it", "es", "pt"]) {
+    if (alt === lang.toLowerCase()) continue;
+    out.push(`${set}_${alt}_${num}`.toLowerCase());
+  }
+  return out;
+}
+
 /** Live foil_mask enum when it toggles CC foil / laminate plates. */
 export function liveFoilMaskForBundle(
   bundleStem: string | null | undefined,
@@ -54,16 +71,21 @@ export function liveFoilMaskFromMap(
   if (!stem) return null;
 
   const variant = normalizeVariant(opts?.variant);
+  const stems = [stem, ...siblingLocaleStems(stem)];
   if (variant) {
-    const hit = map[`${stem}::${variant}`];
-    if (hit) return hit;
+    for (const s of stems) {
+      const hit = map[`${s}::${variant}`];
+      if (hit) return hit;
+    }
   }
 
   // Playroom / unknown variant: prefer CastAndCure on this stem (SunPillar
-  // seeds).
-  for (const [key, mask] of Object.entries(map)) {
-    if (!key.startsWith(`${stem}::`)) continue;
-    if (mask === "CastAndCure") return mask;
+  // seeds), including sibling locales when Live identity is EN-only.
+  for (const s of stems) {
+    for (const [key, mask] of Object.entries(map)) {
+      if (!key.startsWith(`${s}::`)) continue;
+      if (mask === "CastAndCure") return mask;
+    }
   }
 
   /*
@@ -73,13 +95,15 @@ export function liveFoilMaskFromMap(
     override only if unambiguous — never pick between mph vs sph arbitrarily.
   */
   const laminates: string[] = [];
-  for (const v of ["mph", "sph"] as const) {
-    const mask = map[`${stem}::${v}`];
-    if (
-      mask === "ReverseLaminateMasterBall" ||
-      mask === "ReverseLaminatePokeBall"
-    ) {
-      if (!laminates.includes(mask)) laminates.push(mask);
+  for (const s of stems) {
+    for (const v of ["mph", "sph"] as const) {
+      const mask = map[`${s}::${v}`];
+      if (
+        mask === "ReverseLaminateMasterBall" ||
+        mask === "ReverseLaminatePokeBall"
+      ) {
+        if (!laminates.includes(mask)) laminates.push(mask);
+      }
     }
   }
   if (laminates.length === 1) return laminates[0]!;

@@ -387,6 +387,48 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
       ).toMatchObject({ lang: "en", fullName: "Sakura Haruno" });
     });
 
+    it("copies only FR titles onto S1 manga prerelease (no JA hang)", () => {
+      const merged = copyNarutoTitlesOntoGroupedPrints({
+        prints: [
+          {
+            printKey: "naruto:te-0003",
+            setCode: "s1",
+            number: "te0003",
+            cardType: "te",
+            family: "jutsu",
+          },
+          {
+            printKey: "naruto:te-0003-prerelease",
+            setCode: "prerelease",
+            number: "te0003-prerelease",
+            cardType: "te",
+            family: "jutsu",
+            grouping: "prerelease",
+          },
+        ],
+        titles: [
+          {
+            printKey: "naruto:te-0003",
+            lang: "fr",
+            fullName: "Jutsu de séduction",
+          },
+          {
+            printKey: "naruto:te-0003",
+            lang: "ja",
+            fullName: "お色気の術",
+          },
+        ],
+      });
+      expect(
+        merged.titles.filter((t) => t.printKey === "naruto:te-0003-prerelease"),
+      ).toEqual([
+        expect.objectContaining({
+          lang: "fr",
+          fullName: "Jutsu de séduction",
+        }),
+      ]);
+    });
+
     it("does not copy the retail FR name onto a PS1 bonus with its own art", () => {
       const merged = copyNarutoTitlesOntoGroupedPrints({
         prints: [

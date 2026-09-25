@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { AsyncQueue } from "@/lib/async/asyncQueue";
+import { AsyncQueue } from "@/lib/async";
 import { isAbortError } from "@/lib/http/abort";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 import { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";

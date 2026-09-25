@@ -1,11 +1,15 @@
 /**
- * Build `data/pokemon/catalog.sqlite` from config-cache card-database files.
+ * Build `data/pokemon/live.sqlite` from config-cache card-database files.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonLiveDbPath,
+} from "@/providers/pokemon/paths";
 
 import {
   collectIdentitiesFromConfigCache,
@@ -29,13 +33,17 @@ export function indexLiveCards(opts: IndexLiveCardsOptions = {}): {
   ok: true;
   meta: Record<string, unknown>;
 } {
+  ensurePokemonDbLayout();
   const root = opts.root ?? path.resolve(dataRoot(), "..");
   const cache = path.resolve(
     opts.configCache ??
       path.join(root, "data", "pokemon", "staging", "config-cache"),
   );
   const out = path.resolve(
-    opts.out ?? path.join(root, "data", "pokemon", "catalog.sqlite"),
+    opts.out ??
+      (opts.root
+        ? path.join(root, "data", "pokemon", "live.sqlite")
+        : pokemonLiveDbPath()),
   );
 
   if (!fs.existsSync(cache) || !fs.statSync(cache).isDirectory()) {

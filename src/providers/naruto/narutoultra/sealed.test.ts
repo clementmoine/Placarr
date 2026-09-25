@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import os from "node:os";
 import path from "node:path";
 import { packCardsDir, packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { ingestUltraSealedProducts, readUltraReconstructedLedger } from "./sealed";
 import { NARUTO_ULTRA_PACK_ID } from "./pack";
 
@@ -51,14 +52,7 @@ import { NARUTO_ULTRA_PACK_ID } from "./pack";
       });
       expect(report).toMatchObject({ written: 2, skipped: 0 });
 
-      const index = JSON.parse(
-        readFileSync(packProductsIndexPath(NARUTO_ULTRA_PACK_ID), "utf8"),
-      ) as {
-        products: Record<
-          string,
-          { kind: string; image: string; imageBack: string | null; setCode: string }
-        >;
-      };
+      const index = loadSealedProductsIndex(NARUTO_ULTRA_PACK_ID);
       expect(Object.keys(index.products).sort()).toEqual([
         "naruto/ultra-challenge::booster",
         "naruto/ultra-challenge::collector-album",
@@ -111,9 +105,7 @@ import { NARUTO_ULTRA_PACK_ID } from "./pack";
         colekaStagingDir: coleka,
       });
       expect(report.written).toBe(1);
-      const index = JSON.parse(
-        readFileSync(packProductsIndexPath(NARUTO_ULTRA_PACK_ID), "utf8"),
-      ) as { products: Record<string, { image: string }> };
+      const index = loadSealedProductsIndex(NARUTO_ULTRA_PACK_ID);
       expect(
         index.products["naruto/ultra-challenge::collector-album"]?.image,
       ).toBe(

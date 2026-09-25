@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import os from "node:os";
 import path from "node:path";
 import { packProductsIndexPath } from "@/lib/packPaths";
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { indexNarutomythosMarketplaceListings, loadNarutomythosMarketplaceIndex, type NarutomythosMarketplaceListing, quoteFromNarutomythosListings, refreshNarutomythosMarketplacePriceOffers, resetNarutomythosMarketplaceCache } from "./sources/prices";
 import { NARUTO_MYTHOS_PACK_ID, narutoMythosCuratedDir } from "./pack";
 import { readLorenzoneProductsLedger } from "./sealed";
@@ -68,7 +69,7 @@ import { readLorenzoneProductsLedger } from "./sealed";
       }
     });
 
-    it("writes products-index when packshots are staged", async () => {
+    it("writes sealed products when packshots are staged", async () => {
       tmpDataRoot();
       const ledger = readLorenzoneProductsLedger();
       const partial = { ...ledger, products: ledger.products.slice(0, 2) };
@@ -93,9 +94,7 @@ import { readLorenzoneProductsLedger } from "./sealed";
         const { ingestMythosSealedProducts } = await import("./sealed");
         const report = await ingestMythosSealedProducts({ ledger: partial });
         expect(report.written).toBe(2);
-        const index = JSON.parse(
-          readFileSync(packProductsIndexPath(NARUTO_MYTHOS_PACK_ID), "utf8"),
-        ) as { products: Record<string, unknown> };
+        const index = loadSealedProductsIndex(NARUTO_MYTHOS_PACK_ID);
         expect(Object.keys(index.products).length).toBe(2);
         for (const key of Object.keys(index.products)) {
           const entry = index.products[key] as { image: string | null };

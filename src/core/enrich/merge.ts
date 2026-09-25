@@ -10,10 +10,8 @@ import {
   rankCoverGalleryAttachments,
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { refineCatalogDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
-import {
-  collectMergedSearchAliases,
-  promoteTitleKeepingAliases,
-} from "@/core/enrich/aliases";
+import { promoteTitleKeepingAliases } from "@/core/enrich/aliases";
+import { collectMergedSearchAliases } from "@/core/enrich/aliasesSearch";
 import {
   dedupeFieldEvidence,
   dedupeFacts,

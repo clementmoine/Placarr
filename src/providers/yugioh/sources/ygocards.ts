@@ -16,7 +16,6 @@ import {
   tcgCardsListingCategories,
   tcgCardsSite,
 } from "@/providers/shared/tcgcards/sites";
-import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 
 export const YGOCARDS_SITE = tcgCardsSite("ygocards");
 export const YGOCARDS_LISTING_CATEGORIES =
@@ -38,6 +37,8 @@ export async function scrapeYgocardsProducts(opts: {
   limit?: number;
   onProgress?: (message: string) => void;
 }): Promise<ScrapeDbscardsProductsResult> {
-  installProviderProductsContents("yugioh", YUGIOH_PRODUCTS_CONTENTS);
-  return scrapeTcgCardsProducts("ygocards", opts);
+  return scrapeTcgCardsProducts("ygocards", {
+    ...opts,
+    curatedContentsPath: YUGIOH_PRODUCTS_CONTENTS,
+  });
 }

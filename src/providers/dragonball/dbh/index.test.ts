@@ -9,9 +9,9 @@ import {
 import { parseDbhCategories, parseDbhCategoryCards } from "./scrape/cardlist";
 
 describe("dbh", () => {
-  it("declares local catalogue under dbs/heroes", () => {
+  it("declares local catalogue under dragonball/heroes", () => {
     expect(dbhModule.info.id).toBe("dbh");
-    expect(dbhModule.catalog?.dataPack).toBe("dbs/heroes");
+    expect(dbhModule.catalog?.dataPack).toBe("dragonball/heroes");
     expect(dbhModule.printGames).toEqual(["dbh"]);
     expect(dbhModule.info.defaultLanguage).toBe("ja");
   });

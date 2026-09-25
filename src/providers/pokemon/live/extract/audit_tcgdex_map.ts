@@ -365,7 +365,7 @@ async function main() {
         status: "unmapped",
         bundles,
         hint: stem.endsWith("a")
-          ? "Likely JP Character Rare — join via catalog.sqlite name (foil:pokemon:index-cards)"
+          ? "Likely JP Character Rare — join via live.sqlite name (foil:pokemon:index-cards)"
           : stem.endsWith("r")
             ? "Radiant/reprint slice — check EN TCGdex or parent set RC ids"
             : "No TCGdex set id resolves here yet — add alias or confirm absent",
@@ -431,8 +431,8 @@ async function main() {
         ? `reprintMeta.json written (${reprintMetaCount} *sv fallbacks)`
         : null,
       liveCardsIndexAvailable()
-        ? "catalog.sqlite present (name join for resolveEffect)"
-        : "catalog.sqlite missing — run Catalogue Sync for Pokémon",
+        ? "live.sqlite present (name join for resolveEffect)"
+        : "live.sqlite missing — run Catalogue Sync for Pokémon",
     ]
       .filter(Boolean)
       .join("; "),

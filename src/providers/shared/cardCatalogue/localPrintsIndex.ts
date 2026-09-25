@@ -2,21 +2,22 @@
  * Index SQLite d'une ligne de cartes locale — même forme partout
  * (`prints` / `print_titles` / `print_assets`).
  *
- * Un pack vide a le droit d'exister : le schéma et un `cards-index.json` à
- * zéro carte disent « pas encore ingéré », ce qui est vrai. Inventer une
+ * Un pack vide a le droit d'exister : le schéma sqlite à
+ * zéro carte dit « pas encore ingéré », ce qui est vrai. Inventer une
  * première carte pour que le catalogue « ait l'air peuplé » serait un faux
  * positif.
  */
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
-import { packCardsIndexPath, packCatalogDb } from "@/lib/packPaths";
+import { packCatalogDb } from "@/lib/packPaths";
 
 import { attachSiblingTitlesToCardsIndex } from "./attachIndexTitles";
 import { SET_ENUMERATION_LIMIT } from "./setPrints";
 import { finalizeSetOptions, isAnsweredQuery, setScopedWhere } from "./sets";
+import { migrateProductsSchema } from "../sealedProducts/productsSqlite";
 
 export type LocalPrintSearchRow = {
   printKey: string;
@@ -87,10 +88,23 @@ export type LocalPrintsIndex = {
     setSortKey?: (setCode: string) => number | null;
     languages?: readonly string[];
   }) => { id: string; label: string }[];
+  /**
+   * Toutes les lignes titre d'une langue — admin Catalogue / anti-désync
+   * checklist (même sqlite que searchRows).
+   */
+  listRowsForLanguage: (language?: string) => LocalPrintSearchRow[];
+  /** True when `catalog.sqlite` exists and exposes LocalPrints `art` assets. */
+  hasIdentityCorpus: () => boolean;
   writePrints: (rows: readonly LocalPrintWrite[]) => {
     prints: number;
     titles: number;
   };
+  /**
+   * Drop prints (and their titles / assets) whose keys are not in `keep`.
+   * Full-corpus seeds (Scryfall MTG) must call this after `writePrints` so
+   * renamed/removed collector numbers do not linger as « sans image » ghosts.
+   */
+  prunePrintsExcept: (keep: ReadonlySet<string>) => { removed: number };
   /**
    * Copie chaque titre `en` vers les langues cibles qui n'en ont pas encore.
    * Les titres déjà attestés (traduction, graphie locale…) ne sont pas touchés.
@@ -99,12 +113,20 @@ export type LocalPrintsIndex = {
     copied: number;
   };
   writeAssets: (rows: readonly LocalPrintAssetWrite[]) => { assets: number };
-  exportIndex: () => { path: string; cards: number } | null;
+  exportIndex: () => {
+    path: string;
+    cards: number;
+    index: CardsIndexV1;
+  } | null;
   /**
-   * Crée le schéma et l'index JSON, même à zéro carte. C'est ce qui rend un
+   * Crée le schéma sqlite, même à zéro carte. C'est ce qui rend un
    * onglet Catalogue ouvrable avant la première moisson.
    */
-  bootstrapEmpty: () => { path: string; cards: number };
+  bootstrapEmpty: () => {
+    path: string;
+    cards: number;
+    index: CardsIndexV1;
+  };
 };
 
 const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
@@ -194,6 +216,7 @@ export function createPrintsSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_prints_set ON prints(set_code);
   `);
   migrateLocalPrintsSchema(db);
+  migrateProductsSchema(db);
 }
 
 export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
@@ -412,6 +435,40 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     );
   };
 
+  const hasIdentityCorpus = (): boolean => {
+    const db = ensure();
+    if (!db) return false;
+    try {
+      const cols = db
+        .prepare(`PRAGMA table_info(print_assets)`)
+        .all() as { name: string }[];
+      if (!cols.some((c) => c.name === "art")) return false;
+      const row = db
+        .prepare(`SELECT 1 AS ok FROM prints LIMIT 1`)
+        .get() as { ok: number } | undefined;
+      return Boolean(row);
+    } catch {
+      return false;
+    }
+  };
+
+  const listRowsForLanguage = (language = "fr"): LocalPrintSearchRow[] => {
+    const db = ensure();
+    if (!db) return [];
+    const lang = language.trim().toLowerCase() || "fr";
+    try {
+      return db
+        .prepare(
+          `${SELECT_ROW}
+          WHERE t.lang = ?
+          ORDER BY LOWER(p.set_code), CAST(p.number AS INTEGER), p.number`,
+        )
+        .all(lang) as LocalPrintSearchRow[];
+    } catch {
+      return [];
+    }
+  };
+
   const writePrints = (
     rows: readonly LocalPrintWrite[],
   ): { prints: number; titles: number } => {
@@ -470,6 +527,47 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       resetCache();
     }
     return { prints: rows.length, titles };
+  };
+
+  const prunePrintsExcept = (
+    keep: ReadonlySet<string>,
+  ): { removed: number } => {
+    const db = openForWrite();
+    let removed = 0;
+    try {
+      const existing = db
+        .prepare(`SELECT print_key AS printKey FROM prints`)
+        .all() as Array<{ printKey: string }>;
+      const doomed = existing
+        .map((row) => row.printKey)
+        .filter((key) => !keep.has(key));
+      if (doomed.length === 0) return { removed: 0 };
+
+      const delAssets = db.prepare(
+        `DELETE FROM print_assets WHERE print_key = ?`,
+      );
+      const delTitles = db.prepare(
+        `DELETE FROM print_titles WHERE print_key = ?`,
+      );
+      const delPrint = db.prepare(`DELETE FROM prints WHERE print_key = ?`);
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        for (const key of doomed) {
+          delAssets.run(key);
+          delTitles.run(key);
+          const result = delPrint.run(key);
+          removed += Number(result.changes ?? 0);
+        }
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    } finally {
+      db.close();
+      resetCache();
+    }
+    return { removed };
   };
 
   const fillMissingTitlesFromEnglish = (
@@ -562,7 +660,11 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     return { assets };
   };
 
-  const exportIndex = (): { path: string; cards: number } | null => {
+  const exportIndex = (): {
+    path: string;
+    cards: number;
+    index: CardsIndexV1;
+  } | null => {
     const db = ensure();
     if (!db) return null;
     const rows = db.prepare(SELECT_ROW).all() as LocalPrintSearchRow[];
@@ -610,8 +712,6 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       entry.langs[row.lang] = slot;
     }
 
-    const dest = packCardsIndexPath(packId);
-    mkdirSync(path.dirname(dest), { recursive: true });
     const index: CardsIndexV1 = {
       version: 1,
       pack: packId,
@@ -620,11 +720,15 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     };
     // Orphan art (title in another lang only) → show with nameSource, not blank.
     attachSiblingTitlesToCardsIndex(index);
-    writeFileSync(dest, `${JSON.stringify(index)}\n`);
-    return { path: dest, cards: Object.keys(cards).length };
+    // Identity SSOT is catalog.sqlite — no cards-index.json projection.
+    return { path: dbPath(), cards: Object.keys(cards).length, index };
   };
 
-  const bootstrapEmpty = (): { path: string; cards: number } => {
+  const bootstrapEmpty = (): {
+    path: string;
+    cards: number;
+    index: CardsIndexV1;
+  } => {
     const db = openForWrite();
     db.close();
     resetCache();
@@ -637,16 +741,13 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     */
     const again = exportIndex();
     if (again) return again;
-    const dest = packCardsIndexPath(packId);
-    mkdirSync(path.dirname(dest), { recursive: true });
     const index: CardsIndexV1 = {
       version: 1,
       pack: packId,
       generatedAt: new Date().toISOString(),
       cards: {},
     };
-    writeFileSync(dest, `${JSON.stringify(index)}\n`);
-    return { path: dest, cards: 0 };
+    return { path: dbPath(), cards: 0, index };
   };
 
   return {
@@ -659,7 +760,10 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     lookupRow,
     lookupAssets,
     listSets,
+    listRowsForLanguage,
+    hasIdentityCorpus,
     writePrints,
+    prunePrintsExcept,
     fillMissingTitlesFromEnglish,
     writeAssets,
     exportIndex,

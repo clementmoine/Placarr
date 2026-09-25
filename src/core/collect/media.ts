@@ -34,7 +34,7 @@ import {
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
-import { isVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import { isVideoGamePlatformKey } from "@/core/identify/platforms/platformList";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
 import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";

@@ -10,7 +10,7 @@ import { dbsLamincardsCuratedDir } from "./pack";
 describe("dbslamincards provider hooks", () => {
   it("declares an empty local catalogue surface under Dragon Ball", () => {
     expect(dbslamincardsModule.info.id).toBe("dbslamincards");
-    expect(dbslamincardsModule.catalog?.dataPack).toBe("dbs/lamincards");
+    expect(dbslamincardsModule.catalog?.dataPack).toBe("dragonball/lamincards");
     expect(dbslamincardsModule.searchPrints).toBeTypeOf("function");
     expect(dbslamincardsModule.lookupPrint).toBeTypeOf("function");
     expect(dbslamincardsModule.info.nameDatabase).toBe(true);

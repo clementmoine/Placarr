@@ -93,9 +93,9 @@ scripts/lorcana/.venv/
 scripts/pokemon/.venv/
 scripts/lorcana/bin/
 scripts/pokemon/bin/
-src/providers/lorcanatcg/unity/.venv/
+src/providers/lorcana/lorcanatcg/unity/.venv/
 src/providers/pokemontcglive/unity/.venv/
-src/providers/lorcanatcg/unity/bin/
+src/providers/lorcana/lorcanatcg/unity/bin/
 src/providers/pokemontcglive/unity/bin/
 
 # Cursor IDE
@@ -107,3 +107,6 @@ __pycache__/
 # Spool de sniffing / audit Live — contient des tokens OAuth, ne jamais committer
 .tmp-foil-audit/
 .tmp-rebase-aside/
+
+# Local dig / crop staging (never commit)
+.tmp-*

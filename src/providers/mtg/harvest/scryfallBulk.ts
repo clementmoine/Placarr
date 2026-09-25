@@ -9,8 +9,10 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   renameSync,
   statSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createInterface } from "node:readline";
@@ -18,9 +20,16 @@ import { createGunzip } from "node:zlib";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
+import { DatabaseSync } from "node:sqlite";
 
 import { httpGet, HTTP_DEFAULT_USER_AGENT } from "@/lib/http/httpClient";
-import { packStagingDir } from "@/lib/packPaths";
+import { packCatalogDb, packStagingDir } from "@/lib/packPaths";
+import {
+  catalogArtefactIsFresh,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 
 import { MTG_PACK_ID } from "../pack";
 
@@ -28,6 +37,8 @@ const SCRYFALL_UA = `${HTTP_DEFAULT_USER_AGENT} Scryfall-bulk`;
 const BULK_META_URL = "https://api.scryfall.com/bulk-data";
 
 export type ScryfallBulkType = "default_cards" | "all_cards";
+
+const SCRYFALL_ARTEFACT = (type: ScryfallBulkType) => `scryfall:${type}`;
 
 export type ScryfallCardFace = {
   name?: string;
@@ -86,11 +97,20 @@ function bulkDownloadUri(row: BulkListRow): string | null {
 /**
  * Download + gunzip Scryfall bulk to staging (cached by updated_at).
  * Returns path to the uncompressed `.jsonl` (or legacy `.json`) file.
+ *
+ * When the durable ingest ledger already holds this `updated_at` and the pack
+ * catalogue is seeded, returns `skippedFresh: true` with `path: null` — no
+ * re-download even if staging was purged.
  */
 export async function ensureScryfallBulkFile(
   type: ScryfallBulkType = "all_cards",
   opts: { force?: boolean } = {},
-): Promise<{ path: string; cardsApprox: number; updatedAt: string }> {
+): Promise<{
+  path: string | null;
+  cardsApprox: number;
+  updatedAt: string;
+  skippedFresh?: boolean;
+}> {
   const meta = await fetchScryfallBulkMeta();
   const row = meta.find((r) => r.type === type);
   const downloadUri = row ? bulkDownloadUri(row) : null;
@@ -103,6 +123,22 @@ export async function ensureScryfallBulkFile(
   const isJsonl = downloadUri.includes(".jsonl");
   const dest = path.join(dir, `${type}-${stamp}${isJsonl ? ".jsonl" : ".json"}`);
   const metaPath = path.join(dir, `${type}.meta.json`);
+  const ledgerPath = packCatalogIngestLedgerPath(MTG_PACK_ID);
+  const ledger = readCatalogIngestLedger(ledgerPath);
+  const artefactId = SCRYFALL_ARTEFACT(type);
+
+  if (
+    !opts.force &&
+    catalogArtefactIsFresh(ledger, artefactId, row.updated_at) &&
+    scryfallCatalogueLooksSeeded()
+  ) {
+    return {
+      path: existsSync(dest) ? dest : null,
+      cardsApprox: 0,
+      updatedAt: row.updated_at,
+      skippedFresh: true,
+    };
+  }
 
   if (!opts.force && existsSync(dest)) {
     writeFileSync(
@@ -157,6 +193,55 @@ export async function ensureScryfallBulkFile(
     ),
   );
   return { path: dest, cardsApprox: 0, updatedAt: row.updated_at };
+}
+
+/** After seed into catalog.sqlite — ledger + purge this bulk (and stale siblings). */
+export function recordScryfallBulkPromotedAndPurge(input: {
+  type: ScryfallBulkType;
+  updatedAt: string;
+  stagingPath: string;
+}): void {
+  const dir = scryfallStagingDir();
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(MTG_PACK_ID),
+    artefactId: SCRYFALL_ARTEFACT(input.type),
+    contentHash: input.updatedAt,
+    stagingPath: input.stagingPath,
+  });
+  // Drop other stamped dumps of the same type left from older syncs.
+  try {
+    for (const name of readdirSync(dir)) {
+      if (!name.startsWith(`${input.type}-`)) continue;
+      if (!name.endsWith(".jsonl") && !name.endsWith(".json")) continue;
+      const abs = path.join(dir, name);
+      if (abs === input.stagingPath) continue;
+      try {
+        unlinkSync(abs);
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function scryfallCatalogueLooksSeeded(): boolean {
+  const dbPath = packCatalogDb(MTG_PACK_ID);
+  if (!existsSync(dbPath)) return false;
+  try {
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    try {
+      const row = db
+        .prepare(`SELECT COUNT(*) AS n FROM prints`)
+        .get() as { n?: number } | undefined;
+      return (row?.n ?? 0) > 1000;
+    } finally {
+      db.close();
+    }
+  } catch {
+    return false;
+  }
 }
 
 /** Stream-load bulk file — JSON Lines (current) or small JSON array (tests). */

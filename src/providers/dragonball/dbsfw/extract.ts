@@ -1,9 +1,9 @@
 /**
  * Dragon Ball Fusion World pack extract — Catalogue Sync / worker (in-process).
  */
-import { DBSCARDS_SITES } from "@/providers/dragonball/shared/dbscards/list";
-import { scrapeDbscardsIndex } from "@/providers/dragonball/shared/dbscards/scrapeList";
-import { scrapeTcgCardsProducts } from "@/providers/dragonball/shared/dbscards/scrapeProducts";
+import { DBSCARDS_SITES } from "@/providers/shared/tcgcards/list";
+import { scrapeDbscardsIndex } from "@/providers/shared/tcgcards/scrapeList";
+import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
 
 import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./disk/fetchFaces";

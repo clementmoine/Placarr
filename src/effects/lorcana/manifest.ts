@@ -1,5 +1,5 @@
 import type { FoilMaterial } from "@/core/render/foil/types";
-import { hotFoilStampUniforms } from "@/core/render/foil/hotFoilStamp";
+import { hotFoilStampUniforms } from "@/core/render/foil/backend";
 import { lazyLiveList } from "@/effects/lazyLiveList";
 import { loadFoilManifest } from "@/lib/foilMetaLoad";
 

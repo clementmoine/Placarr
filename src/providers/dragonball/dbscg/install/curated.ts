@@ -1,5 +1,5 @@
 /**
- * Assets curés du pack `dbs/cg` : verso et plaque de foil.
+ * Assets curés du pack `dragonball/cg` : verso et plaque de foil.
  *
  * Le fichier lui-même est commun à tous les packs de cartes — il ne différait
  * ici que par l'id et le nom des fonctions, à une ligne près entre les deux

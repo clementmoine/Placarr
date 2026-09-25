@@ -25,6 +25,10 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonLiveDbPath,
+} from "@/providers/pokemon/paths";
 
 import { verifyAgainstCardTex } from "./liveCardVerify";
 import {
@@ -128,10 +132,8 @@ type Match = {
 };
 
 function resolve(name: string, lang: string): Match[] {
-  const db = new DatabaseSync(
-    path.join(dataRoot(), "pokemon", "catalog.sqlite"),
-    { readOnly: true },
-  );
+  ensurePokemonDbLayout();
+  const db = new DatabaseSync(pokemonLiveDbPath(), { readOnly: true });
   /*
     Names come from whichever locale was dumped, stems get normalised after.
 

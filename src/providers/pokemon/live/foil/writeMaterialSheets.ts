@@ -6,6 +6,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { resetFoilMetaCache } from "@/lib/foilMetaLoad";
 import {
   iterClassTreeEntries,
   loadUnityFs,
@@ -154,5 +155,8 @@ export function writeMaterialSheets(
     `${JSON.stringify(motifs, null, 1)}\n`,
     "utf8",
   );
+  // Drop stale in-memory hydrate so `/api/admin/foil-meta` re-reads disk
+  // (otherwise a bad pathid resolve sticks as TEX_CC_PB until process restart).
+  resetFoilMetaCache();
   return { materialSheetsPath, sharedMotifsPath };
 }

@@ -50,6 +50,12 @@ export const TCGDEX_TO_LIVE_SETS: Readonly<Record<string, readonly string[]>> =
     pgo: ["swsh10-5"],
     // EN TCGdex — Legendary Treasures (+ radiant slice)
     bw11: ["bw11", "bw11r"],
+    // 30ᵉ Anniversaire — local catalogue id is me05.5 (API still `30th`).
+    // Keep API ids as Live aliases until any leftover printKeys are rewritten.
+    "me05.5": ["me5-5", "me5-5m"],
+    "me05.5c": ["me5-5c"],
+    "30th": ["me5-5", "me5-5m"],
+    "30th-c": ["me5-5c"],
   };
 
 /** @deprecated Prefer {@link TCGDEX_TO_LIVE_SETS}; kept for single-stem callers. */

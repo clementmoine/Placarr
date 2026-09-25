@@ -1,7 +1,7 @@
 /**
- * Écrit `data/dbs/cg/facts.json` depuis le dépôt Masters déjà en staging.
+ * Écrit `data/dragonball/cg/facts.json` depuis le dépôt Masters déjà en staging.
  *
- * Même adresse que les faits Fusion World (`data/dbs/fw/facts.json`) et que
+ * Même adresse que les faits Fusion World (`data/dragonball/fw/facts.json`) et que
  * `facts-ja.json` côté Naruto : la forme de `cards-index.json` est commune à
  * tous les packs, et un bloc de règles Dragon Ball n'a rien à y faire.
  *
@@ -26,13 +26,17 @@ import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { dataRoot } from "@/lib/runtimeData";
 
 import {
+  dbsCgCardFolder,
+  loadDbsCgIndex,
+} from "../indexStore";
+import {
   dbsCgBaseNumber,
   normalizeDbsCgNumber,
   parseDbsCgMastersSuperset,
   type DbsCgCardFacts,
 } from "./mastersFacts";
 
-export const DBS_CG_PACK_ID = "dbs/cg";
+export const DBS_CG_PACK_ID = "dragonball/cg";
 export const DBS_CG_FACTS_FILE = "facts.json";
 const MASTERS_STAGING = path.join(
   "staging",
@@ -152,17 +156,23 @@ export function buildDbsCgFacts(opts: { root?: string } = {}): DbsCgFactsFile {
   if (!existsSync(mastersPath)) {
     throw new Error(`dépôt Masters absent : ${mastersPath}`);
   }
-  const indexPath = path.join(root, "cards-index.json");
-  if (!existsSync(indexPath)) {
-    throw new Error(`cards-index.json absent : ${indexPath}`);
+  const loaded = loadDbsCgIndex();
+  if (!loaded?.prints.length) {
+    throw new Error(`catalog.sqlite absent ou vide : ${root}`);
   }
 
   const cards = parseDbsCgMastersSuperset(
     JSON.parse(readFileSync(mastersPath, "utf8")),
   );
-  const numbers = dbsCgIndexNumbers(
-    JSON.parse(readFileSync(indexPath, "utf8")) as CardsIndexV1,
-  );
+  const numbers = [
+    ...new Set(
+      loaded.prints.map((p) =>
+        normalizeDbsCgNumber(
+          `${p.setCode}-${dbsCgCardFolder(p)}`.replace(/-p\d+$/i, ""),
+        ),
+      ),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
   const { cards: joined, coverage } = joinDbsCgFacts(cards, numbers);
 
   const file: DbsCgFactsFile = {

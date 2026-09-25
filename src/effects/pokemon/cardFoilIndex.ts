@@ -1,7 +1,7 @@
 /**
  * SQLite implementation of the per-print foil texture lookups.
  *
- * Table `card_foil` in `data/pokemon/catalog.sqlite`, built by
+ * Table `card_foil` in `data/pokemon/live.sqlite`, built by
  * `Catalogue Sync Pokémon`.
  *
  * Do not import this from client modules — importing it is what *installs* the
@@ -11,11 +11,13 @@
  * exactly as `liveCardsIndex` documents.
  */
 import { existsSync, statSync } from "node:fs";
-import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import "@/lib/foilMetaLoad.server";
-import { dataRoot } from "@/lib/runtimeData";
+import {
+  ensurePokemonDbLayout,
+  pokemonLiveDbPath,
+} from "@/providers/pokemon/paths";
 
 import {
   installCardFoilLookups,
@@ -40,9 +42,8 @@ let cachedMtimeMs: number | null = null;
 let cachedDb: DatabaseSync | null = null;
 
 export function cardFoilDbPath(): string {
-  const override = process.env.PLACARR_LIVE_CARDS_DB?.trim();
-  if (override) return path.resolve(override);
-  return path.join(dataRoot(), "pokemon", "catalog.sqlite");
+  ensurePokemonDbLayout();
+  return pokemonLiveDbPath();
 }
 
 function openDb(dbPath = cardFoilDbPath()): DatabaseSync | null {

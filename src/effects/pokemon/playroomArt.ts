@@ -20,10 +20,12 @@ import {
   liveFoilMaskForBundle,
   liveLaminatePreferForBundle,
 } from "./liveFoilMasks";
-import { faceQuarterTurnsForPokemonPrint } from "./faceOrientation";
+import {
+  faceQuarterTurnsForPokemonPrint,
+  ownedBundlesForShader,
+} from "./liveJoin";
 import { POKEMON_MAT_ALIASES } from "./materials";
 import { lookupByBundle } from "./liveCardsLookups";
-import { ownedBundlesForShader } from "./liveOwnedBundles";
 import {
   formatPlayroomFaceCaption,
   pickLiveCardDisplayName,
@@ -185,6 +187,21 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
     label: "Tambour de l'Éveil",
     bundleId: "sv5_fr_141",
   },
+  PikachuFoil: {
+    imageBase: "https://assets.tcgdex.net/fr/me/me5.5/23",
+    label: "Pikachu",
+    bundleId: "me5-5_fr_023",
+  },
+  ClassicFoil: {
+    imageBase: "https://assets.tcgdex.net/fr/me/me5.5c/23",
+    label: "Pikachu",
+    bundleId: "me5-5c_fr_023",
+  },
+  Celebrations: {
+    imageBase: "https://assets.tcgdex.net/fr/swsh/cel25/1",
+    label: "Tortank",
+    bundleId: "swsh7-5r_fr_001",
+  },
   Galaxy: {
     imageBase: "https://assets.tcgdex.net/fr/xy/xy12/11",
     label: "Dracaufeu",
@@ -275,8 +292,8 @@ function pickFromLookup(
   const candidates: BundlePick[] = [];
   for (const variant of variantsForBundle(bundleId)) {
     const mapped =
-      foilManifestToShader(variant.shader) ||
-      foilManifestToShader(variant.foil);
+      foilManifestToShader(variant.foil) ||
+      foilManifestToShader(variant.shader);
     if (mapped !== want) continue;
     candidates.push({
       bundleId,
@@ -386,8 +403,8 @@ export function listDumpedBundlesForShader(
     for (const row of bundlesForShader(frag)) {
       if (seenBundle.has(row.bundleId)) continue;
       const mapped =
-        foilManifestToShader(row.variant.shader) ||
-        foilManifestToShader(row.variant.foil);
+        foilManifestToShader(row.variant.foil) ||
+        foilManifestToShader(row.variant.shader);
       if (mapped !== frag) continue;
       push({
         bundleId: row.bundleId,

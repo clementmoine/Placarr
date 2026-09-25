@@ -5,7 +5,7 @@ Contrat commun CSS+WebGL : [foil_effects.md](foil_effects.md).
 Dernière passe 2026-09-06 — staging simey via `syncSimeyCss.ts`.
 
 **Règle licence.** Placarr = GPL-3.0-or-later. Arbres simey =
-`data/pokemon/staging/simey/{poke-holo,poke-151}/` pour **lire** recettes —
+`data/pokemon/foil/simey/{poke-holo,poke-151}/` pour **lire** recettes —
 pas de dépendance runtime, pas de rasters EN upstream.
 
 ---

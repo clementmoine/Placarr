@@ -142,8 +142,8 @@ function main() {
       if (!variant) continue;
       variants += 1;
       const mapped =
-        foilManifestToShader(variant.shader) ||
-        foilManifestToShader(variant.foil);
+        foilManifestToShader(variant.foil) ||
+        foilManifestToShader(variant.shader);
       if (mapped) {
         foilCounts[mapped] = (foilCounts[mapped] ?? 0) + 1;
       } else if (unmappedSamples.length < 30) {
@@ -183,8 +183,8 @@ function main() {
       const variant = entry[variantKey];
       if (!variant) continue;
       const mapped =
-        foilManifestToShader(variant.shader) ||
-        foilManifestToShader(variant.foil);
+        foilManifestToShader(variant.foil) ||
+        foilManifestToShader(variant.shader);
       if (!mapped) n += 1;
     }
     return acc + n;

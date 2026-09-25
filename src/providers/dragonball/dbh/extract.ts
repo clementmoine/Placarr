@@ -9,6 +9,7 @@ import { installProviderProductsContents } from "@/providers/shared/sealedProduc
 import { installDbhFromLedger } from "./install/fromLedgers";
 import { DBH_PACK_ID, dbhCuratedDir } from "./pack";
 import { scrapeDbhCardlists } from "./scrape/cardlist";
+import { ingestDbhSealedProducts } from "./sealed";
 
 export async function runDbhPackPipeline(
   argv: readonly string[] = [],
@@ -50,5 +51,6 @@ export async function runDbhPackPipeline(
       );
       return { prints: installed.prints, titles: installed.titles };
     },
+    seedProducts: () => ingestDbhSealedProducts(),
   });
 }

@@ -15,6 +15,8 @@ import type {
 } from "@/types/providerRegistry";
 import { cleanCode } from "@/core/identify/query";
 
+import { PRESTASHOP_RETAILER_MODULES } from "@/providers/prestashop";
+import { SHOPIFY_RETAILER_MODULES } from "@/providers/shopify";
 import { PROVIDER_MODULES } from "./registry";
 
 export type {
@@ -23,6 +25,14 @@ export type {
   ProviderAuth,
   ProviderInfo,
 } from "@/types/providerRegistry";
+
+export type {
+  ProviderHealthCheck,
+  ProviderHealthStatus,
+  TestProviderHandler,
+  TestProviderHandlerKind,
+  TestProviderFormatContext,
+} from "@/types/providerModule";
 
 export { PROVIDER_MODULES };
 
@@ -223,7 +233,29 @@ export function nameDatabaseProviderForType(
   ).sort((a, b) => Number(b.canonical) - Number(a.canonical))[0];
 }
 
-export { scrapeCatalogRetailerLookupEntries } from "@/core/catalog/scrapeRetailers";
+export function scrapeCatalogRetailerLookupEntries(): Array<{
+  lookupKey: string;
+  providerName: string;
+  types: MediaType[];
+}> {
+  return [...PRESTASHOP_RETAILER_MODULES, ...SHOPIFY_RETAILER_MODULES].map(
+    (module) => ({
+      lookupKey: module.info.id,
+      providerName: module.evidence?.label ?? module.info.label,
+      types: module.info.types,
+    }),
+  );
+}
+
+export const providerHealthChecks = PROVIDER_MODULES.flatMap((module) =>
+  module.healthCheck ? [module.healthCheck] : [],
+);
+
+export const testProviderHandlers = Object.fromEntries(
+  PROVIDER_MODULES.flatMap((module) =>
+    Object.entries(module.testHandlers ?? {}),
+  ),
+) as Record<string, import("@/types/providerModule").TestProviderHandler>;
 
 export function capabilityCoverage(
   type: MediaType,

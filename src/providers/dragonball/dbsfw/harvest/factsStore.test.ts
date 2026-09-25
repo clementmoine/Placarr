@@ -7,7 +7,7 @@ import { dbsFwFactsFor, resetDbsFwFactsCache } from "./factsStore";
 
 function packWith(cards: Record<string, unknown>): string {
   const root = mkdtempSync(path.join(os.tmpdir(), "dbsfw-facts-"));
-  const dir = path.join(root, "dbs", "fw");
+  const dir = path.join(root, "dragonball", "fw");
   mkdirSync(dir, { recursive: true });
   writeFileSync(
     path.join(dir, "facts.json"),

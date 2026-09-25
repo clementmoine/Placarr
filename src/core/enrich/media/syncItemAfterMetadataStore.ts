@@ -1,9 +1,9 @@
 /**
  * Sync item cover / barcode / hero / display name after metadata persist.
  */
-import path from "path";
 import type { Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
+import { localMediaFilePath } from "@/lib/media/localMediaPath";
 import {
   readFileImageMetrics,
   isCoverResolutionAcceptable,
@@ -70,7 +70,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
     const itemCoverMetrics = item.imageUrl?.startsWith("/uploads/")
       ? (imageMetricsByUrl.get(item.imageUrl) ??
         (await readFileImageMetrics(
-          path.join(process.cwd(), "public", item.imageUrl),
+          localMediaFilePath(item.imageUrl) ?? "",
         )))
       : null;
     const itemCoverIsLowRes =
@@ -87,11 +87,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
         urlsReferToSameLocalizedImage(attachment.url, item.imageUrl),
     );
     let visualCatalogMatchUrl: string | null = null;
-    if (
-      item.imageUrl?.startsWith("/uploads/") &&
-      !itemCoverStillInGallery &&
-      !itemCoverIsUserAttachment
-    ) {
+    if (item.imageUrl?.startsWith("/uploads/")) {
       const pinHash = await perceptualHashForAsset(item.imageUrl);
       if (pinHash) {
         const candidates = await Promise.all(
@@ -102,6 +98,9 @@ export async function syncItemFieldsAfterMetadataStore(input: {
             hash: await perceptualHashForAsset(attachment.url),
           })),
         );
+        // Visual twin of catalog art — even a `source: user` UUID upload of the
+        // same face (or a leftover bake of `/assets/…`) collapses onto the
+        // catalog URL so refresh can keep upgrading pack faces.
         visualCatalogMatchUrl = pickVisuallyMatchingCatalogCoverUrl(
           pinHash,
           candidates,
@@ -110,7 +109,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
       }
     }
     const shouldSyncItemCover =
-      !itemCoverIsUserAttachment &&
+      (!itemCoverIsUserAttachment || Boolean(visualCatalogMatchUrl)) &&
       (!item.imageUrl ||
         item.imageUrl === previousMetadataImage ||
         item.imageUrl === croppedImageUrl ||

@@ -90,8 +90,26 @@ function shared(stem: string): FoilTextureBinding {
     // noise) are flagged raw in the dump. Unknown stems read as colour —
     // that is the overwhelming default in the bundle.
     srgb: textureFlags()[stem]?.srgb ?? true,
+    // 1px crosses / channel sparkles (Galaxy Stars, Cosmos dots, …) vanish
+    // under bilinear — Live keeps them sharp; match with nearest sampling.
+    ...(POINT_FILTER_SPARKLE_STEMS.has(stem)
+      ? { filter: "point" as const, mipmaps: false }
+      : {}),
   };
 }
+
+/**
+ * Sparse RGB/A sparkle plates — nearest filter or 1px crosses become soft
+ * bokeh discs (Galaxy WebGL looked like blobs, Live shows four-point stars).
+ */
+const POINT_FILTER_SPARKLE_STEMS = new Set([
+  "T_Holofoil_Galaxy_Stars",
+  "T_Holofoil_Cosmos_Dots",
+  "T_Holofoil_Cosmos_Dots_RGBA_Gradient",
+  "T_Holofoil_Star_Classic",
+  "T_Holofoil_Confetti_Dots",
+  "T_Holofoil_Pikachu_Dot",
+]);
 
 /**
  * Pathological MAT / GLES overrides (CC unbound, stripped sampler names, …).
@@ -99,6 +117,13 @@ function shared(stem: string): FoilTextureBinding {
  * @see docs/foil_apk_sources.md
  */
 const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
+  Celebrations: {
+    _FoilShineTexture: "FX_T_Highlight_Over",
+    _SpectrumTex: "FX_T_Spectrum_Celebration",
+    _TexDistort: "T_CloudNoise",
+    _TexDots: "FX_T_Celeb_Confetti",
+  },
+  /** @deprecated dump stem — same motifs as Celebrations */
   "25thConfetti": {
     _FoilShineTexture: "FX_T_Highlight_Over",
     _SpectrumTex: "FX_T_Spectrum_Celebration",
@@ -111,6 +136,18 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _T_Holofoil_Mask_Bar_Thin_Single: "T_Holofoil_Mask_Bar_Thin_Single",
     _speccyspect: "FX_T_Spectrum_BlackSide",
   },
+  /**
+   * me5-5 PikachuFoil — CC plate is StitchedRings, never TEX_CC_PB.
+   * A bad pathid resolve once wrote Poké Ball laminate into shared-motifs;
+   * override wins over stale server hydrate too.
+   */
+  PikachuFoil: {
+    _CCPatternTex: "TEX_StitchedRings",
+    _SpectrumTex: "T_Holofoil_Pikachu_Spectrum",
+    _TexDistort: "FX_T_Celeb_Confetti",
+    _TexDots: "T_Holofoil_Pikachu_Dot",
+  },
+
   AngledPillars: {
     _SpectrumTexture: "FX_T_Spectrum_Bands_Angled",
   },
@@ -127,20 +164,22 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _TextureLightSheen: "T_Holofoil_Mask_Gradient_LightSheen",
   },
   FlatSilver: {
-    // MAT leaves `_Tex_CC` unbound (pathid 0). The frag still *samples*
-    // glitter/CC spectrum, but the overlay is gated by `_Tex_CC.a × _UseCCFoil`
+    // MAT leaves CC pattern unbound (pathid 0). The frag still *samples*
+    // glitter/CC spectrum, but the overlay is gated by pattern α × `_UseCCFoil`
     // — null CC ⇒ α≈0 ⇒ silver-only reverse. WebGL must not fill unbound slots
     // with opaque black (that arms SVHolo2). ReverseLaminate* / FlatSilver_CC
     // bind a real CC plate via foil_mask overrides.
-    _Tex_CC_Glitter: "FX_T_SVUltra_Glitter",
-    _Tex_CC_Spectrum: "FX_T_Spectrum_SVHolo2",
+    // GLES dumps rename MAT `_Tex_CC*` → `_CCPatternTex` / `_CCGlitterTex` /
+    // `_CCSpectrumPatternTex` — bind the sampler names the .frag actually uses.
+    _CCGlitterTex: "FX_T_SVUltra_Glitter",
+    _CCSpectrumPatternTex: "FX_T_Spectrum_SVHolo2",
     _Tex_Shine: "T_Holofoil_Mask_Bar_Wide_Single",
     _Tex_Spectrum: "FX_T_Spectrum_FlatSilver",
   },
   FlatSilver_CC: {
-    _Tex_CC: "TEX_CC_PB",
-    _Tex_CC_Glitter: "FX_T_SVUltra_Glitter",
-    _Tex_CC_Spectrum: "FX_T_Spectrum_SVHolo2",
+    _CCPatternTex: "TEX_CC_PB",
+    _CCGlitterTex: "FX_T_SVUltra_Glitter",
+    _CCSpectrumPatternTex: "FX_T_Spectrum_SVHolo2",
     _Tex_Shine: "T_Holofoil_Mask_Bar_Wide_Single",
     _Tex_Spectrum: "FX_T_Spectrum_FlatSilver",
   },
@@ -174,7 +213,12 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _T_noise_dots: "FX_T_Spectrum_Bands_Vertical",
   },
   Stamped: {
-    _TextureSample3: "FX_T_Gradient_Shine",
+    // HLSLcc stripped the hash-seed sampler (same pattern as SvHolo `_Sampler51071`).
+    _Sampler5868: "FX_T_Noise_Dim",
+    _CardGlitter: "FX_T_SVUltra_Glitter",
+    _Highlight: "T_Stamped_HighlightPan",
+    _SecondaryLowlight: "T_HoloFoil_Bars_Mask",
+    _Shine_Tex: "FX_T_Highlight_Over",
   },
   SunBeam: {
     _DirectionTexture: "T_Holofoil_Distortion_Sun_Pillar",
@@ -188,9 +232,10 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
   SunPillar: {
     // Northern Cross is on the MAT, but `_UseCCFoil` defaults to 0 — CastAndCure
     // prints turn the layer on at runtime (see `applyLiveFoilMask`).
+    // GLES frag samples `_CCPatternTex` (not MAT `_Tex_CC`).
     _SpectrumTexture: "FX_T_Spectrum_Sunpillar",
-    _Tex_CC: "FX_T_Northern_Cross",
-    _Tex_CC_Spectrum: "FX_T_Spectrum_SVHolo2",
+    _CCPatternTex: "FX_T_Northern_Cross",
+    _CCSpectrumPatternTex: "FX_T_Spectrum_SVHolo2",
   },
   SvHolo: {
     // HLSLcc stripped the hash-seed sampler name; MAT has no extra TexEnv —
@@ -250,14 +295,39 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
 };
 
 /**
+ * Sheet aliases that reuse a parent MAT dump but need different floats.
+ * FlatSilver_CC has no own sheet — it inherits FlatSilver's `_UseCCFoil = 0`,
+ * which gates Poké Ball CC off even with `_CCPatternTex` bound.
+ */
+const SHARED_FLOAT_OVERRIDES: Record<string, Record<string, number>> = {
+  FlatSilver_CC: { _UseCCFoil: 1 },
+  /**
+   * Stamped MAT ships `_ShadowDarknessLimit = 0.3` + `_UseVertexNomal_On = 1`.
+   * On our flat Y-up card the vertex-normal remap drives N·L ≈ 0, so the 0.3
+   * floor crushes the whole face (compare Unity column nearly black). Live's
+   * mesh/light setup keeps stamped readable; match other leaves' 0.7 floor and
+   * skip the vertex-normal path.
+   */
+  Stamped: {
+    _ShadowDarknessLimit: 0.7,
+    _UseVertexNomal_On: 0,
+  },
+};
+
+/**
  * Merge BASE floats with a dumped sheet. Live sometimes leaves
  * `_FoilAnimation = 0` while `_FoilScrollingOn = 1` (SolidColor) — the GLES
  * frags only read the former, so a zero freezes the spectrum scroll forever.
  */
 export function mergeMaterialFloats(
   sheetFloats: Record<string, number> | undefined,
+  sheetName?: string,
 ): Record<string, number> {
-  const floats = { ...BASE_FLOATS, ...sheetFloats };
+  const floats = {
+    ...BASE_FLOATS,
+    ...sheetFloats,
+    ...(sheetName ? (SHARED_FLOAT_OVERRIDES[sheetName] ?? {}) : {}),
+  };
   if (
     (floats._FoilScrollingOn ?? 0) > 0 &&
     (floats._FoilAnimation ?? 0) === 0
@@ -288,11 +358,12 @@ export function applyLiveFoilMask(
     changed = true;
   } else if (mask === "ReverseLaminatePokeBall") {
     floats._UseCCFoil = 1;
-    textures._Tex_CC = shared("TEX_CC_PB");
+    // GLES FlatSilver.frag samples `_CCPatternTex` (MAT name was `_Tex_CC`).
+    textures._CCPatternTex = shared("TEX_CC_PB");
     changed = true;
   } else if (mask === "ReverseLaminateMasterBall") {
     floats._UseCCFoil = 1;
-    textures._Tex_CC = shared("TEX_CC_MB");
+    textures._CCPatternTex = shared("TEX_CC_MB");
     changed = true;
   }
 
@@ -363,7 +434,7 @@ function materialForSheet(
     // only re-blit art through Standard lighting (SDL=1 noop) and fake a gap.
     ...(isNonFoil ? { webgl: false as const } : {}),
     textures,
-    floats: mergeMaterialFloats(sheet?.floats),
+    floats: mergeMaterialFloats(sheet?.floats, sheetName),
     // `*_ST` stays identity like the sheet says: the app crops its square
     // card textures through mesh UVs, the dump crops the files themselves
     // (`card_crop`), so both sample the full texture.

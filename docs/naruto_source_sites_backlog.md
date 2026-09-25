@@ -415,7 +415,7 @@ personne ne les a publiées.
 ### nikita — les autres jeux du site ne valent pas une intégration
 
 Mesuré le 2026-08-19 : `dbfw` **464 cartes**, `dbs` **68**, `lor` **6**. Or notre
-pack `dbs/fw` tient déjà **3 003 cartes JA** et `dbs/cg` 8 434 : nikita
+pack `dragonball/fw` tient déjà **3 003 cartes JA** et `dragonball/cg` 8 434 : nikita
 n'apporterait aucune couverture, seulement d'éventuels champs de jeu en japonais
 sur un sous-ensemble. Lorcana à 6 cartes est du bruit. **Rien à brancher.**
 

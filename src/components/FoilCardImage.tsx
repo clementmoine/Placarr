@@ -404,7 +404,7 @@ export function FoilCardImage({
     foilMaskUrl: effectiveMaskUrl,
   });
   const fromPack = pack
-    ? pack.resolveCss(finish ?? "", varnishType, {
+    ? pack.resolveCss(materialName ?? finish ?? "", varnishType, {
         foilMask: liveFoilMask,
         printKey,
         title,

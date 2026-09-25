@@ -9,6 +9,8 @@ import path from "node:path";
 
 type SeriesAliasLedger = {
   aliases?: Readonly<Record<string, string>>;
+  /** Catalogue set ids with no intl scan folder on PokéCardex. */
+  noScans?: Readonly<Record<string, string>>;
 };
 
 function aliasLedgerPath(): string {
@@ -24,15 +26,30 @@ function aliasLedgerPath(): string {
   );
 }
 
-export function loadPokecardexSeriesAliases(
+function readSeriesLedger(
   filePath = aliasLedgerPath(),
-): Readonly<Record<string, string>> {
+): SeriesAliasLedger {
   try {
-    const raw = JSON.parse(readFileSync(filePath, "utf8")) as SeriesAliasLedger;
-    return raw.aliases ?? {};
+    return JSON.parse(readFileSync(filePath, "utf8")) as SeriesAliasLedger;
   } catch {
     return {};
   }
+}
+
+export function loadPokecardexSeriesAliases(
+  filePath = aliasLedgerPath(),
+): Readonly<Record<string, string>> {
+  return readSeriesLedger(filePath).aliases ?? {};
+}
+
+/** Sets known absent from the intl scan CDN (skip retail fill). */
+export function loadPokecardexNoScanSetIds(
+  filePath = aliasLedgerPath(),
+): ReadonlySet<string> {
+  const noScans = readSeriesLedger(filePath).noScans ?? {};
+  return new Set(
+    Object.keys(noScans).map((id) => id.trim().toLowerCase()).filter(Boolean),
+  );
 }
 
 /** PokéCardex accepts `POP1`, `DP`, and hyphenated kits (`TK1-LA`). */

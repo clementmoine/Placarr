@@ -1,5 +1,5 @@
 import type { EffectPackModule } from "@/core/render/foil/types";
-import { registerEffectPack } from "@/core/render/foil/registry";
+import { registerEffectPack } from "@/core/render/foil/backend";
 
 import { resolveCssRecipe } from "./cssRecipes";
 import {

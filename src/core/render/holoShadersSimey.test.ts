@@ -80,9 +80,11 @@ describe("holoShadersSimey", () => {
     );
     const amazing = simeyHoloShader("amazingRare");
     expect(amazing.backgroundImage).toContain("simey_glitter");
-    expect(amazing.mixBlendMode).toBe("normal");
+    expect(amazing.mixBlendMode).toBe("soft-light");
     expect(amazing.overlay).toBe("amazingRareFoil");
-    expect(amazing.carve?.url).toContain("Galaxy_Stars");
+    // Star plate must not carve the dark invert spot (stamped black dots).
+    expect(amazing.carve).toBeUndefined();
+    expect(amazing.backgroundImage).not.toContain("Galaxy_Stars");
     expect(simeyHoloShader("amazingRareFoil").mixBlendMode).toBe("lighten");
     expect(simeyHoloShader("amazingRareFoil").backgroundImage).toContain(
       "var(--foil-etch",

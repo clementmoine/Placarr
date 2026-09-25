@@ -2,8 +2,6 @@
  * Kayou catalogue samples for the foil playroom — one curated print per
  * lenticular family (Heaven Scrolls HR grids, BP, MR, holo).
  */
-import { existsSync, readFileSync } from "node:fs";
-
 import { isCardsIndexV1, type CardsIndexEntry } from "@/effects/cardsIndex";
 import {
   KAYOU_LENTICULAR_TYPES,
@@ -14,11 +12,11 @@ import {
   NARUTO_KAYOU_FULL_FOIL_MASK_URL,
 } from "@/effects/narutokayou";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
-import { packCardsIndexPath } from "@/lib/packPaths";
 import type {
   FoilPlayroomCatalogSample,
   FoilPlayroomNeed,
 } from "@/types/providerModule";
+import { loadCardsIndexDoc } from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 
 import { NARUTO_KAYOU_PACK_ID } from "./pack";
 
@@ -67,15 +65,8 @@ function sampleForPrintKey(
 export function suggestKayouFoilPlayroomSamples(
   needs: readonly FoilPlayroomNeed[],
 ): FoilPlayroomCatalogSample[] {
-  const indexPath = packCardsIndexPath(NARUTO_KAYOU_PACK_ID);
-  if (!existsSync(indexPath)) return [];
-  let raw: unknown;
-  try {
-    raw = JSON.parse(readFileSync(indexPath, "utf8"));
-  } catch {
-    return [];
-  }
-  if (!isCardsIndexV1(raw)) return [];
+  const raw = loadCardsIndexDoc(NARUTO_KAYOU_PACK_ID);
+  if (!raw || !isCardsIndexV1(raw)) return [];
 
   const cards = raw.cards;
   const seen = new Set<string>();
@@ -101,18 +92,15 @@ export function suggestKayouFoilPlayroomSamples(
 
 /** Every lenticular family with a face on disk — for tests / diagnostics. */
 export function listKayouLenticularPlayroomSamples(): FoilPlayroomCatalogSample[] {
-  const indexPath = packCardsIndexPath(NARUTO_KAYOU_PACK_ID);
-  if (!existsSync(indexPath)) return [];
-  let raw: unknown;
-  try {
-    raw = JSON.parse(readFileSync(indexPath, "utf8"));
-  } catch {
-    return [];
-  }
-  if (!isCardsIndexV1(raw)) return [];
+  const raw = loadCardsIndexDoc(NARUTO_KAYOU_PACK_ID);
+  if (!raw || !isCardsIndexV1(raw)) return [];
 
   return KAYOU_LENTICULAR_TYPES.flatMap((type) => {
-    const sample = sampleForPrintKey(raw.cards, type.exemplarPrintKey, type.finish);
+    const sample = sampleForPrintKey(
+      raw.cards,
+      type.exemplarPrintKey,
+      type.finish,
+    );
     return sample ? [sample] : [];
   });
 }

@@ -5,7 +5,7 @@ import {
 } from "@/lib/dev/mappingRawKeys";
 import { pricedOffer, pricedOffers } from "@/core/catalog/priceOffers";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
 import {

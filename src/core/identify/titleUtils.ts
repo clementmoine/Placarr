@@ -5,7 +5,7 @@ import { moveTrailingSortArticleToFront } from "@/core/enrich/titles/sort";
 import {
   createVideoGamePlatformMatcher,
   VIDEO_GAME_PLATFORM_TERMS,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 import {
   GAME_EDITION_TERMS,
   LISTING_CALENDAR_MONTH_TERMS,

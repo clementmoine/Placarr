@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { packCardsDir, packProductsIndexPath } from "@/lib/packPaths";
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import {
   colekaUltraFaceUrl,
   colekaUltraThumbCorroborates,
@@ -15,6 +16,8 @@ import {
 import { NARUTO_ULTRA_PACK_ID } from "../pack";
 import {
   animeCollectionFaceUrl,
+  animeCollectionUltraFacesContentHash,
+  colekaUltraFacesContentHash,
   ingestColekaAlbum,
   installAnimeCollectionFaces,
   installColekaUltraFaces,
@@ -22,6 +25,10 @@ import {
   readAnimeCollectionFacesLedger,
   readColekaAlbumLedger,
 } from "./faces";
+import {
+  catalogArtefactIsFresh,
+  emptyCatalogIngestLedger,
+} from "@/providers/shared/catalogIngestLedger";
 
 // —— animecollectionFaces ——
 {
@@ -365,11 +372,7 @@ import {
       const report = ingestColekaAlbum({ stagingDir: staging });
       expect(report).toMatchObject({ written: 1, skipped: 0 });
 
-      const index = JSON.parse(
-        readFileSync(packProductsIndexPath(NARUTO_ULTRA_PACK_ID), "utf8"),
-      ) as {
-        products: Record<string, { kind: string; image: string; name: string }>;
-      };
+      const index = loadSealedProductsIndex(NARUTO_ULTRA_PACK_ID);
       expect(Object.keys(index.products)).toEqual([
         "naruto/ultra-challenge::collector-album",
       ]);
@@ -382,6 +385,45 @@ import {
           "/assets/naruto/ultra-challenge/products/collector-album/fr/art.coleka.webp",
       });
       expect(existsSync(packCardsDir(NARUTO_ULTRA_PACK_ID))).toBe(false);
+    });
+  });
+}
+
+// —— dig contentHash (Sync skip after purge) ——
+{
+  describe("animeCollectionUltraFacesContentHash", () => {
+    it("is stable and marks ledger fresh", () => {
+      const a = animeCollectionUltraFacesContentHash();
+      const b = animeCollectionUltraFacesContentHash();
+      expect(a).toBe(b);
+      expect(a).toMatch(/^[a-f0-9]{64}$/);
+      const ledger = emptyCatalogIngestLedger();
+      ledger.entries["faces:animecollection-ultra"] = {
+        artefactId: "faces:animecollection-ultra",
+        contentHash: a,
+        promotedAt: "2026-01-01T00:00:00.000Z",
+      };
+      expect(
+        catalogArtefactIsFresh(ledger, "faces:animecollection-ultra", b),
+      ).toBe(true);
+    });
+  });
+
+  describe("colekaUltraFacesContentHash", () => {
+    it("is stable and marks ledger fresh", () => {
+      const a = colekaUltraFacesContentHash();
+      const b = colekaUltraFacesContentHash();
+      expect(a).toBe(b);
+      expect(a).toMatch(/^[a-f0-9]{64}$/);
+      const ledger = emptyCatalogIngestLedger();
+      ledger.entries["faces:coleka-ultra"] = {
+        artefactId: "faces:coleka-ultra",
+        contentHash: a,
+        promotedAt: "2026-01-01T00:00:00.000Z",
+      };
+      expect(
+        catalogArtefactIsFresh(ledger, "faces:coleka-ultra", b),
+      ).toBe(true);
     });
   });
 }

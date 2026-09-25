@@ -144,6 +144,16 @@ describe("resolveEffectForPrintKey", () => {
     );
   });
 
+  it("resolves 30ᵉ Anniversaire #23 to PikachuFoil (not AceFoil stand-in)", () => {
+    const r = resolveEffectForPrintKey("pokemon:me05.5-023", "live-std", "fr");
+    expect(r).toMatchObject({
+      shader: "PikachuFoil",
+      variant: "std",
+      bundle: "me5-5_fr_023",
+      confidence: "exact",
+    });
+  });
+
   it("returns null for normal finish", () => {
     expect(resolveEffectForPrintKey("pokemon:bw10-001", "normal")).toBeNull();
   });

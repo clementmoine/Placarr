@@ -6,7 +6,7 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { throwIfAborted } from "@/lib/http/abort";

@@ -40,6 +40,7 @@ import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
 } from "./disk";
+import { buildNarutoDiskArtAttachments } from "./diskArtAttachments";
 import { NARUTO_PACK_ID } from "./identity";
 import {
   NARUTO_INDICATIVE_PRICE_SOURCE,
@@ -115,14 +116,25 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   if (!title) return null;
 
   const pathId = narutoCardPathFromCollector(row.number, row.lang);
+  const disk = buildNarutoDiskArtAttachments({
+    printKey,
+    number: row.number,
+    lang: row.lang,
+    source: PROVIDER_ID,
+    title,
+  });
   const face =
-    row.art && pathId
+    disk.defaultUrl ||
+    (row.art && pathId
       ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.art)
-      : undefined;
+      : undefined);
 
   return {
     title,
     ...(face ? { imageUrl: face } : {}),
+    ...(disk.attachments.length > 0
+      ? { attachments: disk.attachments }
+      : {}),
     facts: narutoPrintFacts(row, PROVIDER_ID),
     externalIds: {
       [PROVIDER_ID]: printKey,
@@ -164,7 +176,12 @@ export const narutocarddassModule = defineProvider({
     /** Côtes dig Collection Naruto — référence quand le marché live est absent. */
     referencePriceSource: true,
     evidenceOnlyPriceRefresh: true,
-    sourceAliases: [NARUTO_INDICATIVE_PRICE_SOURCE, GG_ARCHIVE_PRICE_SOURCE],
+    sourceAliases: [
+      // Pre-rename provider id — still stamped on most Carddass fiches/facts.
+      "narutoccg",
+      NARUTO_INDICATIVE_PRICE_SOURCE,
+      GG_ARCHIVE_PRICE_SOURCE,
+    ],
     factLabel: NARUTO_INDICATIVE_PRICE_SOURCE,
     notes:
       "Corpus Bandai CCG/JCC (FR first-class) → `data/naruto/carddass/`. Curated sous `src/providers/naruto/narutocarddass/curated/`. Sync : Catalogue Extract (admin / worker). Prix : Estimations Collection Naruto (YT 7r7) + côtes narutocardgame.gg classic-ccg.",
@@ -265,6 +282,7 @@ export const narutocarddassModule = defineProvider({
 export {
   writeNarutoCcgIndex,
   exportNarutoCardsIndexJson,
+  loadNarutoCardsIndexFromSqlite,
   narutoCcgDbPath,
   ensureNarutoCcgIndex,
 } from "./indexStore";

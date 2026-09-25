@@ -34,6 +34,7 @@ const LEDGER_FILES = [
   "carddas-jp-maku.json",
   "carddas-jp-gaku.json",
   "noihjp-maku5-6.json",
+  "carddas20-promo.json",
 ] as const;
 
 /** La liste officielle des sorties, avec les plages de numéros de chacune. */
@@ -169,8 +170,9 @@ export function buildShippudenFromLedgers(
   */
   let filed = 0;
   let attested = 0;
+  const retailFamilies = ["shi", "mju", "msa", "gaku"] as const;
   for (const release of readShippudenChecklist().releases) {
-    for (const family of SHIPPUDEN_FAMILIES) {
+    for (const family of retailFamilies) {
       const band = release[family];
       if (!band) continue;
       for (let number = band[0]; number <= band[1]; number += 1) {

@@ -22,6 +22,7 @@ export {
   decodeTexturesFromUnityFs,
   listTexture2D,
   decodeTextureFormat,
+  canDecodeTextureFormat,
   rgbaFromTexture2DObject,
   pixelsFromTextureObject,
   textureFormatId,

@@ -26,7 +26,7 @@ import {
   priceChartingCatalogAlignsWithTitles,
   priceChartingUrlIsPal,
 } from "./fetch";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 import { buildPriceChartingCatalogLink } from "./catalogLink";
 import { productNameFromPriceChartingGameUrl } from "./fetch";

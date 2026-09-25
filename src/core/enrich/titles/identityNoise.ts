@@ -16,7 +16,7 @@ import {
   VIDEO_GAME_PLATFORM_TERMS,
   VIDEO_GAME_PLATFORM_TOKEN_TERMS,
   detectVideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 
 /**
  * Closed function-word taxonomy (articles / light prepositions).

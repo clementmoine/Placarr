@@ -27,6 +27,13 @@ import {
   downloadCardFaceBytes,
   installCardFace,
 } from "@/providers/shared/cardCatalogue/faceInstall";
+import {
+  catalogArtefactIsFresh,
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 import type {
   LocalPrintAssetWrite,
   LocalPrintsIndex,
@@ -801,10 +808,22 @@ export async function installMythosNarutomythosSiteFaces(
 const OFFICIAL_API = "https://cards.narutotcgmythos.com/api/cards";
 const OFFICIAL_STAGING_FOLDER = "official-faces";
 const OFFICIAL_SOURCE_ID = "official";
+const OFFICIAL_ARTEFACT_ID = "mythos:official-faces";
 const OFFICIAL_LANGS = ["fr", "en"] as const;
 
 export function mythosOfficialFacesStagingDir(): string {
   return path.join(packStagingDir(NARUTO_MYTHOS_PACK_ID), OFFICIAL_STAGING_FOLDER);
+}
+
+/** Stable hash from official checklist face URLs — survives staging purge. */
+export function mythosOfficialFacesContentHash(
+  prints: readonly MythosOfficialPrint[] = readOfficialMythosChecklist(),
+): string {
+  const lines = prints
+    .filter((p) => p.faceUrl?.trim())
+    .map((p) => `${p.setCode}|${p.printed}|${p.faceUrl!.trim()}`)
+    .sort();
+  return hashCatalogArtefactBytes(lines.join("\n"));
 }
 
 function officialDiskCard(print: MythosOfficialPrint): string {
@@ -954,9 +973,59 @@ export async function harvestOfficialMythosFaces(
     prints?: MythosOfficialPrint[];
   } = {},
 ): Promise<OfficialFaceHarvest> {
-  const prints = opts.prints ?? (await fetchOfficialMythosPrints());
-  const checklistPath = writeOfficialMythosChecklist(prints);
   const staging = opts.stagingDir ?? mythosOfficialFacesStagingDir();
+
+  if (!opts.force && !opts.prints) {
+    const cached = readOfficialMythosChecklist();
+    if (cached.length) {
+      const contentHash = mythosOfficialFacesContentHash(cached);
+      const ledger = readCatalogIngestLedger(
+        packCatalogIngestLedgerPath(NARUTO_MYTHOS_PACK_ID),
+      );
+      if (catalogArtefactIsFresh(ledger, OFFICIAL_ARTEFACT_ID, contentHash)) {
+        const withUrl = cached.filter((p) => p.faceUrl?.trim()).length;
+        return {
+          cards: cached.length,
+          ok: 0,
+          skip: withUrl,
+          fail: 0,
+          checklistPath: mythosOfficialChecklistPath(),
+        };
+      }
+    }
+  }
+
+  const prints = opts.prints ?? (await fetchOfficialMythosPrints());
+  // Never clobber a known-good checklist with an empty API response.
+  const checklistPath =
+    prints.length > 0
+      ? writeOfficialMythosChecklist(prints)
+      : mythosOfficialChecklistPath();
+  if (prints.length === 0) {
+    return {
+      cards: 0,
+      ok: 0,
+      skip: 0,
+      fail: 0,
+      checklistPath,
+    };
+  }
+  const contentHash = mythosOfficialFacesContentHash(prints);
+  if (!opts.force) {
+    const ledger = readCatalogIngestLedger(
+      packCatalogIngestLedgerPath(NARUTO_MYTHOS_PACK_ID),
+    );
+    if (catalogArtefactIsFresh(ledger, OFFICIAL_ARTEFACT_ID, contentHash)) {
+      const withUrl = prints.filter((p) => p.faceUrl?.trim()).length;
+      return {
+        cards: prints.length,
+        ok: 0,
+        skip: withUrl,
+        fail: 0,
+        checklistPath,
+      };
+    }
+  }
   mkdirSync(staging, { recursive: true });
 
   let ok = 0;
@@ -989,10 +1058,15 @@ export type OfficialFaceInstall = { faces: number; missing: string[] };
 
 export async function installOfficialMythosFaces(
   index: LocalPrintsIndex,
-  opts: { stagingDir?: string; prints?: MythosOfficialPrint[] } = {},
+  opts: {
+    stagingDir?: string;
+    prints?: MythosOfficialPrint[];
+    force?: boolean;
+  } = {},
 ): Promise<OfficialFaceInstall> {
   const prints = opts.prints ?? readOfficialMythosChecklist();
   const staging = opts.stagingDir ?? mythosOfficialFacesStagingDir();
+  const contentHash = mythosOfficialFacesContentHash(prints);
   const missing: string[] = [];
   const assets: {
     printKey: string;
@@ -1000,6 +1074,25 @@ export async function installOfficialMythosFaces(
     art: string;
     sourceUrl: string;
   }[] = [];
+
+  if (!existsSync(staging)) {
+    if (
+      !opts.force &&
+      catalogArtefactIsFresh(
+        readCatalogIngestLedger(
+          packCatalogIngestLedgerPath(NARUTO_MYTHOS_PACK_ID),
+        ),
+        OFFICIAL_ARTEFACT_ID,
+        contentHash,
+      )
+    ) {
+      return { faces: 0, missing: [] };
+    }
+    return {
+      faces: 0,
+      missing: prints.map((p) => `${p.setCode}:${p.printed}`),
+    };
+  }
 
   for (const print of prints) {
     const from = path.join(staging, officialStagingName(print));
@@ -1043,6 +1136,16 @@ export async function installOfficialMythosFaces(
   }
 
   if (assets.length) index.writeAssets(assets);
+
+  if (assets.length > 0 && missing.length === 0 && !opts.stagingDir) {
+    recordCatalogPromoteAndPurgeStaging({
+      ledgerPath: packCatalogIngestLedgerPath(NARUTO_MYTHOS_PACK_ID),
+      artefactId: OFFICIAL_ARTEFACT_ID,
+      contentHash,
+      stagingPath: staging,
+    });
+  }
+
   return { faces: assets.length, missing };
 }
 
@@ -1214,9 +1317,28 @@ export async function installMythosNarutopiaFaces(
 
 const LORENZONE_STAGING_FOLDER = "lorenzone-faces";
 const LORENZONE_SOURCE_ID = "lorenzone";
+const LORENZONE_ARTEFACT_ID = "mythos:lorenzone-faces";
 
 export function mythosFacesStagingDir(): string {
   return path.join(packStagingDir(NARUTO_MYTHOS_PACK_ID), LORENZONE_STAGING_FOLDER);
+}
+
+/** Stable hash from curated checklist face URLs — survives staging purge. */
+export function mythosLorenzoneFacesContentHash(
+  ledgers = readAllMythosChecklists(),
+): string {
+  const lines: string[] = [];
+  for (const ledger of ledgers) {
+    const setCode =
+      ledger.set?.code?.trim().toLowerCase() || NARUTO_MYTHOS_KS1_SET_CODE;
+    for (const card of ledger.cards) {
+      const url = card.faceUrl?.trim();
+      if (!url) continue;
+      lines.push(`${setCode}|${card.printed}|${url}`);
+    }
+  }
+  lines.sort();
+  return hashCatalogArtefactBytes(lines.join("\n"));
 }
 
 /** Prefixed by set — bare `0001.webp` must never satisfy SS2. */
@@ -1296,6 +1418,19 @@ export async function harvestMythosFaces(
 ): Promise<MythosFaceHarvest> {
   const ledgers = readAllMythosChecklists();
   const staging = opts.stagingDir ?? mythosFacesStagingDir();
+  const contentHash = mythosLorenzoneFacesContentHash(ledgers);
+  if (!opts.force) {
+    const ledger = readCatalogIngestLedger(
+      packCatalogIngestLedgerPath(NARUTO_MYTHOS_PACK_ID),
+    );
+    if (catalogArtefactIsFresh(ledger, LORENZONE_ARTEFACT_ID, contentHash)) {
+      const withUrl = ledgers.reduce(
+        (n, l) => n + l.cards.filter((c) => c.faceUrl?.trim()).length,
+        0,
+      );
+      return { cards: withUrl, ok: 0, skip: withUrl, fail: 0 };
+    }
+  }
   mkdirSync(staging, { recursive: true });
 
   let cards = 0;
@@ -1338,10 +1473,11 @@ export type MythosFaceInstall = { faces: number; missing: string[] };
 
 export async function installMythosFaces(
   index: LocalPrintsIndex,
-  opts: { stagingDir?: string } = {},
+  opts: { stagingDir?: string; force?: boolean } = {},
 ): Promise<MythosFaceInstall> {
   const ledgers = readAllMythosChecklists();
   const staging = opts.stagingDir ?? mythosFacesStagingDir();
+  const contentHash = mythosLorenzoneFacesContentHash(ledgers);
   const missing: string[] = [];
   const assets: {
     printKey: string;
@@ -1351,6 +1487,18 @@ export async function installMythosFaces(
   }[] = [];
 
   if (!existsSync(staging)) {
+    if (
+      !opts.force &&
+      catalogArtefactIsFresh(
+        readCatalogIngestLedger(
+          packCatalogIngestLedgerPath(NARUTO_MYTHOS_PACK_ID),
+        ),
+        LORENZONE_ARTEFACT_ID,
+        contentHash,
+      )
+    ) {
+      return { faces: 0, missing: [] };
+    }
     return {
       faces: 0,
       missing: ledgers.flatMap((l) =>
@@ -1406,6 +1554,17 @@ export async function installMythosFaces(
   }
 
   if (assets.length) index.writeAssets(assets);
+
+  // Staging fully consumed → ledger + purge (re-fetch only if face URLs change).
+  if (assets.length > 0 && missing.length === 0 && !opts.stagingDir) {
+    recordCatalogPromoteAndPurgeStaging({
+      ledgerPath: packCatalogIngestLedgerPath(NARUTO_MYTHOS_PACK_ID),
+      artefactId: LORENZONE_ARTEFACT_ID,
+      contentHash,
+      stagingPath: staging,
+    });
+  }
+
   return { faces: assets.length, missing };
 }
 

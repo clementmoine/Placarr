@@ -1,7 +1,6 @@
 /**
  * Local image-asset processing: metrics, perceptual hash, dedupe, flat filters.
  */
-import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import type { AttachmentType } from "@/generated/prisma/browser";
@@ -16,6 +15,7 @@ import {
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 import { measureCoverExposureFromBuffer } from "@/core/enrich/media/coverExposure.server";
 import { regionRank } from "@/core/locale/preference";
+import { localMediaFilePath } from "@/lib/media/localMediaPath";
 
 export function hammingDistance(a: string, b: string): number {
   let count = 0;
@@ -100,7 +100,7 @@ export async function perceptualHashForAsset(
   if (cached) return cached;
 
   const task = (async () => {
-    const filePath = resolvePublicAssetPath(url);
+    const filePath = localMediaFilePath(url);
     if (!filePath || !fs.existsSync(filePath)) return null;
     try {
       const { data, info } = await sharp(filePath)
@@ -317,12 +317,8 @@ export function shouldReadImageMetricsForAttachment(
   );
 }
 
-function resolvePublicAssetPath(url: string): string | null {
-  if (!url || !url.startsWith("/")) return null;
-  const cleanPath = url.split("?")[0]?.replace(/^\/+/, "");
-  if (!cleanPath) return null;
-  const safePath = cleanPath.replace(/\.\.(\/|\\)/g, "");
-  return path.join(process.cwd(), "public", safePath);
+function resolveLocalMediaFilePath(url: string): string | null {
+  return localMediaFilePath(url);
 }
 
 export async function readAttachmentImageMetrics(
@@ -333,7 +329,7 @@ export async function readAttachmentImageMetrics(
   if (cached) return cached;
 
   const task = (async () => {
-    const filePath = resolvePublicAssetPath(url);
+    const filePath = resolveLocalMediaFilePath(url);
     if (!filePath || !fs.existsSync(filePath)) return null;
     try {
       const buffer = fs.readFileSync(filePath);
@@ -370,7 +366,7 @@ async function isFlatImageAsset(url: string): Promise<boolean> {
   if (cached) return cached;
 
   const task = (async () => {
-    const filePath = resolvePublicAssetPath(url);
+    const filePath = resolveLocalMediaFilePath(url);
     if (!filePath || !fs.existsSync(filePath)) return false;
     try {
       const buffer = fs.readFileSync(filePath);

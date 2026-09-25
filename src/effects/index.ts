@@ -22,7 +22,7 @@ import { markEffectsRegistered } from "@/effects/ensureEffects";
 
 markEffectsRegistered();
 
-export { getEffectPack, listEffectPacks } from "@/core/render/foil/registry";
+export { getEffectPack, listEffectPacks } from "@/core/render/foil/backend";
 export { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
 export { POKEMON_EFFECT_PACK_ID } from "@/effects/pokemon";
 export {

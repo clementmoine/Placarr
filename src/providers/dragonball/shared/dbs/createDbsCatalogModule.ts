@@ -40,9 +40,13 @@ export type DbsCatalogModuleSpec = {
   probePrintKey: string;
   probeCardName: string;
   catalog: ProviderCatalogHooks;
+  /** Default living — Masters / Fusion World still receive sets. */
+  catalogLifecycle?: "living" | "finished";
   dbPath: () => string;
   ensureIndex: () => unknown;
-  listPrintSets: () => { id: string; label: string }[];
+  listPrintSets: () =>
+    | { id: string; label: string }[]
+    | Promise<{ id: string; label: string }[]>;
   searchPrints: (
     query: string,
     opts?: { language?: string; limit?: number; setId?: string | null },
@@ -81,6 +85,7 @@ export function createDbsCatalogModule(
     resolveMetadata,
     loadBoosterComposition,
   } = spec;
+  const catalogLifecycle = spec.catalogLifecycle ?? "living";
 
   return {
     info: {
@@ -93,6 +98,7 @@ export function createDbsCatalogModule(
       nameDatabase: true,
       auth: { kind: "none" },
       supplyMode: "local_catalog",
+      catalogLifecycle,
       canonical: false,
       defaultLanguage,
       websiteUrl,

@@ -27,7 +27,6 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 import { dataRoot } from "@/lib/runtimeData";
 import {
   finalizeSetOptions,
@@ -43,7 +42,15 @@ export const NARUTO_SHIPPUDEN_PACK_ID = "naruto/shippuden";
  * `gaku` est une **sous-série** du 忍伝 — `忍伝-学-N`, la ligne « école » — et
  * non une famille à part : sa maquette est celle du 忍伝.
  */
-export const SHIPPUDEN_FAMILIES = ["shi", "mju", "msa", "gaku"] as const;
+export const SHIPPUDEN_FAMILIES = [
+  "shi",
+  "mju",
+  "msa",
+  "gaku",
+  "prshi",
+  "prmsa",
+  "prgaku",
+] as const;
 
 export type ShippudenSearchRow = {
   printKey: string;
@@ -163,6 +170,7 @@ export function shippudenSetLabel(setCode: string): string {
     jeton, entre le deuxième et le troisième. Ses huit numéros lui sont propres.
   */
   if (setCode.trim().toLowerCase() === "coin") return "Coin＋ (2007)";
+  if (setCode.trim().toLowerCase() === "promo") return "プロモーション";
   return setCode.trim().toUpperCase();
 }
 
@@ -251,12 +259,8 @@ export function searchNarutoShippudenRows(
 }
 
 /**
- * Exporte `cards-index.json` depuis la base — ce que lit l'écran Catalogue.
- *
- * La base est la source ; ce fichier n'en est qu'une projection, réécrite à
- * chaque passe. Le champ `set` porte la **famille** (`shi`, `mju`…) et non
- * l'acte, comme chez le Carddass : c'est elle qui range les faces sur le
- * disque, et l'index doit pouvoir les retrouver.
+ * Legacy CardsIndex projection — no longer written to disk.
+ * Catalogue browse uses catalog.sqlite via identity browse.
  */
 export function exportNarutoShippudenCardsIndex(): {
   path: string;
@@ -264,57 +268,15 @@ export function exportNarutoShippudenCardsIndex(): {
 } | null {
   const db = ensureNarutoShippudenIndex();
   if (!db) return null;
-  const rows = db
-    .prepare(
-      `SELECT p.print_key AS printKey, p.card_type AS cardType, p.number,
-              COALESCE(t.lang, a.lang, 'ja') AS lang, t.full_name AS fullName, t.rarity,
-              a.art, a.thumb
-         FROM prints p
-         LEFT JOIN print_titles t ON t.print_key = p.print_key
-         LEFT JOIN print_assets a
-                ON a.print_key = p.print_key AND (a.lang = t.lang OR t.lang IS NULL)`,
-    )
-    .all() as {
-    printKey: string;
-    cardType: string;
-    number: string;
-    lang: string | null;
-    fullName: string | null;
-    rarity: string | null;
-    art: string | null;
-    thumb: string | null;
-  }[];
-
-  const cards: Record<string, CardsIndexEntry> = {};
-  for (const row of rows) {
-    const entry = (cards[row.printKey] ??= {
-      set: row.cardType,
-      card: row.number,
-      langs: {},
-    });
-    if (!row.lang) continue;
-    const slot = entry.langs[row.lang] ?? {};
-    if (row.fullName) slot.name = row.fullName;
-    if (row.art) slot.art = row.art;
-    if (row.thumb) slot.thumb = row.thumb;
-    entry.langs[row.lang] = slot;
-    // Le jeu n'existe qu'en japonais : son nom fait le nom affiché.
-    if (!entry.name && row.fullName) entry.name = row.fullName;
-    if (!entry.rarity && row.rarity) entry.rarity = row.rarity;
-  }
-
-  const dest = path.join(
-    dataRoot(),
-    ...NARUTO_SHIPPUDEN_PACK_ID.split("/"),
-    "cards-index.json",
-  );
-  mkdirSync(path.dirname(dest), { recursive: true });
-  const index: CardsIndexV1 = {
-    version: 1,
-    pack: NARUTO_SHIPPUDEN_PACK_ID,
-    generatedAt: new Date().toISOString(),
-    cards,
+  const row = db
+    .prepare(`SELECT COUNT(*) AS n FROM prints`)
+    .get() as { n?: number } | undefined;
+  return {
+    path: path.join(
+      dataRoot(),
+      ...NARUTO_SHIPPUDEN_PACK_ID.split("/"),
+      "catalog.sqlite",
+    ),
+    cards: row?.n ?? 0,
   };
-  writeFileSync(dest, `${JSON.stringify(index)}\n`);
-  return { path: dest, cards: Object.keys(cards).length };
 }

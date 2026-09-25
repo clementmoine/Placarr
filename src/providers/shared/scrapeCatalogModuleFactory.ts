@@ -7,7 +7,7 @@ import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { retailerProductUrlBarcodeConflicts } from "@/core/commerce/retailer/productUrl";
 import {
   promoteRetailPriceEvidence,

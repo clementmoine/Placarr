@@ -6,14 +6,15 @@
  * fab / fft / lol / lor / mtg / ope / pkm / swu / ygo, plus Fusion World on
  * `fw.dbscards.fr`. Product listings paginate as `/products/{cat}/2`.
  *
- * This module is the site table. Parsing and the sequential crawl live next
- * door; a pack just names a row. Product scrapes do not walk `/cards` —
- * sealed SKUs only. Pokémon also harvests pkmcards.fr `/cards` faces into
- * `art.pkmcards.*` (all tiles that map to a Live stem — not gap-only).
+ * Contract: one row here + shared parsers (`tile`, `parseProducts`,
+ * `cardsFrShopPrintKey`, `scrapeTcgCardsProducts`). A slug/ref/printKey fix
+ * benefits every crawlable pack. To plug a new host: set `packId` +
+ * `printGame`, then call `scrapeTcgCardsProducts(siteId)`.
  *
- * Accessories are classified here and never requested. Displays are opened
- * for shop price + metadata (JSON-LD). Boosters are opened for the labelled
- * 15-tile preview.
+ * Product scrapes do not walk `/cards` — sealed SKUs only. Pokémon also
+ * harvests pkmcards.fr `/cards` faces into `art.pkmcards.*`. Accessories are
+ * classified here and never requested. Displays are opened for shop price +
+ * metadata (JSON-LD). Boosters are opened for the labelled 15-tile preview.
  */
 
 export type TcgCardsCategoryRole = "preview" | "detail" | "index" | "skip";
@@ -85,6 +86,11 @@ export type TcgCardsSite = {
    * crawlable — staging only until the local line is wired.
    */
   packId: string | null;
+  /**
+   * printKey game segment for sealed preview tiles / shop faces. Set with
+   * `packId` when the host is crawlable so ingest does not keep a second map.
+   */
+  printGame?: string | null;
   stagingFolder: string;
   /**
    * Nav `/products/{slug}` slugs published on the host (measured 2026-08-16,
@@ -114,7 +120,8 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
   masters: {
     id: "masters",
     origin: "https://www.dbscards.fr",
-    packId: "dbs/cg",
+    packId: "dragonball/cg",
+    printGame: "dbscg",
     stagingFolder: "dbscards-products",
     catalogJoin: true,
     indexLang: "fr",
@@ -133,7 +140,8 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
   fusion: {
     id: "fusion",
     origin: "https://fw.dbscards.fr",
-    packId: "dbs/fw",
+    packId: "dragonball/fw",
+    printGame: "dbsfw",
     stagingFolder: "dbscards-products",
     catalogJoin: true,
     indexLang: "en",
@@ -147,7 +155,12 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "lorcards",
     origin: "https://www.lorcards.fr",
     packId: "lorcana",
+    printGame: "lorcana",
     stagingFolder: "lorcards-products",
+    lists: {
+      fr: "/cards/liste-cartes-francaises",
+      en: "/cards/liste-cartes-anglaises",
+    },
     categories: [
       "boosters",
       "boosters-blister",
@@ -164,6 +177,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "pkmcards",
     origin: "https://www.pkmcards.fr",
     packId: "pokemon",
+    printGame: "pokemon",
     stagingFolder: "pkmcards-products",
     categories: [
       "boosters",
@@ -180,6 +194,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "opecards",
     origin: "https://www.opecards.fr",
     packId: "onepiece",
+    printGame: "onepiece",
     stagingFolder: "opecards-products",
     categories: [
       "boosters",
@@ -197,6 +212,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "ygocards",
     origin: "https://www.ygocards.fr",
     packId: "yugioh",
+    printGame: "yugioh",
     stagingFolder: "ygocards-products",
     categories: ["boosters", "displays"],
     lists: {
@@ -207,6 +223,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "mtgcards",
     origin: "https://www.mtgcards.fr",
     packId: "mtg",
+    printGame: "mtg",
     stagingFolder: "mtgcards-products",
     categories: ["commander-decks", "prerelease-packs"],
     lists: {
@@ -217,6 +234,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "fabcards",
     origin: "https://www.fabcards.fr",
     packId: null,
+    printGame: null,
     stagingFolder: "fabcards-products",
     categories: [
       "boosters",
@@ -230,6 +248,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "fftcards",
     origin: "https://www.fftcards.fr",
     packId: null,
+    printGame: null,
     stagingFolder: "fftcards-products",
     categories: ["boosters", "displays", "decks"],
   },
@@ -237,6 +256,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "swucards",
     origin: "https://www.swucards.fr",
     packId: null,
+    printGame: null,
     stagingFolder: "swucards-products",
     categories: ["boosters", "displays", "decks", "collector-boxes"],
   },
@@ -244,6 +264,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "dgmcards",
     origin: "https://www.dgmcards.fr",
     packId: null,
+    printGame: null,
     stagingFolder: "dgmcards-products",
     categories: ["boosters", "decks"],
   },
@@ -251,6 +272,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "bsscards",
     origin: "https://www.bsscards.fr",
     packId: null,
+    printGame: null,
     stagingFolder: "bsscards-products",
     categories: [
       "boosters",
@@ -264,6 +286,7 @@ export const TCGCARDS_SITES: Readonly<Record<TcgCardsSiteId, TcgCardsSite>> = {
     id: "lolcards",
     origin: "https://www.lolcards.fr",
     packId: null,
+    printGame: null,
     stagingFolder: "lolcards-products",
     categories: [
       "boosters",

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import ledger from "../curated/sources/avalon-shop-jp.json";
 import ledger_parseSurugaCarddass from "../curated/sources/suruga-ya-carddass.json";
 import { narutoDiskCardId } from "../identity";
-import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtml, parseAvalonNarutoListing, chitoroVolumeSetCode, japaneseFamilyOf, normalizeShopName, parseChitoroTitle, resolveChitoroIdentity, resolveChitoroNameFamily, frilFamilyClash, frilLargeImage, frilRefFromTitle, frilRefWithinPublishedRange, frilSearchUrl, parseFrilSearch, parseStorm3Listing, parseStorm3ProductFaceUrl, storm3PrintKey, foldSurugaCarddassListings, loadSurugaCarddassCuratedListings, mergeSurugaCarddassListings, parseSurugaCarddassPrinted, parseSurugaCarddassSearchHtml, parseSurugaProductDetailHtml, parseSurugaCarddassCharacterName, surugaCarddassFaceUrl, surugaPrintedToDiskId } from "./marketplace";
+import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtml, parseAvalonNarutoListing, chitoroVolumeSetCode, chitoroPsDiskOverride, japaneseFamilyOf, normalizeShopName, parseChitoroTitle, resolveChitoroIdentity, resolveChitoroNameFamily, frilFamilyClash, frilLargeImage, frilRefFromTitle, frilRefWithinPublishedRange, frilSearchUrl, parseFrilSearch, parseStorm3Listing, parseStorm3ProductFaceUrl, storm3PrintKey, foldSurugaCarddassListings, loadSurugaCarddassCuratedListings, mergeSurugaCarddassListings, parseSurugaCarddassPrinted, parseSurugaCarddassSearchHtml, parseSurugaProductDetailHtml, parseSurugaCarddassCharacterName, surugaCarddassFaceUrl, surugaPrintedToDiskId } from "./marketplace";
 
 // —— parseAvalonShop ——
 {
@@ -110,6 +110,11 @@ import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtm
         name: "gaara of the desert",
         number: 295,
       });
+    });
+
+    it("routes the known PS bonus scan off the retail booster number", () => {
+      expect(chitoroPsDiskOverride("ni0002")).toBe("ni0002-ps");
+      expect(chitoroPsDiskOverride("ni0003")).toBeNull();
     });
 
     /*
@@ -572,13 +577,21 @@ import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtm
       expect(ledger_parseSurugaCarddass.not).toContain("data-carddass");
       expect(ledger_parseSurugaCarddass.not).toContain("en-ccg");
       const listings = loadSurugaCarddassCuratedListings();
-      expect(listings.length).toBe(1216);
+      expect(listings.length).toBe(1214);
+      expect(listings.some((row) => row.id === "G8859390")).toBe(true);
+      expect(listings.some((row) => row.printed === "PR忍-10")).toBe(true);
       expect(listings.some((row) => row.id === "GU112665")).toBe(true);
       expect(listings.some((row) => row.id === "GL398669")).toBe(true);
       expect(listings.some((row) => row.id === "GL685033")).toBe(true);
       expect(listings.some((row) => row.id === "GL685034")).toBe(true);
       expect(listings.some((row) => row.id === "GL685035")).toBe(true);
       expect(listings.some((row) => row.id === "GL636976")).toBe(true);
+      expect(listings.some((row) => row.id === "GG936720")).toBe(true);
+      expect(listings.some((row) => row.printed === "COIN-9")).toBe(true);
+      expect(listings.some((row) => row.id === "GL818531")).toBe(true);
+      expect(listings.some((row) => row.printed === "忍-1-a")).toBe(true);
+      expect(listings.some((row) => row.id === "GL734891")).toBe(false);
+      expect(listings.some((row) => row.id === "GL410641")).toBe(false);
       expect(listings.some((row) => /DN-|NM-/.test(row.printed))).toBe(false);
       expect(foldSurugaCarddassListings(listings).length).toBeGreaterThan(300);
       expect(listings.some((row) => row.printed === "忍-3")).toBe(true);

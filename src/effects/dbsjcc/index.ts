@@ -5,7 +5,7 @@ import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 export const DBS_JCC_EFFECT_PACK_ID = "dbs-jcc";
 
-const ASSET_BASE = "/assets/dbs/jcc";
+const ASSET_BASE = "/assets/dragonball/jcc";
 
 export const dbsJccEffectPack = defineCatalogueOnlyPack({
   id: DBS_JCC_EFFECT_PACK_ID,

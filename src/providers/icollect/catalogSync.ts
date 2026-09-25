@@ -1,7 +1,7 @@
 import { httpGet } from "@/lib/http/httpClient";
 import type { DatabaseSync } from "node:sqlite";
 
-import { createSerializeAsync } from "@/lib/async/serializeAsync";
+import { createSerializeAsync } from "@/lib/async";
 import {
   BACKGROUND_WORK_KIND,
   BACKGROUND_WORK_STATUS,

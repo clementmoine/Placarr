@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { packCardsDir, packCatalogDb, packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import sharp from "sharp";
 import { buildFrenchNinjaRanksTitles } from "./titles";
 import { buildNinjaRanksFromLedgers } from "../pipeline/ledgers";
@@ -92,14 +93,7 @@ import type { ImadokiSheet } from "../parse/catalogues";
       expect(report.written).toBe(3);
       expect(report.skipped).toBe(0);
 
-      const index = JSON.parse(
-        readFileSync(packProductsIndexPath(NARUTO_RANKS_PACK_ID), "utf8"),
-      ) as {
-        products: Record<
-          string,
-          { slug: string; kind: string; image: string; name: string }
-        >;
-      };
+      const index = loadSealedProductsIndex(NARUTO_RANKS_PACK_ID);
       expect(Object.keys(index.products).sort()).toEqual([
         "naruto/ninja-ranks::booster",
         "naruto/ninja-ranks::collector-album",

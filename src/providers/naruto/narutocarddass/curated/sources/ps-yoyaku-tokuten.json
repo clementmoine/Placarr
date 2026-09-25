@@ -14,8 +14,8 @@
     "released": "2003-06-26",
     "price": "5 800 ¥ (hors taxe)"
   },
-  "note": "Les quatre 忍-n（PS） sont le bonus de précommande d'un jeu PS1, pas une réimpression : la page de Bandai dit 書き下ろしイラスト — illustration inédite. Aucun scan de carte n'a été trouvé (Fril, eBay, buyee, zenmarket, jauce, aucfan ; Yahoo Auctions répond 403 EEA depuis ce conteneur). Ce qui existe, ce sont deux visuels officiels du set, tous deux composites : la page goods de TV Tokyo (470×300, les 4 côte à côte) et le mini-site du jeu chez Bandai via Wayback (220×315, en 2×2). Les vignettes installées sont des découpes de la première, à leur taille native — ce sont des `thumb.jpg`, jamais des `art.*` : une découpe de 106×160 dans une image promotionnelle n'est pas un scan de carte.",
-  "not": ["art", "reimpression-de-忍-1", "data-carddass"],
+  "note": "Les quatre 忍-n（PS） sont le bonus de précommande d'un jeu PS1, pas une réimpression : la page de Bandai dit 書き下ろしイラスト — illustration inédite. Faces : Mercari lot + Suruga GL410638–640 (忍-1/2/3（PS）) + Suruga product GL734891 (忍-11（PS）). Thumbs d'origine = découpes TV Tokyo (106×160).",
+  "not": ["reimpression-de-忍-1", "data-carddass", "tsv-fold-sans-PS"],
   "images": [
     {
       "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/images/ps2/card.gif",
@@ -66,7 +66,7 @@
     "pitch": 0.2475,
     "width": 0.225
   },
-  "stillMissing": "Rien pour les faces : les quatre sont servies. Restent des scans à plat pour 忍-1/2/3 (seul 忍-11 en a un, chez Suruga).",
+  "stillMissing": null,
   "scans": {
     "mercariLot": {
       "listing": "https://jp.mercari.com/item/m28811788058",
@@ -78,13 +78,26 @@
         "ni0011-ps": 9
       }
     },
-    "surugaKaitori": {
+    "surugaProductGl734891": {
       "id": "GL734891",
-      "page": "https://www.suruga-ya.jp/kaitori/kaitori_detail/GL734891",
+      "page": "https://www.suruga-ya.jp/product/detail/GL734891",
+      "kaitori": "https://www.suruga-ya.jp/kaitori/kaitori_detail/GL734891",
       "image": "https://cdn.suruga-ya.jp/database/pics/game/gl734891.jpg",
       "card": "ni0011-ps",
       "size": "348×512",
-      "note": "Scan à plat de 忍-11（PS）, corrobore la photo Mercari. **Ne pas l'ajouter au TSV Suruga** : `PRINTED_RE` n'y connaît pas （PS）, la ligne serait lue « 忍-11 » et le scan atterrirait sur la carte de booster. Les ids kaitori voisins (GL734886…894) sont d'autres jeux — pas de bloc contigu à exploiter."
+      "ingest": true,
+      "note": "Scan à plat 忍-11（PS） → art.suruga.jpg. Same CDN as kaitori. **Ne pas l'ajouter au TSV Suruga** : `PRINTED_RE` n'y connaît pas （PS）, la ligne serait lue « 忍-11 » et le scan atterrirait sur le booster."
+    },
+    "surugaProductGl410": {
+      "observed": "2026-09-21",
+      "ledger": "suruga-ps-gl410638-641.json",
+      "note": "GL410638–640 = 忍-1/2/3（PS） flat CDN → art.suruga.jpg. GL734891 = 忍-11（PS）. GL410641 (next id after trio) is retail 忍-11 2004 劇場版 — not PS.",
+      "cards": {
+        "ni0001-ps": "GL410638",
+        "ni0002-ps": "GL410639",
+        "ni0003-ps": "GL410640",
+        "ni0011-ps": "GL734891"
+      }
     }
   },
   "products": [

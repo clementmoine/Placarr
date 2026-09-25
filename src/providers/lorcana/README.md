@@ -10,9 +10,10 @@ Registry ids stay flat; folders nest by franchise.
 | [`lorcanajson/`](./lorcanajson/) | `lorcanajson` | `living` (`api_live`) | Community JSON API (FR/EN/DE/IT faces + foil masks) |
 | [`lorcast/`](./lorcast/) | `lorcast` | price module | TCGplayer USD via Lorcast API |
 | [`lorcanagg/`](./lorcanagg/) | `lorcanagg` | price module | Cardmarket EUR via Lorcana.gg (DotGG) |
+| [`lormarket/`](./lormarket/) | `lormarket` | price module | Cardmarket EUR via dump liste lorcards.fr |
 | [`shared/`](./shared/) | — | franchise helpers | Promo set grouping → market codes |
 
-`lorcanatcg` owns the local corpus; `lorcanajson` / `lorcast` / `lorcanagg` are complementary observations (JSON + prices), not stand-ins for the app dump.
+`lorcanatcg` owns the local corpus; `lorcanajson` / `lorcast` / `lorcanagg` / `lormarket` are complementary observations (JSON + prices), not stand-ins for the app dump.
 
 ## Action template (local TCG)
 

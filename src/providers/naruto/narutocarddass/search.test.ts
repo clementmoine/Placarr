@@ -26,6 +26,25 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       );
     });
 
+    it("prints JA tourney stamps as PR忍 / PR術 (shop / Google form)", () => {
+      expect(formatNarutoReference("promo", "ni0065-promo", "ja")).toBe(
+        "PR忍-65",
+      );
+      expect(formatNarutoReference("promo", "ni0284-promo", "ja")).toBe(
+        "PR忍-284",
+      );
+      expect(formatNarutoReference("promo", "te0253-promo", "ja")).toBe(
+        "PR術-253",
+      );
+      expect(formatNarutoReference("promo", "ta0022-promo", "ja")).toBe(
+        "PR作-22",
+      );
+      // Latin FR stays `NI-063 · promo` — European Carddass convention.
+      expect(formatNarutoReference("promo", "ni0063-promo", "fr")).toBe(
+        "NI-063 · promo",
+      );
+    });
+
     it("keeps a variant suffix rather than dropping it", () => {
       // `te030-cdf` is a distinct print, not a stray suffix to normalise away.
       expect(formatNarutoReference("promo", "te030-cdf")).toBe("TE-030-cdf");
@@ -34,6 +53,25 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
 
     it("passes through a number it cannot parse instead of mangling it", () => {
       expect(formatNarutoReference("s1", "weird")).toBe("weird");
+    });
+
+    it("prints the JA card face for ja (Google / Suruga / Mercari)", () => {
+      // `NI-349` is a latin transliteration — shops and Google index `忍-349`.
+      expect(formatNarutoReference("maki14", "ni0349", "ja")).toBe("忍-349");
+      expect(formatNarutoReference("maki1", "ni0003", "ja")).toBe("忍-3");
+      expect(formatNarutoReference("maki1", "te0001", "ja")).toBe("術-1");
+      expect(formatNarutoReference("promo", "prta0029", "ja")).toBe("PR作-29");
+      expect(formatNarutoReference("promo", "prni0013", "ja")).toBe("PR忍-13");
+      expect(formatNarutoReference("promo", "prte0001", "ja")).toBe("PR術-1");
+      expect(formatNarutoReference("promo", "opni0003", "ja")).toBe("OP忍-3");
+      expect(formatNarutoReference("promo", "ni0001-ps", "ja")).toBe(
+        "忍-1（PS）",
+      );
+      // EN CCG has no 忍 face — stay latin even if lang is ja.
+      expect(formatNarutoReference("s28", "n1621", "ja")).toBe("N-1621");
+      expect(formatNarutoReference("s5", "ni0349", "fr")).toBe("NI-349");
+      expect(formatNarutoReference("promo", "can0005", "ja")).toBe("CAN-5");
+      expect(formatNarutoReference("promo", "can0006")).toBe("CAN-6");
     });
   });
 

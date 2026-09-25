@@ -2,6 +2,7 @@ import type { Attachment } from "@/generated/prisma/browser";
 
 import { shouldShowCoverAttachmentOnShelf } from "@/core/enrich/media/attachmentDisplayScore";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
+import { filterAttachmentsForPrintKey } from "@/core/collect/printKeyGallery.server";
 import { normalizeProviderSourceKey } from "@/core/enrich/providerExternalLinks";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import type { MetadataAttachment } from "@/types/metadataProvider";
@@ -53,15 +54,23 @@ function sameGalleryRow(
  * Partial refreshes (e.g. marketplace-only stage-2) must not delete catalog
  * covers from providers that simply did not answer this pass — same contract
  * as `mergePriceOffers` / facts merge.
+ *
+ * When `printKey` is set, foreign-game covers (e.g. Lorcana on a Naruto print)
+ * are never revived — name-substring contamination must leave the fiche on
+ * refresh, not stick via absent-source preservation.
  */
 export function preserveGalleryAttachmentsOnRegression(
   previous: readonly Attachment[] | undefined,
   next: readonly MetadataAttachment[],
   requestedPlatformKey?: string,
+  printKey?: string | null,
 ): MetadataAttachment[] {
-  const withUserUploads = preserveUserUploadedAttachments(previous, next);
+  const scopedNext = filterAttachmentsForPrintKey(next, printKey);
+  const withUserUploads = preserveUserUploadedAttachments(previous, scopedNext);
 
-  if (!previous?.length) return withUserUploads;
+  if (!previous?.length) {
+    return filterAttachmentsForPrintKey(withUserUploads, printKey);
+  }
 
   const withAbsentSources = preserveAbsentSourceGalleryAttachments(
     previous,
@@ -76,8 +85,9 @@ export function preserveGalleryAttachmentsOnRegression(
     GALLERY_ATTACHMENT_TYPES.has(attachment.type),
   );
 
-  if (previousGallery.length < 2) return withAbsentSources;
-  if (nextGallery.length >= 2) return withAbsentSources;
+  if (previousGallery.length < 2 || nextGallery.length >= 2) {
+    return filterAttachmentsForPrintKey(withAbsentSources, printKey);
+  }
 
   const revivedCandidates = previous
     .filter((attachment) => attachment.url.startsWith("/uploads/"))
@@ -106,7 +116,10 @@ export function preserveGalleryAttachmentsOnRegression(
     );
   });
 
-  return [...withAbsentSources, ...revived];
+  return filterAttachmentsForPrintKey(
+    [...withAbsentSources, ...revived],
+    printKey,
+  );
 }
 
 /**

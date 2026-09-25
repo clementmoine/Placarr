@@ -1,5 +1,5 @@
 /**
- * Crochets de catalogue du pack `dbs/fw`.
+ * Crochets de catalogue du pack `dragonball/fw`.
  *
  * Le corps est commun à tous les packs de cartes — voir
  * `shared/cardCatalogue/pipeline`. Ne reste ici que ce qui est propre au pack :
@@ -16,7 +16,7 @@ const hooks = cardCatalogueHooks({
   runPipeline: async (argv) => {
     const { runDbsFwPackPipeline } = await import(
       /* webpackIgnore: true */
-      "./extract"
+      "../extract"
     );
     return runDbsFwPackPipeline(argv);
   },

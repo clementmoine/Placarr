@@ -108,6 +108,7 @@ import {
   filterMetadataForShelfPlatform,
   backgroundPickerAttachmentsForItem,
 } from "@/core/collect/media";
+import { metadataForPrintKeyImagePicker } from "@/core/collect/printKeyGallery";
 import {
   findAttachmentForUrl,
   isEditDerivativeUrl,
@@ -646,6 +647,7 @@ export function ItemModal({
   } = useItemModalMetadataMutations({
     activeShelfType,
     activeShelfName: activeShelf?.name ?? null,
+    printKey: item?.printKey ?? null,
     applyMetadataPreviewToForm,
     onSuggestionsLoaded: (cleanSuggestions, primary) => {
       setSuggestions(cleanSuggestions);
@@ -851,8 +853,14 @@ export function ItemModal({
   );
 
   const availableImages = useMemo(() => {
-    const rawMetadata =
-      itemId && item?.metadata
+    const printKey = item?.printKey ?? null;
+    const rawMetadata = printKey
+      ? metadataForPrintKeyImagePicker(
+          item?.metadata,
+          fetchedMetadata,
+          printKey,
+        )
+      : itemId && item?.metadata
         ? item.metadata
         : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(
@@ -1135,8 +1143,14 @@ export function ItemModal({
   }, [pendingUploadPreviewUrl]);
 
   const finalImages = useMemo(() => {
-    const rawMetadata =
-      itemId && item?.metadata
+    const printKey = item?.printKey ?? null;
+    const rawMetadata = printKey
+      ? metadataForPrintKeyImagePicker(
+          item?.metadata,
+          fetchedMetadata,
+          printKey,
+        )
+      : itemId && item?.metadata
         ? item.metadata
         : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(

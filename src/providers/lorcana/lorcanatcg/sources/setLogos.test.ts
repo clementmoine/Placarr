@@ -371,6 +371,38 @@ describe("installLorcanaSetLogos", () => {
   });
 });
 
+describe("persistLorcanaSetLogoIndex sqlite", () => {
+  let dir: string;
+  let dbPath: string;
+
+  beforeEach(() => {
+    __resetLorcanaSetLogoIndexForTests();
+    dir = mkdtempSync(path.join(os.tmpdir(), "lorcana-logos-db-"));
+    dbPath = path.join(dir, "catalog.sqlite");
+  });
+
+  afterEach(() => {
+    __resetLorcanaSetLogoIndexForTests();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("round_trips_through_pack_documents", async () => {
+    const { persistLorcanaSetLogoIndex, LORCANA_SET_LOGOS_DOC_KEY } =
+      await import("./setLogos");
+    const { readPackDocument } = await import(
+      "@/providers/shared/sealedProducts/productsSqlite"
+    );
+    persistLorcanaSetLogoIndex(FIXTURE, { dbPath });
+    const back = readPackDocument<LorcanaSetLogoIndex>(
+      "lorcana",
+      LORCANA_SET_LOGOS_DOC_KEY,
+      { dbPath },
+    );
+    expect(back?.sets).toHaveLength(FIXTURE.sets.length);
+    expect(back?.sets[0]?.id).toBe(FIXTURE.sets[0]?.id);
+  });
+});
+
 describe("mergeLorcanaSetLogoCatalogs", () => {
   it("keeps the FR thumb and adds the EN title as alias", () => {
     const fr = parseLorcanaSetLogosFromCatalog(CATALOG);

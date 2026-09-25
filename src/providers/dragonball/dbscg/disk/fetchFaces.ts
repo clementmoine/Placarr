@@ -1,5 +1,5 @@
 /**
- * Card faces → `data/dbs/cg/cards/{set}/{lang}/{card}/art.webp`.
+ * Card faces → `data/dragonball/cg/cards/{set}/{lang}/{card}/art.webp`.
  *
  * One face per printing *in its own language*, filed per locale. dbscards
  * leads at 400x560, Bandai's own 260x363 stands in. English Deckplanet faces
@@ -48,8 +48,8 @@ import {
   lookupDbscardsEntry,
   type DbscardsIndex,
   type DbscardsIndexEntry,
-} from "@/providers/dragonball/shared/dbscards/list";
-import { dbscardsIndexPath } from "@/providers/dragonball/shared/dbscards/scrapeList";
+} from "@/providers/shared/tcgcards/list";
+import { dbscardsIndexPath } from "@/providers/shared/tcgcards/scrapeList";
 import {
   dbsFaceFileOf,
   dbsFaceFilename,
@@ -65,7 +65,6 @@ import {
   DBS_CG_FACE_LANGS,
   DBS_CG_PACK_ID,
   dbsCgCardFolder,
-  exportDbsCgCardsIndexJson,
   loadDbsCgIndex,
 } from "../indexStore";
 import { formatDbsCollectorNumber } from "../identity";
@@ -800,15 +799,8 @@ export async function fetchDbsCgFaces(
     order,
   );
 
-  const indexPath = dataPackPath(DBS_CG_PACK_ID, "cards-index.json");
-  exportDbsCgCardsIndexJson(
-    loaded.prints,
-    loaded.titles,
-    loaded.assets,
-    indexPath,
-  );
   console.log(
-    `── faces ok=${stats.ok} skip=${stats.skip} miss=${stats.miss} fail=${stats.fail} → ${indexPath}`,
+    `── faces ok=${stats.ok} skip=${stats.skip} miss=${stats.miss} fail=${stats.fail}`,
   );
   if (banned.has(PREFERRED_HOST) && remainingMs === 0) {
     /*

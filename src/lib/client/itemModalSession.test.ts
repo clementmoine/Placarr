@@ -78,6 +78,28 @@ describe("itemModalSession", () => {
     expect(init.asyncInit).toBeNull();
   });
 
+  it("queues printKey-scoped preview for edit sessions so Images can list catalogue faces", () => {
+    const init = buildItemModalSessionInit({
+      shelfId: "shelf-naruto",
+      activeShelfForMedia: { type: "tcg", name: "Naruto" },
+      item: {
+        id: "item-1",
+        shelfId: "shelf-naruto",
+        name: "Haku",
+        storedName: "Haku",
+        printKey: "naruto:ni-0017",
+        condition: "used",
+        metadata: {
+          title: "Haku",
+          imageUrl:
+            "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+        },
+      } as never,
+    });
+
+    expect(init.asyncInit).toEqual({ kind: "preview", name: "Haku" });
+  });
+
   it("queues barcode lookup for prefilled scan sessions", () => {
     const init = buildItemModalSessionInit({
       shelfId: "shelf-1",

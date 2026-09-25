@@ -16,10 +16,12 @@ import {
 } from "./digitalOnly";
 import {
   __resetTcgdexSetLogoIndexForTests,
+  persistTcgdexSetLogoIndex,
   pokecardexFallbackGlyphCode,
   pokecardexSymbolUrl,
   refreshTcgdexSetLogoIndex,
   tcgdexCatalogueSetIdForProduct,
+  TCGDEX_SET_LOGOS_DOC_KEY,
   tcgdexLogoUrlForProduct,
   tcgdexLogoUrlForSetCode,
   tcgdexSetAssetUrl,
@@ -29,6 +31,7 @@ import {
   withTcgdexSetSymbols,
   type TcgdexSetLogoIndex,
 } from "./setLogos";
+import { readPackDocument } from "@/providers/shared/sealedProducts/productsSqlite";
 
 const FIXTURE: TcgdexSetLogoIndex = {
   version: 2,
@@ -648,5 +651,30 @@ describe("refreshTcgdexSetLogoIndex", () => {
     const reused = await refreshTcgdexSetLogoIndex({ dest });
     expect(reused.sets[0]?.officialAbbr).toBe("CRI");
     expect(httpGet).not.toHaveBeenCalled();
+  });
+});
+
+describe("persistTcgdexSetLogoIndex sqlite", () => {
+  let dir: string;
+  let dbPath: string;
+
+  beforeEach(() => {
+    __resetTcgdexSetLogoIndexForTests();
+    dir = mkdtempSync(path.join(os.tmpdir(), "tcgdex-logos-db-"));
+    dbPath = path.join(dir, "catalog.sqlite");
+  });
+
+  afterEach(() => {
+    __resetTcgdexSetLogoIndexForTests();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("round_trips_through_pack_documents", () => {
+    persistTcgdexSetLogoIndex(FIXTURE, { dbPath });
+    const back = readPackDocument<TcgdexSetLogoIndex>("pokemon", TCGDEX_SET_LOGOS_DOC_KEY, {
+      dbPath,
+    });
+    expect(back?.sets).toHaveLength(FIXTURE.sets.length);
+    expect(back?.sets[0]?.officialAbbr).toBe(FIXTURE.sets[0]?.officialAbbr);
   });
 });

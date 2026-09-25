@@ -18,6 +18,13 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
+import {
+  catalogArtefactIsFresh,
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  readCatalogIngestLedger,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import {
@@ -41,6 +48,7 @@ import {
 const LEDGER_FILE = "dragonball-center.json";
 const STAGING_FOLDER = "dbc-faces";
 const SOURCE_ID = "dbc";
+const ARTEFACT_ID = "lamincards:dbc-faces";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 const DELAY_MS = 200;
@@ -77,6 +85,11 @@ export function readDbcFacesLedger(): DbcFacesLedger {
 
 export function dbcFacesStagingDir(): string {
   return path.join(packStagingDir(DBS_LAMINCARDS_PACK_ID), STAGING_FOLDER);
+}
+
+/** Stable hash from curated DBC series ledger — survives staging purge. */
+export function dbcFacesContentHash(): string {
+  return hashCatalogArtefactBytes(readFileSync(dbcFacesLedgerPath()));
 }
 
 function seriesStagingDir(setCode: string, stagingRoot?: string): string {
@@ -282,6 +295,20 @@ export async function harvestDbcFaces(
     argv?: readonly string[];
   } = {},
 ): Promise<DbcHarvest> {
+  const contentHash = dbcFacesContentHash();
+  if (
+    !opts.force &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(
+        packCatalogIngestLedgerPath(DBS_LAMINCARDS_PACK_ID),
+      ),
+      ARTEFACT_ID,
+      contentHash,
+    )
+  ) {
+    return { series: 0, cards: 0, ok: 0, skip: 0, fail: 0 };
+  }
+
   const ledger = readDbcFacesLedger();
   const seriesList = enabledDbcSeries(ledger, opts.argv ?? []);
   const stagingRoot = opts.stagingDir ?? dbcFacesStagingDir();
@@ -340,9 +367,24 @@ export function installDbcFaces(
   index: LocalPrintsIndex,
   opts: { stagingDir?: string; argv?: readonly string[] } = {},
 ): DbcSeedReport {
+  const contentHash = dbcFacesContentHash();
+  const stagingRoot = opts.stagingDir ?? dbcFacesStagingDir();
+  if (
+    !opts.stagingDir &&
+    !existsSync(stagingRoot) &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(
+        packCatalogIngestLedgerPath(DBS_LAMINCARDS_PACK_ID),
+      ),
+      ARTEFACT_ID,
+      contentHash,
+    )
+  ) {
+    return { prints: 0, titles: 0, faces: 0, missing: [] };
+  }
+
   const ledger = readDbcFacesLedger();
   const seriesList = enabledDbcSeries(ledger, opts.argv ?? []);
-  const stagingRoot = opts.stagingDir ?? dbcFacesStagingDir();
   let prints = 0;
   let titles = 0;
   let faces = 0;
@@ -432,5 +474,15 @@ export function installDbcFaces(
   }
 
   if (assets.length) index.writeAssets(assets);
+
+  if (faces > 0 && missing.length === 0 && !opts.stagingDir) {
+    recordCatalogPromoteAndPurgeStaging({
+      ledgerPath: packCatalogIngestLedgerPath(DBS_LAMINCARDS_PACK_ID),
+      artefactId: ARTEFACT_ID,
+      contentHash: dbcFacesContentHash(),
+      stagingPath: stagingRoot,
+    });
+  }
+
   return { prints, titles, faces, missing };
 }

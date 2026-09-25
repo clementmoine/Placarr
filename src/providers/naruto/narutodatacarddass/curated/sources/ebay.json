@@ -1,6 +1,6 @@
 {
   "source": "i.ebayimg.com listing photos (collector pastes)",
-  "observed": "2026-09-14",
+  "observed": "2026-09-19",
   "note": "Browser/Flare scrape: mikanshopja (2026-09) + takumisouljapan/japangoodsstoretakumi narutimate (ebay.fr, 2026-09-14). CDN s-l1600 only. Dig: ebay-mikan-… + ebay-takumi-narutimate-hunt-2026-09-14.json.",
   "ingestCollection": false,
   "seller": {
@@ -4160,6 +4160,989 @@
       "staging": "staging/ebay/nx-92-ja.webp",
       "ingest": false,
       "seller": "takumisouljapan"
+    },
+    {
+      "printedRef": "DN-174T",
+      "lang": "ja",
+      "title": "suivre Rock Lee NARUTO Card Very Rare BANDAI Japanese very rare DN-174T F/S",
+      "listing": "https://www.ebay.fr/itm/185382412157",
+      "imageId": "xHQAAOSwm3tiVSLj",
+      "url": "https://i.ebayimg.com/images/g/xHQAAOSwm3tiVSLj/s-l1600.webp",
+      "staging": "staging/ebay/dn-174t-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "DNP-30",
+      "lang": "ja",
+      "title": "suivre Naruto Promo Card 2006 Jump Festa DNP-030 DMP-000 Narultimate Mission Data Card",
+      "listing": "https://www.ebay.fr/itm/187160174473",
+      "imageId": "fXoAAOSwvP5oBaQ7",
+      "url": "https://i.ebayimg.com/images/g/fXoAAOSwvP5oBaQ7/s-l1600.webp",
+      "staging": "staging/ebay/dnp-30-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-206",
+      "lang": "ja",
+      "title": "suivre Shikamaru Nara Naruto Card Very Rare BANDAI Japanese Japan NF-206 F/S",
+      "listing": "https://www.ebay.fr/itm/185368249354",
+      "imageId": "Ig0AAOSwIV9iSBcv",
+      "url": "https://i.ebayimg.com/images/g/Ig0AAOSwIV9iSBcv/s-l1600.webp",
+      "staging": "staging/ebay/nf-206-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-232",
+      "lang": "ja",
+      "title": "suivre NARUTO CARD GAME Amaterasu Itachi Uchiha Jutsu-178 Rare BANDAI Japanese NF-232",
+      "listing": "https://www.ebay.fr/itm/187160292490",
+      "imageId": "ZLsAAOSwtKxoBbXq",
+      "url": "https://i.ebayimg.com/images/g/ZLsAAOSwtKxoBbXq/s-l1600.webp",
+      "staging": "staging/ebay/nf-232-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-278",
+      "lang": "ja",
+      "title": "suivre Temari NF-278 Nartimet Formation NARUTO Card Japanese",
+      "listing": "https://www.ebay.fr/itm/185231209604",
+      "imageId": "y5AAAOSwYh5hyP5k",
+      "url": "https://i.ebayimg.com/images/g/y5AAAOSwYh5hyP5k/s-l1600.webp",
+      "staging": "staging/ebay/nf-278-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-302",
+      "lang": "ja",
+      "title": "suivre Nara Shikamaru NF-302 Nartimet Formation NARUTO Card Japanese",
+      "listing": "https://www.ebay.fr/itm/185232192192",
+      "imageId": "ZnwAAOSwYHNhyckl",
+      "url": "https://i.ebayimg.com/images/g/ZnwAAOSwYHNhyckl/s-l1600.webp",
+      "staging": "staging/ebay/nf-302-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-31",
+      "lang": "ja",
+      "title": "suivre ZABUZA MOMOCHI Naruto Card Very Rare BANDAI Japanese Japan NF-031",
+      "listing": "https://www.ebay.fr/itm/185368172115",
+      "imageId": "rjsAAOSwYM9iSAiK",
+      "url": "https://i.ebayimg.com/images/g/rjsAAOSwYM9iSAiK/s-l1600.webp",
+      "staging": "staging/ebay/nf-31-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-78",
+      "lang": "ja",
+      "title": "suivre kankuro Naruto Card Very Rare BANDAI Japanese Japan NF-078 F/S",
+      "listing": "https://www.ebay.fr/itm/185368656712",
+      "imageId": "jKoAAOSwoFZiSGb8",
+      "url": "https://i.ebayimg.com/images/g/jKoAAOSwoFZiSGb8/s-l1600.webp",
+      "staging": "staging/ebay/nf-78-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-92",
+      "lang": "ja",
+      "title": "suivre Sakon Naruto Card Very Rare BANDAI Japanese Japan NF-092 F/S",
+      "listing": "https://www.ebay.fr/itm/185371601666",
+      "imageId": "XrQAAOSwMBZiSuen",
+      "url": "https://i.ebayimg.com/images/g/XrQAAOSwMBZiSuen/s-l1600.webp",
+      "staging": "staging/ebay/nf-92-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-133",
+      "lang": "ja",
+      "title": "suivre Deidara NX-133 Naruto Card Game From Japan BANDAI 2009 With trackinJapanese Rare",
+      "listing": "https://www.ebay.fr/itm/187151284059",
+      "imageId": "1eYAAOSwGBJoARF0",
+      "url": "https://i.ebayimg.com/images/g/1eYAAOSwGBJoARF0/s-l1600.webp",
+      "staging": "staging/ebay/nx-133-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-255",
+      "lang": "ja",
+      "title": "suivre Kakashi Hatake Naruto Card Very Rare BANDAI Japanese Japan NX-255",
+      "listing": "https://www.ebay.fr/itm/185368203717",
+      "imageId": "kWAAAOSwvv1iSAtr",
+      "url": "https://i.ebayimg.com/images/g/kWAAAOSwvv1iSAtr/s-l1600.webp",
+      "staging": "staging/ebay/nx-255-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-277",
+      "lang": "ja",
+      "title": "suivre Kotetsu Hagane Naruto Card Very Rare BANDAI Japanese Japan NX-277",
+      "listing": "https://www.ebay.fr/itm/185368174056",
+      "imageId": "wtwAAOSwbW1iSAkT",
+      "url": "https://i.ebayimg.com/images/g/wtwAAOSwbW1iSAkT/s-l1600.webp",
+      "staging": "staging/ebay/nx-277-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-16",
+      "lang": "ja",
+      "title": "suivre Naruto Card Might Guy NF-016 Ninja Very Rare BANDAI Japan Anime F/S",
+      "listing": "https://www.ebay.fr/itm/185397577203",
+      "imageId": "dnwAAOSwh3ViZB4d",
+      "url": "https://i.ebayimg.com/images/g/dnwAAOSwh3ViZB4d/s-l1600.webp",
+      "staging": "staging/ebay/nf-16-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-162",
+      "lang": "ja",
+      "title": "suivre Kakashi Hatake Naruto Card Very Rare BANDAI Japanese Japan NF-162",
+      "listing": "https://www.ebay.fr/itm/185368182525",
+      "imageId": "5V0AAOSw0kFiSAqR",
+      "url": "https://i.ebayimg.com/images/g/5V0AAOSw0kFiSAqR/s-l1600.webp",
+      "staging": "staging/ebay/nf-162-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-224",
+      "lang": "ja",
+      "title": "suivre Tenten Naruto Card Very Rare BANDAI Japanese Japan NF-224 F/S",
+      "listing": "https://www.ebay.fr/itm/185368575546",
+      "imageId": "lqYAAOSwHr9iSFjX",
+      "url": "https://i.ebayimg.com/images/g/lqYAAOSwHr9iSFjX/s-l1600.webp",
+      "staging": "staging/ebay/nf-224-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-227",
+      "lang": "ja",
+      "title": "suivre Temari Naruto Card Very Rare BANDAI Japanese Japan NF-227 F/S",
+      "listing": "https://www.ebay.fr/itm/185368522724",
+      "imageId": "onoAAOSw0qRiSEuw",
+      "url": "https://i.ebayimg.com/images/g/onoAAOSw0qRiSEuw/s-l1600.webp",
+      "staging": "staging/ebay/nf-227-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-62",
+      "lang": "ja",
+      "title": "suivre Shikamaru Nara Naruto Card Very Rare BANDAI Japanese Japan NF-062 F/S",
+      "listing": "https://www.ebay.fr/itm/185368244987",
+      "imageId": "BAIAAOSwpVBiSBaZ",
+      "url": "https://i.ebayimg.com/images/g/BAIAAOSwpVBiSBaZ/s-l1600.webp",
+      "staging": "staging/ebay/nf-62-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-1",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-001 Naruto Uzumaki",
+      "listing": "https://www.ebay.fr/itm/205454254478",
+      "imageId": "-88AAOSwiqZoEHN~",
+      "url": "https://i.ebayimg.com/images/g/-88AAOSwiqZoEHN~/s-l1600.webp",
+      "staging": "staging/ebay/nf-1-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-137",
+      "lang": "ja",
+      "title": "suivre Naruto Shippuden Sasori Ultimate Formation NF-137 Trading Card MP",
+      "listing": "https://www.ebay.fr/itm/377462364973",
+      "imageId": "CroAAeSw6xpqlshW",
+      "url": "https://i.ebayimg.com/images/g/CroAAeSw6xpqlshW/s-l1600.webp",
+      "staging": "staging/ebay/nf-137-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-147",
+      "lang": "ja",
+      "title": "suivre NARUTO Formation Jiraiya NF 147",
+      "listing": "https://www.ebay.fr/itm/147573399906",
+      "imageId": "KcQAAeSwpr5qqGT3",
+      "url": "https://i.ebayimg.com/images/g/KcQAAeSwpr5qqGT3/s-l1600.webp",
+      "staging": "staging/ebay/nf-147-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-151",
+      "lang": "ja",
+      "title": "suivre Naruto Naruto Ultimate Formation Cards Set Naruto Uzumaki NF151 NF152 NF153",
+      "listing": "https://www.ebay.fr/itm/820116732276",
+      "imageId": "szsAAeSweP9qpMUt",
+      "url": "https://i.ebayimg.com/images/g/szsAAeSweP9qpMUt/s-l1600.webp",
+      "staging": "staging/ebay/nf-151-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-152",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-152 SR Naruto Uzumaki &amp; Sai",
+      "listing": "https://www.ebay.fr/itm/386985449391",
+      "imageId": "~AIAAOSwmyRmOSm0",
+      "url": "https://i.ebayimg.com/images/g/~AIAAOSwmyRmOSm0/s-l1600.webp",
+      "staging": "staging/ebay/nf-152-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-156",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Formation Haruno Sakura NF 156",
+      "listing": "https://www.ebay.fr/itm/147581995445",
+      "imageId": "cUgAAeSwM-xqrSnu",
+      "url": "https://i.ebayimg.com/images/g/cUgAAeSwM-xqrSnu/s-l1600.webp",
+      "staging": "staging/ebay/nf-156-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-186",
+      "lang": "ja",
+      "title": "suivre Tsunade NARUTO Formation NF 186",
+      "listing": "https://www.ebay.fr/itm/147579977039",
+      "imageId": "MngAAeSw2WZqq~tW",
+      "url": "https://i.ebayimg.com/images/g/MngAAeSw2WZqq~tW/s-l1600.webp",
+      "staging": "staging/ebay/nf-186-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-190",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Ultimate Formation Itachi Uchiha NF-190 Trading Card",
+      "listing": "https://www.ebay.fr/itm/377503185653",
+      "imageId": "FboAAeSwahRqq-as",
+      "url": "https://i.ebayimg.com/images/g/FboAAeSwahRqq-as/s-l1600.webp",
+      "staging": "staging/ebay/nf-190-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-193",
+      "lang": "ja",
+      "title": "suivre Naruto NF-193 Itachi Uchiha Holo Akatsuki Rare Narutimate Formation Card JDM",
+      "listing": "https://www.ebay.fr/itm/407170768963",
+      "imageId": "HvAAAeSwWIxqjpyM",
+      "url": "https://i.ebayimg.com/images/g/HvAAAeSwWIxqjpyM/s-l1600.webp",
+      "staging": "staging/ebay/nf-193-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-195",
+      "lang": "ja",
+      "title": "suivre Naruto Ultimate Formation Deidara NF-195 Trading Card MP Slight Damage",
+      "listing": "https://www.ebay.fr/itm/377460387060",
+      "imageId": "W64AAeSwkhFqlaNf",
+      "url": "https://i.ebayimg.com/images/g/W64AAeSwkhFqlaNf/s-l1600.webp",
+      "staging": "staging/ebay/nf-195-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-196",
+      "lang": "ja",
+      "title": "suivre NF-196 Sasori Naruto Data Card Ultimate Formation",
+      "listing": "https://www.ebay.fr/itm/176661015083",
+      "imageId": "TQUAAOSwN1NnJzXX",
+      "url": "https://i.ebayimg.com/images/g/TQUAAOSwN1NnJzXX/s-l1600.webp",
+      "staging": "staging/ebay/nf-196-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-201",
+      "lang": "ja",
+      "title": "suivre Naruto Ultimate Formation Naruto Sasuke NF-201",
+      "listing": "https://www.ebay.fr/itm/137692628468",
+      "imageId": "mXYAAeSwxqFqmNIQ",
+      "url": "https://i.ebayimg.com/images/g/mXYAAeSwxqFqmNIQ/s-l1600.webp",
+      "staging": "staging/ebay/nf-201-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-202",
+      "lang": "ja",
+      "title": "suivre Naruto Uzumaki Naruto Ultimate Formation NF-202 Japanese Trading Card NM",
+      "listing": "https://www.ebay.fr/itm/377485548380",
+      "imageId": "UCsAAeSwtQFqoju6",
+      "url": "https://i.ebayimg.com/images/g/UCsAAeSwtQFqoju6/s-l1600.webp",
+      "staging": "staging/ebay/nf-202-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-210",
+      "lang": "ja",
+      "title": "suivre Kakashi Hatake NF-210 Rare Naruto Tsumetete Formation Japanese Card Bandai",
+      "listing": "https://www.ebay.fr/itm/800604153946",
+      "imageId": "gicAAeSwndxqmM4U",
+      "url": "https://i.ebayimg.com/images/g/gicAAeSwndxqmM4U/s-l1600.webp",
+      "staging": "staging/ebay/nf-210-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-216",
+      "lang": "ja",
+      "title": "suivre Yamanaka Ino Naruto Ultimate Formation NF-216 Trading Card",
+      "listing": "https://www.ebay.fr/itm/377505246236",
+      "imageId": "SQIAAeSwamhqrOhq",
+      "url": "https://i.ebayimg.com/images/g/SQIAAeSwamhqrOhq/s-l1600.webp",
+      "staging": "staging/ebay/nf-216-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-220",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-220 Neji Hyūga",
+      "listing": "https://www.ebay.fr/itm/205456257968",
+      "imageId": "PbQAAOSwskRoEc1L",
+      "url": "https://i.ebayimg.com/images/g/PbQAAOSwskRoEc1L/s-l1600.webp",
+      "staging": "staging/ebay/nf-220-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-236",
+      "lang": "ja",
+      "title": "suivre NF-236 Sasori NARUTO Ultimate Formation Card Game",
+      "listing": "https://www.ebay.fr/itm/176395192857",
+      "imageId": "z9IAAOSwT5JmUyVz",
+      "url": "https://i.ebayimg.com/images/g/z9IAAOSwT5JmUyVz/s-l1600.webp",
+      "staging": "staging/ebay/nf-236-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-244",
+      "lang": "ja",
+      "title": "suivre NARUTO Formation Jiraiya NF 244 G en Rasengan",
+      "listing": "https://www.ebay.fr/itm/147575249047",
+      "imageId": "a6wAAeSwXz1qqX41",
+      "url": "https://i.ebayimg.com/images/g/a6wAAeSwXz1qqX41/s-l1600.webp",
+      "staging": "staging/ebay/nf-244-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-248",
+      "lang": "ja",
+      "title": "suivre Ultimate Formation Itachi Uchiha Naruto Card NF-248 MP Used",
+      "listing": "https://www.ebay.fr/itm/377461673742",
+      "imageId": "takAAeSwvr5qlnJP",
+      "url": "https://i.ebayimg.com/images/g/takAAeSwvr5qlnJP/s-l1600.webp",
+      "staging": "staging/ebay/nf-248-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-249",
+      "lang": "ja",
+      "title": "suivre Naruto Narutimate formation Card Game Naruto Uzumaki NF-249 BANDAI 2008 Japan",
+      "listing": "https://www.ebay.fr/itm/318672149967",
+      "imageId": "d-4AAeSwAY9qcKVV",
+      "url": "https://i.ebayimg.com/images/g/d-4AAeSwAY9qcKVV/s-l1600.webp",
+      "staging": "staging/ebay/nf-249-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-250",
+      "lang": "ja",
+      "title": "suivre NARUTO Sasuke Uchiha Trading Card NF-250 Ultimate Formation Series",
+      "listing": "https://www.ebay.fr/itm/206548224527",
+      "imageId": "XCIAAeSw9VxqoqHf",
+      "url": "https://i.ebayimg.com/images/g/XCIAAeSw9VxqoqHf/s-l1600.webp",
+      "staging": "staging/ebay/nf-250-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-259",
+      "lang": "ja",
+      "title": "suivre Rare NARUTO Ultimate Formation Hatake Kakashi NF-259",
+      "listing": "https://www.ebay.fr/itm/398356946885",
+      "imageId": "CyAAAeSwIK1qmip4",
+      "url": "https://i.ebayimg.com/images/g/CyAAAeSwIK1qmip4/s-l1600.webp",
+      "staging": "staging/ebay/nf-259-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-279",
+      "lang": "ja",
+      "title": "suivre 2008 Bandai Carddass Naruto: Narutimate Formation Japanese Itachi Uchiha #NF-279",
+      "listing": "https://www.ebay.fr/itm/318874538548",
+      "imageId": "~iMAAeSw9TBqqWEJ",
+      "url": "https://i.ebayimg.com/images/g/~iMAAeSw9TBqqWEJ/s-l1600.webp",
+      "staging": "staging/ebay/nf-279-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-280",
+      "lang": "ja",
+      "title": "suivre 2008 Naruto Data Carddass Itachi NF-280 SR Narutimate Formation Ch.5 Bandai",
+      "listing": "https://www.ebay.fr/itm/128087263795",
+      "imageId": "WUwAAeSwpr5qrkG7",
+      "url": "https://i.ebayimg.com/images/g/WUwAAeSwpr5qrkG7/s-l1600.webp",
+      "staging": "staging/ebay/nf-280-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-290",
+      "lang": "ja",
+      "title": "suivre NARUTO Orochimaru Ultimate Formation Trading Card NF-290 UR Hologram",
+      "listing": "https://www.ebay.fr/itm/206548224515",
+      "imageId": "XMgAAeSwqMhqoqHf",
+      "url": "https://i.ebayimg.com/images/g/XMgAAeSwqMhqoqHf/s-l1600.webp",
+      "staging": "staging/ebay/nf-290-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-295",
+      "lang": "ja",
+      "title": "suivre NARUTO Ultimate Formation Naruto Uzumaki NF-295",
+      "listing": "https://www.ebay.fr/itm/377436051553",
+      "imageId": "lL8AAeSwN0tqhy3k",
+      "url": "https://i.ebayimg.com/images/g/lL8AAeSwN0tqhy3k/s-l1600.webp",
+      "staging": "staging/ebay/nf-295-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-296",
+      "lang": "ja",
+      "title": "suivre Naruto Ultimate Formation Naruto Uzumaki Uncontrollable Power NF-296 Trading Car",
+      "listing": "https://www.ebay.fr/itm/377470139724",
+      "imageId": "cOcAAeSw5eVqmqBS",
+      "url": "https://i.ebayimg.com/images/g/cOcAAeSw5eVqmqBS/s-l1600.webp",
+      "staging": "staging/ebay/nf-296-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-299",
+      "lang": "ja",
+      "title": "suivre NARUTO Formation Uchiha Sasuke NF 299 Cursed Power",
+      "listing": "https://www.ebay.fr/itm/318833990616",
+      "imageId": "364AAeSwE~FqnWRV",
+      "url": "https://i.ebayimg.com/images/g/364AAeSwE~FqnWRV/s-l1600.webp",
+      "staging": "staging/ebay/nf-299-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-3",
+      "lang": "ja",
+      "title": "suivre NARUTO Uzumaki Naruto Formation NF 003",
+      "listing": "https://www.ebay.fr/itm/147584465792",
+      "imageId": "jNYAAeSwq8Rqrp4G",
+      "url": "https://i.ebayimg.com/images/g/jNYAAeSwq8Rqrp4G/s-l1600.webp",
+      "staging": "staging/ebay/nf-3-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-30",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-030 Haku",
+      "listing": "https://www.ebay.fr/itm/205456256029",
+      "imageId": "vbgAAOSwLxBoEc0E",
+      "url": "https://i.ebayimg.com/images/g/vbgAAOSwLxBoEc0E/s-l1600.webp",
+      "staging": "staging/ebay/nf-30-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-304",
+      "lang": "ja",
+      "title": "suivre NARUTO Formation Gaara Shippuden NF 304 Card",
+      "listing": "https://www.ebay.fr/itm/147581995668",
+      "imageId": "RI8AAeSw-1xqrSnu",
+      "url": "https://i.ebayimg.com/images/g/RI8AAeSw-1xqrSnu/s-l1600.webp",
+      "staging": "staging/ebay/nf-304-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-326",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Formation First Hokage Senju Hashirama NF 326",
+      "listing": "https://www.ebay.fr/itm/147584467355",
+      "imageId": "cPIAAeSw~n5qrp4x",
+      "url": "https://i.ebayimg.com/images/g/cPIAAeSw~n5qrp4x/s-l1600.webp",
+      "staging": "staging/ebay/nf-326-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-337",
+      "lang": "ja",
+      "title": "suivre PSA9 NF-337 Itachi Uchiha NARUTO Shippuden Ultimate Formation Carddass",
+      "listing": "https://www.ebay.fr/itm/178265962025",
+      "imageId": "9iUAAeSw5XRqQjrr",
+      "url": "https://i.ebayimg.com/images/g/9iUAAeSw5XRqQjrr/s-l1600.webp",
+      "staging": "staging/ebay/nf-337-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-339",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Formation Uchiha Itachi NF 339",
+      "listing": "https://www.ebay.fr/itm/318823204281",
+      "imageId": "PMkAAeSwsoRqmkdc",
+      "url": "https://i.ebayimg.com/images/g/PMkAAeSwsoRqmkdc/s-l1600.webp",
+      "staging": "staging/ebay/nf-339-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-344",
+      "lang": "ja",
+      "title": "suivre NARUTO Formation NF 344 Orochimaru Edo Tensei",
+      "listing": "https://www.ebay.fr/itm/147581995530",
+      "imageId": "MhgAAeSwDZhqrSnq",
+      "url": "https://i.ebayimg.com/images/g/MhgAAeSwDZhqrSnq/s-l1600.webp",
+      "staging": "staging/ebay/nf-344-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-44",
+      "lang": "ja",
+      "title": "suivre Naruto Shippuden Ultimate Formation NF-044 Kimimaro",
+      "listing": "https://www.ebay.fr/itm/205912143755",
+      "imageId": "TiAAAeSwe5ZpNZgj",
+      "url": "https://i.ebayimg.com/images/g/TiAAAeSwe5ZpNZgj/s-l1600.webp",
+      "staging": "staging/ebay/nf-44-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-51",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Formation Uzumaki Naruto NF 051",
+      "listing": "https://www.ebay.fr/itm/147575391142",
+      "imageId": "dkEAAeSwHYBqqY8w",
+      "url": "https://i.ebayimg.com/images/g/dkEAAeSwHYBqqY8w/s-l1600.webp",
+      "staging": "staging/ebay/nf-51-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-52",
+      "lang": "ja",
+      "title": "suivre Naruto Ultimate Formation Card Naruto Uzumaki Shinobi W NF-052 BANDAI Japan",
+      "listing": "https://www.ebay.fr/itm/318672188993",
+      "imageId": "yHwAAeSw8OVqcKbZ",
+      "url": "https://i.ebayimg.com/images/g/yHwAAeSw8OVqcKbZ/s-l1600.webp",
+      "staging": "staging/ebay/nf-52-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-53",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-053 Naruto Uzumaki",
+      "listing": "https://www.ebay.fr/itm/388345021602",
+      "imageId": "A4AAAOSw0ENoEcly",
+      "url": "https://i.ebayimg.com/images/g/A4AAAOSw0ENoEcly/s-l1600.webp",
+      "staging": "staging/ebay/nf-53-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-54",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Formation Uzumaki Naruto NF 054",
+      "listing": "https://www.ebay.fr/itm/318818140104",
+      "imageId": "DUsAAeSwzbZqmPC3",
+      "url": "https://i.ebayimg.com/images/g/DUsAAeSwzbZqmPC3/s-l1600.webp",
+      "staging": "staging/ebay/nf-54-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-63",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-063 Shikamaru Nara",
+      "listing": "https://www.ebay.fr/itm/205456247167",
+      "imageId": "hE8AAOSw8ANoEcmg",
+      "url": "https://i.ebayimg.com/images/g/hE8AAOSw8ANoEcmg/s-l1600.webp",
+      "staging": "staging/ebay/nf-63-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-71",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-071 Rare Chōji Akimichi",
+      "listing": "https://www.ebay.fr/itm/205452207868",
+      "imageId": "8ssAAOSw0NBoDxfw",
+      "url": "https://i.ebayimg.com/images/g/8ssAAOSw0NBoDxfw/s-l1600.webp",
+      "staging": "staging/ebay/nf-71-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-9",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Formation NF-009 Shikamaru Nara",
+      "listing": "https://www.ebay.fr/itm/388340314652",
+      "imageId": "ELMAAOSwp7toEHPZ",
+      "url": "https://i.ebayimg.com/images/g/ELMAAOSwp7toEHPZ/s-l1600.webp",
+      "staging": "staging/ebay/nf-9-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NF-94",
+      "lang": "ja",
+      "title": "suivre NARUTO Ultimate Formation NF-094 Orochimaru Holo Card Japanese Bandai",
+      "listing": "https://www.ebay.fr/itm/147584404625",
+      "imageId": "-S0AAeSwDTZqrpRC",
+      "url": "https://i.ebayimg.com/images/g/-S0AAeSwDTZqrpRC/s-l1600.webp",
+      "staging": "staging/ebay/nf-94-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "DN-210T",
+      "lang": "ja",
+      "title": "DN-210T",
+      "listing": "https://www.ebay.fr/itm/227468484391",
+      "imageId": "EeYAAeSwn1JqeID0",
+      "url": "https://i.ebayimg.com/images/g/EeYAAeSwn1JqeID0/s-l1600.webp",
+      "staging": "staging/ebay/dn-210t-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-106",
+      "lang": "ja",
+      "title": "suivre Good Uchiha Sasuke Naruto Ultimate Cross Baku Rare Data Carddass NX-106",
+      "listing": "https://www.ebay.fr/itm/398356786093",
+      "imageId": "LNQAAeSwF5Bqmh2~",
+      "url": "https://i.ebayimg.com/images/g/LNQAAeSwF5Bqmh2~/s-l1600.webp",
+      "staging": "staging/ebay/nx-106-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-179",
+      "lang": "ja",
+      "title": "suivre Naruto Shippuden Ultimate Cross Itachi Uchiha Card Series NX-179 Attack 10000",
+      "listing": "https://www.ebay.fr/itm/820116731851",
+      "imageId": "6YQAAeSw0BhqpMUp",
+      "url": "https://i.ebayimg.com/images/g/6YQAAeSw0BhqpMUp/s-l1600.webp",
+      "staging": "staging/ebay/nx-179-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-197",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Ultimate Cross Sasuke Uchiha NX-197 card",
+      "listing": "https://www.ebay.fr/itm/820116732199",
+      "imageId": "igYAAeSwIWdqpMUr",
+      "url": "https://i.ebayimg.com/images/g/igYAAeSwIWdqpMUr/s-l1600.webp",
+      "staging": "staging/ebay/nx-197-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-199",
+      "lang": "ja",
+      "title": "suivre NARUTO Uchiha Sasuke Ultimate Cross nx-199",
+      "listing": "https://www.ebay.fr/itm/377441591344",
+      "imageId": "v04AAeSw0HxqipGM",
+      "url": "https://i.ebayimg.com/images/g/v04AAeSw0HxqipGM/s-l1600.webp",
+      "staging": "staging/ebay/nx-199-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-205",
+      "lang": "ja",
+      "title": "suivre NARUTO Card Ultimate Cross Sai NX-205 Trading Card Collectible",
+      "listing": "https://www.ebay.fr/itm/377466969576",
+      "imageId": "2cUAAeSwAKZqmP1a",
+      "url": "https://i.ebayimg.com/images/g/2cUAAeSwAKZqmP1a/s-l1600.webp",
+      "staging": "staging/ebay/nx-205-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-211",
+      "lang": "ja",
+      "title": "suivre NX-211 Jiraiya Naruto Ultimate Cross Data Carddass",
+      "listing": "https://www.ebay.fr/itm/176480646289",
+      "imageId": "vd0AAOSwU~BmmzNr",
+      "url": "https://i.ebayimg.com/images/g/vd0AAOSwU~BmmzNr/s-l1600.webp",
+      "staging": "staging/ebay/nx-211-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-265",
+      "lang": "ja",
+      "title": "suivre NARUTO Cross NX 265 Hyuga Neji Trading Card",
+      "listing": "https://www.ebay.fr/itm/147584465705",
+      "imageId": "UvcAAeSw-TFqrp4E",
+      "url": "https://i.ebayimg.com/images/g/UvcAAeSw-TFqrp4E/s-l1600.webp",
+      "staging": "staging/ebay/nx-265-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-282",
+      "lang": "ja",
+      "title": "suivre NARUTO Cross Pain Uchiha Itachi NX 282",
+      "listing": "https://www.ebay.fr/itm/318838695003",
+      "imageId": "cXEAAeSwks5qnro1",
+      "url": "https://i.ebayimg.com/images/g/cXEAAeSwks5qnro1/s-l1600.webp",
+      "staging": "staging/ebay/nx-282-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-283",
+      "lang": "ja",
+      "title": "NX-283",
+      "listing": "https://www.ebay.fr/itm/377442932297",
+      "imageId": "SNQAAeSwZDpqP8T3",
+      "url": "https://i.ebayimg.com/images/g/SNQAAeSwZDpqP8T3/s-l1600.webp",
+      "staging": "staging/ebay/nx-283-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-297",
+      "lang": "ja",
+      "title": "suivre Rare NARUTO Ultimate Cross Sasuke Naruto Sakura NX-297",
+      "listing": "https://www.ebay.fr/itm/398356766273",
+      "imageId": "pbIAAeSwehZqmhtX",
+      "url": "https://i.ebayimg.com/images/g/pbIAAeSwehZqmhtX/s-l1600.webp",
+      "staging": "staging/ebay/nx-297-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-298",
+      "lang": "ja",
+      "title": "suivre NX-298 Uzumaki Naruto &amp; Minato Naruto Data Carddass Ultimate Cross",
+      "listing": "https://www.ebay.fr/itm/176558487483",
+      "imageId": "iQUAAOSwFaxm17ZB",
+      "url": "https://i.ebayimg.com/images/g/iQUAAOSwFaxm17ZB/s-l1600.webp",
+      "staging": "staging/ebay/nx-298-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-300",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Ultimate Cross NX-300 Sasuke Trading Card Unused",
+      "listing": "https://www.ebay.fr/itm/377464199833",
+      "imageId": "BAYAAeSwKVhql6yS",
+      "url": "https://i.ebayimg.com/images/g/BAYAAeSwKVhql6yS/s-l1600.webp",
+      "staging": "staging/ebay/nx-300-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-302",
+      "lang": "ja",
+      "title": "suivre NARUTO Ultimate Cross Uchiha Sasuke NX-302",
+      "listing": "https://www.ebay.fr/itm/137718383946",
+      "imageId": "lUQAAeSww5ZqoY5-",
+      "url": "https://i.ebayimg.com/images/g/lUQAAeSww5ZqoY5-/s-l1600.webp",
+      "staging": "staging/ebay/nx-302-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-304",
+      "lang": "ja",
+      "title": "suivre NARUTO Cross Sai NX 304",
+      "listing": "https://www.ebay.fr/itm/147584465967",
+      "imageId": "jREAAeSwq8Rqrp4J",
+      "url": "https://i.ebayimg.com/images/g/jREAAeSwq8Rqrp4J/s-l1600.webp",
+      "staging": "staging/ebay/nx-304-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-305",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Cross NX-305 Super Rare Yamato",
+      "listing": "https://www.ebay.fr/itm/205448114952",
+      "imageId": "WQsAAOSw~fRoDHfB",
+      "url": "https://i.ebayimg.com/images/g/WQsAAOSw~fRoDHfB/s-l1600.webp",
+      "staging": "staging/ebay/nx-305-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-310",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Cross NX-310 Super Rare Jiraiya",
+      "listing": "https://www.ebay.fr/itm/388324694870",
+      "imageId": "3c0AAOSwxVVoDHfw",
+      "url": "https://i.ebayimg.com/images/g/3c0AAOSwxVVoDHfw/s-l1600.webp",
+      "staging": "staging/ebay/nx-310-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-321",
+      "lang": "ja",
+      "title": "suivre NARUTO Naruto Cross Hyuga Hinata NX 321 BANDAI 2010",
+      "listing": "https://www.ebay.fr/itm/147584467387",
+      "imageId": "hs8AAeSwd3Nqrp4r",
+      "url": "https://i.ebayimg.com/images/g/hs8AAeSwd3Nqrp4r/s-l1600.webp",
+      "staging": "staging/ebay/nx-321-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-325",
+      "lang": "ja",
+      "title": "suivre NX-325 Third Hokage Naruto Data Carddass Ultimate Cross",
+      "listing": "https://www.ebay.fr/itm/176558487926",
+      "imageId": "SvYAAOSwN0dm17ZZ",
+      "url": "https://i.ebayimg.com/images/g/SvYAAOSwN0dm17ZZ/s-l1600.webp",
+      "staging": "staging/ebay/nx-325-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-327",
+      "lang": "ja",
+      "title": "suivre NX-327 Yellow Flash Minato Uzumaki Naruto Data Carddass Ultimate Naruto Cross",
+      "listing": "https://www.ebay.fr/itm/178486485055",
+      "imageId": "6lIAAOSw5lpm17RK",
+      "url": "https://i.ebayimg.com/images/g/6lIAAOSw5lpm17RK/s-l1600.webp",
+      "staging": "staging/ebay/nx-327-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-330",
+      "lang": "ja",
+      "title": "suivre NARUTO Pain NX-330 Trading Card Series Ultimate Cross Near Mint Japan",
+      "listing": "https://www.ebay.fr/itm/377485548437",
+      "imageId": "6X8AAeSwWEVqoju7",
+      "url": "https://i.ebayimg.com/images/g/6X8AAeSwWEVqoju7/s-l1600.webp",
+      "staging": "staging/ebay/nx-330-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-331",
+      "lang": "ja",
+      "title": "suivre Naruto Shippuden Ultimate Cross Pain NX-331 LV5 Hologram Card NM",
+      "listing": "https://www.ebay.fr/itm/377499147842",
+      "imageId": "PjAAAeSw0Bhqqj8r",
+      "url": "https://i.ebayimg.com/images/g/PjAAAeSw0Bhqqj8r/s-l1600.webp",
+      "staging": "staging/ebay/nx-331-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-334",
+      "lang": "ja",
+      "title": "suivre Naruto Ultimate Cross Itachi Uchiha NX-334 Trading Card EX Bandai Japan",
+      "listing": "https://www.ebay.fr/itm/318681683053",
+      "imageId": "HnMAAeSwlDZqcyb6",
+      "url": "https://i.ebayimg.com/images/g/HnMAAeSwlDZqcyb6/s-l1600.webp",
+      "staging": "staging/ebay/nx-334-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-335",
+      "lang": "ja",
+      "title": "suivre Naruto Ultimate Cross Itachi Sasuke NX-335 Card New Unused",
+      "listing": "https://www.ebay.fr/itm/307156128554",
+      "imageId": "c2UAAeSw~vdqmDVz",
+      "url": "https://i.ebayimg.com/images/g/c2UAAeSw~vdqmDVz/s-l1600.webp",
+      "staging": "staging/ebay/nx-335-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-341",
+      "lang": "ja",
+      "title": "suivre NX-341 Zetsu Naruto Data Card Ultimate Cross",
+      "listing": "https://www.ebay.fr/itm/176661019775",
+      "imageId": "T0kAAOSwXIdnJzZM",
+      "url": "https://i.ebayimg.com/images/g/T0kAAOSwXIdnJzZM/s-l1600.webp",
+      "staging": "staging/ebay/nx-341-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NX-218",
+      "lang": "ja",
+      "title": "NX-218",
+      "listing": "https://www.ebay.fr/itm/365158049503",
+      "imageId": "QQ4AAOSwzDxm~x7K",
+      "url": "https://i.ebayimg.com/images/g/QQ4AAOSwzDxm~x7K/s-l1600.webp",
+      "staging": "staging/ebay/nx-218-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-131",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Mission NM-131 Tsunade",
+      "listing": "https://www.ebay.fr/itm/388360200243",
+      "imageId": "-d8AAOSwFKxoFbU8",
+      "url": "https://i.ebayimg.com/images/g/-d8AAOSwFKxoFbU8/s-l1600.webp",
+      "staging": "staging/ebay/nm-131-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-132",
+      "lang": "ja",
+      "title": "suivre NARUTO Ultimate Mission carddass Tsunade NM-132 holo RARE",
+      "listing": "https://www.ebay.fr/itm/307035839294",
+      "imageId": "rBEAAeSw505qRKml",
+      "url": "https://i.ebayimg.com/images/g/rBEAAeSw505qRKml/s-l1600.webp",
+      "staging": "staging/ebay/nm-132-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-140",
+      "lang": "ja",
+      "title": "suivre Naruto Uzumaki Data Carddass Ultimate Mission NM-140 Trading Card MP",
+      "listing": "https://www.ebay.fr/itm/377461566428",
+      "imageId": "bBMAAeSwNuRqlmHr",
+      "url": "https://i.ebayimg.com/images/g/bBMAAeSwNuRqlmHr/s-l1600.webp",
+      "staging": "staging/ebay/nm-140-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-146",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Mission NM-146 Explosive Rare Gaara",
+      "listing": "https://www.ebay.fr/itm/388369692155",
+      "imageId": "0WQAAOSwWrhoGFBP",
+      "url": "https://i.ebayimg.com/images/g/0WQAAOSwWrhoGFBP/s-l1600.webp",
+      "staging": "staging/ebay/nm-146-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-179",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Mission NM-179 Super Rare Kimimaro",
+      "listing": "https://www.ebay.fr/itm/388324705397",
+      "imageId": "c4oAAOSw~31oDHhE",
+      "url": "https://i.ebayimg.com/images/g/c4oAAOSw~31oDHhE/s-l1600.webp",
+      "staging": "staging/ebay/nm-179-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-23",
+      "lang": "ja",
+      "title": "suivre Naruto Data Carddass Narutimate Mission NM-023 Rare Hinata Hyūga",
+      "listing": "https://www.ebay.fr/itm/387219184034",
+      "imageId": "QnAAAOSw1xNmmq1M",
+      "url": "https://i.ebayimg.com/images/g/QnAAAOSw1xNmmq1M/s-l1600.webp",
+      "staging": "staging/ebay/nm-23-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NM-54",
+      "lang": "ja",
+      "title": "suivre NM-054 Uzumaki Naruto Rare Naruto Data Carddass Ultimate Mission",
+      "listing": "https://www.ebay.fr/itm/178034168022",
+      "imageId": "StQAAOSwEFBma8Z0",
+      "url": "https://i.ebayimg.com/images/g/StQAAOSwEFBma8Z0/s-l1600.webp",
+      "staging": "staging/ebay/nm-54-ja.webp",
+      "ingest": true
+    },
+    {
+      "printedRef": "NFP-016",
+      "diskId": "016",
+      "set": "nfp",
+      "title": "NFP-016 Naruto & Minato Promo Naruto Card Game Shippuden Japanese",
+      "listingUrl": "https://www.ebay.com/itm/175958813146",
+      "url": "https://i.ebayimg.com/images/g/1iYAAOSwbJ5lJ9PN/s-l1600.webp",
+      "imageId": "1iYAAOSwbJ5lJ9PN",
+      "ingest": true,
+      "note": "cardjpstore — NFP-016 verified on reverse photo"
+    },
+    {
+      "printedRef": "NXP-001",
+      "lang": "ja",
+      "title": "NXP-001 Naruto Uzumaki Promo Naruto Card Game Japanese",
+      "listing": "https://www.ebay.com/itm/178336944058",
+      "url": "https://i.ebayimg.com/images/g/D2YAAeSw2~5qYdlK/s-l1600.webp",
+      "imageId": "D2YAAeSw2~5qYdlK",
+      "ingest": true,
+      "note": "cardjpstore — NXP-001 verified"
+    },
+    {
+      "printedRef": "NXP-004",
+      "lang": "ja",
+      "title": "NXP-004 Itachi from lot",
+      "listing": "https://www.ebay.com/itm/176898643807",
+      "imageId": "evoAAOSwJthnyX~d",
+      "url": "https://i.ebayimg.com/images/g/evoAAOSwJthnyX~d/s-l1600.webp",
+      "staging": "staging/ebay/nxp-004-ja-cardjpstore.webp",
+      "ingest": true,
+      "note": "cardjpstore lot crop — NXP-004 verified 2026-09-21"
+    },
+    {
+      "printedRef": "NFC-002",
+      "lang": "ja",
+      "title": "NFC-002 Uchiha Sasuke Rare",
+      "listing": "https://www.ebay.com/itm/177657503162",
+      "imageId": "8UkAAOSw0xdh65NZ",
+      "url": "https://i.ebayimg.com/images/g/8UkAAOSw0xdh65NZ/s-l1600.webp",
+      "staging": "staging/ebay/nfc-002-ja-cardjpstore.webp",
+      "ingest": true,
+      "note": "cardjpstore — NFC-002 printed code verified; other listing thumbs wrong card"
     }
   ]
 }

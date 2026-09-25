@@ -9,7 +9,7 @@ import { listingLooksLikeConsoleSystemProduct } from "@/core/identify/listingMer
 import {
   detectVideoGamePlatformKey,
   getVideoGamePlatform,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 import { GENERIC_TITLE_TOKENS } from "./parse";
 
 /**

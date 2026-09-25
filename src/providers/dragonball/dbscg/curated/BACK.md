@@ -3,7 +3,7 @@
 | Fichier curated | `src/providers/dragonball/dbscg/curated/cards/back.webp`                                                      |
 | --------------- | -------------------------------------------------------------------------------------------------- |
 | Fichier data    | `cards/back.webp` (copie)                                                                          |
-| URL             | `/assets/dbs/cg/cards/back.webp`                                                                   |
+| URL             | `/assets/dragonball/cg/cards/back.webp`                                                                   |
 | Taille          | 400×560 WebP                                                                                       |
 | Source          | [dbscards.fr](https://www.dbscards.fr/) `static.dbscards.fr/cards/original/back.webp` (2026-08-14) |
 
@@ -20,6 +20,6 @@ sans vérif.
 
 ## Règle
 
-- Rejouer : Catalogue Sync copie curated → `data/dbs/cg/cards/back.webp`.
+- Rejouer : Catalogue Sync copie curated → `data/dragonball/cg/cards/back.webp`.
 - Si Bandai publie un dos isolé, remplacer curated et noter l’URL ici.
 - Ne pas confondre avec `{id}_b.png` / `{id}-back.webp` **par carte** (éveil Leader).

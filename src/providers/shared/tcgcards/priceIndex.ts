@@ -19,6 +19,13 @@ export type DbscardsPriceCard = {
   currency: string;
   sourceUrl: string | null;
   lang: string | null;
+  /** *cards.fr Symfony item id — stable shop handle for re-fetch / deep link. */
+  shopItemId?: string | null;
+  /**
+   * Thirty-day Cardmarket move from the list tile, in EUR cents
+   * (positive = up). Null when the site quotes none.
+   */
+  priceDeltaCents?: number | null;
 };
 
 export type DbscardsPriceIndex = Record<string, DbscardsPriceCard>;
@@ -88,6 +95,32 @@ function euroToCents(price: number | null | undefined): number | null {
     return null;
   }
   return Math.round(price * 100);
+}
+
+/** Signed EUR delta → cents (0,00 € move stays 0). */
+function euroDeltaToCents(delta: number | null | undefined): number | null {
+  if (typeof delta !== "number" || !Number.isFinite(delta)) return null;
+  return Math.round(delta * 100);
+}
+
+function cardFromTile(
+  tile: DbscardsTile,
+  printKey: string,
+  origin: string,
+  cents: number,
+): DbscardsPriceCard {
+  const shopItemId = tile.itemId?.trim() || null;
+  const priceDeltaCents = euroDeltaToCents(tile.priceDelta);
+  return {
+    printKey,
+    name: tile.name.trim() || printKey,
+    priceCents: cents,
+    currency: (tile.currency?.trim() || "EUR").toUpperCase(),
+    sourceUrl: cardUrl(origin, tile.slug),
+    lang: tile.lang,
+    ...(shopItemId ? { shopItemId } : {}),
+    ...(priceDeltaCents != null ? { priceDeltaCents } : {}),
+  };
 }
 
 function cardUrl(origin: string, slug: string): string | null {
@@ -162,14 +195,7 @@ export function priceIndexFromDbscardsTiles(
     const key = buildPrintKey(identity);
     if (!key) continue;
 
-    const card: DbscardsPriceCard = {
-      printKey: key,
-      name: tile.name.trim() || key,
-      priceCents: cents,
-      currency: (tile.currency?.trim() || "EUR").toUpperCase(),
-      sourceUrl: cardUrl(opts.origin, tile.slug),
-      lang: tile.lang,
-    };
+    const card = cardFromTile(tile, key, opts.origin, cents);
     putCard(index, key, card);
 
     if (opts.aliasSprAsPr && identity.grouping === "spr") {
@@ -205,14 +231,7 @@ export function priceIndexFromMappedTiles(
     putCard(
       index,
       key,
-      {
-        printKey: key,
-        name: tile.name.trim() || key,
-        priceCents: cents,
-        currency: (tile.currency?.trim() || "EUR").toUpperCase(),
-        sourceUrl: cardUrl(opts.origin, tile.slug),
-        lang: tile.lang,
-      },
+      cardFromTile(tile, key, opts.origin, cents),
       { preferHigherPrice: opts.preferHigherPrice ?? true },
     );
   }

@@ -38,10 +38,11 @@ const built = createEmptyLocalTcgProvider({
     effectPackId: DBS_LAMINCARDS_EFFECT_PACK_ID,
     printGame: DBS_LAMINCARDS_PRINT_GAME,
     defaultLanguage: "fr",
+    catalogLifecycle: "finished",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://web.archive.org/web/20070403094745id_/http://www.edibas.com/edibas_it/collezionabili_lista.aspx",
     notes:
-      "Edibas Lamincards (PVC) → `data/dbs/lamincards/`. Faces : Dragon Ball Center (`art.dbc.jpg`, séries Nero/Argento/Oro/Platino/Smeraldo/z2008). Coleka r4591 documenté mais mur Verifica. Distinct de Bandai Masters / Fusion World.",
+      "Edibas Lamincards (PVC) → `data/dragonball/lamincards/`. Faces : Dragon Ball Center (`art.dbc.jpg`, séries Nero/Argento/Oro/Platino/Smeraldo/z2008). Coleka r4591 documenté mais mur Verifica. Distinct de Bandai Masters / Fusion World.",
   },
   runPipeline: async (argv) => {
     const { runDbsLamincardsPackPipeline } = await import(

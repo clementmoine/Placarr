@@ -1,13 +1,11 @@
 /**
- * Côtes narutocardgame.gg pour Kayou — index staging → printKey via cards-index.
+ * Côtes narutocardgame.gg pour Kayou — index staging → printKey via cards-index doc.
  */
 
-import { existsSync, readFileSync } from "node:fs";
-
 import type { PriceOfferInput } from "@/core/enrich/evidence";
-import { packCardsIndexPath } from "@/lib/packPaths";
-import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
+import type { BarcodePriceRefreshContext } from "@/types/providerModule";
+import { loadCardsIndexDoc } from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 import {
   kayouGgNumberToCard,
   refreshGgArchivePriceOffers,
@@ -23,14 +21,9 @@ let cardToPrintKey: Map<string, string> | null = null;
 function kayouCardIndex(): Map<string, string> {
   if (cardToPrintKey) return cardToPrintKey;
   const map = new Map<string, string>();
-  const file = packCardsIndexPath(NARUTO_KAYOU_PACK_ID);
-  if (!existsSync(file)) {
-    cardToPrintKey = map;
-    return map;
-  }
   try {
-    const index = JSON.parse(readFileSync(file, "utf8")) as CardsIndexV1;
-    for (const [printKey, entry] of Object.entries(index.cards ?? {})) {
+    const index = loadCardsIndexDoc(NARUTO_KAYOU_PACK_ID) as CardsIndexV1 | null;
+    for (const [printKey, entry] of Object.entries(index?.cards ?? {})) {
       const card = entry.card?.trim().toLowerCase();
       if (card) map.set(card, printKey);
     }

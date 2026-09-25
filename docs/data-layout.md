@@ -23,14 +23,13 @@ data/
     # lorcana/staging/set-logos.json      — wordmarks de chapitre (viewer)
     # lorcana/products/sets/{set12}/logo.png
     # pokemon/staging/pkmcards-products/  — Sync admin (même famille)
-    # pokemon/staging/tcgdex-set-logos.json — wordmarks d'extension (API)
+    # pokemon pack_documents.tcgdex-set-logos — wordmarks d'extension (API)
   # prévu, pas encore sur disque : onepiece/staging/opecards-products/,
   # yugioh/staging/ygocards-products/, mtg/staging/mtgcards-products/
   # (CLI famille ; pas encore de pack Catalogue ; mtg = rayon scellé mince)
   naruto/                          # franchise ombrelle
-    carddass/                      # un pack (Carddass + CCG). `naruto/en-ccg` = alias disque
-      catalog.sqlite | cards-index.json | products-index.json | appearances.json
-      facts-ja.json | facts-hinokunian.json   # relevés de titres JA
+    carddass/                      # un pack (Carddass FR/JA/IT + Bandai USA CCG)
+      catalog.sqlite
       cards/
         back.fr.webp | back.en.webp | …   # sleeve par langue (pas de back.webp générique)
         back.en.webp | back.it.webp | back.ja.webp
@@ -46,17 +45,17 @@ data/
           face.json
       staging/  carddass-fr/ | carddas-jp/ | bandaicg-en/ | goat-en-ccg/ | cardgameclub-it/ | coleka-s6-it/ | stop2shop-uns3/ …
       logs/
-    en-ccg/                        # alias → carddass (staging historique peut rester ici)
+    # `naruto/en-ccg` n'est plus un pack : alias URL → carddass ; dossier data/ legacy à migrer puis supprimer
     shippuden/                     # 「疾風伝 カードゲーム」 — autre jeu, autre pack
     ninja-ranks/                   # Panini / Inkworks Ninja Ranks (titres EN ; packshots en produits, éditions US Inkworks + EU Panini ; 2 faces échantillon)
       locale-specific-faces.json | prints.sqlite
     ultra-challenge/               # Panini Ultra Challenge (lamincards, 2007)
-  dbs/                             # franchise Dragon Ball Super
+  dragonball/                      # franchise Dragon Ball (Masters, FW, JCC, Heroes, Lamincards)
     cg/                            # Masters (provider dbscg)
       catalog.sqlite | cards-index.json | products-index.json
       facts.json | dbscards-fr.json | dbscards-en.json | scrape-summary.json
       backup/
-      cards/back.webp              → /assets/dbs/cg/cards/back.webp
+      cards/back.webp              → /assets/dragonball/cg/cards/back.webp
       cards/{set}/fr/{card}/art.webp   # dbscards / Bandai (FR)
       cards/{set}/en/{card}/art.webp   # clone TCG Arena / Deckplanet
       staging/dragon-ball-masters-arena/  # git clone, gitignored
@@ -65,7 +64,7 @@ data/
       logs/
     fw/                            # Fusion World (provider dbsfw)
       catalog.sqlite | cards-index.json | products-index.json
-      cards/back.webp              → /assets/dbs/fw/cards/back.webp
+      cards/back.webp              → /assets/dragonball/fw/cards/back.webp
       staging/dbscards-products/          # Sync admin Fusion World
       foil/full_foil_mask.webp
       logs/
@@ -79,7 +78,7 @@ data/
 `cards/{family}/{ni0001|n0001|nus0097}/{lang}/` — family = tri (`ninja`…), id = préfixe
 imprimé + numéro. NI et N sont **voisins**, pas la même carte. `N-US097` n’est
 pas `N-097` : disque `nus0097`, printKey `naruto:nus-0097`. La série (`s1`,
-`s28`) est une apparition dans `catalog.sqlite` / `appearances.json`, pas un
+`s28`) est une apparition dans `catalog.sqlite` (`pack_documents.appearances`), pas un
 dossier. printKey : `naruto:ni-0001` / `naruto:n-0001` / `naruto:nus-0097`
 (alias `sN-*`).
 `printed=false` (S6 FR) : visible au catalogue, absent du picker.
@@ -107,8 +106,8 @@ autorisé** dans `curated/` comme documentation locale (`BACK.md` chez dbscg,
 dbsfw, narutoshippuden, narutoranks, narutoultra) — jamais installé vers
 `data/` (`curatedCardsInstall` ne copie pas le markdown).
 
-`dbs` = franchise ; **`dbs/cg`** = Masters (`dbscg:bt1-001`) ; **`dbs/fw`** =
-Fusion World (`dbsfw:st01-001`, parallels `_P1`) ; **`dbs/lamincards`** =
+`dbs` = franchise ; **`dragonball/cg`** = Masters (`dbscg:bt1-001`) ; **`dragonball/fw`** =
+Fusion World (`dbsfw:st01-001`, parallels `_P1`) ; **`dragonball/lamincards`** =
 Edibas Lamincards PVC (`dbslamincards:nero-0001`, …). Faces = Dragon Ball Center
 (`art.dbc.jpg`) ; versos pack `back.it` / `back.fr` ; journal
 `providers/dragonball/dbslamincards/curated/sources/source-hunt.json`. Identité Masters = cardlists

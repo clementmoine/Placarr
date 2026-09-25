@@ -6,6 +6,9 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { CardsIndexV1 } from "@/effects/cardsIndex";
+import { persistCardsIndexDoc } from "@/providers/shared/cardCatalogue/cardsIndexDoc";
+
 import {
   artOrientationForPackPrint,
   resetCardsIndexOrientationCache,
@@ -22,17 +25,17 @@ afterEach(() => {
 
 function writePackIndex(
   packId: string,
-  cards: Record<string, unknown>,
+  cards: CardsIndexV1["cards"],
 ): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cards-orient-"));
   roots.push(root);
   vi.stubEnv("PLACARR_DATA_DIR", root);
-  const packDir = path.join(root, packId);
-  fs.mkdirSync(packDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(packDir, "cards-index.json"),
-    JSON.stringify({ version: 1, pack: packId, cards }),
-  );
+  fs.mkdirSync(path.join(root, packId), { recursive: true });
+  persistCardsIndexDoc(packId, {
+    version: 1,
+    pack: packId,
+    cards,
+  });
   return packId;
 }
 

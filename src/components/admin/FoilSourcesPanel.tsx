@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { FoilPackStatus } from "@/lib/admin/foilStatusTypes";
+import type { FoilPackStatus } from "@/lib/admin/foilStatus";
 import { getBackgroundJobs } from "@/lib/api/backgroundJobs";
 import type {
   CatalogueExtractScope,

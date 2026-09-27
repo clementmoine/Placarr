@@ -3,6 +3,8 @@
  *
  * `GET /v3/catalog/fr` → `card_sets[].thumbnail_image_url`. Those "thumbs"
  * are the chapter / Quest / Gateway logos (512×288), not card art.
+ * Le payload `cards` (titres / faces Companion) est ingéré à part :
+ * `scrape/officialCatalogFill.ts`.
  *
  * Bytes land under `data/lorcana/products/sets/{id}/logo.png` and are served
  * as `/assets/lorcana/products/sets/{id}/logo.png`. Join at ingest is unique

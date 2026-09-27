@@ -34,6 +34,15 @@ const PRINTED_PREFIX: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Disk family (`gaku`, `shi`, …) → printed type label (`忍伝-学`, `忍伝`, …).
+ * Display only — paths and printKeys keep the Latin folder ids.
+ */
+export function shippudenFamilyLabel(cardType: string): string {
+  const family = cardType.trim().toLowerCase();
+  return PRINTED_PREFIX[family] ?? cardType.trim();
+}
+
+/**
  * Variantes acceptées à la saisie (carddas20 `忍伝学-001`, recherche Suruga
  * `忍伝学`, tiret optionnel avant le n°). Plus long d'abord pour ne pas
  * laisser `忍伝` avaler `忍伝-学` / `忍伝学`, ni `作伝` avaler `PR作伝`.

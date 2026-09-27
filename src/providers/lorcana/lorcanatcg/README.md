@@ -6,7 +6,7 @@
 | Catalogue Extract | `extract.ts` (orchestrator) |
 | Unity / foil dump | `extract/{unityApk,unityNode,shaders,materials,textures,unityRevision}.ts` |
 | Unity fixtures | `unity/` |
-| Scrape | `scrape/{cards,officialSite,officialSiteApply,lorcastFill}.ts` |
+| Scrape | `scrape/{cards,officialSite,officialSiteApply,officialSiteSpoilers,officialCatalogFill,lorcastFill}.ts` |
 | Sources | `sources/{lorcards,setLogos,promoSeries}.ts` |
 | Pipeline / web dump | `pipeline/{index,dumpWeb}.ts` |
 | Index store | `indexStore.ts` |

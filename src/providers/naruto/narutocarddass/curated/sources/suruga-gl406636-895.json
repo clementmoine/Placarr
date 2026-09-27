@@ -14,7 +14,7 @@
     "faceless": 0,
     "duplicatePrintedPairs": 7
   },
-  "note": "Entire range already in suruga-ya-carddass-listings.tsv. Every unique printed disk already has art.suruga.jpg. Seven printed-ref pairs are CDN-distinct 絵違い — staged only, no invented -R, catalogue faces unchanged.",
+  "note": "Entire range already in suruga-ya-carddass-listings.tsv. Every unique printed disk already has art.suruga.jpg. 絵違い pairs staged under gl406-636-895-dups/; 術-236-a (GL406779) minted 2026-09-25 as te0236-a. Remaining stage-only pairs still await mint.",
   "not": [
     "invent-R",
     "overwrite-catalogue-suruga"
@@ -105,10 +105,11 @@
     },
     {
       "productId": "GL406779",
-      "printed": "術-236",
-      "diskId": "te0236",
+      "printed": "術-236-a",
+      "diskId": "te0236-a",
       "surugaTag": "絵違い",
-      "role": "stage"
+      "role": "catalogue",
+      "note": "2026-09-25: minted te0236-a. Catalogue te0236 = GL406778 双頭狼; this CDN = spinning 牙狼牙 (matches tvtokyo j236b). Same printed 術-236, distinct illu."
     },
     {
       "productId": "GL406789",

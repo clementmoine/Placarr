@@ -30,7 +30,11 @@ import {
   type SurugaShippudenCard,
 } from "../parse/suruga";
 import { diskIdFromPrintedReference } from "../search";
-import { shippudenMercariIngestFaces } from "../sources/faces";
+import {
+  shippudenEbayIngestFaces,
+  shippudenFrilIngestFaces,
+  shippudenMercariIngestFaces,
+} from "../sources/faces";
 
 const LANG = "ja";
 const UA =
@@ -183,6 +187,209 @@ export async function installShippudenMercariFaces(
   writeFileSync(
     path.join(staging, "faces.json"),
     `${JSON.stringify({ source: "mercari", packRoot, written, skipped, failed }, null, 2)}\n`,
+  );
+
+  return { written, skipped, failed };
+}
+
+// ─── Fril / ラクマ ─────────────────────────────────────────────────────────
+
+export type InstallShippudenFrilFacesOptions = {
+  packRoot?: string;
+  force?: boolean;
+  dryRun?: boolean;
+  fetchImage?: (url: string) => Promise<Buffer | null>;
+};
+
+async function downloadFrilBytes(url: string): Promise<Buffer | null> {
+  try {
+    const res = await httpGet<ArrayBuffer>(url, {
+      headers: {
+        "User-Agent": UA,
+        Accept: "image/jpeg,image/*,*/*;q=0.8",
+        Referer: "https://fril.jp/",
+      },
+      responseType: "arraybuffer",
+      timeout: 30_000,
+      validateStatus: (status) => status === 200,
+    });
+    const buf = Buffer.from(res.data as ArrayBuffer);
+    if (extFromMagic(buf) === ".bin") return null;
+    return buf.byteLength >= MIN_BYTES ? buf : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Disk layout: `cards/{family}/{lang}/{diskId}/art.fril.*`
+ */
+export async function installShippudenFrilFaces(
+  options: InstallShippudenFrilFacesOptions = {},
+): Promise<{ written: string[]; skipped: string[]; failed: string[] }> {
+  const packRoot =
+    options.packRoot ?? path.join(dataRoot(), NARUTO_SHIPPUDEN_PACK_ID);
+  const fetchImage = options.fetchImage ?? downloadFrilBytes;
+  const staging = path.join(packStagingDir(NARUTO_SHIPPUDEN_PACK_ID), "fril");
+  mkdirSync(staging, { recursive: true });
+
+  const written: string[] = [];
+  const skipped: string[] = [];
+  const failed: string[] = [];
+
+  for (const row of shippudenFrilIngestFaces()) {
+    const diskId =
+      ("diskId" in row && typeof row.diskId === "string" && row.diskId) ||
+      diskIdFromPrintedReference(row.printedRef);
+    if (!diskId) {
+      failed.push(row.printedRef);
+      continue;
+    }
+    const family = diskId.replace(/\d+$/, "");
+    const cardDir = packCardDir(NARUTO_SHIPPUDEN_PACK_ID, {
+      set: family,
+      lang: LANG,
+      card: diskId,
+    });
+    const key = `${diskId}/${LANG}`;
+    const printKey = `naruto:${family}-${diskId.slice(family.length)}`;
+    let destName = existingHostArt(cardDir, "fril");
+
+    if (!destName || options.force) {
+      const buf = await fetchImage(row.url);
+      if (!buf || extFromMagic(buf) === ".bin" || buf.byteLength < MIN_BYTES) {
+        failed.push(key);
+        continue;
+      }
+      if (options.dryRun) {
+        written.push(key);
+        continue;
+      }
+      writeFileSync(path.join(staging, `${diskId}${extFromMagic(buf)}`), buf);
+      destName = writeHostArt(cardDir, "fril", buf);
+      written.push(key);
+    } else {
+      skipped.push(key);
+    }
+
+    try {
+      const db = openNarutoShippudenDbForWrite();
+      db.prepare(
+        `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
+         VALUES (?, ?, ?, ?, 1)
+         ON CONFLICT(print_key, lang) DO UPDATE SET
+           art = excluded.art,
+           source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
+      ).run(printKey, LANG, destName, row.listingUrl);
+    } catch {
+      /* ignore db errors in dry runs or headless tests */
+    }
+  }
+
+  writeFileSync(
+    path.join(staging, "faces.json"),
+    `${JSON.stringify({ source: "fril", packRoot, written, skipped, failed }, null, 2)}\n`,
+  );
+
+  return { written, skipped, failed };
+}
+
+// ─── eBay (paste-only ledgers) ─────────────────────────────────────────────
+
+export type InstallShippudenEbayFacesOptions = {
+  packRoot?: string;
+  force?: boolean;
+  dryRun?: boolean;
+  fetchImage?: (url: string) => Promise<Buffer | null>;
+};
+
+async function downloadEbayBytes(url: string): Promise<Buffer | null> {
+  try {
+    const res = await httpGet<ArrayBuffer>(url, {
+      headers: {
+        "User-Agent": UA,
+        Accept: "image/webp,image/jpeg,image/*,*/*;q=0.8",
+      },
+      responseType: "arraybuffer",
+      timeout: 30_000,
+      validateStatus: (status) => status === 200,
+    });
+    const buf = Buffer.from(res.data as ArrayBuffer);
+    if (extFromMagic(buf) === ".bin") return null;
+    return buf.byteLength >= MIN_BYTES ? buf : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Disk layout: `cards/{family}/{lang}/{diskId}/art.ebay.*`
+ */
+export async function installShippudenEbayFaces(
+  options: InstallShippudenEbayFacesOptions = {},
+): Promise<{ written: string[]; skipped: string[]; failed: string[] }> {
+  const packRoot =
+    options.packRoot ?? path.join(dataRoot(), NARUTO_SHIPPUDEN_PACK_ID);
+  const fetchImage = options.fetchImage ?? downloadEbayBytes;
+  const staging = path.join(packStagingDir(NARUTO_SHIPPUDEN_PACK_ID), "ebay");
+  mkdirSync(staging, { recursive: true });
+
+  const written: string[] = [];
+  const skipped: string[] = [];
+  const failed: string[] = [];
+
+  for (const row of shippudenEbayIngestFaces()) {
+    const diskId =
+      (typeof row.diskId === "string" && row.diskId) ||
+      diskIdFromPrintedReference(row.printedRef);
+    if (!diskId) {
+      failed.push(row.printedRef);
+      continue;
+    }
+    const family = diskId.replace(/\d+$/, "");
+    const cardDir = packCardDir(NARUTO_SHIPPUDEN_PACK_ID, {
+      set: family,
+      lang: LANG,
+      card: diskId,
+    });
+    const key = `${diskId}/${LANG}`;
+    const printKey = `naruto:${family}-${diskId.slice(family.length)}`;
+    let destName = existingHostArt(cardDir, "ebay");
+
+    if (!destName || options.force) {
+      const buf = await fetchImage(row.url);
+      if (!buf || extFromMagic(buf) === ".bin" || buf.byteLength < MIN_BYTES) {
+        failed.push(key);
+        continue;
+      }
+      if (options.dryRun) {
+        written.push(key);
+        continue;
+      }
+      writeFileSync(path.join(staging, `${diskId}${extFromMagic(buf)}`), buf);
+      destName = writeHostArt(cardDir, "ebay", buf);
+      written.push(key);
+    } else {
+      skipped.push(key);
+    }
+
+    try {
+      const db = openNarutoShippudenDbForWrite();
+      db.prepare(
+        `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
+         VALUES (?, ?, ?, ?, 1)
+         ON CONFLICT(print_key, lang) DO UPDATE SET
+           art = excluded.art,
+           source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
+      ).run(printKey, LANG, destName, row.listingUrl);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  writeFileSync(
+    path.join(staging, "faces.json"),
+    `${JSON.stringify({ source: "ebay", packRoot, written, skipped, failed }, null, 2)}\n`,
   );
 
   return { written, skipped, failed };

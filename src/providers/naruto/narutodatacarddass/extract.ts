@@ -14,6 +14,7 @@ import {
   harvestChitoroshopDataCarddassFaces,
   harvestNaoYoshiSeesaa,
   applyNaoYoshiSeesaaToChecklist,
+  applyMojibakeRepairToChecklist,
   harvestSurugaDcd,
   writeOfficialDataCarddassChecklist,
 } from "./harvest";
@@ -111,6 +112,14 @@ export async function runNarutoDataCarddassPackPipeline(
     const applied = applyNaoYoshiSeesaaToChecklist({ ledger });
     console.log(
       `── nao-yoshi Seesaa — ${ledger.rows.length} refs : ${applied.nameFixed} nom(s), ${applied.raritySet} rareté(s)`,
+    );
+    const mojibake = applyMojibakeRepairToChecklist();
+    console.log(
+      `── mojibake repair — ${mojibake.repaired}/${mojibake.scanned} nom(s)${
+        mojibake.unresolved.length
+          ? ` ; non résolu : ${mojibake.unresolved.join(", ")}`
+          : ""
+      }`,
     );
   } catch (err) {
     console.warn(

@@ -13,6 +13,8 @@ import {
   parseNaoYoshiSeesaaArticle,
   parseSurugaDataCarddassCategoryHtml,
   parseSurugaDataCarddassListingsTsv,
+  repairMojibakeJa,
+  simulateUtf8AsShiftJis,
   parseSurugaDataCarddassPrintedFromTitle,
   surugaDataCarddassFaceUrl,
 } from "./catalogues";
@@ -90,6 +92,38 @@ import {
       expect(looksLikeMojibakeJa("うずまきナルト")).toBe(false);
       expect(looksLikeMojibakeJa("縺�★縺ｾ縺阪リ")).toBe(true);
       expect(looksLikeMojibakeJa("broken�name")).toBe(true);
+      expect(looksLikeMojibakeJa("荳我ｻ｣逶ｮ轣ｫ蠖ｱ")).toBe(true);
+      expect(looksLikeMojibakeJa("三代目火影")).toBe(false);
+    });
+
+    it("repairs UTF-8 misread as Shift_JIS titles against a corpus", () => {
+      const corpus = [
+        "うずまきナルト",
+        "うちはイタチ",
+        "犬塚キバ",
+        "夕日紅",
+        "三代目火影",
+        "二位ユギト（人柱力）",
+      ];
+      expect(
+        repairMojibakeJa(simulateUtf8AsShiftJis("うちはイタチ"), corpus)?.nameJa,
+      ).toBe("うちはイタチ");
+      expect(
+        repairMojibakeJa(simulateUtf8AsShiftJis("犬塚キバ"), corpus)?.nameJa,
+      ).toBe("犬塚キバ");
+      expect(
+        repairMojibakeJa(simulateUtf8AsShiftJis("夕日紅"), corpus)?.nameJa,
+      ).toBe("夕日紅");
+      expect(
+        repairMojibakeJa(simulateUtf8AsShiftJis("三代目火影"), corpus)?.nameJa,
+      ).toBe("三代目火影");
+      // Parenthetical suffix mangled by � — recover from base prefix.
+      expect(
+        repairMojibakeJa(
+          `${simulateUtf8AsShiftJis("二位ユギト")}�ｼ亥ｰｾ逖｣蛹厄ｼ�`,
+          corpus,
+        )?.nameJa,
+      ).toBe("二位ユギト（人柱力）");
     });
 
     it("parses NX article rows without treating barcodes as printed refs", () => {

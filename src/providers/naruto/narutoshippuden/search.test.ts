@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   diskIdFromPrintedReference,
   formatShippudenReference,
+  shippudenFamilyLabel,
 } from "./search";
 
 // —— searchPrints ——
@@ -55,6 +56,14 @@ import {
       expect(formatShippudenReference("gaku", "gaku0007")).toBe("忍伝-学007");
       expect(formatShippudenReference("gaku", "7")).toBe("忍伝-学007");
       expect(formatShippudenReference("shi", "shi0043")).toBe("忍伝-43");
+    });
+
+    it("labels disk families with printed kanji, never Latin folder ids", () => {
+      expect(shippudenFamilyLabel("gaku")).toBe("忍伝-学");
+      expect(shippudenFamilyLabel("shi")).toBe("忍伝");
+      expect(shippudenFamilyLabel("mju")).toBe("術伝");
+      expect(shippudenFamilyLabel("msa")).toBe("作伝");
+      expect(shippudenFamilyLabel("prshi")).toBe("PR忍伝");
     });
 
     /*

@@ -7050,11 +7050,12 @@
       "page": "card_12.html",
       "file": "j236b.jpg",
       "printedRef": "術-236",
-      "diskId": "te0236",
+      "diskId": "te0236-a",
       "name": "牙狼牙",
       "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/j236b.jpg",
       "lang": "ja",
-      "ingest": true
+      "ingest": true,
+      "note": "絵違い → te0236-a (Suruga GL406779)"
     },
     {
       "page": "card_12.html",

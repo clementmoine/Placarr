@@ -42,12 +42,19 @@ const hooks = cardCatalogueHooks({
     );
     const ledgers = buildShippudenFromLedgers();
 
-    const { installShippudenMercariFaces, installShippudenSurugaFaces } =
+    const {
+      installShippudenMercariFaces,
+      installShippudenSurugaFaces,
+      installShippudenFrilFaces,
+      installShippudenEbayFaces,
+    } =
       await import(
         /* webpackIgnore: true */
         "./install/faces"
       );
     const mercari = await installShippudenMercariFaces();
+    const fril = await installShippudenFrilFaces();
+    const ebay = await installShippudenEbayFaces();
     const suruga = await installShippudenSurugaFaces();
 
     const { installCuratedCardBacks, curatedCardsDir } = await import(
@@ -89,7 +96,7 @@ const hooks = cardCatalogueHooks({
       "./indexStore"
     );
     exportNarutoShippudenCardsIndex();
-    return { ...migrated, ledgers, mercari, suruga, packshots, sealed };
+    return { ...migrated, ledgers, mercari, fril, ebay, suruga, packshots, sealed };
   },
 });
 

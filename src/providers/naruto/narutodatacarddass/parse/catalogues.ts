@@ -469,9 +469,139 @@ export function mergeNaoYoshiSeesaaRows(
 /** True when a checklist Japanese title looks like mojibake / replacement chars. */
 export function looksLikeMojibakeJa(name: string | null | undefined): boolean {
   if (!name) return false;
-  if (name.includes("�")) return true;
-  // Typical Shift_JIS→UTF-8 corruption from Wayback fudanin pages.
-  return /[縺繧]/.test(name);
+  if (name.includes("�") || name.includes("\uFFFD")) return true;
+  // Typical UTF-8 bytes misread as Shift_JIS (hiragana block noise).
+  if (/[縺繧]/.test(name)) return true;
+  // Halfwidth katakana clusters from the same corruption path (e.g. ャ､ｬﾖ).
+  let halfwidth = 0;
+  for (const ch of name) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp >= 0xff61 && cp <= 0xff9f) halfwidth += 1;
+    if (halfwidth >= 2) return true;
+  }
+  return false;
+}
+
+/** Simulate UTF-8 bytes decoded as Shift_JIS (the checklist corruption path). */
+export function simulateUtf8AsShiftJis(clean: string): string {
+  return new TextDecoder("shift_jis").decode(Buffer.from(clean, "utf8"));
+}
+
+function mojibakeFingerprint(value: string): string {
+  return value.replace(/[\uFFFD�■]+/gu, "�");
+}
+
+function stripMojibakeNoise(value: string): string {
+  return value.replace(/[\uFFFD�■]+/gu, "");
+}
+
+function orderedOverlapRatio(a: string, b: string): number {
+  const left = stripMojibakeNoise(a);
+  const right = stripMojibakeNoise(b);
+  if (!left || !right) return 0;
+  const m = left.length;
+  const n = right.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    Array.from({ length: n + 1 }, () => 0),
+  );
+  for (let i = 1; i <= m; i += 1) {
+    for (let j = 1; j <= n; j += 1) {
+      dp[i]![j] =
+        left[i - 1] === right[j - 1]
+          ? dp[i - 1]![j - 1]! + 1
+          : Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!);
+    }
+  }
+  return dp[m]![n]! / Math.max(m, n);
+}
+
+/**
+ * Names that only appear as mojibake on some NX rows — seed the repair corpus
+ * so fingerprint matching can recover them.
+ */
+export const MOJIBAKE_REPAIR_SEED_NAMES_JA = [
+  "黄色い閃光",
+  "はがねコテツ",
+  "はがね・コテツ",
+  "重吾（状態１）",
+  "二位ユギト",
+  "二位ユギト（人柱力）",
+  "山中いの（第一部）",
+  "うずまきナルト（第一部）",
+  "うちはサスケ（第一部）",
+  "秋道チョウジ（第一部）",
+  "サソリ（暁服）",
+  "デイダラ",
+  "テマリ",
+  "我愛羅",
+  "ロック・リー",
+  "マイト・ガイ",
+  "テンテン",
+] as const;
+
+export type MojibakeRepairHit = {
+  nameJa: string;
+  score: number;
+  how: "exact" | "prefix" | "fuzzy";
+};
+
+/**
+ * Recover a Japanese title corrupted by UTF-8→Shift_JIS mis-decode, by matching
+ * against a corpus of clean names (checklist + nao-yoshi + seeds).
+ */
+export function repairMojibakeJa(
+  broken: string,
+  corpus: Iterable<string>,
+): MojibakeRepairHit | null {
+  if (!looksLikeMojibakeJa(broken)) return null;
+
+  const names = new Set<string>();
+  for (const seed of MOJIBAKE_REPAIR_SEED_NAMES_JA) names.add(seed);
+  for (const name of corpus) {
+    const trimmed = name.trim();
+    if (!trimmed || looksLikeMojibakeJa(trimmed)) continue;
+    if (!/[\u3040-\u30ff\u4e00-\u9fff]/u.test(trimmed)) continue;
+    names.add(trimmed);
+  }
+
+  const exact = new Map<string, string | null>();
+  for (const name of names) {
+    const fp = mojibakeFingerprint(simulateUtf8AsShiftJis(name));
+    if (!exact.has(fp)) exact.set(fp, name);
+    else if (exact.get(fp) !== name) exact.set(fp, null);
+  }
+
+  const brokenFp = mojibakeFingerprint(broken);
+  const exactHit = exact.get(brokenFp);
+  if (exactHit) return { nameJa: exactHit, score: 1, how: "exact" };
+
+  // Parenthetical suffix lost to �: match clean base as corrupt prefix.
+  let bestPrefix: MojibakeRepairHit | null = null;
+  for (const name of names) {
+    const base = name.replace(/[（(].*$/u, "").trim();
+    if (!base) continue;
+    const baseCorrupt = mojibakeFingerprint(simulateUtf8AsShiftJis(base));
+    const baseBare = stripMojibakeNoise(baseCorrupt);
+    const brokenBare = stripMojibakeNoise(brokenFp);
+    if (baseBare.length >= 4 && brokenBare.startsWith(baseBare)) {
+      // Prefer the longest matching clean form (with parenthetical when present).
+      const score = baseBare.length + (name.length > base.length ? 0.5 : 0);
+      if (!bestPrefix || score > bestPrefix.score) {
+        bestPrefix = { nameJa: name, score, how: "prefix" };
+      }
+    }
+  }
+  if (bestPrefix) return bestPrefix;
+
+  let bestFuzzy: MojibakeRepairHit | null = null;
+  for (const name of names) {
+    const score = orderedOverlapRatio(broken, simulateUtf8AsShiftJis(name));
+    if (!bestFuzzy || score > bestFuzzy.score) {
+      bestFuzzy = { nameJa: name, score, how: "fuzzy" };
+    }
+  }
+  if (bestFuzzy && bestFuzzy.score >= 0.65) return bestFuzzy;
+  return null;
 }
 
 

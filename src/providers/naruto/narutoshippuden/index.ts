@@ -28,6 +28,7 @@ import { narutoShippudenCatalog } from "./catalog";
 import {
   diskIdFromPrintedReference,
   formatShippudenReference,
+  shippudenFamilyLabel,
 } from "./search";
 
 export {
@@ -63,6 +64,10 @@ const line = createLocalTcgLine({
   setLabel: shippudenSetLabel,
   setSortKey: shippudenActNumber,
   normalizeSearchQuery: (query) => diskIdFromPrintedReference(query) ?? query,
+  decorateCandidate: (candidate, row) => ({
+    ...candidate,
+    category: shippudenFamilyLabel(row.cardType),
+  }),
   // Disque = `{set}/{lang}/{diskId}/` (ex. `gaku/ja/gaku0038/`).
   cardAssetUrl: (id, file) =>
     narutoShippudenAssetsCardUrl(id.set, id.card, id.lang, file),

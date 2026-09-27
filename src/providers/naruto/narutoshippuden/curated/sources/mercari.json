@@ -1,10 +1,10 @@
 {
-  "source": "Mercari pasted 疾風伝 leads (忍伝 / 術伝 / 作伝)",
-  "observed": "2026-09-14",
+  "source": "Mercari pasted 疾風伝 leads (忍伝 / 術伝 / 作伝 / PR学)",
+  "observed": "2026-09-25",
   "crawlLive": false,
   "ingest": "curated-faces",
   "lang": "ja",
-  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches). Optional `curated` is offline fallback only.",
+  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches). Optional `curated` is offline fallback only. 2026-09-25: m89472003355 = 未開封プロモパック 10× PR学-001…010 (忍者学校ルール).",
   "not": [
     "crawl",
     "shops-og-image",
@@ -94,6 +94,140 @@
       "title": "NARUTO ナルト 疾風伝 カードゲーム うちはサスケ 忍伝-215",
       "ingest": true,
       "url": "https://static.mercdn.net/item/detail/orig/photos/m15225089660_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-001",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-001 うずまきナルト",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_4.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-002",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-002 春野サクラ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_5.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-003",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-003 はたけカカシ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_6.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-004",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-004 うみのイルカ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_7.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-005",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-005 奈良シカマル",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_8.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-006",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-006 秋道チョウジ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_9.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-007",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-007 犬塚キバ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_10.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-008",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-008 日向ヒナタ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_11.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-009",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-009 白",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_12.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m89472003355",
+      "printedRef": "PR学-010",
+      "title": "ナルトカードゲーム 忍 SHINOBI 未開封プロモパック — PR学-010 桃地再不斬",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m89472003355_13.jpg?1776294535"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m81667697805",
+      "printedRef": "PR忍伝-2",
+      "title": "NARUTO疾風伝 PR忍伝-2 春野サクラ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m81667697805_1.jpg?1780129643",
+      "note": "First catalogue face for prshi0002 (was title-only). Cropped from sleeved wood photo → art.mercari.jpg."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m30458189956",
+      "printedRef": "PR忍伝-8",
+      "title": "ナルト 疾風伝 カードゲーム★PR忍伝-8 うずまきナルト＆日向ヒナタ プロモ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m30458189956_1.jpg",
+      "note": "2026-09-26 source hunt — prshi0008 gap fill"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m80487235868",
+      "printedRef": "PR忍伝-1",
+      "title": "NARUTO ナルトカード プロモ PR忍伝-1 うずまきナルト",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m80487235868_1.jpg?1790256881",
+      "note": "2026-09-26 browser hunt — prshi0001"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m29398959256",
+      "printedRef": "PR忍伝-3",
+      "title": "NARUTO ナルト 疾風伝 カードゲーム★PR忍伝-3 はたけカカシ プロモ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m29398959256_1.jpg?1786233829",
+      "note": "2026-09-26 browser hunt — prshi0003"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m33650947973",
+      "printedRef": "PR忍伝-10",
+      "title": "【非売品プロモ】春野サクラ＆山中いの PR忍伝-10",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m33650947973_1.jpg?1782619126",
+      "note": "2026-09-26 browser hunt — prshi0010"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m98823704479",
+      "printedRef": "PR忍伝-4",
+      "title": "PR忍伝-4 デイダラ プロモ 非売品 NARUTO疾風伝 カードゲーム",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m98823704479_1.jpg?1725763976",
+      "note": "2026-09-26 browser hunt — prshi0004"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m22567169905",
+      "printedRef": "忍伝-学024",
+      "title": "ナルト疾風伝カードゲーム 我愛羅 忍伝-学024",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m22567169905_1.jpg?1786590204",
+      "note": "2026-09-26 browser hunt — gaku0024"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m38233803966",
+      "printedRef": "忍伝-学029",
+      "title": "ナルト疾風伝カードゲーム 四代目風影 忍伝-学029",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m38233803966_1.jpg?1786404062",
+      "note": "2026-09-26 browser hunt — gaku0029"
     }
   ]
 }

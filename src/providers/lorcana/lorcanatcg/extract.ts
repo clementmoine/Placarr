@@ -26,13 +26,28 @@ async function runOfficialSiteOnly(
     onProgress: (message) => console.log(`   official — ${message}`),
   });
   console.log(
-    `── official site — ${harvested.pages} pages, ${harvested.logos} logos, ${harvested.packshots} packshots`,
+    `── official site — ${harvested.pages} pages, ${harvested.logos} logos, ${harvested.packshots} packshots, ${harvested.spoilers} spoilers`,
   );
   const logos = applyOfficialSiteLogos();
   const upserted = upsertOfficialSiteProducts({ setLogoIndex: logos.index });
   console.log(
     `── official upsert — logos +${logos.added}/${logos.updated}, produits ${upserted.written}`,
   );
+  const { applyOfficialSiteSpoilerFaces } = await import(
+    "./scrape/officialSiteSpoilers"
+  );
+  const spoilers = await applyOfficialSiteSpoilerFaces({
+    pages: harvested.pagesParsed,
+    onProgress: (message) => console.log(`   spoiler — ${message}`),
+  });
+  console.log(
+    `── official spoilers — ${spoilers.written} faces, ${spoilers.matched} matchés, ${spoilers.unmatched} sans ancre`,
+  );
+  if (spoilers.unmatchedTitles.length) {
+    console.log(
+      `   (sans ancre) ${spoilers.unmatchedTitles.slice(0, 12).join(" · ")}`,
+    );
+  }
   const { promoteOfficialSiteAndPurgeStaging } = await import(
     "./scrape/officialSite"
   );
@@ -49,6 +64,9 @@ async function runOfficialSiteOnly(
     officialPages: harvested.pages,
     officialLogos: harvested.logos,
     officialPackshots: harvested.packshots,
+    officialSpoilers: harvested.spoilers,
+    officialSpoilerFaces: spoilers.written,
+    officialSpoilerUnmatched: spoilers.unmatched,
     officialUpserted: upserted.written,
   };
 }

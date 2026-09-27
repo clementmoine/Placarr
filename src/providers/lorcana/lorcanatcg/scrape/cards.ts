@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Scrape Lorcana catalogue media (masks + art) as published bytes into
- * data/lorcana/cards/{set}/{lang}/{card}/ — all LorcanaJSON languages
- * (fr, en, de, it).
+ * data/lorcana/cards/{set}/{lang}/{card}/ — LorcanaJSON languages (fr, en),
+ * trous Lorcast, puis titres/faces manquants via le catalogue Companion
+ * (`api.lorcana.ravensburger.com/v3/catalog/{lang}`).
  *
- *   Catalogue Sync Lorcana
  *   Catalogue Sync Lorcana
  *   Catalogue Sync Lorcana -- --force
  */
@@ -37,6 +37,10 @@ import {
   lorcanaGapKey,
   type LorcastFillPrint,
 } from "./lorcastFill";
+import {
+  loadOfficialCatalogFill,
+  type OfficialCatalogFillPrint,
+} from "./officialCatalogFill";
 import { resolveAttestedFinishes } from "../curated/attestedFinishes";
 
 export type ScrapeLorcanaCardsOptions = {
@@ -272,6 +276,41 @@ function collectJobsForLorcastPrint(
   return jobs;
 }
 
+/**
+ * Faces Companion (même CDN que LorcanaJSON) — stems plain, pas `.lorcast.`.
+ */
+function collectJobsForOfficialCatalogPrint(
+  print: OfficialCatalogFillPrint,
+  cardsDir: string,
+): Job[] {
+  const disk = cardDiskIdFromPrintKey(print.printKey, print.language);
+  if (!disk) return [];
+  const dir = path.join(cardsDir, disk.set, disk.lang, disk.card);
+  const jobs: Job[] = [];
+
+  const add = (field: keyof LangFiles, fileStem: string, url: string) => {
+    const file = `${fileStem}${extFromUrl(url)}`;
+    jobs.push({
+      printKey: print.printKey,
+      language: print.language,
+      field,
+      file,
+      url,
+      dest: path.join(dir, file),
+    });
+  };
+
+  if (print.imageUrl) add("art", "art", print.imageUrl);
+  if (print.thumbnailUrl && print.thumbnailUrl !== print.imageUrl) {
+    add("thumb", "thumb", print.thumbnailUrl);
+  }
+  if (print.foilMaskUrl) add("foilMask", "mask", print.foilMaskUrl);
+  if (print.varnishMaskUrl) {
+    add("varnishMask", "varnish_mask", print.varnishMaskUrl);
+  }
+  return jobs;
+}
+
 export async function scrapeLorcanaCards(
   opts: ScrapeLorcanaCardsOptions = {},
 ): Promise<{
@@ -421,6 +460,74 @@ export async function scrapeLorcanaCards(
     jobs.push(...collectJobsForLorcastPrint(print, cardsDir));
   }
 
+  // Catalogue Companion (cards.disneylorcana.com) — langues manquantes seulement.
+  const coveredTitles = new Set(
+    titles.map((t) => `${t.printKey}\0${t.lang}`),
+  );
+  const officialFill = await loadOfficialCatalogFill(
+    coveredTitles,
+    new Set(prints.keys()),
+    { languages: SCRAPE_LANGUAGES },
+  );
+  for (const note of officialFill.notes) console.log(`  official: ${note}`);
+  for (const print of officialFill.fills) {
+    const existing = prints.get(print.printKey);
+    if (!existing) continue;
+    // Complète les faits print seulement s’ils sont vides — ne contredit pas
+    // LorcanaJSON (coût / foil déjà tenus).
+    prints.set(print.printKey, {
+      ...existing,
+      providerId: existing.providerId ?? print.providerId,
+      cost: existing.cost ?? print.cost,
+      artists:
+        existing.artists && existing.artists.length
+          ? existing.artists
+          : print.artists.length
+            ? print.artists
+            : null,
+      foilTypes:
+        existing.foilTypes && existing.foilTypes.length
+          ? existing.foilTypes
+          : print.foilTypes.length
+            ? print.foilTypes
+            : null,
+      varnishType: existing.varnishType ?? print.varnishType,
+      lore: existing.lore ?? print.lore,
+      strength: existing.strength ?? print.strength,
+      willpower: existing.willpower ?? print.willpower,
+      inkwell: existing.inkwell ?? print.inkwell,
+      setCardCount: existing.setCardCount ?? print.setCardCount,
+      foilEffectColors:
+        existing.foilEffectColors && existing.foilEffectColors.length
+          ? existing.foilEffectColors
+          : print.foilEffectColors.length
+            ? print.foilEffectColors
+            : null,
+    });
+    titles.push({
+      printKey: print.printKey,
+      lang: print.language,
+      fullName: print.fullName,
+      name: print.name,
+      version: print.version,
+      setName: print.setName,
+      rarity: print.rarity,
+      cardType: print.cardType,
+      color: print.color,
+      story: null,
+      flavorText: print.flavorText,
+      subtypes: print.subtypes.length ? print.subtypes : null,
+      searchName: print.searchName,
+      imageUrl: print.imageUrl,
+      thumbnailUrl: print.thumbnailUrl,
+      fullFoilUrl: null,
+      foilMaskUrl: print.foilMaskUrl,
+      varnishMaskUrl: print.varnishMaskUrl,
+      secondVarnishMaskUrl: null,
+    });
+    jobs.push(...collectJobsForOfficialCatalogPrint(print, cardsDir));
+  }
+
   // Ce que ni LorcanaJSON ni Lorcast ne disent, un exemplaire en main peut le
   // dire. Appliqué en dernier, et seulement sur un tirage sans finition.
   const attested = resolveAttestedFinishes((printKey) => {
@@ -475,6 +582,29 @@ export async function scrapeLorcanaCards(
     throw new Error("Failed to read Lorcana catalogue from sqlite after write");
   }
 
+  // Spoilers site (ledger durable) après rebuild — faces FR manquantes etc.
+  let officialSpoilers: Record<string, unknown> = {};
+  try {
+    const { applyOfficialSiteSpoilerFaces } = await import(
+      "./officialSiteSpoilers"
+    );
+    const spoilers = await applyOfficialSiteSpoilerFaces({ force: !skipExisting });
+    officialSpoilers = {
+      officialSpoilerFaces: spoilers.written,
+      officialSpoilerMatched: spoilers.matched,
+      officialSpoilerUnmatched: spoilers.unmatched,
+    };
+    if (spoilers.written || spoilers.unmatched) {
+      console.log(
+        `── official spoilers — ${spoilers.written} faces / ${spoilers.matched} matchés / ${spoilers.unmatched} sans ancre`,
+      );
+    }
+  } catch (error) {
+    console.log(
+      `── official spoilers — skip (${error instanceof Error ? error.message : String(error)})`,
+    );
+  }
+
   const legacy = cleanupLegacyPrintRootAssets(cardsDir);
 
   console.log(
@@ -488,6 +618,7 @@ export async function scrapeLorcanaCards(
         languages: [...SCRAPE_LANGUAGES],
         legacyRootRemoved: legacy.removed,
         legacyRootBytes: legacy.bytes,
+        ...officialSpoilers,
         errorSample: errors
           .slice(0, 5)
           .map((e) => (e instanceof Error ? e.message : String(e))),

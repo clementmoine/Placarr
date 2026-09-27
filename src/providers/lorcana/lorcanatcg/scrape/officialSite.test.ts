@@ -29,6 +29,11 @@ const PAGE_HTML = `
 <img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/en/whtzuxaqg5_en.png" alt="Disney Lorcana TCG Hyperia City logo" />
 <img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/products/fr_trove.png" alt="Illumineer's Trove" />
 <img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/products/booster-display/fr_box.png" alt="Booster Display" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/en/first-look/fr_lz5fcutdbh.png.png" alt="Disney Lorcana Miguel Rivera - Musicien de rue" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/d23-card-reveal/fr_jquxxkhs5s.png.png" alt="Pepita - Sweet Kitty" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/fr_rvzhusaqg5.png.png" alt="Aurora -Delightful Musician" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/fr_eh5zvbr4if.png.png" alt="Nick Wilde - Inquisitive Harbor master" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s14-hyperia-city/cyjgbbabub_playmat_1920x1080-1.png" alt="Playmat Rapunzel" />
 </body></html>
 `;
 
@@ -54,6 +59,23 @@ describe("parseOfficialProductPage", () => {
       "trove",
     ]);
     expect(page.lang).toBe("fr");
+  });
+
+  it("extrait les spoilers first-look / D23 / reveal (pas les playmats)", () => {
+    const page = parseOfficialProductPage(PAGE_HTML, "hyperia-city");
+    expect(page.spoilers.map((s) => s.title).sort()).toEqual([
+      "Aurora - Delightful Musician",
+      "Miguel Rivera - Musicien de rue",
+      "Nick Wilde - Inquisitive Harbor master",
+      "Pepita - Sweet Kitty",
+    ]);
+    expect(page.spoilers.find((s) => s.kind === "first-look")?.title).toContain(
+      "Miguel",
+    );
+    expect(page.spoilers.find((s) => s.kind === "d23")?.title).toContain(
+      "Pepita",
+    );
+    expect(page.spoilers.some((s) => /playmat/i.test(s.title))).toBe(false);
   });
 
   it("accepte logo via chemin CDN même sans « logo » dans l'alt", () => {
@@ -154,6 +176,13 @@ describe("officialSiteContentHashFromPages", () => {
             kind: "coffret",
           },
         ],
+        spoilers: [
+          {
+            url: "https://example.com/first-look/a.png",
+            title: "Aurora - Delightful Musician",
+            kind: "first-look",
+          },
+        ],
         sourceUrl: "https://www.disneylorcana.com/fr-FR/product/hyperia-city",
         lang: "fr",
       },
@@ -161,6 +190,10 @@ describe("officialSiteContentHashFromPages", () => {
     const a = officialSiteContentHashFromPages(pages);
     const b = officialSiteContentHashFromPages(pages);
     expect(a).toBe(b);
+    const withoutSpoilers = officialSiteContentHashFromPages([
+      { ...pages[0]!, spoilers: [] },
+    ]);
+    expect(withoutSpoilers).not.toBe(a);
     expect(a).toMatch(/^[a-f0-9]{64}$/);
     const ledger = emptyCatalogIngestLedger();
     ledger.entries["lorcana:official-site"] = {

@@ -1,6 +1,6 @@
 {
   "source": "ebay.com/str/cardjpstore (tokyotcgstore)",
-  "observed": "2026-09-20",
+  "observed": "2026-09-26",
   "crawlLive": false,
   "ingest": "faces",
   "lang": "ja",
@@ -149,6 +149,66 @@
       "imageId": "vcIAAeSwjdlphuJQ",
       "ingest": true,
       "note": "cardjpstore — 忍伝-187 自来也 verified on photo 2026-09-21"
+    },
+    {
+      "printedRef": "忍伝-77",
+      "diskId": "shi0077",
+      "title": "No.077 Haruno Sakura Naruto Card Game Shippuden",
+      "listingUrl": "https://www.ebay.com/itm/176661018228",
+      "url": "https://i.ebayimg.com/images/g/BgcAAOSwct9nJzYU/s-l1600.webp",
+      "imageId": "BgcAAOSwct9nJzYU",
+      "ingest": true,
+      "note": "2026-09-26 browser — cardjpstore active; 忍伝-077 春野サクラ title+name aligned"
+    },
+    {
+      "printedRef": "忍伝-104",
+      "diskId": "shi0104",
+      "title": "②PSA10 Ninden.104 Uchiha Sasuke Naruto Card Game Shippuden Bandai",
+      "listingUrl": "https://www.ebay.com/itm/178486485086",
+      "url": "https://i.ebayimg.com/images/g/j64AAOSwzYVl8nC2/s-l1600.webp",
+      "imageId": "j64AAOSwzYVl8nC2",
+      "ingest": true,
+      "note": "2026-09-26 browser — cardjpstore active PSA slab; N104 うちはサスケ verified on photo"
+    },
+    {
+      "printedRef": "忍伝-119",
+      "diskId": "shi0119",
+      "title": "No.119 Kakashi Hatake Guy UR Naruto Card Game Shippuden Bandai Japanese",
+      "listingUrl": "https://www.ebay.com/itm/176009071471",
+      "url": "https://i.ebayimg.com/images/g/l0sAAOSwD6VlRfIt/s-l1600.webp",
+      "imageId": "l0sAAOSwD6VlRfIt",
+      "ingest": true,
+      "note": "2026-09-26 browser — cardjpstore active; 忍伝-119 カカシ＆ガイ title+name aligned"
+    },
+    {
+      "printedRef": "忍伝-135",
+      "diskId": "shi0135",
+      "title": "No.135 Yakushi Kabuto UR Naruto Card Game Shippuden Bandai Japanese",
+      "listingUrl": "https://www.ebay.com/itm/176009071803",
+      "url": "https://i.ebayimg.com/images/g/52oAAOSwW8VlRfJS/s-l1600.webp",
+      "imageId": "52oAAOSwW8VlRfJS",
+      "ingest": true,
+      "note": "2026-09-26 browser — cardjpstore active; 忍伝-135 薬師カブト title+name aligned"
+    },
+    {
+      "printedRef": "忍伝-149",
+      "diskId": "shi0149",
+      "title": "No.149 Yamato UR Naruto Card Game Shippuden Bandai Japanese",
+      "listingUrl": "https://www.ebay.com/itm/176396629241",
+      "url": "https://i.ebayimg.com/images/g/CBgAAOSwKr9mVFQo/s-l1600.webp",
+      "imageId": "CBgAAOSwKr9mVFQo",
+      "ingest": true,
+      "note": "2026-09-26 browser — cardjpstore active; 忍伝-149 ヤマト title+name aligned"
+    },
+    {
+      "printedRef": "忍伝-150",
+      "diskId": "shi0150",
+      "title": "No.150 Naruto & Sai UR Naruto Card Game Shippuden Bandai Japan",
+      "listingUrl": "https://www.ebay.com/itm/176395191341",
+      "url": "https://i.ebayimg.com/images/g/ChIAAOSwfbRmUyVH/s-l1600.webp",
+      "imageId": "ChIAAOSwfbRmUyVH",
+      "ingest": true,
+      "note": "2026-09-26 browser — cardjpstore active; 忍伝-150 ナルト&サイ title+name aligned"
     }
   ]
 }

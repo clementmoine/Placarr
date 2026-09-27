@@ -28,6 +28,7 @@ import {
 import {
   decodeOfficialCardlistBytes,
   looksLikeMojibakeJa,
+  repairMojibakeJa,
   mergeNaoYoshiSeesaaRows,
   NAO_YOSHI_SEESAA_ARTICLES,
   NAO_YOSHI_SEESAA_ORIGIN,
@@ -431,6 +432,66 @@ export function applyNaoYoshiSeesaaToChecklist(
   writeFileSync(
     dataCarddassChecklistPath(),
     JSON.stringify(out, null, 2) + "\n",
+    "utf8",
+  );
+  return report;
+}
+
+export type MojibakeRepairReport = {
+  total: number;
+  scanned: number;
+  repaired: number;
+  unresolved: string[];
+};
+
+/**
+ * Fix UTF-8→Shift_JIS mojibake titles in the checklist using clean names from
+ * the checklist itself + nao-yoshi Seesaa (+ seed names).
+ */
+export function applyMojibakeRepairToChecklist(
+  opts: { dryRun?: boolean } = {},
+): MojibakeRepairReport {
+  const checklist = readDataCarddassChecklist();
+  const corpus = new Set<string>();
+  for (const card of checklist.cards) {
+    const name = (card.nameJa ?? card.name ?? "").trim();
+    if (name) corpus.add(name);
+  }
+  const nao = readNaoYoshiSeesaaLedger();
+  if (nao) {
+    for (const row of nao.rows) {
+      const name = (row.nameJa ?? "").trim();
+      if (name) corpus.add(name);
+    }
+  }
+
+  let scanned = 0;
+  let repaired = 0;
+  const unresolved: string[] = [];
+  const nextCards: DataCarddassChecklistCard[] = checklist.cards.map((card) => {
+    const current = (card.nameJa ?? card.name ?? "").trim();
+    if (!looksLikeMojibakeJa(current)) return card;
+    scanned += 1;
+    const hit = repairMojibakeJa(current, corpus);
+    if (!hit) {
+      unresolved.push(card.printed);
+      return card;
+    }
+    repaired += 1;
+    return { ...card, nameJa: hit.nameJa, name: hit.nameJa };
+  });
+
+  const report: MojibakeRepairReport = {
+    total: checklist.cards.length,
+    scanned,
+    repaired,
+    unresolved,
+  };
+  if (opts.dryRun) return report;
+
+  writeFileSync(
+    dataCarddassChecklistPath(),
+    JSON.stringify({ ...checklist, cards: nextCards }, null, 2) + "\n",
     "utf8",
   );
   return report;

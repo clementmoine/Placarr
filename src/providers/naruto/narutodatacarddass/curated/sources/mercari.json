@@ -1,16 +1,34 @@
 {
   "source": "Mercari pasted Data Carddass leads (Narutimate)",
-  "observed": "2026-09-14",
+  "observed": "2026-09-25",
   "crawlLive": false,
   "ingest": "curated-faces",
   "lang": "ja",
-  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only.",
+  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only. 2026-09-25: m61124182960 = Jump Festa 大会限定 うずまきナルト = DNP-030 / DMP-000 (same face; Mission barcode table nao-yoshi).",
   "not": [
     "crawl",
     "shops-og-image",
     "lot-uncropped"
   ],
   "faces": [
+    {
+      "listingUrl": "https://jp.mercari.com/item/m61124182960",
+      "printedRef": "DNP-030",
+      "diskId": "dnp0030",
+      "title": "【大会限定プロモ】超激レア NARUTO ジャンプフェスタ大会 うずまきナルト",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m61124182960_1.jpg",
+      "note": "Same physical Jump Festa promo as DMP-000 (dual catalogue). Verified 対ネジ / 影分身の術 2500 vs existing art.ebay.webp."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m61124182960",
+      "printedRef": "DMP-000",
+      "diskId": "dmp0000",
+      "title": "【大会限定プロモ】超激レア NARUTO ジャンプフェスタ大会 うずまきナルト",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m61124182960_1.jpg",
+      "note": "Mission-side print key of DNP-030 Jump Festa dual-ref (nao-yoshi Mission CODE128 table)."
+    },
     {
       "listingUrl": "https://jp.mercari.com/item/m10628220337",
       "printedRef": "NF-011",

@@ -30,6 +30,10 @@ import { sealedStructureAttested } from "@/providers/shared/sealedProducts/conte
 import { resolveSealedPackshotUrl } from "@/providers/shared/sealedProducts/packshotUrl";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { providerModuleProviding } from "@/providers/shared/packOwner";
+import {
+  NARUTO_SHIPPUDEN_PACK_ID,
+  shippudenSetLabel,
+} from "@/providers/naruto/narutoshippuden/indexStore";
 
 export type CatalogueSealedRow = {
   productKey: string;
@@ -261,10 +265,21 @@ function rowFromEntry(
       typeof entry.priceCents === "number" && entry.priceCents > 0
         ? entry.priceCents
         : null,
-    label: entry.setCode
-      ? `${entry.setCode} · ${name} · ${count}`
-      : `${name} · ${count}`,
+    label: sealedRowLabel(corpusPack, entry.setCode, name, count),
   };
+}
+
+function sealedRowLabel(
+  pack: string,
+  setCode: string | null | undefined,
+  name: string,
+  count: string,
+): string {
+  const code = setCode?.trim();
+  if (!code) return `${name} · ${count}`;
+  const set =
+    pack === NARUTO_SHIPPUDEN_PACK_ID ? shippudenSetLabel(code) : code;
+  return `${set} · ${name} · ${count}`;
 }
 
 export function buildCatalogueSealedRows(

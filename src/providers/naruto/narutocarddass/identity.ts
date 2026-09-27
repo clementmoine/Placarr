@@ -829,16 +829,19 @@ const CARD_FAMILY: Record<string, string> = {
   m: "Mission",
   st: "Tactique",
   c: "Client",
-  shi: "Ninja",
-  mju: "Jutsu",
-  msa: "Tactique",
+  shi: "忍伝",
+  mju: "術伝",
+  msa: "作伝",
   prni: "Promo",
   prte: "Promo",
   prta: "Promo",
   prcl: "Promo",
   prki: "Promo",
   opni: "Promo",
-  gaku: "Ninja",
+  gaku: "忍伝-学",
+  prshi: "PR忍伝",
+  prmsa: "PR作伝",
+  prgaku: "PR学",
 };
 
 type SetsFile = {

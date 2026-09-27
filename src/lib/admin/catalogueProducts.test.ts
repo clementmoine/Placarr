@@ -372,7 +372,7 @@ describe("catalogue sealed rows", () => {
     expect(rows[0]).toMatchObject({
       structureAttested: true,
       contentsKnown: false,
-      label: "gaku · スターティングパック · deck",
+      label: "忍伝-学 (série école) · スターティングパック · deck",
     });
   });
 

@@ -62,6 +62,19 @@ export type OfficialPackshot = {
   kind: SealedKind | null;
 };
 
+/**
+ * Carte spoilée sur la page marketing (first-look / D23 / carousel), distincte
+ * des packshots scellés. Pas de numéro collection dans l'URL — l'ancrage se
+ * fait ensuite par set + titre normalisé.
+ */
+export type OfficialSpoilerCard = {
+  url: string;
+  /** Alt nettoyé (`Miguel Rivera - Musicien de rue`). */
+  title: string;
+  /** `first-look` | `d23` | `reveal` — provenance CDN. */
+  kind: "first-look" | "d23" | "reveal";
+};
+
 export type OfficialProductPage = {
   slug: string;
   title: string | null;
@@ -71,6 +84,8 @@ export type OfficialProductPage = {
   /** `set14` / `quest3` / `gateway1` — null si non résolu. */
   setId: string | null;
   packshots: OfficialPackshot[];
+  /** Cartes spoilées (ignorées des packshots à dessein). */
+  spoilers: OfficialSpoilerCard[];
   sourceUrl: string;
   /** Print language for sealed SKUs (`fr`, `en`, …). */
   lang: string;
@@ -127,15 +142,90 @@ export function officialSiteDurablePagesPath(packId = "lorcana"): string {
 export function officialSiteContentHashFromPages(
   pages: readonly OfficialProductPage[],
 ): string {
-  const lines: string[] = [];
+  const lines: string[] = ["schema|spoilers-v1"];
   for (const page of pages) {
     if (page.logoUrl) lines.push(`logo|${page.slug}|${page.logoUrl}`);
     for (const shot of page.packshots) {
       lines.push(`shot|${page.slug}|${shot.kind ?? "?"}|${shot.url}`);
     }
+    for (const spoiler of page.spoilers ?? []) {
+      lines.push(`spoiler|${page.slug}|${spoiler.kind}|${spoiler.url}`);
+    }
   }
   lines.sort();
   return hashCatalogArtefactBytes(lines.join("\n"));
+}
+
+/** `set14` → `14`, `quest3` → `Q3`, `gateway1` → `G1`. */
+export function officialSetIdToSetCode(setId: string | null): string | null {
+  if (!setId) return null;
+  const m = /^(set|quest|gateway)(\d+)$/i.exec(setId.trim());
+  if (!m) return null;
+  const kind = m[1]!.toLowerCase();
+  const n = m[2]!;
+  if (kind === "set") return n;
+  if (kind === "quest") return `Q${n}`;
+  return `G${n}`;
+}
+
+/**
+ * Alt marketing → titre imprimable.
+ * `Disney Lorcana Miguel Rivera - Musicien de rue` → `Miguel Rivera - Musicien de rue`.
+ */
+export function parseOfficialSpoilerTitle(alt: string): string | null {
+  let title = decodeEntities(alt)
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!title) return null;
+  title = title
+    .replace(/^disney\s+lorcana(?:\s+tcg)?\s*[–—:-]?\s*/i, "")
+    .replace(/^lorcana\s*[–—:-]?\s*/i, "")
+    .trim();
+  // Refuse chrome / produits / playmats.
+  if (
+    /^(logo|hyperia city|playmat|trove|booster|prerelease|illumineer|companion\s*app|teaser)/i.test(
+      title,
+    )
+  ) {
+    return null;
+  }
+  if (/playmat|product image|header|map_|teaser-double|banner/i.test(title)) {
+    return null;
+  }
+  // Une vraie carte spoile un personnage / sort : tiret version ou nom composé.
+  if (!/[–—-]/.test(title) && title.split(/\s+/).length < 2) return null;
+  // Collage fréquent `Aurora -Delightful` → espace après tiret.
+  title = title.replace(/\s*([–—-])\s*/g, " - ").replace(/\s+/g, " ").trim();
+  if (title.length < 4 || title.length > 120) return null;
+  return title;
+}
+
+export function classifyOfficialSpoilerUrl(
+  url: string,
+): OfficialSpoilerCard["kind"] | null {
+  if (/\/first-look\//i.test(url)) return "first-look";
+  if (/\/d23-card-reveal\/|\/card-reveal\//i.test(url)) return "d23";
+  // PNG carte hors packshots scellés. Le CMS range tout sous
+  // `…/products/s14-…/` ; les scellés sont en `…/products/s14-…/products/…`.
+  if (
+    /ravensburger\.cloud/i.test(url) &&
+    /\.png(?:\.png)?$/i.test(url) &&
+    !/\/products\/[^/]+\/products\//i.test(url) &&
+    !/\/products\/(?:trove|booster|pre-release|iq)\//i.test(url) &&
+    !/logo|header|map_|teaser-double|playmat|1920x1080|1080x1920/i.test(url)
+  ) {
+    return "reveal";
+  }
+  return null;
+}
+
+export function isOfficialSpoilerImage(alt: string, url: string): boolean {
+  if (!/ravensburger\.cloud/i.test(url)) return false;
+  if (/\/cards\/|\/glimmers\/|\/vinelings\//i.test(url)) return true;
+  const kind = classifyOfficialSpoilerUrl(url);
+  if (!kind) return false;
+  return Boolean(parseOfficialSpoilerTitle(alt));
 }
 
 export function persistOfficialSitePagesDurable(
@@ -372,15 +462,30 @@ export function parseOfficialProductPage(
   const logo = pickPreferredLogo(logoCandidates, setId);
 
   const packshots: OfficialPackshot[] = [];
+  const spoilers: OfficialSpoilerCard[] = [];
   const seen = new Set<string>();
   const kindSeen = new Set<string>();
+  const spoilerSeen = new Set<string>();
   for (const img of imgs) {
     if (logo && img.url === logo.url) continue;
     if (isSiteChromeLogo(img.alt, img.url)) continue;
     if (!/ravensburger\.cloud/i.test(img.url)) continue;
+
+    // Spoilers d'abord : first-look / D23 / PNG carte — jamais des packshots.
+    if (isOfficialSpoilerImage(img.alt, img.url)) {
+      const spoilerKind = classifyOfficialSpoilerUrl(img.url);
+      const title = parseOfficialSpoilerTitle(img.alt);
+      if (spoilerKind && title && !spoilerSeen.has(img.url)) {
+        spoilerSeen.add(img.url);
+        spoilers.push({ url: img.url, title, kind: spoilerKind });
+      }
+      continue;
+    }
+
     const kind = inferPackshotKind(img.alt, img.url);
     if (!kind) continue;
-    // Skip tiny card / glimmer art
+    // Skip tiny card / glimmer art (déjà couvert ci-dessus ; ce filet évite
+    // qu'un alt produit ambigu tombe en packshot).
     if (/\/cards\/|\/glimmers\/|\/vinelings\/|card-reveal|first-look/i.test(img.url))
       continue;
     if (seen.has(img.url)) continue;
@@ -415,6 +520,7 @@ export function parseOfficialProductPage(
     logoAlt: logo?.alt ?? null,
     setId,
     packshots,
+    spoilers,
     sourceUrl: opts.sourceUrl ?? officialSiteProductUrl(slug, locale),
     lang,
   };
@@ -458,6 +564,7 @@ export type OfficialSiteHarvest = {
   pages: number;
   logos: number;
   packshots: number;
+  spoilers: number;
   fail: number;
   pagesParsed: OfficialProductPage[];
 };
@@ -494,6 +601,10 @@ export async function harvestOfficialLorcanaSite(opts: {
           pages: durable.pages.length,
           logos: 0,
           packshots: 0,
+          spoilers: durable.pages.reduce(
+            (n, p) => n + (p.spoilers?.length ?? 0),
+            0,
+          ),
           fail: 0,
           pagesParsed: durable.pages,
         };
@@ -517,6 +628,7 @@ export async function harvestOfficialLorcanaSite(opts: {
   const menuBySlug = new Map<string, OfficialMenuEntry>();
   let logos = 0;
   let packshots = 0;
+  let spoilers = 0;
   let fail = 0;
 
   for (const locale of locales) {
@@ -637,6 +749,9 @@ export async function harvestOfficialLorcanaSite(opts: {
         }
         if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
       }
+
+      // Compte les spoilers (téléchargement face → applyOfficialSiteSpoilerFaces).
+      spoilers += parsed.spoilers.length;
     }
   }
 
@@ -657,6 +772,7 @@ export async function harvestOfficialLorcanaSite(opts: {
     pages: pagesParsed.length,
     logos,
     packshots,
+    spoilers,
     fail,
     pagesParsed,
   };
@@ -685,6 +801,7 @@ export function readOfficialSiteLedger(
       const pages = (raw.pages ?? []).map((page) => ({
         ...page,
         lang: page.lang ?? "fr",
+        spoilers: page.spoilers ?? [],
       }));
       return {
         menu: raw.menu ?? [],

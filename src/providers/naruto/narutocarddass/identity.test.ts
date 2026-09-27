@@ -485,6 +485,7 @@ import type { NarutoPrintDetail } from "./search";
       expect(isJpOnlyNarutoArtwork("ni0001-ps")).toBe(true);
       expect(isJpOnlyNarutoArtwork("ni0001-a")).toBe(true);
       expect(isJpOnlyNarutoArtwork("te0259-a")).toBe(true);
+      expect(isJpOnlyNarutoArtwork("te0236-a")).toBe(true);
       expect(isJpOnlyNarutoArtwork("te0259-b")).toBe(true);
       expect(isJpOnlyNarutoArtwork("te0269-b")).toBe(true);
       expect(isJpOnlyNarutoArtwork("ni0001")).toBe(false);
@@ -660,6 +661,7 @@ import type { NarutoPrintDetail } from "./search";
         "ni0002-a",
         "te0259-a",
         "te0259-b",
+        "te0236-a",
         "te0269-b",
         "sa0257-a",
       ]) {

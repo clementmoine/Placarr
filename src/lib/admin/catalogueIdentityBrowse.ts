@@ -50,6 +50,14 @@ import {
   clearCarddassCatalogueBrowseCache,
 } from "@/providers/naruto/narutocarddass/catalogueBrowse";
 import {
+  buildShippudenCatalogueBrowseRows,
+  clearShippudenCatalogueBrowseCache,
+} from "@/providers/naruto/narutoshippuden/catalogueBrowse";
+import {
+  NARUTO_SHIPPUDEN_PACK_ID,
+  narutoShippudenDbPath,
+} from "@/providers/naruto/narutoshippuden/indexStore";
+import {
   buildMtgCatalogueBrowseRows,
   clearMtgCatalogueBrowseCache,
 } from "@/providers/mtg/catalogueBrowse";
@@ -195,6 +203,10 @@ export function tryBuildIdentityCatalogueRows(
   if (pack === "naruto/carddass") {
     return buildCarddassCatalogueBrowseRows();
   }
+  if (pack === NARUTO_SHIPPUDEN_PACK_ID) {
+    if (!existsSync(narutoShippudenDbPath())) return null;
+    return buildShippudenCatalogueBrowseRows();
+  }
   if (pack === MTG_PACK_ID) {
     const index = createLocalPrintsIndex(MTG_PACK_ID);
     if (!index.hasIdentityCorpus()) return null;
@@ -207,6 +219,7 @@ export function tryBuildIdentityCatalogueRows(
 export function clearIdentityCatalogueBrowseCache(): void {
   localCache.clear();
   clearCarddassCatalogueBrowseCache();
+  clearShippudenCatalogueBrowseCache();
   clearMtgCatalogueBrowseCache();
   clearDbsFwCatalogueBrowseCache();
   clearDbsCgCatalogueBrowseCache();

@@ -15,6 +15,7 @@ import {
   NARUTO_FACE_DECISION_FILE,
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
+  narutoFaceCoverProvenance,
   narutoFaceSourceOf,
   parseNarutoFaceDecision,
 } from "./disk";
@@ -95,7 +96,7 @@ export function buildNarutoDiskArtAttachments(opts: {
       title: opts.title?.trim() || faceSource,
       role: `naruto-face-${faceSource}`,
       source: opts.source,
-      coverProvenance: "catalog",
+      coverProvenance: narutoFaceCoverProvenance(faceSource),
     };
   });
 

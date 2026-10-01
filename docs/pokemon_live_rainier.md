@@ -223,8 +223,13 @@ Exemple live : craft `bw6-5_2` (Dratini / Tinsel, Common, 40) → wallet
 | mitmdump     | CDN + WebView OAuth en clair ; **0** hit `api.*.studio-prod` (Unity TLS hors proxy)        |
 | frida-server | Présent — unpin non requis une fois les paths commerce connus                              |
 
+**Téléphone réel (2026-09)** — Magisk CA + proxy : Unity libcurl en clair
+(CDN, OAuth, `api.*.studio-prod`) **sans Frida**. Frida anti-tamper sur Live —
+ne pas l’armer pour le sniff. Handoff :
+`docs/handoff-device-mitm-frida.md` + `~/.cache/placarr-device-mitm/scripts/pokemon_sniff.sh`.
+
 Inutile de vider les caches app pour l’owned si on a un refresh PTCS valide :
-appeler carddex/inventory directement.
+appeler carddex/inventory directement (`syncLiveOwned.ts`).
 
 ---
 

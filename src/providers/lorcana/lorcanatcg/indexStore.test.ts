@@ -236,4 +236,47 @@ describe("lorcanatcg — les chiffres du jeu", () => {
       lookupLorcanaTcgTitle("lorcana:1-2", "fr", dbPath)?.subtypes,
     ).toEqual(["Né du récit", "Allié"]);
   });
+
+  it("refuse d’écrire un titre FR branché sur un CDN /images/en/", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "lorcanatcg-"));
+    dirs.push(dir);
+    const dbPath = path.join(dir, "catalog.sqlite");
+
+    writeLorcanaTcgIndex({
+      dbPath,
+      languages: ["fr", "en"],
+      prints: [
+        {
+          printKey: "lorcana:1-4-challenge1",
+          setCode: "1",
+          number: "4",
+          promoGrouping: "CHALLENGE1",
+        },
+      ],
+      titles: [
+        {
+          printKey: "lorcana:1-4-challenge1",
+          lang: "fr",
+          fullName: "Rapunzel - Gifted with Healing",
+          imageUrl:
+            "https://api.lorcana.ravensburger.com/images/en/challenge1/4.jpg",
+        },
+        {
+          printKey: "lorcana:1-4-challenge1",
+          lang: "en",
+          fullName: "Rapunzel - Gifted with Healing",
+          imageUrl:
+            "https://api.lorcana.ravensburger.com/images/en/challenge1/4.jpg",
+        },
+      ],
+      assets: [],
+    });
+
+    expect(
+      lookupLorcanaTcgTitle("lorcana:1-4-challenge1", "fr", dbPath),
+    ).toBeNull();
+    expect(
+      lookupLorcanaTcgTitle("lorcana:1-4-challenge1", "en", dbPath)?.fullName,
+    ).toBe("Rapunzel - Gifted with Healing");
+  });
 });

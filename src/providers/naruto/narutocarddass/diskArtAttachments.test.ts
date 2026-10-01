@@ -25,9 +25,13 @@ describe("buildNarutoDiskArtAttachments", () => {
     });
 
     expect(attachments).toHaveLength(2);
-    expect(attachments.every((a) => a.coverProvenance === "catalog")).toBe(
-      true,
-    );
+    expect(
+      attachments.find((a) => a.role === "naruto-face-carddass")
+        ?.coverProvenance,
+    ).toBe("catalog");
+    expect(
+      attachments.find((a) => a.role === "naruto-face-coleka")?.coverProvenance,
+    ).toBe("listing_photo");
     expect(attachments.every((a) => a.source === "narutocarddass")).toBe(true);
     expect(defaultUrl).toBe(
       "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.coleka.webp",

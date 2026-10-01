@@ -21,6 +21,7 @@ import {
   lorcanaPromoChecklistSeries,
   lorcanaSetScopeWhere,
 } from "./sources/promoSeries";
+import { ravensburgerMediaConflictsLang } from "./scrape/officialCatalogFill";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { parsePrintKey } from "@/core/identify/printKey";
@@ -270,6 +271,30 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
   }
   mkdirSync(path.dirname(dbPath), { recursive: true });
 
+  // Garde anti-fuite EN→FR : un titre `lang=X` ne peut pas porter un CDN
+  // Ravensburger `/images/Y/` (Y≠X). Les autres hosts passent.
+  // Les assets (fichiers locaux / art-only siblings) ne sont pas filtrés ici :
+  // un lang peut avoir de l’art sans titre (nameSource sibling).
+  const titles = input.titles.filter((row) => {
+    const conflict = ravensburgerMediaConflictsLang(
+      row.lang,
+      row.imageUrl,
+      row.thumbnailUrl,
+      row.foilMaskUrl,
+      row.varnishMaskUrl,
+      row.fullFoilUrl,
+      row.secondVarnishMaskUrl,
+    );
+    if (conflict) {
+      console.warn(
+        `[lorcana] drop title ${row.printKey} lang=${row.lang} (CDN langue ≠ titre)`,
+      );
+      return false;
+    }
+    return true;
+  });
+  const assets = input.assets;
+
   const db = new DatabaseSync(dbPath);
   createSchema(db);
 
@@ -360,7 +385,7 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
       row.setCardCount ?? null,
     );
   }
-  for (const row of input.titles) {
+  for (const row of titles) {
     insertTitle.run(
       row.printKey,
       row.lang,
@@ -383,7 +408,7 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
       row.secondVarnishMaskUrl ?? null,
     );
   }
-  for (const row of input.assets) {
+  for (const row of assets) {
     insertAsset.run(
       row.printKey,
       row.lang,

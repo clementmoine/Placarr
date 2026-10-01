@@ -253,6 +253,30 @@ export const NARUTO_JA_SHOP_SCAN_SOURCES: ReadonlySet<NarutoFaceSource> =
     "tvtokyo-b",
   ]);
 
+/**
+ * Photos vendeur / place de marché — `coverProvenance: listing_photo` pour que
+ * le ranking générique préfère une face Bandai / shop catalogue quand elle existe.
+ * Avalon / Coleka : photos boutique ou collectionneur (glare, table), pas un render fiche.
+ */
+export const NARUTO_LISTING_PHOTO_FACE_SOURCES: ReadonlySet<NarutoFaceSource> =
+  new Set([
+    "ebay",
+    "leboncoin",
+    "mercari",
+    "yahoo",
+    "fril",
+    "coleka",
+    "avalon",
+  ]);
+
+export function narutoFaceCoverProvenance(
+  source: NarutoFaceSource,
+): "catalog" | "listing_photo" {
+  return NARUTO_LISTING_PHOTO_FACE_SOURCES.has(source)
+    ? "listing_photo"
+    : "catalog";
+}
+
 export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
   {
     fr: [

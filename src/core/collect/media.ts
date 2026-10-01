@@ -22,7 +22,7 @@ import {
   rankCoverGalleryAttachments,
   scoreAttachmentForDisplay,
   shouldShowCoverAttachmentOnShelf,
-  isMarketplaceCoverRole,
+  isWeakDisplayCoverPin,
   coverLocaleRankForAttachment,
   type AttachmentDisplayScoreOptions,
   type AttachmentImageMetrics,
@@ -787,13 +787,13 @@ function orderRankedCoversWithMetadataPin(
     (attachment) =>
       attachment.url &&
       attachment !== pinAttachment &&
-      !isMarketplaceCoverRole(attachment.role) &&
+      !isWeakDisplayCoverPin(attachment) &&
       COVER_GALLERY_TYPES.has(attachment.type),
   );
 
   if (
     pinAttachment &&
-    isMarketplaceCoverRole(pinAttachment.role) &&
+    isWeakDisplayCoverPin(pinAttachment) &&
     hasRegionalCatalog
   ) {
     return dedupeAttachmentsByImageUrl(ranked);
@@ -874,13 +874,11 @@ export function resolveMetadataCoverUrl(
 
   if (
     pinAttachment &&
-    isMarketplaceCoverRole(pinAttachment.role) &&
+    isWeakDisplayCoverPin(pinAttachment) &&
     coverPool.length > 0
   ) {
     const bestRegional = pickBestCoverFromAttachments(
-      coverPool.filter(
-        (attachment) => !isMarketplaceCoverRole(attachment.role),
-      ),
+      coverPool.filter((attachment) => !isWeakDisplayCoverPin(attachment)),
       persistedImageMetricsByUrl(item),
       options,
     );

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "naruto/carddass",
-  "updatedAt": "2026-09-14",
+  "updatedAt": "2026-10-01",
   "byKind": {
     "booster": {
       "source": "carddass.fr / presse 2006–07 + NARUTO_BOOSTER_CARD_COUNT (hors JP 6)",
@@ -1446,8 +1446,8 @@
       ]
     },
     "starter-la-quete": {
-      "source": "carddass.fr liste_cartes_s5.htm (* /**) — pas de catalogue_s5 quantités",
-      "verifiedAt": "2026-08-29",
+      "source": "poster papier S5 La quête (user 2026-10-01) — 25 exclusives ; holos = rareté checklist Manga-News / carddass ; quantités / communes inconnues",
+      "verifiedAt": "2026-10-01",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -1461,7 +1461,6 @@
         "naruto:ni-0160",
         "naruto:ni-0161",
         "naruto:ni-0162",
-        "naruto:ni-0197",
         "naruto:ni-0207",
         "naruto:ni-0218",
         "naruto:ni-0224",
@@ -1483,11 +1482,38 @@
         "naruto:te-0213",
         "naruto:te-0231"
       ],
-      "notes": "Marqueurs * = 27 printKeys (présents deck). UltraJeux : 40 cartes, « 25 exclusives » sans liste. Hunt forums/blogs 2026-08-26 : pas de lot quantitatif — contentsKnown false. Dig : curated/sources/s5-starter-contents-hunt-2026-08-26.json. Corrigé 2026-08-29: NI-229 Kakashi ** (pas *) — déplacé vers Un nouveau départ."
+      "guaranteedPrints": [
+        { "printKey": "naruto:ni-0049", "qty": 1 },
+        { "printKey": "naruto:ni-0126", "qty": 1 },
+        { "printKey": "naruto:ni-0160", "qty": 1 },
+        { "printKey": "naruto:ni-0161", "qty": 1 },
+        { "printKey": "naruto:ni-0162", "qty": 1 },
+        { "printKey": "naruto:ni-0207", "qty": 1 },
+        { "printKey": "naruto:ni-0218", "qty": 1, "finish": "holo" },
+        { "printKey": "naruto:ni-0224", "qty": 1 },
+        { "printKey": "naruto:ni-0227", "qty": 1 },
+        { "printKey": "naruto:ni-0228", "qty": 1 },
+        { "printKey": "naruto:ni-0230", "qty": 1 },
+        { "printKey": "naruto:ni-0231", "qty": 1 },
+        { "printKey": "naruto:ni-0233", "qty": 1 },
+        { "printKey": "naruto:ni-0245", "qty": 1 },
+        { "printKey": "naruto:ni-0313", "qty": 1, "finish": "holo" },
+        { "printKey": "naruto:ta-0192", "qty": 1 },
+        { "printKey": "naruto:ta-0194", "qty": 1 },
+        { "printKey": "naruto:ta-0208", "qty": 1 },
+        { "printKey": "naruto:ta-0209", "qty": 1 },
+        { "printKey": "naruto:ta-0213", "qty": 1 },
+        { "printKey": "naruto:te-0193", "qty": 1 },
+        { "printKey": "naruto:te-0208", "qty": 1 },
+        { "printKey": "naruto:te-0210", "qty": 1 },
+        { "printKey": "naruto:te-0213", "qty": 1 },
+        { "printKey": "naruto:te-0231", "qty": 1 }
+      ],
+      "notes": "Poster 2026-10-01 = 25 exclusives (UltraJeux « 25 »). Holos annoncés Holo sur checklist série (Manga-News) parmi les exclusives + « 2 holos » packaging → NI-218 Jiraya + NI-313 Anko. NI-197 → Nouveau départ. Pas de qty / 15 communes → contentsKnown false. Dig : poster-starters-s5 + s5-starter-qty-web-hunt-2026-10-01. guaranteedPrints = full exclusive list (keys alone are ignored when prints[] is set)."
     },
     "starter-un-nouveau-depart": {
-      "source": "carddass.fr liste_cartes_s5.htm (* /**) — pas de catalogue_s5 quantités",
-      "verifiedAt": "2026-08-29",
+      "source": "poster papier S5 Un nouveau départ (user 2026-10-01) — 25 exclusives ; holos = rareté checklist Manga-News / carddass ; quantités / communes inconnues",
+      "verifiedAt": "2026-10-01",
       "packsContained": null,
       "cardsPerPack": null,
       "declaredCardCount": 40,
@@ -1500,6 +1526,7 @@
         "naruto:ni-0159",
         "naruto:ni-0191",
         "naruto:ni-0196",
+        "naruto:ni-0197",
         "naruto:ni-0219",
         "naruto:ni-0225",
         "naruto:ni-0226",
@@ -1521,7 +1548,34 @@
         "naruto:te-0217",
         "naruto:te-0219"
       ],
-      "notes": "Marqueurs ** = 23 printKeys. UltraJeux « 25 exclusives » (même boilerplate). Hunt 2026-08-26 : toujours sans communes/quantités. Corrigé 2026-08-29: +NI-229 Kakashi (** sur liste_cartes_s5)."
+      "guaranteedPrints": [
+        { "printKey": "naruto:ni-0029", "qty": 1 },
+        { "printKey": "naruto:ni-0159", "qty": 1 },
+        { "printKey": "naruto:ni-0191", "qty": 1 },
+        { "printKey": "naruto:ni-0196", "qty": 1 },
+        { "printKey": "naruto:ni-0197", "qty": 1 },
+        { "printKey": "naruto:ni-0219", "qty": 1, "finish": "holo" },
+        { "printKey": "naruto:ni-0225", "qty": 1 },
+        { "printKey": "naruto:ni-0226", "qty": 1 },
+        { "printKey": "naruto:ni-0229", "qty": 1, "finish": "holo" },
+        { "printKey": "naruto:ni-0237", "qty": 1 },
+        { "printKey": "naruto:ni-0241", "qty": 1 },
+        { "printKey": "naruto:ni-0242", "qty": 1 },
+        { "printKey": "naruto:ni-0243", "qty": 1 },
+        { "printKey": "naruto:ni-0244", "qty": 1 },
+        { "printKey": "naruto:ni-0246", "qty": 1 },
+        { "printKey": "naruto:ta-0196", "qty": 1 },
+        { "printKey": "naruto:ta-0210", "qty": 1 },
+        { "printKey": "naruto:ta-0211", "qty": 1 },
+        { "printKey": "naruto:ta-0212", "qty": 1 },
+        { "printKey": "naruto:ta-0216", "qty": 1 },
+        { "printKey": "naruto:te-0200", "qty": 1 },
+        { "printKey": "naruto:te-0211", "qty": 1 },
+        { "printKey": "naruto:te-0212", "qty": 1 },
+        { "printKey": "naruto:te-0217", "qty": 1 },
+        { "printKey": "naruto:te-0219", "qty": 1 }
+      ],
+      "notes": "Poster 2026-10-01 = 25 exclusives. Holos annoncés Holo sur checklist (Manga-News) parmi exclusives + « 2 holos » packaging → NI-219 Tsunade + NI-229 Kakashi. +NI-197 Kuromaru. Pas de qty / 15 communes → contentsKnown false. Dig : poster-starters-s5 + s5-starter-qty-web-hunt-2026-10-01. guaranteedPrints = full exclusive list (keys alone are ignored when prints[] is set)."
     },
     "starter-forza-della-foglia": {
       "source": "sets.json / presse : 40 cartes (11R+2H+27C) — liste printKeys inconnue",

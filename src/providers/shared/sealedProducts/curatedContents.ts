@@ -241,16 +241,20 @@ function applyPatch(
     randomPoolPrints: pool ?? entry.randomPoolPrints,
     randomPoolScope: patch.randomPoolScope ?? entry.randomPoolScope,
     behavior: patch.behavior ?? entry.behavior,
-    contentsKnown: inventoryKnown
-      ? true
-      : patch.contentsKnown !== undefined
+    // Explicit curated flag wins — partial exclusives (S5 posters) keep
+    // contentsKnown=false even with guaranteedPrints filled.
+    contentsKnown:
+      patch.contentsKnown !== undefined
         ? patch.contentsKnown
-        : entry.contentsKnown,
-    containsPrintsIsPreview: inventoryKnown
-      ? false
-      : patch.containsPrintsIsPreview !== undefined
+        : inventoryKnown
+          ? true
+          : entry.contentsKnown,
+    containsPrintsIsPreview:
+      patch.containsPrintsIsPreview !== undefined
         ? patch.containsPrintsIsPreview
-        : entry.containsPrintsIsPreview,
+        : inventoryKnown
+          ? false
+          : entry.containsPrintsIsPreview,
   };
 }
 

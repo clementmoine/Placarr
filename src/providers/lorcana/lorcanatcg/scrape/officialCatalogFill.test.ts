@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   parseOfficialCardIdentifier,
   parseOfficialCatalogCards,
+  ravensburgerImageLang,
+  ravensburgerMediaConflictsLang,
   resolveOfficialSetCode,
   selectOfficialCatalogFill,
   toOfficialCatalogFillPrint,
@@ -45,6 +47,37 @@ function card(
     ...overrides,
   };
 }
+
+describe("ravensburgerImageLang", () => {
+  it("lit la langue du chemin CDN", () => {
+    expect(
+      ravensburgerImageLang(
+        "https://api.lorcana.ravensburger.com/images/fr/set14/23.jpg",
+      ),
+    ).toBe("fr");
+    expect(
+      ravensburgerImageLang(
+        "https://api.lorcana.ravensburger.com/images/en/d23/13.jpg",
+      ),
+    ).toBe("en");
+    expect(ravensburgerImageLang("https://cdn.example/art.png")).toBeNull();
+  });
+
+  it("détecte un conflit lang/CDN", () => {
+    expect(
+      ravensburgerMediaConflictsLang(
+        "fr",
+        "https://api.lorcana.ravensburger.com/images/en/challenge1/4.jpg",
+      ),
+    ).toBe(true);
+    expect(
+      ravensburgerMediaConflictsLang(
+        "fr",
+        "https://api.lorcana.ravensburger.com/images/fr/set1/4.jpg",
+      ),
+    ).toBe(false);
+  });
+});
 
 describe("parseOfficialCardIdentifier", () => {
   it("lit un tirage de set principal", () => {
@@ -165,10 +198,71 @@ describe("toOfficialCatalogFillPrint", () => {
           cardIdentifier: "13/D23 EN 14",
           name: "Héctor Rivera",
           subtitle: "En miettes",
+          variants: [
+            {
+              variantId: "Regular",
+              detailImageUrl:
+                "https://api.lorcana.ravensburger.com/images/en/d23/13_abc.jpg",
+              foilMaskUrl: null,
+              varnishMaskUrl: null,
+              foilType: null,
+              hotFoilColor: null,
+            },
+          ],
+        }),
+        "fr",
+      ),
+    ).toBeNull();
+  });
+
+  it("refuse une face FR dont le CDN est /images/en/", () => {
+    expect(
+      toOfficialCatalogFillPrint(
+        card({
+          cardIdentifier: "4/204 FR 1",
+          name: "Rapunzel",
+          subtitle: "Gifted with Healing",
+          cardSets: ["set1"],
+          variants: [
+            {
+              variantId: "Regular",
+              detailImageUrl:
+                "https://api.lorcana.ravensburger.com/images/en/challenge1/4_abc.jpg",
+              foilMaskUrl: null,
+              varnishMaskUrl: null,
+              foilType: null,
+              hotFoilColor: null,
+            },
+          ],
+        }),
+        "fr",
+      ),
+    ).toBeNull();
+  });
+
+  it("accepte une promo FR avec image /images/fr/", () => {
+    expect(
+      toOfficialCatalogFillPrint(
+        card({
+          cardIdentifier: "14/P4 FR 13",
+          name: "Promo",
+          subtitle: "Test",
+          cardSets: ["set13"],
+          variants: [
+            {
+              variantId: "Regular",
+              detailImageUrl:
+                "https://api.lorcana.ravensburger.com/images/fr/promo4/14_abc.jpg",
+              foilMaskUrl: null,
+              varnishMaskUrl: null,
+              foilType: null,
+              hotFoilColor: null,
+            },
+          ],
         }),
         "fr",
       )?.printKey,
-    ).toBe("lorcana:14-13-d23");
+    ).toBe("lorcana:13-14-p4");
   });
 });
 

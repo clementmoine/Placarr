@@ -160,6 +160,37 @@ describe("mergeCuratedSealedContents", () => {
     expect(merged.a?.contentsKnown).toBe(true);
   });
 
+  it("honors explicit contentsKnown=false with partial guaranteedPrints", () => {
+    stubPack("naruto/carddass", {
+      version: 1,
+      pack: "naruto/carddass",
+      updatedAt: "2026-10-01",
+      skus: {
+        "starter-partial": {
+          source: "test",
+          verifiedAt: "2026-10-01",
+          contentsKnown: false,
+          containsPrintsIsPreview: false,
+          declaredCardCount: 40,
+          guaranteedPrints: [
+            { printKey: "naruto:ni-0218", qty: 1, finish: "holo" },
+            { printKey: "naruto:ni-0313", qty: 1 },
+          ],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("naruto/carddass", {
+      a: entry({
+        slug: "starter-partial",
+        kind: "deck",
+        behavior: "known_bundle",
+      }),
+    });
+    expect(merged.a?.guaranteedPrints).toHaveLength(2);
+    expect(merged.a?.contentsKnown).toBe(false);
+    expect(merged.a?.containsPrintsIsPreview).toBe(false);
+  });
+
   it("merges guaranteedProducts for multi-SKU bundles", () => {
     stubPack("naruto/carddass", {
       version: 1,

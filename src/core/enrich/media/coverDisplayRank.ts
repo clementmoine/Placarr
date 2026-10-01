@@ -4,6 +4,7 @@ import {
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import {
   coverProvenanceRank,
+  isListingPhotoCoverProvenance,
   resolveCoverProvenance,
 } from "@/core/enrich/media/coverProvenance";
 import { isCoverEligibleAttachmentType } from "@/core/enrich/media/coverUrl";
@@ -78,6 +79,21 @@ export function isMarketplaceCoverRole(role?: string | null): boolean {
     normalized === "marketplace" ||
     normalized === "marketplace_offer" ||
     normalized.startsWith("3d-marketplace")
+  );
+}
+
+/**
+ * Weak display cover for metadata-pin demotion: marketplace *role* or
+ * `coverProvenance: listing_photo`. Prefer the provenance signal when providers
+ * stamp seller photos with a domain role (`naruto-face-ebay`, …).
+ */
+export function isWeakDisplayCoverPin(attachment: {
+  role?: string | null;
+  coverProvenance?: string | null;
+}): boolean {
+  return (
+    isMarketplaceCoverRole(attachment.role) ||
+    isListingPhotoCoverProvenance(attachment.coverProvenance)
   );
 }
 
@@ -388,7 +404,7 @@ export function resolveStoredMetadataCoverUrl(
   const scoredAttachment = coverAttachments.find(
     (attachment) => attachment.url === scoredImageUrl,
   );
-  if (scoredAttachment && !isMarketplaceCoverRole(scoredAttachment.role)) {
+  if (scoredAttachment && !isWeakDisplayCoverPin(scoredAttachment)) {
     return scoredImageUrl;
   }
 

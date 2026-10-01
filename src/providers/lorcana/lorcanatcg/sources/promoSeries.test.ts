@@ -45,6 +45,16 @@ describe("lorcanaPromoChecklistSeries", () => {
     });
   });
 
+  it("maps DIS to Discover Promo", () => {
+    expect(lorcanaPromoChecklistSeries("DIS")).toEqual({
+      id: "dis",
+      code: "DIS",
+      label: "Discover Promo",
+      sortKey: 80,
+    });
+    expect(lorcanaPromoChecklistSeries("dis")?.label).toBe("Discover Promo");
+  });
+
   it("keeps challenge and other groupings as their own series", () => {
     expect(lorcanaPromoChecklistSeries("C2")).toMatchObject({
       id: "c2",

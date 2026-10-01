@@ -224,6 +224,32 @@ function httpsUrl(value: unknown): string | null {
   }
 }
 
+/**
+ * Langue du chemin CDN Ravensburger (`…/images/fr/set14/…` → `fr`).
+ * `null` si l’URL n’est pas ce CDN — on ne bloque pas les autres hosts.
+ */
+export function ravensburgerImageLang(
+  url: string | null | undefined,
+): string | null {
+  if (!url) return null;
+  const match = /\/images\/([a-z]{2})\//i.exec(url);
+  return match?.[1]?.toLowerCase() ?? null;
+}
+
+/** True si une URL média contredit la langue demandée. */
+export function ravensburgerMediaConflictsLang(
+  language: string,
+  ...urls: Array<string | null | undefined>
+): boolean {
+  const want = language.trim().toLowerCase();
+  if (!want) return false;
+  for (const url of urls) {
+    const got = ravensburgerImageLang(url);
+    if (got && got !== want) return true;
+  }
+  return false;
+}
+
 function labelFor(
   table: Record<string, Partial<Record<LorcanaLanguage, string>>>,
   key: string | null | undefined,
@@ -360,6 +386,10 @@ export function parseOfficialSetNames(
 
 /**
  * Carte officielle → face pack, ou `null` si l’identifiant n’ancre rien.
+ *
+ * Refuse les fuites EN→FR : le Companion `/v3/catalog/fr` liste encore des
+ * Challenge / D23 / Promo dont l’identifiant dit `EN` et le CDN est
+ * `/images/en/…`. Sans ce filtre on inventait un `print_titles` FR fantôme.
  */
 export function toOfficialCatalogFillPrint(
   card: OfficialCatalogCard,
@@ -368,6 +398,9 @@ export function toOfficialCatalogFillPrint(
 ): OfficialCatalogFillPrint | null {
   const parsed = parseOfficialCardIdentifier(card.cardIdentifier);
   if (!parsed) return null;
+  if (parsed.languageMark.toLowerCase() !== language.toLowerCase()) {
+    return null;
+  }
   const setCode = resolveOfficialSetCode(card.cardSets, parsed.setTail);
   if (!setCode) return null;
 
@@ -382,6 +415,17 @@ export function toOfficialCatalogFillPrint(
   const version = card.subtitle;
   const fullName = version ? `${card.name} - ${version}` : card.name;
   const media = pickVariants(card.variants);
+  if (
+    ravensburgerMediaConflictsLang(
+      language,
+      media.imageUrl,
+      card.thumbnailUrl,
+      media.foilMaskUrl,
+      media.varnishMaskUrl,
+    )
+  ) {
+    return null;
+  }
 
   return {
     printKey,

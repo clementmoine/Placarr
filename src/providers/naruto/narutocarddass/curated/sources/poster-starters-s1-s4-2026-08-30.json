@@ -3,7 +3,7 @@
   "observed": "2026-08-30",
   "kind": "research-dig",
   "ingest": "guaranteedPrints (+ qty) → curated/products-contents.json → products-index merge",
-  "proof": "User-confirmed poster membership (S1–S4) + carddass.fr catalogue_* qty; S5 deferred",
+  "proof": "User-confirmed poster membership (S1–S4) + carddass.fr catalogue_* qty; S5 posters → poster-starters-s5-2026-10-01.json",
   "notes": [
     "Holo finish: packaging says 2 holos per starter but poster does not name them — finish omitted (no invention).",
     "tin-box guaranteed synced to Invocation poster list (no S1 pollution).",
@@ -25,7 +25,6 @@
     "starter-invocation": { "sumQty": 40, "contentsKnown": true }
   },
   "notDone": [
-    "Identify the 2 holo finishes per starter (not on poster)",
-    "S5 Quête / Nouveau départ (awaiting posters)"
+    "Identify the 2 holo finishes per starter (not on poster)"
   ]
 }

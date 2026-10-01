@@ -82,6 +82,16 @@ export function lorcanaPromoChecklistSeries(
     };
   }
 
+  // Cardmarket : Discover Promo (Magical Places / parcs Disney).
+  if (g === "DIS") {
+    return {
+      id: "dis",
+      code: "DIS",
+      label: "Discover Promo",
+      sortKey: 80,
+    };
+  }
+
   return {
     id: g.toLowerCase(),
     code: g,

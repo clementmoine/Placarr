@@ -158,6 +158,41 @@ describe("orderedCoverAttachmentsForDisplay", () => {
     ).toEqual(["geedie", "icollect"]);
   });
 
+  it("demotes a listing_photo metadata pin when catalog art exists", () => {
+    const item = {
+      metadata: {
+        imageUrl: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.ebay.webp",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "narutocarddass",
+            role: "naruto-face-ebay",
+            coverProvenance: "listing_photo",
+            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.ebay.webp",
+            width: 1200,
+            height: 1600,
+          },
+          {
+            type: "cover" as const,
+            source: "narutocarddass",
+            role: "naruto-face-carddass",
+            coverProvenance: "catalog",
+            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+            width: 350,
+            height: 495,
+          },
+        ],
+      },
+      shelf: { type: "cards", name: "Naruto" },
+    };
+
+    expect(
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.role,
+      ),
+    ).toEqual(["naruto-face-carddass", "naruto-face-ebay"]);
+  });
+
   it("keeps Geedie covers visible but ranks explicit PS4 art first on a PS4 shelf", () => {
     const item = {
       metadata: {

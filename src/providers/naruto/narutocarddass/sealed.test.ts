@@ -1502,6 +1502,30 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       const inv = ledger.skus["starter-invocation"]!.guaranteedPrintKeys ?? [];
       expect(inv).not.toContain("naruto:ni-0001");
       expect(inv).toContain("naruto:ni-0156");
+      // S5 posters 2026-10-01 : 25 exclusives each ; NI-197 → Nouveau départ.
+      const quete = ledger.skus["starter-la-quete"]!;
+      const nouveau = ledger.skus["starter-un-nouveau-depart"]!;
+      expect(quete.guaranteedPrintKeys).toHaveLength(25);
+      expect(nouveau.guaranteedPrintKeys).toHaveLength(25);
+      // guaranteedPrints wins over keys at merge — must list all 25 exclusives.
+      expect(quete.guaranteedPrints).toHaveLength(25);
+      expect(nouveau.guaranteedPrints).toHaveLength(25);
+      expect(quete.guaranteedPrintKeys).not.toContain("naruto:ni-0197");
+      expect(nouveau.guaranteedPrintKeys).toContain("naruto:ni-0197");
+      expect(quete.contentsKnown).toBe(false);
+      expect(nouveau.contentsKnown).toBe(false);
+      expect(
+        quete.guaranteedPrints?.filter((row) => row.finish === "holo"),
+      ).toEqual([
+        { printKey: "naruto:ni-0218", qty: 1, finish: "holo" },
+        { printKey: "naruto:ni-0313", qty: 1, finish: "holo" },
+      ]);
+      expect(
+        nouveau.guaranteedPrints?.filter((row) => row.finish === "holo"),
+      ).toEqual([
+        { printKey: "naruto:ni-0219", qty: 1, finish: "holo" },
+        { printKey: "naruto:ni-0229", qty: 1, finish: "holo" },
+      ]);
       expect(
         ledger.skus["starter-maitre-hokage"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",

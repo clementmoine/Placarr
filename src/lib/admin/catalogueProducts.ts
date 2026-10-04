@@ -268,7 +268,7 @@ function rowFromEntry(
       typeof entry.priceCents === "number" && entry.priceCents > 0
         ? entry.priceCents
         : null,
-    label: sealedRowLabel(corpusPack, entry.setCode, name, count),
+    label: sealedRowLabel(corpusPack ?? "", entry.setCode, name, count),
   };
 }
 

@@ -97,10 +97,16 @@ const UA =
  * Si le buffer est du UTF-8 valide sans U+FFFD, on le garde (AJAX entities
  * ASCII + éventuel futur UTF-8) ; sinon latin-1.
  */
-export function decodeDbzcHtmlBytes(bytes: ArrayBuffer | Uint8Array): string {
-  const buf = Buffer.from(
-    bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : bytes,
-  );
+export function decodeDbzcHtmlBytes(
+  bytes: ArrayBuffer | ArrayBufferView | Buffer,
+): string {
+  const view =
+    bytes instanceof ArrayBuffer
+      ? new Uint8Array(bytes)
+      : Buffer.isBuffer(bytes)
+        ? bytes
+        : new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const buf = Buffer.from(view);
   const asUtf8 = buf.toString("utf8");
   if (!asUtf8.includes("\uFFFD")) return asUtf8;
   return buf.toString("latin1");
@@ -123,9 +129,7 @@ export async function fetchDbzcText(
       return data.length >= minLength ? data : null;
     }
     if (!data) return null;
-    const html = decodeDbzcHtmlBytes(
-      data instanceof ArrayBuffer ? new Uint8Array(data) : data,
-    );
+    const html = decodeDbzcHtmlBytes(data);
     return html.length >= minLength ? html : null;
   } catch {
     return null;

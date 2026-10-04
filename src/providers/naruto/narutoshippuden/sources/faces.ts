@@ -25,6 +25,7 @@ export type ShippudenEbayFace = {
   ingest: true;
   title?: string;
   note?: string;
+  imageId?: string;
 };
 
 export function shippudenMercariIngestFaces(): ShippudenMercariFace[] {
@@ -49,8 +50,8 @@ export function shippudenEbayIngestFaces(): ShippudenEbayFace[] {
     ...ebayCardjpstoreLedger.faces,
     ...ebayHmzkhytLedger.faces,
   ];
-  return rows.filter((row): row is ShippudenEbayFace => {
+  return rows.filter((row): row is typeof row & { ingest: true } => {
     if (row.ingest !== true) return false;
     return typeof row.url === "string" && row.url.length > 0;
-  });
+  }) as ShippudenEbayFace[];
 }

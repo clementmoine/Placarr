@@ -9,7 +9,7 @@ import type { PriceOfferInput } from "@/core/enrich/evidence";
 import { cataloguePokemonPriceLookupKey } from "@/providers/pokemon/pkmmarket";
 import { catalogueColekaPriceQuoteByPrintKey } from "@/providers/shared/coleka/priceIndex";
 import type { DbscardsPriceCard } from "@/providers/shared/tcgcards/priceIndex";
-import type { MediaType } from "@/types/media";
+import type { MediaType } from "@/types/providerRegistry";
 import type {
   BarcodePriceRefreshContext,
   ProviderModule,

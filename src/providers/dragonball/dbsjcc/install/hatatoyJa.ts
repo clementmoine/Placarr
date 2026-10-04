@@ -113,7 +113,11 @@ export async function installDbsJccHatatoyJa(
       matched += 1;
     }
 
-    const titles: LocalPrintWrite["titles"] = [];
+    const titles: Array<{
+      lang: string;
+      fullName: string;
+      rarity?: string | null;
+    }> = [];
     const ja = row.titleJa?.trim();
     if (ja) titles.push({ lang: "ja", fullName: ja });
 

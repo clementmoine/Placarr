@@ -49,7 +49,12 @@ export type DbsCatalogModuleSpec = {
     | Promise<{ id: string; label: string }[]>;
   searchPrints: (
     query: string,
-    opts?: { language?: string; limit?: number; setId?: string | null },
+    opts?: {
+      language?: string;
+      limit?: number;
+      setId?: string | null;
+      catalogueBrowse?: boolean;
+    },
   ) => PrintCandidate[];
   lookupPrint: (
     printKey: string,

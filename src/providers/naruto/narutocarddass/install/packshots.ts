@@ -47,7 +47,7 @@ export type StagingPackshotRow = {
   staging: string;
   url: string;
   page?: string;
-  listing?: string;
+  listing?: string | null;
 };
 
 export type InstallStagingPackshotsOptions = {

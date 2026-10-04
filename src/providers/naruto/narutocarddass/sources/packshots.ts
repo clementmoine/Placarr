@@ -53,7 +53,7 @@ export function mangaSanctuaryPackshotLedger() {
 }
 
 export function mangaSanctuaryIngestPackshots(): MangaSanctuaryPackshot[] {
-  return mangaSanctuaryApi.ingest();
+  return mangaSanctuaryApi.ingest() as MangaSanctuaryPackshot[];
 }
 
 // ─── Martina’s Fumetti ─────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ export function martinaLedger() {
 }
 
 export function martinaIngestPackshots(): MartinaPackshot[] {
-  return martinaApi.ingest();
+  return martinaApi.ingest() as MartinaPackshot[];
 }
 
 // ─── ToyWiz ────────────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ export function toywizPackshotLedger() {
 }
 
 export function toywizIngestPackshots(): ToywizPackshot[] {
-  return toywizApi.ingest();
+  return toywizApi.ingest() as ToywizPackshot[];
 }
 
 // ─── Atomic Empire ─────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ export function atomicempirePackshotLedger() {
 }
 
 export function atomicempireIngestPackshots(): AtomicEmpirePackshot[] {
-  return atomicempireApi.ingest();
+  return atomicempireApi.ingest() as AtomicEmpirePackshot[];
 }
 
 // ─── Emporio di Milo ───────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ export function emporiodimiloLedger() {
 }
 
 export function emporiodimiloIngestPackshots(): EmporiodimiloPackshot[] {
-  return emporiodimiloApi.ingest();
+  return emporiodimiloApi.ingest() as EmporiodimiloPackshot[];
 }
 
 // ─── Sunny Store ───────────────────────────────────────────────────────────

@@ -165,7 +165,7 @@ export function metadataForPrintKeyImagePicker(
     ...filteredStored,
     ...filteredPreview,
     title: filteredStored.title ?? filteredPreview.title,
-    imageUrl,
+    imageUrl: imageUrl ?? undefined,
     attachments,
     externalIds: {
       ...(filteredPreview.externalIds ?? {}),

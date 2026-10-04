@@ -9,9 +9,13 @@ import { dbsJccCuratedDir } from "../pack";
 import { parseDbsjccNumber } from "../printKey";
 import {
   matchChitoroshopToDbsjccPrint,
-  type ChitoroshopMatchResult,
   type DbsjccPrintCandidate,
 } from "./chitoroshop";
+
+/** FR official never mints — only match an existing print or skip. */
+export type CarddassFrMatchResult =
+  | { kind: "match"; print: DbsjccPrintCandidate }
+  | { kind: "skip"; reason: string };
 
 export type CarddassFrDbzFace = {
   series: string;
@@ -272,7 +276,7 @@ export function matchCarddassFrToDbsjccPrint(
   number: string,
   setHint: string | null,
   candidates: readonly DbsjccPrintCandidate[],
-): ChitoroshopMatchResult {
+): CarddassFrMatchResult {
   const decision = matchChitoroshopToDbsjccPrint(number, setHint, candidates);
   if (decision.kind === "mint") {
     return {

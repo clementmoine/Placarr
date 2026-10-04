@@ -1262,10 +1262,10 @@ describe("same-number art fallback (Naruto)", () => {
       card: "001",
       label: "Tropius",
       name: "Tropius",
-      artUrl: null as string | null,
+      artUrl: "",
       missingArt: false,
       hasFoil: false,
-      kind: "card" as const,
+      kind: "face" as const,
     };
     const rows = [
       { ...base, printKey: "me5_fr_001", lang: "fr" },

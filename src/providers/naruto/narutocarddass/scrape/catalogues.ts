@@ -2482,7 +2482,7 @@ function syncNarutoCardsNetLedger(
     narutoCardsNetLedgerPath(root),
     `${JSON.stringify(
       {
-        source: hinokunianJp.sitemap,
+        source: narutocardsNet.sitemap,
         generatedAt: new Date().toISOString(),
         ingest: "titles-slug-derived",
         cards,
@@ -2527,7 +2527,7 @@ export async function scrapeNarutoCardsNetTitles(
     }
   }
 
-  const res = await httpGet<string>(hinokunianJp.sitemap, {
+  const res = await httpGet<string>(narutocardsNet.sitemap, {
     headers: { "User-Agent": UA, Accept: "application/xml,text/xml" },
     responseType: "text",
     timeout: 45_000,

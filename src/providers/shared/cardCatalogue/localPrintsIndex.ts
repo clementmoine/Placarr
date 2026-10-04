@@ -101,6 +101,8 @@ export type LocalPrintsIndex = {
   ) => { lang: string; art: string | null; thumb: string | null; back: string | null } | null;
   listSets: (opts?: {
     setLabel?: (setCode: string, language?: string | null) => string;
+    setDisplayCode?: (setCode: string) => string | null;
+    setPrefixCode?: (setCode: string) => boolean;
     setSortKey?: (setCode: string) => number | null;
     languages?: readonly string[];
   }) => { id: string; label: string }[];

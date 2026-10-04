@@ -115,11 +115,12 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
     lookupNarutoTitle(printKey, "en")?.fullName;
   if (!title) return null;
 
-  const pathId = narutoCardPathFromCollector(row.number, row.lang);
+  const lang = row.lang?.trim() || "fr";
+  const pathId = narutoCardPathFromCollector(row.number, lang);
   const disk = buildNarutoDiskArtAttachments({
     printKey,
     number: row.number,
-    lang: row.lang,
+    lang,
     source: PROVIDER_ID,
     title,
   });

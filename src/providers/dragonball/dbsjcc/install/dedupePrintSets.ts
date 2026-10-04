@@ -390,7 +390,9 @@ async function remapPrismaItems(
     }
 
     // First migration only rewrote printKey — repair stale card-folder URLs.
-    remapped += await repairStalePrintAssetUrls(prisma);
+    remapped += await repairStalePrintAssetUrls(
+      prisma as unknown as RepairPrisma,
+    );
     return remapped;
   } catch {
     // No DB / prisma unavailable in some test contexts.
@@ -398,10 +400,11 @@ async function remapPrismaItems(
   }
 }
 
-/** Point item/metadata imageUrl at the folder that matches the current printKey. */
-async function repairStalePrintAssetUrls(prisma: {
+type RepairPrisma = {
   item: {
-    findMany: (args: unknown) => Promise<
+    // PrismaClient method signatures are invariant on args; keep this loose.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    findMany: (args?: any) => Promise<
       Array<{
         id: string;
         printKey: string | null;
@@ -410,12 +413,19 @@ async function repairStalePrintAssetUrls(prisma: {
         metadata: { id: string; imageUrl: string | null } | null;
       }>
     >;
-    update: (args: unknown) => Promise<unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    update: (args: any) => Promise<unknown>;
   };
   metadata: {
-    update: (args: unknown) => Promise<unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    update: (args: any) => Promise<unknown>;
   };
-}): Promise<number> {
+};
+
+/** Point item/metadata imageUrl at the folder that matches the current printKey. */
+async function repairStalePrintAssetUrls(
+  prisma: RepairPrisma,
+): Promise<number> {
   const items = await prisma.item.findMany({
     where: { printKey: { startsWith: "dbsjcc:" } },
     select: {

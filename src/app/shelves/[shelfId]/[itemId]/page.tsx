@@ -1952,7 +1952,8 @@ export default function ItemDetailsPage() {
             source: img.source,
             providerLabel: img.providerLabel,
             sourceNames: img.sourceNames,
-            gridStyleCoverLabelsSource: img.gridStyleCoverLabelsSource,
+            gridStyleCoverLabelsSource:
+              img.gridStyleCoverLabelsSource ?? undefined,
           },
           displayLocale,
         );

@@ -25,7 +25,7 @@ describe("productsSqlite", () => {
       slug: "booster-s1",
       path: "products/booster-s1",
       kind: "booster",
-      behavior: "random",
+      behavior: "random_pack",
       category: "booster",
       name: "Booster S1",
       image: null,

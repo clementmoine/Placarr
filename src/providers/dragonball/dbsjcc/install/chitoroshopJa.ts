@@ -113,7 +113,11 @@ export async function installDbsJccChitoroshopJa(
       matched += 1;
     }
 
-    const titles: LocalPrintWrite["titles"] = [];
+    const titles: Array<{
+      lang: string;
+      fullName: string;
+      rarity?: string | null;
+    }> = [];
     const en = row.titleEn?.trim();
     if (en) titles.push({ lang: "en", fullName: en });
 

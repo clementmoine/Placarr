@@ -23,15 +23,16 @@ const LORCANA_GAME = "lorcana";
 
 /** Shop tile → `lorcana:set-number` (numeric shop set via logo catalogue map). */
 export function lorcardsTileToPrintKey(
-  tile: Pick<DbscardsTile, "slug" | "ref" | "name" | "imageFront">,
+  tile: Pick<DbscardsTile, "slug"> &
+    Partial<Pick<DbscardsTile, "ref" | "name" | "imageFront">>,
 ): string | null {
   return cardsFrShopPrintKey({
     game: LORCANA_GAME,
     print: {
       slug: tile.slug,
-      ref: tile.ref,
-      name: tile.name,
-      image: tile.imageFront,
+      ref: tile.ref ?? "",
+      name: tile.name ?? "",
+      image: tile.imageFront ?? "",
     },
     resolveCatalogueSetId: ({ setCode, slug, name }) => {
       const fromLogos = lorcanaCatalogueSetIdForProduct({

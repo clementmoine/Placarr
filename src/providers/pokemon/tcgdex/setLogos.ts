@@ -577,7 +577,7 @@ export function withTcgdexSetSymbols<
 >(
   sets: readonly T[],
   index: TcgdexSetLogoIndex | null | undefined = loadTcgdexSetLogoIndex(),
-): T[] {
+): Array<T & { iconUrl?: string; iconUrls?: string[] }> {
   return sets.map((set) => {
     if (set.iconUrl?.trim() || set.iconUrls?.some((u) => u?.trim())) return set;
     const iconUrls = tcgdexSetSymbolCandidates(set.id, index);

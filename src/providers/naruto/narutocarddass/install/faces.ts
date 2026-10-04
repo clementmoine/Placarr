@@ -349,9 +349,11 @@ export async function installMercariFaces(
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
       path.join(cardsDir, "ninja", diskId, lang);
     const key = `${diskId}/${lang}`;
-    upsertNarutoAppearances(packRoot, [
-      { diskId, lang, appearanceSet: row.setCode },
-    ]);
+    if (row.setCode) {
+      upsertNarutoAppearances(packRoot, [
+        { diskId, lang, appearanceSet: row.setCode },
+      ]);
+    }
     if (!options.force && existingNarutoArtForSource(cardDir, "mercari")) {
       skipped.push(key);
       continue;
@@ -417,9 +419,11 @@ export async function installYahooAuctionFaces(
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
       path.join(cardsDir, "ninja", diskId, lang);
     const key = `${diskId}/${lang}`;
-    upsertNarutoAppearances(packRoot, [
-      { diskId, lang, appearanceSet: row.setCode },
-    ]);
+    if (row.setCode) {
+      upsertNarutoAppearances(packRoot, [
+        { diskId, lang, appearanceSet: row.setCode },
+      ]);
+    }
     if (!options.force && existingNarutoArtForSource(cardDir, "yahoo")) {
       skipped.push(key);
       continue;

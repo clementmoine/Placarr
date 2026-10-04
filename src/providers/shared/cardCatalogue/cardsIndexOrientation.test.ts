@@ -43,6 +43,8 @@ describe("artOrientationForPackPrint", () => {
   it("survives a null lang from a print with no title yet", () => {
     const packId = writePackIndex("naruto/carddass", {
       "naruto:ni-0001": {
+        set: "ninja",
+        card: "ni-0001",
         langs: {
           fr: { art: "art.jpg", artW: 500, artH: 700 },
         },
@@ -61,6 +63,8 @@ describe("artOrientationForPackPrint", () => {
   it("still resolves landscapePrint when lang is missing", () => {
     const packId = writePackIndex("naruto/carddass", {
       "naruto:ni-0099": {
+        set: "ninja",
+        card: "ni-0099",
         landscapePrint: true,
         langs: {
           fr: { art: "art.jpg", artW: 700, artH: 500 },

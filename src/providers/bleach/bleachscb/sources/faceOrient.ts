@@ -22,7 +22,7 @@ const BLEACH_SCB_BLAST_LANDSCAPE_NUMBERS: ReadonlySet<string> = new Set([
 
 /** Degrees passed to sharp.rotate / sips -r (CCW 90 ≡ 270 CW). */
 export function bleachScbJaFaceRotateDeg(
-  card: Pick<BleachScbCard, "type" | "set" | "number">,
+  card: Pick<Partial<BleachScbCard>, "type" | "set" | "number">,
 ): 0 | 90 | 180 | 270 {
   const type = card.type?.trim() ?? "";
   if (type === "アビリティ" || card.set === BLEACH_SCB_ABILITY_SET) return 270;

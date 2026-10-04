@@ -12,7 +12,10 @@ import { FoilCardImage } from "@/components/FoilCardImage";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { RemoteImage } from "@/components/RemoteImage";
 import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
-import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  parsePrintKey,
+  printCollectableKey,
+} from "@/core/identify/printKey";
 import {
   variantRendering,
   type PrintVariantInfo,
@@ -117,6 +120,24 @@ function ownedRowKey(
 ): string {
   return [
     printKey.trim().toLowerCase(),
+    (language ?? "").trim().toLowerCase(),
+    (variant ?? "").trim().toLowerCase(),
+  ].join("|");
+}
+
+/**
+ * Même carte sous un autre set (`dbsjcc:part1-d0123` ↔ `part9-d0123`).
+ * `null` si le numéro est set-scoped (Lorcana…).
+ */
+function ownedCollectableRowKey(
+  printKey: string,
+  variant: string | null,
+  language: string | null,
+): string | null {
+  const collectable = printCollectableKey(printKey);
+  if (!collectable) return null;
+  return [
+    collectable,
     (language ?? "").trim().toLowerCase(),
     (variant ?? "").trim().toLowerCase(),
   ].join("|");
@@ -339,12 +360,27 @@ export function PrintPickerModal({
   const owned = useMemo(() => {
     const exact = new Set<string>();
     const anyFinish = new Set<string>();
+    const collectableExact = new Set<string>();
+    const collectableAnyFinish = new Set<string>();
     const games = new Set<string>();
     for (const row of ownedPrints ?? []) {
       const key = row.printKey?.trim().toLowerCase();
       if (!key) continue;
-      exact.add(ownedRowKey(key, row.variant ?? null, row.language ?? null));
+      const lang = row.language ?? null;
+      const variant = row.variant ?? null;
+      exact.add(ownedRowKey(key, variant, lang));
       anyFinish.add(key);
+      const collectable = ownedCollectableRowKey(key, variant, lang);
+      if (collectable) collectableExact.add(collectable);
+      const collectableBase = printCollectableKey(key);
+      if (collectableBase) {
+        collectableAnyFinish.add(
+          [
+            collectableBase,
+            (lang ?? "").trim().toLowerCase(),
+          ].join("|"),
+        );
+      }
       const game = parsePrintKey(key)?.game;
       if (game) games.add(game);
     }
@@ -357,6 +393,8 @@ export function PrintPickerModal({
     return {
       exact,
       anyFinish,
+      collectableExact,
+      collectableAnyFinish,
       game: games.size === 1 ? [...games][0]! : null,
     };
   }, [ownedPrints]);
@@ -383,6 +421,7 @@ export function PrintPickerModal({
     isSearching: false,
     trimmedQuery: "",
     activeSetId: null as string | null,
+    catalogueBrowse: false,
     candidatesLength: 0,
     shelfType: "",
     catalogue: ALL_CATALOGUES,
@@ -609,14 +648,17 @@ export function PrintPickerModal({
   */
   const activeSetId =
     setId && catalogueSets.some((set) => set.id === setId) ? setId : null;
+  /** Jeu choisi, pas d'extension : parcourir tout le catalogue en ordre numérique. */
+  const catalogueBrowse =
+    catalogue !== ALL_CATALOGUES && !activeSetId;
 
   useEffect(() => {
     /*
-      Une extension choisie est une question complète — « montre-moi la Série 1 »
-      — même sans mot-clé. C'est tout l'intérêt du sélecteur : parcourir un set
-      qu'on ne sait pas encore nommer.
+      Une extension choisie — ou un **jeu** sans extension — est une question
+      complète, même sans mot-clé. On parcourt le set / le catalogue qu'on ne
+      sait pas encore nommer.
     */
-    if (!trimmedQuery && !activeSetId) {
+    if (!trimmedQuery && !activeSetId && !catalogueBrowse) {
       searchAbort.current?.abort();
       loadMoreAbort.current?.abort();
       candidatesRef.current = [];
@@ -692,7 +734,15 @@ export function PrintPickerModal({
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [trimmedQuery, shelfType, catalogue, activeSetId, language, t]);
+  }, [
+    trimmedQuery,
+    shelfType,
+    catalogue,
+    activeSetId,
+    catalogueBrowse,
+    language,
+    t,
+  ]);
 
   const loadMore = useCallback(async () => {
     const q = scrollQueryRef.current;
@@ -700,7 +750,7 @@ export function PrintPickerModal({
       !q.hasMore ||
       loadingMoreRef.current ||
       q.isSearching ||
-      (!q.trimmedQuery && !q.activeSetId)
+      (!q.trimmedQuery && !q.activeSetId && !q.catalogueBrowse)
     ) {
       return;
     }
@@ -777,6 +827,7 @@ export function PrintPickerModal({
     isSearching,
     trimmedQuery,
     activeSetId,
+    catalogueBrowse,
     candidatesLength: candidatesRef.current.length,
     shelfType,
     catalogue,
@@ -840,9 +891,9 @@ export function PrintPickerModal({
   const pickerRows = useMemo(
     () =>
       expandPrintCandidatesByFinish(
-        trimmedQuery || activeSetId ? candidates : [],
+        trimmedQuery || activeSetId || catalogueBrowse ? candidates : [],
       ),
-    [trimmedQuery, activeSetId, candidates],
+    [trimmedQuery, activeSetId, catalogueBrowse, candidates],
   );
 
   /*
@@ -1028,14 +1079,14 @@ export function PrintPickerModal({
       title={t("items.printPicker.title")}
       description={t("items.printPicker.description")}
       footer={
-        <div className="flex w-full items-center justify-end gap-2">
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={() => {
               if (requestClose()) performClose();
             }}
             disabled={Boolean(progress)}
-            className="rounded-xl h-10 px-4 text-sm font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-60"
+            className="w-full sm:w-auto rounded-xl h-10 px-4 text-sm font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-60"
           >
             {t("common.cancel")}
           </button>
@@ -1043,7 +1094,7 @@ export function PrintPickerModal({
             type="button"
             onClick={() => void addSelected()}
             disabled={activeSelection.length === 0 || Boolean(progress)}
-            className="inline-flex items-center gap-2 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
           >
             {progress && <Loader2 className="size-4 animate-spin" />}
             {progress
@@ -1059,8 +1110,12 @@ export function PrintPickerModal({
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-start gap-2">
-          <div className="relative min-w-[12rem] flex-1">
+        {/*
+          Mobile: stack full-width. sm+: search grows, selects keep fixed
+          widths and wrap beside it.
+        */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start">
+          <div className="relative w-full sm:min-w-[12rem] sm:flex-1">
             <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
             <textarea
               autoFocus
@@ -1089,9 +1144,9 @@ export function PrintPickerModal({
           */}
           {isCataloguesLoading ? (
             <>
-              <Skeleton className="h-[42px] w-[11rem] rounded-xl" />
-              <Skeleton className="h-[42px] w-[13rem] rounded-xl" />
-              <Skeleton className="h-[42px] w-[15rem] rounded-xl" />
+              <Skeleton className="h-11 w-full sm:w-[11rem] rounded-xl" />
+              <Skeleton className="h-11 w-full sm:w-[13rem] rounded-xl" />
+              <Skeleton className="h-11 w-full sm:w-[15rem] rounded-xl" />
             </>
           ) : (
             <>
@@ -1102,7 +1157,7 @@ export function PrintPickerModal({
             >
               <SelectTrigger
                 aria-label={t("items.printPicker.languageLabel")}
-                className="h-[42px] w-[11rem] rounded-xl"
+                className="h-11 data-[size=default]:h-11 w-full sm:w-[11rem] rounded-xl"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -1144,7 +1199,7 @@ export function PrintPickerModal({
             >
               <SelectTrigger
                 aria-label={t("items.printPicker.catalogueLabel")}
-                className="h-[42px] w-[13rem] rounded-xl"
+                className="h-11 data-[size=default]:h-11 w-full sm:w-[13rem] rounded-xl"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -1175,7 +1230,7 @@ export function PrintPickerModal({
             >
               <SelectTrigger
                 aria-label={t("items.printPicker.setLabel")}
-                className="h-[42px] w-[15rem] rounded-xl"
+                className="h-11 data-[size=default]:h-11 w-full sm:w-[15rem] rounded-xl"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -1274,7 +1329,7 @@ export function PrintPickerModal({
           <p className="text-sm font-medium text-destructive">{error}</p>
         )}
 
-        {!trimmedQuery && !activeSetId && (
+        {!trimmedQuery && !activeSetId && !catalogueBrowse && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {t("items.printPicker.hint")}
           </p>
@@ -1297,10 +1352,31 @@ export function PrintPickerModal({
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {visibleRows.map((row) => {
               const printKey = row.printKey.trim().toLowerCase();
-              const hasExact = owned.exact.has(
-                ownedRowKey(printKey, row.finish, row.language ?? null),
+              const lang = row.language ?? null;
+              const collectableExact = ownedCollectableRowKey(
+                printKey,
+                row.finish,
+                lang,
               );
-              const hasOtherFinish = !hasExact && owned.anyFinish.has(printKey);
+              const collectableBase = printCollectableKey(printKey);
+              const hasExact =
+                owned.exact.has(ownedRowKey(printKey, row.finish, lang)) ||
+                Boolean(
+                  collectableExact &&
+                    owned.collectableExact.has(collectableExact),
+                );
+              const hasOtherFinish =
+                !hasExact &&
+                (owned.anyFinish.has(printKey) ||
+                  Boolean(
+                    collectableBase &&
+                      owned.collectableAnyFinish.has(
+                        [
+                          collectableBase,
+                          (lang ?? "").trim().toLowerCase(),
+                        ].join("|"),
+                      ),
+                  ));
               const isChecked = selected.has(row.rowKey);
               return (
                 <li key={row.rowKey}>

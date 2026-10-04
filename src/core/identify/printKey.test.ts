@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPrintKey,
+  isGameUniqueCollectorNumber,
   isPrintKey,
   parsePrintKey,
+  printCollectableKey,
   comparePrintKeys,
   comparePrintSetCodes,
 } from "./printKey";
@@ -164,6 +166,21 @@ describe("comparePrintSetCodes", () => {
   it("keeps lettered sets after numeric ones", () => {
     expect(comparePrintSetCodes("9", "q1")).toBeLessThan(0);
     expect(comparePrintSetCodes("q1", "9")).toBeGreaterThan(0);
+  });
+});
+
+describe("printCollectableKey", () => {
+  it("ignores set for game-unique collector numbers", () => {
+    expect(isGameUniqueCollectorNumber("d0123")).toBe(true);
+    expect(isGameUniqueCollectorNumber("sp0025")).toBe(true);
+    expect(isGameUniqueCollectorNumber("1")).toBe(false);
+    expect(isGameUniqueCollectorNumber("001")).toBe(false);
+    expect(printCollectableKey("dbsjcc:part1-d0123")).toBe("dbsjcc|d0123|");
+    expect(printCollectableKey("dbsjcc:part9-d0123")).toBe("dbsjcc|d0123|");
+    expect(printCollectableKey("dbsjcc:part4-d0437-kaio")).toBe(
+      "dbsjcc|d0437|kaio",
+    );
+    expect(printCollectableKey("lorcana:1-1")).toBeNull();
   });
 });
 

@@ -722,7 +722,14 @@ export const lorcanajsonModule = defineProvider({
           setId: opts.setId,
         }).map((row) => toPrintCandidate(cardFromLocalRow(row))),
     }),
-  searchPrints: async ({ query, language, limit, signal, setId }) => {
+  searchPrints: async ({
+    query,
+    language,
+    limit,
+    signal,
+    setId,
+    catalogueBrowse,
+  }) => {
     /*
       La base locale d'abord : c'est la même donnée, sans le réseau, et c'est
       elle qui connaît les identifiants d'extension que le sélecteur propose.
@@ -733,6 +740,7 @@ export const lorcanajsonModule = defineProvider({
       language: language ?? undefined,
       limit,
       setId,
+      catalogueBrowse,
     });
     if (local.length > 0) {
       const seen = new Set<string>();

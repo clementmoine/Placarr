@@ -12,7 +12,17 @@ import {
   DBS_JCC_PRINT_GAME,
   DBS_JCC_PROVIDER_ID,
 } from "./pack";
-import { parseDbsjccNumber } from "./printKey";
+import { decorateDbsjccCandidate } from "./finishes";
+import { listDbsjccRemoteSets } from "./listRemoteSets";
+import {
+  dbsjccSetDisplayCode,
+  dbsjccSetLabel,
+  dbsjccSetPrefixCode,
+  dbsjccSetSortKey,
+  formatDbsjccCollectorReference,
+  parseDbsjccNumber,
+} from "./printKey";
+import { resolveDbsjccPrintKeyAlias } from "./printKeyAliases";
 
 export {
   DBS_JCC_EFFECT_PACK_ID,
@@ -30,23 +40,33 @@ const built = createEmptyLocalTcgProvider({
     catalogueAliases: [
       { label: "Dragon Ball JCC", language: "fr" },
       { label: "Dragon Ball CJC", language: "fr" },
-      { label: "Dragon Ball Carddass", language: "en" },
+      { label: "Dragon Ball Carddass", language: "fr" },
       { label: "Dragon Ball Card Game", language: "en" },
       { label: "ドラゴンボールカードゲーム", language: "ja" },
-      { label: "Dragon Ball CCG Bandai France", language: "en" },
+      { label: "Dragon Ball CCG Bandai France", language: "fr" },
     ],
     factLabel: "Dragon Ball Carddass / JCC",
     packId: DBS_JCC_PACK_ID,
     effectPackId: DBS_JCC_EFFECT_PACK_ID,
     printGame: DBS_JCC_PRINT_GAME,
     catalogLifecycle: "finished",
-    /** Original JP Card Game + FR adaptation — JA titles from attested nikita ledger (partial). */
-    defaultLanguage: "ja",
-    listSetLanguages: ["ja", "fr", "en"],
+    /**
+     * Adaptation FR Bandai (comme Naruto Carddass) : face / titre FR par défaut.
+     * Corpus JA (nikita / Hatatoy) reste dispo via `listSetLanguages`.
+     */
+    defaultLanguage: "fr",
+    listSetLanguages: ["fr", "ja", "en"],
+    setLabel: dbsjccSetLabel,
+    setDisplayCode: dbsjccSetDisplayCode,
+    setPrefixCode: dbsjccSetPrefixCode,
+    setSortKey: dbsjccSetSortKey,
+    formatReference: formatDbsjccCollectorReference,
+    decorateCandidate: decorateDbsjccCandidate,
     normalizeSearchQuery: (query: string) => {
       const parsed = parseDbsjccNumber(query);
       return parsed ?? query;
     },
+    listRemotePrintSets: async (language) => listDbsjccRemoteSets(language),
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "http://www.dbzcollection.fr/2v2/cartes.php?idc=1",
     notes:
@@ -63,4 +83,15 @@ const built = createEmptyLocalTcgProvider({
 
 export const dbsJccLine = built.line;
 export const dbsJccCatalog = built.catalog;
-export const dbsjccModule = built.module;
+
+const baseLookup = built.module.lookupPrint!;
+export const dbsjccModule = {
+  ...built.module,
+  lookupPrint: async (input: {
+    printKey: string;
+    language?: string | null;
+  }) => {
+    const printKey = resolveDbsjccPrintKeyAlias(input.printKey);
+    return baseLookup({ ...input, printKey });
+  },
+};

@@ -58,6 +58,8 @@ export type DbsjccPrintCandidate = {
   setCode: string;
   number: string;
   grouping: string | null;
+  /** Multi-set membership when known (`print_sets`). */
+  setCodes?: readonly string[];
 };
 
 export type ChitoroshopMatchResult =
@@ -188,12 +190,19 @@ function preferUngrouped(
  * - Without hint: prefer lowest `partN` over `promo`/`sp`; skip if still
  *   ambiguous (multiple ungrouped prints at the preferred rank).
  */
+function numberBase(raw: string): string {
+  return raw.trim().toLowerCase().replace(/[a-z]+$/i, "") || raw.trim().toLowerCase();
+}
+
 export function matchChitoroshopToDbsjccPrint(
   number: string,
   setHint: string | null,
   candidates: readonly DbsjccPrintCandidate[],
 ): ChitoroshopMatchResult {
-  const hits = candidates.filter((c) => c.number === number);
+  const want = numberBase(number);
+  const hits = candidates.filter(
+    (c) => numberBase(c.number) === want || c.number === number,
+  );
   const byKey = new Map<string, DbsjccPrintCandidate>();
   for (const hit of hits) {
     if (!byKey.has(hit.printKey)) byKey.set(hit.printKey, hit);
@@ -201,7 +210,13 @@ export function matchChitoroshopToDbsjccPrint(
   const unique = [...byKey.values()];
 
   if (setHint) {
-    const inSet = unique.filter((c) => c.setCode === setHint);
+    const hint = setHint.trim().toLowerCase();
+    const inSet = unique.filter(
+      (c) =>
+        c.setCode === hint ||
+        (c.setCodes?.some((code) => code.trim().toLowerCase() === hint) ??
+          false),
+    );
     if (inSet.length === 0) {
       return { kind: "mint", setCode: setHint };
     }

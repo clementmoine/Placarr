@@ -140,6 +140,14 @@
   font-size: 0.9375rem;
 }
 
+.untaggedHint {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  max-width: 42rem;
+}
+
 .bar {
   flex: 1;
   min-width: 4rem;
@@ -378,6 +386,19 @@
   white-space: nowrap;
   min-width: 0;
   flex: 1;
+}
+
+.finish {
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 0.05rem 0.35rem;
+  white-space: nowrap;
 }
 
 /*

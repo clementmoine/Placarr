@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   expandPrintCandidatesByFinish,
+  finishesOwnedByBlankVariant,
   normalizeVariantOptions,
   offersVariantChoice,
   resolveStoredVariant,
@@ -134,5 +135,16 @@ describe("variantUsesFoilMarketPrice", () => {
     expect(variantUsesFoilMarketPrice("nonfoil")).toBe(false);
     expect(variantUsesFoilMarketPrice("Silver")).toBe(true);
     expect(variantUsesFoilMarketPrice(null)).toBe(false);
+  });
+});
+
+describe("finishesOwnedByBlankVariant", () => {
+  it("maps unset copies to plain only", () => {
+    expect(
+      finishesOwnedByBlankVariant(["None", "Silver"], ["None"]),
+    ).toEqual(["None"]);
+    expect(finishesOwnedByBlankVariant(["Silver"])).toEqual(["Silver"]);
+    expect(finishesOwnedByBlankVariant(["None", "Silver"])).toEqual(["None"]);
+    expect(finishesOwnedByBlankVariant([])).toEqual([]);
   });
 });

@@ -60,6 +60,8 @@ export type LocalSealedWrite = {
   artPath: string | null;
   logoPath?: string | null;
   imageBackPath?: string | null;
+  /** Affiche checklist (deck) — fichier `poster.<source>.*`. */
+  posterPath?: string | null;
   /**
    * Autres hôtes, copiés à côté. L'index continue d'afficher `artPath`.
    * Un dump Coleka à côté d'un `art.reconstructed` n'est pas un 2ᵉ SKU.
@@ -68,6 +70,7 @@ export type LocalSealedWrite = {
     source: string;
     artPath?: string | null;
     imageBackPath?: string | null;
+    posterPath?: string | null;
   }[];
 };
 
@@ -79,7 +82,7 @@ export type WriteLocalSealedResult = {
 };
 
 function storedName(
-  role: "art" | "logo" | "back",
+  role: "art" | "logo" | "back" | "poster",
   source: string,
   src: string,
 ): string {
@@ -89,7 +92,7 @@ function storedName(
 
 function installRole(
   destDir: string,
-  role: "art" | "logo" | "back",
+  role: "art" | "logo" | "back" | "poster",
   source: string,
   src: string | null | undefined,
 ): string | null {
@@ -136,9 +139,11 @@ export function writeLocalSealedProducts(input: {
     }
     const logoFile = installRole(destDir, "logo", source, spec.logoPath);
     const backFile = installRole(destDir, "back", source, spec.imageBackPath);
+    const posterFile = installRole(destDir, "poster", source, spec.posterPath);
     for (const extra of spec.extraDumps ?? []) {
       installRole(destDir, "art", extra.source, extra.artPath);
       installRole(destDir, "back", extra.source, extra.imageBackPath);
+      installRole(destDir, "poster", extra.source, extra.posterPath);
     }
     const preview = sealedKindIsOpaqueContents(spec.kind);
     const contents = resolveSealedContents({
@@ -185,6 +190,17 @@ export function writeLocalSealedProducts(input: {
             backFile,
           )
         : null,
+      ...(posterFile
+        ? {
+            poster: assetsPackFileUrl(
+              input.packId,
+              "products",
+              spec.slug,
+              langFolder,
+              posterFile,
+            ),
+          }
+        : {}),
       setLogo: logoFile
         ? assetsPackFileUrl(
             input.packId,

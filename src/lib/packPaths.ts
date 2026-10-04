@@ -9,17 +9,20 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { dataRoot, foilDataRoot } from "./runtimeData";
-import { assetsPackFileUrl } from "./packAssetUrls";
+import { ASSET_PACK_ALIASES, assetsPackFileUrl } from "./packAssetUrls";
 
 export {
   ASSETS_URL_PREFIX,
+  ASSET_PACK_ALIASES,
   assetsCardUrl,
   assetsPackBase,
   assetsPackFileUrl,
+  canonicalAssetPack,
   cardDiskIdFromBundleStem,
   cardDiskIdFromPrintKey,
   pokemonCardTextureUrl,
   pokemonFaceFileFromTex,
+  rewriteAssetPackUrl,
   type CardDiskId,
 } from "./packAssetUrls";
 
@@ -52,11 +55,8 @@ export function backFilenameCandidates(lang?: string | null): string[] {
   return names;
 }
 
-/** Old Carddass folder `naruto/ccg` still serves from `naruto/carddass`. */
-const PACK_DISK_ALIASES: Readonly<Record<string, string>> = {
-  "naruto/ccg": "naruto/carddass",
-  "naruto/en-ccg": "naruto/carddass",
-};
+/** Old pack folders still serve from the canonical disk tree. */
+const PACK_DISK_ALIASES: Readonly<Record<string, string>> = ASSET_PACK_ALIASES;
 
 /**
  * Pack ids are relative under `data/` (`naruto/data-carddass`).

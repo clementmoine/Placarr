@@ -7,6 +7,7 @@ import {
   dbzcPackInfoUrl,
   dbzcSetListingUrl,
   decodeDbzcEntities,
+  decodeDbzcHtmlBytes,
   extractDbzcTableField,
 } from "./site";
 
@@ -33,6 +34,16 @@ describe("dbzcollection site", () => {
     expect(decodeDbzcEntities("Cartes &Agrave; Jouer")).toBe("Cartes À Jouer");
     expect(decodeDbzcEntities("Caf&eacute;")).toBe("Café");
     expect(decodeDbzcEntities("Ka&iuml;o")).toBe("Kaïo");
+    expect(decodeDbzcEntities("Le v&oelig;u d'Upa")).toBe("Le vœu d'Upa");
+    expect(decodeDbzcEntities("gr&acirc;ce")).toBe("grâce");
+  });
+
+  it("decodes latin-1 listing bytes (Détecteur) without U+FFFD", () => {
+    const latin1 = Buffer.from("D\xe9tecteur", "binary");
+    expect(decodeDbzcHtmlBytes(latin1)).toBe("Détecteur");
+    expect(decodeDbzcHtmlBytes(Buffer.from("Détecteur", "utf8"))).toBe(
+      "Détecteur",
+    );
   });
 
   it("reads AJAX table fields", () => {

@@ -60,6 +60,35 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
       ).toBe(false);
     });
 
+    it("re-homes existing unknown prints onto promo for the checklist", () => {
+      const existing: NarutoPrintRow = {
+        printKey: "naruto:ni-0063-promo",
+        setCode: "unknown",
+        number: "ni0063-promo",
+        cardType: "ni",
+        grouping: "promo",
+      };
+      const merged = mergeAttestedPromos({
+        prints: [existing],
+        titles: [
+          {
+            printKey: "naruto:ni-0063-promo",
+            lang: "fr",
+            fullName: "Iruka",
+            rarity: "promo",
+          },
+        ],
+        promos: [{ number: "ni063", name: "Iruka", shuriken: 2 }],
+      });
+      expect(merged.addedPrints).toEqual([]);
+      expect(
+        merged.prints.find((p) => p.printKey === "naruto:ni-0063-promo"),
+      ).toMatchObject({
+        setCode: "promo",
+        setCodes: ["promo"],
+      });
+    });
+
     it("injects missing promo prints with FR names, keeps existing art rows", () => {
       const existing: NarutoPrintRow = {
         printKey: "naruto:promo-ni095",

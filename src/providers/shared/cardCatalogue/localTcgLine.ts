@@ -9,7 +9,7 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
-import { parsePrintKey } from "@/core/identify/printKey";
+import { comparePrintKeys, parsePrintKey } from "@/core/identify/printKey";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   assetsCardUrl,
@@ -69,6 +69,13 @@ export type LocalTcgLineSpec = {
     language?: string | null,
   ) => string;
   setLabel?: (setCode: string, language?: string | null) => string;
+  /**
+   * Code affiché en tête de libellé set (`S1` plutôt que l'id disque
+   * `part1`). Passé à `finalizeSetOptions` comme `code`.
+   */
+  setDisplayCode?: (setCode: string) => string | null;
+  /** `false` = libellé déjà composé (ex. Détecteur). Défaut : préfixer. */
+  setPrefixCode?: (setCode: string) => boolean;
   setSortKey?: (setCode: string) => number | null;
   /**
    * Traduit une requête utilisateur avant la recherche SQL (ex. référence
@@ -215,7 +222,11 @@ function toCandidate(
     row.grouping,
     row.lang,
   );
-  const set = row.cardType.trim().toLowerCase();
+  /*
+    Le dossier disque suit `set_code` (home set), pas `card_type` (famille
+    D/SP…). Confondre les deux cassait DB JCC dès que card_type = `d`.
+  */
+  const set = row.setCode.trim().toLowerCase();
   const card = row.grouping?.trim()
     ? `${row.number.trim().toLowerCase()}-${row.grouping.trim().toLowerCase()}`
     : row.number.trim().toLowerCase();
@@ -269,11 +280,18 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
 
   const searchPrints = (
     query: string,
-    opts: { language?: string; limit?: number; setId?: string | null } = {},
+    opts: {
+      language?: string;
+      limit?: number;
+      setId?: string | null;
+      catalogueBrowse?: boolean;
+    } = {},
   ): PrintCandidate[] => {
     const normalized = spec.normalizeSearchQuery?.(query) ?? query;
+    const catalogueBrowse = Boolean(opts.catalogueBrowse);
     const rows = index.searchRows(normalized, {
       ...opts,
+      catalogueBrowse,
       language: opts.language ?? preferLang,
     });
     const seen = new Set<string>();
@@ -282,7 +300,28 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       if (seen.has(row.printKey)) continue;
       seen.add(row.printKey);
       out.push(candidateForRow(spec, index, row));
-      if (opts.limit && out.length >= opts.limit) break;
+      if (!catalogueBrowse && opts.limit && out.length >= opts.limit) break;
+    }
+    /*
+      Parcours catalogue : tri set (sortKey pack) puis numéro — `part2` avant
+      `part10`, D-1 avant D-2. On trie la fenêtre SQL entière avant de couper.
+    */
+    if (catalogueBrowse) {
+      out.sort((a, b) => {
+        const pa = parsePrintKey(a.printKey);
+        const pb = parsePrintKey(b.printKey);
+        if (spec.setSortKey && pa && pb) {
+          const sa = spec.setSortKey(pa.set);
+          const sb = spec.setSortKey(pb.set);
+          if (sa != null || sb != null) {
+            if (sa == null) return 1;
+            if (sb == null) return -1;
+            if (sa !== sb) return sa - sb;
+          }
+        }
+        return comparePrintKeys(a.printKey, b.printKey);
+      });
+      return opts.limit ? out.slice(0, opts.limit) : out;
     }
     return out;
   };
@@ -324,7 +363,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       ? `${row.number.trim().toLowerCase()}-${row.grouping.trim().toLowerCase()}`
       : row.number.trim().toLowerCase();
     const diskId: CardDiskId = {
-      set: row.cardType.trim().toLowerCase(),
+      set: row.setCode.trim().toLowerCase(),
       lang: faces.diskLang,
       card,
     };
@@ -451,6 +490,8 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       const local = index.listSets({
         setLabel: (code) =>
           spec.setLabel?.(code, language) ?? code.trim().toUpperCase(),
+        setDisplayCode: spec.setDisplayCode,
+        setPrefixCode: spec.setPrefixCode,
         setSortKey: spec.setSortKey,
         ...(spec.listSetLanguages
           ? { languages: [...spec.listSetLanguages] }
@@ -470,11 +511,12 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
         language,
         search: (opts) => searchPrints(opts.query, opts),
       }),
-    searchPrints: async ({ query, language, limit, setId }) =>
+    searchPrints: async ({ query, language, limit, setId, catalogueBrowse }) =>
       searchPrints(query, {
         language: language ?? undefined,
         limit,
         setId,
+        catalogueBrowse,
       }),
     lookupPrint: async ({ printKey, language }) =>
       lookupPrint(printKey, language),

@@ -210,14 +210,19 @@ export function listNarutoShippudenSets(): { id: string; label: string }[] {
 
 export function searchNarutoShippudenRows(
   query: string,
-  opts: { language?: string; limit?: number; setId?: string | null } = {},
+  opts: {
+    language?: string;
+    limit?: number;
+    setId?: string | null;
+    catalogueBrowse?: boolean;
+  } = {},
 ): ShippudenSearchRow[] {
   const db = ensureNarutoShippudenIndex();
   if (!db) return [];
 
   const trimmed = query.trim().toLowerCase();
   const setId = opts.setId?.trim();
-  if (!isAnsweredQuery(trimmed, setId)) return [];
+  if (!isAnsweredQuery(trimmed, setId, opts.catalogueBrowse)) return [];
 
   const lang = (opts.language || "ja").toLowerCase();
   /*

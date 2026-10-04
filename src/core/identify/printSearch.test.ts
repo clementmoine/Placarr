@@ -248,6 +248,40 @@ describe("searchPrintCandidates", () => {
     expect(page[0]?.printKey).toBe("lorcana:1-201");
   });
 
+  it("browses a whole catalogue when a game is chosen without a set", async () => {
+    const searchPrints = vi.fn(
+      async ({ limit }: { limit?: number }) =>
+        Array.from({ length: Math.min(limit ?? 0, 120) }, (_, index) =>
+          candidate({ printKey: `dbsjcc:part1-d${String(index + 1).padStart(4, "0")}` }),
+        ),
+    );
+    modules.push(fakeModule("dbsjcc", ["tcg"], searchPrints));
+
+    const page = await searchPrintCandidates("", "tcg", {
+      providerId: "dbsjcc",
+      limit: 48,
+      offset: 0,
+    });
+
+    expect(searchPrints).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: "",
+        catalogueBrowse: true,
+        limit: 48,
+      }),
+    );
+    expect(page).toHaveLength(48);
+    expect(page[0]?.printKey).toBe("dbsjcc:part1-d0001");
+  });
+
+  it("still returns nothing for a blank query without game or set", async () => {
+    const searchPrints = vi.fn(async () => [candidate()]);
+    modules.push(fakeModule("dbsjcc", ["tcg"], searchPrints));
+
+    expect(await searchPrintCandidates("", "tcg")).toEqual([]);
+    expect(searchPrints).not.toHaveBeenCalled();
+  });
+
   it("passes the language and abort signal down to the provider", async () => {
     const searchPrints = vi.fn(async () => [candidate()]);
     modules.push(fakeModule("lorcanajson", ["tcg"], searchPrints));

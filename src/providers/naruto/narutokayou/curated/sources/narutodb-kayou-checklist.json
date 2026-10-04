@@ -1,7 +1,7 @@
 {
   "source": "narutodb.com",
   "url": "https://narutodb.com/",
-  "observed": "2026-10-01",
+  "observed": "2026-10-03",
   "sets": [
     {
       "slug": "narutodb-nrea01",
@@ -2396,7 +2396,7 @@
         {
           "printed": "NRSA01-PU-001L4",
           "number": "nrsa01.pu.001l4",
-          "name": "Sasuke Uchiha",
+          "name": "Naruto Uzumaki",
           "rarity": "PU",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-PU-001L4-front.png",
           "faceSource": "narutodb"
@@ -3044,7 +3044,7 @@
         {
           "printed": "NRSA01-SR-016L2",
           "number": "nrsa01.sr.016l2",
-          "name": "Zabuza Momochi",
+          "name": "Konohamaru",
           "rarity": "SR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SR-016L2-front.png",
           "faceSource": "narutodb"
@@ -3068,7 +3068,7 @@
         {
           "printed": "NRSA01-SR-019L2",
           "number": "nrsa01.sr.019l2",
-          "name": "Sasuke Uchiha",
+          "name": "Inari",
           "rarity": "SR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SR-019L2-front.png",
           "faceSource": "narutodb"
@@ -3084,7 +3084,7 @@
         {
           "printed": "NRSA01-SSR-001L3",
           "number": "nrsa01.ssr.001l3",
-          "name": "Haku",
+          "name": "Naruto Uzumaki",
           "rarity": "SSR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SSR-001L3-front.png",
           "faceSource": "narutodb"
@@ -3108,7 +3108,7 @@
         {
           "printed": "NRSA01-SSR-004L3",
           "number": "nrsa01.ssr.004l3",
-          "name": "Haku",
+          "name": "Sasuke Uchiha",
           "rarity": "SSR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SSR-004L3-front.png",
           "faceSource": "narutodb"
@@ -3116,7 +3116,7 @@
         {
           "printed": "NRSA01-SSR-005L3",
           "number": "nrsa01.ssr.005l3",
-          "name": "Zabuza Momochi",
+          "name": "Sakura Haruno",
           "rarity": "SSR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SSR-005L3-front.png",
           "faceSource": "narutodb"
@@ -3124,7 +3124,7 @@
         {
           "printed": "NRSA01-SSR-006L3",
           "number": "nrsa01.ssr.006l3",
-          "name": "Kakashi Hatake",
+          "name": "Sakura Haruno",
           "rarity": "SSR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SSR-006L3-front.png",
           "faceSource": "narutodb"
@@ -3164,7 +3164,7 @@
         {
           "printed": "NRSA01-SSR-011L3",
           "number": "nrsa01.ssr.011l3",
-          "name": "Naruto Uzumaki",
+          "name": "Zabuza Momochi",
           "rarity": "SSR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SSR-011L3-front.png",
           "faceSource": "narutodb"
@@ -3172,7 +3172,7 @@
         {
           "printed": "NRSA01-SSR-012L3",
           "number": "nrsa01.ssr.012l3",
-          "name": "Sasuke Uchiha",
+          "name": "Haku",
           "rarity": "SSR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SSR-012L3-front.png",
           "faceSource": "narutodb"
@@ -3260,7 +3260,7 @@
         {
           "printed": "NRSA01-SSR-023L3",
           "number": "nrsa01.ssr.023l3",
-          "name": "Sasuke Uchiha",
+          "name": "Hiruzen Sarutobi",
           "rarity": "SSR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-SSR-023L3-front.png",
           "faceSource": "narutodb"
@@ -3332,7 +3332,7 @@
         {
           "printed": "NRSA01-UR-008L3",
           "number": "nrsa01.ur.008l3",
-          "name": "Shikamaru Nara",
+          "name": "Hiruzen Sarutobi",
           "rarity": "UR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-UR-008L3-front.png",
           "faceSource": "narutodb"
@@ -3356,7 +3356,7 @@
         {
           "printed": "NRSA01-UR-011L3",
           "number": "nrsa01.ur.011l3",
-          "name": "Neji Hyuga",
+          "name": "Shikamaru Nara",
           "rarity": "UR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA01-UR-011L3-front.png",
           "faceSource": "narutodb"
@@ -5004,7 +5004,7 @@
         {
           "printed": "NRSA03-HR-001L3",
           "number": "nrsa03.hr.001l3",
-          "name": "Return of the Morning Mist",
+          "name": "The End of Tears (2/2)",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-001L3-front.png",
           "faceSource": "narutodb"
@@ -5012,7 +5012,7 @@
         {
           "printed": "NRSA03-HR-002L3",
           "number": "nrsa03.hr.002l3",
-          "name": "Unforgivable! A Total Lack of Respect",
+          "name": "The End of Tears (1/2)",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-002L3-front.png",
           "faceSource": "narutodb"
@@ -5020,7 +5020,7 @@
         {
           "printed": "NRSA03-HR-003L3",
           "number": "nrsa03.hr.003l3",
-          "name": "Breakdown! The Deal is Off!",
+          "name": "A Plea From a Friend",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-003L3-front.png",
           "faceSource": "narutodb"
@@ -5028,7 +5028,7 @@
         {
           "printed": "NRSA03-HR-004L3",
           "number": "nrsa03.hr.004l3",
-          "name": "The Fifth Hokage! A Life on the Line! (1/2)",
+          "name": "The Secrets of the Mangekyo Sharingan",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-004L3-front.png",
           "faceSource": "narutodb"
@@ -5036,7 +5036,7 @@
         {
           "printed": "NRSA03-HR-005L3",
           "number": "nrsa03.hr.005l3",
-          "name": "The Fifth Hokage! A Life on the Line! (2/2)",
+          "name": "Showdown: Gaara vs. Kimimaro",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-005L3-front.png",
           "faceSource": "narutodb"
@@ -5044,7 +5044,7 @@
         {
           "printed": "NRSA03-HR-006L3",
           "number": "nrsa03.hr.006l3",
-          "name": "Deadlock! Sannin Showdown!",
+          "name": "The Sand Shinobi: Allies of the Leaf",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-006L3-front.png",
           "faceSource": "narutodb"
@@ -5052,7 +5052,7 @@
         {
           "printed": "NRSA03-HR-007L3",
           "number": "nrsa03.hr.007l3",
-          "name": "The Battle Begins: Naruto vs. Sasuke",
+          "name": "The Beast Within",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-007L3-front.png",
           "faceSource": "narutodb"
@@ -5060,7 +5060,7 @@
         {
           "printed": "NRSA03-HR-008L3",
           "number": "nrsa03.hr.008l3",
-          "name": "Sound vs. Leaf",
+          "name": "The Vessel Arrives Too Late",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-008L3-front.png",
           "faceSource": "narutodb"
@@ -5068,7 +5068,7 @@
         {
           "printed": "NRSA03-HR-009L3",
           "number": "nrsa03.hr.009l3",
-          "name": "Squad Mutiny: Everything Falls Apart!",
+          "name": "Losing is Not an Option!",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-009L3-front.png",
           "faceSource": "narutodb"
@@ -5076,7 +5076,7 @@
         {
           "printed": "NRSA03-HR-010L3",
           "number": "nrsa03.hr.010l3",
-          "name": "Good-bye Old Friend! I'll Always Believe In You!",
+          "name": "360 Degrees of Vision: The Byakugan's Blind Spot!",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-010L3-front.png",
           "faceSource": "narutodb"
@@ -5084,7 +5084,7 @@
         {
           "printed": "NRSA03-HR-011L3",
           "number": "nrsa03.hr.011l3",
-          "name": "360 Degrees of Vision: The Byakugan's Blind Spot!",
+          "name": "Good-bye Old Friend! I'll Always Believe In You!",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-011L3-front.png",
           "faceSource": "narutodb"
@@ -5092,7 +5092,7 @@
         {
           "printed": "NRSA03-HR-012L3",
           "number": "nrsa03.hr.012l3",
-          "name": "Losing is Not an Option!",
+          "name": "Squad Mutiny: Everything Falls Apart!",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-012L3-front.png",
           "faceSource": "narutodb"
@@ -5100,7 +5100,7 @@
         {
           "printed": "NRSA03-HR-013L3",
           "number": "nrsa03.hr.013l3",
-          "name": "The Vessel Arrives Too Late",
+          "name": "Sound vs. Leaf",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-013L3-front.png",
           "faceSource": "narutodb"
@@ -5108,7 +5108,7 @@
         {
           "printed": "NRSA03-HR-014L3",
           "number": "nrsa03.hr.014l3",
-          "name": "The Beast Within",
+          "name": "The Battle Begins: Naruto vs. Sasuke",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-014L3-front.png",
           "faceSource": "narutodb"
@@ -5116,7 +5116,7 @@
         {
           "printed": "NRSA03-HR-015L3",
           "number": "nrsa03.hr.015l3",
-          "name": "The Sand Shinobi: Allies of the Leaf",
+          "name": "Deadlock! Sannin Showdown!",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-015L3-front.png",
           "faceSource": "narutodb"
@@ -5124,7 +5124,7 @@
         {
           "printed": "NRSA03-HR-016L3",
           "number": "nrsa03.hr.016l3",
-          "name": "Showdown: Gaara vs. Kimimaro",
+          "name": "The Fifth Hokage! A Life on the Line! (2/2)",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-016L3-front.png",
           "faceSource": "narutodb"
@@ -5132,7 +5132,7 @@
         {
           "printed": "NRSA03-HR-017L3",
           "number": "nrsa03.hr.017l3",
-          "name": "The Secrets of the Mangekyo Sharingan",
+          "name": "The Fifth Hokage! A Life on the Line! (1/2)",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-017L3-front.png",
           "faceSource": "narutodb"
@@ -5140,7 +5140,7 @@
         {
           "printed": "NRSA03-HR-018L3",
           "number": "nrsa03.hr.018l3",
-          "name": "A Plea From a Friend",
+          "name": "Breakdown! The Deal is Off!",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-018L3-front.png",
           "faceSource": "narutodb"
@@ -5148,7 +5148,7 @@
         {
           "printed": "NRSA03-HR-019L3",
           "number": "nrsa03.hr.019l3",
-          "name": "The End of Tears (1/2)",
+          "name": "Unforgivable! A Total Lack of Respect",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-019L3-front.png",
           "faceSource": "narutodb"
@@ -5156,7 +5156,7 @@
         {
           "printed": "NRSA03-HR-020L3",
           "number": "nrsa03.hr.020l3",
-          "name": "The End of Tears (2/2)",
+          "name": "Return of the Morning Mist",
           "rarity": "HR",
           "faceUrl": "https://cdn.narutodb.com/storage/cards/official/NRSA03-HR-020L3-front.png",
           "faceSource": "narutodb"

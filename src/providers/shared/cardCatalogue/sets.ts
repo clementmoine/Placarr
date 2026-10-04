@@ -228,6 +228,13 @@ export function setScopedWhere(input: {
   /** Colonne du code de set, telle que ce pack la nomme. */
   setColumn: string;
   setId?: string | null;
+  /**
+   * Quand true : appartenance `print_sets` **ou** repli sur `setColumn`
+   * (Naruto / DB JCC multi-série). La table doit exister.
+   */
+  usePrintSets?: boolean;
+  /** Alias SQL de la table prints (défaut `p`) pour la jointure print_sets. */
+  printKeyColumn?: string;
   /** Le `OR ...` du texte, sans le `WHERE`. Omis = pas de filtre textuel. */
   textClause?: string | null;
   /** Les valeurs du filtre textuel, dans l'ordre où la clause les attend. */
@@ -235,18 +242,41 @@ export function setScopedWhere(input: {
 }): { where: string; params: SqlBindValue[] } {
   const setId = input.setId?.trim().toLowerCase();
   const hasText = Boolean(input.textClause?.trim());
+  const printKey = input.printKeyColumn ?? "p.print_key";
+  let setClause = "1 = 1";
+  const setParams: SqlBindValue[] = [];
+  if (setId) {
+    if (input.usePrintSets) {
+      setClause = `(
+        EXISTS (
+          SELECT 1 FROM print_sets ps
+           WHERE ps.print_key = ${printKey}
+             AND LOWER(ps.set_code) = ?
+        )
+        OR (
+          NOT EXISTS (
+            SELECT 1 FROM print_sets ps2
+             WHERE ps2.print_key = ${printKey}
+          )
+          AND LOWER(${input.setColumn}) = ?
+        )
+      )`;
+      setParams.push(setId, setId);
+    } else {
+      setClause = `LOWER(${input.setColumn}) = ?`;
+      setParams.push(setId);
+    }
+  }
   return {
-    where: `${setId ? `LOWER(${input.setColumn}) = ?` : "1 = 1"}
+    where: `${setClause}
           AND (${hasText ? input.textClause : "1 = 1"})`,
-    params: [
-      ...(setId ? [setId] : []),
-      ...(hasText ? (input.textParams ?? []) : []),
-    ],
+    params: [...setParams, ...(hasText ? (input.textParams ?? []) : [])],
   };
 }
 
 /**
- * Une recherche sans mot-clé **ni** extension n'est pas une question.
+ * Une recherche sans mot-clé **ni** extension n'est pas une question — sauf
+ * parcours catalogue (`catalogueBrowse`) : jeu choisi, pas d'extension.
  *
  * Le dire une fois évite que chaque pack décide seul de ce qu'il fait d'une
  * chaîne vide — l'un rendant tout son catalogue, l'autre rien.
@@ -254,8 +284,28 @@ export function setScopedWhere(input: {
 export function isAnsweredQuery(
   query: string | null | undefined,
   setId?: string | null,
+  catalogueBrowse?: boolean,
 ): boolean {
-  return Boolean(query?.trim() || setId?.trim());
+  return Boolean(query?.trim() || setId?.trim() || catalogueBrowse);
+}
+
+/**
+ * Requête forme collectionneur (`d-15`, `d0015`, `sp25`) → famille + chiffres
+ * sans zéros à gauche.
+ *
+ * Sert à élargir `d-15` à `d0150` / `d0151` sans matcher `d0115` (préfixe sur
+ * la valeur numérique, pas une sous-chaîne du zero-pad).
+ */
+export function collectorNumberPrefix(
+  query: string,
+): { family: string; digitPrefix: string } | null {
+  const compact = query.trim().toLowerCase().replace(/[\s-_]/g, "");
+  const match = /^([a-z]*)(\d+)$/.exec(compact);
+  if (!match) return null;
+  const family = match[1] ?? "";
+  const rawDigits = match[2]!;
+  const digitPrefix = rawDigits.replace(/^0+/, "") || "0";
+  return { family, digitPrefix };
 }
 
 /**

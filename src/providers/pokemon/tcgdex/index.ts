@@ -735,7 +735,14 @@ export const tcgdexModule = defineProvider({
     const key = setId.trim().toLowerCase();
     if (!key) return [];
     return checklistPrintsForLanguage(lang).get(key) ?? [];
-  },  searchPrints: async ({ query, language, limit, signal, setId }) => {
+  },  searchPrints: async ({
+    query,
+    language,
+    limit,
+    signal,
+    setId,
+    catalogueBrowse,
+  }) => {
     /*
       La base locale d'abord : même donnée, sans le réseau. Mesuré avant
       moisson — 327 ms l'appel distant, contre 42 à 56 ms pour les packs qui
@@ -746,6 +753,7 @@ export const tcgdexModule = defineProvider({
       language: language ?? undefined,
       limit,
       setId,
+      catalogueBrowse,
     });
     const cards =
       localRows.length > 0

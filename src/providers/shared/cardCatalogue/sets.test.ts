@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  collectorNumberPrefix,
   finalizeSetOptions,
   isAnsweredQuery,
   mergePrintSetOptions,
@@ -199,6 +200,16 @@ describe("setScopedWhere", () => {
     expect(params).toEqual(["s1"]);
   });
 
+  it("usePrintSets matches membership or primary set_code fallback", () => {
+    const { where, params } = setScopedWhere({
+      setColumn: "p.set_code",
+      setId: "part2",
+      usePrintSets: true,
+    });
+    expect(where).toContain("print_sets");
+    expect(params).toEqual(["part2", "part2"]);
+  });
+
   it("combine set et texte, paramètres dans l'ordre", () => {
     const { where, params } = setScopedWhere({
       setColumn: "p.set_code",
@@ -240,6 +251,29 @@ describe("isAnsweredQuery", () => {
     expect(isAnsweredQuery("   ", "  ")).toBe(false);
     expect(isAnsweredQuery("elsa", null)).toBe(true);
     expect(isAnsweredQuery("", "s1")).toBe(true);
+    expect(isAnsweredQuery("", null, true)).toBe(true);
+  });
+});
+
+describe("collectorNumberPrefix", () => {
+  it("lit la famille et le préfixe numérique sans zéros", () => {
+    expect(collectorNumberPrefix("d-15")).toEqual({
+      family: "d",
+      digitPrefix: "15",
+    });
+    expect(collectorNumberPrefix("d0015")).toEqual({
+      family: "d",
+      digitPrefix: "15",
+    });
+    expect(collectorNumberPrefix("SP-25")).toEqual({
+      family: "sp",
+      digitPrefix: "25",
+    });
+    expect(collectorNumberPrefix("150")).toEqual({
+      family: "",
+      digitPrefix: "150",
+    });
+    expect(collectorNumberPrefix("goku")).toBeNull();
   });
 });
 

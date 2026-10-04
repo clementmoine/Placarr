@@ -234,6 +234,21 @@ export function CatalogueSealedDetailDialog({
               </div>
             ) : null}
 
+            {detail.poster ? (
+              <div className="space-y-1">
+                <p className="text-[11px] text-muted-foreground">
+                  {fr ? "Poster / affiche" : "Poster"}
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={detail.poster}
+                  alt=""
+                  className="max-h-48 rounded-md object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : null}
+
             {!detail.contentsKnown &&
             !detail.structureAttested &&
             detail.guaranteedPrints.length === 0 &&

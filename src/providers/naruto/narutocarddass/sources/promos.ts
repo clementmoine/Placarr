@@ -18,6 +18,7 @@ import {
   mintNarutoPrintKey,
   narutoDiskCardId,
   narutoNumbersEqual,
+  appearanceSetsOf,
 } from "../identity";
 import type { NarutoCollectorId } from "../identity";
 import ledger from "../curated/sources/coleka-us-promos.json";
@@ -255,6 +256,36 @@ export function mergeAttestedPromos(input: {
       printByKey.set(printKey, print);
       printByCanonical.set(printKey, print);
       addedPrints.push(printKey);
+    } else {
+      /*
+        Un retirage tournoi peut déjà exister via le disque / appearances avec
+        `setCode: unknown` (pas d'art promo dédié). Sans le ré-ancrer sur
+        `promo`, la check-list FR ne le voit jamais — membership vide +
+        `set_code ≠ promo`.
+      */
+      const existingPrint =
+        printByKey.get(printKey) ?? printByCanonical.get(printKey);
+      if (existingPrint) {
+        const sets = new Set(
+          appearanceSetsOf(
+            existingPrint.setCodes?.length
+              ? existingPrint.setCodes
+              : [existingPrint.setCode],
+          ),
+        );
+        sets.add("promo");
+        existingPrint.setCodes = [...sets];
+        if (
+          !existingPrint.setCode ||
+          existingPrint.setCode === "unknown" ||
+          existingPrint.setCode === "promo"
+        ) {
+          existingPrint.setCode = "promo";
+        }
+        if (grouping && !existingPrint.grouping) {
+          existingPrint.grouping = grouping;
+        }
+      }
     }
 
     const existing = titleByKey.get(printKey);

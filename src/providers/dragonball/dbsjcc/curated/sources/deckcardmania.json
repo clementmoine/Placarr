@@ -1,6 +1,6 @@
 {
   "source": "deckcardmania.com — Dragon Ball set fiches (idf=3, grandes séries / SP / promo / Super Séries)",
-  "observed": "2026-09-24",
+  "observed": "2026-10-04",
   "ingest": "set-fiches",
   "crawl": true,
   "note": "Fiches set (pas un dump face-par-face). Packshot files/3/{idm}b.jpg + galerie _iNb.jpg. Listes Cartes Rares / Holographiques (D-###) pour JCC FR. Faces sample uniquement quand title/alt nomme clairement une carte (Carte SP01 / D-###). Super Séries / DBS CG / Zenzu = ledger only (hors corpus dbsjcc).",

@@ -1,6 +1,6 @@
 {
   "source": "chitoroshop.com — Dragon Ball Card Game 2003–2004 singles (Shopify products.json)",
-  "observed": "2026-09-24",
+  "observed": "2026-10-04",
   "ingest": "faces",
   "crawl": false,
   "note": "Boutique FR Shopify. Collection paginée limit=250. Photos JA, titres EN « Name D-205 | Dragon Ball Card Game ». body_html / title portent Part N · series N · Promo. D-numbers non uniques côté FR → setHint + match prudent à l'install.",

@@ -10,10 +10,15 @@ import {
   parseDbzcollectionListing,
   parseDbzcPackDetail,
 } from "./dbzcollection";
-import { assignCardGroupings } from "../scrape/dbzcollection";
+import {
+  assignCardGroupings,
+  pairDbzcFaceBackPackWrites,
+} from "../scrape/dbzcollection";
 import {
   dbsjccPrintKey,
   dbsjccSetLabel,
+  dbsjccSetSortKey,
+  formatDbsjccCollectorReference,
   formatDbsjccReference,
   normalizeGrouping,
   parseDbsjccNumber,
@@ -24,6 +29,8 @@ describe("printKey", () => {
     expect(parseDbsjccNumber("D-1")).toBe("d0001");
     expect(parseDbsjccNumber("D-51")).toBe("d0051");
     expect(parseDbsjccNumber("D-123")).toBe("d0123");
+    expect(parseDbsjccNumber("D-123a")).toBe("d0123a");
+    expect(parseDbsjccNumber("d0123b")).toBe("d0123b");
     expect(parseDbsjccNumber("D-938")).toBe("d0938");
     expect(parseDbsjccNumber("SP-01")).toBe("sp0001");
     expect(parseDbsjccNumber("SP-25")).toBe("sp0025");
@@ -46,13 +53,28 @@ describe("printKey", () => {
   });
 
   it("formats reference strings nicely", () => {
-    expect(dbsjccSetLabel("part1")).toBe("Part 1");
+    expect(dbsjccSetLabel("part1")).toBe("Série 1 — Super-Saiyans");
+    expect(dbsjccSetLabel("part5")).toBe("Série 5 — Planète / Résistance");
+    expect(dbsjccSetLabel("promo")).toBe("Promo (hors série)");
+    expect(dbsjccSetLabel("sp")).toBe("Hors-série");
+    expect(dbsjccSetLabel("accessory")).toBe("Détecteur");
+    expect(formatDbsjccCollectorReference("part2", "d0127")).toBe("D-127");
+    expect(formatDbsjccCollectorReference("part2", "d0123b")).toBe("D-123b");
+    expect(formatDbsjccCollectorReference("sp", "sp0025")).toBe("SP-25");
     expect(formatDbsjccReference("part1", "D-1", "Commune")).toBe(
-      "Part 1 D-1 (Commune)",
+      "Série 1 D-1 (Commune)",
     );
     expect(
       formatDbsjccReference("part4", "D-431", "Commune", "Monde de kaio"),
-    ).toBe("Part 4 D-431 (Monde de kaio, Commune)");
+    ).toBe("Série 4 D-431 (Monde de kaio, Commune)");
+  });
+
+  it("orders Série 1…10 before promo, hors-série and accessoire", () => {
+    expect(dbsjccSetSortKey("part1")).toBe(1);
+    expect(dbsjccSetSortKey("part10")).toBe(10);
+    expect(dbsjccSetSortKey("promo")).toBe(100);
+    expect(dbsjccSetSortKey("sp")).toBe(101);
+    expect(dbsjccSetSortKey("accessory")).toBe(102);
   });
 });
 
@@ -283,5 +305,94 @@ describe("parseDbzcollection", () => {
     expect(groupings.get("51")).toBeNull();
     expect(groupings.get("499")).toBe("kaio");
     expect(groupings.get("500")).toBe("enfer");
+  });
+
+  it("keeps pouvoir caché on singletons (Main / Monde de kaio)", () => {
+    const cards = [
+      {
+        cardId: "562",
+        printed: "D-153",
+        rarityTile: "Commune",
+        thumbPath: "",
+        facePath: "",
+        hdFacePath: "",
+        detail: {
+          cardId: "562",
+          collection: null,
+          serie: "Part 5",
+          printed: "D-153",
+          rarity: "Commune",
+          name: "Roi cold",
+          cost: null,
+          characteristics: null,
+          powerCost: null,
+          power: null,
+          pouvoirCache: "Main",
+          nature: null,
+          otherInfo: null,
+          hdPath: null,
+        },
+      },
+      {
+        cardId: "439",
+        printed: "D-250",
+        rarityTile: "Commune",
+        thumbPath: "",
+        facePath: "",
+        hdFacePath: "",
+        detail: {
+          cardId: "439",
+          collection: null,
+          serie: "Part 4",
+          printed: "D-250",
+          rarity: "Commune",
+          name: "Piccolo",
+          cost: null,
+          characteristics: null,
+          powerCost: null,
+          power: null,
+          pouvoirCache: "Monde de kaio",
+          nature: null,
+          otherInfo: null,
+          hdPath: null,
+        },
+      },
+    ];
+    const groupings = assignCardGroupings(cards);
+    expect(groupings.get("562")).toBe("main");
+    expect(groupings.get("439")).toBe("kaio");
+  });
+});
+
+describe("pairDbzcFaceBackPackWrites", () => {
+  it("keeps the lower packId as face and the other as imageBackPath", () => {
+    const paired = pairDbzcFaceBackPackWrites([
+      {
+        slug: "part6-box-1511",
+        kind: "collector_box",
+        category: "tin-box",
+        name: "Série 6 — Box",
+        setCode: "part6",
+        lang: "fr",
+        releaseDate: null,
+        declaredCardCount: null,
+        artPath: "/tmp/back.jpg",
+      },
+      {
+        slug: "part6-box-1510",
+        kind: "collector_box",
+        category: "tin-box",
+        name: "Série 6 — Box",
+        setCode: "part6",
+        lang: "fr",
+        releaseDate: null,
+        declaredCardCount: null,
+        artPath: "/tmp/front.jpg",
+      },
+    ]);
+    expect(paired).toHaveLength(1);
+    expect(paired[0]?.slug).toBe("part6-box-1510");
+    expect(paired[0]?.artPath).toBe("/tmp/front.jpg");
+    expect(paired[0]?.imageBackPath).toBe("/tmp/back.jpg");
   });
 });

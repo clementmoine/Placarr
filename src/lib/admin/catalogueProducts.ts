@@ -47,6 +47,8 @@ export type CatalogueSealedRow = {
   image: string | null;
   /** Dos de l'emballage, quand une source l'a photographié. Rare. */
   imageBack: string | null;
+  /** Affiche checklist fournie avec le deck (ex. Série 9 Héros). */
+  poster: string | null;
   setLogo: string | null;
   declaredCardCount: number | null;
   printCount: number;
@@ -252,6 +254,7 @@ function rowFromEntry(
     lang,
     image,
     imageBack: entry.imageBack ?? null,
+    poster: entry.poster ?? null,
     setLogo: entry.setLogo ?? null,
     declaredCardCount: entry.declaredCardCount,
     printCount,

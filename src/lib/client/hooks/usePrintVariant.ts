@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-import { resolveStoredVariant } from "@/core/enrich/variants";
+import {
+  normalizeVariantOptions,
+  resolveStoredVariant,
+} from "@/core/enrich/variants";
 import { applyHouseFoilFallback, getEffectPack } from "@/core/render/foil";
 import {
   peekPrintVariant,
@@ -190,7 +193,16 @@ export function variantRendering(
   if (!info) return plain;
 
   const packId = info.effectPack ?? null;
-  const resolved = resolveStoredVariant(variant, info.finishes);
+  /*
+    Blank variant + exactly one catalogue finish (foil-only print, e.g. JCC
+    Holo): imply that finish. Multi-finish prints (Naruto normal|holo, Lorcana
+    None|Silver) stay flat until the copy picks one — do not collapse onto the
+    plain option via ownership helpers.
+  */
+  const finishes = normalizeVariantOptions(info.finishes);
+  const resolved =
+    resolveStoredVariant(variant, info.finishes) ??
+    (finishes.length === 1 ? finishes[0]! : null);
   // Keep pack id even without a finish: backs (flip / skeleton) resolve from
   // the pack; foil layers stay null until a finish is known.
   if (!resolved) {

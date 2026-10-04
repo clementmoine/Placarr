@@ -166,13 +166,14 @@ export async function GET(req: NextRequest) {
     }
 
     const set = searchParams.get("set")?.trim() || null;
+    const catalogue = searchParams.get("catalogue")?.trim() || null;
 
     /*
       Les catalogues se demandent **sans** requête : c'est ce qui permet de
-      choisir une extension avant de savoir quoi y chercher. Tant qu'il fallait
-      un `q`, le sélecteur restait vide à l'ouverture.
+      choisir une extension — ou un **jeu entier** — avant de savoir quoi y
+      chercher. Sans `q` ni `set` ni `catalogue`, le sélecteur reste vide.
     */
-    if (!query && !set) {
+    if (!query && !set && !catalogue) {
       return NextResponse.json({
         supported: true,
         candidates: [],
@@ -194,7 +195,7 @@ export async function GET(req: NextRequest) {
       language: searchParams.get("language"),
       limit: pageSize + 1,
       offset,
-      providerId: searchParams.get("catalogue"),
+      providerId: catalogue,
       setId: set,
       signal: req.signal,
     });

@@ -7,6 +7,7 @@ import {
   existsSync,
   mkdirSync,
   renameSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -79,7 +80,10 @@ export type NarutoAssetRow = {
   printed?: boolean;
 };
 
-const activeDbs = new Map<string, DatabaseSync>();
+const activeDbs = new Map<
+  string,
+  { db: DatabaseSync; mtimeMs: number; generatedAt: string | null }
+>();
 
 export function narutoPackDbPath(packId: string = NARUTO_PACK_ID): string {
   if (packId === NARUTO_PACK_ID) {
@@ -94,14 +98,25 @@ export function narutoCcgDbPath(): string {
 }
 
 export function resetNarutoCcgDbCache(): void {
-  for (const db of activeDbs.values()) {
+  for (const entry of activeDbs.values()) {
     try {
-      db.close();
+      entry.db.close();
     } catch {
       /* ignore */
     }
   }
   activeDbs.clear();
+}
+
+function readDbGeneratedAt(db: DatabaseSync): string | null {
+  try {
+    const row = db
+      .prepare(`SELECT value FROM meta WHERE key = ?`)
+      .get("generatedAt") as { value: string } | undefined;
+    return row?.value?.trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -347,6 +362,11 @@ export function writeNarutoCcgIndex(input: {
   copyCatalogSideTablesFromPrevious(dbPath, buildPath);
 
   renameSync(buildPath, dbPath);
+  /*
+    Les lecteurs (Next) qui tenaient l'ancien fichier doivent le lâcher —
+    sinon ils servent encore l'inode remplacé.
+  */
+  resetNarutoCcgDbCache();
   return { dbPath, printCount: folded.prints.length };
 }
 
@@ -494,28 +514,57 @@ export function exportNarutoCardsIndexJson(
 export function ensureNarutoPackIndex(
   packId: string = NARUTO_PACK_ID,
 ): DatabaseSync | null {
+  const dbPath = narutoPackDbPath(packId);
+  if (!existsSync(dbPath)) return null;
+
+  let mtimeMs = 0;
+  try {
+    mtimeMs = statSync(dbPath).mtimeMs;
+  } catch {
+    return null;
+  }
+
   const hit = activeDbs.get(packId);
   if (hit) {
+    /*
+      Un `rename` atomique après Catalogue Sync laisse l'ancien fd ouvert sur
+      l'inode remplacé — la check-list restait à 9 promos alors que le disque
+      en avait 29. On rouvre dès que mtime / generatedAt bouge.
+    */
+    let schemaOk = false;
     try {
-      const row = hit
+      const row = hit.db
         .prepare(`SELECT value FROM meta WHERE key = ?`)
         .get("schemaVersion") as { value: string } | undefined;
-      if (row?.value === NARUTO_CCG_SCHEMA_VERSION) return hit;
+      schemaOk = row?.value === NARUTO_CCG_SCHEMA_VERSION;
     } catch {
-      /* handle closed or schema-less — reopen */
+      schemaOk = false;
+    }
+    if (schemaOk && hit.mtimeMs === mtimeMs) {
+      return hit.db;
     }
     try {
-      hit.close();
+      hit.db.close();
     } catch {
       /* ignore */
     }
     activeDbs.delete(packId);
   }
-  const dbPath = narutoPackDbPath(packId);
-  if (!existsSync(dbPath)) return null;
+
   try {
     const db = new DatabaseSync(dbPath, { readOnly: true });
-    activeDbs.set(packId, db);
+    const schema = db
+      .prepare(`SELECT value FROM meta WHERE key = ?`)
+      .get("schemaVersion") as { value: string } | undefined;
+    if (schema?.value !== NARUTO_CCG_SCHEMA_VERSION) {
+      db.close();
+      return null;
+    }
+    activeDbs.set(packId, {
+      db,
+      mtimeMs,
+      generatedAt: readDbGeneratedAt(db),
+    });
     return db;
   } catch {
     return null;

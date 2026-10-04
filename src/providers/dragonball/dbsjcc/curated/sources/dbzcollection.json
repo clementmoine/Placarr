@@ -12,7 +12,7 @@
     {
       "ids": "1",
       "setCode": "part1",
-      "label": "Part 1",
+      "label": "Série 1",
       "listingPath": "cartes.php?idc=1&ids=1",
       "expectedCards": 134,
       "cardsPerBooster": 8,
@@ -23,7 +23,7 @@
     {
       "ids": "5",
       "setCode": "part2",
-      "label": "Part 2",
+      "label": "Série 2",
       "listingPath": "cartes.php?idc=1&ids=5",
       "expectedCards": 121,
       "cardsPerBooster": 8,
@@ -34,7 +34,7 @@
     {
       "ids": "12",
       "setCode": "part3",
-      "label": "Part 3",
+      "label": "Série 3",
       "listingPath": "cartes.php?idc=1&ids=12",
       "expectedCards": 119,
       "cardsPerBooster": 8,
@@ -45,7 +45,7 @@
     {
       "ids": "14",
       "setCode": "part4",
-      "label": "Part 4",
+      "label": "Série 4",
       "listingPath": "cartes.php?idc=1&ids=14",
       "expectedCards": 134,
       "cardsPerBooster": 8,
@@ -56,7 +56,7 @@
     {
       "ids": "15",
       "setCode": "part5",
-      "label": "Part 5",
+      "label": "Série 5",
       "listingPath": "cartes.php?idc=1&ids=15",
       "expectedCards": 163,
       "cardsPerBooster": 8,
@@ -67,7 +67,7 @@
     {
       "ids": "16",
       "setCode": "part6",
-      "label": "Part 6",
+      "label": "Série 6",
       "listingPath": "cartes.php?idc=1&ids=16",
       "expectedCards": 122,
       "cardsPerBooster": 8,
@@ -78,7 +78,7 @@
     {
       "ids": "17",
       "setCode": "part7",
-      "label": "Part 7",
+      "label": "Série 7",
       "listingPath": "cartes.php?idc=1&ids=17",
       "expectedCards": 140,
       "cardsPerBooster": 8,
@@ -89,7 +89,7 @@
     {
       "ids": "228",
       "setCode": "part8",
-      "label": "Part 8",
+      "label": "Série 8",
       "listingPath": "cartes.php?idc=1&ids=228",
       "expectedCards": 148,
       "cardsPerBooster": 8,
@@ -100,7 +100,7 @@
     {
       "ids": "319",
       "setCode": "part9",
-      "label": "Part 9",
+      "label": "Série 9",
       "listingPath": "cartes.php?idc=1&ids=319",
       "expectedCards": 118,
       "cardsPerBooster": 8,
@@ -111,7 +111,7 @@
     {
       "ids": "393",
       "setCode": "part10",
-      "label": "Part 10",
+      "label": "Série 10",
       "listingPath": "cartes.php?idc=1&ids=393",
       "expectedCards": 158,
       "cardsPerBooster": 8,
@@ -122,7 +122,7 @@
     {
       "ids": "21",
       "setCode": "promo",
-      "label": "Part Promo",
+      "label": "Série Promo",
       "listingPath": "cartes.php?idc=1&ids=21",
       "expectedCards": 36,
       "note": "36 cartes promotionnelles (1 à 3 boules)."

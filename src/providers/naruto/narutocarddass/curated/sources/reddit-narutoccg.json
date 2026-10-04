@@ -186,6 +186,37 @@
       "lists": ["10× french storm 3 blisters", "EU printed english sage's legacy boosters"],
       "note": "Matches our duopack-s28 / s28 FR sealed market; not a new SKU by itself.",
       "ingestPhoto": false
+    },
+    {
+      "id": "1uhfnge",
+      "url": "https://www.reddit.com/r/Narutoccg/comments/1uhfnge/complete_naruto_ccg_inventory_spreadsheet_17800/",
+      "title": "Complete Naruto CCG inventory spreadsheet! (17,800+ rows, every variant, pricing, and more!)",
+      "kind": "inventory-sheet",
+      "line": "en-ccg",
+      "author": "Spend_Far",
+      "observed": "2026-10-04",
+      "sheet": {
+        "url": "https://docs.google.com/spreadsheets/d/1J7bs4XCjI3NOYWobsoDzsy7UuPwebwprr1jQrBltYlw/edit?usp=sharing",
+        "access": "comment-only (download pending community vetting)",
+        "rowsClaimed": 17800,
+        "covers": [
+          "28 booster sets",
+          "Tournament Packs 1–4",
+          "promos"
+        ],
+        "variantAxes": ["edition", "finish", "lettering", "art style"],
+        "pricing": "Goat Card Shop links per variant"
+      },
+      "openQuestionsFromOp": [
+        "M-549–M-584 + M-258 exist in US?",
+        "PR-047 / PR-094 / PR-097–099 printed?",
+        "PR-068 double-assign Sasuke vs Killer Bee; PR-067 exists?"
+      ],
+      "correctionForm": "https://forms.gle/ohG5Co2PbXN5buHx5",
+      "discordPointer": "https://discord.gg/JpmuA3zmxb (ccgtrader / community pooling)",
+      "note": "Bandai USA CCG (N/J/M) — not Kayou, not Carddass FR NI/TE/TA. Distinct from sheets-naruto-cards-complete.json (~360 chase rows). Do not crawl; comment-only until OP releases download. Useful later for EN finish master-set / missing PR holes — never invent FR Carddass from it.",
+      "ingestPhoto": false,
+      "ingestSheet": false
     }
   ],
   "findings2026-08-26": {
@@ -196,10 +227,11 @@
     "accessUnlocked": "Arctic Shift replaces blocked Reddit JSON for research digs"
   },
   "stillWanted": [
-    "inventory-sheets (chase-only candidate: sheets-naruto-cards-complete.json — still need a real full checklist sheet)",
+    "inventory-sheets downloadable export once Spend_Far (1uhfnge) opens full xlsx — comment-only today",
     "visual-id xaxwh9 + 1vkzduh galleries → which PR",
     "DE effect title for PR-095 (not in seller table)",
-    "Amigo DE series checklist cross-check vs comicplanet-de / FR Carddass"
+    "Amigo DE series checklist cross-check vs comicplanet-de / FR Carddass",
+    "PR-047 / PR-094 / PR-097–099 print evidence (photos) if any"
   ],
   "not": ["carddass-crawl", "chrono-clash", "kayou", "live-subreddit-scrape"]
 }

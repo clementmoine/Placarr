@@ -205,11 +205,12 @@ export const narutocarddassModule = defineProvider({
       return resolveFromLocal(ctx);
     },
   }),
-  searchPrints: async ({ query, language, limit, setId }) =>
+  searchPrints: async ({ query, language, limit, setId, catalogueBrowse }) =>
     searchNarutoPrints(query, {
       language: language ?? undefined,
       limit,
       setId,
+      catalogueBrowse,
     }),
   /*
     Catalogue : original japonais + fr + en. L’italien retail (S1–S6) n’est

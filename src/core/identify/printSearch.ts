@@ -198,24 +198,29 @@ export async function searchPrintCandidates(
 ): Promise<PrintCandidate[]> {
   const trimmed = query?.trim();
   const setId = options.setId?.trim();
+  const providerId = options.providerId?.trim();
   /*
     Une requête vide n'est plus forcément une non-question : accompagnée d'une
-    extension, elle veut dire « montre-moi ce set ». Sans extension, elle reste
-    sans réponse — chercher tout le catalogue n'est pas une intention.
+    extension, elle veut dire « montre-moi ce set ». Accompagnée d'un **catalogue**
+    (jeu) sans extension : « montre-moi tout le jeu » en ordre collectionneur.
+    Sans l'un ni l'autre, elle reste sans réponse.
   */
-  if (!trimmed && !setId) return [];
+  const catalogueBrowse = Boolean(!trimmed && !setId && providerId);
+  if (!trimmed && !setId && !catalogueBrowse) return [];
 
-  const modules = providersFor(type, options.providerId);
+  const modules = providersFor(type, providerId);
   if (modules.length === 0) return [];
 
   const offset = Math.max(0, Math.floor(options.offset ?? 0));
   const pageSize = Math.max(1, options.limit ?? DEFAULT_LIMIT);
   /*
     On demande au provider assez de lignes pour couvrir la page courante
-    (`offset + pageSize`). Avec `setId`, le plafond monte : un set de plusieurs
-    centaines de cartes doit pouvoir défiler jusqu'au bout.
+    (`offset + pageSize`). Avec `setId` ou parcours catalogue, le plafond monte :
+    un jeu / set de plusieurs centaines de cartes doit pouvoir défiler jusqu'au
+    bout.
   */
-  const fetchCeiling = setId ? MAX_SET_FETCH_LIMIT : MAX_PER_PROVIDER_LIMIT;
+  const fetchCeiling =
+    setId || catalogueBrowse ? MAX_SET_FETCH_LIMIT : MAX_PER_PROVIDER_LIMIT;
   const fetchLimit = Math.min(
     Math.max(offset + pageSize, PER_PROVIDER_LIMIT),
     fetchCeiling,
@@ -226,6 +231,7 @@ export async function searchPrintCandidates(
       const found = await module.searchPrints!({
         query: trimmed ?? "",
         setId,
+        ...(catalogueBrowse ? { catalogueBrowse: true } : {}),
         language: options.language,
         limit: fetchLimit,
         signal: options.signal,

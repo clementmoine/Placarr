@@ -129,11 +129,12 @@ export function createDbsCatalogModule(
         language,
         search: (opts) => searchPrints(opts.query, opts),
       }),
-    searchPrints: async ({ query, language, limit, setId }) =>
+    searchPrints: async ({ query, language, limit, setId, catalogueBrowse }) =>
       searchPrints(query, {
         language: language ?? undefined,
         limit,
         setId,
+        catalogueBrowse,
       }),
     lookupPrint: async ({ printKey, language }) => {
       if (parsePrintKey(printKey)?.game !== printGame) return null;

@@ -56,6 +56,10 @@ export function decodeDbzcEntities(raw: string): string {
     .replace(/&uuml;/gi, "ü")
     .replace(/&Ccedil;/g, "Ç")
     .replace(/&ccedil;/g, "ç")
+    .replace(/&Acirc;/g, "Â")
+    .replace(/&acirc;/gi, "â")
+    .replace(/&OElig;/g, "Œ")
+    .replace(/&oelig;/gi, "œ")
     .replace(/&deg;/gi, "°")
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
@@ -86,21 +90,43 @@ export function extractDbzcTableField(
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 
+/**
+ * dbzcollection.fr sert du HTML **latin-1** sans charset (listing packs :
+ * `D\xe9tecteur`). Un decode UTF-8 transformait ça en `D�tecteur`.
+ *
+ * Si le buffer est du UTF-8 valide sans U+FFFD, on le garde (AJAX entities
+ * ASCII + éventuel futur UTF-8) ; sinon latin-1.
+ */
+export function decodeDbzcHtmlBytes(bytes: ArrayBuffer | Uint8Array): string {
+  const buf = Buffer.from(
+    bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : bytes,
+  );
+  const asUtf8 = buf.toString("utf8");
+  if (!asUtf8.includes("\uFFFD")) return asUtf8;
+  return buf.toString("latin1");
+}
+
 export async function fetchDbzcText(
   url: string,
   opts: { minLength?: number } = {},
 ): Promise<string | null> {
   const minLength = opts.minLength ?? 100;
   try {
-    const res = await httpGet<string>(url, {
+    const res = await httpGet<ArrayBuffer>(url, {
       headers: { "User-Agent": UA, Accept: "text/html" },
-      responseType: "text",
+      responseType: "arraybuffer",
       timeout: 40_000,
       validateStatus: (status: number) => status === 200,
     });
-    return typeof res.data === "string" && res.data.length >= minLength
-      ? res.data
-      : null;
+    const data = res.data as ArrayBuffer | ArrayBufferView | Buffer | string;
+    if (typeof data === "string") {
+      return data.length >= minLength ? data : null;
+    }
+    if (!data) return null;
+    const html = decodeDbzcHtmlBytes(
+      data instanceof ArrayBuffer ? new Uint8Array(data) : data,
+    );
+    return html.length >= minLength ? html : null;
   } catch {
     return null;
   }

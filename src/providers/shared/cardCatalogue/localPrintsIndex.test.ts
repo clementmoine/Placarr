@@ -45,6 +45,75 @@ describe("createLocalPrintsIndex", () => {
     expect(index.searchRows("   ")).toEqual([]);
   });
 
+  it("lists a print under every print_sets membership", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("dragonball/jcc");
+    index.writePrints([
+      {
+        printKey: "dbsjcc:part2-d0123b",
+        setCode: "part2",
+        setCodes: ["part2", "part3", "part4"],
+        number: "d0123b",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Dragon ball" }],
+      },
+    ]);
+    expect(
+      index.searchRows("", { setId: "part4", language: "fr", limit: 5 }).map(
+        (row) => row.printKey,
+      ),
+    ).toEqual(["dbsjcc:part2-d0123b"]);
+    expect(index.listSets().map((row) => row.id).sort()).toEqual([
+      "part2",
+      "part3",
+      "part4",
+    ]);
+  });
+
+  it("expands a padded collector prefix (d-15 → d0150, not d0115)", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("dragonball/jcc");
+    index.writePrints([
+      {
+        printKey: "dbsjcc:part1-d0015",
+        setCode: "part1",
+        number: "d0015",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Fifteen" }],
+      },
+      {
+        printKey: "dbsjcc:part2-d0150",
+        setCode: "part2",
+        number: "d0150",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Hundred fifty" }],
+      },
+      {
+        printKey: "dbsjcc:part1-d0115",
+        setCode: "part1",
+        number: "d0115",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Hundred fifteen" }],
+      },
+      {
+        printKey: "dbsjcc:sp-sp0015",
+        setCode: "sp",
+        number: "sp0015",
+        cardType: "sp",
+        titles: [{ lang: "fr", fullName: "SP fifteen" }],
+      },
+    ]);
+
+    const keys = index
+      .searchRows("d0015", { language: "fr", limit: 20 })
+      .map((row) => row.printKey);
+    expect(keys).toEqual(
+      expect.arrayContaining(["dbsjcc:part1-d0015", "dbsjcc:part2-d0150"]),
+    );
+    expect(keys).not.toContain("dbsjcc:part1-d0115");
+    expect(keys).not.toContain("dbsjcc:sp-sp0015");
+  });
+
   it("upserts attested titles without inventing art", () => {
     tmpDataRoot();
     const index = createLocalPrintsIndex("naruto/ninja-ranks");

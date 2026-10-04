@@ -9,9 +9,13 @@
  * elle on compte toutes les langues confondues, ce qui ne veut rien dire pour
  * une complétion. On retombe donc sur la langue majoritaire de l'étagère, et on
  * la rend dans la réponse pour que l'écran puisse la montrer et la changer.
+ *
+ * **Master set** (`?masterSet=1`) : chaque finition est une case à part. Posséder
+ * la foil ne coche pas la normale, et inversement.
  */
 import { NextRequest, NextResponse } from "next/server";
 
+import { checklistOwnedKey } from "@/core/collect/checklist";
 import { buildChecklistForShelf } from "@/lib/collect/shelfChecklist";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
@@ -60,12 +64,16 @@ export async function GET(
     return NextResponse.json({ error: "Shelf not found" }, { status: 404 });
   }
 
+  const params = request.nextUrl.searchParams;
+  const masterSet =
+    params.get("masterSet") === "1" ||
+    params.get("masterSet")?.trim().toLowerCase() === "true";
+
   const items = await prisma.item.findMany({
     where: { shelfId: shelf.id, printKey: { not: null } },
-    select: { printKey: true, language: true },
+    select: { printKey: true, language: true, variant: true },
   });
 
-  const params = request.nextUrl.searchParams;
   const language =
     params.get("language")?.trim().toLowerCase() || dominantLanguage(items);
 
@@ -75,13 +83,17 @@ export async function GET(
     la langue est inconnue est compté — le retirer punirait un item que la
     passe de rattrapage n'a pas su trancher.
   */
+  const matching = items.filter((item) => {
+    const code = item.language?.trim().toLowerCase();
+    return !language || !code || code === language;
+  });
+
   const owned = new Set(
-    items
-      .filter((item) => {
-        const code = item.language?.trim().toLowerCase();
-        return !language || !code || code === language;
-      })
-      .map((item) => item.printKey!.trim().toLowerCase()),
+    masterSet
+      ? matching.map((item) =>
+          checklistOwnedKey(item.printKey!, item.variant),
+        )
+      : matching.map((item) => item.printKey!.trim().toLowerCase()),
   );
 
   const checklist = await buildChecklistForShelf({
@@ -89,10 +101,22 @@ export async function GET(
     owned,
     language,
     shelfName: shelf.name,
+    masterSet,
   });
+
+  /*
+    En master set, une copie sans `variant` ne coche aucune finition catalogue
+    (None vs Silver). On le dit à l'UI pour expliquer un % bas malgré des
+    cartes sur l'étagère — ex. Ch1 Lorcana ajouté avant le sélecteur.
+  */
+  const untaggedOwned = masterSet
+    ? matching.filter((item) => !item.variant?.trim()).length
+    : 0;
 
   return NextResponse.json({
     shelf: { id: shelf.id, name: shelf.name, slug: shelf.slug },
+    masterSet,
+    untaggedOwned,
     ...checklist,
   });
 }

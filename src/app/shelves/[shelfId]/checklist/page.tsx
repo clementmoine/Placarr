@@ -44,6 +44,8 @@ type ChecklistPrint = {
   title: string;
   thumbnailUrl?: string | null;
   owned?: boolean;
+  /** Présent en mode master set — une ligne par finition. */
+  finish?: string | null;
 };
 
 type ChecklistSet = {
@@ -112,6 +114,9 @@ type ChecklistResponse = {
   shelf: { id: string; name: string | null; slug: string | null };
   language: string | null;
   languages: string[];
+  masterSet?: boolean;
+  /** Copies sans `variant` — ignorées en master set. */
+  untaggedOwned?: number;
   sets: ChecklistSet[];
   setsWithoutCatalogue: { id: string; label: string }[];
   advice: SetAdvice[];
@@ -572,6 +577,7 @@ function SetRow({
         card.reference,
         card.title,
         card.printKey,
+        card.finish,
       ),
     );
   }, [
@@ -664,7 +670,7 @@ function SetRow({
                 : "";
             return (
               <li
-                key={row.printKey}
+                key={`${row.printKey}|${row.finish ?? ""}`}
                 className={cn(
                   styles.missingRow,
                   row.owned && styles.missingOwned,
@@ -684,6 +690,9 @@ function SetRow({
                 )}
                 <span className={styles.ref}>{row.reference}</span>
                 <span className={styles.name}>{row.title}</span>
+                {row.finish ? (
+                  <span className={styles.finish}>{row.finish}</span>
+                ) : null}
                 {sources.length > 0 && (
                   <span
                     className={styles.cardSources}
@@ -737,6 +746,11 @@ export default function ChecklistPage() {
     toggle pour revoir aussi ce qui est déjà sur l'étagère.
   */
   const [showOwned, setShowOwned] = useState(false);
+  /*
+    Master set : chaque finition (normale / foil / …) est une case. Posséder
+    la foil ne coche pas la normale.
+  */
+  const [masterSet, setMasterSet] = useState(false);
   const [search, setSearch] = useState("");
   /** Déplie tous les sets le temps d'imprimer (sinon les cartes ne sont pas dans le DOM). */
   const [printing, setPrinting] = useState(false);
@@ -759,10 +773,11 @@ export default function ChecklistPage() {
   }, []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["checklist", shelfId, language],
+    queryKey: ["checklist", shelfId, language, masterSet],
     queryFn: async (): Promise<ChecklistResponse> => {
       const params = new URLSearchParams();
       if (language) params.set("language", language);
+      if (masterSet) params.set("masterSet", "1");
       const query = params.toString();
       const url = `/api/shelves/${encodeURIComponent(shelfId)}/checklist${
         query ? `?${query}` : ""
@@ -812,6 +827,7 @@ export default function ChecklistPage() {
           card.reference,
           card.title,
           card.printKey,
+          card.finish,
         ),
       );
     });
@@ -835,7 +851,9 @@ export default function ChecklistPage() {
         total: set.total,
         completion: set.completion,
         cards: (set.cards ?? []).map((card) => ({
-          reference: card.reference,
+          reference: card.finish
+            ? `${card.reference} (${card.finish})`
+            : card.reference,
           title: card.title,
           owned: Boolean(card.owned),
         })),
@@ -912,6 +930,14 @@ export default function ChecklistPage() {
               />
               {t("items.checklistShowOwned")}
             </label>
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                checked={masterSet}
+                onChange={(event) => setMasterSet(event.target.checked)}
+              />
+              {t("items.checklistMasterSet")}
+            </label>
 
             <button
               type="button"
@@ -952,6 +978,13 @@ export default function ChecklistPage() {
             <CompletionBar value={data.totals.completion} />
             <span>{data.totals.completion}%</span>
           </div>
+        )}
+        {data && masterSet && (data.untaggedOwned ?? 0) > 0 && (
+          <p className={styles.untaggedHint}>
+            {t("items.checklistUntaggedOwned", {
+              count: data.untaggedOwned ?? 0,
+            })}
+          </p>
         )}
       </header>
 

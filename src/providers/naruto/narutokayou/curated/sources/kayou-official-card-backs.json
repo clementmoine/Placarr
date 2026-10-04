@@ -1,6 +1,6 @@
 {
   "source": "kayouofficial.com + narutodb.com — per-card backs (heterogeneous tiers)",
-  "observed": "2026-10-01",
+  "observed": "2026-10-03",
   "cards": {
     "nrccna-ptr-001": {
       "idCode": "NRCCNA-PTR-001",
@@ -10855,6 +10855,66 @@
         "lang": "en",
         "card": "nri01.r.001l1"
       }
+    },
+    "nrccna-sp-007l4": {
+      "idCode": "NRCCNA-SP-007L4",
+      "url": "https://cdn.narutodb.com/storage/cards/official/NRCCNA-SP-007L4-back.png",
+      "seriesId": "narutodb:NRCCNA",
+      "rarity": "SP",
+      "placement": {
+        "kind": "print",
+        "set": "ninjaagebox",
+        "lang": "en",
+        "card": "cc.sp.007l4"
+      }
+    },
+    "nrccna-sp-008l4": {
+      "idCode": "NRCCNA-SP-008L4",
+      "url": "https://cdn.narutodb.com/storage/cards/official/NRCCNA-SP-008L4-back.png",
+      "seriesId": "narutodb:NRCCNA",
+      "rarity": "SP",
+      "placement": {
+        "kind": "print",
+        "set": "ninjaagebox",
+        "lang": "en",
+        "card": "cc.sp.008l4"
+      }
+    },
+    "nrccna-sp-009l4": {
+      "idCode": "NRCCNA-SP-009L4",
+      "url": "https://cdn.narutodb.com/storage/cards/official/NRCCNA-SP-009L4-back.png",
+      "seriesId": "narutodb:NRCCNA",
+      "rarity": "SP",
+      "placement": {
+        "kind": "print",
+        "set": "ninjaagebox",
+        "lang": "en",
+        "card": "cc.sp.009l4"
+      }
+    },
+    "nrccna-sp-010l4": {
+      "idCode": "NRCCNA-SP-010L4",
+      "url": "https://cdn.narutodb.com/storage/cards/official/NRCCNA-SP-010L4-back.png",
+      "seriesId": "narutodb:NRCCNA",
+      "rarity": "SP",
+      "placement": {
+        "kind": "print",
+        "set": "ninjaagebox",
+        "lang": "en",
+        "card": "cc.sp.010l4"
+      }
+    },
+    "nrccna-sp-011l4": {
+      "idCode": "NRCCNA-SP-011L4",
+      "url": "https://cdn.narutodb.com/storage/cards/official/NRCCNA-SP-011L4-back.png",
+      "seriesId": "narutodb:NRCCNA",
+      "rarity": "SP",
+      "placement": {
+        "kind": "print",
+        "set": "ninjaagebox",
+        "lang": "en",
+        "card": "cc.sp.011l4"
+      }
     }
   },
   "suffix": {
@@ -11947,6 +12007,16 @@
     "nrccna-ssr-019l3": "nrccna-ssr-019l3",
     "nrccna-ssr-020l3": "nrccna-ssr-020l3",
     "nri01-mr-001l4": "nri01-mr-001l4",
-    "nri01-r-001l1": "nri01-r-001l1"
+    "nri01-r-001l1": "nri01-r-001l1",
+    "sp-007l4": "nrccna-sp-007l4",
+    "nrccna-sp-007l4": "nrccna-sp-007l4",
+    "sp-008l4": "nrccna-sp-008l4",
+    "nrccna-sp-008l4": "nrccna-sp-008l4",
+    "sp-009l4": "nrccna-sp-009l4",
+    "nrccna-sp-009l4": "nrccna-sp-009l4",
+    "sp-010l4": "nrccna-sp-010l4",
+    "nrccna-sp-010l4": "nrccna-sp-010l4",
+    "sp-011l4": "nrccna-sp-011l4",
+    "nrccna-sp-011l4": "nrccna-sp-011l4"
   }
 }

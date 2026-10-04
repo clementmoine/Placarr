@@ -509,6 +509,56 @@ export function buyOptionsForMissing(input: {
   });
 }
 
+/**
+ * Même produit retail sous plusieurs SKU (recto/verso dbzcollection,
+ * `part1-booster-1188` vs `1189`) — une seule option d'achat suffit.
+ */
+export function buyAdviceEquivalenceKey(product: BuyProduct): string {
+  const name = product.name
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[\s—–_-]+/g, " ")
+    .trim();
+  return [
+    (product.setId ?? "").trim().toLowerCase(),
+    product.kind.trim().toLowerCase(),
+    product.behavior,
+    normalizeLang(product.language) ?? "",
+    product.packSize ?? "",
+    product.packsInContainer ?? "",
+    product.cardCount ?? "",
+    name,
+  ].join("\0");
+}
+
+function preferBuyProductForAdvice(a: BuyProduct, b: BuyProduct): BuyProduct {
+  if ((a.priceCents != null) !== (b.priceCents != null)) {
+    return a.priceCents != null ? a : b;
+  }
+  if (Boolean(a.imageUrl?.trim()) !== Boolean(b.imageUrl?.trim())) {
+    return a.imageUrl?.trim() ? a : b;
+  }
+  const aPrints = a.prints?.length ?? 0;
+  const bPrints = b.prints?.length ?? 0;
+  if (aPrints !== bPrints) return aPrints > bPrints ? a : b;
+  return a.slug.localeCompare(b.slug, "en") <= 0 ? a : b;
+}
+
+/** Garde un SKU par signature d'achat (set × kind × nom × taille). */
+export function dedupeBuyProductsForAdvice(
+  products: readonly BuyProduct[],
+): BuyProduct[] {
+  const best = new Map<string, BuyProduct>();
+  for (const product of products) {
+    const key = buyAdviceEquivalenceKey(product);
+    const prev = best.get(key);
+    best.set(key, prev ? preferBuyProductForAdvice(prev, product) : product);
+  }
+  return [...best.values()];
+}
+
 function scoreBuyOptions(input: {
   missing: ReadonlySet<string>;
   poolSize: number;
@@ -521,8 +571,19 @@ function scoreBuyOptions(input: {
   const preferred = normalizeLang(input.preferredLanguage);
   const missingKeys = [...input.missing];
   const seenSlugs = new Set<string>();
+  const products = dedupeBuyProductsForAdvice(input.products);
 
-  for (const product of input.products) {
+  for (const product of products) {
+    /*
+      Détecteurs / posters / sell sheets : catalogue OK, pas une option
+      d'achat pour compléter des cartes.
+    */
+    if (
+      product.kind === "ephemera" ||
+      (product.behavior as string) === "no_cards"
+    ) {
+      continue;
+    }
     const slug = product.slug.trim();
     if (slug) {
       if (seenSlugs.has(slug)) continue;

@@ -1,6 +1,6 @@
 {
   "source": "hatatoy.shop — バンダイ ドラゴンボール Card Game singles (ColorMe / shop-pro.jp)",
-  "observed": "2026-09-24",
+  "observed": "2026-10-04",
   "ingest": "faces",
   "crawl": true,
   "note": "Boutique JA ColorMe (EUC-JP). Catégorie cbid=2849233&csid=31 (~878 / 12 / 74 pages). Grille table.list uniquement (pas la sidebar). Titres « バンダイ ドラゴンボール DB10 D-920 … ». DB N → partN ; faces art.hatatoy.* sous lang=ja.",

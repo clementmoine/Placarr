@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   boostersToExpectNearComplete,
   buyOptionsForMissing,
+  dedupeBuyProductsForAdvice,
   expectedNewCards,
   packSizeFromName,
   packsOpenedForProduct,
@@ -127,6 +128,87 @@ describe("boostersToExpectNearComplete with rates", () => {
 
 describe("comparer les options d'achat", () => {
   const missing = new Set(["a", "b", "c", "d"]);
+
+  it("collapses recto/verso SKUs of the same booster into one option", () => {
+    const options = buyOptionsForMissing({
+      missing: new Set(Array.from({ length: 134 }, (_, i) => `c${i}`)),
+      poolSize: 134,
+      preferredLanguage: "fr",
+      products: [
+        {
+          slug: "part1-booster-1188",
+          name: "Part 1 — Booster",
+          kind: "booster",
+          behavior: "random_pack",
+          setId: "part1",
+          language: "fr",
+          packSize: 8,
+          imageUrl: "/assets/a.jpg",
+        },
+        {
+          slug: "part1-booster-1189",
+          name: "Part 1 - Booster",
+          kind: "booster",
+          behavior: "random_pack",
+          setId: "part1",
+          language: "fr",
+          packSize: 8,
+          imageUrl: "/assets/b.jpg",
+        },
+      ],
+    });
+    expect(options).toHaveLength(1);
+    expect(options[0]?.slug).toBe("part1-booster-1188");
+    expect(dedupeBuyProductsForAdvice([
+      {
+        slug: "part1-booster-1189",
+        name: "Part 1 — Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        setId: "part1",
+        language: "fr",
+        packSize: 8,
+        priceCents: 500,
+      },
+      {
+        slug: "part1-booster-1188",
+        name: "Part 1 — Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        setId: "part1",
+        language: "fr",
+        packSize: 8,
+      },
+    ])[0]?.slug).toBe("part1-booster-1189");
+  });
+
+  it("skips ephemera / no_cards products (détecteur, poster)", () => {
+    const options = buyOptionsForMissing({
+      missing: new Set(["a", "b"]),
+      poolSize: 10,
+      preferredLanguage: "fr",
+      products: [
+        {
+          slug: "part4-d-tecteur-253",
+          name: "Part 4 — Détecteur",
+          kind: "ephemera",
+          behavior: "no_cards" as "known_bundle",
+          setId: "part4",
+          language: "fr",
+        },
+        {
+          slug: "part4-booster",
+          name: "Part 4 — Booster",
+          kind: "booster",
+          behavior: "random_pack",
+          setId: "part4",
+          language: "fr",
+          packSize: 8,
+        },
+      ],
+    });
+    expect(options.map((o) => o.slug)).toEqual(["part4-booster"]);
+  });
 
   it("counts a known bundle exactly, and says so", () => {
     const [option] = buyOptionsForMissing({

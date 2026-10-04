@@ -408,15 +408,20 @@ export function tcgdexSetIdsNeedingFrImageRefresh(): string[] {
 
 export function searchTcgdexRows(
   query: string,
-  opts: { language?: string; limit?: number; setId?: string | null } = {},
+  opts: {
+    language?: string;
+    limit?: number;
+    setId?: string | null;
+    catalogueBrowse?: boolean;
+  } = {},
 ): TcgdexSearchRow[] {
   const db = ensureTcgdexIndex();
   if (!db) return [];
 
   const trimmed = query.trim().toLowerCase();
   const setId = opts.setId?.trim().toLowerCase();
-  // Une extension seule est une question complète : « montre-moi ce set ».
-  if (!isAnsweredQuery(trimmed, setId)) return [];
+  // Une extension seule — ou un parcours catalogue — est une question complète.
+  if (!isAnsweredQuery(trimmed, setId, opts.catalogueBrowse)) return [];
 
   const lang = (opts.language || "fr").toLowerCase();
   /*

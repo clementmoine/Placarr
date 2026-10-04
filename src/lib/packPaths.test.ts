@@ -38,6 +38,10 @@ describe("packPaths", () => {
     expect(packDataDir(abs)).not.toContain(`${path.sep}Users${path.sep}`);
   });
 
+  it("aliases legacy dbs/jcc onto dragonball/jcc", () => {
+    expect(canonicalDataPack("dbs/jcc")).toBe("dragonball/jcc");
+  });
+
   it("maps Lorcana printKey to set/lang/card", () => {
     expect(cardDiskIdFromPrintKey("lorcana:q2-14", "fr")).toEqual({
       set: "q2",

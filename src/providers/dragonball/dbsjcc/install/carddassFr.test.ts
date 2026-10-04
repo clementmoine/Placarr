@@ -6,10 +6,34 @@ import { describe, expect, it } from "vitest";
 import {
   carddassFrSeriesToSetHint,
   matchCarddassFrToDbsjccPrint,
+  parseCarddassFrCardImagePath,
   parseCarddassFrFaceFile,
   selectCarddassFrInstallRows,
 } from "../harvest/carddassFr";
 import type { DbsjccPrintCandidate } from "../harvest/chitoroshop";
+
+describe("parseCarddassFrCardImagePath", () => {
+  it("accepts Part 3 category folders that the flat JPEG regex missed", () => {
+    expect(
+      parseCarddassFrCardImagePath(
+        "/dbz/images/cartes/3/CHARACTER/D-215.jpg",
+      ),
+    ).toEqual({
+      series: "3",
+      category: "CHARACTER",
+      file: "D-215.jpg",
+    });
+    expect(
+      parseCarddassFrCardImagePath("/dbz/images/cartes/3/ACTION/D-268.jpg"),
+    ).toMatchObject({ series: "3", category: "ACTION", file: "D-268.jpg" });
+    expect(
+      parseCarddassFrCardImagePath("/dbz/images/cartes/4/JPEG/D-021 PA copie.jpg"),
+    ).toMatchObject({ series: "4", category: "JPEG", file: "D-021 PA copie.jpg" });
+    expect(
+      parseCarddassFrCardImagePath("/dbz/images/cartes/1/D-001.jpg"),
+    ).toMatchObject({ series: "1", category: null, file: "D-001.jpg" });
+  });
+});
 
 describe("carddassFrSeriesToSetHint", () => {
   it("maps series 1–10 to partN", () => {
@@ -26,11 +50,13 @@ describe("parseCarddassFrFaceFile", () => {
       printed: "D-1",
       number: "d0001",
       kind: "plain",
+      marker: null,
     });
     expect(parseCarddassFrFaceFile("D728.jpg")).toEqual({
       printed: "D-728",
       number: "d0728",
       kind: "plain",
+      marker: null,
     });
   });
 
@@ -39,13 +65,23 @@ describe("parseCarddassFrFaceFile", () => {
       printed: "D-99",
       number: "d0099",
       kind: "plain",
+      marker: null,
     });
   });
 
-  it("flags PA / PB / vc as pouvoir", () => {
-    expect(parseCarddassFrFaceFile("D-021 PA copie.jpg")?.kind).toBe("pouvoir");
-    expect(parseCarddassFrFaceFile("D-434-PB.jpg")?.kind).toBe("pouvoir");
-    expect(parseCarddassFrFaceFile("D-662-vc.jpg")?.kind).toBe("pouvoir");
+  it("flags PA / PB / vc as pouvoir markers (not kaio/enfer labels)", () => {
+    expect(parseCarddassFrFaceFile("D-021 PA copie.jpg")).toMatchObject({
+      kind: "pouvoir",
+      marker: "pa",
+    });
+    expect(parseCarddassFrFaceFile("D-434-PB.jpg")).toMatchObject({
+      kind: "pouvoir",
+      marker: "pb",
+    });
+    expect(parseCarddassFrFaceFile("D-662-vc.jpg")).toMatchObject({
+      kind: "pouvoir",
+      marker: "vc",
+    });
   });
 
   it("rejects illustrator sources", () => {

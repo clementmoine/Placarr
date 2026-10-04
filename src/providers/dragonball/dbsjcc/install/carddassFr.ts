@@ -24,6 +24,7 @@ import {
   type CarddassFrDbzFace,
 } from "../harvest/carddassFr";
 import { DBS_JCC_PACK_ID } from "../pack";
+import { splitDbsjccNumber } from "../printKey";
 import { cardFolderName } from "../scrape/dbzcollection";
 
 function loadFaces(): CarddassFrDbzFace[] {
@@ -39,9 +40,13 @@ function candidatesForNumber(
   index: LocalPrintsIndex,
   number: string,
 ): DbsjccPrintCandidate[] {
+  const want = splitDbsjccNumber(number)?.base;
   const rows = index
-    .searchRows(number, { language: "fr", limit: 40 })
-    .filter((row) => row.number === number);
+    .searchRows(number, { language: "fr", limit: 80 })
+    .filter((row) => {
+      if (!want) return row.number === number;
+      return splitDbsjccNumber(row.number)?.base === want;
+    });
   const byKey = new Map<string, DbsjccPrintCandidate>();
   for (const row of rows) {
     if (byKey.has(row.printKey)) continue;

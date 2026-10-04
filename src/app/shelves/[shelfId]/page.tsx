@@ -19,10 +19,10 @@ import {
   Compass,
   Plus,
   Wrench,
-  ListChecks,
   Pizza,
   Search,
   ChevronDown,
+  ChevronRight,
   ListPlus,
   ScanLine,
   Layers,
@@ -843,13 +843,14 @@ function ShelfComponent() {
               : "pb-24 md:pb-6",
           )}
         >
-          {/* Shelf header — title + primary actions only */}
-          <div className="flex items-center justify-between gap-3 mt-2 w-full">
+          {/* Shelf header — title + primary actions only.
+              Mobile: stack so the name can breathe; sm+: one row. */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-2 w-full">
             <div className="flex min-w-0 items-center gap-3">
               <span className="shrink-0 text-foreground dark:text-white">
                 <ShelfTypeIcon type={shelf?.type} className="size-8" />
               </span>
-              <h1 className="truncate text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-none">
+              <h1 className="min-w-0 text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-tight sm:leading-none sm:truncate">
                 {shelf?.name || "..."}
               </h1>
             </div>
@@ -859,49 +860,24 @@ function ShelfComponent() {
             {isAuthenticated && !isGuest && canEdit && (
               <div
                 className={cn(
-                  "flex items-center gap-2 shrink-0 select-none",
+                  "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:shrink-0 select-none",
                   selectionMode && "invisible pointer-events-none",
                 )}
                 aria-hidden={selectionMode || undefined}
               >
-                {/*
-                  La check-list n'apparaît que là où elle a un sens : elle
-                  compte des tirages, et une étagère qui n'en porte aucun
-                  n'aurait rien à compter.
-                */}
-                {hasPrintItems && (
-                  <Button
-                    asChild
-                    variant="secondary"
-                    className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
-                    tabIndex={selectionMode ? -1 : undefined}
-                  >
-                    <Link
-                      href={`/shelves/${encodeURIComponent(shelfId)}/checklist`}
-                    >
-                      <ListChecks className="size-4" />
-                      <span className="hidden sm:inline">
-                        {t("items.checklistOpen")}
-                      </span>
-                    </Link>
-                  </Button>
-                )}
-
                 <Button
                   variant="secondary"
-                  className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
+                  className="w-full sm:w-auto justify-center bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
                   onClick={() => handleModalOpen("shelf")}
                   tabIndex={selectionMode ? -1 : undefined}
                 >
                   <Wrench className="size-4" />
-                  <span className="hidden sm:inline">
-                    {t("shelves.editShelf")}
-                  </span>
+                  {t("shelves.editShelf")}
                 </Button>
 
                 {isPrintSearchShelf ? (
                   <Button
-                    className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                    className="w-full sm:w-auto justify-center rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
                     onClick={() => openModalFromAddMenu("item")}
                     tabIndex={selectionMode ? -1 : undefined}
                   >
@@ -916,7 +892,7 @@ function ShelfComponent() {
                   >
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                        className="w-full sm:w-auto justify-center rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
                         tabIndex={selectionMode ? -1 : undefined}
                       >
                         <Plus className="size-4" />
@@ -1021,11 +997,22 @@ function ShelfComponent() {
           </div>
 
           {/* Items Grid */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
-            <h2 className="text-xl font-semibold">
-              {sortedItems.length || 0}{" "}
-              {t(itemsCountNounKey(shelf?.type, sortedItems.length || 0))}
-            </h2>
+          <div className="flex flex-wrap items-end justify-between gap-4 mt-2">
+            <div className="min-w-0 flex flex-col gap-0.5">
+              <h2 className="text-xl font-semibold">
+                {sortedItems.length || 0}{" "}
+                {t(itemsCountNounKey(shelf?.type, sortedItems.length || 0))}
+              </h2>
+              {hasPrintItems && (
+                <Link
+                  href={`/shelves/${encodeURIComponent(shelfId)}/checklist`}
+                  className="inline-flex w-fit items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t("items.checklistOpen")}
+                  <ChevronRight className="size-3.5 opacity-70" />
+                </Link>
+              )}
+            </div>
 
             {totalValue.total > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">

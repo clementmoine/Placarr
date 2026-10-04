@@ -89,6 +89,34 @@ const FALLBACK_PLAIN_FINISH_KEYS = new Set([
 ]);
 
 /**
+ * Finishes a copy with **no** stored variant should count as owning.
+ *
+ * Blank `Item.variant` is common on older adds (before the finish picker).
+ * Pricing already treats blank as non-foil; master-set ownership must do the
+ * same — otherwise a shelf full of unset copies shows 0 % against `None` /
+ * `Silver` rows.
+ *
+ * - 0 finishes → nothing to map (caller keeps `printKey|`)
+ * - 1 finish → that finish (no choice was ever offered)
+ * - several → only the plain ones (`plainFinishes`, else common spellings)
+ */
+export function finishesOwnedByBlankVariant(
+  finishes: readonly (string | null | undefined)[] | null | undefined,
+  plainFinishes?: readonly (string | null | undefined)[] | null,
+): string[] {
+  const options = normalizeVariantOptions(finishes);
+  if (options.length === 0) return [];
+  if (options.length === 1) return [options[0]!];
+
+  const plain = normalizeVariantOptions(plainFinishes);
+  if (plain.length > 0) {
+    const plainKeys = new Set(plain.map(key));
+    return options.filter((option) => plainKeys.has(key(option)));
+  }
+  return options.filter((option) => FALLBACK_PLAIN_FINISH_KEYS.has(key(option)));
+}
+
+/**
  * Whether this copy's finish should read the market `foil` bucket (vs `new`).
  * Blank / unknown finish → non-foil market (honest default for unset copies).
  */

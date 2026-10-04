@@ -16,7 +16,12 @@ import { packCatalogDb } from "@/lib/packPaths";
 
 import { attachSiblingTitlesToCardsIndex } from "./attachIndexTitles";
 import { SET_ENUMERATION_LIMIT } from "./setPrints";
-import { finalizeSetOptions, isAnsweredQuery, setScopedWhere } from "./sets";
+import {
+  collectorNumberPrefix,
+  finalizeSetOptions,
+  isAnsweredQuery,
+  setScopedWhere,
+} from "./sets";
 import { migrateProductsSchema } from "../sealedProducts/productsSqlite";
 
 export type LocalPrintSearchRow = {
@@ -51,6 +56,12 @@ export type LocalPrintWrite = {
   number: string;
   cardType: string;
   grouping?: string | null;
+  /**
+   * Appartenances multi-set (comme Naruto `print_sets`). Absent → seule
+   * `setCode` compte. Home = `setCode` ; les autres séries apparaissent
+   * quand même dans la check-list / le filtre set.
+   */
+  setCodes?: readonly string[];
   /** Card type when known (OPTCG Leader / Character / Event / Stage). */
   category?: string | null;
   sourceUrl?: string | null;
@@ -69,7 +80,12 @@ export type LocalPrintsIndex = {
   openForWrite: () => DatabaseSync;
   searchRows: (
     query: string,
-    opts?: { language?: string; limit?: number; setId?: string | null },
+    opts?: {
+      language?: string;
+      limit?: number;
+      setId?: string | null;
+      catalogueBrowse?: boolean;
+    },
   ) => LocalPrintSearchRow[];
   lookupRow: (
     printKey: string,
@@ -163,7 +179,7 @@ const ADDED_PRINT_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
   { name: "category", ddl: "TEXT" },
 ];
 
-/** Add columns that older pack DBs may lack (`CREATE IF NOT EXISTS` is a no-op). */
+/** Add columns / tables that older pack DBs may lack. */
 export function migrateLocalPrintsSchema(db: DatabaseSync): void {
   const tables = db
     .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'prints'`)
@@ -178,6 +194,15 @@ export function migrateLocalPrintsSchema(db: DatabaseSync): void {
     if (present.has(column.name)) continue;
     db.exec(`ALTER TABLE prints ADD COLUMN ${column.name} ${column.ddl}`);
   }
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS print_sets (
+      print_key TEXT NOT NULL,
+      set_code TEXT NOT NULL,
+      PRIMARY KEY (print_key, set_code),
+      FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_print_sets_set ON print_sets(set_code);
+  `);
 }
 
 export function createPrintsSchema(db: DatabaseSync): void {
@@ -213,7 +238,15 @@ export function createPrintsSchema(db: DatabaseSync): void {
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS print_sets (
+      print_key TEXT NOT NULL,
+      set_code TEXT NOT NULL,
+      PRIMARY KEY (print_key, set_code),
+      FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_prints_set ON prints(set_code);
+    CREATE INDEX IF NOT EXISTS idx_print_sets_set ON print_sets(set_code);
   `);
   migrateLocalPrintsSchema(db);
   migrateProductsSchema(db);
@@ -266,14 +299,19 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
 
   const searchRows = (
     query: string,
-    opts: { language?: string; limit?: number; setId?: string | null } = {},
+    opts: {
+      language?: string;
+      limit?: number;
+      setId?: string | null;
+      catalogueBrowse?: boolean;
+    } = {},
   ): LocalPrintSearchRow[] => {
     const db = ensure();
     if (!db) return [];
 
     const trimmed = query.trim().toLowerCase();
     const setId = opts.setId?.trim();
-    if (!isAnsweredQuery(trimmed, setId)) return [];
+    if (!isAnsweredQuery(trimmed, setId, opts.catalogueBrowse)) return [];
 
     const lang = (opts.language || "fr").toLowerCase();
     const limit = Math.max(
@@ -282,23 +320,55 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     );
     const like = `%${trimmed}%`;
     const compact = trimmed.replace(/[\s-]/g, "");
+    /*
+      `d-15` (normalisé `d0015`) doit aussi trouver `d0150` : préfixe sur les
+      chiffres débarrassés des zéros, pas `LIKE %d0015%` qui n'y voit que
+      l'égalité paddée.
+    */
+    const collector = trimmed ? collectorNumberPrefix(trimmed) : null;
+    const collectorClause = collector
+      ? collector.family
+        ? `OR (
+             LOWER(p.number) LIKE ?
+             AND LTRIM(SUBSTR(LOWER(p.number), ?), '0') LIKE ?
+           )`
+        : `OR LTRIM(
+             LTRIM(LOWER(p.number), 'abcdefghijklmnopqrstuvwxyz'),
+             '0'
+           ) LIKE ?`
+      : "";
+    const collectorParams: Array<string | number> = collector
+      ? collector.family
+        ? [
+            `${collector.family}%`,
+            collector.family.length + 1,
+            `${collector.digitPrefix}%`,
+          ]
+        : [`${collector.digitPrefix}%`]
+      : [];
 
     const scope = setScopedWhere({
       setColumn: "p.set_code",
       setId,
+      usePrintSets: true,
       textClause: trimmed
         ? `LOWER(t.full_name) LIKE ?
            OR LOWER(p.print_key) LIKE ?
-           OR LOWER(p.number) LIKE ?`
+           OR LOWER(p.number) LIKE ?
+           ${collectorClause}`
         : null,
-      textParams: [like, like, `%${compact}%`],
+      textParams: [like, like, `%${compact}%`, ...collectorParams],
     });
 
+    /*
+      Numéros zero-padded (`d0001`) : tri lexicographique = ordre numérique.
+      `CAST(number AS INTEGER)` tombe à 0 dès qu'il y a une lettre.
+    */
     return db
       .prepare(
         `${SELECT_ROW}
         WHERE ${scope.where}
-        ORDER BY (t.lang = ?) DESC, p.card_type, CAST(p.number AS INTEGER)
+        ORDER BY (t.lang = ?) DESC, p.set_code, p.number, p.grouping
         LIMIT ?`,
       )
       .all(...scope.params, lang, limit * 3) as LocalPrintSearchRow[];
@@ -409,6 +479,8 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
 
   const listSets = (opts?: {
     setLabel?: (setCode: string, language?: string | null) => string;
+    setDisplayCode?: (setCode: string) => string | null;
+    setPrefixCode?: (setCode: string) => boolean;
     setSortKey?: (setCode: string) => number | null;
     languages?: readonly string[];
   }) => {
@@ -416,8 +488,13 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     if (!db) return [];
     const rows = db
       .prepare(
-        `SELECT DISTINCT set_code AS setCode FROM prints
-          WHERE set_code IS NOT NULL AND TRIM(set_code) <> ''`,
+        `SELECT DISTINCT set_code AS setCode FROM (
+            SELECT set_code FROM prints
+             WHERE set_code IS NOT NULL AND TRIM(set_code) <> ''
+            UNION
+            SELECT set_code FROM print_sets
+             WHERE set_code IS NOT NULL AND TRIM(set_code) <> ''
+          )`,
       )
       .all() as { setCode: string }[];
     const label =
@@ -428,8 +505,12 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
         .filter((row) => row.setCode.trim().toLowerCase() !== "unknown")
         .map((row) => ({
           id: row.setCode,
+          code: opts?.setDisplayCode?.(row.setCode) ?? null,
           label: label(row.setCode),
           sortKey: opts?.setSortKey?.(row.setCode) ?? null,
+          ...(opts?.setPrefixCode
+            ? { prefixCode: opts.setPrefixCode(row.setCode) }
+            : {}),
           ...(languages ? { languages } : {}),
         })),
     );
@@ -493,6 +574,11 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
            full_name = excluded.full_name,
            rarity = excluded.rarity`,
       );
+      const insertPrintSet = db.prepare(
+        `INSERT INTO print_sets (print_key, set_code)
+         VALUES (?, ?)
+         ON CONFLICT(print_key, set_code) DO NOTHING`,
+      );
       db.exec("BEGIN IMMEDIATE");
       try {
         for (const row of rows) {
@@ -505,6 +591,16 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
             row.sourceUrl ?? null,
             row.category?.trim() || null,
           );
+          const membership = [
+            ...new Set(
+              [row.setCode, ...(row.setCodes ?? [])]
+                .map((code) => code.trim().toLowerCase())
+                .filter(Boolean),
+            ),
+          ];
+          for (const setCode of membership) {
+            insertPrintSet.run(row.printKey, setCode);
+          }
           for (const title of row.titles) {
             const name = title.fullName.trim();
             if (!name) continue;
@@ -549,12 +645,16 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       const delTitles = db.prepare(
         `DELETE FROM print_titles WHERE print_key = ?`,
       );
+      const delSets = db.prepare(
+        `DELETE FROM print_sets WHERE print_key = ?`,
+      );
       const delPrint = db.prepare(`DELETE FROM prints WHERE print_key = ?`);
       db.exec("BEGIN IMMEDIATE");
       try {
         for (const key of doomed) {
           delAssets.run(key);
           delTitles.run(key);
+          delSets.run(key);
           const result = delPrint.run(key);
           removed += Number(result.changes ?? 0);
         }

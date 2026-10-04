@@ -14,13 +14,6 @@
     "length": "2713"
   },
   {
-    "timestamp": "20070301065815",
-    "original": "http://www.carddass.fr:80/dbz/archive_analyse_semaine.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5225"
-  },
-  {
     "timestamp": "20070531074219",
     "original": "http://www.carddass.fr:80/dbz/archive_analyse_semaine_2.htm",
     "statuscode": "200",
@@ -70,18 +63,18 @@
     "length": "3588"
   },
   {
+    "timestamp": "20070301065815",
+    "original": "http://www.carddass.fr:80/dbz/archive_analyse_semaine.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5225"
+  },
+  {
     "timestamp": "20070922181634",
     "original": "http://www.carddass.fr:80/dbz/archive_conseils.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "9052"
-  },
-  {
-    "timestamp": "20071015003605",
-    "original": "http://www.carddass.fr/dbz/archive_deck_du_mois.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4848"
   },
   {
     "timestamp": "20070510030547",
@@ -91,25 +84,11 @@
     "length": "11903"
   },
   {
-    "timestamp": "20071015003145",
-    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_1.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3629"
-  },
-  {
     "timestamp": "20070915024422",
     "original": "http://www.carddass.fr:80/dbz/archivedbz_analyse_semaine_10.html",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "3487"
-  },
-  {
-    "timestamp": "20071013180938",
-    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_11.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4178"
   },
   {
     "timestamp": "20080115191738",
@@ -208,13 +187,6 @@
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "4167"
-  },
-  {
-    "timestamp": "20081118072319",
-    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_25.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3361"
   },
   {
     "timestamp": "20081228194304",
@@ -322,13 +294,6 @@
     "length": "5901"
   },
   {
-    "timestamp": "20071015220141",
-    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_4.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4978"
-  },
-  {
     "timestamp": "20110530035951",
     "original": "http://www.carddass.fr:80/dbz/archivedbz_analyse_semaine_40.html",
     "statuscode": "200",
@@ -364,13 +329,6 @@
     "length": "3736"
   },
   {
-    "timestamp": "20071015003229",
-    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_5.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4494"
-  },
-  {
     "timestamp": "20070921035640",
     "original": "http://www.carddass.fr:80/dbz/archivedbz_analyse_semaine_6.html",
     "statuscode": "200",
@@ -399,13 +357,6 @@
     "length": "4907"
   },
   {
-    "timestamp": "20070110032646",
-    "original": "http://www.carddass.fr:80/dbz/c_jouer.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "2480"
-  },
-  {
     "timestamp": "20070218080605",
     "original": "http://www.carddass.fr:80/dbz/c_jouer_02.htm",
     "statuscode": "200",
@@ -425,6 +376,13 @@
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "2682"
+  },
+  {
+    "timestamp": "20070110032646",
+    "original": "http://www.carddass.fr:80/dbz/c_jouer.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "2480"
   },
   {
     "timestamp": "20070506182844",
@@ -637,27 +595,6 @@
     "length": "1703"
   },
   {
-    "timestamp": "20071016100317",
-    "original": "http://www.carddass.fr/dbz/cartes/D-031.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1625"
-  },
-  {
-    "timestamp": "20071016102225",
-    "original": "http://www.carddass.fr/dbz/cartes/D-032.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1623"
-  },
-  {
-    "timestamp": "20071016181511",
-    "original": "http://www.carddass.fr/dbz/cartes/D-033.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1626"
-  },
-  {
     "timestamp": "20070509104226",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-034.htm",
     "statuscode": "200",
@@ -693,20 +630,6 @@
     "length": "1689"
   },
   {
-    "timestamp": "20071016181545",
-    "original": "http://www.carddass.fr/dbz/cartes/D-039.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1677"
-  },
-  {
-    "timestamp": "20071014100944",
-    "original": "http://www.carddass.fr/dbz/cartes/D-040.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1628"
-  },
-  {
     "timestamp": "20070513175126",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-041.htm",
     "statuscode": "200",
@@ -721,32 +644,11 @@
     "length": "1700"
   },
   {
-    "timestamp": "20071016183535",
-    "original": "http://www.carddass.fr/dbz/cartes/D-043.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1680"
-  },
-  {
-    "timestamp": "20071016100745",
-    "original": "http://www.carddass.fr/dbz/cartes/D-044.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1690"
-  },
-  {
     "timestamp": "20070513083457",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-045.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "1699"
-  },
-  {
-    "timestamp": "20071016095919",
-    "original": "http://www.carddass.fr/dbz/cartes/D-046.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1678"
   },
   {
     "timestamp": "20070709174403",
@@ -770,32 +672,11 @@
     "length": "1693"
   },
   {
-    "timestamp": "20071016181431",
-    "original": "http://www.carddass.fr/dbz/cartes/D-050.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1626"
-  },
-  {
     "timestamp": "20070509104319",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-051.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "1715"
-  },
-  {
-    "timestamp": "20071015002726",
-    "original": "http://www.carddass.fr/dbz/cartes/D-052.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1629"
-  },
-  {
-    "timestamp": "20071016183614",
-    "original": "http://www.carddass.fr/dbz/cartes/D-053.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1624"
   },
   {
     "timestamp": "20070513083507",
@@ -833,53 +714,11 @@
     "length": "1718"
   },
   {
-    "timestamp": "20071016183107",
-    "original": "http://www.carddass.fr/dbz/cartes/D-059.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1660"
-  },
-  {
-    "timestamp": "20071016181937",
-    "original": "http://www.carddass.fr/dbz/cartes/D-060.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1671"
-  },
-  {
     "timestamp": "20070510030913",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-061.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "1712"
-  },
-  {
-    "timestamp": "20071016183305",
-    "original": "http://www.carddass.fr/dbz/cartes/D-062.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1627"
-  },
-  {
-    "timestamp": "20071014174044",
-    "original": "http://www.carddass.fr/dbz/cartes/D-063.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1630"
-  },
-  {
-    "timestamp": "20071014174639",
-    "original": "http://www.carddass.fr/dbz/cartes/D-064.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1630"
-  },
-  {
-    "timestamp": "20071016182745",
-    "original": "http://www.carddass.fr/dbz/cartes/D-065.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1627"
   },
   {
     "timestamp": "20070820163818",
@@ -917,13 +756,6 @@
     "length": "1742"
   },
   {
-    "timestamp": "20071014100414",
-    "original": "http://www.carddass.fr/dbz/cartes/D-071.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1626"
-  },
-  {
     "timestamp": "20070707060858",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-072.htm",
     "statuscode": "200",
@@ -936,13 +768,6 @@
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "1642"
-  },
-  {
-    "timestamp": "20071016181031",
-    "original": "http://www.carddass.fr/dbz/cartes/D-074.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1691"
   },
   {
     "timestamp": "20070709174329",
@@ -1008,13 +833,6 @@
     "length": "1685"
   },
   {
-    "timestamp": "20071016100711",
-    "original": "http://www.carddass.fr/dbz/cartes/D-084.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1626"
-  },
-  {
     "timestamp": "20070510082033",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-085.htm",
     "statuscode": "200",
@@ -1029,90 +847,6 @@
     "length": "1724"
   },
   {
-    "timestamp": "20071016183207",
-    "original": "http://www.carddass.fr/dbz/cartes/D-087.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1647"
-  },
-  {
-    "timestamp": "20071016181210",
-    "original": "http://www.carddass.fr/dbz/cartes/D-088.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1626"
-  },
-  {
-    "timestamp": "20071014170315",
-    "original": "http://www.carddass.fr/dbz/cartes/D-089.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1627"
-  },
-  {
-    "timestamp": "20071016102144",
-    "original": "http://www.carddass.fr/dbz/cartes/D-090.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1642"
-  },
-  {
-    "timestamp": "20071017000851",
-    "original": "http://www.carddass.fr/dbz/cartes/D-091.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1630"
-  },
-  {
-    "timestamp": "20071016182203",
-    "original": "http://www.carddass.fr/dbz/cartes/D-092.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1634"
-  },
-  {
-    "timestamp": "20071016182102",
-    "original": "http://www.carddass.fr/dbz/cartes/D-093.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1632"
-  },
-  {
-    "timestamp": "20071016183237",
-    "original": "http://www.carddass.fr/dbz/cartes/D-094.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1638"
-  },
-  {
-    "timestamp": "20071016183340",
-    "original": "http://www.carddass.fr/dbz/cartes/D-095.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1632"
-  },
-  {
-    "timestamp": "20071016101719",
-    "original": "http://www.carddass.fr/dbz/cartes/D-096.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1633"
-  },
-  {
-    "timestamp": "20071016101347",
-    "original": "http://www.carddass.fr/dbz/cartes/D-097.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1629"
-  },
-  {
-    "timestamp": "20071016182813",
-    "original": "http://www.carddass.fr/dbz/cartes/D-098.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1624"
-  },
-  {
     "timestamp": "20070701191231",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-099.htm",
     "statuscode": "200",
@@ -1120,81 +854,11 @@
     "length": "1651"
   },
   {
-    "timestamp": "20071016180938",
-    "original": "http://www.carddass.fr/dbz/cartes/D-100.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1644"
-  },
-  {
-    "timestamp": "20071016181824",
-    "original": "http://www.carddass.fr/dbz/cartes/D-101.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1626"
-  },
-  {
-    "timestamp": "20071017001153",
-    "original": "http://www.carddass.fr/dbz/cartes/D-102.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1630"
-  },
-  {
-    "timestamp": "20071016100234",
-    "original": "http://www.carddass.fr/dbz/cartes/D-103.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1623"
-  },
-  {
-    "timestamp": "20071016182027",
-    "original": "http://www.carddass.fr/dbz/cartes/D-104.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1625"
-  },
-  {
-    "timestamp": "20071016100833",
-    "original": "http://www.carddass.fr/dbz/cartes/D-105.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1637"
-  },
-  {
     "timestamp": "20070525065433",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-106.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "1658"
-  },
-  {
-    "timestamp": "20071016101028",
-    "original": "http://www.carddass.fr/dbz/cartes/D-107.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1627"
-  },
-  {
-    "timestamp": "20071016100956",
-    "original": "http://www.carddass.fr/dbz/cartes/D-108.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1627"
-  },
-  {
-    "timestamp": "20071014170340",
-    "original": "http://www.carddass.fr/dbz/cartes/D-109.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1655"
-  },
-  {
-    "timestamp": "20071016100930",
-    "original": "http://www.carddass.fr/dbz/cartes/D-110.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1634"
   },
   {
     "timestamp": "20070625114132",
@@ -1218,46 +882,11 @@
     "length": "1652"
   },
   {
-    "timestamp": "20071014100559",
-    "original": "http://www.carddass.fr/dbz/cartes/D-114.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1640"
-  },
-  {
-    "timestamp": "20071016101411",
-    "original": "http://www.carddass.fr/dbz/cartes/D-115.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1628"
-  },
-  {
-    "timestamp": "20071016181625",
-    "original": "http://www.carddass.fr/dbz/cartes/D-116.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1646"
-  },
-  {
-    "timestamp": "20071016101644",
-    "original": "http://www.carddass.fr/dbz/cartes/D-117.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1648"
-  },
-  {
     "timestamp": "20070707060441",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-118.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "1672"
-  },
-  {
-    "timestamp": "20071016100112",
-    "original": "http://www.carddass.fr/dbz/cartes/D-119.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1639"
   },
   {
     "timestamp": "20070625114056",
@@ -1267,62 +896,6 @@
     "length": "1658"
   },
   {
-    "timestamp": "20071016182422",
-    "original": "http://www.carddass.fr/dbz/cartes/D-121.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1635"
-  },
-  {
-    "timestamp": "20071016181444",
-    "original": "http://www.carddass.fr/dbz/cartes/D-122.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1643"
-  },
-  {
-    "timestamp": "20071016102117",
-    "original": "http://www.carddass.fr/dbz/cartes/D-123.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1631"
-  },
-  {
-    "timestamp": "20071016182946",
-    "original": "http://www.carddass.fr/dbz/cartes/D-124.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1631"
-  },
-  {
-    "timestamp": "20071016181323",
-    "original": "http://www.carddass.fr/dbz/cartes/D-125.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1633"
-  },
-  {
-    "timestamp": "20071016100249",
-    "original": "http://www.carddass.fr/dbz/cartes/D-126.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1632"
-  },
-  {
-    "timestamp": "20071016181118",
-    "original": "http://www.carddass.fr/dbz/cartes/D-127.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1632"
-  },
-  {
-    "timestamp": "20071017001058",
-    "original": "http://www.carddass.fr/dbz/cartes/D-128.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1638"
-  },
-  {
     "timestamp": "20070820211117",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-129.htm",
     "statuscode": "200",
@@ -1330,46 +903,11 @@
     "length": "1650"
   },
   {
-    "timestamp": "20071016181004",
-    "original": "http://www.carddass.fr/dbz/cartes/D-130.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1635"
-  },
-  {
     "timestamp": "20070707060910",
     "original": "http://www.carddass.fr:80/dbz/cartes/D-131.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "1666"
-  },
-  {
-    "timestamp": "20071016181855",
-    "original": "http://www.carddass.fr/dbz/cartes/D-132.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1634"
-  },
-  {
-    "timestamp": "20071017000954",
-    "original": "http://www.carddass.fr/dbz/cartes/D-133.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1648"
-  },
-  {
-    "timestamp": "20071016181243",
-    "original": "http://www.carddass.fr/dbz/cartes/D-134.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1624"
-  },
-  {
-    "timestamp": "20070110033110",
-    "original": "http://www.carddass.fr:80/dbz/catalogue.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "2293"
   },
   {
     "timestamp": "20070109074200",
@@ -1407,11 +945,11 @@
     "length": "3995"
   },
   {
-    "timestamp": "20071015071612",
-    "original": "http://www.carddass.fr/dbz/catalogue_s6.html",
+    "timestamp": "20070110033110",
+    "original": "http://www.carddass.fr:80/dbz/catalogue.htm",
     "statuscode": "200",
     "mimetype": "text/html",
-    "length": "3401"
+    "length": "2293"
   },
   {
     "timestamp": "20070108085250",
@@ -1449,62 +987,6 @@
     "length": "3589"
   },
   {
-    "timestamp": "20071012160218",
-    "original": "http://www.carddass.fr/dbz/docs/banner-411x196.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "46871"
-  },
-  {
-    "timestamp": "20081121012107",
-    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S2.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "66318"
-  },
-  {
-    "timestamp": "20081121065047",
-    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S3.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "64439"
-  },
-  {
-    "timestamp": "20081120161112",
-    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S4.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "64175"
-  },
-  {
-    "timestamp": "20081120161915",
-    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S5.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "98189"
-  },
-  {
-    "timestamp": "20081123091807",
-    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S6.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "93482"
-  },
-  {
-    "timestamp": "20071016182307",
-    "original": "http://www.carddass.fr/dbz/docs/checklist_F1.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "1724020"
-  },
-  {
-    "timestamp": "20071015215627",
-    "original": "http://www.carddass.fr/dbz/docs/ENNEMIS_F2807.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "70517033"
-  },
-  {
     "timestamp": "20070302224711",
     "original": "http://www.carddass.fr:80/dbz/docs/fond1-1024x768.jpg",
     "statuscode": "200",
@@ -1512,88 +994,11 @@
     "length": "339529"
   },
   {
-    "timestamp": "20071014100015",
-    "original": "http://www.carddass.fr/dbz/docs/fond2-1024x768.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "294873"
-  },
-  {
-    "timestamp": "20071014100054",
-    "original": "http://www.carddass.fr/dbz/docs/fond3-1024x768.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "238701"
-  },
-  {
-    "timestamp": "20071014095857",
-    "original": "http://www.carddass.fr/dbz/docs/fond4-1024x768.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "299994"
-  },
-  {
-    "timestamp": "20071014095936",
-    "original": "http://www.carddass.fr/dbz/docs/fond5-1024x768.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "283963"
-  },
-  {
-    "timestamp": "20071014100036",
-    "original": "http://www.carddass.fr/dbz/docs/fond6-1024x768.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "331785"
-  },
-  {
-    "timestamp": "20071014095955",
-    "original": "http://www.carddass.fr/dbz/docs/fond7-1024x768.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "325057"
-  },
-  {
-    "timestamp": "20081119060856",
-    "original": "http://www.carddass.fr/dbz/docs/reglescoursderecre.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "2582888"
-  },
-  {
-    "timestamp": "20071015215545",
-    "original": "http://www.carddass.fr/dbz/docs/reglesdragonball_F.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "6921950"
-  },
-  {
     "timestamp": "20091007065917",
     "original": "http://www.carddass.fr:80/dbz/docs/rulebook-DBCG.pdf",
     "statuscode": "200",
     "mimetype": "application/pdf",
     "length": "1969422"
-  },
-  {
-    "timestamp": "20071015215323",
-    "original": "http://www.carddass.fr/dbz/docs/SAIYANS_F2807.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "19055070"
-  },
-  {
-    "timestamp": "20081118072842",
-    "original": "http://www.carddass.fr/dbz/docs/shuffle.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "12370"
-  },
-  {
-    "timestamp": "20071015215303",
-    "original": "http://www.carddass.fr/dbz/docs/tableaux%20pour%20JO.pdf",
-    "statuscode": "200",
-    "mimetype": "application/pdf",
-    "length": "65574"
   },
   {
     "timestamp": "20070118124338",
@@ -1610,20 +1015,6 @@
     "length": "3761"
   },
   {
-    "timestamp": "20071013180959",
-    "original": "http://www.carddass.fr/dbz/faq_cartes.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5090"
-  },
-  {
-    "timestamp": "20071013180829",
-    "original": "http://www.carddass.fr/dbz/faq_generales.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3529"
-  },
-  {
     "timestamp": "20070626234925",
     "original": "http://www.carddass.fr:80/dbz/images/",
     "statuscode": "200",
@@ -1638,18 +1029,39 @@
     "length": "543"
   },
   {
+    "timestamp": "20080101013907",
+    "original": "http://www.carddass.fr:80/dbz/images/?C=D;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3142"
+  },
+  {
+    "timestamp": "20080101013912",
+    "original": "http://www.carddass.fr:80/dbz/images/?C=M;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3153"
+  },
+  {
+    "timestamp": "20080101013914",
+    "original": "http://www.carddass.fr:80/dbz/images/?C=N;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3111"
+  },
+  {
+    "timestamp": "20080101013921",
+    "original": "http://www.carddass.fr:80/dbz/images/?C=S;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3056"
+  },
+  {
     "timestamp": "20070323144427",
     "original": "http://www.carddass.fr:80/dbz/images/accion.gif",
     "statuscode": "200",
     "mimetype": "image/gif",
     "length": "1039"
-  },
-  {
-    "timestamp": "20071013180414",
-    "original": "http://www.carddass.fr/dbz/images/adobe.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "1821"
   },
   {
     "timestamp": "20080101013944",
@@ -1659,46 +1071,11 @@
     "length": "855"
   },
   {
-    "timestamp": "20081118073222",
-    "original": "http://www.carddass.fr/dbz/images/archives/Finale_CdF2008.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "55485"
-  },
-  {
-    "timestamp": "20081118073254",
-    "original": "http://www.carddass.fr/dbz/images/archives/Gen1_CdF2008.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "59055"
-  },
-  {
-    "timestamp": "20081118073236",
-    "original": "http://www.carddass.fr/dbz/images/archives/Podium_CdF2008.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "65342"
-  },
-  {
-    "timestamp": "20081118073207",
-    "original": "http://www.carddass.fr/dbz/images/archives/TB_CdF2008.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "49086"
-  },
-  {
     "timestamp": "20070323091421",
     "original": "http://www.carddass.fr:80/dbz/images/batalla.gif",
     "statuscode": "200",
     "mimetype": "image/gif",
     "length": "740"
-  },
-  {
-    "timestamp": "20071012155734",
-    "original": "http://www.carddass.fr/dbz/images/bkgd.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "1319"
   },
   {
     "timestamp": "20070222074848",
@@ -1727,20 +1104,6 @@
     "statuscode": "200",
     "mimetype": "image/gif",
     "length": "377"
-  },
-  {
-    "timestamp": "20071012155820",
-    "original": "http://www.carddass.fr/dbz/images/box4.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "366"
-  },
-  {
-    "timestamp": "20070222075003",
-    "original": "http://www.carddass.fr:80/dbz/images/c_jugar.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "31145"
   },
   {
     "timestamp": "20070323144459",
@@ -1827,11 +1190,11 @@
     "length": "2799"
   },
   {
-    "timestamp": "20071012160001",
-    "original": "http://www.carddass.fr/dbz/images/carddass_logo.gif",
+    "timestamp": "20070222075003",
+    "original": "http://www.carddass.fr:80/dbz/images/c_jugar.gif",
     "statuscode": "200",
     "mimetype": "image/gif",
-    "length": "2547"
+    "length": "31145"
   },
   {
     "timestamp": "20070321132700",
@@ -1848,11 +1211,2209 @@
     "length": "886"
   },
   {
+    "timestamp": "20071210124745",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "547"
+  },
+  {
+    "timestamp": "20080114082532",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=D;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "555"
+  },
+  {
+    "timestamp": "20080114082537",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=M;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "556"
+  },
+  {
+    "timestamp": "20080114082544",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=N;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "551"
+  },
+  {
+    "timestamp": "20080114082550",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=S;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "556"
+  },
+  {
+    "timestamp": "20080114082555",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/dwsync.xml",
+    "statuscode": "200",
+    "mimetype": "application/xml",
+    "length": "454"
+  },
+  {
+    "timestamp": "20071210124656",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=D;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "936"
+  },
+  {
+    "timestamp": "20071210124702",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=M;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "950"
+  },
+  {
+    "timestamp": "20071213001909",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=N;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "937"
+  },
+  {
+    "timestamp": "20071210124712",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=N;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "945"
+  },
+  {
+    "timestamp": "20071210124717",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=S;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "931"
+  },
+  {
     "timestamp": "20071209162504",
     "original": "http://www.carddass.fr:80/dbz/images/cartes/1/",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "2734"
+  },
+  {
+    "timestamp": "20071209162527",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/1/small/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1930"
+  },
+  {
+    "timestamp": "20071210124632",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/2/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1628"
+  },
+  {
+    "timestamp": "20071210124637",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/3/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "620"
+  },
+  {
+    "timestamp": "20071209162542",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "575"
+  },
+  {
+    "timestamp": "20071210095638",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=D;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "580"
+  },
+  {
+    "timestamp": "20080114082355",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=D;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "582"
+  },
+  {
+    "timestamp": "20071210095647",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=M;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "582"
+  },
+  {
+    "timestamp": "20080114082402",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=M;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "580"
+  },
+  {
+    "timestamp": "20071213001856",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=N;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "578"
+  },
+  {
+    "timestamp": "20071210095708",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=N;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "577"
+  },
+  {
+    "timestamp": "20071210095713",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=S;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "580"
+  },
+  {
+    "timestamp": "20080114082407",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=S;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "582"
+  },
+  {
+    "timestamp": "20071209162555",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1904"
+  },
+  {
+    "timestamp": "20071212054807",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=D;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1909"
+  },
+  {
+    "timestamp": "20071212054812",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=M;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1912"
+  },
+  {
+    "timestamp": "20080114082412",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=N;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1908"
+  },
+  {
+    "timestamp": "20071212054816",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=N;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1888"
+  },
+  {
+    "timestamp": "20071212054821",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=S;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1890"
+  },
+  {
+    "timestamp": "20070223234303",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-021%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "84197"
+  },
+  {
+    "timestamp": "20070224053849",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-024%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "92671"
+  },
+  {
+    "timestamp": "20070225032821",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-029%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "79227"
+  },
+  {
+    "timestamp": "20070223233938",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-035%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87458"
+  },
+  {
+    "timestamp": "20070223234315",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-047%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "91324"
+  },
+  {
+    "timestamp": "20070224053326",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-050%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87338"
+  },
+  {
+    "timestamp": "20070224053903",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-052%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "98960"
+  },
+  {
+    "timestamp": "20070224053911",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-053%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "89075"
+  },
+  {
+    "timestamp": "20070223234425",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-063%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "81400"
+  },
+  {
+    "timestamp": "20070225032839",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-073%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "73383"
+  },
+  {
+    "timestamp": "20070223234049",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-077%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "89285"
+  },
+  {
+    "timestamp": "20070224053921",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-078%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "88179"
+  },
+  {
+    "timestamp": "20070223234435",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-080%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95651"
+  },
+  {
+    "timestamp": "20070223234100",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-099%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "88758"
+  },
+  {
+    "timestamp": "20070225075819",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-134%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "94507"
+  },
+  {
+    "timestamp": "20070223234254",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-138%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87534"
+  },
+  {
+    "timestamp": "20070225032848",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-139%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "82375"
+  },
+  {
+    "timestamp": "20070301025813",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-160%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87966"
+  },
+  {
+    "timestamp": "20070224053931",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-168%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "92129"
+  },
+  {
+    "timestamp": "20070224053336",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-176%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "78032"
+  },
+  {
+    "timestamp": "20070223233948",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-197%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "91492"
+  },
+  {
+    "timestamp": "20070224053941",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-247%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95131"
+  },
+  {
+    "timestamp": "20070224053950",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-250%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "86980"
+  },
+  {
+    "timestamp": "20070224054001",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-251%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "90370"
+  },
+  {
+    "timestamp": "20070224053527",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-277%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "101648"
+  },
+  {
+    "timestamp": "20070225075938",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-293%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "91941"
+  },
+  {
+    "timestamp": "20070223234110",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-315%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87220"
+  },
+  {
+    "timestamp": "20070225075745",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-337%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "84016"
+  },
+  {
+    "timestamp": "20070225075921",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-346%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87898"
+  },
+  {
+    "timestamp": "20070224053426",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-369%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "94312"
+  },
+  {
+    "timestamp": "20070223233928",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-370%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "84555"
+  },
+  {
+    "timestamp": "20070224053456",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-371%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "101120"
+  },
+  {
+    "timestamp": "20070224053516",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-372%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "91475"
+  },
+  {
+    "timestamp": "20070224053603",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-373%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87506"
+  },
+  {
+    "timestamp": "20070225032757",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-374%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "85575"
+  },
+  {
+    "timestamp": "20070224053613",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-375%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "97005"
+  },
+  {
+    "timestamp": "20070225080056",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-376%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "88092"
+  },
+  {
+    "timestamp": "20070224053627",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-379%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "91086"
+  },
+  {
+    "timestamp": "20070224192628",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-381%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "88328"
+  },
+  {
+    "timestamp": "20070223234334",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-383%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "92393"
+  },
+  {
+    "timestamp": "20070223234150",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-385%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "102979"
+  },
+  {
+    "timestamp": "20070224053637",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-386%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "78885"
+  },
+  {
+    "timestamp": "20070224053648",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-387%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95134"
+  },
+  {
+    "timestamp": "20070224053658",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-389%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "85030"
+  },
+  {
+    "timestamp": "20070224053709",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-390%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "85833"
+  },
+  {
+    "timestamp": "20070225075735",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-391%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "89907"
+  },
+  {
+    "timestamp": "20070224053719",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-392%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "80016"
+  },
+  {
+    "timestamp": "20070224053728",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-393%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "93447"
+  },
+  {
+    "timestamp": "20070224053739",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-394%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87855"
+  },
+  {
+    "timestamp": "20070223234028",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-395%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "110839"
+  },
+  {
+    "timestamp": "20070113063044",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-396%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95257"
+  },
+  {
+    "timestamp": "20070224192537",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-397%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "96911"
+  },
+  {
+    "timestamp": "20070114001220",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-399%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "101661"
+  },
+  {
+    "timestamp": "20070224053749",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-400%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95263"
+  },
+  {
+    "timestamp": "20070224053759",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-402%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "101243"
+  },
+  {
+    "timestamp": "20070225032505",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-403%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "104816"
+  },
+  {
+    "timestamp": "20070224053809",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-404%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "90493"
+  },
+  {
+    "timestamp": "20070223234018",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-406%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "91679"
+  },
+  {
+    "timestamp": "20070225075724",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-407%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "94893"
+  },
+  {
+    "timestamp": "20070224192456",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-408%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "91126"
+  },
+  {
+    "timestamp": "20070223234403",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-409%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "88651"
+  },
+  {
+    "timestamp": "20070223234242",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-410%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "81302"
+  },
+  {
+    "timestamp": "20070224192608",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-411%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "122587"
+  },
+  {
+    "timestamp": "20070223234120",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-412%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95984"
+  },
+  {
+    "timestamp": "20070224192648",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-413%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "98122"
+  },
+  {
+    "timestamp": "20070224192657",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-414%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "85992"
+  },
+  {
+    "timestamp": "20070223234416",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-415%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "118080"
+  },
+  {
+    "timestamp": "20070224053819",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-417%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95466"
+  },
+  {
+    "timestamp": "20070225075907",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-418%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "96021"
+  },
+  {
+    "timestamp": "20070224192547",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-424%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "107206"
+  },
+  {
+    "timestamp": "20070225075846",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-425%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "97131"
+  },
+  {
+    "timestamp": "20070224054011",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-431%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "90837"
+  },
+  {
+    "timestamp": "20070224054021",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-436%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "100282"
+  },
+  {
+    "timestamp": "20070223233958",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-437%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "88890"
+  },
+  {
+    "timestamp": "20070305172234",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-438%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "95001"
+  },
+  {
+    "timestamp": "20070225032619",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-439%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "89628"
+  },
+  {
+    "timestamp": "20070224054031",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-462%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "98743"
+  },
+  {
+    "timestamp": "20070225032900",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-463%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87358"
+  },
+  {
+    "timestamp": "20070224192718",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-484%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "97742"
+  },
+  {
+    "timestamp": "20070224192728",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-486%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "104505"
+  },
+  {
+    "timestamp": "20070224053311",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-487%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "106188"
+  },
+  {
+    "timestamp": "20070224192739",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-492%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "100080"
+  },
+  {
+    "timestamp": "20070224192748",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-494%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "106378"
+  },
+  {
+    "timestamp": "20070224054041",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-495%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "100038"
+  },
+  {
+    "timestamp": "20070223234445",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-497%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "100629"
+  },
+  {
+    "timestamp": "20070225032715",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-501%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "113905"
+  },
+  {
+    "timestamp": "20070224054051",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-506%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "94604"
+  },
+  {
+    "timestamp": "20070224192526",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-507%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "102716"
+  },
+  {
+    "timestamp": "20070224054101",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-508%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "76437"
+  },
+  {
+    "timestamp": "20070224054112",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-513%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "96965"
+  },
+  {
+    "timestamp": "20070225075856",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-514%20PA%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "107812"
+  },
+  {
+    "timestamp": "20070225032745",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-518%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "92793"
+  },
+  {
+    "timestamp": "20070223234039",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-519%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "107115"
+  },
+  {
+    "timestamp": "20070224053829",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-521%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "100094"
+  },
+  {
+    "timestamp": "20070224053839",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-522%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "92045"
+  },
+  {
+    "timestamp": "20070225080017",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-523%20copie.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "87438"
+  },
+  {
+    "timestamp": "20071212054947",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/Thumbs.db",
+    "statuscode": "200",
+    "mimetype": "text/plain",
+    "length": "521526"
+  },
+  {
+    "timestamp": "20071210095731",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/Thumbs.db",
+    "statuscode": "200",
+    "mimetype": "text/plain",
+    "length": "3544"
+  },
+  {
+    "timestamp": "20071210124646",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/5/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1705"
+  },
+  {
+    "timestamp": "20071210124648",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1531"
+  },
+  {
+    "timestamp": "20080202183556",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=D;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1559"
+  },
+  {
+    "timestamp": "20080202183601",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=M;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1557"
+  },
+  {
+    "timestamp": "20080204221506",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=N;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1558"
+  },
+  {
+    "timestamp": "20080202183607",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=N;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1557"
+  },
+  {
+    "timestamp": "20080202183614",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=S;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1569"
+  },
+  {
+    "timestamp": "20080202183647",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/Large%20visuel/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "625"
+  },
+  {
+    "timestamp": "20080202183653",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/MED%20analyse%20semaine/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "668"
+  },
+  {
+    "timestamp": "20071210124750",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "2472"
+  },
+  {
+    "timestamp": "20070227130543",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/D-182-med.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "39790"
+  },
+  {
+    "timestamp": "20070110110843",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/D-424-med.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "43644"
+  },
+  {
+    "timestamp": "20070110110852",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/D-510-med.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "41079"
+  },
+  {
+    "timestamp": "20071210124732",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1150"
+  },
+  {
+    "timestamp": "20071231170500",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=D;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1154"
+  },
+  {
+    "timestamp": "20080222210646",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=D;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1158"
+  },
+  {
+    "timestamp": "20071231170503",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=M;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1168"
+  },
+  {
+    "timestamp": "20080222210651",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=M;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1168"
+  },
+  {
+    "timestamp": "20080102140649",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=N;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1156"
+  },
+  {
+    "timestamp": "20071231170508",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=N;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1154"
+  },
+  {
+    "timestamp": "20071231170522",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=S;O=A",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1173"
+  },
+  {
+    "timestamp": "20080222210656",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=S;O=D",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1184"
+  },
+  {
+    "timestamp": "20071210124742",
+    "original": "http://www.carddass.fr:80/dbz/images/cartes/Thumbs.db",
+    "statuscode": "200",
+    "mimetype": "text/plain",
+    "length": "40244"
+  },
+  {
+    "timestamp": "20070320071203",
+    "original": "http://www.carddass.fr:80/dbz/images/catalogue_titlex.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "2544"
+  },
+  {
+    "timestamp": "20070321132549",
+    "original": "http://www.carddass.fr:80/dbz/images/goku_c_j.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "7740"
+  },
+  {
+    "timestamp": "20070222074943",
+    "original": "http://www.carddass.fr:80/dbz/images/index.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "59129"
+  },
+  {
+    "timestamp": "20080101014830",
+    "original": "http://www.carddass.fr:80/dbz/images/logos_series/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "767"
+  },
+  {
+    "timestamp": "20080101014821",
+    "original": "http://www.carddass.fr:80/dbz/images/logos%20s%E9ries/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "637"
+  },
+  {
+    "timestamp": "20070320071049",
+    "original": "http://www.carddass.fr:80/dbz/images/magasins_titlex.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "2439"
+  },
+  {
+    "timestamp": "20070323091534",
+    "original": "http://www.carddass.fr:80/dbz/images/movimiento.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "736"
+  },
+  {
+    "timestamp": "20070110110738",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_01.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "34457"
+  },
+  {
+    "timestamp": "20070224192554",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_02.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "6973"
+  },
+  {
+    "timestamp": "20061214200556",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_03.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "3804"
+  },
+  {
+    "timestamp": "20061214200511",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_04.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "27474"
+  },
+  {
+    "timestamp": "20070118182832",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_07.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "11352"
+  },
+  {
+    "timestamp": "20070118124234",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_08.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "1733"
+  },
+  {
+    "timestamp": "20061215090054",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_10.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "491"
+  },
+  {
+    "timestamp": "20070223234218",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_11.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "495"
+  },
+  {
+    "timestamp": "20070110110635",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_12.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "591"
+  },
+  {
+    "timestamp": "20070118124255",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_13.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "1327"
+  },
+  {
+    "timestamp": "20061215090203",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_14.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "11050"
+  },
+  {
+    "timestamp": "20070110110706",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_15.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "490"
+  },
+  {
+    "timestamp": "20070110110747",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_16.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "493"
+  },
+  {
+    "timestamp": "20061214200521",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_17.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "645"
+  },
+  {
+    "timestamp": "20070118124414",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_18.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "1343"
+  },
+  {
+    "timestamp": "20070110110757",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_19.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "2009"
+  },
+  {
+    "timestamp": "20070118124319",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_21.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "683"
+  },
+  {
+    "timestamp": "20070118182842",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_22.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "860"
+  },
+  {
+    "timestamp": "20061214200706",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_23.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "744"
+  },
+  {
+    "timestamp": "20070110110808",
+    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_24.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "1352"
+  },
+  {
+    "timestamp": "20080101014851",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1395"
+  },
+  {
+    "timestamp": "20070118124328",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/enemies_starter_small.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "8817"
+  },
+  {
+    "timestamp": "20070222080258",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/heroes_starter_s.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "7412"
+  },
+  {
+    "timestamp": "20070224053414",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/packshot_serie4a.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "11776"
+  },
+  {
+    "timestamp": "20070110110819",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/starters_s3.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "10256"
+  },
+  {
+    "timestamp": "20070321081612",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/stuffx.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "37530"
+  },
+  {
+    "timestamp": "20070110110902",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/vaincre_starter%20copy.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "22958"
+  },
+  {
+    "timestamp": "20070110110829",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots/wallpaper_small.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "7020"
+  },
+  {
+    "timestamp": "20080101014846",
+    "original": "http://www.carddass.fr:80/dbz/images/packshots%20et%20starters/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1454"
+  },
+  {
+    "timestamp": "20070222074911",
+    "original": "http://www.carddass.fr:80/dbz/images/prod_goku.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "22012"
+  },
+  {
+    "timestamp": "20070222075113",
+    "original": "http://www.carddass.fr:80/dbz/images/prod_shen.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "19804"
+  },
+  {
+    "timestamp": "20061214200911",
+    "original": "http://www.carddass.fr:80/dbz/images/separador_bola.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "1906"
+  },
+  {
+    "timestamp": "20070320071007",
+    "original": "http://www.carddass.fr:80/dbz/images/terrain_livret.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "42288"
+  },
+  {
+    "timestamp": "20080101013929",
+    "original": "http://www.carddass.fr:80/dbz/images/Thumbs.db",
+    "statuscode": "200",
+    "mimetype": "text/plain",
+    "length": "403501"
+  },
+  {
+    "timestamp": "20070301065535",
+    "original": "http://www.carddass.fr:80/dbz/images/titres_carte_semainex.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "2933"
+  },
+  {
+    "timestamp": "20070108125429",
+    "original": "http://www.carddass.fr:80/dbz/index.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3419"
+  },
+  {
+    "timestamp": "20071205062019",
+    "original": "http://www.carddass.fr:80/dbz/jeu_organise.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4740"
+  },
+  {
+    "timestamp": "20061208200548",
+    "original": "http://www.carddass.fr:80/dbz/ligue.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "2253"
+  },
+  {
+    "timestamp": "20070502144508",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s1.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "6056"
+  },
+  {
+    "timestamp": "20090421110440",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s10.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5364"
+  },
+  {
+    "timestamp": "20070222074859",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s2.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5367"
+  },
+  {
+    "timestamp": "20070510023620",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s3.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5633"
+  },
+  {
+    "timestamp": "20070510031140",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s3.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5413"
+  },
+  {
+    "timestamp": "20070507024701",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s4.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5376"
+  },
+  {
+    "timestamp": "20070110032932",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s4.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4885"
+  },
+  {
+    "timestamp": "20070527115653",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s5.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4925"
+  },
+  {
+    "timestamp": "20070531074526",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s5.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4827"
+  },
+  {
+    "timestamp": "20070915024706",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s6.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4520"
+  },
+  {
+    "timestamp": "20080206075847",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s7.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4865"
+  },
+  {
+    "timestamp": "20080724200700",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s8.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5038"
+  },
+  {
+    "timestamp": "20090921164613",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_Sups1.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "6154"
+  },
+  {
+    "timestamp": "20091229141105",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sups2.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "6381"
+  },
+  {
+    "timestamp": "20100108134716",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sups3.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "6136"
+  },
+  {
+    "timestamp": "20101227083002",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sups4.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5713"
+  },
+  {
+    "timestamp": "20071225122806",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sx.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4878"
+  },
+  {
+    "timestamp": "20070221041824",
+    "original": "http://www.carddass.fr:80/dbz/liste_cartes.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "2538"
+  },
+  {
+    "timestamp": "20070310182059",
+    "original": "http://www.carddass.fr:80/dbz/magasins.htm#dpt37",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "9955"
+  },
+  {
+    "timestamp": "20070305172903",
+    "original": "http://www.carddass.fr:80/dbz/news.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5043"
+  },
+  {
+    "timestamp": "20070519012115",
+    "original": "http://www.carddass.fr:80/dbz/resume_cdf_07.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4953"
+  },
+  {
+    "timestamp": "20070614190336",
+    "original": "http://www.carddass.fr:80/dbz/tournois_majeurs.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3090"
+  },
+  {
+    "timestamp": "20070505220128",
+    "original": "http://www.carddass.fr:80/dbz/tournois_preview.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "7524"
+  },
+  {
+    "timestamp": "20070108124745",
+    "original": "http://www.carddass.fr:80/dbz/tournois.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "2389"
+  },
+  {
+    "timestamp": "20071015003605",
+    "original": "http://www.carddass.fr/dbz/archive_deck_du_mois.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4848"
+  },
+  {
+    "timestamp": "20071015003145",
+    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_1.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3629"
+  },
+  {
+    "timestamp": "20071013180938",
+    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_11.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4178"
+  },
+  {
+    "timestamp": "20081118072319",
+    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_25.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3361"
+  },
+  {
+    "timestamp": "20071015220141",
+    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_4.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4978"
+  },
+  {
+    "timestamp": "20071015003229",
+    "original": "http://www.carddass.fr/dbz/archivedbz_analyse_semaine_5.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "4494"
+  },
+  {
+    "timestamp": "20071016100317",
+    "original": "http://www.carddass.fr/dbz/cartes/D-031.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1625"
+  },
+  {
+    "timestamp": "20071016102225",
+    "original": "http://www.carddass.fr/dbz/cartes/D-032.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1623"
+  },
+  {
+    "timestamp": "20071016181511",
+    "original": "http://www.carddass.fr/dbz/cartes/D-033.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1626"
+  },
+  {
+    "timestamp": "20071016181545",
+    "original": "http://www.carddass.fr/dbz/cartes/D-039.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1677"
+  },
+  {
+    "timestamp": "20071014100944",
+    "original": "http://www.carddass.fr/dbz/cartes/D-040.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1628"
+  },
+  {
+    "timestamp": "20071016183535",
+    "original": "http://www.carddass.fr/dbz/cartes/D-043.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1680"
+  },
+  {
+    "timestamp": "20071016100745",
+    "original": "http://www.carddass.fr/dbz/cartes/D-044.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1690"
+  },
+  {
+    "timestamp": "20071016095919",
+    "original": "http://www.carddass.fr/dbz/cartes/D-046.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1678"
+  },
+  {
+    "timestamp": "20071016181431",
+    "original": "http://www.carddass.fr/dbz/cartes/D-050.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1626"
+  },
+  {
+    "timestamp": "20071015002726",
+    "original": "http://www.carddass.fr/dbz/cartes/D-052.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1629"
+  },
+  {
+    "timestamp": "20071016183614",
+    "original": "http://www.carddass.fr/dbz/cartes/D-053.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1624"
+  },
+  {
+    "timestamp": "20071016183107",
+    "original": "http://www.carddass.fr/dbz/cartes/D-059.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1660"
+  },
+  {
+    "timestamp": "20071016181937",
+    "original": "http://www.carddass.fr/dbz/cartes/D-060.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1671"
+  },
+  {
+    "timestamp": "20071016183305",
+    "original": "http://www.carddass.fr/dbz/cartes/D-062.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1627"
+  },
+  {
+    "timestamp": "20071014174044",
+    "original": "http://www.carddass.fr/dbz/cartes/D-063.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1630"
+  },
+  {
+    "timestamp": "20071014174639",
+    "original": "http://www.carddass.fr/dbz/cartes/D-064.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1630"
+  },
+  {
+    "timestamp": "20071016182745",
+    "original": "http://www.carddass.fr/dbz/cartes/D-065.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1627"
+  },
+  {
+    "timestamp": "20071014100414",
+    "original": "http://www.carddass.fr/dbz/cartes/D-071.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1626"
+  },
+  {
+    "timestamp": "20071016181031",
+    "original": "http://www.carddass.fr/dbz/cartes/D-074.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1691"
+  },
+  {
+    "timestamp": "20071016100711",
+    "original": "http://www.carddass.fr/dbz/cartes/D-084.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1626"
+  },
+  {
+    "timestamp": "20071016183207",
+    "original": "http://www.carddass.fr/dbz/cartes/D-087.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1647"
+  },
+  {
+    "timestamp": "20071016181210",
+    "original": "http://www.carddass.fr/dbz/cartes/D-088.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1626"
+  },
+  {
+    "timestamp": "20071014170315",
+    "original": "http://www.carddass.fr/dbz/cartes/D-089.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1627"
+  },
+  {
+    "timestamp": "20071016102144",
+    "original": "http://www.carddass.fr/dbz/cartes/D-090.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1642"
+  },
+  {
+    "timestamp": "20071017000851",
+    "original": "http://www.carddass.fr/dbz/cartes/D-091.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1630"
+  },
+  {
+    "timestamp": "20071016182203",
+    "original": "http://www.carddass.fr/dbz/cartes/D-092.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1634"
+  },
+  {
+    "timestamp": "20071016182102",
+    "original": "http://www.carddass.fr/dbz/cartes/D-093.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1632"
+  },
+  {
+    "timestamp": "20071016183237",
+    "original": "http://www.carddass.fr/dbz/cartes/D-094.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1638"
+  },
+  {
+    "timestamp": "20071016183340",
+    "original": "http://www.carddass.fr/dbz/cartes/D-095.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1632"
+  },
+  {
+    "timestamp": "20071016101719",
+    "original": "http://www.carddass.fr/dbz/cartes/D-096.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1633"
+  },
+  {
+    "timestamp": "20071016101347",
+    "original": "http://www.carddass.fr/dbz/cartes/D-097.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1629"
+  },
+  {
+    "timestamp": "20071016182813",
+    "original": "http://www.carddass.fr/dbz/cartes/D-098.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1624"
+  },
+  {
+    "timestamp": "20071016180938",
+    "original": "http://www.carddass.fr/dbz/cartes/D-100.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1644"
+  },
+  {
+    "timestamp": "20071016181824",
+    "original": "http://www.carddass.fr/dbz/cartes/D-101.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1626"
+  },
+  {
+    "timestamp": "20071017001153",
+    "original": "http://www.carddass.fr/dbz/cartes/D-102.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1630"
+  },
+  {
+    "timestamp": "20071016100234",
+    "original": "http://www.carddass.fr/dbz/cartes/D-103.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1623"
+  },
+  {
+    "timestamp": "20071016182027",
+    "original": "http://www.carddass.fr/dbz/cartes/D-104.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1625"
+  },
+  {
+    "timestamp": "20071016100833",
+    "original": "http://www.carddass.fr/dbz/cartes/D-105.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1637"
+  },
+  {
+    "timestamp": "20071016101028",
+    "original": "http://www.carddass.fr/dbz/cartes/D-107.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1627"
+  },
+  {
+    "timestamp": "20071016100956",
+    "original": "http://www.carddass.fr/dbz/cartes/D-108.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1627"
+  },
+  {
+    "timestamp": "20071014170340",
+    "original": "http://www.carddass.fr/dbz/cartes/D-109.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1655"
+  },
+  {
+    "timestamp": "20071016100930",
+    "original": "http://www.carddass.fr/dbz/cartes/D-110.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1634"
+  },
+  {
+    "timestamp": "20071014100559",
+    "original": "http://www.carddass.fr/dbz/cartes/D-114.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1640"
+  },
+  {
+    "timestamp": "20071016101411",
+    "original": "http://www.carddass.fr/dbz/cartes/D-115.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1628"
+  },
+  {
+    "timestamp": "20071016181625",
+    "original": "http://www.carddass.fr/dbz/cartes/D-116.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1646"
+  },
+  {
+    "timestamp": "20071016101644",
+    "original": "http://www.carddass.fr/dbz/cartes/D-117.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1648"
+  },
+  {
+    "timestamp": "20071016100112",
+    "original": "http://www.carddass.fr/dbz/cartes/D-119.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1639"
+  },
+  {
+    "timestamp": "20071016182422",
+    "original": "http://www.carddass.fr/dbz/cartes/D-121.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1635"
+  },
+  {
+    "timestamp": "20071016181444",
+    "original": "http://www.carddass.fr/dbz/cartes/D-122.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1643"
+  },
+  {
+    "timestamp": "20071016102117",
+    "original": "http://www.carddass.fr/dbz/cartes/D-123.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1631"
+  },
+  {
+    "timestamp": "20071016182946",
+    "original": "http://www.carddass.fr/dbz/cartes/D-124.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1631"
+  },
+  {
+    "timestamp": "20071016181323",
+    "original": "http://www.carddass.fr/dbz/cartes/D-125.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1633"
+  },
+  {
+    "timestamp": "20071016100249",
+    "original": "http://www.carddass.fr/dbz/cartes/D-126.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1632"
+  },
+  {
+    "timestamp": "20071016181118",
+    "original": "http://www.carddass.fr/dbz/cartes/D-127.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1632"
+  },
+  {
+    "timestamp": "20071017001058",
+    "original": "http://www.carddass.fr/dbz/cartes/D-128.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1638"
+  },
+  {
+    "timestamp": "20071016181004",
+    "original": "http://www.carddass.fr/dbz/cartes/D-130.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1635"
+  },
+  {
+    "timestamp": "20071016181855",
+    "original": "http://www.carddass.fr/dbz/cartes/D-132.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1634"
+  },
+  {
+    "timestamp": "20071017000954",
+    "original": "http://www.carddass.fr/dbz/cartes/D-133.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1648"
+  },
+  {
+    "timestamp": "20071016181243",
+    "original": "http://www.carddass.fr/dbz/cartes/D-134.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "1624"
+  },
+  {
+    "timestamp": "20071015071612",
+    "original": "http://www.carddass.fr/dbz/catalogue_s6.html",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3401"
+  },
+  {
+    "timestamp": "20071012160218",
+    "original": "http://www.carddass.fr/dbz/docs/banner-411x196.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "46871"
+  },
+  {
+    "timestamp": "20071016182307",
+    "original": "http://www.carddass.fr/dbz/docs/checklist_F1.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "1724020"
+  },
+  {
+    "timestamp": "20081121012107",
+    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S2.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "66318"
+  },
+  {
+    "timestamp": "20081121065047",
+    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S3.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "64439"
+  },
+  {
+    "timestamp": "20081120161112",
+    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S4.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "64175"
+  },
+  {
+    "timestamp": "20081120161915",
+    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S5.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "98189"
+  },
+  {
+    "timestamp": "20081123091807",
+    "original": "http://www.carddass.fr/dbz/docs/checklist%20DB%20S6.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "93482"
+  },
+  {
+    "timestamp": "20071015215627",
+    "original": "http://www.carddass.fr/dbz/docs/ENNEMIS_F2807.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "70517033"
+  },
+  {
+    "timestamp": "20071014100015",
+    "original": "http://www.carddass.fr/dbz/docs/fond2-1024x768.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "294873"
+  },
+  {
+    "timestamp": "20071014100054",
+    "original": "http://www.carddass.fr/dbz/docs/fond3-1024x768.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "238701"
+  },
+  {
+    "timestamp": "20071014095857",
+    "original": "http://www.carddass.fr/dbz/docs/fond4-1024x768.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "299994"
+  },
+  {
+    "timestamp": "20071014095936",
+    "original": "http://www.carddass.fr/dbz/docs/fond5-1024x768.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "283963"
+  },
+  {
+    "timestamp": "20071014100036",
+    "original": "http://www.carddass.fr/dbz/docs/fond6-1024x768.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "331785"
+  },
+  {
+    "timestamp": "20071014095955",
+    "original": "http://www.carddass.fr/dbz/docs/fond7-1024x768.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "325057"
+  },
+  {
+    "timestamp": "20081119060856",
+    "original": "http://www.carddass.fr/dbz/docs/reglescoursderecre.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "2582888"
+  },
+  {
+    "timestamp": "20071015215545",
+    "original": "http://www.carddass.fr/dbz/docs/reglesdragonball_F.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "6921950"
+  },
+  {
+    "timestamp": "20071015215323",
+    "original": "http://www.carddass.fr/dbz/docs/SAIYANS_F2807.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "19055070"
+  },
+  {
+    "timestamp": "20081118072842",
+    "original": "http://www.carddass.fr/dbz/docs/shuffle.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "12370"
+  },
+  {
+    "timestamp": "20071015215303",
+    "original": "http://www.carddass.fr/dbz/docs/tableaux%20pour%20JO.pdf",
+    "statuscode": "200",
+    "mimetype": "application/pdf",
+    "length": "65574"
+  },
+  {
+    "timestamp": "20071013180959",
+    "original": "http://www.carddass.fr/dbz/faq_cartes.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "5090"
+  },
+  {
+    "timestamp": "20071013180829",
+    "original": "http://www.carddass.fr/dbz/faq_generales.htm",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "length": "3529"
+  },
+  {
+    "timestamp": "20071013180414",
+    "original": "http://www.carddass.fr/dbz/images/adobe.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "1821"
+  },
+  {
+    "timestamp": "20081118073222",
+    "original": "http://www.carddass.fr/dbz/images/archives/Finale_CdF2008.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "55485"
+  },
+  {
+    "timestamp": "20081118073254",
+    "original": "http://www.carddass.fr/dbz/images/archives/Gen1_CdF2008.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "59055"
+  },
+  {
+    "timestamp": "20081118073236",
+    "original": "http://www.carddass.fr/dbz/images/archives/Podium_CdF2008.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "65342"
+  },
+  {
+    "timestamp": "20081118073207",
+    "original": "http://www.carddass.fr/dbz/images/archives/TB_CdF2008.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "49086"
+  },
+  {
+    "timestamp": "20071012155734",
+    "original": "http://www.carddass.fr/dbz/images/bkgd.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "1319"
+  },
+  {
+    "timestamp": "20071012155820",
+    "original": "http://www.carddass.fr/dbz/images/box4.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "366"
+  },
+  {
+    "timestamp": "20071012160001",
+    "original": "http://www.carddass.fr/dbz/images/carddass_logo.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "2547"
   },
   {
     "timestamp": "20071016101330",
@@ -2793,13 +4354,6 @@
     "length": "278600"
   },
   {
-    "timestamp": "20071209162527",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/1/small/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1930"
-  },
-  {
     "timestamp": "20071014174836",
     "original": "http://www.carddass.fr/dbz/images/cartes/1/small/D-001.jpg",
     "statuscode": "200",
@@ -3120,13 +4674,6 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "427783"
-  },
-  {
-    "timestamp": "20071210124632",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/2/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1628"
   },
   {
     "timestamp": "20071015151329",
@@ -3927,13 +5474,6 @@
     "length": "60719"
   },
   {
-    "timestamp": "20071210124637",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/3/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "620"
-  },
-  {
     "timestamp": "20071016040702",
     "original": "http://www.carddass.fr/dbz/images/cartes/3/ACTION/D-268.jpg",
     "statuscode": "200",
@@ -4718,118 +6258,6 @@
     "length": "75216"
   },
   {
-    "timestamp": "20071209162542",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "575"
-  },
-  {
-    "timestamp": "20071209162555",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1904"
-  },
-  {
-    "timestamp": "20070223234303",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-021%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "84197"
-  },
-  {
-    "timestamp": "20070224053849",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-024%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "92671"
-  },
-  {
-    "timestamp": "20070225032821",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-029%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "79227"
-  },
-  {
-    "timestamp": "20070223233938",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-035%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87458"
-  },
-  {
-    "timestamp": "20070223234315",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-047%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "91324"
-  },
-  {
-    "timestamp": "20070224053326",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-050%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87338"
-  },
-  {
-    "timestamp": "20070224053903",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-052%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "98960"
-  },
-  {
-    "timestamp": "20070224053911",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-053%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "89075"
-  },
-  {
-    "timestamp": "20070223234425",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-063%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "81400"
-  },
-  {
-    "timestamp": "20070225032839",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-073%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "73383"
-  },
-  {
-    "timestamp": "20070223234049",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-077%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "89285"
-  },
-  {
-    "timestamp": "20070224053921",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-078%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "88179"
-  },
-  {
-    "timestamp": "20070223234435",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-080%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95651"
-  },
-  {
-    "timestamp": "20070223234100",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-099%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "88758"
-  },
-  {
     "timestamp": "20071015150107",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-134%20copie.jpg",
     "statuscode": "200",
@@ -4844,88 +6272,11 @@
     "length": "85988"
   },
   {
-    "timestamp": "20070223234254",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-138%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87534"
-  },
-  {
-    "timestamp": "20070225032848",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-139%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "82375"
-  },
-  {
-    "timestamp": "20070301025813",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-160%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87966"
-  },
-  {
-    "timestamp": "20070224053931",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-168%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "92129"
-  },
-  {
-    "timestamp": "20070224053336",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-176%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "78032"
-  },
-  {
-    "timestamp": "20070223233948",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-197%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "91492"
-  },
-  {
-    "timestamp": "20070224053941",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-247%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95131"
-  },
-  {
-    "timestamp": "20070224053950",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-250%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "86980"
-  },
-  {
-    "timestamp": "20070224054001",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-251%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "90370"
-  },
-  {
-    "timestamp": "20070224053527",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-277%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "101648"
-  },
-  {
     "timestamp": "20071015003551",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-293%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "91950"
-  },
-  {
-    "timestamp": "20070223234110",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-315%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87220"
   },
   {
     "timestamp": "20071015003407",
@@ -4949,55 +6300,6 @@
     "length": "93521"
   },
   {
-    "timestamp": "20070224053426",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-369%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "94312"
-  },
-  {
-    "timestamp": "20070223233928",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-370%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "84555"
-  },
-  {
-    "timestamp": "20070224053456",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-371%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "101120"
-  },
-  {
-    "timestamp": "20070224053516",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-372%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "91475"
-  },
-  {
-    "timestamp": "20070224053603",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-373%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87506"
-  },
-  {
-    "timestamp": "20070225032757",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-374%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "85575"
-  },
-  {
-    "timestamp": "20070224053613",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-375%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "97005"
-  },
-  {
     "timestamp": "20071015145350",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-376%20copie.jpg",
     "statuscode": "200",
@@ -5019,53 +6321,11 @@
     "length": "81067"
   },
   {
-    "timestamp": "20070224053627",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-379%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "91086"
-  },
-  {
-    "timestamp": "20070224192628",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-381%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "88328"
-  },
-  {
     "timestamp": "20071015072554",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-382%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "90112"
-  },
-  {
-    "timestamp": "20070223234334",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-383%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "92393"
-  },
-  {
-    "timestamp": "20070223234150",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-385%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "102979"
-  },
-  {
-    "timestamp": "20070224053637",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-386%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "78885"
-  },
-  {
-    "timestamp": "20070224053648",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-387%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95134"
   },
   {
     "timestamp": "20071014174408",
@@ -5075,67 +6335,11 @@
     "length": "90794"
   },
   {
-    "timestamp": "20070224053658",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-389%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "85030"
-  },
-  {
-    "timestamp": "20070224053709",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-390%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "85833"
-  },
-  {
     "timestamp": "20071015150442",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-391%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "89910"
-  },
-  {
-    "timestamp": "20070224053719",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-392%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "80016"
-  },
-  {
-    "timestamp": "20070224053728",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-393%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "93447"
-  },
-  {
-    "timestamp": "20070224053739",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-394%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87855"
-  },
-  {
-    "timestamp": "20070223234028",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-395%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "110839"
-  },
-  {
-    "timestamp": "20070113063044",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-396%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95257"
-  },
-  {
-    "timestamp": "20070224192537",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-397%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "96911"
   },
   {
     "timestamp": "20071015145708",
@@ -5145,46 +6349,11 @@
     "length": "94194"
   },
   {
-    "timestamp": "20070114001220",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-399%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "101661"
-  },
-  {
-    "timestamp": "20070224053749",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-400%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95263"
-  },
-  {
     "timestamp": "20071014173923",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-401%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "112936"
-  },
-  {
-    "timestamp": "20070224053759",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-402%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "101243"
-  },
-  {
-    "timestamp": "20070225032505",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-403%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "104816"
-  },
-  {
-    "timestamp": "20070224053809",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-404%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "90493"
   },
   {
     "timestamp": "20071014174452",
@@ -5194,13 +6363,6 @@
     "length": "94308"
   },
   {
-    "timestamp": "20070223234018",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-406%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "91679"
-  },
-  {
     "timestamp": "20071015145333",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-407%20copie.jpg",
     "statuscode": "200",
@@ -5208,81 +6370,11 @@
     "length": "94898"
   },
   {
-    "timestamp": "20070224192456",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-408%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "91126"
-  },
-  {
-    "timestamp": "20070223234403",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-409%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "88651"
-  },
-  {
-    "timestamp": "20070223234242",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-410%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "81302"
-  },
-  {
-    "timestamp": "20070224192608",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-411%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "122587"
-  },
-  {
-    "timestamp": "20070223234120",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-412%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95984"
-  },
-  {
-    "timestamp": "20070224192648",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-413%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "98122"
-  },
-  {
-    "timestamp": "20070224192657",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-414%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "85992"
-  },
-  {
-    "timestamp": "20070223234416",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-415%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "118080"
-  },
-  {
     "timestamp": "20071014170706",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-416%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "89702"
-  },
-  {
-    "timestamp": "20070224053819",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-417%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95466"
-  },
-  {
-    "timestamp": "20070225075907",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-418%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "96021"
   },
   {
     "timestamp": "20071015150427",
@@ -5299,123 +6391,11 @@
     "length": "94529"
   },
   {
-    "timestamp": "20070224192547",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-424%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "107206"
-  },
-  {
     "timestamp": "20071015002250",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-425%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "97139"
-  },
-  {
-    "timestamp": "20070224054011",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-431%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "90837"
-  },
-  {
-    "timestamp": "20070224054021",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-436%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "100282"
-  },
-  {
-    "timestamp": "20070223233958",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-437%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "88890"
-  },
-  {
-    "timestamp": "20070305172234",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-438%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "95001"
-  },
-  {
-    "timestamp": "20070225032619",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-439%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "89628"
-  },
-  {
-    "timestamp": "20070224054031",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-462%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "98743"
-  },
-  {
-    "timestamp": "20070225032900",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-463%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87358"
-  },
-  {
-    "timestamp": "20070224192718",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-484%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "97742"
-  },
-  {
-    "timestamp": "20070224192728",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-486%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "104505"
-  },
-  {
-    "timestamp": "20070224053311",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-487%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "106188"
-  },
-  {
-    "timestamp": "20070224192739",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-492%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "100080"
-  },
-  {
-    "timestamp": "20070224192748",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-494%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "106378"
-  },
-  {
-    "timestamp": "20070224054041",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-495%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "100038"
-  },
-  {
-    "timestamp": "20070223234445",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-497%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "100629"
-  },
-  {
-    "timestamp": "20070225032715",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-501%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "113905"
   },
   {
     "timestamp": "20071014173737",
@@ -5425,39 +6405,11 @@
     "length": "100079"
   },
   {
-    "timestamp": "20070224054051",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-506%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "94604"
-  },
-  {
-    "timestamp": "20070224192526",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-507%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "102716"
-  },
-  {
-    "timestamp": "20070224054101",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-508%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "76437"
-  },
-  {
     "timestamp": "20071014174912",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-510%20PA%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "102073"
-  },
-  {
-    "timestamp": "20070224054112",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-513%20PA%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "96965"
   },
   {
     "timestamp": "20071015150147",
@@ -5467,158 +6419,11 @@
     "length": "107820"
   },
   {
-    "timestamp": "20070225032745",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-518%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "92793"
-  },
-  {
-    "timestamp": "20070223234039",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-519%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "107115"
-  },
-  {
     "timestamp": "20071015145919",
     "original": "http://www.carddass.fr/dbz/images/cartes/4/JPEG/D-520%20copie.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "108362"
-  },
-  {
-    "timestamp": "20070224053829",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-521%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "100094"
-  },
-  {
-    "timestamp": "20070224053839",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-522%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "92045"
-  },
-  {
-    "timestamp": "20070225080017",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/D-523%20copie.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "87438"
-  },
-  {
-    "timestamp": "20071212054947",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/Thumbs.db",
-    "statuscode": "200",
-    "mimetype": "text/plain",
-    "length": "521526"
-  },
-  {
-    "timestamp": "20071212054807",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=D;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1909"
-  },
-  {
-    "timestamp": "20071212054812",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=M;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1912"
-  },
-  {
-    "timestamp": "20080114082412",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=N;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1908"
-  },
-  {
-    "timestamp": "20071212054816",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=N;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1888"
-  },
-  {
-    "timestamp": "20071212054821",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/JPEG/?C=S;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1890"
-  },
-  {
-    "timestamp": "20071210095731",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/Thumbs.db",
-    "statuscode": "200",
-    "mimetype": "text/plain",
-    "length": "3544"
-  },
-  {
-    "timestamp": "20071210095638",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=D;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "580"
-  },
-  {
-    "timestamp": "20080114082355",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=D;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "582"
-  },
-  {
-    "timestamp": "20071210095647",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=M;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "582"
-  },
-  {
-    "timestamp": "20080114082402",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=M;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "580"
-  },
-  {
-    "timestamp": "20071213001856",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=N;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "578"
-  },
-  {
-    "timestamp": "20071210095708",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=N;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "577"
-  },
-  {
-    "timestamp": "20071210095713",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=S;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "580"
-  },
-  {
-    "timestamp": "20080114082407",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/4/?C=S;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "582"
-  },
-  {
-    "timestamp": "20071210124646",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/5/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1705"
   },
   {
     "timestamp": "20071015150616",
@@ -6251,13 +7056,6 @@
     "length": "73401"
   },
   {
-    "timestamp": "20071210124648",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1531"
-  },
-  {
     "timestamp": "20081118180401",
     "original": "http://www.carddass.fr/dbz/images/cartes/6/D-524%20PA.jpg",
     "statuscode": "200",
@@ -6804,13 +7602,6 @@
     "length": "195241"
   },
   {
-    "timestamp": "20080202183647",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/Large%20visuel/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "625"
-  },
-  {
     "timestamp": "20071015003136",
     "original": "http://www.carddass.fr/dbz/images/cartes/6/Large%20visuel/D-527%20PA.jpg",
     "statuscode": "200",
@@ -6823,13 +7614,6 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "107769"
-  },
-  {
-    "timestamp": "20080202183653",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/MED%20analyse%20semaine/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "668"
   },
   {
     "timestamp": "20071013060214",
@@ -6851,41 +7635,6 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "59741"
-  },
-  {
-    "timestamp": "20080202183556",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=D;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1559"
-  },
-  {
-    "timestamp": "20080202183601",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=M;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1557"
-  },
-  {
-    "timestamp": "20080204221506",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=N;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1558"
-  },
-  {
-    "timestamp": "20080202183607",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=N;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1557"
-  },
-  {
-    "timestamp": "20080202183614",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/6/?C=S;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1569"
   },
   {
     "timestamp": "20081121070009",
@@ -8841,55 +9590,6 @@
     "length": "355870"
   },
   {
-    "timestamp": "20071210124745",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "547"
-  },
-  {
-    "timestamp": "20080114082555",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/dwsync.xml",
-    "statuscode": "200",
-    "mimetype": "application/xml",
-    "length": "454"
-  },
-  {
-    "timestamp": "20080114082532",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=D;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "555"
-  },
-  {
-    "timestamp": "20080114082537",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=M;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "556"
-  },
-  {
-    "timestamp": "20080114082544",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=N;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "551"
-  },
-  {
-    "timestamp": "20080114082550",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/_notes/?C=S;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "556"
-  },
-  {
-    "timestamp": "20071210124750",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "2472"
-  },
-  {
     "timestamp": "20071013055927",
     "original": "http://www.carddass.fr/dbz/images/cartes/cartes_med/D-070_med.gif",
     "statuscode": "200",
@@ -8909,13 +9609,6 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "35269"
-  },
-  {
-    "timestamp": "20070227130543",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/D-182-med.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "39790"
   },
   {
     "timestamp": "20071013181109",
@@ -9009,13 +9702,6 @@
     "length": "42919"
   },
   {
-    "timestamp": "20070110110843",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/D-424-med.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "43644"
-  },
-  {
     "timestamp": "20071013180925",
     "original": "http://www.carddass.fr/dbz/images/cartes/cartes_med/D-425-med.jpg",
     "statuscode": "200",
@@ -9056,13 +9742,6 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "22325"
-  },
-  {
-    "timestamp": "20070110110852",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/cartes_med/D-510-med.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "41079"
   },
   {
     "timestamp": "20071013180645",
@@ -9597,13 +10276,6 @@
     "length": "38259"
   },
   {
-    "timestamp": "20071210124732",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1150"
-  },
-  {
     "timestamp": "20081118072936",
     "original": "http://www.carddass.fr/dbz/images/cartes/Promos/promo_Tbox08_1.jpg",
     "statuscode": "200",
@@ -9625,109 +10297,11 @@
     "length": "77656"
   },
   {
-    "timestamp": "20071231170500",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=D;O=A",
+    "timestamp": "20071013180610",
+    "original": "http://www.carddass.fr/dbz/images/clip_image002_0000.jpg",
     "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1154"
-  },
-  {
-    "timestamp": "20080222210646",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=D;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1158"
-  },
-  {
-    "timestamp": "20071231170503",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=M;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1168"
-  },
-  {
-    "timestamp": "20080222210651",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=M;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1168"
-  },
-  {
-    "timestamp": "20080102140649",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=N;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1156"
-  },
-  {
-    "timestamp": "20071231170508",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=N;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1154"
-  },
-  {
-    "timestamp": "20071231170522",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=S;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1173"
-  },
-  {
-    "timestamp": "20080222210656",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Promos/?C=S;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1184"
-  },
-  {
-    "timestamp": "20071210124742",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/Thumbs.db",
-    "statuscode": "200",
-    "mimetype": "text/plain",
-    "length": "40244"
-  },
-  {
-    "timestamp": "20071210124656",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=D;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "936"
-  },
-  {
-    "timestamp": "20071210124702",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=M;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "950"
-  },
-  {
-    "timestamp": "20071213001909",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=N;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "937"
-  },
-  {
-    "timestamp": "20071210124712",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=N;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "945"
-  },
-  {
-    "timestamp": "20071210124717",
-    "original": "http://www.carddass.fr:80/dbz/images/cartes/?C=S;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "931"
-  },
-  {
-    "timestamp": "20070320071203",
-    "original": "http://www.carddass.fr:80/dbz/images/catalogue_titlex.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "2544"
+    "mimetype": "image/jpeg",
+    "length": "20785"
   },
   {
     "timestamp": "20071013060206",
@@ -9737,11 +10311,11 @@
     "length": "21022"
   },
   {
-    "timestamp": "20071013180610",
-    "original": "http://www.carddass.fr/dbz/images/clip_image002_0000.jpg",
+    "timestamp": "20071013180635",
+    "original": "http://www.carddass.fr/dbz/images/clip_image004_0000.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
-    "length": "20785"
+    "length": "19246"
   },
   {
     "timestamp": "20071013060138",
@@ -9749,13 +10323,6 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "28032"
-  },
-  {
-    "timestamp": "20071013180635",
-    "original": "http://www.carddass.fr/dbz/images/clip_image004_0000.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "19246"
   },
   {
     "timestamp": "20071013055638",
@@ -9779,18 +10346,18 @@
     "length": "2431"
   },
   {
-    "timestamp": "20081118123730",
-    "original": "http://www.carddass.fr/dbz/images/dbz_sd-buu.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "15167"
-  },
-  {
     "timestamp": "20071013180815",
     "original": "http://www.carddass.fr/dbz/images/dbz_sd_piccolo.gif",
     "statuscode": "200",
     "mimetype": "image/gif",
     "length": "18599"
+  },
+  {
+    "timestamp": "20081118123730",
+    "original": "http://www.carddass.fr/dbz/images/dbz_sd-buu.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "15167"
   },
   {
     "timestamp": "20071013180406",
@@ -9870,20 +10437,6 @@
     "length": "12305"
   },
   {
-    "timestamp": "20070321132549",
-    "original": "http://www.carddass.fr:80/dbz/images/goku_c_j.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "7740"
-  },
-  {
-    "timestamp": "20070222074943",
-    "original": "http://www.carddass.fr:80/dbz/images/index.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "59129"
-  },
-  {
     "timestamp": "20071012155314",
     "original": "http://www.carddass.fr/dbz/images/interface_carddass.jpg",
     "statuscode": "200",
@@ -9910,20 +10463,6 @@
     "statuscode": "200",
     "mimetype": "application/x-msdos-program",
     "length": "2776434"
-  },
-  {
-    "timestamp": "20080101014821",
-    "original": "http://www.carddass.fr:80/dbz/images/logos%20s%E9ries/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "637"
-  },
-  {
-    "timestamp": "20080101014830",
-    "original": "http://www.carddass.fr:80/dbz/images/logos_series/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "767"
   },
   {
     "timestamp": "20081118072123",
@@ -9996,53 +10535,11 @@
     "length": "1788"
   },
   {
-    "timestamp": "20070320071049",
-    "original": "http://www.carddass.fr:80/dbz/images/magasins_titlex.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "2439"
-  },
-  {
     "timestamp": "20071015215214",
     "original": "http://www.carddass.fr/dbz/images/mode%20d'emploi%20logiciel.pdf",
     "statuscode": "200",
     "mimetype": "application/pdf",
     "length": "1119813"
-  },
-  {
-    "timestamp": "20070323091534",
-    "original": "http://www.carddass.fr:80/dbz/images/movimiento.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "736"
-  },
-  {
-    "timestamp": "20070110110738",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_01.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "34457"
-  },
-  {
-    "timestamp": "20070224192554",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_02.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "6973"
-  },
-  {
-    "timestamp": "20061214200556",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_03.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "3804"
-  },
-  {
-    "timestamp": "20061214200511",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_04.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "27474"
   },
   {
     "timestamp": "20071012160059",
@@ -10059,95 +10556,11 @@
     "length": "589"
   },
   {
-    "timestamp": "20070118182832",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_07.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "11352"
-  },
-  {
-    "timestamp": "20070118124234",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_08.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "1733"
-  },
-  {
     "timestamp": "20071012160052",
     "original": "http://www.carddass.fr/dbz/images/new_DESIGN_test3_09.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "512"
-  },
-  {
-    "timestamp": "20061215090054",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_10.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "491"
-  },
-  {
-    "timestamp": "20070223234218",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_11.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "495"
-  },
-  {
-    "timestamp": "20070110110635",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_12.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "591"
-  },
-  {
-    "timestamp": "20070118124255",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_13.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "1327"
-  },
-  {
-    "timestamp": "20061215090203",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_14.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "11050"
-  },
-  {
-    "timestamp": "20070110110706",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_15.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "490"
-  },
-  {
-    "timestamp": "20070110110747",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_16.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "493"
-  },
-  {
-    "timestamp": "20061214200521",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_17.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "645"
-  },
-  {
-    "timestamp": "20070118124414",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_18.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "1343"
-  },
-  {
-    "timestamp": "20070110110757",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_19.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "2009"
   },
   {
     "timestamp": "20071012155954",
@@ -10157,34 +10570,6 @@
     "length": "763"
   },
   {
-    "timestamp": "20070118124319",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_21.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "683"
-  },
-  {
-    "timestamp": "20070118182842",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_22.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "860"
-  },
-  {
-    "timestamp": "20061214200706",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_23.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "744"
-  },
-  {
-    "timestamp": "20070110110808",
-    "original": "http://www.carddass.fr:80/dbz/images/new_DESIGN_test3_24.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "1352"
-  },
-  {
     "timestamp": "20071013055958",
     "original": "http://www.carddass.fr/dbz/images/noticias_titlex.gif",
     "statuscode": "200",
@@ -10192,25 +10577,102 @@
     "length": "2284"
   },
   {
-    "timestamp": "20080101014851",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1395"
-  },
-  {
-    "timestamp": "20080101014846",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots%20et%20starters/",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "1454"
-  },
-  {
-    "timestamp": "20071012155923",
-    "original": "http://www.carddass.fr/dbz/images/packshots%20et%20starters/BOOSTER%206.gif",
+    "timestamp": "20071013060117",
+    "original": "http://www.carddass.fr/dbz/images/packshots/championnat_starter.gif",
     "statuscode": "200",
     "mimetype": "image/gif",
-    "length": "15658"
+    "length": "20934"
+  },
+  {
+    "timestamp": "20071013175938",
+    "original": "http://www.carddass.fr/dbz/images/packshots/DBCG%20BT1%20ESP%20Foil%20Pack.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "13888"
+  },
+  {
+    "timestamp": "20071013180427",
+    "original": "http://www.carddass.fr/dbz/images/packshots/enemies_starter_s.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "8447"
+  },
+  {
+    "timestamp": "20071013055849",
+    "original": "http://www.carddass.fr/dbz/images/packshots/enemies_starter.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "22530"
+  },
+  {
+    "timestamp": "20071013055859",
+    "original": "http://www.carddass.fr/dbz/images/packshots/EVEIL%20DE%20GOHAN%20copy.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "29242"
+  },
+  {
+    "timestamp": "20071013055917",
+    "original": "http://www.carddass.fr/dbz/images/packshots/forces_starter.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "33717"
+  },
+  {
+    "timestamp": "20071013055937",
+    "original": "http://www.carddass.fr/dbz/images/packshots/heroes_starter.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "20558"
+  },
+  {
+    "timestamp": "20071013175525",
+    "original": "http://www.carddass.fr/dbz/images/packshots/packshot_serie3a.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "25335"
+  },
+  {
+    "timestamp": "20071013060042",
+    "original": "http://www.carddass.fr/dbz/images/packshots/retour_starter.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "21827"
+  },
+  {
+    "timestamp": "20071013055945",
+    "original": "http://www.carddass.fr/dbz/images/packshots/RUBAN%20ROUGE.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "28853"
+  },
+  {
+    "timestamp": "20071013180324",
+    "original": "http://www.carddass.fr/dbz/images/packshots/serie2_booster.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "21131"
+  },
+  {
+    "timestamp": "20081118072426",
+    "original": "http://www.carddass.fr/dbz/images/packshots/Tin-boxDB.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "188272"
+  },
+  {
+    "timestamp": "20071013180152",
+    "original": "http://www.carddass.fr/dbz/images/packshots/TIN%20BOX%20DBCG%20taille%20med.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "136883"
+  },
+  {
+    "timestamp": "20071013055832",
+    "original": "http://www.carddass.fr/dbz/images/packshots/vaincre_starter-copy.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "30628"
   },
   {
     "timestamp": "20081118072726",
@@ -10218,6 +10680,13 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "67944"
+  },
+  {
+    "timestamp": "20071012155923",
+    "original": "http://www.carddass.fr/dbz/images/packshots%20et%20starters/BOOSTER%206.gif",
+    "statuscode": "200",
+    "mimetype": "image/gif",
+    "length": "15658"
   },
   {
     "timestamp": "20081118072952",
@@ -10255,13 +10724,6 @@
     "length": "11154"
   },
   {
-    "timestamp": "20071012155827",
-    "original": "http://www.carddass.fr/dbz/images/packshots%20et%20starters/STARTER%206.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "70823"
-  },
-  {
     "timestamp": "20071013180255",
     "original": "http://www.carddass.fr/dbz/images/packshots%20et%20starters/starter_planete.gif",
     "statuscode": "200",
@@ -10281,6 +10743,13 @@
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "94007"
+  },
+  {
+    "timestamp": "20071012155827",
+    "original": "http://www.carddass.fr/dbz/images/packshots%20et%20starters/STARTER%206.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "70823"
   },
   {
     "timestamp": "20081118072745",
@@ -10304,165 +10773,11 @@
     "length": "96847"
   },
   {
-    "timestamp": "20071013060117",
-    "original": "http://www.carddass.fr/dbz/images/packshots/championnat_starter.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "20934"
-  },
-  {
-    "timestamp": "20071013175938",
-    "original": "http://www.carddass.fr/dbz/images/packshots/DBCG%20BT1%20ESP%20Foil%20Pack.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "13888"
-  },
-  {
-    "timestamp": "20071013055849",
-    "original": "http://www.carddass.fr/dbz/images/packshots/enemies_starter.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "22530"
-  },
-  {
-    "timestamp": "20071013180427",
-    "original": "http://www.carddass.fr/dbz/images/packshots/enemies_starter_s.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "8447"
-  },
-  {
-    "timestamp": "20070118124328",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/enemies_starter_small.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "8817"
-  },
-  {
-    "timestamp": "20071013055859",
-    "original": "http://www.carddass.fr/dbz/images/packshots/EVEIL%20DE%20GOHAN%20copy.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "29242"
-  },
-  {
-    "timestamp": "20071013055917",
-    "original": "http://www.carddass.fr/dbz/images/packshots/forces_starter.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "33717"
-  },
-  {
-    "timestamp": "20071013055937",
-    "original": "http://www.carddass.fr/dbz/images/packshots/heroes_starter.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "20558"
-  },
-  {
-    "timestamp": "20070222080258",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/heroes_starter_s.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "7412"
-  },
-  {
-    "timestamp": "20071013175525",
-    "original": "http://www.carddass.fr/dbz/images/packshots/packshot_serie3a.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "25335"
-  },
-  {
-    "timestamp": "20070224053414",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/packshot_serie4a.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "11776"
-  },
-  {
-    "timestamp": "20071013060042",
-    "original": "http://www.carddass.fr/dbz/images/packshots/retour_starter.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "21827"
-  },
-  {
-    "timestamp": "20071013055945",
-    "original": "http://www.carddass.fr/dbz/images/packshots/RUBAN%20ROUGE.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "28853"
-  },
-  {
-    "timestamp": "20071013180324",
-    "original": "http://www.carddass.fr/dbz/images/packshots/serie2_booster.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "21131"
-  },
-  {
-    "timestamp": "20070110110819",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/starters_s3.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "10256"
-  },
-  {
-    "timestamp": "20070321081612",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/stuffx.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "37530"
-  },
-  {
-    "timestamp": "20071013180152",
-    "original": "http://www.carddass.fr/dbz/images/packshots/TIN%20BOX%20DBCG%20taille%20med.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "136883"
-  },
-  {
-    "timestamp": "20081118072426",
-    "original": "http://www.carddass.fr/dbz/images/packshots/Tin-boxDB.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "188272"
-  },
-  {
-    "timestamp": "20070110110902",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/vaincre_starter%20copy.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "22958"
-  },
-  {
-    "timestamp": "20071013055832",
-    "original": "http://www.carddass.fr/dbz/images/packshots/vaincre_starter-copy.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "30628"
-  },
-  {
-    "timestamp": "20070110110829",
-    "original": "http://www.carddass.fr:80/dbz/images/packshots/wallpaper_small.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "7020"
-  },
-  {
     "timestamp": "20081118015416",
     "original": "http://www.carddass.fr/dbz/images/page1mini.jpg",
     "statuscode": "200",
     "mimetype": "image/jpeg",
     "length": "4131"
-  },
-  {
-    "timestamp": "20071013055425",
-    "original": "http://www.carddass.fr/dbz/images/Photo-kit-ligue.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "38232"
   },
   {
     "timestamp": "20071015003946",
@@ -10472,53 +10787,18 @@
     "length": "44591"
   },
   {
+    "timestamp": "20071013055425",
+    "original": "http://www.carddass.fr/dbz/images/Photo-kit-ligue.jpg",
+    "statuscode": "200",
+    "mimetype": "image/jpeg",
+    "length": "38232"
+  },
+  {
     "timestamp": "20071013175924",
     "original": "http://www.carddass.fr/dbz/images/prod_fre.gif",
     "statuscode": "200",
     "mimetype": "image/gif",
     "length": "19376"
-  },
-  {
-    "timestamp": "20070222074911",
-    "original": "http://www.carddass.fr:80/dbz/images/prod_goku.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "22012"
-  },
-  {
-    "timestamp": "20070222075113",
-    "original": "http://www.carddass.fr:80/dbz/images/prod_shen.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "19804"
-  },
-  {
-    "timestamp": "20061214200911",
-    "original": "http://www.carddass.fr:80/dbz/images/separador_bola.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "1906"
-  },
-  {
-    "timestamp": "20070320071007",
-    "original": "http://www.carddass.fr:80/dbz/images/terrain_livret.jpg",
-    "statuscode": "200",
-    "mimetype": "image/jpeg",
-    "length": "42288"
-  },
-  {
-    "timestamp": "20080101013929",
-    "original": "http://www.carddass.fr:80/dbz/images/Thumbs.db",
-    "statuscode": "200",
-    "mimetype": "text/plain",
-    "length": "403501"
-  },
-  {
-    "timestamp": "20070301065535",
-    "original": "http://www.carddass.fr:80/dbz/images/titres_carte_semainex.gif",
-    "statuscode": "200",
-    "mimetype": "image/gif",
-    "length": "2933"
   },
   {
     "timestamp": "20071013055541",
@@ -10542,151 +10822,11 @@
     "length": "2458"
   },
   {
-    "timestamp": "20080101013907",
-    "original": "http://www.carddass.fr:80/dbz/images/?C=D;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3142"
-  },
-  {
-    "timestamp": "20080101013912",
-    "original": "http://www.carddass.fr:80/dbz/images/?C=M;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3153"
-  },
-  {
-    "timestamp": "20080101013914",
-    "original": "http://www.carddass.fr:80/dbz/images/?C=N;O=D",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3111"
-  },
-  {
-    "timestamp": "20080101013921",
-    "original": "http://www.carddass.fr:80/dbz/images/?C=S;O=A",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3056"
-  },
-  {
-    "timestamp": "20070108125429",
-    "original": "http://www.carddass.fr:80/dbz/index.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3419"
-  },
-  {
-    "timestamp": "20071205062019",
-    "original": "http://www.carddass.fr:80/dbz/jeu_organise.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4740"
-  },
-  {
-    "timestamp": "20061208200548",
-    "original": "http://www.carddass.fr:80/dbz/ligue.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "2253"
-  },
-  {
     "timestamp": "20071014095533",
     "original": "http://www.carddass.fr/dbz/ligue_resultats.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "2772"
-  },
-  {
-    "timestamp": "20070221041824",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "2538"
-  },
-  {
-    "timestamp": "20070502144508",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s1.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "6056"
-  },
-  {
-    "timestamp": "20090421110440",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s10.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5364"
-  },
-  {
-    "timestamp": "20070222074859",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s2.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5367"
-  },
-  {
-    "timestamp": "20070510023620",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s3.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5633"
-  },
-  {
-    "timestamp": "20070510031140",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s3.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5413"
-  },
-  {
-    "timestamp": "20070507024701",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s4.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5376"
-  },
-  {
-    "timestamp": "20070110032932",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s4.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4885"
-  },
-  {
-    "timestamp": "20070527115653",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s5.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4925"
-  },
-  {
-    "timestamp": "20070531074526",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s5.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4827"
-  },
-  {
-    "timestamp": "20070915024706",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s6.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4520"
-  },
-  {
-    "timestamp": "20080206075847",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s7.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4865"
-  },
-  {
-    "timestamp": "20080724200700",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_s8.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5038"
   },
   {
     "timestamp": "20081120155713",
@@ -10696,67 +10836,11 @@
     "length": "5473"
   },
   {
-    "timestamp": "20090921164613",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_Sups1.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "6154"
-  },
-  {
-    "timestamp": "20091229141105",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sups2.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "6381"
-  },
-  {
-    "timestamp": "20100108134716",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sups3.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "6136"
-  },
-  {
-    "timestamp": "20101227083002",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sups4.html",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5713"
-  },
-  {
-    "timestamp": "20071225122806",
-    "original": "http://www.carddass.fr:80/dbz/liste_cartes_sx.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4878"
-  },
-  {
-    "timestamp": "20070310182059",
-    "original": "http://www.carddass.fr:80/dbz/magasins.htm#dpt37",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "9955"
-  },
-  {
-    "timestamp": "20070305172903",
-    "original": "http://www.carddass.fr:80/dbz/news.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "5043"
-  },
-  {
     "timestamp": "20071013180011",
     "original": "http://www.carddass.fr/dbz/result_intergalactique_07.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "3993"
-  },
-  {
-    "timestamp": "20070519012115",
-    "original": "http://www.carddass.fr:80/dbz/resume_cdf_07.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "4953"
   },
   {
     "timestamp": "20071013180039",
@@ -10773,32 +10857,11 @@
     "length": "711"
   },
   {
-    "timestamp": "20070108124745",
-    "original": "http://www.carddass.fr:80/dbz/tournois.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "2389"
-  },
-  {
     "timestamp": "20071013175755",
     "original": "http://www.carddass.fr/dbz/tournois_classiques.htm",
     "statuscode": "200",
     "mimetype": "text/html",
     "length": "4152"
-  },
-  {
-    "timestamp": "20070614190336",
-    "original": "http://www.carddass.fr:80/dbz/tournois_majeurs.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "3090"
-  },
-  {
-    "timestamp": "20070505220128",
-    "original": "http://www.carddass.fr:80/dbz/tournois_preview.htm",
-    "statuscode": "200",
-    "mimetype": "text/html",
-    "length": "7524"
   },
   {
     "timestamp": "20071015215314",

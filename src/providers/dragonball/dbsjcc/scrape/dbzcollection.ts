@@ -35,6 +35,7 @@ import {
   writeLocalSealedProducts,
   type LocalSealedWrite,
 } from "@/providers/shared/sealedProducts/localWrite";
+import { sealedSlugHostId } from "@/providers/shared/sealedProducts/rewrite";
 
 import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
 import {
@@ -52,9 +53,12 @@ import {
   type DbzcPackTile,
 } from "../parse/dbzcollection";
 import {
-  dbsjccPrintKey,
-  dbsjccSetLabel,
-  formatDbsjccReference,
+  buildDbsjccCanonicalMap,
+  preferredFaceFile,
+  resolveCanonicalForListing,
+} from "../canonicalPrint";
+import {
+  formatDbsjccCollectorReference,
   normalizeGrouping,
   parseDbsjccNumber,
 } from "../printKey";
@@ -134,7 +138,7 @@ export function enabledDbzcSets(
 }
 
 /** Slugifies a power / scouter variant descriptor into a clean grouping segment. */
-function powerToGroupingSlug(power: string): string {
+export function powerToGroupingSlug(power: string): string {
   const clean = power
     .toLowerCase()
     .normalize("NFD")
@@ -159,8 +163,8 @@ function rarityToSlug(rarity: string | null): string {
 
 /**
  * Attribue à chaque carte du set un `grouping` unique et déterministe.
- * Si le numéro est unique dans le set : grouping = null.
- * S'il y a des doublons : regroupe par pouvoir caché, rareté ou caractéristique.
+ * Singleton avec pouvoir caché → grouping quand même (`-kaio` / `-main`…).
+ * Doublons → pouvoir / rareté / caractéristique pour les distinguer.
  */
 export function assignCardGroupings(
   cards: Array<DbzcCardTile & { detail?: DbzcCardDetail | null }>,
@@ -181,7 +185,10 @@ export function assignCardGroupings(
 
   for (const [, group] of byNumber) {
     if (group.length === 1) {
-      out.set(group[0]!.cardId, null);
+      const card = group[0]!;
+      const pc = card.detail?.pouvoirCache?.trim();
+      const slug = pc ? normalizeGrouping(powerToGroupingSlug(pc)) : null;
+      out.set(card.cardId, slug);
       continue;
     }
 
@@ -255,6 +262,9 @@ function packKind(label: string): { kind: SealedKind; category: string } {
   if (lower.includes("box")) return { kind: "collector_box", category: "tin-box" };
   if (lower.includes("scouter") || lower.includes("tecteur")) {
     return { kind: "ephemera", category: "scouter" };
+  }
+  if (lower.includes("poster")) {
+    return { kind: "ephemera", category: "poster" };
   }
   return { kind: "ephemera", category: "sealed" };
 }
@@ -402,7 +412,7 @@ export async function harvestSet(
     const pouvoirCache = card.detail?.pouvoirCache?.trim() || null;
     const title = characterName
       ? characterName
-      : formatDbsjccReference(set.setCode, card.printed, rarity, pouvoirCache);
+      : formatDbsjccCollectorReference(set.setCode, card.printed);
 
     writeFileSync(
       manifestDest,
@@ -622,34 +632,25 @@ export function installDbzcollectionFaces(
   const ledger = readDbzcollectionLedger();
   const sets = enabledDbzcSets(ledger, opts.argv ?? []);
 
-  let prints = 0;
-  let titles = 0;
-  let faces = 0;
   let dumps = 0;
   const missingList: string[] = [];
-  const assets: {
-    printKey: string;
-    lang: string;
-    art: string;
-    sourceUrl: string;
-  }[] = [];
+  /** Titles / rarities harvested per listing set — merged onto canonical keys. */
+  type ListingMeta = {
+    setCode: string;
+    number: string;
+    grouping: string | null;
+    fullName: string;
+    rarity: string | null;
+    faceUrl: string;
+  };
+  const listings: ListingMeta[] = [];
 
   for (const set of sets) {
     const lang = "fr";
     const staging = setStagingDir(set.setCode, stagingRoot);
     const manifests = readCardManifests(staging);
-    const printRows: LocalPrintWrite[] = [];
 
     for (const row of manifests) {
-      const printKey = dbsjccPrintKey(
-        row.setCode,
-        row.printed,
-        row.grouping,
-      );
-      if (!printKey) {
-        missingList.push(`${row.setCode}:${row.printed}`);
-        continue;
-      }
       const folder = cardFolderName(row.normalizedNumber, row.grouping);
       const src = path.join(staging, `${folder}.jpg`);
       if (!existsSync(src)) {
@@ -659,29 +660,21 @@ export function installDbzcollectionFaces(
 
       const fullName =
         row.name?.trim() ||
-        formatDbsjccReference(
-          row.setCode,
-          row.printed,
-          row.rarity,
-          row.pouvoirCache,
-        );
+        formatDbsjccCollectorReference(row.setCode, row.printed);
 
-      printRows.push({
-        printKey,
+      listings.push({
         setCode: row.setCode.trim().toLowerCase(),
         number: row.normalizedNumber,
-        cardType: row.setCode.trim().toLowerCase(),
         grouping: row.grouping ?? null,
-        sourceUrl: row.faceUrl,
-        titles: [
-          {
-            lang,
-            fullName,
-            rarity: row.rarity ?? null,
-          },
-        ],
+        fullName,
+        rarity: row.rarity ?? null,
+        faceUrl: row.faceUrl,
       });
 
+      /*
+        Dump under the listing set first — the face hash scan clusters
+        identical arts across series afterwards.
+      */
       const destDir = path.join(
         packCardsDir(DBS_JCC_PACK_ID),
         row.setCode.trim().toLowerCase(),
@@ -689,28 +682,141 @@ export function installDbzcollectionFaces(
         folder,
       );
       mkdirSync(destDir, { recursive: true });
-      const artName = `art.${SOURCE_ID}.jpg`;
-      copyFileSync(src, path.join(destDir, artName));
+      copyFileSync(src, path.join(destDir, `art.${SOURCE_ID}.jpg`));
       dumps += 1;
-
-      assets.push({
-        printKey,
-        lang,
-        art: artName,
-        sourceUrl: row.faceUrl,
-      });
-      faces += 1;
-    }
-
-    if (printRows.length) {
-      const written = index.writePrints(printRows);
-      prints += written.prints;
-      titles += written.titles;
     }
   }
 
+  const catalogue = buildDbsjccCanonicalMap();
+  const printByKey = new Map<
+    string,
+    LocalPrintWrite & { sourceUrl: string | null }
+  >();
+  const assets: {
+    printKey: string;
+    lang: string;
+    art: string;
+    sourceUrl: string;
+  }[] = [];
+
+  for (const listing of listings) {
+    const canonical = resolveCanonicalForListing({
+      setCode: listing.setCode,
+      number: listing.number,
+      powerGrouping: listing.grouping,
+      catalogue,
+    });
+    if (!canonical) {
+      missingList.push(`${listing.setCode}:${listing.number}:no-canonical`);
+      continue;
+    }
+
+    const cardType = canonical.number.startsWith("sp") ? "sp" : "d";
+    const prev = printByKey.get(canonical.printKey);
+    const titles = [...(prev?.titles ?? [])];
+    if (!titles.some((t) => t.lang === "fr")) {
+      titles.push({
+        lang: "fr",
+        fullName: listing.fullName,
+        rarity: listing.rarity,
+      });
+    } else if (listing.rarity && /holo|prism/i.test(listing.rarity)) {
+      /*
+        Prefer a foil rarity stamp when the same face was listed as Rare in
+        one set and Holo in another — finishes read the title rarity.
+      */
+      const fr = titles.find((t) => t.lang === "fr");
+      if (fr && !dbsjccFinishWorthy(fr.rarity) && dbsjccFinishWorthy(listing.rarity)) {
+        fr.rarity = listing.rarity;
+      }
+    }
+
+    printByKey.set(canonical.printKey, {
+      printKey: canonical.printKey,
+      setCode: canonical.homeSet,
+      setCodes: canonical.setCodes,
+      number: canonical.number,
+      cardType,
+      grouping: canonical.grouping,
+      sourceUrl: listing.faceUrl,
+      titles,
+    });
+  }
+
+  /*
+    Place the preferred face under the home set + lettered card id so
+    `cardDiskIdFromPrintKey` resolves.
+  */
+  for (const print of printByKey.values()) {
+    const card = print.grouping
+      ? `${print.number}-${print.grouping}`
+      : print.number;
+    const homeDir = path.join(
+      packCardsDir(DBS_JCC_PACK_ID),
+      print.setCode,
+      "fr",
+      card,
+    );
+    mkdirSync(homeDir, { recursive: true });
+    let artName: string | null = null;
+    let sourceUrl = print.sourceUrl ?? "";
+    for (const setCode of print.setCodes ?? [print.setCode]) {
+      const baseNum = print.number.replace(/[a-z]+$/i, "");
+      const candidates = [
+        path.join(packCardsDir(DBS_JCC_PACK_ID), setCode, "fr", card),
+        path.join(
+          packCardsDir(DBS_JCC_PACK_ID),
+          setCode,
+          "fr",
+          print.grouping ? `${baseNum}-${print.grouping}` : baseNum,
+        ),
+      ];
+      for (const dir of candidates) {
+        const face = preferredFaceFile(dir);
+        if (!face) continue;
+        artName = path.basename(face);
+        if (path.resolve(dir) !== path.resolve(homeDir)) {
+          copyFileSync(face, path.join(homeDir, artName));
+        }
+        break;
+      }
+      if (artName) break;
+    }
+    if (artName) {
+      assets.push({
+        printKey: print.printKey,
+        lang: "fr",
+        art: artName,
+        sourceUrl,
+      });
+    }
+  }
+
+  const printRows = [...printByKey.values()];
+  let prints = 0;
+  let titles = 0;
+  if (printRows.length) {
+    const written = index.writePrints(printRows);
+    prints = written.prints;
+    titles = written.titles;
+  }
   if (assets.length) index.writeAssets(assets);
-  return { prints, titles, faces, dumps, missing: missingList };
+
+  const keep = new Set(printRows.map((row) => row.printKey));
+  if (keep.size) index.prunePrintsExcept(keep);
+
+  return {
+    prints,
+    titles,
+    faces: assets.length,
+    dumps,
+    missing: missingList,
+  };
+}
+
+function dbsjccFinishWorthy(rarity: string | null | undefined): boolean {
+  const key = rarity?.trim().toLowerCase() ?? "";
+  return key.includes("holo") || key === "prism";
 }
 
 type PackManifest = {
@@ -723,6 +829,58 @@ type PackManifest = {
   faceUrl: string;
   listingUrl: string;
 };
+
+/**
+ * Même libellé + même set sur deux packIds dbzc = recto puis verso.
+ * On garde le plus petit id comme face, l'autre devient `imageBackPath`.
+ */
+export function pairDbzcFaceBackPackWrites(
+  products: readonly LocalSealedWrite[],
+): LocalSealedWrite[] {
+  const groups = new Map<string, LocalSealedWrite[]>();
+  for (const product of products) {
+    const key = [
+      (product.setCode ?? "").trim().toLowerCase(),
+      product.kind,
+      product.lang.trim().toLowerCase(),
+      product.name
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{M}/gu, "")
+        .replace(/[\s—–_-]+/g, " ")
+        .trim(),
+    ].join("\0");
+    const list = groups.get(key) ?? [];
+    list.push(product);
+    groups.set(key, list);
+  }
+
+  const out: LocalSealedWrite[] = [];
+  for (const list of groups.values()) {
+    if (list.length !== 2) {
+      out.push(...list);
+      continue;
+    }
+    const ranked = [...list].sort((a, b) => {
+      const idA = sealedSlugHostId(a.slug);
+      const idB = sealedSlugHostId(b.slug);
+      if (idA != null && idB != null && idA !== idB) return idA - idB;
+      return a.slug.localeCompare(b.slug, "en");
+    });
+    const front = ranked[0]!;
+    const back = ranked[1]!;
+    if (!front.artPath || !back.artPath) {
+      out.push(...list);
+      continue;
+    }
+    out.push({
+      ...front,
+      imageBackPath: front.imageBackPath ?? back.artPath,
+    });
+  }
+  return out;
+}
 
 export function ingestDbzcollectionSealedProducts(
   opts: { stagingDir?: string; argv?: readonly string[] } = {},
@@ -763,6 +921,8 @@ export function ingestDbzcollectionSealedProducts(
       if (!existsSync(artPath)) continue;
 
       const { kind, category } = packKind(row.label);
+      // Détecteur = carte catalogue ; poster checklist = champ `poster` du deck.
+      if (category === "scouter" || category === "poster") continue;
       const cardsPerPack =
         kind === "booster"
           ? (set.cardsPerBooster ?? 8)
@@ -791,6 +951,6 @@ export function ingestDbzcollectionSealedProducts(
   return writeLocalSealedProducts({
     packId: DBS_JCC_PACK_ID,
     source: SOURCE_ID,
-    products,
+    products: pairDbzcFaceBackPackWrites(products),
   });
 }

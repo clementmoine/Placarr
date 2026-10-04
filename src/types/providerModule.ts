@@ -189,6 +189,12 @@ export type PrintSearchContext = {
    * liste vide plutôt que d'ignorer la restriction et de répondre à côté.
    */
   setId?: string | null;
+  /**
+   * Parcourir **tout** le catalogue du jeu (jeu choisi, pas d'extension).
+   * Requête vide légitime — même intention que `setId`, sans borne d'extension.
+   * Les tirages sortent en ordre collectionneur (set puis numéro).
+   */
+  catalogueBrowse?: boolean;
 };
 
 /** Une extension telle qu'un joueur la nomme, pour la choisir avant de chercher. */

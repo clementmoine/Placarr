@@ -49,6 +49,14 @@ export type SealedProductEntry = {
    * photographient que la face avant.
    */
   imageBack: string | null;
+  /**
+   * Affiche / poster checklist fournie avec le deck (ex. Série 9 Héros).
+   *
+   * Distinct du dos emballage (`imageBack`) : c'est le document à plat
+   * (liste de cartes, art) — pas la face arrière de la boîte. Absent sur
+   * la plupart des SKU.
+   */
+  poster?: string | null;
   /** Series logo (Naruto packshots, Pokémon TCGdex wordmark, …). */
   setLogo: string | null;
   setCode: string | null;

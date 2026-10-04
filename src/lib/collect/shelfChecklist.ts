@@ -15,6 +15,7 @@ import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { parsePrintKey } from "@/core/identify/printKey";
 import {
   buildShelfChecklist,
+  resolveMasterSetOwned,
   type ChecklistPrint,
   type ShelfChecklist,
 } from "@/core/collect/checklist";
@@ -31,6 +32,7 @@ import {
 } from "@/core/collect/buyAdvice";
 import { displayEstimatedCentsFromOffers } from "@/core/commerce/pricing/pricePipeline";
 import type { PriceObservation } from "@/core/commerce/pricing/priceTypes";
+import { normalizeVariantOptions } from "@/core/enrich/variants";
 import {
   readBoosterCompositionFile,
   resolveBoosterComposition,
@@ -381,19 +383,41 @@ async function priceMissing(
 
 export async function buildChecklistForShelf(input: {
   shelfType: MediaType;
-  /** `printKey` des exemplaires possédés, déjà filtrés sur la langue. */
+  /**
+   * Exemplaires possédés, déjà filtrés sur la langue.
+   *
+   * Mode classique : `printKey` en minuscules.
+   * Master set : {@link checklistOwnedKey} (`printKey|finish`).
+   */
   owned: ReadonlySet<string>;
   language?: string | null;
   /** Nom d'étagère — borne au catalogue quand il est unique (Ninja Ranks…). */
   shelfName?: string | null;
+  /**
+   * Master set : une ligne par finition, possession exacte print×finish.
+   * Sinon toute finition du même `printKey` compte.
+   */
+  masterSet?: boolean;
 }): Promise<ShelfChecklistResult> {
-  const games = gamesInShelf(input.owned);
+  const masterSet = Boolean(input.masterSet);
+  /*
+    `gamesInShelf` / catalogues lisent des printKey. En master set les clés
+    owned sont `printKey|finish` — on récupère le premier segment.
+  */
+  const ownedPrintKeys = new Set(
+    [...input.owned].map((key) => {
+      if (!masterSet) return key;
+      const pipe = key.indexOf("|");
+      return pipe >= 0 ? key.slice(0, pipe) : key;
+    }),
+  );
+  const games = gamesInShelf(ownedPrintKeys);
   const language = input.language?.trim().toLowerCase() || null;
   const gameScoped = providersForShelf({ type: input.shelfType, games });
   const catalogueIds = await resolveChecklistCatalogueIds({
     modules: gameScoped,
     shelfName: input.shelfName,
-    owned: input.owned,
+    owned: ownedPrintKeys,
     language,
   });
   const modules = providersForShelf({
@@ -417,6 +441,9 @@ export async function buildChecklistForShelf(input: {
   const prints: ChecklistPrint[] = [];
   const productsBySet = new Map<string, BuyProduct[]>();
   const allSealed: BuyProduct[] = [];
+  /** Finitions catalogue par printKey (minuscules) — master set ownership. */
+  const finishesByPrintKey = new Map<string, string[]>();
+  const plainFinishesByPrintKey = new Map<string, string[]>();
 
   for (const pack of modules) {
     catalogues.push({
@@ -462,14 +489,41 @@ export async function buildChecklistForShelf(input: {
       for (const row of await Promise.resolve(
         pack.listSetPrints!({ setId: set.id, language }),
       )) {
-        prints.push({
+        const base = {
           printKey: row.printKey,
           setId: set.id,
           reference: row.reference ?? row.printKey,
           title: row.title ?? row.reference ?? row.printKey,
           thumbnailUrl: row.thumbnailUrl ?? row.imageUrl ?? null,
           rarity: row.rarity ?? null,
-        });
+        };
+        if (!masterSet) {
+          prints.push(base);
+          continue;
+        }
+        /*
+          Master set : une ligne par finition annoncée. Sans liste, une seule
+          ligne (finish null) — comme le print picker.
+        */
+        const finishes = normalizeVariantOptions(row.finishes);
+        const printKeyLower = row.printKey.trim().toLowerCase();
+        finishesByPrintKey.set(printKeyLower, finishes);
+        plainFinishesByPrintKey.set(
+          printKeyLower,
+          normalizeVariantOptions(row.plainFinishes),
+        );
+        if (finishes.length === 0) {
+          prints.push({ ...base, finish: null });
+          continue;
+        }
+        for (const finish of finishes) {
+          const finishArt = row.variantImageUrls?.[finish]?.trim();
+          prints.push({
+            ...base,
+            finish,
+            thumbnailUrl: finishArt || base.thumbnailUrl,
+          });
+        }
       }
     }
   }
@@ -521,8 +575,15 @@ export async function buildChecklistForShelf(input: {
   const checklist = buildShelfChecklist({
     sets,
     prints,
-    owned: input.owned,
+    owned: masterSet
+      ? resolveMasterSetOwned({
+          owned: input.owned,
+          finishesByPrintKey,
+          plainFinishesByPrintKey,
+        })
+      : input.owned,
     language,
+    masterSet,
   });
 
   const advice: ChecklistSetAdvice[] = [];

@@ -1,7 +1,75 @@
 import { describe, expect, it } from "vitest";
 
-import type { ProductsIndexV1 } from "./indexFormat";
-import { rewriteSealedProductsIndex } from "./rewrite";
+import type { ProductsIndexV1, SealedProductEntry } from "./indexFormat";
+import {
+  mergeSealedFaceBackPairs,
+  rewriteSealedProductName,
+  rewriteSealedProductsIndex,
+} from "./rewrite";
+
+function entry(
+  partial: Partial<SealedProductEntry> & Pick<SealedProductEntry, "slug">,
+): SealedProductEntry {
+  return {
+    path: "",
+    kind: "collector_box",
+    behavior: "mixed_bundle",
+    category: "tin-box",
+    name: "Série 6 — Box",
+    image: null,
+    imageBack: null,
+    setLogo: null,
+    setCode: "part6",
+    lang: "fr",
+    releaseDate: null,
+    priceCents: null,
+    cardsPerPack: null,
+    packsContained: null,
+    guaranteedPrints: [],
+    randomPoolScope: "unknown",
+    randomPoolPrints: [],
+    declaredCardCount: null,
+    setCardCount: null,
+    contentsKnown: false,
+    containsPrintsIsPreview: false,
+    prints: [],
+    ...partial,
+  };
+}
+
+describe("rewriteSealedProductName", () => {
+  it("repairs latin-1 mojibake left as U+FFFD", () => {
+    expect(rewriteSealedProductName("Série 4 — D\uFFFDtecteur")).toBe(
+      "Série 4 — Détecteur",
+    );
+    expect(rewriteSealedProductName("Part 9 — Starter Héros")).toBe(
+      "Série 9 — Starter Héros",
+    );
+    expect(rewriteSealedProductName("Part Promo — Carte")).toBe(
+      "Série Promo — Carte",
+    );
+  });
+});
+
+describe("mergeSealedFaceBackPairs", () => {
+  it("collapses recto/verso SKUs into one product with imageBack", () => {
+    const products: Record<string, SealedProductEntry> = {
+      "dragonball/jcc::part6-box-1510": entry({
+        slug: "part6-box-1510",
+        image: "/assets/dragonball/jcc/products/part6-box-1510/fr/art.jpg",
+      }),
+      "dragonball/jcc::part6-box-1511": entry({
+        slug: "part6-box-1511",
+        image: "/assets/dragonball/jcc/products/part6-box-1511/fr/art.jpg",
+      }),
+    };
+    expect(mergeSealedFaceBackPairs(products)).toBe(1);
+    expect(Object.keys(products)).toEqual(["dragonball/jcc::part6-box-1510"]);
+    expect(products["dragonball/jcc::part6-box-1510"]?.imageBack).toBe(
+      "/assets/dragonball/jcc/products/part6-box-1511/fr/art.jpg",
+    );
+  });
+});
 
 describe("rewriteSealedProductsIndex", () => {
   it("promotes coffret categories and normalizes langs without changing slugs", () => {

@@ -729,12 +729,17 @@ export function listNarutoPrintSets(language?: string | null): {
 
 export function searchNarutoPrints(
   query: string,
-  opts: { language?: string; limit?: number; setId?: string | null } = {},
+  opts: {
+    language?: string;
+    limit?: number;
+    setId?: string | null;
+    catalogueBrowse?: boolean;
+  } = {},
 ): PrintCandidate[] {
   const trimmed = query.trim();
   const setId = opts.setId?.trim().toLowerCase();
-  // Une extension seule est une question complète : « montre-moi ce set ».
-  if (!isAnsweredQuery(trimmed, setId)) return [];
+  // Une extension seule — ou un parcours catalogue — est une question complète.
+  if (!isAnsweredQuery(trimmed, setId, opts.catalogueBrowse)) return [];
 
   const requestedLang = opts.language?.trim().toLowerCase() || "";
   if (requestedLang && !isNarutoCatalogueLanguage(requestedLang)) return [];

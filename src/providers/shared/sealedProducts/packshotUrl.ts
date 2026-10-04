@@ -5,7 +5,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { assetsPackFileUrl, rewriteAssetPackUrl } from "@/lib/packAssetUrls";
 import { packSealedProductsDir } from "@/lib/packPaths";
 import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
 
@@ -63,7 +63,9 @@ export function resolveSealedPackshotUrl(input: {
     /* fall through */
   }
 
-  const fallback = input.fallback?.trim() || null;
+  const fallback = input.fallback?.trim()
+    ? rewriteAssetPackUrl(input.fallback)
+    : null;
   if (fallback) return fallback;
 
   const arts = artFilesIn(dir);
@@ -93,8 +95,9 @@ export function backfillSealedProductPackshots(
     });
     if (!next) continue;
     if (entry.image === next) continue;
-    // Only fill holes — don't rewrite a working index URL during backfill.
-    if (entry.image?.trim()) continue;
+    const current = entry.image?.trim() || "";
+    // Fill holes, or rewrite a legacy `/assets/<alias>/…` URL onto disk.
+    if (current && rewriteAssetPackUrl(current) === current) continue;
     entry.image = next;
     filled += 1;
   }

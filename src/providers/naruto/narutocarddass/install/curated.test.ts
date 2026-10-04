@@ -596,6 +596,11 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       });
       const pr096de = redditNarutoccg.threads.find((row) => row.id === "ugdgqq");
       expect(pr096de?.attests?.some((a) => a.ref === "PR-096")).toBe(true);
+      const inventory = redditNarutoccg.threads.find((row) => row.id === "1uhfnge");
+      expect(inventory?.kind).toBe("inventory-sheet");
+      expect(inventory?.line).toBe("en-ccg");
+      expect(inventory?.sheet?.rowsClaimed).toBe(17800);
+      expect(inventory?.ingestSheet).toBe(false);
       expect(redditNarutoccg.stillWanted.some((s) => s.startsWith("inventory-sheets"))).toBe(
         true,
       );

@@ -4,7 +4,8 @@
  * Source : dbzcollection.fr (12 parts, 1 398 cartes, 46 packagings) +
  * carddass.fr/dbz Wayback (FR faces) + nikita DBC (JA titres partiels) +
  * Chitoroshop (JA faces / titres EN) + Hatatoy (JA faces / titres JA) +
- * DeckCardMania (fiches set FR : packshots / rares-holos / samples nommés).
+ * DeckCardMania (fiches set FR : packshots / rares-holos / samples nommés) +
+ * packshots presse / retail (manga-sanctuary, coleka, DCM, fnac, …).
  */
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -33,6 +34,14 @@ import { installDbsJccCarddassFr } from "./install/carddassFr";
 import { installDbsJccChitoroshopJa } from "./install/chitoroshopJa";
 import { installDbsJccDeckcardmania } from "./install/deckcardmania";
 import { installDbsJccHatatoyJa } from "./install/hatatoyJa";
+import { harvestDbzcollectionContents } from "./harvest/dbzcollectionContents";
+import { harvestDbzcollectionPouvoirs } from "./harvest/dbzcollectionPouvoirs";
+import { applyDbsjccPouvoirGroupings } from "./install/applyPouvoirGroupings";
+import { dedupeDbsjccPrintSets } from "./install/dedupePrintSets";
+import { installDbsjccDetecteur } from "./install/detecteur";
+import { installDbsjccDeckPosters } from "./install/deckPosters";
+import { installDbsJccPressPackshots } from "./install/pressPackshots";
+import { writeSealedContentsFromDbzc } from "./install/sealedContentsFromDbzc";
 import { installDbsJccJaTitles } from "./install/nikitaJa";
 import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "./pack";
 
@@ -50,6 +59,29 @@ export async function runDbsJccPackPipeline(
   console.log(
     `── carddass.fr/dbz — ${frOfficial.faces} face URL(s) → ${frOfficial.path}`,
   );
+  console.log(
+    `── carddass.fr pouvoirs — ${frOfficial.pouvoirMarkers} marqueur(s) PA/PB/vc → ${frOfficial.pouvoirMarkersPath}`,
+  );
+  const dbzcPouvoirs = await harvestDbzcollectionPouvoirs({ force });
+  console.log(
+    `── dbzcollection pouvoirs — ${dbzcPouvoirs.withPouvoir}/${dbzcPouvoirs.listed} → ${dbzcPouvoirs.path}`,
+  );
+  if (argv.includes("--names") || argv.includes("--harvest-names")) {
+    const { harvestCarddassFrDbzNames } = await import(
+      /* webpackIgnore: true */
+      "./harvest/carddassFrNames"
+    );
+    const { harvestDbzcollectionNames } = await import(
+      /* webpackIgnore: true */
+      "./harvest/dbzcollectionNames"
+    );
+    const frNames = await harvestCarddassFrDbzNames();
+    console.log(`── carddass.fr names — ${frNames.names} → ${frNames.path}`);
+    const dbzcNames = await harvestDbzcollectionNames();
+    console.log(
+      `── dbzcollection names — ${dbzcNames.named} Nom, ${dbzcNames.missingNom} sans → ${dbzcNames.path}`,
+    );
+  }
   // carddass.com DBC: live /dbc|/dbz|/cardgame = 404; CDX no Card Game face dump
   // (dbh = Heroes, other pack). JA faces = nikita + shops — see curated/BACK.md.
   console.log(
@@ -95,6 +127,14 @@ export async function runDbsJccPackPipeline(
       console.log(
         `── Faces dbzc — ${dbzcFaces.faces} index, ${dbzcFaces.dumps} dump(s)`,
       );
+      const dedupe = await dedupeDbsjccPrintSets(DBS_JCC_PACK_ID);
+      console.log(
+        `── dedupe print_sets — ${dedupe.canonical} canonique(s), ${dedupe.aliasesRemoved} alias retiré(s), ${dedupe.printSets} membership(s), items ${dedupe.itemsRemapped}, contents ${dedupe.productsRemapped}`,
+      );
+      const pouvoirs = await applyDbsjccPouvoirGroupings(DBS_JCC_PACK_ID);
+      console.log(
+        `── pouvoirs groupings — ${pouvoirs.remapped} remap(s), skip ${pouvoirs.skipped}, items ${pouvoirs.itemsRemapped}, aliases +${pouvoirs.aliasesAdded}`,
+      );
       const carddassFr = await installDbsJccCarddassFr(index, {
         downloadFaces: !skipFaces,
       });
@@ -106,6 +146,10 @@ export async function runDbsJccPackPipeline(
       });
       console.log(
         `── JA nikita — ${jaInstall.titles} titres, ${jaInstall.faces} faces (unmatched ${jaInstall.unmatched.length})`,
+      );
+      const detecteur = await installDbsjccDetecteur({ force });
+      console.log(
+        `── Détecteur — print ${detecteur.print ? "ok" : "ko"}, FR ${detecteur.faceFr ? "ok" : "—"}, JA ${detecteur.faceJa ? "ok" : "—"}, ${detecteur.purgedSealed} SKU scellé(s) retiré(s)`,
       );
       const chitoroInstall = await installDbsJccChitoroshopJa(index, {
         downloadFaces: !skipFaces,
@@ -136,7 +180,7 @@ export async function runDbsJccPackPipeline(
           hatatoyInstall.titles,
       };
     },
-    seedProducts: () => {
+    seedProducts: async () => {
       const sealed = ingestDbzcollectionSealedProducts({ argv });
       const staging = dbzcollectionStagingDir();
       if (!force && existsSync(staging)) {
@@ -148,6 +192,22 @@ export async function runDbsJccPackPipeline(
         });
         console.log("── dbzc staging — purgé (ledger frais)");
       }
+      const press = await installDbsJccPressPackshots({ force });
+      console.log(
+        `── press packshots — ${press.installed} installé(s), ${press.renamed} renommé(s), ${press.minted} créé(s), ${press.failed} échec(s)`,
+      );
+      const contents = await harvestDbzcollectionContents({ force, argv });
+      console.log(
+        `── dbzc contents — ${contents.cards} carte(s) → ${contents.path}`,
+      );
+      const sealedLists = writeSealedContentsFromDbzc();
+      console.log(
+        `── sealed lists — ${sealedLists.decks} deck(s), ${sealedLists.prints} garantie(s), ${sealedLists.boosters} booster pool(s)`,
+      );
+      const posters = installDbsjccDeckPosters();
+      console.log(
+        `── deck posters — ${posters.attached} attaché(s), ${posters.purged} SKU retiré(s)${posters.missing.length ? `, manquant: ${posters.missing.join(", ")}` : ""}`,
+      );
       return sealed;
     },
   });

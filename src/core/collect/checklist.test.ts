@@ -6,8 +6,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildShelfChecklist,
+  checklistOwnedKey,
   compareChecklistPrints,
+  expandOwnedAcrossSetListings,
   referenceWithinSet,
+  resolveMasterSetOwned,
   type ChecklistPrint,
 } from "./checklist";
 
@@ -15,11 +18,13 @@ const print = (
   printKey: string,
   setId: string,
   reference: string,
+  finish?: string | null,
 ): ChecklistPrint => ({
   printKey,
   setId,
   reference,
   title: reference,
+  ...(finish !== undefined ? { finish } : {}),
 });
 
 describe("check-list d'étagère", () => {
@@ -253,5 +258,150 @@ describe("ordre retail puis promos", () => {
         print("lorcana:1-10", "1", "10/204"),
       ),
     ).toBeLessThan(0);
+  });
+
+  /*
+    Master set : foil et normale sont deux cases. Posséder l'une ne coche
+    pas l'autre — c'est le sens d'un master set.
+  */
+  it("master set treats each finish as its own slot", () => {
+    const list = buildShelfChecklist({
+      sets: [{ id: "s1", label: "Série 1" }],
+      prints: [
+        print("k:1", "s1", "NI-001", "None"),
+        print("k:1", "s1", "NI-001", "Silver"),
+        print("k:2", "s1", "NI-002", "None"),
+        print("k:2", "s1", "NI-002", "Silver"),
+      ],
+      owned: new Set([
+        checklistOwnedKey("k:1", "Silver"),
+        checklistOwnedKey("k:2", "None"),
+      ]),
+      masterSet: true,
+    });
+    expect(list.totals).toEqual({ total: 4, owned: 2, completion: 50 });
+    const cards = list.sets[0]!.cards;
+    expect(
+      cards.map((c) => `${c.reference}|${c.finish}|${c.owned}`),
+    ).toEqual([
+      "NI-001|None|false",
+      "NI-001|Silver|true",
+      "NI-002|None|true",
+      "NI-002|Silver|false",
+    ]);
+    expect(list.sets[0]!.missing.map((m) => `${m.reference}|${m.finish}`)).toEqual([
+      "NI-001|None",
+      "NI-002|Silver",
+    ]);
+  });
+
+  /*
+    Items ajoutés avant le sélecteur de finish : variant null → `printKey|`.
+    On ne devine pas None : une foil non taguée ne doit pas cocher la normale.
+  */
+  it("resolveMasterSetOwned does not invent a plain finish for blank variant", () => {
+    const owned = resolveMasterSetOwned({
+      owned: new Set([
+        checklistOwnedKey("lorcana:1-1", null),
+        checklistOwnedKey("lorcana:1-2", "Silver"),
+      ]),
+      finishesByPrintKey: new Map([
+        ["lorcana:1-1", ["None", "Silver"]],
+        ["lorcana:1-2", ["None", "Silver"]],
+      ]),
+      plainFinishesByPrintKey: new Map([
+        ["lorcana:1-1", ["None"]],
+        ["lorcana:1-2", ["None"]],
+      ]),
+    });
+    expect(owned.has(checklistOwnedKey("lorcana:1-1", null))).toBe(true);
+    expect(owned.has(checklistOwnedKey("lorcana:1-1", "None"))).toBe(false);
+    expect(owned.has(checklistOwnedKey("lorcana:1-2", "Silver"))).toBe(true);
+
+    const list = buildShelfChecklist({
+      sets: [{ id: "1", label: "Premier Chapitre" }],
+      prints: [
+        print("lorcana:1-1", "1", "1/204", "None"),
+        print("lorcana:1-1", "1", "1/204", "Silver"),
+        print("lorcana:1-2", "1", "2/204", "None"),
+        print("lorcana:1-2", "1", "2/204", "Silver"),
+      ],
+      owned,
+      masterSet: true,
+    });
+    expect(list.totals).toEqual({ total: 4, owned: 1, completion: 25 });
+  });
+
+  it("without master set, any finish of a printKey counts once", () => {
+    const list = buildShelfChecklist({
+      sets: [{ id: "s1", label: "Série 1" }],
+      prints: [print("k:1", "s1", "NI-001"), print("k:2", "s1", "NI-002")],
+      owned: new Set(["k:1"]),
+      masterSet: false,
+    });
+    expect(list.totals.owned).toBe(1);
+    expect(list.sets[0]!.cards.find((c) => c.printKey === "k:1")!.owned).toBe(
+      true,
+    );
+  });
+
+  it("checklistOwnedKey folds printKey and finish", () => {
+    expect(checklistOwnedKey("K:1", " Silver ")).toBe("k:1|silver");
+    expect(checklistOwnedKey("k:1", null)).toBe("k:1|");
+  });
+
+  it("does not treat distinct art letters as the same owned card", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "part1", label: "Série 1", sortKey: 1 },
+        { id: "part9", label: "Série 9", sortKey: 9 },
+      ],
+      prints: [
+        print("dbsjcc:part1-d0123a", "part1", "D-123a"),
+        print("dbsjcc:part9-d0123d", "part9", "D-123d"),
+      ],
+      owned: new Set(["dbsjcc:part1-d0123a"]),
+    });
+    expect(list.totals.owned).toBe(1);
+    expect(
+      list.sets.flatMap((s) => s.cards).find((c) => c.printKey.endsWith("d0123d"))
+        ?.owned,
+    ).toBe(false);
+  });
+
+  it("does not cross-own Lorcana cards that reuse numbers across sets", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "1", label: "Ch1", sortKey: 1 },
+        { id: "2", label: "Ch2", sortKey: 2 },
+      ],
+      prints: [
+        print("lorcana:1-1", "1", "1/204"),
+        print("lorcana:2-1", "2", "1/204"),
+      ],
+      owned: new Set(["lorcana:1-1"]),
+    });
+    expect(list.totals.owned).toBe(1);
+    expect(
+      list.sets.flatMap((set) => set.cards).find((c) => c.printKey === "lorcana:2-1")
+        ?.owned,
+    ).toBe(false);
+  });
+
+  it("expandOwnedAcrossSetListings keeps finish in master set", () => {
+    const expanded = expandOwnedAcrossSetListings({
+      owned: new Set([checklistOwnedKey("dbsjcc:part1-d0107", "holo")]),
+      cataloguePrintKeys: [
+        "dbsjcc:part1-d0107",
+        "dbsjcc:part9-d0107",
+      ],
+      masterSet: true,
+    });
+    expect(expanded.has(checklistOwnedKey("dbsjcc:part9-d0107", "holo"))).toBe(
+      true,
+    );
+    expect(expanded.has(checklistOwnedKey("dbsjcc:part9-d0107", null))).toBe(
+      false,
+    );
   });
 });

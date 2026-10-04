@@ -98,6 +98,32 @@ export function isPrintKey(value: string | null | undefined): boolean {
 }
 
 /**
+ * Collector numbers that carry a family prefix (`d0123`, `ni0046`, `sp0025`)
+ * are unique in the game — the same card may be listed under several sets.
+ *
+ * Bare digits (`1`, `207`, `001`) stay set-scoped (Lorcana, One Piece…).
+ */
+export function isGameUniqueCollectorNumber(
+  number: string | null | undefined,
+): boolean {
+  return /^[a-z]{1,6}\d+[a-z]*$/i.test((number ?? "").trim());
+}
+
+/**
+ * Possession / identité hors set : `game|number|grouping`.
+ *
+ * `null` quand le numéro n'est pas game-unique — on ne doit alors **pas**
+ * coller Lorcana `1-1` et `2-1`.
+ */
+export function printCollectableKey(
+  printKey: string | null | undefined,
+): string | null {
+  const id = parsePrintKey(printKey);
+  if (!id || !isGameUniqueCollectorNumber(id.number)) return null;
+  return [id.game, id.number, id.grouping ?? ""].join("|");
+}
+
+/**
  * Set order as collectors browse binders: numeric release codes ascending
  * (`1` Premier Chapitre before `11`), then lettered codes (`q1`).
  */

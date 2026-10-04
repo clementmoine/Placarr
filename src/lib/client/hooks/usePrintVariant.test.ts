@@ -103,6 +103,26 @@ describe("variantRendering", () => {
     });
   });
 
+  it("implies the only finish on foil-only prints when the copy has no variant", () => {
+    expect(
+      variantRendering(
+        null,
+        {
+          finishes: ["holo"],
+          plainFinishes: [],
+          effectPack: "dbs-jcc",
+          foilMaskUrl: "/assets/dragonball/jcc/full_foil_mask.webp",
+        },
+        BASE,
+      ),
+    ).toMatchObject({
+      finish: "holo",
+      foilMaskUrl: "/assets/dragonball/jcc/full_foil_mask.webp",
+      effectPackId: "dbs-jcc",
+      shader: { id: "flare" },
+    });
+  });
+
   it("gives no effect before the provider has answered", () => {
     expect(variantRendering("Silver", null, BASE)).toMatchObject({
       imageUrl: BASE,

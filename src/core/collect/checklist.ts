@@ -13,7 +13,10 @@
  * (extension, territoire).
  */
 
-import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  parsePrintKey,
+  printCollectableKey,
+} from "@/core/identify/printKey";
 
 export type ChecklistPrint = {
   printKey: string;
@@ -24,7 +27,117 @@ export type ChecklistPrint = {
   thumbnailUrl?: string | null;
   /** Rareté catalogue (`Enchanted`, `commune`, …) — pour les taux de tirage. */
   rarity?: string | null;
+  /**
+   * Finition catalogue en mode master set (`Silver`, `holo`, …).
+   *
+   * Absent / `null` hors master set, ou quand le tirage n'offre qu'une face
+   * sans choix de finish. En master set, normal et foil sont deux lignes.
+   */
+  finish?: string | null;
 };
+
+/**
+ * Clé d'appartenance master set : `printKey|finish`.
+ *
+ * La langue est déjà filtrée par l'appelant. Sans finish (carte plain seule,
+ * ou item sans variante renseignée), le second segment est vide — comme dans
+ * le print picker (`ownedRowKey`).
+ */
+export function checklistOwnedKey(
+  printKey: string,
+  finish?: string | null,
+): string {
+  return [
+    printKey.trim().toLowerCase(),
+    (finish ?? "").trim().toLowerCase(),
+  ].join("|");
+}
+
+/**
+ * Réécrit les clés possédées pour le master set.
+ *
+ * Normalise la casse. **Ne devine pas** une finition pour `printKey|` (variant
+ * vide) : inventer `None` ferait croire qu'on a la normale alors que la copie
+ * peut être une foil jamais taguée. Sans finition renseignée, la case master
+ * set reste ouverte — c'est le même principe que « foil ≠ normale ».
+ *
+ * Les maps sont indexées par `printKey` **déjà en minuscules**.
+ */
+/**
+ * Posséder `dbsjcc:part1-d0123` coche aussi `dbsjcc:part9-d0123` quand le
+ * catalogue a dupliqué la même carte sous plusieurs sets.
+ *
+ * Ne touche pas aux numéros set-scoped (Lorcana `1`, One Piece `001`).
+ */
+export function expandOwnedAcrossSetListings(input: {
+  owned: ReadonlySet<string>;
+  cataloguePrintKeys: readonly string[];
+  masterSet?: boolean;
+}): Set<string> {
+  const masterSet = Boolean(input.masterSet);
+  const ownedCollectables = new Set<string>();
+  for (const key of input.owned) {
+    const pipe = key.indexOf("|");
+    const printKey = (
+      masterSet && pipe >= 0 ? key.slice(0, pipe) : key
+    ).trim().toLowerCase();
+    const finish =
+      masterSet && pipe >= 0 ? key.slice(pipe + 1).trim().toLowerCase() : "";
+    const collectable = printCollectableKey(printKey);
+    if (!collectable) continue;
+    ownedCollectables.add(
+      masterSet ? `${collectable}|${finish}` : collectable,
+    );
+  }
+  if (ownedCollectables.size === 0) return new Set(input.owned);
+
+  const out = new Set(
+    [...input.owned].map((key) => key.trim().toLowerCase()),
+  );
+  for (const raw of input.cataloguePrintKeys) {
+    const printKey = raw.trim().toLowerCase();
+    const collectable = printCollectableKey(printKey);
+    if (!collectable) continue;
+    if (!masterSet) {
+      if (ownedCollectables.has(collectable)) out.add(printKey);
+      continue;
+    }
+    for (const owned of ownedCollectables) {
+      const sep = owned.lastIndexOf("|");
+      if (sep < 0) continue;
+      if (owned.slice(0, sep) !== collectable) continue;
+      out.add(checklistOwnedKey(printKey, owned.slice(sep + 1)));
+    }
+  }
+  return out;
+}
+
+export function resolveMasterSetOwned(input: {
+  owned: ReadonlySet<string>;
+  /** Finitions catalogue par printKey (minuscules). */
+  finishesByPrintKey: ReadonlyMap<string, readonly string[]>;
+  /** Plain finishes provider, quand il les annonce. */
+  plainFinishesByPrintKey?: ReadonlyMap<string, readonly string[]>;
+}): Set<string> {
+  void input.finishesByPrintKey;
+  void input.plainFinishesByPrintKey;
+  const resolved = new Set<string>();
+  for (const key of input.owned) {
+    const pipe = key.indexOf("|");
+    const printKey = (pipe >= 0 ? key.slice(0, pipe) : key).trim().toLowerCase();
+    const finish = (pipe >= 0 ? key.slice(pipe + 1) : "").trim().toLowerCase();
+    if (!finish) {
+      /*
+        Variant vide : on garde la clé telle quelle. Elle ne matche une ligne
+        catalogue que si cette ligne a aussi `finish` null (pas de choix).
+      */
+      resolved.add(checklistOwnedKey(printKey, null));
+      continue;
+    }
+    resolved.add(`${printKey}|${finish}`);
+  }
+  return resolved;
+}
 
 export type ChecklistSetInput = {
   id: string;
@@ -137,6 +250,10 @@ export function compareChecklistPrints(
   if (ga !== gb) return ga.localeCompare(gb, "fr", { numeric: true });
   const byRef = a.reference.localeCompare(b.reference, "fr", { numeric: true });
   if (byRef !== 0) return byRef;
+  const byFinish = (a.finish ?? "").localeCompare(b.finish ?? "", "fr", {
+    numeric: true,
+  });
+  if (byFinish !== 0) return byFinish;
   return a.printKey.localeCompare(b.printKey);
 }
 
@@ -148,16 +265,28 @@ function percent(owned: number, total: number): number {
 /**
  * Croise le catalogue et la collection.
  *
- * `owned` est un ensemble de `printKey` **déjà filtré sur la langue** par
- * l'appelant : lui seul sait comment ses items la portent, et le faire ici
- * obligerait ce module à connaître le modèle de données.
+ * `owned` est un ensemble **déjà filtré sur la langue** par l'appelant : lui
+ * seul sait comment ses items la portent, et le faire ici obligerait ce module
+ * à connaître le modèle de données.
+ *
+ * - mode classique : clés = `printKey` (toute finition compte) ;
+ * - master set : clés = `printKey|finish` ({@link checklistOwnedKey}), et les
+ *   `prints` sont déjà éclatés une ligne par finition.
  */
 export function buildShelfChecklist(input: {
   sets: readonly ChecklistSetInput[];
   prints: readonly ChecklistPrint[];
   owned: ReadonlySet<string>;
   language?: string | null;
+  /** Une ligne par finition ; possession exacte printKey×finish. */
+  masterSet?: boolean;
 }): ShelfChecklist {
+  const masterSet = Boolean(input.masterSet);
+  const owned = expandOwnedAcrossSetListings({
+    owned: input.owned,
+    cataloguePrintKeys: input.prints.map((print) => print.printKey),
+    masterSet,
+  });
   const bySet = new Map<string, ChecklistPrint[]>();
   for (const print of input.prints) {
     const rows = bySet.get(print.setId) ?? [];
@@ -168,7 +297,7 @@ export function buildShelfChecklist(input: {
   const sets: ChecklistSet[] = [];
   const setsWithoutCatalogue: ChecklistSetInput[] = [];
   let total = 0;
-  let owned = 0;
+  let ownedCount = 0;
 
   for (const set of input.sets) {
     const prints = bySet.get(set.id);
@@ -179,10 +308,13 @@ export function buildShelfChecklist(input: {
     const cards = prints
       .map((print) => {
         const reference = referenceWithinSet(print.reference, set.label);
+        const isOwned = masterSet
+          ? owned.has(checklistOwnedKey(print.printKey, print.finish))
+          : owned.has(print.printKey.trim().toLowerCase());
         return {
           ...print,
           reference,
-          owned: input.owned.has(print.printKey),
+          owned: isOwned,
         };
       })
       .sort(compareChecklistPrints);
@@ -191,7 +323,7 @@ export function buildShelfChecklist(input: {
       .map(({ owned: _owned, ...print }) => print);
     const held = prints.length - missing.length;
     total += prints.length;
-    owned += held;
+    ownedCount += held;
     sets.push({
       ...set,
       total: prints.length,
@@ -231,7 +363,7 @@ export function buildShelfChecklist(input: {
   return {
     language: input.language ?? null,
     sets,
-    totals: { total, owned, completion: percent(owned, total) },
+    totals: { total, owned: ownedCount, completion: percent(ownedCount, total) },
     setsWithoutCatalogue,
   };
 }

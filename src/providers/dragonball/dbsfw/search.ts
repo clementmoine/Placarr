@@ -106,16 +106,20 @@ const DETAIL_SQL = `SELECT p.print_key AS printKey,
 
 export function searchDbsFwPrints(
   query: string,
-  opts: { language?: string; limit?: number; setId?: string | null } = {},
+  opts: {
+    language?: string;
+    limit?: number;
+    setId?: string | null;
+    catalogueBrowse?: boolean;
+  } = {},
 ): PrintCandidate[] {
   const trimmed = query.trim();
   const setId = opts.setId?.trim().toLowerCase();
   /*
-    Une extension seule est une question complète — « montre-moi ce set » — et
-    c'est ainsi qu'on le parcourt sans savoir quoi y chercher. Sans extension,
-    une requête vide reste sans réponse.
+    Une extension seule — ou un parcours catalogue — est une question complète.
+    Sans l'un ni l'autre, une requête vide reste sans réponse.
   */
-  if (!isAnsweredQuery(trimmed, setId)) return [];
+  if (!isAnsweredQuery(trimmed, setId, opts.catalogueBrowse)) return [];
   const db = ensureDbsFwIndex();
   if (!db) return [];
 

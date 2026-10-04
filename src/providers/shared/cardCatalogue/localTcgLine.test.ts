@@ -277,6 +277,69 @@ describe("localTcgLine metadata adapter", () => {
   });
 });
 
+describe("localTcgLine catalogueBrowse", () => {
+  it("lists a whole game without a set, ordered by setSortKey then number", () => {
+    tmpDataRoot();
+    const packId = "dragonball/jcc";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "dbsjcc:part10-d0900",
+        setCode: "part10",
+        number: "d0900",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Part 10" }],
+      },
+      {
+        printKey: "dbsjcc:part2-d0100",
+        setCode: "part2",
+        number: "d0100",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Part 2" }],
+      },
+      {
+        printKey: "dbsjcc:part1-d0002",
+        setCode: "part1",
+        number: "d0002",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "D-2" }],
+      },
+      {
+        printKey: "dbsjcc:part1-d0001",
+        setCode: "part1",
+        number: "d0001",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "D-1" }],
+      },
+    ]);
+
+    const line = createLocalTcgLine({
+      providerId: "dbsjcc",
+      providerLabel: "DB JCC",
+      catalogueLabel: "DB JCC",
+      factLabel: "DB JCC",
+      packId,
+      effectPackId: "dbs-jcc",
+      printGame: "dbsjcc",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+      setSortKey: (setCode) => {
+        const part = /^part(\d+)$/.exec(setCode.trim().toLowerCase());
+        return part ? Number.parseInt(part[1]!, 10) : null;
+      },
+    });
+
+    const found = line.searchPrints("", { catalogueBrowse: true, limit: 10 });
+    expect(found.map((row) => row.printKey)).toEqual([
+      "dbsjcc:part1-d0001",
+      "dbsjcc:part1-d0002",
+      "dbsjcc:part2-d0100",
+      "dbsjcc:part10-d0900",
+    ]);
+  });
+});
+
 describe("localTcgLine listPrintSets remote merge", () => {
   it("union locale ∪ remote so a stale DB cannot hide a new set", async () => {
     tmpDataRoot();

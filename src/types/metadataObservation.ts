@@ -76,6 +76,7 @@ export interface TitleObservation extends MetadataObservationBase {
 export type ImageObservationRole =
   | "cover_front"
   | "cover_back"
+  | "cover_spine"
   | "product_packshot"
   | "listing_photo"
   | "user_photo"

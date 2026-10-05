@@ -155,6 +155,7 @@ function usageForImageRole(
   switch (role) {
     case "cover_front":
     case "cover_back":
+    case "cover_spine":
     case "product_packshot":
     case "background":
     case "screenshot":

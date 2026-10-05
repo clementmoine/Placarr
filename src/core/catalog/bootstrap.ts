@@ -201,6 +201,9 @@ function normalizeObservationImages(
     if (region.includes("back")) {
       return { ...observation, role: "cover_back" };
     }
+    if (region === "spine" || region.startsWith("spine-")) {
+      return { ...observation, role: "cover_spine" };
+    }
     if (observation.type === "background") {
       return { ...observation, role: "background" };
     }

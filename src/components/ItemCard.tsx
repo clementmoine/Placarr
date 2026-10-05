@@ -53,6 +53,8 @@ import type { Condition } from "@/generated/prisma/browser";
 import { withoutCopyMarker } from "@/core/collect/groupCopies";
 import { shelfShowsItemCondition } from "@/core/collect/condition";
 import { isItemOnLoan } from "@/core/collect/itemLoan";
+import { isLooseDiscShelfPresentation } from "@/core/enrich/media/opticalDisc";
+import { DiscFaceArt } from "@/components/DiscFaceArt";
 import { cn } from "@/lib/shared/utils";
 
 function conditionBadgeClass(condition: Condition) {
@@ -220,9 +222,13 @@ function ItemCardInner(props: ItemCardProps) {
     () => getAspectRatio(cardFormat, shelfType),
     [cardFormat, shelfType],
   );
+  const looseDiscTile = isLooseDiscShelfPresentation(condition, shelfType);
   const aspectRatio = useMemo(
-    () => faceDisplayAspect(baseAspect, { faceQuarterTurns, landscapeFace }),
-    [baseAspect, faceQuarterTurns, landscapeFace],
+    () =>
+      looseDiscTile
+        ? "1 / 1"
+        : faceDisplayAspect(baseAspect, { faceQuarterTurns, landscapeFace }),
+    [looseDiscTile, baseAspect, faceQuarterTurns, landscapeFace],
   );
   const displayQuarterTurns = landscapeFace ? 0 : faceQuarterTurns;
 
@@ -345,6 +351,19 @@ function ItemCardInner(props: ItemCardProps) {
       )}
 
       {displayImageUrl ? (
+        looseDiscTile ? (
+          <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-[inherit]">
+            <div className="relative aspect-square w-full max-h-full">
+              <DiscFaceArt
+                src={displayImageUrl}
+                alt={name}
+                priority={priority}
+                onLoad={handleImageLoad}
+              />
+            </div>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          </div>
+        ) : (
         <div
           ref={artFrameRef}
           className="relative h-full w-full overflow-hidden rounded-[inherit] bg-zinc-200 dark:bg-zinc-950"
@@ -415,6 +434,7 @@ function ItemCardInner(props: ItemCardProps) {
           {/* subtle dark overlay gradient for title legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
         </div>
+        )
       ) : (
         /* Premium looking placeholder fallback */
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-900 dark:to-zinc-950 text-muted-foreground gap-3">

@@ -112,6 +112,14 @@ import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { FlippableCard } from "@/components/FlippableCard";
+import { GameBox3D } from "@/components/GameBox3D";
+import { Disc3D } from "@/components/Disc3D";
+import {
+  resolveBoxFaces,
+  resolveDiscFace,
+} from "@/core/enrich/media/resolveBoxFaces";
+import { resolveOpticalDiscKind } from "@/core/enrich/media/opticalDisc";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
 import {
   resolveDefaultCardBack,
   resolveSharedCardBackSkeleton,
@@ -1858,6 +1866,86 @@ export default function ItemDetailsPage() {
    */
   const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
   const variantView = variantRendering(item?.variant, printVariant, coverImage);
+
+  /** Loose disc hero — printed support art + synthetic optical underside. */
+  const [disc3dFailed, setDisc3dFailed] = useState(false);
+  const preferredCoverRegion = locale === "en" ? "us" : "fr";
+  const itemPlatformKey = useMemo(
+    () =>
+      item?.metadata?.platformKey ??
+      detectVideoGamePlatformKey(shelf?.name ?? "") ??
+      null,
+    [item?.metadata?.platformKey, shelf?.name],
+  );
+  const discFaceUrl = useMemo(() => {
+    if (!item || variantView.foilMaskUrl || item.condition !== "loose") {
+      return null;
+    }
+    return resolveDiscFace(item.metadata?.attachments ?? [], {
+      preferredRegion: preferredCoverRegion,
+      preferredPlatformKey: itemPlatformKey,
+      preferredUrl: coverImage,
+    });
+  }, [
+    item,
+    coverImage,
+    preferredCoverRegion,
+    itemPlatformKey,
+    variantView.foilMaskUrl,
+  ]);
+  const opticalKind = useMemo(() => {
+    const facts = normalizeFacts(item?.metadata?.facts);
+    const mediaFormat =
+      facts.find((fact) => fact.kind === "media-format")?.value ?? null;
+    return resolveOpticalDiscKind({
+      platformKey: itemPlatformKey,
+      mediaFormatFact: mediaFormat,
+      shelfType: shelf?.type ?? null,
+    });
+  }, [item?.metadata?.facts, itemPlatformKey, shelf?.type]);
+  const showDisc3d =
+    Boolean(discFaceUrl) && !disc3dFailed && !variantView.foilMaskUrl;
+
+  /** Rotatable CSS box when front + back + spine scans exist (games shelves). */
+  const [box3dFailed, setBox3dFailed] = useState(false);
+  const boxFaces = useMemo(() => {
+    if (!item || variantView.foilMaskUrl || showDisc3d) {
+      return { complete: false as const };
+    }
+    return resolveBoxFaces(item.metadata?.attachments ?? [], {
+      fallbackFrontUrl: coverImage,
+      preferredRegion: preferredCoverRegion,
+      preferredPlatformKey: itemPlatformKey,
+    });
+  }, [
+    item,
+    coverImage,
+    preferredCoverRegion,
+    itemPlatformKey,
+    variantView.foilMaskUrl,
+    showDisc3d,
+  ]);
+  const showGameBox =
+    boxFaces.complete &&
+    !box3dFailed &&
+    !variantView.foilMaskUrl &&
+    !showDisc3d;
+
+  const [prevBoxFaceKey, setPrevBoxFaceKey] = useState<string | null>(null);
+  const boxFaceKey = boxFaces.complete
+    ? `${boxFaces.front}|${boxFaces.back}|${boxFaces.spine}`
+    : null;
+  if (prevBoxFaceKey !== boxFaceKey) {
+    setPrevBoxFaceKey(boxFaceKey);
+    if (box3dFailed) setBox3dFailed(false);
+  }
+
+  const [prevDiscFaceUrl, setPrevDiscFaceUrl] = useState<string | null>(null);
+  if (prevDiscFaceUrl !== discFaceUrl) {
+    setPrevDiscFaceUrl(discFaceUrl);
+    if (disc3dFailed) setDisc3dFailed(false);
+  }
+
   const cardBack = resolveDefaultCardBack({
     printCardBackUrl: printVariant?.cardBackUrl,
     printKey: item?.printKey,
@@ -2512,43 +2600,84 @@ export default function ItemDetailsPage() {
           ) : (
             <div className="relative flex flex-col md:flex-row gap-6 md:gap-10 items-start p-6 md:p-8 rounded-3xl border border-border/60 dark:border-zinc-800/80 bg-zinc-50/20 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl overflow-hidden w-full mt-4">
               <div
-                onClick={() => coverImage && setZoomImageUrl(coverImage)}
+                onClick={() =>
+                  coverImage &&
+                  !showGameBox &&
+                  !showDisc3d &&
+                  setZoomImageUrl(coverImage)
+                }
                 className={cn(
                   // Clips again now that nothing leans out of it — see the
-                  // `tilt={false}` below.
-                  "relative mx-auto md:mx-0 overflow-hidden rounded-2xl shrink-0 select-none transition-all duration-300",
-                  coverImage
+                  // `tilt={false}` below. The 3D box / disc must bleed past
+                  // their footprint while turning, so overflow stays visible.
+                  "relative mx-auto md:mx-0 rounded-2xl shrink-0 select-none transition-all duration-300",
+                  showGameBox || showDisc3d
+                    ? "overflow-visible"
+                    : "overflow-hidden",
+                  coverImage || showDisc3d
                     ? // No plate behind the cover: card art is opaque and edge
                       // to edge, so a white slab only framed it. Anything else
                       // gets its own edges bled outwards, see `style` below.
-                      "cursor-pointer group/cover"
+                      showGameBox || showDisc3d
+                        ? "cursor-grab"
+                        : "cursor-pointer group/cover"
                     : "bg-zinc-950/20",
-                  coverAspectRatio,
+                  showDisc3d
+                    ? "aspect-square w-[240px] md:w-[320px]"
+                    : coverAspectRatio,
                 )}
                 /**
                  * Bleed the cover's own edges into the letterbox. Skipped for a
                  * foil card, which fills its frame edge to edge and has the
-                 * holographic layers instead.
+                 * holographic layers instead. Also skipped for the CSS 3D box /
+                 * disc, whose aspect comes from the artwork.
                  */
                 style={{
                   // Always set aspect-ratio in style: Tailwind classes for
                   // formats live in `cardFormat.ts` and can miss the CSS scan.
-                  aspectRatio: coverOrientedAspect,
-                  ...(coverEdgeColors && !variantView.foilMaskUrl
+                  aspectRatio: showDisc3d ? "1 / 1" : coverOrientedAspect,
+                  ...(coverEdgeColors &&
+                  !variantView.foilMaskUrl &&
+                  !showGameBox &&
+                  !showDisc3d
                     ? { background: edgeGradient(coverEdgeColors) }
                     : {}),
                 }}
               >
                 {/* Bleeding the cover's own edges wins; the back only fills a
                     frame that has nothing else behind it. */}
-                {!(coverEdgeColors && !variantView.foilMaskUrl) && (
+                {!(coverEdgeColors && !variantView.foilMaskUrl) &&
+                  !showGameBox &&
+                  !showDisc3d && (
                   <CardBackSkeleton
                     url={cardBackSkeletonUrl}
                     faceQuarterTurns={displayQuarterTurns}
                     orientedAspect={coverOrientedAspect}
                   />
                 )}
-                {coverImage ? (
+                {coverImage || discFaceUrl ? (
+                  showDisc3d && discFaceUrl ? (
+                    <Disc3D
+                      frontUrl={discFaceUrl}
+                      kind={opticalKind}
+                      alt={itemDisplayName ?? ""}
+                      flipLabel={t("items.flipCard")}
+                      faceTabLabel={t("items.cardFace")}
+                      backTabLabel={t("items.cardBack")}
+                      onError={() => setDisc3dFailed(true)}
+                      className="w-full"
+                    />
+                  ) : showGameBox && boxFaces.complete ? (
+                    <GameBox3D
+                      front={boxFaces.front}
+                      back={boxFaces.back}
+                      spine={boxFaces.spine}
+                      platformKey={itemPlatformKey}
+                      alt={itemDisplayName ?? ""}
+                      onError={() => setBox3dFailed(true)}
+                      className="w-full max-w-[240px] md:max-w-[480px]"
+                    />
+                  ) : coverImage ? (
                   <>
                     <OrientedMediaRotator
                       faceQuarterTurns={displayQuarterTurns}
@@ -2625,6 +2754,7 @@ export default function ItemDetailsPage() {
                       </div>
                     </div>
                   </>
+                  ) : null
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-950 text-muted-foreground p-6 gap-3 min-h-[300px]">
                     <ShelfTypeIcon

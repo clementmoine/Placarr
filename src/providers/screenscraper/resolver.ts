@@ -70,6 +70,7 @@ import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
 import { isWeakMetadataSearchFragment } from "@/core/enrich/titles/searchVariants";
 import { metadataHasDisplayImage } from "@/core/enrich/media/displayImage";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
+import { opticalMediaFormatFromRomBytes } from "@/core/enrich/media/opticalDisc";
 
 export { parseScreenScraperMediaUrl } from "./mediaUrl";
 export {
@@ -149,6 +150,17 @@ export function rewriteScreenScraperGameInfoUrl(
 const MAX_SCREENSCRAPER_SEARCH_ATTEMPTS = 10;
 const MAX_CACHED_BARCODE_SUGGESTION_CANDIDATES = 3;
 
+/** One dump entry from ScreenScraper `jeu.roms` / `jeu.rom`. */
+export interface SSRom {
+  romsize?: string | number;
+  romfilename?: string;
+  beta?: string | number;
+  demo?: string | number;
+  proto?: string | number;
+  hack?: string | number;
+  unl?: string | number;
+}
+
 export interface SSGame {
   id?: number;
   systeme?: { id?: number | string; text?: string };
@@ -162,6 +174,38 @@ export interface SSGame {
   note?: { text: string };
   classifications?: { type?: string; text?: string }[];
   medias?: SSMedia[];
+  roms?: SSRom[];
+  rom?: SSRom;
+}
+
+function ssRomFlagOn(value: string | number | undefined): boolean {
+  return value === 1 || value === "1";
+}
+
+/**
+ * Largest clean dump size in bytes (skips beta / demo / proto / hack / unl).
+ * Used to infer CD-ROM vs DVD-ROM vs Blu-ray for the loose disc underside.
+ */
+export function pickScreenScraperRomBytes(game: SSGame): number | null {
+  const roms: SSRom[] = [
+    ...(Array.isArray(game.roms) ? game.roms : []),
+    ...(game.rom ? [game.rom] : []),
+  ];
+  let max = 0;
+  for (const rom of roms) {
+    if (
+      ssRomFlagOn(rom.beta) ||
+      ssRomFlagOn(rom.demo) ||
+      ssRomFlagOn(rom.proto) ||
+      ssRomFlagOn(rom.hack) ||
+      ssRomFlagOn(rom.unl)
+    ) {
+      continue;
+    }
+    const size = Number(rom.romsize);
+    if (Number.isFinite(size) && size > max) max = size;
+  }
+  return max > 0 ? max : null;
 }
 
 function pickSSTitle(noms?: SSGame["noms"]): string | undefined {
@@ -833,6 +877,19 @@ export function buildScreenScraperFacts(
     });
   }
 
+  const romBytes = pickScreenScraperRomBytes(gameData);
+  const opticalFormat = opticalMediaFormatFromRomBytes(romBytes);
+  if (opticalFormat) {
+    facts.push({
+      kind: "media-format",
+      label: "Support",
+      value: opticalFormat,
+      source: "screenscraper",
+      confidence: 0.8,
+      priority: 68,
+    });
+  }
+
   return facts;
 }
 
@@ -857,6 +914,7 @@ function screenScraperImageRole(
   if (attachment.type === "background") return "background";
   if (attachment.type === "image") {
     if (role === "back" || role.startsWith("back-")) return "cover_back";
+    if (role === "spine" || role.startsWith("spine-")) return "cover_spine";
     if (role === "disc" || role.startsWith("disc-")) return "product_packshot";
     return "gallery_image";
   }
@@ -884,6 +942,7 @@ function imageObservationUsage(role: ImageObservationRole) {
     evidence:
       role === "cover_front" ||
       role === "cover_back" ||
+      role === "cover_spine" ||
       role === "product_packshot"
         ? "strong"
         : "normal",

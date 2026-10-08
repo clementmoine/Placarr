@@ -504,10 +504,12 @@ describe("getGalleryImages", () => {
       shelf: { type: "hardware", name: "Consoles" },
     };
 
+    // Sleeve backs trail the front in Affiche order, then other gallery images
+    // (inbox / loose shots) follow.
     expect(getGalleryImages(item).map((image) => image.url)).toEqual([
       "/uploads/n64-main.jpg",
-      "/uploads/n64-inbox.jpg",
       "/uploads/n64-back.jpg",
+      "/uploads/n64-inbox.jpg",
     ]);
   });
 });

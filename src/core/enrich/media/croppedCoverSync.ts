@@ -152,6 +152,31 @@ export function planCroppedCoverAttachmentSync(
  * Prefer durable pack assets (`/assets/…`) over another `/uploads/` twin: the
  * catalogue face can be upgraded in place; a baked upload cannot.
  */
+/**
+ * Whether a UUID localize may rewrite `catalogTwinUrl`. Remote twins (or the
+ * row the collector picked) may fold; another provider's durable `/uploads/`
+ * hash must keep its bytes — marketplace + LDDb sleeves often share dHash ≤ 8.
+ */
+export function shouldRewriteCatalogTwinOntoLocalizedUpload(input: {
+  catalogTwinUrl: string;
+  localizedUploadUrl: string;
+  selectedImageUrl?: string | null;
+}): boolean {
+  const { catalogTwinUrl, localizedUploadUrl, selectedImageUrl } = input;
+  if (!localizedUploadUrl.startsWith("/uploads/")) return false;
+  if (catalogTwinUrl.startsWith("/assets/")) return false;
+  if (catalogTwinUrl === localizedUploadUrl) return false;
+  if (/^https?:\/\//i.test(catalogTwinUrl)) return true;
+  if (
+    selectedImageUrl &&
+    (catalogTwinUrl === selectedImageUrl ||
+      urlsReferToSameLocalizedImage(catalogTwinUrl, selectedImageUrl))
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function pickVisuallyMatchingCatalogCoverUrl(
   pinHash: string,
   candidates: ReadonlyArray<{
@@ -224,10 +249,18 @@ export async function syncCroppedCoverAttachment(
     );
     let catalogTwinId: string | null = null;
     let catalogTwinUrl: string | null = null;
+    let pinHash: string | null = null;
+    let candidates: Array<{
+      id: string;
+      url: string;
+      type: string;
+      source: string | null;
+      hash: string | null;
+    }> = [];
     if (!alreadyOnCatalogRow) {
-      const pinHash = await perceptualHashForAsset(plan.url);
+      pinHash = await perceptualHashForAsset(plan.url);
       if (pinHash) {
-        const candidates = await Promise.all(
+        candidates = await Promise.all(
           attachments
             .filter((attachment) => attachment.source !== "user")
             .map(async (attachment) => ({
@@ -261,15 +294,49 @@ export async function syncCroppedCoverAttachment(
         !plan.url.startsWith("/uploads/")
       ) {
         preferredImageUrl = catalogTwinUrl;
-      } else if (catalogTwinUrl !== plan.url) {
+        continue;
+      }
+      if (catalogTwinUrl === plan.url) {
+        preferredImageUrl = plan.url;
+        continue;
+      }
+
+      if (
+        shouldRewriteCatalogTwinOntoLocalizedUpload({
+          catalogTwinUrl,
+          localizedUploadUrl: plan.url,
+          selectedImageUrl,
+        })
+      ) {
         await prisma.attachment.update({
           where: { id: catalogTwinId },
           data: { url: plan.url },
         });
         preferredImageUrl = plan.url;
-      } else {
-        preferredImageUrl = plan.url;
+        continue;
       }
+
+      const remoteVisualTwin =
+        pinHash &&
+        candidates.find(
+          (candidate) =>
+            candidate.id !== catalogTwinId &&
+            candidate.hash &&
+            /^https?:\/\//i.test(candidate.url) &&
+            isCoverEligibleAttachmentType(candidate.type) &&
+            hammingDistance(pinHash, candidate.hash) <=
+              PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+        );
+      if (remoteVisualTwin) {
+        await prisma.attachment.update({
+          where: { id: remoteVisualTwin.id },
+          data: { url: plan.url },
+        });
+        preferredImageUrl = plan.url;
+        continue;
+      }
+
+      preferredImageUrl = catalogTwinUrl;
       continue;
     }
 

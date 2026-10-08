@@ -22,6 +22,7 @@ export {
   normalizeVideoGamePlatformText,
   detectVideoGamePlatformKey,
   getVideoGamePlatform,
+  platformHasOpticalDiscMedia,
   createVideoGamePlatformMatcher,
   createTrailingVideoGamePlatformSuffixMatcher,
   createSequelNumberBeforePlatformMatcher,

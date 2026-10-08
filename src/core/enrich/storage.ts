@@ -43,6 +43,7 @@ export {
 export {
   pickVisuallyMatchingCatalogCoverUrl,
   planCroppedCoverAttachmentSync,
+  shouldRewriteCatalogTwinOntoLocalizedUpload,
   syncCroppedCoverAttachment,
   type CroppedCoverAttachmentSyncPlan,
 } from "@/core/enrich/media/croppedCoverSync";

@@ -36,7 +36,7 @@ export function scrapeAccessBlocked(status: number, body: unknown): boolean {
   if (status === 403 || status === 429 || status === 503) return true;
   const text = bodyToText(body);
   if (!text) return false;
-  return /don't have permission|acc[eè]s refus[eé]|just a moment|cf-browser-verification|attention required|enable javascript and cookies/i.test(
+  return /don't have permission|acc[eè]s refus[eé]|just a moment|cf-browser-verification|attention required|enable javascript and cookies|making sure you're not a bot|techaro\.lol-anubis|anubis/i.test(
     text,
   );
 }

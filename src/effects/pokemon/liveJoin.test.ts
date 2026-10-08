@@ -72,7 +72,8 @@ describe("liveOwnedBundles", () => {
     expect(ownedBundlesForShader("Thatch")).toContain("bwalt_fr_008");
     expect(ownedBundlesForShader("Galaxy")).toContain("xy12_fr_011");
     expect(ownedBundlesForShader("Cosmos")).toContain("smalt_fr_013");
-    expect(ownedBundlesForShader("AngledPillars")[0]).toBe("smalt_fr_001");
+    expect(ownedBundlesForShader("AngledPillars")).toContain("smalt_fr_001");
+    expect(ownedBundlesForShader("AngledPillars")).toContain("ec_fr_010");
   });
 
   it("isOwnedPlayroomBundle scopes to shader when given", () => {

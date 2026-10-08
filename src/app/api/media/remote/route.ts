@@ -38,11 +38,17 @@ export async function GET(req: NextRequest) {
 
   const rawUrl = req.nextUrl.searchParams.get("url")?.trim();
   if (!rawUrl) {
-    return NextResponse.json({ error: "url is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "url is required" },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   if (!isAllowedRemoteImageProxyTarget(rawUrl)) {
-    return NextResponse.json({ error: "URL not allowed" }, { status: 400 });
+    return NextResponse.json(
+      { error: "URL not allowed" },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const cached = findCachedRemoteImageUpload(rawUrl);
@@ -76,7 +82,10 @@ export async function GET(req: NextRequest) {
   }
 
   if (!fetched) {
-    return NextResponse.json({ error: "Image unavailable" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Image unavailable" },
+      { status: 404, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const persisted = persistRemoteImageUpload(rawUrl, fetched.buffer, {

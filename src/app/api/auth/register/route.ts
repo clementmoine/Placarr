@@ -6,23 +6,8 @@ import {
   MIN_PASSWORD_LENGTH,
   PASSWORD_HASH_ROUNDS,
 } from "@/lib/auth/passwordPolicy";
+import { isRegistrationOpen } from "@/lib/auth/registrationOpen";
 import { clientIpFrom, consumeRateLimit } from "@/lib/http/rateLimit";
-
-function isTruthyEnv(value?: string | null): boolean {
-  const raw = value?.trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes";
-}
-
-/** Open only for bootstrap (no accounts yet) or when ALLOW_REGISTRATION is set. */
-export async function isRegistrationOpen(): Promise<{
-  open: boolean;
-  bootstrap: boolean;
-}> {
-  const userCount = await prisma.user.count();
-  const bootstrap = userCount === 0;
-  const open = bootstrap || isTruthyEnv(process.env.ALLOW_REGISTRATION);
-  return { open, bootstrap };
-}
 
 export async function GET() {
   const status = await isRegistrationOpen();

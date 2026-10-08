@@ -16,6 +16,11 @@ describe("remoteImageDisplay", () => {
 
   it("detects referer-protected CDN URLs", () => {
     expect(remoteImageNeedsProxy(booknodeFull)).toBe(true);
+    expect(
+      remoteImageNeedsProxy(
+        "https://www.lddb.com/cover/ld/33801-33900/33828.jpg",
+      ),
+    ).toBe(true);
     expect(remoteImageNeedsProxy("/uploads/local.webp")).toBe(false);
     expect(remoteImageNeedsProxy("https://i.ebayimg.com/x.jpg")).toBe(false);
   });

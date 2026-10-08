@@ -8,9 +8,27 @@ import {
   parseAgeFromFactValue,
   providerLinkDisplayLabel,
   sortProviderLinkFacts,
+  splitTagValues,
 } from "./displayFacts";
 
 describe("displayFacts", () => {
+  describe("splitTagValues", () => {
+    it("splits bullet, semicolon, and comma joined theme lists", () => {
+      expect(splitTagValues("Adventure; Stealth")).toEqual([
+        "Adventure",
+        "Stealth",
+      ]);
+      expect(splitTagValues("Action, Aventure")).toEqual([
+        "Action",
+        "Aventure",
+      ]);
+      expect(splitTagValues("Story • Assassin")).toEqual([
+        "Story",
+        "Assassin",
+      ]);
+    });
+  });
+
   describe("parseAgeFromFactValue", () => {
     it("extracts numeric age from rating strings", () => {
       expect(parseAgeFromFactValue("12+")).toBe(12);
@@ -180,6 +198,30 @@ describe("displayFacts", () => {
       expect(filtered[0]?.label).toBe("Catégories");
       expect(filtered[0]?.value).toBe("Humour • Party • Déduction");
       expect(filtered[0]?.sourceCount).toBe(3);
+    });
+
+    it("splits semicolon-joined genres into separate theme chips", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "genre",
+          label: "Genres",
+          value: "Adventure; Stealth",
+          source: "wikidata",
+          priority: 55,
+        },
+        {
+          kind: "tag",
+          label: "Thèmes",
+          value: "Story • Stealth",
+          source: "rawg",
+          priority: 50,
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0]?.kind).toBe("tag");
+      expect(filtered[0]?.value).toBe("Adventure • Stealth • Story");
     });
 
     it("merges duplicate tag values across sources", () => {

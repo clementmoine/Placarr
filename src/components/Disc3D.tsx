@@ -152,6 +152,7 @@ export function Disc3D({
         ref={frameRef}
         role="button"
         tabIndex={0}
+        data-no-item-swipe=""
         aria-label={flipLabel}
         aria-pressed={flipped}
         onClick={(e) => {
@@ -159,6 +160,8 @@ export function Disc3D({
           const rect = e.currentTarget.getBoundingClientRect();
           push(e.clientX > rect.left + rect.width / 2);
         }}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -168,7 +171,7 @@ export function Disc3D({
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
         className={cn(
-          "relative aspect-square w-full max-w-[240px] md:max-w-[320px] cursor-pointer select-none",
+          "relative aspect-square w-full max-w-[240px] md:max-w-[320px] cursor-pointer select-none touch-none",
           "outline-none focus-visible:ring-2 focus-visible:ring-white/40",
           "[perspective:900px]",
         )}

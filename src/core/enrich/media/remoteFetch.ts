@@ -41,6 +41,9 @@ async function tryFetchUrl(
   const response = await httpGet<ArrayBuffer>(url, {
     responseType: "arraybuffer",
     timeout: 15_000,
+    // Cookie / UA variants must not share in-flight slots with bare GETs
+    // (Anubis HTML must not win the race against a Flare-unlocked JPEG).
+    noDedup: true,
     headers: {
       ...remoteImageRequestHeaders(url),
       ...extraHeaders,
@@ -128,6 +131,32 @@ function isAcceptableForRequest(
   return coverUrlExpectsHighResolution(ranked.sourceUrl);
 }
 
+function cookieFetchLooksComplete(
+  cookieFetch: RankedFetch | null,
+  fullCandidates: string[],
+): cookieFetch is RankedFetch {
+  if (!cookieFetch) return false;
+  return (
+    fullCandidates.length === 0 ||
+    coverUrlExpectsHighResolution(cookieFetch.sourceUrl)
+  );
+}
+
+async function fetchCandidatesWithFlareCookies(
+  candidates: string[],
+  unlockUrl: string,
+  timeout: number,
+): Promise<RankedFetch | null> {
+  const flare = await flareSolverrCookiesFor(unlockUrl, timeout);
+  if (!flare) return null;
+  return fetchBestFromCandidates(candidates, (candidate) =>
+    tryFetchUrl(candidate, {
+      Cookie: flare.cookie,
+      "User-Agent": flare.userAgent,
+    }),
+  );
+}
+
 async function fetchWithOptionalFlare(
   url: string,
   candidates: string[],
@@ -138,32 +167,39 @@ async function fetchWithOptionalFlare(
   const fullCandidates = candidates.filter((candidate) =>
     coverUrlExpectsHighResolution(candidate),
   );
-  let cookieFetch: RankedFetch | null = null;
 
-  const flare = await flareSolverrCookiesFor(referer, timeout);
-  if (flare) {
-    cookieFetch = await fetchBestFromCandidates(candidates, (candidate) =>
-      tryFetchUrl(candidate, {
-        Cookie: flare.cookie,
-        "User-Agent": flare.userAgent,
-      }),
+  // 1) Asset URL first — Anubis (LDDb) mints usable auth cookies on the cover
+  //    GET; homepage-only cookies often still return challenge HTML.
+  // 2) Site referer next (Booknode / Referer-gated CDNs).
+  const unlockUrls = Array.from(
+    new Set([candidates[0] || url, referer].filter(Boolean)),
+  );
+
+  let cookieFetch: RankedFetch | null = null;
+  for (const unlockUrl of unlockUrls) {
+    cookieFetch = await fetchCandidatesWithFlareCookies(
+      candidates,
+      unlockUrl,
+      timeout,
     );
-    if (
-      cookieFetch &&
-      (!fullCandidates.length ||
-        coverUrlExpectsHighResolution(cookieFetch.sourceUrl))
-    ) {
+    if (cookieFetchLooksComplete(cookieFetch, fullCandidates)) {
       return cookieFetch;
     }
   }
 
-  if (fullCandidates.length === 0) {
+  // Prefer /full/ targets when present (Booknode fork with downloadUrls).
+  // Plain candidates are included so Anubis hosts still try the browser path
+  // when the local FlareSolverr build supports it.
+  const downloadTargets = (
+    fullCandidates.length > 0 ? fullCandidates : candidates
+  ).slice(0, 4);
+  if (downloadTargets.length === 0) {
     return cookieFetch;
   }
 
   const downloads = await flareSolverrDownloadImages(
     referer,
-    fullCandidates.slice(0, 4),
+    downloadTargets,
     timeout,
   );
   let best: RankedFetch | null = cookieFetch;

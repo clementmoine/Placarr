@@ -691,6 +691,19 @@ export function filterItemPriceOffers(
       sourceUrl: normalized.sourceUrl ?? offer.sourceUrl,
     };
   });
+  // Already bound to this item/metadata at write time — skip FR/EN title
+  // matching (dominant cost on large TCG shelves like Lorcana).
+  if (
+    enrichedOffers.length > 0 &&
+    enrichedOffers.every((offer) => offer.metadataScoped === true)
+  ) {
+    return trimObservedPriceOutliers(
+      shelfType,
+      dropUnnamedMarketplaceNoise(
+        dropAccessoryListings(enrichedOffers, shelfType),
+      ),
+    );
+  }
   const names = [
     ...new Set(itemNames.map((name) => name.trim()).filter(Boolean)),
   ];
@@ -1113,21 +1126,6 @@ export function resolveItemDisplayPrices(
   offers: PriceObservation[],
   cacheSummary: CacheSummaryFields | null,
 ): BarcodePricesResult | null {
-  const observedSummary = observedSummaryFromAlignedOffers(
-    shelfType,
-    shelfName,
-    itemNames,
-    offers,
-  );
-  const summaryInput: CacheSummaryFields = {
-    priceNew: cacheSummary?.priceNew ?? observedSummary?.priceNew ?? null,
-    priceUsed: cacheSummary?.priceUsed ?? observedSummary?.priceUsed ?? null,
-    priceUsedCIB:
-      cacheSummary?.priceUsedCIB ?? observedSummary?.priceUsedCIB ?? null,
-    priceLastUpdated:
-      cacheSummary?.priceLastUpdated ?? priceLastUpdatedFromOffers(offers),
-  };
-
   if (offers.length > 0) {
     const resolution = resolveItemPriceFromOffers(
       shelfType,
@@ -1151,6 +1149,7 @@ export function resolveItemDisplayPrices(
 
       return withPriceSourceTraits({
         priceNew: resolution.summary.priceNew,
+        priceFoil: resolution.summary.priceFoil ?? null,
         priceUsed: resolution.summary.priceUsed,
         priceUsedCIB: resolution.summary.priceUsedCIB,
         priceLastUpdated: priceLastUpdatedFromOffers(offers),
@@ -1164,6 +1163,15 @@ export function resolveItemDisplayPrices(
       });
     }
   }
+
+  // Cache / unfiltered fallback — only path that still needs a second align.
+  const summaryInput: CacheSummaryFields = {
+    priceNew: cacheSummary?.priceNew ?? null,
+    priceUsed: cacheSummary?.priceUsed ?? null,
+    priceUsedCIB: cacheSummary?.priceUsedCIB ?? null,
+    priceLastUpdated:
+      cacheSummary?.priceLastUpdated ?? priceLastUpdatedFromOffers(offers),
+  };
 
   const hasSummaryInput =
     summaryInput.priceNew != null ||
@@ -1189,6 +1197,7 @@ export function resolveItemDisplayPrices(
 
   if (
     aligned.priceNew == null &&
+    aligned.priceFoil == null &&
     aligned.priceUsed == null &&
     aligned.priceUsedCIB == null
   ) {

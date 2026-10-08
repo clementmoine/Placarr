@@ -190,6 +190,20 @@ export async function getCachedBarcodePrices(
   );
 }
 
+function shelfResultHasMarketPrice(
+  result: Pick<
+    ShelfItemPriceFields,
+    "priceNew" | "priceFoil" | "priceUsed" | "priceUsedCIB"
+  >,
+): boolean {
+  return (
+    result.priceNew != null ||
+    result.priceFoil != null ||
+    result.priceUsed != null ||
+    result.priceUsedCIB != null
+  );
+}
+
 async function resolveShelfItemPriceFields(
   shelfType: string,
   shelfName: string | null | undefined,
@@ -206,30 +220,38 @@ async function resolveShelfItemPriceFields(
   );
   if (!resolved) return null;
 
-  const withFx = await withFxPriceEstimated(resolved, offers, shelfType);
-  // Title-align the same way as item detail so FR prints keep Lorcast ~EUR.
-  const aligned = alignBarcodePricesForItemNames(
-    shelfType,
-    itemNames,
-    withFx,
-    shelfName,
-  );
+  // Strict resolve already filtered observations — re-align only on the
+  // cache/relaxed path (empty observations) where FR/EN title gates still apply.
+  const needsAlign = resolved.priceObservations.length === 0 && offers.length > 0;
+  const needsFx = !shelfResultHasMarketPrice(resolved);
+  let priced = resolved;
+  if (needsFx) {
+    priced = await withFxPriceEstimated(priced, offers, shelfType);
+  }
+  if (needsAlign) {
+    priced = alignBarcodePricesForItemNames(
+      shelfType,
+      itemNames,
+      priced,
+      shelfName,
+    );
+  }
   // Catalog côtes (`condition: estimated`) are excluded from market summaries —
   // surface them as priceEstimated so the shelf grid can show ~ without a
   // second evidence-only pass when PriceOffer rows already exist.
   const catalogEstimate = catalogEstimatedCentsFromOffers(offers);
-  const priceEstimated = aligned.priceEstimated ?? catalogEstimate;
+  const priceEstimated = priced.priceEstimated ?? catalogEstimate;
 
   return {
-    priceNew: aligned.priceNew,
-    ...(aligned.priceFoil != null ? { priceFoil: aligned.priceFoil } : {}),
-    priceUsed: aligned.priceUsed,
-    priceUsedCIB: aligned.priceUsedCIB,
+    priceNew: priced.priceNew,
+    ...(priced.priceFoil != null ? { priceFoil: priced.priceFoil } : {}),
+    priceUsed: priced.priceUsed,
+    priceUsedCIB: priced.priceUsedCIB,
     ...(priceEstimated != null ? { priceEstimated } : {}),
-    ...(aligned.priceEstimatedFoil != null
-      ? { priceEstimatedFoil: aligned.priceEstimatedFoil }
+    ...(priced.priceEstimatedFoil != null
+      ? { priceEstimatedFoil: priced.priceEstimatedFoil }
       : {}),
-    priceLastUpdated: aligned.priceLastUpdated,
+    priceLastUpdated: priced.priceLastUpdated,
   };
 }
 
@@ -289,6 +311,21 @@ export async function summarizeShelfItemPrices(
     .map((cache) => cache.id);
   const itemIds = items.map((item) => item.id);
 
+  // Shelf grid does not need rawValue JSON (~0.6MB on Lorcana): item-bound
+  // rows are already matched at write time → treat as metadataScoped.
+  const shelfOfferSelect = {
+    itemId: true,
+    barcodeCacheId: true,
+    source: true,
+    productName: true,
+    merchantName: true,
+    condition: true,
+    priceCents: true,
+    currency: true,
+    sourceUrl: true,
+    offerCount: true,
+    observedAt: true,
+  } as const;
   const offers =
     itemIds.length > 0 || usableCacheIds.length > 0
       ? await prisma.priceOffer.findMany({
@@ -300,11 +337,26 @@ export async function summarizeShelfItemPrices(
                 : []),
             ],
           },
+          select: shelfOfferSelect,
           orderBy: { observedAt: "desc" },
         })
       : [];
 
-  const offersByItemId = new Map<string, typeof offers>();
+  type ShelfOfferRow = (typeof offers)[number];
+  const offersByItemId = new Map<string, ShelfOfferRow[]>();
+  const offersByCacheId = new Map<number, ShelfOfferRow[]>();
+  for (const offer of offers) {
+    if (offer.itemId) {
+      const bucket = offersByItemId.get(offer.itemId);
+      if (bucket) bucket.push(offer);
+      else offersByItemId.set(offer.itemId, [offer]);
+    }
+    if (offer.barcodeCacheId != null) {
+      const bucket = offersByCacheId.get(offer.barcodeCacheId);
+      if (bucket) bucket.push(offer);
+      else offersByCacheId.set(offer.barcodeCacheId, [offer]);
+    }
+  }
   for (const item of items) {
     const clean = cleanBarcodeValue(item.barcode);
     const cache = clean ? cacheByBarcode.get(clean) : null;
@@ -312,14 +364,30 @@ export async function summarizeShelfItemPrices(
       cache && (!cache.shelfType || cache.shelfType === shelfType)
         ? cache
         : null;
-    const itemOffers = offers.filter(
-      (offer) =>
-        offer.itemId === item.id ||
-        (usableCache?.id != null && offer.barcodeCacheId === usableCache.id),
-    );
-    if (itemOffers.length > 0) {
-      offersByItemId.set(item.id, itemOffers.slice(0, 24));
+    const direct = offersByItemId.get(item.id) ?? [];
+    const fromCache =
+      usableCache?.id != null
+        ? (offersByCacheId.get(usableCache.id) ?? [])
+        : [];
+    if (direct.length === 0 && fromCache.length === 0) {
+      offersByItemId.delete(item.id);
+      continue;
     }
+    if (fromCache.length === 0) {
+      offersByItemId.set(item.id, direct.slice(0, 24));
+      continue;
+    }
+    // Merge item + barcode-cache offers, newest first (query is ordered desc).
+    const seen = new Set<string>();
+    const merged: ShelfOfferRow[] = [];
+    for (const offer of [...direct, ...fromCache]) {
+      const key = `${offer.source}|${offer.condition}|${offer.priceCents}|${offer.productName ?? ""}|${offer.sourceUrl ?? ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(offer);
+      if (merged.length >= 24) break;
+    }
+    offersByItemId.set(item.id, merged);
   }
 
   for (const item of items) {
@@ -340,7 +408,15 @@ export async function summarizeShelfItemPrices(
     const itemNames = [item.name, item.metadataTitle, ...aliasNames].filter(
       (name): name is string => !!name?.trim(),
     );
-    const sourceOffers = toPriceObservations(itemOffers);
+    const sourceOffers = toPriceObservations(
+      itemOffers.map((offer) => ({
+        ...offer,
+        // TCG printKey digs stamp metadataScoped in rawValue; without loading
+        // that JSON, item-bound TCG rows are still trusted. Other shelf types
+        // keep title gates (wrong-issue / lot listings).
+        metadataScoped: shelfType === "tcg" && Boolean(offer.itemId),
+      })),
+    );
     const cacheSummary = usableCache
       ? {
           priceNew: usableCache.priceNew,
@@ -409,6 +485,18 @@ async function estimatedCentsForPrintKey(input: {
   return displayEstimatedCentsFromOffers(input.shelfType, observations);
 }
 
+function shelfItemHasMarketPrice(
+  fields: ShelfItemPriceFields | undefined,
+): boolean {
+  if (!fields) return false;
+  return (
+    fields.priceNew != null ||
+    fields.priceFoil != null ||
+    fields.priceUsed != null ||
+    fields.priceUsedCIB != null
+  );
+}
+
 async function fillShelfPrintKeyEstimates(
   result: Map<string, ShelfItemPriceFields>,
   items: Array<{
@@ -419,11 +507,14 @@ async function fillShelfPrintKeyEstimates(
   }>,
   shelfType: string,
 ): Promise<void> {
+  // Skip when a market bucket already displays on the grid — evidence-only
+  // printKey ~cotes are only useful when there is nothing else to show.
   const needsEstimate = items.filter((item) => {
     const printKey = item.printKey?.trim();
     if (!printKey) return false;
     const fields = result.get(item.id);
-    return fields?.priceEstimated == null;
+    if (fields?.priceEstimated != null) return false;
+    return !shelfItemHasMarketPrice(fields);
   });
   if (needsEstimate.length === 0) return;
 

@@ -39,9 +39,9 @@ function luminanceEntropy(
 }
 
 /**
- * Google Books (and lookalikes) serve a portrait tile with a black field and
- * localized "image not available" artwork (~257×389, ≤ ~20 KB). Pixel stats
- * only — no OCR, no provider id literals.
+ * Catalog "no cover" tiles — Google Books dark field (~257×389) and light
+ * marketplace fillers ("Visuel non disponible", ~260×390). Pixel stats only —
+ * no OCR, no provider id literals.
  */
 export async function isUnavailableCoverPlaceholderBuffer(
   buffer: Buffer,
@@ -82,6 +82,9 @@ export async function isUnavailableCoverPlaceholderBuffer(
 
   const channels = info.channels;
   let darkPixels = 0;
+  let brightPixels = 0;
+  let luminanceSum = 0;
+  let counted = 0;
   const total = width * height;
 
   for (let y = 0; y < height; y++) {
@@ -93,13 +96,30 @@ export async function isUnavailableCoverPlaceholderBuffer(
       const green = data[offset + 1] ?? 0;
       const blue = data[offset + 2] ?? 0;
       const luminance = 0.299 * red + 0.587 * green + 0.114 * blue;
+      luminanceSum += luminance;
+      counted += 1;
       if (luminance < 45) darkPixels += 1;
+      if (luminance > 200) brightPixels += 1;
     }
   }
 
+  const entropy = luminanceEntropy(data, width, height, channels);
+  const darkRatio = darkPixels / total;
+  if (
+    darkRatio >= UNAVAILABLE_TILE_MIN_DARK_RATIO &&
+    entropy < UNAVAILABLE_TILE_MAX_ENTROPY
+  ) {
+    return true;
+  }
+
+  // Light-gray FR marketplace tiles ("Visuel non disponible"): nearly blank
+  // bright field, tiny file, book-cover aspect.
+  const meanLuminance = counted > 0 ? luminanceSum / counted : 0;
+  const brightRatio = brightPixels / total;
   return (
-    darkPixels / total >= UNAVAILABLE_TILE_MIN_DARK_RATIO &&
-    luminanceEntropy(data, width, height, channels) <
-      UNAVAILABLE_TILE_MAX_ENTROPY
+    meanLuminance >= 200 &&
+    brightRatio >= 0.85 &&
+    darkRatio < 0.05 &&
+    entropy < 5.0
   );
 }

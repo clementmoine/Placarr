@@ -91,6 +91,34 @@ const SHIPPUDEN_JA_SETS = /^(maku\d+|shi|mju|msa|gaku)$/i;
  */
 const SHIPPUDEN_JA_BACK_URL = `${ASSET_BASE}/cards/shi/back.webp`;
 
+/*
+  Même découpe que `narutoCatalogueLineForCard` (packs.ts) — dupliquée ici pour
+  que le registry effects reste autonome. Le skeleton grille n'accepte que les
+  dos pack/set : sans resolve set-scope, Storm 3 / Legacy retombaient sur le
+  verso Carddass FR pendant le chargement (le stamp print `back.en` est filtré).
+*/
+const CARDDASS_PRINTED_PREFIX =
+  /^(ni|te|ta|cl|ki|prni|prte|prta|prcl|prki|opni)[-]?\d/i;
+const EN_CCG_PRINTED_PREFIX =
+  /^(nus|jus|mus|cus|prus|n|j|m|c|pr|ps)[-]?\d/i;
+const DATA_CARDDASS_PRINTED_PREFIX = /^(dn|nm|nx)[-]?\d/i;
+
+function isEnCcgPrintedRef(card: string, setCode: string): boolean {
+  const raw = card.trim();
+  if (DATA_CARDDASS_PRINTED_PREFIX.test(raw)) return false;
+  if (CARDDASS_PRINTED_PREFIX.test(raw)) return false;
+  if (EN_CCG_PRINTED_PREFIX.test(raw)) return true;
+  const series = setCode.trim().toLowerCase();
+  if (!series) return false;
+  if (/^maki\d+$/.test(series)) return false;
+  // s7–s28 / TP / tin — ligne USA (Storm 3, Sage's Legacy, …)
+  return (
+    /^s(?:[7-9]|1\d|2[0-8])$/.test(series) ||
+    /^tp\d+$/.test(series) ||
+    /^tin\d+$/.test(series)
+  );
+}
+
 export const narutoCarddassEffectPack = defineCatalogueOnlyPack({
   id: NARUTO_CARDDASS_EFFECT_PACK_ID,
   label: "Naruto Carddass",
@@ -102,13 +130,21 @@ export const narutoCarddassEffectPack = defineCatalogueOnlyPack({
     Les 313 cartes du 疾風伝 montraient le dos Carddass : les dos sont servis
     par **langue**, et cette ligne est japonaise, donc elle héritait de
     `back.ja.webp`. Deux jeux différents ne partagent pas un dos.
+
+    La ligne USA (Legacy / Storm 3 / s7–s28) partage un verso unique
+    (`back.en.webp`). Il doit être **set-scope** pour le skeleton grille —
+    le stamp print seul est ignoré par `resolveSharedCardBackSkeleton`.
   */
   resolveCardBack: ({ setCode, printKey }) => {
     const card = (printKey ?? "").split(":").pop() ?? "";
     const set = (setCode ?? "").trim();
-    return SHIPPUDEN_JA_FAMILIES.test(card) || SHIPPUDEN_JA_SETS.test(set)
-      ? SHIPPUDEN_JA_BACK_URL
-      : null;
+    if (SHIPPUDEN_JA_FAMILIES.test(card) || SHIPPUDEN_JA_SETS.test(set)) {
+      return SHIPPUDEN_JA_BACK_URL;
+    }
+    if (isEnCcgPrintedRef(card, set)) {
+      return NARUTO_CCG_SLEEVE_BACK_URL;
+    }
+    return null;
   },
   finishShader: FINISH_SHADER,
   fallbackFoilMaskUrl: NARUTO_CARDDASS_FULL_FOIL_MASK_URL,

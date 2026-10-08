@@ -47,9 +47,13 @@ function normalizeThemeDisplayFact(fact: DetailFact): DetailFact {
   };
 }
 
-function splitTagValues(value: string): string[] {
+/**
+ * Chip-split multi-value theme/genre facts. Providers join with `•`, `;`, or
+ * `,` (SensCritique / legacy dumps); never leave "Adventure; Stealth" as one chip.
+ */
+export function splitTagValues(value: string): string[] {
   return value
-    .split(/\s*•\s*/g)
+    .split(/\s*[•|;,]\s*/g)
     .map((tag) => tag.trim())
     .filter(Boolean);
 }

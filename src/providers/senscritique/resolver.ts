@@ -67,7 +67,7 @@ function buildSensCritiqueFacts(product: SensCritiqueProduct): MetadataFact[] {
     facts.push({
       kind: "genre",
       label: "Genre",
-      value: product.genres.join(", "),
+      value: product.genres.join(" • "),
       source: "senscritique",
       confidence: 0.7,
       priority: 62,

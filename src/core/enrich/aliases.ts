@@ -1,4 +1,8 @@
 import { repairCatalogColonSubstitute } from "@/core/enrich/titles/normalize";
+import {
+  formatAttachmentLanguageLabel,
+  isAttachmentFaceLabelTitle,
+} from "@/core/enrich/media/attachmentDisplayLabels";
 import { cleanTitleForDisplay } from "@/core/identify/titleUtils";
 import { hasUnrequestedSeriesSuffixToken } from "@/core/enrich/titleMatching";
 
@@ -39,6 +43,8 @@ export function isNoiseDisplayAlias(
   const trimmed = normalizeAliasValue(alias);
   if (!trimmed || trimmed.length < 2) return true;
   if (PLACEHOLDER_ALIAS.test(trimmed)) return true;
+  // Gallery face labels (LaunchBox / PriceCharting / HDJV) are not alternate names.
+  if (isAttachmentFaceLabelTitle(trimmed)) return true;
   // Entirely bracketed titles are usually wrong-game / unreleased stubs.
   if (/^\[[^\]]+\]$/.test(trimmed)) return true;
 
@@ -232,7 +238,11 @@ export function displayAliasesForItem(input: {
   return aliases;
 }
 
-/** Cover titles whose `role` is a language code (Lorcana FR/EN/DE/IT jaquettes). */
+/**
+ * Cover titles whose `role` is a print language (Lorcana FR/EN/DE/IT jaquettes).
+ * Region roles (`eu` / `us` / `jp` / `wor`) and gallery face labels
+ * ("Box - Front", "Main Image") are excluded — those are box art tags, not AKAs.
+ */
 export function regionalCoverAliasTitles(
   attachments:
     | Array<{
@@ -248,10 +258,10 @@ export function regionalCoverAliasTitles(
   const seen = new Set<string>();
   for (const attachment of attachments) {
     if (attachment.type !== "cover") continue;
-    const role = attachment.role?.trim().toLowerCase();
-    if (!role || !/^[a-z]{2}(?:-[a-z]{2})?$/.test(role)) continue;
+    // ISO print languages only — not LaunchBox/PriceCharting region codes.
+    if (!formatAttachmentLanguageLabel(attachment.role)) continue;
     const title = attachment.title?.trim();
-    if (!title) continue;
+    if (!title || isAttachmentFaceLabelTitle(title)) continue;
     const key = normalizeTitleKey(normalizeAliasValue(title));
     if (!key || seen.has(key)) continue;
     seen.add(key);

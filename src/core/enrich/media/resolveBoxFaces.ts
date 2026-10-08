@@ -7,8 +7,10 @@ import {
   isAttachmentCoverPlatformMismatch,
   platformMatchRank,
 } from "@/core/enrich/media/attachmentPlatformGate";
+import type { ScoredAttachmentInput } from "@/core/enrich/media/attachmentDisplayTypes";
 import { urlsReferToSameLocalizedImage } from "@/core/enrich/media/coverUrl";
 import type { LocaleRegion } from "@/core/locale/preference";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 /**
  * Flat attachment-shaped input for assembling a CSS 3D game box.
@@ -84,50 +86,42 @@ function faceKind(
  * on a PS2 shelf) are dropped when a preferred platform is set — better an
  * incomplete box than a confidently wrong one.
  */
+function scoredBoxFace(
+  attachment: BoxFaceAttachment,
+): ScoredAttachmentInput | null {
+  const url = attachment.url?.trim();
+  if (!url) return null;
+  return {
+    type: (attachment.type || "image") as AttachmentType,
+    role: attachment.role,
+    title: attachment.title,
+    url,
+    platformKey: attachment.platformKey,
+  };
+}
+
 function pickBestUrl(
   candidates: RankedCandidate[],
   preferredRegion?: LocaleRegion | null,
   preferredPlatformKey?: string | null,
 ): string | undefined {
   const eligible = preferredPlatformKey
-    ? candidates.filter(
-        (c) =>
-          !isAttachmentCoverPlatformMismatch(
-            {
-              type: c.attachment.type || "image",
-              role: c.attachment.role,
-              title: c.attachment.title,
-              url: c.attachment.url,
-              platformKey: c.attachment.platformKey,
-            },
-            preferredPlatformKey,
-          ),
-      )
+    ? candidates.filter((c) => {
+        const scored = scoredBoxFace(c.attachment);
+        return (
+          scored != null &&
+          !isAttachmentCoverPlatformMismatch(scored, preferredPlatformKey)
+        );
+      })
     : candidates;
   if (eligible.length === 0) return undefined;
 
   const sorted = [...eligible].sort((a, b) => {
+    const aScored = scoredBoxFace(a.attachment);
+    const bScored = scoredBoxFace(b.attachment);
     const platformDelta =
-      platformMatchRank(
-        {
-          type: a.attachment.type || "image",
-          role: a.attachment.role,
-          title: a.attachment.title,
-          url: a.attachment.url,
-          platformKey: a.attachment.platformKey,
-        },
-        preferredPlatformKey,
-      ) -
-      platformMatchRank(
-        {
-          type: b.attachment.type || "image",
-          role: b.attachment.role,
-          title: b.attachment.title,
-          url: b.attachment.url,
-          platformKey: b.attachment.platformKey,
-        },
-        preferredPlatformKey,
-      );
+      platformMatchRank(aScored!, preferredPlatformKey) -
+      platformMatchRank(bScored!, preferredPlatformKey);
     if (platformDelta !== 0) return platformDelta;
     return (
       regionRank(a.region, preferredRegion) -
@@ -203,6 +197,27 @@ export function resolveBoxFaces(
     ...(back ? { back } : {}),
     ...(spine ? { spine } : {}),
   };
+}
+
+/**
+ * Flat sleeve / jacket flip (vinyl, LaserDisc, …): front + back only.
+ * Never invents a spine — when all three faces exist, {@link resolveBoxFaces}
+ * owns the GameBox3D path instead.
+ *
+ * `preferredFrontUrl` (usually the ranked `coverImage`) keeps the hero face
+ * aligned with Affiche / shelf aspect ranking when several fronts compete.
+ */
+export function resolveFlatSleeveFlip(
+  faces: ResolvedBoxFaces,
+  options?: { preferredFrontUrl?: string | null },
+): { front: string; back: string } | null {
+  if (faces.complete) return null;
+  if (!faces.back) return null;
+  const preferred = options?.preferredFrontUrl?.trim() || undefined;
+  const front = preferred || faces.front;
+  if (!front) return null;
+  if (urlsReferToSameLocalizedImage(front, faces.back)) return null;
+  return { front, back: faces.back };
 }
 
 /**

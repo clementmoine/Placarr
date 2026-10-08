@@ -1,8 +1,9 @@
 /**
  * Keep-case polycarbonate tint for GameBox3D plastic edges.
  *
- * Distinctive shell colours (PS2 blue, Switch red, Wii U blue…) only when the
- * platform key is known — unknown / cardboard eras stay honest generic smoke.
+ * Distinctive shell colours (PS2 blue, Switch 2 red, Wii U blue…) only when the
+ * platform ships a polycarbonate keep-case — cardboard-era keys are handled by
+ * GameBox3D's spine-wrap mode instead (`usesKeepCaseShell`).
  */
 
 export type KeepCasePlasticRecipe = {
@@ -19,6 +20,13 @@ const SMOKE: KeepCasePlasticRecipe = {
   base: "oklch(0.22 0.01 260)",
   highlight: "oklch(0.32 0.012 260)",
   shade: "oklch(0.14 0.008 260)",
+};
+
+/** Clear gray-white polycarbonate — DS / Switch keep-cases. */
+const CLEAR_TRANSLUCENT: KeepCasePlasticRecipe = {
+  base: "oklch(0.88 0.01 250)",
+  highlight: "oklch(0.95 0.006 250)",
+  shade: "oklch(0.72 0.015 250)",
 };
 
 const RECIPES: Record<string, KeepCasePlasticRecipe> = {
@@ -81,25 +89,18 @@ const RECIPES: Record<string, KeepCasePlasticRecipe> = {
     highlight: "oklch(0.55 0.14 250)",
     shade: "oklch(0.28 0.1 250)",
   },
-  switch: {
+  switch: CLEAR_TRANSLUCENT,
+  switch2: {
     base: "oklch(0.42 0.18 25)",
     highlight: "oklch(0.52 0.2 25)",
     shade: "oklch(0.28 0.15 25)",
   },
-  switch2: {
-    base: "oklch(0.38 0.16 25)",
-    highlight: "oklch(0.48 0.18 25)",
-    shade: "oklch(0.24 0.13 25)",
-  },
-  ds: {
-    base: "oklch(0.72 0.015 250)",
-    highlight: "oklch(0.85 0.012 250)",
-    shade: "oklch(0.52 0.02 250)",
-  },
+  ds: CLEAR_TRANSLUCENT,
   "3ds": {
-    base: "oklch(0.2 0.015 260)",
-    highlight: "oklch(0.3 0.02 260)",
-    shade: "oklch(0.12 0.01 260)",
+    // Retail 3DS keep-cases are the same clear/white plastic family as Wii.
+    base: "oklch(0.92 0.008 250)",
+    highlight: "oklch(0.97 0.005 250)",
+    shade: "oklch(0.78 0.012 250)",
   },
 
   // Sega
@@ -125,4 +126,13 @@ export function keepCasePlasticRecipe(
   const key = (platformKey || "").toLowerCase().trim();
   if (!key) return SMOKE;
   return RECIPES[key] ?? SMOKE;
+}
+
+/**
+ * True when retail copies ship in a polycarbonate keep-case (PS2, Switch…).
+ * Cardboard-era platforms (N64, Game Boy…) use the spine-wrap box instead.
+ */
+export function usesKeepCaseShell(platformKey?: string | null): boolean {
+  const key = (platformKey || "").toLowerCase().trim();
+  return Boolean(key && Object.prototype.hasOwnProperty.call(RECIPES, key));
 }

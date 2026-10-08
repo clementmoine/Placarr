@@ -45,6 +45,7 @@ import {
   type PlaceholderCoverSignals,
 } from "@/core/enrich/media/coverPlaceholder";
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/coverResolution";
+import { expectedCoverAspectRatioForShelf } from "@/lib/text/cardFormat";
 import {
   findAttachmentForUrl,
   isCoverEligibleAttachmentType,
@@ -108,6 +109,8 @@ export interface MediaInput {
   shelf?: {
     type?: string | null;
     name?: string | null;
+    /** Shelf card frame — drives cover aspect-fit ranking. */
+    cardFormat?: string | null;
   } | null;
 }
 
@@ -116,15 +119,23 @@ function isUserUploadedImage(url?: string | null): boolean {
   return url.startsWith("/") || url.startsWith("data:");
 }
 
+/**
+ * Progressive enrichment often stamps a ranked catalog cover onto
+ * `item.imageUrl` a moment after `lastFetched` while `metadata.imageUrl` still
+ * points at another provider. That must not lock Affiche / the fiche as a
+ * "user pick". Real gallery saves happen later (see media tests: hours gap).
+ */
+const ENRICHMENT_IMAGE_SYNC_GRACE_MS = 30_000;
+
 /** Cover saved manually after the last enrichment — do not auto-heal over it. */
 export function isExplicitUserCoverOverride(item: MediaInput): boolean {
   if (!item.imageUrl) return false;
   const lastFetched = item.metadata?.lastFetched;
   const updatedAt = item.updatedAt;
   if (!lastFetched || !updatedAt) return false;
-  if (new Date(updatedAt).getTime() <= new Date(lastFetched).getTime()) {
-    return false;
-  }
+  const ageMs =
+    new Date(updatedAt).getTime() - new Date(lastFetched).getTime();
+  if (ageMs <= 0) return false;
   // Enrichment often syncs item.imageUrl to metadata.imageUrl right after
   // writing lastFetched, which bumps updatedAt — that is not a gallery pick.
   const metadataCover = item.metadata?.imageUrl?.trim();
@@ -133,6 +144,18 @@ export function isExplicitUserCoverOverride(item: MediaInput): boolean {
     urlsReferToSameLocalizedImage(item.imageUrl, metadataCover)
   ) {
     return false;
+  }
+  // Same race with a *different* catalog row (e.g. Chasse ranked cover vs
+  // SensCritique metadata.imageUrl) within the enrichment settle window.
+  if (ageMs < ENRICHMENT_IMAGE_SYNC_GRACE_MS) {
+    const pin = item.imageUrl.trim();
+    const matchesCatalog = (item.metadata?.attachments ?? []).some(
+      (attachment) =>
+        attachment.url &&
+        attachment.source !== "user" &&
+        urlsReferToSameLocalizedImage(attachment.url, pin),
+    );
+    if (matchesCatalog) return false;
   }
   return true;
 }
@@ -209,6 +232,10 @@ function coverDisplayOptions(
       item.shelf?.type === "games"
         ? detectShelfGamePlatformKey(item.shelf?.name)
         : undefined,
+    expectedCoverAspectRatio: expectedCoverAspectRatioForShelf(
+      item.shelf?.cardFormat,
+      item.shelf?.type,
+    ),
     ...(resolvedLocale ? { uiLocale: resolvedLocale } : {}),
     ...(preferDiscCover ? { preferDiscCover: true } : {}),
     ...(preferSystemOnlyCover ? { preferSystemOnlyCover: true } : {}),
@@ -887,18 +914,32 @@ export function resolveMetadataCoverUrl(
 
   // Enrichment may stamp metadata.imageUrl to a high-scoring NTSC box (Geedie US)
   // while the gallery already has a better locale match (HDJV FR). Prefer the
-  // locale-ranked catalog cover over that stale regional pin.
+  // locale-ranked catalog cover over that stale regional pin. Same locale + better
+  // score also wins (square LD sleeve vs tall TMDB poster left as the pin).
   if (pinAttachment && coverPool.length > 0) {
     const metrics = persistedImageMetricsByUrl(item);
     const bestUrl = pickBestCoverFromAttachments(coverPool, metrics, options);
     if (bestUrl && !urlsReferToSameLocalizedImage(bestUrl, pin)) {
       const bestAttachment = findAttachmentForUrl(coverPool, bestUrl);
-      if (
-        bestAttachment &&
-        coverLocaleRankForAttachment(bestAttachment, options) <
-          coverLocaleRankForAttachment(pinAttachment, options)
-      ) {
-        return bestUrl;
+      if (bestAttachment) {
+        const bestLocale = coverLocaleRankForAttachment(bestAttachment, options);
+        const pinLocale = coverLocaleRankForAttachment(pinAttachment, options);
+        if (bestLocale < pinLocale) return bestUrl;
+        if (
+          bestLocale === pinLocale &&
+          scoreAttachmentForDisplay(
+            bestAttachment,
+            metrics?.get(bestUrl),
+            options,
+          ) >
+            scoreAttachmentForDisplay(
+              pinAttachment,
+              metrics?.get(pinAttachment.url),
+              options,
+            )
+        ) {
+          return bestUrl;
+        }
       }
     }
   }
@@ -1175,8 +1216,8 @@ export function getGalleryImages(
   ranked.filter((attachment) => attachment.type === "logo").forEach(add);
   ranked.filter((attachment) => attachment.type === "image").forEach(add);
 
-  // Cover ranking omits box backs/spines so they never win the default cover
-  // slot — still list them in the page gallery (PriceCharting #images, etc.).
+  // Sleeve backs already trail fronts in Affiche ranking; re-append any
+  // remaining physical faces (spine, …) that ranking still omits.
   for (const attachment of attachments(item)) {
     if (!attachment.url) continue;
     const { kind } = resolveAttachmentSemantics({
@@ -1185,7 +1226,8 @@ export function getGalleryImages(
       title: attachment.title,
       source: attachment.source,
     });
-    if (!isPhysicalNonCoverKind(kind) || kind === "disc") continue;
+    if (!isPhysicalNonCoverKind(kind) || kind === "disc" || kind === "back")
+      continue;
     add({
       url: attachment.url,
       type: attachment.type,

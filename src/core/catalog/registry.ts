@@ -93,6 +93,8 @@ import { steamModule } from "@/providers/steam";
 import { steamgriddbModule } from "@/providers/steamgriddb";
 import { thegamesdbModule } from "@/providers/thegamesdb";
 import { tmdbModule } from "@/providers/tmdb";
+import { lddbModule } from "@/providers/lddb";
+import { cdandlpModule } from "@/providers/cdandlp";
 import { vivlioModule } from "@/providers/vivlio";
 
 import type { ProviderModule } from "@/types/providerModule";
@@ -113,9 +115,11 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   coverprojectModule,
   musicbrainzModule,
   discogsModule,
+  cdandlpModule,
   deezerModule,
   tmdbModule,
   omdbModule,
+  lddbModule,
   openlibraryModule,
   googlebooksModule,
   booknodeModule,

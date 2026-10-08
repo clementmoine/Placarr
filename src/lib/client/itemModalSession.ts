@@ -10,6 +10,7 @@ import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions
 import { loanedAtInputValue } from "@/core/collect/itemLoan";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { Locale } from "@/types/i18n";
 
 export type ItemModalFormValues = {
   shelfId: string;
@@ -34,6 +35,7 @@ export type ItemModalFormValues = {
 export type ItemModalShelfMediaContext = {
   type?: string;
   name?: string;
+  cardFormat?: string | null;
 };
 
 export type ItemModalPrefilledValues = {
@@ -143,8 +145,10 @@ export function buildItemModalSessionInit(input: {
   prefilledValues?: ItemModalPrefilledValues;
   shelfId: string;
   activeShelfForMedia: ItemModalShelfMediaContext;
+  uiLocale?: Locale | null;
 }): ItemModalSessionInit {
-  const { item, prefilledValues, shelfId, activeShelfForMedia } = input;
+  const { item, prefilledValues, shelfId, activeShelfForMedia, uiLocale } =
+    input;
   const defaults = defaultFormValues(shelfId, prefilledValues);
 
   if (item) {
@@ -154,13 +158,22 @@ export function buildItemModalSessionInit(input: {
       updatedAt: item.updatedAt,
       condition: item.condition,
       metadata: item.metadata,
-      shelf: item.shelf || activeShelfForMedia,
+      // Prefer the live shelf frame (cardFormat) over a stale nested item.shelf
+      // that may omit it — same options as Affiche gallery ranking.
+      shelf: {
+        type: activeShelfForMedia.type ?? item.shelf?.type,
+        name: activeShelfForMedia.name ?? item.shelf?.name,
+        cardFormat:
+          activeShelfForMedia.cardFormat ?? item.shelf?.cardFormat ?? null,
+      },
     };
     // Without an explicit user gallery pick, seed the form on the dynamic
     // default (same ranking as cards / "Par défaut") — not a stale item.imageUrl.
     const seededCoverUrl = isExplicitUserCoverOverride(mediaForCover)
       ? item.imageUrl || defaults.imageUrl
-      : getCoverImage(mediaForCover) || item.imageUrl || defaults.imageUrl;
+      : getCoverImage(mediaForCover, uiLocale) ||
+        item.imageUrl ||
+        defaults.imageUrl;
     let formValues: ItemModalFormValues = {
       shelfId: item.shelfId || defaults.shelfId,
       name: storedName,

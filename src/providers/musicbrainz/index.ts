@@ -179,6 +179,7 @@ function createMusicBrainzAdapter(): MetadataProviderAdapter {
         authors: mb.artist ? [{ name: mb.artist }] : [],
         tracksCount: mb.tracksCount || undefined,
         imageUrl: mb.imageUrl || undefined,
+        attachments: mb.attachments,
         aliases: catalogAliasesFromNames(mb.title, [
           mb.releaseTitle,
           ...(mb.aliases || []),
@@ -199,8 +200,14 @@ export const musicbrainzModule = defineProvider({
     auth: { kind: "none" },
     supplyMode: "api_live",
     canonical: true,
+    isRealBoxCover: true,
+    coverUrlHost: "coverartarchive.org",
+    coverProvenanceRules: {
+      catalog: ["coverartarchive.org", "archive.org"],
+    },
     websiteUrl: "https://musicbrainz.org/",
-    notes: "Lookup par code-barre, sans clé.",
+    notes:
+      "Lookup par code-barre. Cover Art Archive : Front / Back / Spine dédiée / Medium (disc). Back+Spine combinés = dos seul (pas de fausse tranche).",
   },
   evidence: {
     label: "MusicBrainz",

@@ -333,7 +333,7 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
       expect(byDisk.get("ta0193")?.sort()).toEqual(["tvtokyo-a", "tvtokyo-b"]);
       expect(byDisk.get("ta0178")?.sort()).toEqual(["tvtokyo", "tvtokyo-b"]);
       expect(byDisk.get("ta0034")?.sort()).toEqual(["tvtokyo", "tvtokyo-b"]);
-      expect(byDisk.size).toBe(790);
+      expect(byDisk.size).toBe(791);
     });
   });
 }

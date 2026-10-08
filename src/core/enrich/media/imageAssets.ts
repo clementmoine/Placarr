@@ -5,7 +5,10 @@ import fs from "fs";
 import sharp from "sharp";
 import type { AttachmentType } from "@/generated/prisma/browser";
 import { type AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
-import { isCoverResolutionAcceptable } from "@/core/enrich/media/imageMetrics";
+import {
+  isCoverResolutionAcceptable,
+  readBufferImageMetrics,
+} from "@/core/enrich/media/imageMetrics";
 import { isPlaceholderCoverImage } from "@/core/enrich/media/coverPlaceholder";
 import { isUnavailableCoverPlaceholderBuffer } from "@/core/enrich/media/coverPlaceholder.server";
 import {
@@ -55,7 +58,15 @@ export function dedupeByPerceptualHash<
 ): T[] {
   const kept: Array<{ hash: string; resultIndex: number; group: string }> = [];
   const result: T[] = [];
+  // Remote URLs (no local hash) still collapse when the exact URL repeats —
+  // e.g. imageUrl + attachment twin when localization/Anubis fails.
+  const seenExactUrl = new Set<string>();
   for (const attachment of attachments) {
+    const urlKey = attachment.url;
+    if (urlKey) {
+      if (seenExactUrl.has(urlKey)) continue;
+      seenExactUrl.add(urlKey);
+    }
     const hash = hashOf(attachment.url);
     if (hash === null) {
       result.push(attachment);
@@ -334,11 +345,14 @@ export async function readAttachmentImageMetrics(
     try {
       const buffer = fs.readFileSync(filePath);
       const metadata = await sharp(buffer).metadata();
-      if (!metadata.width || !metadata.height) return null;
+      // Content box (not canvas) — padded marketplace squares must not rank as
+      // square LD/vinyl sleeves. See `measureDisplayImageDimensions`.
+      const dims = await readBufferImageMetrics(buffer);
+      if (!dims?.width || !dims?.height) return null;
       const exposure = await measureCoverExposureFromBuffer(buffer);
       return {
-        width: metadata.width,
-        height: metadata.height,
+        width: dims.width,
+        height: dims.height,
         format: metadata.format,
         meanLuminance: exposure?.meanLuminance,
         darkPixelRatio: exposure?.darkPixelRatio,

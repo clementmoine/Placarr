@@ -24,6 +24,7 @@ import {
 import { createTeardownBarcodeTask } from "@/lib/dev/teardownUtils";
 import { scopedContribution } from "@/core/identify/lookup/sourceContribution";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { isMissingArtImageUrl } from "@/core/enrich/media/coverPlaceholder";
 
 /** Shelf type -> Chasse aux Livres catalog slug. */
 export const CHASSE_AUX_LIVRES_CATALOG_BY_TYPE = {
@@ -294,8 +295,9 @@ function buildChasseAuxLivresAttachments(
   >,
 ): MetadataAttachment[] | undefined {
   const images = product.images ?? [];
-  const urls =
-    images.length > 0 ? images : product.coverUrl ? [product.coverUrl] : [];
+  const urls = (
+    images.length > 0 ? images : product.coverUrl ? [product.coverUrl] : []
+  ).filter((url) => !isMissingArtImageUrl(url));
   if (urls.length === 0) return undefined;
 
   return urls.map((url, index) => ({
@@ -446,7 +448,10 @@ function mapChasseAuxLivresMetadata(
     authors: product.authors?.map((name) => ({ name })),
     publishers: product.publisher ? [{ name: product.publisher }] : undefined,
     description: product.description,
-    imageUrl: product.coverUrl,
+    imageUrl:
+      product.coverUrl && !isMissingArtImageUrl(product.coverUrl)
+        ? product.coverUrl
+        : undefined,
     regionalTitles: [{ region: "fr", text: product.name }],
     attachments: buildChasseAuxLivresAttachments(product),
     facts: facts.length > 0 ? facts : undefined,

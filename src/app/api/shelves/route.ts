@@ -39,6 +39,7 @@ async function formatShelfWithItemPrices<
   T extends {
     type: string;
     name: string;
+    cardFormat?: string | null;
     items: Array<
       {
         id: string;
@@ -66,7 +67,13 @@ async function formatShelfWithItemPrices<
 
   const items = applySeriesDisplayNames(
     shelf.items.map((item) => {
-      const shelfContext = { type: shelf.type, name: shelf.name };
+      // cardFormat must reach getCoverImage — without it movies fall back to
+      // portrait (~0.707) and square LD/vinyl shelves pick the wrong Affiche.
+      const shelfContext = {
+        type: shelf.type,
+        name: shelf.name,
+        cardFormat: shelf.cardFormat ?? null,
+      };
       const presented = presentItemFromStorage(
         {
           ...item,
@@ -95,8 +102,20 @@ async function formatShelfWithItemPrices<
         ),
         priceByItemId.get(item.id) ?? null,
       );
+      // Grid cards only need imageUrl + a few metadata fields — drop the
+      // ranked attachment gallery from the wire payload (~0.65MB on Lorcana).
+      const metadata = presented.metadata as MetadataResult | null | undefined;
+      const slimMetadata: MetadataResult | null | undefined = metadata
+        ? {
+            title: metadata.title,
+            imageUrl: metadata.imageUrl,
+            platformKey: metadata.platformKey,
+            attachments: [],
+          }
+        : metadata;
       return {
         ...presented,
+        metadata: slimMetadata,
         id: item.id,
         ...prices,
       };
@@ -210,18 +229,19 @@ export async function GET(req: NextRequest) {
         const resolvedId = await resolveShelfId(id, scopeUserId);
         if (q) {
           const searchTerm = q.trim();
+          const shelfItemsInclude = {
+            where: {
+              OR: buildItemSearchConditions(searchTerm),
+            },
+            include: {
+              metadata: itemListMetadataInclude,
+            },
+            orderBy: { name: "asc" as const },
+          };
           const shelf = await prisma.shelf.findUnique({
             where: { id: resolvedId },
             include: {
-              items: {
-                where: {
-                  OR: buildItemSearchConditions(searchTerm),
-                },
-                include: {
-                  metadata: itemListMetadataInclude,
-                },
-                orderBy: { name: "asc" },
-              },
+              items: shelfItemsInclude,
             },
           });
 
@@ -239,42 +259,35 @@ export async function GET(req: NextRequest) {
             );
           }
 
-          await reconcileDuplicateItemSlugsOnShelf(shelf.id);
-          const refreshedShelf = await prisma.shelf.findUnique({
-            where: { id: resolvedId },
-            include: {
-              items: {
-                where: {
-                  OR: buildItemSearchConditions(searchTerm),
-                },
-                include: {
-                  metadata: itemListMetadataInclude,
-                },
-                orderBy: { name: "asc" },
-              },
-            },
-          });
-
-          const formatted = await formatShelfWithItemPrices(
-            refreshedShelf ?? shelf,
-            uiLocale,
+          const slugChanges = await reconcileDuplicateItemSlugsOnShelf(
+            shelf.id,
           );
-          const [withBest] = await withBestItems([{ id: formatted.id }]);
-          return NextResponse.json({
-            ...formatted,
-            bestItem: withBest.bestItem,
-          });
+          const shelfForFormat =
+            slugChanges > 0
+              ? ((await prisma.shelf.findUnique({
+                  where: { id: resolvedId },
+                  include: {
+                    items: shelfItemsInclude,
+                  },
+                })) ?? shelf)
+              : shelf;
+
+          // Detail grid does not use bestItem (ShelfCard / shelves list only).
+          return NextResponse.json(
+            await formatShelfWithItemPrices(shelfForFormat, uiLocale),
+          );
         }
 
+        const shelfItemsInclude = {
+          include: {
+            metadata: itemListMetadataInclude,
+          },
+          orderBy: { name: "asc" as const },
+        };
         const shelf = await prisma.shelf.findUnique({
           where: { id: resolvedId },
           include: {
-            items: {
-              include: {
-                metadata: itemListMetadataInclude,
-              },
-              orderBy: { name: "asc" },
-            },
+            items: shelfItemsInclude,
           },
         });
 
@@ -289,28 +302,21 @@ export async function GET(req: NextRequest) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
-        await reconcileDuplicateItemSlugsOnShelf(shelf.id);
-        const refreshedShelf = await prisma.shelf.findUnique({
-          where: { id: resolvedId },
-          include: {
-            items: {
-              include: {
-                metadata: itemListMetadataInclude,
-              },
-              orderBy: { name: "asc" },
-            },
-          },
-        });
+        const slugChanges = await reconcileDuplicateItemSlugsOnShelf(shelf.id);
+        const shelfForFormat =
+          slugChanges > 0
+            ? ((await prisma.shelf.findUnique({
+                where: { id: resolvedId },
+                include: {
+                  items: shelfItemsInclude,
+                },
+              })) ?? shelf)
+            : shelf;
 
-        const formatted = await formatShelfWithItemPrices(
-          refreshedShelf ?? shelf,
-          uiLocale,
+        // Detail grid does not use bestItem (ShelfCard / shelves list only).
+        return NextResponse.json(
+          await formatShelfWithItemPrices(shelfForFormat, uiLocale),
         );
-        const [withBest] = await withBestItems([{ id: formatted.id }]);
-        return NextResponse.json({
-          ...formatted,
-          bestItem: withBest.bestItem,
-        });
       }
 
       if (q) {

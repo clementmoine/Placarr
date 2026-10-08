@@ -36,6 +36,12 @@ describe("scrapeAccessBlocked", () => {
     expect(scrapeAccessBlocked(200, '{"rendered_products":"<div/>"}')).toBe(
       false,
     );
+    expect(
+      scrapeAccessBlocked(200, "<title>Making sure you're not a bot!</title>"),
+    ).toBe(true);
+    expect(
+      scrapeAccessBlocked(200, '<meta name="anubis-challenge" content="1">'),
+    ).toBe(true);
   });
 });
 

@@ -269,6 +269,8 @@ export async function fetchMetadata(
       queuePriority:
         options?.queuePriority ?? (options?.isBackground ? "normal" : "high"),
       signal: options?.signal,
+      // Seed IMDb for scrapes that key off it (LDDb `/search/IMDb/…`, OMDb).
+      imdbId: options?.existingExternalIds?.imdb ?? undefined,
       externalIds: options?.existingExternalIds
         ? { ...options.existingExternalIds }
         : undefined,
@@ -414,6 +416,23 @@ export async function fetchMetadata(
   );
   const runScrapePass = shouldRunScrapeMetadataPass(scrapePassOptions);
 
+  // API pass (TMDB) may have just minted imdb — forward it to scrapes that
+  // resolve by IMDb id (LDDb) before Stage-2 secondaries.
+  const apiExternalIds: Record<string, string | null> = {
+    ...(adapterContextBase.externalIds ?? {}),
+  };
+  for (const result of byProvider.values()) {
+    if (!result?.externalIds) continue;
+    for (const [key, value] of Object.entries(result.externalIds)) {
+      if (value && !apiExternalIds[key]) apiExternalIds[key] = value;
+    }
+  }
+  const scrapeAdapterContext = {
+    ...adapterContextBase,
+    imdbId: apiExternalIds.imdb ?? adapterContextBase.imdbId,
+    externalIds: apiExternalIds,
+  };
+
   if (runScrapePass && scrapeCanonicalProviders.length > 0) {
     throwIfAborted(options?.signal);
     const activeSoFar = Array.from(byProvider.values()).filter(
@@ -437,7 +456,7 @@ export async function fetchMetadata(
     if (orderedIds.length > 0) {
       const scrapeResults = await resolveMetadataProvidersInOrder(
         metadataProvidersReadyToResolve(orderedIds),
-        adapterContextBase,
+        scrapeAdapterContext,
         metadataProviderResolverMap,
         resolvePassOptions,
       );

@@ -13,6 +13,9 @@ vi.mock("@/core/enrich/media/coverDownloadCandidates", () => ({
         "https://cdn.example.test/large.jpg",
       ];
     }
+    if (url.includes("lddb.com")) {
+      return [url];
+    }
     return [
       url,
       "https://cdn1.booknode.com/book_cover/5518/mod11/lart-et-la-creation-de-arcane-5517968-264-432.webp",
@@ -24,15 +27,24 @@ vi.mock("@/lib/http/flareSolverr", () => ({
   flareSolverrDownloadImages: vi.fn(),
 }));
 vi.mock("@/core/enrich/media/remoteProxy", () => ({
-  remoteImageProxyProviderFor: (url: string) =>
-    url.includes("booknode.com")
-      ? {
-          id: "booknode",
-          remoteImageFlareTimeoutMs: 20_000,
-        }
-      : null,
-  remoteImageRequestHeaders: (url: string) =>
-    url.includes("booknode.com") ? { Referer: "https://booknode.com/" } : {},
+  remoteImageProxyProviderFor: (url: string) => {
+    if (url.includes("booknode.com")) {
+      return { id: "booknode", remoteImageFlareTimeoutMs: 20_000 };
+    }
+    if (url.includes("lddb.com")) {
+      return { id: "lddb", remoteImageReferer: "https://www.lddb.com/" };
+    }
+    return null;
+  },
+  remoteImageRequestHeaders: (url: string) => {
+    if (url.includes("booknode.com")) {
+      return { Referer: "https://booknode.com/" };
+    }
+    if (url.includes("lddb.com")) {
+      return { Referer: "https://www.lddb.com/" };
+    }
+    return {};
+  },
 }));
 vi.mock("axios", () => ({ default: { get: vi.fn() } }));
 
@@ -218,5 +230,53 @@ describe("fetchRemoteImageBuffer", () => {
     expect(mockedFlareDownload).toHaveBeenCalled();
     expect(result?.sourceUrl).toBe(BOOKNODE_FULL);
     expect(result?.buffer.equals(full)).toBe(true);
+  });
+
+  it("unlocks Anubis JPEG hosts by solving the challenge on the asset URL", async () => {
+    const lddbUrl =
+      "https://www.lddb.com/cover/ld/33801-33900/33828.jpg";
+    const jpeg = await jpegBuffer(260, 390);
+    const anubisHtml = Buffer.from(
+      "<!doctype html><html><title>Making sure you're not a bot!</title></html>",
+    );
+
+    mockedGet.mockImplementation(
+      async (_url: string, config?: AxiosRequestConfig) => {
+        const cookie = String(config?.headers?.Cookie || "");
+        if (cookie.includes("asset-unlock")) {
+          return {
+            status: 200,
+            data: jpeg,
+            headers: { "content-type": "image/jpeg" },
+          };
+        }
+        return {
+          status: 200,
+          data: anubisHtml,
+          headers: { "content-type": "text/html" },
+        };
+      },
+    );
+    mockedFlare.mockImplementation(async (unlockUrl: string) => {
+      if (unlockUrl.includes("/cover/")) {
+        return {
+          cookie: "asset-unlock=1",
+          userAgent: "flare-agent",
+        };
+      }
+      // Homepage cookies are too weak for LDDb covers.
+      return {
+        cookie: "homepage-only=1",
+        userAgent: "flare-agent",
+      };
+    });
+
+    const result = await fetchRemoteImageBuffer(lddbUrl, {
+      allowSubThresholdFallback: true,
+    });
+
+    expect(mockedFlare).toHaveBeenCalledWith(lddbUrl, expect.any(Number));
+    expect(result?.sourceUrl).toBe(lddbUrl);
+    expect(result?.buffer.equals(jpeg)).toBe(true);
   });
 });

@@ -81,6 +81,23 @@ describe("metadataAliases", () => {
     ).toEqual(["Ariel - On Human Legs", "Arielle - Auf menschlichen Beinen"]);
   });
 
+  it("drops gallery face labels and region-role covers from Aussi connu sous", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "Another Code : Two Memories",
+        metadataTitle: "Another Code : Two Memories",
+        aliases: ["Trace Memory", "Main Image", "Box - Front"],
+        attachments: [
+          { type: "cover", role: "us", title: "Main Image" },
+          { type: "cover", role: "eu", title: "Box - Front" },
+          { type: "cover", role: "fr", title: "Recto de la pochette" },
+          { type: "cover", role: "en", title: "Trace Memory" },
+        ],
+      }),
+    ).toEqual(["Trace Memory"]);
+  });
+
   it("does not repeat the display name as an alias", async () => {
     const { displayAliasesForItem } = await import("@/core/enrich/aliases");
     expect(

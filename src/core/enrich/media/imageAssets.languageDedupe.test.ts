@@ -69,4 +69,28 @@ describe("dedupeByPerceptualHash language roles", () => {
     expect(kept).toHaveLength(1);
     expect(kept[0]?.url).toBe("/uploads/fr-a.jpg");
   });
+
+  it("collapses exact remote URL twins when no perceptual hash is available", () => {
+    const cover =
+      "https://www.lddb.com/cover/ld/33801-33900/33828.jpg";
+    const kept = dedupeByPerceptualHash(
+      [
+        {
+          type: "cover" as AttachmentType,
+          url: cover,
+          source: "lddb",
+          role: "front",
+        },
+        {
+          type: "cover" as AttachmentType,
+          url: cover,
+          source: "lddb",
+          role: "front",
+        },
+      ],
+      () => null,
+    );
+    expect(kept).toHaveLength(1);
+    expect(kept[0]?.url).toBe(cover);
+  });
 });

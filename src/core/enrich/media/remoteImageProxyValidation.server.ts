@@ -1,5 +1,5 @@
 import { remoteImageProxyProviderFor } from "@/core/enrich/media/remoteProxy";
-import { isScreenScraperMediaUrl } from "@/core/enrich/media/remoteImageProxyHosts";
+import { remoteImageUrlMatchesProxyHost } from "@/core/enrich/media/remoteImageProxyHosts";
 
 /**
  * Defence in depth behind the provider-host allowlist: a provider hostname that
@@ -10,13 +10,20 @@ import { isScreenScraperMediaUrl } from "@/core/enrich/media/remoteImageProxyHos
 const BLOCKED_PROXY_HOSTS =
   /^(localhost|127(?:\.\d+){3}|0\.0\.0\.0|\[::1\])$|^(10\.|192\.168\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.)|\.local$|^\[?f[cd][0-9a-f]{2}:/i;
 
-/** Server-side allowlist for `/api/media/remote` (registry-backed). */
+/**
+ * Server-side allowlist for `/api/media/remote`.
+ *
+ * Accept either the registry (`remoteImageReferer` + `coverUrlHost`) or the
+ * client-safe host fragments — the client routes on fragments, so rejecting a
+ * fragment-matched URL here produces a broken `<img>` ("URL not allowed").
+ */
 export function isAllowedRemoteImageProxyTarget(url: string): boolean {
   if (
     !url ||
-    (!remoteImageProxyProviderFor(url) && !isScreenScraperMediaUrl(url))
-  )
+    (!remoteImageProxyProviderFor(url) && !remoteImageUrlMatchesProxyHost(url))
+  ) {
     return false;
+  }
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:") return false;

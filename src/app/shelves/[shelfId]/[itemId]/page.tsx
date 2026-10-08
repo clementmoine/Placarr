@@ -117,9 +117,12 @@ import { Disc3D } from "@/components/Disc3D";
 import {
   resolveBoxFaces,
   resolveDiscFace,
+  resolveFlatSleeveFlip,
 } from "@/core/enrich/media/resolveBoxFaces";
-import { resolveOpticalDiscKind } from "@/core/enrich/media/opticalDisc";
-import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import { remoteImageDisplaySrc } from "@/core/enrich/media/remoteImageDisplay";
+import { resolveOpticalDiscKind, isLooseDiscShelfPresentation } from "@/core/enrich/media/opticalDisc";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platformList";
+import { shouldIgnoreItemSiblingNavigation } from "@/lib/client/itemSiblingNavigation";
 import {
   resolveDefaultCardBack,
   resolveSharedCardBackSkeleton,
@@ -188,6 +191,7 @@ import {
 import {
   extractProviderLinkFacts,
   filterRedundantDisplayFacts,
+  splitTagValues,
 } from "@/core/enrich/facts/displayFacts";
 import { ProviderLinksBar } from "@/components/ProviderLinksBar";
 
@@ -215,15 +219,6 @@ function formatDurationSeconds(seconds?: number | null) {
   return minutes
     ? `${hours} h ${String(minutes).padStart(2, "0")}`
     : `${hours} h`;
-}
-
-function shouldIgnoreItemNavigation(target: EventTarget | null) {
-  if (!(target instanceof Element)) return false;
-  return Boolean(
-    target.closest(
-      'a, button, input, textarea, select, [role="button"], [role="textbox"], [contenteditable="true"]',
-    ),
-  );
 }
 
 function normalizeFacts(rawFacts: unknown): DetailFact[] {
@@ -671,12 +666,6 @@ function isTagLikeDetailFact(fact: DetailFact) {
   );
 }
 
-function splitTagFactValue(value: string) {
-  return value
-    .split(/\s*•\s*/g)
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-}
 
 const FACT_DISPLAY_ORDER: Record<string, number> = {
   "estimated-value": 10,
@@ -1469,7 +1458,7 @@ export default function ItemDetailsPage() {
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
-        shouldIgnoreItemNavigation(event.target)
+        shouldIgnoreItemSiblingNavigation(event.target)
       ) {
         return;
       }
@@ -1496,7 +1485,7 @@ export default function ItemDetailsPage() {
         !nextItemHref ||
         isDetailOverlayOpen ||
         event.touches.length !== 1 ||
-        shouldIgnoreItemNavigation(event.target)
+        shouldIgnoreItemSiblingNavigation(event.target)
       ) {
         touchStartRef.current = null;
         return;
@@ -1512,7 +1501,13 @@ export default function ItemDetailsPage() {
     (event: TouchEvent<HTMLDivElement>) => {
       const start = touchStartRef.current;
       touchStartRef.current = null;
-      if (!start || isDetailOverlayOpen || !previousItemHref || !nextItemHref) {
+      if (
+        !start ||
+        isDetailOverlayOpen ||
+        !previousItemHref ||
+        !nextItemHref ||
+        shouldIgnoreItemSiblingNavigation(event.target)
+      ) {
         return;
       }
 
@@ -1904,7 +1899,14 @@ export default function ItemDetailsPage() {
     });
   }, [item?.metadata?.facts, itemPlatformKey, shelf?.type]);
   const showDisc3d =
-    Boolean(discFaceUrl) && !disc3dFailed && !variantView.foilMaskUrl;
+    Boolean(discFaceUrl) &&
+    !disc3dFailed &&
+    !variantView.foilMaskUrl &&
+    isLooseDiscShelfPresentation(
+      item?.condition,
+      shelf?.type ?? null,
+      itemPlatformKey,
+    );
 
   /** Rotatable CSS box when front + back + spine scans exist (games shelves). */
   const [box3dFailed, setBox3dFailed] = useState(false);
@@ -1931,10 +1933,25 @@ export default function ItemDetailsPage() {
     !variantView.foilMaskUrl &&
     !showDisc3d;
 
+  /** Vinyl / LaserDisc jackets: front + back, no honest spine to invent. */
+  const flatSleeve = useMemo(
+    () =>
+      showGameBox || showDisc3d
+        ? null
+        : resolveFlatSleeveFlip(boxFaces, {
+            preferredFrontUrl: coverImage,
+          }),
+    [boxFaces, showGameBox, showDisc3d, coverImage],
+  );
+  const showFlatSleeve =
+    Boolean(flatSleeve) && !variantView.foilMaskUrl && !box3dFailed;
+
   const [prevBoxFaceKey, setPrevBoxFaceKey] = useState<string | null>(null);
   const boxFaceKey = boxFaces.complete
     ? `${boxFaces.front}|${boxFaces.back}|${boxFaces.spine}`
-    : null;
+    : flatSleeve
+      ? `${flatSleeve.front}|${flatSleeve.back}`
+      : null;
   if (prevBoxFaceKey !== boxFaceKey) {
     setPrevBoxFaceKey(boxFaceKey);
     if (box3dFailed) setBox3dFailed(false);
@@ -2604,6 +2621,7 @@ export default function ItemDetailsPage() {
                   coverImage &&
                   !showGameBox &&
                   !showDisc3d &&
+                  !showFlatSleeve &&
                   setZoomImageUrl(coverImage)
                 }
                 className={cn(
@@ -2611,14 +2629,14 @@ export default function ItemDetailsPage() {
                   // `tilt={false}` below. The 3D box / disc must bleed past
                   // their footprint while turning, so overflow stays visible.
                   "relative mx-auto md:mx-0 rounded-2xl shrink-0 select-none transition-all duration-300",
-                  showGameBox || showDisc3d
+                  showGameBox || showDisc3d || showFlatSleeve
                     ? "overflow-visible"
                     : "overflow-hidden",
-                  coverImage || showDisc3d
+                  coverImage || showDisc3d || showFlatSleeve
                     ? // No plate behind the cover: card art is opaque and edge
                       // to edge, so a white slab only framed it. Anything else
                       // gets its own edges bled outwards, see `style` below.
-                      showGameBox || showDisc3d
+                      showGameBox || showDisc3d || showFlatSleeve
                         ? "cursor-grab"
                         : "cursor-pointer group/cover"
                     : "bg-zinc-950/20",
@@ -2639,7 +2657,8 @@ export default function ItemDetailsPage() {
                   ...(coverEdgeColors &&
                   !variantView.foilMaskUrl &&
                   !showGameBox &&
-                  !showDisc3d
+                  !showDisc3d &&
+                  !showFlatSleeve
                     ? { background: edgeGradient(coverEdgeColors) }
                     : {}),
                 }}
@@ -2648,14 +2667,15 @@ export default function ItemDetailsPage() {
                     frame that has nothing else behind it. */}
                 {!(coverEdgeColors && !variantView.foilMaskUrl) &&
                   !showGameBox &&
-                  !showDisc3d && (
+                  !showDisc3d &&
+                  !showFlatSleeve && (
                   <CardBackSkeleton
                     url={cardBackSkeletonUrl}
                     faceQuarterTurns={displayQuarterTurns}
                     orientedAspect={coverOrientedAspect}
                   />
                 )}
-                {coverImage || discFaceUrl ? (
+                {coverImage || discFaceUrl || showFlatSleeve ? (
                   showDisc3d && discFaceUrl ? (
                     <Disc3D
                       frontUrl={discFaceUrl}
@@ -2677,6 +2697,35 @@ export default function ItemDetailsPage() {
                       onError={() => setBox3dFailed(true)}
                       className="w-full max-w-[240px] md:max-w-[480px]"
                     />
+                  ) : showFlatSleeve && flatSleeve ? (
+                    <FlippableCard
+                      backUrl={remoteImageDisplaySrc(flatSleeve.back)}
+                      backAlt={itemDisplayName ?? ""}
+                      flipLabel={t("items.flipCard")}
+                      tiltPromptLabel={t("items.tiltPrompt")}
+                      faceTabLabel={t("items.cardFace")}
+                      backTabLabel={t("items.cardBack")}
+                      orientedAspect={coverOrientedAspect}
+                      className="h-full w-full"
+                    >
+                      <RemoteImage
+                        src={flatSleeve.front}
+                        alt={itemDisplayName ?? ""}
+                        width={768}
+                        height={768}
+                        sizes="(max-width: 768px) 240px, 480px"
+                        loading="eager"
+                        fetchPriority="high"
+                        onLoad={handleCoverImageLoad}
+                        onError={() => setBox3dFailed(true)}
+                        className={cn(
+                          "w-full h-full",
+                          coverImageFit === "contain"
+                            ? "object-contain"
+                            : "object-cover",
+                        )}
+                      />
+                    </FlippableCard>
                   ) : coverImage ? (
                   <>
                     <OrientedMediaRotator
@@ -3028,7 +3077,7 @@ export default function ItemDetailsPage() {
                       </span>
                       {isTagLikeDetailFact(fact) ? (
                         <div className="flex flex-wrap gap-1.5 pt-1">
-                          {splitTagFactValue(fact.value).map((tag) => (
+                          {splitTagValues(fact.value).map((tag) => (
                             <Badge
                               key={tag}
                               variant="secondary"

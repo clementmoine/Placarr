@@ -5,6 +5,8 @@
  * `generic` (honest silver polycarbonate + rainbow), never a confident wrong hue.
  */
 
+import { platformHasOpticalDiscMedia } from "@/core/identify/platforms/platformList";
+
 export type OpticalDiscKind =
   | "ps1-cd"
   | "ps2-cd"
@@ -131,20 +133,19 @@ export type ResolveOpticalDiscKindInput = {
  * or a CD-ROM format label.
  */
 /**
- * Shelf / hero presentation: loose copies on disc-native shelves show circular
- * support art in a square tile (games, movies, music). Hardware loose is often
- * a console without media — keep the shelf format.
+ * Shelf / hero presentation: loose copies on optical media show circular
+ * support art. Cartridge / game-card platforms stay rectangular — never invent
+ * a disc for Game Boy, Switch, DS, etc.
  */
 export function isLooseDiscShelfPresentation(
   condition?: string | null,
   shelfType?: string | null,
+  platformKey?: string | null,
 ): boolean {
   if (condition !== "loose") return false;
-  return (
-    shelfType === "games" ||
-    shelfType === "movies" ||
-    shelfType === "musics"
-  );
+  if (shelfType === "movies" || shelfType === "musics") return true;
+  if (shelfType !== "games") return false;
+  return platformHasOpticalDiscMedia(platformKey);
 }
 
 export function resolveOpticalDiscKind(

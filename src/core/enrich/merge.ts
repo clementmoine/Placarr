@@ -438,16 +438,19 @@ export function mergeMetadata(
     if (excludesDigitalStorefrontArt(r.providerId)) {
       return [];
     }
-    const matchingAttachment = r.metadata.attachments?.find(
-      (attachment) => attachment.url === r.metadata.imageUrl,
-    );
+    // Already listed in attachments — do not emit a second gallery card.
+    if (
+      r.metadata.attachments?.some(
+        (attachment) => attachment.url === r.metadata.imageUrl,
+      )
+    ) {
+      return [];
+    }
     return [
       withProviderAttachmentTraits({
-        type: matchingAttachment?.type ?? ("cover" as AttachmentType),
+        type: "cover" as AttachmentType,
         url: r.metadata.imageUrl,
-        role: matchingAttachment?.role,
-        source: matchingAttachment?.source || r.providerId,
-        title: matchingAttachment?.title,
+        source: r.providerId,
       }),
     ];
   });

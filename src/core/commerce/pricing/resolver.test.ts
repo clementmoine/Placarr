@@ -232,6 +232,50 @@ describe("summarizeShelfItemPrices", () => {
     expect(map.get("item-ni019")?.priceEstimated).toBe(1500);
   });
 
+  it("skips printKey estimate fill when a market EUR price already exists", async () => {
+    h.barcodeCache.findMany.mockResolvedValue([]);
+    h.priceOffer.findMany.mockResolvedValue([
+      {
+        itemId: "item-ariel",
+        source: "Lorcana.gg",
+        productName: "Ariel - Sur des jambes humaines",
+        condition: "new",
+        priceCents: 50,
+        currency: "EUR",
+        observedAt: new Date("2026-09-01T12:00:00.000Z"),
+      },
+      {
+        itemId: "item-ariel",
+        source: "Lorcana.gg",
+        productName: "Ariel - Sur des jambes humaines",
+        condition: "foil",
+        priceCents: 200,
+        currency: "EUR",
+        observedAt: new Date("2026-09-01T12:00:00.000Z"),
+      },
+    ]);
+
+    const map = await summarizeShelfItemPrices(
+      "tcg",
+      [
+        {
+          id: "item-ariel",
+          barcode: null,
+          name: "Ariel - Sur des jambes humaines",
+          printKey: "lorcana:1-1",
+        },
+      ],
+      "Lorcana",
+    );
+
+    expect(h.collectRefreshBarcodePriceOffers).not.toHaveBeenCalled();
+    expect(map.get("item-ariel")).toMatchObject({
+      priceNew: 50,
+      priceFoil: 200,
+    });
+    expect(map.get("item-ariel")?.priceEstimated).toBeUndefined();
+  });
+
   it("falls back to item-scoped offers when barcode is missing", async () => {
     h.barcodeCache.findMany.mockResolvedValue([]);
     h.priceOffer.findMany.mockResolvedValue([
@@ -1051,6 +1095,38 @@ describe("filterPriceOfferInputsForPersist", () => {
 });
 
 describe("filterItemPriceOffers", () => {
+  it("keeps metadataScoped TCG offers without FR/EN title matching", () => {
+    const filtered = filterItemPriceOffers(
+      "tcg",
+      "Lorcana",
+      ["Ariel - Sur des jambes humaines"],
+      [
+        {
+          source: "Lorcast",
+          productName: "Ariel - On Human Legs",
+          condition: "new",
+          priceCents: 7,
+          currency: "USD",
+          metadataScoped: true,
+        },
+        {
+          source: "Lorcana.gg",
+          productName: "Ariel - On Human Legs",
+          condition: "new",
+          priceCents: 50,
+          currency: "EUR",
+          metadataScoped: true,
+        },
+      ],
+    );
+
+    expect(filtered).toHaveLength(2);
+    expect(filtered.map((row) => row.source).sort()).toEqual([
+      "Lorcana.gg",
+      "Lorcast",
+    ]);
+  });
+
   it("keeps PriceCharting console System chrome on hardware shelves", () => {
     const filtered = filterItemPriceOffers(
       "hardware",

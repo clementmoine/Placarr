@@ -55,6 +55,7 @@ import { shelfShowsItemCondition } from "@/core/collect/condition";
 import { isItemOnLoan } from "@/core/collect/itemLoan";
 import { isLooseDiscShelfPresentation } from "@/core/enrich/media/opticalDisc";
 import { DiscFaceArt } from "@/components/DiscFaceArt";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platformList";
 import { cn } from "@/lib/shared/utils";
 
 function conditionBadgeClass(condition: Condition) {
@@ -115,6 +116,7 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.loanedAt === next.loanedAt &&
     prev.copyCount === next.copyCount &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
+    prev.metadata?.platformKey === next.metadata?.platformKey &&
     (prev.metadata?.attachments?.length ?? 0) ===
       (next.metadata?.attachments?.length ?? 0) &&
     prev.createdAt === next.createdAt
@@ -222,7 +224,13 @@ function ItemCardInner(props: ItemCardProps) {
     () => getAspectRatio(cardFormat, shelfType),
     [cardFormat, shelfType],
   );
-  const looseDiscTile = isLooseDiscShelfPresentation(condition, shelfType);
+  const looseDiscTile = isLooseDiscShelfPresentation(
+    condition,
+    shelfType,
+    props.metadata?.platformKey ??
+      detectVideoGamePlatformKey(props.shelfName) ??
+      null,
+  );
   const aspectRatio = useMemo(
     () =>
       looseDiscTile

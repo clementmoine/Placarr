@@ -12,6 +12,7 @@ import {
   metadataImageAttachmentSemantics,
   pickVisuallyMatchingCatalogCoverUrl,
   planCroppedCoverAttachmentSync,
+  shouldRewriteCatalogTwinOntoLocalizedUpload,
   providerOriginalImageUrl,
   retailerOriginalImageUrl,
   retargetUserHonorPinIfCatalogTwin,
@@ -28,6 +29,31 @@ const att = (url: string, source: string): Att => ({
 });
 
 const bits = (s: string) => s.padEnd(64, "0");
+
+describe("shouldRewriteCatalogTwinOntoLocalizedUpload", () => {
+  it("allows folding a UUID onto a still-remote LDDb twin", () => {
+    expect(
+      shouldRewriteCatalogTwinOntoLocalizedUpload({
+        catalogTwinUrl:
+          "https://www.lddb.com/cover/ld/33801-33900/33828.jpg",
+        localizedUploadUrl: "/uploads/uuid-from-lddb.webp",
+        selectedImageUrl:
+          "https://www.lddb.com/cover/ld/33801-33900/33828.jpg",
+      }),
+    ).toBe(true);
+  });
+
+  it("does not rewrite a durable CD&LP upload when LDDb localizes to a twin UUID", () => {
+    expect(
+      shouldRewriteCatalogTwinOntoLocalizedUpload({
+        catalogTwinUrl: "/uploads/1c4d1153f7a40fd22fd0338f4ed9fecf.webp",
+        localizedUploadUrl: "/uploads/df9b2c99-09cf-4892-ba2e-d1de44c05243.webp",
+        selectedImageUrl:
+          "https://www.lddb.com/cover/ld/33801-33900/33828.jpg",
+      }),
+    ).toBe(false);
+  });
+});
 
 describe("pickVisuallyMatchingCatalogCoverUrl", () => {
   it("remaps an orphan scan upload to the matching catalog provider cover", () => {

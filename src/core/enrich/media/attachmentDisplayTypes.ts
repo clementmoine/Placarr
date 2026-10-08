@@ -3,7 +3,12 @@ import { resolveAttachmentSemantics } from "@/core/enrich/media/attachmentDispla
 import type { LocalePreferenceOptions } from "@/core/locale/preference";
 
 export interface AttachmentImageMetrics {
+  /**
+   * Display content width (neutral margins trimmed when present). Canvas-only
+   * padding must not make a marketplace square look like a LaserDisc sleeve.
+   */
   width?: number;
+  /** Display content height — see `width`. */
   height?: number;
   format?: string;
   /** Average RGB luminance sampled from the asset (0–255). */
@@ -73,6 +78,12 @@ export type AttachmentDisplayScoreOptions = LocalePreferenceOptions & {
    * fronts (display-time only).
    */
   preferSystemOnlyCover?: boolean;
+  /**
+   * Expected cover width/height from the shelf card format (LaserDisc square → 1,
+   * DVD/games → ≈0.707). Drives aspect-fit scoring so a square LD sleeve beats a
+   * tall TMDB poster on a square shelf.
+   */
+  expectedCoverAspectRatio?: number | null;
 };
 
 export interface AttachmentDisplayScoreDetails {

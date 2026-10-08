@@ -419,6 +419,53 @@ export function resolveStoredMetadataCoverUrl(
   );
 }
 
+/**
+ * Score alone buries sleeve backs under a long TMDB poster tail (−320). Affiche
+ * should still surface them: park each back right after the last front of the
+ * same region (else after the whole front block).
+ */
+export function placeSleeveBacksAfterMatchingFronts<
+  T extends ScoredAttachmentInput,
+>(ranked: T[]): T[] {
+  const fronts: T[] = [];
+  const backs: T[] = [];
+  for (const attachment of ranked) {
+    if (attachmentSemantics(attachment).kind === "back") {
+      backs.push(attachment);
+    } else {
+      fronts.push(attachment);
+    }
+  }
+  if (backs.length === 0) return ranked;
+
+  const remaining = [...backs];
+  const result: T[] = [];
+
+  for (let index = 0; index < fronts.length; index++) {
+    const front = fronts[index]!;
+    result.push(front);
+    const region = attachmentSemantics(front).region;
+    const nextRegion =
+      index + 1 < fronts.length
+        ? attachmentSemantics(fronts[index + 1]!).region
+        : null;
+    if (!region || region === nextRegion) continue;
+
+    const matching: T[] = [];
+    const kept: T[] = [];
+    for (const back of remaining) {
+      if (attachmentSemantics(back).region === region) matching.push(back);
+      else kept.push(back);
+    }
+    remaining.length = 0;
+    remaining.push(...kept);
+    result.push(...matching);
+  }
+
+  // Preserve score order among leftovers (e.g. back with no matching front).
+  return [...result, ...remaining];
+}
+
 /** Shared cover ordering for the default picker and gallery UIs. */
 export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
   attachments: T[],
@@ -437,6 +484,12 @@ export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
       coverCandidates.push(attachment);
       continue;
     }
+    // Sleeve backs (LDDb, LaunchBox, …) belong in Affiche too — scored low so
+    // they trail fronts, but selectable / labeled "Dos · …".
+    if (semantics.kind === "back") {
+      coverCandidates.push(attachment);
+      continue;
+    }
     // Hardware loose: System Only / console shots compete as cover candidates.
     if (options?.preferSystemOnlyCover) {
       const title = (attachment.title || "").toLowerCase();
@@ -449,7 +502,7 @@ export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
         continue;
       }
     }
-    if (isPhysicalNonCoverKind(semantics.kind)) continue; // back / spine
+    if (isPhysicalNonCoverKind(semantics.kind)) continue; // spine
     if (isCoverCandidateKind(semantics.kind)) {
       coverCandidates.push(attachment);
       continue;
@@ -459,7 +512,9 @@ export function rankCoverGalleryAttachments<T extends ScoredAttachmentInput>(
 
   if (coverCandidates.length > 0) {
     return [
-      ...rankCoversForDisplay(coverCandidates, imageMetricsByUrl, options),
+      ...placeSleeveBacksAfterMatchingFronts(
+        rankCoversForDisplay(coverCandidates, imageMetricsByUrl, options),
+      ),
       ...rankAttachmentsForDisplay(galleryExtras, imageMetricsByUrl, options),
     ];
   }

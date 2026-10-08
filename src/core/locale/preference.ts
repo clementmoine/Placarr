@@ -117,6 +117,8 @@ const LOCALE_REGION_ALIASES: Record<string, LocaleRegion> = {
   // Europe / PAL territories
   eur: "eu",
   europe: "eu",
+  pal: "eu",
+  secam: "eu",
   oce: "eu",
   oceania: "eu",
   at: "eu",
@@ -212,6 +214,35 @@ export function resolveLocaleRegion(
   return LOCALE_REGION_ALIASES[normalized];
 }
 
+/**
+ * Cover attachment role from a release country (LDDb Country, CD&LP pressage)
+ * plus optional marketplace hints (URL slug, listing title). Honest empty when
+ * nothing resolves — do not invent "wor".
+ */
+export function coverRegionRoleFromReleaseSignals(
+  country?: string | null,
+  hints: readonly (string | null | undefined)[] = [],
+): LocaleRegion | undefined {
+  const announced = resolveLocaleRegion(country);
+  if (announced) return announced;
+
+  const hay = normalizeRegionToken(hints.filter(Boolean).join(" "));
+  if (!hay) return undefined;
+
+  const spacedAliases = Object.entries(LOCALE_REGION_ALIASES)
+    .filter(([alias]) => alias.includes(" "))
+    .sort((a, b) => b[0].length - a[0].length);
+  for (const [alias, region] of spacedAliases) {
+    if (hay.includes(alias)) return region;
+  }
+
+  for (const token of hay.split(/[^a-z0-9]+/).filter((t) => t.length >= 2)) {
+    const region = resolveLocaleRegion(token);
+    if (region) return region;
+  }
+  return undefined;
+}
+
 export function regionRank(
   region?: string | null,
   options?: LocalePreferenceOptions,
@@ -278,10 +309,17 @@ export function mapLanguageNameToAttachmentRole(
   return "wor";
 }
 
+/** Face labels (LDDb/Discogs) — not release regions; ignore for locale scoring. */
+const FACE_ONLY_ATTACHMENT_ROLES = new Set(["front", "back"]);
+
 export function parseRegionFromRole(role?: string | null): string | undefined {
   if (!role) return undefined;
 
   const normalized = normalizeRegionToken(role);
+  if (FACE_ONLY_ATTACHMENT_ROLES.has(normalized)) return undefined;
+
+  // Compound face+region roles (`back-fr`, `disc-eu`) stay undefined here —
+  // gallery labels unpack them separately; cover ranking uses plain `fr`/`us`.
   if (/[-_]/.test(normalized) && !LOCALE_REGION_ALIASES[normalized]) {
     return undefined;
   }
@@ -295,7 +333,9 @@ export function localeBonusForAttachmentRole(
   role?: string | null,
   options?: LocalePreferenceOptions,
 ): number {
-  const region = parseRegionFromRole(role) || (role || "").toLowerCase();
+  // Do not fall back to raw role text (`front`) — that invented a fake region.
+  const region = parseRegionFromRole(role);
+  if (!region) return 0;
   const rank = regionRank(region, options);
   return rank < LOCALE_ATTACHMENT_BONUSES.length
     ? LOCALE_ATTACHMENT_BONUSES[rank]

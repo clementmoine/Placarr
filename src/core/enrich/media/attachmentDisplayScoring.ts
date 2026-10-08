@@ -79,6 +79,54 @@ export function crossSourceConsensusBonus(distinctSourceCount: number): number {
   return extraSources * CROSS_SOURCE_CONSENSUS_BONUS;
 }
 
+/** Default ≈ DVD/game box (`1 / 1.414`) when the shelf does not declare a format. */
+const DEFAULT_COVER_ASPECT_RATIO = 0.7;
+/** Treat targets in [1±ε] as square — no absolute portrait bias. */
+const SQUARE_TARGET_EPSILON = 0.08;
+
+/**
+ * Score how well a cover's width/height matches the shelf frame.
+ * Orientation bonus is relative to the expected shape (square shelves must not
+ * prefer tall TMDB posters over real square LaserDisc / vinyl sleeves).
+ */
+export function applyCoverAspectFitSignals(
+  ratio: number,
+  expectedCoverAspectRatio: number | null | undefined,
+  addSignal: (delta: number, label: string) => void,
+): void {
+  const target =
+    expectedCoverAspectRatio != null &&
+    Number.isFinite(expectedCoverAspectRatio) &&
+    expectedCoverAspectRatio > 0
+      ? expectedCoverAspectRatio
+      : DEFAULT_COVER_ASPECT_RATIO;
+
+  const ratioDistance = Math.abs(ratio - target);
+  addSignal(
+    Math.max(-120, 140 - ratioDistance * 260),
+    "cover aspect ratio fit",
+  );
+
+  const targetIsSquare = Math.abs(target - 1) <= SQUARE_TARGET_EPSILON;
+  if (targetIsSquare) {
+    // Tall TMDB posters are often 2MP+; the resolution bonus must not bury a
+    // real square LaserDisc / vinyl sleeve. Slight drift stays free.
+    if (ratio >= 1.25) addSignal(-65, "landscape vs square shelf");
+    else if (ratio <= 0.75) addSignal(-130, "tall portrait vs square shelf");
+    return;
+  }
+
+  if (target < 1) {
+    if (ratio < 1) addSignal(25, "portrait orientation");
+    else addSignal(-65, "landscape orientation");
+    return;
+  }
+
+  // Landscape shelf (DS, landscape_retro, …).
+  if (ratio > 1) addSignal(25, "landscape orientation");
+  else addSignal(-65, "portrait orientation");
+}
+
 export function buildAttachmentDisplayScoreDetails(
   attachment: ScoredAttachmentInput,
   imageMetrics?: AttachmentImageMetrics | null,
@@ -229,14 +277,7 @@ export function buildAttachmentDisplayScoreDetails(
 
     const ratio = width / height;
     if (COVER_FRIENDLY_TYPES.has(attachment.type)) {
-      const targetRatio = 0.7;
-      const ratioDistance = Math.abs(ratio - targetRatio);
-      addSignal(
-        Math.max(-120, 140 - ratioDistance * 260),
-        "cover aspect ratio fit",
-      );
-      if (height > width) addSignal(25, "portrait orientation");
-      else addSignal(-65, "landscape orientation");
+      applyCoverAspectFitSignals(ratio, options?.expectedCoverAspectRatio, addSignal);
     } else if (
       attachment.type === "screenshot" ||
       attachment.type === "background"

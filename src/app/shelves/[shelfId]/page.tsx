@@ -218,6 +218,8 @@ const ShelfGridItem = memo(function ShelfGridItem({
         damping: 30,
       }}
       className={cn(
+        // Skip layout/paint for off-screen cards on large shelves (Lorcana…).
+        "[content-visibility:auto] [contain-intrinsic-size:auto_220px]",
         "group relative block w-full rounded-2xl",
         isSelected &&
           "ring-2 ring-primary ring-offset-2 ring-offset-background",

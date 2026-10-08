@@ -72,7 +72,9 @@ model Attachment {
   platformKey     String?
   // Image metrics measured once at enrichment (sharp) and persisted so the
   // read-time cover ranking can sort by resolution + exposure without
-  // re-decoding files on every page render. See @/lib/media/attachmentDisplayScore.
+  // re-decoding files on every page render. width/height are the trimmed
+  // content box when neutral margins pad the canvas (not raw file size).
+  // See @/core/enrich/media/imageMetrics + attachmentDisplayScore.
   width           Int?
   height          Int?
   meanLuminance   Float?

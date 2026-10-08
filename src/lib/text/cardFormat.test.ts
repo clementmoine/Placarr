@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   coerceCardFormatForType,
+  expectedCoverAspectRatioForShelf,
   faceDisplayAspect,
   faceRotateDeg,
   getCardFormatsForPicker,
   getDefaultCardFormatAlias,
   normalizeFaceQuarterTurns,
   orientAspectRatio,
+  parseAspectRatioNumber,
 } from "@/lib/text/cardFormat";
 
 describe("getDefaultCardFormatAlias", () => {
@@ -33,6 +35,43 @@ describe("getCardFormatsForPicker", () => {
 
   it("always includes default", () => {
     expect(getCardFormatsForPicker("games")[0]).toBe("default");
+  });
+});
+
+describe("parseAspectRatioNumber", () => {
+  it.each([
+    ["1 / 1", 1],
+    ["5 / 7", 5 / 7],
+    ["1 / 1.414", 1 / 1.414],
+    ["16 / 9", 16 / 9],
+  ] as const)("parses %s", (aspect, expected) => {
+    expect(parseAspectRatioNumber(aspect)).toBeCloseTo(expected, 5);
+  });
+
+  it("returns undefined for garbage", () => {
+    expect(parseAspectRatioNumber("")).toBeUndefined();
+    expect(parseAspectRatioNumber("square")).toBeUndefined();
+  });
+});
+
+describe("expectedCoverAspectRatioForShelf", () => {
+  it("uses square for musics / explicit square movies (LaserDisc)", () => {
+    expect(expectedCoverAspectRatioForShelf(null, "musics")).toBeCloseTo(1, 5);
+    expect(expectedCoverAspectRatioForShelf("square", "movies")).toBeCloseTo(
+      1,
+      5,
+    );
+  });
+
+  it("defaults movies/games to DVD portrait", () => {
+    expect(expectedCoverAspectRatioForShelf(null, "movies")).toBeCloseTo(
+      1 / 1.414,
+      3,
+    );
+    expect(expectedCoverAspectRatioForShelf("default", "games")).toBeCloseTo(
+      1 / 1.414,
+      3,
+    );
   });
 });
 

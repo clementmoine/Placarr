@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveBoxFaces, resolveDiscFace } from "./resolveBoxFaces";
+import {
+  resolveBoxFaces,
+  resolveDiscFace,
+  resolveFlatSleeveFlip,
+} from "./resolveBoxFaces";
 
 describe("resolveBoxFaces", () => {
   it("is incomplete until front, back and spine are all present", () => {
@@ -14,6 +18,42 @@ describe("resolveBoxFaces", () => {
       front: "https://ex/front.jpg",
       back: "https://ex/back.jpg",
     });
+  });
+
+  it("exposes a flat sleeve flip when only front + back exist (vinyl / LD)", () => {
+    const faces = resolveBoxFaces([
+      { type: "cover", role: "fr", url: "https://ex/front.jpg" },
+      { type: "image", role: "back-fr", url: "https://ex/back.jpg" },
+    ]);
+    expect(resolveFlatSleeveFlip(faces)).toEqual({
+      front: "https://ex/front.jpg",
+      back: "https://ex/back.jpg",
+    });
+  });
+
+  it("prefers the ranked cover as flat-sleeve face when provided", () => {
+    const faces = resolveBoxFaces([
+      { type: "cover", role: "fr", url: "https://ex/front-lddb.jpg" },
+      { type: "image", role: "back-fr", url: "https://ex/back.jpg" },
+    ]);
+    expect(
+      resolveFlatSleeveFlip(faces, {
+        preferredFrontUrl: "https://ex/ranked-cdandlp.jpg",
+      }),
+    ).toEqual({
+      front: "https://ex/ranked-cdandlp.jpg",
+      back: "https://ex/back.jpg",
+    });
+  });
+
+  it("does not flat-flip when GameBox3D already has a real spine", () => {
+    const faces = resolveBoxFaces([
+      { type: "cover", role: "fr", url: "https://ex/front.jpg" },
+      { type: "image", role: "back-fr", url: "https://ex/back.jpg" },
+      { type: "image", role: "spine-fr", url: "https://ex/spine.jpg" },
+    ]);
+    expect(faces.complete).toBe(true);
+    expect(resolveFlatSleeveFlip(faces)).toBeNull();
   });
 
   it("completes when ScreenScraper-style front/back/spine are present", () => {

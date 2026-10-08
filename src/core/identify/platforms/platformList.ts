@@ -27,6 +27,12 @@ type VideoGamePlatformDefinition = {
    * — used when filtering web-only catalog hits on console-targeted fetches.
    */
   physicalMediaRelease?: boolean;
+  /**
+   * Circular optical retail media (CD / DVD / Blu-ray / GC / Wii / UMD…).
+   * False/omitted for cartridges and game cards — loose shelf tiles stay
+   * rectangular instead of a fake disc.
+   */
+  opticalDiscMedia?: boolean;
 };
 
 export const VIDEO_GAME_PLATFORMS = [
@@ -44,6 +50,7 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Microsoft Xbox Series X/S"],
     theGamesDbId: 4981,
     screenScraperSystemId: 34,
+    opticalDiscMedia: true,
   },
   {
     key: "xboxone",
@@ -52,6 +59,7 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Microsoft Xbox One"],
     theGamesDbId: 4920,
     screenScraperSystemId: 34,
+    opticalDiscMedia: true,
   },
   {
     key: "xbox360",
@@ -61,6 +69,7 @@ export const VIDEO_GAME_PLATFORMS = [
     theGamesDbId: 15,
     screenScraperSystemId: 33,
     coverProject: [{ folder: "xbox_360", prefix: "xbox360_" }],
+    opticalDiscMedia: true,
   },
   {
     key: "xbox",
@@ -70,6 +79,7 @@ export const VIDEO_GAME_PLATFORMS = [
     theGamesDbId: 14,
     screenScraperSystemId: 32,
     coverProject: [{ folder: "xbox", prefix: "xbox_" }],
+    opticalDiscMedia: true,
   },
   {
     key: "ps5",
@@ -79,6 +89,7 @@ export const VIDEO_GAME_PLATFORMS = [
     theGamesDbId: 4980,
     screenScraperSystemId: 284,
     coverProject: [{ folder: "playstation_5", prefix: "ps5_" }],
+    opticalDiscMedia: true,
   },
   {
     key: "ps4",
@@ -88,6 +99,7 @@ export const VIDEO_GAME_PLATFORMS = [
     theGamesDbId: 4919,
     screenScraperSystemId: 60,
     coverProject: [{ folder: "playstation_4", prefix: "ps4_" }],
+    opticalDiscMedia: true,
   },
   {
     key: "ps3",
@@ -97,6 +109,7 @@ export const VIDEO_GAME_PLATFORMS = [
     theGamesDbId: 12,
     screenScraperSystemId: 59,
     coverProject: [{ folder: "playstation_3", prefix: "ps3_" }],
+    opticalDiscMedia: true,
   },
   {
     key: "ps2",
@@ -106,6 +119,7 @@ export const VIDEO_GAME_PLATFORMS = [
     theGamesDbId: 11,
     screenScraperSystemId: 58,
     coverProject: [{ folder: "playstation_2", prefix: "ps2_" }],
+    opticalDiscMedia: true,
   },
   {
     key: "psp",
@@ -114,6 +128,7 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Sony PSP"],
     theGamesDbId: 13,
     screenScraperSystemId: 61,
+    opticalDiscMedia: true,
   },
   {
     key: "psvita",
@@ -134,6 +149,7 @@ export const VIDEO_GAME_PLATFORMS = [
       { folder: "playstation", prefix: "ps_" },
       { folder: "playstation_1", prefix: "ps1_" },
     ],
+    opticalDiscMedia: true,
   },
   {
     key: "wiiu",
@@ -146,6 +162,7 @@ export const VIDEO_GAME_PLATFORMS = [
       { folder: "nintendo_wii_u", prefix: "wiiu_" },
       { folder: "wii_u", prefix: "wiiu_" },
     ],
+    opticalDiscMedia: true,
   },
   {
     key: "wii",
@@ -155,6 +172,7 @@ export const VIDEO_GAME_PLATFORMS = [
     theGamesDbId: 9,
     screenScraperSystemId: 16,
     coverProject: [{ folder: "nintendo_wii", prefix: "wii_" }],
+    opticalDiscMedia: true,
   },
   {
     key: "switch",
@@ -183,6 +201,7 @@ export const VIDEO_GAME_PLATFORMS = [
       { folder: "gamecube", prefix: "gc_" },
       { folder: "nintendo_gamecube", prefix: "gc_" },
     ],
+    opticalDiscMedia: true,
   },
   {
     key: "n64",
@@ -294,6 +313,7 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Sega Dreamcast"],
     theGamesDbId: 16,
     screenScraperSystemId: 23,
+    opticalDiscMedia: true,
   },
   {
     key: "megadrive",
@@ -375,6 +395,7 @@ export const VIDEO_GAME_PLATFORMS = [
     launchBoxNames: ["Sega Saturn"],
     theGamesDbId: 17,
     screenScraperSystemId: 22,
+    opticalDiscMedia: true,
   },
 ] as const satisfies readonly VideoGamePlatformDefinition[];
 
@@ -422,6 +443,13 @@ export function getVideoGamePlatform(
 ): VideoGamePlatform | null {
   if (!isVideoGamePlatformKey(key)) return null;
   return PLATFORM_BY_KEY.get(key) || null;
+}
+
+/** True when retail copies ship as a circular optical disc (not cart / card). */
+export function platformHasOpticalDiscMedia(
+  key: VideoGamePlatformKey | string | null | undefined,
+): boolean {
+  return getVideoGamePlatform(key)?.opticalDiscMedia === true;
 }
 
 function detectVideoGamePlatformKeyInNormalizedText(

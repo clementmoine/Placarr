@@ -1000,7 +1000,60 @@ describe("mergeMetadata generic function", () => {
         }),
       ]),
     );
+    expect(
+      merged.attachments?.filter(
+        (attachment) =>
+          attachment.url === "https://example.test/pc-pink-main.jpg",
+      ),
+    ).toHaveLength(1);
     expect(merged.imageUrl).toBe("https://example.test/pc-pink-main.jpg");
+  });
+
+  it("does not duplicate gallery covers when imageUrl matches an attachment", () => {
+    const cover =
+      "https://www.lddb.com/cover/ld/33801-33900/33828.jpg";
+    const merged = mergeMetadata("movies", [
+      {
+        providerId: "lddb",
+        metadata: {
+          title: "Toy Story",
+          imageUrl: cover,
+          attachments: [
+            {
+              type: "cover",
+              url: cover,
+              role: "front",
+              title: "Box - Front",
+              source: "lddb",
+            },
+          ],
+        },
+      },
+      {
+        providerId: "cdandlp",
+        metadata: {
+          title: "Toy Story",
+          imageUrl: "https://img.cdandlp.com/2017/09/imgL/118938116.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.cdandlp.com/2017/09/imgL/118938116.jpg",
+              role: "front",
+              title: "Cover",
+              source: "cdandlp",
+            },
+          ],
+        },
+      },
+    ]);
+
+    const urls = merged.attachments?.map((a) => a.url) ?? [];
+    expect(urls.filter((url) => url === cover)).toHaveLength(1);
+    expect(
+      urls.filter(
+        (url) => url === "https://img.cdandlp.com/2017/09/imgL/118938116.jpg",
+      ),
+    ).toHaveLength(1);
   });
 
   it("prefers a clean alias over a noisy retailer object title", () => {

@@ -24,6 +24,7 @@ export const REMOTE_IMAGE_PROXY_HOST_FRAGMENTS = [
   "www.babelio.com",
   "www.bdfugue.com",
   "www.gibert.com",
+  "www.lddb.com",
 ] as const;
 
 const BLOCKED_PROXY_HOSTS =

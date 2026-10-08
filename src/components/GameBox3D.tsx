@@ -9,7 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
-import { keepCasePlasticRecipe } from "@/core/enrich/media/keepCasePlastic";
+import { keepCasePlasticRecipe, usesKeepCaseShell } from "@/core/enrich/media/keepCasePlastic";
 import { cn } from "@/lib/shared/utils";
 
 /** Keep the box readable — never belly-up. */
@@ -24,17 +24,30 @@ const MOMENTUM_MAX = 540;
 const DEFAULT_FRONT_RATIO = 0.715;
 const DEFAULT_SPINE_RATIO = 0.12;
 const MAX_SPINE_RATIO = 0.3;
-/** Soft keep-case corner — modest radius so face seams still close cleanly. */
-const CASE_RADIUS_PX = 6;
+/** Soft keep-case corner. */
+const KEEP_CASE_RADIUS_PX = 6;
+/** Cardboard retail boxes stay closer to square. */
+const CARDBOARD_RADIUS_PX = 2;
 /**
- * Cover insert is one wraparound sheet (front–spine–back). Clear tray leaves
- * plastic lips at top/bottom; front/back also show a thin lip on the opening
- * edge — never on the spine seam. Fractions of the face size (applied in px).
+ * Cover insert is one wraparound sheet (front–spine–back). Keep-case trays
+ * leave plastic lips at top/bottom + opening edge — never on the spine seam.
  */
 const COVER_LIP_Y_FRAC = 0.018;
 const COVER_LIP_OPENING_FRAC = 0.022;
 /** Expand each face slightly so rounded corners overlap instead of showing through. */
 const FACE_OVERLAP_PX = 1.5;
+/**
+ * Inset of the opaque square-cornered core. Outer faces keep their radius; the
+ * core sits just inside so corner AA blends against shell plastic, not the page.
+ */
+const CORE_INSET_PX = 1;
+
+/** Kraft cardboard for non-keep-case retail boxes (N64, Game Boy…). */
+const CARDBOARD = {
+  base: "oklch(0.78 0.03 85)",
+  highlight: "oklch(0.88 0.025 85)",
+  shade: "oklch(0.62 0.035 75)",
+} as const;
 
 export function clampBoxPitch(pitch: number, limit = BOX_PITCH_LIMIT): number {
   return Math.max(-limit, Math.min(limit, pitch));
@@ -91,12 +104,11 @@ export type GameBox3DProps = {
 /**
  * Fake-but-believable 3D game box from three flat scans (front, back, spine).
  *
- * Six CSS faces under `preserve-3d`: printed art on front / back / left spine;
- * top, bottom and right are synthetic keep-case plastic (opening slit on the
- * right). Proportions come from the artwork: the front's natural ratio drives
- * width/height, the spine's short/long ratio drives depth — chunky N64 and slim
- * DS cases both look right without per-platform tuning. Inspired by ROMM
- * `RBox3D`.
+ * Keep-case platforms: polycarbonate shell, printed insert with lips, opening
+ * slit + finger notch. Cardboard-era platforms: spine art wraps all four edge
+ * faces (ROMM-style), full-bleed covers, no plastic tray. Proportions come from
+ * the artwork — chunky N64 and slim DS both look right without per-platform
+ * tuning.
  */
 export function GameBox3D({
   front,
@@ -110,7 +122,9 @@ export function GameBox3D({
   className,
   onError,
 }: GameBox3DProps) {
-  const plastic = keepCasePlasticRecipe(platformKey);
+  const keepCase = usesKeepCaseShell(platformKey);
+  const shell = keepCase ? keepCasePlasticRecipe(platformKey) : CARDBOARD;
+  const caseRadius = keepCase ? KEEP_CASE_RADIUS_PX : CARDBOARD_RADIUS_PX;
   const rootRef = useRef<HTMLDivElement>(null);
   const frontImgRef = useRef<HTMLImageElement>(null);
   const spineImgRef = useRef<HTMLImageElement>(null);
@@ -201,6 +215,8 @@ export function GameBox3D({
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (dragPointerId.current !== null) return;
+    // Keep page sibling-swipe from stealing this drag (mobile touch).
+    e.stopPropagation();
     dragPointerId.current = e.pointerId;
     setDragging(true);
     setCoasting(false);
@@ -286,6 +302,9 @@ export function GameBox3D({
       ? "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)"
       : "transform 0.28s ease-out";
 
+  // Overlap scales with radius so AA fringes still meet on soft keep-case corners.
+  const faceOverlap = Math.max(FACE_OVERLAP_PX, caseRadius * 0.55);
+
   const faceBase: CSSProperties = {
     position: "absolute",
     top: "50%",
@@ -293,56 +312,82 @@ export function GameBox3D({
     backfaceVisibility: "hidden",
     overflow: "hidden",
     pointerEvents: "none",
-    borderRadius: CASE_RADIUS_PX,
+    borderRadius: caseRadius,
     // Opaque fill — rounded 3D faces otherwise AA to black at seams.
-    backgroundColor: plastic.base,
+    backgroundColor: shell.base,
   };
 
   const frontStyle: CSSProperties = {
     ...faceBase,
-    width: widthPx + FACE_OVERLAP_PX,
-    height: heightPx + FACE_OVERLAP_PX,
+    width: widthPx + faceOverlap,
+    height: heightPx + faceOverlap,
     transform: `translate(-50%, -50%) translateZ(${depthPx / 2}px)`,
   };
   const backStyle: CSSProperties = {
     ...faceBase,
-    width: widthPx + FACE_OVERLAP_PX,
-    height: heightPx + FACE_OVERLAP_PX,
+    width: widthPx + faceOverlap,
+    height: heightPx + faceOverlap,
     transform: `translate(-50%, -50%) rotateY(180deg) translateZ(${depthPx / 2}px)`,
   };
 
   const leftAlt = spineLandscape;
   const leftStyle: CSSProperties = {
     ...faceBase,
-    width: (leftAlt ? heightPx : depthPx) + FACE_OVERLAP_PX,
-    height: (leftAlt ? depthPx : heightPx) + FACE_OVERLAP_PX,
+    width: (leftAlt ? heightPx : depthPx) + faceOverlap,
+    height: (leftAlt ? depthPx : heightPx) + faceOverlap,
     transform: `translate(-50%, -50%) rotateY(-90deg) translateZ(${widthPx / 2}px)${leftAlt ? " rotate(90deg)" : ""}`,
   };
   const rightStyle: CSSProperties = {
     ...faceBase,
-    width: (leftAlt ? heightPx : depthPx) + FACE_OVERLAP_PX,
-    height: (leftAlt ? depthPx : heightPx) + FACE_OVERLAP_PX,
+    width: (leftAlt ? heightPx : depthPx) + faceOverlap,
+    height: (leftAlt ? depthPx : heightPx) + faceOverlap,
     transform: `translate(-50%, -50%) rotateY(90deg) translateZ(${widthPx / 2}px)${leftAlt ? " rotate(90deg)" : ""}`,
   };
 
   const topAlt = !spineLandscape;
   const topStyle: CSSProperties = {
     ...faceBase,
-    width: (topAlt ? depthPx : widthPx) + FACE_OVERLAP_PX,
-    height: (topAlt ? widthPx : depthPx) + FACE_OVERLAP_PX,
+    width: (topAlt ? depthPx : widthPx) + faceOverlap,
+    height: (topAlt ? widthPx : depthPx) + faceOverlap,
     transform: `translate(-50%, -50%) rotateX(90deg) translateZ(${heightPx / 2}px)${topAlt ? " rotate(90deg)" : ""}`,
   };
   const bottomStyle: CSSProperties = {
     ...faceBase,
-    width: (topAlt ? depthPx : widthPx) + FACE_OVERLAP_PX,
-    height: (topAlt ? widthPx : depthPx) + FACE_OVERLAP_PX,
+    width: (topAlt ? depthPx : widthPx) + faceOverlap,
+    height: (topAlt ? widthPx : depthPx) + faceOverlap,
     transform: `translate(-50%, -50%) rotateX(-90deg) translateZ(${heightPx / 2}px)${topAlt ? " rotate(90deg)" : ""}`,
   };
 
-  // Same px lip on front / back / spine so the wraparound sheet shares one height.
-  const lipY = Math.max(2, heightPx * COVER_LIP_Y_FRAC);
-  const lipOpening = Math.max(2, widthPx * COVER_LIP_OPENING_FRAC);
-  /** Hairline seam on top / bottom only. */
+  /**
+   * Square-cornered opaque core just inside the outer faces. Rounded-face AA
+   * otherwise composites against the page (near-black) → dark corner fringes.
+   * Radius on the outer faces is unchanged.
+   */
+  const coreW = Math.max(0, widthPx - CORE_INSET_PX * 2);
+  const coreH = Math.max(0, heightPx - CORE_INSET_PX * 2);
+  const coreD = Math.max(0, depthPx - CORE_INSET_PX * 2);
+  const coreFace = (
+    width: number,
+    height: number,
+    transform: string,
+  ): CSSProperties => ({
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width,
+    height,
+    transform: `translate(-50%, -50%) ${transform}`,
+    backgroundColor: shell.base,
+    backfaceVisibility: "hidden",
+    pointerEvents: "none",
+  });
+
+  // Keep-case lips; cardboard prints go edge-to-edge.
+  const lipY = keepCase ? Math.max(2, heightPx * COVER_LIP_Y_FRAC) : 0;
+  const lipOpening = keepCase
+    ? Math.max(2, widthPx * COVER_LIP_OPENING_FRAC)
+    : 0;
+  /** Hairline seam on top / bottom / opening (keep-case only). */
   const grooveW = Math.min(2.5, Math.max(1.25, depthPx * 0.035));
   /**
    * Finger recess on the opening edge — elongated stadium with rounded caps
@@ -370,13 +415,15 @@ export function GameBox3D({
     left: opening === "left" ? lipOpening : 0,
     right: opening === "right" ? lipOpening : 0,
     overflow: "hidden",
-    backgroundColor: plastic.base,
-    boxShadow: "inset 0 0 0 1px color-mix(in oklch, black 10%, transparent)",
+    backgroundColor: shell.base,
+    boxShadow: keepCase
+      ? "inset 0 0 0 1px color-mix(in oklch, black 10%, transparent)"
+      : undefined,
   });
 
   /** Landscape spine face is rotated 90° — lips on local X → box top/bottom. */
   const spineInsertFrame = (): CSSProperties =>
-    leftAlt
+    leftAlt && keepCase
       ? {
           position: "absolute",
           top: 0,
@@ -384,25 +431,36 @@ export function GameBox3D({
           left: lipY,
           right: lipY,
           overflow: "hidden",
-          backgroundColor: plastic.base,
+          backgroundColor: shell.base,
           boxShadow:
             "inset 0 0 0 1px color-mix(in oklch, black 10%, transparent)",
         }
-      : insertFrame("none");
+      : leftAlt
+        ? {
+            position: "absolute",
+            inset: 0,
+            overflow: "hidden",
+            backgroundColor: shell.base,
+          }
+        : insertFrame("none");
 
-  /** Keep-case polycarbonate — soft shell, no proud rim. */
-  const plasticFace = (): CSSProperties => ({
-    backgroundColor: plastic.base,
+  /** Face shell fill — polycarbonate keep-case or kraft cardboard. */
+  const shellFace = (): CSSProperties => ({
+    backgroundColor: shell.base,
     backgroundImage: `
       linear-gradient(
         160deg,
-        ${plastic.highlight} 0%,
-        ${plastic.base} 42%,
-        ${plastic.shade} 100%
+        ${shell.highlight} 0%,
+        ${shell.base} 42%,
+        ${shell.shade} 100%
       )`,
-    boxShadow: `
-      inset 0 0 0 1px color-mix(in oklch, ${plastic.highlight} 35%, transparent),
-      inset 0 0 10px color-mix(in oklch, ${plastic.shade} 55%, transparent)`,
+    boxShadow: keepCase
+      ? `
+      inset 0 0 0 1px color-mix(in oklch, ${shell.highlight} 35%, transparent),
+      inset 0 0 10px color-mix(in oklch, ${shell.shade} 55%, transparent)`
+      : `
+      inset 0 0 0 1px color-mix(in oklch, ${shell.highlight} 25%, transparent),
+      inset 0 0 6px color-mix(in oklch, ${shell.shade} 35%, transparent)`,
   });
 
   /** Hairline seam for top / bottom / opening edges (mid-depth). */
@@ -467,20 +525,37 @@ export function GameBox3D({
     background: `
       linear-gradient(
         90deg,
-        color-mix(in oklch, ${plastic.shade} 55%, ${plastic.base}) 0%,
-        color-mix(in oklch, ${plastic.shade} 70%, black) 45%,
-        color-mix(in oklch, ${plastic.shade} 78%, black) 50%,
-        color-mix(in oklch, ${plastic.shade} 70%, black) 55%,
-        color-mix(in oklch, ${plastic.shade} 55%, ${plastic.base}) 100%
+        color-mix(in oklch, ${shell.shade} 55%, ${shell.base}) 0%,
+        color-mix(in oklch, ${shell.shade} 70%, black) 45%,
+        color-mix(in oklch, ${shell.shade} 78%, black) 50%,
+        color-mix(in oklch, ${shell.shade} 70%, black) 55%,
+        color-mix(in oklch, ${shell.shade} 55%, ${shell.base}) 100%
       )`,
     boxShadow: `
       inset 0 0 0 1px color-mix(in oklch, black 28%, transparent),
       inset 1px 0 3px color-mix(in oklch, black 28%, transparent),
-      inset -1px 0 2px color-mix(in oklch, ${plastic.highlight} 22%, transparent),
+      inset -1px 0 2px color-mix(in oklch, ${shell.highlight} 22%, transparent),
       inset 0 2px 3px color-mix(in oklch, black 18%, transparent),
       inset 0 -2px 3px color-mix(in oklch, black 18%, transparent)`,
     transform: `translate(-50%, -50%) rotateY(90deg) translateZ(${widthPx / 2 + grooveNudge + 0.35}px)`,
   });
+
+  const spineArt = (opts?: { measure?: boolean }) => (
+    <div style={spineInsertFrame()}>
+      <img
+        ref={opts?.measure ? spineImgRef : undefined}
+        src={spine}
+        alt=""
+        draggable={false}
+        className={artClass}
+        onLoad={
+          opts?.measure
+            ? (e) => measureSpine(e.currentTarget)
+            : undefined
+        }
+      />
+    </div>
+  );
 
   return (
     <div
@@ -488,12 +563,16 @@ export function GameBox3D({
       role="img"
       aria-label={alt || undefined}
       tabIndex={0}
+      data-no-item-swipe=""
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onKeyDown={onKeyDown}
       onClick={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onTouchCancel={(e) => e.stopPropagation()}
       className={cn(
         "relative w-full overflow-visible select-none touch-none outline-none cursor-grab active:cursor-grabbing",
         "focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
@@ -518,13 +597,66 @@ export function GameBox3D({
             willChange: "transform",
           }}
         >
-          {/* Front / back / spine — same insert height, flush wraparound */}
+          {/* Opaque square core — AA at outer rounded corners blends against
+              shell plastic instead of the page (near-black). Radius unchanged. */}
+          <div
+            aria-hidden
+            data-box-core="front"
+            style={coreFace(coreW, coreH, `translateZ(${coreD / 2}px)`)}
+          />
+          <div
+            aria-hidden
+            data-box-core="back"
+            style={coreFace(
+              coreW,
+              coreH,
+              `rotateY(180deg) translateZ(${coreD / 2}px)`,
+            )}
+          />
+          <div
+            aria-hidden
+            data-box-core="left"
+            style={coreFace(
+              coreD,
+              coreH,
+              `rotateY(-90deg) translateZ(${coreW / 2}px)`,
+            )}
+          />
+          <div
+            aria-hidden
+            data-box-core="right"
+            style={coreFace(
+              coreD,
+              coreH,
+              `rotateY(90deg) translateZ(${coreW / 2}px)`,
+            )}
+          />
+          <div
+            aria-hidden
+            data-box-core="top"
+            style={coreFace(
+              coreW,
+              coreD,
+              `rotateX(90deg) translateZ(${coreH / 2}px)`,
+            )}
+          />
+          <div
+            aria-hidden
+            data-box-core="bottom"
+            style={coreFace(
+              coreW,
+              coreD,
+              `rotateX(-90deg) translateZ(${coreH / 2}px)`,
+            )}
+          />
+
+          {/* Front / back / spine — keep-case insert or full-bleed cardboard */}
           <div
             aria-hidden
             data-box-face="front"
-            style={{ ...frontStyle, ...plasticFace() }}
+            style={{ ...frontStyle, ...shellFace() }}
           >
-            <div style={insertFrame("right")}>
+            <div style={insertFrame(keepCase ? "right" : "none")}>
               <img
                 ref={frontImgRef}
                 src={front}
@@ -539,9 +671,9 @@ export function GameBox3D({
           <div
             aria-hidden
             data-box-face="back"
-            style={{ ...backStyle, ...plasticFace() }}
+            style={{ ...backStyle, ...shellFace() }}
           >
-            <div style={insertFrame("left")}>
+            <div style={insertFrame(keepCase ? "left" : "none")}>
               <img
                 src={back}
                 alt=""
@@ -553,40 +685,60 @@ export function GameBox3D({
           <div
             aria-hidden
             data-box-face="left"
-            style={{ ...leftStyle, ...plasticFace() }}
+            style={{ ...leftStyle, ...shellFace() }}
           >
-            <div style={spineInsertFrame()}>
-              <img
-                ref={spineImgRef}
-                src={spine}
-                alt=""
-                draggable={false}
-                className={artClass}
-                onLoad={(e) => measureSpine(e.currentTarget)}
-              />
-            </div>
+            {spineArt({ measure: true })}
           </div>
-          {/* Opening edge + top/bottom: keep-case plastic, not spine art */}
-          <div
-            aria-hidden
-            data-box-face="right"
-            style={{ ...rightStyle, ...plasticFace() }}
-          />
-          <div
-            aria-hidden
-            data-box-face="top"
-            style={{ ...topStyle, ...plasticFace() }}
-          />
-          <div
-            aria-hidden
-            data-box-face="bottom"
-            style={{ ...bottomStyle, ...plasticFace() }}
-          />
-          {/* Hairline U-seam + opening-edge finger notch on top of it */}
-          <div aria-hidden data-box-groove="right" style={grooveEdge("right")} />
-          <div aria-hidden data-box-groove="top" style={grooveEdge("top")} />
-          <div aria-hidden data-box-groove="bottom" style={grooveEdge("bottom")} />
-          <div aria-hidden data-box-finger style={fingerRecess()} />
+          {keepCase ? (
+            <>
+              {/* Opening edge + top/bottom: keep-case plastic, not spine art */}
+              <div
+                aria-hidden
+                data-box-face="right"
+                style={{ ...rightStyle, ...shellFace() }}
+              />
+              <div
+                aria-hidden
+                data-box-face="top"
+                style={{ ...topStyle, ...shellFace() }}
+              />
+              <div
+                aria-hidden
+                data-box-face="bottom"
+                style={{ ...bottomStyle, ...shellFace() }}
+              />
+              {/* Hairline U-seam + opening-edge finger notch */}
+              <div aria-hidden data-box-groove="right" style={grooveEdge("right")} />
+              <div aria-hidden data-box-groove="top" style={grooveEdge("top")} />
+              <div aria-hidden data-box-groove="bottom" style={grooveEdge("bottom")} />
+              <div aria-hidden data-box-finger style={fingerRecess()} />
+            </>
+          ) : (
+            <>
+              {/* Cardboard: spine scan wraps all four edge faces */}
+              <div
+                aria-hidden
+                data-box-face="right"
+                style={{ ...rightStyle, ...shellFace() }}
+              >
+                {spineArt()}
+              </div>
+              <div
+                aria-hidden
+                data-box-face="top"
+                style={{ ...topStyle, ...shellFace() }}
+              >
+                {spineArt()}
+              </div>
+              <div
+                aria-hidden
+                data-box-face="bottom"
+                style={{ ...bottomStyle, ...shellFace() }}
+              >
+                {spineArt()}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

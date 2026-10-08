@@ -165,6 +165,36 @@ export function getAspectRatio(
   }
 }
 
+/**
+ * Numeric width/height ratio from a CSS aspect string (`"1 / 1.414"` → ≈0.707).
+ * Used by cover ranking so gallery scoring shares the shelf frame target.
+ */
+export function parseAspectRatioNumber(
+  aspect: string | null | undefined,
+): number | undefined {
+  if (!aspect?.trim()) return undefined;
+  const match = aspect.trim().match(/^([\d.]+)\s*\/\s*([\d.]+)$/);
+  if (!match?.[1] || !match[2]) return undefined;
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || height <= 0) {
+    return undefined;
+  }
+  return width / height;
+}
+
+/** Shelf UI frame as a numeric cover-ranking target. */
+export function expectedCoverAspectRatioForShelf(
+  cardFormat: string | null | undefined,
+  type: Type | string | null | undefined,
+): number {
+  return (
+    parseAspectRatioNumber(getAspectRatio(cardFormat, type)) ??
+    parseAspectRatioNumber("1 / 1.414") ??
+    0.707
+  );
+}
+
 export function getTailwindAspectRatioClass(
   cardFormat: string | null | undefined,
   type: Type | string | null | undefined,

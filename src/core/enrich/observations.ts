@@ -242,7 +242,13 @@ export function observationsFromMetadataResult(
     });
   }
 
-  if (metadata.imageUrl) {
+  const attachmentUrls = new Set(
+    (metadata.attachments || [])
+      .map((attachment) => attachment.url)
+      .filter(Boolean),
+  );
+  // Prefer the richer attachment observation when imageUrl is the same URL.
+  if (metadata.imageUrl && !attachmentUrls.has(metadata.imageUrl)) {
     observations.push({
       kind: "image",
       role: options.imageRole,

@@ -258,19 +258,38 @@ export async function flareSolverrRequestGet(
 
   return runFlareExclusive(
     async () => {
-      try {
-        const response = await axios.post(
-          `${baseUrl}/v1`,
-          { ...body, maxTimeout: maxTimeoutMs },
-          {
-            timeout: maxTimeoutMs + 5_000,
-            validateStatus: () => true,
-            signal,
-          },
-        );
+      const postOnce = async (waitInSeconds?: number) => {
+        const payload: Record<string, unknown> = {
+          ...body,
+          maxTimeout: maxTimeoutMs,
+        };
+        if (waitInSeconds) payload.waitInSeconds = waitInSeconds;
+        const response = await axios.post(`${baseUrl}/v1`, payload, {
+          timeout: maxTimeoutMs + 5_000,
+          validateStatus: () => true,
+          signal,
+        });
         const html = response.data?.solution?.response;
         const status = Number(response.data?.solution?.status || 0);
-        if (typeof html !== "string" || status >= 400) {
+        if (typeof html !== "string" || status >= 400) return null;
+        return html;
+      };
+
+      try {
+        let html = await postOnce(options.waitInSeconds);
+        // Anubis sometimes returns the challenge shell with HTTP 200 and
+        // "Challenge not detected!" — wait and retry once before giving up.
+        if (
+          html &&
+          /making sure you're not a bot|techaro\.lol-anubis/i.test(html) &&
+          !options.waitInSeconds
+        ) {
+          html = await postOnce(5);
+        }
+        if (
+          !html ||
+          /making sure you're not a bot|techaro\.lol-anubis/i.test(html)
+        ) {
           recordFlareOutcome(false);
           return null;
         }

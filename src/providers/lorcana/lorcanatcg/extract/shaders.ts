@@ -16,7 +16,7 @@ import { primaryUnityBundlePath } from "@/providers/lorcana/lorcanatcg/extract/u
 import { LORCANA_UNITY_REVISION } from "@/providers/lorcana/lorcanatcg/extract/unityRevision";
 
 /** Golden parity target for ``data/lorcana/foil/shaders/``. */
-export const LORCANA_SHADER_FRAG_COUNT = 48;
+export const LORCANA_SHADER_FRAG_COUNT = 58;
 
 function nodeShaderExtract(
   am: AssetManager,

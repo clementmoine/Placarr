@@ -396,12 +396,21 @@ export function ItemModal({
         shelf?.name ??
         currentShelfId ??
         shelfId,
+      // Cover Affiche ranking targets this frame (square LD/vinyl vs DVD portrait).
+      cardFormat:
+        activeShelf?.cardFormat ??
+        item?.shelf?.cardFormat ??
+        shelf?.cardFormat ??
+        null,
     }),
     [
+      activeShelf?.cardFormat,
       activeShelf?.name,
       activeShelfType,
       currentShelfId,
+      item?.shelf?.cardFormat,
       item?.shelf?.name,
+      shelf?.cardFormat,
       shelf?.name,
       shelfId,
       shelves,
@@ -478,6 +487,13 @@ export function ItemModal({
     key: string;
     init: ReturnType<typeof buildItemModalSessionInit>;
   } | null>(null);
+  /**
+   * Affiche tile / file pick in this modal session only. Enrichment must not
+   * mark `imageUrl` dirty (that stuck SensCritique as "selected" after refresh).
+   */
+  const [userPickedCoverUrl, setUserPickedCoverUrl] = useState<string | null>(
+    null,
+  );
   if (sessionKey !== sessionState?.key) {
     if (sessionKey) {
       const init = buildItemModalSessionInit({
@@ -485,8 +501,10 @@ export function ItemModal({
         prefilledValues,
         shelfId,
         activeShelfForMedia,
+        uiLocale: locale,
       });
       setSessionState({ key: sessionKey, init });
+      setUserPickedCoverUrl(null);
       setSuggestions(init.suggestions);
       setNameSuggestion(init.nameSuggestion);
       setActiveTab(defaultTab || "general");
@@ -498,6 +516,7 @@ export function ItemModal({
       setBgPage(1);
     } else if (!isOpen && sessionState !== null) {
       setSessionState(null);
+      setUserPickedCoverUrl(null);
     }
   }
 
@@ -569,10 +588,10 @@ export function ItemModal({
       const forceOverwrite = options.forceOverwrite ?? false;
       const barcodeContext = options.barcodeContext;
 
-      setFetchedMetadata(
+      const filteredMetadata =
         filterMetadataForShelfPlatform(metadata, activeShelfForMedia) ??
-          metadata,
-      );
+        metadata;
+      setFetchedMetadata(filteredMetadata);
 
       const currentBarcode = (
         barcodeContext ||
@@ -603,17 +622,39 @@ export function ItemModal({
         }
       }
 
-      if (metadata.imageUrl) {
+      // Seed Affiche from the same ranking as the fiche — include item.imageUrl
+      // so honored user pins win; otherwise follow dynamic ranking / metadata.
+      const rankedCover = getCoverImage(
+        {
+          imageUrl: item?.imageUrl ?? null,
+          updatedAt: item?.updatedAt,
+          condition: item?.condition ?? null,
+          metadata: filteredMetadata,
+          shelf: activeShelfForMedia,
+        },
+        locale,
+      );
+      const coverCandidate = rankedCover || filteredMetadata.imageUrl;
+      if (coverCandidate) {
         const currentImageUrl = form.getValues("imageUrl");
         const canReplaceScanImage =
           activeShelfType === "games" &&
           hasPrefilledScanImage &&
           typeof currentImageUrl === "string" &&
           currentImageUrl.trim() === prefilledScanImageUrl;
-
-        if (forceOverwrite || !currentImageUrl || canReplaceScanImage) {
-          form.setValue("imageUrl", metadata.imageUrl, {
-            shouldDirty: true,
+        // Keep an in-session Affiche click; otherwise follow ranked cover without
+        // dirtying the field (dirty metadata pins stuck SensCritique as selected).
+        if (
+          userPickedCoverUrl &&
+          !forceOverwrite &&
+          !canReplaceScanImage &&
+          currentImageUrl
+        ) {
+          // user pick wins
+        } else {
+          setUserPickedCoverUrl(null);
+          form.setValue("imageUrl", coverCandidate, {
+            shouldDirty: Boolean(forceOverwrite || canReplaceScanImage),
           });
         }
       }
@@ -635,7 +676,12 @@ export function ItemModal({
       activeShelfType,
       form,
       hasPrefilledScanImage,
+      item?.condition,
+      item?.imageUrl,
+      item?.updatedAt,
+      locale,
       prefilledScanImageUrl,
+      userPickedCoverUrl,
     ],
   );
 
@@ -1125,6 +1171,61 @@ export function ItemModal({
   ]);
 
   const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
+  // Checkmark = in-session Affiche pick, else the same cover as the fiche.
+  const afficheSelectedCoverUrl = useMemo(() => {
+    if (currentImageUrl instanceof File) return null;
+    if (userPickedCoverUrl) return userPickedCoverUrl;
+    return (
+      getCoverImage(
+        {
+          imageUrl: item?.imageUrl ?? null,
+          updatedAt: item?.updatedAt,
+          condition: watchedCondition ?? item?.condition ?? null,
+          metadata: item?.metadata ?? fetchedMetadata ?? null,
+          shelf: activeShelfForMedia,
+        },
+        locale,
+      ) ||
+      (typeof currentImageUrl === "string" ? currentImageUrl : null)
+    );
+  }, [
+    activeShelfForMedia,
+    currentImageUrl,
+    fetchedMetadata,
+    item?.condition,
+    item?.imageUrl,
+    item?.metadata,
+    item?.updatedAt,
+    locale,
+    userPickedCoverUrl,
+    watchedCondition,
+  ]);
+
+  // Keep form.imageUrl aligned with the fiche when the user has not picked
+  // a cover in this session (clears enrichment-dirtied SensCritique pins).
+  useEffect(() => {
+    if (!isOpen || userPickedCoverUrl) return;
+    if (currentImageUrl instanceof File) return;
+    if (
+      typeof afficheSelectedCoverUrl !== "string" ||
+      !afficheSelectedCoverUrl
+    ) {
+      return;
+    }
+    if (
+      typeof currentImageUrl === "string" &&
+      urlsReferToSameLocalizedImage(currentImageUrl, afficheSelectedCoverUrl)
+    ) {
+      return;
+    }
+    form.setValue("imageUrl", afficheSelectedCoverUrl, { shouldDirty: false });
+  }, [
+    afficheSelectedCoverUrl,
+    currentImageUrl,
+    form,
+    isOpen,
+    userPickedCoverUrl,
+  ]);
   // Preview URL for a freshly picked file. Derived from the File rather than
   // pushed through setState from an effect, so choosing an image costs one
   // render instead of two; the effect owns the revoke, and each URL it sees
@@ -1450,13 +1551,17 @@ export function ItemModal({
         if (!file.type.startsWith("image/")) {
           toast.error(t("items.invalidImageFile"));
           form.setValue("imageUrl", null);
+          setUserPickedCoverUrl(null);
           return;
         }
+        setUserPickedCoverUrl(null);
         form.setValue("imageUrl", file);
       } else {
+        setUserPickedCoverUrl(file);
         form.setValue("imageUrl", file);
       }
     } else {
+      setUserPickedCoverUrl(null);
       form.setValue("imageUrl", null);
     }
   };
@@ -2259,6 +2364,7 @@ export function ItemModal({
                                   toast.error(t("items.invalidImageFile"));
                                   return;
                                 }
+                                setUserPickedCoverUrl(null);
                                 form.setValue("imageUrl", file);
                                 toast.success(t("common.success"));
                               }
@@ -2338,31 +2444,33 @@ export function ItemModal({
                                 currentPosterPage * 12,
                               )
                               .map((img, i) => {
-                                const selectedCoverUrl = currentImageUrl;
+                                const selectedCoverUrl =
+                                  pendingUploadPreviewUrl ??
+                                  afficheSelectedCoverUrl;
                                 const isSelected =
-                                  pendingUploadPreviewUrl != null
-                                    ? img.url === pendingUploadPreviewUrl
-                                    : typeof selectedCoverUrl === "string" &&
-                                      urlsReferToSameLocalizedImage(
-                                        selectedCoverUrl,
-                                        img.url,
-                                      );
+                                  typeof selectedCoverUrl === "string" &&
+                                  urlsReferToSameLocalizedImage(
+                                    selectedCoverUrl,
+                                    img.url,
+                                  );
                                 return (
                                   <div
                                     key={i}
                                     role="button"
                                     tabIndex={0}
-                                    onClick={() =>
+                                    onClick={() => {
+                                      setUserPickedCoverUrl(img.url);
                                       form.setValue("imageUrl", img.url, {
                                         shouldDirty: true,
-                                      })
-                                    }
+                                      });
+                                    }}
                                     onKeyDown={(event) => {
                                       if (
                                         event.key === "Enter" ||
                                         event.key === " "
                                       ) {
                                         event.preventDefault();
+                                        setUserPickedCoverUrl(img.url);
                                         form.setValue("imageUrl", img.url, {
                                           shouldDirty: true,
                                         });

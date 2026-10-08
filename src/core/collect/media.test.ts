@@ -80,6 +80,35 @@ describe("resolveMetadataCoverUrl", () => {
       ),
     ).toBe("/uploads/fr-hdjv.jpg");
   });
+
+  it("same-locale pin vs better cover does not crash when no metrics are persisted", () => {
+    // Preview / add-item path: attachments often have no width/luminance yet.
+    expect(
+      resolveMetadataCoverUrl(
+        {
+          metadata: {
+            imageUrl: "https://www.lddb.com/cover/ld/27901-28000/27959.jpg",
+            attachments: [
+              {
+                type: "cover",
+                source: "lddb",
+                role: "eu",
+                url: "https://www.lddb.com/cover/ld/27901-28000/27959.jpg",
+              },
+              {
+                type: "cover",
+                source: "tmdb",
+                role: "fr",
+                url: "/uploads/tmdb-fr.jpg",
+              },
+            ],
+          },
+          shelf: { type: "movies", name: "Laser Disc", cardFormat: "square" },
+        },
+        "fr",
+      ),
+    ).toBe("/uploads/tmdb-fr.jpg");
+  });
 });
 
 describe("getCoverImage", () => {
@@ -284,6 +313,48 @@ describe("getCoverImage", () => {
         shelf: { type: "games", name: "Xbox 360" },
       }),
     ).toBe("/uploads/icollect-lowres.jpg");
+  });
+
+  it("does not treat a catalog cover stamped seconds after enrichment as a user pick", () => {
+    // LaserDisc Jack: enrichment wrote SensCritique as metadata.imageUrl, then
+    // progressive present stamped Chasse onto item.imageUrl ~1.6s later.
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/chasse-ranked.webp",
+        updatedAt: "2026-10-07T15:44:00.835Z",
+        metadata: {
+          imageUrl: "/uploads/senscritique.webp",
+          lastFetched: "2026-10-07T15:43:59.216Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "lddb",
+              role: "fr",
+              url: "/uploads/lddb-square.jpg",
+              width: 800,
+              height: 800,
+            },
+            {
+              type: "cover",
+              source: "chasseauxlivres",
+              role: "fr",
+              url: "/uploads/chasse-ranked.webp",
+              width: 866,
+              height: 868,
+            },
+            {
+              type: "cover",
+              source: "senscritique",
+              role: "fr",
+              url: "/uploads/senscritique.webp",
+              width: 1562,
+              height: 2125,
+            },
+          ],
+        },
+        shelf: { type: "movies", name: "Laser Disc", cardFormat: "square" },
+      }),
+    ).toBe("/uploads/lddb-square.jpg");
   });
 
   it("ignores a stale enrichment item.imageUrl when metadata default moved on", () => {

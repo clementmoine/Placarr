@@ -7,7 +7,7 @@
 import { SERVED_LOCAL_PREFIXES } from "@/lib/media/servedLocalPaths";
 
 const MISSING_ART_URL =
-  /no[-_]?image|image[-_]?not[-_]?available|no[-_]?art(?:work)?|missing[-_]?cover/i;
+  /no[-_]?image|image[-_]?not[-_]?available|no[-_]?art(?:work)?|missing[-_]?cover|non[-_]?dispo(?:nible)?|visuel[-_]?non[-_]?disponible|cover[-_]?unavailable|no[-_]?cover/i;
 
 /**
  * URL path/name signals "catalog has no artwork" — not a corrupt download.
@@ -120,7 +120,7 @@ export function isPlaceholderCoverFromPersistedMetrics(
   );
 }
 
-/** Read-path filter for Google-style "no cover" tiles persisted with metrics. */
+/** Read-path filter for Google/marketplace "no cover" tiles with metrics. */
 export function isUnavailableCoverPlaceholderFromPersistedMetrics(
   signals: PlaceholderCoverSignals,
 ): boolean {
@@ -132,19 +132,35 @@ export function isUnavailableCoverPlaceholderFromPersistedMetrics(
     return true;
   }
 
-  const darkPixelRatio = signals.darkPixelRatio;
-  if (darkPixelRatio == null || darkPixelRatio < 0.55) return false;
-
-  if (signals.entropy != null && signals.entropy >= 4.5) return false;
-
   const aspect = width / height;
-  return (
+  const portraitTile =
     width >= 200 &&
     width <= 320 &&
     height >= 350 &&
     height <= 450 &&
     aspect >= 0.55 &&
-    aspect <= 0.75
+    aspect <= 0.75;
+  if (!portraitTile) return false;
+
+  const darkPixelRatio = signals.darkPixelRatio;
+  const meanLuminance = signals.meanLuminance;
+
+  // Dark Google-style tile.
+  if (
+    darkPixelRatio != null &&
+    darkPixelRatio >= 0.55 &&
+    (signals.entropy == null || signals.entropy < 4.5)
+  ) {
+    return true;
+  }
+
+  // Light marketplace tile ("Visuel non disponible").
+  return (
+    meanLuminance != null &&
+    meanLuminance >= 200 &&
+    darkPixelRatio != null &&
+    darkPixelRatio < 0.05 &&
+    (signals.entropy == null || signals.entropy < 5.0)
   );
 }
 
@@ -171,6 +187,35 @@ function isBrightSquarePlaceholderFromPersistedMetrics(
   );
 }
 
+/**
+ * Light portrait "Visuel non disponible" tiles. Intentionally narrower than
+ * the full unavailable-tile rule — localized dark real covers must stay.
+ */
+function isLightUnavailablePortraitFromPersistedMetrics(
+  signals: PlaceholderCoverSignals,
+): boolean {
+  const width = signals.width;
+  const height = signals.height;
+  if (!width || !height) return false;
+  const aspect = width / height;
+  if (
+    width < 200 ||
+    width > 320 ||
+    height < 350 ||
+    height > 450 ||
+    aspect < 0.55 ||
+    aspect > 0.75
+  ) {
+    return false;
+  }
+  return (
+    signals.meanLuminance != null &&
+    signals.meanLuminance >= 200 &&
+    signals.darkPixelRatio != null &&
+    signals.darkPixelRatio < 0.05
+  );
+}
+
 function isPersistedLocalizedUpload(url?: string | null): boolean {
   return Boolean(url?.startsWith("/uploads/"));
 }
@@ -180,10 +225,13 @@ export function filterPlaceholderCoverAttachments<
 >(attachments: T[]): T[] {
   return attachments.filter((attachment) => {
     if (isMissingArtImageUrl(attachment.url)) return false;
-    // Localized assets skip dark "unavailable tile" heuristics, but bright
-    // square placeholders (e.g. Geedie 500×500) are still dropped.
+    // Localized assets skip dark Google-tile heuristics (real dark art lives
+    // in /uploads/), but bright squares + light "no visual" portraits drop.
     if (isPersistedLocalizedUpload(attachment.url)) {
-      return !isBrightSquarePlaceholderFromPersistedMetrics(attachment);
+      return (
+        !isBrightSquarePlaceholderFromPersistedMetrics(attachment) &&
+        !isLightUnavailablePortraitFromPersistedMetrics(attachment)
+      );
     }
     return !isPlaceholderCoverFromPersistedMetrics(attachment);
   });

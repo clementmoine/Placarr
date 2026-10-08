@@ -88,11 +88,20 @@ describe("opticalDiscBackRecipe", () => {
 });
 
 describe("isLooseDiscShelfPresentation", () => {
-  it("is square disc tiles for loose games / movies / music only", () => {
-    expect(isLooseDiscShelfPresentation("loose", "games")).toBe(true);
+  it("is square disc tiles for loose optical games / movies / music only", () => {
+    expect(isLooseDiscShelfPresentation("loose", "games", "ps2")).toBe(true);
     expect(isLooseDiscShelfPresentation("loose", "movies")).toBe(true);
     expect(isLooseDiscShelfPresentation("loose", "musics")).toBe(true);
     expect(isLooseDiscShelfPresentation("loose", "hardware")).toBe(false);
-    expect(isLooseDiscShelfPresentation("used", "games")).toBe(false);
+    expect(isLooseDiscShelfPresentation("used", "games", "ps2")).toBe(false);
+  });
+
+  it("never invents a disc tile for cartridge or game-card platforms", () => {
+    expect(isLooseDiscShelfPresentation("loose", "games", "gb")).toBe(false);
+    expect(isLooseDiscShelfPresentation("loose", "games", "gba")).toBe(false);
+    expect(isLooseDiscShelfPresentation("loose", "games", "n64")).toBe(false);
+    expect(isLooseDiscShelfPresentation("loose", "games", "switch")).toBe(false);
+    expect(isLooseDiscShelfPresentation("loose", "games", "ds")).toBe(false);
+    expect(isLooseDiscShelfPresentation("loose", "games", null)).toBe(false);
   });
 });

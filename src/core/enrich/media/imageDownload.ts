@@ -81,6 +81,11 @@ export async function existingLocalizedUploadForUrl(
     for (const ext of LOCAL_IMAGE_EXTENSIONS) {
       const targetPath = path.join(targetDir, `${hash}${ext}`);
       if (!fs.existsSync(targetPath)) continue;
+      const existingBuffer = fs.readFileSync(targetPath);
+      if (await isUnavailableCoverPlaceholderBuffer(existingBuffer)) {
+        fs.unlinkSync(targetPath);
+        continue;
+      }
       return `/uploads/${hash}${ext}`;
     }
   }
@@ -187,7 +192,9 @@ export async function downloadRemoteImage(
       console.info(
         `[ImageLocalizer] Rejected unavailable-art placeholder from ${fetched.sourceUrl}`,
       );
-      return persistRemoteFallback();
+      // Never keep the remote URL: marketplace "Visuel non disponible" tiles
+      // would otherwise pollute Affiche via remoteImageFallback providers.
+      return null;
     }
     if (options.trim) {
       imageBuffer = await trimLightImageMargins(imageBuffer, {

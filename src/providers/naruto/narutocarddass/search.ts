@@ -26,12 +26,15 @@ import {
   compareNarutoCollectors,
   compareNarutoLangs,
   formatNarutoReference,
+  mintNarutoPrintKey,
   narutoCatalogueLineForCard,
   narutoCollectorNumberKey,
   narutoCollectorSearchNeedles,
   narutoSetLabel,
   narutoSetShippedLanguages,
   narutoSetsUnreleasedInFrench,
+  officialFrChecklistIds,
+  officialFrChecklistSetsForNumber,
   NARUTO_PACK_ID,
   parseNarutoCollector,
   type NarutoPrintDetail,
@@ -51,9 +54,11 @@ import {
   japaneseReleaseBands,
   listJapaneseReleases,
 } from "./sources/sealed";
+import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
 import {
   isNarutoS6FrPrintedNumber,
   narutoS6FrPrintedDiskNumbers,
+  narutoS6FrSeries5BonusNumbers,
 } from "./sources/titles";
 
 // --- from printOrientation.ts ---
@@ -611,12 +616,12 @@ function europeanSetLanguages(): Map<string, string[]> {
     }
   }
   /*
-    Retail S6 FR annulé, mais des inserts Kana (MIJ 2008) existent. On ouvre
-    le set en français sur ce sous-ensemble, pas sur les rendus carddass.fr.
+    Retail S6 FR annulé : pas de chapitre checklist `s6` en français. Les
+    inserts Kana restent des cartes **s6** (`set_code` / libellé) ; on les
+    **classe** seulement dans la checklist S5 — voir
+    {@link unionNarutoSetPrintsWithS6FrSeries5Bonus}. Catalogue `s6` pour
+    IT / EN / préprod.
   */
-  const s6 = found.get("s6") ?? new Set<string>();
-  s6.add("fr");
-  found.set("s6", s6);
   return new Map([...found].map(([code, langs]) => [code, [...langs].sort()]));
 }
 
@@ -939,6 +944,218 @@ export function searchNarutoPrints(
     out.push(toCandidate(row));
     if (out.length >= limit) break;
   }
+  /*
+    Parcours / recherche bornés à une extension : même pool que la check-list
+    (papier + decks). Sinon NI-050 (garantie starter S4, hors `print_sets`)
+    apparaît en check-list mais pas dans le sélecteur filtré sur S4.
+  */
+  if (setId) {
+    const lang = requestedLang || undefined;
+    let merged = unionNarutoSetPrintsWithOfficialFrChecklist(
+      out,
+      setId,
+      lang,
+    );
+    merged = unionNarutoSetPrintsWithSeriesDeckGuarantees(
+      merged,
+      setId,
+      lang,
+    );
+    merged = unionNarutoSetPrintsWithS6FrSeries5Bonus(merged, setId, lang);
+    if (trimmed) {
+      const baseKeys = new Set(out.map((row) => row.printKey));
+      merged = merged.filter(
+        (row) =>
+          baseKeys.has(row.printKey) ||
+          narutoPrintCandidateMatchesQuery(row, trimmed, compact),
+      );
+    }
+    merged.sort((a, b) => {
+      const byNumber = compareNarutoCollectors(a.reference, b.reference);
+      if (byNumber !== 0) return byNumber;
+      return compareNarutoLangs(a.language, b.language);
+    });
+    /*
+      Filtre set actif : chaque ligne porte **ce** set (reprints multi-séries,
+      garanties deck). Sinon le sélecteur affichait encore le set_code primaire
+      (TA-074 → s2) alors qu'on parcourt S3.
+      Les inserts S6 classés en S5 gardent leur identité s6 — on ne les
+      retampe pas.
+    */
+    return merged
+      .map((row) =>
+        (row.setCode ?? "").trim().toLowerCase() === "s6"
+          ? row
+          : stampNarutoCandidateSet(row, setId),
+      )
+      .slice(0, limit);
+  }
+  /*
+    Sans filtre d'extension : un tirage multi-séries (TA-074 → s2+s3) doit
+    produire une ligne par appartenance — sinon le sélecteur n'affiche qu'un
+    set primaire et on ne voit pas laquelle on ajoute.
+  */
+  return explodeNarutoCandidatesBySetMembership(out, limit);
+}
+
+/** Texte / n° collectionneur — pour garder les extras deck après union. */
+function narutoPrintCandidateMatchesQuery(
+  row: PrintCandidate,
+  trimmed: string,
+  compact: string,
+): boolean {
+  const hay = [row.printKey, row.reference, row.title]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const q = trimmed.toLowerCase();
+  if (hay.includes(q)) return true;
+  const hayCompact = hay.replace(/[\s-]/g, "");
+  if (compact && hayCompact.includes(compact)) return true;
+  for (const needle of narutoCollectorSearchNeedles(trimmed)) {
+    const n = needle.toLowerCase().replace(/[\s-]/g, "");
+    if (n && hayCompact.includes(n)) return true;
+  }
+  return false;
+}
+
+function narutoCollectorRawFromPrintKey(printKey: string): string {
+  return printKey.replace(/^naruto:/i, "").trim();
+}
+
+function isNarutoPromoCandidate(row: PrintCandidate): boolean {
+  const code = (row.setCode ?? "").trim().toLowerCase();
+  if (code === "promo") return true;
+  const raw = narutoCollectorRawFromPrintKey(row.printKey);
+  const id = parseNarutoCollector(raw);
+  return id?.grouping === "promo";
+}
+
+/** Sets from sqlite `print_sets` for one print key. */
+function printSetsFromIndex(printKey: string): string[] {
+  const sets = new Set<string>();
+  for (const pack of narutoIndexPacks()) {
+    const db = ensureNarutoPackIndex(pack);
+    if (!db || !hasPrintSetsTable(db)) continue;
+    for (const row of db
+      .prepare(
+        `SELECT LOWER(set_code) AS setCode
+           FROM print_sets
+          WHERE print_key = ?`,
+      )
+      .all(printKey) as { setCode: string }[]) {
+      const code = row.setCode?.trim().toLowerCase();
+      if (code && code !== "unknown") sets.add(code);
+    }
+  }
+  return [...sets];
+}
+
+/** Series whose decks / deck bundles guarantee this print key. */
+function deckSetsForPrintKey(printKey: string): string[] {
+  const key = printKey.trim();
+  if (!key) return [];
+  const sets = new Set<string>();
+  for (const entry of loadSealedProductEntries(NARUTO_PACK_ID)) {
+    if (entry.kind !== "deck" && entry.kind !== "deck_bundle") continue;
+    const productSet = (entry.catalogueSetId ?? entry.setCode ?? "")
+      .trim()
+      .toLowerCase();
+    if (!productSet) continue;
+    for (const link of entry.guaranteedPrints ?? []) {
+      if ((link.printKey ?? "").trim() === key) {
+        sets.add(productSet);
+        break;
+      }
+    }
+  }
+  return [...sets];
+}
+
+function compareNarutoSetCodes(a: string, b: string): number {
+  const series = (code: string) => {
+    const m = /^s(\d+)$/.exec(code);
+    return m ? Number(m[1]) : null;
+  };
+  const sa = series(a);
+  const sb = series(b);
+  if (sa != null && sb != null) return sa - sb;
+  if (sa != null) return -1;
+  if (sb != null) return 1;
+  if (a === "promo") return 1;
+  if (b === "promo") return -1;
+  return a.localeCompare(b);
+}
+
+/**
+ * Appartenances d'un tirage pour le sélecteur sans filtre set :
+ * checklist papier ∪ `print_sets` ∪ garanties deck ∪ set primaire.
+ */
+export function narutoPrintSetMemberships(
+  printKey: string,
+  primarySet?: string | null,
+): string[] {
+  const sets = new Set<string>();
+  const primary = primarySet?.trim().toLowerCase();
+  if (primary && primary !== "unknown") sets.add(primary);
+
+  const raw = narutoCollectorRawFromPrintKey(printKey);
+  const id = parseNarutoCollector(raw);
+  if (id?.grouping === "promo" || primary === "promo") {
+    return ["promo"];
+  }
+
+  for (const code of officialFrChecklistSetsForNumber(raw)) sets.add(code);
+  for (const code of printSetsFromIndex(printKey)) sets.add(code);
+  for (const code of deckSetsForPrintKey(printKey)) sets.add(code);
+
+  return [...sets].sort(compareNarutoSetCodes);
+}
+
+function stampNarutoCandidateSet(
+  row: PrintCandidate,
+  setCode: string | null | undefined,
+): PrintCandidate {
+  const code = setCode?.trim().toLowerCase();
+  if (!code) return row;
+  const raw = narutoCollectorRawFromPrintKey(row.printKey);
+  return {
+    ...row,
+    setCode: code,
+    setLabel: narutoSetLabel(code, raw, row.language),
+  };
+}
+
+/**
+ * Une ligne catalogue → N lignes (une par set d'appartenance) pour l'ajout
+ * set-scoped sans filtre d'extension.
+ */
+export function explodeNarutoCandidatesBySetMembership(
+  candidates: readonly PrintCandidate[],
+  limit: number,
+): PrintCandidate[] {
+  const out: PrintCandidate[] = [];
+  for (const row of candidates) {
+    if (isNarutoPromoCandidate(row)) {
+      out.push(stampNarutoCandidateSet(row, "promo"));
+      if (out.length >= limit) break;
+      continue;
+    }
+    const memberships = narutoPrintSetMemberships(row.printKey, row.setCode);
+    const codes =
+      memberships.length > 0
+        ? memberships
+        : [(row.setCode ?? "").trim().toLowerCase()].filter(Boolean);
+    if (codes.length === 0) {
+      out.push(row);
+    } else {
+      for (const code of codes) {
+        out.push(stampNarutoCandidateSet(row, code));
+        if (out.length >= limit) return out;
+      }
+    }
+    if (out.length >= limit) break;
+  }
   return out;
 }
 
@@ -998,6 +1215,121 @@ export function lookupNarutoPrint(
 export type { NarutoPrintRow };
 
 /**
+ * PrintKeys guaranteed by decks / deck bundles of `setId`, including
+ * earlier-series reprints those constructed products ship with.
+ *
+ * « Série 2 complète » = paper checklist ∪ what that series' decks require.
+ */
+export function narutoSeriesDeckGuaranteePrintKeys(setId: string): string[] {
+  const sid = setId.trim();
+  if (!sid) return [];
+  const keys = new Set<string>();
+  for (const entry of loadSealedProductEntries(NARUTO_PACK_ID)) {
+    const productSet = (entry.catalogueSetId ?? entry.setCode ?? "").trim();
+    if (productSet !== sid) continue;
+    if (entry.kind !== "deck" && entry.kind !== "deck_bundle") continue;
+    for (const link of entry.guaranteedPrints ?? []) {
+      const key = link.printKey?.trim();
+      if (key) keys.add(key);
+    }
+  }
+  return [...keys];
+}
+
+function appendMissingPrintCandidates(
+  base: readonly PrintCandidate[],
+  printKeys: readonly string[],
+  language?: string | null,
+  setId?: string | null,
+): PrintCandidate[] {
+  const seen = new Set(base.map((row) => row.printKey));
+  const extras: PrintCandidate[] = [];
+  const lang = language?.trim().toLowerCase() || undefined;
+  const sid = setId?.trim().toLowerCase() || null;
+  for (const printKey of printKeys) {
+    if (seen.has(printKey)) continue;
+    const candidate = lookupNarutoPrint(printKey, { language: lang });
+    if (!candidate) continue;
+    if (
+      lang &&
+      candidate.language &&
+      candidate.language.trim().toLowerCase() !== lang
+    ) {
+      continue;
+    }
+    const stamped =
+      sid && (candidate.setCode ?? "").trim().toLowerCase() !== "s6"
+        ? stampNarutoCandidateSet(candidate, sid)
+        : candidate;
+    extras.push(stamped);
+    seen.add(printKey);
+  }
+  return extras.length ? [...base, ...extras] : [...base];
+}
+
+/**
+ * Paper FR checklist gaps vs stale `print_sets` (ex. TA-074 on S3 booster
+ * pool — on the poster, missing from an older sqlite membership).
+ * FR only: the printed checklists are French.
+ */
+export function unionNarutoSetPrintsWithOfficialFrChecklist(
+  base: readonly PrintCandidate[],
+  setId: string,
+  language?: string | null,
+): PrintCandidate[] {
+  const sid = setId.trim().toLowerCase();
+  if (!/^s[1-5]$/.test(sid)) return [...base];
+  const lang = language?.trim().toLowerCase() || undefined;
+  if (lang && lang !== "fr") return [...base];
+
+  const keys: string[] = [];
+  for (const id of officialFrChecklistIds(sid)) {
+    const printKey = mintNarutoPrintKey(id);
+    if (printKey) keys.push(printKey);
+  }
+  return appendMissingPrintCandidates(base, keys, lang ?? "fr", sid);
+}
+
+/**
+ * Append deck-only reprints missing from the paper `print_sets` list.
+ * Order: paper checklist first, then newly attached deck guarantees.
+ */
+export function unionNarutoSetPrintsWithSeriesDeckGuarantees(
+  base: readonly PrintCandidate[],
+  setId: string,
+  language?: string | null,
+): PrintCandidate[] {
+  return appendMissingPrintCandidates(
+    base,
+    narutoSeriesDeckGuaranteePrintKeys(setId),
+    language,
+    setId,
+  );
+}
+
+/**
+ * Inserts Kana S6 FR (6 inédites) → **classées** dans la checklist Série 5.
+ * Identité inchangée : ce sont toujours des cartes `s6` (setCode / libellé).
+ * Les 9 reprints blister sont déjà au pool S5 — pas de second passage.
+ */
+export function unionNarutoSetPrintsWithS6FrSeries5Bonus(
+  base: readonly PrintCandidate[],
+  setId: string,
+  language?: string | null,
+): PrintCandidate[] {
+  const sid = setId.trim().toLowerCase();
+  const lang = language?.trim().toLowerCase() || undefined;
+  if (sid !== "s5" || (lang && lang !== "fr")) return [...base];
+  const keys: string[] = [];
+  for (const id of narutoS6FrSeries5BonusNumbers()) {
+    const printKey = mintNarutoPrintKey(id);
+    if (printKey) keys.push(printKey);
+  }
+  // Pas de `setId` : les inédites restent s6.
+  return appendMissingPrintCandidates(base, keys, lang ?? "fr");
+}
+
+/**
  * Tous les tirages d'une extension, sans plafond — pour la check-list.
  *
  * `searchNarutoPrints` se borne à deux cents lignes, ce qui convient au
@@ -1007,6 +1339,12 @@ export type { NarutoPrintRow };
  * La langue borne le résultat. Sans elle, on rendrait les tirages de toutes
  * les langues confondues, et « la Série 1 est complète » ne voudrait plus rien
  * dire.
+ *
+ * Union papier FR + decks : checklist imprimée (reprints multi-séries) et
+ * starters — sans eux, « saison complète » est un mensonge.
+ *
+ * FR : pas de checklist `s6` (retail annulé) — les inserts Kana restent
+ * des cartes s6, classées dans S5.
  */
 export function listNarutoSetPrints(input: {
   setId: string;
@@ -1014,14 +1352,25 @@ export function listNarutoSetPrints(input: {
 }): PrintCandidate[] {
   const setId = input.setId.trim();
   if (!setId) return [];
+  const lang = input.language?.trim().toLowerCase();
+  if (setId.toLowerCase() === "s6" && lang === "fr") return [];
   const rows = searchNarutoPrints("", {
     setId,
     language: input.language ?? undefined,
     limit: 5000,
   });
-  const lang = input.language?.trim().toLowerCase();
-  if (!lang) return rows;
-  return rows.filter(
-    (row) => (row.language ?? "").trim().toLowerCase() === lang,
+  const base = lang
+    ? rows.filter((row) => (row.language ?? "").trim().toLowerCase() === lang)
+    : rows;
+  const withPaper = unionNarutoSetPrintsWithOfficialFrChecklist(
+    base,
+    setId,
+    lang,
   );
+  const withDecks = unionNarutoSetPrintsWithSeriesDeckGuarantees(
+    withPaper,
+    setId,
+    lang,
+  );
+  return unionNarutoSetPrintsWithS6FrSeries5Bonus(withDecks, setId, lang);
 }

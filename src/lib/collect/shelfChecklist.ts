@@ -67,14 +67,16 @@ export type ChecklistSetAdvice = {
   /** Ce que coûterait l'achat à l'unité, et où est la falaise. */
   singles: ReturnType<typeof singlesCostBreakdown>;
   /**
-   * Prix unitaire des manquantes (`printKey` → centimes). Absent = pas de cote
-   * connue — la carte n'est pas gratuite, elle est juste hors cache.
-   * Toujours en devise d'affichage (EUR), y compris après fallback FX USD→EUR.
+   * Prix unitaire par carte du set (`printKey` → centimes), **possédées
+   * comprises** — pour afficher la cote même une fois la case cochée.
+   * Absent = pas de cote connue. Devise d'affichage (EUR), y compris après
+   * fallback FX USD→EUR. Le plan d'achat (`singles` / `plan`) ne compte que
+   * les manquantes.
    */
   prices: Record<string, number>;
   /**
-   * Produits scellés qui **garantissent** chaque manquante (starter, promo
-   * gift…). Absent = seulement le pool booster du set, pas de liste connue.
+   * Produits scellés qui **garantissent** chaque carte du set (starter, promo
+   * gift…), y compris déjà possédées. Absent = seulement le pool booster.
    */
   sealedSources: Record<string, SealedPrintSource[]>;
   options: BuyOption[];
@@ -317,6 +319,7 @@ function checklistPriceContext(
   };
 }
 
+/** Cotes unitaires pour une liste de printKeys (manquantes ou possédées). */
 async function priceMissing(
   shelfType: MediaType,
   printKeys: readonly string[],
@@ -386,29 +389,34 @@ export async function buildChecklistForShelf(input: {
   /**
    * Exemplaires possédés, déjà filtrés sur la langue.
    *
-   * Mode classique : `printKey` en minuscules.
-   * Master set : {@link checklistOwnedKey} (`printKey|finish`).
+   * Set-scoped : `setCode|printKey` (ou `printKey` legacy sans set).
+   * Master set : `setCode|printKey|finish` via {@link checklistSetOwnedKey}.
    */
   owned: ReadonlySet<string>;
   language?: string | null;
   /** Nom d'étagère — borne au catalogue quand il est unique (Ninja Ranks…). */
   shelfName?: string | null;
   /**
-   * Master set : une ligne par finition, possession exacte print×finish.
-   * Sinon toute finition du même `printKey` compte.
+   * Master set : une ligne par finition, possession exacte set×print×finish.
+   * Sinon toute finition du même `printKey` (dans ce set) compte.
    */
   masterSet?: boolean;
 }): Promise<ShelfChecklistResult> {
   const masterSet = Boolean(input.masterSet);
   /*
-    `gamesInShelf` / catalogues lisent des printKey. En master set les clés
-    owned sont `printKey|finish` — on récupère le premier segment.
+    `gamesInShelf` / catalogues lisent des printKey. Les clés owned sont
+    `set|printKey` ou `set|printKey|finish` — on isole le segment printKey
+    (celui qui contient `:`).
   */
   const ownedPrintKeys = new Set(
     [...input.owned].map((key) => {
-      if (!masterSet) return key;
-      const pipe = key.indexOf("|");
-      return pipe >= 0 ? key.slice(0, pipe) : key;
+      const parts = key.trim().toLowerCase().split("|");
+      if (parts.length >= 3) return parts[1]!;
+      if (parts.length === 2) {
+        // `set|printKey` ou `printKey|finish` — le printKey porte toujours `:`.
+        return parts[0]!.includes(":") ? parts[0]! : parts[1]!;
+      }
+      return parts[0]!;
     }),
   );
   const games = gamesInShelf(ownedPrintKeys);
@@ -550,9 +558,19 @@ export async function buildChecklistForShelf(input: {
     }
   }
 
-  const printSetIds = new Map<string, string>();
+  /*
+    Reprints multi-set (NI-009 → s1+s4) : toutes les memberships. Un last-write
+    unique inventait une seule série et faussait les projections multi-set
+    (coffrets). Ça n'autorise **pas** un starter S1 comme conseil pour S4.
+  */
+  const printSetIds = new Map<string, Set<string>>();
   for (const row of prints) {
-    printSetIds.set(row.printKey, row.setId);
+    const key = row.printKey.trim().toLowerCase();
+    const setId = row.setId.trim().toLowerCase();
+    if (!key || !setId) continue;
+    const bag = printSetIds.get(key) ?? new Set<string>();
+    bag.add(setId);
+    printSetIds.set(key, bag);
   }
   for (const [setId, rows] of projectBuyProductsBySet({
     products: allSealed,
@@ -560,8 +578,6 @@ export async function buildChecklistForShelf(input: {
   })) {
     productsBySet.set(setId, rows);
   }
-
-  const sourcesIndex = sealedSourcesByPrint(allSealed);
 
   const dataPackIds = [
     ...new Set(
@@ -587,11 +603,16 @@ export async function buildChecklistForShelf(input: {
   });
 
   const advice: ChecklistSetAdvice[] = [];
-  // Toute extension incomplète — y compris à 0 % — reçoit un conseil d'achat.
   for (const set of checklist.sets) {
-    if (set.missing.length === 0) continue;
     const missingKeys = set.missing.map((row) => row.printKey);
-    const prices = await priceMissing(input.shelfType, missingKeys);
+    /*
+      Cotes + sources scellées pour **toutes** les cartes du set (possédées
+      comprises). Le plan d'achat ne porte que sur les manquantes.
+    */
+    const allKeys = [
+      ...new Set(set.cards.map((row) => row.printKey.trim()).filter(Boolean)),
+    ];
+    const prices = await priceMissing(input.shelfType, allKeys);
     /*
       Filtre check-list → une seule langue. Sinon les langues **des cartes**
       de l'extension (pas tous les scellés du monde : un booster DE pour une
@@ -614,16 +635,25 @@ export async function buildChecklistForShelf(input: {
           })
         : undefined;
 
-    const options = buyOptionsForMissing({
-      missing: new Set(missingKeys),
-      poolSize: set.total,
-      products,
-      allowedLanguages,
-      preferredLanguage: language,
-      packsPerHitByPrint,
-    });
+    const options =
+      missingKeys.length === 0
+        ? []
+        : buyOptionsForMissing({
+            missing: new Set(missingKeys),
+            poolSize: set.total,
+            products,
+            allowedLanguages,
+            preferredLanguage: language,
+            packsPerHitByPrint,
+          });
+    /*
+      Sources scellées **du set** seulement. Un starter S1 qui contient NI-009
+      ne doit pas s'afficher sur la checklist S4 (autre extension), même si le
+      printKey est partagé.
+    */
+    const sourcesIndex = sealedSourcesByPrint(products);
     const sealedSources: Record<string, SealedPrintSource[]> = {};
-    for (const key of missingKeys) {
+    for (const key of allKeys) {
       const sources = sourcesIndex.get(key);
       if (sources?.length) sealedSources[key] = sources;
     }

@@ -20,6 +20,7 @@ import {
   isLorcanaMainCatalogueSetCode,
   lorcanaPromoChecklistSeries,
   lorcanaSetScopeWhere,
+  normalizeLorcanaPromoGrouping,
 } from "./sources/promoSeries";
 import { ravensburgerMediaConflictsLang } from "./scrape/officialCatalogFill";
 
@@ -370,7 +371,7 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
       row.setCode ?? null,
       row.number ?? null,
       row.variant ?? null,
-      row.promoGrouping ?? null,
+      normalizeLorcanaPromoGrouping(row.setCode, row.promoGrouping),
       row.providerId ?? null,
       row.cost ?? null,
       jsonOrNull(row.artists),
@@ -696,6 +697,21 @@ function migrateLorcanaTcgSchema(dbPath: string): void {
       if (present.has(column.name)) continue;
       db.exec(`ALTER TABLE prints ADD COLUMN ${column.name} ${column.ddl}`);
     }
+    /*
+      Fill Lorcast : `promo_grouping = set_code` sur les quêtes (`Q3`). La
+      check-list les rangeait en « Sans catalogue » (série promo fantôme).
+    */
+    db.exec(`
+      UPDATE prints
+         SET promo_grouping = NULL
+       WHERE promo_grouping IS NOT NULL
+         AND TRIM(promo_grouping) <> ''
+         AND LOWER(TRIM(promo_grouping)) = LOWER(TRIM(set_code))
+         AND (
+           set_code GLOB '[0-9]*'
+           OR LOWER(TRIM(set_code)) GLOB 'q[0-9]*'
+         )
+    `);
   } catch {
     // Base illisible ou verrouillée : la recherche retombera sur le distant.
   } finally {

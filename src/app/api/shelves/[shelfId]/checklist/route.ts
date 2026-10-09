@@ -12,10 +12,13 @@
  *
  * **Master set** (`?masterSet=1`) : chaque finition est une case à part. Posséder
  * la foil ne coche pas la normale, et inversement.
+ *
+ * **Set-scoped** : `Item.setCode` borne la case à une extension. Sans setCode
+ * (items legacy), le `printKey` compte encore dans chaque set qui le liste.
  */
 import { NextRequest, NextResponse } from "next/server";
 
-import { checklistOwnedKey } from "@/core/collect/checklist";
+import { checklistSetOwnedKey } from "@/core/collect/checklist";
 import { buildChecklistForShelf } from "@/lib/collect/shelfChecklist";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
@@ -71,7 +74,7 @@ export async function GET(
 
   const items = await prisma.item.findMany({
     where: { shelfId: shelf.id, printKey: { not: null } },
-    select: { printKey: true, language: true, variant: true },
+    select: { printKey: true, setCode: true, language: true, variant: true },
   });
 
   const language =
@@ -89,11 +92,11 @@ export async function GET(
   });
 
   const owned = new Set(
-    masterSet
-      ? matching.map((item) =>
-          checklistOwnedKey(item.printKey!, item.variant),
-        )
-      : matching.map((item) => item.printKey!.trim().toLowerCase()),
+    matching.map((item) =>
+      masterSet
+        ? checklistSetOwnedKey(item.setCode, item.printKey!, item.variant)
+        : checklistSetOwnedKey(item.setCode, item.printKey!),
+    ),
   );
 
   const checklist = await buildChecklistForShelf({

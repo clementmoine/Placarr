@@ -13,10 +13,7 @@
  * (extension, territoire).
  */
 
-import {
-  parsePrintKey,
-  printCollectableKey,
-} from "@/core/identify/printKey";
+import { comparePrintKeys, parsePrintKey } from "@/core/identify/printKey";
 
 export type ChecklistPrint = {
   printKey: string;
@@ -37,11 +34,11 @@ export type ChecklistPrint = {
 };
 
 /**
- * Clé d'appartenance master set : `printKey|finish`.
+ * Clé d'appartenance master set **sans** set : `printKey|finish`.
  *
- * La langue est déjà filtrée par l'appelant. Sans finish (carte plain seule,
- * ou item sans variante renseignée), le second segment est vide — comme dans
- * le print picker (`ownedRowKey`).
+ * Préférer {@link checklistSetOwnedKey} dès qu'on a un `setCode`. La langue
+ * est filtrée par l'appelant. Sans finish (carte plain seule, ou item sans
+ * variante), le second segment est vide.
  */
 export function checklistOwnedKey(
   printKey: string,
@@ -54,6 +51,43 @@ export function checklistOwnedKey(
 }
 
 /**
+ * Clé d'appartenance **set-scoped**.
+ *
+ * - classique : `setCode|printKey` (ou `printKey` si set inconnu — legacy) ;
+ * - master set : `setCode|printKey|finish` (ou `printKey|finish`).
+ *
+ * Un exemplaire tagué `s5` ne coche que la checklist S5, même si le même
+ * `printKey` figure aussi en S1 (reprints Naruto).
+ */
+export function checklistSetOwnedKey(
+  setCode: string | null | undefined,
+  printKey: string,
+  finish?: string | null,
+): string {
+  const set = (setCode ?? "").trim().toLowerCase();
+  const base =
+    finish !== undefined
+      ? checklistOwnedKey(printKey, finish)
+      : printKey.trim().toLowerCase();
+  return set ? `${set}|${base}` : base;
+}
+
+/** La ligne checklist est-elle couverte par l'ensemble possédé ? */
+export function isChecklistPrintOwned(
+  owned: ReadonlySet<string>,
+  print: Pick<ChecklistPrint, "setId" | "printKey" | "finish">,
+  masterSet: boolean,
+): boolean {
+  const set = print.setId.trim().toLowerCase();
+  const pk = print.printKey.trim().toLowerCase();
+  if (masterSet) {
+    const finishKey = checklistOwnedKey(pk, print.finish);
+    return owned.has(`${set}|${finishKey}`) || owned.has(finishKey);
+  }
+  return owned.has(`${set}|${pk}`) || owned.has(pk);
+}
+
+/**
  * Réécrit les clés possédées pour le master set.
  *
  * Normalise la casse. **Ne devine pas** une finition pour `printKey|` (variant
@@ -61,57 +95,8 @@ export function checklistOwnedKey(
  * peut être une foil jamais taguée. Sans finition renseignée, la case master
  * set reste ouverte — c'est le même principe que « foil ≠ normale ».
  *
- * Les maps sont indexées par `printKey` **déjà en minuscules**.
+ * Préserve un éventuel préfixe `setCode|`.
  */
-/**
- * Posséder `dbsjcc:part1-d0123` coche aussi `dbsjcc:part9-d0123` quand le
- * catalogue a dupliqué la même carte sous plusieurs sets.
- *
- * Ne touche pas aux numéros set-scoped (Lorcana `1`, One Piece `001`).
- */
-export function expandOwnedAcrossSetListings(input: {
-  owned: ReadonlySet<string>;
-  cataloguePrintKeys: readonly string[];
-  masterSet?: boolean;
-}): Set<string> {
-  const masterSet = Boolean(input.masterSet);
-  const ownedCollectables = new Set<string>();
-  for (const key of input.owned) {
-    const pipe = key.indexOf("|");
-    const printKey = (
-      masterSet && pipe >= 0 ? key.slice(0, pipe) : key
-    ).trim().toLowerCase();
-    const finish =
-      masterSet && pipe >= 0 ? key.slice(pipe + 1).trim().toLowerCase() : "";
-    const collectable = printCollectableKey(printKey);
-    if (!collectable) continue;
-    ownedCollectables.add(
-      masterSet ? `${collectable}|${finish}` : collectable,
-    );
-  }
-  if (ownedCollectables.size === 0) return new Set(input.owned);
-
-  const out = new Set(
-    [...input.owned].map((key) => key.trim().toLowerCase()),
-  );
-  for (const raw of input.cataloguePrintKeys) {
-    const printKey = raw.trim().toLowerCase();
-    const collectable = printCollectableKey(printKey);
-    if (!collectable) continue;
-    if (!masterSet) {
-      if (ownedCollectables.has(collectable)) out.add(printKey);
-      continue;
-    }
-    for (const owned of ownedCollectables) {
-      const sep = owned.lastIndexOf("|");
-      if (sep < 0) continue;
-      if (owned.slice(0, sep) !== collectable) continue;
-      out.add(checklistOwnedKey(printKey, owned.slice(sep + 1)));
-    }
-  }
-  return out;
-}
-
 export function resolveMasterSetOwned(input: {
   owned: ReadonlySet<string>;
   /** Finitions catalogue par printKey (minuscules). */
@@ -123,18 +108,25 @@ export function resolveMasterSetOwned(input: {
   void input.plainFinishesByPrintKey;
   const resolved = new Set<string>();
   for (const key of input.owned) {
-    const pipe = key.indexOf("|");
-    const printKey = (pipe >= 0 ? key.slice(0, pipe) : key).trim().toLowerCase();
-    const finish = (pipe >= 0 ? key.slice(pipe + 1) : "").trim().toLowerCase();
-    if (!finish) {
+    const raw = key.trim().toLowerCase();
+    const parts = raw.split("|");
+    if (parts.length >= 3) {
+      const [setCode, printKey, ...finishParts] = parts;
+      resolved.add(
+        checklistSetOwnedKey(setCode, printKey!, finishParts.join("|")),
+      );
+      continue;
+    }
+    if (parts.length === 2) {
+      const [printKey, finish] = parts;
       /*
         Variant vide : on garde la clé telle quelle. Elle ne matche une ligne
         catalogue que si cette ligne a aussi `finish` null (pas de choix).
       */
-      resolved.add(checklistOwnedKey(printKey, null));
+      resolved.add(checklistOwnedKey(printKey!, finish ?? ""));
       continue;
     }
-    resolved.add(`${printKey}|${finish}`);
+    resolved.add(checklistOwnedKey(raw, null));
   }
   return resolved;
 }
@@ -248,6 +240,9 @@ export function compareChecklistPrints(
   const bGrouped = gb ? 1 : 0;
   if (aGrouped !== bGrouped) return aGrouped - bGrouped;
   if (ga !== gb) return ga.localeCompare(gb, "fr", { numeric: true });
+  // Game hooks (e.g. Naruto Client → Ninja → Technique → Tactique) via printKey.
+  const byPrint = comparePrintKeys(a.printKey, b.printKey);
+  if (byPrint !== 0) return byPrint;
   const byRef = a.reference.localeCompare(b.reference, "fr", { numeric: true });
   if (byRef !== 0) return byRef;
   const byFinish = (a.finish ?? "").localeCompare(b.finish ?? "", "fr", {
@@ -269,9 +264,12 @@ function percent(owned: number, total: number): number {
  * seul sait comment ses items la portent, et le faire ici obligerait ce module
  * à connaître le modèle de données.
  *
- * - mode classique : clés = `printKey` (toute finition compte) ;
- * - master set : clés = `printKey|finish` ({@link checklistOwnedKey}), et les
- *   `prints` sont déjà éclatés une ligne par finition.
+ * - mode classique : clés = `setCode|printKey` (ou `printKey` legacy) ;
+ * - master set : clés = `setCode|printKey|finish` ({@link checklistSetOwnedKey}),
+ *   et les `prints` sont déjà éclatés une ligne par finition.
+ *
+ * **Set-scoped** : posséder un tirage pour S5 ne coche pas S1, même si le
+ * `printKey` est partagé (reprints Naruto). Pas d'expansion cross-set.
  */
 export function buildShelfChecklist(input: {
   sets: readonly ChecklistSetInput[];
@@ -282,11 +280,7 @@ export function buildShelfChecklist(input: {
   masterSet?: boolean;
 }): ShelfChecklist {
   const masterSet = Boolean(input.masterSet);
-  const owned = expandOwnedAcrossSetListings({
-    owned: input.owned,
-    cataloguePrintKeys: input.prints.map((print) => print.printKey),
-    masterSet,
-  });
+  const owned = input.owned;
   const bySet = new Map<string, ChecklistPrint[]>();
   for (const print of input.prints) {
     const rows = bySet.get(print.setId) ?? [];
@@ -308,13 +302,10 @@ export function buildShelfChecklist(input: {
     const cards = prints
       .map((print) => {
         const reference = referenceWithinSet(print.reference, set.label);
-        const isOwned = masterSet
-          ? owned.has(checklistOwnedKey(print.printKey, print.finish))
-          : owned.has(print.printKey.trim().toLowerCase());
         return {
           ...print,
           reference,
-          owned: isOwned,
+          owned: isChecklistPrintOwned(owned, print, masterSet),
         };
       })
       .sort(compareChecklistPrints);

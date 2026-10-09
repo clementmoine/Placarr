@@ -1,11 +1,77 @@
 /**
  * Pokémon foil extract — Catalogue Sync / worker (in-process).
+ *
+ * STEPS (`--only` / `--skip` / `--offline`) pick which passes run — same
+ * operability contract as dbscg/dbsfw/lorcana. Legacy `--skip-scrape` etc.
+ * still work and are applied after step selection.
  */
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+
+export const POKEMON_STEPS = [
+  "malie",
+  "scrape",
+  "extract",
+  "paper-faces",
+  "products",
+] as const;
+export type PokemonStep = (typeof POKEMON_STEPS)[number];
+
+/** Default Sync path — products opt-in via `--only products` or `--products`. */
+const POKEMON_DEFAULT_STEPS: PokemonStep[] = [
+  "malie",
+  "scrape",
+  "extract",
+  "paper-faces",
+];
+
+const POKEMON_ONLINE = new Set<PokemonStep>([
+  "malie",
+  "scrape",
+  "paper-faces",
+  "products",
+]);
+
+function argValueFrom(
+  argv: readonly string[],
+  name: string,
+): string | undefined {
+  const idx = argv.indexOf(name);
+  if (idx < 0) return undefined;
+  return argv[idx + 1];
+}
+
+function argListFrom(argv: readonly string[], name: string): string[] {
+  return (argValueFrom(argv, name) ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Resolve which Pokémon extract passes to run.
+ *
+ * Explicit `--products` / `--skip-products` and friends still override after
+ * this selection in {@link parseArgs}.
+ */
+export function selectPokemonSteps(argv: readonly string[]): PokemonStep[] {
+  const only = argListFrom(argv, "--only");
+  const skip = new Set(argListFrom(argv, "--skip"));
+  const offline = argv.includes("--offline");
+  // Legacy flag: include products in the default set when asked.
+  const withProducts = argv.includes("--products");
+  const base = only.length
+    ? POKEMON_STEPS.filter((step) => only.includes(step))
+    : withProducts
+      ? [...POKEMON_DEFAULT_STEPS, "products" as const]
+      : [...POKEMON_DEFAULT_STEPS];
+  return base.filter(
+    (step) => !skip.has(step) && !(offline && POKEMON_ONLINE.has(step)),
+  );
+}
 
 import {
   ensureEffectsLayout,
@@ -254,6 +320,21 @@ export type UpdateOpts = {
   /** AbortSignal from CLI background-job cancel. */
   signal?: AbortSignal;
 };
+
+function applyPokemonSteps(
+  steps: readonly PokemonStep[],
+  opts: UpdateOpts,
+): UpdateOpts {
+  const set = new Set(steps);
+  return {
+    ...opts,
+    bootstrapMalie: set.has("malie") && opts.bootstrapMalie !== false,
+    skipScrape: !set.has("scrape") || Boolean(opts.skipScrape),
+    textureMode: set.has("extract") ? (opts.textureMode ?? "cards") : "none",
+    skipPaperFaces: !set.has("paper-faces") || Boolean(opts.skipPaperFaces),
+    skipProducts: !set.has("products"),
+  };
+}
 
 export async function runUpdate(
   repo: string,
@@ -722,6 +803,28 @@ export async function runUpdate(
   }
 
   try {
+    const { prunePokemonCardLangs } = await import("../cdn/pruneCardLangs");
+    const prunedLangs = prunePokemonCardLangs({
+      keepLangs: opts.langs,
+      cardsRoot: path.join(repo, "data", "pokemon", "cards"),
+      apply: true,
+    });
+    if (prunedLangs.removedDirs > 0) {
+      const gb = (prunedLangs.removedBytes / 1e9).toFixed(1);
+      console.log(
+        `── prune card langs: kept=${prunedLangs.keptLangs.join(",")}` +
+          ` removed=${prunedLangs.removedLangs.join(",") || "—"}` +
+          ` (${prunedLangs.removedDirs} dirs, ~${gb} Go)`,
+      );
+    }
+    (summary as { pruneCardLangs?: unknown }).pruneCardLangs = prunedLangs;
+  } catch (err) {
+    console.warn(
+      `[cdn] prune card langs skipped: ${err instanceof Error ? err.message : err}`,
+    );
+  }
+
+  try {
     const { rebuildPokemonCardsIndex } = await import(
       "../pipeline/rebuildCardsIndex"
     );
@@ -750,7 +853,14 @@ export async function runPokemonFoilExtract(
   const args = parseArgs(argv);
   const repo = path.resolve(opts.repo || args.repo || repoRoot());
   const { repo: _repo, ...updateOpts } = args;
-  return runUpdate(repo, { ...updateOpts, signal: opts.signal });
+  const steps = selectPokemonSteps(argv);
+  console.log(
+    `── Pokémon — étapes : ${steps.join(" → ") || "(rien)"}`,
+  );
+  return runUpdate(repo, {
+    ...applyPokemonSteps(steps, updateOpts),
+    signal: opts.signal,
+  });
 }
 
 function parseArgs(argv: string[]): UpdateOpts & { repo: string } {

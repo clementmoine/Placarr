@@ -157,8 +157,36 @@ function compareCollectorNumbers(left: string, right: string): number {
 }
 
 /**
- * Binder order: game → set → number → base before promo grouping → full key.
- * Missing / malformed keys sort after real prints (then caller may name-tiebreak).
+ * Optional per-game binder order (family prefixes, etc.). Return `null` to
+ * fall through to the default set → number → grouping order.
+ * Registered by catalogue modules — never game literals in this file.
+ */
+export type PrintKeyCompareHook = (
+  left: PrintIdentity,
+  right: PrintIdentity,
+  leftKey: string,
+  rightKey: string,
+) => number | null;
+
+const printKeyCompareByGame = new Map<string, PrintKeyCompareHook>();
+
+export function registerPrintKeyCompare(
+  game: string,
+  compare: PrintKeyCompareHook,
+): void {
+  const slug = game.trim().toLowerCase();
+  if (!slug) return;
+  printKeyCompareByGame.set(slug, compare);
+}
+
+/** Test helper — drop one game hook without wiping others. */
+export function unregisterPrintKeyCompare(game: string): void {
+  printKeyCompareByGame.delete(game.trim().toLowerCase());
+}
+
+/**
+ * Binder order: game → (optional game hook) → set → number → base before
+ * promo grouping → full key. Missing / malformed keys sort after real prints.
  */
 export function comparePrintKeys(
   left: string | null | undefined,
@@ -172,6 +200,12 @@ export function comparePrintKeys(
 
   const game = a.game.localeCompare(b.game);
   if (game !== 0) return game;
+
+  const hooked = printKeyCompareByGame.get(a.game);
+  if (hooked) {
+    const custom = hooked(a, b, left ?? "", right ?? "");
+    if (custom != null) return custom;
+  }
 
   const set = comparePrintSetCodes(a.set, b.set);
   if (set !== 0) return set;

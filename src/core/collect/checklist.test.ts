@@ -7,8 +7,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildShelfChecklist,
   checklistOwnedKey,
+  checklistSetOwnedKey,
   compareChecklistPrints,
-  expandOwnedAcrossSetListings,
   referenceWithinSet,
   resolveMasterSetOwned,
   type ChecklistPrint,
@@ -260,6 +260,23 @@ describe("ordre retail puis promos", () => {
     ).toBeLessThan(0);
   });
 
+  it("compareChecklistPrints follows Naruto family binder order", async () => {
+    // Registers the `naruto` printKey compare hook (Client → Ninja → …).
+    await import("@/providers/naruto/narutocarddass/identity");
+    const sorted = [
+      print("naruto:ta-0001", "s1", "TA-001"),
+      print("naruto:te-0001", "s1", "TE-001"),
+      print("naruto:ni-0001", "s1", "NI-001"),
+      print("naruto:cl-0001", "s1", "CL-001"),
+    ].sort(compareChecklistPrints);
+    expect(sorted.map((p) => p.reference)).toEqual([
+      "CL-001",
+      "NI-001",
+      "TE-001",
+      "TA-001",
+    ]);
+  });
+
   /*
     Master set : foil et normale sont deux cases. Posséder l'une ne coche
     pas l'autre — c'est le sens d'un master set.
@@ -388,20 +405,75 @@ describe("ordre retail puis promos", () => {
     ).toBe(false);
   });
 
-  it("expandOwnedAcrossSetListings keeps finish in master set", () => {
-    const expanded = expandOwnedAcrossSetListings({
-      owned: new Set([checklistOwnedKey("dbsjcc:part1-d0107", "holo")]),
-      cataloguePrintKeys: [
-        "dbsjcc:part1-d0107",
-        "dbsjcc:part9-d0107",
+  it("set-scoped ownership does not cross sets for the same printKey", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "s1", label: "Série 1", sortKey: 1 },
+        { id: "s5", label: "Série 5", sortKey: 5 },
       ],
+      prints: [
+        print("naruto:ni-0049", "s1", "NI-049"),
+        print("naruto:ni-0049", "s5", "NI-049"),
+      ],
+      owned: new Set([checklistSetOwnedKey("s5", "naruto:ni-0049")]),
+    });
+    expect(list.totals.owned).toBe(1);
+    expect(
+      list.sets.find((s) => s.id === "s5")?.cards[0]?.owned,
+    ).toBe(true);
+    expect(
+      list.sets.find((s) => s.id === "s1")?.cards[0]?.owned,
+    ).toBe(false);
+  });
+
+  it("legacy owned printKey without set still counts in every listing", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "s1", label: "Série 1", sortKey: 1 },
+        { id: "s5", label: "Série 5", sortKey: 5 },
+      ],
+      prints: [
+        print("naruto:ni-0049", "s1", "NI-049"),
+        print("naruto:ni-0049", "s5", "NI-049"),
+      ],
+      owned: new Set(["naruto:ni-0049"]),
+    });
+    expect(list.totals.owned).toBe(2);
+  });
+
+  it("set-scoped master set keeps finish and set", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "part1", label: "Série 1", sortKey: 1 },
+        { id: "part9", label: "Série 9", sortKey: 9 },
+      ],
+      prints: [
+        print("dbsjcc:part1-d0107", "part1", "D-107", "holo"),
+        print("dbsjcc:part9-d0107", "part9", "D-107", "holo"),
+        print("dbsjcc:part9-d0107", "part9", "D-107", "normal"),
+      ],
+      owned: new Set([
+        checklistSetOwnedKey("part1", "dbsjcc:part1-d0107", "holo"),
+      ]),
       masterSet: true,
     });
-    expect(expanded.has(checklistOwnedKey("dbsjcc:part9-d0107", "holo"))).toBe(
-      true,
+    expect(
+      list.sets
+        .flatMap((s) => s.cards)
+        .filter((c) => c.owned)
+        .map((c) => `${c.setId}|${c.finish}`),
+    ).toEqual(["part1|holo"]);
+  });
+
+  it("checklistSetOwnedKey folds set, printKey and optional finish", () => {
+    expect(checklistSetOwnedKey("S5", "Naruto:ni-0049")).toBe(
+      "s5|naruto:ni-0049",
     );
-    expect(expanded.has(checklistOwnedKey("dbsjcc:part9-d0107", null))).toBe(
-      false,
+    expect(checklistSetOwnedKey("s5", "naruto:ni-0049", "Holo")).toBe(
+      "s5|naruto:ni-0049|holo",
+    );
+    expect(checklistSetOwnedKey(null, "naruto:ni-0049", "holo")).toBe(
+      "naruto:ni-0049|holo",
     );
   });
 });

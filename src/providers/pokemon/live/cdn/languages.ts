@@ -18,9 +18,10 @@ export const POKEMON_LIVE_LANGUAGES = [
 export type PokemonLiveLanguage = (typeof POKEMON_LIVE_LANGUAGES)[number];
 
 /**
- * Catalogue languages for **Live face dump** / cards-index walk:
- * Live has no JA — keep EN (Live pivot) + FR.
- * Paper **original JA** lives in TCGdex `prints.sqlite` (`TCGDEX_HARVEST_LANGUAGES`).
+ * Catalogue languages for **Live face dump** / admin Extract / cards-index:
+ * **EN (Live original / pivot) + FR**. Live has no JA — paper JA titles live
+ * in TCGdex (`TCGDEX_HARVEST_LANGUAGES`). DE/IT/ES/ptbr stay opt-in via
+ * `--langs` (each ~10+ Go).
  */
 export const POKEMON_CATALOGUE_LANGUAGES = ["en", "fr"] as const;
 

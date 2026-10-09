@@ -259,7 +259,16 @@ export async function searchPrintCandidates(
     for (const candidate of result.value) {
       if (candidate.printed === false) continue;
       if (!parsePrintKey(candidate.printKey)) continue;
-      const key = `${candidate.printKey}|${candidate.language ?? ""}`;
+      /*
+        Set-scoped reprints (Naruto TA-074 → s2 + s3) share printKey + langue.
+        Sans `setCode` dans la clé, le merge n'en gardait qu'une et le sélecteur
+        n'affichait jamais la seconde série.
+      */
+      const key = [
+        candidate.printKey,
+        candidate.language ?? "",
+        (candidate.setCode ?? "").trim().toLowerCase(),
+      ].join("|");
       if (seen.has(key)) continue;
       seen.add(key);
       merged.push(candidate);

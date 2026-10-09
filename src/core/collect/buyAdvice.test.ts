@@ -605,6 +605,33 @@ describe("projectBuyProductsBySet", () => {
     expect(projectBuyProductForSet(tin, "s5", printSetIds)).toBeNull();
   });
 
+  it("does not recommend an S1 starter to complete S4 via shared reprints", () => {
+    const starter = {
+      slug: "starter-maitre-hokage",
+      name: "Starter Maître Hokage",
+      kind: "deck",
+      behavior: "known_bundle" as const,
+      setId: "s1",
+      prints: [
+        "naruto:ni-0009",
+        "naruto:ni-0002",
+        "naruto:cl-0004",
+      ],
+      printsArePreview: false,
+    };
+    const memberships = new Map<string, Set<string>>([
+      ["naruto:ni-0009", new Set(["s1", "s4"])],
+      ["naruto:ni-0002", new Set(["s1"])],
+      ["naruto:cl-0004", new Set(["s1"])],
+    ]);
+    expect(projectBuyProductForSet(starter, "s4", memberships)).toBeNull();
+    const bySet = projectBuyProductsBySet({
+      products: [starter],
+      printSetIds: memberships,
+    });
+    expect([...bySet.keys()]).toEqual(["s1"]);
+  });
+
   it("keeps single-set products unchanged on their setId", () => {
     const projected = projectBuyProductForSet(
       {

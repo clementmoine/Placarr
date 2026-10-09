@@ -166,6 +166,32 @@ describe("searchPrintCandidates", () => {
     expect(found[0]?.providerId).toBe("lorcanajson");
   });
 
+  it("keeps the same print in two set memberships apart", async () => {
+    modules.push(
+      fakeModule("narutocarddass", ["tcg"], async () => [
+        candidate({
+          printKey: "naruto:ta-0074",
+          title: "Monnaie d'Echange",
+          reference: "TA-074",
+          language: "fr",
+          setCode: "s2",
+          setLabel: "Série 2",
+        }),
+        candidate({
+          printKey: "naruto:ta-0074",
+          title: "Monnaie d'Echange",
+          reference: "TA-074",
+          language: "fr",
+          setCode: "s3",
+          setLabel: "Série 3",
+        }),
+      ]),
+    );
+
+    const found = await searchPrintCandidates("TA-074", "tcg");
+    expect(found.map((entry) => entry.setCode)).toEqual(["s2", "s3"]);
+  });
+
   it("keeps the same print in two languages apart", async () => {
     modules.push(
       fakeModule("lorcanajson", ["tcg"], async () => [

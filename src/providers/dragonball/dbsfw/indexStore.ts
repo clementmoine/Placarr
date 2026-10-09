@@ -18,6 +18,11 @@ import {
   pickCatalogueSetNameByCount,
 } from "@/providers/shared/cardCatalogue/sets";
 import { attachSiblingTitlesToCardsIndex } from "@/providers/shared/cardCatalogue/attachIndexTitles";
+import {
+  normalizePrintAssetColumns,
+  printAssetsArtSql,
+  printAssetsColumnNames,
+} from "@/providers/shared/cardCatalogue/printAssetsCore";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { packCardDir } from "@/lib/packPaths";
@@ -50,8 +55,20 @@ export type DbsFwTitleRow = {
 export type DbsFwAssetRow = {
   printKey: string;
   lang: string;
+  /** Core face column (preferred). */
+  art?: string | null;
+  /** @deprecated Legacy alias — prefer {@link art}. */
   imageUrl?: string | null;
 };
+
+function assetArt(row: DbsFwAssetRow): string | null {
+  return (
+    normalizePrintAssetColumns({
+      art: row.art,
+      imageUrl: row.imageUrl,
+    }).art
+  );
+}
 
 let activeDb: DatabaseSync | null = null;
 
@@ -102,7 +119,7 @@ function createSchema(db: DatabaseSync): void {
     CREATE TABLE print_assets (
       print_key TEXT NOT NULL,
       lang TEXT NOT NULL,
-      image_url TEXT,
+      art TEXT,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
@@ -147,10 +164,10 @@ export function writeDbsFwIndex(input: {
       set_name = excluded.set_name
   `);
   const insertAsset = db.prepare(`
-    INSERT INTO print_assets (print_key, lang, image_url)
+    INSERT INTO print_assets (print_key, lang, art)
     VALUES (?, ?, ?)
     ON CONFLICT(print_key, lang) DO UPDATE SET
-      image_url = COALESCE(excluded.image_url, print_assets.image_url)
+      art = COALESCE(excluded.art, print_assets.art)
   `);
 
   db.exec("BEGIN");
@@ -185,7 +202,7 @@ export function writeDbsFwIndex(input: {
       );
     }
     for (const asset of input.assets) {
-      insertAsset.run(asset.printKey, asset.lang, asset.imageUrl ?? null);
+      insertAsset.run(asset.printKey, asset.lang, assetArt(asset));
     }
     db.exec("COMMIT");
   } catch (error) {
@@ -249,7 +266,7 @@ export function exportDbsFwCardsIndexJson(
     for (const lang of langs) {
       const files: CardsIndexLangFiles = {};
       const name = titlesFor?.get(lang)?.fullName?.trim();
-      const imageUrl = assetsFor?.get(lang)?.imageUrl?.trim();
+      const imageUrl = assetArt(assetsFor?.get(lang) ?? { printKey: "", lang: "" });
       const art = dbsFwLocalArtFilename(print, lang);
       const back = dbsFwLocalBackFilename(print, lang);
       if (name) files.name = name;
@@ -312,11 +329,12 @@ export function listDbsFwRowsForLanguage(language = "en"): DbsFwBrowseRow[] {
   const db = ensureDbsFwIndex();
   if (!db) return [];
   const lang = language.trim().toLowerCase() || "en";
+  const artSql = printAssetsArtSql(printAssetsColumnNames(db));
   return db
     .prepare(
       `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
               p.grouping, t.lang, t.full_name AS fullName,
-              a.image_url AS imageUrl
+              ${artSql} AS imageUrl
          FROM prints p
          JOIN print_titles t
            ON t.print_key = p.print_key AND t.lang = ?
@@ -386,9 +404,15 @@ export function loadDbsFwIndex(): {
            FROM print_titles`,
       )
       .all() as DbsFwTitleRow[];
+    const artExpr = printAssetsArtSql(printAssetsColumnNames(db)).replace(
+      /\ba\./g,
+      "",
+    );
     const assets = db
       .prepare(
-        `SELECT print_key AS printKey, lang, image_url AS imageUrl
+        `SELECT print_key AS printKey, lang,
+                ${artExpr} AS art,
+                ${artExpr} AS imageUrl
            FROM print_assets`,
       )
       .all() as DbsFwAssetRow[];

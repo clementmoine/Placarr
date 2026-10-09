@@ -1,6 +1,6 @@
 {
   "source": "Annonce officielle Kana mangakana.com avr. 2008 (Wayback) + forum t1192/t1185 + Victor FB/YT DVD + Ultrajeux S5 holes",
-  "note": "Le retail S6 FR (starters Le Duel / Quartet, boosters) n'est jamais sorti. Check-list FR S6 = les **15** de l'opération manga Kana : 6 inédites MIJ (`cards`) + 9 reprints S5 (`kanaBlisterS5Reprints`, multi-set s5+s6). Canal DVD = autre distribution des inédites. Ne pas y verser la branche Coleka serie-06 entière (noms IT, Rivalità Eterna).",
+  "note": "Le retail S6 FR (starters Le Duel / Quartet, boosters) n'est jamais sorti. Check-list FR : pas de chapitre `s6` — les **6** inédites Kana (`cards`) restent des cartes **s6** (identité / set_code) mais sont **classées** dans la checklist Série 5 ; les 9 reprints blister (`kanaBlisterS5Reprints`) sont déjà au pool S5 (pas de doublon). Canal DVD = autre distribution des inédites. Catalogue `s6` reste pour IT / EN / préprod. Ne pas y verser la branche Coleka serie-06 entière (noms IT, Rivalità Eterna).",
   "retailFr": false,
   "officialKana": {
     "announced": "2008-04-25",

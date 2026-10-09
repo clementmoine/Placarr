@@ -625,6 +625,24 @@ function ledgerNumbers(file: S6FrPrintedFile): string[] {
   return out;
 }
 
+/**
+ * Inédites Kana (6) — cartes **s6** classées dans la checklist Série 5 FR.
+ * Les 9 reprints blister sont déjà S5 ; pas de doublon ici.
+ * Le retail S6 FR n'existe pas : pas de chapitre checklist `s6` en français.
+ */
+export function narutoS6FrSeries5BonusNumbers(): string[] {
+  try {
+    const out: string[] = [];
+    for (const row of loadFile().cards ?? []) {
+      const n = row.number?.trim();
+      if (n) out.push(n);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 function loadKeys(): Set<string> {
   if (keys) return keys;
   const out = new Set<string>();

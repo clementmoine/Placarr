@@ -49,6 +49,33 @@ function finalizeSealedProducts(
   return products;
 }
 
+function readProductsIndexJson(packId: string): ProductsIndexV1 | null {
+  const file = packProductsIndexPath(packId);
+  if (!existsSync(file)) return null;
+  try {
+    const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
+    return isProductsIndexV1(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * SQLite may lag behind a fuller `products-index.json` (measured: Carddass
+ * FR starters present in JSON, absent from `catalog.sqlite`). Fill gaps only —
+ * never overwrite a sqlite row with JSON.
+ */
+export function unionSealedProductsPreferPrimary(
+  primary: Record<string, SealedProductEntry>,
+  fill: Record<string, SealedProductEntry>,
+): Record<string, SealedProductEntry> {
+  const out = { ...primary };
+  for (const [key, entry] of Object.entries(fill)) {
+    if (!out[key]) out[key] = entry;
+  }
+  return out;
+}
+
 /**
  * Charge l'index + overlay curated + packshots disque. À utiliser par tout
  * lecteur (Catalogue, conseil d'achat, …) pour ne pas dépendre d'un disque
@@ -56,17 +83,16 @@ function finalizeSealedProducts(
  */
 export function loadSealedProductsIndex(packId: string): ProductsIndexV1 {
   const fromSqlite = loadProductsIndexFromSqlite(packId);
-  let index = fromSqlite ?? emptyProductsIndex(packId);
-  if (!fromSqlite) {
-    const file = packProductsIndexPath(packId);
-    if (existsSync(file)) {
-      try {
-        const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
-        if (isProductsIndexV1(raw)) index = raw;
-      } catch {
-        /* keep empty */
-      }
-    }
+  const fromJson = readProductsIndexJson(packId);
+  let index = fromSqlite ?? fromJson ?? emptyProductsIndex(packId);
+  if (fromSqlite && fromJson) {
+    index = {
+      ...index,
+      products: unionSealedProductsPreferPrimary(
+        fromSqlite.products,
+        fromJson.products,
+      ),
+    };
   }
   const products = mergeCuratedSealedContents(packId, index.products);
   return {

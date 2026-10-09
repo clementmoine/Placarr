@@ -439,10 +439,11 @@
   cursor: zoom-in;
 }
 
-.missingOwned .cardPrice,
-.missingOwned .cardSources {
-  display: none;
-}
+/*
+  Prix + scellés restent visibles sur les cartes possédées : c'est la seule
+  liste centralisée cote / provenance. Le mute porte sur le titre, pas sur
+  ces infos.
+*/
 
 .hint,
 .empty,

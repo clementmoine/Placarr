@@ -12,10 +12,7 @@ import { FoilCardImage } from "@/components/FoilCardImage";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { RemoteImage } from "@/components/RemoteImage";
 import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
-import {
-  parsePrintKey,
-  printCollectableKey,
-} from "@/core/identify/printKey";
+import { parsePrintKey } from "@/core/identify/printKey";
 import {
   variantRendering,
   type PrintVariantInfo,
@@ -48,6 +45,8 @@ export type PrintCandidateView = {
   providerId?: string | null;
   /** L'extension seule, quand le catalogue la nomme. */
   setLabel?: string | null;
+  /** Code d'extension checklist (`s5`, `1`) — possession set-scoped. */
+  setCode?: string | null;
   title: string;
   reference: string;
   rarity?: string | null;
@@ -83,6 +82,8 @@ export type OwnedPrintRef = {
   variant?: string | null;
   /** Sans elle, posséder l'Inari française disait posséder l'イナリ japonaise. */
   language?: string | null;
+  /** Extension rangée — set-scoped ; absent = legacy (tous les sets du printKey). */
+  setCode?: string | null;
 };
 
 type PrintPickerModalProps = {
@@ -106,38 +107,24 @@ type PrintPickerModalProps = {
 };
 
 /**
- * `naruto:cl-0004` + `fr` + `holo` → une clé de comparaison stable.
+ * `s5` + `naruto:cl-0004` + `fr` + `holo` → une clé de comparaison stable.
+ *
+ * Set-scoped : une copie rangée en S5 ne marque pas la même carte en S1.
+ * Sans `setCode` (legacy) la clé laisse le set vide — elle matche toute
+ * ligne du même printKey (comportement d'avant).
  *
  * La langue en fait partie depuis le 2026-08-21. Une clé de tirage vaut pour
- * toutes ses localisations — 898 clés Naruto et 19 673 clés Pokémon en portent
- * plusieurs — si bien que posséder l'Inari française marquait l'イナリ
- * japonaise « déjà dans l'étagère ». Ce sont deux cartes.
+ * toutes ses localisations — posséder l'Inari française ne marque pas l'イナリ.
  */
 function ownedRowKey(
   printKey: string,
   variant: string | null,
   language: string | null,
+  setCode: string | null,
 ): string {
   return [
+    (setCode ?? "").trim().toLowerCase(),
     printKey.trim().toLowerCase(),
-    (language ?? "").trim().toLowerCase(),
-    (variant ?? "").trim().toLowerCase(),
-  ].join("|");
-}
-
-/**
- * Même carte sous un autre set (`dbsjcc:part1-d0123` ↔ `part9-d0123`).
- * `null` si le numéro est set-scoped (Lorcana…).
- */
-function ownedCollectableRowKey(
-  printKey: string,
-  variant: string | null,
-  language: string | null,
-): string | null {
-  const collectable = printCollectableKey(printKey);
-  if (!collectable) return null;
-  return [
-    collectable,
     (language ?? "").trim().toLowerCase(),
     (variant ?? "").trim().toLowerCase(),
   ].join("|");
@@ -360,27 +347,18 @@ export function PrintPickerModal({
   const owned = useMemo(() => {
     const exact = new Set<string>();
     const anyFinish = new Set<string>();
-    const collectableExact = new Set<string>();
-    const collectableAnyFinish = new Set<string>();
     const games = new Set<string>();
     for (const row of ownedPrints ?? []) {
       const key = row.printKey?.trim().toLowerCase();
       if (!key) continue;
       const lang = row.language ?? null;
       const variant = row.variant ?? null;
-      exact.add(ownedRowKey(key, variant, lang));
-      anyFinish.add(key);
-      const collectable = ownedCollectableRowKey(key, variant, lang);
-      if (collectable) collectableExact.add(collectable);
-      const collectableBase = printCollectableKey(key);
-      if (collectableBase) {
-        collectableAnyFinish.add(
-          [
-            collectableBase,
-            (lang ?? "").trim().toLowerCase(),
-          ].join("|"),
-        );
-      }
+      const setCode = row.setCode?.trim().toLowerCase() || null;
+      exact.add(ownedRowKey(key, variant, lang, setCode));
+      // Finitions : bornées au set quand on le connaît.
+      anyFinish.add(
+        [(setCode ?? "").trim().toLowerCase(), key].join("|"),
+      );
       const game = parsePrintKey(key)?.game;
       if (game) games.add(game);
     }
@@ -393,8 +371,6 @@ export function PrintPickerModal({
     return {
       exact,
       anyFinish,
-      collectableExact,
-      collectableAnyFinish,
       game: games.size === 1 ? [...games][0]! : null,
     };
   }, [ownedPrints]);
@@ -793,11 +769,13 @@ export function PrintPickerModal({
       */
       const seen = new Set(
         candidatesRef.current.map(
-          (row) => `${row.printKey}|${row.language ?? ""}`.toLowerCase(),
+          (row) =>
+            `${row.printKey}|${row.language ?? ""}|${(row.setCode ?? "").trim()}`.toLowerCase(),
         ),
       );
       const appended = next.filter((row) => {
-        const key = `${row.printKey}|${row.language ?? ""}`.toLowerCase();
+        const key =
+          `${row.printKey}|${row.language ?? ""}|${(row.setCode ?? "").trim()}`.toLowerCase();
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -888,13 +866,44 @@ export function PrintPickerModal({
    * Derived rather than cleared by an effect: an empty box shows nothing, and a
    * stale list never flashes between two queries.
    */
-  const pickerRows = useMemo(
-    () =>
-      expandPrintCandidatesByFinish(
-        trimmedQuery || activeSetId || catalogueBrowse ? candidates : [],
-      ),
-    [trimmedQuery, activeSetId, catalogueBrowse, candidates],
-  );
+  const pickerRows = useMemo(() => {
+    const source =
+      trimmedQuery || activeSetId || catalogueBrowse ? candidates : [];
+    /*
+      L'extension **parcourue** prime sur `prints.set_code` (souvent la série
+      primaire). Sans ça, ajouter depuis S5 rangeait encore en S1.
+      Le libellé suit le filtre — sinon TA-074 en parcours S3 affichait encore
+      « Série 2 ».
+    */
+    const activeSetLabel = activeSetId
+      ? (catalogueSets.find((set) => set.id === activeSetId)?.label ?? null)
+      : null;
+    const stamped = source.map((row) => {
+      /*
+        Inserts S6 classés en checklist S5 : identité s6 (setCode + libellé).
+        Ne pas les retamper avec l'extension parcourue.
+      */
+      const keepS6Identity =
+        (row.setCode ?? "").trim().toLowerCase() === "s6";
+      const setCode = keepS6Identity
+        ? row.setCode
+        : (activeSetId ?? row.setCode ?? null);
+      return {
+        ...row,
+        setCode,
+        ...(!keepS6Identity && activeSetId && activeSetLabel
+          ? { setLabel: activeSetLabel }
+          : {}),
+      };
+    });
+    return expandPrintCandidatesByFinish(stamped);
+  }, [
+    trimmedQuery,
+    activeSetId,
+    catalogueBrowse,
+    candidates,
+    catalogueSets,
+  ]);
 
   /*
     Les langues proposées sortent des résultats eux-mêmes. Une liste écrite en
@@ -987,6 +996,7 @@ export function PrintPickerModal({
           shelfId,
           name: candidate.title,
           printKey: candidate.printKey,
+          setCode: candidate.setCode ?? null,
           variant: finish,
           language: candidate.language ?? null,
           imageUrl: candidateCoverUrl(candidate, finish),
@@ -1353,30 +1363,19 @@ export function PrintPickerModal({
             {visibleRows.map((row) => {
               const printKey = row.printKey.trim().toLowerCase();
               const lang = row.language ?? null;
-              const collectableExact = ownedCollectableRowKey(
-                printKey,
-                row.finish,
-                lang,
-              );
-              const collectableBase = printCollectableKey(printKey);
+              const rowSet = row.setCode?.trim().toLowerCase() || null;
               const hasExact =
-                owned.exact.has(ownedRowKey(printKey, row.finish, lang)) ||
-                Boolean(
-                  collectableExact &&
-                    owned.collectableExact.has(collectableExact),
-                );
+                owned.exact.has(
+                  ownedRowKey(printKey, row.finish, lang, rowSet),
+                ) ||
+                // Legacy : item sans setCode → encore « déjà là » sur tout set.
+                owned.exact.has(ownedRowKey(printKey, row.finish, lang, null));
               const hasOtherFinish =
                 !hasExact &&
-                (owned.anyFinish.has(printKey) ||
-                  Boolean(
-                    collectableBase &&
-                      owned.collectableAnyFinish.has(
-                        [
-                          collectableBase,
-                          (lang ?? "").trim().toLowerCase(),
-                        ].join("|"),
-                      ),
-                  ));
+                (owned.anyFinish.has(
+                  [(rowSet ?? "").trim().toLowerCase(), printKey].join("|"),
+                ) ||
+                  owned.anyFinish.has(["", printKey].join("|")));
               const isChecked = selected.has(row.rowKey);
               return (
                 <li key={row.rowKey}>
@@ -1439,6 +1438,14 @@ export function PrintPickerModal({
                       <p className="truncate text-[11px] text-muted-foreground">
                         {row.reference}
                       </p>
+                      {(row.setLabel || row.setCode) && (
+                        <p
+                          className="truncate text-[11px] font-medium text-foreground/80"
+                          title={row.setLabel ?? row.setCode ?? undefined}
+                        >
+                          {row.setLabel?.trim() || row.setCode}
+                        </p>
+                      )}
                       {row.rarity && (
                         <p className="truncate text-[11px] text-muted-foreground">
                           {row.rarity}

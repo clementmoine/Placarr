@@ -30,7 +30,10 @@ import { resolveShelfId, resolveItemId } from "@/lib/routing/resolveIds";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
-import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  isGameUniqueCollectorNumber,
+  parsePrintKey,
+} from "@/core/identify/printKey";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
 import { normalizeItemLoanInput } from "@/core/collect/itemLoan";
@@ -261,6 +264,7 @@ export async function POST(req: NextRequest) {
         backgroundImageUrl,
         barcode,
         printKey: rawPrintKey,
+        setCode: rawSetCode,
         variant: rawVariant,
         language: rawLanguage,
         condition,
@@ -294,6 +298,24 @@ export async function POST(req: NextRequest) {
         typeof rawPrintKey === "string" && parsePrintKey(rawPrintKey)
           ? rawPrintKey.trim().toLowerCase()
           : null;
+      /*
+        Extension pour laquelle on range la copie (check-list set-scoped).
+        Absent → legacy : le printKey compte dans tous les sets qui le listent.
+        Fallback printKey : seulement si le numéro est set-scoped (Lorcana
+        `1-1`). Chez Naruto / DBS JCC le segment « set » du printKey est la
+        famille (`ni`, `part1`) — ce n'est pas l'extension checklist.
+      */
+      const setCodeFromBody =
+        typeof rawSetCode === "string" && rawSetCode.trim()
+          ? rawSetCode.trim().toLowerCase()
+          : null;
+      const setCodeFromKey = (() => {
+        if (!printKey) return null;
+        const id = parsePrintKey(printKey);
+        if (!id || isGameUniqueCollectorNumber(id.number)) return null;
+        return id.set;
+      })();
+      const setCode = setCodeFromBody || setCodeFromKey;
       // Free text on purpose: the vocabulary is the provider's, not ours. It is
       // validated against the metadata's declared options at read time, so an
       // unknown value degrades to "no variant" rather than being rejected here.
@@ -379,6 +401,7 @@ export async function POST(req: NextRequest) {
           backgroundImageUrl: localBackgroundImageUrl,
           barcode: normalizedBarcode ?? barcode,
           printKey,
+          setCode,
           variant,
           language,
           condition: resolvedCondition,

@@ -52,6 +52,30 @@ describe("expandPrintCandidatesByFinish", () => {
       ])[0],
     ).toMatchObject({ finish: "holo", rowKey: "p:1|holo|en" });
   });
+
+  it("includes setCode in rowKey so multi-set finishes stay distinct", () => {
+    expect(
+      expandPrintCandidatesByFinish([
+        {
+          printKey: "naruto:ta-0074",
+          finishes: ["normal", "holo"],
+          language: "fr",
+          setCode: "s2",
+        },
+        {
+          printKey: "naruto:ta-0074",
+          finishes: ["normal", "holo"],
+          language: "fr",
+          setCode: "s3",
+        },
+      ]).map((row) => row.rowKey),
+    ).toEqual([
+      "naruto:ta-0074|normal|fr|s2",
+      "naruto:ta-0074|holo|fr|s2",
+      "naruto:ta-0074|normal|fr|s3",
+      "naruto:ta-0074|holo|fr|s3",
+    ]);
+  });
 });
 
 describe("normalizeVariantOptions", () => {

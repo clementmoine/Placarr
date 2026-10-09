@@ -25,6 +25,8 @@ import type {
   SealedProductEntry,
   SealedProductLink,
 } from "./indexFormat";
+import { sealedProductKey } from "./indexFormat";
+import type { SealedKind } from "./kinds";
 
 /** Une ligne de contenu garanti (playset + finish optionnel). */
 export type CuratedGuaranteedPrint = {
@@ -258,9 +260,61 @@ function applyPatch(
   };
 }
 
+function curatedHasInventory(patch: CuratedSealedSku): boolean {
+  return Boolean(
+    (patch.guaranteedPrintKeys && patch.guaranteedPrintKeys.length > 0) ||
+      (patch.guaranteedPrints && patch.guaranteedPrints.length > 0) ||
+      (patch.guaranteedProducts && patch.guaranteedProducts.length > 0),
+  );
+}
+
+function guessKindFromSlug(slug: string): SealedKind {
+  if (slug.startsWith("booster")) return "booster";
+  if (slug.startsWith("pack-decouverte") || slug.includes("deck-bundle")) {
+    return "deck_bundle";
+  }
+  if (slug.startsWith("tin")) return "tin";
+  if (slug.startsWith("starter") || slug.startsWith("deck")) return "deck";
+  return "coffret";
+}
+
+/** Minimal row so curated can mint a SKU the boutique index dropped. */
+function stubSealedEntry(_packId: string, slug: string): SealedProductEntry {
+  const kind = guessKindFromSlug(slug);
+  return {
+    slug,
+    path: `curated/${slug}`,
+    kind,
+    behavior: kind === "booster" ? "random_pack" : "known_bundle",
+    category: kind === "booster" ? "boosters" : "decks",
+    name: null,
+    image: null,
+    imageBack: null,
+    setLogo: null,
+    setCode: null,
+    lang: null,
+    releaseDate: null,
+    priceCents: null,
+    cardsPerPack: null,
+    packsContained: null,
+    declaredCardCount: null,
+    setCardCount: null,
+    randomPoolScope: "none",
+    randomPoolPrints: [],
+    contentsKnown: false,
+    containsPrintsIsPreview: true,
+    guaranteedPrints: [],
+    prints: [],
+  };
+}
+
 /**
  * Applique le ledger curated sur un index déjà projeté depuis la boutique.
  * SKU dédié gagne sur `byKind`.
+ *
+ * SKUs curated with a known inventory that are **absent** from the index are
+ * minted (sqlite sometimes drops FR Naruto starters while curated still lists
+ * them) — otherwise checklist / buy advice cannot attach deck cards.
  */
 export function mergeCuratedSealedContents(
   packId: string,
@@ -269,6 +323,7 @@ export function mergeCuratedSealedContents(
   const curated = readCuratedSealedContents(packId);
   if (!curated) return products;
   const out: Record<string, SealedProductEntry> = {};
+  const seenSlugs = new Set<string>();
   for (const [key, entry] of Object.entries(products)) {
     const bySku = curated.skus[entry.slug];
     const byKind = curated.byKind?.[entry.kind];
@@ -276,6 +331,13 @@ export function mergeCuratedSealedContents(
     if (byKind) next = applyPatch(next, byKind);
     if (bySku) next = applyPatch(next, bySku);
     out[key] = next;
+    seenSlugs.add(entry.slug);
+  }
+  for (const [slug, patch] of Object.entries(curated.skus)) {
+    if (seenSlugs.has(slug)) continue;
+    if (!curatedHasInventory(patch)) continue;
+    const key = sealedProductKey(packId, slug);
+    out[key] = applyPatch(stubSealedEntry(packId, slug), patch);
   }
   return out;
 }

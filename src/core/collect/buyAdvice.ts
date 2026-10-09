@@ -249,6 +249,41 @@ const RANDOM: ReadonlySet<ProductBehavior> = new Set([
 ]);
 
 /**
+ * Memberships catalogue d'un printKey — plusieurs sets pour les reprints
+ * (Naruto NI-009 → s1+s4). Valeur scalaire encore acceptée (tests / legacy).
+ */
+export type PrintSetMemberships = ReadonlyMap<
+  string,
+  string | ReadonlySet<string>
+>;
+
+/** Le tirage appartient-il à cette extension ? */
+export function printBelongsToSet(
+  printSetIds: PrintSetMemberships,
+  printKey: string,
+  setId: string,
+): boolean {
+  const sid = setId.trim();
+  if (!sid) return false;
+  const value = printSetIds.get(printKey.trim().toLowerCase())
+    ?? printSetIds.get(printKey);
+  if (value == null) return false;
+  if (typeof value === "string") return value === sid;
+  return value.has(sid);
+}
+
+function membershipSetIds(
+  printSetIds: PrintSetMemberships,
+  printKey: string,
+): string[] {
+  const value = printSetIds.get(printKey.trim().toLowerCase())
+    ?? printSetIds.get(printKey);
+  if (value == null) return [];
+  if (typeof value === "string") return value.trim() ? [value] : [];
+  return [...value];
+}
+
+/**
  * Projette un scellé sur **une** extension pour le conseil d'achat.
  *
  * - `packsBySet` renseigné → sachets pour ce set (loterie seule sur ces sets).
@@ -256,11 +291,15 @@ const RANDOM: ReadonlySet<ProductBehavior> = new Set([
  *   (évite qu'un reprint catalogue accroche le coffret ailleurs).
  * - Sinon `setId` primaire → produit inchangé (comportement historique).
  * - Sinon garanties seules (SKU multi-set sans setId) → packs à 0 sur ce set.
+ *
+ * Un starter S1 **ne** se conseille **pas** pour compléter S4 : même si un
+ * reprint partage le printKey (NI-009), S1 est une autre extension / un autre
+ * produit. La possession set-scoped ne change pas ça.
  */
 export function projectBuyProductForSet(
   product: BuyProduct,
   setId: string,
-  printSetIds: ReadonlyMap<string, string>,
+  printSetIds: PrintSetMemberships,
 ): BuyProduct | null {
   const sid = setId.trim();
   if (!sid) return null;
@@ -282,8 +321,9 @@ export function projectBuyProductForSet(
 
   const allPrints = product.prints ?? [];
   const printsMappedHere = allPrints.filter((key) => {
-    const printSet = printSetIds.get(key);
-    if (printSet) return printSet === sid;
+    if (printBelongsToSet(printSetIds, key, sid)) return true;
+    const known = membershipSetIds(printSetIds, key).length > 0;
+    if (known) return false;
     return !hasPacksBySet && !hasGuaranteeSets && product.setId === sid;
   });
 
@@ -299,6 +339,11 @@ export function projectBuyProductForSet(
         : []
       : printsMappedHere;
 
+  /*
+    Deck borné à son `setId` : un starter S1 ne remplit pas la checklist S4,
+    même pour un reprint au même printKey. Sans setId, les garanties mappées
+    suffisent (SKU multi-set).
+  */
   const attach = hasPacksBySet || hasGuaranteeSets
     ? (packsInContainer ?? 0) > 0 || printsForSet.length > 0
     : product.setId === sid ||
@@ -323,7 +368,7 @@ export function projectBuyProductForSet(
  */
 export function projectBuyProductsBySet(input: {
   products: readonly BuyProduct[];
-  printSetIds: ReadonlyMap<string, string>;
+  printSetIds: PrintSetMemberships;
 }): Map<string, BuyProduct[]> {
   const out = new Map<string, BuyProduct[]>();
   for (const product of input.products) {
@@ -339,13 +384,15 @@ export function projectBuyProductsBySet(input: {
     }
     if (!(product.guaranteeSets ?? []).length) {
       for (const key of product.prints ?? []) {
-        const setId = input.printSetIds.get(key);
-        if (setId) candidates.add(setId);
+        for (const setId of membershipSetIds(input.printSetIds, key)) {
+          candidates.add(setId);
+        }
       }
       if (product.randomPoolScope === "listed") {
         for (const key of product.randomPoolPrints ?? []) {
-          const setId = input.printSetIds.get(key);
-          if (setId) candidates.add(setId);
+          for (const setId of membershipSetIds(input.printSetIds, key)) {
+            candidates.add(setId);
+          }
         }
       }
     }

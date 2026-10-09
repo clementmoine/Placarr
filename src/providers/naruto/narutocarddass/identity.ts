@@ -13,7 +13,11 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildPrintKey, parsePrintKey } from "@/core/identify/printKey";
+import {
+  buildPrintKey,
+  parsePrintKey,
+  registerPrintKeyCompare,
+} from "@/core/identify/printKey";
 import { dataRoot } from "@/lib/runtimeData";
 import type { MetadataFact } from "@/types/metadataProvider";
 import { pickPreferredFaceArtFilename } from "./parse/bandai";
@@ -101,11 +105,12 @@ export type NarutoCollectorId = {
   printedPrefix: string;
 };
 
+/** Binder / checklist: Client → Ninja → Technique → Tactique → knight → promo. */
 const FAMILY_ORDER: readonly NarutoCollectorFamily[] = [
+  "client",
   "ninja",
   "jutsu",
   "mission",
-  "client",
   "knight",
   "promo",
 ];
@@ -217,8 +222,11 @@ const DISK_LAYOUT_FOLDERS: readonly string[] = [
   "msa",
 ];
 
-/** Carddass prefixes sort before CCG so NI sits left of N. Promo sequences last. */
+/** Within a family: Carddass before CCG (CL before C, NI before N…). Promo last. */
 const DISK_PREFIX_ORDER = [
+  "cl",
+  "c",
+  "cus",
   "ni",
   "n",
   "nus",
@@ -233,9 +241,6 @@ const DISK_PREFIX_ORDER = [
   "m",
   "mus",
   "msa",
-  "cl",
-  "c",
-  "cus",
   "ki",
   "pr",
   "ps",
@@ -754,6 +759,27 @@ export function canonicalizeNarutoPrintKey(key: string): string {
     : `${parsed.set}${parsed.number}`;
   return mintNarutoPrintKey(raw) ?? key;
 }
+
+function narutoCollectorFromPrintIdentity(id: {
+  set: string;
+  number: string;
+  grouping?: string | null;
+}): string {
+  return id.grouping
+    ? `${id.set}${id.number}-${id.grouping}`
+    : `${id.set}${id.number}`;
+}
+
+/** Shelf / checklist binder order for `naruto:*` print keys. */
+registerPrintKeyCompare("naruto", (left, right, leftKey, rightKey) => {
+  const a = parsePrintKey(canonicalizeNarutoPrintKey(leftKey)) ?? left;
+  const b = parsePrintKey(canonicalizeNarutoPrintKey(rightKey)) ?? right;
+  if (SERIES_SET.test(a.set) || SERIES_SET.test(b.set)) return null;
+  return compareNarutoCollectors(
+    narutoCollectorFromPrintIdentity(a),
+    narutoCollectorFromPrintIdentity(b),
+  );
+});
 
 export function isNarutoSeriesSetCode(set: string): boolean {
   return SERIES_SET.test(set.trim());
@@ -1538,6 +1564,17 @@ export function officialFrChecklistSetsForNumber(number: string): string[] {
     if (nums.some((n) => forms.has(n))) hits.push(setId);
   }
   return hits.sort();
+}
+
+/** Raw checklist ids (`ta074`, `ni049`, …) for one printed FR series. */
+export function officialFrChecklistIds(setId: string): string[] {
+  const sid = setId.trim().toLowerCase();
+  if (!/^s[1-5]$/.test(sid)) return [];
+  const ids: string[] = [];
+  for (const [id, sets] of loadChecklistSetsById()) {
+    if (sets.includes(sid)) ids.push(id);
+  }
+  return ids;
 }
 
 /**

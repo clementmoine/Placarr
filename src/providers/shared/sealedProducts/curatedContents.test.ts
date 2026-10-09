@@ -255,4 +255,32 @@ describe("mergeCuratedSealedContents", () => {
     });
     expect(merged.a?.guaranteedPrints).toEqual(existing);
   });
+
+  it("mints curated SKUs that have inventory but are absent from the index", () => {
+    stubPack("naruto/carddass", {
+      version: 1,
+      pack: "naruto/carddass",
+      updatedAt: "2026-10-08",
+      skus: {
+        "starter-pays-du-vent": {
+          source: "test",
+          verifiedAt: "2026-10-08",
+          contentsKnown: true,
+          guaranteedPrintKeys: ["naruto:ni-0001", "naruto:ni-0008"],
+        },
+        "starter-empty-stub": {
+          source: "test",
+          verifiedAt: "2026-10-08",
+          guaranteedPrintKeys: [],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("naruto/carddass", {});
+    expect(
+      merged["naruto/carddass::starter-pays-du-vent"]?.guaranteedPrints?.map(
+        (p) => p.printKey,
+      ),
+    ).toEqual(["naruto:ni-0001", "naruto:ni-0008"]);
+    expect(merged["naruto/carddass::starter-empty-stub"]).toBeUndefined();
+  });
 });

@@ -18,6 +18,27 @@ export function isLorcanaMainCatalogueSetCode(setCode: string): boolean {
   return /^q\d+$/i.test(code);
 }
 
+/**
+ * Lorcast fill used to stamp `promo_grouping = setCode` on quests (`Q3`).
+ * That is not a promo — clear it so the set stays a main checklist chapter.
+ */
+export function normalizeLorcanaPromoGrouping(
+  setCode: string | null | undefined,
+  promoGrouping: string | null | undefined,
+): string | null {
+  const set = (setCode ?? "").trim();
+  const grouping = (promoGrouping ?? "").trim();
+  if (!grouping) return null;
+  if (
+    set &&
+    grouping.toUpperCase() === set.toUpperCase() &&
+    isLorcanaMainCatalogueSetCode(set)
+  ) {
+    return null;
+  }
+  return grouping;
+}
+
 /** Tirage promo (observation : grouping non vide). */
 export function isLorcanaPromoPrint(
   promoGrouping: string | null | undefined,

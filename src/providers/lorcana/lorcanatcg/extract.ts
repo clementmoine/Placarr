@@ -1,5 +1,8 @@
 /**
  * Lorcana foil extract — Catalogue Sync / worker (in-process).
+ *
+ * STEPS mirror dbscg/dbsfw: `--only` / `--skip` / `--offline` pick which
+ * passes run. Legacy `--providers` still works and maps onto the same steps.
  */
 
 import fs from "node:fs";
@@ -14,6 +17,84 @@ import { scrapeLorcardsProducts } from "@/providers/lorcana/lorcanatcg/sources/l
 import { scrapeLorcanaCards } from "@/providers/lorcana/lorcanatcg/scrape/cards";
 import { dumpLorcanaWeb } from "@/providers/lorcana/lorcanatcg/pipeline/dumpWeb";
 import { lorcanaUnityArtifactsFresh } from "@/providers/lorcana/lorcanatcg/extract/unityApk";
+
+export const LORCANA_STEPS = [
+  "web",
+  "cards",
+  "products",
+  "official",
+  "mobile",
+] as const;
+export type LorcanaStep = (typeof LORCANA_STEPS)[number];
+
+/**
+ * Steps that need the network (skipped under `--offline`).
+ * `products` can reuse on-disk lorcards staging like dbscg/dbsfw.
+ */
+const LORCANA_ONLINE = new Set<LorcanaStep>([
+  "web",
+  "cards",
+  "official",
+  "mobile",
+]);
+
+const PROVIDER_TO_STEP: Record<string, LorcanaStep> = {
+  lorcanaweb: "web",
+  lorcanacards: "cards",
+  lorcanaproducts: "products",
+  lorcanaofficial: "official",
+  lorcanamobile: "mobile",
+};
+
+function argValueFrom(
+  argv: readonly string[],
+  name: string,
+): string | undefined {
+  const idx = argv.indexOf(name);
+  if (idx < 0) return undefined;
+  return argv[idx + 1];
+}
+
+function argListFrom(argv: readonly string[], name: string): string[] {
+  return (argValueFrom(argv, name) ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Resolve which Lorcana extract passes to run.
+ *
+ * `--providers` (legacy) wins when present; otherwise `--only` / `--skip` /
+ * `--offline` filter {@link LORCANA_STEPS}. Default = web + cards + mobile
+ * (same as the historical default provider list).
+ */
+export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
+  const providersIdx = argv.indexOf("--providers");
+  if (providersIdx >= 0) {
+    const providers: string[] = [];
+    for (let i = providersIdx + 1; i < argv.length; i++) {
+      const a = argv[i]!;
+      if (a.startsWith("--")) break;
+      providers.push(a);
+    }
+    const fromProviders = providers
+      .map((p) => PROVIDER_TO_STEP[p])
+      .filter((s): s is LorcanaStep => Boolean(s));
+    if (fromProviders.length) return fromProviders;
+  }
+
+  const only = argListFrom(argv, "--only");
+  const skip = new Set(argListFrom(argv, "--skip"));
+  const offline = argv.includes("--offline");
+  const defaultSteps: LorcanaStep[] = ["web", "cards", "mobile"];
+  const base = only.length
+    ? LORCANA_STEPS.filter((step) => only.includes(step))
+    : defaultSteps;
+  return base.filter(
+    (step) => !skip.has(step) && !(offline && LORCANA_ONLINE.has(step)),
+  );
+}
 
 async function runOfficialSiteOnly(
   force: boolean,
@@ -172,7 +253,6 @@ async function runUnity(
 function parseArgs(argv: string[]) {
   const out = {
     repo: process.cwd(),
-    providers: ["lorcanaweb", "lorcanacards", "lorcanamobile"] as string[],
     apk: null as string | null,
     data: null as string | null,
     force: false,
@@ -185,12 +265,6 @@ function parseArgs(argv: string[]) {
     else if (a === "--data") out.data = path.resolve(argv[++i]!);
     else if (a === "--force") out.force = true;
     else if (a === "--offline") out.offline = true;
-    else if (a === "--providers") {
-      out.providers = [];
-      while (argv[i + 1] && !argv[i + 1]!.startsWith("--")) {
-        out.providers.push(argv[++i]!);
-      }
-    }
   }
   return out;
 }
@@ -202,9 +276,14 @@ export async function runLorcanaFoilExtract(
   const args = parseArgs(argv);
   const repo = path.resolve(opts.repo || args.repo || repoRoot());
   const signal = opts.signal;
+  const steps = selectLorcanaSteps(argv);
 
   if (signal?.aborted) throw new Error("foil extract cancelled");
   ensureEffectsLayout(repo);
+
+  console.log(
+    `── Lorcana — étapes : ${steps.join(" → ") || "(masks only)"}`,
+  );
 
   const { installFullFoilMask } = await import(
     "@/providers/shared/cardCatalogue/curatedAssets"
@@ -226,17 +305,17 @@ export async function runLorcanaFoilExtract(
   }
 
   const results: Record<string, unknown>[] = [];
-  for (const pid of args.providers) {
+  for (const step of steps) {
     if (signal?.aborted) throw new Error("foil extract cancelled");
-    if (pid === "lorcanaweb") {
+    if (step === "web") {
       results.push(await dumpLorcanaWeb({ root: repo }));
-    } else if (pid === "lorcanacards") {
+    } else if (step === "cards") {
       results.push(await runCardsScrape(repo, args.force));
-    } else if (pid === "lorcanaofficial") {
+    } else if (step === "official") {
       results.push(await runOfficialSiteOnly(args.force));
-    } else if (pid === "lorcanaproducts") {
+    } else if (step === "products") {
       results.push(await runLorcardsProducts(args.force, args.offline));
-    } else if (pid === "lorcanamobile") {
+    } else if (step === "mobile") {
       if (!unityInputsAvailable(repo, args.apk, args.data)) {
         console.log(
           "skip Unity: no APK under data/lorcana/staging/apks/ (web + cards only)",

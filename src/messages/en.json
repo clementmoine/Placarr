@@ -513,7 +513,7 @@
     "checklistPrint": "Print",
     "checklistExportMarkdown": "Markdown",
     "checklistLanguage": "Language",
-    "checklistShowOwned": "Show cards already on the shelf",
+    "checklistShowOwned": "Also show cards already on the shelf",
     "checklistMasterSet": "Master set (each finish separately)",
     "checklistUntaggedOwned": "{count} cards on the shelf have no finish set — master set ignores them until you choose None or Silver on each copy.",
     "checklistSearch": "Search for a card or set…",
@@ -606,7 +606,8 @@
     "ratingMin": "Minimum rating",
     "rating.any": "Any rating",
     "rating.atLeast": "{rating}+ / 10",
-    "pricedOnly": "With price estimate"
+    "pricedOnly": "With price estimate",
+    "duplicatesOnly": "Duplicates only"
   },
   "app": {
     "name": "Placarr",

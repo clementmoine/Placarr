@@ -231,6 +231,77 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       ).toBe(true);
     });
 
+    /*
+      Starters S2 annoncent des reprints S1 (ex. NI-008). « Série 2 complète »
+      doit les exiger aussi — pas seulement le checklist papier `print_sets`.
+    */
+    it("includes S1 reprints that S2 starters guarantee in the S2 checklist", () => {
+      const s2 = listNarutoSetPrints({ setId: "s2", language: "fr" });
+      const keys = new Set(s2.map((row) => row.printKey));
+      // Sceller le Maléfice reprints from S1
+      expect(keys.has("naruto:ni-0008")).toBe(true);
+      expect(keys.has("naruto:ni-0027")).toBe(true);
+      // Détruire Konoha reprints from S1
+      expect(keys.has("naruto:ni-0014")).toBe(true);
+      expect(keys.has("naruto:ni-0054")).toBe(true);
+    });
+
+    it("lists TA-074 on S2 (deck) and S3 (booster pool reprint, paper poster)", () => {
+      const key = "naruto:ta-0074";
+      expect(
+        listNarutoSetPrints({ setId: "s2", language: "fr" }).some(
+          (row) => row.printKey === key,
+        ),
+      ).toBe(true);
+      expect(
+        listNarutoSetPrints({ setId: "s3", language: "fr" }).some(
+          (row) => row.printKey === key,
+        ),
+      ).toBe(true);
+    });
+
+    it("expands TA-074 to S2 and S3 when searching without set filter", () => {
+      const retail = searchNarutoPrints("TA-074", {
+        language: "fr",
+        limit: 20,
+      }).filter((row) => row.printKey === "naruto:ta-0074");
+      expect(retail.map((row) => row.setCode).sort()).toEqual(["s2", "s3"]);
+      expect(retail.find((row) => row.setCode === "s2")?.setLabel).toMatch(
+        /Série 2/i,
+      );
+      expect(retail.find((row) => row.setCode === "s3")?.setLabel).toMatch(
+        /Série 3/i,
+      );
+    });
+
+    it("stamps setCode/setLabel to the filtered series for multi-set reprints", () => {
+      const row = searchNarutoPrints("TA-074", {
+        setId: "s3",
+        language: "fr",
+        limit: 20,
+      }).find((r) => r.printKey === "naruto:ta-0074");
+      expect(row?.setCode).toBe("s3");
+      expect(row?.setLabel).toMatch(/Série 3/i);
+    });
+
+    it("finds deck-only S4 reprints in set-filtered search (picker)", () => {
+      // NI-050 = garantie starter S4, souvent hors `print_sets` → SQL seul rate.
+      expect(
+        searchNarutoPrints("NI-050", {
+          setId: "s4",
+          language: "fr",
+          limit: 20,
+        }).map((row) => row.printKey),
+      ).toContain("naruto:ni-0050");
+      expect(
+        searchNarutoPrints("", {
+          setId: "s4",
+          language: "fr",
+          limit: 5000,
+        }).some((row) => row.printKey === "naruto:ni-0050"),
+      ).toBe(true);
+    });
+
     it("no longer exposes Italian as a catalogue language", () => {
       const rows = listNarutoSetPrints({ setId: "s1", language: "it" });
       expect(rows).toEqual([]);
@@ -254,32 +325,46 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       expect(rows.every((row) => row.language === "fr")).toBe(true);
     });
 
-    it("lists the 15 Kana manga promo cards on S6 FR (6 inédites + 9 S5 reprints)", () => {
-      const rows = listNarutoSetPrints({ setId: "s6", language: "fr" });
-      const keys = rows.map((row) => row.printKey).sort();
-      expect(keys).toEqual(
-        [
-          "naruto:ni-0206",
-          "naruto:ni-0232",
-          "naruto:ni-0236",
-          "naruto:ni-0239",
-          "naruto:ni-0240",
-          "naruto:ni-0252",
-          "naruto:ni-0253",
-          "naruto:ta-0214",
-          "naruto:ta-0219",
-          "naruto:ta-0221",
-          "naruto:ta-0226",
-          "naruto:ta-0227",
-          "naruto:te-0192",
-          "naruto:te-0205",
-          "naruto:te-0207",
-        ].sort(),
-      );
-      expect(keys).toHaveLength(15);
-      expect(rows.every((row) => row.language === "fr")).toBe(true);
-      expect(keys).not.toContain("naruto:ni-0268");
-      expect(keys).not.toContain("naruto:te-0191");
+    it("folds Kana S6 FR inserts into S5 and hides checklist s6 in French", () => {
+      expect(listNarutoSetPrints({ setId: "s6", language: "fr" })).toEqual([]);
+      // Pas de chapitre FR : `languages` sans `fr` (filtre shelfChecklist / picker).
+      expect(
+        listNarutoPrintSets().find((set) => set.id === "s6")?.languages ?? [],
+      ).not.toContain("fr");
+
+      const s5 = listNarutoSetPrints({ setId: "s5", language: "fr" });
+      const keys = new Set(s5.map((row) => row.printKey));
+      // 6 inédites Kana → classées S5, restent des cartes s6
+      for (const key of [
+        "naruto:ni-0232",
+        "naruto:ni-0236",
+        "naruto:ni-0252",
+        "naruto:ni-0253",
+        "naruto:ta-0221",
+        "naruto:ta-0226",
+      ]) {
+        expect(keys.has(key)).toBe(true);
+        const row = s5.find((r) => r.printKey === key);
+        expect(row?.setCode).toBe("s6");
+        expect(row?.setLabel).toMatch(/Série 6/i);
+      }
+      // 9 reprints blister — already S5, still present, no second set
+      for (const key of [
+        "naruto:ni-0206",
+        "naruto:ni-0239",
+        "naruto:ni-0240",
+        "naruto:ta-0214",
+        "naruto:ta-0219",
+        "naruto:ta-0227",
+        "naruto:te-0192",
+        "naruto:te-0205",
+        "naruto:te-0207",
+      ]) {
+        expect(keys.has(key)).toBe(true);
+      }
+      expect(keys.has("naruto:ni-0268")).toBe(false);
+      expect(keys.has("naruto:te-0191")).toBe(false);
+      expect(s5.every((row) => row.language === "fr")).toBe(true);
     });
 
     it("does not mix CCG M-092 into Carddass Série 3 FR", () => {
@@ -336,9 +421,15 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       La clé se colle telle qu'elle s'écrit, tirets compris — c'est la forme que
       rend le catalogue et celle que porte l'URL. La variante sans tiret n'est pas
       reconnue, et n'a pas à l'être : personne ne la produit.
+      Multi-set : une ligne par appartenance (ex. S1 + garantie deck S2), jamais
+      une voisine de numéro (NI-0015…).
     */
     it("rend la carte seule, pas ses voisines de numéro", () => {
-      expect(searchNarutoPrints("naruto:ni-0014", { limit: 10 })).toHaveLength(1);
+      const rows = searchNarutoPrints("naruto:ni-0014", { limit: 10 });
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+      expect(new Set(rows.map((row) => row.printKey))).toEqual(
+        new Set(["naruto:ni-0014"]),
+      );
     });
 
     /*
@@ -400,13 +491,13 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       const sets = listNarutoPrintSets();
       const langs = (id: string) => sets.find((s) => s.id === id)?.languages;
       /*
-        Le français retail s'arrête à la Série 5 ; la S6 retail est annulée mais
-        des inserts Kana (MIJ 2008) existent — d'où `fr` sur `s6` (sous-ensemble).
+        Le français retail s'arrête à la Série 5 ; la S6 retail est annulée —
+        inserts Kana (MIJ 2008) = bonus checklist S5, pas de `fr` sur `s6`.
         Les séries 7 à 23 et 25–27 sont anglaises seules. Sage's Legacy (s24) et
         Storm 3 (s28) ont reçu une impression française tardive.
       */
       expect(langs("s1")).toEqual(["en", "fr"]);
-      expect(langs("s6")).toEqual(["en", "fr"]);
+      expect(langs("s6")).toEqual(["en"]);
       expect(langs("s7")).toEqual(["en"]);
       expect(langs("s24")).toEqual(["en", "fr"]);
       expect(langs("s28")).toEqual(["en", "fr"]);

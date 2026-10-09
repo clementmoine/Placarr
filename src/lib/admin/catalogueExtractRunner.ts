@@ -220,7 +220,7 @@ export async function resolveCatalogueExtractPlan(
             ...resumePrelude,
             "Pokémon: catalogue CDN (AssetManifests, 14 buckets) → tous les bundles listés",
             "chaque bundle porte son bucket : aucune sonde de dossiers",
-            "langs catalogue = en,fr (Live DE/IT/ES/ptbr hors tuiles admin)",
+            "langs catalogue = en,fr (Live original + FR ; DE/IT/ES/ptbr hors dump)",
           ]
         : [
             ...resumePrelude,

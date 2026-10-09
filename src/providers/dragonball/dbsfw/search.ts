@@ -11,6 +11,10 @@ import {
   isAnsweredQuery,
   setScopedWhere,
 } from "@/providers/shared/cardCatalogue/sets";
+import {
+  printAssetsArtSql,
+  printAssetsColumnNames,
+} from "@/providers/shared/cardCatalogue/printAssetsCore";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { assetsCardUrl } from "@/lib/packAssetUrls";
@@ -90,19 +94,22 @@ function toCandidate(row: DbsFwPrintDetail): PrintCandidate {
   };
 }
 
-const DETAIL_SQL = `SELECT p.print_key AS printKey,
+function detailSql(db: { prepare: (sql: string) => { all: () => unknown[] } }) {
+  const artSql = printAssetsArtSql(printAssetsColumnNames(db));
+  return `SELECT p.print_key AS printKey,
               p.set_code   AS setCode,
               p.number     AS number,
               p.grouping   AS grouping,
               t.lang       AS lang,
               t.full_name  AS fullName,
               t.set_name   AS setName,
-              a.image_url  AS imageUrl
+              ${artSql}    AS imageUrl
          FROM prints p
          LEFT JOIN print_titles t
                 ON t.print_key = p.print_key
          LEFT JOIN print_assets a
                 ON a.print_key = p.print_key AND a.lang = t.lang`;
+}
 
 export function searchDbsFwPrints(
   query: string,
@@ -150,7 +157,7 @@ export function searchDbsFwPrints(
 
   const rows = db
     .prepare(
-      `${DETAIL_SQL}
+      `${detailSql(db)}
         WHERE ${scope.where}
         ORDER BY (t.lang = ?) DESC, p.set_code, p.number, p.grouping
         LIMIT ?`,
@@ -182,7 +189,7 @@ export function lookupDbsFwPrintDetail(
   const lang = (opts.language || "en").toLowerCase();
   const row = db
     .prepare(
-      `${DETAIL_SQL}
+      `${detailSql(db)}
         WHERE p.print_key = ?
         ORDER BY (t.lang = ?) DESC
         LIMIT 1`,

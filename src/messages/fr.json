@@ -513,7 +513,7 @@
     "checklistPrint": "Imprimer",
     "checklistExportMarkdown": "Markdown",
     "checklistLanguage": "Langue",
-    "checklistShowOwned": "Afficher les cartes déjà en liste",
+    "checklistShowOwned": "Afficher aussi les cartes déjà en liste",
     "checklistMasterSet": "Master set (chaque finition séparément)",
     "checklistUntaggedOwned": "{count} cartes sur l'étagère n'ont pas de finition — le master set les ignore tant que None ou Silver n'est pas renseigné sur chaque exemplaire.",
     "checklistSearch": "Rechercher une carte ou une extension…",
@@ -606,7 +606,8 @@
     "ratingMin": "Note minimale",
     "rating.any": "Toutes les notes",
     "rating.atLeast": "{rating}+ / 10",
-    "pricedOnly": "Avec estimation de prix"
+    "pricedOnly": "Avec estimation de prix",
+    "duplicatesOnly": "Doublons seulement"
   },
   "app": {
     "name": "Placarr",

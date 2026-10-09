@@ -2,6 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { mkdirSync, writeFileSync, mkdtempSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { comparePrintKeys } from "@/core/identify/printKey";
 import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel } from "./identity";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import type { NarutoPrintDetail } from "./search";
@@ -245,7 +246,7 @@ import type { NarutoPrintDetail } from "./search";
       const sorted = ["prni0001", "ki0007", "cl0002", "ni0001"].sort(
         compareNarutoCollectors,
       );
-      expect(sorted).toEqual(["ni0001", "cl0002", "ki0007", "prni0001"]);
+      expect(sorted).toEqual(["cl0002", "ni0001", "ki0007", "prni0001"]);
     });
   });
 
@@ -276,6 +277,28 @@ import type { NarutoPrintDetail } from "./search";
   });
 
   describe("compareNarutoCollectors", () => {
+    it("orders Client → Ninja → Technique → Tactique", () => {
+      const sorted = ["ta001", "te001", "ni001", "cl001"].sort(
+        compareNarutoCollectors,
+      );
+      expect(sorted).toEqual(["cl001", "ni001", "te001", "ta001"]);
+    });
+
+    it("registers the same order on comparePrintKeys", () => {
+      const sorted = [
+        "naruto:ta-0001",
+        "naruto:te-0001",
+        "naruto:ni-0001",
+        "naruto:cl-0001",
+      ].sort(comparePrintKeys);
+      expect(sorted).toEqual([
+        "naruto:cl-0001",
+        "naruto:ni-0001",
+        "naruto:te-0001",
+        "naruto:ta-0001",
+      ]);
+    });
+
     it("lines locale printings of the same number up together, ignoring series", () => {
       const numbers = ["m081", "ni001", "ta081", "N-001", "J-001", "te001"];
       const sorted = [...numbers].sort(compareNarutoCollectors);
@@ -793,6 +816,12 @@ import type { NarutoPrintDetail } from "./search";
   describe("officialFrChecklistSetsForNumber", () => {
     it("liste S1 et S5 pour NI-049 (checklist papier)", () => {
       expect(officialFrChecklistSetsForNumber("ni0049")).toEqual(["s1", "s5"]);
+    });
+
+    it("liste S2 et S3 pour TA-074 (deck S2 + pool booster S3, poster user)", () => {
+      resetOfficialFrChecklistCache();
+      expect(officialFrChecklistSetsForNumber("ta074")).toEqual(["s2", "s3"]);
+      expect(officialFrChecklistSetsForNumber("ta0074")).toEqual(["s2", "s3"]);
     });
   });
 

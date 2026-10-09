@@ -213,6 +213,11 @@ model Item {
   // `barcode` on purpose: a column holding something that is not a barcode
   // costs more in the long run than the extra column. See core/identify/printKey.
   printKey                  String?
+  // Which expansion this copy was collected as (`s5`, `1`, `part1`). Set-scoped
+  // checklists need it: Naruto reuses one printKey across series, so owning
+  // NI-049 for S5 must not auto-complete S1. Null = legacy / unknown — the
+  // checklist still counts the printKey in every set that lists it.
+  setCode                   String?
   // Which variant of the object this copy is: a card's finish (foil, reverse),
   // eventually a game's completeness. Deliberately generic and free text —
   // every media type has variants and the vocabulary belongs to the provider,
@@ -253,6 +258,7 @@ model Item {
   @@index([metadataId])
   @@index([barcode])
   @@index([printKey])
+  @@index([printKey, setCode, variant, language])
   @@index([printKey, variant, language])
   @@index([slug])
   @@index([loanedTo])

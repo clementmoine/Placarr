@@ -42,6 +42,10 @@ import {
   LORCANA_GAME,
   normalizeLorcanaSearchText,
 } from "@/providers/lorcana/lorcanajson/fetch";
+import {
+  isLorcanaMainCatalogueSetCode,
+  normalizeLorcanaPromoGrouping,
+} from "@/providers/lorcana/lorcanatcg/sources/promoSeries";
 
 /**
  * Ce qu'un numéro de collection peut être : des chiffres, et au plus **une**
@@ -49,9 +53,6 @@ import {
  * imprimé, et n'ancre donc rien.
  */
 const COLLECTOR_NUMBER = /^(\d+)([a-z]?)$/;
-
-/** Un code purement numérique est une extension principale, pas une promo. */
-const MAIN_SET_CODE = /^\d+$/;
 
 /**
  * Sets de Lorcast qu'on ne fusionne pas, et pourquoi.
@@ -123,9 +124,14 @@ export function toLorcastFillPrint(
     printKey,
     baseNumber: String(Number(match[1])),
     variant: match[2] || null,
-    promoGrouping: MAIN_SET_CODE.test(print.setCode)
-      ? null
-      : print.setCode.toUpperCase(),
+    // Chapitres `1`…`14` et quêtes `Q1`… : pas de groupe promo. Un set
+    // Lorcast non principal (`P2`, `C2`…) porte son code comme grouping.
+    promoGrouping: normalizeLorcanaPromoGrouping(
+      print.setCode,
+      isLorcanaMainCatalogueSetCode(print.setCode)
+        ? null
+        : print.setCode.toUpperCase(),
+    ),
     fullName,
     searchName: normalizeLorcanaSearchText(fullName),
   };

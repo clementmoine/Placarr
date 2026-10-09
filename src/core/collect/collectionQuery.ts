@@ -30,12 +30,18 @@ export type ItemCollectionFilters = {
   condition: Condition | "all";
   ratingMin: number | null;
   pricedOnly: boolean;
+  /**
+   * Display-only: after {@link groupCopies}, keep groups with more than one
+   * copy. Not applied inside {@link filterCollectionItems}.
+   */
+  duplicatesOnly: boolean;
 };
 
 export const DEFAULT_ITEM_COLLECTION_FILTERS: ItemCollectionFilters = {
   condition: "all",
   ratingMin: null,
   pricedOnly: false,
+  duplicatesOnly: false,
 };
 
 const BASE_ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
@@ -292,7 +298,11 @@ export function parseItemCollectionFilters(searchParams: {
   const pricedParam = searchParams.get("priced");
   const pricedOnly = pricedParam === "1" || pricedParam === "true";
 
-  return { condition, ratingMin, pricedOnly };
+  const duplicatesParam = searchParams.get("duplicates");
+  const duplicatesOnly =
+    duplicatesParam === "1" || duplicatesParam === "true";
+
+  return { condition, ratingMin, pricedOnly, duplicatesOnly };
 }
 
 export function hasActiveCollectionFilters(
@@ -301,7 +311,8 @@ export function hasActiveCollectionFilters(
   return (
     filters.condition !== "all" ||
     filters.ratingMin !== null ||
-    filters.pricedOnly
+    filters.pricedOnly ||
+    filters.duplicatesOnly
   );
 }
 
@@ -312,5 +323,6 @@ export function collectionFiltersToSearchParams(
     condition: filters.condition === "all" ? null : filters.condition,
     ratingMin: filters.ratingMin === null ? null : String(filters.ratingMin),
     priced: filters.pricedOnly ? "1" : null,
+    duplicates: filters.duplicatesOnly ? "1" : null,
   };
 }

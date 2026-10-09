@@ -20,7 +20,7 @@ import dig_youtubeGapsWebHunt from "../curated/sources/youtube-gaps-web-hunt-202
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_SEALED_SKUS } from "../sealed";
 import { loadNarutoAppearancesFile } from "../identity";
-import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrPrintedNumber, narutoS6FrPrintedDiskNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
+import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrPrintedNumber, narutoS6FrPrintedDiskNumbers, narutoS6FrSeries5BonusNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
 
 // —— carteSemaine ——
 {
@@ -237,6 +237,17 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       expect(isNarutoS6FrPrintedNumber("ni240")).toBe(true);
       expect(isNarutoS6FrPrintedNumber("ni268")).toBe(false);
       expect(isNarutoS6FrPrintedNumber("te191")).toBe(false);
+    });
+
+    it("exposes only the 6 s6 inédites for S5 checklist placement (not the 9 reprints)", () => {
+      expect(narutoS6FrSeries5BonusNumbers().sort()).toEqual([
+        "ni232",
+        "ni236",
+        "ni252",
+        "ni253",
+        "ta221",
+        "ta226",
+      ]);
     });
 
     it("lists disk number forms for membership SQL", () => {

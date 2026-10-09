@@ -26,7 +26,7 @@ describe("pokemontcglive languages", () => {
     expect(POKEMON_LIVE_LANGS_CSV).toBe("fr,en,de,it,es,ptbr");
   });
 
-  it("catalogue ingest is original EN + FR only", () => {
+  it("catalogue ingest is Live original EN + FR", () => {
     expect([...POKEMON_CATALOGUE_LANGUAGES]).toEqual(["en", "fr"]);
     expect(POKEMON_CATALOGUE_LANGS_CSV).toBe("en,fr");
   });

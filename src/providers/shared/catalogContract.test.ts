@@ -29,6 +29,7 @@ import {
   loadNarutoCardsIndexFromSqlite,
   NARUTO_PACK_ID,
 } from "@/providers/naruto/narutocarddass/indexStore";
+import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 describe("catalogDurableCdn", () => {
   it("marks known encyclopaedia / static hosts as durable", () => {
@@ -198,14 +199,34 @@ describe("catalogue identity browse anti-désync", () => {
     }
   });
 
-  it("One Piece + Yu-Gi-Oh! browse from identity sqlite", () => {
-    for (const pack of ["onepiece", "yugioh"] as const) {
+  it.each([
+    { pack: "onepiece" as const, lang: "en" },
+    { pack: "yugioh" as const, lang: "en" },
+    { pack: "mtg" as const, lang: "en" },
+    { pack: "naruto/kayou" as const, lang: "en" },
+  ])(
+    "$pack identity browse printKeys ⊆ checklist sqlite (same corpus)",
+    ({ pack, lang }) => {
+      const index = createLocalPrintsIndex(pack);
+      if (!index.hasIdentityCorpus()) return;
+
+      const checklist = new Set(
+        index.listRowsForLanguage(lang).map((r) => r.printKey),
+      );
+      if (checklist.size === 0) return;
+
       const browse = tryBuildIdentityCatalogueRows(pack);
-      if (browse === null) continue; // no local corpus in CI
-      expect(browse.length).toBeGreaterThan(0);
-      expect(browse.every((r) => r.printKey.includes(":"))).toBe(true);
-    }
-  });
+      expect(browse).not.toBeNull();
+      const faces = (browse ?? []).filter(
+        (r) => r.kind !== "pack-back" && r.lang === lang,
+      );
+      expect(faces.length).toBeGreaterThan(0);
+      for (const row of faces.slice(0, 50)) {
+        expect(checklist.has(row.printKey)).toBe(true);
+      }
+      expect(faces.every((r) => r.printKey.includes(":"))).toBe(true);
+    },
+  );
 
   it("Carddass identity browse is non-null when catalog.sqlite exists", () => {
     const db = ensureNarutoPackIndex(NARUTO_PACK_ID);
@@ -236,8 +257,10 @@ describe("catalogue identity browse anti-désync", () => {
       "pokemon",
       "lorcana",
       "naruto/carddass",
+      "naruto/kayou",
       "onepiece",
       "yugioh",
+      "mtg",
       "dragonball/cg",
       "dragonball/fw",
     ] as const;
@@ -247,7 +270,9 @@ describe("catalogue identity browse anti-désync", () => {
       expect(pack.emptyUnless, id).not.toContain("cards-index.json");
       expect(pack.extractMarkers, id).not.toContain("cards-index.json");
       expect(
-        pack.emptyUnless.some((m) => m.endsWith("catalog.sqlite") || m === "catalog.sqlite"),
+        pack.emptyUnless.some(
+          (m) => m.endsWith("catalog.sqlite") || m === "catalog.sqlite",
+        ),
         id,
       ).toBe(true);
     }

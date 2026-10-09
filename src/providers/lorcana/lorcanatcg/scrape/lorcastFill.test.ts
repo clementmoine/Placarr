@@ -95,6 +95,21 @@ describe("toLorcastFillPrint", () => {
     });
   });
 
+  it("ne pose pas de groupe promo sur une quête (Q3 ≠ promo)", () => {
+    const mapped = toLorcastFillPrint(
+      print({
+        setCode: "Q3",
+        collectorNumber: "1",
+        name: "Mickey Mouse",
+        version: "Rescued from the Entrance",
+      }),
+    );
+    expect(mapped).toMatchObject({
+      printKey: "lorcana:q3-1",
+      promoGrouping: null,
+    });
+  });
+
   it("garde la lettre de variante dans la clé, la sort du numéro", () => {
     const mapped = toLorcastFillPrint(
       print({ setCode: "P2", collectorNumber: "24B", name: "Hiro Hamada" }),

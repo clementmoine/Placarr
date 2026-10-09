@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   buildPrintKey,
@@ -8,6 +8,8 @@ import {
   printCollectableKey,
   comparePrintKeys,
   comparePrintSetCodes,
+  registerPrintKeyCompare,
+  unregisterPrintKeyCompare,
 } from "./printKey";
 
 describe("buildPrintKey", () => {
@@ -209,5 +211,25 @@ describe("comparePrintKeys", () => {
   it("places missing keys after real prints", () => {
     expect(comparePrintKeys(null, "lorcana:1-1")).toBeGreaterThan(0);
     expect(comparePrintKeys("lorcana:1-1", null)).toBeLessThan(0);
+  });
+
+  describe("registerPrintKeyCompare", () => {
+    afterEach(() => {
+      unregisterPrintKeyCompare("demo");
+    });
+
+    it("lets a game override set order then falls through for others", () => {
+      registerPrintKeyCompare("demo", (a, b) => {
+        const order = ["z", "a"];
+        const ia = order.indexOf(a.set);
+        const ib = order.indexOf(b.set);
+        if (ia === -1 && ib === -1) return null;
+        return (ia === -1 ? order.length : ia) - (ib === -1 ? order.length : ib);
+      });
+      expect(
+        [...["demo:a-1", "demo:z-1"]].sort(comparePrintKeys),
+      ).toEqual(["demo:z-1", "demo:a-1"]);
+      expect(comparePrintKeys("lorcana:1-2", "lorcana:1-10")).toBeLessThan(0);
+    });
   });
 });

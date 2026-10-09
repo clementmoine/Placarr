@@ -6,10 +6,11 @@ import {
   lorcanaPromoChecklistSeries,
   lorcanaPromoGroupingForSetId,
   lorcanaSetScopeWhere,
+  normalizeLorcanaPromoGrouping,
 } from "./promoSeries";
 
 describe("isLorcanaMainCatalogueSetCode", () => {
-  it.each(["1", "13", "Q1", "q2"])("keeps %s as main catalogue", (code) => {
+  it.each(["1", "13", "Q1", "q2", "Q3"])("keeps %s as main catalogue", (code) => {
     expect(isLorcanaMainCatalogueSetCode(code)).toBe(true);
   });
 
@@ -19,6 +20,19 @@ describe("isLorcanaMainCatalogueSetCode", () => {
       expect(isLorcanaMainCatalogueSetCode(code)).toBe(false);
     },
   );
+});
+
+describe("normalizeLorcanaPromoGrouping", () => {
+  it("clears quest self-stamps (Lorcast Q3 bug)", () => {
+    expect(normalizeLorcanaPromoGrouping("Q3", "Q3")).toBeNull();
+    expect(normalizeLorcanaPromoGrouping("q2", "Q2")).toBeNull();
+    expect(normalizeLorcanaPromoGrouping("14", "14")).toBeNull();
+  });
+
+  it("keeps real promo groupings under a retail chapter", () => {
+    expect(normalizeLorcanaPromoGrouping("1", "P1")).toBe("P1");
+    expect(normalizeLorcanaPromoGrouping("P2", "P2")).toBe("P2");
+  });
 });
 
 describe("lorcanaPromoChecklistSeries", () => {

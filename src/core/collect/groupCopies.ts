@@ -73,6 +73,18 @@ export function groupCopies<T extends GroupableCopy>(
 }
 
 /**
+ * Keep only groups that represent more than one physical copy.
+ *
+ * Applied after {@link groupCopies} so the shelf can show "my duplicates"
+ * without changing how tiles fold (still ×N, never forced piles).
+ */
+export function filterDuplicateGroups<T>(
+  groups: readonly CopyGroup<T>[],
+): CopyGroup<T>[] {
+  return groups.filter((group) => group.copies.length > 1);
+}
+
+/**
  * Strip the copy marker a duplicate's title carries.
  *
  * Duplicates were disambiguated by appending `(copie)` to the name. Once the

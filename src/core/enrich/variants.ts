@@ -148,17 +148,22 @@ export function expandPrintCandidatesByFinish<
   T extends {
     printKey: string;
     language?: string | null;
+    setCode?: string | null;
     finishes?: readonly (string | null | undefined)[] | null;
   },
 >(candidates: readonly T[]): PrintFinishRow<T>[] {
   const rows: PrintFinishRow<T>[] = [];
   for (const candidate of candidates) {
     const finishes = normalizeVariantOptions(candidate.finishes);
+    const set = (candidate.setCode ?? "").trim().toLowerCase();
+    const lang = candidate.language ?? "";
     if (finishes.length === 0) {
       rows.push({
         ...candidate,
         finish: null,
-        rowKey: `${candidate.printKey}||${candidate.language ?? ""}`,
+        rowKey: set
+          ? `${candidate.printKey}||${lang}|${set}`
+          : `${candidate.printKey}||${lang}`,
       });
       continue;
     }
@@ -166,7 +171,9 @@ export function expandPrintCandidatesByFinish<
       rows.push({
         ...candidate,
         finish,
-        rowKey: `${candidate.printKey}|${finish}|${candidate.language ?? ""}`,
+        rowKey: set
+          ? `${candidate.printKey}|${finish}|${lang}|${set}`
+          : `${candidate.printKey}|${finish}|${lang}`,
       });
     }
   }

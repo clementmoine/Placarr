@@ -1,5 +1,8 @@
 "use client";
 
+import { Copy } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -54,5 +57,38 @@ export function ItemCollectionSortSelect({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+type ItemCollectionDuplicatesFilterProps = {
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  className?: string;
+};
+
+/** Toggle: show only tiles that group more than one physical copy. */
+export function ItemCollectionDuplicatesFilter({
+  value,
+  onValueChange,
+  className,
+}: ItemCollectionDuplicatesFilterProps) {
+  const { t } = useLocale();
+
+  return (
+    <Button
+      type="button"
+      variant={value ? "default" : "outline"}
+      aria-pressed={value}
+      onClick={() => onValueChange(!value)}
+      className={cn(
+        "h-11 shrink-0 rounded-2xl border-border/80 dark:border-zinc-800/80 px-3.5",
+        !value &&
+          "bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md hover:bg-zinc-50/10",
+        className,
+      )}
+    >
+      <Copy className="size-4" />
+      {t("filters.duplicatesOnly")}
+    </Button>
   );
 }

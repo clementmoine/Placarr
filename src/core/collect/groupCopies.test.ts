@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   copyGroupKey,
+  filterDuplicateGroups,
   groupCopies,
   withoutCopyMarker,
   type GroupableCopy,
@@ -87,6 +88,27 @@ describe("groupCopies", () => {
 
   it("has nothing to say about an empty shelf", () => {
     expect(groupCopies([])).toEqual([]);
+  });
+});
+
+describe("filterDuplicateGroups", () => {
+  it("keeps only groups with more than one copy", () => {
+    const groups = groupCopies([
+      copy({ id: "elsa1", metadataId: "elsa" }),
+      copy({ id: "elsa2", metadataId: "elsa" }),
+      copy({ id: "pumbaa", metadataId: "pumbaa" }),
+    ]);
+    expect(filterDuplicateGroups(groups).map((g) => g.lead.id)).toEqual([
+      "elsa1",
+    ]);
+  });
+
+  it("returns nothing when every tile is a singleton", () => {
+    const groups = groupCopies([
+      copy({ id: "a", metadataId: "a" }),
+      copy({ id: "b", metadataId: "b" }),
+    ]);
+    expect(filterDuplicateGroups(groups)).toEqual([]);
   });
 });
 

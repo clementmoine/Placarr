@@ -56,8 +56,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
-import { groupCopies } from "@/core/collect/groupCopies";
-import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
+import {
+  filterDuplicateGroups,
+  groupCopies,
+} from "@/core/collect/groupCopies";
+import {
+  ItemCollectionDuplicatesFilter,
+  ItemCollectionSortSelect,
+} from "@/components/ItemCollectionControls";
 import dynamic from "next/dynamic";
 import type { BulkAddTab } from "@/components/modals/BulkAddModal";
 import { ScannerButton } from "@/components/ScannerButton";
@@ -113,6 +119,7 @@ import {
 } from "@/core/collect/queryCache";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
+  parseItemCollectionFilters,
   parseItemCollectionSort,
   queryCollectionItems,
   summarizeCollectionEstimatedValue,
@@ -259,6 +266,9 @@ function ShelfComponent() {
   const [sortBy, setSortBy] = useState<ItemCollectionSort>(
     parseItemCollectionSort(sortParam),
   );
+  const [duplicatesOnly, setDuplicatesOnly] = useState(
+    () => parseItemCollectionFilters(searchParams).duplicatesOnly,
+  );
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
     () => new Set(),
@@ -369,6 +379,7 @@ function ShelfComponent() {
     setPrevSortSourceKey(sortSourceKey);
     setSearchQuery(q);
     setSortBy(parseItemCollectionSort(searchParams.get("sort"), shelf?.type));
+    setDuplicatesOnly(parseItemCollectionFilters(searchParams).duplicatesOnly);
   }
 
   useDocumentTitle(shelf?.name);
@@ -433,7 +444,18 @@ function ShelfComponent() {
    * loan — so this is purely a display fold, applied after sorting so a group
    * appears where its first copy did. See `docs/tcg_support.md` §4.
    */
-  const groupedItems = useMemo(() => groupCopies(sortedItems), [sortedItems]);
+  const groupedItems = useMemo(() => {
+    const groups = groupCopies(sortedItems);
+    return duplicatesOnly ? filterDuplicateGroups(groups) : groups;
+  }, [sortedItems, duplicatesOnly]);
+
+  const visibleItemCount = useMemo(
+    () =>
+      duplicatesOnly
+        ? groupedItems.reduce((sum, group) => sum + group.copies.length, 0)
+        : sortedItems.length,
+    [duplicatesOnly, groupedItems, sortedItems.length],
+  );
 
   /*
     Ce que l'étagère tient déjà, pour que le sélecteur de tirages le dise avant
@@ -457,6 +479,7 @@ function ShelfComponent() {
           printKey: item.printKey,
           variant: item.variant,
           language: item.language,
+          setCode: item.setCode,
         })),
     [shelf?.items],
   );
@@ -986,15 +1009,26 @@ function ShelfComponent() {
               </Form>
             </div>
 
-            <div className="w-full sm:w-[220px] shrink-0">
-              <ItemCollectionSortSelect
-                value={sortBy}
-                shelfType={shelf?.type}
+            <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">
+              <ItemCollectionDuplicatesFilter
+                value={duplicatesOnly}
                 onValueChange={(value) => {
-                  setSortBy(value);
-                  replaceCollectionParams({ sort: value });
+                  setDuplicatesOnly(value);
+                  replaceCollectionParams({
+                    duplicates: value ? "1" : null,
+                  });
                 }}
               />
+              <div className="w-full sm:w-[220px]">
+                <ItemCollectionSortSelect
+                  value={sortBy}
+                  shelfType={shelf?.type}
+                  onValueChange={(value) => {
+                    setSortBy(value);
+                    replaceCollectionParams({ sort: value });
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -1002,8 +1036,8 @@ function ShelfComponent() {
           <div className="flex flex-wrap items-end justify-between gap-4 mt-2">
             <div className="min-w-0 flex flex-col gap-0.5">
               <h2 className="text-xl font-semibold">
-                {sortedItems.length || 0}{" "}
-                {t(itemsCountNounKey(shelf?.type, sortedItems.length || 0))}
+                {visibleItemCount || 0}{" "}
+                {t(itemsCountNounKey(shelf?.type, visibleItemCount || 0))}
               </h2>
               {hasPrintItems && (
                 <Link

@@ -94,9 +94,9 @@ type SetAdvice = {
     expensiveCents: number;
     medianCents: number | null;
   };
-  /** `printKey` → centimes EUR, pour afficher le prix à côté de chaque manquante. */
+  /** `printKey` → centimes EUR — manquantes et possédées. */
   prices: Record<string, number>;
-  /** `printKey` → produits scellés qui garantissent la carte. */
+  /** `printKey` → produits scellés qui garantissent la carte (aussi si possédée). */
   sealedSources: Record<string, SealedPrintSource[]>;
   options: BuyOption[];
   plan: {
@@ -655,15 +655,17 @@ function SetRow({
         l'impression** : une check-list papier qu'il faut déplier n'en est pas
         une.
       */}
-      {advice && listOpen && !searching && <Advice advice={advice} t={t} />}
+      {advice &&
+        set.missing.length > 0 &&
+        listOpen &&
+        !searching && <Advice advice={advice} t={t} />}
 
       {listOpen && rows.length > 0 && (
         <ol className={cn(styles.missing, styles.missingOpen)}>
           {rows.map((row) => {
-            const priceCents = row.owned ? null : (prices[row.printKey] ?? null);
-            const sources = row.owned
-              ? []
-              : (sealedSources[row.printKey] ?? []);
+            // Cote + sources scellées aussi pour les cartes déjà possédées.
+            const priceCents = prices[row.printKey] ?? null;
+            const sources = sealedSources[row.printKey] ?? [];
             const sealedLabel =
               sources.length > 0
                 ? sources.map((source) => source.name).join(" · ")
@@ -742,10 +744,11 @@ export default function ChecklistPage() {
   const { t } = useLocale();
   const [language, setLanguage] = useState<string | null>(null);
   /*
-    Par défaut : manquantes seulement — la liste à chasser. Cocher le
-    toggle pour revoir aussi ce qui est déjà sur l'étagère.
+    Par défaut : toute la liste (possédées comprises) — cote et provenance
+    scellée restent utiles même cochées. Décocher pour ne chasser que les
+    manquantes.
   */
-  const [showOwned, setShowOwned] = useState(false);
+  const [showOwned, setShowOwned] = useState(true);
   /*
     Master set : chaque finition (normale / foil / …) est une case. Posséder
     la foil ne coche pas la normale.

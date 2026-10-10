@@ -92,6 +92,12 @@ import {
 import { installVialudibundaPackshots } from "./install/packshots";
 import { ingestNarutoSealedProducts } from "./sealed";
 
+import {
+  catalogueArgList,
+  catalogueArgValue,
+  selectCatalogueSteps,
+} from "@/providers/shared/cardCatalogue/catalogueSteps";
+
 const STEPS = [
   "scrape",
   "reconstruct",
@@ -108,38 +114,16 @@ const ONLINE: ReadonlySet<Step> = new Set<Step>(["scrape", "checklist"]);
 /** Not part of a normal pack build — regenerate curated ledgers on demand. */
 const OFF_BY_DEFAULT: ReadonlySet<Step> = new Set<Step>(["sources"]);
 
-function argValueFrom(
-  argv: readonly string[],
-  name: string,
-): string | undefined {
-  const idx = argv.indexOf(name);
-  if (idx < 0) return undefined;
-  return argv[idx + 1];
-}
-
-function argListFrom(argv: readonly string[], name: string): string[] {
-  return (argValueFrom(argv, name) ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 function unknown(list: string[]): string[] {
   return list.filter((s) => !(STEPS as readonly string[]).includes(s));
 }
 
 /** Which steps to run, from --only / --skip / --offline. */
 export function selectSteps(argv: readonly string[]): Step[] {
-  const only = argListFrom(argv, "--only");
-  const skip = new Set(argListFrom(argv, "--skip"));
-  const offline = argv.includes("--offline");
-  const base = only.length ? STEPS.filter((s) => only.includes(s)) : [...STEPS];
-  return base.filter(
-    (s) =>
-      !skip.has(s) &&
-      !(offline && ONLINE.has(s)) &&
-      !(only.length === 0 && OFF_BY_DEFAULT.has(s)),
-  );
+  return selectCatalogueSteps(argv, STEPS, {
+    online: ONLINE,
+    offByDefault: OFF_BY_DEFAULT,
+  });
 }
 
 async function runScrape(argv: readonly string[]): Promise<void> {
@@ -147,18 +131,18 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     force: argv.includes("--force"),
     cdxOnly: argv.includes("--cdx-only"),
     cardsOnly: argv.includes("--cards-only"),
-    limit: argValueFrom(argv, "--limit")
-      ? Number(argValueFrom(argv, "--limit"))
+    limit: catalogueArgValue(argv, "--limit")
+      ? Number(catalogueArgValue(argv, "--limit"))
       : undefined,
-    concurrency: argValueFrom(argv, "--concurrency")
-      ? Number(argValueFrom(argv, "--concurrency"))
+    concurrency: catalogueArgValue(argv, "--concurrency")
+      ? Number(catalogueArgValue(argv, "--concurrency"))
       : undefined,
-    delayMs: argValueFrom(argv, "--delay")
-      ? Number(argValueFrom(argv, "--delay"))
+    delayMs: catalogueArgValue(argv, "--delay")
+      ? Number(catalogueArgValue(argv, "--delay"))
       : undefined,
   };
   const raw =
-    argValueFrom(argv, "--locale") ?? argValueFrom(argv, "--lang") ?? "fr";
+    catalogueArgValue(argv, "--locale") ?? catalogueArgValue(argv, "--lang") ?? "fr";
   const locales = raw
     .split(",")
     .map((s) => s.trim().toLowerCase())
@@ -316,7 +300,7 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     if (wayback || drive) {
       const stagingOnly = argv.includes("--staging-only");
       const driveLocal =
-        argValueFrom(argv, "--drive-local") ??
+        catalogueArgValue(argv, "--drive-local") ??
         process.env.NARUTO_DRIVE_EXPORT_DIR;
       if (driveLocal) {
         const local = await ingestNarutoCcgDriveLocalExport({
@@ -373,7 +357,7 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         const driveFaces = await installNarutoCcgDriveFaces({
           force: shared.force,
           limit: shared.limit,
-          sets: argListFrom(argv, "--sets"),
+          sets: catalogueArgList(argv, "--sets"),
         });
         if (
           driveFaces.written.length ||
@@ -460,8 +444,8 @@ export async function runNarutoPackPipeline(
   argv: readonly string[] = [],
 ): Promise<void> {
   const bad = unknown([
-    ...argListFrom(argv, "--only"),
-    ...argListFrom(argv, "--skip"),
+    ...catalogueArgList(argv, "--only"),
+    ...catalogueArgList(argv, "--skip"),
   ]);
   if (bad.length) {
     throw new Error(

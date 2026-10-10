@@ -21,6 +21,12 @@ import {
   finalizeSetOptions,
   pickCatalogueSetNameByCount,
 } from "@/providers/shared/cardCatalogue/sets";
+import {
+  normalizePrintAssetColumns,
+  printAssetsArtSql,
+  printAssetsBackSql,
+  printAssetsColumnNames,
+} from "@/providers/shared/cardCatalogue/printAssetsCore";
 
 import { dataRoot } from "@/lib/runtimeData";
 
@@ -32,7 +38,8 @@ import {
 } from "./disk/faceChoice";
 import { DBS_CG_GAME } from "./identity";
 
-export const DBS_CG_SCHEMA_VERSION = "1";
+/** Bumped when `print_assets` moved `image_url`/`back_url` → `art`/`back`. */
+export const DBS_CG_SCHEMA_VERSION = "2";
 export const DBS_CG_PACK_ID = "dragonball/cg";
 
 export type DbsPrintRow = {
@@ -59,9 +66,28 @@ export type DbsTitleRow = {
 export type DbsAssetRow = {
   printKey: string;
   lang: string;
+  /** Core face column (preferred). */
+  art?: string | null;
+  back?: string | null;
+  /** @deprecated Legacy alias — prefer {@link art}. */
   imageUrl?: string | null;
+  /** @deprecated Legacy alias — prefer {@link back}. */
   backUrl?: string | null;
 };
+
+function assetArt(row: DbsAssetRow): string | null {
+  return normalizePrintAssetColumns({
+    art: row.art,
+    imageUrl: row.imageUrl,
+  }).art;
+}
+
+function assetBack(row: DbsAssetRow): string | null {
+  return normalizePrintAssetColumns({
+    back: row.back,
+    backUrl: row.backUrl,
+  }).back;
+}
 
 let activeDb: DatabaseSync | null = null;
 
@@ -118,8 +144,8 @@ function createSchema(db: DatabaseSync): void {
     CREATE TABLE print_assets (
       print_key TEXT NOT NULL,
       lang TEXT NOT NULL,
-      image_url TEXT,
-      back_url TEXT,
+      art TEXT,
+      back TEXT,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
@@ -171,11 +197,11 @@ export function writeDbsCgIndex(input: {
       awakened_name = excluded.awakened_name
   `);
   const insertAsset = db.prepare(`
-    INSERT INTO print_assets (print_key, lang, image_url, back_url)
+    INSERT INTO print_assets (print_key, lang, art, back)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(print_key, lang) DO UPDATE SET
-      image_url = COALESCE(excluded.image_url, print_assets.image_url),
-      back_url = COALESCE(excluded.back_url, print_assets.back_url)
+      art = COALESCE(excluded.art, print_assets.art),
+      back = COALESCE(excluded.back, print_assets.back)
   `);
 
   db.exec("BEGIN");
@@ -219,8 +245,8 @@ export function writeDbsCgIndex(input: {
       insertAsset.run(
         asset.printKey,
         asset.lang,
-        asset.imageUrl ?? null,
-        asset.backUrl ?? null,
+        assetArt(asset),
+        assetBack(asset),
       );
     }
     db.exec("COMMIT");
@@ -267,11 +293,12 @@ export function listDbsCgRowsForLanguage(language = "fr"): DbsCgBrowseRow[] {
   const db = ensureDbsCgIndex();
   if (!db) return [];
   const lang = language.trim().toLowerCase() || "fr";
+  const artSql = printAssetsArtSql(printAssetsColumnNames(db));
   return db
     .prepare(
       `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
               p.grouping, t.lang, t.full_name AS fullName, t.rarity,
-              a.image_url AS imageUrl
+              ${artSql} AS imageUrl
          FROM prints p
          JOIN print_titles t
            ON t.print_key = p.print_key AND t.lang = ?
@@ -381,10 +408,16 @@ export function loadDbsCgIndex(): {
            FROM print_titles`,
       )
       .all() as DbsTitleRow[];
+    const cols = printAssetsColumnNames(db);
+    const artSql = printAssetsArtSql(cols, "print_assets");
+    const backSql = printAssetsBackSql(cols, "print_assets");
     const assets = db
       .prepare(
-        `SELECT print_key AS printKey, lang, image_url AS imageUrl,
-                back_url AS backUrl
+        `SELECT print_key AS printKey, lang,
+                ${artSql} AS art,
+                ${backSql} AS back,
+                ${artSql} AS imageUrl,
+                ${backSql} AS backUrl
            FROM print_assets`,
       )
       .all() as DbsAssetRow[];
@@ -431,7 +464,8 @@ export function exportDbsCgCardsIndexJson(
     for (const lang of DBS_CG_FACE_LANGS) {
       const art = dbsCgLocalArtFilename(print, lang);
       const back = dbsCgLocalBackFilename(print, lang);
-      const imageUrl = assetsFor?.get(lang)?.imageUrl;
+      const remote = assetsFor?.get(lang);
+      const imageUrl = remote ? assetArt(remote) : null;
       const name = titlesFor?.get(lang)?.fullName?.trim();
       const files: CardsIndexLangFiles = {};
       if (art) files.art = art;

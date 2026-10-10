@@ -110,18 +110,23 @@ récurrent (≥2 packs).
       `localTcgContract.test.ts` (garde search / lookup / sets / catalog)
 10. [ ] `pnpm test` vert ; pas de literal provider hors `providers/`
 
-## Packs hors factory (héritage)
+## Packs hors factory (héritage — même contrat app)
 
-`narutocarddass`, `lorcanatcg`, `pokemon/live`, `dbscg`, `dbsfw` ont leur
-propre index / pipeline. Ils doivent **converger** vers le même contrat app
-(`PrintCandidate`, set-scoped keys, `catalogueSetFromPrintKey`) mais ne sont
-pas le modèle pour un **nouveau** jeu — partir de
-`createEmptyLocalTcgProvider`.
+`narutocarddass`, `lorcanatcg`, `pokemontcglive`, `dbscg`, `dbsfw` gardent leur
+index / pipeline (schemas historiques, foil Unity, STEPS riches). Ils
+**exposent déjà** la surface `createLocalTcgLine` (search / lookup / sets /
+catalog / `printGames`) — garde `legacyTcgContract.test.ts`.
 
-**Dual owners** (corpus local + API) : le module `dataPack` expose quand même
-`searchPrints` / `lookupPrint` / `listPrintSets` / `listSetPrints` (Lorcana
-local, Pokémon Live). Le sibling API garde le repli distant — ne pas laisser
-le picker dépendre uniquement de l’API.
+Nouveau jeu → `createEmptyLocalTcgProvider`, pas une copie de ces packs.
+
+| Pack | Index | STEPS |
+| ---- | ----- | ----- |
+| Carddass / Lorcana / Pokémon / DBS | pack `indexStore` | `selectCatalogueSteps` |
+| DBS FW | `art`/`back` core | idem |
+| DBS CG | `art`/`back` (ex-`image_url`) | idem |
+
+**Dual owners** : le module `dataPack` porte search+sets ; le sibling API
+(`lorcanajson`, `tcgdex`) garde le repli distant.
 
 ## Exemples de référence
 

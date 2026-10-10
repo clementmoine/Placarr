@@ -13,6 +13,7 @@ import {
   repoRoot,
   writeLastRun,
 } from "@/providers/shared/foilPaths";
+import { selectCatalogueSteps } from "@/providers/shared/cardCatalogue/catalogueSteps";
 import { scrapeLorcardsProducts } from "@/providers/lorcana/lorcanatcg/sources/lorcards";
 import { scrapeLorcanaCards } from "@/providers/lorcana/lorcanatcg/scrape/cards";
 import { dumpLorcanaWeb } from "@/providers/lorcana/lorcanatcg/pipeline/dumpWeb";
@@ -46,22 +47,6 @@ const PROVIDER_TO_STEP: Record<string, LorcanaStep> = {
   lorcanamobile: "mobile",
 };
 
-function argValueFrom(
-  argv: readonly string[],
-  name: string,
-): string | undefined {
-  const idx = argv.indexOf(name);
-  if (idx < 0) return undefined;
-  return argv[idx + 1];
-}
-
-function argListFrom(argv: readonly string[], name: string): string[] {
-  return (argValueFrom(argv, name) ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 /**
  * Resolve which Lorcana extract passes to run.
  *
@@ -84,16 +69,10 @@ export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
     if (fromProviders.length) return fromProviders;
   }
 
-  const only = argListFrom(argv, "--only");
-  const skip = new Set(argListFrom(argv, "--skip"));
-  const offline = argv.includes("--offline");
-  const defaultSteps: LorcanaStep[] = ["web", "cards", "mobile"];
-  const base = only.length
-    ? LORCANA_STEPS.filter((step) => only.includes(step))
-    : defaultSteps;
-  return base.filter(
-    (step) => !skip.has(step) && !(offline && LORCANA_ONLINE.has(step)),
-  );
+  return selectCatalogueSteps(argv, LORCANA_STEPS, {
+    online: LORCANA_ONLINE,
+    defaults: ["web", "cards", "mobile"],
+  });
 }
 
 async function runOfficialSiteOnly(

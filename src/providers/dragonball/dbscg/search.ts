@@ -16,6 +16,11 @@ import {
   isAnsweredQuery,
   setScopedWhere,
 } from "@/providers/shared/cardCatalogue/sets";
+import {
+  printAssetsArtSql,
+  printAssetsBackSql,
+  printAssetsColumnNames,
+} from "@/providers/shared/cardCatalogue/printAssetsCore";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { assetsCardUrl } from "@/lib/packAssetUrls";
@@ -60,7 +65,7 @@ export type DbsPrintDetail = {
 /**
  * The synced face, when the pack has one.
  *
- * Worth preferring over `image_url`: the local file is 400x560 from
+ * Worth preferring over remote `art`: the local file is 400x560 from
  * dbscards.fr, where Bandai's own URL is 260x363 — and it was already being
  * downloaded, just never used, so every card was served at the smaller size.
  *
@@ -122,7 +127,11 @@ function toCandidate(row: DbsPrintDetail): PrintCandidate {
   };
 }
 
-const DETAIL_SQL = `SELECT p.print_key AS printKey,
+function detailSql(db: { prepare: (sql: string) => { all: () => unknown[] } }): string {
+  const cols = printAssetsColumnNames(db);
+  const artSql = printAssetsArtSql(cols);
+  const backSql = printAssetsBackSql(cols);
+  return `SELECT p.print_key AS printKey,
               p.set_code   AS setCode,
               p.number     AS number,
               p.grouping   AS grouping,
@@ -135,13 +144,14 @@ const DETAIL_SQL = `SELECT p.print_key AS printKey,
               t.character  AS character,
               t.power      AS power,
               t.awakened_name AS awakenedName,
-              a.image_url  AS imageUrl,
-              a.back_url   AS backUrl
+              ${artSql}  AS imageUrl,
+              ${backSql} AS backUrl
          FROM prints p
          LEFT JOIN print_titles t
                 ON t.print_key = p.print_key
          LEFT JOIN print_assets a
                 ON a.print_key = p.print_key AND a.lang = t.lang`;
+}
 
 export function searchDbsCgPrints(
   query: string,
@@ -190,7 +200,7 @@ export function searchDbsCgPrints(
 
   const rows = db
     .prepare(
-      `${DETAIL_SQL}
+      `${detailSql(db)}
         WHERE ${scope.where}
         ORDER BY (t.lang = ?) DESC, p.set_code, p.number, p.grouping
         LIMIT ?`,
@@ -217,7 +227,7 @@ export function lookupDbsCgPrintDetail(
   const lang = (opts.language || "fr").toLowerCase();
   const row = db
     .prepare(
-      `${DETAIL_SQL}
+      `${detailSql(db)}
         WHERE p.print_key = ?
         ORDER BY (t.lang = ?) DESC
         LIMIT 1`,

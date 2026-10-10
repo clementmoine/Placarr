@@ -11,6 +11,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import { selectCatalogueSteps } from "@/providers/shared/cardCatalogue/catalogueSteps";
+
 export const POKEMON_STEPS = [
   "malie",
   "scrape",
@@ -35,22 +37,6 @@ const POKEMON_ONLINE = new Set<PokemonStep>([
   "products",
 ]);
 
-function argValueFrom(
-  argv: readonly string[],
-  name: string,
-): string | undefined {
-  const idx = argv.indexOf(name);
-  if (idx < 0) return undefined;
-  return argv[idx + 1];
-}
-
-function argListFrom(argv: readonly string[], name: string): string[] {
-  return (argValueFrom(argv, name) ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 /**
  * Resolve which Pokémon extract passes to run.
  *
@@ -58,19 +44,14 @@ function argListFrom(argv: readonly string[], name: string): string[] {
  * this selection in {@link parseArgs}.
  */
 export function selectPokemonSteps(argv: readonly string[]): PokemonStep[] {
-  const only = argListFrom(argv, "--only");
-  const skip = new Set(argListFrom(argv, "--skip"));
-  const offline = argv.includes("--offline");
   // Legacy flag: include products in the default set when asked.
   const withProducts = argv.includes("--products");
-  const base = only.length
-    ? POKEMON_STEPS.filter((step) => only.includes(step))
-    : withProducts
-      ? [...POKEMON_DEFAULT_STEPS, "products" as const]
-      : [...POKEMON_DEFAULT_STEPS];
-  return base.filter(
-    (step) => !skip.has(step) && !(offline && POKEMON_ONLINE.has(step)),
-  );
+  return selectCatalogueSteps(argv, POKEMON_STEPS, {
+    online: POKEMON_ONLINE,
+    defaults: withProducts
+      ? [...POKEMON_DEFAULT_STEPS, "products"]
+      : POKEMON_DEFAULT_STEPS,
+  });
 }
 
 import {

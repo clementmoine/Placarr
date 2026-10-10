@@ -3,8 +3,11 @@ import {
   detectVideoGamePlatformKey,
   isVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+} from "@/core/identify/platforms/platformList";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
 
 export function normalizeVideoGamePlatformKey(
   value?: string | null,
@@ -21,10 +24,7 @@ export function normalizeVideoGamePlatformKey(
  */
 export function stampAttachmentsMissingPlatformKey<
   T extends MetadataAttachment & { strictShelfPlatformCoverSource?: boolean },
->(
-  attachments: readonly T[],
-  fallbackPlatformKey?: string | null,
-): T[] {
+>(attachments: readonly T[], fallbackPlatformKey?: string | null): T[] {
   const normalized = normalizeVideoGamePlatformKey(fallbackPlatformKey);
   if (!normalized) return [...attachments];
   return attachments.map((attachment) => {

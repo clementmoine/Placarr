@@ -1,0 +1,44 @@
+{
+  "source": "TV Tokyo NARUTO goods pages (VPN JP probe 2026-08-18)",
+  "observed": "2026-08-18",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "note": "Official merch copy, not a card dump. Live 200 from JP. Original series page is Shift_JIS. Shippuden pages list 忍伝/術伝/作伝 counts — same as carddas-jp-maku, not 巻ノ. No face JPEGs in the HTML.",
+  "not": ["data-carddass", "en-ccg", "faces"],
+  "pages": [
+    {
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/card_starter.html",
+      "role": "constructed starters 巻ノ五/八/十",
+      "starters": [
+        { "set": "maki5", "books": ["雷鳴の書", "風雲の書"] },
+        {
+          "set": "maki8",
+          "books": ["蝦蟇の書", "守鶴の書"],
+          "released": "2004-07-09"
+        },
+        {
+          "set": "maki10",
+          "books": ["迅雷の書", "烈火の書"],
+          "released": "2004-12-10"
+        }
+      ]
+    },
+    {
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/",
+      "role": "hub — points at 疾風伝 site"
+    },
+    {
+      "url": "https://www.tv-tokyo.co.jp/contents/naruto/goods/card.html",
+      "role": "疾風伝 CARD — 第一幕 counts",
+      "printed": "忍伝-001～036、術伝-001～024、作伝-001～010",
+      "not": ["maki1"]
+    },
+    {
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto/sp/goods/other/other01/",
+      "role": "疾風伝 第二幕+",
+      "not": ["maki2", "data-carddass-as-tabletop"]
+    }
+  ]
+}

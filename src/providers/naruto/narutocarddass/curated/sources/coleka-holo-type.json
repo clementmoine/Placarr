@@ -1,0 +1,12 @@
+{
+  "source": "coleka.com type filter (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "url": "https://www.coleka.com/fr/type-carte-naruto-holo_t58531",
+  "kind": "type-filter",
+  "scrape": false,
+  "ingest": "none",
+  "note": "_t58531 is a Coleka TYPE tag (holo), not a series leaf _r. Same mix risk as umbrella _r4102. Live hit the verify wall (button disabled) — do not bypass captcha. Faces already come from series leaves (_r4108…, _r16649). Use this URL later only to list which printed refs Coleka tagged holo.",
+  "verifyWall": true,
+  "parentUmbrella": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner_r4102",
+  "not": ["series-leaf", "kayou-as-bandai"]
+}

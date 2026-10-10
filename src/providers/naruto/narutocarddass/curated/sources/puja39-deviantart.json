@@ -1,0 +1,21 @@
+{
+  "source": "deviantart.com/puja39 (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "url": "https://www.deviantart.com/puja39/gallery",
+  "ingest": "none",
+  "crawl": false,
+  "kind": "fan-custom-cards",
+  "note": "User-named gallery. 1516 deviations. Folder Naruto TG Cards = 1110 custom 'TG Card' templates (Dosu Kinuta TG Card 6, Kin Tsuchi TG Card…), not Bandai scans. Same class as Band of the Hawk printables. Do not crawl the gallery. Folder Naruto = 35, not a Carddass dump.",
+  "folders": [
+    { "name": "Naruto TG Cards", "count": 1110, "role": "custom-tg" },
+    { "name": "Naruto", "count": 35, "role": "fan-art" },
+    { "name": "My Draws", "count": 14, "role": "original" }
+  ],
+  "sampleTitles": [
+    "Kakashi Hatake And Pakkun TG Card",
+    "Dosu Kinuta TG Card 6",
+    "Kin Tsuchi TG Card"
+  ],
+  "not": ["carddass", "en-ccg", "chrono-clash"],
+  "mirrors": ["aventurasaventurescas7.json"]
+}

@@ -13,12 +13,23 @@ const BGG_DARK_COVER = path.join(
   import.meta.dirname,
   "__fixtures__/bgg-dark-boardgame-cover.jpg",
 );
+const CHASSE_LIGHT_PLACEHOLDER = path.join(
+  import.meta.dirname,
+  "__fixtures__/chasse-visuel-non-disponible.webp",
+);
 
 describe("isUnavailableCoverPlaceholderBuffer", () => {
   it("detects the localized Google Books no-cover tile", async () => {
     if (!fs.existsSync(SPANISH_PLACEHOLDER)) return;
 
     const buffer = fs.readFileSync(SPANISH_PLACEHOLDER);
+    await expect(isUnavailableCoverPlaceholderBuffer(buffer)).resolves.toBe(
+      true,
+    );
+  });
+
+  it("detects light marketplace 'Visuel non disponible' tiles", async () => {
+    const buffer = fs.readFileSync(CHASSE_LIGHT_PLACEHOLDER);
     await expect(isUnavailableCoverPlaceholderBuffer(buffer)).resolves.toBe(
       true,
     );

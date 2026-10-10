@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => ({
@@ -131,10 +131,9 @@ describe("bedetheque fetch", () => {
     expect(credits.find((entry) => entry.role === "Scénario")?.names).toEqual([
       "Barosso, Abramo",
     ]);
-    expect(credits.find((entry) => entry.role === "Couverture")?.names).toEqual([
-      "Croci, Patrice",
-      "Guillaume, René",
-    ]);
+    expect(credits.find((entry) => entry.role === "Couverture")?.names).toEqual(
+      ["Croci, Patrice", "Guillaume, René"],
+    );
   });
 
   it("extrait les URLs media (couverture, verso, planches) depuis la fiche", () => {
@@ -353,14 +352,18 @@ describe("bedetheque fetch", () => {
         entries,
         "Super Picsou Géant - Hors-Série - Picsou - Des souvenirs par millions - Tome 1",
       ),
-    ).toBe("https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-SPM1-468192.html");
+    ).toBe(
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-SPM1-468192.html",
+    );
 
     expect(
       pickBedethequeHorsSerieAlbumPath(
         entries,
         "Super Picsou Géant - Hors-Série - L'histoire de la dynastie Picsou - Tome 1",
       ),
-    ).toBe("https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-HDP1-497308.html");
+    ).toBe(
+      "https://www.bedetheque.com/BD-Super-Picsou-Geant-HS-HDP1-497308.html",
+    );
   });
 
   it("choisit les hors-série codés HS2017 (sans tiret après HS)", () => {
@@ -414,13 +417,16 @@ describe("bedetheque fetch", () => {
   });
 
   it("garde la série variante en fallback derrière la série principale", () => {
-    const ranked = rankBedethequeSeriesCandidates("Super Picsou Géant n°100bis", [
-      { id: 11795, label: "Super Picsou Géant" },
-      {
-        id: 18476,
-        label: "Super Picsou Géant (Supplément Picsou Magazine)",
-      },
-    ]);
+    const ranked = rankBedethequeSeriesCandidates(
+      "Super Picsou Géant n°100bis",
+      [
+        { id: 11795, label: "Super Picsou Géant" },
+        {
+          id: 18476,
+          label: "Super Picsou Géant (Supplément Picsou Magazine)",
+        },
+      ],
+    );
 
     expect(ranked.map((candidate) => candidate.id)).toEqual([11795, 18476]);
   });
@@ -530,7 +536,7 @@ describe("bedetheque fetch", () => {
 
   it("résout un hors-série via la partie série du titre + similarité de sous-titre", async () => {
     mockedGet.mockImplementation(
-      async (url: string, config?: { params?: { term?: string } }) => {
+      async (url: string, config?: AxiosRequestConfig) => {
         if (url.includes("/ajax/tout")) {
           // Comme en réel : l'autocomplete ne répond qu'au nom de série seul,
           // pas au titre complet contenant « Hors-Série » et le sous-titre.
@@ -627,9 +633,9 @@ describe("bedetheque fetch", () => {
       data: [{ id: "S11795", label: "Super Picsou Géant" }],
     } as never);
 
-    await expect(searchBedethequeSeries("Super Picsou Géant")).resolves.toEqual([
-      { id: 11795, label: "Super Picsou Géant" },
-    ]);
+    await expect(searchBedethequeSeries("Super Picsou Géant")).resolves.toEqual(
+      [{ id: 11795, label: "Super Picsou Géant" }],
+    );
     expect(promoteBedethequeSeriesEvidence).toHaveBeenCalledWith(
       expect.stringContaining("/ajax/tout?term="),
       [{ id: 11795, label: "Super Picsou Géant" }],

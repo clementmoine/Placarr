@@ -52,7 +52,6 @@ export type DecitreProduct = {
   priceCents?: number;
 };
 
-
 export function decitreSearchUrl(query: string): string {
   const params = new URLSearchParams({ search: query.trim() });
   return `${DECITRE_BASE_URL}/search?${params.toString()}`;
@@ -69,7 +68,9 @@ function schemaNames(value: unknown): string[] {
   );
 }
 
-function parseEuroPriceCents(value?: string | number | null): number | undefined {
+function parseEuroPriceCents(
+  value?: string | number | null,
+): number | undefined {
   if (value == null) return undefined;
   if (typeof value === "number") {
     if (!Number.isFinite(value) || value <= 0) return undefined;
@@ -145,7 +146,8 @@ export function parseDecitreProductPage(
   sourceUrl: string,
 ): DecitreProduct | null {
   const schema = bookSchema(html);
-  const productUrl = absoluteUrlFromBase(DECITRE_BASE_URL, sourceUrl) || sourceUrl;
+  const productUrl =
+    absoluteUrlFromBase(DECITRE_BASE_URL, sourceUrl) || sourceUrl;
 
   const title =
     firstSchemaStringValue(schema?.name) ||
@@ -157,7 +159,8 @@ export function parseDecitreProductPage(
   if (!title) return null;
 
   const description = firstSchemaStringValue(schema?.description);
-  const coverUrl = absoluteUrlFromBase(DECITRE_BASE_URL, 
+  const coverUrl = absoluteUrlFromBase(
+    DECITRE_BASE_URL,
     firstSchemaStringValue(schema?.image) ||
       html.match(
         /https:\/\/products-images\.di-static\.com\/image\/[^"'>\s]+/i,
@@ -208,9 +211,7 @@ export function parseDecitreProductPage(
       : undefined;
   const priceCents =
     parseEuroPriceCents(offer?.price as string | number | null | undefined) ||
-    parseEuroPriceCents(
-      html.match(/(\d+[.,]\d{2})\s*€/)?.[1],
-    );
+    parseEuroPriceCents(html.match(/(\d+[.,]\d{2})\s*€/)?.[1]);
 
   return {
     title,
@@ -313,8 +314,7 @@ export async function fetchDecitreByBarcode(
   const hits = await searchDecitreHits(normalized, options);
   const preferred =
     hits.find(
-      (hit) =>
-        hit.barcode && barcodesEquivalent(hit.barcode, normalized),
+      (hit) => hit.barcode && barcodesEquivalent(hit.barcode, normalized),
     ) ||
     hits.find((hit) =>
       retailerProductBarcodeConfirmed(hit.productUrl, hit.barcode, normalized),
@@ -358,9 +358,7 @@ export async function resolveDecitreMetadata(input: {
           searchQuery: query,
           catalogTitle: hit.title,
           barcodeConfirmed: Boolean(
-            barcode &&
-              hit.barcode &&
-              barcodesEquivalent(hit.barcode, barcode),
+            barcode && hit.barcode && barcodesEquivalent(hit.barcode, barcode),
           ),
           itemBarcode: barcode,
         })

@@ -1,0 +1,78 @@
+{
+  "source": "comicplanet.de — boutique allemande",
+  "observed": "2026-08-20",
+  "ingest": "packshots",
+  "lang": "de",
+  "note": "Seule source connue de packshots allemands. Neuf séries de boosters et un display, servis en 600×1039 sur fond détouré. Le titre du display reprenait celui du booster dans l'`og:title` de la page ; il est corrigé ici d'après l'URL et le nom de fichier (`gc-n-d-b-s3-dspl.png`).",
+  "not": ["cards", "numbering"],
+  "products": [
+    {
+      "slug": "booster-s1-de",
+      "url": "https://www.comicplanet.de/sammelkarten/sonstige/naruto/naruto-serie-1-booster-deutsch",
+      "name": "Naruto Serie 1 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/97/60/17/1718213682/gc-na-d-s1-bo.png?ts=1729117670"
+    },
+    {
+      "slug": "booster-s2-de",
+      "url": "https://www.comicplanet.de/sammelkarten/sonstige/naruto/naruto-serie-2-booster-deutsch",
+      "name": "Naruto Serie 2 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/11/d8/aa/1718215302/gc-nt-d-b-s2.png?ts=1729118049"
+    },
+    {
+      "slug": "booster-s3-de",
+      "url": "https://www.comicplanet.de/sammelkarten/sonstige/naruto/naruto-serie-3-booster-deutsch",
+      "name": "Naruto Serie 3 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/74/6c/ac/1718215393/gc-nt-d-b-s3.png?ts=1729118049"
+    },
+    {
+      "slug": "booster-s4-de",
+      "url": "https://www.comicplanet.de/sammelkarten/naruto/naruto-serie-4-booster-deutsch",
+      "name": "Naruto Serie 4 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/f0/4f/e8/1718215380/gc-nt-d-b-s4.png?ts=1729118049"
+    },
+    {
+      "slug": "booster-s5-de",
+      "url": "https://www.comicplanet.de/sammelkarten/naruto/naruto-serie-5-booster-deutsch",
+      "name": "Naruto Serie 5 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/f2/f9/88/1718215556/gc-nt-d-b-s5.png?ts=1729118049"
+    },
+    {
+      "slug": "booster-s6-de",
+      "url": "https://www.comicplanet.de/sammelkarten/naruto/naruto-serie-6-booster-deutsch",
+      "name": "Naruto Serie 6 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/f5/3a/c8/1718215785/gc-nt-d-b-s6.png?ts=1729118049"
+    },
+    {
+      "slug": "booster-s7-de",
+      "url": "https://www.comicplanet.de/sammelkarten/sonstige/naruto/naruto-serie-7-booster-deutsch",
+      "name": "Naruto Serie 7 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/b0/e3/63/1770972345/gc-nrt-d-s7-bo.png?ts=1770972345"
+    },
+    {
+      "slug": "booster-s8-de",
+      "url": "https://www.comicplanet.de/sammelkarten/sonstige/naruto/naruto-serie-8-booster-deutsch",
+      "name": "Naruto Serie 8 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/96/20/da/1718215274/gc-n-d-b-s8.png?ts=1729118803"
+    },
+    {
+      "slug": "booster-s9-de",
+      "url": "https://www.comicplanet.de/sammelkarten/sonstige/naruto/naruto-serie-9-booster-deutsch",
+      "name": "Naruto Serie 9 Booster deutsch",
+      "image": "https://www.comicplanet.de/media/36/25/40/1718215504/gc-nrt-b-d-s9.png?ts=1729118067"
+    },
+    {
+      "slug": "display-s3-de",
+      "url": "https://www.comicplanet.de/sammelkarten/sonstige/naruto/naruto-serie-3-booster-display-deutsch",
+      "name": "Naruto Serie 3 Booster Display deutsch",
+      "image": "https://www.comicplanet.de/media/b4/e9/bd/1718208436/gc-n-d-b-s3-dspl.png?ts=1729118803"
+    }
+  ],
+  "trimNote": {
+    "on": "2026-08-20",
+    "file": "booster-s7-de.png",
+    "was": "1600×1200 en paysage, le sachet flottant dans un grand vide transparent — le produit occupait environ un quart du cadre.",
+    "now": "415×747, recadré sur la boîte englobante opaque (`sharp.trim({ threshold: 12 })`), même cadrage que les neuf autres.",
+    "why": "La série 7 est la seule que comicplanet a réimportée récemment (horodatage 1770972345 contre 1718215xxx pour les autres) et elle n'est pas détourée comme les autres. Sous le plancher de 0,2 mégapixel du scorer, un cadre rembourré passe pour un ratio idéal : le laisser tel quel aurait faussé le choix de visuel.",
+    "ifReharvested": "Le site peut resservir la version rembourrée. Recadrer à nouveau avant de verser — l'original est conservé hors dépôt, seul le fichier de staging est curé."
+  }
+}

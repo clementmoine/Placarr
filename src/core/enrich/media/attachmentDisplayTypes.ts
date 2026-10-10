@@ -1,11 +1,14 @@
-import type { AttachmentType } from "@prisma/client";
-import {
-  resolveAttachmentSemantics,
-} from "@/core/enrich/media/attachmentDisplayLabels";
+import type { AttachmentType } from "@/generated/prisma/browser";
+import { resolveAttachmentSemantics } from "@/core/enrich/media/attachmentDisplayLabels";
 import type { LocalePreferenceOptions } from "@/core/locale/preference";
 
 export interface AttachmentImageMetrics {
+  /**
+   * Display content width (neutral margins trimmed when present). Canvas-only
+   * padding must not make a marketplace square look like a LaserDisc sleeve.
+   */
   width?: number;
+  /** Display content height — see `width`. */
   height?: number;
   format?: string;
   /** Average RGB luminance sampled from the asset (0–255). */
@@ -26,6 +29,11 @@ export type ScoredAttachmentInput = {
    * Display-only — formatted by `getAttachmentGalleryLabels`.
    */
   sourceNames?: string[] | null;
+  /**
+   * SteamGridDB-style cover sources — enables style/variant chip labels
+   * in `getAttachmentGalleryLabels` (stamped via provider traits).
+   */
+  gridStyleCoverLabelsSource?: boolean;
   /**
    * Provider-declared cover traits, stamped server-side (the scorer is client-safe
    * and cannot read the registry). `isFullWrapCoverSource` marks a full front+back
@@ -70,6 +78,12 @@ export type AttachmentDisplayScoreOptions = LocalePreferenceOptions & {
    * fronts (display-time only).
    */
   preferSystemOnlyCover?: boolean;
+  /**
+   * Expected cover width/height from the shelf card format (LaserDisc square → 1,
+   * DVD/games → ≈0.707). Drives aspect-fit scoring so a square LD sleeve beats a
+   * tall TMDB poster on a square shelf.
+   */
+  expectedCoverAspectRatio?: number | null;
 };
 
 export interface AttachmentDisplayScoreDetails {
@@ -81,7 +95,9 @@ export interface AttachmentDisplayScoreDetails {
   format?: string;
 }
 
-export const DISPLAY_ATTACHMENT_BASE_SCORE: Partial<Record<AttachmentType, number>> = {
+export const DISPLAY_ATTACHMENT_BASE_SCORE: Partial<
+  Record<AttachmentType, number>
+> = {
   cover: 620,
   artwork: 430,
   image: 330,

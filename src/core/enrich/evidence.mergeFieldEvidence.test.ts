@@ -20,7 +20,8 @@ describe("mergeFieldEvidenceForStorage", () => {
           field: "external-link:PriceCharting",
           source: "pricecharting",
           value: "Voir la fiche",
-          sourceUrl: "https://www.pricecharting.com/game/ds/white-nintendo-ds-lite",
+          sourceUrl:
+            "https://www.pricecharting.com/game/ds/white-nintendo-ds-lite",
         },
       ],
       [
@@ -42,9 +43,7 @@ describe("mergeFieldEvidenceForStorage", () => {
       ],
     );
 
-    expect(
-      merged.map((row) => `${row.source}:${row.field}`).sort(),
-    ).toEqual(
+    expect(merged.map((row) => `${row.source}:${row.field}`).sort()).toEqual(
       [
         "Back Market:title",
         "MergedEngine:title",

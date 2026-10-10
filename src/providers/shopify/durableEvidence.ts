@@ -12,9 +12,7 @@ import {
 
 function isShopifySearchHandles(value: unknown): value is string[] {
   if (!Array.isArray(value)) return false;
-  return value.every(
-    (row) => typeof row === "string" && row.trim().length > 0,
-  );
+  return value.every((row) => typeof row === "string" && row.trim().length > 0);
 }
 
 function isShopifySearchUrl(url: string): boolean {

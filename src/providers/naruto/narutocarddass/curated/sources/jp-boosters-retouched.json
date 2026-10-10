@@ -1,0 +1,29 @@
+{
+  "source": "visuels de sachets japonais détourés à la main",
+  "observed": "2026-08-20",
+  "ingest": "curated/products/jp-boosters/",
+  "lang": "ja",
+  "why": "Ces images viennent de fiches marchandes, fond compris. Le détourage est fait à la main, donc elles vivent dans `curated/` : posées en `staging/`, la prochaine moisson les effacerait sans bruit.",
+  "products": [
+    {
+      "slug": "booster-vol6-jp",
+      "reads": "巻ノ六「それぞれの試練！編」— カードダスEX BOOSTER PACK, 1パック6枚入り, 全57種, 150円, BANDAI 2004 MADE IN JAPAN",
+      "origin": "https://m.media-amazon.com/images/I/810eMb8twkL.jpg"
+    },
+    {
+      "slug": "booster-vol8-jp",
+      "reads": "巻ノ八「強襲！木ノ葉崩し 編」— カードダスEX BOOSTER PACK, 1パック6枚入り, 全57種, BANDAI 2004 MADE IN JAPAN",
+      "origin": "https://ae01.alicdn.com/kf/S3244560ffe334542994d1fca0e3246fd6.jpg"
+    },
+    {
+      "slug": "jp-release-09",
+      "reads": "BEST SELECT BOOSTER 忍兵法札絵巻 — カードダスEX, 1パック12枚入り, 全72種, BANDAI 2004 MADE IN JAPAN",
+      "origin": "https://www.flipkart.com/ancientkart-rare-naruto-silver-shinning-pvc-waterproof-cards-set-55-1-pack/p/itmfaadb613d97ea",
+      "learned": "L'emballage annonce **全72種**, là où `cardcheckbox-jp.json` note « unconfirmed » pour cette sortie. Le sachet est la source la plus directe qui soit : c'est l'éditeur qui l'imprime.",
+      "originCaveat": "La fiche marchande vend un jeu de 55 cartes PVC sans rapport ; seule la photo du sachet, authentique, a été retenue. Le titre de l'annonce n'est pas une source."
+    }
+  ],
+  "identification": "Chaque visuel a été ouvert et le titre de volume lu sur le sachet avant classement — 巻ノ六 et 巻ノ八 sont écrits en toutes lettres au bas de l'emballage.",
+  "rejected": "`hidrotap.cl` servait la seconde image mais n'est pas la source : c'est un domaine de revente au motif douteux, du même genre que ceux écartés le 2026-08-19. L'image a été prise sur le CDN d'origine (`ae01.alicdn.com`), pas sur ce site.",
+  "stillMissing": "Volumes japonais encore sans visuel : 1, 2, 3, 10, 11, 13, 14, 15."
+}

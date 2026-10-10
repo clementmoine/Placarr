@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getCoverImage } from "@/core/collect/media";
 import {
+  coverRegionRoleFromReleaseSignals,
   inferTextLanguage,
   localeBonusForAttachmentRole,
   mapLanguageNameToAttachmentRole,
@@ -37,6 +38,28 @@ describe("localePreference", () => {
     expect(localeBonusForAttachmentRole("europe")).toBe(
       localeBonusForAttachmentRole("eu"),
     );
+  });
+
+  it("maps release-country signals to cover region roles", () => {
+    expect(coverRegionRoleFromReleaseSignals("France")).toBe("fr");
+    expect(coverRegionRoleFromReleaseSignals("USA")).toBe("us");
+    expect(coverRegionRoleFromReleaseSignals("Japan")).toBe("jp");
+    expect(
+      coverRegionRoleFromReleaseSignals(null, [
+        "https://www.cdandlp.com/x/toy-story-ld-laserdisc-france/laser-disc/r1/",
+      ]),
+    ).toBe("fr");
+    expect(coverRegionRoleFromReleaseSignals(null, ["PAL / LBX"])).toBe("eu");
+    expect(coverRegionRoleFromReleaseSignals(null, ["unknown listing"])).toBe(
+      undefined,
+    );
+  });
+
+  it("ignores face-only attachment roles for locale bonuses", () => {
+    expect(parseRegionFromRole("front")).toBeUndefined();
+    expect(parseRegionFromRole("back")).toBeUndefined();
+    expect(localeBonusForAttachmentRole("front")).toBe(0);
+    expect(localeBonusForAttachmentRole("fr")).toBeGreaterThan(0);
   });
 
   it("maps ScreenScraper ISO short codes to canonical PAL/NTSC/JP buckets", () => {

@@ -51,12 +51,7 @@ describe("patchCachedItem", () => {
         id: "item-2",
         shelfId: "cuid-dreamcast",
         name: "NBA 2K2",
-        shelf: {
-          id: "cuid-dreamcast",
-          slug: "sega-dreamcast",
-          name: "Sega Dreamcast",
-          type: "games",
-        },
+        shelf: { id: "cuid-dreamcast", slug: "sega-dreamcast" },
       },
       { isCreate: true },
     );

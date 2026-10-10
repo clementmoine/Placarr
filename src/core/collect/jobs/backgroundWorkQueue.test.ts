@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AsyncQueue } from "@/lib/async/asyncQueue";
+import { AsyncQueue } from "@/lib/async";
 import {
   runBackgroundWork,
   runCpuBackgroundWork,

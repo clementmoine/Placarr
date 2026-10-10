@@ -1,0 +1,37 @@
+{
+  "source": "Suruga-ya.jp product detail GL124614 + GL124615 (user paste 2026-09-21)",
+  "observed": "2026-09-21",
+  "ingest": "faces",
+  "lang": "ja",
+  "line": "shippuden-jp",
+  "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "note": "Both NOT FOR SALE 2007 promos. PR作伝 / PR忍伝 are distinct from retail 作伝 / 忍伝 of the same number.",
+  "faces": [
+    {
+      "productId": "GL124614",
+      "printedRef": "PR作伝-5",
+      "diskId": "prmsa0005",
+      "title": "究極連係",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2007,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL124614",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl124614.jpg",
+      "pixels": { "width": 350, "height": 512 },
+      "note": "Narutimate Accel 2 tie-in. Catalogue face for prmsa0005."
+    },
+    {
+      "productId": "GL124615",
+      "printedRef": "PR忍伝-6",
+      "diskId": "prshi0006",
+      "title": "うちはサスケ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2007,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL124615",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl124615.jpg",
+      "pixels": { "width": 350, "height": 512 },
+      "note": "Catalogue face for prshi0006."
+    }
+  ]
+}

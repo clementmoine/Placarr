@@ -19,6 +19,9 @@ describe("nextImageRemoteGuard", () => {
 
   it("allows local uploads served through the optimizer", () => {
     expect(isAllowedNextImageRemoteUrl("/uploads/covers/foo.webp")).toBe(true);
+    expect(isAllowedNextImageRemoteUrl("/assets/pokemon/cards/back.png")).toBe(
+      true,
+    );
   });
 
   it("blocks private and loopback hosts", () => {

@@ -16,9 +16,7 @@ import {
   normalizeVolumeNumber,
   volumeNumberFromPriceListing,
 } from "@/core/enrich/titles/volumeNumber";
-import {
-  hardwareProductTitlesAlign,
-} from "@/core/enrich/titles/residualIdentity";
+import { hardwareProductTitlesAlign } from "@/core/enrich/titles/residualIdentity";
 import {
   listingAddsUnrequestedControllerAccessory,
   listingAddsUnrequestedConsoleSystem,
@@ -321,9 +319,7 @@ export function isNameOnlyRetailerTitleMatch(
   // Hardware: residual identity is the hard gate (games spinoffs, Mini/Classic
   // remakes, generation upgrades). Soft similarity alone accepts Switch Sports.
   if (options?.shelfType === "hardware") {
-    if (
-      !priceListingSharesItemIdentity(trimmedQuery, trimmedTitle, options)
-    ) {
+    if (!priceListingSharesItemIdentity(trimmedQuery, trimmedTitle, options)) {
       return false;
     }
   }

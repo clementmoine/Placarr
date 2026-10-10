@@ -83,6 +83,47 @@ describe("getMetadata — short-lived lookup cache", () => {
     expect(fetchMetadataByType).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps two prints sharing a name and no barcode apart", async () => {
+    // Set 3 prints five different Dalmatian Puppies under one name. Without the
+    // print key in the cache key they collapse onto one entry, and the second
+    // card silently inherits the fiche of the first.
+    const first = await getMetadata("Chiot dalmatien", "tcg", null, null, {
+      printKey: "lorcana:3-4a",
+    });
+    const second = await getMetadata("Chiot dalmatien", "tcg", null, null, {
+      printKey: "lorcana:3-4b",
+    });
+
+    expect(fetchMetadataByType).toHaveBeenCalledTimes(2);
+    expect(first).not.toEqual(second);
+  });
+
+  it("still coalesces two lookups of the very same print", async () => {
+    const first = await getMetadata("Elsa", "tcg", null, null, {
+      printKey: "lorcana:1-42",
+    });
+    const second = await getMetadata("Elsa", "tcg", null, null, {
+      printKey: "lorcana:1-42",
+    });
+
+    expect(fetchMetadataByType).toHaveBeenCalledTimes(1);
+    expect(first).toEqual(second);
+  });
+
+  it("hands the print key to the provider fan-out", async () => {
+    await getMetadata("La Reine", "tcg", null, null, {
+      printKey: "lorcana:9-1",
+    });
+
+    expect(fetchMetadataByType).toHaveBeenCalledWith(
+      "La Reine",
+      "tcg",
+      null,
+      undefined,
+      expect.objectContaining({ printKey: "lorcana:9-1" }),
+    );
+  });
+
   it("does not put abort-signaled lookups in the shared cache", async () => {
     await getMetadata("Sith Game F", "games", "666", "xbox", {
       signal: new AbortController().signal,

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import {
   isMetadataTitleAligned,
@@ -41,6 +41,7 @@ import {
 } from "@/core/enrich/media/platformKeyStamp";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import { isRawgQuotaBlocked, markRawgQuotaHit } from "./quota";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 type RawgResolverDeps = {
   formatScore: (value: number, scale: number) => string | null;
@@ -114,9 +115,7 @@ export function filterRawgTagsForShelf(
     ? detectVideoGamePlatformKey(requestedPlatform)
     : null;
   if (!requestedKey || requestedKey === "pc") return unique;
-  return unique.filter(
-    (name) => !/\b(fangame|gamemaker|horror)\b/i.test(name),
-  );
+  return unique.filter((name) => !/\b(fangame|gamemaker|horror)\b/i.test(name));
 }
 
 /**
@@ -131,12 +130,14 @@ export function pickRawgSearchMatch(
   const cleanedQuery = query.trim();
   if (!cleanedQuery || results.length === 0) return null;
 
-  const requestedKey = platform
-    ? detectVideoGamePlatformKey(platform)
-    : null;
+  const requestedKey = platform ? detectVideoGamePlatformKey(platform) : null;
 
   const aligned = results.filter((game) =>
-    isMetadataTitleAligned({ title: game.name }, [cleanedQuery], 0.58),
+    isMetadataTitleAligned(
+      { title: game.name },
+      [cleanedQuery],
+      METADATA_TITLE_ALIGN_FLOOR,
+    ),
   );
   if (aligned.length === 0) return null;
 
@@ -185,9 +186,7 @@ export function readRawgGameplayClip(
 /** Official alternate titles from a RAWG game detail payload. */
 export function readRawgCatalogAliases(
   detail:
-    | Pick<RawgGame, "name_original" | "alternative_names">
-    | null
-    | undefined,
+    Pick<RawgGame, "name_original" | "alternative_names"> | null | undefined,
 ): string[] {
   if (!detail) return [];
   const names: string[] = [];
@@ -229,7 +228,7 @@ export function createRawgResolver(deps: RawgResolverDeps) {
       let lastError: unknown;
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         try {
-          const response = await axios.get<T>(url);
+          const response = await httpGet<T>(url);
           return response.data;
         } catch (error: unknown) {
           lastError = error;
@@ -267,9 +266,11 @@ export function createRawgResolver(deps: RawgResolverDeps) {
 
     if (!data?.results || data.results.length === 0) return null;
 
-    const bestMatch = pickRawgSearchMatch(data.results, name, platform) as
-      | RawgGame
-      | null;
+    const bestMatch = pickRawgSearchMatch(
+      data.results,
+      name,
+      platform,
+    ) as RawgGame | null;
     if (!bestMatch) return null;
 
     let detailedDescription: string | undefined;

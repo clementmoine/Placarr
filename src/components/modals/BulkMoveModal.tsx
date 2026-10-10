@@ -17,7 +17,7 @@ import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { moveItemsBatch } from "@/lib/api/items";
 import { getShelves } from "@/lib/api/shelves";
 
-import type { Shelf } from "@prisma/client";
+import type { Shelf } from "@/generated/prisma/browser";
 
 export function BulkMoveModal({
   isOpen,

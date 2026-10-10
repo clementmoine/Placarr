@@ -98,9 +98,7 @@ export function recordContributionsFromMergedMetadata(
   const coverAttachment =
     result.attachments?.find(
       (attachment) =>
-        attachment.url &&
-        result.imageUrl &&
-        attachment.url === result.imageUrl,
+        attachment.url && result.imageUrl && attachment.url === result.imageUrl,
     ) ??
     result.attachments?.find(
       (attachment) =>
@@ -120,7 +118,7 @@ export function recordContributionsFromMergedMetadata(
       : undefined);
 
   const coverProviderId = coverSource
-    ? canonicalProviderIdForSource(coverSource) ?? coverSource
+    ? (canonicalProviderIdForSource(coverSource) ?? coverSource)
     : null;
   if (coverProviderId && result.imageUrl) {
     recordProviderContribution({
@@ -190,12 +188,7 @@ export function providerResolvePriorityScore(
   const coverWinRate = stat.coverWinCount / Math.max(1, stat.resolveCount);
   const latencyPenalty = Math.min(stat.latencyEmaMs / 1000, 30);
 
-  return (
-    traitScore +
-    hitRate * 40 +
-    coverWinRate * 50 -
-    latencyPenalty
-  );
+  return traitScore + hitRate * 40 + coverWinRate * 50 - latencyPenalty;
 }
 
 /**

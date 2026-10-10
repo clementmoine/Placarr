@@ -1,0 +1,20 @@
+{
+  "source": "Fril / ラクマ pasted 疾風伝 leads",
+  "observed": "2026-09-25",
+  "crawlLive": false,
+  "ingest": "curated-faces",
+  "lang": "ja",
+  "note": "Pasted listing URLs only — do not crawl Fril search. Seller photos (often 1080² fabric); crop to card before art.fril. Prefer Suruga / Mercari when available.",
+  "not": ["crawl", "lot-uncropped"],
+  "faces": [
+    {
+      "listingUrl": "https://item.fril.jp/60b4ec7f3cccb4735f3a4f304511c886",
+      "printedRef": "PR忍伝-7",
+      "diskId": "prshi0007",
+      "title": "NARUTO疾風伝 ナルトカードゲーム PR忍伝-7 うちはイタチ",
+      "ingest": true,
+      "url": "https://img.fril.jp/img/848431589/l/2929812969.jpg?1786975480",
+      "note": "First catalogue face for prshi0007 (was title-only). Cropped from 1080² fabric photo → art.fril.jpg."
+    }
+  ]
+}

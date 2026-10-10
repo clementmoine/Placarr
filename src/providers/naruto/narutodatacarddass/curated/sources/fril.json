@@ -1,0 +1,26 @@
+{
+  "source": "Fril / ラクマ item pastes (Hobby&Collector's shop)",
+  "observed": "2026-09-14",
+  "crawlLive": false,
+  "ingest": "faces",
+  "lang": "ja",
+  "note": "Two Formation singles (NF-005, NF-007). Studio matte cropped into curated source.fril.jpg → art.fril.jpg. Kept beside art.ebay ; faceChoice decides.",
+  "faces": [
+    {
+      "listingUrl": "https://item.fril.jp/235529b1dcdad0ec62cc6e2950bc6172",
+      "printedRef": "NF-007",
+      "title": "春野サクラ NF-007 ナルト",
+      "imageUrl": "https://img.fril.jp/img/773274158/l/2619267971.jpg?1750996321",
+      "curated": "cards/nf/ja/007/source.fril.jpg",
+      "ingest": true
+    },
+    {
+      "listingUrl": "https://item.fril.jp/9c048376604ba881c90e368ca19ca543",
+      "printedRef": "NF-005",
+      "title": "春野サクラ(疾風伝) NF-005 ナルト",
+      "imageUrl": "https://img.fril.jp/img/773273132/l/2619259693.jpg?1750995749",
+      "curated": "cards/nf/ja/005/source.fril.jpg",
+      "ingest": true
+    }
+  ]
+}

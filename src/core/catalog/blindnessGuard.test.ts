@@ -22,7 +22,106 @@ type ProviderLiteralInventory = Record<
 >;
 
 /** Empty = zero quoted provider ids outside `src/providers/` (+ tests). */
-const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {};
+const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
+  /*
+    Faux positif assumé. Les slugs de **printKey** (`dbscg`, `dbsfw`,
+    `onepiece`, …) s'écrivent comme l'id du provider correspondant. Ce ne
+    sont pas des références à un provider : la table `printGame` vit sur
+    `tcgcards/sites.ts` (+ Bandai set dans `cardsFrPrintRef`, + extras Naruto
+    dans ingest) exprès, pour que `core/` n'ait jamais à nommer un TCG.
+
+    À ne pas confondre avec ce que le garde des imports frères interdit, lui,
+    pour de bon — voir `providers/shared/sharedBlindness.test.ts`.
+  */
+  "src/providers/shared/sealedProducts/ingest.ts": {
+    dbsjcc: 1,
+  },
+  "src/providers/shared/tcgcards/cardsFrPrintRef.ts": {
+    dbscg: 1,
+    dbsfw: 1,
+    onepiece: 1,
+    mtg: 1,
+    yugioh: 1,
+  },
+  "src/providers/shared/sealedProducts/rebuildFromStaging.ts": { onepiece: 2 },
+  /*
+    Vague TCG locale (ADR-014) : l'id de **pack** catalogue / effets /
+    staging dbscards est volontairement le même slug que le provider
+    `createLocalTcgLine` (un dossier data = une ligne = un module). Ce n'est
+    pas du câblage core→provider — c'est le registre des packs et le lien
+    site→pack. Renommer les packs casserait `data/<pack>/`.
+  */
+  "src/lib/admin/cataloguePacks.ts": {
+    mtg: 9,
+    onepiece: 8,
+    yugioh: 8,
+  },
+  /*
+    Extract targets = pack ids pour OPTCG / YGO / MTG (même collision
+    pack/provider que cataloguePacks). Un `case` par ligne.
+  */
+  "src/lib/admin/catalogueExtractRunner.ts": {
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
+  "src/effects/mtg/index.ts": { mtg: 1 },
+  "src/effects/onepiece/index.ts": { onepiece: 1 },
+  "src/effects/yugioh/index.ts": { yugioh: 1 },
+  // Pack id = provider id (même collision OPTCG).
+  "src/providers/shared/sealedProducts/langCoverage.ts": { onepiece: 1 },
+  /*
+    TCG Cards site table — `packId` / `printGame` are data-pack / printKey
+    slugs, identical to the provider id for MTG / OPTCG / YGO / Lorcana /
+    Pokémon (same collision as cataloguePacks).
+  */
+  "src/providers/shared/tcgcards/sites.ts": {
+    dbscg: 1,
+    dbsfw: 1,
+    mtg: 2,
+    onepiece: 2,
+    yugioh: 2,
+  },
+  /*
+    List dump paths / face install — foilPackDataDir("yugioh"|"mtg"|"onepiece")
+    is the catalogue pack slug (same collision as sites.ts).
+  */
+  "src/providers/shared/tcgcards/scrapeList.ts": {
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+  },
+  "src/providers/shared/tcgcards/fillCardsFrFaces.ts": {
+    mtg: 1,
+    yugioh: 1,
+  },
+};
+
+/**
+ * Same idea for provider ids used as **unquoted object keys** (`philibert: …`).
+ * The quoted-literal sweep above cannot see those, which is how two tables of
+ * provider knowledge survived in core (the queue knobs, closed 2026-07-25, and
+ * the entries below). Shrink this to `{}`.
+ */
+const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
+  // `GameLookupInputs` still names two marketplace buckets, and picks a title
+  // from them in provider-preference order — tracked in docs/backlog.md.
+  "src/core/identify/gameLookup.ts": { ebay: 2, freakxy: 1 },
+  "src/core/identify/lookup/lookups.ts": { ebay: 1, freakxy: 1 },
+  // Alias map pack extract target → CataloguePackId (même collision pack/provider).
+  "src/lib/admin/cataloguePacks.ts": {
+    mtg: 1,
+    onepiece: 1,
+    yugioh: 1,
+    leclercmarvel21: 1,
+    leclercmarvel22: 1,
+    leclercmarvel23: 1,
+    leclercmarvel24: 1,
+    leclercdisney25: 1,
+  },
+};
+
+const SHARED_PROVIDER_DIR = path.join("src", "providers", "shared");
 
 const SOURCE_ROOTS = ["src", "scripts"];
 const SOURCE_EXTENSIONS = new Set([".cjs", ".js", ".ts", ".tsx"]);
@@ -37,8 +136,23 @@ function listSourceFiles(dir: string, files: string[] = []): string[] {
     const relativePath = path.relative(process.cwd(), absolutePath);
 
     if (entry.isDirectory()) {
-      if (relativePath === "src/providers") continue;
-      if (relativePath.startsWith("src/providers/")) continue;
+      /*
+        `src/providers/shared/` est balayé comme le reste : c'est de
+        l'infrastructure, pas un provider. La distinction manquait, et c'est par
+        cet angle mort que du code partagé s'est mis à importer un provider
+        nommément et à brancher sur des ids de pack — ce que ce garde existe
+        précisément pour interdire ailleurs.
+      */
+      if (relativePath === "src/providers") {
+        listSourceFiles(path.join(absolutePath, "shared"), files);
+        continue;
+      }
+      if (
+        relativePath.startsWith("src/providers/") &&
+        !relativePath.startsWith(SHARED_PROVIDER_DIR)
+      ) {
+        continue;
+      }
       listSourceFiles(absolutePath, files);
       continue;
     }
@@ -70,6 +184,41 @@ function inventoryProviderLiterals(): ProviderLiteralInventory {
         "gi",
       );
       const matches = text.match(quotedLiteral);
+      if (matches?.length) {
+        fileHits[term] = matches.length;
+      }
+    }
+
+    if (Object.keys(fileHits).length > 0) {
+      inventory[relativePath] = fileHits;
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(inventory).sort(([a], [b]) => a.localeCompare(b)),
+  );
+}
+
+function inventoryProviderKeys(): ProviderLiteralInventory {
+  const inventory: ProviderLiteralInventory = {};
+  const sourceFiles = SOURCE_ROOTS.flatMap((sourceRoot) =>
+    listSourceFiles(path.join(process.cwd(), sourceRoot)),
+  );
+
+  for (const absolutePath of sourceFiles) {
+    const text = fs.readFileSync(absolutePath, "utf8");
+    const relativePath = path.relative(process.cwd(), absolutePath);
+    const fileHits: Partial<Record<ProviderTerm, number>> = {};
+
+    for (const term of PROVIDER_TERMS) {
+      // `foo:` in *key position* only — at the start of a line (optionally
+      // after `{` or `,`), so prose like "pnpm foo:build" and property reads
+      // are not counted. `?:` covers optional members.
+      const objectKey = new RegExp(
+        `(?:^|[{,])\\s*${escapeRegExp(term)}\\s*\\??\\s*:`,
+        "gm",
+      );
+      const matches = text.match(objectKey);
       if (matches?.length) {
         fileHits[term] = matches.length;
       }
@@ -122,6 +271,14 @@ describe("provider-blind core guard", () => {
     for (const id of registryIds) {
       expect(PROVIDER_TERMS).toContain(id);
     }
+  });
+
+  it("keeps provider ids out of core object keys too", () => {
+    const differences = diffInventory(
+      inventoryProviderKeys(),
+      ALLOWED_PROVIDER_KEYS,
+    );
+    expect(differences).toEqual([]);
   });
 
   it("keeps provider literals outside provider modules on a shrinking allowlist", () => {

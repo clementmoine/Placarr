@@ -6,6 +6,7 @@ import {
   itemConditionsForShelfType,
   marketOfferConditionsForItem,
   parseItemCondition,
+  shelfShowsItemCondition,
 } from "./condition";
 
 describe("item conditions", () => {
@@ -43,6 +44,51 @@ describe("item conditions", () => {
     expect(
       marketOfferConditionsForItem("used", "games", { priceUsedCIB: 1200 }),
     ).toEqual(["cib", "used"]);
+  });
+
+  it("maps TCG used/new copies onto new and foil market rows", () => {
+    expect(marketOfferConditionsForItem("new", "tcg")).toEqual(["new"]);
+    expect(marketOfferConditionsForItem("used", "tcg")).toEqual(["new"]);
+    expect(
+      marketOfferConditionsForItem("used", "tcg", null, {
+        variant: "Silver",
+        plainFinishes: ["None"],
+      }),
+    ).toEqual(["foil"]);
+    expect(
+      marketOfferConditionsForItem("new", "tcg", null, { variant: "None" }),
+    ).toEqual(["new"]);
+  });
+
+  it("attributes foil-only Enchanted offers still tagged as new", () => {
+    expect(
+      marketOfferConditionsForItem(
+        "used",
+        "tcg",
+        {
+          priceObservations: [
+            { condition: "new" }, // stale Lorcast foil-only row
+          ],
+        },
+        { variant: "Lore", plainFinishes: ["None"] },
+      ),
+    ).toEqual(["new"]);
+    expect(
+      marketOfferConditionsForItem(
+        "used",
+        "tcg",
+        {
+          priceObservations: [{ condition: "new" }, { condition: "foil" }],
+        },
+        { variant: "Lore", plainFinishes: ["None"] },
+      ),
+    ).toEqual(["foil"]);
+  });
+
+  it("hides item condition UI for TCG shelves", () => {
+    expect(shelfShowsItemCondition("tcg")).toBe(false);
+    expect(shelfShowsItemCondition("games")).toBe(true);
+    expect(shelfShowsItemCondition("books")).toBe(true);
   });
 
   it("maps loose games and hardware to loose observations only", () => {

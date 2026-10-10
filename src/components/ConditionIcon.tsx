@@ -1,5 +1,5 @@
 import { Star, Recycle, Disc3, Skull } from "lucide-react";
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 type ConditionIconProps = {
   condition: Condition;

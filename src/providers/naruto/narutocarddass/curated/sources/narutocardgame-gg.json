@@ -1,0 +1,53 @@
+{
+  "source": "narutocardgame.gg — base de cartes du CCG Bandai 2006-2013",
+  "url": "https://narutocardgame.gg/archive/classic-ccg/cards",
+  "observed": "2026-08-21",
+  "ingest": "checklist — 4 452 cartes avec préfixe, numéro, nom anglais et set",
+  "lang": "en",
+  "line": "en-ccg",
+  "correction": "Ce registre a d'abord conclu que le site n'avait aucune donnée carte par carte. **C'était faux, et l'erreur était la mienne** : j'avais ouvert `/cards` à la racine, qui sert douze cartes d'échantillon du nouveau jeu Bandai de 2027. La base du CCG classique est ailleurs, sous `/archive/classic-ccg/cards`, et elle tient bien les 4 487 cartes annoncées. Une URL voisine n'est pas la même page.",
+  "access": "Une seule requête rend tout : la page liste les 4 452 cartes en HTML, chacune liée à `/archive/classic-ccg/{set}/{prefixe}{numero}-{slug}`. Le set est donc dans l'URL, sans avoir à ouvrir la fiche.",
+  "counts": {
+    "cartes": 4452,
+    "sets": 38,
+    "parPrefixe": {
+      "n": 1836,
+      "j": 1073,
+      "m": 1000,
+      "nus": 130,
+      "mus": 113,
+      "jus": 96,
+      "pr": 93,
+      "c": 73,
+      "nc": 16,
+      "prus": 15,
+      "ps": 4,
+      "ex": 2,
+      "cus": 1
+    }
+  },
+  "measuredAgainstOurs": {
+    "note": "Comparé sur le couple (préfixe, numéro), le 2026-08-21.",
+    "quIlsOntEtPasNous": 140,
+    "parPrefixe": {
+      "n": 70,
+      "m": 22,
+      "j": 19,
+      "nc": 16,
+      "c": 8,
+      "pr": 3,
+      "ex": 2
+    },
+    "queNousAvonsEtPasEux": 1422,
+    "pourquoiNousEnAvonsPlus": "Notre catalogue porte aussi les lignes japonaise et européenne (ni/te/ta/cl), que cette base ne couvre pas — elle est américaine seule."
+  },
+  "newPrefixes": "`nc` (16 cartes) et `ex` (2) n'existent nulle part chez nous. **Identifiés le 2026-08-21** en ouvrant leurs fiches : `nc` est une famille NINJA à numérotation propre à l'intérieur de Quest for Power (set 7) — `NC001` y est Naruto Uzumaki, position 132/161, avec ses stats complètes. `ex` est une paire promo, Naruto et Sasuke. Ce ne sont donc pas des jeux ni des lignes inconnues, mais des variantes à verser avec leur préfixe propre.",
+  "images": {
+    "url": "https://narutocardgame.gg/images/classic/{id}.jpg",
+    "size": "350×490",
+    "verdict": "Trop petites pour remplacer quoi que ce soit — nos faces existantes vont jusqu'à 1414×2000. Elles ne valent que pour les 140 cartes qu'on n'a pas du tout, où une petite face vaut mieux que pas de face."
+  },
+  "not": ["raretés", "titres français", "cartes japonaises"],
+  "cardPagesAlsoHave": "Chaque fiche porte les données de jeu : type, attribut, symbole, coût de tour, coût de main, et les statistiques en état sain et blessé. Non moissonné — ce n'est pas ce qu'un catalogue de collection a besoin de savoir — mais c'est là si un jour la question se pose.",
+  "harvested": "Index en une requête (4 318 cartes après dédoublonnage), puis un visuel par carte à cadence basse. Les 350×490 sont prises malgré leur taille : elles ne remplacent rien là où on a mieux, et le classement par pixels s'en charge, mais elles couvrent ce qu'on n'a pas du tout."
+}

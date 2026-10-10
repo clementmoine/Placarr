@@ -1,0 +1,30 @@
+{
+  "source": "aventurasaventurescas7.blogspot.com (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "crawl": false,
+  "download": false,
+  "kind": "fan-custom-cards",
+  "line": "unofficial",
+  "url": "https://aventurasaventurescas7.blogspot.com/2021/08/cartas-de-naruto-em-hd-para-imprimir.html",
+  "wayback": "https://web.archive.org/web/20231223150358/https://aventurasaventurescas7.blogspot.com/2021/08/cartas-de-naruto-em-hd-para-imprimir.html",
+  "published": "2021-08",
+  "note": "Portuguese 'cartas em HD para imprimir' post. The author says every card comes from deviantart.com/puja39. Filenames are *_tg_card_*_by_puja39_*. Same fan TG templates already skipped (1110 on DA). Not Bandai Carddass or EN CCG scans. Inline examples ~457×640; blogger s1051 hrefs are still the same templates. User Downloads/cards has 15 of 16 on-page examples (missing Sakura). Linked Drive folder + zip 404 in 2026. Do not ingest the Downloads, do not crawl DA or the dead Drive.",
+  "credits": "https://www.deviantart.com/puja39",
+  "sameAs": "puja39-deviantart.json",
+  "onPageExamples": 16,
+  "userDownloaded": 15,
+  "missingOnPageExample": "haruno_sakura_tg_card_2_by_puja39_d5hh1gj.jpg",
+  "sample": {
+    "file": "uzumaki_naruto_tg_card_2_by_puja39_d5hau6q.jpg",
+    "pixels": { "width": 457, "height": 640 },
+    "fanNumber": "1118 S21",
+    "not": ["n1118", "ni1118", "n0001"]
+  },
+  "deadMirrors": {
+    "folder": "https://drive.google.com/drive/folders/1ZhtFYPyqkupRSKYRNR6FGWYGq0S3DOcv",
+    "zip": "https://drive.google.com/file/d/1iHexKS8CViXM4h2DD-V7K6EXWWHkfVlD/view",
+    "live": "404"
+  },
+  "not": ["carddass", "en-ccg", "bandai-scans"]
+}

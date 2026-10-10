@@ -1,0 +1,388 @@
+{
+  "source": "https://pt-fullahead.com/",
+  "observed": "2026-09-20",
+  "note": "shopbrand/sdbh/ (136 pages) = mostly singles. Sealed retail lives under shopbrand/sdbh-bp/ (ブースターパック) and sdbh-others starters. Many BOX listings still show pack faces only; prefer high-res display shots when present.",
+  "brandUrls": {
+    "singles": "https://pt-fullahead.com/shopbrand/sdbh/page1/recommend/",
+    "boosterPacks": "https://pt-fullahead.com/shopbrand/sdbh-bp/",
+    "others": "https://pt-fullahead.com/shopbrand/sdbh-others/"
+  },
+  "wired": [
+    {
+      "slugs": [
+        "ultimate-booster-new-clash"
+      ],
+      "productUrl": "https://pt-fullahead.com/shopdetail/000000050213/",
+      "art": [
+        "products/fullahead/ultimate-booster-new-clash.jpg"
+      ],
+      "title": "アルティメットブースターパック -新たなる激闘-"
+    },
+    {
+      "slugs": [
+        "ultimate-booster-super-warrior",
+        "ultimate-booster-super-warrior-box"
+      ],
+      "productUrl": "https://pt-fullahead.com/shopdetail/000000050129/",
+      "packProductUrl": "https://pt-fullahead.com/shopdetail/000000050216/",
+      "art": [
+        "products/fullahead/ultimate-booster-super-warrior.jpg",
+        "products/fullahead/ultimate-booster-super-warrior-box.jpg"
+      ],
+      "title": "アルティメットブースターパック -超戦士集結-"
+    },
+    {
+      "slugs": [
+        "ultimate-booster-dbh"
+      ],
+      "productUrl": "https://pt-fullahead.com/shopdetail/000000050141/",
+      "art": [
+        "products/fullahead/ultimate-booster-dbh.jpg"
+      ],
+      "title": "ドラゴンボールヒーローズ アルティメットブースターパック (HUM)"
+    }
+  ],
+  "stagingBoxArts": [
+    {
+      "note": "ビッグバンブースターパック (PUMS7) display — distinct from Big Bang Mission BMT SKUs",
+      "productUrl": "https://pt-fullahead.com/shopdetail/000000050132/",
+      "art": [
+        "products/fullahead/big-bang-booster-pack-1-box.jpg"
+      ]
+    }
+  ],
+  "boxListings": [
+    {
+      "id": "000000054635",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000546353_fQ11B3U.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズ エクストラブースターパック (BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズ エクストラブースターパック (BOX)"
+    },
+    {
+      "id": "000000053484",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000534843_sdIh19r.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック4 ブースターパック (BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック4 ブースターパック (BOX)"
+    },
+    {
+      "id": "000000050135",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501353_cwSzgzt.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズエクストラブースターパック3 (BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズエクストラブースターパック3 (BOX)"
+    },
+    {
+      "id": "000000050134",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501343_DcBiYk1.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック3(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック3(BOX)"
+    },
+    {
+      "id": "000000050133",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501333_hnr2XIB.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック2(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック2(BOX)"
+    },
+    {
+      "id": "000000050132",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501323_NlnGPTI.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック(BOX)"
+    },
+    {
+      "id": "000000050131",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501313_jQ5Osv1.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-激突する武勇-(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-激突する武勇-(BOX)"
+    },
+    {
+      "id": "000000050130",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501303_5UzsVcm.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-限界突破の究極戦士-(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-限界突破の究極戦士-(BOX)"
+    },
+    {
+      "id": "000000050129",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501293_QOH6PJX.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-超戦士集結-(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-超戦士集結-(BOX)"
+    },
+    {
+      "id": "000000050128",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501283_upxmp4d.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-新たなる激闘-(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-新たなる激闘-(BOX)"
+    },
+    {
+      "id": "000000050127",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501273_azKZnnS.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースター超パック(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースター超パック(BOX)"
+    },
+    {
+      "id": "000000050126",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501263_Uneey15.jpg",
+      "alt": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック(BOX)",
+      "name": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック(BOX)"
+    },
+    {
+      "id": "000000050125",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501253_mxoH7EV.jpg",
+      "alt": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースター超絶パック(BOX)",
+      "name": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースター超絶パック(BOX)"
+    },
+    {
+      "id": "000000050124",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501243_eHZTMHq.jpg",
+      "alt": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターパック〜選ばれし戦士たち〜(BOX)",
+      "name": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターパック〜選ばれし戦士たち〜(BOX)"
+    },
+    {
+      "id": "000000050123",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501233_C4kplBl.jpg",
+      "alt": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターパック超(BOX)",
+      "name": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターパック超(BOX)"
+    },
+    {
+      "id": "000000050122",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501223_HXcF60I.jpg",
+      "alt": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターゴッドパック(BOX)",
+      "name": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターゴッドパック(BOX)"
+    },
+    {
+      "id": "000000050121",
+      "thumb": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501213_HICEWGm.jpg",
+      "alt": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターパック(BOX)",
+      "name": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターパック(BOX)"
+    }
+  ],
+  "fetchedPages": [
+    {
+      "id": "000000050128",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-新たなる激闘-(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050128/",
+      "images": [
+        {
+          "file": "000000050128_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050128_kNmIMFX.jpg",
+          "bytes": 58608
+        },
+        {
+          "file": "000000050128_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501282_ABCCMM1.jpg",
+          "bytes": 58608
+        }
+      ]
+    },
+    {
+      "id": "000000050129",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-超戦士集結-(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050129/",
+      "images": [
+        {
+          "file": "000000050129_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050129_Culdptt.jpg",
+          "bytes": 358293
+        }
+      ]
+    },
+    {
+      "id": "000000050130",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-限界突破の究極戦士-(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050130/",
+      "images": [
+        {
+          "file": "000000050130_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050130_hoWkAaA.jpg",
+          "bytes": 53492
+        },
+        {
+          "file": "000000050130_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501302_XIYw4sn.jpg",
+          "bytes": 53492
+        }
+      ]
+    },
+    {
+      "id": "000000050131",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック-激突する武勇-(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050131/",
+      "images": [
+        {
+          "file": "000000050131_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050131_R0c7tAm.jpg",
+          "bytes": 63714
+        },
+        {
+          "file": "000000050131_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501312_CoZuW7o.jpg",
+          "bytes": 63714
+        }
+      ]
+    },
+    {
+      "id": "000000050126",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズアルティメットブースターパック(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050126/",
+      "images": [
+        {
+          "file": "000000050126_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050126_4M5ENCC.jpg",
+          "bytes": 29155
+        },
+        {
+          "file": "000000050126_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501262_SRVF4KZ.jpg",
+          "bytes": 39368
+        }
+      ]
+    },
+    {
+      "id": "000000050121",
+      "title": "【宅配便のみ】ドラゴンボールヒーローズアルティメットブースターパック(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050121/",
+      "images": [
+        {
+          "file": "000000050121_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050121_wKu6bgr.jpg",
+          "bytes": 63517
+        },
+        {
+          "file": "000000050121_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501212_6JFLcpI.jpg",
+          "bytes": 63517
+        }
+      ]
+    },
+    {
+      "id": "000000050132",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050132/",
+      "images": [
+        {
+          "file": "000000050132_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050132_NZHk7BO.jpg",
+          "bytes": 63330
+        },
+        {
+          "file": "000000050132_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501322_PAeWAOz.jpg",
+          "bytes": 369402
+        }
+      ]
+    },
+    {
+      "id": "000000050133",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック2(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050133/",
+      "images": [
+        {
+          "file": "000000050133_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050133_wBOaqTN.jpg",
+          "bytes": 26479
+        },
+        {
+          "file": "000000050133_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501332_39AfyRJ.jpg",
+          "bytes": 26479
+        }
+      ]
+    },
+    {
+      "id": "000000050134",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック3(BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050134/",
+      "images": [
+        {
+          "file": "000000050134_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050134_v2vvNTd.jpg",
+          "bytes": 59213
+        }
+      ]
+    },
+    {
+      "id": "000000053484",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズビッグバンブースターパック4 ブースターパック (BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000053484/",
+      "images": [
+        {
+          "file": "000000053484_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000053484_NdzqviA.jpg",
+          "bytes": 13724
+        },
+        {
+          "file": "000000053484_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000534842_TQA8Cmo.jpg",
+          "bytes": 13724
+        }
+      ]
+    },
+    {
+      "id": "000000054635",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズ エクストラブースターパック (BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000054635/",
+      "images": [
+        {
+          "file": "000000054635_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000054635_T1mNZhY.jpg",
+          "bytes": 54043
+        },
+        {
+          "file": "000000054635_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000546352_7FngyxN.jpg",
+          "bytes": 60317
+        }
+      ]
+    },
+    {
+      "id": "000000050135",
+      "title": "【宅配便のみ】スーパードラゴンボールヒーローズエクストラブースターパック3 (BOX)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050135/",
+      "images": [
+        {
+          "file": "000000050135_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050135_ay1Pr5s.jpg",
+          "bytes": 38194
+        },
+        {
+          "file": "000000050135_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501352_iOUMwIy.jpg",
+          "bytes": 38194
+        }
+      ]
+    },
+    {
+      "id": "000000050213",
+      "title": "スーパードラゴンボールヒーローズアルティメットブースターパック-新たなる激闘-(PUMS3-22,PUMS3-23,PUMS3-24)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050213/",
+      "images": [
+        {
+          "file": "000000050213_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050213_MtLYpOC.jpg",
+          "bytes": 58608
+        },
+        {
+          "file": "000000050213_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000502132_IJJg77N.jpg",
+          "bytes": 58608
+        }
+      ]
+    },
+    {
+      "id": "000000050141",
+      "title": "ドラゴンボールヒーローズアルティメットブースターパック(HUM-16,HUM-17,HUM-18)",
+      "url": "https://pt-fullahead.com/shopdetail/000000050141/",
+      "images": [
+        {
+          "file": "000000050141_0.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/000000050141_mzhFw6t.jpg",
+          "bytes": 63517
+        },
+        {
+          "file": "000000050141_1.jpg",
+          "url": "https://makeshop-multi-images.akamaized.net/fullkids/itemimages/0000000501412_UVQcQqp.jpg",
+          "bytes": 63517
+        }
+      ]
+    }
+  ]
+}

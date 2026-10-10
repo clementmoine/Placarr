@@ -15,6 +15,8 @@ import type {
 } from "@/types/providerRegistry";
 import { cleanCode } from "@/core/identify/query";
 
+import { PRESTASHOP_RETAILER_MODULES } from "@/providers/prestashop";
+import { SHOPIFY_RETAILER_MODULES } from "@/providers/shopify";
 import { PROVIDER_MODULES } from "./registry";
 
 export type {
@@ -23,6 +25,14 @@ export type {
   ProviderAuth,
   ProviderInfo,
 } from "@/types/providerRegistry";
+
+export type {
+  ProviderHealthCheck,
+  ProviderHealthStatus,
+  TestProviderHandler,
+  TestProviderHandlerKind,
+  TestProviderFormatContext,
+} from "@/types/providerModule";
 
 export { PROVIDER_MODULES };
 
@@ -37,6 +47,18 @@ export const PROVIDERS: ProviderInfo[] = PROVIDER_MODULES.filter(
 
 export function getProviderModule(id: string): ProviderModule | undefined {
   return PROVIDER_MODULES.find((mdl) => mdl.info.id === id);
+}
+
+/** Modules that expose a local/scrape corpus refresh surface. */
+export function discoverCatalogProviderModules(): readonly ProviderModule[] {
+  return PROVIDER_MODULES.filter((mdl) => Boolean(mdl.catalog));
+}
+
+export function getCatalogProviderModule(
+  id: string,
+): ProviderModule | undefined {
+  const mdl = getProviderModule(id);
+  return mdl?.catalog ? mdl : undefined;
 }
 
 /** Provider that owns a custom cover download path for this remote URL. */
@@ -211,7 +233,29 @@ export function nameDatabaseProviderForType(
   ).sort((a, b) => Number(b.canonical) - Number(a.canonical))[0];
 }
 
-export { scrapeCatalogRetailerLookupEntries } from "@/core/catalog/scrapeRetailers";
+export function scrapeCatalogRetailerLookupEntries(): Array<{
+  lookupKey: string;
+  providerName: string;
+  types: MediaType[];
+}> {
+  return [...PRESTASHOP_RETAILER_MODULES, ...SHOPIFY_RETAILER_MODULES].map(
+    (module) => ({
+      lookupKey: module.info.id,
+      providerName: module.evidence?.label ?? module.info.label,
+      types: module.info.types,
+    }),
+  );
+}
+
+export const providerHealthChecks = PROVIDER_MODULES.flatMap((module) =>
+  module.healthCheck ? [module.healthCheck] : [],
+);
+
+export const testProviderHandlers = Object.fromEntries(
+  PROVIDER_MODULES.flatMap((module) =>
+    Object.entries(module.testHandlers ?? {}),
+  ),
+) as Record<string, import("@/types/providerModule").TestProviderHandler>;
 
 export function capabilityCoverage(
   type: MediaType,
@@ -291,6 +335,9 @@ export function providerProductUrlsFromMetadataFacts(
 
   for (const fact of linkFacts) {
     const url = fact.url!.trim();
+    // Attribution chips may point at registry websiteUrl (site root) — those
+    // must never drive URL-first price refresh.
+    if (!urlLooksLikeProductPagePath(url)) continue;
     for (const providerModule of PROVIDER_MODULES) {
       if (!factMatchesPriceProviderModule(fact, url, providerModule)) continue;
 
@@ -302,6 +349,17 @@ export function providerProductUrlsFromMetadataFacts(
   }
 
   return results;
+}
+
+/** Site roots / bare hosts are attribution chips, not product fiches. */
+function urlLooksLikeProductPagePath(url: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    const path = new URL(url).pathname.replace(/\/+$/, "");
+    return Boolean(path);
+  } catch {
+    return false;
+  }
 }
 
 // ── coalesced from src/core/catalog/materializeProviderInfo.ts ──
@@ -327,5 +385,7 @@ export function materializeProviderInfo(info: ProviderInfo): ProviderInfo {
     gridStyleCoverLabels: info.gridStyleCoverLabels ?? false,
     collectorCoverRegionFromAgeRating:
       info.collectorCoverRegionFromAgeRating ?? false,
+    supplyMode: info.supplyMode ?? "api_live",
+    catalogLifecycle: info.catalogLifecycle,
   };
 }

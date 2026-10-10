@@ -15,18 +15,14 @@ describe("identityTokens", () => {
       "z",
     ]);
     expect(identityTokens("Dragon Ball, tome 2")).toEqual(["dragon", "ball"]);
-    expect(identityTokens("Baldur's Gate 3")).toEqual([
-      "baldurs",
-      "gate",
-      "3",
-    ]);
+    expect(identityTokens("Baldur's Gate 3")).toEqual(["baldurs", "gate", "3"]);
   });
 
   it("retire plateforme registry + connecteurs, pas l'identité produit", () => {
     expect(identityTokens("Silt sur PS4")).toEqual(["silt"]);
-    expect(
-      identityTokens("Garou: Mark of the Wolves sur NEOGEO AES+"),
-    ).toEqual(["garou", "mark", "of", "the", "wolves"]);
+    expect(identityTokens("Garou: Mark of the Wolves sur NEOGEO AES+")).toEqual(
+      ["garou", "mark", "of", "the", "wolves"],
+    );
     expect(identityTokens("Far Cry Blood Dragon")).toEqual([
       "far",
       "cry",
@@ -276,9 +272,7 @@ describe("residualIdentityMatch hardware", () => {
   it("accepte Modèle (FR) comme chrome catalog", () => {
     expect(
       residualIdentityMatch({
-        requestTitles: [
-          "Nintendo Switch OLED Édition The Legend of Zelda",
-        ],
+        requestTitles: ["Nintendo Switch OLED Édition The Legend of Zelda"],
         candidateTitles: [
           "Console Nintendo Switch Modèle OLED Édition The Legend of Zelda",
         ],
@@ -289,9 +283,7 @@ describe("residualIdentityMatch hardware", () => {
 
   it("rejette une édition Pokémon OLED pour une édition Zelda", () => {
     const result = residualIdentityMatch({
-      requestTitles: [
-        "Nintendo Switch OLED Édition The Legend of Zelda",
-      ],
+      requestTitles: ["Nintendo Switch OLED Édition The Legend of Zelda"],
       candidateTitles: [
         "Console Nintendo Switch Modèle OLED Edition Pokémon Ecarlate & Pokémon Violet",
       ],
@@ -304,9 +296,7 @@ describe("residualIdentityMatch hardware", () => {
   it("accepte une édition console → SKU OLED générique", () => {
     expect(
       residualIdentityMatch({
-        requestTitles: [
-          "Nintendo Switch OLED Édition The Legend of Zelda",
-        ],
+        requestTitles: ["Nintendo Switch OLED Édition The Legend of Zelda"],
         candidateTitles: ["Nintendo Switch OLED Model"],
         shelfType: "hardware",
       }).decision,
@@ -315,9 +305,7 @@ describe("residualIdentityMatch hardware", () => {
 
   it("rejette un jeu Zelda NES pour une Switch OLED", () => {
     const result = residualIdentityMatch({
-      requestTitles: [
-        "Nintendo Switch OLED Édition The Legend of Zelda",
-      ],
+      requestTitles: ["Nintendo Switch OLED Édition The Legend of Zelda"],
       candidateTitles: ["The Legend of Zelda"],
       shelfType: "hardware",
     });
@@ -723,9 +711,9 @@ describe("hardwareProductTitlesAlign", () => {
     expect(
       hardwareProductTitlesAlign("Sega Megadrive", "Sega Mega Drive - Noir"),
     ).toBe(true);
-    expect(
-      hardwareProductTitlesAlign("Sega Genesis", "Sega Game Gear"),
-    ).toBe(false);
+    expect(hardwareProductTitlesAlign("Sega Genesis", "Sega Game Gear")).toBe(
+      false,
+    );
   });
 
   it("rejects sibling PlayStation generations and Classic ≠ PS One", () => {

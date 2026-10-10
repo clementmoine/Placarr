@@ -1,9 +1,9 @@
 /**
  * Sync item cover / barcode / hero / display name after metadata persist.
  */
-import path from "path";
-import type { Type } from "@prisma/client";
+import type { Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
+import { localMediaFilePath } from "@/lib/media/localMediaPath";
 import {
   readFileImageMetrics,
   isCoverResolutionAcceptable,
@@ -21,10 +21,17 @@ import {
 } from "@/core/identify/platforms/platforms";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { resolveMetadataDisplayTitle } from "@/core/enrich/titles/refineCatalogDisplayTitle";
-import { adoptItemNameFromMetadataIfPlaceholder } from "@/core/collect/adoptMetadataTitle";
+import {
+  adoptItemNameFromMetadataIfPlaceholder,
+  syncPrintItemIdentityFromMetadata,
+} from "@/core/collect/adoptMetadataTitle";
 import type { AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
 import type { StoreItemContext } from "@/core/enrich/media/prepareMetadataGallery";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 export async function syncItemFieldsAfterMetadataStore(input: {
   itemId: string;
@@ -63,7 +70,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
     const itemCoverMetrics = item.imageUrl?.startsWith("/uploads/")
       ? (imageMetricsByUrl.get(item.imageUrl) ??
         (await readFileImageMetrics(
-          path.join(process.cwd(), "public", item.imageUrl),
+          localMediaFilePath(item.imageUrl) ?? "",
         )))
       : null;
     const itemCoverIsLowRes =
@@ -80,11 +87,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
         urlsReferToSameLocalizedImage(attachment.url, item.imageUrl),
     );
     let visualCatalogMatchUrl: string | null = null;
-    if (
-      item.imageUrl?.startsWith("/uploads/") &&
-      !itemCoverStillInGallery &&
-      !itemCoverIsUserAttachment
-    ) {
+    if (item.imageUrl?.startsWith("/uploads/")) {
       const pinHash = await perceptualHashForAsset(item.imageUrl);
       if (pinHash) {
         const candidates = await Promise.all(
@@ -95,6 +98,9 @@ export async function syncItemFieldsAfterMetadataStore(input: {
             hash: await perceptualHashForAsset(attachment.url),
           })),
         );
+        // Visual twin of catalog art — even a `source: user` UUID upload of the
+        // same face (or a leftover bake of `/assets/…`) collapses onto the
+        // catalog URL so refresh can keep upgrading pack faces.
         visualCatalogMatchUrl = pickVisuallyMatchingCatalogCoverUrl(
           pinHash,
           candidates,
@@ -103,7 +109,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
       }
     }
     const shouldSyncItemCover =
-      !itemCoverIsUserAttachment &&
+      (!itemCoverIsUserAttachment || Boolean(visualCatalogMatchUrl)) &&
       (!item.imageUrl ||
         item.imageUrl === previousMetadataImage ||
         item.imageUrl === croppedImageUrl ||
@@ -111,8 +117,7 @@ export async function syncItemFieldsAfterMetadataStore(input: {
         Boolean(visualCatalogMatchUrl) ||
         attachmentsForRanking.some(
           (attachment) =>
-            attachment.source === "barcode" &&
-            attachment.url === item.imageUrl,
+            attachment.source === "barcode" && attachment.url === item.imageUrl,
         ) ||
         (type === "musics" &&
           !itemCoverStillInGallery &&
@@ -143,8 +148,8 @@ export async function syncItemFieldsAfterMetadataStore(input: {
       : detectVideoGamePlatformKey(metadata.platformKey ?? "");
   const discoveredBarcodePlatformConflicts = Boolean(
     requestedPlatformKey &&
-      metadataPlatformKey &&
-      metadataPlatformKey !== requestedPlatformKey,
+    metadataPlatformKey &&
+    metadataPlatformKey !== requestedPlatformKey,
   );
   let effectiveBarcode = normalizeProductBarcode(item?.barcode);
   if (
@@ -154,9 +159,14 @@ export async function syncItemFieldsAfterMetadataStore(input: {
     !discoveredBarcodePlatformConflicts &&
     itemName &&
     metadata.title &&
-    isMetadataTitleAligned({ title: metadata.title }, [itemName], 0.58, {
-      shelfType: type,
-    })
+    isMetadataTitleAligned(
+      { title: metadata.title },
+      [itemName],
+      METADATA_TITLE_ALIGN_FLOOR,
+      {
+        shelfType: type,
+      },
+    )
   ) {
     await prisma.item.update({
       where: { id: itemId },
@@ -180,15 +190,25 @@ export async function syncItemFieldsAfterMetadataStore(input: {
   }
 
   // Fill item.name only when empty / barcode placeholder and a barcode is set.
+  // Print shelves also adopt catalog title + printKey when the add was a code
+  // (`TFC#001`) rather than a finished title.
   if (item) {
-    const displayTitle = resolveMetadataDisplayTitle(metadata, effectiveBarcode);
+    const displayTitle = resolveMetadataDisplayTitle(
+      metadata,
+      effectiveBarcode,
+    );
     await adoptItemNameFromMetadataIfPlaceholder({
       itemId,
       metadataTitle: displayTitle,
       itemName: item.name?.trim() || name.trim(),
       barcode: effectiveBarcode,
     });
+    await syncPrintItemIdentityFromMetadata({
+      itemId,
+      shelfType: type,
+      itemName: item.name?.trim() || name.trim(),
+      metadataTitle: displayTitle,
+      metadataPrintKey: metadata.externalIds?.printKey,
+    });
   }
-
-
 }

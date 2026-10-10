@@ -1,5 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/http/httpClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/http/httpClient")>();
+  return {
+    ...actual,
+    httpGet: vi.fn(() => Promise.resolve({ status: 404, data: null })),
+    httpPost: vi.fn(() => Promise.resolve({ status: 404, data: null })),
+    httpHead: vi.fn(() => Promise.resolve({ status: 404, data: null })),
+  };
+});
+
 import {
   buildBarcodeRecordEnrichmentDeps,
   filterBarcodeLookupTasksForRecord,
@@ -44,9 +54,8 @@ describe("barcode recordMode", () => {
 
   it("omits slow barcode lookup modules before tasks are built", async () => {
     process.env.BARCODE_RECORD_SLIM = "1";
-    const { createBarcodeLookupTaskBuilders } = await import(
-      "@/core/catalog/barcode"
-    );
+    const { createBarcodeLookupTaskBuilders } =
+      await import("@/core/catalog/barcode");
     const leDenicheurStarted = vi.fn(() => Promise.resolve(null));
     const freakxyStarted = vi.fn(() => Promise.resolve([]));
     const chasseStarted = vi.fn(() => Promise.resolve([]));

@@ -32,10 +32,7 @@ import {
 import { DialogFooter } from "@/components/ui/dialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { CardFormatPicker } from "@/components/modals/CardFormatPicker";
-import {
-  SHELF_CARD_LOGO_CLASSNAME,
-  ShelfCard,
-} from "@/components/ShelfCard";
+import { SHELF_CARD_LOGO_CLASSNAME, ShelfCard } from "@/components/ShelfCard";
 import { RemoteImage } from "@/components/RemoteImage";
 import { cn } from "@/lib/shared/utils";
 
@@ -49,7 +46,7 @@ import {
 } from "@/lib/text/cardFormat";
 import type { ShelfBestItem, ShelfWithItemCount } from "@/types/shelves";
 
-import { type Prisma, type Shelf, Type } from "@prisma/client";
+import { type Prisma, type Shelf, Type } from "@/generated/prisma/browser";
 import {
   isShelfTypeComingSoon,
   isShelfTypeReady,
@@ -82,9 +79,14 @@ function ShelfLogoEditControl({
   const [logoMaxHeight, setLogoMaxHeight] = useState<number | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
 
-  useEffect(() => {
+  // Reset the broken-image flag while rendering the new src (React's
+  // "adjust state on prop change" pattern) — an effect would paint once with
+  // the previous failure state.
+  const [renderedSrc, setRenderedSrc] = useState(src);
+  if (src !== renderedSrc) {
+    setRenderedSrc(src);
     setImageFailed(false);
-  }, [src]);
+  }
 
   useLayoutEffect(() => {
     const band = bandRef.current;
@@ -206,17 +208,15 @@ export function ShelfModal({
       .trim()
       .min(1, t("shelves.nameRequired"))
       .refine((value) => value.trim().length > 0, t("shelves.nameNotEmpty")),
-    imageUrl: z
-      .any()
-      .refine((url) => {
-        if (url instanceof File) return true;
-        if (typeof url !== "string" || url.trim() === "") return false;
-        return (
-          url.startsWith("/uploads/") ||
-          isUrl(url) ||
-          /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url)
-        );
-      }, t("shelves.imageRequired")),
+    imageUrl: z.any().refine((url) => {
+      if (url instanceof File) return true;
+      if (typeof url !== "string" || url.trim() === "") return false;
+      return (
+        url.startsWith("/uploads/") ||
+        isUrl(url) ||
+        /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url)
+      );
+    }, t("shelves.imageRequired")),
     color: z
       .string()
       .trim()
@@ -229,11 +229,9 @@ export function ShelfModal({
           return false;
         }
       }, t("shelves.invalidColorFormat")),
-    type: z
-      .nativeEnum(Type)
-      .refine((value) => isShelfTypeReady(value), {
-        message: t("shelf.type.soon"),
-      }),
+    type: z.nativeEnum(Type).refine((value) => isShelfTypeReady(value), {
+      message: t("shelf.type.soon"),
+    }),
     cardFormat: z.string().default("default"),
   });
 
@@ -266,21 +264,21 @@ export function ShelfModal({
     queryKey: ["shelf", shelfId],
     queryFn: () => getShelf(shelfId),
     enabled: !!shelfId,
-    initialData: () =>
-      shelfId
-        ? queryClient
-            .getQueryData<ShelfWithItemCount[]>(["shelves"])
-            ?.find((s) => s.id === shelfId)
-        : undefined,
-    initialDataUpdatedAt: () =>
-      queryClient.getQueryState(["shelves"])?.dataUpdatedAt,
+    // List cache has counts/bestItem but no `items` — seed as empty until fetch.
+    placeholderData: () => {
+      if (!shelfId) return undefined;
+      const cached = queryClient
+        .getQueryData<ShelfWithItemCount[]>(["shelves"])
+        ?.find((s) => s.id === shelfId);
+      if (!cached) return undefined;
+      return { ...cached, items: [] };
+    },
   });
 
   const previewBestItem = useMemo((): ShelfBestItem | null => {
     if (!shelfId) return null;
-    const fromShelf = (
-      shelf as { bestItem?: ShelfBestItem | null } | undefined
-    )?.bestItem;
+    const fromShelf = (shelf as { bestItem?: ShelfBestItem | null } | undefined)
+      ?.bestItem;
     if (fromShelf) return fromShelf;
     return (
       queryClient
@@ -437,7 +435,10 @@ export function ShelfModal({
 
   const setLogoFile = (file: File | null) => {
     if (!file) {
-      form.setValue("imageUrl", null, { shouldValidate: true, shouldDirty: true });
+      form.setValue("imageUrl", null, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
       return;
     }
     if (!file.type.startsWith("image/")) {
@@ -445,7 +446,10 @@ export function ShelfModal({
       form.setValue("imageUrl", null, { shouldValidate: true });
       return;
     }
-    form.setValue("imageUrl", file, { shouldValidate: true, shouldDirty: true });
+    form.setValue("imageUrl", file, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   const handleSubmit = async (values: FormValues) => {
@@ -688,7 +692,10 @@ export function ShelfModal({
                                       : null,
                                 )}
                               >
-                                <ShelfTypeIcon type={type} className="size-3.5" />
+                                <ShelfTypeIcon
+                                  type={type}
+                                  className="size-3.5"
+                                />
                                 <span>{t(`shelf.type.${type}`)}</span>
                                 {comingSoon ? (
                                   <span className="rounded-full bg-zinc-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-muted-foreground dark:bg-zinc-800">
@@ -760,15 +767,13 @@ export function ShelfModal({
                               ref={customColorInputRef}
                               type="color"
                               className="sr-only"
-                              value={
-                                (() => {
-                                  try {
-                                    return color(field.value || "#3b82f6").hex();
-                                  } catch {
-                                    return "#3b82f6";
-                                  }
-                                })()
-                              }
+                              value={(() => {
+                                try {
+                                  return color(field.value || "#3b82f6").hex();
+                                } catch {
+                                  return "#3b82f6";
+                                }
+                              })()}
                               onChange={(e) => field.onChange(e.target.value)}
                             />
                           </button>

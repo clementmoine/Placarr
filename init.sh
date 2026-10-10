@@ -2,9 +2,33 @@
 # All-in-one entrypoint (Plex-style): migrate → workers → Next in one container.
 set -e
 
+# Drop privileges. Everything below — migrations, workers, the HTTP server —
+# runs as `node` (uid 1000 by default, PUID/PGID to match a host user).
+#
+# The chown covers volumes created by an earlier root-running version of this
+# image: Docker only copies image ownership into a volume the first time it is
+# created, so an upgrade would otherwise land on root-owned uploads and cache.
+# Only the mount points, never the whole tree: `node_modules` is enormous.
+APP_UID="${PUID:-1000}"
+APP_GID="${PGID:-1000}"
+if [ "$(id -u)" = "0" ]; then
+  chown -R "$APP_UID:$APP_GID" /app/data 2>/dev/null || true
+  echo "[init] dropping privileges to ${APP_UID}:${APP_GID}"
+  exec su-exec "$APP_UID:$APP_GID" "$0" "$@"
+fi
+
 # PostgreSQL is expected healthy (compose depends_on). DATABASE_URL from env.
 
 npx prisma migrate deploy
+
+# Comptes admin/guest. Le seed est idempotent (upsert sans update), donc le
+# rejouer à chaque boot ne réinitialise aucun mot de passe existant — sans lui
+# une installation Docker n'a aucun administrateur, et l'inscription publique
+# ne crée que des comptes `user`. ENABLE_SEED=0 pour s'en passer.
+if [ "${ENABLE_SEED:-1}" = "1" ]; then
+  echo "[init] seeding admin/guest accounts"
+  npx prisma db seed
+fi
 
 PIDS=""
 
@@ -29,7 +53,7 @@ start_worker() {
 
 rebuild_title_idf() {
   echo "[init] rebuilding title IDF index…"
-  if ./node_modules/.bin/tsx scripts/buildTokenCorpusIndex.ts; then
+  if ./node_modules/.bin/tsx scripts/buildTitleIdfIndex.ts; then
     echo "[init] title IDF index ready"
   else
     echo "[init] title IDF rebuild skipped (non-fatal)"
@@ -79,7 +103,23 @@ node server.js &
 NEXT_PID=$!
 PIDS="$PIDS $NEXT_PID"
 
-wait "$NEXT_PID"
-STATUS=$?
-cleanup
-exit "$STATUS"
+# Watch every child, not just Next. Waiting on `$NEXT_PID` alone left a
+# container that looked healthy with a dead worker: enrichment stopped silently
+# and `restart: unless-stopped` never fired. Polling rather than `wait -n`,
+# which busybox sh (alpine) does not reliably support.
+while :; do
+  for pid in $PIDS; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      if [ "$pid" = "$NEXT_PID" ]; then
+        wait "$NEXT_PID" || true
+        STATUS=$?
+      else
+        echo "[init] worker pid=$pid died — taking the container down"
+        STATUS=1
+      fi
+      cleanup
+      exit "$STATUS"
+    fi
+  done
+  sleep 5
+done

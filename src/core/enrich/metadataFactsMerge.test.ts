@@ -31,6 +31,64 @@ describe("mergeMetadataFactsForStorage", () => {
     ).toBe(true);
   });
 
+  it("upgrades a TCG collector slot when the same provider emits a new value", () => {
+    const merged = mergeMetadataFactsForStorage(
+      [
+        {
+          kind: "format" as const,
+          label: "Numéro",
+          value: "11",
+          source: "tcgdex",
+        },
+        {
+          kind: "tag" as const,
+          label: "Type",
+          value: "Pokémon",
+          source: "tcgdex",
+        },
+        {
+          kind: "tag" as const,
+          label: "PV",
+          value: "150",
+          source: "tcgdex",
+        },
+      ],
+      [
+        {
+          kind: "format" as const,
+          label: "Numéro",
+          value: "11/108",
+          source: "tcgdex",
+          priority: 45,
+        },
+        {
+          kind: "tag" as const,
+          label: "Type",
+          value: "Feu",
+          source: "tcgdex",
+          priority: 31,
+        },
+        {
+          kind: "category" as const,
+          label: "Catégorie",
+          value: "Pokémon",
+          source: "tcgdex",
+          priority: 32,
+        },
+      ],
+    );
+
+    expect(merged.find((fact) => fact.label === "Numéro")?.value).toBe(
+      "11/108",
+    );
+    expect(merged.find((fact) => fact.label === "Type")?.value).toBe("Feu");
+    expect(merged.find((fact) => fact.label === "Catégorie")?.value).toBe(
+      "Pokémon",
+    );
+    // Same-kind tag from this provider that was not re-emitted stays.
+    expect(merged.find((fact) => fact.label === "PV")?.value).toBe("150");
+  });
+
   it("preserves existing external-link when refresh omits it", () => {
     const existing = [
       {
@@ -80,9 +138,7 @@ describe("mergeMetadataFactsForStorage", () => {
 
     const merged = mergeMetadataFactsForStorage(existing, incoming);
     expect(
-      merged.some(
-        (fact) => fact.kind === "price" && fact.value === "11,00 €",
-      ),
+      merged.some((fact) => fact.kind === "price" && fact.value === "11,00 €"),
     ).toBe(true);
   });
 
@@ -109,9 +165,7 @@ describe("mergeMetadataFactsForStorage", () => {
       merged.filter(
         (fact) => fact.kind === "price" && fact.source === "booknode",
       ),
-    ).toEqual([
-      expect.objectContaining({ value: "9,50 €" }),
-    ]);
+    ).toEqual([expect.objectContaining({ value: "9,50 €" })]);
   });
 
   it("incoming external-link replaces stale link from the same provider", () => {
@@ -141,6 +195,8 @@ describe("mergeMetadataFactsForStorage", () => {
           fact.kind === "external-link" &&
           normalizeProviderSourceKey(fact.source ?? "") === "bedetheque",
       ),
-    ).toEqual([expect.objectContaining({ url: "https://www.bedetheque.com/new.html" })]);
+    ).toEqual([
+      expect.objectContaining({ url: "https://www.bedetheque.com/new.html" }),
+    ]);
   });
 });

@@ -1,0 +1,27 @@
+{
+  "source": "narutocards.net — base CCG EN vivante (Card Database, Deck Builder, Sets)",
+  "observed": "2026-08-19",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "en-ccg",
+  "lang": "en",
+  "url": "https://narutocards.net/",
+  "database": "https://narutocards.net/card-database/",
+  "sitemap": "https://narutocards.net/sitemap.xml",
+  "note": "Site vivant, absent du backlog jusqu'ici. **2 289 fiches carte**, avec filtres symbole / type / coût / combat / rareté. Les slugs portent le nom ET la ref (`akamaru-n-036`, `prompt-instruction-m-us043`), donc la jointure ne se devine pas. Le sitemap (178 Ko) énumère tout en un seul fichier : pas besoin de crawler.",
+  "images": {
+    "thumb": "https://narutocards.net/cards/{id}.webp",
+    "hq": "https://narutocards.net/cards-hq/{id}.webp",
+    "measured": "640×912 en HQ",
+    "verdict": "**Aucun gain d'image** : nos faces EN sont déjà en 750×1050 (art.vintage, art.drive) et l'EN est à 100 % de couverture. Ne pas ingérer ces visuels.",
+    "cdn": "Le bundle référence aussi `img.ccgdb.com/naruto/cards/<n>/` — 404 sur les motifs essayés, à creuser si besoin un jour."
+  },
+  "why": "Le vrai manque côté EN n'est pas l'image mais le **nom** : 176 cartes ont une face et aucun titre. Mesuré sur le sitemap, **82 d'entre elles sont nommables ici** — cus 1, jus 17, mus 2, nus 34 (les exclusivités tin), pr 13, prus 15.",
+  "parsing": {
+    "slug": "/card/<nom-en-slug>-<n|j|m|c|pr>-<us>?<numéro>/",
+    "parsed": "2 258 des 2 289 fiches ; 28 échappent au motif (`-n-c013`, `-pr-008r` — suffixes de variante à qualifier).",
+    "caveat": "Le nom se déduit du slug, donc il hérite de leurs coquilles (`...-spell-fomula-j-006`) et perd la ponctuation. À décider avant d'écrire ces titres au catalogue : nom dérivé, pas nom attesté."
+  },
+  "not": ["faces", "carddass", "kayou"],
+  "next": "Ingérer les 82 noms depuis le sitemap (un fichier, aucune requête par carte), en marquant la provenance comme dérivée du slug."
+}

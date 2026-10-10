@@ -1,11 +1,33 @@
 import { applyConsensus } from "@/core/enrich/consensus";
 import { withProviderFactTraits } from "@/core/catalog/sourceTraits";
 import type { FieldEvidenceInput } from "@/core/enrich/evidence";
+import { normalizeProviderSourceKey } from "@/core/enrich/providerExternalLinks";
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
+
+/**
+ * One display slot per kind+label+provider. Conflicting values from a seeded
+ * fiche + fresh provider hit (e.g. Numéro `11` vs `11/108`) collapse to the
+ * highest-priority row; equal priority prefers a fuller collector number, then
+ * the later input (fresher merge).
+ */
+function collectorNumberScore(value: string): number {
+  if (/^\s*\S+\/\S+\s*$/.test(value)) return 2;
+  if (value.includes("/")) return 1;
+  return 0;
+}
+
+function factProviderSlotKey(fact: MetadataFact): string {
+  const kind = fact.kind.toLowerCase();
+  const label = (fact.label || "").toLowerCase();
+  const sourceKey = normalizeProviderSourceKey(fact.source ?? "");
+  if (sourceKey) return `${kind}\0${label}\0${sourceKey}`;
+  // Sourceless rows stay distinct by value (legacy / synthetic).
+  return `${kind}\0${label}\0\0${(fact.value || "").toLowerCase()}`;
+}
 
 export function dedupeFacts(
   facts?: MetadataFact[],
@@ -14,12 +36,21 @@ export function dedupeFacts(
   const seen = new Set<string>();
   const normalizedFacts = normalizeMetadataFacts(applyConsensus(facts));
   const cleanFacts = normalizedFacts
-    .filter((fact) => fact.label && fact.value)
-    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+    .map((fact, index) => ({ fact, index }))
+    .filter(({ fact }) => fact.label && fact.value)
+    .sort((a, b) => {
+      const byPriority = (b.fact.priority ?? 0) - (a.fact.priority ?? 0);
+      if (byPriority !== 0) return byPriority;
+      const byNumber =
+        collectorNumberScore(b.fact.value) - collectorNumberScore(a.fact.value);
+      if (byNumber !== 0) return byNumber;
+      return b.index - a.index;
+    })
+    .map(({ fact }) => fact);
 
   const deduped: MetadataFact[] = [];
   for (const fact of cleanFacts) {
-    const key = `${fact.kind}:${fact.label}:${fact.value}`.toLowerCase();
+    const key = factProviderSlotKey(fact);
     if (seen.has(key)) continue;
     seen.add(key);
     deduped.push(fact);
@@ -281,7 +312,22 @@ export function dedupeFieldEvidence(
 ): FieldEvidenceInput[] {
   const seen = new Set<string>();
   const output: FieldEvidenceInput[] = [];
+  // Fact-shaped fields (`format:Numéro`, `tag:Type`) are one slot per
+  // field+source — seeded fiche + fresh provider must not keep both values.
+  // Column-backed fields (cover, title, …) still allow multiple values.
+  const factSlotBest = new Map<string, FieldEvidenceInput>();
+
   for (const item of evidence) {
+    if (item.field.includes(":")) {
+      const slot = `${item.field}\0${item.source}`.toLowerCase();
+      const current = factSlotBest.get(slot);
+      if (!current || (item.priority ?? 0) >= (current.priority ?? 0)) {
+        // Higher priority wins; equal priority keeps the later row (fresher).
+        factSlotBest.set(slot, item);
+      }
+      continue;
+    }
+
     const key = [
       item.field,
       item.source,
@@ -295,7 +341,8 @@ export function dedupeFieldEvidence(
     seen.add(key);
     output.push(item);
   }
-  return output;
+
+  return [...output, ...factSlotBest.values()];
 }
 
 export function withProviderEvidence(

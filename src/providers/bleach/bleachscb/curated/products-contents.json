@@ -1,0 +1,339 @@
+{
+  "version": 1,
+  "pack": "bleach/scb",
+  "updatedAt": "2026-09-13",
+  "byKind": {
+    "booster": {
+      "source": "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)",
+      "verifiedAt": "2026-09-13",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "FR S1 : 8 cartes / sachet (Bandai carddass.fr)."
+    },
+    "deck": {
+      "source": "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)",
+      "verifiedAt": "2026-09-13",
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "behavior": "known_bundle",
+      "contentsKnown": false,
+      "notes": "Listes SKU sous skus.* quand attestées."
+    }
+  },
+  "skus": {
+    "starter-compagnons": {
+      "source": "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Starter \"Compagnons\" — 33 cartes (liste Bandai FR ; « 32 + Zanpakutô » sur la fiche). Boosters S1 = 8 cartes, pool set.",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "declaredCardCount": 33,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "bleachscb:a-002",
+        "bleachscb:a-003",
+        "bleachscb:a-009",
+        "bleachscb:a-015",
+        "bleachscb:a-016",
+        "bleachscb:a-017",
+        "bleachscb:a-020",
+        "bleachscb:a-023",
+        "bleachscb:a-024",
+        "bleachscb:a-025",
+        "bleachscb:a-026",
+        "bleachscb:a-027",
+        "bleachscb:c-001",
+        "bleachscb:c-002",
+        "bleachscb:c-003",
+        "bleachscb:c-004",
+        "bleachscb:c-005",
+        "bleachscb:c-006",
+        "bleachscb:c-007",
+        "bleachscb:c-012",
+        "bleachscb:e-001",
+        "bleachscb:e-003",
+        "bleachscb:e-007",
+        "bleachscb:e-008",
+        "bleachscb:e-009",
+        "bleachscb:e-010",
+        "bleachscb:z-001"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "bleachscb:a-002",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-003",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:a-009",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:a-015",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-016",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-017",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-020",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-023",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-024",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-025",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-026",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-027",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-001",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:c-002",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:c-003",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-004",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-005",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:c-006",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-007",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-012",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-001",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:e-003",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-007",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-008",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-009",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-010",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:z-001",
+          "qty": 1
+        }
+      ]
+    },
+    "starter-rivaux": {
+      "source": "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Starter \"Rivaux\" — 33 cartes (liste Bandai FR ; « 32 + Zanpakutô » sur la fiche). Boosters S1 = 8 cartes, pool set.",
+      "cardsPerPack": null,
+      "packsContained": 1,
+      "declaredCardCount": 33,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "bleachscb:a-012",
+        "bleachscb:a-001",
+        "bleachscb:a-009",
+        "bleachscb:a-015",
+        "bleachscb:a-016",
+        "bleachscb:a-017",
+        "bleachscb:a-020",
+        "bleachscb:a-023",
+        "bleachscb:a-024",
+        "bleachscb:a-025",
+        "bleachscb:a-028",
+        "bleachscb:a-029",
+        "bleachscb:c-001",
+        "bleachscb:c-002",
+        "bleachscb:c-003",
+        "bleachscb:c-004",
+        "bleachscb:c-012",
+        "bleachscb:c-014",
+        "bleachscb:c-015",
+        "bleachscb:e-001",
+        "bleachscb:e-007",
+        "bleachscb:e-008",
+        "bleachscb:e-009",
+        "bleachscb:e-010",
+        "bleachscb:e-013",
+        "bleachscb:e-015",
+        "bleachscb:z-002"
+      ],
+      "guaranteedPrints": [
+        {
+          "printKey": "bleachscb:a-012",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-001",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:a-009",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:a-015",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-016",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-017",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-020",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-023",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-024",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-025",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-028",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:a-029",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-001",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:c-002",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:c-003",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-004",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-012",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:c-014",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:c-015",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-001",
+          "qty": 2
+        },
+        {
+          "printKey": "bleachscb:e-007",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-008",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-009",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-010",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-013",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:e-015",
+          "qty": 1
+        },
+        {
+          "printKey": "bleachscb:z-002",
+          "qty": 1
+        }
+      ]
+    },
+    "booster-s1-shinigami-and-ichigo": {
+      "source": "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)",
+      "verifiedAt": "2026-09-13",
+      "notes": "Booster « Shinigami and Ichigo » — 8 cartes dont 1 spéciale ; pool = 58 cartes booster S1 (pas le set starter).",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    }
+  }
+}

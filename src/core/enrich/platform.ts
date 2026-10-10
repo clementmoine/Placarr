@@ -2,7 +2,7 @@ import {
   detectVideoGamePlatformKey,
   isVideoGamePlatformKey,
   type VideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 
 /**
  * Platform key from a shelf label (canonical detection only — aliases live on
@@ -25,11 +25,7 @@ export function resolveGameMetadataPlatform(
   shelfName?: string | null,
   shelfType?: string | null,
 ): string | undefined {
-  if (
-    shelfType &&
-    shelfType !== "games" &&
-    shelfType !== "hardware"
-  ) {
+  if (shelfType && shelfType !== "games" && shelfType !== "hardware") {
     return undefined;
   }
 

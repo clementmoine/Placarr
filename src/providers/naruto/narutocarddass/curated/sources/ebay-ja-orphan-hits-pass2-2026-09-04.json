@@ -1,0 +1,137 @@
+{
+  "observed": "2026-09-04",
+  "source": "ebay.fr/com paste CDN pass2 (依-/PR忍-/忍- mid)",
+  "note": "Active market exhausted for remaining NI/TE/TA high orphans; sold listings need login on ebay.com",
+  "skippedMarketEmpty": {
+    "niHigh": [
+      397,
+      398,
+      399,
+      400,
+      401,
+      402,
+      403,
+      404,
+      405,
+      406,
+      407,
+      408,
+      412,
+      413,
+      414,
+      415,
+      416,
+      417
+    ],
+    "teRemaining": "none listed on ebay.com/fr 術- Card Game active",
+    "taRemaining": "none listed on ebay.com/fr 作- Card Game active",
+    "clMissing": [
+      44,
+      45
+    ]
+  },
+  "faces": [
+    {
+      "printedRef": "忍-330",
+      "lang": "ja",
+      "title": "Naruto Card Game Hinata Hyuga UR 忍-330 Vol 14 2005 Bandai Japanese + Checklist",
+      "listing": "https://www.ebay.com/itm/287522976620",
+      "imageId": "aEcAAeSwwSNqfe9g",
+      "url": "https://i.ebayimg.com/images/g/aEcAAeSwwSNqfe9g/s-l1600.webp",
+      "staging": "staging/ebay/ni0330-ja.webp",
+      "ingest": true,
+      "note": "ebay.com dig JA orphan pass2 2026-09-04"
+    },
+    {
+      "printedRef": "依-38",
+      "lang": "ja",
+      "title": "Naruto Card Game 依-38",
+      "listing": "https://www.ebay.fr/itm/255804334099",
+      "imageId": "GrsAAOSw4XhjYGOu",
+      "url": "https://i.ebayimg.com/images/g/GrsAAOSw4XhjYGOu/s-l1600.webp",
+      "staging": "staging/ebay/cl0038-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan pass2 2026-09-04"
+    },
+    {
+      "printedRef": "依-39",
+      "lang": "ja",
+      "title": "Naruto Card Game 依-39",
+      "listing": "https://www.ebay.fr/itm/255804337008",
+      "imageId": "494AAOSwIGdjYGP7",
+      "url": "https://i.ebayimg.com/images/g/494AAOSwIGdjYGP7/s-l1600.webp",
+      "staging": "staging/ebay/cl0039-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan pass2 2026-09-04"
+    },
+    {
+      "printedRef": "依-40",
+      "lang": "ja",
+      "title": "Naruto Card Game 依-40",
+      "listing": "https://www.ebay.fr/itm/265965461143",
+      "imageId": "geIAAOSwWbRjYGSV",
+      "url": "https://i.ebayimg.com/images/g/geIAAOSwWbRjYGSV/s-l1600.webp",
+      "staging": "staging/ebay/cl0040-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan pass2 2026-09-04"
+    },
+    {
+      "printedRef": "依-46",
+      "lang": "ja",
+      "title": "Naruto Card Game 依-46",
+      "listing": "https://www.ebay.fr/itm/255804343353",
+      "imageId": "ShEAAOSwGwNjYGTM",
+      "url": "https://i.ebayimg.com/images/g/ShEAAOSwGwNjYGTM/s-l1600.webp",
+      "staging": "staging/ebay/cl0046-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan pass2 2026-09-04"
+    },
+    {
+      "printedRef": "PR忍-2",
+      "lang": "ja",
+      "title": "2003 Naruto Card Game PR忍-2 Promo Card UCHIHA SASUKE Japanese",
+      "listing": "https://www.ebay.fr/itm/318825712813",
+      "imageId": "5UcAAeSwS9pqPdNz",
+      "url": "https://i.ebayimg.com/images/g/5UcAAeSwS9pqPdNz/s-l1600.webp",
+      "staging": "staging/ebay/prni0002-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan pass2 2026-09-04"
+    },
+    {
+      "printedRef": "PR忍-8",
+      "lang": "ja",
+      "title": "NARUTO Card Game Naruto Uzumaki PR忍-8 Promo, 2004",
+      "listing": "https://www.ebay.fr/itm/377430957966",
+      "imageId": "fpYAAeSwnsNqhSgn",
+      "url": "https://i.ebayimg.com/images/g/fpYAAeSwnsNqhSgn/s-l1600.webp",
+      "staging": "staging/ebay/prni0008-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan pass2 2026-09-04"
+    },
+    {
+      "printedRef": "PR忍-17",
+      "lang": "ja",
+      "title": "NARUTO Card Uzumaki Naruto & Uchiha Sasuke V Jump Promo PR忍-17",
+      "listing": "https://www.ebay.fr/itm/377434537604",
+      "imageId": "CmsAAeSwcJ1qhqHC",
+      "url": "https://i.ebayimg.com/images/g/CmsAAeSwcJ1qhqHC/s-l1600.webp",
+      "staging": "staging/ebay/prni0017-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan pass2 2026-09-04"
+    }
+  ],
+  "counts": {
+    "total": 8,
+    "ni": 1,
+    "cl": 4,
+    "prni": 3
+  },
+  "installed": {
+    "written": 8,
+    "failed": 0
+  },
+  "after": {
+    "missingArtTiles": 579,
+    "trulyFacelessJa": 119
+  }
+}

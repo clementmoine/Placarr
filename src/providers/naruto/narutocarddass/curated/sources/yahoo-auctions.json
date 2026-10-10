@@ -1,0 +1,672 @@
+{
+  "source": "Yahoo! Auctions JP (pasted listing photos)",
+  "observed": "2026-09-21",
+  "crawlLive": false,
+  "ingest": "curated-faces",
+  "lang": "ja",
+  "note": "Pasted auction + CDN URLs only — do not crawl search or seller stores. Listing HTML 200 from JP; live search 404 without a browser. Bytes live under curated/cards/{family}/{id}/ja/source.jpg so they survive without VPN. art.yahoo is a collector photo, below nikita/suruga/carddas. 忍-3 NFS 2003 / winter 2004 arts do not match FR NI-03 standing pose — not ingested as maki1. 忍-37 only in a 4-card lot — not cropped.",
+  "not": [
+    "crawl",
+    "data-carddass",
+    "ni0003-from-nfs",
+    "lot-uncropped"
+  ],
+  "faces": [
+    {
+      "printedRef": "忍-19",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うずまきナルト",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/d1240010966",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/user/6c6b918525f85b2bc969347b9db2f4447d839de81ce34256e830f63a0f38beb6/i-img1200x1200-17861018669415eoylnr78076.jpg",
+      "curated": "cards/ninja/ni0019/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "忍-20",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うちはサスケ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/n1236292271",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/2b68d60532fef404967acdb74f1e3efa310359caa008ec6db6af89042d52a968/i-img900x1200-178346353810143qxqbq241.jpg",
+      "curated": "cards/ninja/ni0020/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "術-14",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "無音殺人術",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/m1234689126",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0206/user/17b9efb1feb01e2d3a171a06932bd93cb83db9b34bc85368f68ea80cb8a503ce/i-img900x1200-17822711060890dkyjon36028.jpg",
+      "curated": "cards/jutsu/te0014/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "術-17",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "変わり身の術",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/q1192461006",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0107/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img831x1200-17523802762209u31xyd394.jpg",
+      "curated": "cards/jutsu/te0017/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "作-5",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "九尾の災厄",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/w1234622944",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0206/user/b6ae07056661c619bc3f31cf9e3f1ce54f399fb5877e53604fee01d0ceb3ee0f/i-img900x1200-17822231621873x2dahc11050.jpg",
+      "curated": "cards/mission/ta0005/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
+    },
+    {
+      "printedRef": "作-8",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "ハプニング",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/x1236113673",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img839x1200-17833211610865jzkxau35.jpg",
+      "curated": "cards/mission/ta0008/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "作-14",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "殺気！",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/k1192452552",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0107/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img839x1200-175238030041444curhj226537.jpg",
+      "curated": "cards/mission/ta0014/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "作-18",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "目覚めの朝",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/m1198509136",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0109/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img828x1200-17567179619245lbln7h34.jpg",
+      "curated": "cards/mission/ta0018/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
+    },
+    {
+      "printedRef": "作-21",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "戦い終えて",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/s1174314433",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0102/user/ac0052e2dc53ce0c0cb94a624cbd6ab243449009f6324556611baed410607527/i-img800x600-17401095093479te2skv18408.jpg",
+      "curated": "cards/mission/ta0021/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/l1239088161",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/13058f4ba4926a6a2c08355e8cc2eed180af8e605420bf2315bb6d4274f13fd5/i-img1075x1200-17854606556957qgakto36.jpg",
+      "curated": "cards/promo/opni0003/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005
+    },
+    {
+      "printedRef": "PR忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/e1192446937",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0107/user/d0098f8e8cf217b478b37a7148473da0f2aa672b767c115bbf15d1f7758d003c/i-img825x1200-175238026860338n3fiw15953.jpg",
+      "curated": "cards/promo/prni0003/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2003
+    },
+    {
+      "printedRef": "忍-3",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/b1239481898",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/user/3e2b0f990a17565271dd4d2e2c7b0ef4aff3fdaac21009c168bca74d09024262/i-img1200x900-17857482221104s1hiqh81486.jpg",
+      "ingest": false,
+      "reason": "Printed 忍-3 NOT FOR SALE 2003 combat pose — not FR NI-03 standing art, not 2002 巻ノ壱. Do not file as ni0003 or ni0003-ps."
+    },
+    {
+      "printedRef": "忍-3",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "春野サクラ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/n1239077558",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/user/13058f4ba4926a6a2c08355e8cc2eed180af8e605420bf2315bb6d4274f13fd5/i-img1182x1200-17854601844521qkrrf656565.jpg",
+      "ingest": false,
+      "reason": "Printed 忍-3 BANDAI 2004 winter cloak — art does not match FR NI-03."
+    },
+    {
+      "printedRef": "忍-37",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "はたけカカシ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/j1235211033",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0206/user/e8d58f35e97c2be4c432d707ba0f091d0f91a4d07124dd29c1bd56447ad5d447/i-img1200x900-1782655462585816hyzhhk8.jpg",
+      "ingest": false,
+      "reason": "Lot photo (忍-37+38). Do not use an uncropped 2-up as the catalogue face."
+    },
+    {
+      "printedRef": "PR作-11",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "存在の証明",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z671389014",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e700dc25be20783b6c6ade78876f41b1e296d143/i-img900x1200-17880071711860dnjrq.jpg",
+      "curated": "cards/promo/prta0011/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
+    },
+    {
+      "printedRef": "PR作-12",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "最後の一撃",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z670666630",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/8966afbc02f5808c4eb5c7d05dd7351c31d4bfb2/i-img904x1200-1787916060732w8d2ci.jpg",
+      "curated": "cards/promo/prta0012/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004
+    },
+    {
+      "printedRef": "PR作-29",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "木ノ葉を襲う脅威",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z664704912",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/d97ba707f8edb6326fff8bf4c0ca4185664ec92d/i-img921x1200-1787058301841rrctja.jpg",
+      "curated": "cards/promo/prta0029/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 921,
+        "height": 1200
+      },
+      "note": "大会優勝プロモ / NOT FOR SALE. Aussi listé hatatoy.shop/?pid=172759209 (SOLD OUT, HTML 403 — pas d'image). JA orphan hole."
+    },
+    {
+      "printedRef": "CAN-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト＆日向ネジ",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z669176354",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e700dc25be20783b6c6ade78876f41b1e296d143/i-img900x1200-1787705692000flzvoj.jpg",
+      "curated": "cards/promo/can0003/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 900,
+        "height": 1200
+      },
+      "note": "Porte-cartes 木ノ葉絵巻. Duo 忍-style (not 作戦)."
+    },
+    {
+      "printedRef": "CAN-4",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "光と闇",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z671351520",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e700dc25be20783b6c6ade78876f41b1e296d143/i-img900x1200-1788004267231tw2tgj.jpg",
+      "curated": "cards/promo/can0004/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 900,
+        "height": 1200
+      },
+      "note": "Porte-cartes 木ノ葉絵巻. 作戦 (Naruto vs Gaara)."
+    },
+    {
+      "printedRef": "CAN-5",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "師から弟子へ",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z671354378",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e700dc25be20783b6c6ade78876f41b1e296d143/i-img900x1200-17880044685730bmiva.jpg",
+      "curated": "cards/promo/can0005/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 900,
+        "height": 1200
+      },
+      "note": "Porte-cartes 木ノ葉絵巻 (ラムネ). Aussi miroir spam lifestyle.bdpkktbh.yoga — ignoré. JA orphan (CAN unparsed avant 2026-09-21)."
+    },
+    {
+      "printedRef": "CAN-6",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "火影を目指して",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z671358008",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e700dc25be20783b6c6ade78876f41b1e296d143/i-img900x1200-1788004666993iftfn0.jpg",
+      "curated": "cards/promo/can0006/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 900,
+        "height": 1200
+      },
+      "note": "Porte-cartes 木ノ葉絵巻 (ラムネ). JA orphan (CAN unparsed avant 2026-09-21)."
+    },
+    {
+      "printedRef": "PR作-26",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "深淵の野望",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z669486704",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/edcc756e499f22304dcb4f1e16b4515db2bf89a2/i-img1200x1200-1787742588136e3ywxb.jpg",
+      "curated": "cards/promo/prta0026/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1200
+      },
+      "note": "カードダスカーニバル 札の里攻防合戦. JA orphan hole. Photo _1 = recto plein cadre (fond blanc). Pied PR作-26 · NOT FOR SALE · BANDAI 2006."
+    },
+    {
+      "printedRef": "CAN-1",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト＆うちはサスケ",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z668929396",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e700dc25be20783b6c6ade78876f41b1e296d143/i-img900x1200-1787659475292e6x28b.jpg",
+      "curated": "cards/promo/can0001/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 900,
+        "height": 1200
+      },
+      "note": "Porte-cartes 木ノ葉絵巻. Upgrade over mercari 810×1080. Photo _1 = recto plein cadre."
+    },
+    {
+      "printedRef": "忍-399",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "ロック・リー",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img1075x790-1784539815139qw3ey5.jpg",
+      "curated": "cards/ninja/ni0399/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 563,
+        "height": 827
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop from listing photo (Lee left of pair with 忍-405)."
+    },
+    {
+      "printedRef": "忍-405",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "カレンバナ",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img1075x790-1784539815139qw3ey5.jpg",
+      "curated": "cards/ninja/ni0405/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 563,
+        "height": 820
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop from listing photo (Karenbana right of pair with 忍-399). Rare."
+    },
+    {
+      "printedRef": "忍-410",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "ホクト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img1051x752-17845398342798yq0mu.jpg",
+      "curated": "cards/ninja/ni0410/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 556,
+        "height": 815
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop from listing photo (Hokuto left of pair with checklist)."
+    },
+    {
+      "printedRef": "忍-406",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "うずまきナルト＆うずまきナルト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img854x1185-1784335559433um9ig2.jpg",
+      "curated": "cards/ninja/ni0406/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 782,
+        "height": 1124
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop of UR 忍-406 (foil). Seller listed as うずまきナルト UR."
+    },
+    {
+      "printedRef": "作-330",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "姑息な脅迫",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img854x1185-1784335559433um9ig2.jpg",
+      "curated": "cards/mission/ta0330/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 572,
+        "height": 833
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop — pied 作-330 (pas 331). Reconstruction TA-330J. Title 姑息な脅迫."
+    },
+    {
+      "printedRef": "作-333",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "防毒マスク",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img1090x810-1784539713583ourneq.jpg",
+      "curated": "cards/mission/ta0333/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 560,
+        "height": 812
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop from listing pair photo (left of 作-335)."
+    },
+    {
+      "printedRef": "作-335",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "地獄谷",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img1090x810-1784539713583ourneq.jpg",
+      "curated": "cards/mission/ta0335/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 550,
+        "height": 812
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop from listing pair photo (right of 作-333)."
+    },
+    {
+      "printedRef": "PR忍-4",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z681048232",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0209/users/84368016f0492b180f52951442b6b9026e4af6ba/i-img1200x1200-17891385370499xn2if.jpg",
+      "curated": "cards/promo/prni0004/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 1200,
+        "height": 1200
+      },
+      "note": "PayPay z681048232. Pied PR忍-4 BANDAI 2003. ≪主人公の特権≫."
+    },
+    {
+      "printedRef": "PR忍-1",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z680858402",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0209/users/8966afbc02f5808c4eb5c7d05dd7351c31d4bfb2/i-img904x1200-1789124431650zzl188.jpg",
+      "ingest": false,
+      "bandaiYear": 2002,
+      "reason": "Seller title PR忍-1 — pied imprimé 忍-1 BANDAI 2002 (巻ノ壱, art forêt). Pas la promo flamme PR忍-1. Ingesté comme 忍-1 ci-dessous."
+    },
+    {
+      "printedRef": "忍-1",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うずまきナルト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z680858402",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0209/users/8966afbc02f5808c4eb5c7d05dd7351c31d4bfb2/i-img904x1200-1789124431650zzl188.jpg",
+      "curated": "cards/ninja/ni0001/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2002,
+      "pixels": {
+        "width": 904,
+        "height": 1200
+      },
+      "note": "PayPay z680858402 (titré PR par le vendeur). Pied 忍-1 — 巻ノ壱."
+    },
+    {
+      "printedRef": "PR忍-1-R",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト",
+      "listing": "http://localhost:3000/assets/naruto/carddass/cards/promo/prni0001/ja/art.suruga.jpg",
+      "ingest": false,
+      "bandaiYear": 2002,
+      "reason": "Pointé comme PR忍-1R — le fichier est art.suruga de prni0001, pied imprimé PR忍-1 (pas ・R). PR忍-1-R reste art.zabuza (pied PR忍-1・R)."
+    },
+    {
+      "printedRef": "PR忍-8",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z655232472",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/84368016f0492b180f52951442b6b9026e4af6ba/i-img1200x1200-1785670729691mb7ej5.jpg",
+      "curated": "cards/promo/prni0008/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2004,
+      "pixels": {
+        "width": 1200,
+        "height": 1200
+      },
+      "note": "PayPay z655232472. Pied PR忍-8 BANDAI 2004 NOT FOR SALE. ≪エロ仙人の修行≫."
+    },
+    {
+      "printedRef": "忍-331",
+      "lang": "ja",
+      "setCode": "maki14",
+      "title": "ロック・リー",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z660810148",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/users/e83b28bff5c5f189c38389304303db580131a47c/i-img881x1200-17865204590629dg3lz.jpg",
+      "curated": "cards/ninja/ni0331/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 881,
+        "height": 1200
+      },
+      "note": "PayPay z660810148. JA orphan. Pied 忍-331 BANDAI 2005 — 巻ノ十四."
+    },
+    {
+      "printedRef": "忍-397",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "うずまきナルト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z684763690",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0209/users/32f9955ef3ac696af12bf1972c9dd8d74e8a30e6/i-img875x1200-1789644119845dnu2u7.jpg",
+      "curated": "cards/ninja/ni0397/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 875,
+        "height": 1200
+      },
+      "note": "PayPay z684763690. JA orphan. Pied 忍-397 BANDAI 2006 劇場版 — 巻ノ十七. Pair with 忍-398 on sec.carddass.com 自販機ブースター JAN 4543112451491000 (packshot déjà sur vending-vol17-jp)."
+    },
+    {
+      "printedRef": "忍-413",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "アカホシ",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z645705410",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/fbff82555c9c752855297e8fdcbc49eac73baa2f/i-img1200x1200-1784269271178029dl8.jpg",
+      "curated": "cards/ninja/ni0413/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1200,
+        "height": 1200
+      },
+      "note": "PayPay z645705410. JA orphan. Pied 忍-413 BANDAI 2006 — 巻ノ十七."
+    },
+    {
+      "printedRef": "忍-416",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "薬師カブト",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z653161996",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/8cd6ce5d4f27f7c089f576644c9e064b85c574b9/i-img1078x1200-1785422087259rbm178.jpg",
+      "curated": "cards/ninja/ni0416/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1078,
+        "height": 1200
+      },
+      "note": "PayPay z653161996. JA orphan. Pied 忍-416 BANDAI 2006 — 巻ノ十七."
+    },
+    {
+      "printedRef": "PR忍-14",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "君麻呂",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z686842770",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0209/users/72b2736ea3a60ceb12d0b35a799229e9d1d0ef16/i-img900x1200-1789819432083l2nl7k.jpg",
+      "curated": "cards/promo/prni0014/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 900,
+        "height": 1200
+      },
+      "note": "PayPay dig 2026-09-21. Pied PR-忍14 BANDAI 2005. ≪骨による攻撃≫."
+    },
+    {
+      "printedRef": "PR忍-18",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "はたけカカシ",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z682001160",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0209/users/9249f7f8dd158b8cdc6ae046dd75b6f4908b372f/i-img900x1200-1789260339765rj6hqh.jpg",
+      "curated": "cards/promo/prni0018/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 900,
+        "height": 1200
+      },
+      "note": "PayPay dig 2026-09-21. Photo _2 = recto ( _1 = dos). Pied PR忍-18 NOT FOR SALE BANDAI 2006."
+    },
+    {
+      "printedRef": "術-319",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "鉄鎖",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z642274184",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/ec354e47f84b53c8abffda8935dc7ec775707083/i-img900x1200-1783705956483brvhcm.jpg",
+      "curated": "cards/jutsu/te0319/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 414,
+        "height": 1080
+      },
+      "note": "PayPay dig 2026-09-21. Lot 術-319+術-036 — crop gauche = 鉄鎖. 巻ノ十五."
+    },
+    {
+      "printedRef": "術-355",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "忍法・壁抜けの術",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img1148x833-1784539742435s2vcl2.jpg",
+      "curated": "cards/jutsu/te0355/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 520,
+        "height": 740
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop from pair photo (left). Right of pair is 術-359 金轟力 (not 356)."
+    },
+    {
+      "printedRef": "術-359",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "金轟力",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z647535466",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0207/users/768b3b41c9004c9eb7d9ef3029f2d2fc1210afef/i-img1148x833-1784539742435s2vcl2.jpg",
+      "curated": "cards/jutsu/te0359/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 520,
+        "height": 740
+      },
+      "note": "Lot maki17 PayPay z647535466. User crop from pair photo (right of 術-355). Pied 術-359 — seller/user said 356 but printed is 359."
+    },
+    {
+      "printedRef": "術-350",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "金分身の術",
+      "listing": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSchVeG2X-KtXrrUEgzSdUM3quQOGGyjWURuMUo-r-QLcfaDQWvCWQiiK3_",
+      "url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSchVeG2X-KtXrrUEgzSdUM3quQOGGyjWURuMUo-r-QLcfaDQWvCWQiiK3_&s=10",
+      "curated": "cards/jutsu/te0350/ja/source.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 397,
+        "height": 554
+      },
+      "note": "User paste 2026-09-24 Google encrypted thumb (554²). Cropped to card; installed art.yahoo as orphan placeholder until a shop scan exists. Original page unknown."
+    },
+    {
+      "printedRef": "忍-381",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "ホウキ",
+      "listing": "https://auctions.yahoo.co.jp/jp/auction/s1241092962",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0208/user/9cbb57abf9794a7c12ac71efed99d2fa4aa550c16b38ca6c3892b5a07d6ba613/i-img1200x1200-17869750718538fglqbw36.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 575,
+        "height": 777
+      },
+      "note": "JA orphan fill. Pied 忍-381 BANDAI — ホウキ. Crop from 1200sq Yahoo auction photo."
+    },
+    {
+      "printedRef": "作-281",
+      "lang": "ja",
+      "setCode": "maki14",
+      "title": "蟲使い達の攻防",
+      "listing": "https://paypayfleamarket.yahoo.co.jp/item/z680536886",
+      "url": "https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0209/users/1221e3c7a813bde449432ebd2bb5959ea2e0d7cb/i-img1200x1200-1789090269234e65bvm.jpg",
+      "ingest": false,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 1200,
+        "height": 1200
+      },
+      "note": "skip: PayPay flea 1200² fabric photo; existing art.ebay.webp already 1200×1600 full-bleed."
+    }
+  ]
+}

@@ -69,8 +69,8 @@ export function crc32Hex(bytes: Uint8Array): string {
 const MD5_S = [
   7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5,
   9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11,
-  16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10,
-  15, 21,
+  16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15,
+  21,
 ];
 
 const MD5_K = (() => {
@@ -159,7 +159,9 @@ function createMd5(): IncrementalHexHasher {
     digest() {
       const bitLenLo = (totalLen * 8) >>> 0;
       const bitLenHi = Math.floor(totalLen / 0x20000000);
-      const pad = new Uint8Array(bufferLen < 56 ? 64 - bufferLen : 128 - bufferLen);
+      const pad = new Uint8Array(
+        bufferLen < 56 ? 64 - bufferLen : 128 - bufferLen,
+      );
       pad[0] = 0x80;
       const view = new DataView(pad.buffer);
       view.setUint32(pad.length - 8, bitLenLo, true);
@@ -229,8 +231,7 @@ function createSha1(): IncrementalHexHasher {
         f = b ^ c ^ d;
         k = 0xca62c1d6;
       }
-      const temp =
-        (((a << 5) | (a >>> 27)) + f + e + k + w[i]!) >>> 0;
+      const temp = (((a << 5) | (a >>> 27)) + f + e + k + w[i]!) >>> 0;
       e = d;
       d = c;
       c = ((b << 30) | (b >>> 2)) >>> 0;
@@ -271,7 +272,9 @@ function createSha1(): IncrementalHexHasher {
     digest() {
       const bitLenHi = Math.floor(totalLen / 0x20000000);
       const bitLenLo = (totalLen * 8) >>> 0;
-      const pad = new Uint8Array(bufferLen < 56 ? 64 - bufferLen : 128 - bufferLen);
+      const pad = new Uint8Array(
+        bufferLen < 56 ? 64 - bufferLen : 128 - bufferLen,
+      );
       pad[0] = 0x80;
       const view = new DataView(pad.buffer);
       view.setUint32(pad.length - 8, bitLenHi, false);
@@ -371,8 +374,7 @@ export async function hashRomFile(
     md5.update(chunk);
     sha1.update(chunk);
     bytesRead += chunk.byteLength;
-    const ratio =
-      totalBytes <= 0 ? 1 : Math.min(1, bytesRead / totalBytes);
+    const ratio = totalBytes <= 0 ? 1 : Math.min(1, bytesRead / totalBytes);
     onProgress?.({ bytesRead, totalBytes, ratio });
   }
 

@@ -5,7 +5,10 @@ import { significantTokens } from "@/core/enrich/titles/identityTokens";
  * Hyphen / spacing vs catalog compound: "Q-Force" tokens ≡ "QForce".
  * Structural join only — never invent FR↔EN aliases (rose ≠ pink).
  */
-export function compactTokenStreamEquivalent(a: string[], b: string[]): boolean {
+export function compactTokenStreamEquivalent(
+  a: string[],
+  b: string[],
+): boolean {
   if (
     a.length === b.length &&
     a.every((token, index) => titleTokensEquivalent(token, b[index] ?? ""))

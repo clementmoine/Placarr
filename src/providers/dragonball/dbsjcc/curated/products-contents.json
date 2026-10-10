@@ -1,0 +1,2989 @@
+{
+  "version": 1,
+  "pack": "dragonball/jcc",
+  "updatedAt": "2026-10-04",
+  "byKind": {
+    "booster": {
+      "source": "dbzcollection ledger cardsPerBooster=8 + manga-sanctuary news 3101 (8 cartes dont 1 holo)",
+      "verifiedAt": "2026-10-04",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "Loterie = set Part N. Presse 2006 : 1 holographique / pochette ; pool série 66–84. MSRP indicatif 3–5 € (pas collé en priceCents). contentsKnown false jusqu'à checklist attestée."
+    },
+    "display": {
+      "source": "dbzcollection starter box / display JCC",
+      "verifiedAt": "2026-09-13",
+      "packsContained": null,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "packsContained renseigné SKU par SKU quand attesté (ex. starter box)."
+    },
+    "deck": {
+      "source": "Bandai JCC starter — manga-sanctuary news 3101 + dbzcollection cardsPerStarter",
+      "verifiedAt": "2026-10-04",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "behavior": "known_bundle",
+      "contentsKnown": false,
+      "notes": "Presse : 2 starters / série ; 32 cartes (25+7) ; 2 holos. Listes partielles depuis dbzcollection Autres infos (Deck …) — contentsKnown false tant que <32. Voir skus + dbzcollection-contents.json."
+    },
+    "ephemera": {
+      "source": "Poster JCC — pas de cartes",
+      "verifiedAt": "2026-10-04",
+      "behavior": "no_cards",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Posters / print éphémère. Le Détecteur est une carte catalogue (`dbsjcc:accessory-detecteur`), pas un SKU scellé."
+    }
+  },
+  "skus": {
+    "part1-starter-1190": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Oolong",
+          "slug": "d0005",
+          "ref": "D-5",
+          "printKey": "dbsjcc:part1-d0005",
+          "qty": 1
+        },
+        {
+          "name": "Plume",
+          "slug": "d0006",
+          "ref": "D-6",
+          "printKey": "dbsjcc:part1-d0006",
+          "qty": 1
+        },
+        {
+          "name": "Tortue géniale",
+          "slug": "d0007",
+          "ref": "D-7",
+          "printKey": "dbsjcc:part1-d0007",
+          "qty": 1
+        },
+        {
+          "name": "Yajirobé",
+          "slug": "d0022",
+          "ref": "D-22",
+          "printKey": "dbsjcc:part1-d0022",
+          "qty": 1
+        },
+        {
+          "name": "Karine",
+          "slug": "d0023",
+          "ref": "D-23",
+          "printKey": "dbsjcc:part1-d0023",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0036",
+          "ref": "D-36",
+          "printKey": "dbsjcc:part1-d0036",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0037",
+          "ref": "D-37",
+          "printKey": "dbsjcc:part1-d0037",
+          "qty": 1
+        },
+        {
+          "name": "Chaozu",
+          "slug": "d0038",
+          "ref": "D-38",
+          "printKey": "dbsjcc:part1-d0038",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0039",
+          "ref": "D-39",
+          "printKey": "dbsjcc:part1-d0039",
+          "qty": 1
+        },
+        {
+          "name": "Piccolo",
+          "slug": "d0041",
+          "ref": "D-41",
+          "printKey": "dbsjcc:part1-d0041",
+          "qty": 1
+        },
+        {
+          "name": "Krillin",
+          "slug": "d0047",
+          "ref": "D-47",
+          "printKey": "dbsjcc:part1-d0047",
+          "qty": 1
+        },
+        {
+          "name": "Kaïo",
+          "slug": "d0050",
+          "ref": "D-50",
+          "printKey": "dbsjcc:part1-d0050",
+          "qty": 1
+        },
+        {
+          "name": "Dendé",
+          "slug": "d0071",
+          "ref": "D-71",
+          "printKey": "dbsjcc:part1-d0071",
+          "qty": 1
+        },
+        {
+          "name": "Grand chef",
+          "slug": "d0072",
+          "ref": "D-72",
+          "printKey": "dbsjcc:part1-d0072",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0078",
+          "ref": "D-78",
+          "printKey": "dbsjcc:part1-d0078",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0080",
+          "ref": "D-80",
+          "printKey": "dbsjcc:part1-d0080",
+          "qty": 1
+        },
+        {
+          "name": "Bulma",
+          "slug": "d0081",
+          "ref": "D-81",
+          "printKey": "dbsjcc:part1-d0081",
+          "qty": 1
+        },
+        {
+          "name": "Eau mystique",
+          "slug": "d0093",
+          "ref": "D-93",
+          "printKey": "dbsjcc:part1-d0093",
+          "qty": 1
+        },
+        {
+          "name": "Croissance de goku",
+          "slug": "d0099",
+          "ref": "D-99",
+          "printKey": "dbsjcc:part1-d0099",
+          "qty": 1
+        },
+        {
+          "name": "Récupération grâce aux senzus",
+          "slug": "d0109",
+          "ref": "D-109",
+          "printKey": "dbsjcc:part1-d0109",
+          "qty": 1
+        },
+        {
+          "name": "Concours de circonstances !",
+          "slug": "d0114",
+          "ref": "D-114",
+          "printKey": "dbsjcc:part1-d0114",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 1 étoile",
+          "slug": "d0123",
+          "ref": "D-123",
+          "printKey": "dbsjcc:part1-d0123",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 2 étoiles",
+          "slug": "d0124",
+          "ref": "D-124",
+          "printKey": "dbsjcc:part1-d0124",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 3 étoiles",
+          "slug": "d0125",
+          "ref": "D-125",
+          "printKey": "dbsjcc:part1-d0125",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 4 étoiles",
+          "slug": "d0126",
+          "ref": "D-126",
+          "printKey": "dbsjcc:part1-d0126",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 5 étoiles",
+          "slug": "d0127",
+          "ref": "D-127",
+          "printKey": "dbsjcc:part1-d0127",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 6 étoiles",
+          "slug": "d0128",
+          "ref": "D-128",
+          "printKey": "dbsjcc:part1-d0128",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 7 étoiles",
+          "slug": "d0129",
+          "ref": "D-129",
+          "printKey": "dbsjcc:part1-d0129",
+          "qty": 1
+        },
+        {
+          "name": "Shenron",
+          "slug": "d0134",
+          "ref": "D-134",
+          "printKey": "dbsjcc:part1-d0134",
+          "qty": 1
+        }
+      ],
+      "notes": "29/32 cartes attestees — liste partielle, contentsKnown false."
+    },
+    "part1-starter-ennemis": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Ninja violet",
+          "slug": "d0011",
+          "ref": "D-11",
+          "printKey": "dbsjcc:part1-d0011",
+          "qty": 1
+        },
+        {
+          "name": "Draculaman",
+          "slug": "d0015",
+          "ref": "D-15",
+          "printKey": "dbsjcc:part1-d0015",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0018",
+          "ref": "D-18",
+          "printKey": "dbsjcc:part1-d0018",
+          "qty": 1
+        },
+        {
+          "name": "Chaozu",
+          "slug": "d0019",
+          "ref": "D-19",
+          "printKey": "dbsjcc:part1-d0019",
+          "qty": 1
+        },
+        {
+          "name": "Maître des grues",
+          "slug": "d0020",
+          "ref": "D-20",
+          "printKey": "dbsjcc:part1-d0020",
+          "qty": 1
+        },
+        {
+          "name": "Pilaf",
+          "slug": "d0021",
+          "ref": "D-21",
+          "printKey": "dbsjcc:part1-d0021",
+          "qty": 1
+        },
+        {
+          "name": "Toto le lapin",
+          "slug": "d0024",
+          "ref": "D-24",
+          "printKey": "dbsjcc:part1-d0024",
+          "qty": 1
+        },
+        {
+          "name": "Radditz",
+          "slug": "d0040",
+          "ref": "D-40",
+          "printKey": "dbsjcc:part1-d0040",
+          "qty": 1
+        },
+        {
+          "name": "Saibaiman",
+          "slug": "d0052",
+          "ref": "D-52",
+          "printKey": "dbsjcc:part1-d0052",
+          "qty": 1
+        },
+        {
+          "name": "Dodoria",
+          "slug": "d0058",
+          "ref": "D-58",
+          "printKey": "dbsjcc:part1-d0058",
+          "qty": 1
+        },
+        {
+          "name": "Guldo",
+          "slug": "d0063",
+          "ref": "D-63",
+          "printKey": "dbsjcc:part1-d0063",
+          "qty": 1
+        },
+        {
+          "name": "Jeece",
+          "slug": "d0064",
+          "ref": "D-64",
+          "printKey": "dbsjcc:part1-d0064",
+          "qty": 1
+        },
+        {
+          "name": "Barta",
+          "slug": "d0066",
+          "ref": "D-66",
+          "printKey": "dbsjcc:part1-d0066",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0068",
+          "ref": "D-68",
+          "printKey": "dbsjcc:part1-d0068",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0069",
+          "ref": "D-69",
+          "printKey": "dbsjcc:part1-d0069",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0070",
+          "ref": "D-70",
+          "printKey": "dbsjcc:part1-d0070",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0077",
+          "ref": "D-77",
+          "printKey": "dbsjcc:part1-d0077",
+          "qty": 1
+        },
+        {
+          "name": "Cell Jr",
+          "slug": "d0079",
+          "ref": "D-79",
+          "printKey": "dbsjcc:part1-d0079",
+          "qty": 1
+        },
+        {
+          "name": "Taiyoken",
+          "slug": "d0089",
+          "ref": "D-89",
+          "printKey": "dbsjcc:part1-d0089",
+          "qty": 1
+        },
+        {
+          "name": "Kikoha",
+          "slug": "d0112",
+          "ref": "D-112",
+          "printKey": "dbsjcc:part1-d0112",
+          "qty": 1
+        },
+        {
+          "name": "1 ère transformation",
+          "slug": "d0113",
+          "ref": "D-113",
+          "printKey": "dbsjcc:part1-d0113",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 1 étoile",
+          "slug": "d0123",
+          "ref": "D-123",
+          "printKey": "dbsjcc:part1-d0123",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 2 étoiles",
+          "slug": "d0124",
+          "ref": "D-124",
+          "printKey": "dbsjcc:part1-d0124",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 3 étoiles",
+          "slug": "d0125",
+          "ref": "D-125",
+          "printKey": "dbsjcc:part1-d0125",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 4 étoiles",
+          "slug": "d0126",
+          "ref": "D-126",
+          "printKey": "dbsjcc:part1-d0126",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 5 étoiles",
+          "slug": "d0127",
+          "ref": "D-127",
+          "printKey": "dbsjcc:part1-d0127",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 6 étoiles",
+          "slug": "d0128",
+          "ref": "D-128",
+          "printKey": "dbsjcc:part1-d0128",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 7 étoiles",
+          "slug": "d0129",
+          "ref": "D-129",
+          "printKey": "dbsjcc:part1-d0129",
+          "qty": 1
+        },
+        {
+          "name": "Shenron",
+          "slug": "d0134",
+          "ref": "D-134",
+          "printKey": "dbsjcc:part1-d0134",
+          "qty": 1
+        }
+      ],
+      "notes": "29/32 cartes attestees — liste partielle, contentsKnown false."
+    },
+    "part2-starter-1193": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Lunch",
+          "slug": "d0140",
+          "ref": "D-140",
+          "printKey": "dbsjcc:part2-d0140",
+          "qty": 1
+        },
+        {
+          "name": "Upa",
+          "slug": "d0141",
+          "ref": "D-141",
+          "printKey": "dbsjcc:part2-d0141",
+          "qty": 1
+        },
+        {
+          "name": "Dendé",
+          "slug": "d0149",
+          "ref": "D-149",
+          "printKey": "dbsjcc:part2-d0149",
+          "qty": 1
+        },
+        {
+          "name": "Mr popo",
+          "slug": "d0150",
+          "ref": "D-150",
+          "printKey": "dbsjcc:part2-d0150",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0155",
+          "ref": "D-155",
+          "printKey": "dbsjcc:part2-d0155",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0157",
+          "ref": "D-157",
+          "printKey": "dbsjcc:part2-d0157",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0158",
+          "ref": "D-158",
+          "printKey": "dbsjcc:part2-d0158",
+          "qty": 1
+        },
+        {
+          "name": "Yamcha",
+          "slug": "d0160",
+          "ref": "D-160",
+          "printKey": "dbsjcc:part2-d0160",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0168",
+          "ref": "D-168",
+          "printKey": "dbsjcc:part2-d0168",
+          "qty": 1
+        },
+        {
+          "name": "Krillin",
+          "slug": "d0169",
+          "ref": "D-169",
+          "printKey": "dbsjcc:part2-d0169",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan",
+          "slug": "d0170",
+          "ref": "D-170",
+          "printKey": "dbsjcc:part2-d0170",
+          "qty": 1
+        },
+        {
+          "name": "Cell",
+          "slug": "d0173",
+          "ref": "D-173",
+          "printKey": "dbsjcc:part2-d0173",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0182",
+          "ref": "D-182",
+          "printKey": "dbsjcc:part2-d0182",
+          "qty": 1
+        },
+        {
+          "name": "Gohan laisse exploser toute sa puissance",
+          "slug": "d0183",
+          "ref": "D-183",
+          "printKey": "dbsjcc:part2-d0183",
+          "qty": 1
+        },
+        {
+          "name": "Le guerrier surpassant goku",
+          "slug": "d0192",
+          "ref": "D-192",
+          "printKey": "dbsjcc:part2-d0192",
+          "qty": 1
+        },
+        {
+          "name": "Capsule hoïpoï !!!",
+          "slug": "d0196",
+          "ref": "D-196",
+          "printKey": "dbsjcc:part2-d0196",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan, champion du monde d'arts martiaux !!",
+          "slug": "d0199",
+          "ref": "D-199",
+          "printKey": "dbsjcc:part2-d0199",
+          "qty": 1
+        },
+        {
+          "name": "Le voeu de pilaf",
+          "slug": "d0209",
+          "ref": "D-209",
+          "printKey": "dbsjcc:part2-d0209",
+          "qty": 1
+        },
+        {
+          "name": "Goten",
+          "slug": "d0213",
+          "ref": "D-213",
+          "printKey": "dbsjcc:part2-d0213",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0214",
+          "ref": "D-214",
+          "printKey": "dbsjcc:part2-d0214",
+          "qty": 1
+        },
+        {
+          "name": "Vieux kaïo shin",
+          "slug": "d0233",
+          "ref": "D-233",
+          "printKey": "dbsjcc:part2-d0233",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0247",
+          "ref": "D-247",
+          "printKey": "dbsjcc:part2-d0247",
+          "qty": 1
+        },
+        {
+          "name": "Force potentielle",
+          "slug": "d0261",
+          "ref": "D-261",
+          "printKey": "dbsjcc:part2-d0261",
+          "qty": 1
+        },
+        {
+          "name": "L'équipe des super saiyans !",
+          "slug": "d0279",
+          "ref": "D-279",
+          "printKey": "dbsjcc:part2-d0279",
+          "qty": 1
+        }
+      ],
+      "notes": "24/32 cartes attestees — liste partielle, contentsKnown false."
+    },
+    "part3-starter-1197": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Gohan",
+          "slug": "d0215",
+          "ref": "D-215",
+          "printKey": "dbsjcc:part3-d0215",
+          "qty": 1
+        },
+        {
+          "name": "Videl",
+          "slug": "d0216",
+          "ref": "D-216",
+          "printKey": "dbsjcc:part3-d0216",
+          "qty": 1
+        },
+        {
+          "name": "Gyumao",
+          "slug": "d0217",
+          "ref": "D-217",
+          "printKey": "dbsjcc:part3-d0217",
+          "qty": 1
+        },
+        {
+          "name": "Vegeto",
+          "slug": "d0234",
+          "ref": "D-234",
+          "printKey": "dbsjcc:part3-d0234",
+          "qty": 1
+        },
+        {
+          "name": "Piccolo",
+          "slug": "d0236",
+          "ref": "D-236",
+          "printKey": "dbsjcc:part3-d0236",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0242",
+          "ref": "D-242",
+          "printKey": "dbsjcc:part3-d0242",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0251",
+          "ref": "D-251",
+          "printKey": "dbsjcc:part3-d0251",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0253",
+          "ref": "D-253",
+          "printKey": "dbsjcc:part3-d0253",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan",
+          "slug": "d0254",
+          "ref": "D-254",
+          "printKey": "dbsjcc:part3-d0254",
+          "qty": 1
+        },
+        {
+          "name": "Buu",
+          "slug": "d0255",
+          "ref": "D-255",
+          "printKey": "dbsjcc:part3-d0255",
+          "qty": 1
+        },
+        {
+          "name": "Bubbles",
+          "slug": "d0257",
+          "ref": "D-257",
+          "printKey": "dbsjcc:part3-d0257",
+          "qty": 1
+        },
+        {
+          "name": "Oob",
+          "slug": "d0259",
+          "ref": "D-259",
+          "printKey": "dbsjcc:part3-d0259",
+          "qty": 1
+        },
+        {
+          "name": "Le duel des maître de l'univers !",
+          "slug": "d0272",
+          "ref": "D-272",
+          "printKey": "dbsjcc:part3-d0272",
+          "qty": 1
+        },
+        {
+          "name": "Fusion potaras",
+          "slug": "d0273",
+          "ref": "D-273",
+          "printKey": "dbsjcc:part3-d0273",
+          "qty": 1
+        },
+        {
+          "name": "Great saiyaman découvert !",
+          "slug": "d0274",
+          "ref": "D-274",
+          "printKey": "dbsjcc:part3-d0274",
+          "qty": 1
+        },
+        {
+          "name": "Les exigences de vegeta",
+          "slug": "d0290",
+          "ref": "D-290",
+          "printKey": "dbsjcc:part3-d0290",
+          "qty": 1
+        },
+        {
+          "name": "Tortue géniale",
+          "slug": "d0291",
+          "ref": "D-291",
+          "printKey": "dbsjcc:part3-d0291",
+          "qty": 1
+        },
+        {
+          "name": "Krillin",
+          "slug": "d0292",
+          "ref": "D-292",
+          "printKey": "dbsjcc:part3-d0292",
+          "qty": 1
+        },
+        {
+          "name": "Kaïo shin",
+          "slug": "d0302",
+          "ref": "D-302",
+          "printKey": "dbsjcc:part3-d0302",
+          "qty": 1
+        },
+        {
+          "name": "Passage de relais",
+          "slug": "d0341",
+          "ref": "D-341",
+          "printKey": "dbsjcc:part3-d0341",
+          "qty": 1
+        },
+        {
+          "name": "Shenron est réssucité !",
+          "slug": "d0353",
+          "ref": "D-353",
+          "printKey": "dbsjcc:part3-d0353",
+          "qty": 1
+        },
+        {
+          "name": "L'ultime assaut !",
+          "slug": "d0355",
+          "ref": "D-355",
+          "printKey": "dbsjcc:part3-d0355",
+          "qty": 1
+        }
+      ],
+      "notes": "22/32 cartes attestees — liste partielle, contentsKnown false."
+    },
+    "part3-starter-championnat": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Je veux une culotte !",
+          "slug": "d0289",
+          "ref": "D-289",
+          "printKey": "dbsjcc:part3-d0289",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0307",
+          "ref": "D-307",
+          "printKey": "dbsjcc:part3-d0307",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan",
+          "slug": "d0317",
+          "ref": "D-317",
+          "printKey": "dbsjcc:part3-d0317",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0318",
+          "ref": "D-318",
+          "printKey": "dbsjcc:part3-d0318",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0320",
+          "ref": "D-320",
+          "printKey": "dbsjcc:part3-d0320",
+          "qty": 1
+        },
+        {
+          "name": "Pan",
+          "slug": "d0324",
+          "ref": "D-324",
+          "printKey": "dbsjcc:part3-d0324",
+          "qty": 1
+        },
+        {
+          "name": "Krillin",
+          "slug": "d0325",
+          "ref": "D-325",
+          "printKey": "dbsjcc:part3-d0325",
+          "qty": 1
+        },
+        {
+          "name": "C-18",
+          "slug": "d0326",
+          "ref": "D-326",
+          "printKey": "dbsjcc:part3-d0326",
+          "qty": 1
+        },
+        {
+          "name": "Chaozu",
+          "slug": "d0327",
+          "ref": "D-327",
+          "printKey": "dbsjcc:part3-d0327",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0328",
+          "ref": "D-328",
+          "printKey": "dbsjcc:part3-d0328",
+          "qty": 1
+        },
+        {
+          "name": "Yamcha",
+          "slug": "d0329",
+          "ref": "D-329",
+          "printKey": "dbsjcc:part3-d0329",
+          "qty": 1
+        },
+        {
+          "name": "Lanfan",
+          "slug": "d0330",
+          "ref": "D-330",
+          "printKey": "dbsjcc:part3-d0330",
+          "qty": 1
+        },
+        {
+          "name": "Mighty mask",
+          "slug": "d0331",
+          "ref": "D-331",
+          "printKey": "dbsjcc:part3-d0331",
+          "qty": 1
+        },
+        {
+          "name": "Nam",
+          "slug": "d0332",
+          "ref": "D-332",
+          "printKey": "dbsjcc:part3-d0332",
+          "qty": 1
+        },
+        {
+          "name": "Chi chi",
+          "slug": "d0333",
+          "ref": "D-333",
+          "printKey": "dbsjcc:part3-d0333",
+          "qty": 1
+        },
+        {
+          "name": "Jackie choun",
+          "slug": "d0334",
+          "ref": "D-334",
+          "printKey": "dbsjcc:part3-d0334",
+          "qty": 1
+        },
+        {
+          "name": "Présentateur",
+          "slug": "d0336",
+          "ref": "D-336",
+          "printKey": "dbsjcc:part3-d0336",
+          "qty": 1
+        },
+        {
+          "name": "Jackie choun",
+          "slug": "d0338",
+          "ref": "D-338",
+          "printKey": "dbsjcc:part3-d0338",
+          "qty": 1
+        },
+        {
+          "name": "Les deux petits super saiyans !",
+          "slug": "d0342",
+          "ref": "D-342",
+          "printKey": "dbsjcc:part3-d0342",
+          "qty": 1
+        },
+        {
+          "name": "Cri de soulagement",
+          "slug": "d0349",
+          "ref": "D-349",
+          "printKey": "dbsjcc:part3-d0349",
+          "qty": 1
+        },
+        {
+          "name": "Namamidabutsu !!",
+          "slug": "d0352",
+          "ref": "D-352",
+          "printKey": "dbsjcc:part3-d0352",
+          "qty": 1
+        },
+        {
+          "name": "Technique de la transposition",
+          "slug": "d0356",
+          "ref": "D-356",
+          "printKey": "dbsjcc:part3-d0356",
+          "qty": 1
+        },
+        {
+          "name": "Championnat du monde des arts martiaux",
+          "slug": "d0357",
+          "ref": "D-357",
+          "printKey": "dbsjcc:part3-d0357",
+          "qty": 1
+        }
+      ],
+      "notes": "23/32 cartes attestees — liste partielle, contentsKnown false."
+    },
+    "part4-starter-forces-du-mal": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Toto le lapin",
+          "slug": "d0024",
+          "ref": "D-24",
+          "printKey": "dbsjcc:part4-d0024",
+          "qty": 1
+        },
+        {
+          "name": "Saibaiman",
+          "slug": "d0052",
+          "ref": "D-52",
+          "printKey": "dbsjcc:part4-d0052",
+          "qty": 1
+        },
+        {
+          "name": "Guldo",
+          "slug": "d0063",
+          "ref": "D-63",
+          "printKey": "dbsjcc:part4-d0063",
+          "qty": 1
+        },
+        {
+          "name": "Général rouge",
+          "slug": "d0376",
+          "ref": "D-376",
+          "printKey": "dbsjcc:part4-d0376",
+          "qty": 1
+        },
+        {
+          "name": "Dabura",
+          "slug": "d0377",
+          "ref": "D-377",
+          "printKey": "dbsjcc:part4-d0377",
+          "qty": 1
+        },
+        {
+          "name": "Radditz",
+          "slug": "d0383",
+          "ref": "D-383",
+          "printKey": "dbsjcc:part4-d0383",
+          "qty": 1
+        },
+        {
+          "name": "Mal incessant",
+          "slug": "d0402",
+          "ref": "D-402",
+          "printKey": "dbsjcc:part4-d0402",
+          "qty": 1
+        },
+        {
+          "name": "Medical machine",
+          "slug": "d0409",
+          "ref": "D-409",
+          "printKey": "dbsjcc:part4-d0409",
+          "qty": 1
+        },
+        {
+          "name": "Transformation en pierre",
+          "slug": "d0413",
+          "ref": "D-413",
+          "printKey": "dbsjcc:part4-d0413",
+          "qty": 1
+        },
+        {
+          "name": "Ambition obsessionnelle",
+          "slug": "d0414",
+          "ref": "D-414",
+          "printKey": "dbsjcc:part4-d0414",
+          "qty": 1
+        },
+        {
+          "name": "Combat à mort par fierté",
+          "slug": "d0415",
+          "ref": "D-415",
+          "printKey": "dbsjcc:part4-d0415",
+          "qty": 1
+        },
+        {
+          "name": "Polunga de la planète namek",
+          "slug": "d0425",
+          "ref": "D-425",
+          "printKey": "dbsjcc:part4-d0425",
+          "qty": 1
+        },
+        {
+          "name": "Nappa",
+          "slug": "d0436",
+          "ref": "D-436",
+          "printKey": "dbsjcc:part4-d0436",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0437",
+          "ref": "D-437",
+          "printKey": "dbsjcc:part4-d0437",
+          "qty": 1
+        },
+        {
+          "name": "Dodoria",
+          "slug": "d0439",
+          "ref": "D-439",
+          "printKey": "dbsjcc:part4-d0439",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur d'énergie de dernière génération",
+          "slug": "d0487",
+          "ref": "D-487",
+          "printKey": "dbsjcc:part4-d0487",
+          "qty": 1
+        },
+        {
+          "name": "Pilaf",
+          "slug": "d0503",
+          "ref": "D-503",
+          "printKey": "dbsjcc:part4-d0503",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0510",
+          "ref": "D-510",
+          "printKey": "dbsjcc:part4-d0510",
+          "qty": 1
+        },
+        {
+          "name": "Bardock",
+          "slug": "d0513",
+          "ref": "D-513",
+          "printKey": "dbsjcc:part4-d0513",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0514",
+          "ref": "D-514",
+          "printKey": "dbsjcc:part4-d0514",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "20/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part4-starter-1200": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Dieu",
+          "slug": "d0035",
+          "ref": "D-35",
+          "printKey": "dbsjcc:part4-d0035",
+          "qty": 1
+        },
+        {
+          "name": "Kaïo",
+          "slug": "d0050",
+          "ref": "D-50",
+          "printKey": "dbsjcc:part4-d0050",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0078",
+          "ref": "D-78",
+          "printKey": "dbsjcc:part4-d0078",
+          "qty": 1
+        },
+        {
+          "name": "Croissance de goku",
+          "slug": "d0099",
+          "ref": "D-99",
+          "printKey": "dbsjcc:part4-d0099",
+          "qty": 1
+        },
+        {
+          "name": "Dr brif",
+          "slug": "d0139",
+          "ref": "D-139",
+          "printKey": "dbsjcc:part4-d0139",
+          "qty": 1
+        },
+        {
+          "name": "Yamcha",
+          "slug": "d0372",
+          "ref": "D-372",
+          "printKey": "dbsjcc:part4-d0372",
+          "qty": 1
+        },
+        {
+          "name": "Bulma",
+          "slug": "d0373",
+          "ref": "D-373",
+          "printKey": "dbsjcc:part4-d0373",
+          "qty": 1
+        },
+        {
+          "name": "Majin buu",
+          "slug": "d0379",
+          "ref": "D-379",
+          "printKey": "dbsjcc:part4-d0379",
+          "qty": 1
+        },
+        {
+          "name": "Kaïo",
+          "slug": "d0381",
+          "ref": "D-381",
+          "printKey": "dbsjcc:part4-d0381",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0385",
+          "ref": "D-385",
+          "printKey": "dbsjcc:part4-d0385",
+          "qty": 1
+        },
+        {
+          "name": "Piccolo",
+          "slug": "d0386",
+          "ref": "D-386",
+          "printKey": "dbsjcc:part4-d0386",
+          "qty": 1
+        },
+        {
+          "name": "Goten",
+          "slug": "d0387",
+          "ref": "D-387",
+          "printKey": "dbsjcc:part4-d0387",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0393",
+          "ref": "D-393",
+          "printKey": "dbsjcc:part4-d0393",
+          "qty": 1
+        },
+        {
+          "name": "Roi tschapah",
+          "slug": "d0394",
+          "ref": "D-394",
+          "printKey": "dbsjcc:part4-d0394",
+          "qty": 1
+        },
+        {
+          "name": "Clarté durable",
+          "slug": "d0401",
+          "ref": "D-401",
+          "printKey": "dbsjcc:part4-d0401",
+          "qty": 1
+        },
+        {
+          "name": "Pouvoir inattendu",
+          "slug": "d0405",
+          "ref": "D-405",
+          "printKey": "dbsjcc:part4-d0405",
+          "qty": 1
+        },
+        {
+          "name": "Kamehameha !",
+          "slug": "d0416",
+          "ref": "D-416",
+          "printKey": "dbsjcc:part4-d0416",
+          "qty": 1
+        },
+        {
+          "name": "Shenron de la terre",
+          "slug": "d0424",
+          "ref": "D-424",
+          "printKey": "dbsjcc:part4-d0424",
+          "qty": 1
+        },
+        {
+          "name": "Machine inconnue",
+          "slug": "d0484",
+          "ref": "D-484",
+          "printKey": "dbsjcc:part4-d0484",
+          "qty": 1
+        },
+        {
+          "name": "Videl",
+          "slug": "d0494",
+          "ref": "D-494",
+          "printKey": "dbsjcc:part4-d0494",
+          "qty": 1
+        },
+        {
+          "name": "Roi de la terre",
+          "slug": "d0497",
+          "ref": "D-497",
+          "printKey": "dbsjcc:part4-d0497",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "21/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part5-starter-1203": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Radditz",
+          "slug": "d0040",
+          "ref": "D-40",
+          "printKey": "dbsjcc:part5-d0040",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0057",
+          "ref": "D-57",
+          "printKey": "dbsjcc:part5-d0057",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0068",
+          "ref": "D-68",
+          "printKey": "dbsjcc:part5-d0068",
+          "qty": 1
+        },
+        {
+          "name": "Kikoha",
+          "slug": "d0112",
+          "ref": "D-112",
+          "printKey": "dbsjcc:part5-d0112",
+          "qty": 1
+        },
+        {
+          "name": "1 ère transformation",
+          "slug": "d0113",
+          "ref": "D-113",
+          "printKey": "dbsjcc:part5-d0113",
+          "qty": 1
+        },
+        {
+          "name": "Zabon",
+          "slug": "d0440",
+          "ref": "D-440",
+          "printKey": "dbsjcc:part5-d0440",
+          "qty": 1
+        },
+        {
+          "name": "Guldo",
+          "slug": "d0441",
+          "ref": "D-441",
+          "printKey": "dbsjcc:part5-d0441",
+          "qty": 1
+        },
+        {
+          "name": "Jeece",
+          "slug": "d0442",
+          "ref": "D-442",
+          "printKey": "dbsjcc:part5-d0442",
+          "qty": 1
+        },
+        {
+          "name": "Barta",
+          "slug": "d0443",
+          "ref": "D-443",
+          "printKey": "dbsjcc:part5-d0443",
+          "qty": 1
+        },
+        {
+          "name": "Recoome",
+          "slug": "d0444",
+          "ref": "D-444",
+          "printKey": "dbsjcc:part5-d0444",
+          "qty": 1
+        },
+        {
+          "name": "Ginyu",
+          "slug": "d0445",
+          "ref": "D-445",
+          "printKey": "dbsjcc:part5-d0445",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0448",
+          "ref": "D-448",
+          "printKey": "dbsjcc:part5-d0448",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0449",
+          "ref": "D-449",
+          "printKey": "dbsjcc:part5-d0449",
+          "qty": 1
+        },
+        {
+          "name": "Frieza",
+          "slug": "d0450",
+          "ref": "D-450",
+          "printKey": "dbsjcc:part5-d0450",
+          "qty": 1
+        },
+        {
+          "name": "Goten",
+          "slug": "d0453",
+          "ref": "D-453",
+          "printKey": "dbsjcc:part5-d0453",
+          "qty": 1
+        },
+        {
+          "name": "Saibaiman",
+          "slug": "d0465",
+          "ref": "D-465",
+          "printKey": "dbsjcc:part5-d0465",
+          "qty": 1
+        },
+        {
+          "name": "Kiwi",
+          "slug": "d0466",
+          "ref": "D-466",
+          "printKey": "dbsjcc:part5-d0466",
+          "qty": 1
+        },
+        {
+          "name": "Au secours de frieza",
+          "slug": "d0469",
+          "ref": "D-469",
+          "printKey": "dbsjcc:part5-d0469",
+          "qty": 1
+        },
+        {
+          "name": "Force ginyu regroupée !",
+          "slug": "d0470",
+          "ref": "D-470",
+          "printKey": "dbsjcc:part5-d0470",
+          "qty": 1
+        },
+        {
+          "name": "Transformation en vraie forme",
+          "slug": "d0471",
+          "ref": "D-471",
+          "printKey": "dbsjcc:part5-d0471",
+          "qty": 1
+        },
+        {
+          "name": "Attaque soudaine !",
+          "slug": "d0488",
+          "ref": "D-488",
+          "printKey": "dbsjcc:part5-d0488",
+          "qty": 1
+        },
+        {
+          "name": "Deux shenron",
+          "slug": "d0491",
+          "ref": "D-491",
+          "printKey": "dbsjcc:part5-d0491",
+          "qty": 1
+        },
+        {
+          "name": "Babidi",
+          "slug": "d0512",
+          "ref": "D-512",
+          "printKey": "dbsjcc:part5-d0512",
+          "qty": 1
+        },
+        {
+          "name": "Toma",
+          "slug": "d0515",
+          "ref": "D-515",
+          "printKey": "dbsjcc:part5-d0515",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "24/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part5-starter-resistance": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Yajirobé",
+          "slug": "d0022",
+          "ref": "D-22",
+          "printKey": "dbsjcc:part5-d0022",
+          "qty": 1
+        },
+        {
+          "name": "Dendé",
+          "slug": "d0071",
+          "ref": "D-71",
+          "printKey": "dbsjcc:part5-d0071",
+          "qty": 1
+        },
+        {
+          "name": "Grand chef",
+          "slug": "d0072",
+          "ref": "D-72",
+          "printKey": "dbsjcc:part5-d0072",
+          "qty": 1
+        },
+        {
+          "name": "Bulma",
+          "slug": "d0081",
+          "ref": "D-81",
+          "printKey": "dbsjcc:part5-d0081",
+          "qty": 1
+        },
+        {
+          "name": "Bubbles",
+          "slug": "d0257",
+          "ref": "D-257",
+          "printKey": "dbsjcc:part5-d0257",
+          "qty": 1
+        },
+        {
+          "name": "Karine",
+          "slug": "d0380",
+          "ref": "D-380",
+          "printKey": "dbsjcc:part5-d0380",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0384",
+          "ref": "D-384",
+          "printKey": "dbsjcc:part5-d0384",
+          "qty": 1
+        },
+        {
+          "name": "Franky 8 (c-8)",
+          "slug": "d0427",
+          "ref": "D-427",
+          "printKey": "dbsjcc:part5-d0427",
+          "qty": 1
+        },
+        {
+          "name": "Yajirobé",
+          "slug": "d0433",
+          "ref": "D-433",
+          "printKey": "dbsjcc:part5-d0433",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0434",
+          "ref": "D-434",
+          "printKey": "dbsjcc:part5-d0434",
+          "qty": 1
+        },
+        {
+          "name": "Yamcha",
+          "slug": "d0435",
+          "ref": "D-435",
+          "printKey": "dbsjcc:part5-d0435",
+          "qty": 1
+        },
+        {
+          "name": "Krillin",
+          "slug": "d0451",
+          "ref": "D-451",
+          "printKey": "dbsjcc:part5-d0451",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0452",
+          "ref": "D-452",
+          "printKey": "dbsjcc:part5-d0452",
+          "qty": 1
+        },
+        {
+          "name": "Goten",
+          "slug": "d0453",
+          "ref": "D-453",
+          "printKey": "dbsjcc:part5-d0453",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0454",
+          "ref": "D-454",
+          "printKey": "dbsjcc:part5-d0454",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0455",
+          "ref": "D-455",
+          "printKey": "dbsjcc:part5-d0455",
+          "qty": 1
+        },
+        {
+          "name": "Piccolo",
+          "slug": "d0456",
+          "ref": "D-456",
+          "printKey": "dbsjcc:part5-d0456",
+          "qty": 1
+        },
+        {
+          "name": "Croissance extraordinaire",
+          "slug": "d0472",
+          "ref": "D-472",
+          "printKey": "dbsjcc:part5-d0472",
+          "qty": 1
+        },
+        {
+          "name": "Chemin du serpent",
+          "slug": "d0475",
+          "ref": "D-475",
+          "printKey": "dbsjcc:part5-d0475",
+          "qty": 1
+        },
+        {
+          "name": "Kaïoken kaméhaméha 20 fois plus puissant !",
+          "slug": "d0476",
+          "ref": "D-476",
+          "printKey": "dbsjcc:part5-d0476",
+          "qty": 1
+        },
+        {
+          "name": "Chose précieuse",
+          "slug": "d0477",
+          "ref": "D-477",
+          "printKey": "dbsjcc:part5-d0477",
+          "qty": 1
+        },
+        {
+          "name": "Temps limite !",
+          "slug": "d0482",
+          "ref": "D-482",
+          "printKey": "dbsjcc:part5-d0482",
+          "qty": 1
+        },
+        {
+          "name": "Capacité à l'assimilation",
+          "slug": "d0485",
+          "ref": "D-485",
+          "printKey": "dbsjcc:part5-d0485",
+          "qty": 1
+        },
+        {
+          "name": "Deux shenron",
+          "slug": "d0491",
+          "ref": "D-491",
+          "printKey": "dbsjcc:part5-d0491",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "24/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part6-starter-1206": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Bulma",
+          "slug": "d0524",
+          "ref": "D-524",
+          "printKey": "dbsjcc:part6-d0524",
+          "qty": 1
+        },
+        {
+          "name": "Plume",
+          "slug": "d0526",
+          "ref": "D-526",
+          "printKey": "dbsjcc:part6-d0526",
+          "qty": 1
+        },
+        {
+          "name": "Tortue",
+          "slug": "d0527",
+          "ref": "D-527",
+          "printKey": "dbsjcc:part6-d0527",
+          "qty": 1
+        },
+        {
+          "name": "Kaïo shin",
+          "slug": "d0552",
+          "ref": "D-552",
+          "printKey": "dbsjcc:part6-d0552",
+          "qty": 1
+        },
+        {
+          "name": "Vieux kaïo shin",
+          "slug": "d0553",
+          "ref": "D-553",
+          "printKey": "dbsjcc:part6-d0553",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0572",
+          "ref": "D-572",
+          "printKey": "dbsjcc:part6-d0572",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0573",
+          "ref": "D-573",
+          "printKey": "dbsjcc:part6-d0573",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0574",
+          "ref": "D-574",
+          "printKey": "dbsjcc:part6-d0574",
+          "qty": 1
+        },
+        {
+          "name": "Piccolo",
+          "slug": "d0576",
+          "ref": "D-576",
+          "printKey": "dbsjcc:part6-d0576",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0577",
+          "ref": "D-577",
+          "printKey": "dbsjcc:part6-d0577",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0579",
+          "ref": "D-579",
+          "printKey": "dbsjcc:part6-d0579",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0580",
+          "ref": "D-580",
+          "printKey": "dbsjcc:part6-d0580",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan",
+          "slug": "d0592",
+          "ref": "D-592",
+          "printKey": "dbsjcc:part6-d0592",
+          "qty": 1
+        },
+        {
+          "name": "Pouvoir surpassé !",
+          "slug": "d0603",
+          "ref": "D-603",
+          "printKey": "dbsjcc:part6-d0603",
+          "qty": 1
+        },
+        {
+          "name": "Aventure mystérieuse !",
+          "slug": "d0604",
+          "ref": "D-604",
+          "printKey": "dbsjcc:part6-d0604",
+          "qty": 1
+        },
+        {
+          "name": "Mémoire du futur",
+          "slug": "d0608",
+          "ref": "D-608",
+          "printKey": "dbsjcc:part6-d0608",
+          "qty": 1
+        },
+        {
+          "name": "Combat fugitif !",
+          "slug": "d0623",
+          "ref": "D-623",
+          "printKey": "dbsjcc:part6-d0623",
+          "qty": 1
+        },
+        {
+          "name": "Polunga, encore !",
+          "slug": "d0635",
+          "ref": "D-635",
+          "printKey": "dbsjcc:part6-d0635",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "18/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part7-starter-1208": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Chaozu",
+          "slug": "d0570",
+          "ref": "D-570",
+          "printKey": "dbsjcc:part7-d0570",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0645",
+          "ref": "D-645",
+          "printKey": "dbsjcc:part7-d0645",
+          "qty": 1
+        },
+        {
+          "name": "Suno",
+          "slug": "d0646",
+          "ref": "D-646",
+          "printKey": "dbsjcc:part7-d0646",
+          "qty": 1
+        },
+        {
+          "name": "Gyumao",
+          "slug": "d0647",
+          "ref": "D-647",
+          "printKey": "dbsjcc:part7-d0647",
+          "qty": 1
+        },
+        {
+          "name": "Yamcha",
+          "slug": "d0648",
+          "ref": "D-648",
+          "printKey": "dbsjcc:part7-d0648",
+          "qty": 1
+        },
+        {
+          "name": "Malone",
+          "slug": "d0649",
+          "ref": "D-649",
+          "printKey": "dbsjcc:part7-d0649",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0665",
+          "ref": "D-665",
+          "printKey": "dbsjcc:part7-d0665",
+          "qty": 1
+        },
+        {
+          "name": "Grégory",
+          "slug": "d0666",
+          "ref": "D-666",
+          "printKey": "dbsjcc:part7-d0666",
+          "qty": 1
+        },
+        {
+          "name": "Mr popo",
+          "slug": "d0668",
+          "ref": "D-668",
+          "printKey": "dbsjcc:part7-d0668",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0671",
+          "ref": "D-671",
+          "printKey": "dbsjcc:part7-d0671",
+          "qty": 1
+        },
+        {
+          "name": "Videl",
+          "slug": "d0681",
+          "ref": "D-681",
+          "printKey": "dbsjcc:part7-d0681",
+          "qty": 1
+        },
+        {
+          "name": "Krillin",
+          "slug": "d0683",
+          "ref": "D-683",
+          "printKey": "dbsjcc:part7-d0683",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0684",
+          "ref": "D-684",
+          "printKey": "dbsjcc:part7-d0684",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan",
+          "slug": "d0697",
+          "ref": "D-697",
+          "printKey": "dbsjcc:part7-d0697",
+          "qty": 1
+        },
+        {
+          "name": "Décision difficile",
+          "slug": "d0703",
+          "ref": "D-703",
+          "printKey": "dbsjcc:part7-d0703",
+          "qty": 1
+        },
+        {
+          "name": "Amis à capacités égales",
+          "slug": "d0706",
+          "ref": "D-706",
+          "printKey": "dbsjcc:part7-d0706",
+          "qty": 1
+        },
+        {
+          "name": "Prévoyance",
+          "slug": "d0718",
+          "ref": "D-718",
+          "printKey": "dbsjcc:part7-d0718",
+          "qty": 1
+        },
+        {
+          "name": "Enseignement du maitre",
+          "slug": "d0720",
+          "ref": "D-720",
+          "printKey": "dbsjcc:part7-d0720",
+          "qty": 1
+        },
+        {
+          "name": "Accident !!",
+          "slug": "d0721",
+          "ref": "D-721",
+          "printKey": "dbsjcc:part7-d0721",
+          "qty": 1
+        },
+        {
+          "name": "Shenron Voeux de destruction",
+          "slug": "d0726",
+          "ref": "D-726",
+          "printKey": "dbsjcc:part7-d0726",
+          "qty": 1
+        },
+        {
+          "name": "Yamcha",
+          "slug": "d0823",
+          "ref": "D-823",
+          "printKey": "dbsjcc:part7-d0823",
+          "qty": 1
+        },
+        {
+          "name": "Pouvoir légandaire",
+          "slug": "d0846",
+          "ref": "D-846",
+          "printKey": "dbsjcc:part7-d0846",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "22/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part8-starter-1213": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Guigui",
+          "slug": "d0728",
+          "ref": "D-728",
+          "printKey": "dbsjcc:part8-d0728",
+          "qty": 1
+        },
+        {
+          "name": "Bulma",
+          "slug": "d0730",
+          "ref": "D-730",
+          "printKey": "dbsjcc:part8-d0730",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0731",
+          "ref": "D-731",
+          "printKey": "dbsjcc:part8-d0731",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0732",
+          "ref": "D-732",
+          "printKey": "dbsjcc:part8-d0732",
+          "qty": 1
+        },
+        {
+          "name": "Dieu",
+          "slug": "d0737",
+          "ref": "D-737",
+          "printKey": "dbsjcc:part8-d0737",
+          "qty": 1
+        },
+        {
+          "name": "Grand maitre kaïo",
+          "slug": "d0739",
+          "ref": "D-739",
+          "printKey": "dbsjcc:part8-d0739",
+          "qty": 1
+        },
+        {
+          "name": "Kaïo",
+          "slug": "d0740",
+          "ref": "D-740",
+          "printKey": "dbsjcc:part8-d0740",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0749",
+          "ref": "D-749",
+          "printKey": "dbsjcc:part8-d0749",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0751",
+          "ref": "D-751",
+          "printKey": "dbsjcc:part8-d0751",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0752",
+          "ref": "D-752",
+          "printKey": "dbsjcc:part8-d0752",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0764",
+          "ref": "D-764",
+          "printKey": "dbsjcc:part8-d0764",
+          "qty": 1
+        },
+        {
+          "name": "Buu",
+          "slug": "d0766",
+          "ref": "D-766",
+          "printKey": "dbsjcc:part8-d0766",
+          "qty": 1
+        },
+        {
+          "name": "Oob",
+          "slug": "d0768",
+          "ref": "D-768",
+          "printKey": "dbsjcc:part8-d0768",
+          "qty": 1
+        },
+        {
+          "name": "Ryan shinron dragon ball à 2 étoiles",
+          "slug": "d0769",
+          "ref": "D-769",
+          "printKey": "dbsjcc:part8-d0769",
+          "qty": 1
+        },
+        {
+          "name": "San shinron dragon ball à 3 étoiles",
+          "slug": "d0770",
+          "ref": "D-770",
+          "printKey": "dbsjcc:part8-d0770",
+          "qty": 1
+        },
+        {
+          "name": "Suu shinron dragon ball à 4 étoiles",
+          "slug": "d0771",
+          "ref": "D-771",
+          "printKey": "dbsjcc:part8-d0771",
+          "qty": 1
+        },
+        {
+          "name": "Uu shinron dragon ball à 5 étoiles",
+          "slug": "d0772",
+          "ref": "D-772",
+          "printKey": "dbsjcc:part8-d0772",
+          "qty": 1
+        },
+        {
+          "name": "Ryu shinron dragon ball à 6 étoiles",
+          "slug": "d0773",
+          "ref": "D-773",
+          "printKey": "dbsjcc:part8-d0773",
+          "qty": 1
+        },
+        {
+          "name": "Chi shinron dragon ball à 7 étoiles",
+          "slug": "d0774",
+          "ref": "D-774",
+          "printKey": "dbsjcc:part8-d0774",
+          "qty": 1
+        },
+        {
+          "name": "Li shinron ultime dragon ball à 1 étoile",
+          "slug": "d0775",
+          "ref": "D-775",
+          "printKey": "dbsjcc:part8-d0775",
+          "qty": 1
+        },
+        {
+          "name": "1,2,3 !",
+          "slug": "d0783",
+          "ref": "D-783",
+          "printKey": "dbsjcc:part8-d0783",
+          "qty": 1
+        },
+        {
+          "name": "Multiple kamehameha instantanés !",
+          "slug": "d0784",
+          "ref": "D-784",
+          "printKey": "dbsjcc:part8-d0784",
+          "qty": 1
+        },
+        {
+          "name": "Poings divers",
+          "slug": "d0799",
+          "ref": "D-799",
+          "printKey": "dbsjcc:part8-d0799",
+          "qty": 1
+        },
+        {
+          "name": "Grande tournée !",
+          "slug": "d0803",
+          "ref": "D-803",
+          "printKey": "dbsjcc:part8-d0803",
+          "qty": 1
+        },
+        {
+          "name": "Annonciation de guérison",
+          "slug": "d0806",
+          "ref": "D-806",
+          "printKey": "dbsjcc:part8-d0806",
+          "qty": 1
+        },
+        {
+          "name": "Shenron",
+          "slug": "d0815",
+          "ref": "D-815",
+          "printKey": "dbsjcc:part8-d0815",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "26/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part9-starter-1216": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Dragon ball à 1 étoile",
+          "slug": "d0123",
+          "ref": "D-123",
+          "printKey": "dbsjcc:part9-d0123",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 2 étoiles",
+          "slug": "d0124",
+          "ref": "D-124",
+          "printKey": "dbsjcc:part9-d0124",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 3 étoiles",
+          "slug": "d0125",
+          "ref": "D-125",
+          "printKey": "dbsjcc:part9-d0125",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 4 étoiles",
+          "slug": "d0126",
+          "ref": "D-126",
+          "printKey": "dbsjcc:part9-d0126",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 5 étoiles",
+          "slug": "d0127",
+          "ref": "D-127",
+          "printKey": "dbsjcc:part9-d0127",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 6 étoiles",
+          "slug": "d0128",
+          "ref": "D-128",
+          "printKey": "dbsjcc:part9-d0128",
+          "qty": 1
+        },
+        {
+          "name": "Dragon ball à 7 étoiles",
+          "slug": "d0129",
+          "ref": "D-129",
+          "printKey": "dbsjcc:part9-d0129",
+          "qty": 1
+        },
+        {
+          "name": "Great saiyaman",
+          "slug": "d0138",
+          "ref": "D-138",
+          "printKey": "dbsjcc:part9-d0138",
+          "qty": 1
+        },
+        {
+          "name": "Tenshinhan",
+          "slug": "d0168",
+          "ref": "D-168",
+          "printKey": "dbsjcc:part9-d0168",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan",
+          "slug": "d0170",
+          "ref": "D-170",
+          "printKey": "dbsjcc:part9-d0170",
+          "qty": 1
+        },
+        {
+          "name": "Capsule Hoïpoï !!!",
+          "slug": "d0196",
+          "ref": "D-196",
+          "printKey": "dbsjcc:part9-d0196",
+          "qty": 1
+        },
+        {
+          "name": "Bubbles",
+          "slug": "d0257",
+          "ref": "D-257",
+          "printKey": "dbsjcc:part9-d0257",
+          "qty": 1
+        },
+        {
+          "name": "Je veux une culotte !",
+          "slug": "d0289",
+          "ref": "D-289",
+          "printKey": "dbsjcc:part9-d0289",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0305",
+          "ref": "D-305",
+          "printKey": "dbsjcc:part9-d0305",
+          "qty": 1
+        },
+        {
+          "name": "Bulma",
+          "slug": "d0373",
+          "ref": "D-373",
+          "printKey": "dbsjcc:part9-d0373",
+          "qty": 1
+        },
+        {
+          "name": "Karine",
+          "slug": "d0380",
+          "ref": "D-380",
+          "printKey": "dbsjcc:part9-d0380",
+          "qty": 1
+        },
+        {
+          "name": "Piccolo",
+          "slug": "d0386",
+          "ref": "D-386",
+          "printKey": "dbsjcc:part9-d0386",
+          "qty": 1
+        },
+        {
+          "name": "Clarté durable",
+          "slug": "d0401",
+          "ref": "D-401",
+          "printKey": "dbsjcc:part9-d0401",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0461",
+          "ref": "D-461",
+          "printKey": "dbsjcc:part9-d0461",
+          "qty": 1
+        },
+        {
+          "name": "Coeur calme, colère féroce",
+          "slug": "d0467",
+          "ref": "D-467",
+          "printKey": "dbsjcc:part9-d0467",
+          "qty": 1
+        },
+        {
+          "name": "Plume",
+          "slug": "d0526",
+          "ref": "D-526",
+          "printKey": "dbsjcc:part9-d0526",
+          "qty": 1
+        },
+        {
+          "name": "Tortue",
+          "slug": "d0527",
+          "ref": "D-527",
+          "printKey": "dbsjcc:part9-d0527",
+          "qty": 1
+        },
+        {
+          "name": "Pouvoir surpassé !",
+          "slug": "d0603",
+          "ref": "D-603",
+          "printKey": "dbsjcc:part9-d0603",
+          "qty": 1
+        },
+        {
+          "name": "Mémoire du futur",
+          "slug": "d0608",
+          "ref": "D-608",
+          "printKey": "dbsjcc:part9-d0608",
+          "qty": 1
+        },
+        {
+          "name": "Suno",
+          "slug": "d0646",
+          "ref": "D-646",
+          "printKey": "dbsjcc:part9-d0646",
+          "qty": 1
+        },
+        {
+          "name": "Grégory",
+          "slug": "d0666",
+          "ref": "D-666",
+          "printKey": "dbsjcc:part9-d0666",
+          "qty": 1
+        },
+        {
+          "name": "Mr popo",
+          "slug": "d0668",
+          "ref": "D-668",
+          "printKey": "dbsjcc:part9-d0668",
+          "qty": 1
+        },
+        {
+          "name": "Videl",
+          "slug": "d0681",
+          "ref": "D-681",
+          "printKey": "dbsjcc:part9-d0681",
+          "qty": 1
+        },
+        {
+          "name": "Yamcha",
+          "slug": "d0823",
+          "ref": "D-823",
+          "printKey": "dbsjcc:part9-d0823",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "29/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part10-starter-1219": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Dragon Ball à 1 étoile",
+          "slug": "d0123",
+          "ref": "D-123",
+          "printKey": "dbsjcc:part10-d0123",
+          "qty": 1
+        },
+        {
+          "name": "Dragon Ball à 2 étoiles",
+          "slug": "d0124",
+          "ref": "D-124",
+          "printKey": "dbsjcc:part10-d0124",
+          "qty": 1
+        },
+        {
+          "name": "Dragon Ball à 3 étoiles",
+          "slug": "d0125",
+          "ref": "D-125",
+          "printKey": "dbsjcc:part10-d0125",
+          "qty": 1
+        },
+        {
+          "name": "Dragon Ball à 4 étoiles",
+          "slug": "d0126",
+          "ref": "D-126",
+          "printKey": "dbsjcc:part10-d0126",
+          "qty": 1
+        },
+        {
+          "name": "Dragon Ball à 5 étoiles",
+          "slug": "d0127",
+          "ref": "D-127",
+          "printKey": "dbsjcc:part10-d0127",
+          "qty": 1
+        },
+        {
+          "name": "Dragon Ball à 6 étoiles",
+          "slug": "d0128",
+          "ref": "D-128",
+          "printKey": "dbsjcc:part10-d0128",
+          "qty": 1
+        },
+        {
+          "name": "Dragon Ball à 7 étoiles",
+          "slug": "d0129",
+          "ref": "D-129",
+          "printKey": "dbsjcc:part10-d0129",
+          "qty": 1
+        },
+        {
+          "name": "Krillin",
+          "slug": "d0827",
+          "ref": "D-827",
+          "printKey": "dbsjcc:part10-d0827",
+          "qty": 1
+        },
+        {
+          "name": "Mr satan",
+          "slug": "d0830",
+          "ref": "D-830",
+          "printKey": "dbsjcc:part10-d0830",
+          "qty": 1
+        },
+        {
+          "name": "Bulma",
+          "slug": "d0852",
+          "ref": "D-852",
+          "printKey": "dbsjcc:part10-d0852",
+          "qty": 1
+        },
+        {
+          "name": "Malone",
+          "slug": "d0853",
+          "ref": "D-853",
+          "printKey": "dbsjcc:part10-d0853",
+          "qty": 1
+        },
+        {
+          "name": "C-18",
+          "slug": "d0854",
+          "ref": "D-854",
+          "printKey": "dbsjcc:part10-d0854",
+          "qty": 1
+        },
+        {
+          "name": "Trunks",
+          "slug": "d0862",
+          "ref": "D-862",
+          "printKey": "dbsjcc:part10-d0862",
+          "qty": 1
+        },
+        {
+          "name": "Vieux kaïo shin",
+          "slug": "d0865",
+          "ref": "D-865",
+          "printKey": "dbsjcc:part10-d0865",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0873",
+          "ref": "D-873",
+          "printKey": "dbsjcc:part10-d0873",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0874",
+          "ref": "D-874",
+          "printKey": "dbsjcc:part10-d0874",
+          "qty": 1
+        },
+        {
+          "name": "Vegeta",
+          "slug": "d0875",
+          "ref": "D-875",
+          "printKey": "dbsjcc:part10-d0875",
+          "qty": 1
+        },
+        {
+          "name": "Goku",
+          "slug": "d0876",
+          "ref": "D-876",
+          "printKey": "dbsjcc:part10-d0876",
+          "qty": 1
+        },
+        {
+          "name": "Gohan",
+          "slug": "d0877",
+          "ref": "D-877",
+          "printKey": "dbsjcc:part10-d0877",
+          "qty": 1
+        },
+        {
+          "name": "Goten",
+          "slug": "d0879",
+          "ref": "D-879",
+          "printKey": "dbsjcc:part10-d0879",
+          "qty": 1
+        },
+        {
+          "name": "Olive",
+          "slug": "d0900",
+          "ref": "D-900",
+          "printKey": "dbsjcc:part10-d0900",
+          "qty": 1
+        },
+        {
+          "name": "Lunch",
+          "slug": "d0902",
+          "ref": "D-902",
+          "printKey": "dbsjcc:part10-d0902",
+          "qty": 1
+        },
+        {
+          "name": "Maccaroni",
+          "slug": "d0903",
+          "ref": "D-903",
+          "printKey": "dbsjcc:part10-d0903",
+          "qty": 1
+        },
+        {
+          "name": "Bataille du monde suprême de kaïo",
+          "slug": "d0911",
+          "ref": "D-911",
+          "printKey": "dbsjcc:part10-d0911",
+          "qty": 1
+        },
+        {
+          "name": "Nous fusionnons !",
+          "slug": "d0912",
+          "ref": "D-912",
+          "printKey": "dbsjcc:part10-d0912",
+          "qty": 1
+        },
+        {
+          "name": "Vie régénérée",
+          "slug": "d0913",
+          "ref": "D-913",
+          "printKey": "dbsjcc:part10-d0913",
+          "qty": 1
+        },
+        {
+          "name": "Attaque commune",
+          "slug": "d0916",
+          "ref": "D-916",
+          "printKey": "dbsjcc:part10-d0916",
+          "qty": 1
+        },
+        {
+          "name": "Force d'inondation",
+          "slug": "d0921",
+          "ref": "D-921",
+          "printKey": "dbsjcc:part10-d0921",
+          "qty": 1
+        },
+        {
+          "name": "Gogeta",
+          "slug": "d0933",
+          "ref": "D-933",
+          "printKey": "dbsjcc:part10-d0933",
+          "qty": 1
+        },
+        {
+          "name": "Détecteur",
+          "slug": "detecteur",
+          "ref": "Détecteur",
+          "printKey": "dbsjcc:accessory-detecteur",
+          "qty": 1
+        }
+      ],
+      "notes": "29/32 cartes attestees — liste partielle, contentsKnown false ; + Détecteur."
+    },
+    "part1-booster-1188": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "84 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part2-booster-1192": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "69 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part3-booster-1196": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "67 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part4-booster-1199": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "77 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part5-booster-1202": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "88 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part5-booster-box": {
+      "source": "comicplanet.de Display Série 5 FR",
+      "verifiedAt": "2026-10-04",
+      "kind": "display",
+      "behavior": "pack_container",
+      "cardsPerPack": 8,
+      "packsContained": 24,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "Display = 24 boosters × 8 cartes (attesté Comic Planet)."
+    },
+    "part6-booster-1205": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "82 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part7-booster-1207": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "98 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part8-booster-1210": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "97 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part9-booster-1215": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "81 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part10-booster-1218": {
+      "source": "dbzcollection Autres infos = Booster + structure presse",
+      "verifiedAt": "2026-10-04",
+      "kind": "booster",
+      "behavior": "random_pack",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "112 cartes taguées Booster dans le set (pool loterie, pas de liste fixe)."
+    },
+    "part2-starter-ruban-rouge": {
+      "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
+      "verifiedAt": "2026-10-04",
+      "kind": "deck",
+      "behavior": "known_bundle",
+      "cardsPerPack": 32,
+      "packsContained": 1,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "declaredCardCount": 32,
+      "guaranteedPrints": [
+        {
+          "name": "Tao paï paï",
+          "slug": "d0142",
+          "ref": "D-142",
+          "printKey": "dbsjcc:part2-d0142",
+          "qty": 1
+        },
+        {
+          "name": "Assistant noir",
+          "slug": "d0143",
+          "ref": "D-143",
+          "printKey": "dbsjcc:part2-d0143",
+          "qty": 1
+        },
+        {
+          "name": "Cell",
+          "slug": "d0171",
+          "ref": "D-171",
+          "printKey": "dbsjcc:part2-d0171",
+          "qty": 1
+        },
+        {
+          "name": "Cell",
+          "slug": "d0172",
+          "ref": "D-172",
+          "printKey": "dbsjcc:part2-d0172",
+          "qty": 1
+        },
+        {
+          "name": "Cell",
+          "slug": "d0174",
+          "ref": "D-174",
+          "printKey": "dbsjcc:part2-d0174",
+          "qty": 1
+        },
+        {
+          "name": "C-16",
+          "slug": "d0175",
+          "ref": "D-175",
+          "printKey": "dbsjcc:part2-d0175",
+          "qty": 1
+        },
+        {
+          "name": "C-19",
+          "slug": "d0179",
+          "ref": "D-179",
+          "printKey": "dbsjcc:part2-d0179",
+          "qty": 1
+        },
+        {
+          "name": "C-20",
+          "slug": "d0180",
+          "ref": "D-180",
+          "printKey": "dbsjcc:part2-d0180",
+          "qty": 1
+        },
+        {
+          "name": "Flammes de l'enfer",
+          "slug": "d0187",
+          "ref": "D-187",
+          "printKey": "dbsjcc:part2-d0187",
+          "qty": 1
+        },
+        {
+          "name": "Fuite",
+          "slug": "d0189",
+          "ref": "D-189",
+          "printKey": "dbsjcc:part2-d0189",
+          "qty": 1
+        },
+        {
+          "name": "Transformation",
+          "slug": "d0193",
+          "ref": "D-193",
+          "printKey": "dbsjcc:part2-d0193",
+          "qty": 1
+        },
+        {
+          "name": "Le réveil des androïdes",
+          "slug": "d0200",
+          "ref": "D-200",
+          "printKey": "dbsjcc:part2-d0200",
+          "qty": 1
+        },
+        {
+          "name": "Androïde mystérieux",
+          "slug": "d0201",
+          "ref": "D-201",
+          "printKey": "dbsjcc:part2-d0201",
+          "qty": 1
+        },
+        {
+          "name": "Lunch",
+          "slug": "d0218",
+          "ref": "D-218",
+          "printKey": "dbsjcc:part2-d0218",
+          "qty": 1
+        },
+        {
+          "name": "Babidi",
+          "slug": "d0224",
+          "ref": "D-224",
+          "printKey": "dbsjcc:part2-d0224",
+          "qty": 1
+        },
+        {
+          "name": "Dabura",
+          "slug": "d0225",
+          "ref": "D-225",
+          "printKey": "dbsjcc:part2-d0225",
+          "qty": 1
+        },
+        {
+          "name": "Buï buï",
+          "slug": "d0227",
+          "ref": "D-227",
+          "printKey": "dbsjcc:part2-d0227",
+          "qty": 1
+        },
+        {
+          "name": "Yakon",
+          "slug": "d0228",
+          "ref": "D-228",
+          "printKey": "dbsjcc:part2-d0228",
+          "qty": 1
+        },
+        {
+          "name": "Papparapaaah !",
+          "slug": "d0267",
+          "ref": "D-267",
+          "printKey": "dbsjcc:part2-d0267",
+          "qty": 1
+        },
+        {
+          "name": "Maladie retardée",
+          "slug": "d0275",
+          "ref": "D-275",
+          "printKey": "dbsjcc:part2-d0275",
+          "qty": 1
+        },
+        {
+          "name": "Deuxième chance",
+          "slug": "d0288",
+          "ref": "D-288",
+          "printKey": "dbsjcc:part2-d0288",
+          "qty": 1
+        }
+      ],
+      "notes": "21/32 cartes attestees — liste partielle, contentsKnown false."
+    },
+    "part9-poster-1217": {
+      "source": "Poster checklist Deck Héros — art sur part9-starter-1216.poster",
+      "verifiedAt": "2026-10-04",
+      "kind": "ephemera",
+      "behavior": "no_cards",
+      "contentsKnown": false,
+      "notes": "SKU retiré de l'index scellé : l'affiche vit en `poster` sur le starter Héros (comme imageBack)."
+    },
+    "part6-box-1510": {
+      "source": "Dos boîte Ref 05033 (dbzcollection) + Ultrajeux produit 1013",
+      "verifiedAt": "2026-10-04",
+      "kind": "collector_box",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Structure dos : 1 deck série 6 + 1 booster série 2 + 1 booster série 3 + 1 holo exclusive (Vegeto). Texte Ultrajeux (4 boosters) non retenu — contredit le dos scellé."
+    },
+    "part9-box-1512": {
+      "source": "Ultrajeux produit 7791 (EAN 3296580050574) + dbzc tin box 2008 + Amazon B001GXR350",
+      "verifiedAt": "2026-10-04",
+      "kind": "collector_box",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Ultrajeux : 1 starter Super Série Prince Vegeta + 1 starter Série 2 (Ruban Rouge ou Éveil de Gohan) + 1 booster Super Série Prince Vegeta + 1 promo exclusive. Amazon/dbzc : variantes 2 starters + booster + SP. Contenu packs non figé — Super Séries hors corpus cartes dbsjcc."
+    }
+  }
+}

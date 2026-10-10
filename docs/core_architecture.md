@@ -4,15 +4,17 @@
 
 ## Piliers (2026-07-05)
 
-| Pilier | Question | Import racine | Contenu |
-|--------|----------|---------------|---------|
-| **identify** | « Ce barcode = quoi ? » | `@/core/identify/` | evidence, lookup, resolver, platforms |
-| **enrich** | « Quelles metadata + covers ? » | `@/core/enrich/` | fetch, merge, storage, media/, titles/, search/ |
-| **collect** | « Comment vit l’item en collection ? » | `@/core/collect/` | item, jobs/ |
-| **commerce** | « Quel prix / quelle annonce ? » | `@/core/commerce/` | pricing/, retailer/ |
-| **catalog** | « Quels providers, comment les brancher ? » | `@/core/catalog/` | registry, bootstrap, guard |
+| Pilier       | Question                                    | Import racine      | Contenu                                         |
+| ------------ | ------------------------------------------- | ------------------ | ----------------------------------------------- |
+| **identify** | « Ce barcode = quoi ? »                     | `@/core/identify/` | evidence, lookup, resolver, platforms           |
+| **enrich**   | « Quelles metadata + covers ? »             | `@/core/enrich/`   | fetch, merge, storage, media/, titles/, search/ |
+| **collect**  | « Comment vit l’item en collection ? »      | `@/core/collect/`  | item, jobs/                                     |
+| **commerce** | « Quel prix / quelle annonce ? »            | `@/core/commerce/` | pricing/, retailer/                             |
+| **catalog**  | « Quels providers, comment les brancher ? » | `@/core/catalog/`  | registry, bootstrap, guard                      |
 
-Transverse : `core/locale/` (préférences UI/région).
+Transverse : `core/locale/` (préférences UI/région) ; `core/schemas/`
+(contrat logique item — [content-types.ts](../src/core/schemas/content-types.ts),
+ADR-020).
 
 **API publique** : `@/core` ré-exporte les entrypoints (`resolveBarcode`, `getMetadata`, `fetchAndStoreMetadata`, …). Le reste = imports ciblés dans le pilier.
 
@@ -23,16 +25,16 @@ Transverse : `core/locale/` (préférences UI/région).
 Un seul sac de match partagé (`MatchContext` dans `types/providerModule.ts`,
 builder `core/catalog/matchContext.ts`) :
 
-| Champ | Exemples |
-|-------|----------|
-| `barcodes` | EAN / UPC / ISBN contribués par n'importe quel provider |
-| `titles` | Titre + aliases + titres régionaux (soft match / search) |
-| `acceptanceTitles` | Titres fiables pour validation marketplace |
-| `releaseDate` / `platformKey` / `externalIds` | Discriminants soft |
+| Champ                                         | Exemples                                                 |
+| --------------------------------------------- | -------------------------------------------------------- |
+| `barcodes`                                    | EAN / UPC / ISBN contribués par n'importe quel provider  |
+| `titles`                                      | Titre + aliases + titres régionaux (soft match / search) |
+| `acceptanceTitles`                            | Titres fiables pour validation marketplace               |
+| `releaseDate` / `platformKey` / `externalIds` | Discriminants soft                                       |
 
 - **Enrich** : chaque passe rebuild le contexte depuis les résultats déjà connus
   (`ctx.match` sur `MetadataAdapterContext`).
-- **Prix** : `BarcodePriceRefreshContext` *est* un `MatchContext` (+ alias legacy
+- **Prix** : `BarcodePriceRefreshContext` _est_ un `MatchContext` (+ alias legacy
   `cleanedBarcode` / `primaryName` / `fallbackNames`). Seek multi-barcode via
   `matchPriceSeekQueries` — un EAN découvert par un provider est essayé par tous.
 - **Catalog links** : `isVerifiedCatalogProductUrl` sur le module provider (pas de
@@ -44,14 +46,14 @@ builder `core/catalog/matchContext.ts`) :
 
 Si deux modules ne sont importés **que ensemble**, les fusionner. Exemples fusionnés (2026-07-05) :
 
-| Avant | Après |
-|-------|-------|
-| `fetch.ts` orchestrator | **`enrich/fetch.ts`** (+ `metadataFetchGating` / `merge` / `mergeObservationRanking` / book* re-extraits) |
-| `storage.ts` persist | **`enrich/storage.ts`** (+ `media/image*` / crop / localize / coverBootstrap / gallery+cover+item sync) |
-| `compile.ts` consensus override | **`identify/evidence/compile.ts`** (+ `consensusTitle` / `resolve` re-extraits) |
-| `resolver.ts` prix | **`commerce/pricing/resolver.ts`** (+ `priceTypes` / `pricePipeline` / `cachePolicy` / `outlierTrim`) |
-| `itemDisplay.ts` + `metadataPriceFallback` | **`commerce/pricing/itemDisplay.ts`** |
-| `catalog.ts` + `materializeProviderInfo` | **`catalog/catalog.ts`** |
+| Avant                                      | Après                                                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `fetch.ts` orchestrator                    | **`enrich/fetch.ts`** (+ `metadataFetchGating` / `merge` / `mergeObservationRanking` / book\* re-extraits) |
+| `storage.ts` persist                       | **`enrich/storage.ts`** (+ `media/image*` / crop / localize / coverBootstrap / gallery+cover+item sync)    |
+| `compile.ts` consensus override            | **`identify/evidence/compile.ts`** (+ `consensusTitle` / `resolve` re-extraits)                            |
+| `resolver.ts` prix                         | **`commerce/pricing/resolver.ts`** (+ `priceTypes` / `pricePipeline` / `cachePolicy` / `outlierTrim`)      |
+| `itemDisplay.ts` + `metadataPriceFallback` | **`commerce/pricing/itemDisplay.ts`**                                                                      |
+| `catalog.ts` + `materializeProviderInfo`   | **`catalog/catalog.ts`**                                                                                   |
 
 Imports publics stables : `@/core/enrich/fetch`, `@/core/commerce/pricing/resolver` (re-exporte cachePolicy), `@/core/identify/evidence/compile` (re-exporte consensusTitle/resolve).
 
@@ -74,11 +76,11 @@ Auth / DB / HTTP             → lib/
 
 ### 3. Quand fusionner vs scinder
 
-| Fusionner | Scinder |
-|-----------|---------|
-| 3 helpers < 50 lignes, même feature | Fichier > ~800 lignes avec 2+ raisons de changer |
-| Barrel `index.ts` mort | Pipeline stage testé isolément (evidence/compile) |
-| Doublon prouvé par test | Data générée / snapshots |
+| Fusionner                           | Scinder                                           |
+| ----------------------------------- | ------------------------------------------------- |
+| 3 helpers < 50 lignes, même feature | Fichier > ~800 lignes avec 2+ raisons de changer  |
+| Barrel `index.ts` mort              | Pipeline stage testé isolément (evidence/compile) |
+| Doublon prouvé par test             | Data générée / snapshots                          |
 
 ### 4. Ce qu’on ne fige plus
 
@@ -87,16 +89,16 @@ Auth / DB / HTTP             → lib/
 
 ## Taille actuelle (~186 fichiers prod sous `src/core/`)
 
-| Pilier | Gros morceaux |
-|--------|---------------|
-| enrich | storage, fetch, titleMatching (facades), attachmentDisplayScore leaves |
-| identify | compile, resolver, titleUtils, platforms |
-| collect | present, media, jobs/workRunner |
-| catalog | registry, sourceTraits, mappingAudit |
-| commerce | pricing/resolver, retailer/titleMatch |
-| locale | preference |
+| Pilier   | Gros morceaux                                                          |
+| -------- | ---------------------------------------------------------------------- |
+| enrich   | storage, fetch, titleMatching (facades), attachmentDisplayScore leaves |
+| identify | compile, resolver, titleUtils, platforms                               |
+| collect  | present, media, jobs/workRunner                                        |
+| catalog  | registry, sourceTraits, mappingAudit                                   |
+| commerce | pricing/resolver, retailer/titleMatch                                  |
+| locale   | preference                                                             |
 
-**Prochaines réductions utiles** (voir [metadata_engine_audit.md](metadata_engine_audit.md)) :
+**Prochaines réductions utiles** (voir [metadata_engine_audit.md](archive/metadata_engine_audit.md)) :
 
 1. ~~Découper `enrich/storage.ts` images / crop / localize / cover bootstrap / store stages~~ **fait 2026-07-24** — `media/image*` + `croppedCoverSync` + `attachmentLocalization` + `metadataCoverBootstrap` + `prepareMetadataGallery` / `resolveMetadataCoverHero` / `syncItemAfterMetadataStore` ; `storage.ts` = orchestrateur.
 2. ~~`fetch` gating/merge/book~~ **partiel 2026-07-24** — `metadataFetchGating` / `merge` / `mergeObservationRanking` / `bookSearch*`.

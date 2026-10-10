@@ -1,0 +1,699 @@
+{
+  "source": "coleka.com dump navigateur ?nbpp=240 (listing complet) + Fixeez paninimania",
+  "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/decouvre-la-magie-de-disney-leclerc_r46879?nbpp=240",
+  "set": {
+    "code": "disney25",
+    "label": "2025 Disney: Découvre la magie de Disney",
+    "year": 2025,
+    "franchise": "Disney"
+  },
+  "coverage": {
+    "namedCards": 108,
+    "placeholderCards": 0,
+    "fixeez": 24
+  },
+  "cards": [
+    {
+      "number": "001",
+      "name": "Lilo",
+      "kind": "card"
+    },
+    {
+      "number": "002",
+      "name": "Stitch",
+      "kind": "card",
+      "rarity": "metallisee"
+    },
+    {
+      "number": "003",
+      "name": "Pikly",
+      "kind": "card"
+    },
+    {
+      "number": "004",
+      "name": "Jumba",
+      "kind": "card"
+    },
+    {
+      "number": "005",
+      "name": "Lilo & Stitch",
+      "kind": "card"
+    },
+    {
+      "number": "006",
+      "name": "Angel",
+      "kind": "card"
+    },
+    {
+      "number": "007",
+      "name": "Félix",
+      "kind": "card"
+    },
+    {
+      "number": "008",
+      "name": "Dr. Jumba Jookiba",
+      "kind": "card"
+    },
+    {
+      "number": "009",
+      "name": "Hamsterviel",
+      "kind": "card"
+    },
+    {
+      "number": "010",
+      "name": "Simba",
+      "kind": "card"
+    },
+    {
+      "number": "011",
+      "name": "Scar",
+      "kind": "card"
+    },
+    {
+      "number": "012",
+      "name": "Mufasa",
+      "kind": "card",
+      "rarity": "thermoreactive"
+    },
+    {
+      "number": "013",
+      "name": "Pumbaa",
+      "kind": "card"
+    },
+    {
+      "number": "014",
+      "name": "Shenzi, Banzaï et Ed",
+      "kind": "card"
+    },
+    {
+      "number": "015",
+      "name": "Rafiki",
+      "kind": "card"
+    },
+    {
+      "number": "016",
+      "name": "Zazu",
+      "kind": "card"
+    },
+    {
+      "number": "017",
+      "name": "Nala",
+      "kind": "card"
+    },
+    {
+      "number": "018",
+      "name": "Timon",
+      "kind": "card"
+    },
+    {
+      "number": "019",
+      "name": "Judy Hopps",
+      "kind": "card",
+      "rarity": "metallisee"
+    },
+    {
+      "number": "020",
+      "name": "Nick Wilde",
+      "kind": "card"
+    },
+    {
+      "number": "021",
+      "name": "Chef Bogo",
+      "kind": "card"
+    },
+    {
+      "number": "022",
+      "name": "Gary",
+      "kind": "card"
+    },
+    {
+      "number": "023",
+      "name": "Nibbles",
+      "kind": "card"
+    },
+    {
+      "number": "024",
+      "name": "Clawhauser",
+      "kind": "card"
+    },
+    {
+      "number": "025",
+      "name": "Mister Big",
+      "kind": "card"
+    },
+    {
+      "number": "026",
+      "name": "Flash",
+      "kind": "card"
+    },
+    {
+      "number": "027",
+      "name": "Gazelle",
+      "kind": "card"
+    },
+    {
+      "number": "028",
+      "name": "Woody",
+      "kind": "card"
+    },
+    {
+      "number": "029",
+      "name": "Buzz L'Éclair",
+      "kind": "card",
+      "rarity": "thermoreactive"
+    },
+    {
+      "number": "030",
+      "name": "Jessie",
+      "kind": "card"
+    },
+    {
+      "number": "031",
+      "name": "Fourchette",
+      "kind": "card"
+    },
+    {
+      "number": "032",
+      "name": "M. Patate",
+      "kind": "card"
+    },
+    {
+      "number": "033",
+      "name": "Flash McQueen",
+      "kind": "card"
+    },
+    {
+      "number": "034",
+      "name": "Cruz Ramirez",
+      "kind": "card"
+    },
+    {
+      "number": "035",
+      "name": "Le King",
+      "kind": "card"
+    },
+    {
+      "number": "036",
+      "name": "Martin",
+      "kind": "card"
+    },
+    {
+      "number": "037",
+      "name": "Ariel",
+      "kind": "card"
+    },
+    {
+      "number": "038",
+      "name": "Ursula",
+      "kind": "card"
+    },
+    {
+      "number": "039",
+      "name": "Sébastien",
+      "kind": "card"
+    },
+    {
+      "number": "040",
+      "name": "Polochon",
+      "kind": "card"
+    },
+    {
+      "number": "041",
+      "name": "Roi Triton",
+      "kind": "card"
+    },
+    {
+      "number": "042",
+      "name": "Belle",
+      "kind": "card",
+      "rarity": "pailletee"
+    },
+    {
+      "number": "043",
+      "name": "La Bête",
+      "kind": "card"
+    },
+    {
+      "number": "044",
+      "name": "Lumière",
+      "kind": "card"
+    },
+    {
+      "number": "045",
+      "name": "Madame Samovar",
+      "kind": "card"
+    },
+    {
+      "number": "046",
+      "name": "Evile",
+      "kind": "card"
+    },
+    {
+      "number": "047",
+      "name": "Dr. Jumba Jookiba",
+      "kind": "card"
+    },
+    {
+      "number": "048",
+      "name": "M. Stenchy",
+      "kind": "card"
+    },
+    {
+      "number": "049",
+      "name": "Stitch",
+      "kind": "card"
+    },
+    {
+      "number": "050",
+      "name": "Lilo",
+      "kind": "card"
+    },
+    {
+      "number": "051",
+      "name": "Angel",
+      "kind": "card",
+      "rarity": "thermoreactive"
+    },
+    {
+      "number": "052",
+      "name": "Reuben",
+      "kind": "card"
+    },
+    {
+      "number": "053",
+      "name": "Écho",
+      "kind": "card"
+    },
+    {
+      "number": "054",
+      "name": "Capitaine Gantu",
+      "kind": "card"
+    },
+    {
+      "number": "055",
+      "name": "Peter Pan",
+      "kind": "card",
+      "rarity": "phosphorescente"
+    },
+    {
+      "number": "056",
+      "name": "Fée Clochette",
+      "kind": "card"
+    },
+    {
+      "number": "057",
+      "name": "Capitaine Crochet",
+      "kind": "card"
+    },
+    {
+      "number": "058",
+      "name": "Crocodile",
+      "kind": "card"
+    },
+    {
+      "number": "059",
+      "name": "Monsieur Mouche",
+      "kind": "card"
+    },
+    {
+      "number": "060",
+      "name": "Alice",
+      "kind": "card"
+    },
+    {
+      "number": "061",
+      "name": "Chat de Cheshire",
+      "kind": "card"
+    },
+    {
+      "number": "062",
+      "name": "La Reine de cœur",
+      "kind": "card"
+    },
+    {
+      "number": "063",
+      "name": "Carte soldat",
+      "kind": "card"
+    },
+    {
+      "number": "064",
+      "name": "Elsa",
+      "kind": "card"
+    },
+    {
+      "number": "065",
+      "name": "Anna",
+      "kind": "card"
+    },
+    {
+      "number": "066",
+      "name": "Olaf",
+      "kind": "card"
+    },
+    {
+      "number": "067",
+      "name": "Kristoff",
+      "kind": "card"
+    },
+    {
+      "number": "068",
+      "name": "Elsa",
+      "kind": "card",
+      "rarity": "pailletee"
+    },
+    {
+      "number": "069",
+      "name": "Nokk",
+      "kind": "card"
+    },
+    {
+      "number": "070",
+      "name": "Olaf",
+      "kind": "card"
+    },
+    {
+      "number": "071",
+      "name": "Sven",
+      "kind": "card"
+    },
+    {
+      "number": "072",
+      "name": "Bruni",
+      "kind": "card"
+    },
+    {
+      "number": "073",
+      "name": "Vaiana",
+      "kind": "card",
+      "rarity": "metallisee"
+    },
+    {
+      "number": "074",
+      "name": "Maui",
+      "kind": "card"
+    },
+    {
+      "number": "075",
+      "name": "Pua",
+      "kind": "card"
+    },
+    {
+      "number": "076",
+      "name": "Heihei",
+      "kind": "card"
+    },
+    {
+      "number": "077",
+      "name": "Simea",
+      "kind": "card"
+    },
+    {
+      "number": "078",
+      "name": "Jasmine",
+      "kind": "card"
+    },
+    {
+      "number": "079",
+      "name": "Aladdin",
+      "kind": "card"
+    },
+    {
+      "number": "080",
+      "name": "Abu",
+      "kind": "card"
+    },
+    {
+      "number": "081",
+      "name": "Le génie",
+      "kind": "card"
+    },
+    {
+      "number": "082",
+      "name": "Dory",
+      "kind": "card"
+    },
+    {
+      "number": "083",
+      "name": "Némo",
+      "kind": "card"
+    },
+    {
+      "number": "084",
+      "name": "Destinée",
+      "kind": "card"
+    },
+    {
+      "number": "085",
+      "name": "Hank",
+      "kind": "card"
+    },
+    {
+      "number": "086",
+      "name": "Crush",
+      "kind": "card"
+    },
+    {
+      "number": "087",
+      "name": "Bob",
+      "kind": "card",
+      "rarity": "phosphorescente"
+    },
+    {
+      "number": "088",
+      "name": "Sulli",
+      "kind": "card"
+    },
+    {
+      "number": "089",
+      "name": "Terri et Terry",
+      "kind": "card"
+    },
+    {
+      "number": "090",
+      "name": "Léon",
+      "kind": "card"
+    },
+    {
+      "number": "091",
+      "name": "Blanche-Neige",
+      "kind": "card"
+    },
+    {
+      "number": "092",
+      "name": "Raiponce",
+      "kind": "card"
+    },
+    {
+      "number": "093",
+      "name": "Belle",
+      "kind": "card"
+    },
+    {
+      "number": "094",
+      "name": "Jasmine",
+      "kind": "card"
+    },
+    {
+      "number": "095",
+      "name": "Ariel",
+      "kind": "card",
+      "rarity": "pailletee"
+    },
+    {
+      "number": "096",
+      "name": "Vaiana",
+      "kind": "card"
+    },
+    {
+      "number": "097",
+      "name": "Cendrillon",
+      "kind": "card"
+    },
+    {
+      "number": "098",
+      "name": "Mulan",
+      "kind": "card"
+    },
+    {
+      "number": "099",
+      "name": "Tiana",
+      "kind": "card"
+    },
+    {
+      "number": "100",
+      "name": "Rémy",
+      "kind": "card",
+      "rarity": "phosphorescente"
+    },
+    {
+      "number": "101",
+      "name": "Émile",
+      "kind": "card"
+    },
+    {
+      "number": "102",
+      "name": "Linguini",
+      "kind": "card"
+    },
+    {
+      "number": "103",
+      "name": "Colette",
+      "kind": "card"
+    },
+    {
+      "number": "104",
+      "name": "Riley",
+      "kind": "card"
+    },
+    {
+      "number": "105",
+      "name": "Joie",
+      "kind": "card"
+    },
+    {
+      "number": "106",
+      "name": "Tristesse",
+      "kind": "card"
+    },
+    {
+      "number": "107",
+      "name": "Anxiété",
+      "kind": "card"
+    },
+    {
+      "number": "108",
+      "name": "Bing Bong",
+      "kind": "card"
+    },
+    {
+      "number": "f01",
+      "name": "Fixeez — Mickey",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f02",
+      "name": "Fixeez — Pumbaa",
+      "aka": ["Pumba"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f03",
+      "name": "Fixeez — Blanche-Neige",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f04",
+      "name": "Fixeez — Rolly",
+      "aka": ["Dalmatien"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f05",
+      "name": "Fixeez — Simba",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f06",
+      "name": "Fixeez — Main de Mickey",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f07",
+      "name": "Fixeez — Minnie",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f08",
+      "name": "Fixeez — Le génie",
+      "aka": ["Génie", "Genie"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f09",
+      "name": "Fixeez — Polochon",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f10",
+      "name": "Fixeez — Judy",
+      "aka": ["Judy Hopps"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f11",
+      "name": "Fixeez — Stitch (tirant la langue)",
+      "aka": ["Stitch"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f12",
+      "name": "Fixeez — Stitch (avec un ananas)",
+      "aka": ["Stitch ananas", "Stitch (ananas)"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f13",
+      "name": "Fixeez — Zootopia Police",
+      "aka": ["badge", "Zootopia"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f14",
+      "name": "Fixeez — Stitch (avec une pastèque)",
+      "aka": ["Stitch Fruits", "Stitch (pastèque)"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f15",
+      "name": "Fixeez — Angel",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f16",
+      "name": "Fixeez — Ariel",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f17",
+      "name": "Fixeez — Némo",
+      "aka": ["Nemo"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f18",
+      "name": "Fixeez — Elsa",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f19",
+      "name": "Fixeez — Olaf",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f20",
+      "name": "Fixeez — Raiponce",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f21",
+      "name": "Fixeez — Woody",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f22",
+      "name": "Fixeez — Stitch (tenant un cœur rouge)",
+      "aka": ["Stitch Coeur", "Stitch (coeur)"],
+      "kind": "fixeez"
+    },
+    {
+      "number": "f23",
+      "name": "Fixeez — Rémy",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f24",
+      "name": "Fixeez — Vaiana",
+      "kind": "fixeez"
+    }
+  ]
+}

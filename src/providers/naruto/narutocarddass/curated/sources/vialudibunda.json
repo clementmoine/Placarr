@@ -1,0 +1,59 @@
+{
+  "source": "vialudibunda.com (Magento shop)",
+  "observed": "2026-08-16",
+  "note": "User pasted Magento 700×700 cache JPEGs. Canonical is the catalog original (drop /cache/{n}/{type}/{WxH}/{hash}/). Carddass FR Série 1 SKUs already in the catalogue (tiny carddass.fr GIFs). Shop SKUs (DeckS01/DeckS02) are theirs, not Bandai set codes. Search q=naruto = 3 SKUs (S1 only). Tric Trac starter boxes beat these Magento squares.",
+  "products": [
+    {
+      "slug": "booster-s1",
+      "setCode": "s1",
+      "kind": "booster",
+      "lang": "FR",
+      "title": "Naruto - Série 1 - Booster (Français)",
+      "page": "https://vialudibunda.com/naruto-serie-1-booster.html",
+      "shopSku": "NARUTO-boosterS01",
+      "printedRef": "05112",
+      "thumb": "https://vialudibunda.com/media/catalog/product/cache/2/image/700x700/9df78eab33525d08d6e5fb8d27136e95/n/a/naruto-serie-1-booster.jpg",
+      "url": "https://vialudibunda.com/media/catalog/product/n/a/naruto-serie-1-booster.jpg",
+      "staging": "staging/vialudibunda/naruto-serie-1-booster.jpg",
+      "ingest": true,
+      "pixels": { "width": 310, "height": 500 }
+    },
+    {
+      "slug": "starter-pays-du-vent",
+      "setCode": "s1",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Naruto - Série 1 - Deck Le pays du vent (Français)",
+      "page": "https://vialudibunda.com/naruto-serie-1-deck-le-pays-du-vent.html",
+      "shopSku": "NARUTO-DeckS01",
+      "printedRef": "05110",
+      "thumb": "https://vialudibunda.com/media/catalog/product/cache/2/image/700x700/9df78eab33525d08d6e5fb8d27136e95/n/a/naruto-serie-1-deck-pays-du-vent.jpg",
+      "url": "https://vialudibunda.com/media/catalog/product/n/a/naruto-serie-1-deck-pays-du-vent.jpg",
+      "staging": "staging/vialudibunda/naruto-serie-1-deck-pays-du-vent.jpg",
+      "ingest": true,
+      "pixels": { "width": 403, "height": 500 }
+    },
+    {
+      "slug": "starter-maitre-hokage",
+      "setCode": "s1",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Naruto - Série 1 - Deck Maître Hokage (Français)",
+      "page": "https://vialudibunda.com/naruto-serie-1-deck-maitre-hokage.html",
+      "shopSku": "NARUTO-DeckS02",
+      "thumb": "https://vialudibunda.com/media/catalog/product/cache/1/image/988x988/9df78eab33525d08d6e5fb8d27136e95/s/t/starter-naruto-serie-1-maitre-hokage.jpg",
+      "url": "https://vialudibunda.com/media/catalog/product/s/t/starter-naruto-serie-1-maitre-hokage.jpg",
+      "staging": "staging/vialudibunda/starter-naruto-serie-1-maitre-hokage.jpg",
+      "ingest": true,
+      "pixels": { "width": 458, "height": 458 },
+      "doNotDisplace": "staging/trictrac/starter-maitre-hokage.jpeg",
+      "note": "Guessed n/a/naruto-serie-1-maitre-hokage.jpg is 404. Shop SKU DeckS02 is theirs, not Bandai S2."
+    }
+  ],
+  "search": {
+    "url": "https://vialudibunda.com/catalogsearch/result/?q=naruto",
+    "hits": 3,
+    "staging": "staging/vialudibunda/catalogsearch-naruto.html",
+    "note": "Only S1 booster + Pays du Vent + Maître Hokage. No S2+."
+  }
+}

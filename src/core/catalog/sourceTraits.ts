@@ -148,7 +148,9 @@ const PROVIDER_LABEL_BY_ID = new Map(
  * was never stamped (orphan jaquette rows). Uses registry `coverUrlHost` /
  * `websiteUrl` — no provider-id literals.
  */
-export function inferProviderIdFromMediaUrl(url?: string | null): string | null {
+export function inferProviderIdFromMediaUrl(
+  url?: string | null,
+): string | null {
   const trimmed = url?.trim();
   if (!trimmed || trimmed.startsWith("/")) return null;
 
@@ -385,9 +387,8 @@ export function withProviderAttachmentTraits<
     collectorCoverRegionFromAgeRatingSource:
       collectorCoverRegionFromAgeRatingSource(resolvedSource),
     coverDefaultRegion: coverDefaultRegionForSource(resolvedSource),
-    providerImageScoreAdjustment: providerImageScoreAdjustmentForSource(
-      resolvedSource,
-    ),
+    providerImageScoreAdjustment:
+      providerImageScoreAdjustmentForSource(resolvedSource),
     providerLabel: providerLabelForSource(resolvedSource) ?? undefined,
   };
 }

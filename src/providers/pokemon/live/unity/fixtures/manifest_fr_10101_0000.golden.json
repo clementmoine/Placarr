@@ -1,0 +1,37 @@
+{
+  "assetCount": 40522,
+  "first": {
+    "name": "_shared",
+    "crc": 500489556,
+    "hash": "00b60688d48146caaff916654ee0e16f",
+    "dependencies": [
+      "attack_fairy",
+      "attack_fighting",
+      "attack_fire",
+      "attack_water",
+      "board_ace_spec",
+      "board_colorless",
+      "board_fairy",
+      "board_fire",
+      "board_interactions",
+      "board_lightning",
+      "cards_block_move",
+      "cards_fizzle",
+      "status_burned",
+      "status_confusion",
+      "status_damage",
+      "status_poison",
+      "status_sleep"
+    ]
+  },
+  "sampleNames": [
+    "_shared",
+    "bw1_fr_001",
+    "xybsp_fr_019",
+    "shadersbundle"
+  ],
+  "sampleCrc": {
+    "_shared": 500489556,
+    "bw1_fr_001": 1096558123
+  }
+}

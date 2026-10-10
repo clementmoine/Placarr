@@ -1,0 +1,111 @@
+{
+  "source": "Amazon retail packshots (CA / FR / NL / JP) — Super Dragon Ball Heroes sealed",
+  "observed": "2026-09-20",
+  "ingest": "dbh curated/products → sealed.ts artFile",
+  "note": "Images downloaded from m.media-amazon.com; primary art on disk under curated/products/<slug>.jpg. ASINs are provenance, not live URLs in products-index.",
+  "items": [
+    {
+      "asin": "B0BS8ML1D1",
+      "slug": "starter-pack-namek-battle",
+      "title": "Bandai Super Dragon Ball Heroes Starter Pack Namek Star Battle",
+      "page": "https://www.amazon.ca/-/fr/Bandai-Dragon-Heroes-Starter-Battle/dp/B0BS8ML1D1",
+      "art": "starter-pack-namek-battle.jpg",
+      "origin": "https://m.media-amazon.com/images/I/81tlFDKO70L._AC_SL1500_.jpg"
+    },
+    {
+      "asin": "B09B22PVT9",
+      "slug": "starter-pack-burst",
+      "title": "Bandai Super Dragon Ball Heroes Starter Pack Burst",
+      "page": "https://www.amazon.ca/-/fr/Bandai-Super-Dragon-Heroes-Starter/dp/B09B22PVT9",
+      "art": "starter-pack-burst.jpg",
+      "origin": "https://m.media-amazon.com/images/I/91px1V49XhL._AC_SL1500_.jpg",
+      "notes": "7 cartes fixes (BMPS) + guide."
+    },
+    {
+      "asin": "B0C5593VG4",
+      "slug": "extra-booster-pack-3-box",
+      "also": ["extra-booster-pack-3"],
+      "title": "BANDAI Super Dragon Ball Heroes Lot de 3 boosters supplémentaires (photo = Extra Booster Pack 3 display)",
+      "page": "https://www.amazon.ca/-/fr/BANDAI-Dragon-Heroes-boosters-suppl%C3%A9mentaires/dp/B0C5593VG4",
+      "art": "extra-booster-pack-3-box.jpg",
+      "packArt": "extra-booster-pack-3.jpg",
+      "origins": [
+        "https://m.media-amazon.com/images/I/81LkCljnKRL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/81Mgcok381L._AC_SL1500_.jpg"
+      ]
+    },
+    {
+      "asin": "B0CQY3LR45",
+      "slug": "extra-booster-pack-4-box",
+      "also": ["extra-booster-pack-4"],
+      "title": "Bandai Super Dragon Ball Heroes Extra Booster Pack 4 (boîte), 20 paquets",
+      "page": "https://www.amazon.ca/-/fr/Bandai-Dragon-Heroes-Booster-paquets/dp/B0CQY3LR45",
+      "art": "extra-booster-pack-4-box.jpg",
+      "packArt": "extra-booster-pack-4.jpg",
+      "origins": [
+        "https://m.media-amazon.com/images/I/81ZTtbqphzL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/81QTVk4gRzL._AC_SL1500_.jpg"
+      ]
+    },
+    {
+      "asin": "B0B8RDYXHG",
+      "slug": "binder-12th-anniversary-ultra-god",
+      "title": "BANDAI Super Dragon Ball Heroes Classeur officiel 9 pochettes 12ème anniversaire — Ensemble mission Ultra God",
+      "page": "https://www.amazon.ca/-/fr/BANDAI-Classeur-officiel-pochettes-anniversaire/dp/B0B8RDYXHG",
+      "art": "binder-12th-anniversary-ultra-god.jpg",
+      "origin": "https://m.media-amazon.com/images/I/A1SjRPzYzQL._AC_SL1500_.jpg",
+      "notes": "Binder + 11 recharges + 13 battle + 1 avatar + 30 sleeves."
+    },
+    {
+      "asin": "B07RP6MLXY",
+      "slug": "ultimate-booster-bravery-box",
+      "also": ["ultimate-booster-bravery"],
+      "title": "Bandai Dragon Ultimate Booster Bravery Clash",
+      "page": "https://www.amazon.nl/-/en/Bandai-Dragon-Ultimate-Booster-Bravery/dp/B07RP6MLXY",
+      "art": "ultimate-booster-bravery-box.jpg",
+      "packArt": "ultimate-booster-bravery.jpg",
+      "origins": [
+        "https://m.media-amazon.com/images/I/81VtbiBXqL._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/81PHVuJowuL._AC_SL1500_.jpg"
+      ],
+      "notes": "激突する武勇 — 3 cartes/pack, ~30 types."
+    },
+    {
+      "asin": "B07MD15T5S",
+      "slug": "ultimate-booster-power-breakthrough-box",
+      "also": ["ultimate-booster-power-breakthrough"],
+      "title": "Dragon Ultimate Booster Pack Power Breakthrough",
+      "page": "https://www.amazon.fr/Dragon-Ultimate-Booster-Pack-Power-Breakthrough/dp/B07MD15T5S",
+      "art": "ultimate-booster-power-breakthrough-box.jpg",
+      "packArt": "ultimate-booster-power-breakthrough.jpg",
+      "origins": [
+        "https://m.media-amazon.com/images/I/91TKAnd0I9L._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/91l5VcD6dyL._AC_SL1500_.jpg"
+      ],
+      "notes": "3 cartes/pack, ~30 types."
+    },
+    {
+      "asin": "B08R5TB4VN",
+      "slug": "big-bang-booster-pack-3-box",
+      "also": ["big-bang-booster-pack-3"],
+      "title": "BANDAI Super Dragon Ball Heroes Big Bang Booster Pack 3 BOX",
+      "page": "https://www.amazon.co.jp/dp/B08R5TB4VN",
+      "art": "big-bang-booster-pack-3-box.jpg",
+      "packArt": "big-bang-booster-pack-3.jpg",
+      "origins": [
+        "https://m.media-amazon.com/images/I/91Ftle5m06L._AC_SL1500_.jpg",
+        "https://m.media-amazon.com/images/I/81-nGLujMFL._AC_SL1500_.jpg"
+      ],
+      "notes": "30+1 types, 3 cartes/pack."
+    },
+    {
+      "asin": "B0CFLBGK35",
+      "slug": "binder-13th-anniversary-cell",
+      "title": "Super Dragon Ball Heroes 13th Anniversary 9-Pocket Binder Set — Cell Arc",
+      "page": "https://www.amazon.co.jp/-/en/dp/B0CFLBGK35",
+      "art": "binder-13th-anniversary-cell.jpg",
+      "origin": "https://m.media-amazon.com/images/I/81TMelw+L6L._AC_SL1500_.jpg",
+      "notes": "Binder + 10 recharges + 13 foil + avatar + 30 sleeves."
+    }
+  ]
+}

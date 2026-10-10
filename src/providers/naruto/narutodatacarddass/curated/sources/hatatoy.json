@@ -1,0 +1,20 @@
+{
+  "sourceId": "hatatoy",
+  "label": "ハタトーイ (hatatoy.shop / ColorMe)",
+  "ingest": "none — category crawl 2026-09-19; all matched prints already have faces",
+  "category": {
+    "cbid": 2849255,
+    "csid": 3,
+    "nameJa": "未分類",
+    "url": "https://hatatoy.shop/?mode=cate&cbid=2849255&csid=3",
+    "pages": "1–67 (Naruto DCD only on pages 1–7; rest = other TCG)"
+  },
+  "faceUrl": "https://img07.shop-pro.jp/PA01424/345/product/{pid}.jpg",
+  "thumbUrl": "https://img07.shop-pro.jp/PA01424/345/product/{pid}_th.jpg",
+  "crawledAt": "2026-09-19",
+  "listings": 79,
+  "uniquePrinted": 50,
+  "prefixes": { "DN": 63, "NM": 15, "DNP": 1 },
+  "not": ["DN-136T", "DN-144T", "DMP-*", "dedicated-naruto-category"],
+  "note": "Shop search for DN-136T returns unrelated hits. No dedicated NARUTOデータカードダス category — only unsorted 未分類 leftovers. Full listing dump: data/naruto/data-carddass/staging/hatatoy-cbid2849255.json (optional)."
+}

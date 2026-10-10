@@ -1,0 +1,34 @@
+{
+  "source": "narutozabuza.centerblog.net — fan blog 2009 (user paste 2026-08-16)",
+  "observed": "2026-08-16",
+  "note": "One pasted post. The rest of the blog is character pages (naruto / sasuke / …), not a card dump — do not crawl. The photo is a 400×400 JPEG of the early JP Carddass promo PR忍-1-R (うずまきナルト, BANDAI 2002). Same game as FR/IT Carddass, not Bandai CCG, not FR NI-001, not NI-180 (Yashamaru). Slab-Z treats PR忍-1 as the Jump Festa 2003 flyer first print and PR忍-1-R as a later foil — see slab-z-2002-carddass.json. Ingest that one JPEG as art.zabuza.* beside any other dump.",
+  "ingest": "faces",
+  "disk": "cards/promo/prni0001-R/ja/",
+  "crawlBlog": false,
+  "url": "http://narutozabuza.centerblog.net/14-cartes-naruto",
+  "published": "2009-04-26",
+  "image": {
+    "url": "http://narutozabuza.n.a.pic.centerblog.net/ctccm8do.jpg",
+    "pixels": {
+      "width": 400,
+      "height": 400
+    }
+  },
+  "print": {
+    "printedRef": "PR忍-1-R",
+    "namePrinted": "うずまきナルト",
+    "abilityPrinted": "戦いの決意",
+    "year": 2002,
+    "lang": "JA",
+    "line": "carddass-jp",
+    "not": ["ni001", "ni180", "pr011", "pr096", "n001"]
+  },
+  "exhausted": {
+    "verified": "2026-08-19",
+    "method": "Racine du blog relue : 8 images hébergées sur `narutozabuza.n.a.pic.centerblog.net`, toutes téléchargées et regardées.",
+    "cards": 1,
+    "nonCards": 7,
+    "detail": "7 des 8 sont des captures d'anime (Shikamaru, Rock Lee, Jiraiya, Tsunade, Iruka, un ninja de dos) et un bandeau frontal de cosplay. Seule `ctccm8do.jpg` est une carte — la PR忍-1-R qu'on tient déjà.",
+    "slugTrap": "Le billet s'appelle `14-cartes-naruto` : **14 est l'id du billet**, pas un nombre de cartes. C'est ce qui donne l'impression d'un hôte sous-exploité — il ne l'est pas."
+  }
+}

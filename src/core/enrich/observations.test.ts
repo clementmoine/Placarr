@@ -209,4 +209,43 @@ describe("metadata observation contract", () => {
     });
     expect(observations.every(shouldRetainObservation)).toBe(true);
   });
+
+  it("does not emit a second image observation when imageUrl matches an attachment", () => {
+    const cover = "https://www.lddb.com/cover/ld/33801-33900/33828.jpg";
+    const observations = observationsFromMetadataResult(
+      {
+        title: "Toy Story",
+        imageUrl: cover,
+        attachments: [
+          {
+            type: "cover",
+            url: cover,
+            source: "lddb",
+            role: "front",
+            title: "Box - Front",
+          },
+        ],
+      },
+      {
+        providerId: "lddb",
+        providerLabel: "LDDb",
+        sourceDocumentRole: "reference_record",
+        evidenceSignals: ["structured_data"],
+        titleRole: "object_title",
+        imageRole: "cover_front",
+        aliasRole: "provider_grouped_alias",
+        factRole: "structured_fact",
+        language: "neutral",
+      },
+    );
+
+    const images = observations.filter((item) => item.kind === "image");
+    expect(images).toHaveLength(1);
+    expect(images[0]).toMatchObject({
+      kind: "image",
+      url: cover,
+      title: "Box - Front",
+      region: "front",
+    });
+  });
 });

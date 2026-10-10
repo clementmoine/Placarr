@@ -1,0 +1,49 @@
+{
+  "source": "rakuten-mall-search",
+  "observed": "2026-09-24",
+  "query": "naruto カード ゲーム /101164/ p1-9 (~956 hits, ~345 CCG singles parsed)",
+  "url": "https://search.rakuten.co.jp/search/mall/naruto+%E3%82%AB%E3%83%BC%E3%83%89+%E3%82%B2%E3%83%BC%E3%83%A0/101164/",
+  "note": "User-pasted search. Bare numbers already had JA art. Harvest value = Surugaya 絵違い. Installed 6 novel alts as grouping -a (art.suruga). CDN: cdn.suruga-ya.jp/database/pics/game/{gu|gl}XXXX.jpg from og:image.",
+  "installed": [
+    {
+      "printed": "作-279",
+      "disk": "ta0279-a",
+      "printKey": "naruto:ta-0279-a",
+      "note": "Initial art.suruga was Suruga CDN GU866763 mid-crop (1024×660). Superseded 2026-09-25 by OtterMart ebay/196781940461 → art.ebay.jpg 964×1381 (full card); truncated suruga removed."
+    },
+    {
+      "printed": "作-282",
+      "disk": "ta0282-a",
+      "printKey": "naruto:ta-0282-a",
+      "note": "Suruga CDN GU866764 mid-crop only (1024×660, missing 作戦/pied/head). Same class as GU866763/ta0279-a. Dig 2026-09-25: OtterMart Mission-282 is main Hinata art (→ ta0282), not 絵違い Sasuke/alt; Mercari/Yahoo/Mandarake empty; no full 絵違い photo. Kept truncated for identity until a full scan appears."
+    },
+    {
+      "printed": "忍-149",
+      "disk": "ni0149-a",
+      "printKey": "naruto:ni-0149-a"
+    },
+    {
+      "printed": "忍-239",
+      "disk": "ni0239-a",
+      "printKey": "naruto:ni-0239-a"
+    },
+    {
+      "printed": "忍-246",
+      "disk": "ni0246-a",
+      "printKey": "naruto:ni-0246-a"
+    },
+    {
+      "printed": "術-103",
+      "disk": "te0103-a",
+      "printKey": "naruto:te-0103-a"
+    }
+  ],
+  "alreadyCoveredEchigai": [
+    "作-193",
+    "作-229",
+    "術-203"
+  ],
+  "noPhoto": [
+    "術-161"
+  ]
+}

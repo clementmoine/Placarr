@@ -23,13 +23,19 @@ describe("discoveredBarcodeMatchesRequestedPlatform", () => {
 
   it("rejects unknown-platform barcodes on a platform shelf", () => {
     expect(
-      discoveredBarcodeMatchesRequestedPlatform({ platformKey: undefined }, "psvita"),
+      discoveredBarcodeMatchesRequestedPlatform(
+        { platformKey: undefined },
+        "psvita",
+      ),
     ).toBe(false);
   });
 
   it("allows unknown-platform barcodes on a generic shelf", () => {
     expect(
-      discoveredBarcodeMatchesRequestedPlatform({ platformKey: undefined }, null),
+      discoveredBarcodeMatchesRequestedPlatform(
+        { platformKey: undefined },
+        null,
+      ),
     ).toBe(true);
   });
 });

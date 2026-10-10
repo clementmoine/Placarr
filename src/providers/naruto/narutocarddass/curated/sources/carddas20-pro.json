@@ -1,0 +1,737 @@
+{
+  "source": "http://carddas20.com/memo/pro.html",
+  "observed": "2026-09-21",
+  "ingest": "titles",
+  "line": "carddass-jp",
+  "staging": "staging/carddas20/pro.html",
+  "note": "Fan memo (Shift_JIS). Titles + existence only — never faces. Overlaps official carddas.com promo.shtml; unique value = CAN-1..6 食玩 slot notes + confirmation of name-only promos. Certificates (任務完遂) have no collector ref → research. Shippuden PR block kept research until wired on narutoshippuden.",
+  "not": [
+    "faces",
+    "crawl",
+    "data-carddass",
+    "en-ccg"
+  ],
+  "counts": {
+    "cards": 67,
+    "shippudenResearch": 24,
+    "research": 20
+  },
+  "cards": [
+    {
+      "printed": "PR忍-1",
+      "number": "prni0001",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-2",
+      "number": "prni0002",
+      "name": "うちはサスケ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-3",
+      "number": "prni0003",
+      "name": "春野サクラ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-4",
+      "number": "prni0004",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-5",
+      "number": "prni0005",
+      "name": "初代火影",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-6",
+      "number": "prni0006",
+      "name": "二代目火影",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-7",
+      "number": "prni0007",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-8",
+      "number": "prni0008",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-9",
+      "number": "prni0009",
+      "name": "うちはサスケ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-10",
+      "number": "prni0010",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-11",
+      "number": "prni0011",
+      "name": "大蛇丸",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-12",
+      "number": "prni0012",
+      "name": "うずまきナルト＆うちはサスケ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-13",
+      "number": "prni0013",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-14",
+      "number": "prni0014",
+      "name": "君麻呂",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-15",
+      "number": "prni0015",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-16",
+      "number": "prni0016",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-17",
+      "number": "prni0017",
+      "name": "うずまきナルト＆うちはサスケ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-18",
+      "number": "prni0018",
+      "name": "はたけカカシ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR忍-19",
+      "number": "prni0019",
+      "name": "砂瀑の我愛羅",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR騎-1",
+      "number": "prki0001",
+      "name": "テムジン",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR術-1",
+      "number": "prte0001",
+      "name": "雷切弐連突",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR術-2",
+      "number": "prte0002",
+      "name": "黒夢",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-1",
+      "number": "prta0001",
+      "name": "火影岩",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-2",
+      "number": "prta0002",
+      "name": "伝説の三忍",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-3",
+      "number": "prta0003",
+      "name": "受け継ぐ者たち",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-4",
+      "number": "prta0004",
+      "name": "戦闘開始！",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-5",
+      "number": "prta0005",
+      "name": "陰謀の発端",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-6",
+      "number": "prta0006",
+      "name": "五人と一匹",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-7",
+      "number": "prta0007",
+      "name": "大蛇丸が為に",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-8",
+      "number": "prta0008",
+      "name": "恐るべき敵",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-9",
+      "number": "prta0009",
+      "name": "強者、集う",
+      "setCode": "promo",
+      "note": "ゲーム(PS2):「NARUTO-ナルト- ナルティメットヒーロー2」予約特典"
+    },
+    {
+      "printed": "PR作-10",
+      "number": "prta0010",
+      "name": "雪姫忍法帖",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-11",
+      "number": "prta0011",
+      "name": "存在の証明",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-12",
+      "number": "prta0012",
+      "name": "最後の一撃",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-13",
+      "number": "prta0013",
+      "name": "帰郷",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-14",
+      "number": "prta0014",
+      "name": "暁の狙い",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-15",
+      "number": "prta0015",
+      "name": "ナルトvsサスケ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-16",
+      "number": "prta0016",
+      "name": "三忍の攻防",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-17",
+      "number": "prta0017",
+      "name": "新たなる敵",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-18",
+      "number": "prta0018",
+      "name": "最強の騎士",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-19",
+      "number": "prta0019",
+      "name": "大激突！幻の地底遺跡だってばよ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-20",
+      "number": "prta0020",
+      "name": "終わりなき闇",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-21",
+      "number": "prta0021",
+      "name": "それぞれの思惑",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-22",
+      "number": "prta0022",
+      "name": "英雄の名にかけて",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-23",
+      "number": "prta0023",
+      "name": "永久に続く運命",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-24",
+      "number": "prta0024",
+      "name": "精鋭結集",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-25",
+      "number": "prta0025",
+      "name": "烈火の意思",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-26",
+      "number": "prta0026",
+      "name": "深淵の野望",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-27",
+      "number": "prta0027",
+      "name": "伝説への畏怖",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-28",
+      "number": "prta0028",
+      "name": "火影の系譜",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR作-29",
+      "number": "prta0029",
+      "name": "木ノ葉を襲う脅威",
+      "setCode": "promo"
+    },
+    {
+      "printed": "PR依-1",
+      "number": "prcl0001",
+      "name": "ネルグイ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "OP忍-1",
+      "number": "opni0001",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "OP忍-2",
+      "number": "opni0002",
+      "name": "うちはサスケ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "OP忍-3",
+      "number": "opni0003",
+      "name": "春野サクラ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "OP忍-4",
+      "number": "opni0004",
+      "name": "イルカ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "OP忍-5",
+      "number": "opni0005",
+      "name": "はたけカカシ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "忍-1（PS）",
+      "number": "ni0001-ps",
+      "name": "うずまきナルト",
+      "setCode": "promo"
+    },
+    {
+      "printed": "忍-2（PS）",
+      "number": "ni0002-ps",
+      "name": "うちはサスケ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "忍-3（PS）",
+      "number": "ni0003-ps",
+      "name": "春野サクラ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "忍-11（PS）",
+      "number": "ni0011-ps",
+      "name": "はたけカカシ",
+      "setCode": "promo"
+    },
+    {
+      "printed": "CAN-1",
+      "number": "can0001",
+      "name": "うずまきナルト＆うちはサスケ",
+      "setCode": "promo",
+      "note": "食玩:「カードスタンド ナルト木ノ葉絵」の1番に同梱"
+    },
+    {
+      "printed": "CAN-2",
+      "number": "can0002",
+      "name": "うずまきナルト＆犬塚キバ",
+      "setCode": "promo",
+      "note": "食玩:「カードスタンド ナルト木ノ葉絵」の3番に同梱"
+    },
+    {
+      "printed": "CAN-3",
+      "number": "can0003",
+      "name": "うずまきナルト＆日向ネジ",
+      "setCode": "promo",
+      "note": "食玩:「カードスタンド ナルト木ノ葉絵」の4番に同梱"
+    },
+    {
+      "printed": "CAN-4",
+      "number": "can0004",
+      "name": "光と闇",
+      "setCode": "promo",
+      "note": "食玩:「カードスタンド ナルト木ノ葉絵」の5番に同梱"
+    },
+    {
+      "printed": "CAN-5",
+      "number": "can0005",
+      "name": "師から弟子へ",
+      "setCode": "promo",
+      "note": "食玩:「カードスタンド ナルト木ノ葉絵」の2番に同梱"
+    },
+    {
+      "printed": "CAN-6",
+      "number": "can0006",
+      "name": "火影を目指して",
+      "setCode": "promo",
+      "note": "食玩:「カードスタンド ナルト木ノ葉絵」の6番に同梱"
+    }
+  ],
+  "shippuden": [
+    {
+      "printed": "PR忍伝-1",
+      "name": "うずまきナルト",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-2",
+      "name": "春野サクラ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-3",
+      "name": "はたけカカシ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-4",
+      "name": "デイダラ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-5",
+      "name": "うずまきナルト＆我愛羅",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-6",
+      "name": "うちはサスケ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-7",
+      "name": "うちはイタチ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-8",
+      "name": "うずまきナルト＆日向ヒナタ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR忍伝-10",
+      "name": "春野サクラ＆山中いの",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR作伝-1",
+      "name": "壮烈なる疾風",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR作伝-2",
+      "name": "暴虐なる凶風",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR作伝-3",
+      "name": "交差する宿命",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR作伝-4",
+      "name": "死の予知",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR作伝-5",
+      "name": "究極連係",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-001",
+      "name": "うずまきナルト",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-002",
+      "name": "春野サクラ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-003",
+      "name": "はたけカカシ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-004",
+      "name": "うみのイルカ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-005",
+      "name": "奈良シカマル",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-006",
+      "name": "秋道チョウジ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-007",
+      "name": "犬塚キバ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-008",
+      "name": "日向ヒナタ",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-009",
+      "name": "白",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    },
+    {
+      "printed": "PR学-010",
+      "name": "桃地再不斬",
+      "note": null,
+      "ingest": false,
+      "reason": "疾風伝 PR refs live on narutoshippuden (carddas20-promo.json titles; Suruga faces when attested)."
+    }
+  ],
+  "research": [
+    {
+      "kind": "certificate",
+      "name": "Dクラス任務完遂証明書(2004)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Dクラス任務完遂証明書(2005)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Cクラス任務完遂証明書(2004)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Cクラス任務完遂証明書(2005)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Bクラス任務完遂証明書(2004)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Bクラス任務完遂証明書(2005)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Aクラス任務完遂証明書(2004)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Aクラス任務完遂証明書(2005)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Sクラス任務完遂証明書(2004)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Sクラス任務完遂証明書(2005)",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Dランク任務完遂証明書",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Cランク任務完遂証明書",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Bランク任務完遂証明書",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Aランク任務完遂証明書",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "certificate",
+      "name": "Sランク任務完遂証明書",
+      "note": null,
+      "ingest": false,
+      "reason": "No printed collector ref on carddas20 — existence note only."
+    },
+    {
+      "kind": "shippuden-certificate",
+      "name": "Dランク任務完遂証明書",
+      "ingest": false,
+      "reason": "No printed collector ref."
+    },
+    {
+      "kind": "shippuden-certificate",
+      "name": "Cランク任務完遂証明書",
+      "ingest": false,
+      "reason": "No printed collector ref."
+    },
+    {
+      "kind": "shippuden-certificate",
+      "name": "Bランク任務完遂証明書",
+      "ingest": false,
+      "reason": "No printed collector ref."
+    },
+    {
+      "kind": "shippuden-certificate",
+      "name": "Aランク任務完遂証明書",
+      "ingest": false,
+      "reason": "No printed collector ref."
+    },
+    {
+      "kind": "shippuden-certificate",
+      "name": "Sランク任務完遂証明書",
+      "ingest": false,
+      "reason": "No printed collector ref."
+    }
+  ]
+}

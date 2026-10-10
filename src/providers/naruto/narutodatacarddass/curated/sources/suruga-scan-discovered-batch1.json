@@ -1,0 +1,512 @@
+{
+  "g886": [
+    {
+      "id": "G8868292",
+      "status": 200,
+      "h1": "アニメ系トレカ/ノーマル/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　作伝-055[ノーマル]：作伝-055/追憶",
+      "isNaruto": true
+    },
+    {
+      "id": "G8868293",
+      "status": 200,
+      "h1": "アニメ系トレカ/ノーマル/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　作伝-058[ノーマル]：作伝-058/決意の涙",
+      "isNaruto": true
+    },
+    {
+      "id": "G8868294",
+      "status": 200,
+      "h1": "アニメ系トレカ/ノーマル/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　術伝-154[ノーマル]：術伝-154/短縮修業法",
+      "isNaruto": true
+    },
+    {
+      "id": "G8868295",
+      "status": 200,
+      "h1": "アニメ系トレカ/レア/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　術伝-156[レア]：術伝-156/咆哮",
+      "isNaruto": true
+    },
+    {
+      "id": "G8868296",
+      "status": 200,
+      "h1": "アニメ系トレカ/ノーマル/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　術伝-163[ノーマル]：術伝-163/水遁滝壺の術",
+      "isNaruto": true
+    },
+    {
+      "id": "G8868297",
+      "status": 200,
+      "h1": "アニメ系トレカ/ノーマル/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　術伝-168[ノーマル]：術伝-168/カウンター",
+      "isNaruto": true
+    },
+    {
+      "id": "G8868298",
+      "status": 200,
+      "h1": "アニメ系トレカ/ノーマル/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　忍伝-205[ノーマル]：忍伝-205/犬塚ハナ",
+      "isNaruto": true
+    },
+    {
+      "id": "G8868299",
+      "status": 200,
+      "h1": "アニメ系トレカ/ノーマル/NARUTO　疾風伝　CARDGAME　第七幕　「紅き烈風の絆　編」　忍伝-207[ノーマル]：忍伝-207/奈良ヨシノ",
+      "isNaruto": true
+    }
+  ],
+  "gg594_rare": [
+    {
+      "id": "GG594466",
+      "status": 200,
+      "h1": "アニメ系トレカ/ウルトラレア/火/NARUTO-ナルト-　カードゲーム　術-328[ウルトラレア]：雷切",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594467",
+      "status": 200,
+      "h1": "アニメ系トレカ/ウルトラレア/火/NARUTO-ナルト-　カードゲーム　巻ノ十五　構築済みスターター　暗躍の書　忍-365[ウルトラレア]：うちはイタチ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594468",
+      "status": 200,
+      "h1": "アニメ系トレカ/火/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-1：うずまきナルト",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594469",
+      "status": 200,
+      "h1": "アニメ系トレカ/雷/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-2：うちはサスケ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594470",
+      "status": 200,
+      "h1": "アニメ系トレカ/風/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-3：春野サクラ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594471",
+      "status": 200,
+      "h1": "アニメ系トレカ/土/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-4：奈良シカマル",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594472",
+      "status": 200,
+      "h1": "アニメ系トレカ/雷/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-5：ロック・リー",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594473",
+      "status": 200,
+      "h1": "アニメ系トレカ/火/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-6：はたけカカシ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594474",
+      "status": 200,
+      "h1": "アニメ系トレカ/水/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-7：白",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594475",
+      "status": 200,
+      "h1": "アニメ系トレカ/火/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-8：うちはイタチ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594476",
+      "status": 200,
+      "h1": "アニメ系トレカ/火/風/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-10：うちはサスケ＆春野サクラ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594477",
+      "status": 200,
+      "h1": "アニメ系トレカ/雷/火/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-12：はたけカカシ＆イルカ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594478",
+      "status": 200,
+      "h1": "アニメ系トレカ/風/土/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-13：猿飛アスマ＆夕日紅",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594479",
+      "status": 200,
+      "h1": "アニメ系トレカ/雷/風/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-14：自来也＆綱手姫",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594480",
+      "status": 200,
+      "h1": "アニメ系トレカ/雷/風/NARUTO-ナルト-　カードゲーム　COIN＋　COIN-15：パックン＆トントン",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594481",
+      "status": 302,
+      "h1": "",
+      "isNaruto": false
+    },
+    {
+      "id": "GG594482",
+      "status": 200,
+      "h1": "アニメ系トレカ/シークレットレア/忍/NARUTO　疾風伝　CARDGAME　忍伝-030[シークレットレア]：うずまきナルト＆春野サクラ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594483",
+      "status": 200,
+      "h1": "アニメ系トレカ/ウルトラレア/忍/NARUTO　疾風伝　CARDGAME　忍伝-055[ウルトラレア]：うちはイタチ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594484",
+      "status": 200,
+      "h1": "アニメ系トレカ/レア/NARUTO　疾風伝　CARDGAME　忍伝-128[レア]：シズネ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594485",
+      "status": 200,
+      "h1": "アニメ系トレカ/ウルトラレア/忍/NARUTO　疾風伝　CARDGAME　第五幕　～再会、忌まわしき写輪眼!編～　忍伝-146[ウルトラレア]：春野サクラ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594486",
+      "status": 200,
+      "h1": "アニメ系トレカ/シークレットレア/忍/NARUTO　疾風伝　CARDGAME　忍伝-168[シークレットレア]：うちはサスケ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594487",
+      "status": 200,
+      "h1": "アニメ系トレカ/ウルトラレア/忍/NARUTO　疾風伝　CARDGAME　忍伝-188[ウルトラレア]：綱手",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594488",
+      "status": 200,
+      "h1": "アニメ系トレカ/シークレットレア/忍/NARUTO　疾風伝　CARDGAME　忍伝-191[シークレットレア]：うずまきナルト＆自来也",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594489",
+      "status": 200,
+      "h1": "アニメ系トレカ/シークレットレア/忍/NARUTO　疾風伝　CARDGAME　忍伝-225[シークレットレア]：うずまきナルト",
+      "isNaruto": true
+    }
+  ],
+  "gg594_dcd": [
+    {
+      "id": "GG594245",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-188[呪印レア]：うちはサスケ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594246",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-189[N]：うずまきナルト",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594247",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-190[激レア]：うずまきナルト",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594248",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-191[N]：うちはサスケ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594249",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-192[R]：うちはサスケ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594250",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-194[R]：ロック・リー",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594251",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-195[N]：砂瀑の我愛羅",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594252",
+      "status": 302,
+      "h1": "",
+      "isNaruto": false
+    },
+    {
+      "id": "GG594253",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-197[N]：奈良シカマル",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594254",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-198[N]：日向ネジ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594255",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-199[N]：日向ネジ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594256",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-200[激レア]：はたけカカシ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594257",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-201[爆レア]：大蛇丸",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594258",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-202[激レア]：白",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594259",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-203[激レア]：桃地再不斬",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594260",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-204[N]：日向ヒナタ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594261",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-205[N]：テンテン",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594262",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-206[R]：秋道チョウジ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594263",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-207[N]：山中いの",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594264",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-210[R]：マイト・ガイ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594265",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-211[N]：マイト・ガイ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594266",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-212[N]：自来也",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594267",
+      "status": 302,
+      "h1": "",
+      "isNaruto": false
+    },
+    {
+      "id": "GG594268",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-214[R]：三代目火影",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594269",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-215[爆レア]：三代目火影",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594270",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-216[ナルティメットレア]：うちはイタチ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594271",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-217[R]：干柿鬼鮫",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594272",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-218[N]：綱手",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594273",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-219[N]：シズネ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594274",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-220[N]：薬師カブト",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594275",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-221[N]：暗部のカカシ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594276",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-222[N]：碧い魔獣",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594277",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-223[N]：次郎坊",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594278",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-224[R]：次郎坊",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594279",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-225[N]：鬼童丸",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594280",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-226[R]：鬼童丸",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594281",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-228[R]：多由也",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594282",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-230[R]：左近",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594283",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-231[R]：君麻呂",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594284",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-232[N]：木の葉丸軍団",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594285",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-233[N]：日向ハナビ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594286",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-234[N]：猿飛アスマ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594287",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-235[N]：夕日紅",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594288",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-236[N]：みたらしアンコ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594289",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NM-237[R]：みたらしアンコ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594290",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NF-068[R]：はたけカカシ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594291",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NX-081[ナルティメットレア]：黄色い閃光",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594292",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NX-308[ナルティメットレア]：はたけカカシ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594293",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NX-CAM001[デザインレア]：うずまきナルト",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594294",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NX-CAM002[デザインレア]：うちはサスケ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594295",
+      "status": 200,
+      "h1": "NARUTOデータカードダス　NX-CAM003[デザインレア]：はたけカカシ",
+      "isNaruto": true
+    },
+    {
+      "id": "GG594296",
+      "status": 200,
+      "h1": "NARUTOデータカードダス/デザインレア/メイン＆アシスト/ナルティメットクロス　第4章　～1億枚突破記念弾～　NX-CAM004[デザインレア]：黄色い閃光",
+      "isNaruto": true
+    }
+  ]
+}

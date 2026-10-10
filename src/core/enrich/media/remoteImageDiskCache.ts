@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
+import { uploadsDir } from "@/lib/runtimeData";
 
 const LOCAL_IMAGE_EXTENSIONS = [
   ".jpg",
@@ -19,10 +20,6 @@ export type CachedRemoteImageUpload = {
   contentType: string;
   buffer: Buffer;
 };
-
-function uploadsDir(): string {
-  return path.join(process.cwd(), "public", "uploads");
-}
 
 function contentTypeForExt(ext: string): string {
   switch (ext.toLowerCase()) {

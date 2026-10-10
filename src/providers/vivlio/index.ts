@@ -18,14 +18,13 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectVivlioMappingRawKeys,
   fetchVivlioProduct,
   resolveVivlioMetadata,
-  searchVivlioHits,
   vivlioCoverDownloadCandidates,
   type VivlioProduct,
 } from "./fetch";
@@ -185,9 +184,7 @@ export function mapVivlioMetadata(
     regionalTitles: [{ region: "fr", text: product.title }],
     attachments: buildAttachments(product),
     facts,
-    externalIds: product.barcode
-      ? { vivlio: product.barcode }
-      : undefined,
+    externalIds: product.barcode ? { vivlio: product.barcode } : undefined,
   };
 
   return {
@@ -199,6 +196,7 @@ export function mapVivlioMetadata(
       sourceUrl: product.productUrl,
       evidenceSignals: ["structured_data"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -230,7 +228,7 @@ async function refreshVivlioOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const vivlioModule: ProviderModule = {
+export const vivlioModule = defineProvider({
   info: {
     id: "vivlio",
     label: "Vivlio",
@@ -244,6 +242,7 @@ export const vivlioModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -290,7 +289,7 @@ export const vivlioModule: ProviderModule = {
         return mapVivlioMetadata(
           await resolveVivlioMetadata({
             name: String(ctx.name || "").trim() || undefined,
-            barcode: ctx.barcode,
+            barcode: ctx.barcode ?? undefined,
             lookupQueries: ctx.lookupQueries,
             signal: ctx.signal,
           }),
@@ -340,4 +339,4 @@ export const vivlioModule: ProviderModule = {
     return collectVivlioMappingRawKeys(ctx.barcode || ctx.name);
   },
   refreshBarcodePriceOffers: refreshVivlioOffers,
-};
+});

@@ -43,7 +43,7 @@ let indexInitPromise: Promise<DatabaseSync | null> | null = null;
 function cacheDir(): string {
   return (
     process.env.ICOLLECT_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "icollect")
+    path.join(process.cwd(), "data", "icollect")
   );
 }
 

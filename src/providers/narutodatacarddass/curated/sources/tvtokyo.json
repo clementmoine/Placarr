@@ -1,0 +1,808 @@
+{
+  "source": "tv-tokyo.co.jp — Naruto Data Carddass arcade cards (dcard_00.html to dcard_03.html)",
+  "observed": "2026-09-12",
+  "ingest": "faces",
+  "base": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/",
+  "faces": [
+    {
+      "printed": "DN-001T",
+      "name": "うずまきナルト",
+      "skill": "変わり身",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-001t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-002T",
+      "name": "うずまきナルト",
+      "skill": "対サスケ",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-002t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-003T",
+      "name": "うずまきナルト",
+      "skill": "対我愛羅",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-003t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-004T",
+      "name": "うずまきナルト",
+      "skill": "一発逆転！",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-004t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-005T",
+      "name": "うちはサスケ",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-005t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-006T",
+      "name": "うちはサスケ",
+      "skill": "対ナルト",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-006t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-007T",
+      "name": "うちはサスケ",
+      "skill": "写輪眼",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-007t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-008T",
+      "name": "うちはサスケ",
+      "skill": "先手必勝",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-008t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-009T",
+      "name": "ロック・リー",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-009t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-010T",
+      "name": "ロック・リー",
+      "skill": "追いうち必勝",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-010t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-011T",
+      "name": "ロック・リー",
+      "skill": "八門遁甲",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-011t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-012T",
+      "name": "砂瀑の我愛羅",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-012t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-013T",
+      "name": "砂瀑の我愛羅",
+      "skill": "追いうち必勝",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-013t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-014T",
+      "name": "砂瀑の我愛羅",
+      "skill": "怒り心頭",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-014t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-015T",
+      "name": "奈良シカマル",
+      "skill": "影真似の術",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-015t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-016T",
+      "name": "奈良シカマル",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-016t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-017T",
+      "name": "奈良シカマル",
+      "skill": "一発逆転！",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-017t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-018T",
+      "name": "日向ネジ",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-018t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-019T",
+      "name": "日向ネジ",
+      "skill": "白眼",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-019t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-020T",
+      "name": "春野サクラ",
+      "skill": "かく乱",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-020t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-021T",
+      "name": "春野サクラ",
+      "skill": "馬鹿力",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-021t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-022T",
+      "name": "はたけカカシ",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-022t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-023T",
+      "name": "はたけカカシ",
+      "skill": "追いうち必勝",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-023t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-024T",
+      "name": "はたけカカシ",
+      "skill": "写輪眼",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-024t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-025T",
+      "name": "大蛇丸",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-025t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-026T",
+      "name": "大蛇丸",
+      "skill": "威圧",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-026t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-027T",
+      "name": "白",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-027t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-028T",
+      "name": "白",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-028t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-029T",
+      "name": "桃地再不斬",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-029t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-030T",
+      "name": "桃地再不斬",
+      "skill": "急所狙い",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-030t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-031T",
+      "name": "日向ヒナタ",
+      "skill": "ハンディキャップ",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-031t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-032T",
+      "name": "日向ヒナタ",
+      "skill": "急所狙い",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-032t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-033T",
+      "name": "テンテン",
+      "skill": "起死回生",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-033t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-034T",
+      "name": "秋道チョウジ",
+      "skill": null,
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-034t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-035T",
+      "name": "山中いの",
+      "skill": "毒",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-035t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-036T",
+      "name": "犬塚キバ",
+      "skill": "対シノ",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-036t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-037T",
+      "name": "油女シノ",
+      "skill": "変わり身",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-037t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-038T",
+      "name": "カンクロウ",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-038t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-039T",
+      "name": "テマリ",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-039t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-040T",
+      "name": "マイト・ガイ",
+      "skill": "対カカシ",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-040t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-041T",
+      "name": "マイト・ガイ",
+      "skill": "アンラッキー",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-041t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-042T",
+      "name": "薬師カブト",
+      "skill": "医療忍術",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-042t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-043T",
+      "name": "自来也",
+      "skill": "封印[正]ランダム口寄せ",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-043t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-044T",
+      "name": "桃地再不斬",
+      "skill": "怒り心頭",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-044t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-045T",
+      "name": "カンクロウ",
+      "skill": "毒",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-045t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-046T",
+      "name": "テマリ",
+      "skill": "対テンテン",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-046t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-047T",
+      "name": "奈良シカマル",
+      "skill": "影真似の術",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-047t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-048T",
+      "name": "はたけカカシ",
+      "skill": "変わり身",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-048t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-049T",
+      "name": "日向ヒナタ",
+      "skill": "サバイバル",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-049t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-050T",
+      "name": "自来也",
+      "skill": "口寄せ",
+      "page": "dcard_01.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/01/dn-050t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-051T",
+      "name": "九尾のナルト",
+      "skill": "威圧",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-051t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-052T",
+      "name": "はたけカカシ",
+      "skill": "たたみかけ",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-052t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-053T",
+      "name": "砂瀑の我愛羅",
+      "skill": "奥義合戦",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-053t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-054T",
+      "name": "うずまきナルト",
+      "skill": "起死回生",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-054t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-055T",
+      "name": "うちはサスケ",
+      "skill": "呪印",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-055t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-056T",
+      "name": "ロック・リー",
+      "skill": "馬鹿力",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-056t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-057T",
+      "name": "奈良シカマル",
+      "skill": "先手必勝",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-057t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-058T",
+      "name": "日向ネジ",
+      "skill": "絶対防御",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-058t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-059T",
+      "name": "桃地再不斬",
+      "skill": "変わり身",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-059t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-060T",
+      "name": "テマリ",
+      "skill": "勝利予告",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-060t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-061T",
+      "name": "大蛇丸",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-061t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-062T",
+      "name": "九尾のナルト",
+      "skill": "馬鹿力",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-062t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-063T",
+      "name": "はたけカカシ",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-063t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-064T",
+      "name": "白",
+      "skill": "追いうち必勝",
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-064t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-065T",
+      "name": "自来也",
+      "skill": null,
+      "page": "dcard_02.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/02/dn-065t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-066T",
+      "name": "封印",
+      "skill": "大蛇丸",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-066t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-067T",
+      "name": "うちはイタチ",
+      "skill": "威圧",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-067t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-068T",
+      "name": "うちはサスケ",
+      "skill": "急所狙い",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-068t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-069T",
+      "name": "砂瀑の我愛羅",
+      "skill": "怒り心頭",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-069t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-070T",
+      "name": "白",
+      "skill": "急所狙い",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-070t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-071T",
+      "name": "うずまきナルト",
+      "skill": "アンラッキー",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-071t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-072T",
+      "name": "うちはサスケ",
+      "skill": "対イタチ",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-072t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-073T",
+      "name": "春野サクラ",
+      "skill": "アンラッキー",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-073t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-074T",
+      "name": "白",
+      "skill": "勝利予告",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-074t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-075T",
+      "name": "桃地再不斬",
+      "skill": "負けず嫌い",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-075t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-076T",
+      "name": "カンクロウ",
+      "skill": "毒",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-076t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-077T",
+      "name": "干柿鬼鮫",
+      "skill": "干柿鬼鮫",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-077t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-078T",
+      "name": "干柿鬼鮫",
+      "skill": "負けず嫌い",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-078t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-079T",
+      "name": "ロック・リー",
+      "skill": "リベンジ予告",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-079t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-080T",
+      "name": "テマリ",
+      "skill": "負けず嫌い",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-080t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-081T",
+      "name": "うちはイタチ",
+      "skill": null,
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-081t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DN-082T",
+      "name": "干柿鬼鮫",
+      "skill": "リベンジ予告",
+      "page": "dcard_03.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/03/dn-082t.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-001",
+      "name": "うずまきナルト",
+      "skill": "対サスケ",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-001.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-002",
+      "name": "うちはサスケ",
+      "skill": "対ナルト",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-002.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-003",
+      "name": "奈良シカマル",
+      "skill": "影真似の術",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-003.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-004",
+      "name": "はたけカカシ",
+      "skill": "追いうち必勝",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-004.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-005",
+      "name": "うずまきナルト",
+      "skill": "対サスケ",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-005.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-006",
+      "name": "うずまきナルト",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-006.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-007",
+      "name": "うずまきナルト",
+      "skill": "馬鹿力",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-007.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-008",
+      "name": "うずまきナルト",
+      "skill": "対サスケ",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-008.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-009",
+      "name": "うちはサスケ",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-009.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-010",
+      "name": "うずまきナルト",
+      "skill": "変わり身",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-010.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-011",
+      "name": "砂瀑の我愛羅",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-011.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-012",
+      "name": "日向ネジ",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-012.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-013",
+      "name": "春野サクラ",
+      "skill": "馬鹿力",
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-013.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-014",
+      "name": "うずまきナルト",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-014.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-015",
+      "name": "うちはサスケ",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-015.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-016",
+      "name": "うずまきナルト",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-016.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-017",
+      "name": "うちはサスケ",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-017.gif",
+      "ingest": true
+    },
+    {
+      "printed": "DNP-018",
+      "name": "うちはイタチ",
+      "skill": null,
+      "page": "dcard_00.html",
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/cardimg/dcd/p/dnp-018.gif",
+      "ingest": true
+    }
+  ]
+}

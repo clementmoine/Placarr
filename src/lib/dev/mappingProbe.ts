@@ -1,9 +1,5 @@
 export type MappingProbeStatus =
-  | "ok"
-  | "partial"
-  | "empty"
-  | "blocked"
-  | "error";
+  "ok" | "partial" | "empty" | "blocked" | "error";
 
 export interface MappingProbeResult {
   rawKeys: string[];

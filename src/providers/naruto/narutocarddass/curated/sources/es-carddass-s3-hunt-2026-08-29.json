@@ -1,0 +1,44 @@
+{
+  "source": "es-carddass-s3-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "sunnystore.json → booster-s3-es art/back ; sealed-contents.json booster-s3-es 8 ; pas de crawl",
+  "verdict": {
+    "line": "Carddass Serie 3 castellano (Amigo EU family FR·DE·IT·ES) — not Bandai USA / Storm 3 CCG",
+    "packMath": "Face printed « SOBRE DE 8 CARTAS » + « INCLUYE UNA CARTA HOLOGRÁFICA » = same 8/1 as FR/IT Carddass",
+    "ids": "Ref. 93114 / EAN 3296580931149 / BANDAI 2007 FABRICADO EN BELGICA / BANDAI ESPAÑA S.A."
+  },
+  "sources": [
+    {
+      "id": "sunnystore-booster-s3-es",
+      "url": "https://sunnystore.es/en/products/naruto-sobre-cerrado-serie-series-3-jcc-castellano-juego-de-cartas-booster",
+      "claims": [
+        "NARUTO BOOSTER SEALED SERIE 3 TCG BANDAI CARDDASS (SPANISH)",
+        "SOBRE DE 8 CARTAS",
+        "INCLUYE UNA CARTA HOLOGRÁFICA",
+        "Ref. 93114",
+        "EAN 3296580931149"
+      ],
+      "region": "ES",
+      "set": "s3",
+      "staging": [
+        "staging/sunnystore/booster-s3-es-01.jpg",
+        "staging/sunnystore/booster-s3-es-02.jpg"
+      ]
+    }
+  ],
+  "skuMapping": {
+    "booster-s3-es": {
+      "lang": "ES",
+      "cardsPerPack": 8,
+      "packsContained": 1,
+      "ean": "3296580931149",
+      "ref": "93114",
+      "note": "Sunny Store sealed ES Carddass Serie 3 — not Storm 3"
+    }
+  },
+  "notDone": [
+    "Spanish series subtitle on face (pack only says SERIE 3 — do not invent « Maldición… »)",
+    "Other ES series boosters / displays if packshots appear"
+  ]
+}

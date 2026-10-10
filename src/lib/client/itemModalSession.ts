@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 import { isBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import {
@@ -7,15 +7,27 @@ import {
   isExplicitUserCoverOverride,
 } from "@/core/collect/media";
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
+import { loanedAtInputValue } from "@/core/collect/itemLoan";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { Locale } from "@/types/i18n";
 
 export type ItemModalFormValues = {
   shelfId: string;
   name: string;
   barcode?: string;
   description?: string;
+  /**
+   * Which variant of the object this copy is (a card's finish, say). Free text
+   * because the vocabulary is the provider's; the options come from the
+   * metadata's `variant-option` facts. See `@/core/enrich/variants`.
+   */
+  variant?: string | null;
   condition: Condition;
+  /** Who currently has this copy — empty means at home. */
+  loanedTo?: string;
+  /** `yyyy-mm-dd` for the date input, or empty. */
+  loanedAt?: string;
   imageUrl: string | File | null;
   backgroundImageUrl: string | File | null;
 };
@@ -23,6 +35,7 @@ export type ItemModalFormValues = {
 export type ItemModalShelfMediaContext = {
   type?: string;
   name?: string;
+  cardFormat?: string | null;
 };
 
 export type ItemModalPrefilledValues = {
@@ -84,7 +97,10 @@ function defaultFormValues(
     backgroundImageUrl: null,
     description: "",
     barcode: prefilledValues?.barcode || "",
+    variant: null,
     condition: "used",
+    loanedTo: "",
+    loanedAt: "",
   };
 }
 
@@ -129,8 +145,10 @@ export function buildItemModalSessionInit(input: {
   prefilledValues?: ItemModalPrefilledValues;
   shelfId: string;
   activeShelfForMedia: ItemModalShelfMediaContext;
+  uiLocale?: Locale | null;
 }): ItemModalSessionInit {
-  const { item, prefilledValues, shelfId, activeShelfForMedia } = input;
+  const { item, prefilledValues, shelfId, activeShelfForMedia, uiLocale } =
+    input;
   const defaults = defaultFormValues(shelfId, prefilledValues);
 
   if (item) {
@@ -140,23 +158,35 @@ export function buildItemModalSessionInit(input: {
       updatedAt: item.updatedAt,
       condition: item.condition,
       metadata: item.metadata,
-      shelf: item.shelf || activeShelfForMedia,
+      // Prefer the live shelf frame (cardFormat) over a stale nested item.shelf
+      // that may omit it — same options as Affiche gallery ranking.
+      shelf: {
+        type: activeShelfForMedia.type ?? item.shelf?.type,
+        name: activeShelfForMedia.name ?? item.shelf?.name,
+        cardFormat:
+          activeShelfForMedia.cardFormat ?? item.shelf?.cardFormat ?? null,
+      },
     };
     // Without an explicit user gallery pick, seed the form on the dynamic
     // default (same ranking as cards / "Par défaut") — not a stale item.imageUrl.
     const seededCoverUrl = isExplicitUserCoverOverride(mediaForCover)
       ? item.imageUrl || defaults.imageUrl
-      : getCoverImage(mediaForCover) || item.imageUrl || defaults.imageUrl;
+      : getCoverImage(mediaForCover, uiLocale) ||
+        item.imageUrl ||
+        defaults.imageUrl;
     let formValues: ItemModalFormValues = {
       shelfId: item.shelfId || defaults.shelfId,
       name: storedName,
       description:
         item.description || item.metadata?.description || defaults.description,
       condition: item.condition || defaults.condition,
+      variant: item.variant ?? defaults.variant ?? null,
       imageUrl: seededCoverUrl,
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,
+      loanedTo: item.loanedTo?.trim() || "",
+      loanedAt: loanedAtInputValue(item.loanedAt),
     };
 
     const metadata = filterMetadataForShelfPlatform(
@@ -184,9 +214,16 @@ export function buildItemModalSessionInit(input: {
       nameSuggestion: titleSuggestions[0] ?? null,
       fetchedMetadata: metadata ?? null,
       lastInitializedShelfId: formValues.shelfId,
-      asyncInit:
-        !metadata && item.barcode?.trim()
-          ? { kind: "barcode", barcode: item.barcode.trim() }
+      // Print-bound edits re-resolve by printKey so the Images picker can list
+      // every local_catalog face for that print (not a stale single winner, and
+      // not a cross-game name hit).
+      asyncInit: item.printKey?.trim()
+        ? {
+            kind: "preview" as const,
+            name: formValues.name.trim() || storedName,
+          }
+        : !metadata && item.barcode?.trim()
+          ? { kind: "barcode" as const, barcode: item.barcode.trim() }
           : null,
     };
   }

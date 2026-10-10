@@ -1,0 +1,34 @@
+{
+ "source": "http://www.carddas.com/naruto/product.html et /naruto/cardgame/image/product/1st/",
+ "observed": "2026-08-20",
+ "ingest": "packshots du 第一幕 — les trois SKU que la base produit de Bandai ignore",
+ "lang": "ja",
+ "url": "http://www.carddas.com/naruto/cardgame/image/product/1st/",
+ "splitNote": "Extrait du registre Carddass le 2026-08-21. Le miroir sert les deux jeux — `image/product/` pour la ligne 巻ノ, `cardgame/image/product/{1st..4th}/` pour les 幕 — mais chaque pack décrit ce qu'il y prend.",
+ "shapeTellsRole": "Le rapport hauteur/largeur classe le fichier sans l'ouvrir : ~2,1 = sachet, ~1,5 = boîte, ~3,5 = distributeur, ~1,45 = carte. C'est ce qui a séparé `1st_box.jpg` (une boîte) des sachets.",
+ "why": "La base produit de Bandai ne porte pas le 第一幕 : sa ligne 疾風伝 commence à l'acte 2. Le catalogue avait donc 75 cartes en `maku1` et aucun produit scellé pour les contenir — un trou visible à l'œil nu dans la liste des SKU.",
+ "attestation": "La page de lancement écrit « テレビアニメ「疾風伝」突入にともない、カードゲームも新たなる戦いの幕開け!! » — l'entrée en Shippuden, donc le premier acte. Le sachet porte 全69種+1種 et « BANDAI 2007 MADE IN JAPAN ».",
+ "mirrorNote": "`/naruto/img/` et `/naruto/cardgame/image/product/1st/` sont identiques au bit près (mêmes MD5) : un seul jeu de fichiers publié à deux endroits. On lit le second, qui nomme son acte.",
+ "products": [
+  {
+   "slug": "booster-shippuden-act1-jp",
+   "file": "cardgame/image/product/1st/pack.jpg",
+   "size": "125x250",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第一幕 ブースターパック"
+  },
+  {
+   "slug": "starter-shippuden-act1-jp",
+   "file": "cardgame/image/product/1st/box.jpg",
+   "size": "162x250",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第一幕 初回限定版 構築済みスターターBOX"
+  },
+  {
+   "slug": "vending-shippuden-act1-jp",
+   "file": "cardgame/image/product/1st/jihan.jpg",
+   "size": "72x250",
+   "title": "NARUTO-ナルト- 疾風伝 カードゲーム 第一幕 自販機ブースター"
+  }
+ ],
+ "vendingCaveat": "`jihan.jpg` montre le distributeur automatique lui-même, pas le sachet — c'est ainsi que Bandai illustre ce format, ici comme sur le 巻ノ十六.",
+ "notAProduct": "`img/binder_1.jpg` et `binder_2.jpg` sont un classeur : un accessoire, pas une sortie scellée. Non versé."
+}

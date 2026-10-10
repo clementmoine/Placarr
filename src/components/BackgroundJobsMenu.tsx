@@ -23,14 +23,41 @@ import {
 } from "@/lib/api/backgroundJobs";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { METADATA_POLL_INTERVAL_MS } from "@/core/collect/enrichment";
+import { backgroundJobsRefetchInterval } from "@/core/collect/enrichment";
 import { itemPath } from "@/lib/routing/slugs";
 import { cn } from "@/lib/shared/utils";
 
 function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   if (job.kind === "metadataRefresh") return t("backgroundJobs.kindRefresh");
   if (job.kind === "priceRefresh") return t("backgroundJobs.kindPrice");
+  if (job.kind === "foilExtract") return t("backgroundJobs.kindFoil");
+  if (job.kind === "apkStoreFetch") return t("backgroundJobs.kindApkStore");
+  if (job.kind === "icollectCatalogSync")
+    return t("backgroundJobs.kindCatalog");
+  if (job.kind === "launchboxIndexSync")
+    return t("backgroundJobs.kindLaunchbox");
+  if (job.kind === "nointroIndexSync") return t("backgroundJobs.kindNointro");
+  if (job.kind === "catalogProviderSync")
+    return t("backgroundJobs.kindProviderSync");
   return t("backgroundJobs.kindEnrich");
+}
+
+/**
+ * Catalogue crawls the collector never asked for by name.
+ *
+ * iCollect, LaunchBox, No-Intro and « Tout rafraîchir » (`catalogProviderSync`)
+ * keep provider data fresh; listing each crawl as its own row is plumbing noise.
+ * They collapse into one “provider data” row in the menu.
+ */
+const PROVIDER_DATA_KINDS = new Set([
+  "icollectCatalogSync",
+  "launchboxIndexSync",
+  "nointroIndexSync",
+  "catalogProviderSync",
+]);
+
+function isProviderDataJob(job: BackgroundJob): boolean {
+  return PROVIDER_DATA_KINDS.has(job.kind);
 }
 
 export function BackgroundJobsMenu() {
@@ -42,9 +69,8 @@ export function BackgroundJobsMenu() {
     queryKey: ["backgroundJobs"],
     queryFn: getBackgroundJobs,
     enabled: !isGuest,
-    // Keep polling while idle so a just-started job appears without depending
-    // on every mutation remembering to invalidate this query.
-    refetchInterval: !isGuest ? METADATA_POLL_INTERVAL_MS : false,
+    // Busy → 5s; idle → 45s (mutations still invalidate for snappy start).
+    refetchInterval: !isGuest ? backgroundJobsRefetchInterval : false,
     refetchIntervalInBackground: true,
   });
 
@@ -80,7 +106,9 @@ export function BackgroundJobsMenu() {
   if (isGuest) return null;
 
   const count = data?.count ?? 0;
-  const jobs = data?.jobs ?? [];
+  const allJobs = data?.jobs ?? [];
+  const jobs = allJobs.filter((job) => !isProviderDataJob(job));
+  const providerDataJobs = allJobs.filter(isProviderDataJob);
   const isBusy = count > 0 || cancelAll.isPending || cancelOne.isPending;
 
   if (!isBusy) return null;
@@ -124,11 +152,11 @@ export function BackgroundJobsMenu() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {isLoading && jobs.length === 0 ? (
+        {isLoading && allJobs.length === 0 ? (
           <div className="px-3 py-4 text-sm text-muted-foreground">
             {t("common.loading")}
           </div>
-        ) : jobs.length === 0 ? (
+        ) : allJobs.length === 0 ? (
           <div className="px-3 py-4 text-sm text-muted-foreground">
             {t("backgroundJobs.empty")}
           </div>
@@ -139,19 +167,35 @@ export function BackgroundJobsMenu() {
               className="flex items-start gap-2 p-2 focus:bg-accent"
               onSelect={(event) => event.preventDefault()}
             >
-              <ShelfTypeIcon
-                type={job.shelf.type}
-                className="mt-0.5 size-4 shrink-0"
-              />
+              {job.shelf ? (
+                <ShelfTypeIcon
+                  type={job.shelf.type}
+                  className="mt-0.5 size-4 shrink-0"
+                />
+              ) : (
+                <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+              )}
               <div className="min-w-0 flex-1">
-                <Link
-                  href={itemPath(job.shelf, job)}
-                  className="block truncate text-sm font-semibold hover:text-primary"
-                >
-                  {job.name}
-                </Link>
+                {job.shelf ? (
+                  <Link
+                    href={itemPath(job.shelf, job)}
+                    className="block truncate text-sm font-semibold hover:text-primary"
+                  >
+                    {job.name}
+                  </Link>
+                ) : (
+                  <Link
+                    href="/admin?tab=catalogue"
+                    className="block truncate text-sm font-semibold hover:text-primary"
+                  >
+                    {job.name}
+                  </Link>
+                )}
                 <p className="truncate text-xs text-muted-foreground">
-                  {jobKindLabel(job, t)} · {job.shelf.name}
+                  {jobKindLabel(job, t)}
+                  {job.shelf
+                    ? ` · ${job.shelf.name}`
+                    : ` · ${t("backgroundJobs.foilAdmin")}`}
                 </p>
               </div>
               {job.cancellable ? (
@@ -168,6 +212,42 @@ export function BackgroundJobsMenu() {
               ) : null}
             </DropdownMenuItem>
           ))
+        )}
+        {providerDataJobs.length > 0 && (
+          /*
+            One row for the lot, and deliberately not a link: there is nothing
+            here the collector has to act on, and the previous per-crawl rows
+            pointed at an admin tab none of them belongs to.
+          */
+          <DropdownMenuItem
+            className="flex items-start gap-2 p-2 focus:bg-accent"
+            onSelect={(event) => event.preventDefault()}
+          >
+            <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">
+                {t("backgroundJobs.providerData")}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {t("backgroundJobs.providerDataHint").replace(
+                  "{count}",
+                  String(providerDataJobs.length),
+                )}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0"
+              aria-label={t("backgroundJobs.cancelOne")}
+              disabled={cancelOne.isPending}
+              onClick={() => {
+                for (const job of providerDataJobs) cancelOne.mutate(job.id);
+              }}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

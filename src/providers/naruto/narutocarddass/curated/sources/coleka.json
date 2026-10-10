@@ -1,0 +1,245 @@
+{
+  "source": "coleka.com — collector database, French Naruto Carddass branches",
+  "note": "Community catalogue, but the only index that exists for Série 06 and the only one listing ni232/ni236/ni252/ni253 (which it files under Série 06, consistent with their BANDAI 2008 imprint while the rest of S5 is BANDAI 2007). Item pages carry the printed number but no photo for Série 06.",
+  "branches": {
+    "series-francaises": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises_r41705",
+    "serie-01": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-01-le-pays-du-vent_r4108",
+    "serie-02": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-02-detruire-konoha_r4109",
+    "serie-03": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-03-puissances-cachees_r4110",
+    "serie-04": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-04-l-esprit-du-sable_r4111",
+    "serie-05": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-05-un-nouveau-depart_r4112",
+    "series-francaises-cover": "https://thumbs.coleka.com/media/rubrique/202411/15/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-naruto-carddass-series-francaises.webp",
+    "serie-06": "https://www.coleka.com/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06_r41388"
+  },
+  "types": {
+    "holo": "https://www.coleka.com/fr/type-carte-naruto-holo_t58531"
+  },
+  "seriesFrancaises": {
+    "title": "Naruto Carddass - Séries Françaises",
+    "publisher": "Bandai",
+    "years": "2002–2008",
+    "listedCount": 741,
+    "listedCountScope": "Coleka FR s1–s5 branch only — not Italian s6, promos, or our disk total",
+    "scrape": false,
+    "rules": {
+      "players": 2,
+      "winGains": 10
+    },
+    "description": "Les Naruto Carddass - Séries Françaises représentent une collection emblématique de cartes à collectionner, lancée en 2002 par Bandai. Cette série, qui s'est étendue jusqu'en 2008, capture l'essence de l'univers ninja créé par Masashi Kishimoto, offrant aux fans une façon unique d'interagir avec leurs personnages préférés.\n\nCes cartes se distinguent par leur système de jeu innovant, conçu pour deux joueurs s'affrontant avec des équipes de ninjas. L'objectif est d'accumuler des \"gains\" en attaquant l'équipe adverse, le premier à atteindre 10 gains remportant la partie. Cette mécanique reflète habilement les combats stratégiques caractéristiques de la série Naruto.\n\nAvec 741 cartes recensées, la collection offre une grande diversité, des personnages emblématiques aux moments clés de la saga. Les cartes Naruto Carddass ont non seulement permis aux fans de collectionner, mais aussi de revivre les aventures de leurs héros ninjas à travers des batailles stratégiques, contribuant ainsi à l'immersion dans cet univers riche et captivant."
+  },
+  "todo": "Harvest 2026-08-17: 542/741 listed (s1 96, s2 138, s3 124, s4 96, s5 88). Later pages of s1/s4/s5 hit Coleka verify wall (`?p=2`). te080 = no-image. Retry remaining leaves later; do not bypass captcha. Parent `_r41705` stays scrape:false.",
+  "cards": {
+    "cl032": {
+      "name": "Carte CL-32",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-cl-32_i1761802"
+    },
+    "cl033": {
+      "name": "Uruchai Uchiha",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/uruchai-uchiha_i1761803"
+    },
+    "ni103": {
+      "name": "Dosu Kinuta",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/dosu-kinuta_i1762466"
+    },
+    "ni104": {
+      "name": "Zaku Abumi",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/zaku-abumi_i1761744"
+    },
+    "ni105": {
+      "name": "Kin Tsuchi",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/kin-tsuchi_i1761745"
+    },
+    "ni232": {
+      "name": "Shikamaru Nara",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/shikamaru-nara_i1762493"
+    },
+    "ni236": {
+      "name": "Sasuke Uchiha",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/sasuke-uchiha_i1761746"
+    },
+    "ni242": {
+      "name": "Akamaru",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/akamaru_i1761747"
+    },
+    "ni243": {
+      "name": "Tenma Shiranui",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/tenma-shiranui_i1761748"
+    },
+    "ni244": {
+      "name": "Raido Namiashi",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/raido-namiashi_i1761749"
+    },
+    "ni245": {
+      "name": "Iwashi Tatami",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/iwashi-tatami_i1761750"
+    },
+    "ni246": {
+      "name": "Shizune",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/shizune_i1761751"
+    },
+    "ni250": {
+      "name": "Kidomaru",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/kidomaru_i1761752"
+    },
+    "ni251": {
+      "name": "Jirôbô",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/jirobo_i1761753"
+    },
+    "ni252": {
+      "name": "Sakon",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/sakon_i1761754"
+    },
+    "ni253": {
+      "name": "Tayuya",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/tayuya_i1761755"
+    },
+    "ni255": {
+      "name": "Carte NI-255",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-255_i1761756"
+    },
+    "ni256": {
+      "name": "Carte NI-256",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-256_i1761757"
+    },
+    "ni257": {
+      "name": "Sasuke Uchiwa",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/sasuke-uchiwa_i1761758"
+    },
+    "ni258": {
+      "name": "Rock Lee",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/rock-lee_i1761759"
+    },
+    "ni259": {
+      "name": "Itachi Uchiha",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/itachi-uchiha_i1761760"
+    },
+    "ni260": {
+      "name": "Carte NI-260",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-260_i1761761"
+    },
+    "ni261": {
+      "name": "Mikoto Uchiha",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/mikoto-uchiha_i1761762"
+    },
+    "ni263": {
+      "name": "Carte NI-263",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-263_i1761763"
+    },
+    "ni264": {
+      "name": "Shikamaru Nara & Temari",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/shikamaru-nara-temari_i1761764"
+    },
+    "ni265": {
+      "name": "Ukon",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/ukon_i1761765"
+    },
+    "ni266": {
+      "name": "Kimimaro",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/kimimaro_i1761766"
+    },
+    "ni267": {
+      "name": "Orchi Iracondi",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/orchi-iracondi_i1761767"
+    },
+    "ni268": {
+      "name": "Gaara",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-268_i1761768"
+    },
+    "ni269": {
+      "name": "Carte NI-269",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-269_i1761769"
+    },
+    "ni270": {
+      "name": "Carte NI-270",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-270_i1761770"
+    },
+    "ni271": {
+      "name": "Kuroari",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/kuroari_i1761771"
+    },
+    "ni272": {
+      "name": "Karasu & Kuroari",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/karasu-kuroari_i1761772"
+    },
+    "ni273": {
+      "name": "Carte NI-273",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-273_i1761773"
+    },
+    "ni274": {
+      "name": "Naruto Uzumaki",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/naruto-uzumaki_i1761774"
+    },
+    "ni275": {
+      "name": "Kiba Inuzuka",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/kiba-inuzuka_i1761775"
+    },
+    "ni276": {
+      "name": "Chôji Akimichi",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/choji-akimichi_i1761776"
+    },
+    "ni277": {
+      "name": "Neji Hyûga",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/neji-hyuga_i1761777"
+    },
+    "ni278": {
+      "name": "Naruto Uzumaki & Shikamaru Nara",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/naruto-uzumaki-shikamaru-nara_i1761778"
+    },
+    "ni279": {
+      "name": "Kimimaro",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/kimimaro_i1761779"
+    },
+    "ni280": {
+      "name": "Kidomaru",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/kidomaru_i1761780"
+    },
+    "ni281": {
+      "name": "Jirôbô",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/jirobo_i1761781"
+    },
+    "ni282": {
+      "name": "Sakon",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/sakon_i1761782"
+    },
+    "ni283": {
+      "name": "Tayuya",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/tayuya_i1761783"
+    },
+    "ni288": {
+      "name": "Carte NI-288",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-288_i1761784"
+    },
+    "ni289": {
+      "name": "Carte NI-289",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-289_i1761785"
+    },
+    "ni290": {
+      "name": "Carte NI-290",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-290_i1761786"
+    },
+    "ni291": {
+      "name": "Carte NI-291",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/cartes-naruto-serie-06/carte-ni-291_i1761787"
+    },
+    "pr016": {
+      "name": "Naruto Uzumaki",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-05-un-nouveau-depart/naruto-uzumaki_i787874",
+      "colekaId": 787874,
+      "printed": "PR-16",
+      "note": "Tin PR filed under S5 on Coleka"
+    },
+    "pr011": {
+      "name": "Orochimaru",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-05-un-nouveau-depart/orochimaru_i787868",
+      "colekaId": 787868,
+      "printed": "PR-11",
+      "note": "Tin PR filed under S5 on Coleka"
+    },
+    "te109": {
+      "name": "Invocation",
+      "page": "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/naruto-carddass-series-francaises/cartes-naruto-serie-03-puissances-cachees/invocation_i203137",
+      "colekaId": 203137,
+      "printed": "TE-109"
+    }
+  }
+}

@@ -6,6 +6,7 @@ const h = vi.hoisted(() => ({
   getMetadata: vi.fn(),
   getDatabaseSuggestions: vi.fn(),
   filterMetadataForShelfPlatform: vi.fn((_m: unknown) => _m),
+  filterMetadataForPrintKey: vi.fn((_m: unknown) => _m),
   resolveGameMetadataPlatform: vi.fn(
     (platform: string | null) => platform ?? undefined,
   ),
@@ -16,6 +17,7 @@ vi.mock("@/core/enrich", () => ({
   getMetadata: h.getMetadata,
   getDatabaseSuggestions: h.getDatabaseSuggestions,
   filterMetadataForShelfPlatform: h.filterMetadataForShelfPlatform,
+  filterMetadataForPrintKey: h.filterMetadataForPrintKey,
 }));
 vi.mock("@/core/enrich/platform", () => ({
   resolveGameMetadataPlatform: h.resolveGameMetadataPlatform,
@@ -34,6 +36,7 @@ beforeEach(() => {
   h.getMetadata.mockReset().mockResolvedValue({ title: "Tetris" });
   h.getDatabaseSuggestions.mockReset().mockResolvedValue([]);
   h.filterMetadataForShelfPlatform.mockClear();
+  h.filterMetadataForPrintKey.mockClear().mockImplementation((m) => m);
   h.resolveGameMetadataPlatform.mockClear();
 });
 
@@ -70,5 +73,21 @@ describe("GET /api/metadata", () => {
         },
       }),
     );
+  });
+
+  it("passe printKey à getMetadata et filtre la galerie", async () => {
+    await GET(
+      metadataReq(
+        "name=Inari&type=tcg&printKey=naruto%3Acl-0001&shelfName=Naruto",
+      ),
+    );
+    expect(h.getMetadata).toHaveBeenCalledWith(
+      "Inari",
+      "tcg",
+      null,
+      null,
+      expect.objectContaining({ printKey: "naruto:cl-0001" }),
+    );
+    expect(h.filterMetadataForPrintKey).toHaveBeenCalled();
   });
 });

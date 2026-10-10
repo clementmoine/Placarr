@@ -80,6 +80,35 @@ describe("resolveMetadataCoverUrl", () => {
       ),
     ).toBe("/uploads/fr-hdjv.jpg");
   });
+
+  it("same-locale pin vs better cover does not crash when no metrics are persisted", () => {
+    // Preview / add-item path: attachments often have no width/luminance yet.
+    expect(
+      resolveMetadataCoverUrl(
+        {
+          metadata: {
+            imageUrl: "https://www.lddb.com/cover/ld/27901-28000/27959.jpg",
+            attachments: [
+              {
+                type: "cover",
+                source: "lddb",
+                role: "eu",
+                url: "https://www.lddb.com/cover/ld/27901-28000/27959.jpg",
+              },
+              {
+                type: "cover",
+                source: "tmdb",
+                role: "fr",
+                url: "/uploads/tmdb-fr.jpg",
+              },
+            ],
+          },
+          shelf: { type: "movies", name: "Laser Disc", cardFormat: "square" },
+        },
+        "fr",
+      ),
+    ).toBe("/uploads/tmdb-fr.jpg");
+  });
 });
 
 describe("getCoverImage", () => {
@@ -286,6 +315,48 @@ describe("getCoverImage", () => {
     ).toBe("/uploads/icollect-lowres.jpg");
   });
 
+  it("does not treat a catalog cover stamped seconds after enrichment as a user pick", () => {
+    // LaserDisc Jack: enrichment wrote SensCritique as metadata.imageUrl, then
+    // progressive present stamped Chasse onto item.imageUrl ~1.6s later.
+    expect(
+      getCoverImage({
+        imageUrl: "/uploads/chasse-ranked.webp",
+        updatedAt: "2026-10-07T15:44:00.835Z",
+        metadata: {
+          imageUrl: "/uploads/senscritique.webp",
+          lastFetched: "2026-10-07T15:43:59.216Z",
+          attachments: [
+            {
+              type: "cover",
+              source: "lddb",
+              role: "fr",
+              url: "/uploads/lddb-square.jpg",
+              width: 800,
+              height: 800,
+            },
+            {
+              type: "cover",
+              source: "chasseauxlivres",
+              role: "fr",
+              url: "/uploads/chasse-ranked.webp",
+              width: 866,
+              height: 868,
+            },
+            {
+              type: "cover",
+              source: "senscritique",
+              role: "fr",
+              url: "/uploads/senscritique.webp",
+              width: 1562,
+              height: 2125,
+            },
+          ],
+        },
+        shelf: { type: "movies", name: "Laser Disc", cardFormat: "square" },
+      }),
+    ).toBe("/uploads/lddb-square.jpg");
+  });
+
   it("ignores a stale enrichment item.imageUrl when metadata default moved on", () => {
     // Without an explicit user pick (updatedAt > lastFetched), display follows
     // the dynamic metadata default — not a leftover enrichment-synced pin.
@@ -389,7 +460,7 @@ describe("getCoverImage", () => {
   it("honors a source=user gallery pick after enrichment refreshes lastFetched", () => {
     expect(
       getCoverImage({
-        imageUrl: "/uploads/grid-alt_crop.jpg",
+        imageUrl: "/uploads/grid-alt_edited.jpg",
         updatedAt: "2026-07-19T12:00:00.000Z",
         shelf: { type: "games", name: "PlayStation 3" },
         metadata: {
@@ -407,7 +478,7 @@ describe("getCoverImage", () => {
             {
               type: "image",
               source: "user",
-              url: "/uploads/grid-alt_crop.jpg",
+              url: "/uploads/grid-alt_edited.jpg",
             },
             {
               type: "cover",
@@ -420,24 +491,24 @@ describe("getCoverImage", () => {
           ],
         },
       }),
-    ).toBe("/uploads/grid-alt_crop.jpg");
+    ).toBe("/uploads/grid-alt_edited.jpg");
   });
 
   it("does not let an orphan source=user pin override a marketplace item cover", () => {
     expect(
       getCoverImage({
-        imageUrl: "/uploads/ebay_crop.jpg",
+        imageUrl: "/uploads/ebay_edited.jpg",
         updatedAt: "2026-07-19T12:00:00.000Z",
         shelf: { type: "games", name: "PlayStation Vita" },
         metadata: {
-          imageUrl: "/uploads/ebay_crop.jpg",
+          imageUrl: "/uploads/ebay_edited.jpg",
           lastFetched: "2026-07-19T18:00:00.000Z",
           attachments: [
             {
               type: "cover",
               source: "ebay",
               role: "marketplace",
-              url: "/uploads/ebay_crop.jpg",
+              url: "/uploads/ebay_edited.jpg",
               width: 400,
               height: 560,
             },
@@ -462,18 +533,18 @@ describe("getCoverImage", () => {
   it("honors a marketplace cover once the user pin matches it", () => {
     expect(
       getCoverImage({
-        imageUrl: "/uploads/ebay_crop.jpg",
+        imageUrl: "/uploads/ebay_edited.jpg",
         updatedAt: "2026-07-19T19:00:00.000Z",
         shelf: { type: "games", name: "PlayStation Vita" },
         metadata: {
-          imageUrl: "/uploads/ebay_crop.jpg",
+          imageUrl: "/uploads/ebay_edited.jpg",
           lastFetched: "2026-07-19T12:00:00.000Z",
           attachments: [
             {
               type: "cover",
               source: "ebay",
               role: "marketplace",
-              url: "/uploads/ebay_crop.jpg",
+              url: "/uploads/ebay_edited.jpg",
               width: 400,
               height: 560,
             },
@@ -487,12 +558,12 @@ describe("getCoverImage", () => {
             {
               type: "image",
               source: "user",
-              url: "/uploads/ebay_crop.jpg",
+              url: "/uploads/ebay_edited.jpg",
             },
           ],
         },
       }),
-    ).toBe("/uploads/ebay_crop.jpg");
+    ).toBe("/uploads/ebay_edited.jpg");
   });
 
   it("does not pin a background banner as the default cover", () => {
@@ -1186,7 +1257,7 @@ describe("filterMetadataForShelfPlatform", () => {
           duration: null,
           role: "fr",
           coverProvenance: null,
-platformKey: null,
+          platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -1204,7 +1275,7 @@ platformKey: null,
           duration: null,
           role: "fr",
           coverProvenance: null,
-platformKey: null,
+          platformKey: null,
           width: null,
           height: null,
           meanLuminance: null,
@@ -1325,7 +1396,7 @@ describe("presentItem", () => {
             url: "/uploads/base-pop.jpg",
             title: "PS3 Prince of Persia",
             coverProvenance: null,
-platformKey: null,
+            platformKey: null,
             width: null,
             height: null,
             meanLuminance: null,
@@ -1343,7 +1414,7 @@ platformKey: null,
             url: "/uploads/trilogy-pop.jpg",
             title: "PS3 Prince of Persia Trilogy: 3 Full Games",
             coverProvenance: null,
-platformKey: null,
+            platformKey: null,
             width: null,
             height: null,
             meanLuminance: null,
@@ -1457,9 +1528,9 @@ platformKey: null,
       shelf: { type: "books", name: "Les Trésors de Picsou" },
     });
 
-    expect(presented.metadata?.attachments?.map((attachment) => attachment.url)).toEqual([
-      "/uploads/tresors.jpg",
-    ]);
+    expect(
+      presented.metadata?.attachments?.map((attachment) => attachment.url),
+    ).toEqual(["/uploads/tresors.jpg"]);
     expect(presented.imageUrl).toBe("/uploads/tresors.jpg");
     expect(presented.imageUrl).not.toBe("/uploads/ages-or-crop.jpg");
   });
@@ -1467,7 +1538,7 @@ platformKey: null,
 
 describe("collapseCroppedUserPinWithCatalogOriginal", () => {
   it("folds Perso crop + remote jaquette into one catalog-provenance card", () => {
-    const crop = "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_crop.jpg";
+    const crop = "/uploads/81643a5c96dc4d6f01d8dc468a9c6d17_edited.jpg";
     const remote =
       "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg";
 
@@ -1498,7 +1569,7 @@ describe("collapseCroppedUserPinWithCatalogOriginal", () => {
   });
 
   it("keeps distinct remote covers when more than one catalog jaquette exists", () => {
-    const crop = "/uploads/pin_crop.jpg";
+    const crop = "/uploads/pin_edited.jpg";
     const list = collapseCroppedUserPinWithCatalogOriginal(
       [
         { type: "image", url: crop, source: "user" },
@@ -1519,7 +1590,7 @@ describe("collapseCroppedUserPinWithCatalogOriginal", () => {
   });
 
   it("folds Perso onto the metadata default among several remote covers", () => {
-    const crop = "/uploads/da99c92ff8141242c04338d2cddcc64a_crop.jpg";
+    const crop = "/uploads/da99c92ff8141242c04338d2cddcc64a_edited.jpg";
     const main =
       "https://storage.googleapis.com/images.pricecharting.com/labbsm5tagjpm2lr/1600.jpg";
     const collapsed = collapseCroppedUserPinWithCatalogOriginal(
@@ -1556,7 +1627,7 @@ describe("collapseCroppedUserPinWithCatalogOriginal", () => {
   });
 
   it("does not fold an explicit post-enrichment personal pick onto catalog art", () => {
-    const crop = "/uploads/my-disc_crop.jpg";
+    const crop = "/uploads/my-disc_edited.jpg";
     const main = "https://cdn.example.com/main.jpg";
     const list = collapseCroppedUserPinWithCatalogOriginal(
       [
@@ -1573,7 +1644,7 @@ describe("collapseCroppedUserPinWithCatalogOriginal", () => {
 
 describe("mergeCoverAttachmentsForPicker Perso/jaquette twin", () => {
   it("does not show Perso and Jaquette for the same cropped NetGamesRetro cover", () => {
-    const crop = "/uploads/gamecube_crop.jpg";
+    const crop = "/uploads/gamecube_edited.jpg";
     const remote =
       "https://www.netgamesretro.com/28634-large_default/console-nintendo-gamecube-silver.jpg";
 
@@ -1606,9 +1677,9 @@ describe("mergeCoverAttachmentsForPicker Perso/jaquette twin", () => {
       "fr",
     );
 
-    expect(picker.filter((a) => a.type === "cover" || a.type === "image")).toHaveLength(
-      1,
-    );
+    expect(
+      picker.filter((a) => a.type === "cover" || a.type === "image"),
+    ).toHaveLength(1);
     expect(picker[0]?.source).toBe("netgamesretro");
     expect(picker[0]?.url).toBe(crop);
   });

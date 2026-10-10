@@ -4,13 +4,14 @@ import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import { ensureNoIntroIndex } from "./indexStore";
+import { nointroCatalog } from "./pipeline";
 import { fetchFromNoIntro, resolveNoIntroMetadata } from "./resolver";
 
-export const nointroModule: ProviderModule = {
+export const nointroModule = defineProvider({
   info: {
     id: "nointro",
     label: "No-Intro",
@@ -18,12 +19,14 @@ export const nointroModule: ProviderModule = {
     requiresTitleAlignment: true,
     capabilities: ["identify"],
     auth: { kind: "none" },
+    supplyMode: "local_catalog",
     canonical: false,
     defaultLanguage: "en",
     websiteUrl: "https://www.no-intro.org/",
     notes:
-      "Dump DAT Logiqx local (`pnpm nointro:sync` / `nointro:build-index`, NOINTRO_DAT_PATH = fichier ou dossier). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
+      "Dump DAT Logiqx (admin Local indexes / worker catalog : NOINTRO_DAT_PATH et/ou pack zip NOINTRO_DAT_PACK / URL). Index SQLite — pas de download au scan. Checksum (sha1/md5/crc) prioritaire, sinon titre ; pas de jaquette.",
   },
+  catalog: nointroCatalog,
   createMetadataAdapter: () => ({
     id: "nointro",
     async resolve(ctx) {
@@ -36,7 +39,7 @@ export const nointroModule: ProviderModule = {
     return {
       ok: Boolean(db),
       latency: Date.now() - start,
-      error: db ? null : "Index unavailable — run pnpm nointro:build-index",
+      error: db ? null : "Index unavailable — sync No-Intro from admin Local indexes",
       configured: true,
     };
   }),
@@ -77,7 +80,7 @@ export const nointroModule: ProviderModule = {
     );
     return collectObjectMappingSignals(metadata);
   },
-};
+});
 
 export {
   fetchFromNoIntro,

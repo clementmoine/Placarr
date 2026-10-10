@@ -1,0 +1,216 @@
+{
+  "observed": "2026-09-13",
+  "kind": "wayback-orphan-archaeology",
+  "orphanCount": 97,
+  "queries": {
+    "www.carddas.com/naruto/card/*": {
+      "error": null,
+      "rows": 795,
+      "images": 268,
+      "orphanMatches": 0,
+      "secs": 8.9,
+      "sampleImgs": [
+        "http://www.carddas.com/naruto/card.gif",
+        "http://www.carddas.com:80/naruto/card/288.gif",
+        "http://www.carddas.com:80/naruto/card/293.gif",
+        "http://www.carddas.com:80/naruto/card/295.gif",
+        "http://www.carddas.com/naruto/card/371.gif",
+        "http://www.carddas.com/naruto/card/373.gif",
+        "http://www.carddas.com/naruto/card/391.gif",
+        "http://www.carddas.com:80/naruto/card/jutsu-296s.gif"
+      ]
+    },
+    "www.carddas.com/naruto/cardlist/card_img/*": {
+      "error": null,
+      "rows": 17,
+      "images": 17,
+      "orphanMatches": 0,
+      "secs": 4.2,
+      "sampleImgs": [
+        "http://www.carddas.com/naruto/cardlist/card_img/head.gif",
+        "http://www.carddas.com/naruto/cardlist/card_img/irai-043_spc2.gif",
+        "http://www.carddas.com/naruto/cardlist/card_img/jutsu-027_spc2.gif",
+        "http://www.carddas.com/naruto/cardlist/card_img/jutsu-048_spc2.gif",
+        "http://www.carddas.com/naruto/cardlist/card_img/jutsu-106_spc2.gif",
+        "http://www.carddas.com/naruto/cardlist/card_img/jutsu-128_spc2.gif",
+        "http://www.carddas.com/naruto/cardlist/card_img/jutsu-255_spc2.gif",
+        "http://www.carddas.com/naruto/cardlist/card_img/saku-010_spc2.gif"
+      ]
+    },
+    "www.carddas.com/naruto/image/product/*": {
+      "error": null,
+      "rows": 128,
+      "images": 128,
+      "orphanMatches": 1,
+      "secs": 51.0,
+      "sampleImgs": [
+        "http://www.carddas.com:80/naruto/image/product/06.gif",
+        "http://www.carddas.com:80/naruto/image/product/10dan.gif",
+        "http://www.carddas.com:80/naruto/image/product/10th.gif",
+        "http://www.carddas.com:80/naruto/image/product/10th_box_01.gif",
+        "http://www.carddas.com:80/naruto/image/product/10th_box_02.gif",
+        "http://www.carddas.com:80/naruto/image/product/11th.gif",
+        "http://www.carddas.com:80/naruto/image/product/11th_pac.gif",
+        "http://www.carddas.com:80/naruto/image/product/13th_card1.gif"
+      ]
+    },
+    "www.carddass.com/naruto/card/*": {
+      "error": null,
+      "rows": 146,
+      "images": 68,
+      "orphanMatches": 0,
+      "secs": 16.2,
+      "sampleImgs": [
+        "http://www.carddass.com/naruto/card/001.gif",
+        "http://www.carddass.com/naruto/card/203.gif",
+        "http://www.carddass.com/naruto/card/289.gif",
+        "http://www.carddass.com/naruto/card/333.gif",
+        "http://www.carddass.com/naruto/card/365.gif",
+        "http://www.carddass.com/naruto/card/373.gif",
+        "http://www.carddass.com/naruto/card/ju-202B.gif",
+        "http://www.carddass.com/naruto/card/jutsu-296s.gif"
+      ]
+    },
+    "www.carddass.com/naruto/cardlist/card_img/*": {
+      "error": null,
+      "rows": 14,
+      "images": 14,
+      "orphanMatches": 0,
+      "secs": 3.7,
+      "sampleImgs": [
+        "http://www.carddass.com/naruto/cardlist/card_img/head.gif",
+        "http://www.carddass.com/naruto/cardlist/card_img/jutsu-011_1.gif",
+        "http://www.carddass.com/naruto/cardlist/card_img/jutsu-169_yuki.gif",
+        "http://www.carddass.com/naruto/cardlist/card_img/jutsu-192_10.gif",
+        "http://www.carddass.com/naruto/cardlist/card_img/jutsu-208_10.gif",
+        "http://www.carddass.com/naruto/cardlist/card_img/jutsu-260_13.gif",
+        "http://www.carddass.com/naruto/cardlist/card_img/jutsu-274_13.gif",
+        "http://www.carddass.com/naruto/cardlist/card_img/jutsu-348_17.gif"
+      ]
+    },
+    "www.carddass.com/naruto/image/product/*": {
+      "error": null,
+      "rows": 54,
+      "images": 54,
+      "orphanMatches": 1,
+      "secs": 12.3,
+      "sampleImgs": [
+        "http://www.carddass.com/naruto/image/product/14-ex2/jutsu-291-a.jpg",
+        "http://www.carddass.com/naruto/image/product/14-ex2/shinobi-331.jpg",
+        "http://www.carddass.com/naruto/image/product/14-ex2/UR-283-a.jpg",
+        "http://www.carddass.com/naruto/image/product/14th_card1.gif",
+        "http://www.carddass.com/naruto/image/product/14th_card2.gif",
+        "http://www.carddass.com/naruto/image/product/14th_jihan.gif",
+        "http://www.carddass.com/naruto/image/product/14th_logo.gif",
+        "http://www.carddass.com/naruto/image/product/14th_pac.gif"
+      ]
+    },
+    "naruto.noihjp.com/*": {
+      "error": null,
+      "rows": 885,
+      "images": 44,
+      "orphanMatches": 0,
+      "secs": 41.3,
+      "sampleImgs": [
+        "http://naruto.noihjp.com:80/image/B00008DZ3D.jpg",
+        "http://naruto.noihjp.com:80/image/B00008PT75.jpg",
+        "http://naruto.noihjp.com:80/image/B000091L95.jpg",
+        "http://naruto.noihjp.com:80/image/B00009KMFE.jpg",
+        "http://naruto.noihjp.com:80/image/B00009WKZ6.jpg",
+        "http://naruto.noihjp.com:80/image/B0000AFOQI.jpg",
+        "http://naruto.noihjp.com:80/image/B0000BI11H.jpg",
+        "http://naruto.noihjp.com:80/image/B0000CD8B0.jpg"
+      ]
+    },
+    "www.cardgameclub.net/*": {
+      "error": null,
+      "rows": 0,
+      "images": 0,
+      "orphanMatches": 0,
+      "secs": 0.8,
+      "sampleImgs": []
+    },
+    "cardgameclub.net/*": {
+      "error": null,
+      "rows": 0,
+      "images": 0,
+      "orphanMatches": 0,
+      "secs": 2.7,
+      "sampleImgs": []
+    },
+    "www.slab-z.com/*": {
+      "error": null,
+      "rows": 658,
+      "images": 1,
+      "orphanMatches": 0,
+      "secs": 6.2,
+      "sampleImgs": [
+        "https://www.slab-z.com/favicon.ico"
+      ]
+    },
+    "www.nikita-tcg.com/*": {
+      "error": null,
+      "rows": 0,
+      "images": 0,
+      "orphanMatches": 0,
+      "secs": 7.0,
+      "sampleImgs": []
+    },
+    "nikita-tcg.com/*": {
+      "error": null,
+      "rows": 0,
+      "images": 0,
+      "orphanMatches": 0,
+      "secs": 10.2,
+      "sampleImgs": []
+    }
+  },
+  "orphanHits": {
+    "te0291": [
+      {
+        "timestamp": "20060321031344",
+        "original": "http://www.carddas.com:80/naruto/image/product/14-ex2/jutsu-291-a.jpg",
+        "mimetype": "image/jpeg",
+        "statuscode": "200",
+        "query": "www.carddas.com/naruto/image/product/*"
+      },
+      {
+        "timestamp": "20060321031344",
+        "original": "http://www.carddas.com:80/naruto/image/product/14-ex2/jutsu-291-a.jpg",
+        "mimetype": "image/jpeg",
+        "statuscode": "200",
+        "query": "www.carddas.com/naruto/image/product/*"
+      },
+      {
+        "timestamp": "20150104030334",
+        "original": "http://www.carddass.com/naruto/image/product/14-ex2/jutsu-291-a.jpg",
+        "mimetype": "image/jpeg",
+        "statuscode": "200",
+        "query": "www.carddass.com/naruto/image/product/*"
+      },
+      {
+        "timestamp": "20150104030334",
+        "original": "http://www.carddass.com/naruto/image/product/14-ex2/jutsu-291-a.jpg",
+        "mimetype": "image/jpeg",
+        "statuscode": "200",
+        "query": "www.carddass.com/naruto/image/product/*"
+      }
+    ]
+  },
+  "orphanHitCount": 1,
+  "pass2": {
+    "carddasNarutoImagesArchived": 1329,
+    "orphanHitCount": 1,
+    "orphanHits": {
+      "te0291": [
+        "http://www.carddas.com/naruto/image/product/14-ex2/jutsu-291-a.jpg"
+      ]
+    },
+    "note": "Full CDX image/* under carddas(s).com/naruto + speculative product/card_img URL patterns for all 68 retail orphans + extra hosts (ultrajeux, amigo, narutocardgame.com, primegame, carddass.fr cartes). Only te0291 has an archived face among remaining no-art prints. Official archive never published a full 巻 face dump — sparse specials/product chrome only. FR carddass.fr CDX exhausted earlier and has 0 overlap with these late JA orphans.",
+    "deadEnds": [
+      "naruto.noihjp.com — 885 captures, 44 images, checklist chrome only",
+      "cardgameclub / nikita-tcg — 0 CDX",
+      "speculative shinobi-N.jpg product URLs — not in CDX except known non-orphan previews"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "source": "Suruga-ya.com EN used category 501080113 (Wayback paste 2024-07/12)",
+  "observed": "2026-09-14",
+  "crawl": false,
+  "url": "https://www.suruga-ya.jp/search?category=501080113&search_word=",
+  "urlEn": "https://www.suruga-ya.com/en/category/501080113",
+  "shopTitle": "NARUTO DATA CARDDASS",
+  "results": 565,
+  "listed": 958,
+  "maker": "Bandai",
+  "line": "data-carddass",
+  "lang": "ja",
+  "disk": "cards/{set}/ja/{number}/",
+  "listings": "suruga-ya-data-carddass-listings.tsv",
+  "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "servedPixels": { "width": 349, "height": 512 },
+  "note": "Restock Flare 2026-09-14 sur category JP 501080113 (pages 1–24, ~291 ids live) : **0 nouveau** vs TSV 958. Stock vivant ⊂ ledger. Install Suruga : 0 write / 891 skip / 45 CDN fail. Pages EN Wayback + scans G8903… toujours la base.",
+  "prefixesSeen": ["DN", "NM", "NF", "NX", "DMP", "DNP", "NC", "NFM", "NFP", "NFF", "NFC", "NXPF", "NX-MAC", "NX-CAM", "NX-SP", "NXP-SP", "CAN", "VJCF"],
+  "cabinets": [
+    {
+      "title": "ナルト ナルティメットカードバトル",
+      "year": 2005,
+      "prefix": "DN"
+    },
+    {
+      "title": "ナルト疾風伝 究極忍務 ナルティメットミッション",
+      "year": 2007,
+      "prefix": "NM"
+    },
+    {
+      "title": "ナルト疾風伝 ナルティメットクロス",
+      "year": 2009,
+      "prefix": "NX"
+    }
+  ],
+  "not": ["carddass", "en-ccg", "ni", "te", "ta", "n", "j", "m"]
+}

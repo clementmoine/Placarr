@@ -1,0 +1,5288 @@
+{
+  "source": "dbzcollection.fr — Pouvoir caché (part4+)",
+  "lang": "fr",
+  "observed": "2026-10-04",
+  "note": "Grouping slug from pouvoirCache. Singletons keep the slug too.",
+  "pouvoirs": [
+    {
+      "setCode": "part10",
+      "cardId": "26096",
+      "printed": "D-545",
+      "number": "d0545",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26097",
+      "printed": "D-545",
+      "number": "d0545",
+      "pouvoirCache": "NC 6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26098",
+      "printed": "D-575",
+      "number": "d0575",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26099",
+      "printed": "D-575",
+      "number": "d0575",
+      "pouvoirCache": "PA 9000",
+      "grouping": "pa9000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26100",
+      "printed": "D-578",
+      "number": "d0578",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26101",
+      "printed": "D-578",
+      "number": "d0578",
+      "pouvoirCache": "NC 7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26102",
+      "printed": "D-582",
+      "number": "d0582",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26103",
+      "printed": "D-582",
+      "number": "d0582",
+      "pouvoirCache": "PA 9500",
+      "grouping": "pa9500"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26104",
+      "printed": "D-591",
+      "number": "d0591",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26105",
+      "printed": "D-591",
+      "number": "d0591",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26106",
+      "printed": "D-599",
+      "number": "d0599",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26107",
+      "printed": "D-599",
+      "number": "d0599",
+      "pouvoirCache": "NC 5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26108",
+      "printed": "D-622",
+      "number": "d0622",
+      "pouvoirCache": "Lorsque tu élimines ton Goku et ton Vegeta de même nature, nc et caractéristique, tu peux placer une carte Gogeta ou Vegeto de ta main possédant les même caractéristiques dans ta zone.",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26109",
+      "printed": "D-667",
+      "number": "d0667",
+      "pouvoirCache": "PA 8000",
+      "grouping": "pa8000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26110",
+      "printed": "D-680",
+      "number": "d0680",
+      "pouvoirCache": "PA 9000",
+      "grouping": "pa9000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26111",
+      "printed": "D-684",
+      "number": "d0684",
+      "pouvoirCache": "NC 9",
+      "grouping": "nc9"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26112",
+      "printed": "D-751",
+      "number": "d0751",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26113",
+      "printed": "D-751",
+      "number": "d0751",
+      "pouvoirCache": "NC 10",
+      "grouping": "nc10"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26114",
+      "printed": "D-753",
+      "number": "d0753",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26115",
+      "printed": "D-753",
+      "number": "d0753",
+      "pouvoirCache": "NC 11",
+      "grouping": "nc11"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26116",
+      "printed": "D-757",
+      "number": "d0757",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26117",
+      "printed": "D-757",
+      "number": "d0757",
+      "pouvoirCache": "NC 12",
+      "grouping": "nc12"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26118",
+      "printed": "D-763",
+      "number": "d0763",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26119",
+      "printed": "D-763",
+      "number": "d0763",
+      "pouvoirCache": "PA 7000",
+      "grouping": "pa7000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26120",
+      "printed": "D-815",
+      "number": "d0815",
+      "pouvoirCache": "NC 10",
+      "grouping": "nc10"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26121",
+      "printed": "D-827",
+      "number": "d0827",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26122",
+      "printed": "D-828",
+      "number": "d0828",
+      "pouvoirCache": "NC 5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "27232",
+      "printed": "D-828",
+      "number": "d0828",
+      "pouvoirCache": "Rien",
+      "grouping": "rien"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26123",
+      "printed": "D-829",
+      "number": "d0829",
+      "pouvoirCache": "PA 3000",
+      "grouping": "pa3000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26124",
+      "printed": "D-830",
+      "number": "d0830",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26125",
+      "printed": "D-840",
+      "number": "d0840",
+      "pouvoirCache": "NC 6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26126",
+      "printed": "D-841",
+      "number": "d0841",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26128",
+      "printed": "D-852",
+      "number": "d0852",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26129",
+      "printed": "D-852",
+      "number": "d0852",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26130",
+      "printed": "D-853",
+      "number": "d0853",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26131",
+      "printed": "D-853",
+      "number": "d0853",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26132",
+      "printed": "D-854",
+      "number": "d0854",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26133",
+      "printed": "D-854",
+      "number": "d0854",
+      "pouvoirCache": "PA 2500",
+      "grouping": "pa2500"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26134",
+      "printed": "D-855",
+      "number": "d0855",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26135",
+      "printed": "D-855",
+      "number": "d0855",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26137",
+      "printed": "D-856",
+      "number": "d0856",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26138",
+      "printed": "D-856",
+      "number": "d0856",
+      "pouvoirCache": "ENfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26139",
+      "printed": "D-857",
+      "number": "d0857",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26140",
+      "printed": "D-857",
+      "number": "d0857",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26143",
+      "printed": "D-859",
+      "number": "d0859",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26144",
+      "printed": "D-859",
+      "number": "d0859",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26147",
+      "printed": "D-862",
+      "number": "d0862",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26148",
+      "printed": "D-862",
+      "number": "d0862",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26395",
+      "printed": "D-863",
+      "number": "d0863",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26396",
+      "printed": "D-863",
+      "number": "d0863",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26397",
+      "printed": "D-864",
+      "number": "d0864",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26398",
+      "printed": "D-864",
+      "number": "d0864",
+      "pouvoirCache": "NC 4",
+      "grouping": "nc4"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26399",
+      "printed": "D-865",
+      "number": "d0865",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26400",
+      "printed": "D-865",
+      "number": "d0865",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26401",
+      "printed": "D-866",
+      "number": "d0866",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26402",
+      "printed": "D-866",
+      "number": "d0866",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26403",
+      "printed": "D-867",
+      "number": "d0867",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26404",
+      "printed": "D-867",
+      "number": "d0867",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26405",
+      "printed": "D-868",
+      "number": "d0868",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26406",
+      "printed": "D-868",
+      "number": "d0868",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26407",
+      "printed": "D-872",
+      "number": "d0872",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26408",
+      "printed": "D-872",
+      "number": "d0872",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26409",
+      "printed": "D-873",
+      "number": "d0873",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26410",
+      "printed": "D-873",
+      "number": "d0873",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "27147",
+      "printed": "D-873",
+      "number": "d0873",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "27148",
+      "printed": "D-873",
+      "number": "d0873",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26411",
+      "printed": "D-874",
+      "number": "d0874",
+      "pouvoirCache": "PA 1000",
+      "grouping": "pa1000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26412",
+      "printed": "D-874",
+      "number": "d0874",
+      "pouvoirCache": "PA 1000",
+      "grouping": "pa1000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "27150",
+      "printed": "D-874",
+      "number": "d0874",
+      "pouvoirCache": "PA 1000",
+      "grouping": "pa1000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26413",
+      "printed": "D-875",
+      "number": "d0875",
+      "pouvoirCache": "PA 1000",
+      "grouping": "pa1000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26414",
+      "printed": "D-875",
+      "number": "d0875",
+      "pouvoirCache": "PA 1000",
+      "grouping": "pa1000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26415",
+      "printed": "D-876",
+      "number": "d0876",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26416",
+      "printed": "D-876",
+      "number": "d0876",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26417",
+      "printed": "D-877",
+      "number": "d0877",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26418",
+      "printed": "D-877",
+      "number": "d0877",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26419",
+      "printed": "D-878",
+      "number": "d0878",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26420",
+      "printed": "D-878",
+      "number": "d0878",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26421",
+      "printed": "D-879",
+      "number": "d0879",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26422",
+      "printed": "D-879",
+      "number": "d0879",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26423",
+      "printed": "D-880",
+      "number": "d0880",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26424",
+      "printed": "D-880",
+      "number": "d0880",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26425",
+      "printed": "D-881",
+      "number": "d0881",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26426",
+      "printed": "D-881",
+      "number": "d0881",
+      "pouvoirCache": "PA 9000",
+      "grouping": "pa9000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26427",
+      "printed": "D-882",
+      "number": "d0882",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26428",
+      "printed": "D-882",
+      "number": "d0882",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26429",
+      "printed": "D-883",
+      "number": "d0883",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26430",
+      "printed": "D-883",
+      "number": "d0883",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26431",
+      "printed": "D-885",
+      "number": "d0885",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26432",
+      "printed": "D-885",
+      "number": "d0885",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26433",
+      "printed": "D-887",
+      "number": "d0887",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26434",
+      "printed": "D-887",
+      "number": "d0887",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26435",
+      "printed": "D-888",
+      "number": "d0888",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26436",
+      "printed": "D-888",
+      "number": "d0888",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26437",
+      "printed": "D-890",
+      "number": "d0890",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26438",
+      "printed": "D-890",
+      "number": "d0890",
+      "pouvoirCache": "PA 5000",
+      "grouping": "pa5000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26439",
+      "printed": "D-891",
+      "number": "d0891",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26440",
+      "printed": "D-891",
+      "number": "d0891",
+      "pouvoirCache": "NC 7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26727",
+      "printed": "D-891",
+      "number": "d0891",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26728",
+      "printed": "D-891",
+      "number": "d0891",
+      "pouvoirCache": "NC 7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26729",
+      "printed": "D-895",
+      "number": "d0895",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26730",
+      "printed": "D-895",
+      "number": "d0895",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26731",
+      "printed": "D-896",
+      "number": "d0896",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26732",
+      "printed": "D-896",
+      "number": "d0896",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26733",
+      "printed": "D-897",
+      "number": "d0897",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26734",
+      "printed": "D-897",
+      "number": "d0897",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26735",
+      "printed": "D-898",
+      "number": "d0898",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26736",
+      "printed": "D-898",
+      "number": "d0898",
+      "pouvoirCache": "NC 4",
+      "grouping": "nc4"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26737",
+      "printed": "D-899",
+      "number": "d0899",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26738",
+      "printed": "D-899",
+      "number": "d0899",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26739",
+      "printed": "D-900",
+      "number": "d0900",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26740",
+      "printed": "D-900",
+      "number": "d0900",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26741",
+      "printed": "D-901",
+      "number": "d0901",
+      "pouvoirCache": "PA 7000",
+      "grouping": "pa7000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26742",
+      "printed": "D-901",
+      "number": "d0901",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26743",
+      "printed": "D-902",
+      "number": "d0902",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26744",
+      "printed": "D-902",
+      "number": "d0902",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26745",
+      "printed": "D-903",
+      "number": "d0903",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26746",
+      "printed": "D-903",
+      "number": "d0903",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26747",
+      "printed": "D-904",
+      "number": "d0904",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26748",
+      "printed": "D-904",
+      "number": "d0904",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26749",
+      "printed": "D-905",
+      "number": "d0905",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26750",
+      "printed": "D-905",
+      "number": "d0905",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26751",
+      "printed": "D-906",
+      "number": "d0906",
+      "pouvoirCache": "Monde de Kaïo",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26752",
+      "printed": "D-906",
+      "number": "d0906",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26753",
+      "printed": "D-907",
+      "number": "d0907",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26754",
+      "printed": "D-907",
+      "number": "d0907",
+      "pouvoirCache": "PA 7000",
+      "grouping": "pa7000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "26777",
+      "printed": "D-933",
+      "number": "d0933",
+      "pouvoirCache": "PA 12000",
+      "grouping": "pa12000"
+    },
+    {
+      "setCode": "part10",
+      "cardId": "27149",
+      "printed": "D-933",
+      "number": "d0933",
+      "pouvoirCache": "PA 12000",
+      "grouping": "pa12000"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "416",
+      "printed": "D-21",
+      "number": "d0021",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "417",
+      "printed": "D-24",
+      "number": "d0024",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "418",
+      "printed": "D-29",
+      "number": "d0029",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "419",
+      "printed": "D-35",
+      "number": "d0035",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "420",
+      "printed": "D-47",
+      "number": "d0047",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "421",
+      "printed": "D-50",
+      "number": "d0050",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "422",
+      "printed": "D-52",
+      "number": "d0052",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "423",
+      "printed": "D-53",
+      "number": "d0053",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "424",
+      "printed": "D-63",
+      "number": "d0063",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "425",
+      "printed": "D-73",
+      "number": "d0073",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "426",
+      "printed": "D-77",
+      "number": "d0077",
+      "pouvoirCache": "NC6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "427",
+      "printed": "D-78",
+      "number": "d0078",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "428",
+      "printed": "D-80",
+      "number": "d0080",
+      "pouvoirCache": "NC6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "433",
+      "printed": "D-139",
+      "number": "d0139",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "434",
+      "printed": "D-160",
+      "number": "d0160",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "435",
+      "printed": "D-168",
+      "number": "d0168",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "438",
+      "printed": "D-247",
+      "number": "d0247",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "439",
+      "printed": "D-250",
+      "number": "d0250",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "440",
+      "printed": "D-251",
+      "number": "d0251",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "500",
+      "printed": "D-431",
+      "number": "d0431",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "499",
+      "printed": "D-431",
+      "number": "d0431",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "501",
+      "printed": "D-436",
+      "number": "d0436",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "502",
+      "printed": "D-436",
+      "number": "d0436",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "503",
+      "printed": "D-437",
+      "number": "d0437",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "504",
+      "printed": "D-437",
+      "number": "d0437",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "505",
+      "printed": "D-438",
+      "number": "d0438",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "506",
+      "printed": "D-438",
+      "number": "d0438",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "507",
+      "printed": "D-439",
+      "number": "d0439",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "508",
+      "printed": "D-439",
+      "number": "d0439",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "509",
+      "printed": "D-462",
+      "number": "d0462",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "510",
+      "printed": "D-463",
+      "number": "d0463",
+      "pouvoirCache": "NC3",
+      "grouping": "nc3"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "514",
+      "printed": "D-492",
+      "number": "d0492",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "515",
+      "printed": "D-492",
+      "number": "d0492",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "516",
+      "printed": "D-494",
+      "number": "d0494",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "517",
+      "printed": "D-494",
+      "number": "d0494",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "518",
+      "printed": "D-495",
+      "number": "d0495",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "519",
+      "printed": "D-495",
+      "number": "d0495",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "520",
+      "printed": "D-497",
+      "number": "d0497",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "521",
+      "printed": "D-497",
+      "number": "d0497",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "522",
+      "printed": "D-501",
+      "number": "d0501",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "523",
+      "printed": "D-501",
+      "number": "d0501",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "524",
+      "printed": "D-503",
+      "number": "d0503",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "525",
+      "printed": "D-503",
+      "number": "d0503",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "527",
+      "printed": "D-506",
+      "number": "d0506",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "528",
+      "printed": "D-506",
+      "number": "d0506",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "530",
+      "printed": "D-507",
+      "number": "d0507",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "531",
+      "printed": "D-507",
+      "number": "d0507",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "532",
+      "printed": "D-508",
+      "number": "d0508",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "533",
+      "printed": "D-508",
+      "number": "d0508",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "534",
+      "printed": "D-510",
+      "number": "d0510",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "535",
+      "printed": "D-510",
+      "number": "d0510",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "536",
+      "printed": "D-513",
+      "number": "d0513",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "537",
+      "printed": "D-513",
+      "number": "d0513",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "538",
+      "printed": "D-514",
+      "number": "d0514",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part4",
+      "cardId": "539",
+      "printed": "D-514",
+      "number": "d0514",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "546",
+      "printed": "D-7",
+      "number": "d0007",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "547",
+      "printed": "D-22",
+      "number": "d0022",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "548",
+      "printed": "D-40",
+      "number": "d0040",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "549",
+      "printed": "D-54",
+      "number": "d0054",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "550",
+      "printed": "D-57",
+      "number": "d0057",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "551",
+      "printed": "D-58",
+      "number": "d0058",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "552",
+      "printed": "D-59",
+      "number": "d0059",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "553",
+      "printed": "D-60",
+      "number": "d0060",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "554",
+      "printed": "D-64",
+      "number": "d0064",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "555",
+      "printed": "D-66",
+      "number": "d0066",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "556",
+      "printed": "D-68",
+      "number": "d0068",
+      "pouvoirCache": "NC3",
+      "grouping": "nc3"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "557",
+      "printed": "D-71",
+      "number": "d0071",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "558",
+      "printed": "D-72",
+      "number": "d0072",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "559",
+      "printed": "D-81",
+      "number": "d0081",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "562",
+      "printed": "D-153",
+      "number": "d0153",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "563",
+      "printed": "D-257",
+      "number": "d0257",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "570",
+      "printed": "D-426",
+      "number": "d0426",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "571",
+      "printed": "D-426",
+      "number": "d0426",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "572",
+      "printed": "D-427",
+      "number": "d0427",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "573",
+      "printed": "D-427",
+      "number": "d0427",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "574",
+      "printed": "D-428",
+      "number": "d0428",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "575",
+      "printed": "D-428",
+      "number": "d0428",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "576",
+      "printed": "D-429",
+      "number": "d0429",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "577",
+      "printed": "D-429",
+      "number": "d0429",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "578",
+      "printed": "D-430",
+      "number": "d0430",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "579",
+      "printed": "D-430",
+      "number": "d0430",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "580",
+      "printed": "D-432",
+      "number": "d0432",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "581",
+      "printed": "D-432",
+      "number": "d0432",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "582",
+      "printed": "D-433",
+      "number": "d0433",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "583",
+      "printed": "D-433",
+      "number": "d0433",
+      "pouvoirCache": "NC3",
+      "grouping": "nc3"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "584",
+      "printed": "D-434",
+      "number": "d0434",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "585",
+      "printed": "D-434",
+      "number": "d0434",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "586",
+      "printed": "D-435",
+      "number": "d0435",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "587",
+      "printed": "D-435",
+      "number": "d0435",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "588",
+      "printed": "D-440",
+      "number": "d0440",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "589",
+      "printed": "D-440",
+      "number": "d0440",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "590",
+      "printed": "D-441",
+      "number": "d0441",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "591",
+      "printed": "D-441",
+      "number": "d0441",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "592",
+      "printed": "D-442",
+      "number": "d0442",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "593",
+      "printed": "D-442",
+      "number": "d0442",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "594",
+      "printed": "D-443",
+      "number": "d0443",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "595",
+      "printed": "D-443",
+      "number": "d0443",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "596",
+      "printed": "D-444",
+      "number": "d0444",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "597",
+      "printed": "D-444",
+      "number": "d0444",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "598",
+      "printed": "D-445",
+      "number": "d0445",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "599",
+      "printed": "D-445",
+      "number": "d0445",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "600",
+      "printed": "D-446",
+      "number": "d0446",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "601",
+      "printed": "D-446",
+      "number": "d0446",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "602",
+      "printed": "D-447",
+      "number": "d0447",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "603",
+      "printed": "D-447",
+      "number": "d0447",
+      "pouvoirCache": "NC6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "604",
+      "printed": "D-448",
+      "number": "d0448",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "605",
+      "printed": "D-448",
+      "number": "d0448",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "606",
+      "printed": "D-449",
+      "number": "d0449",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "607",
+      "printed": "D-449",
+      "number": "d0449",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "608",
+      "printed": "D-450",
+      "number": "d0450",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "609",
+      "printed": "D-450",
+      "number": "d0450",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "610",
+      "printed": "D-451",
+      "number": "d0451",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "611",
+      "printed": "D-451",
+      "number": "d0451",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "612",
+      "printed": "D-452",
+      "number": "d0452",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "613",
+      "printed": "D-452",
+      "number": "d0452",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "614",
+      "printed": "D-453",
+      "number": "d0453",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "615",
+      "printed": "D-453",
+      "number": "d0453",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "616",
+      "printed": "D-454",
+      "number": "d0454",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "617",
+      "printed": "D-454",
+      "number": "d0454",
+      "pouvoirCache": "NC1",
+      "grouping": "nc1"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "618",
+      "printed": "D-455",
+      "number": "d0455",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "619",
+      "printed": "D-455",
+      "number": "d0455",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "620",
+      "printed": "D-456",
+      "number": "d0456",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "621",
+      "printed": "D-456",
+      "number": "d0456",
+      "pouvoirCache": "NC6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "622",
+      "printed": "D-457",
+      "number": "d0457",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "623",
+      "printed": "D-457",
+      "number": "d0457",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "624",
+      "printed": "D-458",
+      "number": "d0458",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "625",
+      "printed": "D-458",
+      "number": "d0458",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "626",
+      "printed": "D-459",
+      "number": "d0459",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "627",
+      "printed": "D-459",
+      "number": "d0459",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "628",
+      "printed": "D-460",
+      "number": "d0460",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "629",
+      "printed": "D-460",
+      "number": "d0460",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "630",
+      "printed": "D-461",
+      "number": "d0461",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "631",
+      "printed": "D-461",
+      "number": "d0461",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "632",
+      "printed": "D-464",
+      "number": "d0464",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "633",
+      "printed": "D-465",
+      "number": "d0465",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "634",
+      "printed": "D-466",
+      "number": "d0466",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "657",
+      "printed": "D-493",
+      "number": "d0493",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "658",
+      "printed": "D-493",
+      "number": "d0493",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "660",
+      "printed": "D-496",
+      "number": "d0496",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "659",
+      "printed": "D-496",
+      "number": "d0496",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "661",
+      "printed": "D-498",
+      "number": "d0498",
+      "pouvoirCache": "NC5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "662",
+      "printed": "D-499",
+      "number": "d0499",
+      "pouvoirCache": "NC5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "663",
+      "printed": "D-500",
+      "number": "d0500",
+      "pouvoirCache": "NC5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "664",
+      "printed": "D-502",
+      "number": "d0502",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "665",
+      "printed": "D-502",
+      "number": "d0502",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "666",
+      "printed": "D-504",
+      "number": "d0504",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "667",
+      "printed": "D-504",
+      "number": "d0504",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "668",
+      "printed": "D-505",
+      "number": "d0505",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "669",
+      "printed": "D-505",
+      "number": "d0505",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "670",
+      "printed": "D-509",
+      "number": "d0509",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "671",
+      "printed": "D-509",
+      "number": "d0509",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "672",
+      "printed": "D-511",
+      "number": "d0511",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "673",
+      "printed": "D-511",
+      "number": "d0511",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "674",
+      "printed": "D-512",
+      "number": "d0512",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "675",
+      "printed": "D-512",
+      "number": "d0512",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "676",
+      "printed": "D-515",
+      "number": "d0515",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "677",
+      "printed": "D-515",
+      "number": "d0515",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "680",
+      "printed": "D-529",
+      "number": "d0529",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "681",
+      "printed": "D-529",
+      "number": "d0529",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "682",
+      "printed": "D-530",
+      "number": "d0530",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "683",
+      "printed": "D-530",
+      "number": "d0530",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "684",
+      "printed": "D-536",
+      "number": "d0536",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "685",
+      "printed": "D-536",
+      "number": "d0536",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "686",
+      "printed": "D-538",
+      "number": "d0538",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "687",
+      "printed": "D-538",
+      "number": "d0538",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "688",
+      "printed": "D-544",
+      "number": "d0544",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "689",
+      "printed": "D-544",
+      "number": "d0544",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "690",
+      "printed": "D-547",
+      "number": "d0547",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "691",
+      "printed": "D-547",
+      "number": "d0547",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "692",
+      "printed": "D-548",
+      "number": "d0548",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "693",
+      "printed": "D-548",
+      "number": "d0548",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "694",
+      "printed": "D-554",
+      "number": "d0554",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "695",
+      "printed": "D-554",
+      "number": "d0554",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "696",
+      "printed": "D-588",
+      "number": "d0588",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "697",
+      "printed": "D-588",
+      "number": "d0588",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "698",
+      "printed": "D-589",
+      "number": "d0589",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part5",
+      "cardId": "699",
+      "printed": "D-589",
+      "number": "d0589",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "702",
+      "printed": "D-524",
+      "number": "d0524",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "703",
+      "printed": "D-524",
+      "number": "d0524",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "704",
+      "printed": "D-525",
+      "number": "d0525",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "705",
+      "printed": "D-525",
+      "number": "d0525",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "706",
+      "printed": "D-526",
+      "number": "d0526",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "707",
+      "printed": "D-526",
+      "number": "d0526",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "708",
+      "printed": "D-527",
+      "number": "d0527",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "709",
+      "printed": "D-527",
+      "number": "d0527",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "710",
+      "printed": "D-528",
+      "number": "d0528",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "711",
+      "printed": "D-531",
+      "number": "d0531",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "712",
+      "printed": "D-531",
+      "number": "d0531",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "713",
+      "printed": "D-532",
+      "number": "d0532",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "714",
+      "printed": "D-532",
+      "number": "d0532",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "715",
+      "printed": "D-533",
+      "number": "d0533",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "716",
+      "printed": "D-533",
+      "number": "d0533",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "717",
+      "printed": "D-535",
+      "number": "d0535",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "718",
+      "printed": "D-537",
+      "number": "d0537",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "719",
+      "printed": "D-537",
+      "number": "d0537",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "720",
+      "printed": "D-539",
+      "number": "d0539",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "721",
+      "printed": "D-540",
+      "number": "d0540",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "722",
+      "printed": "D-540",
+      "number": "d0540",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "723",
+      "printed": "D-543",
+      "number": "d0543",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "724",
+      "printed": "D-543",
+      "number": "d0543",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "725",
+      "printed": "D-545",
+      "number": "d0545",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "726",
+      "printed": "D-545",
+      "number": "d0545",
+      "pouvoirCache": "NC6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "727",
+      "printed": "D-546",
+      "number": "d0546",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "728",
+      "printed": "D-546",
+      "number": "d0546",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "729",
+      "printed": "D-550",
+      "number": "d0550",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "730",
+      "printed": "D-550",
+      "number": "d0550",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "731",
+      "printed": "D-551",
+      "number": "d0551",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "732",
+      "printed": "D-552",
+      "number": "d0552",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "733",
+      "printed": "D-552",
+      "number": "d0552",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "734",
+      "printed": "D-553",
+      "number": "d0553",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "735",
+      "printed": "D-553",
+      "number": "d0553",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "736",
+      "printed": "D-555",
+      "number": "d0555",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "737",
+      "printed": "D-555",
+      "number": "d0555",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "738",
+      "printed": "D-556",
+      "number": "d0556",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "739",
+      "printed": "D-556",
+      "number": "d0556",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "740",
+      "printed": "D-557",
+      "number": "d0557",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "741",
+      "printed": "D-557",
+      "number": "d0557",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "742",
+      "printed": "D-558",
+      "number": "d0558",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "743",
+      "printed": "D-558",
+      "number": "d0558",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "744",
+      "printed": "D-559",
+      "number": "d0559",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "745",
+      "printed": "D-559",
+      "number": "d0559",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "746",
+      "printed": "D-560",
+      "number": "d0560",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "747",
+      "printed": "D-560",
+      "number": "d0560",
+      "pouvoirCache": "NC1",
+      "grouping": "nc1"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "748",
+      "printed": "D-561",
+      "number": "d0561",
+      "pouvoirCache": "NC2",
+      "grouping": "nc2"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "750",
+      "printed": "D-571",
+      "number": "d0571",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "749",
+      "printed": "D-571",
+      "number": "d0571",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "751",
+      "printed": "D-572",
+      "number": "d0572",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "752",
+      "printed": "D-572",
+      "number": "d0572",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "753",
+      "printed": "D-573",
+      "number": "d0573",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "754",
+      "printed": "D-573",
+      "number": "d0573",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "755",
+      "printed": "D-574",
+      "number": "d0574",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "756",
+      "printed": "D-574",
+      "number": "d0574",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "757",
+      "printed": "D-575",
+      "number": "d0575",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "758",
+      "printed": "D-575",
+      "number": "d0575",
+      "pouvoirCache": "PA9000",
+      "grouping": "pa9000"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "759",
+      "printed": "D-576",
+      "number": "d0576",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "760",
+      "printed": "D-576",
+      "number": "d0576",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "761",
+      "printed": "D-577",
+      "number": "d0577",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "762",
+      "printed": "D-577",
+      "number": "d0577",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "763",
+      "printed": "D-578",
+      "number": "d0578",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "764",
+      "printed": "D-578",
+      "number": "d0578",
+      "pouvoirCache": "NC7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "765",
+      "printed": "D-579",
+      "number": "d0579",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "766",
+      "printed": "D-579",
+      "number": "d0579",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "767",
+      "printed": "D-580",
+      "number": "d0580",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "768",
+      "printed": "D-580",
+      "number": "d0580",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "769",
+      "printed": "D-582",
+      "number": "d0582",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "770",
+      "printed": "D-582",
+      "number": "d0582",
+      "pouvoirCache": "PA9500",
+      "grouping": "pa9500"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "771",
+      "printed": "D-583",
+      "number": "d0583",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "772",
+      "printed": "D-583",
+      "number": "d0583",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "773",
+      "printed": "D-587",
+      "number": "d0587",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "774",
+      "printed": "D-590",
+      "number": "d0590",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "775",
+      "printed": "D-590",
+      "number": "d0590",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "776",
+      "printed": "D-591",
+      "number": "d0591",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "777",
+      "printed": "D-591",
+      "number": "d0591",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "778",
+      "printed": "D-592",
+      "number": "d0592",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "779",
+      "printed": "D-592",
+      "number": "d0592",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "780",
+      "printed": "D-593",
+      "number": "d0593",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "781",
+      "printed": "D-597",
+      "number": "d0597",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "782",
+      "printed": "D-597",
+      "number": "d0597",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "783",
+      "printed": "D-598",
+      "number": "d0598",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "784",
+      "printed": "D-598",
+      "number": "d0598",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "805",
+      "printed": "D-637",
+      "number": "d0637",
+      "pouvoirCache": "NC 9",
+      "grouping": "nc9"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "806",
+      "printed": "D-638",
+      "number": "d0638",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "807",
+      "printed": "D-640",
+      "number": "d0640",
+      "pouvoirCache": "PA 5500",
+      "grouping": "pa5500"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "809",
+      "printed": "D-816",
+      "number": "d0816",
+      "pouvoirCache": "PA 4000",
+      "grouping": "pa4000"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "810",
+      "printed": "D-817",
+      "number": "d0817",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "811",
+      "printed": "D-818",
+      "number": "d0818",
+      "pouvoirCache": "NC3",
+      "grouping": "nc3"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "812",
+      "printed": "D-837",
+      "number": "d0837",
+      "pouvoirCache": "PA9500",
+      "grouping": "pa9500"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "813",
+      "printed": "D-838",
+      "number": "d0838",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part6",
+      "cardId": "814",
+      "printed": "D-839",
+      "number": "d0839",
+      "pouvoirCache": "NC2",
+      "grouping": "nc2"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "817",
+      "printed": "D-534",
+      "number": "d0534",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "818",
+      "printed": "D-534",
+      "number": "d0534",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "819",
+      "printed": "D-541",
+      "number": "d0541",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "820",
+      "printed": "D-541",
+      "number": "d0541",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "821",
+      "printed": "D-542",
+      "number": "d0542",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "822",
+      "printed": "D-542",
+      "number": "d0542",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "823",
+      "printed": "D-570",
+      "number": "d0570",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "824",
+      "printed": "D-570",
+      "number": "d0570",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "825",
+      "printed": "D-581",
+      "number": "d0581",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "826",
+      "printed": "D-581",
+      "number": "d0581",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "827",
+      "printed": "D-594",
+      "number": "d0594",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "828",
+      "printed": "D-594",
+      "number": "d0594",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "829",
+      "printed": "D-595",
+      "number": "d0595",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "830",
+      "printed": "D-595",
+      "number": "d0595",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "831",
+      "printed": "D-596",
+      "number": "d0596",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "832",
+      "printed": "D-596",
+      "number": "d0596",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "833",
+      "printed": "D-600",
+      "number": "d0600",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "834",
+      "printed": "D-600",
+      "number": "d0600",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "835",
+      "printed": "D-601",
+      "number": "d0601",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "836",
+      "printed": "D-601",
+      "number": "d0601",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "839",
+      "printed": "D-639",
+      "number": "d0639",
+      "pouvoirCache": "NC5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "840",
+      "printed": "D-641",
+      "number": "d0641",
+      "pouvoirCache": "PA4000",
+      "grouping": "pa4000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "841",
+      "printed": "D-642",
+      "number": "d0642",
+      "pouvoirCache": "PA5000",
+      "grouping": "pa5000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "842",
+      "printed": "D-645",
+      "number": "d0645",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "843",
+      "printed": "D-645",
+      "number": "d0645",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "844",
+      "printed": "D-646",
+      "number": "d0646",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "845",
+      "printed": "D-646",
+      "number": "d0646",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "846",
+      "printed": "D-647",
+      "number": "d0647",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "847",
+      "printed": "D-647",
+      "number": "d0647",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "848",
+      "printed": "D-648",
+      "number": "d0648",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "849",
+      "printed": "D-648",
+      "number": "d0648",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "850",
+      "printed": "D-649",
+      "number": "d0649",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "851",
+      "printed": "D-649",
+      "number": "d0649",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "852",
+      "printed": "D-650",
+      "number": "d0650",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "853",
+      "printed": "D-650",
+      "number": "d0650",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "854",
+      "printed": "D-651",
+      "number": "d0651",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "855",
+      "printed": "D-651",
+      "number": "d0651",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "856",
+      "printed": "D-652",
+      "number": "d0652",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "857",
+      "printed": "D-652",
+      "number": "d0652",
+      "pouvoirCache": "PA7000",
+      "grouping": "pa7000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "858",
+      "printed": "D-653",
+      "number": "d0653",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "859",
+      "printed": "D-653",
+      "number": "d0653",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "860",
+      "printed": "D-654",
+      "number": "d0654",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "861",
+      "printed": "D-654",
+      "number": "d0654",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "917",
+      "printed": "D-655",
+      "number": "d0655",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "918",
+      "printed": "D-655",
+      "number": "d0655",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "919",
+      "printed": "D-656",
+      "number": "d0656",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "920",
+      "printed": "D-656",
+      "number": "d0656",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "921",
+      "printed": "D-658",
+      "number": "d0658",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "922",
+      "printed": "D-658",
+      "number": "d0658",
+      "pouvoirCache": "NC7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "923",
+      "printed": "D-659",
+      "number": "d0659",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "924",
+      "printed": "D-659",
+      "number": "d0659",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "925",
+      "printed": "D-660",
+      "number": "d0660",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "926",
+      "printed": "D-660",
+      "number": "d0660",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "927",
+      "printed": "D-661",
+      "number": "d0661",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "928",
+      "printed": "D-661",
+      "number": "d0661",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "929",
+      "printed": "D-662",
+      "number": "d0662",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "930",
+      "printed": "D-662",
+      "number": "d0662",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "931",
+      "printed": "D-664",
+      "number": "d0664",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "932",
+      "printed": "D-664",
+      "number": "d0664",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "933",
+      "printed": "D-665",
+      "number": "d0665",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "934",
+      "printed": "D-665",
+      "number": "d0665",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "935",
+      "printed": "D-666",
+      "number": "d0666",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "936",
+      "printed": "D-666",
+      "number": "d0666",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "937",
+      "printed": "D-667",
+      "number": "d0667",
+      "pouvoirCache": "PA 8000",
+      "grouping": "pa8000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "938",
+      "printed": "D-668",
+      "number": "d0668",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "939",
+      "printed": "D-668",
+      "number": "d0668",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "940",
+      "printed": "D-671",
+      "number": "d0671",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "941",
+      "printed": "D-671",
+      "number": "d0671",
+      "pouvoirCache": "NC6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "942",
+      "printed": "D-679",
+      "number": "d0679",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "943",
+      "printed": "D-679",
+      "number": "d0679",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "944",
+      "printed": "D-680",
+      "number": "d0680",
+      "pouvoirCache": "PA9000",
+      "grouping": "pa9000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "945",
+      "printed": "D-681",
+      "number": "d0681",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "946",
+      "printed": "D-681",
+      "number": "d0681",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "947",
+      "printed": "D-682",
+      "number": "d0682",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "948",
+      "printed": "D-682",
+      "number": "d0682",
+      "pouvoirCache": "NC10",
+      "grouping": "nc10"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "949",
+      "printed": "D-683",
+      "number": "d0683",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "950",
+      "printed": "D-683",
+      "number": "d0683",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "951",
+      "printed": "D-684",
+      "number": "d0684",
+      "pouvoirCache": "NC 9",
+      "grouping": "nc9"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "952",
+      "printed": "D-685",
+      "number": "d0685",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "953",
+      "printed": "D-685",
+      "number": "d0685",
+      "pouvoirCache": "NC7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "954",
+      "printed": "D-686",
+      "number": "d0686",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "955",
+      "printed": "D-686",
+      "number": "d0686",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "956",
+      "printed": "D-687",
+      "number": "d0687",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "957",
+      "printed": "D-687",
+      "number": "d0687",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "958",
+      "printed": "D-689",
+      "number": "d0689",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "959",
+      "printed": "D-689",
+      "number": "d0689",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "960",
+      "printed": "D-690",
+      "number": "d0690",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "961",
+      "printed": "D-690",
+      "number": "d0690",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "963",
+      "printed": "D-692",
+      "number": "d0692",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "962",
+      "printed": "D-692",
+      "number": "d0692",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "964",
+      "printed": "D-693",
+      "number": "d0693",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "965",
+      "printed": "D-693",
+      "number": "d0693",
+      "pouvoirCache": "NC7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "966",
+      "printed": "D-694",
+      "number": "d0694",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "967",
+      "printed": "D-694",
+      "number": "d0694",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "968",
+      "printed": "D-695",
+      "number": "d0695",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "969",
+      "printed": "D-695",
+      "number": "d0695",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "970",
+      "printed": "D-696",
+      "number": "d0696",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "971",
+      "printed": "D-696",
+      "number": "d0696",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "972",
+      "printed": "D-697",
+      "number": "d0697",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "973",
+      "printed": "D-697",
+      "number": "d0697",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "974",
+      "printed": "D-698",
+      "number": "d0698",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "975",
+      "printed": "D-698",
+      "number": "d0698",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "976",
+      "printed": "D-699",
+      "number": "d0699",
+      "pouvoirCache": "NC4",
+      "grouping": "nc4"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "977",
+      "printed": "D-822",
+      "number": "d0822",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "978",
+      "printed": "D-823",
+      "number": "d0823",
+      "pouvoirCache": "PA4000",
+      "grouping": "pa4000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "979",
+      "printed": "D-824",
+      "number": "d0824",
+      "pouvoirCache": "NC5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "980",
+      "printed": "D-826",
+      "number": "d0826",
+      "pouvoirCache": "PA4000",
+      "grouping": "pa4000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "981",
+      "printed": "D-834",
+      "number": "d0834",
+      "pouvoirCache": "PA6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "982",
+      "printed": "D-835",
+      "number": "d0835",
+      "pouvoirCache": "PA6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part7",
+      "cardId": "983",
+      "printed": "D-836",
+      "number": "d0836",
+      "pouvoirCache": "NC1",
+      "grouping": "nc1"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11804",
+      "printed": "D-728",
+      "number": "d0728",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11805",
+      "printed": "D-728",
+      "number": "d0728",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11806",
+      "printed": "D-730",
+      "number": "d0730",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11807",
+      "printed": "D-730",
+      "number": "d0730",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11808",
+      "printed": "D-731",
+      "number": "d0731",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11809",
+      "printed": "D-731",
+      "number": "d0731",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11810",
+      "printed": "D-732",
+      "number": "d0732",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11811",
+      "printed": "D-732",
+      "number": "d0732",
+      "pouvoirCache": "PA5000",
+      "grouping": "pa5000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11812",
+      "printed": "D-733",
+      "number": "d0733",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11813",
+      "printed": "D-733",
+      "number": "d0733",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11814",
+      "printed": "D-734",
+      "number": "d0734",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11815",
+      "printed": "D-734",
+      "number": "d0734",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11816",
+      "printed": "D-735",
+      "number": "d0735",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11817",
+      "printed": "D-735",
+      "number": "d0735",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11818",
+      "printed": "D-736",
+      "number": "d0736",
+      "pouvoirCache": "NC6",
+      "grouping": "nc6"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11819",
+      "printed": "D-736",
+      "number": "d0736",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11820",
+      "printed": "D-737",
+      "number": "d0737",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11821",
+      "printed": "D-737",
+      "number": "d0737",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11822",
+      "printed": "D-738",
+      "number": "d0738",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11823",
+      "printed": "D-738",
+      "number": "d0738",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11824",
+      "printed": "D-739",
+      "number": "d0739",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11825",
+      "printed": "D-739",
+      "number": "d0739",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11826",
+      "printed": "D-740",
+      "number": "d0740",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11827",
+      "printed": "D-740",
+      "number": "d0740",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11828",
+      "printed": "D-741",
+      "number": "d0741",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11829",
+      "printed": "D-741",
+      "number": "d0741",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11830",
+      "printed": "D-742",
+      "number": "d0742",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11831",
+      "printed": "D-742",
+      "number": "d0742",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11832",
+      "printed": "D-743",
+      "number": "d0743",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11833",
+      "printed": "D-743",
+      "number": "d0743",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11834",
+      "printed": "D-744",
+      "number": "d0744",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11835",
+      "printed": "D-744",
+      "number": "d0744",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11836",
+      "printed": "D-745",
+      "number": "d0745",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11837",
+      "printed": "D-745",
+      "number": "d0745",
+      "pouvoirCache": "NC5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11838",
+      "printed": "D-746",
+      "number": "d0746",
+      "pouvoirCache": "PA7000",
+      "grouping": "pa7000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11839",
+      "printed": "D-746",
+      "number": "d0746",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11840",
+      "printed": "D-747",
+      "number": "d0747",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11841",
+      "printed": "D-747",
+      "number": "d0747",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11842",
+      "printed": "D-748",
+      "number": "d0748",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11843",
+      "printed": "D-748",
+      "number": "d0748",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11844",
+      "printed": "D-749",
+      "number": "d0749",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11845",
+      "printed": "D-749",
+      "number": "d0749",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11846",
+      "printed": "D-750",
+      "number": "d0750",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11847",
+      "printed": "D-750",
+      "number": "d0750",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11848",
+      "printed": "D-751",
+      "number": "d0751",
+      "pouvoirCache": "NC10",
+      "grouping": "nc10"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11849",
+      "printed": "D-751",
+      "number": "d0751",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11850",
+      "printed": "D-752",
+      "number": "d0752",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11851",
+      "printed": "D-752",
+      "number": "d0752",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11852",
+      "printed": "D-753",
+      "number": "d0753",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11853",
+      "printed": "D-753",
+      "number": "d0753",
+      "pouvoirCache": "NC10",
+      "grouping": "nc10"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11854",
+      "printed": "D-755",
+      "number": "d0755",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11855",
+      "printed": "D-755",
+      "number": "d0755",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11856",
+      "printed": "D-756",
+      "number": "d0756",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11857",
+      "printed": "D-756",
+      "number": "d0756",
+      "pouvoirCache": "NC8",
+      "grouping": "nc8"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11858",
+      "printed": "D-757",
+      "number": "d0757",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11859",
+      "printed": "D-757",
+      "number": "d0757",
+      "pouvoirCache": "NC10",
+      "grouping": "nc10"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11860",
+      "printed": "D-758",
+      "number": "d0758",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11861",
+      "printed": "D-758",
+      "number": "d0758",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11862",
+      "printed": "D-759",
+      "number": "d0759",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11863",
+      "printed": "D-759",
+      "number": "d0759",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11864",
+      "printed": "D-760",
+      "number": "d0760",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11865",
+      "printed": "D-760",
+      "number": "d0760",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11866",
+      "printed": "D-761",
+      "number": "d0761",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11867",
+      "printed": "D-761",
+      "number": "d0761",
+      "pouvoirCache": "PA5000",
+      "grouping": "pa5000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11868",
+      "printed": "D-762",
+      "number": "d0762",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11869",
+      "printed": "D-762",
+      "number": "d0762",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11870",
+      "printed": "D-763",
+      "number": "d0763",
+      "pouvoirCache": "PA7000",
+      "grouping": "pa7000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11871",
+      "printed": "D-763",
+      "number": "d0763",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11872",
+      "printed": "D-764",
+      "number": "d0764",
+      "pouvoirCache": "NC3",
+      "grouping": "nc3"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11873",
+      "printed": "D-764",
+      "number": "d0764",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11874",
+      "printed": "D-765",
+      "number": "d0765",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11875",
+      "printed": "D-765",
+      "number": "d0765",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11876",
+      "printed": "D-766",
+      "number": "d0766",
+      "pouvoirCache": "enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11877",
+      "printed": "D-766",
+      "number": "d0766",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11878",
+      "printed": "D-767",
+      "number": "d0767",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11879",
+      "printed": "D-767",
+      "number": "d0767",
+      "pouvoirCache": "NC8",
+      "grouping": "nc8"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11880",
+      "printed": "D-768",
+      "number": "d0768",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11881",
+      "printed": "D-768",
+      "number": "d0768",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11882",
+      "printed": "D-769",
+      "number": "d0769",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11883",
+      "printed": "D-769",
+      "number": "d0769",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11884",
+      "printed": "D-770",
+      "number": "d0770",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11885",
+      "printed": "D-770",
+      "number": "d0770",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11886",
+      "printed": "D-771",
+      "number": "d0771",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11887",
+      "printed": "D-771",
+      "number": "d0771",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11888",
+      "printed": "D-772",
+      "number": "d0772",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11889",
+      "printed": "D-772",
+      "number": "d0772",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11890",
+      "printed": "D-773",
+      "number": "d0773",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11891",
+      "printed": "D-773",
+      "number": "d0773",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11892",
+      "printed": "D-774",
+      "number": "d0774",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11893",
+      "printed": "D-774",
+      "number": "d0774",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11894",
+      "printed": "D-775",
+      "number": "d0775",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11895",
+      "printed": "D-775",
+      "number": "d0775",
+      "pouvoirCache": "NC7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11896",
+      "printed": "D-776",
+      "number": "d0776",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11897",
+      "printed": "D-776",
+      "number": "d0776",
+      "pouvoirCache": "PA 4000",
+      "grouping": "pa4000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11898",
+      "printed": "D-777",
+      "number": "d0777",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11899",
+      "printed": "D-777",
+      "number": "d0777",
+      "pouvoirCache": "NC5",
+      "grouping": "nc5"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11900",
+      "printed": "D-778",
+      "number": "d0778",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11901",
+      "printed": "D-778",
+      "number": "d0778",
+      "pouvoirCache": "PA7000",
+      "grouping": "pa7000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11902",
+      "printed": "D-779",
+      "number": "d0779",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11903",
+      "printed": "D-779",
+      "number": "d0779",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11904",
+      "printed": "D-780",
+      "number": "d0780",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11905",
+      "printed": "D-780",
+      "number": "d0780",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11946",
+      "printed": "D-781",
+      "number": "d0781",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11947",
+      "printed": "D-781",
+      "number": "d0781",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11799",
+      "printed": "D-782",
+      "number": "d0782",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11800",
+      "printed": "D-782",
+      "number": "d0782",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11938",
+      "printed": "D-819",
+      "number": "d0819",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11939",
+      "printed": "D-820",
+      "number": "d0820",
+      "pouvoirCache": "PA4000",
+      "grouping": "pa4000"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11940",
+      "printed": "D-821",
+      "number": "d0821",
+      "pouvoirCache": "NC3",
+      "grouping": "nc3"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11941",
+      "printed": "D-825",
+      "number": "d0825",
+      "pouvoirCache": "NC7",
+      "grouping": "nc7"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11942",
+      "printed": "D-831",
+      "number": "d0831",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11943",
+      "printed": "D-832",
+      "number": "d0832",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part8",
+      "cardId": "11944",
+      "printed": "D-833",
+      "number": "d0833",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18939",
+      "printed": "D-437",
+      "number": "d0437",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18940",
+      "printed": "D-437",
+      "number": "d0437",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18941",
+      "printed": "D-449",
+      "number": "d0449",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18942",
+      "printed": "D-449",
+      "number": "d0449",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17578",
+      "printed": "D-461",
+      "number": "d0461",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18943",
+      "printed": "D-461",
+      "number": "d0461",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18945",
+      "printed": "D-497",
+      "number": "d0497",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18946",
+      "printed": "D-497",
+      "number": "d0497",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18947",
+      "printed": "D-502",
+      "number": "d0502",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18948",
+      "printed": "D-502",
+      "number": "d0502",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18949",
+      "printed": "D-503",
+      "number": "d0503",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18950",
+      "printed": "D-503",
+      "number": "d0503",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18952",
+      "printed": "D-510",
+      "number": "d0510",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17580",
+      "printed": "D-526",
+      "number": "d0526",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17581",
+      "printed": "D-526",
+      "number": "d0526",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17582",
+      "printed": "D-527",
+      "number": "d0527",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17583",
+      "printed": "D-527",
+      "number": "d0527",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18953",
+      "printed": "D-530",
+      "number": "d0530",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18954",
+      "printed": "D-530",
+      "number": "d0530",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18955",
+      "printed": "D-531",
+      "number": "d0531",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18956",
+      "printed": "D-531",
+      "number": "d0531",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18957",
+      "printed": "D-538",
+      "number": "d0538",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18958",
+      "printed": "D-538",
+      "number": "d0538",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18966",
+      "printed": "D-583",
+      "number": "d0583",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18969",
+      "printed": "D-583",
+      "number": "d0583",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18992",
+      "printed": "D-590",
+      "number": "d0590",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18994",
+      "printed": "D-590",
+      "number": "d0590",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "18999",
+      "printed": "D-637",
+      "number": "d0637",
+      "pouvoirCache": "NC 9",
+      "grouping": "nc9"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17586",
+      "printed": "D-646",
+      "number": "d0646",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17587",
+      "printed": "D-646",
+      "number": "d0646",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "19000",
+      "printed": "D-655",
+      "number": "d0655",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "19001",
+      "printed": "D-655",
+      "number": "d0655",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17588",
+      "printed": "D-666",
+      "number": "d0666",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17589",
+      "printed": "D-666",
+      "number": "d0666",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17590",
+      "printed": "D-668",
+      "number": "d0668",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17591",
+      "printed": "D-668",
+      "number": "d0668",
+      "pouvoirCache": "Enfer",
+      "grouping": "enfer"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "19002",
+      "printed": "D-680",
+      "number": "d0680",
+      "pouvoirCache": "PA 9000",
+      "grouping": "pa9000"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17592",
+      "printed": "D-681",
+      "number": "d0681",
+      "pouvoirCache": "Monde de kaio",
+      "grouping": "kaio"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17593",
+      "printed": "D-681",
+      "number": "d0681",
+      "pouvoirCache": "Main",
+      "grouping": "main"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "17594",
+      "printed": "D-823",
+      "number": "d0823",
+      "pouvoirCache": "PA 4000",
+      "grouping": "pa4000"
+    },
+    {
+      "setCode": "part9",
+      "cardId": "19004",
+      "printed": "D-834",
+      "number": "d0834",
+      "pouvoirCache": "PA 6000",
+      "grouping": "pa6000"
+    }
+  ]
+}

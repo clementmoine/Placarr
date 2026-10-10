@@ -1,0 +1,980 @@
+{
+  "source": "カードダスドットコム — sec.carddass.com club (official Bandai products)",
+  "observed": "2026-09-20",
+  "crawlLive": true,
+  "lang": "ja",
+  "url": "https://sec.carddass.com/club/products?keyword=スーパードラゴンボールヒーローズ",
+  "keyword": "スーパードラゴンボールヒーローズ",
+  "note": "Recherche littérale スーパードラゴンボールヒーローズ → 90 fiches. Thumbs listing /model/m/ (200px) ; fiches /model/b/ (560px). Galeries Heroes = souvent collages de cartes ou borne arcade, pas packshots emballage — utile pour JAN / titre / date ; packshots catalogue restent Amazon / toy-let / Chitoro quand l’emballage réel existe. Exception : Ultimate Booster Bravery (emballage + 3 cartes / 30 types).",
+  "imageHost": "bandai-a.akamaihd.net/bc/img/model/b/{id}_{n}.jpg",
+  "packshotCaveat": true,
+  "count": 90,
+  "products": [
+    {
+      "jan": "4582769734236",
+      "title": "スーパードラゴンボールヒーローズ メテオミッション6弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000214959_1.jpg",
+      "modelId": "1000214959",
+      "released": "2024-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000214959_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000214959_2.jpg"
+      ]
+    },
+    {
+      "jan": "4582769721397",
+      "title": "スーパードラゴンボールヒーローズ メテオミッション5弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000212660_1.jpg",
+      "modelId": "1000212660",
+      "released": "2024-06",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000212660_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000212660_2.jpg"
+      ]
+    },
+    {
+      "jan": "4582769706936",
+      "title": "スーパードラゴンボールヒーローズ メテオミッション4弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000210292_1.jpg",
+      "modelId": "1000210292",
+      "released": "2024-04",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000210292_1.jpg"
+      ]
+    },
+    {
+      "jan": "4570118213631",
+      "title": "スーパードラゴンボールヒーローズ エクストラブースターパック4",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000207747_1.jpg",
+      "modelId": "1000207747",
+      "released": "2024-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000207747_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000207747_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570118228314",
+      "title": "スーパードラゴンボールヒーローズ メテオミッション3弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000207748_1.jpg",
+      "modelId": "1000207748",
+      "released": "2024-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000207748_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000207748_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570118213372",
+      "title": "スーパードラゴンボールヒーローズ メテオミッション2弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000204317_1.jpg",
+      "modelId": "1000204317",
+      "released": "2024-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000204317_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000204317_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570118189745",
+      "title": "スーパードラゴンボールヒーローズオフィシャル9ポケットバインダーセット-セル編-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000203160_1.jpg",
+      "modelId": "1000203160",
+      "released": "2023-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000203160_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000203160_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570118189769",
+      "title": "スーパードラゴンボールヒーローズ メテオミッション1弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000200902_1.jpg",
+      "modelId": "1000200902",
+      "released": "2023-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000200902_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000200902_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570118119667",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション10弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000198239_1.jpg",
+      "modelId": "1000198239",
+      "released": "2023-09",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000198239_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000198239_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570118002549",
+      "title": "スーパードラゴンボールヒーローズ オフィシャル4ポケットバインダーセット-魔人ブウ編-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000195702_1.jpg",
+      "modelId": "1000195702",
+      "released": "2023-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000195702_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000195702_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570118084491",
+      "title": "DCDスーパードラゴンボールヒーローズウルトラゴッドミッション9弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000195097_1.jpg",
+      "modelId": "1000195097",
+      "released": "2023-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000195097_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000195097_2.jpg"
+      ]
+    },
+    {
+      "jan": "4570117961779",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション8弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000191909_1.jpg",
+      "modelId": "1000191909",
+      "released": "2023-04",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000191909_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000191909_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660859994",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション 7弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000189942_1.jpg",
+      "modelId": "1000189942",
+      "released": "2023-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000189942_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000189942_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660859987",
+      "title": "スーパードラゴンボールヒーローズウルトラゴッドミッション6弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000186300_1.jpg",
+      "modelId": "1000186300",
+      "released": "2023-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000186300_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000186300_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660860013",
+      "title": "スーパードラゴンボールヒーローズ オフィシャル9ポケットバインダー-ウルトラゴッドミッションセット-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000183445_1.jpg",
+      "modelId": "1000183445",
+      "released": "2022-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000183445_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000183445_2.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000183445_3.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000183445_4.jpg"
+      ]
+    },
+    {
+      "jan": "454966085997",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション5弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000182714_1.jpg",
+      "modelId": "1000182714",
+      "released": "2022-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000182714_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000182714_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660860006",
+      "title": "スーパードラゴンボールヒーローズ オフィシャル4ポケットバインダーセット-SUPER HERO-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000179159_1.jpg",
+      "modelId": "1000179159",
+      "released": "2022-09",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000179159_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000179159_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660859963",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション4弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000179160_1.jpg",
+      "modelId": "1000179160",
+      "released": "2022-09",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000179160_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000179160_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660860037",
+      "title": "スーパードラゴンボールヒーローズ エクストラブースターパック２",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000178502_1.jpg",
+      "modelId": "1000178502",
+      "released": "2022-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000178502_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000178502_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660859956",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション3弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000176923_1.jpg",
+      "modelId": "1000176923",
+      "released": "2022-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000176923_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000176923_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660853633",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション2弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000174271_1.jpg",
+      "modelId": "1000174271",
+      "released": "2022-05",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000174271_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000174271_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660823698",
+      "title": "スーパードラゴンボールヒーローズ エクストラブースタ－パック",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000172150_1.jpg",
+      "modelId": "1000172150",
+      "released": "2022-04",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000172150_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000172150_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660823254",
+      "title": "スーパードラゴンボールヒーローズ ウルトラゴッドミッション1弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000171725_1.jpg",
+      "modelId": "1000171725",
+      "released": "2022-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000171725_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000171725_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660804482",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション12弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000168099_1.jpg",
+      "modelId": "1000168099",
+      "released": "2022-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000168099_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000168099_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660736523000",
+      "title": "スーパードラゴンボールヒーローズ オフィシャル9ポケットバインダー-新時空大戦編セット-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000166990_1.jpg",
+      "modelId": "1000166990",
+      "released": "2021-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000166990_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000166990_2.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000166990_3.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000166990_4.jpg"
+      ]
+    },
+    {
+      "jan": "4549660749387000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション11弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000165842_1.jpg",
+      "modelId": "1000165842",
+      "released": "2021-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000165842_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000165842_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660705512000",
+      "title": "スーパードラゴンボールヒーローズ 4ポケットバインダーセット 新時空大戦編",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000161646_1.jpg",
+      "modelId": "1000161646",
+      "released": "2021-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000161646_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000161646_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660725442000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション10弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000163356_1.jpg",
+      "modelId": "1000163356",
+      "released": "2021-09",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000163356_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000163356_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660667247000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション9弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000161104_1.jpg",
+      "modelId": "1000161104",
+      "released": "2021-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000161104_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660667216000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンブースターパック4",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000160696_1.jpg",
+      "modelId": "1000160696",
+      "released": "2021-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000160696_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000160696_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660666448000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション8弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000158617_1.jpg",
+      "modelId": "1000158617",
+      "released": "2021-06",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000158617_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000158617_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660640462000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション7弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000155747_1.jpg",
+      "modelId": "1000155747",
+      "released": "2021-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000155747_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000155747_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660637585000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンブースターパック3",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000155745_1.jpg",
+      "modelId": "1000155745",
+      "released": "2021-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000155745_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000155745_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660611059000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンミッション６弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000153657_1.jpg",
+      "modelId": "1000153657",
+      "released": "2021-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000153657_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000153657_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660567974000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンミッション5弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000152303_1.jpg",
+      "modelId": "1000152303",
+      "released": "2020-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000152303_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000152303_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660540847000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション4弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000150688_1.jpg",
+      "modelId": "1000150688",
+      "released": "2020-10",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000150688_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000150688_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660539995000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンブースターパック2",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000148848_1.jpg",
+      "modelId": "1000148848",
+      "released": "2020-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000148848_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000148848_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660539988000",
+      "title": "スーパードラゴンボールヒーローズ 4ポケットバインダーセット ビッグバンミッション",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000148846_1.jpg",
+      "modelId": "1000148846",
+      "released": "2020-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000148846_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000148846_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660523574000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション3弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000148849_1.jpg",
+      "modelId": "1000148849",
+      "released": "2020-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000148849_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000148849_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660505914000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション2弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000145654_1.jpg",
+      "modelId": "1000145654",
+      "released": "2020-06",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000145654_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000145654_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660490722000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンブースターパック",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000144783_1.jpg",
+      "modelId": "1000144783",
+      "released": "2020-04",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000144783_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000144783_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660505686000",
+      "title": "スーパードラゴンボールヒーローズ　スターターパック　アルティメットシルバー",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000143356_1.jpg",
+      "modelId": "1000143356",
+      "released": "2020-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000143356_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000143356_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660505693000",
+      "title": "スーパードラゴンボールヒーローズ　スターターパック　ゼノゴールド",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000143355_1.jpg",
+      "modelId": "1000143355",
+      "released": "2020-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000143355_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000143355_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660505624000",
+      "title": "スーパードラゴンボールヒーローズ　オフィシャルスリーブ　ビッグバンミッション",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000144153_1.jpg",
+      "modelId": "1000144153",
+      "released": "2020-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000144153_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660505679000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンミッション1弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000143357_1.jpg",
+      "modelId": "1000143357",
+      "released": "2020-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000143357_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000143357_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660481010000",
+      "title": "スーパードラゴンボールヒーローズ　ユニバースミッション12弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000142100_1.jpg",
+      "modelId": "1000142100",
+      "released": "2020-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000142100_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000142100_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660452072000",
+      "title": "スーパードラゴンボールヒーローズ　ゴッドデッキセット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000140932_1.jpg",
+      "modelId": "1000140932",
+      "released": "2019-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140932_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140932_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660463580000",
+      "title": "スーパードラゴンボールヒーローズ　ユニバースミッション11弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000140396_1.jpg",
+      "modelId": "1000140396",
+      "released": "2019-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140396_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140396_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660452065000",
+      "title": "スーパードラゴンボールヒーローズ　オフィシャルカードローダー 9th Anniversary",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000140422_1.jpg",
+      "modelId": "1000140422",
+      "released": "2019-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140422_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660452058000",
+      "title": "スーパードラゴンボールヒーローズ　オフィシャル9ポケットバインダー超絶セット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000140393_1.jpg",
+      "modelId": "1000140393",
+      "released": "2019-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140393_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140393_2.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000140393_3.jpg"
+      ]
+    },
+    {
+      "jan": "4549660430698000",
+      "title": "スーパードラゴンボールヒーローズ　ユニバースミッション10弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000138847_1.jpg",
+      "modelId": "1000138847",
+      "released": "2019-09",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000138847_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000138847_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660401124000",
+      "title": "スーパードラゴンボールヒーローズ　アルティメットブースターパック－激突する武勇－",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000137564_1.jpg",
+      "modelId": "1000137564",
+      "released": "2019-08",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137564_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137564_2.jpg"
+      ],
+      "cardsPerPack": 3,
+      "declaredCardCount": 30
+    },
+    {
+      "jan": "4549660401377000",
+      "title": "スーパードラゴンボールヒーローズ　4ポケットバインダーセット　宇宙争乱編",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000137244_1.jpg",
+      "modelId": "1000137244",
+      "released": "2019-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137244_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137244_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660401414000",
+      "title": "スーパードラゴンボールヒーローズ　ユニバースミッション9弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000137245_1.jpg",
+      "modelId": "1000137245",
+      "released": "2019-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137245_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137245_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660383895000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 8弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000135312_1.jpg",
+      "modelId": "1000135312",
+      "released": "2019-05",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000135312_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000135312_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660383888000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 7弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000133921_1.jpg",
+      "modelId": "1000133921",
+      "released": "2019-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000133921_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000133921_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660364870000",
+      "title": "スーパードラゴンボールヒーローズ アルティメットブースターパック -限界突破の究極戦士-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000133914_1.jpg",
+      "modelId": "1000133914",
+      "released": "2019-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000133914_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000133914_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660364276000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 6弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000132193_1.jpg",
+      "modelId": "1000132193",
+      "released": "2019-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000132193_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000132193_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660331100000",
+      "title": "スーパードラゴンボールヒーローズ オフィシャル9ポケットバインダー究極セット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000131503_1.jpg",
+      "modelId": "1000131503",
+      "released": "2018-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000131503_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000131503_2.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000131503_3.jpg"
+      ]
+    },
+    {
+      "jan": "4549660331704000",
+      "title": "スーパードラゴンボールヒーローズ 4ポケットバインダーセット ブロリーver.",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000131260_1.jpg",
+      "modelId": "1000131260",
+      "released": "2018-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000131260_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660331582000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースデッキセット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000131258_1.jpg",
+      "modelId": "1000131258",
+      "released": "2018-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000131258_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000131258_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660331711000",
+      "title": "スーパードラゴンボールヒーローズ スーパーヒーローライセンスセット ブロリーver.",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000131259_1.jpg",
+      "modelId": "1000131259",
+      "released": "2018-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000131259_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660331094000",
+      "title": "スーパードラゴンボールヒーローズ オフィシャルカードローダー 8th Anniversary",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000130696_1.jpg",
+      "modelId": "1000130696",
+      "released": "2018-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000130696_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660331698000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 5弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000130699_1.jpg",
+      "modelId": "1000130699",
+      "released": "2018-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000130699_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000130699_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660331070000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 4弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000128318_1.jpg",
+      "modelId": "1000128318",
+      "released": "2018-09",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000128318_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000128318_2.jpg"
+      ]
+    },
+    {
+      "jan": "4549660305644000",
+      "title": "スーパードラゴンボールヒーローズ アルティメットブースターパック -超戦士集結-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000126865_1.jpg",
+      "modelId": "1000126865",
+      "released": "2018-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000126865_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660305866000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 3弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000126867_1.jpg",
+      "modelId": "1000126867",
+      "released": "2018-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000126867_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660281887000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 2弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000125281_1.jpg",
+      "modelId": "1000125281",
+      "released": "2018-05",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000125281_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660249863000",
+      "title": "スーパードラゴンボールヒーローズ アルティメットブースターパック -新たなる激闘-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000124180_1.jpg",
+      "modelId": "1000124180",
+      "released": "2018-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000124180_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660249849000",
+      "title": "スーパードラゴンボールヒーローズ オフィシャル4ポケットバインダーセット -究極の極意-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000124179_1.jpg",
+      "modelId": "1000124179",
+      "released": "2018-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000124179_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660249856000",
+      "title": "スーパードラゴンボールヒーローズ オフィシャルスリーブ ユニバースミッション",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000124181_1.jpg",
+      "modelId": "1000124181",
+      "released": "2018-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000124181_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660250166000",
+      "title": "スーパードラゴンボールヒーローズ ユニバースミッション 1弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000124182_1.jpg",
+      "modelId": "1000124182",
+      "released": "2018-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000124182_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660238577000",
+      "title": "スーパードラゴンボールヒーローズ 8弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000121915_1.jpg",
+      "modelId": "1000121915",
+      "released": "2018-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000121915_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660237815000",
+      "title": "スーパードラゴンボールヒーローズ 究極デッキセット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000120933_1.jpg",
+      "modelId": "1000120933",
+      "released": "2017-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000120933_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660188711000",
+      "title": "スーパードラゴンボールヒーローズ 9ポケットバインダー超セット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000120814_1.jpg",
+      "modelId": "1000120814",
+      "released": "2017-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000120814_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660237853000",
+      "title": "スーパードラゴンボールヒーローズ 7弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000119686_1.jpg",
+      "modelId": "1000119686",
+      "released": "2017-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000119686_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660188704000",
+      "title": "スーパードラゴンボールヒーローズ オフィシャルカードローダー",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000119642_1.jpg",
+      "modelId": "1000119642",
+      "released": "2017-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000119642_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660188681000",
+      "title": "スーパードラゴンボールヒーローズ　6弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000117758_1.jpg",
+      "modelId": "1000117758",
+      "released": "2017-09",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000117758_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660187844000",
+      "title": "スーパードラゴンボールヒーローズ　5弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000115949_1.jpg",
+      "modelId": "1000115949",
+      "released": "2017-07",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000115949_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660187202000",
+      "title": "スーパードラゴンボールヒーローズ　4弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000114516_1.jpg",
+      "modelId": "1000114516",
+      "released": "2017-05",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000114516_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660156673000",
+      "title": "スーパードラゴンボールヒーローズ　オフィシャル4ポケットバインダーセット -宇宙サバイバル編-",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000113214_1.jpg",
+      "modelId": "1000113214",
+      "released": "2017-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000113214_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660170860000",
+      "title": "スーパードラゴンボールヒーローズ　3弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000113216_1.jpg",
+      "modelId": "1000113216",
+      "released": "2017-03",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000113216_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660156666000",
+      "title": "スーパードラゴンボールヒーローズ　2弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000111270_1.jpg",
+      "modelId": "1000111270",
+      "released": "2017-01",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000111270_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660120766000",
+      "title": "スーパードラゴンボールヒーローズ　超絶デッキセット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000110913_1.jpg",
+      "modelId": "1000110913",
+      "released": "2016-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000110913_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660120773000",
+      "title": "スーパードラゴンボールヒーローズ　9ポケットバインダーセット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000110737_1.jpg",
+      "modelId": "1000110737",
+      "released": "2016-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000110737_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660119951000",
+      "title": "スーパードラゴンボールヒーローズ　オフィシャルカードローダー",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000110738_1.jpg",
+      "modelId": "1000110738",
+      "released": "2016-12",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000110738_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660119937000",
+      "title": "スーパードラゴンボールヒーローズ　オフィシャル4ポケットバインダーセット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000110005_1.jpg",
+      "modelId": "1000110005",
+      "released": "2016-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000110005_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660119944000",
+      "title": "スーパードラゴンボールヒーローズ　オフィシャルスリーブ",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000110006_1.jpg",
+      "modelId": "1000110006",
+      "released": "2016-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000110006_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660120742000",
+      "title": "スーパードラゴンボールヒーローズ　1弾",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000110007_1.jpg",
+      "modelId": "1000110007",
+      "released": "2016-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000110007_1.jpg"
+      ]
+    },
+    {
+      "jan": "4549660111436000",
+      "title": "スーパードラゴンボールヒーローズ　スーパーヒーローライセンスセット",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000110004_1.jpg",
+      "modelId": "1000110004",
+      "released": "2016-11",
+      "images": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000110004_1.jpg"
+      ]
+    }
+  ]
+}

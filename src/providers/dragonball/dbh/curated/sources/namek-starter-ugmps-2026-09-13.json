@@ -1,0 +1,35 @@
+{
+  "source": "namek-starter-ugmps",
+  "observed": "2026-09-13",
+  "kind": "research-dig",
+  "question": "Starter Pack ナメック星の激闘編 (UGMPS) sealed contents.",
+  "verdict": {
+    "structure": "Fixed 7 cards: 6 battle (UGMPS-01…06 ×1) + 1 hero avatar",
+    "battleIds": ["UGMPS-01", "UGMPS-02", "UGMPS-03", "UGMPS-04", "UGMPS-05", "UGMPS-06"],
+    "avatarId": "Not firmly printed as UGMPS-07 on public list pages — leave soft",
+    "contentsKnown": false,
+    "declaredCardCount": 7,
+    "note": "guaranteedPrintKeys = 6 battle cards; contentsKnown stays false until avatar printKey attested"
+  },
+  "sources": [
+    {
+      "id": "dbh-biyori-list",
+      "url": "https://xn--dbh-cj4e260f.xyz/startar-ugmps-list/",
+      "finding": "UGMPS-01…06 abilities; «全7種» = 6 new + 1 avatar"
+    },
+    {
+      "id": "retail-structure",
+      "url": "https://thewildsense.com/?dp=c7c371074037",
+      "finding": "バトルカード6枚、アバターカード1枚、必勝の書1枚 — fixed pack"
+    },
+    {
+      "id": "official-product",
+      "url": "https://www.carddass.com/dbh/sdbh_ugm/products/starterpack_planet_namek.php",
+      "finding": "SKU listed; no Pieces table"
+    }
+  ],
+  "extraPoolsNoted": {
+    "extra-bp": "PUMS11/12/13 ~40-type pools on fan/retail — map when printKeys exist; keep random_pack contentsKnown false",
+    "selection": "BPSE ~30-type pool — same"
+  }
+}

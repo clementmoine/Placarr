@@ -7,12 +7,16 @@ export const REMOTE_IMAGE_PROXY_HOST_FRAGMENTS = [
   "bdovore.com/images/couv/",
   "bedetheque.com/media/Couvertures/",
   "canalbd.b-cdn.net",
+  "cdn.myanimelist.net",
+  "cdn.rebrickable.com",
   "cdn.vivlio.com",
   "cdn1.booknode.com/book_cover/",
   "geedie.lt",
   "historiquedesjeuxvideo.com",
   "image.izneo.com",
+  "images.brickset.com",
   "img.chasse-aux-livres.fr",
+  "nautiljon.com/images/",
   "pictures.abebooks.com",
   "products-images.di-static.com",
   "static.bdphile.fr",
@@ -20,6 +24,7 @@ export const REMOTE_IMAGE_PROXY_HOST_FRAGMENTS = [
   "www.babelio.com",
   "www.bdfugue.com",
   "www.gibert.com",
+  "www.lddb.com",
 ] as const;
 
 const BLOCKED_PROXY_HOSTS =

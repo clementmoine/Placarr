@@ -1,0 +1,24 @@
+{
+  "source": "rakuten-tin-box-hobby",
+  "observed": "2026-08-30",
+  "kind": "research-dig",
+  "ingest": "rakuten.json → tin-box-hobby face archival (ingest:false) ; gallery sides archival ; face catalogue = curated wrappers/tin-box-hobby.png (sleeve bleu)",
+  "listing": "https://fr.shopping.rakuten.com/offer/buy/1962181402/naruto-jcc-tin-box-hobby.html",
+  "productId": "1962181402",
+  "title": "NARUTO JCC - Tin box hobby",
+  "stock": "Aucun vendeur — page catalogue / alerte prix seulement",
+  "ean": null,
+  "printedRef": null,
+  "packshots": {
+    "face": "staging/rakuten/tin-box-hobby/01-face.webp",
+    "sideKakashi": "staging/rakuten/tin-box-hobby/02-side-kakashi.jpg",
+    "lidEmbossed": "staging/rakuten/tin-box-hobby/03-lid-embossed.jpg"
+  },
+  "verdict": "Confirme le nom commercial « Tin Box Hobby ». Photos vendeur : tin + sleeve COFFRET MÉTAL — même art tin que Tin-boxN / LBC. Face catalogue = sleeve bleu reconstruit (wrappers/tin-box-hobby.png) ; Tin-box-hobby.jpg / contenu-tin-box archival ; Rakuten face archival (sinon 500×500 écrase). Contenu Hobby = news.htm (5 boosters S1–S5 + PR-11/16).",
+  "doNot": [
+    "Fusionner tin-box-hobby avec tin-box 05129 parce que la face est la même",
+    "Inventer EAN depuis cette fiche vide",
+    "Remonter Tin-box-hobby.jpg / contenu-tin-box en stagingFile (bat le sleeve portrait)",
+    "Ingest art.rakuten comme face Hobby (bat le sleeve au scorer)"
+  ]
+}

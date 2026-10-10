@@ -10,7 +10,11 @@ function normalizeCacheKey(url: string): string {
     parsed.hash = "";
     // Search: keep q= ; product: strip query (canonical).
     if (parsed.pathname.includes("/search")) {
-      const q = parsed.searchParams.get("q")?.trim().toLowerCase().replace(/\s+/g, " ");
+      const q = parsed.searchParams
+        .get("q")
+        ?.trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
       return q ? `search:${q}` : parsed.toString();
     }
     parsed.search = "";

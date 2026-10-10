@@ -1,0 +1,55 @@
+{
+  "source": "ebay-mikan-data-carddass-hunt",
+  "observed": "2026-09-04",
+  "kind": "research-dig",
+  "query": "https://www.ebay.fr/sch/i.html?_ssn=mikanjuiceshop&store_name=mikanshopja&_nkw=naruto",
+  "seller": {
+    "user": "mikanjuiceshop",
+    "store": "mikanshopja",
+    "feedback": "98.6% / 11k+"
+  },
+  "ingest": "faces via curated/sources/ebay.json (collage CDN s-l1600) — pas de crawl boutique",
+  "verdict": "~780 annonces Naruto. 1ʳᵉ page = surtout Data Carddass / Narutimate (NX NM NF DN + promos NFP/DMP/NFM). Presque pas de Carddass 巻ノ NI/TE/TA. Collage ciblé des refs parseables ; SP (NX-SP / NXP-SP) et titres sans numéro exclus.",
+  "page1Breakdown": {
+    "dataCarddassish": 25,
+    "ultimateNinjaMissionPhysical": 4,
+    "clearCard": 7,
+    "otherMerch": 12,
+    "classicCarddassVolume": 1
+  },
+  "skipped": [
+    {
+      "ref": "NXP-SPⅡ",
+      "why": "promo SP romaine — pas de modèle de numéro encore"
+    },
+    {
+      "ref": "NX-SP Ⅰ",
+      "why": "idem SP"
+    },
+    {
+      "ref": "DNP-030 / DMP-000",
+      "why": "double ref Jump Festa — à trancher sur scan avant mint"
+    }
+  ],
+  "ingestedPrinted": [
+    "NX-002",
+    "NX-143",
+    "NX-193",
+    "NX-301",
+    "NM-127",
+    "NM-142",
+    "NM-167",
+    "NF-007",
+    "NF-035",
+    "NF-141",
+    "NF-177",
+    "DN-051-R",
+    "DN-143T",
+    "DN-205T",
+    "NFP-006",
+    "NFP-018",
+    "NFP-019",
+    "NFM-003",
+    "DMP-016"
+  ]
+}

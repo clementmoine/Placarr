@@ -23,7 +23,7 @@ describe("chasseauxlivres metadata adapter", () => {
       coverUrl: "https://img.chasse-aux-livres.fr/cover.jpg",
     });
 
-    const adapter = chasseauxlivresModule.createMetadataAdapter!();
+    const adapter = chasseauxlivresModule.createMetadataAdapter!()!;
     const metadata = await adapter.resolve({
       name: "",
       barcode: "9780140328721",
@@ -33,6 +33,27 @@ describe("chasseauxlivres metadata adapter", () => {
     expect(metadata?.title).toBe("Fantastic Mr Fox");
     expect(metadata?.observations?.length).toBeGreaterThan(0);
     expect(metadata?.observationSchemaVersion).toBeTruthy();
+  });
+
+  it("drops marketplace 'non-dispo' covers instead of emitting Affiche tiles", async () => {
+    mockedMetadataProduct.mockResolvedValue({
+      name: "Toy Story",
+      barcode: "3456789012345",
+      productUrl:
+        "https://www.chasse-aux-livres.fr/prix/3456789012345/toy-story",
+      coverUrl: "https://images.chasse-aux-livres.fr/c/images/non-dispo.png",
+      images: ["https://images.chasse-aux-livres.fr/c/images/non-dispo.png"],
+    });
+
+    const adapter = chasseauxlivresModule.createMetadataAdapter!()!;
+    const metadata = await adapter.resolve({
+      name: "Toy Story",
+      barcode: "3456789012345",
+      type: "movies",
+    });
+
+    expect(metadata?.imageUrl).toBeUndefined();
+    expect(metadata?.attachments ?? []).toEqual([]);
   });
 });
 

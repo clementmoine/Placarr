@@ -1,0 +1,19 @@
+{
+  "source": "tin-box-hobby-sleeve",
+  "observed": "2026-08-30",
+  "ingest": "curated/products/wrappers/tin-box-hobby.png → face catalogue tin-box-hobby (stagingKind wrappers)",
+  "slug": "tin-box-hobby",
+  "file": "curated/products/wrappers/tin-box-hobby.png",
+  "dims": "225×301 PNG",
+  "verdict": "Sleeve bleu « COFFRET MÉTAL » (Naruto + scroll, fond ciel, bandes orange). Reconstruit à la main pour le catalogue — même famille visuelle que le tin GD fond blanc (Tric Trac), canal Hobby. Remplace Tin-box-hobby.jpg / contenu-tin-box.jpg comme face (plan paysage contenu reste archival sous packshots/).",
+  "archival": [
+    "staging/carddass-fr/images/packshots/Tin-box-hobby.jpg",
+    "staging/carddass-fr/images/cartes/promo/contenu-tin-box.jpg",
+    "staging/rakuten/tin-box-hobby/01-face.webp"
+  ],
+  "doNot": [
+    "Remonter Tin-box-hobby.jpg en stagingFile (400×232 bat le sleeve portrait)",
+    "Fusionner avec tin-box Invocation 05129",
+    "Ingest Rakuten face (même art tin que GD)"
+  ]
+}

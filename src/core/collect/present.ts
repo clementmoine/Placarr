@@ -1,4 +1,11 @@
-import type { Attachment, AttachmentType, Author, Metadata, PriceOffer, Publisher } from "@prisma/client";
+import type {
+  Attachment,
+  AttachmentType,
+  Author,
+  Metadata,
+  PriceOffer,
+  Publisher,
+} from "@/generated/prisma/browser";
 
 import {
   getCoverImage,
@@ -30,6 +37,8 @@ export interface PresentableItemInput {
   shelf?: {
     type?: string | null;
     name?: string | null;
+    /** Shelf card frame — required for cover aspect-fit ranking. */
+    cardFormat?: string | null;
   } | null;
 }
 
@@ -135,8 +144,7 @@ export const itemListMetadataInclude = {
     duration: true,
     pageCount: true,
     tracksCount: true,
-    description: true,
-    facts: true,
+    // facts/description stay on item detail — grid covers + prices do not need them.
     attachments: itemListCoverAttachmentInclude,
     // Marketplace covers are persisted as Attachment rows at price-offer write
     // time — list grids must not load priceOffers.rawValue JSON.
@@ -183,6 +191,7 @@ function enrichMetadataProviderLinks(
     priceOffers?: ProviderPriceOfferLinkInput[];
     itemBarcode?: string | null;
     itemTitle?: string | null;
+    itemTitles?: readonly string[] | null;
     shelfType?: string | null;
     platformKey?: string | null;
     catalogLink?: { url: string; providerLabel?: string } | null;
@@ -198,6 +207,7 @@ function enrichMetadataProviderLinks(
     priceOffers: input.priceOffers,
     itemBarcode: input.itemBarcode,
     itemTitle: input.itemTitle,
+    itemTitles: input.itemTitles,
     shelfType: input.shelfType,
     platformKey: input.platformKey ?? metadata.platformKey,
     catalogLink: input.catalogLink,
@@ -207,6 +217,7 @@ function enrichMetadataProviderLinks(
     input.itemBarcode,
     input.itemTitle,
     input.shelfType,
+    input.itemTitles,
   );
 
   // Marketplace covers persist as Attachment rows at price-offer write time —
@@ -246,6 +257,11 @@ function formatItemMetadata(
         priceOffers: mapStoredPriceOffers(metadata.priceOffers),
         itemBarcode: item?.barcode,
         itemTitle: item?.name,
+        itemTitles: [
+          item?.name,
+          formatted?.title,
+          ...(metadataAliases(formatted?.aliases ?? metadata.aliases) ?? []),
+        ].filter((value): value is string => Boolean(value?.trim())),
         shelfType: item?.shelfType,
         platformKey: formatted?.platformKey ?? shelfPlatformKey,
         catalogLink: item?.catalogLink,

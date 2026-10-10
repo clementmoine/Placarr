@@ -8,7 +8,7 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { DatabaseSync } from "node:sqlite";
 
 import {
@@ -32,7 +32,7 @@ let indexBuildPromise: Promise<DatabaseSync | null> | null = null;
 function cacheDir(): string {
   return (
     process.env.LAUNCHBOX_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "launchbox")
+    path.join(process.cwd(), "data", "launchbox")
   );
 }
 
@@ -54,7 +54,7 @@ function metadataXmlPath(): string {
 }
 
 export type LaunchBoxIndexBuildOptions = {
-  /** Intentional prebuild (`pnpm launchbox:build-index`) — may download Metadata.zip. */
+  /** Intentional prebuild (admin Local indexes) — may download Metadata.zip. */
   allowDownload?: boolean;
 };
 
@@ -109,7 +109,7 @@ async function downloadMetadataZip(): Promise<string | null> {
   await fs.mkdir(cacheDir(), { recursive: true });
 
   try {
-    const response = await axios.get<ArrayBuffer>(zipUrl, {
+    const response = await httpGet<ArrayBuffer>(zipUrl, {
       responseType: "arraybuffer",
       timeout: 10 * 60_000,
       maxContentLength: 256 * 1024 * 1024,
@@ -385,7 +385,7 @@ export async function buildLaunchBoxIndex(
   const xmlPath = await resolveMetadataXmlSource(options);
   if (!xmlPath) {
     console.warn(
-      "[LaunchBox] No Metadata.xml/zip — run `pnpm launchbox:build-index` (download is opt-in, not at scan)",
+      "[LaunchBox] No Metadata.xml/zip — sync LaunchBox from admin Local indexes (download is opt-in, not at scan)",
     );
     return null;
   }
@@ -449,7 +449,7 @@ export async function ensureLaunchBoxIndex(): Promise<DatabaseSync | null> {
 
   if (!shouldBuildLaunchBoxIndex()) {
     console.info(
-      "[LaunchBox] Index unavailable — run `pnpm launchbox:build-index` (no Metadata.zip download at scan)",
+      "[LaunchBox] Index unavailable — sync LaunchBox from admin Local indexes (no Metadata.zip download at scan)",
     );
     return null;
   }

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 
 import { normalizeProductBarcode } from "@/core/identify/normalize";
@@ -344,12 +344,12 @@ export function createDeezerResolver() {
 
     if (!query && normalizedBarcode) {
       try {
-        const res = await axios.get(
+        const res = await httpGet(
           `https://api.deezer.com/album/upc:${normalizedBarcode}`,
         );
         const album = res.data as DeezerAlbum;
         if (album && album.title && !album.error) {
-          const albumDetailsRes = await axios.get(
+          const albumDetailsRes = await httpGet(
             `https://api.deezer.com/album/${album.id}`,
           );
           const bestMatch = albumDetailsRes.data as DeezerAlbum;
@@ -372,7 +372,7 @@ export function createDeezerResolver() {
     if (!query) return null;
 
     const searchUrl = `https://api.deezer.com/search/album?q=${encodeURIComponent(query)}`;
-    const res = await axios.get(searchUrl);
+    const res = await httpGet(searchUrl);
     const data = res.data as { data?: Array<{ id?: number | string }> };
 
     if (!Array.isArray(data.data) || data.data.length === 0) return null;
@@ -382,7 +382,7 @@ export function createDeezerResolver() {
 
     for (const album of data.data) {
       if (!album.id) continue;
-      const albumDetailsRes = await axios.get(
+      const albumDetailsRes = await httpGet(
         `https://api.deezer.com/album/${album.id}`,
       );
       const albumDetails = albumDetailsRes.data as DeezerAlbum;

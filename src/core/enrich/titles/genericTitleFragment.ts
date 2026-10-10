@@ -35,8 +35,7 @@ export function isGenericTitleFragment(
     // for "Sony PlayStation 5") — brand prefixes are not generic subtitles.
     if (
       candTokens.some(
-        (token) =>
-          isIdentityPlatformNoiseToken(token) && nameSet.has(token),
+        (token) => isIdentityPlatformNoiseToken(token) && nameSet.has(token),
       )
     ) {
       return false;

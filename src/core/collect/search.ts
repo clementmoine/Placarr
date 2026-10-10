@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import { cleanCode } from "@/core/identify/query";
 import { stripVolumeMarkersKeepingNumber } from "@/core/enrich/titles/volumeNumber";
@@ -101,6 +101,10 @@ function fieldContainsConditions(
     { name: { contains: term, mode } },
     { description: { contains: term, mode } },
     { barcode: { contains: term, mode } },
+    // TCG / Carddass: collectors search by number ("250", "d0250") while the
+    // display title is often just the character name.
+    { printKey: { contains: term, mode } },
+    { slug: { contains: term, mode } },
     { metadata: { is: { title: { contains: term, mode } } } },
     { metadata: { is: { sourceQuery: { contains: term, mode } } } },
     { metadata: { is: { aliases: { contains: term, mode } } } },
@@ -220,6 +224,8 @@ export function itemSearchHaystacks(item: {
   name?: string | null;
   description?: string | null;
   barcode?: string | null;
+  printKey?: string | null;
+  slug?: string | null;
   metadata?: {
     title?: string | null;
     aliases?: string[] | string | null;
@@ -232,6 +238,8 @@ export function itemSearchHaystacks(item: {
     item.name,
     item.description,
     item.barcode,
+    item.printKey,
+    item.slug,
     item.metadata?.title,
     item.metadata?.sourceQuery,
   ];

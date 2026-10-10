@@ -1,0 +1,1672 @@
+{
+  "source": "cardgame-club.it Magento singles (Google-indexed shop titles, 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "titles",
+  "line": "carddass-it",
+  "note": "Italian Carddass S1–S5 shop titles as CardGameClub Magento printed them. Live host is now Shopify (sealed only). Titles harvested from Google-indexed listing pages — incomplete vs shop counts (s1 183 / s2 145 / s3 131 / s4 139 / s5 142). ST → ta on disk. No faces. Do not invent the missing names. Pass 2026-08-17: Magento listing URLs 301 to cardgameclub.it (Shopify 404). Wayback CDX 503. staging/cardgameclub-it/cards.json empty. Still 273 titles.",
+  "shopCounts": {
+    "s1": 183,
+    "s2": 145,
+    "s3": 131,
+    "s4": 139,
+    "s5": 142
+  },
+  "counts": {
+    "cards": 273,
+    "bySet": {
+      "s1": 53,
+      "s2": 65,
+      "s3": 58,
+      "s4": 49,
+      "s5": 48
+    }
+  },
+  "cards": [
+    {
+      "number": "cl001",
+      "name": "Inari",
+      "setCode": "s1",
+      "printedRef": "CL-01"
+    },
+    {
+      "number": "cl003",
+      "name": "Gatoo",
+      "setCode": "s1",
+      "printedRef": "CL-03"
+    },
+    {
+      "number": "cl004",
+      "name": "Madame Shijimi",
+      "setCode": "s1",
+      "printedRef": "CL-04"
+    },
+    {
+      "number": "cl005",
+      "name": "Zori",
+      "setCode": "s1",
+      "printedRef": "CL-05"
+    },
+    {
+      "number": "cl008",
+      "name": "Genzo",
+      "setCode": "s1",
+      "printedRef": "CL-08"
+    },
+    {
+      "number": "cl014",
+      "name": "Daimyo del paese del vento",
+      "setCode": "s3",
+      "printedRef": "CL-14"
+    },
+    {
+      "number": "cl015",
+      "name": "Ami",
+      "setCode": "s3",
+      "printedRef": "CL-15"
+    },
+    {
+      "number": "cl016",
+      "name": "Teuchi",
+      "setCode": "s3",
+      "printedRef": "CL-16"
+    },
+    {
+      "number": "cl026",
+      "name": "Emi",
+      "setCode": "s4",
+      "printedRef": "CL-26"
+    },
+    {
+      "number": "ni001",
+      "name": "Naruto Uzumaki",
+      "setCode": "s1",
+      "printedRef": "NI-01"
+    },
+    {
+      "number": "ni003",
+      "name": "Sakura Haruno",
+      "setCode": "s1",
+      "printedRef": "NI-03"
+    },
+    {
+      "number": "ni004",
+      "name": "Ino Yamanaka",
+      "setCode": "s1",
+      "printedRef": "NI-04"
+    },
+    {
+      "number": "ni008",
+      "name": "Iruka",
+      "setCode": "s2",
+      "printedRef": "NI-08"
+    },
+    {
+      "number": "ni010",
+      "name": "Ebisu",
+      "setCode": "s1",
+      "printedRef": "NI-10"
+    },
+    {
+      "number": "ni012",
+      "name": "Asuma Sarutobi",
+      "setCode": "s1",
+      "printedRef": "NI-12"
+    },
+    {
+      "number": "ni013",
+      "name": "Terzo Hokage",
+      "setCode": "s1",
+      "printedRef": "NI-13"
+    },
+    {
+      "number": "ni014",
+      "name": "Gozu dei fratelli Diavolo",
+      "setCode": "s1",
+      "printedRef": "NI-14"
+    },
+    {
+      "number": "ni016",
+      "name": "Haku",
+      "setCode": "s1",
+      "printedRef": "NI-16"
+    },
+    {
+      "number": "ni017",
+      "name": "Haku",
+      "setCode": "s1",
+      "printedRef": "NI-17"
+    },
+    {
+      "number": "ni019",
+      "name": "Naruto Uzumaki",
+      "setCode": "s1",
+      "printedRef": "NI-19"
+    },
+    {
+      "number": "ni021",
+      "name": "Sakura Haruno",
+      "setCode": "s1",
+      "printedRef": "NI-21"
+    },
+    {
+      "number": "ni022",
+      "name": "Iruka",
+      "setCode": "s1",
+      "printedRef": "NI-22"
+    },
+    {
+      "number": "ni023",
+      "name": "Kakashi Hatake",
+      "setCode": "s1",
+      "printedRef": "NI-23"
+    },
+    {
+      "number": "ni028",
+      "name": "Kiba Inuzuka",
+      "setCode": "s1",
+      "printedRef": "NI-28"
+    },
+    {
+      "number": "ni031",
+      "name": "Rock Lee",
+      "setCode": "s1",
+      "printedRef": "NI-31"
+    },
+    {
+      "number": "ni033",
+      "name": "Neji Hyuga",
+      "setCode": "s1",
+      "printedRef": "NI-33"
+    },
+    {
+      "number": "ni034",
+      "name": "Konohamaru",
+      "setCode": "s1",
+      "printedRef": "NI-34"
+    },
+    {
+      "number": "ni038",
+      "name": "Kurenai Yuhi",
+      "setCode": "s1",
+      "printedRef": "NI-38"
+    },
+    {
+      "number": "ni039",
+      "name": "Gai Maito",
+      "setCode": "s1",
+      "printedRef": "NI-39"
+    },
+    {
+      "number": "ni040",
+      "name": "Zabuza Momoki",
+      "setCode": "s1",
+      "printedRef": "NI-40"
+    },
+    {
+      "number": "ni041",
+      "name": "Rock Lee",
+      "setCode": "s1",
+      "printedRef": "NI-41"
+    },
+    {
+      "number": "ni042",
+      "name": "Neji Hyuga",
+      "setCode": "s1",
+      "printedRef": "NI-42"
+    },
+    {
+      "number": "ni045",
+      "name": "Kabuto Yakushi",
+      "setCode": "s1",
+      "printedRef": "NI-45"
+    },
+    {
+      "number": "ni049",
+      "name": "Izumo Kamizuki",
+      "setCode": "s1",
+      "printedRef": "NI-49"
+    },
+    {
+      "number": "ni050",
+      "name": "Kotetsu Hagane",
+      "setCode": "s1",
+      "printedRef": "NI-50"
+    },
+    {
+      "number": "ni051",
+      "name": "Tonbo Tobitake",
+      "setCode": "s4",
+      "printedRef": "NI-51"
+    },
+    {
+      "number": "ni053",
+      "name": "Testuggine ninja",
+      "setCode": "s1",
+      "printedRef": "NI-53"
+    },
+    {
+      "number": "ni054",
+      "name": "Karasu",
+      "setCode": "s1",
+      "printedRef": "NI-54"
+    },
+    {
+      "number": "ni056",
+      "name": "Zaku Abumi",
+      "setCode": "s1",
+      "printedRef": "NI-56"
+    },
+    {
+      "number": "ni057",
+      "name": "Kin Tsuchi",
+      "setCode": "s1",
+      "printedRef": "NI-57"
+    },
+    {
+      "number": "ni061",
+      "name": "Naruto Uzumaki",
+      "setCode": "s2",
+      "printedRef": "NI-61"
+    },
+    {
+      "number": "ni063",
+      "name": "Iruka",
+      "setCode": "s3",
+      "printedRef": "NI-63"
+    },
+    {
+      "number": "ni064",
+      "name": "Kakashi Hatake",
+      "setCode": "s2",
+      "printedRef": "NI-64"
+    },
+    {
+      "number": "ni071",
+      "name": "Shikamaru Nara",
+      "setCode": "s2",
+      "printedRef": "NI-71"
+    },
+    {
+      "number": "ni077",
+      "name": "Baiu",
+      "setCode": "s2",
+      "printedRef": "NI-77"
+    },
+    {
+      "number": "ni079",
+      "name": "Oboro",
+      "setCode": "s3",
+      "printedRef": "NI-79"
+    },
+    {
+      "number": "ni080",
+      "name": "Kagari",
+      "setCode": "s4",
+      "printedRef": "NI-80"
+    },
+    {
+      "number": "ni083",
+      "name": "Anko Mitarashi",
+      "setCode": "s2",
+      "printedRef": "NI-83"
+    },
+    {
+      "number": "ni084",
+      "name": "Orochimaru",
+      "setCode": "s2",
+      "printedRef": "NI-84"
+    },
+    {
+      "number": "ni086",
+      "name": "Sasuke Uchiha",
+      "setCode": "s3",
+      "printedRef": "NI-86"
+    },
+    {
+      "number": "ni087",
+      "name": "Sakura Haruno",
+      "setCode": "s3",
+      "printedRef": "NI-87"
+    },
+    {
+      "number": "ni088",
+      "name": "Ino Yamanaka",
+      "setCode": "s3",
+      "printedRef": "NI-88"
+    },
+    {
+      "number": "ni089",
+      "name": "Shikamaru Nara",
+      "setCode": "s3",
+      "printedRef": "NI-89"
+    },
+    {
+      "number": "ni094",
+      "name": "Rock Lee",
+      "setCode": "s2",
+      "printedRef": "NI-94"
+    },
+    {
+      "number": "ni095",
+      "name": "Neji Hyuga",
+      "setCode": "s2",
+      "printedRef": "NI-95"
+    },
+    {
+      "number": "ni097",
+      "name": "Suzume",
+      "setCode": "s2",
+      "printedRef": "NI-97"
+    },
+    {
+      "number": "ni101",
+      "name": "Jiraiya",
+      "setCode": "s3",
+      "printedRef": "NI-101"
+    },
+    {
+      "number": "ni103",
+      "name": "Dosu Kinuta",
+      "setCode": "s2",
+      "printedRef": "NI-103"
+    },
+    {
+      "number": "ni104",
+      "name": "Zaku Abumi",
+      "setCode": "s2",
+      "printedRef": "NI-104"
+    },
+    {
+      "number": "ni106",
+      "name": "Yoroi Akado",
+      "setCode": "s2",
+      "printedRef": "NI-106"
+    },
+    {
+      "number": "ni109",
+      "name": "Kakashi Hatake",
+      "setCode": "s2",
+      "printedRef": "NI-109"
+    },
+    {
+      "number": "ni111",
+      "name": "Akamaru",
+      "setCode": "s2",
+      "printedRef": "NI-111"
+    },
+    {
+      "number": "ni112",
+      "name": "Gaara",
+      "setCode": "s2",
+      "printedRef": "NI-112"
+    },
+    {
+      "number": "ni113",
+      "name": "Kankuro",
+      "setCode": "s2",
+      "printedRef": "NI-113"
+    },
+    {
+      "number": "ni114",
+      "name": "Temari",
+      "setCode": "s2",
+      "printedRef": "NI-114"
+    },
+    {
+      "number": "ni118",
+      "name": "Naruto Uzumaki",
+      "setCode": "s3",
+      "printedRef": "NI-118"
+    },
+    {
+      "number": "ni120",
+      "name": "Sakura Haruno",
+      "setCode": "s3",
+      "printedRef": "NI-120"
+    },
+    {
+      "number": "ni123",
+      "name": "Kakashi Hatake",
+      "setCode": "s3",
+      "printedRef": "NI-123"
+    },
+    {
+      "number": "ni125",
+      "name": "Hanabi Hyuga",
+      "setCode": "s3",
+      "printedRef": "NI-125"
+    },
+    {
+      "number": "ni128",
+      "name": "Gamabunta",
+      "setCode": "s3",
+      "printedRef": "NI-128"
+    },
+    {
+      "number": "ni130",
+      "name": "Baki",
+      "setCode": "s3",
+      "printedRef": "NI-130"
+    },
+    {
+      "number": "ni136",
+      "name": "Naruto Uzumaki",
+      "setCode": "s3",
+      "printedRef": "NI-136"
+    },
+    {
+      "number": "ni138",
+      "name": "Shikamaru Nara",
+      "setCode": "s3",
+      "printedRef": "NI-138"
+    },
+    {
+      "number": "ni139",
+      "name": "Rock Lee",
+      "setCode": "s3",
+      "printedRef": "NI-139"
+    },
+    {
+      "number": "ni144",
+      "name": "Genma Shiranui",
+      "setCode": "s3",
+      "printedRef": "NI-144"
+    },
+    {
+      "number": "ni145",
+      "name": "Gaara del Deserto",
+      "setCode": "s4",
+      "printedRef": "NI-145"
+    },
+    {
+      "number": "ni147",
+      "name": "Kazekage",
+      "setCode": "s3",
+      "printedRef": "NI-147"
+    },
+    {
+      "number": "ni148",
+      "name": "Kidomaru",
+      "setCode": "s3",
+      "printedRef": "NI-148"
+    },
+    {
+      "number": "ni149",
+      "name": "Jirobo",
+      "setCode": "s3",
+      "printedRef": "NI-149"
+    },
+    {
+      "number": "ni150",
+      "name": "Sakon",
+      "setCode": "s3",
+      "printedRef": "NI-150"
+    },
+    {
+      "number": "ni154",
+      "name": "Naruto Uzumaki",
+      "setCode": "s4",
+      "printedRef": "NI-154"
+    },
+    {
+      "number": "ni156",
+      "name": "Shino Aburame",
+      "setCode": "s4",
+      "printedRef": "NI-156"
+    },
+    {
+      "number": "ni159",
+      "name": "Gen Aburame",
+      "setCode": "s4",
+      "printedRef": "NI-159"
+    },
+    {
+      "number": "ni160",
+      "name": "Inoichi Yamanaka",
+      "setCode": "s4",
+      "printedRef": "NI-160"
+    },
+    {
+      "number": "ni161",
+      "name": "Shikaku Nara",
+      "setCode": "s5",
+      "printedRef": "NI-161"
+    },
+    {
+      "number": "ni164",
+      "name": "Enma, il Sovrano dei Primati",
+      "setCode": "s4",
+      "printedRef": "NI-164"
+    },
+    {
+      "number": "ni167",
+      "name": "Primo Hokage",
+      "setCode": "s4",
+      "printedRef": "NI-167"
+    },
+    {
+      "number": "ni168",
+      "name": "Secondo Hokage",
+      "setCode": "s4",
+      "printedRef": "NI-168"
+    },
+    {
+      "number": "ni170",
+      "name": "Kankuro",
+      "setCode": "s4",
+      "printedRef": "NI-170"
+    },
+    {
+      "number": "ni174",
+      "name": "Sasuke Uchiha",
+      "setCode": "s4",
+      "printedRef": "NI-174"
+    },
+    {
+      "number": "ni175",
+      "name": "Gamakichi",
+      "setCode": "s4",
+      "printedRef": "NI-175"
+    },
+    {
+      "number": "ni177",
+      "name": "Reliquia della Sabbia",
+      "setCode": "s4",
+      "printedRef": "NI-177"
+    },
+    {
+      "number": "ni178",
+      "name": "Gaara del Deserto",
+      "setCode": "s4",
+      "printedRef": "NI-178"
+    },
+    {
+      "number": "ni180",
+      "name": "Yashamaru",
+      "setCode": "s4",
+      "printedRef": "NI-180"
+    },
+    {
+      "number": "ni186",
+      "name": "Naruto Uzumaki & Iruka",
+      "setCode": "s4",
+      "printedRef": "NI-186"
+    },
+    {
+      "number": "ni190",
+      "name": "Shimon Hijiri",
+      "setCode": "s4",
+      "printedRef": "NI-190"
+    },
+    {
+      "number": "ni194",
+      "name": "Asuma Sarutobi",
+      "setCode": "s4",
+      "printedRef": "NI-194"
+    },
+    {
+      "number": "ni196",
+      "name": "Tsume Inuzuka",
+      "setCode": "s4",
+      "printedRef": "NI-196"
+    },
+    {
+      "number": "ni199",
+      "name": "Homura Mitodako",
+      "setCode": "s4",
+      "printedRef": "NI-199"
+    },
+    {
+      "number": "ni205",
+      "name": "Naruto Uzumaki",
+      "setCode": "s5",
+      "printedRef": "NI-205"
+    },
+    {
+      "number": "ni209",
+      "name": "Nawaki",
+      "setCode": "s5",
+      "printedRef": "NI-209"
+    },
+    {
+      "number": "ni213",
+      "name": "Gamatatsu",
+      "setCode": "s5",
+      "printedRef": "NI-213"
+    },
+    {
+      "number": "ni219",
+      "name": "Principessa Tsunade",
+      "setCode": "s5",
+      "printedRef": "NI-219"
+    },
+    {
+      "number": "ni222",
+      "name": "Katsuyu",
+      "setCode": "s5",
+      "printedRef": "NI-222"
+    },
+    {
+      "number": "ni224",
+      "name": "Naruto Uzumaki",
+      "setCode": "s5",
+      "printedRef": "NI-224"
+    },
+    {
+      "number": "ni225",
+      "name": "Sasuke Uchiha",
+      "setCode": "s5",
+      "printedRef": "NI-225"
+    },
+    {
+      "number": "ni234",
+      "name": "Shikamaru Nara & Choji Akimachi",
+      "setCode": "s5",
+      "printedRef": "NI-234"
+    },
+    {
+      "number": "ni235",
+      "name": "Naruto Uzumaki",
+      "setCode": "s5",
+      "printedRef": "NI-235"
+    },
+    {
+      "number": "ni238",
+      "name": "Shikamaru Nara",
+      "setCode": "s5",
+      "printedRef": "NI-238"
+    },
+    {
+      "number": "ni239",
+      "name": "Choji Akimichi",
+      "setCode": "s5",
+      "printedRef": "NI-239"
+    },
+    {
+      "number": "ni240",
+      "name": "Neji Hyuga",
+      "setCode": "s5",
+      "printedRef": "NI-240"
+    },
+    {
+      "number": "ni241",
+      "name": "Kiba Inuzuka",
+      "setCode": "s5",
+      "printedRef": "NI-241"
+    },
+    {
+      "number": "ni247",
+      "name": "Quinto Hokage",
+      "setCode": "s5",
+      "printedRef": "NI-247"
+    },
+    {
+      "number": "ni249",
+      "name": "Aoi Rokusho",
+      "setCode": "s5",
+      "printedRef": "NI-249"
+    },
+    {
+      "number": "ni251",
+      "name": "Jirobo",
+      "setCode": "s5",
+      "printedRef": "NI-251"
+    },
+    {
+      "number": "ni254",
+      "name": "Kimimaro",
+      "setCode": "s5",
+      "printedRef": "NI-254"
+    },
+    {
+      "number": "ni313",
+      "name": "Anko Mitarashi",
+      "setCode": "s5",
+      "printedRef": "NI-313"
+    },
+    {
+      "number": "ta001",
+      "name": "Ramen Ichiraku",
+      "setCode": "s1",
+      "printedRef": "ST-01"
+    },
+    {
+      "number": "ta062",
+      "name": "A digiuno",
+      "setCode": "s2",
+      "printedRef": "ST-62"
+    },
+    {
+      "number": "ta065",
+      "name": "Raccogliere le lattine",
+      "setCode": "s2",
+      "printedRef": "ST-65"
+    },
+    {
+      "number": "ta066",
+      "name": "Strappare le erbacce",
+      "setCode": "s2",
+      "printedRef": "ST-66"
+    },
+    {
+      "number": "ta071",
+      "name": "Fuoriuscita del segno maledetto",
+      "setCode": "s2",
+      "printedRef": "ST-71"
+    },
+    {
+      "number": "ta072",
+      "name": "Rinasci, Sharingan!",
+      "setCode": "s2",
+      "printedRef": "ST-72"
+    },
+    {
+      "number": "ta073",
+      "name": "Sopravvivere nella foresta della morte",
+      "setCode": "s2",
+      "printedRef": "ST-73"
+    },
+    {
+      "number": "ta074",
+      "name": "Segno di riconoscenza",
+      "setCode": "s2",
+      "printedRef": "ST-74"
+    },
+    {
+      "number": "ta076",
+      "name": "Immagine di morte",
+      "setCode": "s2",
+      "printedRef": "ST-76"
+    },
+    {
+      "number": "ta077",
+      "name": "Inno dei ninja",
+      "setCode": "s2",
+      "printedRef": "ST-77"
+    },
+    {
+      "number": "ta079",
+      "name": "Record di attraversamento",
+      "setCode": "s2",
+      "printedRef": "ST-79"
+    },
+    {
+      "number": "ta082",
+      "name": "Procurarsi i viveri",
+      "setCode": "s2",
+      "printedRef": "ST-82"
+    },
+    {
+      "number": "ta083",
+      "name": "Antica promessa",
+      "setCode": "s2",
+      "printedRef": "ST-83"
+    },
+    {
+      "number": "ta084",
+      "name": "Fame",
+      "setCode": "s2",
+      "printedRef": "ST-84"
+    },
+    {
+      "number": "ta085",
+      "name": "Improvvisazione",
+      "setCode": "s2",
+      "printedRef": "ST-85"
+    },
+    {
+      "number": "ta086",
+      "name": "Teoria del contrario",
+      "setCode": "s2",
+      "printedRef": "ST-86"
+    },
+    {
+      "number": "ta087",
+      "name": "Qualificazione per la terza prova",
+      "setCode": "s2",
+      "printedRef": "ST-87"
+    },
+    {
+      "number": "ta088",
+      "name": "Ninja esemplare",
+      "setCode": "s2",
+      "printedRef": "ST-88"
+    },
+    {
+      "number": "ta090",
+      "name": "Riprodurre le tecniche",
+      "setCode": "s2",
+      "printedRef": "ST-90"
+    },
+    {
+      "number": "ta092",
+      "name": "Risultato dello scontro",
+      "setCode": "s2",
+      "printedRef": "ST-92"
+    },
+    {
+      "number": "ta093",
+      "name": "Pedone sacrificabile",
+      "setCode": "s2",
+      "printedRef": "ST-93"
+    },
+    {
+      "number": "ta094",
+      "name": "Movimento nell'ombra",
+      "setCode": "s2",
+      "printedRef": "ST-94"
+    },
+    {
+      "number": "ta096",
+      "name": "Spia del villaggio del suono",
+      "setCode": "s2",
+      "printedRef": "ST-96"
+    },
+    {
+      "number": "ta098",
+      "name": "Comprendere le circostanze",
+      "setCode": "s2",
+      "printedRef": "ST-98"
+    },
+    {
+      "number": "ta099",
+      "name": "Regole dell'esame",
+      "setCode": "s2",
+      "printedRef": "ST-99"
+    },
+    {
+      "number": "ta100",
+      "name": "Pannello elettronico",
+      "setCode": "s2",
+      "printedRef": "ST-100"
+    },
+    {
+      "number": "ta102",
+      "name": "Pomata",
+      "setCode": "s2",
+      "printedRef": "ST-102"
+    },
+    {
+      "number": "ta105",
+      "name": "Vendetta",
+      "setCode": "s2",
+      "printedRef": "ST-105"
+    },
+    {
+      "number": "ta106",
+      "name": "Intervento dei jonin",
+      "setCode": "s2",
+      "printedRef": "ST-106"
+    },
+    {
+      "number": "ta119",
+      "name": "Insegnamento delle tecniche segrete",
+      "setCode": "s3",
+      "printedRef": "ST-119"
+    },
+    {
+      "number": "ta125",
+      "name": "Cospirazione strisciante",
+      "setCode": "s3",
+      "printedRef": "ST-125"
+    },
+    {
+      "number": "ta130",
+      "name": "Fiore carico di speranze",
+      "setCode": "s3",
+      "printedRef": "ST-130"
+    },
+    {
+      "number": "ta136",
+      "name": "Sedici colpi concatenati",
+      "setCode": "s3",
+      "printedRef": "ST-136"
+    },
+    {
+      "number": "ta144",
+      "name": "Cambiare gli abbinamenti",
+      "setCode": "s3",
+      "printedRef": "ST-144"
+    },
+    {
+      "number": "ta148",
+      "name": "Mi arrrendo!",
+      "setCode": "s3",
+      "printedRef": "ST-148"
+    },
+    {
+      "number": "ta150",
+      "name": "Uccello in gabbia",
+      "setCode": "s3",
+      "printedRef": "ST-150"
+    },
+    {
+      "number": "ta159",
+      "name": "Studio delle tecniche proibite",
+      "setCode": "s4",
+      "printedRef": "ST-159"
+    },
+    {
+      "number": "ta163",
+      "name": "Squadra base",
+      "setCode": "s4",
+      "printedRef": "ST-163"
+    },
+    {
+      "number": "ta169",
+      "name": "Tuta speciale",
+      "setCode": "s4",
+      "printedRef": "ST-169"
+    },
+    {
+      "number": "ta174",
+      "name": "Viaggio di ricerca",
+      "setCode": "s4",
+      "printedRef": "ST-174"
+    },
+    {
+      "number": "ta176",
+      "name": "Bagaglio troppo pesante",
+      "setCode": "s4",
+      "printedRef": "ST-176"
+    },
+    {
+      "number": "ta183",
+      "name": "Assassinio del Kazekage",
+      "setCode": "s4",
+      "printedRef": "ST-183"
+    },
+    {
+      "number": "ta187",
+      "name": "I tre divieti del Ninja",
+      "setCode": "s4",
+      "printedRef": "ST-187"
+    },
+    {
+      "number": "ta190",
+      "name": "Festa",
+      "setCode": "s4",
+      "printedRef": "ST-190"
+    },
+    {
+      "number": "ta205",
+      "name": "Grande gara di atletica della foglia",
+      "setCode": "s5",
+      "printedRef": "ST-205"
+    },
+    {
+      "number": "ta207",
+      "name": "Esplosione",
+      "setCode": "s5",
+      "printedRef": "ST-207"
+    },
+    {
+      "number": "ta210",
+      "name": "Volto del maestro Kakashi",
+      "setCode": "s5",
+      "printedRef": "ST-210"
+    },
+    {
+      "number": "ta225",
+      "name": "Punto cieco",
+      "setCode": "s5",
+      "printedRef": "ST-225"
+    },
+    {
+      "number": "ta229",
+      "name": "Incontro improvviso",
+      "setCode": "s5",
+      "printedRef": "ST-229"
+    },
+    {
+      "number": "ta233",
+      "name": "Cento volte piu' forte",
+      "setCode": "s5",
+      "printedRef": "ST-233"
+    },
+    {
+      "number": "ta235",
+      "name": "Formazione migliore",
+      "setCode": "s5",
+      "printedRef": "ST-235"
+    },
+    {
+      "number": "te015",
+      "name": "Tecnica della moltiplicazione del corpo",
+      "setCode": "s1",
+      "printedRef": "TE-15"
+    },
+    {
+      "number": "te021",
+      "name": "Arte della terra-Tecnica della decapitazione sotterranea",
+      "setCode": "s1",
+      "printedRef": "TE-21"
+    },
+    {
+      "number": "te031",
+      "name": "Mannaia decapitatrice",
+      "setCode": "s1",
+      "printedRef": "TE-31"
+    },
+    {
+      "number": "te037",
+      "name": "Tecnica dello Shuriken ombra",
+      "setCode": "s1",
+      "printedRef": "TE-37"
+    },
+    {
+      "number": "te038",
+      "name": "Tecnica del trasferimento di nebbia",
+      "setCode": "s1",
+      "printedRef": "TE-38"
+    },
+    {
+      "number": "te041",
+      "name": "Tecnica del richiamo-Arte della terra-Artigli inseguitori sotterranei",
+      "setCode": "s1",
+      "printedRef": "TE-41"
+    },
+    {
+      "number": "te043",
+      "name": "Ombra imprigionante",
+      "setCode": "s1",
+      "printedRef": "TE-43"
+    },
+    {
+      "number": "te046",
+      "name": "Illusione",
+      "setCode": "s1",
+      "printedRef": "TE-46"
+    },
+    {
+      "number": "te047",
+      "name": "Tecnica del disorientamento",
+      "setCode": "s1",
+      "printedRef": "TE-47"
+    },
+    {
+      "number": "te048",
+      "name": "Sharingan",
+      "setCode": "s1",
+      "printedRef": "TE-48"
+    },
+    {
+      "number": "te049",
+      "name": "Tecnica superiore della moltiplicazione del corpo",
+      "setCode": "s1",
+      "printedRef": "TE-49"
+    },
+    {
+      "number": "te052",
+      "name": "Onda tagliente",
+      "setCode": "s1",
+      "printedRef": "TE-52"
+    },
+    {
+      "number": "te053",
+      "name": "Tuono perforante",
+      "setCode": "s1",
+      "printedRef": "TE-53"
+    },
+    {
+      "number": "te054",
+      "name": "Tecnica delle lame di vento",
+      "setCode": "s1",
+      "printedRef": "TE-54"
+    },
+    {
+      "number": "te056",
+      "name": "Apertura del terzo occhio",
+      "setCode": "s1",
+      "printedRef": "TE-56"
+    },
+    {
+      "number": "te057",
+      "name": "Scudo di sabbia",
+      "setCode": "s1",
+      "printedRef": "TE-57"
+    },
+    {
+      "number": "te059",
+      "name": "Makibishi",
+      "setCode": "s1",
+      "printedRef": "TE-59"
+    },
+    {
+      "number": "te060",
+      "name": "Copiare",
+      "setCode": "s1",
+      "printedRef": "TE-60"
+    },
+    {
+      "number": "te063",
+      "name": "Sharingan",
+      "setCode": "s2",
+      "printedRef": "TE-63"
+    },
+    {
+      "number": "te064",
+      "name": "Shuriken gigante",
+      "setCode": "s3",
+      "printedRef": "TE-64"
+    },
+    {
+      "number": "te065",
+      "name": "Fumogeno",
+      "setCode": "s2",
+      "printedRef": "TE-65"
+    },
+    {
+      "number": "te067",
+      "name": "Carta-bomba che esplode con un timer",
+      "setCode": "s2",
+      "printedRef": "TE-67"
+    },
+    {
+      "number": "te068",
+      "name": "Adesione per mezzo del chakra",
+      "setCode": "s2",
+      "printedRef": "TE-68"
+    },
+    {
+      "number": "te069",
+      "name": "Tecnica della paralisi",
+      "setCode": "s2",
+      "printedRef": "TE-69"
+    },
+    {
+      "number": "te073",
+      "name": "Arte del fuoco-Tecnica del drago di fuoco",
+      "setCode": "s2",
+      "printedRef": "TE-73"
+    },
+    {
+      "number": "te074",
+      "name": "Tecnica del richiamo",
+      "setCode": "s2",
+      "printedRef": "TE-74"
+    },
+    {
+      "number": "te076",
+      "name": "Tecnica dell'ombra della serpe",
+      "setCode": "s2",
+      "printedRef": "TE-76"
+    },
+    {
+      "number": "te079",
+      "name": "Arte del vento-Tempesta di sabbia",
+      "setCode": "s2",
+      "printedRef": "TE-79"
+    },
+    {
+      "number": "te080",
+      "name": "Tecnica dello smarrimento",
+      "setCode": "s3",
+      "printedRef": "TE-80"
+    },
+    {
+      "number": "te081",
+      "name": "Tecnica dei servitori della Bruma",
+      "setCode": "s3",
+      "printedRef": "TE-81"
+    },
+    {
+      "number": "te083",
+      "name": "Formazione Ino-Shika-Cho",
+      "setCode": "s2",
+      "printedRef": "TE-83"
+    },
+    {
+      "number": "te085",
+      "name": "Colpo concatenato di Naruto Uzumaki",
+      "setCode": "s2",
+      "printedRef": "TE-85"
+    },
+    {
+      "number": "te087",
+      "name": "Le otto porte difensive del corpo",
+      "setCode": "s2",
+      "printedRef": "TE-87"
+    },
+    {
+      "number": "te089",
+      "name": "Arte magica selvatica-Moltiplicazione selvatica",
+      "setCode": "s2",
+      "printedRef": "TE-89"
+    },
+    {
+      "number": "te095",
+      "name": "Tecnica dell'assorbimento del chakra",
+      "setCode": "s2",
+      "printedRef": "TE-95"
+    },
+    {
+      "number": "te096",
+      "name": "Strangolare",
+      "setCode": "s2",
+      "printedRef": "TE-96"
+    },
+    {
+      "number": "te097",
+      "name": "Tecnica della moltiplicazione oscura del corpo",
+      "setCode": "s3",
+      "printedRef": "TE-97"
+    },
+    {
+      "number": "te098",
+      "name": "Arte della terra-Tecnica del pesce sotterraneo",
+      "setCode": "s3",
+      "printedRef": "TE-98"
+    },
+    {
+      "number": "te099",
+      "name": "Armatura di sabbia",
+      "setCode": "s2",
+      "printedRef": "TE-99"
+    },
+    {
+      "number": "te100",
+      "name": "Funerale del deserto",
+      "setCode": "s2",
+      "printedRef": "TE-100"
+    },
+    {
+      "number": "te102",
+      "name": "Proiettile umano travolgente",
+      "setCode": "s2",
+      "printedRef": "TE-102"
+    },
+    {
+      "number": "te103",
+      "name": "Juken",
+      "setCode": "s2",
+      "printedRef": "TE-103"
+    },
+    {
+      "number": "te107",
+      "name": "Tecnica dell'omicidio silenzioso",
+      "setCode": "s3",
+      "printedRef": "TE-107"
+    },
+    {
+      "number": "te108",
+      "name": "Byakugan",
+      "setCode": "s3",
+      "printedRef": "TE-108"
+    },
+    {
+      "number": "te109",
+      "name": "Tecnica del richiamo",
+      "setCode": "s3",
+      "printedRef": "TE-109"
+    },
+    {
+      "number": "te110",
+      "name": "Tecnica dell'erotismo",
+      "setCode": "s3",
+      "printedRef": "TE-110"
+    },
+    {
+      "number": "te111",
+      "name": "Loto posteriore",
+      "setCode": "s3",
+      "printedRef": "TE-111"
+    },
+    {
+      "number": "te113",
+      "name": "Dolore millenario",
+      "setCode": "s3",
+      "printedRef": "TE-113"
+    },
+    {
+      "number": "te114",
+      "name": "Danza della luna",
+      "setCode": "s3",
+      "printedRef": "TE-114"
+    },
+    {
+      "number": "te124",
+      "name": "Arte della terra",
+      "setCode": "s3",
+      "printedRef": "TE-124"
+    },
+    {
+      "number": "te125",
+      "name": "Colpo",
+      "setCode": "s3",
+      "printedRef": "TE-125"
+    },
+    {
+      "number": "te127",
+      "name": "Kunai",
+      "setCode": "s3",
+      "printedRef": "TE-127"
+    },
+    {
+      "number": "te128",
+      "name": "Tecnica superiore della moltiplicazione del corpo",
+      "setCode": "s3",
+      "printedRef": "TE-128"
+    },
+    {
+      "number": "te130",
+      "name": "Sharingan",
+      "setCode": "s3",
+      "printedRef": "TE-130"
+    },
+    {
+      "number": "te131",
+      "name": "Mille falchi",
+      "setCode": "s3",
+      "printedRef": "TE-131"
+    },
+    {
+      "number": "te132",
+      "name": "Tecnica del palmo mistico",
+      "setCode": "s3",
+      "printedRef": "TE-132"
+    },
+    {
+      "number": "te133",
+      "name": "Tecnica dell'anima morta",
+      "setCode": "s3",
+      "printedRef": "TE-133"
+    },
+    {
+      "number": "te134",
+      "name": "Tecnica del tempio del nirvana",
+      "setCode": "s3",
+      "printedRef": "TE-134"
+    },
+    {
+      "number": "te136",
+      "name": "Ventaglio gigante",
+      "setCode": "s3",
+      "printedRef": "TE-136"
+    },
+    {
+      "number": "te137",
+      "name": "Tecnica delle lame di vento",
+      "setCode": "s3",
+      "printedRef": "TE-137"
+    },
+    {
+      "number": "te139",
+      "name": "Copia di sabbia",
+      "setCode": "s3",
+      "printedRef": "TE-139"
+    },
+    {
+      "number": "te140",
+      "name": "Tecnica del controllo dell'ombra",
+      "setCode": "s3",
+      "printedRef": "TE-140"
+    },
+    {
+      "number": "te143",
+      "name": "Rotazione suprema",
+      "setCode": "s3",
+      "printedRef": "TE-143"
+    },
+    {
+      "number": "te144",
+      "name": "Sessantaquattro chiusure",
+      "setCode": "s3",
+      "printedRef": "TE-144"
+    },
+    {
+      "number": "te145",
+      "name": "Duemila colpi concatenati di Naruto Uzumaki",
+      "setCode": "s4",
+      "printedRef": "TE-145"
+    },
+    {
+      "number": "te146",
+      "name": "Attacco multiplo travolgente",
+      "setCode": "s4",
+      "printedRef": "TE-146"
+    },
+    {
+      "number": "te148",
+      "name": "Arte del fuoco-Fiato ardente del Drago",
+      "setCode": "s4",
+      "printedRef": "TE-148"
+    },
+    {
+      "number": "te150",
+      "name": "Spada Kusanagi",
+      "setCode": "s4",
+      "printedRef": "TE-150"
+    },
+    {
+      "number": "te152",
+      "name": "Arte dell'acqua-Muro acquatico",
+      "setCode": "s4",
+      "printedRef": "TE-152"
+    },
+    {
+      "number": "te157",
+      "name": "Arte illusoria-Tecnica dell'oscurita'",
+      "setCode": "s4",
+      "printedRef": "TE-157"
+    },
+    {
+      "number": "te158",
+      "name": "Arte della terra-Paramento terrestre",
+      "setCode": "s4",
+      "printedRef": "TE-158"
+    },
+    {
+      "number": "te162",
+      "name": "Tecnica dell'espansione",
+      "setCode": "s4",
+      "printedRef": "TE-162"
+    },
+    {
+      "number": "te163",
+      "name": "Tecnica del richiamo",
+      "setCode": "s4",
+      "printedRef": "TE-163"
+    },
+    {
+      "number": "te168",
+      "name": "Arte del vento-Proiettili di aria congelante",
+      "setCode": "s4",
+      "printedRef": "TE-168"
+    },
+    {
+      "number": "te169",
+      "name": "Testata",
+      "setCode": "s4",
+      "printedRef": "TE-169"
+    },
+    {
+      "number": "te171",
+      "name": "Mille falchi",
+      "setCode": "s4",
+      "printedRef": "TE-171"
+    },
+    {
+      "number": "te174",
+      "name": "Entrata dinamica",
+      "setCode": "s4",
+      "printedRef": "TE-174"
+    },
+    {
+      "number": "te175",
+      "name": "Tecnica della prigionia della bocca di rospo",
+      "setCode": "s4",
+      "printedRef": "TE-175"
+    },
+    {
+      "number": "te183",
+      "name": "Ragnatela intrappolante",
+      "setCode": "s4",
+      "printedRef": "TE-183"
+    },
+    {
+      "number": "te184",
+      "name": "Pelle di squalo",
+      "setCode": "s4",
+      "printedRef": "TE-184"
+    },
+    {
+      "number": "te187",
+      "name": "Arte illusoria-Sigillo dell'albero imprigionante",
+      "setCode": "s4",
+      "printedRef": "TE-187"
+    },
+    {
+      "number": "te189",
+      "name": "Tecnica del sigillo-Piroconfinamento",
+      "setCode": "s4",
+      "printedRef": "TE-189"
+    },
+    {
+      "number": "te191",
+      "name": "Tirapugni a lama",
+      "setCode": "s4",
+      "printedRef": "TE-191"
+    },
+    {
+      "number": "te192",
+      "name": "Colpo con l'indice",
+      "setCode": "s5",
+      "printedRef": "TE-192"
+    },
+    {
+      "number": "te193",
+      "name": "Arte magica-Simulacro di spine",
+      "setCode": "s5",
+      "printedRef": "TE-193"
+    },
+    {
+      "number": "te195",
+      "name": "Arte del fuoco-Fiato incendiario del rospo",
+      "setCode": "s5",
+      "printedRef": "TE-195"
+    },
+    {
+      "number": "te201",
+      "name": "Arte magica-Nebbia velenosa",
+      "setCode": "s5",
+      "printedRef": "TE-201"
+    },
+    {
+      "number": "te202",
+      "name": "Arte magica-Rinascita",
+      "setCode": "s5",
+      "printedRef": "TE-202"
+    },
+    {
+      "number": "te204",
+      "name": "Tecnica del richiamo",
+      "setCode": "s5",
+      "printedRef": "TE-204"
+    },
+    {
+      "number": "te206",
+      "name": "Acido vischioso",
+      "setCode": "s5",
+      "printedRef": "TE-206"
+    },
+    {
+      "number": "te207",
+      "name": "Cura medica",
+      "setCode": "s5",
+      "printedRef": "TE-207"
+    },
+    {
+      "number": "te208",
+      "name": "Voragine",
+      "setCode": "s5",
+      "printedRef": "TE-208"
+    },
+    {
+      "number": "te211",
+      "name": "Mille falchi",
+      "setCode": "s5",
+      "printedRef": "TE-211"
+    },
+    {
+      "number": "te212",
+      "name": "Arte del fuoco-Tecnica della palla di fuoco suprema",
+      "setCode": "s5",
+      "printedRef": "TE-212"
+    },
+    {
+      "number": "te213",
+      "name": "Trappola",
+      "setCode": "s5",
+      "printedRef": "TE-213"
+    },
+    {
+      "number": "te214",
+      "name": "Applicazione della prima fase",
+      "setCode": "s5",
+      "printedRef": "TE-214"
+    },
+    {
+      "number": "te215",
+      "name": "Spada del dio del fulmine",
+      "setCode": "s5",
+      "printedRef": "TE-215"
+    },
+    {
+      "number": "te217",
+      "name": "Tecnica del filo",
+      "setCode": "s5",
+      "printedRef": "TE-217"
+    },
+    {
+      "number": "te218",
+      "name": "Marcatura dinamica in volo",
+      "setCode": "s5",
+      "printedRef": "TE-218"
+    },
+    {
+      "number": "te220",
+      "name": "Arte della terra-Prigione di roccia",
+      "setCode": "s5",
+      "printedRef": "TE-220"
+    },
+    {
+      "number": "te221",
+      "name": "Arte della terra-Disco roccioso",
+      "setCode": "s5",
+      "printedRef": "TE-221"
+    },
+    {
+      "number": "te222",
+      "name": "Arte della terra-Rovesciamento terrestre",
+      "setCode": "s5",
+      "printedRef": "TE-222"
+    },
+    {
+      "number": "te226",
+      "name": "Sigillo nero",
+      "setCode": "s5",
+      "printedRef": "TE-226"
+    },
+    {
+      "number": "te230",
+      "name": "Tecnica del gigantismo",
+      "setCode": "s5",
+      "printedRef": "TE-230"
+    },
+    {
+      "number": "te231",
+      "name": "Juken",
+      "setCode": "s5",
+      "printedRef": "TE-231"
+    }
+  ],
+  "facesVerdict": {
+    "on": "2026-08-20",
+    "state": "appariement non fiable — ne pas ingérer de faces",
+    "measured": "Une seule face avait été téléchargée depuis cette source, `ni069.jpg` pour NI-69 « Sakura Haruno ». Elle montre une **STRATEGIA** — 第2試験官みたらしアンコ / « ANKO MITARASHI È QUI! ». Ni le personnage ni la famille ne correspondent. 1 sur 1 fausse.",
+    "cause": "L'image vient du cache media de la boutique (`4-625.jpg`), un identifiant interne qui ne porte aucun numéro de carte : rien dans le fichier ne permet de recouper l'appariement titre ↔ vignette fait sur la page de liste.",
+    "action": "Face retirée du catalogue. Les 121 entrées de `staging/cardgameclub-it/faces.json` restent sur le disque mais ne doivent pas être versées tant qu'un recoupement n'existe pas — un numéro lisible sur l'image, ou une seconde source.",
+    "keep": "Les **titres** de ce relevé ne sont pas remis en cause : ils viennent des pages de liste, pas de l'appariement d'images."
+  }
+}

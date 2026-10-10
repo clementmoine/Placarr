@@ -70,6 +70,49 @@ describe("preferRequestedDisplayTitle", () => {
     expect(result.imageUrl).toBeUndefined();
     expect(result.attachments).toBeUndefined();
   });
+
+  it("keeps the catalog card title when the request was a collector code", () => {
+    const metadata: MetadataResult = {
+      title: "Ariel - Sur des jambes humaines",
+      externalIds: { printKey: "lorcana:1-1", lorcanajson: "1" },
+      imageUrl: "https://example.test/ariel.jpg",
+    };
+    const result = preferRequestedDisplayTitle(metadata, "TFC#001", {
+      shelfType: "tcg",
+    });
+    expect(result.title).toBe("Ariel - Sur des jambes humaines");
+    expect(result.imageUrl).toBe("https://example.test/ariel.jpg");
+  });
+});
+
+describe("mergeMetadata print lookup covers", () => {
+  it("keeps catalog cover when requested title is a collector code", () => {
+    const merged = mergeMetadata(
+      "tcg",
+      [
+        {
+          providerId: "lorcanajson",
+          metadata: {
+            title: "Ariel - Chanteuse exceptionnelle",
+            imageUrl: "https://example.test/ariel-2.jpg",
+            externalIds: { printKey: "lorcana:1-2", lorcanajson: "2" },
+            attachments: [
+              {
+                type: "cover",
+                url: "https://example.test/ariel-2.jpg",
+                source: "lorcanajson",
+              },
+            ],
+          },
+        },
+      ],
+      { requestedTitle: "TFC#002" },
+    );
+
+    expect(merged.title).toBe("Ariel - Chanteuse exceptionnelle");
+    expect(merged.imageUrl).toBe("https://example.test/ariel-2.jpg");
+    expect(merged.externalIds?.printKey).toBe("lorcana:1-2");
+  });
 });
 
 describe("mergeMetadata generic function", () => {
@@ -957,7 +1000,60 @@ describe("mergeMetadata generic function", () => {
         }),
       ]),
     );
+    expect(
+      merged.attachments?.filter(
+        (attachment) =>
+          attachment.url === "https://example.test/pc-pink-main.jpg",
+      ),
+    ).toHaveLength(1);
     expect(merged.imageUrl).toBe("https://example.test/pc-pink-main.jpg");
+  });
+
+  it("does not duplicate gallery covers when imageUrl matches an attachment", () => {
+    const cover =
+      "https://www.lddb.com/cover/ld/33801-33900/33828.jpg";
+    const merged = mergeMetadata("movies", [
+      {
+        providerId: "lddb",
+        metadata: {
+          title: "Toy Story",
+          imageUrl: cover,
+          attachments: [
+            {
+              type: "cover",
+              url: cover,
+              role: "front",
+              title: "Box - Front",
+              source: "lddb",
+            },
+          ],
+        },
+      },
+      {
+        providerId: "cdandlp",
+        metadata: {
+          title: "Toy Story",
+          imageUrl: "https://img.cdandlp.com/2017/09/imgL/118938116.jpg",
+          attachments: [
+            {
+              type: "cover",
+              url: "https://img.cdandlp.com/2017/09/imgL/118938116.jpg",
+              role: "front",
+              title: "Cover",
+              source: "cdandlp",
+            },
+          ],
+        },
+      },
+    ]);
+
+    const urls = merged.attachments?.map((a) => a.url) ?? [];
+    expect(urls.filter((url) => url === cover)).toHaveLength(1);
+    expect(
+      urls.filter(
+        (url) => url === "https://img.cdandlp.com/2017/09/imgL/118938116.jpg",
+      ),
+    ).toHaveLength(1);
   });
 
   it("prefers a clean alias over a noisy retailer object title", () => {

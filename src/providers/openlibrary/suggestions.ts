@@ -1,10 +1,10 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 export async function getOpenLibrarySuggestions(
   name: string,
 ): Promise<string[]> {
   try {
-    const res = await axios.get(
+    const res = await httpGet<{ docs?: Array<{ title?: string }> }>(
       `https://openlibrary.org/search.json?q=${encodeURIComponent(name)}&limit=5`,
     );
     return (res.data?.docs || [])

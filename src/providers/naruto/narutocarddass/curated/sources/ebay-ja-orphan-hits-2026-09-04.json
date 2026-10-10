@@ -1,0 +1,556 @@
+{
+  "observed": "2026-09-04",
+  "source": "ebay.fr search paste CDN (no store crawl)",
+  "queries": [
+    "naruto 忍- Card Game",
+    "naruto 術- Card Game",
+    "naruto 作- Card Game"
+  ],
+  "scope": "JA truly-faceless orphans from ebay-carddass-face-gaps-2026-09-04.json (ni/te/ta only; promos/依 skipped this pass)",
+  "skipped": [
+    {
+      "printedRef": "術-36",
+      "reason": "listing titled Version 2 — variant risk"
+    },
+    {
+      "printedRef": "忍-63",
+      "reason": "Version 2 seen earlier — variant risk"
+    }
+  ],
+  "faces": [
+    {
+      "printedRef": "作-246",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-246",
+      "listing": "https://www.ebay.fr/itm/265946762017",
+      "imageId": "sKMAAOSwDz1jUb9z",
+      "url": "https://i.ebayimg.com/images/g/sKMAAOSwDz1jUb9z/s-l1600.webp",
+      "staging": "staging/ebay/ta0246-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-274",
+      "lang": "ja",
+      "title": "Naruto Card Game Rare 作-274",
+      "listing": "https://www.ebay.fr/itm/253750515268",
+      "imageId": "2bUAAOSw2FVbSQ8z",
+      "url": "https://i.ebayimg.com/images/g/2bUAAOSw2FVbSQ8z/s-l1600.webp",
+      "staging": "staging/ebay/ta0274-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-275",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-275",
+      "listing": "https://www.ebay.fr/itm/255786715669",
+      "imageId": "f6IAAOSwWEdjUcG3",
+      "url": "https://i.ebayimg.com/images/g/f6IAAOSwWEdjUcG3/s-l1600.webp",
+      "staging": "staging/ebay/ta0275-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-276",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-276",
+      "listing": "https://www.ebay.fr/itm/265946770463",
+      "imageId": "qjYAAOSwGM9jUcHa",
+      "url": "https://i.ebayimg.com/images/g/qjYAAOSwGM9jUcHa/s-l1600.webp",
+      "staging": "staging/ebay/ta0276-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-278",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-278",
+      "listing": "https://www.ebay.fr/itm/255786716671",
+      "imageId": "1OYAAOSwDZBjUcIZ",
+      "url": "https://i.ebayimg.com/images/g/1OYAAOSwDZBjUcIZ/s-l1600.webp",
+      "staging": "staging/ebay/ta0278-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-281",
+      "lang": "ja",
+      "title": "Naruto Card Game Rare 作-281",
+      "listing": "https://www.ebay.fr/itm/263813764358",
+      "imageId": "gd4AAOSwzlFbSQ9e",
+      "url": "https://i.ebayimg.com/images/g/gd4AAOSwzlFbSQ9e/s-l1600.webp",
+      "staging": "staging/ebay/ta0281-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-284",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-284",
+      "listing": "https://www.ebay.fr/itm/255786717488",
+      "imageId": "ydIAAOSwB8djUcJY",
+      "url": "https://i.ebayimg.com/images/g/ydIAAOSwB8djUcJY/s-l1600.webp",
+      "staging": "staging/ebay/ta0284-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-286",
+      "lang": "ja",
+      "title": "Naruto Card Game Rare 作-286",
+      "listing": "https://www.ebay.fr/itm/263304165541",
+      "imageId": "6wgAAOSwpvZaAPBO",
+      "url": "https://i.ebayimg.com/images/g/6wgAAOSwpvZaAPBO/s-l1600.webp",
+      "staging": "staging/ebay/ta0286-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-287",
+      "lang": "ja",
+      "title": "Naruto Card Game Rare 作-287",
+      "listing": "https://www.ebay.fr/itm/253246151974",
+      "imageId": "6wkAAOSwWv5aAPB7",
+      "url": "https://i.ebayimg.com/images/g/6wkAAOSwWv5aAPB7/s-l1600.webp",
+      "staging": "staging/ebay/ta0287-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-289",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-289",
+      "listing": "https://www.ebay.fr/itm/255786718568",
+      "imageId": "essAAOSw~vhjUcKq",
+      "url": "https://i.ebayimg.com/images/g/essAAOSw~vhjUcKq/s-l1600.webp",
+      "staging": "staging/ebay/ta0289-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-290",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-290",
+      "listing": "https://www.ebay.fr/itm/265946776087",
+      "imageId": "VAIAAOSwdydjUcLQ",
+      "url": "https://i.ebayimg.com/images/g/VAIAAOSwdydjUcLQ/s-l1600.webp",
+      "staging": "staging/ebay/ta0290-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-291",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-291",
+      "listing": "https://www.ebay.fr/itm/255786719044",
+      "imageId": "quMAAOSwfk1jUcLw",
+      "url": "https://i.ebayimg.com/images/g/quMAAOSwfk1jUcLw/s-l1600.webp",
+      "staging": "staging/ebay/ta0291-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-292",
+      "lang": "ja",
+      "title": "Naruto Card Game Rare 作-292",
+      "listing": "https://www.ebay.fr/itm/253750517688",
+      "imageId": "GekAAOSwAzZbSQ-u",
+      "url": "https://i.ebayimg.com/images/g/GekAAOSwAzZbSQ-u/s-l1600.webp",
+      "staging": "staging/ebay/ta0292-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-293",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-293",
+      "listing": "https://www.ebay.fr/itm/255786719491",
+      "imageId": "2Z8AAOSwo6JjUcMS",
+      "url": "https://i.ebayimg.com/images/g/2Z8AAOSwo6JjUcMS/s-l1600.webp",
+      "staging": "staging/ebay/ta0293-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-297",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-297",
+      "listing": "https://www.ebay.fr/itm/265946777085",
+      "imageId": "gAsAAOSwtlVjUcOC",
+      "url": "https://i.ebayimg.com/images/g/gAsAAOSwtlVjUcOC/s-l1600.webp",
+      "staging": "staging/ebay/ta0297-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-308",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-308",
+      "listing": "https://www.ebay.fr/itm/265946778078",
+      "imageId": "sGgAAOSws3FjUcQZ",
+      "url": "https://i.ebayimg.com/images/g/sGgAAOSws3FjUcQZ/s-l1600.webp",
+      "staging": "staging/ebay/ta0308-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-323",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-323",
+      "listing": "https://www.ebay.fr/itm/265946778912",
+      "imageId": "plAAAOSwyzJjUcR0",
+      "url": "https://i.ebayimg.com/images/g/plAAAOSwyzJjUcR0/s-l1600.webp",
+      "staging": "staging/ebay/ta0323-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-333",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-333",
+      "listing": "https://www.ebay.fr/itm/265946779637",
+      "imageId": "sPYAAOSwPJhjUcTQ",
+      "url": "https://i.ebayimg.com/images/g/sPYAAOSwPJhjUcTQ/s-l1600.webp",
+      "staging": "staging/ebay/ta0333-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-90",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-90 (2003)",
+      "listing": "https://www.ebay.fr/itm/255786600207",
+      "imageId": "PqMAAOSwF~RjUafF",
+      "url": "https://i.ebayimg.com/images/g/PqMAAOSwF~RjUafF/s-l1600.webp",
+      "staging": "staging/ebay/ta0090-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-279",
+      "lang": "ja",
+      "title": "Naruto Card Game Super Rare 術-279",
+      "listing": "https://www.ebay.fr/itm/263812952899",
+      "imageId": "Y90AAOSwOaBbSIxJ",
+      "url": "https://i.ebayimg.com/images/g/Y90AAOSwOaBbSIxJ/s-l1600.webp",
+      "staging": "staging/ebay/te0279-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-286",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-286",
+      "listing": "https://www.ebay.fr/itm/255785100969",
+      "imageId": "W5QAAOSwct5jUJF~",
+      "url": "https://i.ebayimg.com/images/g/W5QAAOSwct5jUJF~/s-l1600.webp",
+      "staging": "staging/ebay/te0286-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-292",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-292",
+      "listing": "https://www.ebay.fr/itm/255785102033",
+      "imageId": "xP0AAOSwzF5jUJHG",
+      "url": "https://i.ebayimg.com/images/g/xP0AAOSwzF5jUJHG/s-l1600.webp",
+      "staging": "staging/ebay/te0292-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-293",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-293",
+      "listing": "https://www.ebay.fr/itm/255785102799",
+      "imageId": "S9AAAOSwtk9jUJHo",
+      "url": "https://i.ebayimg.com/images/g/S9AAAOSwtk9jUJHo/s-l1600.webp",
+      "staging": "staging/ebay/te0293-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-305",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-305",
+      "listing": "https://www.ebay.fr/itm/265945190812",
+      "imageId": "gUIAAOSwG1FjUJJi",
+      "url": "https://i.ebayimg.com/images/g/gUIAAOSwG1FjUJJi/s-l1600.webp",
+      "staging": "staging/ebay/te0305-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-306",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-306",
+      "listing": "https://www.ebay.fr/itm/265945191211",
+      "imageId": "xGsAAOSwMS5jUJKM",
+      "url": "https://i.ebayimg.com/images/g/xGsAAOSwMS5jUJKM/s-l1600.webp",
+      "staging": "staging/ebay/te0306-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-307",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-307",
+      "listing": "https://www.ebay.fr/itm/255785110976",
+      "imageId": "csEAAOSwuGhjUJKy",
+      "url": "https://i.ebayimg.com/images/g/csEAAOSwuGhjUJKy/s-l1600.webp",
+      "staging": "staging/ebay/te0307-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-308",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-308",
+      "listing": "https://www.ebay.fr/itm/265945192090",
+      "imageId": "gbcAAOSwQUFjUJLV",
+      "url": "https://i.ebayimg.com/images/g/gbcAAOSwQUFjUJLV/s-l1600.webp",
+      "staging": "staging/ebay/te0308-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-311",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-311",
+      "listing": "https://www.ebay.fr/itm/255785113421",
+      "imageId": "LsQAAOSwRltjUJNB",
+      "url": "https://i.ebayimg.com/images/g/LsQAAOSwRltjUJNB/s-l1600.webp",
+      "staging": "staging/ebay/te0311-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-312",
+      "lang": "ja",
+      "title": "Naruto Card Game Rare 術-312",
+      "listing": "https://www.ebay.fr/itm/253246031955",
+      "imageId": "PC8AAOSwzQFaANPk",
+      "url": "https://i.ebayimg.com/images/g/PC8AAOSwzQFaANPk/s-l1600.webp",
+      "staging": "staging/ebay/te0312-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-316",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-316",
+      "listing": "https://www.ebay.fr/itm/255785114666",
+      "imageId": "cy4AAOSwHqpjUJOR",
+      "url": "https://i.ebayimg.com/images/g/cy4AAOSwHqpjUJOR/s-l1600.webp",
+      "staging": "staging/ebay/te0316-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-318",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-318",
+      "listing": "https://www.ebay.fr/itm/255785115161",
+      "imageId": "4cYAAOSwloljUJOx",
+      "url": "https://i.ebayimg.com/images/g/4cYAAOSwloljUJOx/s-l1600.webp",
+      "staging": "staging/ebay/te0318-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-321",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-321",
+      "listing": "https://www.ebay.fr/itm/255785115579",
+      "imageId": "XkoAAOSwLzRjUJPd",
+      "url": "https://i.ebayimg.com/images/g/XkoAAOSwLzRjUJPd/s-l1600.webp",
+      "staging": "staging/ebay/te0321-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-334",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-334",
+      "listing": "https://www.ebay.fr/itm/255785117804",
+      "imageId": "kOQAAOSwALJjUJR0",
+      "url": "https://i.ebayimg.com/images/g/kOQAAOSwALJjUJR0/s-l1600.webp",
+      "staging": "staging/ebay/te0334-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-340",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-340",
+      "listing": "https://www.ebay.fr/itm/265945203013",
+      "imageId": "GcoAAOSw7HNjUJTq",
+      "url": "https://i.ebayimg.com/images/g/GcoAAOSw7HNjUJTq/s-l1600.webp",
+      "staging": "staging/ebay/te0340-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-351",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-351",
+      "listing": "https://www.ebay.fr/itm/265945203468",
+      "imageId": "UnMAAOSwmMBjUJUH",
+      "url": "https://i.ebayimg.com/images/g/UnMAAOSwmMBjUJUH/s-l1600.webp",
+      "staging": "staging/ebay/te0351-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-352",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-352",
+      "listing": "https://www.ebay.fr/itm/265945203987",
+      "imageId": "6EgAAOSwuJ5jUJUi",
+      "url": "https://i.ebayimg.com/images/g/6EgAAOSwuJ5jUJUi/s-l1600.webp",
+      "staging": "staging/ebay/te0352-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-354",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-354",
+      "listing": "https://www.ebay.fr/itm/255785120285",
+      "imageId": "aHAAAOSwFjFjUJVA",
+      "url": "https://i.ebayimg.com/images/g/aHAAAOSwFjFjUJVA/s-l1600.webp",
+      "staging": "staging/ebay/te0354-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "術-361",
+      "lang": "ja",
+      "title": "Naruto Card Game 術-361",
+      "listing": "https://www.ebay.fr/itm/265945205325",
+      "imageId": "xaIAAOSw4YtjUJV4",
+      "url": "https://i.ebayimg.com/images/g/xaIAAOSw4YtjUJV4/s-l1600.webp",
+      "staging": "staging/ebay/te0361-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-347",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-347",
+      "listing": "https://www.ebay.fr/itm/254408752591",
+      "imageId": "dVIAAOSw-qNdvc24",
+      "url": "https://i.ebayimg.com/images/g/dVIAAOSw-qNdvc24/s-l1600.webp",
+      "staging": "staging/ebay/ni0347-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-350",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-350",
+      "listing": "https://www.ebay.fr/itm/264519773726",
+      "imageId": "GcMAAOSwRs1dvc4H",
+      "url": "https://i.ebayimg.com/images/g/GcMAAOSwRs1dvc4H/s-l1600.webp",
+      "staging": "staging/ebay/ni0350-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-351",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-351",
+      "listing": "https://www.ebay.fr/itm/264519774483",
+      "imageId": "3VkAAOSwWZVdvc4t",
+      "url": "https://i.ebayimg.com/images/g/3VkAAOSwWZVdvc4t/s-l1600.webp",
+      "staging": "staging/ebay/ni0351-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-357",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-357",
+      "listing": "https://www.ebay.fr/itm/264519775168",
+      "imageId": "StAAAOSwAPpdvc5h",
+      "url": "https://i.ebayimg.com/images/g/StAAAOSwAPpdvc5h/s-l1600.webp",
+      "staging": "staging/ebay/ni0357-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-359",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-359",
+      "listing": "https://www.ebay.fr/itm/254408758360",
+      "imageId": "~7wAAOSwiS9dvc6T",
+      "url": "https://i.ebayimg.com/images/g/~7wAAOSwiS9dvc6T/s-l1600.webp",
+      "staging": "staging/ebay/ni0359-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-360",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-360",
+      "listing": "https://www.ebay.fr/itm/254408759088",
+      "imageId": "n7YAAOSwdvxdvc68",
+      "url": "https://i.ebayimg.com/images/g/n7YAAOSwdvxdvc68/s-l1600.webp",
+      "staging": "staging/ebay/ni0360-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-361",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-361",
+      "listing": "https://www.ebay.fr/itm/254408759742",
+      "imageId": "uFcAAOSwH9Rdvc7k",
+      "url": "https://i.ebayimg.com/images/g/uFcAAOSwH9Rdvc7k/s-l1600.webp",
+      "staging": "staging/ebay/ni0361-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "忍-411",
+      "lang": "ja",
+      "title": "Naruto Card Game 忍-411",
+      "listing": "https://www.ebay.fr/itm/264519782623",
+      "imageId": "QGwAAOSwzO9dvdBR",
+      "url": "https://i.ebayimg.com/images/g/QGwAAOSwzO9dvdBR/s-l1600.webp",
+      "staging": "staging/ebay/ni0411-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "作-313",
+      "lang": "ja",
+      "title": "Naruto Card Game 作-313",
+      "listing": "https://www.ebay.fr/itm/265946778322",
+      "imageId": "7cwAAOSwksdjUcQ2",
+      "url": "https://i.ebayimg.com/images/g/7cwAAOSwksdjUcQ2/s-l1600.webp",
+      "staging": "staging/ebay/ta0313-ja.webp",
+      "ingest": true,
+      "note": "ebay dig JA orphan 2026-09-04"
+    }
+  ],
+  "counts": {
+    "total": 47,
+    "ni": 8,
+    "te": 19,
+    "ta": 20
+  },
+  "installed": {
+    "written": 47,
+    "skippedExisting": 203,
+    "failed": 0
+  },
+  "after": {
+    "missingArtTiles": 587,
+    "trulyFacelessJa": 127,
+    "trulyFacelessIt": 0,
+    "preferredFrMissing": 0
+  }
+}

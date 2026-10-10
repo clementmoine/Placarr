@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
@@ -9,6 +9,39 @@ export type TMDBSeriesIntent = {
   isSeriesLike: boolean;
   searchTitle: string;
   seasonNumber?: number;
+};
+
+/** Fields of the TMDB detail endpoints this resolver reads. */
+type TMDBDetails = {
+  adult?: boolean;
+  overview?: string;
+  homepage?: string;
+  imdb_id?: string;
+  runtime?: number;
+  vote_average?: number;
+  release_date?: string;
+  first_air_date?: string;
+  name?: string;
+  original_name?: string;
+  original_title?: string;
+  original_language?: string;
+  origin_country?: unknown;
+  episode_run_time?: unknown;
+  genres?: unknown;
+  created_by?: Array<{ name: string; profile_path?: string | null }>;
+  production_countries?: unknown;
+  production_companies?: Array<{ name: string; logo_path: string }>;
+  belongs_to_collection?: { name?: string } | null;
+};
+
+type TMDBCredits = {
+  crew: Array<{ job: string; name: string; profile_path: string }>;
+};
+
+type TMDBImages = {
+  posters?: TMDBImage[];
+  backdrops?: TMDBImage[];
+  logos?: TMDBImage[];
 };
 
 type TMDBSearchResult = {
@@ -126,7 +159,7 @@ async function fetchTMDBMovieOverviewFallback(
   const localized = localizedOverview?.trim();
   if (localized) return localized;
   try {
-    const enRes = await axios.get(
+    const enRes = await httpGet<{ overview?: string }>(
       `https://api.themoviedb.org/3/movie/${movieId}?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
     );
     const enOverview = enRes.data?.overview?.trim();
@@ -147,7 +180,7 @@ async function fetchTMDBSeriesOverviewFallback(
   const localized = localizedOverview?.trim();
   if (localized) return localized;
   try {
-    const enRes = await axios.get(
+    const enRes = await httpGet<{ overview?: string }>(
       `https://api.themoviedb.org/3/tv/${seriesId}?api_key=${process.env.TMDB_API_KEY}&language=en-US`,
     );
     const enOverview = enRes.data?.overview?.trim();
@@ -166,7 +199,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     name: string,
   ): Promise<MetadataResult | null> {
     const searchUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(name)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
-    const res = await axios.get(searchUrl);
+    const res = await httpGet<{ results?: TMDBSearchResult[] }>(searchUrl);
     const data = res.data;
 
     if (!data.results || data.results.length === 0) return null;
@@ -174,13 +207,13 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     let bestMatch = data.results[0];
     let minDistance = levenshtein.get(
       name.toLowerCase(),
-      bestMatch.title.toLowerCase(),
+      (bestMatch.title ?? "").toLowerCase(),
     );
 
     for (const movie of data.results) {
       const distance = levenshtein.get(
         name.toLowerCase(),
-        movie.title.toLowerCase(),
+        (movie.title ?? "").toLowerCase(),
       );
       if (distance < minDistance) {
         minDistance = distance;
@@ -188,7 +221,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       }
     }
 
-    const detailsRes = await axios.get(
+    const detailsRes = await httpGet<TMDBDetails>(
       `https://api.themoviedb.org/3/movie/${bestMatch.id}?api_key=${process.env.TMDB_API_KEY}&language=fr-FR`,
     );
     const details = detailsRes.data;
@@ -198,7 +231,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       details.overview,
     );
 
-    const creditsRes = await axios.get(
+    const creditsRes = await httpGet<TMDBCredits>(
       `https://api.themoviedb.org/3/movie/${bestMatch.id}/credits?api_key=${process.env.TMDB_API_KEY}&language=fr-FR`,
     );
     const credits = creditsRes.data;
@@ -211,7 +244,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     try {
       // include_image_language ensures French + textless artwork is returned
       // (the default endpoint already returns every language, but be explicit).
-      const imagesRes = await axios.get(
+      const imagesRes = await httpGet<TMDBImages>(
         `https://api.themoviedb.org/3/movie/${bestMatch.id}/images?api_key=${process.env.TMDB_API_KEY}&include_image_language=fr,en,null`,
       );
       imagesData = imagesRes.data;
@@ -251,7 +284,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
 
     let aliases: string[] = [];
     try {
-      const titlesRes = await axios.get(
+      const titlesRes = await httpGet<{ titles?: TMDBAlternativeTitle[] }>(
         `https://api.themoviedb.org/3/movie/${bestMatch.id}/alternative_titles?api_key=${process.env.TMDB_API_KEY}`,
       );
       aliases = ((titlesRes.data?.titles || []) as TMDBAlternativeTitle[])
@@ -273,7 +306,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
 
     let certification: string | null = null;
     try {
-      const releaseDatesRes = await axios.get(
+      const releaseDatesRes = await httpGet<{
+        results?: TMDBCertificationCountry[];
+      }>(
         `https://api.themoviedb.org/3/movie/${bestMatch.id}/release_dates?api_key=${process.env.TMDB_API_KEY}`,
       );
       const countries = releaseDatesRes.data?.results || [];
@@ -409,7 +444,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
             ? `https://image.tmdb.org/t/p/w780${person.profile_path}`
             : null,
         })),
-      publishers: details.production_companies.map(
+      publishers: (details.production_companies ?? []).map(
         (company: { name: string; logo_path: string }) => ({
           name: company.name,
           imageUrl: company.logo_path
@@ -465,7 +500,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
   ): Promise<MetadataResult | null> {
     const intent = parseTMDBSeriesIntent(name, deps.cleanSearchQuery);
     const searchUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(intent.searchTitle)}&api_key=${process.env.TMDB_API_KEY}&language=fr-FR`;
-    const res = await axios.get(searchUrl);
+    const res = await httpGet<{ results?: TMDBSearchResult[] }>(searchUrl);
     const data = res.data;
 
     if (!data.results || data.results.length === 0) return null;
@@ -476,7 +511,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     );
     if (!bestMatch) return null;
 
-    const detailsRes = await axios.get(
+    const detailsRes = await httpGet<TMDBDetails>(
       `https://api.themoviedb.org/3/tv/${bestMatch.id}?api_key=${process.env.TMDB_API_KEY}&language=fr-FR`,
     );
     const details = detailsRes.data;
@@ -484,7 +519,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     let seasonDetails: TMDBSeasonDetails | null = null;
     if (intent.seasonNumber) {
       try {
-        const seasonRes = await axios.get(
+        const seasonRes = await httpGet<TMDBSeasonDetails>(
           `https://api.themoviedb.org/3/tv/${bestMatch.id}/season/${intent.seasonNumber}?api_key=${process.env.TMDB_API_KEY}&language=fr-FR`,
         );
         seasonDetails = seasonRes.data;
@@ -502,7 +537,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
       logos?: TMDBImage[];
     } = {};
     try {
-      const imagesRes = await axios.get(
+      const imagesRes = await httpGet<TMDBImages>(
         `https://api.themoviedb.org/3/tv/${bestMatch.id}/images?api_key=${process.env.TMDB_API_KEY}&include_image_language=fr,en,null`,
       );
       imagesData = imagesRes.data;
@@ -516,7 +551,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
     let seasonImagesData: { posters?: TMDBImage[] } = {};
     if (intent.seasonNumber) {
       try {
-        const seasonImagesRes = await axios.get(
+        const seasonImagesRes = await httpGet<{ posters?: TMDBImage[] }>(
           `https://api.themoviedb.org/3/tv/${bestMatch.id}/season/${intent.seasonNumber}/images?api_key=${process.env.TMDB_API_KEY}&include_image_language=fr,en,null`,
         );
         seasonImagesData = seasonImagesRes.data;
@@ -571,7 +606,7 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
 
     let aliases: string[] = [];
     try {
-      const titlesRes = await axios.get(
+      const titlesRes = await httpGet<{ results?: TMDBAlternativeTitle[] }>(
         `https://api.themoviedb.org/3/tv/${bestMatch.id}/alternative_titles?api_key=${process.env.TMDB_API_KEY}`,
       );
       aliases = ((titlesRes.data?.results || []) as TMDBAlternativeTitle[])
@@ -598,7 +633,9 @@ export function createTMDBResolver(deps: TmdbResolverDeps) {
 
     let certification: string | null = null;
     try {
-      const ratingsRes = await axios.get(
+      const ratingsRes = await httpGet<{
+        results?: TMDBCertificationCountry[];
+      }>(
         `https://api.themoviedb.org/3/tv/${bestMatch.id}/content_ratings?api_key=${process.env.TMDB_API_KEY}`,
       );
       const countries = ratingsRes.data?.results || [];

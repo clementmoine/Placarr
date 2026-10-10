@@ -1,0 +1,23 @@
+{
+  "source": "simey-css-live-paint-contract",
+  "observed": "2026-09-06",
+  "kind": "research-dig",
+  "question": "Simey CSS + our multilingual faces/masks — compositing understood?",
+  "verdict": "Contract encoded. Runtime already uses Live faces/etch/FX (no Simey EN CDN). Compositing = Simey shine→after→before + glare, paint via --foil-etch / wp / /assets/pokemon/textures.",
+  "split": {
+    "simey": "compositing recipe (layers, blends, pointer compress)",
+    "placarr": "face + _CardEtch + white-plate + shared Live FX, per locale",
+    "fallback": "flare when no Simey analogue"
+  },
+  "auditRuntime": {
+    "simeyCdnInSrc": false,
+    "paintPaths": [
+      "HoloCardImage --foil-etch from Live etch (+ invert blob)",
+      "/assets/pokemon/textures/* from Live extract",
+      "playroomArt prefers Live dump faces"
+    ],
+    "polarity": "useInvertedPaintBlob — Live dark-on-light → Simey light-on-black"
+  },
+  "docs": ["docs/foil_css_sources.md", "docs/foil_effects.md", "cssRecipes.ts header"],
+  "ingest": "doc+contract — no asset pipeline change this pass"
+}

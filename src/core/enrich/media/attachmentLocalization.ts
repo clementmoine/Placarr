@@ -1,16 +1,17 @@
 /**
  * Cap and prepare remote attachments for deferred image localization.
  */
-import {
-  deriveAttachmentPlatformKeyFromUrl,
-} from "@/core/enrich/media/attachmentDisplayScore";
+import { deriveAttachmentPlatformKeyFromUrl } from "@/core/enrich/media/attachmentDisplayScore";
 import {
   authoritative3dCoverRoleSource,
   coverProvenanceForSource,
   gridStyleCoverLabelSource,
 } from "@/core/catalog/sourceTraits";
 import { resolveCoverAttachmentRole } from "@/core/enrich/media/coverPerspective";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
 
 export function cloneMetadataForImageLocalization(
   metadata: MetadataResult,
@@ -60,8 +61,7 @@ export function prepareDeferredAttachments(
         coverProvenanceForSource(attachment.source, sourceUrl) ??
         attachment.coverProvenance,
       platformKey:
-        deriveAttachmentPlatformKeyFromUrl(sourceUrl) ??
-        attachment.platformKey,
+        deriveAttachmentPlatformKeyFromUrl(sourceUrl) ?? attachment.platformKey,
     };
   });
 }
@@ -75,11 +75,7 @@ function attachmentLocalizationPriority(
   if (type === "cover" || role.includes("cover") || role.includes("box")) {
     return 0;
   }
-  if (
-    type === "hero" ||
-    role.includes("hero") ||
-    role.includes("background")
-  ) {
+  if (type === "hero" || role.includes("hero") || role.includes("background")) {
     return 1;
   }
   if (type === "logo" || role.includes("logo")) return 2;
@@ -110,4 +106,3 @@ export function selectAttachmentsForLocalization(
     )
     .slice(0, limit);
 }
-

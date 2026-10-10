@@ -10,7 +10,7 @@ import {
 } from "./remoteImageDiskCache";
 
 const tmpRoot = path.join(os.tmpdir(), `placarr-img-cache-${process.pid}`);
-const uploads = path.join(tmpRoot, "public", "uploads");
+const uploads = path.join(tmpRoot, "data", "uploads");
 
 describe("remoteImageDiskCache", () => {
   beforeEach(() => {

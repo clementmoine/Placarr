@@ -1,0 +1,118 @@
+{
+  "source": "auditFaceCollisions.ts — relevé du 2026-08-20",
+  "observed": "2026-08-20",
+  "ingest": "corrections appliquées",
+  "note": "13 images étaient classées sous deux tirages aux titres différents. Chacune a été ouverte et lue : la carte dont le titre correspond au nom imprimé garde la face, l'autre la perd. Aucun tirage n'a perdu sa dernière image. Après correction : 57 collisions restantes, toutes des réimpressions au même titre.",
+  "rule": "Le sens n'est pas devinable : sur les familles 忍/作 le numéro imprimé suit le numéro de disque (忍 242 → n0242, six fois vérifié), mais sur les sets TP1/TP2 il ne le suit pas (術 699 n'est pas j0699). Seul le **nom imprimé** tranche.",
+  "resolved": [
+    {
+      "pair": "j1030 = j1040",
+      "image": "Byakugan — 術 696 TP1",
+      "keep": "j1040",
+      "removedFrom": "j1030",
+      "source": "vintage"
+    },
+    {
+      "pair": "j1031 = j1041",
+      "image": "Expansion Jutsu: Super Slap! — 術 697 TP1",
+      "keep": "j1041",
+      "removedFrom": "j1031",
+      "source": "vintage"
+    },
+    {
+      "pair": "j1033 = j1043",
+      "image": "Lightning Blade Single Slash — 術 699 TP1",
+      "keep": "j1043",
+      "removedFrom": "j1033",
+      "source": "vintage"
+    },
+    {
+      "pair": "m0391 = m0586",
+      "image": "Debt — 作 391",
+      "keep": "m0391",
+      "removedFrom": "m0586",
+      "source": "vintage"
+    },
+    {
+      "pair": "m0550 = m0587",
+      "image": "Succeeded Will of Fire — 作 585破",
+      "keep": "m0550",
+      "removedFrom": "m0587",
+      "source": "vintage"
+    },
+    {
+      "pair": "m0963 = m0968",
+      "image": "Dehydration — 作 668 TP1",
+      "keep": "aucun",
+      "removedFrom": "m0963 et m0968",
+      "source": "vintage",
+      "note": "« Dehydration » n'existe nulle part au catalogue : l'image n'appartenait à aucun des deux, elle est retirée des deux."
+    },
+    {
+      "pair": "n0242 = n0788",
+      "image": "Akamaru — 忍 242",
+      "keep": "n0242",
+      "removedFrom": "n0788",
+      "source": "vintage"
+    },
+    {
+      "pair": "n0332 = n0789",
+      "image": "Konohamaru Ninja Squad — 忍 332",
+      "keep": "n0332",
+      "removedFrom": "n0789",
+      "source": "vintage"
+    },
+    {
+      "pair": "n0436 = n0792",
+      "image": "Iruka Umino — 忍 436",
+      "keep": "n0436",
+      "removedFrom": "n0792",
+      "source": "vintage"
+    },
+    {
+      "pair": "n0438 = n0794",
+      "image": "Asuma Sarutobi — 忍 438",
+      "keep": "n0438",
+      "removedFrom": "n0794",
+      "source": "vintage"
+    },
+    {
+      "pair": "n0493 = n0795",
+      "image": "Hinata Hyuga — 忍 493",
+      "keep": "n0493",
+      "removedFrom": "n0795",
+      "source": "vintage"
+    },
+    {
+      "pair": "n0657 = n0796 = n1826",
+      "image": "Shino Aburame — 忍 657",
+      "keep": "n0657",
+      "removedFrom": "n0796 et n1826",
+      "source": "vintage"
+    },
+    {
+      "pair": "n0849 = n0857",
+      "image": "Cursed Warrior — 忍 849",
+      "keep": "n0849",
+      "removedFrom": "n0857",
+      "source": "drive"
+    },
+    {
+      "pair": "n0951 = n0952",
+      "image": "Kikunojou — 忍 951",
+      "keep": "n0951",
+      "removedFrom": "n0952",
+      "source": "drive"
+    }
+  ],
+  "openTitleIssue": {
+    "card": "n0849",
+    "catalogue": "Ghost Samurai",
+    "printedOnCard": "Cursed Warrior",
+    "note": "Le numéro imprimé 忍 849 désigne bien n0849, donc la face y est à sa place — mais notre **titre** ne correspond pas au nom imprimé. À vérifier : mauvaise traduction, autre tirage du même numéro, ou titre venu d'une source fautive."
+  },
+  "sources": {
+    "vintage": 11,
+    "drive": 2
+  }
+}

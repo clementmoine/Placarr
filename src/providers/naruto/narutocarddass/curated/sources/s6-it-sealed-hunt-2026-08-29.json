@@ -1,0 +1,52 @@
+{
+  "source": "s6-it-sealed-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "ebay.json → booster-s6-it packshot ; sealed-contents starter Fascino + booster 8 ; pas de crawl Vinted",
+  "listings": [
+    {
+      "id": "ebay-booster-s6-it",
+      "url": "https://www.ebay.fr/itm/265148225277",
+      "sku": "booster-s6-it",
+      "claims": [
+        "1 bustina Serie 6 Italiano Rivalità Eterna",
+        "photo i.ebayimg g/TrcAAOSwp-xgkVyZ"
+      ],
+      "action": "ingest packshot"
+    },
+    {
+      "id": "vinted-starter-fascino",
+      "url": "https://www.vinted.fr/items/7633991617-naruto-card-game-serie-6-rivalita-eterna-starter-deck-il-fascino-del-male-sealed",
+      "sku": "starter-il-fascino-del-male",
+      "claims": [
+        "1 Mazzo di 40 carte",
+        "1 Regolamento",
+        "1 Plancia di Gioco",
+        "1 Segnaturni",
+        "5 Monete",
+        "nuovo, sigillato"
+      ],
+      "action": "attest declaredCardCount 40 + accessories note — packshot reste Martina ; angles Vinted → staging/vinted (face+back ingest)"
+    },
+    {
+      "id": "vinted-booster-s6-it",
+      "url": "https://www.vinted.fr/items/9720460480-booster-naruto-serie-6-italien",
+      "sku": "booster-s6-it",
+      "claims": [
+        "Booster IT Bandai 2006 scellé",
+        "1 carte holo garantie"
+      ],
+      "action": "attest existence only — eBay CDN for packshot"
+    }
+  ],
+  "vintedFascinoAngles": {
+    "ingest": "curated/sources/vinted.json",
+    "kept": ["01 front", "02 back", "03–05 spines archival"],
+    "rejected": "06 seller avatar"
+  },
+  "notDone": [
+    "2e starter S6 IT (si existe) — Martina dit ne pas inventer",
+    "Display S6 IT (cardgameclub handle na06riv-ibu24di 404)",
+    "Liste printKeys Fascino del Male"
+  ]
+}

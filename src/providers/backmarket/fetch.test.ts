@@ -38,10 +38,7 @@ import { mapBackMarketMetadata } from "./index";
 const mockedGet = vi.mocked(axios.get);
 
 function fixture(name: string) {
-  return readFileSync(
-    path.join(__dirname, "fixtures", name),
-    "utf8",
-  );
+  return readFileSync(path.join(__dirname, "fixtures", name), "utf8");
 }
 
 beforeEach(() => {
@@ -382,5 +379,65 @@ describe("fetchPricesFromBackMarket", () => {
         shelfType: "hardware",
       }),
     ).resolves.toBeNull();
+  });
+
+  it("evidenceOnly unlocks a SearchYield hit via soft alias without HTTP", async () => {
+    readBackMarketSearchEvidence.mockResolvedValueOnce([
+      {
+        title: "CECH-2004A",
+        priceCents: 8990,
+        currency: "EUR",
+        sourceUrl:
+          "https://www.backmarket.fr/fr-fr/p/sony-playstation-3-slim-cech-2004a/abc123",
+        grade: "Bon état",
+      },
+    ]);
+
+    await expect(
+      fetchPricesFromBackMarket(
+        "PlayStation 3 Slim Gris",
+        ["PlayStation 3 Slim Gris"],
+        { shelfType: "hardware", evidenceOnly: true },
+      ),
+    ).resolves.toBeNull();
+    expect(mockedGet).not.toHaveBeenCalled();
+
+    readBackMarketSearchEvidence.mockResolvedValueOnce([
+      {
+        title: "CECH-2004A",
+        priceCents: 8990,
+        currency: "EUR",
+        sourceUrl:
+          "https://www.backmarket.fr/fr-fr/p/sony-playstation-3-slim-cech-2004a/abc123",
+        grade: "Bon état",
+      },
+    ]);
+
+    await expect(
+      fetchPricesFromBackMarket(
+        "PlayStation 3 Slim Gris",
+        ["PlayStation 3 Slim Gris", "CECH-2004A"],
+        { shelfType: "hardware", evidenceOnly: true },
+      ),
+    ).resolves.toMatchObject({
+      priceUsed: 8990,
+      productName: "CECH-2004A",
+      sourceUrl: expect.stringContaining("cech-2004a"),
+    });
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(promoteBackMarketSearchEvidence).not.toHaveBeenCalled();
+  });
+
+  it("evidenceOnly returns null when SearchYield is missing (no HTTP)", async () => {
+    readBackMarketSearchEvidence.mockResolvedValueOnce(null);
+
+    await expect(
+      fetchPricesFromBackMarket(
+        "PlayStation 3 Slim Gris",
+        ["PlayStation 3 Slim Gris", "CECH-2004A"],
+        { shelfType: "hardware", evidenceOnly: true },
+      ),
+    ).resolves.toBeNull();
+    expect(mockedGet).not.toHaveBeenCalled();
   });
 });

@@ -25,12 +25,33 @@ The app uses **PostgreSQL**.
 pnpm install
 docker compose up -d db          # PostgreSQL on localhost:5432
 pnpm prisma migrate deploy       # apply migrations
-pnpm prisma db seed              # create admin/guest users (first run only)
+pnpm prisma db seed              # create owner account (first run only)
 pnpm dev                         # native compile (~1-2s)
 ```
 
 `DATABASE_URL` defaults to `postgresql://placarr:placarr@localhost:5432/placarr`
 (see `.env`). Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+### Configuration
+
+Copy [`.env.example`](./.env.example) to `.env`. Only two variables are
+mandatory — `DATABASE_URL` and `NEXTAUTH_SECRET`; everything else has a working
+default and the file documents each one next to its value.
+
+What you may actually want to change:
+
+| Variable                            | Default                    | Why you would touch it                                                                                                                  |
+| ----------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_PASSWORD` | `admin` | **Change before exposing an instance** — unlocks write access; browsing is public. |
+| `FLARESOLVERR_URL`                  | unset                      | Enables the Cloudflare-protected retailers. Without it they are skipped.                                                                |
+| `WORKER_CONCURRENCY`                | `6`                        | Jobs the `pnpm worker` process runs at once. Automatically capped to 3 when FlareSolverr is configured — one browser, one serial queue. |
+| `BACKGROUND_IO_CONCURRENCY`         | `4`                        | In-process work the Next server does itself (a separate pool from the worker).                                                          |
+| `BACKGROUND_CPU_CONCURRENCY`        | `2`                        | Image localization (`sharp`). Raise only if the host has cores to spare.                                                                |
+| `PRISMA_PG_POOL_MAX`                | `10`                       | Connections per process. Keep (processes × pool) under Postgres `max_connections`.                                                      |
+| Provider API keys                   | unset                      | Each missing key simply disables that provider — `pnpm providers:health` lists them.                                                    |
+
+Provider credentials are all optional and all free tiers. A provider without its
+key reports as `blocked` and is skipped at runtime rather than failing a scan.
 
 ### Full Docker (parity / Linux servers)
 
@@ -42,10 +63,6 @@ pnpm dev:docker                  # Postgres + Next, hot-reload, http://localhost
 > first compile of each route very slow (module resolution is I/O-bound). It's
 > fine on Linux (native bind mounts). On a Mac, prefer the hybrid setup above
 > for day-to-day development.
-
-> Migrating an existing SQLite `dev.db`? Use `scripts/export-data.cjs`
-> (run while still on SQLite) then `scripts/import-data.cjs` (after the
-> Postgres migration). See the migration notes in the repo.
 
 ---
 
@@ -60,6 +77,8 @@ pnpm dev:docker                  # Postgres + Next, hot-reload, http://localhost
 
 ## 📚 Learn More
 
+- [Architecture — chemin de lecture](./ARCHITECTURE.md) (par où commencer)
+- [Docs](./docs/README.md) — ADR, core, providers, TCG
 - [Next.js Documentation](https://nextjs.org/docs)
 - [shadcn/ui Documentation](https://ui.shadcn.com)
 
@@ -73,9 +92,11 @@ Deploy this project instantly with [Vercel](https://vercel.com/new?utm_source=cr
 
 ---
 
-## 🧾 License
+## License
 
-This project is licensed under the [MIT License](LICENSE).
+Placarr is licensed under the [GNU General Public License v3.0 or later](LICENSE).
+See [NOTICE](NOTICE) for third-party foil CSS attributions (notably
+[simeydotme/pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css)).
 
 ---
 

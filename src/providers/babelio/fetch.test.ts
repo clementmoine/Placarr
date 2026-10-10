@@ -104,7 +104,8 @@ function ajaxHits() {
       titre: "Dragon Ball Z - Cycle 1, tome 2",
       prenoms: "Akira",
       nom: "Toriyama",
-      couverture: "http://ecx.images-amazon.com/images/I/519kTSXan6L._SX95_.jpg",
+      couverture:
+        "http://ecx.images-amazon.com/images/I/519kTSXan6L._SX95_.jpg",
       url: "/livres/Toriyama-Dragon-Ball-Z-Cycle-1-tome-2/53653",
       ca_copies: 114,
       ca_note: "3.72",
@@ -157,9 +158,7 @@ describe("babelio fetch", () => {
       normalizeBabelioCoverUrl(
         "http://ecx.images-amazon.com/images/I/519kTSXan6L._SX95_.jpg",
       ),
-    ).toBe(
-      "https://ecx.images-amazon.com/images/I/519kTSXan6L._SX500_.jpg",
-    );
+    ).toBe("https://ecx.images-amazon.com/images/I/519kTSXan6L._SX500_.jpg");
     expect(normalizeBabelioCoverUrl("/couv/cvt_foo.jpg")).toBe(
       "https://www.babelio.com/couv/cvt_foo.jpg",
     );
@@ -227,9 +226,9 @@ describe("babelio fetch", () => {
         "à partir de 12 ans",
       ]),
     );
-    expect(
-      metadata?.facts?.find((f) => f.kind === "identifier")?.value,
-    ).toBe("9782723457903");
+    expect(metadata?.facts?.find((f) => f.kind === "identifier")?.value).toBe(
+      "9782723457903",
+    );
   });
 
   it("rejette la série classique quand Dragon Ball Z est demandé", async () => {
@@ -398,9 +397,7 @@ describe("babelio fetch", () => {
     await searchBabelioHits("Dragon Ball Z");
     expect(promoteBabelioSearchEvidence).toHaveBeenCalledWith(
       "https://www.babelio.com/recherche.php?term=Dragon+Ball+Z",
-      expect.arrayContaining([
-        expect.objectContaining({ id: "53653" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ id: "53653" })]),
     );
   });
 

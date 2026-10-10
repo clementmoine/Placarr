@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 
@@ -7,20 +7,40 @@ export const BACKGROUND_WORK_KIND = {
   metadataRefresh: "metadataRefresh",
   priceRefresh: "priceRefresh",
   icollectCatalogSync: "icollectCatalogSync",
+  launchboxIndexSync: "launchboxIndexSync",
+  nointroIndexSync: "nointroIndexSync",
+  /** Provider-blind catalog refresh — payload `{ providerId, auto? }`. */
+  catalogProviderSync: "catalogProviderSync",
+  /** Legacy store-only job — new work goes through `catalogueExtract` (APK first). */
+  apkStoreFetch: "apkStoreFetch",
+  /*
+    The stored value stays `foilExtract` on purpose. This is a column in
+    `BackgroundWorkJob`, and rows carrying it are queued or running right now —
+    renaming the string would orphan them: the worker would stop recognising
+    its own work and they would sit `running` forever. The key is what the code
+    reads; the value is a wire format, and changing it needs a migration.
+  */
+  catalogueExtract: "foilExtract",
 } as const;
 
 export type BackgroundWorkKind =
   (typeof BACKGROUND_WORK_KIND)[keyof typeof BACKGROUND_WORK_KIND];
 
-/** Interactive enrich path — must not share slots with the iCollect crawl. */
+/** Interactive enrich path — must not share slots with the catalog crawl. */
 export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.metadataRefresh,
   BACKGROUND_WORK_KIND.priceRefresh,
+  BACKGROUND_WORK_KIND.catalogueExtract,
+  // Same pool as the extract it feeds — a fresh APK enqueues its foilExtract.
+  BACKGROUND_WORK_KIND.apkStoreFetch,
 ];
 
-/** Catalog crawl — dedicated process (`pnpm worker:catalog`). */
+/** Local index / catalog crawl — dedicated process (`pnpm worker:icollect`). */
 export const ICOLLECT_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.icollectCatalogSync,
+  BACKGROUND_WORK_KIND.launchboxIndexSync,
+  BACKGROUND_WORK_KIND.nointroIndexSync,
+  BACKGROUND_WORK_KIND.catalogProviderSync,
 ];
 
 const KNOWN_WORKER_KINDS = new Set<string>(Object.values(BACKGROUND_WORK_KIND));
@@ -28,7 +48,7 @@ const KNOWN_WORKER_KINDS = new Set<string>(Object.values(BACKGROUND_WORK_KIND));
 /**
  * Parse `WORKER_KINDS` (comma-separated).
  * - unset / empty → `null` (all kinds — tests / explicit override)
- * - `interactive` → metadata + price
+ * - `interactive` → metadata + price + foil extract
  * - `catalog` → catalog sync only
  * - otherwise a comma list of kind ids
  */
@@ -90,7 +110,38 @@ export type PriceRefreshJobPayload = {
   metadataFacts?: unknown;
   shelfType: string;
   shelfName: string;
+  printKey?: string | null;
   force?: boolean;
+};
+
+import type {
+  CatalogueExtractScope,
+  CatalogueExtractTarget,
+} from "@/lib/admin/catalogueExtractRunner";
+
+export type CatalogueExtractJobPayload = {
+  target: CatalogueExtractTarget;
+  /** Absent on rows enqueued before scopes existed → treated as ``inventory``. */
+  scope?: CatalogueExtractScope;
+  /**
+   * Steps already finished (from `── checkpoint <step>` log lines).
+   * On resume the runner appends `--skip` for these when the pack declares
+   * `extract.pipelineSteps`.
+   */
+  completedSteps?: string[];
+  /** Auto-sync: probe the store APK, extract only when a newer one landed. */
+  auto?: boolean;
+  /** Re-download the store APK even when versionCode matches. */
+  forceApk?: boolean;
+};
+
+export type ApkStoreFetchJobPayload = {
+  /** Catalogue pack id with `androidPackageId` (pokemon / lorcana). */
+  pack: string;
+  /** Re-download even when the store version matches the tracked one. */
+  force?: boolean;
+  /** Enqueued by the auto-sync loop (vs admin button). */
+  auto?: boolean;
 };
 
 export type BackgroundWorkJobRow = {
@@ -114,18 +165,30 @@ async function cancelOpenJobs(options: {
   itemId?: string;
   kind?: BackgroundWorkKind;
   userId?: string;
+  /**
+   * Narrow the sweep to jobs whose payload matches, e.g. one pack's extract.
+   *
+   * Without it, "replace the open job of this kind" means *every* job of that
+   * kind — which cancelled a running Lorcana extract because a Pokémon one was
+   * started five seconds later. They share a kind and nothing else: different
+   * packs, different folders, different hosts.
+   */
+  payloadMatch?: { path: string[]; equals: string };
 }): Promise<number> {
   const where: Prisma.BackgroundWorkJobWhereInput = {
     status: {
-      in: [
-        BACKGROUND_WORK_STATUS.pending,
-        BACKGROUND_WORK_STATUS.running,
-      ],
+      in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
     },
   };
   if (options.itemId) where.itemId = options.itemId;
   if (options.kind) where.kind = options.kind;
   if (options.userId) where.userId = options.userId;
+  if (options.payloadMatch) {
+    where.payload = {
+      path: options.payloadMatch.path,
+      equals: options.payloadMatch.equals,
+    };
+  }
 
   const result = await prisma.backgroundWorkJob.updateMany({
     where,
@@ -148,6 +211,12 @@ export async function enqueueBackgroundWorkJob(input: {
   replaceOpenForItem?: boolean;
   /** Replace any open job of this kind (e.g. singleton sync ticks). */
   replaceOpenForKind?: boolean;
+  /**
+   * Restrict `replaceOpenForKind` to jobs carrying the same payload value —
+   * how a per-pack job stays a singleton *for its own pack* without touching
+   * its neighbours.
+   */
+  replaceOpenPayloadMatch?: { path: string[]; equals: string };
 }): Promise<BackgroundWorkJobRow> {
   /**
    * Preserve FIFO `createdAt` when replacing. Cancel+recreate with a fresh
@@ -161,10 +230,7 @@ export async function enqueueBackgroundWorkJob(input: {
         itemId: input.itemId,
         kind: input.kind,
         status: {
-          in: [
-            BACKGROUND_WORK_STATUS.pending,
-            BACKGROUND_WORK_STATUS.running,
-          ],
+          in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
         },
       },
       orderBy: { createdAt: "asc" },
@@ -173,7 +239,10 @@ export async function enqueueBackgroundWorkJob(input: {
     preserveCreatedAt = earliest?.createdAt;
     await cancelOpenJobs({ itemId: input.itemId, kind: input.kind });
   } else if (input.replaceOpenForKind) {
-    await cancelOpenJobs({ kind: input.kind });
+    await cancelOpenJobs({
+      kind: input.kind,
+      payloadMatch: input.replaceOpenPayloadMatch,
+    });
   }
 
   return prisma.backgroundWorkJob.create({
@@ -195,6 +264,30 @@ export async function cancelBackgroundWorkJobsForItem(
   return cancelOpenJobs({ itemId });
 }
 
+export async function cancelBackgroundWorkJobById(
+  jobId: string,
+  userId?: string | null,
+): Promise<boolean> {
+  const where: Prisma.BackgroundWorkJobWhereInput = {
+    id: jobId,
+    status: {
+      in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+    },
+  };
+  if (userId) where.userId = userId;
+
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where,
+    data: {
+      status: BACKGROUND_WORK_STATUS.cancelled,
+      finishedAt: new Date(),
+      lockedAt: null,
+      lockedBy: null,
+    },
+  });
+  return result.count > 0;
+}
+
 export async function cancelBackgroundWorkJobsForUser(
   userId: string,
 ): Promise<number> {
@@ -208,10 +301,7 @@ export async function hasActiveBackgroundWorkJobForItem(
     where: {
       itemId,
       status: {
-        in: [
-          BACKGROUND_WORK_STATUS.pending,
-          BACKGROUND_WORK_STATUS.running,
-        ],
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
       },
     },
     select: { id: true },
@@ -226,7 +316,7 @@ export async function hasActiveBackgroundWorkJobForItem(
  * @param kinds When set, only claim jobs of these kinds (pool isolation).
  */
 export async function claimNextBackgroundWorkJob(
-  workerId = randomUUID(),
+  workerId: string = randomUUID(),
   kinds: readonly BackgroundWorkKind[] | null = null,
 ): Promise<BackgroundWorkJobRow | null> {
   // Empty array = misconfigured pool (never claim). null = all kinds.
@@ -280,10 +370,21 @@ export async function claimNextBackgroundWorkJob(
               AND running_price."kind" = ${BACKGROUND_WORK_KIND.priceRefresh}
           ) < 1
         )
+        AND (
+          -- At most one long foil extract at a time (CDN scrape).
+          candidate."kind" <> ${BACKGROUND_WORK_KIND.catalogueExtract}
+          OR (
+            SELECT COUNT(*)::int
+            FROM "BackgroundWorkJob" AS running_foil
+            WHERE running_foil."status" = ${BACKGROUND_WORK_STATUS.running}
+              AND running_foil."kind" = ${BACKGROUND_WORK_KIND.catalogueExtract}
+          ) < 1
+        )
       ORDER BY
         CASE candidate."kind"
           WHEN ${BACKGROUND_WORK_KIND.metadataRefresh} THEN 0
           WHEN ${BACKGROUND_WORK_KIND.icollectCatalogSync} THEN 2
+          WHEN ${BACKGROUND_WORK_KIND.catalogueExtract} THEN 3
           ELSE 1
         END ASC,
         candidate."createdAt" ASC
@@ -378,23 +479,199 @@ export async function failBackgroundWorkJob(
   });
 }
 
-/** Re-queue jobs stuck in `running` after a worker crash. */
-export async function recoverStaleRunningBackgroundWorkJobs(
-  staleAfterMs = 30 * 60 * 1000,
+/** Keep a long-running job's lock fresh so stale recovery does not steal it. */
+export async function touchBackgroundWorkJobLock(
+  jobId: string,
+): Promise<boolean> {
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where: {
+      id: jobId,
+      status: BACKGROUND_WORK_STATUS.running,
+    },
+    data: {
+      lockedAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+  return result.count > 0;
+}
+
+/**
+ * Record a finished extract pipeline step on the job payload so a later
+ * resume can `--skip` it (autonomy_audit §4 / ADR-017).
+ */
+export async function mergeCatalogueExtractCompletedStep(
+  jobId: string,
+  step: string,
+): Promise<boolean> {
+  const { mergeCompletedSteps } = await import(
+    "@/lib/admin/catalogueExtractCheckpoint"
+  );
+  const job = await prisma.backgroundWorkJob.findUnique({
+    where: { id: jobId },
+    select: { payload: true, status: true, kind: true },
+  });
+  if (
+    !job ||
+    job.status !== BACKGROUND_WORK_STATUS.running ||
+    job.kind !== BACKGROUND_WORK_KIND.catalogueExtract
+  ) {
+    return false;
+  }
+
+  const raw =
+    job.payload && typeof job.payload === "object" && !Array.isArray(job.payload)
+      ? (job.payload as Record<string, unknown>)
+      : {};
+  const existing = Array.isArray(raw.completedSteps)
+    ? raw.completedSteps.filter((value): value is string => typeof value === "string")
+    : [];
+  const completedSteps = mergeCompletedSteps(existing, step);
+  if (
+    completedSteps.length === existing.length &&
+    completedSteps.every((value, i) => value === existing[i])
+  ) {
+    return true;
+  }
+
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where: {
+      id: jobId,
+      status: BACKGROUND_WORK_STATUS.running,
+    },
+    data: {
+      payload: { ...raw, completedSteps } as Prisma.InputJsonValue,
+      updatedAt: new Date(),
+    },
+  });
+  return result.count > 0;
+}
+
+/**
+ * Re-queue this worker's running jobs (SIGINT / crash path).
+ * Without this, foil extracts stay `running` forever and block the one-at-a-time gate.
+ */
+export async function releaseRunningJobsForWorker(
+  workerId: string,
 ): Promise<number> {
-  const cutoff = new Date(Date.now() - staleAfterMs);
   const result = await prisma.backgroundWorkJob.updateMany({
     where: {
       status: BACKGROUND_WORK_STATUS.running,
-      lockedAt: { lt: cutoff },
+      lockedBy: workerId,
     },
     data: {
       status: BACKGROUND_WORK_STATUS.pending,
       lockedAt: null,
       lockedBy: null,
       runAfter: new Date(),
-      error: "Recovered stale running job after worker timeout",
+      error: "Released on worker shutdown — will retry",
+      updatedAt: new Date(),
     },
   });
   return result.count;
+}
+
+/** Default stale window for jobs that do not heartbeat. */
+export const DEFAULT_STALE_RUNNING_MS = 30 * 60 * 1000;
+/**
+ * Foil extracts heartbeat every ~60s. No touch for this long ⇒ zombie lock
+ * (worker died mid-spawn, or claim without execute).
+ * 30 min leaves room for brief event-loop stalls (Unity typetree / GC / big
+ * AssetManifest batches) without abandoning a live worker; a crashed process
+ * still clears within one window.
+ */
+export const FOIL_STALE_RUNNING_MS = 30 * 60 * 1000;
+/**
+ * Soft recoveries (Unity stall, deploy restart) increment ``attempts`` on
+ * reclaim. Allow several before abandoning — a 40 min CDN Sync can trip the
+ * window more than once without being a true zombie.
+ */
+export const FOIL_STALE_MAX_ATTEMPTS = 5;
+
+export type StaleRecoveryResult = {
+  requeued: number;
+  abandoned: number;
+};
+
+/**
+ * Re-queue (or abandon) jobs stuck in `running` after a worker crash / orphan lock.
+ *
+ * Foil uses a short heartbeat window and is abandoned after
+ * {@link FOIL_STALE_MAX_ATTEMPTS} stale recoveries so zombies cannot block the
+ * single-foil gate forever.
+ */
+export async function recoverStaleRunningBackgroundWorkJobs(
+  staleAfterMs = DEFAULT_STALE_RUNNING_MS,
+  options?: {
+    foilStaleAfterMs?: number;
+    foilMaxAttempts?: number;
+  },
+): Promise<StaleRecoveryResult> {
+  const foilStaleMs = options?.foilStaleAfterMs ?? FOIL_STALE_RUNNING_MS;
+  const foilMaxAttempts = options?.foilMaxAttempts ?? FOIL_STALE_MAX_ATTEMPTS;
+  const now = Date.now();
+  const generalCutoff = new Date(now - staleAfterMs);
+  const foilCutoff = new Date(now - foilStaleMs);
+
+  const stale = await prisma.backgroundWorkJob.findMany({
+    where: {
+      status: BACKGROUND_WORK_STATUS.running,
+      OR: [
+        {
+          kind: BACKGROUND_WORK_KIND.catalogueExtract,
+          lockedAt: { lt: foilCutoff },
+        },
+        {
+          kind: { not: BACKGROUND_WORK_KIND.catalogueExtract },
+          lockedAt: { lt: generalCutoff },
+        },
+      ],
+    },
+    select: { id: true, kind: true, attempts: true },
+  });
+
+  let requeued = 0;
+  let abandoned = 0;
+
+  for (const job of stale) {
+    const isFoil = job.kind === BACKGROUND_WORK_KIND.catalogueExtract;
+    if (isFoil && job.attempts >= foilMaxAttempts) {
+      const result = await prisma.backgroundWorkJob.updateMany({
+        where: {
+          id: job.id,
+          status: BACKGROUND_WORK_STATUS.running,
+        },
+        data: {
+          status: BACKGROUND_WORK_STATUS.failed,
+          finishedAt: new Date(),
+          lockedBy: null,
+          error:
+            "Abandoned stale foil extract (no heartbeat — worker died or never ran)",
+          updatedAt: new Date(),
+        },
+      });
+      abandoned += result.count;
+      continue;
+    }
+
+    const result = await prisma.backgroundWorkJob.updateMany({
+      where: {
+        id: job.id,
+        status: BACKGROUND_WORK_STATUS.running,
+      },
+      data: {
+        status: BACKGROUND_WORK_STATUS.pending,
+        lockedAt: null,
+        lockedBy: null,
+        runAfter: new Date(),
+        error: isFoil
+          ? "Recovered stale foil extract — will retry"
+          : "Recovered stale running job after worker timeout",
+        updatedAt: new Date(),
+      },
+    });
+    requeued += result.count;
+  }
+
+  return { requeued, abandoned };
 }

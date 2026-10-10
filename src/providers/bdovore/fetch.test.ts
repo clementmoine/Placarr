@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => ({
@@ -267,8 +267,8 @@ describe("bdovore fetch", () => {
 
   it("ne résout pas un hors-série embarqué vers une autre ligne de la franchise", async () => {
     mockedGet.mockImplementation(
-      async (_url: string, config?: { params?: Record<string, string> }) => {
-        const params = config?.params ?? {};
+      async (_url: string, config?: AxiosRequestConfig) => {
+        const params = (config?.params ?? {}) as Record<string, string>;
         if (params.data === "Serie") {
           return {
             status: 200,
@@ -276,7 +276,8 @@ describe("bdovore fetch", () => {
               { ID_SERIE: "846", NOM_SERIE: "Les âges d'or de Picsou" },
               {
                 ID_SERIE: "12539",
-                NOM_SERIE: "Picsou Magazine (hors-série, les trésors de Picsou)",
+                NOM_SERIE:
+                  "Picsou Magazine (hors-série, les trésors de Picsou)",
               },
             ]),
           };
@@ -290,7 +291,8 @@ describe("bdovore fetch", () => {
                 ID_TOME: "47485",
                 TITRE_TOME: "Les trésors de Picsou n°1 : La jeunesse de Picsou",
                 NUM_TOME: "1",
-                NOM_SERIE: "Picsou Magazine (hors-série, les trésors de Picsou)",
+                NOM_SERIE:
+                  "Picsou Magazine (hors-série, les trésors de Picsou)",
                 ID_SERIE: "12539",
               },
             ]),
@@ -322,7 +324,7 @@ describe("bdovore fetch", () => {
 
   it("résout un EAN directement via l'API (data=Album&EAN=)", async () => {
     mockedGet.mockImplementation(
-      async (_url: string, config?: { params?: Record<string, string> }) => {
+      async (_url: string, config?: AxiosRequestConfig) => {
         if (config?.params?.EAN === "9782803624560") {
           return { status: 200, data: JSON.stringify([modernAlbumRecord()]) };
         }
@@ -340,8 +342,8 @@ describe("bdovore fetch", () => {
 
   it("résout un numéro bis via la série sœur « <série> bis »", async () => {
     mockedGet.mockImplementation(
-      async (_url: string, config?: { params?: Record<string, string> }) => {
-        const params = config?.params ?? {};
+      async (_url: string, config?: AxiosRequestConfig) => {
+        const params = (config?.params ?? {}) as Record<string, string>;
         if (params.data === "Serie") {
           const term = String(params.term || "");
           if (/\bbis\b/i.test(term)) {
@@ -387,8 +389,8 @@ describe("bdovore fetch", () => {
 
   it("résout Tout Picsou de A à Z dans la série principale avant la sous-série HS", async () => {
     mockedGet.mockImplementation(
-      async (_url: string, config?: { params?: Record<string, string> }) => {
-        const params = config?.params ?? {};
+      async (_url: string, config?: AxiosRequestConfig) => {
+        const params = (config?.params ?? {}) as Record<string, string>;
         if (params.data === "Serie") {
           const term = String(params.term || "").toLowerCase();
           if (term.includes("hors serie")) {
@@ -473,9 +475,7 @@ describe("bdovore fetch", () => {
   it("promotes series SearchYield after a live getjson GET", async () => {
     mockedGet.mockResolvedValueOnce({
       status: 200,
-      data: JSON.stringify([
-        { ID_SERIE: "59", NOM_SERIE: "Alpha" },
-      ]),
+      data: JSON.stringify([{ ID_SERIE: "59", NOM_SERIE: "Alpha" }]),
     } as never);
 
     await expect(searchBdovoreSeries("Alpha")).resolves.toEqual([

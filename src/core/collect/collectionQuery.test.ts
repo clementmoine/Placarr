@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_ITEM_COLLECTION_FILTERS,
+  defaultItemCollectionSort,
   filterCollectionItems,
   parseItemCollectionFilters,
+  parseItemCollectionSort,
   queryCollectionItems,
   sortCollectionItems,
   summarizeCollectionEstimatedValue,
@@ -24,6 +26,8 @@ function makeItem(
     shelfId: "shelf-1",
     description: null,
     barcode: null,
+    printKey: overrides.printKey ?? null,
+    setCode: overrides.setCode ?? null,
     condition: overrides.condition ?? "new",
     metadataId: null,
     metadataRefreshStartedAt: null,
@@ -40,7 +44,6 @@ function makeItem(
       createdAt: new Date(),
       updatedAt: new Date(),
       userId: "user-1",
-      isPublic: false,
     },
     metadata: overrides.metadata,
     priceNew: overrides.priceNew ?? null,
@@ -141,6 +144,68 @@ describe("collectionQuery", () => {
     ).toEqual(["cheap", "mid", "best"]);
   });
 
+  it("sorts TCG prints by set then collector number", () => {
+    const items = [
+      makeItem({
+        id: "rof-1",
+        name: "Later set",
+        printKey: "lorcana:2-1",
+      }),
+      makeItem({
+        id: "tfc-20p",
+        name: "Promo",
+        printKey: "lorcana:1-20-p1",
+      }),
+      makeItem({
+        id: "tfc-2",
+        name: "Ariel",
+        printKey: "lorcana:1-2",
+      }),
+      makeItem({
+        id: "tfc-10",
+        name: "Ten",
+        printKey: "lorcana:1-10",
+      }),
+      makeItem({
+        id: "orphan",
+        name: "Sans clé",
+      }),
+    ];
+
+    expect(
+      sortCollectionItems(items, "print_asc", "tcg").map((item) => item.id),
+    ).toEqual(["tfc-2", "tfc-10", "tfc-20p", "rof-1", "orphan"]);
+  });
+
+  it("sorts multi-set reprints by catalogue set (setCode or printKey)", () => {
+    const items = [
+      makeItem({
+        id: "ta074-s3",
+        name: "Monnaie d'Echange",
+        printKey: "naruto:s3-ta0074",
+      }),
+      makeItem({
+        id: "ni001-s2",
+        name: "Naruto",
+        printKey: "naruto:s2-ni0001",
+      }),
+      makeItem({
+        id: "ta074-s2",
+        name: "Monnaie d'Echange",
+        printKey: "naruto:s2-ta0074",
+      }),
+      makeItem({
+        id: "m092-s11",
+        name: "Kakashi",
+        printKey: "naruto:s11-m0092",
+      }),
+    ];
+
+    expect(
+      sortCollectionItems(items, "print_asc", "tcg").map((item) => item.id),
+    ).toEqual(["ni001-s2", "ta074-s2", "ta074-s3", "m092-s11"]);
+  });
+
   it("parses filter params from the URL", () => {
     expect(
       parseItemCollectionFilters({
@@ -155,6 +220,7 @@ describe("collectionQuery", () => {
       condition: "used",
       ratingMin: 8,
       pricedOnly: true,
+      duplicatesOnly: false,
     });
 
     expect(
@@ -168,6 +234,21 @@ describe("collectionQuery", () => {
         get: (key) => (key === "condition" ? "mint" : null),
       }).condition,
     ).toBe("all");
+
+    expect(
+      parseItemCollectionFilters({
+        get: (key) => (key === "duplicates" ? "1" : null),
+      }).duplicatesOnly,
+    ).toBe(true);
+  });
+
+  it("defaults TCG shelves to print binder order", () => {
+    expect(defaultItemCollectionSort("tcg")).toBe("print_asc");
+    expect(defaultItemCollectionSort("games")).toBe("name_asc");
+    expect(parseItemCollectionSort(null, "tcg")).toBe("print_asc");
+    expect(parseItemCollectionSort(null, "games")).toBe("name_asc");
+    expect(parseItemCollectionSort("name_asc", "tcg")).toBe("name_asc");
+    expect(parseItemCollectionSort("price_desc", "tcg")).toBe("price_desc");
   });
 
   it("applies filters then sort", () => {

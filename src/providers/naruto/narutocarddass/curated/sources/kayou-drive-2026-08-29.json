@@ -1,0 +1,33 @@
+{
+  "source": "Google Drive folder Kayou (user paste 2026-08-29)",
+  "observed": "2026-08-29",
+  "url": "https://drive.google.com/drive/folders/14XOoBV1Wn6Nhxzs3m9t6uB2YUGDMv7W3",
+  "folderId": "14XOoBV1Wn6Nhxzs3m9t6uB2YUGDMv7W3",
+  "line": "kayou",
+  "ingest": "staging-only",
+  "staging": "staging/kayou-drive/",
+  "files": [
+    {
+      "id": "1Y8iy5eK4RnnU9xP2pU3MhoAARcr-zvkb",
+      "title": "GUIDE_RARETE_KAYOU_2-8 (2).pdf",
+      "staging": "staging/kayou-drive/pdfs/GUIDE_RARETE_KAYOU_2-8.pdf"
+    },
+    {
+      "id": "1byovUKQTDXDVgev6zBzoRtB03KTUQ1PC",
+      "title": "liste_naruto_kayou_bypuma_28.12.22.pdf",
+      "staging": "staging/kayou-drive/pdfs/liste_naruto_kayou_bypuma_28.12.22.pdf"
+    },
+    {
+      "id": "1fzX54tmfc3zhKwCwWoJr1Ti_jabQKOjehdJXRH-SgAI",
+      "title": "Items",
+      "staging": "staging/kayou-drive/items.txt",
+      "note": "Google Doc — product photos also under staging/kayou-drive/from-docs/items-kayou/"
+    }
+  ],
+  "not": [
+    "carddass",
+    "en-ccg",
+    "bandai-fr-us-drive-products"
+  ],
+  "note": "Absorbed for Kayou Mythos work later. Do not merge faces or sealed SKUs into Carddass FR / EN CCG catalogues."
+}

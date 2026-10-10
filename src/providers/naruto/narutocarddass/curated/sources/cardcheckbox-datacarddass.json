@@ -1,0 +1,243 @@
+{
+  "source": "cardcheckbox.com — les quatre lignes DATA CARDDASS Naruto",
+  "observed": "2026-08-21",
+  "ingest": "none — plages de numéros seules, aucun pack n'existe pour ce jeu",
+  "lang": "ja",
+  "whyItMatters": "Le backlog notait « Data Carddass — modèle prêt (familles, ligne, préfixes), **aucune source trouvée** ». En voici quatre, complètes, avec les plages par chapitre. La piste venait d'un post de forum français de 2015 ; cardcheckbox les documente une par une.",
+  "whatThisIs": "Des cartes **payées par un distributeur d'arcade** : le joueur met une pièce, la borne imprime une carte. Physiques, donc collectionnables — mais c'est un autre jeu que le Carddass de table, comme le 疾風伝. Un pack à part le jour où on le décidera.",
+  "lines": [
+    {
+      "prefix": "DN",
+      "name": "NARUTO ナルティメットカードバトル",
+      "url": "https://cardcheckbox.com/a06a-bandai-3/dcd-naruto-ncb.html",
+      "years": "2005-2006",
+      "range": "DN-001T〜DN-249T",
+      "chapters": [
+        {
+          "name": "第1弾",
+          "released": "2005-10",
+          "kinds": 50,
+          "from": "DN-001T",
+          "to": "DN-050T"
+        },
+        {
+          "name": "第2弾",
+          "released": "2005-12",
+          "kinds": "15 new",
+          "from": "DN-051T",
+          "to": "DN-065T"
+        },
+        {
+          "name": "第3弾",
+          "released": "2006-02",
+          "kinds": "17 new",
+          "from": "DN-066T",
+          "to": "DN-082T"
+        },
+        {
+          "name": "第4弾",
+          "released": "2006-04",
+          "kinds": "25 new",
+          "from": "DN-083T",
+          "to": "DN-107T"
+        },
+        {
+          "name": "第5弾",
+          "released": "2006-06",
+          "kinds": "28 new",
+          "from": "DN-108T",
+          "to": "DN-135T"
+        },
+        {
+          "name": "ナルティメットコンボシート 2",
+          "released": "2006-07",
+          "kinds": "5 new",
+          "from": "DN-136T",
+          "to": "DN-140T"
+        },
+        {
+          "name": "第6弾",
+          "released": "2006-08",
+          "kinds": "31 new",
+          "from": "DN-141T",
+          "to": "DN-171T"
+        },
+        {
+          "name": "第7弾",
+          "released": "2006-10",
+          "kinds": "37 new",
+          "from": "DN-173T",
+          "to": "DN-209T"
+        },
+        {
+          "name": "ナルティメット SP !",
+          "released": "2006-12",
+          "kinds": "50 new",
+          "from": "DN-210T",
+          "to": "DN-249T"
+        }
+      ],
+      "quirks": "Le suffixe `T` fait partie du numéro. `DN-172T` manque à la suite : c'est une réimpression réservée à l'édition spéciale d'un guide Shueisha. Les promos par correspondance V-Jump portent `DNP-021〜023`."
+    },
+    {
+      "prefix": "NM",
+      "name": "NARUTO 疾風伝 究極任務 ナルティメットミッション",
+      "url": "https://cardcheckbox.com/a06a-bandai-4/dcd-narutospd-nm.html",
+      "years": "2007",
+      "range": "NM-001〜NM-237",
+      "chapters": [
+        {
+          "name": "第1章 蒼天!新たなる旅立ち編",
+          "released": "2007-02",
+          "from": "NM-001",
+          "to": "NM-050"
+        },
+        {
+          "name": "第2章 君臨!黄砂に舞う風編",
+          "released": "2007-04-27",
+          "kinds": 42,
+          "from": "NM-051",
+          "to": "NM-092"
+        },
+        {
+          "name": "第3章 強襲!赤き絶望の毒牙編",
+          "released": "2007-06-14",
+          "kinds": 44,
+          "from": "NM-093",
+          "to": "NM-136"
+        },
+        {
+          "name": "第4章 激闘!闇をはこぶ暗雲編",
+          "released": "2007-08-03",
+          "from": "NM-137",
+          "to": "NM-187"
+        },
+        {
+          "name": "特別任務の章",
+          "released": "2007-10-11",
+          "kinds": 50,
+          "from": "NM-188",
+          "to": "NM-237"
+        }
+      ],
+      "quirks": "Une série de cartes transparentes porte `NC-001〜NC-032` — à ne PAS confondre avec le préfixe `nc` du CCG américain, qui est une famille NINJA de Quest for Power. Deux jeux, deux `NC`."
+    },
+    {
+      "prefix": "NF",
+      "name": "NARUTO 疾風伝 ナルティメットフォーメーション",
+      "url": "https://cardcheckbox.com/a06a-bandai-4/dcd-narutospd-nf.html",
+      "years": "2007-2008",
+      "range": "NF-001〜NF-295",
+      "chapters": [
+        {
+          "name": "第1章 強襲!砂塵に煙る瀑炎の脅威編",
+          "released": "2007-12-13",
+          "kinds": 50,
+          "from": "NF-001",
+          "to": "NF-050"
+        },
+        {
+          "name": "第2章 再会!共鳴する宿命の二人編",
+          "released": "2008-02",
+          "kinds": 50,
+          "from": "NF-051",
+          "to": "NF-100"
+        },
+        {
+          "name": "第3章 奪還!砂漠に眠る友の魂編",
+          "released": "2008-04",
+          "kinds": 50,
+          "from": "NF-101",
+          "to": "NF-150"
+        },
+        {
+          "name": "第4章 結集!漆黒に浮かぶ紅き野望編",
+          "released": "2008-06",
+          "from": "NF-151",
+          "to": "NF-197"
+        },
+        {
+          "name": "第5章 激突!闇を穿つ火の意志編",
+          "released": "2008-07",
+          "from": "NF-198",
+          "to": "NF-245"
+        },
+        {
+          "name": "第6章 集結!英雄たちの慟哭編",
+          "released": "2008-10",
+          "kinds": 50,
+          "from": "NF-246",
+          "to": "NF-295"
+        },
+        {
+          "name": "火の意志伝承の章",
+          "released": "2008-12",
+          "numberingUnknown": true
+        }
+      ],
+      "quirks": "Trois familles annexes : `NFM-001〜005`, les transparentes `NFC-001〜020`, et la carte de campagne `NFP-019`. Le dernier chapitre a ses numéros notés 未確認 par la source."
+    },
+    {
+      "prefix": "NX",
+      "name": "NARUTO 疾風伝 ナルティメットクロス",
+      "url": "https://cardcheckbox.com/a06a-bandai-4/dcd-narutospd-nx.html",
+      "years": "2009-2010",
+      "range": "NX-001〜NX-344",
+      "chapters": [
+        {
+          "name": "第1章",
+          "released": "2009-01",
+          "kinds": 50,
+          "from": "NX-001",
+          "to": "NX-050"
+        },
+        {
+          "name": "第2章",
+          "released": "2009-03-26",
+          "kinds": 50,
+          "from": "NX-051",
+          "to": "NX-100"
+        },
+        {
+          "name": "第3章",
+          "released": "2009-05-28",
+          "kinds": 41,
+          "from": "NX-101",
+          "to": "NX-141"
+        },
+        {
+          "name": "第4章",
+          "released": "2009-07-16",
+          "kinds": 57,
+          "from": "NX-142",
+          "to": "NX-191"
+        },
+        {
+          "name": "第5章 10周年記念弾",
+          "released": "2009-09-17",
+          "kinds": 50,
+          "from": "NX-192",
+          "to": "NX-241"
+        },
+        {
+          "name": "第6章",
+          "released": "2009-11-19",
+          "kinds": 52,
+          "from": "NX-242",
+          "to": "NX-293"
+        },
+        {
+          "name": "第7章",
+          "released": "2010-01-21",
+          "kinds": 51,
+          "from": "NX-294",
+          "to": "NX-344"
+        }
+      ],
+      "quirks": "Le 4e chapitre ajoute `NX-CAM001〜004` et `NX-SPI〜SPIII`. La ポケットファイルダス de 2009-02 porte `NXpf-001〜008`."
+    }
+  ],
+  "totalNumbered": "DN 249 + NM 237 + NF 295 + NX 344 = 1 125 numéros de base, sans compter les familles annexes.",
+  "not": ["faces", "titres", "raretés"],
+  "decision": "Aucun pack n'est créé ici. Verser ces quatre lignes voudrait dire un pack `naruto/datacarddass`, sur le modèle du 疾風伝 — c'est une décision, pas une conséquence."
+}

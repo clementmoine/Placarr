@@ -140,4 +140,3 @@ export function catalogAttachmentTitleConflicts(
 
   return false;
 }
-

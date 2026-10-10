@@ -20,7 +20,10 @@ src/providers/<franchise>/<id>/
 ```
 
 Registry : une entrée dans `core/catalog/registry.ts` — **aucun** literal de
-provider id hors `providers/`.
+provider id hors `providers/`. Aussi : ligne `CATALOGUE_PACKS` + import
+`effects/` (dette **wiring auto** — backlog P2 : un Sync doit suffire pour
+sets / cartes / scellés / faces une fois le pack branché ; pas de nouvel
+`if` core à chaque extension).
 
 | Factory | Quand |
 | ------- | ----- |

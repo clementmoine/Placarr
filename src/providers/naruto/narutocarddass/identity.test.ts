@@ -10,11 +10,11 @@ import type { NarutoPrintDetail } from "./search";
 // —— knownCards ——
 {
   describe("formatKnownCardsMarkdown", () => {
-    it("tolerates set rows without starters (tempete-class)", () => {
+    it("tolerates set rows without starters", () => {
       const report: KnownCardsReport = {
         generatedAt: "2026-09-09T00:00:00.000Z",
         sets: {
-          tempete: {
+          s11: {
             series: 11,
             starters: undefined as unknown as string[],
             colekaLabel: null,
@@ -37,7 +37,7 @@ import type { NarutoPrintDetail } from "./search";
         photoFallbackArt: [],
         cards: [],
       };
-      expect(formatKnownCardsMarkdown(report)).toContain("| `tempete` | — | — |");
+      expect(formatKnownCardsMarkdown(report)).toContain("| `s11` | — | — |");
     });
   });
 
@@ -99,7 +99,7 @@ import type { NarutoPrintDetail } from "./search";
       mkdirSync(gap, { recursive: true });
       writeFileSync(path.join(gap, "art.jpg"), Buffer.alloc(400_000));
       const rows = collectPhotoFallbackArt(root);
-      expect(rows.map((r) => r.printKey)).toEqual(["naruto:ni-0194"]);
+      expect(rows.map((r) => r.printKey)).toEqual(["naruto:s4-ni0194"]);
       expect(rows[0]?.priority).toBe("high");
     });
   });
@@ -171,7 +171,9 @@ import type { NarutoPrintDetail } from "./search";
       });
       expect(narutoDiskCardId("PR-005R")).toBe("pr0005-R");
       expect(narutoDiskCardId("Pr 005R")).toBe("pr0005-R");
-      expect(mintNarutoPrintKey("PR-005R")).toBe("naruto:pr-0005-r");
+      expect(mintNarutoPrintKey("PR-005R", "promo")).toBe(
+        "naruto:promo-pr0005-r",
+      );
       expect(narutoCollectorsMatch("PR-005", "PR-005R")).toBe(false);
     });
 
@@ -408,7 +410,7 @@ import type { NarutoPrintDetail } from "./search";
       expect(narutoDiskCardId("N-US097")).toBe("nus0097");
       expect(formatNarutoReference("tin1", "nus0097")).toBe("N-US097");
       expect(formatNarutoReference("s3", "n0097-us")).toBe("N-US097");
-      expect(mintNarutoPrintKey("N-US097")).toBe("naruto:nus-0097");
+      expect(mintNarutoPrintKey("N-US097", "s1")).toBe("naruto:s1-nus0097");
     });
 
     it("does not search 幕 / 忍者学校 inside NI/N/J/M folders", () => {
@@ -444,34 +446,41 @@ import type { NarutoPrintDetail } from "./search";
   });
 
   describe("canonicalizeNarutoPrintKey", () => {
-    it("folds series-baked keys onto the printed prefix", () => {
-      expect(canonicalizeNarutoPrintKey("naruto:s6-ni064")).toBe(
-        "naruto:ni-0064",
+    it("keeps set-scoped keys and re-pads the collector segment", () => {
+      expect(canonicalizeNarutoPrintKey("naruto:s6-ni0064")).toBe(
+        "naruto:s6-ni0064",
       );
       expect(canonicalizeNarutoPrintKey("naruto:s2-ni064")).toBe(
-        "naruto:ni-0064",
+        "naruto:s2-ni0064",
       );
-      expect(canonicalizeNarutoPrintKey("naruto:ni-0064")).toBe("naruto:ni-0064");
-      expect(mintNarutoPrintKey("ni064")).toBe("naruto:ni-0064");
+      expect(mintNarutoPrintKey("ni064", "s2")).toBe("naruto:s2-ni0064");
+      expect(mintNarutoPrintKey("ni064")).toBeNull();
     });
 
-    it("re-pads a prefix key so ni-086 is the same print as ni-0086", () => {
-      expect(canonicalizeNarutoPrintKey("naruto:ni-086")).toBe("naruto:ni-0086");
-      expect(canonicalizeNarutoPrintKey("naruto:ni-0086")).toBe("naruto:ni-0086");
-    });
-
-    it("rewrites a leftover n-0097-us key onto the US prefix", () => {
-      expect(canonicalizeNarutoPrintKey("naruto:n-0097-us")).toBe(
-        "naruto:nus-0097",
+    it("leaves legacy family keys alone without a catalogue set", () => {
+      expect(canonicalizeNarutoPrintKey("naruto:ni-0086")).toBe(
+        "naruto:ni-0086",
       );
-      expect(canonicalizeNarutoPrintKey("naruto:nus-0097")).toBe(
-        "naruto:nus-0097",
+      expect(canonicalizeNarutoPrintKey("naruto:ni-0086", "s1")).toBe(
+        "naruto:s1-ni0086",
       );
     });
 
-    it("keeps a promo grouping off the retail number", () => {
+    it("rewrites a leftover n-0097-us key onto the US prefix when set is given", () => {
+      expect(canonicalizeNarutoPrintKey("naruto:n-0097-us", "s1")).toBe(
+        "naruto:s1-nus0097",
+      );
+      expect(canonicalizeNarutoPrintKey("naruto:s1-nus0097")).toBe(
+        "naruto:s1-nus0097",
+      );
+    });
+
+    it("folds legacy promo keys onto set promo", () => {
       expect(canonicalizeNarutoPrintKey("naruto:promo-ni024")).toBe(
-        "naruto:ni-0024-promo",
+        "naruto:promo-ni0024",
+      );
+      expect(canonicalizeNarutoPrintKey("naruto:ni-0024-promo")).toBe(
+        "naruto:promo-ni0024",
       );
     });
   });
@@ -491,14 +500,14 @@ import type { NarutoPrintDetail } from "./search";
       expect(narutoDiskCardId("CAN-5")).toBe("can0005");
       expect(narutoDiskCardId("CAN-6")).toBe("can0006");
       expect(narutoDiskCardId("CAN-7")).toBeNull();
-      expect(mintNarutoPrintKey("CAN-5")).toBe("naruto:can-0005");
+      expect(mintNarutoPrintKey("CAN-5", "promo")).toBe("naruto:promo-can0005");
     });
 
     it("mint COIN-1〜16 dans Carddass (コイン PLUS), pas l'arcade", () => {
       expect(narutoDiskCardId("COIN-1")).toBe("coin0001");
       expect(narutoDiskCardId("COIN-16")).toBe("coin0016");
       expect(narutoDiskCardId("COIN-17")).toBeNull();
-      expect(mintNarutoPrintKey("COIN-8")).toBe("naruto:coin-0008");
+      expect(mintNarutoPrintKey("COIN-8", "promo")).toBe("naruto:promo-coin0008");
       expect(formatNarutoReference("promo", "coin0001", "ja")).toBe("COIN-1");
     });
   });
@@ -895,7 +904,10 @@ import type { NarutoPrintDetail } from "./search";
     it("names late FR CCG sets with their series number", () => {
       expect(narutoSetLabel("s24")).toBe("Série 24 — Sage's Legacy");
       expect(narutoSetLabel("s28")).toBe("Série 28 — Ultimate Ninja Storm 3");
-      expect(narutoSetLabel("tempete")).toBe("Série 11 — La Tempête Approche");
+      expect(narutoSetLabel("s11")).toBe("Série 11 — La Tempête Approche");
+      expect(narutoSetLabel("s11", null, "en")).toBe(
+        "Series 11 — Approaching Wind",
+      );
     });
 
     it("uses Series N — Bandai USA titles when the checklist language is en", () => {

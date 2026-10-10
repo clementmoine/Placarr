@@ -110,6 +110,8 @@ export type FetchMetadataOptions = {
    * tell two prints of the same card apart.
    */
   printKey?: string | null;
+  /** Catalogue set of this copy when the printKey is multi-set. */
+  setCode?: string | null;
 };
 
 function pinnedProviderIdsFromOptions(
@@ -259,6 +261,7 @@ export async function fetchMetadata(
       name,
       barcode,
       printKey: options?.printKey,
+      setCode: options?.setCode,
       platform: resolvedPlatform,
       shelfName: options?.shelfName,
       lookupQueries,

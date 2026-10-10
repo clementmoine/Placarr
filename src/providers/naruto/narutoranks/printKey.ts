@@ -1,4 +1,7 @@
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  buildPrintKey,
+  registerPrintKeyCatalogueSets,
+} from "@/core/identify/printKey";
 
 const SET_LABELS: Readonly<Record<string, string>> = {
   nr: "Ninja Ranks",
@@ -10,6 +13,9 @@ const SET_LABELS: Readonly<Record<string, string>> = {
   bl: "Box Loaders",
   pn: "Promos",
 };
+
+/** Alphabetic chapters — so `catalogueSetFromPrintKey("naruto:nr-0009")` → `nr`. */
+registerPrintKeyCatalogueSets("naruto", Object.keys(SET_LABELS));
 
 /**
  * EU (FR / IT) : PaniniMania, Coleka, Imadoki écrivent `GS1–3` (Group Seven).

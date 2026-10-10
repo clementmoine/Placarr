@@ -103,6 +103,8 @@ function metadataCacheKey(
   // without this the five "Chiot dalmatien" prints collapse onto one entry and
   // the second card silently inherits the first one's fiche.
   printKey?: string | null,
+  /** Set-scoped copy — same printKey can live in several series. */
+  setCode?: string | null,
 ): string {
   const norm = (value?: string | null) =>
     (value ?? "").normalize("NFKC").trim().toLowerCase();
@@ -113,6 +115,7 @@ function metadataCacheKey(
     norm(platform),
     norm(shelfName),
     norm(printKey),
+    norm(setCode),
   ].join("|");
 }
 
@@ -124,6 +127,7 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
   romChecksums?: RomChecksums;
   priceLastUpdated?: Date | null;
   printKey?: string | null;
+  setCode?: string | null;
 }> {
   const item = await prisma.item.findUnique({
     where: { id: itemId },
@@ -177,6 +181,7 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
     romChecksums: romChecksumsFromIdentifierFacts(facts),
     priceLastUpdated: item.priceOffers?.[0]?.observedAt ?? null,
     printKey: item.printKey,
+    setCode: item.setCode,
   };
 }
 
@@ -201,6 +206,8 @@ export async function getMetadata(
     onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
     /** Print identity for barcode-less objects. See `@/core/identify/printKey`. */
     printKey?: string | null;
+    /** Catalogue set of this copy when the printKey is multi-set. */
+    setCode?: string | null;
   } = {},
 ): Promise<MetadataResult | null> {
   const resolvedPlatform = resolveGameMetadataPlatform(
@@ -215,6 +222,7 @@ export async function getMetadata(
     resolvedPlatform,
     options.shelfName,
     options.printKey,
+    options.setCode,
   );
   const now = Date.now();
 
@@ -259,6 +267,7 @@ export async function getMetadata(
           lightRefresh: options.lightRefresh,
           onApiPassComplete: options.onApiPassComplete,
           printKey: options.printKey,
+          setCode: options.setCode,
         },
       );
       return result;
@@ -354,6 +363,7 @@ export async function fetchAndStoreMetadata(
     romChecksums: storedRomChecksums,
     priceLastUpdated,
     printKey: storedPrintKey,
+    setCode: storedSetCode,
   } = await storedProviderMemoryForItem(itemId);
 
   // Even on forceRefresh, seed capability gating from the current fiche so we
@@ -408,6 +418,7 @@ export async function fetchAndStoreMetadata(
       isBackground,
       shelfName,
       printKey: storedPrintKey,
+      setCode: storedSetCode,
       signal: refreshSession?.signal,
       existingScrapeProviderIds,
       existingExternalIds,

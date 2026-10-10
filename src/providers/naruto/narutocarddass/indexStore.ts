@@ -6,6 +6,7 @@
 import {
   existsSync,
   mkdirSync,
+  readFileSync,
   renameSync,
   statSync,
   unlinkSync,
@@ -14,27 +15,62 @@ import {
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import { japaneseVolumeForPrintNumber } from "./sources/sealed";
+import {
+  japaneseCatalogueSetsForPrintNumber,
+  japaneseVolumeForPrintNumber,
+} from "./sources/sealed";
 
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 import { canonicalDataPack } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { migrateProductsSchema } from "@/providers/shared/sealedProducts/productsSqlite";
 
+import { parsePrintKey } from "@/core/identify/printKey";
 import { appearanceSetsOf } from "./identity";
 import {
   canonicalizeNarutoPrintKey,
+  expandNarutoPrintsToSetScoped,
   isJpOnlyNarutoArtwork,
+  isNarutoCatalogueSetCode,
+  narutoDiskCardId,
   parseNarutoCollector,
 } from "./identity";
+import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
 import { foldNarutoCatalogueRecords } from "./pipeline";
 import { fillNarutoTitlesFromSiblingLocales } from "./pipeline/ledgers";
 import { narutoEditorialLandscapePrints } from "./search";
 import { NARUTO_PACK_ID } from "./identity";
 import { NARUTO_GAME } from "./parse/bandai";
 import { isNarutoLangPrinted } from "./identity";
+import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { isNarutoS6FrPrintedNumber } from "./sources/titles";
+
+/** Coleka Tempête / Rampage Tornado (33) — FR checklist membership on `s11`. */
+function rampageTornadoCollectors(): Set<string> {
+  const file = path.join(
+    dataRoot(),
+    NARUTO_PACK_ID,
+    "staging",
+    "coleka-rampage-tornado",
+    "cards.json",
+  );
+  if (!existsSync(file)) return new Set();
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as {
+      cards?: Array<{ number?: string }>;
+    };
+    const out = new Set<string>();
+    for (const card of raw.cards ?? []) {
+      const n = card.number?.trim();
+      if (!n) continue;
+      out.add((narutoDiskCardId(n) ?? n).toLowerCase());
+    }
+    return out;
+  } catch {
+    return new Set();
+  }
+}
 
 export const NARUTO_CCG_SCHEMA_VERSION = "3";
 export { NARUTO_EN_PACK_ID, NARUTO_PACK_ID } from "./identity";
@@ -213,6 +249,176 @@ export function writeNarutoCcgIndex(input: {
     assets: input.assets,
   });
 
+  /*
+    Set-scoped printKeys: one row per membership (`s1-ni0049` + `s5-ni0049`).
+    Titles/assets are duplicated onto every expanded key that shares the
+    collector number.
+  */
+  /*
+    Deck / deck_bundle guarantees (ex. S2 starter reprints NI-008) — sets that
+    appearances.json never lists. Mint `s2-ni0008` beside `s1-ni0008`.
+  */
+  const deckSetsByCollector = new Map<string, Set<string>>();
+  for (const entry of loadSealedProductEntries(NARUTO_PACK_ID)) {
+    if (entry.kind !== "deck" && entry.kind !== "deck_bundle") continue;
+    const productSet = (entry.catalogueSetId ?? entry.setCode ?? "")
+      .trim()
+      .toLowerCase();
+    for (const link of entry.guaranteedPrints ?? []) {
+      const key = link.printKey?.trim();
+      if (!key) continue;
+      /*
+        Prefer the set segment of a set-scoped guarantee key (`s2-ni0008`) —
+        products-index often leaves `setCode` null on starters.
+      */
+      const parsed = parsePrintKey(
+        canonicalizeNarutoPrintKey(
+          key,
+          productSet && isNarutoCatalogueSetCode(productSet)
+            ? productSet
+            : null,
+        ),
+      );
+      if (!parsed || parsed.game !== "naruto") continue;
+      const setFromKey = isNarutoCatalogueSetCode(parsed.set)
+        ? parsed.set
+        : "";
+      const set =
+        setFromKey ||
+        (productSet && isNarutoCatalogueSetCode(productSet) ? productSet : "");
+      if (!set) continue;
+      const raw = isNarutoCatalogueSetCode(parsed.set)
+        ? parsed.grouping
+          ? `${parsed.number}-${parsed.grouping}`
+          : parsed.number
+        : `${parsed.set}${parsed.number}${
+            parsed.grouping ? `-${parsed.grouping}` : ""
+          }`;
+      const collector = (narutoDiskCardId(raw) ?? raw).toLowerCase();
+      const bucket = deckSetsByCollector.get(collector) ?? new Set<string>();
+      bucket.add(set);
+      deckSetsByCollector.set(collector, bucket);
+    }
+  }
+
+  const collectorOf = (number: string, printKey: string) =>
+    (narutoDiskCardId(number) ?? printKey).toLowerCase();
+
+  /** Resolve collector for legacy + set-scoped keys (title/asset remap). */
+  const collectorFromPrintKey = (printKey: string): string => {
+    const parsed = parsePrintKey(printKey);
+    if (!parsed || parsed.game !== "naruto") return printKey.toLowerCase();
+    const raw = isNarutoCatalogueSetCode(parsed.set)
+      ? parsed.grouping
+        ? `${parsed.number}-${parsed.grouping}`
+        : parsed.number
+      : `${parsed.set}${parsed.number}${
+          parsed.grouping ? `-${parsed.grouping}` : ""
+        }`;
+    return (narutoDiskCardId(raw) ?? raw).toLowerCase();
+  };
+
+  const rampageCollectors = rampageTornadoCollectors();
+
+  const prepared = folded.prints.map((p) => {
+    let sets = appearanceSetsOf(
+      p.setCodes?.length ? p.setCodes : [p.setCode],
+    );
+    if (isNarutoS6FrPrintedNumber(p.number) && !sets.includes("s6")) {
+      sets = [...sets, "s6"];
+    }
+    /*
+      巻ノ : jamais dans appearances (sources EU). On les attache depuis les
+      bornes numériques — une clé `maki*` distincte de `s1-*` pour le même n°.
+    */
+    const grouping = (p.grouping ?? "").trim().toLowerCase();
+    const skipMaki =
+      grouping === "ps" ||
+      grouping === "promo" ||
+      grouping === "prerelease" ||
+      /-(ps|promo|prerelease)$/i.test(p.number);
+    if (!skipMaki) {
+      for (const code of japaneseCatalogueSetsForPrintNumber(p.number)) {
+        if (!sets.includes(code)) sets.push(code);
+      }
+    }
+    const collector = collectorOf(p.number, p.printKey);
+    /*
+      Tempête approche (Coleka 33) = checklist FR `s11`. Reprints live under
+      earlier series too — mint a distinct `s11-*` key so FR titles / ownership
+      don't stay stuck on s1/s3.
+    */
+    if (
+      rampageCollectors.has(collector) &&
+      !sets.includes(RAMPAGE_TORNADO_SET)
+    ) {
+      sets = [...sets, RAMPAGE_TORNADO_SET];
+    }
+    for (const code of deckSetsByCollector.get(collector) ?? []) {
+      if (!sets.includes(code)) sets.push(code);
+    }
+    sets = sets.filter((set) => {
+      if (set === "promo" && !belongsOnNarutoPromoChecklist(p.number)) {
+        return false;
+      }
+      return true;
+    });
+    return { ...p, setCodes: sets };
+  });
+  const expandedPrints = expandNarutoPrintsToSetScoped(prepared);
+  const keysByCollector = new Map<string, string[]>();
+  for (const p of expandedPrints) {
+    const c = collectorOf(p.number, p.printKey);
+    const list = keysByCollector.get(c) ?? [];
+    list.push(p.printKey);
+    keysByCollector.set(c, list);
+  }
+  const oldKeyCollector = new Map<string, string>();
+  for (const p of folded.prints) {
+    oldKeyCollector.set(p.printKey, collectorOf(p.number, p.printKey));
+  }
+  const expandRows = <T extends { printKey: string }>(rows: readonly T[]): T[] => {
+    const out: T[] = [];
+    for (const row of rows) {
+      const collector =
+        oldKeyCollector.get(row.printKey) ??
+        collectorFromPrintKey(row.printKey);
+      const keys = keysByCollector.get(collector);
+      if (!keys?.length) continue;
+      for (const printKey of keys) {
+        out.push({ ...row, printKey });
+      }
+    }
+    return out;
+  };
+  /*
+    FR titles must not land on EN-only series keys (s7–s10, s15, tp4…).
+    Expand used to copy every locale onto every membership — checklist FR then
+    listed Tempête reprints under Quest for Power, etc.
+  */
+  const setAcceptsTitleLang = (setCode: string, lang: string): boolean => {
+    const l = lang.trim().toLowerCase();
+    const set = setCode.trim().toLowerCase();
+    if (!l || !set) return true;
+    if (l === "en" || l === "ja") return true;
+    if (l !== "fr") return true;
+    if (set === "promo" || set === "prerelease") return true;
+    if (set === "s6" || set === "s11" || set === "s24" || set === "s28") {
+      return true;
+    }
+    const series = /^s(\d+)$/.exec(set);
+    if (series) {
+      const n = Number(series[1]);
+      return n >= 1 && n <= 5;
+    }
+    return false;
+  };
+  const expandedTitles = expandRows(folded.titles).filter((row) => {
+    const set = parsePrintKey(row.printKey)?.set ?? "";
+    return setAcceptsTitleLang(set, row.lang);
+  });
+  const expandedAssets = expandRows(folded.assets ?? []);
+
   const db = new DatabaseSync(buildPath);
   createSchema(db);
 
@@ -264,7 +470,7 @@ export function writeNarutoCcgIndex(input: {
       metaInsert.run(k, v);
     }
 
-    for (const p of folded.prints) {
+    for (const p of expandedPrints) {
       insertPrint.run(
         p.printKey,
         p.setCode,
@@ -273,22 +479,9 @@ export function writeNarutoCcgIndex(input: {
         p.grouping ?? null,
         p.sourceUrl ?? null,
       );
-      let membership = appearanceSetsOf(
-        p.setCodes?.length ? p.setCodes : [p.setCode],
-      ).filter((set) => {
-        if (/^maki\d+$/i.test(set)) return false;
-        if (set === "promo" && !belongsOnNarutoPromoChecklist(p.number))
-          return false;
-        return true;
-      });
-      if (
-        isNarutoS6FrPrintedNumber(p.number) &&
-        !membership.includes("s6")
-      ) {
-        membership = [...membership, "s6"];
-      }
-      for (const set of membership) {
-        insertPrintSet.run(p.printKey, set);
+      // Set-scoped key: membership is the key's own set (plus maki kept off EU).
+      if (!/^maki\d+$/i.test(p.setCode)) {
+        insertPrintSet.run(p.printKey, p.setCode);
       }
     }
     /*
@@ -296,17 +489,17 @@ export function writeNarutoCcgIndex(input: {
       SQLite ne dit alors que « constraint failed ». On nomme le coupable : sans
       ça, la seule piste est une base vide.
     */
-    const known = new Set(folded.prints.map((p) => p.printKey));
+    const known = new Set(expandedPrints.map((p) => p.printKey));
     const jpOnlyPrintKeys = new Set(
-      folded.prints
+      expandedPrints
         .filter((p) => isJpOnlyNarutoArtwork(p.number))
         .map((p) => p.printKey),
     );
     const orphans = [
-      ...folded.titles
+      ...expandedTitles
         .filter((t) => !known.has(t.printKey))
         .map((t) => `titre ${t.printKey} (${t.lang})`),
-      ...folded.assets
+      ...expandedAssets
         .filter((a) => !known.has(a.printKey))
         .map((a) => `face ${a.printKey} (${a.lang})`),
     ];
@@ -316,7 +509,7 @@ export function writeNarutoCcgIndex(input: {
           `${orphans.slice(0, 12).join(", ")}${orphans.length > 12 ? `, … (+${orphans.length - 12})` : ""}`,
       );
     }
-    for (const t of folded.titles) {
+    for (const t of expandedTitles) {
       if (t.nameLocaleFrom?.trim()) continue;
       if (
         jpOnlyPrintKeys.has(t.printKey) &&
@@ -326,7 +519,7 @@ export function writeNarutoCcgIndex(input: {
       }
       insertTitle.run(t.printKey, t.lang, t.fullName, t.rarity ?? null);
     }
-    for (const a of folded.assets) {
+    for (const a of expandedAssets) {
       if (
         jpOnlyPrintKeys.has(a.printKey) &&
         a.lang.toLowerCase() !== "ja"
@@ -367,7 +560,7 @@ export function writeNarutoCcgIndex(input: {
     sinon ils servent encore l'inode remplacé.
   */
   resetNarutoCcgDbCache();
-  return { dbPath, printCount: folded.prints.length };
+  return { dbPath, printCount: expandedPrints.length };
 }
 
 function copyCatalogSideTablesFromPrevious(

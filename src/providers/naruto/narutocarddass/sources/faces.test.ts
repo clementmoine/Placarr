@@ -580,7 +580,7 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
         "carddass-fr-branch",
       ]);
       expect(ledger.rampageTornado.scrape).toBe(true);
-      expect(ledger.rampageTornado.setCode).toBe("tempete");
+      expect(ledger.rampageTornado.setCode).toBe("s11");
       expect(ledger.rampageTornado.url).toContain("_r16963");
       expect(ledger.rampageTornado.colekaCardCount).toBe(33);
       const hashed = ledger.covers.find((row) => row.set === "s26");

@@ -1,4 +1,7 @@
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  buildPrintKey,
+  registerPrintKeyCatalogueSets,
+} from "@/core/identify/printKey";
 
 /**
  * Ultra Challenge n'a qu'un seul set : cent cartes numérotées 1 à 100.
@@ -8,6 +11,8 @@ import { buildPrintKey } from "@/core/identify/printKey";
  * `maku*`, `gaku`, `coin`. Vérifié en base avant de le choisir.
  */
 export const NARUTO_ULTRA_SET_CODE = "uc";
+
+registerPrintKeyCatalogueSets("naruto", [NARUTO_ULTRA_SET_CODE]);
 
 /** `naruto:uc-0001`. */
 export function ultraChallengePrintKey(number: string): string | null {

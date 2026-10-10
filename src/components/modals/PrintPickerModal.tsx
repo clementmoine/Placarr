@@ -878,24 +878,11 @@ export function PrintPickerModal({
     const activeSetLabel = activeSetId
       ? (catalogueSets.find((set) => set.id === activeSetId)?.label ?? null)
       : null;
-    const stamped = source.map((row) => {
-      /*
-        Inserts S6 classés en checklist S5 : identité s6 (setCode + libellé).
-        Ne pas les retamper avec l'extension parcourue.
-      */
-      const keepS6Identity =
-        (row.setCode ?? "").trim().toLowerCase() === "s6";
-      const setCode = keepS6Identity
-        ? row.setCode
-        : (activeSetId ?? row.setCode ?? null);
-      return {
-        ...row,
-        setCode,
-        ...(!keepS6Identity && activeSetId && activeSetLabel
-          ? { setLabel: activeSetLabel }
-          : {}),
-      };
-    });
+    const stamped = source.map((row) => ({
+      ...row,
+      setCode: activeSetId ?? row.setCode ?? null,
+      ...(activeSetId && activeSetLabel ? { setLabel: activeSetLabel } : {}),
+    }));
     return expandPrintCandidatesByFinish(stamped);
   }, [
     trimmedQuery,

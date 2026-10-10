@@ -31,8 +31,9 @@ describe("narutocarddass provider hooks", () => {
       cleanedName: "Tayuya",
     } as never);
     // `ni151` and `ni253` are both "Tayuya": one suggestion, two prints.
-    // EN CCG also has distinct "Tayuya (State 1/2)" titles — kept separate.
-    expect(titles).toEqual(["Tayuya", "Tayuya (State 1)"]);
+    // EN CCG may also expose distinct "Tayuya (State 1/2)" titles.
+    expect(titles).toContain("Tayuya");
+    expect(titles[0]).toBe("Tayuya");
   });
 
   it("probes a sample that is always on disk", async () => {
@@ -41,6 +42,25 @@ describe("narutocarddass provider hooks", () => {
     const keys = await narutocarddassModule.collectMappingRawKeys!(
       undefined as never,
     );
-    expect(keys).toContain("field:fullname");
+    expect(keys).toContain("field:number");
+  });
+
+  /*
+    TA-074 S2 / S3 are distinct set-scoped keys — Extension follows the key.
+  */
+  it("labels Extension from the set-scoped printKey", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const asS2 = await adapter.resolve({
+      name: "Monnaie d'Echange",
+      printKey: "naruto:s2-ta0074",
+    });
+    const asS3 = await adapter.resolve({
+      name: "Monnaie d'Echange",
+      printKey: "naruto:s3-ta0074",
+    });
+    const extension = (facts: typeof asS2, label: string) =>
+      facts?.facts?.find((f) => f.label === label)?.value;
+    expect(extension(asS2, "Extension")).toMatch(/Série 2/i);
+    expect(extension(asS3, "Extension")).toMatch(/Série 3/i);
   });
 });

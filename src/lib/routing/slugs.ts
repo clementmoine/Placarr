@@ -4,6 +4,7 @@ import {
   unpaddedVolumeNumbersInTitle,
   volumeNumberFromTitle,
 } from "@/core/enrich/titles/volumeNumber";
+import { itemSlugSetCode } from "@/providers/shared/cardCatalogue/sets";
 
 export function slugify(value?: string | null): string {
   if (!value) return "";
@@ -137,17 +138,28 @@ function parseMetadataAliasLabels(raw?: string | null): string[] {
  * Elle est écrite **toujours**, pas seulement quand elle départage : sinon
  * l'URL de la carte française changerait le jour où l'on ajoute la japonaise.
  * Un slug ne doit pas dépendre de ce qu'on possède par ailleurs.
+ *
+ * **L'extension catalogue** (`Item.setCode`) aussi, quand le segment « set »
+ * du printKey n'est pas cette extension — legacy Naruto `ta-0074` (famille)
+ * vs set-scoped `s3-ta0074`. Lorcana / set-scoped keys already carry the
+ * chapter : on ne redouble pas.
  */
 export function printKeyItemSlug(
   printKey?: string | null,
   variant?: string | null,
   language?: string | null,
+  setCode?: string | null,
 ): string {
   const identity = parsePrintKey(printKey);
   if (!identity) return "";
   const reference = slugify(`${identity.set}-${identity.number}`);
   if (!reference) return "";
-  return [reference, slugify(language), slugify(variant)]
+  const catalogue = slugify(itemSlugSetCode(setCode) || setCode);
+  const head =
+    catalogue && catalogue !== identity.set
+      ? `${catalogue}-${reference}`
+      : reference;
+  return [head, slugify(language), slugify(variant)]
     .filter(Boolean)
     .join("-");
 }
@@ -158,6 +170,7 @@ export function itemLookupSlugs(item: {
   printKey?: string | null;
   variant?: string | null;
   language?: string | null;
+  setCode?: string | null;
   metadata?: { title?: string | null; aliases?: string | null } | null;
 }): string[] {
   const slugs = new Set<string>();
@@ -177,14 +190,21 @@ export function itemLookupSlugs(item: {
     renommer quoi que ce soit en base, et donc sans casser un lien déjà partagé.
   */
   /*
-    Toutes les formes par référence sont reconnues, langue comprise ou non :
+    Toutes les formes par référence sont reconnues, langue / set compris ou non :
     c'est ce qui laisse répondre les URL déjà partagées quand un item est
-    re-slugué, ici parce que la langue est entrée dans le slug.
+    re-slugué (langue, puis préfixe d'extension).
   */
-  for (const withLanguage of [item.language, null]) {
-    for (const withVariant of [item.variant, null]) {
-      const slug = printKeyItemSlug(item.printKey, withVariant, withLanguage);
-      if (slug) slugs.add(slug);
+  for (const withSet of [item.setCode, null]) {
+    for (const withLanguage of [item.language, null]) {
+      for (const withVariant of [item.variant, null]) {
+        const slug = printKeyItemSlug(
+          item.printKey,
+          withVariant,
+          withLanguage,
+          withSet,
+        );
+        if (slug) slugs.add(slug);
+      }
     }
   }
   return [...slugs];

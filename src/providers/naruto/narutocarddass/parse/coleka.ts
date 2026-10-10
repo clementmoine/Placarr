@@ -286,8 +286,8 @@ export const COLEKA_STORM3_LISTING_PATH =
 /** Deck spécial FR « La tempête approche » (Rampage Tornado) — 33 reprints, not a set dump. */
 export const COLEKA_RAMPAGE_TORNADO_LISTING_PATH =
   "/fr/cartes-de-collection/cartes-anime-manga/naruto-cartes-a-jouer-et-a-collectionner/deck-special-naruto-la-tempete-approche-rampage-tornado_r16963";
-/** Checklist / appearances id — not EN Approaching Wind (`s11`). */
-export const RAMPAGE_TORNADO_SET = "tempete";
+/** Deck FR Rampage Tornado / La Tempête Approche — même code série que l'EN Approaching Wind. */
+export const RAMPAGE_TORNADO_SET = "s11";
 /** Display / deck packshot Coleka uses for the special deck branch. */
 export const COLEKA_RAMPAGE_TORNADO_SET_COVER_URL =
   "https://thumbs.coleka.com/media/rubrique/202012/20/cartes-de-collection-cartes-anime-manga-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-deck-special-approche-du-vent-rampage-tornado.webp";

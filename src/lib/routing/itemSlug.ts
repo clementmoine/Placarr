@@ -27,6 +27,7 @@ function itemBaseSlug(item: {
   printKey?: string | null;
   variant?: string | null;
   language?: string | null;
+  setCode?: string | null;
   id: string;
 }): string {
   /*
@@ -35,7 +36,12 @@ function itemBaseSlug(item: {
     d'elles qu'elles sont un même objet en double. Voir `printKeyItemSlug`.
   */
   return (
-    printKeyItemSlug(item.printKey, item.variant, item.language) ||
+    printKeyItemSlug(
+      item.printKey,
+      item.variant,
+      item.language,
+      item.setCode,
+    ) ||
     slugifyItemName(item.name) ||
     item.slug?.trim() ||
     item.id
@@ -95,6 +101,11 @@ export async function allocateUniqueItemSlug(
       /** La langue de l'exemplaire : deux localisations d'une même carte
        *  partagent la clé, et sans elle la seconde devenait une « copie ». */
       language?: string | null;
+      /**
+       * Extension catalogue (`s2`, `s3`…). Distincte du segment « set » du
+       * printKey quand celui-ci est une famille (`ta`, `ni`).
+       */
+      setCode?: string | null;
     } | null;
   } = {},
 ): Promise<string> {
@@ -103,6 +114,7 @@ export async function allocateUniqueItemSlug(
       options.print?.printKey,
       options.print?.variant,
       options.print?.language,
+      options.print?.setCode,
     ) || slugifyItemName(name);
   if (!base) return options.excludeItemId ?? "";
 
@@ -137,6 +149,7 @@ export async function reconcileDuplicateItemSlugsOnShelf(
       printKey: true,
       language: true,
       variant: true,
+      setCode: true,
       createdAt: true,
     },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],

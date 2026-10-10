@@ -42,7 +42,7 @@ function setCodeFromHeading(heading: string): string | null {
   if (!m) return null;
   const token = m[1]!.toUpperCase();
   if (token === "PROMO") return "promo";
-  if (token === "TEMPETE") return "tempete";
+  if (token === "TEMPETE") return "s11";
   if (token === "PRERELEASE") return "prerelease";
   const series = /^S(\d+)$/i.exec(token);
   if (series) return `s${Number(series[1])}`;

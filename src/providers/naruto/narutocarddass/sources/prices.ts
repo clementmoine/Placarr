@@ -18,6 +18,9 @@ import { ensureNarutoCcgIndex } from "../indexStore";
 import { narutoCatalogueLineForCard } from "../identity";
 import { lookupNarutoPrintDetail } from "../search";
 import { loadAttestedPromos } from "./promos";
+import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./priceSourceId";
+
+export { NARUTO_INDICATIVE_PRICE_SOURCE } from "./priceSourceId";
 
 /**
  * Côtes approximatives Collection Naruto (YT 7r7) — estimations `~` pour
@@ -313,8 +316,6 @@ export function narutoIndicativeQuoteForPrint(input: {
  * référence Placarr pour les tirages Carddass FR concernés.
  */
 
-
-export const NARUTO_INDICATIVE_PRICE_SOURCE = "Collection Naruto";
 
 function printKeyFromCtx(ctx: BarcodePriceRefreshContext): string | null {
   const direct = ctx.printKey?.trim();

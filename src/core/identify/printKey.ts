@@ -110,6 +110,63 @@ export function isGameUniqueCollectorNumber(
 }
 
 /**
+ * Alphabetic set codes that are real catalogue chapters for a game
+ * (`nr` Ninja Ranks, `uc` Ultra Challenge, `dn` Data Carddass…).
+ * Registered by catalogue modules — never game literals in this file.
+ * Without registration, bare alpha sets stay `null` (Carddass family stubs
+ * `ni` / `ta`).
+ */
+const catalogueAlphaSetsByGame = new Map<string, Set<string>>();
+
+export function registerPrintKeyCatalogueSets(
+  game: string,
+  sets: readonly string[],
+): void {
+  const slug = game.trim().toLowerCase();
+  if (!slug) return;
+  const bag = catalogueAlphaSetsByGame.get(slug) ?? new Set<string>();
+  for (const raw of sets) {
+    const code = raw.trim().toLowerCase();
+    if (code) bag.add(code);
+  }
+  catalogueAlphaSetsByGame.set(slug, bag);
+}
+
+/** Test helper — drop one game's alphabetic catalogue sets. */
+export function unregisterPrintKeyCatalogueSets(game: string): void {
+  catalogueAlphaSetsByGame.delete(game.trim().toLowerCase());
+}
+
+/**
+ * Catalogue extension carried by the printKey set segment.
+ *
+ * - Set-scoped family numbers (`naruto:s3-ta0074`, `dbscg:part1-d0123`) → `s3` / `part1`
+ * - Bare numbers (`lorcana:1-106`) → `1`
+ * - Registered alphabetic chapters (`naruto:nr-0009`, `naruto:uc-0001`) → `nr` / `uc`
+ * - Legacy family-as-set (`naruto:ni-0049`) → `null` (set is the family, not the series)
+ */
+export function catalogueSetFromPrintKey(
+  printKey: string | null | undefined,
+): string | null {
+  const id = parsePrintKey(printKey);
+  if (!id) return null;
+  if (isGameUniqueCollectorNumber(id.number)) return id.set;
+  /*
+    Bare collector number: set is the chapter when it looks like one (digits,
+    `s11`, `promo`…) or when the game registered the alphabetic code
+    (Ninja Ranks `nr`, Ultra `uc`…). Unregistered alpha stubs (`ni`, `ta`)
+    stay null — Carddass family-as-set legacy.
+  */
+  if (
+    /^[a-z]{1,6}$/i.test(id.set) &&
+    !/^(promo|prerelease)$/i.test(id.set)
+  ) {
+    return catalogueAlphaSetsByGame.get(id.game)?.has(id.set) ? id.set : null;
+  }
+  return id.set;
+}
+
+/**
  * Possession / identité hors set : `game|number|grouping`.
  *
  * `null` quand le numéro n'est pas game-unique — on ne doit alors **pas**
@@ -125,17 +182,27 @@ export function printCollectableKey(
 
 /**
  * Set order as collectors browse binders: numeric release codes ascending
- * (`1` Premier Chapitre before `11`), then lettered codes (`q1`).
+ * (`1` Premier Chapitre before `11`, `s2` before `s11`), then lettered codes
+ * (`q1`, `promo`, `maki1`…).
  */
 export function comparePrintSetCodes(left: string, right: string): number {
-  const leftNumber = /^\d+$/.test(left) ? Number(left) : null;
-  const rightNumber = /^\d+$/.test(right) ? Number(right) : null;
+  const seriesNumber = (raw: string): number | null => {
+    const code = raw.trim().toLowerCase();
+    if (/^\d+$/.test(code)) return Number(code);
+    const series = /^s(\d+)$/.exec(code);
+    return series ? Number(series[1]) : null;
+  };
+  const leftNumber = seriesNumber(left);
+  const rightNumber = seriesNumber(right);
   if (leftNumber != null && rightNumber != null) {
     return leftNumber - rightNumber;
   }
   if (leftNumber != null) return -1;
   if (rightNumber != null) return 1;
-  return left.localeCompare(right);
+  return left
+    .trim()
+    .toLowerCase()
+    .localeCompare(right.trim().toLowerCase());
 }
 
 /** Collector number with optional variant letter (`4`, `4a`, `20`). */

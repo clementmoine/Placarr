@@ -42,10 +42,8 @@ import {
 } from "./disk";
 import { buildNarutoDiskArtAttachments } from "./diskArtAttachments";
 import { NARUTO_PACK_ID } from "./identity";
-import {
-  NARUTO_INDICATIVE_PRICE_SOURCE,
-  refreshNarutoIndicativePriceOffers,
-} from "./sources/prices";
+import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./sources/priceSourceId";
+import { refreshNarutoIndicativePriceOffers } from "./sources/prices";
 import {
   classicGgNumberToPrintKey,
   GG_ARCHIVE_PRICE_SOURCE,
@@ -130,6 +128,10 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
       ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.art)
       : undefined);
 
+  /*
+    Set-scoped printKey (`s3-ta0074`) already carries the extension — Extension
+    facts come from the catalogue row, not a separate Item.setCode override.
+  */
   return {
     title,
     ...(face ? { imageUrl: face } : {}),
@@ -180,8 +182,7 @@ export const narutocarddassModule = defineProvider({
     sourceAliases: [
       // Pre-rename provider id — still stamped on most Carddass fiches/facts.
       "narutoccg",
-      NARUTO_INDICATIVE_PRICE_SOURCE,
-      GG_ARCHIVE_PRICE_SOURCE,
+  GG_ARCHIVE_PRICE_SOURCE,
     ],
     factLabel: NARUTO_INDICATIVE_PRICE_SOURCE,
     notes:

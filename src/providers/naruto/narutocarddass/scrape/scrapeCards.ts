@@ -44,7 +44,11 @@ import {
 import { applyOfficialNames, loadOfficialNames } from "../identity";
 import { mergeFoundCatalogueLedgers } from "../pipeline/ledgers";
 import { mergeColekaUsPromosIntoIndex } from "../sources/promos";
-import { loadColekaCcgFrLedgers } from "./coleka";
+import {
+  loadColekaRampageTornadoLedger,
+  loadColekaSagesLegacyLedger,
+  loadColekaStorm3Ledger,
+} from "./coleka";
 import { loadStorm3Ledger } from "./marketplace";
 import { ensureNarutoChecklistLayout } from "../pipeline/coverage";
 import { ensureNarutoCuratedAssets } from "../install/curated";
@@ -1009,24 +1013,68 @@ function titlesForNarutoPrints(prints: NarutoPrintRow[], root: string) {
       rarity: card.rarity,
     });
   }
-  const colekaCcgFr = [
-    ...loadColekaCcgFrLedgers(root),
-    ...loadColekaCcgFrLedgers(path.join(dataRoot(), NARUTO_LEGACY_EN_CCG_DISK)),
-  ].filter(
-    (card, i, all) => all.findIndex((c) => c.number === card.number) === i,
-  );
-  for (const card of colekaCcgFr) {
-    const print = prints.find((p) => narutoNumbersEqual(p.number, card.number));
-    if (!print) continue;
-    const key = `${print.printKey}\0fr`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    withStorm3.push({
-      printKey: print.printKey,
-      lang: "fr",
-      fullName: card.name,
-      rarity: rarityByNumber.get(card.number) ?? null,
-    });
+  /*
+    Coleka CCG FR ledgers are set-scoped (s24 / s28 / s11 Tempête). Prefer a
+    print already on that set — `prints.find` by number alone stuck Tempête
+    names on s1/s3 reprints and left s11 at 16/33 FR titles.
+  */
+  const colekaCcgFrBySet: Array<{
+    preferredSet: string;
+    cards: ReturnType<typeof loadColekaRampageTornadoLedger>;
+  }> = [
+    {
+      preferredSet: "s24",
+      cards: [
+        ...loadColekaSagesLegacyLedger(root),
+        ...loadColekaSagesLegacyLedger(
+          path.join(dataRoot(), NARUTO_LEGACY_EN_CCG_DISK),
+        ),
+      ],
+    },
+    {
+      preferredSet: "s28",
+      cards: [
+        ...loadColekaStorm3Ledger(root),
+        ...loadColekaStorm3Ledger(
+          path.join(dataRoot(), NARUTO_LEGACY_EN_CCG_DISK),
+        ),
+      ],
+    },
+    {
+      preferredSet: "s11",
+      cards: [
+        ...loadColekaRampageTornadoLedger(root),
+        ...loadColekaRampageTornadoLedger(
+          path.join(dataRoot(), NARUTO_LEGACY_EN_CCG_DISK),
+        ),
+      ],
+    },
+  ];
+  for (const { preferredSet, cards } of colekaCcgFrBySet) {
+    const unique = cards.filter(
+      (card, i, all) => all.findIndex((c) => c.number === card.number) === i,
+    );
+    for (const card of unique) {
+      const matches = prints.filter((p) =>
+        narutoNumbersEqual(p.number, card.number),
+      );
+      const print =
+        matches.find(
+          (p) =>
+            p.setCode === preferredSet ||
+            (p.setCodes ?? []).includes(preferredSet),
+        ) ?? matches[0];
+      if (!print) continue;
+      const key = `${print.printKey}\0fr`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      withStorm3.push({
+        printKey: print.printKey,
+        lang: "fr",
+        fullName: card.name,
+        rarity: rarityByNumber.get(card.number) ?? null,
+      });
+    }
   }
   return withStorm3;
 }

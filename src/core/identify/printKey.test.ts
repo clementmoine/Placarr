@@ -2,13 +2,16 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   buildPrintKey,
+  catalogueSetFromPrintKey,
   isGameUniqueCollectorNumber,
   isPrintKey,
   parsePrintKey,
   printCollectableKey,
   comparePrintKeys,
   comparePrintSetCodes,
+  registerPrintKeyCatalogueSets,
   registerPrintKeyCompare,
+  unregisterPrintKeyCatalogueSets,
   unregisterPrintKeyCompare,
 } from "./printKey";
 
@@ -165,6 +168,12 @@ describe("comparePrintSetCodes", () => {
     expect(comparePrintSetCodes("11", "2")).toBeGreaterThan(0);
   });
 
+  it("orders sN series by their number, not lexicographically", () => {
+    expect(comparePrintSetCodes("s2", "s11")).toBeLessThan(0);
+    expect(comparePrintSetCodes("s11", "s2")).toBeGreaterThan(0);
+    expect(comparePrintSetCodes("s1", "s2")).toBeLessThan(0);
+  });
+
   it("keeps lettered sets after numeric ones", () => {
     expect(comparePrintSetCodes("9", "q1")).toBeLessThan(0);
     expect(comparePrintSetCodes("q1", "9")).toBeGreaterThan(0);
@@ -183,6 +192,29 @@ describe("printCollectableKey", () => {
       "dbsjcc|d0437|kaio",
     );
     expect(printCollectableKey("lorcana:1-1")).toBeNull();
+  });
+});
+
+describe("catalogueSetFromPrintKey", () => {
+  afterEach(() => {
+    unregisterPrintKeyCatalogueSets("naruto");
+  });
+
+  it("reads the catalogue set from set-scoped keys, not legacy family-as-set", () => {
+    expect(catalogueSetFromPrintKey("naruto:s3-ta0074")).toBe("s3");
+    expect(catalogueSetFromPrintKey("naruto:promo-ni0023")).toBe("promo");
+    expect(catalogueSetFromPrintKey("lorcana:1-106")).toBe("1");
+    expect(catalogueSetFromPrintKey("naruto:ni-0049")).toBeNull();
+    expect(catalogueSetFromPrintKey("naruto:ta-0074")).toBeNull();
+  });
+
+  it("reads registered alphabetic chapters (Ninja Ranks / Ultra)", () => {
+    expect(catalogueSetFromPrintKey("naruto:nr-0009")).toBeNull();
+    registerPrintKeyCatalogueSets("naruto", ["nr", "ff", "uc"]);
+    expect(catalogueSetFromPrintKey("naruto:nr-0009")).toBe("nr");
+    expect(catalogueSetFromPrintKey("naruto:ff-0001")).toBe("ff");
+    expect(catalogueSetFromPrintKey("naruto:uc-0047")).toBe("uc");
+    expect(catalogueSetFromPrintKey("naruto:ni-0049")).toBeNull();
   });
 });
 

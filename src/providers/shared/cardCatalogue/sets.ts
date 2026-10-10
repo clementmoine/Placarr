@@ -81,8 +81,7 @@ export function pickCatalogueSetNameByCount(
  * sans le préfixe, la liste était illisible. Si le libellé est déjà le code
  * (ou `CODE — …`), on ne le double pas.
  *
- * `code` override : quand l'id disque ≠ le code lu (ex. deck FR `tempete` →
- * `S11`), on préfixe le code affiché sans renommer l'id.
+ * `code` override : préfixe affiché distinct de l'id (rare).
  */
 function labelWithSetCode(
   id: string,
@@ -108,11 +107,15 @@ function labelWithSetCode(
   return `${code} — ${trimmed}`;
 }
 
+/** Préfixe d'URL d'item : id set catalogue normalisé. */
+export function itemSlugSetCode(setCode: string | null | undefined): string {
+  return (setCode ?? "").trim().toLowerCase();
+}
+
 export type FinalizeSetOptionsInput = {
   id: string;
   /**
    * Code affiché en tête de libellé (`S11 — …`). Défaut = `id` en majuscules.
-   * Utile quand l'id disque n'est pas le code collectionneur (deck FR `tempete`).
    */
   code?: string | null;
   /** La découpe dont ce set fait partie — voir `PrintSetOption.group`. */

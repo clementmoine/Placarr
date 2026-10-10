@@ -1,6 +1,6 @@
 {
-  "source": "Annonce officielle Kana mangakana.com avr. 2008 (Wayback) + forum t1192/t1185 + Victor FB/YT DVD + Ultrajeux S5 holes",
-  "note": "Le retail S6 FR (starters Le Duel / Quartet, boosters) n'est jamais sorti. Check-list FR : pas de chapitre `s6` — les **6** inédites Kana (`cards`) restent des cartes **s6** (identité / set_code) mais sont **classées** dans la checklist Série 5 ; les 9 reprints blister (`kanaBlisterS5Reprints`) sont déjà au pool S5 (pas de doublon). Canal DVD = autre distribution des inédites. Catalogue `s6` reste pour IT / EN / préprod. Ne pas y verser la branche Coleka serie-06 entière (noms IT, Rivalità Eterna).",
+  "source": "Annonce officielle Kana mangakana.com avr. 2008 (Wayback) + forum t1192/t1185 + Victor FB/YT DVD + Ultrajeux S5 holes + lecture imprint utilisateur",
+  "note": "Le retail S6 FR (starters Le Duel / Quartet, boosters) n'est jamais sorti. Check-list FR `s6` = les **6** inédites Kana / DVD (`cards`) + reprints blister dont l'imprint MIJ est attesté (`mijReprints`, ex. TA-227). Les autres inserts blister Kana (`kanaBlisterS5Reprints`) restent **S5** (Belgique) — pas de clé `s6-*`. Canal DVD = autre distribution des inédites. Catalogue `s6` IT / EN / préprod inchangé. Ne pas y verser la branche Coleka serie-06 entière (noms IT, Rivalità Eterna).",
   "retailFr": false,
   "officialKana": {
     "announced": "2008-04-25",
@@ -61,15 +61,25 @@
       "imprint": "BANDAI 2008 MADE IN JAPAN"
     }
   ],
+  "mijReprints": [
+    {
+      "tome": 13,
+      "number": "ta227",
+      "name": "Jeu de hasard",
+      "channel": "kana-manga-blister",
+      "confidence": "user-imprint-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Exemplaire MIJ ≠ retail S5 Belgique — checklist `s6-ta0227`. Les autres reprints blister sans lecture MIJ restent en S5."
+    }
+  ],
   "kanaBlisterS5Reprints": [
-    { "tome": 3, "number": "ni206", "name": "Sakura et Ino", "note": "Déjà S5 retail — pas une membership S6." },
+    { "tome": 3, "number": "ni206", "name": "Sakura et Ino", "note": "S5 retail / blister sans imprint MIJ attesté — pas de membership s6." },
     { "tome": 4, "number": "te192", "name": "Pichenette" },
     { "tome": 5, "number": "ta214", "name": "Promesse Eternelle", "note": "Filename collage Kana TACTIQUE-214.jpg" },
     { "tome": 8, "number": "te205", "name": "Dédoublement" },
     { "tome": 9, "number": "ta219", "name": "Tentative désespérée", "note": "Filename collage Kana TACTIQUE-219.jpg" },
     { "tome": 11, "number": "ni239", "name": "Chôji Akimichi", "note": "Filename collage Kana NINJA-239.jpg" },
-    { "tome": 12, "number": "ni240", "name": "Neji Hyûga", "note": "Filename collage Kana NINJA-240.jpg + t347 ; catalogue set s5 (Rare forum, pas inédite)." },
-    { "tome": 13, "number": "ta227", "name": "Jeu de hasard" },
+    { "tome": 12, "number": "ni240", "name": "Neji Hyûga", "note": "Filename collage Kana NINJA-240.jpg + t347 ; Rare S5, pas s6 sans imprint MIJ." },
     { "tome": 15, "number": "te207", "name": "Soin typique" }
   ],
   "notS6": [

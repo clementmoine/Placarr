@@ -8,9 +8,42 @@ import {
 import { getItemRatingScore10 } from "@/core/collect/rating";
 import type { MetadataFact } from "@/types/metadataProvider";
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
-import { comparePrintKeys } from "@/core/identify/printKey";
+import {
+  catalogueSetFromPrintKey,
+  comparePrintKeys,
+  comparePrintSetCodes,
+} from "@/core/identify/printKey";
 import { usesPrintSearch } from "@/lib/printSearchTypes";
+import { itemSlugSetCode } from "@/providers/shared/cardCatalogue/sets";
 import type { ItemWithMetadata } from "@/types/items";
+
+/** Extension catalogue pour le tri binder. */
+function itemCatalogueSetCode(item: ItemWithMetadata): string {
+  const raw =
+    typeof item.setCode === "string" ? item.setCode.trim().toLowerCase() : "";
+  if (raw) return itemSlugSetCode(raw) || raw;
+  const fromKey = catalogueSetFromPrintKey(item.printKey);
+  return fromKey ? itemSlugSetCode(fromKey) || fromKey : "";
+}
+
+/**
+ * Binder shelf order: catalogue set (Item.setCode or printKey set segment)
+ * then printKey.
+ */
+function compareItemsByPrint(
+  a: ItemWithMetadata,
+  b: ItemWithMetadata,
+): number {
+  const setA = itemCatalogueSetCode(a);
+  const setB = itemCatalogueSetCode(b);
+  if (setA || setB) {
+    if (!setA) return 1;
+    if (!setB) return -1;
+    const bySet = comparePrintSetCodes(setA, setB);
+    if (bySet !== 0) return bySet;
+  }
+  return comparePrintKeys(a.printKey, b.printKey);
+}
 
 export type ItemCollectionSort =
   | "name_asc"
@@ -159,11 +192,11 @@ export function sortCollectionItems(
       case "name_desc":
         return compareTitlesForSort(a.name, b.name, "desc");
       case "print_asc": {
-        const print = comparePrintKeys(a.printKey, b.printKey);
+        const print = compareItemsByPrint(a, b);
         return print || compareTitlesForSort(a.name, b.name);
       }
       case "print_desc": {
-        const print = comparePrintKeys(b.printKey, a.printKey);
+        const print = compareItemsByPrint(b, a);
         return print || compareTitlesForSort(a.name, b.name, "desc");
       }
       case "added_desc":

@@ -31,7 +31,7 @@ import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
 import {
-  isGameUniqueCollectorNumber,
+  catalogueSetFromPrintKey,
   parsePrintKey,
 } from "@/core/identify/printKey";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
@@ -299,23 +299,15 @@ export async function POST(req: NextRequest) {
           ? rawPrintKey.trim().toLowerCase()
           : null;
       /*
-        Extension pour laquelle on range la copie (check-list set-scoped).
-        Absent → legacy : le printKey compte dans tous les sets qui le listent.
-        Fallback printKey : seulement si le numéro est set-scoped (Lorcana
-        `1-1`). Chez Naruto / DBS JCC le segment « set » du printKey est la
-        famille (`ni`, `part1`) — ce n'est pas l'extension checklist.
+        Extension checklist. Prefer body; else the set segment of a set-scoped
+        printKey (`naruto:s3-ta0074`, `lorcana:1-106`). Legacy family-as-set
+        keys (`naruto:ni-0049`) yield null — set is not the series.
       */
       const setCodeFromBody =
         typeof rawSetCode === "string" && rawSetCode.trim()
           ? rawSetCode.trim().toLowerCase()
           : null;
-      const setCodeFromKey = (() => {
-        if (!printKey) return null;
-        const id = parsePrintKey(printKey);
-        if (!id || isGameUniqueCollectorNumber(id.number)) return null;
-        return id.set;
-      })();
-      const setCode = setCodeFromBody || setCodeFromKey;
+      const setCode = setCodeFromBody || catalogueSetFromPrintKey(printKey);
       // Free text on purpose: the vocabulary is the provider's, not ours. It is
       // validated against the metadata's declared options at read time, so an
       // unknown value degrades to "no variant" rather than being rejected here.
@@ -382,7 +374,7 @@ export async function POST(req: NextRequest) {
       const itemSlug = await allocateUniqueItemSlug(
         resolvedShelfId,
         resolvedName,
-        { print: { printKey, variant, language } },
+        { print: { printKey, variant, language, setCode } },
       );
 
       const loan =

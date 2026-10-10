@@ -557,40 +557,45 @@ import sharp from "sharp";
   });
 
   describe("print keys", () => {
-    it("mints prefix keys and keeps NI distinct from N", () => {
-      expect(mintNarutoPrintKey("ni001")).toBe("naruto:ni-0001");
-      expect(mintNarutoPrintKey("n001")).toBe("naruto:n-0001");
-      expect(mintNarutoPrintKey("ta081")).toBe("naruto:ta-0081");
-      expect(mintNarutoPrintKey("m081")).toBe("naruto:m-0081");
-      expect(mintNarutoPrintKey("te030-cdf")).toBe("naruto:te-0030-cdf");
-      expect(mintNarutoPrintKey("ni023", "promo")).toBe("naruto:ni-0023-promo");
-      expect(mintNarutoPrintKey("pr011", "promo")).toBe("naruto:pr-0011");
-      expect(mintNarutoPrintKey("PR-忍-1", "promo")).toBe("naruto:prni-0001");
+    it("mints set-scoped keys and keeps NI distinct from N", () => {
+      expect(mintNarutoPrintKey("ni001", "s1")).toBe("naruto:s1-ni0001");
+      expect(mintNarutoPrintKey("n001", "s1")).toBe("naruto:s1-n0001");
+      expect(mintNarutoPrintKey("ta081", "s2")).toBe("naruto:s2-ta0081");
+      expect(mintNarutoPrintKey("m081", "s3")).toBe("naruto:s3-m0081");
+      expect(mintNarutoPrintKey("te030-cdf", "promo")).toBe(
+        "naruto:promo-te0030-cdf",
+      );
+      expect(mintNarutoPrintKey("ni023", "promo")).toBe("naruto:promo-ni0023");
+      expect(mintNarutoPrintKey("pr011", "promo")).toBe("naruto:promo-pr0011");
+      expect(mintNarutoPrintKey("PR-忍-1", "promo")).toBe("naruto:promo-prni0001");
       expect(
         narutoCardRelPath(narutoCardPathFromCollector("PR-忍-1", "ja")!),
       ).toBe("promo/prni0001/ja");
-      expect(mintNarutoPrintKey("N-US097")).toBe("naruto:nus-0097");
-      expect(canonicalizeNarutoPrintKey("naruto:n-0097-us")).toBe(
-        "naruto:nus-0097",
+      expect(mintNarutoPrintKey("N-US097", "s1")).toBe("naruto:s1-nus0097");
+      expect(canonicalizeNarutoPrintKey("naruto:n-0097-us", "s1")).toBe(
+        "naruto:s1-nus0097",
       );
     });
 
-    it("rewrites series-baked keys without collapsing NI onto N", () => {
+    it("keeps set-scoped keys without collapsing NI onto N", () => {
       expect(canonicalizeNarutoPrintKey("naruto:s1-ni001")).toBe(
-        "naruto:ni-0001",
+        "naruto:s1-ni0001",
       );
-      expect(canonicalizeNarutoPrintKey("naruto:s1-n001")).toBe("naruto:n-0001");
+      expect(canonicalizeNarutoPrintKey("naruto:s1-n001")).toBe(
+        "naruto:s1-n0001",
+      );
       expect(canonicalizeNarutoPrintKey("naruto:s28-n1650")).toBe(
-        "naruto:n-1650",
+        "naruto:s28-n1650",
       );
       expect(canonicalizeNarutoPrintKey("naruto:ni-0001")).toBe("naruto:ni-0001");
-      expect(canonicalizeNarutoPrintKey("naruto:ni-001")).toBe("naruto:ni-0001");
-      expect(canonicalizeNarutoPrintKey("naruto:ni-086")).toBe("naruto:ni-0086");
+      expect(canonicalizeNarutoPrintKey("naruto:ni-0001", "s1")).toBe(
+        "naruto:s1-ni0001",
+      );
       expect(canonicalizeNarutoPrintKey("naruto:promo-ni023")).toBe(
-        "naruto:ni-0023-promo",
+        "naruto:promo-ni0023",
       );
       expect(canonicalizeNarutoPrintKey("naruto:promo-te030-cdf")).toBe(
-        "naruto:te-0030-cdf",
+        "naruto:promo-te0030-cdf",
       );
     });
   });

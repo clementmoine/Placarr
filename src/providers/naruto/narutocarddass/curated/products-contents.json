@@ -32,194 +32,194 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:cl-0004",
-        "naruto:ni-0002",
-        "naruto:ni-0003",
-        "naruto:ni-0009",
-        "naruto:ni-0010",
-        "naruto:ni-0013",
-        "naruto:ni-0017",
-        "naruto:ni-0018",
-        "naruto:ni-0027",
-        "naruto:ni-0028",
-        "naruto:ni-0029",
-        "naruto:ni-0035",
-        "naruto:ni-0036",
-        "naruto:ni-0037",
-        "naruto:ni-0038",
-        "naruto:ni-0047",
-        "naruto:ni-0050",
-        "naruto:ta-0006",
-        "naruto:ta-0007",
-        "naruto:ta-0008",
-        "naruto:ta-0015",
-        "naruto:ta-0017",
-        "naruto:ta-0029",
-        "naruto:ta-0036",
-        "naruto:ta-0037",
-        "naruto:ta-0046",
-        "naruto:ta-0049",
-        "naruto:te-0006",
-        "naruto:te-0008",
-        "naruto:te-0010",
-        "naruto:te-0015",
-        "naruto:te-0016",
-        "naruto:te-0019",
-        "naruto:te-0029",
-        "naruto:te-0038",
-        "naruto:te-0048",
-        "naruto:te-0049"
+        "naruto:s1-cl0004",
+        "naruto:s1-ni0002",
+        "naruto:s1-ni0003",
+        "naruto:s1-ni0009",
+        "naruto:s1-ni0010",
+        "naruto:s1-ni0013",
+        "naruto:s1-ni0017",
+        "naruto:s1-ni0018",
+        "naruto:s1-ni0027",
+        "naruto:s1-ni0028",
+        "naruto:s1-ni0029",
+        "naruto:s1-ni0035",
+        "naruto:s1-ni0036",
+        "naruto:s1-ni0037",
+        "naruto:s1-ni0038",
+        "naruto:s1-ni0047",
+        "naruto:s1-ni0050",
+        "naruto:s1-ta0006",
+        "naruto:s1-ta0007",
+        "naruto:s1-ta0008",
+        "naruto:s1-ta0015",
+        "naruto:s1-ta0017",
+        "naruto:s1-ta0029",
+        "naruto:s1-ta0036",
+        "naruto:s1-ta0037",
+        "naruto:s1-ta0046",
+        "naruto:s1-ta0049",
+        "naruto:s1-te0006",
+        "naruto:s1-te0008",
+        "naruto:s1-te0010",
+        "naruto:s1-te0015",
+        "naruto:s1-te0016",
+        "naruto:s1-te0019",
+        "naruto:s1-te0029",
+        "naruto:s1-te0038",
+        "naruto:s1-te0048",
+        "naruto:s1-te0049"
       ],
       "notes": "poster membership 40/40; qty catalogue+poster = 40; holos = NI-002 + NI-003 (user 2026-09-05) ; NI-035×2 / NI-047×1 (user 2026-09-13)",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:cl-0004",
+          "printKey": "naruto:s1-cl0004",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0002",
+          "printKey": "naruto:s1-ni0002",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0003",
+          "printKey": "naruto:s1-ni0003",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0009",
+          "printKey": "naruto:s1-ni0009",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0010",
+          "printKey": "naruto:s1-ni0010",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0013",
+          "printKey": "naruto:s1-ni0013",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0017",
+          "printKey": "naruto:s1-ni0017",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0018",
+          "printKey": "naruto:s1-ni0018",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0027",
+          "printKey": "naruto:s1-ni0027",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0028",
+          "printKey": "naruto:s1-ni0028",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0029",
+          "printKey": "naruto:s1-ni0029",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0035",
+          "printKey": "naruto:s1-ni0035",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0036",
+          "printKey": "naruto:s1-ni0036",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0037",
+          "printKey": "naruto:s1-ni0037",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0038",
+          "printKey": "naruto:s1-ni0038",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0047",
+          "printKey": "naruto:s1-ni0047",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0050",
+          "printKey": "naruto:s1-ni0050",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0006",
+          "printKey": "naruto:s1-ta0006",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0007",
+          "printKey": "naruto:s1-ta0007",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0008",
+          "printKey": "naruto:s1-ta0008",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0015",
+          "printKey": "naruto:s1-ta0015",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0017",
+          "printKey": "naruto:s1-ta0017",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0029",
+          "printKey": "naruto:s1-ta0029",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0036",
+          "printKey": "naruto:s1-ta0036",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0037",
+          "printKey": "naruto:s1-ta0037",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0046",
+          "printKey": "naruto:s1-ta0046",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0049",
+          "printKey": "naruto:s1-ta0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0006",
+          "printKey": "naruto:s1-te0006",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0008",
+          "printKey": "naruto:s1-te0008",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0010",
+          "printKey": "naruto:s1-te0010",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0015",
+          "printKey": "naruto:s1-te0015",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0016",
+          "printKey": "naruto:s1-te0016",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0019",
+          "printKey": "naruto:s1-te0019",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0029",
+          "printKey": "naruto:s1-te0029",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0038",
+          "printKey": "naruto:s1-te0038",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0048",
+          "printKey": "naruto:s1-te0048",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0049",
+          "printKey": "naruto:s1-te0049",
           "qty": 1
         }
       ]
@@ -235,194 +235,194 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:cl-0001",
-        "naruto:ni-0001",
-        "naruto:ni-0004",
-        "naruto:ni-0005",
-        "naruto:ni-0006",
-        "naruto:ni-0008",
-        "naruto:ni-0025",
-        "naruto:ni-0030",
-        "naruto:ni-0031",
-        "naruto:ni-0032",
-        "naruto:ni-0033",
-        "naruto:ni-0034",
-        "naruto:ni-0039",
-        "naruto:ni-0049",
-        "naruto:ni-0051",
-        "naruto:ni-0052",
-        "naruto:ni-0053",
-        "naruto:ta-0001",
-        "naruto:ta-0004",
-        "naruto:ta-0020",
-        "naruto:ta-0022",
-        "naruto:ta-0024",
-        "naruto:ta-0026",
-        "naruto:ta-0039",
-        "naruto:ta-0041",
-        "naruto:ta-0045",
-        "naruto:ta-0057",
-        "naruto:te-0001",
-        "naruto:te-0002",
-        "naruto:te-0003",
-        "naruto:te-0020",
-        "naruto:te-0021",
-        "naruto:te-0025",
-        "naruto:te-0040",
-        "naruto:te-0046",
-        "naruto:te-0058",
-        "naruto:te-0059"
+        "naruto:s1-cl0001",
+        "naruto:s1-ni0001",
+        "naruto:s1-ni0004",
+        "naruto:s1-ni0005",
+        "naruto:s1-ni0006",
+        "naruto:s1-ni0008",
+        "naruto:s1-ni0025",
+        "naruto:s1-ni0030",
+        "naruto:s1-ni0031",
+        "naruto:s1-ni0032",
+        "naruto:s1-ni0033",
+        "naruto:s1-ni0034",
+        "naruto:s1-ni0039",
+        "naruto:s1-ni0049",
+        "naruto:s1-ni0051",
+        "naruto:s1-ni0052",
+        "naruto:s1-ni0053",
+        "naruto:s1-ta0001",
+        "naruto:s1-ta0004",
+        "naruto:s1-ta0020",
+        "naruto:s1-ta0022",
+        "naruto:s1-ta0024",
+        "naruto:s1-ta0026",
+        "naruto:s1-ta0039",
+        "naruto:s1-ta0041",
+        "naruto:s1-ta0045",
+        "naruto:s1-ta0057",
+        "naruto:s1-te0001",
+        "naruto:s1-te0002",
+        "naruto:s1-te0003",
+        "naruto:s1-te0020",
+        "naruto:s1-te0021",
+        "naruto:s1-te0025",
+        "naruto:s1-te0040",
+        "naruto:s1-te0046",
+        "naruto:s1-te0058",
+        "naruto:s1-te0059"
       ],
       "notes": "poster membership 40/40; qty catalogue+poster = 40; liste user 2026-09-05 identité+qty match ; holos = NI-001 + NI-008 (user 2026-09-05)",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:cl-0001",
+          "printKey": "naruto:s1-cl0001",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0001",
+          "printKey": "naruto:s1-ni0001",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0004",
+          "printKey": "naruto:s1-ni0004",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0005",
+          "printKey": "naruto:s1-ni0005",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0006",
+          "printKey": "naruto:s1-ni0006",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0008",
+          "printKey": "naruto:s1-ni0008",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0025",
+          "printKey": "naruto:s1-ni0025",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0030",
+          "printKey": "naruto:s1-ni0030",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0031",
+          "printKey": "naruto:s1-ni0031",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0032",
+          "printKey": "naruto:s1-ni0032",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0033",
+          "printKey": "naruto:s1-ni0033",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0034",
+          "printKey": "naruto:s1-ni0034",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0039",
+          "printKey": "naruto:s1-ni0039",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0049",
+          "printKey": "naruto:s1-ni0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0051",
+          "printKey": "naruto:s1-ni0051",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0052",
+          "printKey": "naruto:s1-ni0052",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0053",
+          "printKey": "naruto:s1-ni0053",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0001",
+          "printKey": "naruto:s1-ta0001",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0004",
+          "printKey": "naruto:s1-ta0004",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0020",
+          "printKey": "naruto:s1-ta0020",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0022",
+          "printKey": "naruto:s1-ta0022",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0024",
+          "printKey": "naruto:s1-ta0024",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0026",
+          "printKey": "naruto:s1-ta0026",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0039",
+          "printKey": "naruto:s1-ta0039",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0041",
+          "printKey": "naruto:s1-ta0041",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0045",
+          "printKey": "naruto:s1-ta0045",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0057",
+          "printKey": "naruto:s1-ta0057",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0001",
+          "printKey": "naruto:s1-te0001",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0002",
+          "printKey": "naruto:s1-te0002",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0003",
+          "printKey": "naruto:s1-te0003",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0020",
+          "printKey": "naruto:s1-te0020",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0021",
+          "printKey": "naruto:s1-te0021",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0025",
+          "printKey": "naruto:s1-te0025",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0040",
+          "printKey": "naruto:s1-te0040",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0046",
+          "printKey": "naruto:s1-te0046",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0058",
+          "printKey": "naruto:s1-te0058",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0059",
+          "printKey": "naruto:s1-te0059",
           "qty": 1
         }
       ]
@@ -438,184 +438,184 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:cl-0010",
-        "naruto:ni-0008",
-        "naruto:ni-0027",
-        "naruto:ni-0028",
-        "naruto:ni-0031",
-        "naruto:ni-0034",
-        "naruto:ni-0062",
-        "naruto:ni-0065",
-        "naruto:ni-0066",
-        "naruto:ni-0067",
-        "naruto:ni-0073",
-        "naruto:ni-0074",
-        "naruto:ni-0099",
-        "naruto:ni-0109",
-        "naruto:ni-0110",
-        "naruto:ni-0111",
-        "naruto:ta-0061",
-        "naruto:ta-0062",
-        "naruto:ta-0063",
-        "naruto:ta-0072",
-        "naruto:ta-0086",
-        "naruto:ta-0087",
-        "naruto:ta-0088",
-        "naruto:ta-0091",
-        "naruto:ta-0106",
-        "naruto:te-0061",
-        "naruto:te-0062",
-        "naruto:te-0063",
-        "naruto:te-0067",
-        "naruto:te-0068",
-        "naruto:te-0070",
-        "naruto:te-0071",
-        "naruto:te-0072",
-        "naruto:te-0086",
-        "naruto:te-0088"
+        "naruto:s2-cl0010",
+        "naruto:s2-ni0008",
+        "naruto:s2-ni0027",
+        "naruto:s2-ni0028",
+        "naruto:s2-ni0031",
+        "naruto:s2-ni0034",
+        "naruto:s2-ni0062",
+        "naruto:s2-ni0065",
+        "naruto:s2-ni0066",
+        "naruto:s2-ni0067",
+        "naruto:s2-ni0073",
+        "naruto:s2-ni0074",
+        "naruto:s2-ni0099",
+        "naruto:s2-ni0109",
+        "naruto:s2-ni0110",
+        "naruto:s2-ni0111",
+        "naruto:s2-ta0061",
+        "naruto:s2-ta0062",
+        "naruto:s2-ta0063",
+        "naruto:s2-ta0072",
+        "naruto:s2-ta0086",
+        "naruto:s2-ta0087",
+        "naruto:s2-ta0088",
+        "naruto:s2-ta0091",
+        "naruto:s2-ta0106",
+        "naruto:s2-te0061",
+        "naruto:s2-te0062",
+        "naruto:s2-te0063",
+        "naruto:s2-te0067",
+        "naruto:s2-te0068",
+        "naruto:s2-te0070",
+        "naruto:s2-te0071",
+        "naruto:s2-te0072",
+        "naruto:s2-te0086",
+        "naruto:s2-te0088"
       ],
       "notes": "poster membership 40/40; qty catalogue+poster = 40; holos = NI-109 + TE-062 (user 2026-09-05)",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:cl-0010",
+          "printKey": "naruto:s2-cl0010",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0008",
+          "printKey": "naruto:s2-ni0008",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0027",
+          "printKey": "naruto:s2-ni0027",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0028",
+          "printKey": "naruto:s2-ni0028",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0031",
+          "printKey": "naruto:s2-ni0031",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0034",
+          "printKey": "naruto:s2-ni0034",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0062",
+          "printKey": "naruto:s2-ni0062",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0065",
+          "printKey": "naruto:s2-ni0065",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0066",
+          "printKey": "naruto:s2-ni0066",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0067",
+          "printKey": "naruto:s2-ni0067",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0073",
+          "printKey": "naruto:s2-ni0073",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0074",
+          "printKey": "naruto:s2-ni0074",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0099",
+          "printKey": "naruto:s2-ni0099",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0109",
+          "printKey": "naruto:s2-ni0109",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0110",
+          "printKey": "naruto:s2-ni0110",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0111",
+          "printKey": "naruto:s2-ni0111",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0061",
+          "printKey": "naruto:s2-ta0061",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0062",
+          "printKey": "naruto:s2-ta0062",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0063",
+          "printKey": "naruto:s2-ta0063",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0072",
+          "printKey": "naruto:s2-ta0072",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0086",
+          "printKey": "naruto:s2-ta0086",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0087",
+          "printKey": "naruto:s2-ta0087",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0088",
+          "printKey": "naruto:s2-ta0088",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0091",
+          "printKey": "naruto:s2-ta0091",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0106",
+          "printKey": "naruto:s2-ta0106",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0061",
+          "printKey": "naruto:s2-te0061",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0062",
+          "printKey": "naruto:s2-te0062",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:te-0063",
+          "printKey": "naruto:s2-te0063",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0067",
+          "printKey": "naruto:s2-te0067",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0068",
+          "printKey": "naruto:s2-te0068",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0070",
+          "printKey": "naruto:s2-te0070",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0071",
+          "printKey": "naruto:s2-te0071",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0072",
+          "printKey": "naruto:s2-te0072",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0086",
+          "printKey": "naruto:s2-te0086",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0088",
+          "printKey": "naruto:s2-te0088",
           "qty": 1
         }
       ]
@@ -631,184 +631,184 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:cl-0007",
-        "naruto:ni-0014",
-        "naruto:ni-0015",
-        "naruto:ni-0017",
-        "naruto:ni-0040",
-        "naruto:ni-0054",
-        "naruto:ni-0075",
-        "naruto:ni-0076",
-        "naruto:ni-0077",
-        "naruto:ni-0078",
-        "naruto:ni-0084",
-        "naruto:ni-0106",
-        "naruto:ni-0107",
-        "naruto:ni-0112",
-        "naruto:ni-0113",
-        "naruto:ni-0114",
-        "naruto:ta-0074",
-        "naruto:ta-0075",
-        "naruto:ta-0076",
-        "naruto:ta-0078",
-        "naruto:ta-0079",
-        "naruto:ta-0095",
-        "naruto:ta-0096",
-        "naruto:ta-0097",
-        "naruto:ta-0100",
-        "naruto:ta-0107",
-        "naruto:te-0074",
-        "naruto:te-0075",
-        "naruto:te-0076",
-        "naruto:te-0078",
-        "naruto:te-0079",
-        "naruto:te-0093",
-        "naruto:te-0095",
-        "naruto:te-0096",
-        "naruto:te-0099"
+        "naruto:s2-cl0007",
+        "naruto:s2-ni0014",
+        "naruto:s2-ni0015",
+        "naruto:s2-ni0017",
+        "naruto:s2-ni0040",
+        "naruto:s2-ni0054",
+        "naruto:s2-ni0075",
+        "naruto:s2-ni0076",
+        "naruto:s2-ni0077",
+        "naruto:s2-ni0078",
+        "naruto:s2-ni0084",
+        "naruto:s2-ni0106",
+        "naruto:s2-ni0107",
+        "naruto:s2-ni0112",
+        "naruto:s2-ni0113",
+        "naruto:s2-ni0114",
+        "naruto:s2-ta0074",
+        "naruto:s2-ta0075",
+        "naruto:s2-ta0076",
+        "naruto:s2-ta0078",
+        "naruto:s2-ta0079",
+        "naruto:s2-ta0095",
+        "naruto:s2-ta0096",
+        "naruto:s2-ta0097",
+        "naruto:s2-ta0100",
+        "naruto:s2-ta0107",
+        "naruto:s2-te0074",
+        "naruto:s2-te0075",
+        "naruto:s2-te0076",
+        "naruto:s2-te0078",
+        "naruto:s2-te0079",
+        "naruto:s2-te0093",
+        "naruto:s2-te0095",
+        "naruto:s2-te0096",
+        "naruto:s2-te0099"
       ],
       "notes": "Sum 40 : catalogue_s2 listait « 2 Incatation/Invocation » (TE-074) et omettait TA-074 Monnaie ; poster + photos user → TA-074 ×1 et TE-074 ×1 (pas ×2). Dig : curated/sources/detruire-konoha-qty-web-hunt-2026-09-13.json.",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:cl-0007",
+          "printKey": "naruto:s2-cl0007",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0014",
+          "printKey": "naruto:s2-ni0014",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0015",
+          "printKey": "naruto:s2-ni0015",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0017",
+          "printKey": "naruto:s2-ni0017",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0040",
+          "printKey": "naruto:s2-ni0040",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0054",
+          "printKey": "naruto:s2-ni0054",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0075",
+          "printKey": "naruto:s2-ni0075",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0076",
+          "printKey": "naruto:s2-ni0076",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0077",
+          "printKey": "naruto:s2-ni0077",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0078",
+          "printKey": "naruto:s2-ni0078",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0084",
+          "printKey": "naruto:s2-ni0084",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0106",
+          "printKey": "naruto:s2-ni0106",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0107",
+          "printKey": "naruto:s2-ni0107",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0112",
+          "printKey": "naruto:s2-ni0112",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0113",
+          "printKey": "naruto:s2-ni0113",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0114",
+          "printKey": "naruto:s2-ni0114",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0074",
+          "printKey": "naruto:s2-ta0074",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0075",
+          "printKey": "naruto:s2-ta0075",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0076",
+          "printKey": "naruto:s2-ta0076",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0078",
+          "printKey": "naruto:s2-ta0078",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0079",
+          "printKey": "naruto:s2-ta0079",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0095",
+          "printKey": "naruto:s2-ta0095",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0096",
+          "printKey": "naruto:s2-ta0096",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0097",
+          "printKey": "naruto:s2-ta0097",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0100",
+          "printKey": "naruto:s2-ta0100",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0107",
+          "printKey": "naruto:s2-ta0107",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0074",
+          "printKey": "naruto:s2-te0074",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0075",
+          "printKey": "naruto:s2-te0075",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0076",
+          "printKey": "naruto:s2-te0076",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:te-0078",
+          "printKey": "naruto:s2-te0078",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0079",
+          "printKey": "naruto:s2-te0079",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0093",
+          "printKey": "naruto:s2-te0093",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0095",
+          "printKey": "naruto:s2-te0095",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0096",
+          "printKey": "naruto:s2-te0096",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0099",
+          "printKey": "naruto:s2-te0099",
           "qty": 1
         }
       ]
@@ -824,159 +824,159 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:ni-0049",
-        "naruto:ni-0050",
-        "naruto:ni-0073",
-        "naruto:ni-0074",
-        "naruto:ni-0099",
-        "naruto:ni-0115",
-        "naruto:ni-0116",
-        "naruto:ni-0120",
-        "naruto:ni-0121",
-        "naruto:ni-0123",
-        "naruto:ni-0127",
-        "naruto:ni-0136",
-        "naruto:ni-0137",
-        "naruto:ni-0138",
-        "naruto:ni-0139",
-        "naruto:ni-0144",
-        "naruto:ta-0110",
-        "naruto:ta-0114",
-        "naruto:ta-0116",
-        "naruto:ta-0134",
-        "naruto:ta-0135",
-        "naruto:ta-0139",
-        "naruto:te-0110",
-        "naruto:te-0112",
-        "naruto:te-0113",
-        "naruto:te-0127",
-        "naruto:te-0128",
-        "naruto:te-0129",
-        "naruto:te-0130",
-        "naruto:te-0131"
+        "naruto:s3-ni0049",
+        "naruto:s3-ni0050",
+        "naruto:s3-ni0073",
+        "naruto:s3-ni0074",
+        "naruto:s3-ni0099",
+        "naruto:s3-ni0115",
+        "naruto:s3-ni0116",
+        "naruto:s3-ni0120",
+        "naruto:s3-ni0121",
+        "naruto:s3-ni0123",
+        "naruto:s3-ni0127",
+        "naruto:s3-ni0136",
+        "naruto:s3-ni0137",
+        "naruto:s3-ni0138",
+        "naruto:s3-ni0139",
+        "naruto:s3-ni0144",
+        "naruto:s3-ta0110",
+        "naruto:s3-ta0114",
+        "naruto:s3-ta0116",
+        "naruto:s3-ta0134",
+        "naruto:s3-ta0135",
+        "naruto:s3-ta0139",
+        "naruto:s3-te0110",
+        "naruto:s3-te0112",
+        "naruto:s3-te0113",
+        "naruto:s3-te0127",
+        "naruto:s3-te0128",
+        "naruto:s3-te0129",
+        "naruto:s3-te0130",
+        "naruto:s3-te0131"
       ],
       "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 holos non identifiés sur poster ; holos = NI-115 + NI-127 (user 2026-09-05 ; dit « Invocation » mais membership = Apprentissage). Corrigé 2026-09-13: TA-116 ×2, TE-113 ×1 (user).",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:ni-0049",
+          "printKey": "naruto:s3-ni0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0050",
+          "printKey": "naruto:s3-ni0050",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0073",
+          "printKey": "naruto:s3-ni0073",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0074",
+          "printKey": "naruto:s3-ni0074",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0099",
+          "printKey": "naruto:s3-ni0099",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0115",
+          "printKey": "naruto:s3-ni0115",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0116",
+          "printKey": "naruto:s3-ni0116",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0120",
+          "printKey": "naruto:s3-ni0120",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0121",
+          "printKey": "naruto:s3-ni0121",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0123",
+          "printKey": "naruto:s3-ni0123",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0127",
+          "printKey": "naruto:s3-ni0127",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0136",
+          "printKey": "naruto:s3-ni0136",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0137",
+          "printKey": "naruto:s3-ni0137",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0138",
+          "printKey": "naruto:s3-ni0138",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0139",
+          "printKey": "naruto:s3-ni0139",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0144",
+          "printKey": "naruto:s3-ni0144",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0110",
+          "printKey": "naruto:s3-ta0110",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0114",
+          "printKey": "naruto:s3-ta0114",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0116",
+          "printKey": "naruto:s3-ta0116",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0134",
+          "printKey": "naruto:s3-ta0134",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0135",
+          "printKey": "naruto:s3-ta0135",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0139",
+          "printKey": "naruto:s3-ta0139",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0110",
+          "printKey": "naruto:s3-te0110",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0112",
+          "printKey": "naruto:s3-te0112",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0113",
+          "printKey": "naruto:s3-te0113",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0127",
+          "printKey": "naruto:s3-te0127",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0128",
+          "printKey": "naruto:s3-te0128",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0129",
+          "printKey": "naruto:s3-te0129",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0130",
+          "printKey": "naruto:s3-te0130",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0131",
+          "printKey": "naruto:s3-te0131",
           "qty": 1
         }
       ]
@@ -992,158 +992,158 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:ni-0009",
-        "naruto:ni-0029",
-        "naruto:ni-0032",
-        "naruto:ni-0038",
-        "naruto:ni-0051",
-        "naruto:ni-0079",
-        "naruto:ni-0080",
-        "naruto:ni-0081",
-        "naruto:ni-0117",
-        "naruto:ni-0125",
-        "naruto:ni-0126",
-        "naruto:ni-0130",
-        "naruto:ni-0140",
-        "naruto:ni-0141",
-        "naruto:ni-0146",
-        "naruto:ni-0147",
-        "naruto:ta-0128",
-        "naruto:ta-0129",
-        "naruto:ta-0143",
-        "naruto:ta-0144",
-        "naruto:ta-0146",
-        "naruto:ta-0150",
-        "naruto:te-0080",
-        "naruto:te-0081",
-        "naruto:te-0097",
-        "naruto:te-0098",
-        "naruto:te-0108",
-        "naruto:te-0139",
-        "naruto:te-0143",
-        "naruto:te-0144"
+        "naruto:s3-ni0009",
+        "naruto:s3-ni0029",
+        "naruto:s3-ni0032",
+        "naruto:s3-ni0038",
+        "naruto:s3-ni0051",
+        "naruto:s3-ni0079",
+        "naruto:s3-ni0080",
+        "naruto:s3-ni0081",
+        "naruto:s3-ni0117",
+        "naruto:s3-ni0125",
+        "naruto:s3-ni0126",
+        "naruto:s3-ni0130",
+        "naruto:s3-ni0140",
+        "naruto:s3-ni0141",
+        "naruto:s3-ni0146",
+        "naruto:s3-ni0147",
+        "naruto:s3-ta0128",
+        "naruto:s3-ta0129",
+        "naruto:s3-ta0143",
+        "naruto:s3-ta0144",
+        "naruto:s3-ta0146",
+        "naruto:s3-ta0150",
+        "naruto:s3-te0080",
+        "naruto:s3-te0081",
+        "naruto:s3-te0097",
+        "naruto:s3-te0098",
+        "naruto:s3-te0108",
+        "naruto:s3-te0139",
+        "naruto:s3-te0143",
+        "naruto:s3-te0144"
       ],
       "notes": "poster membership 40/40; qty catalogue+poster = 40; 2 ; holos = TE-144 + NI-117 (user 2026-09-05)",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:ni-0009",
+          "printKey": "naruto:s3-ni0009",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0029",
+          "printKey": "naruto:s3-ni0029",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0032",
+          "printKey": "naruto:s3-ni0032",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0038",
+          "printKey": "naruto:s3-ni0038",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0051",
+          "printKey": "naruto:s3-ni0051",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0079",
+          "printKey": "naruto:s3-ni0079",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0080",
+          "printKey": "naruto:s3-ni0080",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0081",
+          "printKey": "naruto:s3-ni0081",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0117",
+          "printKey": "naruto:s3-ni0117",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0125",
+          "printKey": "naruto:s3-ni0125",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0126",
+          "printKey": "naruto:s3-ni0126",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0130",
+          "printKey": "naruto:s3-ni0130",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0140",
+          "printKey": "naruto:s3-ni0140",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0141",
+          "printKey": "naruto:s3-ni0141",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0146",
+          "printKey": "naruto:s3-ni0146",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0147",
+          "printKey": "naruto:s3-ni0147",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0128",
+          "printKey": "naruto:s3-ta0128",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0129",
+          "printKey": "naruto:s3-ta0129",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0143",
+          "printKey": "naruto:s3-ta0143",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0144",
+          "printKey": "naruto:s3-ta0144",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0146",
+          "printKey": "naruto:s3-ta0146",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0150",
+          "printKey": "naruto:s3-ta0150",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0080",
+          "printKey": "naruto:s3-te0080",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0081",
+          "printKey": "naruto:s3-te0081",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0097",
+          "printKey": "naruto:s3-te0097",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0098",
+          "printKey": "naruto:s3-te0098",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0108",
+          "printKey": "naruto:s3-te0108",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0139",
+          "printKey": "naruto:s3-te0139",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0143",
+          "printKey": "naruto:s3-te0143",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0144",
+          "printKey": "naruto:s3-te0144",
           "qty": 1,
           "finish": "holo"
         }
@@ -1160,139 +1160,139 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:ni-0009",
-        "naruto:ni-0010",
-        "naruto:ni-0038",
-        "naruto:ni-0079",
-        "naruto:ni-0080",
-        "naruto:ni-0081",
-        "naruto:ni-0114",
-        "naruto:ni-0145",
-        "naruto:ni-0169",
-        "naruto:ni-0170",
-        "naruto:ni-0171",
-        "naruto:ni-0177",
-        "naruto:ni-0178",
-        "naruto:ni-0179",
-        "naruto:ni-0180",
-        "naruto:ta-0160",
-        "naruto:ta-0161",
-        "naruto:ta-0162",
-        "naruto:ta-0164",
-        "naruto:ta-0165",
-        "naruto:te-0138",
-        "naruto:te-0155",
-        "naruto:te-0166",
-        "naruto:te-0167",
-        "naruto:te-0168",
-        "naruto:te-0188"
+        "naruto:s4-ni0009",
+        "naruto:s4-ni0010",
+        "naruto:s4-ni0038",
+        "naruto:s4-ni0079",
+        "naruto:s4-ni0080",
+        "naruto:s4-ni0081",
+        "naruto:s4-ni0114",
+        "naruto:s4-ni0145",
+        "naruto:s4-ni0169",
+        "naruto:s4-ni0170",
+        "naruto:s4-ni0171",
+        "naruto:s4-ni0177",
+        "naruto:s4-ni0178",
+        "naruto:s4-ni0179",
+        "naruto:s4-ni0180",
+        "naruto:s4-ta0160",
+        "naruto:s4-ta0161",
+        "naruto:s4-ta0162",
+        "naruto:s4-ta0164",
+        "naruto:s4-ta0165",
+        "naruto:s4-te0138",
+        "naruto:s4-te0155",
+        "naruto:s4-te0166",
+        "naruto:s4-te0167",
+        "naruto:s4-te0168",
+        "naruto:s4-te0188"
       ],
       "notes": "qty exactes user 2026-09-05 = 40/40 ; holos = NI-145 + NI-177",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:ni-0009",
+          "printKey": "naruto:s4-ni0009",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0010",
+          "printKey": "naruto:s4-ni0010",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0038",
+          "printKey": "naruto:s4-ni0038",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0079",
+          "printKey": "naruto:s4-ni0079",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0080",
+          "printKey": "naruto:s4-ni0080",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0081",
+          "printKey": "naruto:s4-ni0081",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0114",
+          "printKey": "naruto:s4-ni0114",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0145",
+          "printKey": "naruto:s4-ni0145",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0169",
+          "printKey": "naruto:s4-ni0169",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0170",
+          "printKey": "naruto:s4-ni0170",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0171",
+          "printKey": "naruto:s4-ni0171",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0177",
+          "printKey": "naruto:s4-ni0177",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0178",
+          "printKey": "naruto:s4-ni0178",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0179",
+          "printKey": "naruto:s4-ni0179",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0180",
+          "printKey": "naruto:s4-ni0180",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0160",
+          "printKey": "naruto:s4-ta0160",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0161",
+          "printKey": "naruto:s4-ta0161",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0162",
+          "printKey": "naruto:s4-ta0162",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0164",
+          "printKey": "naruto:s4-ta0164",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0165",
+          "printKey": "naruto:s4-ta0165",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0138",
+          "printKey": "naruto:s4-te0138",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0155",
+          "printKey": "naruto:s4-te0155",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0166",
+          "printKey": "naruto:s4-te0166",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0167",
+          "printKey": "naruto:s4-te0167",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0168",
+          "printKey": "naruto:s4-te0168",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0188",
+          "printKey": "naruto:s4-te0188",
           "qty": 2
         }
       ]
@@ -1308,139 +1308,139 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:ni-0027",
-        "naruto:ni-0028",
-        "naruto:ni-0049",
-        "naruto:ni-0050",
-        "naruto:ni-0099",
-        "naruto:ni-0127",
-        "naruto:ni-0156",
-        "naruto:ni-0157",
-        "naruto:ni-0165",
-        "naruto:ni-0173",
-        "naruto:ni-0174",
-        "naruto:ni-0175",
-        "naruto:ni-0176",
-        "naruto:ni-0198",
-        "naruto:ni-0204",
-        "naruto:ta-0118",
-        "naruto:ta-0152",
-        "naruto:ta-0154",
-        "naruto:ta-0155",
-        "naruto:ta-0156",
-        "naruto:te-0145",
-        "naruto:te-0146",
-        "naruto:te-0163",
-        "naruto:te-0164",
-        "naruto:te-0165",
-        "naruto:te-0169"
+        "naruto:s4-ni0027",
+        "naruto:s4-ni0028",
+        "naruto:s4-ni0049",
+        "naruto:s4-ni0050",
+        "naruto:s4-ni0099",
+        "naruto:s4-ni0127",
+        "naruto:s4-ni0156",
+        "naruto:s4-ni0157",
+        "naruto:s4-ni0165",
+        "naruto:s4-ni0173",
+        "naruto:s4-ni0174",
+        "naruto:s4-ni0175",
+        "naruto:s4-ni0176",
+        "naruto:s4-ni0198",
+        "naruto:s4-ni0204",
+        "naruto:s4-ta0118",
+        "naruto:s4-ta0152",
+        "naruto:s4-ta0154",
+        "naruto:s4-ta0155",
+        "naruto:s4-ta0156",
+        "naruto:s4-te0145",
+        "naruto:s4-te0146",
+        "naruto:s4-te0163",
+        "naruto:s4-te0164",
+        "naruto:s4-te0165",
+        "naruto:s4-te0169"
       ],
       "notes": "qty exactes user 2026-09-05 = 40/40 ; holos = NI-176 + NI-204",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:ni-0027",
+          "printKey": "naruto:s4-ni0027",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0028",
+          "printKey": "naruto:s4-ni0028",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0049",
+          "printKey": "naruto:s4-ni0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0050",
+          "printKey": "naruto:s4-ni0050",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0099",
+          "printKey": "naruto:s4-ni0099",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0127",
+          "printKey": "naruto:s4-ni0127",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0156",
+          "printKey": "naruto:s4-ni0156",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0157",
+          "printKey": "naruto:s4-ni0157",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0165",
+          "printKey": "naruto:s4-ni0165",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0173",
+          "printKey": "naruto:s4-ni0173",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0174",
+          "printKey": "naruto:s4-ni0174",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0175",
+          "printKey": "naruto:s4-ni0175",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0176",
+          "printKey": "naruto:s4-ni0176",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0198",
+          "printKey": "naruto:s4-ni0198",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0204",
+          "printKey": "naruto:s4-ni0204",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ta-0118",
+          "printKey": "naruto:s4-ta0118",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0152",
+          "printKey": "naruto:s4-ta0152",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0154",
+          "printKey": "naruto:s4-ta0154",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0155",
+          "printKey": "naruto:s4-ta0155",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0156",
+          "printKey": "naruto:s4-ta0156",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0145",
+          "printKey": "naruto:s4-te0145",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0146",
+          "printKey": "naruto:s4-te0146",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0163",
+          "printKey": "naruto:s4-te0163",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0164",
+          "printKey": "naruto:s4-te0164",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0165",
+          "printKey": "naruto:s4-te0165",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0169",
+          "printKey": "naruto:s4-te0169",
           "qty": 2
         }
       ]
@@ -1456,58 +1456,135 @@
       "contentsKnown": false,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:ni-0049",
-        "naruto:ni-0126",
-        "naruto:ni-0160",
-        "naruto:ni-0161",
-        "naruto:ni-0162",
-        "naruto:ni-0207",
-        "naruto:ni-0218",
-        "naruto:ni-0224",
-        "naruto:ni-0227",
-        "naruto:ni-0228",
-        "naruto:ni-0230",
-        "naruto:ni-0231",
-        "naruto:ni-0233",
-        "naruto:ni-0245",
-        "naruto:ni-0313",
-        "naruto:ta-0192",
-        "naruto:ta-0194",
-        "naruto:ta-0208",
-        "naruto:ta-0209",
-        "naruto:ta-0213",
-        "naruto:te-0193",
-        "naruto:te-0208",
-        "naruto:te-0210",
-        "naruto:te-0213",
-        "naruto:te-0231"
+        "naruto:s5-ni0049",
+        "naruto:s5-ni0126",
+        "naruto:s5-ni0160",
+        "naruto:s5-ni0161",
+        "naruto:s5-ni0162",
+        "naruto:s5-ni0207",
+        "naruto:s5-ni0218",
+        "naruto:s5-ni0224",
+        "naruto:s5-ni0227",
+        "naruto:s5-ni0228",
+        "naruto:s5-ni0230",
+        "naruto:s5-ni0231",
+        "naruto:s5-ni0233",
+        "naruto:s5-ni0245",
+        "naruto:s5-ni0313",
+        "naruto:s5-ta0192",
+        "naruto:s5-ta0194",
+        "naruto:s5-ta0208",
+        "naruto:s5-ta0209",
+        "naruto:s5-ta0213",
+        "naruto:s5-te0193",
+        "naruto:s5-te0208",
+        "naruto:s5-te0210",
+        "naruto:s5-te0213",
+        "naruto:s5-te0231"
       ],
       "guaranteedPrints": [
-        { "printKey": "naruto:ni-0049", "qty": 1 },
-        { "printKey": "naruto:ni-0126", "qty": 1 },
-        { "printKey": "naruto:ni-0160", "qty": 1 },
-        { "printKey": "naruto:ni-0161", "qty": 1 },
-        { "printKey": "naruto:ni-0162", "qty": 1 },
-        { "printKey": "naruto:ni-0207", "qty": 1 },
-        { "printKey": "naruto:ni-0218", "qty": 1, "finish": "holo" },
-        { "printKey": "naruto:ni-0224", "qty": 1 },
-        { "printKey": "naruto:ni-0227", "qty": 1 },
-        { "printKey": "naruto:ni-0228", "qty": 1 },
-        { "printKey": "naruto:ni-0230", "qty": 1 },
-        { "printKey": "naruto:ni-0231", "qty": 1 },
-        { "printKey": "naruto:ni-0233", "qty": 1 },
-        { "printKey": "naruto:ni-0245", "qty": 1 },
-        { "printKey": "naruto:ni-0313", "qty": 1, "finish": "holo" },
-        { "printKey": "naruto:ta-0192", "qty": 1 },
-        { "printKey": "naruto:ta-0194", "qty": 1 },
-        { "printKey": "naruto:ta-0208", "qty": 1 },
-        { "printKey": "naruto:ta-0209", "qty": 1 },
-        { "printKey": "naruto:ta-0213", "qty": 1 },
-        { "printKey": "naruto:te-0193", "qty": 1 },
-        { "printKey": "naruto:te-0208", "qty": 1 },
-        { "printKey": "naruto:te-0210", "qty": 1 },
-        { "printKey": "naruto:te-0213", "qty": 1 },
-        { "printKey": "naruto:te-0231", "qty": 1 }
+        {
+          "printKey": "naruto:s5-ni0049",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0126",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0160",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0161",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0162",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0207",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0218",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:s5-ni0224",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0227",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0228",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0230",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0231",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0233",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0245",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0313",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:s5-ta0192",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0194",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0208",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0209",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0213",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0193",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0208",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0210",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0213",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0231",
+          "qty": 1
+        }
       ],
       "notes": "Poster 2026-10-01 = 25 exclusives (UltraJeux « 25 »). Holos annoncés Holo sur checklist série (Manga-News) parmi les exclusives + « 2 holos » packaging → NI-218 Jiraya + NI-313 Anko. NI-197 → Nouveau départ. Pas de qty / 15 communes → contentsKnown false. Dig : poster-starters-s5 + s5-starter-qty-web-hunt-2026-10-01. guaranteedPrints = full exclusive list (keys alone are ignored when prints[] is set)."
     },
@@ -1522,58 +1599,135 @@
       "contentsKnown": false,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:ni-0029",
-        "naruto:ni-0159",
-        "naruto:ni-0191",
-        "naruto:ni-0196",
-        "naruto:ni-0197",
-        "naruto:ni-0219",
-        "naruto:ni-0225",
-        "naruto:ni-0226",
-        "naruto:ni-0229",
-        "naruto:ni-0237",
-        "naruto:ni-0241",
-        "naruto:ni-0242",
-        "naruto:ni-0243",
-        "naruto:ni-0244",
-        "naruto:ni-0246",
-        "naruto:ta-0196",
-        "naruto:ta-0210",
-        "naruto:ta-0211",
-        "naruto:ta-0212",
-        "naruto:ta-0216",
-        "naruto:te-0200",
-        "naruto:te-0211",
-        "naruto:te-0212",
-        "naruto:te-0217",
-        "naruto:te-0219"
+        "naruto:s5-ni0029",
+        "naruto:s5-ni0159",
+        "naruto:s5-ni0191",
+        "naruto:s5-ni0196",
+        "naruto:s5-ni0197",
+        "naruto:s5-ni0219",
+        "naruto:s5-ni0225",
+        "naruto:s5-ni0226",
+        "naruto:s5-ni0229",
+        "naruto:s5-ni0237",
+        "naruto:s5-ni0241",
+        "naruto:s5-ni0242",
+        "naruto:s5-ni0243",
+        "naruto:s5-ni0244",
+        "naruto:s5-ni0246",
+        "naruto:s5-ta0196",
+        "naruto:s5-ta0210",
+        "naruto:s5-ta0211",
+        "naruto:s5-ta0212",
+        "naruto:s5-ta0216",
+        "naruto:s5-te0200",
+        "naruto:s5-te0211",
+        "naruto:s5-te0212",
+        "naruto:s5-te0217",
+        "naruto:s5-te0219"
       ],
       "guaranteedPrints": [
-        { "printKey": "naruto:ni-0029", "qty": 1 },
-        { "printKey": "naruto:ni-0159", "qty": 1 },
-        { "printKey": "naruto:ni-0191", "qty": 1 },
-        { "printKey": "naruto:ni-0196", "qty": 1 },
-        { "printKey": "naruto:ni-0197", "qty": 1 },
-        { "printKey": "naruto:ni-0219", "qty": 1, "finish": "holo" },
-        { "printKey": "naruto:ni-0225", "qty": 1 },
-        { "printKey": "naruto:ni-0226", "qty": 1 },
-        { "printKey": "naruto:ni-0229", "qty": 1, "finish": "holo" },
-        { "printKey": "naruto:ni-0237", "qty": 1 },
-        { "printKey": "naruto:ni-0241", "qty": 1 },
-        { "printKey": "naruto:ni-0242", "qty": 1 },
-        { "printKey": "naruto:ni-0243", "qty": 1 },
-        { "printKey": "naruto:ni-0244", "qty": 1 },
-        { "printKey": "naruto:ni-0246", "qty": 1 },
-        { "printKey": "naruto:ta-0196", "qty": 1 },
-        { "printKey": "naruto:ta-0210", "qty": 1 },
-        { "printKey": "naruto:ta-0211", "qty": 1 },
-        { "printKey": "naruto:ta-0212", "qty": 1 },
-        { "printKey": "naruto:ta-0216", "qty": 1 },
-        { "printKey": "naruto:te-0200", "qty": 1 },
-        { "printKey": "naruto:te-0211", "qty": 1 },
-        { "printKey": "naruto:te-0212", "qty": 1 },
-        { "printKey": "naruto:te-0217", "qty": 1 },
-        { "printKey": "naruto:te-0219", "qty": 1 }
+        {
+          "printKey": "naruto:s5-ni0029",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0159",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0191",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0196",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0197",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0219",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:s5-ni0225",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0226",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0229",
+          "qty": 1,
+          "finish": "holo"
+        },
+        {
+          "printKey": "naruto:s5-ni0237",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0241",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0242",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0243",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0244",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ni0246",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0196",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0210",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0211",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0212",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-ta0216",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0200",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0211",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0212",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0217",
+          "qty": 1
+        },
+        {
+          "printKey": "naruto:s5-te0219",
+          "qty": 1
+        }
       ],
       "notes": "Poster 2026-10-01 = 25 exclusives. Holos annoncés Holo sur checklist (Manga-News) parmi exclusives + « 2 holos » packaging → NI-219 Tsunade + NI-229 Kakashi. +NI-197 Kuromaru. Pas de qty / 15 communes → contentsKnown false. Dig : poster-starters-s5 + s5-starter-qty-web-hunt-2026-10-01. guaranteedPrints = full exclusive list (keys alone are ignored when prints[] is set)."
     },
@@ -1935,7 +2089,7 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:pr-0096"
+        "naruto:promo-pr0096"
       ],
       "notes": "Verso imprimé FR : « Chaque pack booster contient : 8 cartes sélectionnées aléatoirement (7 + 1 carte spéciale) ». 2 sachets + promo fenêtre PR-096 (4e Hokage). 120 cartes série. EAN 3391891970488. BANDAI 2013 MADE IN ITALY / NAMCO BANDAI Games Europe (Cergy). Pas Day One PR-095. Sachets aléatoires — seule la promo est garantie. contentsKnown=true : 2× booster-s28 + promo fenêtre PR-096.",
       "guaranteedProducts": [
@@ -1994,381 +2148,381 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:cl-0001",
-        "naruto:cl-0004",
-        "naruto:ni-0001",
-        "naruto:ni-0002",
-        "naruto:ni-0003",
-        "naruto:ni-0004",
-        "naruto:ni-0005",
-        "naruto:ni-0006",
-        "naruto:ni-0008",
-        "naruto:ni-0009",
-        "naruto:ni-0010",
-        "naruto:ni-0013",
-        "naruto:ni-0017",
-        "naruto:ni-0018",
-        "naruto:ni-0025",
-        "naruto:ni-0027",
-        "naruto:ni-0028",
-        "naruto:ni-0029",
-        "naruto:ni-0030",
-        "naruto:ni-0031",
-        "naruto:ni-0032",
-        "naruto:ni-0033",
-        "naruto:ni-0034",
-        "naruto:ni-0035",
-        "naruto:ni-0036",
-        "naruto:ni-0037",
-        "naruto:ni-0038",
-        "naruto:ni-0039",
-        "naruto:ni-0047",
-        "naruto:ni-0049",
-        "naruto:ni-0050",
-        "naruto:ni-0051",
-        "naruto:ni-0052",
-        "naruto:ni-0053",
-        "naruto:ta-0001",
-        "naruto:ta-0004",
-        "naruto:ta-0006",
-        "naruto:ta-0007",
-        "naruto:ta-0008",
-        "naruto:ta-0015",
-        "naruto:ta-0017",
-        "naruto:ta-0020",
-        "naruto:ta-0022",
-        "naruto:ta-0024",
-        "naruto:ta-0026",
-        "naruto:ta-0029",
-        "naruto:ta-0036",
-        "naruto:ta-0037",
-        "naruto:ta-0039",
-        "naruto:ta-0041",
-        "naruto:ta-0045",
-        "naruto:ta-0046",
-        "naruto:ta-0049",
-        "naruto:ta-0057",
-        "naruto:te-0001",
-        "naruto:te-0002",
-        "naruto:te-0003",
-        "naruto:te-0006",
-        "naruto:te-0008",
-        "naruto:te-0010",
-        "naruto:te-0015",
-        "naruto:te-0016",
-        "naruto:te-0019",
-        "naruto:te-0020",
-        "naruto:te-0021",
-        "naruto:te-0025",
-        "naruto:te-0029",
-        "naruto:te-0038",
-        "naruto:te-0040",
-        "naruto:te-0046",
-        "naruto:te-0048",
-        "naruto:te-0049",
-        "naruto:te-0058",
-        "naruto:te-0059"
+        "naruto:s1-cl0001",
+        "naruto:s1-cl0004",
+        "naruto:s1-ni0001",
+        "naruto:s1-ni0002",
+        "naruto:s1-ni0003",
+        "naruto:s1-ni0004",
+        "naruto:s1-ni0005",
+        "naruto:s1-ni0006",
+        "naruto:s1-ni0008",
+        "naruto:s1-ni0009",
+        "naruto:s1-ni0010",
+        "naruto:s1-ni0013",
+        "naruto:s1-ni0017",
+        "naruto:s1-ni0018",
+        "naruto:s1-ni0025",
+        "naruto:s1-ni0027",
+        "naruto:s1-ni0028",
+        "naruto:s1-ni0029",
+        "naruto:s1-ni0030",
+        "naruto:s1-ni0031",
+        "naruto:s1-ni0032",
+        "naruto:s1-ni0033",
+        "naruto:s1-ni0034",
+        "naruto:s1-ni0035",
+        "naruto:s1-ni0036",
+        "naruto:s1-ni0037",
+        "naruto:s1-ni0038",
+        "naruto:s1-ni0039",
+        "naruto:s1-ni0047",
+        "naruto:s1-ni0049",
+        "naruto:s1-ni0050",
+        "naruto:s1-ni0051",
+        "naruto:s1-ni0052",
+        "naruto:s1-ni0053",
+        "naruto:s1-ta0001",
+        "naruto:s1-ta0004",
+        "naruto:s1-ta0006",
+        "naruto:s1-ta0007",
+        "naruto:s1-ta0008",
+        "naruto:s1-ta0015",
+        "naruto:s1-ta0017",
+        "naruto:s1-ta0020",
+        "naruto:s1-ta0022",
+        "naruto:s1-ta0024",
+        "naruto:s1-ta0026",
+        "naruto:s1-ta0029",
+        "naruto:s1-ta0036",
+        "naruto:s1-ta0037",
+        "naruto:s1-ta0039",
+        "naruto:s1-ta0041",
+        "naruto:s1-ta0045",
+        "naruto:s1-ta0046",
+        "naruto:s1-ta0049",
+        "naruto:s1-ta0057",
+        "naruto:s1-te0001",
+        "naruto:s1-te0002",
+        "naruto:s1-te0003",
+        "naruto:s1-te0006",
+        "naruto:s1-te0008",
+        "naruto:s1-te0010",
+        "naruto:s1-te0015",
+        "naruto:s1-te0016",
+        "naruto:s1-te0019",
+        "naruto:s1-te0020",
+        "naruto:s1-te0021",
+        "naruto:s1-te0025",
+        "naruto:s1-te0029",
+        "naruto:s1-te0038",
+        "naruto:s1-te0040",
+        "naruto:s1-te0046",
+        "naruto:s1-te0048",
+        "naruto:s1-te0049",
+        "naruto:s1-te0058",
+        "naruto:s1-te0059"
       ],
       "notes": "1× starter Pays du Vent + 1× starter Maître Hokage + 2× booster S1. guaranteedProducts = SKUs inclus ; guaranteedPrints = cartes des 2 decks (conseil d'achat). Face = curated/products/wrappers/pack-decouverte.jpg.",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:cl-0001",
+          "printKey": "naruto:s1-cl0001",
           "qty": 1
         },
         {
-          "printKey": "naruto:cl-0004",
+          "printKey": "naruto:s1-cl0004",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0001",
+          "printKey": "naruto:s1-ni0001",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0002",
+          "printKey": "naruto:s1-ni0002",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0003",
+          "printKey": "naruto:s1-ni0003",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0004",
+          "printKey": "naruto:s1-ni0004",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0005",
+          "printKey": "naruto:s1-ni0005",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0006",
+          "printKey": "naruto:s1-ni0006",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0008",
+          "printKey": "naruto:s1-ni0008",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0009",
+          "printKey": "naruto:s1-ni0009",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0010",
+          "printKey": "naruto:s1-ni0010",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0013",
+          "printKey": "naruto:s1-ni0013",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0017",
+          "printKey": "naruto:s1-ni0017",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0018",
+          "printKey": "naruto:s1-ni0018",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0025",
+          "printKey": "naruto:s1-ni0025",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0027",
+          "printKey": "naruto:s1-ni0027",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0028",
+          "printKey": "naruto:s1-ni0028",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0029",
+          "printKey": "naruto:s1-ni0029",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0030",
+          "printKey": "naruto:s1-ni0030",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0031",
+          "printKey": "naruto:s1-ni0031",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0032",
+          "printKey": "naruto:s1-ni0032",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0033",
+          "printKey": "naruto:s1-ni0033",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0034",
+          "printKey": "naruto:s1-ni0034",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0035",
+          "printKey": "naruto:s1-ni0035",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0036",
+          "printKey": "naruto:s1-ni0036",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0037",
+          "printKey": "naruto:s1-ni0037",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0038",
+          "printKey": "naruto:s1-ni0038",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0039",
+          "printKey": "naruto:s1-ni0039",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0047",
+          "printKey": "naruto:s1-ni0047",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0049",
+          "printKey": "naruto:s1-ni0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0050",
+          "printKey": "naruto:s1-ni0050",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0051",
+          "printKey": "naruto:s1-ni0051",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0052",
+          "printKey": "naruto:s1-ni0052",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0053",
+          "printKey": "naruto:s1-ni0053",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0001",
+          "printKey": "naruto:s1-ta0001",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0004",
+          "printKey": "naruto:s1-ta0004",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0006",
+          "printKey": "naruto:s1-ta0006",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0007",
+          "printKey": "naruto:s1-ta0007",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0008",
+          "printKey": "naruto:s1-ta0008",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0015",
+          "printKey": "naruto:s1-ta0015",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0017",
+          "printKey": "naruto:s1-ta0017",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0020",
+          "printKey": "naruto:s1-ta0020",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0022",
+          "printKey": "naruto:s1-ta0022",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0024",
+          "printKey": "naruto:s1-ta0024",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0026",
+          "printKey": "naruto:s1-ta0026",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0029",
+          "printKey": "naruto:s1-ta0029",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0036",
+          "printKey": "naruto:s1-ta0036",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0037",
+          "printKey": "naruto:s1-ta0037",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0039",
+          "printKey": "naruto:s1-ta0039",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0041",
+          "printKey": "naruto:s1-ta0041",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0045",
+          "printKey": "naruto:s1-ta0045",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0046",
+          "printKey": "naruto:s1-ta0046",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0049",
+          "printKey": "naruto:s1-ta0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:ta-0057",
+          "printKey": "naruto:s1-ta0057",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0001",
+          "printKey": "naruto:s1-te0001",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0002",
+          "printKey": "naruto:s1-te0002",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0003",
+          "printKey": "naruto:s1-te0003",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0006",
+          "printKey": "naruto:s1-te0006",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0008",
+          "printKey": "naruto:s1-te0008",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0010",
+          "printKey": "naruto:s1-te0010",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0015",
+          "printKey": "naruto:s1-te0015",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0016",
+          "printKey": "naruto:s1-te0016",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0019",
+          "printKey": "naruto:s1-te0019",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0020",
+          "printKey": "naruto:s1-te0020",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0021",
+          "printKey": "naruto:s1-te0021",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0025",
+          "printKey": "naruto:s1-te0025",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0029",
+          "printKey": "naruto:s1-te0029",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0038",
+          "printKey": "naruto:s1-te0038",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0040",
+          "printKey": "naruto:s1-te0040",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0046",
+          "printKey": "naruto:s1-te0046",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0048",
+          "printKey": "naruto:s1-te0048",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0049",
+          "printKey": "naruto:s1-te0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0058",
+          "printKey": "naruto:s1-te0058",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0059",
+          "printKey": "naruto:s1-te0059",
           "qty": 1
         }
       ],
@@ -2406,144 +2560,144 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:ni-0027",
-        "naruto:ni-0028",
-        "naruto:ni-0049",
-        "naruto:ni-0050",
-        "naruto:ni-0099",
-        "naruto:ni-0127",
-        "naruto:ni-0156",
-        "naruto:ni-0157",
-        "naruto:ni-0165",
-        "naruto:ni-0173",
-        "naruto:ni-0174",
-        "naruto:ni-0175",
-        "naruto:ni-0176",
-        "naruto:ni-0198",
-        "naruto:ni-0204",
-        "naruto:ta-0118",
-        "naruto:ta-0152",
-        "naruto:ta-0154",
-        "naruto:ta-0155",
-        "naruto:ta-0156",
-        "naruto:te-0145",
-        "naruto:te-0146",
-        "naruto:te-0163",
-        "naruto:te-0164",
-        "naruto:te-0165",
-        "naruto:te-0169",
-        "naruto:pr-0016"
+        "naruto:s4-ni0027",
+        "naruto:s4-ni0028",
+        "naruto:s4-ni0049",
+        "naruto:s4-ni0050",
+        "naruto:s4-ni0099",
+        "naruto:s4-ni0127",
+        "naruto:s4-ni0156",
+        "naruto:s4-ni0157",
+        "naruto:s4-ni0165",
+        "naruto:s4-ni0173",
+        "naruto:s4-ni0174",
+        "naruto:s4-ni0175",
+        "naruto:s4-ni0176",
+        "naruto:s4-ni0198",
+        "naruto:s4-ni0204",
+        "naruto:s4-ta0118",
+        "naruto:s4-ta0152",
+        "naruto:s4-ta0154",
+        "naruto:s4-ta0155",
+        "naruto:s4-ta0156",
+        "naruto:s4-te0145",
+        "naruto:s4-te0146",
+        "naruto:s4-te0163",
+        "naruto:s4-te0164",
+        "naruto:s4-te0165",
+        "naruto:s4-te0169",
+        "naruto:promo-pr0016"
       ],
       "notes": "Verso imprimé : deck [INVOCATION] s4 (40) + booster s1 (8) + booster s2 (8) + 1 promo holo exclusive + tapis + 6 jetons + livret. Réf. 05129 / EAN 3296580051298 / BANDAI 2007 BE. Guarantees = deck Invocation + PR-016. packsBySet = loterie S1/S2 ; guaranteeSets = s4+promo (un NI du deck mal rangé S5 au catalogue ne doit pas accrocher le conseil S5). Variant Hobby = SKU tin-box-hobby. contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
       "guaranteedPrints": [
         {
-          "printKey": "naruto:ni-0027",
+          "printKey": "naruto:s4-ni0027",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0028",
+          "printKey": "naruto:s4-ni0028",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0049",
+          "printKey": "naruto:s4-ni0049",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0050",
+          "printKey": "naruto:s4-ni0050",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0099",
+          "printKey": "naruto:s4-ni0099",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0127",
+          "printKey": "naruto:s4-ni0127",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0156",
+          "printKey": "naruto:s4-ni0156",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0157",
+          "printKey": "naruto:s4-ni0157",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0165",
+          "printKey": "naruto:s4-ni0165",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0173",
+          "printKey": "naruto:s4-ni0173",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0174",
+          "printKey": "naruto:s4-ni0174",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0175",
+          "printKey": "naruto:s4-ni0175",
           "qty": 2
         },
         {
-          "printKey": "naruto:ni-0176",
+          "printKey": "naruto:s4-ni0176",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ni-0198",
+          "printKey": "naruto:s4-ni0198",
           "qty": 1
         },
         {
-          "printKey": "naruto:ni-0204",
+          "printKey": "naruto:s4-ni0204",
           "qty": 1,
           "finish": "holo"
         },
         {
-          "printKey": "naruto:ta-0118",
+          "printKey": "naruto:s4-ta0118",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0152",
+          "printKey": "naruto:s4-ta0152",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0154",
+          "printKey": "naruto:s4-ta0154",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0155",
+          "printKey": "naruto:s4-ta0155",
           "qty": 2
         },
         {
-          "printKey": "naruto:ta-0156",
+          "printKey": "naruto:s4-ta0156",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0145",
+          "printKey": "naruto:s4-te0145",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0146",
+          "printKey": "naruto:s4-te0146",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0163",
+          "printKey": "naruto:s4-te0163",
           "qty": 2
         },
         {
-          "printKey": "naruto:te-0164",
+          "printKey": "naruto:s4-te0164",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0165",
+          "printKey": "naruto:s4-te0165",
           "qty": 1
         },
         {
-          "printKey": "naruto:te-0169",
+          "printKey": "naruto:s4-te0169",
           "qty": 2
         },
         {
-          "printKey": "naruto:pr-0016",
+          "printKey": "naruto:promo-pr0016",
           "qty": 1,
           "finish": "holo"
         }
@@ -2584,8 +2738,8 @@
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
-        "naruto:pr-0011",
-        "naruto:pr-0016"
+        "naruto:promo-pr0011",
+        "naruto:promo-pr0016"
       ],
       "notes": "Canal hobby (magasins spécialisés). Officiel : 1 booster S1 + S2 + S3 + S4 + S5 + Naruto NI-PR16 + Orochimaru NI-PR11. Face catalogue = sleeve bleu reconstruit (wrappers/tin-box-hobby.png) ; contenu-tin-box / Tin-box-hobby.jpg archival. Sachets aléatoires via packsBySet — seules les 2 promos sont garanties. Distinct de tin-box Invocation 05129. contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
       "guaranteedProducts": [
@@ -2663,12 +2817,12 @@
       "declaredCardCount": 1,
       "guaranteedPrintKeys": [],
       "randomPoolPrintKeys": [
-        "naruto:ta-0221",
-        "naruto:ni-0236",
-        "naruto:ni-0253",
-        "naruto:ni-0252",
-        "naruto:ni-0232",
-        "naruto:ta-0226"
+        "naruto:s6-ta0221",
+        "naruto:s6-ni0236",
+        "naruto:s6-ni0253",
+        "naruto:s6-ni0252",
+        "naruto:s6-ni0232",
+        "naruto:s6-ta0226"
       ]
     },
     "kana-dvd-shippuden-vol21": {
@@ -2683,7 +2837,7 @@
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
       "guaranteedPrintKeys": [
-        "naruto:pr-0100"
+        "naruto:promo-pr0100"
       ]
     },
     "xbox360-uns3": {
@@ -2698,7 +2852,7 @@
       "containsPrintsIsPreview": false,
       "declaredCardCount": 1,
       "guaranteedPrintKeys": [
-        "naruto:pr-0095"
+        "naruto:promo-pr0095"
       ]
     },
     "tin-unbound-power-naruto": {
@@ -2780,16 +2934,16 @@
       "declaredCardCount": 1,
       "guaranteedPrintKeys": [],
       "randomPoolPrintKeys": [
-        "naruto:ni-0025-prerelease",
-        "naruto:ni-0019-prerelease",
-        "naruto:ni-0047-prerelease",
-        "naruto:ni-0027-prerelease",
-        "naruto:ta-0005-prerelease",
-        "naruto:ta-0004-prerelease",
-        "naruto:te-0015-prerelease",
-        "naruto:te-0007-prerelease",
-        "naruto:te-0003-prerelease",
-        "naruto:te-0036-prerelease"
+        "naruto:prerelease-ni0025",
+        "naruto:prerelease-ni0019",
+        "naruto:prerelease-ni0047",
+        "naruto:prerelease-ni0027",
+        "naruto:prerelease-ta0005",
+        "naruto:prerelease-ta0004",
+        "naruto:prerelease-te0015",
+        "naruto:prerelease-te0007",
+        "naruto:prerelease-te0003",
+        "naruto:prerelease-te0036"
       ]
     },
     "display-s1-it": {
@@ -2987,6 +3141,54 @@
       "behavior": "pack_container",
       "contentsKnown": false,
       "notes": "Display EN CCG = 24 boosters (US). EU/DE 30 = SKU -fr/-de si distinct."
+    },
+    "deck-la-tempete-approche": {
+      "source": "Coleka `_r16963` Rampage Tornado / La tempête approche — 33 reprints",
+      "verifiedAt": "2026-10-10",
+      "packsContained": null,
+      "cardsPerPack": null,
+      "declaredCardCount": 33,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteeSets": ["s11"],
+      "guaranteedPrintKeys": [
+        "naruto:s11-c0045",
+        "naruto:s11-j0067",
+        "naruto:s11-j0234",
+        "naruto:s11-j0255",
+        "naruto:s11-j0329",
+        "naruto:s11-j0367",
+        "naruto:s11-j0377",
+        "naruto:s11-j0380",
+        "naruto:s11-m0092",
+        "naruto:s11-m0209",
+        "naruto:s11-m0272",
+        "naruto:s11-m0305",
+        "naruto:s11-m0323",
+        "naruto:s11-m0344",
+        "naruto:s11-mus0086",
+        "naruto:s11-n0013",
+        "naruto:s11-n0100",
+        "naruto:s11-n0144",
+        "naruto:s11-n0205",
+        "naruto:s11-n0261",
+        "naruto:s11-n0303",
+        "naruto:s11-n0319",
+        "naruto:s11-n0361",
+        "naruto:s11-n0392",
+        "naruto:s11-n0393",
+        "naruto:s11-n0395",
+        "naruto:s11-n0400",
+        "naruto:s11-n0402",
+        "naruto:s11-n0406",
+        "naruto:s11-n0412",
+        "naruto:s11-n0427",
+        "naruto:s11-n0435",
+        "naruto:s11-n0436"
+      ],
+      "notes": "Checklist FR s11 = 33 Coleka; clés set-scoped `s11-*` (reprints aussi en s1–s10)."
     }
   }
 }

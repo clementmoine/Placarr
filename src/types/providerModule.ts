@@ -63,6 +63,13 @@ export type MetadataAdapterContext = {
   barcode?: string | null;
   /** Print identity for barcode-less objects. See {@link MatchContext.printKey}. */
   printKey?: string | null;
+  /**
+   * Extension catalogue de **cet** exemplaire (`Item.setCode`). Distincte du
+   * set primaire du tirage quand un même printKey figure dans plusieurs séries
+   * (Naruto TA-074 → s2 et s3) : sans elle, le refresh réécrit « Série 2 »
+   * sur une copie rangée en S3.
+   */
+  setCode?: string | null;
   platform?: string | null;
   shelfName?: string | null;
   lookupQueries?: string[];

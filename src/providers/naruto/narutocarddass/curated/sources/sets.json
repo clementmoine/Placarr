@@ -124,19 +124,11 @@
     },
     "s11": {
       "series": 11,
-      "title": "Approaching Wind",
-      "starters": [],
-      "released": true,
-      "note": "EN CCG booster set. The FR special deck Rampage Tornado is `tempete`, not this dump."
-    },
-    "tempete": {
-      "series": 11,
       "title": "Série 11 — La Tempête Approche",
+      "enCcgTitle": "Approaching Wind",
       "starters": [],
-      "colekaLabel": null,
-      "printedLanguages": ["fr"],
       "released": true,
-      "note": "Deck spécial FR 33 cartes (Coleka `_r16963`). Reprints s1–s11, pas Sage's Legacy ni Storm 3. Set id `tempete` (≠ EN Approaching Wind `s11`)."
+      "note": "EN CCG Approaching Wind + deck spécial FR Rampage Tornado / La Tempête Approche (Coleka `_r16963`, 33 reprints). Id disque = `s11`."
     },
     "s12": {
       "series": 12,

@@ -27,6 +27,7 @@ function makeItem(
     description: null,
     barcode: null,
     printKey: overrides.printKey ?? null,
+    setCode: overrides.setCode ?? null,
     condition: overrides.condition ?? "new",
     metadataId: null,
     metadataRefreshStartedAt: null,
@@ -174,6 +175,35 @@ describe("collectionQuery", () => {
     expect(
       sortCollectionItems(items, "print_asc", "tcg").map((item) => item.id),
     ).toEqual(["tfc-2", "tfc-10", "tfc-20p", "rof-1", "orphan"]);
+  });
+
+  it("sorts multi-set reprints by catalogue set (setCode or printKey)", () => {
+    const items = [
+      makeItem({
+        id: "ta074-s3",
+        name: "Monnaie d'Echange",
+        printKey: "naruto:s3-ta0074",
+      }),
+      makeItem({
+        id: "ni001-s2",
+        name: "Naruto",
+        printKey: "naruto:s2-ni0001",
+      }),
+      makeItem({
+        id: "ta074-s2",
+        name: "Monnaie d'Echange",
+        printKey: "naruto:s2-ta0074",
+      }),
+      makeItem({
+        id: "m092-s11",
+        name: "Kakashi",
+        printKey: "naruto:s11-m0092",
+      }),
+    ];
+
+    expect(
+      sortCollectionItems(items, "print_asc", "tcg").map((item) => item.id),
+    ).toEqual(["ni001-s2", "ta074-s2", "ta074-s3", "m092-s11"]);
   });
 
   it("parses filter params from the URL", () => {

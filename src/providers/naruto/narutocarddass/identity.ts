@@ -15,6 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildPrintKey,
+  comparePrintSetCodes,
   parsePrintKey,
   registerPrintKeyCompare,
 } from "@/core/identify/printKey";
@@ -28,10 +29,8 @@ import {
 import { listNarutoCardDirs } from "./disk";
 import { type NarutoPrintRow, type NarutoTitleRow, loadNarutoCardsIndexFromSqlite } from "./indexStore";
 import { loadAttestedPromos } from "./sources/promos";
-import {
-  NARUTO_INDICATIVE_PRICE_SOURCE,
-  narutoIndicativeQuoteForPrint,
-} from "./sources/prices";
+import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./sources/priceSourceId";
+import { narutoIndicativeQuoteForPrint } from "./sources/prices";
 import {
   readPackDocument,
   writePackDocument,
@@ -723,41 +722,151 @@ export function compareNarutoCollectors(a: string, b: string): number {
   return (ia.grouping ?? "").localeCompare(ib.grouping ?? "");
 }
 
-const SERIES_SET = /^(s\d+|promo|prerelease|ns|spc|maki\d+|maku\d+)$/i;
+const SERIES_SET =
+  /^(s\d+|promo|prerelease|ns|spc|maki\d+|maku\d+|tp\d+|tin\d+)$/i;
 
-/** `ni001` → `naruto:ni-0001`. Distinct from `naruto:n-0001`. */
+/** Extension catalogue (`s3`, `promo`, `maki1`…) — pas un préfixe famille (`ni`). */
+export function isNarutoCatalogueSetCode(set: string): boolean {
+  return SERIES_SET.test(set.trim());
+}
+
+/**
+ * Collector segment for a set-scoped key: `ta0074`, `ni0023-cdf`.
+ * Legacy family-as-set keys (`naruto:ni-0001`) use {@link narutoCollectorFromPrintIdentity}.
+ */
+function collectorFromSetScopedIdentity(id: {
+  set: string;
+  number: string;
+  grouping?: string | null;
+}): string {
+  return id.grouping ? `${id.number}-${id.grouping}` : id.number;
+}
+
+/**
+ * `ni001` + set `s3` → `naruto:s3-ni0001`. Distinct from `naruto:s3-n0001`.
+ * `catalogueSet` is required (extension checklist / sealed product set).
+ */
 export function mintNarutoPrintKey(
   raw: string,
-  appearanceSet?: string | null,
+  catalogueSet?: string | null,
 ): string | null {
   const id = parseNarutoCollector(raw);
   if (!id) return null;
+  const set = (catalogueSet ?? "").trim().toLowerCase();
+  if (!set || !isNarutoCatalogueSetCode(set)) return null;
+  const prefix = canonicalNarutoDiskPrefix(id.printedPrefix);
+  const number = `${prefix}${paddedNumber(id)}`;
+  /*
+    Promo / prerelease live in the set segment — do not also suffix grouping.
+    Other groupings (`ps`, `cdf`, `a`/`b`) stay as a third segment.
+  */
+  let grouping = id.grouping?.trim().toLowerCase() || null;
+  if (grouping === "promo" && set === "promo") grouping = null;
+  if (grouping === "prerelease" && set === "prerelease") grouping = null;
+  if (!grouping) {
+    const appearanceGroup = narutoAppearanceGrouping(id, set);
+    if (
+      appearanceGroup &&
+      !(appearanceGroup === "promo" && set === "promo") &&
+      !(appearanceGroup === "prerelease" && set === "prerelease")
+    ) {
+      grouping = appearanceGroup;
+    }
+  }
   return buildPrintKey({
     game: "naruto",
-    set: canonicalNarutoDiskPrefix(id.printedPrefix),
-    number: paddedNumber(id),
-    grouping: narutoAppearanceGrouping(id, appearanceSet),
+    set,
+    number,
+    grouping,
   });
 }
 
 /**
- * Old keys baked the series (`naruto:s1-ni001`). New keys are the printed
- * prefix (`naruto:ni-0001`). `naruto:promo-ni023` → `naruto:ni-0023-promo`.
- * Already-new keys pass through.
+ * Normalize padding / promo set. Legacy `naruto:ni-0001` stays until a
+ * catalogue set is supplied (second arg) or the key is already set-scoped.
  */
-export function canonicalizeNarutoPrintKey(key: string): string {
+export function canonicalizeNarutoPrintKey(
+  key: string,
+  catalogueSet?: string | null,
+): string {
   const parsed = parsePrintKey(key);
   if (!parsed || parsed.game !== "naruto") return key;
-  if (SERIES_SET.test(parsed.set)) {
-    const raw = parsed.grouping
-      ? `${parsed.number}-${parsed.grouping}`
-      : parsed.number;
-    return mintNarutoPrintKey(raw, parsed.set) ?? key;
+  if (isNarutoCatalogueSetCode(parsed.set)) {
+    return (
+      mintNarutoPrintKey(collectorFromSetScopedIdentity(parsed), parsed.set) ??
+      key
+    );
   }
-  const raw = parsed.grouping
-    ? `${parsed.set}${parsed.number}-${parsed.grouping}`
-    : `${parsed.set}${parsed.number}`;
-  return mintNarutoPrintKey(raw) ?? key;
+  /*
+    Legacy family-as-set (`naruto:ni-0023-promo`). Promo grouping → set promo
+    without an explicit catalogue set.
+  */
+  const legacyCollector = narutoCollectorFromPrintIdentity(parsed);
+  const inferred =
+    (catalogueSet ?? "").trim().toLowerCase() ||
+    (parsed.grouping?.toLowerCase() === "promo" ? "promo" : "") ||
+    (parsed.grouping?.toLowerCase() === "prerelease" ? "prerelease" : "");
+  if (!inferred || !isNarutoCatalogueSetCode(inferred)) return key;
+  return mintNarutoPrintKey(legacyCollector, inferred) ?? key;
+}
+
+/**
+ * Rewrite a (possibly legacy) key onto a catalogue set.
+ * `naruto:ta-0074` + `s3` → `naruto:s3-ta0074`.
+ */
+export function remintNarutoPrintKeyWithSet(
+  key: string,
+  catalogueSet: string,
+): string | null {
+  const set = catalogueSet.trim().toLowerCase();
+  if (!isNarutoCatalogueSetCode(set)) return null;
+  const parsed = parsePrintKey(key);
+  if (!parsed || parsed.game !== "naruto") return null;
+  const collector = isNarutoCatalogueSetCode(parsed.set)
+    ? collectorFromSetScopedIdentity(parsed)
+    : narutoCollectorFromPrintIdentity(parsed);
+  return mintNarutoPrintKey(collector, set);
+}
+
+/**
+ * One catalogue row per membership — `naruto:s1-ni0049` and `naruto:s5-ni0049`
+ * (and `naruto:maki1-ni0001` when the caller added that set) are distinct prints.
+ * Shared faces/titles are remapped by the index writer.
+ */
+export function expandNarutoPrintsToSetScoped(
+  prints: readonly NarutoPrintRow[],
+  opts?: {
+    /** When false, skip promo filter (tests). Default true. */
+    filterPromoChecklist?: boolean;
+  },
+): NarutoPrintRow[] {
+  const filterPromo = opts?.filterPromoChecklist !== false;
+  const out: NarutoPrintRow[] = [];
+  const seen = new Set<string>();
+  for (const p of prints) {
+    let sets = appearanceSetsOf(
+      p.setCodes?.length ? p.setCodes : [p.setCode],
+    )
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => isNarutoCatalogueSetCode(s));
+    void filterPromo;
+    if (sets.length === 0) {
+      const fallback = (p.setCode ?? "").trim().toLowerCase();
+      if (isNarutoCatalogueSetCode(fallback)) sets = [fallback];
+    }
+    for (const set of sets) {
+      const printKey = mintNarutoPrintKey(p.number, set);
+      if (!printKey || seen.has(printKey)) continue;
+      seen.add(printKey);
+      out.push({
+        ...p,
+        printKey,
+        setCode: set,
+        setCodes: undefined,
+      });
+    }
+  }
+  return out;
 }
 
 function narutoCollectorFromPrintIdentity(id: {
@@ -772,9 +881,23 @@ function narutoCollectorFromPrintIdentity(id: {
 
 /** Shelf / checklist binder order for `naruto:*` print keys. */
 registerPrintKeyCompare("naruto", (left, right, leftKey, rightKey) => {
-  const a = parsePrintKey(canonicalizeNarutoPrintKey(leftKey)) ?? left;
-  const b = parsePrintKey(canonicalizeNarutoPrintKey(rightKey)) ?? right;
-  if (SERIES_SET.test(a.set) || SERIES_SET.test(b.set)) return null;
+  const a = parsePrintKey(leftKey) ?? left;
+  const b = parsePrintKey(rightKey) ?? right;
+  const setA = isNarutoCatalogueSetCode(a.set) ? a.set : "";
+  const setB = isNarutoCatalogueSetCode(b.set) ? b.set : "";
+  if (setA || setB) {
+    if (!setA) return 1;
+    if (!setB) return -1;
+    const bySet = comparePrintSetCodes(setA, setB);
+    if (bySet !== 0) return bySet;
+    const collectorA = isNarutoCatalogueSetCode(a.set)
+      ? collectorFromSetScopedIdentity(a)
+      : narutoCollectorFromPrintIdentity(a);
+    const collectorB = isNarutoCatalogueSetCode(b.set)
+      ? collectorFromSetScopedIdentity(b)
+      : narutoCollectorFromPrintIdentity(b);
+    return compareNarutoCollectors(collectorA, collectorB);
+  }
   return compareNarutoCollectors(
     narutoCollectorFromPrintIdentity(a),
     narutoCollectorFromPrintIdentity(b),
@@ -932,7 +1055,7 @@ export function narutoSetsUnreleasedInFrench(): Set<string> {
   );
 }
 
-/** Langues de sortie curées — le deck Tempête n'est pas l'Approaching Wind EN. */
+/** Langues de sortie curées (`printedLanguages` / `languages` du registre). */
 export function narutoSetShippedLanguages(setCode: string): string[] | null {
   const entry = loadSets().sets?.[setCode.trim().toLowerCase()];
   const langs = entry?.printedLanguages ?? entry?.languages;

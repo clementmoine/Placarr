@@ -50,16 +50,9 @@ import {
 } from "./indexStore";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
-import {
-  japaneseReleaseBands,
-  listJapaneseReleases,
-} from "./sources/sealed";
+import { listJapaneseReleases } from "./sources/sealed";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
-import {
-  isNarutoS6FrPrintedNumber,
-  narutoS6FrPrintedDiskNumbers,
-  narutoS6FrSeries5BonusNumbers,
-} from "./sources/titles";
+import { isNarutoS6FrPrintedNumber } from "./sources/titles";
 
 // --- from printOrientation.ts ---
 
@@ -157,17 +150,9 @@ function setMembershipScope(
   const id = setId?.trim().toLowerCase();
   if (!id) return null;
   /*
-    Inserts S6 FR (TA-221…) peuvent n'avoir que `set_code` = 巻ノ — pas de
-    ligne `print_sets` — tant que le ledger n'a pas été syncé sur le disque.
+    Set-scoped keys already mint `s6-ni0232` etc. Do **not** OR on number —
+    that pulled `maki10-ni0232` into the S6 FR chapter.
   */
-  const s6InsertNums =
-    id === "s6"
-      ? narutoS6FrPrintedDiskNumbers().map((n) => n.toLowerCase())
-      : [];
-  const s6InsertOr =
-    s6InsertNums.length > 0
-      ? ` OR LOWER(p.number) IN (${s6InsertNums.map(() => "?").join(",")})`
-      : "";
   if (hasPrintSetsTable(db)) {
     /*
       `print_sets` porte les multi-séries (NI-049 → s1+s5). Un tirage sans
@@ -188,14 +173,14 @@ function setMembershipScope(
                      WHERE ps2.print_key = p.print_key
                   )
                   AND LOWER(p.set_code) = ?
-                )${s6InsertOr}
+                )
               )`,
-      params: [id, id, ...s6InsertNums],
+      params: [id, id],
     };
   }
   return {
-    clause: `(LOWER(p.set_code) = ?${s6InsertOr})`,
-    params: [id, ...s6InsertNums],
+    clause: `LOWER(p.set_code) = ?`,
+    params: [id],
   };
 }
 
@@ -269,7 +254,6 @@ function narutoSetListingLine(
   const id = setId?.trim().toLowerCase();
   if (!id || !language) return null;
   if (id === "promo") return null;
-  if (id === RAMPAGE_TORNADO_SET) return "en-ccg";
   if (/^s(?:[7-9]|1\d|2[0-8])$/.test(id) || /^tp\d+$/.test(id) || /^tin\d+$/.test(id)) {
     return "en-ccg";
   }
@@ -586,7 +570,16 @@ function europeanSetLanguages(): Map<string, string[]> {
     partagés ne doivent pas rouvrir le filtre FR sur « Quest for Power ».
     L’italien n’est plus une langue de catalogue (filtré à l’assemblage).
   */
-  const frenchLateSeries = new Set(["s24", "s28", RAMPAGE_TORNADO_SET]);
+  /*
+    Retail FR s'arrête à S5, sauf sorties tardives (s24 / s28 / Tempête) et le
+    chapitre **S6** des inserts Kana / DVD (pas le retail boosters annulé).
+  */
+  const frenchLateSeries = new Set([
+    "s6",
+    "s24",
+    "s28",
+    RAMPAGE_TORNADO_SET,
+  ]);
   const found = new Map<string, Set<string>>();
   for (const pack of narutoIndexPacks()) {
     const db = ensureNarutoPackIndex(pack);
@@ -603,11 +596,16 @@ function europeanSetLanguages(): Map<string, string[]> {
       const lang = row.lang?.trim().toLowerCase();
       if (!code || lang === "ja" || lang === "it") continue;
       if (lang === "fr") {
-        if (unreleasedInFrench.has(code.toLowerCase())) continue;
+        const id = code.toLowerCase();
+        /*
+          `released: false` sur s6 = retail boosters annulé. Les inserts Kana
+          ont quand même un chapitre checklist FR séparé — on n'occulte pas s6.
+        */
+        if (unreleasedInFrench.has(id) && id !== "s6") continue;
         const series = /^s(\d+)$/i.exec(code);
         if (series) {
           const n = Number(series[1]);
-          if (n > 5 && !frenchLateSeries.has(code.toLowerCase())) continue;
+          if (n > 5 && !frenchLateSeries.has(id)) continue;
         }
       }
       const set = found.get(code) ?? new Set<string>();
@@ -615,13 +613,6 @@ function europeanSetLanguages(): Map<string, string[]> {
       found.set(code, set);
     }
   }
-  /*
-    Retail S6 FR annulé : pas de chapitre checklist `s6` en français. Les
-    inserts Kana restent des cartes **s6** (`set_code` / libellé) ; on les
-    **classe** seulement dans la checklist S5 — voir
-    {@link unionNarutoSetPrintsWithS6FrSeries5Bonus}. Catalogue `s6` pour
-    IT / EN / préprod.
-  */
   return new Map([...found].map(([code, langs]) => [code, [...langs].sort()]));
 }
 
@@ -691,11 +682,6 @@ export function listNarutoPrintSets(language?: string | null): {
       [...european].map((code) => ({
         id: code,
         label: narutoSetLabel(code, null, labelLang),
-        /**
-         * Deck FR Tempête : id disque `tempete`, code collectionneur S11
-         * (reprints de la s11 US) — pas TEMPETE en tête de liste.
-         */
-        ...(code === RAMPAGE_TORNADO_SET ? { code: "S11" } : {}),
         group: EUROPEAN_CUT,
         languages:
           narutoSetShippedLanguages(code) ?? europeanLanguages.get(code) ?? [],
@@ -703,16 +689,13 @@ export function listNarutoPrintSets(language?: string | null): {
           Le rang est dans le **code** — `s5` — pas dans le libellé, qui porte
           souvent le nom anglais du set. Trié par texte, la liste s'ouvrait sur
           « A New Chronicle », qui est la douzième série.
-          Le deck Tempête se range avec la s11 US dont il reprend les reprints.
         */
         sortKey:
           code === "prerelease"
             ? 0
-            : code === RAMPAGE_TORNADO_SET
-              ? 11
-              : /^s(\d+)$/.exec(code)
-                ? Number(code.slice(1))
-                : null,
+            : /^s(\d+)$/.exec(code)
+              ? Number(code.slice(1))
+              : null,
       })),
     ),
     ...finalizeSetOptions(
@@ -808,39 +791,13 @@ export function searchNarutoPrints(
     différentes : « à quel volume appartient cette carte ? » n'a pas de réponse,
     « quelles cartes ce volume peut-il contenir ? » en a une.
   */
-  const japaneseBands = setId ? japaneseReleaseBands(setId) : [];
   /*
-    Un tirage qui porte un `grouping` réutilise le numéro d'un autre sans être
-    lui : les quatre bonus PS1 (`-ps`) et les promos (`-promo`) tombent dans les
-    bornes du 巻ノ一 sans en faire partie. La source les compte d'ailleurs à
-    part — « 70種類＋P ». Les écarter fait tomber notre décompte exactement sur
-    le sien, ce qui rend la découpe vérifiable.
-  */
-  const japaneseScope =
-    japaneseBands.length > 0
-      ? {
-          clause: `(p.grouping IS NULL OR p.grouping = '') AND (${japaneseBands
-            .map(
-              () =>
-                `(p.card_type = ? AND CAST(REPLACE(LOWER(p.number), p.card_type, '') AS INTEGER) BETWEEN ? AND ?)`,
-            )
-            .join(" OR ")})`,
-          params: japaneseBands.flatMap((band) => [
-            band.family,
-            band.from,
-            band.to,
-          ]) as (string | number)[],
-        }
-      : null;
-
-  /*
-    Multi-set FR : `print_sets` (écrit depuis appearances.json) — pas un OR sur
-    les numéros checklist au query-time. Si Bandai liste NI-049 en S1 et S5,
-    les deux memberships sont sur le disque / dans l'index.
+    Set-scoped keys : 巻ノ = `naruto:maki1-ni0001` (minté à l'index depuis les
+    bornes). Plus de filtre SQL par plage numérique — sinon on retombait sur
+    les clés européennes `s1-ni0001` qui partagent le numéro.
   */
   const scope = setScopedWhere({
     setColumn: "p.set_code",
-    /* Extension : `japaneseScope` (巻ノ) ou `print_sets` — jamais `set_code` seul. */
     setId: null,
     textClause: trimmed
       ? `LOWER(t.full_name) LIKE ?
@@ -848,12 +805,6 @@ export function searchNarutoPrints(
                OR LOWER(p.print_key) LIKE ?
                OR ${numberClause}`
       : null,
-    /*
-      La clé se cherche sous ses **deux** formes. La comparaison ne se faisait
-      que sur la forme compacte — tirets retirés — alors que les clés sont
-      stockées avec : coller `naruto:ni-0014`, l'identifiant exact de la carte,
-      ne rendait donc rien du tout.
-    */
     textParams: [like, like, likeCompact, ...numberParams],
   });
 
@@ -862,8 +813,7 @@ export function searchNarutoPrints(
     const db = ensureNarutoPackIndex(pack);
     if (!db) continue;
     const printedSql = printedColumnSql(db);
-    const membership =
-      japaneseScope || !setId ? null : setMembershipScope(db, setId);
+    const membership = !setId ? null : setMembershipScope(db, setId);
     rows.push(
       ...(db
         .prepare(
@@ -882,13 +832,12 @@ export function searchNarutoPrints(
                     ON t.print_key = p.print_key
              LEFT JOIN print_assets a
                     ON a.print_key = p.print_key AND a.lang = t.lang
-            WHERE ${scope.where}${japaneseScope ? ` AND ${japaneseScope.clause}` : ""}${membership ? ` AND ${membership.clause}` : ""}
+            WHERE ${scope.where}${membership ? ` AND ${membership.clause}` : ""}
             ORDER BY (t.lang = ?) DESC, p.number
             LIMIT ?`,
         )
         .all(
           ...scope.params,
-          ...(japaneseScope?.params ?? []),
           ...(membership?.params ?? []),
           lang,
           limit * 3,
@@ -919,9 +868,12 @@ export function searchNarutoPrints(
   const enriched = withNarutoRetailArtFallback(rows);
   for (const row of enriched) {
     if (row.printed === false) {
+      /*
+        Index : s6 FR « unreleased » → printed=false (préprod carddass.fr).
+        Les inserts Kana / DVD attestés restent pickables.
+      */
       const s6FrInsert =
-        setId === "s6" &&
-        requestedLang === "fr" &&
+        (!requestedLang || requestedLang === "fr") &&
         isNarutoS6FrPrintedNumber(row.number);
       if (!s6FrInsert) continue;
     }
@@ -932,6 +884,10 @@ export function searchNarutoPrints(
     )
       continue;
     if (setId === "s6" && requestedLang === "fr") {
+      /*
+        Chapitre FR = inédites Kana / DVD + reprints MIJ attestés
+        (`s6-fr-printed.json`). Les autres inserts blister restent S5.
+      */
       if (!isNarutoS6FrPrintedNumber(row.number)) continue;
     }
     if (
@@ -961,7 +917,6 @@ export function searchNarutoPrints(
       setId,
       lang,
     );
-    merged = unionNarutoSetPrintsWithS6FrSeries5Bonus(merged, setId, lang);
     if (trimmed) {
       const baseKeys = new Set(out.map((row) => row.printKey));
       merged = merged.filter(
@@ -979,23 +934,16 @@ export function searchNarutoPrints(
       Filtre set actif : chaque ligne porte **ce** set (reprints multi-séries,
       garanties deck). Sinon le sélecteur affichait encore le set_code primaire
       (TA-074 → s2) alors qu'on parcourt S3.
-      Les inserts S6 classés en S5 gardent leur identité s6 — on ne les
-      retampe pas.
     */
     return merged
-      .map((row) =>
-        (row.setCode ?? "").trim().toLowerCase() === "s6"
-          ? row
-          : stampNarutoCandidateSet(row, setId),
-      )
+      .map((row) => stampNarutoCandidateSet(row, setId))
       .slice(0, limit);
   }
   /*
-    Sans filtre d'extension : un tirage multi-séries (TA-074 → s2+s3) doit
-    produire une ligne par appartenance — sinon le sélecteur n'affiche qu'un
-    set primaire et on ne voit pas laquelle on ajoute.
+    Set-scoped printKeys (`s2-ta0074` / `s3-ta0074`) are already distinct rows
+    in the index — no membership explode.
   */
-  return explodeNarutoCandidatesBySetMembership(out, limit);
+  return out.slice(0, limit);
 }
 
 /** Texte / n° collectionneur — pour garder les extras deck après union. */
@@ -1127,39 +1075,6 @@ function stampNarutoCandidateSet(
 }
 
 /**
- * Une ligne catalogue → N lignes (une par set d'appartenance) pour l'ajout
- * set-scoped sans filtre d'extension.
- */
-export function explodeNarutoCandidatesBySetMembership(
-  candidates: readonly PrintCandidate[],
-  limit: number,
-): PrintCandidate[] {
-  const out: PrintCandidate[] = [];
-  for (const row of candidates) {
-    if (isNarutoPromoCandidate(row)) {
-      out.push(stampNarutoCandidateSet(row, "promo"));
-      if (out.length >= limit) break;
-      continue;
-    }
-    const memberships = narutoPrintSetMemberships(row.printKey, row.setCode);
-    const codes =
-      memberships.length > 0
-        ? memberships
-        : [(row.setCode ?? "").trim().toLowerCase()].filter(Boolean);
-    if (codes.length === 0) {
-      out.push(row);
-    } else {
-      for (const code of codes) {
-        out.push(stampNarutoCandidateSet(row, code));
-        if (out.length >= limit) return out;
-      }
-    }
-    if (out.length >= limit) break;
-  }
-  return out;
-}
-
-/**
  * Raw catalogue row for one print — what both the picker candidate and the
  * item metadata are built from, so the two never disagree.
  */
@@ -1284,7 +1199,7 @@ export function unionNarutoSetPrintsWithOfficialFrChecklist(
 
   const keys: string[] = [];
   for (const id of officialFrChecklistIds(sid)) {
-    const printKey = mintNarutoPrintKey(id);
+    const printKey = mintNarutoPrintKey(id, sid);
     if (printKey) keys.push(printKey);
   }
   return appendMissingPrintCandidates(base, keys, lang ?? "fr", sid);
@@ -1308,28 +1223,6 @@ export function unionNarutoSetPrintsWithSeriesDeckGuarantees(
 }
 
 /**
- * Inserts Kana S6 FR (6 inédites) → **classées** dans la checklist Série 5.
- * Identité inchangée : ce sont toujours des cartes `s6` (setCode / libellé).
- * Les 9 reprints blister sont déjà au pool S5 — pas de second passage.
- */
-export function unionNarutoSetPrintsWithS6FrSeries5Bonus(
-  base: readonly PrintCandidate[],
-  setId: string,
-  language?: string | null,
-): PrintCandidate[] {
-  const sid = setId.trim().toLowerCase();
-  const lang = language?.trim().toLowerCase() || undefined;
-  if (sid !== "s5" || (lang && lang !== "fr")) return [...base];
-  const keys: string[] = [];
-  for (const id of narutoS6FrSeries5BonusNumbers()) {
-    const printKey = mintNarutoPrintKey(id);
-    if (printKey) keys.push(printKey);
-  }
-  // Pas de `setId` : les inédites restent s6.
-  return appendMissingPrintCandidates(base, keys, lang ?? "fr");
-}
-
-/**
  * Tous les tirages d'une extension, sans plafond — pour la check-list.
  *
  * `searchNarutoPrints` se borne à deux cents lignes, ce qui convient au
@@ -1343,8 +1236,8 @@ export function unionNarutoSetPrintsWithS6FrSeries5Bonus(
  * Union papier FR + decks : checklist imprimée (reprints multi-séries) et
  * starters — sans eux, « saison complète » est un mensonge.
  *
- * FR : pas de checklist `s6` (retail annulé) — les inserts Kana restent
- * des cartes s6, classées dans S5.
+ * FR S6 : retail boosters annulé ; le chapitre liste les inédites Kana / DVD
+ * + reprints MIJ (`isNarutoS6FrPrintedNumber`), pas la préprod carddass.fr.
  */
 export function listNarutoSetPrints(input: {
   setId: string;
@@ -1353,7 +1246,6 @@ export function listNarutoSetPrints(input: {
   const setId = input.setId.trim();
   if (!setId) return [];
   const lang = input.language?.trim().toLowerCase();
-  if (setId.toLowerCase() === "s6" && lang === "fr") return [];
   const rows = searchNarutoPrints("", {
     setId,
     language: input.language ?? undefined,
@@ -1367,10 +1259,5 @@ export function listNarutoSetPrints(input: {
     setId,
     lang,
   );
-  const withDecks = unionNarutoSetPrintsWithSeriesDeckGuarantees(
-    withPaper,
-    setId,
-    lang,
-  );
-  return unionNarutoSetPrintsWithS6FrSeries5Bonus(withDecks, setId, lang);
+  return unionNarutoSetPrintsWithSeriesDeckGuarantees(withPaper, setId, lang);
 }

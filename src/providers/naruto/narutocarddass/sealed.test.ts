@@ -1437,7 +1437,8 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       const ledger = JSON.parse(
         fs.readFileSync(ledgerPath, "utf8"),
       ) as CuratedSealedContentsFile;
-      const carddass = /^naruto:(ni|te|ta|cl|pr)-/i;
+      const carddass =
+        /^naruto:(?:s\d+|promo|prerelease|tin\d+|tp\d+|maki\d+)-(ni|te|ta|cl|pr)/i;
       const polluted: string[] = [];
       for (const [slug, sku] of Object.entries(ledger.skus)) {
         if (!slug.startsWith("starter-")) continue;
@@ -1447,7 +1448,7 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       }
       expect(polluted).toEqual([]);
       const puissance = ledger.skus["starter-puissances-cachees"]!;
-      expect(puissance.guaranteedPrintKeys).toContain("naruto:ni-0032");
+      expect(puissance.guaranteedPrintKeys).toContain("naruto:s3-ni0032");
       expect(puissance.guaranteedPrintKeys).not.toContain("naruto:n-1362");
     });
 
@@ -1474,34 +1475,34 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       }
       const detruire = ledger.skus["starter-detruire-konoha"]!;
       expect(detruire.declaredCardCount).toBe(40);
-      expect(detruire.guaranteedPrintKeys).toContain("naruto:ta-0074");
+      expect(detruire.guaranteedPrintKeys).toContain("naruto:s2-ta0074");
       expect(
         detruire.guaranteedPrints?.find(
-          (row) => row.printKey === "naruto:ta-0074",
+          (row) => row.printKey === "naruto:s2-ta0074",
         ),
-      ).toEqual({ printKey: "naruto:ta-0074", qty: 1 });
+      ).toEqual({ printKey: "naruto:s2-ta0074", qty: 1 });
       expect(
         detruire.guaranteedPrints?.find(
-          (row) => row.printKey === "naruto:te-0074",
+          (row) => row.printKey === "naruto:s2-te0074",
         ),
-      ).toEqual({ printKey: "naruto:te-0074", qty: 1 });
+      ).toEqual({ printKey: "naruto:s2-te0074", qty: 1 });
       expect(
         detruire.guaranteedPrints?.find(
-          (row) => row.printKey === "naruto:ni-0075",
+          (row) => row.printKey === "naruto:s2-ni0075",
         ),
-      ).toEqual({ printKey: "naruto:ni-0075", qty: 2 });
+      ).toEqual({ printKey: "naruto:s2-ni0075", qty: 2 });
       const sceller = ledger.skus["starter-sceller-le-malefice"]!;
       for (const key of [
-        "naruto:ni-0027",
-        "naruto:ni-0028",
-        "naruto:ni-0031",
-        "naruto:ni-0034",
+        "naruto:s2-ni0027",
+        "naruto:s2-ni0028",
+        "naruto:s2-ni0031",
+        "naruto:s2-ni0034",
       ]) {
         expect(sceller.guaranteedPrintKeys).toContain(key);
       }
       const inv = ledger.skus["starter-invocation"]!.guaranteedPrintKeys ?? [];
-      expect(inv).not.toContain("naruto:ni-0001");
-      expect(inv).toContain("naruto:ni-0156");
+      expect(inv).not.toContain("naruto:s4-ni0001");
+      expect(inv).toContain("naruto:s4-ni0156");
       // S5 posters 2026-10-01 : 25 exclusives each ; NI-197 → Nouveau départ.
       const quete = ledger.skus["starter-la-quete"]!;
       const nouveau = ledger.skus["starter-un-nouveau-depart"]!;
@@ -1510,169 +1511,169 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       // guaranteedPrints wins over keys at merge — must list all 25 exclusives.
       expect(quete.guaranteedPrints).toHaveLength(25);
       expect(nouveau.guaranteedPrints).toHaveLength(25);
-      expect(quete.guaranteedPrintKeys).not.toContain("naruto:ni-0197");
-      expect(nouveau.guaranteedPrintKeys).toContain("naruto:ni-0197");
+      expect(quete.guaranteedPrintKeys).not.toContain("naruto:s5-ni0197");
+      expect(nouveau.guaranteedPrintKeys).toContain("naruto:s5-ni0197");
       expect(quete.contentsKnown).toBe(false);
       expect(nouveau.contentsKnown).toBe(false);
       expect(
         quete.guaranteedPrints?.filter((row) => row.finish === "holo"),
       ).toEqual([
-        { printKey: "naruto:ni-0218", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0313", qty: 1, finish: "holo" },
+        { printKey: "naruto:s5-ni0218", qty: 1, finish: "holo" },
+        { printKey: "naruto:s5-ni0313", qty: 1, finish: "holo" },
       ]);
       expect(
         nouveau.guaranteedPrints?.filter((row) => row.finish === "holo"),
       ).toEqual([
-        { printKey: "naruto:ni-0219", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0229", qty: 1, finish: "holo" },
+        { printKey: "naruto:s5-ni0219", qty: 1, finish: "holo" },
+        { printKey: "naruto:s5-ni0229", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-maitre-hokage"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0002", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0003", qty: 1, finish: "holo" },
+        { printKey: "naruto:s1-ni0002", qty: 1, finish: "holo" },
+        { printKey: "naruto:s1-ni0003", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-maitre-hokage"]!.guaranteedPrints?.find(
-          (row) => row.printKey === "naruto:ni-0035",
+          (row) => row.printKey === "naruto:s1-ni0035",
         ),
-      ).toEqual({ printKey: "naruto:ni-0035", qty: 2 });
+      ).toEqual({ printKey: "naruto:s1-ni0035", qty: 2 });
       expect(
         ledger.skus["starter-maitre-hokage"]!.guaranteedPrints?.find(
-          (row) => row.printKey === "naruto:ni-0047",
+          (row) => row.printKey === "naruto:s1-ni0047",
         ),
-      ).toEqual({ printKey: "naruto:ni-0047", qty: 1 });
+      ).toEqual({ printKey: "naruto:s1-ni0047", qty: 1 });
       expect(
         ledger.skus["starter-pays-du-vent"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0001", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0008", qty: 1, finish: "holo" },
+        { printKey: "naruto:s1-ni0001", qty: 1, finish: "holo" },
+        { printKey: "naruto:s1-ni0008", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-sceller-le-malefice"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0109", qty: 1, finish: "holo" },
-        { printKey: "naruto:te-0062", qty: 1, finish: "holo" },
+        { printKey: "naruto:s2-ni0109", qty: 1, finish: "holo" },
+        { printKey: "naruto:s2-te0062", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-detruire-konoha"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0084", qty: 1, finish: "holo" },
-        { printKey: "naruto:te-0076", qty: 1, finish: "holo" },
+        { printKey: "naruto:s2-ni0084", qty: 1, finish: "holo" },
+        { printKey: "naruto:s2-te0076", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-esprit-du-sable"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0145", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0177", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ni0145", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ni0177", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-esprit-du-sable"]!.guaranteedPrints,
       ).toEqual([
-        { printKey: "naruto:ni-0009", qty: 2 },
-        { printKey: "naruto:ni-0010", qty: 1 },
-        { printKey: "naruto:ni-0038", qty: 1 },
-        { printKey: "naruto:ni-0079", qty: 1 },
-        { printKey: "naruto:ni-0080", qty: 1 },
-        { printKey: "naruto:ni-0081", qty: 1 },
-        { printKey: "naruto:ni-0114", qty: 1 },
-        { printKey: "naruto:ni-0145", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0169", qty: 1 },
-        { printKey: "naruto:ni-0170", qty: 2 },
-        { printKey: "naruto:ni-0171", qty: 1 },
-        { printKey: "naruto:ni-0177", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0178", qty: 2 },
-        { printKey: "naruto:ni-0179", qty: 2 },
-        { printKey: "naruto:ni-0180", qty: 2 },
-        { printKey: "naruto:ta-0160", qty: 2 },
-        { printKey: "naruto:ta-0161", qty: 2 },
-        { printKey: "naruto:ta-0162", qty: 2 },
-        { printKey: "naruto:ta-0164", qty: 2 },
-        { printKey: "naruto:ta-0165", qty: 2 },
-        { printKey: "naruto:te-0138", qty: 2 },
-        { printKey: "naruto:te-0155", qty: 1 },
-        { printKey: "naruto:te-0166", qty: 2 },
-        { printKey: "naruto:te-0167", qty: 2 },
-        { printKey: "naruto:te-0168", qty: 1 },
-        { printKey: "naruto:te-0188", qty: 2 },
+        { printKey: "naruto:s4-ni0009", qty: 2 },
+        { printKey: "naruto:s4-ni0010", qty: 1 },
+        { printKey: "naruto:s4-ni0038", qty: 1 },
+        { printKey: "naruto:s4-ni0079", qty: 1 },
+        { printKey: "naruto:s4-ni0080", qty: 1 },
+        { printKey: "naruto:s4-ni0081", qty: 1 },
+        { printKey: "naruto:s4-ni0114", qty: 1 },
+        { printKey: "naruto:s4-ni0145", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ni0169", qty: 1 },
+        { printKey: "naruto:s4-ni0170", qty: 2 },
+        { printKey: "naruto:s4-ni0171", qty: 1 },
+        { printKey: "naruto:s4-ni0177", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ni0178", qty: 2 },
+        { printKey: "naruto:s4-ni0179", qty: 2 },
+        { printKey: "naruto:s4-ni0180", qty: 2 },
+        { printKey: "naruto:s4-ta0160", qty: 2 },
+        { printKey: "naruto:s4-ta0161", qty: 2 },
+        { printKey: "naruto:s4-ta0162", qty: 2 },
+        { printKey: "naruto:s4-ta0164", qty: 2 },
+        { printKey: "naruto:s4-ta0165", qty: 2 },
+        { printKey: "naruto:s4-te0138", qty: 2 },
+        { printKey: "naruto:s4-te0155", qty: 1 },
+        { printKey: "naruto:s4-te0166", qty: 2 },
+        { printKey: "naruto:s4-te0167", qty: 2 },
+        { printKey: "naruto:s4-te0168", qty: 1 },
+        { printKey: "naruto:s4-te0188", qty: 2 },
       ]);
       expect(
         ledger.skus["starter-invocation"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0176", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0204", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ni0176", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ni0204", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-invocation"]!.guaranteedPrints,
       ).toEqual([
-        { printKey: "naruto:ni-0027", qty: 1 },
-        { printKey: "naruto:ni-0028", qty: 2 },
-        { printKey: "naruto:ni-0049", qty: 1 },
-        { printKey: "naruto:ni-0050", qty: 1 },
-        { printKey: "naruto:ni-0099", qty: 1 },
-        { printKey: "naruto:ni-0127", qty: 1 },
-        { printKey: "naruto:ni-0156", qty: 2 },
-        { printKey: "naruto:ni-0157", qty: 1 },
-        { printKey: "naruto:ni-0165", qty: 1 },
-        { printKey: "naruto:ni-0173", qty: 2 },
-        { printKey: "naruto:ni-0174", qty: 2 },
-        { printKey: "naruto:ni-0175", qty: 2 },
-        { printKey: "naruto:ni-0176", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0198", qty: 1 },
-        { printKey: "naruto:ni-0204", qty: 1, finish: "holo" },
-        { printKey: "naruto:ta-0118", qty: 2 },
-        { printKey: "naruto:ta-0152", qty: 2 },
-        { printKey: "naruto:ta-0154", qty: 2 },
-        { printKey: "naruto:ta-0155", qty: 2 },
-        { printKey: "naruto:ta-0156", qty: 2 },
-        { printKey: "naruto:te-0145", qty: 2 },
-        { printKey: "naruto:te-0146", qty: 2 },
-        { printKey: "naruto:te-0163", qty: 2 },
-        { printKey: "naruto:te-0164", qty: 1 },
-        { printKey: "naruto:te-0165", qty: 1 },
-        { printKey: "naruto:te-0169", qty: 2 },
+        { printKey: "naruto:s4-ni0027", qty: 1 },
+        { printKey: "naruto:s4-ni0028", qty: 2 },
+        { printKey: "naruto:s4-ni0049", qty: 1 },
+        { printKey: "naruto:s4-ni0050", qty: 1 },
+        { printKey: "naruto:s4-ni0099", qty: 1 },
+        { printKey: "naruto:s4-ni0127", qty: 1 },
+        { printKey: "naruto:s4-ni0156", qty: 2 },
+        { printKey: "naruto:s4-ni0157", qty: 1 },
+        { printKey: "naruto:s4-ni0165", qty: 1 },
+        { printKey: "naruto:s4-ni0173", qty: 2 },
+        { printKey: "naruto:s4-ni0174", qty: 2 },
+        { printKey: "naruto:s4-ni0175", qty: 2 },
+        { printKey: "naruto:s4-ni0176", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ni0198", qty: 1 },
+        { printKey: "naruto:s4-ni0204", qty: 1, finish: "holo" },
+        { printKey: "naruto:s4-ta0118", qty: 2 },
+        { printKey: "naruto:s4-ta0152", qty: 2 },
+        { printKey: "naruto:s4-ta0154", qty: 2 },
+        { printKey: "naruto:s4-ta0155", qty: 2 },
+        { printKey: "naruto:s4-ta0156", qty: 2 },
+        { printKey: "naruto:s4-te0145", qty: 2 },
+        { printKey: "naruto:s4-te0146", qty: 2 },
+        { printKey: "naruto:s4-te0163", qty: 2 },
+        { printKey: "naruto:s4-te0164", qty: 1 },
+        { printKey: "naruto:s4-te0165", qty: 1 },
+        { printKey: "naruto:s4-te0169", qty: 2 },
       ]);
       expect(
         ledger.skus["starter-apprentissage"]!.guaranteedPrints?.find(
-          (row) => row.printKey === "naruto:ta-0116",
+          (row) => row.printKey === "naruto:s3-ta0116",
         ),
-      ).toEqual({ printKey: "naruto:ta-0116", qty: 2 });
+      ).toEqual({ printKey: "naruto:s3-ta0116", qty: 2 });
       expect(
         ledger.skus["starter-apprentissage"]!.guaranteedPrints?.find(
-          (row) => row.printKey === "naruto:te-0113",
+          (row) => row.printKey === "naruto:s3-te0113",
         ),
-      ).toEqual({ printKey: "naruto:te-0113", qty: 1 });
+      ).toEqual({ printKey: "naruto:s3-te0113", qty: 1 });
       expect(
         ledger.skus["starter-apprentissage"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0115", qty: 1, finish: "holo" },
-        { printKey: "naruto:ni-0127", qty: 1, finish: "holo" },
+        { printKey: "naruto:s3-ni0115", qty: 1, finish: "holo" },
+        { printKey: "naruto:s3-ni0127", qty: 1, finish: "holo" },
       ]);
       expect(
         ledger.skus["starter-puissances-cachees"]!.guaranteedPrints?.filter(
           (row) => row.finish === "holo",
         ),
       ).toEqual([
-        { printKey: "naruto:ni-0117", qty: 1, finish: "holo" },
-        { printKey: "naruto:te-0144", qty: 1, finish: "holo" },
+        { printKey: "naruto:s3-ni0117", qty: 1, finish: "holo" },
+        { printKey: "naruto:s3-te0144", qty: 1, finish: "holo" },
       ]);
       const tin = ledger.skus["tin-box"]!;
-      expect(tin.guaranteedPrintKeys).not.toContain("naruto:ni-0001");
-      expect(tin.guaranteedPrintKeys).toEqual([...inv, "naruto:pr-0016"]);
+      expect(tin.guaranteedPrintKeys).not.toContain("naruto:s4-ni0001");
+      expect(tin.guaranteedPrintKeys).toEqual([...inv, "naruto:promo-pr0016"]);
     });
 
     it("wires US 10×24 for s24/s28 EN SKUs and EU 8×2 + PR-096 for FR duopack", () => {
@@ -1721,7 +1722,7 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
         declaredCardCount: 17,
         behavior: "mixed_bundle",
         contentsKnown: true,
-        guaranteedPrintKeys: ["naruto:pr-0096"],
+        guaranteedPrintKeys: ["naruto:promo-pr0096"],
         guaranteedProducts: [{ slug: "booster-s28", qty: 2 }],
       });
       expect(ledger.skus["duopack-s28"]?.notes).toContain("3391891970488");
@@ -1812,20 +1813,20 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
         { slug: "booster-s5", qty: 1 },
       ]);
       expect(ledger.skus["tin-box"]?.guaranteedPrintKeys).toContain(
-        "naruto:ni-0156",
+        "naruto:s4-ni0156",
       );
       expect(ledger.skus["tin-box"]?.guaranteedPrintKeys).not.toContain(
-        "naruto:ni-0001",
+        "naruto:s4-ni0001",
       );
       expect(ledger.skus["tin-box"]?.guaranteedPrintKeys).not.toContain(
-        "naruto:pr-0011",
+        "naruto:promo-pr0011",
       );
       expect(ledger.skus["tin-box"]?.guaranteedPrintKeys).toContain(
-        "naruto:pr-0016",
+        "naruto:promo-pr0016",
       );
       expect(ledger.skus["tin-box-hobby"]?.guaranteedPrintKeys).toEqual([
-        "naruto:pr-0011",
-        "naruto:pr-0016",
+        "naruto:promo-pr0011",
+        "naruto:promo-pr0016",
       ]);
       expect(ledger.skus["kana-dvd-naruto-vol3"]).toMatchObject({
         behavior: "random_pack",
@@ -1861,18 +1862,18 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
         guaranteedPrintKeys: [],
       });
       expect(ledger.skus["kana-dvd-naruto-vol15"]?.randomPoolPrintKeys).toEqual([
-        "naruto:ta-0221",
-        "naruto:ni-0236",
-        "naruto:ni-0253",
-        "naruto:ni-0252",
-        "naruto:ni-0232",
-        "naruto:ta-0226",
+        "naruto:s6-ta0221",
+        "naruto:s6-ni0236",
+        "naruto:s6-ni0253",
+        "naruto:s6-ni0252",
+        "naruto:s6-ni0232",
+        "naruto:s6-ta0226",
       ]);
       expect(ledger.skus["kana-dvd-shippuden-vol21"]?.guaranteedPrintKeys).toEqual(
-        ["naruto:pr-0100"],
+        ["naruto:promo-pr0100"],
       );
       expect(ledger.skus["xbox360-uns3"]?.guaranteedPrintKeys).toEqual([
-        "naruto:pr-0095",
+        "naruto:promo-pr0095",
       ]);
       expect(ledger.skus["tin-unbound-power-naruto"]).toMatchObject({
         behavior: "mixed_bundle",
@@ -1909,16 +1910,16 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
         contentsKnown: true,
       });
       expect(ledger.skus["kana-manga-pack-1-2-3"]?.randomPoolPrintKeys).toEqual([
-        "naruto:ni-0025-prerelease",
-        "naruto:ni-0019-prerelease",
-        "naruto:ni-0047-prerelease",
-        "naruto:ni-0027-prerelease",
-        "naruto:ta-0005-prerelease",
-        "naruto:ta-0004-prerelease",
-        "naruto:te-0015-prerelease",
-        "naruto:te-0007-prerelease",
-        "naruto:te-0003-prerelease",
-        "naruto:te-0036-prerelease",
+        "naruto:prerelease-ni0025",
+        "naruto:prerelease-ni0019",
+        "naruto:prerelease-ni0047",
+        "naruto:prerelease-ni0027",
+        "naruto:prerelease-ta0005",
+        "naruto:prerelease-ta0004",
+        "naruto:prerelease-te0015",
+        "naruto:prerelease-te0007",
+        "naruto:prerelease-te0003",
+        "naruto:prerelease-te0036",
       ]);
       expect(ledger.skus["booster-vol1-jp"]).toMatchObject({
         cardsPerPack: 10,

@@ -496,21 +496,23 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
         number: 1,
         printedPrefix: "prni",
       });
-      expect(mintNarutoPrintKey("PR-忍-1")).toBe("naruto:prni-0001");
-      expect(mintNarutoPrintKey("忍-1")).toBe("naruto:ni-0001");
+      expect(mintNarutoPrintKey("PR-忍-1", "promo")).toBe(
+        "naruto:promo-prni0001",
+      );
+      expect(mintNarutoPrintKey("忍-1", "s1")).toBe("naruto:s1-ni0001");
       expect(parseNarutoCollector("忍-1（PS）")).toMatchObject({
         family: "ninja",
         number: 1,
         grouping: "ps",
       });
-      expect(mintNarutoPrintKey("忍-1（PS）")).toBe("naruto:ni-0001-ps");
+      expect(mintNarutoPrintKey("忍-1（PS）", "s1")).toBe("naruto:s1-ni0001-ps");
     });
 
     it("does not fold 幕 ju-001 onto CCG J-001", () => {
-      expect(mintNarutoPrintKey("mju0001")).toBe("naruto:mju-0001");
-      expect(mintNarutoPrintKey("J-001")).toBe("naruto:j-0001");
-      expect(mintNarutoPrintKey("shi0001")).toBe("naruto:shi-0001");
-      expect(mintNarutoPrintKey("ni0001")).toBe("naruto:ni-0001");
+      expect(mintNarutoPrintKey("mju0001", "maki1")).toBe("naruto:maki1-mju0001");
+      expect(mintNarutoPrintKey("J-001", "s1")).toBe("naruto:s1-j0001");
+      expect(mintNarutoPrintKey("shi0001", "maki1")).toBe("naruto:maki1-shi0001");
+      expect(mintNarutoPrintKey("ni0001", "s1")).toBe("naruto:s1-ni0001");
     });
   });
 

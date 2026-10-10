@@ -4,6 +4,7 @@ import {
   collectorNumberPrefix,
   finalizeSetOptions,
   isAnsweredQuery,
+  itemSlugSetCode,
   mergePrintSetOptions,
   pickCatalogueSetName,
   pickCatalogueSetNameByCount,
@@ -106,17 +107,25 @@ describe("finalizeSetOptions", () => {
     expect(
       finalizeSetOptions([
         {
-          id: "tempete",
+          id: "deck-x",
           code: "S11",
           label: "Série 11 — La Tempête Approche",
         },
       ]),
     ).toEqual([
       {
-        id: "tempete",
+        id: "deck-x",
         label: "S11 — Série 11 — La Tempête Approche",
       },
     ]);
+  });
+});
+
+describe("itemSlugSetCode", () => {
+  it("normalizes the catalogue set id for item URLs", () => {
+    expect(itemSlugSetCode("s11")).toBe("s11");
+    expect(itemSlugSetCode("S2")).toBe("s2");
+    expect(itemSlugSetCode(null)).toBe("");
   });
 });
 

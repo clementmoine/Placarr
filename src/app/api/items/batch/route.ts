@@ -16,7 +16,10 @@ import {
   supportsPrintSearch,
   type PrintSearchOptions,
 } from "@/core/identify/printSearch";
-import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  catalogueSetFromPrintKey,
+  parsePrintKey,
+} from "@/core/identify/printKey";
 import { shelfPrintSearchScope } from "@/lib/collect/shelfPrintSearchScope";
 
 const VALID_CONDITIONS = new Set<string>(ITEM_CONDITIONS);
@@ -166,6 +169,7 @@ async function createItemsInChunks(
   rows: Array<{
     name: string;
     printKey: string | null;
+    setCode?: string | null;
     language?: string | null;
     imageUrl?: string | null;
   }>,
@@ -184,20 +188,28 @@ async function createItemsInChunks(
       name: string;
       slug: string;
       printKey: string | null;
+      setCode: string | null;
       language: string | null;
       imageUrl: string | null;
     }> = [];
     for (const row of chunk) {
+      const setCode = row.setCode?.trim().toLowerCase() || null;
+      const language = row.language?.trim().toLowerCase() || null;
       const slug = await allocateUniqueItemSlug(data.shelfId, row.name, {
         reserved: reservedSlugs,
-        print: { printKey: row.printKey },
+        print: {
+          printKey: row.printKey,
+          language,
+          setCode,
+        },
       });
       reservedSlugs.add(slug);
       planned.push({
         name: row.name,
         slug,
         printKey: row.printKey,
-        language: row.language?.trim().toLowerCase() || null,
+        setCode,
+        language,
         imageUrl: row.imageUrl?.trim() || null,
       });
     }
@@ -212,6 +224,7 @@ async function createItemsInChunks(
             condition: data.condition,
             userId: data.userId,
             printKey: row.printKey,
+            setCode: row.setCode,
             language: row.language,
             imageUrl: row.imageUrl,
           },
@@ -254,6 +267,7 @@ async function resolveBatchCreateRows(
   Array<{
     name: string;
     printKey: string | null;
+    setCode: string | null;
     lookupQuery: string;
     language: string | null;
     imageUrl: string | null;
@@ -263,6 +277,7 @@ async function resolveBatchCreateRows(
     return names.map((name) => ({
       name,
       printKey: null,
+      setCode: null,
       lookupQuery: name,
       language: null,
       imageUrl: null,
@@ -272,6 +287,7 @@ async function resolveBatchCreateRows(
   const rows: Array<{
     name: string;
     printKey: string | null;
+    setCode: string | null;
     lookupQuery: string;
     language: string | null;
     imageUrl: string | null;
@@ -285,9 +301,13 @@ async function resolveBatchCreateRows(
     if (hit && printKey) {
       const language =
         (hit.language ?? scope.language)?.trim().toLowerCase() || null;
+      const setCode =
+        (hit.setCode ?? scope.setId)?.trim().toLowerCase() ||
+        catalogueSetFromPrintKey(printKey);
       rows.push({
         name: hit.title.trim() || query,
         printKey,
+        setCode,
         lookupQuery: hit.title.trim() || query,
         language,
         imageUrl: hit.imageUrl?.trim() || hit.thumbnailUrl?.trim() || null,
@@ -296,6 +316,7 @@ async function resolveBatchCreateRows(
       rows.push({
         name: query,
         printKey: null,
+        setCode: null,
         lookupQuery: query,
         language: null,
         imageUrl: null,

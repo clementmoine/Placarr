@@ -20,7 +20,7 @@ import dig_youtubeGapsWebHunt from "../curated/sources/youtube-gaps-web-hunt-202
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_SEALED_SKUS } from "../sealed";
 import { loadNarutoAppearancesFile } from "../identity";
-import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrPrintedNumber, narutoS6FrPrintedDiskNumbers, narutoS6FrSeries5BonusNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
+import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrInediteNumber, isNarutoS6FrPrintedNumber, narutoS6FrPrintedDiskNumbers, narutoS6FrInediteNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
 
 // —— carteSemaine ——
 {
@@ -233,14 +233,14 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       expect(isNarutoS6FrPrintedNumber("ni236")).toBe(true);
       expect(isNarutoS6FrPrintedNumber("ni0236")).toBe(true);
       expect(isNarutoS6FrPrintedNumber("ta221")).toBe(true);
-      expect(isNarutoS6FrPrintedNumber("ta214")).toBe(true);
-      expect(isNarutoS6FrPrintedNumber("ni240")).toBe(true);
+      expect(isNarutoS6FrPrintedNumber("ta214")).toBe(false);
+      expect(isNarutoS6FrPrintedNumber("ni240")).toBe(false);
       expect(isNarutoS6FrPrintedNumber("ni268")).toBe(false);
       expect(isNarutoS6FrPrintedNumber("te191")).toBe(false);
     });
 
-    it("exposes only the 6 s6 inédites for S5 checklist placement (not the 9 reprints)", () => {
-      expect(narutoS6FrSeries5BonusNumbers().sort()).toEqual([
+    it("checklist FR s6 = 6 inédites + MIJ reprints (ta227), not S5 blister", () => {
+      expect(narutoS6FrInediteNumbers().sort()).toEqual([
         "ni232",
         "ni236",
         "ni252",
@@ -248,6 +248,11 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
         "ta221",
         "ta226",
       ]);
+      expect(isNarutoS6FrInediteNumber("ni236")).toBe(true);
+      expect(isNarutoS6FrInediteNumber("ta227")).toBe(false);
+      expect(isNarutoS6FrPrintedNumber("ta227")).toBe(true);
+      expect(isNarutoS6FrPrintedNumber("ta0227")).toBe(true);
+      expect(isNarutoS6FrPrintedNumber("te192")).toBe(false);
     });
 
     it("lists disk number forms for membership SQL", () => {
@@ -257,7 +262,7 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       );
     });
 
-    it("writes s6 onto appearances.fr for inédites and Kana S5 reprints", () => {
+    it("writes s6 onto appearances.fr for inédites + MIJ, strips s6 from S5 blister", () => {
       const root = mkdtempSync(path.join(tmpdir(), "naruto-s6-fr-"));
       dirs.push(root);
       const file = path.join(root, "appearances.json");
@@ -267,7 +272,8 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
           generatedAt: "2026-01-01T00:00:00.000Z",
           appearances: {
             ta0221: { ja: "maki11" },
-            ta0214: { fr: "s5" },
+            ta0227: { fr: "s5" },
+            ta0214: { fr: ["s5", "s6"] },
           },
         })}\n`,
       );
@@ -278,7 +284,8 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       const raw = loadNarutoAppearancesFile(root);
       expect(raw?.appearances.ta0221?.fr).toBe("s6");
       expect(raw?.appearances.ta0221?.ja).toBe("maki11");
-      expect(raw?.appearances.ta0214?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.ta0227?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.ta0214?.fr).toBe("s5");
     });
   });
 }

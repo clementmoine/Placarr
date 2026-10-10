@@ -522,7 +522,8 @@ export function mergeCarteSemaineIntoIndex(input: {
 
   for (const [cardId, name] of names) {
     if (isImplausibleNarutoTitle(name)) continue;
-    const wantKey = mintNarutoPrintKey(cardId);
+    const setGuess = guessSetForCarteSemaineId(cardId);
+    const wantKey = mintNarutoPrintKey(cardId, setGuess);
     let rows = prints.filter(
       (p) =>
         (wantKey != null &&
@@ -530,7 +531,7 @@ export function mergeCarteSemaineIntoIndex(input: {
         narutoNumbersEqual(p.number, cardId),
     );
     if (rows.length === 0) {
-      const set = guessSetForCarteSemaineId(cardId);
+      const set = setGuess;
       const printKey = mintNarutoPrintKey(cardId, set);
       if (!printKey || printByKey.has(printKey)) continue;
       const parsed = parseNarutoCollector(cardId);
@@ -579,10 +580,14 @@ export function mergeCarteSemaineIntoIndex(input: {
 type S6FrPrintedFile = {
   retailFr?: boolean;
   cards?: readonly { number?: string }[];
+  /** Reprints blister avec imprint MIJ attesté → checklist / membership `s6`. */
+  mijReprints?: readonly { number?: string }[];
+  /** Inserts blister Kana restés S5 (Belgique) — pas de membership `s6`. */
   kanaBlisterS5Reprints?: readonly { number?: string }[];
 };
 
 let keys: Set<string> | null = null;
+let inediteKeys: Set<string> | null = null;
 let diskNumbers: string[] | null = null;
 
 /** Formes disque pour un id ledger (`ta221` → ta221 / ta0221 / …). */
@@ -611,13 +616,22 @@ function loadFile(): S6FrPrintedFile {
   ) as S6FrPrintedFile;
 }
 
-/** Inédites S6 + reprints S5 de l'opération manga Kana (15 tomes). */
+/** Inédites + reprints MIJ — membership / checklist FR `s6` (pas les S5 Belgique). */
 function ledgerNumbers(file: S6FrPrintedFile): string[] {
   const out: string[] = [];
   for (const row of file.cards ?? []) {
     const n = row.number?.trim();
     if (n) out.push(n);
   }
+  for (const row of file.mijReprints ?? []) {
+    const n = row.number?.trim();
+    if (n) out.push(n);
+  }
+  return out;
+}
+
+function s5OnlyBlisterNumbers(file: S6FrPrintedFile): string[] {
+  const out: string[] = [];
   for (const row of file.kanaBlisterS5Reprints ?? []) {
     const n = row.number?.trim();
     if (n) out.push(n);
@@ -625,12 +639,8 @@ function ledgerNumbers(file: S6FrPrintedFile): string[] {
   return out;
 }
 
-/**
- * Inédites Kana (6) — cartes **s6** classées dans la checklist Série 5 FR.
- * Les 9 reprints blister sont déjà S5 ; pas de doublon ici.
- * Le retail S6 FR n'existe pas : pas de chapitre checklist `s6` en français.
- */
-export function narutoS6FrSeries5BonusNumbers(): string[] {
+/** Inédites Kana / DVD (6) — sous-ensemble du ledger. */
+export function narutoS6FrInediteNumbers(): string[] {
   try {
     const out: string[] = [];
     for (const row of loadFile().cards ?? []) {
@@ -641,6 +651,21 @@ export function narutoS6FrSeries5BonusNumbers(): string[] {
   } catch {
     return [];
   }
+}
+
+function loadInediteKeys(): Set<string> {
+  if (inediteKeys) return inediteKeys;
+  const out = new Set<string>();
+  try {
+    for (const row of loadFile().cards ?? []) {
+      const key = narutoCollectorKey(row.number?.trim() ?? "");
+      if (key) out.add(key);
+    }
+  } catch {
+    /* ledger absent */
+  }
+  inediteKeys = out;
+  return out;
 }
 
 function loadKeys(): Set<string> {
@@ -660,6 +685,7 @@ function loadKeys(): Set<string> {
 
 export function resetNarutoS6FrPrintedCache(): void {
   keys = null;
+  inediteKeys = null;
   diskNumbers = null;
 }
 
@@ -690,9 +716,15 @@ export function isNarutoS6FrPrintedNumber(raw: string): boolean {
   return key != null && loadKeys().has(key);
 }
 
+/** True pour les 6 inédites du chapitre checklist FR `s6`. */
+export function isNarutoS6FrInediteNumber(raw: string): boolean {
+  const key = narutoCollectorKey(raw);
+  return key != null && loadInediteKeys().has(key);
+}
+
 /**
- * Opération manga Kana (15) + inédites DVD → appearances FR `s6` (sqlite).
- * Les reprints gardent aussi `s5` (multi-set, comme NI-049).
+ * Inédites + reprints MIJ → appearances FR `s6`. Retire `s6` des inserts
+ * blister restés S5 Belgique (évite des `s6-*` fantômes après un sync trop large).
  * @returns nombre de cartes FR dont la liste de sets a changé.
  */
 export function syncNarutoS6FrPrintedAppearances(packRoot: string): number {
@@ -702,19 +734,36 @@ export function syncNarutoS6FrPrintedAppearances(packRoot: string): number {
   };
   const generatedAt = existing?.generatedAt ?? new Date().toISOString();
 
+  const diskIdOf = (raw: string): string | null =>
+    narutoDiskCardId(raw) ??
+    numberForms(raw).find((form) => /^[a-z]+\d{4}/.test(form)) ??
+    numberForms(raw)[0] ??
+    null;
+
   let changed = 0;
   try {
-    for (const raw of ledgerNumbers(loadFile())) {
+    const file = loadFile();
+    for (const raw of ledgerNumbers(file)) {
       if (!raw) continue;
-      const diskId =
-        narutoDiskCardId(raw) ??
-        numberForms(raw).find((form) => /^[a-z]+\d{4}/.test(form)) ??
-        numberForms(raw)[0];
+      const diskId = diskIdOf(raw);
       if (!diskId) continue;
       const langs = appearances[diskId] ?? {};
       const before = appearanceSetsOf(langs.fr).join(",");
       const merged = mergeAppearanceValues(langs.fr, "s6");
       langs.fr = appearanceValueForJson(merged);
+      appearances[diskId] = langs;
+      if (appearanceSetsOf(langs.fr).join(",") !== before) changed += 1;
+    }
+    for (const raw of s5OnlyBlisterNumbers(file)) {
+      if (!raw) continue;
+      const diskId = diskIdOf(raw);
+      if (!diskId) continue;
+      const langs = appearances[diskId];
+      if (!langs) continue;
+      const before = appearanceSetsOf(langs.fr).join(",");
+      const withoutS6 = appearanceSetsOf(langs.fr).filter((set) => set !== "s6");
+      if (!withoutS6.length && !langs.fr) continue;
+      langs.fr = appearanceValueForJson(withoutS6);
       appearances[diskId] = langs;
       if (appearanceSetsOf(langs.fr).join(",") !== before) changed += 1;
     }

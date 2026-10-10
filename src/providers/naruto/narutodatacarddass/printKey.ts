@@ -1,7 +1,10 @@
 /**
  * Printed refs Data Carddass — cabinets DN/NM/NF/NX + annexes promo.
  */
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  buildPrintKey,
+  registerPrintKeyCatalogueSets,
+} from "@/core/identify/printKey";
 
 import { NARUTO_DATA_CARDDASS_PRINT_GAME } from "./pack";
 
@@ -148,6 +151,11 @@ export const DATA_CARDDASS_SETS = {
 export type DataCarddassSetCode = keyof typeof DATA_CARDDASS_SETS;
 
 const SET_CODES = new Set(Object.keys(DATA_CARDDASS_SETS));
+
+registerPrintKeyCatalogueSets(
+  NARUTO_DATA_CARDDASS_PRINT_GAME,
+  [...SET_CODES],
+);
 
 /**
  * `DN-032T` / `DN-051-R` / `NF-141` / `NFP-018` → set + number.

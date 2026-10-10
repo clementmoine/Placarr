@@ -14,6 +14,7 @@ import {
   NARUTO_ULTRA_PACK_ID,
   NARUTO_ULTRA_PROVIDER_ID,
 } from "./pack";
+import "./printKey"; // register `uc` for catalogueSetFromPrintKey
 
 export {
   NARUTO_ULTRA_EFFECT_PACK_ID,

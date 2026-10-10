@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { checklistSetOwnedKey } from "@/core/collect/checklist";
+import { catalogueSetFromPrintKey } from "@/core/identify/printKey";
 import { buildChecklistForShelf } from "@/lib/collect/shelfChecklist";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
@@ -92,11 +93,13 @@ export async function GET(
   });
 
   const owned = new Set(
-    matching.map((item) =>
-      masterSet
-        ? checklistSetOwnedKey(item.setCode, item.printKey!, item.variant)
-        : checklistSetOwnedKey(item.setCode, item.printKey!),
-    ),
+    matching.map((item) => {
+      const setCode =
+        item.setCode?.trim() || catalogueSetFromPrintKey(item.printKey);
+      return masterSet
+        ? checklistSetOwnedKey(setCode, item.printKey!, item.variant)
+        : checklistSetOwnedKey(setCode, item.printKey!);
+    }),
   );
 
   const checklist = await buildChecklistForShelf({

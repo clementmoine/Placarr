@@ -89,6 +89,8 @@ export async function resolveItemId(
         // La référence de collection sert de clé d'URL pour les cartes.
         printKey: true,
         variant: true,
+        language: true,
+        setCode: true,
         metadata: { select: { title: true, aliases: true } },
       },
     });

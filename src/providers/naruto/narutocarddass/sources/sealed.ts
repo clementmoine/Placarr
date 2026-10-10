@@ -577,6 +577,29 @@ export function japaneseVolumeForPrintNumber(
 }
 
 /**
+ * Sets `maki*` pour une clé set-scoped.
+ *
+ * Un numéro contesté (巻ノ十 / 十一) apparaît sous **les deux** volumes — même
+ * règle que l'ancien filtre par bornes. Sinon 0 ou 1 volume.
+ */
+export function japaneseCatalogueSetsForPrintNumber(raw: string): string[] {
+  const parsed = parseJapaneseNumber(raw);
+  if (!parsed) return [];
+  const contested = contestedJapaneseNumbers().get(parsed.family);
+  if (contested?.has(parsed.number)) {
+    const codes = new Set<string>();
+    for (const band of bands()) {
+      if (band.family !== parsed.family) continue;
+      if (parsed.number < band.from || parsed.number > band.to) continue;
+      codes.add(band.volume.setCode);
+    }
+    return [...codes];
+  }
+  const volume = japaneseVolumeForNumber(parsed.family, parsed.number);
+  return volume ? [volume.setCode] : [];
+}
+
+/**
  * Les plages qui se chevauchent encore, une fois les réimpressions écartées.
  *
  * Sert de garde : si une future édition du relevé en réintroduit, la dérivation

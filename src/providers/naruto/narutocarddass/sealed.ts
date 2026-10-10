@@ -1115,16 +1115,15 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
   {
     /*
       Deck spécial Bandai USA CCG FR (Rampage Tornado / La tempête approche).
-      33 reprints listés sur Coleka `_r16963` — pas le dump Approaching Wind
-      (`s11`). Checklist = set `tempete`. Contenu exact attesté en staging
-      (`coleka-rampage-tornado/cards.json`) ; les singles FR (titres + faces)
-      sont ingestés via le scrape Coleka. `contentsKnown` reste false tant que
-      l'ingest sealed n'attache pas encore `guaranteedPrints` depuis ce ledger.
+      33 reprints listés sur Coleka `_r16963` — checklist FR du set `s11`
+      (même id que l'EN Approaching Wind). Contenu exact en staging
+      (`coleka-rampage-tornado/cards.json`) + `products-contents.json`
+      (`guaranteedPrintKeys` `s11-*`).
     */
     slug: "deck-la-tempete-approche",
     kind: "deck",
     category: "decks",
-    setCode: "tempete",
+    setCode: "s11",
     name: "Deck Spécial — La tempête approche (Rampage Tornado)",
     stagingFile: "set-cover.webp",
     stagingKind: "coleka-rampage-tornado",

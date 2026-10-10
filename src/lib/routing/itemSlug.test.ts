@@ -228,24 +228,63 @@ describe("deux langues d'une même carte ne sont pas des copies", () => {
     expect(printKeyItemSlug("lorcana:1-106", null, "fr")).toBe("1-106-fr");
   });
 
+  /*
+    Set-scoped Naruto keys already carry the series (`s3-ta0074`). Lorcana
+    likewise — do not double the chapter. Legacy family-as-set keys still
+    accept an Item.setCode prefix for old URLs.
+  */
+  it("uses the set segment of set-scoped keys without doubling setCode", () => {
+    expect(printKeyItemSlug("naruto:s2-ta0074", "normal", "fr")).toBe(
+      "s2-ta0074-fr-normal",
+    );
+    expect(printKeyItemSlug("naruto:s3-ta0074", "normal", "fr")).toBe(
+      "s3-ta0074-fr-normal",
+    );
+    expect(
+      printKeyItemSlug("naruto:ta-0074", "normal", "fr", "s3"),
+    ).toBe("s3-ta-0074-fr-normal");
+    expect(printKeyItemSlug("lorcana:1-106", null, "fr", "1")).toBe("1-106-fr");
+  });
+
+  it("keeps Tempête / Approaching Wind on s11 in the set-scoped key", () => {
+    expect(printKeyItemSlug("naruto:s11-m0092", "normal", "fr")).toBe(
+      "s11-m0092-fr-normal",
+    );
+  });
+
+  it("keeps answering to the URL a card had before set-scoped keys", () => {
+    const forms = itemLookupSlugs({
+      name: "Monnaie d'Echange",
+      slug: "s3-ta0074-fr-normal",
+      printKey: "naruto:s3-ta0074",
+      variant: "normal",
+      language: "fr",
+      setCode: "s3",
+    });
+    expect(forms).toContain("s3-ta0074-fr-normal");
+    expect(forms).toContain("s3-ta0074");
+  });
+
   /** Langue inconnue : l'ancienne forme, qui reste une URL valide. */
   it("falls back to the language-free form when nothing is known", () => {
-    expect(printKeyItemSlug("naruto:ni-0046", "normal", null)).toBe(
-      "ni-0046-normal",
+    expect(printKeyItemSlug("naruto:s1-ni0046", "normal", null)).toBe(
+      "s1-ni0046-normal",
     );
-    expect(printKeyItemSlug("naruto:ni-0046", "normal")).toBe("ni-0046-normal");
+    expect(printKeyItemSlug("naruto:s1-ni0046", "normal")).toBe(
+      "s1-ni0046-normal",
+    );
   });
 
   it("keeps answering to the URL a card had before the language arrived", () => {
     const forms = itemLookupSlugs({
       name: "Madame Shijimi",
-      slug: "cl-0004-fr-normal",
-      printKey: "naruto:cl-0004",
+      slug: "s1-cl0004-fr-normal",
+      printKey: "naruto:s1-cl0004",
       variant: "normal",
       language: "fr",
     });
-    expect(forms).toContain("cl-0004-fr-normal");
-    expect(forms).toContain("cl-0004-normal");
-    expect(forms).toContain("cl-0004");
+    expect(forms).toContain("s1-cl0004-fr-normal");
+    expect(forms).toContain("s1-cl0004-normal");
+    expect(forms).toContain("s1-cl0004");
   });
 });

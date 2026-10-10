@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { catalogueSetFromPrintKey } from "@/core/identify/printKey";
 import {
   formatNinjaRanksReference,
   ninjaRanksPrintKey,
@@ -18,6 +19,13 @@ import { readInkworksChecklist } from "./pipeline/ledgers";
       expect(ninjaRanksPrintKey("pn", "ga")).toBe("naruto:pn-ga");
       expect(ninjaRanksPrintKey("pn", "i")).toBe("naruto:pn-i");
       expect(ninjaRanksPrintKey("pn", "sd2006")).toBe("naruto:pn-sd2006");
+    });
+
+    it("registers alphabetic chapters for catalogueSetFromPrintKey", () => {
+      expect(catalogueSetFromPrintKey("naruto:nr-0009")).toBe("nr");
+      expect(catalogueSetFromPrintKey("naruto:ff-0001")).toBe("ff");
+      expect(catalogueSetFromPrintKey("naruto:bl-0001")).toBe("bl");
+      expect(catalogueSetFromPrintKey("naruto:ni-0049")).toBeNull();
     });
 
     it("formats the Inkworks printed refs", () => {

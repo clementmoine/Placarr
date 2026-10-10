@@ -97,7 +97,9 @@ récurrent (≥2 packs).
 7. [ ] Quand les données arrivent : ledgers → install → faces → sealed →
       `products-contents.json` (conseil d’achat)
 8. [ ] Test : `catalogueSetFromPrintKey` sur un printKey réel du jeu
-9. [ ] `pnpm test` vert ; pas de literal provider hors `providers/`
+9. [ ] Ajouter l’id provider à `FACTORY_LOCAL_TCG_IDS` dans
+      `localTcgContract.test.ts` (garde search / lookup / sets / catalog)
+10. [ ] `pnpm test` vert ; pas de literal provider hors `providers/`
 
 ## Packs hors factory (héritage)
 

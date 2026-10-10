@@ -9,7 +9,11 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
-import { comparePrintKeys, parsePrintKey } from "@/core/identify/printKey";
+import {
+  comparePrintKeys,
+  parsePrintKey,
+  registerPrintKeyCatalogueSets,
+} from "@/core/identify/printKey";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   assetsCardUrl,
@@ -51,6 +55,13 @@ export type LocalTcgLineSpec = {
   packId: string;
   effectPackId: string;
   printGame: string;
+  /**
+   * Alphabetic catalogue chapters for this game (`nr`, `uc`, `dn`…).
+   * Registered into {@link registerPrintKeyCatalogueSets} so ownership /
+   * checklist can read the set from the printKey without `Item.setCode`.
+   * Omit when every set code already carries a digit (`s1`, `ks1`, `t1w1`).
+   */
+  catalogueSetCodes?: readonly string[];
   notes: string;
   defaultLanguage: "fr" | "en" | "ja" | "unknown";
   /** Ce que dit le health-check si la base n'est pas encore là. */
@@ -278,6 +289,9 @@ function candidateForRow(
 }
 
 export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
+  if (spec.catalogueSetCodes?.length) {
+    registerPrintKeyCatalogueSets(spec.printGame, spec.catalogueSetCodes);
+  }
   const index = createLocalPrintsIndex(spec.packId);
   const preferLang =
     spec.searchPreferLanguage ??

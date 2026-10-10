@@ -21,6 +21,24 @@ export type BleachScbParsed = {
 /** Disk / printKey set for JP Ability cards (`A-029`). */
 export const BLEACH_SCB_ABILITY_SET = "ability";
 
+/**
+ * Alphabetic catalogue chapters for {@link LocalTcgLineSpec.catalogueSetCodes}.
+ * Bare collector numbers (`001`) need these registered so ownership / checklist
+ * can read the set from the printKey.
+ */
+export const BLEACH_SCB_CATALOGUE_SET_CODES = [
+  "a",
+  "c",
+  "e",
+  "z",
+  "p",
+  "j",
+  "s",
+  "b",
+  BLEACH_SCB_ABILITY_SET,
+  "promo",
+] as const;
+
 /** `A001` / `A-029` / `E-007` / `S-001` / `J-011` / `PZ-004` → set + number. */
 export function parseBleachScbPrinted(raw: string): BleachScbParsed | null {
   const trimmed = raw.trim().replace(/\s+/g, "").toUpperCase();

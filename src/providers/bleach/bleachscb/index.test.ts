@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { catalogueSetFromPrintKey } from "@/core/identify/printKey";
+
 import { bleachscbModule } from "./index";
 import {
+  BLEACH_SCB_CATALOGUE_SET_CODES,
   formatBleachScbReference,
   parseBleachScbPrinted,
   bleachScbPrintKey,
@@ -12,6 +15,15 @@ describe("bleachscb", () => {
     expect(bleachscbModule.info.id).toBe("bleachscb");
     expect(bleachscbModule.catalog?.dataPack).toBe("bleach/scb");
     expect(bleachscbModule.printGames).toEqual(["bleachscb"]);
+  });
+
+  it("registers alphabetic chapters for catalogueSetFromPrintKey", () => {
+    expect(BLEACH_SCB_CATALOGUE_SET_CODES).toEqual(
+      expect.arrayContaining(["a", "s", "ability", "j"]),
+    );
+    expect(catalogueSetFromPrintKey("bleachscb:a-001")).toBe("a");
+    expect(catalogueSetFromPrintKey("bleachscb:s-002")).toBe("s");
+    expect(catalogueSetFromPrintKey("bleachscb:ability-029")).toBe("ability");
   });
 
   it("parses FR and JP printed refs", () => {

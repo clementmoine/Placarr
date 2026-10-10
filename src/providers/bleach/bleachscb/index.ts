@@ -10,6 +10,7 @@ import {
   BLEACH_SCB_PROVIDER_ID,
 } from "./pack";
 import {
+  BLEACH_SCB_CATALOGUE_SET_CODES,
   formatBleachScbReference,
   normalizeBleachScbSearchQuery,
 } from "./printKey";
@@ -36,6 +37,7 @@ const built = createEmptyLocalTcgProvider({
     packId: BLEACH_SCB_PACK_ID,
     effectPackId: BLEACH_SCB_EFFECT_PACK_ID,
     printGame: BLEACH_SCB_PRINT_GAME,
+    catalogueSetCodes: BLEACH_SCB_CATALOGUE_SET_CODES,
     defaultLanguage: "ja",
     catalogLifecycle: "finished",
     listSetLanguages: ["ja", "fr"],

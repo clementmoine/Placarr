@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 import { catalogueSetFromPrintKey } from "@/core/identify/printKey";
 import {
   formatNinjaRanksReference,
+  NINJA_RANKS_CATALOGUE_SET_CODES,
   ninjaRanksPrintKey,
   ninjaRanksSetLabel,
   ninjaRanksSetSortKey,
   normalizeNinjaRanksSearchQuery,
 } from "./printKey";
 import { readInkworksChecklist } from "./pipeline/ledgers";
+
+// Side-effect: line registers alphabetic catalogue sets.
+import "./index";
 
 // —— printKey ——
 {
@@ -21,7 +25,10 @@ import { readInkworksChecklist } from "./pipeline/ledgers";
       expect(ninjaRanksPrintKey("pn", "sd2006")).toBe("naruto:pn-sd2006");
     });
 
-    it("registers alphabetic chapters for catalogueSetFromPrintKey", () => {
+    it("declares alphabetic chapters for catalogueSetFromPrintKey", () => {
+      expect(NINJA_RANKS_CATALOGUE_SET_CODES).toEqual(
+        expect.arrayContaining(["nr", "ff", "bl", "pn"]),
+      );
       expect(catalogueSetFromPrintKey("naruto:nr-0009")).toBe("nr");
       expect(catalogueSetFromPrintKey("naruto:ff-0001")).toBe("ff");
       expect(catalogueSetFromPrintKey("naruto:bl-0001")).toBe("bl");

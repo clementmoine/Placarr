@@ -16,6 +16,7 @@ import {
 } from "./pack";
 import {
   formatNinjaRanksReference,
+  NINJA_RANKS_CATALOGUE_SET_CODES,
   ninjaRanksSetLabel,
   ninjaRanksSetSortKey,
   normalizeNinjaRanksSearchQuery,
@@ -37,6 +38,7 @@ const line = createLocalTcgLine({
   packId: NARUTO_RANKS_PACK_ID,
   effectPackId: NARUTO_RANKS_EFFECT_PACK_ID,
   printGame: "naruto",
+  catalogueSetCodes: NINJA_RANKS_CATALOGUE_SET_CODES,
   defaultLanguage: "fr",
   catalogLifecycle: "finished",
   syncHint: "Catalogue Sync (admin)",

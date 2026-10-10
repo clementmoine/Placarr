@@ -12,6 +12,7 @@ import {
   NARUTO_DATA_CARDDASS_PROVIDER_ID,
 } from "./pack";
 import {
+  DATA_CARDDASS_CATALOGUE_SET_CODES,
   formatDataCarddassReference,
   dataCarddassSetLabel,
   dataCarddassSetSortKey,
@@ -41,6 +42,7 @@ const built = createEmptyLocalTcgProvider({
     packId: NARUTO_DATA_CARDDASS_PACK_ID,
     effectPackId: NARUTO_DATA_CARDDASS_EFFECT_PACK_ID,
     printGame: NARUTO_DATA_CARDDASS_PRINT_GAME,
+    catalogueSetCodes: DATA_CARDDASS_CATALOGUE_SET_CODES,
     defaultLanguage: "ja",
     catalogLifecycle: "finished",
     syncHint: "Catalogue Sync (admin)",

@@ -1,5 +1,10 @@
 # Contrat des packs cartes — audit et harmonisation
 
+> **Contrat vivant pour un nouveau TCG** → [tcg_new_pack.md](tcg_new_pack.md)
+> (`createLocalTcgLine` / `createEmptyLocalTcgProvider` + `LocalTcgLineSpec`).
+> Ce fichier reste l’audit historique des packs hérités (Lorcana, Pokémon Live,
+> Carddass, DBS CG/FW) et la feuille de route de convergence.
+
 État mesuré le **2026-08-15** sur les cinq packs cartes. À traiter plus tard :
 rien ici n'est urgent, l'app fonctionne. C'est de la maintenabilité, et le coût
 d'un pack de plus augmente tant que ce n'est pas fait.

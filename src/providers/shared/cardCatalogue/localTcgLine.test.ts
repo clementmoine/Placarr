@@ -6,6 +6,11 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  catalogueSetFromPrintKey,
+  unregisterPrintKeyCatalogueSets,
+} from "@/core/identify/printKey";
+
 import { createLocalTcgLine } from "./localTcgLine";
 import { createLocalPrintsIndex } from "./localPrintsIndex";
 
@@ -337,6 +342,35 @@ describe("localTcgLine catalogueBrowse", () => {
       "dbsjcc:part2-d0100",
       "dbsjcc:part10-d0900",
     ]);
+  });
+});
+
+describe("localTcgLine catalogueSetCodes", () => {
+  afterEach(() => {
+    unregisterPrintKeyCatalogueSets("testdemo");
+  });
+
+  it("registers alphabetic chapters for catalogueSetFromPrintKey", () => {
+    tmpDataRoot();
+    expect(catalogueSetFromPrintKey("testdemo:nr-0001")).toBeNull();
+
+    createLocalTcgLine({
+      providerId: "testdemo",
+      providerLabel: "Demo",
+      catalogueLabel: "Demo",
+      factLabel: "Demo",
+      packId: "demo/pack",
+      effectPackId: "demo",
+      printGame: "testdemo",
+      catalogueSetCodes: ["nr", "ff"],
+      defaultLanguage: "en",
+      syncHint: "test",
+      notes: "test",
+    });
+
+    expect(catalogueSetFromPrintKey("testdemo:nr-0001")).toBe("nr");
+    expect(catalogueSetFromPrintKey("testdemo:ff-0001")).toBe("ff");
+    expect(catalogueSetFromPrintKey("testdemo:xx-0001")).toBeNull();
   });
 });
 

@@ -135,6 +135,11 @@ export type LocalTcgLineSpec = {
     candidate: PrintCandidate,
     row: LocalPrintSearchRow,
   ) => PrintCandidate;
+  /**
+   * Stable printKey for mapping probes / admin health. When set, replaces the
+   * empty lookup that factory lines used to ship.
+   */
+  probePrintKey?: string;
 };
 
 export type LocalTcgLine = {
@@ -539,10 +544,13 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       }),
     lookupPrint: async ({ printKey, language }) =>
       lookupPrint(printKey, language),
-    runMappingProbe: async () => metadataProbe(lookupPrint("")),
+    runMappingProbe: async () =>
+      metadataProbe(lookupPrint(spec.probePrintKey ?? "")),
     mappingProbe: {
-      sampleInput: spec.packId,
-      context: {},
+      sampleInput: spec.probePrintKey ?? spec.packId,
+      context: spec.probePrintKey
+        ? { printKey: spec.probePrintKey }
+        : {},
     },
     testHandlers: {
       [`${spec.providerId}-search`]: {

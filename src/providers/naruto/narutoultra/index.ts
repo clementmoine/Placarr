@@ -35,6 +35,7 @@ const line = createLocalTcgLine({
   catalogueSetCodes: ULTRA_CHALLENGE_CATALOGUE_SET_CODES,
   defaultLanguage: "fr",
   catalogLifecycle: "finished",
+  probePrintKey: "naruto:uc-0001",
   syncHint: "Catalogue Sync (admin)",
   websiteUrl: "http://www.animecollection.fr/cartes.php?idl=4&idc=113&ids=254",
   notes:

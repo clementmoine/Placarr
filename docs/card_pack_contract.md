@@ -1,9 +1,11 @@
 # Contrat des packs cartes — audit et harmonisation
 
 > **Contrat vivant pour un nouveau TCG** → [tcg_new_pack.md](tcg_new_pack.md)
-> (`createLocalTcgLine` / `createEmptyLocalTcgProvider` + `LocalTcgLineSpec`).
-> Ce fichier reste l’audit historique des packs hérités (Lorcana, Pokémon Live,
-> Carddass, DBS CG/FW) et la feuille de route de convergence.
+> (`LocalTcgLineSpec` + `createLocalTcgLine` / `createEmptyLocalTcgProvider`).
+> ADR-004 : pas de mega-`CardPack` — des factories de comportement.
+> Ce fichier reste l’audit des packs **hérités** (Lorcana, Pokémon Live,
+> Carddass, DBS CG/FW) et la feuille de route de convergence vers le même
+> contrat app (`PrintCandidate`, set-scoped keys, `listSetPrints`).
 
 État mesuré le **2026-08-15** sur les cinq packs cartes. À traiter plus tard :
 rien ici n'est urgent, l'app fonctionne. C'est de la maintenabilité, et le coût

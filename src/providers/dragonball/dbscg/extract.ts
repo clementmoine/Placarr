@@ -13,6 +13,11 @@ import {
 import { scrapeDbscardsIndex } from "@/providers/shared/tcgcards/scrapeList";
 import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
+import {
+  catalogueArgList,
+  catalogueArgValue,
+  selectCatalogueSteps,
+} from "@/providers/shared/cardCatalogue/catalogueSteps";
 
 import { DBS_CG_PACK_ID } from "./indexStore";
 
@@ -20,39 +25,15 @@ const STEPS = ["scrape", "dbscards", "products", "arena", "faces"] as const;
 type Step = (typeof STEPS)[number];
 const ONLINE = new Set<Step>(["scrape", "dbscards", "faces"]);
 
-function argValueFrom(
-  argv: readonly string[],
-  name: string,
-): string | undefined {
-  const idx = argv.indexOf(name);
-  if (idx < 0) return undefined;
-  return argv[idx + 1];
-}
-
-function argListFrom(argv: readonly string[], name: string): string[] {
-  return (argValueFrom(argv, name) ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export function selectDbsCgSteps(argv: readonly string[]): Step[] {
-  const only = argListFrom(argv, "--only");
-  const skip = new Set(argListFrom(argv, "--skip"));
-  const offline = argv.includes("--offline");
-  const base = only.length
-    ? STEPS.filter((step) => only.includes(step))
-    : [...STEPS];
-  return base.filter(
-    (step) => !skip.has(step) && !(offline && ONLINE.has(step)),
-  );
+  return selectCatalogueSteps(argv, STEPS, { online: ONLINE });
 }
 
 /** `--langs fr,en` (default both). Unknown tokens are dropped. */
 export function dbsCgScrapeLangs(
   argv: readonly string[],
 ): DbsCardlistLocaleId[] {
-  const picked = argListFrom(argv, "--langs").filter(
+  const picked = catalogueArgList(argv, "--langs").filter(
     (value): value is DbsCardlistLocaleId => value === "fr" || value === "en",
   );
   return picked.length ? picked : ["fr", "en"];
@@ -62,7 +43,7 @@ function optionalNumber(
   argv: readonly string[],
   name: string,
 ): number | undefined {
-  const raw = argValueFrom(argv, name);
+  const raw = catalogueArgValue(argv, name);
   if (!raw) return undefined;
   const n = Number(raw);
   return Number.isFinite(n) ? n : undefined;

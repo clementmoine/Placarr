@@ -43,6 +43,7 @@ const built = createEmptyLocalTcgProvider({
     searchPreferLanguage: "ja",
     formatReference: (set, number) => formatDbhReference(set, number),
     normalizeSearchQuery: normalizeDbhSearchQuery,
+    probePrintKey: "dbh:h1-01",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://www.carddass.com/dbh/cardlist/",
     notes:

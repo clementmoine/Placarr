@@ -67,6 +67,7 @@ const built = createEmptyLocalTcgProvider({
       return parsed ?? query;
     },
     listRemotePrintSets: async (language) => listDbsjccRemoteSets(language),
+    probePrintKey: "dbsjcc:part1-d0001",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "http://www.dbzcollection.fr/2v2/cartes.php?idc=1",
     notes:

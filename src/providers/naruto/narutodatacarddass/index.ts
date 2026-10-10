@@ -51,6 +51,7 @@ const built = createEmptyLocalTcgProvider({
     setLabel: dataCarddassSetLabel,
     setSortKey: dataCarddassSetSortKey,
     normalizeSearchQuery: normalizeDataCarddassSearchQuery,
+    probePrintKey: "datacarddass:dn-032t",
     notes:
       "Bandai Data Carddass arcade (ナルティメット…) → `data/naruto/data-carddass/`. Préfixes DN / NM / NX. Autre jeu que Carddass de table et CCG USA.",
   },

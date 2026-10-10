@@ -44,6 +44,7 @@ const built = createEmptyLocalTcgProvider({
     searchPreferLanguage: "ja",
     formatReference: (set, number) => formatBleachScbReference(set, number),
     normalizeSearchQuery: normalizeBleachScbSearchQuery,
+    probePrintKey: "bleachscb:s-002",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "http://www.carddass.fr/bleach/",
     notes:

@@ -35,6 +35,7 @@ const built = createEmptyLocalTcgProvider({
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://en.onepiece-cardgame.com/cardlist/",
     formatReference: formatOnepieceReference,
+    probePrintKey: "onepiece:op17-001",
     borrowFaceAcrossLocales: true,
     decorateCandidate: (candidate) => stampOnepieceBack(candidate),
     listRemotePrintSets: async () => {

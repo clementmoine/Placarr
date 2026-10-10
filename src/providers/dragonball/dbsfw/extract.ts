@@ -5,6 +5,11 @@ import { DBSCARDS_SITES } from "@/providers/shared/tcgcards/list";
 import { scrapeDbscardsIndex } from "@/providers/shared/tcgcards/scrapeList";
 import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
+import {
+  catalogueArgList,
+  catalogueArgValue,
+  selectCatalogueSteps,
+} from "@/providers/shared/cardCatalogue/catalogueSteps";
 
 import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./disk/fetchFaces";
 import { DBS_FW_PACK_ID } from "./indexStore";
@@ -18,32 +23,8 @@ type Step = (typeof STEPS)[number];
 /** Everything but a local re-range needs the network. */
 const ONLINE = new Set<Step>(["scrape", "dbscards", "faces", "details"]);
 
-function argValueFrom(
-  argv: readonly string[],
-  name: string,
-): string | undefined {
-  const idx = argv.indexOf(name);
-  if (idx < 0) return undefined;
-  return argv[idx + 1];
-}
-
-function argListFrom(argv: readonly string[], name: string): string[] {
-  return (argValueFrom(argv, name) ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export function selectDbsFwSteps(argv: readonly string[]): Step[] {
-  const only = argListFrom(argv, "--only");
-  const skip = new Set(argListFrom(argv, "--skip"));
-  const offline = argv.includes("--offline");
-  const base = only.length
-    ? STEPS.filter((step) => only.includes(step))
-    : [...STEPS];
-  return base.filter(
-    (step) => !skip.has(step) && !(offline && ONLINE.has(step)),
-  );
+  return selectCatalogueSteps(argv, STEPS, { online: ONLINE });
 }
 
 export async function runDbsFwPackPipeline(
@@ -59,7 +40,7 @@ export async function runDbsFwPackPipeline(
   console.log(`── curated sync${dryRun ? " (dry run)" : ""}`);
   await ensureDbsFwCuratedAssets({ dryRun, force });
 
-  const langs = argListFrom(argv, "--langs").filter((l) =>
+  const langs = catalogueArgList(argv, "--langs").filter((l) =>
     (DBS_FW_FACE_LANGS as readonly string[]).includes(l),
   );
 
@@ -75,8 +56,8 @@ export async function runDbsFwPackPipeline(
           packId: DBS_FW_PACK_ID,
           site: DBSCARDS_SITES.fusion,
           lang,
-          delayMs: argValueFrom(argv, "--delay")
-            ? Number(argValueFrom(argv, "--delay"))
+          delayMs: catalogueArgValue(argv, "--delay")
+            ? Number(catalogueArgValue(argv, "--delay"))
             : undefined,
           onProgress: (page, total) => {
             if (page % 20 === 0) {
@@ -96,11 +77,11 @@ export async function runDbsFwPackPipeline(
       const result = await scrapeTcgCardsProducts("fusion", {
         force,
         offline: argv.includes("--offline"),
-        delayMs: argValueFrom(argv, "--delay")
-          ? Number(argValueFrom(argv, "--delay"))
+        delayMs: catalogueArgValue(argv, "--delay")
+          ? Number(catalogueArgValue(argv, "--delay"))
           : undefined,
-        limit: argValueFrom(argv, "--limit")
-          ? Number(argValueFrom(argv, "--limit"))
+        limit: catalogueArgValue(argv, "--limit")
+          ? Number(catalogueArgValue(argv, "--limit"))
           : undefined,
         onProgress: (message) => console.log(`   products — ${message}`),
       });
@@ -114,11 +95,11 @@ export async function runDbsFwPackPipeline(
       const result = await fetchDbsFwFaces({
         force,
         ...(langs.length ? { langs } : {}),
-        ...(argValueFrom(argv, "--limit")
-          ? { limit: Number(argValueFrom(argv, "--limit")) }
+        ...(catalogueArgValue(argv, "--limit")
+          ? { limit: Number(catalogueArgValue(argv, "--limit")) }
           : {}),
-        ...(argValueFrom(argv, "--delay")
-          ? { delayMs: Number(argValueFrom(argv, "--delay")) }
+        ...(catalogueArgValue(argv, "--delay")
+          ? { delayMs: Number(catalogueArgValue(argv, "--delay")) }
           : {}),
       });
       console.log(
@@ -134,22 +115,22 @@ export async function runDbsFwPackPipeline(
       */
       await scrapeDbsFwCardDetails({
         force,
-        limit: argValueFrom(argv, "--limit")
-          ? Number(argValueFrom(argv, "--limit"))
+        limit: catalogueArgValue(argv, "--limit")
+          ? Number(catalogueArgValue(argv, "--limit"))
           : undefined,
-        delayMs: argValueFrom(argv, "--delay")
-          ? Number(argValueFrom(argv, "--delay"))
+        delayMs: catalogueArgValue(argv, "--delay")
+          ? Number(catalogueArgValue(argv, "--delay"))
           : undefined,
       });
     }
     if (step === "scrape") {
       await scrapeDbsFwCardlist({
         force,
-        limit: argValueFrom(argv, "--limit")
-          ? Number(argValueFrom(argv, "--limit"))
+        limit: catalogueArgValue(argv, "--limit")
+          ? Number(catalogueArgValue(argv, "--limit"))
           : undefined,
-        delayMs: argValueFrom(argv, "--delay")
-          ? Number(argValueFrom(argv, "--delay"))
+        delayMs: catalogueArgValue(argv, "--delay")
+          ? Number(catalogueArgValue(argv, "--delay"))
           : undefined,
       });
     }

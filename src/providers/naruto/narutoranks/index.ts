@@ -47,6 +47,7 @@ const line = createLocalTcgLine({
   setLabel: ninjaRanksSetLabel,
   setSortKey: ninjaRanksSetSortKey,
   normalizeSearchQuery: normalizeNinjaRanksSearchQuery,
+  probePrintKey: "naruto:nr-0001",
   borrowFaceAcrossLocales: true,
   notes:
     "Panini Ninja Ranks Premium Trading Cards → `data/naruto/ninja-ranks/`. Checklist officielle Inkworks (100 titres EN, juin 2006). Packshots officiels en produits scellés (booster, display, album). Faces échantillon Inkworks (SD-1, BL-1) et dumps fan (sachet vert, SD-4). Ni Carddass, ni CCG Bandai, ni 疾風伝, ni Ultra Challenge. Les NS européennes d'AnimeCollection ne sont pas sur la feuille US.",

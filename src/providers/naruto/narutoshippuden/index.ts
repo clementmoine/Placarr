@@ -13,7 +13,6 @@
  * carte en commun.
  */
 import { createLocalTcgLine } from "@/providers/shared/cardCatalogue/localTcgLine";
-import { metadataProbe } from "@/lib/dev/mappingProbe";
 
 import {
   narutoShippudenAssetsCardUrl,
@@ -64,6 +63,7 @@ const line = createLocalTcgLine({
   setLabel: shippudenSetLabel,
   setSortKey: shippudenActNumber,
   normalizeSearchQuery: (query) => diskIdFromPrintedReference(query) ?? query,
+  probePrintKey: PROBE_PRINT_KEY,
   decorateCandidate: (candidate, row) => ({
     ...candidate,
     category: shippudenFamilyLabel(row.cardType),
@@ -82,11 +82,4 @@ export const narutoShippudenLine = line;
  * ledgers → verso → scellés → index). On attache ses hooks au module produit
  * par `createLocalTcgLine`.
  */
-export const narutoshippudenModule = {
-  ...line.attachCatalog(narutoShippudenCatalog),
-  runMappingProbe: async () => metadataProbe(line.lookupPrint(PROBE_PRINT_KEY)),
-  mappingProbe: {
-    sampleInput: PROBE_PRINT_KEY,
-    context: { printKey: PROBE_PRINT_KEY },
-  },
-};
+export const narutoshippudenModule = line.attachCatalog(narutoShippudenCatalog);

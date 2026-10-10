@@ -45,6 +45,11 @@ Les deux passent par `LocalTcgLineSpec`. Le core consomme uniquement
 | `cardAssetUrl` / `borrowFaceAcrossLocales` | Faces disque |
 | `listRemotePrintSets` | Sets annoncés hors DB locale |
 | `decorateCandidate` | Post-traitement (dos, catégorie) |
+| `probePrintKey` | Sonde mapping / admin (printKey réel du jeu) |
+
+**`printGame`** : un slug par univers de checklist. Partager (`naruto` pour
+Carddass / Ranks / Ultra / 疾風伝) seulement si la possession doit se croiser ;
+sinon un jeu propre (`kayou`, `mythos`, `dbsjcc`, `bleachscb`).
 
 Déjà fourni par la factory (ne pas réécrire) :
 
@@ -55,6 +60,10 @@ Déjà fourni par la factory (ne pas réécrire) :
 
 Pipeline générique : `runLocalTcgPipeline` (seed cartes → export index →
 dimensions faces → curated assets → seed produits).
+
+Étapes extract multi-passes : `selectCatalogueSteps(argv, STEPS, { online,
+offByDefault })` dans `catalogueSteps.ts` — même contrat `--only` / `--skip` /
+`--offline` que les packs hérités.
 
 ## Identité print — règles non négociables
 

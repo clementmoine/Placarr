@@ -1,4 +1,7 @@
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  alphabeticCatalogueSetCodes,
+  buildPrintKey,
+} from "@/core/identify/printKey";
 
 const SET_LABELS: Readonly<Record<string, string>> = {
   nr: "Ninja Ranks",
@@ -12,9 +15,9 @@ const SET_LABELS: Readonly<Record<string, string>> = {
 };
 
 /** Alphabetic chapters for {@link LocalTcgLineSpec.catalogueSetCodes}. */
-export const NINJA_RANKS_CATALOGUE_SET_CODES = Object.keys(
-  SET_LABELS,
-) as readonly string[];
+export const NINJA_RANKS_CATALOGUE_SET_CODES = alphabeticCatalogueSetCodes(
+  Object.keys(SET_LABELS),
+);
 
 /**
  * EU (FR / IT) : PaniniMania, Coleka, Imadoki écrivent `GS1–3` (Group Seven).

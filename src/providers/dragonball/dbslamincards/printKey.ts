@@ -1,4 +1,7 @@
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  alphabeticCatalogueSetCodes,
+  buildPrintKey,
+} from "@/core/identify/printKey";
 
 import { DBS_LAMINCARDS_PRINT_GAME } from "./pack";
 
@@ -12,6 +15,11 @@ const SET_LABELS: Readonly<Record<string, string>> = {
   fr2008: "Lamincards France 2008",
   fror: "Lamincards Série Or (FR)",
 };
+
+/** Short alphabetic chapters (`nero`, `oro`, `fror`) for ownership / checklist. */
+export const LAMINCARDS_CATALOGUE_SET_CODES = alphabeticCatalogueSetCodes(
+  Object.keys(SET_LABELS),
+);
 
 /** `dbslamincards:fr2008-0008` / `dbslamincards:fr2008-0008-s` (Silver). */
 export function lamincardsPrintKey(

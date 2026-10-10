@@ -14,6 +14,11 @@ import {
   DBS_LAMINCARDS_PRINT_GAME,
   DBS_LAMINCARDS_PROVIDER_ID,
 } from "./pack";
+import {
+  formatLamincardsReference,
+  LAMINCARDS_CATALOGUE_SET_CODES,
+  lamincardsSetLabel,
+} from "./printKey";
 
 export {
   DBS_LAMINCARDS_EFFECT_PACK_ID,
@@ -37,8 +42,11 @@ const built = createEmptyLocalTcgProvider({
     packId: DBS_LAMINCARDS_PACK_ID,
     effectPackId: DBS_LAMINCARDS_EFFECT_PACK_ID,
     printGame: DBS_LAMINCARDS_PRINT_GAME,
+    catalogueSetCodes: LAMINCARDS_CATALOGUE_SET_CODES,
     defaultLanguage: "fr",
     catalogLifecycle: "finished",
+    formatReference: (set, number) => formatLamincardsReference(set, number),
+    setLabel: lamincardsSetLabel,
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://web.archive.org/web/20070403094745id_/http://www.edibas.com/edibas_it/collezionabili_lista.aspx",
     notes:

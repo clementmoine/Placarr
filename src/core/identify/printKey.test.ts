@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  alphabeticCatalogueSetCodes,
   buildPrintKey,
   catalogueSetFromPrintKey,
   isGameUniqueCollectorNumber,
@@ -192,6 +193,24 @@ describe("printCollectableKey", () => {
       "dbsjcc|d0437|kaio",
     );
     expect(printCollectableKey("lorcana:1-1")).toBeNull();
+  });
+});
+
+describe("alphabeticCatalogueSetCodes", () => {
+  it("keeps only codes that need LocalTcgLineSpec.catalogueSetCodes", () => {
+    expect(
+      alphabeticCatalogueSetCodes([
+        "nr",
+        "ff",
+        "s11",
+        "h1",
+        "promo",
+        "ability",
+        "argento",
+        "NR",
+        "nr",
+      ]),
+    ).toEqual(["nr", "ff"]);
   });
 });
 

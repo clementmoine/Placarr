@@ -8,7 +8,10 @@
  * the letter namespace with FR `E###` / `Z###` (same physical EU remaps when
  * present).
  */
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  alphabeticCatalogueSetCodes,
+  buildPrintKey,
+} from "@/core/identify/printKey";
 
 import { BLEACH_SCB_PRINT_GAME } from "./pack";
 
@@ -24,9 +27,10 @@ export const BLEACH_SCB_ABILITY_SET = "ability";
 /**
  * Alphabetic catalogue chapters for {@link LocalTcgLineSpec.catalogueSetCodes}.
  * Bare collector numbers (`001`) need these registered so ownership / checklist
- * can read the set from the printKey.
+ * can read the set from the printKey. `ability` / `promo` resolve without
+ * registration (length / reserved name).
  */
-export const BLEACH_SCB_CATALOGUE_SET_CODES = [
+export const BLEACH_SCB_CATALOGUE_SET_CODES = alphabeticCatalogueSetCodes([
   "a",
   "c",
   "e",
@@ -37,7 +41,7 @@ export const BLEACH_SCB_CATALOGUE_SET_CODES = [
   "b",
   BLEACH_SCB_ABILITY_SET,
   "promo",
-] as const;
+]);
 
 /** `A001` / `A-029` / `E-007` / `S-001` / `J-011` / `PZ-004` → set + number. */
 export function parseBleachScbPrinted(raw: string): BleachScbParsed | null {

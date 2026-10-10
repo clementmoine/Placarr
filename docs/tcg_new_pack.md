@@ -38,7 +38,7 @@ Les deux passent par `LocalTcgLineSpec`. Le core consomme uniquement
 | `providerId` / labels / `notes` | Identité onglet + facts |
 | `packId` / `effectPackId` | Disque `data/<pack>/` + foil pack |
 | `printGame` | Segment jeu du `printKey` (`game:set-number`) |
-| `catalogueSetCodes` | Chapitres alphabétiques (`nr`, `uc`, `a`…) enregistrés pour `catalogueSetFromPrintKey` |
+| `catalogueSetCodes` | Chapitres alphabétiques (`nr`, `uc`, `a`…) — dériver via `alphabeticCatalogueSetCodes([...])` |
 | `defaultLanguage` / `listSetLanguages` / `searchPreferLanguage` | Locales |
 | `catalogLifecycle` | `finished` → pas d’auto-sync Plex-like |
 | `formatReference` / `setLabel` / `setSortKey` / `normalizeSearchQuery` | Affichage + recherche |
@@ -64,8 +64,10 @@ dimensions faces → curated assets → seed produits).
    extension), pas la famille de numéro (`ni` / `ta` legacy Carddass).
 3. Numéros **game-unique** (`d0123`, `shi0043`) → `catalogueSetFromPrintKey`
    lit le set sans déclaration.
-4. Numéros **nus** (`001`, `47`) + set alphabétique → déclarer
-   `catalogueSetCodes` sur la ligne. Sinon ownership / checklist voient `null`.
+4. Numéros **nus** (`001`, `47`) + set alphabétique (1–6 lettres) →
+   `catalogueSetCodes: alphabeticCatalogueSetCodes(Object.keys(SET_LABELS))`.
+   Sinon ownership / checklist voient `null`. Codes avec chiffre (`s11`, `h1`),
+   `promo` / `prerelease`, ou >6 lettres se résolvent seuls.
 5. Langue **hors** clé (`printKey` identique FR/EN/JA).
 
 ## Ce qui reste pack-spécifique (volontaire)

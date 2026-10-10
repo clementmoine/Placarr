@@ -1,9 +1,23 @@
 /**
  * Dragon Ball Heroes collector ids — H1-01, GM10-SEC, MM1-001, GDPB-01…
  */
-import { buildPrintKey } from "@/core/identify/printKey";
+import {
+  alphabeticCatalogueSetCodes,
+  buildPrintKey,
+} from "@/core/identify/printKey";
 
 import { DBH_PRINT_GAME } from "./pack";
+
+/**
+ * Promo / starter alphabetic chapters (bare numbers like `01`).
+ * Wave codes (`h1`, `hg10`…) already carry a digit.
+ */
+export const DBH_CATALOGUE_SET_CODES = alphabeticCatalogueSetCodes([
+  "pb",
+  "pbc",
+  "pj",
+  "pm",
+]);
 
 export type DbhParsed = {
   set: string;

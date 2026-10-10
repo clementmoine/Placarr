@@ -118,6 +118,31 @@ export function isGameUniqueCollectorNumber(
  */
 const catalogueAlphaSetsByGame = new Map<string, Set<string>>();
 
+/**
+ * Filter set codes that must be declared on
+ * `LocalTcgLineSpec.catalogueSetCodes` for {@link catalogueSetFromPrintKey}.
+ * Codes with a digit (`s11`, `h1`), longer than 6 letters, or `promo` /
+ * `prerelease` already resolve without registration.
+ */
+export function alphabeticCatalogueSetCodes(
+  codes: readonly string[],
+): readonly string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of codes) {
+    const code = raw.trim().toLowerCase();
+    if (!code || seen.has(code)) continue;
+    if (
+      /^[a-z]{1,6}$/i.test(code) &&
+      !/^(promo|prerelease)$/i.test(code)
+    ) {
+      seen.add(code);
+      out.push(code);
+    }
+  }
+  return out;
+}
+
 export function registerPrintKeyCatalogueSets(
   game: string,
   sets: readonly string[],

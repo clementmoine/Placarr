@@ -1,11 +1,13 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { catalogueSetFromPrintKey } from "@/core/identify/printKey";
 import { dbsLamincardsEffectPack } from "@/effects/dbslamincards";
 import { listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
 
 import { dbslamincardsModule } from "./index";
 import { dbsLamincardsCuratedDir } from "./pack";
+import { LAMINCARDS_CATALOGUE_SET_CODES } from "./printKey";
 
 describe("dbslamincards provider hooks", () => {
   it("declares an empty local catalogue surface under Dragon Ball", () => {
@@ -15,6 +17,16 @@ describe("dbslamincards provider hooks", () => {
     expect(dbslamincardsModule.lookupPrint).toBeTypeOf("function");
     expect(dbslamincardsModule.info.nameDatabase).toBe(true);
     expect(dbslamincardsModule.printGames).toEqual(["dbslamincards"]);
+  });
+
+  it("registers short alphabetic series for catalogueSetFromPrintKey", () => {
+    expect(LAMINCARDS_CATALOGUE_SET_CODES).toEqual(
+      expect.arrayContaining(["nero", "oro", "fror"]),
+    );
+    expect(catalogueSetFromPrintKey("dbslamincards:nero-0001")).toBe("nero");
+    expect(catalogueSetFromPrintKey("dbslamincards:argento-0001")).toBe(
+      "argento",
+    );
   });
 
   it("does not claim Bandai Masters or Fusion World prints", async () => {

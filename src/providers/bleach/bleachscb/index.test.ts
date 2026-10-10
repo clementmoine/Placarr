@@ -19,10 +19,11 @@ describe("bleachscb", () => {
 
   it("registers alphabetic chapters for catalogueSetFromPrintKey", () => {
     expect(BLEACH_SCB_CATALOGUE_SET_CODES).toEqual(
-      expect.arrayContaining(["a", "s", "ability", "j"]),
+      expect.arrayContaining(["a", "s", "j", "b"]),
     );
     expect(catalogueSetFromPrintKey("bleachscb:a-001")).toBe("a");
     expect(catalogueSetFromPrintKey("bleachscb:s-002")).toBe("s");
+    // `ability` is >6 letters — resolves without registration.
     expect(catalogueSetFromPrintKey("bleachscb:ability-029")).toBe("ability");
   });
 

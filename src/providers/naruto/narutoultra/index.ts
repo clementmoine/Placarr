@@ -14,7 +14,7 @@ import {
   NARUTO_ULTRA_PACK_ID,
   NARUTO_ULTRA_PROVIDER_ID,
 } from "./pack";
-import { NARUTO_ULTRA_SET_CODE } from "./printKey";
+import { ULTRA_CHALLENGE_CATALOGUE_SET_CODES } from "./printKey";
 
 export {
   NARUTO_ULTRA_EFFECT_PACK_ID,
@@ -32,7 +32,7 @@ const line = createLocalTcgLine({
   packId: NARUTO_ULTRA_PACK_ID,
   effectPackId: NARUTO_ULTRA_EFFECT_PACK_ID,
   printGame: "naruto",
-  catalogueSetCodes: [NARUTO_ULTRA_SET_CODE],
+  catalogueSetCodes: ULTRA_CHALLENGE_CATALOGUE_SET_CODES,
   defaultLanguage: "fr",
   catalogLifecycle: "finished",
   syncHint: "Catalogue Sync (admin)",

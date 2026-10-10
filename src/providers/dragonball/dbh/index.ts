@@ -10,6 +10,7 @@ import {
   DBH_PROVIDER_ID,
 } from "./pack";
 import {
+  DBH_CATALOGUE_SET_CODES,
   formatDbhReference,
   normalizeDbhSearchQuery,
 } from "./printKey";
@@ -36,6 +37,7 @@ const built = createEmptyLocalTcgProvider({
     packId: DBH_PACK_ID,
     effectPackId: DBH_EFFECT_PACK_ID,
     printGame: DBH_PRINT_GAME,
+    catalogueSetCodes: DBH_CATALOGUE_SET_CODES,
     defaultLanguage: "ja",
     listSetLanguages: ["ja"],
     searchPreferLanguage: "ja",

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { catalogueSetFromPrintKey } from "@/core/identify/printKey";
+
 import { dbhModule } from "./index";
 import {
+  DBH_CATALOGUE_SET_CODES,
   formatDbhReference,
   parseDbhPrinted,
   dbhPrintKey,
@@ -14,6 +17,14 @@ describe("dbh", () => {
     expect(dbhModule.catalog?.dataPack).toBe("dragonball/heroes");
     expect(dbhModule.printGames).toEqual(["dbh"]);
     expect(dbhModule.info.defaultLanguage).toBe("ja");
+  });
+
+  it("registers alphabetic promo chapters for catalogueSetFromPrintKey", () => {
+    expect(DBH_CATALOGUE_SET_CODES).toEqual(
+      expect.arrayContaining(["pb", "pbc", "pj", "pm"]),
+    );
+    expect(catalogueSetFromPrintKey("dbh:pb-01")).toBe("pb");
+    expect(catalogueSetFromPrintKey("dbh:h1-01")).toBe("h1");
   });
 
   it("parses Heroes printed refs", () => {

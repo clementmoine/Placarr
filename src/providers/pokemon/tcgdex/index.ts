@@ -615,7 +615,8 @@ const refreshTcgdexOffers = createPrintKeyPriceRefresh<TcgdexCard>({
  * revanche le nom du set et de la série, eux, arrivent **avec** la moisson,
  * là où le distant demandait un appel de plus par set.
  */
-function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
+/** @internal also used by `pokemontcglive` print search (same identity corpus). */
+export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
   const language = (isTcgdexLanguage(row.lang)
     ? row.lang
     : "fr") as TcgdexCard["language"];

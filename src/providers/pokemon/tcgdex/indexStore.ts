@@ -406,6 +406,37 @@ export function tcgdexSetIdsNeedingFrImageRefresh(): string[] {
   return rows.map((row) => row.setId);
 }
 
+/**
+ * Exact print + preferred-language title from the local identity store.
+ */
+export function lookupTcgdexSearchRow(
+  printKey: string,
+  opts: { language?: string } = {},
+): TcgdexSearchRow | null {
+  const key = printKey.trim();
+  if (!key) return null;
+  const db = ensureTcgdexIndex();
+  if (!db) return null;
+  const lang = (opts.language || "fr").toLowerCase();
+  const row = db
+    .prepare(
+      `SELECT p.print_key AS printKey, p.set_id AS setId,
+              p.local_id AS localId, p.provider_id AS providerId,
+              p.image_base_url AS imageBaseUrl,
+              t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
+              s.official_count AS setOfficialCount
+         FROM prints p
+         JOIN print_titles t ON t.print_key = p.print_key
+         LEFT JOIN sets s
+                ON s.set_id = p.set_id AND s.lang = t.lang
+        WHERE p.print_key = ?
+        ORDER BY (t.lang = ?) DESC, t.lang ASC
+        LIMIT 1`,
+    )
+    .get(key, lang) as TcgdexSearchRow | undefined;
+  return row ?? null;
+}
+
 export function searchTcgdexRows(
   query: string,
   opts: {

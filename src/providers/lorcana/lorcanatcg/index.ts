@@ -1,4 +1,5 @@
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
+import { parsePrintKey } from "@/core/identify/printKey";
 import { withPackCardUrls } from "@/effects/lorcana/packAssets";
 import type {
   MetadataResult,
@@ -6,13 +7,21 @@ import type {
 } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
+  PrintCandidate,
 } from "@/types/providerModule";
 import { defineProvider } from "@/providers/shared/defineProvider";
+import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
+import {
+  cardFromLocalRow,
+  toPrintCandidate,
+} from "@/providers/lorcana/lorcanajson";
 
 import {
   ensureLorcanaTcgIndex,
+  listLorcanaTcgSets,
   lookupLorcanaTcgPrint,
+  lookupLorcanaTcgSearchRow,
   lookupLorcanaTcgTitle,
   lorcanaTcgDbPath,
   searchLorcanaTcgRows,
@@ -153,9 +162,42 @@ export const lorcanatcgModule = defineProvider({
       index: loadLorcanaSetLogoIndex(),
     }),
   /*
-    Owner du `dataPack` lorcana : la check-list scellés (pool set) passe par
-    ici, pas par lorcanajson (pas de dataPack). Même base locale que la recherche.
+    Owner du `dataPack` lorcana : picker + check-list scellés lisent la même
+    base que `lorcanajson` (qui garde le repli API distant).
   */
+  listPrintLanguages: () => distinctPrintLanguages(lorcanaTcgDbPath()),
+  listPrintSets: async (_type, language) =>
+    listLorcanaTcgSets(language ?? undefined),
+  searchPrints: async ({
+    query,
+    language,
+    limit,
+    setId,
+    catalogueBrowse,
+  }): Promise<PrintCandidate[]> => {
+    const rows = searchLorcanaTcgRows(query, {
+      language: language ?? undefined,
+      limit,
+      setId,
+      catalogueBrowse,
+    });
+    const seen = new Set<string>();
+    const out: PrintCandidate[] = [];
+    for (const row of rows) {
+      if (seen.has(row.printKey)) continue;
+      seen.add(row.printKey);
+      out.push(toPrintCandidate(cardFromLocalRow(row)));
+      if (limit && out.length >= limit) break;
+    }
+    return out;
+  },
+  lookupPrint: async ({ printKey, language }) => {
+    if (parsePrintKey(printKey)?.game !== "lorcana") return null;
+    const row = lookupLorcanaTcgSearchRow(printKey, {
+      language: language ?? undefined,
+    });
+    return row ? toPrintCandidate(cardFromLocalRow(row)) : null;
+  },
   listSetPrints: async ({ setId, language }) =>
     enumerateSetPrints({
       setId,
@@ -165,12 +207,7 @@ export const lorcanatcgModule = defineProvider({
           language: opts.language,
           limit: opts.limit,
           setId: opts.setId,
-        }).map((row) => ({
-          printKey: row.printKey,
-          title: row.fullName,
-          reference: `${row.setCode}-${row.number}`,
-          language: row.lang,
-        })),
+        }).map((row) => toPrintCandidate(cardFromLocalRow(row))),
     }),
   printGames: ["lorcana"],
   resolveSetLogo: ({ setCode, slug, name }) =>

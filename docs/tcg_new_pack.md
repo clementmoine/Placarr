@@ -118,6 +118,11 @@ propre index / pipeline. Ils doivent **converger** vers le même contrat app
 pas le modèle pour un **nouveau** jeu — partir de
 `createEmptyLocalTcgProvider`.
 
+**Dual owners** (corpus local + API) : le module `dataPack` expose quand même
+`searchPrints` / `lookupPrint` / `listPrintSets` / `listSetPrints` (Lorcana
+local, Pokémon Live). Le sibling API garde le repli distant — ne pas laisser
+le picker dépendre uniquement de l’API.
+
 ## Exemples de référence
 
 | Pack | Fabrique | Notes |

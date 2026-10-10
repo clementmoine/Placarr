@@ -3,20 +3,25 @@
  * Live join store: `live.sqlite`. Catalogue identity remains TCGdex (`catalog.sqlite`).
  */
 import { existsSync } from "node:fs";
-import path from "node:path";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { parsePrintKey } from "@/core/identify/printKey";
-import { dataRoot } from "@/lib/runtimeData";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
 } from "@/types/providerModule";
 import { defineProvider } from "@/providers/shared/defineProvider";
+import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import {
   ensurePokemonDbLayout,
   pokemonLiveDbPath,
 } from "@/providers/pokemon/paths";
+import {
+  ensureTcgdexSetLogoIndex,
+  loadTcgdexSetLogoIndex,
+  tcgdexCatalogueSetIdForProduct,
+  tcgdexLogoUrlForProduct,
+} from "@/providers/pokemon/tcgdex/setLogos";
 
 import {
   buildPokemonLiveAttachments,
@@ -25,11 +30,11 @@ import {
 } from "./disk/liveAssets";
 import { pokemontcgliveCatalog } from "./pipeline";
 import {
-  ensureTcgdexSetLogoIndex,
-  loadTcgdexSetLogoIndex,
-  tcgdexCatalogueSetIdForProduct,
-  tcgdexLogoUrlForProduct,
-} from "@/providers/pokemon/tcgdex/setLogos";
+  listPokemonLivePrintLanguages,
+  listPokemonLivePrintSets,
+  lookupPokemonLivePrint,
+  searchPokemonLivePrints,
+} from "./printSearch";
 
 const PROVIDER_ID = "pokemontcglive";
 const PROVIDER_LABEL = "Pokémon TCG Live (local)";
@@ -97,6 +102,34 @@ export const pokemontcgliveModule = defineProvider({
     return `tcgdex set logos : ${withLogo} wordmarks / ${logos.sets.length} sets`;
   },
   printGames: [POKEMON_GAME],
+  /*
+    Identity corpus = TCGdex `catalog.sqlite`. Exposed on the dataPack owner so
+    checklist / sealed pool match createLocalTcgLine (search sibling alone is
+    not enough for dataPack-bound surfaces).
+  */
+  listPrintLanguages: () => listPokemonLivePrintLanguages(),
+  listPrintSets: async (_type, language) =>
+    listPokemonLivePrintSets(language),
+  searchPrints: async ({ query, language, limit, setId, catalogueBrowse }) =>
+    searchPokemonLivePrints(query, {
+      language: language ?? undefined,
+      limit,
+      setId,
+      catalogueBrowse,
+    }),
+  lookupPrint: async ({ printKey, language }) =>
+    lookupPokemonLivePrint(printKey, language),
+  listSetPrints: async ({ setId, language }) =>
+    enumerateSetPrints({
+      setId,
+      language,
+      search: (opts) =>
+        searchPokemonLivePrints(opts.query, {
+          language: opts.language,
+          limit: opts.limit,
+          setId: opts.setId,
+        }),
+    }),
   resolveSetLogo: ({ setCode, slug, name }) =>
     tcgdexLogoUrlForProduct({
       setCode,

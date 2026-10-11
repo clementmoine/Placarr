@@ -1,7 +1,7 @@
 {
   "source": "collector physical copies (chat 2026-08-16 17:46) + UNS3 EU hunt 2026-08-26",
   "observed": "2026-08-26",
-  "note": "French-text Bandai USA CCG — same game as EN, not Carddass NI/TE/TA. Storm 3 booster line = s28. Quartet promo Storm 3 VF = PR-093 / PR-095 / PR-096 / PR-100 (photo classeur FB fbid 1968916513588340) — pack-in / Day One / duopack / collectors, pas singles booster. 10-char codes are UNS3 video-game passwords. « © 2002 MK – 2007 SP » ≠ print year. Sleeve: curated/cards/back.en.png.",
+  "note": "French-text Bandai USA CCG — same game as EN, not Carddass NI/TE/TA. Storm 3 booster line = s28. Quartet promo Storm 3 VF = PR-093 / PR-095 / PR-096 / PR-100 (photo classeur FB fbid 1968916513588340) — Kana JE manga / Day One / duopack / collectors, pas singles booster. 10-char codes are UNS3 video-game passwords. « © 2002 MK – 2007 SP » ≠ print year. Sleeve: curated/cards/back.en.png.",
   "sameSleeveEnFr": true,
   "pack": "naruto/carddass",
   "legalLine": "2002MK - 2007SP",
@@ -18,8 +18,14 @@
       "inCardsIndex": true,
       "enName": "Lightning Blade : Twin Lightning Shiver",
       "art": "Kakashi Chidori",
-      "channel": "Storm 3 VF promo quartet (PR-093/095/096/100) — classeur FB",
-      "attestedBy": ["facebook-fbid-1968916513588340", "uns3-vf-promo-quartet-binder"],
+      "channel": "Kana Japan Expo 2013 — carte offerte à l'achat d'un tome Naruto",
+      "attestedBy": [
+        "kana-je-18-carte-naruto-offerte",
+        "facebook-fbid-1968916513588340",
+        "uns3-vf-promo-quartet-binder"
+      ],
+      "official": "https://www.kana.fr/je-18-carte-naruto-offerte/",
+      "officialPhoto": "https://www.kana.fr/assets/uploads/2013/06/narutocarte.jpg",
       "faceFr": "art.reconstructed 864×1210 ; source.jpg = FB binder fbid 1968916513588340",
       "faceEn": "drive + coleka"
     },

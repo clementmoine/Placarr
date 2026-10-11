@@ -174,9 +174,9 @@
           "printKey": "naruto:promo-pr0093",
           "password": "N2FB24M1K5",
           "editionMark": "Édition Limitée",
-          "channelHint": "promo wave UNS3 — pas booster s28",
+          "channelHint": "Kana JE 2013 — tome Naruto → carte offerte (je-18-carte-naruto-offerte)",
           "faceFr": "curated/cards/promo/pr0093/fr — art.reconstructed.png (864×1210) ; source.jpg = crop FB binder",
-          "note": "Dig 2026-09-02 avait mal lu PR-098 sur ce bandeau"
+          "note": "Dig 2026-09-02 avait mal lu PR-098 ; canal Kana confirmé 2026-10-11 via photo officielle narutocarte.jpg"
         },
         {
           "printedRef": "PR-095",
@@ -218,9 +218,9 @@
     {
       "printedRef": "PR-093",
       "nameFr": "Double éclair pourfendeur",
-      "evidence": "uns3-vf-promo-quartet-binder",
-      "channel": "quartet Storm 3 VF (classeur) — canaux unitaires Day One / duopack / collectors selon ref",
-      "ingest": "face + titre FR ingestés 2026-10-11 ; dos encore ouvert"
+      "evidence": "uns3-vf-promo-quartet-binder + kana.fr/je-18-carte-naruto-offerte/",
+      "channel": "Kana Japan Expo 2013 — carte offerte à l'achat d'un tome Naruto",
+      "ingest": "face + titre FR ingestés 2026-10-11 ; canal officiel pin 2026-10-11 ; dos encore ouvert"
     }
   ],
   "physicalMarkers": {

@@ -30,18 +30,23 @@
       "note": "Kana 23/11/2012 + press : « une carte premium » dans WoF / True Despair — canal jeu, pas manga. Sealed-box photos still needed to pin PR-100 vs other."
     },
     "kanaJapanExpo2013MangaCard": {
-      "status": "secondary-press-only — not pinned to a PR ref",
-      "claim": "« une carte Naruto pour tout achat d'un tome » sur le stand Kana JE 2013",
+      "status": "official — pinned to PR-093",
+      "promo": "PR-093",
+      "printKey": "naruto:promo-pr0093",
+      "nameFr": "Double éclair pourfendeur",
+      "claim": "Stand Kana JE 2013 — carte à jouer offerte pour tout achat d'un tome Naruto (en plus du booklet)",
+      "official": "https://www.kana.fr/je-18-carte-naruto-offerte/",
+      "officialDate": "2013-06-16",
+      "officialPhoto": "https://www.kana.fr/assets/uploads/2013/06/narutocarte.jpg",
+      "photoShows": "PR-093 VF face + logo Ultimate Ninja STORM 3 + « Édition Limitée »",
       "press": [
         "https://anime-news.eklablog.com/les-goodies-kana-a-la-japan-expo-le-guide-a92812469"
       ],
-      "officialPageAliveButEmpty": "https://www.kana.fr/je-les-goodies-sur-la-japan/",
       "not": [
-        "PR-093 Double éclair pourfendeur (aucun lien nommé)",
         "kana-manga-blister-2008 Carddass S6 (autre époque / autre jeu)",
-        "WoF / True Despair « carte premium » (collectors jeu)"
+        "WoF / True Despair « carte premium » (collectors jeu — autre SKU)"
       ],
-      "note": "Ne pas fusionner avec le quartet Storm 3 VF tant qu'aucune photo / ref n'identifie la carte JE."
+      "note": "Canal unitaire du quartet Storm 3 VF pour PR-093 ; ≠ Day One (095) / duopack (096) / collectors (100)."
     },
     "retailDuopack": {
       "slug": "duopack-s28",

@@ -731,7 +731,9 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         namePrinted: "Double éclair pourfendeur",
         password: "N2FB24M1K5",
         printKeyHint: "naruto:pr-0093",
-        faceFr: expect.stringContaining("pr0093"),
+        faceFr: expect.stringMatching(/art\.reconstructed|FB binder/i),
+        channel: expect.stringMatching(/Kana Japan Expo 2013/i),
+        official: "https://www.kana.fr/je-18-carte-naruto-offerte/",
       });
       expect(goku).toMatchObject({
         notBoosterS28: true,

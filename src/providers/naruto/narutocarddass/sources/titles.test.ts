@@ -450,7 +450,9 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
         expect.arrayContaining(["PR-098", "PR-099"]),
       );
       const gap = dig.promoGapsFr?.find((p) => p.printedRef === "PR-093");
-      expect(gap?.evidence).toBe("uns3-vf-promo-quartet-binder");
+      expect(gap?.evidence).toMatch(/je-18-carte-naruto-offerte/);
+      expect(gap?.channel).toMatch(/Kana Japan Expo 2013/i);
+      expect(att?.prints?.[0]?.channelHint).toMatch(/Kana JE 2013/i);
     });
 
     it("flags open conflict manga t1185 vs DVD vol. 15 for NI-236", () => {

@@ -15,6 +15,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 
+import { assetsFilePath } from "@/lib/media/assetsPath";
 import {
   assetsCardUrl,
   cardDiskIdFromPrintKey,
@@ -42,6 +43,42 @@ export type DedupePrintSetsReport = {
 
 function cardFolder(number: string, grouping: string | null): string {
   return grouping ? `${number}-${grouping}` : number;
+}
+
+/**
+ * Drop a trailing art letter (`d0007a` → `d0007`, `d0250b-kaio` → `d0250-kaio`).
+ * Leaves multi-char suffixes (`detecteur`, `main` alone) alone.
+ */
+export function stripDbsjccArtLetterFromCardFolder(
+  card: string,
+): string | null {
+  const m = /^([a-z]+\d+)([a-z])(-[a-z0-9]+)?$/i.exec(card.trim());
+  if (!m) return null;
+  return `${m[1]}${m[3] ?? ""}`.toLowerCase();
+}
+
+/** `dbsjcc:part1-d0007a` → `dbsjcc:part1-d0007` (null if no single art letter). */
+export function stripDbsjccArtLetterFromPrintKey(
+  printKey: string,
+): string | null {
+  const m =
+    /^(dbsjcc:[a-z0-9]+-)([a-z]+\d+)([a-z])(-[a-z0-9]+)?$/i.exec(
+      printKey.trim(),
+    );
+  if (!m) return null;
+  return `${m[1]}${m[2]}${m[4] ?? ""}`.toLowerCase();
+}
+
+/** Rewrite `/cards/.../{lettered}/` → unlettered folder when applicable. */
+export function stripDbsjccArtLetterFromAssetUrl(url: string): string | null {
+  const m = /\/cards\/([^/]+)\/([^/]+)\/([^/]+)\//i.exec(url);
+  if (!m) return null;
+  const stripped = stripDbsjccArtLetterFromCardFolder(m[3]!);
+  if (!stripped || stripped === m[3]!.toLowerCase()) return null;
+  return url.replace(
+    `/cards/${m[1]}/${m[2]}/${m[3]}/`,
+    `/cards/${m[1]}/${m[2]}/${stripped}/`,
+  );
 }
 
 function ensureDir(dir: string): void {
@@ -389,8 +426,18 @@ async function remapPrismaItems(
       }
     }
 
+    // Letters can disappear when a face family collapses — remap orphans
+    // (`…-d0007a` → `…-d0007`) that are no longer in the alias map.
+    remapped += await remapOrphanLetteredItems(
+      prisma as unknown as RemapPrisma,
+      aliasToCanonical,
+    );
+
     // First migration only rewrote printKey — repair stale card-folder URLs.
     remapped += await repairStalePrintAssetUrls(
+      prisma as unknown as RepairPrisma,
+    );
+    remapped += await repairMissingUrlsByStrippingArtLetter(
       prisma as unknown as RepairPrisma,
     );
     return remapped;
@@ -421,6 +468,140 @@ type RepairPrisma = {
     update: (args: any) => Promise<unknown>;
   };
 };
+
+type RemapPrisma = RepairPrisma & {
+  item: RepairPrisma["item"] & {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    findFirst: (args?: any) => Promise<{ id: string } | null>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete: (args: any) => Promise<unknown>;
+  };
+};
+
+/**
+ * When clustering no longer assigns an art letter, collection items can keep
+ * the old lettered printKey / URL. Fold them onto the bare canonical key.
+ */
+async function remapOrphanLetteredItems(
+  prisma: RemapPrisma,
+  aliasToCanonical: Map<string, string>,
+): Promise<number> {
+  const known = new Set(aliasToCanonical.keys());
+  const items = await prisma.item.findMany({
+    where: { printKey: { startsWith: "dbsjcc:" } },
+    select: {
+      id: true,
+      shelfId: true,
+      variant: true,
+      language: true,
+      printKey: true,
+      imageUrl: true,
+      metadata: { select: { id: true, imageUrl: true } },
+    },
+  });
+  let remapped = 0;
+  for (const item of items) {
+    if (!item.printKey || known.has(item.printKey)) continue;
+    const stripped = stripDbsjccArtLetterFromPrintKey(item.printKey);
+    if (!stripped || !known.has(stripped)) continue;
+    const to = aliasToCanonical.get(stripped) ?? stripped;
+    const clash = await prisma.item.findFirst({
+      where: {
+        shelfId: item.shelfId,
+        printKey: to,
+        language: item.language,
+        variant: item.variant,
+        NOT: { id: item.id },
+      },
+      select: { id: true },
+    });
+    if (clash) {
+      await prisma.item.delete({ where: { id: item.id } });
+      remapped += 1;
+      continue;
+    }
+    const nextImage = rewriteAssetUrlForPrintKeyChange(
+      item.imageUrl,
+      item.printKey,
+      to,
+      item.language,
+    );
+    await prisma.item.update({
+      where: { id: item.id },
+      data: {
+        printKey: to,
+        ...(nextImage !== item.imageUrl ? { imageUrl: nextImage ?? null } : {}),
+      },
+    });
+    if (item.metadata?.imageUrl) {
+      const metaImage = rewriteAssetUrlForPrintKeyChange(
+        item.metadata.imageUrl,
+        item.printKey,
+        to,
+        item.language,
+      );
+      if (metaImage !== item.metadata.imageUrl) {
+        await prisma.metadata.update({
+          where: { id: item.metadata.id },
+          data: { imageUrl: metaImage ?? null },
+        });
+      }
+    }
+    remapped += 1;
+  }
+  return remapped;
+}
+
+function assetUrlExistsOnDisk(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const abs = assetsFilePath(url);
+  return !!abs && existsSync(abs);
+}
+
+/** Last resort: URL still lettered while the unlettered file exists on disk. */
+async function repairMissingUrlsByStrippingArtLetter(
+  prisma: RepairPrisma,
+): Promise<number> {
+  const items = await prisma.item.findMany({
+    where: { printKey: { startsWith: "dbsjcc:" } },
+    select: {
+      id: true,
+      printKey: true,
+      language: true,
+      imageUrl: true,
+      metadata: { select: { id: true, imageUrl: true } },
+    },
+  });
+  let fixed = 0;
+  for (const item of items) {
+    let touched = false;
+    if (item.imageUrl && !assetUrlExistsOnDisk(item.imageUrl)) {
+      const stripped = stripDbsjccArtLetterFromAssetUrl(item.imageUrl);
+      if (stripped && assetUrlExistsOnDisk(stripped)) {
+        await prisma.item.update({
+          where: { id: item.id },
+          data: { imageUrl: stripped },
+        });
+        touched = true;
+      }
+    }
+    if (
+      item.metadata?.imageUrl &&
+      !assetUrlExistsOnDisk(item.metadata.imageUrl)
+    ) {
+      const stripped = stripDbsjccArtLetterFromAssetUrl(item.metadata.imageUrl);
+      if (stripped && assetUrlExistsOnDisk(stripped)) {
+        await prisma.metadata.update({
+          where: { id: item.metadata.id },
+          data: { imageUrl: stripped },
+        });
+        touched = true;
+      }
+    }
+    if (touched) fixed += 1;
+  }
+  return fixed;
+}
 
 /** Point item/metadata imageUrl at the folder that matches the current printKey. */
 async function repairStalePrintAssetUrls(

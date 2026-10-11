@@ -31,6 +31,8 @@ import {
   compareNarutoLangs,
   formatNarutoReference,
   isJpOnlyNarutoArtwork,
+  isNarutoCatalogueSetCode,
+  narutoCollectorKey,
   narutoCollectorNumberKey,
   parseNarutoCollector,
 } from "@/providers/naruto/narutocarddass/identity";
@@ -106,6 +108,11 @@ export type CatalogueCardRow = {
   priceDeltaCents?: number | null;
   /** Symfony item id on the *cards.fr shop tile, when the dump carries it. */
   shopItemId?: string | null;
+  /**
+   * Checklist appearances collapsed into this browse tile (set-scoped
+   * printKeys). Sealed still uses the full membership list in sqlite.
+   */
+  appearanceSets?: string[];
 };
 
 const NARUTO_UNIFIED_PACKS: readonly CataloguePackId[] = ["naruto/carddass"];
@@ -304,6 +311,83 @@ function remoteArtUrl(files: CardsIndexLangFiles): string | null {
   return null;
 }
 
+/**
+ * Short set tag for admin tiles (`S1`, `巻3`, `Promo`).
+ * Membership lives on the printKey after set-scoping; `entry.set` is often
+ * just the family folder (`ninja`).
+ */
+/** Catalogue set on a set-scoped printKey (`s1`, `maki3`) — not family `ni`. */
+export function narutoPrintKeySetCode(printKey: string): string | null {
+  const canon = canonicalizeNarutoPrintKey(printKey);
+  const m = /^naruto:([a-z0-9]+)-/i.exec(canon);
+  if (!m) return null;
+  const set = m[1]!.toLowerCase();
+  return isNarutoCatalogueSetCode(set) ? set : null;
+}
+
+/** JP Carddass volumes (`maki3` / 巻ノ参) — JA checklist only. */
+export function isNarutoJapaneseVolumeSet(setCode: string | null): boolean {
+  return !!setCode && /^maki\d+$/i.test(setCode);
+}
+
+export function narutoSetCodeTag(setCode: string | null): string | null {
+  if (!setCode) return null;
+  const set = setCode.toLowerCase();
+  if (/^s\d+$/.test(set)) return set.toUpperCase();
+  const maki = /^maki(\d+)$/.exec(set);
+  if (maki) {
+    // Product name is 巻ノ… — never the internal slug `maki1`.
+    return `巻${maki[1]}`;
+  }
+  if (set === "promo") return "Promo";
+  if (set === "prerelease") return "Prerelease";
+  return set.toUpperCase();
+}
+
+export function narutoCatalogueSetTag(
+  printKey: string,
+  _lang?: string | null,
+): string | null {
+  return narutoSetCodeTag(narutoPrintKeySetCode(printKey));
+}
+
+/**
+ * Sets shown on a browse caption for this face language.
+ * FR/EN/IT → EU sN (+ promo channels); JA → 巻ノ volumes.
+ */
+export function narutoBrowseAppearanceTags(
+  appearanceSets: readonly string[] | undefined,
+  lang: string,
+): string[] {
+  if (!appearanceSets?.length) return [];
+  const ja = lang.toLowerCase() === "ja";
+  const codes = appearanceSets.filter((set) => {
+    if (isNarutoJapaneseVolumeSet(set)) return ja;
+    if (/^s\d+$/i.test(set)) return !ja;
+    if (set === "promo" || set === "prerelease") return true;
+    return !ja;
+  });
+  codes.sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+  return codes
+    .map((set) => narutoSetCodeTag(set))
+    .filter((tag): tag is string => Boolean(tag));
+}
+
+/** Rewrite `S1 · NI-027 — …` → `S1/S2/S4 · NI-027 — …` when collapsed. */
+function withNarutoAppearanceLabel(row: CatalogueCardRow): CatalogueCardRow {
+  const tags = narutoBrowseAppearanceTags(row.appearanceSets, row.lang);
+  if (tags.length <= 1) return row;
+  const primary = narutoCatalogueSetTag(row.printKey, row.lang);
+  const joined = tags.join("/");
+  if (primary && row.label.startsWith(`${primary} · `)) {
+    return {
+      ...row,
+      label: `${joined} · ${row.label.slice(primary.length + 3)}`,
+    };
+  }
+  return row;
+}
+
 /** Locale tile name — attested in that language only; siblings stay in aka. */
 function catalogueNames(
   pack: CataloguePackId,
@@ -344,7 +428,18 @@ function catalogueNames(
       : useNarutoRef
         ? formatNarutoReference(entry.set, entry.card, lang)
         : `${entry.set} · ${diskCard}`;
-  const label = preferred ? `${printed} — ${preferred}` : printed;
+  let setTag = useNarutoRef
+    ? narutoCatalogueSetTag(printKey, lang)
+    : null;
+  // Ref already carries « · promo » / PR-… — don't prefix another Promo.
+  if (
+    setTag === "Promo" &&
+    (/\bpromo\b/i.test(printed) || /^PR(?:-US)?-?\d/i.test(printed))
+  ) {
+    setTag = null;
+  }
+  const withSet = setTag ? `${setTag} · ${printed}` : printed;
+  const label = preferred ? `${withSet} — ${preferred}` : withSet;
   return {
     ...(preferred ? { name: preferred } : {}),
     ...(aka.length ? { aka } : {}),
@@ -421,18 +516,59 @@ function donorMapKey(card: string, lang: string): string {
   return `${catalogueCollectorKey(card)}\0${lang.toLowerCase()}`;
 }
 
+/**
+ * Browse identity: collector (+ grouping) × face language.
+ * Promo / prerelease channels stay on their set-scoped printKey.
+ */
+function narutoBrowseIdentityKey(row: CatalogueCardRow): string {
+  const lang = row.lang.toLowerCase();
+  const membership = narutoPrintKeySetCode(row.printKey);
+  if (membership === "promo" || membership === "prerelease") {
+    return `${canonicalizeNarutoPrintKey(row.printKey)}\0${lang}`;
+  }
+  const collector =
+    narutoCollectorKey(row.card) ?? canonicalizeNarutoPrintKey(row.printKey);
+  return `${collector}\0${lang}`;
+}
+
+/** Prefer the checklist axis that matches the face language. */
+function membershipLocaleScore(
+  setCode: string | null,
+  lang: string,
+): number {
+  if (!setCode) return 0;
+  const ja = lang.toLowerCase() === "ja";
+  if (isNarutoJapaneseVolumeSet(setCode)) return ja ? 100 : -40;
+  if (/^s\d+$/i.test(setCode)) {
+    if (ja) return 0;
+    return 100 + Math.max(0, 20 - Number(setCode.slice(1)));
+  }
+  return 5;
+}
+
 function catalogueRowScore(row: CatalogueCardRow): number {
   let score = 0;
-  if (row.printed !== false) score += 20;
+  if (row.printed === false) score -= 100;
+  else score += 20;
   if (row.artUrl && !row.missingArt && !row.artFallbackFrom) score += 10;
   if (!row.artFallbackFrom) score += 3;
   if (row.name) score += 1;
+  score += membershipLocaleScore(
+    narutoPrintKeySetCode(row.printKey),
+    row.lang,
+  );
   return score;
 }
 
+function appearanceSetOfRow(row: CatalogueCardRow): string | null {
+  return narutoPrintKeySetCode(row.printKey);
+}
+
 /**
- * One tile per printed identity + locale. An unprinted stub of NI-086 must
- * not sit beside the real FR face just because the printKey padding differs.
+ * One browse tile per collector impression + face language.
+ *
+ * Set-scoped printKeys (`s1` / `maki3` / …) stay in sqlite for sealed
+ * checklists; the admin grid collapses them and keeps `appearanceSets`.
  */
 function collapseNarutoIdentityRows(
   rows: CatalogueCardRow[],
@@ -444,8 +580,7 @@ function collapseNarutoIdentityRows(
       passthrough.push(row);
       continue;
     }
-    const identity = canonicalizeNarutoPrintKey(row.printKey);
-    const key = `${identity}\0${row.lang.toLowerCase()}`;
+    const key = narutoBrowseIdentityKey(row);
     const list = groups.get(key) ?? [];
     list.push(row);
     groups.set(key, list);
@@ -453,15 +588,65 @@ function collapseNarutoIdentityRows(
   const collapsed: CatalogueCardRow[] = [];
   for (const list of groups.values()) {
     if (list.length === 1) {
-      collapsed.push(list[0]!);
+      const only = list[0]!;
+      const set = appearanceSetOfRow(only);
+      collapsed.push(
+        withNarutoAppearanceLabel(
+          set && !only.appearanceSets
+            ? { ...only, appearanceSets: [set] }
+            : only,
+        ),
+      );
       continue;
     }
-    list.sort((a, b) => catalogueRowScore(b) - catalogueRowScore(a));
-    collapsed.push(list[0]!);
+    list.sort((a, b) => {
+      const byScore = catalogueRowScore(b) - catalogueRowScore(a);
+      if (byScore !== 0) return byScore;
+      return a.printKey.localeCompare(b.printKey);
+    });
+    const winner = list[0]!;
+    const appearanceSets = [
+      ...new Set(
+        list
+          .map((row) => appearanceSetOfRow(row))
+          .filter((set): set is string => Boolean(set)),
+      ),
+    ].sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+    collapsed.push(
+      withNarutoAppearanceLabel(
+        appearanceSets.length
+          ? { ...winner, appearanceSets }
+          : winner,
+      ),
+    );
   }
   return collapseNarutoAbBareJaRows(
-    [...passthrough, ...collapsed].sort(compareNarutoCatalogueRows),
+    dropUnprintedWhenPrintedSiblingExists(
+      [...passthrough, ...collapsed].sort(compareNarutoCatalogueRows),
+    ),
   );
+}
+
+/** Drop unprinted stubs when a printed face of the same collector+lang exists. */
+function dropUnprintedWhenPrintedSiblingExists(
+  rows: CatalogueCardRow[],
+): CatalogueCardRow[] {
+  const printedCollectors = new Set<string>();
+  for (const row of rows) {
+    if (row.kind && row.kind !== "face") continue;
+    if (row.printed === false) continue;
+    const collector = narutoCollectorKey(row.card);
+    if (!collector) continue;
+    printedCollectors.add(`${collector}\0${row.lang.toLowerCase()}`);
+  }
+  if (printedCollectors.size === 0) return rows;
+  return rows.filter((row) => {
+    if (row.kind && row.kind !== "face") return true;
+    if (row.printed !== false) return true;
+    const collector = narutoCollectorKey(row.card);
+    if (!collector) return true;
+    return !printedCollectors.has(`${collector}\0${row.lang.toLowerCase()}`);
+  });
 }
 
 /**

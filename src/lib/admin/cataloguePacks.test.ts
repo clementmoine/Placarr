@@ -434,6 +434,95 @@ describe("Naruto catalogue lines", () => {
     );
   });
 
+  it("collapses set memberships into one browse tile per collector+lang", () => {
+    /*
+      Set-scoped minting lists NI-009 on s1+s3+s4+maki1. Browse shows one FR
+      tile (EU primary S1) and one JA tile (巻1); sealed still uses full
+      memberships via appearanceSets.
+    */
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:maki1-ni0009": {
+          set: "ninja",
+          card: "ni0009",
+          langs: { fr: { art: "art.jpg" }, ja: { name: "ミズキ" } },
+        },
+        "naruto:s1-ni0009": {
+          set: "ninja",
+          card: "ni0009",
+          name: "Mizuki",
+          langs: {
+            fr: { art: "art.jpg", name: "Mizuki" },
+            ja: { name: "ミズキ" },
+          },
+        },
+        "naruto:s3-ni0009": {
+          set: "ninja",
+          card: "ni0009",
+          name: "Mizuki",
+          langs: { fr: { art: "art.jpg", name: "Mizuki" } },
+        },
+        "naruto:s4-ni0009": {
+          set: "ninja",
+          card: "ni0009",
+          name: "Mizuki",
+          langs: { fr: { art: "art.jpg", name: "Mizuki" } },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    const fr = rows.filter(
+      (row) => /ni0*009/i.test(row.card) && row.lang === "fr",
+    );
+    expect(fr).toHaveLength(1);
+    expect(fr[0]?.printKey).toBe("naruto:s1-ni0009");
+    // One tile; every EU membership stays visible in the caption.
+    expect(fr[0]?.label).toBe("S1/S3/S4 · NI-009 — Mizuki");
+    expect(fr[0]?.appearanceSets).toEqual(["maki1", "s1", "s3", "s4"]);
+    const ja = rows.filter(
+      (row) => /ni0*009/i.test(row.card) && row.lang === "ja",
+    );
+    expect(ja).toHaveLength(1);
+    expect(ja[0]?.printKey).toBe("naruto:maki1-ni0009");
+    expect(ja[0]?.label).toBe("巻1 · 忍-9 — ミズキ");
+    expect(ja[0]?.appearanceSets).toEqual(["maki1", "s1"]);
+
+    // Same model for CL-001 (S1 + 巻3): FR keeps the EU face, JA the 巻ノ.
+    const clIndex = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:maki3-cl0001": {
+          set: "character",
+          card: "cl0001",
+          langs: { ja: { name: "イナリ" }, fr: { art: "art.jpg" } },
+        },
+        "naruto:s1-cl0001": {
+          set: "character",
+          card: "cl0001",
+          name: "Inari",
+          langs: {
+            fr: { art: "art.jpg", name: "Inari" },
+            ja: { name: "イナリ" },
+          },
+        },
+      },
+    };
+    const clRows = buildCatalogueCardRows("naruto/carddass", clIndex);
+    const clFr = clRows.find((r) => r.card === "cl0001" && r.lang === "fr");
+    const clJa = clRows.find((r) => r.card === "cl0001" && r.lang === "ja");
+    expect(clFr?.printKey).toBe("naruto:s1-cl0001");
+    expect(clFr?.label).toMatch(/^S1 · CL-001/);
+    expect(clJa?.printKey).toBe("naruto:maki3-cl0001");
+    expect(clJa?.label).toMatch(/^巻3 ·/);
+    expect(clFr?.appearanceSets).toEqual(["maki3", "s1"]);
+    expect(clJa?.appearanceSets).toEqual(["maki3", "s1"]);
+  });
+
   it("does not show a borrowed sibling name on a locale tile", () => {
     const index = {
       version: 1 as const,
@@ -711,8 +800,8 @@ describe("same-number art fallback (Naruto)", () => {
       "ta081",
       "m081",
     ]);
-    expect(byCard.get("ni001")?.label).toMatch(/^NI-001/);
-    expect(byCard.get("n001")?.label).toMatch(/^N-001/);
+    expect(byCard.get("ni001")?.label).toMatch(/^S1 · NI-001/);
+    expect(byCard.get("n001")?.label).toMatch(/^S7 · N-001/);
   });
 
   it("inherits retail face onto promo stub until official art exists", () => {

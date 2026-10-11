@@ -119,14 +119,65 @@ async function runSlot(slot: number): Promise<void> {
   }
 }
 
-async function sweepStaleLocks(): Promise<void> {
-  const { requeued, abandoned } =
-    await recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS);
-  if (requeued > 0 || abandoned > 0) {
-    console.warn(
-      `[Worker ${WORKER_ID}] stale recovery: requeued=${requeued} abandoned=${abandoned}`,
-    );
+function isDbUnavailableError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const code = "code" in error ? String((error as { code?: unknown }).code) : "";
+  if (code === "ECONNREFUSED" || code === "P1001" || code === "P1017") {
+    return true;
   }
+  const message =
+    error instanceof Error ? error.message : String(error ?? "");
+  return /ECONNREFUSED|Can't reach database|Connection refused/i.test(message);
+}
+
+async function sweepStaleLocks(): Promise<void> {
+  try {
+    const { requeued, abandoned } =
+      await recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS);
+    if (requeued > 0 || abandoned > 0) {
+      console.warn(
+        `[Worker ${WORKER_ID}] stale recovery: requeued=${requeued} abandoned=${abandoned}`,
+      );
+    }
+  } catch (error) {
+    if (isDbUnavailableError(error)) {
+      console.warn(
+        `[Worker ${WORKER_ID}] stale recovery skipped — database unreachable`,
+      );
+      return;
+    }
+    throw error;
+  }
+}
+
+/** Wait until Prisma can reach Postgres (hybrid Mac: compose db + host workers). */
+async function waitForDatabase(opts?: {
+  attempts?: number;
+  delayMs?: number;
+}): Promise<void> {
+  const attempts = opts?.attempts ?? 30;
+  const delayMs = opts?.delayMs ?? 2000;
+  const { prisma } = await import("../src/lib/db/prisma");
+  let last: unknown;
+  for (let i = 1; i <= attempts; i += 1) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      if (i > 1) {
+        console.info(`[Worker ${WORKER_ID}] database ready (attempt ${i})`);
+      }
+      return;
+    } catch (error) {
+      last = error;
+      if (!isDbUnavailableError(error)) throw error;
+      console.warn(
+        `[Worker ${WORKER_ID}] waiting for database (${i}/${attempts})…`,
+      );
+      await sleep(delayMs);
+    }
+  }
+  throw last instanceof Error
+    ? last
+    : new Error("database unreachable after wait");
 }
 
 async function main(): Promise<void> {
@@ -147,6 +198,8 @@ async function main(): Promise<void> {
       `[Worker ${WORKER_ID}] capped concurrency for FlareSolverr (serial browser). Set WORKER_CONCURRENCY_FORCE=1 to override.`,
     );
   }
+
+  await waitForDatabase();
 
   const recoverTimer = setInterval(() => {
     void sweepStaleLocks();

@@ -5,6 +5,7 @@
  * `shared/cardCatalogue/pipeline`. Ne reste ici que ce qui est propre au pack :
  * sa base, son pipeline, et ce qu'une passe automatique s'autorise.
  */
+import { DBS_CG_EFFECT_PACK_ID } from "@/effects/dbscg";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 
@@ -12,6 +13,7 @@ import { dbsCgDbPath, DBS_CG_PACK_ID } from "../indexStore";
 
 const hooks = cardCatalogueHooks({
   packId: DBS_CG_PACK_ID,
+  effectPackId: DBS_CG_EFFECT_PACK_ID,
   dbPath: dbsCgDbPath,
   runPipeline: async (argv) => {
     const { runDbsCgPackPipeline } = await import(

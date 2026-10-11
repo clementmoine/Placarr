@@ -3,10 +3,22 @@
  * (provider-blind: discovered from registry on the server).
  */
 
+export type CatalogueCorpusLastGrowth = {
+  cards?: number;
+  products?: number;
+  sets?: number;
+  cardsDelta?: number;
+  productsDelta?: number;
+  setsDelta?: number;
+  addedSets?: string[];
+};
+
 export type CatalogueCorpusStatus = {
   empty: boolean;
   stale: boolean;
   lastSyncAt: string | null;
+  /** Counts from the last Sync that reported them (autonomie signal). */
+  lastGrowth?: CatalogueCorpusLastGrowth | null;
 };
 
 export type CatalogueCorpusRow = {

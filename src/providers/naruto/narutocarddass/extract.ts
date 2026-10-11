@@ -57,6 +57,7 @@ import {
 } from "@/providers/naruto/shared/gg/ggArchiveHarvest";
 import { scrapeNarutoCardGameGgCards } from "./scrape/catalogues";
 import { harvestColekaCarddassPrices } from "./harvest/colekaPrices";
+import { harvestSurugaCarddassPrices } from "./harvest/surugaPrices";
 import { harvestCarddasVol1Faces } from "./harvest";
 import { probeSurugaVol1Listings } from "./pipeline/suruga";
 import { probeSurugaMissingVol1 } from "./pipeline/suruga";
@@ -291,6 +292,16 @@ async function runScrape(argv: readonly string[]): Promise<void> {
       } catch (err) {
         console.warn(
           `── Coleka deals prices — ${err instanceof Error ? err.message : err}`,
+        );
+      }
+      try {
+        const surugaPrices = await harvestSurugaCarddassPrices();
+        console.log(
+          `── Suruga yen prices — ${surugaPrices.ledger.cardCount} diskId (${surugaPrices.fetched} fiches)`,
+        );
+      } catch (err) {
+        console.warn(
+          `── Suruga yen prices — ${err instanceof Error ? err.message : err}`,
         );
       }
     }

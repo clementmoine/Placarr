@@ -557,8 +557,9 @@ export function parseStorm3ProductFaceUrl(html: string): string | null {
 }
 
 export function storm3PrintKey(number: string): string {
+  const set = "s28";
   return (
-    mintNarutoPrintKey(number) ?? `naruto:${STORM3_SET}-${number.toLowerCase()}`
+    mintNarutoPrintKey(number, set) ?? `naruto:${set}-${number.toLowerCase()}`
   );
 }
 
@@ -594,6 +595,8 @@ const DATA_CARDDASS_RE = /データカードダス|\bDN-|\bNM-/i;
 export type SurugaCarddassListing = {
   id: string;
   printed: string;
+  /** Used listing yen (税込 when present). Absent on face-only TSV rows. */
+  priceYen?: number | null;
 };
 
 export type SurugaCarddassCard = {
@@ -699,7 +702,13 @@ export function parseSurugaCarddassSearchHtml(
     const printed = parseSurugaCarddassPrinted(title);
     if (!printed || DATA_CARDDASS_RE.test(title)) continue;
     seen.add(id);
-    out.push({ id, printed });
+    const slice = html.slice(m.index, m.index + 800);
+    const priceYen = parseSurugaYenAmount(slice);
+    out.push({
+      id,
+      printed,
+      ...(priceYen != null ? { priceYen } : {}),
+    });
   }
 
   surugaCarddass_ITEM_RE.lastIndex = 0;
@@ -731,6 +740,40 @@ function isDataCarddassSlice(slice: string, printed: string | null): boolean {
   return !printed;
 }
 
+/**
+ * Yen amount from Suruga copy. Prefer 税込 when both bare and tax-in are shown
+ * (`40円(税込44円)` → 44).
+ */
+export function parseSurugaYenAmount(raw: string): number | null {
+  const text = decodeSurugaHtmlEntities(raw).replace(/\s+/g, " ");
+  const taxIn = /税込\s*([0-9,]+)\s*円/.exec(text);
+  if (taxIn) {
+    const n = Number(taxIn[1]!.replace(/,/g, ""));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  const plain = /([0-9,]+)\s*円/.exec(text);
+  if (!plain) return null;
+  const n = Number(plain[1]!.replace(/,/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Used (中古) ask on a product page — marketplace, not kaitori buyback. */
+export function parseSurugaUsedPriceYen(html: string): number | null {
+  const usedBlock =
+    /data-label="[^"]*中古[^"]*"[\s\S]{0,500}?class="[^"]*price-buy[^"]*"[^>]*>([^<]+)/i.exec(
+      html,
+    ) ??
+    /中古[\s\S]{0,200}?([0-9,]+)\s*円(?:\s*\(?\s*税込)?/i.exec(html);
+  if (usedBlock) {
+    const yen = parseSurugaYenAmount(usedBlock[0]!);
+    if (yen != null) return yen;
+  }
+  const buy =
+    /class="[^"]*price-buy[^"]*"[^>]*>([^<]+)/i.exec(html) ??
+    /<span class="price">([^<]+)<\/span>/i.exec(html);
+  return buy ? parseSurugaYenAmount(buy[1] ?? buy[0]!) : null;
+}
+
 /** Single product page — same printed rules as search slices. */
 export function parseSurugaProductDetailHtml(
   html: string,
@@ -740,23 +783,36 @@ export function parseSurugaProductDetailHtml(
   if (!printed) return null;
   if (isDataCarddassSlice(html, printed)) return null;
   if (/^NM-|^DN-/i.test(printed)) return null;
-  return { id: productId.toUpperCase(), printed };
+  const priceYen = parseSurugaUsedPriceYen(html);
+  return {
+    id: productId.toUpperCase(),
+    printed,
+    ...(priceYen != null ? { priceYen } : {}),
+  };
 }
 
 export function mergeSurugaCarddassListings(
   ...groups: readonly (readonly SurugaCarddassListing[])[]
 ): SurugaCarddassListing[] {
-  const seen = new Set<string>();
-  const out: SurugaCarddassListing[] = [];
+  const byId = new Map<string, SurugaCarddassListing>();
   for (const group of groups) {
     for (const row of group) {
       const id = row.id.toUpperCase();
-      if (seen.has(id)) continue;
-      seen.add(id);
-      out.push({ id, printed: row.printed });
+      const prev = byId.get(id);
+      if (!prev) {
+        byId.set(id, {
+          id,
+          printed: row.printed,
+          ...(row.priceYen != null ? { priceYen: row.priceYen } : {}),
+        });
+        continue;
+      }
+      if (prev.priceYen == null && row.priceYen != null) {
+        byId.set(id, { ...prev, priceYen: row.priceYen });
+      }
     }
   }
-  return out;
+  return [...byId.values()];
 }
 
 export function parseSurugaCarddassListingsTsv(

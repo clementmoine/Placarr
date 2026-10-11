@@ -42,6 +42,10 @@ export type TcgdexTitleRow = {
   name: string;
   setName: string | null;
   serieName: string | null;
+  /** Localized TCGdex rarity (`Commune`, `Holo Rare V`, …) — detail enrich. */
+  rarity?: string | null;
+  /** Localized stage (`Base`, `Niveau 1`, …) — detail enrich. */
+  stage?: string | null;
 };
 
 export type TcgdexSetRow = {
@@ -66,12 +70,22 @@ export type TcgdexSearchRow = {
   name: string;
   setName: string | null;
   serieName: string | null;
+  rarity: string | null;
+  stage: string | null;
   /**
    * Printed set size for `004/015` labels — **official only**, never the
    * harvest `total` (secrets push past the corner denominator: 158/128).
    */
   setOfficialCount: number | null;
 };
+
+/** Shared projection for search / lookup / checklist SQL. */
+const TCGDEX_SEARCH_SELECT = `p.print_key AS printKey, p.set_id AS setId,
+              p.local_id AS localId, p.provider_id AS providerId,
+              p.image_base_url AS imageBaseUrl,
+              t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
+              t.rarity, t.stage,
+              s.official_count AS setOfficialCount`;
 
 export function tcgdexDbPath(): string {
   ensurePokemonDbLayout();
@@ -112,6 +126,8 @@ function createSchema(db: DatabaseSync): void {
       name TEXT NOT NULL,
       set_name TEXT,
       serie_name TEXT,
+      rarity TEXT,
+      stage TEXT,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
@@ -132,6 +148,7 @@ function createSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_titles_name ON print_titles(name);
   `);
   migrateTcgdexSetsColumns(db);
+  migrateTcgdexTitleColumns(db);
 }
 
 /**
@@ -142,20 +159,40 @@ const ADDED_SET_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
   { name: "official_count", ddl: "INTEGER" },
 ];
 
-function migrateTcgdexSetsColumns(db: DatabaseSync): void {
+/** Detail enrich (per-card API) — absent from set briefs. */
+const ADDED_TITLE_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
+  { name: "rarity", ddl: "TEXT" },
+  { name: "stage", ddl: "TEXT" },
+];
+
+function migrateTableColumns(
+  db: DatabaseSync,
+  table: string,
+  columns: ReadonlyArray<{ name: string; ddl: string }>,
+): void {
   try {
     const present = new Set(
-      (db.prepare(`PRAGMA table_info(sets)`).all() as { name: string }[]).map(
-        (row) => row.name,
-      ),
+      (
+        db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+      ).map((row) => row.name),
     );
-    for (const column of ADDED_SET_COLUMNS) {
+    for (const column of columns) {
       if (present.has(column.name)) continue;
-      db.exec(`ALTER TABLE sets ADD COLUMN ${column.name} ${column.ddl}`);
+      db.exec(
+        `ALTER TABLE ${table} ADD COLUMN ${column.name} ${column.ddl}`,
+      );
     }
   } catch {
-    /* illisible / verrouillée — la lecture retombera sans le dénominateur */
+    /* illisible / verrouillée — la lecture retombera sans la colonne */
   }
+}
+
+function migrateTcgdexSetsColumns(db: DatabaseSync): void {
+  migrateTableColumns(db, "sets", ADDED_SET_COLUMNS);
+}
+
+function migrateTcgdexTitleColumns(db: DatabaseSync): void {
+  migrateTableColumns(db, "print_titles", ADDED_TITLE_COLUMNS);
 }
 
 export function writeTcgdexSet(input: {
@@ -196,12 +233,14 @@ export function writeTcgdexSet(input: {
         END
     `);
     const insertTitle = db.prepare(`
-      INSERT INTO print_titles (print_key, lang, name, set_name, serie_name)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO print_titles (print_key, lang, name, set_name, serie_name, rarity, stage)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(print_key, lang) DO UPDATE SET
         name = excluded.name,
         set_name = excluded.set_name,
-        serie_name = excluded.serie_name
+        serie_name = excluded.serie_name,
+        rarity = COALESCE(excluded.rarity, print_titles.rarity),
+        stage = COALESCE(excluded.stage, print_titles.stage)
     `);
     const insertSet = db.prepare(`
       INSERT INTO sets (set_id, lang, name, serie_name, released_at, total_count, official_count, harvested_at)
@@ -233,6 +272,8 @@ export function writeTcgdexSet(input: {
           row.name,
           row.setName,
           row.serieName,
+          row.rarity ?? null,
+          row.stage ?? null,
         );
       }
       insertSet.run(
@@ -321,6 +362,7 @@ export function ensureTcgdexIndex(): DatabaseSync | null {
     const writable = new DatabaseSync(dbPath);
     try {
       migrateTcgdexSetsColumns(writable);
+      migrateTcgdexTitleColumns(writable);
     } finally {
       writable.close();
     }
@@ -420,11 +462,7 @@ export function lookupTcgdexSearchRow(
   const lang = (opts.language || "fr").toLowerCase();
   const row = db
     .prepare(
-      `SELECT p.print_key AS printKey, p.set_id AS setId,
-              p.local_id AS localId, p.provider_id AS providerId,
-              p.image_base_url AS imageBaseUrl,
-              t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
-              s.official_count AS setOfficialCount
+      `SELECT ${TCGDEX_SEARCH_SELECT}
          FROM prints p
          JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN sets s
@@ -477,11 +515,7 @@ export function searchTcgdexRows(
 
   return db
     .prepare(
-      `SELECT p.print_key AS printKey, p.set_id AS setId,
-              p.local_id AS localId, p.provider_id AS providerId,
-              p.image_base_url AS imageBaseUrl,
-              t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
-              s.official_count AS setOfficialCount
+      `SELECT ${TCGDEX_SEARCH_SELECT}
          FROM prints p
          JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN sets s
@@ -503,11 +537,7 @@ export function listTcgdexRowsForLanguage(language = "fr"): TcgdexSearchRow[] {
   const lang = language.trim().toLowerCase() || "fr";
   return db
     .prepare(
-      `SELECT p.print_key AS printKey, p.set_id AS setId,
-              p.local_id AS localId, p.provider_id AS providerId,
-              p.image_base_url AS imageBaseUrl,
-              t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
-              s.official_count AS setOfficialCount
+      `SELECT ${TCGDEX_SEARCH_SELECT}
          FROM prints p
          JOIN print_titles t
            ON t.print_key = p.print_key AND t.lang = ?
@@ -516,6 +546,80 @@ export function listTcgdexRowsForLanguage(language = "fr"): TcgdexSearchRow[] {
         ORDER BY LOWER(p.set_id), CAST(p.local_id AS INTEGER), p.local_id`,
     )
     .all(lang) as TcgdexSearchRow[];
+}
+
+export type TcgdexTitleDetailGap = {
+  printKey: string;
+  lang: string;
+  providerId: string;
+};
+
+/** Titles still missing rarity after set-brief harvest — detail API candidates. */
+export function listTcgdexTitlesMissingRarity(
+  limit = 200,
+): TcgdexTitleDetailGap[] {
+  const db = ensureTcgdexIndex();
+  if (!db) return [];
+  const cap = Math.max(1, Math.min(Math.floor(limit), 5_000));
+  return db
+    .prepare(
+      `SELECT t.print_key AS printKey, t.lang, p.provider_id AS providerId
+         FROM print_titles t
+         JOIN prints p ON p.print_key = t.print_key
+        WHERE t.rarity IS NULL OR TRIM(t.rarity) = ''
+        ORDER BY (t.lang = 'fr') DESC,
+                 (t.lang = 'en') DESC,
+                 LOWER(p.set_id),
+                 CAST(p.local_id AS INTEGER),
+                 p.local_id
+        LIMIT ?`,
+    )
+    .all(cap) as TcgdexTitleDetailGap[];
+}
+
+/** Patch rarity/stage from per-card detail enrich (does not touch names). */
+export function patchTcgdexTitleDetails(
+  patches: readonly {
+    printKey: string;
+    lang: string;
+    rarity: string | null;
+    stage: string | null;
+  }[],
+  dbPath?: string,
+): number {
+  if (patches.length === 0) return 0;
+  const pathToDb = dbPath ?? tcgdexDbPath();
+  mkdirSync(path.dirname(pathToDb), { recursive: true });
+  const db = new DatabaseSync(pathToDb);
+  try {
+    db.exec("PRAGMA busy_timeout = 30000");
+    createSchema(db);
+    const update = db.prepare(`
+      UPDATE print_titles
+         SET rarity = COALESCE(?, rarity),
+             stage = COALESCE(?, stage)
+       WHERE print_key = ? AND lang = ?
+    `);
+    let written = 0;
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      for (const row of patches) {
+        const rarity = row.rarity?.trim() || null;
+        const stage = row.stage?.trim() || null;
+        if (!rarity && !stage) continue;
+        const result = update.run(rarity, stage, row.printKey, row.lang);
+        written += Number(result.changes ?? 0);
+      }
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+    return written;
+  } finally {
+    db.close();
+    resetTcgdexIndexCache();
+  }
 }
 
 /**

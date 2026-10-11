@@ -785,8 +785,14 @@ export async function runUpdate(
 
   try {
     const { prunePokemonCardLangs } = await import("../cdn/pruneCardLangs");
+    const { pokemonCardLangsToKeep } = await import("../cdn/languages");
+    /*
+      Always keep catalogue locales (en+fr). `opts.langs` is the scrape set
+      (often just `fr`) — using it alone as keepLangs wiped `en` and left
+      opt-in shells (de/it/es/ptbr) when a prior pass had asked for all six.
+    */
     const prunedLangs = prunePokemonCardLangs({
-      keepLangs: opts.langs,
+      keepLangs: pokemonCardLangsToKeep(opts.langs),
       cardsRoot: path.join(repo, "data", "pokemon", "cards"),
       apply: true,
     });

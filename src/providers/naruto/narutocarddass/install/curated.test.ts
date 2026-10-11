@@ -327,11 +327,14 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         "ninja/ni0309/ja",
         "ninja/ni0369/ja",
         /*
+          PR-93 : face FB binder Victor (fbid 1968916513588340) — dig corrige
+          une lecture PR-098 → PR-093 (2026-10-11).
           PR-95 / PR-96 : reconstructions FR du 2026-09-04, source.jpg à côté —
           aucun scan à plat de ces promos n'était détenu.
           PR-100 : Gemini FR à partir des faces EN Coleka + Drive
           (`source.coleka.jpg` + `source.drive.jpg`).
         */
+        "promo/pr0093/fr",
         "promo/pr0095/fr",
         "promo/pr0096/fr",
         "promo/pr0100/fr",
@@ -718,10 +721,18 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
     it("keeps the collector's French CCG copies (UNS3 promos ≠ s28 booster)", () => {
       expect(physical.sameSleeveEnFr).toBe(true);
       expect(physical.legalLineIsNotPrintYear).toBe(true);
+      const twin = physical.prints.find((row) => row.ref === "PR-093");
       const goku = physical.prints.find((row) => row.ref === "PR-095");
       const hokage = physical.prints.find((row) => row.ref === "PR-096");
       const cloak = physical.prints.find((row) => row.ref === "PR-100");
       const kisame = physical.prints.find((row) => row.ref === "1650");
+      expect(twin).toMatchObject({
+        notBoosterS28: true,
+        namePrinted: "Double éclair pourfendeur",
+        password: "N2FB24M1K5",
+        printKeyHint: "naruto:pr-0093",
+        faceFr: expect.stringContaining("pr0093"),
+      });
       expect(goku).toMatchObject({
         notBoosterS28: true,
         namePrinted: "Naruto Uzumaki",

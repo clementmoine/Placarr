@@ -7,6 +7,7 @@
  * L'extract Unity / foil passe par Catalogue Extract (admin / worker
  * in-process) — ce pipeline catalogue ne le lance pas.
  */
+import { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 
@@ -18,6 +19,7 @@ const LORCANA_PACK_ID = "lorcana";
 
 const hooks = cardCatalogueHooks({
   packId: LORCANA_PACK_ID,
+  effectPackId: LORCANA_EFFECT_PACK_ID,
   dbPath: lorcanaTcgDbPath,
   runPipeline: async (argv) => {
     /*

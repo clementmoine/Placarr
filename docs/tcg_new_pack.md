@@ -21,9 +21,11 @@ src/providers/<franchise>/<id>/
 
 Registry : une entrée dans `core/catalog/registry.ts` — **aucun** literal de
 provider id hors `providers/`. Aussi : ligne `CATALOGUE_PACKS` + import
-`effects/` (dette **wiring auto** — backlog P2 : un Sync doit suffire pour
-sets / cartes / scellés / faces une fois le pack branché ; pas de nouvel
-`if` core à chaque extension).
+`effects/` (garde `localTcgWiring.test.ts` : `catalog.dataPack` ⇒ hub,
+`catalog.effectPack` ⇒ pack enregistré, `effects/index.ts` couvre chaque
+dossier). **Croissance** (nouveau set / carte / scellé / face) : Sync seul —
+pas de nouvel `if` core. **Nouveau jeu** : encore ces 3 edits manuels jusqu’à
+dérivation hub (backlog P2 wiring auto).
 
 | Factory | Quand |
 | ------- | ----- |
@@ -98,20 +100,44 @@ Ne **pas** ajouter de `if (providerId === …)` dans `core/` pour ces écarts :
 étendre `LocalTcgLineSpec` ou un hook `ProviderModule` si le besoin est
 récurrent (≥2 packs).
 
+## Croissance Sync (autonomie — le vrai travail)
+
+**Critère de fin** : sources vivantes → Sync → nouveautés dans la sqlite,
+sans edit dev par set/carte. Le wiring (registry / hub / effects) n’est que
+le **bootstrap** d’un nouveau jeu. Détail : [catalogue_contract.md](catalogue_contract.md)
+§ Autonomie.
+
+Une fois le pack branché, **ne pas** retoucher le core pour étendre le corpus :
+
+| Donnée | Chemin |
+| ------ | ------ |
+| Sets | harvest autoritaire → `listPrintSets` / `listRemotePrintSets` ; alpha → `catalogueSetCodes` |
+| Cartes | seed / install → `searchPrints` / `lookupPrint` / checklist |
+| Scellés | `seedProducts` + `products-contents.json` |
+| Faces / dos | curated + install sous `data/<pack>/cards/` ; `effectPack` déjà sur `catalog` |
+| Foil materials | dump / kit déjà enregistré sur le pack d’effets |
+
+Pack-side seulement : harvest STEPS (`selectCatalogueSteps`), parse des refs,
+nouveau finish shader, contenus scellés — **pas** une liste magique de sets
+dans le core.
+
 ## Checklist nouveau pack (vide → vivant)
 
 1. [ ] `pack.ts` — ids + `*CuratedDir()`
 2. [ ] `printKey.ts` — mint/parse/format + `CATALOGUE_SET_CODES` si sets alpha
 3. [ ] `index.ts` — `createEmptyLocalTcgProvider({ lineSpec, runPipeline })`
 4. [ ] Registry + test module (`info.id`, `printGames`, `catalog.dataPack`)
-5. [ ] `extract.ts` — `runLocalTcgPipeline` (seed peut écrire 0 cartes)
-6. [ ] Curated minimal (`cards/back.*`, éventuellement `products/`)
-7. [ ] Quand les données arrivent : ledgers → install → faces → sealed →
-      `products-contents.json` (conseil d’achat)
-8. [ ] Test : `catalogueSetFromPrintKey` sur un printKey réel du jeu
-9. [ ] Ajouter l’id provider à `FACTORY_LOCAL_TCG_IDS` dans
+5. [ ] Hub admin : entrée `CATALOGUE_PACKS` (`extractTarget`, markers, labels)
+6. [ ] `effects/<id>/` + import side-effect dans `effects/index.ts`
+7. [ ] `extract.ts` — `runLocalTcgPipeline` (seed peut écrire 0 cartes)
+8. [ ] Curated minimal (`cards/back.*`, éventuellement `products/`)
+9. [ ] Quand les données arrivent : ledgers → install → faces → sealed →
+   `products-contents.json` (conseil d’achat)
+10. [ ] Test : `catalogueSetFromPrintKey` sur un printKey réel du jeu
+11. [ ] Ajouter l’id provider à `FACTORY_LOCAL_TCG_IDS` dans
       `localTcgContract.test.ts` (garde search / lookup / sets / catalog)
-10. [ ] `pnpm test` vert ; pas de literal provider hors `providers/`
+12. [ ] `pnpm test` vert — dont `localTcgWiring.test.ts` ; pas de literal
+      provider hors `providers/`
 
 ## Packs hors factory (héritage — même contrat app)
 

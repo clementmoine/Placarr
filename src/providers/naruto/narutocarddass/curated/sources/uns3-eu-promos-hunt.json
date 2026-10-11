@@ -24,7 +24,24 @@
     "collectorsEditions": {
       "skus": ["Will of Fire", "True Despair"],
       "promo": "premium trading card (PR TBD — likely same late wave; do not invent ref)",
-      "note": "Press says « a premium trading card »; sealed-box photos still needed to pin PR-100 vs other."
+      "press": [
+        "https://www.kana.fr/jeux-videos-des-coffrets-collector-naruto-shippuden-ultimate-ninja-storm-3/"
+      ],
+      "note": "Kana 23/11/2012 + press : « une carte premium » dans WoF / True Despair — canal jeu, pas manga. Sealed-box photos still needed to pin PR-100 vs other."
+    },
+    "kanaJapanExpo2013MangaCard": {
+      "status": "secondary-press-only — not pinned to a PR ref",
+      "claim": "« une carte Naruto pour tout achat d'un tome » sur le stand Kana JE 2013",
+      "press": [
+        "https://anime-news.eklablog.com/les-goodies-kana-a-la-japan-expo-le-guide-a92812469"
+      ],
+      "officialPageAliveButEmpty": "https://www.kana.fr/je-les-goodies-sur-la-japan/",
+      "not": [
+        "PR-093 Double éclair pourfendeur (aucun lien nommé)",
+        "kana-manga-blister-2008 Carddass S6 (autre époque / autre jeu)",
+        "WoF / True Despair « carte premium » (collectors jeu)"
+      ],
+      "note": "Ne pas fusionner avec le quartet Storm 3 VF tant qu'aucune photo / ref n'identifie la carte JE."
     },
     "retailDuopack": {
       "slug": "duopack-s28",
@@ -43,8 +60,30 @@
   },
   "checklistAxis": {
     "hypothesis": "Late Bandai USA PR line tied to UNS3 (Coleka `_r38199` already enumerates PR-095, PR-096, PR-100; gaps 094/097–099). EU Day One/collectors shipped translated EURO foils of that late promo wave — not the full 100+ US promo set.",
-    "enAlreadyInCatalog": ["naruto:pr-0095", "naruto:pr-0096", "naruto:pr-0100"],
-    "frTitlesInLedger": ["naruto:pr-0095", "naruto:pr-0096", "naruto:pr-0100"],
+    "frStorm3Quartet": {
+      "attestedAt": "2026-10-11",
+      "evidence": "facebook-naruto-collection-france-2026-09-02.json → uns3-vf-promo-quartet-binder (fbid 1968916513588340)",
+      "refs": ["PR-093", "PR-095", "PR-096", "PR-100"],
+      "namesFr": [
+        "Double éclair pourfendeur",
+        "Naruto Uzumaki",
+        "4E Hokage",
+        "Naruto Uzumaki"
+      ],
+      "note": "Les quatre promos Storm 3 VF sur une même page classeur — ≠ PR-098/099."
+    },
+    "enAlreadyInCatalog": [
+      "naruto:pr-0093",
+      "naruto:pr-0095",
+      "naruto:pr-0096",
+      "naruto:pr-0100"
+    ],
+    "frTitlesInLedger": [
+      "naruto:pr-0093",
+      "naruto:pr-0095",
+      "naruto:pr-0096",
+      "naruto:pr-0100"
+    ],
     "frFaceStillMissing": [],
     "frEffectStillNull": [],
     "goatLocaleProbe2026-08-26": {

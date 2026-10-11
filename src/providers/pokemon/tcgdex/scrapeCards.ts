@@ -13,9 +13,9 @@
  * de vingt mille fiches. C'est ce qui rend la moisson tenable, et poliment
  * courte pour l'hôte.
  *
- * Ce que ça ramène : identité, nom, image, nom de set et de série. Pas la
- * rareté, que le brief d'un set ne porte pas — elle exigerait une requête par
- * carte, et la recherche distante ne l'avait pas non plus.
+ * Ce que ça ramène : identité, nom, image, nom de set/série, `releaseDate`
+ * set. Pas la rareté (absente du brief) — voir `enrichCardDetails.ts`
+ * (passe budgétée `/cards/{id}` au Sync).
  */
 import { httpGet } from "@/lib/http/httpClient";
 

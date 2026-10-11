@@ -107,10 +107,36 @@ Catalogue Sync reconstruit le corpus **sans** snapshot local, moyennant délai r
 - Pokémon Live CDN : **Malie** (inventaire + `live.sqlite`) + **epoch probe** (buckets datés) — plus de dig `config-cache` ; meta store sous `logs/apk-store-meta.json`.
 - Hors Sync : `uploads/`, `liveOwned.json` (PTCS), pipelines non-catalogue (icollect / LaunchBox…).
 
-## Croissance & découverte (contrat, code plus tard)
+## Autonomie — critère de fin
 
-- **Croissance** : sync détecte nouveau contenu upstream → insert dans **la même** base.
-- **Découverte** (barcode hors TCG) : confirm → promote corpus — backlog, pas silo parallèle.
+Le catalogue n’est **pas** fini quand tous les packs sont branchés à la main.
+Il l’est quand l’app, depuis les **sources vivantes déjà câblées**, détecte
+et intègre (ou propose) le nouveau contenu **sans** edit core ni curated
+par nouveauté.
+
+```
+Source vivante (API / cardlist / CDN / *cards.fr / punk-records / …)
+  → Sync (auto si catalogLifecycle=living + stale)
+  → delta vs sqlite SSOT
+  → insert (source autoritaire) ou propose (source incertaine)
+  → même base → search / checklist / admin
+```
+
+| Mode source | Exemples | Comportement |
+| ----------- | -------- | ------------ |
+| **Autoritaire** | TCGdex, Bandai cardlist, Scryfall, punk-records, LorcanaJSON | Sync **insert** dans la sqlite pack |
+| **Éphémère / marché** | Coleka, Suruga, shops | Faces/prix → ledger local ; identité seulement si corroborée |
+| **Fermée** | Carddass, 疾風伝, Leclerc ops passées (`finished`) | Pas d’auto-sync ; densification manuelle / ledgers OK |
+
+**Wiring** (registry / hub / effects) = bootstrap d’un **nouveau jeu**.
+**Croissance** (nouveaux sets / cartes / scellés / faces) = Sync seul — garde
+`localTcgWiring.test.ts` + [tcg_new_pack.md](tcg_new_pack.md).
+
+Inventaire des sources encore sous-exploitées :
+[catalogue_sources_underexploited.md](catalogue_sources_underexploited.md).
+
+- **Découverte barcode** (hors TCG) : confirm → promote **dans la même** base
+  catalogue — backlog P3, pas un silo parallèle.
 
 ## Face choice
 

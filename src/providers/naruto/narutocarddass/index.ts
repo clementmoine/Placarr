@@ -4,6 +4,7 @@
  */
 import { existsSync } from "node:fs";
 
+import { NARUTO_CARDDASS_EFFECT_PACK_ID } from "@/effects/narutocarddass";
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
@@ -51,12 +52,21 @@ import {
 } from "@/providers/naruto/shared/gg/ggArchivePrices";
 import type { PriceOfferInput } from "@/core/enrich/evidence";
 
-/** Dig FR d'abord ; à défaut côtes classic-ccg gg (USD). */
+/**
+ * Dig FR d'abord ; sinon Suruga yen (marché JA, FX → ~EUR) ; sinon
+ * classic-ccg gg (USD).
+ */
 export async function refreshNarutoCarddassPriceOffers(
   ctx: BarcodePriceRefreshContext,
 ): Promise<PriceOfferInput[]> {
   const indicative = await refreshNarutoIndicativePriceOffers(ctx);
   if (indicative.length) return indicative;
+  const { refreshSurugaYenPriceOffers } = await import(
+    /* webpackIgnore: true */
+    "./harvest/surugaPrices"
+  );
+  const suruga = await refreshSurugaYenPriceOffers(ctx);
+  if (suruga.length) return suruga;
   return refreshGgArchivePriceOffers({
     ctx,
     packId: NARUTO_PACK_ID,
@@ -71,6 +81,7 @@ const DATA_PACK = "naruto/carddass";
 
 const narutocarddassCatalogHooks = cardCatalogueHooks({
   packId: DATA_PACK,
+  effectPackId: NARUTO_CARDDASS_EFFECT_PACK_ID,
   dbPath: narutoCcgDbPath,
   runPipeline: async (argv) => {
     /*

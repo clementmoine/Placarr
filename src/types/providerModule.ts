@@ -592,6 +592,19 @@ export interface MappingProbeResult {
   statusHint?: MappingProbeStatus;
 }
 
+/** Counts / deltas written by the last successful catalogue Sync. */
+export type ProviderCatalogLastGrowth = {
+  cards?: number;
+  products?: number;
+  sets?: number;
+  /** `after - before` when both sides known (autonomie : nouveautés Sync). */
+  cardsDelta?: number;
+  productsDelta?: number;
+  setsDelta?: number;
+  /** Newly seen set codes this Sync (capped). */
+  addedSets?: string[];
+};
+
 export interface ProviderCatalogStatus {
   /** No usable index / cards yet. */
   empty: boolean;
@@ -599,6 +612,11 @@ export interface ProviderCatalogStatus {
   stale: boolean;
   /** Last successful sync/build, when known. */
   lastSyncAt: string | null;
+  /**
+   * Corpus size after the last Sync that reported counts — autonomy signal
+   * (« Sync a posé N cartes »), not a live DB COUNT.
+   */
+  lastGrowth?: ProviderCatalogLastGrowth | null;
 }
 
 export type ProviderCatalogRefreshOpts = {
@@ -627,6 +645,12 @@ export type ProviderCatalogRefreshOpts = {
 export interface ProviderCatalogHooks {
   /** Pack slug under `data/<pack>/` (may differ from provider id). */
   dataPack: string;
+  /**
+   * Effect-pack id stamped on `PrintCandidate.effectPack` for this corpus.
+   * Must be registered (`@/effects`) whenever the module serves TCG prints —
+   * wiring guard: `localTcgWiring.test.ts`.
+   */
+  effectPack?: string;
   status: () => ProviderCatalogStatus | Promise<ProviderCatalogStatus>;
   refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
 }

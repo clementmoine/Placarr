@@ -610,10 +610,9 @@ const refreshTcgdexOffers = createPrintKeyPriceRefresh<TcgdexCard>({
  * garde **une seule** mise en forme : `toPrintCandidate` ne sait pas d'où vient
  * la carte, et la sortie locale ne peut donc pas dériver de la distante.
  *
- * Les champs absents le sont pour de bon : le brief d'un set ne porte ni
- * rareté ni type — la recherche distante ne les avait pas non plus. En
- * revanche le nom du set et de la série, eux, arrivent **avec** la moisson,
- * là où le distant demandait un appel de plus par set.
+ * Set / série arrivent avec la moisson brief. Rareté / stage : passe détail
+ * budgétée (`enrichTcgdexCardDetails`) — absents du brief set, présents après
+ * enrich (sinon null honnête).
  */
 /** @internal also used by `pokemontcglive` print search (same identity corpus). */
 export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
@@ -636,8 +635,8 @@ export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
     localId: row.localId,
     language,
     name: tcgdexCardDisplayName(row.name, row.localId),
-    rarity: null,
-    stage: null,
+    rarity: row.rarity?.trim() || null,
+    stage: row.stage?.trim() || null,
     category: null,
     types: [],
     hp: null,

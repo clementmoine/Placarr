@@ -155,46 +155,72 @@
       "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/"
     },
     {
-      "id": "pr098-double-eclair-pourfendeur-binder",
-      "product": "Carte promo CCG PR-098 « Double éclair pourfendeur » (VF)",
-      "printedRef": "PR-098",
-      "nameFr": "Double éclair pourfendeur",
-      "type": "promo",
-      "editionMark": "Édition Limitée",
-      "attestedBy": "Victor Husson FB album 2024-10-24 — page classeur promo",
-      "attestedAt": "2026-09-02",
-      "locale": "fr-carddass",
-      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916513588340&set=pcb.1619206362353996",
+      "id": "uns3-vf-promo-quartet-binder",
+      "product": "Quartet promo CCG Ultimate Ninja Storm 3 VF (classeur)",
+      "type": "promo-set",
+      "wave": "UNS3 / Storm 3 EU",
+      "attestedBy": "Victor Husson FB album — photo classeur ; lecture collectionneur 2026-10-11",
+      "attestedAt": "2026-10-11",
+      "locale": "fr-ccg",
+      "photoUrl": "https://www.facebook.com/photo/?fbid=1968916513588340&set=g.805799330361374",
+      "photoUrlAlbum": "https://www.facebook.com/photo/?fbid=1968916513588340&set=pcb.1619206362353996",
       "postPermalink": "https://www.facebook.com/groups/805799330361374/permalink/1619206362353996/",
-      "catalogStatus": "absent — pas dans attested-promos.json ni faces index FR (grep repo 2026-09-02)",
-      "notToConfuseWith": {
-        "te030": "L'éclair pourfendeur — TE-030 CdF champion 2007 (technique S1 tournoi, shuriken 3)"
-      },
-      "samePhotoVisible": [
-        { "printedRef": "PR-099", "nameFr": "Naruto Uzumaki", "note": "tenue film — aussi absent catalogue FR" },
-        { "printedRef": "PR-100", "nameFr": "Naruto Uzumaki", "note": "Sage Mode — déjà documenté DVD Shippuden vol. 21" },
-        { "printedRef": "PR-096", "nameFr": "4e Hokage", "note": "duopack-s28 fenêtre — déjà indexé" }
+      "catalogStatus": "les 4 refs ont titre + face FR (PR-093 ingest 2026-10-11 ; 095/096/100 déjà là)",
+      "prints": [
+        {
+          "printedRef": "PR-093",
+          "nameFr": "Double éclair pourfendeur",
+          "enName": "Lightning Blade : Twin Lightning Shiver",
+          "printKey": "naruto:promo-pr0093",
+          "password": "N2FB24M1K5",
+          "editionMark": "Édition Limitée",
+          "channelHint": "promo wave UNS3 — pas booster s28",
+          "faceFr": "curated/cards/promo/pr0093/fr — art.reconstructed.png (864×1210) ; source.jpg = crop FB binder",
+          "note": "Dig 2026-09-02 avait mal lu PR-098 sur ce bandeau"
+        },
+        {
+          "printedRef": "PR-095",
+          "nameFr": "Naruto Uzumaki",
+          "printKey": "naruto:promo-pr0095",
+          "channelHint": "Day One Edition EU",
+          "faceFr": "déjà indexée"
+        },
+        {
+          "printedRef": "PR-096",
+          "nameFr": "4E Hokage",
+          "printKey": "naruto:promo-pr0096",
+          "channelHint": "duopack-s28 fenêtre",
+          "faceFr": "déjà indexée"
+        },
+        {
+          "printedRef": "PR-100",
+          "nameFr": "Naruto Uzumaki",
+          "printKey": "naruto:promo-pr0100",
+          "channelHint": "UNS3 EU collectors / Goat French Foil",
+          "faceFr": "déjà indexée"
+        }
       ],
+      "notOnThisPhoto": [
+        "PR-098",
+        "PR-099"
+      ],
+      "notToConfuseWith": {
+        "te030": "L'éclair pourfendeur — TE-030 CdF champion 2007 (≠ PR-093)",
+        "misreadPr098": "Ancienne lecture dig 2026-09-02 — bandeau = PR-093"
+      },
       "crossRefs": {
-        "colekaUsGaps": "coleka-us-promos.json — PR-094 / PR-097–099 non énumérés US ; PR-098 physique VF attestée ici",
-        "uns3EuPromos": "uns3-eu-promos-hunt.json — vague promo UNS3 EU partielle"
+        "userPhysical": "user-physical-ccg.json — les 4 refs",
+        "uns3EuPromos": "uns3-eu-promos-hunt.json — checklistAxis.frStorm3Quartet"
       }
     }
   ],
   "promoGapsFr": [
     {
-      "printedRef": "PR-098",
+      "printedRef": "PR-093",
       "nameFr": "Double éclair pourfendeur",
-      "evidence": "pr098-double-eclair-pourfendeur-binder",
-      "channel": "unknown — classeur promo Victor ; pas de SKU scellé identifié sur photo",
-      "ingest": "attestation dig only — ne pas minter face sans scan dos + canal retail/tournoi"
-    },
-    {
-      "printedRef": "PR-099",
-      "nameFr": "Naruto Uzumaki",
-      "evidence": "pr098-double-eclair-pourfendeur-binder (même photo classeur)",
-      "channel": "unknown",
-      "ingest": "attestation dig only"
+      "evidence": "uns3-vf-promo-quartet-binder",
+      "channel": "quartet Storm 3 VF (classeur) — canaux unitaires Day One / duopack / collectors selon ref",
+      "ingest": "face + titre FR ingestés 2026-10-11 ; dos encore ouvert"
     }
   ],
   "physicalMarkers": {
@@ -576,7 +602,7 @@
     "EAN + scan dos cartes vol. 3 / 4 / 8 / 15 / Shippuden 21 (packshots face OK, dos MIJ/Belgium TBD)",
     "Ouvrir ou photo insert réel vol. 15 — confirmer NI-232 + tactique vs seule NI-236",
     "Scan dos PR-095 insert Xbox360 UNS3 VF (face confirmée user)",
-    "Canal retail/tournoi PR-098 Double éclair pourfendeur + PR-099 (classeur Victor) — faces visibles, provenance TBD",
+    "Quartet Storm 3 VF (PR-093/095/096/100) — faces FR OK ; scans dos unitaires encore utiles",
     "EAN coffret Tsunade MIJ S6 (Victor réception) — distinct vol. 15 classique",
     "Croiser liste t1185 manga 15 cartes vs inserts DVD documentés",
     "Wayback fiches manga-news / DVD Kana 2007–2008 pour bonus officiels"

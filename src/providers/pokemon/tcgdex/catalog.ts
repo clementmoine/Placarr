@@ -67,13 +67,24 @@ export async function refreshTcgdexCatalog(
 ): Promise<void> {
   const { harvestTcgdexCatalogue } = await import("./scrapeCards");
   const { ensureTcgdexSetLogoIndex } = await import("./setLogos");
+  const {
+    enrichTcgdexCardDetails,
+    TCGDEX_DETAIL_ENRICH_AUTO_LIMIT,
+    TCGDEX_DETAIL_ENRICH_FORCE_LIMIT,
+  } = await import("./enrichCardDetails");
   // Manual refresh forces a full re-check; auto only fills gaps / new sets.
-  await harvestTcgdexCatalogue({ force: !opts?.auto });
+  const harvest = await harvestTcgdexCatalogue({ force: !opts?.auto });
   try {
     await ensureTcgdexSetLogoIndex({ force: !opts?.auto });
   } catch {
     /* logos are nice-to-have for wordmarks; prints matter more */
   }
+  // Set briefs omit rarity — budgeted per-card fill (autonomie living).
+  const details = await enrichTcgdexCardDetails({
+    limit: opts?.auto
+      ? TCGDEX_DETAIL_ENRICH_AUTO_LIMIT
+      : TCGDEX_DETAIL_ENRICH_FORCE_LIMIT,
+  });
   const logs = packLogsDir("pokemon");
   mkdirSync(logs, { recursive: true });
   writeFileSync(
@@ -81,6 +92,10 @@ export async function refreshTcgdexCatalog(
     `${JSON.stringify({
       finishedAt: new Date().toISOString(),
       auto: Boolean(opts?.auto),
+      sets: harvest.sets,
+      prints: harvest.prints,
+      titles: harvest.titles,
+      detailsPatched: details.patched,
     })}\n`,
   );
 }

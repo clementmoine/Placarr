@@ -58,6 +58,7 @@ export const narutoRanksDbPath = line.index.dbPath;
 
 const hooks = cardCatalogueHooks({
   packId: NARUTO_RANKS_PACK_ID,
+  effectPackId: NARUTO_RANKS_EFFECT_PACK_ID,
   dbPath: line.index.dbPath,
   runPipeline: async (argv) => {
     const { runNarutoRanksPackPipeline } = await import(

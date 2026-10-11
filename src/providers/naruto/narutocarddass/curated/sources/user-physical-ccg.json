@@ -1,12 +1,28 @@
 {
   "source": "collector physical copies (chat 2026-08-16 17:46) + UNS3 EU hunt 2026-08-26",
   "observed": "2026-08-26",
-  "note": "French-text Bandai USA CCG — same game as EN, not Carddass NI/TE/TA. Storm 3 booster line = s28. Late UNS3 promos PR-095/096/100 are pack-in / duopack, not booster singles. 10-char codes are UNS3 video-game passwords. « © 2002 MK – 2007 SP » ≠ print year. Sleeve: curated/cards/back.en.png.",
+  "note": "French-text Bandai USA CCG — same game as EN, not Carddass NI/TE/TA. Storm 3 booster line = s28. Quartet promo Storm 3 VF = PR-093 / PR-095 / PR-096 / PR-100 (photo classeur FB fbid 1968916513588340) — pack-in / Day One / duopack / collectors, pas singles booster. 10-char codes are UNS3 video-game passwords. « © 2002 MK – 2007 SP » ≠ print year. Sleeve: curated/cards/back.en.png.",
   "sameSleeveEnFr": true,
   "pack": "naruto/carddass",
   "legalLine": "2002MK - 2007SP",
   "legalLineIsNotPrintYear": true,
   "prints": [
+    {
+      "namePrinted": "Double éclair pourfendeur",
+      "ref": "PR-093",
+      "password": "N2FB24M1K5",
+      "lang": "fr",
+      "setCode": "promo",
+      "notBoosterS28": true,
+      "printKeyHint": "naruto:pr-0093",
+      "inCardsIndex": true,
+      "enName": "Lightning Blade : Twin Lightning Shiver",
+      "art": "Kakashi Chidori",
+      "channel": "Storm 3 VF promo quartet (PR-093/095/096/100) — classeur FB",
+      "attestedBy": ["facebook-fbid-1968916513588340", "uns3-vf-promo-quartet-binder"],
+      "faceFr": "art.reconstructed 864×1210 ; source.jpg = FB binder fbid 1968916513588340",
+      "faceEn": "drive + coleka"
+    },
     {
       "namePrinted": "Naruto Uzumaki",
       "ref": "PR-095",

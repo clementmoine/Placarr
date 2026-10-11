@@ -41,7 +41,7 @@ describe("colekaCarddassDealsTargets", () => {
         observedAt: null,
         affiliatePath: null,
       }),
-    ).toBe("naruto:ni-0232");
+    ).toBe("naruto:s1-ni0232");
     expect(
       s24.resolvePrintKey({
         colekaId: "2",
@@ -56,7 +56,7 @@ describe("colekaCarddassDealsTargets", () => {
         observedAt: null,
         affiliatePath: null,
       }),
-    ).toBe("naruto:n-1650");
+    ).toBe("naruto:s24-n1650");
     expect(
       s27.resolvePrintKey({
         colekaId: "3",
@@ -71,6 +71,6 @@ describe("colekaCarddassDealsTargets", () => {
         observedAt: null,
         affiliatePath: null,
       }),
-    ).toBe("naruto:j-0986");
+    ).toBe("naruto:s27-j0986");
   });
 });

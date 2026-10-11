@@ -28,6 +28,74 @@ function tmpDataRoot(): string {
   d'aucun jeu, et n'était couvert nulle part.
 */
 describe("cardCatalogueHooks", () => {
+  it("expose dataPack + effectPack pour le wiring hub/foil", () => {
+    const hooks = cardCatalogueHooks({
+      packId: "test/pack",
+      effectPackId: "test-effect",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline: async () => undefined,
+    });
+    expect(hooks.dataPack).toBe("test/pack");
+    expect(hooks.effectPack).toBe("test-effect");
+  });
+
+  it("persiste cards/products du pipeline dans last-run (signal autonomie)", async () => {
+    tmpDataRoot();
+    const runPipeline = vi.fn().mockResolvedValue({ cards: 42, products: 3 });
+    const hooks = cardCatalogueHooks({
+      packId: "test/growth",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline,
+    });
+    await hooks.refresh();
+    const lastRun = JSON.parse(
+      fs.readFileSync(path.join(packLogsDir("test/growth"), "last-run.json"), "utf8"),
+    ) as { cards?: number; products?: number };
+    expect(lastRun.cards).toBe(42);
+    expect(lastRun.products).toBe(3);
+    expect(hooks.status().lastGrowth).toEqual({
+      cards: 42,
+      products: 3,
+      cardsDelta: 42,
+      productsDelta: 3,
+    });
+  });
+
+  it("mesure sets ajoutés avant/après Sync (deltas autonomie)", async () => {
+    tmpDataRoot();
+    let after = false;
+    const hooks = cardCatalogueHooks({
+      packId: "test/sets",
+      dbPath: () => "/introuvable.sqlite",
+      measureCorpus: () =>
+        after
+          ? {
+              cards: 10,
+              products: 0,
+              sets: 2,
+              setIds: ["s1", "s2"],
+            }
+          : {
+              cards: 5,
+              products: 0,
+              sets: 1,
+              setIds: ["s1"],
+            },
+      runPipeline: async () => {
+        after = true;
+        return {};
+      },
+    });
+    await hooks.refresh();
+    expect(hooks.status().lastGrowth).toEqual({
+      cards: 10,
+      sets: 2,
+      cardsDelta: 5,
+      setsDelta: 1,
+      addedSets: ["s2"],
+    });
+  });
+
   it("passe la main au pipeline du pack, sans argument par défaut", async () => {
     tmpDataRoot();
     const runPipeline = vi.fn().mockResolvedValue(undefined);

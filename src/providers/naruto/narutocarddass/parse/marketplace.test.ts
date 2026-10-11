@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import ledger from "../curated/sources/avalon-shop-jp.json";
 import ledger_parseSurugaCarddass from "../curated/sources/suruga-ya-carddass.json";
 import { narutoDiskCardId } from "../identity";
-import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtml, parseAvalonNarutoListing, chitoroVolumeSetCode, chitoroPsDiskOverride, japaneseFamilyOf, normalizeShopName, parseChitoroTitle, resolveChitoroIdentity, resolveChitoroNameFamily, frilFamilyClash, frilLargeImage, frilRefFromTitle, frilRefWithinPublishedRange, frilSearchUrl, parseFrilSearch, parseStorm3Listing, parseStorm3ProductFaceUrl, storm3PrintKey, foldSurugaCarddassListings, loadSurugaCarddassCuratedListings, mergeSurugaCarddassListings, parseSurugaCarddassPrinted, parseSurugaCarddassSearchHtml, parseSurugaProductDetailHtml, parseSurugaCarddassCharacterName, surugaCarddassFaceUrl, surugaPrintedToDiskId } from "./marketplace";
+import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtml, parseAvalonNarutoListing, chitoroVolumeSetCode, chitoroPsDiskOverride, japaneseFamilyOf, normalizeShopName, parseChitoroTitle, resolveChitoroIdentity, resolveChitoroNameFamily, frilFamilyClash, frilLargeImage, frilRefFromTitle, frilRefWithinPublishedRange, frilSearchUrl, parseFrilSearch, parseStorm3Listing, parseStorm3ProductFaceUrl, storm3PrintKey, foldSurugaCarddassListings, loadSurugaCarddassCuratedListings, mergeSurugaCarddassListings, parseSurugaCarddassPrinted, parseSurugaCarddassSearchHtml, parseSurugaProductDetailHtml, parseSurugaCarddassCharacterName, parseSurugaUsedPriceYen, parseSurugaYenAmount, surugaCarddassFaceUrl, surugaPrintedToDiskId } from "./marketplace";
 
 // —— parseAvalonShop ——
 {
@@ -422,7 +422,8 @@ import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtm
 
   describe("storm3PrintKey", () => {
     it("stays on s28 so FR Carddass s1–s6 are untouched", () => {
-      expect(storm3PrintKey("N1685")).toBe("naruto:n-1685");
+      expect(storm3PrintKey("N1685")).toBe("naruto:s28-n1685");
+      // set-scoped mint (padded) — never legacy `naruto:n-1685` on FR s1–s6.
     });
   });
 }
@@ -532,6 +533,26 @@ import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtm
     });
   });
 
+  describe("parseSurugaYenAmount", () => {
+    it("prefers 税込 when both bare and tax-in are shown", () => {
+      expect(parseSurugaYenAmount("40円(税込44円)")).toBe(44);
+      expect(parseSurugaYenAmount("中古 2,180円 (税込)")).toBe(2180);
+    });
+  });
+
+  describe("parseSurugaUsedPriceYen", () => {
+    it("reads 中古 price-buy on a product page", () => {
+      expect(
+        parseSurugaUsedPriceYen(`
+          <div class="item-price">
+            <div class="mgnB0 d-block" data-label="中古">
+              <span class="price-buy">980円 (税込)</span>
+            </div>
+          </div>`),
+      ).toBe(980);
+    });
+  });
+
   describe("parseSurugaProductDetailHtml", () => {
     it("reads printed code from a product page", () => {
       expect(
@@ -540,6 +561,16 @@ import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtm
           "gl636810",
         ),
       ).toEqual({ id: "GL636810", printed: "忍-1" });
+    });
+
+    it("attaches used yen when the detail page carries a price", () => {
+      expect(
+        parseSurugaProductDetailHtml(
+          `<h1>忍-85[ウルトラレア]：うずまきナルト</h1>
+           <div data-label="中古"><span class="price-buy">1,200円 (税込)</span></div>`,
+          "GL410631",
+        ),
+      ).toEqual({ id: "GL410631", printed: "忍-85", priceYen: 1200 });
     });
 
     it("drops Data Carddass pages without a tabletop code", () => {

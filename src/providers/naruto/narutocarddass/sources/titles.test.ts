@@ -432,14 +432,25 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       );
     });
 
-    it("flags PR-098 Double éclair pourfendeur as absent from FR catalogue", () => {
-      const gap = dig.promoGapsFr?.find((p) => p.printedRef === "PR-098");
-      expect(gap?.nameFr).toMatch(/Double éclair pourfendeur/i);
+    it("attests Storm 3 VF promo quartet on FB binder (PR-093/095/096/100)", () => {
       const att = dig.packshotAttestations.find(
-        (p) => p.id === "pr098-double-eclair-pourfendeur-binder",
+        (p) => p.id === "uns3-vf-promo-quartet-binder",
       );
       expect(att?.photoUrl).toContain("1968916513588340");
-      expect(att?.notToConfuseWith?.te030).toMatch(/L'éclair pourfendeur/i);
+      expect(att?.wave).toMatch(/Storm 3|UNS3/i);
+      expect(att?.prints?.map((p) => p.printedRef)).toEqual([
+        "PR-093",
+        "PR-095",
+        "PR-096",
+        "PR-100",
+      ]);
+      expect(att?.prints?.[0]?.nameFr).toMatch(/Double éclair pourfendeur/i);
+      expect(att?.prints?.[2]?.nameFr).toMatch(/4E Hokage/i);
+      expect(att?.notOnThisPhoto).toEqual(
+        expect.arrayContaining(["PR-098", "PR-099"]),
+      );
+      const gap = dig.promoGapsFr?.find((p) => p.printedRef === "PR-093");
+      expect(gap?.evidence).toBe("uns3-vf-promo-quartet-binder");
     });
 
     it("flags open conflict manga t1185 vs DVD vol. 15 for NI-236", () => {

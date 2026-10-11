@@ -10,13 +10,15 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { POKEMON_EFFECT_PACK_ID } from "@/effects/pokemon";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
+import { measureCatalogDbCorpus } from "@/providers/shared/catalogCorpus";
 import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
-import { dataRoot } from "@/lib/runtimeData";
 import {
   ensurePokemonDbLayout,
+  pokemonIdentityDbPath,
   pokemonLiveDbPath,
   POKEMON_PACK_ID,
 } from "@/providers/pokemon/paths";
@@ -36,7 +38,10 @@ function cardsDbPath(): string {
 
 const hooks = cardCatalogueHooks({
   packId: POKEMON_PACK_ID,
+  effectPackId: POKEMON_EFFECT_PACK_ID,
   dbPath: cardsDbPath,
+  // Identity corpus is catalog.sqlite; dbPath stays on live.sqlite for empty/stale.
+  measureCorpus: () => measureCatalogDbCorpus(pokemonIdentityDbPath()),
   runPipeline: async (argv) => {
     const skipProducts = argv.includes("products");
     try {

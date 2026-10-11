@@ -40,9 +40,12 @@ function rubriqueIdFromUrl(url: string): string | null {
   return m?.[1] ?? null;
 }
 
-function printKeyFromCollector(collector: string | null): string | null {
+function printKeyFromCollector(
+  collector: string | null,
+  catalogueSet: string,
+): string | null {
   if (!collector) return null;
-  return mintNarutoPrintKey(collector);
+  return mintNarutoPrintKey(collector, catalogueSet);
 }
 
 export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
@@ -57,6 +60,7 @@ export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
       resolvePrintKey: (deal) =>
         printKeyFromCollector(
           colekaCarddassPrefixToCollector(deal.refItem ?? ""),
+          series.set,
         ),
       resolvePrinted: (deal) =>
         colekaCarddassPrefixToCollector(deal.refItem ?? ""),
@@ -71,6 +75,7 @@ export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
     resolvePrintKey: (deal) =>
       printKeyFromCollector(
         colekaCarddassPrefixToCollector(deal.refItem ?? ""),
+        "s6",
       ),
     resolvePrinted: (deal) =>
       colekaCarddassPrefixToCollector(deal.refItem ?? ""),
@@ -82,7 +87,10 @@ export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
     label: "Sage's Legacy s24 FR",
     listedCount: colekaS24.listing.enumerated ?? null,
     resolvePrintKey: (deal) =>
-      printKeyFromCollector(colekaEuPrefixToCollector(deal.refItem ?? "")),
+      printKeyFromCollector(
+        colekaEuPrefixToCollector(deal.refItem ?? ""),
+        "s24",
+      ),
     resolvePrinted: (deal) => colekaEuPrefixToCollector(deal.refItem ?? ""),
   });
 
@@ -92,7 +100,10 @@ export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
     label: "Storm 3 s28 FR",
     listedCount: null,
     resolvePrintKey: (deal) =>
-      printKeyFromCollector(colekaEuPrefixToCollector(deal.refItem ?? "")),
+      printKeyFromCollector(
+        colekaEuPrefixToCollector(deal.refItem ?? ""),
+        "s28",
+      ),
     resolvePrinted: (deal) => colekaEuPrefixToCollector(deal.refItem ?? ""),
   });
 
@@ -103,6 +114,7 @@ export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
     resolvePrintKey: (deal) =>
       printKeyFromCollector(
         colekaRampagePrefixToCollector(deal.refItem ?? ""),
+        "s11",
       ),
     resolvePrinted: (deal) =>
       colekaRampagePrefixToCollector(deal.refItem ?? ""),
@@ -114,7 +126,10 @@ export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
     label: "US EN promos",
     listedCount: colekaUsPromos.listing.count ?? null,
     resolvePrintKey: (deal) =>
-      printKeyFromCollector(colekaUsPromoRefToCollector(deal.refItem ?? "")),
+      printKeyFromCollector(
+        colekaUsPromoRefToCollector(deal.refItem ?? ""),
+        "promo",
+      ),
     resolvePrinted: (deal) => colekaUsPromoRefToCollector(deal.refItem ?? ""),
   });
 
@@ -124,7 +139,10 @@ export function colekaCarddassDealsTargets(): ColekaDealsRubriqueTarget[] {
     label: "Hero's Ascension s27 EN",
     listedCount: null,
     resolvePrintKey: (deal) =>
-      printKeyFromCollector(colekaEuPrefixToCollector(deal.refItem ?? "")),
+      printKeyFromCollector(
+        colekaEuPrefixToCollector(deal.refItem ?? ""),
+        "s27",
+      ),
     resolvePrinted: (deal) => colekaEuPrefixToCollector(deal.refItem ?? ""),
   });
 

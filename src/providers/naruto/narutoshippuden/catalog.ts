@@ -21,6 +21,7 @@
  * `carddass/staging/` pour se reconstruire (les harvests Carddass restent
  * la source amont tant qu'ils n'ont pas leur propre CLI).
  */
+import { NARUTO_SHIPPUDEN_EFFECT_PACK_ID } from "@/effects/narutoshippuden";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 
@@ -28,6 +29,7 @@ import { narutoShippudenDbPath, NARUTO_SHIPPUDEN_PACK_ID } from "./indexStore";
 
 const hooks = cardCatalogueHooks({
   packId: NARUTO_SHIPPUDEN_PACK_ID,
+  effectPackId: NARUTO_SHIPPUDEN_EFFECT_PACK_ID,
   dbPath: narutoShippudenDbPath,
   runPipeline: async () => {
     const { migrateShippudenFromCarddass } = await import(

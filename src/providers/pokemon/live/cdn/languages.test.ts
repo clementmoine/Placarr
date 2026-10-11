@@ -9,6 +9,7 @@ import {
   POKEMON_LIVE_LANGS_CSV,
   POKEMON_LIVE_SCRAPE_DEFAULT_LANGUAGES,
   POKEMON_LIVE_SCRAPE_DEFAULT_LANGS_CSV,
+  pokemonCardLangsToKeep,
   isPokemonLiveLanguage,
   tcgdexLangFromLive,
 } from "./languages";
@@ -45,5 +46,16 @@ describe("pokemontcglive languages", () => {
     expect(tcgdexLangFromLive("ja")).toBeNull();
     expect(isPokemonLiveLanguage("pt")).toBe(false);
     expect(isPokemonLiveLanguage("ptbr")).toBe(true);
+  });
+
+  it("prune keep-set always retains catalogue en+fr", () => {
+    expect(pokemonCardLangsToKeep(["fr"])).toEqual(["en", "fr"]);
+    expect(pokemonCardLangsToKeep(["de"])).toEqual(["de", "en", "fr"]);
+    expect(pokemonCardLangsToKeep(["fr", "en", "de", "it"])).toEqual([
+      "de",
+      "en",
+      "fr",
+      "it",
+    ]);
   });
 });

@@ -81,7 +81,65 @@ export function corpusStatusLabel(
   const synced = corpus.status.lastSyncAt
     ? ` · ${new Date(corpus.status.lastSyncAt).toLocaleString()}`
     : "";
-  return `${corpus.dataPack} · ${corpus.supplyMode} · ${state}${synced}`;
+  const growth = formatCorpusLastGrowth(corpus.status.lastGrowth, fr);
+  return `${corpus.dataPack} · ${corpus.supplyMode} · ${state}${synced}${growth}`;
+}
+
+function formatGrowthPart(
+  total: number | undefined,
+  delta: number | undefined,
+  labels: { one: string; many: string },
+): string | null {
+  const hasTotal = typeof total === "number" && Number.isFinite(total);
+  const hasDelta = typeof delta === "number" && Number.isFinite(delta) && delta !== 0;
+  if (!hasTotal && !hasDelta) return null;
+  const n = hasTotal ? total : Math.abs(delta!);
+  const label = n === 1 ? labels.one : labels.many;
+  const head = hasTotal ? `${total} ${label}` : `${delta! > 0 ? "+" : ""}${delta} ${label}`;
+  if (hasTotal && hasDelta) {
+    const sign = delta! > 0 ? "+" : "";
+    return `${head} (${sign}${delta})`;
+  }
+  return head;
+}
+
+/** Sync growth snippet — empty when the pack did not report counts. */
+export function formatCorpusLastGrowth(
+  growth: CatalogueCorpusRow["status"]["lastGrowth"],
+  fr: boolean,
+): string {
+  if (!growth) return "";
+  const parts: string[] = [];
+  const cards = formatGrowthPart(growth.cards, growth.cardsDelta, {
+    one: fr ? "carte" : "card",
+    many: fr ? "cartes" : "cards",
+  });
+  if (cards) parts.push(cards);
+  const products = formatGrowthPart(growth.products, growth.productsDelta, {
+    one: fr ? "scellé" : "sealed",
+    many: fr ? "scellés" : "sealed",
+  });
+  if (products) parts.push(products);
+  const sets = formatGrowthPart(growth.sets, growth.setsDelta, {
+    one: "set",
+    many: "sets",
+  });
+  if (sets) {
+    const added = growth.addedSets?.filter(Boolean) ?? [];
+    if (added.length) {
+      const shown = added.slice(0, 4).join(", ");
+      const more = added.length > 4 ? ` +${added.length - 4}` : "";
+      parts.push(`${sets}: ${shown}${more}`);
+    } else {
+      parts.push(sets);
+    }
+  } else if (growth.addedSets?.length) {
+    const shown = growth.addedSets.slice(0, 4).join(", ");
+    const more =
+      growth.addedSets.length > 4 ? ` +${growth.addedSets.length - 4}` : "";
+    parts.push(fr ? `sets: ${shown}${more}` : `sets: ${shown}${more}`);
+  }
+  return parts.length ? ` · ${parts.join(" · ")}` : "";
 }
 
 /** Refresh every catalog provider at once (corpus panels / callers that need it). */

@@ -58,6 +58,19 @@ export function isPokemonLiveLanguage(
 }
 
 /**
+ * Locales to keep under `cards/{set}/{lang}` after a scrape pass.
+ * Catalogue (en+fr) is always retained; scrape langs may add opt-in locales.
+ */
+export function pokemonCardLangsToKeep(
+  scrapeLangs: readonly string[],
+): string[] {
+  const extra = scrapeLangs
+    .map((l) => l.trim().toLowerCase())
+    .filter(Boolean);
+  return [...new Set([...POKEMON_CATALOGUE_LANGUAGES, ...extra])].sort();
+}
+
+/**
  * Live CDN lang → TCGdex API locale.
  * `ptbr` maps to `pt-br` (TCGdex); keep `pt` as a legacy Dex alias separately.
  */

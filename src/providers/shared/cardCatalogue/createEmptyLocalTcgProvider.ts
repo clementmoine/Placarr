@@ -30,6 +30,7 @@ export function createEmptyLocalTcgProvider(input: {
   const line = createLocalTcgLine(input.lineSpec);
   const catalog = cardCatalogueHooks({
     packId: input.lineSpec.packId,
+    effectPackId: input.lineSpec.effectPackId,
     dbPath: line.index.dbPath,
     runPipeline: input.runPipeline,
     autoSkip: input.autoSkip,

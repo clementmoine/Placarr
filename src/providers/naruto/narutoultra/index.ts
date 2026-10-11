@@ -47,6 +47,7 @@ export const narutoUltraDbPath = line.index.dbPath;
 
 const hooks = cardCatalogueHooks({
   packId: NARUTO_ULTRA_PACK_ID,
+  effectPackId: NARUTO_ULTRA_EFFECT_PACK_ID,
   dbPath: line.index.dbPath,
   runPipeline: async (argv) => {
     const { runNarutoUltraPackPipeline } = await import(

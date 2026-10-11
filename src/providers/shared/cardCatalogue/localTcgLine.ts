@@ -584,7 +584,13 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
   return {
     spec,
     index,
-    attachCatalog: (catalog) => ({ ...providerModule, catalog }),
+    attachCatalog: (catalog) => ({
+      ...providerModule,
+      catalog: {
+        ...catalog,
+        effectPack: catalog.effectPack ?? spec.effectPackId,
+      },
+    }),
     searchPrints,
     lookupPrint,
     curatedDir,

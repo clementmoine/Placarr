@@ -11,7 +11,12 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { packLogsDir } from "@/lib/packPaths";
-import { statusFromLastRun } from "@/providers/shared/catalogCorpus";
+import {
+  buildCatalogLastGrowth,
+  measureCatalogDbCorpus,
+  type CatalogCorpusSnapshot,
+  statusFromLastRun,
+} from "@/providers/shared/catalogCorpus";
 import type {
   ProviderCatalogRefreshOpts,
   ProviderCatalogStatus,
@@ -19,6 +24,11 @@ import type {
 
 export type CardCatalogueHooksInput = {
   packId: string;
+  /**
+   * Effect-pack id for `PrintCandidate.effectPack` / foil backs. Required for
+   * local TCG lines — factory packs pass `LocalTcgLineSpec.effectPackId`.
+   */
+  effectPackId?: string;
   /** Chemin de la base du pack — sa présence dit qu'il y a quelque chose. */
   dbPath: () => string;
   /**
@@ -26,6 +36,11 @@ export type CardCatalogueHooksInput = {
    * tire des modules serveur que les chemins de lecture n'ont pas à payer.
    */
   runPipeline: (argv: string[]) => Promise<unknown>;
+  /**
+   * Corpus measure before/after Sync (defaults to {@link measureCatalogDbCorpus}
+   * on `dbPath`). Override when identity lives on another file (Pokémon).
+   */
+  measureCorpus?: () => CatalogCorpusSnapshot;
   /**
    * Ce qu'on saute quand la passe est **automatique**.
    *
@@ -51,6 +66,7 @@ export type CardCatalogueHooksInput = {
  */
 export type CardCatalogueHooks = {
   dataPack: string;
+  effectPack?: string;
   status: () => ProviderCatalogStatus;
   refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
 };
@@ -65,6 +81,29 @@ function csvTokens(values: readonly string[] | undefined): string | null {
     )
     .filter(Boolean);
   return tokens.length ? tokens.join(",") : null;
+}
+
+/** Pull optional `{ cards, products, sets }` from a pack pipeline return value. */
+export function catalogGrowthFromPipelineResult(
+  result: unknown,
+): { cards?: number; products?: number; sets?: number } {
+  if (!result || typeof result !== "object") return {};
+  const row = result as {
+    cards?: unknown;
+    products?: unknown;
+    sets?: unknown;
+  };
+  const out: { cards?: number; products?: number; sets?: number } = {};
+  if (typeof row.cards === "number" && Number.isFinite(row.cards)) {
+    out.cards = row.cards;
+  }
+  if (typeof row.products === "number" && Number.isFinite(row.products)) {
+    out.products = row.products;
+  }
+  if (typeof row.sets === "number" && Number.isFinite(row.sets)) {
+    out.sets = row.sets;
+  }
+  return out;
 }
 
 /**
@@ -110,14 +149,27 @@ export function cardCatalogueHooks(
     return statusFromLastRun({ dataPack: input.packId, empty });
   };
 
+  const measure =
+    input.measureCorpus ??
+    (() => measureCatalogDbCorpus(input.dbPath()));
+
   const refresh = async (opts?: ProviderCatalogRefreshOpts): Promise<void> => {
     const argv = catalogueRefreshArgv(opts, input);
-    await input.runPipeline(argv);
+    const before = measure();
+    const pipelineResult = await input.runPipeline(argv);
     /*
       La trace est écrite **après**, et seulement si la moisson n'a pas jeté :
       une date de dernier passage qui ment est pire que pas de date du tout, on
-      croirait le catalogue frais.
+      croirait le catalogue frais. Totaux + deltas (sets inclus) = signal
+      d'autonomie : Sync a posé du corpus, pas seulement tourné à vide.
     */
+    const after = measure();
+    const growth =
+      buildCatalogLastGrowth({
+        pipeline: catalogGrowthFromPipelineResult(pipelineResult),
+        before,
+        after,
+      }) ?? {};
     const logs = packLogsDir(input.packId);
     mkdirSync(logs, { recursive: true });
     writeFileSync(
@@ -129,9 +181,15 @@ export function cardCatalogueHooks(
         skip: opts?.skip ?? null,
         langs: opts?.langs ?? null,
         limit: opts?.limit ?? null,
+        ...growth,
       })}\n`,
     );
   };
 
-  return { dataPack: input.packId, status, refresh };
+  return {
+    dataPack: input.packId,
+    ...(input.effectPackId ? { effectPack: input.effectPackId } : {}),
+    status,
+    refresh,
+  };
 }

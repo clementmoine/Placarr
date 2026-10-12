@@ -176,9 +176,9 @@ export async function reconcileDuplicateItemSlugsOnShelf(
       exemplaire du premier, alors que ce sont `pr-0016` en holo et `ni-0046`
       en normal, deux cartes différentes.
 
-      Réécrire ne casse pas les liens déjà partagés : `itemLookupSlugs` dérive
-      encore le slug par nom, et `/…/inari` continue de résoudre vers `cl-0001`.
-      Ce qui disparaît, ce sont les `-copy-N` — des identifiants fabriqués par
+      La passe réécrit vers la référence canonique (`p4-16-fr-magma`, pas
+      l'ancien `13-16-fr-magma`) : on migre, on ne garde pas d'alias. Ce qui
+      disparaît aussi, ce sont les `-copy-N` — des identifiants fabriqués par
       la machine, que personne n'a choisi de partager.
     */
     const isPrint = Boolean(item.printKey) && base !== "";

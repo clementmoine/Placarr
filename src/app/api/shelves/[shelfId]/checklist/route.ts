@@ -19,8 +19,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { checklistSetOwnedKey } from "@/core/collect/checklist";
-import { catalogueSetFromPrintKey } from "@/core/identify/printKey";
+import { ownershipSetFromPrintKey } from "@/core/collect/checklistOwnership";
 import { buildChecklistForShelf } from "@/lib/collect/shelfChecklist";
+/*
+  Lorcana Promo Year ownership (`p4` vs chapter `13`) registers on module load.
+  Pull the catalogue so the resolver is installed before we build owned keys.
+*/
+import "@/core/catalog/registry";
 import { prisma } from "@/lib/db/prisma";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
@@ -94,8 +99,7 @@ export async function GET(
 
   const owned = new Set(
     matching.map((item) => {
-      const setCode =
-        item.setCode?.trim() || catalogueSetFromPrintKey(item.printKey);
+      const setCode = ownershipSetFromPrintKey(item.printKey, item.setCode);
       return masterSet
         ? checklistSetOwnedKey(setCode, item.printKey!, item.variant)
         : checklistSetOwnedKey(setCode, item.printKey!);

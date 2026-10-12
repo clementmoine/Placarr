@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { ownershipSetFromPrintKey } from "@/core/collect/checklistOwnership";
+
 import {
   isLorcanaMainCatalogueSetCode,
   isLorcanaPromoPrint,
@@ -94,6 +96,14 @@ describe("isLorcanaPromoPrint", () => {
     expect(isLorcanaPromoPrint("P1")).toBe(true);
     expect(isLorcanaPromoPrint("  ")).toBe(false);
     expect(isLorcanaPromoPrint(null)).toBe(false);
+  });
+});
+
+describe("Lorcana checklist ownership registration", () => {
+  it("maps promo printKeys onto Promo Year set ids", () => {
+    expect(ownershipSetFromPrintKey("lorcana:13-16-p4", "13")).toBe("p4");
+    expect(ownershipSetFromPrintKey("lorcana:9-34-p3", "9")).toBe("p3");
+    expect(ownershipSetFromPrintKey("lorcana:13-16", "13")).toBe("13");
   });
 });
 

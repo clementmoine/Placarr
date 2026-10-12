@@ -152,11 +152,23 @@ export function printKeyItemSlug(
 ): string {
   const identity = parsePrintKey(printKey);
   if (!identity) return "";
-  const reference = slugify(`${identity.set}-${identity.number}`);
+  const grouping = identity.grouping?.trim() || "";
+  /*
+    Promo / alternate imprint: the collector reads `16/P4`, not « chapter 13
+    #16 with a p4 stamp ». Slug as `p4-16` so it matches the checklist axis
+    and does not collide with retail `13-16`.
+  */
+  const reference = grouping
+    ? slugify(`${grouping}-${identity.number}`)
+    : slugify(`${identity.set}-${identity.number}`);
   if (!reference) return "";
+  /*
+    Legacy family-as-set still accepts an Item.setCode prefix. Never prefix a
+    promo grouping slug with the retail chapter (`13-p4-16`).
+  */
   const catalogue = slugify(itemSlugSetCode(setCode) || setCode);
   const head =
-    catalogue && catalogue !== identity.set
+    !grouping && catalogue && catalogue !== identity.set
       ? `${catalogue}-${reference}`
       : reference;
   return [head, slugify(language), slugify(variant)]
@@ -190,9 +202,9 @@ export function itemLookupSlugs(item: {
     renommer quoi que ce soit en base, et donc sans casser un lien déjà partagé.
   */
   /*
-    Toutes les formes par référence sont reconnues, langue / set compris ou non :
-    c'est ce qui laisse répondre les URL déjà partagées quand un item est
-    re-slugué (langue, puis préfixe d'extension).
+    Variantes langue / set / finish de la référence canonique — pas d'anciennes
+    formes (ex. `13-16-…` pour une P4) : `reconcileDuplicateItemSlugsOnShelf`
+    migre le slug stocké.
   */
   for (const withSet of [item.setCode, null]) {
     for (const withLanguage of [item.language, null]) {

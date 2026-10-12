@@ -8,6 +8,7 @@
  * réécrire `printKey` ni `set_code`.
  */
 
+import { registerChecklistOwnershipSet } from "@/core/collect/checklistOwnership";
 import type { SqlBindValue } from "@/providers/shared/cardCatalogue/sets";
 
 /** Chapitre numéroté (`1`…`13`) ou quête (`Q1`, `Q2`) — hors séries promo. */
@@ -179,3 +180,13 @@ export function lorcanaSetScopeWhere(input: {
     params: [setId, ...textParams],
   };
 }
+
+/**
+ * Owned `lorcana:13-16-p4` must tick checklist set `p4`, not chapter `13`
+ * (catalogue setCode / printKey segment).
+ */
+registerChecklistOwnershipSet("lorcana", (identity) => {
+  const grouping = identity.grouping?.trim();
+  if (!grouping) return null;
+  return lorcanaPromoChecklistSeries(grouping)?.id ?? null;
+});

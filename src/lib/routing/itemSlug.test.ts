@@ -228,6 +228,16 @@ describe("deux langues d'une même carte ne sont pas des copies", () => {
     expect(printKeyItemSlug("lorcana:1-106", null, "fr")).toBe("1-106-fr");
   });
 
+  it("slugs Lorcana promos as grouping-number (16/P4 → p4-16)", () => {
+    expect(printKeyItemSlug("lorcana:13-16-p4", "magma", "fr")).toBe(
+      "p4-16-fr-magma",
+    );
+    expect(printKeyItemSlug("lorcana:13-16", "magma", "fr")).toBe(
+      "13-16-fr-magma",
+    );
+    expect(printKeyItemSlug("lorcana:9-34-p3", null, "fr")).toBe("p3-34-fr");
+  });
+
   /*
     Set-scoped Naruto keys already carry the series (`s3-ta0074`). Lorcana
     likewise — do not double the chapter. Legacy family-as-set keys still

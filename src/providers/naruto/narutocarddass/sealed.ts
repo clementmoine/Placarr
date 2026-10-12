@@ -40,6 +40,8 @@ import {
   gradedcardcenterIngestPackshots,
   kinkaiIngestBacks,
   kinkaiIngestPackshots,
+  micromaniaIngestPackshots,
+  fnacIngestPackshots,
   leboncoinIngestBacks,
   leboncoinIngestPackshots,
   mangaNewsIngestPackshots,
@@ -330,7 +332,7 @@ export function materializeTinBoxPromos(root?: string): {
  * Lealtà come from Emporio di Milo shop pastes. JP product shots stay JP.
  * Série 28 display is the Coleka rubric packshot (box + booster), not a
  * Carddass product and not a guessed booster SKU. Retail FR duopack
- * (`duopack-s28`) is 2 boosters + window PR-096 — eBay overlay packshot.
+ * (`duopack-s28`) is 2 boosters + window PR-096 — curated wrappers packshot.
  * Tric Trac starter boxes
  * (cdn10 originals) beat Via Ludibunda / carddass.fr GIFs. Card thumbs on
  * those pages are the same 350×495 as carddass.fr — not a second scan.
@@ -1133,21 +1135,73 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
   },
   {
     /*
-      Blister retail FR : 2 sachets EU (8 cartes = 7+1 spéciale, verso Kinkai)
-      + promo fenêtre PR-096 (4e Hokage). Pas Day One (PR-095). Packshot eBay
-      face + Kinkai verso (EAN 3391891970488, BANDAI 2013 MADE IN ITALY).
-      Math EU (≠ US 10×24) : sealed-contents + dig eu-ccg-pack-math.
-      `multipack` + mixed_bundle : promo fixe, sachets aléatoires.
+      Blister retail FR Sage's Legacy — fenêtre J-895 Scellage des Démons à
+      Queues. EAN 3391891963138 (Micromania 48379 / Fnac a4099814 ZoomPE).
+      Face catalogue = Fnac (pas encore de reconstruit clean) ; dos = wrappers
+      partagé `duopack-s24-back.png` (identique pour toutes les variantes s24).
+    */
+    slug: "duopack-s24",
+    kind: "multipack",
+    category: "boosters-blister",
+    setCode: "s24",
+    name: "Duopack Série 24 — Sage's Legacy (Scellage des Démons à Queues)",
+    stagingFile: "",
+    stagingKind: "wrappers",
+    stagingBackFile: "duopack-s24-back.png",
+    lang: "FR",
+    declaredCardCount: null,
+    attested: true,
+  },
+  {
+    /*
+      Variante fenêtre M-873 Organisation Pacifique (FB + packshot clean).
+      Même format blister ; dos partagé s24. ≠ retail Micromania/Fnac (J-895).
+    */
+    slug: "duopack-s24-organisation-pacifique",
+    kind: "multipack",
+    category: "boosters-blister",
+    setCode: "s24",
+    name: "Duopack Série 24 — Sage's Legacy (Organisation Pacifique)",
+    stagingFile: "duopack-s24-organisation-pacifique.png",
+    stagingKind: "wrappers",
+    stagingBackFile: "duopack-s24-back.png",
+    lang: "FR",
+    declaredCardCount: null,
+    attested: true,
+  },
+  {
+    /*
+      Variante fenêtre N-1379 Loup Bicéphale (FB + packshot clean). Dos s24
+      partagé.
+    */
+    slug: "duopack-s24-loup-bicephale",
+    kind: "multipack",
+    category: "boosters-blister",
+    setCode: "s24",
+    name: "Duopack Série 24 — Sage's Legacy (Loup Bicéphale)",
+    stagingFile: "duopack-s24-loup-bicephale.png",
+    stagingKind: "wrappers",
+    stagingBackFile: "duopack-s24-back.png",
+    lang: "FR",
+    declaredCardCount: null,
+    attested: true,
+  },
+  {
+    /*
+      Blister retail FR : 2 sachets EU (8 cartes = 7+1 spéciale) + promo
+      fenêtre PR-096 (4e Hokage). EAN 3391891970488 (Kinkai verso). Packshot
+      clean curated/wrappers ; eBay/Kinkai restent archival (ingest false).
+      Math EU (≠ US 10×24). `multipack` + mixed_bundle.
     */
     slug: "duopack-s28",
     kind: "multipack",
     category: "boosters-blister",
     setCode: "s28",
     name: "Duopack Série 28 — Ultimate Ninja Storm 3 (2 boosters + PR-096)",
-    stagingFile: "",
+    stagingFile: "duopack-s28.png",
+    stagingKind: "wrappers",
+    stagingBackFile: "duopack-s28-back.png",
     lang: "FR",
-    // Total 17 (= 8+8+1) vit dans sealed-contents — pas ici : `resolveSealedContents`
-    // prendrait 17 pour cardsPerPack sur un `multipack`.
     declaredCardCount: null,
     attested: true,
   },
@@ -1227,6 +1281,8 @@ function shopPackshotRows(): readonly { slug: string; staging: string }[] {
     ...vintedIngestPackshots(),
     ...leboncoinIngestPackshots(),
     ...kinkaiIngestPackshots(),
+    ...fnacIngestPackshots(),
+    ...micromaniaIngestPackshots(),
     ...sunnystoreIngestPackshots(),
     ...gradedcardcenterIngestPackshots(),
     ...psYoyakuIngestPackshots(),

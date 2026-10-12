@@ -8,6 +8,9 @@ import {
   narutoDiskCardId,
   parseNarutoCollector,
   canonicalNarutoDiskPrefix,
+  resolveNarutoLedgerPrintKeys,
+  resolveNarutoLedgerPrintTarget,
+  narutoNumbersEqual,
 } from "../identity";
 import { goatCdnOriginal } from "../sources/packshots";
 import { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
@@ -361,11 +364,12 @@ export function mergeGoatEnCcgCardsIntoIndex(input: {
   const rarityFilled: string[] = [];
 
   for (const row of input.cards) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey) continue;
+    const target = resolveNarutoLedgerPrintTarget(row.number, row.setCode, prints);
+    if (!target) continue;
+    const printKey = target.printKey;
     const diskId = narutoDiskCardId(row.number) ?? row.number;
     const parsed = parseNarutoCollector(row.number);
-    if (!printByKey.has(printKey)) {
+    if (!target.exists) {
       const print: NarutoPrintRow = {
         printKey,
         setCode: row.setCode,
@@ -755,11 +759,16 @@ export function mergeCardgameclubItCardsIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of input.cards) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey) continue;
+    const target = resolveNarutoLedgerPrintTarget(
+      row.number,
+      row.setCode,
+      prints,
+    );
+    if (!target) continue;
+    const printKey = target.printKey;
     const diskId = narutoDiskCardId(row.number) ?? row.number;
     const parsed = parseNarutoCollector(row.number);
-    if (!printByKey.has(printKey)) {
+    if (!target.exists) {
       const print: NarutoPrintRow = {
         printKey,
         setCode: row.setCode,
@@ -926,7 +935,7 @@ export function mergePrimegameItIntoIndex(input: {
   );
   let merged = 0;
   for (const card of input.cards) {
-    const printKey = mintNarutoPrintKey(card.number);
+    const printKey = mintNarutoPrintKey(card.number, card.setCode);
     // Numéro non-collector (rubrique primegame inconnue) : rien à minter.
     if (!printKey) continue;
     if (!printByKey.has(printKey)) {
@@ -1384,14 +1393,19 @@ export function mergeNarutoCardsCaIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of input.cards) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey) continue;
+    const target = resolveNarutoLedgerPrintTarget(
+      row.number,
+      row.setCode,
+      prints,
+    );
     const diskId = narutoDiskCardId(row.number) ?? row.number;
     const parsed = parseNarutoCollector(row.number);
-    if (!printByKey.has(printKey)) {
-      if (!narutoCardsCaMayMintPrint(row, false)) continue;
+    let attachKeys: string[] = [];
+    if (target?.exists) {
+      attachKeys = [target.printKey];
+    } else if (target && narutoCardsCaMayMintPrint(row, false)) {
       const print: NarutoPrintRow = {
-        printKey,
+        printKey: target.printKey,
         setCode: row.setCode,
         number: diskId,
         cardType: cardTypeFromCollectorNumber(diskId),
@@ -1399,14 +1413,20 @@ export function mergeNarutoCardsCaIntoIndex(input: {
         grouping: parsed?.grouping ?? null,
       };
       prints.push(print);
-      printByKey.set(printKey, print);
-      addedPrints.push(printKey);
+      printByKey.set(target.printKey, print);
+      addedPrints.push(target.printKey);
+      attachKeys = [target.printKey];
+    } else {
+      // TP/tin shop labels: title existing collectors, never mint invented sets.
+      attachKeys = resolveNarutoLedgerPrintKeys(row.number, null, prints);
     }
-    const titleKey = `${printKey}\0en`;
-    if (titleKeys.has(titleKey)) continue;
-    titles.push({ printKey, lang: "en", fullName: row.name.trim() });
-    titleKeys.add(titleKey);
-    titled.push(printKey);
+    for (const printKey of attachKeys) {
+      const titleKey = `${printKey}\0en`;
+      if (titleKeys.has(titleKey)) continue;
+      titles.push({ printKey, lang: "en", fullName: row.name.trim() });
+      titleKeys.add(titleKey);
+      titled.push(printKey);
+    }
   }
 
   prints.sort((a, b) => a.printKey.localeCompare(b.printKey));
@@ -1519,20 +1539,20 @@ export function mergeNarutoCardsNetIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of input.cards) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey) continue;
-    const existing = printByKey.get(printKey);
-    if (!existing) continue;
-    const titleKey = `${printKey}\0en`;
-    if (titleKeys.has(titleKey)) continue;
-    titles.push({
-      printKey,
-      lang: "en",
-      fullName: row.name.trim(),
-      nameSource: "narutocards-net:slug",
-    });
-    titleKeys.add(titleKey);
-    titled.push(printKey);
+    const keys = resolveNarutoLedgerPrintKeys(row.number, null, prints);
+    for (const printKey of keys) {
+      if (!printByKey.has(printKey)) continue;
+      const titleKey = `${printKey}\0en`;
+      if (titleKeys.has(titleKey)) continue;
+      titles.push({
+        printKey,
+        lang: "en",
+        fullName: row.name.trim(),
+        nameSource: "narutocards-net:slug",
+      });
+      titleKeys.add(titleKey);
+      titled.push(printKey);
+    }
   }
 
   prints.sort((a, b) => a.printKey.localeCompare(b.printKey));
@@ -1849,8 +1869,13 @@ export function mergeCollectorsCometIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of input.cards) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey || !printByKey.has(printKey)) continue;
+    const target = resolveNarutoLedgerPrintTarget(
+      row.number,
+      row.setCode,
+      prints,
+    );
+    if (!target?.exists) continue;
+    const printKey = target.printKey;
     const titleKey = `${printKey}\0en`;
     if (titleKeys.has(titleKey)) continue;
     titles.push({
@@ -1901,32 +1926,35 @@ export function mergeFansetEnTitlesIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of fansetEnTitleCards()) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey || !printKeys.has(printKey)) continue;
+    const keys = resolveNarutoLedgerPrintKeys(row.number, null, prints).filter(
+      (printKey) => printKeys.has(printKey),
+    );
+    if (!keys.length) continue;
     const name = row.name.trim();
     if (!name) continue;
+    for (const printKey of keys) {
+      const existing = titles.find(
+        (t) =>
+          canonicalizeNarutoPrintKey(t.printKey) === printKey &&
+          t.lang.toLowerCase() === "en",
+      );
+      if (existing) {
+        if (existing.nameSource !== "fanset-ocr-validated") continue;
+        if (existing.fullName.trim() === name) continue;
+        existing.fullName = name;
+        titled.push(printKey);
+        continue;
+      }
 
-    const existing = titles.find(
-      (t) =>
-        canonicalizeNarutoPrintKey(t.printKey) === printKey &&
-        t.lang.toLowerCase() === "en",
-    );
-    if (existing) {
-      if (existing.nameSource !== "fanset-ocr-validated") continue;
-      if (existing.fullName.trim() === name) continue;
-      existing.fullName = name;
+      titles.push({
+        printKey,
+        lang: "en",
+        fullName: name,
+        nameSource: "fanset-ocr-validated",
+      });
+      titleKeys.add(`${printKey}\0en`);
       titled.push(printKey);
-      continue;
     }
-
-    titles.push({
-      printKey,
-      lang: "en",
-      fullName: name,
-      nameSource: "fanset-ocr-validated",
-    });
-    titleKeys.add(`${printKey}\0en`);
-    titled.push(printKey);
   }
 
   titled.sort((a, b) => a.localeCompare(b));

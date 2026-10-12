@@ -97,6 +97,26 @@ describe("catalogueFacePick", () => {
     expect(face.file).toBe("art.coleka.webp");
   });
 
+  it("n'emprunte jamais un recto FR/EN sur une tuile JA", () => {
+    const entry = {
+      set: "jutsu",
+      card: "te0107",
+      langs: {
+        fr: { art: "art.carddass.jpg", artW: 350, artH: 496 },
+        ja: { name: "無音殺人者" },
+      },
+    };
+    const face = resolveCatalogueFace({
+      entry,
+      tileLang: "ja",
+      tileFiles: entry.langs.ja!,
+      languageSpecific: false,
+      bestFaceAcrossLocales: true,
+    });
+    expect(face.artLang).toBe("ja");
+    expect(face.file).toBeNull();
+  });
+
   it("garde la locale du tile quand le recto est language-specific", () => {
     const entry = {
       set: "nr",

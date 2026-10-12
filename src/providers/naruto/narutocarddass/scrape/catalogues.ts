@@ -76,6 +76,7 @@ import {
   parseNarutoCollector,
   mintNarutoPrintKey,
   narutoFamilyForPrefix,
+  resolveNarutoLedgerPrintKeys,
 } from "../identity";
 import { bandaicgEnCardlistCards, parseEnCcgPrintedRef } from "../parse/bandai";
 import ledger from "../curated/sources/collectors-comet.json";
@@ -2731,19 +2732,22 @@ export function mergeGgClassicTitlesIntoIndex(input: {
   );
   const titled: string[] = [];
   for (const row of cards) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey || !printKeys.has(printKey)) continue;
-    if (titledEn.has(printKey)) continue;
+    const keys = resolveNarutoLedgerPrintKeys(row.number, null, prints).filter(
+      (printKey) => printKeys.has(printKey),
+    );
     const name = ggCardName(row.slug).trim();
-    if (!name) continue;
-    titles.push({
-      printKey,
-      lang: "en",
-      fullName: name,
-      nameSource: "narutocardgamegg",
-    });
-    titledEn.add(printKey);
-    titled.push(printKey);
+    if (!name || !keys.length) continue;
+    for (const printKey of keys) {
+      if (titledEn.has(printKey)) continue;
+      titles.push({
+        printKey,
+        lang: "en",
+        fullName: name,
+        nameSource: "narutocardgamegg",
+      });
+      titledEn.add(printKey);
+      titled.push(printKey);
+    }
   }
   titled.sort((a, b) => a.localeCompare(b));
   return { prints, titles, titled };

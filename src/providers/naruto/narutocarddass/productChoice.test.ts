@@ -37,6 +37,12 @@ describe("productSourceFromStagingRel", () => {
       productSourceFromStagingRel("staging/kinkai/duopack-s28-02.webp"),
     ).toBe("kinkai");
     expect(
+      productSourceFromStagingRel("staging/micromania/duopack-s24.jpg"),
+    ).toBe("micromania");
+    expect(productSourceFromStagingRel("staging/fnac/duopack-s24.jpg")).toBe(
+      "fnac",
+    );
+    expect(
       productSourceFromStagingRel("staging/sunnystore/booster-s28-01.jpg"),
     ).toBe("sunnystore");
     expect(
@@ -112,9 +118,11 @@ describe("pickBestNarutoProductDump", () => {
     // `badge` est passé en tête le 2026-08-20 : c'est le seul badge de série
     // découpé, et il ne concurrence aucun packshot — il ne sert qu'au logo.
     expect(NARUTO_PRODUCT_PRIORITY.fr[0]).toBe("badge");
+    expect(NARUTO_PRODUCT_PRIORITY.fr[1]).toBe("reconstructed");
     expect(NARUTO_PRODUCT_PRIORITY.fr).toContain("manga-sanctuary");
     expect(NARUTO_PRODUCT_PRIORITY.en).toContain("bandai-drive");
     expect(NARUTO_PRODUCT_PRIORITY.es[0]).toBe("badge");
-    expect(NARUTO_PRODUCT_PRIORITY.es[1]).toBe("sunnystore");
+    expect(NARUTO_PRODUCT_PRIORITY.es[1]).toBe("reconstructed");
+    expect(NARUTO_PRODUCT_PRIORITY.es[2]).toBe("sunnystore");
   });
 });

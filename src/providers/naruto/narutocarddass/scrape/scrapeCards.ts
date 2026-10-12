@@ -64,6 +64,7 @@ import {
 import { foldUnsourcedNarutoArt } from "../pipeline/audit";
 import {
   migrateNarutoCardLayout,
+  relocateMiskeyedPromoAppearances,
   upsertNarutoAppearances,
 } from "../pipeline";
 import {
@@ -595,9 +596,31 @@ function ingestNarutoCardDir(input: {
   const art = pickArtForNarutoCardDir(input.cardDir, files, input.lang);
   const thumb = files.find((f) => /^thumb\.(jpe?g|png|webp|gif)$/i.test(f));
   if (!art && !thumb) return;
-  const sets = appearanceSetsOf(input.appearanceSets);
-  const appearanceSet = primaryAppearanceSet(sets, "unknown");
   const parsed = parseNarutoCollector(input.diskId);
+  const grouping = parsed?.grouping?.toLowerCase() ?? "";
+  /*
+    Folder identity wins over a mis-keyed appearance. Bare `te0107/ja` must not
+    mint `naruto:promo-te0107` (URL → `te0107-promo/…` while files live under
+    `te0107/`). `-promo` folders always mint the promo channel.
+  */
+  let sets = appearanceSetsOf(input.appearanceSets);
+  if (
+    grouping === "promo" ||
+    grouping === "cdf" ||
+    grouping === "prerelease"
+  ) {
+    if (!sets.includes(grouping)) sets = [grouping];
+  } else {
+    sets = sets.filter((set) => set !== "promo");
+  }
+  const appearanceSet = primaryAppearanceSet(
+    sets,
+    grouping === "promo" ||
+      grouping === "cdf" ||
+      grouping === "prerelease"
+      ? grouping
+      : "unknown",
+  );
   const printKey = mintNarutoPrintKey(input.diskId, appearanceSet);
   if (!parsed || !printKey) return;
   const lang = normalizeNarutoLang(input.lang);
@@ -652,6 +675,7 @@ export function buildIndexFromDisk(root: string): {
   */
   syncOfficialFrChecklistAppearances(root);
   syncNarutoS6FrPrintedAppearances(root);
+  relocateMiskeyedPromoAppearances(root);
   const cardsDir = path.join(root, "cards");
   const prints = new Map<string, NarutoPrintRow>();
   const assets: NarutoAssetRow[] = [];

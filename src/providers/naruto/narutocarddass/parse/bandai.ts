@@ -9,6 +9,7 @@ import {
   mintNarutoPrintKey,
   narutoDiskCardId,
   parseNarutoCollector,
+  resolveNarutoLedgerPrintTarget,
 } from "../identity";
 import { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import carddasJpCardlist from "../curated/sources/carddas-jp-cardlist.json";
@@ -206,11 +207,16 @@ export function mergeBandaicgEnNamesIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of bandaicgEnCardlistCards()) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey) continue;
+    const target = resolveNarutoLedgerPrintTarget(
+      row.number,
+      row.setCode,
+      prints,
+    );
+    if (!target) continue;
+    const printKey = target.printKey;
     const diskId = narutoDiskCardId(row.number) ?? row.number;
     const parsed = parseNarutoCollector(row.number);
-    if (!printByKey.has(printKey)) {
+    if (!target.exists) {
       const print: NarutoPrintRow = {
         printKey,
         setCode: row.setCode,
@@ -527,11 +533,16 @@ export function mergeCarddasJpNamesIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of carddasJpCardlistCards()) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey) continue;
+    const target = resolveNarutoLedgerPrintTarget(
+      row.number,
+      row.setCode,
+      prints,
+    );
+    if (!target) continue;
+    const printKey = target.printKey;
     const diskId = narutoDiskCardId(row.number) ?? row.number;
     const parsed = parseNarutoCollector(row.number);
-    if (!printByKey.has(printKey)) {
+    if (!target.exists) {
       const print: NarutoPrintRow = {
         printKey,
         setCode: row.setCode,
@@ -603,11 +614,16 @@ function mergeJaRows(
   const titled: string[] = [];
 
   for (const row of rows) {
-    const printKey = mintNarutoPrintKey(row.number);
-    if (!printKey) continue;
+    const target = resolveNarutoLedgerPrintTarget(
+      row.number,
+      row.setCode,
+      prints,
+    );
+    if (!target) continue;
+    const printKey = target.printKey;
     const diskId = narutoDiskCardId(row.number) ?? row.number;
     const parsed = parseNarutoCollector(row.number);
-    if (!printByKey.has(printKey)) {
+    if (!target.exists) {
       const print: NarutoPrintRow = {
         printKey,
         setCode: row.setCode,
@@ -1062,12 +1078,17 @@ export function mergeBggEnCcgS1IntoIndex(input: {
   for (const row of bggEnCcgS1Cards()) {
     const printed = bggEnCcgPrinted(row);
     if (!printed?.number || printed.usExclusive) continue;
-    const printKey = mintNarutoPrintKey(printed.number);
-    if (!printKey) continue;
+    const target = resolveNarutoLedgerPrintTarget(
+      printed.number,
+      BGG_EN_CCG_S1_SET,
+      prints,
+    );
+    if (!target) continue;
+    const printKey = target.printKey;
     const diskId = narutoDiskCardId(printed.number) ?? printed.number;
     const parsed = parseNarutoCollector(printed.number);
 
-    if (!printByKey.has(printKey)) {
+    if (!target.exists) {
       const print: NarutoPrintRow = {
         printKey,
         setCode: BGG_EN_CCG_S1_SET,

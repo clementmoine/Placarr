@@ -401,7 +401,8 @@ export function mergeColekaS6ItIntoIndex(input: {
     const existing = prints.find((p) =>
       narutoNumbersEqual(p.number, card.number),
     );
-    const printKey = existing?.printKey ?? mintNarutoPrintKey(card.number);
+    const printKey =
+      existing?.printKey ?? mintNarutoPrintKey(card.number, COLEKA_S6_IT_SET);
     if (!printKey) continue;
     if (!printByKey.has(printKey)) {
       const print: NarutoPrintRow = {

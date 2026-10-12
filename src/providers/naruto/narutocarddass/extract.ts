@@ -74,6 +74,8 @@ import {
   installGoatPackshots,
   installGradedcardcenterPackshots,
   installKinkaiPackshots,
+  installMicromaniaPackshots,
+  installFnacPackshots,
   installLeboncoinPackshots,
   installMangaSanctuaryPackshots,
   installMartinaPackshots,
@@ -613,6 +615,18 @@ export async function runNarutoPackPipeline(
         if (kinkai.written.length || kinkai.skipped.length) {
           console.log(
             `── Kinkai packshots : ${kinkai.written.length} écrits, ${kinkai.skipped.length} sautés`,
+          );
+        }
+        const micromania = await installMicromaniaPackshots({ force });
+        if (micromania.written.length || micromania.skipped.length) {
+          console.log(
+            `── Micromania packshots : ${micromania.written.length} écrits, ${micromania.skipped.length} sautés`,
+          );
+        }
+        const fnac = await installFnacPackshots({ force });
+        if (fnac.written.length || fnac.skipped.length) {
+          console.log(
+            `── Fnac packshots : ${fnac.written.length} écrits, ${fnac.skipped.length} sautés`,
           );
         }
         const sunny = await installSunnystorePackshots({ force });

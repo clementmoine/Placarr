@@ -9,6 +9,7 @@ import { mapSiteMedThumbsOntoAssets, collectorNumbersWithThumb, installedTinStag
 import { NARUTO_SEALED_SKUS, narutoCatalogueSealedSpecs, narutoSealedSpecs, NARUTO_SET_LOGOS, ingestNarutoSealedProducts, starterBook, volumeNumber, volumeOfficialProducts, volumeProductFormat, materializeTinBoxPromos, starterBoxAccessories, starterBoxAccessoriesLedger } from "./sealed";
 import { NARUTO_PACK_ID } from "./identity";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
+import productsContentsLedger from "./curated/products-contents.json";
 
 // —— sealedProducts ——
 {
@@ -64,24 +65,75 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
    * Packshots curés non-attestés toujours sur disque (ex. sleeve Hobby).
    * Même logique qu'`ATTESTED` : hors staging du tmp pack.
    */
-  const CURATED_ALWAYS = narutoCatalogueSealedSpecs().filter((spec) => {
-    if (spec.attested) return false;
-    if (spec.stagingKind !== "wrappers" && spec.stagingKind !== "jp-boosters") {
-      return false;
-    }
-    if (!spec.stagingFile) return false;
-    return fs.existsSync(
-      path.join(
-        narutoCuratedProductsDir(),
-        spec.stagingKind,
-        spec.stagingFile,
-      ),
-    );
-  }).length;
+  const CURATED_ALWAYS_SLUGS = new Set(
+    narutoCatalogueSealedSpecs()
+      .filter((spec) => {
+        if (spec.attested) return false;
+        if (
+          spec.stagingKind !== "wrappers" &&
+          spec.stagingKind !== "jp-boosters"
+        ) {
+          return false;
+        }
+        if (!spec.stagingFile) return false;
+        return fs.existsSync(
+          path.join(
+            narutoCuratedProductsDir(),
+            spec.stagingKind,
+            spec.stagingFile,
+          ),
+        );
+      })
+      .map((spec) => spec.slug),
+  );
+  const CURATED_ALWAYS = CURATED_ALWAYS_SLUGS.size;
 
-  /** Staging dumps + attestés + curés toujours présents. */
-  function writtenFromStaging(n: number): number {
-    return n + ATTESTED + CURATED_ALWAYS;
+  const ATTESTED_SLUGS = new Set(
+    narutoCatalogueSealedSpecs()
+      .filter((spec) => spec.attested)
+      .map((spec) => spec.slug),
+  );
+
+  /**
+   * `mergeCuratedSealedContents` mints inventory SKUs absent from the ingest
+   * index (FR starters / tin-box when the tmp pack has no packshot).
+   */
+  const CURATED_INVENTORY_STUB_SLUGS = new Set(
+    Object.entries(productsContentsLedger.skus)
+      .filter(([slug, patch]) => {
+        const hasInventory = Boolean(
+          (patch.guaranteedPrintKeys &&
+            patch.guaranteedPrintKeys.length > 0) ||
+            (patch.guaranteedPrints && patch.guaranteedPrints.length > 0) ||
+            (patch.guaranteedProducts &&
+              patch.guaranteedProducts.length > 0),
+        );
+        if (!hasInventory) return false;
+        if (ATTESTED_SLUGS.has(slug)) return false;
+        if (CURATED_ALWAYS_SLUGS.has(slug)) return false;
+        return true;
+      })
+      .map(([slug]) => slug),
+  );
+  const CURATED_INVENTORY_STUBS = CURATED_INVENTORY_STUB_SLUGS.size;
+
+  /**
+   * Staging dumps + attestés + curés toujours présents + stubs merge.
+   * `stagedSlugs` that were inventory stubs must not be double-counted.
+   */
+  function writtenFromStaging(
+    n: number,
+    stagedSlugs: readonly string[] = [],
+  ): number {
+    const coveredStubs = stagedSlugs.filter((slug) =>
+      CURATED_INVENTORY_STUB_SLUGS.has(slug),
+    ).length;
+    return (
+      n +
+      ATTESTED +
+      CURATED_ALWAYS +
+      (CURATED_INVENTORY_STUBS - coveredStubs)
+    );
   }
 
   describe("Naruto sealed SKUs", async () => {
@@ -165,6 +217,9 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
         "display-s28",
         "display-s28-fr",
         "deck-la-tempete-approche",
+        "duopack-s24",
+        "duopack-s24-organisation-pacifique",
+        "duopack-s24-loup-bicephale",
         "duopack-s28",
       ]);
       expect(slugs).not.toContain("booster-s6");
@@ -263,11 +318,49 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
         declaredCardCount: 9,
         attested: true,
       });
+      expect(
+        NARUTO_SEALED_SKUS.find((row) => row.slug === "duopack-s24"),
+      ).toMatchObject({
+        setCode: "s24",
+        kind: "multipack",
+        lang: "FR",
+        stagingKind: "wrappers",
+        stagingFile: "",
+        stagingBackFile: "duopack-s24-back.png",
+        attested: true,
+      });
+      expect(
+        NARUTO_SEALED_SKUS.find(
+          (row) => row.slug === "duopack-s24-organisation-pacifique",
+        ),
+      ).toMatchObject({
+        setCode: "s24",
+        kind: "multipack",
+        stagingKind: "wrappers",
+        stagingFile: "duopack-s24-organisation-pacifique.png",
+        stagingBackFile: "duopack-s24-back.png",
+        attested: true,
+      });
+      expect(
+        NARUTO_SEALED_SKUS.find(
+          (row) => row.slug === "duopack-s24-loup-bicephale",
+        ),
+      ).toMatchObject({
+        setCode: "s24",
+        kind: "multipack",
+        stagingKind: "wrappers",
+        stagingFile: "duopack-s24-loup-bicephale.png",
+        stagingBackFile: "duopack-s24-back.png",
+        attested: true,
+      });
       const duopack = NARUTO_SEALED_SKUS.find((row) => row.slug === "duopack-s28");
       expect(duopack).toMatchObject({
         setCode: "s28",
         kind: "multipack",
         lang: "FR",
+        stagingKind: "wrappers",
+        stagingFile: "duopack-s28.png",
+        stagingBackFile: "duopack-s28-back.png",
         attested: true,
       });
       expect(
@@ -359,7 +452,9 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       );
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(2));
+      expect(result.written).toBe(
+        writtenFromStaging(2, ["starter-maitre-hokage"]),
+      );
       // Two staged packshots + curated-always + every catalogue `attested` SKU.
       const nonAttested = narutoCatalogueSealedSpecs().filter(
         (row) => !row.attested,
@@ -442,7 +537,12 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       fs.writeFileSync(path.join(tt, "starter-maitre-hokage.jpeg"), "tt-hokage");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(2));
+      expect(result.written).toBe(
+        writtenFromStaging(2, [
+          "starter-pays-du-vent",
+          "starter-maitre-hokage",
+        ]),
+      );
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
       ) as { products: Record<string, { image: string; path: string }> };
@@ -498,7 +598,9 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       fs.writeFileSync(path.join(shop, "11650-maitre-hokage.jpg"), "scifi");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(1));
+      expect(result.written).toBe(
+        writtenFromStaging(1, ["starter-maitre-hokage"]),
+      );
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
       ) as { products: Record<string, { path: string }> };
@@ -545,7 +647,9 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       );
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(2));
+      expect(result.written).toBe(
+        writtenFromStaging(2, ["starter-pays-du-vent"]),
+      );
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
       ) as { products: Record<string, { image: string; path: string }> };
@@ -803,7 +907,7 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       fs.writeFileSync(path.join(lbc, "tin-box-02.jpg"), "lbc-back");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(1));
+      expect(result.written).toBe(writtenFromStaging(1, ["tin-box"]));
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
       ) as {
@@ -845,7 +949,7 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       fs.writeFileSync(path.join(tt, "tin-box.jpeg"), "tt-tin");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(1));
+      expect(result.written).toBe(writtenFromStaging(1, ["tin-box"]));
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
       ) as {
@@ -865,7 +969,7 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       expect(hobby.path).toBe("curated/products/wrappers/tin-box-hobby.png");
     });
 
-    it("publishes Duopack S28 verso from Kinkai and keeps eBay face preferred", async () => {
+    it("publishes Duopack S28 face+verso from curated wrappers (shops archival)", async () => {
       const root = tmpPack();
       const ebay = path.join(root, "staging", "ebay");
       fs.mkdirSync(ebay, { recursive: true });
@@ -876,7 +980,7 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       fs.writeFileSync(path.join(kinkai, "duopack-s28-02.webp"), "kinkai-back");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      // duopack-s28 is already `attested` — dumps only add imageBack, not a new SKU.
+      // Attested + curated wrappers — eBay/Kinkai dumps stay archival (ingest false).
       expect(result.written).toBe(writtenFromStaging(0));
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
@@ -893,8 +997,26 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       const duo = index.products["naruto/carddass::duopack-s28"]!;
       // Curated products-contents : 2×8 + promo PR-096.
       expect(duo.declaredCardCount).toBe(17);
-      expect(duo.path).toBe("staging/ebay/duopack-s28.webp");
-      expect(duo.imageBack).toContain("duopack-s28/fr/back.kinkai.webp");
+      expect(duo.path).toBe("curated/products/wrappers/duopack-s28.png");
+      expect(duo.imageBack).toContain(
+        "duopack-s28/fr/back.reconstructed.png",
+      );
+      const org =
+        index.products["naruto/carddass::duopack-s24-organisation-pacifique"]!;
+      expect(org.path).toBe(
+        "curated/products/wrappers/duopack-s24-organisation-pacifique.png",
+      );
+      expect(org.imageBack).toContain(
+        "duopack-s24-organisation-pacifique/fr/back.reconstructed.png",
+      );
+      const loup =
+        index.products["naruto/carddass::duopack-s24-loup-bicephale"]!;
+      expect(loup.path).toBe(
+        "curated/products/wrappers/duopack-s24-loup-bicephale.png",
+      );
+      expect(loup.imageBack).toContain(
+        "duopack-s24-loup-bicephale/fr/back.reconstructed.png",
+      );
     });
 
     it("publishes FR Storm 3 single booster from Sunny Store with verso", async () => {
@@ -1235,7 +1357,7 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       };
       const ps = index.products["naruto/carddass::ps-yoyaku-tokuten"];
       expect(ps?.imageBack).toBe(
-        "/assets/naruto/carddass/products/ps-yoyaku-tokuten/ja/back.mercari.jpg",
+        "/assets/naruto/carddass/products/ps-yoyaku-tokuten/ja/back.reconstructed.jpg",
       );
       // Le recto reste le visuel officiel : le verso ne le remplace pas.
       expect(ps?.image).toContain("art.tvtokyo");
@@ -1257,11 +1379,12 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
         Le verso est une photo choisie à la main : il vit dans `curated/`, donc
         dans le provider et non dans le pack. Il est trouvé quel que soit le
         contenu du pack — c'est tout l'intérêt de ne pas l'avoir mis en staging,
-        que la prochaine moisson aurait effacé.
+        que la prochaine moisson aurait effacé. Source = `reconstructed`
+        (wrappers curés), pas Mercari boutique.
       */
       expect(
         index.products["naruto/carddass::ps-yoyaku-tokuten"]?.imageBack,
-      ).toContain("back.mercari.jpg");
+      ).toContain("back.reconstructed.jpg");
     });
   });
 
@@ -1715,6 +1838,27 @@ import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persi
       expect(ledger.skus["display-s28-fr"]).toMatchObject({
         cardsPerPack: 8,
         packsContained: 24,
+      });
+      expect(ledger.skus["duopack-s24"]).toMatchObject({
+        cardsPerPack: 8,
+        packsContained: 2,
+        declaredCardCount: 17,
+        behavior: "mixed_bundle",
+        contentsKnown: true,
+        guaranteedPrintKeys: ["naruto:s24-j0895"],
+        guaranteedProducts: [{ slug: "booster-s24", qty: 2 }],
+      });
+      expect(ledger.skus["duopack-s24"]?.notes).toContain("3391891963138");
+      expect(ledger.skus["duopack-s24-organisation-pacifique"]).toMatchObject({
+        guaranteedPrintKeys: ["naruto:s24-m0873"],
+        guaranteedProducts: [{ slug: "booster-s24", qty: 2 }],
+      });
+      expect(ledger.skus["duopack-s24-loup-bicephale"]).toMatchObject({
+        cardsPerPack: 8,
+        packsContained: 2,
+        declaredCardCount: 17,
+        guaranteedPrintKeys: ["naruto:s24-n1379"],
+        guaranteedProducts: [{ slug: "booster-s24", qty: 2 }],
       });
       expect(ledger.skus["duopack-s28"]).toMatchObject({
         cardsPerPack: 8,

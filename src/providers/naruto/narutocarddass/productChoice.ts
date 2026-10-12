@@ -29,6 +29,10 @@ export const NARUTO_PRODUCT_SOURCES = [
   "rakuten",
   /** Kinkai pasted uploads — FR retail blister verso (EAN + pack math). */
   "kinkai",
+  /** Micromania Demandware CDN — FR retail sealed (pastes only). */
+  "micromania",
+  /** Fnac static CDN — FR retail sealed (pastes only). */
+  "fnac",
   /** Sunny Store Shopify CDN — FR/ES/EN sealed packshots (pastes only). */
   "sunnystore",
   "gradedcardcenter",
@@ -56,6 +60,11 @@ export const NARUTO_PRODUCT_SOURCES = [
    * n'a jamais montré.
    */
   "mercari",
+  /**
+   * Visuels reconstités / détourés à la main dans `curated/products/wrappers/`.
+   * Pas une boutique — priorité haute pour battre eBay / Fnac / thumbs.
+   */
+  "reconstructed",
   /**
    * カードダスドットコム — la base produit de Bandai. Visuel officiel, donc en
    * tête de l'ordre japonais : c'est l'éditeur qui photographie son propre
@@ -111,6 +120,7 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
 > = {
   fr: [
     "badge",
+    "reconstructed",
     "trictrac",
     "vialudibunda",
     "ebay",
@@ -127,6 +137,8 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
     "leboncoin",
     "rakuten",
     "kinkai",
+    "fnac",
+    "micromania",
     "sunnystore",
     "gradedcardcenter",
     "coleka",
@@ -139,6 +151,7 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
   /** L'allemand n'a qu'une source de packshot connue : comicplanet.de. */
   de: [
     "badge",
+    "reconstructed",
     "comicplanet",
     "trictrac",
     "vialudibunda",
@@ -166,6 +179,7 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
   ],
   en: [
     "badge",
+    "reconstructed",
     "coleka",
     "goat",
     "bandai-drive",
@@ -195,6 +209,7 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
   ],
   it: [
     "badge",
+    "reconstructed",
     "cardgameclub",
     "martina",
     "emporiodimilo",
@@ -223,6 +238,7 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
   /** Castellano Carddass — seule source collée à ce jour : sunnystore.es. */
   es: [
     "badge",
+    "reconstructed",
     "sunnystore",
     "ebay",
     "vinted",
@@ -249,6 +265,7 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
   ],
   ja: [
     "badge",
+    "reconstructed",
     "carddassofficial",
     "suruga",
     "gradedcardcenter",
@@ -283,7 +300,6 @@ const STAGING_FOLDER_SOURCE: Readonly<Record<string, NarutoProductSource>> = {
   "ccg-logo": "kingslayer",
   "suruga-kaitori": "suruga",
   "series-badges": "badge",
-  wrappers: "mercari",
   "carddass-fr": "carddass",
   trictrac: "trictrac",
   vialudibunda: "vialudibunda",
@@ -298,6 +314,8 @@ const STAGING_FOLDER_SOURCE: Readonly<Record<string, NarutoProductSource>> = {
   leboncoin: "leboncoin",
   rakuten: "rakuten",
   kinkai: "kinkai",
+  micromania: "micromania",
+  fnac: "fnac",
   sunnystore: "sunnystore",
   gradedcardcenter: "gradedcardcenter",
   "goat-en-boxes": "goat",
@@ -355,7 +373,7 @@ export function pickBestNarutoProductDump(
 const CURATED_FOLDER_SOURCE: Readonly<Record<string, NarutoProductSource>> = {
   "series-badges": "badge",
   "ccg-logo": "kingslayer",
-  wrappers: "mercari",
+  wrappers: "reconstructed",
   "comicplanet-de": "comicplanet",
   "jp-boosters": "amazon",
 };

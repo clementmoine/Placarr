@@ -140,6 +140,18 @@ export function resolveCatalogueFace(input: {
   const bestArt = best ? catalogueFaceArtFile(best.files) : null;
   if (!best || !bestArt) return tileFace();
 
+  /*
+    JA rectos carry different printed text (Carddass 忍/術 vs EU NI/TE). Empty
+    FR shells may still borrow a JA scan when the print is neutral — never the
+    reverse: a JA tile must not show a FR/EN retail face.
+  */
+  if (
+    input.tileLang.toLowerCase() === "ja" &&
+    best.lang.toLowerCase() !== "ja"
+  ) {
+    return tileFace();
+  }
+
   if (tileArt) {
     const tileScore = catalogueFaceSlotScore(input.tileFiles);
     const bestScore = catalogueFaceSlotScore(best.files);

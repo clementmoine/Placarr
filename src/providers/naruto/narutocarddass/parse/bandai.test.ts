@@ -166,7 +166,7 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
             family: "ninja",
           },
           {
-            printKey: "naruto:n-0001",
+            printKey: "naruto:s1-n0001",
             setCode: "s1",
             number: "n0001",
             cardType: "n",
@@ -174,13 +174,13 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
           },
         ],
         titles: [
-          { printKey: "naruto:n-0001", lang: "en", fullName: "Naruto (BGG)" },
+          { printKey: "naruto:s1-n0001", lang: "en", fullName: "Naruto (BGG)" },
         ],
       });
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:n-0001")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:s1-n0001")?.fullName,
       ).toBe("Naruto (BGG)");
-      expect(merged.addedPrints).toContain("naruto:n-0044");
+      expect(merged.addedPrints).toContain("naruto:s2-n0044");
       expect(merged.prints.some((p) => p.printKey === "naruto:ni-0001")).toBe(
         true,
       );
@@ -277,11 +277,11 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
           },
         ],
       });
-      expect(merged.addedPrints).toContain("naruto:n-0001");
-      expect(merged.addedPrints).toContain("naruto:j-0001");
+      expect(merged.addedPrints).toContain("naruto:s1-n0001");
+      expect(merged.addedPrints).toContain("naruto:s1-j0001");
       expect(merged.addedPrints).not.toContain("naruto:ni-0001");
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:n-0001"),
+        merged.titles.find((t) => t.printKey === "naruto:s1-n0001"),
       ).toMatchObject({
         lang: "en",
         fullName: "Naruto Uzumaki",
@@ -290,10 +290,10 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
         merged.titles.find((t) => t.printKey === "naruto:ni-0001")?.lang,
       ).toBe("fr");
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:j-0016")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:s1-j0016")?.fullName,
       ).toBe("Transfrmation Jutsu");
       expect(
-        merged.prints.find((p) => p.printKey === "naruto:n-0001"),
+        merged.prints.find((p) => p.printKey === "naruto:s1-n0001"),
       ).toMatchObject({
         setCode: "s1",
         number: "n0001",
@@ -463,25 +463,30 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
       const merged = mergeCarddasJpNamesIntoIndex({
         prints: [
           {
-            printKey: "naruto:ni-0001",
-            setCode: "s1",
+            printKey: "naruto:maki1-ni0001",
+            setCode: "maki1",
             number: "ni0001",
             cardType: "ni",
             family: "ninja",
           },
         ],
         titles: [
-          { printKey: "naruto:ni-0001", lang: "fr", fullName: "Naruto Uzumaki" },
+          {
+            printKey: "naruto:maki1-ni0001",
+            lang: "fr",
+            fullName: "Naruto Uzumaki",
+          },
         ],
       });
       expect(
         merged.titles.find(
-          (t) => t.printKey === "naruto:ni-0001" && t.lang === "ja",
+          (t) => t.printKey === "naruto:maki1-ni0001" && t.lang === "ja",
         )?.fullName,
       ).toBe("うずまきナルト");
       expect(
-        merged.prints.find((p) => p.printKey === "naruto:ni-0001")?.setCode,
-      ).toBe("s1");
+        merged.prints.find((p) => p.printKey === "naruto:maki1-ni0001")
+          ?.setCode,
+      ).toBe("maki1");
       expect(merged.addedPrints.length).toBeGreaterThan(900);
     });
   });
@@ -543,7 +548,7 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
           { printKey: "naruto:ni-0001", lang: "ja", fullName: "うずまきナルト" },
         ],
       });
-      expect(merged.addedPrints).toContain("naruto:prni-0001");
+      expect(merged.addedPrints).toContain("naruto:promo-prni0001");
       expect(
         merged.titles.find((t) => t.printKey === "naruto:ni-0001")?.fullName,
       ).toBe("うずまきナルト");
@@ -575,18 +580,20 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
         titles: [
           ...afterOfficial.titles,
           {
-            printKey: "naruto:can-0002",
+            printKey: "naruto:promo-can0002",
             lang: "ja",
             fullName: "KEEP",
           },
         ],
       });
-      expect(merged.addedPrints).toContain("naruto:can-0001");
+      expect(merged.addedPrints).toContain("naruto:promo-can0001");
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:can-0002")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:promo-can0002")
+          ?.fullName,
       ).toBe("KEEP");
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:can-0001")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:promo-can0001")
+          ?.fullName,
       ).toBe("うずまきナルト＆うちはサスケ");
     });
   });
@@ -612,7 +619,7 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
       const merged = mergeNoihjpCarddassIntoIndex({
         prints: [
           {
-            printKey: "naruto:coin-0001",
+            printKey: "naruto:promo-coin0001",
             setCode: "promo",
             number: "coin0001",
             cardType: "coin",
@@ -621,19 +628,21 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
         ],
         titles: [
           {
-            printKey: "naruto:coin-0001",
+            printKey: "naruto:promo-coin0001",
             lang: "ja",
             fullName: "KEEP",
           },
         ],
       });
-      expect(merged.addedPrints).toContain("naruto:coin-0009");
-      expect(merged.addedPrints).toContain("naruto:coin-0011");
+      expect(merged.addedPrints).toContain("naruto:promo-coin0009");
+      expect(merged.addedPrints).toContain("naruto:promo-coin0011");
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:coin-0001")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:promo-coin0001")
+          ?.fullName,
       ).toBe("KEEP");
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:coin-0009")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:promo-coin0009")
+          ?.fullName,
       ).toBe("うずまきナルト＆ガマブン太");
     });
   });

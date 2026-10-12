@@ -782,6 +782,60 @@ export function mintNarutoPrintKey(
 }
 
 /**
+ * Ledger merge helper: mint a set-scoped key when `catalogueSet` is known,
+ * otherwise attach to every existing print that shares the collector number.
+ *
+ * Without a set, `mintNarutoPrintKey` returns null (set-scoped SSOT) — callers
+ * that still minted legacy keys silently dropped every Goat / Bandai / CA title.
+ */
+export function resolveNarutoLedgerPrintKeys(
+  raw: string,
+  catalogueSet: string | null | undefined,
+  existingPrints: readonly { printKey: string; number: string }[],
+): string[] {
+  const minted = mintNarutoPrintKey(raw, catalogueSet);
+  if (minted) return [minted];
+  const disk = narutoDiskCardId(raw);
+  if (!disk) return [];
+  const diskLower = disk.toLowerCase();
+  return existingPrints
+    .filter(
+      (p) => (narutoDiskCardId(p.number) ?? p.number).toLowerCase() === diskLower,
+    )
+    .map((p) => p.printKey);
+}
+
+/**
+ * Prefer an existing print (legacy or set-scoped) for the same collector + set
+ * before minting a new set-scoped key — avoids double prints during migration.
+ */
+export function resolveNarutoLedgerPrintTarget(
+  raw: string,
+  catalogueSet: string,
+  existingPrints: readonly {
+    printKey: string;
+    number: string;
+    setCode: string;
+  }[],
+): { printKey: string; exists: boolean } | null {
+  const set = catalogueSet.trim().toLowerCase();
+  if (!set || !isNarutoCatalogueSetCode(set)) return null;
+  const minted = mintNarutoPrintKey(raw, set);
+  if (!minted) return null;
+  const exact = existingPrints.find((p) => p.printKey === minted);
+  if (exact) return { printKey: exact.printKey, exists: true };
+  const sameCollector = existingPrints.find(
+    (p) =>
+      p.setCode.trim().toLowerCase() === set &&
+      narutoNumbersEqual(p.number, raw),
+  );
+  if (sameCollector) {
+    return { printKey: sameCollector.printKey, exists: true };
+  }
+  return { printKey: minted, exists: false };
+}
+
+/**
  * Normalize padding / promo set. Legacy `naruto:ni-0001` stays until a
  * catalogue set is supplied (second arg) or the key is already set-scoped.
  */

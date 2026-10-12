@@ -21,6 +21,10 @@ import {
   kinkaiIngestBacks,
   kinkaiIngestPackshots,
   kinkaiPackshotLedger,
+  micromaniaIngestPackshots,
+  micromaniaPackshotLedger,
+  fnacIngestPackshots,
+  fnacPackshotLedger,
   leboncoinIngestBacks,
   leboncoinIngestPackshots,
   leboncoinPackshotImageFull,
@@ -270,6 +274,50 @@ export async function installKinkaiPackshots(
     options,
     referer: (row) => row.listing || ledger.listing,
     accept: ACCEPT_WEBP,
+    idKey: "staging",
+    dedupeByDest: true,
+  });
+}
+
+// ─── Micromania ────────────────────────────────────────────────────────────
+
+export const NARUTO_STAGING_MICROMANIA = path.join("staging", "micromania");
+
+export type InstallMicromaniaPackshotsOptions = InstallStagingPackshotsOptions;
+
+export async function installMicromaniaPackshots(
+  options: InstallMicromaniaPackshotsOptions = {},
+): Promise<{ written: string[]; skipped: string[] }> {
+  const ledger = micromaniaPackshotLedger();
+  return installStagingPackshots({
+    packId: NARUTO_PACK_ID,
+    stagingDir: NARUTO_STAGING_MICROMANIA,
+    rows: micromaniaIngestPackshots(),
+    options,
+    referer: (row) => row.listing || ledger.listing,
+    accept: ACCEPT_JPEG,
+    idKey: "staging",
+    dedupeByDest: true,
+  });
+}
+
+// ─── Fnac ──────────────────────────────────────────────────────────────────
+
+export const NARUTO_STAGING_FNAC = path.join("staging", "fnac");
+
+export type InstallFnacPackshotsOptions = InstallStagingPackshotsOptions;
+
+export async function installFnacPackshots(
+  options: InstallFnacPackshotsOptions = {},
+): Promise<{ written: string[]; skipped: string[] }> {
+  const ledger = fnacPackshotLedger();
+  return installStagingPackshots({
+    packId: NARUTO_PACK_ID,
+    stagingDir: NARUTO_STAGING_FNAC,
+    rows: fnacIngestPackshots(),
+    options,
+    referer: (row) => row.listing || ledger.listing,
+    accept: ACCEPT_JPEG,
     idKey: "staging",
     dedupeByDest: true,
   });

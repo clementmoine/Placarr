@@ -175,14 +175,14 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
       const merged = mergeGoatEnCcgCardsIntoIndex({
         prints: [
           {
-            printKey: "naruto:ni-0082",
+            printKey: "naruto:s2-ni0082",
             setCode: "s2",
             number: "ni0082",
             cardType: "ni",
             family: "ninja",
           },
           {
-            printKey: "naruto:n-0082",
+            printKey: "naruto:s2-n0082",
             setCode: "s2",
             number: "n0082",
             cardType: "n",
@@ -190,15 +190,15 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
           },
         ],
         titles: [
-          { printKey: "naruto:n-0082", lang: "en", fullName: "Anbu (BGG)" },
+          { printKey: "naruto:s2-n0082", lang: "en", fullName: "Anbu (BGG)" },
         ],
         cards: parseGoatEnCcgListing(FIXTURE, "s2"),
       });
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:n-0082")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:s2-n0082")?.fullName,
       ).toBe("Anbu (BGG)");
-      expect(merged.addedPrints).toContain("naruto:n-0077");
-      expect(merged.prints.some((p) => p.printKey === "naruto:ni-0082")).toBe(
+      expect(merged.addedPrints).toContain("naruto:s2-n0077");
+      expect(merged.prints.some((p) => p.printKey === "naruto:s2-ni0082")).toBe(
         true,
       );
     });
@@ -226,7 +226,7 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
     it("comble la rareté d'un titre déjà connu au lieu de sauter la ligne", () => {
       const merged = mergeGoatEnCcgCardsIntoIndex({
         prints: [],
-        titles: [{ printKey: "naruto:n-0041", lang: "en", fullName: "Rock Lee" }],
+        titles: [{ printKey: "naruto:s1-n0041", lang: "en", fullName: "Rock Lee" }],
         cards: [
           {
             number: "n0041",
@@ -238,7 +238,7 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
         ],
       });
       expect(merged.titles[0]?.rarity).toBe("Rare");
-      expect(merged.rarityFilled).toEqual(["naruto:n-0041"]);
+      expect(merged.rarityFilled).toEqual(["naruto:s1-n0041"]);
     });
 
     it("ne réécrit pas une rareté déjà posée", () => {
@@ -246,7 +246,7 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
         prints: [],
         titles: [
           {
-            printKey: "naruto:n-0041",
+            printKey: "naruto:s1-n0041",
             lang: "en",
             fullName: "Rock Lee",
             rarity: "Super Rare",
@@ -940,7 +940,7 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
       const merged = mergeNarutoCardsCaIntoIndex({
         prints: [
           {
-            printKey: "naruto:n-0001",
+            printKey: "naruto:s1-n0001",
             setCode: "s1",
             number: "n0001",
             cardType: "n",
@@ -949,7 +949,7 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
         ],
         titles: [
           {
-            printKey: "naruto:n-0001",
+            printKey: "naruto:s1-n0001",
             lang: "en",
             fullName: "Naruto (official)",
           },
@@ -957,17 +957,17 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
         cards: parseNarutoCardsCaSetHtml(FIXTURE, "s1"),
       });
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:n-0001")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:s1-n0001")?.fullName,
       ).toBe("Naruto (official)");
-      expect(merged.addedPrints).toContain("naruto:nus-0122");
-      expect(merged.addedPrints).toContain("naruto:jus-0001");
+      expect(merged.addedPrints).toContain("naruto:s1-nus0122");
+      expect(merged.addedPrints).toContain("naruto:s1-jus0001");
       expect(
-        merged.prints.find((p) => p.printKey === "naruto:nus-0122"),
+        merged.prints.find((p) => p.printKey === "naruto:s1-nus0122"),
       ).toMatchObject({
         number: "nus0122",
         grouping: null,
       });
-      expect(merged.prints.some((p) => p.printKey === "naruto:n-0122")).toBe(
+      expect(merged.prints.some((p) => p.printKey === "naruto:s1-n0122")).toBe(
         false,
       );
     });
@@ -1190,21 +1190,21 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
       const merged = mergeCollectorsCometIntoIndex({
         prints: [
           {
-            printKey: "naruto:nus-0087",
+            printKey: "naruto:s9-nus0087",
             setCode: "s9",
             number: "nus0087",
             cardType: "n",
             family: "ninja",
           },
           {
-            printKey: "naruto:n-0087",
+            printKey: "naruto:s3-n0087",
             setCode: "s3",
             number: "n0087",
             cardType: "n",
             family: "ninja",
           },
         ],
-        titles: [{ printKey: "naruto:n-0087", lang: "en", fullName: "Sakura" }],
+        titles: [{ printKey: "naruto:s3-n0087", lang: "en", fullName: "Sakura" }],
         cards: [
           {
             number: "nus0087",
@@ -1214,9 +1214,9 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
           },
         ],
       });
-      expect(merged.titled).toEqual(["naruto:nus-0087"]);
+      expect(merged.titled).toEqual(["naruto:s9-nus0087"]);
       expect(merged.titles).toContainEqual({
-        printKey: "naruto:nus-0087",
+        printKey: "naruto:s9-nus0087",
         lang: "en",
         fullName: "Choji Akimichi",
         nameSource: "collectors-comet",

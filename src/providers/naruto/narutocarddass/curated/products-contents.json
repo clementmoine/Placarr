@@ -2078,9 +2078,72 @@
       "randomPoolScope": "set",
       "notes": "Display FR Storm 3. Sachets EU 8. Compte 24 = titre vendeur (pas imprimé sur face/flanc staged). ≠ display-s28 EN 24×10."
     },
+    "duopack-s24": {
+      "source": "fnac ZoomPE + micromania EAN 3391891963138 — fenêtre J-895",
+      "verifiedAt": "2026-10-12",
+      "cardsPerPack": 8,
+      "packsContained": 2,
+      "declaredCardCount": 17,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "set",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "naruto:s24-j0895"
+      ],
+      "notes": "EAN 3391891963138 — Micromania 48379 / Fnac a4099814. Fenêtre Scellage des Démons à Queues (J-895 / JU-895). 2× booster-s24 + 1 jutsu. Dos partagé wrappers/duopack-s24-back.png. Variantes FB clean = organisation-pacifique / loup-bicephale.",
+      "guaranteedProducts": [
+        {
+          "slug": "booster-s24",
+          "qty": 2
+        }
+      ]
+    },
+    "duopack-s24-organisation-pacifique": {
+      "source": "curated wrappers + FB fenêtre M-873",
+      "verifiedAt": "2026-10-12",
+      "cardsPerPack": 8,
+      "packsContained": 2,
+      "declaredCardCount": 17,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "set",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "naruto:s24-m0873"
+      ],
+      "notes": "Variante fenêtre Organisation Pacifique (M-873). Packshot clean wrappers/. Dos partagé duopack-s24-back.png. ≠ retail Fnac/Micromania (J-895).",
+      "guaranteedProducts": [
+        {
+          "slug": "booster-s24",
+          "qty": 2
+        }
+      ]
+    },
+    "duopack-s24-loup-bicephale": {
+      "source": "curated wrappers + FB fenêtre N-1379",
+      "verifiedAt": "2026-10-12",
+      "cardsPerPack": 8,
+      "packsContained": 2,
+      "declaredCardCount": 17,
+      "behavior": "mixed_bundle",
+      "randomPoolScope": "set",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "naruto:s24-n1379"
+      ],
+      "notes": "Variante fenêtre Loup Bicéphale (N-1379). Packshot clean wrappers/. Dos partagé duopack-s24-back.png.",
+      "guaranteedProducts": [
+        {
+          "slug": "booster-s24",
+          "qty": 2
+        }
+      ]
+    },
     "duopack-s28": {
-      "source": "kinkai.fr/article/5274 verso (EAN 3391891970488) + eBay FR face + Namco/Cardport EU (eu-ccg-pack-math-2026-08-29)",
-      "verifiedAt": "2026-09-09",
+      "source": "curated wrappers + kinkai.fr/article/5274 verso (EAN 3391891970488) + Namco/Cardport EU",
+      "verifiedAt": "2026-10-11",
       "cardsPerPack": 8,
       "packsContained": 2,
       "declaredCardCount": 17,
@@ -2091,7 +2154,7 @@
       "guaranteedPrintKeys": [
         "naruto:promo-pr0096"
       ],
-      "notes": "Verso imprimé FR : « Chaque pack booster contient : 8 cartes sélectionnées aléatoirement (7 + 1 carte spéciale) ». 2 sachets + promo fenêtre PR-096 (4e Hokage). 120 cartes série. EAN 3391891970488. BANDAI 2013 MADE IN ITALY / NAMCO BANDAI Games Europe (Cergy). Pas Day One PR-095. Sachets aléatoires — seule la promo est garantie. contentsKnown=true : 2× booster-s28 + promo fenêtre PR-096.",
+      "notes": "Verso imprimé FR : « Chaque pack booster contient : 8 cartes sélectionnées aléatoirement (7 + 1 carte spéciale) ». 2 sachets + promo fenêtre PR-096 (4e Hokage). 120 cartes série. EAN 3391891970488. BANDAI 2013 MADE IN ITALY / NAMCO BANDAI Games Europe (Cergy). Pas Day One PR-095. Packshot clean wrappers/ (eBay/Kinkai archival). contentsKnown=true : 2× booster-s28 + promo fenêtre PR-096.",
       "guaranteedProducts": [
         {
           "slug": "booster-s28",

@@ -255,6 +255,37 @@ function donorScore(set: string, file: string, card?: string): number {
   return score;
 }
 
+/** Promo / prerelease / cdf channel — not a retail booster membership. */
+function isAltChannelPrint(printKey: string, card: string): boolean {
+  const set = narutoPrintKeySetCode(printKey)?.toLowerCase();
+  if (set === "promo" || set === "prerelease") return true;
+  const grouping = parseNarutoCollector(card)?.grouping?.toLowerCase();
+  return (
+    grouping === "promo" ||
+    grouping === "prerelease" ||
+    grouping === "cdf"
+  );
+}
+
+/**
+ * Promo stubs may inherit retail art; a retail tile must not show a tourney /
+ * promo face (TE-107 無音殺人者 ≠ PR術-107 無音殺人術).
+ */
+function acceptArtDonor(
+  tilePrintKey: string,
+  tileCard: string,
+  donor: ArtDonor,
+): boolean {
+  if (donor.printKey === tilePrintKey) return false;
+  if (
+    !isAltChannelPrint(tilePrintKey, tileCard) &&
+    isAltChannelPrint(donor.printKey, donor.card)
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export function resetCatalogueCardsCache(): void {
   clearIdentityCatalogueBrowseCache();
 }
@@ -552,7 +583,12 @@ function catalogueRowScore(row: CatalogueCardRow): number {
   else score += 20;
   if (row.artUrl && !row.missingArt && !row.artFallbackFrom) score += 10;
   if (!row.artFallbackFrom) score += 3;
-  if (row.name) score += 1;
+  /*
+    Named locale faces beat earlier-series invent shells. FR titles land on
+    s11 (etc.) while s7–s10 keep FR art-only slots — membershipLocaleScore
+    alone would pick Quest for Power over the named Curse reprint.
+  */
+  if (row.name?.trim()) score += 50;
   score += membershipLocaleScore(
     narutoPrintKeySetCode(row.printKey),
     row.lang,
@@ -797,7 +833,7 @@ export function buildCatalogueCardRows(
       const tileOwnArt = artFile(slot.files);
       if (!tileOwnArt && allowFallback) {
         const donor = donorsByNumber.get(donorMapKey(entry.card, lang));
-        if (donor && donor.printKey !== printKey) {
+        if (donor && acceptArtDonor(printKey, entry.card, donor)) {
           const donorDisk = {
             set: donor.set,
             lang: donor.lang,
@@ -874,7 +910,7 @@ export function buildCatalogueCardRows(
         const donor = allowFallback
           ? donorsByNumber.get(donorMapKey(entry.card, lang))
           : undefined;
-        if (donor && donor.printKey !== printKey) {
+        if (donor && acceptArtDonor(printKey, entry.card, donor)) {
           const donorDisk = {
             set: donor.set,
             lang: donor.lang,

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { decodeNarutoHtmlEntities, foldNarutoCardsIndex, foldNarutoCatalogueRecords, isImplausibleNarutoTitle, pickBetterNarutoTitle, planNarutoCardMove, planNarutoCanonicalDiskRename, THUMB_RATIO_TOLERANCE, correctedThumbSize, thumbRatioDeviation } from ".";
-import { narutoDiskCardId } from "../identity";
+import { decodeNarutoHtmlEntities, foldNarutoCardsIndex, foldNarutoCatalogueRecords, isImplausibleNarutoTitle, pickBetterNarutoTitle, planNarutoCardMove, planNarutoCanonicalDiskRename, relocateMiskeyedPromoAppearances, THUMB_RATIO_TOLERANCE, correctedThumbSize, thumbRatioDeviation, upsertNarutoAppearances } from ".";
+import { loadNarutoAppearancesFile, narutoDiskCardId, writeNarutoAppearancesFile } from "../identity";
 import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
 
 // —— foldNarutoIndex ——
@@ -304,6 +304,33 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
       expect(existsSync(path.join(root, "cards", "art.corrected.webp"))).toBe(
         false,
       );
+    });
+  });
+}
+
+// —— promo appearances ——
+{
+  describe("upsertNarutoAppearances / relocateMiskeyedPromoAppearances", () => {
+    it("stamps promo appearances onto te0107-promo, not bare te0107", () => {
+      const root = mkdtempSync(path.join(tmpdir(), "naruto-promo-app-"));
+      upsertNarutoAppearances(root, [
+        { diskId: "te0107", lang: "ja", appearanceSet: "promo" },
+        { diskId: "te0107", lang: "fr", appearanceSet: "s3" },
+      ]);
+      const afterUpsert = loadNarutoAppearancesFile(root);
+      expect(afterUpsert?.appearances["te0107-promo"]).toEqual({ ja: "promo" });
+      expect(afterUpsert?.appearances["te0107"]).toEqual({ fr: "s3" });
+
+      writeNarutoAppearancesFile(root, {
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        appearances: {
+          te0108: { fr: "s3", ja: "promo" },
+        },
+      });
+      expect(relocateMiskeyedPromoAppearances(root)).toBe(1);
+      const relocated = loadNarutoAppearancesFile(root);
+      expect(relocated?.appearances["te0108"]).toEqual({ fr: "s3" });
+      expect(relocated?.appearances["te0108-promo"]).toEqual({ ja: "promo" });
     });
   });
 }

@@ -35,6 +35,7 @@ import {
   normalizeNarutoLang,
 } from "../disk";
 import {
+  appearanceSetsOf,
   appearanceValueForJson,
   canonicalizeNarutoPrintKey,
   isNarutoFamilyFolder,
@@ -670,23 +671,79 @@ export function upsertNarutoAppearances(
   for (const row of rows) {
     const set = row.appearanceSet.trim().toLowerCase();
     const lang = row.lang.trim().toLowerCase();
+    /*
+      eBay/TV Tokyo promo fills install under `te0107-promo/` but used to key
+      appearances on bare `te0107` → ingest minted promo art onto the wrong
+      disk path (`…/te0107-promo/ja/art.tvtokyo.jpg` 404 while the file sat in
+      `te0107/ja/`). Stamp the appearance key when the set is promo.
+    */
+    const diskId =
+      set === "promo"
+        ? (narutoDiskCardId(row.diskId, "promo") ?? row.diskId)
+        : row.diskId;
     if (
       lang === "fr" &&
       /^s[1-6]$/.test(set) &&
-      narutoCatalogueLineForCard(row.diskId, set) === "en-ccg"
+      narutoCatalogueLineForCard(diskId, set) === "en-ccg"
     ) {
       continue;
     }
-    const langs = appearances[row.diskId] ?? {};
+    const langs = appearances[diskId] ?? {};
     langs[row.lang] = appearanceValueForJson(
       mergeAppearanceValues(langs[row.lang], row.appearanceSet),
     );
-    appearances[row.diskId] = langs;
+    appearances[diskId] = langs;
   }
   writeNarutoAppearancesFile(root, {
     generatedAt: new Date().toISOString(),
     appearances,
   });
+}
+
+/**
+ * Move `ja/fr: promo` off bare retail disk ids onto `*-promo` keys so ingest
+ * paths match on-disk folders.
+ */
+export function relocateMiskeyedPromoAppearances(root: string): number {
+  const existing = loadNarutoAppearancesFile(root);
+  if (!existing?.appearances) return 0;
+  const appearances: Record<string, NarutoLangAppearances> = {
+    ...existing.appearances,
+  };
+  let moved = 0;
+  for (const [diskId, langs] of Object.entries(existing.appearances)) {
+    if (/-promo$/i.test(diskId)) continue;
+    const stamped = narutoDiskCardId(diskId, "promo");
+    if (!stamped || stamped === diskId) continue;
+    const nextLangs: NarutoLangAppearances = { ...langs };
+    let touched = false;
+    for (const [lang, value] of Object.entries(langs)) {
+      const sets = appearanceSetsOf(value);
+      if (!sets.includes("promo")) continue;
+      const stampedLangs = appearances[stamped] ?? {};
+      stampedLangs[lang] = appearanceValueForJson(
+        mergeAppearanceValues(stampedLangs[lang], "promo"),
+      );
+      appearances[stamped] = stampedLangs;
+      const without = sets.filter((set) => set !== "promo");
+      if (without.length) {
+        nextLangs[lang] = appearanceValueForJson(without);
+      } else {
+        delete nextLangs[lang];
+      }
+      touched = true;
+      moved += 1;
+    }
+    if (!touched) continue;
+    if (Object.keys(nextLangs).length) appearances[diskId] = nextLangs;
+    else delete appearances[diskId];
+  }
+  if (moved === 0) return 0;
+  writeNarutoAppearancesFile(root, {
+    generatedAt: new Date().toISOString(),
+    appearances,
+  });
+  return moved;
 }
 
 export function migrateNarutoCardLayout(opts?: {

@@ -138,7 +138,7 @@ export function mergeTvTokyoJaNamesIntoIndex(input: {
   const titled: string[] = [];
 
   for (const row of narutoCcgTvTokyoIngestFaces()) {
-    const printKey = mintNarutoPrintKey(row.diskId);
+    const printKey = mintNarutoPrintKey(row.diskId, "promo");
     if (!printKey) continue;
     const diskId = narutoDiskCardId(row.diskId) ?? row.diskId;
     const parsed = parseNarutoCollector(row.diskId);

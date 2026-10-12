@@ -414,7 +414,7 @@ describe("Naruto catalogue lines", () => {
       },
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
-    // Expand = langs present on the print; JA borrows FR recto via bestFace.
+    // Expand = langs present on the print; JA never pastes a FR retail face.
     expect(
       rows
         .filter((row) => row.card === "ni001")
@@ -423,15 +423,66 @@ describe("Naruto catalogue lines", () => {
     expect(
       rows.find((row) => row.card === "ni001" && row.lang === "ja")?.name,
     ).toBe("うずまきナルト");
-    expect(
-      rows.find((row) => row.card === "ni001" && row.lang === "ja")?.artUrl,
-    ).toContain("/ninja/ni0001/fr/");
+    const jaNi = rows.find((row) => row.card === "ni001" && row.lang === "ja");
+    expect(jaNi?.artLocaleFrom).toBeUndefined();
+    expect(jaNi?.missingArt).toBe(true);
     expect(
       rows.find((row) => row.card === "n1621" && row.lang === "en")?.artUrl,
     ).toBe("/assets/naruto/carddass/cards/ninja/n1621/en/art.jpg");
     expect(rows.some((row) => row.card === "n001" && row.lang === "en")).toBe(
       true,
     );
+  });
+
+  it("prefers the named FR membership over earlier invent shells", () => {
+    /*
+      N-261 reprints on S8/S11/S15: FR title only on S11 (setAcceptsTitleLang),
+      FR art also on S8/S15. Collapse must keep Mikoto Uchiwa, not a nameless
+      Quest for Power shell.
+    */
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s8-n0261": {
+          set: "ninja",
+          card: "n0261",
+          name: "Mikoto Uchiha",
+          langs: {
+            en: { name: "Mikoto Uchiha", art: "art.en.webp" },
+            fr: { art: "art.fr.webp" },
+          },
+        },
+        "naruto:s11-n0261": {
+          set: "ninja",
+          card: "n0261",
+          name: "Mikoto Uchiwa",
+          langs: {
+            en: { name: "Mikoto Uchiha", art: "art.en.webp" },
+            fr: { name: "Mikoto Uchiwa", art: "art.fr.webp" },
+          },
+        },
+        "naruto:s15-n0261": {
+          set: "ninja",
+          card: "n0261",
+          name: "Mikoto Uchiha",
+          langs: {
+            en: { name: "Mikoto Uchiha", art: "art.en.webp" },
+            fr: { art: "art.fr.webp" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    const fr = rows.filter(
+      (row) => /n0261/i.test(row.card) && row.lang === "fr",
+    );
+    expect(fr).toHaveLength(1);
+    expect(fr[0]?.printKey).toBe("naruto:s11-n0261");
+    expect(fr[0]?.name).toBe("Mikoto Uchiwa");
+    expect(fr[0]?.appearanceSets).toEqual(["s8", "s11", "s15"]);
+    expect(fr[0]?.label).toMatch(/Mikoto Uchiwa/);
   });
 
   it("collapses set memberships into one browse tile per collector+lang", () => {
@@ -802,6 +853,51 @@ describe("same-number art fallback (Naruto)", () => {
     ]);
     expect(byCard.get("ni001")?.label).toMatch(/^S1 · NI-001/);
     expect(byCard.get("n001")?.label).toMatch(/^S7 · N-001/);
+  });
+
+  it("does not paint a retail tile with promo art (TE-107 ≠ PR術-107)", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s3-te0107": {
+          set: "jutsu",
+          card: "te0107",
+          name: "L'assassinat silencieux",
+          langs: {
+            fr: { name: "L'assassinat silencieux", art: "art.carddass.jpg" },
+            ja: { name: "無音殺人者" },
+          },
+        },
+        "naruto:promo-te0107": {
+          set: "jutsu",
+          card: "te0107-promo",
+          name: "L'assassinat silencieux",
+          langs: {
+            fr: { name: "L'assassinat silencieux" },
+            ja: {
+              name: "無音殺人術 （サイレントキリング）",
+              art: "art.ebay.webp",
+            },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    const retailJa = rows.find(
+      (r) => r.printKey === "naruto:s3-te0107" && r.lang === "ja",
+    );
+    const promoJa = rows.find(
+      (r) => r.printKey === "naruto:promo-te0107" && r.lang === "ja",
+    );
+    const promoFr = rows.find(
+      (r) => r.printKey === "naruto:promo-te0107" && r.lang === "fr",
+    );
+    expect(retailJa?.missingArt).toBe(true);
+    expect(retailJa?.artFallbackFrom).toBeUndefined();
+    expect(promoJa?.artUrl).toContain("/te0107-promo/ja/art.ebay.webp");
+    expect(promoFr?.artFallbackFrom).toBe("naruto:s3-te0107");
   });
 
   it("inherits retail face onto promo stub until official art exists", () => {

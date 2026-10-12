@@ -5,7 +5,7 @@ import dig from "../curated/sources/pack-decouverte-packshot-2026-08-30.json";
 import { narutoCatalogueLineForSealed, narutoDiskCardId } from "../identity";
 import { narutoCuratedProductsDir } from "../install/curated";
 import { NARUTO_SEALED_SKUS } from "../sealed";
-import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, gradedcardcenterIngestPackshots, gradedcardcenterLedger, gradedcardcenterOriginalUrl, ebayIngestFaces, ebayIngestPackshots, ebayListingImageFull, ebayPackshotLedger, martinaIngestPackshots, martinaLedger, toywizIngestPackshots, toywizPackshotLedger, atomicempireIngestPackshots, atomicempirePackshotLedger, vintedIngestBacks, vintedIngestPackshots, vintedLedger, mangaSanctuaryIngestPackshots, mangaSanctuaryPackshotLedger, sunnystoreIngestBacks, sunnystoreIngestPackshots, sunnystorePackshotLedger, leboncoinIngestBacks, leboncoinIngestPackshots, leboncoinPackshotImageFull, leboncoinPackshotLedger, kinkaiIngestBacks, kinkaiIngestPackshots, kinkaiPackshotLedger, goatCdnOriginal, goatIngestPackshots, goatMintDisplayPackshots, goatPackshotLedger, trictracCdnOriginal, trictracIngestPackshots, trictracLedger, mangaNewsFullGoodieUrl, mangaNewsIngestPackshots, mangaNewsPackshotLedger, magentoCatalogOriginal, vialudibundaIngestPackshots, vialudibundaLedger, scifiUniverseIngestPackshots, scifiUniverseLedger } from "./packshots";
+import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, gradedcardcenterIngestPackshots, gradedcardcenterLedger, gradedcardcenterOriginalUrl, ebayIngestFaces, ebayIngestPackshots, ebayListingImageFull, ebayPackshotLedger, martinaIngestPackshots, martinaLedger, toywizIngestPackshots, toywizPackshotLedger, atomicempireIngestPackshots, atomicempirePackshotLedger, vintedIngestBacks, vintedIngestPackshots, vintedLedger, mangaSanctuaryIngestPackshots, mangaSanctuaryPackshotLedger, sunnystoreIngestBacks, sunnystoreIngestPackshots, sunnystorePackshotLedger, leboncoinIngestBacks, leboncoinIngestPackshots, leboncoinPackshotImageFull, leboncoinPackshotLedger, kinkaiIngestBacks, kinkaiIngestPackshots, kinkaiPackshotLedger, micromaniaIngestPackshots, micromaniaPackshotLedger, fnacIngestPackshots, fnacPackshotLedger, goatCdnOriginal, goatIngestPackshots, goatMintDisplayPackshots, goatPackshotLedger, trictracCdnOriginal, trictracIngestPackshots, trictracLedger, mangaNewsFullGoodieUrl, mangaNewsIngestPackshots, mangaNewsPackshotLedger, magentoCatalogOriginal, vialudibundaIngestPackshots, vialudibundaLedger, scifiUniverseIngestPackshots, scifiUniverseLedger } from "./packshots";
 
 // —— cardgameclubPackshots ——
 {
@@ -157,7 +157,6 @@ import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, 
       expect(ebayIngestPackshots().map((row) => row.slug)).toEqual([
         "booster-s2",
         "display-s28-fr",
-        "duopack-s28",
         "booster-s6-it",
         "booster-s7-it",
         "booster-s8-it",
@@ -167,8 +166,12 @@ import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, 
       expect(ledger.products[0]?.url).not.toContain("s-l2048");
       expect(ledger.products[1]?.slug).toBe("display-s28-fr");
       expect(ledger.products[1]?.ean).toBe("3391891969949");
-      expect(ledger.products[2]?.slug).toBe("duopack-s28");
-      expect(ledger.products[2]?.url).toContain("q1cAAeSwLDFqb6zN");
+      expect(
+        ledger.products.find((row) => row.slug === "duopack-s28"),
+      ).toMatchObject({
+        ingest: false,
+        ean: "3391891970488",
+      });
       expect(ledger.products[3]?.slug).toBe("booster-s6-it");
       expect(ledger.products[3]?.url).toContain("TrcAAOSwp-xgkVyZ");
       expect(ledger.products[3]?.listing).toContain("265148225277");
@@ -626,24 +629,59 @@ import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, 
 // —— kinkaiPackshots ——
 {
   describe("kinkai duopack packshots", () => {
-    it("wires FR duopack-s28 face + verso from pasted uploads (no crawl)", () => {
+    it("keeps FR duopack-s28 Kinkai pastes archival (curated wrappers win)", () => {
       const ledger = kinkaiPackshotLedger();
       expect(ledger.ingestCollection).toBe(false);
       expect(ledger.listing).toContain("/article/5274");
-      expect(kinkaiIngestPackshots().map((row) => row.staging)).toEqual([
-        "staging/kinkai/duopack-s28-01.webp",
-      ]);
-      expect(kinkaiIngestBacks().map((row) => row.staging)).toEqual([
-        "staging/kinkai/duopack-s28-02.webp",
-      ]);
-      const back = kinkaiIngestBacks()[0]!;
-      expect(back).toMatchObject({
+      expect(kinkaiIngestPackshots()).toEqual([]);
+      expect(kinkaiIngestBacks()).toEqual([]);
+      expect(
+        ledger.products.find((row) => row.role === "back"),
+      ).toMatchObject({
         slug: "duopack-s28",
-        role: "back",
         ean: "3391891970488",
+        ingest: false,
       });
-      expect(back.note).toContain("7 + 1");
-      expect(back.note).toContain("MADE IN ITALY");
+    });
+  });
+}
+
+// —— micromaniaPackshots ——
+{
+  describe("micromania duopack packshots", () => {
+    it("attests EAN via Micromania 48379 without ingesting the shop thumb", () => {
+      const ledger = micromaniaPackshotLedger();
+      expect(ledger.ingestCollection).toBe(false);
+      expect(ledger.listing).toContain("48379");
+      expect(micromaniaIngestPackshots()).toEqual([]);
+      expect(ledger.products[0]).toMatchObject({
+        slug: "duopack-s24",
+        ean: "3391891963138",
+        sku: "48379",
+        ingest: false,
+        released: "2012-03-22",
+      });
+    });
+  });
+}
+
+// —— fnacPackshots ——
+{
+  describe("fnac duopack packshots", () => {
+    it("ingests ZoomPE as interim retail face for J-895 duopack-s24", () => {
+      const ledger = fnacPackshotLedger();
+      expect(ledger.ingestCollection).toBe(false);
+      expect(ledger.listing).toContain("a4099814");
+      expect(fnacIngestPackshots()).toEqual([
+        expect.objectContaining({
+          slug: "duopack-s24",
+          ean: "3391891963138",
+          sku: "6600638",
+          fnacArticle: "a4099814",
+          staging: "staging/fnac/duopack-s24.jpg",
+        }),
+      ]);
+      expect(fnacIngestPackshots()[0]?.url).toContain("ZoomPE");
     });
   });
 }

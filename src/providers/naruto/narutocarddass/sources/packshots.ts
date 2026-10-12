@@ -10,6 +10,8 @@ import emporiodimiloLedgerJson from "../curated/sources/emporiodimilo.json";
 import goatLedgerJson from "../curated/sources/goat-en-ccg.json";
 import gradedcardcenterLedgerJson from "../curated/sources/gradedcardcenter.json";
 import kinkaiLedgerJson from "../curated/sources/kinkai.json";
+import micromaniaLedgerJson from "../curated/sources/micromania.json";
+import fnacLedgerJson from "../curated/sources/fnac.json";
 import leboncoinLedgerJson from "../curated/sources/leboncoin.json";
 import mangaNewsLedgerJson from "../curated/sources/manga-news-packshots.json";
 import mangaSanctuaryLedgerJson from "../curated/sources/manga-sanctuary-packshots.json";
@@ -170,6 +172,34 @@ export function kinkaiIngestPackshots(): KinkaiPackshot[] {
 export function kinkaiIngestBacks(): KinkaiPackshot[] {
   return kinkaiLedgerJson.products.filter(
     (row) => row.ingest && row.role === "back",
+  );
+}
+
+// ─── Micromania ────────────────────────────────────────────────────────────
+
+export type MicromaniaPackshot = (typeof micromaniaLedgerJson.products)[number];
+
+export function micromaniaPackshotLedger() {
+  return micromaniaLedgerJson;
+}
+
+export function micromaniaIngestPackshots(): MicromaniaPackshot[] {
+  return micromaniaLedgerJson.products.filter(
+    (row) => row.ingest && row.role === "art",
+  );
+}
+
+// ─── Fnac ──────────────────────────────────────────────────────────────────
+
+export type FnacPackshot = (typeof fnacLedgerJson.products)[number];
+
+export function fnacPackshotLedger() {
+  return fnacLedgerJson;
+}
+
+export function fnacIngestPackshots(): FnacPackshot[] {
+  return fnacLedgerJson.products.filter(
+    (row) => row.ingest && row.role === "art",
   );
 }
 

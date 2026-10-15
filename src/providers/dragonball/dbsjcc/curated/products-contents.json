@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "dragonball/jcc",
-  "updatedAt": "2026-10-04",
+  "updatedAt": "2026-10-12",
   "byKind": {
     "booster": {
       "source": "dbzcollection ledger cardsPerBooster=8 + manga-sanctuary news 3101 (8 cartes dont 1 holo)",
@@ -42,7 +42,7 @@
   "skus": {
     "part1-starter-1190": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -160,7 +160,7 @@
           "name": "Goku",
           "slug": "d0080",
           "ref": "D-80",
-          "printKey": "dbsjcc:part1-d0080",
+          "printKey": "dbsjcc:part1-d0080a",
           "qty": 1
         },
         {
@@ -181,7 +181,7 @@
           "name": "Croissance de goku",
           "slug": "d0099",
           "ref": "D-99",
-          "printKey": "dbsjcc:part1-d0099",
+          "printKey": "dbsjcc:part1-d0099a",
           "qty": 1
         },
         {
@@ -202,56 +202,56 @@
           "name": "Dragon ball à 1 étoile",
           "slug": "d0123",
           "ref": "D-123",
-          "printKey": "dbsjcc:part1-d0123",
+          "printKey": "dbsjcc:part1-d0123a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 2 étoiles",
           "slug": "d0124",
           "ref": "D-124",
-          "printKey": "dbsjcc:part1-d0124",
+          "printKey": "dbsjcc:part1-d0124a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 3 étoiles",
           "slug": "d0125",
           "ref": "D-125",
-          "printKey": "dbsjcc:part1-d0125",
+          "printKey": "dbsjcc:part1-d0125a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 4 étoiles",
           "slug": "d0126",
           "ref": "D-126",
-          "printKey": "dbsjcc:part1-d0126",
+          "printKey": "dbsjcc:part1-d0126a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 5 étoiles",
           "slug": "d0127",
           "ref": "D-127",
-          "printKey": "dbsjcc:part1-d0127",
+          "printKey": "dbsjcc:part1-d0127a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 6 étoiles",
           "slug": "d0128",
           "ref": "D-128",
-          "printKey": "dbsjcc:part1-d0128",
+          "printKey": "dbsjcc:part1-d0128a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 7 étoiles",
           "slug": "d0129",
           "ref": "D-129",
-          "printKey": "dbsjcc:part1-d0129",
+          "printKey": "dbsjcc:part1-d0129a",
           "qty": 1
         },
         {
           "name": "Shenron",
           "slug": "d0134",
           "ref": "D-134",
-          "printKey": "dbsjcc:part1-d0134",
+          "printKey": "dbsjcc:part1-d0134a",
           "qty": 1
         }
       ],
@@ -259,7 +259,7 @@
     },
     "part1-starter-ennemis": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -328,7 +328,7 @@
           "name": "Saibaiman",
           "slug": "d0052",
           "ref": "D-52",
-          "printKey": "dbsjcc:part1-d0052",
+          "printKey": "dbsjcc:part1-d0052a",
           "qty": 1
         },
         {
@@ -405,70 +405,70 @@
           "name": "Kikoha",
           "slug": "d0112",
           "ref": "D-112",
-          "printKey": "dbsjcc:part1-d0112",
+          "printKey": "dbsjcc:part1-d0112a",
           "qty": 1
         },
         {
           "name": "1 ère transformation",
           "slug": "d0113",
           "ref": "D-113",
-          "printKey": "dbsjcc:part1-d0113",
+          "printKey": "dbsjcc:part1-d0113a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 1 étoile",
           "slug": "d0123",
           "ref": "D-123",
-          "printKey": "dbsjcc:part1-d0123",
+          "printKey": "dbsjcc:part1-d0123a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 2 étoiles",
           "slug": "d0124",
           "ref": "D-124",
-          "printKey": "dbsjcc:part1-d0124",
+          "printKey": "dbsjcc:part1-d0124a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 3 étoiles",
           "slug": "d0125",
           "ref": "D-125",
-          "printKey": "dbsjcc:part1-d0125",
+          "printKey": "dbsjcc:part1-d0125a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 4 étoiles",
           "slug": "d0126",
           "ref": "D-126",
-          "printKey": "dbsjcc:part1-d0126",
+          "printKey": "dbsjcc:part1-d0126a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 5 étoiles",
           "slug": "d0127",
           "ref": "D-127",
-          "printKey": "dbsjcc:part1-d0127",
+          "printKey": "dbsjcc:part1-d0127a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 6 étoiles",
           "slug": "d0128",
           "ref": "D-128",
-          "printKey": "dbsjcc:part1-d0128",
+          "printKey": "dbsjcc:part1-d0128a",
           "qty": 1
         },
         {
           "name": "Dragon ball à 7 étoiles",
           "slug": "d0129",
           "ref": "D-129",
-          "printKey": "dbsjcc:part1-d0129",
+          "printKey": "dbsjcc:part1-d0129a",
           "qty": 1
         },
         {
           "name": "Shenron",
           "slug": "d0134",
           "ref": "D-134",
-          "printKey": "dbsjcc:part1-d0134",
+          "printKey": "dbsjcc:part1-d0134a",
           "qty": 1
         }
       ],
@@ -476,7 +476,7 @@
     },
     "part2-starter-1193": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -496,14 +496,14 @@
           "name": "Upa",
           "slug": "d0141",
           "ref": "D-141",
-          "printKey": "dbsjcc:part2-d0141",
+          "printKey": "dbsjcc:part2-d0141a",
           "qty": 1
         },
         {
           "name": "Dendé",
           "slug": "d0149",
           "ref": "D-149",
-          "printKey": "dbsjcc:part2-d0149",
+          "printKey": "dbsjcc:part2-d0149a",
           "qty": 1
         },
         {
@@ -545,7 +545,7 @@
           "name": "Tenshinhan",
           "slug": "d0168",
           "ref": "D-168",
-          "printKey": "dbsjcc:part2-d0168",
+          "printKey": "dbsjcc:part2-d0168a",
           "qty": 1
         },
         {
@@ -559,7 +559,7 @@
           "name": "Mr satan",
           "slug": "d0170",
           "ref": "D-170",
-          "printKey": "dbsjcc:part2-d0170",
+          "printKey": "dbsjcc:part2-d0170a",
           "qty": 1
         },
         {
@@ -580,7 +580,7 @@
           "name": "Gohan laisse exploser toute sa puissance",
           "slug": "d0183",
           "ref": "D-183",
-          "printKey": "dbsjcc:part2-d0183",
+          "printKey": "dbsjcc:part2-d0183a",
           "qty": 1
         },
         {
@@ -594,7 +594,7 @@
           "name": "Capsule hoïpoï !!!",
           "slug": "d0196",
           "ref": "D-196",
-          "printKey": "dbsjcc:part2-d0196",
+          "printKey": "dbsjcc:part2-d0196a",
           "qty": 1
         },
         {
@@ -658,7 +658,7 @@
     },
     "part3-starter-1197": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -741,7 +741,7 @@
           "name": "Bubbles",
           "slug": "d0257",
           "ref": "D-257",
-          "printKey": "dbsjcc:part3-d0257",
+          "printKey": "dbsjcc:part3-d0257a",
           "qty": 1
         },
         {
@@ -826,7 +826,7 @@
     },
     "part3-starter-championnat": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -839,7 +839,7 @@
           "name": "Je veux une culotte !",
           "slug": "d0289",
           "ref": "D-289",
-          "printKey": "dbsjcc:part3-d0289",
+          "printKey": "dbsjcc:part3-d0289a",
           "qty": 1
         },
         {
@@ -874,7 +874,7 @@
           "name": "Pan",
           "slug": "d0324",
           "ref": "D-324",
-          "printKey": "dbsjcc:part3-d0324",
+          "printKey": "dbsjcc:part3-d0324a",
           "qty": 1
         },
         {
@@ -895,7 +895,7 @@
           "name": "Chaozu",
           "slug": "d0327",
           "ref": "D-327",
-          "printKey": "dbsjcc:part3-d0327",
+          "printKey": "dbsjcc:part3-d0327a",
           "qty": 1
         },
         {
@@ -923,21 +923,21 @@
           "name": "Mighty mask",
           "slug": "d0331",
           "ref": "D-331",
-          "printKey": "dbsjcc:part3-d0331",
+          "printKey": "dbsjcc:part3-d0331a",
           "qty": 1
         },
         {
           "name": "Nam",
           "slug": "d0332",
           "ref": "D-332",
-          "printKey": "dbsjcc:part3-d0332",
+          "printKey": "dbsjcc:part3-d0332a",
           "qty": 1
         },
         {
           "name": "Chi chi",
           "slug": "d0333",
           "ref": "D-333",
-          "printKey": "dbsjcc:part3-d0333",
+          "printKey": "dbsjcc:part3-d0333a",
           "qty": 1
         },
         {
@@ -951,14 +951,14 @@
           "name": "Présentateur",
           "slug": "d0336",
           "ref": "D-336",
-          "printKey": "dbsjcc:part3-d0336",
+          "printKey": "dbsjcc:part3-d0336a",
           "qty": 1
         },
         {
           "name": "Jackie choun",
           "slug": "d0338",
           "ref": "D-338",
-          "printKey": "dbsjcc:part3-d0338",
+          "printKey": "dbsjcc:part3-d0338a",
           "qty": 1
         },
         {
@@ -1001,7 +1001,7 @@
     },
     "part4-starter-forces-du-mal": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1084,7 +1084,7 @@
           "name": "Combat à mort par fierté",
           "slug": "d0415",
           "ref": "D-415",
-          "printKey": "dbsjcc:part4-d0415",
+          "printKey": "dbsjcc:part4-d0415a",
           "qty": 1
         },
         {
@@ -1162,7 +1162,7 @@
     },
     "part4-starter-1200": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1196,7 +1196,7 @@
           "name": "Croissance de goku",
           "slug": "d0099",
           "ref": "D-99",
-          "printKey": "dbsjcc:part4-d0099",
+          "printKey": "dbsjcc:part4-d0099b",
           "qty": 1
         },
         {
@@ -1217,7 +1217,7 @@
           "name": "Bulma",
           "slug": "d0373",
           "ref": "D-373",
-          "printKey": "dbsjcc:part4-d0373",
+          "printKey": "dbsjcc:part4-d0373a",
           "qty": 1
         },
         {
@@ -1245,7 +1245,7 @@
           "name": "Piccolo",
           "slug": "d0386",
           "ref": "D-386",
-          "printKey": "dbsjcc:part4-d0386",
+          "printKey": "dbsjcc:part4-d0386a",
           "qty": 1
         },
         {
@@ -1273,7 +1273,7 @@
           "name": "Clarté durable",
           "slug": "d0401",
           "ref": "D-401",
-          "printKey": "dbsjcc:part4-d0401",
+          "printKey": "dbsjcc:part4-d0401a",
           "qty": 1
         },
         {
@@ -1330,7 +1330,7 @@
     },
     "part5-starter-1203": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1364,14 +1364,14 @@
           "name": "Kikoha",
           "slug": "d0112",
           "ref": "D-112",
-          "printKey": "dbsjcc:part5-d0112",
+          "printKey": "dbsjcc:part5-d0112b",
           "qty": 1
         },
         {
           "name": "1 ère transformation",
           "slug": "d0113",
           "ref": "D-113",
-          "printKey": "dbsjcc:part5-d0113",
+          "printKey": "dbsjcc:part5-d0113b",
           "qty": 1
         },
         {
@@ -1476,7 +1476,7 @@
           "name": "Transformation en vraie forme",
           "slug": "d0471",
           "ref": "D-471",
-          "printKey": "dbsjcc:part5-d0471",
+          "printKey": "dbsjcc:part5-d0471a",
           "qty": 1
         },
         {
@@ -1519,7 +1519,7 @@
     },
     "part5-starter-resistance": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1567,7 +1567,7 @@
           "name": "Karine",
           "slug": "d0380",
           "ref": "D-380",
-          "printKey": "dbsjcc:part5-d0380",
+          "printKey": "dbsjcc:part5-d0380a",
           "qty": 1
         },
         {
@@ -1708,7 +1708,7 @@
     },
     "part6-starter-1206": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1812,7 +1812,7 @@
           "name": "Pouvoir surpassé !",
           "slug": "d0603",
           "ref": "D-603",
-          "printKey": "dbsjcc:part6-d0603",
+          "printKey": "dbsjcc:part6-d0603a",
           "qty": 1
         },
         {
@@ -1826,7 +1826,7 @@
           "name": "Mémoire du futur",
           "slug": "d0608",
           "ref": "D-608",
-          "printKey": "dbsjcc:part6-d0608",
+          "printKey": "dbsjcc:part6-d0608a",
           "qty": 1
         },
         {
@@ -1855,7 +1855,7 @@
     },
     "part7-starter-1208": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2015,7 +2015,7 @@
           "name": "Pouvoir légandaire",
           "slug": "d0846",
           "ref": "D-846",
-          "printKey": "dbsjcc:part7-d0846",
+          "printKey": "dbsjcc:part7-d0846a",
           "qty": 1
         },
         {
@@ -2030,7 +2030,7 @@
     },
     "part8-starter-1213": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2233,7 +2233,7 @@
     },
     "part9-starter-1216": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2246,126 +2246,126 @@
           "name": "Dragon ball à 1 étoile",
           "slug": "d0123",
           "ref": "D-123",
-          "printKey": "dbsjcc:part9-d0123",
+          "printKey": "dbsjcc:part9-d0123d",
           "qty": 1
         },
         {
           "name": "Dragon ball à 2 étoiles",
           "slug": "d0124",
           "ref": "D-124",
-          "printKey": "dbsjcc:part9-d0124",
+          "printKey": "dbsjcc:part9-d0124d",
           "qty": 1
         },
         {
           "name": "Dragon ball à 3 étoiles",
           "slug": "d0125",
           "ref": "D-125",
-          "printKey": "dbsjcc:part9-d0125",
+          "printKey": "dbsjcc:part9-d0125d",
           "qty": 1
         },
         {
           "name": "Dragon ball à 4 étoiles",
           "slug": "d0126",
           "ref": "D-126",
-          "printKey": "dbsjcc:part9-d0126",
+          "printKey": "dbsjcc:part9-d0126d",
           "qty": 1
         },
         {
           "name": "Dragon ball à 5 étoiles",
           "slug": "d0127",
           "ref": "D-127",
-          "printKey": "dbsjcc:part9-d0127",
+          "printKey": "dbsjcc:part9-d0127d",
           "qty": 1
         },
         {
           "name": "Dragon ball à 6 étoiles",
           "slug": "d0128",
           "ref": "D-128",
-          "printKey": "dbsjcc:part9-d0128",
+          "printKey": "dbsjcc:part9-d0128d",
           "qty": 1
         },
         {
           "name": "Dragon ball à 7 étoiles",
           "slug": "d0129",
           "ref": "D-129",
-          "printKey": "dbsjcc:part9-d0129",
+          "printKey": "dbsjcc:part9-d0129d",
           "qty": 1
         },
         {
           "name": "Great saiyaman",
           "slug": "d0138",
           "ref": "D-138",
-          "printKey": "dbsjcc:part9-d0138",
+          "printKey": "dbsjcc:part9-d0138c",
           "qty": 1
         },
         {
           "name": "Tenshinhan",
           "slug": "d0168",
           "ref": "D-168",
-          "printKey": "dbsjcc:part9-d0168",
+          "printKey": "dbsjcc:part9-d0168b",
           "qty": 1
         },
         {
           "name": "Mr satan",
           "slug": "d0170",
           "ref": "D-170",
-          "printKey": "dbsjcc:part9-d0170",
+          "printKey": "dbsjcc:part9-d0170b",
           "qty": 1
         },
         {
           "name": "Capsule Hoïpoï !!!",
           "slug": "d0196",
           "ref": "D-196",
-          "printKey": "dbsjcc:part9-d0196",
+          "printKey": "dbsjcc:part9-d0196b",
           "qty": 1
         },
         {
           "name": "Bubbles",
           "slug": "d0257",
           "ref": "D-257",
-          "printKey": "dbsjcc:part9-d0257",
+          "printKey": "dbsjcc:part9-d0257b",
           "qty": 1
         },
         {
           "name": "Je veux une culotte !",
           "slug": "d0289",
           "ref": "D-289",
-          "printKey": "dbsjcc:part9-d0289",
+          "printKey": "dbsjcc:part9-d0289b",
           "qty": 1
         },
         {
           "name": "Goku",
           "slug": "d0305",
           "ref": "D-305",
-          "printKey": "dbsjcc:part9-d0305",
+          "printKey": "dbsjcc:part9-d0305b",
           "qty": 1
         },
         {
           "name": "Bulma",
           "slug": "d0373",
           "ref": "D-373",
-          "printKey": "dbsjcc:part9-d0373",
+          "printKey": "dbsjcc:part9-d0373b",
           "qty": 1
         },
         {
           "name": "Karine",
           "slug": "d0380",
           "ref": "D-380",
-          "printKey": "dbsjcc:part9-d0380",
+          "printKey": "dbsjcc:part9-d0380b",
           "qty": 1
         },
         {
           "name": "Piccolo",
           "slug": "d0386",
           "ref": "D-386",
-          "printKey": "dbsjcc:part9-d0386",
+          "printKey": "dbsjcc:part9-d0386b",
           "qty": 1
         },
         {
           "name": "Clarté durable",
           "slug": "d0401",
           "ref": "D-401",
-          "printKey": "dbsjcc:part9-d0401",
+          "printKey": "dbsjcc:part9-d0401b",
           "qty": 1
         },
         {
@@ -2400,14 +2400,14 @@
           "name": "Pouvoir surpassé !",
           "slug": "d0603",
           "ref": "D-603",
-          "printKey": "dbsjcc:part9-d0603",
+          "printKey": "dbsjcc:part9-d0603b",
           "qty": 1
         },
         {
           "name": "Mémoire du futur",
           "slug": "d0608",
           "ref": "D-608",
-          "printKey": "dbsjcc:part9-d0608",
+          "printKey": "dbsjcc:part9-d0608b",
           "qty": 1
         },
         {
@@ -2457,7 +2457,7 @@
     },
     "part10-starter-1219": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2470,49 +2470,49 @@
           "name": "Dragon Ball à 1 étoile",
           "slug": "d0123",
           "ref": "D-123",
-          "printKey": "dbsjcc:part10-d0123",
+          "printKey": "dbsjcc:part10-d0123e",
           "qty": 1
         },
         {
           "name": "Dragon Ball à 2 étoiles",
           "slug": "d0124",
           "ref": "D-124",
-          "printKey": "dbsjcc:part10-d0124",
+          "printKey": "dbsjcc:part10-d0124e",
           "qty": 1
         },
         {
           "name": "Dragon Ball à 3 étoiles",
           "slug": "d0125",
           "ref": "D-125",
-          "printKey": "dbsjcc:part10-d0125",
+          "printKey": "dbsjcc:part10-d0125e",
           "qty": 1
         },
         {
           "name": "Dragon Ball à 4 étoiles",
           "slug": "d0126",
           "ref": "D-126",
-          "printKey": "dbsjcc:part10-d0126",
+          "printKey": "dbsjcc:part10-d0126e",
           "qty": 1
         },
         {
           "name": "Dragon Ball à 5 étoiles",
           "slug": "d0127",
           "ref": "D-127",
-          "printKey": "dbsjcc:part10-d0127",
+          "printKey": "dbsjcc:part10-d0127e",
           "qty": 1
         },
         {
           "name": "Dragon Ball à 6 étoiles",
           "slug": "d0128",
           "ref": "D-128",
-          "printKey": "dbsjcc:part10-d0128",
+          "printKey": "dbsjcc:part10-d0128e",
           "qty": 1
         },
         {
           "name": "Dragon Ball à 7 étoiles",
           "slug": "d0129",
           "ref": "D-129",
-          "printKey": "dbsjcc:part10-d0129",
+          "printKey": "dbsjcc:part10-d0129e",
           "qty": 1
         },
         {
@@ -2681,7 +2681,7 @@
     },
     "part1-booster-1188": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2692,7 +2692,7 @@
     },
     "part2-booster-1192": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2703,7 +2703,7 @@
     },
     "part3-booster-1196": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2714,7 +2714,7 @@
     },
     "part4-booster-1199": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2725,7 +2725,7 @@
     },
     "part5-booster-1202": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2747,7 +2747,7 @@
     },
     "part6-booster-1205": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2758,7 +2758,7 @@
     },
     "part7-booster-1207": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2769,7 +2769,7 @@
     },
     "part8-booster-1210": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2780,7 +2780,7 @@
     },
     "part9-booster-1215": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2791,7 +2791,7 @@
     },
     "part10-booster-1218": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2802,7 +2802,7 @@
     },
     "part2-starter-ruban-rouge": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-04",
+      "verifiedAt": "2026-10-12",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2822,7 +2822,7 @@
           "name": "Assistant noir",
           "slug": "d0143",
           "ref": "D-143",
-          "printKey": "dbsjcc:part2-d0143",
+          "printKey": "dbsjcc:part2-d0143a",
           "qty": 1
         },
         {
@@ -2864,7 +2864,7 @@
           "name": "C-20",
           "slug": "d0180",
           "ref": "D-180",
-          "printKey": "dbsjcc:part2-d0180",
+          "printKey": "dbsjcc:part2-d0180a",
           "qty": 1
         },
         {
@@ -2878,7 +2878,7 @@
           "name": "Fuite",
           "slug": "d0189",
           "ref": "D-189",
-          "printKey": "dbsjcc:part2-d0189",
+          "printKey": "dbsjcc:part2-d0189a",
           "qty": 1
         },
         {
@@ -2920,7 +2920,7 @@
           "name": "Dabura",
           "slug": "d0225",
           "ref": "D-225",
-          "printKey": "dbsjcc:part2-d0225",
+          "printKey": "dbsjcc:part2-d0225a",
           "qty": 1
         },
         {

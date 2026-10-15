@@ -20,6 +20,7 @@ import {
 } from "./catalogueProducts";
 import type { ProductsIndexV1 } from "@/providers/shared/sealedProducts/indexFormat";
 import { sealedGuaranteedPrintsSectionTitle } from "@/providers/shared/sealedProducts/guaranteedPrintsTitle";
+import { persistSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 
 vi.mock("@/providers/shared/packOwner", async (importOriginal) => {
   const actual =
@@ -288,6 +289,40 @@ describe("catalogue sealed rows", () => {
     });
     expect(missing.total).toBe(1);
     expect(missing.products[0]?.slug).toBe("free");
+  });
+
+  it("invalidates Scellés cache when catalog.sqlite changes (no JSON projection)", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "cat-sealed-sqlite-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    mkdirSync(path.join(root, "lorcana"), { recursive: true });
+
+    persistSealedProductsIndex("lorcana", {}, { alreadyMerged: true });
+    resetCatalogueProductsCache();
+    expect(listCatalogueProducts({ pack: "lorcana", limit: 5 }).total).toBe(0);
+
+    persistSealedProductsIndex(
+      "lorcana",
+      {
+        "lorcana::woody": baseEntry({
+          slug: "woody",
+          kind: "booster",
+          behavior: "random_pack",
+          name: "Booster Woody",
+          // No setCode — avoids labelPrintSet hitting an incomplete sqlite.
+          setCode: null,
+          lang: "fr",
+          cardsPerPack: 12,
+          packsContained: 1,
+          randomPoolScope: "set",
+        }),
+      },
+      { alreadyMerged: true },
+    );
+    // No resetCatalogueProductsCache — sqlite mtime must bust the empty hit.
+    const after = listCatalogueProducts({ pack: "lorcana", limit: 5 });
+    expect(after.total).toBe(1);
+    expect(after.products[0]?.slug).toBe("woody");
   });
 
   it("labels a structure-attested Lorcana booster by pack size, not shop preview", () => {

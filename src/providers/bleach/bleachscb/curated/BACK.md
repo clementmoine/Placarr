@@ -26,15 +26,17 @@ Coleka (fallback faces) : https://www.coleka.com/fr/cartes-de-collection/cartes-
 - Sets Bandai 14–21+ absents de nikita
 - Autres rubriques Coleka Bleach (S2+ si elles apparaissent)
 
-## Scellé (2026-09-13)
+## Scellé (2026-10-15)
 
-Source : Wayback `carddass.fr/bleach/catalogue_S1_Bleach.html` (`curated/sources/wayback/bleach-s1.html`).
+Source listes : Wayback `carddass.fr/bleach/catalogue_S1_Bleach.html` (`curated/sources/wayback/bleach-s1.html`).
+Provenance arts : `curated/sources/press-packshots.json`.
 
-| SKU | Contenu |
-| --- | --- |
-| `starter-compagnons` | 33 cartes (qty Bandai) — `contentsKnown` |
-| `starter-rivaux` | 33 cartes — `contentsKnown` |
-| `booster-s1-shinigami-and-ichigo` | 8 cartes, pool 58 cartes booster S1 |
+| SKU | Contenu | Face |
+| --- | --- | --- |
+| `starter-compagnons` | 33 cartes (qty Bandai) — `contentsKnown` | carddass / mangaluxe GIF |
+| `starter-rivaux` | 33 cartes — `contentsKnown` · Ref 05210 | **ultrajeux** (+ dump carddass) |
+| `booster-s1-shinigami-and-ichigo` | 8 cartes, pool set · EAN 3296580052110 | **tempslibre** (+ dump carddass 100×187) |
+| `display-s1-shinigami-and-ichigo` | display S1 · qty sachets inconnue | **ultrajeux** (fiche « booster » + même EAN — ne pas fusionner) |
 
-Packshots : `curated/products/compagnons_catalogue.gif`, `rivaux_catalogue.jpg`, `booster_s1_05211.jpg`.
+Packshots curated : `compagnons_catalogue.gif`, `rivaux_ultrajeux.jpg`, `booster_s1_tempslibre.jpg`, `display_s1_ultrajeux.jpg`.
 Graine : `curated/products-contents.json` (régénérée au Sync via `ingestBleachScbSealedProducts`).

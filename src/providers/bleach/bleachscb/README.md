@@ -10,6 +10,7 @@
 | Install | `install/fromLedgers.ts` |
 | Sources | `sources/faceOrient.ts` |
 | Sealed | `sealed.ts` |
+| Press packshots ledger | `curated/sources/press-packshots.json` |
 | Curated | `curated/` — **DATA** |
 
 Registry id: `bleachscb` (unchanged). Soft-nest: `providers/bleach/bleachscb/`.

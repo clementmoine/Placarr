@@ -1,7 +1,7 @@
 /**
- * Bleach SCB sealed SKUs — starters Compagnons / Rivaux + booster S1.
+ * Bleach SCB sealed SKUs — starters Compagnons / Rivaux + booster S1 + display.
  * Decklists: carddass.fr catalogue S1 (Wayback HTML under curated/sources/wayback).
- * Packshots: curated → products/ directly; pack `staging/carddass-fr` purged after pose.
+ * Packshots: curated/products + provenance `curated/sources/press-packshots.json`.
  */
 import {
   existsSync,
@@ -25,7 +25,9 @@ import {
 } from "@/providers/shared/sealedProducts/localWrite";
 import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 import type { CuratedSealedContentsFile } from "@/providers/shared/sealedProducts/curatedContents";
+import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
+import pressPackshotsLedgerJson from "./curated/sources/press-packshots.json";
 import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "./pack";
 import {
   bleachPrintedToPrintKey,
@@ -34,15 +36,41 @@ import {
 
 const SOURCE =
   "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)";
-const VERIFIED = "2026-09-13";
+const VERIFIED = "2026-10-15";
 const SEALED_ARTEFACT = "sealed:carddass-fr";
 const SEALED_STAGING_REL = "carddass-fr";
 
-const CURATED_ART: Record<string, string> = {
-  "starter-compagnons": "compagnons_catalogue.gif",
-  "starter-rivaux": "rivaux_catalogue.jpg",
-  "booster-s1-shinigami-and-ichigo": "booster_s1_05211.jpg",
+type CuratedArtSpec = {
+  primary: string;
+  source: string;
+  extras?: readonly { file: string; source: string }[];
 };
+
+/** Face catalogue + dumps secondaires (carddass basse rés., mangaluxe…). */
+export const BLEACH_SCB_CURATED_ART: Record<string, CuratedArtSpec> = {
+  "starter-compagnons": {
+    primary: "compagnons_catalogue.gif",
+    source: "carddass-fr",
+  },
+  "starter-rivaux": {
+    primary: "rivaux_ultrajeux.jpg",
+    source: "ultrajeux",
+    extras: [{ file: "rivaux_catalogue.jpg", source: "carddass-fr" }],
+  },
+  "booster-s1-shinigami-and-ichigo": {
+    primary: "booster_s1_tempslibre.jpg",
+    source: "tempslibre",
+    extras: [{ file: "booster_s1_05211.jpg", source: "carddass-fr" }],
+  },
+  "display-s1-shinigami-and-ichigo": {
+    primary: "display_s1_ultrajeux.jpg",
+    source: "ultrajeux",
+  },
+};
+
+export function bleachScbPressPackshotLedger() {
+  return pressPackshotsLedgerJson;
+}
 
 function stagingS1Html(): string | null {
   const p = path.join(
@@ -67,9 +95,13 @@ function bleachSealedStagingDir(): string {
 /** Stable SSOT — curated packshot bytes (force = re-install). */
 export function bleachScbSealedContentHash(): string {
   const parts: Buffer[] = [];
-  for (const name of Object.values(CURATED_ART)) {
-    const abs = curatedProductArt(name);
+  for (const spec of Object.values(BLEACH_SCB_CURATED_ART)) {
+    const abs = curatedProductArt(spec.primary);
     if (abs) parts.push(readFileSync(abs));
+    for (const extra of spec.extras ?? []) {
+      const extraAbs = curatedProductArt(extra.file);
+      if (extraAbs) parts.push(readFileSync(extraAbs));
+    }
   }
   const contentsPath = path.join(
     bleachScbCuratedDir(),
@@ -114,9 +146,22 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
     source: SOURCE,
     verifiedAt: VERIFIED,
     notes:
-      "Booster « Shinigami and Ichigo » — 8 cartes dont 1 spéciale ; pool = 58 cartes booster S1 (pas le set starter).",
+      "Booster « Shinigami and Ichigo » — 8 cartes dont 1 spéciale ; pool = 58 cartes booster S1 (pas le set starter). EAN 3296580052110.",
     cardsPerPack: 8,
     packsContained: 1,
+    randomPoolScope: "set",
+    contentsKnown: false,
+    containsPrintsIsPreview: false,
+  };
+
+  skus["display-s1-shinigami-and-ichigo"] = {
+    source:
+      "https://www.ultrajeux.com/produit-1137-bleach-serie-1-shinigami-and-ichigo-3296580052110.html",
+    verifiedAt: VERIFIED,
+    notes:
+      "Boîte display S1 (photo Ultrajeux). Fiche boutique confond EAN sachet — ne pas fusionner avec booster-s1. packsContained inconnu.",
+    cardsPerPack: 8,
+    packsContained: null,
     randomPoolScope: "set",
     contentsKnown: false,
     containsPrintsIsPreview: false,
@@ -135,6 +180,14 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
         randomPoolScope: "set",
         contentsKnown: false,
         notes: "FR S1 : 8 cartes / sachet (Bandai carddass.fr).",
+      },
+      display: {
+        source: SOURCE,
+        verifiedAt: VERIFIED,
+        cardsPerPack: 8,
+        randomPoolScope: "set",
+        contentsKnown: false,
+        notes: "Display S1 — qty sachets non attestée.",
       },
       deck: {
         source: SOURCE,
@@ -191,7 +244,7 @@ export function ingestBleachScbSealedProducts(
     return {
       pack: BLEACH_SCB_PACK_ID,
       written: 0,
-      skipped: Object.keys(CURATED_ART).length,
+      skipped: Object.keys(BLEACH_SCB_CURATED_ART).length,
       file: "",
     };
   }
@@ -200,10 +253,12 @@ export function ingestBleachScbSealedProducts(
 
   const meta: Array<{
     slug: string;
-    kind: "deck" | "booster";
+    kind: SealedKind;
     category: string;
     name: string;
     cardsPerPack: number | null;
+    packsContained: number | null;
+    path?: string;
   }> = [
     {
       slug: "starter-compagnons",
@@ -211,6 +266,7 @@ export function ingestBleachScbSealedProducts(
       category: "starter-deck",
       name: 'Bleach SCB S1 — Starter "Compagnons"',
       cardsPerPack: contents.skus["starter-compagnons"]?.declaredCardCount ?? 33,
+      packsContained: 1,
     },
     {
       slug: "starter-rivaux",
@@ -218,6 +274,8 @@ export function ingestBleachScbSealedProducts(
       category: "starter-deck",
       name: 'Bleach SCB S1 — Starter "Rivaux"',
       cardsPerPack: contents.skus["starter-rivaux"]?.declaredCardCount ?? 33,
+      packsContained: 1,
+      path: "https://www.ultrajeux.com/produit-1138-bleach-serie-1-shinigami-and-ichigo-starter-rivaux.html",
     },
     {
       slug: "booster-s1-shinigami-and-ichigo",
@@ -225,28 +283,47 @@ export function ingestBleachScbSealedProducts(
       category: "boosters",
       name: 'Bleach SCB S1 — Booster "Shinigami and Ichigo"',
       cardsPerPack: 8,
+      packsContained: 1,
+      path: "https://www.tempslibrenet.com/fr/autres-jcc-en-francais/659-bleach-booster-shinigami-ichigo-vf-3296580052110.html",
+    },
+    {
+      slug: "display-s1-shinigami-and-ichigo",
+      kind: "display",
+      category: "booster-box",
+      name: 'Bleach SCB S1 — Display "Shinigami and Ichigo"',
+      cardsPerPack: 8,
+      packsContained: null,
+      path: "https://www.ultrajeux.com/produit-1137-bleach-serie-1-shinigami-and-ichigo-3296580052110.html",
     },
   ];
 
   for (const row of meta) {
-    const artName = CURATED_ART[row.slug];
-    const art = artName ? curatedProductArt(artName) : null;
+    const art = BLEACH_SCB_CURATED_ART[row.slug];
     if (!art) continue;
+    const artPath = curatedProductArt(art.primary);
+    if (!artPath) continue;
+    const extraDumps = (art.extras ?? [])
+      .map((extra) => {
+        const p = curatedProductArt(extra.file);
+        return p ? { source: extra.source, artPath: p } : null;
+      })
+      .filter((x): x is { source: string; artPath: string } => x != null);
     products.push({
       slug: row.slug,
       kind: row.kind,
       category: row.category,
       name: row.name,
-      source: "carddass-fr",
+      source: art.source,
       setCode: "s1",
       catalogueSetId: "s",
       lang: "fr",
       releaseDate: "2008",
-      declaredCardCount: row.cardsPerPack,
-      cardsPerPack: row.kind === "booster" ? 8 : row.cardsPerPack,
-      packsContained: 1,
-      path: SOURCE,
-      artPath: art,
+      declaredCardCount: row.kind === "deck" ? row.cardsPerPack : null,
+      cardsPerPack: row.cardsPerPack,
+      packsContained: row.packsContained,
+      path: row.path ?? SOURCE,
+      artPath,
+      ...(extraDumps.length ? { extraDumps } : {}),
     });
   }
 

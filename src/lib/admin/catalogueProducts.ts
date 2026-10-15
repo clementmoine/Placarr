@@ -3,7 +3,7 @@
  */
 import { statSync } from "node:fs";
 
-import { packProductsIndexPath } from "@/lib/packPaths";
+import { packCatalogDb, packProductsIndexPath } from "@/lib/packPaths";
 import {
   catalogueCorpusPack,
   cataloguePackInfo,
@@ -108,10 +108,16 @@ function fileMtimeMs(file: string): number {
   }
 }
 
-/** Index + ledger curated — un changement de graine invalide le cache Catalogue. */
+/**
+ * Index + ledger curated — un changement de graine invalide le cache Catalogue.
+ * `catalog.sqlite` is the SSOT for TCG Cards packs (Masters / Fusion / …);
+ * watching only `products-index.json` left the Scellés grid empty after sync
+ * when that JSON projection is absent.
+ */
 function indexMtimeMs(pack: string): number {
   const corpus = catalogueCorpusPack(pack);
   return (
+    fileMtimeMs(packCatalogDb(corpus)) +
     fileMtimeMs(packProductsIndexPath(corpus)) +
     fileMtimeMs(curatedProductsContentsPath(corpus))
   );

@@ -1,0 +1,45 @@
+{
+  "source": "Suruga-ya.jp used product detail (税込)",
+  "sourceId": "suruga-ya-used",
+  "packId": "naruto/shippuden",
+  "fetchedAt": "2026-10-15T21:28:57.682Z",
+  "cardCount": 4,
+  "cards": [
+    {
+      "diskId": "mju0163",
+      "printed": "術伝-163",
+      "productId": "G8868296",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8868296",
+      "observedAt": "2026-10-15T21:28:57.682Z"
+    },
+    {
+      "diskId": "msa0055",
+      "printed": "作伝-055",
+      "productId": "G8868292",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8868292",
+      "observedAt": "2026-10-15T21:28:57.682Z"
+    },
+    {
+      "diskId": "msa0058",
+      "printed": "作伝-058",
+      "productId": "G8868293",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8868293",
+      "observedAt": "2026-10-15T21:28:57.682Z"
+    },
+    {
+      "diskId": "shi0205",
+      "printed": "忍伝-205",
+      "productId": "G8868298",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8868298",
+      "observedAt": "2026-10-15T21:28:57.682Z"
+    }
+  ]
+}

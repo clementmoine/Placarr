@@ -72,6 +72,10 @@ describe("pressPackshots", () => {
     expect(tinFace?.kind).toBe("tin");
     expect(tinFace?.note).toMatch(/05058|0581/);
     expect(tin2010.find((r) => r.host === "ultrajeux")?.face).toBe(false);
+    expect(tinFace?.title).toMatch(/05058|Tin Box Boosters 2009/);
+    expect(tin2010.find((r) => r.host === "ultrajeux")?.title).toMatch(
+      /Ultrajeux/,
+    );
     expect(bySlug.get("part6-box-1510")?.kind).toBe("tin");
     expect(bySlug.get("tinbox-2008")?.kind).toBe("tin");
   });

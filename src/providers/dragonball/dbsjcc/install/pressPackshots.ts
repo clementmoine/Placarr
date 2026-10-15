@@ -231,6 +231,12 @@ export async function installDbsJccPressPackshots(
       continue;
     }
 
+    // Photo-only hosts (face:false): art.* already on disk — do not clobber
+    // catalogue name / image / kind (Ultrajeux 7791 after Invaluable face).
+    if (!rowClaimsFace(row)) {
+      continue;
+    }
+
     if (row.mint) {
       const aligned = mintKeyForSlug(products, row.slug, siblingSlug);
       if (aligned !== existingKey) {
@@ -258,8 +264,7 @@ export async function installDbsJccPressPackshots(
     products[existingKey] = {
       ...existing,
       name: row.title,
-      // Photo-only hosts (face:false) install art.* but leave catalogue image.
-      ...(rowClaimsFace(row) ? { image: imageUrl } : {}),
+      image: imageUrl,
       kind,
       behavior: sealedBehaviorForKind(kind),
       category,

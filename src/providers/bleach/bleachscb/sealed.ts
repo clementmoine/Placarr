@@ -50,8 +50,12 @@ type CuratedArtSpec = {
 /** Face catalogue + dumps secondaires (carddass basse rés., mangaluxe…). */
 export const BLEACH_SCB_CURATED_ART: Record<string, CuratedArtSpec> = {
   "starter-compagnons": {
-    primary: "compagnons_catalogue.gif",
-    source: "carddass-fr",
+    primary: "compagnons_adilsons.jpg",
+    source: "adilsons",
+    extras: [
+      { file: "compagnons_catalogue.gif", source: "carddass-fr" },
+      { file: "compagnons_ultrajeux.jpg", source: "ultrajeux" },
+    ],
   },
   "starter-rivaux": {
     primary: "rivaux_ultrajeux.jpg",
@@ -307,6 +311,7 @@ export function ingestBleachScbSealedProducts(
       name: 'Bleach SCB S1 — Starter "Compagnons"',
       cardsPerPack: contents.skus["starter-compagnons"]?.declaredCardCount ?? 33,
       packsContained: 1,
+      path: "https://adilsons.mu/products/bleach-serie-1-compagnons",
     },
     {
       slug: "starter-rivaux",

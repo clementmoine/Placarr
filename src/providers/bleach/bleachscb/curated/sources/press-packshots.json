@@ -84,13 +84,41 @@
       "kind": "deck",
       "lang": "fr",
       "title": "Bleach SCB S1 — Starter \"Compagnons\"",
+      "host": "adilsons",
+      "url": "https://adilsons.mu/cdn/shop/products/20230316_110315.jpg",
+      "curated": "products/compagnons_adilsons.jpg",
+      "referer": "https://adilsons.mu/products/bleach-serie-1-compagnons",
+      "ingest": true,
+      "face": true,
+      "note": "Photo retail boîte (Ichigo + Rukia, SERIE 1 COMPAGNONS). Ultrajeux 1139 = même art catalogue 210×311."
+    },
+    {
+      "slug": "starter-compagnons",
+      "setCode": "s1",
+      "kind": "deck",
+      "lang": "fr",
+      "title": "Bleach SCB S1 — Starter \"Compagnons\"",
+      "host": "ultrajeux",
+      "url": "https://www.ultrajeux.com/images/produits/maxi/1139-cartes-a-collectionner-bleach-serie-1-shinigami-and-ichigo-starter-compagnons.jpg",
+      "curated": "products/compagnons_ultrajeux.jpg",
+      "referer": "https://www.ultrajeux.com/produit-1139-bleach-serie-1-shinigami-and-ichigo-starter-compagnons-.html",
+      "ingest": true,
+      "face": false,
+      "note": "Fiche Ultrajeux 1139 — art catalogue basse rés. seulement."
+    },
+    {
+      "slug": "starter-compagnons",
+      "setCode": "s1",
+      "kind": "deck",
+      "lang": "fr",
+      "title": "Bleach SCB S1 — Starter \"Compagnons\"",
       "host": "mangaluxe",
       "url": "https://www.mangaluxe.com/dossiers/bleach/img/carddass-bleach-compagnons.gif",
       "curated": "products/compagnons_catalogue.gif",
       "referer": "https://www.mangaluxe.com/dossiers/bleach/",
       "ingest": true,
-      "face": true,
-      "note": "Pas de packshot Ultrajeux Compagnons trouvé ; catalogue carddass/mangaluxe reste face."
+      "face": false,
+      "note": "GIF catalogue carddass.fr 210×311 — dump secondaire."
     },
     {
       "slug": "booster-s1-shinigami-and-ichigo",

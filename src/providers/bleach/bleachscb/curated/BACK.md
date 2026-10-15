@@ -33,10 +33,10 @@ Provenance arts : `curated/sources/press-packshots.json`.
 
 | SKU | Contenu | Face |
 | --- | --- | --- |
-| `starter-compagnons` | 33 cartes (qty Bandai) — `contentsKnown` | carddass / mangaluxe GIF |
+| `starter-compagnons` | 33 cartes (qty Bandai) — `contentsKnown` | **adilsons** (+ dumps carddass / Ultrajeux 1139) |
 | `starter-rivaux` | 33 cartes — `contentsKnown` · Ref 05210 | **ultrajeux** (+ dump carddass) |
 | `booster-s1-shinigami-and-ichigo` | 8 cartes · pool **listed** FR a/c/e/z (pas JA `s`) · EAN 3296580052110 | **tempslibre** (+ dump carddass 100×187) |
 | `display-s1-shinigami-and-ichigo` | display · loterie = sachets enfants · qty sachets inconnue | **ultrajeux** (fiche « booster » + même EAN — ne pas fusionner) |
 
-Packshots curated : `compagnons_catalogue.gif`, `rivaux_ultrajeux.jpg`, `booster_s1_tempslibre.jpg`, `display_s1_ultrajeux.jpg`.
+Packshots curated : `compagnons_adilsons.jpg`, `rivaux_ultrajeux.jpg`, `booster_s1_tempslibre.jpg`, `display_s1_ultrajeux.jpg`.
 Graine : `curated/products-contents.json` (régénérée au Sync via `ingestBleachScbSealedProducts`).

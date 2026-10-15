@@ -29,7 +29,7 @@ Ledger : `sources/deckcardmania.json` (albums idf=3, hub grandes séries).
 Contenu typique : packshot `files/3/{idm}b.jpg`, listes **Cartes Rares** / **Holographiques** (D-###), galerie (liste / dos / exemples / samples nommés).
 - Packshot album Série 1–10 (`{idm}b.jpg`) → **staging only** (collage multi-SKU). Super Série / Tin box (`ssN` / `tinbox`) → primary sealed slug (une fiche ≈ un SKU).
 - **Trois coffrets métal distincts** : (1) `part6-box-1510` Ref **05033** / 2007 (deck S6) ; (2) `tinbox-2008` Ref **05056** / 2008 ; (3) `tinbox-2010` « Tin Box Boosters » Kid Goku Ref **05058** / EAN **…0581** / Bandai **2009** (dos Aguttes : 3× SS Vegeta + 2× S9 + 2 promos). DCM « 2010 » / Ultrajeux 7791 = même tin. Orphans dbzc → `quarantine/orphan-dbzc-sealed/`.
-- **Super Série** = reprints DCM (`DB###` checklist) → membership `print_sets` ss1–ss6 sur printKeys `partN` (pas de `ssN-d####` inventés). Annoncés au picker via `print_sets`, pas via les SKUs scellés.
+- **Super JCC / SJCC** ([dbzc idc=112](http://www.dbzcollection.fr/2v2/cartes.php?idc=112)) = **autre ligne** que le JCC `D-###` : numéros `DB-###`, Parts 1–6 → setCodes `ss1`–`ss6`, printKeys `dbsjcc:ssN-db####`. Ledger `dbzcollection-super.json`. DCM Super Série = corroboration listes, pas membership sur `partN`.
 - **Tin box** = scellé mix sans check-list cartes (exclu du picker).
 - **dbcardshop** : photos retail (boosters vides) — `art.dbcardshop.*` OK, `face:false` dans press-packshots (ne pas prendre la face catalogue).
 - **Dual decks S1–5** : les ids packaging dbzc (`1191`/`1194`/…) portaient souvent l’art de l’**autre** deck du duo — ré-homés sur les slugs thématiques (`…-ennemis`, `…-ruban-rouge`, …). Voir `staging/misfiled/dual-deck-dbzc-swap/`.

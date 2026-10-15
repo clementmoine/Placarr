@@ -34,6 +34,9 @@ describe("printKey", () => {
     expect(parseDbsjccNumber("D-938")).toBe("d0938");
     expect(parseDbsjccNumber("SP-01")).toBe("sp0001");
     expect(parseDbsjccNumber("SP-25")).toBe("sp0025");
+    expect(parseDbsjccNumber("DB-001")).toBe("db0001");
+    expect(parseDbsjccNumber("DB001")).toBe("db0001");
+    expect(parseDbsjccNumber("DB-189")).toBe("db0189");
     expect(parseDbsjccNumber("invalid")).toBeNull();
   });
 
@@ -46,6 +49,7 @@ describe("printKey", () => {
 
   it("builds valid printKeys without and with grouping", () => {
     expect(dbsjccPrintKey("part1", "D-1")).toBe("dbsjcc:part1-d0001");
+    expect(dbsjccPrintKey("ss1", "DB-001")).toBe("dbsjcc:ss1-db0001");
     expect(dbsjccPrintKey("part4", "D-431", "kaio")).toBe(
       "dbsjcc:part4-d0431-kaio",
     );

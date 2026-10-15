@@ -488,8 +488,7 @@ export async function installDbsJccDeckcardmania(
     downloadFaces: opts.downloadFaces,
     ledgerPath: opts.ledgerPath,
   });
-  const superSerie = installDbsJccSuperSerieMembership(index, {
-    ledgerPath: opts.ledgerPath,
-  });
+  // Clears false ssN→partN links; real SJCC cards come from dbzc idc=112.
+  const superSerie = installDbsJccSuperSerieMembership();
   return { packshots, rarity, faces, superSerie };
 }

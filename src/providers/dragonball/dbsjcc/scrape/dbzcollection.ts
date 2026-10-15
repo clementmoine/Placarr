@@ -64,9 +64,11 @@ import {
 } from "../printKey";
 
 const LEDGER_FILE = "dbzcollection.json";
+const SUPER_LEDGER_FILE = "dbzcollection-super.json";
 const STAGING_FOLDER = "dbzcollection";
 const SOURCE_ID = "dbzcollection";
 const ARTEFACT_ID = "jcc:dbzcollection";
+const SUPER_ARTEFACT_ID = "jcc:dbzcollection-super";
 const DELAY_MS = 60;
 
 export type DbzcSetSpec = {
@@ -94,8 +96,18 @@ export function dbzcollectionLedgerPath(): string {
   return path.join(dbsJccCuratedDir(), "sources", LEDGER_FILE);
 }
 
+export function dbzcollectionSuperLedgerPath(): string {
+  return path.join(dbsJccCuratedDir(), "sources", SUPER_LEDGER_FILE);
+}
+
 export function readDbzcollectionLedger(): DbzcLedger {
   return JSON.parse(readFileSync(dbzcollectionLedgerPath(), "utf8")) as DbzcLedger;
+}
+
+export function readDbzcollectionSuperLedger(): DbzcLedger {
+  return JSON.parse(
+    readFileSync(dbzcollectionSuperLedgerPath(), "utf8"),
+  ) as DbzcLedger;
 }
 
 export function dbzcollectionStagingDir(): string {
@@ -105,6 +117,10 @@ export function dbzcollectionStagingDir(): string {
 /** Stable hash from curated dbzc sets ledger — survives staging purge. */
 export function jccDbzcollectionContentHash(): string {
   return hashCatalogArtefactBytes(readFileSync(dbzcollectionLedgerPath()));
+}
+
+export function jccDbzcollectionSuperContentHash(): string {
+  return hashCatalogArtefactBytes(readFileSync(dbzcollectionSuperLedgerPath()));
 }
 
 function setStagingDir(setCode: string, root?: string): string {
@@ -565,6 +581,58 @@ export async function harvestDbzcollection(
   return { sets: sets.length, cards, packs, ok, skip, fail };
 }
 
+/**
+ * Super JCC / SJCC (dbzc idc=112) — Parts 1–6 → setCodes ss1–ss6, printed DB-###.
+ */
+export async function harvestDbzcollectionSuper(
+  opts: {
+    force?: boolean;
+    stagingDir?: string;
+    argv?: readonly string[];
+  } = {},
+): Promise<DbzcHarvest> {
+  const contentHash = jccDbzcollectionSuperContentHash();
+  if (
+    !opts.force &&
+    catalogArtefactIsFresh(
+      readCatalogIngestLedger(packCatalogIngestLedgerPath(DBS_JCC_PACK_ID)),
+      SUPER_ARTEFACT_ID,
+      contentHash,
+    )
+  ) {
+    return { sets: 0, cards: 0, packs: 0, ok: 0, skip: 0, fail: 0 };
+  }
+
+  const ledger = readDbzcollectionSuperLedger();
+  const sets = enabledDbzcSets(ledger, opts.argv ?? []);
+  const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
+  mkdirSync(stagingRoot, { recursive: true });
+
+  let cards = 0;
+  let packs = 0;
+  let ok = 0;
+  let skip = 0;
+  let fail = 0;
+
+  for (const set of sets) {
+    console.log(`── dbzc Super ${set.setCode} — ${set.label}`);
+    const report = await harvestSet(set, ledger, {
+      force: opts.force,
+      stagingRoot,
+    });
+    cards += report.cards;
+    packs += report.packs;
+    ok += report.ok;
+    skip += report.skip;
+    fail += report.fail;
+    console.log(
+      `── dbzc Super ${set.setCode} — ${report.cards} carte(s), ${report.packs} SKU : ${report.ok} DL, ${report.skip} déjà là, ${report.fail} manqué${report.fail === 1 ? "" : "s"}`,
+    );
+  }
+
+  return { sets: sets.length, cards, packs, ok, skip, fail };
+}
+
 type CardManifest = {
   setCode: string;
   lang: string;
@@ -613,23 +681,33 @@ export type DbzcFaceInstall = {
 
 export function installDbzcollectionFaces(
   index: LocalPrintsIndex,
-  opts: { stagingDir?: string; argv?: readonly string[] } = {},
+  opts: {
+    stagingDir?: string;
+    argv?: readonly string[];
+    ledger?: DbzcLedger;
+    artefactId?: string;
+    contentHash?: string;
+    /** When false, do not drop unrelated prints (Super JCC install). Default true. */
+    prune?: boolean;
+  } = {},
 ): DbzcFaceInstall {
-  const contentHash = jccDbzcollectionContentHash();
+  const contentHash = opts.contentHash ?? jccDbzcollectionContentHash();
+  const artefactId = opts.artefactId ?? ARTEFACT_ID;
   const stagingRoot = opts.stagingDir ?? dbzcollectionStagingDir();
   if (
     !opts.stagingDir &&
+    !opts.ledger &&
     !existsSync(stagingRoot) &&
     catalogArtefactIsFresh(
       readCatalogIngestLedger(packCatalogIngestLedgerPath(DBS_JCC_PACK_ID)),
-      ARTEFACT_ID,
+      artefactId,
       contentHash,
     )
   ) {
     return { prints: 0, titles: 0, faces: 0, dumps: 0, missing: [] };
   }
 
-  const ledger = readDbzcollectionLedger();
+  const ledger = opts.ledger ?? readDbzcollectionLedger();
   const sets = enabledDbzcSets(ledger, opts.argv ?? []);
 
   let dumps = 0;
@@ -711,7 +789,11 @@ export function installDbzcollectionFaces(
       continue;
     }
 
-    const cardType = canonical.number.startsWith("sp") ? "sp" : "d";
+    const cardType = canonical.number.startsWith("sp")
+      ? "sp"
+      : canonical.number.startsWith("db")
+        ? "db"
+        : "d";
     const prev = printByKey.get(canonical.printKey);
     const titles = [...(prev?.titles ?? [])];
     if (!titles.some((t) => t.lang === "fr")) {
@@ -802,8 +884,10 @@ export function installDbzcollectionFaces(
   }
   if (assets.length) index.writeAssets(assets);
 
-  const keep = new Set(printRows.map((row) => row.printKey));
-  if (keep.size) index.prunePrintsExcept(keep);
+  if (opts.prune !== false) {
+    const keep = new Set(printRows.map((row) => row.printKey));
+    if (keep.size) index.prunePrintsExcept(keep);
+  }
 
   return {
     prints,
@@ -812,6 +896,20 @@ export function installDbzcollectionFaces(
     dumps,
     missing: missingList,
   };
+}
+
+/** Install Super JCC (ss1–ss6 / DB-###) without pruning classic partN prints. */
+export function installDbzcollectionSuperFaces(
+  index: LocalPrintsIndex,
+  opts: { stagingDir?: string; argv?: readonly string[] } = {},
+): DbzcFaceInstall {
+  return installDbzcollectionFaces(index, {
+    ...opts,
+    ledger: readDbzcollectionSuperLedger(),
+    artefactId: SUPER_ARTEFACT_ID,
+    contentHash: jccDbzcollectionSuperContentHash(),
+    prune: false,
+  });
 }
 
 function dbsjccFinishWorthy(rarity: string | null | undefined): boolean {

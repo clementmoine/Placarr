@@ -56,16 +56,16 @@ const SET_THEMES: Readonly<Record<string, string>> = {
 };
 
 /**
- * Normalise un code de numéro imprimé JCC :
+ * Normalise un code de numéro imprimé JCC / Super JCC :
  * `D-1` -> `d0001`
- * `D-123` -> `d0123`
  * `D-123a` / `d0123a` -> `d0123a` (lettre = variante d'illustration)
  * `SP-01` -> `sp0001`
- * `SP-25` -> `sp0025`
+ * `DB-001` / `DB001` (Super JCC / SJCC) -> `db0001`
  */
 export function parseDbsjccNumber(raw: string): string | null {
   const clean = raw.trim().toUpperCase();
-  const m = clean.match(/^(?:(SP|D)\s*[-_]?\s*)?(\d+)([A-Z])?$/i);
+  // DB before D — otherwise `DB-001` collapses to D.
+  const m = clean.match(/^(?:(SP|DB|D)\s*[-_]?\s*)?(\d+)([A-Z])?$/i);
   if (!m) return null;
   const prefix = (m[1] ?? "D").toLowerCase();
   const n = Number.parseInt(m[2]!, 10);
@@ -74,14 +74,14 @@ export function parseDbsjccNumber(raw: string): string | null {
   return `${prefix}${String(n).padStart(4, "0")}${letter}`;
 }
 
-/** `d0123a` → `{ base: "d0123", artLetter: "a" }`. */
+/** `d0123a` / `db0001` → `{ base, artLetter }`. */
 export function splitDbsjccNumber(raw: string): {
   base: string;
   artLetter: string | null;
 } | null {
   const parsed = parseDbsjccNumber(raw);
   if (!parsed) return null;
-  const m = /^(d|sp)(\d+)([a-z]?)$/i.exec(parsed);
+  const m = /^(d|sp|db)(\d+)([a-z]?)$/i.exec(parsed);
   if (!m) return { base: parsed, artLetter: null };
   const base = `${m[1]!.toLowerCase()}${m[2]}`;
   const artLetter = m[3] ? m[3].toLowerCase() : null;
@@ -103,9 +103,9 @@ export function normalizeGrouping(raw: string): string | null {
 }
 
 /**
- * Construit un printKey canonique JCC Dragon Ball :
+ * Construit un printKey canonique JCC / Super JCC :
  * `dbsjcc:part1-d0001`
- * `dbsjcc:part4-d0431-kaio`
+ * `dbsjcc:ss1-db0001`
  * `dbsjcc:sp-sp0001`
  */
 export function dbsjccPrintKey(
@@ -203,9 +203,8 @@ export function dbsjccSetSortKey(setCode: string): number | null {
 }
 
 /**
- * Référence collectionneur pour le picker / la check-list : `D-127`, `SP-25`,
- * `D-123a` (variante d'illustration).
- * `number` accepte l'id disque (`d0127` / `d0123a`) ou l'imprimé (`D-127`).
+ * Référence collectionneur : `D-127`, `DB-001` (Super JCC), `SP-25`,
+ * `D-123a`. Accepte id disque (`d0127` / `db0001`) ou imprimé.
  */
 export function formatDbsjccCollectorReference(
   _setCode: string,
@@ -214,7 +213,7 @@ export function formatDbsjccCollectorReference(
 ): string {
   const raw = number.trim();
   if (raw.toLowerCase() === DBSJCC_DETECTEUR_NUMBER) return "Détecteur";
-  const disk = /^(d|sp)0*(\d+)([a-z]?)$/i.exec(raw);
+  const disk = /^(d|sp|db)0*(\d+)([a-z]?)$/i.exec(raw);
   const printed = disk
     ? `${disk[1]!.toUpperCase()}-${disk[2]!}${disk[3]?.toLowerCase() ?? ""}`
     : raw

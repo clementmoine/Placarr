@@ -20,8 +20,10 @@ import { installProviderProductsContents } from "@/providers/shared/sealedProduc
 import {
   dbzcollectionStagingDir,
   harvestDbzcollection,
+  harvestDbzcollectionSuper,
   ingestDbzcollectionSealedProducts,
   installDbzcollectionFaces,
+  installDbzcollectionSuperFaces,
   jccDbzcollectionContentHash,
 } from "./scrape/dbzcollection";
 import { harvestCarddassFrDbz } from "./harvest/carddassFr";
@@ -53,6 +55,10 @@ export async function runDbsJccPackPipeline(
   const dbzc = await harvestDbzcollection({ force, argv });
   console.log(
     `── dbzc — ${dbzc.sets} set(s), ${dbzc.cards} carte(s), ${dbzc.packs} SKU : ${dbzc.ok} DL, ${dbzc.skip} déjà là, ${dbzc.fail} manqué${dbzc.fail === 1 ? "" : "s"}`,
+  );
+  const dbzcSuper = await harvestDbzcollectionSuper({ force, argv });
+  console.log(
+    `── dbzc Super JCC — ${dbzcSuper.sets} set(s), ${dbzcSuper.cards} carte(s), ${dbzcSuper.packs} SKU : ${dbzcSuper.ok} DL, ${dbzcSuper.skip} déjà là, ${dbzcSuper.fail} manqué${dbzcSuper.fail === 1 ? "" : "s"}`,
   );
 
   const frOfficial = harvestCarddassFrDbz();
@@ -127,6 +133,10 @@ export async function runDbsJccPackPipeline(
       console.log(
         `── Faces dbzc — ${dbzcFaces.faces} index, ${dbzcFaces.dumps} dump(s)`,
       );
+      const dbzcSuperFaces = installDbzcollectionSuperFaces(index, { argv });
+      console.log(
+        `── Faces dbzc Super JCC — ${dbzcSuperFaces.faces} index, ${dbzcSuperFaces.dumps} dump(s), missing ${dbzcSuperFaces.missing.length}`,
+      );
       const dedupe = await dedupeDbsjccPrintSets(DBS_JCC_PACK_ID);
       console.log(
         `── dedupe print_sets — ${dedupe.canonical} canonique(s), ${dedupe.aliasesRemoved} alias retiré(s), ${dedupe.printSets} membership(s), items ${dedupe.itemsRemapped}, contents ${dedupe.productsRemapped}`,
@@ -168,7 +178,7 @@ export async function runDbsJccPackPipeline(
         force,
       });
       console.log(
-        `── FR deckcardmania — packshots installed ${dcmInstall.packshots.packshotsInstalled} (dl ${dcmInstall.packshots.packshotsDownloaded}, staging-only ${dcmInstall.packshots.stagedOnly}), rarity stamped ${dcmInstall.rarity.stamped}/${dcmInstall.rarity.listed}, faces ${dcmInstall.faces.faces} matched ${dcmInstall.faces.matched} (skip ${dcmInstall.faces.skipped.length}), Super Série membership ${dcmInstall.superSerie.linked}/${dcmInstall.superSerie.listed} (missing ${dcmInstall.superSerie.missing})`,
+        `── FR deckcardmania — packshots installed ${dcmInstall.packshots.packshotsInstalled} (dl ${dcmInstall.packshots.packshotsDownloaded}, staging-only ${dcmInstall.packshots.stagedOnly}), rarity stamped ${dcmInstall.rarity.stamped}/${dcmInstall.rarity.listed}, faces ${dcmInstall.faces.faces} matched ${dcmInstall.faces.matched} (skip ${dcmInstall.faces.skipped.length}), false SS→part links cleared ${dcmInstall.superSerie.cleared}`,
       );
       return {
         prints:

@@ -61,9 +61,53 @@ function readProductsIndexJson(packId: string): ProductsIndexV1 | null {
 }
 
 /**
+ * Identity / packshot fields a curated stub often leaves null while JSON still
+ * holds the boutique row. Fill only when primary is empty — never clobber a
+ * real sqlite value with a stale JSON one.
+ */
+const UNION_FILL_WHEN_EMPTY = [
+  "name",
+  "lang",
+  "image",
+  "imageBack",
+  "poster",
+  "setLogo",
+  "setCode",
+  "catalogueSetId",
+  "releaseDate",
+  "priceCents",
+] as const satisfies ReadonlyArray<keyof SealedProductEntry>;
+
+function isEmptyUnionField(value: unknown): boolean {
+  if (value == null) return true;
+  if (typeof value === "string") return value.trim() === "";
+  return false;
+}
+
+/** Prefer primary; copy empty identity fields from fill. */
+export function coalesceSealedProductEntry(
+  primary: SealedProductEntry,
+  fill: SealedProductEntry,
+): SealedProductEntry {
+  let next: SealedProductEntry | null = null;
+  for (const field of UNION_FILL_WHEN_EMPTY) {
+    if (!isEmptyUnionField(primary[field]) || isEmptyUnionField(fill[field])) {
+      continue;
+    }
+    if (!next) next = { ...primary };
+    (next as Record<string, unknown>)[field] = fill[field];
+  }
+  return next ?? primary;
+}
+
+/**
  * SQLite may lag behind a fuller `products-index.json` (measured: Carddass
  * FR starters present in JSON, absent from `catalog.sqlite`). Fill gaps only —
- * never overwrite a sqlite row with JSON.
+ * never overwrite a populated sqlite field with JSON.
+ *
+ * Curated mint stubs in sqlite often keep `name`/`lang`/`image` null while
+ * JSON still has the boutique row — coalesce those empties so catalogue lang
+ * filtering does not drop the SKU.
  */
 export function unionSealedProductsPreferPrimary(
   primary: Record<string, SealedProductEntry>,
@@ -71,7 +115,12 @@ export function unionSealedProductsPreferPrimary(
 ): Record<string, SealedProductEntry> {
   const out = { ...primary };
   for (const [key, entry] of Object.entries(fill)) {
-    if (!out[key]) out[key] = entry;
+    const existing = out[key];
+    if (!existing) {
+      out[key] = entry;
+      continue;
+    }
+    out[key] = coalesceSealedProductEntry(existing, entry);
   }
   return out;
 }

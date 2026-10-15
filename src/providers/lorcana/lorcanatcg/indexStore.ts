@@ -7,7 +7,13 @@ import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrint
  *
  * Server/worker only — do not import from client bundles.
  */
-import { existsSync, mkdirSync, unlinkSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+} from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -106,6 +112,8 @@ export type LorcanaCardsIndexJson = CardsIndexV1;
 
 let activeDb: DatabaseSync | null = null;
 let activePath: string | null = null;
+/** mtime of the open handle — invalidate when Sync rewrites the file under us. */
+let activeMtimeMs: number | null = null;
 
 export function lorcanaTcgDbPath(): string {
   const override = process.env.PLACARR_LORCANA_TCG_DB?.trim();
@@ -191,6 +199,7 @@ export function resetLorcanaTcgDbCache(): void {
   }
   activeDb = null;
   activePath = null;
+  activeMtimeMs = null;
 }
 
 /** Une ligne de recherche : le tirage et son titre, joints. */
@@ -256,21 +265,43 @@ function parseJsonArray(raw: string | null | undefined): string[] | null {
   }
 }
 
-/** Rebuild sqlite from scrape rows (full replace). */
+/**
+ * Rebuild sqlite from scrape rows (full replace).
+ *
+ * Writes to a sibling `.tmp` then renames — never unlink the live DB first.
+ * An empty payload must not erase a populated catalogue (that left the
+ * check-list at « Sans catalogue » / 0 sur 0 after a botched sync).
+ */
 export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
   dbPath: string;
   printCount: number;
 } {
   const dbPath = input.dbPath ?? lorcanaTcgDbPath();
   resetLorcanaTcgDbCache();
-  if (existsSync(dbPath)) {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+
+  if (input.prints.length === 0 && existsSync(dbPath)) {
+    let priorCount = 0;
     try {
-      unlinkSync(dbPath);
+      const prior = new DatabaseSync(dbPath, { readOnly: true });
+      try {
+        priorCount = (
+          prior.prepare(`SELECT COUNT(*) AS n FROM prints`).get() as {
+            n: number;
+          }
+        ).n;
+      } finally {
+        prior.close();
+      }
     } catch {
-      /* ignore */
+      priorCount = 0;
+    }
+    if (priorCount > 0) {
+      throw new Error(
+        `Refusing to replace Lorcana catalogue (${priorCount} prints) with an empty write — ${dbPath}`,
+      );
     }
   }
-  mkdirSync(path.dirname(dbPath), { recursive: true });
 
   // Garde anti-fuite EN→FR : un titre `lang=X` ne peut pas porter un CDN
   // Ravensburger `/images/Y/` (Y≠X). Les autres hosts passent.
@@ -296,7 +327,16 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
   });
   const assets = input.assets;
 
-  const db = new DatabaseSync(dbPath);
+  const tmpPath = `${dbPath}.tmp-${process.pid}-${Date.now()}`;
+  if (existsSync(tmpPath)) {
+    try {
+      unlinkSync(tmpPath);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const db = new DatabaseSync(tmpPath);
   createSchema(db);
 
   const insertPrint = db.prepare(`
@@ -430,9 +470,27 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
     new Date().toISOString(),
   );
   db.exec("COMMIT");
+  db.close();
 
-  activeDb = db;
+  try {
+    renameSync(tmpPath, dbPath);
+  } catch (error) {
+    try {
+      unlinkSync(tmpPath);
+    } catch {
+      /* ignore */
+    }
+    throw error;
+  }
+
+  const live = new DatabaseSync(dbPath);
+  activeDb = live;
   activePath = dbPath;
+  try {
+    activeMtimeMs = statSync(dbPath).mtimeMs;
+  } catch {
+    activeMtimeMs = null;
+  }
   return { dbPath, printCount: input.prints.length };
 }
 
@@ -721,12 +779,36 @@ function migrateLorcanaTcgSchema(dbPath: string): void {
 
 export function ensureLorcanaTcgIndex(): DatabaseSync | null {
   const dbPath = lorcanaTcgDbPath();
-  if (!existsSync(dbPath)) return null;
-  if (activeDb && activePath === dbPath) return activeDb;
+  if (!existsSync(dbPath)) {
+    resetLorcanaTcgDbCache();
+    return null;
+  }
+  let mtimeMs = 0;
+  try {
+    mtimeMs = statSync(dbPath).mtimeMs;
+  } catch {
+    resetLorcanaTcgDbCache();
+    return null;
+  }
+  /*
+    Catalogue Sync remplace le fichier (rename atomique). Un handle read-only
+    ouvert avant le rebuild reste collé à l'ancien inode — check-list à 0 %
+    alors que `catalog.sqlite` est peuplé. On rouvre dès que le mtime change.
+  */
+  if (
+    activeDb &&
+    activePath === dbPath &&
+    activeMtimeMs != null &&
+    activeMtimeMs === mtimeMs
+  ) {
+    return activeDb;
+  }
+  resetLorcanaTcgDbCache();
   migrateLorcanaTcgSchema(dbPath);
   const db = new DatabaseSync(dbPath, { readOnly: true });
   activeDb = db;
   activePath = dbPath;
+  activeMtimeMs = mtimeMs;
   return db;
 }
 

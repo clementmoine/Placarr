@@ -66,4 +66,105 @@ describe("areaDecidesBelow", () => {
       ),
     ).toBe("petit");
   });
+
+  it("prefers catalog provenance over a larger listing photo", () => {
+    const choice = createCardFaceChoice<"boutique" | "photo">({
+      sources: ["boutique", "photo"],
+      priority: { fr: ["photo", "boutique"] },
+      sourceCoverProvenance: (source) =>
+        source === "photo" ? "listing_photo" : "catalog",
+      areaDecidesBelow: 200_000,
+    });
+    expect(
+      choice.pickBestFace(
+        [
+          {
+            source: "photo",
+            file: "art.photo.jpg",
+            width: 764,
+            height: 1000,
+          },
+          {
+            source: "boutique",
+            file: "art.boutique.jpg",
+            width: 336,
+            height: 421,
+          },
+        ],
+        "fr",
+      ),
+    ).toBe("boutique");
+  });
+
+  it("preferPriorityOverScore lets locale order beat a larger padded square", () => {
+    const choice = createCardFaceChoice<"potomac" | "drive">({
+      sources: ["potomac", "drive"],
+      priority: { en: ["potomac", "drive"] },
+      areaDecidesBelow: 200_000,
+      preferPriorityOverScore: true,
+    });
+    expect(
+      choice.pickBestFace(
+        [
+          {
+            source: "drive",
+            file: "art.drive.png",
+            width: 1600,
+            height: 1600,
+          },
+          {
+            source: "potomac",
+            file: "art.potomac.jpg",
+            width: 736,
+            height: 597,
+          },
+        ],
+        "en",
+      ),
+    ).toBe("potomac");
+  });
+
+  it("keeps a real listing photo when the only catalog dump is a stub GIF", () => {
+    const choice = createCardFaceChoice<"gif" | "photo" | "boutique">({
+      sources: ["gif", "photo", "boutique"],
+      priority: { fr: ["gif", "photo", "boutique"] },
+      sourceCoverProvenance: (source) =>
+        source === "photo" ? "listing_photo" : "catalog",
+      areaDecidesBelow: 200_000,
+    });
+    expect(
+      choice.pickBestFace(
+        [
+          { source: "gif", file: "art.gif.gif", width: 200, height: 247 },
+          {
+            source: "photo",
+            file: "art.photo.jpg",
+            width: 631,
+            height: 810,
+          },
+        ],
+        "fr",
+      ),
+    ).toBe("photo");
+    // Boutique packshot under areaFloor but above stub floor still beats photo.
+    expect(
+      choice.pickBestFace(
+        [
+          {
+            source: "photo",
+            file: "art.photo.jpg",
+            width: 774,
+            height: 1000,
+          },
+          {
+            source: "boutique",
+            file: "art.boutique.jpg",
+            width: 336,
+            height: 421,
+          },
+        ],
+        "fr",
+      ),
+    ).toBe("boutique");
+  });
 });

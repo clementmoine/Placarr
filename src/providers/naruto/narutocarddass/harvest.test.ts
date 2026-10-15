@@ -231,6 +231,20 @@ import { volumeNumber, volumeOfficialProducts } from "./sealed";
         true,
       );
     });
+
+    it("maps ラムネ カードスタンド hobby packshot to jp-release-17 (not cardimg/)", () => {
+      const row = tvtokyo.products.find((p) => p.slug === "jp-release-17");
+      expect(row?.path).toBe("images/hobby/nkemak-p.jpg");
+      expect(row?.page).toBe("nar_kemaki.html");
+      expect(row?.variantViews?.map((v) => v.printedRef)).toEqual([
+        "CAN-1",
+        "CAN-5",
+        "CAN-2",
+        "CAN-3",
+        "CAN-4",
+        "CAN-6",
+      ]);
+    });
   });
 }
 

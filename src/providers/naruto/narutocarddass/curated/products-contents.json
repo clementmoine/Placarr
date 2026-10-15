@@ -2085,7 +2085,7 @@
       "packsContained": 2,
       "declaredCardCount": 17,
       "behavior": "mixed_bundle",
-      "randomPoolScope": "set",
+      "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -2106,7 +2106,7 @@
       "packsContained": 2,
       "declaredCardCount": 17,
       "behavior": "mixed_bundle",
-      "randomPoolScope": "set",
+      "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -2127,7 +2127,7 @@
       "packsContained": 2,
       "declaredCardCount": 17,
       "behavior": "mixed_bundle",
-      "randomPoolScope": "set",
+      "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -2148,7 +2148,7 @@
       "packsContained": 2,
       "declaredCardCount": 17,
       "behavior": "mixed_bundle",
-      "randomPoolScope": "set",
+      "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -2207,7 +2207,7 @@
       ],
       "declaredCardCount": 96,
       "behavior": "mixed_bundle",
-      "randomPoolScope": "set",
+      "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -2619,7 +2619,7 @@
       ],
       "declaredCardCount": 57,
       "behavior": "mixed_bundle",
-      "randomPoolScope": "set",
+      "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -2651,7 +2651,7 @@
         "naruto:s4-te0169",
         "naruto:promo-pr0016"
       ],
-      "notes": "Verso imprimé : deck [INVOCATION] s4 (40) + booster s1 (8) + booster s2 (8) + 1 promo holo exclusive + tapis + 6 jetons + livret. Réf. 05129 / EAN 3296580051298 / BANDAI 2007 BE. Guarantees = deck Invocation + PR-016. packsBySet = loterie S1/S2 ; guaranteeSets = s4+promo (un NI du deck mal rangé S5 au catalogue ne doit pas accrocher le conseil S5). Variant Hobby = SKU tin-box-hobby. contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
+      "notes": "Verso imprimé : deck [INVOCATION] s4 (40) + booster s1 (8) + booster s2 (8) + 1 promo holo exclusive + tapis + 6 jetons + livret. Réf. 05129 / EAN 3296580051298 / BANDAI 2007 BE. Guarantees = deck Invocation + PR-016. packsBySet = loterie S1/S2 ; guaranteeSets = s4+promo (un NI du deck mal rangé S5 au catalogue ne doit pas accrocher le conseil S5). Variant Hobby = SKU tin-box-hobby. Face catalogue = wrappers/tin-box.png (clean). contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
       "guaranteedPrints": [
         {
           "printKey": "naruto:s4-ni0027",
@@ -2797,14 +2797,14 @@
       ],
       "declaredCardCount": 42,
       "behavior": "mixed_bundle",
-      "randomPoolScope": "set",
+      "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "naruto:promo-pr0011",
         "naruto:promo-pr0016"
       ],
-      "notes": "Canal hobby (magasins spécialisés). Officiel : 1 booster S1 + S2 + S3 + S4 + S5 + Naruto NI-PR16 + Orochimaru NI-PR11. Face catalogue = sleeve bleu reconstruit (wrappers/tin-box-hobby.png) ; contenu-tin-box / Tin-box-hobby.jpg archival. Sachets aléatoires via packsBySet — seules les 2 promos sont garanties. Distinct de tin-box Invocation 05129. contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
+      "notes": "Canal hobby (magasins spécialisés). Officiel : 1 booster S1 + S2 + S3 + S4 + S5 + Naruto NI-PR16 + Orochimaru NI-PR11. Face catalogue = wrappers/tin-box-hobby.png (clean) ; contenu-tin-box / Tin-box-hobby.jpg archival. Sachets aléatoires via packsBySet — seules les 2 promos sont garanties. Distinct de tin-box Invocation 05129. contentsKnown=true : composition officielle attestée (deck/promos fixes + sachets via packsBySet).",
       "guaranteedProducts": [
         {
           "slug": "booster-s1",
@@ -3215,7 +3215,9 @@
       "randomPoolScope": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
-      "guaranteeSets": ["s11"],
+      "guaranteeSets": [
+        "s11"
+      ],
       "guaranteedPrintKeys": [
         "naruto:s11-c0045",
         "naruto:s11-j0067",

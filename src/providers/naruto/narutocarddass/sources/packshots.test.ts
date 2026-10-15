@@ -5,7 +5,7 @@ import dig from "../curated/sources/pack-decouverte-packshot-2026-08-30.json";
 import { narutoCatalogueLineForSealed, narutoDiskCardId } from "../identity";
 import { narutoCuratedProductsDir } from "../install/curated";
 import { NARUTO_SEALED_SKUS } from "../sealed";
-import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, gradedcardcenterIngestPackshots, gradedcardcenterLedger, gradedcardcenterOriginalUrl, ebayIngestFaces, ebayIngestPackshots, ebayListingImageFull, ebayPackshotLedger, martinaIngestPackshots, martinaLedger, toywizIngestPackshots, toywizPackshotLedger, atomicempireIngestPackshots, atomicempirePackshotLedger, vintedIngestBacks, vintedIngestPackshots, vintedLedger, mangaSanctuaryIngestPackshots, mangaSanctuaryPackshotLedger, sunnystoreIngestBacks, sunnystoreIngestPackshots, sunnystorePackshotLedger, leboncoinIngestBacks, leboncoinIngestPackshots, leboncoinPackshotImageFull, leboncoinPackshotLedger, kinkaiIngestBacks, kinkaiIngestPackshots, kinkaiPackshotLedger, micromaniaIngestPackshots, micromaniaPackshotLedger, fnacIngestPackshots, fnacPackshotLedger, goatCdnOriginal, goatIngestPackshots, goatMintDisplayPackshots, goatPackshotLedger, trictracCdnOriginal, trictracIngestPackshots, trictracLedger, mangaNewsFullGoodieUrl, mangaNewsIngestPackshots, mangaNewsPackshotLedger, magentoCatalogOriginal, vialudibundaIngestPackshots, vialudibundaLedger, scifiUniverseIngestPackshots, scifiUniverseLedger } from "./packshots";
+import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, gradedcardcenterIngestPackshots, gradedcardcenterLedger, gradedcardcenterOriginalUrl, ebayIngestFaces, ebayIngestPackshots, ebayListingImageFull, ebayPackshotLedger, martinaIngestPackshots, martinaLedger, toywizIngestPackshots, toywizPackshotLedger, atomicempireIngestPackshots, atomicempirePackshotLedger, vintedIngestBacks, vintedIngestPackshots, vintedLedger, mangaSanctuaryIngestPackshots, mangaSanctuaryPackshotLedger, sunnystoreIngestBacks, sunnystoreIngestPackshots, sunnystorePackshotLedger, leboncoinIngestBacks, leboncoinIngestPackshots, leboncoinPackshotImageFull, leboncoinPackshotLedger, kinkaiIngestBacks, kinkaiIngestPackshots, kinkaiPackshotLedger, micromaniaIngestPackshots, micromaniaPackshotLedger, fnacIngestPackshots, fnacPackshotLedger, goatCdnOriginal, goatIngestPackshots, goatMintDisplayPackshots, goatPackshotLedger, trictracCdnOriginal, trictracIngestPackshots, trictracLedger, mangaNewsFullGoodieUrl, mangaNewsIngestPackshots, mangaNewsPackshotLedger, magentoCatalogOriginal, amazonFrIngestPackshots, amazonJaIngestPackshots, colekaFrStartersIngestPackshots, potomacIngestPackshots, potomacPackshotLedger, ultrajeuxSealedIngestPackshots, vialudibundaIngestPackshots, vialudibundaLedger, scifiUniverseIngestPackshots, scifiUniverseLedger } from "./packshots";
 
 // —— cardgameclubPackshots ——
 {
@@ -897,10 +897,50 @@ import { cardgameclubImageUrl, cardgameclubIngestPackshots, cardgameclubLedger, 
         "/s/t/starter-naruto-serie-1-maitre-hokage.jpg",
       );
       expect(hokage.url).not.toContain("/n/a/");
-      expect(hokage.doNotDisplace).toBe(
-        "staging/trictrac/starter-maitre-hokage.jpeg",
-      );
+      expect("doNotDisplace" in hokage).toBe(false);
       expect(ledger.search.hits).toBe(3);
+    });
+  });
+}
+
+// —— amazon / ultrajeux / coleka catalogue starters ——
+{
+  describe("catalogue starter packshots (Amazon / UltraJeux / Coleka)", () => {
+    it("ingests Pays du Vent from Amazon + Coleka and S2 from UltraJeux", () => {
+      expect(amazonFrIngestPackshots().map((row) => row.slug)).toEqual([
+        "starter-pays-du-vent",
+      ]);
+      expect(amazonJaIngestPackshots().map((row) => row.slug)).toEqual([
+        "starter-gorai-vol16-jp",
+      ]);
+      expect(ultrajeuxSealedIngestPackshots().map((row) => row.slug).sort()).toEqual(
+        ["starter-detruire-konoha", "starter-sceller-le-malefice"],
+      );
+      expect(
+        colekaFrStartersIngestPackshots().map((row) => row.slug).sort(),
+      ).toEqual(["starter-detruire-konoha", "starter-pays-du-vent"]);
+    });
+  });
+}
+
+// —— potomac EN displays ——
+{
+  describe("Potomac Dist EN CCG display packshots", () => {
+    it("maps awbb/ncbb/tgsbb to s11/s12/s20 full GAME JPEGs", () => {
+      const ledger = potomacPackshotLedger();
+      expect(ledger.ingestCollection).toBe(false);
+      expect(potomacIngestPackshots().map((row) => row.slug)).toEqual([
+        "display-s11",
+        "display-s12",
+        "display-s20",
+      ]);
+      expect(
+        potomacIngestPackshots().every((row) =>
+          row.url.includes("/images/GAME/"),
+        ),
+      ).toBe(true);
+      expect(potomacIngestPackshots()[0]?.itemId).toBe("narutoawbb");
+      expect(potomacIngestPackshots()[2]?.itemId).toBe("narutotgsbb");
     });
   });
 }

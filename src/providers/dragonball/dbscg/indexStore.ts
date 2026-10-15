@@ -8,6 +8,8 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  renameSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -90,6 +92,8 @@ function assetBack(row: DbsAssetRow): string | null {
 }
 
 let activeDb: DatabaseSync | null = null;
+let activePath: string | null = null;
+let activeMtimeMs: number | null = null;
 
 export function dbsCgDbPath(): string {
   const override = process.env.PLACARR_DBSCG_DB?.trim();
@@ -104,6 +108,8 @@ export function resetDbsCgDbCache(): void {
     /* ignore */
   }
   activeDb = null;
+  activePath = null;
+  activeMtimeMs = null;
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -161,16 +167,41 @@ export function writeDbsCgIndex(input: {
 }): { dbPath: string; printCount: number } {
   const dbPath = input.dbPath ?? dbsCgDbPath();
   resetDbsCgDbCache();
-  if (existsSync(dbPath)) {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+
+  if (input.prints.length === 0 && existsSync(dbPath)) {
+    let priorCount = 0;
     try {
-      unlinkSync(dbPath);
+      const prior = new DatabaseSync(dbPath, { readOnly: true });
+      try {
+        priorCount = (
+          prior.prepare(`SELECT COUNT(*) AS n FROM prints`).get() as {
+            n: number;
+          }
+        ).n;
+      } finally {
+        prior.close();
+      }
+    } catch {
+      priorCount = 0;
+    }
+    if (priorCount > 0) {
+      throw new Error(
+        `Refusing to replace DBS Masters catalogue (${priorCount} prints) with an empty write — ${dbPath}`,
+      );
+    }
+  }
+
+  const tmpPath = `${dbPath}.tmp-${process.pid}-${Date.now()}`;
+  if (existsSync(tmpPath)) {
+    try {
+      unlinkSync(tmpPath);
     } catch {
       /* ignore */
     }
   }
-  mkdirSync(path.dirname(dbPath), { recursive: true });
 
-  const db = new DatabaseSync(dbPath);
+  const db = new DatabaseSync(tmpPath);
   createSchema(db);
 
   const insertPrint = db.prepare(`
@@ -251,21 +282,60 @@ export function writeDbsCgIndex(input: {
     }
     db.exec("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    try {
+      db.exec("ROLLBACK");
+    } catch {
+      /* ignore */
+    }
     db.close();
+    try {
+      unlinkSync(tmpPath);
+    } catch {
+      /* ignore */
+    }
     throw error;
   }
 
   db.close();
+  try {
+    renameSync(tmpPath, dbPath);
+  } catch (error) {
+    try {
+      unlinkSync(tmpPath);
+    } catch {
+      /* ignore */
+    }
+    throw error;
+  }
   return { dbPath, printCount: input.prints.length };
 }
 
 export function ensureDbsCgIndex(): DatabaseSync | null {
   const dbPath = dbsCgDbPath();
-  if (!existsSync(dbPath)) return null;
-  if (activeDb) return activeDb;
+  if (!existsSync(dbPath)) {
+    resetDbsCgDbCache();
+    return null;
+  }
+  let mtimeMs = 0;
+  try {
+    mtimeMs = statSync(dbPath).mtimeMs;
+  } catch {
+    resetDbsCgDbCache();
+    return null;
+  }
+  if (
+    activeDb &&
+    activePath === dbPath &&
+    activeMtimeMs != null &&
+    activeMtimeMs === mtimeMs
+  ) {
+    return activeDb;
+  }
+  resetDbsCgDbCache();
   try {
     activeDb = new DatabaseSync(dbPath, { readOnly: true });
+    activePath = dbPath;
+    activeMtimeMs = mtimeMs;
     return activeDb;
   } catch {
     return null;
@@ -504,39 +574,63 @@ export function exportDbsCgCardsIndexJson(
  * on retombe sur le code quand aucun titre ne l'a nommé — un set réel sans
  * libellé vaut mieux qu'un set absent de la liste.
  */
-export function listDbsCgPrintSets(): { id: string; label: string }[] {
+export function listDbsCgPrintSets(): {
+  id: string;
+  label: string;
+  languages?: string[];
+}[] {
   const db = ensureDbsCgIndex();
   if (!db) return [];
   /*
     On agrège par (set, nom) puis on choisit le nom **utilisable** le plus
     fréquent. Un `MIN(set_name)` prenait `-` avant « Promotion Cartes », et le
     set promo s'affichait « P ».
+
+    `languages` : la check-list FR ne doit pas ranger 90 sets EN en
+    « Sans catalogue » — seuls les sets avec titres dans la langue comptent.
   */
   const rows = db
     .prepare(
       `SELECT p.set_code AS setCode,
               NULLIF(TRIM(t.set_name), '') AS setName,
+              LOWER(TRIM(t.lang)) AS lang,
               COUNT(*) AS n
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
-        GROUP BY p.set_code, NULLIF(TRIM(t.set_name), '')`,
+        GROUP BY p.set_code, NULLIF(TRIM(t.set_name), ''),
+                 LOWER(TRIM(t.lang))`,
     )
-    .all() as { setCode: string; setName: string | null; n: number }[];
+    .all() as {
+    setCode: string;
+    setName: string | null;
+    lang: string | null;
+    n: number;
+  }[];
 
   const namesBySet = new Map<
     string,
     { name?: string | null; count: number }[]
   >();
+  const langsBySet = new Map<string, Set<string>>();
   for (const row of rows) {
     const list = namesBySet.get(row.setCode) ?? [];
     list.push({ name: row.setName, count: row.n });
     namesBySet.set(row.setCode, list);
+    if (row.lang) {
+      const langs = langsBySet.get(row.setCode) ?? new Set();
+      langs.add(row.lang);
+      langsBySet.set(row.setCode, langs);
+    }
   }
 
   return finalizeSetOptions(
-    [...namesBySet].map(([id, names]) => ({
-      id,
-      label: pickCatalogueSetNameByCount(names),
-    })),
+    [...namesBySet].map(([id, names]) => {
+      const languages = [...(langsBySet.get(id) ?? [])].sort();
+      return {
+        id,
+        label: pickCatalogueSetNameByCount(names),
+        languages: languages.length ? languages : undefined,
+      };
+    }),
   );
 }

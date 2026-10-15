@@ -58,6 +58,8 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     expect(card).not.toBeNull();
     const candidate = toPrintCandidate(card!);
     expect(candidate.printKey).toBe("pokemon:sv03.5-006");
+    expect(candidate.setCode).toBe("sv03.5");
+    expect(candidate.setLabel).toBe("151");
     expect(candidate.imageUrl).toBe(
       "/assets/pokemon/cards/sv3-5/fr/006/art.webp",
     );

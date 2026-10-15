@@ -30,10 +30,6 @@ import { sealedStructureAttested } from "@/providers/shared/sealedProducts/conte
 import { resolveSealedPackshotUrl } from "@/providers/shared/sealedProducts/packshotUrl";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { providerModuleProviding } from "@/providers/shared/packOwner";
-import {
-  NARUTO_SHIPPUDEN_PACK_ID,
-  shippudenSetLabel,
-} from "@/providers/naruto/narutoshippuden/indexStore";
 
 export type CatalogueSealedRow = {
   productKey: string;
@@ -280,8 +276,9 @@ function sealedRowLabel(
 ): string {
   const code = setCode?.trim();
   if (!code) return `${name} · ${count}`;
+  const owner = providerModuleProviding(pack, "labelPrintSet");
   const set =
-    pack === NARUTO_SHIPPUDEN_PACK_ID ? shippudenSetLabel(code) : code;
+    owner?.labelPrintSet?.({ setCode: code })?.trim() || code;
   return `${set} · ${name} · ${count}`;
 }
 
@@ -429,6 +426,60 @@ function buildGuaranteedProducts(
   });
 }
 
+function needsPrintEnrichment(link: SealedPrintLink): boolean {
+  const key = link.printKey?.trim();
+  if (!key) return false;
+  const name = link.name?.trim() || "";
+  const image = link.image?.trim() || "";
+  return !image || !name || name === key;
+}
+
+/**
+ * Fill title / art on curated print links via the pack owner's `lookupPrint`
+ * (merge stores name=printKey when only keys are curated).
+ */
+export async function enrichSealedPrintLinks(input: {
+  packId: string;
+  lang: string | null | undefined;
+  prints: readonly SealedPrintLink[];
+}): Promise<SealedPrintLink[]> {
+  if (!input.prints.length) return [];
+  const owner = providerModuleProviding(input.packId, "lookupPrint");
+  if (!owner?.lookupPrint) return [...input.prints];
+  const lang = input.lang?.trim() || null;
+  return Promise.all(
+    input.prints.map(async (link) => {
+      if (!needsPrintEnrichment(link)) return link;
+      const printKey = link.printKey!.trim();
+      try {
+        const found = await owner.lookupPrint!({
+          printKey,
+          language: lang,
+        });
+        if (!found) return link;
+        const title = found.title?.trim() || null;
+        const image =
+          found.imageUrl?.trim() || found.thumbnailUrl?.trim() || null;
+        const nameIsPlaceholder =
+          !link.name?.trim() || link.name.trim() === printKey;
+        return {
+          ...link,
+          name:
+            nameIsPlaceholder && title
+              ? title
+              : link.name?.trim() || title || printKey,
+          ...(image && !link.image?.trim() ? { image } : {}),
+          ...(found.reference?.trim() && !link.ref
+            ? { ref: found.reference.trim() }
+            : {}),
+        };
+      } catch {
+        return link;
+      }
+    }),
+  );
+}
+
 export async function getCatalogueProductDetailAsync(
   pack: CataloguePackId,
   productKey: string,
@@ -451,13 +502,20 @@ export async function getCatalogueProductDetailAsync(
     slug: entry.slug,
     name: entry.name,
   });
-  const randomPoolPrints = await resolveSealedSetLotteryPool({
-    packId: corpus,
-    setCode: lotterySetId,
-    lang: row.lang,
-    scope: entry.randomPoolScope,
-    existing: entry.randomPoolPrints,
-  });
+  const [randomPoolPrints, guaranteedPrints] = await Promise.all([
+    resolveSealedSetLotteryPool({
+      packId: corpus,
+      setCode: lotterySetId,
+      lang: row.lang,
+      scope: entry.randomPoolScope,
+      existing: entry.randomPoolPrints,
+    }),
+    enrichSealedPrintLinks({
+      packId: corpus,
+      lang: row.lang,
+      prints: entry.guaranteedPrints,
+    }),
+  ]);
   return {
     ...row,
     cardsPerPack: entry.cardsPerPack,
@@ -466,7 +524,7 @@ export async function getCatalogueProductDetailAsync(
     setCardCount: entry.setCardCount,
     randomPoolScope: entry.randomPoolScope,
     guaranteedProducts: buildGuaranteedProducts(corpus, entry, bySlug),
-    guaranteedPrints: entry.guaranteedPrints,
+    guaranteedPrints,
     randomPoolPrints,
     prints: entry.prints,
   };

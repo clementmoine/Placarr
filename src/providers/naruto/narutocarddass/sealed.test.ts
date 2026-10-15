@@ -379,7 +379,17 @@ import productsContentsLedger from "./curated/products-contents.json";
         (row) => row.slug === "display-s28",
       );
       expect(display?.kind).toBe("display");
-      expect(display?.stagingKind).toBe("coleka-s28");
+      expect(display?.stagingKind).toBe("wrappers");
+      expect(display?.stagingFile).toBe("display-s28.png");
+      expect(
+        NARUTO_SEALED_SKUS.find((row) => row.slug === "display-s28-fr"),
+      ).toMatchObject({
+        kind: "display",
+        stagingKind: "wrappers",
+        stagingFile: "display-s28-fr.png",
+        lang: "FR",
+        attested: true,
+      });
       expect(
         NARUTO_SEALED_SKUS.filter((row) => row.lang === "IT").map(
           (row) => row.slug,
@@ -549,13 +559,17 @@ import productsContentsLedger from "./curated/products-contents.json";
       const vent = index.products["naruto/carddass::starter-pays-du-vent"]!;
       const hokage = index.products["naruto/carddass::starter-maitre-hokage"]!;
       expect(vent.image).toBe(
-        "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.trictrac.jpeg",
+        "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.vialudibunda.jpg",
       );
-      expect(vent.path).toBe("staging/trictrac/starter-pays-du-vent.jpeg");
+      expect(vent.path).toBe(
+        "staging/vialudibunda/naruto-serie-1-deck-pays-du-vent.jpg",
+      );
       expect(hokage.image).toBe(
-        "/assets/naruto/carddass/products/starter-maitre-hokage/fr/art.trictrac.jpeg",
+        "/assets/naruto/carddass/products/starter-maitre-hokage/fr/art.vialudibunda.jpg",
       );
-      expect(hokage.path).toBe("staging/trictrac/starter-maitre-hokage.jpeg");
+      expect(hokage.path).toBe(
+        "staging/vialudibunda/starter-naruto-serie-1-maitre-hokage.jpg",
+      );
       expect(
         fs.existsSync(
           path.join(
@@ -611,12 +625,22 @@ import productsContentsLedger from "./curated/products-contents.json";
 
     it("keeps Tric Trac over SciFi-Universe when both dumps exist", async () => {
       const root = tmpPack();
+      const { default: sharp } = await import("sharp");
       const scifi = path.join(root, "staging", "scifi-universe", "images");
       fs.mkdirSync(scifi, { recursive: true });
-      fs.writeFileSync(path.join(scifi, "11650-maitre-hokage.jpg"), "scifi");
+      // Stub catalogue dump (~50k px) — must not beat a real listing photo.
+      await sharp({
+        create: { width: 200, height: 242, channels: 3, background: "#abc" },
+      })
+        .jpeg()
+        .toFile(path.join(scifi, "11650-maitre-hokage.jpg"));
       const tt = path.join(root, "staging", "trictrac");
       fs.mkdirSync(tt, { recursive: true });
-      fs.writeFileSync(path.join(tt, "starter-maitre-hokage.jpeg"), "tt-hokage");
+      await sharp({
+        create: { width: 764, height: 1000, channels: 3, background: "#def" },
+      })
+        .jpeg()
+        .toFile(path.join(tt, "starter-maitre-hokage.jpeg"));
 
       await ingestNarutoSealedProducts({ packRoot: root });
       const index = JSON.parse(
@@ -681,6 +705,7 @@ import productsContentsLedger from "./curated/products-contents.json";
 
     it("prefers the eBay S2 booster webp over the carddass.fr GIF", async () => {
       const root = tmpPack();
+      const { default: sharp } = await import("sharp");
       const packshots = path.join(
         root,
         "staging",
@@ -689,10 +714,18 @@ import productsContentsLedger from "./curated/products-contents.json";
         "packshots",
       );
       fs.mkdirSync(packshots, { recursive: true });
-      fs.writeFileSync(path.join(packshots, "booster_s2.gif"), "gif");
+      await sharp({
+        create: { width: 200, height: 246, channels: 3, background: "#111" },
+      })
+        .gif()
+        .toFile(path.join(packshots, "booster_s2.gif"));
       const ebay = path.join(root, "staging", "ebay");
       fs.mkdirSync(ebay, { recursive: true });
-      fs.writeFileSync(path.join(ebay, "booster-s2.webp"), "webp");
+      await sharp({
+        create: { width: 600, height: 800, channels: 3, background: "#222" },
+      })
+        .webp()
+        .toFile(path.join(ebay, "booster-s2.webp"));
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(1));
@@ -748,8 +781,20 @@ import productsContentsLedger from "./curated/products-contents.json";
       fs.mkdirSync(coverDir, { recursive: true });
       fs.writeFileSync(path.join(coverDir, "set-cover.webp"), "cover");
 
+    // Face catalogue = wrappers/display-s28.png (CURATED_ALWAYS) ; Coleka reste dump.
       const result = await ingestNarutoSealedProducts({ enPackRoot: root });
-      expect(result.written).toBe(writtenFromStaging(1));
+      expect(result.written).toBe(writtenFromStaging(0));
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "display-s28",
+            "en",
+            "art.reconstructed.png",
+          ),
+        ),
+      ).toBe(true);
       expect(
         fs.existsSync(
           path.join(root, "products", "display-s28", "en", "art.coleka.webp"),
@@ -780,19 +825,22 @@ import productsContentsLedger from "./curated/products-contents.json";
             prints: unknown[];
             declaredCardCount: number | null;
             image: string;
+            path: string;
             setLogo: string | null;
             lang: string;
           }
         >;
       };
-      expect(packshotKeys(index)).toEqual(["naruto/carddass::display-s28"]);
+      // path curated/ → exclu de packshotKeys (filtre staging-only).
+      expect(packshotKeys(index)).toEqual([]);
       const display = index.products["naruto/carddass::display-s28"]!;
       expect(display.kind).toBe("display");
       expect(display.contentsKnown).toBe(false);
       expect(display.prints).toEqual([]);
       expect(display.declaredCardCount).toBeNull();
+      expect(display.path).toBe("curated/products/wrappers/display-s28.png");
       expect(display.image).toBe(
-        "/assets/naruto/carddass/products/display-s28/en/art.coleka.webp",
+        "/assets/naruto/carddass/products/display-s28/en/art.reconstructed.png",
       );
       /*
         La couverture du display n'est pas un logo — mais le wordmark du jeu en
@@ -886,7 +934,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(index.products["naruto/carddass::booster-s6"]).toBeUndefined();
     });
 
-    it("publishes Tin Box verso from Leboncoin and prefers Tric Trac white-bg face", async () => {
+    it("publishes Tin Box verso from Leboncoin and prefers curated clean face", async () => {
       const root = tmpPack();
       const tt = path.join(root, "staging", "trictrac");
       fs.mkdirSync(tt, { recursive: true });
@@ -899,7 +947,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         "packshots",
       );
       fs.mkdirSync(site, { recursive: true });
-      // Archival only — empty stagingFile means Tin-boxN is not collected.
+      // Archival only — Tin-boxN is not the catalogue face.
       fs.writeFileSync(path.join(site, "Tin-boxN.jpg"), "site-tin");
       const lbc = path.join(root, "staging", "leboncoin");
       fs.mkdirSync(lbc, { recursive: true });
@@ -907,7 +955,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       fs.writeFileSync(path.join(lbc, "tin-box-02.jpg"), "lbc-back");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(1, ["tin-box"]));
+      // tin-box + hobby = wrappers curés (CURATED_ALWAYS) ; trictrac/LBC = dumps secondaires.
+      expect(result.written).toBe(writtenFromStaging(0));
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
       ) as {
@@ -918,6 +967,7 @@ import productsContentsLedger from "./curated/products-contents.json";
             declaredCardCount: number | null;
             path: string;
             imageBack: string | null;
+            image: string | null;
           }
         >;
       };
@@ -925,14 +975,15 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(tin.name).toBe("Coffret Métal");
       // Curated products-contents : 40 deck + 8 + 8 + 1 promo.
       expect(tin.declaredCardCount).toBe(57);
-      expect(tin.path).toBe("staging/trictrac/tin-box.jpeg");
+      expect(tin.path).toBe("curated/products/wrappers/tin-box.png");
+      expect(tin.image).toContain("tin-box/fr/art.reconstructed.png");
       expect(tin.imageBack).toContain("tin-box/fr/back.leboncoin.jpg");
       expect(index.products["naruto/carddass::tin-box-hobby"]!.path).toBe(
         "curated/products/wrappers/tin-box-hobby.png",
       );
     });
 
-    it("publishes Tin Box Hobby with curated blue sleeve without merging Invocation", async () => {
+    it("publishes Tin Box Hobby with curated clean face without merging Invocation", async () => {
       const root = tmpPack();
       const site = path.join(
         root,
@@ -949,7 +1000,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       fs.writeFileSync(path.join(tt, "tin-box.jpeg"), "tt-tin");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(1, ["tin-box"]));
+      expect(result.written).toBe(writtenFromStaging(0));
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
       ) as {
@@ -962,7 +1013,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         >;
       };
       expect(index.products["naruto/carddass::tin-box"]!.path).toBe(
-        "staging/trictrac/tin-box.jpeg",
+        "curated/products/wrappers/tin-box.png",
       );
       const hobby = index.products["naruto/carddass::tin-box-hobby"]!;
       expect(hobby.name).toBe("Tin Box Hobby");
@@ -1309,17 +1360,23 @@ import productsContentsLedger from "./curated/products-contents.json";
       fs.writeFileSync(path.join(coverDir, "set-cover.webp"), "cover");
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
-      expect(result.written).toBe(writtenFromStaging(2));
+      // booster-s1 = staging ; display-s28 = wrappers CURATED_ALWAYS.
+      expect(result.written).toBe(writtenFromStaging(1));
       const index = JSON.parse(
         fs.readFileSync(path.join(root, "products-index.json"), "utf8"),
-      ) as { pack: string; products: Record<string, { lang: string }> };
+      ) as {
+        pack: string;
+        products: Record<string, { lang: string; image?: string }>;
+      };
       expect(index.pack).toBe("naruto/carddass");
       expect(packshotKeys(index).sort()).toEqual([
         "naruto/carddass::booster-s1",
-        "naruto/carddass::display-s28",
       ]);
       expect(index.products["naruto/carddass::booster-s1"]?.lang).toBe("FR");
       expect(index.products["naruto/carddass::display-s28"]?.lang).toBe("EN");
+      expect(index.products["naruto/carddass::display-s28"]?.image).toContain(
+        "art.reconstructed.png",
+      );
       expect(fs.existsSync(path.join(root, ".en-ccg"))).toBe(false);
     });
   });
@@ -1844,12 +1901,14 @@ import productsContentsLedger from "./curated/products-contents.json";
         packsContained: 2,
         declaredCardCount: 17,
         behavior: "mixed_bundle",
+        randomPoolScope: "none",
         contentsKnown: true,
         guaranteedPrintKeys: ["naruto:s24-j0895"],
         guaranteedProducts: [{ slug: "booster-s24", qty: 2 }],
       });
       expect(ledger.skus["duopack-s24"]?.notes).toContain("3391891963138");
       expect(ledger.skus["duopack-s24-organisation-pacifique"]).toMatchObject({
+        randomPoolScope: "none",
         guaranteedPrintKeys: ["naruto:s24-m0873"],
         guaranteedProducts: [{ slug: "booster-s24", qty: 2 }],
       });
@@ -1857,6 +1916,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         cardsPerPack: 8,
         packsContained: 2,
         declaredCardCount: 17,
+        randomPoolScope: "none",
         guaranteedPrintKeys: ["naruto:s24-n1379"],
         guaranteedProducts: [{ slug: "booster-s24", qty: 2 }],
       });
@@ -1865,6 +1925,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         packsContained: 2,
         declaredCardCount: 17,
         behavior: "mixed_bundle",
+        randomPoolScope: "none",
         contentsKnown: true,
         guaranteedPrintKeys: ["naruto:promo-pr0096"],
         guaranteedProducts: [{ slug: "booster-s28", qty: 2 }],
@@ -1918,6 +1979,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         guaranteeSets: ["s4", "promo"],
         declaredCardCount: 57,
         behavior: "mixed_bundle",
+        randomPoolScope: "none",
         contentsKnown: true,
       });
       expect(ledger.skus["tin-box-hobby"]).toMatchObject({
@@ -1927,11 +1989,13 @@ import productsContentsLedger from "./curated/products-contents.json";
         guaranteeSets: ["promo"],
         declaredCardCount: 42,
         behavior: "mixed_bundle",
+        randomPoolScope: "none",
         contentsKnown: true,
       });
       expect(ledger.skus["pack-decouverte"]).toMatchObject({
         declaredCardCount: 96,
         behavior: "mixed_bundle",
+        randomPoolScope: "none",
         contentsKnown: true,
         cardsPerPack: 8,
         packsContained: 2,

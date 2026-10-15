@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import path from "node:path";
 import amazonFr from "../curated/sources/amazon-fr.json";
+import amazonJa from "../curated/sources/amazon-ja.json";
 import carddasCom from "../curated/sources/carddas-com-naruto.json";
 import checklist from "../curated/sources/carddass-fr-checklist.json";
 import dig_collectionNarutoYoutube from "../curated/sources/collection-naruto-youtube-2026-08-29.json";
@@ -617,21 +618,43 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
 // —— amazonFr ——
 {
   describe("Amazon FR starter S1 B0019R7M2W", () => {
-    it("records the SKU without ingesting a missing packshot", () => {
-      expect(amazonFr.ingest).toBe("none");
-      expect(amazonFr.asin).toBe("B0019R7M2W");
-      expect(amazonFr.printedRef).toBe("05110");
-      expect(amazonFr.slug).toBe("starter-pays-du-vent");
-      expect(amazonFr.doNotDisplace).toBe(
-        "staging/trictrac/starter-pays-du-vent.jpeg",
-      );
+    it("ingests the live Pays du Vent packshot", () => {
+      const row = amazonFr.products.find(
+        (p) => p.slug === "starter-pays-du-vent",
+      )!;
+      expect(row.asin).toBe("B0019R7M2W");
+      expect(row.printedRef).toBe("05110");
+      expect(row.ingest).toBe(true);
+      expect(row.url).toContain("51qoMTBbSDL");
+      expect(row.staging).toBe("staging/amazon-fr/starter-pays-du-vent.jpg");
       expect(
-        vialudibunda.products.find((row) => row.slug === amazonFr.slug)
+        vialudibunda.products.find((p) => p.slug === "starter-pays-du-vent")
           ?.printedRef,
       ).toBe("05110");
       expect(
-        trictrac.products.some((row) => row.slug === "starter-pays-du-vent"),
+        trictrac.products.some((p) => p.slug === "starter-pays-du-vent"),
       ).toBe(true);
+    });
+  });
+}
+
+// —— amazonJa ——
+{
+  describe("Amazon JA starter 豪雷の書 (巻ノ十六)", () => {
+    it("ingests the live media packshot (bare /images/I/, not ._AC_)", () => {
+      const row = amazonJa.products.find(
+        (p) => p.slug === "starter-gorai-vol16-jp",
+      )!;
+      expect(row.jan).toBe("4543112312686");
+      expect(row.lang).toBe("JA");
+      expect(row.ingest).toBe(true);
+      expect(row.imageId).toBe("61ZBR2RJEBL");
+      expect(row.url).toBe(
+        "https://m.media-amazon.com/images/I/61ZBR2RJEBL.jpg",
+      );
+      expect(row.staging).toBe(
+        "staging/amazon-ja/starter-gorai-vol16-jp.jpg",
+      );
     });
   });
 }

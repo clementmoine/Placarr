@@ -279,4 +279,36 @@ describe("lorcanatcg — les chiffres du jeu", () => {
       lookupLorcanaTcgTitle("lorcana:1-4-challenge1", "en", dbPath)?.fullName,
     ).toBe("Rapunzel - Gifted with Healing");
   });
+
+  it("refuse de remplacer un catalogue peuplé par une écriture vide", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "lorcanatcg-"));
+    dirs.push(dir);
+    const dbPath = path.join(dir, "catalog.sqlite");
+
+    writeLorcanaTcgIndex({
+      dbPath,
+      languages: ["fr"],
+      prints: [{ printKey: "lorcana:1-1", setCode: "1", number: "1" }],
+      titles: [
+        {
+          printKey: "lorcana:1-1",
+          lang: "fr",
+          fullName: "Ariel",
+        },
+      ],
+      assets: [],
+    });
+
+    expect(() =>
+      writeLorcanaTcgIndex({
+        dbPath,
+        languages: ["fr"],
+        prints: [],
+        titles: [],
+        assets: [],
+      }),
+    ).toThrow(/empty write/i);
+
+    expect(lookupLorcanaTcgPrint("lorcana:1-1", dbPath)?.setCode).toBe("1");
+  });
 });

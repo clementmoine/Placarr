@@ -11,6 +11,7 @@ import { existsSync } from "node:fs";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { labelFromPrintSetOptions } from "@/providers/shared/cardCatalogue/labelPrintSet";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
@@ -126,6 +127,11 @@ export function createDbsCatalogModule(
     }),
     listPrintLanguages: () => distinctPrintLanguages(dbPath()),
     listPrintSets,
+    labelPrintSet: ({ setCode }) => {
+      const listed = listPrintSets();
+      if (listed instanceof Promise) return setCode.trim() || null;
+      return labelFromPrintSetOptions(listed, setCode);
+    },
     printGames: [printGame],
     ...(loadBoosterComposition ? { loadBoosterComposition } : {}),
     listSetPrints: ({ setId, language }) =>

@@ -54,6 +54,11 @@ import {
   sunnystoreIngestPackshots,
   toywizIngestPackshots,
   trictracIngestPackshots,
+  amazonFrIngestPackshots,
+  amazonJaIngestPackshots,
+  colekaFrStartersIngestPackshots,
+  potomacIngestPackshots,
+  ultrajeuxSealedIngestPackshots,
   vialudibundaIngestPackshots,
   vintedIngestBacks,
   vintedIngestPackshots,
@@ -551,16 +556,19 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
       Coffret Métal FR canal grande distribution (Réf. 05129 / EAN
       3296580051298) — verso Leboncoin : deck Invocation s4 + boosters s1/s2
       + 1 promo holo. Distinct de tin-box-hobby (canal magasins spécialisés).
-      Face catalogue = Tric Trac fond blanc (staging/trictrac/tin-box.jpeg).
-      Tin-boxN.jpg reste sur disque en archival ; ne pas le remonter en
-      stagingFile sinon il bat Tric Trac au scorer (surface un peu plus grande).
+      Face catalogue = packshot clean détouré
+      (curated/products/wrappers/tin-box.png). Tric Trac / Tin-boxN.jpg /
+      Leboncoin face restent archival (shops dump) ; le verso Leboncoin
+      reste le dos catalogue.
     */
     slug: "tin-box",
     kind: "tin",
     category: "collector-boxes",
     setCode: null,
     name: "Coffret Métal",
-    stagingFile: "",
+    stagingFile: "tin-box.png",
+    stagingKind: "wrappers",
+    lang: "FR",
     // Total 57 (= 40+8+8+1) dans products-contents — voir duopack-s28.
     declaredCardCount: null,
   },
@@ -568,8 +576,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     /*
       Tin Box Hobby — canal magasins spécialisés. carddass.fr news.htm
       (15 nov) : 5 boosters S1–S5 + NI-PR16 + NI-PR11. Face catalogue =
-      sleeve bleu reconstruit (curated/products/wrappers/tin-box-hobby.png) —
-      même art « COFFRET MÉTAL » / Naruto scroll que le tin GD, fond bleu.
+      packshot clean détouré (curated/products/wrappers/tin-box-hobby.png).
       Tin-box-hobby.jpg (contenu-tin-box : étui + tin + boosters) reste
       archival sous packshots/ ; ne pas le remonter en stagingFile sinon
       le plan paysage 400×232 bat le sleeve portrait au scorer.
@@ -1086,30 +1093,38 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
     attested: true,
   },
   {
+    /*
+      Display EN Ultimate Ninja Storm 3 (Bandai USA Item #23648, 24×10).
+      Face catalogue = packshot clean détouré (wrappers/display-s28.png).
+      Coleka set-cover / Bandai Drive restent dumps secondaires.
+    */
     slug: "display-s28",
     kind: "display",
     category: "displays",
     setCode: "s28",
     name: "Display Série 28",
-    stagingFile: "set-cover.webp",
-    stagingKind: "coleka-s28",
+    stagingFile: "display-s28.png",
+    stagingKind: "wrappers",
+    packshots: [
+      { stagingFile: "set-cover.webp", stagingKind: "coleka-s28" },
+    ],
     lang: "EN",
     declaredCardCount: null,
   },
   {
     /*
-      Display FR Storm 3 — eBay itm/285342890666 (vendu). Face FR + bas
-      BANDAI 2013 MADE IN ITALY / Namco Bandai Games Europe Cergy ; flanc
-      EAN 3391891969949 + « 120 cartes ». ≠ display-s28 EN (24×10 US).
-      Nombre de sachets : titre vendeur « 24 BOOSTER » — pas imprimé sur
-      les photos staged ; packsContained pas garanti ici.
+      Display FR Storm 3 — « COLLECTIONNE LES 120 CARTES… », Item #25648,
+      EAN 3391891969949. ≠ display-s28 EN (24×10 US / #23648).
+      Face catalogue = packshot clean détouré (wrappers/display-s28-fr.png).
+      eBay itm/285342890666 reste archival.
     */
     slug: "display-s28-fr",
     kind: "display",
     category: "displays",
     setCode: "s28",
     name: "Display Série 28",
-    stagingFile: "",
+    stagingFile: "display-s28-fr.png",
+    stagingKind: "wrappers",
     lang: "FR",
     declaredCardCount: null,
     attested: true,
@@ -1288,6 +1303,11 @@ function shopPackshotRows(): readonly { slug: string; staging: string }[] {
     ...psYoyakuIngestPackshots(),
     ...trictracIngestPackshots(),
     ...vialudibundaIngestPackshots(),
+    ...amazonFrIngestPackshots(),
+    ...amazonJaIngestPackshots(),
+    ...ultrajeuxSealedIngestPackshots(),
+    ...colekaFrStartersIngestPackshots(),
+    ...potomacIngestPackshots(),
     ...ebayIngestPackshots(),
     ...rakutenIngestPackshots(),
     ...mangaNewsIngestPackshots(),

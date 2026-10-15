@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import {
+  coalesceSealedProductEntry,
   loadSealedProductsIndex,
   persistSealedProductsIndex,
+  unionSealedProductsPreferPrimary,
 } from "./persistProductsIndex";
 import type { SealedProductEntry } from "./indexFormat";
 
@@ -196,5 +198,82 @@ describe("persistSealedProductsIndex", () => {
         "Pack Découverte (stale json name)",
       );
     });
+  });
+
+  it("coalesces null identity fields from JSON onto curated sqlite stubs", () => {
+    const stub = entry({
+      slug: "starter-maitre-hokage",
+      name: null,
+      lang: null,
+      image: null,
+      contentsKnown: true,
+      guaranteedPrints: [
+        {
+          name: "naruto:s1-ni0002",
+          slug: "naruto:s1-ni0002",
+          ref: null,
+          printKey: "naruto:s1-ni0002",
+        },
+      ],
+    });
+    const boutique = entry({
+      slug: "starter-maitre-hokage",
+      name: "Starter Maître Hokage",
+      lang: "FR",
+      image: "/assets/naruto/carddass/products/starter-maitre-hokage/fr/art.jpg",
+      contentsKnown: false,
+      guaranteedPrints: [],
+    });
+    expect(coalesceSealedProductEntry(stub, boutique)).toMatchObject({
+      name: "Starter Maître Hokage",
+      lang: "FR",
+      image: "/assets/naruto/carddass/products/starter-maitre-hokage/fr/art.jpg",
+      contentsKnown: true,
+      guaranteedPrints: stub.guaranteedPrints,
+    });
+
+    const root = mkdtempSync(path.join(tmpdir(), "placarr-sealed-stub-"));
+    withDataRoot(root, () => {
+      const packDir = path.join(root, "naruto", "carddass");
+      mkdirSync(packDir, { recursive: true });
+
+      persistSealedProductsIndex("naruto/carddass", {
+        "naruto/carddass::starter-maitre-hokage": stub,
+      });
+
+      writeFileSync(
+        path.join(packDir, "products-index.json"),
+        `${JSON.stringify({
+          version: 1,
+          pack: "naruto/carddass",
+          generatedAt: "2026-10-15T00:00:00.000Z",
+          products: {
+            "naruto/carddass::starter-maitre-hokage": boutique,
+          },
+        })}\n`,
+      );
+
+      const loaded = loadSealedProductsIndex("naruto/carddass");
+      const row = loaded.products["naruto/carddass::starter-maitre-hokage"];
+      expect(row?.name).toBe("Starter Maître Hokage");
+      expect(row?.lang).toBe("FR");
+      expect(row?.image).toContain("starter-maitre-hokage");
+      expect(row?.contentsKnown).toBe(true);
+      expect(row?.guaranteedPrints).toHaveLength(1);
+    });
+  });
+
+  it("unionSealedProductsPreferPrimary keeps populated primary fields", () => {
+    const primary = {
+      "pack::a": entry({ slug: "a", name: "Sqlite", lang: "fr" }),
+    };
+    const fill = {
+      "pack::a": entry({ slug: "a", name: "Json stale", lang: "en" }),
+      "pack::b": entry({ slug: "b", name: "Json only", lang: "fr" }),
+    };
+    const union = unionSealedProductsPreferPrimary(primary, fill);
+    expect(union["pack::a"]?.name).toBe("Sqlite");
+    expect(union["pack::a"]?.lang).toBe("fr");
+    expect(union["pack::b"]?.name).toBe("Json only");
   });
 });

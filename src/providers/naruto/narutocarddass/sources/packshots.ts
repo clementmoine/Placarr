@@ -3,7 +3,10 @@
  * One file for sealedProducts / install / tests; curated JSON paths unchanged.
  */
 
+import amazonFrLedgerJson from "../curated/sources/amazon-fr.json";
+import amazonJaLedgerJson from "../curated/sources/amazon-ja.json";
 import atomicempireLedgerJson from "../curated/sources/atomicempire.json";
+import potomacLedgerJson from "../curated/sources/potomac.json";
 import cardgameclubLedgerJson from "../curated/sources/cardgameclub.json";
 import ebayLedgerJson from "../curated/sources/ebay.json";
 import emporiodimiloLedgerJson from "../curated/sources/emporiodimilo.json";
@@ -24,7 +27,9 @@ import trictracLedgerJson from "../curated/sources/trictrac.json";
 import vintedLedgerJson from "../curated/sources/vinted.json";
 import bandaiFrUsDriveLedgerJson from "../curated/sources/bandai-fr-us-drive.json";
 import colekaEnCcgCoversLedgerJson from "../curated/sources/coleka-en-ccg-covers.json";
+import colekaFrStartersLedgerJson from "../curated/sources/coleka-fr-starters.json";
 import scifiUniverseLedgerJson from "../curated/sources/scifi-universe.json";
+import ultrajeuxSealedLedgerJson from "../curated/sources/ultrajeux-sealed.json";
 import vialudibundaLedgerJson from "../curated/sources/vialudibunda.json";
 
 // ─── shared ledger factory ─────────────────────────────────────────────────
@@ -480,6 +485,78 @@ export function vialudibundaLedger() {
 
 export function vialudibundaIngestPackshots(): VialudibundaProduct[] {
   return vialudibundaLedgerJson.products.filter((row) => row.ingest);
+}
+
+// ─── Amazon FR sealed packshots ──────────────────────────────────────────
+
+export type AmazonFrPackshot = (typeof amazonFrLedgerJson.products)[number];
+
+const amazonFrApi = defineLedgerPackshots(amazonFrLedgerJson);
+
+export function amazonFrPackshotLedger() {
+  return amazonFrApi.ledger();
+}
+
+export function amazonFrIngestPackshots(): AmazonFrPackshot[] {
+  return amazonFrApi.ingest() as AmazonFrPackshot[];
+}
+
+// ─── Amazon JA sealed packshots ──────────────────────────────────────────
+
+export type AmazonJaPackshot = (typeof amazonJaLedgerJson.products)[number];
+
+const amazonJaApi = defineLedgerPackshots(amazonJaLedgerJson);
+
+export function amazonJaPackshotLedger() {
+  return amazonJaApi.ledger();
+}
+
+export function amazonJaIngestPackshots(): AmazonJaPackshot[] {
+  return amazonJaApi.ingest() as AmazonJaPackshot[];
+}
+
+// ─── UltraJeux sealed starters ───────────────────────────────────────────
+
+export type UltrajeuxSealedPackshot =
+  (typeof ultrajeuxSealedLedgerJson.products)[number];
+
+const ultrajeuxSealedApi = defineLedgerPackshots(ultrajeuxSealedLedgerJson);
+
+export function ultrajeuxSealedPackshotLedger() {
+  return ultrajeuxSealedApi.ledger();
+}
+
+export function ultrajeuxSealedIngestPackshots(): UltrajeuxSealedPackshot[] {
+  return ultrajeuxSealedApi.ingest() as UltrajeuxSealedPackshot[];
+}
+
+// ─── Coleka FR starter rubrique packshots ────────────────────────────────
+
+export type ColekaFrStarterPackshot =
+  (typeof colekaFrStartersLedgerJson.products)[number];
+
+const colekaFrStartersApi = defineLedgerPackshots(colekaFrStartersLedgerJson);
+
+export function colekaFrStartersPackshotLedger() {
+  return colekaFrStartersApi.ledger();
+}
+
+export function colekaFrStartersIngestPackshots(): ColekaFrStarterPackshot[] {
+  return colekaFrStartersApi.ingest() as ColekaFrStarterPackshot[];
+}
+
+// ─── Potomac Dist EN CCG displays ────────────────────────────────────────
+
+export type PotomacPackshot = (typeof potomacLedgerJson.products)[number];
+
+const potomacApi = defineLedgerPackshots(potomacLedgerJson);
+
+export function potomacPackshotLedger() {
+  return potomacApi.ledger();
+}
+
+export function potomacIngestPackshots(): PotomacPackshot[] {
+  return potomacApi.ingest() as PotomacPackshot[];
 }
 
 // ─── SciFi-Universe packshots ────────────────────────────────────────────

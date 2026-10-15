@@ -249,12 +249,12 @@ import { germanSealedReleases, germanSetCode, classifyJapaneseRelease, declaredK
       ]);
     });
 
-    it("laisse ラムネ / Vジャンプ / 絵巻 弐 sans visuel plutôt que d'en inventer un", () => {
-      for (const slug of [
-        "jp-release-15",
-        "jp-release-17",
-        "jp-release-20",
-      ] as const) {
+    it("prend le packshot TV Tokyo hobby pour ラムネ, laisse Vジャンプ / 絵巻 弐 sans", () => {
+      const ramune = rows.find((r) => r.slug === "jp-release-17");
+      expect(ramune?.stagingKind).toBe("tv-tokyo");
+      expect(ramune?.stagingFile).toBe("jp-release-17.jpg");
+      expect(ramune?.packshots?.map((p) => p.kind)).toEqual(["tv-tokyo"]);
+      for (const slug of ["jp-release-15", "jp-release-20"] as const) {
         const row = rows.find((r) => r.slug === slug);
         expect(row?.stagingFile).toBeUndefined();
         expect(row?.attested).toBe(true);

@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildCatalogueSealedRows,
+  enrichSealedPrintLinks,
   getCatalogueProductDetail,
   getCatalogueProductDetailAsync,
   listCatalogueProducts,
@@ -18,8 +19,11 @@ import {
   resolveSealedSetLotteryPool,
 } from "./catalogueProducts";
 import type { ProductsIndexV1 } from "@/providers/shared/sealedProducts/indexFormat";
+import { sealedGuaranteedPrintsSectionTitle } from "@/providers/shared/sealedProducts/guaranteedPrintsTitle";
 
-vi.mock("@/providers/shared/packOwner", () => {
+vi.mock("@/providers/shared/packOwner", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/providers/shared/packOwner")>();
   const listSetPrints = ({
     setId,
     language,
@@ -104,15 +108,49 @@ vi.mock("@/providers/shared/packOwner", () => {
     if (setCode === "ATV") return "13";
     return null;
   };
-  const owner = { listSetPrints, resolveCatalogueSetId };
+  const lookupPrint = async ({
+    printKey,
+  }: {
+    printKey: string;
+    language?: string | null;
+  }) => {
+    if (printKey === "naruto:promo-pr0011") {
+      return {
+        printKey,
+        title: "Orochimaru",
+        reference: "PR-011",
+        imageUrl: "/assets/naruto/carddass/cards/promo/pr0011/fr/art.webp",
+      };
+    }
+    if (printKey === "naruto:promo-pr0016") {
+      return {
+        printKey,
+        title: "Naruto Uzumaki",
+        reference: "PR-016",
+        imageUrl: "/assets/naruto/carddass/cards/promo/pr0016/fr/art.webp",
+      };
+    }
+    return null;
+  };
+  const owner = { listSetPrints, resolveCatalogueSetId, lookupPrint };
   return {
+    ...actual,
     providerModulesForPack: vi.fn(() => []),
     providerModuleForPack: vi.fn(() => owner),
-    providerModuleProviding: vi.fn((_packId: string, hook: string) =>
-      hook === "listSetPrints" || hook === "resolveCatalogueSetId"
-        ? owner
-        : undefined,
-    ),
+    providerModuleProviding: vi.fn((packId: string, hook: string) => {
+      if (
+        hook === "listSetPrints" ||
+        hook === "resolveCatalogueSetId" ||
+        hook === "lookupPrint"
+      ) {
+        return owner;
+      }
+      // labelPrintSet etc. — real registry (Shippuden set names, …).
+      return actual.providerModuleProviding(
+        packId,
+        hook as Parameters<typeof actual.providerModuleProviding>[1],
+      );
+    }),
   };
 });
 
@@ -754,5 +792,143 @@ describe("catalogue sealed rows", () => {
       existing: [],
     });
     expect(pool.map((row) => row.printKey)).toEqual(["bleach:s-001"]);
+  });
+
+  it("labels guaranteed prints as deck cards only for deck / deck_bundle", () => {
+    expect(
+      sealedGuaranteedPrintsSectionTitle({
+        fr: true,
+        kind: "deck_bundle",
+        hasGuaranteedProducts: true,
+      }),
+    ).toBe("Cartes des decks (décomposées)");
+    expect(
+      sealedGuaranteedPrintsSectionTitle({
+        fr: true,
+        kind: "tin",
+        hasGuaranteedProducts: true,
+      }),
+    ).toBe("Garanties (toujours dedans)");
+    expect(
+      sealedGuaranteedPrintsSectionTitle({
+        fr: true,
+        kind: "multipack",
+        hasGuaranteedProducts: true,
+      }),
+    ).toBe("Garanties (toujours dedans)");
+    expect(
+      sealedGuaranteedPrintsSectionTitle({
+        fr: false,
+        kind: "tin",
+        hasGuaranteedProducts: false,
+      }),
+    ).toBe("Guaranteed (always in)");
+  });
+
+  it("enriches curated printKeys with catalogue titles and art", async () => {
+    const enriched = await enrichSealedPrintLinks({
+      packId: "naruto/carddass",
+      lang: "fr",
+      prints: [
+        {
+          name: "naruto:promo-pr0011",
+          slug: "naruto:promo-pr0011",
+          ref: null,
+          printKey: "naruto:promo-pr0011",
+        },
+        {
+          name: "naruto:promo-pr0016",
+          slug: "naruto:promo-pr0016",
+          ref: null,
+          printKey: "naruto:promo-pr0016",
+        },
+      ],
+    });
+    expect(enriched).toEqual([
+      expect.objectContaining({
+        printKey: "naruto:promo-pr0011",
+        name: "Orochimaru",
+        ref: "PR-011",
+        image: "/assets/naruto/carddass/cards/promo/pr0011/fr/art.webp",
+      }),
+      expect.objectContaining({
+        printKey: "naruto:promo-pr0016",
+        name: "Naruto Uzumaki",
+        ref: "PR-016",
+        image: "/assets/naruto/carddass/cards/promo/pr0016/fr/art.webp",
+      }),
+    ]);
+  });
+
+  it("enriches tin-box-hobby guaranteedPrints in async product detail", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "cat-sealed-hobby-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const packDir = path.join(root, "naruto", "carddass");
+    mkdirSync(packDir, { recursive: true });
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "naruto/carddass",
+      generatedAt: "2026-10-14T00:00:00.000Z",
+      products: {
+        "naruto/carddass::booster-s1": baseEntry({
+          slug: "booster-s1",
+          kind: "booster",
+          behavior: "random_pack",
+          name: "Booster Série 1",
+          setCode: "s1",
+        }),
+        "naruto/carddass::tin-box-hobby": baseEntry({
+          slug: "tin-box-hobby",
+          kind: "tin",
+          behavior: "mixed_bundle",
+          name: "Tin Box Hobby",
+          lang: "fr",
+          contentsKnown: true,
+          cardsPerPack: 8,
+          packsContained: 5,
+          declaredCardCount: 42,
+          randomPoolScope: "none",
+          packsBySet: { s1: 1, s2: 1, s3: 1, s4: 1, s5: 1 },
+          guaranteedProducts: [
+            { slug: "booster-s1", qty: 1 },
+            { slug: "booster-s2", qty: 1 },
+            { slug: "booster-s3", qty: 1 },
+            { slug: "booster-s4", qty: 1 },
+            { slug: "booster-s5", qty: 1 },
+          ],
+          guaranteedPrints: [
+            {
+              name: "naruto:promo-pr0011",
+              slug: "naruto:promo-pr0011",
+              ref: null,
+              printKey: "naruto:promo-pr0011",
+            },
+            {
+              name: "naruto:promo-pr0016",
+              slug: "naruto:promo-pr0016",
+              ref: null,
+              printKey: "naruto:promo-pr0016",
+            },
+          ],
+        }),
+      },
+    };
+    writeFileSync(
+      path.join(packDir, "products-index.json"),
+      `${JSON.stringify(index, null, 2)}\n`,
+    );
+    resetCatalogueProductsCache();
+    const detail = await getCatalogueProductDetailAsync(
+      "naruto/carddass",
+      "naruto/carddass::tin-box-hobby",
+    );
+    expect(detail?.randomPoolScope).toBe("none");
+    expect(detail?.randomPoolPrints).toEqual([]);
+    expect(detail?.guaranteedPrints.map((row) => row.name)).toEqual([
+      "Orochimaru",
+      "Naruto Uzumaki",
+    ]);
+    expect(detail?.guaranteedPrints[0]?.image).toContain("pr0011");
   });
 });

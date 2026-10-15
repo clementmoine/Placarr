@@ -11,6 +11,7 @@ import type {
 } from "@/types/providerModule";
 import { defineProvider } from "@/providers/shared/defineProvider";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { labelFromPrintSetOptions } from "@/providers/shared/cardCatalogue/labelPrintSet";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import {
   cardFromLocalRow,
@@ -166,6 +167,11 @@ export const lorcanatcgModule = defineProvider({
     base que `lorcanajson` (qui garde le repli API distant).
   */
   listPrintLanguages: () => distinctPrintLanguages(lorcanaTcgDbPath()),
+  labelPrintSet: ({ setCode, language }) =>
+    labelFromPrintSetOptions(
+      listLorcanaTcgSets(language ?? undefined),
+      setCode,
+    ),
   listPrintSets: async (_type, language) =>
     listLorcanaTcgSets(language ?? undefined),
   searchPrints: async ({

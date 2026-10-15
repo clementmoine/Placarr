@@ -6,6 +6,8 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  renameSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -71,6 +73,8 @@ function assetArt(row: DbsFwAssetRow): string | null {
 }
 
 let activeDb: DatabaseSync | null = null;
+let activePath: string | null = null;
+let activeMtimeMs: number | null = null;
 
 export function dbsFwDbPath(): string {
   const override = process.env.PLACARR_DBSFW_DB?.trim();
@@ -85,6 +89,8 @@ export function resetDbsFwDbCache(): void {
     /* ignore */
   }
   activeDb = null;
+  activePath = null;
+  activeMtimeMs = null;
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -135,16 +141,41 @@ export function writeDbsFwIndex(input: {
 }): { dbPath: string; printCount: number } {
   const dbPath = input.dbPath ?? dbsFwDbPath();
   resetDbsFwDbCache();
-  if (existsSync(dbPath)) {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+
+  if (input.prints.length === 0 && existsSync(dbPath)) {
+    let priorCount = 0;
     try {
-      unlinkSync(dbPath);
+      const prior = new DatabaseSync(dbPath, { readOnly: true });
+      try {
+        priorCount = (
+          prior.prepare(`SELECT COUNT(*) AS n FROM prints`).get() as {
+            n: number;
+          }
+        ).n;
+      } finally {
+        prior.close();
+      }
+    } catch {
+      priorCount = 0;
+    }
+    if (priorCount > 0) {
+      throw new Error(
+        `Refusing to replace Fusion World catalogue (${priorCount} prints) with an empty write — ${dbPath}`,
+      );
+    }
+  }
+
+  const tmpPath = `${dbPath}.tmp-${process.pid}-${Date.now()}`;
+  if (existsSync(tmpPath)) {
+    try {
+      unlinkSync(tmpPath);
     } catch {
       /* ignore */
     }
   }
-  mkdirSync(path.dirname(dbPath), { recursive: true });
 
-  const db = new DatabaseSync(dbPath);
+  const db = new DatabaseSync(tmpPath);
   createSchema(db);
 
   const insertPrint = db.prepare(`
@@ -206,21 +237,60 @@ export function writeDbsFwIndex(input: {
     }
     db.exec("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    try {
+      db.exec("ROLLBACK");
+    } catch {
+      /* ignore */
+    }
     db.close();
+    try {
+      unlinkSync(tmpPath);
+    } catch {
+      /* ignore */
+    }
     throw error;
   }
 
   db.close();
+  try {
+    renameSync(tmpPath, dbPath);
+  } catch (error) {
+    try {
+      unlinkSync(tmpPath);
+    } catch {
+      /* ignore */
+    }
+    throw error;
+  }
   return { dbPath, printCount: input.prints.length };
 }
 
 export function ensureDbsFwIndex(): DatabaseSync | null {
   const dbPath = dbsFwDbPath();
-  if (!existsSync(dbPath)) return null;
-  if (activeDb) return activeDb;
+  if (!existsSync(dbPath)) {
+    resetDbsFwDbCache();
+    return null;
+  }
+  let mtimeMs = 0;
+  try {
+    mtimeMs = statSync(dbPath).mtimeMs;
+  } catch {
+    resetDbsFwDbCache();
+    return null;
+  }
+  if (
+    activeDb &&
+    activePath === dbPath &&
+    activeMtimeMs != null &&
+    activeMtimeMs === mtimeMs
+  ) {
+    return activeDb;
+  }
+  resetDbsFwDbCache();
   try {
     activeDb = new DatabaseSync(dbPath, { readOnly: true });
+    activePath = dbPath;
+    activeMtimeMs = mtimeMs;
     return activeDb;
   } catch {
     return null;

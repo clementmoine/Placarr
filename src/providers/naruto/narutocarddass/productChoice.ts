@@ -14,8 +14,14 @@ import {
 } from "@/providers/shared/cardFaces";
 
 export const NARUTO_PRODUCT_SOURCES = [
+  /**
+   * Tric Trac CDN — photos communautaires (pas une fiche boutique).
+   * Classées `listing_photo` : une jaquette catalogue les bat même plus petites.
+   */
   "trictrac",
   "vialudibunda",
+  /** ultrajeux.com fiche produit (`images/produits/maxi/`) — packshot boutique. */
+  "ultrajeux",
   "ebay",
   "cardgameclub",
   "martina",
@@ -54,6 +60,11 @@ export const NARUTO_PRODUCT_SOURCES = [
   "toywiz",
   /** Atomic Empire Alliance CDN pastes (EN CCG display boxes). */
   "atomicempire",
+  /**
+   * potomacdist.com distributor GAME packshots (watermark). Angled EN CCG
+   * booster boxes — better than flat Bandai Drive embeds when both exist.
+   */
+  "potomac",
   /**
    * Photos de vendeurs Mercari. Dernier recours : c'est la seule source connue
    * pour l'**emballage** du bonus PS1, recto et verso, qu'aucune page officielle
@@ -113,7 +124,31 @@ export const NARUTO_PRODUCT_SOURCES = [
 
 export type NarutoProductSource = (typeof NARUTO_PRODUCT_SOURCES)[number];
 
-/** Locale tie-break. Pixels still decide when both dumps measure. */
+/**
+ * Photos vendeur / communauté — passent derrière une jaquette catalogue
+ * (Via Ludibunda, UltraJeux, Amazon, Coleka rubrique, …) même plus petite.
+ */
+export const NARUTO_PRODUCT_LISTING_PHOTO_SOURCES: ReadonlySet<NarutoProductSource> =
+  new Set([
+    "trictrac",
+    "ebay",
+    "leboncoin",
+    "vinted",
+    "mercari",
+    "rakuten",
+    "kinkai",
+    "suruga",
+  ]);
+
+export function narutoProductCoverProvenance(
+  source: NarutoProductSource,
+): "catalog" | "listing_photo" {
+  return NARUTO_PRODUCT_LISTING_PHOTO_SOURCES.has(source)
+    ? "listing_photo"
+    : "catalog";
+}
+
+/** Locale tie-break. Provenance catalog > listing_photo, puis pixels / priorité. */
 export const NARUTO_PRODUCT_PRIORITY: Record<
   string,
   readonly NarutoProductSource[]
@@ -121,41 +156,45 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
   fr: [
     "badge",
     "reconstructed",
-    "trictrac",
     "vialudibunda",
-    "ebay",
-    "manga-news",
+    "ultrajeux",
+    "amazon",
     "manga-sanctuary",
+    "manga-news",
+    "coleka",
     "bandai-drive",
     "scifi-universe",
     "carddass",
     "tvtokyo",
     "cardgameclub",
     "martina",
-    "emporiodimilo",
-    "vinted",
-    "leboncoin",
-    "rakuten",
-    "kinkai",
     "fnac",
     "micromania",
     "sunnystore",
     "gradedcardcenter",
-    "coleka",
     "goat",
+    "potomac",
     "comicplanet",
     "kingslayer",
+    // Photos (listing_photo) — dernier recours quand aucune fiche n'existe.
+    "emporiodimilo",
+    "ebay",
+    "trictrac",
+    "leboncoin",
+    "vinted",
+    "rakuten",
+    "kinkai",
     "suruga",
-    "amazon",
+    "mercari",
   ],
   /** L'allemand n'a qu'une source de packshot connue : comicplanet.de. */
   de: [
     "badge",
     "reconstructed",
     "comicplanet",
-    "trictrac",
     "vialudibunda",
-    "ebay",
+    "ultrajeux",
+    "amazon",
     "manga-news",
     "manga-sanctuary",
     "bandai-drive",
@@ -164,39 +203,39 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
     "tvtokyo",
     "cardgameclub",
     "martina",
-    "emporiodimilo",
-    "vinted",
-    "leboncoin",
-    "rakuten",
-    "kinkai",
     "sunnystore",
     "gradedcardcenter",
     "coleka",
     "goat",
+    "potomac",
     "kingslayer",
+    "emporiodimilo",
+    "ebay",
+    "trictrac",
+    "leboncoin",
+    "vinted",
+    "rakuten",
+    "kinkai",
     "suruga",
-    "amazon",
+    "mercari",
   ],
   en: [
     "badge",
     "reconstructed",
+    // Distributor GAME packshots (full /images/GAME) over Coleka web thumbs.
+    "potomac",
     "coleka",
     "goat",
     "bandai-drive",
     "toywiz",
     "atomicempire",
-    "ebay",
-    "trictrac",
     "vialudibunda",
+    "ultrajeux",
+    "amazon",
     "carddass",
     "tvtokyo",
     "cardgameclub",
     "martina",
-    "emporiodimilo",
-    "vinted",
-    "leboncoin",
-    "rakuten",
-    "kinkai",
     "sunnystore",
     "gradedcardcenter",
     "manga-news",
@@ -204,51 +243,57 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
     "scifi-universe",
     "comicplanet",
     "kingslayer",
+    "emporiodimilo",
+    "ebay",
+    "trictrac",
+    "leboncoin",
+    "vinted",
+    "rakuten",
+    "kinkai",
     "suruga",
-    "amazon",
+    "mercari",
   ],
   it: [
     "badge",
     "reconstructed",
     "cardgameclub",
     "martina",
-    "emporiodimilo",
-    "vinted",
-    "leboncoin",
-    "rakuten",
-    "kinkai",
+    "vialudibunda",
+    "ultrajeux",
+    "amazon",
     "sunnystore",
     "coleka",
-    "ebay",
-    "vialudibunda",
-    "trictrac",
     "carddass",
     "tvtokyo",
     "gradedcardcenter",
     "goat",
+    "potomac",
     "manga-news",
     "manga-sanctuary",
     "bandai-drive",
     "scifi-universe",
     "comicplanet",
     "kingslayer",
+    "emporiodimilo",
+    "ebay",
+    "trictrac",
+    "leboncoin",
+    "vinted",
+    "rakuten",
+    "kinkai",
     "suruga",
-    "amazon",
+    "mercari",
   ],
   /** Castellano Carddass — seule source collée à ce jour : sunnystore.es. */
   es: [
     "badge",
     "reconstructed",
     "sunnystore",
-    "ebay",
-    "vinted",
-    "leboncoin",
-    "rakuten",
-    "kinkai",
+    "vialudibunda",
+    "ultrajeux",
+    "amazon",
     "cardgameclub",
     "martina",
-    "trictrac",
-    "vialudibunda",
     "manga-news",
     "manga-sanctuary",
     "bandai-drive",
@@ -258,40 +303,49 @@ export const NARUTO_PRODUCT_PRIORITY: Record<
     "gradedcardcenter",
     "coleka",
     "goat",
+    "potomac",
     "comicplanet",
     "kingslayer",
+    "ebay",
+    "trictrac",
+    "leboncoin",
+    "vinted",
+    "rakuten",
+    "kinkai",
     "suruga",
-    "amazon",
+    "mercari",
   ],
   ja: [
     "badge",
     "reconstructed",
     "carddassofficial",
-    "suruga",
     "gradedcardcenter",
     "carddass",
     "tvtokyo",
-    "ebay",
     "coleka",
-    "trictrac",
     "vialudibunda",
+    "ultrajeux",
+    "amazon",
     "cardgameclub",
     "martina",
-    "emporiodimilo",
-    "vinted",
-    "leboncoin",
-    "rakuten",
-    "kinkai",
     "sunnystore",
     "goat",
+    "potomac",
     "manga-news",
     "manga-sanctuary",
     "bandai-drive",
     "scifi-universe",
-    "mercari",
     "comicplanet",
     "kingslayer",
-    "amazon",
+    "emporiodimilo",
+    "ebay",
+    "trictrac",
+    "leboncoin",
+    "vinted",
+    "rakuten",
+    "kinkai",
+    "suruga",
+    "mercari",
   ],
 };
 
@@ -303,6 +357,9 @@ const STAGING_FOLDER_SOURCE: Readonly<Record<string, NarutoProductSource>> = {
   "carddass-fr": "carddass",
   trictrac: "trictrac",
   vialudibunda: "vialudibunda",
+  ultrajeux: "ultrajeux",
+  "amazon-fr": "amazon",
+  "amazon-ja": "amazon",
   ebay: "ebay",
   "manga-news": "manga-news",
   "manga-sanctuary": "manga-sanctuary",
@@ -320,6 +377,7 @@ const STAGING_FOLDER_SOURCE: Readonly<Record<string, NarutoProductSource>> = {
   gradedcardcenter: "gradedcardcenter",
   "goat-en-boxes": "goat",
   "coleka-en-covers": "coleka",
+  "coleka-fr-starters": "coleka",
   "coleka-s24": "coleka",
   "coleka-s28": "coleka",
   "coleka-rampage-tornado": "coleka",
@@ -327,6 +385,7 @@ const STAGING_FOLDER_SOURCE: Readonly<Record<string, NarutoProductSource>> = {
   "tv-tokyo": "tvtokyo",
   toywiz: "toywiz",
   atomicempire: "atomicempire",
+  potomac: "potomac",
   mercari: "mercari",
   "carddass-official": "carddassofficial",
   // Le miroir Wayback du site de jeu, moissonné par `scrapeCarddasJp`.
@@ -337,6 +396,7 @@ const choice = createCardFaceChoice<NarutoProductSource>({
   sources: NARUTO_PRODUCT_SOURCES,
   priority: NARUTO_PRODUCT_PRIORITY,
   coverProvenance: "catalog",
+  sourceCoverProvenance: narutoProductCoverProvenance,
   /*
     Les packshots sont presque tous sous le plancher de 0,2 mégapixel du
     scorer, qui n'y départage plus rien : il ne reste que le bonus de ratio, et
@@ -345,6 +405,12 @@ const choice = createCardFaceChoice<NarutoProductSource>({
     pack. Sous ce plancher, la taille tranche.
   */
   areaDecidesBelow: 200_000,
+  /*
+    Potomac / ViaLudi / UltraJeux : la priorité locale doit battre un embed
+    Drive 1600×1600 (carré rembourré) qui scorait mieux malgré un moins bon
+    packshot.
+  */
+  preferPriorityOverScore: true,
 });
 
 export const NARUTO_PRODUCT_ROLES = CARD_FACE_ROLES;

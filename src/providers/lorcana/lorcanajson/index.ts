@@ -1,5 +1,6 @@
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { labelFromPrintSetOptions } from "@/providers/shared/cardCatalogue/labelPrintSet";
 import { mergePrintSetOptions } from "@/providers/shared/cardCatalogue/sets";
 import { lorcanaTcgDbPath } from "@/providers/lorcana/lorcanatcg/indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
@@ -460,6 +461,8 @@ export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
     printKey: withMask.printKey,
     title: withMask.fullName,
     reference: lorcanaPrintLabel(withMask),
+    setCode: withMask.setCode,
+    setLabel: withMask.setName?.trim() || withMask.setCode,
     rarity: withMask.rarity,
     category: withMask.cardType,
     ...(faceQuarterTurns ? { faceQuarterTurns } : {}),
@@ -696,6 +699,11 @@ export const lorcanajsonModule = defineProvider({
   /* Les extensions de la base locale ; les JSON distants en repli. */
   /** Le catalogue local sert fr/en/de/it ; la liste se lit dans la base. Voir `distinctPrintLanguages`. */
   listPrintLanguages: () => distinctPrintLanguages(lorcanaTcgDbPath()),
+  labelPrintSet: ({ setCode, language }) =>
+    labelFromPrintSetOptions(
+      listLorcanaTcgSets(language ?? undefined),
+      setCode,
+    ),
   listPrintSets: async (_type, language) => {
     const local = listLorcanaTcgSets(language ?? undefined);
     const remote = await listLorcanaPrintSets();

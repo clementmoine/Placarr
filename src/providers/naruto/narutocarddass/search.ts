@@ -43,6 +43,7 @@ import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
 } from "./disk";
+import { buildNarutoDiskArtAttachments } from "./diskArtAttachments";
 import {
   ensureNarutoPackIndex,
   narutoIndexPacks,
@@ -435,10 +436,8 @@ export function withNarutoRetailArtFallback(
 }
 
 function toCandidate(row: NarutoPrintDetail): PrintCandidate {
-  const pathId = narutoCardPathFromCollector(
-    row.artNumber ?? row.number,
-    row.lang,
-  );
+  const collectorNumber = row.artNumber ?? row.number;
+  const pathId = narutoCardPathFromCollector(collectorNumber, row.lang);
   /*
     Double illustration officielle (術-192/348/358, voir doubleIllustrations) :
     la copie choisit son illustration comme elle choisit sa finition. L'axe
@@ -455,6 +454,32 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
   const printed = row.printed !== false;
   const sleeveBack = narutoCandidateCardBackUrl(row.number, row.setCode);
   const orient = narutoCarddassPrintOrientation(row.printKey, row.lang);
+  /*
+    Index SQLite peut omettre `print_assets` (ex. promos tin FR titrées sans
+    ligne asset) alors que `face.json` + art.* sont sur disque. Même contrat
+    que Pokémon `localPokemonCatalogueArtUrl` — le disque gagne si l'index
+    n'a pas d'art.
+  */
+  const indexedImage =
+    row.art && pathId
+      ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.art)
+      : null;
+  const indexedThumb =
+    row.thumb && pathId
+      ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.thumb)
+      : null;
+  const diskFace =
+    !indexedImage && pathId
+      ? buildNarutoDiskArtAttachments({
+          printKey: row.printKey,
+          number: collectorNumber,
+          lang: row.lang,
+          source: "narutocarddass",
+          title: row.fullName,
+        }).defaultUrl
+      : null;
+  const imageUrl = indexedImage ?? diskFace;
+  const thumbnailUrl = indexedThumb ?? diskFace;
   return {
     printKey: row.printKey,
     // A print with no title yet still deserves to be pickable: the reference
@@ -469,12 +494,8 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     ...(row.cardType
       ? { category: CARD_FAMILY[row.cardType.toLowerCase()] ?? row.cardType }
       : {}),
-    ...(row.art && pathId
-      ? { imageUrl: narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.art) }
-      : {}),
-    ...(row.thumb && pathId
-      ? { thumbnailUrl: narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.thumb) }
-      : {}),
+    ...(imageUrl ? { imageUrl } : {}),
+    ...(thumbnailUrl ? { thumbnailUrl } : {}),
     language: row.lang,
     setCode: row.setCode,
     printed,

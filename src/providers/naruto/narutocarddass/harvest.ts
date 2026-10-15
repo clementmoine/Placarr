@@ -678,7 +678,11 @@ export async function harvestTvTokyo(
         : null) || `${row.slug}.jpg`;
     const dest = path.join(dir, stagingName);
     if (!opts.force && existsSync(dest)) continue;
-    const url = `${tvtokyo.base}cardimg/${row.file}`;
+    const rel =
+      "path" in row && typeof row.path === "string" && row.path.trim()
+        ? row.path.trim()
+        : `cardimg/${row.file}`;
+    const url = `${tvtokyo.base}${rel.replace(/^\//, "")}`;
     if (await download(url, dest, tvtokyo.base)) written += 1;
     else failed += 1;
     await sleep(DELAY_MS);

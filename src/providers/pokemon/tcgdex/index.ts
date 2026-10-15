@@ -1,4 +1,5 @@
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
+import { labelFromPrintSetOptions } from "@/providers/shared/cardCatalogue/labelPrintSet";
 import { mergePrintSetOptions } from "@/providers/shared/cardCatalogue/sets";
 import { tcgdexDbPath } from "./indexStore";
 import { tcgdexCatalog } from "./catalog";
@@ -388,6 +389,7 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
     rarity: card.rarity ?? rarityLabelFromLiveCode(liveRarity) ?? null,
     category: card.category,
     setCode: card.setId,
+    setLabel: card.setName?.trim() || card.setId,
     thumbnailUrl: liveFront ?? localPaper ?? tcgdexThumb,
     imageUrl: liveFront ?? localPaper ?? tcgdexFull,
     // Pack default back lives on EffectPack.cardBackUrl — do not stamp it as
@@ -444,6 +446,7 @@ export function toChecklistPrintCandidate(card: TcgdexCard): PrintCandidate {
     rarity: card.rarity ?? null,
     category: card.category,
     setCode: card.setId,
+    setLabel: card.setName?.trim() || card.setId,
     thumbnailUrl: thumb,
     imageUrl: thumb,
     language: card.language,
@@ -699,6 +702,11 @@ export const tcgdexModule = defineProvider({
   },
   /** Ce que la moisson a réellement rapporté, pas ce que TCGdex publie. Voir `distinctPrintLanguages`. */
   listPrintLanguages: () => distinctPrintLanguages(tcgdexDbPath()),
+  labelPrintSet: ({ setCode, language }) =>
+    labelFromPrintSetOptions(
+      listTcgdexLocalSets(language ?? undefined),
+      setCode,
+    ),
   /*
     Local ∪ API ∪ logos : une base non vide ne doit plus masquer un set déjà
     annoncé (ex. `me05.5`). La moisson `catalog.refresh` remplit ensuite les

@@ -114,15 +114,60 @@ describe("pickBestNarutoProductDump", () => {
         ],
         "fr",
       ),
-    ).toBe("trictrac");
+    ).toBe("vialudibunda");
     // `badge` est passé en tête le 2026-08-20 : c'est le seul badge de série
     // découpé, et il ne concurrence aucun packshot — il ne sert qu'au logo.
     expect(NARUTO_PRODUCT_PRIORITY.fr[0]).toBe("badge");
     expect(NARUTO_PRODUCT_PRIORITY.fr[1]).toBe("reconstructed");
+    expect(NARUTO_PRODUCT_PRIORITY.fr[2]).toBe("vialudibunda");
     expect(NARUTO_PRODUCT_PRIORITY.fr).toContain("manga-sanctuary");
+    expect(NARUTO_PRODUCT_PRIORITY.fr.indexOf("trictrac")).toBeGreaterThan(
+      NARUTO_PRODUCT_PRIORITY.fr.indexOf("vialudibunda"),
+    );
     expect(NARUTO_PRODUCT_PRIORITY.en).toContain("bandai-drive");
     expect(NARUTO_PRODUCT_PRIORITY.es[0]).toBe("badge");
     expect(NARUTO_PRODUCT_PRIORITY.es[1]).toBe("reconstructed");
     expect(NARUTO_PRODUCT_PRIORITY.es[2]).toBe("sunnystore");
+  });
+
+  it("prefers a smaller catalogue packshot over a larger Tric Trac photo", () => {
+    expect(
+      pickBestNarutoProductDump(
+        [
+          {
+            source: "trictrac",
+            file: "art.trictrac.jpeg",
+            width: 764,
+            height: 1000,
+          },
+          {
+            source: "vialudibunda",
+            file: "art.vialudibunda.jpg",
+            width: 458,
+            height: 458,
+          },
+        ],
+        "fr",
+      ),
+    ).toBe("vialudibunda");
+    expect(
+      pickBestNarutoProductDump(
+        [
+          {
+            source: "trictrac",
+            file: "art.trictrac.jpeg",
+            width: 774,
+            height: 1000,
+          },
+          {
+            source: "ultrajeux",
+            file: "art.ultrajeux.jpg",
+            width: 336,
+            height: 421,
+          },
+        ],
+        "fr",
+      ),
+    ).toBe("ultrajeux");
   });
 });

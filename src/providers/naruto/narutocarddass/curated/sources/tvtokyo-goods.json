@@ -112,6 +112,61 @@
       "volume": "巻ノ零",
       "volumeNumber": 0,
       "note": "Visuel 巻ノ零 (card_pbest2) — archivé même sans SKU booster maki0."
+    },
+    {
+      "slug": "jp-release-17",
+      "file": "nkemak-p.jpg",
+      "path": "images/hobby/nkemak-p.jpg",
+      "page": "nar_kemaki.html",
+      "title": "カードスタンド ナルト木ノ葉絵巻",
+      "released": "2004-05-17",
+      "numbering": "CAN-1〜CAN-6",
+      "note": "食玩 ラムネ — packshot boîte (114×200). Les six vues figure+carte (nkemaki_Nf) restent archival : composites paysage, pas des faces carte (Yahoo/Mercari déjà meilleurs).",
+      "variantViews": [
+        {
+          "file": "nkemaki_1f.jpg",
+          "path": "images/hobby/nkemaki_1f.jpg",
+          "slot": 1,
+          "printedRef": "CAN-1",
+          "diskId": "can0001"
+        },
+        {
+          "file": "nkemaki_2f.jpg",
+          "path": "images/hobby/nkemaki_2f.jpg",
+          "slot": 2,
+          "printedRef": "CAN-5",
+          "diskId": "can0005",
+          "note": "carddas20-pro : 2番 → CAN-5 師から弟子へ"
+        },
+        {
+          "file": "nkemaki_3f.jpg",
+          "path": "images/hobby/nkemaki_3f.jpg",
+          "slot": 3,
+          "printedRef": "CAN-2",
+          "diskId": "can0002"
+        },
+        {
+          "file": "nkemaki_4f.jpg",
+          "path": "images/hobby/nkemaki_4f.jpg",
+          "slot": 4,
+          "printedRef": "CAN-3",
+          "diskId": "can0003"
+        },
+        {
+          "file": "nkemaki_5f.jpg",
+          "path": "images/hobby/nkemaki_5f.jpg",
+          "slot": 5,
+          "printedRef": "CAN-4",
+          "diskId": "can0004"
+        },
+        {
+          "file": "nkemaki_6f.jpg",
+          "path": "images/hobby/nkemaki_6f.jpg",
+          "slot": 6,
+          "printedRef": "CAN-6",
+          "diskId": "can0006"
+        }
+      ]
     }
   ]
 }

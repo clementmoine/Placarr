@@ -510,6 +510,15 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     listPrintLanguages: () =>
       spec.listPrintLanguages?.() ?? distinctPrintLanguages(index.dbPath()),
     printGames: [spec.printGame],
+    labelPrintSet: ({ setCode, language }) => {
+      const code = setCode.trim();
+      if (!code) return null;
+      return (
+        spec.setLabel?.(code, language)?.trim() ||
+        code.trim().toUpperCase() ||
+        null
+      );
+    },
     listPrintSets: async (_type, language) => {
       const local = index.listSets({
         setLabel: (code) =>

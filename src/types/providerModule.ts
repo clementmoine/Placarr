@@ -715,6 +715,16 @@ export interface ProviderModule {
     slug?: string | null;
     name?: string | null;
   }) => string | null;
+  /**
+   * Libellé joueur d'une extension (`Premier Chapitre`, `忍伝-学`, …) à partir
+   * du `setCode` catalogue. Sync — listes scellées / tuiles catalogue.
+   *
+   * Absent = le code brut. Ne pas hardcoder un pack dans core / admin.
+   */
+  labelPrintSet?: (input: {
+    setCode: string;
+    language?: string | null;
+  }) => string | null;
   resolveSetLogo?: (input: {
     setCode?: string | null;
     /** Slug de la fiche produit, quand le logo s'y raccroche mieux. */

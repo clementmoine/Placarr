@@ -36,7 +36,12 @@ import {
   trictracCdnOriginal,
   trictracIngestPackshots,
   magentoCatalogOriginal,
+  amazonFrIngestPackshots,
+  amazonJaIngestPackshots,
+  colekaFrStartersIngestPackshots,
+  potomacIngestPackshots,
   scifiUniverseIngestPackshots,
+  ultrajeuxSealedIngestPackshots,
   vialudibundaIngestPackshots,
   vintedIngestBacks,
   vintedIngestPackshots,
@@ -556,5 +561,120 @@ export async function installVialudibundaPackshots(
     resolveUrl: (row) => magentoCatalogOriginal(row.url),
     accept: ACCEPT_JPEG,
     destMode: "basenameInFolder",
+  });
+}
+
+// ─── Amazon FR ─────────────────────────────────────────────────────────────
+
+export const NARUTO_STAGING_AMAZON_FR = path.join("staging", "amazon-fr");
+
+export type InstallAmazonFrPackshotsOptions = InstallStagingPackshotsOptions;
+
+export async function installAmazonFrPackshots(
+  options: InstallAmazonFrPackshotsOptions = {},
+): Promise<{ written: string[]; skipped: string[] }> {
+  return installStagingPackshots({
+    packId: NARUTO_PACK_ID,
+    stagingDir: NARUTO_STAGING_AMAZON_FR,
+    rows: amazonFrIngestPackshots(),
+    options,
+    referer: "https://www.amazon.fr/",
+    accept: ACCEPT_JPEG,
+  });
+}
+
+// ─── Amazon JA ─────────────────────────────────────────────────────────────
+
+export const NARUTO_STAGING_AMAZON_JA = path.join("staging", "amazon-ja");
+
+export type InstallAmazonJaPackshotsOptions = InstallStagingPackshotsOptions;
+
+export async function installAmazonJaPackshots(
+  options: InstallAmazonJaPackshotsOptions = {},
+): Promise<{ written: string[]; skipped: string[] }> {
+  return installStagingPackshots({
+    packId: NARUTO_PACK_ID,
+    stagingDir: NARUTO_STAGING_AMAZON_JA,
+    rows: amazonJaIngestPackshots(),
+    options,
+    referer: "https://www.amazon.co.jp/",
+    accept: ACCEPT_JPEG,
+  });
+}
+
+// ─── UltraJeux sealed starters ─────────────────────────────────────────────
+
+export const NARUTO_STAGING_ULTRAJEUX = path.join("staging", "ultrajeux");
+
+export type InstallUltrajeuxSealedPackshotsOptions =
+  InstallStagingPackshotsOptions;
+
+export async function installUltrajeuxSealedPackshots(
+  options: InstallUltrajeuxSealedPackshotsOptions = {},
+): Promise<{ written: string[]; skipped: string[] }> {
+  return installStagingPackshots({
+    packId: NARUTO_PACK_ID,
+    stagingDir: NARUTO_STAGING_ULTRAJEUX,
+    rows: ultrajeuxSealedIngestPackshots(),
+    options,
+    referer: (row) =>
+      "listing" in row && typeof row.listing === "string"
+        ? row.listing
+        : "https://www.ultrajeux.com/",
+    accept: ACCEPT_JPEG,
+  });
+}
+
+// ─── Coleka FR starter rubrique ────────────────────────────────────────────
+
+export const NARUTO_STAGING_COLEKA_FR_STARTERS = path.join(
+  "staging",
+  "coleka-fr-starters",
+);
+
+export type InstallColekaFrStartersPackshotsOptions =
+  InstallStagingPackshotsOptions;
+
+const ACCEPT_WEBP_OR_JPEG: StagingBytesAccept = (buf) => {
+  const jpeg = buf[0] === 0xff && buf[1] === 0xd8;
+  const webp =
+    buf.byteLength >= 12 &&
+    buf.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buf.subarray(8, 12).toString("ascii") === "WEBP";
+  return (jpeg || webp) && buf.byteLength >= 4_000;
+};
+
+export async function installColekaFrStartersPackshots(
+  options: InstallColekaFrStartersPackshotsOptions = {},
+): Promise<{ written: string[]; skipped: string[] }> {
+  return installStagingPackshots({
+    packId: NARUTO_PACK_ID,
+    stagingDir: NARUTO_STAGING_COLEKA_FR_STARTERS,
+    rows: colekaFrStartersIngestPackshots(),
+    options,
+    referer: "https://www.coleka.com/",
+    accept: ACCEPT_WEBP_OR_JPEG,
+  });
+}
+
+// ─── Potomac Dist EN displays ──────────────────────────────────────────────
+
+export const NARUTO_STAGING_POTOMAC = path.join("staging", "potomac");
+
+export type InstallPotomacPackshotsOptions = InstallStagingPackshotsOptions;
+
+export async function installPotomacPackshots(
+  options: InstallPotomacPackshotsOptions = {},
+): Promise<{ written: string[]; skipped: string[] }> {
+  return installStagingPackshots({
+    packId: NARUTO_PACK_ID,
+    stagingDir: NARUTO_STAGING_POTOMAC,
+    rows: potomacIngestPackshots(),
+    options,
+    referer: (row) =>
+      "listing" in row && typeof row.listing === "string"
+        ? row.listing
+        : "https://www.potomacdist.com/",
+    accept: ACCEPT_BOX,
   });
 }

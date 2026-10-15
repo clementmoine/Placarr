@@ -112,7 +112,7 @@ function SealedPrintThumb({
                     printKey={printKey}
                     title={label}
                     imageUrl={art}
-                    alt={label}
+                    alt=""
                     finish={view.finish}
                     varnishType={view.varnishType}
                     cssFinishShaderId={view.shader?.id ?? null}
@@ -133,7 +133,7 @@ function SealedPrintThumb({
                 ) : (
                   <RemoteImage
                     src={art}
-                    alt={label}
+                    alt=""
                     fill
                     sizes="72px"
                     className="object-cover"
@@ -185,7 +185,7 @@ function SealedPrintThumb({
         ) : null}
       </div>
       <p className="mt-1 truncate text-center text-[10px] leading-tight text-muted-foreground">
-        {art ? (printKey ?? label) : null}
+        {art ? label : null}
       </p>
     </li>
   );
@@ -347,7 +347,7 @@ export function CatalogueSealedContainedGrid({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={product.image}
-                          alt={isFront ? label : ""}
+                          alt=""
                           className={cn(
                             "h-full w-full object-contain p-0.5",
                             !isFront && "opacity-90",

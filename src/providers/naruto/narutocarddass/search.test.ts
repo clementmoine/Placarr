@@ -112,6 +112,19 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       expect(promo?.printKey).toMatch(/promo/i);
     });
 
+    it("serves tin / UNS3 promo faces from disk when print_assets is empty", () => {
+      // Titles live in sqlite; FR tin PR art is on disk only (no print_assets row).
+      for (const [key, needle] of [
+        ["naruto:promo-pr0011", "/promo/pr0011/fr/"],
+        ["naruto:promo-pr0016", "/promo/pr0016/fr/"],
+        ["naruto:promo-pr0095", "/promo/pr0095/fr/"],
+      ] as const) {
+        const candidate = lookupNarutoPrint(key, { language: "fr" });
+        expect(candidate?.imageUrl, key).toBeTruthy();
+        expect(candidate?.imageUrl, key).toContain(needle);
+      }
+    });
+
     it("marks the plain finish so the renderer lays no foil over it", () => {
       const candidate = lookupNarutoPrint("naruto:s1-ni0001");
       expect(candidate?.plainFinishes).toEqual(["normal"]);

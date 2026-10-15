@@ -27,6 +27,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import {
+  coverProvenanceRank,
+  resolveCoverProvenance,
+} from "@/core/enrich/media/coverProvenance";
 import { explainAttachmentScoreForDisplay } from "@/core/enrich/media/attachmentDisplayScoring";
 
 /**
@@ -100,9 +104,16 @@ export function createCardFaceChoice<S extends string>(config: {
    */
   priority: Readonly<Record<string, readonly S[]>>;
   /**
-   * Provenance handed to the scorer. Publisher scans, not marketplace photos.
+   * Provenance handed to the scorer when `sourceCoverProvenance` is unset.
+   * Publisher scans, not marketplace photos.
    */
   coverProvenance?: string;
+  /**
+   * Per-source provenance (catalog vs listing_photo). When set, a clean
+   * boutique packshot beats a larger seller photo — same tier order as
+   * `rankCoversForDisplay`.
+   */
+  sourceCoverProvenance?: (source: S) => string | null | undefined;
   /**
    * Surface (en pixels) sous laquelle la **taille** tranche seule, sans passer
    * par le score d'affichage.
@@ -118,10 +129,23 @@ export function createCardFaceChoice<S extends string>(config: {
    * sont presque tous sous le plancher, en ont besoin aujourd'hui.
    */
   areaDecidesBelow?: number;
+  /**
+   * When true, locale priority beats display score within the same provenance
+   * tier (after the stub-floor exception). Sealed packshots need this: a
+   * padded 1600×1600 Drive embed otherwise outranks an angled distributor
+   * box photo that the catalogue prefers by source order.
+   */
+  preferPriorityOverScore?: boolean;
 }): CardFaceChoice<S> {
   const { sources, priority } = config;
-  const provenance = config.coverProvenance ?? "catalog";
+  const defaultProvenance = config.coverProvenance ?? "catalog";
+  const provenanceOf = (source: S): string =>
+    resolveCoverProvenance({
+      coverProvenance:
+        config.sourceCoverProvenance?.(source) ?? defaultProvenance,
+    });
   const areaFloor = config.areaDecidesBelow ?? 0;
+  const priorityFirst = Boolean(config.preferPriorityOverScore);
 
   /** Rank within a locale; unlisted sources sort last, in declaration order. */
   const priorityOf = (source: S, lang: string): number => {
@@ -173,24 +197,62 @@ export function createCardFaceChoice<S extends string>(config: {
       source order rather than out of the running.
     */
     if (faces.length > 0 && faces.every((f) => f.width <= 0 || f.height <= 0)) {
+      // No pixels → no provenance demotion (a stub GIF and a photo look alike
+      // at 0×0). Locale priority is the only signal left.
       return [...faces].sort(
         (a, b) => priorityOf(a.source, lang) - priorityOf(b.source, lang),
       )[0]!.source;
     }
-    let best: { face: StoredFace<S>; score: number } | null = null;
+    let best: {
+      face: StoredFace<S>;
+      score: number;
+      provenanceRank: number;
+    } | null = null;
     for (const face of faces) {
       if (face.width <= 0 || face.height <= 0) continue;
+      const coverProvenance = provenanceOf(face.source);
+      const provenanceRank = coverProvenanceRank(coverProvenance);
       const score = explainAttachmentScoreForDisplay(
         {
           type: "cover",
           url: `${face.source}/${face.file ?? faceFilename(face.source)}`,
           source: face.source,
-          coverProvenance: provenance,
+          coverProvenance,
         },
         { width: face.width, height: face.height },
       ).score;
       const area = face.width * face.height;
       const bestArea = best ? best.face.width * best.face.height : 0;
+      /*
+        Provenance catalog > listing_photo. Exception: a stub catalogue dump
+        (carddass.fr GIF ~200×247 ≈ 50k px) must not demote a real seller photo.
+        Boutique packshots under `areaFloor` (UltraJeux 336×421) still count —
+        only dumps under this stub floor are ignored for provenance wins.
+      */
+      const provenanceStubFloor = Math.min(100_000, areaFloor || 100_000);
+      if (
+        best &&
+        provenanceRank !== best.provenanceRank &&
+        provenanceStubFloor > 0
+      ) {
+        const faceUsable = area >= provenanceStubFloor;
+        const bestUsable = bestArea >= provenanceStubFloor;
+        if (provenanceRank < best.provenanceRank) {
+          if (faceUsable || !bestUsable) {
+            best = { face, score, provenanceRank };
+          }
+          continue;
+        }
+        if (!bestUsable && faceUsable) {
+          best = { face, score, provenanceRank };
+        }
+        continue;
+      }
+      if (best && provenanceRank < best.provenanceRank) {
+        best = { face, score, provenanceRank };
+        continue;
+      }
+      if (best && provenanceRank > best.provenanceRank) continue;
       // Les deux sous le plancher : la taille tranche, le score n'y voit rien.
       const bothTiny =
         best != null &&
@@ -198,24 +260,39 @@ export function createCardFaceChoice<S extends string>(config: {
         area < areaFloor &&
         bestArea < areaFloor;
       if (bothTiny) {
-        if (area > bestArea) best = { face, score };
+        if (area > bestArea) best = { face, score, provenanceRank };
         else if (
           area === bestArea &&
           priorityOf(face.source, lang) < priorityOf(best!.face.source, lang)
         ) {
-          best = { face, score };
+          best = { face, score, provenanceRank };
         }
         continue;
       }
-      if (!best || score > best.score) {
-        best = { face, score };
+      if (!best) {
+        best = { face, score, provenanceRank };
+        continue;
+      }
+      if (priorityFirst) {
+        const facePri = priorityOf(face.source, lang);
+        const bestPri = priorityOf(best.face.source, lang);
+        if (facePri < bestPri) {
+          best = { face, score, provenanceRank };
+          continue;
+        }
+        if (facePri > bestPri) continue;
+        if (score > best.score) best = { face, score, provenanceRank };
+        continue;
+      }
+      if (score > best.score) {
+        best = { face, score, provenanceRank };
         continue;
       }
       if (score === best.score) {
         if (
           priorityOf(face.source, lang) < priorityOf(best.face.source, lang)
         ) {
-          best = { face, score };
+          best = { face, score, provenanceRank };
         }
       }
     }

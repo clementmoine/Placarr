@@ -1,28 +1,34 @@
 {
-  "source": "amazon.fr ASIN B0019R7M2W Wayback product page",
-  "observed": "2026-08-17",
-  "ingest": "none",
-  "kind": "sealed-sku",
-  "lang": "fr",
-  "slug": "starter-pays-du-vent",
-  "asin": "B0019R7M2W",
-  "printedRef": "05110",
-  "title": "Bandai - Cartes à jouer - Naruto - Starter Série 1 - Le pays du vent",
-  "page": "https://www.amazon.fr/Bandai-Cartes-jouer-Naruto-Starter/dp/B0019R7M2W",
+  "source": "amazon.fr ASIN B0019R7M2W — live m.media-amazon.com packshot",
+  "observed": "2026-10-15",
+  "note": "Live JPEG works (Wayback ecx.images-amazon.com was 404). Tric Trac keeps a listing_photo dump; catalogue prefers this Amazon / Via Ludibunda face.",
+  "products": [
+    {
+      "slug": "starter-pays-du-vent",
+      "setCode": "s1",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Bandai - Cartes à jouer - Naruto - Starter Série 1 - Le pays du vent",
+      "asin": "B0019R7M2W",
+      "printedRef": "05110",
+      "page": "https://www.amazon.fr/Bandai-Cartes-jouer-Naruto-Starter/dp/B0019R7M2W",
+      "url": "https://m.media-amazon.com/images/I/51qoMTBbSDL._AC_.jpg",
+      "staging": "staging/amazon-fr/starter-pays-du-vent.jpg",
+      "ingest": true,
+      "pixels": { "width": 372, "height": 472 }
+    }
+  ],
   "wayback": {
     "timestamp": "20101115093130",
     "url": "https://web.archive.org/web/20101115093130/http://www.amazon.fr/Bandai-Cartes-jouer-Naruto-Starter/dp/B0019R7M2W",
     "staging": "staging/amazon-fr/B0019R7M2W-20101115.html",
-    "also": ["20090101045216", "20090130134201", "20110220160151"]
-  },
-  "imageIds": [
-    "51qoMTBbSDL",
-    "51ZUuG4ggbL",
-    "51i3VIEiohL",
-    "512rWO0GhyL",
-    "51sBivIMTkL"
-  ],
-  "note": "HTML snapshot confirms réf. 05110 + ASIN. ecx.images-amazon.com JPEGs are not in CDX; reconstructed Wayback URLs return 404 HTML. Live Amazon often 503. Do not displace Tric Trac starter-pays-du-vent.jpeg (already preferred over the carddass.fr GIF).",
-  "doNotDisplace": "staging/trictrac/starter-pays-du-vent.jpeg",
-  "crossSell": "Maître Hokage"
+    "also": ["20090101045216", "20090130134201", "20110220160151"],
+    "imageIds": [
+      "51qoMTBbSDL",
+      "51ZUuG4ggbL",
+      "51i3VIEiohL",
+      "512rWO0GhyL",
+      "51sBivIMTkL"
+    ]
+  }
 }

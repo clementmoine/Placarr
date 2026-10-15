@@ -19,6 +19,7 @@ import type {
   CatalogueSealedRow,
 } from "@/lib/admin/catalogueProducts";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
+import { sealedGuaranteedPrintsSectionTitle } from "@/providers/shared/sealedProducts/guaranteedPrintsTitle";
 import { sealedKindLabel } from "@/providers/shared/sealedProducts/kinds";
 
 async function fetchDetail(
@@ -209,6 +210,7 @@ export function CatalogueSealedDetailDialog({
                 </p>
                 {detail.contentsKnown &&
                 detail.randomPoolScope === "set" &&
+                detail.setCode &&
                 detail.randomPoolPrints.length === 0 ? (
                   <p className="text-[11px] text-amber-800 dark:text-amber-200">
                     {fr
@@ -281,18 +283,17 @@ export function CatalogueSealedDetailDialog({
               fr={fr}
             />
             <CatalogueSealedPrintGrid
-              title={
-                detail.guaranteedProducts.length > 0
-                  ? fr
-                    ? "Cartes des decks (décomposées)"
-                    : "Deck cards (expanded)"
-                  : fr
-                    ? "Garanties (toujours dedans)"
-                    : "Guaranteed (always in)"
-              }
+              title={sealedGuaranteedPrintsSectionTitle({
+                fr,
+                kind: detail.kind,
+                hasGuaranteedProducts: detail.guaranteedProducts.length > 0,
+              })}
               prints={detail.guaranteedPrints}
               fr={fr}
-              muted={detail.guaranteedProducts.length > 0}
+              muted={
+                detail.guaranteedProducts.length > 0 &&
+                (detail.kind === "deck" || detail.kind === "deck_bundle")
+              }
             />
             <CatalogueSealedPrintGrid
               title={

@@ -201,8 +201,8 @@ const CARDDAS_JP_BOOSTER_PACKSHOTS: Record<number, string> = {
  * parlait de `image/product/1st_pac.gif`, absent de la CDX ; le fichier new
  * est bien là (75×143, « 1パック10枚入り / 全70種 »).
  *
- * Pas de mapping inventé : ラムネ菓子, Vジャンプ special filing et 絵巻 弐
- * restent sans visuel tant qu'aucune photo d'emballage n'est attestée.
+ * Pas de mapping inventé hors sources attestées : Vジャンプ special filing et
+ * 絵巻 弐 restent sans visuel. ラムネ菓子 (`jp-release-17`) → TV Tokyo hobby.
  */
 const CARDDAS_JP_RELEASE_PACKSHOTS: Readonly<Record<string, string>> = {
   "booster-vol1-jp": "image/new/1st_pac.gif",
@@ -244,6 +244,12 @@ const CURATED_BOOSTER_PACKSHOTS = new Set([6, 8]);
 const TVTOKYO_BOOSTER_PACKSHOTS = new Set([
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 ]);
+
+/**
+ * Sorties hors 巻ノ dont TV Tokyo publie un packshot (hobby/, pas cardimg/).
+ * `jp-release-17` = ラムネ菓子 カードスタンド 木ノ葉絵巻 (`nar_kemaki.html`).
+ */
+const TVTOKYO_RELEASE_PACKSHOTS = new Set(["jp-release-17"]);
 
 /** Sorties sans numéro de volume dont le visuel est détouré à la main. */
 const CURATED_RELEASE_PACKSHOTS = new Set(["jp-release-09"]);
@@ -370,7 +376,9 @@ function collectPackshots(input: {
           stagingFile: `booster-vol${volume}-jp.jpg`,
           kind: "tv-tokyo",
         }
-      : null,
+      : TVTOKYO_RELEASE_PACKSHOTS.has(slug)
+        ? { stagingFile: `${slug}.jpg`, kind: "tv-tokyo" }
+        : null,
   );
   return out;
 }

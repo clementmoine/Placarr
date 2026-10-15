@@ -12,7 +12,7 @@ import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrint
  * Une entrée par **carte et par langue** : le même tirage s'appelle
  * « Mystherbe » en français et « Oddish » en anglais, et les deux se cherchent.
  */
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -94,6 +94,7 @@ export function tcgdexDbPath(): string {
 
 let activeDb: DatabaseSync | null = null;
 let activePath: string | null = null;
+let activeMtimeMs: number | null = null;
 
 export function resetTcgdexIndexCache(): void {
   try {
@@ -103,6 +104,7 @@ export function resetTcgdexIndexCache(): void {
   }
   activeDb = null;
   activePath = null;
+  activeMtimeMs = null;
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -356,8 +358,26 @@ export function patchTcgdexSetCounts(
 
 export function ensureTcgdexIndex(): DatabaseSync | null {
   const dbPath = tcgdexDbPath();
-  if (!existsSync(dbPath)) return null;
-  if (activeDb && activePath === dbPath) return activeDb;
+  if (!existsSync(dbPath)) {
+    resetTcgdexIndexCache();
+    return null;
+  }
+  let mtimeMs = 0;
+  try {
+    mtimeMs = statSync(dbPath).mtimeMs;
+  } catch {
+    resetTcgdexIndexCache();
+    return null;
+  }
+  if (
+    activeDb &&
+    activePath === dbPath &&
+    activeMtimeMs != null &&
+    activeMtimeMs === mtimeMs
+  ) {
+    return activeDb;
+  }
+  resetTcgdexIndexCache();
   {
     const writable = new DatabaseSync(dbPath);
     try {
@@ -370,6 +390,7 @@ export function ensureTcgdexIndex(): DatabaseSync | null {
   const db = new DatabaseSync(dbPath, { readOnly: true });
   activeDb = db;
   activePath = dbPath;
+  activeMtimeMs = mtimeMs;
   return db;
 }
 

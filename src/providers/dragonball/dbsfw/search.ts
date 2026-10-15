@@ -82,6 +82,7 @@ function toCandidate(row: DbsFwPrintDetail): PrintCandidate {
     title: row.fullName?.trim() || reference,
     reference,
     setCode: row.setCode,
+    setLabel: row.setName?.trim() || row.setCode,
     ...(row.harvested?.rarity ? { rarity: row.harvested.rarity } : {}),
     ...(face ? { imageUrl: face } : {}),
     ...(face ? { thumbnailUrl: face } : {}),

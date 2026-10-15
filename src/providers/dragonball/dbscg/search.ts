@@ -111,6 +111,7 @@ function toCandidate(row: DbsPrintDetail): PrintCandidate {
     title: row.fullName?.trim() || reference,
     reference,
     setCode: row.setCode,
+    setLabel: row.setName?.trim() || row.setCode,
     ...(row.rarity ? { rarity: row.rarity } : {}),
     ...(row.cardType ? { category: row.cardType } : {}),
     ...(face ? { imageUrl: face } : {}),

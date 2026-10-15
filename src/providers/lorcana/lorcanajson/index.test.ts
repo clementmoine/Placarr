@@ -146,6 +146,17 @@ describe("toPrintCandidate varnish", () => {
 });
 
 describe("toPrintCandidate finishes", () => {
+  it("stamps setCode and setLabel for the picker (same contract as Naruto)", () => {
+    expect(
+      toPrintCandidate(
+        card({ setCode: "1", setName: "Premier Chapitre" }),
+      ),
+    ).toMatchObject({
+      setCode: "1",
+      setLabel: "Premier Chapitre",
+    });
+  });
+
   it("tags every print with the Lorcana effect pack", () => {
     expect(toPrintCandidate(card({})).effectPack).toBe("lorcana");
   });

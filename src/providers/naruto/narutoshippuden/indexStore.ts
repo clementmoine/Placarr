@@ -23,7 +23,7 @@ import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrint
  * les listes officielles moissonnées s'arrêtent au 第四幕. La moitié des cartes
  * manque donc encore, et c'est le scellé qui l'a révélé — pas le catalogue.
  */
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -71,6 +71,7 @@ export function narutoShippudenDbPath(): string {
 
 let activeDb: DatabaseSync | null = null;
 let activePath: string | null = null;
+let activeMtimeMs: number | null = null;
 
 export function resetNarutoShippudenIndexCache(): void {
   try {
@@ -80,6 +81,7 @@ export function resetNarutoShippudenIndexCache(): void {
   }
   activeDb = null;
   activePath = null;
+  activeMtimeMs = null;
 }
 
 export function createNarutoShippudenSchema(db: DatabaseSync): void {
@@ -125,11 +127,30 @@ export function createNarutoShippudenSchema(db: DatabaseSync): void {
 
 export function ensureNarutoShippudenIndex(): DatabaseSync | null {
   const dbPath = narutoShippudenDbPath();
-  if (!existsSync(dbPath)) return null;
-  if (activeDb && activePath === dbPath) return activeDb;
+  if (!existsSync(dbPath)) {
+    resetNarutoShippudenIndexCache();
+    return null;
+  }
+  let mtimeMs = 0;
+  try {
+    mtimeMs = statSync(dbPath).mtimeMs;
+  } catch {
+    resetNarutoShippudenIndexCache();
+    return null;
+  }
+  if (
+    activeDb &&
+    activePath === dbPath &&
+    activeMtimeMs != null &&
+    activeMtimeMs === mtimeMs
+  ) {
+    return activeDb;
+  }
+  resetNarutoShippudenIndexCache();
   const db = new DatabaseSync(dbPath, { readOnly: true });
   activeDb = db;
   activePath = dbPath;
+  activeMtimeMs = mtimeMs;
   return db;
 }
 

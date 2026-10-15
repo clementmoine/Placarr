@@ -172,6 +172,15 @@ export function sealedProductModulesForShelf(input: {
   const selectedGames = new Set(
     selected.flatMap((pack) => pack.printGames ?? []),
   );
+  /*
+    Lorcana : `lorcanajson` énumère, `lorcanatcg` porte `data/lorcana/`. Les
+    deux listent désormais les sets — sans sibling dataPack, zéro booster.
+    Naruto : chaque catalogue a déjà son dataPack ; on n'élargit pas à
+    Carddass depuis Ninja Ranks.
+  */
+  const selectedNeedDataSibling = !selected.some(
+    (pack) => pack.catalog?.dataPack,
+  );
 
   const byId = new Map<string, ProviderModule>();
   for (const pack of PROVIDER_MODULES) {
@@ -180,13 +189,13 @@ export function sealedProductModulesForShelf(input: {
       byId.set(pack.info.id, pack);
       continue;
     }
-    /*
-      Sibling data-only : le catalogue Lorcana a le dossier `lorcana/`, pas la
-      liste d'extensions. Un second catalogue qui sait aussi lister (Carddass)
-      reste hors allowlist.
-    */
     if (!pack.catalog?.dataPack) continue;
-    if (typeof pack.listPrintSets === "function") continue;
+    if (
+      typeof pack.listPrintSets === "function" &&
+      !selectedNeedDataSibling
+    ) {
+      continue;
+    }
     if (!(pack.printGames ?? []).some((game) => selectedGames.has(game))) {
       continue;
     }

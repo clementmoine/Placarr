@@ -1,7 +1,7 @@
 {
   "source": "vialudibunda.com (Magento shop)",
   "observed": "2026-08-16",
-  "note": "User pasted Magento 700×700 cache JPEGs. Canonical is the catalog original (drop /cache/{n}/{type}/{WxH}/{hash}/). Carddass FR Série 1 SKUs already in the catalogue (tiny carddass.fr GIFs). Shop SKUs (DeckS01/DeckS02) are theirs, not Bandai set codes. Search q=naruto = 3 SKUs (S1 only). Tric Trac starter boxes beat these Magento squares.",
+  "note": "User pasted Magento 700×700 cache JPEGs. Canonical is the catalog original (drop /cache/{n}/{type}/{WxH}/{hash}/). Carddass FR Série 1 SKUs already in the catalogue (tiny carddass.fr GIFs). Shop SKUs (DeckS01/DeckS02) are theirs, not Bandai set codes. Search q=naruto = 3 SKUs (S1 only). Tric Trac is listing_photo — these Magento faces win when both exist.",
   "products": [
     {
       "slug": "booster-s1",
@@ -46,8 +46,7 @@
       "staging": "staging/vialudibunda/starter-naruto-serie-1-maitre-hokage.jpg",
       "ingest": true,
       "pixels": { "width": 458, "height": 458 },
-      "doNotDisplace": "staging/trictrac/starter-maitre-hokage.jpeg",
-      "note": "Guessed n/a/naruto-serie-1-maitre-hokage.jpg is 404. Shop SKU DeckS02 is theirs, not Bandai S2."
+      "note": "Guessed n/a/naruto-serie-1-maitre-hokage.jpg is 404. Shop SKU DeckS02 is theirs, not Bandai S2. Catalogue preferred over Tric Trac photo."
     }
   ],
   "search": {

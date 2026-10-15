@@ -64,8 +64,6 @@ function catalogueIncompleteTags(
         ? `nom ← ${card.nameLocaleFrom.toUpperCase()}`
         : `name from ${card.nameLocaleFrom.toUpperCase()}`,
     );
-  } else if (card.nameSource?.startsWith("narutocards-net")) {
-    tags.push(fr ? "nom ~ slug net" : "slug-derived name");
   } else if (card.nameSource) {
     tags.push(fr ? `nom ~ ${card.nameSource}` : `derived: ${card.nameSource}`);
   }

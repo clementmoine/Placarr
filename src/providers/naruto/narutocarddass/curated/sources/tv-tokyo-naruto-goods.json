@@ -39,6 +39,14 @@
       "url": "https://www.tv-tokyo.co.jp/anime/naruto/sp/goods/other/other01/",
       "role": "疾風伝 第二幕+",
       "not": ["maki2", "data-carddass-as-tabletop"]
+    },
+    {
+      "url": "https://www.tv-tokyo.co.jp/anime/naruto2002/goods/nar_kemaki.html",
+      "role": "食玩 ラムネ カードスタンド ナルト木ノ葉絵巻 (CAN-1〜6)",
+      "packshot": "images/hobby/nkemak-p.jpg",
+      "sku": "jp-release-17",
+      "released": "2004-05-17",
+      "note": "Packshot + six composites figure/carte (nkemaki_Nf). Ingest packshot only — see tvtokyo-goods.json."
     }
   ]
 }

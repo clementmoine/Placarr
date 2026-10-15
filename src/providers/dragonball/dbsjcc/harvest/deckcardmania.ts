@@ -61,7 +61,7 @@ export type DeckcardmaniaAlbum = {
   idm: number;
   title: string;
   albumUrl: string;
-  /** `partN` / `sp` / `promo` when FR JCC corpus applies; else null. */
+  /** `partN` / `ssN` / `tinbox` / `sp` / `promo` when dbsjcc corpus applies; else null. */
   setHint: string | null;
   line: DeckcardmaniaLine;
   bandaiRange: string | null;
@@ -101,9 +101,15 @@ export function deckcardmaniaAbsoluteFileUrl(src: string): string | null {
   return `${DECKCARDMANIA_ORIGIN}/${pathPart}`;
 }
 
-/** Prefer big gallery file (`_iNb.jpg`) over thumb (`_iNs.jpg`). */
+/**
+ * Prefer the largest DCM file DCM actually hosts.
+ * Gallery: `_iNs.jpg` (thumb) → `_iNb.jpg` (big). Album: `{idm}s.jpg` → `{idm}b.jpg`.
+ * No higher “raw/ori/hd” tier exists on deckcardmania.com (probed 2026-10-15).
+ */
 export function preferDeckcardmaniaBigImage(src: string): string {
-  return src.replace(/(_i\d+)s\.(jpe?g|png|gif|webp)$/i, "$1b.$2");
+  return src
+    .replace(/(_i\d+)s\.(jpe?g|png|gif|webp)$/i, "$1b.$2")
+    .replace(/(\/\d+)s\.(jpe?g|png|gif|webp)$/i, "$1b.$2");
 }
 
 function decodeEntities(raw: string): string {
@@ -122,8 +128,9 @@ function stripTags(html: string): string {
 
 /**
  * Map album title → FR JCC setHint when attested.
- * `Série 1`…`Série 10` → partN ; SP → sp ; Promo → promo.
- * Super Séries / DBS Super Card Game / Zenzu → null (other packs / lines).
+ * `Série 1`…`Série 10` → partN ; Super Série N → ssN ; Tin box → tinbox ;
+ * SP → sp ; Promo → promo. DBS Super Card Game / Zenzu → null.
+ * DCM typo « Tim box » (idm=248) = Tin box métal Bandai — même setHint.
  */
 export function extractSetHintFromDeckcardmaniaTitle(
   title: string,
@@ -135,7 +142,15 @@ export function extractSetHintFromDeckcardmaniaTitle(
   if (/zenzu\s+blast/i.test(t)) {
     return { setHint: null, line: "other" };
   }
-  if (/super\s+s[eé]rie/i.test(t)) {
+  if (/\bti[mn]\s*box\b/i.test(t)) {
+    return { setHint: "tinbox", line: "other" };
+  }
+  const superSerie = t.match(/\bsuper\s+s[eé]rie\s+(\d{1,2})\b/i);
+  if (superSerie) {
+    const n = Number.parseInt(superSerie[1]!, 10);
+    if (Number.isFinite(n) && n >= 1 && n <= 6) {
+      return { setHint: `ss${n}`, line: "super-serie" };
+    }
     return { setHint: null, line: "super-serie" };
   }
   if (/\bs[eé]rie\s+promo\b/i.test(t)) {
@@ -305,8 +320,11 @@ export function parseDeckcardmaniaAlbumHtml(
   const packshotRel = html.match(
     new RegExp(`(?:src|href)=["'](files/${DECKCARDMANIA_IDF}/${idm}b\\.(?:jpe?g|png|gif))["']`, "i"),
   );
-  const packshotUrl = packshotRel
+  const packshotAbs = packshotRel
     ? deckcardmaniaAbsoluteFileUrl(packshotRel[1]!)
+    : null;
+  const packshotUrl = packshotAbs
+    ? preferDeckcardmaniaBigImage(packshotAbs)
     : null;
 
   const gallery: DeckcardmaniaGalleryImage[] = [];
@@ -317,7 +335,8 @@ export function parseDeckcardmaniaAlbumHtml(
   );
   let m: RegExpExecArray | null;
   while ((m = linkRe.exec(html)) !== null) {
-    const big = deckcardmaniaAbsoluteFileUrl(m[1]!);
+    const bigRaw = deckcardmaniaAbsoluteFileUrl(m[1]!);
+    const big = bigRaw ? preferDeckcardmaniaBigImage(bigRaw) : null;
     if (!big || seen.has(big)) continue;
     seen.add(big);
     const titleAttr = decodeEntities(m[3]!).trim();
@@ -332,13 +351,14 @@ export function parseDeckcardmaniaAlbumHtml(
     });
   }
 
-  // Fallback: links without paired thumb in the same <a>
+  // Fallback: links without paired thumb in the same <a> (also upgrade any _iNs).
   const looseRe = new RegExp(
-    `href=["'](files/${DECKCARDMANIA_IDF}/${idm}_i(\\d+)b\\.(?:jpe?g|png|gif))["'][^>]*title=["']([^"']*)["']`,
+    `href=["'](files/${DECKCARDMANIA_IDF}/${idm}_i(\\d+)[sb]?\\.(?:jpe?g|png|gif))["'][^>]*title=["']([^"']*)["']`,
     "gi",
   );
   while ((m = looseRe.exec(html)) !== null) {
-    const big = deckcardmaniaAbsoluteFileUrl(m[1]!);
+    const bigRaw = deckcardmaniaAbsoluteFileUrl(m[1]!);
+    const big = bigRaw ? preferDeckcardmaniaBigImage(bigRaw) : null;
     if (!big || seen.has(big)) continue;
     seen.add(big);
     const titleAttr = decodeEntities(m[3]!).trim();

@@ -268,30 +268,62 @@ function curatedHasInventory(patch: CuratedSealedSku): boolean {
   );
 }
 
-function guessKindFromSlug(slug: string): SealedKind {
-  if (slug.startsWith("booster")) return "booster";
-  if (slug.startsWith("pack-decouverte") || slug.includes("deck-bundle")) {
+/**
+ * Kind from slug shape. Prefer infix match — dbsjcc dual decks are
+ * `part4-starter-forces-du-mal`, not `starter-…`.
+ */
+export function guessSealedKindFromSlug(slug: string): SealedKind {
+  const s = slug.trim().toLowerCase();
+  if (s.startsWith("pack-decouverte") || s.includes("deck-bundle")) {
     return "deck_bundle";
   }
-  if (slug.startsWith("tin")) return "tin";
-  if (slug.startsWith("starter") || slug.startsWith("deck")) return "deck";
+  if (/(^|-)booster(-box|-display)?(-|$)/.test(s) || s.startsWith("booster")) {
+    if (s.includes("-box") || s.includes("display")) return "display";
+    return "booster";
+  }
+  if (s.startsWith("tin") || /(^|-)tin(-|$)/.test(s)) return "tin";
+  if (
+    /(^|-)starter(-|$)/.test(s) ||
+    /(^|-)deck(-|$)/.test(s) ||
+    s.startsWith("deck") ||
+    s.startsWith("starter")
+  ) {
+    return "deck";
+  }
   return "coffret";
+}
+
+/** `part4-starter-forces-du-mal` → `part4`; `ss5-starter` → `ss5`. */
+export function guessSealedSetCodeFromSlug(slug: string): string | null {
+  const m = /^(part\d+|ss\d+|tinbox|sp|promo|accessory)(?:-|$)/i.exec(
+    slug.trim(),
+  );
+  return m ? m[1]!.toLowerCase() : null;
 }
 
 /** Minimal row so curated can mint a SKU the boutique index dropped. */
 function stubSealedEntry(_packId: string, slug: string): SealedProductEntry {
-  const kind = guessKindFromSlug(slug);
+  const kind = guessSealedKindFromSlug(slug);
+  const setCode = guessSealedSetCodeFromSlug(slug);
   return {
     slug,
     path: `curated/${slug}`,
     kind,
     behavior: kind === "booster" ? "random_pack" : "known_bundle",
-    category: kind === "booster" ? "boosters" : "decks",
+    category:
+      kind === "booster"
+        ? "boosters"
+        : kind === "deck"
+          ? "starter-deck"
+          : kind === "display"
+            ? "booster-box"
+            : "decks",
     name: null,
     image: null,
     imageBack: null,
     setLogo: null,
-    setCode: null,
+    setCode,
+    catalogueSetId: setCode,
     lang: null,
     releaseDate: null,
     priceCents: null,

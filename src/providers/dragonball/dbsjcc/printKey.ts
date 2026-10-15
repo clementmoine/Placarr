@@ -14,6 +14,13 @@ const SET_LABELS_SHORT: Readonly<Record<string, string>> = {
   part8: "Série 8",
   part9: "Série 9",
   part10: "Série 10",
+  ss1: "Super Série 1",
+  ss2: "Super Série 2",
+  ss3: "Super Série 3",
+  ss4: "Super Série 4",
+  ss5: "Super Série 5",
+  ss6: "Super Série 6",
+  tinbox: "Tin box",
   promo: "Série Promo",
   sp: "Hors-Série",
   accessory: "Accessoire",
@@ -39,6 +46,13 @@ const SET_THEMES: Readonly<Record<string, string>> = {
   part8: "Nouvelle Épreuve",
   part9: "Héros",
   part10: "Guerriers Légendaires",
+  ss1: "Goku",
+  ss2: "Prince Vegeta",
+  ss3: "Gohan contre-attaque",
+  ss4: "Puissance des Saiyans",
+  ss5: "Premiers combats",
+  ss6: "Redoutable Majin Buu",
+  tinbox: "Hobby / Collector",
 };
 
 /**
@@ -123,8 +137,12 @@ export function dbsjccSetLabel(setCode: string): string {
   const key = setCode.trim().toLowerCase();
   const theme = SET_THEMES[key];
   if (theme) {
-    const n = /^part(\d+)$/.exec(key)?.[1];
-    return n ? `Série ${n} — ${theme}` : theme;
+    const part = /^part(\d+)$/.exec(key)?.[1];
+    if (part) return `Série ${part} — ${theme}`;
+    const ss = /^ss(\d+)$/.exec(key)?.[1];
+    if (ss) return `Super Série ${ss} — ${theme}`;
+    if (key === "tinbox") return `Tin box — ${theme}`;
+    return theme;
   }
   if (key === "promo") return "Promo (hors série)";
   if (key === "sp") return "Hors-série";
@@ -141,6 +159,9 @@ export function dbsjccSetDisplayCode(setCode: string): string | null {
   const key = setCode.trim().toLowerCase();
   const part = /^part(\d+)$/.exec(key);
   if (part) return `S${part[1]}`;
+  const ss = /^ss(\d+)$/.exec(key);
+  if (ss) return `SS${ss[1]}`;
+  if (key === "tinbox") return "TIN";
   return null;
 }
 
@@ -149,7 +170,7 @@ export function dbsjccSetPrefixCode(setCode: string): boolean {
   return setCode.trim().toLowerCase() !== "accessory";
 }
 
-/** Série 1…10 chronologiques, puis Promo, Hors-Série, Accessoire. */
+/** Série 1…10, Super Série 1…6, Tin box, puis Promo / Hors-Série / Accessoire. */
 export function dbsjccSetSortKey(setCode: string): number | null {
   const key = setCode.trim().toLowerCase();
   const part = /^part(\d+)$/.exec(key);
@@ -157,6 +178,12 @@ export function dbsjccSetSortKey(setCode: string): number | null {
     const n = Number.parseInt(part[1]!, 10);
     return Number.isFinite(n) ? n : null;
   }
+  const ss = /^ss(\d+)$/.exec(key);
+  if (ss) {
+    const n = Number.parseInt(ss[1]!, 10);
+    return Number.isFinite(n) ? 20 + n : null;
+  }
+  if (key === "tinbox") return 30;
   if (key === "promo") return 100;
   if (key === "sp") return 101;
   if (key === "accessory") return 102;

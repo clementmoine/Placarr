@@ -27,9 +27,12 @@ JA faces = nikita + Chitoroshop + Hatatoy — pas d’`art.carddass.com` invent�
 
 Ledger : `sources/deckcardmania.json` (albums idf=3, hub grandes séries).
 Contenu typique : packshot `files/3/{idm}b.jpg`, listes **Cartes Rares** / **Holographiques** (D-###), galerie (liste / dos / exemples / samples nommés).
-- Packshots → `art.deckcardmania.jpg` à côté des sealed `partN` / `sp` / `promo` déjà présents ; Super Séries / DBS CG / Zenzu restent en `data/…/staging/deckcardmania/`.
+- Packshot album Série 1–10 (`{idm}b.jpg`) → **staging only** (collage multi-SKU). Super Série / Tin box (`ssN` / `tinbox`) → primary sealed slug (une fiche ≈ un SKU).
+- **Tin box ≠ Coffret Métal** : `tinbox-2008` (Hobby Ref 05056 / EAN …0567, front dbzc 1512 + dos 1513) et `tinbox-2010` sous set `tinbox` ; `part9-box-1512` = Coffret Métal Ultrajeux 7791 (EAN …0574), art Ultrajeux only. Orphans dbzc (d-tecteurs, doublons num) → `data/dragonball/jcc/quarantine/orphan-dbzc-sealed/`.
+- **Dual decks S1–5** : les ids packaging dbzc (`1191`/`1194`/…) portaient souvent l’art de l’**autre** deck du duo — ré-homés sur les slugs thématiques (`…-ennemis`, `…-ruban-rouge`, …). Voir `staging/misfiled/dual-deck-dbzc-swap/`.
+- Galerie **légendée** (`title=` sur le lien) : « Deck Planète », « Deck Résistance », « Booster de 8 cartes », « Pochette », « Deck de 32 cartes » → `art.deckcardmania.jpg` sur **un** slug (`deckcardmaniaSealedSlugs.ts`). Les `_iNs` thumbs sont ignorés ; on prend `_iNb`.
 - Samples faces **uniquement** si title/alt nomme clairement une carte (`Carte SP01`, `D-86`) → `art.deckcardmania.jpg` lang=fr.
-- Variantes ambiguës (`D 933-1`, `Carte 189-1` Super Série) : ledger only, pas d’install.
+- Variantes ambiguës (`D 933-1`, `Carte 189-1`) : ledger only, pas d’install.
 - **Ce n’est pas** un dump face-par-face type Chitoroshop / Hatatoy.
 
 ## Dos

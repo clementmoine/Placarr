@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "dragonball/jcc",
-  "updatedAt": "2026-10-12",
+  "updatedAt": "2026-10-15",
   "byKind": {
     "booster": {
       "source": "dbzcollection ledger cardsPerBooster=8 + manga-sanctuary news 3101 (8 cartes dont 1 holo)",
@@ -42,7 +42,7 @@
   "skus": {
     "part1-starter-1190": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -259,7 +259,7 @@
     },
     "part1-starter-ennemis": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -476,7 +476,7 @@
     },
     "part2-starter-1193": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -658,7 +658,7 @@
     },
     "part3-starter-1197": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -826,7 +826,7 @@
     },
     "part3-starter-championnat": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1001,7 +1001,7 @@
     },
     "part4-starter-forces-du-mal": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1162,7 +1162,7 @@
     },
     "part4-starter-1200": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1330,7 +1330,7 @@
     },
     "part5-starter-1203": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1519,7 +1519,7 @@
     },
     "part5-starter-resistance": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1708,7 +1708,7 @@
     },
     "part6-starter-1206": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1855,7 +1855,7 @@
     },
     "part7-starter-1208": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2030,7 +2030,7 @@
     },
     "part8-starter-1213": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2233,7 +2233,7 @@
     },
     "part9-starter-1216": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2457,7 +2457,7 @@
     },
     "part10-starter-1219": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2681,7 +2681,7 @@
     },
     "part1-booster-1188": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2692,7 +2692,7 @@
     },
     "part2-booster-1192": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2703,7 +2703,7 @@
     },
     "part3-booster-1196": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2714,7 +2714,7 @@
     },
     "part4-booster-1199": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2725,7 +2725,7 @@
     },
     "part5-booster-1202": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2747,7 +2747,7 @@
     },
     "part6-booster-1205": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2758,7 +2758,7 @@
     },
     "part7-booster-1207": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2769,7 +2769,7 @@
     },
     "part8-booster-1210": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2780,7 +2780,7 @@
     },
     "part9-booster-1215": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2791,7 +2791,7 @@
     },
     "part10-booster-1218": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2802,7 +2802,7 @@
     },
     "part2-starter-ruban-rouge": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-12",
+      "verifiedAt": "2026-10-15",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2978,12 +2978,20 @@
       "notes": "Structure dos : 1 deck série 6 + 1 booster série 2 + 1 booster série 3 + 1 holo exclusive (Vegeto). Texte Ultrajeux (4 boosters) non retenu — contredit le dos scellé."
     },
     "part9-box-1512": {
-      "source": "Ultrajeux produit 7791 (EAN 3296580050574) + dbzc tin box 2008 + Amazon B001GXR350",
-      "verifiedAt": "2026-10-04",
+      "source": "Ultrajeux produit 7791 (EAN 3296580050574)",
+      "verifiedAt": "2026-10-15",
       "kind": "collector_box",
       "behavior": "mixed_bundle",
       "contentsKnown": false,
-      "notes": "Ultrajeux : 1 starter Super Série Prince Vegeta + 1 starter Série 2 (Ruban Rouge ou Éveil de Gohan) + 1 booster Super Série Prince Vegeta + 1 promo exclusive. Amazon/dbzc : variantes 2 starters + booster + SP. Contenu packs non figé — Super Séries hors corpus cartes dbsjcc."
+      "notes": "Coffret Métal Ultrajeux : 1 starter Super Série Prince Vegeta + 1 starter Série 2 + 1 booster Super Série Prince Vegeta + 1 promo. Distinct de tinbox-2008 (Hobby Ref 05056 / EAN …0567)."
+    },
+    "tinbox-2008": {
+      "source": "dbzc packaging 1512 front + 1513 back (EAN 3296580050567 Ref 05056)",
+      "verifiedAt": "2026-10-15",
+      "kind": "collector_box",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Dos attesté : 2 boosters Série 9 + 2 boosters Série 2/4/5/6 + 2 holos exclusives. Édition Collector / Tin Box Hobby 2008."
     }
   }
 }

@@ -96,6 +96,19 @@ describe("deckcardmaniaAbsoluteFileUrl / preferDeckcardmaniaBigImage", () => {
         "https://www.deckcardmania.com/files/3/120_i5s.jpg",
       ),
     ).toBe("https://www.deckcardmania.com/files/3/120_i5b.jpg");
+    expect(
+      preferDeckcardmaniaBigImage(
+        "https://www.deckcardmania.com/files/3/117_i2s.jpg",
+      ),
+    ).toBe("https://www.deckcardmania.com/files/3/117_i2b.jpg");
+  });
+
+  it("prefers album packshot b over s", () => {
+    expect(
+      preferDeckcardmaniaBigImage(
+        "https://www.deckcardmania.com/files/3/112s.jpg",
+      ),
+    ).toBe("https://www.deckcardmania.com/files/3/112b.jpg");
   });
 });
 
@@ -126,12 +139,31 @@ describe("extractSetHintFromDeckcardmaniaTitle", () => {
     ).toEqual({ setHint: "promo", line: "jcc-promo" });
   });
 
-  it("leaves Super Séries / DBS CG / Zenzu without a dbsjcc setHint", () => {
+  it("maps Super Série N → ssN and Tin box → tinbox", () => {
     expect(
       extractSetHintFromDeckcardmaniaTitle(
         "DragonBall - Super Série 1 - Goku - Cartes à jouer",
       ),
-    ).toEqual({ setHint: null, line: "super-serie" });
+    ).toEqual({ setHint: "ss1", line: "super-serie" });
+    expect(
+      extractSetHintFromDeckcardmaniaTitle(
+        "DragonBall - Super Série 4 Puissance des Saiyans - Français",
+      ),
+    ).toEqual({ setHint: "ss4", line: "super-serie" });
+    // DCM idm=248 title typo « Tim » ; Bandai = Tin box.
+    expect(
+      extractSetHintFromDeckcardmaniaTitle(
+        "DragonBall - Tim box 2010 - Cartes Promo -",
+      ),
+    ).toEqual({ setHint: "tinbox", line: "other" });
+    expect(
+      extractSetHintFromDeckcardmaniaTitle(
+        "DragonBall - Tin box Hobby 2008 - Français",
+      ),
+    ).toEqual({ setHint: "tinbox", line: "other" });
+  });
+
+  it("leaves DBS CG / Zenzu without a dbsjcc setHint", () => {
     expect(
       extractSetHintFromDeckcardmaniaTitle(
         "DragonBall Super Card Game - Galactic Battle - Français",

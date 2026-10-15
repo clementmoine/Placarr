@@ -55,6 +55,8 @@ describe("printKey", () => {
   it("formats reference strings nicely", () => {
     expect(dbsjccSetLabel("part1")).toBe("Série 1 — Super-Saiyans");
     expect(dbsjccSetLabel("part5")).toBe("Série 5 — Planète / Résistance");
+    expect(dbsjccSetLabel("ss4")).toBe("Super Série 4 — Puissance des Saiyans");
+    expect(dbsjccSetLabel("tinbox")).toBe("Tin box — Hobby / Collector");
     expect(dbsjccSetLabel("promo")).toBe("Promo (hors série)");
     expect(dbsjccSetLabel("sp")).toBe("Hors-série");
     expect(dbsjccSetLabel("accessory")).toBe("Détecteur");
@@ -72,6 +74,8 @@ describe("printKey", () => {
   it("orders Série 1…10 before promo, hors-série and accessoire", () => {
     expect(dbsjccSetSortKey("part1")).toBe(1);
     expect(dbsjccSetSortKey("part10")).toBe(10);
+    expect(dbsjccSetSortKey("ss1")).toBe(21);
+    expect(dbsjccSetSortKey("tinbox")).toBe(30);
     expect(dbsjccSetSortKey("promo")).toBe(100);
     expect(dbsjccSetSortKey("sp")).toBe(101);
     expect(dbsjccSetSortKey("accessory")).toBe(102);

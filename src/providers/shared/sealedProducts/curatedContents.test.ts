@@ -3,7 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { mergeCuratedSealedContents } from "./curatedContents";
+import {
+  guessSealedKindFromSlug,
+  guessSealedSetCodeFromSlug,
+  mergeCuratedSealedContents,
+} from "./curatedContents";
 import type { SealedProductEntry } from "./indexFormat";
 
 const roots: string[] = [];
@@ -254,6 +258,37 @@ describe("mergeCuratedSealedContents", () => {
       }),
     });
     expect(merged.a?.guaranteedPrints).toEqual(existing);
+  });
+
+  it("guesses deck kind + setCode for infix -starter- slugs (dbsjcc dual decks)", () => {
+    expect(guessSealedKindFromSlug("part4-starter-forces-du-mal")).toBe("deck");
+    expect(guessSealedSetCodeFromSlug("part4-starter-forces-du-mal")).toBe(
+      "part4",
+    );
+    expect(guessSealedKindFromSlug("part5-starter-resistance")).toBe("deck");
+    expect(guessSealedSetCodeFromSlug("ss5-starter")).toBe("ss5");
+    expect(guessSealedKindFromSlug("part5-booster-1202")).toBe("booster");
+  });
+
+  it("mints dual-deck stubs as deck with setCode, not coffret", () => {
+    stubPack("dragonball/jcc", {
+      version: 1,
+      pack: "dragonball/jcc",
+      updatedAt: "2026-10-15",
+      skus: {
+        "part4-starter-forces-du-mal": {
+          source: "test",
+          verifiedAt: "2026-10-15",
+          contentsKnown: true,
+          guaranteedPrintKeys: ["dbsjcc:part4-d0024"],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("dragonball/jcc", {});
+    const row = merged["dragonball/jcc::part4-starter-forces-du-mal"];
+    expect(row?.kind).toBe("deck");
+    expect(row?.setCode).toBe("part4");
+    expect(row?.category).toBe("starter-deck");
   });
 
   it("mints curated SKUs that have inventory but are absent from the index", () => {

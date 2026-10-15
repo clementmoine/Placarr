@@ -133,9 +133,15 @@ function mintDeckTemplate(
   const cardsPerPack =
     kind === "deck"
       ? (sibling?.cardsPerPack ?? 32)
-      : (sibling?.cardsPerPack ?? 8);
+      : kind === "booster" || kind === "display"
+        ? (sibling?.cardsPerPack ?? 8)
+        : null;
   const packsContained =
-    kind === "display" ? 24 : (sibling?.packsContained ?? 1);
+    kind === "display"
+      ? 24
+      : kind === "booster" || kind === "deck"
+        ? (sibling?.packsContained ?? 1)
+        : null;
   return {
     slug: row.slug,
     path: sibling?.path ?? row.referer ?? row.url,
@@ -229,10 +235,30 @@ export async function installDbsJccPressPackshots(
     }
 
     if (existing.name !== row.title) renamed += 1;
+    // Realign identity when curated stub minted as coffret / setCode null
+    // (e.g. `part4-starter-forces-du-mal` — infix `-starter-`, not prefix).
+    const kind = (row.kind as SealedKind) || existing.kind;
+    const category =
+      kind === "display"
+        ? "booster-box"
+        : kind === "collector_box"
+          ? "tin-box"
+          : kind === "booster"
+            ? "boosters"
+            : kind === "deck"
+              ? "starter-deck"
+              : existing.category;
     products[existingKey] = {
       ...existing,
       name: row.title,
       image: imageUrl,
+      kind,
+      behavior: sealedBehaviorForKind(kind),
+      category,
+      setCode: row.setCode || existing.setCode,
+      catalogueSetId:
+        row.setCode || existing.catalogueSetId || existing.setCode,
+      lang: row.lang || existing.lang || "fr",
     };
   }
 

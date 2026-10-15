@@ -1,24 +1,28 @@
 /**
  * Install DeckCardMania assets onto dbsjcc — honest set-fiche scope.
  *
- * 1. Packshots → `art.deckcardmania.jpg` beside existing sealed SKUs for
- *    matching `partN` / `sp` / `promo` (never wipe the products index).
- * 2. Non-matching albums (Super Séries / DBS CG / Zenzu) → staging only.
- * 3. Rarity stamp from DCM rare/holo lists onto FR titles when rarity empty.
- * 4. Named sample faces (`Carte SP01` / `D-###`) → `art.deckcardmania.jpg`
- *    under lang=fr when unambiguously matchable.
- * 5. Dos gallery documented in BACK.md — never overwrite nikita / FR backs.
+ * 1. Album packshots Série 1–10 → staging only (often multi-SKU collage).
+ *    Super Série / Tin box → primary sealed slug when one SKU per fiche.
+ * 2. Gallery captions « Deck Planète » / « Booster de 8 cartes » → one
+ *    `art.deckcardmania.jpg` on the matching sealed slug (never spray).
+ * 3. DBS CG / Zenzu albums → staging only (hors corpus).
+ * 4. Rarity stamp from DCM rare/holo lists onto FR titles when rarity empty.
+ * 5. Named sample faces (`Carte SP01` / `D-###`) → card `art.deckcardmania`.
+ * 6. Dos gallery documented in BACK.md — never overwrite nikita / FR backs.
  */
 import {
   copyFileSync,
   existsSync,
   mkdirSync,
-  readdirSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
 
 import { packCardDir, packDataDir, packSealedProductsDir } from "@/lib/packPaths";
+import {
+  primarySealedSlugForSet,
+  sealedSlugFromDeckcardmaniaGalleryTitle,
+} from "./deckcardmaniaSealedSlugs";
 import {
   downloadCardFaceBytes,
   installCardFace,
@@ -72,18 +76,6 @@ async function downloadToFile(
   if (!buf) return "failed";
   writeFileSync(dest, buf);
   return "written";
-}
-
-function productDirsForSet(setCode: string): string[] {
-  const root = packSealedProductsDir(DBS_JCC_PACK_ID);
-  if (!existsSync(root)) return [];
-  const out: string[] = [];
-  for (const slug of readdirSync(root)) {
-    if (!slug.startsWith(`${setCode}-`)) continue;
-    const fr = path.join(root, slug, "fr");
-    if (existsSync(fr)) out.push(fr);
-  }
-  return out;
 }
 
 function candidatesForNumber(
@@ -173,17 +165,45 @@ export async function installDbsJccDeckcardmaniaPackshots(
       if (dl === "failed") failed += 1;
       else {
         if (dl === "written") packshotsDownloaded += 1;
-        if (album.setHint) {
-          const dirs = productDirsForSet(album.setHint);
-          if (dirs.length === 0) {
-            stagedOnly += 1;
-          } else {
-            for (const dir of dirs) {
-              const dest = path.join(dir, `art.${SOURCE}.jpg`);
-              if (!opts.force && existsSync(dest)) continue;
-              copyFileSync(localPack, dest);
+        /*
+          Série 1–10 album packshot = collage multi-SKU → staging only.
+          Super Série / Tin box = une fiche ≈ un SKU → copier sur le primary.
+        */
+        const set = album.setHint?.trim().toLowerCase() ?? "";
+        /*
+          Album packshot → primary starter when the fiche is one themed deck
+          (Super Série / Tin box / Série 6–10). Never for S1–5 (dual decks /
+          collage). Prefer gallery `_iNb` captions when present.
+        */
+        const partN = /^part(\d+)$/.exec(set);
+        const allowAlbumPackshot =
+          /^ss\d+$/.test(set) ||
+          set === "tinbox" ||
+          (partN != null &&
+            Number.parseInt(partN[1]!, 10) >= 6 &&
+            Number.parseInt(partN[1]!, 10) <= 10);
+        if (allowAlbumPackshot) {
+          const sealedSlug =
+            primarySealedSlugForSet(set) ?? null;
+          if (sealedSlug) {
+            const productFr = path.join(
+              packSealedProductsDir(DBS_JCC_PACK_ID),
+              sealedSlug,
+              "fr",
+            );
+            const productArt = path.join(productFr, `art.${SOURCE}.jpg`);
+            if (
+              existsSync(productFr) &&
+              (opts.force || !existsSync(productArt)) &&
+              existsSync(localPack)
+            ) {
+              copyFileSync(localPack, productArt);
               packshotsInstalled += 1;
+            } else {
+              stagedOnly += 1;
             }
+          } else {
+            stagedOnly += 1;
           }
         } else {
           stagedOnly += 1;
@@ -204,7 +224,30 @@ export async function installDbsJccDeckcardmaniaPackshots(
       const dest = path.join(albumDir, `${safe}.jpg`);
       const dl = await downloadToFile(img.url, dest, { force: opts.force });
       if (dl === "written") galleryStaged += 1;
-      else if (dl === "failed") failed += 1;
+      else if (dl === "failed") {
+        failed += 1;
+        continue;
+      }
+
+      const sealedSlug = sealedSlugFromDeckcardmaniaGalleryTitle(
+        album.setHint,
+        img.title,
+      );
+      if (!sealedSlug) continue;
+      const productFr = path.join(
+        packSealedProductsDir(DBS_JCC_PACK_ID),
+        sealedSlug,
+        "fr",
+      );
+      if (!existsSync(productFr)) {
+        stagedOnly += 1;
+        continue;
+      }
+      const productArt = path.join(productFr, `art.${SOURCE}.jpg`);
+      if (!opts.force && existsSync(productArt)) continue;
+      if (!existsSync(dest)) continue;
+      copyFileSync(dest, productArt);
+      packshotsInstalled += 1;
     }
   }
 

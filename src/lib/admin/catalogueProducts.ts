@@ -508,7 +508,7 @@ export async function getCatalogueProductDetailAsync(
     slug: entry.slug,
     name: entry.name,
   });
-  const [randomPoolPrints, guaranteedPrints] = await Promise.all([
+  const [rawPool, guaranteedPrints] = await Promise.all([
     resolveSealedSetLotteryPool({
       packId: corpus,
       setCode: lotterySetId,
@@ -522,6 +522,12 @@ export async function getCatalogueProductDetailAsync(
       prints: entry.guaranteedPrints,
     }),
   ]);
+  // Listed pools often store name=printKey until lookup fills FR/JA titles.
+  const randomPoolPrints = await enrichSealedPrintLinks({
+    packId: corpus,
+    lang: row.lang,
+    prints: rawPool,
+  });
   return {
     ...row,
     cardsPerPack: entry.cardsPerPack,

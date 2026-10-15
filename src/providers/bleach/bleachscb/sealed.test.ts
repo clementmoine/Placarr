@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   BLEACH_SCB_CURATED_ART,
+  bleachFrS1BoosterPoolPrintKeys,
   bleachScbPressPackshotLedger,
+  buildBleachScbProductsContents,
 } from "./sealed";
 
 describe("bleachscb sealed press packshots", () => {
@@ -42,5 +44,24 @@ describe("bleachscb sealed press packshots", () => {
       primary: "display_s1_ultrajeux.jpg",
       source: "ultrajeux",
     });
+  });
+
+  it("lists FR S1 booster pool from carddass ledger (not JA set s)", () => {
+    const keys = bleachFrS1BoosterPoolPrintKeys();
+    expect(keys.length).toBeGreaterThanOrEqual(60);
+    expect(keys.every((k) => k.startsWith("bleachscb:"))).toBe(true);
+    expect(keys.some((k) => k.startsWith("bleachscb:a-"))).toBe(true);
+    expect(keys.some((k) => k.startsWith("bleachscb:s-"))).toBe(false);
+    expect(keys.some((k) => k.startsWith("bleachscb:p-"))).toBe(false);
+
+    const contents = buildBleachScbProductsContents();
+    const booster = contents.skus["booster-s1-shinigami-and-ichigo"];
+    expect(booster?.randomPoolScope).toBe("listed");
+    expect(booster?.randomPoolPrintKeys).toEqual(keys);
+    const display = contents.skus["display-s1-shinigami-and-ichigo"];
+    expect(display?.randomPoolScope).toBe("none");
+    expect(display?.guaranteedProducts?.[0]?.slug).toBe(
+      "booster-s1-shinigami-and-ichigo",
+    );
   });
 });

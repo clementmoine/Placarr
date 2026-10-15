@@ -29,6 +29,7 @@ import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
 import pressPackshotsLedgerJson from "./curated/sources/press-packshots.json";
 import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "./pack";
+import { bleachScbPrintKey } from "./printKey";
 import {
   bleachPrintedToPrintKey,
   parseBleachS1StarterDecks,
@@ -111,11 +112,46 @@ export function bleachScbSealedContentHash(): string {
   return hashCatalogArtefactBytes(Buffer.concat(parts));
 }
 
+/**
+ * FR S1 booster lottery — letter sets a/c/e/z (âmes, combat, événements,
+ * zanpakutô). Never JA set `s` (Soul nikita) : FR SKUs must not resolve to
+ * 黒崎 titles. Bandai announces 58 booster-available cards; ledger has 69
+ * non-promo FR printKeys — exact starter-only vs booster split not keyed yet.
+ */
+export function bleachFrS1BoosterPoolPrintKeys(): string[] {
+  const ledgerPath = path.join(
+    bleachScbCuratedDir(),
+    "sources",
+    "carddass-fr-bleach.json",
+  );
+  if (!existsSync(ledgerPath)) return [];
+  try {
+    const raw = JSON.parse(readFileSync(ledgerPath, "utf8")) as {
+      cards?: Array<{ set?: string; number?: string; type?: string }>;
+    };
+    const cards = Array.isArray(raw.cards) ? raw.cards : [];
+    const keys = new Set<string>();
+    for (const card of cards) {
+      const set = card.set?.trim().toLowerCase() ?? "";
+      const number = card.number?.trim() ?? "";
+      if (!set || !number) continue;
+      if (set === "p" || card.type === "promo") continue;
+      if (!/^[acez]$/.test(set)) continue;
+      const printKey = bleachScbPrintKey(set, number);
+      if (printKey) keys.add(printKey);
+    }
+    return [...keys].sort();
+  } catch {
+    return [];
+  }
+}
+
 /** Build + write `products-contents.json` from S1 HTML decklists. */
 export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
   const html = stagingS1Html() ?? "";
   const decks = parseBleachS1StarterDecks(html);
   const skus: CuratedSealedContentsFile["skus"] = {};
+  const boosterPool = bleachFrS1BoosterPoolPrintKeys();
 
   for (const deck of decks) {
     const guaranteedPrints = deck.lines
@@ -129,7 +165,7 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
     skus[deck.slug] = {
       source: SOURCE,
       verifiedAt: VERIFIED,
-      notes: `${deck.nameFr} — ${sum} cartes (liste Bandai FR ; « 32 + Zanpakutô » sur la fiche). Boosters S1 = 8 cartes, pool set.`,
+      notes: `${deck.nameFr} — ${sum} cartes (liste Bandai FR ; « 32 + Zanpakutô » sur la fiche). Boosters S1 = 8 cartes, pool FR listé.`,
       cardsPerPack: null,
       packsContained: 1,
       declaredCardCount: sum,
@@ -146,10 +182,11 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
     source: SOURCE,
     verifiedAt: VERIFIED,
     notes:
-      "Booster « Shinigami and Ichigo » — 8 cartes dont 1 spéciale ; pool = 58 cartes booster S1 (pas le set starter). EAN 3296580052110.",
+      `Booster « Shinigami and Ichigo » — 8 cartes dont 1 spéciale. EAN 3296580052110. Pool loterie = corpus FR S1 hors promos (${boosterPool.length} printKeys a/c/e/z) ; Bandai annonce 58 cartes booster — découpe starter-only non attestée carte-à-carte. Pas le set JA « s ».`,
     cardsPerPack: 8,
     packsContained: 1,
-    randomPoolScope: "set",
+    randomPoolScope: "listed",
+    randomPoolPrintKeys: boosterPool,
     contentsKnown: false,
     containsPrintsIsPreview: false,
   };
@@ -159,12 +196,14 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
       "https://www.ultrajeux.com/produit-1137-bleach-serie-1-shinigami-and-ichigo-3296580052110.html",
     verifiedAt: VERIFIED,
     notes:
-      "Boîte display S1 (photo Ultrajeux). Fiche boutique confond EAN sachet — ne pas fusionner avec booster-s1. packsContained inconnu.",
+      "Boîte display S1 (photo Ultrajeux). Fiche boutique confond EAN sachet — ne pas fusionner avec booster-s1. Loterie = sachets enfants ; qty sachets inconnue.",
     cardsPerPack: 8,
     packsContained: null,
-    randomPoolScope: "set",
+    behavior: "pack_container",
+    randomPoolScope: "none",
     contentsKnown: false,
     containsPrintsIsPreview: false,
+    guaranteedProducts: [{ slug: "booster-s1-shinigami-and-ichigo" }],
   };
 
   const file: CuratedSealedContentsFile = {
@@ -177,7 +216,7 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
         verifiedAt: VERIFIED,
         cardsPerPack: 8,
         packsContained: 1,
-        randomPoolScope: "set",
+        randomPoolScope: "listed",
         contentsKnown: false,
         notes: "FR S1 : 8 cartes / sachet (Bandai carddass.fr).",
       },
@@ -185,9 +224,10 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
         source: SOURCE,
         verifiedAt: VERIFIED,
         cardsPerPack: 8,
-        randomPoolScope: "set",
+        behavior: "pack_container",
+        randomPoolScope: "none",
         contentsKnown: false,
-        notes: "Display S1 — qty sachets non attestée.",
+        notes: "Display S1 — loterie dans les boosters ; qty sachets non attestée.",
       },
       deck: {
         source: SOURCE,
@@ -315,7 +355,8 @@ export function ingestBleachScbSealedProducts(
       name: row.name,
       source: art.source,
       setCode: "s1",
-      catalogueSetId: "s",
+      // FR retail S1 — not JA catalogue set `s` (would expand nikita Soul titles).
+      catalogueSetId: null,
       lang: "fr",
       releaseDate: "2008",
       declaredCardCount: row.kind === "deck" ? row.cardsPerPack : null,

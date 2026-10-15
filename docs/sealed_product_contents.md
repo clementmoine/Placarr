@@ -90,7 +90,7 @@ lorcards c'est souvent la taille du **set** (420), pas du sachet.
 | One Piece | `byKind` pool=`set` | `byKind` 24 | **38 / 58** decks known — ST-01–07/10/21 + ST-29–35 Tier One 収録枚数 ; **ST-36** membership only ; ST-14 sans table |
 | DBS JCC | **`byKind` 8** + pool=`set` | partiel | **0 / 17** — taille 32 attestée ; **pas de checklist starter** (dbzcollection / Wayback) |
 | Naruto Carddass | **FR/IT 8** (`byKind`) | partiel | **7 / 8** starters FR S1–S4 known (+ Détruire Konoha sum 41/`contentsKnown` false) ; S5 partial |
-| **Bleach SCB** | **`byKind` 8** (S1) | display S1 qty sachets ? | **2 / 2** starters Compagnons + Rivaux (S1) ; booster + display S1 packshots retail ; **S2+ FR/JP qty absentes** |
+| **Bleach SCB** | **`byKind` 8** (S1) | display S1 **24** (collectthemall) | **2 / 2** starters Compagnons + Rivaux (S1) ; booster + display S1 packshots retail ; **S2+ FR/JP qty absentes** |
 | DBH | **`byKind` 3**/sachet (Extra/Selection) | BOX **20** packs | Namek : 6× UGMPS + avatar soft (`contentsKnown` false) ; Extra/Selection = pools |
 
 Rebuild CG/FW/OP : `pnpm exec tsx src/providers/shared/sealedProducts/rebuildFromStaging.ts`.

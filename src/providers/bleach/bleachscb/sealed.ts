@@ -197,12 +197,12 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
 
   skus["display-s1-shinigami-and-ichigo"] = {
     source:
-      "https://www.ultrajeux.com/produit-1137-bleach-serie-1-shinigami-and-ichigo-3296580052110.html",
+      "https://collectthemall.be/autres-tcg/29--fr-bleach-display-serie-1-shinigami-and-ichigo-x24.html",
     verifiedAt: VERIFIED,
     notes:
-      "Boîte display S1 (photo Ultrajeux). Fiche boutique confond EAN sachet — ne pas fusionner avec booster-s1. Loterie = sachets enfants ; qty sachets inconnue.",
+      "Boîte display S1 — 24 boosters × 8 (collectthemall « x24 »). Photo Ultrajeux ; fiche boutique confond EAN sachet — ne pas fusionner avec booster-s1. Loterie = sachets enfants.",
     cardsPerPack: 8,
-    packsContained: null,
+    packsContained: 24,
     behavior: "pack_container",
     randomPoolScope: "none",
     contentsKnown: false,
@@ -225,13 +225,15 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
         notes: "FR S1 : 8 cartes / sachet (Bandai carddass.fr).",
       },
       display: {
-        source: SOURCE,
+        source:
+          "https://collectthemall.be/autres-tcg/29--fr-bleach-display-serie-1-shinigami-and-ichigo-x24.html",
         verifiedAt: VERIFIED,
         cardsPerPack: 8,
+        packsContained: 24,
         behavior: "pack_container",
         randomPoolScope: "none",
         contentsKnown: false,
-        notes: "Display S1 — loterie dans les boosters ; qty sachets non attestée.",
+        notes: "Display S1 — 24 sachets (collectthemall) ; loterie dans les boosters.",
       },
       deck: {
         source: SOURCE,
@@ -337,7 +339,7 @@ export function ingestBleachScbSealedProducts(
       category: "booster-box",
       name: 'Bleach SCB S1 — Display "Shinigami and Ichigo"',
       cardsPerPack: 8,
-      packsContained: null,
+      packsContained: 24,
       path: "https://www.ultrajeux.com/produit-1137-bleach-serie-1-shinigami-and-ichigo-3296580052110.html",
     },
   ];

@@ -70,8 +70,10 @@ describe("bleachscb sealed press packshots", () => {
     expect(booster?.randomPoolPrintKeys).toEqual(keys);
     const display = contents.skus["display-s1-shinigami-and-ichigo"];
     expect(display?.randomPoolScope).toBe("none");
+    expect(display?.packsContained).toBe(24);
     expect(display?.guaranteedProducts?.[0]?.slug).toBe(
       "booster-s1-shinigami-and-ichigo",
     );
+    expect(contents.byKind.display?.packsContained).toBe(24);
   });
 });

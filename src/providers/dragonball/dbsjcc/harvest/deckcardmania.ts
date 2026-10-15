@@ -68,6 +68,11 @@ export type DeckcardmaniaAlbum = {
   releaseText: string | null;
   rares: string[];
   holos: string[];
+  /**
+   * Super Série full pool (`DB001`, `DB189-1`… / ranges). Empty for Série 1–10
+   * (Bandai range + rares/holos only). Printed as `D-N` / `D-Na`.
+   */
+  checklist: string[];
   packshotUrl: string | null;
   gallery: DeckcardmaniaGalleryImage[];
 };
@@ -169,44 +174,124 @@ export function extractSetHintFromDeckcardmaniaTitle(
   return { setHint: null, line: "other" };
 }
 
-/** Normalise a D/SP token from DCM lists (`D12`, `D-12`, `SP01`, `D504enf`) → `D-12`. */
-export function normalizeDeckcardmaniaPrinted(raw: string): string | null {
-  let clean = raw.trim();
+/** `1` → `a`, `2` → `b` … for DCM art variants (`189-1`, `DB189-2`). */
+export function deckcardmaniaArtLetterFromIndex(index: number): string | null {
+  if (!Number.isFinite(index) || index < 1 || index > 26) return null;
+  return String.fromCharCode("a".charCodeAt(0) + index - 1);
+}
+
+/**
+ * Normalise a D/SP/DB token from DCM lists → `D-12` / `D-189a` / `SP-1`.
+ * `DB001`, `DB-102`, `DB189-1` (Super Série) need `allowArtVariants` for `-N`.
+ */
+export function normalizeDeckcardmaniaPrinted(
+  raw: string,
+  opts: { allowArtVariants?: boolean } = {},
+): string | null {
+  let clean = raw.trim().replace(/\*+$/, "");
   // Strip trailing pouvoir / grouping suffixes DCM glues on (enf, mai, mdk, nc6…).
   clean = clean.replace(
     /^(D\s*[-_]?\s*\d+)(?:enf|mai|mdk|main|nc\d+|kaio|holo|prism).*$/i,
     "$1",
   );
-  // Refuse bare integers — Super Série lists use plain DB numbers without D/SP.
-  if (!/^(?:SP|D)\s*[-_]?\s*\d+$/i.test(clean)) return null;
+
+  const db = clean.match(/^DB\s*[-_]?\s*0*(\d+)(?:\s*[-–]\s*(\d+))?$/i);
+  if (db) {
+    const n = Number.parseInt(db[1]!, 10);
+    if (!Number.isFinite(n) || n < 1) return null;
+    if (db[2]) {
+      if (!opts.allowArtVariants) return null;
+      const letter = deckcardmaniaArtLetterFromIndex(Number.parseInt(db[2]!, 10));
+      if (!letter) return null;
+      return `D-${n}${letter}`;
+    }
+    return `D-${n}`;
+  }
+
+  const dArt = clean.match(/^D\s*[-_]?\s*0*(\d+)\s*[-–]\s*(\d+)$/i);
+  if (dArt) {
+    if (!opts.allowArtVariants) return null;
+    const n = Number.parseInt(dArt[1]!, 10);
+    const letter = deckcardmaniaArtLetterFromIndex(Number.parseInt(dArt[2]!, 10));
+    if (!Number.isFinite(n) || n < 1 || !letter) return null;
+    return `D-${n}${letter}`;
+  }
+
+  if (!/^(?:SP|D)\s*[-_]?\s*\d+[A-Z]?$/i.test(clean)) return null;
   const number = parseDbsjccNumber(clean);
   if (!number) return null;
-  const prefix = number.startsWith("sp") ? "SP" : "D";
-  const n = Number.parseInt(number.replace(/^[a-z]+/, ""), 10);
-  return `${prefix}-${n}`;
+  const split = number.match(/^(sp|d)(\d+)([a-z]?)$/i);
+  if (!split) return null;
+  const prefix = split[1]!.toLowerCase() === "sp" ? "SP" : "D";
+  const n = Number.parseInt(split[2]!, 10);
+  const letter = split[3]?.toLowerCase() ?? "";
+  return `${prefix}-${n}${letter}`;
 }
 
+export type ParseDeckcardmaniaPrintedListOpts = {
+  /** Bare `17` → `D-17` (Super Série holos / checklists). */
+  assumeDPrefix?: boolean;
+  /** `189-1` / `DB189-2` → `D-189a` / `D-189b`. */
+  allowArtVariants?: boolean;
+  /** Expand `DB-365 à DB-366` / `365 à 366`. */
+  expandRanges?: boolean;
+};
+
 /**
- * Parse `D12, D26, D-30` (and plain numbers in Super Série holos) into printed
- * refs. Plain integers alone are **not** treated as D- without album context —
- * callers pass `assumeDPrefix` for FR JCC rare/holo lists only.
+ * Parse `D12, D26, D-30`, Super Série `DB001` / bare holos, optional ranges.
+ * Plain integers alone need `assumeDPrefix`.
  */
 export function parseDeckcardmaniaPrintedList(
   raw: string,
-  opts: { assumeDPrefix?: boolean } = {},
+  opts: ParseDeckcardmaniaPrintedListOpts = {},
 ): string[] {
+  let text = raw.replace(/\s+/g, " ").trim();
+  if (opts.expandRanges) {
+    text = text.replace(
+      /(?:DB\s*[-_]?\s*)?(\d+)\s*(?:à|a)\s*(?:DB\s*[-_]?\s*)?(\d+)/gi,
+      (full, a, b) => {
+        const lo = Number.parseInt(a, 10);
+        const hi = Number.parseInt(b, 10);
+        if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo) return full;
+        if (hi - lo > 200) return full;
+        return Array.from(
+          { length: hi - lo + 1 },
+          (_, i) => `D-${lo + i}`,
+        ).join(", ");
+      },
+    );
+  }
+
   const out: string[] = [];
   const seen = new Set<string>();
-  const tokens = raw.split(/[,;]/).map((t) => t.trim()).filter(Boolean);
+  const tokens = text.split(/[,;]/).map((t) => t.trim()).filter(Boolean);
+  const normOpts = { allowArtVariants: opts.allowArtVariants === true };
   for (const token of tokens) {
-    const cleaned = token.replace(/\*+$/, "").trim();
-    // Skip variant suffixes like D-933-1 / 189-1 — not a plain collector number.
-    if (/(?:^|D\s*[-_]?\s*)\d+\s*[-–]\s*\d+/i.test(cleaned)) continue;
-    let printed = normalizeDeckcardmaniaPrinted(cleaned);
+    const cleaned = token
+      .replace(/\*+$/, "")
+      .replace(/[.:;]+$/g, "")
+      .trim();
+    if (!cleaned) continue;
+    // Skip ambiguous variants unless Super Série art letters are enabled.
+    if (
+      !opts.allowArtVariants &&
+      /(?:^|DB?\s*[-_]?\s*)\d+\s*[-–]\s*\d+/i.test(cleaned)
+    ) {
+      continue;
+    }
+    let printed = normalizeDeckcardmaniaPrinted(cleaned, normOpts);
     if (!printed && opts.assumeDPrefix) {
-      const bare = cleaned.match(/^(\d+)$/);
-      if (bare) {
-        printed = normalizeDeckcardmaniaPrinted(`D-${bare[1]}`);
+      const bareArt = cleaned.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+      if (bareArt && opts.allowArtVariants) {
+        printed = normalizeDeckcardmaniaPrinted(
+          `D-${bareArt[1]}-${bareArt[2]}`,
+          normOpts,
+        );
+      } else {
+        const bare = cleaned.match(/^(\d+)$/);
+        if (bare) {
+          printed = normalizeDeckcardmaniaPrinted(`D-${bare[1]}`, normOpts);
+        }
       }
     }
     if (!printed || seen.has(printed)) continue;
@@ -214,6 +299,34 @@ export function parseDeckcardmaniaPrintedList(
     out.push(printed);
   }
   return out;
+}
+
+/**
+ * Full Super Série pool from the fiche body (`DB001…` or `Liste des cartes:`).
+ */
+export function extractDeckcardmaniaSuperSerieChecklist(html: string): string[] {
+  const liste = html.match(
+    /Liste\s+des\s+cartes\s*:?\s*([\s\S]+?)(?:Exemple|Deck\s+de|Booster|Avis\s+des|$)/i,
+  );
+  let blob = liste?.[1] ?? "";
+  if (!blob) {
+    const afterHolo = html.split(/Cartes\s+Holographiques/i)[1] ?? "";
+    // Drop the holo values line — SS3 writes holos as `DB403…`, which would
+    // otherwise steal the checklist start from the real pool (`DB256…`).
+    const afterHoloList = afterHolo.replace(/^[\s\S]*?<\/div>/i, "");
+    const dbStart = afterHoloList.search(/\bDB\s*[-_]?\s*\d/i);
+    const fromDb =
+      dbStart >= 0 ? afterHoloList.slice(dbStart) : afterHoloList;
+    blob =
+      fromDb.split(/Exemple\s+de|Avis\s+des|Deck\s+de|Booster\s+de/i)[0] ??
+      fromDb;
+  }
+  const text = stripTags(blob.replace(/<br\s*\/?>/gi, ","));
+  return parseDeckcardmaniaPrintedList(text, {
+    assumeDPrefix: true,
+    allowArtVariants: true,
+    expandRanges: true,
+  });
 }
 
 /**
@@ -293,7 +406,7 @@ function extractReleaseText(html: string): string | null {
 function extractLabeledList(
   html: string,
   label: RegExp,
-  assumeDPrefix: boolean,
+  opts: ParseDeckcardmaniaPrintedListOpts,
 ): string[] {
   const m = html.match(
     new RegExp(
@@ -302,7 +415,7 @@ function extractLabeledList(
     ),
   );
   if (!m) return [];
-  return parseDeckcardmaniaPrintedList(stripTags(m[1]!), { assumeDPrefix });
+  return parseDeckcardmaniaPrintedList(stripTags(m[1]!), opts);
 }
 
 /**
@@ -315,7 +428,16 @@ export function parseDeckcardmaniaAlbumHtml(
   const h1 = html.match(/<h1>\s*([\s\S]*?)\s*<\/h1>/i);
   const title = h1 ? stripTags(h1[1]!) : `Album ${idm}`;
   const { setHint, line } = extractSetHintFromDeckcardmaniaTitle(title);
-  const assumeD = line === "jcc-serie" || line === "jcc-sp" || line === "jcc-promo";
+  const assumeD =
+    line === "jcc-serie" ||
+    line === "jcc-sp" ||
+    line === "jcc-promo" ||
+    line === "super-serie";
+  const listOpts = {
+    assumeDPrefix: assumeD,
+    allowArtVariants: line === "super-serie",
+    expandRanges: line === "super-serie",
+  };
 
   const packshotRel = html.match(
     new RegExp(`(?:src|href)=["'](files/${DECKCARDMANIA_IDF}/${idm}b\\.(?:jpe?g|png|gif))["']`, "i"),
@@ -383,8 +505,12 @@ export function parseDeckcardmaniaAlbumHtml(
     line,
     bandaiRange: extractBandaiRange(html),
     releaseText: extractReleaseText(html),
-    rares: extractLabeledList(html, /Cartes\s+Rares/i, assumeD),
-    holos: extractLabeledList(html, /Cartes\s+Holographiques/i, assumeD),
+    rares: extractLabeledList(html, /Cartes\s+Rares/i, listOpts),
+    holos: extractLabeledList(html, /Cartes\s+Holographiques/i, listOpts),
+    checklist:
+      line === "super-serie"
+        ? extractDeckcardmaniaSuperSerieChecklist(html)
+        : [],
     packshotUrl,
     gallery,
   };
@@ -402,7 +528,7 @@ export function buildDeckcardmaniaLedger(
     ingest: "set-fiches",
     crawl: true,
     note:
-      "Fiches set (pas un dump face-par-face). Packshot files/3/{idm}b.jpg + galerie _iNb.jpg. Listes Cartes Rares / Holographiques (D-###) pour JCC FR. Faces sample uniquement quand title/alt nomme clairement une carte (Carte SP01 / D-###). Super Séries / DBS CG / Zenzu = ledger only (hors corpus dbsjcc).",
+      "Fiches set (pas un dump face-par-face). Packshot files/3/{idm}b.jpg + galerie _iNb.jpg. Listes Cartes Rares / Holographiques (D-###) pour JCC FR. Super Séries : checklist DB### → membership print_sets ssN (reprints partN). Faces sample uniquement quand title/alt nomme clairement une carte (Carte SP01 / D-###). DBS CG / Zenzu = hors corpus.",
     hub: DECKCARDMANIA_HUB,
     listed: sorted.length,
     albums: sorted,

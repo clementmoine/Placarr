@@ -203,6 +203,26 @@ describe("normalizeDeckcardmaniaPrinted / parseDeckcardmaniaPrintedList", () => 
       parseDeckcardmaniaPrintedList("190, D12", { assumeDPrefix: true }),
     ).toEqual(["D-190", "D-12"]);
   });
+
+  it("parses Super Série DB### / art variants / ranges", () => {
+    expect(normalizeDeckcardmaniaPrinted("DB001")).toBe("D-1");
+    expect(normalizeDeckcardmaniaPrinted("DB0102")).toBe("D-102");
+    expect(
+      normalizeDeckcardmaniaPrinted("DB189-2", { allowArtVariants: true }),
+    ).toBe("D-189b");
+    expect(
+      parseDeckcardmaniaPrintedList("DB017*, 189-1, DB189-2", {
+        assumeDPrefix: true,
+        allowArtVariants: true,
+      }),
+    ).toEqual(["D-17", "D-189a", "D-189b"]);
+    expect(
+      parseDeckcardmaniaPrintedList("DB-365 à DB-366, DB-439", {
+        assumeDPrefix: true,
+        expandRanges: true,
+      }),
+    ).toEqual(["D-365", "D-366", "D-439"]);
+  });
 });
 
 describe("extractNamedCardFromDeckcardmaniaTitle", () => {
@@ -271,5 +291,46 @@ describe("parseDeckcardmaniaAlbumHtml", () => {
     expect(album.setHint).toBe("part10");
     expect(album.gallery.every((g) => g.kind !== "named")).toBe(true);
     expect(album.gallery.every((g) => g.printed === null)).toBe(true);
+  });
+
+  it("parses Super Série holos + DB checklist into D- refs", () => {
+    const html = `
+<h1>DragonBall - Super Série 1 - Goku - Cartes à jouer</h1>
+<img src="files/3/7b.jpg" />
+<b>Première parution : </b>juillet 2009<br>
+<div class="g0">
+<b>Cartes Holographiques </b><em>*hol</em><b> : </b>17, 18, 189-1, 189-2
+</div>
+<div class="d2"><div class="g0">
+Carte :DB001 = 1<br>DB001, DB002, DB017*, DB189-1*, DB189-2*.
+</div></div>
+`;
+    const album = parseDeckcardmaniaAlbumHtml(html, 7);
+    expect(album.setHint).toBe("ss1");
+    expect(album.line).toBe("super-serie");
+    expect(album.holos).toEqual(["D-17", "D-18", "D-189a", "D-189b"]);
+    expect(album.checklist).toEqual(
+      expect.arrayContaining(["D-1", "D-2", "D-17", "D-189a", "D-189b"]),
+    );
+    expect(album.checklist.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("does not let DB-prefixed holos steal the Super Série checklist start", () => {
+    const html = `
+<h1>DragonBall - Super Série 3 - Gohan contre attaque - Cartes</h1>
+<div class="g0">
+<b>Cartes Holographiques </b><em>*hol</em><b> : </b>DB403, DB414, DB415
+</div>
+<div class="d2"><div class="g0">
+DB256, DB314, DB365, DB403, DB562
+</div></div>
+`;
+    const album = parseDeckcardmaniaAlbumHtml(html, 4);
+    expect(album.setHint).toBe("ss3");
+    expect(album.holos).toEqual(["D-403", "D-414", "D-415"]);
+    expect(album.checklist[0]).toBe("D-256");
+    expect(album.checklist).toEqual(
+      expect.arrayContaining(["D-256", "D-314", "D-365", "D-403", "D-562"]),
+    );
   });
 });

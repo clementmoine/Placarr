@@ -33,6 +33,11 @@ import type {
   LocalPrintWrite,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
+import {
+  installDbsJccSuperSerieMembership,
+  type InstallSuperSerieMembershipReport,
+} from "./superSerieMembership";
+
 import type { DbsjccPrintCandidate } from "../harvest/chitoroshop";
 import {
   matchCarddassFrToDbsjccPrint,
@@ -283,6 +288,8 @@ export function installDbsJccDeckcardmaniaRarity(
 
   for (const album of ledger.albums) {
     if (!album.setHint) continue;
+    // Super Série reprints live under partN — match without ssN home set.
+    const matchHint = /^ss\d+$/i.test(album.setHint) ? null : album.setHint;
     for (const printed of album.rares) {
       listed += 1;
       const number = parseDbsjccNumber(printed);
@@ -290,7 +297,7 @@ export function installDbsJccDeckcardmaniaRarity(
       const candidates = candidatesForNumber(index, number);
       const decision = matchCarddassFrToDbsjccPrint(
         number,
-        album.setHint,
+        matchHint,
         candidates,
       );
       if (decision.kind !== "match") continue;
@@ -305,7 +312,7 @@ export function installDbsJccDeckcardmaniaRarity(
       const candidates = candidatesForNumber(index, number);
       const decision = matchCarddassFrToDbsjccPrint(
         number,
-        album.setHint,
+        matchHint,
         candidates,
       );
       if (decision.kind !== "match") continue;
@@ -462,9 +469,10 @@ export type InstallDeckcardmaniaReport = {
   packshots: InstallDeckcardmaniaPackshotsReport;
   rarity: InstallDeckcardmaniaRarityReport;
   faces: InstallDeckcardmaniaFacesReport;
+  superSerie: InstallSuperSerieMembershipReport;
 };
 
-/** Packshots + rarity + named sample faces. */
+/** Packshots + rarity + named sample faces + Super Série print_sets. */
 export async function installDbsJccDeckcardmania(
   index: LocalPrintsIndex,
   opts: { downloadFaces?: boolean; force?: boolean; ledgerPath?: string } = {},
@@ -480,5 +488,8 @@ export async function installDbsJccDeckcardmania(
     downloadFaces: opts.downloadFaces,
     ledgerPath: opts.ledgerPath,
   });
-  return { packshots, rarity, faces };
+  const superSerie = installDbsJccSuperSerieMembership(index, {
+    ledgerPath: opts.ledgerPath,
+  });
+  return { packshots, rarity, faces, superSerie };
 }

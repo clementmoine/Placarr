@@ -171,9 +171,9 @@ export function dbsjccSetPrefixCode(setCode: string): boolean {
 }
 
 /**
- * Super Série / Tin box = lignes **scellées** (reprints / mix de Série N).
- * Aucun printKey `ssN` / `tinbox` — les cartes restent sous `partN` / `sp` /
- * `promo`. Les exposer au picker / check-list → « Sans catalogue » fantôme.
+ * Codes packaging scellés (ssN / tinbox) : ne pas les annoncer depuis les SKUs
+ * produits (sinon « Sans catalogue »). Les Super Séries apparaissent au picker
+ * via `print_sets` après membership DCM → reprints `partN`.
  */
 export function isDbsjccCardCatalogueSetCode(setCode: string): boolean {
   const key = setCode.trim().toLowerCase();

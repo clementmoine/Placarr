@@ -168,7 +168,7 @@ export async function runDbsJccPackPipeline(
         force,
       });
       console.log(
-        `── FR deckcardmania — packshots installed ${dcmInstall.packshots.packshotsInstalled} (dl ${dcmInstall.packshots.packshotsDownloaded}, staging-only ${dcmInstall.packshots.stagedOnly}), rarity stamped ${dcmInstall.rarity.stamped}/${dcmInstall.rarity.listed}, faces ${dcmInstall.faces.faces} matched ${dcmInstall.faces.matched} (skip ${dcmInstall.faces.skipped.length})`,
+        `── FR deckcardmania — packshots installed ${dcmInstall.packshots.packshotsInstalled} (dl ${dcmInstall.packshots.packshotsDownloaded}, staging-only ${dcmInstall.packshots.stagedOnly}), rarity stamped ${dcmInstall.rarity.stamped}/${dcmInstall.rarity.listed}, faces ${dcmInstall.faces.faces} matched ${dcmInstall.faces.matched} (skip ${dcmInstall.faces.skipped.length}), Super Série membership ${dcmInstall.superSerie.linked}/${dcmInstall.superSerie.listed} (missing ${dcmInstall.superSerie.missing})`,
       );
       return {
         prints:

@@ -23,6 +23,22 @@ export async function runNarutoShippudenPackPipeline(
       );
     }
   }
+  if (!argv.includes("--offline") && !argv.includes("--skip-suruga-prices")) {
+    try {
+      const { harvestSurugaShippudenPrices } = await import(
+        /* webpackIgnore: true */
+        "./harvest/surugaPrices"
+      );
+      const surugaPrices = await harvestSurugaShippudenPrices();
+      console.log(
+        `── Suruga yen prices — ${surugaPrices.ledger.cardCount} diskId (${surugaPrices.fetched} fiches)`,
+      );
+    } catch (err) {
+      console.warn(
+        `── Suruga yen prices — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
   const summary = await refreshNarutoShippudenCatalog();
   console.log(`── Naruto Shippuden — catalogue rafraîchi`, summary);
 }

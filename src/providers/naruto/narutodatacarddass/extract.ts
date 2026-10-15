@@ -76,6 +76,22 @@ export async function runNarutoDataCarddassPackPipeline(
       );
     }
   }
+  if (!argv.includes("--offline") && !argv.includes("--skip-suruga-prices")) {
+    try {
+      const { harvestSurugaDataCarddassPrices } = await import(
+        /* webpackIgnore: true */
+        "./harvest/surugaPrices"
+      );
+      const surugaPrices = await harvestSurugaDataCarddassPrices();
+      console.log(
+        `── Suruga yen prices — ${surugaPrices.ledger.cardCount} diskId (${surugaPrices.fetched} fiches)`,
+      );
+    } catch (err) {
+      console.warn(
+        `── Suruga yen prices — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
   const surugaHtml = (() => {
     const i = argv.indexOf("--merge-suruga-html");
     return i >= 0 ? argv[i + 1] : undefined;

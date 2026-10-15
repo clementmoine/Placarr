@@ -4,6 +4,7 @@
  * Autre jeu que le Carddass de table (NI/TE/TA) et le CCG Bandai USA.
  */
 import { createEmptyLocalTcgProvider } from "@/providers/shared/cardCatalogue/createEmptyLocalTcgProvider";
+import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 
 import {
   NARUTO_DATA_CARDDASS_EFFECT_PACK_ID,
@@ -66,4 +67,21 @@ const built = createEmptyLocalTcgProvider({
 
 export const narutoDataCarddassLine = built.line;
 export const narutoDataCarddassCatalog = built.catalog;
-export const narutodatacarddassModule = built.module;
+
+export const narutodatacarddassModule = {
+  ...built.module,
+  info: {
+    ...built.module.info,
+    capabilities: [
+      ...new Set([...(built.module.info.capabilities ?? []), "price" as const]),
+    ],
+    notes: `${built.module.info.notes ?? ""} Prix : Suruga-ya yen used (ledger).`.trim(),
+  },
+  refreshBarcodePriceOffers: async (ctx: BarcodePriceRefreshContext) => {
+    const { refreshSurugaDataCarddassYenPriceOffers } = await import(
+      /* webpackIgnore: true */
+      "./harvest/surugaPrices"
+    );
+    return refreshSurugaDataCarddassYenPriceOffers(ctx);
+  },
+};

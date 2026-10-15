@@ -4,9 +4,18 @@
 
 import universe from "../curated/sources/cardcheckbox-jp.json";
 import { mintNarutoPrintKey, narutoDiskCardId } from "../identity";
+import {
+  parseSurugaUsedPriceYen,
+  parseSurugaYenAmount,
+} from "@/providers/naruto/shared/surugaYenPrices";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+export {
+  parseSurugaYenAmount,
+  parseSurugaUsedPriceYen,
+} from "@/providers/naruto/shared/surugaYenPrices";
 
 // ─── shared helpers ─────────────────────────────────────────────────────
 
@@ -738,40 +747,6 @@ export function parseSurugaCarddassSearchHtml(
 function isDataCarddassSlice(slice: string, printed: string | null): boolean {
   if (!DATA_CARDDASS_RE.test(slice)) return false;
   return !printed;
-}
-
-/**
- * Yen amount from Suruga copy. Prefer 税込 when both bare and tax-in are shown
- * (`40円(税込44円)` → 44).
- */
-export function parseSurugaYenAmount(raw: string): number | null {
-  const text = decodeSurugaHtmlEntities(raw).replace(/\s+/g, " ");
-  const taxIn = /税込\s*([0-9,]+)\s*円/.exec(text);
-  if (taxIn) {
-    const n = Number(taxIn[1]!.replace(/,/g, ""));
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }
-  const plain = /([0-9,]+)\s*円/.exec(text);
-  if (!plain) return null;
-  const n = Number(plain[1]!.replace(/,/g, ""));
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-/** Used (中古) ask on a product page — marketplace, not kaitori buyback. */
-export function parseSurugaUsedPriceYen(html: string): number | null {
-  const usedBlock =
-    /data-label="[^"]*中古[^"]*"[\s\S]{0,500}?class="[^"]*price-buy[^"]*"[^>]*>([^<]+)/i.exec(
-      html,
-    ) ??
-    /中古[\s\S]{0,200}?([0-9,]+)\s*円(?:\s*\(?\s*税込)?/i.exec(html);
-  if (usedBlock) {
-    const yen = parseSurugaYenAmount(usedBlock[0]!);
-    if (yen != null) return yen;
-  }
-  const buy =
-    /class="[^"]*price-buy[^"]*"[^>]*>([^<]+)/i.exec(html) ??
-    /<span class="price">([^<]+)<\/span>/i.exec(html);
-  return buy ? parseSurugaYenAmount(buy[1] ?? buy[0]!) : null;
 }
 
 /** Single product page — same printed rules as search slices. */

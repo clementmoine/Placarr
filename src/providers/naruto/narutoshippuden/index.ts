@@ -13,6 +13,7 @@
  * carte en commun.
  */
 import { createLocalTcgLine } from "@/providers/shared/cardCatalogue/localTcgLine";
+import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 
 import {
   narutoShippudenAssetsCardUrl,
@@ -82,4 +83,25 @@ export const narutoShippudenLine = line;
  * ledgers → verso → scellés → index). On attache ses hooks au module produit
  * par `createLocalTcgLine`.
  */
-export const narutoshippudenModule = line.attachCatalog(narutoShippudenCatalog);
+const shippudenBaseModule = line.attachCatalog(narutoShippudenCatalog);
+
+export const narutoshippudenModule = {
+  ...shippudenBaseModule,
+  info: {
+    ...shippudenBaseModule.info,
+    capabilities: [
+      ...new Set([
+        ...(shippudenBaseModule.info.capabilities ?? []),
+        "price" as const,
+      ]),
+    ],
+    notes: `${shippudenBaseModule.info.notes ?? ""} Prix : Suruga-ya yen used (ledger).`.trim(),
+  },
+  refreshBarcodePriceOffers: async (ctx: BarcodePriceRefreshContext) => {
+    const { refreshSurugaShippudenYenPriceOffers } = await import(
+      /* webpackIgnore: true */
+      "./harvest/surugaPrices"
+    );
+    return refreshSurugaShippudenYenPriceOffers(ctx);
+  },
+};

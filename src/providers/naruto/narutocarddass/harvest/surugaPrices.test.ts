@@ -23,6 +23,7 @@ describe("surugaDiskIdFromPrintKey", () => {
     expect(surugaDiskIdFromPrintKey("naruto:s1-ni0085")).toBe("ni0085");
     expect(surugaDiskIdFromPrintKey("naruto:maki1-ni0001")).toBe("ni0001");
     expect(surugaDiskIdFromPrintKey("pokemon:swsh3-1")).toBeNull();
+    expect(surugaDiskIdFromPrintKey("naruto:shi-0001")).toBeNull();
   });
 });
 

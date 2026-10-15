@@ -2,8 +2,8 @@
   "source": "Suruga-ya.jp used product detail (税込)",
   "sourceId": "suruga-ya-used",
   "packId": "naruto/shippuden",
-  "fetchedAt": "2026-10-15T21:35:12.304Z",
-  "cardCount": 21,
+  "fetchedAt": "2026-10-15T21:46:06.197Z",
+  "cardCount": 29,
   "cards": [
     {
       "diskId": "mju0163",
@@ -175,6 +175,78 @@
       "priceYenCents": 520,
       "productUrl": "https://www.suruga-ya.jp/product/detail/GL124397",
       "observedAt": "2026-10-15T21:35:12.304Z"
+    },
+    {
+      "diskId": "shi0097",
+      "printed": "忍伝-097",
+      "productId": "GL124402",
+      "priceYen": 700,
+      "priceYenCents": 700,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124402",
+      "observedAt": "2026-10-15T21:46:06.197Z"
+    },
+    {
+      "diskId": "shi0099",
+      "printed": "忍伝-099",
+      "productId": "GL124404",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124404",
+      "observedAt": "2026-10-15T21:46:06.197Z"
+    },
+    {
+      "diskId": "shi0122",
+      "printed": "忍伝-122",
+      "productId": "GL124406",
+      "priceYen": 570,
+      "priceYenCents": 570,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124406",
+      "observedAt": "2026-10-15T21:46:06.197Z"
+    },
+    {
+      "diskId": "shi0124",
+      "printed": "忍伝-124",
+      "productId": "GL124408",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124408",
+      "observedAt": "2026-10-15T21:46:06.197Z"
+    },
+    {
+      "diskId": "shi0125",
+      "printed": "忍伝-125",
+      "productId": "GL124409",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124409",
+      "observedAt": "2026-10-15T21:46:06.197Z"
+    },
+    {
+      "diskId": "shi0126",
+      "printed": "忍伝-126",
+      "productId": "GL124410",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124410",
+      "observedAt": "2026-10-15T21:46:06.197Z"
+    },
+    {
+      "diskId": "shi0131",
+      "printed": "忍伝-131",
+      "productId": "GL124413",
+      "priceYen": 280,
+      "priceYenCents": 280,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124413",
+      "observedAt": "2026-10-15T21:46:06.197Z"
+    },
+    {
+      "diskId": "shi0132",
+      "printed": "忍伝-132",
+      "productId": "GL124414",
+      "priceYen": 280,
+      "priceYenCents": 280,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124414",
+      "observedAt": "2026-10-15T21:46:06.197Z"
     },
     {
       "diskId": "shi0205",

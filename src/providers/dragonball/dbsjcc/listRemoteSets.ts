@@ -13,6 +13,7 @@ import {
   dbsjccSetLabel,
   dbsjccSetPrefixCode,
   dbsjccSetSortKey,
+  isDbsjccCardCatalogueSetCode,
 } from "./printKey";
 
 /** Sets announced for the print picker / checklist. */
@@ -24,7 +25,9 @@ export function listDbsjccRemoteSets(
   if (index) {
     for (const entry of Object.values(index.products)) {
       const code = (entry.setCode ?? "").trim().toLowerCase();
-      if (code) setCodes.add(code);
+      // Keep sealed SKUs under ss*/tinbox — do not invent empty card sets.
+      if (!code || !isDbsjccCardCatalogueSetCode(code)) continue;
+      setCodes.add(code);
     }
   }
   // Promo / SP / accessoire (Détecteur) : pas de SKU scellé — set picker quand même.

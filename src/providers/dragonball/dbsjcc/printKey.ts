@@ -170,6 +170,18 @@ export function dbsjccSetPrefixCode(setCode: string): boolean {
   return setCode.trim().toLowerCase() !== "accessory";
 }
 
+/**
+ * Super Série / Tin box = lignes **scellées** (reprints / mix de Série N).
+ * Aucun printKey `ssN` / `tinbox` — les cartes restent sous `partN` / `sp` /
+ * `promo`. Les exposer au picker / check-list → « Sans catalogue » fantôme.
+ */
+export function isDbsjccCardCatalogueSetCode(setCode: string): boolean {
+  const key = setCode.trim().toLowerCase();
+  if (!key) return false;
+  if (/^ss\d+$/.test(key) || key === "tinbox") return false;
+  return true;
+}
+
 /** Série 1…10, Super Série 1…6, Tin box, puis Promo / Hors-Série / Accessoire. */
 export function dbsjccSetSortKey(setCode: string): number | null {
   const key = setCode.trim().toLowerCase();

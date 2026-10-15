@@ -96,6 +96,11 @@ async function downloadToStaging(
   return { path: dest, wrote: true };
 }
 
+/** Photo hosts (dbcardshop …) keep `art.<host>` but must not claim catalogue face. */
+function rowClaimsFace(row: PressPackshotRow): boolean {
+  return !("face" in row && row.face === false);
+}
+
 function installArt(
   row: PressPackshotRow,
   staged: string,
@@ -104,11 +109,13 @@ function installArt(
   const dir = productArtDir(row.slug, row.lang);
   mkdirSync(dir, { recursive: true });
   copyFileSync(staged, path.join(dir, artName));
-  writeFileSync(
-    path.join(dir, CARD_FACE_DECISION_FILE),
-    `${JSON.stringify({ art: artName }, null, 2)}\n`,
-    "utf8",
-  );
+  if (rowClaimsFace(row)) {
+    writeFileSync(
+      path.join(dir, CARD_FACE_DECISION_FILE),
+      `${JSON.stringify({ art: artName }, null, 2)}\n`,
+      "utf8",
+    );
+  }
   return assetsPackFileUrl(
     DBS_JCC_PACK_ID,
     "products",
@@ -127,7 +134,7 @@ function mintDeckTemplate(
   const category =
     kind === "display"
       ? "booster-box"
-      : kind === "collector_box"
+      : kind === "tin" || kind === "collector_box"
         ? "tin-box"
         : (sibling?.category ?? "starter-deck");
   const cardsPerPack =
@@ -241,7 +248,7 @@ export async function installDbsJccPressPackshots(
     const category =
       kind === "display"
         ? "booster-box"
-        : kind === "collector_box"
+        : kind === "tin" || kind === "collector_box"
           ? "tin-box"
           : kind === "booster"
             ? "boosters"
@@ -251,7 +258,8 @@ export async function installDbsJccPressPackshots(
     products[existingKey] = {
       ...existing,
       name: row.title,
-      image: imageUrl,
+      // Photo-only hosts (face:false) install art.* but leave catalogue image.
+      ...(rowClaimsFace(row) ? { image: imageUrl } : {}),
       kind,
       behavior: sealedBehaviorForKind(kind),
       category,

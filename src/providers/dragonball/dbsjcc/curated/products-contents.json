@@ -2971,27 +2971,35 @@
     },
     "part6-box-1510": {
       "source": "Dos boîte Ref 05033 (dbzcollection) + Ultrajeux produit 1013",
-      "verifiedAt": "2026-10-04",
-      "kind": "collector_box",
+      "verifiedAt": "2026-10-15",
+      "kind": "tin",
       "behavior": "mixed_bundle",
       "contentsKnown": false,
-      "notes": "Structure dos : 1 deck série 6 + 1 booster série 2 + 1 booster série 3 + 1 holo exclusive (Vegeto). Texte Ultrajeux (4 boosters) non retenu — contredit le dos scellé."
+      "notes": "Ref 05033 / EAN …0338 / Bandai 2007 : 1 deck S6 + boosters S2+S3 + 1 holo Vegeto. Kind tin (métal) — set part6. Face = art.dbzcollection (pas Amazon SS×4 = tinbox-2008)."
     },
     "part9-box-1512": {
-      "source": "Ultrajeux produit 7791 (EAN 3296580050574)",
+      "source": "Fusionné dans tinbox-2010 (même tin Kid Goku / Ultrajeux 7791 EAN …0574)",
       "verifiedAt": "2026-10-15",
       "kind": "collector_box",
       "behavior": "mixed_bundle",
       "contentsKnown": false,
-      "notes": "Coffret Métal Ultrajeux : 1 starter Super Série Prince Vegeta + 1 starter Série 2 + 1 booster Super Série Prince Vegeta + 1 promo. Distinct de tinbox-2008 (Hobby Ref 05056 / EAN …0567)."
+      "notes": "SKU retiré de l'index — doublon de tinbox-2010."
     },
     "tinbox-2008": {
       "source": "dbzc packaging 1512 front + 1513 back (EAN 3296580050567 Ref 05056)",
       "verifiedAt": "2026-10-15",
-      "kind": "collector_box",
+      "kind": "tin",
       "behavior": "mixed_bundle",
       "contentsKnown": false,
-      "notes": "Dos attesté : 2 boosters Série 9 + 2 boosters Série 2/4/5/6 + 2 holos exclusives. Édition Collector / Tin Box Hobby 2008."
+      "notes": "Ref 05056 / Bandai 2008 : 2 boosters S9 + 2 boosters S2/4/5/6 + 2 holos. Distinct de part6-box-1510 (05033/2007) et tinbox-2010 (05058/2009 Kid Goku)."
+    },
+    "tinbox-2010": {
+      "source": "Aguttes/Invaluable lot 104 dos scellé Ref 05058 (EAN 3296580050581, Bandai 2009) + DCM idm=248 + Ultrajeux 7791 art",
+      "verifiedAt": "2026-10-15",
+      "kind": "tin",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Dos : 3 boosters Super Série Prince Vegeta + 2 boosters Série 9 + 2 cartes promo. DCM « 2010 » = année fiche, fabrication 2009. Ultrajeux EAN …0574 / starters = texte vendeur non retenu."
     }
   }
 }

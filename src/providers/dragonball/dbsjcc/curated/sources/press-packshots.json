@@ -1,7 +1,7 @@
 {
   "source": "Packshots presse / retail FR pour starters & boosters JCC (manga-sanctuary, coleka, fnac, DCM, okkazeo, ultrajeux, amazon, vialudibunda, centerblog, comicplanet, kingcollector, dbcardshop)",
   "observed": "2026-10-15",
-  "note": "Une ligne = un SKU. mint=true crée le SKU absent (2ᵉ starter S1–10, ou Super Série / Tin box). setCode ss1–ss6 / tinbox = même catalogue dbsjcc. DBS CG / Zenzu hors corpus. Tacticgames « booster Série 1 » Ref 95100 = ligne vintage 6 cartes — ne pas ingérer comme part1-booster. dbcardshop « booster vide » = pochette plastique vide, packshot wrapper 1:1.",
+  "note": "Une ligne = un SKU. mint=true crée le SKU absent (2ᵉ starter S1–10, ou Super Série / Tin box). setCode ss1–ss6 / tinbox = même catalogue dbsjcc. DBS CG / Zenzu hors corpus. Tacticgames « booster Série 1 » Ref 95100 = ligne vintage 6 cartes — ne pas ingérer comme part1-booster. dbcardshop = photos retail (booster vide / pochette) — face:false, art secondaire seulement ; face catalogue = dbzc / DCM / presse studio.",
   "products": [
     {
       "slug": "part1-starter-1190",
@@ -68,7 +68,8 @@
       "staging": "staging/press/part2-booster-dbcardshop.jpg",
       "referer": "https://www.dbcardshop.fr/product/21396720/booster-vide-jcc-card-game-fr-serie-2",
       "ingest": true,
-      "mint": false
+      "mint": false,
+      "face": false
     },
     {
       "slug": "part3-starter-1197",
@@ -108,7 +109,8 @@
       "staging": "staging/press/part3-booster-dbcardshop.jpg",
       "referer": "https://www.dbcardshop.fr/product/21396728/booster-vide-jcc-card-game-fr-serie-3",
       "ingest": true,
-      "mint": false
+      "mint": false,
+      "face": false
     },
     {
       "slug": "part4-starter-1200",
@@ -148,7 +150,8 @@
       "staging": "staging/press/part4-booster-dbcardshop.jpg",
       "referer": "https://www.dbcardshop.fr/product/21396735/booster-vide-jcc-card-game-fr-serie-4",
       "ingest": true,
-      "mint": false
+      "mint": false,
+      "face": false
     },
     {
       "slug": "part5-starter-1203",
@@ -188,7 +191,8 @@
       "staging": "staging/press/part5-booster-dbcardshop.jpg",
       "referer": "https://www.dbcardshop.fr/product/21396748/booster-vide-jcc-card-game-fr-serie-5",
       "ingest": true,
-      "mint": false
+      "mint": false,
+      "face": false
     },
     {
       "slug": "part5-booster-box",
@@ -220,15 +224,17 @@
     {
       "slug": "part6-box-1510",
       "setCode": "part6",
-      "kind": "collector_box",
+      "kind": "tin",
       "lang": "fr",
-      "title": "Série 6 — Édition Collector 2007",
+      "title": "Tin / Édition Collector 2007 — Ref 05033",
       "host": "amazon",
       "url": "https://m.media-amazon.com/images/I/41xLrwSJlWL._AC_UL640_QL65_.jpg",
       "staging": "staging/press/part6-box-edition-collector-2007.jpg",
       "referer": "https://www.amazon.fr/",
       "ingest": true,
-      "mint": false
+      "mint": false,
+      "note": "Ref 05033 / EAN 3296580050338 / Bandai 2007 : 1 deck S6 + boosters S2+S3 + 1 holo Vegeto. Distinct de tinbox-2008 (Ref 05056). Ne pas utiliser art Amazon SS×4 (= tin 2008) en face.",
+      "face": false
     },
     {
       "slug": "part6-booster-1205",
@@ -280,7 +286,8 @@
       "staging": "staging/press/part7-booster-dbcardshop.jpg",
       "referer": "https://www.dbcardshop.fr/product/21396756/booster-vide-jcc-card-game-fr-serie-7",
       "ingest": true,
-      "mint": false
+      "mint": false,
+      "face": false
     },
     {
       "slug": "part8-starter-1213",
@@ -332,35 +339,23 @@
       "staging": "staging/press/part9-booster-dbcardshop.jpg",
       "referer": "https://www.dbcardshop.fr/product/21396761/booster-vide-jcc-card-game-fr-serie-9",
       "ingest": true,
-      "mint": false
-    },
-    {
-      "slug": "part9-box-1512",
-      "setCode": "part9",
-      "kind": "collector_box",
-      "lang": "fr",
-      "title": "Coffret Métal Dragon Ball (Ultrajeux 7791)",
-      "host": "ultrajeux",
-      "url": "https://www.ultrajeux.com/images/produits/maxi/7791-cartes-a-collectionner-dragon-ball-coffret-metal-dragon-ball.jpg",
-      "staging": "staging/press/part9-box-coffret-metal.jpg",
-      "referer": "https://www.ultrajeux.com/produit-7791-dragon-ball-coffret-metal-dragon-ball-296580050574.html",
-      "ingest": true,
       "mint": false,
-      "note": "EAN Ultrajeux 3296580050574. Distinct de Tin box Hobby 2008 (tinbox-2008, EAN 3296580050567 Ref 05056)."
+      "face": false
     },
     {
       "slug": "tinbox-2008",
       "setCode": "tinbox",
-      "kind": "collector_box",
+      "kind": "tin",
       "lang": "fr",
-      "title": "Tin box Hobby 2008 — Édition Collector",
+      "title": "Tin Box Hobby 2008 — Ref 05056",
       "host": "dbzcollection",
       "url": "http://www.dbzcollection.fr/2v2/packagings/1/14/h400_1512_packaging.jpg",
       "staging": "staging/press/tinbox-2008.jpg",
       "referer": "http://www.dbzcollection.fr/2v2/",
       "ingest": true,
       "mint": true,
-      "note": "Front dbzc 1512 + dos 1513 (EAN 3296580050567, Ref 05056) : 2 boosters S9 + 2 boosters S2/4/5/6 + 2 holos exclusives. Pas le Coffret Métal Ultrajeux 7791."
+      "note": "Front dbzc 1512 (= photo) + dos 1513 (EAN 3296580050567, Ref 05056, Bandai 2008) : 2 boosters S9 + 2 boosters S2/4/5/6 + 2 holos. Face catalogue = art.amazon.jpg (packshot) ; dbzc face:false. Distinct de part6-box-1510 (05033) et tinbox-2010 (05058).",
+      "face": false
     },
     {
       "slug": "part10-starter-1219",
@@ -469,16 +464,47 @@
     {
       "slug": "tinbox-2010",
       "setCode": "tinbox",
-      "kind": "collector_box",
+      "kind": "tin",
       "lang": "fr",
-      "title": "Tin box Boosters 2010 — Cartes Promo",
-      "host": "deckcardmania",
-      "url": "https://www.deckcardmania.com/files/3/248b.jpg",
-      "staging": "staging/press/tinbox-2010.jpg",
-      "referer": "https://www.deckcardmania.com/?pag=cid508_alb&idf=3&idm=248",
+      "title": "Tin Box Boosters 2009 — Ref 05058",
+      "host": "invaluable",
+      "url": "https://image.invaluable.com/housePhotos/Aguttes/67/756167/H4084-L348147418_original.jpg",
+      "staging": "staging/press/tinbox-2010-invaluable-front.jpg",
+      "referer": "https://www.invaluable.com/auction-lot/dragon-ball-tin-box-boosters-version-francaise-104-c-c434055987",
       "ingest": true,
       "mint": true,
-      "note": "DCM idm=248 (typo « Tim box »). Art kid Goku nuage — distinct du Coffret Métal / Édition Collector 2008 (part9-box-1512, Ultrajeux 7791 EAN 3296580050574). Promos EX:001–009."
+      "note": "Aguttes/Invaluable lot 104 : face Kid Goku « TIN BOX BOOSTERS ». Dos Ref 05058 / EAN 3296580050581 / Bandai 2009 — 3 boosters Super Série Prince Vegeta + 2 boosters Série 9 + 2 cartes promo. DCM « Tim box 2010 » = même tin (année DCM erronée). Ultrajeux 7791 EAN …0574 = fiche vendeur divergente (contenu starters) ; art gardé en secondaire."
+    },
+    {
+      "slug": "tinbox-2010",
+      "setCode": "tinbox",
+      "kind": "tin",
+      "lang": "fr",
+      "title": "Tin Box Boosters — dos (Ref 05058)",
+      "host": "invaluable",
+      "url": "https://image.invaluable.com/housePhotos/Aguttes/67/756167/H4084-L348147416_original.jpg",
+      "staging": "staging/press/tinbox-2010-invaluable-back.jpg",
+      "referer": "https://www.invaluable.com/auction-lot/dragon-ball-tin-box-boosters-version-francaise-104-c-c434055987",
+      "ingest": false,
+      "mint": false,
+      "face": false,
+      "role": "back",
+      "note": "Dos scellé : Ref 05058 / EAN 3296580050581."
+    },
+    {
+      "slug": "tinbox-2010",
+      "setCode": "tinbox",
+      "kind": "tin",
+      "lang": "fr",
+      "title": "Tin box / Coffret Métal — Kid Goku (Ultrajeux 7791)",
+      "host": "ultrajeux",
+      "url": "https://www.ultrajeux.com/images/produits/maxi/7791-cartes-a-collectionner-dragon-ball-coffret-metal-dragon-ball.jpg",
+      "staging": "staging/press/part9-box-coffret-metal.jpg",
+      "referer": "https://www.ultrajeux.com/produit-7791-dragon-ball-coffret-metal-dragon-ball-296580050574.html",
+      "ingest": true,
+      "mint": false,
+      "face": false,
+      "note": "Ultrajeux 7791 — même art Kid Goku, EAN fiche …0574 (≠ dos scellé …0581). Texte vendeur (starters Super Série) contredit le dos Aguttes ; art secondaire only."
     }
   ]
 }

@@ -85,9 +85,21 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
     it("attests S1 FR finishes from Bandai détailée (not dual everywhere)", () => {
       expect(finishes("naruto:s1-cl0001")).toEqual(["normal"]);
       expect(finishes("naruto:s1-ni0001")).toEqual(["holo"]);
-      // Prerelease non-holo alt of a holo ID → both.
+      // Non-holo alt of a holo ID (opened bag) shares retail Normale + Holofoil.
       expect(finishes("naruto:s1-ni0019")).toEqual(["normal", "holo"]);
       expect(finishes("naruto:s1-ta0005")).toEqual(["normal", "holo"]);
+      expect(finishes("naruto:s1-te0007")).toEqual(["normal", "holo"]);
+      expect(finishes("naruto:s1-te0036")).toEqual(["normal", "holo"]);
+    });
+
+    it("offers sealed only on manga prerelease keys (opened = retail Normale)", () => {
+      const pre = lookupNarutoPrint("naruto:s1-ni0019-prerelease");
+      expect(pre?.finishes).toEqual(["sealed"]);
+      expect(pre?.plainFinishes).toEqual(["sealed"]);
+      expect(pre?.sealedBag).toBe(true);
+      // Commune prerelease: same — bag is the only distinct finish.
+      expect(finishes("naruto:s1-ni0027-prerelease")).toEqual(["sealed"]);
+      expect(finishes("naruto:s1-ni0027")).toEqual(["normal"]);
     });
 
     it("keeps dual outside S1 when rarity cannot gate (ta158)", () => {
@@ -421,24 +433,44 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       expect(listNarutoPrintSets("en").find((s) => s.id === "promo")).toMatchObject({
         label: "PROMO — Promo (off-series)",
       });
-      expect(listNarutoPrintSets("fr").find((s) => s.id === "prerelease")).toMatchObject({
-        label: "PRERELEASE — Prerelease (manga)",
-        languages: ["fr"],
-        sortKey: 0,
-      });
+      expect(listNarutoPrintSets("fr").find((s) => s.id === "prerelease")).toBeUndefined();
       expect(listNarutoPrintSets("it").find((s) => s.id === "s1")).toBeUndefined();
     });
 
-    it("lists manga prerelease cards under the prerelease series, not S1", () => {
-      const prerelease = listNarutoSetPrints({ setId: "prerelease", language: "fr" });
+    it("lists manga prerelease cards under Série 1, not a separate series", () => {
+      const s1 = listNarutoSetPrints({ setId: "s1", language: "fr" });
+      const prerelease = s1.filter((row) =>
+        row.printKey.endsWith("-prerelease"),
+      );
       expect(prerelease.length).toBe(10);
       expect(
-        prerelease.every((row) => row.printKey.startsWith("naruto:prerelease-")),
+        prerelease.every((row) =>
+          row.printKey.startsWith("naruto:s1-"),
+        ),
       ).toBe(true);
-      const s1 = listNarutoSetPrints({ setId: "s1", language: "fr" });
-      expect(
-        s1.some((row) => row.printKey.startsWith("naruto:prerelease-")),
-      ).toBe(false);
+      expect(listNarutoSetPrints({ setId: "prerelease", language: "fr" })).toEqual(
+        [],
+      );
+    });
+
+    /*
+      PrintPicker capped at 48: display refs used to sort unparsed (`NI-019 ·
+      prerelease` after the whole set), so the slice hid every sachet print.
+    */
+    it("keeps S1 manga prereleases inside the picker page (beside retail)", () => {
+      const page = searchNarutoPrints("", {
+        setId: "s1",
+        language: "fr",
+        limit: 48,
+        catalogueBrowse: true,
+      });
+      const keys = page.map((row) => row.printKey);
+      expect(keys).toContain("naruto:s1-ni0019-prerelease");
+      const retail = keys.indexOf("naruto:s1-ni0019");
+      const bag = keys.indexOf("naruto:s1-ni0019-prerelease");
+      expect(retail).toBeGreaterThanOrEqual(0);
+      expect(bag).toBe(retail + 1);
+      expect(page[bag]?.finishes).toEqual(["sealed"]);
     });
 
     /*
@@ -560,8 +592,7 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       const eu = listNarutoPrintSets()
         .filter((s) => s.group === "Séries (Europe / US)")
         .map((s) => s.id);
-      expect(eu.slice(0, 6)).toEqual([
-        "prerelease",
+      expect(eu.slice(0, 5)).toEqual([
         "s1",
         "s2",
         "s3",

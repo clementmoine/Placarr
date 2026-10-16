@@ -1,3 +1,4 @@
+import { isSealedFinish } from "@/core/render/sealedBag";
 import type {
   EffectPackModule,
   FoilBackend,
@@ -103,6 +104,8 @@ export function applyHouseFoilFallback(
   if (id) return id;
   const f = (finish ?? "").trim();
   if (!f || /^none$/i.test(f)) return null;
+  // Packaging only — a house flare idle on the face desyncs from the bag lean.
+  if (isSealedFinish(f)) return null;
   return HOUSE_FOIL_FALLBACK_CSS_ID;
 }
 

@@ -23,6 +23,11 @@ import { OpenInLiveButton } from "@/components/admin/OpenInLiveButton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
 import { clearFoilPool, setFoilPoolMax } from "@/core/render/foil";
+import {
+  materialWantsSealedBag,
+  sealedBagOuterAspect,
+  sealedBagVariantFromMaterial,
+} from "@/core/render/sealedBag";
 import { listEffectPacks } from "@/effects";
 import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
@@ -497,7 +502,16 @@ function MaterialTile({
   const focus = size === "focus" || size === "stack";
   const stack = size === "stack";
   const faceQuarterTurns = packArt?.faceQuarterTurns ?? 0;
-  const baseAspect = getAspectRatio("tcg", "tcg");
+  const sealedBag = materialWantsSealedBag(materialName);
+  const bagVariant = sealedBagVariantFromMaterial(materialName);
+  // Same geometry as shelf / item fiche (%-based outer aspect + insets).
+  const faceAspect = getAspectRatio("tcg", "tcg");
+  const baseAspect =
+    sealedBagOuterAspect({
+      sealedBag,
+      variant: bagVariant,
+      faceAspect,
+    }) ?? faceAspect;
   const cssForMaterial = pack?.resolveCss?.(
     finish ?? materialName,
     varnish ?? null,
@@ -597,8 +611,15 @@ function MaterialTile({
           // plate underneath, so a black rim appeared along the leading edges
           // the moment the pointer moved. The artwork is opaque and fills the
           // frame, so the plate was only ever visible when it was wrong.
-          "rounded-lg shadow-sm transition-shadow group-hover:shadow-md",
-          focus && "shadow-lg",
+          //
+          // Sealed bags are transparent PNGs — a box-shadow draws a rectangle
+          // through the clear PE and reads as a floating plate under the bag.
+          sealedBag
+            ? "rounded-lg"
+            : cn(
+                "rounded-lg shadow-sm transition-shadow group-hover:shadow-md",
+                focus && "shadow-lg",
+              ),
         )}
         materialName={materialName}
         liveFoilMask={
@@ -608,6 +629,7 @@ function MaterialTile({
           finish ??
           (material?.webgl === false ? materialName : own?.finish ?? materialName)
         }
+        sealedBag={sealedBag}
         // Only pass varnish from the material under test — not from a random
         // adapted print that happens to carry a varnish coat.
         varnishType={material?.webgl === false ? null : varnish}
@@ -618,7 +640,13 @@ function MaterialTile({
           wore `swsh7-5_wp_fr_009` while its own `…_wp_…` sat unused on disk.
         */
         maskUrl={
-          material?.webgl === false
+          material?.webgl === false ||
+          // Packaging-only bags: no foil mask. Foil+bag demos keep theirs.
+          (sealedBag &&
+            (finish === "sealed" ||
+              materialName === "sealed" ||
+              materialName === "sealed-full" ||
+              materialName === "sealed-adaptive"))
             ? null
             : (packArt?.maskUrl ??
               own?.foilMaskUrl ??
@@ -1135,14 +1163,6 @@ export function FoilPlayroom({
         }
         onChange={selectScope}
         options={[
-          ...(catalogueInfo.hasFoilEffects
-            ? [
-                {
-                  value: "foils" as const,
-                  label: fr ? "Foils" : "Foils",
-                },
-              ]
-            : []),
           {
             value: "all",
             label: fr ? "Cartes" : "Cards",
@@ -1151,6 +1171,18 @@ export function FoilPlayroom({
             value: "sealed",
             label: fr ? "Scellés" : "Sealed",
           },
+          /*
+            Last: foils, sachets, and later box/disc renders — not only TCG
+            foil dumps. URL scope stays `foils` for bookmarks.
+          */
+          ...(catalogueInfo.hasFoilEffects
+            ? [
+                {
+                  value: "foils" as const,
+                  label: fr ? "Rendu" : "Render",
+                },
+              ]
+            : []),
         ]}
       />
 

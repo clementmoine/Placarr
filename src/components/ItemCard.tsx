@@ -19,6 +19,7 @@ import {
 } from "@/components/ShelfTypeIcon";
 import { RemoteImage } from "@/components/RemoteImage";
 import { CardBackSkeleton } from "@/components/CardBackSkeleton";
+import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import {
   usePrintVariant,
   variantRendering,
@@ -32,6 +33,10 @@ import {
 import {
   resolveSharedCardBackSkeleton,
 } from "@/core/render/foil";
+import {
+  isSealedFinish,
+  sealedBagOuterAspect,
+} from "@/core/render/sealedBag";
 import {
   effectsRegistered,
   ensureEffects,
@@ -231,13 +236,28 @@ function ItemCardInner(props: ItemCardProps) {
       detectVideoGamePlatformKey(props.shelfName) ??
       null,
   );
-  const aspectRatio = useMemo(
-    () =>
-      looseDiscTile
-        ? "1 / 1"
-        : faceDisplayAspect(baseAspect, { faceQuarterTurns, landscapeFace }),
-    [looseDiscTile, baseAspect, faceQuarterTurns, landscapeFace],
-  );
+  const aspectRatio = useMemo(() => {
+    if (looseDiscTile) return "1 / 1";
+    const faceAspect = faceDisplayAspect(baseAspect, {
+      faceQuarterTurns,
+      landscapeFace,
+    });
+    const sealedAspect = sealedBagOuterAspect({
+      finish: variantView.finish ?? props.variant,
+      sealedBag: printVariant?.sealedBag,
+      faceAspect,
+    });
+    if (sealedAspect) return sealedAspect;
+    return faceAspect;
+  }, [
+    looseDiscTile,
+    baseAspect,
+    faceQuarterTurns,
+    landscapeFace,
+    variantView.finish,
+    props.variant,
+    printVariant?.sealedBag,
+  ]);
   const displayQuarterTurns = landscapeFace ? 0 : faceQuarterTurns;
 
   // Pick placeholder icon based on shelf type — memoized as an ELEMENT so no
@@ -311,7 +331,8 @@ function ItemCardInner(props: ItemCardProps) {
       {(estimatedPrice !== null ||
         (condition && shelfShowsItemCondition(shelfType)) ||
         copyCount > 1 ||
-        (variantView.foilMaskUrl && props.variant) ||
+        ((variantView.foilMaskUrl || isSealedFinish(props.variant)) &&
+          props.variant) ||
         isItemOnLoan(props)) && (
         <div className="absolute top-2 right-2 z-20 pointer-events-none select-none flex flex-col items-end gap-1">
           {estimatedPrice !== null && (
@@ -325,7 +346,8 @@ function ItemCardInner(props: ItemCardProps) {
               ×{copyCount}
             </span>
           )}
-          {variantView.foilMaskUrl && props.variant && (
+          {props.variant &&
+            (variantView.foilMaskUrl || isSealedFinish(props.variant)) && (
             <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
               ✦ {localizeFinishLabel(props.variant, t)}
             </span>
@@ -403,6 +425,7 @@ function ItemCardInner(props: ItemCardProps) {
                 imageUrl={variantView.imageUrl ?? displayImageUrl}
                 alt={name}
                 finish={variantView.finish}
+                sealedBag={printVariant?.sealedBag}
                 materialName={variantView.materialName}
                 varnishType={variantView.varnishType}
                 cssFinishShaderId={variantView.shader?.id ?? null}
@@ -426,17 +449,39 @@ function ItemCardInner(props: ItemCardProps) {
                 tilt={false}
               />
             ) : (
-              <RemoteImage
-                src={displayImageUrl}
-                alt={name}
-                priority={priority}
-                onLoad={handleImageLoad}
-                className={[
-                  "w-full h-full select-none transition-opacity duration-150 ease-out object-center",
-                  imageFit === "contain" ? "object-contain" : "object-cover",
-                  cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
-                ].join(" ")}
-              />
+              isSealedFinish(variantView.finish ?? props.variant) ? (
+                <SealedBagOverlay side="front">
+                  <RemoteImage
+                    src={displayImageUrl}
+                    alt={name}
+                    priority={priority}
+                    onLoad={handleImageLoad}
+                    className={[
+                      "w-full h-full select-none transition-opacity duration-150 ease-out object-center",
+                      imageFit === "contain"
+                        ? "object-contain"
+                        : "object-cover",
+                      cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
+                    ].join(" ")}
+                  />
+                </SealedBagOverlay>
+              ) : (
+                <div className="relative h-full w-full">
+                  <RemoteImage
+                    src={displayImageUrl}
+                    alt={name}
+                    priority={priority}
+                    onLoad={handleImageLoad}
+                    className={[
+                      "w-full h-full select-none transition-opacity duration-150 ease-out object-center",
+                      imageFit === "contain"
+                        ? "object-contain"
+                        : "object-cover",
+                      cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
+                    ].join(" ")}
+                  />
+                </div>
+              )
             )}
           </OrientedMediaRotator>
           {/* subtle dark overlay gradient for title legibility */}

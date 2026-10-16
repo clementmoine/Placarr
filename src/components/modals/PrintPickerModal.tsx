@@ -11,12 +11,18 @@ import {
 import { FoilCardImage } from "@/components/FoilCardImage";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { RemoteImage } from "@/components/RemoteImage";
+import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
 import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  isSealedFinish,
+  sealedBagOuterAspect,
+} from "@/core/render/sealedBag";
 import {
   variantRendering,
   type PrintVariantInfo,
 } from "@/lib/client/hooks/usePrintVariant";
+import { ownedPrintKeyAliases } from "@/core/identify/printKey";
 import { inferPrintPickerDefaults } from "@/lib/collect/inferPrintPickerDefaults";
 import {
   getCachedPrintCatalogues,
@@ -62,6 +68,7 @@ export type PrintCandidateView = {
   language?: string | null;
   finishes?: string[];
   plainFinishes?: string[];
+  sealedBag?: boolean | null;
   effectPack?: string | null;
   finishShaders?: Record<string, string>;
   finishFoilMaskUrls?: Record<string, string>;
@@ -190,6 +197,7 @@ function candidateAsVariantInfo(
   return {
     finishes: candidate.finishes,
     plainFinishes: candidate.plainFinishes,
+    sealedBag: candidate.sealedBag,
     effectPack: candidate.effectPack,
     finishShaders: candidate.finishShaders,
     finishFoilMaskUrls: candidate.finishFoilMaskUrls,
@@ -239,6 +247,7 @@ function PrintPickerTileArt({
         imageUrl={art}
         alt={candidate.title}
         finish={view.finish}
+        sealedBag={candidate.sealedBag}
         materialName={view.materialName}
         varnishType={view.varnishType}
         cssFinishShaderId={view.shader?.id ?? null}
@@ -259,7 +268,7 @@ function PrintPickerTileArt({
     );
   }
 
-  return (
+  const image = (
     <RemoteImage
       src={art}
       alt={candidate.title}
@@ -268,6 +277,19 @@ function PrintPickerTileArt({
       className="object-cover"
     />
   );
+
+  if (isSealedFinish(view.finish ?? finish)) {
+    return (
+      <SealedBagOverlay
+        side="front"
+        className="absolute inset-0 h-full w-full"
+      >
+        {image}
+      </SealedBagOverlay>
+    );
+  }
+
+  return <div className="absolute inset-0 h-full w-full">{image}</div>;
 }
 
 /**
@@ -349,18 +371,25 @@ export function PrintPickerModal({
     const anyFinish = new Set<string>();
     const games = new Set<string>();
     for (const row of ownedPrints ?? []) {
-      const key = row.printKey?.trim().toLowerCase();
-      if (!key) continue;
+      const raw = row.printKey?.trim().toLowerCase();
+      if (!raw) continue;
+      /*
+        Brief `prerelease` set ↔ home-series grouping (`prerelease-ni0019` /
+        `s1-ni0019-prerelease`). Both must light the same picker tile.
+      */
+      const keys = ownedPrintKeyAliases(raw);
       const lang = row.language ?? null;
       const variant = row.variant ?? null;
       const setCode = row.setCode?.trim().toLowerCase() || null;
-      exact.add(ownedRowKey(key, variant, lang, setCode));
-      // Finitions : bornées au set quand on le connaît.
-      anyFinish.add(
-        [(setCode ?? "").trim().toLowerCase(), key].join("|"),
-      );
-      const game = parsePrintKey(key)?.game;
-      if (game) games.add(game);
+      for (const key of keys) {
+        exact.add(ownedRowKey(key, variant, lang, setCode));
+        // Finitions : bornées au set quand on le connaît.
+        anyFinish.add(
+          [(setCode ?? "").trim().toLowerCase(), key].join("|"),
+        );
+        const game = parsePrintKey(key)?.game;
+        if (game) games.add(game);
+      }
     }
     /*
       Le jeu de l'étagère, déduit de ce qu'elle contient — rien ne le porte
@@ -1379,7 +1408,13 @@ export function PrintPickerModal({
                   >
                     <div className="relative">
                       <OrientedMediaFrame
-                        aspectRatio="5 / 7"
+                        aspectRatio={
+                          sealedBagOuterAspect({
+                            finish: row.finish,
+                            sealedBag: row.sealedBag,
+                            faceAspect: "5 / 7",
+                          }) ?? "5 / 7"
+                        }
                         faceQuarterTurns={row.faceQuarterTurns}
                         landscapeFace={row.landscapeFace}
                         className="overflow-hidden rounded-lg bg-muted"

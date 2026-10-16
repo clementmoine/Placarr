@@ -112,7 +112,12 @@ import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { FlippableCard } from "@/components/FlippableCard";
+import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import { GameBox3D } from "@/components/GameBox3D";
+import {
+  isSealedFinish,
+  sealedBagOuterAspect,
+} from "@/core/render/sealedBag";
 import { Disc3D } from "@/components/Disc3D";
 import {
   resolveBoxFaces,
@@ -2185,14 +2190,29 @@ export default function ItemDetailsPage() {
       .replace(/\s+/g, " ")
       .trim();
   }, [shelf?.cardFormat, shelf?.type, displayQuarterTurns, landscapeFace]);
-  const coverOrientedAspect = useMemo(
-    () =>
-      faceDisplayAspect(getAspectRatio(shelf?.cardFormat, shelf?.type), {
+  const coverOrientedAspect = useMemo(() => {
+    const faceAspect = faceDisplayAspect(
+      getAspectRatio(shelf?.cardFormat, shelf?.type),
+      {
         faceQuarterTurns,
         landscapeFace,
-      }),
-    [shelf?.cardFormat, shelf?.type, faceQuarterTurns, landscapeFace],
-  );
+      },
+    );
+    const sealedAspect = sealedBagOuterAspect({
+      finish: variantView.finish,
+      sealedBag: printVariant?.sealedBag,
+      faceAspect,
+    });
+    if (sealedAspect) return sealedAspect;
+    return faceAspect;
+  }, [
+    shelf?.cardFormat,
+    shelf?.type,
+    faceQuarterTurns,
+    landscapeFace,
+    variantView.finish,
+    printVariant?.sealedBag,
+  ]);
   /**
    * The backdrop turns with the card only when it *is* the card. A Location has
    * no background of its own, so the hero falls back to its own face — a
@@ -2740,6 +2760,7 @@ export default function ItemDetailsPage() {
                           imageUrl={variantView.imageUrl ?? coverImage}
                           alt={itemDisplayName ?? ""}
                           finish={variantView.finish}
+                          sealedBag={printVariant?.sealedBag}
                           materialName={variantView.materialName}
                           varnishType={variantView.varnishType}
                           cssFinishShaderId={variantView.shader?.id ?? null}
@@ -2763,26 +2784,51 @@ export default function ItemDetailsPage() {
                            */
                           tilt={false}
                         />
+                      ) : isSealedFinish(
+                          variantView.finish ?? item?.variant,
+                        ) ? (
+                        <SealedBagOverlay
+                          side="front"
+                        >
+                          <RemoteImage
+                            src={coverImage}
+                            alt={itemDisplayName ?? ""}
+                            width={768}
+                            height={1152}
+                            sizes="(max-width: 768px) 240px, 480px"
+                            loading="eager"
+                            fetchPriority="high"
+                            onLoad={handleCoverImageLoad}
+                            className={cn(
+                              "h-full w-full transition-opacity duration-150 object-cover",
+                              cardBackSkeletonUrl &&
+                                !coverFaceReady &&
+                                "opacity-0",
+                            )}
+                          />
+                        </SealedBagOverlay>
                       ) : (
-                        <RemoteImage
-                          src={coverImage}
-                          alt={itemDisplayName ?? ""}
-                          width={768}
-                          height={1152}
-                          sizes="(max-width: 768px) 240px, 480px"
-                          loading="eager"
-                          fetchPriority="high"
-                          onLoad={handleCoverImageLoad}
-                          className={cn(
-                            "w-full h-full transition-opacity duration-150 transition-transform duration-500",
-                            coverImageFit === "contain"
-                              ? "object-contain"
-                              : "object-cover group-hover/cover:scale-105",
-                            cardBackSkeletonUrl &&
-                              !coverFaceReady &&
-                              "opacity-0",
-                          )}
-                        />
+                        <div className="relative h-full w-full">
+                          <RemoteImage
+                            src={coverImage}
+                            alt={itemDisplayName ?? ""}
+                            width={768}
+                            height={1152}
+                            sizes="(max-width: 768px) 240px, 480px"
+                            loading="eager"
+                            fetchPriority="high"
+                            onLoad={handleCoverImageLoad}
+                            className={cn(
+                              "w-full h-full transition-opacity duration-150 transition-transform duration-500",
+                              coverImageFit === "contain"
+                                ? "object-contain"
+                                : "object-cover group-hover/cover:scale-105",
+                              cardBackSkeletonUrl &&
+                                !coverFaceReady &&
+                                "opacity-0",
+                            )}
+                          />
+                        </div>
                       )}
                     </OrientedMediaRotator>
                     {/* Hover Zoom Overlay — decorative, and the click is the
@@ -3329,6 +3375,10 @@ export default function ItemDetailsPage() {
                 <FlippableCard
                   backUrl={cardBackUrl}
                   backAlt={`${itemDisplayName ?? ""} — dos`}
+                  sealedBag={
+                    isSealedFinish(variantView.finish ?? item?.variant) ||
+                    Boolean(printVariant?.sealedBag)
+                  }
                   flipLabel={t("items.flipCard")}
                   tiltPromptLabel={t("items.tiltPrompt")}
                   faceQuarterTurns={displayQuarterTurns}
@@ -3347,6 +3397,7 @@ export default function ItemDetailsPage() {
                       imageUrl={variantView.imageUrl ?? zoomImageUrl}
                       alt="Zoom"
                       finish={variantView.finish}
+                      sealedBag={printVariant?.sealedBag}
                       materialName={variantView.materialName}
                       varnishType={variantView.varnishType}
                       cssFinishShaderId={variantView.shader?.id ?? null}

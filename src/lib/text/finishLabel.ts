@@ -15,6 +15,8 @@ const PLAIN_FINISH_LABEL_KEYS: Record<string, string> = {
   nonfoil: "items.finishes.nonfoil",
   "non-foil": "items.finishes.nonfoil",
   normal: "items.finishes.normal",
+  /** Still in bag — packaging overlay, not a foil treatment. */
+  sealed: "items.finishes.sealed",
 };
 
 /**

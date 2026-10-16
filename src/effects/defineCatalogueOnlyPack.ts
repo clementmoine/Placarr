@@ -3,8 +3,8 @@
  * packs carry is the card back (flip target via the registry) and, for some, a
  * texture-free *house* CSS look keyed by finish.
  *
- * Foils admin tab is gated by `cataloguePacks.hasFoilEffects`, not by this
- * factory. Opt in with {@link CatalogueOnlyPackOptions.listHouseFinishesAsMaterials}
+ * Catalogue « Rendu » tab is gated by `cataloguePacks.hasFoilEffects`, not by
+ * this factory. Opt in with {@link CatalogueOnlyPackOptions.listHouseFinishesAsMaterials}
  * so the playroom has finish names to tile — without inventing Unity materials.
  *
  * Lives in `src/effects/`, not in core: a pack is plug-and-play data, and the

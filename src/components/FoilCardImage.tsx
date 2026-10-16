@@ -8,10 +8,13 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
   type SyntheticEvent,
 } from "react";
 
-import { HoloCardImage } from "@/components/HoloCardImage";
+import { HOLO_FACE_ATTR, HoloCardImage } from "@/components/HoloCardImage";
+import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import {
   foilLookSuppressed,
   foilSurfacesReady,
@@ -30,12 +33,17 @@ import {
   type FoilMaterial,
   foilRenderScale,
 } from "@/core/render/foil";
+import { applyFoilPointerCss } from "@/core/render/foil/pointerCss";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import {
   holoShader,
   varnishShader as varnishShaderFor,
   type HoloTuning,
 } from "@/core/render/holoShaders";
+import {
+  isSealedFinish,
+  sealedBagVariantFromMaterial,
+} from "@/core/render/sealedBag";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
 import { cn } from "@/lib/shared/utils";
@@ -128,6 +136,8 @@ type FoilCardImageProps = {
   alt: string;
   /** Catalogue finish name (e.g. Magma), not a shader id. */
   finish?: string | null;
+  /** Wrap the face in the shared sealed-bag overlay. */
+  sealedBag?: boolean | null;
   varnishType?: string | null;
   /**
    * Exact dumped material (playroom). When set, WebGL uses this material
@@ -231,6 +241,7 @@ function CssFoilFace({
   tuning,
   tilt,
   trackPointer,
+  lightFromParent,
   onLoad,
   className,
   children,
@@ -253,6 +264,7 @@ function CssFoilFace({
   tuning?: HoloTuning;
   tilt?: boolean;
   trackPointer?: boolean;
+  lightFromParent?: boolean;
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   className?: string;
   children?: React.ReactNode;
@@ -277,6 +289,7 @@ function CssFoilFace({
       tuning={tuning}
       tilt={tilt}
       trackPointer={trackPointer}
+      lightFromParent={lightFromParent}
       cardGlow={cardGlow}
       onLoad={onLoad}
       className={className}
@@ -314,6 +327,7 @@ export function FoilCardImage({
   imageUrl,
   alt,
   finish,
+  sealedBag = null,
   varnishType,
   materialName,
   liveFoilMask,
@@ -388,7 +402,18 @@ export function FoilCardImage({
     metaReady,
   ]);
 
-  const effectiveMaskUrl = maskUrl ?? pack?.fallbackFoilMaskUrl ?? null;
+  /** Outer bag chrome — finish `sealed` *or* an explicit bag flag (foil+bag). */
+  const bagged = Boolean(sealedBag) || isSealedFinish(finish);
+  // Playroom passes a material name (`sealed` vs `sealed-adaptive`). Shelves
+  // usually have no material — default to the 9-slice bag.
+  const bagVariant = materialName
+    ? sealedBagVariantFromMaterial(materialName)
+    : "adaptive";
+  /** Packaging-only: no house foil idle on the face. Foil+bag keeps a shine. */
+  const packagingOnly = isSealedFinish(finish);
+  const effectiveMaskUrl = packagingOnly
+    ? null
+    : (maskUrl ?? pack?.fallbackFoilMaskUrl ?? null);
   /**
    * Un matériau qui réclame un masque n'a rien à dessiner sans lui.
    *
@@ -415,15 +440,16 @@ export function FoilCardImage({
   // Plain leaves (`webgl: false`, Live NonFoil) must stay shader-less even if
   // a stale `finish` prop names another print's foil.
   // Shiny finish with no dedicated CSS → house flare (all TCG packs).
+  // Packaging-only bags stay flat; foil+bag demos keep the shine.
   const resolvedFinishShaderId =
-    material?.webgl === false || foilMaskMissing
+    packagingOnly || material?.webgl === false || foilMaskMissing
       ? null
       : applyHouseFoilFallback(
           fromPack.finishShaderId ?? cssFinishShaderId ?? null,
           finish,
         );
   const cssRecipe =
-    material?.webgl === false || foilMaskMissing
+    packagingOnly || material?.webgl === false || foilMaskMissing
       ? { finishShaderId: null, varnishShaderId: null, lenticularGrid: null }
       : {
           finishShaderId: resolvedFinishShaderId,
@@ -563,7 +589,7 @@ export function FoilCardImage({
   });
 
   const applyLean = useCallback(
-    (lean: Lean, opts?: { engageTiltProgram?: boolean }) => {
+    (lean: Lean, opts?: { engageTiltProgram?: boolean; glare?: number }) => {
       const xy = [
         tiltFromLightPercent(lean.lightX, leanAmplitude),
         tiltFromLightPercent(lean.lightY, leanAmplitude),
@@ -588,17 +614,26 @@ export function FoilCardImage({
       if (frame) {
         frame.style.setProperty("--rotateX", `${lean.tiltY}deg`);
         frame.style.setProperty("--rotateY", `${lean.tiltX}deg`);
+        // Foil+bag: one lean drives bag pose and face light (no second idle).
+        if (bagged && !packagingOnly) {
+          const face = frame.querySelector(`[${HOLO_FACE_ATTR}]`);
+          if (face instanceof HTMLElement) {
+            applyFoilPointerCss(face, lean, opts?.glare ?? 0.66);
+          }
+        }
       }
     },
-    [leanAmplitude, hasTimeSibling],
+    [leanAmplitude, hasTimeSibling, bagged, packagingOnly],
   );
 
   // Physical lean follows the same `cos(t)` Time mode uses for the foil, with
   // a release blend so leaving the card is not a snap.
+  // Sealed CSS faces also lean here (bag + card share one transform); plain
+  // CSS foil still idles inside HoloCardImage.
   const { noteLean } = useFoilIdleLean(
-    isDriven || !useWebgl || !tilt,
+    isDriven || !tilt || (!useWebgl && !bagged),
     MAX_TILT,
-    (lean) => applyLean(lean),
+    (lean, glare) => applyLean(lean, { glare }),
   );
 
   useEffect(() => {
@@ -734,20 +769,17 @@ export function FoilCardImage({
       scanCrop={scanCropProp}
       fit={fit}
       tuning={tuning}
-      tilt={tilt}
-      trackPointer={trackPointer}
+      // Bagged: parent owns 3D lean + foil light (see applyLean → holo face).
+      tilt={bagged ? false : tilt}
+      trackPointer={bagged ? false : trackPointer}
+      lightFromParent={bagged && !packagingOnly}
       cardGlow={cardGlow}
       onLoad={onLoad}
-      className={eligible ? undefined : className}
+      className={eligible || bagged ? undefined : className}
     >
       {!eligible ? children : null}
     </CssFoilFace>
   );
-
-  // No WebGL attempt: preference CSS, missing material/surfaces, or failed.
-  if (!eligible) {
-    return cssFace;
-  }
 
   const onPointerMove = trackPointer
     ? (event: React.PointerEvent) => {
@@ -773,89 +805,141 @@ export function FoilCardImage({
       }
     : undefined;
 
+  const ownsTiltChrome = useWebgl || bagged;
+  const tiltNode = (face: ReactNode) => (
+    <div
+      style={
+        tilt
+          ? {
+              transform: "rotateX(var(--rotateY)) rotateY(var(--rotateX))",
+              willChange: "transform",
+            }
+          : undefined
+      }
+      className={cn(
+        "relative h-full w-full rounded-[inherit]",
+        // Lorcana dual-frag can ease the canvas tilt; Live / bagged follow the
+        // pointer immediately (a CSS transition desynced bag lean from pose).
+        tilt &&
+          isDriven &&
+          hasTimeSibling &&
+          !bagged &&
+          "transition-transform duration-200 ease-out",
+      )}
+    >
+      {bagged ? (
+        <SealedBagOverlay side="front" variant={bagVariant}>
+          {face}
+        </SealedBagOverlay>
+      ) : (
+        face
+      )}
+    </div>
+  );
+
+  // No WebGL attempt: preference CSS, missing material/surfaces, or failed.
+  if (!eligible) {
+    if (!bagged) return cssFace;
+    // Bag + art share one lean (idle + pointer). Outer chrome (shadow) rides
+    // the same node so it does not float while the face tips alone.
+    return (
+      <div
+        ref={frameRef}
+        onPointerMove={onPointerMove}
+        onPointerLeave={reset}
+        onPointerCancel={reset}
+        className={cn(
+          "relative h-full w-full select-none rounded-[inherit]",
+          tilt && "[perspective:900px]",
+          className,
+        )}
+        style={
+          {
+            "--rotateX": "0deg",
+            "--rotateY": "0deg",
+          } as CSSProperties
+        }
+      >
+        {tiltNode(cssFace)}
+      </div>
+    );
+  }
+
   // Eligible: keep a stable frame for IntersectionObserver. Without this
   // wrapper, inView never flips and WebGL never starts. Face stays empty until
   // the canvas is ready so the parent card-back skeleton shows (no CSS flash).
+  const webglFace = (
+    <div
+      className={cn(
+        "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
+        bagged ? undefined : className,
+      )}
+    >
+      {/*
+        Fill the oriented frame edge-to-edge. Aspect lives on
+        OrientedMediaFrame / shelf tile — do not re-introduce aspectRatio +
+        maxHeight here (that fight clips BREAK faces after rotate).
+
+        `rounded-[inherit]` here too: the canvas asks to inherit the card
+        radius, and inside a `preserve-3d` scene that own rounded box is
+        the only thing that still clips it.
+      */}
+      <div className="relative h-full w-full rounded-[inherit]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageUrl}
+          alt={rendererReady ? alt : ""}
+          aria-hidden={!rendererReady}
+          draggable={false}
+          onLoad={onLoad}
+          className="pointer-events-none h-full w-full object-fill opacity-0"
+        />
+        <canvas
+          ref={canvasRef}
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-0 h-full w-full rounded-[inherit]",
+            rendererReady ? "opacity-100" : "opacity-0",
+          )}
+        />
+      </div>
+      {children}
+    </div>
+  );
+
   return (
     <div
       ref={frameRef}
-      // CSS face owns its pointer + idle; only the WebGL canvas needs the
-      // frame (canvas is pointer-events-none).
-      onPointerMove={useWebgl ? onPointerMove : undefined}
-      onPointerLeave={useWebgl ? reset : undefined}
-      onPointerCancel={useWebgl ? reset : undefined}
+      // CSS face owns its pointer + idle; bagged / WebGL canvas need the frame
+      // (canvas is pointer-events-none).
+      onPointerMove={ownsTiltChrome ? onPointerMove : undefined}
+      onPointerLeave={ownsTiltChrome ? reset : undefined}
+      onPointerCancel={ownsTiltChrome ? reset : undefined}
       className={cn(
         "relative h-full w-full select-none rounded-[inherit]",
-        useWebgl && tilt && "[perspective:900px]",
+        ownsTiltChrome && tilt && "[perspective:900px]",
+        bagged ? className : undefined,
       )}
+      style={
+        bagged
+          ? ({
+              "--rotateX": "0deg",
+              "--rotateY": "0deg",
+            } as CSSProperties)
+          : undefined
+      }
       aria-busy={useWebgl && !rendererReady ? true : undefined}
     >
       {!useWebgl ? (
-        <div className={cn("h-full w-full rounded-[inherit]", className)}>
-          {cssFace}
-        </div>
-      ) : (
-        <div
-          style={
-            tilt
-              ? {
-                  transform: "rotateX(var(--rotateY)) rotateY(var(--rotateX))",
-                  willChange: "transform",
-                }
-              : undefined
-          }
-          className={cn(
-            "relative h-full w-full rounded-[inherit]",
-            // Lorcana dual-frag can ease the canvas tilt; Live single-frag
-            // follows the pointer immediately (CSS transition felt like a pose).
-            tilt &&
-              isDriven &&
-              hasTimeSibling &&
-              "transition-transform duration-200 ease-out",
-          )}
-        >
-          {/*
-            Radius + overflow must be on a node *inside* the tilt transform.
-            Same-node `transform` + `overflow:hidden` + `border-radius` fails to
-            clip the canvas (sharp corners, rounded shadow only).
-          */}
-          <div
-            className={cn(
-              "relative isolate h-full w-full overflow-hidden rounded-[inherit]",
-              className,
-            )}
-          >
-            {/*
-              Fill the oriented frame edge-to-edge. Aspect lives on
-              OrientedMediaFrame / shelf tile — do not re-introduce aspectRatio +
-              maxHeight here (that fight clips BREAK faces after rotate).
-
-              `rounded-[inherit]` here too: the canvas asks to inherit the card
-              radius, and inside a `preserve-3d` scene that own rounded box is
-              the only thing that still clips it.
-            */}
-            <div className="relative h-full w-full rounded-[inherit]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageUrl}
-                alt={rendererReady ? alt : ""}
-                aria-hidden={!rendererReady}
-                draggable={false}
-                onLoad={onLoad}
-                className="pointer-events-none h-full w-full object-fill opacity-0"
-              />
-              <canvas
-                ref={canvasRef}
-                aria-hidden
-                className={cn(
-                  "pointer-events-none absolute inset-0 h-full w-full rounded-[inherit]",
-                  rendererReady ? "opacity-100" : "opacity-0",
-                )}
-              />
-            </div>
-            {children}
+        bagged ? (
+          tiltNode(cssFace)
+        ) : (
+          <div className={cn("h-full w-full rounded-[inherit]", className)}>
+            {cssFace}
           </div>
-        </div>
+        )
+      ) : (
+        tiltNode(webglFace)
       )}
     </div>
   );

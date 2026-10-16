@@ -316,10 +316,21 @@ describe("cataloguePacks", () => {
   });
 
   it("forces all scope when pack has no foil effects", () => {
-    const naruto = cataloguePackInfo("naruto/carddass")!;
-    expect(resolveCatalogueScope("sealed", naruto)).toBe("sealed");
-    expect(resolveCatalogueScope("foils", naruto)).toBe("all");
-    expect(resolveCatalogueScope(null, naruto)).toBe("all");
+    const ranks = cataloguePackInfo("naruto/ninja-ranks")!;
+    expect(ranks.hasFoilEffects).toBe(false);
+    expect(resolveCatalogueScope("sealed", ranks)).toBe("sealed");
+    expect(resolveCatalogueScope("foils", ranks)).toBe("all");
+    expect(resolveCatalogueScope(null, ranks)).toBe("all");
+  });
+
+  it("offers a render playroom on Carddass (house foil + sealed bags)", () => {
+    const carddass = cataloguePackInfo("naruto/carddass")!;
+    expect(carddass.hasFoilEffects).toBe(true);
+    expect(resolveCatalogueScope(null, carddass)).toBe("foils");
+    expect(resolveCatalogueScope("rendu", carddass)).toBe("foils");
+    expect(resolveCatalogueScope("render", carddass)).toBe("foils");
+    expect(resolveCatalogueScope("all", carddass)).toBe("all");
+    expect(resolveCatalogueScope("sealed", carddass)).toBe("sealed");
   });
 
   it("carddass borrows faces across locales like ranks", () => {

@@ -114,6 +114,11 @@ type HoloCardImageProps = {
    */
   trackPointer?: boolean;
   /**
+   * Parent owns lean + light (sealed bag / shared 3D chrome). Skip local idle
+   * and pointer; the parent writes foil CSS vars onto {@link HOLO_FACE_ATTR}.
+   */
+  lightFromParent?: boolean;
+  /**
    * Simey `--card-glow` (Radiant spotlight colour). Written once on the frame
    * so pointerCss does not overwrite with the generic cyan default.
    */
@@ -139,6 +144,9 @@ function objectFitClass(fit: "cover" | "contain"): string {
  * holding a card rather than as a hover state.
  */
 const MAX_TILT = 18;
+
+/** Marker for parents that drive foil light CSS from a shared lean. */
+export const HOLO_FACE_ATTR = "data-holo-face";
 
 /**
  * A card that catches the light as you move over it, or as you tilt the phone.
@@ -166,6 +174,7 @@ export function HoloCardImage({
   tuning,
   tilt = true,
   trackPointer = tilt,
+  lightFromParent = false,
   cardGlow = null,
   onLoad,
   lenticularGrid = null,
@@ -409,14 +418,16 @@ export function HoloCardImage({
     [place, springSnap],
   );
 
-  const idleEnabled = holoCssIdleEnabled({
-    hasFinish: Boolean(shader || varnishShader),
-    isDriven,
-    fullCardFinish: isLiveGoldCss || isKayouLenticularCss,
-    shineMask,
-  });
+  const idleEnabled =
+    !lightFromParent &&
+    holoCssIdleEnabled({
+      hasFinish: Boolean(shader || varnishShader),
+      isDriven,
+      fullCardFinish: isLiveGoldCss || isKayouLenticularCss,
+      shineMask,
+    });
   const { noteLean } = useFoilIdleLean(
-    isDriven || !idleEnabled,
+    isDriven || !idleEnabled || lightFromParent,
     MAX_TILT,
     placeIdle,
   );
@@ -447,12 +458,12 @@ export function HoloCardImage({
   // disagree — and the pointer wins while it is actually on the card, because a
   // mouse user tilting their laptop is not making a gesture.
   useEffect(() => {
-    if (!deviceLean || isActive) return;
+    if (lightFromParent || !deviceLean || isActive) return;
     // The same shape the pointer produces, so the two inputs cannot disagree
     // about which way the card turns.
     noteLean(deviceLean, 0.4);
     springTo(deviceLean, 0.4);
-  }, [deviceLean, isActive, springTo, noteLean]);
+  }, [lightFromParent, deviceLean, isActive, springTo, noteLean]);
 
   const artLayer =
     useLenticularArt && lenticularGrid ? (
@@ -568,19 +579,22 @@ export function HoloCardImage({
     }
   }
 
+  const followPointer = trackPointer && !lightFromParent;
+
   return (
     <div
       ref={frameRef}
+      {...{ [HOLO_FACE_ATTR]: "" }}
       onPointerMove={
-        trackPointer
+        followPointer
           ? (event) => {
               setIsActive(true);
               applyPointer(event.clientX, event.clientY);
             }
           : undefined
       }
-      onPointerLeave={trackPointer ? reset : undefined}
-      onPointerCancel={trackPointer ? reset : undefined}
+      onPointerLeave={followPointer ? reset : undefined}
+      onPointerCancel={followPointer ? reset : undefined}
       style={
         {
           /**

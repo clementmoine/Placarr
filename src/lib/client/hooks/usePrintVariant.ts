@@ -20,6 +20,8 @@ import { isHoloShaderId } from "@/core/render/holoShaderIds";
 export type PrintVariantInfo = {
   finishes?: string[];
   plainFinishes?: string[];
+  /** Sealed PE bag when `sealed` is offered. See `PrintCandidate.sealedBag`. */
+  sealedBag?: boolean | null;
   /** Effect pack id from `src/effects/<id>`. See `PrintCandidate.effectPack`. */
   effectPack?: string | null;
   /** Finish -> shader id. See `PrintCandidate.finishShaders`. */

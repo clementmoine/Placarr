@@ -324,8 +324,15 @@ export type PrintCandidate = {
    * The subset of `finishes` that carries no visual effect — a plain print.
    * Core cannot infer this: only the provider knows that Lorcana's `None` means
    * "no foil" while every other value means there is something to render.
+   * Includes packaging finishes such as `sealed` (bag overlay, not foil).
    */
   plainFinishes?: string[];
+  /**
+   * Heat-seal layout when this print offers a `sealed` finish (`top` = seal on
+   * top only; `both` = top + bottom). Used by {@link SealedBagOverlay}.
+   */
+  /** Face ships in a sealed PE bag (shared packaging overlay). */
+  sealedBag?: boolean | null;
   /**
    * Which look each finish is drawn with, keyed by finish, valued by an id from
    * the shader library in `core/render/holoShaders`.

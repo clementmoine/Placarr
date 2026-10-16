@@ -86,6 +86,7 @@ const FALLBACK_PLAIN_FINISH_KEYS = new Set([
   "nonfoil",
   "normal",
   "non-foil",
+  "sealed",
 ]);
 
 /**

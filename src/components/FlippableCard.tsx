@@ -7,6 +7,7 @@ import {
   cardFaceRadius,
   OrientedMediaRotator,
 } from "@/components/OrientedMediaFrame";
+import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
@@ -18,6 +19,12 @@ type FlippableCardProps = {
   /** Where the back lives, if one was resolved (print / set / pack). */
   backUrl?: string | null;
   backAlt: string;
+  /**
+   * When the copy is sealed, mirror the bag on the back and stack the
+   * peel strip. Front overlay stays on the face children (FoilCardImage /
+   * SealedBagOverlay).
+   */
+  sealedBag?: boolean | null;
   /** Announced on the control, so this component stays free of locale plumbing. */
   flipLabel: string;
   /** Label for the control that asks iOS for the motion sensor. Same reason. */
@@ -142,6 +149,7 @@ export function FlippableCard({
   children,
   backUrl,
   backAlt,
+  sealedBag = null,
   flipLabel,
   tiltPromptLabel,
   faceQuarterTurns = 0,
@@ -368,13 +376,27 @@ export function FlippableCard({
                     faceQuarterTurns={faceQuarterTurns}
                     orientedAspect={orientedAspect}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={backUrl}
-                      alt={backAlt}
-                      draggable={false}
-                      className="h-full w-full object-contain"
-                    />
+                    {sealedBag ? (
+                      <SealedBagOverlay side="back">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={backUrl}
+                          alt={backAlt}
+                          draggable={false}
+                          className="h-full w-full object-contain"
+                        />
+                      </SealedBagOverlay>
+                    ) : (
+                      <div className="relative h-full w-full">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={backUrl}
+                          alt={backAlt}
+                          draggable={false}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                    )}
                   </OrientedMediaRotator>
                 </div>
               )}

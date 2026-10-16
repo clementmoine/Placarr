@@ -1,19 +1,13 @@
 /**
- * Naruto Carddass effect pack — card back, and a house look per finish.
+ * Naruto Carddass effect pack — card back, house foil, and sealed-bag demos.
  *
- * The pack is catalogue-only: no APK and no shader dump — that is what
- * `cataloguePacks.hasFoilEffects === false` still means. It is registered
- * because the card back resolves through the effect pack registry
- * (`resolveCardBackCandidates`), and without one a Naruto card had nothing to
- * flip to.
- *
- * What it does render is a *house* CSS look. Those are texture-free, so they
- * need no dump: an approximation is honest here because we know from the
- * catalogue which prints are foil (the rarity is the finish on this game), we
- * just do not have the captured layer. The alternative was showing a holo and
- * a common as the same flat scan.
+ * Catalogue-only (no APK / Unity dump). House CSS foil approximates holos; the
+ * playroom also tiles a generic sealed bag (`sealed` / `foil-sealed`) and
+ * adaptive 9-slice demos (`*-adaptive`) so we can inspect packaging without a
+ * Live capture.
  */
 import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
+import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 
 /**
  * Id chosen to collide with nothing else quoted in the tree: the data-pack
@@ -60,9 +54,52 @@ const FINISH_SHADER: Record<string, string> = {
   holo: "flare",
 };
 
-/** Finish names this pack renders, lower-cased as they are stored. */
+/**
+ * Playroom tiles (not Unity materials).
+ * - `sealed` → packaging only (9-slice, same as shelves)
+ * - `foil-sealed` → finish `holo` + bag
+ * - `*-full` → legacy full-bleed PNG for A/B
+ */
+export const NARUTO_CARDDASS_PLAYROOM_MATERIALS = [
+  "holo",
+  "foil-sealed",
+  "foil-sealed-full",
+  "sealed",
+  "sealed-full",
+] as const;
+
+/** Finish names this pack renders as foil, lower-cased as they are stored. */
 export const NARUTO_CARDDASS_FINISHES = Object.keys(FINISH_SHADER);
 export const NARUTO_CCG_FINISHES = NARUTO_CARDDASS_FINISHES;
+
+/** Demo face for the foils / bag playroom (S1 FR NI-019). */
+const PLAYROOM_DEMO_ART =
+  `${ASSET_BASE}/cards/ninja/ni0019/fr/art.carddass.jpg`;
+
+function playroomArtForMaterial(name: string): PlayroomArt | null {
+  const n = name.trim().toLowerCase();
+  if (n === "holo") {
+    return {
+      imageUrl: PLAYROOM_DEMO_ART,
+      maskUrl: NARUTO_CARDDASS_FULL_FOIL_MASK_URL,
+      label: "Holofoil (générique)",
+    };
+  }
+  if (n === "foil-sealed" || n === "foil-sealed-full") {
+    return {
+      imageUrl: PLAYROOM_DEMO_ART,
+      maskUrl: NARUTO_CARDDASS_FULL_FOIL_MASK_URL,
+      label: n.endsWith("-full") ? "Foil + sachet (full)" : "Foil + sachet",
+    };
+  }
+  if (n === "sealed" || n === "sealed-full") {
+    return {
+      imageUrl: PLAYROOM_DEMO_ART,
+      label: n.endsWith("-full") ? "Sachet (full)" : "Sachet",
+    };
+  }
+  return null;
+}
 
 /**
  * Les quatre familles du 「NARUTO-ナルト- 疾風伝 カードゲーム」 (2007-2009).
@@ -119,10 +156,10 @@ function isEnCcgPrintedRef(card: string, setCode: string): boolean {
   );
 }
 
-export const narutoCarddassEffectPack = defineCatalogueOnlyPack({
+const pack = defineCatalogueOnlyPack({
   id: NARUTO_CARDDASS_EFFECT_PACK_ID,
   label: "Naruto Carddass",
-  blurb: "Catalogue local — dos de pack, sans effet foil",
+  blurb: "Catalogue local — foil maison + sachets (playroom)",
   assetBase: ASSET_BASE,
   /** Flip default = Carddass FR sleeve (`curated/cards/back.fr.png`). */
   cardBackUrl: `${ASSET_BASE}/cards/back.fr.webp`,
@@ -147,8 +184,55 @@ export const narutoCarddassEffectPack = defineCatalogueOnlyPack({
     return null;
   },
   finishShader: FINISH_SHADER,
+  listHouseFinishesAsMaterials: true,
   fallbackFoilMaskUrl: NARUTO_CARDDASS_FULL_FOIL_MASK_URL,
+  playroomArtForMaterial,
+  resolveCss: (finish) => {
+    const key = (finish ?? "").trim().toLowerCase();
+    // Packaging-only finish — foil+bag demos use finish `holo` instead.
+    if (
+      key === "sealed" ||
+      key === "sealed-top" ||
+      key === "sealed-both" ||
+      key === "sealed-adaptive" ||
+      key === "sealed-full"
+    ) {
+      return { finishShaderId: null, varnishShaderId: null };
+    }
+    const mapped = FINISH_SHADER[key] ?? null;
+    return {
+      finishShaderId: mapped,
+      varnishShaderId: null,
+    };
+  },
 });
 
+pack.listMaterials = () => [...NARUTO_CARDDASS_PLAYROOM_MATERIALS];
+pack.parseMaterialName = (name) => {
+  const n = name.trim().toLowerCase();
+  if (
+    n === "sealed" ||
+    n === "sealed-both" ||
+    n === "sealed-top" ||
+    n === "sealed-adaptive" ||
+    n === "sealed-full"
+  ) {
+    return { finish: "sealed", varnish: null };
+  }
+  if (
+    n === "foil-sealed" ||
+    n === "foil-sealed-adaptive" ||
+    n === "foil-sealed-full" ||
+    n.endsWith("-sealed") ||
+    n.endsWith("-sealed-adaptive") ||
+    n.endsWith("-sealed-full")
+  ) {
+    return { finish: "holo", varnish: null };
+  }
+  if (n === "holo") return { finish: "holo", varnish: null };
+  return { finish: null, varnish: null };
+};
+
+export const narutoCarddassEffectPack = pack;
 export const narutoCcgEffectPack = narutoCarddassEffectPack;
 export const narutoEnCcgEffectPack = narutoCarddassEffectPack;

@@ -377,8 +377,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     },
     labelFr: "Naruto Carddass",
     labelEn: "Naruto Carddass",
-    hasFoilEffects: false,
-    defaultScope: "all",
+    hasFoilEffects: true,
+    defaultScope: "foils",
     sameNumberArtFallback: true,
     narutoCollectorDisk: true,
     /**
@@ -1203,14 +1203,28 @@ export function resolveCatalogueScope(
   }
   if (!pack.hasFoilEffects) return "all";
   if (raw === "all" || raw === "toutes" || raw === "cards") return "all";
-  if (raw === "foils" || raw === "foil" || raw === "effects") return "foils";
+  /*
+    Internal id stays `foils` (bookmarks). UI label is Rendu / Render — also
+    sachets and future box / disc previews.
+  */
+  if (
+    raw === "foils" ||
+    raw === "foil" ||
+    raw === "effects" ||
+    raw === "effect" ||
+    raw === "rendu" ||
+    raw === "render" ||
+    raw === "renders"
+  ) {
+    return "foils";
+  }
   return pack.defaultScope;
 }
 
 /**
  * URL semantics of switching the active Catalogue tab. A pack change must drop
  * a material that does not exist in the next pack, and force `scope=all` on a
- * pack with no foil effects — otherwise the browser opens on an empty "Foils".
+ * pack with no render playroom — otherwise the browser opens on an empty Rendu.
  */
 export function applyCataloguePackParams(
   params: URLSearchParams,

@@ -50,11 +50,16 @@ import {
   type NarutoPrintRow,
 } from "./indexStore";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
+import { registerPrereleaseHomeSet } from "@/core/identify/printKey";
+import { SEALED_FINISH } from "@/core/render/sealedBag";
 import { attestedNarutoCarddassFinishes } from "./sources/faces";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { listJapaneseReleases } from "./sources/sealed";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
 import { isNarutoS6FrPrintedNumber } from "./sources/titles";
+
+// Brief `prerelease` catalogue set folds into Série 1 — ownership aliases both keys.
+registerPrereleaseHomeSet("naruto", "s1");
 
 // --- from printOrientation.ts ---
 
@@ -443,9 +448,21 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     row.lang?.trim().toLowerCase() === "ja"
       ? narutoIllustrationBArt(row.number)
       : null;
+  /*
+    Manga S1 prerelease printKey = the bag only (`sealed`). Opened, the card is
+    the retail non-foil (`normal`) — same object, so we do not offer a second
+    Normale on the prerelease key.
+  */
+  const isPrereleasePrint =
+    parseNarutoCollector(row.number)?.grouping?.toLowerCase() ===
+      "prerelease" ||
+    /-prerelease$/i.test(row.number) ||
+    /-prerelease$/i.test(row.printKey);
   // S1 FR: Bandai-attested finishes. Elsewhere keep dual (rarity too dirty to gate).
-  const baseFinishes =
-    attestedNarutoCarddassFinishes(row.setCode, row.number) ?? NARUTO_FINISHES;
+  const baseFinishes = isPrereleasePrint
+    ? ([SEALED_FINISH] as string[])
+    : (attestedNarutoCarddassFinishes(row.setCode, row.number) ??
+      NARUTO_FINISHES);
   const finishes = illustrationBArt
     ? [...baseFinishes, ...baseFinishes.map(narutoIllustrationBFinish)]
     : [...baseFinishes];
@@ -471,7 +488,7 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
       ? buildNarutoDiskArtAttachments({
           printKey: row.printKey,
           number: collectorNumber,
-          lang: row.lang,
+          lang: row.lang ?? "fr",
           source: "narutocarddass",
           title: row.fullName,
         }).defaultUrl
@@ -503,8 +520,11 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     plainFinishes: finishes.filter(
       (finish) =>
         finish === PLAIN_FINISH ||
+        finish === SEALED_FINISH ||
         finish === narutoIllustrationBFinish(PLAIN_FINISH),
     ),
+    // Manga FR prereleases ship with heat-seals top + bottom (double pinch).
+    ...(isPrereleasePrint ? { sealedBag: true } : {}),
     ...(illustrationBArt && pathId
       ? {
           variantImageUrls: Object.fromEntries(

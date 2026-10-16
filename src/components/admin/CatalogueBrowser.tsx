@@ -199,7 +199,7 @@ function formatCardPriceDeltaCents(
 
 /**
  * Flat grid of every local catalogue face (cards-index), for Catalogue → Toutes
- * and for packs without a foil playroom (Naruto).
+ * and for packs without a foil playroom (e.g. Ninja Ranks).
  */
 export function CatalogueBrowser({
   packId,

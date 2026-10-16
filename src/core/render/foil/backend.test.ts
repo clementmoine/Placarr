@@ -143,6 +143,11 @@ describe("applyHouseFoilFallback", () => {
     expect(applyHouseFoilFallback(null, "")).toBeNull();
     expect(applyHouseFoilFallback(null, "None")).toBeNull();
   });
+
+  it("stays flat for sealed packaging finishes", () => {
+    expect(applyHouseFoilFallback(null, "sealed")).toBeNull();
+    expect(applyHouseFoilFallback(null, "sealed-both")).toBeNull();
+  });
 });
 
 describe("rankCardBacks", () => {

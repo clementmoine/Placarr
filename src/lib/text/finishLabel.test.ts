@@ -28,6 +28,7 @@ describe("localizeFinishLabel", () => {
       "items.finishes.none": "Regular",
       "items.finishes.nonfoil": "Regular",
       "items.finishes.normal": "Regular",
+      "items.finishes.sealed": "Sealed bag",
       "items.finishes.holo": "Holofoil",
       "items.finishes.reverse": "Reverse Holofoil",
       "items.finishes.firstEdition": "1st Edition",
@@ -37,10 +38,12 @@ describe("localizeFinishLabel", () => {
   it("uses the collector lexicon for catalogue finishes", () => {
     expect(localizeFinishLabel("None", t)).toBe("Regular");
     expect(localizeFinishLabel("normal", t)).toBe("Regular");
+    expect(localizeFinishLabel("sealed", t)).toBe("Sealed bag");
     expect(localizeFinishLabel("holo", t)).toBe("Holofoil");
     expect(localizeFinishLabel("reverse", t)).toBe("Reverse Holofoil");
     expect(localizeFinishLabel("firstEdition", t)).toBe("1st Edition");
     expect(finishLabelMessageKey("None")).toBe("items.finishes.none");
+    expect(finishLabelMessageKey("sealed")).toBe("items.finishes.sealed");
     expect(finishLabelMessageKey("holo")).toBe("items.finishes.holo");
   });
 

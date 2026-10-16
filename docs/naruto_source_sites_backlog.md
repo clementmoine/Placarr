@@ -1569,3 +1569,14 @@ la carte reste une, son rangement change avec la langue.
 - [x] ~~**Sous-catalogue 疾風伝**~~ — **livré le 2026-08-21.** Pack
       `naruto/shippuden` : 436 tirages, 19 SKU scellés, ses propres registres et
       son dos. Le pack Carddass n'en porte plus rien.
+
+## Session 2026-10-16 — index JA densifié
+
+`Catalogue Sync --index-only` + borrow d’appearances FR/checklist pour locales
+sans membership : les faces JA déjà sur disque (Suruga / Chitoroshop / …)
+entrent dans `print_assets`. Complétude JA **~32 % → 84 %** images
+(`titleWithoutImage` 1959 → 471). Miroir d’art entre printKeys même numéro.
+
+Reste : ~471 titres JA sans scan (promos / coins / trous Suruga) ; EN 102 ;
+FR 56 (maki).
+

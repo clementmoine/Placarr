@@ -9,6 +9,7 @@ import tvtokyoLedgerJson from "../curated/sources/tvtokyo.json";
 import yahooAuctionsLedgerJson from "../curated/sources/yahoo-auctions.json";
 import {
   canonicalizeNarutoPrintKey,
+  canonicalNarutoDiskPrefix,
   mintNarutoPrintKey,
   narutoDiskCardId,
   parseNarutoCollector,
@@ -32,6 +33,44 @@ export function bandaiFrSerie1DetailleePrintKeys(): string[] {
 
 export function bandaiFrSerie1DetailleeHoloCount(): number {
   return bandaiFrSerie1DetailleeJson.cards.filter((row) => row.holoMarker).length;
+}
+
+const S1_PLAIN = "normal";
+const S1_HOLO = "holo";
+
+/** Bandai short key `ni001` from collector `ni0001` / `NI-1`. */
+function bandaiFrSerie1ShortKey(collectorNumber: string): string | null {
+  const id = parseNarutoCollector(collectorNumber);
+  if (!id) return null;
+  const prefix = canonicalNarutoDiskPrefix(id.printedPrefix).toLowerCase();
+  return `${prefix}${String(id.number).padStart(3, "0")}`;
+}
+
+/**
+ * Attested finishes for FR Carddass **Série 1** from Bandai détailée.
+ * Dual = prerelease non-holo alt of a holo ID (`ni019` / `ta005` / `te007` / `te036`).
+ * Returns `null` outside S1 or when the number is absent from the ledger
+ * (caller keeps the legacy dual `normal+holo`).
+ */
+export function attestedNarutoCarddassFinishes(
+  setCode: string,
+  collectorNumber: string,
+): readonly string[] | null {
+  if (setCode.trim().toLowerCase() !== "s1") return null;
+  const short = bandaiFrSerie1ShortKey(collectorNumber);
+  if (!short) return null;
+  const card = bandaiFrSerie1DetailleeJson.cards.find(
+    (row) => row.printKey.toLowerCase() === short,
+  );
+  if (!card) return null;
+  const dual =
+    card.holoMarker &&
+    bandaiFrSerie1DetailleeJson.prereleaseListed.some(
+      (id) => id.toLowerCase() === short,
+    );
+  if (dual) return [S1_PLAIN, S1_HOLO];
+  if (card.holoMarker) return [S1_HOLO];
+  return [S1_PLAIN];
 }
 
 // ─── Mercari faces ───────────────────────────────────────────────────────

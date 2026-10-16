@@ -50,6 +50,7 @@ import {
   type NarutoPrintRow,
 } from "./indexStore";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
+import { attestedNarutoCarddassFinishes } from "./sources/faces";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { listJapaneseReleases } from "./sources/sealed";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
@@ -283,15 +284,9 @@ export type { NarutoPrintDetail } from "./identity";
 const PLAIN_FINISH = "normal";
 
 /**
- * Every card is offered plain or holo, whatever the catalogue says its rarity
- * is.
- *
- * Deriving the finish from the rarity was tempting — the catalogue has no
- * finish axis — but the stored rarity is not trustworthy enough to *remove* an
- * option: `ta158` is filed `commune` and exists in holo in a real collection.
- * The parser also flattens the site's four grades (Commune, Rare, Holo, Holo
- * rare) into two, so a wrong guess would silently deny a collector the copy
- * they own. Rarity stays a displayed fact; it does not gate what you can hold.
+ * Default outside Bandai-attested S1: plain + holo on every print.
+ * Rarity alone is too dirty to gate (`ta158` commune + physical holo).
+ * S1 FR uses {@link attestedNarutoCarddassFinishes} instead.
  */
 const NARUTO_FINISHES = [PLAIN_FINISH, ...NARUTO_CARDDASS_FINISHES];
 
@@ -448,9 +443,12 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     row.lang?.trim().toLowerCase() === "ja"
       ? narutoIllustrationBArt(row.number)
       : null;
+  // S1 FR: Bandai-attested finishes. Elsewhere keep dual (rarity too dirty to gate).
+  const baseFinishes =
+    attestedNarutoCarddassFinishes(row.setCode, row.number) ?? NARUTO_FINISHES;
   const finishes = illustrationBArt
-    ? [...NARUTO_FINISHES, ...NARUTO_FINISHES.map(narutoIllustrationBFinish)]
-    : NARUTO_FINISHES;
+    ? [...baseFinishes, ...baseFinishes.map(narutoIllustrationBFinish)]
+    : [...baseFinishes];
   const printed = row.printed !== false;
   const sleeveBack = narutoCandidateCardBackUrl(row.number, row.setCode);
   const orient = narutoCarddassPrintOrientation(row.printKey, row.lang);
@@ -510,7 +508,7 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     ...(illustrationBArt && pathId
       ? {
           variantImageUrls: Object.fromEntries(
-            NARUTO_FINISHES.map((finish) => [
+            baseFinishes.map((finish) => [
               narutoIllustrationBFinish(finish),
               narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, illustrationBArt),
             ]),

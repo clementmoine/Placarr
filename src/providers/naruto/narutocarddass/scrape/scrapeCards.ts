@@ -50,7 +50,10 @@ import {
   loadColekaStorm3Ledger,
 } from "./coleka";
 import { loadStorm3Ledger } from "./marketplace";
-import { ensureNarutoChecklistLayout } from "../pipeline/coverage";
+import {
+  ensureNarutoChecklistLayout,
+  writeNarutoCompleteness,
+} from "../pipeline/coverage";
 import { ensureNarutoCuratedAssets } from "../install/curated";
 import {
   ALT_LINE_DISK_PREFIXES,
@@ -59,6 +62,7 @@ import {
   narutoDiskCardId,
   narutoLedgerNumber,
   narutoNumbersEqual,
+  officialFrChecklistSetsForNumber,
   parseNarutoCollector,
 } from "../identity";
 import { foldUnsourcedNarutoArt } from "../pipeline/audit";
@@ -686,6 +690,30 @@ export function buildIndexFromDisk(root: string): {
     return { prints: [], assets: [] };
   }
 
+  /**
+   * JA (and EN) folders often lack pack_documents.appearances rows while FR
+   * already lists s1–s5 membership. Minting with `unknown` returns null and
+   * silently drops on-disk Suruga/Chitoroshop faces from print_assets.
+   */
+  const resolveDiskAppearanceSets = (
+    diskId: string,
+    lang: string,
+  ): string[] => {
+    const normalized = normalizeNarutoLang(lang);
+    const own = appearanceSetsOf(appearances[diskId]?.[normalized]);
+    if (own.length) return own;
+    for (const [otherLang, value] of Object.entries(
+      appearances[diskId] ?? {},
+    )) {
+      if (otherLang === normalized) continue;
+      const borrowed = appearanceSetsOf(value);
+      if (borrowed.length) return borrowed;
+    }
+    const checklist = officialFrChecklistSetsForNumber(diskId);
+    if (checklist.length) return checklist;
+    return [];
+  };
+
   for (const family of fs.readdirSync(cardsDir)) {
     const familyDir = path.join(cardsDir, family);
     if (!fs.statSync(familyDir).isDirectory()) continue;
@@ -708,9 +736,8 @@ export function buildIndexFromDisk(root: string): {
       const diskDir = path.join(familyDir, diskId);
       if (!fs.statSync(diskDir).isDirectory()) continue;
       for (const lang of fs.readdirSync(diskDir)) {
-        const sets = appearanceSetsOf(
-          appearances[diskId]?.[normalizeNarutoLang(lang)],
-        );
+        const sets = resolveDiskAppearanceSets(diskId, lang);
+        if (!sets.length) continue;
         ingestNarutoCardDir({
           prints,
           assets,
@@ -719,7 +746,7 @@ export function buildIndexFromDisk(root: string): {
           diskId,
           lang,
           family,
-          appearanceSets: sets.length ? sets : ["unknown"],
+          appearanceSets: sets,
         });
       }
     }
@@ -750,6 +777,54 @@ export function buildIndexFromDisk(root: string): {
   }
 
   return { prints: [...prints.values()], assets };
+}
+
+/**
+ * Same physical scan under `cards/{family}/{id}/{lang}/` is shared by every
+ * catalogue membership (makiN / sN). Titles often mint extra printKeys without
+ * a disk walk hit — mirror an existing art row onto those keys so JA/FR/EN
+ * completeness does not treat "named sister set" as a missing face.
+ */
+export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
+  prints: readonly NarutoPrintRow[];
+  titles: readonly { printKey: string; lang: string }[];
+  assets: NarutoAssetRow[];
+}): { assets: NarutoAssetRow[]; mirrored: number } {
+  const numberByKey = new Map(
+    input.prints.map((p) => [p.printKey, p.number.toLowerCase()] as const),
+  );
+  const artByNumberLang = new Map<string, NarutoAssetRow>();
+  const have = new Set<string>();
+  for (const asset of input.assets) {
+    const key = `${asset.printKey}\0${asset.lang}`;
+    have.add(key);
+    if (!asset.art) continue;
+    const num = numberByKey.get(asset.printKey);
+    if (!num) continue;
+    const nk = `${num}\0${asset.lang}`;
+    if (!artByNumberLang.has(nk)) artByNumberLang.set(nk, asset);
+  }
+  const out = [...input.assets];
+  let mirrored = 0;
+  for (const title of input.titles) {
+    const assetKey = `${title.printKey}\0${title.lang}`;
+    if (have.has(assetKey)) continue;
+    const num = numberByKey.get(title.printKey);
+    if (!num) continue;
+    const donor = artByNumberLang.get(`${num}\0${title.lang}`);
+    if (!donor?.art) continue;
+    out.push({
+      printKey: title.printKey,
+      lang: title.lang,
+      art: donor.art,
+      thumb: donor.thumb,
+      back: donor.back ?? null,
+      printed: donor.printed,
+    });
+    have.add(assetKey);
+    mirrored += 1;
+  }
+  return { assets: out, mirrored };
 }
 
 function assetMapKey(printKey: string, lang: string): string {
@@ -1232,10 +1307,15 @@ export async function scrapeNarutoCards(
       titlesForNarutoPrints(prints, root),
       root,
     );
-    const { dbPath, printCount } = writeNarutoCcgIndex({
+    const mirrored = mirrorNarutoAssetsAcrossCollectorNumbers({
       prints: assembled.prints,
       titles: assembled.titles,
       assets,
+    });
+    const { dbPath, printCount } = writeNarutoCcgIndex({
+      prints: assembled.prints,
+      titles: assembled.titles,
+      assets: mirrored.assets,
       dbPath: path.join(root, "catalog.sqlite"),
       meta: {
         source: "disk",
@@ -1250,6 +1330,7 @@ export async function scrapeNarutoCards(
         physicalAdded: String(assembled.found.physicalAdded.length),
         slabZJaNamed: String(assembled.found.slabZTitled.length),
         migratedVcBacks: String(migratedVc),
+        assetsMirrored: String(mirrored.mirrored),
       },
     });
     const builtIndex = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
@@ -1257,6 +1338,8 @@ export async function scrapeNarutoCards(
       ? writeCarddassLocaleSpecificFaces(builtIndex)
       : 0;
     indexNarutoEnPackFromDisk();
+    // `writeNarutoCompleteness` joins `dataRoot()` + pack id — do not pass pack root.
+    const completeness = writeNarutoCompleteness();
     console.log(
       JSON.stringify(
         {
@@ -1276,6 +1359,10 @@ export async function scrapeNarutoCards(
           hinokunianJaNamed: assembled.hinokunianTitled.length,
           titlesCorrected: assembled.found.titlesCorrected.length,
           localeSpecificFaces,
+          assetsMirrored: mirrored.mirrored,
+          completenessJaImagePct: completeness.report.locales.ja?.image.pct,
+          completenessJaTitleWithoutImage:
+            completeness.report.locales.ja?.titleWithoutImage,
           dbPath,
         },
         null,

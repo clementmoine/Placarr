@@ -1,7 +1,7 @@
 {
   "source": "carddass.fr/bleach Wayback",
   "lang": "fr",
-  "observed": "2026-10-12",
+  "observed": "2026-10-16",
   "url": "http://www.carddass.fr/bleach/",
   "cards": [
     {
@@ -693,7 +693,7 @@
       "set": "p",
       "number": "015",
       "type": "promo",
-      "faceUrlFr": "https://web.archive.org/web/20081119220641id_/http://www.carddass.fr/bleach/images/cartes%20Bleach/promos%20+%20carddass/Promo-15-16.gif",
+      "faceUrlFr": "https://web.archive.org/web/20081119223142id_/http://www.carddass.fr/bleach/images/cartes%20Bleach/promos%20+%20carddass/Promo-15.gif",
       "note": "carddass.fr Wayback promo",
       "nameFr": "Ichigo Kurosaki"
     },

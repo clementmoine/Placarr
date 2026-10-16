@@ -45,8 +45,10 @@ export async function harvestBleachScbLedgers(): Promise<{
   ja: number;
   coleka: number;
   colekaPrices: number;
+  promosCopied: number;
+  promosMissing: number;
 }> {
-  const { cards: fr } = buildBleachFrLedger();
+  const { cards: fr, promos } = buildBleachFrLedger();
   const { cards: ja } = await harvestBleachJaFromNikita();
   const { cards: coleka } = await harvestColekaBleachS1();
   const { ledger: prices } = await harvestColekaBleachS1Prices();
@@ -55,6 +57,8 @@ export async function harvestBleachScbLedgers(): Promise<{
     ja: ja.length,
     coleka: coleka.length,
     colekaPrices: prices.withPrintKey,
+    promosCopied: promos.copied,
+    promosMissing: promos.missing.length,
   };
 }
 

@@ -9,7 +9,7 @@ Facettes : `cards/{set}/{lang}/{number}/`.
 | Lang | Source | Statut |
 |------|--------|--------|
 | `ja` | nikita `/cardlist/blc` (S-/B-/E-/Z-/A-/J-/PZ-) | **130** uniques (site « 133 » = 3 doublons). Faces reprint `*_2.jpg` quand le stem de base 404. Corpus Bandai réel ≫ nikita. |
-| `fr` | carddass.fr Wayback (A/C/E/Z/P, S1 EU) + Coleka `_r37171` fallback | **80** carddass (identité + faces `art.carddass`). Coleka : **71** faces disque (`art.coleka`) si carddass absent — jamais devant. |
+| `fr` | carddass.fr Wayback (A/C/E/Z/P, S1 EU) + Coleka `_r37171` fallback | **80** carddass (identité + faces `art.carddass`). Coleka : **71** faces disque (`art.coleka`) si carddass absent — jamais devant. Promo GIFs (`Promo-1`…`16`, dual `15-16`) → `sources/wayback/promos/` + ledger `carddass-fr-bleach-promos.json` ; face P### préfère le GIF exclusif (pas le collage). |
 | `en` | — | **Pas d’EN SCB officiel.** Score Bleach TCG (US) = autre jeu, hors pack. |
 
 `A###` FR (âme) ≠ `A-###` JP (アビリティ → set `ability`).

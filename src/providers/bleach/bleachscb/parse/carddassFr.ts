@@ -1,10 +1,18 @@
 /**
  * Parse Bleach FR carddass.fr HTML + CDX image scout into a ledger.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
-import { bleachScbCuratedDir } from "../pack";
+import { packCardDir } from "@/lib/packPaths";
+
+import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "../pack";
 import { parseBleachScbPrinted } from "../printKey";
 
 export type BleachScbCard = {
@@ -17,6 +25,19 @@ export type BleachScbCard = {
   faceUrlFr?: string;
   faceUrlJa?: string;
   note?: string;
+};
+
+/** One Promo-*.gif (or jpeg) under carddass.fr `promos + carddass/`. */
+export type BleachCarddassFrPromoAsset = {
+  file: string;
+  /** Padded collector numbers this file covers (`001`, or `015`+`016`). */
+  numbers: string[];
+  exclusive: boolean;
+  waybackUrl: string;
+  timestamp: string;
+  printed: string[];
+  /** Local durable copy under curated/sources/wayback/promos/ when present. */
+  localRel?: string;
 };
 
 /** Durable Wayback scout — under provider curated (not `data/staging/`). */
@@ -32,6 +53,17 @@ const LISTE_HTML = path.join(
   "wayback",
   "bleach-liste.html",
 );
+const PROMOS_DIR = path.join(
+  bleachScbCuratedDir(),
+  "sources",
+  "wayback",
+  "promos",
+);
+const PROMOS_LEDGER = path.join(
+  bleachScbCuratedDir(),
+  "sources",
+  "carddass-fr-bleach-promos.json",
+);
 
 const TYPE_FROM_DIR: Record<string, string> = {
   "ames+logo": "ame",
@@ -41,6 +73,10 @@ const TYPE_FROM_DIR: Record<string, string> = {
   "promos+%20carddass": "promo",
   "promos + carddass": "promo",
 };
+
+/** Exclusive face beats a dual Promo-N-M collage. */
+const FACE_SCORE_EXCLUSIVE = 2;
+const FACE_SCORE_COMPOSITE = 1;
 
 function waybackIdUrl(timestamp: string, original: string): string {
   return `https://web.archive.org/web/${timestamp}id_/${original}`;
@@ -57,10 +93,199 @@ function stripHtml(s: string): string {
     .trim();
 }
 
+/**
+ * Parse a carddass.fr promo filename stem (`Promo-1`, `Promo-15-16`).
+ * Dual files illustrate both numbers but are weaker than exclusive GIFs.
+ */
+export function parseBleachCarddassFrPromoFile(file: string): {
+  file: string;
+  numbers: string[];
+  exclusive: boolean;
+} | null {
+  const base = file.replace(/\.(jpe?g|png|gif)$/i, "");
+  const dual = base.match(/^Promo-(\d+)-(\d+)$/i);
+  if (dual) {
+    return {
+      file: `${base}${file.slice(base.length)}`,
+      numbers: [dual[1]!.padStart(3, "0"), dual[2]!.padStart(3, "0")],
+      exclusive: false,
+    };
+  }
+  const single = base.match(/^Promo-(\d+)$/i);
+  if (!single) return null;
+  const ext = file.slice(base.length) || ".gif";
+  return {
+    file: `Promo-${single[1]}${ext}`,
+    numbers: [single[1]!.padStart(3, "0")],
+    exclusive: true,
+  };
+}
+
+type FaceMeta = { score: number };
+
+function assignPromoFace(
+  byPrinted: Map<string, BleachScbCard>,
+  faceScore: Map<string, FaceMeta>,
+  number: string,
+  faceUrlFr: string,
+  exclusive: boolean,
+): void {
+  const parsed = parseBleachScbPrinted(`P${number}`);
+  if (!parsed) return;
+  const score = exclusive ? FACE_SCORE_EXCLUSIVE : FACE_SCORE_COMPOSITE;
+  const prev = byPrinted.get(parsed.printed);
+  const prevScore = faceScore.get(parsed.printed)?.score ?? 0;
+  if (!prev) {
+    byPrinted.set(parsed.printed, {
+      printed: parsed.printed,
+      set: parsed.set,
+      number: parsed.number,
+      type: "promo",
+      faceUrlFr,
+      note: exclusive
+        ? "carddass.fr Wayback promo"
+        : "carddass.fr Wayback promo (composite fallback)",
+    });
+    faceScore.set(parsed.printed, { score });
+    return;
+  }
+  if (!prev.faceUrlFr || score > prevScore) {
+    prev.faceUrlFr = faceUrlFr;
+    prev.type = "promo";
+    if (!exclusive && prevScore === 0) {
+      prev.note = "carddass.fr Wayback promo (composite fallback)";
+    } else if (exclusive) {
+      prev.note = "carddass.fr Wayback promo";
+    }
+    faceScore.set(parsed.printed, { score });
+  }
+}
+
+/** Collect unique Promo-* assets from the durable CDX scout. */
+export function listBleachCarddassFrPromoAssets(): BleachCarddassFrPromoAsset[] {
+  if (!existsSync(SCOUT_BLEACH)) return [];
+  const rows = JSON.parse(readFileSync(SCOUT_BLEACH, "utf8")) as Array<{
+    timestamp: string;
+    original: string;
+  }>;
+  const byFile = new Map<string, BleachCarddassFrPromoAsset>();
+  for (const row of rows) {
+    let pathname = "";
+    try {
+      pathname = decodeURIComponent(new URL(row.original).pathname);
+    } catch {
+      continue;
+    }
+    const m = pathname.match(
+      /\/bleach\/images\/cartes[^/]*\/promos[^/]*\/(Promo-[^/]+\.(?:jpe?g|png|gif))$/i,
+    );
+    if (!m) continue;
+    const parsed = parseBleachCarddassFrPromoFile(m[1]!);
+    if (!parsed) continue;
+    const key = parsed.file.toLowerCase();
+    const prev = byFile.get(key);
+    if (prev && prev.timestamp >= row.timestamp) continue;
+    byFile.set(key, {
+      file: parsed.file,
+      numbers: parsed.numbers,
+      exclusive: parsed.exclusive,
+      waybackUrl: waybackIdUrl(row.timestamp, row.original),
+      timestamp: row.timestamp,
+      printed: parsed.numbers.map((n) => `P${n}`),
+    });
+  }
+  return [...byFile.values()].sort((a, b) => a.file.localeCompare(b.file));
+}
+
+/**
+ * Copy Promo-* bytes we already hold (installed P faces) into curated
+ * `sources/wayback/promos/`, and write a durable promo ledger.
+ */
+export function materializeBleachCarddassFrPromos(): {
+  assets: BleachCarddassFrPromoAsset[];
+  copied: number;
+  missing: string[];
+  outPath: string;
+} {
+  mkdirSync(PROMOS_DIR, { recursive: true });
+  const assets = listBleachCarddassFrPromoAssets();
+  let copied = 0;
+  const missing: string[] = [];
+
+  for (const asset of assets) {
+    const dest = path.join(PROMOS_DIR, asset.file);
+    if (existsSync(dest)) {
+      asset.localRel = `sources/wayback/promos/${asset.file}`;
+      continue;
+    }
+    // Exclusive Promo-N ← installed P face (same Wayback bytes historically).
+    // Skip when a dual Promo-N-M also exists for that number: P### may still
+    // hold the collage (P015) and must not be mislabeled as Promo-N.gif.
+    // Composite ← first installed P face among covered numbers (P015 collage).
+    let src: string | null = null;
+    if (asset.exclusive) {
+      const num = asset.numbers[0]!;
+      // P015 still holds the Promo-15-16 collage; don't mislabel those bytes
+      // as Promo-15.gif. P016's exclusive face is fine to copy.
+      const collageLikelyOnThisPrint = assets.some(
+        (a) => !a.exclusive && a.numbers[0] === num,
+      );
+      if (collageLikelyOnThisPrint) {
+        missing.push(asset.file);
+        continue;
+      }
+      const cardDir = packCardDir(BLEACH_SCB_PACK_ID, {
+        set: "p",
+        lang: "fr",
+        card: num,
+      });
+      const candidate = path.join(cardDir, "art.carddass.jpg");
+      if (existsSync(candidate)) src = candidate;
+    } else {
+      for (const num of asset.numbers) {
+        const cardDir = packCardDir(BLEACH_SCB_PACK_ID, {
+          set: "p",
+          lang: "fr",
+          card: num,
+        });
+        const candidate = path.join(cardDir, "art.carddass.jpg");
+        if (!existsSync(candidate)) continue;
+        src = candidate;
+        break;
+      }
+    }
+    if (!src) {
+      missing.push(asset.file);
+      continue;
+    }
+    copyFileSync(src, dest);
+    asset.localRel = `sources/wayback/promos/${asset.file}`;
+    copied += 1;
+  }
+
+  writeFileSync(
+    PROMOS_LEDGER,
+    `${JSON.stringify(
+      {
+        source: "carddass.fr/bleach Wayback — promos + carddass/",
+        lang: "fr",
+        observed: new Date().toISOString().slice(0, 10),
+        note: "Exclusive Promo-N.gif preferred as P### faces. Dual Promo-N-M.gif kept as durable extras (not preferred faces).",
+        assets,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
+  return { assets, copied, missing, outPath: PROMOS_LEDGER };
+}
+
 /** Build FR ledger from CDX image paths + optional liste HTML. */
 export function buildBleachFrLedger(): {
   cards: BleachScbCard[];
   outPath: string;
+  promos: ReturnType<typeof materializeBleachCarddassFrPromos>;
 } {
   const outPath = path.join(
     bleachScbCuratedDir(),
@@ -70,6 +295,7 @@ export function buildBleachFrLedger(): {
   mkdirSync(path.dirname(outPath), { recursive: true });
 
   const byPrinted = new Map<string, BleachScbCard>();
+  const faceScore = new Map<string, FaceMeta>();
 
   if (existsSync(SCOUT_BLEACH)) {
     const rows = JSON.parse(readFileSync(SCOUT_BLEACH, "utf8")) as Array<{
@@ -110,26 +336,21 @@ export function buildBleachFrLedger(): {
         continue;
       }
       // …/cartes Bleach/promos + carddass/Promo-1.gif
-      const promo = pathname.match(
-        /\/bleach\/images\/cartes[^/]*\/promos[^/]*\/Promo-(\d+)(?:-\d+)?\.(jpe?g|png|gif)$/i,
+      const promoPath = pathname.match(
+        /\/bleach\/images\/cartes[^/]*\/promos[^/]*\/(Promo-[^/]+\.(?:jpe?g|png|gif))$/i,
       );
+      if (!promoPath) continue;
+      const promo = parseBleachCarddassFrPromoFile(promoPath[1]!);
       if (!promo) continue;
-      const num = promo[1]!.padStart(3, "0");
-      const parsed = parseBleachScbPrinted(`P${num}`);
-      if (!parsed) continue;
       const faceUrlFr = waybackIdUrl(row.timestamp, row.original);
-      const prev = byPrinted.get(parsed.printed);
-      if (!prev) {
-        byPrinted.set(parsed.printed, {
-          printed: parsed.printed,
-          set: parsed.set,
-          number: parsed.number,
-          type: "promo",
+      for (const num of promo.numbers) {
+        assignPromoFace(
+          byPrinted,
+          faceScore,
+          num,
           faceUrlFr,
-          note: "carddass.fr Wayback promo",
-        });
-      } else if (!prev.faceUrlFr) {
-        prev.faceUrlFr = faceUrlFr;
+          promo.exclusive,
+        );
       }
     }
   }
@@ -210,7 +431,8 @@ export function buildBleachFrLedger(): {
       null,
       2,
     )}\n`,
-    "utf8",
   );
-  return { cards, outPath };
+
+  const promos = materializeBleachCarddassFrPromos();
+  return { cards, outPath, promos };
 }

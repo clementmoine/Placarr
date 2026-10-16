@@ -2,7 +2,7 @@
   "source": "coleka.com deals ajax (naruto/ultra-challenge)",
   "sourceId": "coleka-deals",
   "packId": "naruto/ultra-challenge",
-  "fetchedAt": "2026-10-15T17:15:38.700Z",
+  "fetchedAt": "2026-10-15T22:01:27.615Z",
   "rubriques": [
     {
       "id": "18770",
@@ -27,12 +27,12 @@
       "title": "Carte n°1",
       "quotationEuro": 570,
       "quotationCents": 57000,
-      "offerEuro": 1195.16,
-      "offerCents": 119516,
+      "offerEuro": 50.2,
+      "offerCents": 5020,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 12:35:28",
-      "affiliatePath": "/oo/886780/ebay/137684328516/fr"
+      "affiliatePath": "/oo/886780/ebay/366573006839/fr"
     },
     {
       "printKey": "naruto:uc-0004",
@@ -43,12 +43,12 @@
       "title": "Carte n°4",
       "quotationEuro": 3.4,
       "quotationCents": 340,
-      "offerEuro": 7.35,
-      "offerCents": 735,
+      "offerEuro": 21.6,
+      "offerCents": 2160,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-15 07:34:46",
-      "affiliatePath": "/oo/886783/ebay/187072670282/fr"
+      "affiliatePath": "/oo/886783/ebay/307207122808/fr"
     },
     {
       "printKey": "naruto:uc-0007",
@@ -75,12 +75,12 @@
       "title": "Carte n°8",
       "quotationEuro": 670,
       "quotationCents": 67000,
-      "offerEuro": 556.21,
-      "offerCents": 55621,
+      "offerEuro": 2.48,
+      "offerCents": 248,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 05:11:55",
-      "affiliatePath": "/oo/886787/ebay/237099333646/fr"
+      "affiliatePath": "/oo/886787/ebay/267785703382/fr"
     },
     {
       "printKey": "naruto:uc-0009",
@@ -139,12 +139,12 @@
       "title": "Carte n°13",
       "quotationEuro": 6,
       "quotationCents": 600,
-      "offerEuro": 2.48,
-      "offerCents": 248,
+      "offerEuro": 27.58,
+      "offerCents": 2758,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 05:11:52",
-      "affiliatePath": "/oo/886792/ebay/267785703382/fr"
+      "affiliatePath": "/oo/886792/ebay/187072670290/fr"
     },
     {
       "printKey": "naruto:uc-0015",
@@ -203,12 +203,12 @@
       "title": "Carte n°18",
       "quotationEuro": 16,
       "quotationCents": 1600,
-      "offerEuro": 2.48,
-      "offerCents": 248,
-      "shippingEuro": 0,
+      "offerEuro": 13.78,
+      "offerCents": 1378,
+      "shippingEuro": 4.14,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 05:13:35",
-      "affiliatePath": "/oo/886797/ebay/267785703382/fr"
+      "affiliatePath": "/oo/886797/ebay/196424253548/fr"
     },
     {
       "printKey": "naruto:uc-0020",
@@ -265,14 +265,14 @@
       "rubriqueId": "18770",
       "refItem": "025",
       "title": "Carte n°25",
-      "quotationEuro": 19,
-      "quotationCents": 1900,
+      "quotationEuro": 28,
+      "quotationCents": 2800,
       "offerEuro": 2.48,
       "offerCents": 248,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-13 04:01:49",
-      "affiliatePath": "/oo/886804/ebay/267785703382/fr"
+      "observedAt": "2026-10-15 20:04:01",
+      "affiliatePath": "/oo/886804/ebay/267813979035/fr"
     },
     {
       "printKey": "naruto:uc-0026",
@@ -347,12 +347,12 @@
       "title": "Carte n°34",
       "quotationEuro": 3.4,
       "quotationCents": 340,
-      "offerEuro": 2.48,
-      "offerCents": 248,
+      "offerEuro": 2.88,
+      "offerCents": 288,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-15 18:19:58",
-      "affiliatePath": "/oo/886813/ebay/267813979035/fr"
+      "affiliatePath": "/oo/886813/ebay/188854249724/fr"
     },
     {
       "printKey": "naruto:uc-0035",
@@ -395,12 +395,12 @@
       "title": "Carte n°37",
       "quotationEuro": 18,
       "quotationCents": 1800,
-      "offerEuro": 2.48,
-      "offerCents": 248,
-      "shippingEuro": 0,
+      "offerEuro": 18.39,
+      "offerCents": 1839,
+      "shippingEuro": 4.6,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 02:36:29",
-      "affiliatePath": "/oo/886816/ebay/267785703382/fr"
+      "affiliatePath": "/oo/886816/ebay/267757428435/fr"
     },
     {
       "printKey": "naruto:uc-0038",
@@ -411,12 +411,12 @@
       "title": "Carte n°38",
       "quotationEuro": 7,
       "quotationCents": 700,
-      "offerEuro": 4.59,
-      "offerCents": 459,
+      "offerEuro": 7.44,
+      "offerCents": 744,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 02:36:29",
-      "affiliatePath": "/oo/886817/ebay/267809465252/fr"
+      "affiliatePath": "/oo/886817/ebay/267798491144/fr"
     },
     {
       "printKey": "naruto:uc-0040",
@@ -427,12 +427,12 @@
       "title": "Carte n°40",
       "quotationEuro": 1.7,
       "quotationCents": 170,
-      "offerEuro": 1.86,
-      "offerCents": 186,
+      "offerEuro": 27.58,
+      "offerCents": 2758,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 02:36:30",
-      "affiliatePath": "/oo/886819/ebay/226185118376/fr"
+      "affiliatePath": "/oo/886819/ebay/187072670290/fr"
     },
     {
       "printKey": "naruto:uc-0041",
@@ -459,12 +459,12 @@
       "title": "Carte n°42",
       "quotationEuro": 3.2,
       "quotationCents": 320,
-      "offerEuro": 1195.16,
-      "offerCents": 119516,
+      "offerEuro": 16.55,
+      "offerCents": 1655,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 08:05:30",
-      "affiliatePath": "/oo/886821/ebay/137684328516/fr"
+      "affiliatePath": "/oo/886821/ebay/187072670293/fr"
     },
     {
       "printKey": "naruto:uc-0043",
@@ -475,12 +475,12 @@
       "title": "Carte n°43",
       "quotationEuro": 670,
       "quotationCents": 67000,
-      "offerEuro": 27.58,
-      "offerCents": 2758,
+      "offerEuro": 1195.16,
+      "offerCents": 119516,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 08:05:30",
-      "affiliatePath": "/oo/886822/ebay/187072670290/fr"
+      "affiliatePath": "/oo/886822/ebay/137684328516/fr"
     },
     {
       "printKey": "naruto:uc-0045",
@@ -491,12 +491,12 @@
       "title": "Carte n°45",
       "quotationEuro": 35,
       "quotationCents": 3500,
-      "offerEuro": 34.84,
-      "offerCents": 3484,
+      "offerEuro": 38.52,
+      "offerCents": 3852,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 05:16:37",
-      "affiliatePath": "/oo/886824/ebay/292311241829/fr"
+      "affiliatePath": "/oo/886824/ebay/285256875166/fr"
     },
     {
       "printKey": "naruto:uc-0046",
@@ -507,12 +507,12 @@
       "title": "Carte n°46",
       "quotationEuro": 2.9,
       "quotationCents": 290,
-      "offerEuro": 27.58,
-      "offerCents": 2758,
+      "offerEuro": 574.59,
+      "offerCents": 57459,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 13:53:52",
-      "affiliatePath": "/oo/886825/ebay/187072670290/fr"
+      "affiliatePath": "/oo/886825/ebay/206539881336/fr"
     },
     {
       "printKey": "naruto:uc-0047",
@@ -523,12 +523,12 @@
       "title": "Carte n°47",
       "quotationEuro": 13,
       "quotationCents": 1300,
-      "offerEuro": 574.59,
-      "offerCents": 57459,
-      "shippingEuro": 0,
+      "offerEuro": 183.87,
+      "offerCents": 18387,
+      "shippingEuro": 0.92,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 12:38:47",
-      "affiliatePath": "/oo/886826/ebay/206539881336/fr"
+      "affiliatePath": "/oo/886826/ebay/198642566451/fr"
     },
     {
       "printKey": "naruto:uc-0048",
@@ -555,12 +555,12 @@
       "title": "Carte n°49",
       "quotationEuro": 530,
       "quotationCents": 53000,
-      "offerEuro": 597.58,
-      "offerCents": 59758,
-      "shippingEuro": 0,
+      "offerEuro": 6.44,
+      "offerCents": 644,
+      "shippingEuro": 1.84,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 05:15:08",
-      "affiliatePath": "/oo/886828/ebay/158303308124/fr"
+      "affiliatePath": "/oo/886828/ebay/127861305213/fr"
     },
     {
       "printKey": "naruto:uc-0050",
@@ -619,12 +619,12 @@
       "title": "Carte n°53",
       "quotationEuro": 144,
       "quotationCents": 14400,
-      "offerEuro": 1195.16,
-      "offerCents": 119516,
+      "offerEuro": 2.48,
+      "offerCents": 248,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 05:15:36",
-      "affiliatePath": "/oo/886832/ebay/137684328516/fr"
+      "affiliatePath": "/oo/886832/ebay/267785703382/fr"
     },
     {
       "printKey": "naruto:uc-0054",
@@ -635,12 +635,12 @@
       "title": "Carte n°54",
       "quotationEuro": 27,
       "quotationCents": 2700,
-      "offerEuro": 2.76,
-      "offerCents": 276,
-      "shippingEuro": 0,
+      "offerEuro": 9.15,
+      "offerCents": 915,
+      "shippingEuro": 0.91,
       "marketplace": "eBay",
       "observedAt": "2026-10-15 07:11:29",
-      "affiliatePath": "/oo/886833/ebay/267813979035/fr"
+      "affiliatePath": "/oo/886833/ebay/188068302097/fr"
     },
     {
       "printKey": "naruto:uc-0056",
@@ -715,12 +715,12 @@
       "title": "Carte n°67",
       "quotationEuro": 44,
       "quotationCents": 4400,
-      "offerEuro": 3.3,
-      "offerCents": 330,
+      "offerEuro": 574.59,
+      "offerCents": 57459,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 02:36:35",
-      "affiliatePath": "/oo/886846/ebay/267793701134/fr"
+      "affiliatePath": "/oo/886846/ebay/206539881336/fr"
     },
     {
       "printKey": "naruto:uc-0068",
@@ -731,12 +731,12 @@
       "title": "Carte n°68",
       "quotationEuro": 16,
       "quotationCents": 1600,
-      "offerEuro": 6.44,
-      "offerCents": 644,
-      "shippingEuro": 1.84,
+      "offerEuro": 2.48,
+      "offerCents": 248,
+      "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 02:36:35",
-      "affiliatePath": "/oo/886847/ebay/127861305213/fr"
+      "affiliatePath": "/oo/886847/ebay/267785703382/fr"
     },
     {
       "printKey": "naruto:uc-0070",
@@ -779,12 +779,12 @@
       "title": "Carte n°72",
       "quotationEuro": 5.5,
       "quotationCents": 550,
-      "offerEuro": 16.54,
-      "offerCents": 1654,
+      "offerEuro": 21.27,
+      "offerCents": 2127,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 09:59:34",
-      "affiliatePath": "/oo/886851/ebay/267789447816/fr"
+      "affiliatePath": "/oo/886851/ebay/168110894930/fr"
     },
     {
       "printKey": "naruto:uc-0073",
@@ -811,12 +811,12 @@
       "title": "Carte n°74",
       "quotationEuro": 19,
       "quotationCents": 1900,
-      "offerEuro": 2.48,
-      "offerCents": 248,
+      "offerEuro": 2.76,
+      "offerCents": 276,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-15 05:08:33",
-      "affiliatePath": "/oo/886853/ebay/267811982313/fr"
+      "affiliatePath": "/oo/886853/ebay/267813979035/fr"
     },
     {
       "printKey": "naruto:uc-0075",
@@ -827,12 +827,12 @@
       "title": "Carte n°75",
       "quotationEuro": 4.2,
       "quotationCents": 420,
-      "offerEuro": 3.3,
-      "offerCents": 330,
+      "offerEuro": 574.59,
+      "offerCents": 57459,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 09:17:57",
-      "affiliatePath": "/oo/886854/ebay/267793701134/fr"
+      "affiliatePath": "/oo/886854/ebay/206539881336/fr"
     },
     {
       "printKey": "naruto:uc-0076",
@@ -859,12 +859,12 @@
       "title": "Carte n°77",
       "quotationEuro": 62,
       "quotationCents": 6200,
-      "offerEuro": 1195.16,
-      "offerCents": 119516,
+      "offerEuro": 27.58,
+      "offerCents": 2758,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-15 10:20:10",
-      "affiliatePath": "/oo/886856/ebay/137684328516/fr"
+      "affiliatePath": "/oo/886856/ebay/187072670290/fr"
     },
     {
       "printKey": "naruto:uc-0078",
@@ -889,14 +889,14 @@
       "rubriqueId": "18770",
       "refItem": "080",
       "title": "Carte n°80",
-      "quotationEuro": 52,
-      "quotationCents": 5200,
-      "offerEuro": 2.48,
-      "offerCents": 248,
+      "quotationEuro": 41,
+      "quotationCents": 4100,
+      "offerEuro": 91.94,
+      "offerCents": 9194,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-13 04:29:29",
-      "affiliatePath": "/oo/886859/ebay/267785703382/fr"
+      "observedAt": "2026-10-15 20:31:33",
+      "affiliatePath": "/oo/886859/ebay/158335422868/fr"
     },
     {
       "printKey": "naruto:uc-0081",
@@ -939,12 +939,12 @@
       "title": "Carte n°84",
       "quotationEuro": 16,
       "quotationCents": 1600,
-      "offerEuro": 1195.16,
-      "offerCents": 119516,
+      "offerEuro": 3.3,
+      "offerCents": 330,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 12:38:53",
-      "affiliatePath": "/oo/886863/ebay/137684328516/fr"
+      "affiliatePath": "/oo/886863/ebay/267793701134/fr"
     },
     {
       "printKey": "naruto:uc-0085",
@@ -955,12 +955,12 @@
       "title": "Carte n°85",
       "quotationEuro": 800,
       "quotationCents": 80000,
-      "offerEuro": 556.21,
-      "offerCents": 55621,
+      "offerEuro": 597.58,
+      "offerCents": 59758,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 05:17:28",
-      "affiliatePath": "/oo/886864/ebay/237099333646/fr"
+      "affiliatePath": "/oo/886864/ebay/158303308124/fr"
     },
     {
       "printKey": "naruto:uc-0086",
@@ -1019,12 +1019,12 @@
       "title": "Carte n°90",
       "quotationEuro": 45,
       "quotationCents": 4500,
-      "offerEuro": 574.59,
-      "offerCents": 57459,
+      "offerEuro": 1195.16,
+      "offerCents": 119516,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 04:43:38",
-      "affiliatePath": "/oo/886869/ebay/206539881336/fr"
+      "affiliatePath": "/oo/886869/ebay/137684328516/fr"
     },
     {
       "printKey": "naruto:uc-0091",
@@ -1067,12 +1067,12 @@
       "title": "Carte n°94",
       "quotationEuro": 2.8,
       "quotationCents": 280,
-      "offerEuro": 2.48,
-      "offerCents": 248,
+      "offerEuro": 60.67,
+      "offerCents": 6067,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-15 10:12:54",
-      "affiliatePath": "/oo/886873/ebay/267811982313/fr"
+      "affiliatePath": "/oo/886873/ebay/127544293878/fr"
     },
     {
       "printKey": "naruto:uc-0099",
@@ -1083,12 +1083,12 @@
       "title": "Carte n°99",
       "quotationEuro": 780,
       "quotationCents": 78000,
-      "offerEuro": 2.48,
-      "offerCents": 248,
+      "offerEuro": 574.59,
+      "offerCents": 57459,
       "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 10:32:41",
-      "affiliatePath": "/oo/886878/ebay/267785703382/fr"
+      "affiliatePath": "/oo/886878/ebay/206539881336/fr"
     },
     {
       "printKey": "naruto:uc-0100",
@@ -1099,12 +1099,12 @@
       "title": "Carte n°100",
       "quotationEuro": 22,
       "quotationCents": 2200,
-      "offerEuro": 50.1,
-      "offerCents": 5010,
-      "shippingEuro": 0,
+      "offerEuro": 73.07,
+      "offerCents": 7307,
+      "shippingEuro": 9.65,
       "marketplace": "eBay",
       "observedAt": "2026-10-14 21:21:42",
-      "affiliatePath": "/oo/886879/ebay/800785592475/fr"
+      "affiliatePath": "/oo/886879/ebay/820237912208/fr"
     }
   ]
 }

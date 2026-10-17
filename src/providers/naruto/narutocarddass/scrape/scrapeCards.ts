@@ -57,13 +57,13 @@ import {
 import { ensureNarutoCuratedAssets } from "../install/curated";
 import {
   ALT_LINE_DISK_PREFIXES,
-  canonicalNarutoDiskPrefix,
   isNarutoFamilyFolder,
   mintNarutoPrintKey,
   narutoCollectorNumberKey,
   narutoDiskCardId,
   narutoLedgerNumber,
   narutoNumbersEqual,
+  narutoRetailDiskNumber,
   officialFrChecklistSetsForNumber,
   parseNarutoCollector,
 } from "../identity";
@@ -902,14 +902,6 @@ export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
     mirrored += 1;
   }
   return { assets: out, mirrored };
-}
-
-/** Retail disk id without promo/prerelease/cdf grouping (`te0034-promo` → `te0034`). */
-function narutoRetailDiskNumber(raw: string): string | null {
-  const id = parseNarutoCollector(raw);
-  if (!id) return null;
-  const prefix = canonicalNarutoDiskPrefix(id.printedPrefix);
-  return `${prefix}${String(id.number).padStart(4, "0")}`;
 }
 
 /**

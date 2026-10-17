@@ -10,6 +10,7 @@ import { parsePrintKey } from "@/core/identify/printKey";
 import { packCardsDir } from "@/lib/packPaths";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
+import { narutoRetailDiskNumber } from "./identity";
 import { NARUTO_PACK_ID } from "./packs";
 import {
   NARUTO_FACE_DECISION_FILE,
@@ -78,6 +79,46 @@ function faceProvenanceOf(file: string): "catalog" | "listing_photo" {
   return narutoFaceCoverProvenance(source);
 }
 
+/**
+ * Disk folder that actually holds the face file.
+ *
+ * Promo / prerelease stubs often inherit retail `art.*` in sqlite while the
+ * bytes stay under `ta0081/fr/` (not `ta0081-promo/fr/`). Prefer the path that
+ * exists so `/assets/.../ta0081-promo/...` never 404s.
+ */
+export function resolveNarutoArtDiskNumber(opts: {
+  number: string;
+  lang: string;
+  /** When set, require this exact filename under the candidate folder. */
+  artFile?: string | null;
+  cardsRoot?: string;
+}): string {
+  const cardsRoot = opts.cardsRoot ?? packCardsDir(NARUTO_PACK_ID);
+  const lang = opts.lang;
+  const artFile = opts.artFile?.trim() || null;
+  const candidates = [opts.number];
+  const retail = narutoRetailDiskNumber(opts.number);
+  if (retail && retail.toLowerCase() !== opts.number.toLowerCase()) {
+    candidates.push(retail);
+  }
+  for (const candidate of candidates) {
+    const pathId = narutoCardPathFromCollector(candidate, lang);
+    if (!pathId) continue;
+    const dir = path.join(
+      cardsRoot,
+      pathId.folder,
+      pathId.diskId,
+      pathId.lang,
+    );
+    if (artFile) {
+      if (existsSync(path.join(dir, artFile))) return candidate;
+      continue;
+    }
+    if (resolveNarutoDiskArtFilename(dir)) return candidate;
+  }
+  return opts.number;
+}
+
 export function buildNarutoDiskArtAttachments(opts: {
   printKey: string;
   /** Catalogue row number (collector id). */
@@ -93,10 +134,15 @@ export function buildNarutoDiskArtAttachments(opts: {
     return { attachments: [], defaultUrl: null };
   }
 
-  const pathId = narutoCardPathFromCollector(opts.number, opts.lang);
+  const cardsRoot = opts.cardsRoot ?? packCardsDir(NARUTO_PACK_ID);
+  const diskNumber = resolveNarutoArtDiskNumber({
+    number: opts.number,
+    lang: opts.lang,
+    cardsRoot,
+  });
+  const pathId = narutoCardPathFromCollector(diskNumber, opts.lang);
   if (!pathId) return { attachments: [], defaultUrl: null };
 
-  const cardsRoot = opts.cardsRoot ?? packCardsDir(NARUTO_PACK_ID);
   const cardDir = path.join(
     cardsRoot,
     pathId.folder,

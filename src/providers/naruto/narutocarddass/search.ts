@@ -43,7 +43,10 @@ import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
 } from "./disk";
-import { buildNarutoDiskArtAttachments } from "./diskArtAttachments";
+import {
+  buildNarutoDiskArtAttachments,
+  resolveNarutoArtDiskNumber,
+} from "./diskArtAttachments";
 import {
   ensureNarutoPackIndex,
   narutoIndexPacks,
@@ -403,7 +406,6 @@ export function withNarutoRetailArtFallback(
   rows: readonly NarutoPrintDetail[],
 ): NarutoPrintDetail[] {
   const needing = rows.filter((row) => !row.art?.trim());
-  if (needing.length === 0) return [...rows];
 
   const byLang = new Map<string, string[]>();
   for (const row of needing) {
@@ -418,8 +420,24 @@ export function withNarutoRetailArtFallback(
   }
 
   return rows.map((row) => {
-    if (row.art?.trim()) return row;
     const lang = (row.lang || "fr").toLowerCase();
+    if (row.art?.trim()) {
+      /*
+        Index mirror may list art on a promo stub while bytes stay under the
+        retail folder (`ta0081/fr/art.carddass.jpg`). Point artNumber there so
+        asset URLs do not 404 on a missing `ta0081-promo/` tree.
+      */
+      if (row.artNumber?.trim()) return row;
+      const diskNumber = resolveNarutoArtDiskNumber({
+        number: row.number,
+        lang,
+        artFile: row.art,
+      });
+      if (diskNumber.toLowerCase() !== row.number.toLowerCase()) {
+        return { ...row, artNumber: diskNumber };
+      }
+      return row;
+    }
     const key = narutoCollectorNumberKey(row.number);
     if (!key) return row;
     const donor = donorsByLang.get(lang)?.get(`${key}\0${lang}`);
@@ -436,7 +454,13 @@ export function withNarutoRetailArtFallback(
 }
 
 function toCandidate(row: NarutoPrintDetail): PrintCandidate {
-  const collectorNumber = row.artNumber ?? row.number;
+  const collectorNumber =
+    row.artNumber ??
+    resolveNarutoArtDiskNumber({
+      number: row.number,
+      lang: row.lang ?? "fr",
+      artFile: row.art,
+    });
   const pathId = narutoCardPathFromCollector(collectorNumber, row.lang);
   /*
     Double illustration officielle (術-192/348/358, voir doubleIllustrations) :

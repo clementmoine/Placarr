@@ -124,6 +124,16 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       expect(promo?.printKey).toMatch(/promo/i);
     });
 
+    it("resolves mirrored promo art URLs onto the retail disk folder", () => {
+      // print_assets lists art.carddass.jpg on promo-ta0081, but the file lives
+      // under mission/ta0081/fr/ — never invent a missing ta0081-promo/ tree.
+      const promo = lookupNarutoPrint("naruto:promo-ta0081", {
+        language: "fr",
+      });
+      expect(promo?.imageUrl).toContain("/mission/ta0081/fr/art.carddass.jpg");
+      expect(promo?.imageUrl).not.toContain("ta0081-promo");
+    });
+
     it("serves tin / UNS3 promo faces from disk when print_assets is empty", () => {
       // Titles live in sqlite; FR tin PR art is on disk only (no print_assets row).
       for (const [key, needle] of [

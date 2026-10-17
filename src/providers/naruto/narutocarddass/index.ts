@@ -41,7 +41,10 @@ import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
 } from "./disk";
-import { buildNarutoDiskArtAttachments } from "./diskArtAttachments";
+import {
+  buildNarutoDiskArtAttachments,
+  resolveNarutoArtDiskNumber,
+} from "./diskArtAttachments";
 import { NARUTO_PACK_ID } from "./identity";
 import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./sources/priceSourceId";
 import { refreshNarutoIndicativePriceOffers } from "./sources/prices";
@@ -125,10 +128,15 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   if (!title) return null;
 
   const lang = row.lang?.trim() || "fr";
-  const pathId = narutoCardPathFromCollector(row.number, lang);
+  const diskNumber = resolveNarutoArtDiskNumber({
+    number: row.number,
+    lang,
+    artFile: row.art,
+  });
+  const pathId = narutoCardPathFromCollector(diskNumber, lang);
   const disk = buildNarutoDiskArtAttachments({
     printKey,
-    number: row.number,
+    number: diskNumber,
     lang,
     source: PROVIDER_ID,
     title,

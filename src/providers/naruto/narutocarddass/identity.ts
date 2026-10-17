@@ -468,6 +468,20 @@ export function narutoDiskCardId(
   return grouping ? `${prefix}${n}-${grouping}` : `${prefix}${n}`;
 }
 
+/**
+ * Retail disk id without promo / prerelease / cdf grouping
+ * (`ta0081-promo` → `ta0081`, `ni0019-prerelease` → `ni0019`).
+ *
+ * Mirrored `print_assets` often name a face that lives under this folder —
+ * never invent a sibling `*-promo/` tree just because the printKey is a stub.
+ */
+export function narutoRetailDiskNumber(raw: string): string | null {
+  const id = parseNarutoCollector(raw);
+  if (!id) return null;
+  const prefix = canonicalNarutoDiskPrefix(id.printedPrefix);
+  return `${prefix}${paddedNumber(id)}`;
+}
+
 /** Printed-prefix + number. `ni001` ≠ `n001`. Grouping ignored (art fallback). */
 export function narutoCollectorNumberKey(raw: string): string | null {
   const id = parseNarutoCollector(raw);

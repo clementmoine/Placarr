@@ -4,7 +4,10 @@ import os from "node:os";
 import path from "node:path";
 
 import { recordNarutoFaceDecision } from "./disk";
-import { buildNarutoDiskArtAttachments } from "./diskArtAttachments";
+import {
+  buildNarutoDiskArtAttachments,
+  resolveNarutoArtDiskNumber,
+} from "./diskArtAttachments";
 
 describe("buildNarutoDiskArtAttachments", () => {
   it("emits one catalog cover per art.* and defaults to face.json winner", () => {
@@ -51,6 +54,33 @@ describe("buildNarutoDiskArtAttachments", () => {
         source: "narutocarddass",
       }).attachments,
     ).toEqual([]);
+  });
+
+  it("points promo stubs at the retail folder that holds the mirrored face", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "naruto-promo-disk-"));
+    const retailDir = path.join(root, "mission", "ta0081", "fr");
+    mkdirSync(retailDir, { recursive: true });
+    writeFileSync(path.join(retailDir, "art.carddass.jpg"), "face");
+
+    expect(
+      resolveNarutoArtDiskNumber({
+        number: "ta0081-promo",
+        lang: "fr",
+        artFile: "art.carddass.jpg",
+        cardsRoot: root,
+      }),
+    ).toBe("ta0081");
+
+    const { defaultUrl } = buildNarutoDiskArtAttachments({
+      printKey: "naruto:promo-ta0081",
+      number: "ta0081-promo",
+      lang: "fr",
+      source: "narutocarddass",
+      cardsRoot: root,
+    });
+    expect(defaultUrl).toBe(
+      "/assets/naruto/carddass/cards/mission/ta0081/fr/art.carddass.jpg",
+    );
   });
 
   it("surfaces reconstructed-only faces named by face.json", () => {

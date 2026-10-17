@@ -13,6 +13,7 @@ import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
 } from "@/providers/naruto/narutocarddass/disk";
+import { resolveNarutoArtDiskNumber } from "@/providers/naruto/narutocarddass/diskArtAttachments";
 import {
   assetsPackBackUrl,
   assetsPackTierBackUrl,
@@ -298,7 +299,12 @@ export function packFaceAssetUrl(
 ): string {
   const corpus = catalogueCorpusPack(pack);
   if (cataloguePackInfo(pack)?.narutoCollectorDisk) {
-    const naruto = narutoCardPathFromCollector(id.card, id.lang);
+    const diskCard = resolveNarutoArtDiskNumber({
+      number: id.card,
+      lang: id.lang,
+      artFile: file,
+    });
+    const naruto = narutoCardPathFromCollector(diskCard, id.lang);
     if (naruto) {
       return narutoAssetsCardUrl(corpus, naruto, file);
     }

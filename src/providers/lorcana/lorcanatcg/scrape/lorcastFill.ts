@@ -39,6 +39,10 @@ import {
   type LorcastSet,
 } from "@/providers/lorcana/lorcast/catalogue";
 import {
+  lorcastFillPriceRowForPrint,
+  writeLorcastFillPriceLedger,
+} from "@/providers/lorcana/lorcast/prices";
+import {
   LORCANA_GAME,
   normalizeLorcanaSearchText,
 } from "@/providers/lorcana/lorcanajson/fetch";
@@ -208,6 +212,24 @@ export async function loadLorcastFill(
           ? ` (${[...bySet].map(([set, n]) => `${set}×${n}`).join(", ")})`
           : ""),
     );
+    const priceRows = prints
+      .map((print) =>
+        lorcastFillPriceRowForPrint({
+          printKey: print.printKey,
+          setCode: print.setCode,
+          collectorNumber: print.collectorNumber,
+          name: print.fullName,
+          tcgplayerId: print.tcgplayerId,
+          prices: print.prices,
+        }),
+      )
+      .filter((row): row is NonNullable<typeof row> => row != null);
+    if (priceRows.length) {
+      const ledger = writeLorcastFillPriceLedger(priceRows);
+      notes.push(
+        `${priceRows.length} cotes USD jointes au gap-fill (ledger ${Object.keys(ledger.byPrintKey).length} clés)`,
+      );
+    }
     return { prints, notes };
   } catch (error) {
     notes.push(

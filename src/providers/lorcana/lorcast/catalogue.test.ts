@@ -69,7 +69,19 @@ describe("mapLorcastCataloguePrint", () => {
       imageUrl: "https://cards.lorcast.io/card/digital/large/crd_efd.avif?1",
       thumbnailUrl:
         "https://cards.lorcast.io/card/digital/small/crd_efd.avif?1",
+      tcgplayerId: null,
+      prices: { usd: null, usdFoil: null },
     });
+  });
+
+  it("joint les cotes USD du payload set-cards", () => {
+    const card = mapLorcastCataloguePrint({
+      ...rawPuzzlePromo(),
+      tcgplayer_id: 12345,
+      prices: { usd: "1.25", usd_foil: "4.50" },
+    });
+    expect(card?.tcgplayerId).toBe(12345);
+    expect(card?.prices).toEqual({ usd: 125, usdFoil: 450 });
   });
 
   it("déplie la rareté soulignée de Lorcast", () => {

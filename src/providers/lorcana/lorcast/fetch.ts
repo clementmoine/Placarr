@@ -6,16 +6,19 @@ import { httpGet } from "@/lib/http/httpClient";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { lorcanaPromoSetFromGrouping } from "@/providers/lorcana/shared/lorcanaPromoSet";
 
+import {
+  lorcastPricesFromRaw,
+  readLorcastFillPriceLedger,
+  type LorcastUsdPrices,
+} from "./prices";
+
 /** Alias — une seule implémentation dans `lorcana/shared/lorcanaPromoSet`. */
 export const lorcastPromoSetFromGrouping = lorcanaPromoSetFromGrouping;
 
 const BASE_URL = "https://api.lorcast.com/v0";
 const LORCANA_GAME = "lorcana";
 
-export type LorcastCardPrices = {
-  usd: number | null;
-  usdFoil: number | null;
-};
+export type LorcastCardPrices = LorcastUsdPrices;
 
 export type LorcastCard = {
   id: string;
@@ -52,12 +55,6 @@ function numberOrNull(value: unknown): number | null {
   return null;
 }
 
-function usdToCents(value: unknown): number | null {
-  const dollars = numberOrNull(value);
-  if (dollars == null || dollars <= 0) return null;
-  return Math.round(dollars * 100);
-}
-
 export function mapLorcastCard(raw: RawLorcastCard): LorcastCard | null {
   const id = text(raw.id);
   const name = text(raw.name);
@@ -71,10 +68,27 @@ export function mapLorcastCard(raw: RawLorcastCard): LorcastCard | null {
     collectorNumber,
     setCode,
     tcgplayerId: numberOrNull(raw.tcgplayer_id),
-    prices: {
-      usd: usdToCents(raw.prices?.usd),
-      usdFoil: usdToCents(raw.prices?.usd_foil),
-    },
+    prices: lorcastPricesFromRaw(raw.prices),
+  };
+}
+
+/** Gap-fill scrape wrote USD — reuse without another Lorcast GET. */
+export function lorcastCardFromFillPriceLedger(
+  printKey: string | null | undefined,
+): LorcastCard | null {
+  const key = printKey?.trim();
+  if (!key) return null;
+  const row = readLorcastFillPriceLedger().byPrintKey[key];
+  if (!row) return null;
+  if (row.prices.usd == null && row.prices.usdFoil == null) return null;
+  return {
+    id: `fill:${row.printKey}`,
+    name: row.name,
+    version: null,
+    collectorNumber: row.collectorNumber,
+    setCode: row.setCode,
+    tcgplayerId: row.tcgplayerId,
+    prices: row.prices,
   };
 }
 
@@ -264,7 +278,12 @@ export async function fetchLorcastCardForPrintKey(
   }
 
   const hint = options.titleHint?.trim();
-  if (!hint) return lookup.grouping ? null : direct;
+  if (!hint) {
+    return (
+      (lookup.grouping ? null : direct) ??
+      lorcastCardFromFillPriceLedger(printKey)
+    );
+  }
 
   const queries = promoSet
     ? [`${hint} set:${promoSet}`, `${hint} set:${lookup.set}`, hint]
@@ -279,5 +298,8 @@ export async function fetchLorcastCardForPrintKey(
     if (match) return match;
   }
 
-  return lookup.grouping ? null : direct;
+  return (
+    (lookup.grouping ? null : direct) ??
+    lorcastCardFromFillPriceLedger(printKey)
+  );
 }

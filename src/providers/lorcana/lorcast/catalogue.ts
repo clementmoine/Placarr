@@ -14,6 +14,11 @@
  */
 import { httpGet } from "@/lib/http/httpClient";
 
+import {
+  lorcastPricesFromRaw,
+  type LorcastUsdPrices,
+} from "./prices";
+
 const BASE_URL = "https://api.lorcast.com/v0";
 
 /** Lorcast ne publie qu'en anglais. */
@@ -53,6 +58,9 @@ export type LorcastCataloguePrint = {
   flavorText: string | null;
   imageUrl: string | null;
   thumbnailUrl: string | null;
+  tcgplayerId: number | null;
+  /** TCGplayer market USD (cents), when the set-cards payload includes them. */
+  prices: LorcastUsdPrices;
 };
 
 type RawSet = {
@@ -76,6 +84,8 @@ type RawCard = {
   strength?: unknown;
   willpower?: unknown;
   lore?: unknown;
+  tcgplayer_id?: unknown;
+  prices?: { usd?: unknown; usd_foil?: unknown };
   image_uris?: {
     digital?: { small?: unknown; normal?: unknown; large?: unknown };
   };
@@ -91,6 +101,15 @@ function text(value: unknown): string | null {
 function integer(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.trunc(value);
+  }
+  return null;
+}
+
+function numberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
 }
@@ -156,6 +175,8 @@ export function mapLorcastCataloguePrint(
       httpsUrl(raw.image_uris?.digital?.large) ??
       httpsUrl(raw.image_uris?.digital?.normal),
     thumbnailUrl: httpsUrl(raw.image_uris?.digital?.small),
+    tcgplayerId: numberOrNull(raw.tcgplayer_id),
+    prices: lorcastPricesFromRaw(raw.prices),
   };
 }
 

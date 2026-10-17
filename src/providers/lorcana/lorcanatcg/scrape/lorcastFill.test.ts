@@ -34,6 +34,8 @@ function print(
     flavorText: null,
     imageUrl: null,
     thumbnailUrl: null,
+    tcgplayerId: null,
+    prices: { usd: null, usdFoil: null },
     ...overrides,
   };
 }

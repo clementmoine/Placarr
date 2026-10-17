@@ -2,7 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { NARUTO_FACE_PRIORITY, NARUTO_FACE_SOURCES, narutoDumpFaceRank, narutoFaceFilename, narutoFaceSourceOf, parseNarutoFaceDecision, pickBestNarutoDumpFace, narutoAssetsCardUrl, narutoCardPathFromCollector, narutoCardRelPath, normalizeNarutoLang, NARUTO_FACE_DECISION_FILE, existingNarutoArtForSource, saveNarutoFace, writeNarutoArtFile, isMarketplacePaddedImage, carddasJpVol1FaceOriginalUrls, carddasJpVol1FaceStem, carddasJpVol1FaceTargets, carddasJpVolumeFaceStem, waybackImageUrl } from "./disk";
+import { NARUTO_FACE_PRIORITY, NARUTO_FACE_SOURCES, narutoDumpFaceRank, narutoFaceFilename, narutoFaceSourceOf, parseNarutoFaceDecision, pickBestNarutoDumpFace, narutoAssetsCardUrl, narutoCardPathFromCollector, narutoCardRelPath, normalizeNarutoLang, NARUTO_FACE_DECISION_FILE, existingNarutoArtForSource, saveNarutoFace, writeNarutoArtFile, isMarketplacePaddedImage, carddasJpVol1FaceOriginalUrls, carddasJpVol1FaceStem, carddasJpVol1FaceTargets, carddasJpVolumeFaceOriginalUrls, carddasJpVolumeFaceStem, carddasJpVolumeFaceTargets, waybackImageUrl } from "./disk";
 import { canonicalizeNarutoPrintKey, mintNarutoPrintKey, narutoCollectorsMatch, narutoDiskCardId } from "./identity";
 import sharp from "sharp";
 
@@ -838,8 +838,48 @@ import sharp from "sharp";
       ["忍-146", 7, "shinobi-146_7"],
       ["術-348", 17, "jutsu-348_17"],
       ["作-332", 17, "saku-332_17"],
+      ["術-290", 14, "jutsu-290_14"],
+      ["忍-417", 17, "shinobi-417_17"],
+      ["作-326", 17, "saku-326_17"],
+      ["作-337", 17, "saku-337_17"],
     ] as const)("maps %s vol %s", (printed, volume, stem) => {
       expect(carddasJpVolumeFaceStem(printed, volume)).toBe(stem);
+    });
+  });
+
+  describe("carddasJpVolumeFaceTargets", () => {
+    it("resolves remaining maki14/maki17 JA face holes", () => {
+      const byNumber = new Map(
+        carddasJpVolumeFaceTargets()
+          .filter((t) =>
+            ["te0290", "ni0417", "ta0326", "ta0337"].includes(t.number),
+          )
+          .map((t) => [t.number, t] as const),
+      );
+      expect(byNumber.get("te0290")).toMatchObject({
+        printed: "術-290",
+        stem: "jutsu-290_14",
+      });
+      expect(byNumber.get("ni0417")).toMatchObject({
+        printed: "忍-417",
+        stem: "shinobi-417_17",
+      });
+      expect(byNumber.get("ta0326")).toMatchObject({
+        printed: "作-326",
+        stem: "saku-326_17",
+      });
+      expect(byNumber.get("ta0337")).toMatchObject({
+        printed: "作-337",
+        stem: "saku-337_17",
+      });
+    });
+
+    it("adds bare /card/ originals after the volume GIF path", () => {
+      const urls = carddasJpVolumeFaceOriginalUrls("jutsu-290_14");
+      expect(urls[0]).toContain("cardlist/card_img/jutsu-290_14.gif");
+      expect(urls).toContain(
+        "http://www.carddas.com/naruto/card/jutsu-290.gif",
+      );
     });
   });
 

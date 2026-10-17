@@ -1592,3 +1592,12 @@ jamais imprimée FR).
 Reste : ~52 titres JA sans scan (promos / trous numérotation) ; FR S6 hors
 périmètre carton.
 
+## Session 2026-10-17 — volume GIFs carddas (impassé)
+
+`harvestCarddasVolumeFaces` (`--volume-faces --sets maki14,maki17 --numbers
+te0290,ni0417,ta0326,ta0337`) : stems checklist OK, CDX / snapshots vol.1
+fallback → **0 GIF**. Même trou déjà noté Fril 2026-09-04 (`waybackCarddasCdx`
+hits 0). Ultrajeux S1–S4 + spc2 staging déjà installés — pas de delta
+`titleWithoutImage`. Outil volume garé pour un futur CDX ; suite faces =
+marché / paste.
+

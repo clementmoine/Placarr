@@ -17,8 +17,9 @@ import { dataRoot } from "@/lib/runtimeData";
 import { httpGet } from "@/lib/http/httpClient";
 import {
   CARDDAS_JP_VOL1_WAYBACK_TIMESTAMPS,
-  carddasJpVol1FaceOriginalUrls,
-  carddasJpVol1FaceTargets,
+  carddasJpVolumeFaceOriginalUrls,
+  carddasJpVolumeFaceTargets,
+  type CarddasJpVol1FaceTarget,
   waybackImageUrl,
 } from "./disk";
 import { extFromMagic } from "./disk";
@@ -58,20 +59,27 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-// ─── harvestCarddasVol1Faces ──────────────────────────────────────────────────────────
+// ─── harvestCarddasVolumeFaces ──────────────────────────────────────────────────────────
 
 /**
- * Targeted Wayback harvest for official 巻ノ壱 face GIFs (`*_1.gif`).
- * Fills nikita holes (e.g. N-003) when CDX retained the asset body.
+ * Targeted Wayback harvest for official 巻ノ… face GIFs (`shinobi-417_17.gif`).
+ * Vol.1 (`*_1.gif`) remains the default; pass `setCodes` / `numbers` for holes.
  */
-const vol1Faces_DEFAULT_DELAY_MS = 250;
+const volumeFaces_DEFAULT_DELAY_MS = 250;
 
-export type HarvestCarddasVol1FacesOptions = {
+export type HarvestCarddasVolumeFacesOptions = {
   force?: boolean;
   root?: string;
   delayMs?: number;
   limit?: number;
+  /** e.g. `["maki14","maki17"]` — omit for every volume in the cardlist. */
+  setCodes?: readonly string[];
+  /** Disk ids to keep (`te0290`) — omit for the full volume checklist. */
+  numbers?: readonly string[];
 };
+
+/** @deprecated Prefer {@link HarvestCarddasVolumeFacesOptions}. */
+export type HarvestCarddasVol1FacesOptions = HarvestCarddasVolumeFacesOptions;
 
 function stagingDest(stagingDir: string, original: string): string | null {
   const rel = stagingRelFromUrl(original, {
@@ -136,8 +144,30 @@ async function tryDownload(
   return "fail";
 }
 
-export async function harvestCarddasVol1Faces(
-  opts: HarvestCarddasVol1FacesOptions = {},
+function selectCarddasVolumeFaceTargets(
+  opts: HarvestCarddasVolumeFacesOptions,
+): CarddasJpVol1FaceTarget[] {
+  const setCodes = opts.setCodes?.map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const numbers = new Set(
+    (opts.numbers ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean),
+  );
+  let targets: CarddasJpVol1FaceTarget[] = [];
+  if (!setCodes?.length) {
+    targets = carddasJpVolumeFaceTargets();
+  } else {
+    for (const setCode of setCodes) {
+      targets.push(...carddasJpVolumeFaceTargets(setCode));
+    }
+  }
+  if (numbers.size) {
+    targets = targets.filter((t) => numbers.has(t.number.toLowerCase()));
+  }
+  if (opts.limit && opts.limit > 0) targets = targets.slice(0, opts.limit);
+  return targets;
+}
+
+export async function harvestCarddasVolumeFaces(
+  opts: HarvestCarddasVolumeFacesOptions = {},
 ): Promise<{
   listed: number;
   downloaded: number;
@@ -148,12 +178,17 @@ export async function harvestCarddasVol1Faces(
   const stagingDir = path.join(root, NARUTO_STAGING_CARDDAS_JP);
   mkdirSync(stagingDir, { recursive: true });
   const force = opts.force === true;
-  const delayMs = opts.delayMs ?? vol1Faces_DEFAULT_DELAY_MS;
-  let targets = carddasJpVol1FaceTargets();
-  if (opts.limit && opts.limit > 0) targets = targets.slice(0, opts.limit);
+  const delayMs = opts.delayMs ?? volumeFaces_DEFAULT_DELAY_MS;
+  const targets = selectCarddasVolumeFaceTargets(opts);
+  const label =
+    opts.setCodes?.length || opts.numbers?.length
+      ? `巻ノ holes (${opts.setCodes?.join(",") || "all"}${
+          opts.numbers?.length ? ` · ${opts.numbers.length} ids` : ""
+        })`
+      : "巻ノ壱 *_1.gif";
 
   console.log(
-    `── JA carddas 巻ノ壱 *_1.gif → ${NARUTO_STAGING_CARDDAS_JP}/ (${targets.length} stems)`,
+    `── JA carddas ${label} → ${NARUTO_STAGING_CARDDAS_JP}/ (${targets.length} stems)`,
   );
 
   let downloaded = 0;
@@ -163,7 +198,7 @@ export async function harvestCarddasVol1Faces(
 
   for (const target of targets) {
     if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
-    const originals = carddasJpVol1FaceOriginalUrls(target.stem);
+    const originals = carddasJpVolumeFaceOriginalUrls(target.stem);
     let result: "ok" | "skip" | "fail" = "fail";
     for (const original of originals) {
       const dest = stagingDest(stagingDir, original);
@@ -176,15 +211,17 @@ export async function harvestCarddasVol1Faces(
     else failed += 1;
     log.push({ stem: target.stem, number: target.number, result });
     if (result === "fail") {
-      console.log(`JA vol1 ${target.stem} (${target.number}) FAIL`);
+      console.log(`JA volume ${target.stem} (${target.number}) FAIL`);
     }
   }
 
   writeFileSync(
-    path.join(stagingDir, "vol1-harvest.json"),
+    path.join(stagingDir, "volume-harvest.json"),
     `${JSON.stringify(
       {
         at: new Date().toISOString(),
+        setCodes: opts.setCodes ?? null,
+        numbers: opts.numbers ?? null,
         listed: targets.length,
         downloaded,
         skipped,
@@ -198,7 +235,7 @@ export async function harvestCarddasVol1Faces(
 
   console.log(
     JSON.stringify({
-      carddasVol1Harvest: true,
+      carddasVolumeHarvest: true,
       listed: targets.length,
       downloaded,
       skipped,
@@ -206,6 +243,21 @@ export async function harvestCarddasVol1Faces(
     }),
   );
   return { listed: targets.length, downloaded, skipped, failed };
+}
+
+/** 巻ノ壱 only — same as {@link harvestCarddasVolumeFaces} with `setCodes: ["maki1"]`. */
+export async function harvestCarddasVol1Faces(
+  opts: HarvestCarddasVol1FacesOptions = {},
+): Promise<{
+  listed: number;
+  downloaded: number;
+  skipped: number;
+  failed: number;
+}> {
+  return harvestCarddasVolumeFaces({
+    ...opts,
+    setCodes: opts.setCodes ?? ["maki1"],
+  });
 }
 
 /** Optional bulk CDX sweep for any retained `*_1.gif` under card_img. */
@@ -217,19 +269,36 @@ export async function sweepCarddasVol1Cdx(): Promise<number> {
 }
 
 const thisFile = fileURLToPath(import.meta.url);
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === thisFile &&
-  process.argv.includes("--vol1-faces")
-) {
-  harvestCarddasVol1Faces({
-    limit: process.argv.includes("--limit")
-      ? Number(process.argv[process.argv.indexOf("--limit") + 1])
-      : undefined,
-  }).catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+if (process.argv[1] && path.resolve(process.argv[1]) === thisFile) {
+  if (process.argv.includes("--vol1-faces")) {
+    harvestCarddasVol1Faces({
+      limit: process.argv.includes("--limit")
+        ? Number(process.argv[process.argv.indexOf("--limit") + 1])
+        : undefined,
+    }).catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+  } else if (process.argv.includes("--volume-faces")) {
+    const setIdx = process.argv.indexOf("--sets");
+    const numIdx = process.argv.indexOf("--numbers");
+    harvestCarddasVolumeFaces({
+      setCodes:
+        setIdx >= 0
+          ? process.argv[setIdx + 1]?.split(",").filter(Boolean)
+          : undefined,
+      numbers:
+        numIdx >= 0
+          ? process.argv[numIdx + 1]?.split(",").filter(Boolean)
+          : undefined,
+      limit: process.argv.includes("--limit")
+        ? Number(process.argv[process.argv.indexOf("--limit") + 1])
+        : undefined,
+    }).catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+  }
 }
 
 // ─── harvestNarutoCcgDriveStaging ──────────────────────────────────────────────────────────

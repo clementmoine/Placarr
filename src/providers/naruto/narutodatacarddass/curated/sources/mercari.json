@@ -4,7 +4,7 @@
   "crawlLive": false,
   "ingest": "curated-faces",
   "lang": "ja",
-  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only. 2026-09-25: m61124182960 = Jump Festa 大会限定 うずまきナルト = DNP-030 / DMP-000 (same face; Mission barcode table nao-yoshi). 2026-10-17: +5 NF gap-fill (297/282/318/328/338).",
+  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only. 2026-09-25: m61124182960 = Jump Festa 大会限定 うずまきナルト = DNP-030 / DMP-000 (same face; Mission barcode table nao-yoshi). 2026-10-17: +5 NF (297/282/318/328/338) then +5 NF (018/057/246/261/289) +3 NX (196/200/340).",
   "not": [
     "crawl",
     "shops-og-image",
@@ -96,6 +96,70 @@
       "title": "ナルティメットフォーメーション うちはイタチ NF-338",
       "ingest": true,
       "url": "https://static.mercdn.net/item/detail/orig/photos/m31913546150_1.jpg?1775293025",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m99479385373",
+      "printedRef": "NF-018",
+      "title": "NARUTO ナルティメットフォーメーション テンテン NF-018",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m99479385373_1.jpg?1791642187",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m67465736909",
+      "printedRef": "NF-057",
+      "title": "NARUTO ナルティメットフォーメーション 春野サクラ NF-057",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m67465736909_1.jpg?1792208283",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m72477737740",
+      "printedRef": "NF-246",
+      "title": "ナルティメットフォーメーション　うずまきナルト　多影撃連弾　NF-246",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m72477737740_1.jpg?1791816257",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m48999581062",
+      "printedRef": "NF-261",
+      "title": "ナルティメットフォーメーション　はたけカカシ　コピー忍術　NF-261",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m48999581062_1.jpg?1791815976",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m27476666559",
+      "printedRef": "NF-289",
+      "title": "NARUTO ナルティメットフォーメーション 綱手 NF-289",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m27476666559_1.jpg?1792238433",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m25460607792",
+      "printedRef": "NX-196",
+      "title": "NARUTO ナルティメットクロス うちはサスケ NX-196",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m25460607792_1.jpg?1792238494",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m21914197699",
+      "printedRef": "NX-200",
+      "title": "NARUTO ナルティメットクロス デイダラ NX-200",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m21914197699_1.jpg?1792158657",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m94116825723",
+      "printedRef": "NX-340",
+      "title": "NARUTO ナルティメットクロス トビ NX-340 ナルト カード",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m94116825723_1.jpg?1792110002",
       "note": "2026-10-17 densif — print_assets gap."
     }
   ]

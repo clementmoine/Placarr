@@ -319,9 +319,28 @@ import { parseDataCarddassPrinted } from "../printKey";
 
     it("includes 2026-10-17 NF Formation gap fills", () => {
       const refs = dataCarddassMercariIngestFaces().map((f) => f.printedRef);
-      for (const printed of ["NF-297", "NF-282", "NF-318", "NF-328", "NF-338"]) {
+      for (const printed of [
+        "NF-297",
+        "NF-282",
+        "NF-318",
+        "NF-328",
+        "NF-338",
+        "NF-018",
+        "NF-057",
+        "NF-246",
+        "NF-261",
+        "NF-289",
+      ]) {
         expect(refs).toContain(printed);
         expect(parseDataCarddassPrinted(printed)).toMatchObject({ set: "nf" });
+      }
+    });
+
+    it("includes 2026-10-17 NX Cross gap fills", () => {
+      const refs = dataCarddassMercariIngestFaces().map((f) => f.printedRef);
+      for (const printed of ["NX-196", "NX-200", "NX-340"]) {
+        expect(refs).toContain(printed);
+        expect(parseDataCarddassPrinted(printed)).toMatchObject({ set: "nx" });
       }
     });
   });

@@ -22,6 +22,7 @@ import type {
   CardsIndexLangFiles,
   CardsIndexV1,
 } from "@/effects/cardsIndex";
+import { buildPrintKey, parsePrintKey } from "@/core/identify/printKey";
 import { dataRoot } from "@/lib/runtimeData";
 import {
   emptyProductsIndex,
@@ -38,6 +39,8 @@ import {
   appearanceSetsOf,
   appearanceValueForJson,
   canonicalizeNarutoPrintKey,
+  canonicalNarutoDiskPrefix,
+  isNarutoCatalogueSetCode,
   isNarutoFamilyFolder,
   isNarutoSeriesSetCode,
   loadNarutoAppearancesFile,
@@ -61,6 +64,7 @@ import type {
   NarutoTitleRow,
 } from "../indexStore";
 import { pickPreferredFaceArtFilename } from "../parse/bandai";
+import { isNarutoS6FrPrintedNumber } from "../sources/titles";
 
 export type { NarutoAppearancesFile };
 
@@ -69,8 +73,84 @@ export type { NarutoAppearancesFile };
 /**
  * Collapse leftover series-baked print keys (`naruto:s6-ni064`) onto the
  * printed-prefix key (`naruto:ni-0064`). Same card, one catalogue tile.
+ *
+ * Attested FR S6 inserts (`isNarutoS6FrPrintedNumber`) and carte-semaine
+ * cancelled-set keys stay set-scoped; only unattested s6 ghosts fold.
  */
 
+/** Pad legacy `naruto:ni-086` → `naruto:ni-0086`; normalize set-scoped padding. */
+function normalizeNarutoFoldPrintKey(key: string): string {
+  const canon = canonicalizeNarutoPrintKey(key);
+  const parsed = parsePrintKey(canon);
+  if (!parsed || parsed.game !== "naruto") return canon;
+  if (isNarutoCatalogueSetCode(parsed.set)) return canon;
+
+  const raw = parsed.grouping
+    ? `${parsed.set}${parsed.number}-${parsed.grouping}`
+    : `${parsed.set}${parsed.number}`;
+  const disk = narutoDiskCardId(raw);
+  if (!disk) return canon;
+  const id = parseNarutoCollector(disk);
+  if (!id) return canon;
+  return (
+    buildPrintKey({
+      game: "naruto",
+      set: canonicalNarutoDiskPrefix(id.printedPrefix),
+      number: String(id.number).padStart(4, "0"),
+      grouping: id.grouping,
+    }) ?? canon
+  );
+}
+
+/**
+ * Fold bucket: one tile per collector (prefix+number+grouping).
+ * Set-scoped duplicates and unpadded stubs collapse here; `expandNarutoPrintsToSetScoped`
+ * re-mints membership keys from `setCodes` afterward.
+ */
+function narutoFoldGroupKey(printKey: string, numberHint?: string): string {
+  const key = normalizeNarutoFoldPrintKey(printKey);
+  const parsed = parsePrintKey(key);
+  if (!parsed || parsed.game !== "naruto") return key;
+  const number = numberHint?.trim() || parsed.number;
+  const raw = isNarutoCatalogueSetCode(parsed.set)
+    ? parsed.grouping
+      ? `${parsed.number}-${parsed.grouping}`
+      : parsed.number
+    : parsed.grouping
+      ? `${parsed.set}${parsed.number}-${parsed.grouping}`
+      : `${parsed.set}${parsed.number}`;
+  const disk =
+    narutoDiskCardId(number) ?? narutoDiskCardId(raw) ?? raw;
+  /*
+    Attested FR S6 inserts keep their own set-scoped identity so they are not
+    folded onto a retail reprint of the same number.
+  */
+  if (
+    parsed.set.toLowerCase() === "s6" &&
+    (isNarutoS6FrPrintedNumber(number) ||
+      isNarutoS6FrPrintedNumber(parsed.number))
+  ) {
+    return `s6:${disk.toLowerCase()}`;
+  }
+  return `collector:${disk.toLowerCase()}`;
+}
+
+function preferNarutoFoldPrintKey(a: string, b: string): string {
+  const pa = parsePrintKey(a);
+  const pb = parsePrintKey(b);
+  const aS6 = pa?.set.toLowerCase() === "s6";
+  const bS6 = pb?.set.toLowerCase() === "s6";
+  // Drop unattested s6 ghosts in favour of retail / family keys.
+  if (aS6 && !bS6 && !isNarutoS6FrPrintedNumber(pa?.number ?? "")) return b;
+  if (bS6 && !aS6 && !isNarutoS6FrPrintedNumber(pb?.number ?? "")) return a;
+  if (pa && !isNarutoCatalogueSetCode(pa.set) && pb && isNarutoCatalogueSetCode(pb.set)) {
+    return a; // prefer legacy family key for cards-index tiles
+  }
+  if (pb && !isNarutoCatalogueSetCode(pb.set) && pa && isNarutoCatalogueSetCode(pa.set)) {
+    return b;
+  }
+  return a.localeCompare(b) <= 0 ? a : b;
+}
 
 const TITLE_STOP =
   /^(qui|que|dont|quand|cette|voici|son|si|une|le|la|les|ce|elle|il|avec|ne|pour|de|du|des|en|au|aux|sur|par|mais|ou|et|car|donc)$/i;
@@ -217,20 +297,23 @@ function mergeIndexEntries(
 export function foldNarutoCardsIndex(index: CardsIndexV1): CardsIndexV1 {
   const groups = new Map<string, Array<[string, CardsIndexEntry]>>();
   for (const [key, entry] of Object.entries(index.cards)) {
-    const canon = canonicalizeNarutoPrintKey(key);
-    const list = groups.get(canon) ?? [];
-    list.push([key, entry]);
-    groups.set(canon, list);
+    const groupKey = narutoFoldGroupKey(key, entry.card);
+    const list = groups.get(groupKey) ?? [];
+    list.push([normalizeNarutoFoldPrintKey(key), entry]);
+    groups.set(groupKey, list);
   }
   const cards: Record<string, CardsIndexEntry> = {};
-  for (const [canon, group] of groups) {
+  for (const [, group] of groups) {
     if (group.length === 1) {
       const [key, entry] = group[0]!;
       cards[key] = entry;
       continue;
     }
+    const preferredKey = group
+      .map(([key]) => key)
+      .reduce((a, b) => preferNarutoFoldPrintKey(a, b));
     const preferred =
-      group.find(([key]) => canonicalizeNarutoPrintKey(key) === canon)?.[1] ??
+      group.find(([key]) => key === preferredKey)?.[1] ??
       group.find(([, entry]) => isNarutoFamilyFolder(entry.set))?.[1] ??
       group[0]![1];
     let merged = preferred;
@@ -238,21 +321,42 @@ export function foldNarutoCardsIndex(index: CardsIndexV1): CardsIndexV1 {
       if (entry === preferred) continue;
       merged = mergeIndexEntries(merged, entry);
     }
-    cards[canon] = merged;
+    cards[preferredKey] = merged;
   }
   return { ...index, cards };
 }
 
 function foldPrintRow(print: NarutoPrintRow): NarutoPrintRow {
   const printKey =
-    canonicalizeNarutoPrintKey(print.printKey) ||
+    normalizeNarutoFoldPrintKey(print.printKey) ||
     mintNarutoPrintKey(print.number, print.setCode) ||
     print.printKey;
   const parsed = parseNarutoCollector(print.number);
+  const number = narutoDiskCardId(print.number, print.setCode) ?? print.number;
+  // Phantom s6 beside a real EU membership → keep the non-s6 setCode as home.
+  const parsedKey = parsePrintKey(printKey);
+  let setCode = print.setCode;
+  let outKey = printKey;
+  if (
+    parsedKey?.set.toLowerCase() === "s6" &&
+    !isNarutoS6FrPrintedNumber(number) &&
+    print.setCode &&
+    print.setCode.toLowerCase() !== "s6"
+  ) {
+    outKey = mintNarutoPrintKey(number, print.setCode) ?? printKey;
+    setCode = print.setCode;
+  } else if (
+    parsedKey?.set.toLowerCase() === "s6" &&
+    !isNarutoS6FrPrintedNumber(number)
+  ) {
+    // Will merge via narutoFoldGroupKey; prefer family set when merging.
+    setCode = print.setCode;
+  }
   return {
     ...print,
-    printKey,
-    number: narutoDiskCardId(print.number, print.setCode) ?? print.number,
+    printKey: outKey,
+    setCode,
+    number,
     family: print.family ?? parsed?.family ?? null,
     grouping: parsed ? parsed.grouping : (print.grouping ?? null),
   };
@@ -302,16 +406,35 @@ export function foldNarutoCatalogueRecords(input: {
   titles: NarutoTitleRow[];
   assets: NarutoAssetRow[];
 } {
-  const printByKey = new Map<string, NarutoPrintRow>();
+  const printByGroup = new Map<string, NarutoPrintRow>();
   for (const raw of input.prints) {
     const print = foldPrintRow(raw);
-    const prev = printByKey.get(print.printKey);
-    printByKey.set(print.printKey, prev ? mergePrintRow(prev, print) : print);
+    const groupKey = narutoFoldGroupKey(print.printKey, print.number);
+    const prev = printByGroup.get(groupKey);
+    if (!prev) {
+      printByGroup.set(groupKey, print);
+      continue;
+    }
+    const winnerKey = preferNarutoFoldPrintKey(prev.printKey, print.printKey);
+    const merged = mergePrintRow(
+      winnerKey === prev.printKey ? prev : print,
+      winnerKey === prev.printKey ? print : prev,
+    );
+    printByGroup.set(groupKey, { ...merged, printKey: winnerKey });
   }
+  const printKeyByGroup = new Map<string, string>();
+  for (const [groupKey, print] of printByGroup) {
+    printKeyByGroup.set(groupKey, print.printKey);
+  }
+  const remapFoldedPrintKey = (rawKey: string): string => {
+    const normalized = normalizeNarutoFoldPrintKey(rawKey);
+    const groupKey = narutoFoldGroupKey(normalized);
+    return printKeyByGroup.get(groupKey) ?? normalized;
+  };
 
   const titleByKey = new Map<string, NarutoTitleRow>();
   for (const raw of input.titles ?? []) {
-    const printKey = canonicalizeNarutoPrintKey(raw.printKey);
+    const printKey = remapFoldedPrintKey(raw.printKey);
     const lang = raw.lang.toLowerCase();
     const key = `${printKey}\0${lang}`;
     const prev = titleByKey.get(key);
@@ -338,7 +461,7 @@ export function foldNarutoCatalogueRecords(input: {
 
   const assetByKey = new Map<string, NarutoAssetRow>();
   for (const raw of input.assets ?? []) {
-    const printKey = canonicalizeNarutoPrintKey(raw.printKey);
+    const printKey = remapFoldedPrintKey(raw.printKey);
     const key = `${printKey}\0${raw.lang.toLowerCase()}`;
     const next = { ...raw, printKey };
     const prev = assetByKey.get(key);
@@ -346,7 +469,7 @@ export function foldNarutoCatalogueRecords(input: {
   }
 
   return {
-    prints: [...printByKey.values()].sort((a, b) =>
+    prints: [...printByGroup.values()].sort((a, b) =>
       a.printKey.localeCompare(b.printKey),
     ),
     titles: [...titleByKey.values()].sort(

@@ -379,14 +379,24 @@ export function writeNarutoCcgIndex(input: {
   for (const p of folded.prints) {
     oldKeyCollector.set(p.printKey, collectorOf(p.number, p.printKey));
   }
-  const expandRows = <T extends { printKey: string }>(rows: readonly T[]): T[] => {
+  const unmappedRowKeys: string[] = [];
+  const expandRows = <T extends { printKey: string }>(
+    rows: readonly T[],
+    kind: "titre" | "face",
+  ): T[] => {
     const out: T[] = [];
     for (const row of rows) {
       const collector =
         oldKeyCollector.get(row.printKey) ??
         collectorFromPrintKey(row.printKey);
       const keys = keysByCollector.get(collector);
-      if (!keys?.length) continue;
+      if (!keys?.length) {
+        // Unknown collector — do not silently drop (FK would be opaque).
+        unmappedRowKeys.push(
+          `${kind} ${row.printKey}${"lang" in row && typeof (row as { lang?: string }).lang === "string" ? ` (${(row as { lang: string }).lang})` : ""}`,
+        );
+        continue;
+      }
       for (const printKey of keys) {
         out.push({ ...row, printKey });
       }
@@ -415,11 +425,11 @@ export function writeNarutoCcgIndex(input: {
     }
     return false;
   };
-  const expandedTitles = expandRows(folded.titles).filter((row) => {
+  const expandedTitles = expandRows(folded.titles, "titre").filter((row) => {
     const set = parsePrintKey(row.printKey)?.set ?? "";
     return setAcceptsTitleLang(set, row.lang);
   });
-  const expandedAssets = expandRows(folded.assets ?? []);
+  const expandedAssets = expandRows(folded.assets ?? [], "face");
 
   const db = new DatabaseSync(buildPath);
   createSchema(db);
@@ -498,6 +508,7 @@ export function writeNarutoCcgIndex(input: {
         .map((p) => p.printKey),
     );
     const orphans = [
+      ...unmappedRowKeys,
       ...expandedTitles
         .filter((t) => !known.has(t.printKey))
         .map((t) => `titre ${t.printKey} (${t.lang})`),

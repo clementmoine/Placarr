@@ -127,10 +127,13 @@ import { colekaCarddassFrLedgerPath, loadColekaCarddassFrLedger, colekaS6ItLedge
         titles: [],
         root: packDir,
       });
-      expect(merged.addedPrints).toEqual(["naruto:cl-0032", "naruto:ta-0226"]);
+      expect(merged.addedPrints).toEqual([
+        "naruto:s6-cl0032",
+        "naruto:s6-ta0226",
+      ]);
       expect(merged.titles).toEqual([
         {
-          printKey: "naruto:ta-0226",
+          printKey: "naruto:s6-ta0226",
           lang: "it",
           fullName: "Potere del segno maledetto",
           rarity: null,

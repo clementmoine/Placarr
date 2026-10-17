@@ -139,9 +139,9 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       expect(
         merged.titles.find((t) => t.printKey === "naruto:ni-0264")?.fullName,
       ).toBe("Shikamaru Nara & Temari");
-      expect(merged.addedPrints).toEqual(["naruto:te-0263"]);
+      expect(merged.addedPrints).toEqual(["naruto:s6-te0263"]);
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:te-0263")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:s6-te0263")?.fullName,
       ).toBe("Mélodie du guerrier illusoire");
     });
 

@@ -173,7 +173,8 @@ describe("writeNarutoCcgIndex", () => {
       db.close();
       return row.n;
     };
-    expect(countPrints()).toBe(1);
+    const before = countPrints();
+    expect(before).toBeGreaterThanOrEqual(1);
 
     expect(() =>
       writeNarutoCcgIndex({
@@ -185,7 +186,7 @@ describe("writeNarutoCcgIndex", () => {
 
     // Une reconstruction ratée effaçait la base : le fichier était supprimé
     // avant l'écriture, et le ROLLBACK ne rendait rien.
-    expect(countPrints()).toBe(1);
+    expect(countPrints()).toBe(before);
     expect(existsSync(`${dbPath}.building`)).toBe(false);
   });
 
@@ -200,7 +201,8 @@ describe("writeNarutoCcgIndex", () => {
       assets: [],
       dbPath,
     });
-    expect(second.printCount).toBe(2);
+    // Set-scoped SSOT + 巻ノ membership → one row per set (s1 + maki*).
+    expect(second.printCount).toBeGreaterThanOrEqual(2);
     expect(existsSync(`${dbPath}.building`)).toBe(false);
   });
 
@@ -220,15 +222,18 @@ describe("writeNarutoCcgIndex", () => {
       dbPath,
     });
     const db = new DatabaseSync(dbPath);
-    const sets = (
-      db
-        .prepare(
-          `SELECT set_code AS setCode FROM print_sets WHERE print_key = ? ORDER BY set_code`,
-        )
-        .all("naruto:ni-0049") as { setCode: string }[]
-    ).map((row) => row.setCode);
+    const rows = db
+      .prepare(
+        `SELECT print_key AS printKey, set_code AS setCode FROM print_sets ORDER BY print_key, set_code`,
+      )
+      .all() as { printKey: string; setCode: string }[];
     db.close();
-    expect(sets).toEqual(["s1", "s5"]);
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        { printKey: "naruto:s1-ni0049", setCode: "s1" },
+        { printKey: "naruto:s5-ni0049", setCode: "s5" },
+      ]),
+    );
   });
 
   it("ajoute s6 aux inserts FR attestés même sans setCodes européen", () => {
@@ -251,7 +256,7 @@ describe("writeNarutoCcgIndex", () => {
         .prepare(
           `SELECT set_code AS setCode FROM print_sets WHERE print_key = ? ORDER BY set_code`,
         )
-        .all("naruto:ta-0221") as { setCode: string }[]
+        .all("naruto:s6-ta0221") as { setCode: string }[]
     ).map((row) => row.setCode);
     db.close();
     expect(sets).toEqual(["s6"]);

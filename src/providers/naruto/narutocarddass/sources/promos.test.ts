@@ -31,10 +31,10 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
 
     it("builds promo printKeys", () => {
       expect(attestedPromoPrintKey({ number: "ni063", name: "Iruka" })).toBe(
-        "naruto:ni-0063-promo",
+        "naruto:promo-ni0063",
       );
       expect(attestedPromoPrintKey({ number: "pr011", name: "Orochimaru" })).toBe(
-        "naruto:pr-0011",
+        "naruto:promo-pr0011",
       );
       expect(
         attestedPromoPrintKey({
@@ -42,7 +42,7 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
           name: "L'éclair pourfendeur",
           diskCardId: "te030-cdf",
         }),
-      ).toBe("naruto:te-0030-cdf");
+      ).toBe("naruto:promo-te0030-cdf");
     });
 
     it("refuses to mint S6 insert twins that are not 7r7 tournament promos", () => {
@@ -54,9 +54,9 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
           { number: "ni063", name: "Iruka", shuriken: 2 },
         ],
       });
-      expect(merged.addedPrints).toEqual(["naruto:ni-0063-promo"]);
+      expect(merged.addedPrints).toEqual(["naruto:promo-ni0063"]);
       expect(
-        merged.prints.some((p) => p.printKey === "naruto:ni-0232-promo"),
+        merged.prints.some((p) => p.printKey === "naruto:promo-ni0232"),
       ).toBe(false);
     });
 
@@ -119,15 +119,15 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
         promos,
       });
       expect(merged.addedPrints).toEqual([
-        "naruto:ni-0063-promo",
-        "naruto:te-0030-cdf",
+        "naruto:promo-ni0063",
+        "naruto:promo-te0030-cdf",
       ]);
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:ni-0063-promo")
+        merged.titles.find((t) => t.printKey === "naruto:promo-ni0063")
           ?.fullName,
       ).toBe("Iruka");
       expect(
-        merged.prints.find((p) => p.printKey === "naruto:ni-0063-promo"),
+        merged.prints.find((p) => p.printKey === "naruto:promo-ni0063"),
       ).toMatchObject({
         number: "ni0063-promo",
         grouping: "promo",
@@ -248,8 +248,11 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
         root: packDir,
       });
       expect(merged.prints).toHaveLength(2);
-      expect(merged.addedPrints).toEqual(["naruto:pr-0005-r"]);
-      expect(merged.titled).toEqual(["naruto:pr-0005-r", "naruto:pr-0096"]);
+      expect(merged.addedPrints).toEqual(["naruto:promo-pr0005-r"]);
+      expect(merged.titled).toEqual([
+        "naruto:pr-0096",
+        "naruto:promo-pr0005-r",
+      ]);
       expect(
         merged.titles.find(
           (t) => t.printKey === "naruto:pr-0096" && t.lang === "en",
@@ -262,7 +265,7 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
       ).toBe("4E Hokage");
       expect(
         merged.titles.some(
-          (t) => t.printKey === "naruto:pr-0005-r" && t.lang === "fr",
+          (t) => t.printKey === "naruto:promo-pr0005-r" && t.lang === "fr",
         ),
       ).toBe(false);
     });
@@ -272,11 +275,11 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
 // —— s1FrPrerelease ——
 {
   describe("s1FrPrerelease", () => {
-    it("mints distinct prerelease printKeys", () => {
-      expect(s1FrPrereleasePrintKey("ni019")).toBe("naruto:ni-0019-prerelease");
-      expect(s1FrPrereleasePrintKey("ta005")).toBe("naruto:ta-0005-prerelease");
+    it("mints distinct prerelease printKeys under Série 1", () => {
+      expect(s1FrPrereleasePrintKey("ni019")).toBe("naruto:s1-ni0019-prerelease");
+      expect(s1FrPrereleasePrintKey("ta005")).toBe("naruto:s1-ta0005-prerelease");
       expect(s1FrPrereleasePrintKey("te036-prerelease")).toBe(
-        "naruto:te-0036-prerelease",
+        "naruto:s1-te0036-prerelease",
       );
     });
 
@@ -319,18 +322,18 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
         ],
       });
       expect(merged.addedPrints.sort()).toEqual([
-        "naruto:ni-0019-prerelease",
-        "naruto:ta-0005-prerelease",
+        "naruto:s1-ni0019-prerelease",
+        "naruto:s1-ta0005-prerelease",
       ]);
       expect(
-        merged.prints.find((p) => p.printKey === "naruto:ni-0019-prerelease"),
+        merged.prints.find((p) => p.printKey === "naruto:s1-ni0019-prerelease"),
       ).toMatchObject({
-        setCode: "prerelease",
+        setCode: "s1",
         number: "ni0019-prerelease",
         grouping: "prerelease",
       });
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:ta-0005-prerelease"),
+        merged.titles.find((t) => t.printKey === "naruto:s1-ta0005-prerelease"),
       ).toMatchObject({
         fullName: "Le désastre Kyubi",
         rarity: "prerelease",
@@ -341,10 +344,10 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
       );
     });
 
-    it("rememberships legacy s1 prerelease prints onto the prerelease series", () => {
+    it("remints legacy prerelease-series prints onto Série 1", () => {
       const legacy: NarutoPrintRow = {
-        printKey: "naruto:ni-0019-prerelease",
-        setCode: "s1",
+        printKey: "naruto:prerelease-ni0019",
+        setCode: "prerelease",
         number: "ni0019-prerelease",
         cardType: "ni",
         grouping: "prerelease",
@@ -353,7 +356,7 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
         prints: [legacy],
         titles: [
           {
-            printKey: "naruto:ni-0019-prerelease",
+            printKey: "naruto:prerelease-ni0019",
             lang: "fr",
             fullName: "Naruto Uzumaki",
             rarity: "prerelease",
@@ -363,8 +366,14 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
       });
       expect(merged.addedPrints).toEqual([]);
       expect(
-        merged.prints.find((p) => p.printKey === "naruto:ni-0019-prerelease"),
-      ).toMatchObject({ setCode: "prerelease" });
+        merged.prints.find((p) => p.printKey === "naruto:s1-ni0019-prerelease"),
+      ).toMatchObject({ setCode: "s1", grouping: "prerelease" });
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:s1-ni0019-prerelease"),
+      ).toMatchObject({ fullName: "Naruto Uzumaki" });
+      expect(
+        merged.prints.some((p) => p.printKey === "naruto:prerelease-ni0019"),
+      ).toBe(false);
     });
   });
 }

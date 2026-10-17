@@ -2118,16 +2118,16 @@ import productsContentsLedger from "./curated/products-contents.json";
         contentsKnown: true,
       });
       expect(ledger.skus["kana-manga-pack-1-2-3"]?.randomPoolPrintKeys).toEqual([
-        "naruto:prerelease-ni0025",
-        "naruto:prerelease-ni0019",
-        "naruto:prerelease-ni0047",
-        "naruto:prerelease-ni0027",
-        "naruto:prerelease-ta0005",
-        "naruto:prerelease-ta0004",
-        "naruto:prerelease-te0015",
-        "naruto:prerelease-te0007",
-        "naruto:prerelease-te0003",
-        "naruto:prerelease-te0036",
+        "naruto:s1-ni0025-prerelease",
+        "naruto:s1-ni0019-prerelease",
+        "naruto:s1-ni0047-prerelease",
+        "naruto:s1-ni0027-prerelease",
+        "naruto:s1-ta0005-prerelease",
+        "naruto:s1-ta0004-prerelease",
+        "naruto:s1-te0015-prerelease",
+        "naruto:s1-te0007-prerelease",
+        "naruto:s1-te0003-prerelease",
+        "naruto:s1-te0036-prerelease",
       ]);
       expect(ledger.skus["booster-vol1-jp"]).toMatchObject({
         cardsPerPack: 10,

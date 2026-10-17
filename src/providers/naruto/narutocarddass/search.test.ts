@@ -635,10 +635,10 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       expect(
         searchNarutoPrints("", { setId: "maki10", limit: 300 }).length,
       ).toBeGreaterThanOrEqual(81);
-      // Dix cartes manquent encore (ni-365/366…).
+      // Encore sous le décompte source (quelques trous ni-365/366… comblés).
       expect(
         searchNarutoPrints("", { setId: "maki17", limit: 300 }).length,
-      ).toBeLessThan(57);
+      ).toBeLessThan(70);
     });
 
     /*

@@ -278,7 +278,14 @@ const CCG_US_PRINTED: Readonly<Record<string, string>> = {
 };
 
 function foldPrintedNarutoRef(raw: string): string {
-  let trimmed = raw.trim().replace(/\s+/g, "");
+  /*
+    Display refs use a middle dot (`NI-019 · prerelease` / ` · promo`).
+    Collapse spaces then map `·` → `-` so PREFIX_RE sees a normal grouping.
+    Without this, compareNarutoCollectors treats the display form as unparsed
+    and dumps prereleases after the whole set — PrintPicker's limit 48 then
+    hides them when browsing S1.
+  */
+  let trimmed = raw.trim().replace(/\s+/g, "").replace(/·/g, "-");
   const ps = /[（(]PS[）)]$/i.exec(trimmed);
   if (ps) trimmed = `${trimmed.slice(0, ps.index)}-ps`;
   return (
@@ -846,6 +853,20 @@ export function canonicalizeNarutoPrintKey(
   const parsed = parsePrintKey(key);
   if (!parsed || parsed.game !== "naruto") return key;
   if (isNarutoCatalogueSetCode(parsed.set)) {
+    /*
+      Brief `prerelease` catalogue set folded into Série 1 — keep the
+      `*-prerelease` grouping segment so the print stays distinct from retail.
+    */
+    if (parsed.set.toLowerCase() === "prerelease") {
+      const collector = collectorFromSetScopedIdentity({
+        ...parsed,
+        grouping: parsed.grouping ?? "prerelease",
+      });
+      const withGroup = /prerelease/i.test(collector)
+        ? collector
+        : `${collector}-prerelease`;
+      return mintNarutoPrintKey(withGroup, "s1") ?? key;
+    }
     return (
       mintNarutoPrintKey(collectorFromSetScopedIdentity(parsed), parsed.set) ??
       key
@@ -853,13 +874,13 @@ export function canonicalizeNarutoPrintKey(
   }
   /*
     Legacy family-as-set (`naruto:ni-0023-promo`). Promo grouping → set promo
-    without an explicit catalogue set.
+    without an explicit catalogue set. Prerelease grouping → Série 1.
   */
   const legacyCollector = narutoCollectorFromPrintIdentity(parsed);
   const inferred =
     (catalogueSet ?? "").trim().toLowerCase() ||
     (parsed.grouping?.toLowerCase() === "promo" ? "promo" : "") ||
-    (parsed.grouping?.toLowerCase() === "prerelease" ? "prerelease" : "");
+    (parsed.grouping?.toLowerCase() === "prerelease" ? "s1" : "");
   if (!inferred || !isNarutoCatalogueSetCode(inferred)) return key;
   return mintNarutoPrintKey(legacyCollector, inferred) ?? key;
 }
@@ -1149,11 +1170,6 @@ export function narutoSetLabel(
     if (lang === "en") return "Promo (off-series)";
     if (lang === "it") return "Promo (fuori serie)";
     return "Promo (hors série)";
-  }
-  if (code === "prerelease") {
-    if (lang === "en") return "Prerelease (manga)";
-    if (lang === "it") return "Prerelease (manga)";
-    return "Prerelease (manga)";
   }
   if (code === "prerelease") {
     if (lang === "en") return "Prerelease (manga)";

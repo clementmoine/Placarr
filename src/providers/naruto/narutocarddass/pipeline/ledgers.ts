@@ -564,8 +564,19 @@ export function copyNarutoTitlesOntoGroupedPrints(input: {
 function physicalPrintKey(
   row: (typeof physical.prints)[number],
 ): string | null {
-  if (row.printKeyHint?.trim())
-    return canonicalizeNarutoPrintKey(row.printKeyHint);
+  if (row.printKeyHint?.trim()) {
+    const hint = row.printKeyHint.trim();
+    const set = (row.setCode ?? "").trim().toLowerCase();
+    /*
+      Promo / brief-prerelease hints (`naruto:pr-0095`) fold onto set-scoped
+      keys. Do not force-remint retail CCG hints (`naruto:n-1650` + s28) — the
+      index may still hold the legacy key and inventing `s28-n1650` beside it
+      duplicates Kisame.
+    */
+    if (set === "promo") return canonicalizeNarutoPrintKey(hint, "promo");
+    if (set === "prerelease") return canonicalizeNarutoPrintKey(hint, "s1");
+    return canonicalizeNarutoPrintKey(hint);
+  }
   const parsed = parseEnCcgPrintedRef(row.ref);
   if (parsed?.number) return mintNarutoPrintKey(parsed.number, row.setCode);
   return mintNarutoPrintKey(row.ref, row.setCode);

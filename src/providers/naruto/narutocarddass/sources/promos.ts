@@ -337,8 +337,8 @@ type S1FrPrereleaseFile = {
 };
 
 const GROUPING = "prerelease";
-/** Catalogue series of its own — not Série 1 retail, not `promo`. */
-const SET_CODE = "prerelease";
+/** Série 1 membership — distinct print via `*-prerelease` grouping, not a separate set. */
+const SET_CODE = "s1";
 
 export function s1FrPrereleasePath(): string {
   return path.join(narutoCuratedSourcesDir(), "s1-fr-prerelease.json");
@@ -362,14 +362,20 @@ export function loadS1FrPrerelease(
   }
 }
 
-/** `ni019` → `naruto:ni-0019-prerelease`. */
+/** `ni019` → `naruto:s1-ni0019-prerelease`. */
 export function s1FrPrereleasePrintKey(number: string): string | null {
   const bare = number.trim().toLowerCase().replace(/-prerelease$/i, "");
   return mintNarutoPrintKey(`${bare}-${GROUPING}`, SET_CODE);
 }
 
+/** Pre-membership keys (`naruto:prerelease-ni0019`) still findable during remint. */
+function legacyS1FrPrereleasePrintKeys(bare: string): string[] {
+  const asOwnSet = mintNarutoPrintKey(`${bare}-${GROUPING}`, "prerelease");
+  return asOwnSet ? [asOwnSet] : [];
+}
+
 /**
- * Ensure every attested manga prerelease has a `prerelease` print + FR title.
+ * Ensure every attested manga prerelease has an S1 print + FR title.
  * Art can arrive later under `cards/ninja|…/{id}-prerelease/fr/`.
  */
 export function mergeS1FrPrerelease(input: {
@@ -408,14 +414,54 @@ export function mergeS1FrPrerelease(input: {
     const grouping =
       parseNarutoCollector(number)?.grouping?.toLowerCase() ?? GROUPING;
 
-    const existingPrint =
+    let existingPrint =
       printByKey.get(printKey) ?? printByCanonical.get(printKey);
+    if (!existingPrint) {
+      for (const legacy of legacyS1FrPrereleasePrintKeys(bare)) {
+        existingPrint =
+          printByKey.get(legacy) ?? printByCanonical.get(legacy) ?? null;
+        if (existingPrint) break;
+      }
+    }
+    if (!existingPrint) {
+      existingPrint =
+        prints.find(
+          (p) =>
+            (p.grouping?.toLowerCase() === GROUPING ||
+              /-prerelease$/i.test(p.number)) &&
+            narutoNumbersEqual(
+              p.number.replace(/-prerelease$/i, ""),
+              bare,
+            ),
+        ) ?? null;
+    }
     if (existingPrint) {
+      const oldKey = existingPrint.printKey;
+      if (oldKey !== printKey) {
+        existingPrint.printKey = printKey;
+        printByKey.delete(oldKey);
+        printByKey.set(printKey, existingPrint);
+        printByCanonical.set(printKey, existingPrint);
+        for (const title of titles) {
+          if (
+            title.printKey === oldKey ||
+            canonicalizeNarutoPrintKey(title.printKey) ===
+              canonicalizeNarutoPrintKey(oldKey)
+          ) {
+            title.printKey = printKey;
+          }
+        }
+        const moved = titleByKey.get(canonicalizeNarutoPrintKey(oldKey));
+        if (moved) titleByKey.set(printKey, moved);
+      }
       if (existingPrint.setCode !== SET_CODE) {
         existingPrint.setCode = SET_CODE;
       }
       if (existingPrint.grouping !== grouping) {
         existingPrint.grouping = grouping;
+      }
+      if (existingPrint.number !== number) {
+        existingPrint.number = number;
       }
     } else {
       const print: NarutoPrintRow = {

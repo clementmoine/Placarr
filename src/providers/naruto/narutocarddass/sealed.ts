@@ -682,7 +682,7 @@ export const NARUTO_SEALED_SKUS: readonly NarutoSealedSpec[] = [
   {
     /*
       Canal avant-première Carddass S1 via mangas Kana (~2005–2006) :
-      10 variantes `*-prerelease` (s1-fr-prerelease.json). Packshot catalogue =
+      10 variantes S1 `*-prerelease` (s1-fr-prerelease.json). Packshot catalogue =
       « Pack tome 1+2+3 » Amazon B085PJZSN6 (réédition 2020, 9 €) — **art
       seulement** ; aucune carte Carddass attestée sur cet ASIN moderne.
       Contenu = pool listé (1 insert / achat époque), pas 10 garanties.

@@ -13,6 +13,7 @@ import {
   comparePrintKeys,
   parsePrintKey,
   registerPrintKeyCatalogueSets,
+  registerPrereleaseHomeSet,
 } from "@/core/identify/printKey";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
@@ -62,6 +63,12 @@ export type LocalTcgLineSpec = {
    * Omit when every set code already carries a digit (`s1`, `ks1`, `t1w1`).
    */
   catalogueSetCodes?: readonly string[];
+  /**
+   * When this line folds the brief `prerelease` catalogue set into a home
+   * series (`prerelease-ni0019` → `s1-ni0019-prerelease`), register that home
+   * so ownership matching aliases both keys.
+   */
+  prereleaseHomeSet?: string;
   notes: string;
   defaultLanguage: "fr" | "en" | "ja" | "unknown";
   /** Ce que dit le health-check si la base n'est pas encore là. */
@@ -296,6 +303,9 @@ function candidateForRow(
 export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
   if (spec.catalogueSetCodes?.length) {
     registerPrintKeyCatalogueSets(spec.printGame, spec.catalogueSetCodes);
+  }
+  if (spec.prereleaseHomeSet) {
+    registerPrereleaseHomeSet(spec.printGame, spec.prereleaseHomeSet);
   }
   const index = createLocalPrintsIndex(spec.packId);
   const preferLang =

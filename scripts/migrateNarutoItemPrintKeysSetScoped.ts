@@ -19,6 +19,7 @@ import { DatabaseSync } from "node:sqlite";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { prisma } from "@/lib/db/prisma";
 import {
+  canonicalizeNarutoPrintKey,
   isNarutoCatalogueSetCode,
   mintNarutoPrintKey,
   narutoDiskCardId,
@@ -178,7 +179,17 @@ async function main(): Promise<void> {
 
     const bodySet = normalizeCatalogueSet(item.setCode);
     let nextKey = key;
-    if (!isNarutoCatalogueSetCode(parsed.set)) {
+    /*
+      Brief `prerelease` catalogue set (and legacy `*-prerelease` family keys)
+      folded into Série 1: `naruto:prerelease-ni0019` → `naruto:s1-ni0019-prerelease`.
+    */
+    if (
+      parsed.set.toLowerCase() === "prerelease" ||
+      parsed.grouping?.toLowerCase() === "prerelease"
+    ) {
+      const folded = canonicalizeNarutoPrintKey(key);
+      if (folded !== key) nextKey = folded;
+    } else if (!isNarutoCatalogueSetCode(parsed.set)) {
       const remintedKey = pickRemint(key, bodySet, keysByCollector);
       if (!remintedKey) {
         skipped += 1;

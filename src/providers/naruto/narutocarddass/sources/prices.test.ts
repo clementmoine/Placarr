@@ -18,8 +18,8 @@ import { NARUTO_INDICATIVE_PRICE_SOURCE, refreshNarutoIndicativePriceOffers, nar
     it("returns estimated EUR offers for dig-covered S1–S6 / promo prints", async () => {
       const s4 = await refreshNarutoIndicativePriceOffers(
         priceProbeContext({
-          printKey: "naruto:ni-0203",
-          name: "Manda",
+          printKey: "naruto:s4-ni0203",
+          name: "Itachi Uchiha",
         }),
       );
       expect(s4).toEqual([
@@ -34,7 +34,7 @@ import { NARUTO_INDICATIVE_PRICE_SOURCE, refreshNarutoIndicativePriceOffers, nar
 
       const promo = await refreshNarutoIndicativePriceOffers(
         priceProbeContext({
-          printKey: "naruto:ni-0023-promo",
+          printKey: "naruto:promo-ni0023",
           name: "Kakashi Hatake",
         }),
       );
@@ -45,17 +45,22 @@ import { NARUTO_INDICATIVE_PRICE_SOURCE, refreshNarutoIndicativePriceOffers, nar
 
       const prerelease = await refreshNarutoIndicativePriceOffers(
         priceProbeContext({
-          printKey: "naruto:ni-0019-prerelease",
+          printKey: "naruto:s1-ni0019-prerelease",
           name: "Naruto Uzumaki",
         }),
       );
-      // Needs index rebuild for prerelease printKeys — skip soft if absent.
-      if (prerelease.length) {
-        expect(prerelease[0]).toMatchObject({
-          condition: "estimated",
-          priceCents: 1000,
-        });
-      }
+      expect(prerelease[0]).toMatchObject({
+        condition: "estimated",
+        priceCents: 1000,
+      });
+      // Legacy set-as-prerelease keys still resolve via canonicalize.
+      const legacy = await refreshNarutoIndicativePriceOffers(
+        priceProbeContext({
+          printKey: "naruto:prerelease-ni0019",
+          name: "Naruto Uzumaki",
+        }),
+      );
+      expect(legacy[0]).toMatchObject({ priceCents: 1000 });
     });
 
     it("stays quiet outside Naruto / without a printKey", async () => {

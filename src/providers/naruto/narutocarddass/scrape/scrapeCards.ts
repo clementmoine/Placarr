@@ -608,22 +608,34 @@ function ingestNarutoCardDir(input: {
     `te0107/`). `-promo` folders always mint the promo channel.
   */
   let sets = appearanceSetsOf(input.appearanceSets);
-  if (
-    grouping === "promo" ||
-    grouping === "cdf" ||
-    grouping === "prerelease"
-  ) {
+  const family = input.family.trim().toLowerCase();
+  if (grouping === "promo" || grouping === "cdf") {
     if (!sets.includes(grouping)) sets = [grouping];
+  } else if (family === "promo" || family === "cdf") {
+    /*
+      European PR collectors (`pr0011`) parse with family=promo but grouping
+      null. Folder identity must win — otherwise the retail `else` strips
+      `promo` from appearanceSets and mintNarutoPrintKey returns null, so
+      on-disk faces never reach print_assets.
+    */
+    if (!sets.includes(family)) sets = [family];
+  } else if (grouping === "prerelease") {
+    /*
+      Manga S1 avant-première: folder `*-prerelease` belongs to Série 1, not a
+      separate catalogue series (brief `prerelease` set folded back into s1).
+    */
+    sets = sets.filter((set) => set !== "prerelease" && set !== "promo");
+    if (!sets.length) sets = ["s1"];
   } else {
     sets = sets.filter((set) => set !== "promo");
   }
   const appearanceSet = primaryAppearanceSet(
     sets,
-    grouping === "promo" ||
-      grouping === "cdf" ||
-      grouping === "prerelease"
+    grouping === "promo" || grouping === "cdf"
       ? grouping
-      : "unknown",
+      : grouping === "prerelease"
+        ? "s1"
+        : "unknown",
   );
   const printKey = mintNarutoPrintKey(input.diskId, appearanceSet);
   if (!parsed || !printKey) return;
@@ -736,8 +748,27 @@ export function buildIndexFromDisk(root: string): {
       const diskDir = path.join(familyDir, diskId);
       if (!fs.statSync(diskDir).isDirectory()) continue;
       for (const lang of fs.readdirSync(diskDir)) {
-        const sets = resolveDiskAppearanceSets(diskId, lang);
-        if (!sets.length) continue;
+        let sets = resolveDiskAppearanceSets(diskId, lang);
+        if (!sets.length) {
+          /*
+            Promo / CDF / manga-prerelease folders often have no
+            pack_documents.appearances row (titles come from ledgers). Without a
+            default set here, on-disk faces never reach print_assets — catalogue
+            then shows « sans image » for PR-011… while art.* sits under promo/.
+          */
+          const grouping =
+            parseNarutoCollector(diskId)?.grouping?.toLowerCase() ??
+            family.trim().toLowerCase();
+          if (grouping === "promo" || grouping === "cdf") {
+            sets = [grouping];
+          } else if (grouping === "prerelease") {
+            sets = ["s1"];
+          } else if (family.trim().toLowerCase() === "promo") {
+            sets = ["promo"];
+          } else {
+            continue;
+          }
+        }
         ingestNarutoCardDir({
           prints,
           assets,

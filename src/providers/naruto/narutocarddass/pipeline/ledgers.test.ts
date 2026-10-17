@@ -109,25 +109,26 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
         ],
       });
       expect(merged.addedPrints).toEqual([
-        "naruto:pr-0095",
-        "naruto:pr-0096",
-        "naruto:pr-0100",
+        "naruto:promo-pr0093",
+        "naruto:promo-pr0095",
+        "naruto:promo-pr0096",
+        "naruto:promo-pr0100",
       ]);
       expect(
-        merged.prints.find((p) => p.printKey === "naruto:pr-0096"),
+        merged.prints.find((p) => p.printKey === "naruto:promo-pr0096"),
       ).toMatchObject({
         setCode: "promo",
         number: "pr0096",
         family: "promo",
       });
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:pr-0095"),
+        merged.titles.find((t) => t.printKey === "naruto:promo-pr0095"),
       ).toMatchObject({ lang: "fr", fullName: "Naruto Uzumaki" });
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:pr-0096"),
+        merged.titles.find((t) => t.printKey === "naruto:promo-pr0096"),
       ).toMatchObject({ lang: "fr", fullName: "4E Hokage" });
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:pr-0100"),
+        merged.titles.find((t) => t.printKey === "naruto:promo-pr0100"),
       ).toMatchObject({ lang: "fr", fullName: "Naruto Uzumaki" });
       expect(
         merged.prints.filter((p) => p.printKey === "naruto:n-1650"),
@@ -151,9 +152,10 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
           { printKey: "naruto:n-0122", lang: "en", fullName: "Regular ninja" },
         ],
       });
-      expect(merged.addedPrints).toContain("naruto:nus-0122");
+      expect(merged.addedPrints).toContain("naruto:tin1-nus0122");
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:nus-0122")?.fullName,
+        merged.titles.find((t) => t.printKey === "naruto:tin1-nus0122")
+          ?.fullName,
       ).toBe("Naruto Uzumaki");
       expect(
         merged.titles.find((t) => t.printKey === "naruto:n-0122")?.fullName,
@@ -162,31 +164,32 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
   });
 
   describe("mergeFoundCatalogueLedgers", () => {
-    it("keeps NI and N as two impressions", () => {
+    // Full ledger stack (Bandai + Coleka + physical + …) is intentionally heavy.
+    it("keeps NI and N as two impressions", { timeout: 60_000 }, () => {
       const merged = mergeFoundCatalogueLedgers({
         prints: [ni001],
         titles: [
           { printKey: "naruto:ni-0001", lang: "fr", fullName: "Naruto Uzumaki" },
         ],
       });
-      expect(merged.prints.some((p) => p.printKey === "naruto:n-0001")).toBe(
+      expect(merged.prints.some((p) => p.printKey === "naruto:s1-n0001")).toBe(
         true,
       );
       expect(merged.prints.some((p) => p.printKey === "naruto:ni-0001")).toBe(
         true,
       );
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:n-0001")?.lang,
+        merged.titles.find((t) => t.printKey === "naruto:s1-n0001")?.lang,
       ).toBe("en");
       expect(
         merged.titles.find(
           (t) => t.printKey === "naruto:ni-0001" && t.lang === "ja",
         )?.fullName,
       ).toBe("うずまきナルト");
-      expect(merged.physicalAdded).toContain("naruto:pr-0096");
+      expect(merged.physicalAdded).toContain("naruto:promo-pr0096");
       expect(
         merged.titles.find(
-          (t) => t.printKey === "naruto:pr-0096" && t.lang === "fr",
+          (t) => t.printKey === "naruto:promo-pr0096" && t.lang === "fr",
         )?.fullName,
       ).toBe("4E Hokage");
       expect(merged.prints.some((p) => p.printKey === "naruto:n-1715")).toBe(
@@ -398,8 +401,8 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
             family: "jutsu",
           },
           {
-            printKey: "naruto:te-0003-prerelease",
-            setCode: "prerelease",
+            printKey: "naruto:s1-te0003-prerelease",
+            setCode: "s1",
             number: "te0003-prerelease",
             cardType: "te",
             family: "jutsu",
@@ -420,7 +423,9 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
         ],
       });
       expect(
-        merged.titles.filter((t) => t.printKey === "naruto:te-0003-prerelease"),
+        merged.titles.filter(
+          (t) => t.printKey === "naruto:s1-te0003-prerelease",
+        ),
       ).toEqual([
         expect.objectContaining({
           lang: "fr",

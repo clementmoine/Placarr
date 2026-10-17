@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "observed": "2026-10-15",
+  "observed": "2026-10-16",
   "aliases": {
     "dbsjcc:part1-d0004": "dbsjcc:part1-d0004a",
     "dbsjcc:part1-d0012": "dbsjcc:part1-d0012a",
@@ -365,6 +365,32 @@
     "dbsjcc:promo-d0390": "dbsjcc:promo-d0390b",
     "dbsjcc:promo-d0391": "dbsjcc:promo-d0391b",
     "dbsjcc:promo-d0520": "dbsjcc:promo-d0520b",
-    "dbsjcc:sp-d0086": "dbsjcc:sp-d0086c"
+    "dbsjcc:sp-d0086": "dbsjcc:sp-d0086c",
+    "dbsjcc:ss2-db0256": "dbsjcc:ss2-db0256a",
+    "dbsjcc:ss2-db0314": "dbsjcc:ss2-db0314a",
+    "dbsjcc:ss2-db0365": "dbsjcc:ss2-db0365a",
+    "dbsjcc:ss2-db0366": "dbsjcc:ss2-db0366a",
+    "dbsjcc:ss3-db0256": "dbsjcc:ss3-db0256b",
+    "dbsjcc:ss3-db0314": "dbsjcc:ss3-db0314b",
+    "dbsjcc:ss3-db0365": "dbsjcc:ss3-db0365b",
+    "dbsjcc:ss3-db0366": "dbsjcc:ss3-db0366b",
+    "dbsjcc:ss3-db0439": "dbsjcc:ss3-db0439a",
+    "dbsjcc:ss3-db0440": "dbsjcc:ss3-db0440a",
+    "dbsjcc:ss3-db0535": "dbsjcc:ss3-db0535a",
+    "dbsjcc:ss3-db0536": "dbsjcc:ss3-db0536a",
+    "dbsjcc:ss4-db0606": "dbsjcc:ss4-db0606a",
+    "dbsjcc:ss4-db0668": "dbsjcc:ss4-db0668a",
+    "dbsjcc:ss4-db0687": "dbsjcc:ss4-db0687a",
+    "dbsjcc:ss4-db0712": "dbsjcc:ss4-db0712a",
+    "dbsjcc:ss5-db0365": "dbsjcc:ss5-db0365c",
+    "dbsjcc:ss5-db0366": "dbsjcc:ss5-db0366c",
+    "dbsjcc:ss5-db0439": "dbsjcc:ss5-db0439b",
+    "dbsjcc:ss5-db0440": "dbsjcc:ss5-db0440b",
+    "dbsjcc:ss5-db0535": "dbsjcc:ss5-db0535b",
+    "dbsjcc:ss5-db0536": "dbsjcc:ss5-db0536b",
+    "dbsjcc:ss5-db0606": "dbsjcc:ss5-db0606b",
+    "dbsjcc:ss5-db0668": "dbsjcc:ss5-db0668b",
+    "dbsjcc:ss5-db0687": "dbsjcc:ss5-db0687b",
+    "dbsjcc:ss5-db0712": "dbsjcc:ss5-db0712b"
   }
 }

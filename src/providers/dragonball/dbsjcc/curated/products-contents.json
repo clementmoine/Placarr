@@ -1,7 +1,7 @@
 {
   "version": 1,
   "pack": "dragonball/jcc",
-  "updatedAt": "2026-10-15",
+  "updatedAt": "2026-10-16",
   "byKind": {
     "booster": {
       "source": "dbzcollection ledger cardsPerBooster=8 + manga-sanctuary news 3101 (8 cartes dont 1 holo)",
@@ -42,7 +42,7 @@
   "skus": {
     "part1-starter-1190": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -259,7 +259,7 @@
     },
     "part1-starter-ennemis": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -476,7 +476,7 @@
     },
     "part2-starter-1193": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -658,7 +658,7 @@
     },
     "part3-starter-1197": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -826,7 +826,7 @@
     },
     "part3-starter-championnat": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1001,7 +1001,7 @@
     },
     "part4-starter-forces-du-mal": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1162,7 +1162,7 @@
     },
     "part4-starter-1200": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1330,7 +1330,7 @@
     },
     "part5-starter-1203": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1519,7 +1519,7 @@
     },
     "part5-starter-resistance": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1708,7 +1708,7 @@
     },
     "part6-starter-1206": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -1855,7 +1855,7 @@
     },
     "part7-starter-1208": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2030,7 +2030,7 @@
     },
     "part8-starter-1213": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2233,7 +2233,7 @@
     },
     "part9-starter-1216": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2457,7 +2457,7 @@
     },
     "part10-starter-1219": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,
@@ -2681,7 +2681,7 @@
     },
     "part1-booster-1188": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2692,7 +2692,7 @@
     },
     "part2-booster-1192": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2703,7 +2703,7 @@
     },
     "part3-booster-1196": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2714,7 +2714,7 @@
     },
     "part4-booster-1199": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2725,7 +2725,7 @@
     },
     "part5-booster-1202": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2747,7 +2747,7 @@
     },
     "part6-booster-1205": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2758,7 +2758,7 @@
     },
     "part7-booster-1207": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2769,7 +2769,7 @@
     },
     "part8-booster-1210": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2780,7 +2780,7 @@
     },
     "part9-booster-1215": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2791,7 +2791,7 @@
     },
     "part10-booster-1218": {
       "source": "dbzcollection Autres infos = Booster + structure presse",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "booster",
       "behavior": "random_pack",
       "cardsPerPack": 8,
@@ -2802,7 +2802,7 @@
     },
     "part2-starter-ruban-rouge": {
       "source": "dbzcollection Autres infos (Deck …) — exclusives + shared",
-      "verifiedAt": "2026-10-15",
+      "verifiedAt": "2026-10-16",
       "kind": "deck",
       "behavior": "known_bundle",
       "cardsPerPack": 32,

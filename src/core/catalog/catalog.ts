@@ -90,6 +90,7 @@ for (const mdl of PROVIDER_MODULES) {
   for (const key of [
     mdl.info.id,
     mdl.info.label,
+    mdl.info.factLabel,
     ...(mdl.info.sourceAliases ?? []),
   ]) {
     if (!key) continue;
@@ -120,6 +121,7 @@ for (const providerModule of PROVIDER_MODULES) {
   for (const key of [
     providerModule.info.id,
     providerModule.info.label,
+    providerModule.info.factLabel,
     ...(providerModule.info.sourceAliases ?? []),
   ]) {
     if (key) REFERENCE_PRICE_SOURCE_KEYS.add(normalizeSourceKey(key));

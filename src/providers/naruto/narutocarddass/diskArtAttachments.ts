@@ -19,6 +19,7 @@ import {
   narutoFaceSourceOf,
   parseNarutoFaceDecision,
 } from "./disk";
+import { pickPreferredFaceArtFilename } from "./parse/bandai";
 
 const SPECIAL_ART = /^art\.(reconstructed|corrected)\.(jpe?g|png|webp|gif)$/i;
 
@@ -32,9 +33,13 @@ export function listNarutoArtFiles(cardDir: string): string[] {
   });
 }
 
-function resolveDefaultArtFilename(cardDir: string): string | null {
-  const arts = listNarutoArtFiles(cardDir);
-  if (arts.length === 0) return null;
+/**
+ * Winner shown as the card face: `face.json` (incl. reconstructed/corrected),
+ * else highest `faceArtRank` among files on disk.
+ */
+export function resolveNarutoDiskArtFilename(cardDir: string): string | null {
+  if (!existsSync(cardDir) || !statSync(cardDir).isDirectory()) return null;
+  const files = readdirSync(cardDir);
 
   const decisionPath = path.join(cardDir, NARUTO_FACE_DECISION_FILE);
   if (existsSync(decisionPath)) {
@@ -43,12 +48,34 @@ function resolveDefaultArtFilename(cardDir: string): string | null {
         readFileSync(decisionPath, "utf8"),
         "art",
       );
-      if (named && arts.includes(named)) return named;
+      if (
+        named &&
+        files.includes(named) &&
+        (SPECIAL_ART.test(named) || narutoFaceSourceOf(named) != null)
+      ) {
+        return named;
+      }
     } catch {
       /* fall through */
     }
   }
-  return arts[0] ?? null;
+
+  return (
+    pickPreferredFaceArtFilename(files) ?? listNarutoArtFiles(cardDir)[0] ?? null
+  );
+}
+
+function faceRoleOf(file: string): string {
+  if (/^art\.reconstructed\./i.test(file)) return "reconstructed";
+  if (/^art\.corrected\./i.test(file)) return "corrected";
+  return narutoFaceSourceOf(file) ?? "legacy";
+}
+
+function faceProvenanceOf(file: string): "catalog" | "listing_photo" {
+  if (SPECIAL_ART.test(file)) return "catalog";
+  const source = narutoFaceSourceOf(file);
+  if (!source) return "catalog";
+  return narutoFaceCoverProvenance(source);
 }
 
 export function buildNarutoDiskArtAttachments(opts: {
@@ -76,10 +103,12 @@ export function buildNarutoDiskArtAttachments(opts: {
     pathId.diskId,
     pathId.lang,
   );
+  const defaultArt = resolveNarutoDiskArtFilename(cardDir);
   const arts = listNarutoArtFiles(cardDir);
-  if (arts.length === 0) return { attachments: [], defaultUrl: null };
+  if (!defaultArt && arts.length === 0) {
+    return { attachments: [], defaultUrl: null };
+  }
 
-  const defaultArt = resolveDefaultArtFilename(cardDir);
   const defaultUrl = defaultArt
     ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, defaultArt)
     : null;
@@ -89,14 +118,14 @@ export function buildNarutoDiskArtAttachments(opts: {
     : arts;
 
   const attachments: MetadataAttachment[] = ordered.map((file) => {
-    const faceSource = narutoFaceSourceOf(file) ?? "legacy";
+    const faceSource = faceRoleOf(file);
     return {
       type: "cover",
       url: narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, file),
       title: opts.title?.trim() || faceSource,
       role: `naruto-face-${faceSource}`,
       source: opts.source,
-      coverProvenance: narutoFaceCoverProvenance(faceSource),
+      coverProvenance: faceProvenanceOf(file),
     };
   });
 

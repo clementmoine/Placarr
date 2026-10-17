@@ -358,6 +358,29 @@ import type { NarutoPrintDetail } from "./search";
       ]);
     });
 
+    it("keeps manga prerelease beside its retail twin (display · form)", () => {
+      expect(parseNarutoCollector("NI-019 · prerelease")).toMatchObject({
+        number: 19,
+        grouping: "prerelease",
+      });
+      const sorted = [
+        "NI-044",
+        "NI-019 · prerelease",
+        "NI-020",
+        "NI-019",
+        "TA-004 · prerelease",
+        "TA-004",
+      ].sort(compareNarutoCollectors);
+      expect(sorted).toEqual([
+        "NI-019",
+        "NI-019 · prerelease",
+        "NI-020",
+        "NI-044",
+        "TA-004",
+        "TA-004 · prerelease",
+      ]);
+    });
+
     it("files PR忍 with French PR-nn, not beside NI", () => {
       const numbers = ["PR-忍-1", "NI-001", "PR-11", "N-001", "OP忍-1"];
       const sorted = [...numbers].sort(compareNarutoCollectors);
@@ -481,6 +504,18 @@ import type { NarutoPrintDetail } from "./search";
       );
       expect(canonicalizeNarutoPrintKey("naruto:ni-0024-promo")).toBe(
         "naruto:promo-ni0024",
+      );
+    });
+
+    it("folds legacy prerelease-series keys onto Série 1", () => {
+      expect(canonicalizeNarutoPrintKey("naruto:prerelease-ni0019")).toBe(
+        "naruto:s1-ni0019-prerelease",
+      );
+      expect(canonicalizeNarutoPrintKey("naruto:ni-0019-prerelease")).toBe(
+        "naruto:s1-ni0019-prerelease",
+      );
+      expect(mintNarutoPrintKey("ni0019-prerelease", "s1")).toBe(
+        "naruto:s1-ni0019-prerelease",
       );
     });
   });

@@ -21,7 +21,7 @@ import {
 } from "./sources/sealed";
 
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
-import { canonicalDataPack } from "@/lib/packPaths";
+import { canonicalDataPack, packCardsDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { migrateProductsSchema } from "@/providers/shared/sealedProducts/productsSqlite";
 
@@ -45,6 +45,8 @@ import { isNarutoLangPrinted } from "./identity";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { isNarutoS6FrPrintedNumber } from "./sources/titles";
+import { narutoCardPathFromCollector } from "./disk";
+import { resolveNarutoDiskArtFilename } from "./diskArtAttachments";
 
 /** Coleka Tempête / Rampage Tornado (33) — FR checklist membership on `s11`. */
 function rampageTornadoCollectors(): Set<string> {
@@ -953,6 +955,24 @@ export function loadNarutoCardsIndexFromSqlite(
       if (a.back) lang.back = a.back;
       if (a.printed === 0) lang.printed = false;
       entry.langs[a.lang] = lang;
+    }
+
+    /*
+      When print_assets lagged behind disk (promo faces without appearances),
+      fill empty lang.art from face.json / on-disk dumps so catalogue browse
+      does not show « sans image » for cards that already have art on disk.
+    */
+    const cardsRoot = packCardsDir(packId);
+    for (const entry of Object.values(index.cards)) {
+      for (const [lang, slot] of Object.entries(entry.langs)) {
+        if (slot.art?.trim()) continue;
+        const pathId = narutoCardPathFromCollector(entry.card, lang);
+        if (!pathId) continue;
+        const art = resolveNarutoDiskArtFilename(
+          path.join(cardsRoot, pathId.folder, pathId.diskId, pathId.lang),
+        );
+        if (art) slot.art = art;
+      }
     }
 
     for (const row of narutoEditorialLandscapePrints()) {

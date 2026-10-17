@@ -6,14 +6,17 @@ import {
   catalogueSetFromPrintKey,
   isGameUniqueCollectorNumber,
   isPrintKey,
+  ownedPrintKeyAliases,
   parsePrintKey,
   printCollectableKey,
   comparePrintKeys,
   comparePrintSetCodes,
   registerPrintKeyCatalogueSets,
   registerPrintKeyCompare,
+  registerPrereleaseHomeSet,
   unregisterPrintKeyCatalogueSets,
   unregisterPrintKeyCompare,
+  unregisterPrereleaseHomeSet,
 } from "./printKey";
 
 describe("buildPrintKey", () => {
@@ -211,6 +214,27 @@ describe("alphabeticCatalogueSetCodes", () => {
         "nr",
       ]),
     ).toEqual(["nr", "ff"]);
+  });
+});
+
+describe("ownedPrintKeyAliases", () => {
+  afterEach(() => {
+    unregisterPrereleaseHomeSet("naruto");
+  });
+
+  it("folds brief prerelease set ↔ home-series grouping when registered", () => {
+    expect(ownedPrintKeyAliases("naruto:prerelease-ni0019")).toEqual([
+      "naruto:prerelease-ni0019",
+    ]);
+    registerPrereleaseHomeSet("naruto", "s1");
+    expect(ownedPrintKeyAliases("naruto:prerelease-ni0019").sort()).toEqual([
+      "naruto:prerelease-ni0019",
+      "naruto:s1-ni0019-prerelease",
+    ]);
+    expect(ownedPrintKeyAliases("naruto:s1-ni0019-prerelease").sort()).toEqual([
+      "naruto:prerelease-ni0019",
+      "naruto:s1-ni0019-prerelease",
+    ]);
   });
 });
 

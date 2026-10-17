@@ -52,4 +52,27 @@ describe("buildNarutoDiskArtAttachments", () => {
       }).attachments,
     ).toEqual([]);
   });
+
+  it("surfaces reconstructed-only faces named by face.json", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "naruto-recon-art-"));
+    const cardDir = path.join(root, "promo", "pr0093", "fr");
+    mkdirSync(cardDir, { recursive: true });
+    writeFileSync(path.join(cardDir, "art.reconstructed.webp"), "recon");
+    recordNarutoFaceDecision(cardDir, "art", "art.reconstructed.webp");
+
+    const { attachments, defaultUrl } = buildNarutoDiskArtAttachments({
+      printKey: "naruto:promo-pr0093",
+      number: "pr0093",
+      lang: "fr",
+      source: "narutocarddass",
+      cardsRoot: root,
+    });
+
+    expect(defaultUrl).toBe(
+      "/assets/naruto/carddass/cards/promo/pr0093/fr/art.reconstructed.webp",
+    );
+    expect(attachments).toHaveLength(1);
+    expect(attachments[0]?.role).toBe("naruto-face-reconstructed");
+    expect(attachments[0]?.coverProvenance).toBe("catalog");
+  });
 });

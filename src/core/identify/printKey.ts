@@ -98,6 +98,78 @@ export function isPrintKey(value: string | null | undefined): boolean {
 }
 
 /**
+ * Print keys that should count as the same owned row.
+ *
+ * The brief catalogue set `prerelease` was folded into the home series as a
+ * grouping (`game:prerelease-ni0019` → `game:s1-ni0019-prerelease`). Shelf
+ * items may still carry either form until reminted — the picker must treat
+ * them as one.
+ *
+ * Home series is registered per game ({@link registerPrereleaseHomeSet});
+ * without registration only the original key is returned.
+ */
+const prereleaseHomeSetByGame = new Map<string, string>();
+
+export function registerPrereleaseHomeSet(
+  game: string,
+  homeSet: string,
+): void {
+  const slug = game.trim().toLowerCase();
+  const home = homeSet.trim().toLowerCase();
+  if (!slug || !home) return;
+  prereleaseHomeSetByGame.set(slug, home);
+}
+
+/** Test helper — drop one game's prerelease home set. */
+export function unregisterPrereleaseHomeSet(game: string): void {
+  prereleaseHomeSetByGame.delete(game.trim().toLowerCase());
+}
+
+export function ownedPrintKeyAliases(
+  printKey: string | null | undefined,
+): string[] {
+  const key = printKey?.trim().toLowerCase() ?? "";
+  if (!key) return [];
+  const out = new Set<string>([key]);
+  const parsed = parsePrintKey(key);
+  if (!parsed) return [...out];
+  const home = prereleaseHomeSetByGame.get(parsed.game);
+
+  if (parsed.set === "prerelease" && home) {
+    const folded = buildPrintKey({
+      game: parsed.game,
+      set: home,
+      number: parsed.number,
+      grouping: parsed.grouping ?? "prerelease",
+    });
+    if (folded) out.add(folded);
+  }
+  /*
+    Reverse always: a home-series `*-prerelease` grouping still matches the
+    brief set form, even before the game registers a home (picker keys are
+    already folded; shelf rows may lag).
+  */
+  if ((parsed.grouping ?? "").toLowerCase() === "prerelease") {
+    const legacy = buildPrintKey({
+      game: parsed.game,
+      set: "prerelease",
+      number: parsed.number,
+    });
+    if (legacy) out.add(legacy);
+    if (home && parsed.set !== home) {
+      const folded = buildPrintKey({
+        game: parsed.game,
+        set: home,
+        number: parsed.number,
+        grouping: "prerelease",
+      });
+      if (folded) out.add(folded);
+    }
+  }
+  return [...out];
+}
+
+/**
  * Collector numbers that carry a family prefix (`d0123`, `ni0046`, `sp0025`)
  * are unique in the game — the same card may be listed under several sets.
  *

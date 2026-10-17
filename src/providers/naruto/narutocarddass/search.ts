@@ -929,8 +929,15 @@ export function searchNarutoPrints(
       */
       if (!isNarutoS6FrPrintedNumber(row.number)) continue;
     }
+    /*
+      巻ノ cuts are Japanese-only titles. The set id already named the volume —
+      a FR/EN language preference must not empty the checklist (see search.test
+      « reads the cut from the set asked for »).
+    */
+    const japaneseVolumeCut = Boolean(setId?.startsWith("maki"));
     if (
       requestedLang &&
+      !japaneseVolumeCut &&
       (row.lang ?? "").trim().toLowerCase() !== requestedLang
     )
       continue;

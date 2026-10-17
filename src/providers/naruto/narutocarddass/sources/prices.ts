@@ -269,8 +269,8 @@ export function narutoIndicativeQuoteForPrint(input: {
   }
 
   /*
-    Manga prerelease prints live under setCode `prerelease` but dig prices
-    remain on the S1 bucket (`prereleaseEur`).
+    Manga prerelease prints are S1 members (`*-prerelease` grouping); dig prices
+    use the S1 bucket (`prereleaseEur`).
   */
   if (isPrereleasePrint(input.number)) {
     const s1 = seriesBucket("s1");

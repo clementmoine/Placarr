@@ -213,7 +213,7 @@
       "te036"
     ],
     "nonHoloAltsOfHolos": {
-      "note": "Sous-ensemble vu non-holo vs holo retail dans 7r7 (ni019 / te007 / te036 / ta005). Les 10 fullTen ont des printKeys `*-prerelease` (ledger s1-fr-prerelease.json) ; Estimation ~10 € uniquement sur ces tirages.",
+      "note": "Sous-ensemble vu non-holo vs holo retail dans 7r7 (ni019 / te007 / te036 / ta005). Les 10 fullTen sont membres S1 (`naruto:s1-*-prerelease`, ledger s1-fr-prerelease.json) ; Estimation ~10 € uniquement sur ces tirages.",
       "cards": [
         {
           "number": "ni019",

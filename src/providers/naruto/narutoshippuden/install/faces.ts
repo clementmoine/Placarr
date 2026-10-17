@@ -35,6 +35,7 @@ import {
   shippudenFrilIngestFaces,
   shippudenMercariIngestFaces,
 } from "../sources/faces";
+import { preferShippudenArt } from "./faceHost";
 
 const LANG = "ja";
 const UA =
@@ -79,6 +80,38 @@ function writeHostArt(cardDir: string, host: string, buf: Buffer): string {
   }
   writeFileSync(path.join(cardDir, destName), buf);
   return destName;
+}
+
+/** Upsert `print_assets.art` with Suruga shop scans preferred over listing photos. */
+function upsertShippudenFaceArt(
+  printKey: string,
+  destName: string,
+  sourceUrl: string | null,
+): void {
+  try {
+    const db = openNarutoShippudenDbForWrite();
+    const existing = db
+      .prepare(
+        `SELECT art, source_url FROM print_assets WHERE print_key = ? AND lang = ?`,
+      )
+      .get(printKey, LANG) as
+      | { art: string | null; source_url: string | null }
+      | undefined;
+    const art = preferShippudenArt(existing?.art, destName);
+    const source =
+      art === destName
+        ? (sourceUrl ?? existing?.source_url ?? null)
+        : (existing?.source_url ?? sourceUrl);
+    db.prepare(
+      `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
+       VALUES (?, ?, ?, ?, 1)
+       ON CONFLICT(print_key, lang) DO UPDATE SET
+         art = excluded.art,
+         source_url = excluded.source_url`,
+    ).run(printKey, LANG, art, source);
+  } catch {
+    /* ignore db errors in dry runs or headless tests */
+  }
 }
 
 async function mapPool<T>(
@@ -170,17 +203,8 @@ export async function installShippudenMercariFaces(
       skipped.push(key);
     }
 
-    try {
-      const db = openNarutoShippudenDbForWrite();
-      db.prepare(
-        `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
-         VALUES (?, ?, ?, ?, 1)
-         ON CONFLICT(print_key, lang) DO UPDATE SET
-           art = excluded.art,
-           source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
-      ).run(printKey, LANG, destName, row.listingUrl);
-    } catch {
-      /* ignore db errors in dry runs or headless tests */
+    if (destName) {
+      upsertShippudenFaceArt(printKey, destName, row.listingUrl);
     }
   }
 
@@ -272,17 +296,8 @@ export async function installShippudenFrilFaces(
       skipped.push(key);
     }
 
-    try {
-      const db = openNarutoShippudenDbForWrite();
-      db.prepare(
-        `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
-         VALUES (?, ?, ?, ?, 1)
-         ON CONFLICT(print_key, lang) DO UPDATE SET
-           art = excluded.art,
-           source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
-      ).run(printKey, LANG, destName, row.listingUrl);
-    } catch {
-      /* ignore db errors in dry runs or headless tests */
+    if (destName) {
+      upsertShippudenFaceArt(printKey, destName, row.listingUrl);
     }
   }
 
@@ -373,17 +388,8 @@ export async function installShippudenEbayFaces(
       skipped.push(key);
     }
 
-    try {
-      const db = openNarutoShippudenDbForWrite();
-      db.prepare(
-        `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
-         VALUES (?, ?, ?, ?, 1)
-         ON CONFLICT(print_key, lang) DO UPDATE SET
-           art = excluded.art,
-           source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
-      ).run(printKey, LANG, destName, row.listingUrl);
-    } catch {
-      /* ignore */
+    if (destName) {
+      upsertShippudenFaceArt(printKey, destName, row.listingUrl);
     }
   }
 
@@ -524,20 +530,10 @@ export async function installShippudenSurugaFaces(
           }
         }
 
-        db.prepare(
-          `INSERT INTO print_assets (print_key, lang, art, source_url, printed)
-           VALUES (?, ?, ?, ?, 1)
-           ON CONFLICT(print_key, lang) DO UPDATE SET
-             art = CASE
-               WHEN print_assets.art LIKE 'art.mercari%' THEN print_assets.art
-               ELSE excluded.art
-             END,
-             source_url = COALESCE(print_assets.source_url, excluded.source_url)`,
-        ).run(
+        upsertShippudenFaceArt(
           card.printKey,
-          LANG,
           destName,
-          `https://www.suruga-ya.jp/product/detail/${card.productIds[0]}`,
+          `${SURUGA_SHIPPUDEN_ORIGIN}/product/detail/${card.productIds[0]}`,
         );
       } catch {
         /* ignore db errors in dry run */

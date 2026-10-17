@@ -2,20 +2,20 @@
   "source": "coleka.com deals ajax (bleach/scb)",
   "sourceId": "coleka-deals",
   "packId": "bleach/scb",
-  "fetchedAt": "2026-10-12T15:53:03.073Z",
+  "fetchedAt": "2026-10-17T16:42:57.512Z",
   "rubriques": [
     {
       "id": "37171",
       "label": "Bleach Serie 1 FR",
       "offerCount": 50,
       "uniqueItems": 50,
-      "withQuotation": 44,
+      "withQuotation": 46,
       "listedCount": 71
     }
   ],
   "offerCount": 50,
   "uniqueItems": 50,
-  "withQuotation": 44,
+  "withQuotation": 46,
   "withPrintKey": 50,
   "cards": [
     {
@@ -25,14 +25,14 @@
       "rubriqueId": "37171",
       "refItem": "A 001",
       "title": "Ichigo Kurosaki",
-      "quotationEuro": 80,
-      "quotationCents": 8000,
-      "offerEuro": 91.02,
-      "offerCents": 9102,
+      "quotationEuro": 82,
+      "quotationCents": 8200,
+      "offerEuro": 90.09,
+      "offerCents": 9009,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 10:46:50",
-      "affiliatePath": "/oo/1594698/ebay/366686370796/fr"
+      "observedAt": "2026-10-17 14:10:28",
+      "affiliatePath": "/oo/1594698/ebay/237049681327/fr"
     },
     {
       "printKey": "bleachscb:a-002",
@@ -41,14 +41,14 @@
       "rubriqueId": "37171",
       "refItem": "A 002",
       "title": "Ichigo Kurosaki",
-      "quotationEuro": 76,
-      "quotationCents": 7600,
-      "offerEuro": 36.76,
-      "offerCents": 3676,
-      "shippingEuro": 0,
+      "quotationEuro": 82,
+      "quotationCents": 8200,
+      "offerEuro": 27.57,
+      "offerCents": 2757,
+      "shippingEuro": 8.26,
       "marketplace": "eBay",
-      "observedAt": "2026-10-06 16:27:37",
-      "affiliatePath": "/oo/1593426/ebay/318709290572/fr"
+      "observedAt": "2026-10-17 14:10:28",
+      "affiliatePath": "/oo/1593426/ebay/206536517515/fr"
     },
     {
       "printKey": "bleachscb:a-003",
@@ -57,14 +57,14 @@
       "rubriqueId": "37171",
       "refItem": "A 003",
       "title": "Rukia Kuchiki",
-      "quotationEuro": 11.5,
-      "quotationCents": 1150,
-      "offerEuro": 7.35,
-      "offerCents": 735,
+      "quotationEuro": 7.5,
+      "quotationCents": 750,
+      "offerEuro": 6.43,
+      "offerCents": 643,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 03:55:23",
-      "affiliatePath": "/oo/1594693/ebay/237010279025/fr"
+      "observedAt": "2026-10-17 00:11:30",
+      "affiliatePath": "/oo/1594693/ebay/158171965918/fr"
     },
     {
       "printKey": "bleachscb:a-004",
@@ -73,14 +73,14 @@
       "rubriqueId": "37171",
       "refItem": "A 004",
       "title": "Fishbone D",
-      "quotationEuro": 1.6,
-      "quotationCents": 160,
-      "offerEuro": 6.34,
-      "offerCents": 634,
-      "shippingEuro": 55.16,
+      "quotationEuro": 1.5,
+      "quotationCents": 150,
+      "offerEuro": 1.38,
+      "offerCents": 138,
+      "shippingEuro": 0.91,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 14:08:46",
-      "affiliatePath": "/oo/1593550/ebay/165611095662/fr"
+      "observedAt": "2026-10-15 22:17:51",
+      "affiliatePath": "/oo/1593550/ebay/158216302567/fr"
     },
     {
       "printKey": "bleachscb:a-005",
@@ -89,14 +89,14 @@
       "rubriqueId": "37171",
       "refItem": "A 005",
       "title": "Orihime Inoue",
-      "quotationEuro": 22,
-      "quotationCents": 2200,
-      "offerEuro": 18.61,
-      "offerCents": 1861,
-      "shippingEuro": 5.97,
+      "quotationEuro": 60,
+      "quotationCents": 6000,
+      "offerEuro": 335.64,
+      "offerCents": 33564,
+      "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 14:13:43",
-      "affiliatePath": "/oo/1594825/ebay/177049857239/fr"
+      "observedAt": "2026-10-15 22:23:00",
+      "affiliatePath": "/oo/1594825/ebay/178557500415/fr"
     },
     {
       "printKey": "bleachscb:a-006",
@@ -111,7 +111,7 @@
       "offerCents": 183,
       "shippingEuro": 0.91,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 14:13:43",
+      "observedAt": "2026-10-15 22:23:00",
       "affiliatePath": "/oo/1593428/ebay/158093163312/fr"
     },
     {
@@ -121,13 +121,13 @@
       "rubriqueId": "37171",
       "refItem": "A 007",
       "title": "Yasutora Sado",
-      "quotationEuro": 15,
-      "quotationCents": 1500,
+      "quotationEuro": 18,
+      "quotationCents": 1800,
       "offerEuro": 4.6,
       "offerCents": 460,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 13:50:28",
+      "observedAt": "2026-10-16 17:00:49",
       "affiliatePath": "/oo/1594594/ebay/168683741332/fr"
     },
     {
@@ -139,12 +139,12 @@
       "title": "Shrieker",
       "quotationEuro": 4.4,
       "quotationCents": 440,
-      "offerEuro": 4.4,
-      "offerCents": 440,
-      "shippingEuro": 0,
+      "offerEuro": 1.38,
+      "offerCents": 138,
+      "shippingEuro": 0.91,
       "marketplace": "eBay",
-      "observedAt": "2026-10-11 15:08:12",
-      "affiliatePath": "/oo/1593500/ebay/820219740955/fr"
+      "observedAt": "2026-10-17 08:12:37",
+      "affiliatePath": "/oo/1593500/ebay/158216302638/fr"
     },
     {
       "printKey": "bleachscb:a-009",
@@ -153,14 +153,14 @@
       "rubriqueId": "37171",
       "refItem": "A 009",
       "title": "Kisuke Urahara",
-      "quotationEuro": 38,
-      "quotationCents": 3800,
-      "offerEuro": 32.18,
-      "offerCents": 3218,
-      "shippingEuro": 7.35,
+      "quotationEuro": 43,
+      "quotationCents": 4300,
+      "offerEuro": 33.81,
+      "offerCents": 3381,
+      "shippingEuro": 8.27,
       "marketplace": "eBay",
-      "observedAt": "2026-10-12 06:26:14",
-      "affiliatePath": "/oo/1594823/ebay/278443610988/fr"
+      "observedAt": "2026-10-17 14:57:55",
+      "affiliatePath": "/oo/1594823/ebay/137850600399/fr"
     },
     {
       "printKey": "bleachscb:a-010",
@@ -171,12 +171,12 @@
       "title": "Grand Fisher",
       "quotationEuro": 8,
       "quotationCents": 800,
-      "offerEuro": 1.46,
-      "offerCents": 146,
-      "shippingEuro": 0,
+      "offerEuro": 11.02,
+      "offerCents": 1102,
+      "shippingEuro": 11.95,
       "marketplace": "eBay",
-      "observedAt": "2026-10-12 06:40:24",
-      "affiliatePath": "/oo/1593427/ebay/395256284356/fr"
+      "observedAt": "2026-10-17 15:11:01",
+      "affiliatePath": "/oo/1593427/ebay/204851679246/fr"
     },
     {
       "printKey": "bleachscb:a-011",
@@ -187,12 +187,12 @@
       "title": "Don Kan Onji",
       "quotationEuro": 8,
       "quotationCents": 800,
-      "offerEuro": 8.26,
-      "offerCents": 826,
-      "shippingEuro": 0,
+      "offerEuro": 1.38,
+      "offerCents": 138,
+      "shippingEuro": 0.91,
       "marketplace": "eBay",
-      "observedAt": "2026-10-12 06:40:25",
-      "affiliatePath": "/oo/1594833/ebay/234827087561/fr"
+      "observedAt": "2026-10-17 15:11:00",
+      "affiliatePath": "/oo/1594833/ebay/158216302600/fr"
     },
     {
       "printKey": "bleachscb:a-012",
@@ -203,12 +203,12 @@
       "title": "Uryû Ishida",
       "quotationEuro": 6.5,
       "quotationCents": 650,
-      "offerEuro": 95.19,
-      "offerCents": 9519,
-      "shippingEuro": 22.06,
+      "offerEuro": 22.97,
+      "offerCents": 2297,
+      "shippingEuro": 19.31,
       "marketplace": "eBay",
-      "observedAt": "2026-10-12 13:29:29",
-      "affiliatePath": "/oo/1594694/ebay/168708499975/fr"
+      "observedAt": "2026-10-15 05:31:57",
+      "affiliatePath": "/oo/1594694/ebay/145432772872/fr"
     },
     {
       "printKey": "bleachscb:a-013",
@@ -217,14 +217,14 @@
       "rubriqueId": "37171",
       "refItem": "A 013",
       "title": "Renji Abarai",
-      "quotationEuro": 8.5,
-      "quotationCents": 850,
-      "offerEuro": 6.43,
-      "offerCents": 643,
-      "shippingEuro": 0,
+      "quotationEuro": 17,
+      "quotationCents": 1700,
+      "offerEuro": 220.64,
+      "offerCents": 22064,
+      "shippingEuro": 45.97,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:08:29",
-      "affiliatePath": "/oo/1593499/ebay/167164730523/fr"
+      "observedAt": "2026-10-16 22:01:07",
+      "affiliatePath": "/oo/1593499/ebay/187273945331/fr"
     },
     {
       "printKey": "bleachscb:a-014",
@@ -235,12 +235,12 @@
       "title": "Byakuya Kuchiki",
       "quotationEuro": 11.5,
       "quotationCents": 1150,
-      "offerEuro": 5.51,
-      "offerCents": 551,
+      "offerEuro": 459.68,
+      "offerCents": 45968,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:11:46",
-      "affiliatePath": "/oo/1593429/ebay/158226835134/fr"
+      "observedAt": "2026-10-16 22:02:24",
+      "affiliatePath": "/oo/1593429/ebay/137706716446/fr"
     },
     {
       "printKey": "bleachscb:a-015",
@@ -251,12 +251,12 @@
       "title": "Isshin Kurusoki",
       "quotationEuro": 3,
       "quotationCents": 300,
-      "offerEuro": 140.66,
-      "offerCents": 14066,
-      "shippingEuro": 21.14,
+      "offerEuro": 31.26,
+      "offerCents": 3126,
+      "shippingEuro": 9.19,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:08:25",
-      "affiliatePath": "/oo/1594671/ebay/237115309754/fr"
+      "observedAt": "2026-10-16 22:00:52",
+      "affiliatePath": "/oo/1594671/ebay/206316918476/fr"
     },
     {
       "printKey": "bleachscb:a-016",
@@ -265,13 +265,13 @@
       "rubriqueId": "37171",
       "refItem": "A 016",
       "title": "Karin Kurosaki",
-      "quotationEuro": 7,
-      "quotationCents": 700,
+      "quotationEuro": 6.5,
+      "quotationCents": 650,
       "offerEuro": 8.82,
       "offerCents": 882,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:09:47",
+      "observedAt": "2026-10-16 22:01:29",
       "affiliatePath": "/oo/1593498/ebay/124944682790/fr"
     },
     {
@@ -281,14 +281,14 @@
       "rubriqueId": "37171",
       "refItem": "A 017",
       "title": "Yuzu Kurosaki",
-      "quotationEuro": 9.5,
-      "quotationCents": 950,
-      "offerEuro": 0.92,
-      "offerCents": 92,
+      "quotationEuro": 6.5,
+      "quotationCents": 650,
+      "offerEuro": 8.82,
+      "offerCents": 882,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 05:43:26",
-      "affiliatePath": "/oo/1593424/ebay/177035901618/fr"
+      "observedAt": "2026-10-16 15:11:18",
+      "affiliatePath": "/oo/1593424/ebay/124944683096/fr"
     },
     {
       "printKey": "bleachscb:a-018",
@@ -297,14 +297,14 @@
       "rubriqueId": "37171",
       "refItem": "A 018",
       "title": "Tatsuki Arisawa",
-      "quotationEuro": 10.5,
-      "quotationCents": 1050,
-      "offerEuro": 12.86,
-      "offerCents": 1286,
-      "shippingEuro": 0,
+      "quotationEuro": 11,
+      "quotationCents": 1100,
+      "offerEuro": 137.95,
+      "offerCents": 13795,
+      "shippingEuro": 22.98,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 02:30:56",
-      "affiliatePath": "/oo/1594699/ebay/800356449591/fr"
+      "observedAt": "2026-10-16 14:26:42",
+      "affiliatePath": "/oo/1594699/ebay/237089970234/fr"
     },
     {
       "printKey": "bleachscb:a-019",
@@ -315,12 +315,12 @@
       "title": "Yuichi Shibata",
       "quotationEuro": 13.5,
       "quotationCents": 1350,
-      "offerEuro": 81.4,
-      "offerCents": 8140,
-      "shippingEuro": 0,
+      "offerEuro": 11.76,
+      "offerCents": 1176,
+      "shippingEuro": 18.38,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 01:22:48",
-      "affiliatePath": "/oo/1594592/ebay/206234397019/fr"
+      "observedAt": "2026-10-16 14:14:42",
+      "affiliatePath": "/oo/1594592/ebay/134560926458/fr"
     },
     {
       "printKey": "bleachscb:a-020",
@@ -329,14 +329,14 @@
       "rubriqueId": "37171",
       "refItem": "A 020",
       "title": "Kon",
-      "quotationEuro": 4.4,
-      "quotationCents": 440,
-      "offerEuro": 1.38,
-      "offerCents": 138,
-      "shippingEuro": 0.91,
+      "quotationEuro": 3.8,
+      "quotationCents": 380,
+      "offerEuro": 11.94,
+      "offerCents": 1194,
+      "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 21:23:32",
-      "affiliatePath": "/oo/1594691/ebay/158216302571/fr"
+      "observedAt": "2026-10-16 13:17:22",
+      "affiliatePath": "/oo/1594691/ebay/297183579964/fr"
     },
     {
       "printKey": "bleachscb:a-021",
@@ -345,14 +345,14 @@
       "rubriqueId": "37171",
       "refItem": "A 021",
       "title": "Jinta Hanakari",
-      "quotationEuro": 5,
-      "quotationCents": 500,
-      "offerEuro": 20.23,
-      "offerCents": 2023,
-      "shippingEuro": 9.19,
+      "quotationEuro": 4.8,
+      "quotationCents": 480,
+      "offerEuro": 4.59,
+      "offerCents": 459,
+      "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 21:30:55",
-      "affiliatePath": "/oo/1594595/ebay/205063114855/fr"
+      "observedAt": "2026-10-16 13:19:02",
+      "affiliatePath": "/oo/1594595/ebay/234855931912/fr"
     },
     {
       "printKey": "bleachscb:a-022",
@@ -361,13 +361,13 @@
       "rubriqueId": "37171",
       "refItem": "A 022",
       "title": "Ururu Tsumugiya",
-      "quotationEuro": 5,
-      "quotationCents": 500,
+      "quotationEuro": 4.4,
+      "quotationCents": 440,
       "offerEuro": 4.59,
       "offerCents": 459,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 09:15:23",
+      "observedAt": "2026-10-16 15:58:42",
       "affiliatePath": "/oo/1593551/ebay/234855932857/fr"
     },
     {
@@ -377,14 +377,14 @@
       "rubriqueId": "37171",
       "refItem": "A 023",
       "title": "Ichigo Kurosaki",
-      "quotationEuro": 54,
-      "quotationCents": 5400,
-      "offerEuro": 36.77,
-      "offerCents": 3677,
-      "shippingEuro": 13.79,
+      "quotationEuro": 37,
+      "quotationCents": 3700,
+      "offerEuro": 27.57,
+      "offerCents": 2757,
+      "shippingEuro": 8.26,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 09:10:23",
-      "affiliatePath": "/oo/1594837/ebay/137597631419/fr"
+      "observedAt": "2026-10-16 15:57:31",
+      "affiliatePath": "/oo/1594837/ebay/206536517515/fr"
     },
     {
       "printKey": "bleachscb:a-024",
@@ -393,13 +393,13 @@
       "rubriqueId": "37171",
       "refItem": "A 024",
       "title": "Ichigo Kurosaki",
-      "quotationEuro": 74,
-      "quotationCents": 7400,
+      "quotationEuro": 34,
+      "quotationCents": 3400,
       "offerEuro": 27.57,
       "offerCents": 2757,
       "shippingEuro": 8.26,
       "marketplace": "eBay",
-      "observedAt": "2026-10-12 10:37:17",
+      "observedAt": "2026-10-15 02:40:14",
       "affiliatePath": "/oo/1594814/ebay/206536517515/fr"
     },
     {
@@ -409,14 +409,14 @@
       "rubriqueId": "37171",
       "refItem": "A 025",
       "title": "Ichigo Kurosaki",
-      "quotationEuro": 66,
-      "quotationCents": 6600,
-      "offerEuro": 275.76,
-      "offerCents": 27576,
+      "quotationEuro": 64,
+      "quotationCents": 6400,
+      "offerEuro": 5.51,
+      "offerCents": 551,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-12 10:37:18",
-      "affiliatePath": "/oo/1594813/ebay/147153033076/fr"
+      "observedAt": "2026-10-15 02:40:16",
+      "affiliatePath": "/oo/1594813/ebay/236949334193/fr"
     },
     {
       "printKey": "bleachscb:a-026",
@@ -425,14 +425,14 @@
       "rubriqueId": "37171",
       "refItem": "A 026",
       "title": "Rukia Kuchiki",
-      "quotationEuro": 22,
-      "quotationCents": 2200,
-      "offerEuro": 18.38,
-      "offerCents": 1838,
-      "shippingEuro": 0,
+      "quotationEuro": 38,
+      "quotationCents": 3800,
+      "offerEuro": 106.55,
+      "offerCents": 10655,
+      "shippingEuro": 22.06,
       "marketplace": "eBay",
-      "observedAt": "2026-10-12 10:37:18",
-      "affiliatePath": "/oo/1594838/ebay/257476554486/fr"
+      "observedAt": "2026-10-15 02:40:16",
+      "affiliatePath": "/oo/1594838/ebay/205722200047/fr"
     },
     {
       "printKey": "bleachscb:a-027",
@@ -441,13 +441,13 @@
       "rubriqueId": "37171",
       "refItem": "A 027",
       "title": "Rukia Kuchiki",
-      "quotationEuro": 35,
-      "quotationCents": 3500,
+      "quotationEuro": 32,
+      "quotationCents": 3200,
       "offerEuro": 7.35,
       "offerCents": 735,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 09:24:41",
+      "observedAt": "2026-10-15 16:49:25",
       "affiliatePath": "/oo/1594839/ebay/237010279025/fr"
     },
     {
@@ -457,14 +457,14 @@
       "rubriqueId": "37171",
       "refItem": "A 028",
       "title": "Uryû Ishida",
-      "quotationEuro": 8.5,
-      "quotationCents": 850,
-      "offerEuro": 45.97,
-      "offerCents": 4597,
-      "shippingEuro": 0,
+      "quotationEuro": 8,
+      "quotationCents": 800,
+      "offerEuro": 154.85,
+      "offerCents": 15485,
+      "shippingEuro": 49.65,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:10:40",
-      "affiliatePath": "/oo/1594872/ebay/137706832112/fr"
+      "observedAt": "2026-10-16 22:01:42",
+      "affiliatePath": "/oo/1594872/ebay/147638693989/fr"
     },
     {
       "printKey": "bleachscb:a-029",
@@ -473,14 +473,14 @@
       "rubriqueId": "37171",
       "refItem": "A 029",
       "title": "Uryû Ishida",
-      "quotationEuro": 8.5,
-      "quotationCents": 850,
-      "offerEuro": 8.27,
-      "offerCents": 827,
-      "shippingEuro": 0.91,
+      "quotationEuro": 7.5,
+      "quotationCents": 750,
+      "offerEuro": 4.59,
+      "offerCents": 459,
+      "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:10:40",
-      "affiliatePath": "/oo/1594811/ebay/188552181322/fr"
+      "observedAt": "2026-10-16 22:01:42",
+      "affiliatePath": "/oo/1594811/ebay/237055749281/fr"
     },
     {
       "printKey": "bleachscb:a-030",
@@ -489,14 +489,14 @@
       "rubriqueId": "37171",
       "refItem": "A 030",
       "title": "Yasutora Sado",
-      "quotationEuro": 16,
-      "quotationCents": 1600,
-      "offerEuro": 14.71,
-      "offerCents": 1471,
-      "shippingEuro": 9.19,
+      "quotationEuro": 29,
+      "quotationCents": 2900,
+      "offerEuro": 18.38,
+      "offerCents": 1838,
+      "shippingEuro": 11.95,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:10:41",
-      "affiliatePath": "/oo/1594840/ebay/205256862339/fr"
+      "observedAt": "2026-10-16 22:01:42",
+      "affiliatePath": "/oo/1594840/ebay/205433524327/fr"
     },
     {
       "printKey": "bleachscb:a-031",
@@ -505,14 +505,14 @@
       "rubriqueId": "37171",
       "refItem": "A 031",
       "title": "Yasutora Sado",
-      "quotationEuro": 6.5,
-      "quotationCents": 650,
-      "offerEuro": 5.51,
-      "offerCents": 551,
-      "shippingEuro": 0,
+      "quotationEuro": 7,
+      "quotationCents": 700,
+      "offerEuro": 13.79,
+      "offerCents": 1379,
+      "shippingEuro": 20.23,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 13:06:47",
-      "affiliatePath": "/oo/1594841/ebay/167192268245/fr"
+      "observedAt": "2026-10-16 16:51:41",
+      "affiliatePath": "/oo/1594841/ebay/175558803436/fr"
     },
     {
       "printKey": "bleachscb:a-032",
@@ -521,14 +521,14 @@
       "rubriqueId": "37171",
       "refItem": "A 032",
       "title": "Orihime Inoue",
-      "quotationEuro": 23,
-      "quotationCents": 2300,
-      "offerEuro": 76.59,
-      "offerCents": 7659,
-      "shippingEuro": 26.66,
+      "quotationEuro": 58,
+      "quotationCents": 5800,
+      "offerEuro": 57.92,
+      "offerCents": 5792,
+      "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 13:06:54",
-      "affiliatePath": "/oo/1594818/ebay/137825692399/fr"
+      "observedAt": "2026-10-16 16:51:45",
+      "affiliatePath": "/oo/1594818/ebay/336697091137/fr"
     },
     {
       "printKey": "bleachscb:a-033",
@@ -537,14 +537,14 @@
       "rubriqueId": "37171",
       "refItem": "A 033",
       "title": "Orihime Inoue",
-      "quotationEuro": 26,
-      "quotationCents": 2600,
-      "offerEuro": 24.81,
-      "offerCents": 2481,
-      "shippingEuro": 19.31,
+      "quotationEuro": 60,
+      "quotationCents": 6000,
+      "offerEuro": 406.16,
+      "offerCents": 40616,
+      "shippingEuro": 105.73,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 13:06:47",
-      "affiliatePath": "/oo/1594817/ebay/147615911693/fr"
+      "observedAt": "2026-10-16 16:51:41",
+      "affiliatePath": "/oo/1594817/ebay/405779667214/fr"
     },
     {
       "printKey": "bleachscb:c-004",
@@ -555,12 +555,12 @@
       "title": "Balayage puissant",
       "quotationEuro": 78,
       "quotationCents": 7800,
-      "offerEuro": 822.47,
-      "offerCents": 82247,
+      "offerEuro": 14.7,
+      "offerCents": 1470,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 18:30:37",
-      "affiliatePath": "/oo/1593496/ebay/178502322980/fr"
+      "observedAt": "2026-10-17 02:24:48",
+      "affiliatePath": "/oo/1593496/ebay/166748086170/fr"
     },
     {
       "printKey": "bleachscb:c-005",
@@ -569,14 +569,14 @@
       "rubriqueId": "37171",
       "refItem": "C 005",
       "title": "Coup de genou sauté",
-      "quotationEuro": 275,
-      "quotationCents": 27500,
-      "offerEuro": 575.27,
-      "offerCents": 57527,
-      "shippingEuro": 0,
+      "quotationEuro": 250,
+      "quotationCents": 25000,
+      "offerEuro": 323.74,
+      "offerCents": 32374,
+      "shippingEuro": 45.97,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 18:31:23",
-      "affiliatePath": "/oo/1594687/ebay/237115212779/fr"
+      "observedAt": "2026-10-17 02:24:48",
+      "affiliatePath": "/oo/1594687/ebay/128135356914/fr"
     },
     {
       "printKey": "bleachscb:c-007",
@@ -585,14 +585,14 @@
       "rubriqueId": "37171",
       "refItem": "C 007",
       "title": "Bakudô numéro 1 : Sai !",
-      "quotationEuro": 18,
-      "quotationCents": 1800,
-      "offerEuro": 2.18,
-      "offerCents": 218,
-      "shippingEuro": 0.92,
+      "quotationEuro": 23,
+      "quotationCents": 2300,
+      "offerEuro": 82.73,
+      "offerCents": 8273,
+      "shippingEuro": 6.44,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 11:02:56",
-      "affiliatePath": "/oo/1593425/ebay/227491467914/fr"
+      "observedAt": "2026-10-17 00:11:30",
+      "affiliatePath": "/oo/1593425/ebay/276379704606/fr"
     },
     {
       "printKey": "bleachscb:c-009",
@@ -603,12 +603,12 @@
       "title": "Bouclier des trois cieux ! Protection !",
       "quotationEuro": null,
       "quotationCents": null,
-      "offerEuro": 87.33,
-      "offerCents": 8733,
-      "shippingEuro": 7.35,
+      "offerEuro": 398.26,
+      "offerCents": 39826,
+      "shippingEuro": 18.39,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 03:13:53",
-      "affiliatePath": "/oo/1594596/ebay/266085601241/fr"
+      "observedAt": "2026-10-16 22:03:23",
+      "affiliatePath": "/oo/1594596/ebay/266823437317/fr"
     },
     {
       "printKey": "bleachscb:c-016",
@@ -619,12 +619,12 @@
       "title": "En avant , mon Zabimaru",
       "quotationEuro": 9.5,
       "quotationCents": 950,
-      "offerEuro": 2.3,
-      "offerCents": 230,
-      "shippingEuro": 0.91,
+      "offerEuro": 198.58,
+      "offerCents": 19858,
+      "shippingEuro": 41.37,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 16:04:35",
-      "affiliatePath": "/oo/1593494/ebay/298440246315/fr"
+      "observedAt": "2026-10-16 00:33:46",
+      "affiliatePath": "/oo/1593494/ebay/227546125834/fr"
     },
     {
       "printKey": "bleachscb:c-017",
@@ -633,13 +633,13 @@
       "rubriqueId": "37171",
       "refItem": "C 017",
       "title": "Mangeur d'âme",
-      "quotationEuro": 16,
-      "quotationCents": 1600,
+      "quotationEuro": 54,
+      "quotationCents": 5400,
       "offerEuro": 1.38,
       "offerCents": 138,
       "shippingEuro": 0.91,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 16:01:05",
+      "observedAt": "2026-10-16 00:30:09",
       "affiliatePath": "/oo/1593547/ebay/158216302580/fr"
     },
     {
@@ -649,13 +649,13 @@
       "rubriqueId": "37171",
       "refItem": "E 001",
       "title": "Devenir un shinigami",
-      "quotationEuro": 88,
-      "quotationCents": 8800,
+      "quotationEuro": 86,
+      "quotationCents": 8600,
       "offerEuro": 203.86,
       "offerCents": 20386,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-10 04:15:43",
+      "observedAt": "2026-10-16 22:31:36",
       "affiliatePath": "/oo/1594695/ebay/206591418025/fr"
     },
     {
@@ -667,12 +667,12 @@
       "title": "L'équipe du magasin Urahara en action !",
       "quotationEuro": null,
       "quotationCents": null,
-      "offerEuro": 8.95,
-      "offerCents": 895,
+      "offerEuro": 11.76,
+      "offerCents": 1176,
       "shippingEuro": 18.38,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 09:12:30",
-      "affiliatePath": "/oo/1594697/ebay/134598353722/fr"
+      "observedAt": "2026-10-16 15:57:47",
+      "affiliatePath": "/oo/1594697/ebay/134560926480/fr"
     },
     {
       "printKey": "bleachscb:e-009",
@@ -681,14 +681,14 @@
       "rubriqueId": "37171",
       "refItem": "E 009",
       "title": "Serment devant la tombe",
-      "quotationEuro": null,
-      "quotationCents": null,
-      "offerEuro": 215.13,
-      "offerCents": 21513,
+      "quotationEuro": 25,
+      "quotationCents": 2500,
+      "offerEuro": 15.63,
+      "offerCents": 1563,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 09:12:31",
-      "affiliatePath": "/oo/1594591/ebay/187131134545/fr"
+      "observedAt": "2026-10-16 15:57:48",
+      "affiliatePath": "/oo/1594591/ebay/187080030661/fr"
     },
     {
       "printKey": "bleachscb:e-011",
@@ -703,7 +703,7 @@
       "offerCents": 551,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 17:34:30",
+      "observedAt": "2026-10-16 18:10:51",
       "affiliatePath": "/oo/1594669/ebay/156650597835/fr"
     },
     {
@@ -713,13 +713,13 @@
       "rubriqueId": "37171",
       "refItem": "E 012",
       "title": "Un charme irrésistible",
-      "quotationEuro": null,
-      "quotationCents": null,
+      "quotationEuro": 9.5,
+      "quotationCents": 950,
       "offerEuro": 18.38,
       "offerCents": 1838,
-      "shippingEuro": 0,
+      "shippingEuro": 11.95,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 16:04:37",
+      "observedAt": "2026-10-16 17:36:42",
       "affiliatePath": "/oo/1594835/ebay/204811668374/fr"
     },
     {
@@ -731,12 +731,12 @@
       "title": "Kraaaash",
       "quotationEuro": 60,
       "quotationCents": 6000,
-      "offerEuro": 11.03,
-      "offerCents": 1103,
+      "offerEuro": 2.76,
+      "offerCents": 276,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 13:26:34",
-      "affiliatePath": "/oo/1594590/ebay/225216907279/fr"
+      "observedAt": "2026-10-16 16:55:42",
+      "affiliatePath": "/oo/1594590/ebay/177035901618/fr"
     },
     {
       "printKey": "bleachscb:e-016",
@@ -745,14 +745,14 @@
       "rubriqueId": "37171",
       "refItem": "E 016",
       "title": "Front commun",
-      "quotationEuro": 19,
-      "quotationCents": 1900,
-      "offerEuro": 36.76,
-      "offerCents": 3676,
-      "shippingEuro": 18.38,
+      "quotationEuro": 33,
+      "quotationCents": 3300,
+      "offerEuro": 18.39,
+      "offerCents": 1839,
+      "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 15:21:35",
-      "affiliatePath": "/oo/1593546/ebay/176529117286/fr"
+      "observedAt": "2026-10-15 23:46:02",
+      "affiliatePath": "/oo/1593546/ebay/177035901618/fr"
     },
     {
       "printKey": "bleachscb:p-001",
@@ -761,14 +761,14 @@
       "rubriqueId": "37171",
       "refItem": "P 001",
       "title": "Ichigo Kurosaki",
-      "quotationEuro": 48,
-      "quotationCents": 4800,
-      "offerEuro": 130.44,
-      "offerCents": 13044,
-      "shippingEuro": 0,
+      "quotationEuro": 52,
+      "quotationCents": 5200,
+      "offerEuro": 128.71,
+      "offerCents": 12871,
+      "shippingEuro": 9.19,
       "marketplace": "eBay",
-      "observedAt": "2026-10-08 18:52:43",
-      "affiliatePath": "/oo/1594593/ebay/158315173663/fr"
+      "observedAt": "2026-10-16 03:21:37",
+      "affiliatePath": "/oo/1594593/ebay/267813888969/fr"
     },
     {
       "printKey": "bleachscb:p-007",
@@ -777,14 +777,14 @@
       "rubriqueId": "37171",
       "refItem": "P 007",
       "title": "Ichigo Kurosaki",
-      "quotationEuro": 48,
-      "quotationCents": 4800,
-      "offerEuro": 85.95,
-      "offerCents": 8595,
-      "shippingEuro": 0,
+      "quotationEuro": 58,
+      "quotationCents": 5800,
+      "offerEuro": 100.21,
+      "offerCents": 10021,
+      "shippingEuro": 18.39,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 11:57:49",
-      "affiliatePath": "/oo/1594842/ebay/317864556879/fr"
+      "observedAt": "2026-10-16 16:35:45",
+      "affiliatePath": "/oo/1594842/ebay/168793190492/fr"
     },
     {
       "printKey": "bleachscb:z-001",
@@ -793,13 +793,13 @@
       "rubriqueId": "37171",
       "refItem": "Z 001",
       "title": "Zanpakuto",
-      "quotationEuro": 88,
-      "quotationCents": 8800,
+      "quotationEuro": 80,
+      "quotationCents": 8000,
       "offerEuro": 6.34,
       "offerCents": 634,
       "shippingEuro": 55.16,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 11:56:42",
+      "observedAt": "2026-10-16 16:35:37",
       "affiliatePath": "/oo/1594668/ebay/165611087140/fr"
     },
     {
@@ -811,12 +811,12 @@
       "title": "Kojaku",
       "quotationEuro": 8.5,
       "quotationCents": 850,
-      "offerEuro": 4.59,
-      "offerCents": 459,
-      "shippingEuro": 0,
+      "offerEuro": 6.34,
+      "offerCents": 634,
+      "shippingEuro": 55.16,
       "marketplace": "eBay",
-      "observedAt": "2026-10-09 11:55:33",
-      "affiliatePath": "/oo/1593430/ebay/158171965904/fr"
+      "observedAt": "2026-10-16 16:35:10",
+      "affiliatePath": "/oo/1593430/ebay/165611089383/fr"
     }
   ]
 }

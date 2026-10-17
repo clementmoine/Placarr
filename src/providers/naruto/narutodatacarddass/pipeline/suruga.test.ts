@@ -27,5 +27,22 @@ import { parseSurugaDataCarddassListingsTsv } from "../parse/catalogues";
       );
       expect(rows.map((r) => r.id).sort()).toEqual(["G8903919", "G9999999"]);
     });
+
+    it("merges kaitori search_buy rows into the TSV", () => {
+      const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-suruga-kaitori-"));
+      const tsvPath = path.join(tmp, "listings.tsv");
+      writeFileSync(tsvPath, "# productId\tprinted\n", "utf8");
+      const html = `
+        <tr class="listap">
+          <td><input type="hidden" name="shinaban" value="GL344283"></td>
+          <td><h3 class="product-name">NF-151[N]：うずまきナルト(疾風伝)</h3></td>
+        </tr>
+      `;
+      const report = mergeSurugaHtmlIntoListingsTsv(html, tsvPath);
+      expect(report.added).toBe(1);
+      expect(
+        parseSurugaDataCarddassListingsTsv(readFileSync(tsvPath, "utf8")),
+      ).toEqual([{ id: "GL344283", printed: "NF-151" }]);
+    });
   });
 }

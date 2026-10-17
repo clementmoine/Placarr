@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   foldSurugaDataCarddassListings,
+  loadSurugaDataCarddassCuratedListings,
   looksLikeMojibakeJa,
   mergeNaoYoshiSeesaaRows,
   normalizeNaoYoshiRarity,
@@ -12,6 +13,7 @@ import {
   parseMissionCardlistHtml,
   parseNaoYoshiSeesaaArticle,
   parseSurugaDataCarddassCategoryHtml,
+  parseSurugaDataCarddassKaitoriHtml,
   parseSurugaDataCarddassListingsTsv,
   repairMojibakeJa,
   simulateUtf8AsShiftJis,
@@ -349,6 +351,33 @@ import {
       ]);
     });
 
+    it("lit les rangées kaitori search_buy (shinaban + product-name)", () => {
+      const html = `
+        <tr class="listap">
+          <td><input type="hidden" name="shinaban" value="GL344230"></td>
+          <td><div class="title"><a href="/kaitori/kaitori_detail/GL344230">
+            <h3 class="product-name">NFP-006[銀ホロカード]：うちはイタチ</h3>
+          </a></div></td>
+        </tr>
+        <tr class="listap">
+          <td><input type="hidden" name="shinaban" value="G8904124"></td>
+          <td><div class="title"><h3 class="product-name">CAN-001[プロモ]：うずまきナルト</h3></div></td>
+        </tr>
+      `;
+      expect(parseSurugaDataCarddassKaitoriHtml(html)).toEqual([
+        {
+          id: "GL344230",
+          printed: "NFP-006",
+          title: "NFP-006[銀ホロカード]：うちはイタチ",
+        },
+        {
+          id: "G8904124",
+          printed: "CAN-001",
+          title: "CAN-001[プロモ]：うずまきナルト",
+        },
+      ]);
+    });
+
     it("fold TSV par printKey et garde plusieurs productIds", () => {
       const listings = parseSurugaDataCarddassListingsTsv(`
   G1\tNM-113
@@ -361,6 +390,21 @@ import {
         "G1",
         "G2",
       ]);
+    });
+
+    it("curated TSV binds GL344283–285 → NF-151…153 (was hole after NF-150)", () => {
+      const byId = Object.fromEntries(
+        loadSurugaDataCarddassCuratedListings().map((row) => [row.id, row.printed]),
+      );
+      expect(byId.GL344283).toBe("NF-151");
+      expect(byId.GL344284).toBe("NF-152");
+      expect(byId.GL344285).toBe("NF-153");
+      const folded = foldSurugaDataCarddassListings(
+        loadSurugaDataCarddassCuratedListings(),
+      );
+      expect(folded.find((c) => c.printed === "NF-151")?.productIds).toContain(
+        "GL344283",
+      );
     });
   });
 }

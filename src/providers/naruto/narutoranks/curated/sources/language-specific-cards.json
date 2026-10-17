@@ -45,6 +45,22 @@
       "why": "La carte liste les 72 titres ; son contenu est donc entièrement traduit."
     },
     {
+      "setCode": "ns",
+      "number": "0003",
+      "en": "Guy",
+      "fr": "Gaï",
+      "it": null,
+      "why": "Même graphie FR que la base nr-0044 (GUY → Gaï). Checklist Laststicker / ledger EU gardent l'EN « Guy »."
+    },
+    {
+      "setCode": "ff",
+      "number": "0001",
+      "en": "Guy - Kakashi",
+      "fr": "Gaï - Kakashi",
+      "it": null,
+      "why": "Même graphie FR Gaï que nr-0044 / ns-0003. Ledger Inkworks EN garde « Guy - Kakashi »."
+    },
+    {
       "setCode": "ff",
       "number": "0002",
       "en": "Naruto - Fox Spirit",

@@ -793,6 +793,10 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const SURUGA_DCD_JP_CATEGORY =
   "https://www.suruga-ya.jp/search?category=501080113";
 
+/** JP buyback catalogue — denser than used-stock search (~1100 vs ~600). */
+const SURUGA_DCD_JP_KAITORI =
+  "https://www.suruga-ya.jp/kaitori/search_buy?category=501080113";
+
 async function fetchSurugaHtml(url: string): Promise<string> {
   // Suruga always serves Cloudflare on direct GET — skip straight to Flare.
   const html = await fetchTextWithFlareFallback(url, {
@@ -813,8 +817,11 @@ async function harvestSurugaDcdPages(
   label: string,
   urlForPage: (page: number) => string,
   maxPages: number,
+  options: { stopAfterEmptyPages?: number } = {},
 ): Promise<number> {
+  const stopAfterEmpty = options.stopAfterEmptyPages ?? 1;
   let added = 0;
+  let emptyStreak = 0;
   for (let page = 1; page <= maxPages; page++) {
     const url = urlForPage(page);
     try {
@@ -831,16 +838,31 @@ async function harvestSurugaDcdPages(
       console.log(
         `[suruga-dcd] ${label} page ${page}: listings ${resMerge.after} (+${resMerge.added})`,
       );
+      const rowCount = (
+        html.match(/name="shinaban"\s+value="[A-Za-z0-9]+"/g) ?? []
+      ).length;
       const hasNext =
         html.includes(`page=${page + 1}`) ||
         html.includes(`page=${page + 1}&`) ||
-        /rel=["']next["']/i.test(html);
-      // Deux pages sans nouveau SKU → le rayon est déjà dans le TSV.
-      if (resMerge.added === 0 && page > 1) {
-        console.log(`[suruga-dcd] No new listings on ${label} page ${page}, stop.`);
+        /rel=["']next["']/i.test(html) ||
+        // kaitori serves ~20 rows/page; empty page ⇒ end of shelf
+        (label === "kaitori" && rowCount > 0 && page < maxPages);
+      if (resMerge.added === 0) {
+        emptyStreak += 1;
+        if (page > 1 && emptyStreak >= stopAfterEmpty) {
+          console.log(
+            `[suruga-dcd] ${emptyStreak} empty page(s) on ${label}, stop.`,
+          );
+          break;
+        }
+      } else {
+        emptyStreak = 0;
+      }
+      if (label === "kaitori" && rowCount === 0) {
+        console.log(`[suruga-dcd] Empty kaitori page ${page}, stop.`);
         break;
       }
-      if (!hasNext) {
+      if (!hasNext && page > 1) {
         console.log(`[suruga-dcd] No next page for ${label}.`);
         break;
       }
@@ -874,7 +896,20 @@ export async function harvestSurugaDcd(
 
   let grandTotalAdded = 0;
 
-  // Bare category first (user shelf) — covers whatever search_word would miss.
+  // Buyback catalogue first — denser SKU shelf (~55 pages / ~1100 ids).
+  console.log(`\n=== Harvesting Suruga DCD kaitori 501080113 ===`);
+  grandTotalAdded += await harvestSurugaDcdPages(
+    "kaitori",
+    (page) =>
+      page <= 1
+        ? SURUGA_DCD_JP_KAITORI
+        : `${SURUGA_DCD_JP_KAITORI}&search_word=&page=${page}`,
+    Math.max(maxPagesPerQuery, 55),
+    // New IDs can sit on late pages while early pages are already in TSV.
+    { stopAfterEmptyPages: Number.POSITIVE_INFINITY },
+  );
+
+  // Bare used-stock category — covers whatever search_word would miss.
   console.log(`\n=== Harvesting Suruga DCD category 501080113 ===`);
   grandTotalAdded += await harvestSurugaDcdPages(
     "category",

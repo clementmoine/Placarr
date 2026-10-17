@@ -345,8 +345,8 @@ export const IMADOKI_SHEETS: readonly ImadokiSheet[] = [
       Grille 2×3, lecture gauche→droite puis haut→bas. Les noms sur la planche
       ne suivent pas NS1…NS6 :
       slot 0 Asuma → `ns-0004`, 1 Kakashi → `ns-0001`, 2 Iruka → `ns-0005`,
-      3 Kurenai → `ns-0002`, 4 Ebisu → `ns-0006`, 5 vide — `ns-0003` *Guy*
-      manque à la galerie Imadoki.
+      3 Kurenai → `ns-0002`, 4 Ebisu → `ns-0006`, 5 vide — `ns-0003` *Gaï*
+      (EN « Guy ») manque à la galerie Imadoki.
     */
     file: "naruto_premiumtc_ns01-06.JPG",
     columns: 2,

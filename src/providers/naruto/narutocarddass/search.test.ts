@@ -380,14 +380,23 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
         listNarutoPrintSets().find((set) => set.id === "s6")?.languages ?? [],
       ).toContain("fr");
 
+      // 6 inédites + 9 reprints blister Kana MIJ
       const chapter = [
+        "naruto:s6-ni0206",
         "naruto:s6-ni0232",
         "naruto:s6-ni0236",
+        "naruto:s6-ni0239",
+        "naruto:s6-ni0240",
         "naruto:s6-ni0252",
         "naruto:s6-ni0253",
+        "naruto:s6-ta0214",
+        "naruto:s6-ta0219",
         "naruto:s6-ta0221",
         "naruto:s6-ta0226",
-        "naruto:s6-ta0227", // MIJ reprint (pas les autres blister S5)
+        "naruto:s6-ta0227",
+        "naruto:s6-te0192",
+        "naruto:s6-te0205",
+        "naruto:s6-te0207",
       ] as const;
       expect(s6).toHaveLength(chapter.length);
       for (const key of chapter) {
@@ -403,20 +412,22 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       for (const key of chapter) {
         expect(s5Keys.has(key)).toBe(false);
       }
-      // Reprints blister sans MIJ — S5 only
+      // Dual MIJ+MIB — S5 siblings stay for blister reprints
       for (const key of [
         "naruto:s5-ni0206",
         "naruto:s5-ni0239",
         "naruto:s5-ni0240",
         "naruto:s5-ta0214",
         "naruto:s5-ta0219",
+        "naruto:s5-ta0227",
         "naruto:s5-te0192",
         "naruto:s5-te0205",
         "naruto:s5-te0207",
       ]) {
         expect(s5Keys.has(key)).toBe(true);
-        expect(s6Keys.has(key.replace(":s5-", ":s6-"))).toBe(false);
       }
+      expect(s6Keys.has("naruto:s6-ni0234")).toBe(false);
+      expect(s6Keys.has("naruto:s6-te0191")).toBe(false);
       expect(s6Keys.has("naruto:s6-ni0268")).toBe(false);
       expect(s6Keys.has("naruto:s6-te0191")).toBe(false);
     });

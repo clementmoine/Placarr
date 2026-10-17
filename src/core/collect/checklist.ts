@@ -225,20 +225,27 @@ export function referenceWithinSet(
 }
 
 /**
- * Ordre dans un set : retail d'abord (par référence), puis les tirages à
- * grouping (promos) en fin de liste, groupés alphabétiquement (P1 → P3 → …).
+ * Rang de grouping dans un set :
+ * 1. `prerelease` — avant-première / manga, chronologiquement avant le retail
+ * 2. retail (pas de grouping)
+ * 3. autres groupings (promos P1…) en fin, A→Z
  *
  * Un tri purement numérique mélangeait `20/204` et `20/P1` au milieu du set.
  */
+function checklistGroupingRank(grouping: string): number {
+  if (grouping === "prerelease") return -1;
+  if (!grouping) return 0;
+  return 1;
+}
+
 export function compareChecklistPrints(
   a: ChecklistPrint,
   b: ChecklistPrint,
 ): number {
   const ga = (parsePrintKey(a.printKey)?.grouping ?? "").toLowerCase();
   const gb = (parsePrintKey(b.printKey)?.grouping ?? "").toLowerCase();
-  const aGrouped = ga ? 1 : 0;
-  const bGrouped = gb ? 1 : 0;
-  if (aGrouped !== bGrouped) return aGrouped - bGrouped;
+  const byRank = checklistGroupingRank(ga) - checklistGroupingRank(gb);
+  if (byRank !== 0) return byRank;
   if (ga !== gb) return ga.localeCompare(gb, "fr", { numeric: true });
   // Game hooks (e.g. Naruto Client → Ninja → Technique → Tactique) via printKey.
   const byPrint = comparePrintKeys(a.printKey, b.printKey);

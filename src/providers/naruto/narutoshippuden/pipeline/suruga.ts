@@ -113,10 +113,24 @@ export async function harvestSurugaShippuden(options: {
         let pageAdded = 0;
 
         for (const item of items) {
-          if (!byId.has(item.id)) {
+          const prev = byId.get(item.id);
+          if (!prev) {
             byId.set(item.id, item);
             pageAdded++;
             queryAdded++;
+            continue;
+          }
+          // Refresh printed/title when crawl disagrees with a stale TSV row
+          // (truncated prefix binds like 忍伝-2 ← 忍伝-207).
+          if (
+            item.printed !== prev.printed ||
+            (item.title && item.title !== prev.title)
+          ) {
+            byId.set(item.id, {
+              ...prev,
+              printed: item.printed,
+              ...(item.title ? { title: item.title } : {}),
+            });
           }
         }
 

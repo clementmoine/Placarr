@@ -628,6 +628,13 @@ const DATA_INFO_RE = /data-info="(\{[^"]+\})"/gi;
 const DOM_ITEM_RE =
   /<div class="item_detail">[\s\S]*?<a[^>]*href="[^"]*\/product\/detail\/([A-Za-z0-9]+)[^"]*"[^>]*>[\s\S]*?<h3 class="product-name">([^<]+)<\/h3>/gi;
 
+/**
+ * Kaitori (`/kaitori/search_buy`) rows — shinaban + product-name h3.
+ * Broader shelf than used-stock search (≈1100 vs ≈600 SKUs).
+ */
+const KAITORI_ITEM_RE =
+  /name="shinaban"\s+value="([A-Za-z0-9]+)"[\s\S]*?<h3 class="product-name">([^<]+)<\/h3>/gi;
+
 /** Boutique titles may space the hyphen (`NM - 031`, `DN - 035 T`). Handles fullwidth letters. */
 const PRINTED_IN_TITLE =
   /(?:[\b\s]|^)((?:NFP|NFM|NFC|NFF|NXPF|NX-CAM|NXCAM|NX-MAC|VJCF|NXP|DNP|DMP|CAN|DN|DT|NM|NC|NF|NX|ＮＦM|ＮＦF|ＮＦP|ＮＦ|ＮＭ|ＤＮ)\s*-?\s*\d+\s*[A-Za-z]?)(?:[\b\s：:\[\]]|$)/i;
@@ -736,6 +743,20 @@ export function parseSurugaDataCarddassCategoryHtml(
     }
     if (!payload.id || !payload.name) continue;
     pushListing(out, seen, payload.id, payload.name);
+  }
+  return out;
+}
+
+/** JP buyback catalogue pages (`/kaitori/search_buy?category=501080113`). */
+export function parseSurugaDataCarddassKaitoriHtml(
+  html: string,
+): SurugaDataCarddassListing[] {
+  const seen = new Set<string>();
+  const out: SurugaDataCarddassListing[] = [];
+  KAITORI_ITEM_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = KAITORI_ITEM_RE.exec(html))) {
+    pushListing(out, seen, match[1]!, match[2]!);
   }
   return out;
 }

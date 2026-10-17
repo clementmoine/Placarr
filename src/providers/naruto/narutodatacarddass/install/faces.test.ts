@@ -262,6 +262,30 @@ import { parseDataCarddassPrinted } from "../printKey";
         "Itachi Uchiha",
       );
     });
+
+    it("binds NF-52 to cardjpstore Sasuke ナルト(疾)52 thumb (not Kyuubi misbind)", () => {
+      const row = dataCarddassEbayIngestFaces().find(
+        (face) => face.printedRef === "NF-52",
+      );
+      expect(row?.listing).toContain("177657503162");
+      expect(row?.imageId).toBe("PNsAAOSwhxJh65NT");
+      expect(row?.url).toContain("PNsAAOSwhxJh65NT");
+      expect(row?.url).not.toContain("yHwAAeSw8OVqcKbZ");
+      expect(parseDataCarddassPrinted("NF-52")).toMatchObject({
+        set: "nf",
+        number: "052",
+      });
+    });
+
+    it("does not ingest the NF-151/152/153 3-up lot (Suruga shop scans preferred)", () => {
+      const row = dataCarddassEbayIngestFaces().find(
+        (face) =>
+          face.printedRef === "NF-151" ||
+          (typeof face.listing === "string" &&
+            face.listing.includes("820116732276")),
+      );
+      expect(row).toBeUndefined();
+    });
   });
 }
 
@@ -280,6 +304,17 @@ import { parseDataCarddassPrinted } from "../printKey";
         ),
       ).toBe(true);
       expect(faces.some((row) => row.printedRef === "NF-021")).toBe(true);
+    });
+
+    it("includes DN-239T Kabuto gap fill (m20087558151)", () => {
+      const row = dataCarddassMercariIngestFaces().find(
+        (face) => face.printedRef === "DN-239T",
+      );
+      expect(row?.listingUrl).toContain("m20087558151");
+      expect(parseDataCarddassPrinted("DN-239T")).toMatchObject({
+        set: "dn",
+        number: "239t",
+      });
     });
   });
 }

@@ -66,6 +66,48 @@ import { foldSurugaShippudenListings, loadSurugaShippudenCuratedListings, parseC
       expect(parsed).toEqual(original);
     });
 
+    it("heals stale truncated printed columns from the title (忍伝-2 ≠ 忍伝-207)", () => {
+      const tsv = [
+        "602308643\t忍伝-2\t忍伝-207[ノーマル]：忍伝-207/奈良ヨシノ",
+        "GN663724\t忍伝-16\t忍伝-165[レア]：デイダラ（Bランク）",
+        "G8868299\t忍伝-207\t忍伝-207[ノーマル]：忍伝-207/奈良ヨシノ",
+      ].join("\n");
+      const listings = parseSurugaShippudenListingsTsv(tsv);
+      expect(listings.find((l) => l.id === "602308643")?.printed).toBe(
+        "忍伝-207",
+      );
+      expect(listings.find((l) => l.id === "GN663724")?.printed).toBe(
+        "忍伝-165",
+      );
+      const folded = foldSurugaShippudenListings(listings);
+      expect(folded.find((c) => c.diskId === "shi0002")).toBeUndefined();
+      expect(folded.find((c) => c.diskId === "shi0016")).toBeUndefined();
+      expect(folded.find((c) => c.diskId === "shi0207")?.productIds[0]).toBe(
+        "G8868299",
+      );
+      expect(folded.find((c) => c.diskId === "shi0207")?.productIds).toContain(
+        "602308643",
+      );
+      expect(folded.find((c) => c.diskId === "shi0165")?.productIds).toContain(
+        "GN663724",
+      );
+    });
+
+    it("curated TSV has no stale truncated binds or non-card Suruga ids", () => {
+      const listings = loadSurugaShippudenCuratedListings();
+      for (const l of listings) {
+        if (!l.title) continue;
+        const fromTitle = parseSurugaShippudenPrintedFromTitle(l.title);
+        if (fromTitle) expect(l.printed).toBe(fromTitle);
+      }
+      const ids = new Set(listings.map((l) => l.id));
+      // CDN for these served a figurine / wafer pack, not the card face.
+      expect(ids.has("602308643")).toBe(false);
+      expect(ids.has("GN663724")).toBe(false);
+      const folded = foldSurugaShippudenListings(listings);
+      expect(folded.find((c) => c.diskId === "shi0002")).toBeUndefined();
+    });
+
     it("folds multiple listings for the same card into unique cards", () => {
       const listings: SurugaShippudenListing[] = [
         { id: "GL124439", printed: "忍伝-165", title: "忍伝-165 A" },

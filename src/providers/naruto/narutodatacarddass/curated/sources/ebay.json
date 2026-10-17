@@ -4369,7 +4369,8 @@
       "imageId": "szsAAeSweP9qpMUt",
       "url": "https://i.ebayimg.com/images/g/szsAAeSweP9qpMUt/s-l1600.webp",
       "staging": "staging/ebay/nf-151-ja.webp",
-      "ingest": true
+      "ingest": false,
+      "note": "2026-10-17 demote — 3-up lot (NF-151/152/153). Prefer Suruga GL344283 shop scan."
     },
     {
       "printedRef": "NF-152",
@@ -4704,12 +4705,13 @@
     {
       "printedRef": "NF-52",
       "lang": "ja",
-      "title": "suivre Naruto Ultimate Formation Card Naruto Uzumaki Shinobi W NF-052 BANDAI Japan",
-      "listing": "https://www.ebay.fr/itm/318672188993",
-      "imageId": "yHwAAeSw8OVqcKbZ",
-      "url": "https://i.ebayimg.com/images/g/yHwAAeSw8OVqcKbZ/s-l1600.webp",
-      "staging": "staging/ebay/nf-52-ja.webp",
-      "ingest": true
+      "title": "ナルト(疾)52 うちはサスケ — cardjpstore lot thumb (same listing as NFC-002)",
+      "listing": "https://www.ebay.com/itm/177657503162",
+      "imageId": "PNsAAOSwhxJh65NT",
+      "url": "https://i.ebayimg.com/images/g/PNsAAOSwhxJh65NT/s-l1600.webp",
+      "staging": "staging/ebay/nf-52-ja-cardjpstore.webp",
+      "ingest": true,
+      "note": "2026-10-17 — replaced wrong face (was Kyuubi Naruto yHwAAeSw8OVqcKbZ). Printed ナルト(疾)52 / Hayabusa Otoshi Sasuke verified on PNsAAOSwhxJh65NT."
     },
     {
       "printedRef": "NF-53",
@@ -5142,7 +5144,7 @@
       "url": "https://i.ebayimg.com/images/g/8UkAAOSw0xdh65NZ/s-l1600.webp",
       "staging": "staging/ebay/nfc-002-ja-cardjpstore.webp",
       "ingest": true,
-      "note": "cardjpstore — NFC-002 printed code verified; other listing thumbs wrong card"
+      "note": "cardjpstore — NFC-002 printed code verified on 8UkAAOSw0xdh65NZ / 1eEAAOSwNwxh65Nb. Sibling thumbs PNsAAOSwhxJh65NT + nsoAAOSwM05h65NV are NF-52 (ナルト(疾)52), not NFC."
     }
   ]
 }

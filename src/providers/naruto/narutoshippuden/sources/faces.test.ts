@@ -58,6 +58,15 @@ import {
       expect(diskIdFromPrintedReference("PR忍伝-2")).toBe("prshi0002");
     });
 
+    it("does not ingest 忍伝-60 playmat photo (Suruga GL124383 preferred)", () => {
+      const row = shippudenMercariIngestFaces().find(
+        (face) =>
+          face.printedRef === "忍伝-60" ||
+          face.listingUrl.includes("m93858526279"),
+      );
+      expect(row).toBeUndefined();
+    });
+
     it("includes PR忍伝-8 Naruto&Hinata gap fill (m30458189956)", () => {
       const row = shippudenMercariIngestFaces().find(
         (face) => face.printedRef === "PR忍伝-8",
@@ -74,6 +83,17 @@ import {
       expect(byRef["PR忍伝-3"]?.listingUrl).toContain("m29398959256");
       expect(byRef["PR忍伝-4"]?.listingUrl).toContain("m98823704479");
       expect(byRef["PR忍伝-10"]?.listingUrl).toContain("m33650947973");
+    });
+
+    it("includes maku1 gap fills 忍伝-002 / 忍伝-016", () => {
+      const byRef = Object.fromEntries(
+        shippudenMercariIngestFaces().map((row) => [row.printedRef, row]),
+      );
+      expect(byRef["忍伝-002"]?.listingUrl).toContain("m63730673755");
+      expect(byRef["忍伝-002"]?.curated).toBe("faces/shi0002.mercari.jpg");
+      expect(diskIdFromPrintedReference("忍伝-002")).toBe("shi0002");
+      expect(byRef["忍伝-016"]?.listingUrl).toContain("m17059616523");
+      expect(diskIdFromPrintedReference("忍伝-016")).toBe("shi0016");
     });
   });
 }

@@ -43,8 +43,9 @@
       "listingUrl": "https://jp.mercari.com/item/m93858526279",
       "printedRef": "忍伝-60",
       "title": "NARUTO ナルト カード うちはサスケ＆大蛇丸 忍伝-060",
-      "ingest": true,
-      "url": "https://static.mercdn.net/item/detail/orig/photos/m93858526279_1.jpg"
+      "ingest": false,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m93858526279_1.jpg",
+      "note": "Playmat photo — demoted. Prefer Suruga GL124383 scan (art.suruga.jpg)."
     },
     {
       "listingUrl": "https://jp.mercari.com/item/m70939336148",
@@ -228,6 +229,23 @@
       "ingest": true,
       "url": "https://static.mercdn.net/item/detail/orig/photos/m38233803966_1.jpg?1786404062",
       "note": "2026-09-26 browser hunt — gaku0029"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m63730673755",
+      "printedRef": "忍伝-002",
+      "title": "NARUTO疾風伝 カードゲーム 春野サクラ 忍伝-002 2枚セット",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m63730673755_1.jpg?1782542971",
+      "curated": "faces/shi0002.mercari.jpg",
+      "note": "2026-10-17 densif — last maku1 gap shi0002. Listing photo is 2-up; curated crop = left foil card → art.mercari.jpg."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m17059616523",
+      "printedRef": "忍伝-016",
+      "title": "NARUTO疾風伝カードゲーム　犬塚キバ　忍伝-016",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m17059616523_1.jpg",
+      "note": "2026-10-17 densif — last maku1 gap shi0016 (replaces cleared wrong Suruga booster bind)."
     }
   ]
 }

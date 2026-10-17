@@ -12,6 +12,7 @@ import {
   formatSurugaDataCarddassListingsTsv,
   mergeSurugaDataCarddassListings,
   parseSurugaDataCarddassCategoryHtml,
+  parseSurugaDataCarddassKaitoriHtml,
   parseSurugaDataCarddassListingsTsv,
 } from "../parse/catalogues";
 
@@ -24,7 +25,10 @@ export function mergeSurugaHtmlIntoListingsTsv(
   html: string,
   tsvPath = LISTINGS_TSV,
 ): { before: number; after: number; added: number; path: string } {
-  const fromHtml = parseSurugaDataCarddassCategoryHtml(html);
+  const fromHtml = mergeSurugaDataCarddassListings(
+    parseSurugaDataCarddassCategoryHtml(html),
+    parseSurugaDataCarddassKaitoriHtml(html),
+  );
   const existing = parseSurugaDataCarddassListingsTsv(
     readFileSync(tsvPath, "utf8"),
   );

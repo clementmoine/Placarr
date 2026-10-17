@@ -169,6 +169,111 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
       expect(folded.prints[0]?.setCode).toBe("s1");
       expect(folded.prints[0]?.setCodes).toEqual(["s1", "s5"]);
     });
+
+    it("keeps manga prerelease and promo titles off the retail collector", () => {
+      const folded = foldNarutoCatalogueRecords({
+        prints: [
+          {
+            printKey: "naruto:s1-ni0019",
+            setCode: "s1",
+            number: "ni0019",
+            cardType: "ni",
+          },
+          {
+            printKey: "naruto:s1-ni0019-prerelease",
+            setCode: "s1",
+            number: "ni0019-prerelease",
+            cardType: "ni",
+            grouping: "prerelease",
+          },
+          {
+            printKey: "naruto:s1-ni0023",
+            setCode: "s1",
+            number: "ni0023",
+            cardType: "ni",
+          },
+          {
+            printKey: "naruto:promo-ni0023",
+            setCode: "promo",
+            number: "ni0023-promo",
+            cardType: "ni",
+            grouping: "promo",
+          },
+        ],
+        titles: [
+          {
+            printKey: "naruto:s1-ni0019",
+            lang: "fr",
+            fullName: "Naruto Uzumaki",
+          },
+          {
+            printKey: "naruto:s1-ni0019-prerelease",
+            lang: "fr",
+            fullName: "Naruto Uzumaki",
+            rarity: "prerelease",
+          },
+          {
+            printKey: "naruto:promo-ni0023",
+            lang: "fr",
+            fullName: "Kakashi Hatake",
+            rarity: "promo",
+          },
+        ],
+      });
+      const keys = folded.prints.map((p) => p.printKey).sort();
+      expect(keys).toEqual([
+        "naruto:promo-ni0023",
+        "naruto:s1-ni0019",
+        "naruto:s1-ni0019-prerelease",
+        "naruto:s1-ni0023",
+      ]);
+      expect(
+        folded.titles.find((t) => t.printKey === "naruto:s1-ni0019-prerelease"),
+      ).toMatchObject({ fullName: "Naruto Uzumaki", rarity: "prerelease" });
+      expect(
+        folded.titles.find((t) => t.printKey === "naruto:promo-ni0023"),
+      ).toMatchObject({ fullName: "Kakashi Hatake", rarity: "promo" });
+    });
+
+    it("does not fold cards-index promo/prerelease onto retail via bare card hint", () => {
+      const folded = foldNarutoCardsIndex({
+        version: 1,
+        pack: "naruto/carddass",
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        cards: {
+          "naruto:s1-ni0024": {
+            set: "ninja",
+            card: "ni024",
+            name: "Zabuza Momochi",
+            langs: { fr: { art: "art.jpg" } },
+          },
+          "naruto:promo-ni0024": {
+            set: "promo",
+            card: "ni024",
+            name: "Zabuza Momochi",
+            rarity: "promo",
+            langs: {},
+          },
+          "naruto:ni-0019": {
+            set: "ninja",
+            card: "ni0019",
+            langs: { fr: { art: "art.jpg" } },
+          },
+          "naruto:ni-0019-prerelease": {
+            set: "prerelease",
+            card: "ni0019",
+            rarity: "prerelease",
+            langs: { fr: { name: "Naruto Uzumaki" } },
+          },
+        },
+      });
+      expect(Object.keys(folded.cards).sort()).toEqual([
+        "naruto:ni-0019",
+        "naruto:promo-ni0024",
+        "naruto:s1-ni0019-prerelease",
+        "naruto:s1-ni0024",
+      ]);
+    });
   });
 }
 

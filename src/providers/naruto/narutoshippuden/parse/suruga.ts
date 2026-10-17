@@ -132,13 +132,20 @@ export function parseSurugaShippudenListingsTsv(tsvText: string): SurugaShippude
     if (!trimmed || trimmed.startsWith("#")) continue;
     const [idRaw, printedRaw, ...titleParts] = trimmed.split("\t");
     const id = idRaw?.trim().toUpperCase();
-    const printed = printedRaw?.trim();
+    let printed = printedRaw?.trim();
     if (!id || !printed) continue;
     if (seen.has(id)) continue;
+    const title = titleParts.join("\t").trim();
+    // Prefer title-derived printed when the column is a stale prefix
+    // (e.g. 忍伝-2 from 忍伝-207) — that mis-bind installed figurines
+    // onto 忍伝-2 / 春野サクラ.
+    if (title) {
+      const fromTitle = parseSurugaShippudenPrintedFromTitle(title);
+      if (fromTitle) printed = fromTitle;
+    }
     const diskId = diskIdFromPrintedReference(printed);
     if (!diskId) continue;
     seen.add(id);
-    const title = titleParts.join("\t").trim();
     out.push({ id, printed, ...(title ? { title } : {}) });
   }
   return out;
@@ -201,14 +208,23 @@ export function foldSurugaShippudenListings(
   }
 
   return [...byDiskId.values()]
-    .map((c) => ({
-      family: c.family,
-      diskId: c.diskId,
-      printKey: c.printKey,
-      printed: c.printed,
-      title: c.title,
-      productIds: c.productIds,
-      faceUrl: surugaShippudenFaceUrl(c.productIds[0]!),
-    }))
+    .map((c) => {
+      // Prefer letter-prefixed Suruga ids (GL…, GG…) over pure numeric
+      // catalogue ids — the latter often share CDN paths with non-card SKUs.
+      const productIds = [...c.productIds].sort((a, b) => {
+        const aLetter = /^[A-Z]/i.test(a) ? 0 : 1;
+        const bLetter = /^[A-Z]/i.test(b) ? 0 : 1;
+        return aLetter - bLetter || a.localeCompare(b);
+      });
+      return {
+        family: c.family,
+        diskId: c.diskId,
+        printKey: c.printKey,
+        printed: c.printed,
+        title: c.title,
+        productIds,
+        faceUrl: surugaShippudenFaceUrl(productIds[0]!),
+      };
+    })
     .sort((a, b) => a.diskId.localeCompare(b.diskId));
 }

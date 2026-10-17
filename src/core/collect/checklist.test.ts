@@ -229,7 +229,9 @@ describe("la référence dans son set", () => {
 
 /*
   Les promos d'un set (grouping dans le printKey) sortent après le retail —
-  utile à l'intérieur d'une série Promo Year N.
+  utile à l'intérieur d'une série Promo Year N. Les avant-premières manga
+  (`prerelease`) passent **avant** le retail : ce sont chronologiquement les
+  premières cartes du set.
 */
 describe("ordre retail puis promos", () => {
   it("parks grouped prints after retail, grouping A→Z", () => {
@@ -274,6 +276,24 @@ describe("ordre retail puis promos", () => {
       "NI-001",
       "TE-001",
       "TA-001",
+    ]);
+  });
+
+  it("lists Naruto manga prereleases before retail, promos still after", async () => {
+    await import("@/providers/naruto/narutocarddass/identity");
+    const sorted = [
+      print("naruto:s1-ni0019", "s1", "NI-019"),
+      print("naruto:s1-ni0019-prerelease", "s1", "NI-019 · prerelease"),
+      print("naruto:s1-ni0001", "s1", "NI-001"),
+      print("naruto:s1-ta0004-prerelease", "s1", "TA-004 · prerelease"),
+      print("naruto:s1-ni0023-promo", "s1", "NI-023 · promo"),
+    ].sort(compareChecklistPrints);
+    expect(sorted.map((p) => p.printKey)).toEqual([
+      "naruto:s1-ni0019-prerelease",
+      "naruto:s1-ta0004-prerelease",
+      "naruto:s1-ni0001",
+      "naruto:s1-ni0019",
+      "naruto:s1-ni0023-promo",
     ]);
   });
 

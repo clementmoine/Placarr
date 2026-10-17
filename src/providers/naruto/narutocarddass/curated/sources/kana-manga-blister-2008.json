@@ -42,19 +42,19 @@
   "tomeMapping": [
     { "tome": 1, "name": "Devenir Chef", "number": "ta221", "kind": "inedite" },
     { "tome": 2, "name": "Sasuke", "number": "ni236", "kind": "inedite" },
-    { "tome": 3, "name": "Sakura et Ino", "number": "ni206", "kind": "s5-reprint" },
-    { "tome": 4, "name": "Pichenette", "number": "te192", "kind": "s5-reprint" },
-    { "tome": 5, "name": "Promesse Eternelle", "number": "ta214", "kind": "s5-reprint" },
+    { "tome": 3, "name": "Sakura et Ino", "number": "ni206", "kind": "mij-reprint", "note": "2026-10-17 — imprint MIJ utilisateur → s6-ni0206 + S5 MIB." },
+    { "tome": 4, "name": "Pichenette", "number": "te192", "kind": "mij-reprint", "note": "2026-10-17 — photo Vinted MIJ 2008 → s6-te0192 (vinted-lujee1234-serie5-mij-2018.json)." },
+    { "tome": 5, "name": "Promesse Eternelle", "number": "ta214", "kind": "mij-reprint", "note": "2026-10-17 — mint s6 par consensus canal Kana ; photo imprint encore souhaitée." },
     { "tome": 6, "name": "Tayuya", "number": "ni253", "kind": "inedite" },
     { "tome": 7, "name": "Sakon", "number": "ni252", "kind": "inedite" },
-    { "tome": 8, "name": "Dédoublement", "number": "te205", "kind": "s5-reprint" },
-    { "tome": 9, "name": "Tentative désespérée", "number": "ta219", "kind": "s5-reprint" },
+    { "tome": 8, "name": "Dédoublement", "number": "te205", "kind": "mij-reprint", "note": "2026-10-17 — photo Vinted MIJ TE-205 (vinted-lsdestroyed21-te205-mij-2026.json)." },
+    { "tome": 9, "name": "Tentative désespérée", "number": "ta219", "kind": "mij-reprint", "note": "2026-10-17 — mint s6 par consensus canal Kana ; photo imprint encore souhaitée." },
     { "tome": 10, "name": "Shikamaru", "number": "ni232", "kind": "inedite" },
-    { "tome": 11, "name": "Chôji Akimichi", "number": "ni239", "kind": "s5-reprint" },
-    { "tome": 12, "name": "Neji Hyûga", "number": "ni240", "kind": "s5-reprint", "note": "Confirmé par filename officiel NINJA-240.jpg sur mangakana ; t347 « Neji N°240 version 2008 ». Catalogue Placarr : naruto:ni-0240 → set s5." },
-    { "tome": 13, "name": "Jeu de Hasard", "number": "ta227", "kind": "s5-reprint" },
+    { "tome": 11, "name": "Chôji Akimichi", "number": "ni239", "kind": "mij-reprint", "note": "2026-10-17 — imprint MIJ utilisateur → s6-ni0239 + S5 MIB (collage NINJA-239.jpg)." },
+    { "tome": 12, "name": "Neji Hyûga", "number": "ni240", "kind": "mij-reprint", "note": "Confirmé NINJA-240.jpg + t347. Dual imprint 2026-10-17 : MIJ → s6-ni0240 + MIB → s5-ni0240 (comme TA-227)." },
+    { "tome": 13, "name": "Jeu de Hasard", "number": "ta227", "kind": "mij-reprint" },
     { "tome": 14, "name": "Pouvoir de la Marque Maléfique", "number": "ta226", "kind": "inedite" },
-    { "tome": 15, "name": "Soin Typique", "number": "te207", "kind": "s5-reprint" }
+    { "tome": 15, "name": "Soin Typique", "number": "te207", "kind": "mij-reprint", "note": "2026-10-17 — mint s6 par consensus canal Kana ; photo imprint encore souhaitée." }
   ],
   "collageImages": {
     "note": "Filenames dans le HTML Wayback (hotlink mangakana.dlpdomain.com) — **CDX vide** : les JPG n'ont pas été archivés, seuls les noms restent. Mapping type-numéro = printKey.",
@@ -79,7 +79,7 @@
   "stillOpen": [
     "Photo blister scellé manga + carte visible (objet physique 2026)",
     "Annonce Kana ne dit pas « sous blister » explicitement dans le HTML archivé — les forums l'ajoutent",
-    "7ᵉ inédite : Kana annonce 7 ; collage + forums en montrent 6 clairement S6 + Neji NI-240 classé Rare/S5",
+    "7ᵉ inédite (2026-10-17) : mismatch marketing Kana/forum « 7 » vs 6 labels (Inédite) + 6 trous Ultrajeux — pas de 7ᵉ numéro ; Neji/Soin Typique écartés ; seul falsificateur = photo présentoir Kana",
     "JPG collage : non archivés Wayback (filenames HTML only)",
     "Mint SKU scellés manga tome-par-tome (attestation-only jusqu'à packshot)"
   ]

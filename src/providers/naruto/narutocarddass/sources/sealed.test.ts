@@ -494,10 +494,45 @@ import { germanSealedReleases, germanSetCode, classifyJapaneseRelease, declaredK
         "ta214",
         "ta219",
       ]);
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 3)).toMatchObject({
+        number: "ni206",
+        kind: "mij-reprint",
+      });
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 4)).toMatchObject({
+        number: "te192",
+        kind: "mij-reprint",
+      });
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 5)).toMatchObject({
+        number: "ta214",
+        kind: "mij-reprint",
+      });
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 8)).toMatchObject({
+        number: "te205",
+        kind: "mij-reprint",
+      });
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 9)).toMatchObject({
+        number: "ta219",
+        kind: "mij-reprint",
+      });
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 11)).toMatchObject({
+        number: "ni239",
+        kind: "mij-reprint",
+      });
       expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 12)).toMatchObject({
         number: "ni240",
-        kind: "s5-reprint",
+        kind: "mij-reprint",
       });
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 13)).toMatchObject({
+        number: "ta227",
+        kind: "mij-reprint",
+      });
+      expect(dig_kanaMangaBlister2008.tomeMapping.find((row) => row.tome === 15)).toMatchObject({
+        number: "te207",
+        kind: "mij-reprint",
+      });
+      expect(
+        dig_kanaMangaBlister2008.tomeMapping.filter((row) => row.kind === "mij-reprint"),
+      ).toHaveLength(9);
     });
   });
 }

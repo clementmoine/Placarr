@@ -106,28 +106,46 @@ function normalizeNarutoFoldPrintKey(key: string): string {
  * Fold bucket: one tile per collector (prefix+number+grouping).
  * Set-scoped duplicates and unpadded stubs collapse here; `expandNarutoPrintsToSetScoped`
  * re-mints membership keys from `setCodes` afterward.
+ *
+ * Prefer a candidate that **keeps** promo / prerelease grouping. Calling
+ * `narutoDiskCardId(parsed.number)` first would resolve `ni0019` and fold
+ * `s1-ni0019-prerelease` titles onto retail — empty promo/prerelease rows.
  */
 function narutoFoldGroupKey(printKey: string, numberHint?: string): string {
   const key = normalizeNarutoFoldPrintKey(printKey);
   const parsed = parsePrintKey(key);
   if (!parsed || parsed.game !== "naruto") return key;
-  const number = numberHint?.trim() || parsed.number;
-  const raw = isNarutoCatalogueSetCode(parsed.set)
-    ? parsed.grouping
-      ? `${parsed.number}-${parsed.grouping}`
+  let grouping = parsed.grouping?.trim().toLowerCase() || null;
+  // Set segment alone encodes the variant (`naruto:promo-ni0023`).
+  if (!grouping && parsed.set === "promo") grouping = "promo";
+  if (!grouping && parsed.set === "prerelease") grouping = "prerelease";
+  const fromParsed = isNarutoCatalogueSetCode(parsed.set)
+    ? grouping
+      ? `${parsed.number}-${grouping}`
       : parsed.number
-    : parsed.grouping
-      ? `${parsed.set}${parsed.number}-${parsed.grouping}`
+    : grouping
+      ? `${parsed.set}${parsed.number}-${grouping}`
       : `${parsed.set}${parsed.number}`;
-  const disk =
-    narutoDiskCardId(number) ?? narutoDiskCardId(raw) ?? raw;
+  const hint = numberHint?.trim() || "";
+  /*
+    `foldNarutoCardsIndex` passes `entry.card` as hint — often the bare retail
+    id (`ni024`) even on `promo-ni024` / `*-prerelease` keys. Never let that
+    strip a more specific grouping encoded in the printKey.
+  */
+  const hintKeepsGrouping =
+    !grouping ||
+    !hint ||
+    hint.toLowerCase().includes(`-${grouping}`) ||
+    (narutoDiskCardId(hint) ?? "").toLowerCase().includes(`-${grouping}`);
+  const candidate = hint && hintKeepsGrouping ? hint : fromParsed;
+  const disk = narutoDiskCardId(candidate) ?? candidate
   /*
     Attested FR S6 inserts keep their own set-scoped identity so they are not
     folded onto a retail reprint of the same number.
   */
   if (
     parsed.set.toLowerCase() === "s6" &&
-    (isNarutoS6FrPrintedNumber(number) ||
+    (isNarutoS6FrPrintedNumber(candidate) ||
       isNarutoS6FrPrintedNumber(parsed.number))
   ) {
     return `s6:${disk.toLowerCase()}`;

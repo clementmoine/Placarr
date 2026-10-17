@@ -8,7 +8,10 @@ import { packCardsDir, packCatalogDb, packProductsIndexPath, packSealedProductsD
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import sharp from "sharp";
 import { buildFrenchNinjaRanksTitles } from "./titles";
-import { buildNinjaRanksFromLedgers } from "../pipeline/ledgers";
+import {
+  buildEuropeanNsFromLedger,
+  buildNinjaRanksFromLedgers,
+} from "../pipeline/ledgers";
 import {
   cutImadokiSheet,
   ingestInkworksProducts,
@@ -257,10 +260,11 @@ import type { ImadokiSheet } from "../parse/catalogues";
     it("writes attested locale titles then fills shared names from English", () => {
       tmpDataRoot();
       buildNinjaRanksFromLedgers();
+      buildEuropeanNsFromLedger();
       const report = buildFrenchNinjaRanksTitles();
-      // 72 FR checklist + 2 FR hors base (ff-2, sd-5) + IT attestés (nr + ff).
+      // 72 FR checklist + FR hors base (ff-2, sd-5, ns-3) + IT attestés (nr + ff).
       expect(report.ledgerRows).toBe(72);
-      expect(report.languageSpecificRows).toBeGreaterThanOrEqual(2);
+      expect(report.languageSpecificRows).toBeGreaterThanOrEqual(3);
       expect(report.titles).toBe(report.ledgerRows + report.languageSpecificRows);
       expect(report.sharedFromEnglish).toBeGreaterThan(0);
       expect(report.skipped).toEqual([]);
@@ -268,13 +272,14 @@ import type { ImadokiSheet } from "../parse/catalogues";
 
       expect(frenchTitle("naruto:nr-0001")).toBe("Et voici les ninjas !");
       expect(frenchTitle("naruto:nr-0044")).toBe("Gaï");
+      expect(frenchTitle("naruto:ns-0003")).toBe("Gaï");
       expect(frenchTitle("naruto:nr-0058")).toBe("Hokage le 3e");
       expect(frenchTitle("naruto:nr-0066")).toBe("Groupe de Konohamaru");
       expect(frenchTitle("naruto:nr-0068")).toBe("Second Examen des Survivants");
       expect(frenchTitle("naruto:nr-0070")).toBe("Kakashi-Zabuza");
       expect(frenchTitle("naruto:nr-0071")).toBe("Carte");
       expect(frenchTitle("naruto:nr-0057")).toBe("Dosu");
-      expect(frenchTitle("naruto:ff-0001")).toBe("Guy - Kakashi");
+      expect(frenchTitle("naruto:ff-0001")).toBe("Gaï - Kakashi");
       expect(frenchTitle("naruto:ff-0002")).toBe("DEMON-RENARD");
       expect(frenchTitle("naruto:sd-0005")).toBe("HOKAGE LE 4E");
       expect(frenchTitle("naruto:nw-0001")).toBe("Naruto");

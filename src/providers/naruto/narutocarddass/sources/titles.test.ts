@@ -234,13 +234,11 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       expect(isNarutoS6FrPrintedNumber("ni236")).toBe(true);
       expect(isNarutoS6FrPrintedNumber("ni0236")).toBe(true);
       expect(isNarutoS6FrPrintedNumber("ta221")).toBe(true);
-      expect(isNarutoS6FrPrintedNumber("ta214")).toBe(false);
-      expect(isNarutoS6FrPrintedNumber("ni240")).toBe(false);
       expect(isNarutoS6FrPrintedNumber("ni268")).toBe(false);
       expect(isNarutoS6FrPrintedNumber("te191")).toBe(false);
     });
 
-    it("checklist FR s6 = 6 inédites + MIJ reprints (ta227), not S5 blister", () => {
+    it("checklist FR s6 = 6 inédites + 9 Kana blister MIJ reprints", () => {
       expect(narutoS6FrInediteNumbers().sort()).toEqual([
         "ni232",
         "ni236",
@@ -251,9 +249,22 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       ]);
       expect(isNarutoS6FrInediteNumber("ni236")).toBe(true);
       expect(isNarutoS6FrInediteNumber("ta227")).toBe(false);
-      expect(isNarutoS6FrPrintedNumber("ta227")).toBe(true);
-      expect(isNarutoS6FrPrintedNumber("ta0227")).toBe(true);
-      expect(isNarutoS6FrPrintedNumber("te192")).toBe(false);
+      expect(isNarutoS6FrInediteNumber("ni240")).toBe(false);
+      for (const n of [
+        "ni206",
+        "te192",
+        "ta214",
+        "te205",
+        "ta219",
+        "ni239",
+        "ni240",
+        "ta227",
+        "te207",
+      ]) {
+        expect(isNarutoS6FrPrintedNumber(n)).toBe(true);
+      }
+      expect(isNarutoS6FrPrintedNumber("ni234")).toBe(false);
+      expect(isNarutoS6FrPrintedNumber("te191")).toBe(false);
     });
 
     it("lists disk number forms for membership SQL", () => {
@@ -274,7 +285,14 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
           appearances: {
             ta0221: { ja: "maki11" },
             ta0227: { fr: "s5" },
-            ta0214: { fr: ["s5", "s6"] },
+            ni0240: { fr: "s5", ja: "maki11" },
+            ni0206: { fr: "s5" },
+            ni0239: { fr: "s5" },
+            te0192: { fr: "s5" },
+            ta0214: { fr: "s5" },
+            te0205: { fr: "s5" },
+            ta0219: { fr: ["s5", "s6"] },
+            te0207: { fr: "s5" },
           },
         })}\n`,
       );
@@ -286,7 +304,15 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       expect(raw?.appearances.ta0221?.fr).toBe("s6");
       expect(raw?.appearances.ta0221?.ja).toBe("maki11");
       expect(raw?.appearances.ta0227?.fr).toEqual(["s5", "s6"]);
-      expect(raw?.appearances.ta0214?.fr).toBe("s5");
+      expect(raw?.appearances.ni0240?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.ni0240?.ja).toBe("maki11");
+      expect(raw?.appearances.ni0206?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.ni0239?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.te0192?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.ta0214?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.te0205?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.ta0219?.fr).toEqual(["s5", "s6"]);
+      expect(raw?.appearances.te0207?.fr).toEqual(["s5", "s6"]);
     });
   });
 }

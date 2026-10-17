@@ -316,6 +316,14 @@ import { parseDataCarddassPrinted } from "../printKey";
         number: "239t",
       });
     });
+
+    it("includes 2026-10-17 NF Formation gap fills", () => {
+      const refs = dataCarddassMercariIngestFaces().map((f) => f.printedRef);
+      for (const printed of ["NF-297", "NF-282", "NF-318", "NF-328", "NF-338"]) {
+        expect(refs).toContain(printed);
+        expect(parseDataCarddassPrinted(printed)).toMatchObject({ set: "nf" });
+      }
+    });
   });
 }
 

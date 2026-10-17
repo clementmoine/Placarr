@@ -1,10 +1,10 @@
 {
   "source": "Mercari pasted Data Carddass leads (Narutimate)",
-  "observed": "2026-09-25",
+  "observed": "2026-10-17",
   "crawlLive": false,
   "ingest": "curated-faces",
   "lang": "ja",
-  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only. 2026-09-25: m61124182960 = Jump Festa 大会限定 うずまきナルト = DNP-030 / DMP-000 (same face; Mission barcode table nao-yoshi).",
+  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only. 2026-09-25: m61124182960 = Jump Festa 大会限定 うずまきナルト = DNP-030 / DMP-000 (same face; Mission barcode table nao-yoshi). 2026-10-17: +5 NF gap-fill (297/282/318/328/338).",
   "not": [
     "crawl",
     "shops-og-image",
@@ -57,6 +57,46 @@
       "ingest": true,
       "url": "https://static.mercdn.net/item/detail/orig/photos/m20087558151_1.jpg?1751630603",
       "note": "2026-10-17 densif — print_assets gap. Reverse photo confirms DN-239T; front = 薬師カブト チャクラ解剖刀 3800."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m80469964423",
+      "printedRef": "NF-297",
+      "title": "ナルティメット フォーメーション NF-297 うずまきナルトNARUTO",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m80469964423_1.jpg?1790396263",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m64972966017",
+      "printedRef": "NF-282",
+      "title": "NARUTO ナルティメットフォーメーション 干柿鬼鮫 NF-282 レア",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m64972966017_1.jpg?1792161488",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m13332813225",
+      "printedRef": "NF-318",
+      "title": "テマリ 口寄せ・扇舞降ろし NF-318【ナルティメットフォーメーション】",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m13332813225_1.jpg?1779368626",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m51751379600",
+      "printedRef": "NF-328",
+      "title": "NARUTO ナルティメットフォーメーション 三代目火影 NF-328",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m51751379600_1.jpg?1792238352",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m31913546150",
+      "printedRef": "NF-338",
+      "title": "ナルティメットフォーメーション うちはイタチ NF-338",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m31913546150_1.jpg?1775293025",
+      "note": "2026-10-17 densif — print_assets gap."
     }
   ]
 }

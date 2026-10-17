@@ -1,0 +1,33 @@
+{
+  "source": "Coleka — Cartes Mc Donald's (FR)",
+  "observed": "2026-09-04",
+  "umbrella": {
+    "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-pokemon/cartes-mc-donald-s",
+    "scrape": false,
+    "note": "Parent — ne pas crawler. Feuilles année par année."
+  },
+  "branches": [
+    {
+      "id": "m23fr",
+      "setId": "2023sv",
+      "lang": "fr",
+      "label": "Promo 2023 M23fr",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-pokemon/cartes-mc-donald-s/promo-2023-m23fr_r35163",
+      "listingPath": "/fr/cartes-de-collection/cartes-pokemon/cartes-mc-donald-s/promo-2023-m23fr_r35163",
+      "listedCount": 15,
+      "scrape": true
+    },
+    {
+      "id": "m24fr",
+      "setId": "2024sv",
+      "lang": "fr",
+      "label": "Promo 2024 M24fr",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-pokemon/cartes-mc-donald-s/promo-2024-m24fr_r42012",
+      "listingPath": "/fr/cartes-de-collection/cartes-pokemon/cartes-mc-donald-s/promo-2024-m24fr_r42012",
+      "listedCount": 15,
+      "scrape": true,
+      "note": "URL à confirmer si 404 — relancer avec ledger."
+    }
+  ],
+  "not": ["umbrella-crawl", "retail-sv-sets", "live-covered"]
+}

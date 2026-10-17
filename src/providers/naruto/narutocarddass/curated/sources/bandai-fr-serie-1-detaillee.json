@@ -1,0 +1,1359 @@
+{
+  "source": "Google Doc Bandai FR — Série 1 détaillée",
+  "observed": "2026-08-29",
+  "url": "https://docs.google.com/document/d/1ugevbW9XwrK1_ui0Zo1UF6W2Nl95vvE67KgcQAEX-os",
+  "docId": "1ugevbW9XwrK1_ui0Zo1UF6W2Nl95vvE67KgcQAEX-os",
+  "line": "carddass-fr",
+  "staging": {
+    "txt": "staging/bandai-fr-us-drive/docs/serie-1-detaillee.txt",
+    "docx": "staging/bandai-fr-us-drive/docx/serie-1.docx"
+  },
+  "marketing": {
+    "releaseDate": "2006-08-04",
+    "officialDifferentCardsClaim": 184,
+    "collectorTotal": 188,
+    "holos": 33,
+    "communes": 155,
+    "clients": 4,
+    "ninjas": 61,
+    "techniques": 62,
+    "tactiques": 61,
+    "deckExclusives": 31,
+    "deckHolos": 2,
+    "prereleaseCount": 10,
+    "prereleaseNonHoloAltsOfHolos": 4,
+    "note": "Marketing « 184 » + 4 alts → 188 (doc). User 2026-09-03 : les 10 `prereleaseListed` sont de vraies variantes (~10 €) — dig Estimation sur fullTen ; total catalogue à recaler si besoin."
+  },
+  "prereleaseListed": [
+    "ni025",
+    "ni019",
+    "ni047",
+    "ni027",
+    "ta005",
+    "ta004",
+    "te015",
+    "te007",
+    "te003",
+    "te036"
+  ],
+  "cards": [
+    {
+      "printKey": "cl001",
+      "family": "cl",
+      "number": 1,
+      "title": "INARI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "cl002",
+      "family": "cl",
+      "number": 2,
+      "title": "TAZUNA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "cl003",
+      "family": "cl",
+      "number": 3,
+      "title": "GATO",
+      "holoMarker": false
+    },
+    {
+      "printKey": "cl004",
+      "family": "cl",
+      "number": 4,
+      "title": "MADAME SHIJIMI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni001",
+      "family": "ni",
+      "number": 1,
+      "title": "NARUTO UZUMAKI",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni002",
+      "family": "ni",
+      "number": 2,
+      "title": "SASUKE UCHIWA",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni003",
+      "family": "ni",
+      "number": 3,
+      "title": "SAKURA HARUNO",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni004",
+      "family": "ni",
+      "number": 4,
+      "title": "INO YAMANAKA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni005",
+      "family": "ni",
+      "number": 5,
+      "title": "SHIKAMARU NARA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni006",
+      "family": "ni",
+      "number": 6,
+      "title": "CHOJI AKIMICHI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni007",
+      "family": "ni",
+      "number": 7,
+      "title": "KONOHA-MARU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni008",
+      "family": "ni",
+      "number": 8,
+      "title": "IRUKA",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni009",
+      "family": "ni",
+      "number": 9,
+      "title": "MIZUKI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni010",
+      "family": "ni",
+      "number": 10,
+      "title": "EBISU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni011",
+      "family": "ni",
+      "number": 11,
+      "title": "KAKASHI HATAKE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni012",
+      "family": "ni",
+      "number": 12,
+      "title": "ASUMA SARUTOBI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni013",
+      "family": "ni",
+      "number": 13,
+      "title": "HOKAGE LE 3E",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni014",
+      "family": "ni",
+      "number": 14,
+      "title": "GOZU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni015",
+      "family": "ni",
+      "number": 15,
+      "title": "MEIZU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni016",
+      "family": "ni",
+      "number": 16,
+      "title": "HAKU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni017",
+      "family": "ni",
+      "number": 17,
+      "title": "HAKU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni018",
+      "family": "ni",
+      "number": 18,
+      "title": "ZABUZA MOMOCHI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni019",
+      "family": "ni",
+      "number": 19,
+      "title": "NARUTO UZUMAKI",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni019",
+      "family": "ni",
+      "number": 19,
+      "title": "NARUTO UZUMAKI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni020",
+      "family": "ni",
+      "number": 20,
+      "title": "SASUKE UCHIWA",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni021",
+      "family": "ni",
+      "number": 21,
+      "title": "SAKURA HARUNO",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni022",
+      "family": "ni",
+      "number": 22,
+      "title": "IRUKA",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni023",
+      "family": "ni",
+      "number": 23,
+      "title": "KAKASHI HATAKE",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni024",
+      "family": "ni",
+      "number": 24,
+      "title": "ZABUZA MOMOCHI",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni025",
+      "family": "ni",
+      "number": 25,
+      "title": "NARUTO UZUMAKI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni026",
+      "family": "ni",
+      "number": 26,
+      "title": "SASUKE UCHIWA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni027",
+      "family": "ni",
+      "number": 27,
+      "title": "SAKURA HARUNO",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni028",
+      "family": "ni",
+      "number": 28,
+      "title": "KIBA INUZUKA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni029",
+      "family": "ni",
+      "number": 29,
+      "title": "SHINO ABURAME",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni030",
+      "family": "ni",
+      "number": 30,
+      "title": "HINATA HYUGA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni031",
+      "family": "ni",
+      "number": 31,
+      "title": "ROCK LEE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni032",
+      "family": "ni",
+      "number": 32,
+      "title": "TENTEN",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni033",
+      "family": "ni",
+      "number": 33,
+      "title": "NEJI HYUGA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni034",
+      "family": "ni",
+      "number": 34,
+      "title": "KONOHA-MARU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni035",
+      "family": "ni",
+      "number": 35,
+      "title": "KAEDE YOSHINO",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni036",
+      "family": "ni",
+      "number": 36,
+      "title": "AKAMARU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni037",
+      "family": "ni",
+      "number": 37,
+      "title": "KAKASHI HATAKE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni038",
+      "family": "ni",
+      "number": 38,
+      "title": "YUHI KURENAI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni039",
+      "family": "ni",
+      "number": 39,
+      "title": "GAI MAITO",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni040",
+      "family": "ni",
+      "number": 40,
+      "title": "ZABUZA MOMOCHI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni041",
+      "family": "ni",
+      "number": 41,
+      "title": "ROCK LEE",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni042",
+      "family": "ni",
+      "number": 42,
+      "title": "NEJI HYUGA",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni043",
+      "family": "ni",
+      "number": 43,
+      "title": "HAKU",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni044",
+      "family": "ni",
+      "number": 44,
+      "title": "HOKAGE LE 3E",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni045",
+      "family": "ni",
+      "number": 45,
+      "title": "KABUTO YAKUSHI",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni046",
+      "family": "ni",
+      "number": 46,
+      "title": "NARUTO UZUMAKI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni047",
+      "family": "ni",
+      "number": 47,
+      "title": "SASUKE UCHIWA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni048",
+      "family": "ni",
+      "number": 48,
+      "title": "SAKURA HARUNO",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni049",
+      "family": "ni",
+      "number": 49,
+      "title": "IZUMO KAMIZUKI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni050",
+      "family": "ni",
+      "number": 50,
+      "title": "KOTETSU HAGANE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni051",
+      "family": "ni",
+      "number": 51,
+      "title": "TONBO TOBITAKE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni052",
+      "family": "ni",
+      "number": 52,
+      "title": "IBIKI MORINO",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni053",
+      "family": "ni",
+      "number": 53,
+      "title": "NINGAME",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni054",
+      "family": "ni",
+      "number": 54,
+      "title": "KARASU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni055",
+      "family": "ni",
+      "number": 55,
+      "title": "DOSU KINUTA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni056",
+      "family": "ni",
+      "number": 56,
+      "title": "ZAKU ABUMI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni057",
+      "family": "ni",
+      "number": 57,
+      "title": "KIN TSUCHI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ni058",
+      "family": "ni",
+      "number": 58,
+      "title": "GAARA",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni059",
+      "family": "ni",
+      "number": 59,
+      "title": "KANKURO",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ni060",
+      "family": "ni",
+      "number": 60,
+      "title": "TEMARI",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te001",
+      "family": "te",
+      "number": 1,
+      "title": "KUNAI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te002",
+      "family": "te",
+      "number": 2,
+      "title": "SHURIKEN",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te003",
+      "family": "te",
+      "number": 3,
+      "title": "SEXY-META",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te004",
+      "family": "te",
+      "number": 4,
+      "title": "HAREM",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te005",
+      "family": "te",
+      "number": 5,
+      "title": "MULTICLONAGE SUPRA",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te006",
+      "family": "te",
+      "number": 6,
+      "title": "METHODE DU HAKKE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te007",
+      "family": "te",
+      "number": 7,
+      "title": "SHARINGAN",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te007",
+      "family": "te",
+      "number": 7,
+      "title": "SHARINGAN",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te008",
+      "family": "te",
+      "number": 8,
+      "title": "DIVINATION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te009",
+      "family": "te",
+      "number": 9,
+      "title": "ARCANE SECRET DE LA PUISSANCE DE KONOHA, 1000 ANS DE SOUFFRANCE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te010",
+      "family": "te",
+      "number": 10,
+      "title": "KATON TECHNIQUE SUPRÊME DE LA BOULE DE FEU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te011",
+      "family": "te",
+      "number": 11,
+      "title": "TANDEM",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te012",
+      "family": "te",
+      "number": 12,
+      "title": "CLONAGE AQUEUX",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te013",
+      "family": "te",
+      "number": 13,
+      "title": "CAMOUFLAGE DANS LA BRUME",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te014",
+      "family": "te",
+      "number": 14,
+      "title": "L’ASSASSINAT SILENCIEUX",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te015",
+      "family": "te",
+      "number": 15,
+      "title": "DÉDOUBLEMENT",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te016",
+      "family": "te",
+      "number": 16,
+      "title": "MÉTAMORPHOSE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te017",
+      "family": "te",
+      "number": 17,
+      "title": "PERMUTATION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te018",
+      "family": "te",
+      "number": 18,
+      "title": "CAMOUFLAGE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te019",
+      "family": "te",
+      "number": 19,
+      "title": "HYPNOSE HALLUCINATOIRE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te020",
+      "family": "te",
+      "number": 20,
+      "title": "TECHNIQUE NINJA POUR DÉNOUER LES LIENS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te021",
+      "family": "te",
+      "number": 21,
+      "title": "DOTON TECHNIQUE DE LA DÉCAPITATION FATALE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te022",
+      "family": "te",
+      "number": 22,
+      "title": "TRANSPOSITION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te023",
+      "family": "te",
+      "number": 23,
+      "title": "MANIPULATION DES OMBRES",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te024",
+      "family": "te",
+      "number": 24,
+      "title": "DÉCUPLEMENT",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te025",
+      "family": "te",
+      "number": 25,
+      "title": "MULTICLONAGE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te026",
+      "family": "te",
+      "number": 26,
+      "title": "LA TORNADE DE KONOHA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te027",
+      "family": "te",
+      "number": 27,
+      "title": "LA BOURRASQUE DE KONOHA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te028",
+      "family": "te",
+      "number": 28,
+      "title": "LA DANSE DU CHIEN",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te029",
+      "family": "te",
+      "number": 29,
+      "title": "SHURIKEN FUMA, MOULIN D’OMBRE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te030",
+      "family": "te",
+      "number": 30,
+      "title": "L’ECLAIR POURFENDEUR",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te031",
+      "family": "te",
+      "number": 31,
+      "title": "EPÉE DE DÉCAPITATION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te032",
+      "family": "te",
+      "number": 32,
+      "title": "PRISON AQUEUSE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te033",
+      "family": "te",
+      "number": 33,
+      "title": "LE DRAGON AQUEUX",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te034",
+      "family": "te",
+      "number": 34,
+      "title": "LA GRANDE CATARACTE",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te035",
+      "family": "te",
+      "number": 35,
+      "title": "DÉPLOIEMENT AQUEUX FATAL",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te036",
+      "family": "te",
+      "number": 36,
+      "title": "LES DÉMONIAQUES MIROIRS DE GLACE",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te036",
+      "family": "te",
+      "number": 36,
+      "title": "LES DÉMONIAQUES MIROIRS DE GLACE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te037",
+      "family": "te",
+      "number": 37,
+      "title": "SHURIKEN FURTIF",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te038",
+      "family": "te",
+      "number": 38,
+      "title": "DISPARITION BRUMEUSE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te039",
+      "family": "te",
+      "number": 39,
+      "title": "ESSAIM D’INSECTES DESTRUCTEURS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te040",
+      "family": "te",
+      "number": 40,
+      "title": "GRIMPER AUX ARBRES",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te041",
+      "family": "te",
+      "number": 41,
+      "title": "LES CROCS TRAQUEURS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te042",
+      "family": "te",
+      "number": 42,
+      "title": "BYAKUGAN",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te043",
+      "family": "te",
+      "number": 43,
+      "title": "L’OMBRE DE LA FEUILLE MORTE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te044",
+      "family": "te",
+      "number": 44,
+      "title": "MOULIN",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te045",
+      "family": "te",
+      "number": 45,
+      "title": "IRRUPTION FRACASSANTE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te046",
+      "family": "te",
+      "number": 46,
+      "title": "GENJUTSU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te047",
+      "family": "te",
+      "number": 47,
+      "title": "ILLUSION DE PRÉSENCE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te048",
+      "family": "te",
+      "number": 48,
+      "title": "SHARINGAN",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te049",
+      "family": "te",
+      "number": 49,
+      "title": "MULTICLONAGE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te050",
+      "family": "te",
+      "number": 50,
+      "title": "CARTES NINJA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te051",
+      "family": "te",
+      "number": 51,
+      "title": "AIGUILLES",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te052",
+      "family": "te",
+      "number": 52,
+      "title": "ONDES CINGLANTES",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te053",
+      "family": "te",
+      "number": 53,
+      "title": "LA VITESSE DU SON",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te054",
+      "family": "te",
+      "number": 54,
+      "title": "LA LAME DU VENT",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te055",
+      "family": "te",
+      "number": 55,
+      "title": "TECHNIQUE DU MARIONNETTISTE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te056",
+      "family": "te",
+      "number": 56,
+      "title": "TROISIEME OEIL",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te057",
+      "family": "te",
+      "number": 57,
+      "title": "LE BOUCLIER DE SABLE",
+      "holoMarker": true
+    },
+    {
+      "printKey": "te058",
+      "family": "te",
+      "number": 58,
+      "title": "CAILLOU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te059",
+      "family": "te",
+      "number": 59,
+      "title": "MAKIBISHI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "te060",
+      "family": "te",
+      "number": 60,
+      "title": "TRICHE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta001",
+      "family": "ta",
+      "number": 1,
+      "title": "ICHIRAKU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta002",
+      "family": "ta",
+      "number": 2,
+      "title": "REVE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta003",
+      "family": "ta",
+      "number": 3,
+      "title": "BANDEAU FRONTAL À MOTIF DE FEUILLE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta004",
+      "family": "ta",
+      "number": 4,
+      "title": "UN PROFESSEUR ATTACHANT",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta005",
+      "family": "ta",
+      "number": 5,
+      "title": "LE DÉSASTRE DU DEMON RENARD A 9 QUEUES",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ta005",
+      "family": "ta",
+      "number": 5,
+      "title": "LE DÉSASTRE KYUBI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta006",
+      "family": "ta",
+      "number": 6,
+      "title": "MISSION : ATTRAPER TORA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta007",
+      "family": "ta",
+      "number": 7,
+      "title": "LE PARADIS DU BATIFOLAGE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta008",
+      "family": "ta",
+      "number": 8,
+      "title": "OUPS !",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta009",
+      "family": "ta",
+      "number": 9,
+      "title": "SOLITAIRE REVANCHARD",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta010",
+      "family": "ta",
+      "number": 10,
+      "title": "A BOUT DE SOUFFLE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta011",
+      "family": "ta",
+      "number": 11,
+      "title": "BINGO BOOK",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta012",
+      "family": "ta",
+      "number": 12,
+      "title": "LA PIRE DES CLIENTS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta013",
+      "family": "ta",
+      "number": 13,
+      "title": "GATO COMPANY",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta014",
+      "family": "ta",
+      "number": 14,
+      "title": "INCROYABLE TENSION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta015",
+      "family": "ta",
+      "number": 15,
+      "title": "SAKURA EN SON FOR INTÉRIEUR",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta016",
+      "family": "ta",
+      "number": 16,
+      "title": "ON FEUILLETTE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta017",
+      "family": "ta",
+      "number": 17,
+      "title": "ÉQUIPE DE TROIS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta018",
+      "family": "ta",
+      "number": 18,
+      "title": "DEBUT DE JOURNEE",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ta019",
+      "family": "ta",
+      "number": 19,
+      "title": "RECALÉ",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta020",
+      "family": "ta",
+      "number": 20,
+      "title": "ACADEMIE DES NINJAS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta021",
+      "family": "ta",
+      "number": 21,
+      "title": "SOINS",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ta022",
+      "family": "ta",
+      "number": 22,
+      "title": "ARMÉE DE KONOHA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta023",
+      "family": "ta",
+      "number": 23,
+      "title": "COMBAT DE CLONES",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta024",
+      "family": "ta",
+      "number": 24,
+      "title": "SERMENT PAR LA DOULEUR",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta025",
+      "family": "ta",
+      "number": 25,
+      "title": "ARRIVÉE DU HÉROS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta026",
+      "family": "ta",
+      "number": 26,
+      "title": "LE NINJA LE PLUS IMPRÉVISIBLE DU VILLAGE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta027",
+      "family": "ta",
+      "number": 27,
+      "title": "SANG DU CLAN UCHIWA",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta028",
+      "family": "ta",
+      "number": 28,
+      "title": "LÂCHE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta029",
+      "family": "ta",
+      "number": 29,
+      "title": "COMBAT INDÉCIS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta030",
+      "family": "ta",
+      "number": 30,
+      "title": "PERSPICACITÉ DE KAKASHI",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ta031",
+      "family": "ta",
+      "number": 31,
+      "title": "CUEILLETTE D’HERBES MÉDICINALES",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ta032",
+      "family": "ta",
+      "number": 32,
+      "title": "LE DÉMON",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta033",
+      "family": "ta",
+      "number": 33,
+      "title": "EXECUTION PUBLIQUE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta034",
+      "family": "ta",
+      "number": 34,
+      "title": "PERSONNE NE VEUT DE TOI",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta035",
+      "family": "ta",
+      "number": 35,
+      "title": "RECHERCHE D’UN TRÈFLE À 4 FEUILLES ROUGES",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta036",
+      "family": "ta",
+      "number": 36,
+      "title": "LAISSÉ AU REPOS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta037",
+      "family": "ta",
+      "number": 37,
+      "title": "INSTRUCTION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta038",
+      "family": "ta",
+      "number": 38,
+      "title": "HISTOIRE DU HÉROS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta039",
+      "family": "ta",
+      "number": 39,
+      "title": "PETIT COURAGE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta040",
+      "family": "ta",
+      "number": 40,
+      "title": "SHOOTING STAR",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta041",
+      "family": "ta",
+      "number": 41,
+      "title": "FORMATION DE DÉFENSE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta042",
+      "family": "ta",
+      "number": 42,
+      "title": "RESURRECTION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta043",
+      "family": "ta",
+      "number": 43,
+      "title": "DERNIERS RETRANCHEMENTS",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta044",
+      "family": "ta",
+      "number": 44,
+      "title": "REFUS DE MISSION",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta045",
+      "family": "ta",
+      "number": 45,
+      "title": "DESTRUCTION DU SCEAU",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta046",
+      "family": "ta",
+      "number": 46,
+      "title": "EXAMEN PRÉLIMINAIRE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta047",
+      "family": "ta",
+      "number": 47,
+      "title": "SILENCE !",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta048",
+      "family": "ta",
+      "number": 48,
+      "title": "RÈGLE DE L’EXAMEN",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta049",
+      "family": "ta",
+      "number": 49,
+      "title": "ATTAQUE SURPRISE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta050",
+      "family": "ta",
+      "number": 50,
+      "title": "NINJA OBJET",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta051",
+      "family": "ta",
+      "number": 51,
+      "title": "RENCONTRE AVEC DE PUISSANTS ADVERSAIRES",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta052",
+      "family": "ta",
+      "number": 52,
+      "title": "LA FIN DU DEMON",
+      "holoMarker": true
+    },
+    {
+      "printKey": "ta053",
+      "family": "ta",
+      "number": 53,
+      "title": "TEST ÉCRIT",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta054",
+      "family": "ta",
+      "number": 54,
+      "title": "CONTRE LA TRICHE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta055",
+      "family": "ta",
+      "number": 55,
+      "title": "ORDRE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta056",
+      "family": "ta",
+      "number": 56,
+      "title": "LAISSEZ-PASSER",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta057",
+      "family": "ta",
+      "number": 57,
+      "title": "TECHNIQUE INTERDITE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta058",
+      "family": "ta",
+      "number": 58,
+      "title": "PEINE DE COEUR",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta059",
+      "family": "ta",
+      "number": 59,
+      "title": "1ère ÉPREUVE DE L’EXAMEN DE SÉLECTION DES NINJAS DE MOYENNE CLASSE",
+      "holoMarker": false
+    },
+    {
+      "printKey": "ta060",
+      "family": "ta",
+      "number": 60,
+      "title": "CICATRICES EFFRAYANTES",
+      "holoMarker": false
+    }
+  ],
+  "cardCount": 188,
+  "uniquePrintKeys": 184
+}

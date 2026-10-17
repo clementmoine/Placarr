@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Type } from "@prisma/client";
+import { Type } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/db/prisma";
 
-import { requireGuestOrHigher } from "@/lib/auth";
+import {
+  canReadOwnedRow,
+  collectionUserIdFor,
+  getCollectionOwnerId,
+  requireGuestOrHigher,
+} from "@/lib/auth";
 import { withRequestUiLocale } from "@/core/locale/serverPreference";
 import { isShelfTypeReady } from "@/lib/shelfTypeReadiness";
 
@@ -30,11 +35,11 @@ import { reconcileOrphanedMetadataRefreshesForUser } from "@/core/collect/jobs/m
 import type { Locale } from "@/types/i18n";
 import type { ShelfBestItem } from "@/types/shelves";
 
-
 async function formatShelfWithItemPrices<
   T extends {
     type: string;
     name: string;
+    cardFormat?: string | null;
     items: Array<
       {
         id: string;
@@ -54,13 +59,21 @@ async function formatShelfWithItemPrices<
       name: item.name,
       metadataTitle: item.metadata?.title ?? null,
       aliases: metadataAliases(item.metadata?.aliases) ?? null,
+      printKey:
+        typeof item.printKey === "string" ? item.printKey : null,
     })),
     shelf.name,
   );
 
   const items = applySeriesDisplayNames(
     shelf.items.map((item) => {
-      const shelfContext = { type: shelf.type, name: shelf.name };
+      // cardFormat must reach getCoverImage — without it movies fall back to
+      // portrait (~0.707) and square LD/vinyl shelves pick the wrong Affiche.
+      const shelfContext = {
+        type: shelf.type,
+        name: shelf.name,
+        cardFormat: shelf.cardFormat ?? null,
+      };
       const presented = presentItemFromStorage(
         {
           ...item,
@@ -75,14 +88,13 @@ async function formatShelfWithItemPrices<
             id: item.id,
             name: item.name,
             barcode: item.barcode,
+            printKey:
+              typeof item.printKey === "string" ? item.printKey : null,
             metadataId: item.metadataId,
             metadataRefreshStartedAt:
               "metadataRefreshStartedAt" in item
                 ? (item.metadataRefreshStartedAt as
-                    | Date
-                    | string
-                    | null
-                    | undefined)
+                    Date | string | null | undefined)
                 : undefined,
             metadata: presented.metadata as MetadataResult | null | undefined,
           },
@@ -90,19 +102,34 @@ async function formatShelfWithItemPrices<
         ),
         priceByItemId.get(item.id) ?? null,
       );
+      // Grid cards only need imageUrl + a few metadata fields — drop the
+      // ranked attachment gallery from the wire payload (~0.65MB on Lorcana).
+      const metadata = presented.metadata as MetadataResult | null | undefined;
+      const slimMetadata: MetadataResult | null | undefined = metadata
+        ? {
+            title: metadata.title,
+            imageUrl: metadata.imageUrl,
+            platformKey: metadata.platformKey,
+            attachments: [],
+          }
+        : metadata;
       return {
         ...presented,
+        metadata: slimMetadata,
         id: item.id,
         ...prices,
       };
     }),
+    { shelfType: shelf.type },
   ) as Array<
     PresentedItem<PresentableItemInput> & {
       id: string;
       priceNew: number | null;
+      priceFoil?: number | null;
       priceUsed: number | null;
       priceUsedCIB: number | null;
       priceEstimated?: number | null;
+      priceEstimatedFoil?: number | null;
       priceLastUpdated: Date | string | null;
     }
   >;
@@ -194,23 +221,27 @@ export async function GET(req: NextRequest) {
       const id = searchParams.get("id");
       const q = searchParams.get("q");
       const lite = searchParams.get("lite") === "1";
+      const scopeUserId = await collectionUserIdFor(auth.user);
+      const collectionOwnerId =
+        auth.user.role === "guest" ? scopeUserId : await getCollectionOwnerId();
 
       if (id) {
-        const resolvedId = await resolveShelfId(id, auth.user.id);
+        const resolvedId = await resolveShelfId(id, scopeUserId);
         if (q) {
           const searchTerm = q.trim();
+          const shelfItemsInclude = {
+            where: {
+              OR: buildItemSearchConditions(searchTerm),
+            },
+            include: {
+              metadata: itemListMetadataInclude,
+            },
+            orderBy: { name: "asc" as const },
+          };
           const shelf = await prisma.shelf.findUnique({
             where: { id: resolvedId },
             include: {
-              items: {
-                where: {
-                  OR: buildItemSearchConditions(searchTerm),
-                },
-                include: {
-                  metadata: itemListMetadataInclude,
-                },
-                orderBy: { name: "asc" },
-              },
+              items: shelfItemsInclude,
             },
           });
 
@@ -221,50 +252,42 @@ export async function GET(req: NextRequest) {
             );
           }
 
-          // Only allow if user is admin or the owner
-          if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+          if (!canReadOwnedRow(auth.user, shelf.userId, collectionOwnerId)) {
             return NextResponse.json(
               { error: "Access denied" },
               { status: 403 },
             );
           }
 
-          await reconcileDuplicateItemSlugsOnShelf(shelf.id);
-          const refreshedShelf = await prisma.shelf.findUnique({
-            where: { id: resolvedId },
-            include: {
-              items: {
-                where: {
-                  OR: buildItemSearchConditions(searchTerm),
-                },
-                include: {
-                  metadata: itemListMetadataInclude,
-                },
-                orderBy: { name: "asc" },
-              },
-            },
-          });
-
-          const formatted = await formatShelfWithItemPrices(
-            refreshedShelf ?? shelf,
-            uiLocale,
+          const slugChanges = await reconcileDuplicateItemSlugsOnShelf(
+            shelf.id,
           );
-          const [withBest] = await withBestItems([{ id: formatted.id }]);
-          return NextResponse.json({
-            ...formatted,
-            bestItem: withBest.bestItem,
-          });
+          const shelfForFormat =
+            slugChanges > 0
+              ? ((await prisma.shelf.findUnique({
+                  where: { id: resolvedId },
+                  include: {
+                    items: shelfItemsInclude,
+                  },
+                })) ?? shelf)
+              : shelf;
+
+          // Detail grid does not use bestItem (ShelfCard / shelves list only).
+          return NextResponse.json(
+            await formatShelfWithItemPrices(shelfForFormat, uiLocale),
+          );
         }
 
+        const shelfItemsInclude = {
+          include: {
+            metadata: itemListMetadataInclude,
+          },
+          orderBy: { name: "asc" as const },
+        };
         const shelf = await prisma.shelf.findUnique({
           where: { id: resolvedId },
           include: {
-            items: {
-              include: {
-                metadata: itemListMetadataInclude,
-              },
-              orderBy: { name: "asc" },
-            },
+            items: shelfItemsInclude,
           },
         });
 
@@ -275,33 +298,25 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        // Only allow if user is admin or the owner
-        if (auth.user.role !== "admin" && shelf.userId !== auth.user.id) {
+        if (!canReadOwnedRow(auth.user, shelf.userId, collectionOwnerId)) {
           return NextResponse.json({ error: "Access denied" }, { status: 403 });
         }
 
-        await reconcileDuplicateItemSlugsOnShelf(shelf.id);
-        const refreshedShelf = await prisma.shelf.findUnique({
-          where: { id: resolvedId },
-          include: {
-            items: {
-              include: {
-                metadata: itemListMetadataInclude,
-              },
-              orderBy: { name: "asc" },
-            },
-          },
-        });
+        const slugChanges = await reconcileDuplicateItemSlugsOnShelf(shelf.id);
+        const shelfForFormat =
+          slugChanges > 0
+            ? ((await prisma.shelf.findUnique({
+                where: { id: resolvedId },
+                include: {
+                  items: shelfItemsInclude,
+                },
+              })) ?? shelf)
+            : shelf;
 
-        const formatted = await formatShelfWithItemPrices(
-          refreshedShelf ?? shelf,
-          uiLocale,
+        // Detail grid does not use bestItem (ShelfCard / shelves list only).
+        return NextResponse.json(
+          await formatShelfWithItemPrices(shelfForFormat, uiLocale),
         );
-        const [withBest] = await withBestItems([{ id: formatted.id }]);
-        return NextResponse.json({
-          ...formatted,
-          bestItem: withBest.bestItem,
-        });
       }
 
       if (q) {
@@ -309,7 +324,7 @@ export async function GET(req: NextRequest) {
 
         const shelves = await prisma.shelf.findMany({
           where: {
-            userId: auth.user.id,
+            userId: scopeUserId,
             OR: [
               { name: { contains: searchTerm, mode: "insensitive" } },
               {
@@ -333,14 +348,12 @@ export async function GET(req: NextRequest) {
           },
         });
 
-        return NextResponse.json(
-          lite ? shelves : await withBestItems(shelves),
-        );
+        return NextResponse.json(lite ? shelves : await withBestItems(shelves));
       }
 
       const shelves = await prisma.shelf.findMany({
         where: {
-          userId: auth.user.id,
+          userId: scopeUserId,
         },
         include: {
           _count: {
@@ -399,7 +412,7 @@ export async function POST(req: NextRequest) {
         slug: slugify(name),
         imageUrl,
         color,
-        type,
+        type: type as Type,
         ...(typeof cardFormat === "string" && cardFormat.trim()
           ? { cardFormat: cardFormat.trim() }
           : {}),
@@ -449,7 +462,6 @@ export async function PATCH(req: NextRequest) {
       color?: string | null;
       type?: Type;
       cardFormat?: string;
-      isPublic?: boolean;
     } = {};
     if (typeof body.name === "string") {
       data.name = body.name;
@@ -481,9 +493,6 @@ export async function PATCH(req: NextRequest) {
     }
     if (typeof body.cardFormat === "string" && body.cardFormat.trim()) {
       data.cardFormat = body.cardFormat.trim();
-    }
-    if (typeof body.isPublic === "boolean") {
-      data.isPublic = body.isPublic;
     }
 
     // Check if shelf exists and user has permission to update it

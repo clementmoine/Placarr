@@ -35,12 +35,19 @@ function isPlayInSearchHits(
 function isPlayInSearchUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return (
+    const hasCatalogueSearch =
       parsed.pathname.includes("/catalogue") &&
-      Boolean(parsed.searchParams.get("search")?.trim())
-    );
+      Boolean(parsed.searchParams.get("search")?.trim());
+    const hasCardSearch =
+      parsed.pathname.includes("/recherche") &&
+      parsed.searchParams.get("searchType") === "CARDS" &&
+      Boolean(parsed.searchParams.get("q")?.trim());
+    return hasCatalogueSearch || hasCardSearch;
   } catch {
-    return url.includes("/catalogue") && url.includes("search=");
+    return (
+      (url.includes("/catalogue") && url.includes("search=")) ||
+      (url.includes("/recherche") && url.includes("searchType=CARDS"))
+    );
   }
 }
 
@@ -75,9 +82,6 @@ export async function promotePlayInSearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Play-In] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[Play-In] Failed to promote durable search evidence:", error);
   }
 }

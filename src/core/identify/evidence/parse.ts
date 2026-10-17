@@ -5,6 +5,7 @@ import {
   isListingDiscardable,
   isLotListing,
   normalizeForTokens,
+  stripPlatformPhrasesForProductCompare,
 } from "@/core/identify/titleUtils";
 import { cleanSearchQuery } from "@/core/enrich/search/query";
 import {
@@ -33,10 +34,15 @@ function normalizeTitleIdentity(
   stripListingNoise = true,
 ): string {
   const title = stripListingNoise ? cleanSearchQuery(name) || name : name;
-  return normalizeForTokens(title)
+  const normalized = normalizeForTokens(title)
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+  // The platform is a separate compared fact (`platformKey`); a platform
+  // phrase left inside a canonical title ("… (Wii)") is identity noise that
+  // splits clusters of the same product. Keep the original when the title IS
+  // the platform (console hardware SKUs).
+  return stripPlatformPhrasesForProductCompare(normalized) || normalized;
 }
 
 function parseProductName(

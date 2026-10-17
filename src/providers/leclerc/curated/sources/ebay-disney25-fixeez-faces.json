@@ -1,0 +1,157 @@
+{
+  "source": "eBay Browse / gallery — Fixeez MSKU Disney Leclerc 2025",
+  "sourceId": "ebay",
+  "lang": "fr",
+  "setCode": "disney25",
+  "legacyItemId": "236423984089",
+  "marketplaceId": "EBAY_FR",
+  "listingUrl": "https://www.ebay.fr/itm/236423984089",
+  "note": "MSKU valueName = nom Fixeez (pas NNN). VariationIds depuis menuItemMap. Beaucoup en rupture — imageUrl galerie quand connue. f06 = Photo galerie Main de Mickey.",
+  "variations": [
+    {
+      "number": "f01",
+      "name": "Mickey",
+      "variationId": "536970657652",
+      "imageUrl": "https://i.ebayimg.com/images/g/BjAAAeSwUXdpArl9/s-l1600.jpg"
+    },
+    {
+      "number": "f02",
+      "name": "Pumbaa",
+      "variationId": "536970657653",
+      "imageUrl": "https://i.ebayimg.com/images/g/0q0AAeSwxPxpArl3/s-l1600.jpg"
+    },
+    {
+      "number": "f03",
+      "name": "Blanche-Neige",
+      "variationId": "536970657654",
+      "imageUrl": "https://i.ebayimg.com/images/g/vPUAAeSwGf9pArLF/s-l1600.jpg"
+    },
+    {
+      "number": "f04",
+      "name": "Rolly",
+      "variationId": "536970657655",
+      "imageUrl": "https://i.ebayimg.com/images/g/tHEAAeSwl7NpArYF/s-l1600.jpg"
+    },
+    {
+      "number": "f05",
+      "name": "Simba",
+      "variationId": "536970657656",
+      "imageUrl": "https://i.ebayimg.com/images/g/0SYAAeSwdappArfh/s-l1600.jpg"
+    },
+    {
+      "number": "f06",
+      "name": "Main de Mickey",
+      "variationId": "536970657657",
+      "imageUrl": "https://i.ebayimg.com/images/g/FVEAAeSwBY9pArmE/s-l1600.jpg"
+    },
+    {
+      "number": "f07",
+      "name": "Minnie",
+      "variationId": "536970657658",
+      "imageUrl": "https://i.ebayimg.com/images/g/3boAAeSwnRtpArK~/s-l1600.jpg"
+    },
+    {
+      "number": "f08",
+      "name": "Le Génie",
+      "variationId": "536970657659",
+      "imageUrl": "https://i.ebayimg.com/images/g/oDMAAeSwU6ppArX-/s-l1600.jpg"
+    },
+    {
+      "number": "f09",
+      "name": "Polochon",
+      "variationId": "536970657660",
+      "imageUrl": "https://i.ebayimg.com/images/g/ubQAAeSw03JpArmN/s-l1600.jpg"
+    },
+    {
+      "number": "f10",
+      "name": "Judy",
+      "variationId": "536970657661",
+      "imageUrl": "https://i.ebayimg.com/images/g/ihkAAeSwDqdpArmV/s-l1600.jpg"
+    },
+    {
+      "number": "f11",
+      "name": "Stitch",
+      "variationId": "536970657662",
+      "imageUrl": "https://i.ebayimg.com/images/g/kCAAAeSwgsVpiKp7/s-l1600.jpg"
+    },
+    {
+      "number": "f12",
+      "name": "Stitch (ananas)",
+      "variationId": "536970657663",
+      "imageUrl": "https://i.ebayimg.com/images/g/wQYAAeSwvilpArXc/s-l1600.jpg"
+    },
+    {
+      "number": "f13",
+      "name": "badge",
+      "variationId": "536970657664",
+      "imageUrl": "https://i.ebayimg.com/images/g/uOkAAeSwiM5pArfa/s-l1600.jpg"
+    },
+    {
+      "number": "f14",
+      "name": "Stitch (pastèque)",
+      "variationId": "536970657665",
+      "imageUrl": "https://i.ebayimg.com/images/g/uiYAAeSwfndpArLK/s-l1600.jpg"
+    },
+    {
+      "number": "f15",
+      "name": "Angel",
+      "variationId": "536970657666",
+      "imageUrl": "https://i.ebayimg.com/images/g/IqgAAeSwl2dpArXi/s-l1600.jpg"
+    },
+    {
+      "number": "f16",
+      "name": "Ariel",
+      "variationId": "536970657667",
+      "imageUrl": "https://i.ebayimg.com/images/g/2cAAAeSwDphpJ~0h/s-l1600.jpg",
+      "note": "Crop galerie photo 2 (grille 3×3, case Ariel) — pas de solo eBay."
+    },
+    {
+      "number": "f17",
+      "name": "Némo",
+      "variationId": "536970657668",
+      "imageUrl": "https://i.ebayimg.com/images/g/0MsAAeSwipFpArfL/s-l1600.jpg"
+    },
+    {
+      "number": "f18",
+      "name": "Elsa",
+      "variationId": "536970657669",
+      "imageUrl": "https://i.ebayimg.com/images/g/oIMAAeSw~gBpiKpd/s-l1600.jpg"
+    },
+    {
+      "number": "f19",
+      "name": "Olaf",
+      "variationId": "536970657670",
+      "imageUrl": "https://i.ebayimg.com/images/g/BKMAAeSwr09pArYM/s-l1600.jpg"
+    },
+    {
+      "number": "f20",
+      "name": "Raiponce",
+      "variationId": "536970657671",
+      "imageUrl": "https://i.ebayimg.com/images/g/1J4AAeSwOU1pArXq/s-l1600.jpg"
+    },
+    {
+      "number": "f21",
+      "name": "Woody",
+      "variationId": "536970657672",
+      "imageUrl": "https://i.ebayimg.com/images/g/3hQAAeSwnRtpArLU/s-l1600.jpg"
+    },
+    {
+      "number": "f22",
+      "name": "Stitch (coeur)",
+      "variationId": "536970657673",
+      "imageUrl": "https://i.ebayimg.com/images/g/soMAAeSwIJ5pArfQ/s-l1600.jpg"
+    },
+    {
+      "number": "f23",
+      "name": "Rémy",
+      "variationId": "536970657674",
+      "imageUrl": "https://i.ebayimg.com/images/g/ECsAAeSwtmNpArLP/s-l1600.jpg"
+    },
+    {
+      "number": "f24",
+      "name": "Vaiana",
+      "variationId": "536970657675",
+      "imageUrl": "https://i.ebayimg.com/images/g/wGcAAeSw9L5pArXz/s-l1600.jpg"
+    }
+  ]
+}

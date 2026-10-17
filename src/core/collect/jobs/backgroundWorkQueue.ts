@@ -1,5 +1,4 @@
-import { AsyncQueue } from "@/lib/async/asyncQueue";
-import { yieldToEventLoop } from "@/lib/async/yieldToEventLoop";
+import { AsyncQueue, yieldToEventLoop } from "@/lib/async";
 
 /**
  * Residual in-process pools for work that still runs inside Next or the worker

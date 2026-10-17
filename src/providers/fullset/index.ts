@@ -3,12 +3,11 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type {
   MetadataAdapterContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
 
 import { fetchFullSetItem, searchFullSet } from "./fetch";
@@ -16,13 +15,14 @@ import { createFullSetResolver, mapFullSetMetadata } from "./resolver";
 
 const fetchFromFullSet = createFullSetResolver();
 
-export const fullsetModule: ProviderModule = {
+export const fullsetModule = defineProvider({
   info: {
     id: "fullset",
     label: "Full Set",
     types: ["games", "hardware"],
     capabilities: ["identify", "price", "releaseDate"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     // Search is title-based over a collector index: results are validated
@@ -47,22 +47,7 @@ export const fullsetModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck("fullset", "Full Set", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://full-set.net/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
-  testHandlers: {
-    "fullset-metadata": {
-      label: "Full Set - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromFullSet({ name: query, type: "games" }),
-    },
-  },
+  metadataSearch: (query) => fetchFromFullSet({ name: query, type: "games" }),
   buildTeardownMetadataTasks(ctx) {
     return [
       ...teardownMetadataWhen(
@@ -120,6 +105,6 @@ export const fullsetModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchFullSetItem(hit.url));
   },
-};
+});
 
 export { createFullSetResolver, fetchFullSetItem, searchFullSet };

@@ -1,0 +1,20 @@
+{
+  "source": "Google Doc Panini Ninja Ranks (user paste 2026-08-29)",
+  "observed": "2026-08-29",
+  "url": "https://docs.google.com/document/d/1xVCrjZUdD3z4fZzoLXLu671cJsTKsxQKfAjC2yzjhdA",
+  "docId": "1xVCrjZUdD3z4fZzoLXLu671cJsTKsxQKfAjC2yzjhdA",
+  "line": "panini",
+  "ingest": "staging-only",
+  "staging": "staging/panini-ninja-ranks/",
+  "files": [
+    {
+      "staging": "staging/panini-ninja-ranks/ninja-ranks.txt"
+    },
+    {
+      "staging": "staging/panini-ninja-ranks/media/",
+      "note": "Embedded Doc images extracted from DOCX export"
+    }
+  ],
+  "not": ["carddass", "en-ccg", "kayou"],
+  "note": "Panini Ultra / Ninja Ranks — not Bandai Carddass. Staged for later Panini work only."
+}

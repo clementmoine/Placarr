@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "pack": "lorcana",
+  "updatedAt": "2026-08-27",
+  "notes": "Slots Ravensburger (fiche produit). Taux Enchanted / Legendary = consensus openings (pas officiel). Sets 9+ : Epic / Iconic dans le slot foil — poids à resserrer.",
+  "default": {
+    "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/boosters + community pull-rate compilations (lorcanacollectors / lorcanaplayer / gametrodon)",
+    "verifiedAt": "2026-08-27",
+    "notes": "12 cartes jouables + 1 marketing. Foil slot = seule porte Enchanted/Epic/Iconic.",
+    "cardsPerPack": 12,
+    "packsPerDisplay": 24,
+    "displaysPerCase": 4,
+    "slots": [
+      {
+        "id": "common",
+        "count": 6,
+        "kind": "dedicated",
+        "rarities": ["Common"]
+      },
+      {
+        "id": "uncommon",
+        "count": 3,
+        "kind": "dedicated",
+        "rarities": ["Uncommon"]
+      },
+      {
+        "id": "rare_plus",
+        "count": 2,
+        "kind": "shared",
+        "rarities": ["Rare", "Super Rare", "Legendary"]
+      },
+      {
+        "id": "foil",
+        "count": 1,
+        "kind": "shared",
+        "rarities": [
+          "Common",
+          "Uncommon",
+          "Rare",
+          "Super Rare",
+          "Legendary",
+          "Enchanted",
+          "Epic",
+          "Iconic"
+        ]
+      }
+    ],
+    "rarityHits": {
+      "Super Rare": {
+        "packsPerHit": 2,
+        "confidence": "community",
+        "source": "community box openings (~1 SR / 2–3 packs)",
+        "aliases": ["Super rare", "Très Rare", "Mythisch", "Super Rara"]
+      },
+      "Legendary": {
+        "packsPerHit": 5,
+        "displaysPerHit": 0.21,
+        "confidence": "community",
+        "source": "community (~1 Legendary / 5–6 packs ; ~4–5 / display)",
+        "aliases": ["Légendaire", "Legendär", "Leggendaria"]
+      },
+      "Enchanted": {
+        "packsPerHit": 96,
+        "displaysPerHit": 4,
+        "confidence": "community",
+        "source": "https://lorcanacollectors.com/lorcana-pull-rates/ — ≈1 Enchanted / casier 4 displays (96 packs)",
+        "notes": "Moyenne, pas une garantie. Une Enchanted précise ≈ 96 × N_Enchanted du set.",
+        "aliases": ["Enchantée", "Verzaubert", "Incantata"]
+      },
+      "Epic": {
+        "packsPerHit": 16,
+        "confidence": "community",
+        "notes": "Sets modernes (slot Rare+) — à resserrer par set.",
+        "aliases": ["Épique", "Episch", "Epica"]
+      },
+      "Iconic": {
+        "packsPerHit": 1500,
+        "confidence": "estimate",
+        "notes": "Très rare (foil slot) — ordre de grandeur community.",
+        "aliases": ["Iconique", "Ikonisch", "Iconica"]
+      }
+    }
+  },
+  "bySet": {
+    "1": {
+      "notes": "The First Chapter / Premier Chapitre — 12 Enchanted ; pas d'Epic/Iconic.",
+      "rarityHits": {
+        "Enchanted": {
+          "packsPerHit": 96,
+          "displaysPerHit": 4,
+          "confidence": "community",
+          "source": "First Chapter openings — ~1/96 packs, ~1/4 displays",
+          "aliases": ["Enchantée", "Verzaubert", "Incantata"]
+        }
+      }
+    }
+  }
+}

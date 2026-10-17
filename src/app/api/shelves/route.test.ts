@@ -26,6 +26,22 @@ vi.mock("@/core/commerce/pricing/resolver", () => ({
 
 vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: h.requireGuestOrHigher,
+  collectionUserIdFor: async (user: { id: string; role: string }) =>
+    user.role === "guest" ? "owner-1" : user.id,
+  getCollectionOwnerId: async () => "owner-1",
+  canReadOwnedRow: (
+    auth: { id: string; role: string },
+    rowUserId: string,
+    collectionOwnerId: string | null,
+  ) => {
+    if (auth.role === "admin") return true;
+    if (auth.id === rowUserId) return true;
+    return (
+      auth.role === "guest" &&
+      collectionOwnerId != null &&
+      rowUserId === collectionOwnerId
+    );
+  },
 }));
 vi.mock("@/lib/db/prisma", () => ({
   prisma: { shelf: h.shelf, item: h.item, barcodeCache: h.barcodeCache },
@@ -123,6 +139,27 @@ describe("GET /api/shelves — autorisation & cloisonnement", () => {
     await GET(get("/api/shelves"));
 
     expect(h.shelf.findMany.mock.calls[0][0].where.userId).toBe("u1");
+  });
+
+  it("le guest lit la collection du propriétaire", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(GUEST);
+    h.shelf.findMany.mockResolvedValue([]);
+
+    await GET(get("/api/shelves"));
+
+    expect(h.shelf.findMany.mock.calls[0][0].where.userId).toBe("owner-1");
+    expect(h.reconcileOrphanedMetadataRefreshesForUser).not.toHaveBeenCalled();
+  });
+
+  it("un visiteur anonyme (session guest vide) lit aussi la collection owner", async () => {
+    h.requireGuestOrHigher.mockResolvedValue({
+      user: { id: "", role: "guest" },
+    });
+    h.shelf.findMany.mockResolvedValue([]);
+
+    await GET(get("/api/shelves"));
+
+    expect(h.shelf.findMany.mock.calls[0][0].where.userId).toBe("owner-1");
   });
 
   it("attache le bestItem = l'item le mieux noté ayant un fond", async () => {

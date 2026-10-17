@@ -1,0 +1,22 @@
+{
+  "source": "Naruto Montréal (WordPress, 2013)",
+  "url": "https://narutomontreal.wordpress.com/",
+  "restPosts": "https://public-api.wordpress.com/rest/v1.1/sites/narutomontreal.wordpress.com/posts",
+  "observed": "2026-08-16",
+  "note": "Four quiz posts, not a catalogue. Quiz 1 hotlinked official Bandai USA JPEGs (`www.bandai.com/naruto/images/cards_s28/n1646.jpg`, also cards_s23.5, s20, s25–s27). Live URLs 404; WordPress Photon 404 (probed 2026-08-17); Wayback CDX for cards_s28/* = 0 rows. Quiz 2 uploaded PNGs ~348×489 still live — filenames are EN titles, but most collide across reprints (Four Tails, Utakata, Kurenai…). Unique slugs (`cat-fire-bowl`, `naruto-uzumaki-9-tails-cloak`, `tailed-beast-transformation`) already have Vintage EN art. Comment 8 Jun 2013: Bandai stopped after set 28. Do not ingest quiz PNGs as faces.",
+  "hotlinkPattern": "http://www.bandai.com/naruto/images/cards_s{set}/{number}.jpg",
+  "hotlinkFoldersSeen": [
+    "cards_s20",
+    "cards_s23.5",
+    "cards_s25",
+    "cards_s26",
+    "cards_s27",
+    "cards_s28"
+  ],
+  "liveBandai": "404",
+  "waybackCardsS28": 0,
+  "quiz2PngApprox": { "width": 348, "height": 489 },
+  "bandaiStoppedAfterSet": 28,
+  "stoppedAtComment": "2013-06-08",
+  "ingest": "none"
+}

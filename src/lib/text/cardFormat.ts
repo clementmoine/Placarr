@@ -1,4 +1,43 @@
-import { Type } from "@prisma/client";
+import { Type } from "@/generated/prisma/browser";
+
+/** Quarters of a turn for a face that shares the shelf format but is rotated. */
+export type FaceQuarterTurns = 0 | 1 | 2 | 3;
+
+export function normalizeFaceQuarterTurns(
+  value: number | null | undefined,
+): FaceQuarterTurns {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return (((Math.round(value) % 4) + 4) % 4) as FaceQuarterTurns;
+}
+
+/**
+ * Swap width/height when the face is on its side (odd quarter turns).
+ * Same physical rectangle as the shelf format — just reoriented.
+ */
+export function orientAspectRatio(
+  aspect: string,
+  quarterTurns: number | null | undefined,
+): string {
+  if (normalizeFaceQuarterTurns(quarterTurns) % 2 === 0) return aspect;
+  const match = aspect.trim().match(/^([\d.]+)\s*\/\s*([\d.]+)$/);
+  if (!match) return aspect;
+  return `${match[2]} / ${match[1]}`;
+}
+
+/** Display aspect for a face: sideways rotation vs native landscape scan. */
+export function faceDisplayAspect(
+  aspect: string,
+  opts: { faceQuarterTurns?: number | null; landscapeFace?: boolean },
+): string {
+  if (opts.landscapeFace) {
+    return orientAspectRatio(aspect, 1);
+  }
+  return orientAspectRatio(aspect, opts.faceQuarterTurns);
+}
+
+export function faceRotateDeg(quarterTurns: number | null | undefined): number {
+  return normalizeFaceQuarterTurns(quarterTurns) * 90;
+}
 
 export type CardFormat =
   | "default"
@@ -124,6 +163,36 @@ export function getAspectRatio(
     default:
       return "1 / 1.414";
   }
+}
+
+/**
+ * Numeric width/height ratio from a CSS aspect string (`"1 / 1.414"` → ≈0.707).
+ * Used by cover ranking so gallery scoring shares the shelf frame target.
+ */
+export function parseAspectRatioNumber(
+  aspect: string | null | undefined,
+): number | undefined {
+  if (!aspect?.trim()) return undefined;
+  const match = aspect.trim().match(/^([\d.]+)\s*\/\s*([\d.]+)$/);
+  if (!match?.[1] || !match[2]) return undefined;
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || height <= 0) {
+    return undefined;
+  }
+  return width / height;
+}
+
+/** Shelf UI frame as a numeric cover-ranking target. */
+export function expectedCoverAspectRatioForShelf(
+  cardFormat: string | null | undefined,
+  type: Type | string | null | undefined,
+): number {
+  return (
+    parseAspectRatioNumber(getAspectRatio(cardFormat, type)) ??
+    parseAspectRatioNumber("1 / 1.414") ??
+    0.707
+  );
 }
 
 export function getTailwindAspectRatioClass(

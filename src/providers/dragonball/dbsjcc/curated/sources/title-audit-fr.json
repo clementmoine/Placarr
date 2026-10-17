@@ -1,0 +1,268 @@
+{
+  "observed": "2026-10-04T17:14:29.329Z",
+  "flagged": 18,
+  "rows": [
+    {
+      "printKey": "dbsjcc:part1-d0017",
+      "setCode": "part1",
+      "number": "d0017",
+      "catalogTitle": "Mystérieux combattant",
+      "sources": {
+        "dbzcollection": "Mystérieux combattant",
+        "carddassFr": "Mystrérieux Combattant",
+        "hatatoyJa": "謎の武闘家",
+        "chitoroshopEn": "Mysterious Martial Artist D-17"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0055",
+      "setCode": "part1",
+      "number": "d0055",
+      "catalogTitle": "Vegeta (singe géant)",
+      "sources": {
+        "dbzcollection": "Vegeta (singe géant)",
+        "carddassFr": "Veteta (Singe Géant)",
+        "hatatoyJa": "ベジータ(大猿)",
+        "chitoroshopEn": "Vegeta Oozaru D-55"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0060",
+      "setCode": "part1",
+      "number": "d0060",
+      "catalogTitle": "Zabon",
+      "sources": {
+        "dbzcollection": "Zabon",
+        "carddassFr": "Zabon (transformé)",
+        "hatatoyJa": "ザーボン(戦闘体)"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0068",
+      "setCode": "part1",
+      "number": "d0068",
+      "catalogTitle": "Frieza",
+      "sources": {
+        "dbzcollection": "Frieza",
+        "carddassFr": "Frieza (1ère transformation)",
+        "hatatoyJa": "フリーザ(第一戦闘形態)"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0069",
+      "setCode": "part1",
+      "number": "d0069",
+      "catalogTitle": "Frieza",
+      "sources": {
+        "dbzcollection": "Frieza",
+        "carddassFr": "Frieza (2ème transformation)",
+        "hatatoyJa": "フリーザ(第二戦闘形態)",
+        "chitoroshopEn": "Freezer D-69"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0070",
+      "setCode": "part1",
+      "number": "d0070",
+      "catalogTitle": "Frieza",
+      "sources": {
+        "dbzcollection": "Frieza",
+        "carddassFr": "Frieza (3ème transformation)",
+        "chitoroshopEn": "Frieza D-70"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0077",
+      "setCode": "part1",
+      "number": "d0077",
+      "catalogTitle": "Frieza",
+      "sources": {
+        "dbzcollection": "Frieza",
+        "carddassFr": "Frieza (plein-gaz)",
+        "hatatoyJa": "フリーザ(フルパワー形態)",
+        "chitoroshopEn": "Frieza (Full Power Form) D-77"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0079",
+      "setCode": "part1",
+      "number": "d0079",
+      "catalogTitle": "Cell Jr",
+      "sources": {
+        "dbzcollection": "Cell Jr",
+        "carddassFr": "Cell Jr.",
+        "hatatoyJa": "セルジュニア",
+        "chitoroshopEn": "Cell.Jr D-79"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0087",
+      "setCode": "part1",
+      "number": "d0087",
+      "catalogTitle": "Ton piont faible c'est la queue !?",
+      "sources": {
+        "dbzcollection": "Ton piont faible c'est la queue !?",
+        "carddassFr": "Ton point faible c'est ta queue !?",
+        "hatatoyJa": "シッポが弱点!?",
+        "chitoroshopEn": "The Tail is the Weak Point!? D-87"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0088",
+      "setCode": "part1",
+      "number": "d0088",
+      "catalogTitle": "Technique du loup",
+      "sources": {
+        "dbzcollection": "Technique du loup",
+        "carddassFr": "Taiyoken",
+        "hatatoyJa": "狼牙風風拳",
+        "chitoroshopEn": "Wolf Fang Fist D-88"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0093",
+      "setCode": "part1",
+      "number": "d0093",
+      "catalogTitle": "Eau mystique",
+      "sources": {
+        "dbzcollection": "Eau mystique",
+        "carddassFr": "Eau mystique !!",
+        "hatatoyJa": "超神水!!!",
+        "chitoroshopEn": "Super Divine Technique!! D-93"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0111",
+      "setCode": "part1",
+      "number": "d0111",
+      "catalogTitle": "Super saiyan",
+      "sources": {
+        "dbzcollection": "Super saiyan",
+        "carddassFr": "Super-Saiyan",
+        "hatatoyJa": "伝説のスーパーサイヤ人",
+        "chitoroshopEn": "Densetsu no Super Saiyajin D-111"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0113",
+      "setCode": "part1",
+      "number": "d0113",
+      "catalogTitle": "1 ère transformation",
+      "sources": {
+        "dbzcollection": "1 ère transformation",
+        "carddassFr": "1ère transformation",
+        "hatatoyJa": "怪物フリーザ"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0117",
+      "setCode": "part1",
+      "number": "d0117",
+      "catalogTitle": "Franky 8 (C-8), l'andoïde gentil",
+      "sources": {
+        "dbzcollection": "Franky 8 (C-8), l'andoïde gentil",
+        "carddassFr": "Franky 8 (C-8), l'Androïde gentil",
+        "hatatoyJa": "優しい人造人間・ハッチャン",
+        "chitoroshopEn": "The Gentle Android, Hachan D-117"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0130",
+      "setCode": "part1",
+      "number": "d0130",
+      "catalogTitle": "Le voeu d'upa",
+      "sources": {
+        "dbzcollection": "Le voeu d'upa",
+        "carddassFr": "Le vœu d'Upa",
+        "chitoroshopEn": "Upa’s Wish D-130"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part1-d0133",
+      "setCode": "part1",
+      "number": "d0133",
+      "catalogTitle": "Le dernier voeu de frieza",
+      "sources": {
+        "dbzcollection": "Le dernier voeu de frieza",
+        "carddassFr": "Le dernier vœu de Frieza",
+        "hatatoyJa": "フリーザ最期の願い",
+        "chitoroshopEn": "Frieza's Last Wish D-133"
+      },
+      "flags": [
+        "differs-carddass-fr"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part10-d0888-kaio",
+      "setCode": "part10",
+      "number": "d0888",
+      "catalogTitle": "Nappa",
+      "sources": {
+        "dbzcollection": "Nappz",
+        "hatatoyJa": "ナッパ"
+      },
+      "flags": [
+        "differs-dbzcollection"
+      ]
+    },
+    {
+      "printKey": "dbsjcc:part10-d0933-rare",
+      "setCode": "part10",
+      "number": "d0933",
+      "catalogTitle": "La vie éclatante de shenron",
+      "sources": {
+        "dbzcollection": "Gogeta",
+        "hatatoyJa": "ゴジータ",
+        "chitoroshopEn": "Gogeta D-933"
+      },
+      "flags": [
+        "differs-dbzcollection"
+      ]
+    }
+  ]
+}

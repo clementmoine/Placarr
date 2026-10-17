@@ -4,6 +4,7 @@ const prismaMock = vi.hoisted(() => ({
   shelf: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
+    findUnique: vi.fn(),
   },
   item: {
     findUnique: vi.fn(),
@@ -13,6 +14,18 @@ const prismaMock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/db/prisma", () => ({ prisma: prismaMock }));
+
+const resolveUniquePrintCandidate = vi.hoisted(() => vi.fn());
+
+vi.mock("@/core/identify/printSearch", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/core/identify/printSearch")
+  >("@/core/identify/printSearch");
+  return {
+    ...actual,
+    resolveUniquePrintCandidate,
+  };
+});
 
 import { resolveItemId, resolveShelfId } from "./resolveIds";
 
@@ -51,6 +64,7 @@ describe("resolveItemId", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMock.shelf.findFirst.mockResolvedValue({ id: "shelf-ps4" });
+    resolveUniquePrintCandidate.mockReset();
   });
 
   it("resolves a unique slug prefix on the shelf", async () => {
@@ -129,5 +143,39 @@ describe("resolveItemId", () => {
     await expect(
       resolveItemId("need-for-speed-most-wanted-copy-2", "xbox-360", "user-1"),
     ).resolves.toBe("item-nfs-2");
+  });
+
+  it("resolves a former collector-code slug via printKey on TCG shelves", async () => {
+    prismaMock.item.findUnique.mockResolvedValue(null);
+    prismaMock.item.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: "item-ariel" });
+    prismaMock.item.findMany.mockResolvedValue([
+      {
+        id: "item-ariel",
+        name: "Ariel - Chanteuse exceptionnelle",
+        slug: "ariel-chanteuse-exceptionnelle",
+        metadata: null,
+      },
+    ]);
+    prismaMock.shelf.findUnique.mockResolvedValue({ type: "tcg" });
+    resolveUniquePrintCandidate.mockResolvedValue({
+      printKey: "lorcana:1-2",
+      title: "Ariel - Chanteuse exceptionnelle",
+    });
+
+    await expect(resolveItemId("tfc-2", "lorcana", "user-1")).resolves.toBe(
+      "item-ariel",
+    );
+
+    expect(resolveUniquePrintCandidate).toHaveBeenCalledWith("TFC#2", "tcg");
+    expect(prismaMock.item.findFirst).toHaveBeenLastCalledWith({
+      where: {
+        shelfId: "shelf-ps4",
+        printKey: "lorcana:1-2",
+        userId: "user-1",
+      },
+      select: { id: true },
+    });
   });
 });

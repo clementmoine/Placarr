@@ -1,0 +1,34 @@
+{
+  "source": "emporiodimilo.it — Serie 5 IT starter decks (user paste 2026-09-03)",
+  "observed": "2026-09-03",
+  "note": "Two sealed Serie 5 mazzi photographed in-shop. Ref. 93176 on both faces (« DECK DI 40 CARTE CON 2 CARTE HOLO »). Titles printed: TRADIMENTO / LEALTÀ under L'EREDITÀ DEL SOGNO. Do not crawl the catalogue — only these product pages. Emporio has no S3/S4 sealed SKUs in search.",
+  "ingestCatalog": false,
+  "products": [
+    {
+      "slug": "starter-tradimento",
+      "setCode": "s5",
+      "kind": "deck",
+      "lang": "IT",
+      "title": "Mazzo Tradimento — L'Eredità del Sogno (Serie 5)",
+      "printedRef": "93176",
+      "page": "https://www.emporiodimilo.it/prodotti/giocattoli-e-modellismo/giochi-di-ruolo/fantasy-giochi-di-ruolo/naruto-card-game-serie-5-tradimento-leredita-del-sogno-starter-deck-bandai/",
+      "url": "https://www.emporiodimilo.it/wp-content/uploads/2024/10/DSC01769.jpg",
+      "staging": "staging/emporiodimilo/starter-tradimento.jpg",
+      "ingest": true,
+      "pixels": { "width": 984, "height": 1481 }
+    },
+    {
+      "slug": "starter-lealta",
+      "setCode": "s5",
+      "kind": "deck",
+      "lang": "IT",
+      "title": "Mazzo Lealtà — L'Eredità del Sogno (Serie 5)",
+      "printedRef": "93176",
+      "page": "https://www.emporiodimilo.it/prodotti/giocattoli-e-modellismo/giochi-di-ruolo/fantasy-giochi-di-ruolo/naruto-card-game-serie-5-lealta-leredita-del-sogno-starter-deck-bandai/",
+      "url": "https://www.emporiodimilo.it/wp-content/uploads/2024/10/DSC01767.jpg",
+      "staging": "staging/emporiodimilo/starter-lealta.jpg",
+      "ingest": true,
+      "pixels": { "width": 936, "height": 1409 }
+    }
+  ]
+}

@@ -1,0 +1,1073 @@
+{
+  "source": "carddass.fr/dbz Wayback card pages",
+  "lang": "fr",
+  "observed": "2026-10-04",
+  "url": "http://www.carddass.fr/dbz/",
+  "note": "Part 1 only (D-001.htm…D-134.htm). Official Bandai France names.",
+  "names": [
+    {
+      "printed": "D-1",
+      "number": "d0001",
+      "setHint": "part1",
+      "name": "Goku",
+      "waybackUrl": "https://web.archive.org/web/20070506182844id_/http://www.carddass.fr:80/dbz/cartes/D-001.htm",
+      "timestamp": "20070506182844"
+    },
+    {
+      "printed": "D-2",
+      "number": "d0002",
+      "setHint": "part1",
+      "name": "Krillin",
+      "waybackUrl": "https://web.archive.org/web/20070507094220id_/http://www.carddass.fr:80/dbz/cartes/D-002.htm",
+      "timestamp": "20070507094220"
+    },
+    {
+      "printed": "D-3",
+      "number": "d0003",
+      "setHint": "part1",
+      "name": "Yamcha",
+      "waybackUrl": "https://web.archive.org/web/20070502143525id_/http://www.carddass.fr:80/dbz/cartes/D-003.htm",
+      "timestamp": "20070502143525"
+    },
+    {
+      "printed": "D-4",
+      "number": "d0004",
+      "setHint": "part1",
+      "name": "Bulma",
+      "waybackUrl": "https://web.archive.org/web/20070507094836id_/http://www.carddass.fr:80/dbz/cartes/D-004.htm",
+      "timestamp": "20070507094836"
+    },
+    {
+      "printed": "D-5",
+      "number": "d0005",
+      "setHint": "part1",
+      "name": "Oolong",
+      "waybackUrl": "https://web.archive.org/web/20070603203924id_/http://www.carddass.fr:80/dbz/cartes/D-005.htm",
+      "timestamp": "20070603203924"
+    },
+    {
+      "printed": "D-6",
+      "number": "d0006",
+      "setHint": "part1",
+      "name": "Plume",
+      "waybackUrl": "https://web.archive.org/web/20070507024423id_/http://www.carddass.fr:80/dbz/cartes/D-006.htm",
+      "timestamp": "20070507024423"
+    },
+    {
+      "printed": "D-7",
+      "number": "d0007",
+      "setHint": "part1",
+      "name": "Tortue Géniale",
+      "waybackUrl": "https://web.archive.org/web/20070506024816id_/http://www.carddass.fr:80/dbz/cartes/D-007.htm",
+      "timestamp": "20070506024816"
+    },
+    {
+      "printed": "D-8",
+      "number": "d0008",
+      "setHint": "part1",
+      "name": "Goku (Singe Géant)",
+      "waybackUrl": "https://web.archive.org/web/20070506025118id_/http://www.carddass.fr:80/dbz/cartes/D-008.htm",
+      "timestamp": "20070506025118"
+    },
+    {
+      "printed": "D-9",
+      "number": "d0009",
+      "setHint": "part1",
+      "name": "Commandant Bleu",
+      "waybackUrl": "https://web.archive.org/web/20070510005113id_/http://www.carddass.fr:80/dbz/cartes/D-009.htm",
+      "timestamp": "20070510005113"
+    },
+    {
+      "printed": "D-10",
+      "number": "d0010",
+      "setHint": "part1",
+      "name": "Sergent Métallique",
+      "waybackUrl": "https://web.archive.org/web/20070502143732id_/http://www.carddass.fr:80/dbz/cartes/D-010.htm",
+      "timestamp": "20070502143732"
+    },
+    {
+      "printed": "D-11",
+      "number": "d0011",
+      "setHint": "part1",
+      "name": "Ninja Violet",
+      "waybackUrl": "https://web.archive.org/web/20070509165356id_/http://www.carddass.fr:80/dbz/cartes/D-011.htm",
+      "timestamp": "20070509165356"
+    },
+    {
+      "printed": "D-12",
+      "number": "d0012",
+      "setHint": "part1",
+      "name": "Général Rouge",
+      "waybackUrl": "https://web.archive.org/web/20070506025143id_/http://www.carddass.fr:80/dbz/cartes/D-012.htm",
+      "timestamp": "20070506025143"
+    },
+    {
+      "printed": "D-13",
+      "number": "d0013",
+      "setHint": "part1",
+      "name": "Boum",
+      "waybackUrl": "https://web.archive.org/web/20070506182940id_/http://www.carddass.fr:80/dbz/cartes/D-013.htm",
+      "timestamp": "20070506182940"
+    },
+    {
+      "printed": "D-14",
+      "number": "d0014",
+      "setHint": "part1",
+      "name": "Diableman",
+      "waybackUrl": "https://web.archive.org/web/20070507023947id_/http://www.carddass.fr:80/dbz/cartes/D-014.htm",
+      "timestamp": "20070507023947"
+    },
+    {
+      "printed": "D-15",
+      "number": "d0015",
+      "setHint": "part1",
+      "name": "Draculaman",
+      "waybackUrl": "https://web.archive.org/web/20070502144531id_/http://www.carddass.fr:80/dbz/cartes/D-015.htm",
+      "timestamp": "20070502144531"
+    },
+    {
+      "printed": "D-16",
+      "number": "d0016",
+      "setHint": "part1",
+      "name": "La Momie",
+      "waybackUrl": "https://web.archive.org/web/20070507023739id_/http://www.carddass.fr:80/dbz/cartes/D-016.htm",
+      "timestamp": "20070507023739"
+    },
+    {
+      "printed": "D-17",
+      "number": "d0017",
+      "setHint": "part1",
+      "name": "Mystrérieux Combattant",
+      "waybackUrl": "https://web.archive.org/web/20070506024939id_/http://www.carddass.fr:80/dbz/cartes/D-017.htm",
+      "timestamp": "20070506024939"
+    },
+    {
+      "printed": "D-18",
+      "number": "d0018",
+      "setHint": "part1",
+      "name": "Tenshinhan",
+      "waybackUrl": "https://web.archive.org/web/20070509165615id_/http://www.carddass.fr:80/dbz/cartes/D-018.htm",
+      "timestamp": "20070509165615"
+    },
+    {
+      "printed": "D-19",
+      "number": "d0019",
+      "setHint": "part1",
+      "name": "Chaozu",
+      "waybackUrl": "https://web.archive.org/web/20070506182958id_/http://www.carddass.fr:80/dbz/cartes/D-019.htm",
+      "timestamp": "20070506182958"
+    },
+    {
+      "printed": "D-20",
+      "number": "d0020",
+      "setHint": "part1",
+      "name": "Maître des Grues",
+      "waybackUrl": "https://web.archive.org/web/20070606121801id_/http://www.carddass.fr:80/dbz/cartes/D-020.htm",
+      "timestamp": "20070606121801"
+    },
+    {
+      "printed": "D-21",
+      "number": "d0021",
+      "setHint": "part1",
+      "name": "Pilaf",
+      "waybackUrl": "https://web.archive.org/web/20070507024055id_/http://www.carddass.fr:80/dbz/cartes/D-021.htm",
+      "timestamp": "20070507024055"
+    },
+    {
+      "printed": "D-22",
+      "number": "d0022",
+      "setHint": "part1",
+      "name": "Yajirobé",
+      "waybackUrl": "https://web.archive.org/web/20070509121839id_/http://www.carddass.fr:80/dbz/cartes/D-022.htm",
+      "timestamp": "20070509121839"
+    },
+    {
+      "printed": "D-23",
+      "number": "d0023",
+      "setHint": "part1",
+      "name": "Karine",
+      "waybackUrl": "https://web.archive.org/web/20070502144439id_/http://www.carddass.fr:80/dbz/cartes/D-023.htm",
+      "timestamp": "20070502144439"
+    },
+    {
+      "printed": "D-24",
+      "number": "d0024",
+      "setHint": "part1",
+      "name": "Toto le Lapin",
+      "waybackUrl": "https://web.archive.org/web/20070506182917id_/http://www.carddass.fr:80/dbz/cartes/D-024.htm",
+      "timestamp": "20070506182917"
+    },
+    {
+      "printed": "D-25",
+      "number": "d0025",
+      "setHint": "part1",
+      "name": "Franky 8 (C-8)",
+      "waybackUrl": "https://web.archive.org/web/20070507024030id_/http://www.carddass.fr:80/dbz/cartes/D-025.htm",
+      "timestamp": "20070507024030"
+    },
+    {
+      "printed": "D-26",
+      "number": "d0026",
+      "setHint": "part1",
+      "name": "C-17",
+      "waybackUrl": "https://web.archive.org/web/20070510081359id_/http://www.carddass.fr:80/dbz/cartes/D-026.htm",
+      "timestamp": "20070510081359"
+    },
+    {
+      "printed": "D-27",
+      "number": "d0027",
+      "setHint": "part1",
+      "name": "C-18",
+      "waybackUrl": "https://web.archive.org/web/20070510031108id_/http://www.carddass.fr:80/dbz/cartes/D-027.htm",
+      "timestamp": "20070510031108"
+    },
+    {
+      "printed": "D-28",
+      "number": "d0028",
+      "setHint": "part1",
+      "name": "Cell",
+      "waybackUrl": "https://web.archive.org/web/20070510082429id_/http://www.carddass.fr:80/dbz/cartes/D-028.htm",
+      "timestamp": "20070510082429"
+    },
+    {
+      "printed": "D-29",
+      "number": "d0029",
+      "setHint": "part1",
+      "name": "Mamie Voyante",
+      "waybackUrl": "https://web.archive.org/web/20070510082334id_/http://www.carddass.fr:80/dbz/cartes/D-029.htm",
+      "timestamp": "20070510082334"
+    },
+    {
+      "printed": "D-30",
+      "number": "d0030",
+      "setHint": "part1",
+      "name": "Roi Piccolo",
+      "waybackUrl": "https://web.archive.org/web/20070510081812id_/http://www.carddass.fr:80/dbz/cartes/D-030.htm",
+      "timestamp": "20070510081812"
+    },
+    {
+      "printed": "D-31",
+      "number": "d0031",
+      "setHint": "part1",
+      "name": "Tambourin",
+      "waybackUrl": "https://web.archive.org/web/20071016100317id_/http://www.carddass.fr/dbz/cartes/D-031.htm",
+      "timestamp": "20071016100317"
+    },
+    {
+      "printed": "D-32",
+      "number": "d0032",
+      "setHint": "part1",
+      "name": "Drum",
+      "waybackUrl": "https://web.archive.org/web/20071016102225id_/http://www.carddass.fr/dbz/cartes/D-032.htm",
+      "timestamp": "20071016102225"
+    },
+    {
+      "printed": "D-33",
+      "number": "d0033",
+      "setHint": "part1",
+      "name": "Cymbale",
+      "waybackUrl": "https://web.archive.org/web/20071016181511id_/http://www.carddass.fr/dbz/cartes/D-033.htm",
+      "timestamp": "20071016181511"
+    },
+    {
+      "printed": "D-34",
+      "number": "d0034",
+      "setHint": "part1",
+      "name": "Tortue Géniale",
+      "waybackUrl": "https://web.archive.org/web/20070509104226id_/http://www.carddass.fr:80/dbz/cartes/D-034.htm",
+      "timestamp": "20070509104226"
+    },
+    {
+      "printed": "D-35",
+      "number": "d0035",
+      "setHint": "part1",
+      "name": "Dieu",
+      "waybackUrl": "https://web.archive.org/web/20071208153826id_/http://www.carddass.fr:80/dbz/cartes/D-035.htm",
+      "timestamp": "20071208153826"
+    },
+    {
+      "printed": "D-37",
+      "number": "d0037",
+      "setHint": "part1",
+      "name": "Tenshinhan",
+      "waybackUrl": "https://web.archive.org/web/20070513002824id_/http://www.carddass.fr:80/dbz/cartes/D-037.htm",
+      "timestamp": "20070513002824"
+    },
+    {
+      "printed": "D-38",
+      "number": "d0038",
+      "setHint": "part1",
+      "name": "Chaozu",
+      "waybackUrl": "https://web.archive.org/web/20070509104314id_/http://www.carddass.fr:80/dbz/cartes/D-038.htm",
+      "timestamp": "20070509104314"
+    },
+    {
+      "printed": "D-39",
+      "number": "d0039",
+      "setHint": "part1",
+      "name": "Gohan",
+      "waybackUrl": "https://web.archive.org/web/20071016181545id_/http://www.carddass.fr/dbz/cartes/D-039.htm",
+      "timestamp": "20071016181545"
+    },
+    {
+      "printed": "D-40",
+      "number": "d0040",
+      "setHint": "part1",
+      "name": "Radditz",
+      "waybackUrl": "https://web.archive.org/web/20071014100944id_/http://www.carddass.fr/dbz/cartes/D-040.htm",
+      "timestamp": "20071014100944"
+    },
+    {
+      "printed": "D-41",
+      "number": "d0041",
+      "setHint": "part1",
+      "name": "Piccolo",
+      "waybackUrl": "https://web.archive.org/web/20070513175126id_/http://www.carddass.fr:80/dbz/cartes/D-041.htm",
+      "timestamp": "20070513175126"
+    },
+    {
+      "printed": "D-42",
+      "number": "d0042",
+      "setHint": "part1",
+      "name": "Piccolo",
+      "waybackUrl": "https://web.archive.org/web/20070510082025id_/http://www.carddass.fr:80/dbz/cartes/D-042.htm",
+      "timestamp": "20070510082025"
+    },
+    {
+      "printed": "D-43",
+      "number": "d0043",
+      "setHint": "part1",
+      "name": "Gohan",
+      "waybackUrl": "https://web.archive.org/web/20071016183535id_/http://www.carddass.fr/dbz/cartes/D-043.htm",
+      "timestamp": "20071016183535"
+    },
+    {
+      "printed": "D-44",
+      "number": "d0044",
+      "setHint": "part1",
+      "name": "Gohan (Singe Géant)",
+      "waybackUrl": "https://web.archive.org/web/20071016100745id_/http://www.carddass.fr/dbz/cartes/D-044.htm",
+      "timestamp": "20071016100745"
+    },
+    {
+      "printed": "D-45",
+      "number": "d0045",
+      "setHint": "part1",
+      "name": "Piccolo",
+      "waybackUrl": "https://web.archive.org/web/20070513083457id_/http://www.carddass.fr:80/dbz/cartes/D-045.htm",
+      "timestamp": "20070513083457"
+    },
+    {
+      "printed": "D-46",
+      "number": "d0046",
+      "setHint": "part1",
+      "name": "Gohan",
+      "waybackUrl": "https://web.archive.org/web/20071016095919id_/http://www.carddass.fr/dbz/cartes/D-046.htm",
+      "timestamp": "20071016095919"
+    },
+    {
+      "printed": "D-47",
+      "number": "d0047",
+      "setHint": "part1",
+      "name": "Krillin",
+      "waybackUrl": "https://web.archive.org/web/20070709174403id_/http://www.carddass.fr:80/dbz/cartes/D-047.htm",
+      "timestamp": "20070709174403"
+    },
+    {
+      "printed": "D-48",
+      "number": "d0048",
+      "setHint": "part1",
+      "name": "Chaozu",
+      "waybackUrl": "https://web.archive.org/web/20070509104253id_/http://www.carddass.fr:80/dbz/cartes/D-048.htm",
+      "timestamp": "20070509104253"
+    },
+    {
+      "printed": "D-49",
+      "number": "d0049",
+      "setHint": "part1",
+      "name": "Krillin",
+      "waybackUrl": "https://web.archive.org/web/20070709174449id_/http://www.carddass.fr:80/dbz/cartes/D-049.htm",
+      "timestamp": "20070709174449"
+    },
+    {
+      "printed": "D-50",
+      "number": "d0050",
+      "setHint": "part1",
+      "name": "Kaïo",
+      "waybackUrl": "https://web.archive.org/web/20071016181431id_/http://www.carddass.fr/dbz/cartes/D-050.htm",
+      "timestamp": "20071016181431"
+    },
+    {
+      "printed": "D-51",
+      "number": "d0051",
+      "setHint": "part1",
+      "name": "Goku",
+      "waybackUrl": "https://web.archive.org/web/20070509104319id_/http://www.carddass.fr:80/dbz/cartes/D-051.htm",
+      "timestamp": "20070509104319"
+    },
+    {
+      "printed": "D-52",
+      "number": "d0052",
+      "setHint": "part1",
+      "name": "Saibaiman",
+      "waybackUrl": "https://web.archive.org/web/20071015002726id_/http://www.carddass.fr/dbz/cartes/D-052.htm",
+      "timestamp": "20071015002726"
+    },
+    {
+      "printed": "D-53",
+      "number": "d0053",
+      "setHint": "part1",
+      "name": "Nappa",
+      "waybackUrl": "https://web.archive.org/web/20071016183614id_/http://www.carddass.fr/dbz/cartes/D-053.htm",
+      "timestamp": "20071016183614"
+    },
+    {
+      "printed": "D-54",
+      "number": "d0054",
+      "setHint": "part1",
+      "name": "Vegeta",
+      "waybackUrl": "https://web.archive.org/web/20070513083507id_/http://www.carddass.fr:80/dbz/cartes/D-054.htm",
+      "timestamp": "20070513083507"
+    },
+    {
+      "printed": "D-55",
+      "number": "d0055",
+      "setHint": "part1",
+      "name": "Veteta (Singe Géant)",
+      "waybackUrl": "https://web.archive.org/web/20070513083449id_/http://www.carddass.fr:80/dbz/cartes/D-055.htm",
+      "timestamp": "20070513083449"
+    },
+    {
+      "printed": "D-56",
+      "number": "d0056",
+      "setHint": "part1",
+      "name": "Vegeta",
+      "waybackUrl": "https://web.archive.org/web/20070513083545id_/http://www.carddass.fr:80/dbz/cartes/D-056.htm",
+      "timestamp": "20070513083545"
+    },
+    {
+      "printed": "D-57",
+      "number": "d0057",
+      "setHint": "part1",
+      "name": "Frieza",
+      "waybackUrl": "https://web.archive.org/web/20070510082418id_/http://www.carddass.fr:80/dbz/cartes/D-057.htm",
+      "timestamp": "20070510082418"
+    },
+    {
+      "printed": "D-58",
+      "number": "d0058",
+      "setHint": "part1",
+      "name": "Dodoria",
+      "waybackUrl": "https://web.archive.org/web/20070513083523id_/http://www.carddass.fr:80/dbz/cartes/D-058.htm",
+      "timestamp": "20070513083523"
+    },
+    {
+      "printed": "D-59",
+      "number": "d0059",
+      "setHint": "part1",
+      "name": "Zabon",
+      "waybackUrl": "https://web.archive.org/web/20071016183107id_/http://www.carddass.fr/dbz/cartes/D-059.htm",
+      "timestamp": "20071016183107"
+    },
+    {
+      "printed": "D-60",
+      "number": "d0060",
+      "setHint": "part1",
+      "name": "Zabon (transformé)",
+      "waybackUrl": "https://web.archive.org/web/20071016181937id_/http://www.carddass.fr/dbz/cartes/D-060.htm",
+      "timestamp": "20071016181937"
+    },
+    {
+      "printed": "D-61",
+      "number": "d0061",
+      "setHint": "part1",
+      "name": "Vegeta",
+      "waybackUrl": "https://web.archive.org/web/20070510030913id_/http://www.carddass.fr:80/dbz/cartes/D-061.htm",
+      "timestamp": "20070510030913"
+    },
+    {
+      "printed": "D-62",
+      "number": "d0062",
+      "setHint": "part1",
+      "name": "Ginyu",
+      "waybackUrl": "https://web.archive.org/web/20071016183305id_/http://www.carddass.fr/dbz/cartes/D-062.htm",
+      "timestamp": "20071016183305"
+    },
+    {
+      "printed": "D-63",
+      "number": "d0063",
+      "setHint": "part1",
+      "name": "Guldo",
+      "waybackUrl": "https://web.archive.org/web/20071014174044id_/http://www.carddass.fr/dbz/cartes/D-063.htm",
+      "timestamp": "20071014174044"
+    },
+    {
+      "printed": "D-64",
+      "number": "d0064",
+      "setHint": "part1",
+      "name": "Jeece",
+      "waybackUrl": "https://web.archive.org/web/20071014174639id_/http://www.carddass.fr/dbz/cartes/D-064.htm",
+      "timestamp": "20071014174639"
+    },
+    {
+      "printed": "D-65",
+      "number": "d0065",
+      "setHint": "part1",
+      "name": "Recoome",
+      "waybackUrl": "https://web.archive.org/web/20071016182745id_/http://www.carddass.fr/dbz/cartes/D-065.htm",
+      "timestamp": "20071016182745"
+    },
+    {
+      "printed": "D-66",
+      "number": "d0066",
+      "setHint": "part1",
+      "name": "Barta",
+      "waybackUrl": "https://web.archive.org/web/20070820163818id_/http://www.carddass.fr:80/dbz/cartes/D-066.htm",
+      "timestamp": "20070820163818"
+    },
+    {
+      "printed": "D-67",
+      "number": "d0067",
+      "setHint": "part1",
+      "name": "Vegeta",
+      "waybackUrl": "https://web.archive.org/web/20070510082017id_/http://www.carddass.fr:80/dbz/cartes/D-067.htm",
+      "timestamp": "20070510082017"
+    },
+    {
+      "printed": "D-68",
+      "number": "d0068",
+      "setHint": "part1",
+      "name": "Frieza (1ère transformation)",
+      "waybackUrl": "https://web.archive.org/web/20070510031047id_/http://www.carddass.fr:80/dbz/cartes/D-068.htm",
+      "timestamp": "20070510031047"
+    },
+    {
+      "printed": "D-69",
+      "number": "d0069",
+      "setHint": "part1",
+      "name": "Frieza (2ème transformation)",
+      "waybackUrl": "https://web.archive.org/web/20070510082135id_/http://www.carddass.fr:80/dbz/cartes/D-069.htm",
+      "timestamp": "20070510082135"
+    },
+    {
+      "printed": "D-70",
+      "number": "d0070",
+      "setHint": "part1",
+      "name": "Frieza (3ème transformation)",
+      "waybackUrl": "https://web.archive.org/web/20070510031125id_/http://www.carddass.fr:80/dbz/cartes/D-070.htm",
+      "timestamp": "20070510031125"
+    },
+    {
+      "printed": "D-71",
+      "number": "d0071",
+      "setHint": "part1",
+      "name": "Dendé",
+      "waybackUrl": "https://web.archive.org/web/20071014100414id_/http://www.carddass.fr/dbz/cartes/D-071.htm",
+      "timestamp": "20071014100414"
+    },
+    {
+      "printed": "D-72",
+      "number": "d0072",
+      "setHint": "part1",
+      "name": "Grand Chef",
+      "waybackUrl": "https://web.archive.org/web/20070707060858id_/http://www.carddass.fr:80/dbz/cartes/D-072.htm",
+      "timestamp": "20070707060858"
+    },
+    {
+      "printed": "D-73",
+      "number": "d0073",
+      "setHint": "part1",
+      "name": "Nail",
+      "waybackUrl": "https://web.archive.org/web/20070510081531id_/http://www.carddass.fr:80/dbz/cartes/D-073.htm",
+      "timestamp": "20070510081531"
+    },
+    {
+      "printed": "D-74",
+      "number": "d0074",
+      "setHint": "part1",
+      "name": "Gohan",
+      "waybackUrl": "https://web.archive.org/web/20071016181031id_/http://www.carddass.fr/dbz/cartes/D-074.htm",
+      "timestamp": "20071016181031"
+    },
+    {
+      "printed": "D-75",
+      "number": "d0075",
+      "setHint": "part1",
+      "name": "Krillin",
+      "waybackUrl": "https://web.archive.org/web/20070709174329id_/http://www.carddass.fr:80/dbz/cartes/D-075.htm",
+      "timestamp": "20070709174329"
+    },
+    {
+      "printed": "D-76",
+      "number": "d0076",
+      "setHint": "part1",
+      "name": "Piccolo",
+      "waybackUrl": "https://web.archive.org/web/20070510031014id_/http://www.carddass.fr:80/dbz/cartes/D-076.htm",
+      "timestamp": "20070510031014"
+    },
+    {
+      "printed": "D-77",
+      "number": "d0077",
+      "setHint": "part1",
+      "name": "Frieza (plein-gaz)",
+      "waybackUrl": "https://web.archive.org/web/20070510031151id_/http://www.carddass.fr:80/dbz/cartes/D-077.htm",
+      "timestamp": "20070510031151"
+    },
+    {
+      "printed": "D-78",
+      "number": "d0078",
+      "setHint": "part1",
+      "name": "Trunks",
+      "waybackUrl": "https://web.archive.org/web/20070510082007id_/http://www.carddass.fr:80/dbz/cartes/D-078.htm",
+      "timestamp": "20070510082007"
+    },
+    {
+      "printed": "D-79",
+      "number": "d0079",
+      "setHint": "part1",
+      "name": "Cell Jr.",
+      "waybackUrl": "https://web.archive.org/web/20070510081942id_/http://www.carddass.fr:80/dbz/cartes/D-079.htm",
+      "timestamp": "20070510081942"
+    },
+    {
+      "printed": "D-80",
+      "number": "d0080",
+      "setHint": "part1",
+      "name": "Goku",
+      "waybackUrl": "https://web.archive.org/web/20070509164956id_/http://www.carddass.fr:80/dbz/cartes/D-080.htm",
+      "timestamp": "20070509164956"
+    },
+    {
+      "printed": "D-81",
+      "number": "d0081",
+      "setHint": "part1",
+      "name": "Bulma",
+      "waybackUrl": "https://web.archive.org/web/20070507005138id_/http://www.carddass.fr:80/dbz/cartes/D-081.htm",
+      "timestamp": "20070507005138"
+    },
+    {
+      "printed": "D-82",
+      "number": "d0082",
+      "setHint": "part1",
+      "name": "Tenshinhan",
+      "waybackUrl": "https://web.archive.org/web/20070513003104id_/http://www.carddass.fr:80/dbz/cartes/D-082.htm",
+      "timestamp": "20070513003104"
+    },
+    {
+      "printed": "D-83",
+      "number": "d0083",
+      "setHint": "part1",
+      "name": "Yamcha",
+      "waybackUrl": "https://web.archive.org/web/20070507004416id_/http://www.carddass.fr:80/dbz/cartes/D-083.htm",
+      "timestamp": "20070507004416"
+    },
+    {
+      "printed": "D-84",
+      "number": "d0084",
+      "setHint": "part1",
+      "name": "Yamu",
+      "waybackUrl": "https://web.archive.org/web/20071016100711id_/http://www.carddass.fr/dbz/cartes/D-084.htm",
+      "timestamp": "20071016100711"
+    },
+    {
+      "printed": "D-85",
+      "number": "d0085",
+      "setHint": "part1",
+      "name": "Buu",
+      "waybackUrl": "https://web.archive.org/web/20070510082033id_/http://www.carddass.fr:80/dbz/cartes/D-085.htm",
+      "timestamp": "20070510082033"
+    },
+    {
+      "printed": "D-86",
+      "number": "d0086",
+      "setHint": "part1",
+      "name": "Goku",
+      "waybackUrl": "https://web.archive.org/web/20070509104303id_/http://www.carddass.fr:80/dbz/cartes/D-086.htm",
+      "timestamp": "20070509104303"
+    },
+    {
+      "printed": "D-87",
+      "number": "d0087",
+      "setHint": "part1",
+      "name": "Ton point faible c'est ta queue !?",
+      "waybackUrl": "https://web.archive.org/web/20071016183207id_/http://www.carddass.fr/dbz/cartes/D-087.htm",
+      "timestamp": "20071016183207"
+    },
+    {
+      "printed": "D-88",
+      "number": "d0088",
+      "setHint": "part1",
+      "name": "Taiyoken",
+      "waybackUrl": "https://web.archive.org/web/20071016181210id_/http://www.carddass.fr/dbz/cartes/D-088.htm",
+      "timestamp": "20071016181210"
+    },
+    {
+      "printed": "D-89",
+      "number": "d0089",
+      "setHint": "part1",
+      "name": "Taiyoken",
+      "waybackUrl": "https://web.archive.org/web/20071014170315id_/http://www.carddass.fr/dbz/cartes/D-089.htm",
+      "timestamp": "20071014170315"
+    },
+    {
+      "printed": "D-90",
+      "number": "d0090",
+      "setHint": "part1",
+      "name": "Transformation sous la pleine lune",
+      "waybackUrl": "https://web.archive.org/web/20071016102144id_/http://www.carddass.fr/dbz/cartes/D-090.htm",
+      "timestamp": "20071016102144"
+    },
+    {
+      "printed": "D-91",
+      "number": "d0091",
+      "setHint": "part1",
+      "name": "Dodompa",
+      "waybackUrl": "https://web.archive.org/web/20071017000851id_/http://www.carddass.fr/dbz/cartes/D-091.htm",
+      "timestamp": "20071017000851"
+    },
+    {
+      "printed": "D-92",
+      "number": "d0092",
+      "setHint": "part1",
+      "name": "Menace du Clan du Mal",
+      "waybackUrl": "https://web.archive.org/web/20071016182203id_/http://www.carddass.fr/dbz/cartes/D-092.htm",
+      "timestamp": "20071016182203"
+    },
+    {
+      "printed": "D-93",
+      "number": "d0093",
+      "setHint": "part1",
+      "name": "Eau mystique !!",
+      "waybackUrl": "https://web.archive.org/web/20071016182102id_/http://www.carddass.fr/dbz/cartes/D-093.htm",
+      "timestamp": "20071016182102"
+    },
+    {
+      "printed": "D-94",
+      "number": "d0094",
+      "setHint": "part1",
+      "name": "Explosion Démoniaque",
+      "waybackUrl": "https://web.archive.org/web/20071016183237id_/http://www.carddass.fr/dbz/cartes/D-094.htm",
+      "timestamp": "20071016183237"
+    },
+    {
+      "printed": "D-95",
+      "number": "d0095",
+      "setHint": "part1",
+      "name": "Le tout pour le tout",
+      "waybackUrl": "https://web.archive.org/web/20071016183340id_/http://www.carddass.fr/dbz/cartes/D-095.htm",
+      "timestamp": "20071016183340"
+    },
+    {
+      "printed": "D-96",
+      "number": "d0096",
+      "setHint": "part1",
+      "name": "Coup de grâce",
+      "waybackUrl": "https://web.archive.org/web/20071016101719id_/http://www.carddass.fr/dbz/cartes/D-096.htm",
+      "timestamp": "20071016101719"
+    },
+    {
+      "printed": "D-97",
+      "number": "d0097",
+      "setHint": "part1",
+      "name": "Temple de Dieu",
+      "waybackUrl": "https://web.archive.org/web/20071016101347id_/http://www.carddass.fr/dbz/cartes/D-097.htm",
+      "timestamp": "20071016101347"
+    },
+    {
+      "printed": "D-98",
+      "number": "d0098",
+      "setHint": "part1",
+      "name": "Mafuba",
+      "waybackUrl": "https://web.archive.org/web/20071016182813id_/http://www.carddass.fr/dbz/cartes/D-098.htm",
+      "timestamp": "20071016182813"
+    },
+    {
+      "printed": "D-99",
+      "number": "d0099",
+      "setHint": "part1",
+      "name": "Croissance de Goku",
+      "waybackUrl": "https://web.archive.org/web/20070701191231id_/http://www.carddass.fr:80/dbz/cartes/D-099.htm",
+      "timestamp": "20070701191231"
+    },
+    {
+      "printed": "D-100",
+      "number": "d0100",
+      "setHint": "part1",
+      "name": "Les Saiyans, la race des guerriers",
+      "waybackUrl": "https://web.archive.org/web/20071016180938id_/http://www.carddass.fr/dbz/cartes/D-100.htm",
+      "timestamp": "20071016180938"
+    },
+    {
+      "printed": "D-101",
+      "number": "d0101",
+      "setHint": "part1",
+      "name": "Makkankosappo",
+      "waybackUrl": "https://web.archive.org/web/20071016181824id_/http://www.carddass.fr/dbz/cartes/D-101.htm",
+      "timestamp": "20071016181824"
+    },
+    {
+      "printed": "D-102",
+      "number": "d0102",
+      "setHint": "part1",
+      "name": "Kienzan",
+      "waybackUrl": "https://web.archive.org/web/20071017001153id_/http://www.carddass.fr/dbz/cartes/D-102.htm",
+      "timestamp": "20071017001153"
+    },
+    {
+      "printed": "D-103",
+      "number": "d0103",
+      "setHint": "part1",
+      "name": "Kikoho",
+      "waybackUrl": "https://web.archive.org/web/20071016100234id_/http://www.carddass.fr/dbz/cartes/D-103.htm",
+      "timestamp": "20071016100234"
+    },
+    {
+      "printed": "D-104",
+      "number": "d0104",
+      "setHint": "part1",
+      "name": "Masenko",
+      "waybackUrl": "https://web.archive.org/web/20071016182027id_/http://www.carddass.fr/dbz/cartes/D-104.htm",
+      "timestamp": "20071016182027"
+    },
+    {
+      "printed": "D-105",
+      "number": "d0105",
+      "setHint": "part1",
+      "name": "Kaïoken Kaméhaméha",
+      "waybackUrl": "https://web.archive.org/web/20071016100833id_/http://www.carddass.fr/dbz/cartes/D-105.htm",
+      "timestamp": "20071016100833"
+    },
+    {
+      "printed": "D-106",
+      "number": "d0106",
+      "setHint": "part1",
+      "name": "Vegeta le Prince Saiyan",
+      "waybackUrl": "https://web.archive.org/web/20070525065433id_/http://www.carddass.fr:80/dbz/cartes/D-106.htm",
+      "timestamp": "20070525065433"
+    },
+    {
+      "printed": "D-107",
+      "number": "d0107",
+      "setHint": "part1",
+      "name": "Canon Garric",
+      "waybackUrl": "https://web.archive.org/web/20071016101028id_/http://www.carddass.fr/dbz/cartes/D-107.htm",
+      "timestamp": "20071016101028"
+    },
+    {
+      "printed": "D-108",
+      "number": "d0108",
+      "setHint": "part1",
+      "name": "Genkidama",
+      "waybackUrl": "https://web.archive.org/web/20071016100956id_/http://www.carddass.fr/dbz/cartes/D-108.htm",
+      "timestamp": "20071016100956"
+    },
+    {
+      "printed": "D-109",
+      "number": "d0109",
+      "setHint": "part1",
+      "name": "Récupération grâce aux Senzus",
+      "waybackUrl": "https://web.archive.org/web/20071014170340id_/http://www.carddass.fr/dbz/cartes/D-109.htm",
+      "timestamp": "20071014170340"
+    },
+    {
+      "printed": "D-110",
+      "number": "d0110",
+      "setHint": "part1",
+      "name": "Fusion des guerriers",
+      "waybackUrl": "https://web.archive.org/web/20071016100930id_/http://www.carddass.fr/dbz/cartes/D-110.htm",
+      "timestamp": "20071016100930"
+    },
+    {
+      "printed": "D-111",
+      "number": "d0111",
+      "setHint": "part1",
+      "name": "Super-Saiyan",
+      "waybackUrl": "https://web.archive.org/web/20070625114132id_/http://www.carddass.fr:80/dbz/cartes/D-111.htm",
+      "timestamp": "20070625114132"
+    },
+    {
+      "printed": "D-112",
+      "number": "d0112",
+      "setHint": "part1",
+      "name": "Kikoha",
+      "waybackUrl": "https://web.archive.org/web/20070707060630id_/http://www.carddass.fr:80/dbz/cartes/D-112.htm",
+      "timestamp": "20070707060630"
+    },
+    {
+      "printed": "D-113",
+      "number": "d0113",
+      "setHint": "part1",
+      "name": "1ère transformation",
+      "waybackUrl": "https://web.archive.org/web/20070821003011id_/http://www.carddass.fr:80/dbz/cartes/D-113.htm",
+      "timestamp": "20070821003011"
+    },
+    {
+      "printed": "D-114",
+      "number": "d0114",
+      "setHint": "part1",
+      "name": "Concours de circonstances !",
+      "waybackUrl": "https://web.archive.org/web/20071014100559id_/http://www.carddass.fr/dbz/cartes/D-114.htm",
+      "timestamp": "20071014100559"
+    },
+    {
+      "printed": "D-115",
+      "number": "d0115",
+      "setHint": "part1",
+      "name": "Cell en chasse",
+      "waybackUrl": "https://web.archive.org/web/20071016101411id_/http://www.carddass.fr/dbz/cartes/D-115.htm",
+      "timestamp": "20071016101411"
+    },
+    {
+      "printed": "D-116",
+      "number": "d0116",
+      "setHint": "part1",
+      "name": "Yajirobé et la Dragon Ball à 1 étoile",
+      "waybackUrl": "https://web.archive.org/web/20071016181625id_/http://www.carddass.fr/dbz/cartes/D-116.htm",
+      "timestamp": "20071016181625"
+    },
+    {
+      "printed": "D-117",
+      "number": "d0117",
+      "setHint": "part1",
+      "name": "Franky 8 (C-8), l'Androïde gentil",
+      "waybackUrl": "https://web.archive.org/web/20071016101644id_/http://www.carddass.fr/dbz/cartes/D-117.htm",
+      "timestamp": "20071016101644"
+    },
+    {
+      "printed": "D-118",
+      "number": "d0118",
+      "setHint": "part1",
+      "name": "Tortue Géniale et la Dragon Ball à 3 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20070707060441id_/http://www.carddass.fr:80/dbz/cartes/D-118.htm",
+      "timestamp": "20070707060441"
+    },
+    {
+      "printed": "D-119",
+      "number": "d0119",
+      "setHint": "part1",
+      "name": "Gohan, le nouveau guerrier",
+      "waybackUrl": "https://web.archive.org/web/20071016100112id_/http://www.carddass.fr/dbz/cartes/D-119.htm",
+      "timestamp": "20071016100112"
+    },
+    {
+      "printed": "D-120",
+      "number": "d0120",
+      "setHint": "part1",
+      "name": "Bulma et la Dragon Ball à 5 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20070625114056id_/http://www.carddass.fr:80/dbz/cartes/D-120.htm",
+      "timestamp": "20070625114056"
+    },
+    {
+      "printed": "D-121",
+      "number": "d0121",
+      "setHint": "part1",
+      "name": "J'ai trouvé une Dragon Ball",
+      "waybackUrl": "https://web.archive.org/web/20071016182422id_/http://www.carddass.fr/dbz/cartes/D-121.htm",
+      "timestamp": "20071016182422"
+    },
+    {
+      "printed": "D-122",
+      "number": "d0122",
+      "setHint": "part1",
+      "name": "Trésor sur la Montagne de feu",
+      "waybackUrl": "https://web.archive.org/web/20071016181444id_/http://www.carddass.fr/dbz/cartes/D-122.htm",
+      "timestamp": "20071016181444"
+    },
+    {
+      "printed": "D-123",
+      "number": "d0123",
+      "setHint": "part1",
+      "name": "Dragon Ball à 1 étoile",
+      "waybackUrl": "https://web.archive.org/web/20071016102117id_/http://www.carddass.fr/dbz/cartes/D-123.htm",
+      "timestamp": "20071016102117"
+    },
+    {
+      "printed": "D-124",
+      "number": "d0124",
+      "setHint": "part1",
+      "name": "Dragon Ball à 2 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20071016182946id_/http://www.carddass.fr/dbz/cartes/D-124.htm",
+      "timestamp": "20071016182946"
+    },
+    {
+      "printed": "D-125",
+      "number": "d0125",
+      "setHint": "part1",
+      "name": "Dragon Ball à 3 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20071016181323id_/http://www.carddass.fr/dbz/cartes/D-125.htm",
+      "timestamp": "20071016181323"
+    },
+    {
+      "printed": "D-126",
+      "number": "d0126",
+      "setHint": "part1",
+      "name": "Dragon Ball à 4 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20071016100249id_/http://www.carddass.fr/dbz/cartes/D-126.htm",
+      "timestamp": "20071016100249"
+    },
+    {
+      "printed": "D-127",
+      "number": "d0127",
+      "setHint": "part1",
+      "name": "Dragon Ball à 5 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20071016181118id_/http://www.carddass.fr/dbz/cartes/D-127.htm",
+      "timestamp": "20071016181118"
+    },
+    {
+      "printed": "D-128",
+      "number": "d0128",
+      "setHint": "part1",
+      "name": "Dragon Ball à 6 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20071017001058id_/http://www.carddass.fr/dbz/cartes/D-128.htm",
+      "timestamp": "20071017001058"
+    },
+    {
+      "printed": "D-129",
+      "number": "d0129",
+      "setHint": "part1",
+      "name": "Dragon Ball à 7 étoiles",
+      "waybackUrl": "https://web.archive.org/web/20070820211117id_/http://www.carddass.fr:80/dbz/cartes/D-129.htm",
+      "timestamp": "20070820211117"
+    },
+    {
+      "printed": "D-130",
+      "number": "d0130",
+      "setHint": "part1",
+      "name": "Le vœu d'Upa",
+      "waybackUrl": "https://web.archive.org/web/20071016181004id_/http://www.carddass.fr/dbz/cartes/D-130.htm",
+      "timestamp": "20071016181004"
+    },
+    {
+      "printed": "D-131",
+      "number": "d0131",
+      "setHint": "part1",
+      "name": "Nouvelle jeunesse pour le Roi du Mal",
+      "waybackUrl": "https://web.archive.org/web/20070707060910id_/http://www.carddass.fr:80/dbz/cartes/D-131.htm",
+      "timestamp": "20070707060910"
+    },
+    {
+      "printed": "D-132",
+      "number": "d0132",
+      "setHint": "part1",
+      "name": "Le souhait de Dendé",
+      "waybackUrl": "https://web.archive.org/web/20071016181855id_/http://www.carddass.fr/dbz/cartes/D-132.htm",
+      "timestamp": "20071016181855"
+    },
+    {
+      "printed": "D-133",
+      "number": "d0133",
+      "setHint": "part1",
+      "name": "Le dernier vœu de Frieza",
+      "waybackUrl": "https://web.archive.org/web/20071017000954id_/http://www.carddass.fr/dbz/cartes/D-133.htm",
+      "timestamp": "20071017000954"
+    },
+    {
+      "printed": "D-134",
+      "number": "d0134",
+      "setHint": "part1",
+      "name": "Shenron",
+      "waybackUrl": "https://web.archive.org/web/20071016181243id_/http://www.carddass.fr/dbz/cartes/D-134.htm",
+      "timestamp": "20071016181243"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "observed": "2026-09-20",
+  "method": "CDN HEAD around known 学 SKUs GU362436/443 → kaitori title resolve (browser)",
+  "chunk": "GU362433–GU362444",
+  "note": "Contiguous 忍伝-学 block; before = 忍伝 maku, after = Ultraman / off-franchise.",
+  "kept": [
+    { "id": "GU362433", "printed": "忍伝-学002" },
+    { "id": "GU362434", "printed": "忍伝-学005" },
+    { "id": "GU362435", "printed": "忍伝-学006" },
+    { "id": "GU362436", "printed": "忍伝-学007" },
+    { "id": "GU362437", "printed": "忍伝-学014" },
+    { "id": "GU362438", "printed": "忍伝-学025" },
+    { "id": "GU362439", "printed": "忍伝-学026" },
+    { "id": "GU362440", "printed": "忍伝-学028" },
+    { "id": "GU362441", "printed": "忍伝-学030" },
+    { "id": "GU362442", "printed": "忍伝-学033" },
+    { "id": "GU362443", "printed": "忍伝-学038" },
+    { "id": "GU362444", "printed": "忍伝-学040" }
+  ],
+  "neighborProbesDiscarded": {
+    "GU362300–362429": "photos / Kantai Collection arcade",
+    "GU362451–362520": "Ultraman TCG",
+    "GU8394xx": "idol bromides",
+    "GL685038+": "Overlord / seals / Weiss — Naruto window ends at GL685037"
+  }
+}

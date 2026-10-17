@@ -4,6 +4,7 @@ import {
   apiProvidersForMetadataPass,
   externalIdsFromStoredSources,
   metadataResultsHavePrimaryBookCover,
+  nonScrapeProviderIdsFromStoredSources,
   preferPinnedProviderIds,
   providerRecordUrlsFromStoredSources,
   scrapeProviderIdsFromStoredSources,
@@ -119,6 +120,17 @@ describe("shouldRunScrapeMetadataPass", () => {
   });
 });
 
+describe("nonScrapeProviderIdsFromStoredSources", () => {
+  it("maps the legacy narutoccg fact source onto narutocarddass", () => {
+    expect(
+      nonScrapeProviderIdsFromStoredSources({
+        facts: [{ source: "narutoccg" }],
+        attachments: [{ source: "narutoccg" }],
+      }),
+    ).toEqual(["narutocarddass"]);
+  });
+});
+
 describe("apiProvidersForMetadataPass", () => {
   const completeGame: MetadataResult = {
     title: "Tony Hawk's American Wasteland",
@@ -158,6 +170,27 @@ describe("apiProvidersForMetadataPass", () => {
         hasCapability,
       }),
     ).toEqual([]);
+  });
+
+  it("keeps local_catalog packs for the printKey game even when the seed looks complete", () => {
+    expect(
+      apiProvidersForMetadataPass({
+        type: "tcg",
+        activeResults: [
+          {
+            title: "Naruto Uzumaki",
+            imageUrl: "/assets/naruto/carddass/cards/ninja/ni0001/fr/art.webp",
+          },
+        ],
+        candidateApiProviderIds: [
+          "narutocarddass",
+          "lorcanatcg",
+          "igdb",
+        ],
+        printKey: "naruto:s1-ni001",
+        hasCapability,
+      }),
+    ).toEqual(["narutocarddass"]);
   });
 });
 
@@ -284,6 +317,16 @@ describe("scrapeProviderIdsFromStoredSources", () => {
   });
 });
 
+describe("nonScrapeProviderIdsFromStoredSources", () => {
+  it("keeps API / static providers already on the fiche", () => {
+    const ids = nonScrapeProviderIdsFromStoredSources({
+      facts: [{ source: "lorcanajson" }, { source: "Bedetheque" }],
+      attachments: [{ source: "lorcanajson" }],
+    });
+    expect(ids).toEqual(["lorcanajson"]);
+  });
+});
+
 describe("externalIdsFromStoredSources", () => {
   it("parses BDovore id_tome from stored fiche URLs", () => {
     expect(
@@ -372,11 +415,11 @@ describe("preferPinnedProviderIds", () => {
   });
 
   it("keeps original relative order within pin and seek groups", () => {
-    expect(
-      preferPinnedProviderIds(
-        ["a", "b", "c", "d"],
-        ["c", "a"],
-      ),
-    ).toEqual(["a", "c", "b", "d"]);
+    expect(preferPinnedProviderIds(["a", "b", "c", "d"], ["c", "a"])).toEqual([
+      "a",
+      "c",
+      "b",
+      "d",
+    ]);
   });
 });

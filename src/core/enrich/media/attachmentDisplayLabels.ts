@@ -113,6 +113,41 @@ const REGION_LABELS: Record<
   },
 };
 
+/**
+ * ISO 639-1 print languages (TCG cards, multi-lang covers).
+ *
+ * Bare roles like `de` / `it` are also country codes that the region resolver
+ * folds into "Europe" for game boxes — fine for ranking, wrong on the Affiche
+ * chip when the attachment is a German or Italian *language* printing.
+ */
+const LANGUAGE_LABELS: Record<
+  AttachmentDisplayLocale,
+  Record<string, string>
+> = {
+  fr: {
+    fr: "Français",
+    en: "Anglais",
+    de: "Allemand",
+    it: "Italien",
+    es: "Espagnol",
+    pt: "Portugais",
+    nl: "Néerlandais",
+    ja: "Japonais",
+    zh: "Chinois",
+  },
+  en: {
+    fr: "French",
+    en: "English",
+    de: "German",
+    it: "Italian",
+    es: "Spanish",
+    pt: "Portuguese",
+    nl: "Dutch",
+    ja: "Japanese",
+    zh: "Chinese",
+  },
+};
+
 const REGION_TOKEN_ALIASES: Record<string, LocaleRegion> = {
   europe: "eu",
   eur: "eu",
@@ -221,7 +256,7 @@ function parseKindFromTitle(
   }
   if (/\bmain image 2\b/.test(normalized)) return "back";
   if (/\bmain image 3\b/.test(normalized)) return "disc";
-  if (/\bmain image 1\b/.test(normalized)) return "cover";
+  if (/\bmain image(?:\s*1)?\b/.test(normalized)) return "cover";
   if (/box\s*-\s*spine/.test(normalized)) return "spine";
   if (/\bspine\b|spine\s*\/\s*sides\b/.test(normalized)) return "spine";
   if (/\bdisc\b|fanart\s*-\s*disc/.test(normalized)) return "disc";
@@ -236,6 +271,12 @@ function parseKindFromTitle(
   ) {
     return "cover";
   }
+  if (/\bbox\s+(?:view|art|front art|back art)\b/.test(normalized)) {
+    return "cover";
+  }
+  // HDJV French gallery face labels (role is often `fr`, not a print language).
+  if (/^recto(?:\s+de\s+la\s+pochette)?$/.test(normalized)) return "cover";
+  if (/^verso(?:\s+de\s+la\s+pochette)?$/.test(normalized)) return "back";
   if (/fanart\s*-\s*background/.test(normalized)) return "background";
   if (/clear\s*logo/.test(normalized)) return "logo";
   if (/screenshot/.test(normalized)) return "screenshot";
@@ -243,6 +284,32 @@ function parseKindFromTitle(
   if (/fanart/.test(normalized)) return "artwork";
 
   return null;
+}
+
+/**
+ * True when `title` is only a gallery face label (LaunchBox "Box - Front",
+ * PriceCharting "Main Image", HDJV "Recto de la pochette") — never a display
+ * alias / "Aussi connu sous" name.
+ */
+export function isAttachmentFaceLabelTitle(title?: string | null): boolean {
+  const normalized = normalizeToken(title);
+  if (!normalized) return false;
+  // Whole-string labels only — avoid rejecting real titles that merely contain
+  // "disc" / "screenshot" as a word.
+  if (
+    /^(?:main image(?:\s+\d+)?|box view|box art|box front art|box back art|box\s*-\s*(?:front|back|spine|3d)(?:\s*-\s*reconstructed)?|cart\s*-\s*(?:front|back|3d)|fanart\s*-\s*box\s*-\s*front|cover\s*\(\s*back\s*\)(?:\s*\[[^\]]+\])?|recto(?:\s+de\s+la\s+pochette)?|verso(?:\s+de\s+la\s+pochette)?|spine(?:\s*\/\s*sides)?|disc|disque(?:\s+du\s+jeu)?|media\s+du\s+jeu|clear logo|screenshot|banner|back(?:\s+cover)?|rear cover)$/.test(
+      normalized,
+    )
+  ) {
+    return true;
+  }
+  // Compound product captions that end with a face label suffix.
+  return (
+    parseKindFromTitle(normalized) !== null &&
+    /(?:^|[\s\-–—])(?:main image(?:\s+\d+)?|box\s*-\s*(?:front|back|spine|3d)|recto(?:\s+de\s+la\s+pochette)?|verso(?:\s+de\s+la\s+pochette)?)$/.test(
+      normalized,
+    )
+  );
 }
 
 function parseRegionToken(token?: string | null): LocaleRegion | null {
@@ -429,6 +496,21 @@ export function formatAttachmentRegionLabel(
   return REGION_LABELS[locale][region];
 }
 
+/**
+ * Label for a bare ISO language role (`de`, `en`, …). Returns null when the
+ * role is a compound region token (`back-eu`, `au`) or an unknown code.
+ */
+export function formatAttachmentLanguageLabel(
+  role?: string | null,
+  locale: AttachmentDisplayLocale = "fr",
+): string | null {
+  const normalized = normalizeToken(role);
+  if (!normalized) return null;
+  // Compound ScreenScraper roles are regions, not languages.
+  if (normalized.includes("-")) return null;
+  return LANGUAGE_LABELS[locale][normalized] ?? null;
+}
+
 export function getAttachmentGalleryLabels(
   input: AttachmentLabelInput,
   locale: AttachmentDisplayLocale = "fr",
@@ -441,9 +523,10 @@ export function getAttachmentGalleryLabels(
   caption: string;
 } {
   const kindKey = resolveAttachmentDisplayKind(input);
-  const regionKey = resolveAttachmentDisplayRegion(input);
+  const language = formatAttachmentLanguageLabel(input.role, locale);
+  const regionKey = language ? null : resolveAttachmentDisplayRegion(input);
   const kind = formatAttachmentKindLabel(kindKey, locale);
-  const region = formatAttachmentRegionLabel(regionKey, locale);
+  const region = language ?? formatAttachmentRegionLabel(regionKey, locale);
   const sourceNames = formatAttachmentSourceNames(input);
   const provider = sourceNames[0] ?? null;
   const styleLabel =

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { decode as decodeHTMLEntities } from "html-entities";
 import levenshtein from "fast-levenshtein";
 import { convertXML } from "simple-xml-to-json";
@@ -303,7 +303,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
         if (!query) continue;
 
         const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`;
-        const searchRes = await axios.get(searchUrl, {
+        const searchRes = await httpGet<string>(searchUrl, {
           responseType: "text",
           headers,
           timeout: 10000,
@@ -348,7 +348,7 @@ export function createBGGResolver(deps: BggResolverDeps) {
           seenGameIds.add(gameId);
 
           const detailsUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1&versions=1`;
-          const detailsRes = await axios.get(detailsUrl, {
+          const detailsRes = await httpGet<string>(detailsUrl, {
             responseType: "text",
             headers,
             timeout: 10000,

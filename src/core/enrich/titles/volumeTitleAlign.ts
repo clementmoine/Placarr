@@ -1,6 +1,4 @@
-import {
-  explicitVolumeNumbers,
-} from "@/core/enrich/titles/volumeNumber";
+import { explicitVolumeNumbers } from "@/core/enrich/titles/volumeNumber";
 import { parseRomanToken } from "@/core/enrich/titles/romanNumeral";
 import {
   allNumbers,

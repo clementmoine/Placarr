@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getGalleryImages, mergeCoverAttachmentsForPicker, orderedCoverAttachmentsForDisplay } from "./media";
+import {
+  getGalleryImages,
+  mergeCoverAttachmentsForPicker,
+  orderedCoverAttachmentsForDisplay,
+} from "./media";
 
 describe("orderedCoverAttachmentsForDisplay", () => {
   it("pins metadata.imageUrl first then keeps storage order", () => {
@@ -152,6 +156,41 @@ describe("orderedCoverAttachmentsForDisplay", () => {
         (attachment) => attachment.source,
       ),
     ).toEqual(["geedie", "icollect"]);
+  });
+
+  it("demotes a listing_photo metadata pin when catalog art exists", () => {
+    const item = {
+      metadata: {
+        imageUrl: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.ebay.webp",
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "narutocarddass",
+            role: "naruto-face-ebay",
+            coverProvenance: "listing_photo",
+            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.ebay.webp",
+            width: 1200,
+            height: 1600,
+          },
+          {
+            type: "cover" as const,
+            source: "narutocarddass",
+            role: "naruto-face-carddass",
+            coverProvenance: "catalog",
+            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+            width: 350,
+            height: 495,
+          },
+        ],
+      },
+      shelf: { type: "cards", name: "Naruto" },
+    };
+
+    expect(
+      orderedCoverAttachmentsForDisplay(item).map(
+        (attachment) => attachment.role,
+      ),
+    ).toEqual(["naruto-face-carddass", "naruto-face-ebay"]);
   });
 
   it("keeps Geedie covers visible but ranks explicit PS4 art first on a PS4 shelf", () => {
@@ -335,7 +374,7 @@ describe("orderedCoverAttachmentsForDisplay", () => {
   it("collapses duplicate local files referenced by multiple providers", () => {
     const item = {
       metadata: {
-        imageUrl: "/uploads/cover_crop.jpg",
+        imageUrl: "/uploads/cover_edited.jpg",
         attachments: [
           {
             type: "cover",
@@ -465,10 +504,12 @@ describe("getGalleryImages", () => {
       shelf: { type: "hardware", name: "Consoles" },
     };
 
+    // Sleeve backs trail the front in Affiche order, then other gallery images
+    // (inbox / loose shots) follow.
     expect(getGalleryImages(item).map((image) => image.url)).toEqual([
       "/uploads/n64-main.jpg",
-      "/uploads/n64-inbox.jpg",
       "/uploads/n64-back.jpg",
+      "/uploads/n64-inbox.jpg",
     ]);
   });
 });

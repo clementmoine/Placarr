@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { convertXML } from "simple-xml-to-json";
 
 import {
@@ -7,17 +7,17 @@ import {
   pingUrl,
 } from "@/core/catalog/healthUtils";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import { formatScore } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
 import { createBGGResolver } from "./resolver";
 import type { BGGResponse } from "./resolver";
 import { getBGGSuggestions } from "./suggestions";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 const fetchFromBGG = createBGGResolver({ formatScore });
 
-export const bggModule: ProviderModule = {
+export const bggModule = defineProvider({
   info: {
     id: "boardgamegeek",
     label: "BoardGameGeek",
@@ -39,6 +39,7 @@ export const bggModule: ProviderModule = {
       "players",
     ],
     auth: { kind: "key", env: ["BGG_API_TOKEN"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     isRealBoxCover: true,
@@ -116,7 +117,7 @@ export const bggModule: ProviderModule = {
     const token = process.env.BGG_API_TOKEN?.trim();
     if (!token) return [];
     try {
-      const res = await axios.get(
+      const res = await httpGet<string>(
         "https://boardgamegeek.com/xmlapi2/thing?id=13&stats=1",
         {
           headers: {
@@ -136,7 +137,7 @@ export const bggModule: ProviderModule = {
       return [];
     }
   },
-};
+});
 
 export { createBGGResolver } from "./resolver";
 export type { BGGChild, BGGResponse } from "./resolver";

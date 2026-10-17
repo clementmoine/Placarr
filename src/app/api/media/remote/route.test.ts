@@ -107,6 +107,33 @@ describe("GET /api/media/remote", () => {
     expect(h.fetchRemoteImageBuffer).not.toHaveBeenCalled();
   });
 
+  it("allows LDDb covers through the proxy allowlist", async () => {
+    const lddbUrl =
+      "https://www.lddb.com/cover/ld/33801-33900/33828.jpg";
+    h.fetchRemoteImageBuffer.mockResolvedValue({
+      buffer: Buffer.from("lddb-jpeg"),
+      contentType: "image/jpeg",
+      sourceUrl: lddbUrl,
+    });
+    h.persistRemoteImageUpload.mockReturnValue({
+      absolutePath: "/tmp/lddb.jpg",
+      publicPath: "/uploads/lddb.jpg",
+      contentType: "image/jpeg",
+      buffer: Buffer.from("lddb-jpeg"),
+    });
+
+    const res = await GET(
+      new NextRequest(
+        `http://localhost/api/media/remote?url=${encodeURIComponent(lddbUrl)}`,
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.fetchRemoteImageBuffer).toHaveBeenCalledWith(lddbUrl, {
+      allowSubThresholdFallback: true,
+    });
+  });
+
   it("returns 404 when upstream fetch fails", async () => {
     h.fetchRemoteImageBuffer.mockResolvedValue(null);
 

@@ -1,0 +1,10 @@
+{
+  "source": "naruto.lineage2universe.com",
+  "url": "https://naruto.lineage2universe.com/",
+  "observed": "2026-08-16",
+  "note": "Living community search (not a dead archive and not a Bandai CDN mirror). Search covers s1–s28, tins, tournament packs, plus a custom unofficial 'set 29'. Form is POST + CSRF (Zebra); a 2026-08-17 probe returned the form, no card thumbs. Not a face dump. Custom printables are sold at Payhip Band of the Hawk Card Shop (see band-of-the-hawk.json).",
+  "covers": ["s1-s28", "tins", "tournament-packs", "custom-set-29"],
+  "officialCdn": false,
+  "ingest": "none",
+  "storefront": "https://payhip.com/BandoftheHawkCardShop"
+}

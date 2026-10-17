@@ -5,7 +5,10 @@
 import type { RomChecksums } from "@/types/providerModule";
 
 function cleanHash(value?: string | null): string | undefined {
-  const cleaned = value?.trim().toLowerCase().replace(/[^a-f0-9]/g, "");
+  const cleaned = value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[^a-f0-9]/g, "");
   return cleaned || undefined;
 }
 
@@ -22,7 +25,10 @@ export function normalizeRomChecksums(
 }
 
 function labelToChecksumKey(label?: string | null): keyof RomChecksums | null {
-  const key = label?.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const key = label
+    ?.trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
   if (key === "crc" || key === "crc32") return "crc";
   if (key === "md5") return "md5";
   if (key === "sha1" || key === "sha") return "sha1";

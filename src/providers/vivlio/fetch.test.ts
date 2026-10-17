@@ -124,7 +124,9 @@ describe("vivlio", () => {
       releaseDate: "2014-11-27",
       categories: ["Romance"],
     });
-    expect(normalizeVivlioCoverUrl(product?.imageUrl)).toContain("size=450x675");
+    expect(normalizeVivlioCoverUrl(product?.imageUrl)).toContain(
+      "size=450x675",
+    );
   });
 
   it("réécrit les tailles CDN inventées vers l'allowlist Vivlio", () => {
@@ -154,9 +156,10 @@ describe("vivlio", () => {
         (f) => f.kind === "tag" && f.label === "Collection",
       ),
     ).toBe(true);
-    expect(metadata?.facts?.find((f) => f.kind === "tag" && f.label === "Format")?.value).toBe(
-      "Ebook",
-    );
+    expect(
+      metadata?.facts?.find((f) => f.kind === "tag" && f.label === "Format")
+        ?.value,
+    ).toBe("Ebook");
   });
 
   it("extrait l'ISBN produit depuis une URL fiche mémorisée", () => {

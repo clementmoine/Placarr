@@ -1,0 +1,414 @@
+/**
+ * localTcgLine face URLs — canonical `{set}/{lang}/{card}/` + cross-locale borrow.
+ */
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import {
+  catalogueSetFromPrintKey,
+  unregisterPrintKeyCatalogueSets,
+} from "@/core/identify/printKey";
+
+import { createLocalTcgLine } from "./localTcgLine";
+import { createLocalPrintsIndex } from "./localPrintsIndex";
+
+const roots: string[] = [];
+afterEach(() => {
+  for (const root of roots.splice(0)) {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+  vi.unstubAllEnvs();
+});
+
+function tmpDataRoot(): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "local-tcg-line-"));
+  roots.push(root);
+  vi.stubEnv("PLACARR_DATA_DIR", root);
+  return root;
+}
+
+describe("localTcgLine face URLs", () => {
+  it("builds assetsCardUrl order set/lang/card", () => {
+    tmpDataRoot();
+    const packId = "naruto/ninja-ranks";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0001",
+        setCode: "nr",
+        number: "0001",
+        cardType: "nr",
+        titles: [{ lang: "fr", fullName: "Carte" }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:nr-0001", lang: "fr", art: "art.coleka.webp" },
+    ]);
+
+    const line = createLocalTcgLine({
+      providerId: "narutoranks",
+      providerLabel: "test",
+      catalogueLabel: "test",
+      factLabel: "test",
+      packId,
+      effectPackId: "naruto-ninja-ranks",
+      printGame: "naruto",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+    });
+
+    const hit = line.lookupPrint("naruto:nr-0001", "fr");
+    expect(hit?.imageUrl).toBe(
+      "/assets/naruto/ninja-ranks/cards/nr/fr/0001/art.coleka.webp",
+    );
+  });
+
+  it("prefers defaultLanguage when lookupPrint is called without language", () => {
+    tmpDataRoot();
+    const packId = "naruto/ninja-ranks";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0003",
+        setCode: "nr",
+        number: "0003",
+        cardType: "nr",
+        titles: [
+          { lang: "en", fullName: "EN title" },
+          { lang: "fr", fullName: "FR title" },
+        ],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:nr-0003", lang: "en", art: "art.en.webp" },
+      { printKey: "naruto:nr-0003", lang: "fr", art: "art.fr.webp" },
+    ]);
+
+    const line = createLocalTcgLine({
+      providerId: "narutoranks",
+      providerLabel: "test",
+      catalogueLabel: "test",
+      factLabel: "test",
+      packId,
+      effectPackId: "naruto-ninja-ranks",
+      printGame: "naruto",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+    });
+
+    const hit = line.lookupPrint!("naruto:nr-0003");
+    expect(hit?.language).toBe("fr");
+    expect(hit?.title).toBe("FR title");
+    expect(hit?.imageUrl).toBe(
+      "/assets/naruto/ninja-ranks/cards/nr/fr/0003/art.fr.webp",
+    );
+  });
+
+  it("borrows art from another locale when enabled", () => {
+    tmpDataRoot();
+    const packId = "naruto/ninja-ranks";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "naruto:nr-0002",
+        setCode: "nr",
+        number: "0002",
+        cardType: "nr",
+        titles: [
+          { lang: "fr", fullName: "FR" },
+          { lang: "en", fullName: "EN" },
+        ],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:nr-0002", lang: "en", art: "art.coleka.webp" },
+    ]);
+
+    const without = createLocalTcgLine({
+      providerId: "narutoranks",
+      providerLabel: "test",
+      catalogueLabel: "test",
+      factLabel: "test",
+      packId,
+      effectPackId: "naruto-ninja-ranks",
+      printGame: "naruto",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+    });
+    expect(without.lookupPrint("naruto:nr-0002", "fr")?.imageUrl).toBeUndefined();
+
+    const withBorrow = createLocalTcgLine({
+      providerId: "narutoranks",
+      providerLabel: "test",
+      catalogueLabel: "test",
+      factLabel: "test",
+      packId,
+      effectPackId: "naruto-ninja-ranks",
+      printGame: "naruto",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+      borrowFaceAcrossLocales: true,
+    });
+    const hit = withBorrow.lookupPrint("naruto:nr-0002", "fr");
+    expect(hit?.language).toBe("fr");
+    expect(hit?.imageUrl).toBe(
+      "/assets/naruto/ninja-ranks/cards/nr/en/0002/art.coleka.webp",
+    );
+  });
+
+  it("honours cardAssetUrl override (set/lang/card — disk order)", () => {
+    tmpDataRoot();
+    const packId = "naruto/shippuden";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "naruto:msa-0026",
+        setCode: "msa",
+        number: "msa0026",
+        cardType: "msa",
+        titles: [{ lang: "ja", fullName: "作" }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:msa-0026", lang: "ja", art: "art.nikita.jpg" },
+    ]);
+
+    const line = createLocalTcgLine({
+      providerId: "narutoshippuden",
+      providerLabel: "test",
+      catalogueLabel: "test",
+      factLabel: "test",
+      packId,
+      effectPackId: "naruto-shippuden",
+      printGame: "naruto",
+      defaultLanguage: "unknown",
+      syncHint: "test",
+      notes: "test",
+      cardAssetUrl: (id, file) =>
+        `/assets/${packId}/cards/${id.set}/${id.lang}/${id.card}/${file}`,
+    });
+
+    expect(line.lookupPrint("naruto:msa-0026", "ja")?.imageUrl).toBe(
+      "/assets/naruto/shippuden/cards/msa/ja/msa0026/art.nikita.jpg",
+    );
+  });
+});
+
+describe("localTcgLine metadata adapter", () => {
+  it("resolves cover from printKey via the same face URL as lookupPrint", async () => {
+    tmpDataRoot();
+    const packId = "naruto/ultra-challenge";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "naruto:uc-0001",
+        setCode: "uc",
+        number: "0001",
+        cardType: "uc",
+        titles: [{ lang: "fr", fullName: "Naruto" }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:uc-0001", lang: "fr", art: "art.coleka.webp" },
+    ]);
+
+    const line = createLocalTcgLine({
+      providerId: "narutoultra",
+      providerLabel: "Ultra",
+      catalogueLabel: "Ultra",
+      factLabel: "Ultra",
+      packId,
+      effectPackId: "naruto-ultra-challenge",
+      printGame: "naruto",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+    });
+    const module = line.attachCatalog({
+      dataPack: packId,
+      status: async () => ({ empty: false, stale: false, lastSyncAt: null }),
+      refresh: async () => {},
+    });
+
+    expect(typeof module.createMetadataAdapter).toBe("function");
+    const adapter = module.createMetadataAdapter!();
+    expect(adapter).not.toBeNull();
+    const hit = await adapter!.resolve({
+      name: "ignored",
+      printKey: "naruto:uc-0001",
+    });
+    expect(hit?.title).toBe("Naruto");
+    expect(hit?.imageUrl).toBe(
+      "/assets/naruto/ultra-challenge/cards/uc/fr/0001/art.coleka.webp",
+    );
+    expect(hit?.externalIds?.printKey).toBe("naruto:uc-0001");
+    expect(hit?.externalIds?.narutoultra).toBe("naruto:uc-0001");
+  });
+
+  it("returns null for a foreign printGame (no name fallback)", async () => {
+    tmpDataRoot();
+    const packId = "naruto/ultra-challenge";
+    createLocalPrintsIndex(packId).writePrints([]);
+
+    const line = createLocalTcgLine({
+      providerId: "narutoultra",
+      providerLabel: "Ultra",
+      catalogueLabel: "Ultra",
+      factLabel: "Ultra",
+      packId,
+      effectPackId: "naruto-ultra-challenge",
+      printGame: "naruto",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+    });
+    const adapter = line.attachCatalog({
+      dataPack: packId,
+      status: async () => ({ empty: true, stale: true, lastSyncAt: null }),
+      refresh: async () => {},
+    }).createMetadataAdapter!();
+    expect(adapter).not.toBeNull();
+
+    expect(
+      await adapter!.resolve({ name: "Inari", printKey: "lorcana:6-48" }),
+    ).toBeNull();
+    expect(await adapter!.resolve({ name: "Inari" })).toBeNull();
+  });
+});
+
+describe("localTcgLine catalogueBrowse", () => {
+  it("lists a whole game without a set, ordered by setSortKey then number", () => {
+    tmpDataRoot();
+    const packId = "dragonball/jcc";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "dbsjcc:part10-d0900",
+        setCode: "part10",
+        number: "d0900",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Part 10" }],
+      },
+      {
+        printKey: "dbsjcc:part2-d0100",
+        setCode: "part2",
+        number: "d0100",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "Part 2" }],
+      },
+      {
+        printKey: "dbsjcc:part1-d0002",
+        setCode: "part1",
+        number: "d0002",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "D-2" }],
+      },
+      {
+        printKey: "dbsjcc:part1-d0001",
+        setCode: "part1",
+        number: "d0001",
+        cardType: "d",
+        titles: [{ lang: "fr", fullName: "D-1" }],
+      },
+    ]);
+
+    const line = createLocalTcgLine({
+      providerId: "dbsjcc",
+      providerLabel: "DB JCC",
+      catalogueLabel: "DB JCC",
+      factLabel: "DB JCC",
+      packId,
+      effectPackId: "dbs-jcc",
+      printGame: "dbsjcc",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+      setSortKey: (setCode) => {
+        const part = /^part(\d+)$/.exec(setCode.trim().toLowerCase());
+        return part ? Number.parseInt(part[1]!, 10) : null;
+      },
+    });
+
+    const found = line.searchPrints("", { catalogueBrowse: true, limit: 10 });
+    expect(found.map((row) => row.printKey)).toEqual([
+      "dbsjcc:part1-d0001",
+      "dbsjcc:part1-d0002",
+      "dbsjcc:part2-d0100",
+      "dbsjcc:part10-d0900",
+    ]);
+  });
+});
+
+describe("localTcgLine catalogueSetCodes", () => {
+  afterEach(() => {
+    unregisterPrintKeyCatalogueSets("testdemo");
+  });
+
+  it("registers alphabetic chapters for catalogueSetFromPrintKey", () => {
+    tmpDataRoot();
+    expect(catalogueSetFromPrintKey("testdemo:nr-0001")).toBeNull();
+
+    createLocalTcgLine({
+      providerId: "testdemo",
+      providerLabel: "Demo",
+      catalogueLabel: "Demo",
+      factLabel: "Demo",
+      packId: "demo/pack",
+      effectPackId: "demo",
+      printGame: "testdemo",
+      catalogueSetCodes: ["nr", "ff"],
+      defaultLanguage: "en",
+      syncHint: "test",
+      notes: "test",
+    });
+
+    expect(catalogueSetFromPrintKey("testdemo:nr-0001")).toBe("nr");
+    expect(catalogueSetFromPrintKey("testdemo:ff-0001")).toBe("ff");
+    expect(catalogueSetFromPrintKey("testdemo:xx-0001")).toBeNull();
+  });
+});
+
+describe("localTcgLine listPrintSets remote merge", () => {
+  it("union locale ∪ remote so a stale DB cannot hide a new set", async () => {
+    tmpDataRoot();
+    const packId = "mtg";
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "mtg:mh2-1",
+        setCode: "mh2",
+        number: "1",
+        cardType: "mh2",
+        titles: [{ lang: "en", fullName: "Card" }],
+      },
+    ]);
+    const line = createLocalTcgLine({
+      providerId: "mtg",
+      providerLabel: "MTG",
+      catalogueLabel: "MTG",
+      factLabel: "MTG",
+      packId,
+      effectPackId: "mtg",
+      printGame: "mtg",
+      defaultLanguage: "en",
+      syncHint: "test",
+      notes: "test",
+      listRemotePrintSets: async () => [
+        { id: "mh3", label: "Modern Horizons 3" },
+      ],
+    });
+    const module = line.attachCatalog({
+      dataPack: packId,
+      status: async () => ({ empty: false, stale: false, lastSyncAt: null }),
+      refresh: async () => {},
+    });
+    const sets = await module.listPrintSets!("tcg", "en");
+    expect(sets.map((s) => s.id).sort()).toEqual(["mh2", "mh3"]);
+  });
+});

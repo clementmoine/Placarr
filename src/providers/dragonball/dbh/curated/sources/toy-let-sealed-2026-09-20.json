@@ -1,0 +1,185 @@
+{
+  "source": "toy-let.com Shopify product pages (manual packshot harvest)",
+  "observed": "2026-09-20",
+  "notes": "Sealed only — singles skipped. Toy-let gallery order is often BOX then pack — assign by face (20 PACKS / hang-hole), not by array index. Prefer gallery alt when primary is tiny (EVT3).",
+  "count": 14,
+  "items": [
+    {
+      "handle": "sdbh-selection-pack-vol-1",
+      "title": "SDBH Selection Pack Vol.1 (SP01)",
+      "productUrl": "https://toy-let.com/products/sdbh-selection-pack-vol-1",
+      "slugs": [
+        "booster-selection-pack",
+        "booster-selection-pack-box"
+      ],
+      "art": [
+        "products/toy-let/selection-pack-vol-1.png",
+        "products/toy-let/selection-pack-vol-1-box.png"
+      ]
+    },
+    {
+      "handle": "sdh-selection-pack-vol-2",
+      "title": "SDBH Selection Pack Vol.2 (SP02)",
+      "productUrl": "https://toy-let.com/products/sdh-selection-pack-vol-2",
+      "slugs": [
+        "booster-selection-pack-vol-2",
+        "booster-selection-pack-vol-2-box"
+      ],
+      "art": [
+        "products/toy-let/selection-pack-vol-2.png",
+        "products/toy-let/selection-pack-vol-2-box.png"
+      ]
+    },
+    {
+      "handle": "sdbh-selection-pack-vol-3",
+      "title": "SDBH Selection Pack Vol.3 (SP03)",
+      "productUrl": "https://toy-let.com/products/sdbh-selection-pack-vol-3",
+      "slugs": [
+        "booster-selection-pack-vol-3",
+        "booster-selection-pack-vol-3-box"
+      ],
+      "art": [
+        "products/toy-let/selection-pack-vol-3.png",
+        "products/toy-let/selection-pack-vol-3-box.png"
+      ]
+    },
+    {
+      "handle": "sdbhe-big-bang-mission-ver-3",
+      "title": "SDBH Big Bang Mission Vol.3 (BMT3)",
+      "productUrl": "https://toy-let.com/products/sdbhe-big-bang-mission-ver-3",
+      "slugs": [
+        "big-bang-booster-pack-3",
+        "big-bang-booster-pack-3-box"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-3.png",
+        "products/toy-let/big-bang-mission-ver-3-box.png"
+      ]
+    },
+    {
+      "handle": "sdbh-big-bang-mission-ver-4",
+      "title": "SDBH Big Bang Mission Vol.4 (BMT4)",
+      "productUrl": "https://toy-let.com/products/sdbh-big-bang-mission-ver-4",
+      "slugs": [
+        "big-bang-booster-pack-4",
+        "big-bang-booster-pack-4-box"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-4.png",
+        "products/toy-let/big-bang-mission-ver-4-box.png"
+      ]
+    },
+    {
+      "handle": "super-dragonball-heroes-big-bang-mission-ver-5-hk",
+      "title": "SDBH Big Bang Mission Vol.5 (BMT5)",
+      "productUrl": "https://toy-let.com/products/super-dragonball-heroes-big-bang-mission-ver-5-hk",
+      "slugs": [
+        "big-bang-booster-pack-5"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-5.png"
+      ],
+      "notes": "Gallery is pack face only — box SKU has no image until a real BOX packshot exists."
+    },
+    {
+      "handle": "super-dragonball-heroes-big-bang-mission-ver-6-hk",
+      "title": "SDBH Big Bang Mission Vol.6 (BMT6)",
+      "productUrl": "https://toy-let.com/products/super-dragonball-heroes-big-bang-mission-ver-6-hk",
+      "slugs": [
+        "big-bang-booster-pack-6"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-6.png"
+      ],
+      "notes": "Gallery is pack face only — box SKU has no image until a real BOX packshot exists."
+    },
+    {
+      "handle": "super-dragonball-heroes-sdhb-big-bang-mission-ver-7",
+      "title": "SDBH Big Bang Mission Vol.7 (BMT7)",
+      "productUrl": "https://toy-let.com/products/super-dragonball-heroes-sdhb-big-bang-mission-ver-7",
+      "slugs": [
+        "big-bang-booster-pack-7",
+        "big-bang-booster-pack-7-box"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-7.jpg",
+        "products/toy-let/big-bang-mission-ver-7-box.jpg"
+      ]
+    },
+    {
+      "handle": "super-dragonball-heroes-sdbh-big-bang-mission-ver-9",
+      "title": "SDBH Big Bang Mission Vol.9 (BMT9)",
+      "productUrl": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-9",
+      "slugs": [
+        "big-bang-booster-pack-9"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-9.jpg"
+      ],
+      "notes": "Gallery is pack face only — box SKU has no image until a real BOX packshot exists."
+    },
+    {
+      "handle": "super-dragonball-heroes-sdbh-big-bang-mission-ver-10",
+      "title": "SDBH Big Bang Mission Vol.10 (BMT10)",
+      "productUrl": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-10",
+      "slugs": [
+        "big-bang-booster-pack-10",
+        "big-bang-booster-pack-10-box"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-10.jpg",
+        "products/toy-let/big-bang-mission-ver-10-box.jpg"
+      ]
+    },
+    {
+      "handle": "super-dragonball-heroes-sdbh-big-bang-mission-ver-12",
+      "title": "SDBH Big Bang Mission Vol.12 (BMT12)",
+      "productUrl": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-12",
+      "slugs": [
+        "big-bang-booster-pack-12",
+        "big-bang-booster-pack-12-box"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-12.jpg",
+        "products/toy-let/big-bang-mission-ver-12-box.png"
+      ]
+    },
+    {
+      "handle": "sdbh-evolution-pack-vol-1",
+      "title": "SDBH Evolution Pack Vol.1 (EVT1)",
+      "productUrl": "https://toy-let.com/products/sdbh-evolution-pack-vol-1",
+      "slugs": [
+        "evolution-pack-vol-1",
+        "evolution-pack-vol-1-box"
+      ],
+      "art": [
+        "products/toy-let/evolution-pack-vol-1.jpg",
+        "products/toy-let/evolution-pack-vol-1-box.png"
+      ]
+    },
+    {
+      "handle": "sdbh-evolution-pack-vol-3",
+      "title": "SDBH Evolution Pack Vol.3 (EVT3)",
+      "productUrl": "https://toy-let.com/products/sdbh-evolution-pack-vol-3",
+      "slugs": [
+        "evolution-pack-vol-3",
+        "evolution-pack-vol-3-box"
+      ],
+      "art": [
+        "products/toy-let/evolution-pack-vol-3.jpg"
+      ]
+    },
+    {
+      "title": "SDBH Big Bang Mission Vol.11 (BMT11)",
+      "productUrl": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-11",
+      "slugs": [
+        "big-bang-booster-pack-11",
+        "big-bang-booster-pack-11-box"
+      ],
+      "art": [
+        "products/toy-let/big-bang-mission-ver-11.png",
+        "products/toy-let/big-bang-mission-ver-11-box.png"
+      ]
+    }
+  ]
+}

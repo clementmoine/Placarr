@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 import { isItemCondition } from "@/core/collect/condition";
 import {
@@ -8,11 +8,48 @@ import {
 import { getItemRatingScore10 } from "@/core/collect/rating";
 import type { MetadataFact } from "@/types/metadataProvider";
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
+import {
+  catalogueSetFromPrintKey,
+  comparePrintKeys,
+  comparePrintSetCodes,
+} from "@/core/identify/printKey";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
+import { itemSlugSetCode } from "@/providers/shared/cardCatalogue/sets";
 import type { ItemWithMetadata } from "@/types/items";
+
+/** Extension catalogue pour le tri binder. */
+function itemCatalogueSetCode(item: ItemWithMetadata): string {
+  const raw =
+    typeof item.setCode === "string" ? item.setCode.trim().toLowerCase() : "";
+  if (raw) return itemSlugSetCode(raw) || raw;
+  const fromKey = catalogueSetFromPrintKey(item.printKey);
+  return fromKey ? itemSlugSetCode(fromKey) || fromKey : "";
+}
+
+/**
+ * Binder shelf order: catalogue set (Item.setCode or printKey set segment)
+ * then printKey.
+ */
+function compareItemsByPrint(
+  a: ItemWithMetadata,
+  b: ItemWithMetadata,
+): number {
+  const setA = itemCatalogueSetCode(a);
+  const setB = itemCatalogueSetCode(b);
+  if (setA || setB) {
+    if (!setA) return 1;
+    if (!setB) return -1;
+    const bySet = comparePrintSetCodes(setA, setB);
+    if (bySet !== 0) return bySet;
+  }
+  return comparePrintKeys(a.printKey, b.printKey);
+}
 
 export type ItemCollectionSort =
   | "name_asc"
   | "name_desc"
+  | "print_asc"
+  | "print_desc"
   | "added_desc"
   | "added_asc"
   | "release_desc"
@@ -26,15 +63,21 @@ export type ItemCollectionFilters = {
   condition: Condition | "all";
   ratingMin: number | null;
   pricedOnly: boolean;
+  /**
+   * Display-only: after {@link groupCopies}, keep groups with more than one
+   * copy. Not applied inside {@link filterCollectionItems}.
+   */
+  duplicatesOnly: boolean;
 };
 
 export const DEFAULT_ITEM_COLLECTION_FILTERS: ItemCollectionFilters = {
   condition: "all",
   ratingMin: null,
   pricedOnly: false,
+  duplicatesOnly: false,
 };
 
-export const ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
+const BASE_ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
   "name_asc",
   "name_desc",
   "added_desc",
@@ -47,6 +90,32 @@ export const ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
   "price_asc",
 ];
 
+/** All known sort keys (including print binder order). */
+export const ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
+  "print_asc",
+  "print_desc",
+  ...BASE_ITEM_COLLECTION_SORT_OPTIONS,
+];
+
+/**
+ * Sort menu for a shelf: binder order (set → number) only when the shelf
+ * identifies by print, otherwise the usual media sorts.
+ */
+export function itemCollectionSortOptions(
+  shelfType?: string | null,
+): ItemCollectionSort[] {
+  if (usesPrintSearch(shelfType)) {
+    return ["print_asc", "print_desc", ...BASE_ITEM_COLLECTION_SORT_OPTIONS];
+  }
+  return BASE_ITEM_COLLECTION_SORT_OPTIONS;
+}
+
+/** Default binder order on TCG; A–Z everywhere else. */
+export function defaultItemCollectionSort(
+  shelfType?: string | null,
+): ItemCollectionSort {
+  return usesPrintSearch(shelfType) ? "print_asc" : "name_asc";
+}
 export const ITEM_COLLECTION_RATING_MIN_OPTIONS = [6, 7, 8, 9] as const;
 
 function metadataFacts(
@@ -72,10 +141,13 @@ function itemValueEstimate(
   return getItemValueEstimate({
     condition: item.condition,
     shelfType: shelfType ?? item.shelf?.type,
+    variant: item.variant,
     priceNew: item.priceNew,
+    priceFoil: item.priceFoil,
     priceUsed: item.priceUsed,
     priceUsedCIB: item.priceUsedCIB,
     priceEstimated: item.priceEstimated,
+    priceEstimatedFoil: item.priceEstimatedFoil,
   });
 }
 
@@ -119,6 +191,14 @@ export function sortCollectionItems(
     switch (sortBy) {
       case "name_desc":
         return compareTitlesForSort(a.name, b.name, "desc");
+      case "print_asc": {
+        const print = compareItemsByPrint(a, b);
+        return print || compareTitlesForSort(a.name, b.name);
+      }
+      case "print_desc": {
+        const print = compareItemsByPrint(b, a);
+        return print || compareTitlesForSort(a.name, b.name, "desc");
+      }
       case "added_desc":
         return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -219,6 +299,7 @@ export function sumCollectionEstimatedValue(
 
 export function parseItemCollectionSort(
   value: string | null | undefined,
+  shelfType?: string | null,
 ): ItemCollectionSort {
   if (
     value &&
@@ -226,7 +307,7 @@ export function parseItemCollectionSort(
   ) {
     return value as ItemCollectionSort;
   }
-  return "name_asc";
+  return defaultItemCollectionSort(shelfType);
 }
 
 export function parseItemCollectionFilters(searchParams: {
@@ -250,7 +331,11 @@ export function parseItemCollectionFilters(searchParams: {
   const pricedParam = searchParams.get("priced");
   const pricedOnly = pricedParam === "1" || pricedParam === "true";
 
-  return { condition, ratingMin, pricedOnly };
+  const duplicatesParam = searchParams.get("duplicates");
+  const duplicatesOnly =
+    duplicatesParam === "1" || duplicatesParam === "true";
+
+  return { condition, ratingMin, pricedOnly, duplicatesOnly };
 }
 
 export function hasActiveCollectionFilters(
@@ -259,7 +344,8 @@ export function hasActiveCollectionFilters(
   return (
     filters.condition !== "all" ||
     filters.ratingMin !== null ||
-    filters.pricedOnly
+    filters.pricedOnly ||
+    filters.duplicatesOnly
   );
 }
 
@@ -270,5 +356,6 @@ export function collectionFiltersToSearchParams(
     condition: filters.condition === "all" ? null : filters.condition,
     ratingMin: filters.ratingMin === null ? null : String(filters.ratingMin),
     priced: filters.pricedOnly ? "1" : null,
+    duplicates: filters.duplicatesOnly ? "1" : null,
   };
 }

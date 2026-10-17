@@ -1,0 +1,38 @@
+{
+  "source": "キャラクターグッズ研究所 (dream-hobby Hatena) — Bandai Carddass SKU list",
+  "observed": "2026-08-18",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "url": "https://dream-hobby.hatenablog.com/entry/2022/07/17/210700",
+  "related": [
+    {
+      "url": "https://dream-hobby.hatenablog.com/entry/2024/11/29/063555",
+      "covers": ["疾風伝第一幕", "データカードダス"],
+      "skip": ["data-carddass", "jumbo-seal"]
+    },
+    {
+      "url": "https://dream-hobby.hatenablog.com/entry/2024/09/12/072125",
+      "covers": ["カードゲームチョコ 2006"],
+      "note": "Wafer + 1 tabletop card + rule slip. 32 cards / 2 slips."
+    }
+  ],
+  "note": "Timeline of 巻ノ壱–十七 SKUs: カードダス100 (4/100¥), EX booster (6/150–158¥), constructed starters (蝦蟇/守鶴/迅雷/烈火/暗躍/豪雷の書), jumbo sheets, コインPLUS 2. Photos on the post are theme/OG only — not packshots. Same game as FR/IT. Combo / ナルティメット = Data Carddass mix.",
+  "not": ["data-carddass", "en-ccg", "faces", "crawl-hatena"],
+  "startersNamed": [
+    "ナルトの書",
+    "サスケの書",
+    "蝦蟇の書",
+    "守鶴の書",
+    "迅雷の書",
+    "烈火の書",
+    "暗躍の書",
+    "豪雷の書"
+  ],
+  "maki16Split": {
+    "carddass100": "火の継承者編",
+    "boosterEx": "風の継承者編",
+    "note": "Some SR/R arts differ between vending and pack."
+  }
+}

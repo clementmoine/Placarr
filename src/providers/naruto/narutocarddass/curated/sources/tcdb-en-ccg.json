@@ -1,0 +1,81 @@
+{
+  "source": "tcdb.com — Trading Card Database, Gaming (observed 2026-08-16)",
+  "note": "Community checklists + user scans for Bandai USA Naruto CCG. TCDB prefixes (PTHJ, COSN, CUSC…) are invented; Bandai prints N/J/M/C. Public card images render at 250×350 and are hotlink-protected (403 on images.tcdb.com / www.tcdb.com/Images, probed 2026-08-17). PTHJ-001 Kunai has Fr+Bk on the card page — still not a dump source. EN CCG Series 1 is not Carddass FR Série 1 — do not write cards/s1/en/. Future dump: staging/tcdb-en/, like bandaicg-en.",
+  "mainSets": [
+    {
+      "sid": 116757,
+      "year": 2006,
+      "series": 1,
+      "title": "The Path to Hokage",
+      "acronym": "PTH",
+      "tcdbCards": 127,
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/116757/2006-Naruto-Series-1:-The-Path-to-Hokage"
+    },
+    {
+      "sid": 117553,
+      "year": 2006,
+      "series": 2,
+      "title": "Coils of the Snake",
+      "acronym": "COS",
+      "tcdbCards": 131,
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/117553/2006-Naruto-Series-2:-Coils-of-the-Snake"
+    },
+    {
+      "sid": 117701,
+      "year": 2006,
+      "series": 3,
+      "title": "Curse of the Sand",
+      "acronym": "CUS",
+      "tcdbCards": 148,
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/117701/2006-Naruto-Series-3:-Curse-of-the-Sand"
+    }
+  ],
+  "doNotIngest": [
+    {
+      "sid": 118974,
+      "kind": "grab-bag",
+      "title": "2006 Naruto Promos",
+      "tcdbCards": 194,
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/118974/2006-Naruto-Promos",
+      "reason": "Mixes COS/CUS/DL/BOD (and BODN-us059) under one 'Promos' set. Not Bandai PR-xxx. Same trap as Coleka _r4102."
+    },
+    {
+      "sid": 256824,
+      "kind": "do-not-merge",
+      "title": "2002 Bandai Naruto: The Path to Hokage",
+      "url": "https://www.tcdb.com/ViewSet.cfm/sid/256824/2002-Bandai-Naruto-The-Path-to-Hokage",
+      "reason": "Misdated / Carddass-confused listing. Do not merge with 2006 sid 116757."
+    }
+  ],
+  "acronymsObserved": {
+    "PTH": 1,
+    "COS": 2,
+    "CUS": 3,
+    "DL": 5,
+    "BOD": 8
+  },
+  "nIndex": {
+    "url": "https://www.tcdb.com/ViewAll.cfm/sp/Gaming?Let=N&MODE=Years",
+    "note": "TCDB files each CCG series as its own Gaming brand, so ViewAll brand/Naruto only shows leftover sets (2006 Promos, a 1st Edition parallel). The N-index lists series titles, not Storm 3.",
+    "listedSeriesTitles": {
+      "1": "The Path to Hokage",
+      "2": "Coils of the Snake",
+      "3": "Curse of the Sand",
+      "4": "Revenge and Rebirth",
+      "5": "Dream Legacy",
+      "6": "Eternal Rivalry",
+      "7": "Quest for Power",
+      "8": "Battle of Destiny",
+      "9": "The Chosen",
+      "10": "Lineage of the Legends",
+      "11": "Approaching Wind",
+      "12": "A New Chronicle",
+      "14": "Emerging Alliance",
+      "15": "Foretold Prophecy",
+      "16": "Broken Promises",
+      "17": "Will of Fire",
+      "18": "Fangs of the Snake"
+    },
+    "missingOnIndex": [13, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
+  }
+}

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -22,6 +22,7 @@ import {
   promoteBooknodeSearchEvidence,
   readBooknodeSearchEvidence,
 } from "./durableEvidence";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 export interface BooknodeBook {
   id?: string;
@@ -224,7 +225,7 @@ function isCandidateAligned(query: string, title: string): boolean {
   const queryIssue = volumeNumberFromTitle(query);
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
-  return isMetadataTitleAligned({ title }, [query], 0.58);
+  return isMetadataTitleAligned({ title }, [query], METADATA_TITLE_ALIGN_FLOOR);
 }
 
 type JsonLdSchema = Record<string, unknown>;
@@ -552,8 +553,7 @@ export function parseBooknodeBookPage(
     | { ratingValue?: unknown; ratingCount?: unknown; reviewCount?: unknown }
     | undefined;
   const series = book?.isPartOf as
-    | { name?: unknown; url?: unknown; position?: unknown }
-    | undefined;
+    { name?: unknown; url?: unknown; position?: unknown } | undefined;
   const image =
     firstSchemaValue(book?.image) ||
     metaContent(html, "twitter:image") ||
@@ -570,7 +570,8 @@ export function parseBooknodeBookPage(
   const barcode =
     normalizeProductBarcode(firstSchemaValue(book?.isbn)) ||
     normalizeProductBarcode(firstSchemaValue(book?.gtin13)) ||
-    normalizeProductBarcode(firstSchemaValue(book?.gtin));
+    normalizeProductBarcode(firstSchemaValue(book?.gtin)) ||
+    undefined;
   const releaseDate =
     firstSchemaValue(book?.datePublished) ||
     firstSchemaValue(book?.dateCreated);
@@ -654,7 +655,7 @@ async function fetchWithReader(
   signal?: AbortSignal,
 ): Promise<string | null> {
   try {
-    const response = await axios.get(`${BOOKNODE_READER_URL_PREFIX}${url}`, {
+    const response = await httpGet(`${BOOKNODE_READER_URL_PREFIX}${url}`, {
       responseType: "text",
       transformResponse: [(data) => data],
       timeout: 12_000,
@@ -677,7 +678,7 @@ async function fetchBooknodePage(
   signal?: AbortSignal,
 ): Promise<string | null> {
   try {
-    const response = await axios.get(url, {
+    const response = await httpGet(url, {
       headers: BOOKNODE_HEADERS,
       responseType: "text",
       transformResponse: [(data) => data],
@@ -807,10 +808,7 @@ export async function getBooknodeSuggestions(name: string): Promise<string[]> {
     );
     if (candidates.length === 0) continue;
 
-    for (const candidate of candidates.slice(
-      0,
-      5,
-    )) {
+    for (const candidate of candidates.slice(0, 5)) {
       const title = candidate.title.trim();
       if (!title || seen.has(title)) continue;
       seen.add(title);
@@ -836,7 +834,9 @@ export async function collectBooknodeMappingRawKeys(
   if (isBooknodeBookUrl(trimmed)) {
     urls = booknodePageUrlAlternates(trimmed);
   } else {
-    const candidates = await loadBooknodeSearchCandidates(searchUrlFor(trimmed));
+    const candidates = await loadBooknodeSearchCandidates(
+      searchUrlFor(trimmed),
+    );
     const candidate = candidates[0]?.url;
     if (candidate) urls = booknodePageUrlAlternates(candidate);
   }

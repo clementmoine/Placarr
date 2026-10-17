@@ -1,0 +1,53 @@
+{
+  "source": "marketplace.primaltcg.com (user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "crawl": false,
+  "line": "en-ccg",
+  "note": "Primal TCG's own marketplace also hosts a Bandai USA Naruto CCG catalogue. Stock JPEGs are 2019 CCG Trader files re-uploaded 2026-07-24, served 350×490 (same as Goat, smaller than Vintage 750×1050). Codes are TCDB invented prefixes (PTHN-001), not printed N-001 — disk n001, never pthn001. Promotional Cards (194) is the same grab-bag as TCDB sid 118974. Unfiltered /guest/sets mixes Primal TCG sets in. Do not crawl listings; seller photos are optional and Naruto listings were 0 on this paste.",
+  "urls": {
+    "browse": "https://marketplace.primaltcg.com/browse/naruto-ccg",
+    "games": "https://apimarket.primaltcg.com/api/v1/guest/games",
+    "narutoGame": "https://apimarket.primaltcg.com/api/v1/guest/games/naruto-ccg",
+    "narutoSets": "https://apimarket.primaltcg.com/api/v1/guest/sets?game=naruto-ccg",
+    "uploads": "https://apimarket.primaltcg.com/uploads/"
+  },
+  "games": [
+    { "slug": "primal-tcg", "name": "Primal TCG", "line": "other" },
+    {
+      "slug": "naruto-ccg",
+      "id": "6a62cccde7f18682fcd02328",
+      "name": "Naruto CCG",
+      "line": "en-ccg"
+    }
+  ],
+  "catalog": {
+    "setCount": 33,
+    "cardCount": 4420,
+    "boosters": 28,
+    "tournamentPacks": 4,
+    "promos": 1,
+    "servedPixels": { "width": 350, "height": 490 },
+    "listingsWithSlug": 0,
+    "shinobisDream": false,
+    "tins": false
+  },
+  "sample": {
+    "name": "Naruto Uzumaki",
+    "shopRef": "PTHN-001",
+    "printed": "N-001",
+    "diskHint": "n001",
+    "set": "The Path to Hokage",
+    "setCode": "s1",
+    "imageBytes": 53608,
+    "not": ["pthn001", "ni001"]
+  },
+  "traps": {
+    "unfilteredSetsMixPrimal": true,
+    "promotionalCardsGrabBag": 194,
+    "sameTrapAs": ["tcdb-en-ccg.json", "fandom-en-ccg.json"],
+    "s1JunkNumber": "1134",
+    "shopTitleBrokenPromise": "Broken Promise"
+  },
+  "not": ["carddass", "primal-tcg-faces", "shinobis-dream", "kayou"]
+}

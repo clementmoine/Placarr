@@ -97,9 +97,6 @@ export async function promoteBabelioSearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Babelio] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[Babelio] Failed to promote durable search evidence:", error);
   }
 }

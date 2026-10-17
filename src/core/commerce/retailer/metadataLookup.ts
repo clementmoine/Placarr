@@ -244,7 +244,9 @@ export function isRetailerCatalogTitleAccepted(input: {
     ? { shelfType: input.shelfType }
     : undefined;
 
-  if (isNameOnlyRetailerTitleMatch(requestedName, catalogTitle, nameOnlyOptions))
+  if (
+    isNameOnlyRetailerTitleMatch(requestedName, catalogTitle, nameOnlyOptions)
+  )
     return true;
 
   const searchQuery = input.searchQuery?.trim();

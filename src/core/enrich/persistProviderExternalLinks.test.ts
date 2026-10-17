@@ -516,7 +516,7 @@ describe("repairProviderExternalLinksForItem", () => {
     const payload = JSON.parse(h.metadataUpdate.mock.calls[0][0].data.facts);
     expect(
       payload.some(
-        (fact: { source?: string; url?: string }) =>
+        (fact: { kind?: string; source?: string; url?: string }) =>
           fact.kind === "external-link" &&
           fact.source === "okkazeo" &&
           fact.url?.includes("okkazeo.com"),

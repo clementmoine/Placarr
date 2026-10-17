@@ -1,0 +1,36 @@
+{
+  "source": "Mercari pasted Data Carddass leads (Narutimate)",
+  "observed": "2026-09-14",
+  "crawlLive": false,
+  "ingest": "curated-faces",
+  "lang": "ja",
+  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only.",
+  "not": [
+    "crawl",
+    "shops-og-image",
+    "lot-uncropped"
+  ],
+  "faces": [
+    {
+      "listingUrl": "https://jp.mercari.com/item/m10628220337",
+      "printedRef": "NF-011",
+      "title": "NARUTO　フォーメーション　カード　奈良シカマル　シカク　NF011　SR",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m10628220337_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m94904860907",
+      "printedRef": "NF-020",
+      "title": "NARUTO　フォーメーション　カード　秋道チョウジ　チョウザ　NF020　SR",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m94904860907_1.jpg"
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m78347641492",
+      "printedRef": "NF-021",
+      "title": "NARUTO　フォーメーション　カード　山中いの　いのいち　NF021　SR",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m78347641492_1.jpg"
+    }
+  ]
+}

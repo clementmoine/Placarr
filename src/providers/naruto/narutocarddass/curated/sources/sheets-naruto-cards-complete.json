@@ -1,0 +1,60 @@
+{
+  "source": "google-sheets-naruto-cards-complete",
+  "observed": "2026-08-26",
+  "ingest": "none",
+  "crawl": false,
+  "title": "Naruto Cards, Complete",
+  "url": "https://docs.google.com/spreadsheets/d/1dvwy66urXUUFMMht3JyIlUf1AU39xS-pGK3eWQUqx4E/htmlview",
+  "export": "https://docs.google.com/spreadsheets/d/1dvwy66urXUUFMMht3JyIlUf1AU39xS-pGK3eWQUqx4E/export?format=xlsx",
+  "line": "en-ccg",
+  "kind": "personal-chase-inventory",
+  "note": "Owner inventory of valuable EN Bandai USA CCG cards (Goat price column), not a complete set checklist. No Elements / type columns — sorted by finish & rarity. Sheet3 is a short name+edition dump overlapping Wave Foil names. Do not use as completeness oracle.",
+  "sheets": [
+    {
+      "name": "Sheet1",
+      "gid": 0,
+      "sections": [
+        "Super Rare",
+        "Diamond Foil",
+        "Wave Foil",
+        "Rare",
+        "Promo",
+        "Bulk",
+        "Unlimited"
+      ],
+      "listedRowsApprox": 360,
+      "claimedCompleteTotal": 1803,
+      "columns": ["Card Name", "Edition", "Card Number", "Set", "Goat Cards Price"],
+      "missingColumns": ["element", "card type (N/J/M/C)", "lang"]
+    },
+    {
+      "name": "Sheet3",
+      "gid": 1027975810,
+      "columns": ["name", "edition"],
+      "rowsApprox": 69,
+      "note": "Names only — looks like a Wave Foil / misc subset, not a second checklist."
+    }
+  ],
+  "setsNamed": [
+    "The Path to Hokage",
+    "Coils of the Snake",
+    "Curse of the Sand",
+    "Revenge and Rebirth",
+    "Dream Legacy",
+    "Eternal Rivalry",
+    "Quest for Power",
+    "Battle of Destiny",
+    "The Chosen"
+  ],
+  "numbering": {
+    "mostly": "plain integers (EN CCG N/J/M without prefix)",
+    "also": ["us###", "PR###", "C### clients sparse"]
+  },
+  "vsPlacarr": {
+    "elements": false,
+    "clients": "sparse C-refs only — not a client checklist",
+    "usefulFor": "Goat price snapshot + which early-set foils a collector tracked",
+    "notUsefulFor": "EU Amigo lists, UNS3 promos, element affinity, full commons"
+  },
+  "related": "reddit-narutocarddass stillWanted inventory-sheets — this is one candidate, chase-only"
+}

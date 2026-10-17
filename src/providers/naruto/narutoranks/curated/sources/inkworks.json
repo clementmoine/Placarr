@@ -1,0 +1,104 @@
+{
+  "source": "Inkworks — site officiel Naruto: Ninja Ranks (Panini US, 2006)",
+  "observed": "2026-08-21",
+  "ingest": "titles + sealed packshots (booster, display, album) + two attested sample faces",
+  "line": "ninja-ranks",
+  "lang": "en",
+  "publisher": "Panini (US), distribution exclusive Inkworks",
+  "product": "Naruto: Ninja Ranks Premium Trading Cards",
+  "released": "2006-03",
+  "official": {
+    "host": "www.inkworks.com",
+    "product": "http://www.inkworks.com/products/naruto/ninjaranks/naruto.html",
+    "checklist": "http://www.inkworks.com/products/naruto/ninjaranks/narutocklist.htm",
+    "orderForm": "http://www.inkworks.com/products/naruto/ninjaranks/prodformprod1.html",
+    "corporate": "http://www.paninigroup.com",
+    "pressContact": "info@inkworks.com",
+    "altDomain": "www.inkworkscards.com — CDX 2026-08-21 `*naruto*` vide (contests Lost/AVP 2001–2006, pas Ninja Ranks)"
+  },
+  "wayback": {
+    "product": "https://web.archive.org/web/20060617232154id_/http://inkworks.com/products/naruto/ninjaranks/naruto.html",
+    "checklist": "https://web.archive.org/web/20060624043930id_/http://inkworks.com/products/naruto/ninjaranks/narutocklist.htm",
+    "cdx": "https://web.archive.org/cdx/search/cdx?url=www.inkworks.com/products/naruto&matchType=prefix"
+  },
+  "attests": {
+    "base": "72 cartes (1 Title Card … 72 Checklist)",
+    "chase": [
+      "Ninja Warriors NW-1–NW-9, ~1:7 packs, foil board",
+      "Friends and Foes FF-1–FF-6, ~1:11 packs, holo stamp",
+      "Super Deformed SD-1–SD-6, ~1:11 packs, die-cut foil",
+      "Box loaders BL-1–BL-3, 1 per box (Naruto / Sakura / Sasuke)"
+    ],
+    "promos": ["PN-1 general", "PN-T trade shows", "PN-GA GAMA", "PN-i inkworks.com exclusive", "PN-SD2006 SDCC 2006 (hors checklist — voir supplemental-promos-checklist.json)"],
+    "sealed": "9 cartes / pack, 24 packs / display, 10 displays / case, SRP $1.99 ; album collector $19.95",
+    "copyright": "© 2002 MASASHI KISHIMOTO"
+  },
+  "siblingsOnSameTree": {
+    "note": "Même hôte officiel, autres produits. Ne pas coller dans `naruto/ninja-ranks`.",
+    "wayOfTheNinja": {
+      "set": "http://www.inkworks.com/products/naruto/wayofninja/set.html",
+      "checklist": "http://www.inkworks.com/products/naruto/wayofninja/cklist.htm",
+      "waybackSet": "https://web.archive.org/web/20070210131612/http://www.inkworks.com/products/naruto/wayofninja/set.html"
+    },
+    "secretWeapons": {
+      "set": "http://www.inkworks.com/products/naruto/secretweapons/set.html",
+      "checklist": "http://www.inkworks.com/products/naruto/secretweapons/cklist.htm",
+      "waybackSet": "https://web.archive.org/web/20070909103341/http://www.inkworks.com/products/naruto/secretweapons/set.html"
+    }
+  },
+  "europe": {
+    "claim": "AnimeCollection range Ninja Ranks sous « Françaises » à côté d’Ultra card, avec une grille 102 cartes : 1–72 + FF1–6 + NW1–9 + SD1–6 + NS1–6 + GS1–3. Coleka `_r25928` et Imadoki disent aussi 102.",
+    "deltaVsOfficialUs": "La checklist Inkworks US n’a pas les NS (Ninja Sensei) ni le libellé GS : elle a BL-1–BL-3 à la place. Ne pas inventer que NS fait partie du site officiel US.",
+    "noPaniniFranceMicrosite": "CDX 2026-08-21 : zéro URL `panini.fr/*naruto*`, `paninicomics.fr/*naruto*`, `panini.es/*naruto*`. Relance 2026-08-21 soir : `panini.co.uk/*naruto*`, `panini.it/*naruto*`, `figurine.panini.it/*naruto*`, `kana.fr/*naruto*`, `edibas.fr`, `lamincards.fr` vides. `naruto.fr` 2004 = homepage puis blog parké 2022, pas de cartes."
+  },
+  "pressRedistribution": {
+    "note": "Les kits presse Inkworks ont été recopiés par le hobby press. Ce n’est pas une galerie de faces : ce sont les mêmes packshots / key art que le mini-site.",
+    "doNotIngestAsNewArt": true,
+    "icv2": {
+      "article": "https://icv2.com/articles/comics/view/8390/naruto-trading-cards",
+      "date": "2006-03-20",
+      "image": "https://icv2.com/images/79217nnrcardpn1lg1md.jpg",
+      "finding": "Filename Inkworks `nnrcardpn1lg1md` : key art Team 7 (même visuel que `nnrcard1med.jpg`), pas une face PN-1 numérotée. Texte : pubs dans Shonen Jump et Naruto Collector Magazine Viz ; 4 promos (GAMA, site, write-in…)."
+    },
+    "tdmonthly": {
+      "product": "https://www.toydirectory.com/monthly/new_product.asp?id=8834",
+      "added": "2006-07-31",
+      "images": [
+        "https://www.toydirectory.com/monthly/oct2006/images/for-2108-naruto.jpg",
+        "https://www.toydirectory.com/monthly/hgg/inkworks/naruto.jpg"
+      ],
+      "exif": "Adobe Photoshop 7.0, 2006-07-31 / 2006-09-12",
+      "finding": "Display box (= `nnrboxsmed2`) et composite album+stack (= `nnralbumssm` / `nnrsetssm`). Copy trade : « Collect all four different wrappers » — un seul sachet officiel archivé (`nnrwrapmed.jpg`)."
+    },
+    "toymania": "Reprint HTML du communiqué Inkworks, pas de JPEG extra (déjà noté).",
+    "nslists": "https://nslists.com/narutonr.htm — texte only. Mention sell sheet / tin / PN-SD2006 hors checklist Inkworks : ne pas inventer dans le ledger US.",
+    "sellSheet": {
+      "photos": "https://tvmoviecards.com/products/naruto-ninja-ranks-trading-card-dealer-sell-sheet-promo-sale-2008 — recto key art « Coming March 2006 » + www.inkworks.com ; verso config + UPC + www.paniniusa.com.",
+      "upcWiredInLedger": "inkworks-products.json `sellSheet.upc`. Case UPC attesté, pas de SKU case (pas de packshot).",
+      "fourWrappers": "Le flyer ne montre pas quatre arts de sachet distincts. Packshot officiel = fond jaune/orange (`nnrwrapmed.jpg`). Photo Dollar Tree 2010 (blog A Pack To Be Named Later) = sachet **vert** métallique, même key art Team 7 — dump `art.blogger` à côté du wrap officiel, pas un 2ᵉ SKU.",
+      "tin": "TDmonthly `narutotin.jpg` (Photoshop 7.0, 2006-09-26) montre trois tins octogonaux « TRADING CARD GAME » Team 7. Copy TDmonthly = Inkworks + motion cards ; le visuel dit TCG (Bandai). Ne pas mint dans `ninja-ranks` sans packshot Inkworks `*tin*` (CDX vide). nslists : tin mixte NR + Way of the Ninja.",
+      "paniniusa": "CDX `www.paniniusa.com/*naruto*` vide. Captures du domaine = placeholder 2025, pas le site 2006."
+    },
+    "wayneComicsPressFiles": {
+      "host": "waynescomics.com/waynescards/ — revendeur, pas l’éditeur.",
+      "inkworksNamed": "`narutosjlogolg2.jpg` 2310×1360, `nnrsetslg.jpg` 1121×889, `nnrcardpn1lg.jpg` 250×350. Mêmes visuels que le mini-site, plus grands. CDX du dossier `ninjaranks/` : ces noms `*lg*` absents.",
+      "dealerPhotosNotOfficialHost": "Grilles NW / FF / SD / BL et scan PN-SD2006 : photos d’objets. Ne pas ingest comme art officiel. PN-SD2006 reste hors checklist Inkworks US."
+    }
+  },
+  "fanImageHosts": {
+    "note": "Scans utilisateurs, pas CDN Panini/Inkworks. Les dumps `art.blogger` du rip Dollar Tree sont des photos fan à côté de l’officiel. Coleka/AC/Paninimania : thumbs EU, pas ingest (NS/GS hors checklist US).",
+    "bloggerPackRip": "apacktobenamedlater.blogspot.com 2010 — sachet vert + SD-4. Ledger `blogger-pack-rip.json`.",
+    "coleka": "thumbs.coleka.com/media/item/202205|202206/…webp — uploads 2022, 102 cartes (édition EU NS/GS).",
+    "animecollection": "animecollection.fr/cartes/87/200/h100_*_carte.jpg — 102 thumbs + packagings/87/200 (photos objets).",
+    "paninimania": "paninimania.com/files/15/1/?n=121_i* — photos collectionneur."
+  },
+  "not": [
+    "Carddass NI/TE/TA",
+    "CCG Bandai USA N/J/M",
+    "疾風伝",
+    "Ultra Challenge lamincards",
+    "Way of the Ninja",
+    "Secret Weapons"
+  ],
+  "whyItMatters": "Premier site éditeur trouvé pour cette ligne. Checklist officielle et packshots marketing sur Wayback. Les visuels non-cartes (sachet, display, album) sont des produits scellés. Way of the Ninja / Secret Weapons restent hors pack."
+}

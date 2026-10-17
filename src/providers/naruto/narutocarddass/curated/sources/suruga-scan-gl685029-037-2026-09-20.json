@@ -1,0 +1,17 @@
+{
+  "observed": "2026-09-20",
+  "method": "CDN HEAD GL685020–120 + kaitori titles",
+  "chunk": "GL685029–GL685037",
+  "note": "Late Carddass JA window (巻ノ十五+). Adjacent GL685033/034 already known (忍-391/392).",
+  "kept": [
+    { "id": "GL685029", "printed": "忍-346" },
+    { "id": "GL685030", "printed": "忍-375" },
+    { "id": "GL685031", "printed": "忍-389" },
+    { "id": "GL685032", "printed": "忍-390" },
+    { "id": "GL685033", "printed": "忍-391" },
+    { "id": "GL685034", "printed": "忍-392" },
+    { "id": "GL685035", "printed": "作-322" },
+    { "id": "GL685036", "printed": "術-342" },
+    { "id": "GL685037", "printed": "術-343" }
+  ]
+}

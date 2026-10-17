@@ -1,0 +1,695 @@
+{
+  "source": "coleka.com dump navigateur ?nbpp=240 (listing complet)",
+  "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/explore-l-univers-marvel-avec-groot-leclerc_r41370?nbpp=240",
+  "set": {
+    "code": "marvel24",
+    "label": "2024 Marvel: Explore L'Univers Marvel avec Groot",
+    "year": 2024,
+    "franchise": "Marvel"
+  },
+  "coverage": {
+    "namedCards": 108,
+    "placeholderCards": 0,
+    "fixeez": 24,
+    "gold": [
+      "006",
+      "027",
+      "041",
+      "062",
+      "074",
+      "083",
+      "092",
+      "102"
+    ]
+  },
+  "cards": [
+    {
+      "number": "001",
+      "name": "Miss Marvel",
+      "kind": "card"
+    },
+    {
+      "number": "002",
+      "name": "Captain Marvel",
+      "kind": "card"
+    },
+    {
+      "number": "003",
+      "name": "Monica Rambeau",
+      "kind": "card"
+    },
+    {
+      "number": "004",
+      "name": "War Machine",
+      "kind": "card"
+    },
+    {
+      "number": "005",
+      "name": "Doctor Strange",
+      "kind": "card"
+    },
+    {
+      "number": "006",
+      "name": "Groot en Captain Marvel",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "007",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "008",
+      "name": "Thor",
+      "kind": "card"
+    },
+    {
+      "number": "009",
+      "name": "Hulk",
+      "kind": "card"
+    },
+    {
+      "number": "010",
+      "name": "Groot",
+      "kind": "card"
+    },
+    {
+      "number": "011",
+      "name": "Star-Lord",
+      "kind": "card"
+    },
+    {
+      "number": "012",
+      "name": "Rocket Racoon",
+      "kind": "card"
+    },
+    {
+      "number": "013",
+      "name": "Ronan l'accusateur",
+      "kind": "card"
+    },
+    {
+      "number": "014",
+      "name": "Nebula",
+      "kind": "card"
+    },
+    {
+      "number": "015",
+      "name": "Mantis",
+      "kind": "card"
+    },
+    {
+      "number": "016",
+      "name": "Drax",
+      "kind": "card"
+    },
+    {
+      "number": "017",
+      "name": "Le Collectionneur",
+      "kind": "card"
+    },
+    {
+      "number": "018",
+      "name": "Ego",
+      "kind": "card"
+    },
+    {
+      "number": "019",
+      "name": "Kate Bishop",
+      "kind": "card"
+    },
+    {
+      "number": "020",
+      "name": "Captain Marvel",
+      "kind": "card"
+    },
+    {
+      "number": "021",
+      "name": "Nova",
+      "kind": "card"
+    },
+    {
+      "number": "022",
+      "name": "Nick Fury",
+      "kind": "card"
+    },
+    {
+      "number": "023",
+      "name": "Miss Marvel",
+      "kind": "card"
+    },
+    {
+      "number": "024",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "025",
+      "name": "Monica Rambeau",
+      "kind": "card"
+    },
+    {
+      "number": "026",
+      "name": "Iron Man",
+      "kind": "card"
+    },
+    {
+      "number": "027",
+      "name": "Groot en Wolverine",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "028",
+      "name": "Rhino",
+      "kind": "card"
+    },
+    {
+      "number": "029",
+      "name": "Miles Morales",
+      "kind": "card"
+    },
+    {
+      "number": "030",
+      "name": "Spider-Girl",
+      "kind": "card"
+    },
+    {
+      "number": "031",
+      "name": "L'homme-sable",
+      "kind": "card"
+    },
+    {
+      "number": "032",
+      "name": "Spider-Man",
+      "kind": "card"
+    },
+    {
+      "number": "033",
+      "name": "Symbiote Spider-Man",
+      "kind": "card"
+    },
+    {
+      "number": "034",
+      "name": "Silk",
+      "kind": "card"
+    },
+    {
+      "number": "035",
+      "name": "Le Rodeur",
+      "kind": "card"
+    },
+    {
+      "number": "036",
+      "name": "Kraven le chasseur",
+      "kind": "card"
+    },
+    {
+      "number": "037",
+      "name": "Shang-Chi",
+      "kind": "card"
+    },
+    {
+      "number": "038",
+      "name": "Squirrel Girl",
+      "kind": "card"
+    },
+    {
+      "number": "039",
+      "name": "Black Panther",
+      "kind": "card"
+    },
+    {
+      "number": "040",
+      "name": "Ant-Man",
+      "kind": "card"
+    },
+    {
+      "number": "041",
+      "name": "Groot en Iron Man",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "042",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "043",
+      "name": "Doctor Strange",
+      "kind": "card"
+    },
+    {
+      "number": "044",
+      "name": "Hulk",
+      "kind": "card"
+    },
+    {
+      "number": "045",
+      "name": "la Sorcière Rouge",
+      "kind": "card"
+    },
+    {
+      "number": "046",
+      "name": "Star-Lord",
+      "kind": "card"
+    },
+    {
+      "number": "047",
+      "name": "Gamora",
+      "kind": "card"
+    },
+    {
+      "number": "048",
+      "name": "Rocket Racoon",
+      "kind": "card"
+    },
+    {
+      "number": "049",
+      "name": "Groot",
+      "kind": "card"
+    },
+    {
+      "number": "050",
+      "name": "Drax",
+      "kind": "card"
+    },
+    {
+      "number": "051",
+      "name": "Thanos",
+      "kind": "card"
+    },
+    {
+      "number": "052",
+      "name": "Nebula",
+      "kind": "card"
+    },
+    {
+      "number": "053",
+      "name": "Peter Quill",
+      "kind": "card"
+    },
+    {
+      "number": "054",
+      "name": "Cosmo",
+      "kind": "card"
+    },
+    {
+      "number": "055",
+      "name": "Ironheart",
+      "kind": "card"
+    },
+    {
+      "number": "056",
+      "name": "La Guêpe",
+      "kind": "card"
+    },
+    {
+      "number": "057",
+      "name": "Black Panther",
+      "kind": "card"
+    },
+    {
+      "number": "058",
+      "name": "Docteur Fatalis",
+      "kind": "card"
+    },
+    {
+      "number": "059",
+      "name": "America Chavez",
+      "kind": "card"
+    },
+    {
+      "number": "060",
+      "name": "Kang",
+      "kind": "card"
+    },
+    {
+      "number": "061",
+      "name": "Namor",
+      "kind": "card"
+    },
+    {
+      "number": "062",
+      "name": "Groot en Black Panther",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "063",
+      "name": "Okoyé",
+      "kind": "card"
+    },
+    {
+      "number": "064",
+      "name": "Le Lézard",
+      "kind": "card"
+    },
+    {
+      "number": "065",
+      "name": "Spider-Woman",
+      "kind": "card"
+    },
+    {
+      "number": "066",
+      "name": "Electro",
+      "kind": "card"
+    },
+    {
+      "number": "067",
+      "name": "Ghost-Spider",
+      "kind": "card"
+    },
+    {
+      "number": "068",
+      "name": "Iron Spider",
+      "kind": "card"
+    },
+    {
+      "number": "069",
+      "name": "le Bouffon Vert",
+      "kind": "card"
+    },
+    {
+      "number": "070",
+      "name": "Spider-Rex",
+      "kind": "card"
+    },
+    {
+      "number": "071",
+      "name": "Le Super-Bouffon",
+      "kind": "card"
+    },
+    {
+      "number": "072",
+      "name": "Spider-Ham",
+      "kind": "card"
+    },
+    {
+      "number": "073",
+      "name": "La Guêpe",
+      "kind": "card"
+    },
+    {
+      "number": "074",
+      "name": "Groot en Hulk",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "075",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "076",
+      "name": "Black Widow",
+      "kind": "card"
+    },
+    {
+      "number": "077",
+      "name": "Hawkeye",
+      "kind": "card"
+    },
+    {
+      "number": "078",
+      "name": "Madame Hydra",
+      "kind": "card"
+    },
+    {
+      "number": "079",
+      "name": "Iron Man",
+      "kind": "card"
+    },
+    {
+      "number": "080",
+      "name": "Daredevil",
+      "kind": "card"
+    },
+    {
+      "number": "081",
+      "name": "Thanos",
+      "kind": "card"
+    },
+    {
+      "number": "082",
+      "name": "America Chavez",
+      "kind": "card"
+    },
+    {
+      "number": "083",
+      "name": "Groot en Captain America",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "084",
+      "name": "Ultron",
+      "kind": "card"
+    },
+    {
+      "number": "085",
+      "name": "le Soldat de l'hiver",
+      "kind": "card"
+    },
+    {
+      "number": "086",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "087",
+      "name": "Ant-Man",
+      "kind": "card"
+    },
+    {
+      "number": "088",
+      "name": "Crossbones",
+      "kind": "card"
+    },
+    {
+      "number": "089",
+      "name": "Le Faucon",
+      "kind": "card"
+    },
+    {
+      "number": "090",
+      "name": "Hawkeye",
+      "kind": "card"
+    },
+    {
+      "number": "091",
+      "name": "Iron Man",
+      "kind": "card"
+    },
+    {
+      "number": "092",
+      "name": "Groot en Thor",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "093",
+      "name": "Miss Hulk",
+      "kind": "card"
+    },
+    {
+      "number": "094",
+      "name": "Nick Fury",
+      "kind": "card"
+    },
+    {
+      "number": "095",
+      "name": "Thor",
+      "kind": "card"
+    },
+    {
+      "number": "096",
+      "name": "Loki",
+      "kind": "card"
+    },
+    {
+      "number": "097",
+      "name": "La Vision",
+      "kind": "card"
+    },
+    {
+      "number": "098",
+      "name": "Black Widow",
+      "kind": "card"
+    },
+    {
+      "number": "099",
+      "name": "Mighty Thor",
+      "kind": "card"
+    },
+    {
+      "number": "100",
+      "name": "le Vautour",
+      "kind": "card"
+    },
+    {
+      "number": "101",
+      "name": "Dr Octopus",
+      "kind": "card"
+    },
+    {
+      "number": "102",
+      "name": "Groot en Spider-Man",
+      "kind": "card",
+      "rarity": "gold"
+    },
+    {
+      "number": "103",
+      "name": "Spider-Girl",
+      "kind": "card"
+    },
+    {
+      "number": "104",
+      "name": "Miles Morales",
+      "kind": "card"
+    },
+    {
+      "number": "105",
+      "name": "Ghost-Spider",
+      "kind": "card"
+    },
+    {
+      "number": "106",
+      "name": "Spider-Man 2099",
+      "kind": "card"
+    },
+    {
+      "number": "107",
+      "name": "Le Caïd",
+      "kind": "card"
+    },
+    {
+      "number": "108",
+      "name": "Spider-Man",
+      "kind": "card"
+    },
+    {
+      "number": "f01",
+      "name": "Fixeez — Rocket Racoon",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f02",
+      "name": "Fixeez — Groot",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f03",
+      "name": "Fixeez — Groot 2",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f04",
+      "name": "Fixeez — Ghost-Spider",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f05",
+      "name": "Fixeez — Hulk",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f06",
+      "name": "Fixeez — Captain America",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f07",
+      "name": "Fixeez — Groot 3",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f08",
+      "name": "Fixeez — Iron Man",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f09",
+      "name": "Fixeez — Spider-Man",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f10",
+      "name": "Fixeez — Gamora",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f11",
+      "name": "Fixeez — Sorcière rouge",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f12",
+      "name": "Fixeez — Iron Man 2",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f13",
+      "name": "Fixeez — Groot 4",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f14",
+      "name": "Fixeez — Thor",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f15",
+      "name": "Fixeez — Hulk 2",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f16",
+      "name": "Fixeez — Mjolnir",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f17",
+      "name": "Fixeez — Groot 5",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f18",
+      "name": "Fixeez — Gant de l'infini",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f19",
+      "name": "Fixeez — Thor 2",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f20",
+      "name": "Fixeez — Groot 6",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f21",
+      "name": "Fixeez — Captain Marvel",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f22",
+      "name": "Fixeez — Spider-man 2",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f23",
+      "name": "Fixeez — Black Panther",
+      "kind": "fixeez"
+    },
+    {
+      "number": "f24",
+      "name": "Fixeez — Captain America 2",
+      "kind": "fixeez"
+    }
+  ]
+}

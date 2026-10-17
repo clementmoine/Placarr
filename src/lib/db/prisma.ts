@@ -17,12 +17,20 @@ function createPgPool(): Pool {
   // Cap per-process pool so Vitest workers / Next + worker don't exhaust
   // Postgres max_connections (100). Override with PRISMA_PG_POOL_MAX.
   const max = Number(process.env.PRISMA_PG_POOL_MAX ?? 10);
+  // Wait for a free client under parallel durable-evidence bursts (enrich
+  // fans out dozens of provider reads). 5s was too tight →
+  // "timeout exceeded when trying to connect" while Postgres was healthy.
+  const connectionTimeoutMillis = Number(
+    process.env.PRISMA_PG_CONNECT_TIMEOUT_MS ?? 15_000,
+  );
 
   return new Pool({
     connectionString,
     max: Number.isFinite(max) && max > 0 ? max : 10,
-    // Match Prisma 6 engine default (~5s) — pg defaults to 0 (wait forever).
-    connectionTimeoutMillis: 5_000,
+    connectionTimeoutMillis:
+      Number.isFinite(connectionTimeoutMillis) && connectionTimeoutMillis > 0
+        ? connectionTimeoutMillis
+        : 15_000,
     idleTimeoutMillis: 30_000,
   });
 }

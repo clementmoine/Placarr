@@ -13,7 +13,7 @@
  *   pnpm worker
  *   pnpm worker:icollect
  *   pnpm worker:dev          # superviseDevWorker (restart-on-exit)
- *   docker compose -f compose.dev.yml up worker worker-icollect
+ *   docker compose --profile dev up worker worker-icollect
  */
 
 import "dotenv/config";

@@ -1,3 +1,18 @@
+# Un seul compose — profiles pour les modes :
+#
+#   docker compose up -d                    # db + flaresolverr (hybride Mac)
+#   docker compose --profile prod up -d     # + image placarr (Next + workers)
+#   docker compose --profile dev up         # + Next/workers hot-reload en conteneurs
+#
+# Mac quotidien : `docker compose up -d` puis `pnpm dev`.
+# `dev` est lent sous VirtioFS — préférer l'hybride sauf besoin de logs séparés.
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:16-alpine
@@ -7,9 +22,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-placarr}
       POSTGRES_DB: ${POSTGRES_DB:-placarr}
     ports:
-      # Exposé sur l'hôte pour le dev local (next dev sur le Mac), mais lié à
-      # la loopback : sans ça la base est jointe depuis tout le réseau, avec le
-      # mot de passe par défaut.
+      # Loopback only — default password must not be LAN-reachable.
       - "127.0.0.1:5432:5432"
     volumes:
       - placarr-db:/var/lib/postgresql/data
@@ -19,9 +32,26 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+    logging: *default-logging
 
-  # Single image: Next + interactive worker + iCollect worker (init.sh).
+  # Chromium user-data must stay on tmpfs or /tmp grows tens of GB.
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: placarr-flaresolverr
+    ports:
+      - "127.0.0.1:8191:8191"
+    volumes:
+      - placarr-flaresolverr-config:/config
+    tmpfs:
+      - /tmp:size=2g,mode=1777
+    restart: unless-stopped
+    logging: *default-logging
+
+  # Prod all-in-one: Next + background workers (init.sh).
+  # Secrets empty at parse time so `compose up -d` (db+flare) works without
+  # them; the app still refuses to boot if they are missing at runtime.
   placarr:
+    profiles: ["prod"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -42,23 +72,99 @@ services:
       - ENABLE_ICOLLECT_WORKER=1
       - ENABLE_TITLE_IDF_BUILD=1
       - ENABLE_TITLE_IDF_REFRESH=0
-      # - TITLE_IDF_REFRESH_SECONDS=86400
-      # Obligatoire : l'app refuse de démarrer sans. `openssl rand -base64 32`.
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?définis NEXTAUTH_SECRET dans .env (openssl rand -base64 32)}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@placarr.com}
       - ADMIN_NAME=${ADMIN_NAME:-Admin}
-      # Pas de valeur par défaut : une instance exposée avec « admin » est une
-      # instance compromise. Le seed tourne au boot et crée ce compte.
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?définis ADMIN_PASSWORD dans .env}
-      #- AVES_API_KEY=
-      #- DATA_FOR_SEO_API_KEY=
-      #- RAWG_API_KEY=
-      #- STEAMGRIDDB_API_KEY=
-      #- TMDB_API_KEY=
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
     volumes:
-      # Runtime data: uploads, foil packs, provider indexes (never in the image).
       - ${ROOT:-.}/data:/app/data
     restart: unless-stopped
+    logging: *default-logging
+
+  # Full-docker hot-reload (rare on Mac — prefer hybrid).
+  app:
+    profiles: ["dev"]
+    image: node:23.11.0-bookworm-slim
+    working_dir: /app
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile &&
+             pnpm prisma generate &&
+             pnpm prisma migrate deploy &&
+             pnpm exec next dev -H 0.0.0.0"
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - NEXTAUTH_URL=http://localhost:3000
+    volumes:
+      - .:/app
+      - placarr-dev-node-modules:/app/node_modules
+      - placarr-dev-next:/app/.next
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    profiles: ["dev"]
+    image: node:23.11.0-bookworm-slim
+    working_dir: /app
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile &&
+             pnpm prisma generate &&
+             pnpm worker:dev"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - WORKER_ID=dev-worker-1
+      - WORKER_KINDS=interactive
+      - WORKER_CONCURRENCY=6
+    volumes:
+      - .:/app
+      - placarr-dev-node-modules:/app/node_modules
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
+
+  worker-icollect:
+    profiles: ["dev"]
+    image: node:23.11.0-bookworm-slim
+    working_dir: /app
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile &&
+             pnpm prisma generate &&
+             pnpm worker:icollect:dev"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-placarr}:${POSTGRES_PASSWORD:-placarr}@db:5432/${POSTGRES_DB:-placarr}
+      - WORKER_ID=dev-worker-icollect
+      - WORKER_KINDS=catalog
+      - WORKER_CONCURRENCY=1
+    volumes:
+      - .:/app
+      - placarr-dev-node-modules:/app/node_modules
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
 
 volumes:
   placarr-db:
+  placarr-flaresolverr-config:
+    # Created before compose ownership; keep content across recreate.
+    name: placarr_placarr-flaresolverr-config
+    external: true
+  placarr-dev-node-modules:
+  placarr-dev-next:

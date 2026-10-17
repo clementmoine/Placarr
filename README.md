@@ -48,21 +48,23 @@ What you may actually want to change:
 | `BACKGROUND_IO_CONCURRENCY`         | `4`                        | In-process work the Next server does itself (a separate pool from the worker).                                                          |
 | `BACKGROUND_CPU_CONCURRENCY`        | `2`                        | Image localization (`sharp`). Raise only if the host has cores to spare.                                                                |
 | `PRISMA_PG_POOL_MAX`                | `10`                       | Connections per process. Keep (processes × pool) under Postgres `max_connections`.                                                      |
+| `PRISMA_PG_CONNECT_TIMEOUT_MS`      | `15000`                    | Wait for a free pool client (enrich fans out many durable-evidence reads).                                                              |
+| `DATABASE_URL` host                 | `127.0.0.1`                | Prefer over `localhost` — compose binds IPv4 loopback only.                                                                             |
 | Provider API keys                   | unset                      | Each missing key simply disables that provider — `pnpm providers:health` lists them.                                                    |
 
 Provider credentials are all optional and all free tiers. A provider without its
 key reports as `blocked` and is skipped at runtime rather than failing a scan.
 
-### Full Docker (parity / Linux servers)
+### Docker (`compose.yml` only)
 
 ```bash
-pnpm dev:docker                  # Postgres + Next, hot-reload, http://localhost:3000
+docker compose up -d             # db + FlareSolverr (hybrid Mac default)
+pnpm dev:docker                  # + Next/workers in containers (--profile dev)
+docker compose --profile prod up -d   # + production placarr image
 ```
 
-> ⚠️ **On macOS**, the source bind-mount goes through VirtioFS, which makes the
-> first compile of each route very slow (module resolution is I/O-bound). It's
-> fine on Linux (native bind mounts). On a Mac, prefer the hybrid setup above
-> for day-to-day development.
+> ⚠️ **On macOS**, the `dev` profile bind-mount goes through VirtioFS and is
+> slow. Prefer `docker compose up -d` + `pnpm dev` for day-to-day work.
 
 ---
 

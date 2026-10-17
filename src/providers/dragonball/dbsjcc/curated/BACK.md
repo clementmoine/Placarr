@@ -32,6 +32,7 @@ Contenu typique : packshot `files/3/{idm}b.jpg`, listes **Cartes Rares** / **Hol
 - **Super JCC / SJCC** ([dbzc idc=112](http://www.dbzcollection.fr/2v2/cartes.php?idc=112)) = **autre ligne** que le JCC `D-###` : numéros `DB-###`, Parts 1–6 → setCodes `ss1`–`ss6`, printKeys `dbsjcc:ssN-db####`. Ledger `dbzcollection-super.json`. DCM Super Série = corroboration listes, pas membership sur `partN`.
 - **Tin box** = scellé mix sans check-list cartes (exclu du picker).
 - **dbcardshop** : photos retail (boosters vides) — `art.dbcardshop.*` OK, `face:false` dans press-packshots (ne pas prendre la face catalogue).
+- **carddass.fr Wayback packshots** : ledger `carddass-fr-packshots.json` → `art.carddassfr.*`, `face:false` (complément Bandai FR ; pas de collage multi-SKU).
 - **Dual decks S1–5** : les ids packaging dbzc (`1191`/`1194`/…) portaient souvent l’art de l’**autre** deck du duo — ré-homés sur les slugs thématiques (`…-ennemis`, `…-ruban-rouge`, …). Voir `staging/misfiled/dual-deck-dbzc-swap/`.
 - Galerie **légendée** (`title=` sur le lien) : « Deck Planète », « Deck Résistance », « Booster de 8 cartes », « Pochette », « Deck de 32 cartes » → `art.deckcardmania.jpg` sur **un** slug (`deckcardmaniaSealedSlugs.ts`). Les `_iNs` thumbs sont ignorés ; on prend `_iNb`.
 - Samples faces **uniquement** si title/alt nomme clairement une carte (`Carte SP01`, `D-86`) → `art.deckcardmania.jpg` lang=fr.

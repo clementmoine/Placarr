@@ -29,6 +29,7 @@ import {
   persistSealedProductsIndexDoc,
 } from "@/providers/shared/sealedProducts/persistProductsIndex";
 
+import carddassFrPackshotsLedgerJson from "../curated/sources/carddass-fr-packshots.json";
 import pressPackshotsLedgerJson from "../curated/sources/press-packshots.json";
 import { DBS_JCC_PACK_ID } from "../pack";
 
@@ -41,6 +42,13 @@ export function pressPackshotLedger() {
 
 export function pressIngestPackshots(): PressPackshotRow[] {
   return pressPackshotsLedgerJson.products.filter((row) => row.ingest);
+}
+
+/** Official carddass.fr Wayback sealed art — face:false complementary dumps. */
+export function carddassFrIngestPackshots(): PressPackshotRow[] {
+  return carddassFrPackshotsLedgerJson.products.filter(
+    (row) => row.ingest,
+  ) as PressPackshotRow[];
 }
 
 /** Index keys may still be `dbs/jcc::…` after the pack-id rename. */
@@ -197,7 +205,10 @@ export async function installDbsJccPressPackshots(
   let minted = 0;
   let failed = 0;
 
-  for (const row of pressIngestPackshots()) {
+  for (const row of [
+    ...pressIngestPackshots(),
+    ...carddassFrIngestPackshots(),
+  ]) {
     const staged = await downloadToStaging(row, opts);
     if (!staged) {
       failed += 1;

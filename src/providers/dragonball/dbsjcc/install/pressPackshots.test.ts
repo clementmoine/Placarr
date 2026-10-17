@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  carddassFrIngestPackshots,
   pressIngestPackshots,
   pressPackshotLedger,
 } from "./pressPackshots";
@@ -78,5 +79,22 @@ describe("pressPackshots", () => {
     );
     expect(bySlug.get("part6-box-1510")?.kind).toBe("tin");
     expect(bySlug.get("tinbox-2008")?.kind).toBe("tin");
+  });
+
+  it("maps carddass.fr Wayback packshots onto single SKUs without claiming face", () => {
+    const rows = carddassFrIngestPackshots();
+    expect(rows.length).toBeGreaterThanOrEqual(18);
+    expect(rows.every((r) => r.host === "carddassfr")).toBe(true);
+    expect(rows.every((r) => r.face === false)).toBe(true);
+    expect(rows.every((r) => r.url.includes("web.archive.org"))).toBe(true);
+    const bySlug = new Map(rows.map((r) => [r.slug, r]));
+    expect(bySlug.get("part1-starter-ennemis")?.url).toMatch(/enemies_starter\.gif/);
+    expect(bySlug.get("part2-starter-ruban-rouge")?.url).toMatch(/RUBAN/);
+    expect(bySlug.get("part8-booster-box-1212")?.kind).toBe("display");
+    expect(bySlug.get("tinbox-2008")?.url).toMatch(/Tbox08/);
+    // Collages / thumbs stay out of the ingest ledger.
+    expect(rows.some((r) => /packshot_serie|starters_s3|wallpaper|stuffx/i.test(r.url))).toBe(
+      false,
+    );
   });
 });

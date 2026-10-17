@@ -20,6 +20,8 @@ const g = globalThis as typeof globalThis & {
   __PLACARR_FOIL_META__?: MetaCache;
   __PLACARR_FOIL_META_READER__?: FoilMetaFileReader;
   __PLACARR_FOIL_META_WRITER__?: FoilMetaFileWriter;
+  /** In-flight / completed browser hydrate — one fetch for every FoilCardImage. */
+  __PLACARR_FOIL_META_HYDRATE__?: Promise<void>;
 };
 
 function cache(): MetaCache {
@@ -76,9 +78,10 @@ export function installFoilMetaFileWriter(writer: FoilMetaFileWriter): void {
   g.__PLACARR_FOIL_META_WRITER__ = writer;
 }
 
-/** Clear in-memory cache (tests). */
+/** Clear in-memory cache (tests / post-write). */
 export function resetFoilMetaCache(): void {
   g.__PLACARR_FOIL_META__ = {};
+  g.__PLACARR_FOIL_META_HYDRATE__ = undefined;
 }
 
 export function loadCardsIndexJson(pack: string) {
@@ -151,15 +154,9 @@ export function loadReprintMeta() {
   );
 }
 
-/**
- * Browser: pull meta JSON via `/api/admin/foil-meta` (session cookie).
- * `/assets/…` JSON remains optional fallback for non-admin surfaces.
- */
-export async function hydrateFoilMetaFromAssets(
-  fetchImpl: typeof fetch = fetch,
+async function runFoilMetaHydrate(
+  fetchImpl: typeof fetch,
 ): Promise<void> {
-  if (typeof window === "undefined") return;
-
   try {
     const res = await fetchImpl("/api/admin/foil-meta?pack=pokemon");
     if (res.ok) {
@@ -266,4 +263,34 @@ export async function hydrateFoilMetaFromAssets(
   } catch {
     /* server / circular */
   }
+}
+
+/**
+ * Browser: pull meta JSON via `/api/admin/foil-meta` (session cookie).
+ * `/assets/…` JSON remains optional fallback for non-admin surfaces.
+ *
+ * Deduped: every FoilCardImage mounts call this; only the first run fetches.
+ * {@link resetFoilMetaCache} clears the latch (tests / post-write).
+ */
+export async function hydrateFoilMetaFromAssets(
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  // Custom fetch (tests) always runs — do not latch onto the default singleton.
+  if (fetchImpl !== fetch) {
+    await runFoilMetaHydrate(fetchImpl);
+    return;
+  }
+
+  if (!g.__PLACARR_FOIL_META_HYDRATE__) {
+    g.__PLACARR_FOIL_META_HYDRATE__ = runFoilMetaHydrate(fetch).catch(
+      (err) => {
+        // Allow a later mount to retry after a hard failure.
+        g.__PLACARR_FOIL_META_HYDRATE__ = undefined;
+        throw err;
+      },
+    );
+  }
+  await g.__PLACARR_FOIL_META_HYDRATE__;
 }

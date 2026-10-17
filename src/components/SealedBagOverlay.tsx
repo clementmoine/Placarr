@@ -6,8 +6,6 @@ import {
   SEALED_BAG_CHROME_INSET,
   SEALED_BAG_PEEL_STRIP_URL,
   SEALED_BAG_SLICES,
-  SEALED_BAG_URL,
-  type SealedBagVariant,
   sealedCardInsetStyle,
 } from "@/core/render/sealedBag";
 import { cn } from "@/lib/shared/utils";
@@ -18,10 +16,6 @@ export type SealedBagOverlayProps = {
    * Card front: bag face only, upright.
    */
   side?: "front" | "back";
-  /**
-   * `adaptive` (default) — 9-slice. `full` — single PNG (playroom A/B).
-   */
-  variant?: SealedBagVariant;
   className?: string;
   /**
    * Card face to tuck **inside** the bag window. Prefer this over painting the
@@ -69,10 +63,10 @@ function BagFaceImg({
   );
 }
 
-function AdaptiveBagLayers({ mirrored }: { mirrored: boolean }) {
+function BagLayers({ mirrored }: { mirrored: boolean }) {
   const { urls } = SEALED_BAG_SLICES;
   // Chrome tracks = pinch/rim only; the card inset is slightly deeper
-  // ({@link SEALED_CARD_INSET_ADAPTIVE}) so art clears the crimps.
+  // ({@link sealedCardInsetStyle}) so art clears the crimps.
   const colPct = SEALED_BAG_CHROME_INSET.left;
   const rowPct = SEALED_BAG_CHROME_INSET.top;
   const cells = [
@@ -125,43 +119,15 @@ function AdaptiveBagLayers({ mirrored }: { mirrored: boolean }) {
   );
 }
 
-function FullBagLayers({ mirrored }: { mirrored: boolean }) {
-  return (
-    <>
-      <BagFaceImg src={SEALED_BAG_URL} mirrored={mirrored} />
-      {mirrored ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={SEALED_BAG_PEEL_STRIP_URL}
-            alt=""
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-fill brightness-0 opacity-[0.1]"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={SEALED_BAG_PEEL_STRIP_URL}
-            alt=""
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-fill"
-            style={{ filter: BAG_FILTER }}
-          />
-        </>
-      ) : null}
-    </>
-  );
-}
-
 /**
  * Packaging for `finish === "sealed"` (and foil+bag demos). Cross-TCG —
- * stretch to the oriented card box so portrait / landscape / square all work.
+ * 9-slice frame sized to the card + thin pinch bands.
  *
  * With `children`: inset art + plastic sheen + bag on top.
  * Without: bag layers only (caller already inset the face).
  */
 export function SealedBagOverlay({
   side = "front",
-  variant = "adaptive",
   className,
   children,
 }: SealedBagOverlayProps) {
@@ -179,26 +145,19 @@ export function SealedBagOverlay({
       )}
       aria-hidden
     >
-      {variant === "adaptive" ? (
-        <AdaptiveBagLayers mirrored={mirrored} />
-      ) : (
-        <FullBagLayers mirrored={mirrored} />
-      )}
+      <BagLayers mirrored={mirrored} />
     </div>
   );
 
   if (!children) return bagLayers;
 
-  const pctInset = sealedCardInsetStyle(variant);
-  const inset =
-    variant === "adaptive"
-      ? {
-          top: `var(--sealed-bag-seal, ${pctInset.top})`,
-          right: `var(--sealed-bag-rim, ${pctInset.right})`,
-          bottom: `var(--sealed-bag-seal, ${pctInset.bottom})`,
-          left: `var(--sealed-bag-rim, ${pctInset.left})`,
-        }
-      : pctInset;
+  const pctInset = sealedCardInsetStyle();
+  const inset = {
+    top: `var(--sealed-bag-seal, ${pctInset.top})`,
+    right: `var(--sealed-bag-rim, ${pctInset.right})`,
+    bottom: `var(--sealed-bag-seal, ${pctInset.bottom})`,
+    left: `var(--sealed-bag-rim, ${pctInset.left})`,
+  };
 
   return (
     <div className={cn("relative h-full w-full", className)}>

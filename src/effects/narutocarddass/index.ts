@@ -2,9 +2,8 @@
  * Naruto Carddass effect pack — card back, house foil, and sealed-bag demos.
  *
  * Catalogue-only (no APK / Unity dump). House CSS foil approximates holos; the
- * playroom also tiles a generic sealed bag (`sealed` / `foil-sealed`) and
- * adaptive 9-slice demos (`*-adaptive`) so we can inspect packaging without a
- * Live capture.
+ * playroom also tiles a generic sealed bag (`sealed` / `foil-sealed`) so we
+ * can inspect packaging without a Live capture.
  */
 import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
@@ -56,16 +55,13 @@ const FINISH_SHADER: Record<string, string> = {
 
 /**
  * Playroom tiles (not Unity materials).
- * - `sealed` → packaging only (9-slice, same as shelves)
+ * - `sealed` → packaging only (9-slice)
  * - `foil-sealed` → finish `holo` + bag
- * - `*-full` → legacy full-bleed PNG for A/B
  */
 export const NARUTO_CARDDASS_PLAYROOM_MATERIALS = [
   "holo",
   "foil-sealed",
-  "foil-sealed-full",
   "sealed",
-  "sealed-full",
 ] as const;
 
 /** Finish names this pack renders as foil, lower-cased as they are stored. */
@@ -85,17 +81,17 @@ function playroomArtForMaterial(name: string): PlayroomArt | null {
       label: "Holofoil (générique)",
     };
   }
-  if (n === "foil-sealed" || n === "foil-sealed-full") {
+  if (n === "foil-sealed") {
     return {
       imageUrl: PLAYROOM_DEMO_ART,
       maskUrl: NARUTO_CARDDASS_FULL_FOIL_MASK_URL,
-      label: n.endsWith("-full") ? "Foil + sachet (full)" : "Foil + sachet",
+      label: "Foil + sachet",
     };
   }
-  if (n === "sealed" || n === "sealed-full") {
+  if (n === "sealed") {
     return {
       imageUrl: PLAYROOM_DEMO_ART,
-      label: n.endsWith("-full") ? "Sachet (full)" : "Sachet",
+      label: "Sachet",
     };
   }
   return null;
@@ -194,8 +190,7 @@ const pack = defineCatalogueOnlyPack({
       key === "sealed" ||
       key === "sealed-top" ||
       key === "sealed-both" ||
-      key === "sealed-adaptive" ||
-      key === "sealed-full"
+      key === "sealed-adaptive"
     ) {
       return { finishShaderId: null, varnishShaderId: null };
     }
@@ -214,18 +209,14 @@ pack.parseMaterialName = (name) => {
     n === "sealed" ||
     n === "sealed-both" ||
     n === "sealed-top" ||
-    n === "sealed-adaptive" ||
-    n === "sealed-full"
+    n === "sealed-adaptive"
   ) {
     return { finish: "sealed", varnish: null };
   }
   if (
     n === "foil-sealed" ||
-    n === "foil-sealed-adaptive" ||
-    n === "foil-sealed-full" ||
     n.endsWith("-sealed") ||
-    n.endsWith("-sealed-adaptive") ||
-    n.endsWith("-sealed-full")
+    n.endsWith("-sealed-adaptive")
   ) {
     return { finish: "holo", varnish: null };
   }

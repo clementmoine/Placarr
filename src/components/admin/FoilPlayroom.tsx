@@ -26,7 +26,6 @@ import { clearFoilPool, setFoilPoolMax } from "@/core/render/foil";
 import {
   materialWantsSealedBag,
   sealedBagOuterAspect,
-  sealedBagVariantFromMaterial,
 } from "@/core/render/sealedBag";
 import { listEffectPacks } from "@/effects";
 import { SegmentedControl } from "@/components/admin/SegmentedControl";
@@ -503,13 +502,11 @@ function MaterialTile({
   const stack = size === "stack";
   const faceQuarterTurns = packArt?.faceQuarterTurns ?? 0;
   const sealedBag = materialWantsSealedBag(materialName);
-  const bagVariant = sealedBagVariantFromMaterial(materialName);
   // Same geometry as shelf / item fiche (%-based outer aspect + insets).
   const faceAspect = getAspectRatio("tcg", "tcg");
   const baseAspect =
     sealedBagOuterAspect({
       sealedBag,
-      variant: bagVariant,
       faceAspect,
     }) ?? faceAspect;
   const cssForMaterial = pack?.resolveCss?.(
@@ -645,7 +642,6 @@ function MaterialTile({
           (sealedBag &&
             (finish === "sealed" ||
               materialName === "sealed" ||
-              materialName === "sealed-full" ||
               materialName === "sealed-adaptive"))
             ? null
             : (packArt?.maskUrl ??

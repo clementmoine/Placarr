@@ -40,10 +40,7 @@ import {
   varnishShader as varnishShaderFor,
   type HoloTuning,
 } from "@/core/render/holoShaders";
-import {
-  isSealedFinish,
-  sealedBagVariantFromMaterial,
-} from "@/core/render/sealedBag";
+import { isSealedFinish } from "@/core/render/sealedBag";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
 import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
 import { cn } from "@/lib/shared/utils";
@@ -404,11 +401,6 @@ export function FoilCardImage({
 
   /** Outer bag chrome — finish `sealed` *or* an explicit bag flag (foil+bag). */
   const bagged = Boolean(sealedBag) || isSealedFinish(finish);
-  // Playroom passes a material name (`sealed` vs `sealed-adaptive`). Shelves
-  // usually have no material — default to the 9-slice bag.
-  const bagVariant = materialName
-    ? sealedBagVariantFromMaterial(materialName)
-    : "adaptive";
   /** Packaging-only: no house foil idle on the face. Foil+bag keeps a shine. */
   const packagingOnly = isSealedFinish(finish);
   const effectiveMaskUrl = packagingOnly
@@ -828,9 +820,7 @@ export function FoilCardImage({
       )}
     >
       {bagged ? (
-        <SealedBagOverlay side="front" variant={bagVariant}>
-          {face}
-        </SealedBagOverlay>
+        <SealedBagOverlay side="front">{face}</SealedBagOverlay>
       ) : (
         face
       )}

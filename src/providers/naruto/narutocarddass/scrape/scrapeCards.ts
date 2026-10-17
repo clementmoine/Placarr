@@ -77,7 +77,12 @@ import {
   parseNarutoFaceDecision,
 } from "../disk";
 import { promoteAllNarutoFaces, promoteNarutoFace } from "../disk";
-import { narutoCardAbsDir, listNarutoCardDirs } from "../disk";
+import {
+  narutoCardAbsDir,
+  listNarutoCardDirs,
+  narutoCardPathFromCollector,
+} from "../disk";
+import { resolveNarutoDiskArtFilename } from "../diskArtAttachments";
 import {
   appearanceSetsOf,
   loadNarutoAppearancesFile,
@@ -89,6 +94,7 @@ import { syncOfficialFrChecklistAppearances } from "../identity";
 import { syncNarutoS6FrPrintedAppearances } from "../sources/titles";
 import { isNarutoLangPrinted, preferNarutoAppearanceSet } from "../identity";
 import { normalizeNarutoLang } from "../disk";
+import { japaneseCatalogueSetsForPrintNumber } from "../sources/sealed";
 import {
   medThumbRank,
   parseCarddassAssetPath,
@@ -766,7 +772,16 @@ export function buildIndexFromDisk(root: string): {
           } else if (family.trim().toLowerCase() === "promo") {
             sets = ["promo"];
           } else {
-            continue;
+            /*
+              JA volume cards (巻ノ) often have Suruga/Fril art on disk with no
+              FR checklist appearances — without minting `makiN` here, faces
+              never reach print_assets and browse shows « sans image ».
+            */
+            const volumeSets = japaneseCatalogueSetsForPrintNumber(diskId).filter(
+              (set) => /^maki\d+$/i.test(set),
+            );
+            if (!volumeSets.length) continue;
+            sets = volumeSets;
           }
         }
         ingestNarutoCardDir({
@@ -856,6 +871,57 @@ export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
     mirrored += 1;
   }
   return { assets: out, mirrored };
+}
+
+/**
+ * Title rows whose printKey missed the disk walk (maki membership minted from
+ * ledgers, jp-release band quirks, …) still share `cards/{family}/{id}/{lang}/`.
+ * Attach on-disk art so SQLite print_assets matches what the runtime disk fill
+ * already shows in the picker.
+ */
+export function attachNarutoDiskArtAssets(input: {
+  prints: readonly NarutoPrintRow[];
+  titles: readonly { printKey: string; lang: string }[];
+  assets: NarutoAssetRow[];
+  cardsRoot: string;
+}): { assets: NarutoAssetRow[]; attached: number } {
+  const numberByKey = new Map(
+    input.prints.map((p) => [p.printKey, p.number] as const),
+  );
+  const have = new Set(
+    input.assets.map((a) => `${a.printKey}\0${a.lang.toLowerCase()}`),
+  );
+  const out = [...input.assets];
+  let attached = 0;
+  for (const title of input.titles) {
+    const lang = title.lang.trim().toLowerCase();
+    if (!lang) continue;
+    const assetKey = `${title.printKey}\0${lang}`;
+    if (have.has(assetKey)) continue;
+    const number = numberByKey.get(title.printKey);
+    if (!number) continue;
+    const pathId = narutoCardPathFromCollector(number, lang);
+    if (!pathId) continue;
+    const art = resolveNarutoDiskArtFilename(
+      path.join(
+        input.cardsRoot,
+        pathId.folder,
+        pathId.diskId,
+        pathId.lang,
+      ),
+    );
+    if (!art) continue;
+    out.push({
+      printKey: title.printKey,
+      lang,
+      art,
+      thumb: null,
+      back: null,
+    });
+    have.add(assetKey);
+    attached += 1;
+  }
+  return { assets: out, attached };
 }
 
 function assetMapKey(printKey: string, lang: string): string {
@@ -1343,10 +1409,16 @@ export async function scrapeNarutoCards(
       titles: assembled.titles,
       assets,
     });
-    const { dbPath, printCount } = writeNarutoCcgIndex({
+    const diskAttached = attachNarutoDiskArtAssets({
       prints: assembled.prints,
       titles: assembled.titles,
       assets: mirrored.assets,
+      cardsRoot: cardsDir,
+    });
+    const { dbPath, printCount } = writeNarutoCcgIndex({
+      prints: assembled.prints,
+      titles: assembled.titles,
+      assets: diskAttached.assets,
       dbPath: path.join(root, "catalog.sqlite"),
       meta: {
         source: "disk",
@@ -1362,6 +1434,7 @@ export async function scrapeNarutoCards(
         slabZJaNamed: String(assembled.found.slabZTitled.length),
         migratedVcBacks: String(migratedVc),
         assetsMirrored: String(mirrored.mirrored),
+        assetsDiskAttached: String(diskAttached.attached),
       },
     });
     const builtIndex = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
@@ -1391,6 +1464,7 @@ export async function scrapeNarutoCards(
           titlesCorrected: assembled.found.titlesCorrected.length,
           localeSpecificFaces,
           assetsMirrored: mirrored.mirrored,
+          assetsDiskAttached: diskAttached.attached,
           completenessJaImagePct: completeness.report.locales.ja?.image.pct,
           completenessJaTitleWithoutImage:
             completeness.report.locales.ja?.titleWithoutImage,
@@ -1694,7 +1768,7 @@ export async function scrapeNarutoCards(
   const printList = [...prints.values()].sort((a, b) =>
     a.printKey.localeCompare(b.printKey),
   );
-  const assetList = [...assetsByKey.values()].filter(
+  let assetList = [...assetsByKey.values()].filter(
     (a) => a.lang.trim().toLowerCase() !== "it",
   );
   const thumbMapped = mapSiteMedThumbsOntoAssets(root, printList, assetList);
@@ -1723,6 +1797,18 @@ export async function scrapeNarutoCards(
       `── ledgers: BGG EN S1 +${assembled.found.bggAdded.length}, PR physiques +${assembled.found.physicalAdded.length}`,
     );
   }
+  const mirrored = mirrorNarutoAssetsAcrossCollectorNumbers({
+    prints: assembled.prints,
+    titles: assembled.titles,
+    assets: assetList,
+  });
+  const diskAttached = attachNarutoDiskArtAssets({
+    prints: assembled.prints,
+    titles: assembled.titles,
+    assets: mirrored.assets,
+    cardsRoot: cardsDir,
+  });
+  assetList = diskAttached.assets;
   const { dbPath, printCount } = writeNarutoCcgIndex({
     prints: assembled.prints,
     titles: assembled.titles,
@@ -1742,6 +1828,8 @@ export async function scrapeNarutoCards(
       bggEnS1Added: String(assembled.found.bggAdded.length),
       physicalAdded: String(assembled.found.physicalAdded.length),
       migratedVcBacks: String(migratedVc),
+      assetsMirrored: String(mirrored.mirrored),
+      assetsDiskAttached: String(diskAttached.attached),
     },
   });
   const builtIndex = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);

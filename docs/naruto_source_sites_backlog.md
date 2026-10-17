@@ -1577,6 +1577,13 @@ sans membership : les faces JA déjà sur disque (Suruga / Chitoroshop / …)
 entrent dans `print_assets`. Complétude JA **~32 % → 84 %** images
 (`titleWithoutImage` 1959 → 471). Miroir d’art entre printKeys même numéro.
 
-Reste : ~471 titres JA sans scan (promos / coins / trous Suruga) ; EN 102 ;
-FR 56 (maki).
+## Session 2026-10-17 — faces 巻ノ → print_assets
+
+`buildIndexFromDisk` mint `makiN` quand une face JA n’a ni appearances ni
+checklist FR ; `attachNarutoDiskArtAssets` rattache l’art disque aux printKeys
+titrés manqués par le walk. Index-only : **84 % → 98,1 %** JA
+(`titleWithoutImage` 471 → **55** ; `assetsDiskAttached` 63). EN 100 % ;
+FR 97,6 % (48).
+
+Reste : ~55 titres JA sans scan (promos / trous numérotation publiée) ; FR 48.
 

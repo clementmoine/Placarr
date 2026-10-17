@@ -7,7 +7,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { httpGet } from "@/lib/http/httpClient";
+import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import {
   parseSurugaShippudenHtml,
   parseSurugaShippudenListingsTsv,
@@ -42,40 +42,31 @@ const sleep = (ms: number) =>
   });
 
 async function fetchSurugaHtml(url: string): Promise<string> {
-  const res = await httpGet<string>(url, {
+  // Suruga serves Cloudflare on direct GET — same path as Data Carddass.
+  if (!process.env.FLARESOLVERR_URL?.trim()) {
+    throw new Error(
+      "FLARESOLVERR_URL requis pour le crawl Suruga 疾風伝 (Cloudflare)",
+    );
+  }
+  const html = await fetchTextWithFlareFallback(url, {
     headers: {
       "User-Agent": UA,
       "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+      Accept: "text/html,*/*",
       Referer: "https://www.suruga-ya.jp/",
     },
-    responseType: "text",
-    timeout: 15_000,
-    maxRedirects: 0,
-    validateStatus: (s) => s >= 200 && s < 400,
+    timeout: 25_000,
+    flareMaxTimeoutMs: 90_000,
+    skipDirect: true,
   });
-
-  if (res.status >= 300 && res.status < 400 && res.headers.location) {
-    const rawLoc = res.headers.location;
-    const decodedLoc = Buffer.from(rawLoc, "latin1").toString("utf8");
-    const nextUrl = encodeURI(decodeURI(decodedLoc));
-    const res2 = await httpGet<string>(nextUrl, {
-      headers: {
-        "User-Agent": UA,
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-        Referer: "https://www.suruga-ya.jp/",
-      },
-      responseType: "text",
-      timeout: 15_000,
-      validateStatus: (s) => s === 200,
-    });
-    return res2.data;
-  }
-  return res.data;
+  return html ?? "";
 }
 
 export async function harvestSurugaShippuden(options: {
   delayMs?: number;
   tsvPath?: string;
+  /** Cap pages per query (densif chunks / CI). */
+  maxPagesPerQuery?: number;
 } = {}): Promise<{
   crawledPages: number;
   totalListings: number;
@@ -84,6 +75,7 @@ export async function harvestSurugaShippuden(options: {
 }> {
   const tsvPath = options.tsvPath ?? TSV_PATH;
   const delayMs = options.delayMs ?? 400;
+  const pageCap = options.maxPagesPerQuery;
 
   const existing = existsSync(tsvPath)
     ? parseSurugaShippudenListingsTsv(readFileSync(tsvPath, "utf8"))
@@ -100,8 +92,10 @@ export async function harvestSurugaShippuden(options: {
   for (const q of QUERIES) {
     console.log(`\n=== Harvesting Shippuden query: "${q.word}" ===`);
     let queryAdded = 0;
+    const maxPages =
+      pageCap != null ? Math.min(q.maxPages, pageCap) : q.maxPages;
 
-    for (let p = 1; p <= q.maxPages; p++) {
+    for (let p = 1; p <= maxPages; p++) {
       const pageParam = p === 1 ? "" : `&page=${p}`;
       const url = `https://www.suruga-ya.jp/search?category=50108&search_word=${encodeURIComponent(q.word)}${pageParam}`;
 

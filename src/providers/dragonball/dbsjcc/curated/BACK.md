@@ -12,9 +12,9 @@ printKey **sans** langue : `dbsjcc:partN-d0001`. Faces : `cards/{set}/{lang}/{nu
 
 ### carddass.fr (FR faces)
 
-Ledger : `sources/carddass-fr-dbz-faces.json` (Wayback CDX `carddass.fr/dbz/images/cartes/{1–10}/`).
+Ledger : `sources/carddass-fr-dbz-faces.json` (Wayback CDX `carddass.fr/dbz/images/cartes/{1–10}/` + Hors-série `Promos/` / `cartes_med/` SP).
 Install : `art.carddass.jpg` sous `lang=fr`, à côté de dbzcollection — **pas** d’écrasement.
-Matching : série N → `partN` ; plain `D-###` uniquement ; skip PA/PB/vc (pouvoirs ambigus).
+Matching : série N → `partN` ; SP → set `sp` ; plain `D-###` / `SP-###` ; skip PA/PB/vc (pouvoirs ambigus).
 
 ### carddass.com (JP DBC faces) — indisponible
 

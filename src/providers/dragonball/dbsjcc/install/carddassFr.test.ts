@@ -33,14 +33,35 @@ describe("parseCarddassFrCardImagePath", () => {
       parseCarddassFrCardImagePath("/dbz/images/cartes/1/D-001.jpg"),
     ).toMatchObject({ series: "1", category: null, file: "D-001.jpg" });
   });
+
+  it("accepts Hors-série SP dumps under Promos/ and cartes_med/", () => {
+    expect(
+      parseCarddassFrCardImagePath("/dbz/images/cartes/Promos/SP-4.jpg"),
+    ).toEqual({ series: "sp", category: null, file: "SP-4.jpg" });
+    expect(
+      parseCarddassFrCardImagePath(
+        "/dbz/images/cartes/cartes_med/DB Carte promo SP-22.jpg",
+      ),
+    ).toEqual({
+      series: "sp",
+      category: null,
+      file: "DB Carte promo SP-22.jpg",
+    });
+    expect(
+      parseCarddassFrCardImagePath(
+        "/dbz/images/cartes/cartes_med/wallpaper.jpg",
+      ),
+    ).toBeNull();
+  });
 });
 
 describe("carddassFrSeriesToSetHint", () => {
-  it("maps series 1–10 to partN", () => {
+  it("maps series 1–10 to partN and Hors-série to sp", () => {
     expect(carddassFrSeriesToSetHint("1")).toBe("part1");
     expect(carddassFrSeriesToSetHint("10")).toBe("part10");
     expect(carddassFrSeriesToSetHint("11")).toBeNull();
-    expect(carddassFrSeriesToSetHint("promo")).toBeNull();
+    expect(carddassFrSeriesToSetHint("sp")).toBe("sp");
+    expect(carddassFrSeriesToSetHint("promo")).toBe("sp");
   });
 });
 
@@ -87,6 +108,27 @@ describe("parseCarddassFrFaceFile", () => {
   it("rejects illustrator sources", () => {
     expect(parseCarddassFrFaceFile("D-635.ai")).toBeNull();
   });
+
+  it("parses captioned cartes_med SP filenames as plain", () => {
+    expect(parseCarddassFrFaceFile("SP-4.jpg")).toEqual({
+      printed: "SP-4",
+      number: "sp0004",
+      kind: "plain",
+      marker: null,
+    });
+    expect(parseCarddassFrFaceFile("DB Carte promo SP-22.jpg")).toEqual({
+      printed: "SP-22",
+      number: "sp0022",
+      kind: "plain",
+      marker: null,
+    });
+    expect(parseCarddassFrFaceFile("DB Carte promo SP-25.jpg")).toEqual({
+      printed: "SP-25",
+      number: "sp0025",
+      kind: "plain",
+      marker: null,
+    });
+  });
 });
 
 describe("selectCarddassFrInstallRows", () => {
@@ -117,6 +159,35 @@ describe("selectCarddassFrInstallRows", () => {
       setHint: "part4",
       file: "D-099.jpg",
     });
+  });
+
+  it("selects Hors-série SP rows onto setHint sp", () => {
+    const rows = selectCarddassFrInstallRows([
+      {
+        series: "sp",
+        file: "SP-4.jpg",
+        timestamp: "1",
+        waybackUrl: "https://web.archive.org/web/1id_/http://x/SP-4.jpg",
+      },
+      {
+        series: "sp",
+        file: "DB Carte promo SP-22.jpg",
+        timestamp: "2",
+        waybackUrl: "https://web.archive.org/web/2id_/http://x/SP-22.jpg",
+      },
+    ]);
+    expect(rows).toEqual([
+      expect.objectContaining({
+        number: "sp0004",
+        setHint: "sp",
+        file: "SP-4.jpg",
+      }),
+      expect.objectContaining({
+        number: "sp0022",
+        setHint: "sp",
+        file: "DB Carte promo SP-22.jpg",
+      }),
+    ]);
   });
 });
 

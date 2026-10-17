@@ -34,8 +34,9 @@ const CARD_IMAGE_SUBDIRS = "JPEG|CHARACTER|ACTION|BALL|SHENRON";
 
 /**
  * Parse a carddass.fr card image pathname into series + file.
- * Accepts flat `cartes/4/D-021.jpg`, `cartes/4/JPEG/…`, and Part 3
- * category folders (`CHARACTER` / `ACTION` / `BALL` / `SHENRON`).
+ * Accepts flat `cartes/4/D-021.jpg`, `cartes/4/JPEG/…`, Part 3 category
+ * folders (`CHARACTER` / `ACTION` / `BALL` / `SHENRON`), and Hors-série
+ * promos (`cartes/Promos/SP-4.jpg`, `cartes/cartes_med/… SP-22.jpg`).
  */
 export function parseCarddassFrCardImagePath(pathname: string): {
   series: string;
@@ -54,12 +55,21 @@ export function parseCarddassFrCardImagePath(pathname: string): {
       "i",
     ),
   );
-  if (!m) return null;
-  return {
-    series: m[1]!,
-    category: m[2] ? m[2].toUpperCase() : null,
-    file: m[3]!,
-  };
+  if (m) {
+    return {
+      series: m[1]!,
+      category: m[2] ? m[2].toUpperCase() : null,
+      file: m[3]!,
+    };
+  }
+  // Hors-série SP: `Promos/SP-4.jpg` or captioned `cartes_med/DB Carte promo SP-22.jpg`.
+  const promo = path.match(
+    /\/dbz\/images\/cartes\/(?:Promos|cartes_med)\/([^/]+\.(?:jpe?g|png|gif))$/i,
+  );
+  if (!promo) return null;
+  const file = promo[1]!;
+  if (!/\bSP[-_]?\d+\b/i.test(file)) return null;
+  return { series: "sp", category: null, file };
 }
 
 /** Parsed ledger file ready to match/install (plain faces only). */
@@ -114,10 +124,12 @@ export function dbsJccCarddassFrPouvoirMarkersPath(): string {
 
 /**
  * carddass.fr series folder `1`…`10` → retail `part1`…`part10`.
- * Other folders (promo, etc.) are not attested in this scout dump.
+ * Hors-série SP dumps use synthetic series `sp` (`Promos/` / `cartes_med/`).
  */
 export function carddassFrSeriesToSetHint(series: string): string | null {
-  const n = Number.parseInt(series.trim(), 10);
+  const raw = series.trim().toLowerCase();
+  if (raw === "sp" || raw === "promo") return "sp";
+  const n = Number.parseInt(raw, 10);
   if (!Number.isFinite(n) || n < 1 || n > 10) return null;
   return `part${n}`;
 }
@@ -144,6 +156,14 @@ function pouvoirMarkerFromRest(rest: string): CarddassFrPouvoirMarker | null {
  * PA/PB/vc mark that a scouter-zone scan exists on the site. They are **not**
  * Monde de kaio / Enfer / Main labels (faces stay unrevealed).
  */
+/** Captioned med scans: `DB Carte promo SP-22` — noise around the collector token. */
+function isCarddassFrPromoCaptionNoise(rest: string): boolean {
+  const t = rest.trim().replace(/\s+/g, " ");
+  if (!t) return true;
+  if (/^copie$/i.test(t)) return true;
+  return /^(?:db\s+)?carte\s+promo$/i.test(t);
+}
+
 export function parseCarddassFrFaceFile(file: string): {
   printed: string;
   number: string;
@@ -157,16 +177,28 @@ export function parseCarddassFrFaceFile(file: string): {
     return null;
   }
   const base = trimmed.replace(/\.[^.]+$/, "");
-  const m = base.match(/^((?:SP|D)[-_]?\d+)(.*)$/i);
-  if (!m) return null;
-  const number = parseDbsjccNumber(m[1]!);
+  const leading = base.match(/^((?:SP|D)[-_]?\d+)(.*)$/i);
+  const embedded = leading
+    ? null
+    : base.match(/\b((?:SP|D)[-_]?\d+)\b/i);
+  const token = leading?.[1] ?? embedded?.[1];
+  if (!token) return null;
+  const number = parseDbsjccNumber(token);
   if (!number) return null;
   const prefix = number.startsWith("sp") ? "SP" : "D";
   const n = Number.parseInt(number.replace(/^[a-z]+/, ""), 10);
   const printed = `${prefix}-${n}`;
-  const rest = m[2]!.trim();
+  let rest: string;
+  if (leading) {
+    rest = leading[2]!.trim();
+  } else {
+    const idx = embedded!.index ?? 0;
+    const before = base.slice(0, idx).trim();
+    const after = base.slice(idx + embedded![0]!.length).trim();
+    rest = [before, after].filter(Boolean).join(" ");
+  }
 
-  if (!rest || /^copie$/i.test(rest)) {
+  if (isCarddassFrPromoCaptionNoise(rest)) {
     return { printed, number, kind: "plain", marker: null };
   }
   const marker = pouvoirMarkerFromRest(rest);

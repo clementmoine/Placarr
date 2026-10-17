@@ -1,7 +1,7 @@
 {
   "source": "carddass.fr/dbz Wayback CDX",
   "lang": "fr",
-  "observed": "2026-10-16",
+  "observed": "2026-10-17",
   "url": "http://www.carddass.fr/dbz/",
   "faces": [
     {
@@ -6436,6 +6436,27 @@
       "category": null,
       "timestamp": "20081123092521",
       "waybackUrl": "https://web.archive.org/web/20081123092521id_/http://www.carddass.fr/dbz/images/cartes/9/D-846.jpg"
+    },
+    {
+      "series": "sp",
+      "file": "DB Carte promo SP-22.jpg",
+      "category": null,
+      "timestamp": "20071013180207",
+      "waybackUrl": "https://web.archive.org/web/20071013180207id_/http://www.carddass.fr/dbz/images/cartes/cartes_med/DB%20Carte%20promo%20SP-22.jpg"
+    },
+    {
+      "series": "sp",
+      "file": "DB Carte promo SP-25.jpg",
+      "category": null,
+      "timestamp": "20071013180245",
+      "waybackUrl": "https://web.archive.org/web/20071013180245id_/http://www.carddass.fr/dbz/images/cartes/cartes_med/DB%20Carte%20promo%20SP-25.jpg"
+    },
+    {
+      "series": "sp",
+      "file": "SP-4.jpg",
+      "category": null,
+      "timestamp": "20081119061234",
+      "waybackUrl": "https://web.archive.org/web/20081119061234id_/http://www.carddass.fr/dbz/images/cartes/Promos/SP-4.jpg"
     }
   ]
 }

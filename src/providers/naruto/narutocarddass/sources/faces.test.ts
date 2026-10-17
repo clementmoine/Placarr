@@ -5,7 +5,7 @@ import path from "node:path";
 import coleka from "../curated/sources/coleka.json";
 import { narutoDiskCardId } from "../identity";
 import { planTvTokyoFaceSources } from "../install/faces";
-import { mercariIngestFaces, mercariLedger, yahooAuctionLedger, yahooIngestFaces, slabzFaceLedger, slabzFaceUrl, slabzIngestFaces, tvTokyoFaceSourceFromFile, bandaiFrSerie1DetailleeHoloCount, bandaiFrSerie1DetailleeLedger, bandaiFrSerie1DetailleePrintKeys } from "./faces";
+import { mercariIngestFaces, mercariLedger, yahooAuctionLedger, yahooIngestFaces, slabzFaceLedger, slabzFaceUrl, slabzIngestFaces, tvTokyoFaceSourceFromFile, bandaiFrSerie1DetailleeHoloCount, bandaiFrSerie1DetailleeLedger, bandaiFrSerie1DetailleePrintKeys, attestedNarutoCarddassFinishes } from "./faces";
 import { rakutenFaceLedger, rakutenIngestFaces, rakutenIngestPackshots, bandaiFrUsDriveIngestPackshots, bandaiFrUsDriveLedger, bandaiFrUsDriveNewEnDisplays, colekaCarddassFrBranchCoverUrl, colekaEnCcgCoverLedger, colekaEnCcgNewDisplays, colekaThumbToFull } from "./packshots";
 
 vi.mock("@/lib/http/scrapeFetch", () => ({
@@ -433,6 +433,34 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
         sets: { s1: { ids: string[] } };
       };
       expect([...checklist.sets.s1.ids].sort()).toEqual(keys);
+    });
+  });
+}
+
+// —— attestedNarutoCarddassFinishes ——
+{
+  describe("attestedNarutoCarddassFinishes", () => {
+    it("gates S2 from carddass.fr list rarity without inventing duals", () => {
+      expect(attestedNarutoCarddassFinishes("s2", "ni0084")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s2", "ni084")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s2", "cl0006")).toEqual(["normal"]);
+      // Liste omits rarity → null so the picker keeps legacy dual.
+      expect(attestedNarutoCarddassFinishes("s2", "cl0005")).toBeNull();
+    });
+
+    it("gates S5 commune/rare as Normale and leaves S4 ungated", () => {
+      expect(attestedNarutoCarddassFinishes("s5", "ni0232")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s5", "cl0028")).toEqual(["normal"]); // rare
+      expect(attestedNarutoCarddassFinishes("s5", "ni0217")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s4", "ta0158")).toBeNull();
+    });
+
+    it("keeps S1 on Bandai détailée (prerelease duals)", () => {
+      expect(attestedNarutoCarddassFinishes("s1", "ni0001")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s1", "ni0019")).toEqual([
+        "normal",
+        "holo",
+      ]);
     });
   });
 }

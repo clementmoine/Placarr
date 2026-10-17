@@ -294,7 +294,7 @@ const PLAIN_FINISH = "normal";
 /**
  * Default outside Bandai-attested S1: plain + holo on every print.
  * Rarity alone is too dirty to gate (`ta158` commune + physical holo).
- * S1 FR uses {@link attestedNarutoCarddassFinishes} instead.
+ * S1–S3 / S5 FR use {@link attestedNarutoCarddassFinishes} instead.
  */
 const NARUTO_FINISHES = [PLAIN_FINISH, ...NARUTO_CARDDASS_FINISHES];
 

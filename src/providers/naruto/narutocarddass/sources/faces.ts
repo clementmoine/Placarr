@@ -10,6 +10,7 @@ import yahooAuctionsLedgerJson from "../curated/sources/yahoo-auctions.json";
 import {
   canonicalizeNarutoPrintKey,
   canonicalNarutoDiskPrefix,
+  loadOfficialNames,
   mintNarutoPrintKey,
   narutoDiskCardId,
   parseNarutoCollector,
@@ -35,47 +36,76 @@ export function bandaiFrSerie1DetailleeHoloCount(): number {
   return bandaiFrSerie1DetailleeJson.cards.filter((row) => row.holoMarker).length;
 }
 
-const S1_PLAIN = "normal";
-const S1_HOLO = "holo";
+const PLAIN = "normal";
+const HOLO = "holo";
 
-/** Bandai short key `ni001` from collector `ni0001` / `NI-1`. */
-function bandaiFrSerie1ShortKey(collectorNumber: string): string | null {
+/**
+ * FR series whose carddass.fr « liste des cartes » pages carry a usable
+ * rarity (`commune` / `rare` / `holo`). S4 has none; S1 prefers Bandai
+ * détailée (prerelease duals). S6 was never printed FR.
+ */
+const OFFICIAL_LIST_RARITY_SETS = new Set(["s2", "s3", "s5"]);
+
+/** Bandai / official short key `ni001` from collector `ni0001` / `NI-1`. */
+function carddassFrShortKey(collectorNumber: string): string | null {
   const id = parseNarutoCollector(collectorNumber);
   if (!id) return null;
   const prefix = canonicalNarutoDiskPrefix(id.printedPrefix).toLowerCase();
   return `${prefix}${String(id.number).padStart(3, "0")}`;
 }
 
+function finishesFromOfficialListRarity(
+  rarity: string | null | undefined,
+): readonly string[] | null {
+  const r = (rarity ?? "").trim().toLowerCase();
+  if (!r) return null;
+  if (r === "holo" || r === "holofoil") return [HOLO];
+  if (r === "commune" || r === "common" || r === "rare") return [PLAIN];
+  return null;
+}
+
 /**
- * Attested finishes for FR Carddass **Série 1** from Bandai détailée.
+ * Attested finishes for FR Carddass retail series.
  *
- * Dual (`normal`+`holo`) = Bandai listed a non-holo alt of a holo ID
- * (`ni019` / `ta005` / `te007` / `te036`). That plain card is the opened
- * bag content — same Normale as any other non-foil. The still-in-bag copy
- * lives on the `*-prerelease` printKey with finish `sealed` only.
+ * - **S1** — Bandai « Série 1 détaillée ». Dual (`normal`+`holo`) = Bandai
+ *   listed a non-holo alt of a holo ID (`ni019` / `ta005` / `te007` /
+ *   `te036`). That plain card is the opened bag content; the still-in-bag
+ *   copy lives on the `*-prerelease` printKey with finish `sealed` only.
+ * - **S2 / S3 / S5** — carddass.fr listes (`carddass-card-names.json`).
+ *   `holo` → foil only; `commune` / `rare` → Normale only. Missing rarity
+ *   → `null` (caller keeps legacy dual — e.g. S4, or unlisted S2 stubs).
  *
- * Returns `null` outside S1 or when the number is absent from the ledger
- * (caller keeps the legacy dual `normal+holo`).
+ * Returns `null` when the series / number is not attested.
  */
 export function attestedNarutoCarddassFinishes(
   setCode: string,
   collectorNumber: string,
 ): readonly string[] | null {
-  if (setCode.trim().toLowerCase() !== "s1") return null;
-  const short = bandaiFrSerie1ShortKey(collectorNumber);
+  const set = setCode.trim().toLowerCase();
+  const short = carddassFrShortKey(collectorNumber);
   if (!short) return null;
-  const rows = bandaiFrSerie1DetailleeJson.cards.filter(
-    (row) => row.printKey.toLowerCase() === short,
-  );
-  if (rows.length === 0) return null;
-  const hasHolo = rows.some((row) => row.holoMarker);
-  const prereleaseAlt = bandaiFrSerie1DetailleeJson.prereleaseListed.some(
-    (id) => id.toLowerCase() === short,
-  );
-  // Non-holo prerelease alt of a holo ID → retail offers both finishes.
-  if (hasHolo && prereleaseAlt) return [S1_PLAIN, S1_HOLO];
-  if (hasHolo) return [S1_HOLO];
-  return [S1_PLAIN];
+
+  if (set === "s1") {
+    const rows = bandaiFrSerie1DetailleeJson.cards.filter(
+      (row) => row.printKey.toLowerCase() === short,
+    );
+    if (rows.length === 0) return null;
+    const hasHolo = rows.some((row) => row.holoMarker);
+    const prereleaseAlt = bandaiFrSerie1DetailleeJson.prereleaseListed.some(
+      (id) => id.toLowerCase() === short,
+    );
+    // Non-holo prerelease alt of a holo ID → retail offers both finishes.
+    if (hasHolo && prereleaseAlt) return [PLAIN, HOLO];
+    if (hasHolo) return [HOLO];
+    return [PLAIN];
+  }
+
+  if (!OFFICIAL_LIST_RARITY_SETS.has(set)) return null;
+  const official = loadOfficialNames().get(short);
+  if (!official) return null;
+  const serie = official.serie;
+  if (typeof serie === "number" && `s${serie}` !== set) return null;
+  return finishesFromOfficialListRarity(official.rarity);
 }
 
 // ─── Mercari faces ───────────────────────────────────────────────────────

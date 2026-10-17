@@ -76,8 +76,8 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
   });
 
   /**
-   * S1 FR = Bandai-attested finishes. Elsewhere dual (rarity too dirty —
-   * `ta158` commune + physical holo).
+   * S1 = Bandai détailée; S2/S3/S5 = carddass.fr listes. Elsewhere dual
+   * when rarity is missing (`ta158` S4, unlisted stubs).
    */
   describe("finishes", () => {
     const finishes = (printKey: string) => lookupNarutoPrint(printKey)?.finishes;
@@ -92,6 +92,18 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       expect(finishes("naruto:s1-te0036")).toEqual(["normal", "holo"]);
     });
 
+    it("attests S2 FR finishes from carddass.fr listes", () => {
+      expect(finishes("naruto:s2-ni0084")).toEqual(["holo"]);
+      expect(finishes("naruto:s2-ni0062")).toEqual(["holo"]);
+      // Listed commune → Normale only.
+      expect(finishes("naruto:s2-cl0006")).toEqual(["normal"]);
+    });
+
+    it("keeps dual on S2 when the liste omits rarity", () => {
+      // cl005 is in S2 without a rarity field — do not invent a finish.
+      expect(finishes("naruto:s2-cl0005")).toEqual(["normal", "holo"]);
+    });
+
     it("offers sealed only on manga prerelease keys (opened = retail Normale)", () => {
       const pre = lookupNarutoPrint("naruto:s1-ni0019-prerelease");
       expect(pre?.finishes).toEqual(["sealed"]);
@@ -102,7 +114,7 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       expect(finishes("naruto:s1-ni0027")).toEqual(["normal"]);
     });
 
-    it("keeps dual outside S1 when rarity cannot gate (ta158)", () => {
+    it("keeps dual on S4 when rarity cannot gate (ta158)", () => {
       expect(finishes("naruto:s4-ta0158")).toEqual(["normal", "holo"]);
     });
 

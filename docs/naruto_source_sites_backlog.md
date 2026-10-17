@@ -1585,5 +1585,10 @@ titrés manqués par le walk. Index-only : **84 % → 98,1 %** JA
 (`titleWithoutImage` 471 → **55** ; `assetsDiskAttached` 63). EN 100 % ;
 FR 97,6 % (48).
 
-Reste : ~55 titres JA sans scan (promos / trous numérotation publiée) ; FR 48.
+Même session — mirror par `narutoCollectorNumberKey` (prerelease / promo stubs
+empruntent la face retail) : JA **98,2 %** (52) ; FR **99,3 %** (15 = S6
+jamais imprimée FR).
+
+Reste : ~52 titres JA sans scan (promos / trous numérotation) ; FR S6 hors
+périmètre carton.
 

@@ -57,8 +57,10 @@ import {
 import { ensureNarutoCuratedAssets } from "../install/curated";
 import {
   ALT_LINE_DISK_PREFIXES,
+  canonicalNarutoDiskPrefix,
   isNarutoFamilyFolder,
   mintNarutoPrintKey,
+  narutoCollectorNumberKey,
   narutoDiskCardId,
   narutoLedgerNumber,
   narutoNumbersEqual,
@@ -825,39 +827,68 @@ export function buildIndexFromDisk(root: string): {
   return { prints: [...prints.values()], assets };
 }
 
+/** `ni0019-prerelease` / `te0030-cdf` → `ni:0019` — grouping ignored for art share. */
+function mirrorDonorScore(
+  print: NarutoPrintRow | undefined,
+  art: string,
+): number {
+  let score = 0;
+  const set = print?.setCode?.trim().toLowerCase() ?? "";
+  if (set !== "promo") score += 100;
+  const number = print?.number ?? "";
+  if (!/-prerelease$/i.test(number) && !/-promo$/i.test(number)) score += 50;
+  if (/\.reconstructed\./i.test(art)) score += 30;
+  else if (/\.corrected\./i.test(art)) score += 20;
+  return score;
+}
+
 /**
  * Same physical scan under `cards/{family}/{id}/{lang}/` is shared by every
- * catalogue membership (makiN / sN). Titles often mint extra printKeys without
- * a disk walk hit — mirror an existing art row onto those keys so JA/FR/EN
- * completeness does not treat "named sister set" as a missing face.
+ * catalogue membership (makiN / sN / promo stub / manga prerelease). Titles
+ * often mint extra printKeys without a disk walk hit — mirror an existing art
+ * row onto those keys so completeness does not treat a sister number as a
+ * missing face.
  */
 export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
   prints: readonly NarutoPrintRow[];
   titles: readonly { printKey: string; lang: string }[];
   assets: NarutoAssetRow[];
 }): { assets: NarutoAssetRow[]; mirrored: number } {
-  const numberByKey = new Map(
-    input.prints.map((p) => [p.printKey, p.number.toLowerCase()] as const),
+  const printByKey = new Map(input.prints.map((p) => [p.printKey, p] as const));
+  const collectorKeyByPrint = new Map(
+    input.prints.map((p) => {
+      const key = narutoCollectorNumberKey(p.number);
+      return [p.printKey, key] as const;
+    }),
   );
-  const artByNumberLang = new Map<string, NarutoAssetRow>();
+  const artByCollectorLang = new Map<
+    string,
+    { asset: NarutoAssetRow; score: number }
+  >();
   const have = new Set<string>();
   for (const asset of input.assets) {
-    const key = `${asset.printKey}\0${asset.lang}`;
+    const lang = asset.lang.trim().toLowerCase();
+    const key = `${asset.printKey}\0${lang}`;
     have.add(key);
     if (!asset.art) continue;
-    const num = numberByKey.get(asset.printKey);
-    if (!num) continue;
-    const nk = `${num}\0${asset.lang}`;
-    if (!artByNumberLang.has(nk)) artByNumberLang.set(nk, asset);
+    const collector = collectorKeyByPrint.get(asset.printKey);
+    if (!collector) continue;
+    const nk = `${collector}\0${lang}`;
+    const score = mirrorDonorScore(printByKey.get(asset.printKey), asset.art);
+    const prev = artByCollectorLang.get(nk);
+    if (!prev || score > prev.score) {
+      artByCollectorLang.set(nk, { asset, score });
+    }
   }
   const out = [...input.assets];
   let mirrored = 0;
   for (const title of input.titles) {
-    const assetKey = `${title.printKey}\0${title.lang}`;
+    const lang = title.lang.trim().toLowerCase();
+    const assetKey = `${title.printKey}\0${lang}`;
     if (have.has(assetKey)) continue;
-    const num = numberByKey.get(title.printKey);
-    if (!num) continue;
-    const donor = artByNumberLang.get(`${num}\0${title.lang}`);
+    const collector = collectorKeyByPrint.get(title.printKey);
+    if (!collector) continue;
+    const donor = artByCollectorLang.get(`${collector}\0${lang}`)?.asset;
     if (!donor?.art) continue;
     out.push({
       printKey: title.printKey,
@@ -871,6 +902,14 @@ export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
     mirrored += 1;
   }
   return { assets: out, mirrored };
+}
+
+/** Retail disk id without promo/prerelease/cdf grouping (`te0034-promo` → `te0034`). */
+function narutoRetailDiskNumber(raw: string): string | null {
+  const id = parseNarutoCollector(raw);
+  if (!id) return null;
+  const prefix = canonicalNarutoDiskPrefix(id.printedPrefix);
+  return `${prefix}${String(id.number).padStart(4, "0")}`;
 }
 
 /**
@@ -900,16 +939,25 @@ export function attachNarutoDiskArtAssets(input: {
     if (have.has(assetKey)) continue;
     const number = numberByKey.get(title.printKey);
     if (!number) continue;
-    const pathId = narutoCardPathFromCollector(number, lang);
-    if (!pathId) continue;
-    const art = resolveNarutoDiskArtFilename(
-      path.join(
-        input.cardsRoot,
-        pathId.folder,
-        pathId.diskId,
-        pathId.lang,
-      ),
-    );
+    const diskCandidates = [number];
+    const retail = narutoRetailDiskNumber(number);
+    if (retail && retail.toLowerCase() !== number.toLowerCase()) {
+      diskCandidates.push(retail);
+    }
+    let art: string | null = null;
+    for (const candidate of diskCandidates) {
+      const pathId = narutoCardPathFromCollector(candidate, lang);
+      if (!pathId) continue;
+      art = resolveNarutoDiskArtFilename(
+        path.join(
+          input.cardsRoot,
+          pathId.folder,
+          pathId.diskId,
+          pathId.lang,
+        ),
+      );
+      if (art) break;
+    }
     if (!art) continue;
     out.push({
       printKey: title.printKey,

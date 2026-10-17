@@ -46,9 +46,23 @@ describe("bleachscb parseCarddassFr", () => {
     const dual = promos.assets.find((a) => a.file === "Promo-15-16.gif");
     expect(dual?.exclusive).toBe(false);
     expect(dual?.localRel).toMatch(/promos\/Promo-15-16\.gif$/);
+    const exclusive15 = promos.assets.find((a) => a.file === "Promo-15.gif");
+    expect(exclusive15?.exclusive).toBe(true);
+    expect(exclusive15?.localRel).toMatch(/promos\/Promo-15\.gif$/);
     expect(
       existsSync(
         path.join(bleachScbCuratedDir(), "sources", "wayback", "promos", "Promo-1.gif"),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        path.join(
+          bleachScbCuratedDir(),
+          "sources",
+          "wayback",
+          "promos",
+          "Promo-15.gif",
+        ),
       ),
     ).toBe(true);
   });

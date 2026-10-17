@@ -15,6 +15,11 @@ import { packCardDir } from "@/lib/packPaths";
 import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "../pack";
 import { parseBleachScbPrinted } from "../printKey";
 
+function filesIdentical(a: string, b: string): boolean {
+  if (!existsSync(a) || !existsSync(b)) return false;
+  return readFileSync(a).equals(readFileSync(b));
+}
+
 export type BleachScbCard = {
   printed: string;
   set: string;
@@ -219,14 +224,14 @@ export function materializeBleachCarddassFrPromos(): {
       continue;
     }
     // Exclusive Promo-N ← installed P face (same Wayback bytes historically).
-    // Skip when a dual Promo-N-M also exists for that number: P### may still
-    // hold the collage (P015) and must not be mislabeled as Promo-N.gif.
-    // Composite ← first installed P face among covered numbers (P015 collage).
+    // Skip when a dual Promo-N-M also exists for that number *and* we have no
+    // curated exclusive yet: P015 used to hold the Promo-15-16 collage and
+    // must not be mislabeled as Promo-15.gif. Once Promo-15.gif is on disk
+    // under curated (existsSync above), we never enter this branch.
+    // Composite ← first installed P face among covered numbers.
     let src: string | null = null;
     if (asset.exclusive) {
       const num = asset.numbers[0]!;
-      // P015 still holds the Promo-15-16 collage; don't mislabel those bytes
-      // as Promo-15.gif. P016's exclusive face is fine to copy.
       const collageLikelyOnThisPrint = assets.some(
         (a) => !a.exclusive && a.numbers[0] === num,
       );
@@ -279,6 +284,48 @@ export function materializeBleachCarddassFrPromos(): {
   );
 
   return { assets, copied, missing, outPath: PROMOS_LEDGER };
+}
+
+/**
+ * Prefer curated exclusive Promo-N.gif as the pack face (`art.carddass.jpg`).
+ * Overwrites collage fallbacks (ex. P015 held Promo-15-16 until Wayback
+ * returned Promo-15.gif). Dual Promo-N-M files stay curated extras only.
+ */
+export function applyBleachExclusivePromoFacesFromCurated(): {
+  applied: string[];
+  unchanged: string[];
+  missing: string[];
+} {
+  const applied: string[] = [];
+  const unchanged: string[] = [];
+  const missing: string[] = [];
+  for (const asset of listBleachCarddassFrPromoAssets()) {
+    if (!asset.exclusive) continue;
+    const src = path.join(PROMOS_DIR, asset.file);
+    if (!existsSync(src)) {
+      missing.push(asset.file);
+      continue;
+    }
+    const num = asset.numbers[0];
+    if (!num) {
+      missing.push(asset.file);
+      continue;
+    }
+    const destDir = packCardDir(BLEACH_SCB_PACK_ID, {
+      set: "p",
+      lang: "fr",
+      card: num,
+    });
+    mkdirSync(destDir, { recursive: true });
+    const dest = path.join(destDir, "art.carddass.jpg");
+    if (filesIdentical(src, dest)) {
+      unchanged.push(asset.file);
+      continue;
+    }
+    copyFileSync(src, dest);
+    applied.push(asset.file);
+  }
+  return { applied, unchanged, missing };
 }
 
 /** Build FR ledger from CDX image paths + optional liste HTML. */

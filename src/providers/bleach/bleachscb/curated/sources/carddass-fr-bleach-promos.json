@@ -1,7 +1,7 @@
 {
   "source": "carddass.fr/bleach Wayback — promos + carddass/",
   "lang": "fr",
-  "observed": "2026-10-16",
+  "observed": "2026-10-17",
   "note": "Exclusive Promo-N.gif preferred as P### faces. Dual Promo-N-M.gif kept as durable extras (not preferred faces).",
   "assets": [
     {
@@ -55,7 +55,8 @@
       "timestamp": "20081119223142",
       "printed": [
         "P015"
-      ]
+      ],
+      "localRel": "sources/wayback/promos/Promo-15.gif"
     },
     {
       "file": "Promo-16.gif",

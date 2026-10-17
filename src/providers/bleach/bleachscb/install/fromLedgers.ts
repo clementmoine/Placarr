@@ -25,7 +25,10 @@ import {
 import { harvestColekaBleachS1Prices } from "../harvest/colekaPrices";
 import { harvestBleachJaFromNikita } from "../harvest/nikita";
 import type { BleachScbCard } from "../parse/carddassFr";
-import { buildBleachFrLedger } from "../parse/carddassFr";
+import {
+  applyBleachExclusivePromoFacesFromCurated,
+  buildBleachFrLedger,
+} from "../parse/carddassFr";
 import { bleachScbCuratedDir, BLEACH_SCB_PACK_ID } from "../pack";
 import {
   bleachScbPrintKey,
@@ -196,6 +199,13 @@ export async function installBleachScbFromLedgers(
     "art.carddass.jpg",
     opts,
   );
+  /*
+    Curated exclusive Promo-N.gif wins over any prior collage download
+    (P015 used to be Promo-15-16 until Wayback served Promo-15.gif).
+  */
+  if (opts.downloadFaces !== false) {
+    applyBleachExclusivePromoFacesFromCurated();
+  }
   const ja = await installLangFaces(
     jaCards,
     "ja",

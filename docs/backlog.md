@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-10-16** (densif sealed/TCG + catalogues locaux mesures).
+> Dernière vérification : **2026-10-17** (Bleach Promo-15.gif exclusif Wayback).
 > Index docs : [README.md](README.md).
 
 ## Plan perf métadonnées — terminé (2026-07-25)
@@ -33,7 +33,7 @@ disparu.
 | ~~P2~~ | ~~Suruga yen Naruto~~ | **Fait** — ledgers Carddass + Data + 疾風伝 (Data `cardCount` 39→58 le 2026-10-15). |
 | ~~P2~~ | ~~Bleach sealed packshots~~ | **Fait** — Compagnons **adilsons** ; display S1 = **24** sachets (collectthemall). |
 | ~~P2~~ | ~~Bleach Promo-N carddass.fr~~ | **Fait** — `curated/sources/wayback/promos/` + `carddass-fr-bleach-promos.json` ; face P### préfère GIF exclusif (pas collage). |
-| **P2** | **Bleach `Promo-15.gif`** | Pending Wayback 503 ; P015 garde collage `Promo-15-16` jusqu’au re-fetch exclusif. |
+| ~~P2~~ | ~~Bleach `Promo-15.gif`~~ | **Fait 2026-10-17** — Wayback 200 ; curated `Promo-15.gif` + seed pack P015 (remplace collage `Promo-15-16`). |
 | **P3** | **DBSJCC packshots sealed carddass.fr** | ~35 sous Wayback `/dbz/images/packshots*` — densif sealed, pas catalogue cartes D-/DB-. |
 | **P3** | **carddass.fr SP → `art.carddass`** | SP-4 / SP-22 / SP-25 URLs Wayback ; FR déjà couvert dbzc/DCM — complément source optionnel. |
 

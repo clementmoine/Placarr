@@ -6,6 +6,7 @@ import path from "node:path";
 import { recordNarutoFaceDecision } from "./disk";
 import {
   buildNarutoDiskArtAttachments,
+  narutoRetailAssetsRest,
   resolveNarutoArtDiskNumber,
 } from "./diskArtAttachments";
 
@@ -54,6 +55,27 @@ describe("buildNarutoDiskArtAttachments", () => {
         source: "narutocarddass",
       }).attachments,
     ).toEqual([]);
+  });
+
+  it("rewrites assets rest from promo stub folder onto retail", () => {
+    expect(
+      narutoRetailAssetsRest([
+        "cards",
+        "mission",
+        "ta0081-promo",
+        "fr",
+        "art.carddass.jpg",
+      ]),
+    ).toEqual(["cards", "mission", "ta0081", "fr", "art.carddass.jpg"]);
+    expect(
+      narutoRetailAssetsRest([
+        "cards",
+        "mission",
+        "ta0081",
+        "fr",
+        "art.carddass.jpg",
+      ]),
+    ).toBeNull();
   });
 
   it("points promo stubs at the retail folder that holds the mirrored face", () => {

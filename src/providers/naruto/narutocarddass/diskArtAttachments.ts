@@ -80,6 +80,23 @@ function faceProvenanceOf(file: string): "catalog" | "listing_photo" {
 }
 
 /**
+ * `/assets/…/cards/{family}/{diskId}/{lang}/{file}` → retail diskId segment
+ * when the URL still carries `-promo` / `-prerelease` / `-cdf` grouping.
+ *
+ * Stale Metadata rows store the stub path; the bytes live under retail.
+ * Returns a rewritten `rest` for {@link resolveAssetsDiskRoot}, or null.
+ */
+export function narutoRetailAssetsRest(rest: readonly string[]): string[] | null {
+  // cards / family / diskId / lang / file
+  if (rest.length < 5 || rest[0] !== "cards") return null;
+  const diskId = rest[2];
+  if (!diskId) return null;
+  const retail = narutoRetailDiskNumber(diskId);
+  if (!retail || retail.toLowerCase() === diskId.toLowerCase()) return null;
+  return [rest[0]!, rest[1]!, retail, ...rest.slice(3)];
+}
+
+/**
  * Disk folder that actually holds the face file.
  *
  * Promo / prerelease stubs often inherit retail `art.*` in sqlite while the

@@ -5,8 +5,29 @@ import {
   resolveUnderRoot,
   streamFileResponse,
 } from "@/lib/media/streamDataFile";
+import { narutoRetailAssetsRest } from "@/providers/naruto/narutocarddass/diskArtAttachments";
 
 type Ctx = { params: Promise<{ path?: string[] }> };
+
+function resolveAssetFile(
+  pack: string,
+  rest: string[],
+): string | null {
+  const mapped = resolveAssetsDiskRoot(pack, rest);
+  if (!mapped) return null;
+  const hit = resolveUnderRoot(mapped.root, mapped.relative);
+  if (hit) return hit;
+
+  // Stale Metadata still points at `…/ta0081-promo/…` while bytes are retail.
+  if (pack === "naruto/carddass" || pack.startsWith("naruto/")) {
+    const retailRest = narutoRetailAssetsRest(rest);
+    if (!retailRest) return null;
+    const retailMapped = resolveAssetsDiskRoot(pack, retailRest);
+    if (!retailMapped) return null;
+    return resolveUnderRoot(retailMapped.root, retailMapped.relative);
+  }
+  return null;
+}
 
 /** Pack assets are public — the collection is browsable without unlock. */
 export async function GET(req: Request, ctx: Ctx) {
@@ -19,11 +40,7 @@ export async function GET(req: Request, ctx: Ctx) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const mapped = resolveAssetsDiskRoot(split.pack, split.rest);
-  if (!mapped) {
-    return new NextResponse("Not found", { status: 404 });
-  }
-  const filePath = resolveUnderRoot(mapped.root, mapped.relative);
+  const filePath = resolveAssetFile(split.pack, split.rest);
   if (!filePath) {
     return new NextResponse("Not found", { status: 404 });
   }

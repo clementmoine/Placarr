@@ -115,9 +115,7 @@
     "cancelledOne": "Tâche annulée",
     "cancelledAll": "{count} tâche(s) annulée(s)",
     "nothingToCancel": "Aucune tâche à annuler",
-    "cancelFailed": "Impossible d'annuler la tâche",
-    "providerData": "Données fournisseurs",
-    "providerDataHint": "Mise à jour des catalogues · {count} en file"
+    "cancelFailed": "Impossible d'annuler la tâche"
   },
   "auth": {
     "title": "Authentification",

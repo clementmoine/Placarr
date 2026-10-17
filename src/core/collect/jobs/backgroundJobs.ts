@@ -13,11 +13,20 @@ import {
   cancelBackgroundWorkJobById,
   cancelBackgroundWorkJobsForUser,
 } from "@/core/collect/jobs/workQueue";
+import { getProviderModule } from "@/core/catalog/catalog";
+import {
+  adminCatalogueHref,
+  adminCatalogueHrefForExtractTarget,
+  cataloguePackForDataPack,
+  cataloguePackInfo,
+  resolveCataloguePackId,
+} from "@/lib/admin/cataloguePacks";
 import {
   catalogueExtractLabel,
   normalizeCatalogueExtractTarget,
   type CatalogueExtractTarget,
 } from "@/lib/admin/catalogueExtractRunner";
+import { itemPath } from "@/lib/routing/slugs";
 
 export type BackgroundJobKind =
   | "metadataRefresh"
@@ -39,6 +48,11 @@ export type BackgroundJobRow = {
   cancellable: boolean;
   /** Foil extract pack target — drives per-pack loading / logs in admin. */
   foilTarget?: CatalogueExtractTarget | null;
+  /**
+   * Most-scoped place to open this job (item page, or Catalogue pack/corpus).
+   * Null only when there is nowhere useful to land.
+   */
+  href: string | null;
   shelf: {
     id: string;
     name: string;
@@ -46,6 +60,27 @@ export type BackgroundJobRow = {
     type: string;
   } | null;
 };
+
+function hrefForItemJob(item: {
+  id: string;
+  name: string;
+  slug: string | null;
+  shelf: BackgroundJobRow["shelf"];
+}): string | null {
+  if (!item.shelf) return null;
+  return itemPath(item.shelf, item);
+}
+
+/** Catalogue tab for a `catalogProviderSync` / index corpus provider. */
+function hrefForCatalogProvider(providerId: string): string {
+  const mdl = getProviderModule(providerId);
+  const dataPack = mdl?.catalog?.dataPack?.trim();
+  if (dataPack) {
+    const pack = cataloguePackForDataPack(dataPack);
+    return adminCatalogueHref(pack?.id ?? dataPack);
+  }
+  return adminCatalogueHref(providerId);
+}
 
 const backgroundJobSelect = {
   id: true,
@@ -99,6 +134,7 @@ function toBackgroundJobRow(
     kind: isRefresh ? "metadataRefresh" : "metadataEnrich",
     startedAt,
     cancellable: isRefresh || inMemoryIds.has(item.id),
+    href: hrefForItemJob(item),
     shelf: item.shelf,
   };
 }
@@ -150,6 +186,7 @@ async function listPriceRefreshJobsForUser(
       kind: "priceRefresh",
       startedAt: job.lockedAt ?? job.createdAt,
       cancellable: true,
+      href: hrefForItemJob(item),
       shelf: item.shelf,
     });
   }
@@ -197,38 +234,52 @@ async function listCatalogIndexJobsForUser(
 
   return jobs.map((job) => {
     if (job.kind === BACKGROUND_WORK_KIND.apkStoreFetch) {
-      const pack =
+      const packRaw =
         typeof (job.payload as { pack?: unknown })?.pack === "string"
           ? (job.payload as { pack: string }).pack
           : "apk";
+      const packId = resolveCataloguePackId(packRaw) ?? packRaw;
+      const packInfo = cataloguePackInfo(packId);
       return {
         id: job.id,
-        name: pack,
+        name: packInfo?.labelEn ?? packRaw,
         slug: null,
         kind: "apkStoreFetch" as const,
         startedAt: job.lockedAt ?? job.createdAt,
         cancellable: true,
+        href: packInfo
+          ? adminCatalogueHref(packInfo.id)
+          : adminCatalogueHref(packRaw),
         shelf: null,
       };
     }
     if (job.kind === BACKGROUND_WORK_KIND.catalogProviderSync) {
-      // Pas de registry ici : ce poll tourne souvent dans Next, et les lignes
-      // sont de toute façon regroupées en « Données fournisseurs ».
       const providerId =
         typeof (job.payload as { providerId?: unknown })?.providerId ===
         "string"
           ? (job.payload as { providerId: string }).providerId
           : "catalogue";
+      const label =
+        getProviderModule(providerId)?.info.label?.trim() || providerId;
       return {
         id: job.id,
-        name: providerId,
+        name: label,
         slug: null,
         kind: "catalogProviderSync" as const,
         startedAt: job.lockedAt ?? job.createdAt,
         cancellable: true,
+        href: hrefForCatalogProvider(providerId),
         shelf: null,
       };
     }
+    const indexProviderId =
+      job.kind === BACKGROUND_WORK_KIND.icollectCatalogSync
+        ? "icollect"
+        : job.kind === BACKGROUND_WORK_KIND.launchboxIndexSync
+          ? "launchbox"
+          : job.kind === BACKGROUND_WORK_KIND.nointroIndexSync
+            ? "nointro"
+            : null;
     return {
       id: job.id,
       name: labels[job.kind as keyof typeof labels] ?? job.kind,
@@ -236,6 +287,7 @@ async function listCatalogIndexJobsForUser(
       kind: job.kind as BackgroundJobKind,
       startedAt: job.lockedAt ?? job.createdAt,
       cancellable: true,
+      href: indexProviderId ? hrefForCatalogProvider(indexProviderId) : null,
       shelf: null,
     };
   });
@@ -276,6 +328,7 @@ async function listCatalogueExtractJobsForUser(
         startedAt: job.lockedAt ?? job.createdAt,
         cancellable: true,
         foilTarget: target,
+        href: adminCatalogueHrefForExtractTarget(target),
         shelf: null,
       },
     ];

@@ -1244,6 +1244,25 @@ export function applyCataloguePackParams(
 }
 
 /**
+ * Deep-link into Admin → Catalogue on a pack or non-pack corpus id
+ * (`?pack=` accepts both — see TcgEffectsPanel).
+ */
+export function adminCatalogueHref(packOrCorpusId: string): string {
+  const params = new URLSearchParams();
+  params.set("tab", "catalogue");
+  applyCataloguePackParams(params, packOrCorpusId);
+  return `/admin?${params.toString()}`;
+}
+
+/** Most-scoped Catalogue URL for a foil / extract worker target. */
+export function adminCatalogueHrefForExtractTarget(
+  target: string | null | undefined,
+): string | null {
+  const pack = cataloguePackForExtractTarget(target);
+  return pack ? adminCatalogueHref(pack.id) : null;
+}
+
+/**
  * Catalogue pack behind a catalog corpus. `ProviderCatalogHooks.dataPack` is
  * the pack id, so core never has to know provider names — keeping this side
  * provider-blind (see `blindnessGuard`).

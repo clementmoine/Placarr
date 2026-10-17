@@ -115,9 +115,7 @@
     "cancelledOne": "Task cancelled",
     "cancelledAll": "{count} task(s) cancelled",
     "nothingToCancel": "Nothing to cancel",
-    "cancelFailed": "Could not cancel task",
-    "providerData": "Provider data",
-    "providerDataHint": "Updating catalogues · {count} queued"
+    "cancelFailed": "Could not cancel task"
   },
   "auth": {
     "title": "Authentication",

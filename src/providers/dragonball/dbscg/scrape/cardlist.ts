@@ -9,6 +9,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet, httpPost } from "@/lib/http/httpClient";
+import { retry } from "@/lib/http/retry";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
 
 import {
@@ -119,14 +120,22 @@ export function rowsFromCards(cards: readonly DbsParsedCard[]): {
 
 async function fetchIndexHtml(locale: DbsCardlistLocaleId): Promise<string> {
   const urls = dbsCgCardlistUrls(locale);
-  const response = await httpGet<string>(urls.index, {
-    headers: localeHeaders(locale),
-    timeout: SEARCH_TIMEOUT_MS,
-    responseType: "text",
-  });
-  return typeof response.data === "string"
-    ? response.data
-    : String(response.data);
+  // Bandai drops keep-alive mid-scrape (ECONNRESET / socket hang up) — same
+  // as Fusion World. Three attempts beat aborting FR after ~15 series.
+  return retry(
+    async () => {
+      const response = await httpGet<string>(urls.index, {
+        headers: localeHeaders(locale),
+        timeout: SEARCH_TIMEOUT_MS,
+        responseType: "text",
+      });
+      return typeof response.data === "string"
+        ? response.data
+        : String(response.data);
+    },
+    3,
+    800,
+  );
 }
 
 async function fetchSeriesHtml(
@@ -149,18 +158,24 @@ async function fetchSeriesHtml(
     era: "",
     keywordSkill: "",
   });
-  const response = await httpPost<string>(urls.search, body.toString(), {
-    headers: {
-      ...localeHeaders(locale),
-      "Content-Type": "application/x-www-form-urlencoded",
-      Referer: urls.index,
+  return retry(
+    async () => {
+      const response = await httpPost<string>(urls.search, body.toString(), {
+        headers: {
+          ...localeHeaders(locale),
+          "Content-Type": "application/x-www-form-urlencoded",
+          Referer: urls.index,
+        },
+        timeout: SEARCH_TIMEOUT_MS,
+        responseType: "text",
+      });
+      return typeof response.data === "string"
+        ? response.data
+        : String(response.data);
     },
-    timeout: SEARCH_TIMEOUT_MS,
-    responseType: "text",
-  });
-  return typeof response.data === "string"
-    ? response.data
-    : String(response.data);
+    3,
+    800,
+  );
 }
 
 async function scrapeLocale(

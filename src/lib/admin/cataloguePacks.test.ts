@@ -19,6 +19,8 @@ import {
   restrictRowsToCatalogueLocales,
 } from "@/lib/admin/catalogueCards";
 import {
+  adminCatalogueHref,
+  adminCatalogueHrefForExtractTarget,
   applyCataloguePackParams,
   CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
   CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
@@ -363,6 +365,19 @@ describe("cataloguePacks", () => {
     const sealedToPokemon = new URLSearchParams("pack=dragonball/cg&scope=sealed");
     applyCataloguePackParams(sealedToPokemon, "pokemon");
     expect(sealedToPokemon.get("scope")).toBe("sealed");
+  });
+
+  it("deep-links Catalogue jobs onto the pack / extract line", () => {
+    expect(adminCatalogueHref("dragonball/cg")).toBe(
+      "/admin?tab=catalogue&pack=dragonball%2Fcg&scope=all",
+    );
+    expect(adminCatalogueHrefForExtractTarget("dbs-cg")).toBe(
+      "/admin?tab=catalogue&pack=dragonball%2Fcg&scope=all",
+    );
+    expect(adminCatalogueHrefForExtractTarget("pokemon")).toContain(
+      "pack=pokemon",
+    );
+    expect(adminCatalogueHrefForExtractTarget("nope")).toBeNull();
   });
 });
 

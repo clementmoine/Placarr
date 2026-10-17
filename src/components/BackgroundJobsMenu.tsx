@@ -42,22 +42,23 @@ function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   return t("backgroundJobs.kindEnrich");
 }
 
-/**
- * Catalogue crawls the collector never asked for by name.
- *
- * iCollect, LaunchBox, No-Intro and « Tout rafraîchir » (`catalogProviderSync`)
- * keep provider data fresh; listing each crawl as its own row is plumbing noise.
- * They collapse into one “provider data” row in the menu.
- */
-const PROVIDER_DATA_KINDS = new Set([
-  "icollectCatalogSync",
-  "launchboxIndexSync",
-  "nointroIndexSync",
-  "catalogProviderSync",
-]);
+/** Foil / APK lab work — subtitle points at the admin render tab. */
+function isFoilAdminJob(job: BackgroundJob): boolean {
+  return job.kind === "foilExtract" || job.kind === "apkStoreFetch";
+}
 
-function isProviderDataJob(job: BackgroundJob): boolean {
-  return PROVIDER_DATA_KINDS.has(job.kind);
+function jobSubtitle(job: BackgroundJob, t: (key: string) => string): string {
+  const kind = jobKindLabel(job, t);
+  if (job.shelf) return `${kind} · ${job.shelf.name}`;
+  if (isFoilAdminJob(job)) return `${kind} · ${t("backgroundJobs.foilAdmin")}`;
+  return kind;
+}
+
+/** Prefer server deep-link; fall back for older payloads / item jobs. */
+function jobHref(job: BackgroundJob): string | null {
+  if (job.href) return job.href;
+  if (job.shelf) return itemPath(job.shelf, job);
+  return null;
 }
 
 export function BackgroundJobsMenu() {
@@ -106,9 +107,7 @@ export function BackgroundJobsMenu() {
   if (isGuest) return null;
 
   const count = data?.count ?? 0;
-  const allJobs = data?.jobs ?? [];
-  const jobs = allJobs.filter((job) => !isProviderDataJob(job));
-  const providerDataJobs = allJobs.filter(isProviderDataJob);
+  const jobs = data?.jobs ?? [];
   const isBusy = count > 0 || cancelAll.isPending || cancelOne.isPending;
 
   if (!isBusy) return null;
@@ -152,102 +151,61 @@ export function BackgroundJobsMenu() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {isLoading && allJobs.length === 0 ? (
+        {isLoading && jobs.length === 0 ? (
           <div className="px-3 py-4 text-sm text-muted-foreground">
             {t("common.loading")}
           </div>
-        ) : allJobs.length === 0 ? (
+        ) : jobs.length === 0 ? (
           <div className="px-3 py-4 text-sm text-muted-foreground">
             {t("backgroundJobs.empty")}
           </div>
         ) : (
-          jobs.map((job) => (
-            <DropdownMenuItem
-              key={job.id}
-              className="flex items-start gap-2 p-2 focus:bg-accent"
-              onSelect={(event) => event.preventDefault()}
-            >
-              {job.shelf ? (
-                <ShelfTypeIcon
-                  type={job.shelf.type}
-                  className="mt-0.5 size-4 shrink-0"
-                />
-              ) : (
-                <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
-              )}
-              <div className="min-w-0 flex-1">
+          jobs.map((job) => {
+            const href = jobHref(job);
+            return (
+              <DropdownMenuItem
+                key={job.id}
+                className="flex items-start gap-2 p-2 focus:bg-accent"
+                onSelect={(event) => event.preventDefault()}
+              >
                 {job.shelf ? (
-                  <Link
-                    href={itemPath(job.shelf, job)}
-                    className="block truncate text-sm font-semibold hover:text-primary"
-                  >
-                    {job.name}
-                  </Link>
+                  <ShelfTypeIcon
+                    type={job.shelf.type}
+                    className="mt-0.5 size-4 shrink-0"
+                  />
                 ) : (
-                  <Link
-                    href="/admin?tab=catalogue"
-                    className="block truncate text-sm font-semibold hover:text-primary"
+                  <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+                )}
+                <div className="min-w-0 flex-1">
+                  {href ? (
+                    <Link
+                      href={href}
+                      className="block truncate text-sm font-semibold hover:text-primary"
+                    >
+                      {job.name}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-sm font-semibold">{job.name}</p>
+                  )}
+                  <p className="truncate text-xs text-muted-foreground">
+                    {jobSubtitle(job, t)}
+                  </p>
+                </div>
+                {job.cancellable ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0"
+                    aria-label={t("backgroundJobs.cancelOne")}
+                    disabled={cancelOne.isPending}
+                    onClick={() => cancelOne.mutate(job.id)}
                   >
-                    {job.name}
-                  </Link>
-                )}
-                <p className="truncate text-xs text-muted-foreground">
-                  {jobKindLabel(job, t)}
-                  {job.shelf
-                    ? ` · ${job.shelf.name}`
-                    : ` · ${t("backgroundJobs.foilAdmin")}`}
-                </p>
-              </div>
-              {job.cancellable ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 shrink-0"
-                  aria-label={t("backgroundJobs.cancelOne")}
-                  disabled={cancelOne.isPending}
-                  onClick={() => cancelOne.mutate(job.id)}
-                >
-                  <X className="size-3.5" />
-                </Button>
-              ) : null}
-            </DropdownMenuItem>
-          ))
-        )}
-        {providerDataJobs.length > 0 && (
-          /*
-            One row for the lot, and deliberately not a link: there is nothing
-            here the collector has to act on, and the previous per-crawl rows
-            pointed at an admin tab none of them belongs to.
-          */
-          <DropdownMenuItem
-            className="flex items-start gap-2 p-2 focus:bg-accent"
-            onSelect={(event) => event.preventDefault()}
-          >
-            <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">
-                {t("backgroundJobs.providerData")}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {t("backgroundJobs.providerDataHint").replace(
-                  "{count}",
-                  String(providerDataJobs.length),
-                )}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 shrink-0"
-              aria-label={t("backgroundJobs.cancelOne")}
-              disabled={cancelOne.isPending}
-              onClick={() => {
-                for (const job of providerDataJobs) cancelOne.mutate(job.id);
-              }}
-            >
-              <X className="size-3.5" />
-            </Button>
-          </DropdownMenuItem>
+                    <X className="size-3.5" />
+                  </Button>
+                ) : null}
+              </DropdownMenuItem>
+            );
+          })
         )}
       </DropdownMenuContent>
     </DropdownMenu>

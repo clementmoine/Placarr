@@ -20,6 +20,8 @@ export type BackgroundJob = {
   startedAt: string;
   cancellable: boolean;
   foilTarget?: CatalogueExtractTarget | null;
+  /** Most-scoped destination (item page or Catalogue pack/corpus). */
+  href?: string | null;
   shelf: {
     id: string;
     name: string;

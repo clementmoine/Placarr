@@ -38,6 +38,7 @@ disparu.
 | ~~P3~~ | ~~carddass.fr SP → `art.carddass`~~ | **Fait 2026-10-17** — parse `Promos/` + `cartes_med/` ; SP-4 / SP-22 / SP-25 → `art.carddass.jpg` (dbzc/DCM restent face préférée). |
 | ~~P2~~ | ~~Naruto JA faces sur disque → print_assets~~ | **Fait 2026-10-17** — mint `maki*` + `attachNarutoDiskArtAssets` + mirror `narutoCollectorNumberKey` ; JA **98,2 %** (52 sans scan) ; FR **99,3 %** (15 = S6). |
 | P3 | Naruto JA trous restants (~52) | Harvest marché (Suruga TSV = 0 hit) : promos / numéros publiés absents. Pas de faces locales à rattacher. **2026-10-17** : Ultrajeux S1–S4 / `*_spc2` déjà en staging (0 gain) ; volume GIFs carddas `jutsu-290_14` / `shinobi-417_17` / `saku-326_17` / `saku-337_17` — checklist OK, CDX Wayback vide (harvest 0/4). Fril ciblé + hmzkhyt SRP : 0 hit. Suite = paste eBay / VPN marché. |
+| P3 | Data Carddass JA faces (Suruga) | **2026-10-17** : crawl Suruga cat. + NF/NX/NM/NFP → +22 listings TSV ; install → `titleWithoutImage` **261→253** (81,4 % images/titres). Reste ~253 (surtout NF/NX/DT absents du rayon). |
 | ~~P3~~ | ~~Lorcast USD ↔ gap-fill art~~ | **Fait 2026-10-17** — `prices`/`tcgplayer_id` sur catalogue ; ledger `data/lorcana/lorcast-fill-prices.json` au fill ; refresh Lorcast en secours. |
 | ~~P2~~ | ~~Naruto FR finitions S2/S3/S5~~ | **Fait 2026-10-17** — `attestedNarutoCarddassFinishes` lit les raretés carddass.fr ; S4 reste dual. |
 

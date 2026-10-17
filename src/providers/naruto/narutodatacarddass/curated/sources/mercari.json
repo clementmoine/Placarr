@@ -4,7 +4,7 @@
   "crawlLive": false,
   "ingest": "curated-faces",
   "lang": "ja",
-  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only. 2026-09-25: m61124182960 = Jump Festa 大会限定 うずまきナルト = DNP-030 / DMP-000 (same face; Mission barcode table nao-yoshi). 2026-10-17: +5 NF (297/282/318/328/338) then +5 NF (018/057/246/261/289) +3 NX (196/200/340).",
+  "note": "Pasted listing URLs only — do not crawl Mercari search. Ingest rows use live mercdn `url` (install fetches + studio matte crop). Optional `curated` is offline fallback only. 2026-09-25: m61124182960 = Jump Festa 大会限定 うずまきナルト = DNP-030 / DMP-000 (same face; Mission barcode table nao-yoshi). 2026-10-17 densif waves: NF + NX gap-fills from Mercari singles.",
   "not": [
     "crawl",
     "shops-og-image",
@@ -161,6 +161,30 @@
       "ingest": true,
       "url": "https://static.mercdn.net/item/detail/orig/photos/m94116825723_1.jpg?1792110002",
       "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m52988464393",
+      "printedRef": "NF-228",
+      "title": "NARUTO データカードダス うちはイタチ NF-228",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m52988464393_1.jpg?1789998211",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m43402046851",
+      "printedRef": "NF-219",
+      "title": "NARUTO　ナルティメットフォーメーション　 NF-219　日向ネジ",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m43402046851_1.jpg?1784450535",
+      "note": "2026-10-17 densif — print_assets gap."
+    },
+    {
+      "listingUrl": "https://jp.mercari.com/item/m23800361069",
+      "printedRef": "NF-301",
+      "title": "春野サクラ　NARUTO疾風伝ナルティメットクロス　NF-301",
+      "ingest": true,
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m23800361069_1.jpg?1786793209",
+      "note": "2026-10-17 densif — print_assets gap (listing title says Cross; printed NF-301 Formation)."
     }
   ]
 }

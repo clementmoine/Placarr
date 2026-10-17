@@ -327,9 +327,12 @@ import { parseDataCarddassPrinted } from "../printKey";
         "NF-338",
         "NF-018",
         "NF-057",
+        "NF-219",
+        "NF-228",
         "NF-246",
         "NF-261",
         "NF-289",
+        "NF-301",
       ]) {
         expect(refs).toContain(printed);
         expect(parseDataCarddassPrinted(printed)).toMatchObject({ set: "nf" });

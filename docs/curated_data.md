@@ -24,9 +24,10 @@ Trois sous-rôles constatés, un provider ne prend que ceux dont il a besoin :
 | `dbscg`           | ✓ (+ `template/` foil)  | —           | —          | ✓         |
 | `dbsfw`           | ✓                       | —           | —          | ✓         |
 | `lorcanatcg`      | ledger à la racine\*    | —           | —          | —         |
-| `narutocarddass`       | ✓ (backs + reconstruct) | ✓           | ✓          | —         |
-| `narutoshippuden` | ✓                       | —           | ✓          | ✓         |
-| `narutoranks`     | ✓                       | ✓           | ✓          | ✓         |
+| `narutocarddass`       | ✓ (backs + reconstruct lang-first) | ✓           | ✓          | —         |
+| `narutoshippuden` | ✓                       | —           | ✓ (+ digs) | ✓         |
+| `narutoranks`     | ✓ (lang-first faces)    | ✓           | ✓          | ✓         |
+| `narutodatacarddass` | ✓ (lang-first faces) | —           | ✓          | ✓         |
 | `narutoultra`     | —                       | ✓           | ✓          | ✓         |
 
 \* `lorcanatcg/curated/attestedFinishes.json` : ledger plat importé en TS
@@ -38,18 +39,17 @@ Installeur partagé : `src/providers/shared/curatedCardsInstall.ts`
 (`installCuratedCardBacks`). **L'arbre est le contrat** :
 
 - **Verso de pack** : `curated/cards/back.*` → `data/<pack>/cards/back.webp`.
-- **Verso de set** : `curated/cards/{set}/back.*` →
-  `data/<pack>/cards/{set}/back.webp` — **voisin** des dossiers de langue
-  (`en/`, `fr/`), jamais dedans. Un `back.*` sous `{set}/{lang}/` est ignoré
-  avec un warning (un verso est partagé par toutes les langues du set).
-- **Verso localisé** : `back.{lang}.*` au même niveau (`back.fr.png` →
+- **Verso de set (lang-first)** : `curated/cards/{lang}/{set}/back.{lang}.*` →
+  `data/<pack>/cards/{lang}/{set}/back.{lang}.webp`. Legacy
+  `curated/cards/{set}/back.{lang}.*` reste accepté et est remappé via
+  `langFirstSetBackDestRel`.
+- **Verso localisé pack** : `back.{lang}.*` à la racine (`back.fr.png` →
   `back.fr.webp`) ; `lang` = 2 ou 4 lettres minuscules. Le runtime les résout
   via `backFilenameCandidates`.
 - Extensions source : `webp`, `png`, `jpg`, `jpeg`. Un `.webp` est copié tel
   quel ; les autres sont convertis en **WebP lossless** (sharp, effort 6). La
   destination porte toujours l'extension `.webp`.
-- Un seul niveau de set : la collecte lit la racine de `cards/` et ses
-  sous-dossiers directs — pas de récursion plus profonde.
+- Collecte : racine + `{set}/` legacy + `{lang}/{set}/` lang-first.
 - **Idempotent par mtime** : ne réécrit que si la source est plus récente que
   la destination (`curatedDestStale`), sauf `--force`. Les doublons legacy du
   même stem (`back.png` à côté du `back.webp` installé) sont supprimés après
@@ -59,9 +59,10 @@ Installeur partagé : `src/providers/shared/curatedCardsInstall.ts`
   EN sleeve → `back.en.webp`, quand le pack n'a pas de `back.webp` générique).
 
 Le **markdown n'est pas copié** (voir plus bas). Les faces reconstruites
-(`art.reconstructed.*` sous `{family}/{id}/{lang}/`) ne relèvent **pas** de
+(`art.reconstructed.*` sous `{lang}/{set}/{id}/`) ne relèvent **pas** de
 l'installeur partagé : le provider les installe lui-même
-(`narutocarddass/install/installReconstructed.ts`).
+(`narutocarddass/install/curated.ts`, `narutoranks/install/reconstructedFaces.ts`,
+…).
 
 ## `curated/products/` — packshots faits main
 

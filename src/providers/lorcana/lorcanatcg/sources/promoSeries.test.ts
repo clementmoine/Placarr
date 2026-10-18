@@ -11,6 +11,9 @@ import {
   normalizeLorcanaPromoGrouping,
 } from "./promoSeries";
 
+/** Force structural / manual labels (ignore on-disk Lorcast ledger). */
+const STRUCTURAL = { setNames: new Map<string, string>() };
+
 describe("isLorcanaMainCatalogueSetCode", () => {
   it.each(["1", "13", "Q1", "q2", "Q3"])("keeps %s as main catalogue", (code) => {
     expect(isLorcanaMainCatalogueSetCode(code)).toBe(true);
@@ -38,22 +41,58 @@ describe("normalizeLorcanaPromoGrouping", () => {
 });
 
 describe("lorcanaPromoChecklistSeries", () => {
-  it("maps P1/P2/P3 to Promo Year N", () => {
-    expect(lorcanaPromoChecklistSeries("P1")).toEqual({
+  it("maps P1/P2/P3 to Promo Year N without Lorcast names", () => {
+    expect(lorcanaPromoChecklistSeries("P1", STRUCTURAL)).toEqual({
       id: "p1",
       code: "P1",
       label: "Promo Year 1",
       sortKey: 51,
     });
-    expect(lorcanaPromoChecklistSeries("p3")).toMatchObject({
+    expect(lorcanaPromoChecklistSeries("p3", STRUCTURAL)).toMatchObject({
       id: "p3",
       label: "Promo Year 3",
       sortKey: 53,
     });
   });
 
+  it("prefers Lorcast set names when provided", () => {
+    const setNames = new Map([
+      ["P1", "Promo Set 1"],
+      ["DIS", "EPCOT Festival of the Arts"],
+      ["C2", "Lorcana Challenge Year 3"],
+      ["COCONUT", "Format Coconut"],
+      ["CC1", "Curator's Collection: Heroines Edition"],
+      ["CP", "Challenge Promo"],
+    ]);
+    expect(lorcanaPromoChecklistSeries("P1", { setNames })?.label).toBe(
+      "Promo Set 1",
+    );
+    expect(lorcanaPromoChecklistSeries("DIS", { setNames })?.label).toBe(
+      "EPCOT Festival of the Arts",
+    );
+    expect(lorcanaPromoChecklistSeries("C2", { setNames })?.label).toBe(
+      "Lorcana Challenge Year 3",
+    );
+    expect(lorcanaPromoChecklistSeries("Coconut", { setNames })?.label).toBe(
+      "Format Coconut",
+    );
+    expect(lorcanaPromoChecklistSeries("CC1", { setNames })?.label).toBe(
+      "Curator's Collection: Heroines Edition",
+    );
+    expect(lorcanaPromoChecklistSeries("C1", { setNames })?.label).toBe(
+      "Challenge Promo",
+    );
+  });
+
+  it("keeps structural label when Lorcast name is tautological", () => {
+    const setNames = new Map([["PD1", "PD1"]]);
+    expect(lorcanaPromoChecklistSeries("PD1", { setNames })?.label).toBe(
+      "Product Year 1",
+    );
+  });
+
   it("maps PD1 to Product Year 1", () => {
-    expect(lorcanaPromoChecklistSeries("PD1")).toEqual({
+    expect(lorcanaPromoChecklistSeries("PD1", STRUCTURAL)).toEqual({
       id: "pd1",
       code: "PD1",
       label: "Product Year 1",
@@ -61,35 +100,39 @@ describe("lorcanaPromoChecklistSeries", () => {
     });
   });
 
-  it("maps DIS to Discover Promo", () => {
-    expect(lorcanaPromoChecklistSeries("DIS")).toEqual({
+  it("maps DIS to Discover Promo without Lorcast", () => {
+    expect(lorcanaPromoChecklistSeries("DIS", STRUCTURAL)).toEqual({
       id: "dis",
       code: "DIS",
       label: "Discover Promo",
       sortKey: 80,
     });
-    expect(lorcanaPromoChecklistSeries("dis")?.label).toBe("Discover Promo");
+    expect(lorcanaPromoChecklistSeries("dis", STRUCTURAL)?.label).toBe(
+      "Discover Promo",
+    );
   });
 
   it("maps RPH to Ravensburger Play Hub", () => {
-    expect(lorcanaPromoChecklistSeries("RPH")).toEqual({
+    expect(lorcanaPromoChecklistSeries("RPH", STRUCTURAL)).toEqual({
       id: "rph",
       code: "RPH",
       label: "Ravensburger Play Hub",
       sortKey: 85,
     });
-    expect(lorcanaPromoChecklistSeries("rph")?.label).toBe(
+    expect(lorcanaPromoChecklistSeries("rph", STRUCTURAL)?.label).toBe(
       "Ravensburger Play Hub",
     );
   });
 
   it("keeps challenge and other groupings as their own series", () => {
-    expect(lorcanaPromoChecklistSeries("C2")).toMatchObject({
+    expect(lorcanaPromoChecklistSeries("C2", STRUCTURAL)).toMatchObject({
       id: "c2",
       code: "C2",
       label: "Challenge 2",
     });
-    expect(lorcanaPromoChecklistSeries("Coconut")?.id).toBe("coconut");
+    expect(lorcanaPromoChecklistSeries("Coconut", STRUCTURAL)?.id).toBe(
+      "coconut",
+    );
   });
 });
 

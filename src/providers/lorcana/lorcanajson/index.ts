@@ -36,6 +36,10 @@ import {
   LORCANA_EFFECT_PACK_ID,
   LORCANA_FULL_FOIL_MASK_URL,
 } from "@/effects/lorcana";
+import {
+  finishCssMap,
+  varnishCssMap,
+} from "@/effects/lorcana/cssRecipes";
 import { withPackCardUrls } from "@/effects/lorcana/packAssets";
 import type {
   MetadataAdapterContext,
@@ -88,42 +92,6 @@ const PLAIN_FINISH = "None";
  * the everyday foil, which is the honest answer for a finish nobody has looked
  * at yet: the copy is foil, we just have no better word for how.
  */
-const FINISH_SHADERS: Readonly<Record<string, string>> = {
-  Silver: "silver",
-  Satin: "satin",
-  Lore: "lore",
-  Lava: "lava",
-  Magma: "magma",
-  Glitter: "glitter",
-  VerticalWave: "verticalWave",
-  SeaWave: "seaWave",
-  RainbowPillars: "rainbowPillars",
-  FreeForm1: "freeForm",
-  FreeForm2: "freeForm",
-  // Both looks were transcribed months ago and then never wired up: the two
-  // names were missing from this table alone, so every Tempest and CalendarWave
-  // print fell through to the everyday silver. Found by reading the mobile
-  // app's own finish vocabulary — see `docs/tcg_support.md` §7.
-  Tempest: "tempest",
-  CalendarWave: "calendarWave",
-};
-
-/**
- * And the same for the varnish, a separate coat with its own names.
- *
- * `None` is deliberately absent from both tables, so a plain copy cannot pick
- * up a look even by accident.
- */
-const VARNISH_SHADERS: Readonly<Record<string, string>> = {
-  HighGloss: "hotFoil",
-  MatteHotFoil: "hotFoil",
-  MetallicHotFoil: "hotFoil",
-  SnowHotFoil: "hotFoil",
-  // Distinct from `ChromeRainbowHotFoil`, and drawn by the generic coat — only
-  // the Chrome one gets its own rule upstream.
-  RainbowHotFoil: "hotFoil",
-  ChromeRainbowHotFoil: "chromeRainbowHotFoil",
-};
 const PROVIDER_LABEL = "LorcanaJSON";
 
 /**
@@ -474,12 +442,12 @@ export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
     plainFinishes: withMask.foilTypes.filter(
       (finish) => finish === PLAIN_FINISH,
     ),
-    // The table is the only gate: `None` is deliberately absent from it, so a
-    // plain copy cannot pick up a look even by accident.
+    // Dump finishMap is the only gate: `None` is absent, so a plain copy
+    // cannot pick up a look even by accident.
     finishShaders: Object.fromEntries(
       withMask.foilTypes
-        .filter((finish) => FINISH_SHADERS[finish])
-        .map((finish) => [finish, FINISH_SHADERS[finish] as string]),
+        .filter((finish) => finishCssMap()[finish])
+        .map((finish) => [finish, finishCssMap()[finish] as string]),
     ),
     effectPack: LORCANA_EFFECT_PACK_ID,
     variantImageUrls: withMask.fullFoilUrl
@@ -497,9 +465,9 @@ export function toPrintCandidate(card: LorcanaCard): PrintCandidate {
     secondVarnishMaskUrl: withMask.secondVarnishMaskUrl,
     secondVarnishColor: withMask.foilEffectColors[1] ?? null,
     varnishShaders:
-      withMask.varnishType && VARNISH_SHADERS[withMask.varnishType]
+      withMask.varnishType && varnishCssMap()[withMask.varnishType]
         ? {
-            [withMask.varnishType]: VARNISH_SHADERS[
+            [withMask.varnishType]: varnishCssMap()[
               withMask.varnishType
             ] as string,
           }

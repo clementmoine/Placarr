@@ -20,7 +20,7 @@ import {
 } from "@/providers/shared/cardCatalogue/sets";
 import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
 import type { PrintCandidate } from "@/types/providerModule";
-import ledgerLandscape from "./curated/landscape-prints.json";
+import ledgerLandscape from "./curated/sources/landscape-prints.json";
 import ledgerDoubleIllustrations from "./curated/sources/carddas-jp-double-illustrations.json";
 import {
   canonicalizeNarutoPrintKey,
@@ -74,7 +74,7 @@ registerPrereleaseHomeSet("naruto", "s1");
  *
  * Deux sources :
  *
- * 1. Le relevé éditorial `curated/landscape-prints.json` — autorité pour les
+ * 1. Le relevé éditorial `curated/sources/landscape-prints.json` — autorité pour les
  *    cartes paysage dont la face choisie est un scan portrait couché (PR-060).
  *    Le probe pixel ne mesure que la face choisie : il ne peut pas voir qu'un
  *    fichier portrait contient une carte couchée, et son repli sans dimensions

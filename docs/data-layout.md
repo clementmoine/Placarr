@@ -92,22 +92,23 @@ expose `X-Placarr-Art-Source` / `X-Placarr-Art-Disk`. SQLite / index : présence
 éventuelle, **jamais** le basename dans l’URL publique. Layout disque inchangé
 (lang-first, `art.<source>.*`).
 
-**Héritage art (lecture seule, jamais matérialisé)** :
+**Héritage art** :
 
 | Couche | Opt-in | Portée |
 |--------|--------|--------|
-| `artBorrowFrom` | chaîne set→set sur le pack | **même locale** uniquement (`fr/s3` ← `fr/s1`). S1 = faces owned ; reprints S2–S6 qui affichent encore S1 restent `borrowed` / `artFallbackFrom` (deck + checklist) jusqu’à face propre. |
+| `artBorrowFrom` | chaîne set→set sur le pack | **même locale**. S2–S5 soft-borrow **peers bidirectionnels** puis **S1 en affichage seulement** (deck reprints). Promo / prerelease / S6 / maki empruntent aussi S1. |
+| Sync materialize | `materializePeerRetailFaces` | Copie disque S2↔S5 (peers only, **jamais S1**) pour officialiser les rectos partagés → `owned`. Cibles = checklist FR **+** deck guarantees (ex. Temari NI-114 S2→S4 ; S5→S3 OK). |
 | `localeArt.bestFaceAcrossLocales` | pack / série ; denylist carte via `locale-specific-faces.json` | cross-lang seulement si faces neutres (pas de texte / art identique) |
 
-Chaîne vide (`foo: []`) = pas d’héritage pour ce set. S6 emprunte
-S5→S1 (même locale) tant que `fr/s6/{id}/` n’a pas sa propre face — dès
-qu’elle arrive, le résolveur marque `owned`. Les 巻ノ (`maki*`) empruntent
-`s1…s6` : la checklist JA ne montre que `maki*`, alors que beaucoup de scans
-vivent sous `ja/sN/`. Versos restent sur la locale de la tuile. Filtre admin
-« Art emprunté » = `artFallbackFrom` / `artLocaleFrom`.
+Soft-borrow S1 ≠ materialize : la tuile S2 peut afficher le scan S1
+(`artFallbackFrom`) sans créer `fr/s2/{id}/`. S6 emprunte S5→S1 tant que
+`fr/s6/{id}/` n’a pas sa propre face — dès qu’elle arrive, `owned`. Les 巻ノ
+(`maki*`) empruntent `s1…s6` : la checklist JA ne montre que `maki*`, alors
+que beaucoup de scans vivent sous `ja/sN/`. Versos restent sur la locale de
+la tuile. Filtre admin « Art emprunté » = `artFallbackFrom` / `artLocaleFrom`.
 
 `printed=false` (S6 FR) : visible au catalogue, absent du picker ; le
-recto peut quand même s’afficher via emprunt S5.
+recto peut quand même s’afficher via emprunt S5→S1.
 Migration : `pnpm cards:migrate:lang-first`.
 Faces : **jamais ignorer un hôte** parce qu’une autre illustration est déjà là.
 Chaque dump reste `art.<source>.<ext>` ; `face.json` choisit l’affichage
@@ -127,11 +128,13 @@ Provider : `src/providers/naruto/narutocarddass/`. Sync : Catalogue Extract (adm
 worker) — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.md).
 Dos = langue : `cards/back.{fr|en|it|ja}.webp` depuis
 `curated/cards/back.{lang}.png`. Pas de `back.webp` sans langue sur Naruto.
-Reconstruct : `curated/cards/{family}/{id}/{lang}/art.reconstructed.png`
-(+ `source.jpg`). Ledgers JSON : `curated/sources/`. Le markdown **est
-autorisé** dans `curated/` comme documentation locale (`BACK.md` chez dbscg,
-dbsfw, narutoshippuden, narutoranks, narutoultra) — jamais installé vers
-`data/` (`curatedCardsInstall` ne copie pas le markdown).
+Reconstruct : `curated/cards/{lang}/{set}/{id}/art.reconstructed.png`
+(+ `source.jpg`) — même contrat lang-first que `data/`. Dos set curated :
+`cards/{lang}/{set}/back.{lang}.*`. Ledgers JSON : `curated/sources/`
+(dont `landscape-prints.json`). Le markdown **est autorisé** dans `curated/`
+comme documentation locale (`BACK.md` chez dbscg, dbsfw, narutoshippuden,
+narutoranks, narutoultra) — jamais installé vers `data/`
+(`curatedCardsInstall` ne copie pas le markdown).
 
 `dbs` = franchise ; **`dragonball/cg`** = Masters (`dbscg:bt1-001`) ; **`dragonball/fw`** =
 Fusion World (`dbsfw:st01-001`, parallels `_P1`) ; **`dragonball/lamincards`** =

@@ -1054,8 +1054,8 @@ export function lorcanaSetSortKey(setCode: string): number | null {
  * cette langue, pas une collection à 0 %.
  *
  * Les promos (grouping + fills Lorcast) sont **repliées** en séries
- * `P1 — Promo Year 1`, `P2 — Promo Year 2`, … : la check-list ne les compte
- * plus dans le chapitre retail.
+ * `P1 — …`, `P2 — …` (libellé Lorcast si ledger, sinon Promo Year N) : la
+ * check-list ne les compte plus dans le chapitre retail.
  */
 export function listLorcanaTcgSets(
   language = "fr",

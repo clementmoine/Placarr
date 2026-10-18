@@ -4,7 +4,7 @@
   "crawlLive": false,
   "ingest": "curated-faces",
   "lang": "ja",
-  "note": "Pasted auction + CDN URLs only — do not crawl search or seller stores. Listing HTML 200 from JP; live search 404 without a browser. Bytes live under curated/cards/{family}/{id}/ja/source.jpg so they survive without VPN. art.yahoo is a collector photo, below nikita/suruga/carddas. 忍-3 NFS 2003 / winter 2004 arts do not match FR NI-03 standing pose — not ingested as maki1. 忍-37 only in a 4-card lot — not cropped.",
+  "note": "Pasted auction + CDN URLs only — do not crawl search or seller stores. Listing HTML 200 from JP; live search 404 without a browser. Bytes live under curated/cards/{lang}/{set}/{id}/source.jpg so they survive without VPN. art.yahoo is a collector photo, below nikita/suruga/carddas. 忍-3 NFS 2003 / winter 2004 arts do not match FR NI-03 standing pose — not ingested as maki1. 忍-37 only in a 4-card lot — not cropped.",
   "not": [
     "crawl",
     "data-carddass",

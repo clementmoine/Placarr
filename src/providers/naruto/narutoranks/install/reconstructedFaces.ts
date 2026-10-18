@@ -1,6 +1,7 @@
 /**
- * Scans curés (`curated/cards/{set}/{lang}/{number}/art.reconstructed.*`) →
- * `art.reconstructed.webp` sous `data/naruto/ninja-ranks/cards/` + index SQLite.
+ * Scans curés (`curated/cards/{lang}/{set}/{number}/art.reconstructed.*`) →
+ * `art.reconstructed.webp` sous `data/naruto/ninja-ranks/cards/{lang}/{set}/{number}/`
+ * + index SQLite (contrat lang-first universel).
  *
  * C'est **l'arbre qui commande**, comme au Carddass : poser un fichier suffit à
  * l'installer, verso compris (`back.reconstructed.*` à côté du recto). Le
@@ -23,7 +24,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { packCardsDir } from "@/lib/packPaths";
+import { packCardDir } from "@/lib/packPaths";
 import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
 import { curatedDestStale } from "@/providers/shared/curatedCardsInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
@@ -108,8 +109,7 @@ function preferExtension(files: readonly string[]): string | undefined {
 
 /**
  * Toutes les faces reconstruites posées sous `curated/cards/`, sans ledger.
- * Arborescence Ninja Ranks : `{set}/{lang}/{number}/` (le Carddass, lui, range
- * en `{family}/{id}/{lang}/` — d'où deux scanners plutôt qu'un).
+ * Arborescence : `{lang}/{set}/{number}/` (même contrat lang-first que data).
  */
 export function listCuratedReconstructedFaces(
   curatedRoot = narutoRanksCuratedDir(),
@@ -118,19 +118,19 @@ export function listCuratedReconstructedFaces(
   if (!isDir(cardsDir)) return [];
   const out: ReconstructedFaceCandidate[] = [];
 
-  for (const setCode of readdirSync(cardsDir)) {
-    if (!isSafeSegment(setCode)) continue;
-    const setDir = path.join(cardsDir, setCode);
-    if (!isDir(setDir)) continue;
+  for (const lang of readdirSync(cardsDir)) {
+    if (!LANG_DIR.test(lang)) continue;
+    const langDir = path.join(cardsDir, lang);
+    if (!isDir(langDir)) continue;
 
-    for (const lang of readdirSync(setDir)) {
-      if (!LANG_DIR.test(lang)) continue;
-      const langDir = path.join(setDir, lang);
-      if (!isDir(langDir)) continue;
+    for (const setCode of readdirSync(langDir)) {
+      if (!isSafeSegment(setCode)) continue;
+      const setDir = path.join(langDir, setCode);
+      if (!isDir(setDir)) continue;
 
-      for (const number of readdirSync(langDir)) {
+      for (const number of readdirSync(setDir)) {
         if (!isSafeSegment(number)) continue;
-        const cardDir = path.join(langDir, number);
+        const cardDir = path.join(setDir, number);
         if (!isDir(cardDir)) continue;
 
         const arts: string[] = [];
@@ -275,12 +275,11 @@ export async function installReconstructedFaces(
       continue;
     }
 
-    const destDir = path.join(
-      packCardsDir(NARUTO_RANKS_PACK_ID),
-      card.setCode,
-      card.lang,
-      card.number,
-    );
+    const destDir = packCardDir(NARUTO_RANKS_PACK_ID, {
+      set: card.setCode,
+      lang: card.lang,
+      card: card.number,
+    });
 
     let artFile: string | undefined;
     if (card.artSource) {

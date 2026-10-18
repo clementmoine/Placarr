@@ -892,14 +892,41 @@ export function listCuratedDataCarddassFaces(
   if (!existsSync(cardsRoot)) return [];
   const out: DiscoveredCuratedFace[] = [];
 
-  for (const set of readdirSync(cardsRoot)) {
-    const setCode = set.toLowerCase();
-    if (!isDataCarddassSetCode(setCode)) continue;
-    const setDir = path.join(cardsRoot, set);
-    if (!statSync(setDir).isDirectory()) continue;
+  for (const langOrSet of readdirSync(cardsRoot)) {
+    if (langOrSet.startsWith(".")) continue;
+    const topDir = path.join(cardsRoot, langOrSet);
+    if (!statSync(topDir).isDirectory()) continue;
 
-    for (const langOrNum of readdirSync(setDir)) {
-      const segDir = path.join(setDir, langOrNum);
+    // Lang-first: `cards/{lang}/{set}/{num}/`
+    if (/^[a-z]{2}$/i.test(langOrSet)) {
+      const lang = langOrSet.toLowerCase();
+      for (const set of readdirSync(topDir)) {
+        const setCode = set.toLowerCase();
+        if (!isDataCarddassSetCode(setCode)) continue;
+        const setDir = path.join(topDir, set);
+        if (!statSync(setDir).isDirectory()) continue;
+        for (const num of readdirSync(setDir)) {
+          const cardDir = path.join(setDir, num);
+          if (!statSync(cardDir).isDirectory()) continue;
+          const art = pickFaceFile(cardDir);
+          if (art) {
+            out.push({
+              setCode,
+              lang,
+              number: num.toLowerCase(),
+              artSource: art,
+            });
+          }
+        }
+      }
+      continue;
+    }
+
+    // Legacy set-first: `cards/{set}/{lang}/{num}/` or `cards/{set}/{num}/`
+    const setCode = langOrSet.toLowerCase();
+    if (!isDataCarddassSetCode(setCode)) continue;
+    for (const langOrNum of readdirSync(topDir)) {
+      const segDir = path.join(topDir, langOrNum);
       if (!statSync(segDir).isDirectory()) continue;
 
       if (/^[a-z]{2}$/i.test(langOrNum)) {

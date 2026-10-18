@@ -41,7 +41,7 @@ import {
   mergeS1FrPrerelease,
 } from "../sources/promos";
 import {
-  isNarutoS6FrPrintedNumber,
+  keepsNarutoS6FrTitle,
   mergeCarteSemaineIntoIndex,
   writeCarteSemaineReport,
 } from "../sources/titles";
@@ -1383,9 +1383,9 @@ function assembleNarutoCatalogue(
   );
   const keptKeys = new Set(keptPrints.map((print) => print.printKey));
   /*
-    S6 FR retail was cancelled — only Kana/DVD inserts in `s6-fr-printed.json`
-    keep a French title. Other s6 FR names are pre-prod carddass.fr leftovers
-    or Italian Coleka strings that contaminated the FR column.
+    S6 FR retail was cancelled. Keep FR titles for (1) Kana/DVD/MIJ inserts in
+    `s6-fr-printed.json` and (2) names attested on carddass.fr preprod art
+    (`source: s6-preprod`). Drop Italian Coleka strings that contaminated FR.
   */
   const keptTitles = withUsPromos.titles.filter((title) => {
     if (!keptKeys.has(title.printKey)) return false;
@@ -1393,7 +1393,7 @@ function assembleNarutoCatalogue(
     const set = /^naruto:([a-z0-9]+)-/i.exec(title.printKey)?.[1]?.toLowerCase();
     if (set !== "s6") return true;
     const number = title.printKey.slice(title.printKey.indexOf("-") + 1);
-    return isNarutoS6FrPrintedNumber(number);
+    return keepsNarutoS6FrTitle(number);
   });
   return {
     prints: keptPrints,

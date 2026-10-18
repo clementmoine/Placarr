@@ -927,6 +927,10 @@
   "ni294": [
    "images/cartes/6/NINJA 294.jpg"
   ],
+  "ni309": [
+   "images/cartes/6/NINJA-309.jpg",
+   "images/cartes/cartes_med/NINJA-309-med.jpg"
+  ],
   "ni313": [
    "NINJA-313.jpg",
    "images/cartes/5/ninjas/NINJA-313.jpg"
@@ -1695,7 +1699,8 @@
    "images/cartes/6/TA-239.jpg"
   ],
   "ta240": [
-   "images/cartes/6/TA-240.jpg"
+   "images/cartes/6/TA-240.jpg",
+   "images/cartes/cartes_med/TA-240-med.jpg"
   ],
   "ta262": [
    "images/cartes/6/TA-262.jpg"
@@ -2447,7 +2452,8 @@
    "images/cartes/6/TE-248.jpg"
   ],
   "te263": [
-   "images/cartes/6/TE-263.jpg"
+   "images/cartes/6/TE-263.jpg",
+   "images/cartes/cartes_med/TE-263-med.jpg"
   ],
   "te267": [
    "images/cartes/6/TE-267.jpg"

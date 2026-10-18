@@ -17,6 +17,64 @@ import {
   type SealedProductEntry,
 } from "./indexFormat";
 
+/** Wait for writers (Sync / browse / worker) instead of failing SQLITE_BUSY. */
+const PACK_SQLITE_BUSY_MS = 30_000;
+
+function configurePackSqlite(
+  db: DatabaseSync,
+  opts?: { readOnly?: boolean },
+): void {
+  db.exec(`PRAGMA busy_timeout = ${PACK_SQLITE_BUSY_MS}`);
+  if (opts?.readOnly) return;
+  try {
+    db.exec("PRAGMA journal_mode = WAL");
+    db.exec("PRAGMA synchronous = NORMAL");
+  } catch {
+    /* older files / read-only mounts */
+  }
+}
+
+function openPackSqliteWrite(dbPath: string): DatabaseSync {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+  const db = new DatabaseSync(dbPath);
+  configurePackSqlite(db);
+  return db;
+}
+
+function openPackSqliteRead(dbPath: string): DatabaseSync | null {
+  if (!existsSync(dbPath)) return null;
+  try {
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    configurePackSqlite(db, { readOnly: true });
+    return db;
+  } catch {
+    return null;
+  }
+}
+
+function isSqliteBusy(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "errcode" in err &&
+    Number((err as { errcode?: unknown }).errcode) === 5
+  );
+}
+
+/** Re-open + retry after a long busy wait still collided (worker vs extract). */
+function withPackSqliteBusyRetry<T>(fn: () => T, attempts = 4): T {
+  let last: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return fn();
+    } catch (err) {
+      last = err;
+      if (!isSqliteBusy(err) || i === attempts - 1) throw err;
+    }
+  }
+  throw last;
+}
+
 export function migrateProductsSchema(db: DatabaseSync): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS products (
@@ -69,62 +127,63 @@ export function writeProductsIndexToSqlite(
   opts?: { dbPath?: string },
 ): { dbPath: string; products: number; contents: number } {
   const dbPath = opts?.dbPath ?? packCatalogDb(packId);
-  mkdirSync(path.dirname(dbPath), { recursive: true });
-  const db = new DatabaseSync(dbPath);
-  try {
-    migrateProductsSchema(db);
-    db.exec("BEGIN");
-    db.exec(`DELETE FROM product_contents`);
-    db.exec(`DELETE FROM products`);
-    const insertProduct = db.prepare(`
-      INSERT INTO products (
+  return withPackSqliteBusyRetry(() => {
+    const db = openPackSqliteWrite(dbPath);
+    try {
+      migrateProductsSchema(db);
+      db.exec("BEGIN");
+      db.exec(`DELETE FROM product_contents`);
+      db.exec(`DELETE FROM products`);
+      const insertProduct = db.prepare(`
+    INSERT INTO products (
         product_key, slug, lang, set_code, kind, name, image, price_cents, entry_json
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    const insertContent = db.prepare(`
-      INSERT INTO product_contents (
+      const insertContent = db.prepare(`
+    INSERT INTO product_contents (
         product_key, print_key, name, slug, ref, qty, finish, image
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    let contents = 0;
-    for (const [productKey, entry] of Object.entries(index.products)) {
-      insertProduct.run(
-        productKey,
-        entry.slug,
-        entry.lang,
-        entry.setCode,
-        entry.kind,
-        entry.name,
-        entry.image,
-        entry.priceCents,
-        JSON.stringify(entry),
-      );
-      for (const link of entry.prints ?? []) {
-        insertContent.run(
+      let contents = 0;
+      for (const [productKey, entry] of Object.entries(index.products)) {
+        insertProduct.run(
           productKey,
-          link.printKey,
-          link.name,
-          link.slug,
-          link.ref,
-          link.qty ?? null,
-          link.finish ?? null,
-          link.image ?? null,
+          entry.slug,
+          entry.lang,
+          entry.setCode,
+          entry.kind,
+          entry.name,
+          entry.image,
+          entry.priceCents,
+          JSON.stringify(entry),
         );
-        contents += 1;
+        for (const link of entry.prints ?? []) {
+          insertContent.run(
+            productKey,
+            link.printKey,
+            link.name,
+            link.slug,
+            link.ref,
+            link.qty ?? null,
+            link.finish ?? null,
+            link.image ?? null,
+          );
+          contents += 1;
+        }
       }
+      db.exec("COMMIT");
+      return { dbPath, products: Object.keys(index.products).length, contents };
+    } catch (error) {
+      try {
+        db.exec("ROLLBACK");
+      } catch {
+        /* ignore */
+      }
+      throw error;
+    } finally {
+      db.close();
     }
-    db.exec("COMMIT");
-    return { dbPath, products: Object.keys(index.products).length, contents };
-  } catch (error) {
-    try {
-      db.exec("ROLLBACK");
-    } catch {
-      /* ignore */
-    }
-    throw error;
-  } finally {
-    db.close();
-  }
+  });
 }
 
 export function loadProductsIndexFromSqlite(
@@ -132,13 +191,8 @@ export function loadProductsIndexFromSqlite(
   opts?: { dbPath?: string },
 ): ProductsIndexV1 | null {
   const dbPath = opts?.dbPath ?? packCatalogDb(packId);
-  if (!existsSync(dbPath)) return null;
-  let db: DatabaseSync;
-  try {
-    db = new DatabaseSync(dbPath, { readOnly: true });
-  } catch {
-    return null;
-  }
+  const db = openPackSqliteRead(dbPath);
+  if (!db) return null;
   try {
     const has = db
       .prepare(
@@ -176,19 +230,17 @@ export function loadProductsIndexFromSqlite(
 /** True when catalog.sqlite already holds at least one sealed SKU row. */
 export function catalogHasProductsCorpus(packId: string): boolean {
   const dbPath = packCatalogDb(packId);
-  if (!existsSync(dbPath)) return false;
+  const db = openPackSqliteRead(dbPath);
+  if (!db) return false;
   try {
-    const db = new DatabaseSync(dbPath, { readOnly: true });
-    try {
-      const row = db
-        .prepare(`SELECT COUNT(*) AS n FROM products`)
-        .get() as { n: number } | undefined;
-      return (row?.n ?? 0) > 0;
-    } finally {
-      db.close();
-    }
+    const row = db
+      .prepare(`SELECT COUNT(*) AS n FROM products`)
+      .get() as { n: number } | undefined;
+    return (row?.n ?? 0) > 0;
   } catch {
     return false;
+  } finally {
+    db.close();
   }
 }
 
@@ -198,30 +250,31 @@ export function writeLocaleSpecificFacesToSqlite(
   opts?: { dbPath?: string },
 ): { dbPath: string; faces: number } {
   const dbPath = opts?.dbPath ?? packCatalogDb(packId);
-  mkdirSync(path.dirname(dbPath), { recursive: true });
-  const db = new DatabaseSync(dbPath);
-  try {
-    migrateProductsSchema(db);
-    db.exec("BEGIN");
-    db.exec(`DELETE FROM locale_specific_faces`);
-    const insert = db.prepare(
-      `INSERT OR IGNORE INTO locale_specific_faces (set_code, card) VALUES (?, ?)`,
-    );
-    for (const row of faces) {
-      insert.run(row.set.trim(), row.card.trim());
-    }
-    db.exec("COMMIT");
-    return { dbPath, faces: faces.length };
-  } catch (error) {
+  return withPackSqliteBusyRetry(() => {
+    const db = openPackSqliteWrite(dbPath);
     try {
-      db.exec("ROLLBACK");
-    } catch {
-      /* ignore */
+      migrateProductsSchema(db);
+      db.exec("BEGIN");
+      db.exec(`DELETE FROM locale_specific_faces`);
+      const insert = db.prepare(
+        `INSERT OR IGNORE INTO locale_specific_faces (set_code, card) VALUES (?, ?)`,
+      );
+      for (const row of faces) {
+        insert.run(row.set.trim(), row.card.trim());
+      }
+      db.exec("COMMIT");
+      return { dbPath, faces: faces.length };
+    } catch (error) {
+      try {
+        db.exec("ROLLBACK");
+      } catch {
+        /* ignore */
+      }
+      throw error;
+    } finally {
+      db.close();
     }
-    throw error;
-  } finally {
-    db.close();
-  }
+  });
 }
 
 /** `null` when the table is missing or empty (treat all prints as language-neutral). */
@@ -230,13 +283,8 @@ export function loadLocaleSpecificFacesFromSqlite(
   opts?: { dbPath?: string },
 ): Set<string> | null {
   const dbPath = opts?.dbPath ?? packCatalogDb(packId);
-  if (!existsSync(dbPath)) return null;
-  let db: DatabaseSync;
-  try {
-    db = new DatabaseSync(dbPath, { readOnly: true });
-  } catch {
-    return null;
-  }
+  const db = openPackSqliteRead(dbPath);
+  if (!db) return null;
   try {
     const has = db
       .prepare(
@@ -265,21 +313,22 @@ export function writePackDocument(
   opts?: { dbPath?: string },
 ): { dbPath: string } {
   const dbPath = opts?.dbPath ?? packCatalogDb(packId);
-  mkdirSync(path.dirname(dbPath), { recursive: true });
-  const db = new DatabaseSync(dbPath);
-  try {
-    migrateProductsSchema(db);
-    db.prepare(
-      `INSERT INTO pack_documents (doc_key, payload_json, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(doc_key) DO UPDATE SET
-         payload_json = excluded.payload_json,
-         updated_at = excluded.updated_at`,
-    ).run(docKey, JSON.stringify(payload), new Date().toISOString());
-    return { dbPath };
-  } finally {
-    db.close();
-  }
+  return withPackSqliteBusyRetry(() => {
+    const db = openPackSqliteWrite(dbPath);
+    try {
+      migrateProductsSchema(db);
+      db.prepare(
+        `INSERT INTO pack_documents (doc_key, payload_json, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(doc_key) DO UPDATE SET
+           payload_json = excluded.payload_json,
+           updated_at = excluded.updated_at`,
+      ).run(docKey, JSON.stringify(payload), new Date().toISOString());
+      return { dbPath };
+    } finally {
+      db.close();
+    }
+  });
 }
 
 export function readPackDocument<T = unknown>(
@@ -288,13 +337,8 @@ export function readPackDocument<T = unknown>(
   opts?: { dbPath?: string },
 ): T | null {
   const dbPath = opts?.dbPath ?? packCatalogDb(packId);
-  if (!existsSync(dbPath)) return null;
-  let db: DatabaseSync;
-  try {
-    db = new DatabaseSync(dbPath, { readOnly: true });
-  } catch {
-    return null;
-  }
+  const db = openPackSqliteRead(dbPath);
+  if (!db) return null;
   try {
     const row = db
       .prepare(

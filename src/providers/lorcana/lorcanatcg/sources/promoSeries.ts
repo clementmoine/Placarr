@@ -1,14 +1,21 @@
 /**
- * Séries check-list promo Lorcana (Promo Year 1, 2, 3…).
+ * Séries check-list promo Lorcana.
  *
  * En base, les promos LorcanaJSON restent sous l'extension retail
  * (`set_code=2` + `promo_grouping=P1`) ; les fills Lorcast portent déjà un
  * code promo (`P2`, `C2`, `Coconut`). Pour la check-list / le parcours par
- * extension, on les range par **année promo** (`P1` → Promo Year 1) — sans
- * réécrire `printKey` ni `set_code`.
+ * extension, on les range par série promo — sans réécrire `printKey` ni
+ * `set_code`.
+ *
+ * Libellé : nom Lorcast (`lorcast-sets.json`) quand il est utile, sinon règles
+ * structurelles / manuelles (RPH…), sinon le code.
  */
 
 import { registerChecklistOwnershipSet } from "@/core/collect/checklistOwnership";
+import {
+  lorcastSetDisplayName,
+  readLorcastSetNameMap,
+} from "@/providers/lorcana/lorcast/setsLedger";
 import type { SqlBindValue } from "@/providers/shared/cardCatalogue/sets";
 
 /** Chapitre numéroté (`1`…`13`) ou quête (`Q1`, `Q2`) — hors séries promo. */
@@ -60,17 +67,21 @@ export type LorcanaPromoChecklistSeries = {
   sortKey: number;
 };
 
-/**
- * `P1` → `{ id: "p1", label: "Promo Year 1" }`.
- * `RPH` → Ravensburger Play Hub ; `DIS` → Discover Promo.
- * Autres groupings (`C2`, `Coconut`, `D23`…) → une série par code.
- */
-export function lorcanaPromoChecklistSeries(
-  promoGrouping: string,
-): LorcanaPromoChecklistSeries | null {
-  const raw = promoGrouping.trim();
-  if (!raw) return null;
-  const g = raw.toUpperCase();
+export type LorcanaPromoChecklistSeriesOptions = {
+  /**
+   * Lorcast `code → name`. Omit = ledger on disk ; pass `new Map()` to force
+   * structural / manual labels only.
+   */
+  setNames?: ReadonlyMap<string, string>;
+};
+
+function structuralPromoLabel(code: string): {
+  id: string;
+  code: string;
+  label: string;
+  sortKey: number;
+} | null {
+  const g = code.toUpperCase();
 
   const promoYear = /^P(\d+)$/i.exec(g);
   if (promoYear) {
@@ -105,7 +116,6 @@ export function lorcanaPromoChecklistSeries(
     };
   }
 
-  // Cardmarket : Discover Promo (Magical Places / parcs Disney).
   if (g === "DIS") {
     return {
       id: "dis",
@@ -115,7 +125,6 @@ export function lorcanaPromoChecklistSeries(
     };
   }
 
-  // Organized Play / Ravensburger Play Hub (Weekly Play, BaB, championship…).
   if (g === "RPH") {
     return {
       id: "rph",
@@ -125,16 +134,40 @@ export function lorcanaPromoChecklistSeries(
     };
   }
 
-  return {
-    id: g.toLowerCase(),
-    code: g,
-    label: g
-      .replace(/_/g, " ")
-      .replace(/\b([A-Z0-9]+)\b/g, (word) =>
-        word.length <= 3 ? word : word[0] + word.slice(1).toLowerCase(),
-      ),
-    sortKey: 90,
-  };
+  return null;
+}
+
+function prettyPromoCodeLabel(code: string): string {
+  return code
+    .replace(/_/g, " ")
+    .replace(/\b([A-Z0-9]+)\b/g, (word) =>
+      word.length <= 3 ? word : word[0] + word.slice(1).toLowerCase(),
+    );
+}
+
+/**
+ * `P1` → id `p1`, label Lorcast « Promo Set 1 » si ledger, sinon « Promo Year 1 ».
+ * `RPH` → Ravensburger Play Hub (manuel ; absent de Lorcast).
+ */
+export function lorcanaPromoChecklistSeries(
+  promoGrouping: string,
+  options?: LorcanaPromoChecklistSeriesOptions,
+): LorcanaPromoChecklistSeries | null {
+  const raw = promoGrouping.trim();
+  if (!raw) return null;
+  const g = raw.toUpperCase();
+
+  const structural = structuralPromoLabel(g);
+  const id = structural?.id ?? g.toLowerCase();
+  const code = structural?.code ?? g;
+  const sortKey = structural?.sortKey ?? 90;
+
+  const setNames = options?.setNames ?? readLorcastSetNameMap();
+  const lorcastLabel = lorcastSetDisplayName(code, setNames);
+  const label =
+    lorcastLabel ?? structural?.label ?? prettyPromoCodeLabel(code);
+
+  return { id, code, label, sortKey };
 }
 
 /** Groupe SQL `promo_grouping` attendu pour un id de série promo. */
@@ -157,7 +190,7 @@ export function lorcanaPromoGroupingForSetId(setId: string): string | null {
 /**
  * Clause SQL + params pour borner une recherche à une extension.
  *
- * - `p1` / `p2`… → `promo_grouping = P1` / `P2`… (Promo Year N) ;
+ * - `p1` / `p2`… → `promo_grouping = P1` / `P2`… ;
  * - chapitre / quête → ce `set_code`, **sans** les promos rattachées ;
  * - autre id promo (`coconut`, `c2`…) → grouping exact.
  */

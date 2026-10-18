@@ -14,7 +14,7 @@ staging `data/naruto/carddass/staging/` (README).
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **`cards/{lang}/{set}/{id}/`**                                    | Faces **utilisées** (art, `art.corrected`, `art.reconstructed`, thumb)  |
 | **`staging/carddass-fr/`**                                        | Miroir site non utilisé + pages/PDF/CDX (inspectable)                   |
-| **`src/providers/naruto/narutocarddass/curated/cards/{family}/{id}/{lang}/`** | Reconstruct hand-made (`art.reconstructed.png`) + preuve (`source.jpg`) |
+| **`src/providers/naruto/narutocarddass/curated/cards/{lang}/{set}/{id}/`** | Reconstruct hand-made (`art.reconstructed.png`) + preuve (`source.jpg`) |
 | **`staging/bandaicg-en/`**, **`carddas-jp/`**                     | Autres lignes (≠ CACG FR)                                               |
 
 Med / tin **mappés** quittent staging (**move**). Re-scrape **ne re-télécharge
@@ -44,7 +44,7 @@ Wayback, archive.today, Common Crawl, …). Re-scraper ne les ramène pas.
 | `ni241` `te212`                                 |  `-vc` seul  | `art.corrected` + reconstruct préféré                                |
 
 Coverage MN S1–S5 : **711/711**. Preuves :
-`curated/cards/{family}/{id}/fr/source.jpg` +
+`curated/cards/{lang}/{set}/{id}/source.jpg` +
 `curated/sources/reconstructed-provenance.json`.
 
 ---
@@ -113,7 +113,7 @@ plain `art.*` ≥ ~300 KB (faces site ~40–80 KB / ~350×495). Exclut
 | **S6 low**  | faces FR sur disque            | Série annulée — photos only ; reconstruct optionnel.                                                                               |
 
 Listé dans `logs/known-cards.{md,json}` → section **Photos collector en
-fallback**. Cible : `curated/cards/{family}/{id}/{lang}/art.reconstructed.png`
+fallback**. Cible : `curated/cards/{lang}/{set}/{id}/art.reconstructed.png`
 → `art.reconstructed.webp`.
 
 ### 5quater. Archives « carte de la semaine » — 2026-08-13

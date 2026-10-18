@@ -90,7 +90,7 @@ import {
         shippudenMercariIngestFaces().map((row) => [row.printedRef, row]),
       );
       expect(byRef["忍伝-002"]?.listingUrl).toContain("m63730673755");
-      expect(byRef["忍伝-002"]?.curated).toBe("faces/shi0002.mercari.jpg");
+      expect(byRef["忍伝-002"]?.curated).toBe("sources/digs/shi0002.mercari.jpg");
       expect(diskIdFromPrintedReference("忍伝-002")).toBe("shi0002");
       expect(byRef["忍伝-016"]?.listingUrl).toContain("m17059616523");
       expect(diskIdFromPrintedReference("忍伝-016")).toBe("shi0016");

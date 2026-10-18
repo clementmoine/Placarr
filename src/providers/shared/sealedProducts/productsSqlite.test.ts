@@ -7,6 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { emptyProductsIndex, type SealedProductEntry } from "./indexFormat";
 import {
   loadProductsIndexFromSqlite,
+  readPackDocument,
+  writePackDocument,
   writeProductsIndexToSqlite,
 } from "./productsSqlite";
 
@@ -66,5 +68,20 @@ describe("productsSqlite", () => {
       "naruto:ni-0001",
     );
     expect(loaded!.products["demo::booster-s1"]?.priceCents).toBe(450);
+  });
+
+  it("writes pack_documents under busy_timeout / WAL", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-pack-doc-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    writePackDocument(
+      "demo",
+      "appearances",
+      { version: 1, appearances: { ni0001: { fr: "s1" } } },
+      { dbPath },
+    );
+    expect(readPackDocument("demo", "appearances", { dbPath })).toEqual({
+      version: 1,
+      appearances: { ni0001: { fr: "s1" } },
+    });
   });
 });

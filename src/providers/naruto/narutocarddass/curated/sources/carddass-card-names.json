@@ -4012,8 +4012,28 @@
    "rarity": "holo",
    "serie": 5
   },
+  "ni264": {
+   "name": "Shikamaru Nara et Temari",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ni266": {
+   "name": "Kimimaro",
+   "source": "s6-preprod",
+   "serie": 6
+  },
   "ni268": {
    "name": "Gaara",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ni273": {
+   "name": "Sōtōrō, le loup bicéphale",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ni294": {
+   "name": "Jiraya",
    "source": "s6-preprod",
    "serie": 6
   },
@@ -4044,6 +4064,11 @@
   },
   "te259": {
    "name": "Les mille oiseaux",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "te267": {
+   "name": "Bruine de sable",
    "source": "s6-preprod",
    "serie": 6
   },
@@ -4086,10 +4111,30 @@
    "name": "La puissance du stade deux",
    "source": "s6-preprod",
    "serie": 6
+  },
+  "ta262": {
+   "name": "Malléable",
+   "source": "s6-preprod",
+   "serie": 6
+  },
+  "ta240": {
+   "name": "L'homme-ivre",
+   "source": "carte-semaine",
+   "serie": 6
+  },
+  "te263": {
+   "name": "Mélodie du guerrier illusoire",
+   "source": "carte-semaine",
+   "serie": 6
+  },
+  "ni309": {
+   "name": "Ino Yamanaka",
+   "source": "carte-semaine",
+   "serie": 6
   }
  },
  "merge": {
-  "total": 714,
+  "total": 723,
   "stats": {
    "site": 8,
    "checklist": 10,

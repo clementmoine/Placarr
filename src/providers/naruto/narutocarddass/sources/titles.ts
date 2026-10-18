@@ -17,6 +17,7 @@ import {
   appearanceSetsOf,
   appearanceValueForJson,
   canonicalizeNarutoPrintKey,
+  isNarutoS6FrPreprodNamedNumber,
   loadNarutoAppearancesFile,
   mergeAppearanceValues,
   mintNarutoPrintKey,
@@ -714,6 +715,14 @@ export function narutoS6FrPrintedDiskNumbers(): string[] {
 export function isNarutoS6FrPrintedNumber(raw: string): boolean {
   const key = narutoCollectorKey(raw);
   return key != null && loadKeys().has(key);
+}
+
+/**
+ * Titre FR légitime sur `s6` : insert cartonné (Kana/DVD/MIJ) **ou** nom
+ * attesté sur un rendu carddass.fr préprod. Exclut les libellés Coleka IT.
+ */
+export function keepsNarutoS6FrTitle(raw: string): boolean {
+  return isNarutoS6FrPrintedNumber(raw) || isNarutoS6FrPreprodNamedNumber(raw);
 }
 
 /** True pour les 6 inédites du chapitre checklist FR `s6`. */

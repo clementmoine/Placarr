@@ -313,12 +313,13 @@ Plein écran : onglets **Face / Dos** (+ flip). Grille : le dos pack/set peut se
   `["Silver"]` sont des cartes de sets numérotés (`5-1`, `5-2`…) réimprimées en
   promo, pas le set P2 lui-même. Le trou est donc **structurel**, pas un fetch
   périmé : re-tirer LorcanaJSON ne le comblera jamais.
-- **Check-list : Promo Year N.** Les tirages à `promo_grouping` `P1`/`P2`/`P3`…
-  sont **énumérés** en `P1 — Promo Year 1`, `P2 — Promo Year 2`, etc. `PD1` →
-  `PD1 — Product Year 1`. Les autres groupings (`C1`/`C2`, Coconut, D23…)
-  restent des séries à part. Les `printKey` et `set_code` SQLite ne bougent
-  pas — seule la liste d'extensions / le filtre set les replient. Un chapitre
-  `2` ne compte plus `17/P1` dans sa complétion.
+- **Check-list : séries promo.** Les tirages à `promo_grouping` `P1`/`P2`/`P3`…
+  sont **énumérés** en séries à part (`p1`, `p2`…). Libellé : nom Lorcast du
+  ledger `data/lorcana/lorcast-sets.json` (écrit au gap-fill) quand il est
+  utile — sinon règles structurelles (`Promo Year N`, `Product Year N`,
+  `Ravensburger Play Hub` pour RPH…). Les `printKey` et `set_code` SQLite ne
+  bougent pas — seule la liste d'extensions / le filtre set les replient. Un
+  chapitre `2` ne compte plus `17/P1` dans sa complétion.
 - **Lorcast n'a pas de champ de finition.** Ses 28 champs vont de `cost` à
   `purchase_uris` ; aucun ne dit le foil. Seule la forme des prix informe, et
   indirectement : sur le set 1, les 204 cartes ont `usd` **et** `usd_foil` ; sur

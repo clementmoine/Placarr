@@ -1,11 +1,11 @@
 /**
  * Mirror `curated/cards/` → `data/<pack>/cards/`.
  *
- * The tree is the contract: pack verso at `back.*`, set verso at `{set}/back.*`
- * (sibling of `en/` / `fr/`, not inside them). Language-specific versos use
- * the filename `back.{lang}.*` at that same directory — the runtime already
- * resolves those via `backFilenameCandidates`. Markdown is not part of the
- * tree and is not copied.
+ * The tree is the contract: pack verso at `back.*`; set verso at
+ * `{lang}/{set}/back.{lang}.*` (lang-first) or legacy `{set}/back.*`.
+ * Language-specific versos use the filename `back.{lang}.*` — the runtime
+ * already resolves those via `backFilenameCandidates`. Markdown is not part
+ * of the tree and is not copied.
  */
 import {
   copyFileSync,
@@ -96,6 +96,19 @@ export function listCuratedBackSources(
     if (!isSafeSegment(name)) continue;
     const abs = path.join(cardsDir, name);
     if (!statSync(abs).isDirectory()) continue;
+
+    // Lang-first set sleeves: `cards/{lang}/{set}/back.{lang}.*`
+    if (LANG_DIR.test(name)) {
+      for (const set of readdirSync(abs)) {
+        if (!isSafeSegment(set)) continue;
+        const setDir = path.join(abs, set);
+        if (!statSync(setDir).isDirectory()) continue;
+        collect(setDir, `${name}/${set}`);
+      }
+      continue;
+    }
+
+    // Legacy set-first: `cards/{set}/back.*` (mapDestRel → lang-first data).
     collect(abs, name);
   }
 

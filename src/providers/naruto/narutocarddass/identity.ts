@@ -1591,6 +1591,18 @@ export function loadOfficialNames(): OfficialNames {
 }
 
 /**
+ * Nom FR Série 06 attesté hors carton retail : rendu carddass.fr (`s6-preprod`)
+ * ou révélation « carte de la semaine » Bandai (`carte-semaine`). Distinct des
+ * inserts Kana/DVD et des libellés Coleka IT.
+ */
+export function isNarutoS6FrPreprodNamedNumber(raw: string): boolean {
+  const key = narutoLedgerNumber(raw)?.replace(/-.*$/, "")?.toLowerCase();
+  if (!key) return false;
+  const source = loadOfficialNames().get(key)?.source;
+  return source === "s6-preprod" || source === "carte-semaine";
+}
+
+/**
  * Suffixes qui désignent une **autre carte**, pas une réimpression.
  *
  * Le bonus de précommande du jeu PlayStation « 忍の里の陣取り合戦 » (2003) porte
@@ -2424,7 +2436,7 @@ export function formatKnownCardsMarkdown(report: KnownCardsReport): string {
     "",
     "Face affichée = plain `art.*` trop lourde (≥ ~300 KB ; site ~40–80 KB /",
     "~350×495). Pas de `art.corrected` / `art.reconstructed` préféré — OK en",
-    "fallback catalogue, à préparer en reconstruct (`curated/cards/{family}/{id}/{lang}/`).",
+    "fallback catalogue, à préparer en reconstruct (`curated/cards/{lang}/{set}/{id}/`).",
     "",
     "_Exclut_ les cartes déjà servies via `-vc` (`art.corrected`) ou reconstruct.",
     "",

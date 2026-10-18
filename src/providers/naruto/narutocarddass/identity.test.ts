@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync, mkdtempSync, existsSync, readFileSync, rmSync
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { comparePrintKeys } from "@/core/identify/printKey";
-import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isNarutoFrUnpublishedHtmlNumber, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, reconcileNarutoFrChecklistSet, resolveNarutoLedgerPrintTarget, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel } from "./identity";
+import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isNarutoFrUnpublishedHtmlNumber, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, isNarutoS6FrPreprodNamedNumber, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, reconcileNarutoFrChecklistSet, resolveNarutoLedgerPrintTarget, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel } from "./identity";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import type { NarutoPrintDetail } from "./search";
 
@@ -48,6 +48,12 @@ import type { NarutoPrintDetail } from "./search";
       expect(isNarutoFrUnpublishedHtmlNumber("ta0074")).toBe(false);
       // Real S5 MIJ insert absent from PDF checklist — still printed.
       expect(isNarutoFrUnpublishedHtmlNumber("ni0232")).toBe(false);
+    });
+
+    it("flags S6 carte-semaine phantoms without archived JPEG", () => {
+      expect(isNarutoFrUnpublishedHtmlNumber("ta0240")).toBe(true);
+      expect(isNarutoFrUnpublishedHtmlNumber("te0263")).toBe(true);
+      expect(isNarutoFrUnpublishedHtmlNumber("ni0309")).toBe(true);
     });
   });
 
@@ -658,9 +664,10 @@ import type { NarutoPrintDetail } from "./search";
     });
 
     it("leaves Coleka-only S6 names when official has nothing for that number", () => {
-      const kept = title("te267", "Bruine de sable", "commune", "s6");
+      // ni267 = Rivalità Eterna IT — no FR preprod name in the official ledger.
+      const kept = title("ni267", "Orchi Iracondi", "commune", "s6");
       const { titles, replaced, added } = applyOfficialNames(
-        [print("te267", "s6")],
+        [print("ni267", "s6")],
         [kept],
         official,
       );
@@ -672,11 +679,11 @@ import type { NarutoPrintDetail } from "./search";
     it("adds attested S6 FR names from the official ledger", () => {
       const names = loadOfficialNames();
       const { titles, added } = applyOfficialNames(
-        [print("ni268", "s6"), print("te236", "s6")],
+        [print("ni268", "s6"), print("te236", "s6"), print("te267", "s6")],
         [],
         names,
       );
-      expect(added).toBe(2);
+      expect(added).toBe(3);
       expect(titles).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ fullName: "Gaara", lang: "fr" }),
@@ -684,8 +691,16 @@ import type { NarutoPrintDetail } from "./search";
             fullName: "La morsure du loup",
             lang: "fr",
           }),
+          expect.objectContaining({
+            fullName: "Bruine de sable",
+            lang: "fr",
+          }),
         ]),
       );
+      expect(isNarutoS6FrPreprodNamedNumber("ni264")).toBe(true);
+      expect(isNarutoS6FrPreprodNamedNumber("ta240")).toBe(true);
+      expect(isNarutoS6FrPreprodNamedNumber("te263")).toBe(true);
+      expect(isNarutoS6FrPreprodNamedNumber("ni267")).toBe(false);
     });
 
     it("fills a missing rarity without overwriting one", () => {

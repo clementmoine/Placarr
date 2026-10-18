@@ -38,7 +38,10 @@ import {
   officialFrChecklistSetsForNumber,
   parseNarutoCollector,
 } from "./identity";
-import { isNarutoS6FrPrintedNumber } from "./sources/titles";
+import {
+  isNarutoS6FrPrintedNumber,
+  keepsNarutoS6FrTitle,
+} from "./sources/titles";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
 import { foldNarutoCatalogueRecords } from "./pipeline";
 import { fillNarutoTitlesFromSiblingLocales } from "./pipeline/ledgers";
@@ -105,8 +108,9 @@ export function narutoDeckGuaranteeSetsByCollector(
 
 /**
  * Mint missing set-scoped index cards for FR checklist + deck-guarantee
- * memberships so browse can flag S2–S5 reprints that borrow S1 faces
- * (`artFallbackFrom`) without waiting for a full sqlite rebuild.
+ * memberships so browse can list S2–S5 reprints without waiting for a full
+ * sqlite rebuild. Peer faces are officialized on Sync via
+ * `materializePeerRetailFaces` (never from S1).
  */
 export function expandNarutoCardsIndexMembershipSiblings(
   index: CardsIndexV1,
@@ -531,7 +535,8 @@ export function writeNarutoCcgIndex(input: {
         printKey.slice(printKey.lastIndexOf("-") + 1);
       const grouping = parsePrintKey(printKey)?.grouping;
       const raw = grouping ? `${number}-${grouping}` : number;
-      return isNarutoS6FrPrintedNumber(raw);
+      // Inserts cartonnés + noms lus sur préprod carddass.fr (pas Coleka IT).
+      return keepsNarutoS6FrTitle(raw);
     }
     if (set === "s11" || set === "s24" || set === "s28") return true;
     const series = /^s(\d+)$/.exec(set);
@@ -1141,7 +1146,7 @@ export function loadNarutoCardsIndexFromSqlite(
 
     /*
       Stale sqlite may lack deck-only set-scoped keys (`s2-ni0008`). Expand so
-      catalogue tiles can show `artFallbackFrom` (borrowed S1) until rebuild.
+      catalogue tiles appear until rebuild; peer art lands via materialize.
     */
     return expandNarutoCardsIndexMembershipSiblings(index);
   } finally {

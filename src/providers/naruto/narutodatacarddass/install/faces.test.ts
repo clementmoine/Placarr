@@ -55,10 +55,10 @@ import { parseDataCarddassPrinted } from "../printKey";
     let previousData: string | undefined;
 
     const curatedCard = (setCode: string, lang: string, number: string) =>
-      path.join(curatedRoot, "cards", setCode, lang, number);
+      path.join(curatedRoot, "cards", lang, setCode, number);
 
     const installedCard = (setCode: string, lang: string, number: string) =>
-      path.join(dataDir, NARUTO_DATA_CARDDASS_PACK_ID, "cards", setCode, lang, number);
+      path.join(dataDir, NARUTO_DATA_CARDDASS_PACK_ID, "cards", lang, setCode, number);
 
     const writeCurated = (
       setCode: string,
@@ -150,7 +150,7 @@ import { parseDataCarddassPrinted } from "../printKey";
               setCode: "dn",
               number: "141t",
               printed: "DN-141T",
-              sourceFile: "cards/dn/ja/141t/art.reconstructed.png",
+              sourceFile: "cards/ja/dn/141t/art.reconstructed.png",
             },
           ],
         }),

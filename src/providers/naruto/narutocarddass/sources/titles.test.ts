@@ -21,7 +21,7 @@ import dig_youtubeGapsWebHunt from "../curated/sources/youtube-gaps-web-hunt-202
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_SEALED_SKUS } from "../sealed";
 import { loadNarutoAppearancesFile } from "../identity";
-import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrInediteNumber, isNarutoS6FrPrintedNumber, narutoS6FrPrintedDiskNumbers, narutoS6FrInediteNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
+import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrInediteNumber, isNarutoS6FrPrintedNumber, keepsNarutoS6FrTitle, narutoS6FrPrintedDiskNumbers, narutoS6FrInediteNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
 
 // —— carteSemaine ——
 {
@@ -238,7 +238,20 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       expect(isNarutoS6FrPrintedNumber("te191")).toBe(false);
     });
 
-    it("checklist FR s6 = 6 inédites + 9 Kana blister MIJ reprints", () => {
+    it("keeps carddass.fr preprod FR titles without treating them as printed", () => {
+      expect(keepsNarutoS6FrTitle("ni268")).toBe(true);
+      expect(keepsNarutoS6FrTitle("te267")).toBe(true);
+      expect(keepsNarutoS6FrTitle("ni0264")).toBe(true);
+      expect(isNarutoS6FrPrintedNumber("ni268")).toBe(false);
+      // Carte de la semaine Bandai (HTML phantoms, never archived JPEG).
+      expect(keepsNarutoS6FrTitle("ta240")).toBe(true);
+      expect(keepsNarutoS6FrTitle("te263")).toBe(true);
+      expect(keepsNarutoS6FrTitle("ni309")).toBe(true);
+      // Italian Rivalità Eterna — no FR preprod name.
+      expect(keepsNarutoS6FrTitle("ni267")).toBe(false);
+    });
+
+    it("checklist FR s6 = 6 inédites + MIJ reprints (blister + reconstructions)", () => {
       expect(narutoS6FrInediteNumbers().sort()).toEqual([
         "ni232",
         "ni236",
@@ -260,11 +273,25 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
         "ni240",
         "ta227",
         "te207",
+        "ni242",
+        "ni243",
+        "ni244",
+        "ni245",
+        "ni246",
+        "ni250",
+        "ni251",
+        "ta232",
+        "ta234",
+        "ni103",
+        "ni104",
+        "ni105",
+        "ni114",
       ]) {
         expect(isNarutoS6FrPrintedNumber(n)).toBe(true);
       }
       expect(isNarutoS6FrPrintedNumber("ni234")).toBe(false);
       expect(isNarutoS6FrPrintedNumber("te191")).toBe(false);
+      expect(ledger.mijReprints).toHaveLength(22);
     });
 
     it("lists disk number forms for membership SQL", () => {

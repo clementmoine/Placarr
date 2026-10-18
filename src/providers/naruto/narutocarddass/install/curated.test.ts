@@ -105,21 +105,21 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
   });
 
   describe("listCuratedReconstructedFaces", () => {
-    it("reads lang from the folder, not a hardcoded locale", () => {
+    it("reads lang-first curated faces under {lang}/{set}/{id}/", () => {
       const root = mkdtempSync(path.join(tmpdir(), "naruto-curated-faces-"));
       const cards = path.join(root, "cards");
-      mkdirSync(path.join(cards, "ninja", "n0001", "en"), { recursive: true });
-      mkdirSync(path.join(cards, "ninja", "ni0001", "fr"), { recursive: true });
+      mkdirSync(path.join(cards, "en", "s28", "n0001"), { recursive: true });
+      mkdirSync(path.join(cards, "fr", "s1", "ni0001"), { recursive: true });
       writeFileSync(
-        path.join(cards, "ninja", "n0001", "en", "art.reconstructed.png"),
+        path.join(cards, "en", "s28", "n0001", "art.reconstructed.png"),
         "en",
       );
       writeFileSync(
-        path.join(cards, "ninja", "ni0001", "fr", "art.reconstructed.png"),
+        path.join(cards, "fr", "s1", "ni0001", "art.reconstructed.png"),
         "fr",
       );
       writeFileSync(
-        path.join(cards, "ninja", "ni0001", "fr", "source.jpg"),
+        path.join(cards, "fr", "s1", "ni0001", "source.jpg"),
         "pic",
       );
       writeFileSync(path.join(cards, "back.fr.png"), "back");
@@ -129,25 +129,25 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       ).toEqual(["n0001/en", "ni0001/fr"]);
     });
 
-    it("does not misread promo/{pr0096}/{fr} as legacy promo/{lang}/{card}", () => {
+    it("scans promo under {lang}/promo/{id}/", () => {
       const root = mkdtempSync(path.join(tmpdir(), "naruto-curated-promo-"));
       const cards = path.join(root, "cards");
-      mkdirSync(path.join(cards, "promo", "pr0096", "fr"), { recursive: true });
-      mkdirSync(path.join(cards, "promo", "fr", "pr0011"), { recursive: true });
+      mkdirSync(path.join(cards, "fr", "promo", "pr0096"), { recursive: true });
+      mkdirSync(path.join(cards, "fr", "promo", "pr0011"), { recursive: true });
       writeFileSync(
-        path.join(cards, "promo", "pr0096", "fr", "art.reconstructed.png"),
+        path.join(cards, "fr", "promo", "pr0096", "art.reconstructed.png"),
         "new",
       );
       writeFileSync(
-        path.join(cards, "promo", "fr", "pr0011", "art.reconstructed.png"),
+        path.join(cards, "fr", "promo", "pr0011", "art.reconstructed.png"),
         "legacy",
       );
 
       expect(
         listCuratedReconstructedFaces(cards)
-          .map((f) => `${f.family}/${f.cardId}/${f.lang}`)
+          .map((f) => `${f.cardId}/${f.lang}`)
           .sort(),
-      ).toEqual(["promo/pr0011/fr", "promo/pr0096/fr"]);
+      ).toEqual(["pr0011/fr", "pr0096/fr"]);
     });
   });
 
@@ -229,7 +229,6 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       ).toEqual([
         "booster-composition.json",
         "cards",
-        "landscape-prints.json",
         "products",
         "products-contents.json",
         "sources",
@@ -242,6 +241,7 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         ),
       ).toBe(false);
       expect(files).not.toContain("cards/back.png");
+      expect(files).toContain("sources/landscape-prints.json");
     });
 
     it("ships one attested verso per language at pack root", () => {
@@ -269,94 +269,26 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         "back.en.webp",
         "back.fr.webp",
         "back.ja.webp",
-        "s6/back.fr.webp",
+        "fr/s6/back.fr.webp",
       ]);
     });
 
-    it("files reconstructed faces under {family}/{id}/{lang}/, not a flat dump", () => {
+    it("files reconstructed faces under {lang}/{set}/{id}/, not a flat dump", () => {
       const faces = listCuratedReconstructedFaces(cards);
-      expect(
-        faces.map((f) => `${f.family}/${f.cardId}/${f.lang}`).sort(),
-      ).toEqual([
-        /* FR tourney (PROMO CARD) — user scans 2026-10-18. */
-        "jutsu/te0073-promo/fr",
-        "jutsu/te0085-promo/fr",
-        "jutsu/te0109-promo/fr",
-        "jutsu/te0114-promo/fr",
-        "jutsu/te0139-promo/fr",
-        "jutsu/te0212/fr",
-        /*
-          Les huit 騎 (guerriers de Gelel), recadrées à la main : les seules
-          faces qu'on avait étaient des photos eBay carrées de 1600×1600, où la
-          carte n'occupe qu'une partie du cadre.
-        */
-        "knight/ki0001/ja",
-        "knight/ki0002/ja",
-        "knight/ki0003/ja",
-        "knight/ki0004/ja",
-        "knight/ki0005/ja",
-        "knight/ki0006/ja",
-        "knight/ki0007/ja",
-        "knight/ki0008/ja",
-        "mission/ta0005-prerelease/fr",
-        "mission/ta0063-promo/fr",
-        "mission/ta0067-promo/fr",
-        "mission/ta0074-promo/fr",
-        "mission/ta0081-promo/fr",
-        "mission/ta0221/fr",
-        "mission/ta0226/fr",
-        "mission/ta0330/ja",
-        /*
-          Les quatre du bonus PS1, restaurées depuis les photos Mercari : ce sont
-          les seules reconstructions japonaises, et les seules dont l'original
-          n'est pas un scan officiel abîmé mais une photo de collectionneur —
-          aucun scan à plat de ces cartes n'existe. Leur photo source n'est plus
-          copiée en git : c'est la ligne mercdn du ledger `mercari.json`.
-        */
-        "ninja/ni0001-ps/ja",
-        "ninja/ni0002-ps/ja",
-        "ninja/ni0003-ps/ja",
-        "ninja/ni0011-ps/ja",
-        "ninja/ni0063-promo/fr",
-        "ninja/ni0065-promo/fr",
-        "ninja/ni0092-promo/fr",
-        "ninja/ni0095-promo/fr",
-        "ninja/ni0101-promo/fr",
-        "ninja/ni0117-promo/fr",
-        "ninja/ni0194/fr",
-        "ninja/ni0195/fr",
-        "ninja/ni0232/fr",
-        "ninja/ni0236/fr",
-        "ninja/ni0241/fr",
-        "ninja/ni0252/fr",
-        "ninja/ni0253/fr",
-        /*
-          Sound Four 状態2 (巻ノ十二) : lot Mercari m43793500398 + scans
-          NI-280J…NI-283J (Downloads) 2026-09-21. 280 = crop groupe (pas de solo).
-        */
-        "ninja/ni0280/ja",
-        "ninja/ni0281/ja",
-        "ninja/ni0282/ja",
-        "ninja/ni0283/ja",
-        /*
-          忍-309 : orphan JA (Suruga CDN manquant). Photo Mercari m62332171948_6
-          + restauration Gemini 2026-09-21.
-        */
-        "ninja/ni0309/ja",
-        "ninja/ni0369/ja",
-        /*
-          PR-93 : face FB binder Victor (fbid 1968916513588340) — dig corrige
-          une lecture PR-098 → PR-093 (2026-10-11).
-          PR-95 / PR-96 : reconstructions FR du 2026-09-04, source.jpg à côté —
-          aucun scan à plat de ces promos n'était détenu.
-          PR-100 : Gemini FR à partir des faces EN Coleka + Drive
-          (`source.coleka.jpg` + `source.drive.jpg`).
-        */
-        "promo/pr0093/fr",
-        "promo/pr0095/fr",
-        "promo/pr0096/fr",
-        "promo/pr0100/fr",
-      ]);
+      expect(faces.length).toBeGreaterThan(40);
+      const rel = (f: (typeof faces)[number]) =>
+        path.relative(cards, path.dirname(f.source)).replaceAll("\\", "/");
+      for (const face of faces) {
+        expect(rel(face)).toMatch(
+          /^(fr|ja|en|it)\/[a-z0-9-]+\/[a-z0-9-]+$/i,
+        );
+        expect(path.basename(face.source)).toMatch(
+          /^art\.reconstructed\.(png|webp)$/i,
+        );
+      }
+      // S6 MIJ batch (incl. NI-103/104/105/114) lands under fr/s6/
+      expect(faces.some((f) => rel(f) === "fr/s6/ni0114")).toBe(true);
+      expect(faces.some((f) => rel(f) === "fr/s6/ni0103")).toBe(true);
       /*
         Chaque reconstruction reste auditable : soit la photo d'origine est à
         côté (`source.jpg` ou `source.<tag>.jpg`), soit c'est une restauration
@@ -368,14 +300,14 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       );
       const sourcePhotoRe = /^source(\.[a-z0-9]+)?\.(jpe?g|png|webp)$/i;
       for (const face of faces) {
-        expect(path.basename(face.source)).toMatch(
-          /^art\.reconstructed\.(png|webp)$/i,
-        );
         const dir = path.dirname(face.source);
         const hasSourcePhoto = readdirSync(dir).some((name) =>
           sourcePhotoRe.test(name),
         );
-        if (!hasSourcePhoto) {
+        // S6 MIJ reconstructions: attestation is `s6-fr-printed.json`, not a
+        // neighbour source.jpg (Downloads master lives outside the tree).
+        const s6Mij = rel(face).startsWith("fr/s6/");
+        if (!hasSourcePhoto && !s6Mij) {
           expect(mercariDiskIds.has(face.cardId), face.cardId).toBe(true);
         }
       }

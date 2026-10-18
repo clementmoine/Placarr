@@ -3,9 +3,9 @@
  * faces, card backs, and foil mask.
  *
  * Install hand-made card faces from
- * `src/providers/naruto/narutocarddass/curated/cards/{family}/{id}/{lang}/art.reconstructed.png`
- * into the catalogue as `art.reconstructed.webp` under
- * `data/naruto/carddass/cards/{lang}/{set}/{id}/` (lang-first).
+ * `src/providers/naruto/narutocarddass/curated/cards/{lang}/{set}/{id}/art.reconstructed.png`
+ * into the catalogue as `art.reconstructed.webp` under the same lang-first path
+ * in `data/naruto/carddass/cards/`.
  *
  * These are not scrape output: they are rebuilt by hand (AI restoration of a
  * collector photo, then Figma retouching) for cards whose official face is
@@ -73,7 +73,9 @@ import {
   narutoCuratedSourcesDir,
   narutoCuratedReconstructedProvenancePath,
 } from "../identity";
+import { materializePeerRetailFaces } from "../sources/materializePeerRetailFaces";
 import { materializeS1FrPrereleaseIdenticalRetailFaces } from "../sources/promos";
+import { isNarutoS6FrPrintedNumber } from "../sources/titles";
 
 export {
   narutoCuratedDir,
@@ -125,45 +127,35 @@ function curatedSourceSubdirs(dir: string): string[] {
   });
 }
 
-/** Curated pack tree stays `{family}/{id}/{lang}/` — not lang-first data layout. */
+/** Curated faces: `cards/{lang}/{set}/{id}/` (mirrors data lang-first). */
 function listCuratedSourceCardDirs(cardsDir: string): {
   abs: string;
   family: string;
   diskId: string;
   lang: string;
+  set: string;
 }[] {
   const out: {
     abs: string;
     family: string;
     diskId: string;
     lang: string;
+    set: string;
   }[] = [];
-  for (const family of curatedSourceSubdirs(cardsDir)) {
-    const familyDir = path.join(cardsDir, family);
-    for (const mid of curatedSourceSubdirs(familyDir)) {
-      const midDir = path.join(familyDir, mid);
-      if (isNarutoLangDir(mid)) {
-        for (const cardId of curatedSourceSubdirs(midDir)) {
-          const parsed = parseNarutoCollector(cardId);
-          const diskId = narutoDiskCardId(cardId, family) ?? cardId;
-          out.push({
-            abs: path.join(midDir, cardId),
-            family: parsed?.family ?? family,
-            diskId,
-            lang: mid,
-          });
-        }
-        continue;
-      }
-      for (const lang of curatedSourceSubdirs(midDir)) {
-        if (!isNarutoLangDir(lang)) continue;
-        const parsed = parseNarutoCollector(mid);
-        const diskId = narutoDiskCardId(mid, family) ?? mid;
+  for (const lang of curatedSourceSubdirs(cardsDir)) {
+    if (!isNarutoLangDir(lang)) continue;
+    const langDir = path.join(cardsDir, lang);
+    for (const set of curatedSourceSubdirs(langDir)) {
+      const setDir = path.join(langDir, set);
+      for (const cardId of curatedSourceSubdirs(setDir)) {
+        const parsed = parseNarutoCollector(cardId);
+        const diskId = narutoDiskCardId(cardId, parsed?.family) ?? cardId;
         out.push({
-          abs: path.join(midDir, lang),
-          family: parsed?.family ?? family,
+          abs: path.join(setDir, cardId),
+          family: parsed?.family ?? set,
           diskId,
           lang,
+          set,
         });
       }
     }
@@ -171,7 +163,7 @@ function listCuratedSourceCardDirs(cardsDir: string): {
   return out;
 }
 
-/** Faces under `curated/cards/{family}/{id}/{lang}/art.reconstructed.*`. */
+/** Faces under `curated/cards/{lang}/{set}/{id}/art.reconstructed.*`. */
 export function listCuratedReconstructedFaces(
   cardsDir = curatedCardsDir(narutoCuratedDir()),
 ): CuratedReconstructedFace[] {
@@ -198,7 +190,7 @@ function warnLegacyReconstructedDir(): void {
   if (leftover.length === 0) return;
   console.warn(
     "   leftover curated/reconstructed/*.png — move each face to " +
-      "curated/cards/{family}/{id}/{lang}/art.reconstructed.png",
+      "curated/cards/{lang}/{set}/{id}/art.reconstructed.png",
   );
 }
 
@@ -262,6 +254,10 @@ export async function ensureNarutoCuratedAssets(opts?: {
     }
     for (const id of pre.missing) {
       console.log(`   prerelease identical retail MISS → ${id}`);
+    }
+    const peers = materializePeerRetailFaces();
+    for (const id of peers.installed) {
+      console.log(`   peer retail face → ${id}`);
     }
   }
   const yahoo = await installYahooAuctionFaces({
@@ -399,13 +395,19 @@ function mergeProvenanceInstalls(
 }
 
 /**
- * Lang-first set for a curated reconstruct: appearances, then
- * `prints.set_code`, then an existing disk folder, then promo/`s1`.
+ * Lang-first set for a curated reconstruct: S6 FR MIJ ledger, then
+ * appearances, `prints.set_code`, existing disk folder, then promo/`s1`.
  */
 export function reconstructedInstallSet(
   face: CuratedReconstructedFace,
   cardsRoot = cardsDir(),
 ): string {
+  // Kana / DVD MIJ inserts — never park under s5 retail even if appearances
+  // still list the Belgium twin first.
+  if (face.lang === "fr" && isNarutoS6FrPrintedNumber(face.cardId)) {
+    return "s6";
+  }
+
   const apps = loadNarutoAppearancesFile(packRoot())?.appearances ?? {};
   const fromApp = appearanceSetsOf(apps[face.cardId]?.[face.lang]);
   if (fromApp.length) {
@@ -564,7 +566,7 @@ export async function installNarutoReconstructed(opts?: {
           method:
             "AI restoration of an authenticated collector photo, then Figma retouching",
           sourcePhotos:
-            "source.jpg next to art.reconstructed.png under curated/cards/{family}/{id}/{lang}/ " +
+            "source.jpg next to art.reconstructed.png under curated/cards/{lang}/{set}/{id}/ " +
             "(Mercari restorations: the mercdn ingest row in sources/mercari.json)",
           note:
             "Displayed in place of the official face. The official file is kept on " +

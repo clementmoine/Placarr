@@ -56,6 +56,10 @@ describe("langFirstSetBackDestRel", () => {
     );
     expect(langFirstSetBackDestRel("back.fr.webp")).toBe("back.fr.webp");
     expect(langFirstSetBackDestRel("s28/back.webp")).toBe("s28/back.webp");
+    // Already lang-first curated path stays put.
+    expect(langFirstSetBackDestRel("fr/s6/back.fr.webp")).toBe(
+      "fr/s6/back.fr.webp",
+    );
   });
 });
 
@@ -68,9 +72,15 @@ describe("listCuratedBackSources", () => {
     await tinyPng(path.join(cards, "s28", "back.png"));
     writeFileSync(path.join(cards, "BACK.md"), "ignored");
     await tinyPng(path.join(cards, "s28", "fr", "back.png"));
+    await tinyPng(path.join(cards, "fr", "s6", "back.fr.png"));
 
     const listed = listCuratedBackSources(cards).map((row) => row.destRel);
-    expect(listed).toEqual(["back.it.webp", "back.webp", "s28/back.webp"]);
+    expect(listed).toEqual([
+      "back.it.webp",
+      "back.webp",
+      "fr/s6/back.fr.webp",
+      "s28/back.webp",
+    ]);
   });
 });
 

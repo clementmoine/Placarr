@@ -417,14 +417,15 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     sameNumberArtFallback: true,
     collectorCardFolder: true,
     /*
-      S2–S5 share with earlier series until dedicated scans land.
+      S2–S5: soft-borrow peers (bidirectional) then S1 for browse only.
+      Sync `materializePeerRetailFaces` copies peer→peer onto disk (never S1).
       S6 FR (cancelled) displays S5→S1 until `fr/s6/{id}/` exists — then owned.
       Promo / prerelease ← retail chain. Versos stay set-local (S6 has its own).
     */
     artBorrowFrom: {
-      s2: ["s1"],
-      s3: ["s2", "s1"],
-      s4: ["s3", "s2", "s1"],
+      s2: ["s3", "s4", "s5", "s1"],
+      s3: ["s2", "s4", "s5", "s1"],
+      s4: ["s3", "s2", "s5", "s1"],
       s5: ["s4", "s3", "s2", "s1"],
       // Cancelled FR run: display S5→S1 until `fr/s6/{id}/` has its own face.
       s6: ["s5", "s4", "s3", "s2", "s1"],

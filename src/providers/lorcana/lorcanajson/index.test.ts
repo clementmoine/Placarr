@@ -283,6 +283,7 @@ describe("the finish vocabulary", () => {
       ["RainbowPillars", "rainbowPillars"],
       ["FreeForm1", "freeForm"],
       ["FreeForm2", "freeForm"],
+      ["Tinsel", "tinsel"],
       ["Tempest", "tempest"],
       ["CalendarWave", "calendarWave"],
     ] as const) {

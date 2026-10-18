@@ -26,10 +26,10 @@ import { NARUTO_RANKS_PACK_ID } from "../pack";
     let previousEffects: string | undefined;
 
     const curatedCard = (setCode: string, lang: string, number: string) =>
-      path.join(curatedRoot, "cards", setCode, lang, number);
+      path.join(curatedRoot, "cards", lang, setCode, number);
 
     const installedCard = (setCode: string, lang: string, number: string) =>
-      path.join(dataDir, NARUTO_RANKS_PACK_ID, "cards", setCode, lang, number);
+      path.join(dataDir, NARUTO_RANKS_PACK_ID, "cards", lang, setCode, number);
 
     const writeCurated = (
       setCode: string,

@@ -71,16 +71,16 @@ describe.skipIf(!hasLocalCatalogue)("recherche Lorcana locale", () => {
   });
 
   /*
-    Les fills Lorcast et les promos JSON sont découpés en Promo Year N
+    Les fills Lorcast et les promos JSON sont découpés en séries promo
     (`p1`, `p2`…) plus Challenge / Coconut / etc. Un chapitre retail n'inclut
-    plus les `promo_grouping`.
+    plus les `promo_grouping`. Libellé = Lorcast si ledger, sinon Promo Year N.
   */
-  it("découpe les promos en Promo Year N", () => {
+  it("découpe les promos en séries P1…", () => {
     const sets = listLorcanaTcgSets("fr");
     const byId = new Map(sets.map((s) => [s.id, s]));
     expect(byId.has("promo")).toBe(false);
     const y1 = byId.get("p1");
-    expect(y1?.label).toMatch(/Promo Year 1/i);
+    expect(y1?.label).toMatch(/Promo (Year|Set) 1/i);
     expect(y1!.languages?.length).toBeGreaterThan(0);
     const browsed = searchLorcanaTcgRows("", { setId: "p1", limit: 50 });
     expect(browsed.length).toBeGreaterThan(0);

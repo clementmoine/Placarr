@@ -62,6 +62,7 @@ export type LorcanaPromoChecklistSeries = {
 
 /**
  * `P1` → `{ id: "p1", label: "Promo Year 1" }`.
+ * `RPH` → Ravensburger Play Hub ; `DIS` → Discover Promo.
  * Autres groupings (`C2`, `Coconut`, `D23`…) → une série par code.
  */
 export function lorcanaPromoChecklistSeries(
@@ -111,6 +112,16 @@ export function lorcanaPromoChecklistSeries(
       code: "DIS",
       label: "Discover Promo",
       sortKey: 80,
+    };
+  }
+
+  // Organized Play / Ravensburger Play Hub (Weekly Play, BaB, championship…).
+  if (g === "RPH") {
+    return {
+      id: "rph",
+      code: "RPH",
+      label: "Ravensburger Play Hub",
+      sortKey: 85,
     };
   }
 

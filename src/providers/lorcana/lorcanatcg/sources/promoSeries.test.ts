@@ -71,6 +71,18 @@ describe("lorcanaPromoChecklistSeries", () => {
     expect(lorcanaPromoChecklistSeries("dis")?.label).toBe("Discover Promo");
   });
 
+  it("maps RPH to Ravensburger Play Hub", () => {
+    expect(lorcanaPromoChecklistSeries("RPH")).toEqual({
+      id: "rph",
+      code: "RPH",
+      label: "Ravensburger Play Hub",
+      sortKey: 85,
+    });
+    expect(lorcanaPromoChecklistSeries("rph")?.label).toBe(
+      "Ravensburger Play Hub",
+    );
+  });
+
   it("keeps challenge and other groupings as their own series", () => {
     expect(lorcanaPromoChecklistSeries("C2")).toMatchObject({
       id: "c2",

@@ -188,7 +188,7 @@ describe("foilLookSuppressed", () => {
       foilLookSuppressed({
         hasMaterial: true,
         needsFoilMask: true,
-        foilMaskUrl: "/assets/lorcana/cards/6/en/25-p2/mask.jpg",
+        foilMaskUrl: "/assets/lorcana/cards/en/6/25-p2/mask.jpg",
       }),
     ).toBe(false);
   });

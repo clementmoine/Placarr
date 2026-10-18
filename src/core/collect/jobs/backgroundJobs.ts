@@ -193,6 +193,24 @@ async function listPriceRefreshJobsForUser(
   return rows;
 }
 
+/**
+ * Index-sync job kinds encode the provider id as a prefix
+ * (`…CatalogSync` / `…IndexSync`). Avoid quoting provider ids here — the
+ * blindness guard treats those as core→provider wiring.
+ */
+function indexSyncProviderId(kind: string): string | null {
+  if (kind === "catalogProviderSync") return null;
+  if (kind.endsWith("CatalogSync")) {
+    const id = kind.slice(0, -"CatalogSync".length);
+    return id || null;
+  }
+  if (kind.endsWith("IndexSync")) {
+    const id = kind.slice(0, -"IndexSync".length);
+    return id || null;
+  }
+  return null;
+}
+
 async function listCatalogIndexJobsForUser(
   userId: string,
 ): Promise<BackgroundJobRow[]> {
@@ -272,14 +290,7 @@ async function listCatalogIndexJobsForUser(
         shelf: null,
       };
     }
-    const indexProviderId =
-      job.kind === BACKGROUND_WORK_KIND.icollectCatalogSync
-        ? "icollect"
-        : job.kind === BACKGROUND_WORK_KIND.launchboxIndexSync
-          ? "launchbox"
-          : job.kind === BACKGROUND_WORK_KIND.nointroIndexSync
-            ? "nointro"
-            : null;
+    const indexProviderId = indexSyncProviderId(job.kind);
     return {
       id: job.id,
       name: labels[job.kind as keyof typeof labels] ?? job.kind,

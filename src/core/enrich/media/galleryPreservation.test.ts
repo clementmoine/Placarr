@@ -176,7 +176,7 @@ describe("preserveGalleryAttachmentsOnRegression", () => {
     const previous = [
       storedAttachment(
         "cover",
-        "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+        "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
         { source: "narutocarddass" },
       ),
       storedAttachment("cover", "https://lorcana.example/haku.jpg", {
@@ -186,12 +186,12 @@ describe("preserveGalleryAttachmentsOnRegression", () => {
     const next = [
       {
         type: "cover" as const,
-        url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+        url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
         source: "narutocarddass",
       },
       {
         type: "cover" as const,
-        url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.coleka.webp",
+        url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.coleka.webp",
         source: "narutocarddass",
       },
     ];

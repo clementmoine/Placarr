@@ -55,9 +55,9 @@ import sharp from "sharp";
       const dest = path.join(
         packRoot,
         "cards",
-        "ninja",
-        "ni0003",
         "ja",
+        "maki1",
+        "ni0003",
         "art.mercari.jpg",
       );
       expect(readFileSync(dest).equals(jpeg)).toBe(true);
@@ -66,9 +66,9 @@ import sharp from "sharp";
           path.join(
             packRoot,
             "cards",
-            "ninja",
-            "ni0003",
             "ja",
+            "maki1",
+            "ni0003",
             NARUTO_FACE_DECISION_FILE,
           ),
           "utf8",
@@ -102,6 +102,11 @@ import sharp from "sharp";
   describe("installTvTokyoFaces", () => {
     it("downloads and installs TV Tokyo art on disk", async () => {
       const packRoot = tmp();
+      for (const diskId of ["ni0001", "ni0002", "ni0003"]) {
+        mkdirSync(path.join(packRoot, "cards", "ja", "maki1", diskId), {
+          recursive: true,
+        });
+      }
       const fakeJpeg = await sharp({
         create: {
           width: 80,
@@ -131,9 +136,9 @@ import sharp from "sharp";
       const installedFile = path.join(
         packRoot,
         "cards",
-        "ninja",
-        "ni0001",
         "ja",
+        "maki1",
+        "ni0001",
         "art.tvtokyo.jpg",
       );
       expect(existsSync(installedFile)).toBe(true);
@@ -141,9 +146,9 @@ import sharp from "sharp";
       const decisionFile = path.join(
         packRoot,
         "cards",
-        "ninja",
-        "ni0001",
         "ja",
+        "maki1",
+        "ni0001",
         NARUTO_FACE_DECISION_FILE,
       );
       expect(existsSync(decisionFile)).toBe(true);
@@ -199,9 +204,9 @@ import sharp from "sharp";
       const dest = path.join(
         packRoot,
         "cards",
-        "ninja",
-        "ni0019",
         "ja",
+        "maki1",
+        "ni0019",
         "art.yahoo.jpg",
       );
       expect(readFileSync(dest).equals(jpeg)).toBe(true);
@@ -210,9 +215,9 @@ import sharp from "sharp";
           path.join(
             packRoot,
             "cards",
-            "ninja",
-            "ni0019",
             "ja",
+            "maki1",
+            "ni0019",
             NARUTO_FACE_DECISION_FILE,
           ),
           "utf8",
@@ -289,7 +294,7 @@ import sharp from "sharp";
       writeFileSync(path.join(fansetDir, "n001.png"), await png(40, 56));
       writeFileSync(path.join(fansetDir, "n1715.png"), await png(40, 56));
 
-      const existing = path.join(packRoot, "cards", "ninja", "n0001", "en");
+      const existing = path.join(packRoot, "cards", "en", "s28", "n0001");
       mkdirSync(existing, { recursive: true });
       writeFileSync(
         path.join(existing, "art.vintage.jpg"),
@@ -312,9 +317,9 @@ import sharp from "sharp";
         readFileSync(path.join(existing, NARUTO_FACE_DECISION_FILE), "utf8"),
       ) as { art?: string };
       expect(decision.art).toBe("art.vintage.jpg");
-      expect(existsSync(path.join(packRoot, "cards", "ninja", "n1715"))).toBe(
-        false,
-      );
+      expect(
+        existsSync(path.join(packRoot, "cards", "en", "s28", "n1715")),
+      ).toBe(false);
     });
   });
 }

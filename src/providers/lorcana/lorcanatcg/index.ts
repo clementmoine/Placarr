@@ -204,10 +204,15 @@ export const lorcanatcgModule = defineProvider({
     });
     return row ? toPrintCandidate(cardFromLocalRow(row)) : null;
   },
-  listSetPrints: async ({ setId, language }) =>
+  listSetPrints: async ({ setId, language, includeUnprinted }) =>
+    /*
+      Lorcana corpus is cardboard-only today — `includeUnprinted` is a no-op
+      until a non-physical channel lands with `printed: false` stamps.
+    */
     enumerateSetPrints({
       setId,
       language,
+      includeUnprinted,
       search: (opts) =>
         searchLorcanaTcgRows(opts.query, {
           language: opts.language,

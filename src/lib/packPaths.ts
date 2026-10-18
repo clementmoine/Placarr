@@ -9,20 +9,31 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { dataRoot, foilDataRoot } from "./runtimeData";
-import { ASSET_PACK_ALIASES, assetsPackFileUrl } from "./packAssetUrls";
+import {
+  ASSET_PACK_ALIASES,
+  assetsPackBackRoleUrl,
+  assetsPackFileUrl,
+  assetsPackTierBackRoleUrl,
+  assetsSetBackRoleUrl,
+} from "./packAssetUrls";
 
 export {
   ASSETS_URL_PREFIX,
   ASSET_PACK_ALIASES,
   assetsCardUrl,
+  assetsPackBackRoleUrl,
   assetsPackBase,
   assetsPackFileUrl,
+  assetsPackTierBackRoleUrl,
+  assetsPrintFaceUrl,
+  assetsSetBackRoleUrl,
   canonicalAssetPack,
   cardDiskIdFromBundleStem,
   cardDiskIdFromPrintKey,
   pokemonCardTextureUrl,
   pokemonFaceFileFromTex,
   rewriteAssetPackUrl,
+  type AssetsPrintRole,
   type CardDiskId,
 } from "./packAssetUrls";
 
@@ -213,8 +224,9 @@ export function resolvePackBackPath(
 }
 
 /**
- * Optional set-specific verso under `cards/{set}/back.webp` (Naruto etc.).
- * Pack-common back stays at `cards/back.webp`.
+ * Optional set-specific verso under `cards/{lang}/{set}/back.webp`.
+ * Falls back to legacy `cards/{set}/back.*` (pre–lang-first curated install).
+ * Pack-common back stays at `cards/back.webp` / `cards/back.{lang}.webp`.
  */
 export function resolveSetBackPath(
   pack: string,
@@ -230,9 +242,24 @@ export function resolveSetBackPath(
   ) {
     return null;
   }
-  const dir = path.join(packCardsDir(pack), trimmed);
-  for (const name of backFilenameCandidates(lang)) {
-    const candidate = path.join(dir, name);
+  const cards = packCardsDir(pack);
+  const langCode = lang?.trim().toLowerCase();
+  const langDirs = langCode
+    ? [langCode]
+    : ["fr", "en", "ja", "it", "de", "es"].filter((code) =>
+        existsSync(path.join(cards, code, trimmed)),
+      );
+  for (const code of langDirs) {
+    const dir = path.join(cards, code, trimmed);
+    for (const name of backFilenameCandidates(code)) {
+      const candidate = path.join(dir, name);
+      if (existsSync(candidate)) return candidate;
+    }
+  }
+  // Legacy curated dest: cards/{set}/back.{lang}.webp
+  const legacyDir = path.join(cards, trimmed);
+  for (const name of backFilenameCandidates(langCode)) {
+    const candidate = path.join(legacyDir, name);
     if (existsSync(candidate)) return candidate;
   }
   return null;
@@ -241,14 +268,18 @@ export function resolveSetBackPath(
 const PACK_TIER_BACK_FILE =
   /^back\.([a-z0-9][a-z0-9-]*)\.(webp|png|jpe?g)$/i;
 
-/** `/assets/<pack>/cards/back.{webp|png|…}` when a back file exists. */
+/**
+ * Pack sleeve role URL when a back exists on disk.
+ * `/assets/<pack>/backs/{lang}` — filename chosen at HTTP time.
+ */
 export function assetsPackBackUrl(
   pack: string,
   lang?: string | null,
 ): string | null {
   const disk = resolvePackBackPath(pack, lang);
   if (!disk) return null;
-  return assetsPackFileUrl(pack, "cards", path.basename(disk));
+  const code = (lang ?? "").trim().toLowerCase() || "fr";
+  return assetsPackBackRoleUrl(pack, code);
 }
 
 /** Disk path for `cards/back.<tierSlug>.{webp|png|…}`. */
@@ -266,14 +297,14 @@ export function resolvePackTierBackPath(
   return null;
 }
 
-/** `/assets/<pack>/cards/back.<tier>.webp` when installed. */
+/** `/assets/<pack>/backs/{lang}/tiers/{tier}` when installed. */
 export function assetsPackTierBackUrl(
   pack: string,
   tierSlug: string,
 ): string | null {
   const disk = resolvePackTierBackPath(pack, tierSlug);
   if (!disk) return null;
-  return assetsPackFileUrl(pack, "cards", path.basename(disk));
+  return assetsPackTierBackRoleUrl(pack, tierSlug);
 }
 
 /** Slugs from `back.<slug>.webp` at pack cards root (tier / locale suffix). */
@@ -288,7 +319,10 @@ export function listPackTierBackSlugs(pack: string): string[] {
   return [...slugs].sort((a, b) => a.localeCompare(b));
 }
 
-/** `/assets/<pack>/cards/{set}/back.{webp|png|…}` when a set verso exists. */
+/**
+ * Set verso role URL when a set back exists on disk.
+ * `/assets/<pack>/backs/{lang}/sets/{set}` — filename chosen at HTTP time.
+ */
 export function assetsSetBackUrl(
   pack: string,
   set: string,
@@ -296,7 +330,8 @@ export function assetsSetBackUrl(
 ): string | null {
   const disk = resolveSetBackPath(pack, set, lang);
   if (!disk) return null;
-  return assetsPackFileUrl(pack, "cards", set, path.basename(disk));
+  const code = (lang ?? "").trim().toLowerCase() || "fr";
+  return assetsSetBackRoleUrl(pack, set, code);
 }
 
 /** Lorcana Unity materials manifest — `data/lorcana/foil/manifest.json`. */
@@ -338,12 +373,12 @@ export function packShadersDir(pack: string): string {
   return path.join(foilPackDir(pack), "shaders");
 }
 
-/** Disk folder for one print locale: `cards/{set}/{lang}/{card}`. */
+/** Disk folder for one print locale: `cards/{lang}/{set}/{card}`. */
 export function packCardDir(
   pack: string,
   id: { set: string; lang: string; card: string },
 ): string {
-  return path.join(packCardsDir(pack), id.set, id.lang, id.card);
+  return path.join(packCardsDir(pack), id.lang, id.set, id.card);
 }
 
 /**
@@ -361,6 +396,8 @@ export function packCardDir(
  */
 const PACK_ASSET_ROOTS = [
   "cards",
+  "prints",
+  "backs",
   "foil",
   "products",
   "web",

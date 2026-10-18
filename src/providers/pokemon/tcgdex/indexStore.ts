@@ -34,6 +34,8 @@ export type TcgdexPrintRow = {
   localId: string;
   providerId: string;
   imageBaseUrl: string | null;
+  /** False = digital-only / non-cardboard (Pocket, misc Jumbo). Default true. */
+  printed?: boolean;
 };
 
 export type TcgdexTitleRow = {
@@ -77,12 +79,15 @@ export type TcgdexSearchRow = {
    * harvest `total` (secrets push past the corner denominator: 158/128).
    */
   setOfficialCount: number | null;
+  /** 0 / false = not cardboard (Pocket, misc). Omitted columns read as 1. */
+  printed?: number | boolean | null;
 };
 
 /** Shared projection for search / lookup / checklist SQL. */
 const TCGDEX_SEARCH_SELECT = `p.print_key AS printKey, p.set_id AS setId,
               p.local_id AS localId, p.provider_id AS providerId,
               p.image_base_url AS imageBaseUrl,
+              COALESCE(p.printed, 1) AS printed,
               t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
               t.rarity, t.stage,
               s.official_count AS setOfficialCount`;
@@ -119,7 +124,8 @@ function createSchema(db: DatabaseSync): void {
       set_id TEXT NOT NULL,
       local_id TEXT NOT NULL,
       provider_id TEXT NOT NULL,
-      image_base_url TEXT
+      image_base_url TEXT,
+      printed INTEGER NOT NULL DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS print_titles (
@@ -151,6 +157,7 @@ function createSchema(db: DatabaseSync): void {
   `);
   migrateTcgdexSetsColumns(db);
   migrateTcgdexTitleColumns(db);
+  migrateTcgdexPrintColumns(db);
 }
 
 /**
@@ -165,6 +172,11 @@ const ADDED_SET_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
 const ADDED_TITLE_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
   { name: "rarity", ddl: "TEXT" },
   { name: "stage", ddl: "TEXT" },
+];
+
+/** Cardboard flag — Pocket / misc stay in DB with printed=0. */
+const ADDED_PRINT_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
+  { name: "printed", ddl: "INTEGER NOT NULL DEFAULT 1" },
 ];
 
 function migrateTableColumns(
@@ -197,6 +209,10 @@ function migrateTcgdexTitleColumns(db: DatabaseSync): void {
   migrateTableColumns(db, "print_titles", ADDED_TITLE_COLUMNS);
 }
 
+function migrateTcgdexPrintColumns(db: DatabaseSync): void {
+  migrateTableColumns(db, "prints", ADDED_PRINT_COLUMNS);
+}
+
 export function writeTcgdexSet(input: {
   set: TcgdexSetRow;
   prints: readonly TcgdexPrintRow[];
@@ -210,12 +226,13 @@ export function writeTcgdexSet(input: {
     db.exec("PRAGMA busy_timeout = 30000");
     createSchema(db);
     const insertPrint = db.prepare(`
-      INSERT INTO prints (print_key, set_id, local_id, provider_id, image_base_url)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO prints (print_key, set_id, local_id, provider_id, image_base_url, printed)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(print_key) DO UPDATE SET
         set_id = excluded.set_id,
         local_id = excluded.local_id,
         provider_id = excluded.provider_id,
+        printed = excluded.printed,
         -- Une URL par tirage : préférer FR, puis EN, puis le reste (souvent JA).
         -- Sans ça, une passe EN (ou JA) figeait la face anglaise pour la check-list FR.
         image_base_url = CASE
@@ -265,6 +282,7 @@ export function writeTcgdexSet(input: {
           row.localId,
           row.providerId,
           row.imageBaseUrl,
+          row.printed === false ? 0 : 1,
         );
       }
       for (const row of input.titles) {
@@ -383,6 +401,7 @@ export function ensureTcgdexIndex(): DatabaseSync | null {
     try {
       migrateTcgdexSetsColumns(writable);
       migrateTcgdexTitleColumns(writable);
+      migrateTcgdexPrintColumns(writable);
     } finally {
       writable.close();
     }
@@ -503,6 +522,8 @@ export function searchTcgdexRows(
     limit?: number;
     setId?: string | null;
     catalogueBrowse?: boolean;
+    /** Admin — keep `printed: false` (Pocket / misc). Default false. */
+    includeUnprinted?: boolean;
   } = {},
 ): TcgdexSearchRow[] {
   const db = ensureTcgdexIndex();
@@ -514,6 +535,7 @@ export function searchTcgdexRows(
   if (!isAnsweredQuery(trimmed, setId, opts.catalogueBrowse)) return [];
 
   const lang = (opts.language || "fr").toLowerCase();
+  const includeUnprinted = opts.includeUnprinted === true;
   /*
     Le plafond monte à `SET_ENUMERATION_LIMIT` pour la check-list, qui doit
     énumérer un set entier : compté sur les deux cents premières lignes, un set
@@ -533,6 +555,9 @@ export function searchTcgdexRows(
       : null,
     textParams: [like, like, like],
   });
+  const printedGate = includeUnprinted
+    ? ""
+    : " AND COALESCE(p.printed, 1) != 0";
 
   return db
     .prepare(
@@ -541,7 +566,7 @@ export function searchTcgdexRows(
          JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN sets s
                 ON s.set_id = p.set_id AND s.lang = t.lang
-        WHERE ${scope.where}
+        WHERE ${scope.where}${printedGate}
         ORDER BY (t.lang = ?) DESC, p.set_id, CAST(p.local_id AS INTEGER)
         LIMIT ?`,
     )
@@ -552,10 +577,17 @@ export function searchTcgdexRows(
  * Toutes les lignes titre d'une langue — **une** requête pour la check-list
  * (évite ~180× `searchTcgdexRows` par set).
  */
-export function listTcgdexRowsForLanguage(language = "fr"): TcgdexSearchRow[] {
+export function listTcgdexRowsForLanguage(
+  language = "fr",
+  opts?: { includeUnprinted?: boolean },
+): TcgdexSearchRow[] {
   const db = ensureTcgdexIndex();
   if (!db) return [];
   const lang = language.trim().toLowerCase() || "fr";
+  const includeUnprinted = opts?.includeUnprinted === true;
+  const printedGate = includeUnprinted
+    ? ""
+    : " AND COALESCE(p.printed, 1) != 0";
   return db
     .prepare(
       `SELECT ${TCGDEX_SEARCH_SELECT}
@@ -564,6 +596,7 @@ export function listTcgdexRowsForLanguage(language = "fr"): TcgdexSearchRow[] {
            ON t.print_key = p.print_key AND t.lang = ?
          LEFT JOIN sets s
                 ON s.set_id = p.set_id AND s.lang = t.lang
+        WHERE 1=1${printedGate}
         ORDER BY LOWER(p.set_id), CAST(p.local_id AS INTEGER), p.local_id`,
     )
     .all(lang) as TcgdexSearchRow[];
@@ -662,10 +695,23 @@ export function patchTcgdexTitleDetails(
  */
 export function listTcgdexLocalSets(
   language = "fr",
+  opts?: { includeUnprinted?: boolean },
 ): { id: string; label: string; sortKey?: number }[] {
   const db = ensureTcgdexIndex();
   if (!db) return [];
   const lang = language.trim().toLowerCase();
+  const includeUnprinted = opts?.includeUnprinted === true;
+  /*
+    Shelf / checklist: hide sets whose every print is `printed=0` (Pocket).
+    Admin browse reads rows directly and does not use this list.
+  */
+  const cardboardOnly = includeUnprinted
+    ? ""
+    : ` AND EXISTS (
+          SELECT 1 FROM prints p
+           WHERE LOWER(p.set_id) = LOWER(sets.set_id)
+             AND COALESCE(p.printed, 1) != 0
+        )`;
   const rows = db
     .prepare(
       `SELECT LOWER(set_id) AS setId,
@@ -673,7 +719,7 @@ export function listTcgdexLocalSets(
               MIN(NULLIF(TRIM(serie_name), '')) AS serieName,
               MIN(released_at) AS releasedAt
          FROM sets
-        WHERE lang = ?
+        WHERE lang = ?${cardboardOnly}
         GROUP BY LOWER(set_id)`,
     )
     .all(lang) as {

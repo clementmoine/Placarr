@@ -385,8 +385,10 @@ export type PrintCandidate = {
   /** Exact provider handles, so re-resolution never re-runs the search. */
   externalIds?: Record<string, string>;
   /**
-   * False when this language was never printed. Omitted / true = addable.
-   * Search hides `printed: false`; the catalogue may still show the slot.
+   * False = not a collectible cardboard print in this locale/channel
+   * (never printed, digital-only, cancelled). Omitted / true = shelfable.
+   * Checklist / search default to `printed !== false`; admin keeps the row
+   * and can filter on it (`includeUnprinted` on {@link listSetPrints}).
    */
   printed?: boolean;
   /** Stamped by core from the module's own id; modules must not set it. */
@@ -782,6 +784,11 @@ export interface ProviderModule {
   listSetPrints?: (input: {
     setId: string;
     language?: string | null;
+    /**
+     * When true, include `printed: false` rows (admin catalogue).
+     * Default false — checklist / shelf / search only collectible cardboard.
+     */
+    includeUnprinted?: boolean;
   }) => PrintCandidate[] | Promise<PrintCandidate[]>;
   /**
    * Composition de booster + taux de tirage par rareté (`packsPerHit`).

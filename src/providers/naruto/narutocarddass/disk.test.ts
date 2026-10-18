@@ -514,45 +514,45 @@ import sharp from "sharp";
   });
 
   describe("narutoCardPath", () => {
-    it("nests languages under the printed id, not the series", () => {
-      expect(narutoCardRelPath(narutoCardPathFromCollector("ni001", "fr")!)).toBe(
-        "ninja/ni0001/fr",
-      );
-      expect(narutoCardRelPath(narutoCardPathFromCollector("n001", "en")!)).toBe(
-        "ninja/n0001/en",
-      );
-      expect(narutoCardRelPath(narutoCardPathFromCollector("n1650", "fr")!)).toBe(
-        "ninja/n1650/fr",
-      );
+    it("nests cards under lang / set / printed id", () => {
       expect(
-        narutoCardRelPath(narutoCardPathFromCollector("N-US097", "en")!),
-      ).toBe("ninja/nus0097/en");
+        narutoCardRelPath(narutoCardPathFromCollector("ni001", "fr", "s1")!),
+      ).toBe("fr/s1/ni0001");
+      expect(
+        narutoCardRelPath(narutoCardPathFromCollector("n001", "en", "s1")!),
+      ).toBe("en/s1/n0001");
+      expect(
+        narutoCardRelPath(narutoCardPathFromCollector("n1650", "fr", "s28")!),
+      ).toBe("fr/s28/n1650");
+      expect(
+        narutoCardRelPath(narutoCardPathFromCollector("N-US097", "en", "s1")!),
+      ).toBe("en/s1/nus0097");
       expect(normalizeNarutoLang("jap")).toBe("ja");
     });
 
-    it("builds /assets URLs on the new tree", () => {
+    it("builds /assets URLs on the lang-first tree", () => {
       expect(
         narutoAssetsCardUrl(
           "naruto/carddass",
-          narutoCardPathFromCollector("ni001", "fr")!,
+          narutoCardPathFromCollector("ni001", "fr", "s1")!,
           "art.jpg",
         ),
-      ).toBe("/assets/naruto/carddass/cards/ninja/ni0001/fr/art.jpg");
+      ).toBe("/assets/naruto/carddass/cards/fr/s1/ni0001/art.jpg");
     });
 
-    it("files 幕 / 忍者学校 under their own prefix folders", () => {
+    it("keeps 幕 / 忍者学校 under their set folders with lang first", () => {
       expect(
-        narutoCardRelPath(narutoCardPathFromCollector("gaku0001", "ja")!),
-      ).toBe("gaku/gaku0001/ja");
+        narutoCardRelPath(narutoCardPathFromCollector("gaku0001", "ja", "maki1")!),
+      ).toBe("ja/maki1/gaku0001");
       expect(
-        narutoCardRelPath(narutoCardPathFromCollector("shi0001", "ja")!),
-      ).toBe("shi/shi0001/ja");
+        narutoCardRelPath(narutoCardPathFromCollector("shi0001", "ja", "maki3")!),
+      ).toBe("ja/maki3/shi0001");
       expect(
-        narutoCardRelPath(narutoCardPathFromCollector("mju0062", "ja")!),
-      ).toBe("mju/mju0062/ja");
+        narutoCardRelPath(narutoCardPathFromCollector("mju0062", "ja", "maki5")!),
+      ).toBe("ja/maki5/mju0062");
       expect(
-        narutoCardRelPath(narutoCardPathFromCollector("msa0044", "ja")!),
-      ).toBe("msa/msa0044/ja");
+        narutoCardRelPath(narutoCardPathFromCollector("msa0044", "ja", "maki4")!),
+      ).toBe("ja/maki4/msa0044");
     });
   });
 
@@ -569,8 +569,10 @@ import sharp from "sharp";
       expect(mintNarutoPrintKey("pr011", "promo")).toBe("naruto:promo-pr0011");
       expect(mintNarutoPrintKey("PR-忍-1", "promo")).toBe("naruto:promo-prni0001");
       expect(
-        narutoCardRelPath(narutoCardPathFromCollector("PR-忍-1", "ja")!),
-      ).toBe("promo/prni0001/ja");
+        narutoCardRelPath(
+          narutoCardPathFromCollector("PR-忍-1", "ja", "promo")!,
+        ),
+      ).toBe("ja/promo/prni0001");
       expect(mintNarutoPrintKey("N-US097", "s1")).toBe("naruto:s1-nus0097");
       expect(canonicalizeNarutoPrintKey("naruto:n-0097-us", "s1")).toBe(
         "naruto:s1-nus0097",
@@ -638,17 +640,19 @@ import sharp from "sharp";
       (`client/cl0043/fr`). On rend `null` — l'appelant n'attache alors ni art ni
       vignette, et la carte reste sélectionnable par sa seule référence.
     */
-    it("rend null plutôt qu'un chemin sans dossier de langue", () => {
+    it("rend null plutôt qu'un chemin sans dossier de langue ou de set", () => {
       expect(
-        narutoCardPathFromCollector("cl0043", null as unknown as string),
+        narutoCardPathFromCollector("cl0043", null as unknown as string, "s1"),
       ).toBeNull();
-      expect(narutoCardPathFromCollector("cl0043", "")).toBeNull();
+      expect(narutoCardPathFromCollector("cl0043", "", "s1")).toBeNull();
+      expect(narutoCardPathFromCollector("cl0043", "fr")).toBeNull();
     });
 
-    it("rend toujours le chemin quand la langue est là", () => {
-      expect(narutoCardPathFromCollector("cl0043", "fr")).toMatchObject({
+    it("rend toujours le chemin quand la langue et le set sont là", () => {
+      expect(narutoCardPathFromCollector("cl0043", "fr", "s1")).toMatchObject({
         diskId: "cl0043",
         lang: "fr",
+        set: "s1",
       });
     });
   });

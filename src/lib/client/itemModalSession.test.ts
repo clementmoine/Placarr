@@ -92,7 +92,7 @@ describe("itemModalSession", () => {
         metadata: {
           title: "Haku",
           imageUrl:
-            "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+            "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
         },
       } as never,
     });

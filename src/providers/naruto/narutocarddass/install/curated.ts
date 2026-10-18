@@ -5,7 +5,7 @@
  * Install hand-made card faces from
  * `src/providers/naruto/narutocarddass/curated/cards/{family}/{id}/{lang}/art.reconstructed.png`
  * into the catalogue as `art.reconstructed.webp` under
- * `data/naruto/carddass/cards/`.
+ * `data/naruto/carddass/cards/{lang}/{set}/{id}/` (lang-first).
  *
  * These are not scrape output: they are rebuilt by hand (AI restoration of a
  * collector photo, then Figma retouching) for cards whose official face is
@@ -32,9 +32,11 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 
 import sharp, { type Sharp } from "sharp";
@@ -49,18 +51,29 @@ import {
   curatedCardsDir,
   curatedDestStale,
   installCuratedCardBacks,
+  langFirstSetBackDestRel,
 } from "@/providers/shared/curatedCardsInstall";
 
 import { installMercariFaces } from "./faces";
 import { installYahooAuctionFaces } from "./faces";
-import { NARUTO_PACK_ID } from "../identity";
-import { listNarutoCardDirs } from "../disk";
+import {
+  appearanceSetsOf,
+  loadNarutoAppearancesFile,
+  mintNarutoPrintKey,
+  NARUTO_PACK_ID,
+  narutoDiskCardId,
+  parseNarutoCollector,
+  primaryAppearanceSet,
+} from "../identity";
+import { isNarutoLangDir, promoteNarutoFace } from "../disk";
+import { resolveNarutoArtDiskSet } from "../diskArtAttachments";
 import {
   narutoCuratedDir,
   narutoCuratedProductsDir,
   narutoCuratedSourcesDir,
   narutoCuratedReconstructedProvenancePath,
 } from "../identity";
+import { materializeS1FrPrereleaseIdenticalRetailFaces } from "../sources/promos";
 
 export {
   narutoCuratedDir,
@@ -100,12 +113,70 @@ function packRoot(): string {
   return path.join(dataRoot(), NARUTO_PACK_ID);
 }
 
+function curatedSourceSubdirs(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((name) => {
+    if (name.startsWith(".")) return false;
+    try {
+      return statSync(path.join(dir, name)).isDirectory();
+    } catch {
+      return false;
+    }
+  });
+}
+
+/** Curated pack tree stays `{family}/{id}/{lang}/` — not lang-first data layout. */
+function listCuratedSourceCardDirs(cardsDir: string): {
+  abs: string;
+  family: string;
+  diskId: string;
+  lang: string;
+}[] {
+  const out: {
+    abs: string;
+    family: string;
+    diskId: string;
+    lang: string;
+  }[] = [];
+  for (const family of curatedSourceSubdirs(cardsDir)) {
+    const familyDir = path.join(cardsDir, family);
+    for (const mid of curatedSourceSubdirs(familyDir)) {
+      const midDir = path.join(familyDir, mid);
+      if (isNarutoLangDir(mid)) {
+        for (const cardId of curatedSourceSubdirs(midDir)) {
+          const parsed = parseNarutoCollector(cardId);
+          const diskId = narutoDiskCardId(cardId, family) ?? cardId;
+          out.push({
+            abs: path.join(midDir, cardId),
+            family: parsed?.family ?? family,
+            diskId,
+            lang: mid,
+          });
+        }
+        continue;
+      }
+      for (const lang of curatedSourceSubdirs(midDir)) {
+        if (!isNarutoLangDir(lang)) continue;
+        const parsed = parseNarutoCollector(mid);
+        const diskId = narutoDiskCardId(mid, family) ?? mid;
+        out.push({
+          abs: path.join(midDir, lang),
+          family: parsed?.family ?? family,
+          diskId,
+          lang,
+        });
+      }
+    }
+  }
+  return out;
+}
+
 /** Faces under `curated/cards/{family}/{id}/{lang}/art.reconstructed.*`. */
 export function listCuratedReconstructedFaces(
   cardsDir = curatedCardsDir(narutoCuratedDir()),
 ): CuratedReconstructedFace[] {
   const out: CuratedReconstructedFace[] = [];
-  for (const hit of listNarutoCardDirs(cardsDir)) {
+  for (const hit of listCuratedSourceCardDirs(cardsDir)) {
     for (const name of readdirSync(hit.abs)) {
       if (!RECONSTRUCTED_FACE.test(name)) continue;
       const source = path.join(hit.abs, name);
@@ -168,6 +239,8 @@ export async function ensureNarutoCuratedAssets(opts?: {
     destCardsDir: packCardsDir(NARUTO_PACK_ID),
     dryRun: opts?.dryRun,
     force: opts?.force,
+    /** Set sleeves → `cards/{lang}/{set}/back.{lang}.webp` (lang-first). */
+    mapDestRel: langFirstSetBackDestRel,
   });
   for (const row of backs) {
     if (!row.installed) continue;
@@ -182,6 +255,15 @@ export async function ensureNarutoCuratedAssets(opts?: {
     );
   }
   const installs = await installNarutoReconstructed(opts);
+  if (!opts?.dryRun) {
+    const pre = materializeS1FrPrereleaseIdenticalRetailFaces();
+    for (const id of pre.installed) {
+      console.log(`   prerelease identical retail → ${id}`);
+    }
+    for (const id of pre.missing) {
+      console.log(`   prerelease identical retail MISS → ${id}`);
+    }
+  }
   const yahoo = await installYahooAuctionFaces({
     dryRun: opts?.dryRun,
     force: opts?.force,
@@ -316,6 +398,89 @@ function mergeProvenanceInstalls(
   );
 }
 
+/**
+ * Lang-first set for a curated reconstruct: appearances, then
+ * `prints.set_code`, then an existing disk folder, then promo/`s1`.
+ */
+export function reconstructedInstallSet(
+  face: CuratedReconstructedFace,
+  cardsRoot = cardsDir(),
+): string {
+  const apps = loadNarutoAppearancesFile(packRoot())?.appearances ?? {};
+  const fromApp = appearanceSetsOf(apps[face.cardId]?.[face.lang]);
+  if (fromApp.length) {
+    const primary = primaryAppearanceSet(fromApp);
+    if (primary) return primary;
+  }
+
+  const fromCatalog = setCodeFromPrintsCatalog(face.cardId);
+  if (fromCatalog) return fromCatalog;
+
+  const existing = resolveNarutoArtDiskSet({
+    number: face.cardId,
+    lang: face.lang,
+    cardsRoot,
+  });
+  if (existing) return existing;
+
+  return face.family === "promo" ? "promo" : "s1";
+}
+
+function setCodeFromPrintsCatalog(diskId: string): string | null {
+  const dbPath = path.join(packRoot(), "catalog.sqlite");
+  if (!existsSync(dbPath)) return null;
+  try {
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    try {
+      const row = db
+        .prepare(
+          `SELECT set_code FROM prints
+           WHERE lower(number) = lower(?)
+           ORDER BY CASE
+             WHEN set_code GLOB 's[0-9]*' THEN 0
+             WHEN set_code = 'promo' THEN 1
+             ELSE 2
+           END, set_code
+           LIMIT 1`,
+        )
+        .get(diskId) as { set_code?: string } | undefined;
+      const set = row?.set_code?.trim().toLowerCase();
+      return set || null;
+    } finally {
+      db.close();
+    }
+  } catch {
+    return null;
+  }
+}
+
+function bumpPrintAssetArt(
+  cardId: string,
+  lang: string,
+  setCode: string,
+  artFile: string,
+): void {
+  const dbPath = path.join(packRoot(), "catalog.sqlite");
+  if (!existsSync(dbPath)) return;
+  const printKey = mintNarutoPrintKey(cardId, setCode);
+  if (!printKey) return;
+  try {
+    const db = new DatabaseSync(dbPath);
+    try {
+      // Upsert: tourney promo FR often has JA-only assets until a reconstruct lands.
+      db.prepare(
+        `INSERT INTO print_assets (print_key, lang, art)
+         VALUES (?, ?, ?)
+         ON CONFLICT(print_key, lang) DO UPDATE SET art = excluded.art`,
+      ).run(printKey, lang, artFile);
+    } finally {
+      db.close();
+    }
+  } catch {
+    /* index rebuild will heal */
+  }
+}
+
 export async function installNarutoReconstructed(opts?: {
   dryRun?: boolean;
   force?: boolean;
@@ -325,11 +490,12 @@ export async function installNarutoReconstructed(opts?: {
   const installs: ReconstructedInstall[] = [];
   let skippedFresh = 0;
   for (const face of listCuratedReconstructedFaces()) {
+    const setCode = reconstructedInstallSet(face);
     const dest = path.join(
       cardsDir(),
-      face.family,
-      face.cardId,
       face.lang,
+      setCode,
+      face.cardId,
       RECONSTRUCTED_FILENAME,
     );
 
@@ -361,11 +527,13 @@ export async function installNarutoReconstructed(opts?: {
       await writeLosslessWebpFile(raster, dest);
       const legacyPng = path.join(path.dirname(dest), "art.reconstructed.png");
       if (existsSync(legacyPng)) unlinkSync(legacyPng);
+      await promoteNarutoFace(path.dirname(dest), face.lang);
+      bumpPrintAssetArt(face.cardId, face.lang, setCode, RECONSTRUCTED_FILENAME);
     }
 
     installs.push({
       cardId: face.cardId,
-      set: face.family,
+      set: setCode,
       lang: face.lang,
       source: path.relative(narutoCuratedDir(), face.source),
       dest: path.relative(packRoot(), dest),
@@ -375,7 +543,7 @@ export async function installNarutoReconstructed(opts?: {
     console.log(
       `   ${face.cardId.padEnd(12)} ${face.lang.padEnd(3)} ` +
         `${String(`${width}x${height}`).padEnd(11)}` +
-        `→ ${RECONSTRUCTED_WIDTH}x${RECONSTRUCTED_HEIGHT}  ${face.family}` +
+        `→ ${RECONSTRUCTED_WIDTH}x${RECONSTRUCTED_HEIGHT}  ${setCode}` +
         `${cropped ? "  (bleed trimmed)" : ""}` +
         `${opts?.dryRun ? "  (dry run)" : ""}`,
     );

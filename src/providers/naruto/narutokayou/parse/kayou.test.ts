@@ -356,17 +356,17 @@ import { hashKayouOfficialCatalog } from "../sources/crawl";
   describe("kayouCardBackUrlForRarity", () => {
     it("builds tier back asset URL", () => {
       expect(kayouCardBackUrlForRarity("naruto/kayou", "UR")).toBe(
-        "/assets/naruto/kayou/cards/back.ur.webp",
+        "/assets/naruto/kayou/backs/en/tiers/ur",
       );
     });
 
     it("maps SSR/PTR onto the shared SR sleeve via aliases", () => {
       expect(kayouBackTierSlug("SSR")).toBe("ssr");
       expect(kayouCardBackUrlForRarity("naruto/kayou", "SSR")).toBe(
-        "/assets/naruto/kayou/cards/back.sr.webp",
+        "/assets/naruto/kayou/backs/en/tiers/sr",
       );
       expect(kayouCardBackUrlForRarity("naruto/kayou", "PTR")).toBe(
-        "/assets/naruto/kayou/cards/back.sr.webp",
+        "/assets/naruto/kayou/backs/en/tiers/sr",
       );
     });
 
@@ -494,10 +494,10 @@ import { hashKayouOfficialCatalog } from "../sources/crawl";
       expect(
         kayouCardBackUrlForOfficialReference("NREA02-UR-015L3", "UR"),
       ).toBe(
-        "/assets/naruto/kayou/cards/nrea02/en/nrea02.ur.015l3/back.webp",
+        "/assets/naruto/kayou/cards/en/nrea02/nrea02.ur.015l3/back.webp",
       );
       expect(kayouCardBackUrlForOfficialReference("NR-UR-015L3", "UR")).toBe(
-        "/assets/naruto/kayou/cards/nrea02/en/nrea02.ur.015l3/back.webp",
+        "/assets/naruto/kayou/cards/en/nrea02/nrea02.ur.015l3/back.webp",
       );
     });
 
@@ -518,7 +518,7 @@ import { hashKayouOfficialCatalog } from "../sources/crawl";
       );
       expect(
         kayouCardBackUrlForOfficialReference("NREA02-UR-001L3", "UR"),
-      ).toBe("/assets/naruto/kayou/cards/back.ur.webp");
+      ).toBe("/assets/naruto/kayou/backs/en/tiers/ur");
     });
   });
 }

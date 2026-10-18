@@ -179,7 +179,7 @@ describe("apiProvidersForMetadataPass", () => {
         activeResults: [
           {
             title: "Naruto Uzumaki",
-            imageUrl: "/assets/naruto/carddass/cards/ninja/ni0001/fr/art.webp",
+            imageUrl: "/assets/naruto/carddass/cards/fr/s1/ni0001/art.webp",
           },
         ],
         candidateApiProviderIds: [

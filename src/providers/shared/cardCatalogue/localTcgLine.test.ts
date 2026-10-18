@@ -30,7 +30,7 @@ function tmpDataRoot(): string {
 }
 
 describe("localTcgLine face URLs", () => {
-  it("builds assetsCardUrl order set/lang/card", () => {
+  it("builds assetsCardUrl order lang/set/card", () => {
     tmpDataRoot();
     const packId = "naruto/ninja-ranks";
     const index = createLocalPrintsIndex(packId);
@@ -62,7 +62,7 @@ describe("localTcgLine face URLs", () => {
 
     const hit = line.lookupPrint("naruto:nr-0001", "fr");
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ninja-ranks/cards/nr/fr/0001/art.coleka.webp",
+      "/assets/naruto/ninja-ranks/cards/fr/nr/0001/art.coleka.webp",
     );
   });
 
@@ -104,7 +104,7 @@ describe("localTcgLine face URLs", () => {
     expect(hit?.language).toBe("fr");
     expect(hit?.title).toBe("FR title");
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ninja-ranks/cards/nr/fr/0003/art.fr.webp",
+      "/assets/naruto/ninja-ranks/cards/fr/nr/0003/art.fr.webp",
     );
   });
 
@@ -158,11 +158,11 @@ describe("localTcgLine face URLs", () => {
     const hit = withBorrow.lookupPrint("naruto:nr-0002", "fr");
     expect(hit?.language).toBe("fr");
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ninja-ranks/cards/nr/en/0002/art.coleka.webp",
+      "/assets/naruto/ninja-ranks/cards/en/nr/0002/art.coleka.webp",
     );
   });
 
-  it("honours cardAssetUrl override (set/lang/card — disk order)", () => {
+  it("honours cardAssetUrl override (lang/set/card — disk order)", () => {
     tmpDataRoot();
     const packId = "naruto/shippuden";
     const index = createLocalPrintsIndex(packId);
@@ -191,11 +191,11 @@ describe("localTcgLine face URLs", () => {
       syncHint: "test",
       notes: "test",
       cardAssetUrl: (id, file) =>
-        `/assets/${packId}/cards/${id.set}/${id.lang}/${id.card}/${file}`,
+        `/assets/${packId}/cards/${id.lang}/${id.set}/${id.card}/${file}`,
     });
 
     expect(line.lookupPrint("naruto:msa-0026", "ja")?.imageUrl).toBe(
-      "/assets/naruto/shippuden/cards/msa/ja/msa0026/art.nikita.jpg",
+      "/assets/naruto/shippuden/cards/ja/msa/msa0026/art.nikita.jpg",
     );
   });
 });
@@ -245,7 +245,7 @@ describe("localTcgLine metadata adapter", () => {
     });
     expect(hit?.title).toBe("Naruto");
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ultra-challenge/cards/uc/fr/0001/art.coleka.webp",
+      "/assets/naruto/ultra-challenge/cards/fr/uc/0001/art.coleka.webp",
     );
     expect(hit?.externalIds?.printKey).toBe("naruto:uc-0001");
     expect(hit?.externalIds?.narutoultra).toBe("naruto:uc-0001");

@@ -61,14 +61,14 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     expect(candidate.setCode).toBe("sv03.5");
     expect(candidate.setLabel).toBe("151");
     expect(candidate.imageUrl).toBe(
-      "/assets/pokemon/cards/sv3-5/fr/006/art.webp",
+      "/assets/pokemon/cards/fr/sv3-5/006/art.webp",
     );
     expect(candidate.thumbnailUrl).toBe(candidate.imageUrl);
     expect(candidate.cardBackUrl).toBeUndefined();
     expect(candidate.effectPack).toBe("pokemon");
     // Pack default is EffectPack.cardBackUrl, not print scope.
     expect(candidate.variantImageUrls?.holo).toBe(
-      "/assets/pokemon/cards/sv3-5/fr/006/art.webp",
+      "/assets/pokemon/cards/fr/sv3-5/006/art.webp",
     );
     expect(candidate.effectPack).toBe("pokemon");
     expect(candidate.finishes).toEqual(["holo"]);
@@ -76,10 +76,10 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     // Live set id sv3-5 ← TCGdex sv03.5 (stub + full dump both carry 006)
     expect(candidate.finishShaders?.holo).toBe("SunPillar");
     expect(candidate.finishFoilMaskUrls?.holo).toBe(
-      "/assets/pokemon/cards/sv3-5/fr/006/mask.webp",
+      "/assets/pokemon/cards/fr/sv3-5/006/mask.webp",
     );
     expect(candidate.foilMaskUrl).toBe(
-      "/assets/pokemon/cards/sv3-5/fr/006/mask.webp",
+      "/assets/pokemon/cards/fr/sv3-5/006/mask.webp",
     );
     expect(candidate.externalIds?.pokemonLiveBundle).toBe("sv3-5_fr_006");
     expect(candidate.externalIds?.tcgdexImage).toContain("tcgdex.net");
@@ -194,7 +194,7 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     };
     const light = toChecklistPrintCandidate(classic);
     expect(light.thumbnailUrl).toBe(
-      "/assets/pokemon/cards/me5-5c/fr/002/art.webp",
+      "/assets/pokemon/cards/fr/me5-5c/002/art.webp",
     );
     expect(light.finishShaders).toBeUndefined();
   });
@@ -255,7 +255,7 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     expect(candidate.finishShaders?.holo).toBe("Tinsel");
     expect(candidate.finishShaders?.["live-ph"]).toBe("Rainbow");
     expect(candidate.finishFoilMaskUrls?.["live-ph"]).toContain(
-      "/assets/pokemon/cards/bw10/fr/016/mask-ph.webp",
+      "/assets/pokemon/cards/fr/bw10/016/mask-ph.webp",
     );
   });
 
@@ -380,8 +380,8 @@ describe("pickTcgdexPlayroomSamples", () => {
       printKey: "pokemon:sv03.5-006",
       variant: "holo",
       shelfType: "tcg",
-      imageUrl: "/assets/pokemon/cards/sv3-5/fr/006/art.webp",
-      foilMaskUrl: "/assets/pokemon/cards/sv3-5/fr/006/mask.webp",
+      imageUrl: "/assets/pokemon/cards/fr/sv3-5/006/art.webp",
+      foilMaskUrl: "/assets/pokemon/cards/fr/sv3-5/006/mask.webp",
     });
   });
 

@@ -78,7 +78,7 @@ export const narutoKayouEffectPack = defineCatalogueOnlyPack({
   label: "Naruto Kayou",
   blurb: "Catalogue local Kayou — lenticular sprite CSS, sans dump Unity",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
   finishShader: FINISH_SHADER,
   listHouseFinishesAsMaterials: true,
   fallbackFoilMaskUrl: NARUTO_KAYOU_FULL_FOIL_MASK_URL,

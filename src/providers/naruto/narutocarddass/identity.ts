@@ -832,6 +832,24 @@ export function resolveNarutoLedgerPrintKeys(
 }
 
 /**
+ * EU shop ledgers sometimes mis-bucket a collector (IT cardlist CL-5 → s1
+ * while the FR paper checklist is s2 only). When the FR checklist knows the
+ * number, refuse ghost s1–s5 memberships and remint onto a checklist set.
+ * Promo / s6+ / 巻ノ / empty checklist = leave the ledger set alone.
+ */
+export function reconcileNarutoFrChecklistSet(
+  number: string,
+  catalogueSet: string,
+): string {
+  const set = catalogueSet.trim().toLowerCase();
+  if (!/^s[1-5]$/.test(set)) return set;
+  const checklist = officialFrChecklistSetsForNumber(number);
+  if (!checklist.length) return set;
+  if (checklist.includes(set)) return set;
+  return primaryAppearanceSet(checklist, set);
+}
+
+/**
  * Prefer an existing print (legacy or set-scoped) for the same collector + set
  * before minting a new set-scoped key — avoids double prints during migration.
  */
@@ -844,7 +862,7 @@ export function resolveNarutoLedgerPrintTarget(
     setCode: string;
   }[],
 ): { printKey: string; exists: boolean } | null {
-  const set = catalogueSet.trim().toLowerCase();
+  const set = reconcileNarutoFrChecklistSet(raw, catalogueSet);
   if (!set || !isNarutoCatalogueSetCode(set)) return null;
   const minted = mintNarutoPrintKey(raw, set);
   if (!minted) return null;
@@ -1032,13 +1050,21 @@ export type NarutoPrintDetail = {
   rarity: string | null;
   art: string | null;
   thumb: string | null;
-  printed?: boolean | null;
+  /** Sqlite often returns 0/1 — coerce with {@link narutoDetailIsPrinted}. */
+  printed?: boolean | number | null;
   /**
    * Numéro pour le chemin disque quand `art` est emprunté à un jumeau retail
    * (`te0034-promo` → face de `te0034`). Absent = utiliser `number`.
    */
   artNumber?: string | null;
 };
+
+/** Cardboard? Sqlite `printed` is 0/1; JS `0 !== false` would mis-read it. */
+export function narutoDetailIsPrinted(
+  printed: boolean | number | null | undefined,
+): boolean {
+  return printed !== false && printed !== 0;
+}
 
 // --- from facts.ts ---
 
@@ -1763,6 +1789,58 @@ function loadNumbersBySet(): Map<string, string[]> {
 
 export function resetOfficialFrChecklistCache(): void {
   numbersBySet = null;
+  frUnpublishedHtmlNumbers = null;
+}
+
+/**
+ * Site HTML href only, never on FR paper checklist (ex. TA-090 « Le don de la
+ * copie »). Kept in the ledger as unreleased — not a collectible checklist slot.
+ * `absentFromPrintedChecklists` (real S5 MIJ inserts) are excluded.
+ */
+let frUnpublishedHtmlNumbers: Set<string> | null = null;
+
+function loadFrUnpublishedHtmlNumbers(): Set<string> {
+  if (frUnpublishedHtmlNumbers) return frUnpublishedHtmlNumbers;
+  const out = new Set<string>();
+  try {
+    const html = JSON.parse(
+      readFileSync(
+        path.join(narutoCuratedSourcesDir(), "carddass-html-refs.json"),
+        "utf8",
+      ),
+    ) as { refs?: Record<string, string[]> };
+    const checklist = JSON.parse(
+      readFileSync(checklistPath(), "utf8"),
+    ) as {
+      absentFromPrintedChecklists?: { cards?: readonly string[] };
+    };
+    const realButAbsent = new Set(
+      (checklist.absentFromPrintedChecklists?.cards ?? []).flatMap((id) =>
+        checklistIdToNumberForms(id),
+      ),
+    );
+    for (const raw of Object.keys(html.refs ?? {})) {
+      const forms = checklistIdToNumberForms(raw);
+      if (!forms.length) continue;
+      if (forms.some((f) => officialFrChecklistSetsForNumber(f).length > 0)) {
+        continue;
+      }
+      if (forms.some((f) => realButAbsent.has(f))) continue;
+      for (const f of forms) out.add(f);
+    }
+  } catch {
+    /* curated files missing in unit stubs */
+  }
+  frUnpublishedHtmlNumbers = out;
+  return out;
+}
+
+/** FR Carddass: HTML-only phantom, never printed on paper (TA-090 class). */
+export function isNarutoFrUnpublishedHtmlNumber(raw: string): boolean {
+  const base = (narutoRetailDiskNumber(raw) ?? raw).trim().toLowerCase();
+  if (!base) return false;
+  const unpublished = loadFrUnpublishedHtmlNumbers();
+  return checklistIdToNumberForms(base).some((f) => unpublished.has(f));
 }
 
 export function officialFrChecklistDiskNumbers(setId: string): string[] {

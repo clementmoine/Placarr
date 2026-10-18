@@ -17,6 +17,7 @@ import {
   narutoNumbersEqual,
   parseNarutoCollector,
 } from "../identity";
+import { belongsOnNarutoPromoChecklist } from "../sources/promos";
 import { narutoCuratedSourcesDir } from "../install/curated";
 import { isColekaPlaceholderName } from "./index";
 import enCcgSeries from "../curated/sources/en-ccg-series.json";
@@ -546,6 +547,21 @@ export function copyNarutoTitlesOntoGroupedPrints(input: {
           if (
             printGrouping(variant) === "prerelease" &&
             title.lang.toLowerCase() !== "fr"
+          ) {
+            continue;
+          }
+          /*
+            Unattested tourney stubs (`te0107-promo` eBay) must not inherit
+            retail names — dig / PR is the EU Promo gate, and JA may be a
+            different card (無音殺人者 ≠ 無音殺人術).
+          */
+          const variantGrouping = printGrouping(variant);
+          if (
+            (variantGrouping === "promo" || variantGrouping === "cdf") &&
+            !belongsOnNarutoPromoChecklist(variant.number) &&
+            (title.lang.toLowerCase() === "fr" ||
+              title.lang.toLowerCase() === "it" ||
+              title.lang.toLowerCase() === "ja")
           ) {
             continue;
           }

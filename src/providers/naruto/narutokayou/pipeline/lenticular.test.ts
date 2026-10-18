@@ -62,7 +62,7 @@ import {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
       const art =
-        "data/naruto/kayou/cards/t4w4/en/nr.hr.121/art.narutocards.webp";
+        "data/naruto/kayou/cards/en/t4w4/nr.hr.121/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))
@@ -144,7 +144,7 @@ import {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
       const art =
-        "data/naruto/kayou/cards/t4w1/en/nr.hr.003/art.narutocards.webp";
+        "data/naruto/kayou/cards/en/t4w1/nr.hr.003/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))
@@ -171,7 +171,7 @@ import {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
       const art =
-        "data/naruto/kayou/cards/t4w1/en/nr.hr.010/art.narutocards.webp";
+        "data/naruto/kayou/cards/en/t4w1/nr.hr.010/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))
@@ -203,7 +203,7 @@ import {
     it("leaves t4w1 Hinata (nr.hr.040) non-lenticular when probed", async () => {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
-      const art = "data/naruto/kayou/cards/t4w1/en/nr.hr.040/art.narutocards.webp";
+      const art = "data/naruto/kayou/cards/en/t4w1/nr.hr.040/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))
@@ -225,7 +225,7 @@ import {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
       const art =
-        "data/naruto/kayou/cards/newyeargiftbox/en/nrss.hr.011/art.narutocards.webp";
+        "data/naruto/kayou/cards/en/newyeargiftbox/nrss.hr.011/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))
@@ -372,8 +372,8 @@ import {
       }
 
       const isobu =
-        "data/naruto/kayou/cards/t4w1/en/nr.hr.003/art.narutocards.webp";
-      const dual = "data/naruto/kayou/cards/t4w4/en/nr.hr.121/art.narutocards.webp";
+        "data/naruto/kayou/cards/en/t4w1/nr.hr.003/art.narutocards.webp";
+      const dual = "data/naruto/kayou/cards/en/t4w4/nr.hr.121/art.narutocards.webp";
       if (!existsSync(isobu) || !existsSync(dual)) return;
 
       const iso = await load(isobu);
@@ -388,7 +388,7 @@ import {
     it("does not treat t4w1 Hinata (nr.hr.040) as lenticular", async () => {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
-      const art = "data/naruto/kayou/cards/t4w1/en/nr.hr.040/art.narutocards.webp";
+      const art = "data/naruto/kayou/cards/en/t4w1/nr.hr.040/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))
@@ -408,7 +408,7 @@ import {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
       const art =
-        "data/naruto/kayou/cards/newyeargiftbox/en/nrss.hr.011/art.narutocards.webp";
+        "data/naruto/kayou/cards/en/newyeargiftbox/nrss.hr.011/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))
@@ -455,7 +455,7 @@ import {
     it("detects t4w5 Team 7 (nr.hr.163) as 1×2", async () => {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
-      const art = "data/naruto/kayou/cards/t4w5/en/nr.hr.163/art.narutocards.webp";
+      const art = "data/naruto/kayou/cards/en/t4w5/nr.hr.163/art.narutocards.webp";
       if (!existsSync(art)) return;
 
       const { data, info } = await sharp(readFileSync(art))

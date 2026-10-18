@@ -48,13 +48,10 @@ describe.skipIf(!hasCatalogue)("catalogue Pokémon local", () => {
   });
 
   /*
-    Une étagère tient du carton. Les sets 100 % numériques — Pokémon TCG Pocket
-    — n'entrent pas au catalogue. Le filtre existait côté recherche distante ;
-    la première moisson locale l'a oublié, et « pikachu » a rendu des cartes
-    Pocket. Il vit désormais **à la moisson**, pour qu'aucun chemin de lecture
-    n'ait à s'en souvenir.
+    Pocket / Jumbo peuvent vivre en sqlite avec `printed: false`, mais le
+    sélecteur d'étagère (`listTcgdexLocalSets`) ne les propose pas.
   */
-  it("ne garde aucun set exclu (Pocket, Jumbo)", async () => {
+  it("n'offre aucun set numérique (Pocket, Jumbo) au sélecteur carton", async () => {
     const excluded = await digitalOnlySetIds();
     const kept = localSets.filter((set) => excluded.has(set.id.toLowerCase()));
     expect(kept).toEqual([]);

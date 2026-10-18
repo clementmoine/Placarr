@@ -11,6 +11,8 @@
  * way, and the shelves that already hold duplicates benefit without a migration.
  */
 
+import { checklistSetOwnedKey } from "@/core/collect/checklist";
+
 /** The little a copy has to expose to be grouped. */
 export type GroupableCopy = {
   id: string;
@@ -20,6 +22,13 @@ export type GroupableCopy = {
   /** Not part of the identity — see {@link copyGroupKey}. */
   condition?: string | null;
   name?: string | null;
+  /**
+   * TCG printed identity. When set, stacks only merge on the same print
+   * (setCode + printKey + variant) — never across series reprints that share
+   * metadata.
+   */
+  printKey?: string | null;
+  setCode?: string | null;
 };
 
 export type CopyGroup<T> = {
@@ -42,10 +51,18 @@ export type CopyGroup<T> = {
  * The variant *is* in the key: a foil Elsa and a plain one are different
  * objects, priced differently and collected separately.
  *
- * A copy with no metadata falls back to its own id, so unidentified items stay
- * apart rather than piling into one anonymous heap.
+ * For TCG items with a `printKey`, identity is the checklist cell
+ * ({@link checklistSetOwnedKey}: set + printKey + finish). Sharing a
+ * metadata row must not stack S1 with S5 of the same collector number.
+ *
+ * Non-print items keep `metadataId` + variant. A copy with neither printKey
+ * nor metadata falls back to its own id.
  */
 export function copyGroupKey(copy: GroupableCopy): string {
+  const printKey = copy.printKey?.trim();
+  if (printKey) {
+    return `print:${checklistSetOwnedKey(copy.setCode, printKey, copy.variant)}`;
+  }
   if (!copy.metadataId) return `item:${copy.id}`;
   const variant = copy.variant?.trim().toLowerCase() ?? "";
   return `meta:${copy.metadataId}|${variant}`;

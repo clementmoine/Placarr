@@ -35,8 +35,11 @@ import {
   titlesForPrints,
 } from "../sources/titles";
 import { materializeTinBoxPromos, TIN_BOX_PROMOS } from "../sealed";
-import { mergeAttestedPromos } from "../sources/promos";
-import { mergeS1FrPrerelease } from "../sources/promos";
+import {
+  belongsOnNarutoPromoChecklist,
+  mergeAttestedPromos,
+  mergeS1FrPrerelease,
+} from "../sources/promos";
 import {
   isNarutoS6FrPrintedNumber,
   mergeCarteSemaineIntoIndex,
@@ -100,7 +103,7 @@ import {
   isNarutoLangPrinted,
   preferNarutoAppearanceSet,
 } from "../identity";
-import { normalizeNarutoLang } from "../disk";
+import { isNarutoLangDir, normalizeNarutoLang } from "../disk";
 import { japaneseCatalogueSetsForPrintNumber } from "../sources/sealed";
 import {
   medThumbRank,
@@ -530,7 +533,8 @@ export function migrateNarutoVcBacksToCorrectedArt(root: string): number {
    * Depth below `cards/`: a card folder is `<set>/<lang>/<card>` = 3.
    * Only there was `back.jpg` ever a mislabelled errata face. Shallower backs
    * are real versos — `cards/back.webp` is the pack back this very pipeline
-   * installs, and `cards/<set>/back.*` is a set verso (`resolveSetBackPath`).
+   * installs, and `cards/{lang}/{set}/back.*` (legacy `cards/<set>/back.*`)
+   * is a set verso (`resolveSetBackPath`).
    * Renaming those turned the pack back into a stray `art.corrected.webp` on
    * every run, leaving the card with nothing to flip to.
    */
@@ -734,91 +738,43 @@ export function buildIndexFromDisk(root: string): {
     return [];
   };
 
-  for (const family of fs.readdirSync(cardsDir)) {
-    const familyDir = path.join(cardsDir, family);
-    if (!fs.statSync(familyDir).isDirectory()) continue;
-    if (!isNarutoFamilyFolder(family)) continue;
-    /*
-      La ligne 疾風伝 est un **autre jeu**, servi par le pack `narutoshippuden`.
-
-      `DISK_LAYOUT_FOLDERS` accepte ses dossiers (`shi`, `mju`, `msa`, `gaku`)
-      parce que le disque les range ainsi, hérité d'avant la scission. Mais les
-      ranger n'est pas les posséder : leurs tirages ne sont plus dans ce
-      catalogue, et en ramasser les faces produisait des faces sans tirage —
-      dix-sept le 2026-08-22 — sur quoi l'écriture d'index mourait, et la base
-      restait vide.
-
-      Les dix-sept sont déjà dans le pack Shippuden, aux mêmes noms de fichier :
-      rien à récupérer ici, seulement un jeu voisin à ne pas s'annexer.
-    */
-    if (ALT_LINE_DISK_PREFIXES.has(family.trim().toLowerCase())) continue;
-    for (const diskId of fs.readdirSync(familyDir)) {
-      const diskDir = path.join(familyDir, diskId);
-      if (!fs.statSync(diskDir).isDirectory()) continue;
-      for (const lang of fs.readdirSync(diskDir)) {
-        let sets = resolveDiskAppearanceSets(diskId, lang);
-        if (!sets.length) {
-          /*
-            Promo / CDF / manga-prerelease folders often have no
-            pack_documents.appearances row (titles come from ledgers). Without a
-            default set here, on-disk faces never reach print_assets — catalogue
-            then shows « sans image » for PR-011… while art.* sits under promo/.
-          */
-          const grouping =
-            parseNarutoCollector(diskId)?.grouping?.toLowerCase() ??
-            family.trim().toLowerCase();
-          if (grouping === "promo" || grouping === "cdf") {
-            sets = [grouping];
-          } else if (grouping === "prerelease") {
-            sets = ["s1"];
-          } else if (family.trim().toLowerCase() === "promo") {
-            sets = ["promo"];
-          } else {
-            /*
-              JA volume cards (巻ノ) often have Suruga/Fril art on disk with no
-              FR checklist appearances — without minting `makiN` here, faces
-              never reach print_assets and browse shows « sans image ».
-            */
-            const volumeSets = japaneseCatalogueSetsForPrintNumber(diskId).filter(
-              (set) => /^maki\d+$/i.test(set),
-            );
-            if (!volumeSets.length) continue;
-            sets = volumeSets;
-          }
+  /*
+    Universal layout: cards/{lang}/{set}/{card}. Cross-set display is
+    catalogue-time `artBorrowFrom` (same locale); no family-tree dual-read.
+    疾風伝 prefixes stay on disk for Shippuden — skip them here.
+  */
+  for (const lang of fs.readdirSync(cardsDir)) {
+    const langDir = path.join(cardsDir, lang);
+    if (!fs.statSync(langDir).isDirectory()) continue;
+    if (!isNarutoLangDir(lang)) continue;
+    for (const set of fs.readdirSync(langDir)) {
+      const setCode = set.trim().toLowerCase();
+      if (ALT_LINE_DISK_PREFIXES.has(setCode)) continue;
+      const setDir = path.join(langDir, set);
+      if (!fs.statSync(setDir).isDirectory()) continue;
+      for (const cardId of fs.readdirSync(setDir)) {
+        const cardDir = path.join(setDir, cardId);
+        if (!fs.statSync(cardDir).isDirectory()) continue;
+        const diskId = narutoDiskCardId(cardId, setCode) ?? cardId;
+        const parsed = parseNarutoCollector(cardId);
+        let sets = [setCode];
+        /*
+          If a folder is still under a family-like name (pre-migration residue),
+          resolve checklist memberships; otherwise the path set is authoritative.
+        */
+        if (isNarutoFamilyFolder(setCode) && setCode !== "promo") {
+          const resolved = resolveDiskAppearanceSets(diskId, lang);
+          if (resolved.length) sets = resolved;
         }
         ingestNarutoCardDir({
           prints,
           assets,
           seen,
-          cardDir: path.join(diskDir, lang),
-          diskId,
-          lang,
-          family,
-          appearanceSets: sets,
-        });
-      }
-    }
-  }
-
-  for (const set of fs.readdirSync(cardsDir)) {
-    const setDir = path.join(cardsDir, set);
-    if (!fs.statSync(setDir).isDirectory()) continue;
-    if (isNarutoFamilyFolder(set)) continue;
-    for (const lang of fs.readdirSync(setDir)) {
-      const langDir = path.join(setDir, lang);
-      if (!fs.statSync(langDir).isDirectory()) continue;
-      for (const cardId of fs.readdirSync(langDir)) {
-        const diskId = narutoDiskCardId(cardId, set) ?? cardId;
-        const parsed = parseNarutoCollector(cardId);
-        ingestNarutoCardDir({
-          prints,
-          assets,
-          seen,
-          cardDir: path.join(langDir, cardId),
+          cardDir,
           diskId,
           lang,
           family: parsed?.family ?? "ninja",
-          appearanceSets: [set.toLowerCase()],
+          appearanceSets: sets,
         });
       }
     }
@@ -843,11 +799,16 @@ function mirrorDonorScore(
 }
 
 /**
- * Same physical scan under `cards/{family}/{id}/{lang}/` is shared by every
- * catalogue membership (makiN / sN / promo stub / manga prerelease). Titles
- * often mint extra printKeys without a disk walk hit — mirror an existing art
- * row onto those keys so completeness does not treat a sister number as a
- * missing face.
+ * Same collector number may have art under one set folder while titles mint
+ * extra printKeys (promo stub / manga prerelease / sister sN). Mirror an
+ * existing art row onto those keys so completeness does not treat a sister
+ * number as a missing face. Disk stays empty at the borrower set — browse
+ * inherits via `artBorrowFrom` / `bestFaceAcrossLocales`.
+ */
+/**
+ * Same-locale, same-set (or promo←retail) asset row mirror only.
+ * Cross-set inheritance for browse is {@link artBorrowFrom} at catalogue time —
+ * never invent sqlite art on s6 from s1.
  */
 export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
   prints: readonly NarutoPrintRow[];
@@ -861,9 +822,15 @@ export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
       return [p.printKey, key] as const;
     }),
   );
+  const isAlt = (printKey: string, number: string): boolean => {
+    const set = printByKey.get(printKey)?.setCode?.toLowerCase();
+    if (set === "promo" || set === "prerelease") return true;
+    const g = parseNarutoCollector(number)?.grouping?.toLowerCase();
+    return g === "promo" || g === "prerelease" || g === "cdf";
+  };
   const artByCollectorLang = new Map<
     string,
-    { asset: NarutoAssetRow; score: number }
+    { asset: NarutoAssetRow; score: number; set: string; alt: boolean }
   >();
   const have = new Set<string>();
   for (const asset of input.assets) {
@@ -871,13 +838,19 @@ export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
     const key = `${asset.printKey}\0${lang}`;
     have.add(key);
     if (!asset.art) continue;
+    const print = printByKey.get(asset.printKey);
     const collector = collectorKeyByPrint.get(asset.printKey);
-    if (!collector) continue;
+    if (!print || !collector) continue;
     const nk = `${collector}\0${lang}`;
-    const score = mirrorDonorScore(printByKey.get(asset.printKey), asset.art);
+    const score = mirrorDonorScore(print, asset.art);
     const prev = artByCollectorLang.get(nk);
     if (!prev || score > prev.score) {
-      artByCollectorLang.set(nk, { asset, score });
+      artByCollectorLang.set(nk, {
+        asset,
+        score,
+        set: print.setCode.toLowerCase(),
+        alt: isAlt(asset.printKey, print.number),
+      });
     }
   }
   const out = [...input.assets];
@@ -887,16 +860,36 @@ export function mirrorNarutoAssetsAcrossCollectorNumbers(input: {
     const assetKey = `${title.printKey}\0${lang}`;
     if (have.has(assetKey)) continue;
     const collector = collectorKeyByPrint.get(title.printKey);
-    if (!collector) continue;
-    const donor = artByCollectorLang.get(`${collector}\0${lang}`)?.asset;
-    if (!donor?.art) continue;
+    const print = printByKey.get(title.printKey);
+    if (!collector || !print) continue;
+    const donor = artByCollectorLang.get(`${collector}\0${lang}`);
+    if (!donor?.asset.art) continue;
+    const recvSet = print.setCode.toLowerCase();
+    const recvAlt = isAlt(title.printKey, print.number);
+    // Same set always OK; promo/prerelease/cdf may take retail. Never s6←s1.
+    if (donor.set !== recvSet && !(recvAlt && !donor.alt)) continue;
+    if (recvSet === "s6" && donor.set !== "s6") continue;
+    /*
+      Do not invent FR/IT assets on JA-only tourney reprints that are not on
+      the Promo checklist (search already hides them — keep sqlite honest).
+    */
+    if (
+      recvAlt &&
+      (recvSet === "promo" ||
+        parseNarutoCollector(print.number)?.grouping?.toLowerCase() ===
+          "promo") &&
+      !belongsOnNarutoPromoChecklist(print.number) &&
+      (lang === "fr" || lang === "it")
+    ) {
+      continue;
+    }
     out.push({
       printKey: title.printKey,
       lang: title.lang,
-      art: donor.art,
-      thumb: donor.thumb,
-      back: donor.back ?? null,
-      printed: donor.printed,
+      art: donor.asset.art,
+      thumb: donor.asset.thumb,
+      back: donor.asset.back ?? null,
+      printed: donor.asset.printed,
     });
     have.add(assetKey);
     mirrored += 1;
@@ -949,17 +942,14 @@ export function attachNarutoDiskArtAssets(input: {
     if (retail && retail.toLowerCase() !== number.toLowerCase()) {
       diskCandidates.push(retail);
     }
+    const set = setCodeByKey.get(title.printKey)?.toLowerCase();
+    if (!set) continue;
     let art: string | null = null;
     for (const candidate of diskCandidates) {
-      const pathId = narutoCardPathFromCollector(candidate, lang);
+      const pathId = narutoCardPathFromCollector(candidate, lang, set);
       if (!pathId) continue;
       art = resolveNarutoDiskArtFilename(
-        path.join(
-          input.cardsRoot,
-          pathId.folder,
-          pathId.diskId,
-          pathId.lang,
-        ),
+        path.join(input.cardsRoot, pathId.lang, pathId.set, pathId.diskId),
       );
       if (art) break;
     }
@@ -1120,8 +1110,16 @@ export function mapSiteMedThumbsOntoAssets(
       setCodes.size > 1
         ? destPaths.filter((dest) => {
             const rel = path.relative(cardsDir, path.dirname(dest));
-            const setCode = rel.split(path.sep)[0];
-            return setCode !== "promo" && !/-promo$/i.test(rel);
+            const parts = rel.split(path.sep);
+            const appearanceSet = (
+              isNarutoLangDir(parts[0] ?? "") ? parts[1] : parts[0]
+            )
+              ?.trim()
+              .toLowerCase();
+            const cardFolder = parts.at(-1) ?? "";
+            return (
+              appearanceSet !== "promo" && !/-promo$/i.test(cardFolder)
+            );
           })
         : destPaths;
     if (medDestPaths.length === 0) continue;
@@ -1180,14 +1178,18 @@ export function mapSiteMedThumbsOntoAssets(
       const cardId = print.grouping
         ? `${print.number}-${print.grouping}`
         : print.number;
-      const dest = path.join(
+      const next = narutoCardAbsDir(
         cardsDir,
-        print.setCode,
-        asset.lang,
         cardId,
-        "thumb.jpg",
+        asset.lang,
+        print.setCode,
       );
-      const gotMed = medDestPaths.includes(dest);
+      const legacy = path.join(cardsDir, print.setCode, asset.lang, cardId);
+      const cardDir =
+        (next && fs.existsSync(next) && next) ||
+        (fs.existsSync(legacy) ? legacy : next);
+      const dest = cardDir ? path.join(cardDir, "thumb.jpg") : "";
+      const gotMed = dest ? medDestPaths.includes(dest) : false;
       let hasFile = false;
       try {
         hasFile = fs.statSync(dest).isFile();
@@ -1413,15 +1415,18 @@ function indexNarutoEnPackFromDisk(): void {
 /**
  * FR/JA/EN Carddass rectos carry different printed text. Without this ledger,
  * `bestFaceAcrossLocales` lets a high-res JA shop scan steal the FR tile
- * (NI-001/002 → art.suruga ; 忍-2（PS） chitoroshop vit sous `ni0002-ps`). JA-only orphans stay neutral so
- * empty FR shells can still borrow.
+ * (NI-001/002 → art.suruga ; 忍-2（PS） chitoroshop vit sous `ni0002-ps`).
+ * Count titles too: FR « Le don de la copie » without a scan must not show
+ * JA art.suruga. JA-only orphans (no EU title) stay neutral so empty shells
+ * can still borrow.
  */
 function writeCarddassLocaleSpecificFaces(index: CardsIndexV1): number {
   try {
     const doc = buildLocaleSpecificFacesFromIndex(
       index,
       ["fr", "ja", "en"],
-      "Carddass FR/JA/EN — recto localisé, ne pas emprunter cross-langue.",
+      "Carddass FR/JA/EN — recto/titre localisé, ne pas emprunter cross-langue.",
+      { countLocalizedNames: true },
     );
     const out = writeLocaleSpecificFaces(NARUTO_PACK_ID, doc);
     console.log(

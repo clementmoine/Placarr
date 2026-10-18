@@ -4,6 +4,7 @@
  */
 
 import { parsePrintKey } from "@/core/identify/printKey";
+import { printKeyItemSlug } from "@/lib/routing/slugs";
 
 export const ASSETS_URL_PREFIX = "/assets";
 
@@ -54,10 +55,90 @@ export function assetsCardUrl(
   id: CardDiskId,
   file: string,
 ): string {
-  const parts = [id.set, id.lang, id.card, file].map((p) =>
+  const parts = [id.lang, id.set, id.card, file].map((p) =>
     encodeURIComponent(p),
   );
   return `${assetsPackBase(pack)}/cards/${parts.join("/")}`;
+}
+
+/** Roles served by the print HTTP resolver (no basename in the URL). */
+export type AssetsPrintRole = "face" | "thumb" | "face-b";
+
+/**
+ * Asset stem = shelf item slug without finish (`s1-cl0001-fr-normal` →
+ * `s1-cl0001-fr`). Same builder as {@link printKeyItemSlug}.
+ */
+export function printKeyAssetStem(
+  printKey: string,
+  lang: string,
+): string | null {
+  const code = lang.trim().toLowerCase() || "fr";
+  const stem = printKeyItemSlug(printKey, null, code);
+  return stem || null;
+}
+
+/**
+ * Print-scoped face URL — same stem as the shelf item URL.
+ * `/assets/<pack>/prints/{set}-{id}-{lang}/face` (ex. `…/prints/s1-cl0001-fr/thumb`).
+ * Never embeds `art.carddass.jpg` — ranking lives on disk (`face.json`).
+ */
+export function assetsPrintFaceUrl(
+  pack: string,
+  printKey: string,
+  lang: string,
+  role: AssetsPrintRole = "face",
+): string {
+  const code = lang.trim().toLowerCase() || "fr";
+  const stem = printKeyAssetStem(printKey, code);
+  if (stem) {
+    return `${assetsPackBase(pack)}/prints/${encodeURIComponent(stem)}/${role}`;
+  }
+  // Unparseable — keep a resolvable legacy shape.
+  const id = parsePrintKey(printKey);
+  if (id) {
+    const card = id.grouping ? `${id.number}-${id.grouping}` : id.number;
+    return `${assetsPackBase(pack)}/prints/${encodeURIComponent(code)}/${encodeURIComponent(id.set)}/${encodeURIComponent(card)}/${role}`;
+  }
+  const colon = printKey.indexOf(":");
+  const slug = (colon >= 0 ? printKey.slice(colon + 1) : printKey).trim();
+  return `${assetsPackBase(pack)}/prints/${encodeURIComponent(code)}/${encodeURIComponent(slug)}/${role}`;
+}
+
+/**
+ * Pack sleeve role URL — HTTP picks `back.{lang}.*` / `back.*`.
+ * `/assets/<pack>/backs/{lang}`
+ */
+export function assetsPackBackRoleUrl(pack: string, lang: string): string {
+  const code = lang.trim().toLowerCase() || "fr";
+  return `${assetsPackBase(pack)}/backs/${encodeURIComponent(code)}`;
+}
+
+/**
+ * Set verso role URL — HTTP picks under `cards/{lang}/{set}/back.*`.
+ * `/assets/<pack>/backs/{lang}/sets/{set}`
+ */
+export function assetsSetBackRoleUrl(
+  pack: string,
+  set: string,
+  lang: string,
+): string {
+  const code = lang.trim().toLowerCase() || "fr";
+  const setId = set.trim().toLowerCase();
+  return `${assetsPackBase(pack)}/backs/${encodeURIComponent(code)}/sets/${encodeURIComponent(setId)}`;
+}
+
+/**
+ * Tier sleeve role URL — HTTP picks `cards/back.{tier}.*`.
+ * `/assets/<pack>/backs/{lang}/tiers/{tier}` (`lang` is ignored for lookup).
+ */
+export function assetsPackTierBackRoleUrl(
+  pack: string,
+  tierSlug: string,
+  lang = "en",
+): string {
+  const code = lang.trim().toLowerCase() || "en";
+  const tier = tierSlug.trim().toLowerCase();
+  return `${assetsPackBase(pack)}/backs/${encodeURIComponent(code)}/tiers/${encodeURIComponent(tier)}`;
 }
 
 export function assetsPackFileUrl(pack: string, ...segments: string[]): string {
@@ -76,7 +157,7 @@ export function cardDiskIdFromPrintKey(
 }
 
 /**
- * Rewrite `/assets/…/cards/{set}/{lang}/{card}/…` when a printKey remap
+ * Rewrite `/assets/…/cards/{lang}/{set}/{card}/…` when a printKey remap
  * moves the home folder (art letter, home set, grouping).
  */
 export function rewriteAssetUrlForPrintKeyChange(
@@ -86,7 +167,7 @@ export function rewriteAssetUrlForPrintKeyChange(
   langHint?: string | null,
 ): string | null | undefined {
   if (!url) return url;
-  const langMatch = /\/cards\/[^/]+\/([^/]+)\//i.exec(url);
+  const langMatch = /\/cards\/([^/]+)\//i.exec(url);
   const lang = (langMatch?.[1] ?? langHint ?? "fr").toLowerCase();
   const from = cardDiskIdFromPrintKey(fromKey, lang);
   const to = cardDiskIdFromPrintKey(toKey, lang);
@@ -98,8 +179,8 @@ export function rewriteAssetUrlForPrintKeyChange(
   ) {
     return url;
   }
-  const needle = `/cards/${from.set}/${from.lang}/${from.card}/`;
-  const next = `/cards/${to.set}/${to.lang}/${to.card}/`;
+  const needle = `/cards/${from.lang}/${from.set}/${from.card}/`;
+  const next = `/cards/${to.lang}/${to.set}/${to.card}/`;
   return url.includes(needle) ? url.replace(needle, next) : url;
 }
 
@@ -116,7 +197,7 @@ export function cardDiskIdFromBundleStem(stem: string): CardDiskId | null {
 
 /**
  * Live Texture2D stem → canonical face filename under
- * `cards/{set}/{lang}/{card}/`.
+ * `cards/{lang}/{set}/{card}/`.
  */
 export function pokemonFaceFileFromTex(
   bundleStem: string,
@@ -147,7 +228,7 @@ export function pokemonFaceFileFromTex(
   return role === "mask" ? "mask.webp" : "art.webp";
 }
 
-/** `/assets/pokemon/cards/{set}/{lang}/{num}/{art|mask|…}.webp` */
+/** `/assets/pokemon/cards/{lang}/{set}/{num}/{art|mask|…}.webp` */
 export function pokemonCardTextureUrl(
   bundleStem: string,
   texStem: string | null | undefined,

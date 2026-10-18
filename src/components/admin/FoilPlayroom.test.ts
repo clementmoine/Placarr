@@ -106,7 +106,7 @@ describe("printInfoFromSample", () => {
       variant: "hr-2x2",
       printKey: "kayou:smritiheavenscrolls1-nrss.hr.002",
       shelfType: "tcg",
-      imageUrl: "/assets/naruto/kayou/cards/smritiheavenscrolls1/en/nrss.hr.002/art.narutocards.webp",
+      imageUrl: "/assets/naruto/kayou/cards/en/smritiheavenscrolls1/nrss.hr.002/art.narutocards.webp",
       foilMaskUrl: "/assets/naruto/kayou/full_foil_mask.webp",
       effectPack: "naruto-kayou",
     };

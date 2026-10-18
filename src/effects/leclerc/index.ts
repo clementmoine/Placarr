@@ -17,7 +17,7 @@ export const leclercMarvelEffectPack = defineCatalogueOnlyPack({
   label: "Leclerc Marvel",
   blurb: "Catalogue local opérations Marvel Leclerc — dos à curer, sans foil",
   assetBase: MARVEL_ASSET_BASE,
-  cardBackUrl: `${MARVEL_ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${MARVEL_ASSET_BASE}/backs/en`,
 });
 
 export const leclercDisneyEffectPack = defineCatalogueOnlyPack({
@@ -25,7 +25,7 @@ export const leclercDisneyEffectPack = defineCatalogueOnlyPack({
   label: "Leclerc Disney",
   blurb: "Catalogue local opération Disney Leclerc — dos à curer, sans foil",
   assetBase: DISNEY_ASSET_BASE,
-  cardBackUrl: `${DISNEY_ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${DISNEY_ASSET_BASE}/backs/en`,
 });
 
 /** @deprecated Prefer leclercMarvelEffectPack. */

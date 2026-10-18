@@ -13,7 +13,7 @@ describe("kayouScanCrop", () => {
     const sharp = (await import("sharp")).default;
     const { readFileSync, existsSync } = await import("node:fs");
     const art =
-      "data/naruto/kayou/cards/t4w1/en/nr.hr.003/art.narutocards.webp";
+      "data/naruto/kayou/cards/en/t4w1/nr.hr.003/art.narutocards.webp";
     if (!existsSync(art)) return;
 
     const { data, info } = await sharp(readFileSync(art))

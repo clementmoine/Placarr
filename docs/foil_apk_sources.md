@@ -9,7 +9,7 @@ Objectif : sync auto **sans téléphone**. Frida = QA seulement, jamais une sour
 | Artifact                                                | Source actuelle      | Sans APK ?      | Analyse                                                                                |
 | ------------------------------------------------------- | -------------------- | --------------- | -------------------------------------------------------------------------------------- |
 | `foil/shaders/*.frag`, shared textures, material sheets | CDN `shadersbundle`  | **Oui**         | —                                                                                      |
-| `cards/{set}/{lang}/{card}/`                            | CDN card UnityFS     | **Oui**         | Stem list = Malie ou `--from-manifest`                                                 |
+| `cards/{lang}/{set}/{card}/`                            | CDN card UnityFS     | **Oui**         | Stem list = Malie ou `--from-manifest`                                                 |
 | `catalog.sqlite`                                        | Malie ∪ config-cache | **Oui** (Malie) | config-cache = `data/pokemon/staging/config-cache` only (pas de fallback hors staging) |
 | `foil/card-uv-rect.json`                                | APK Card mesh        | **Non**         | Pin rect connu ou hunt mesh CDN — **analyse ouverte**                                  |
 | `cards/back.webp`                                       | APK `cardBack`       | **Non**         | Hunt CDN / pin one-shot — **analyse ouverte**                                          |

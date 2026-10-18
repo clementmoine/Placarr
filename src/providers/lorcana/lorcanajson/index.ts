@@ -719,10 +719,11 @@ export const lorcanajsonModule = defineProvider({
     const raw = lorcanaBoosterComposition as BoosterCompositionFile;
     return raw?.version === 1 ? raw : null;
   },
-  listSetPrints: async ({ setId, language }) =>
+  listSetPrints: async ({ setId, language, includeUnprinted }) =>
     enumerateSetPrints({
       setId,
       language,
+      includeUnprinted,
       search: (opts) =>
         searchLorcanaTcgRows(opts.query, {
           language: opts.language,

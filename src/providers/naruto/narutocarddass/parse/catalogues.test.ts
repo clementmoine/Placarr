@@ -578,6 +578,40 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
         )?.fullName,
       ).toBe("Naruto Uzumaki");
     });
+
+    it("does not mint a ghost S1 key when the FR checklist is S2-only (CL-5)", () => {
+      const merged = mergeCardgameclubItCardsIntoIndex({
+        prints: [
+          {
+            printKey: "naruto:s2-cl0005",
+            setCode: "s2",
+            number: "cl0005",
+            cardType: "cl",
+            family: "client",
+          },
+        ],
+        titles: [
+          { printKey: "naruto:s2-cl0005", lang: "fr", fullName: "Zôri" },
+        ],
+        cards: [
+          {
+            number: "cl005",
+            name: "Zori",
+            setCode: "s1", // mis-bucketed shop rubric
+            printedRef: "CL-05",
+          },
+        ],
+      });
+      expect(merged.addedPrints).toEqual([]);
+      expect(merged.prints.map((p) => p.printKey)).toEqual([
+        "naruto:s2-cl0005",
+      ]);
+      expect(
+        merged.titles.find(
+          (t) => t.printKey === "naruto:s2-cl0005" && t.lang === "it",
+        )?.fullName,
+      ).toBe("Zori");
+    });
   });
 }
 

@@ -66,7 +66,7 @@ describe("unity Texture2D (Node)", () => {
       repo,
       "data/pokemon/staging/cdn-bundles/xybsp_fr_019",
     );
-    const diskArt = path.join(repo, "data/pokemon/cards/xybsp/fr/019/art.webp");
+    const diskArt = path.join(repo, "data/pokemon/cards/fr/xybsp/019/art.webp");
     const uvPath = path.join(repo, "data/pokemon/foil/card-uv-rect.json");
     if (!existsSync(card) || !existsSync(diskArt) || !existsSync(uvPath)) {
       return;

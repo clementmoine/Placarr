@@ -16,5 +16,5 @@ export const narutoRanksEffectPack = defineCatalogueOnlyPack({
   label: "Naruto Ninja Ranks",
   blurb: "Catalogue local — dos du jeu, sans effet foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.fr.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/fr`,
 });

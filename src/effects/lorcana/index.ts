@@ -14,7 +14,7 @@ import {
 } from "./resolveMaterial";
 
 export const LORCANA_EFFECT_PACK_ID = "lorcana";
-export const LORCANA_CARD_BACK_URL = "/assets/lorcana/cards/back.webp";
+export const LORCANA_CARD_BACK_URL = "/assets/lorcana/backs/en";
 /**
  * Opaque full-face foil plate — last-resort CSS coverage when an attested
  * Lorcast fill has no greyscale art facsimile yet.

@@ -61,7 +61,7 @@ import { narutoUltraCuratedDir } from "./pack";
 
     it("declares the filename the effect pack will look for", () => {
       expect(narutoUltraEffectPack.cardBackUrl).toBe(
-        "/assets/naruto/ultra-challenge/cards/back.fr.webp",
+        "/assets/naruto/ultra-challenge/backs/fr",
       );
     });
 

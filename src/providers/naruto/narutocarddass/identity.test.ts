@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync, mkdtempSync, existsSync, readFileSync, rmSync
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { comparePrintKeys } from "@/core/identify/printKey";
-import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel } from "./identity";
+import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isNarutoFrUnpublishedHtmlNumber, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, reconcileNarutoFrChecklistSet, resolveNarutoLedgerPrintTarget, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel } from "./identity";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import type { NarutoPrintDetail } from "./search";
 
@@ -38,6 +38,16 @@ import type { NarutoPrintDetail } from "./search";
         cards: [],
       };
       expect(formatKnownCardsMarkdown(report)).toContain("| `s11` | — | — |");
+    });
+  });
+
+  describe("isNarutoFrUnpublishedHtmlNumber", () => {
+    it("flags TA-090 as FR HTML-only unpublished (never paper)", () => {
+      expect(isNarutoFrUnpublishedHtmlNumber("ta0090")).toBe(true);
+      expect(isNarutoFrUnpublishedHtmlNumber("ta090")).toBe(true);
+      expect(isNarutoFrUnpublishedHtmlNumber("ta0074")).toBe(false);
+      // Real S5 MIJ insert absent from PDF checklist — still printed.
+      expect(isNarutoFrUnpublishedHtmlNumber("ni0232")).toBe(false);
     });
   });
 
@@ -91,14 +101,15 @@ import type { NarutoPrintDetail } from "./search";
 
     it("skips dirs that prefer corrected even if art.jpg is huge", () => {
       const root = mkdtempSync(path.join(tmpdir(), "naruto-photo-fb-"));
-      const card = path.join(root, "s4", "fr", "ni165");
+      const cardsRoot = path.join(root, "cards");
+      const card = path.join(cardsRoot, "fr", "s4", "ni165");
       mkdirSync(card, { recursive: true });
       writeFileSync(path.join(card, "art.jpg"), Buffer.alloc(400_000));
       writeFileSync(path.join(card, "art.corrected.jpg"), Buffer.alloc(80_000));
-      const gap = path.join(root, "s4", "fr", "ni194");
+      const gap = path.join(cardsRoot, "fr", "s4", "ni194");
       mkdirSync(gap, { recursive: true });
       writeFileSync(path.join(gap, "art.jpg"), Buffer.alloc(400_000));
-      const rows = collectPhotoFallbackArt(root);
+      const rows = collectPhotoFallbackArt(cardsRoot);
       expect(rows.map((r) => r.printKey)).toEqual(["naruto:s4-ni0194"]);
       expect(rows[0]?.priority).toBe("high");
     });
@@ -434,6 +445,21 @@ import type { NarutoPrintDetail } from "./search";
       expect(formatNarutoReference("tin1", "nus0097")).toBe("N-US097");
       expect(formatNarutoReference("s3", "n0097-us")).toBe("N-US097");
       expect(mintNarutoPrintKey("N-US097", "s1")).toBe("naruto:s1-nus0097");
+    });
+
+    it("reconcileNarutoFrChecklistSet remints ghost EU sets onto the paper list", () => {
+      expect(reconcileNarutoFrChecklistSet("cl0005", "s1")).toBe("s2");
+      expect(reconcileNarutoFrChecklistSet("cl0005", "s2")).toBe("s2");
+      expect(reconcileNarutoFrChecklistSet("ni0049", "s1")).toBe("s1");
+      expect(
+        resolveNarutoLedgerPrintTarget("cl005", "s1", [
+          {
+            printKey: "naruto:s2-cl0005",
+            setCode: "s2",
+            number: "cl0005",
+          },
+        ]),
+      ).toEqual({ printKey: "naruto:s2-cl0005", exists: true });
     });
 
     it("does not search 幕 / 忍者学校 inside NI/N/J/M folders", () => {
@@ -807,6 +833,13 @@ import type { NarutoPrintDetail } from "./search";
       expect(narutoCatalogueLineForCard("jus0088", "s6")).toBe("en-ccg");
       expect(narutoCatalogueLineForCard("N-US088")).toBe("en-ccg");
       expect(narutoCatalogueLineForCard("PR-US001")).toBe("en-ccg");
+      expect(narutoCatalogueLineForCard("prus0001")).toBe("en-ccg");
+    });
+
+    it("keeps European PR-nn Carddass promos off the CCG line", () => {
+      expect(narutoCatalogueLineForCard("pr0011", "promo")).toBe("carddass-fr");
+      expect(narutoCatalogueLineForCard("PR-016")).toBe("carddass-fr");
+      expect(narutoCatalogueLineForCard("pr0096")).toBe("carddass-fr");
     });
   });
 

@@ -25,7 +25,7 @@ export const dbsCgEffectPack = defineCatalogueOnlyPack({
   label: "Dragon Ball Super Card Game",
   blurb: "Catalogue Bandai Masters — dos sleeve, sans dump foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
   finishShader: FINISH_SHADER,
   fallbackFoilMaskUrl: DBS_CG_FULL_FOIL_MASK_URL,
 });

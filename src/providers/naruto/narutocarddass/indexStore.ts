@@ -33,7 +33,9 @@ import {
   isJpOnlyNarutoArtwork,
   isNarutoCatalogueSetCode,
   isNarutoJapaneseVolumeSet,
+  mintNarutoPrintKey,
   narutoDiskCardId,
+  officialFrChecklistSetsForNumber,
   parseNarutoCollector,
 } from "./identity";
 import { isNarutoS6FrPrintedNumber } from "./sources/titles";
@@ -48,6 +50,122 @@ import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { narutoCardPathFromCollector } from "./disk";
 import { resolveNarutoDiskArtFilename } from "./diskArtAttachments";
+
+/**
+ * Collector → series codes guaranteed by deck / deck_bundle sealed products
+ * (starter reprints like `s2-ni0008` that never appear on the booster checklist).
+ */
+export function narutoDeckGuaranteeSetsByCollector(
+  packId: string = NARUTO_PACK_ID,
+): Map<string, Set<string>> {
+  const deckSetsByCollector = new Map<string, Set<string>>();
+  for (const entry of loadSealedProductEntries(packId)) {
+    if (entry.kind !== "deck" && entry.kind !== "deck_bundle") continue;
+    const productSet = (entry.catalogueSetId ?? entry.setCode ?? "")
+      .trim()
+      .toLowerCase();
+    for (const link of entry.guaranteedPrints ?? []) {
+      const key = link.printKey?.trim();
+      if (!key) continue;
+      /*
+        Prefer the set segment of a set-scoped guarantee key (`s2-ni0008`) —
+        products-index often leaves `setCode` null on starters.
+      */
+      const parsed = parsePrintKey(
+        canonicalizeNarutoPrintKey(
+          key,
+          productSet && isNarutoCatalogueSetCode(productSet)
+            ? productSet
+            : null,
+        ),
+      );
+      if (!parsed || parsed.game !== "naruto") continue;
+      const setFromKey = isNarutoCatalogueSetCode(parsed.set)
+        ? parsed.set
+        : "";
+      const set =
+        setFromKey ||
+        (productSet && isNarutoCatalogueSetCode(productSet) ? productSet : "");
+      if (!set) continue;
+      const raw = isNarutoCatalogueSetCode(parsed.set)
+        ? parsed.grouping
+          ? `${parsed.number}-${parsed.grouping}`
+          : parsed.number
+        : `${parsed.set}${parsed.number}${
+            parsed.grouping ? `-${parsed.grouping}` : ""
+          }`;
+      const collector = (narutoDiskCardId(raw) ?? raw).toLowerCase();
+      const bucket = deckSetsByCollector.get(collector) ?? new Set<string>();
+      bucket.add(set);
+      deckSetsByCollector.set(collector, bucket);
+    }
+  }
+  return deckSetsByCollector;
+}
+
+/**
+ * Mint missing set-scoped index cards for FR checklist + deck-guarantee
+ * memberships so browse can flag S2–S5 reprints that borrow S1 faces
+ * (`artFallbackFrom`) without waiting for a full sqlite rebuild.
+ */
+export function expandNarutoCardsIndexMembershipSiblings(
+  index: CardsIndexV1,
+  opts?: { deckSetsByCollector?: Map<string, Set<string>> },
+): CardsIndexV1 {
+  const deckSetsByCollector =
+    opts?.deckSetsByCollector ?? narutoDeckGuaranteeSetsByCollector(index.pack);
+  const cards = { ...index.cards };
+  const collectors = new Map<string, string[]>();
+  for (const [printKey, entry] of Object.entries(cards)) {
+    const collector = (
+      narutoDiskCardId(entry.card) ?? entry.card
+    ).toLowerCase();
+    const list = collectors.get(collector) ?? [];
+    list.push(printKey);
+    collectors.set(collector, list);
+  }
+
+  for (const [collector, keys] of collectors) {
+    const donorKey =
+      keys.find((key) => {
+        const set = parsePrintKey(key)?.set?.toLowerCase() ?? "";
+        return /^s[1-5]$/.test(set);
+      }) ?? keys[0];
+    if (!donorKey) continue;
+    const donor = cards[donorKey];
+    if (!donor) continue;
+
+    const memberships = new Set<string>();
+    for (const key of keys) {
+      const set = parsePrintKey(key)?.set?.toLowerCase();
+      if (set && isNarutoCatalogueSetCode(set)) memberships.add(set);
+    }
+    for (const set of officialFrChecklistSetsForNumber(collector)) {
+      memberships.add(set);
+    }
+    for (const set of deckSetsByCollector.get(collector) ?? []) {
+      memberships.add(set);
+    }
+
+    for (const set of memberships) {
+      if (!/^s[1-6]$/.test(set)) continue;
+      const printKey = mintNarutoPrintKey(collector, set);
+      if (!printKey || cards[printKey]) continue;
+      cards[printKey] = {
+        ...donor,
+        set,
+        langs: Object.fromEntries(
+          Object.entries(donor.langs ?? {}).map(([lang, slot]) => [
+            lang,
+            { ...slot },
+          ]),
+        ),
+      };
+    }
+  }
+
+  return { ...index, cards };
+}
 
 /** Coleka Tempête / Rampage Tornado (33) — FR checklist membership on `s11`. */
 function rampageTornadoCollectors(): Set<string> {
@@ -261,48 +379,7 @@ export function writeNarutoCcgIndex(input: {
     Deck / deck_bundle guarantees (ex. S2 starter reprints NI-008) — sets that
     appearances.json never lists. Mint `s2-ni0008` beside `s1-ni0008`.
   */
-  const deckSetsByCollector = new Map<string, Set<string>>();
-  for (const entry of loadSealedProductEntries(NARUTO_PACK_ID)) {
-    if (entry.kind !== "deck" && entry.kind !== "deck_bundle") continue;
-    const productSet = (entry.catalogueSetId ?? entry.setCode ?? "")
-      .trim()
-      .toLowerCase();
-    for (const link of entry.guaranteedPrints ?? []) {
-      const key = link.printKey?.trim();
-      if (!key) continue;
-      /*
-        Prefer the set segment of a set-scoped guarantee key (`s2-ni0008`) —
-        products-index often leaves `setCode` null on starters.
-      */
-      const parsed = parsePrintKey(
-        canonicalizeNarutoPrintKey(
-          key,
-          productSet && isNarutoCatalogueSetCode(productSet)
-            ? productSet
-            : null,
-        ),
-      );
-      if (!parsed || parsed.game !== "naruto") continue;
-      const setFromKey = isNarutoCatalogueSetCode(parsed.set)
-        ? parsed.set
-        : "";
-      const set =
-        setFromKey ||
-        (productSet && isNarutoCatalogueSetCode(productSet) ? productSet : "");
-      if (!set) continue;
-      const raw = isNarutoCatalogueSetCode(parsed.set)
-        ? parsed.grouping
-          ? `${parsed.number}-${parsed.grouping}`
-          : parsed.number
-        : `${parsed.set}${parsed.number}${
-            parsed.grouping ? `-${parsed.grouping}` : ""
-          }`;
-      const collector = (narutoDiskCardId(raw) ?? raw).toLowerCase();
-      const bucket = deckSetsByCollector.get(collector) ?? new Set<string>();
-      bucket.add(set);
-      deckSetsByCollector.set(collector, bucket);
-    }
-  }
+  const deckSetsByCollector = narutoDeckGuaranteeSetsByCollector(NARUTO_PACK_ID);
 
   const collectorOf = (number: string, printKey: string) =>
     (narutoDiskCardId(number) ?? printKey).toLowerCase();
@@ -357,15 +434,38 @@ export function writeNarutoCcgIndex(input: {
     ) {
       sets = [...sets, RAMPAGE_TORNADO_SET];
     }
-    for (const code of deckSetsByCollector.get(collector) ?? []) {
+    const deckSets = deckSetsByCollector.get(collector) ?? new Set<string>();
+    for (const code of deckSets) {
+      if (!sets.includes(code)) sets.push(code);
+    }
+    const frChecklist = officialFrChecklistSetsForNumber(p.number);
+    for (const code of frChecklist) {
       if (!sets.includes(code)) sets.push(code);
     }
     sets = sets.filter((set) => {
       if (set === "promo" && !belongsOnNarutoPromoChecklist(p.number)) {
         return false;
       }
+      /*
+        Drop ghost EU memberships (ledger mis-buckets) when the FR paper
+        checklist already lists the collector elsewhere — keep maki / promo /
+        s6+, and keep starter/deck reprint series (NI-008 → s2) that are not
+        on the booster checklist.
+      */
+      if (
+        frChecklist.length &&
+        /^s[1-5]$/.test(set) &&
+        !frChecklist.includes(set) &&
+        !deckSets.has(set)
+      ) {
+        return false;
+      }
       return true;
     });
+    // Ghost-only print (s1-cl0005) → remint onto the paper list, not setCode fallback.
+    if (!sets.length && frChecklist.length) {
+      sets = [...frChecklist];
+    }
     return { ...p, setCodes: sets };
   });
   const expandedPrints = expandNarutoPrintsToSetScoped(prepared);
@@ -1015,10 +1115,14 @@ export function loadNarutoCardsIndexFromSqlite(
       for (const [lang, slot] of Object.entries(entry.langs)) {
         if (maki && lang.toLowerCase() !== "ja") continue;
         if (slot.art?.trim()) continue;
-        const pathId = narutoCardPathFromCollector(entry.card, lang);
+        const set =
+          setCodeByPrintKey.get(printKey)?.toLowerCase() ??
+          entry.set?.toLowerCase();
+        if (!set) continue;
+        const pathId = narutoCardPathFromCollector(entry.card, lang, set);
         if (!pathId) continue;
         const art = resolveNarutoDiskArtFilename(
-          path.join(cardsRoot, pathId.folder, pathId.diskId, pathId.lang),
+          path.join(cardsRoot, pathId.lang, pathId.set, pathId.diskId),
         );
         if (art) slot.art = art;
       }
@@ -1035,7 +1139,11 @@ export function loadNarutoCardsIndexFromSqlite(
       }
     }
 
-    return index;
+    /*
+      Stale sqlite may lack deck-only set-scoped keys (`s2-ni0008`). Expand so
+      catalogue tiles can show `artFallbackFrom` (borrowed S1) until rebuild.
+    */
+    return expandNarutoCardsIndexMembershipSiblings(index);
   } finally {
     if (owned && db) {
       try {

@@ -120,7 +120,7 @@ vi.mock("@/providers/shared/packOwner", async (importOriginal) => {
         printKey,
         title: "Orochimaru",
         reference: "PR-011",
-        imageUrl: "/assets/naruto/carddass/cards/promo/pr0011/fr/art.webp",
+        imageUrl: "/assets/naruto/carddass/cards/fr/promo/pr0011/art.webp",
       };
     }
     if (printKey === "naruto:promo-pr0016") {
@@ -128,7 +128,7 @@ vi.mock("@/providers/shared/packOwner", async (importOriginal) => {
         printKey,
         title: "Naruto Uzumaki",
         reference: "PR-016",
-        imageUrl: "/assets/naruto/carddass/cards/promo/pr0016/fr/art.webp",
+        imageUrl: "/assets/naruto/carddass/cards/fr/promo/pr0016/art.webp",
       };
     }
     return null;
@@ -884,13 +884,13 @@ describe("catalogue sealed rows", () => {
         printKey: "naruto:promo-pr0011",
         name: "Orochimaru",
         ref: "PR-011",
-        image: "/assets/naruto/carddass/cards/promo/pr0011/fr/art.webp",
+        image: "/assets/naruto/carddass/cards/fr/promo/pr0011/art.webp",
       }),
       expect.objectContaining({
         printKey: "naruto:promo-pr0016",
         name: "Naruto Uzumaki",
         ref: "PR-016",
-        image: "/assets/naruto/carddass/cards/promo/pr0016/fr/art.webp",
+        image: "/assets/naruto/carddass/cards/fr/promo/pr0016/art.webp",
       }),
     ]);
   });

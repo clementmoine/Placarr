@@ -119,10 +119,11 @@ export const pokemontcgliveModule = defineProvider({
     }),
   lookupPrint: async ({ printKey, language }) =>
     lookupPokemonLivePrint(printKey, language),
-  listSetPrints: async ({ setId, language }) =>
+  listSetPrints: async ({ setId, language, includeUnprinted }) =>
     enumerateSetPrints({
       setId,
       language,
+      includeUnprinted,
       search: (opts) =>
         searchPokemonLivePrints(opts.query, {
           language: opts.language,

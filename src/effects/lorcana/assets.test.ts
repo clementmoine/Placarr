@@ -113,11 +113,11 @@ describe("lorcana css-only foil masks", () => {
     expect(isLorcanaCssOnlyFoilMask(LORCANA_FULL_FOIL_MASK_URL)).toBe(true);
     expect(
       isLorcanaCssOnlyFoilMask(
-        "/assets/lorcana/cards/p2/en/36/mask.attested.webp",
+        "/assets/lorcana/cards/en/p2/36/mask.attested.webp",
       ),
     ).toBe(false);
     expect(
-      isLorcanaCssOnlyFoilMask("/assets/lorcana/cards/6/en/25-p2/mask.jpg"),
+      isLorcanaCssOnlyFoilMask("/assets/lorcana/cards/en/6/25-p2/mask.jpg"),
     ).toBe(false);
   });
 });

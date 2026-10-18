@@ -20,7 +20,10 @@ import {
 import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
-import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
+import type {
+  CatalogueCardRow,
+  CataloguePrintedFilter,
+} from "@/lib/admin/catalogueCards";
 
 type CatalogueCardsResponse = {
   pack: CataloguePackId;
@@ -150,6 +153,8 @@ async function fetchPage(input: {
   missingArtOnly: boolean;
   missingNameOnly: boolean;
   missingPriceOnly: boolean;
+  borrowedArtOnly: boolean;
+  printed: CataloguePrintedFilter;
 }): Promise<CatalogueCardsResponse> {
   const params = new URLSearchParams({
     pack: input.pack,
@@ -162,6 +167,10 @@ async function fetchPage(input: {
   if (input.missingArtOnly) params.set("missingArt", "1");
   if (input.missingNameOnly) params.set("missingName", "1");
   if (input.missingPriceOnly) params.set("missingPrice", "1");
+  if (input.borrowedArtOnly) params.set("borrowedArt", "1");
+  if (input.printed && input.printed !== "all") {
+    params.set("printed", input.printed);
+  }
   const res = await fetch(`/api/admin/catalogue-cards?${params}`);
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -216,6 +225,9 @@ export function CatalogueBrowser({
   const [missingArtOnly, setMissingArtOnly] = useState(false);
   const [missingNameOnly, setMissingNameOnly] = useState(false);
   const [missingPriceOnly, setMissingPriceOnly] = useState(false);
+  const [borrowedArtOnly, setBorrowedArtOnly] = useState(false);
+  const [printedFilter, setPrintedFilter] =
+    useState<CataloguePrintedFilter>("all");
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(query), 250);
@@ -227,9 +239,16 @@ export function CatalogueBrowser({
     setMissingArtOnly(false);
     setMissingNameOnly(false);
     setMissingPriceOnly(false);
+    setBorrowedArtOnly(false);
+    setPrintedFilter("all");
   }, [packId, defaultLang]);
 
-  const auditActive = missingArtOnly || missingNameOnly || missingPriceOnly;
+  const auditActive =
+    missingArtOnly ||
+    missingNameOnly ||
+    missingPriceOnly ||
+    borrowedArtOnly ||
+    printedFilter !== "all";
 
   const allLocales = langFilter === ALL_LOCALES;
   const preferLang = allLocales ? defaultLang : langFilter;
@@ -253,6 +272,8 @@ export function CatalogueBrowser({
       missingArtOnly,
       missingNameOnly,
       missingPriceOnly,
+      borrowedArtOnly,
+      printedFilter,
     ],
     queryFn: ({ pageParam }) =>
       fetchPage({
@@ -264,6 +285,8 @@ export function CatalogueBrowser({
         missingArtOnly,
         missingNameOnly,
         missingPriceOnly,
+        borrowedArtOnly,
+        printed: printedFilter,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -362,6 +385,30 @@ export function CatalogueBrowser({
             </SelectContent>
           </Select>
         ) : null}
+        <Select
+          value={printedFilter}
+          onValueChange={(value) =>
+            setPrintedFilter(value as CataloguePrintedFilter)
+          }
+        >
+          <SelectTrigger
+            aria-label={fr ? "Filtre carton" : "Cardboard filter"}
+            className="h-8 w-[11rem] text-xs"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              {fr ? "Toutes" : "All"}
+            </SelectItem>
+            <SelectItem value="printed">
+              {fr ? "Imprimées" : "Printed"}
+            </SelectItem>
+            <SelectItem value="unprinted">
+              {fr ? "Non imprimées" : "Unprinted"}
+            </SelectItem>
+          </SelectContent>
+        </Select>
         <div className="flex h-8 items-center gap-2">
           <Checkbox
             id="catalogue-missing-art"
@@ -375,6 +422,21 @@ export function CatalogueBrowser({
             className="cursor-pointer text-xs font-normal text-muted-foreground"
           >
             {fr ? "Sans image" : "Missing art"}
+          </Label>
+        </div>
+        <div className="flex h-8 items-center gap-2">
+          <Checkbox
+            id="catalogue-borrowed-art"
+            checked={borrowedArtOnly}
+            onCheckedChange={(checked) =>
+              setBorrowedArtOnly(checked === true)
+            }
+          />
+          <Label
+            htmlFor="catalogue-borrowed-art"
+            className="cursor-pointer text-xs font-normal text-muted-foreground"
+          >
+            {fr ? "Art emprunté" : "Borrowed art"}
           </Label>
         </div>
         <div className="flex h-8 items-center gap-2">

@@ -17,5 +17,5 @@ export const narutoDataCarddassEffectPack = defineCatalogueOnlyPack({
     Contract URL only — no shared sleeve on disk. Real backs live under each
     print (`cards/{set}/ja/{n}/back.*`) and reach the flip via print scope.
   */
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
 });

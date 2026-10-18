@@ -12,5 +12,5 @@ export const narutoMythosEffectPack = defineCatalogueOnlyPack({
   label: "Naruto Mythos",
   blurb: "Catalogue local Mythos — dos attesté LorenZone / CICABOOM, sans dump foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
 });

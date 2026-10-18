@@ -9,5 +9,5 @@ export const dbhEffectPack = defineCatalogueOnlyPack({
   label: "Dragon Ball Heroes",
   blurb: "Catalogue local Dragon Ball Heroes (carddass.com) — JA",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
 });

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { mirrorNarutoAssetsAcrossCollectorNumbers } from "./scrapeCards";
 
 describe("mirrorNarutoAssetsAcrossCollectorNumbers", () => {
-  it("copies art onto sister printKeys that share the collector number", () => {
+  it("does not mirror art across different retail sets (browse uses artBorrowFrom)", () => {
     const { assets, mirrored } = mirrorNarutoAssetsAcrossCollectorNumbers({
       prints: [
         {
@@ -33,11 +33,8 @@ describe("mirrorNarutoAssetsAcrossCollectorNumbers", () => {
         },
       ],
     });
-    expect(mirrored).toBe(1);
-    expect(
-      assets.find((a) => a.printKey === "naruto:maki1-ni0017" && a.lang === "ja")
-        ?.art,
-    ).toBe("art.suruga.jpg");
+    expect(mirrored).toBe(0);
+    expect(assets).toHaveLength(1);
   });
 
   it("does not invent art when no donor exists", () => {
@@ -132,5 +129,45 @@ describe("mirrorNarutoAssetsAcrossCollectorNumbers", () => {
     expect(
       assets.find((a) => a.printKey === "naruto:promo-te0034")?.art,
     ).toBe("art.carddass.jpg");
+  });
+
+  it("does not invent FR art on JA-only tourney promos off the checklist", () => {
+    const { assets, mirrored } = mirrorNarutoAssetsAcrossCollectorNumbers({
+      prints: [
+        {
+          printKey: "naruto:s3-te0107",
+          setCode: "s3",
+          number: "te0107",
+          cardType: "te",
+        },
+        {
+          printKey: "naruto:promo-te0107",
+          setCode: "promo",
+          number: "te0107-promo",
+          cardType: "te",
+          grouping: "promo",
+        },
+      ],
+      titles: [
+        { printKey: "naruto:s3-te0107", lang: "fr" },
+        { printKey: "naruto:promo-te0107", lang: "fr" },
+        { printKey: "naruto:promo-te0107", lang: "ja" },
+      ],
+      assets: [
+        {
+          printKey: "naruto:s3-te0107",
+          lang: "fr",
+          art: "art.carddass.jpg",
+          thumb: null,
+          back: null,
+        },
+      ],
+    });
+    expect(mirrored).toBe(0);
+    expect(
+      assets.find(
+        (a) => a.printKey === "naruto:promo-te0107" && a.lang === "fr",
+      ),
+    ).toBeUndefined();
   });
 });

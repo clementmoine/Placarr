@@ -26,10 +26,10 @@ describe("onepieceBackCategorySlug", () => {
 describe("onepieceCardBackUrlForCategory", () => {
   it("points at distinct curated sleeves only", () => {
     expect(onepieceCardBackUrlForCategory("Leader")).toBe(
-      "/assets/onepiece/cards/back.leader.webp",
+      "/assets/onepiece/backs/en/tiers/leader",
     );
     expect(onepieceCardBackUrlForCategory("DON!!")).toBe(
-      "/assets/onepiece/cards/back.don.webp",
+      "/assets/onepiece/backs/en/tiers/don",
     );
     expect(onepieceCardBackUrlForCategory("Event")).toBeNull();
     expect(onepieceCardBackUrlForCategory("Stage")).toBeNull();
@@ -47,7 +47,7 @@ describe("stampOnepieceBack", () => {
       rarity: "Leader",
     });
     expect(leader.cardBackUrl).toBe(
-      "/assets/onepiece/cards/back.leader.webp",
+      "/assets/onepiece/backs/en/tiers/leader",
     );
 
     const don = stampOnepieceBack({
@@ -56,7 +56,7 @@ describe("stampOnepieceBack", () => {
       reference: "DON!!",
       category: "DON!!",
     });
-    expect(don.cardBackUrl).toBe("/assets/onepiece/cards/back.don.webp");
+    expect(don.cardBackUrl).toBe("/assets/onepiece/backs/en/tiers/don");
 
     const character = stampOnepieceBack({
       printKey: "onepiece:op01-002",

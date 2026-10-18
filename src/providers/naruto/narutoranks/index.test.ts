@@ -132,7 +132,7 @@ function ensureRanksCardsIndexFromPrints(): boolean {
 
     it("declares the filename the effect pack will look for", () => {
       expect(narutoRanksEffectPack.cardBackUrl).toBe(
-        "/assets/naruto/ninja-ranks/cards/back.fr.webp",
+        "/assets/naruto/ninja-ranks/backs/fr",
       );
     });
 

@@ -264,11 +264,12 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       Ce qui reste doit rester **complet** : trois versos (JA+FR+EN), et rien
       d'autre — un quatrième signalerait une langue hors contrat catalogue.
     */
-    it("ships nothing but the three Carddass versos (JA+FR+EN)", () => {
+    it("ships pack versos (JA+FR+EN) plus optional set sleeves", () => {
       expect(listCuratedBackSources(cards).map((row) => row.destRel)).toEqual([
         "back.en.webp",
         "back.fr.webp",
         "back.ja.webp",
+        "s6/back.fr.webp",
       ]);
     });
 
@@ -277,6 +278,12 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       expect(
         faces.map((f) => `${f.family}/${f.cardId}/${f.lang}`).sort(),
       ).toEqual([
+        /* FR tourney (PROMO CARD) — user scans 2026-10-18. */
+        "jutsu/te0073-promo/fr",
+        "jutsu/te0085-promo/fr",
+        "jutsu/te0109-promo/fr",
+        "jutsu/te0114-promo/fr",
+        "jutsu/te0139-promo/fr",
         "jutsu/te0212/fr",
         /*
           Les huit 騎 (guerriers de Gelel), recadrées à la main : les seules
@@ -291,6 +298,11 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         "knight/ki0006/ja",
         "knight/ki0007/ja",
         "knight/ki0008/ja",
+        "mission/ta0005-prerelease/fr",
+        "mission/ta0063-promo/fr",
+        "mission/ta0067-promo/fr",
+        "mission/ta0074-promo/fr",
+        "mission/ta0081-promo/fr",
         "mission/ta0221/fr",
         "mission/ta0226/fr",
         "mission/ta0330/ja",
@@ -305,6 +317,12 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         "ninja/ni0002-ps/ja",
         "ninja/ni0003-ps/ja",
         "ninja/ni0011-ps/ja",
+        "ninja/ni0063-promo/fr",
+        "ninja/ni0065-promo/fr",
+        "ninja/ni0092-promo/fr",
+        "ninja/ni0095-promo/fr",
+        "ninja/ni0101-promo/fr",
+        "ninja/ni0117-promo/fr",
         "ninja/ni0194/fr",
         "ninja/ni0195/fr",
         "ninja/ni0232/fr",
@@ -764,7 +782,7 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       expect(colekaS6It.listing.scrape).toBe(true);
       expect(colekaS6It.listing.url).toContain("_r41388");
       expect(colekaS6It.listing.lang).toBe("it");
-      expect(colekaS6It.listing.disk).toBe("cards/s6/it/");
+      expect(colekaS6It.listing.disk).toBe("cards/it/s6/");
       expect(colekaS6It.printedTactiquePrefix).toBe("ST");
       expect(colekaS6It.diskTactiquePrefix).toBe("ta");
       expect(colekaS6It.umbrella.scrape).toBe(false);
@@ -1037,7 +1055,7 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         false,
       );
       expect(narutozabuza.ingest).toBe("faces");
-      expect(narutozabuza.disk).toBe("cards/promo/prni0001-R/ja/");
+      expect(narutozabuza.disk).toBe("cards/ja/promo/prni0001-R/");
       expect(narutozabuza.crawlBlog).toBe(false);
       expect(narutozabuza.print.printedRef).toBe("PR忍-1-R");
       expect(narutozabuza.print.not).toContain("ni180");

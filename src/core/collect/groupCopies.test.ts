@@ -50,6 +50,51 @@ describe("copyGroupKey", () => {
       copyGroupKey({ id: "b", metadataId: null }),
     );
   });
+
+  it("does not stack TCG reprints that share metadata but differ by set/printKey", () => {
+    // Naruto NI-049 on S1 vs S5 — same art / metadata blob, distinct prints.
+    expect(
+      copyGroupKey(
+        copy({
+          id: "a",
+          metadataId: "shared",
+          printKey: "naruto:s1-ni0049",
+          setCode: "s1",
+        }),
+      ),
+    ).not.toBe(
+      copyGroupKey(
+        copy({
+          id: "b",
+          metadataId: "shared",
+          printKey: "naruto:s5-ni0049",
+          setCode: "s5",
+        }),
+      ),
+    );
+  });
+
+  it("stacks only same set + printKey (+ variant) for TCG copies", () => {
+    expect(
+      copyGroupKey(
+        copy({
+          id: "a",
+          printKey: "naruto:s2-cl0005",
+          setCode: "s2",
+          variant: "normal",
+        }),
+      ),
+    ).toBe(
+      copyGroupKey(
+        copy({
+          id: "b",
+          printKey: "naruto:s2-cl0005",
+          setCode: "s2",
+          variant: "normal",
+        }),
+      ),
+    );
+  });
 });
 
 describe("groupCopies", () => {

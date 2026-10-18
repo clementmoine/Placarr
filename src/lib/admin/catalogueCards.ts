@@ -8,12 +8,11 @@ import type {
   CardsIndexLangFiles,
   CardsIndexV1,
 } from "@/effects/cardsIndex";
-import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 import {
-  narutoAssetsCardUrl,
-  narutoCardPathFromCollector,
-} from "@/providers/naruto/narutocarddass/disk";
-import { resolveNarutoArtDiskNumber } from "@/providers/naruto/narutocarddass/diskArtAttachments";
+  assetsCardUrl,
+  assetsPrintFaceUrl,
+  cardDiskIdFromPrintKey,
+} from "@/lib/packAssetUrls";
 import {
   assetsPackBackUrl,
   assetsPackTierBackUrl,
@@ -33,17 +32,23 @@ import {
   formatNarutoReference,
   isJpOnlyNarutoArtwork,
   isNarutoCatalogueSetCode,
+  isNarutoFrUnpublishedHtmlNumber,
   isNarutoJapaneseVolumeSet,
   narutoCollectorKey,
   narutoCollectorNumberKey,
   parseNarutoCollector,
 } from "@/providers/naruto/narutocarddass/identity";
 import { foldNarutoCardsIndex } from "@/providers/naruto/narutocarddass/pipeline";
+import { narutoCatalogueLineForCard } from "@/providers/naruto/narutocarddass/packs";
+import { resolveNarutoPrintFace } from "@/providers/naruto/narutocarddass/printFaceResolve";
+import { isNarutoS6FrPrintedNumber } from "@/providers/naruto/narutocarddass/sources/titles";
+import { belongsOnNarutoPromoChecklist } from "@/providers/naruto/narutocarddass/sources/promos";
 import { formatShippudenReference } from "@/providers/naruto/narutoshippuden/search";
 import { printIsLandscapeCard } from "@/lib/text/artFaceOrientation";
 import { orientationFromIndexSlot } from "@/lib/text/artFaceOrientationLenticular";
 import { resolveCatalogueFace } from "@/lib/admin/catalogueFacePick";
 import {
+  entryIsLocaleSpecificFace,
   isLocaleSpecificFace,
   loadLocaleSpecificFaces,
 } from "@/lib/admin/localeSpecificFaces";
@@ -93,7 +98,10 @@ export type CatalogueCardRow = {
   nameSource?: string;
   /** Synthetic pack/set back tiles in the catalogue grid. */
   kind?: "face" | "pack-back" | "set-back";
-  /** False = unprinted locale (shown in catalogue, hidden from add). */
+  /**
+   * False = not collectible cardboard (digital-only, never printed, cancelled).
+   * Admin keeps the tile; checklist / search hide it unless includeUnprinted.
+   */
   printed?: boolean;
   /** Native landscape scan — wider tile, no pixel rotation. */
   landscapeFace?: boolean;
@@ -121,14 +129,14 @@ export type CatalogueCardRow = {
 
 const NARUTO_UNIFIED_PACKS: readonly CataloguePackId[] = ["naruto/carddass"];
 
-/** Disk folder under `cards/{set}/{lang}/` — includes printKey grouping (`20-p1`). */
+/** Disk folder under `cards/{lang}/{set}/` — includes printKey grouping (`20-p1`). */
 export function catalogueDiskCard(
   pack: CataloguePackId,
   printKey: string,
   entry: Pick<CardsIndexEntry, "card">,
 ): string {
-  // Carddass disk ids already embed the collector (`ni0001-ps`); don't double up.
-  if (cataloguePackInfo(pack)?.narutoCollectorDisk) return entry.card;
+  // Collector folders already embed the prefix (`ni0001-ps`); don't double up.
+  if (cataloguePackInfo(pack)?.collectorCardFolder) return entry.card;
   /*
     Prefer the index folder when it already embeds more than parsePrintKey's
     bare number. 疾風伝 stores `gaku0038` on disk / in `entry.card`, but the
@@ -274,45 +282,179 @@ function isAltChannelPrint(printKey: string, card: string): boolean {
 /**
  * Promo stubs may inherit retail art; a retail tile must not show a tourney /
  * promo face (TE-107 無音殺人者 ≠ PR術-107 無音殺人術).
+ * When `artBorrowFrom` is set, the donor set must appear in the tile's chain.
  */
+function isNarutoRetailFamilySet(set: string): boolean {
+  const s = set.toLowerCase();
+  return (
+    s === "ninja" ||
+    s === "jutsu" ||
+    s === "mission" ||
+    s === "client" ||
+    s === "knight" ||
+    s === "character"
+  );
+}
+
+/** Set folder / borrow-policy key for a tile (channel beats folded home sN). */
+function narutoArtChannelSet(
+  printKey: string,
+  card: string,
+  entrySet?: string,
+): string | null {
+  if (isAltChannelPrint(printKey, card)) {
+    const fromKey = narutoPrintKeySetCode(printKey)?.toLowerCase();
+    if (fromKey === "promo" || fromKey === "prerelease") return fromKey;
+    const grouping = parseNarutoCollector(card)?.grouping?.toLowerCase();
+    if (grouping === "prerelease") return "prerelease";
+    if (grouping === "promo" || grouping === "cdf") return "promo";
+    const fromEntry = entrySet?.toLowerCase();
+    if (fromEntry === "promo" || fromEntry === "prerelease") return fromEntry;
+    return "promo";
+  }
+  const fromKey = narutoPrintKeySetCode(printKey)?.toLowerCase();
+  if (fromKey) return fromKey;
+  const fromEntry = (entrySet ?? "").toLowerCase();
+  // Family labels (`ninja`) are not disk sets after lang-first cutover.
+  if (fromEntry && !isNarutoRetailFamilySet(fromEntry)) return fromEntry;
+  return null;
+}
+
+/** Disk set segment for URLs / donors — never a retail family folder. */
+function narutoDiskSetForArt(
+  printKey: string,
+  card: string,
+  entrySet?: string,
+): string {
+  return (
+    narutoArtChannelSet(printKey, card, entrySet) ??
+    (entrySet && !isNarutoRetailFamilySet(entrySet) ? entrySet : "s1")
+  );
+}
+
+function donorMatchesArtBorrowChain(
+  donorSet: string,
+  chain: readonly string[],
+): boolean {
+  const set = donorSet.toLowerCase();
+  if (chain.some((s) => s.toLowerCase() === set)) return true;
+  // Index rows often still label the family (`ninja`) while printKeys are bare
+  // (`naruto:ni-0019`) — treat as retail for s1–s5 inheritance chains.
+  if (isNarutoRetailFamilySet(set)) {
+    return chain.some((s) => /^s[1-5]$/i.test(s));
+  }
+  return false;
+}
+
 function acceptArtDonor(
   tilePrintKey: string,
   tileCard: string,
   donor: ArtDonor,
+  artBorrowFrom?: Readonly<Record<string, readonly string[]>>,
+  tileSetHint?: string | null,
 ): boolean {
   if (donor.printKey === tilePrintKey) return false;
+  /*
+    Carddass NI/TE (S1–S6) ≠ Bandai USA CCG N/J (S1–S28). Same digit « 100 »
+    must never share a face — different backs, different games.
+  */
+  if (
+    narutoCatalogueLineForCard(tileCard, tileSetHint ?? undefined) !==
+    narutoCatalogueLineForCard(donor.card, donor.set)
+  ) {
+    return false;
+  }
   if (
     !isAltChannelPrint(tilePrintKey, tileCard) &&
     isAltChannelPrint(donor.printKey, donor.card)
   ) {
     return false;
   }
+  if (artBorrowFrom) {
+    /*
+      Folded keys like `s1-ni0019-prerelease` report setCode `s1` — borrow
+      policy keys off the channel (`prerelease` / `promo`), not home sN.
+    */
+    const tileSet =
+      tileSetHint?.toLowerCase() ||
+      narutoArtChannelSet(tilePrintKey, tileCard) ||
+      null;
+    if (!tileSet) return false;
+    const chain = artBorrowFrom[tileSet];
+    if (!chain) return false;
+    if (!donorMatchesArtBorrowChain(donor.set, chain)) return false;
+  }
   return true;
+}
+
+/** Browse face band — Carddass S1 ≠ S2–S5 ≠ S6 ≠ CCG s7+. */
+export function narutoFaceBandKey(setCode: string | null | undefined): string {
+  if (!setCode) return "other";
+  const s = setCode.toLowerCase();
+  if (s === "promo" || s === "prerelease") return s;
+  if (s === "s1") return "s1";
+  if (/^s[2-5]$/.test(s)) return "s2-s5";
+  if (s === "s6") return "s6";
+  if (/^s\d+$/.test(s) && Number(s.slice(1)) >= 7) return "ccg";
+  if (isNarutoJapaneseVolumeSet(s)) return "maki";
+  return s;
+}
+
+/**
+ * Cardboard flag for admin tiles — same semantics as checklist `printed`.
+ * HTML phantoms / cancelled S6 FR → false; attested S6 inserts stay cardboard.
+ */
+export function cataloguePrintedFlag(
+  pack: CataloguePackId,
+  printKey: string,
+  card: string,
+  lang: string,
+  slotPrinted: boolean | undefined,
+): false | undefined {
+  if (!isNarutoUnifiedPack(pack)) {
+    return slotPrinted === false ? false : undefined;
+  }
+  const code = lang.trim().toLowerCase();
+  if (code === "fr" && isNarutoFrUnpublishedHtmlNumber(card)) return false;
+  if (isNarutoS6FrPrintedNumber(card)) return undefined;
+  if (narutoPrintKeySetCode(printKey) === "s6" && code === "fr") return false;
+  if (slotPrinted === false) return false;
+  return undefined;
 }
 
 export function resetCatalogueCardsCache(): void {
   clearIdentityCatalogueBrowseCache();
 }
 
-/** Card-local face file under `cards/{set}/{lang}/{card}/`. */
+/** Card-local face file under `cards/{lang}/{set}/{card}/`. */
 export function packFaceAssetUrl(
   pack: CataloguePackId,
   id: { set: string; lang: string; card: string },
   file: string,
 ): string {
-  const corpus = catalogueCorpusPack(pack);
-  if (cataloguePackInfo(pack)?.narutoCollectorDisk) {
-    const diskCard = resolveNarutoArtDiskNumber({
-      number: id.card,
-      lang: id.lang,
-      artFile: file,
-    });
-    const naruto = narutoCardPathFromCollector(diskCard, id.lang);
-    if (naruto) {
-      return narutoAssetsCardUrl(corpus, naruto, file);
-    }
-  }
-  return assetsCardUrl(corpus, id, file);
+  return assetsCardUrl(catalogueCorpusPack(pack), id, file);
+}
+
+/**
+ * Naruto Carddass: printKey role URL only when bytes resolve on disk.
+ * Stale index rows (`art.carddass.jpg` on s6 FR with no folder) must not mint
+ * a 404 thumb — fall through to `missingArt` / verso.
+ */
+function narutoPrintScopedFaceFields(opts: {
+  printKey: string;
+  lang: string;
+}): Pick<CatalogueCardRow, "artUrl" | "thumbUrl" | "artFallbackFrom"> | null {
+  const { printKey, lang } = opts;
+  const hit = resolveNarutoPrintFace({ printKey, lang, role: "face" });
+  if (!hit) return null;
+  const corpus = catalogueCorpusPack("naruto/carddass");
+  return {
+    artUrl: assetsPrintFaceUrl(corpus, printKey, lang, "face"),
+    thumbUrl: assetsPrintFaceUrl(corpus, printKey, lang, "thumb"),
+    ...(hit.source === "borrowed" && hit.donorPrintKey
+      ? { artFallbackFrom: hit.donorPrintKey }
+      : {}),
+  };
 }
 
 export function langFilesHaveFoil(files: CardsIndexLangFiles): boolean {
@@ -449,7 +591,7 @@ function catalogueNames(
     ),
   ];
   const useNarutoRef =
-    cataloguePackInfo(pack)?.narutoCollectorDisk === true &&
+    cataloguePackInfo(pack)?.collectorCardFolder === true &&
     Boolean(narutoCollectorNumberKey(entry.card));
   const diskCard = catalogueDiskCard(pack, printKey, entry);
   /*
@@ -552,8 +694,12 @@ function donorMapKey(card: string, lang: string): string {
 }
 
 /**
- * Browse identity: collector (+ grouping) × face language.
+ * Browse identity: collector × face language × face band.
  * Promo / prerelease channels stay on their set-scoped printKey.
+ *
+ * FR/IT/EN: one tile per EU series membership (same as shelf checklist) —
+ * do not collapse S2–S5 onto a single impression.
+ * JA: 巻ノ band (EU s1–s5 shells fold onto the volume tile).
  */
 function narutoBrowseIdentityKey(row: CatalogueCardRow): string {
   const lang = row.lang.toLowerCase();
@@ -563,7 +709,30 @@ function narutoBrowseIdentityKey(row: CatalogueCardRow): string {
   }
   const collector =
     narutoCollectorKey(row.card) ?? canonicalizeNarutoPrintKey(row.printKey);
-  return `${collector}\0${lang}`;
+  /*
+    JA checklist axis is 巻ノ. EU s1–s5 often hang the same JA name shell —
+    collapse onto the volume band so FR keeps S1 ≠ S2–S5 while JA stays one tile.
+  */
+  if (
+    lang === "ja" &&
+    membership &&
+    (isNarutoJapaneseVolumeSet(membership) || /^s[1-5]$/i.test(membership))
+  ) {
+    return `${collector}\0ja\0maki`;
+  }
+  /*
+    Shelf checklist lists NI-009 on S1 + S3 + S4 as distinct slots. Admin must
+    keep the same set-scoped keys — the old s2–s5 band hid S3/S4/S5 reprints.
+  */
+  if (
+    membership &&
+    /^s[1-5]$/i.test(membership) &&
+    (lang === "fr" || lang === "it" || lang === "en")
+  ) {
+    return `${collector}\0${lang}\0${membership.toLowerCase()}`;
+  }
+  const band = narutoFaceBandKey(membership);
+  return `${collector}\0${lang}\0${band}`;
 }
 
 /** Prefer the checklist axis that matches the face language. */
@@ -607,8 +776,8 @@ function appearanceSetOfRow(row: CatalogueCardRow): string | null {
 /**
  * One browse tile per collector impression + face language.
  *
- * Set-scoped printKeys (`s1` / `maki3` / …) stay in sqlite for sealed
- * checklists; the admin grid collapses them and keeps `appearanceSets`.
+ * EU FR/IT/EN keep each set-scoped membership (`s3-ni0009`, `s4-ni0009`).
+ * JA still collapses EU shells onto the 巻ノ tile; CCG s7+ stay on the ccg band.
  */
 function collapseNarutoIdentityRows(
   rows: CatalogueCardRow[],
@@ -667,7 +836,7 @@ function collapseNarutoIdentityRows(
   );
 }
 
-/** Drop unprinted stubs when a printed face of the same collector+lang exists. */
+/** Drop unprinted stubs when a printed face of the same collector+lang+band exists. */
 function dropUnprintedWhenPrintedSiblingExists(
   rows: CatalogueCardRow[],
 ): CatalogueCardRow[] {
@@ -677,7 +846,8 @@ function dropUnprintedWhenPrintedSiblingExists(
     if (row.printed === false) continue;
     const collector = narutoCollectorKey(row.card);
     if (!collector) continue;
-    printedCollectors.add(`${collector}\0${row.lang.toLowerCase()}`);
+    const band = narutoFaceBandKey(narutoPrintKeySetCode(row.printKey));
+    printedCollectors.add(`${collector}\0${row.lang.toLowerCase()}\0${band}`);
   }
   if (printedCollectors.size === 0) return rows;
   return rows.filter((row) => {
@@ -685,7 +855,10 @@ function dropUnprintedWhenPrintedSiblingExists(
     if (row.printed !== false) return true;
     const collector = narutoCollectorKey(row.card);
     if (!collector) return true;
-    return !printedCollectors.has(`${collector}\0${row.lang.toLowerCase()}`);
+    const band = narutoFaceBandKey(narutoPrintKeySetCode(row.printKey));
+    return !printedCollectors.has(
+      `${collector}\0${row.lang.toLowerCase()}\0${band}`,
+    );
   });
 }
 
@@ -736,6 +909,7 @@ export function buildCatalogueCardRows(
 ): CatalogueCardRow[] {
   const packInfo = cataloguePackInfo(pack);
   const allowFallback = packInfo?.sameNumberArtFallback === true;
+  const artBorrowFrom = packInfo?.artBorrowFrom;
   const expandLocales =
     packInfo?.expandLocales === true || isNarutoUnifiedPack(pack);
   const catalogueLocales = packInfo?.catalogueLocales;
@@ -743,14 +917,19 @@ export function buildCatalogueCardRows(
   const corpusPack = catalogueCorpusPack(pack);
   const bestFaceAcrossLocales =
     packInfo?.localeArt?.bestFaceAcrossLocales === true;
+  const countLocalizedNames =
+    packInfo?.localeArt?.countLocalizedNames === true;
   const localeSpecificFaces = bestFaceAcrossLocales
     ? loadLocaleSpecificFaces(corpusPack)
     : null;
+  const localeSpecificLocales =
+    catalogueLocales ??
+    (countLocalizedNames ? (["fr", "ja", "en"] as const) : []);
   const source = isNarutoUnifiedPack(pack)
     ? foldNarutoCardsIndex(index)
     : index;
 
-  const donorsByNumber = new Map<string, ArtDonor>();
+  const donorsByNumber = new Map<string, ArtDonor[]>();
   if (allowFallback) {
     for (const [printKey, entry] of Object.entries(source.cards)) {
       for (const slot of localeSlots(
@@ -766,23 +945,59 @@ export function buildCatalogueCardRows(
         const thumb = thumbFile(slot.files) ?? undefined;
         const candidate: ArtDonor = {
           printKey,
-          set: entry.set,
+          set: narutoDiskSetForArt(printKey, entry.card, entry.set),
           card: entry.card,
           lang: slot.lang,
           file,
           ...(thumb ? { thumb } : {}),
         };
-        const prev = donorsByNumber.get(key);
-        if (
-          !prev ||
-          donorScore(candidate.set, candidate.file, candidate.card) >
-            donorScore(prev.set, prev.file, prev.card)
-        ) {
-          donorsByNumber.set(key, candidate);
-        }
+        const list = donorsByNumber.get(key) ?? [];
+        list.push(candidate);
+        donorsByNumber.set(key, list);
       }
     }
+    for (const [key, list] of donorsByNumber) {
+      list.sort(
+        (a, b) =>
+          donorScore(b.set, b.file, b.card) - donorScore(a.set, a.file, a.card),
+      );
+      donorsByNumber.set(key, list);
+    }
   }
+
+  const pickArtDonor = (
+    tilePrintKey: string,
+    tileCard: string,
+    lang: string,
+    tileEntrySet?: string,
+  ): ArtDonor | undefined => {
+    const list = donorsByNumber.get(donorMapKey(tileCard, lang));
+    if (!list?.length) return undefined;
+    const tileSet = narutoArtChannelSet(tilePrintKey, tileCard, tileEntrySet);
+    if (artBorrowFrom && tileSet) {
+      const chain = artBorrowFrom[tileSet];
+      if (!chain) return undefined;
+      for (const set of chain) {
+        const hit = list.find(
+          (d) =>
+            (d.set.toLowerCase() === set.toLowerCase() ||
+              isNarutoRetailFamilySet(d.set)) &&
+            acceptArtDonor(
+              tilePrintKey,
+              tileCard,
+              d,
+              artBorrowFrom,
+              tileSet,
+            ),
+        );
+        if (hit) return hit;
+      }
+      return list.find((d) =>
+        acceptArtDonor(tilePrintKey, tileCard, d, artBorrowFrom, tileSet),
+      );
+    }
+    return list.find((d) => acceptArtDonor(tilePrintKey, tileCard, d));
+  };
 
   const rows: CatalogueCardRow[] = [];
   for (const [printKey, entry] of Object.entries(source.cards)) {
@@ -816,18 +1031,36 @@ export function buildCatalogueCardRows(
       ) {
         continue;
       }
+      /*
+        JA-only tourney reprints (`te0107-promo` eBay) mint a promo printKey with
+        a hung FR title + borrowed S3 art. Promo checklist (same gate as search)
+        is the FR/IT attestation — never invent EU tiles for those.
+      */
+      if (
+        isNarutoUnifiedPack(pack) &&
+        narutoArtChannelSet(printKey, entry.card, entry.set) === "promo" &&
+        (lang === "fr" || lang === "it") &&
+        !belongsOnNarutoPromoChecklist(entry.card)
+      ) {
+        continue;
+      }
       const languageSpecific = bestFaceAcrossLocales
         ? isLocaleSpecificFace(
             localeSpecificFaces,
             entry.set,
             entry.card,
-          )
+          ) ||
+          (countLocalizedNames &&
+            entryIsLocaleSpecificFace(entry, localeSpecificLocales, {
+              countLocalizedNames: true,
+            }))
         : true;
       const names = catalogueNames(pack, printKey, entry, slot.files, lang);
       const diskCard = catalogueDiskCard(pack, printKey, entry);
+      const diskSet = narutoDiskSetForArt(printKey, entry.card, entry.set);
       const identityBase = {
         printKey,
-        set: entry.set,
+        set: diskSet,
         card: entry.card,
         hasFoil,
         label: names.label,
@@ -835,7 +1068,10 @@ export function buildCatalogueCardRows(
         ...(names.name ? { name: names.name } : {}),
         ...(names.aka ? { aka: names.aka } : {}),
         ...(entry.rarity ? { rarity: entry.rarity } : {}),
-        ...(slot.files.printed === false ? { printed: false } : {}),
+        ...(cataloguePrintedFlag(pack, printKey, entry.card, lang, slot.files.printed) ===
+        false
+          ? { printed: false }
+          : {}),
         ...(entry.lenticularGrid ? { lenticularGrid: entry.lenticularGrid } : {}),
         ...(slot.files.nameSource ? { nameSource: slot.files.nameSource } : {}),
       };
@@ -846,10 +1082,62 @@ export function buildCatalogueCardRows(
         Prefer that same-lang retail donor *before* bestFaceAcrossLocales, or
         the FR tile shows « art JA » for a card that is the same FR print.
       */
+      /*
+        Naruto Carddass: art URL is always print-scoped. The HTTP resolver
+        serves owned or borrowed bytes and exposes X-Placarr-Art-Source.
+      */
+      if (isNarutoUnifiedPack(pack)) {
+        const orient = orientationFromIndexSlot(entry, slot.files);
+        const landscapePrint = printIsLandscapeCard(entry);
+        const identity = {
+          ...identityBase,
+          ...(orient.landscapeFace ? { landscapeFace: true } : {}),
+          ...(orient.faceQuarterTurns
+            ? { faceQuarterTurns: orient.faceQuarterTurns }
+            : {}),
+          ...(landscapePrint ? { landscapePrint: true } : {}),
+        };
+        const scoped = narutoPrintScopedFaceFields({ printKey, lang });
+        if (scoped) {
+          rows.push({
+            ...identity,
+            lang,
+            ...scoped,
+          });
+          continue;
+        }
+        const remote = remoteArtUrl(slot.files);
+        if (remote) {
+          rows.push({ ...identity, lang, artUrl: remote });
+          continue;
+        }
+        const back = backFile(slot.files);
+        if (back) {
+          rows.push({
+            ...identity,
+            lang,
+            artUrl: packFaceAssetUrl(pack, {
+              set: diskSet,
+              lang,
+              card: diskCard,
+            }, back),
+            versoOnly: true,
+          });
+          continue;
+        }
+        rows.push({
+          ...identity,
+          lang,
+          artUrl: "",
+          missingArt: true,
+        });
+        continue;
+      }
+
       const tileOwnArt = artFile(slot.files);
       if (!tileOwnArt && allowFallback) {
-        const donor = donorsByNumber.get(donorMapKey(entry.card, lang));
-        if (donor && acceptArtDonor(printKey, entry.card, donor)) {
+        const donor = pickArtDonor(printKey, entry.card, lang, diskSet);
+        if (donor) {
           const donorDisk = {
             set: donor.set,
             lang: donor.lang,
@@ -909,7 +1197,7 @@ export function buildCatalogueCardRows(
           continue;
         }
         const diskId = {
-          set: entry.set,
+          set: diskSet,
           lang,
           card: diskCard,
         };
@@ -924,9 +1212,9 @@ export function buildCatalogueCardRows(
           continue;
         }
         const donor = allowFallback
-          ? donorsByNumber.get(donorMapKey(entry.card, lang))
+          ? pickArtDonor(printKey, entry.card, lang, diskSet)
           : undefined;
-        if (donor && acceptArtDonor(printKey, entry.card, donor)) {
+        if (donor) {
           const donorDisk = {
             set: donor.set,
             lang: donor.lang,
@@ -956,7 +1244,7 @@ export function buildCatalogueCardRows(
         continue;
       }
       const diskId = {
-        set: entry.set,
+        set: diskSet,
         lang: face.artLang,
         card: diskCard,
       };
@@ -1217,10 +1505,18 @@ function isNarutoItalianRetailSet(set: string): boolean {
   return !!series && Number(series[1]) <= 6;
 }
 
+/** Late Bandai USA sets with Coleka FR titles (not Path of the Hokage s1–s6). */
+function isNarutoFrenchColekaCcgSet(set: string): boolean {
+  const m = /^s(\d+)$/i.exec(set.trim());
+  if (!m) return false;
+  const n = Number(m[1]);
+  return n === 11 || n === 24 || n === 28;
+}
+
 /**
- * Carddass preferred-lang axis: JA ↔ 巻ノ, FR/IT ↔ retail EU bands, EN ↔ non-maki.
- * Blocks hung JA shop scans on EU-only printKeys (and FR art on EN-only CCG
- * series) from the clean preferred grid — « Toutes locales » still lists all.
+ * Carddass preferred-lang axis: JA ↔ 巻ノ, FR/IT ↔ Carddass EU, EN ↔ CCG.
+ * Blocks hung JA shop scans on EU-only printKeys and CCG `N-013` Coleka FR
+ * shells next to Carddass `NI-013` on S1 — « Toutes locales » still lists all.
  */
 export function matchesNarutoPreferredLocaleAxis(
   row: CatalogueCardRow,
@@ -1233,19 +1529,45 @@ export function matchesNarutoPreferredLocaleAxis(
     row.appearanceSets?.length
       ? row.appearanceSets
       : ([narutoPrintKeySetCode(row.printKey)].filter(Boolean) as string[]);
+  const line = narutoCatalogueLineForCard(
+    row.card,
+    sets[0] ?? narutoPrintKeySetCode(row.printKey) ?? undefined,
+  );
   if (want === "ja") {
     if (isJpOnlyNarutoArtwork(row.card)) return true;
     return sets.some((set) => isNarutoJapaneseVolumeSet(set));
   }
   if (want === "fr") {
     if (!sets.length) return true;
+    /*
+      S1–S6 CCG (`N-013`) is English Bandai USA — Coleka FR titles must not sit
+      beside Carddass `NI-013` (« Hokage le 3e »). Late CCG s11/s24/s28 keep FR.
+    */
+    if (line === "en-ccg") {
+      return sets.some((set) => isNarutoFrenchColekaCcgSet(set));
+    }
+    if (
+      sets.some((set) => set.toLowerCase() === "promo") &&
+      !belongsOnNarutoPromoChecklist(row.card)
+    ) {
+      return false;
+    }
     return sets.some((set) => isNarutoFrenchRetailSet(set));
   }
   if (want === "it") {
+    if (line === "en-ccg") return false;
     if (!sets.length) return true;
+    if (
+      sets.some((set) => set.toLowerCase() === "promo") &&
+      !belongsOnNarutoPromoChecklist(row.card)
+    ) {
+      return false;
+    }
     return sets.some((set) => isNarutoItalianRetailSet(set));
   }
   if (want === "en") {
+    // Preferred EN = CCG checklist, not Carddass NI/TE doubles.
+    if (line === "carddass-fr") return false;
     if (!sets.length) return true;
     return sets.some((set) => !isNarutoJapaneseVolumeSet(set));
   }
@@ -1260,7 +1582,16 @@ export function matchesNarutoPreferredLocaleAxis(
 export function matchesCataloguePreferredLang(
   row: CatalogueCardRow,
   preferLang: string,
-  opts: { expandLocales?: boolean; narutoLocaleAxis?: boolean } = {},
+  opts: {
+    expandLocales?: boolean;
+    narutoLocaleAxis?: boolean;
+    /**
+     * Packs with cross-locale face borrow (Ninja Ranks): a language-specific
+     * tile that only has a title (no scan) is an invent shell — hide it in
+     * preferred browse. Carddass keeps titled FR checklist cards awaiting art.
+     */
+    hideLanguageSpecificMissingArt?: boolean;
+  } = {},
 ): boolean {
   const want = preferLang.trim().toLowerCase();
   if (!want) return true;
@@ -1272,14 +1603,14 @@ export function matchesCataloguePreferredLang(
   if (row.languageSpecific) {
     if (row.lang.toLowerCase() !== want) return false;
     /*
-      Expand packs invent empty FR shells for IT-only text cards — hide those.
-      Non-expand (Mythos SS2 SAMPLE EN sans art) must still list the print.
+      Expand packs invent empty FR shells for IT-only / JA-only text cards —
+      hide nameless missing-art invents. Official EU titles without a scan yet
+      (TA-90 « Le don de la copie ») must stay visible as missingArt — unless
+      the pack borrows faces across locales (then the titled shell is noise).
     */
-    if (
-      opts.expandLocales &&
-      (row.missingArt || row.versoOnly)
-    ) {
-      return false;
+    if (opts.expandLocales && (row.missingArt || row.versoOnly)) {
+      if (!row.name?.trim()) return false;
+      if (opts.hideLanguageSpecificMissingArt) return false;
     }
     if (
       opts.narutoLocaleAxis &&
@@ -1306,6 +1637,9 @@ export function matchesCataloguePreferredLang(
   return true;
 }
 
+/** `all` = no printed filter; `printed` / `unprinted` = cardboard vs not. */
+export type CataloguePrintedFilter = "all" | "printed" | "unprinted";
+
 /** Audit filters for catalogue browse (unit-tested). */
 export function matchesCatalogueAuditFilter(
   row: CatalogueCardRow,
@@ -1314,6 +1648,7 @@ export function matchesCatalogueAuditFilter(
     missingArtOnly?: boolean;
     missingNameOnly?: boolean;
     missingPriceOnly?: boolean;
+    borrowedArtOnly?: boolean;
   },
 ): boolean {
   if (!isFaceRow(row)) return false;
@@ -1326,7 +1661,24 @@ export function matchesCatalogueAuditFilter(
   if (filter.missingPriceOnly) {
     checks.push(!(typeof row.priceCents === "number" && row.priceCents > 0));
   }
+  if (filter.borrowedArtOnly) {
+    checks.push(Boolean(row.artFallbackFrom || row.artLocaleFrom));
+  }
   return checks.some(Boolean);
+}
+
+/**
+ * Printed cardboard filter — faces only.
+ * Pack/set backs are excluded from both « Imprimées » and « Non imprimées ».
+ */
+export function matchesCataloguePrintedFilter(
+  row: CatalogueCardRow,
+  printed: CataloguePrintedFilter | undefined,
+): boolean {
+  if (!printed || printed === "all") return true;
+  if (!isFaceRow(row)) return false;
+  const isPrinted = row.printed !== false;
+  return printed === "printed" ? isPrinted : !isPrinted;
 }
 
 export type ListCatalogueCardsInput = {
@@ -1341,6 +1693,10 @@ export type ListCatalogueCardsInput = {
   missingNameOnly?: boolean;
   /** When true, only face rows with no positive reference price. */
   missingPriceOnly?: boolean;
+  /** When true, only rows showing inherited (borrowed) art. */
+  borrowedArtOnly?: boolean;
+  /** Cardboard filter — default `all` (admin shows unprinted too). */
+  printed?: CataloguePrintedFilter;
   offset?: number;
   limit?: number;
   /** Substring match on printKey / set / card / label. */
@@ -1440,22 +1796,31 @@ export async function listCatalogueCards(
       matchesCataloguePreferredLang(row, preferLang!, {
         expandLocales: expandsLocales,
         narutoLocaleAxis: isNarutoUnifiedPack(input.pack),
+        hideLanguageSpecificMissingArt:
+          packInfo?.localeArt?.bestFaceAcrossLocales === true,
       }),
     );
   }
   if (input.foilOnly) {
     rows = rows.filter((row) => row.hasFoil);
   }
+  if (input.printed && input.printed !== "all") {
+    rows = rows.filter((row) =>
+      matchesCataloguePrintedFilter(row, input.printed),
+    );
+  }
   if (
     input.incompleteOnly ||
     input.missingArtOnly ||
-    input.missingNameOnly
+    input.missingNameOnly ||
+    input.borrowedArtOnly
   ) {
     rows = rows.filter((row) =>
       matchesCatalogueAuditFilter(row, {
         incompleteOnly: input.incompleteOnly,
         missingArtOnly: input.missingArtOnly,
         missingNameOnly: input.missingNameOnly,
+        borrowedArtOnly: input.borrowedArtOnly,
       }),
     );
   }

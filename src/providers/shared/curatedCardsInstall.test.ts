@@ -15,6 +15,7 @@ import {
   curatedDestStale,
   destBackWebpName,
   installCuratedCardBacks,
+  langFirstSetBackDestRel,
   listCuratedBackSources,
 } from "./curatedCardsInstall";
 
@@ -42,6 +43,19 @@ describe("destBackWebpName", () => {
     expect(destBackWebpName("BACK.PNG")).toBe("back.webp");
     expect(destBackWebpName("art.png")).toBeNull();
     expect(destBackWebpName("BACK.md")).toBeNull();
+  });
+});
+
+describe("langFirstSetBackDestRel", () => {
+  it("rewrites language-qualified set backs onto cards/{lang}/{set}/", () => {
+    expect(langFirstSetBackDestRel("s6/back.fr.webp")).toBe(
+      "fr/s6/back.fr.webp",
+    );
+    expect(langFirstSetBackDestRel("s28/back.en.webp")).toBe(
+      "en/s28/back.en.webp",
+    );
+    expect(langFirstSetBackDestRel("back.fr.webp")).toBe("back.fr.webp");
+    expect(langFirstSetBackDestRel("s28/back.webp")).toBe("s28/back.webp");
   });
 });
 

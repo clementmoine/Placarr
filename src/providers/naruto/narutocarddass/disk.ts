@@ -13,7 +13,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
-import { assetsPackBase } from "@/lib/packAssetUrls";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
 import {
   CARD_FACE_DECISION_FILE,
   CARD_FACE_ROLES,
@@ -24,12 +24,9 @@ import {
 } from "@/providers/shared/cardFaces";
 import ledgerDoubleIllustrations from "./curated/sources/carddas-jp-double-illustrations.json";
 import {
-  appearanceSetsOf,
-  isNarutoFamilyFolder,
   narutoCardDiskFolder,
   narutoDiskCardId,
   parseNarutoCollector,
-  primaryAppearanceSet,
   type NarutoCollectorFamily,
   type NarutoLangAppearances,
 } from "./identity";
@@ -38,9 +35,8 @@ import { carddasJpCardlistCards } from "./parse/bandai";
 // --- from narutoCardPath.ts ---
 
 /**
- * Naruto face paths: `cards/{folder}/{ni0001|n0001}/{lang}/`.
- * Alt JP lines use their prefix as folder (`gaku/gaku0001`, `shi/shi0001`).
- * Series folders (`s1`, `s28`) are the old layout — still readable.
+ * Naruto face paths: `cards/{lang}/{set}/{ni0001|n0001}/` — same contract as
+ * every other TCG pack (`packCardDir`). Family is identity metadata only.
  */
 
 
@@ -49,6 +45,8 @@ export type NarutoCardPathId = {
   folder: string;
   diskId: string;
   lang: string;
+  /** Series / channel folder (`s1`, `promo`, `maki3`, …). */
+  set: string;
 };
 
 /**
@@ -76,37 +74,38 @@ export function narutoCardPathFromCollector(
   const diskId = narutoDiskCardId(raw, appearanceSet);
   if (!id || !diskId) return null;
   /*
-    La langue est un **segment du chemin** (`ninja/ni0001/fr`). Sans elle, il n'y
-    a pas de chemin à donner — et un dossier vide pointerait à côté. On rend
-    `null`, ce que les appelants savent lire : ils n'attachent alors ni art ni
+    Langue + set sont des **segments du chemin** (`fr/s1/ni0001`). Sans eux,
+    pas de chemin — on rend `null` ; les appelants n'attachent ni art ni
     vignette, et la carte reste sélectionnable par sa seule référence.
   */
   const code = normalizeNarutoLang(lang);
-  if (!code) return null;
+  const set = (appearanceSet ?? "").trim().toLowerCase();
+  if (!code || !set) return null;
   return {
     family: id.family,
     folder: narutoCardDiskFolder(id),
     diskId,
     lang: code,
+    set,
   };
 }
 
-/** `ninja/ni0001/fr` · `gaku/gaku0001/ja` */
+/** `fr/s1/ni0001` · `ja/maki3/gaku0001` */
 export function narutoCardRelPath(id: NarutoCardPathId): string {
-  return `${id.folder}/${id.diskId}/${id.lang}`;
+  return `${id.lang}/${id.set}/${id.diskId}`;
 }
 
 export function narutoCardRelSegments(id: NarutoCardPathId): string[] {
-  return [id.folder, id.diskId, id.lang];
+  return [id.lang, id.set, id.diskId];
 }
 
-/** Old dump: `s1/fr/ni001`. */
+/** @deprecated Old dump `s1/fr/ni001` — removed; use {@link narutoCardRelPath}. */
 export function legacyNarutoCardRelPath(
   appearanceSet: string,
   lang: string,
   cardId: string,
 ): string {
-  return `${appearanceSet}/${lang}/${cardId}`;
+  return `${lang}/${appearanceSet}/${cardId}`;
 }
 
 export function narutoAssetsCardUrl(
@@ -114,20 +113,21 @@ export function narutoAssetsCardUrl(
   id: NarutoCardPathId,
   file: string,
 ): string {
-  const parts = [...narutoCardRelSegments(id), file].map((p) =>
-    encodeURIComponent(p),
+  return assetsCardUrl(
+    pack,
+    { set: id.set, lang: id.lang, card: id.diskId },
+    file,
   );
-  return `${assetsPackBase(pack)}/cards/${parts.join("/")}`;
-}
-
-export function isNewNarutoCardLayoutRoot(name: string): boolean {
-  return isNarutoFamilyFolder(name);
 }
 
 const NARUTO_LANGS = new Set(["fr", "en", "it", "ja"]);
 
 export function isNarutoLangDir(name: string): boolean {
   return NARUTO_LANGS.has(normalizeNarutoLang(name));
+}
+
+export function isNewNarutoCardLayoutRoot(name: string): boolean {
+  return isNarutoLangDir(name);
 }
 
 // --- from faceChoice.ts ---
@@ -540,8 +540,7 @@ export function narutoDumpFaceRank(filename: string, lang = "fr"): number {
 // --- from narutoCardDisk.ts ---
 
 /**
- * Absolute card folders. New tree: `{family}/{ni0001}/{lang}`.
- * Legacy `{s1}/{lang}/{ni001}` is still listed so thumbs / reconstruct dual-read.
+ * Absolute card folder: `cards/{lang}/{set}/{diskId}` (universal pack layout).
  */
 
 
@@ -582,41 +581,17 @@ export function listNarutoCardDirs(
 ): NarutoOnDiskCard[] {
   if (!existsSync(cardsDir)) return [];
   const out: NarutoOnDiskCard[] = [];
-  for (const family of dirs(cardsDir)) {
-    if (!isNarutoFamilyFolder(family)) continue;
-    const familyDir = path.join(cardsDir, family);
-    for (const diskId of dirs(familyDir)) {
-      if (family === "promo" && isNarutoLangDir(diskId)) continue;
-      const diskDir = path.join(familyDir, diskId);
-      for (const lang of dirs(diskDir)) {
-        const code = normalizeNarutoLang(lang);
-        const sets = appearanceSetsOf(appearances[diskId]?.[code]);
-        out.push({
-          abs: path.join(diskDir, lang),
-          family,
-          diskId,
-          lang: code,
-          appearanceSet: sets.length ? primaryAppearanceSet(sets) : null,
-        });
-      }
-    }
-  }
-  for (const set of dirs(cardsDir)) {
-    if (isNarutoFamilyFolder(set) && set !== "promo") continue;
-    const setDir = path.join(cardsDir, set);
-    for (const lang of dirs(setDir)) {
-      /*
-        New family tree is `{promo}/{pr0096}/{fr}`. Without this guard the
-        legacy walker treats `pr0096` as a language and `fr` as a card id —
-        installing the same PNG to `cards/ninja/fr/pr0096/`.
-      */
-      if (!isNarutoLangDir(lang)) continue;
-      const langDir = path.join(setDir, lang);
-      for (const cardId of dirs(langDir)) {
+  void appearances;
+  for (const lang of dirs(cardsDir)) {
+    if (!isNarutoLangDir(lang)) continue;
+    const langDir = path.join(cardsDir, lang);
+    for (const set of dirs(langDir)) {
+      const setDir = path.join(langDir, set);
+      for (const cardId of dirs(setDir)) {
         const parsed = parseNarutoCollector(cardId);
         const diskId = narutoDiskCardId(cardId, set) ?? cardId;
         out.push({
-          abs: path.join(langDir, cardId),
+          abs: path.join(setDir, cardId),
           family: parsed?.family ?? "ninja",
           diskId,
           lang: normalizeNarutoLang(lang),

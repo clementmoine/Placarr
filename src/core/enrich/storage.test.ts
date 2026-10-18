@@ -120,13 +120,13 @@ describe("pickVisuallyMatchingCatalogCoverUrl", () => {
           hash: artHash,
         },
         {
-          url: "/assets/naruto/carddass/cards/ninja/ni0001/fr/art.webp",
+          url: "/assets/naruto/carddass/cards/fr/s1/ni0001/art.webp",
           type: "cover",
           source: "narutocarddass",
           hash: artHash,
         },
       ]),
-    ).toBe("/assets/naruto/carddass/cards/ninja/ni0001/fr/art.webp");
+    ).toBe("/assets/naruto/carddass/cards/fr/s1/ni0001/art.webp");
   });
 });
 

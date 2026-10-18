@@ -12,5 +12,5 @@ export const onepieceEffectPack = defineCatalogueOnlyPack({
   label: "One Piece Card Game",
   blurb: "Catalogue local OPTCG — dos à curer, sans dump foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
 });

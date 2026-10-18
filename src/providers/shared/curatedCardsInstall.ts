@@ -47,6 +47,21 @@ export function destBackWebpName(filename: string): string | null {
   return qualifier ? `back.${qualifier}.webp` : "back.webp";
 }
 
+/**
+ * Remap curated set backs onto lang-first data layout.
+ *
+ * `s6/back.fr.webp` → `fr/s6/back.fr.webp`. Pack-level (`back.fr.webp`) and
+ * unqualified set sleeves (`s28/back.webp`) stay unchanged.
+ */
+export function langFirstSetBackDestRel(destRel: string): string {
+  const m = /^([^/]+)\/back\.([a-z]{2}(?:[a-z]{2})?)\.(webp)$/i.exec(destRel);
+  if (!m) return destRel;
+  const set = m[1]!;
+  const lang = m[2]!.toLowerCase();
+  const file = `back.${lang}.webp`;
+  return `${lang}/${set}/${file}`;
+}
+
 function isSafeSegment(name: string): boolean {
   return (
     Boolean(name) &&
@@ -145,6 +160,8 @@ export async function installCuratedCardBacks(opts: {
   packBackDestName?: string;
   /** Only install these set folders (and pack-level backs). */
   includeSetCodes?: readonly string[];
+  /** Remap relative dest (e.g. lang-first set backs). */
+  mapDestRel?: (destRel: string) => string;
 }): Promise<CuratedBackInstall[]> {
   warnMisplacedLangBacksUnder(opts.curatedCardsDir);
   const allow = opts.includeSetCodes?.length
@@ -161,10 +178,11 @@ export async function installCuratedCardBacks(opts: {
       // Pack-level back.webp always kept; set backs filtered.
       if (setSeg && !allow.has(setSeg)) continue;
     }
-    const destRel =
+    let destRel =
       opts.packBackDestName && rawDestRel === "back.webp"
         ? opts.packBackDestName
         : rawDestRel;
+    if (opts.mapDestRel) destRel = opts.mapDestRel(destRel);
     const dest = path.join(opts.destCardsDir, destRel);
     const stale = opts.force || curatedDestStale(src, dest);
     if (!stale) {

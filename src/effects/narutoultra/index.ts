@@ -16,5 +16,5 @@ export const narutoUltraEffectPack = defineCatalogueOnlyPack({
   label: "Naruto Ultra Challenge",
   blurb: "Catalogue local — dos du jeu, sans effet foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.fr.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/fr`,
 });

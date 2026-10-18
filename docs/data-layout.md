@@ -31,9 +31,8 @@ data/
     carddass/                      # un pack (Carddass FR/JA/IT + Bandai USA CCG)
       catalog.sqlite
       cards/
-        back.fr.webp | back.en.webp | …   # sleeve par langue (pas de back.webp générique)
-        back.en.webp | back.it.webp | back.ja.webp
-        {ninja|jutsu|mission|client|promo}/{ni0001|n0001|nus0097}/{fr|en|it|ja}/
+        back.fr.webp | back.en.webp | …   # sleeve pack par langue (racine cards/)
+        {fr|en|it|ja}/{s1|s6|promo|…}/{ni0001|n0001|nus0097}/
           art.<source>.<ext>   # un dump par hôte (carddass, nikita, suruga, …)
           art.jpg              # legacy, non renommé
           art.reconstructed.* | art.corrected.*
@@ -56,8 +55,7 @@ data/
       facts.json | dbscards-fr.json | dbscards-en.json | scrape-summary.json
       backup/
       cards/back.webp              → /assets/dragonball/cg/cards/back.webp
-      cards/{set}/fr/{card}/art.webp   # dbscards / Bandai (FR)
-      cards/{set}/en/{card}/art.webp   # clone TCG Arena / Deckplanet
+      cards/{lang}/{set}/{card}/art.webp   # contrat universel (FR Bandai, EN Arena, …)
       staging/dragon-ball-masters-arena/  # git clone, gitignored
       staging/dbscards-products/          # Sync admin Masters
       foil/full_foil_mask.webp
@@ -74,14 +72,43 @@ data/
   logs/                            # artefacts d'audit foil (writer : src/providers/pokemon/live/liveCard.ts)
 ```
 
-`naruto` = franchise ; **`naruto/carddass`** = Carddass + CCG (plus d’onglet Bandai CCG). **`naruto/shippuden`**, **`naruto/ninja-ranks`**, **`naruto/ultra-challenge`** = autres jeux, autres packs. Layout Carddass :
-`cards/{family}/{ni0001|n0001|nus0097}/{lang}/` — family = tri (`ninja`…), id = préfixe
-imprimé + numéro. NI et N sont **voisins**, pas la même carte. `N-US097` n’est
-pas `N-097` : disque `nus0097`, printKey `naruto:nus-0097`. La série (`s1`,
-`s28`) est une apparition dans `catalog.sqlite` (`pack_documents.appearances`), pas un
-dossier. printKey : `naruto:ni-0001` / `naruto:n-0001` / `naruto:nus-0097`
-(alias `sN-*`).
-`printed=false` (S6 FR) : visible au catalogue, absent du picker.
+`naruto` = franchise ; **`naruto/carddass`** = Carddass + CCG (plus d’onglet Bandai CCG). **`naruto/shippuden`**, **`naruto/ninja-ranks`**, **`naruto/ultra-challenge`** = autres jeux, autres packs.
+
+**Contrat disque universel** (tous les TCG) : `cards/{lang}/{set}/{card}/`.
+Carddass : `card` = id collector (`ni0001`, `nus0097`) ; `set` = série / canal
+(`s1`, `s6`, `promo`, …). NI et N sont **voisins**, pas la même carte.
+
+**URLs de rôle (pas de filename en URL)** :
+
+| Rôle | Forme |
+|------|--------|
+| Face / thumb / illust. B | `/assets/<pack>/prints/{set}-{id}-{lang}/face\|thumb\|face-b` (stem étagère sans finish). **Émis** aujourd’hui par Naruto Carddass ; résolveur HTTP pack-agnostique (emprunt = Carddass seulement). |
+| Dos pack | `/assets/<pack>/backs/{lang}` |
+| Dos set | `/assets/<pack>/backs/{lang}/sets/{set}` |
+
+Le résolveur HTTP choisit le meilleur fichier sur disque (`face.json` +
+classement dump pour les faces ; `back.{lang}.*` / `back.*` pour les dos) et
+expose `X-Placarr-Art-Source` / `X-Placarr-Art-Disk`. SQLite / index : présence
+éventuelle, **jamais** le basename dans l’URL publique. Layout disque inchangé
+(lang-first, `art.<source>.*`).
+
+**Héritage art (lecture seule, jamais matérialisé)** :
+
+| Couche | Opt-in | Portée |
+|--------|--------|--------|
+| `artBorrowFrom` | chaîne set→set sur le pack | **même locale** uniquement (`fr/s3` ← `fr/s1`). S1 = faces owned ; reprints S2–S6 qui affichent encore S1 restent `borrowed` / `artFallbackFrom` (deck + checklist) jusqu’à face propre. |
+| `localeArt.bestFaceAcrossLocales` | pack / série ; denylist carte via `locale-specific-faces.json` | cross-lang seulement si faces neutres (pas de texte / art identique) |
+
+Chaîne vide (`foo: []`) = pas d’héritage pour ce set. S6 emprunte
+S5→S1 (même locale) tant que `fr/s6/{id}/` n’a pas sa propre face — dès
+qu’elle arrive, le résolveur marque `owned`. Les 巻ノ (`maki*`) empruntent
+`s1…s6` : la checklist JA ne montre que `maki*`, alors que beaucoup de scans
+vivent sous `ja/sN/`. Versos restent sur la locale de la tuile. Filtre admin
+« Art emprunté » = `artFallbackFrom` / `artLocaleFrom`.
+
+`printed=false` (S6 FR) : visible au catalogue, absent du picker ; le
+recto peut quand même s’afficher via emprunt S5.
+Migration : `pnpm cards:migrate:lang-first`.
 Faces : **jamais ignorer un hôte** parce qu’une autre illustration est déjà là.
 Chaque dump reste `art.<source>.<ext>` ; `face.json` choisit l’affichage
 (pixels, tie-break par locale). Même contrat pour tous les TCG / packs — pas

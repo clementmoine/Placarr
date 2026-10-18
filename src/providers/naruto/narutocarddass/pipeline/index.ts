@@ -605,6 +605,7 @@ export function planNarutoCardMove(
   if (!id || !diskId) return null;
   const destLang = normalizeNarutoLang(lang);
   const folder = narutoCardDiskFolder(id);
+  const set = appearanceSet.toLowerCase();
   return {
     fromRel: `${appearanceSet}/${lang}/${cardId}`,
     toRel: narutoCardRelPath({
@@ -612,8 +613,9 @@ export function planNarutoCardMove(
       folder,
       diskId,
       lang: destLang,
+      set,
     }),
-    appearanceSet: appearanceSet.toLowerCase(),
+    appearanceSet: set,
     lang: destLang,
     diskId,
     family: folder,
@@ -633,6 +635,19 @@ export function planNarutoCanonicalDiskRename(
   const destFolder = narutoCardDiskFolder(parsed);
   const destLang = normalizeNarutoLang(lang);
   if (destFolder === family && destId === diskId) return null;
+  /*
+    Family-tree rename → lang/set/card. Real bulk moves live in
+    `scripts/migrateCardsLangFirst.ts` (appearances-aware). This planner keeps
+    promo / alt-line folders as the set segment.
+  */
+  const set =
+    destFolder === "promo" ||
+    destFolder === "gaku" ||
+    destFolder === "shi" ||
+    destFolder === "mju" ||
+    destFolder === "msa"
+      ? destFolder
+      : "s1";
   return {
     fromRel: `${family}/${diskId}/${lang}`,
     toRel: narutoCardRelPath({
@@ -640,8 +655,9 @@ export function planNarutoCanonicalDiskRename(
       folder: destFolder,
       diskId: destId,
       lang: destLang,
+      set,
     }),
-    appearanceSet: destFolder,
+    appearanceSet: set,
     lang: destLang,
     diskId: destId,
     family: destFolder,

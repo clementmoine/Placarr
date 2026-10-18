@@ -175,7 +175,10 @@ function ItemCardInner(props: ItemCardProps) {
     }
   }, [props.printKey, printVariant?.effectPack, props.variant]);
   const variantView = useMemo(
-    () => variantRendering(props.variant, printVariant, imageUrl),
+    () =>
+      variantRendering(props.variant, printVariant, imageUrl, {
+        preferThumb: true,
+      }),
     [props.variant, printVariant, imageUrl, effectsReady],
   );
   const cardBackSkeletonUrl = resolveSharedCardBackSkeleton({
@@ -217,7 +220,8 @@ function ItemCardInner(props: ItemCardProps) {
     reset: resetEdgeColors,
   } = useImageEdgeColors();
 
-  const displayImageUrl = imageUrl;
+  // Catalogue print roles (`/prints/…/thumb`) beat stale item `/cards/…` pins.
+  const displayImageUrl = variantView.imageUrl ?? imageUrl;
 
   const artOrient = useArtFaceOrientation(
     displayImageUrl,

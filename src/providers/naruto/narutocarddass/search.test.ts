@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parsePrintKey } from "@/core/identify/printKey";
 import { NARUTO_CARDDASS_FINISHES, narutoCarddassEffectPack } from "@/effects/narutocarddass";
 import { narutoSetsUnreleasedInFrench, isNarutoLangPrinted, preferNarutoAppearanceSet } from "./identity";
 import {
@@ -10,6 +11,7 @@ import {
   narutoCandidateCardBackUrl,
   searchNarutoPrints,
 } from "./search";
+import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { japaneseVolumeForNumber } from "./sources/sealed";
 
 // —— searchPrints ——
@@ -139,31 +141,31 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       const retail = lookupNarutoPrint("naruto:s1-te0034", { language: "fr" });
       expect(promo?.title).toMatch(/Cataracte/i);
       expect(promo?.imageUrl).toBeTruthy();
-      expect(promo?.imageUrl).toBe(retail?.imageUrl);
-      expect(promo?.imageUrl).toContain("/jutsu/te0034/fr/");
+      expect(promo?.imageUrl).toContain("/prints/");
+      expect(promo?.imageUrl).toMatch(/\/face$/);
       expect(promo?.printKey).toMatch(/promo/i);
+      // Print-scoped: promo and retail keep distinct URLs; bytes resolve at HTTP.
+      expect(promo?.imageUrl).not.toBe(retail?.imageUrl);
     });
 
     it("resolves mirrored promo art URLs onto the retail disk folder", () => {
-      // print_assets lists art.carddass.jpg on promo-ta0081, but the file lives
-      // under mission/ta0081/fr/ — never invent a missing ta0081-promo/ tree.
+      // print_assets may list art on promo-ta0081 while bytes live under fr/s2/ta0081.
       const promo = lookupNarutoPrint("naruto:promo-ta0081", {
         language: "fr",
       });
-      expect(promo?.imageUrl).toContain("/mission/ta0081/fr/art.carddass.jpg");
-      expect(promo?.imageUrl).not.toContain("ta0081-promo");
+      expect(promo?.imageUrl).toContain("/prints/promo-ta0081-fr/face");
     });
 
     it("serves tin / UNS3 promo faces from disk when print_assets is empty", () => {
       // Titles live in sqlite; FR tin PR art is on disk only (no print_assets row).
-      for (const [key, needle] of [
-        ["naruto:promo-pr0011", "/promo/pr0011/fr/"],
-        ["naruto:promo-pr0016", "/promo/pr0016/fr/"],
-        ["naruto:promo-pr0095", "/promo/pr0095/fr/"],
+      for (const [key] of [
+        ["naruto:promo-pr0011"],
+        ["naruto:promo-pr0016"],
+        ["naruto:promo-pr0095"],
       ] as const) {
         const candidate = lookupNarutoPrint(key, { language: "fr" });
         expect(candidate?.imageUrl, key).toBeTruthy();
-        expect(candidate?.imageUrl, key).toContain(needle);
+        expect(candidate?.imageUrl, key).toMatch(/\/prints\/[^/]+-fr\/face$/);
       }
     });
 
@@ -176,6 +178,13 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       for (const plain of candidate?.plainFinishes ?? []) {
         expect(candidate?.finishes).toContain(plain);
       }
+    });
+
+    it("does not invent a ghost S1 key when FR checklist is S2-only (CL-5)", () => {
+      expect(lookupNarutoPrint("naruto:s1-cl0005", { language: "fr" })).toBeNull();
+      expect(
+        lookupNarutoPrint("naruto:s2-cl0005", { language: "fr" })?.imageUrl,
+      ).toBe("/assets/naruto/carddass/prints/s2-cl0005-fr/face");
     });
 
     /*
@@ -194,12 +203,10 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       ]);
       expect(ja?.plainFinishes).toEqual(["normal", "normal (illustration B)"]);
       expect(ja?.variantImageUrls).toEqual({
-        "normal (illustration B)": expect.stringContaining(
-          "/jutsu/te0192/ja/art.carddas-b.png",
-        ),
-        "holo (illustration B)": expect.stringContaining(
-          "/jutsu/te0192/ja/art.carddas-b.png",
-        ),
+        "normal (illustration B)":
+          "/assets/naruto/carddass/prints/maki10-te0192-ja/face-b",
+        "holo (illustration B)":
+          "/assets/naruto/carddass/prints/maki10-te0192-ja/face-b",
       });
     });
 
@@ -212,12 +219,23 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
 
     it("stamps the USA sleeve on CCG prints and leaves Carddass to the pack back", () => {
       expect(narutoCandidateCardBackUrl("n1621", "s28")).toBe(
-        "/assets/naruto/carddass/cards/back.en.webp",
+        "/assets/naruto/carddass/backs/en",
       );
       expect(narutoCandidateCardBackUrl("n1650", "s28")).toBe(
-        "/assets/naruto/carddass/cards/back.en.webp",
+        "/assets/naruto/carddass/backs/en",
       );
-      expect(narutoCandidateCardBackUrl("ni001", "s1")).toBeUndefined();
+      expect(narutoCandidateCardBackUrl("ni001", "s1")).toBe(
+        "/assets/naruto/carddass/backs/fr",
+      );
+      expect(narutoCandidateCardBackUrl("te0139-promo", "promo", "fr")).toBe(
+        "/assets/naruto/carddass/backs/fr",
+      );
+      expect(narutoCandidateCardBackUrl("ni0206", "s6", "fr")).toBe(
+        "/assets/naruto/carddass/backs/fr/sets/s6",
+      );
+      expect(lookupNarutoPrint("naruto:s6-ni0206", { language: "fr" })?.cardBackUrl).toBe(
+        "/assets/naruto/carddass/backs/fr/sets/s6",
+      );
       expect(lookupNarutoPrint("naruto:s1-ni0001")?.effectPack).toBe(
         "naruto-carddass",
       );
@@ -322,12 +340,130 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
         "naruto:s2-ta0074",
         "naruto:s3-ta0074",
       ]);
-      expect(retail.find((row) => row.setCode === "s2")?.setLabel).toMatch(
-        /Series 2|Série 2/i,
+      expect(retail.find((row) => row.setCode === "s2")?.setLabel).toBe(
+        "Série 2 — Sceller le maléfice / Détruire Konoha",
       );
-      expect(retail.find((row) => row.setCode === "s3")?.setLabel).toMatch(
-        /Series 3|Série 3/i,
+      expect(retail.find((row) => row.setCode === "s3")?.setLabel).toBe(
+        "Série 3 — Apprentissage / Puissances Cachées",
       );
+      expect(retail.every((row) => row.reference === "TA-074")).toBe(true);
+      expect(retail.every((row) => row.rarity !== "promo")).toBe(true);
+    });
+
+    it("keeps tourney promo off S2/S3 sibling expansion", () => {
+      const rows = searchNarutoPrints("TA-074", {
+        language: "fr",
+        limit: 20,
+      }).filter((row) => /ta0074/i.test(row.printKey));
+      const promo = rows.find((row) => row.printKey === "naruto:promo-ta0074");
+      expect(promo?.reference).toBe("TA-074 · promo");
+      expect(promo?.setLabel).toBe("Promo (hors série)");
+      expect(
+        rows.filter((row) => /^naruto:s[23]-ta0074$/.test(row.printKey)),
+      ).toHaveLength(2);
+      expect(
+        rows.some(
+          (row) =>
+            /^naruto:s[23]-/.test(row.printKey) &&
+            (row.reference?.includes("promo") || row.rarity === "promo"),
+        ),
+      ).toBe(false);
+    });
+
+    it("does not offer JA-only TE-107 tourney stub as FR « · promo »", () => {
+      // S3 commune 無音殺人者 ≠ hung FR title on `te0107-promo` (JA gokui fill).
+      const rows = searchNarutoPrints("TE-107", {
+        language: "fr",
+        limit: 20,
+      }).filter((row) => /te0107/i.test(row.printKey));
+      expect(rows.map((row) => row.printKey)).toEqual(["naruto:s3-te0107"]);
+      expect(rows[0]?.reference).toBe("TE-107");
+      expect(rows[0]?.setLabel).toBe(
+        "Série 3 — Apprentissage / Puissances Cachées",
+      );
+      expect(rows[0]?.rarity).toBe("commune");
+      expect(
+        listNarutoSetPrints({ setId: "promo", language: "fr" }).some(
+          (row) => row.printKey === "naruto:promo-te0107",
+        ),
+      ).toBe(false);
+    });
+
+    it("lookup FR remaps unattested promo stubs onto the retail sibling", () => {
+      const looked = lookupNarutoPrint("naruto:promo-te0107", {
+        language: "fr",
+      });
+      expect(looked?.printKey).toBe("naruto:s3-te0107");
+      expect(looked?.reference).toBe("TE-107");
+      expect(looked?.setLabel).toMatch(/^Série 3/);
+      expect(looked?.setLabel).not.toMatch(/Promo/i);
+    });
+
+    it("keeps FR HTML-only unpublished TA-090 off the S2 checklist", () => {
+      expect(
+        listNarutoSetPrints({ setId: "s2", language: "fr" }).some(
+          (row) => row.printKey === "naruto:s2-ta0090",
+        ),
+      ).toBe(false);
+      expect(
+        searchNarutoPrints("TA-090", { language: "fr", limit: 10 }).some(
+          (row) => row.printKey === "naruto:s2-ta0090",
+        ),
+      ).toBe(false);
+    });
+
+    it("keeps HTML-unpublished TA-090 for admin via includeUnprinted", () => {
+      const s2Admin = listNarutoSetPrints({
+        setId: "s2",
+        language: "fr",
+        includeUnprinted: true,
+      });
+      const ta090 = s2Admin.find((row) => row.printKey === "naruto:s2-ta0090");
+      expect(ta090?.printed).toBe(false);
+
+      const s6Checklist = listNarutoSetPrints({
+        setId: "s6",
+        language: "fr",
+        includeUnprinted: false,
+      });
+      const s6Admin = listNarutoSetPrints({
+        setId: "s6",
+        language: "fr",
+        includeUnprinted: true,
+      });
+      expect(s6Checklist.length).toBeGreaterThan(0);
+      expect(s6Checklist.every((row) => row.printed !== false)).toBe(true);
+      // Cancelled S6 FR (asset without FR title) stay out of checklist but in admin.
+      expect(s6Admin.length).toBeGreaterThan(s6Checklist.length);
+      expect(s6Admin.some((row) => row.printed === false)).toBe(true);
+      expect(
+        s6Admin.some((row) => row.printKey === "naruto:s6-ni0264"),
+      ).toBe(true);
+    });
+
+    it("FR checklists have no retail·promo bleed or EN series titles", () => {
+      for (const setId of ["s1", "s2", "s3", "s4", "s5", "s6"] as const) {
+        for (const row of listNarutoSetPrints({ setId, language: "fr" })) {
+          expect(row.setCode).toBe(setId);
+          expect(row.reference ?? "").not.toMatch(/·\s*promo/i);
+          expect(row.setLabel ?? "").not.toMatch(/Promo/i);
+          expect(row.setLabel ?? "").not.toMatch(/^Series\s+\d+/i);
+        }
+      }
+      for (const row of listNarutoSetPrints({
+        setId: "promo",
+        language: "fr",
+      })) {
+        const parsed = parsePrintKey(row.printKey);
+        expect(parsed?.set).toBe("promo");
+        const disk = parsed?.grouping
+          ? `${parsed.number}-${parsed.grouping}`
+          : parsed?.number?.endsWith("-promo") ||
+              /^(pr|op|can|coin)/i.test(parsed?.number ?? "")
+            ? (parsed?.number ?? "")
+            : `${parsed?.number}-promo`;
+        expect(belongsOnNarutoPromoChecklist(disk)).toBe(true);
+      }
     });
 
     it("stamps setCode/setLabel to the filtered series for multi-set reprints", () => {
@@ -337,7 +473,10 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
         limit: 20,
       }).find((r) => r.printKey === "naruto:s3-ta0074");
       expect(row?.setCode).toBe("s3");
-      expect(row?.setLabel).toMatch(/Series 3|Série 3/i);
+      expect(row?.setLabel).toBe(
+        "Série 3 — Apprentissage / Puissances Cachées",
+      );
+      expect(row?.reference).toBe("TA-074");
     });
 
     it("finds deck-only S4 reprints in set-filtered search (picker)", () => {
@@ -479,7 +618,7 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
         label: "PROMO — Promo (off-series)",
       });
       expect(listNarutoPrintSets("fr").find((s) => s.id === "prerelease")).toBeUndefined();
-      expect(listNarutoPrintSets("it").find((s) => s.id === "s1")).toBeUndefined();
+      expect(listNarutoPrintSets("it").find((s) => s.id === "s1")).toBeDefined();
     });
 
     it("lists manga prerelease cards under Série 1, not a separate series", () => {

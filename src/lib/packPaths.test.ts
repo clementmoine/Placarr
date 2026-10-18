@@ -71,7 +71,7 @@ describe("packPaths", () => {
   it("builds assets card URLs and canonical face names", () => {
     expect(
       assetsCardUrl("lorcana", { set: "1", lang: "fr", card: "1" }, "art.jpg"),
-    ).toBe("/assets/lorcana/cards/1/fr/1/art.jpg");
+    ).toBe("/assets/lorcana/cards/fr/1/1/art.jpg");
     expect(pokemonFaceFileFromTex("me5_fr_045", "me5_wp_fr_045")).toBe(
       "mask.webp",
     );
@@ -79,7 +79,7 @@ describe("packPaths", () => {
       "mask-ph.webp",
     );
     expect(pokemonCardTextureUrl("me5_fr_045", "me5_fr_045")).toBe(
-      "/assets/pokemon/cards/me5/fr/045/art.webp",
+      "/assets/pokemon/cards/fr/me5/045/art.webp",
     );
   });
 
@@ -140,6 +140,20 @@ describe("packPaths", () => {
     expect(splitAssetsPackPath(["lorcana", "etc", "passwd"])).toBeNull();
   });
 
+  it("accepts role back roots (nested pack and flat)", async () => {
+    const { splitAssetsPackPath } = await import("./packPaths");
+    expect(splitAssetsPackPath(["naruto", "carddass", "backs", "fr"])).toEqual({
+      pack: "naruto/carddass",
+      rest: ["backs", "fr"],
+    });
+    expect(
+      splitAssetsPackPath(["lorcana", "backs", "en", "sets", "1"]),
+    ).toEqual({
+      pack: "lorcana",
+      rest: ["backs", "en", "sets", "1"],
+    });
+  });
+
   it("resolves pack back.webp or back.png", async () => {
     const { assetsPackBackUrl, resolvePackBackPath } =
       await import("./packPaths");
@@ -148,7 +162,7 @@ describe("packPaths", () => {
     if (naruto) {
       expect(naruto.endsWith("back.fr.webp")).toBe(true);
       expect(assetsPackBackUrl("naruto/carddass", "fr")).toBe(
-        "/assets/naruto/carddass/cards/back.fr.webp",
+        "/assets/naruto/carddass/backs/fr",
       );
     }
   });

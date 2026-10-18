@@ -426,7 +426,10 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
  * Ordre : art disque **FR** (PokéCardex / Live) → CDN TCGdex localisé (`/fr/…`,
  * EN au `onError` via `tcgdexDisplayCandidates`).
  */
-export function toChecklistPrintCandidate(card: TcgdexCard): PrintCandidate {
+export function toChecklistPrintCandidate(
+  card: TcgdexCard,
+  opts?: { printed?: boolean },
+): PrintCandidate {
   const lang = (card.language ?? "fr").trim().toLowerCase() || "fr";
   const localPaper =
     localPokemonCatalogueArtUrl(card.printKey, lang, undefined, {
@@ -453,21 +456,31 @@ export function toChecklistPrintCandidate(card: TcgdexCard): PrintCandidate {
     finishes: card.finishes.length > 0 ? card.finishes : [PLAIN_FINISH],
     plainFinishes: [PLAIN_FINISH],
     effectPack: POKEMON_EFFECT_PACK_ID,
+    ...(opts?.printed === false ? { printed: false } : {}),
     externalIds: {
       [PROVIDER_ID]: card.providerId,
     },
   };
 }
 
+function rowIsPrinted(row: { printed?: number | boolean | null }): boolean {
+  return row.printed !== 0 && row.printed !== false;
+}
+
 /** Cache par langue pour l'énumération check-list (une requête SQL). */
 const checklistPrintsByLang = new Map<string, Map<string, PrintCandidate[]>>();
 
-function checklistPrintsForLanguage(language: string): Map<string, PrintCandidate[]> {
+function checklistPrintsForLanguage(
+  language: string,
+  opts?: { includeUnprinted?: boolean },
+): Map<string, PrintCandidate[]> {
   const lang = language.trim().toLowerCase() || "fr";
-  const hit = checklistPrintsByLang.get(lang);
+  const includeUnprinted = opts?.includeUnprinted === true;
+  const cacheKey = `${lang}\0${includeUnprinted ? "all" : "printed"}`;
+  const hit = checklistPrintsByLang.get(cacheKey);
   if (hit) return hit;
 
-  const rows = listTcgdexRowsForLanguage(lang);
+  const rows = listTcgdexRowsForLanguage(lang, { includeUnprinted });
   const presentIds = new Set(
     rows.map((row) => row.setId.trim().toLowerCase()),
   );
@@ -475,12 +488,14 @@ function checklistPrintsForLanguage(language: string): Map<string, PrintCandidat
   for (const row of rows) {
     const setId = row.setId.trim().toLowerCase();
     if (isLegacyTcgdexTrainerGalleryId(setId, presentIds)) continue;
-    const candidate = toChecklistPrintCandidate(cardFromLocalRow(row));
+    const candidate = toChecklistPrintCandidate(cardFromLocalRow(row), {
+      printed: rowIsPrinted(row) ? undefined : false,
+    });
     const list = bySet.get(setId);
     if (list) list.push(candidate);
     else bySet.set(setId, [candidate]);
   }
-  checklistPrintsByLang.set(lang, bySet);
+  checklistPrintsByLang.set(cacheKey, bySet);
   return bySet;
 }
 
@@ -738,12 +753,15 @@ export const tcgdexModule = defineProvider({
     const raw = tcgdexBoosterComposition as BoosterCompositionFile;
     return raw?.version === 1 ? raw : null;
   },
-  listSetPrints: async ({ setId, language }) => {
+  listSetPrints: async ({ setId, language, includeUnprinted }) => {
     const lang = (language ?? "fr").trim().toLowerCase() || "fr";
     const key = setId.trim().toLowerCase();
     if (!key) return [];
-    return checklistPrintsForLanguage(lang).get(key) ?? [];
-  },  searchPrints: async ({
+    return (
+      checklistPrintsForLanguage(lang, { includeUnprinted }).get(key) ?? []
+    );
+  },
+  searchPrints: async ({
     query,
     language,
     limit,

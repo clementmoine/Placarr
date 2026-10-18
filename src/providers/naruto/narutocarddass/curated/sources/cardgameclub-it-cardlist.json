@@ -43,13 +43,13 @@
     {
       "number": "cl005",
       "name": "Zori",
-      "setCode": "s1",
+      "setCode": "s2",
       "printedRef": "CL-05"
     },
     {
       "number": "cl008",
       "name": "Genzo",
-      "setCode": "s1",
+      "setCode": "s2",
       "printedRef": "CL-08"
     },
     {
@@ -97,7 +97,7 @@
     {
       "number": "ni008",
       "name": "Iruka",
-      "setCode": "s2",
+      "setCode": "s1",
       "printedRef": "NI-08"
     },
     {
@@ -235,7 +235,7 @@
     {
       "number": "ni051",
       "name": "Tonbo Tobitake",
-      "setCode": "s4",
+      "setCode": "s1",
       "printedRef": "NI-51"
     },
     {
@@ -301,7 +301,7 @@
     {
       "number": "ni080",
       "name": "Kagari",
-      "setCode": "s4",
+      "setCode": "s3",
       "printedRef": "NI-80"
     },
     {

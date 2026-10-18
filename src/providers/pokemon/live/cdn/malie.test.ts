@@ -50,7 +50,7 @@ describe("pokemontcglive malie naming", () => {
   it("malie_image_paths_align_with_cdn_bundle_names", () => {
     expect(
       bundleStemFromMalieImagePath(
-        "https://cdn.malie.io/file/malie-io/tcgl/cards/tex/fr/me1/me1_fr_001_std.png",
+        "https://cdn.malie.io/file/malie-io/tcgl/cards/fr/tex/me1/me1_fr_001_std.png",
       ),
     ).toBe("me1_fr_001");
     expect(bundleStemFromMalieImagePath("me1_fr_001_ph.foil.png")).toBe(

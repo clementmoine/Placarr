@@ -1,5 +1,5 @@
 /**
- * Tests — durableCdn + ingest ledger + anti-désync identity browse.
+ * Tests — durableCdn + ingest ledger + anti-désync identity browse + printed.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -29,7 +29,13 @@ import {
   loadNarutoCardsIndexFromSqlite,
   NARUTO_PACK_ID,
 } from "@/providers/naruto/narutocarddass/indexStore";
+import { enumerateNarutoSetPrints } from "@/providers/naruto/narutocarddass/catalogueBrowse";
+import {
+  listNarutoPrintSets,
+  listNarutoSetPrints,
+} from "@/providers/naruto/narutocarddass/search";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import { getProviderModule } from "@/core/catalog/catalog";
 
 describe("catalogDurableCdn", () => {
   it("marks known encyclopaedia / static hosts as durable", () => {
@@ -134,22 +140,46 @@ describe("catalogue identity browse anti-désync", () => {
   });
 
   it(
-    "Pokémon identity browse printKeys ⊆ checklist sqlite (same corpus)",
-    () => {
-      const checklist = new Set(
-        listTcgdexRowsForLanguage("fr").map((r) => r.printKey),
-      );
-      if (checklist.size === 0) return; // no local corpus in CI sandbox
+    "Pokémon admin ⊇ checklist; admin−checklist ⊆ printed=false",
+    async () => {
+      const checklistRows = listTcgdexRowsForLanguage("fr");
+      if (checklistRows.length === 0) return; // no local corpus in CI sandbox
 
+      const checklist = new Set(checklistRows.map((r) => r.printKey));
       const browse = tryBuildIdentityCatalogueRows("pokemon");
       expect(browse).not.toBeNull();
-      const faces = (browse ?? []).filter((r) => r.kind !== "pack-back");
+      const faces = (browse ?? []).filter(
+        (r) => r.kind !== "pack-back" && r.lang === "fr",
+      );
       expect(faces.length).toBeGreaterThan(0);
-      for (const row of faces.slice(0, 50)) {
-        if (row.lang !== "fr") continue;
-        expect(checklist.has(row.printKey)).toBe(true);
+
+      const adminAll = new Set(faces.map((r) => r.printKey));
+      for (const key of [...checklist].slice(0, 80)) {
+        expect(adminAll.has(key)).toBe(true);
       }
-      expect(faces.every((r) => r.printKey.includes(":"))).toBe(true);
+
+      const adminPrinted = new Set(
+        faces.filter((r) => r.printed !== false).map((r) => r.printKey),
+      );
+      for (const key of [...checklist].slice(0, 80)) {
+        expect(adminPrinted.has(key)).toBe(true);
+      }
+
+      for (const row of faces) {
+        if (checklist.has(row.printKey)) continue;
+        expect(row.printed).toBe(false);
+      }
+
+      const mod = getProviderModule("tcgdex");
+      if (mod?.listSetPrints) {
+        const setId = checklistRows[0]!.setId;
+        const listed = await mod.listSetPrints({
+          setId,
+          language: "fr",
+          includeUnprinted: false,
+        });
+        expect(listed.every((c) => c.printed !== false)).toBe(true);
+      }
     },
     60_000,
   );
@@ -228,29 +258,83 @@ describe("catalogue identity browse anti-désync", () => {
     },
   );
 
-  it("Carddass identity browse is non-null when catalog.sqlite exists", () => {
-    const db = ensureNarutoPackIndex(NARUTO_PACK_ID);
-    if (!db) return; // no local corpus in CI sandbox
+  it(
+    "Carddass identity browse is non-null when catalog.sqlite exists",
+    () => {
+      const db = ensureNarutoPackIndex(NARUTO_PACK_ID);
+      if (!db) return; // no local corpus in CI sandbox
 
-    const browse = tryBuildIdentityCatalogueRows("naruto/carddass");
-    expect(browse).not.toBeNull();
-    expect((browse ?? []).length).toBeGreaterThan(0);
-    expect(browse!.every((r) => r.printKey.includes(":"))).toBe(true);
-  });
+      const browse = tryBuildIdentityCatalogueRows("naruto/carddass");
+      expect(browse).not.toBeNull();
+      expect((browse ?? []).length).toBeGreaterThan(0);
+      expect(browse!.every((r) => r.printKey.includes(":"))).toBe(true);
+    },
+    120_000,
+  );
 
-  it("Carddass admin browse printKeys ⊆ catalog.sqlite (same corpus)", () => {
-    const index = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
-    if (!index || Object.keys(index.cards).length === 0) return;
+  it(
+    "Carddass admin browse printKeys ⊆ catalog.sqlite (same corpus)",
+    () => {
+      const index = loadNarutoCardsIndexFromSqlite(NARUTO_PACK_ID);
+      if (!index || Object.keys(index.cards).length === 0) return;
 
-    const checklist = new Set(Object.keys(index.cards));
-    const browse = tryBuildIdentityCatalogueRows("naruto/carddass");
-    expect(browse).not.toBeNull();
-    const faces = (browse ?? []).filter((r) => r.kind !== "pack-back");
-    expect(faces.length).toBeGreaterThan(0);
-    for (const row of faces.slice(0, 80)) {
-      expect(checklist.has(row.printKey)).toBe(true);
-    }
-  });
+      const checklist = new Set(Object.keys(index.cards));
+      const browse = tryBuildIdentityCatalogueRows("naruto/carddass");
+      expect(browse).not.toBeNull();
+      const faces = (browse ?? []).filter((r) => r.kind !== "pack-back");
+      expect(faces.length).toBeGreaterThan(0);
+      for (const row of faces.slice(0, 80)) {
+        expect(checklist.has(row.printKey)).toBe(true);
+      }
+    },
+    120_000,
+  );
+
+  it(
+    "Carddass checklist ⊆ admin enum; admin−checklist ⊆ printed=false (FR)",
+    () => {
+      const db = ensureNarutoPackIndex(NARUTO_PACK_ID);
+      if (!db) return;
+
+      const checklistKeys = new Set<string>();
+      for (const set of listNarutoPrintSets("fr")) {
+        for (const row of listNarutoSetPrints({
+          setId: set.id,
+          language: "fr",
+          includeUnprinted: false,
+        })) {
+          checklistKeys.add(row.printKey);
+        }
+      }
+      if (checklistKeys.size === 0) return;
+
+      const adminFaces = enumerateNarutoSetPrints({
+        includeUnprinted: true,
+      }).filter((r) => r.lang.toLowerCase() === "fr");
+      const adminAll = new Map(
+        adminFaces.map((r) => [r.printKey, r] as const),
+      );
+
+      for (const key of checklistKeys) {
+        expect(adminAll.has(key), key).toBe(true);
+      }
+
+      const adminPrinted = new Set(
+        adminFaces
+          .filter((r) => r.printed !== false)
+          .map((r) => r.printKey),
+      );
+      for (const key of checklistKeys) {
+        expect(adminPrinted.has(key), key).toBe(true);
+      }
+
+      for (const [key, row] of adminAll) {
+        if (checklistKeys.has(key)) continue;
+        expect(row.printed, key).toBe(false);
+      }
+    },
+    120_000,
+  );
 
   it("TCG packs do not require cards-index.json as emptyUnless / extractMarkers", () => {
     const tcgPacks = [
@@ -284,4 +368,52 @@ describe("catalogue identity browse anti-désync", () => {
     expect(pack?.extractMarkers).toContain("catalog.sqlite");
     expect(pack?.emptyUnless).toContain("live.sqlite");
   });
+});
+
+describe("listSetPrints includeUnprinted contract (all TCG modules)", () => {
+  const modules = [
+    "tcgdex",
+    "lorcanatcg",
+    "narutocarddass",
+    "onepiece",
+    "yugioh",
+    "mtg",
+    "dbscg",
+    "dbsfw",
+    "narutokayou",
+  ] as const;
+
+  it.each(modules)(
+    "%s listSetPrints accepts includeUnprinted and defaults to cardboard",
+    async (id) => {
+      const mod = getProviderModule(id);
+      if (!mod?.listSetPrints || !mod.listPrintSets) return;
+
+      const sets = await Promise.resolve(mod.listPrintSets("tcg", "fr"));
+      const setId = sets[0]?.id;
+      if (!setId) return;
+
+      const checklist = await mod.listSetPrints({
+        setId,
+        language: "fr",
+        includeUnprinted: false,
+      });
+      expect(checklist.every((row) => row.printed !== false)).toBe(true);
+
+      const admin = await mod.listSetPrints({
+        setId,
+        language: "fr",
+        includeUnprinted: true,
+      });
+      const checklistKeys = new Set(checklist.map((row) => row.printKey));
+      for (const row of checklist.slice(0, 40)) {
+        expect(admin.some((a) => a.printKey === row.printKey)).toBe(true);
+      }
+      for (const row of admin) {
+        if (checklistKeys.has(row.printKey)) continue;
+        expect(row.printed).toBe(false);
+      }
+    },
+    60_000,
+  );
 });

@@ -19,17 +19,17 @@ describe("le dos du 疾風伝", () => {
   it("sert son propre dos aux quatre familles de la ligne", () => {
     for (const card of ["shi0061", "mju0065", "msa0026", "gaku0001"]) {
       expect(resolve({ printKey: `naruto:${card}`, setCode: null })).toContain(
-        "/cards/shi/back.webp",
+        "/backs/ja/sets/shi",
       );
     }
   });
 
   it("le sert aussi depuis le code de set, quand la carte manque", () => {
     expect(resolve({ setCode: "maku1", printKey: null })).toContain(
-      "/cards/shi/back.webp",
+      "/backs/ja/sets/shi",
     );
     expect(resolve({ setCode: "maku8", printKey: null })).toContain(
-      "/cards/shi/back.webp",
+      "/backs/ja/sets/shi",
     );
   });
 
@@ -43,6 +43,16 @@ describe("le dos du 疾風伝", () => {
     }
   });
 
+  it("sert le dos S6 FR (pas le triskèle S1–S5)", () => {
+    expect(resolve({ printKey: "naruto:s6-ni0206", setCode: "s6" })).toBe(
+      "/assets/naruto/carddass/backs/fr/sets/s6",
+    );
+    expect(resolve({ printKey: "naruto:s6-ni0206", setCode: null })).toBe(
+      "/assets/naruto/carddass/backs/fr/sets/s6",
+    );
+    expect(resolve({ printKey: "naruto:s5-ni0206", setCode: "s5" })).toBeNull();
+  });
+
   /*
     Le piège : le « Naruto Shippuden CCG » **anglais** (`s13`-`s28`) dit aussi
     « Shippuden » et n'est pas ce jeu. Il ne partage aucun tirage avec lui et
@@ -50,10 +60,10 @@ describe("le dos du 疾風伝", () => {
   */
   it("sert le verso USA au CCG anglais (Storm 3 / Legacy), pas le dos 疾風伝", () => {
     expect(resolve({ printKey: "naruto:n0001", setCode: "s13" })).toContain(
-      "/cards/back.en.webp",
+      "/backs/en",
     );
     expect(resolve({ printKey: "naruto:m0042", setCode: "s28" })).toContain(
-      "/cards/back.en.webp",
+      "/backs/en",
     );
   });
 
@@ -73,7 +83,7 @@ describe("skeleton grille — deux dos partagés", () => {
 
   it("Storm 3 expose un dos set-scope (pas seulement print)", () => {
     expect(resolve({ printKey: "naruto:n1621", setCode: "s28" })).toBe(
-      "/assets/naruto/carddass/cards/back.en.webp",
+      "/assets/naruto/carddass/backs/en",
     );
   });
 
@@ -82,18 +92,18 @@ describe("skeleton grille — deux dos partagés", () => {
     expect(
       resolveSharedCardBackSkeleton({
         // Stamp print (filtré par le skeleton) — comme la fiche catalogue.
-        printCardBackUrl: "/assets/naruto/carddass/cards/back.en.webp",
+        printCardBackUrl: "/assets/naruto/carddass/backs/en",
         printKey: "naruto:n1621",
         setCode: "s28",
         effectPackId: narutoCarddassEffectPack.id,
       }),
-    ).toBe("/assets/naruto/carddass/cards/back.en.webp");
+    ).toBe("/assets/naruto/carddass/backs/en");
     expect(
       resolveSharedCardBackSkeleton({
         printKey: "naruto:ni0001",
         setCode: "s1",
         effectPackId: narutoCarddassEffectPack.id,
       }),
-    ).toBe("/assets/naruto/carddass/cards/back.fr.webp");
+    ).toBe("/assets/naruto/carddass/backs/fr");
   });
 });

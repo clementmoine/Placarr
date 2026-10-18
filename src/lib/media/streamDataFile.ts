@@ -134,7 +134,12 @@ function isStillFresh(
 
 export function streamFileResponse(
   filePath: string,
-  options: { request?: Request; cache?: FileCachePolicy } = {},
+  options: {
+    request?: Request;
+    cache?: FileCachePolicy;
+    /** Extra response headers (e.g. print-face owned/borrowed). */
+    headers?: Record<string, string>;
+  } = {},
 ): NextResponse {
   const stat = statSync(filePath);
   const etag = entityTag(stat);
@@ -143,6 +148,7 @@ export function streamFileResponse(
     "Cache-Control": CACHE_CONTROL[options.cache ?? "immutable"],
     ETag: etag,
     "Last-Modified": new Date(stat.mtimeMs).toUTCString(),
+    ...(options.headers ?? {}),
   };
 
   // A revalidating caller pays one conditional request and gets an empty 304

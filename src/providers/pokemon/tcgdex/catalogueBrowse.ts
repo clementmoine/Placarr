@@ -49,6 +49,8 @@ function rowToCatalogueCard(row: TcgdexSearchRow): CatalogueCardRow {
     tcgdexImageUrl(row.imageBaseUrl, "low");
   const artUrl = local ?? remote ?? "";
   const label = row.name?.trim() || `${set}-${card}`;
+  const printed =
+    row.printed === 0 || row.printed === false ? false : undefined;
   return {
     printKey: row.printKey,
     set,
@@ -59,12 +61,14 @@ function rowToCatalogueCard(row: TcgdexSearchRow): CatalogueCardRow {
     label,
     name: row.name?.trim() || undefined,
     missingArt: !artUrl,
+    ...(printed === false ? { printed: false } : {}),
     kind: "face",
   };
 }
 
 /**
  * Une tuile par (printKey, lang) présent dans `print_titles` pour ja/fr/en.
+ * Inclut `printed: false` (Pocket / misc) — filtre UI admin.
  */
 export function buildPokemonCatalogueBrowseRows(): CatalogueCardRow[] {
   const mtimeMs = printsMtimeMs();
@@ -72,7 +76,9 @@ export function buildPokemonCatalogueBrowseRows(): CatalogueCardRow[] {
 
   const byKeyLang = new Map<string, CatalogueCardRow>();
   for (const lang of POKEMON_CATALOGUE_BROWSE_LOCALES) {
-    for (const row of listTcgdexRowsForLanguage(lang)) {
+    for (const row of listTcgdexRowsForLanguage(lang, {
+      includeUnprinted: true,
+    })) {
       const card = rowToCatalogueCard({ ...row, lang });
       byKeyLang.set(`${card.printKey}\0${card.lang}`, card);
     }

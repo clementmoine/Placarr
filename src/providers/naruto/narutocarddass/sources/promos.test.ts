@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import dig from "../curated/sources/ebay-tin-metal-hunt-2026-08-29.json";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_SEALED_SKUS } from "../sealed";
 import { ebayIngestPackshots } from "./packshots";
-import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, groupingFromDiskCardId, mergeAttestedPromos, type AttestedPromoRow, colekaUsPromoLedgerPath, loadColekaUsPromoLedger, mergeColekaUsPromosIntoIndex, parseColekaUsPromoLedgerFromStaging, loadS1FrPrerelease, mergeS1FrPrerelease, s1FrPrereleasePrintKey, belongsOnNarutoPromoChecklist, digCollectorForm } from "./promos";
+import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, groupingFromDiskCardId, mergeAttestedPromos, type AttestedPromoRow, colekaUsPromoLedgerPath, loadColekaUsPromoLedger, mergeColekaUsPromosIntoIndex, parseColekaUsPromoLedgerFromStaging, loadS1FrPrerelease, materializeS1FrPrereleaseIdenticalRetailFaces, mergeS1FrPrerelease, s1FrPrereleasePrintKey, belongsOnNarutoPromoChecklist, digCollectorForm } from "./promos";
 
 // —— attestedPairs ——
 {
@@ -296,6 +296,72 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
         "te003",
         "te036",
       ]);
+      expect(
+        loadS1FrPrerelease()
+          .filter((c) => c.identicalRetailArt)
+          .map((c) => c.number)
+          .sort(),
+      ).toEqual([
+        "ni019",
+        "ni025",
+        "ni027",
+        "ni047",
+        "ta004",
+        "te003",
+        "te007",
+        "te015",
+        "te036",
+      ]);
+      expect(
+        loadS1FrPrerelease().find((c) => c.number === "ta005")
+          ?.identicalRetailArt,
+      ).toBeUndefined();
+    });
+
+    it("copies identical retail faces into fr/s1/*-prerelease/", () => {
+      const root = mkdtempSync(path.join(tmpdir(), "naruto-pre-art-"));
+      const cards = path.join(root, "cards");
+      const retailIds = [
+        "ni0019",
+        "ni0025",
+        "ni0027",
+        "ni0047",
+        "ta0004",
+        "te0003",
+        "te0007",
+        "te0015",
+        "te0036",
+      ];
+      for (const id of retailIds) {
+        const dir = path.join(cards, "fr", "s1", id);
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(path.join(dir, "art.carddass.jpg"), `face-${id}`);
+        writeFileSync(
+          path.join(dir, "face.json"),
+          JSON.stringify({ art: "art.carddass.jpg" }),
+        );
+      }
+      const result = materializeS1FrPrereleaseIdenticalRetailFaces(cards);
+      expect(result.installed.sort()).toEqual([
+        "ni0019-prerelease",
+        "ni0025-prerelease",
+        "ni0027-prerelease",
+        "ni0047-prerelease",
+        "ta0004-prerelease",
+        "te0003-prerelease",
+        "te0007-prerelease",
+        "te0015-prerelease",
+        "te0036-prerelease",
+      ]);
+      expect(result.missing).toEqual([]);
+      for (const id of result.installed) {
+        expect(
+          existsSync(path.join(cards, "fr", "s1", id, "art.carddass.jpg")),
+        ).toBe(true);
+      }
+      expect(
+        materializeS1FrPrereleaseIdenticalRetailFaces(cards).skipped.sort(),
+      ).toEqual(result.installed.sort());
     });
 
     it("injects missing prerelease prints with FR titles", () => {

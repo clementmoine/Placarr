@@ -128,12 +128,14 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   if (!title) return null;
 
   const lang = row.lang?.trim() || "fr";
+  const set = row.setCode?.trim() || "s1";
   const diskNumber = resolveNarutoArtDiskNumber({
     number: row.number,
     lang,
+    set,
     artFile: row.art,
   });
-  const pathId = narutoCardPathFromCollector(diskNumber, lang);
+  const pathId = narutoCardPathFromCollector(diskNumber, lang, set);
   const disk = buildNarutoDiskArtAttachments({
     printKey,
     number: diskNumber,
@@ -246,8 +248,8 @@ export const narutocarddassModule = defineProvider({
     return raw?.version === 1 ? raw : null;
   },
   listPrintSets: (_type, language) => listNarutoPrintSets(language),
-  listSetPrints: ({ setId, language }) =>
-    listNarutoSetPrints({ setId, language }),
+  listSetPrints: ({ setId, language, includeUnprinted }) =>
+    listNarutoSetPrints({ setId, language, includeUnprinted }),
   lookupPrint: async ({ printKey, language }) => {
     if (parsePrintKey(printKey)?.game !== "naruto") return null;
     return lookupNarutoPrint(printKey, { language: language ?? undefined });

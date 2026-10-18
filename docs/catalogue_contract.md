@@ -71,6 +71,22 @@ Ledger durable : `data/<pack>/logs/catalog-ingest-ledger.json` (jamais sous `sta
 - Titre, face, prix = faits `(lang, provenance[, source])`.
 - Demande locale → préférer faits de cette langue ; borrow = provenance explicite.
 
+### `printed`
+
+Fait **langué / canal** sur le tirage (`PrintCandidate.printed`, tuile admin, colonne sqlite quand le pack l’a) :
+
+| Valeur | Sens |
+|--------|------|
+| omis / `true` | Carton collectible (checklist, shelf, search) |
+| `false` | Pas de papier dans ce canal (jamais édité, digital-only, série annulée) |
+
+Surfaces :
+
+- **Admin** : énumère **tout** (`listSetPrints({ includeUnprinted: true })`) + filtre UI Tout / Imprimées / Non imprimées.
+- **Checklist / shelf / search** : défaut `includeUnprinted: false` → `printed !== false` seulement.
+
+Même règle pour tous les TCG (Carddass non éditées, Pokémon Pocket `tcgp`, etc.). Interdit une deuxième liste magique hors ce booléen.
+
 ## Durabilité d’accès
 
 À l’ingest d’URL : résoudre la source →
@@ -90,12 +106,12 @@ Après promote réussi d’un artefact : enregistrer le hash puis **supprimer** 
 
 | Surface | Lecture |
 |---------|---------|
-| Admin browse | Builder pack depuis **sqlite** (`catalogueIdentityBrowse` — tous TCG, y compris Carddass) |
-| Checklist / `listSetPrints` | Même sqlite |
-| Ajout / `searchPrints` | Même sqlite |
+| Admin browse | Même énumération identité (`listSetPrints` / browse sqlite) avec `includeUnprinted: true` |
+| Checklist / `listSetPrints` | Même sqlite, `includeUnprinted: false` (filtre `printed`) |
+| Ajout / `searchPrints` | Même sqlite, masque `printed: false` |
 | Scellés | Tables `products` / `product_contents` dans le **même** `catalog.sqlite` (jointures printKeys) ; `products-index.json` projection optionnelle |
 
-Test de garde : [`catalogContract.test.ts`](../src/providers/shared/catalogContract.test.ts) — durableCdn, ledger purge, printKeys admin ⊆ checklist, Carddass identity ≠ null.
+Test de garde : [`catalogContract.test.ts`](../src/providers/shared/catalogContract.test.ts) — durableCdn, ledger purge, **checklist ⊆ admin**, **admin − checklist ⊆ printed:false**.
 
 **Pokémon :** identité = `catalog.sqlite` (TCGdex) ; dump Live / foil = `live.sqlite` (frère, pas une deuxième identité).
 

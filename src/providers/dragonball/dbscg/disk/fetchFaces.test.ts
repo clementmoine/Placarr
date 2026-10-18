@@ -315,7 +315,7 @@ describe("fetchDbsCgFaces", () => {
       "static.dbscards.fr",
     );
     expect(
-      existsSync(path.join(tmp, "dragonball/cg/cards/bt1/fr/001/art.dbscards.webp")),
+      existsSync(path.join(tmp, "dragonball/cg/cards/fr/bt1/001/art.dbscards.webp")),
     ).toBe(true);
   });
 

@@ -123,10 +123,10 @@ describe("decorateMtgCandidate", () => {
       language: "fr",
       printed: true,
       effectPack: "mtg",
-      imageUrl: "/assets/mtg/cards/tdm/fr/1/art.mtgcards.webp",
+      imageUrl: "/assets/mtg/cards/fr/tdm/1/art.mtgcards.webp",
     });
     expect(decorated.imageUrl).toBe(
-      "/assets/mtg/cards/tdm/fr/1/art.mtgcards.webp",
+      "/assets/mtg/cards/fr/tdm/1/art.mtgcards.webp",
     );
   });
 });

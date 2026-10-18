@@ -12,5 +12,5 @@ export const yugiohEffectPack = defineCatalogueOnlyPack({
   label: "Yu-Gi-Oh!",
   blurb: "Catalogue local Yu-Gi-Oh! — dos à curer, sans dump foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
 });

@@ -25,12 +25,12 @@ import { narutoShippudenAssetsCardUrl, narutoShippudenCuratedDir, normalizeShipp
       expect(
         narutoShippudenAssetsCardUrl("gaku", "0038", "ja", "art.suruga.jpg"),
       ).toBe(
-        "/assets/naruto/shippuden/cards/gaku/ja/gaku0038/art.suruga.jpg",
+        "/assets/naruto/shippuden/cards/ja/gaku/gaku0038/art.suruga.jpg",
       );
       expect(
         narutoShippudenAssetsCardUrl("gaku", "gaku0038", "ja", "art.suruga.jpg"),
       ).toBe(
-        "/assets/naruto/shippuden/cards/gaku/ja/gaku0038/art.suruga.jpg",
+        "/assets/naruto/shippuden/cards/ja/gaku/gaku0038/art.suruga.jpg",
       );
     });
   });

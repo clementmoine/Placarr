@@ -38,6 +38,8 @@ export type LocalPrintSearchRow = {
   art: string | null;
   thumb: string | null;
   back: string | null;
+  /** Sqlite 0/1 — false/0 = not cardboard in this locale. */
+  printed?: number | boolean | null;
 };
 
 /** Face attestée — le fichier est déjà sous `cards/`, on n'enregistre que le nom. */
@@ -150,7 +152,8 @@ export type LocalPrintsIndex = {
 const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
               p.card_type AS cardType, p.grouping, p.category,
               t.lang, t.full_name AS fullName, t.rarity,
-              a.art, a.thumb, a.back
+              a.art, a.thumb, a.back,
+              COALESCE(a.printed, 1) AS printed
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN print_assets a
@@ -170,7 +173,8 @@ const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.num
   l'index avec leur image et sans nom, ce que `CardsIndexEntry` permet déjà.
 */
 const SELECT_ORPHAN_ASSETS = `SELECT a.print_key AS printKey, p.card_type AS cardType,
-              p.number, a.lang, a.art, a.thumb, a.back
+              p.number, a.lang, a.art, a.thumb, a.back,
+              COALESCE(a.printed, 1) AS printed
          FROM print_assets a
          JOIN prints p ON p.print_key = a.print_key
         WHERE NOT EXISTS (
@@ -181,21 +185,38 @@ const ADDED_PRINT_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
   { name: "category", ddl: "TEXT" },
 ];
 
+const ADDED_ASSET_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
+  { name: "printed", ddl: "INTEGER NOT NULL DEFAULT 1" },
+];
+
+function migrateTableColumns(
+  db: DatabaseSync,
+  table: string,
+  columns: ReadonlyArray<{ name: string; ddl: string }>,
+): void {
+  try {
+    const present = new Set(
+      (
+        db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+      ).map((row) => row.name),
+    );
+    for (const column of columns) {
+      if (present.has(column.name)) continue;
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column.name} ${column.ddl}`);
+    }
+  } catch {
+    /* illisible */
+  }
+}
+
 /** Add columns / tables that older pack DBs may lack. */
 export function migrateLocalPrintsSchema(db: DatabaseSync): void {
   const tables = db
     .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'prints'`)
     .all() as { name: string }[];
   if (tables.length === 0) return;
-  const present = new Set(
-    (db.prepare(`PRAGMA table_info(prints)`).all() as { name: string }[]).map(
-      (row) => row.name,
-    ),
-  );
-  for (const column of ADDED_PRINT_COLUMNS) {
-    if (present.has(column.name)) continue;
-    db.exec(`ALTER TABLE prints ADD COLUMN ${column.name} ${column.ddl}`);
-  }
+  migrateTableColumns(db, "prints", ADDED_PRINT_COLUMNS);
+  migrateTableColumns(db, "print_assets", ADDED_ASSET_COLUMNS);
   db.exec(`
     CREATE TABLE IF NOT EXISTS print_sets (
       print_key TEXT NOT NULL,

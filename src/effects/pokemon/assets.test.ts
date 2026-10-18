@@ -32,7 +32,7 @@ const hasCardBack =
 
 describe("pokemon pack assets", () => {
   it("declares the pack default card back URL", () => {
-    expect("/assets/pokemon/cards/back.webp").toMatch(/\/cards\/back\.webp$/);
+    expect("/assets/pokemon/backs/en").toMatch(/\/backs\/[a-z]{2}$/);
   });
 
   it.skipIf(!hasCardBack)(

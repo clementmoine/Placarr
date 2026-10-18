@@ -97,7 +97,7 @@ import { narutokayouModule } from "./index";
         effectPack: "naruto-kayou",
       });
       expect(stamped.cardBackUrl).toBe(
-        "/assets/naruto/kayou/cards/nrea02/en/nrea02.ur.015l3/back.webp",
+        "/assets/naruto/kayou/cards/en/nrea02/nrea02.ur.015l3/back.webp",
       );
     });
 
@@ -119,7 +119,7 @@ import { narutokayouModule } from "./index";
         effectPack: "naruto-kayou",
       });
       expect(stamped.cardBackUrl).toBe(
-        "/assets/naruto/kayou/cards/back.ur.webp",
+        "/assets/naruto/kayou/backs/en/tiers/ur",
       );
     });
 

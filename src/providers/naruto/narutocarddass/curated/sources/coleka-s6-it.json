@@ -18,7 +18,7 @@
     "scrape": true,
     "lang": "it",
     "set": "s6",
-    "disk": "cards/s6/it/",
+    "disk": "cards/it/s6/",
     "announced": 136,
     "enumerated": 135
   },

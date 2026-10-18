@@ -173,7 +173,7 @@ export function sealedProductModulesForShelf(input: {
     selected.flatMap((pack) => pack.printGames ?? []),
   );
   /*
-    Lorcana : `lorcanajson` énumère, `lorcanatcg` porte `data/lorcana/`. Les
+    Lorcana : le module JSON énumère, le pack TCG porte `data/lorcana/`. Les
     deux listent désormais les sets — sans sibling dataPack, zéro booster.
     Naruto : chaque catalogue a déjà son dataPack ; on n'élargit pas à
     Carddass depuis Ninja Ranks.
@@ -504,7 +504,11 @@ export async function buildChecklistForShelf(input: {
         );
       }
       for (const row of await Promise.resolve(
-        pack.listSetPrints!({ setId: set.id, language }),
+        pack.listSetPrints!({
+          setId: set.id,
+          language,
+          includeUnprinted: false,
+        }),
       )) {
         const base = {
           printKey: row.printKey,

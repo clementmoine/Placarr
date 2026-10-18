@@ -1,7 +1,7 @@
 /**
  * Naruto Carddass pack extract — Catalogue Sync / worker (in-process).
  *
- * Catalogue: data/naruto/carddass/cards/{family}/{ni0001|n0001}/{lang}/
+ * Catalogue: data/naruto/carddass/cards/{lang}/{set}/{ni0001|n0001}/
  * Curated tree: src/providers/naruto/narutocarddass/curated/cards/
  * Steps: scrape → reconstruct → index → products → thumbs → checklist → known → sources
  * (resume via --skip / --only from the admin extract plan).

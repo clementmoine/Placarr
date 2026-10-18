@@ -15,7 +15,7 @@ import {
 describe("scrapeInventory", () => {
   it("builds_malie_art_url_from_stem", () => {
     expect(malieCardTexUrl("me1_fr_001")).toBe(
-      "https://cdn.malie.io/file/malie-io/tcgl/cards/tex/fr/me1/me1_fr_001_std.png",
+      "https://cdn.malie.io/file/malie-io/tcgl/cards/fr/tex/me1/me1_fr_001_std.png",
     );
   });
 

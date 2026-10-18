@@ -26,7 +26,7 @@ describe("localPokemonCatalogueArtUrl", () => {
 
     expect(
       localPokemonCatalogueArtUrl("pokemon:2023sv-4", "fr", root),
-    ).toBe("/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp");
+    ).toBe("/assets/pokemon/cards/fr/2023sv/004/art.coleka.webp");
   });
 
   it("joins Classic Collection via Live stem + remapped number", () => {
@@ -41,7 +41,7 @@ describe("localPokemonCatalogueArtUrl", () => {
 
     expect(
       localPokemonCatalogueArtUrl("pokemon:me05.5c-001", "fr", root),
-    ).toBe("/assets/pokemon/cards/me5-5c/fr/002/art.webp");
+    ).toBe("/assets/pokemon/cards/fr/me5-5c/002/art.webp");
   });
 });
 
@@ -69,7 +69,7 @@ describe("buildPokemonDiskArtAttachments", () => {
     );
     expect(attachments.every((a) => a.source === "tcgdex")).toBe(true);
     expect(defaultUrl).toBe(
-      "/assets/pokemon/cards/2023sv/fr/004/art.mcdn.png",
+      "/assets/pokemon/cards/fr/2023sv/004/art.mcdn.png",
     );
     expect(attachments[0]?.url).toBe(defaultUrl);
     expect(

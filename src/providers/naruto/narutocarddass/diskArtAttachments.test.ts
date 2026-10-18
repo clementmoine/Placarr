@@ -6,21 +6,23 @@ import path from "node:path";
 import { recordNarutoFaceDecision } from "./disk";
 import {
   buildNarutoDiskArtAttachments,
+  narutoLangFirstAssetsRest,
   narutoRetailAssetsRest,
   resolveNarutoArtDiskNumber,
+  resolveNarutoArtDiskSet,
 } from "./diskArtAttachments";
 
 describe("buildNarutoDiskArtAttachments", () => {
   it("emits one catalog cover per art.* and defaults to face.json winner", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "naruto-multi-art-"));
-    const cardDir = path.join(root, "ninja", "ni0017", "fr");
+    const cardDir = path.join(root, "fr", "s1", "ni0017");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.carddass.jpg"), "a");
     writeFileSync(path.join(cardDir, "art.coleka.webp"), "b");
     recordNarutoFaceDecision(cardDir, "art", "art.coleka.webp");
 
     const { attachments, defaultUrl } = buildNarutoDiskArtAttachments({
-      printKey: "naruto:ni-0017",
+      printKey: "naruto:s1-ni0017",
       number: "ni0017",
       lang: "fr",
       source: "narutocarddass",
@@ -38,7 +40,7 @@ describe("buildNarutoDiskArtAttachments", () => {
     ).toBe("listing_photo");
     expect(attachments.every((a) => a.source === "narutocarddass")).toBe(true);
     expect(defaultUrl).toBe(
-      "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.coleka.webp",
+      "/assets/naruto/carddass/cards/fr/s1/ni0017/art.coleka.webp",
     );
     expect(attachments[0]?.url).toBe(defaultUrl);
     expect(attachments.map((a) => a.role).sort()).toEqual(
@@ -61,26 +63,86 @@ describe("buildNarutoDiskArtAttachments", () => {
     expect(
       narutoRetailAssetsRest([
         "cards",
-        "mission",
-        "ta0081-promo",
         "fr",
+        "s2",
+        "ta0081-promo",
         "art.carddass.jpg",
       ]),
-    ).toEqual(["cards", "mission", "ta0081", "fr", "art.carddass.jpg"]);
+    ).toEqual(["cards", "fr", "s2", "ta0081", "art.carddass.jpg"]);
     expect(
       narutoRetailAssetsRest([
         "cards",
-        "mission",
-        "ta0081",
         "fr",
+        "s2",
+        "ta0081",
         "art.carddass.jpg",
       ]),
     ).toBeNull();
   });
 
+  it("rewrites legacy family/card/lang onto lang-first disk", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "naruto-legacy-url-"));
+    const s6 = path.join(root, "fr", "s6", "ni0206");
+    mkdirSync(s6, { recursive: true });
+    writeFileSync(path.join(s6, "art.carddass.jpg"), "face");
+
+    expect(
+      narutoLangFirstAssetsRest(
+        ["cards", "ninja", "ni0206", "fr", "art.carddass.jpg"],
+        root,
+      ),
+    ).toEqual(["cards", "fr", "s6", "ni0206", "art.carddass.jpg"]);
+    expect(
+      narutoLangFirstAssetsRest([
+        "cards",
+        "s1",
+        "fr",
+        "ni0013",
+        "art.carddass.jpg",
+      ]),
+    ).toEqual(["cards", "fr", "s1", "ni0013", "art.carddass.jpg"]);
+    expect(
+      narutoLangFirstAssetsRest([
+        "cards",
+        "fr",
+        "s1",
+        "ni0013",
+        "art.carddass.jpg",
+      ]),
+    ).toBeNull();
+  });
+
+  it("resolves art set when printKey set folder is empty (primary appearance elsewhere)", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "naruto-art-set-"));
+    const s2 = path.join(root, "fr", "s2", "cl0005");
+    mkdirSync(s2, { recursive: true });
+    writeFileSync(path.join(s2, "art.carddass.jpg"), "face");
+
+    expect(
+      resolveNarutoArtDiskSet({
+        number: "cl0005",
+        lang: "fr",
+        set: "s1",
+        artFile: "art.carddass.jpg",
+        cardsRoot: root,
+      }),
+    ).toBe("s2");
+
+    const { defaultUrl } = buildNarutoDiskArtAttachments({
+      printKey: "naruto:s1-cl0005",
+      number: "cl0005",
+      lang: "fr",
+      source: "narutocarddass",
+      cardsRoot: root,
+    });
+    expect(defaultUrl).toBe(
+      "/assets/naruto/carddass/cards/fr/s2/cl0005/art.carddass.jpg",
+    );
+  });
+
   it("points promo stubs at the retail folder that holds the mirrored face", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "naruto-promo-disk-"));
-    const retailDir = path.join(root, "mission", "ta0081", "fr");
+    const retailDir = path.join(root, "fr", "s2", "ta0081");
     mkdirSync(retailDir, { recursive: true });
     writeFileSync(path.join(retailDir, "art.carddass.jpg"), "face");
 
@@ -88,6 +150,7 @@ describe("buildNarutoDiskArtAttachments", () => {
       resolveNarutoArtDiskNumber({
         number: "ta0081-promo",
         lang: "fr",
+        set: "promo",
         artFile: "art.carddass.jpg",
         cardsRoot: root,
       }),
@@ -100,14 +163,16 @@ describe("buildNarutoDiskArtAttachments", () => {
       source: "narutocarddass",
       cardsRoot: root,
     });
+    // Promo printKey looks under fr/promo/…; bytes live on retail — resolve
+    // finds ta0081 across sets under fr/.
     expect(defaultUrl).toBe(
-      "/assets/naruto/carddass/cards/mission/ta0081/fr/art.carddass.jpg",
+      "/assets/naruto/carddass/cards/fr/s2/ta0081/art.carddass.jpg",
     );
   });
 
   it("surfaces reconstructed-only faces named by face.json", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "naruto-recon-art-"));
-    const cardDir = path.join(root, "promo", "pr0093", "fr");
+    const cardDir = path.join(root, "fr", "promo", "pr0093");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.reconstructed.webp"), "recon");
     recordNarutoFaceDecision(cardDir, "art", "art.reconstructed.webp");
@@ -121,7 +186,7 @@ describe("buildNarutoDiskArtAttachments", () => {
     });
 
     expect(defaultUrl).toBe(
-      "/assets/naruto/carddass/cards/promo/pr0093/fr/art.reconstructed.webp",
+      "/assets/naruto/carddass/cards/fr/promo/pr0093/art.reconstructed.webp",
     );
     expect(attachments).toHaveLength(1);
     expect(attachments[0]?.role).toBe("naruto-face-reconstructed");

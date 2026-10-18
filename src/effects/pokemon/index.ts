@@ -33,7 +33,7 @@ import { isLiveSyntheticFinish } from "./liveFinishVariants";
 export const POKEMON_EFFECT_PACK_ID = "pokemon";
 export const POKEMON_ASSET_BASE = "/assets/pokemon";
 /** Pack default back — dump must extract `cards/back.webp` (APK / CDN / bundles). */
-export const POKEMON_CARD_BACK_URL = `${POKEMON_ASSET_BASE}/cards/back.webp`;
+export const POKEMON_CARD_BACK_URL = `${POKEMON_ASSET_BASE}/backs/en`;
 /** Opaque white when a HoloFoil material needs a mask and none is dumped yet. */
 export const POKEMON_FULL_FOIL_MASK_URL = `${POKEMON_ASSET_BASE}/full_foil_mask.webp`;
 

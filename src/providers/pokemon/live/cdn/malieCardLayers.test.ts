@@ -22,13 +22,13 @@ describe("malieCardLayerUrls", () => {
   it("builds Malie front / foil / etch for the same print", () => {
     const urls = malieCardLayerUrls("sv3-5_en_193", "std");
     expect(urls?.front).toBe(
-      "https://cdn.malie.io/file/malie-io/tcgl/cards/png/en/sv3-5/sv3-5_en_193_std.png",
+      "https://cdn.malie.io/file/malie-io/tcgl/cards/en/png/sv3-5/sv3-5_en_193_std.png",
     );
     expect(urls?.foil).toBe(
-      "https://cdn.malie.io/file/malie-io/tcgl/cards/png/en/sv3-5/sv3-5_en_193_std.foil.png",
+      "https://cdn.malie.io/file/malie-io/tcgl/cards/en/png/sv3-5/sv3-5_en_193_std.foil.png",
     );
     expect(urls?.etch).toBe(
-      "https://cdn.malie.io/file/malie-io/tcgl/cards/png/en/sv3-5/sv3-5_en_193_std.etch.png",
+      "https://cdn.malie.io/file/malie-io/tcgl/cards/en/png/sv3-5/sv3-5_en_193_std.etch.png",
     );
   });
 

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   matchesCatalogueAuditFilter,
+  matchesCataloguePrintedFilter,
   type CatalogueCardRow,
 } from "./catalogueCards";
 import { catalogueCardPriceCentsByPrintKey } from "./catalogueCardPrices";
@@ -104,6 +105,26 @@ describe("matchesCatalogueAuditFilter missingPriceOnly", () => {
         { missingPriceOnly: true },
       ),
     ).toBe(false);
+  });
+});
+
+describe("matchesCataloguePrintedFilter", () => {
+  it("filters faces by printed flag", () => {
+    expect(
+      matchesCataloguePrintedFilter(face({ printed: false }), "unprinted"),
+    ).toBe(true);
+    expect(
+      matchesCataloguePrintedFilter(face({ printed: false }), "printed"),
+    ).toBe(false);
+    expect(matchesCataloguePrintedFilter(face({}), "printed")).toBe(true);
+    expect(matchesCataloguePrintedFilter(face({}), "unprinted")).toBe(false);
+  });
+
+  it("excludes pack backs from printed and unprinted filters", () => {
+    const back = face({ kind: "pack-back", printed: false });
+    expect(matchesCataloguePrintedFilter(back, "unprinted")).toBe(false);
+    expect(matchesCataloguePrintedFilter(back, "printed")).toBe(false);
+    expect(matchesCataloguePrintedFilter(back, "all")).toBe(true);
   });
 });
 

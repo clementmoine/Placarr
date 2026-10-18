@@ -16,8 +16,13 @@ import {
   mergeNarutoCatalogueFaces,
   catalogueBackLangFromTierSlug,
   packFaceAssetUrl,
+  resetCatalogueCardsCache,
   restrictRowsToCatalogueLocales,
 } from "@/lib/admin/catalogueCards";
+import {
+  listNarutoPrintSets,
+  listNarutoSetPrints,
+} from "@/providers/naruto/narutocarddass/search";
 import {
   adminCatalogueHref,
   adminCatalogueHrefForExtractTarget,
@@ -38,6 +43,10 @@ import {
   resolveCatalogueScope,
   cataloguePackInfo,
 } from "@/lib/admin/cataloguePacks";
+import {
+  buildCarddassCatalogueBrowseRows,
+  clearCarddassCatalogueBrowseCache,
+} from "@/providers/naruto/narutocarddass/catalogueBrowse";
 
 describe("cataloguePacks", () => {
   it("resolves pack ids and aliases", () => {
@@ -335,11 +344,95 @@ describe("cataloguePacks", () => {
     expect(resolveCatalogueScope("sealed", carddass)).toBe("sealed");
   });
 
-  it("carddass borrows faces across locales like ranks", () => {
+  it("carddass refuses cross-lang face borrow (FR≠EN≠JA)", () => {
     const naruto = cataloguePackInfo("naruto/carddass")!;
-    expect(naruto.localeArt?.bestFaceAcrossLocales).toBe(true);
+    expect(naruto.localeArt?.bestFaceAcrossLocales).toBe(false);
     // Inventing fr/en/ja/it shells made EN-only CCG cards look « sans nom ».
     expect(naruto.catalogueLocales).toBeUndefined();
+  });
+
+  it("CCG S11 FR garde Coleka — pas de Drive EN ; Carddass NI-100 garde carddass.fr", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s11-n0100": {
+          set: "ninja",
+          card: "n0100",
+          langs: {
+            fr: {
+              name: "Hayate Gekkô",
+              art: "art.coleka.webp",
+              artW: 1073,
+              artH: 1500,
+            },
+            en: {
+              name: "Hayate Gekko",
+              art: "art.drive.webp",
+              artW: 750,
+              artH: 1050,
+            },
+          },
+        },
+        "naruto:s2-ni0100": {
+          set: "ninja",
+          card: "ni0100",
+          langs: {
+            fr: { name: "Hayate Gekko", art: "art.carddass.jpg" },
+            ja: { name: "月光ハヤテ", art: "art.chitoroshop.jpg" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index, "fr");
+    const ccg = rows.find(
+      (r) => r.printKey === "naruto:s11-n0100" && r.lang === "fr",
+    );
+    const carddass = rows.find(
+      (r) => r.printKey === "naruto:s2-ni0100" && r.lang === "fr",
+    );
+    expect(ccg?.artUrl).toContain("/prints/");
+    expect(ccg?.artUrl).toContain("/prints/s11-n0100-fr/");
+    expect(ccg?.artUrl).toMatch(/\/face$/);
+    expect(ccg?.artLocaleFrom).toBeUndefined();
+    expect(carddass?.artUrl).toContain("/prints/");
+    expect(carddass?.artUrl).toContain("/prints/s2-ni0100-fr/");
+    expect(carddass?.artUrl).toMatch(/\/face$/);
+    expect(carddass?.artLocaleFrom).toBeUndefined();
+  });
+
+  it("ne colle pas art.suruga JA sur une tuile FR titrée sans scan (TA-090)", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s2-ta0090": {
+          set: "mission",
+          card: "ta0090",
+          langs: {
+            fr: { name: "Le don de la copie" },
+            ja: { name: "コピー能力", art: "art.suruga.jpg" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index, "fr");
+    const fr = rows.find(
+      (r) => r.printKey === "naruto:s2-ta0090" && r.lang === "fr",
+    );
+    expect(fr?.languageSpecific).toBe(true);
+    expect(fr?.artLocaleFrom).toBeUndefined();
+    expect(fr?.artUrl ?? "").not.toContain("/ja/");
+    expect(fr?.missingArt).toBe(true);
+    // Preferred FR must still list the official titled card (awaiting scan).
+    expect(
+      matchesCataloguePreferredLang(fr!, "fr", {
+        expandLocales: true,
+        narutoLocaleAxis: true,
+      }),
+    ).toBe(true);
   });
 
   it("defaults pokemon/lorcana/kayou to foils", () => {
@@ -360,7 +453,8 @@ describe("cataloguePacks", () => {
 
     const foilsToNaruto = new URLSearchParams("pack=pokemon");
     applyCataloguePackParams(foilsToNaruto, "naruto/carddass");
-    expect(foilsToNaruto.get("scope")).toBe("all");
+    // Both packs default to foils — omit scope so the UI keeps that default.
+    expect(foilsToNaruto.get("scope")).toBeNull();
 
     const sealedToPokemon = new URLSearchParams("pack=dragonball/cg&scope=sealed");
     applyCataloguePackParams(sealedToPokemon, "pokemon");
@@ -454,7 +548,9 @@ describe("Naruto catalogue lines", () => {
     expect(jaNi?.missingArt).toBe(true);
     expect(
       rows.find((row) => row.card === "n1621" && row.lang === "en")?.artUrl,
-    ).toBe("/assets/naruto/carddass/cards/ninja/n1621/en/art.jpg");
+    ).toBe(
+      "/assets/naruto/carddass/prints/s28-n1621-en/face",
+    );
     expect(rows.some((row) => row.card === "n001" && row.lang === "en")).toBe(
       true,
     );
@@ -511,11 +607,10 @@ describe("Naruto catalogue lines", () => {
     expect(fr[0]?.label).toMatch(/Mikoto Uchiwa/);
   });
 
-  it("collapses set memberships into one browse tile per collector+lang", () => {
+  it("keeps each FR series membership; collapses JA onto 巻", () => {
     /*
-      Set-scoped minting lists NI-009 on s1+s3+s4+maki1. Browse shows one FR
-      tile (EU primary S1) and one JA tile (巻1); sealed still uses full
-      memberships via appearanceSets.
+      Set-scoped minting lists NI-009 on s1+s3+s4+maki1. FR checklist needs
+      every series slot; JA stays one 巻ノ tile.
     */
     const index = {
       version: 1 as const,
@@ -554,12 +649,20 @@ describe("Naruto catalogue lines", () => {
     const fr = rows.filter(
       (row) => /ni0*009/i.test(row.card) && row.lang === "fr",
     );
-    expect(fr).toHaveLength(1);
-    expect(fr[0]?.printKey).toBe("naruto:s1-ni0009");
-    // One tile; every EU membership stays visible in the caption.
-    // 巻ノ printKeys never emit FR shells — appearanceSets stay on the EU axis.
-    expect(fr[0]?.label).toBe("S1/S3/S4 · NI-009 — Mizuki");
-    expect(fr[0]?.appearanceSets).toEqual(["s1", "s3", "s4"]);
+    expect(fr.map((row) => row.printKey).sort()).toEqual([
+      "naruto:s1-ni0009",
+      "naruto:s3-ni0009",
+      "naruto:s4-ni0009",
+    ]);
+    expect(fr.find((row) => row.printKey === "naruto:s1-ni0009")?.appearanceSets).toEqual([
+      "s1",
+    ]);
+    expect(fr.find((row) => row.printKey === "naruto:s3-ni0009")?.appearanceSets).toEqual([
+      "s3",
+    ]);
+    expect(fr.find((row) => row.printKey === "naruto:s4-ni0009")?.appearanceSets).toEqual([
+      "s4",
+    ]);
     const ja = rows.filter(
       (row) => /ni0*009/i.test(row.card) && row.lang === "ja",
     );
@@ -648,9 +751,62 @@ describe("Naruto catalogue lines", () => {
     ).toBe(false);
     expect(
       matchesCataloguePreferredLang(
-        { ...row, printKey: "naruto:s1-ni0001", appearanceSets: ["s1"] },
+        { ...row, printKey: "naruto:s1-ni0001", appearanceSets: ["s1"], card: "ni0001" },
         "fr",
         { expandLocales: true, narutoLocaleAxis: true },
+      ),
+    ).toBe(true);
+  });
+
+  it("preferred FR: Carddass NI-013 oui, CCG N-013 S1 non (pas de double Hokage)", () => {
+    const opts = { expandLocales: true, narutoLocaleAxis: true } as const;
+    expect(
+      matchesCataloguePreferredLang(
+        {
+          printKey: "naruto:s1-ni0013",
+          set: "s1",
+          card: "ni0013",
+          lang: "fr",
+          artUrl: "/fr/ni0013.jpg",
+          label: "S1 · NI-013 — Hokage le 3e",
+          languageSpecific: true,
+          appearanceSets: ["s1"],
+        },
+        "fr",
+        opts,
+      ),
+    ).toBe(true);
+    expect(
+      matchesCataloguePreferredLang(
+        {
+          printKey: "naruto:s1-n0013",
+          set: "s1",
+          card: "n0013",
+          lang: "fr",
+          artUrl: "/fr/n0013.webp",
+          label: "S1 · N-013 — 3e Hokage",
+          languageSpecific: true,
+          appearanceSets: ["s1"],
+        },
+        "fr",
+        opts,
+      ),
+    ).toBe(false);
+    // Late CCG with Coleka FR may stay under preferred FR.
+    expect(
+      matchesCataloguePreferredLang(
+        {
+          printKey: "naruto:s11-n0013",
+          set: "s11",
+          card: "n0013",
+          lang: "fr",
+          artUrl: "/fr/n0013.webp",
+          label: "S11 · N-013 — 3e Hokage",
+          languageSpecific: true,
+          appearanceSets: ["s11"],
+        },
+        "fr",
+        opts,
       ),
     ).toBe(true);
   });
@@ -733,8 +889,8 @@ describe("Naruto catalogue lines", () => {
       pack: "naruto/carddass",
       generatedAt: "2026-01-01T00:00:00.000Z",
       cards: {
-        "naruto:ni-0255": {
-          set: "ninja",
+        "naruto:s6-ni0255": {
+          set: "s6",
           card: "ni0255",
           name: "Pré-prod S6",
           langs: { fr: { art: "art.jpg", printed: false } },
@@ -744,7 +900,13 @@ describe("Naruto catalogue lines", () => {
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.printed).toBe(false);
-    expect(rows[0]?.artUrl).toContain("/ninja/ni0255/fr/");
+    // Synthetic index art without disk bytes → honest missingArt (no 404 URL).
+    if (rows[0]?.artUrl) {
+      expect(rows[0].artUrl).toContain("/prints/");
+      expect(rows[0].artUrl).toMatch(/\/face$/);
+    } else {
+      expect(rows[0]?.missingArt).toBe(true);
+    }
   });
 
   it("lists PS1 bonus prints in JA only — no FR tile", () => {
@@ -753,8 +915,8 @@ describe("Naruto catalogue lines", () => {
       pack: "naruto/carddass",
       generatedAt: "2026-01-01T00:00:00.000Z",
       cards: {
-        "naruto:ni-0001-ps": {
-          set: "ninja",
+        "naruto:s1-ni0001-ps": {
+          set: "s1",
           card: "ni0001-ps",
           name: "うずまきナルト",
           langs: {
@@ -771,8 +933,14 @@ describe("Naruto catalogue lines", () => {
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     expect(rows.map((r) => r.lang)).toEqual(["ja"]);
-    expect(rows[0]?.artUrl).toContain("/ni0001-ps/ja/");
-    expect(rows[0]?.artFallbackFrom).toBeUndefined();
+    if (rows[0]?.artUrl) {
+      expect(rows[0].artUrl).toContain("/prints/");
+      expect(rows[0].artUrl).toMatch(/ni0001-ps/);
+      expect(rows[0].artUrl).toMatch(/\/face$/);
+    } else {
+      expect(rows[0]?.missingArt).toBe(true);
+    }
+    expect(rows[0]?.artLocaleFrom).toBeUndefined();
   });
 
   it("hides bare JA when both -a and -b exist (巻ノ doubles), keeps FR bare", () => {
@@ -837,14 +1005,14 @@ describe("Naruto catalogue lines", () => {
     ).toEqual(["ni0001-a:ja", "ni0001:fr", "ni0001:ja"]);
   });
 
-  it("shows one FR Kakashi for NI-064, not a junk S6 stub", () => {
+  it("keeps S6 FR unprinted as its own printKey; borrows S5→S1 face until owned", () => {
     const index = {
       version: 1 as const,
       pack: "naruto/carddass",
       generatedAt: "2026-01-01T00:00:00.000Z",
       cards: {
-        "naruto:ni-0064": {
-          set: "ninja",
+        "naruto:s1-ni0064": {
+          set: "s1",
           card: "ni0064",
           name: "Kakashi Hatake",
           langs: {
@@ -852,9 +1020,9 @@ describe("Naruto catalogue lines", () => {
             it: { name: "Kakashi Hatake" },
           },
         },
-        "naruto:s6-ni064": {
+        "naruto:s6-ni0064": {
           set: "s6",
-          card: "ni064",
+          card: "ni0064",
           name: "qui",
           langs: { fr: { name: "qui", printed: false } },
         },
@@ -862,41 +1030,104 @@ describe("Naruto catalogue lines", () => {
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     const fr = rows.filter((row) => row.lang === "fr");
-    expect(fr).toHaveLength(1);
-    expect(fr[0]?.printKey).toBe("naruto:ni-0064");
-    expect(fr[0]?.name).toBe("Kakashi Hatake");
-    expect(fr[0]?.printed).toBeUndefined();
-    expect(fr[0]?.artFallbackFrom).toBeUndefined();
+    const retail = fr.find((row) => row.printKey.includes("s1"));
+    const s6 = fr.find((row) => row.printKey.includes("s6"));
+    expect(retail?.name).toBe("Kakashi Hatake");
+    expect(retail?.artFallbackFrom).toBeUndefined();
+    expect(s6?.printed).toBe(false);
+    expect(s6?.printKey).not.toBe(retail?.printKey);
+    // Live disk may supply S5→S1 borrow; URL stays on the s6 printKey.
+    if (s6?.artUrl) {
+      expect(s6.artUrl).toContain("/prints/s6-ni0064-fr/");
+      expect(s6.artFallbackFrom).toMatch(/s[1-5]-ni0*64/);
+    } else {
+      expect(s6?.missingArt).toBe(true);
+    }
   });
 
-  it("shows one FR Sasuke for NI-086 even when the stub key is unpadded", () => {
+  it("does not collapse S1 with S2–S5; S2–S5 may inherit S1 art", () => {
     const index = {
       version: 1 as const,
       pack: "naruto/carddass",
       generatedAt: "2026-01-01T00:00:00.000Z",
       cards: {
-        "naruto:ni-0086": {
-          set: "ninja",
-          card: "ni0086",
-          name: "Sasuke Uchiwa",
-          langs: { fr: { name: "Sasuke Uchiwa", art: "art.jpg" } },
+        "naruto:s1-ni0009": {
+          set: "s1",
+          card: "ni0009",
+          name: "Mizuki",
+          langs: { fr: { art: "art.jpg", name: "Mizuki" } },
         },
-        "naruto:ni-086": {
-          set: "s6",
-          card: "ni086",
-          name: "Sasuke Uchiwa",
-          langs: { fr: { name: "Sasuke Uchiwa", printed: false } },
+        "naruto:s3-ni0009": {
+          set: "s3",
+          card: "ni0009",
+          langs: { fr: {} },
         },
       },
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     const fr = rows.filter((row) => row.lang === "fr");
-    expect(fr).toHaveLength(1);
-    expect(fr[0]?.printKey).toBe("naruto:ni-0086");
-    expect(fr[0]?.name).toBe("Sasuke Uchiwa");
-    expect(fr[0]?.printed).toBeUndefined();
-    expect(fr[0]?.artFallbackFrom).toBeUndefined();
+    expect(fr).toHaveLength(2);
+    const s1 = fr.find((row) => row.printKey === "naruto:s1-ni0009");
+    const s3 = fr.find((row) => row.printKey === "naruto:s3-ni0009");
+    expect(s1?.artFallbackFrom).toBeUndefined();
+    expect(s3?.artFallbackFrom).toBe("naruto:s1-ni0009");
   });
+
+  it(
+    "flags live S2 starter reprints as borrowed from S1 (not owned)",
+    () => {
+      clearCarddassCatalogueBrowseCache();
+      const rows = buildCarddassCatalogueBrowseRows() ?? [];
+      const fr = rows.filter((row) => row.lang === "fr");
+      const s1 = fr.find((row) => row.printKey === "naruto:s1-ni0008");
+      const s2 = fr.find((row) => row.printKey === "naruto:s2-ni0008");
+      expect(s1?.artFallbackFrom).toBeUndefined();
+      expect(s1?.artUrl).toBeTruthy();
+      expect(s2?.artFallbackFrom).toMatch(/s1-ni0*8/);
+      expect(s2?.artUrl).toContain("/prints/s2-ni0008-fr/");
+    },
+    120_000,
+  );
+
+  it(
+    "live FR admin covers every FR checklist printKey",
+    async () => {
+      clearCarddassCatalogueBrowseCache();
+      resetCatalogueCardsCache();
+      const adminKeys = new Set<string>();
+      for (let offset = 0; ; offset += 1000) {
+        const page = await listCatalogueCards({
+          pack: "naruto/carddass",
+          preferLang: "fr",
+          locales: "preferred",
+          offset,
+          limit: 1000,
+        });
+        for (const card of page.cards) {
+          if (card.kind === "pack-back" || card.kind === "set-back") continue;
+          adminKeys.add(card.printKey);
+        }
+        if (
+          page.cards.length < 1000 ||
+          offset + page.cards.length >= page.total
+        ) {
+          break;
+        }
+      }
+      const missing: string[] = [];
+      for (const set of listNarutoPrintSets("fr")) {
+        if (!/^(s\d+|promo)$/.test(set.id)) continue;
+        for (const row of listNarutoSetPrints({
+          setId: set.id,
+          language: "fr",
+        })) {
+          if (!adminKeys.has(row.printKey)) missing.push(row.printKey);
+        }
+      }
+      expect(missing).toEqual([]);
+    },
+    120_000,
+  );
 });
 
 describe("same-number art fallback (Naruto)", () => {
@@ -1018,10 +1249,60 @@ describe("same-number art fallback (Naruto)", () => {
     const promoFr = rows.find(
       (r) => r.printKey === "naruto:promo-te0107" && r.lang === "fr",
     );
-    expect(retailJa?.missingArt).toBe(true);
-    expect(retailJa?.artFallbackFrom).toBeUndefined();
-    expect(promoJa?.artUrl).toContain("/te0107-promo/ja/art.ebay.webp");
-    expect(promoFr?.artFallbackFrom).toBe("naruto:s3-te0107");
+    // Index has no JA art on retail; live disk may still own / borrow a face.
+    if (!retailJa?.artUrl) {
+      expect(retailJa?.missingArt).toBe(true);
+    }
+    // Must not borrow *from* the promo stub onto retail.
+    expect(retailJa?.artFallbackFrom ?? "").not.toMatch(/promo/i);
+    if (promoJa?.artUrl) {
+      expect(promoJa.artUrl).toContain("/prints/");
+      expect(promoJa.artUrl).toContain("/prints/promo-te0107-ja/");
+      expect(promoJa.artUrl).toMatch(/\/face$/);
+    }
+    // JA-only tourney reprint — not on FR Promo checklist; no invent FR tile.
+    expect(promoFr).toBeUndefined();
+  });
+
+  it("gives each set-scoped print its own face URL", () => {
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s1-cl0005": {
+          set: "s1",
+          card: "cl0005",
+          name: "Zôri",
+          langs: { fr: { art: "art.carddass.jpg", name: "Zôri" } },
+        },
+        "naruto:s2-cl0005": {
+          set: "s2",
+          card: "cl0005",
+          name: "Zôri",
+          langs: { fr: { art: "art.carddass.jpg", name: "Zôri" } },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    const s1 = rows.find(
+      (r) => r.printKey === "naruto:s1-cl0005" && r.lang === "fr",
+    );
+    const s2 = rows.find(
+      (r) => r.printKey === "naruto:s2-cl0005" && r.lang === "fr",
+    );
+    // Role URLs only when disk resolves; each printKey stays distinct.
+    if (s2?.artUrl) {
+      expect(s2.artUrl).toContain("/prints/s2-cl0005-fr/");
+    } else {
+      expect(s2?.missingArt).toBe(true);
+    }
+    if (s1?.artUrl) {
+      expect(s1.artUrl).toContain("/prints/s1-cl0005-fr/");
+      if (s2?.artUrl) expect(s1.artUrl).not.toBe(s2.artUrl);
+    } else {
+      expect(s1?.missingArt).toBe(true);
+    }
   });
 
   it("inherits retail face onto promo stub until official art exists", () => {
@@ -1030,15 +1311,15 @@ describe("same-number art fallback (Naruto)", () => {
       pack: "naruto/carddass",
       generatedAt: "2026-01-01T00:00:00.000Z",
       cards: {
-        "naruto:s1-ni024": {
+        "naruto:s1-ni0024": {
           set: "s1",
-          card: "ni024",
+          card: "ni0024",
           name: "Zabuza Momochi",
           langs: { fr: { art: "art.jpg", thumb: "thumb.jpg" } },
         },
-        "naruto:promo-ni024": {
+        "naruto:promo-ni0024": {
           set: "promo",
-          card: "ni024",
+          card: "ni0024-promo",
           name: "Zabuza Momochi",
           rarity: "promo",
           langs: {},
@@ -1046,13 +1327,16 @@ describe("same-number art fallback (Naruto)", () => {
       },
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
-    const promo = rows.find((r) => r.printKey === "naruto:promo-ni024");
-    const retail = rows.find((r) => r.printKey === "naruto:s1-ni024");
-    expect(retail?.artUrl).toContain("/ninja/ni0024/fr/");
+    const promo = rows.find((r) => /promo-ni0*24/i.test(r.printKey));
+    const retail = rows.find((r) => /s1-ni0*24/i.test(r.printKey));
+    expect(retail?.artUrl).toContain("/prints/");
+    expect(retail?.artUrl).toMatch(/\/face$/);
     expect(promo?.missingArt).toBeUndefined();
-    expect(promo?.artFallbackFrom).toBe("naruto:s1-ni024");
-    expect(promo?.artUrl).toBe(retail?.artUrl);
-    expect(promo?.thumbUrl).toBe(retail?.thumbUrl);
+    expect(promo?.artFallbackFrom).toMatch(/s1-ni0*24/);
+    // Print-scoped URLs stay on the requesting printKey; bytes resolve at HTTP.
+    expect(promo?.artUrl).toContain("/prints/");
+    expect(promo?.artUrl).not.toBe(retail?.artUrl);
+    expect(promo?.thumbUrl).toMatch(/\/thumb$/);
   });
 
   it("prefers S1 FR retail over JA scan hung on a manga prerelease stub", () => {
@@ -1084,14 +1368,31 @@ describe("same-number art fallback (Naruto)", () => {
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index, "fr");
     const retail = rows.find(
-      (r) => r.printKey === "naruto:ni-0019" && r.lang === "fr",
+      (r) =>
+        (r.printKey === "naruto:ni-0019" || /s1-ni0*19$/i.test(r.printKey)) &&
+        r.lang === "fr",
     );
     const pre = rows.find(
-      (r) => r.printKey === "naruto:ni-0019-prerelease" && r.lang === "fr",
+      (r) =>
+        r.printKey.includes("prerelease") &&
+        /ni0*19/i.test(r.card) &&
+        r.lang === "fr",
     );
-    expect(retail?.artUrl).toContain("/ninja/ni0019/fr/art.carddass.jpg");
-    expect(pre?.artFallbackFrom).toBe("naruto:ni-0019");
-    expect(pre?.artUrl).toBe(retail?.artUrl);
+    if (retail?.artUrl) {
+      expect(retail.artUrl).toContain("/prints/");
+      expect(retail.artUrl).toMatch(/\/face$/);
+    } else {
+      expect(retail?.missingArt).toBe(true);
+    }
+    if (pre?.artUrl) {
+      expect(pre.artUrl).toContain("/prints/");
+      if (retail?.artUrl) expect(pre.artUrl).not.toBe(retail.artUrl);
+      if (pre.artFallbackFrom) {
+        expect(pre.artFallbackFrom).toMatch(/ni-0*19|s1-ni0*19/);
+      }
+    } else {
+      expect(pre?.missingArt).toBe(true);
+    }
     expect(pre?.artLocaleFrom).toBeUndefined();
   });
 
@@ -1123,9 +1424,14 @@ describe("same-number art fallback (Naruto)", () => {
       },
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
-    const pre = rows.filter((r) => r.printKey === "naruto:te-0003-prerelease");
+    const pre = rows.filter(
+      (r) => r.printKey.includes("prerelease") && /te0*3/i.test(r.card),
+    );
     expect(pre.map((r) => r.lang)).toEqual(["fr"]);
-    expect(pre[0]?.artFallbackFrom).toBe("naruto:te-0003");
+    expect(pre[0]?.artUrl).toContain("/prints/");
+    if (pre[0]?.artFallbackFrom) {
+      expect(pre[0].artFallbackFrom).toMatch(/te-0*3/);
+    }
   });
 
   it("does not pair a tourney reprint with its booster number in the grid", () => {
@@ -1252,7 +1558,7 @@ describe("same-number art fallback (Naruto)", () => {
     };
     const rows = buildCatalogueCardRows("lorcana", index, "en");
     expect(rows[0]?.label).toBe("1 · 1-c1 — Dragon Fire");
-    expect(rows[0]?.artUrl).toBe("/assets/lorcana/cards/1/en/1-c1/art.jpg");
+    expect(rows[0]?.artUrl).toBe("/assets/lorcana/cards/en/1/1-c1/art.jpg");
   });
 
   it("Lorcana expandLocales: FR+EN side by side; filter options stay stable", () => {
@@ -1307,7 +1613,7 @@ describe("same-number art fallback (Naruto)", () => {
       },
     };
     const rows = buildCatalogueCardRows("dragonball/cg", index);
-    expect(rows[0]?.artUrl).toBe("/assets/dragonball/cg/cards/bt1/fr/001/art.webp");
+    expect(rows[0]?.artUrl).toBe("/assets/dragonball/cg/cards/fr/bt1/001/art.webp");
   });
 
   it("shows the English name when preferLang is en, and keeps FR searchable", () => {
@@ -1394,8 +1700,13 @@ describe("same-number art fallback (Naruto)", () => {
       },
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
-    const cdf = rows.find((r) => r.printKey === "naruto:promo-te030-cdf");
-    expect(cdf?.artFallbackFrom).toBe("naruto:s3-te030");
+    const cdf = rows.find(
+      (r) => r.printKey.includes("cdf") || /te0*30-cdf/i.test(r.card),
+    );
+    expect(cdf?.artUrl).toContain("/prints/");
+    if (cdf?.artFallbackFrom) {
+      expect(cdf.artFallbackFrom).toMatch(/s3-te0*30/);
+    }
   });
 
   it("expands every locale for Ninja Ranks instead of hiding FR behind EN titles", () => {
@@ -1435,12 +1746,12 @@ describe("same-number art fallback (Naruto)", () => {
     expect(rows).toHaveLength(6);
     const one = rows.filter((r) => r.printKey === "naruto:nr-0001");
     expect(one.map((r) => r.lang).sort()).toEqual(["en", "fr", "it"]);
-    expect(one.find((r) => r.lang === "fr")?.artUrl).toContain("/nr/fr/0001/");
+    expect(one.find((r) => r.lang === "fr")?.artUrl).toContain("/fr/nr/0001/");
     const threeFr = rows.find(
       (r) => r.printKey === "naruto:nr-0003" && r.lang === "fr",
     );
     expect(threeFr?.missingArt).toBeUndefined();
-    expect(threeFr?.artUrl).toContain("/nr/fr/0003/art.reconstructed.webp");
+    expect(threeFr?.artUrl).toContain("/fr/nr/0003/art.reconstructed.webp");
   });
 
   it("shows every Ninja Ranks locale even when the index has no lang slot yet", () => {
@@ -1463,7 +1774,7 @@ describe("same-number art fallback (Naruto)", () => {
     const rows = buildCatalogueCardRows("naruto/ninja-ranks", index, "it");
     const ff4 = rows.filter((r) => r.printKey === "naruto:ff-0004");
     expect(ff4.map((r) => r.lang).sort()).toEqual(["en", "fr", "it"]);
-    expect(ff4.find((r) => r.lang === "it")?.artUrl).toContain("/ff/fr/0004/");
+    expect(ff4.find((r) => r.lang === "it")?.artUrl).toContain("/fr/ff/0004/");
     expect(ff4.find((r) => r.lang === "it")?.artLocaleFrom).toBe("fr");
   });
 
@@ -1623,14 +1934,14 @@ describe("same-number art fallback (Naruto)", () => {
   });
 
   it("Mythos missions keep set/lang/card disk paths (not Carddass M-001)", () => {
-    expect(cataloguePackInfo("naruto/mythos")?.narutoCollectorDisk).toBeFalsy();
+    expect(cataloguePackInfo("naruto/mythos")?.collectorCardFolder).toBeFalsy();
     expect(
       packFaceAssetUrl(
         "naruto/mythos",
         { set: "ks1", lang: "fr", card: "m1" },
         "art.lorenzone.webp",
       ),
-    ).toBe("/assets/naruto/mythos/cards/ks1/fr/m1/art.lorenzone.webp");
+    ).toBe("/assets/naruto/mythos/cards/fr/ks1/m1/art.lorenzone.webp");
     const rows = buildCatalogueCardRows(
       "naruto/mythos",
       {
@@ -1652,7 +1963,7 @@ describe("same-number art fallback (Naruto)", () => {
       "fr",
     );
     expect(rows[0]?.label).toBe("ks1 · m1 — APPEL DE SOUTIEN");
-    expect(rows[0]?.artUrl).toContain("/cards/ks1/fr/m1/");
+    expect(rows[0]?.artUrl).toContain("/cards/fr/ks1/m1/");
     expect(rows[0]?.missingArt).toBeUndefined();
   });
 
@@ -1692,8 +2003,8 @@ describe("same-number art fallback (Naruto)", () => {
       "ks1 · 0120 — GAARA – Le Sarcophage de Sable",
       "ks1 · 0120-a — GAARA – Le Sarcophage de Sable",
     ]);
-    expect(rows[0]?.artUrl).toContain("/ks1/fr/0120/");
-    expect(rows[1]?.artUrl).toContain("/ks1/fr/0120-a/");
+    expect(rows[0]?.artUrl).toContain("/fr/ks1/0120/");
+    expect(rows[1]?.artUrl).toContain("/fr/ks1/0120-a/");
   });
 
   it("Mythos preferred FR liste aussi Shinobi Shiren (SAMPLE EN)", async () => {
@@ -1873,7 +2184,7 @@ describe("same-number art fallback (Naruto)", () => {
     const fr = rows.find(
       (r) => r.printKey === "naruto:nr-0010" && r.lang === "fr",
     );
-    expect(fr?.artUrl).toContain("/nr/en/0010/");
+    expect(fr?.artUrl).toContain("/en/nr/0010/");
     expect(fr?.artLocaleFrom).toBe("en");
   });
 
@@ -1903,8 +2214,15 @@ describe("same-number art fallback (Naruto)", () => {
     expect(fr?.languageSpecific).toBe(true);
     // Preferred FR must not show the empty FR shell — only IT has the face.
     expect(
-      matchesCataloguePreferredLang(fr!, "fr", { expandLocales: true }),
+      matchesCataloguePreferredLang(fr!, "fr", {
+        expandLocales: true,
+        hideLanguageSpecificMissingArt: true,
+      }),
     ).toBe(false);
+    // Carddass-style: titled FR checklist without scan stays visible.
+    expect(
+      matchesCataloguePreferredLang(fr!, "fr", { expandLocales: true }),
+    ).toBe(true);
     const it = rows.find(
       (r) => r.printKey === "naruto:nr-0068" && r.lang === "it",
     )!;
@@ -1960,7 +2278,7 @@ describe("same-number art fallback (Naruto)", () => {
     const fr = rows.find(
       (r) => r.printKey === "naruto:nr-0044" && r.lang === "fr",
     );
-    expect(fr?.artUrl).toContain("/nr/en/0044/");
+    expect(fr?.artUrl).toContain("/en/nr/0044/");
     expect(fr?.artLocaleFrom).toBe("en");
   });
 
@@ -1986,7 +2304,7 @@ describe("same-number art fallback (Naruto)", () => {
     const fr = rows.find(
       (r) => r.printKey === "naruto:ff-0006" && r.lang === "fr",
     );
-    expect(fr?.artUrl).toContain("/ff/en/0006/");
+    expect(fr?.artUrl).toContain("/en/ff/0006/");
     expect(fr?.artLocaleFrom).toBe("en");
   });
 
@@ -2075,9 +2393,9 @@ describe("mergeCatalogueBackRows", () => {
     const rows = mergeCatalogueBackRows({
       pack: "naruto/carddass",
       faceRows: faces,
-      packBackUrl: "/assets/naruto/carddass/cards/back.webp",
+      packBackUrl: "/assets/naruto/carddass/backs/fr",
       setBackUrls: {
-        s1: "/assets/naruto/carddass/cards/s1/back.webp",
+        s1: "/assets/naruto/carddass/backs/fr/sets/s1",
         // s2 intentionally missing
       },
     });

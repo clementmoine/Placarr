@@ -158,6 +158,9 @@ function buildLocalPrintsBrowseRows(
         label,
         ...(name ? { name } : {}),
         ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
+        ...(row.printed === 0 || row.printed === false
+          ? { printed: false }
+          : {}),
         missingArt: !artUrl,
         ...(artLang !== row.lang && artUrl
           ? { artLocaleFrom: artLang }

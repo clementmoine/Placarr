@@ -326,6 +326,44 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
   });
 
   describe("copyNarutoTitlesOntoGroupedPrints", () => {
+    it("does not hang FR retail names on JA-only unattested tourney stubs", () => {
+      const merged = copyNarutoTitlesOntoGroupedPrints({
+        prints: [
+          {
+            printKey: "naruto:s3-te0107",
+            setCode: "s3",
+            number: "te0107",
+            cardType: "te",
+            family: "jutsu",
+          },
+          {
+            printKey: "naruto:promo-te0107",
+            setCode: "promo",
+            number: "te0107-promo",
+            cardType: "te",
+            family: "jutsu",
+            grouping: "promo",
+          },
+        ],
+        titles: [
+          {
+            printKey: "naruto:s3-te0107",
+            lang: "fr",
+            fullName: "L'assassinat silencieux",
+            rarity: "commune",
+          },
+          {
+            printKey: "naruto:s3-te0107",
+            lang: "ja",
+            fullName: "無音殺人者",
+          },
+        ],
+      });
+      expect(
+        merged.titles.filter((t) => t.printKey === "naruto:promo-te0107"),
+      ).toEqual([]);
+    });
+
     it("copies the retail EN name onto the tourney promo stamp", () => {
       const merged = copyNarutoTitlesOntoGroupedPrints({
         prints: [

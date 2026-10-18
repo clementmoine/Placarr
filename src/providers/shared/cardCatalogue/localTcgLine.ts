@@ -281,7 +281,9 @@ function toCandidate(
     ...(thumb ? { thumbnailUrl: thumb } : {}),
     ...(back ? { cardBackUrl: back } : {}),
     language: row.lang,
-    printed: true,
+    ...(row.printed === 0 || row.printed === false
+      ? { printed: false as const }
+      : {}),
     effectPack: spec.effectPackId,
     ...(orient?.landscapeFace ? { landscapeFace: true } : {}),
     ...(orient?.faceQuarterTurns
@@ -548,10 +550,11 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
         return local;
       }
     },
-    listSetPrints: ({ setId, language }) =>
+    listSetPrints: ({ setId, language, includeUnprinted }) =>
       enumerateSetPrints({
         setId,
         language,
+        includeUnprinted,
         search: (opts) => searchPrints(opts.query, opts),
       }),
     searchPrints: async ({ query, language, limit, setId, catalogueBrowse }) =>
@@ -560,7 +563,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
         limit,
         setId,
         catalogueBrowse,
-      }),
+      }).filter((row) => row.printed !== false),
     lookupPrint: async ({ printKey, language }) =>
       lookupPrint(printKey, language),
     runMappingProbe: async () =>

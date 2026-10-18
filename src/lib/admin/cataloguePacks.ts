@@ -173,21 +173,34 @@ export type CataloguePackInfo = {
   /**
    * When a print has no face yet, reuse art from another print that shares the
    * same printed prefix + number (Naruto promo stub → retail — not NI→N).
+   * Prefer {@link artBorrowFrom} chains when both are set.
    */
   sameNumberArtFallback?: boolean;
   /**
-   * Face disk layout is Carddass `cards/{family}/{diskId}/{lang}/` resolved via
-   * collector identity (`m1` → `mission/m0001`). Other Naruto packs (Mythos,
-   * Kayou, …) keep `cards/{set}/{lang}/{card}/` — never apply this to them or
-   * Mythos missions become `M-001` with a 404 art URL.
+   * Read-only **same-locale** set→set art inheritance.
+   *
+   * Missing face at `cards/{lang}/{set}/{card}/` may *display* art from the
+   * first donor set in the chain that has that collector **in the same lang**.
+   * Never copies / materializes files into the requester folder.
+   *
+   * Default scope is **same locale only**. Cross-lang display is a separate
+   * pack/series/card opt-in: {@link localeArt.bestFaceAcrossLocales} (+
+   * `locale-specific-faces.json` denylist for text faces). Empty chain
+   * (`foo: []`) = no inheritance for that set. S6 FR (cancelled) borrows
+   * S5→S1 until a real `fr/s6/{id}/` face lands — then owned wins.
    */
-  narutoCollectorDisk?: boolean;
+  artBorrowFrom?: Readonly<Record<string, readonly string[]>>;
+  /**
+   * Disk card folder is the collector id (`ni0001`), not parsePrintKey's bare
+   * number. Carddass / similar — path is still `cards/{lang}/{set}/{card}/`.
+   */
+  collectorCardFolder?: boolean;
   /**
    * One grid tile per locale in the identity corpus (Naruto Carddass, Ninja
    * Ranks). Without this, `pickLang` keeps a single row and hides FR / IT /
    * EN faces that live on other lang slots.
    */
-    expandLocales?: boolean;
+  expandLocales?: boolean;
   /**
    * With `expandLocales` + `catalogueLocales`, emit an empty tile for each
    * declared locale missing on the print (Ninja Ranks FR gaps). Off by
@@ -200,13 +213,25 @@ export type CataloguePackInfo = {
    */
   catalogueLocales?: readonly string[];
   /**
-   * How catalogue tiles pick rectos across locales. Versos stay on the tile
-   * locale; a missing back is honest. Any pack can opt in — see
-   * `locale-specific-faces.json` next to `catalog.sqlite`.
+   * Cross-locale recto policy. Default off = faces stay on the tile lang
+   * (Yu-Gi-Oh, most Pokémon). Opt in only when art is language-neutral
+   * (no text / identical across langs) for that TCG / series / card.
+   * Versos always stay on the tile locale; a missing back is honest.
+   * Denylist: `locale-specific-faces.json` next to `catalog.sqlite`.
    */
   localeArt?: {
-    /** Neutral prints borrow the best recto among `catalogueLocales`. */
+    /**
+     * Explicit opt-in: after same-locale {@link artBorrowFrom}, a missing
+     * recto may display the best face from another locale (same collector).
+     * Does not apply to cards listed as locale-specific. Never materializes.
+     */
     bestFaceAcrossLocales?: boolean;
+    /**
+     * Treat a localized title (even without a scan) as locale presence when
+     * building / evaluating the language-specific ledger — Carddass FR/IT
+     * titles must not borrow JA shop rectos.
+     */
+    countLocalizedNames?: boolean;
   };
   extractTarget: CatalogueExtractTarget;
   /** No store APK fetch — Bandai / Wayback catalogue sync. */
@@ -380,14 +405,50 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     hasFoilEffects: true,
     defaultScope: "foils",
     sameNumberArtFallback: true,
-    narutoCollectorDisk: true,
+    collectorCardFolder: true,
+    /*
+      S2–S5 share with earlier series until dedicated scans land.
+      S6 FR (cancelled) displays S5→S1 until `fr/s6/{id}/` exists — then owned.
+      Promo / prerelease ← retail chain. Versos stay set-local (S6 has its own).
+    */
+    artBorrowFrom: {
+      s2: ["s1"],
+      s3: ["s2", "s1"],
+      s4: ["s3", "s2", "s1"],
+      s5: ["s4", "s3", "s2", "s1"],
+      // Cancelled FR run: display S5→S1 until `fr/s6/{id}/` has its own face.
+      s6: ["s5", "s4", "s3", "s2", "s1"],
+      promo: ["s5", "s4", "s3", "s2", "s1"],
+      prerelease: ["s5", "s4", "s3", "s2", "s1"],
+      /*
+        JA checklist = 巻ノ (`maki*`). Preferred-lang JA only shows those
+        printKeys — but lang-first dumps often park scans under `ja/s1…s6/`.
+        Borrow retail so 巻ノ tiles resolve; own `ja/makiN/{id}/` still wins.
+      */
+      maki1: ["s1"],
+      maki2: ["s2", "s1"],
+      maki3: ["s3", "s2", "s1"],
+      maki4: ["s4", "s3", "s2", "s1"],
+      maki5: ["s5", "s4", "s3", "s2", "s1"],
+      maki6: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki7: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki8: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki9: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki10: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki11: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki12: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki13: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki14: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki15: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki16: ["s6", "s5", "s4", "s3", "s2", "s1"],
+      maki17: ["s6", "s5", "s4", "s3", "s2", "s1"],
+    },
     /**
-     * FR tiles often lack a recto while JA (or EN CCG) holds one. Keep expand
-     * to langs that exist on the print (unified pack) — do **not** declare
-     * `catalogueLocales` or we invent empty FR shells for EN-only CCG cards
-     * (« sans nom » with a borrowed face).
+     * No cross-lang recto borrow (FR≠JA≠EN). Same-locale set inheritance stays
+     * on {@link artBorrowFrom}. Do **not** declare `catalogueLocales` or we
+     * invent empty FR shells for EN-only CCG cards.
      */
-    localeArt: { bestFaceAcrossLocales: true },
+    localeArt: { bestFaceAcrossLocales: false },
     extractTarget: "naruto",
     catalogueOnly: true,
     extractMarkers: [

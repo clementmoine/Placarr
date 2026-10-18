@@ -33,7 +33,9 @@ const ASSET_BASE = "/assets/naruto/carddass";
 export const NARUTO_CARDDASS_FULL_FOIL_MASK_URL = `${ASSET_BASE}/full_foil_mask.webp`;
 export const NARUTO_CCG_FULL_FOIL_MASK_URL = NARUTO_CARDDASS_FULL_FOIL_MASK_URL;
 /** USA CCG sleeve — FR Storm 3 uses this verso, not the Carddass back. */
-export const NARUTO_CCG_SLEEVE_BACK_URL = `${ASSET_BASE}/cards/back.en.webp`;
+export const NARUTO_CCG_SLEEVE_BACK_URL = `${ASSET_BASE}/backs/en`;
+/** S6 FR cancelled run — dedicated verso (`cards/fr/s6/back.fr.webp`). */
+export const NARUTO_S6_FR_BACK_URL = `${ASSET_BASE}/backs/fr/sets/s6`;
 
 /**
  * Finish → house shader. The house set is texture-free, so a pack with no
@@ -70,7 +72,7 @@ export const NARUTO_CCG_FINISHES = NARUTO_CARDDASS_FINISHES;
 
 /** Demo face for the foils / bag playroom (S1 FR NI-019). */
 const PLAYROOM_DEMO_ART =
-  `${ASSET_BASE}/cards/ninja/ni0019/fr/art.carddass.jpg`;
+  `${ASSET_BASE}/cards/fr/s1/ni0019/art.carddass.jpg`;
 
 function playroomArtForMaterial(name: string): PlayroomArt | null {
   const n = name.trim().toLowerCase();
@@ -122,7 +124,7 @@ const SHIPPUDEN_JA_SETS = /^(maku\d+|shi|mju|msa|gaku)$/i;
  * l'installeur de dos curés est indexé par dossier. C'est un dos **de ligne**,
  * pas de famille : les quatre le partagent.
  */
-const SHIPPUDEN_JA_BACK_URL = `${ASSET_BASE}/cards/shi/back.webp`;
+const SHIPPUDEN_JA_BACK_URL = `${ASSET_BASE}/backs/ja/sets/shi`;
 
 /*
   Même découpe que `narutoCatalogueLineForCard` (packs.ts) — dupliquée ici pour
@@ -158,7 +160,7 @@ const pack = defineCatalogueOnlyPack({
   blurb: "Catalogue local — foil maison + sachets (playroom)",
   assetBase: ASSET_BASE,
   /** Flip default = Carddass FR sleeve (`curated/cards/back.fr.png`). */
-  cardBackUrl: `${ASSET_BASE}/cards/back.fr.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/fr`,
   /*
     Les 313 cartes du 疾風伝 montraient le dos Carddass : les dos sont servis
     par **langue**, et cette ligne est japonaise, donc elle héritait de
@@ -170,12 +172,21 @@ const pack = defineCatalogueOnlyPack({
   */
   resolveCardBack: ({ setCode, printKey }) => {
     const card = (printKey ?? "").split(":").pop() ?? "";
-    const set = (setCode ?? "").trim();
+    /*
+      Set-scoped keys (`naruto:s6-ni0206`) bury the series in the key when the
+      caller only forwards printKey (shelf flip / skeleton).
+    */
+    const setFromKey = /^naruto:([a-z0-9]+)-/i.exec(printKey ?? "")?.[1] ?? "";
+    const set = ((setCode ?? "").trim() || setFromKey).toLowerCase();
     if (SHIPPUDEN_JA_FAMILIES.test(card) || SHIPPUDEN_JA_SETS.test(set)) {
       return SHIPPUDEN_JA_BACK_URL;
     }
     if (isEnCcgPrintedRef(card, set)) {
       return NARUTO_CCG_SLEEVE_BACK_URL;
+    }
+    // S6 FR sleeve ≠ S1–S5 Carddass triskel — set back when present on disk.
+    if (set === "s6") {
+      return NARUTO_S6_FR_BACK_URL;
     }
     return null;
   },

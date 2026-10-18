@@ -23,7 +23,7 @@ vi.mock("@/lib/runtimeData", async (importOriginal) => {
 });
 
 const SAMPLE =
-  "/assets/naruto/ninja-ranks/cards/nr/fr/0001/art.coleka.webp";
+  "/assets/naruto/ninja-ranks/cards/fr/nr/0001/art.coleka.webp";
 
 describe("assetsPath", () => {
   beforeEach(() => {

@@ -42,10 +42,10 @@ describe("lorcana packAssets", () => {
   it("builds /assets/lorcana/cards/{set}/{lang}/{card}/ URLs", () => {
     expect(packHasCard("lorcana:1-42")).toBe(true);
     expect(packFoilMaskUrl("lorcana:1-42", "fr")).toBe(
-      "/assets/lorcana/cards/1/fr/42/mask.jpg",
+      "/assets/lorcana/cards/fr/1/42/mask.jpg",
     );
     expect(packArtUrl("lorcana:1-42", "fr")).toBe(
-      "/assets/lorcana/cards/1/fr/42/art.jpg",
+      "/assets/lorcana/cards/fr/1/42/art.jpg",
     );
   });
 
@@ -55,7 +55,7 @@ describe("lorcana packAssets", () => {
         packFoilMaskUrl("lorcana:1-42", "fr"),
         "https://cdn/mask.jpg",
       ),
-    ).toBe("/assets/lorcana/cards/1/fr/42/mask.jpg");
+    ).toBe("/assets/lorcana/cards/fr/1/42/mask.jpg");
     expect(preferPackUrl(null, "https://cdn/mask.jpg")).toBe(
       "https://cdn/mask.jpg",
     );
@@ -70,8 +70,8 @@ describe("lorcana packAssets", () => {
         foilMaskUrl: "https://cdn/mask.jpg",
       }),
     ).toMatchObject({
-      imageUrl: "/assets/lorcana/cards/1/fr/42/art.jpg",
-      foilMaskUrl: "/assets/lorcana/cards/1/fr/42/mask.jpg",
+      imageUrl: "/assets/lorcana/cards/fr/1/42/art.jpg",
+      foilMaskUrl: "/assets/lorcana/cards/fr/1/42/mask.jpg",
     });
   });
 });

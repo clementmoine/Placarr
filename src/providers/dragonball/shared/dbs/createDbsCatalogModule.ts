@@ -134,10 +134,11 @@ export function createDbsCatalogModule(
     },
     printGames: [printGame],
     ...(loadBoosterComposition ? { loadBoosterComposition } : {}),
-    listSetPrints: ({ setId, language }) =>
+    listSetPrints: ({ setId, language, includeUnprinted }) =>
       enumerateSetPrints({
         setId,
         language,
+        includeUnprinted,
         search: (opts) => searchPrints(opts.query, opts),
       }),
     searchPrints: async ({ query, language, limit, setId, catalogueBrowse }) =>
@@ -146,7 +147,7 @@ export function createDbsCatalogModule(
         limit,
         setId,
         catalogueBrowse,
-      }),
+      }).filter((row) => row.printed !== false),
     lookupPrint: async ({ printKey, language }) => {
       if (parsePrintKey(printKey)?.game !== printGame) return null;
       return lookupPrint(printKey, { language: language ?? undefined });

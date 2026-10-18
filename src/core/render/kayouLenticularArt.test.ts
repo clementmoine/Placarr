@@ -640,7 +640,7 @@ describe("kayouLenticularArt", () => {
       const sharp = (await import("sharp")).default;
       const { readFileSync, existsSync } = await import("node:fs");
       const path =
-        "data/naruto/kayou/cards/newyeargiftbox/en/nrss.hr.011/art.narutocards.webp";
+        "data/naruto/kayou/cards/en/newyeargiftbox/nrss.hr.011/art.narutocards.webp";
       if (!existsSync(path)) return;
 
       const { data, info } = await sharp(readFileSync(path))
@@ -671,11 +671,11 @@ describe("kayouLenticularArt", () => {
       const grid = { cols: 1, rows: 2 };
       const profile = KAYOU_LENTICULAR_CROP_PROFILE_DUAL_WAVE;
       const cases = [
-        "data/naruto/kayou/cards/t4w2/en/nr.hr.057/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w3/en/nr.hr.084/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w4/en/nr.hr.121/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w5/en/nr.hr.162/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w5/en/nr.hr.163/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w2/nr.hr.057/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w3/nr.hr.084/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w4/nr.hr.121/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w5/nr.hr.162/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w5/nr.hr.163/art.narutocards.webp",
       ] as const;
 
       for (const path of cases) {
@@ -840,11 +840,11 @@ describe("kayouLenticularArt", () => {
       const { readFileSync, existsSync } = await import("node:fs");
       const grid = { cols: 1, rows: 2 };
       const cases = [
-        "data/naruto/kayou/cards/t4w2/en/nr.hr.057/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w3/en/nr.hr.084/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w4/en/nr.hr.121/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w5/en/nr.hr.162/art.narutocards.webp",
-        "data/naruto/kayou/cards/t4w5/en/nr.hr.163/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w2/nr.hr.057/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w3/nr.hr.084/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w4/nr.hr.121/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w5/nr.hr.162/art.narutocards.webp",
+        "data/naruto/kayou/cards/en/t4w5/nr.hr.163/art.narutocards.webp",
       ] as const;
 
       for (const path of cases) {

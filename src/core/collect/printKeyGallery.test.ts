@@ -15,19 +15,19 @@ describe("assetsUrlBelongsToPrintGame", () => {
   it("matches nested pack lines under the game segment", () => {
     expect(
       assetsUrlBelongsToPrintGame(
-        "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.jpg",
+        "/assets/naruto/carddass/cards/fr/s1/ni0017/art.jpg",
         "naruto",
       ),
     ).toBe(true);
     expect(
       assetsUrlBelongsToPrintGame(
-        "/assets/naruto/kayou/cards/x/en/y/art.webp",
+        "/assets/naruto/kayou/cards/en/x/y/art.webp",
         "kayou",
       ),
     ).toBe(true);
     expect(
       assetsUrlBelongsToPrintGame(
-        "/assets/lorcana/cards/1/en/1/art.jpg",
+        "/assets/lorcana/cards/en/1/1/art.jpg",
         "naruto",
       ),
     ).toBe(false);
@@ -44,12 +44,12 @@ describe("filterAttachmentsForPrintKey (client)", () => {
         {
           type: "cover",
           source: "narutocarddass",
-          url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+          url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
         },
         {
           type: "cover",
           source: "lorcanajson",
-          url: "/assets/lorcana/cards/1/en/1/art.jpg",
+          url: "/assets/lorcana/cards/en/1/1/art.jpg",
         },
         {
           type: "cover",
@@ -89,7 +89,7 @@ describe("filterAttachmentsForPrintKey (server registry)", () => {
         {
           type: "cover",
           source: "narutocarddass",
-          url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+          url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
         },
         {
           type: "cover",
@@ -114,17 +114,17 @@ describe("filterMetadataForPrintKey", () => {
     const filtered = filterMetadataForPrintKey(
       {
         title: "Haku",
-        imageUrl: "/assets/lorcana/cards/1/en/1/art.jpg",
+        imageUrl: "/assets/lorcana/cards/en/1/1/art.jpg",
         attachments: [
           {
             type: "cover",
             source: "lorcanajson",
-            url: "/assets/lorcana/cards/1/en/1/art.jpg",
+            url: "/assets/lorcana/cards/en/1/1/art.jpg",
           },
           {
             type: "cover",
             source: "narutocarddass",
-            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+            url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
           },
         ],
       },
@@ -135,7 +135,7 @@ describe("filterMetadataForPrintKey", () => {
       "narutocarddass",
     ]);
     expect(filtered?.imageUrl).toBe(
-      "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+      "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
     );
   });
 
@@ -153,7 +153,7 @@ describe("filterMetadataForPrintKey", () => {
           {
             type: "cover",
             source: "narutocarddass",
-            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+            url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
           },
         ],
       },
@@ -164,7 +164,7 @@ describe("filterMetadataForPrintKey", () => {
       "narutocarddass",
     ]);
     expect(filtered?.imageUrl).toBe(
-      "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+      "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
     );
   });
 });
@@ -175,36 +175,36 @@ describe("metadataForPrintKeyImagePicker", () => {
       {
         title: "Haku",
         imageUrl:
-          "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+          "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
         attachments: [
           {
             type: "cover",
             source: "narutocarddass",
-            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+            url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
           },
         ],
       },
       {
         title: "Haku",
         imageUrl:
-          "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+          "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
         attachments: [
           {
             type: "cover",
             source: "narutocarddass",
             role: "naruto-face-carddass",
-            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
+            url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
           },
           {
             type: "cover",
             source: "narutocarddass",
             role: "naruto-face-coleka",
-            url: "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.coleka.webp",
+            url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.coleka.webp",
           },
           {
             type: "cover",
             source: "lorcanajson",
-            url: "/assets/lorcana/cards/1/en/1/noise.jpg",
+            url: "/assets/lorcana/cards/en/1/1/noise.jpg",
           },
         ],
       },
@@ -212,8 +212,8 @@ describe("metadataForPrintKeyImagePicker", () => {
     );
 
     expect(merged?.attachments?.map((a) => a.url)).toEqual([
-      "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.carddass.jpg",
-      "/assets/naruto/carddass/cards/ninja/ni0017/fr/art.coleka.webp",
+      "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
+      "/assets/naruto/carddass/cards/fr/s1/ni0017/art.coleka.webp",
     ]);
   });
 });

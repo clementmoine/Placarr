@@ -4,15 +4,14 @@ import "@/effects";
 import { listEffectPacks } from "@/core/render/foil/backend";
 
 describe("effect pack card-back contract", () => {
-  it("requires every registered pack to declare a non-empty cardBackUrl under /assets/<id>/cards/", () => {
+  it("requires every registered pack to declare a role back URL under /assets/<id>/backs/", () => {
     const packs = listEffectPacks();
     expect(packs.length).toBeGreaterThan(0);
     for (const pack of packs) {
       expect(pack.cardBackUrl.trim().length).toBeGreaterThan(0);
       expect(pack.cardBackUrl.startsWith(`${pack.assetBase}/`)).toBe(true);
-      expect(pack.cardBackUrl).toMatch(
-        /\/cards\/back(?:\.[a-z]{2})?\.[a-z0-9]+$/i,
-      );
+      // Role URL — HTTP picks back.{lang}.* / back.* on disk.
+      expect(pack.cardBackUrl).toMatch(/\/backs\/[a-z]{2}(?:\/sets\/[a-z0-9-]+)?$/i);
     }
   });
 

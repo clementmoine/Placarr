@@ -31,7 +31,7 @@ describe("finitions attestées sur exemplaire", () => {
     expect(attestedNeedsFullFoilMask("lorcana:p2-36")).toBe(true);
     expect(attestedNeedsFullFoilMask("lorcana:1-12")).toBe(false);
     expect(attestedArtFoilMaskUrl("lorcana:p2-36", "en")).toBe(
-      "/assets/lorcana/cards/p2/en/36/mask.attested.webp",
+      "/assets/lorcana/cards/en/p2/36/mask.attested.webp",
     );
   });
 

@@ -47,10 +47,10 @@ describe("strip collapsed art letters", () => {
     ).toBe("dbsjcc:part4-d0250-kaio");
     expect(
       stripDbsjccArtLetterFromAssetUrl(
-        "/assets/dragonball/jcc/cards/part1/fr/d0007a/art.dbzcollection.jpg",
+        "/assets/dragonball/jcc/cards/fr/part1/d0007a/art.dbzcollection.jpg",
       ),
     ).toBe(
-      "/assets/dragonball/jcc/cards/part1/fr/d0007/art.dbzcollection.jpg",
+      "/assets/dragonball/jcc/cards/fr/part1/d0007/art.dbzcollection.jpg",
     );
   });
 });

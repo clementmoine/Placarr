@@ -173,7 +173,7 @@ describe("toPrintCandidate finishes", () => {
       }),
     );
     expect(candidate.foilMaskUrl).toBe(
-      "/assets/lorcana/cards/p2/en/36/mask.attested.webp",
+      "/assets/lorcana/cards/en/p2/36/mask.attested.webp",
     );
     expect(candidate.effectPack).toBe("lorcana");
   });

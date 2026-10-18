@@ -8,6 +8,7 @@ import {
   narutoDiskCardId,
   parseNarutoCollector,
   canonicalNarutoDiskPrefix,
+  reconcileNarutoFrChecklistSet,
   resolveNarutoLedgerPrintKeys,
   resolveNarutoLedgerPrintTarget,
   narutoNumbersEqual,
@@ -771,7 +772,7 @@ export function mergeCardgameclubItCardsIntoIndex(input: {
     if (!target.exists) {
       const print: NarutoPrintRow = {
         printKey,
-        setCode: row.setCode,
+        setCode: reconcileNarutoFrChecklistSet(row.number, row.setCode),
         number: diskId,
         cardType: cardTypeFromCollectorNumber(diskId),
         family: parsed?.family ?? null,

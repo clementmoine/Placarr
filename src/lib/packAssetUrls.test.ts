@@ -2,10 +2,46 @@ import { describe, expect, it } from "vitest";
 
 import {
   assetsPackBase,
+  assetsPrintFaceUrl,
   pokemonFaceFileFromTex,
   rewriteAssetPackUrl,
   rewriteAssetUrlForPrintKeyChange,
 } from "./packAssetUrls";
+
+describe("assetsPrintFaceUrl", () => {
+  it("uses the shelf stem (set-id-lang) without the finish", () => {
+    expect(
+      assetsPrintFaceUrl("naruto/carddass", "naruto:s1-cl0001", "fr", "thumb"),
+    ).toBe("/assets/naruto/carddass/prints/s1-cl0001-fr/thumb");
+    expect(
+      assetsPrintFaceUrl("naruto/carddass", "naruto:s5-ni0229", "fr", "thumb"),
+    ).toBe("/assets/naruto/carddass/prints/s5-ni0229-fr/thumb");
+    expect(
+      assetsPrintFaceUrl(
+        "naruto/carddass",
+        "naruto:promo-te0107",
+        "ja",
+        "thumb",
+      ),
+    ).toBe("/assets/naruto/carddass/prints/promo-te0107-ja/thumb");
+    expect(
+      assetsPrintFaceUrl("naruto/carddass", "naruto:s1-ni0019-prerelease", "fr"),
+    ).toBe("/assets/naruto/carddass/prints/prerelease-ni0019-fr/face");
+  });
+});
+
+describe("assetsPackBackRoleUrl / assetsSetBackRoleUrl", () => {
+  it("builds role back URLs without filenames", async () => {
+    const { assetsPackBackRoleUrl, assetsSetBackRoleUrl } =
+      await import("./packAssetUrls");
+    expect(assetsPackBackRoleUrl("naruto/carddass", "fr")).toBe(
+      "/assets/naruto/carddass/backs/fr",
+    );
+    expect(assetsSetBackRoleUrl("lorcana", "1", "en")).toBe(
+      "/assets/lorcana/backs/en/sets/1",
+    );
+  });
+});
 
 describe("rewriteAssetPackUrl", () => {
   it("rewrites legacy dbs/jcc sealed URLs onto dragonball/jcc", () => {
@@ -35,24 +71,24 @@ describe("rewriteAssetUrlForPrintKeyChange", () => {
   it("moves the card folder when an art letter is assigned", () => {
     expect(
       rewriteAssetUrlForPrintKeyChange(
-        "/assets/dragonball/jcc/cards/part1/fr/d0050/art.dbzcollection.jpg",
+        "/assets/dragonball/jcc/cards/fr/part1/d0050/art.dbzcollection.jpg",
         "dbsjcc:part1-d0050",
         "dbsjcc:part1-d0050a",
       ),
     ).toBe(
-      "/assets/dragonball/jcc/cards/part1/fr/d0050a/art.dbzcollection.jpg",
+      "/assets/dragonball/jcc/cards/fr/part1/d0050a/art.dbzcollection.jpg",
     );
   });
 
   it("moves home set + letter for multi-set clones", () => {
     expect(
       rewriteAssetUrlForPrintKeyChange(
-        "/assets/dragonball/jcc/cards/part3/fr/d0123/art.dbzcollection.jpg",
+        "/assets/dragonball/jcc/cards/fr/part3/d0123/art.dbzcollection.jpg",
         "dbsjcc:part3-d0123",
         "dbsjcc:part2-d0123b",
       ),
     ).toBe(
-      "/assets/dragonball/jcc/cards/part2/fr/d0123b/art.dbzcollection.jpg",
+      "/assets/dragonball/jcc/cards/fr/part2/d0123b/art.dbzcollection.jpg",
     );
   });
 });

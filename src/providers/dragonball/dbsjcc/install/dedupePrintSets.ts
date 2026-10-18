@@ -93,8 +93,8 @@ function moveCardTree(
   for (const lang of ["fr", "ja", "en"]) {
     const destDir = path.join(
       packCardsDir(packId),
-      print.homeSet,
       lang,
+      print.homeSet,
       destCard,
     );
     ensureDir(destDir);
@@ -106,7 +106,7 @@ function moveCardTree(
         print.number,
         baseNum,
       ]) {
-        const srcDir = path.join(packCardsDir(packId), setCode, lang, folder);
+        const srcDir = path.join(packCardsDir(packId), lang, setCode, folder);
         if (!existsSync(srcDir)) continue;
         if (path.resolve(srcDir) === path.resolve(destDir)) continue;
         for (const file of readdirSync(srcDir)) {

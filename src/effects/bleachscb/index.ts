@@ -9,5 +9,5 @@ export const bleachScbEffectPack = defineCatalogueOnlyPack({
   label: "Bleach Soul Card Battle",
   blurb: "Catalogue local Bleach Soul Card Battle (Carddass) — ja/fr/en",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
 });

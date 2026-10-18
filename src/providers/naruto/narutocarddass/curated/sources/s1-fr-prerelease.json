@@ -5,19 +5,64 @@
   "setCode": "s1",
   "grouping": "prerelease",
   "cards": [
-    { "number": "ni025", "name": "Naruto Uzumaki" },
-    { "number": "ni019", "name": "Naruto Uzumaki" },
-    { "number": "ni047", "name": "Sasuke Uchiwa" },
-    { "number": "ni027", "name": "Sakura Haruno" },
+    {
+      "number": "ni025",
+      "name": "Naruto Uzumaki",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
+    {
+      "number": "ni019",
+      "name": "Naruto Uzumaki",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
+    {
+      "number": "ni047",
+      "name": "Sasuke Uchiwa",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
+    {
+      "number": "ni027",
+      "name": "Sakura Haruno",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
     {
       "number": "ta005",
       "name": "Le désastre Kyubi",
-      "notes": "Titre imprimé prerelease (Drive) ; retail holo = « Le désastre du Démon Renard à 9 queues »."
+      "notes": "Titre imprimé prerelease (Drive). Errata retail S1 → « Le désastre du Démon Renard à 9 queues » — face ≠ retail ; utiliser art.reconstructed (hand-made), pas l'emprunt retail."
     },
-    { "number": "ta004", "name": "Un professeur attachant" },
-    { "number": "te015", "name": "Dédoublement" },
-    { "number": "te007", "name": "Sharingan" },
-    { "number": "te003", "name": "Sexy-meta" },
-    { "number": "te036", "name": "Les démoniaques miroirs de glace" }
+    {
+      "number": "ta004",
+      "name": "Un professeur attachant",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
+    {
+      "number": "te015",
+      "name": "Dédoublement",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
+    {
+      "number": "te007",
+      "name": "Sharingan",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
+    {
+      "number": "te003",
+      "name": "Sexy-meta",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    },
+    {
+      "number": "te036",
+      "name": "Les démoniaques miroirs de glace",
+      "identicalRetailArt": true,
+      "notes": "Visuel identique au retail S1 — face carddass.fr ingérée sous *-prerelease."
+    }
   ]
 }

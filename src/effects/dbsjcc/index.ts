@@ -30,7 +30,7 @@ export const dbsJccEffectPack = defineCatalogueOnlyPack({
   blurb:
     "Catalogue local Dragon Ball Carddass / JCC — holo/prism en look flare maison",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
   finishShader: FINISH_SHADER,
   fallbackFoilMaskUrl: DBS_JCC_FULL_FOIL_MASK_URL,
 });

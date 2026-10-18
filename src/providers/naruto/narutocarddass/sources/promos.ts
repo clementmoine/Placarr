@@ -4,30 +4,36 @@
  */
 
 import {
+  copyFileSync,
   readFileSync,
   existsSync,
   mkdirSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
+import { packCardsDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import {
   parseNarutoCollector,
   canonicalizeNarutoPrintKey,
   mintNarutoPrintKey,
+  narutoCuratedSourcesDir,
   narutoDiskCardId,
   narutoNumbersEqual,
+  narutoRetailDiskNumber,
   appearanceSetsOf,
+  NARUTO_PACK_ID,
 } from "../identity";
 import type { NarutoCollectorId } from "../identity";
 import ledger from "../curated/sources/coleka-us-promos.json";
-import { narutoCuratedSourcesDir } from "../install/curated";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
+import { narutoPackDbPath } from "../indexStore";
 import { upsertNarutoAppearances } from "../pipeline";
-import { narutoCardAbsDir } from "../disk";
+import { narutoCardAbsDir, recordNarutoFaceDecision } from "../disk";
 import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../disk";
-import { NARUTO_PACK_ID } from "../identity";
+import { resolveNarutoDiskArtFilename } from "../diskArtAttachments";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
 import { COLEKA_ORIGIN } from "../parse/coleka";
 import {
@@ -328,6 +334,11 @@ export type S1FrPrereleaseRow = {
   number: string;
   name: string;
   notes?: string;
+  /**
+   * Face identical to the S1 retail print — copy retail `art.*` into
+   * `cards/fr/s1/{id}-prerelease/` so the tile owns its bytes (not borrow).
+   */
+  identicalRetailArt?: boolean;
 };
 
 type S1FrPrereleaseFile = {
@@ -375,8 +386,62 @@ function legacyS1FrPrereleasePrintKeys(bare: string): string[] {
 }
 
 /**
+ * Copy retail S1 faces onto manga prerelease folders when the ledger marks
+ * them identical (`identicalRetailArt`). Official: same Kana print, bag only
+ * differs — browse must own `cards/fr/s1/{id}-prerelease/art.*`, not borrow.
+ */
+export function materializeS1FrPrereleaseIdenticalRetailFaces(
+  cardsRoot = packCardsDir(NARUTO_PACK_ID),
+): { installed: string[]; skipped: string[]; missing: string[] } {
+  const installed: string[] = [];
+  const skipped: string[] = [];
+  const missing: string[] = [];
+  for (const row of loadS1FrPrerelease()) {
+    if (!row.identicalRetailArt) continue;
+    const bare = row.number.trim().toLowerCase().replace(/-prerelease$/i, "");
+    const preId =
+      narutoDiskCardId(`${bare}-${GROUPING}`, SET_CODE) ??
+      `${narutoRetailDiskNumber(bare) ?? bare}-prerelease`;
+    const retailId = narutoRetailDiskNumber(bare) ?? narutoDiskCardId(bare);
+    if (!retailId) {
+      missing.push(bare);
+      continue;
+    }
+    const retailDir = path.join(cardsRoot, "fr", SET_CODE, retailId);
+    const preDir = path.join(cardsRoot, "fr", SET_CODE, preId);
+    const artFile = resolveNarutoDiskArtFilename(retailDir);
+    if (!artFile) {
+      missing.push(preId);
+      continue;
+    }
+    const dest = path.join(preDir, artFile);
+    if (existsSync(dest)) {
+      skipped.push(preId);
+      continue;
+    }
+    mkdirSync(preDir, { recursive: true });
+    copyFileSync(path.join(retailDir, artFile), dest);
+    recordNarutoFaceDecision(preDir, "art", artFile);
+    installed.push(preId);
+  }
+  if (installed.length) {
+    // Bust admin browse cache (sqlite mtime; cards tree stamp also moves).
+    const dbPath = narutoPackDbPath(NARUTO_PACK_ID);
+    if (existsSync(dbPath)) {
+      const now = new Date();
+      try {
+        utimesSync(dbPath, now, now);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return { installed, skipped, missing };
+}
+
+/**
  * Ensure every attested manga prerelease has an S1 print + FR title.
- * Art can arrive later under `cards/ninja|…/{id}-prerelease/fr/`.
+ * Art can arrive later under `cards/fr/s1/{id}-prerelease/`.
  */
 export function mergeS1FrPrerelease(input: {
   prints: NarutoPrintRow[];

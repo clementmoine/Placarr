@@ -38,8 +38,9 @@ export type PrintVariantInfo = {
   secondVarnishColor?: string | null;
   variantImageUrls?: Record<string, string>;
   /**
-   * Catalogue face when the copy has no persisted cover (e.g. McDo sets with
-   * no TCGdex CDN art). Prefer the item's own `imageUrl` when present.
+   * Catalogue face (`/assets/…/prints/s1-cl0001-fr/face` — shelf stem without
+   * finish). User `/uploads/` pins still win; stale `/cards/…/art.*` item
+   * covers lose to these live roles.
    */
   imageUrl?: string | null;
   thumbnailUrl?: string | null;
@@ -140,22 +141,55 @@ export type VariantRendering = {
   varnishType: string | null;
 };
 
+export type VariantRenderingOptions = {
+  /** Shelf grid: prefer catalogue `/prints/…/thumb` over `/face`. */
+  preferThumb?: boolean;
+};
+
+function isUserPinnedCover(url: string): boolean {
+  const u = url.trim();
+  return u.startsWith("/uploads/") || u.startsWith("data:");
+}
+
+/** Print-scoped role URL — no art filename in the path. */
+function isPrintRoleAssetUrl(url: string): boolean {
+  return /\/assets\/.+\/prints\//i.test(url);
+}
+
+/** Legacy pack file path (`…/cards/{lang}/{set}/{id}/art.*`). */
+function isLegacyPackCardFileUrl(url: string): boolean {
+  return /\/assets\/.+\/cards\//i.test(url);
+}
+
 /**
- * Face to draw: item cover first, then catalogue print art (local Coleka /
- * Live / TCGdex). Without this, paper prints harvested after the item was
- * added stay blank until a manual refresh rewrites `item.imageUrl`.
+ * Face to draw: user pin → catalogue print roles → other item cover →
+ * catalogue file paths. Live `/prints/…` beats stale `/cards/…/art.*` pins so
+ * shelves follow the simplified role URLs without a metadata rewrite.
  */
 function resolveFaceUrl(
   info: PrintVariantInfo | null,
   fallbackImageUrl: string | null,
   finish?: string | null,
+  opts?: VariantRenderingOptions,
 ): string | null {
   if (finish && info?.variantImageUrls?.[finish]) {
     return info.variantImageUrls[finish] ?? null;
   }
-  return (
-    fallbackImageUrl ?? info?.imageUrl ?? info?.thumbnailUrl ?? null
-  );
+  const thumb = info?.thumbnailUrl?.trim() || null;
+  const face = info?.imageUrl?.trim() || null;
+  const catalogue =
+    opts?.preferThumb && thumb ? thumb : face ?? thumb;
+  const fallback = fallbackImageUrl?.trim() || null;
+
+  if (fallback && isUserPinnedCover(fallback)) return fallback;
+  if (
+    catalogue &&
+    isPrintRoleAssetUrl(catalogue) &&
+    (!fallback || isLegacyPackCardFileUrl(fallback))
+  ) {
+    return catalogue;
+  }
+  return fallback ?? catalogue ?? null;
 }
 
 /**
@@ -174,9 +208,10 @@ export function variantRendering(
   variant: string | null | undefined,
   info: PrintVariantInfo | null,
   fallbackImageUrl: string | null,
+  opts?: VariantRenderingOptions,
 ): VariantRendering {
   const plain = {
-    imageUrl: resolveFaceUrl(info, fallbackImageUrl),
+    imageUrl: resolveFaceUrl(info, fallbackImageUrl, null, opts),
     foilMaskUrl: null,
     varnishMaskUrl: null,
     shader: null,
@@ -210,7 +245,7 @@ export function variantRendering(
   if (!resolved) {
     return {
       ...plain,
-      imageUrl: resolveFaceUrl(info, fallbackImageUrl),
+      imageUrl: resolveFaceUrl(info, fallbackImageUrl, null, opts),
       effectPackId: packId,
       varnishType: info.varnishType ?? null,
     };
@@ -224,7 +259,7 @@ export function variantRendering(
   if (isPlainFinish) {
     return {
       ...plain,
-      imageUrl: resolveFaceUrl(info, fallbackImageUrl, resolved),
+      imageUrl: resolveFaceUrl(info, fallbackImageUrl, resolved, opts),
       effectPackId: packId,
       finish: resolved,
       varnishType: info.varnishType ?? null,
@@ -268,7 +303,7 @@ export function variantRendering(
       : finishShaderId;
 
   return {
-    imageUrl: resolveFaceUrl(info, fallbackImageUrl, resolved),
+    imageUrl: resolveFaceUrl(info, fallbackImageUrl, resolved, opts),
     foilMaskUrl:
       info.finishFoilMaskUrls?.[resolved] ?? info.foilMaskUrl ?? null,
     varnishMaskUrl: info.varnishMaskUrl ?? null,

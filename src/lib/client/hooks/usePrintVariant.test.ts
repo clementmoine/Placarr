@@ -60,20 +60,42 @@ describe("variantRendering", () => {
       finishes: ["normal"],
       plainFinishes: ["normal"],
       effectPack: "pokemon",
-      imageUrl: "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
-      thumbnailUrl: "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
+      imageUrl: "/assets/pokemon/cards/fr/2023sv/004/art.coleka.webp",
+      thumbnailUrl: "/assets/pokemon/cards/fr/2023sv/004/art.coleka.webp",
     };
     expect(variantRendering("normal", pokemon, null)).toMatchObject({
-      imageUrl: "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
+      imageUrl: "/assets/pokemon/cards/fr/2023sv/004/art.coleka.webp",
       foilMaskUrl: null,
       effectPackId: "pokemon",
       finish: "normal",
     });
     expect(variantRendering(null, pokemon, null).imageUrl).toBe(
-      "/assets/pokemon/cards/2023sv/fr/004/art.coleka.webp",
+      "/assets/pokemon/cards/fr/2023sv/004/art.coleka.webp",
     );
-    // Persisted item cover still wins over catalogue art.
+    // User /uploads pin still wins over catalogue art.
     expect(variantRendering("normal", pokemon, BASE).imageUrl).toBe(BASE);
+  });
+
+  it("prefers live /prints/ roles over stale /cards/…/art.* item pins", () => {
+    const carddass = {
+      finishes: ["normal"],
+      plainFinishes: ["normal"],
+      effectPack: "naruto-carddass",
+      imageUrl: "/assets/naruto/carddass/prints/s5-ni0229-fr/face",
+      thumbnailUrl: "/assets/naruto/carddass/prints/s5-ni0229-fr/thumb",
+    };
+    const stale =
+      "/assets/naruto/carddass/cards/fr/s5/ni0229/art.carddass.jpg";
+    expect(variantRendering("normal", carddass, stale).imageUrl).toBe(
+      carddass.imageUrl,
+    );
+    expect(
+      variantRendering("normal", carddass, stale, { preferThumb: true })
+        .imageUrl,
+    ).toBe(carddass.thumbnailUrl);
+    expect(
+      variantRendering("normal", carddass, "/uploads/my-scan.jpg").imageUrl,
+    ).toBe("/uploads/my-scan.jpg");
   });
 
   it("treats an unrecognized variant as plain rather than guessing", () => {

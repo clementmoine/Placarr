@@ -3,7 +3,7 @@
   "observed": "2026-08-16",
   "note": "One pasted post. The rest of the blog is character pages (naruto / sasuke / …), not a card dump — do not crawl. The photo is a 400×400 JPEG of the early JP Carddass promo PR忍-1-R (うずまきナルト, BANDAI 2002). Same game as FR/IT Carddass, not Bandai CCG, not FR NI-001, not NI-180 (Yashamaru). Slab-Z treats PR忍-1 as the Jump Festa 2003 flyer first print and PR忍-1-R as a later foil — see slab-z-2002-carddass.json. Ingest that one JPEG as art.zabuza.* beside any other dump.",
   "ingest": "faces",
-  "disk": "cards/promo/prni0001-R/ja/",
+  "disk": "cards/ja/promo/prni0001-R/",
   "crawlBlog": false,
   "url": "http://narutozabuza.centerblog.net/14-cartes-naruto",
   "published": "2009-04-26",

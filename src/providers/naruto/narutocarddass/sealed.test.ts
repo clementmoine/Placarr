@@ -2241,7 +2241,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         "cartes",
         "cartes_med",
       );
-      const cardDir = path.join(root, "cards", "s1", "fr", "ni001");
+      const cardDir = path.join(root, "cards", "fr", "s1", "ni0001");
       fs.mkdirSync(medDir, { recursive: true });
       fs.mkdirSync(cardDir, { recursive: true });
       fs.writeFileSync(path.join(cardDir, "art.jpg"), "art");
@@ -2250,14 +2250,14 @@ import productsContentsLedger from "./curated/products-contents.json";
 
       const prints: NarutoPrintRow[] = [
         {
-          printKey: "naruto:s1-ni001",
+          printKey: "naruto:s1-ni0001",
           setCode: "s1",
           number: "ni001",
           cardType: "ni",
         },
       ];
       const assets: NarutoAssetRow[] = [
-        { printKey: "naruto:s1-ni001", lang: "fr", art: "art.jpg" },
+        { printKey: "naruto:s1-ni0001", lang: "fr", art: "art.jpg" },
       ];
 
       const mapped = mapSiteMedThumbsOntoAssets(root, prints, assets);
@@ -2279,8 +2279,8 @@ import productsContentsLedger from "./curated/products-contents.json";
         "cartes",
         "cartes_med",
       );
-      const retailDir = path.join(root, "cards", "s2", "fr", "ni095");
-      const promoDir = path.join(root, "cards", "promo", "fr", "ni095");
+      const retailDir = path.join(root, "cards", "fr", "s2", "ni0095");
+      const promoDir = path.join(root, "cards", "fr", "promo", "ni0095-promo");
       fs.mkdirSync(medDir, { recursive: true });
       fs.mkdirSync(retailDir, { recursive: true });
       fs.mkdirSync(promoDir, { recursive: true });
@@ -2290,21 +2290,21 @@ import productsContentsLedger from "./curated/products-contents.json";
 
       const prints: NarutoPrintRow[] = [
         {
-          printKey: "naruto:s2-ni095",
+          printKey: "naruto:s2-ni0095",
           setCode: "s2",
           number: "ni095",
           cardType: "ni",
         },
         {
-          printKey: "naruto:promo-ni095",
+          printKey: "naruto:promo-ni0095",
           setCode: "promo",
           number: "ni095",
           cardType: "ni",
         },
       ];
       const assets: NarutoAssetRow[] = [
-        { printKey: "naruto:s2-ni095", lang: "fr", art: "art.jpg" },
-        { printKey: "naruto:promo-ni095", lang: "fr", art: "art.jpg" },
+        { printKey: "naruto:s2-ni0095", lang: "fr", art: "art.jpg" },
+        { printKey: "naruto:promo-ni0095", lang: "fr", art: "art.jpg" },
       ];
 
       expect(mapSiteMedThumbsOntoAssets(root, prints, assets)).toBe(1);
@@ -2325,7 +2325,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         "cartes",
         "cartes_med",
       );
-      const cardDir = path.join(root, "cards", "s1", "fr", "ni001");
+      const cardDir = path.join(root, "cards", "fr", "s1", "ni0001");
       fs.mkdirSync(medDir, { recursive: true });
       fs.mkdirSync(cardDir, { recursive: true });
       fs.writeFileSync(path.join(cardDir, "thumb.jpg"), "existing-thumb");
@@ -2333,14 +2333,14 @@ import productsContentsLedger from "./curated/products-contents.json";
 
       const prints: NarutoPrintRow[] = [
         {
-          printKey: "naruto:s1-ni001",
+          printKey: "naruto:s1-ni0001",
           setCode: "s1",
           number: "ni001",
           cardType: "ni",
         },
       ];
       const assets: NarutoAssetRow[] = [
-        { printKey: "naruto:s1-ni001", lang: "fr", art: "art.jpg" },
+        { printKey: "naruto:s1-ni0001", lang: "fr", art: "art.jpg" },
       ];
 
       expect(mapSiteMedThumbsOntoAssets(root, prints, assets)).toBe(1);
@@ -2354,7 +2354,7 @@ import productsContentsLedger from "./curated/products-contents.json";
   describe("collectorNumbersWithThumb / installedTinStagingPaths", () => {
     it("lists numbers that already have thumb.jpg", () => {
       const root = tmpPack();
-      const cardDir = path.join(root, "cards", "s2", "fr", "ta091");
+      const cardDir = path.join(root, "cards", "fr", "s2", "ta091");
       fs.mkdirSync(cardDir, { recursive: true });
       fs.writeFileSync(path.join(cardDir, "thumb.jpg"), "t");
       expect([...collectorNumbersWithThumb(root)]).toEqual(["ta091"]);
@@ -2362,7 +2362,7 @@ import productsContentsLedger from "./curated/products-contents.json";
 
     it("lists tin staging paths once promo art is installed", () => {
       const root = tmpPack();
-      const art = path.join(root, "cards", "promo", "fr", "pr011", "art.jpg");
+      const art = path.join(root, "cards", "fr", "promo", "pr0011", "art.jpg");
       fs.mkdirSync(path.dirname(art), { recursive: true });
       fs.writeFileSync(art, "oro");
       const paths = installedTinStagingPaths(root);
@@ -2398,7 +2398,9 @@ import productsContentsLedger from "./curated/products-contents.json";
       const { installed } = materializeTinBoxPromos(root);
       expect(installed).toEqual(["pr011", "pr016"]);
       expect(
-        fs.existsSync(path.join(root, "cards/promo/pr0011/fr/art.carddass.jpg")),
+        fs.existsSync(
+          path.join(root, "cards/fr/promo/pr0011/art.carddass.jpg"),
+        ),
       ).toBe(true);
       expect(fs.existsSync(path.join(staging, artRel))).toBe(false);
       expect(fs.existsSync(path.join(staging, thumbRel))).toBe(false);

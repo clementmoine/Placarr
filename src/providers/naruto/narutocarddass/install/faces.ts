@@ -32,6 +32,16 @@ import {
   extFromMagic,
   saveNarutoFace,
 } from "../disk";
+
+/** Fallback when appearances cannot resolve a set — still lang-first. */
+function langFirstCardDir(
+  cardsDir: string,
+  lang: string,
+  diskId: string,
+  setCode?: string | null,
+): string {
+  return path.join(cardsDir, lang, (setCode || "s1").toLowerCase(), diskId);
+}
 import { NARUTO_PACK_ID } from "../identity";
 import { carddasJpStagingFaceInstallTarget } from "../parse/bandai";
 import {
@@ -148,7 +158,7 @@ export async function installEbayFaces(
     const lang = row.lang.toLowerCase();
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
-      path.join(cardsDir, "ninja", diskId, lang);
+      langFirstCardDir(cardsDir, lang, diskId, row.setCode);
     const key = `${diskId}/${lang}`;
     // An appearance is a card *in a set*. The 騎 knights have no attested set
     // outside 巻ノ十三, so they record none rather than an invented one.
@@ -230,7 +240,7 @@ export async function installRakutenFaces(
     const lang = String(row.lang ?? "fr").toLowerCase();
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang) ??
-      path.join(cardsDir, "ninja", diskId, lang);
+      langFirstCardDir(cardsDir, lang, diskId);
     const key = `${diskId}/${lang}`;
     if (!options.force && existingNarutoArtForSource(cardDir, "rakuten")) {
       skipped.push(key);
@@ -295,7 +305,7 @@ export async function installLeboncoinFaces(
     const lang = row.lang.toLowerCase();
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
-      path.join(cardsDir, "ninja", diskId, lang);
+      langFirstCardDir(cardsDir, lang, diskId, row.setCode);
     const key = `${diskId}/${lang}`;
     if (row.setCode) {
       upsertNarutoAppearances(packRoot, [
@@ -361,7 +371,7 @@ export async function installMercariFaces(
     const lang = row.lang.toLowerCase();
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
-      path.join(cardsDir, "ninja", diskId, lang);
+      langFirstCardDir(cardsDir, lang, diskId, row.setCode);
     const key = `${diskId}/${lang}`;
     if (row.setCode) {
       upsertNarutoAppearances(packRoot, [
@@ -431,7 +441,7 @@ export async function installYahooAuctionFaces(
     const lang = row.lang.toLowerCase();
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
-      path.join(cardsDir, "ninja", diskId, lang);
+      langFirstCardDir(cardsDir, lang, diskId, row.setCode);
     const key = `${diskId}/${lang}`;
     if (row.setCode) {
       upsertNarutoAppearances(packRoot, [
@@ -485,7 +495,7 @@ export async function installSlabzFaces(
     const lang = "ja";
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang) ??
-      path.join(cardsDir, "ninja", diskId, lang);
+      langFirstCardDir(cardsDir, lang, diskId);
     const key = `${diskId}/${lang}`;
     if (!options.force && existingNarutoArtForSource(cardDir, "slabz")) {
       skipped.push(key);
@@ -573,10 +583,16 @@ export async function installTvTokyoFaces(
     const chunk = planned.slice(i, i + CHUNK_SIZE);
     await Promise.all(
       chunk.map(async ({ row, diskId, lang, source }) => {
-        const cardDir = narutoCardAbsDir(cardsDir, diskId, lang);
-        if (!cardDir) {
-          failed.push(`${diskId}/${lang}`);
-          return;
+        const setHint =
+          "setCode" in row && typeof row.setCode === "string"
+            ? row.setCode
+            : null;
+        const cardDir =
+          narutoCardAbsDir(cardsDir, diskId, lang, setHint) ??
+          existingLangCardDirForHint(cardsDir, lang, diskId) ??
+          langFirstCardDir(cardsDir, lang, diskId, setHint ?? "maki1");
+        if (!existsSync(cardDir)) {
+          mkdirSync(cardDir, { recursive: true });
         }
         const key = `${diskId}/${lang}/${source}`;
         if (!options.force && existingNarutoArtForSource(cardDir, source)) {
@@ -640,7 +656,7 @@ export async function installGoatLocalePromoFaces(
     const lang = row.lang.toLowerCase();
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
-      path.join(cardsDir, "promo", diskId, lang);
+      langFirstCardDir(cardsDir, lang, diskId, row.setCode);
     const key = `${diskId}/${lang}`;
     if (row.setCode) {
       upsertNarutoAppearances(packRoot, [
@@ -806,7 +822,7 @@ export async function installCarddasJpStagingFaces(
   let listed = 0;
   let copied = 0;
   let skipped = 0;
-  console.log("── JA carddas.com GIFs → cards/{family}/{id}/ja/art.carddas.*");
+  console.log("── JA carddas.com GIFs → cards/ja/{set}/{id}/art.carddas.*");
   for (const abs of files) {
     const basename = path.basename(abs);
     if (DOUBLE_GIF_BASENAMES.has(basename)) continue;
@@ -815,7 +831,7 @@ export async function installCarddasJpStagingFaces(
     listed += 1;
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, CARDDAS_JP_LANG) ??
-      path.join(cardsDir, "ninja", diskId, CARDDAS_JP_LANG);
+      langFirstCardDir(cardsDir, CARDDAS_JP_LANG, diskId);
     const buf = readFileSync(abs);
     if (extFromMagic(buf) === ".bin") continue;
     const saved = await saveNarutoFace({
@@ -892,12 +908,7 @@ function cardDirFor(
   const appearanceSet = driveFaceAppearanceSet(diskHint, setCode);
   return (
     narutoCardAbsDir(cardsDir, diskId, DRIVE_LANG, appearanceSet) ??
-    path.join(
-      cardsDir,
-      parseNarutoCollector(diskHint)?.family ?? "ninja",
-      diskId,
-      DRIVE_LANG,
-    )
+    path.join(cardsDir, DRIVE_LANG, appearanceSet || setCode || "s1", diskId)
   );
 }
 
@@ -958,17 +969,33 @@ function collectFansetFallbackCandidates(
   return groupDriveFaceWinners(rows);
 }
 
+function existingLangCardDirForHint(
+  cardsDir: string,
+  lang: string,
+  diskId: string,
+): string | null {
+  const langDir = path.join(cardsDir, lang.trim().toLowerCase());
+  if (!existsSync(langDir) || !statSync(langDir).isDirectory()) return null;
+  for (const set of readdirSync(langDir)) {
+    const cardDir = path.join(langDir, set, diskId);
+    if (existsSync(cardDir) && statSync(cardDir).isDirectory()) return cardDir;
+  }
+  return null;
+}
+
 function existingEnCardDirForHint(
   cardsDir: string,
   diskHint: string,
 ): string | null {
   const diskId = narutoDiskCardId(diskHint);
   if (!diskId) return null;
-  const family = parseNarutoCollector(diskHint)?.family;
-  if (!family) return null;
-  const diskDir = path.join(cardsDir, family, diskId);
-  if (!existsSync(diskDir) || !statSync(diskDir).isDirectory()) return null;
-  return path.join(diskDir, DRIVE_LANG);
+  const langDir = path.join(cardsDir, DRIVE_LANG);
+  if (!existsSync(langDir) || !statSync(langDir).isDirectory()) return null;
+  for (const set of readdirSync(langDir)) {
+    const cardDir = path.join(langDir, set, diskId);
+    if (existsSync(cardDir) && statSync(cardDir).isDirectory()) return cardDir;
+  }
+  return null;
 }
 
 async function installFansetFallback(

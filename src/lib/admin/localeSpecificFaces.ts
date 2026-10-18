@@ -50,25 +50,49 @@ function slotHasArt(
   return Boolean(files?.art?.trim() || files?.thumb?.trim());
 }
 
+function slotHasLocalizedName(
+  files: { name?: string | null } | undefined,
+): boolean {
+  return Boolean(files?.name?.trim());
+}
+
+export type BuildLocaleSpecificFacesOptions = {
+  /**
+   * When true, a locale with a title but no scan still counts toward the
+   * dual-locale threshold. Carddass FR/IT titles without a local recto must
+   * not borrow JA shop scans (e.g. TA-090 « Le don de la copie »).
+   */
+  countLocalizedNames?: boolean;
+};
+
 /**
  * Prints that already have a recto in ≥2 catalogue locales — text/layout almost
  * always differs (Mythos FR vs EN), so the catalogue must not borrow across langs.
+ *
+ * With {@link BuildLocaleSpecificFacesOptions.countLocalizedNames}, a localized
+ * title alone also marks presence (Carddass EU text vs JA 忍/術).
  */
 export function buildLocaleSpecificFacesFromIndex(
   index: CardsIndexV1,
   catalogueLocales: readonly string[],
   note?: string,
+  opts?: BuildLocaleSpecificFacesOptions,
 ): LocaleSpecificFacesV1 {
   const locales = catalogueLocales
     .map((lang) => lang.trim().toLowerCase())
     .filter(Boolean);
+  const countNames = opts?.countLocalizedNames === true;
+  const slotPresent = (
+    files: { art?: string | null; thumb?: string | null; name?: string | null } | undefined,
+  ): boolean =>
+    slotHasArt(files) || (countNames && slotHasLocalizedName(files));
   const faces: { set: string; card: string }[] = [];
   const seen = new Set<string>();
 
   for (const entry of Object.values(index.cards)) {
     const hitCount = locales.length
-      ? locales.filter((lang) => slotHasArt(entry.langs[lang])).length
-      : Object.values(entry.langs).filter((files) => slotHasArt(files)).length;
+      ? locales.filter((lang) => slotPresent(entry.langs[lang])).length
+      : Object.values(entry.langs).filter((files) => slotPresent(files)).length;
     if (hitCount < 2) continue;
     const key = localeSpecificFaceKey(entry.set, entry.card);
     if (seen.has(key)) continue;
@@ -132,6 +156,36 @@ export function isLocaleSpecificFace(
 ): boolean {
   if (!keys) return false;
   return keys.has(localeSpecificFaceKey(set, card));
+}
+
+/**
+ * Runtime twin of {@link buildLocaleSpecificFacesFromIndex} for a single entry
+ * — used so catalogue browse does not depend on a stale sqlite ledger.
+ */
+export function entryIsLocaleSpecificFace(
+  entry: {
+    langs: Record<
+      string,
+      { art?: string | null; thumb?: string | null; name?: string | null } | undefined
+    >;
+  },
+  catalogueLocales: readonly string[],
+  opts?: BuildLocaleSpecificFacesOptions,
+): boolean {
+  const locales = catalogueLocales
+    .map((lang) => lang.trim().toLowerCase())
+    .filter(Boolean);
+  const countNames = opts?.countLocalizedNames === true;
+  const present = (lang: string): boolean => {
+    const files = entry.langs[lang];
+    return (
+      slotHasArt(files) || (countNames && slotHasLocalizedName(files))
+    );
+  };
+  const hitCount = locales.length
+    ? locales.filter(present).length
+    : Object.keys(entry.langs).filter(present).length;
+  return hitCount >= 2;
 }
 
 /** Test seam. */

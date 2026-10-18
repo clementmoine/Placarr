@@ -49,7 +49,8 @@ const MAX_BATCH_KEYS = 120;
 /** Bumped when catalogue imageUrl/thumbnailUrl feed shelf faces (McDo paper). */
 /** Bumped when OPTCG Leader/Event/Stage category sleeve backs stamp. */
 /** Bumped when sealed bag collapses to a single double-pinch style. */
-const PRINT_VARIANT_CACHE_VERSION = 59;
+/** Bumped when Naruto print faces use shelf-stem `/prints/s1-cl0001-fr/…`. */
+const PRINT_VARIANT_CACHE_VERSION = 60;
 
 /** `type` is part of the key: it decides which providers are even asked. */
 function cacheKey(printKey: string, type: string): string {

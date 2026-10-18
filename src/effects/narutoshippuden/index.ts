@@ -21,5 +21,5 @@ export const narutoShippudenEffectPack = defineCatalogueOnlyPack({
   label: "Naruto 疾風伝",
   blurb: "Catalogue local — dos du jeu, sans effet foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.ja.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/ja`,
 });

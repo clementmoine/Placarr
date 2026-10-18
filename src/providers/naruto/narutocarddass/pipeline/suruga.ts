@@ -199,8 +199,10 @@ export type ProbeSurugaMissingVol1Options = {
 
 function jaFaceMissing(packDir: string, diskId: string): boolean {
   const cardsDir = path.join(packDir, "cards");
-  for (const family of ["ninja", "jutsu", "mission", "client"] as const) {
-    const dir = path.join(cardsDir, family, diskId, "ja");
+  const jaDir = path.join(cardsDir, "ja");
+  if (!existsSync(jaDir)) return true;
+  for (const set of readdirSync(jaDir)) {
+    const dir = path.join(jaDir, set, diskId);
     if (!existsSync(dir)) continue;
     for (const name of readdirSync(dir)) {
       if (name.startsWith("art.")) return false;

@@ -35,6 +35,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type SyntheticEvent,
   type TouchEvent,
@@ -146,6 +147,11 @@ import {
   usePrintVariant,
   variantRendering,
 } from "@/lib/client/hooks/usePrintVariant";
+import {
+  effectsRegistered,
+  ensureEffects,
+  subscribeEffectsReady,
+} from "@/effects/ensureEffects";
 import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
 import {
   getDetailCoverClass,
@@ -1865,7 +1871,25 @@ export default function ItemDetailsPage() {
    * provider says which finishes carry an effect and supplies the masks.
    */
   const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
-  const variantView = variantRendering(item?.variant, printVariant, coverImage);
+  /**
+   * Pack backs / resolveCss live on the effect registry. ItemCard warms it for
+   * the grid; the fiche must too — otherwise promo / S1 (no stamped set back)
+   * never get Face·Dos (pack default stays unresolved).
+   */
+  const effectsReady = useSyncExternalStore(
+    subscribeEffectsReady,
+    effectsRegistered,
+    () => false,
+  );
+  useEffect(() => {
+    if (item?.printKey || printVariant?.effectPack || item?.variant) {
+      void ensureEffects();
+    }
+  }, [item?.printKey, printVariant?.effectPack, item?.variant]);
+  const variantView = useMemo(
+    () => variantRendering(item?.variant, printVariant, coverImage),
+    [item?.variant, printVariant, coverImage, effectsReady],
+  );
 
   /** Loose disc hero — printed support art + synthetic optical underside. */
   const [disc3dFailed, setDisc3dFailed] = useState(false);
@@ -2173,7 +2197,7 @@ export default function ItemDetailsPage() {
   }, [shelf, resolvedItemId, seriesVolumes, franchiseItems]);
 
   const artOrient = useArtFaceOrientation(
-    coverImage,
+    heroArtworkUrl,
     printVariant ?? undefined,
   );
   const faceQuarterTurns = artOrient.faceQuarterTurns;
@@ -2638,11 +2662,11 @@ export default function ItemDetailsPage() {
             <div className="relative flex flex-col md:flex-row gap-6 md:gap-10 items-start p-6 md:p-8 rounded-3xl border border-border/60 dark:border-zinc-800/80 bg-zinc-50/20 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl overflow-hidden w-full mt-4">
               <div
                 onClick={() =>
-                  coverImage &&
+                  heroArtworkUrl &&
                   !showGameBox &&
                   !showDisc3d &&
                   !showFlatSleeve &&
-                  setZoomImageUrl(coverImage)
+                  setZoomImageUrl(heroArtworkUrl)
                 }
                 className={cn(
                   // Clips again now that nothing leans out of it — see the
@@ -2791,7 +2815,7 @@ export default function ItemDetailsPage() {
                           side="front"
                         >
                           <RemoteImage
-                            src={coverImage}
+                            src={variantView.imageUrl ?? coverImage}
                             alt={itemDisplayName ?? ""}
                             width={768}
                             height={1152}
@@ -2810,7 +2834,7 @@ export default function ItemDetailsPage() {
                       ) : (
                         <div className="relative h-full w-full">
                           <RemoteImage
-                            src={coverImage}
+                            src={variantView.imageUrl ?? coverImage}
                             alt={itemDisplayName ?? ""}
                             width={768}
                             height={1152}
@@ -3331,7 +3355,13 @@ export default function ItemDetailsPage() {
                and the turn when a back is known — hangs on it being a card,
                not on it shimmering. `printKey` is what makes it one. */
             (item?.printKey &&
-            urlsReferToSameLocalizedImage(zoomImageUrl, coverImage ?? "") ? (
+            urlsReferToSameLocalizedImage(
+              zoomImageUrl,
+              /* Live catalogue face (`/prints/…`) often beats a stale
+                 `item.imageUrl` (`/cards/…/art.*`). Zoom opens on
+                 heroArtworkUrl — compare to that, or Face·Dos never mounts. */
+              heroArtworkUrl ?? coverImage ?? "",
+            ) ? (
               /**
                * Sized from its *width*, so the card can never be wider than
                * the screen.

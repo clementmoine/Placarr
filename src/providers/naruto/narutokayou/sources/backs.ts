@@ -12,7 +12,10 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { assetsCardUrl, assetsPackFileUrl } from "@/lib/packAssetUrls";
+import {
+  assetsCardUrl,
+  assetsPackTierBackRoleUrl,
+} from "@/lib/packAssetUrls";
 import { httpGet } from "@/lib/http/httpClient";
 import {
   installDistinctBacks,
@@ -175,11 +178,7 @@ export function kayouCardBackUrlForOfficialReference(
   const placement = entry?.placement;
   if (!placement || placement.kind === "default") return null;
   if (placement.kind === "tier") {
-    return assetsPackFileUrl(
-      NARUTO_KAYOU_PACK_ID,
-      "cards",
-      `back.${placement.slug}.webp`,
-    );
+    return assetsPackTierBackRoleUrl(NARUTO_KAYOU_PACK_ID, placement.slug);
   }
   if (placement.kind === "print") {
     return assetsCardUrl(
@@ -262,7 +261,7 @@ export function kayouCardBackUrlForRarity(
 ): string | null {
   const slug = kayouCanonicalBackSlug(rarity);
   if (!slug) return null;
-  return assetsPackFileUrl(packId, "cards", `back.${slug}.webp`);
+  return assetsPackTierBackRoleUrl(packId, slug);
 }
 
 // ─── kayouBack ───

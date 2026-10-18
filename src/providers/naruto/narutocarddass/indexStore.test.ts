@@ -5,7 +5,12 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { exportNarutoCardsIndexJson, writeNarutoCcgIndex } from "./indexStore";
+import {
+  expandNarutoCardsIndexMembershipSiblings,
+  exportNarutoCardsIndexJson,
+  narutoDeckGuaranteeSetsByCollector,
+  writeNarutoCcgIndex,
+} from "./indexStore";
 
 const dirs: string[] = [];
 
@@ -234,6 +239,92 @@ describe("writeNarutoCcgIndex", () => {
         { printKey: "naruto:s5-ni0049", setCode: "s5" },
       ]),
     );
+  });
+
+  it("keeps deck-guarantee S2 membership for an S1-only booster checklist card", () => {
+    const deckSets = narutoDeckGuaranteeSetsByCollector();
+    expect(deckSets.get("ni0008")?.has("s2")).toBe(true);
+
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s1-ni0008",
+          setCode: "s1",
+          number: "ni0008",
+          cardType: "ni",
+        },
+      ],
+      titles: [
+        { printKey: "naruto:s1-ni0008", lang: "fr", fullName: "Naruto Uzumaki" },
+      ],
+      assets: [],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const keys = (
+      db
+        .prepare(`SELECT print_key AS printKey FROM prints ORDER BY print_key`)
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    db.close();
+    expect(keys).toContain("naruto:s1-ni0008");
+    expect(keys).toContain("naruto:s2-ni0008");
+  });
+
+  it("expands stale index siblings for deck reprints (borrow detect without rebuild)", () => {
+    const expanded = expandNarutoCardsIndexMembershipSiblings({
+      version: 1,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s1-ni0008": {
+          set: "s1",
+          card: "ni0008",
+          name: "Naruto Uzumaki",
+          langs: { fr: { name: "Naruto Uzumaki", art: "art.jpg" } },
+        },
+      },
+    });
+    expect(expanded.cards["naruto:s2-ni0008"]?.set).toBe("s2");
+    expect(expanded.cards["naruto:s2-ni0008"]?.langs.fr?.name).toBe(
+      "Naruto Uzumaki",
+    );
+  });
+
+  it("drops a ghost S1 print when the FR checklist is S2-only", () => {
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s1-cl0005",
+          setCode: "s1",
+          number: "cl0005",
+          cardType: "cl",
+        },
+        {
+          printKey: "naruto:s2-cl0005",
+          setCode: "s2",
+          number: "cl0005",
+          cardType: "cl",
+        },
+      ],
+      titles: [
+        { printKey: "naruto:s1-cl0005", lang: "fr", fullName: "Zôri" },
+        { printKey: "naruto:s2-cl0005", lang: "fr", fullName: "Zôri" },
+      ],
+      assets: [],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const keys = (
+      db
+        .prepare(`SELECT print_key AS printKey FROM prints ORDER BY print_key`)
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    db.close();
+    expect(keys).toContain("naruto:s2-cl0005");
+    expect(keys).not.toContain("naruto:s1-cl0005");
   });
 
   it("ajoute s6 aux inserts FR attestés même sans setCodes européen", () => {

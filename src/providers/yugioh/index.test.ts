@@ -54,7 +54,7 @@ describe("yugioh curated back", () => {
 
   it("registers a catalogue-only effect pack", () => {
     expect(yugiohEffectPack.id).toBe("yugioh");
-    expect(yugiohEffectPack.cardBackUrl).toBe("/assets/yugioh/cards/back.webp");
+    expect(yugiohEffectPack.cardBackUrl).toBe("/assets/yugioh/backs/en");
     expect(yugiohEffectPack.listMaterials()).toEqual([]);
     expect(yugiohEffectPack.resolveMaterial("foil", null)).toBeNull();
   });
@@ -84,6 +84,6 @@ describe("yugioh identity browse (local corpus)", () => {
     const rows = withCatalogueBackRows("yugioh", faces);
     const backs = rows.filter((r) => r.kind === "pack-back");
     expect(backs.length).toBeGreaterThan(0);
-    expect(backs[0]?.artUrl).toContain("/assets/yugioh/cards/back.webp");
+    expect(backs[0]?.artUrl).toMatch(/\/assets\/yugioh\/backs\/[a-z]{2}$/);
   });
 });

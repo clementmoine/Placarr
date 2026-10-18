@@ -39,6 +39,16 @@ export async function GET(req: Request) {
   const missingPriceOnly =
     url.searchParams.get("missingPrice") === "1" ||
     url.searchParams.get("missingPrice") === "true";
+  const borrowedArtOnly =
+    url.searchParams.get("borrowedArt") === "1" ||
+    url.searchParams.get("borrowedArt") === "true";
+  const printedParam = url.searchParams.get("printed");
+  const printed =
+    printedParam === "printed" ||
+    printedParam === "unprinted" ||
+    printedParam === "all"
+      ? printedParam
+      : undefined;
   const offset = Number(url.searchParams.get("offset") ?? "0");
   const limit = Number(url.searchParams.get("limit") ?? "48");
   const q = url.searchParams.get("q") ?? undefined;
@@ -56,6 +66,8 @@ export async function GET(req: Request) {
     missingArtOnly,
     missingNameOnly,
     missingPriceOnly,
+    borrowedArtOnly,
+    printed,
     offset: Number.isFinite(offset) ? offset : 0,
     limit: Number.isFinite(limit) ? limit : 48,
     q,

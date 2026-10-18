@@ -140,7 +140,7 @@ describe("resolveEffectForPrintKey", () => {
       confidence: "exact",
     });
     expect(paperMaskUrl(r!.bundle, r!.maskTex)).toBe(
-      "/assets/pokemon/cards/bw10/fr/001/mask-ph.webp",
+      "/assets/pokemon/cards/fr/bw10/001/mask-ph.webp",
     );
   });
 

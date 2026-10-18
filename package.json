@@ -33,7 +33,8 @@
     "test:record:one": "RECORD=1 BARCODE_RECORD_SLIM=1 RECORD_CASE_ID=mario-kart-wii vitest run src/core/identify/resolver.fresh.test.ts",
     "test:record:all": "tsx scripts/record-all-barcode-fixtures.ts",
     "providers:audit:mapping": "tsx scripts/providerMappingAudit.ts",
-    "title-idf:update": "tsx scripts/buildTitleIdfIndex.ts"
+    "title-idf:update": "tsx scripts/buildTitleIdfIndex.ts",
+    "cards:migrate:lang-first": "tsx scripts/migrateCardsLangFirst.ts"
   },
   "dependencies": {
     "@arkntools/unity-js": "5.1.0",

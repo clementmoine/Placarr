@@ -304,45 +304,43 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
 // —— migrateCardLayout ——
 {
   describe("planNarutoCardMove", () => {
-    it("lifts series folders onto family / printed id / lang", () => {
+    it("lifts series folders onto lang / set / printed id", () => {
       expect(planNarutoCardMove("s1", "fr", "ni001")).toEqual({
         fromRel: "s1/fr/ni001",
-        toRel: "ninja/ni0001/fr",
+        toRel: "fr/s1/ni0001",
         appearanceSet: "s1",
         lang: "fr",
         diskId: "ni0001",
         family: "ninja",
       });
-      expect(planNarutoCardMove("s1", "en", "n001")?.toRel).toBe(
-        "ninja/n0001/en",
-      );
+      expect(planNarutoCardMove("s1", "en", "n001")?.toRel).toBe("en/s1/n0001");
       expect(planNarutoCardMove("s28", "fr", "n1650")?.toRel).toBe(
-        "ninja/n1650/fr",
+        "fr/s28/n1650",
       );
       expect(planNarutoCardMove("s6", "it", "ta226")?.toRel).toBe(
-        "mission/ta0226/it",
+        "it/s6/ta0226",
       );
       expect(planNarutoCardMove("s6", "jap", "ni255")?.lang).toBe("ja");
       expect(planNarutoCardMove("promo", "fr", "ni023")?.toRel).toBe(
-        "ninja/ni0023-promo/fr",
+        "fr/promo/ni0023-promo",
       );
       expect(planNarutoCardMove("promo", "fr", "pr011")?.toRel).toBe(
-        "promo/pr0011/fr",
+        "fr/promo/pr0011",
       );
       expect(planNarutoCardMove("promo", "ja", "prni0001")?.toRel).toBe(
-        "promo/prni0001/ja",
+        "ja/promo/prni0001",
       );
       expect(narutoDiskCardId("PR-忍-1", "promo")).toBe("prni0001");
       expect(planNarutoCardMove("s6", "en", "n0097-us")?.toRel).toBe(
-        "ninja/nus0097/en",
+        "en/s6/nus0097",
       );
     });
 
-    it("renames a leftover n0097-us folder onto the US prefix", () => {
+    it("renames a leftover n0097-us folder onto lang/s1/…", () => {
       expect(planNarutoCanonicalDiskRename("ninja", "n0097-us", "en")).toEqual({
         fromRel: "ninja/n0097-us/en",
-        toRel: "ninja/nus0097/en",
-        appearanceSet: "ninja",
+        toRel: "en/s1/nus0097",
+        appearanceSet: "s1",
         lang: "en",
         diskId: "nus0097",
         family: "ninja",
@@ -350,10 +348,10 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
       expect(planNarutoCanonicalDiskRename("ninja", "nus0097", "en")).toBeNull();
     });
 
-    it("lifts leftover PR忍 scans out of the ninja folder onto promo/", () => {
+    it("lifts leftover PR忍 scans onto lang/promo/…", () => {
       expect(planNarutoCanonicalDiskRename("ninja", "prni0006", "ja")).toEqual({
         fromRel: "ninja/prni0006/ja",
-        toRel: "promo/prni0006/ja",
+        toRel: "ja/promo/prni0006",
         appearanceSet: "promo",
         lang: "ja",
         diskId: "prni0006",
@@ -361,10 +359,10 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
       });
     });
 
-    it("lifts 幕 / 忍者学校 out of ninja/ onto their prefix folder", () => {
+    it("lifts 幕 / 忍者学校 onto lang/{prefix}/…", () => {
       expect(planNarutoCanonicalDiskRename("ninja", "gaku0001", "ja")).toEqual({
         fromRel: "ninja/gaku0001/ja",
-        toRel: "gaku/gaku0001/ja",
+        toRel: "ja/gaku/gaku0001",
         appearanceSet: "gaku",
         lang: "ja",
         diskId: "gaku0001",
@@ -372,7 +370,7 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
       });
       expect(planNarutoCanonicalDiskRename("ninja", "shi0001", "ja")).toEqual({
         fromRel: "ninja/shi0001/ja",
-        toRel: "shi/shi0001/ja",
+        toRel: "ja/shi/shi0001",
         appearanceSet: "shi",
         lang: "ja",
         diskId: "shi0001",
@@ -380,7 +378,7 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
       });
       expect(planNarutoCanonicalDiskRename("jutsu", "mju0062", "ja")).toEqual({
         fromRel: "jutsu/mju0062/ja",
-        toRel: "mju/mju0062/ja",
+        toRel: "ja/mju/mju0062",
         appearanceSet: "mju",
         lang: "ja",
         diskId: "mju0062",

@@ -226,7 +226,7 @@ import sharp from "sharp";
     it("deletes a Suruga duplicate and renames leftover nikita", async () => {
       const root = path.join(os.tmpdir(), `naruto-fold-${Date.now()}`);
       dirs.push(root);
-      const ja = path.join(root, "cards", "ninja", "ni0001", "ja");
+      const ja = path.join(root, "cards", "ja", "maki1", "ni0001");
       mkdirSync(ja, { recursive: true });
       const dup = await sharp({
         create: {
@@ -251,7 +251,7 @@ import sharp from "sharp";
       writeFileSync(path.join(ja, "art.jpg"), dup);
       writeFileSync(path.join(ja, "art.suruga.jpg"), dup);
       writeFileSync(path.join(ja, "face.json"), '{"art":"art.jpg"}\n');
-      const ni2 = path.join(root, "cards", "ninja", "ni0002", "ja");
+      const ni2 = path.join(root, "cards", "ja", "maki1", "ni0002");
       mkdirSync(ni2, { recursive: true });
       writeFileSync(path.join(ni2, "art.jpg"), nikita);
 

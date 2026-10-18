@@ -5,7 +5,7 @@
  * Character / Event / Stage share the blue sleeve → pack default (no stamp).
  * Leader (red) and DON!! (cream) get print-scoped URLs when files exist.
  */
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { assetsPackTierBackRoleUrl } from "@/lib/packAssetUrls";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { ONEPIECE_PACK_ID } from "./pack";
@@ -38,11 +38,7 @@ export function onepieceCardBackUrlForCategory(
 ): string | null {
   const slug = onepieceBackCategorySlug(category, rarity);
   if (!slug) return null;
-  return assetsPackFileUrl(
-    packId,
-    "cards",
-    `back.${DISTINCT_BACK_SLUGS[slug]}.webp`,
-  );
+  return assetsPackTierBackRoleUrl(packId, DISTINCT_BACK_SLUGS[slug]);
 }
 
 /** Stamp Leader / DON!! sleeves; leave Character / Event / Stage on pack default. */

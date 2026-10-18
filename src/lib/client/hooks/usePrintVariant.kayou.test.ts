@@ -10,7 +10,7 @@ describe("variantRendering kayou lenticular", () => {
       effectPack: "naruto-kayou",
       foilMaskUrl: "/assets/naruto/kayou/full_foil_mask.webp",
       lenticularGrid: { cols: 2, rows: 2 },
-    }, "/assets/naruto/kayou/cards/smritiheavenscrolls1/en/nrss.hr.002/art.narutocards.webp");
+    }, "/assets/naruto/kayou/cards/en/smritiheavenscrolls1/nrss.hr.002/art.narutocards.webp");
 
     expect(view.lenticularGrid).toEqual({ cols: 2, rows: 2 });
     expect(view.shader?.id).toBe("kayouLenticular");
@@ -25,7 +25,7 @@ describe("variantRendering kayou lenticular", () => {
       effectPack: "naruto-kayou",
       foilMaskUrl: "/assets/naruto/kayou/full_foil_mask.webp",
       scanCrop: crop,
-    }, "/assets/naruto/kayou/cards/t4w1/en/nr.hr.003/art.narutocards.webp");
+    }, "/assets/naruto/kayou/cards/en/t4w1/nr.hr.003/art.narutocards.webp");
 
     expect(view.scanCrop).toEqual(crop);
     expect(view.lenticularGrid).toBeNull();

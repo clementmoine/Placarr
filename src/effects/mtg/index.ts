@@ -12,5 +12,5 @@ export const mtgEffectPack = defineCatalogueOnlyPack({
   label: "Magic: The Gathering",
   blurb: "Catalogue Scryfall — dos classique, faces CDN, sans dump foil",
   assetBase: ASSET_BASE,
-  cardBackUrl: `${ASSET_BASE}/cards/back.webp`,
+  cardBackUrl: `${ASSET_BASE}/backs/en`,
 });

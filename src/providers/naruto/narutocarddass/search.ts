@@ -10,6 +10,8 @@ import {
   NARUTO_CARDDASS_FULL_FOIL_MASK_URL,
   NARUTO_CCG_SLEEVE_BACK_URL,
 } from "@/effects/narutocarddass";
+import { assetsPrintFaceUrl } from "@/lib/packAssetUrls";
+import { assetsPackBackUrl, assetsSetBackUrl } from "@/lib/packPaths";
 import type { ArtFaceOrientation } from "@/lib/text/artFaceOrientation";
 import {
   finalizeSetOptions,
@@ -26,34 +28,35 @@ import {
   compareNarutoCollectors,
   compareNarutoLangs,
   formatNarutoReference,
+  isNarutoCatalogueSetCode,
   mintNarutoPrintKey,
   narutoCatalogueLineForCard,
   narutoCollectorNumberKey,
   narutoCollectorSearchNeedles,
+  narutoRetailDiskNumber,
   narutoSetLabel,
   narutoSetShippedLanguages,
   narutoSetsUnreleasedInFrench,
+  isNarutoFrUnpublishedHtmlNumber,
+  narutoDetailIsPrinted,
   officialFrChecklistIds,
   officialFrChecklistSetsForNumber,
   NARUTO_PACK_ID,
   parseNarutoCollector,
   type NarutoPrintDetail,
 } from "./identity";
-import {
-  narutoAssetsCardUrl,
-  narutoCardPathFromCollector,
-} from "./disk";
-import {
-  buildNarutoDiskArtAttachments,
-  resolveNarutoArtDiskNumber,
-} from "./diskArtAttachments";
+import { resolveNarutoArtDiskNumber } from "./diskArtAttachments";
+import { resolveNarutoPrintFace } from "./printFaceResolve";
 import {
   ensureNarutoPackIndex,
   narutoIndexPacks,
   type NarutoPrintRow,
 } from "./indexStore";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
-import { registerPrereleaseHomeSet } from "@/core/identify/printKey";
+import {
+  parsePrintKey,
+  registerPrereleaseHomeSet,
+} from "@/core/identify/printKey";
 import { SEALED_FINISH } from "@/core/render/sealedBag";
 import { attestedNarutoCarddassFinishes } from "./sources/faces";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
@@ -138,6 +141,57 @@ function printedColumnSql(db: DatabaseSync): string {
     name: string;
   }[];
   return cols.some((col) => col.name === "printed") ? "a.printed" : "1";
+}
+
+/**
+ * Admin (`includeUnprinted`): FR (etc.) asset slots with no title in that
+ * language — cancelled S6 preprod keeps `print_assets.fr` without a FR title,
+ * so the titled JOIN never emits a row. Surface them as nameless shells.
+ */
+function loadUnprintedOrphanLangRows(
+  db: DatabaseSync,
+  lang: string,
+  setId: string | null | undefined,
+  limit: number,
+): NarutoPrintDetail[] {
+  const code = lang.trim().toLowerCase();
+  if (!code || !isNarutoCatalogueLanguage(code)) return [];
+  const membership = !setId ? null : setMembershipScope(db, setId);
+  const cap = Math.max(1, Math.min(limit, 5000));
+  /*
+    Always stamp `printed: false` — a locale asset without a locale title is
+    not shelf cardboard in that language (cancelled S6, HTML phantoms, stray
+    EU shells on CCG keys). Admin keeps the tile; checklist never asks for it.
+  */
+  return db
+    .prepare(
+      `SELECT p.print_key AS printKey,
+              p.set_code   AS setCode,
+              p.number     AS number,
+              p.card_type  AS cardType,
+              ?            AS lang,
+              NULL         AS fullName,
+              NULL         AS rarity,
+              a.art        AS art,
+              a.thumb      AS thumb,
+              0            AS printed
+         FROM prints p
+         JOIN print_assets a
+           ON a.print_key = p.print_key AND a.lang = ?
+         LEFT JOIN print_titles t
+           ON t.print_key = p.print_key AND t.lang = ?
+        WHERE t.print_key IS NULL
+          ${membership ? `AND ${membership.clause}` : ""}
+        ORDER BY p.number
+        LIMIT ?`,
+    )
+    .all(
+      code,
+      code,
+      code,
+      ...(membership?.params ?? []),
+      cap,
+    ) as NarutoPrintDetail[];
 }
 
 function hasPrintSetsTable(db: DatabaseSync): boolean {
@@ -276,14 +330,27 @@ function narutoSetListingLine(
   return null;
 }
 
-/** CCG prints share the USA sleeve; Carddass falls through to the pack back. */
+/**
+ * CCG prints share the USA sleeve. Carddass uses a set verso when installed
+ * (S6 FR `backs/fr/sets/s6`); otherwise the pack sleeve (`backs/fr`) so the
+ * fiche can flip before / without the effect registry (promo, S1–S5).
+ */
 export function narutoCandidateCardBackUrl(
   number: string,
   setCode?: string,
+  lang?: string | null,
 ): string | undefined {
-  return narutoCatalogueLineForCard(number, setCode) === "en-ccg"
-    ? NARUTO_CCG_SLEEVE_BACK_URL
-    : undefined;
+  if (narutoCatalogueLineForCard(number, setCode) === "en-ccg") {
+    return NARUTO_CCG_SLEEVE_BACK_URL;
+  }
+  const set = (setCode ?? "").trim().toLowerCase();
+  if (!set) return undefined;
+  const code = lang ?? "fr";
+  return (
+    assetsSetBackUrl(NARUTO_PACK_ID, set, code) ??
+    assetsPackBackUrl(NARUTO_PACK_ID, code) ??
+    undefined
+  );
 }
 
 export type { NarutoPrintDetail } from "./identity";
@@ -375,6 +442,8 @@ function loadSameNumberArtDonors(
     }[];
 
     for (const row of rows) {
+      // Same locale only — never park EN Drive under a FR fallback key.
+      if (row.lang.toLowerCase() !== wantLang) continue;
       const key = narutoCollectorNumberKey(row.number);
       if (!key) continue;
       const mapKey = `${key}\0${wantLang}`;
@@ -440,10 +509,30 @@ export function withNarutoRetailArtFallback(
     }
     const key = narutoCollectorNumberKey(row.number);
     if (!key) return row;
+    /*
+      Unattested JA tourney stubs must not borrow FR/IT retail faces at read
+      time (same gate as scrape mirror + Promo checklist).
+    */
+    if (
+      isNarutoPromoChannelDetail(row) &&
+      !belongsOnNarutoPromoChecklist(row.number) &&
+      (lang === "fr" || lang === "it")
+    ) {
+      return row;
+    }
     const donor = donorsByLang.get(lang)?.get(`${key}\0${lang}`);
     if (!donor) return row;
     // Ne pas s'emprunter soi-même (même numéro disque, pas d'art ailleurs).
     if (donor.number.toLowerCase() === row.number.toLowerCase()) return row;
+    // Carddass ≠ CCG — never glue NI-100 onto N-100.
+    if (
+      narutoCatalogueLineForCard(row.number, row.setCode) !==
+      narutoCatalogueLineForCard(donor.number, donor.setCode)
+    ) {
+      return row;
+    }
+    // Same locale only — no EN Drive on a FR tile.
+    if (donor.lang.toLowerCase() !== lang) return row;
     return {
       ...row,
       art: donor.art,
@@ -454,14 +543,6 @@ export function withNarutoRetailArtFallback(
 }
 
 function toCandidate(row: NarutoPrintDetail): PrintCandidate {
-  const collectorNumber =
-    row.artNumber ??
-    resolveNarutoArtDiskNumber({
-      number: row.number,
-      lang: row.lang ?? "fr",
-      artFile: row.art,
-    });
-  const pathId = narutoCardPathFromCollector(collectorNumber, row.lang);
   /*
     Double illustration officielle (術-192/348/358, voir doubleIllustrations) :
     la copie choisit son illustration comme elle choisit sa finition. L'axe
@@ -490,35 +571,43 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
   const finishes = illustrationBArt
     ? [...baseFinishes, ...baseFinishes.map(narutoIllustrationBFinish)]
     : [...baseFinishes];
-  const printed = row.printed !== false;
-  const sleeveBack = narutoCandidateCardBackUrl(row.number, row.setCode);
+  /*
+    Cardboard flag: HTML phantoms / cancelled S6 stay false. Attested S6 FR
+    inserts (Kana / DVD) are real cardboard despite set-level unprinted
+    (sqlite often stamps the whole S6 FR channel as printed=0).
+  */
+  let printed = narutoDetailIsPrinted(row.printed);
+  const rowLang = (row.lang ?? "").trim().toLowerCase();
+  const rowSet = (row.setCode ?? "").trim().toLowerCase();
+  if (rowLang === "fr" && isNarutoFrUnpublishedHtmlNumber(row.number)) {
+    printed = false;
+  } else if (isNarutoS6FrPrintedNumber(row.number)) {
+    printed = true;
+  } else if (rowLang === "fr" && rowSet === "s6") {
+    printed = false;
+  }
+  const sleeveBack = narutoCandidateCardBackUrl(
+    row.number,
+    row.setCode,
+    row.lang,
+  );
   const orient = narutoCarddassPrintOrientation(row.printKey, row.lang);
   /*
-    Index SQLite peut omettre `print_assets` (ex. promos tin FR titrées sans
-    ligne asset) alors que `face.json` + art.* sont sur disque. Même contrat
-    que Pokémon `localPokemonCatalogueArtUrl` — le disque gagne si l'index
-    n'a pas d'art.
+    Role URLs only when disk resolves — stale print_assets basenames must not
+    mint 404 thumbs (e.g. s6 FR claiming art.carddass.jpg with no folder).
   */
-  const indexedImage =
-    row.art && pathId
-      ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.art)
-      : null;
-  const indexedThumb =
-    row.thumb && pathId
-      ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, row.thumb)
-      : null;
-  const diskFace =
-    !indexedImage && pathId
-      ? buildNarutoDiskArtAttachments({
-          printKey: row.printKey,
-          number: collectorNumber,
-          lang: row.lang ?? "fr",
-          source: "narutocarddass",
-          title: row.fullName,
-        }).defaultUrl
-      : null;
-  const imageUrl = indexedImage ?? diskFace;
-  const thumbnailUrl = indexedThumb ?? diskFace;
+  const faceLang = (row.lang ?? "fr").trim().toLowerCase() || "fr";
+  const diskHit = resolveNarutoPrintFace({
+    printKey: row.printKey,
+    lang: faceLang,
+    role: "face",
+  });
+  const imageUrl = diskHit
+    ? assetsPrintFaceUrl(NARUTO_PACK_ID, row.printKey, faceLang, "face")
+    : null;
+  const thumbnailUrl = diskHit
+    ? assetsPrintFaceUrl(NARUTO_PACK_ID, row.printKey, faceLang, "thumb")
+    : null;
   return {
     printKey: row.printKey,
     // A print with no title yet still deserves to be pickable: the reference
@@ -528,7 +617,7 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
       formatNarutoReference(row.setCode, row.number, row.lang),
     reference: formatNarutoReference(row.setCode, row.number, row.lang),
     // `CL-001` ne dit pas la série ; le sélecteur de catalogue en a besoin.
-    setLabel: narutoSetLabel(row.setCode, row.number),
+    setLabel: narutoSetLabel(row.setCode, row.number, row.lang),
     ...(row.rarity ? { rarity: row.rarity } : {}),
     ...(row.cardType
       ? { category: CARD_FAMILY[row.cardType.toLowerCase()] ?? row.cardType }
@@ -549,12 +638,17 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     ),
     // Manga FR prereleases ship with heat-seals top + bottom (double pinch).
     ...(isPrereleasePrint ? { sealedBag: true } : {}),
-    ...(illustrationBArt && pathId
+    ...(illustrationBArt
       ? {
           variantImageUrls: Object.fromEntries(
             baseFinishes.map((finish) => [
               narutoIllustrationBFinish(finish),
-              narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, illustrationBArt),
+              assetsPrintFaceUrl(
+                NARUTO_PACK_ID,
+                row.printKey,
+                faceLang,
+                "face-b",
+              ),
             ]),
           ),
         }
@@ -795,6 +889,8 @@ export function searchNarutoPrints(
     limit?: number;
     setId?: string | null;
     catalogueBrowse?: boolean;
+    /** Admin catalogue — keep `printed: false` rows. */
+    includeUnprinted?: boolean;
   } = {},
 ): PrintCandidate[] {
   const trimmed = query.trim();
@@ -805,6 +901,7 @@ export function searchNarutoPrints(
   const requestedLang = opts.language?.trim().toLowerCase() || "";
   if (requestedLang && !isNarutoCatalogueLanguage(requestedLang)) return [];
   const lang = requestedLang || "fr";
+  const includeUnprinted = opts.includeUnprinted === true;
   /*
     Le plafond monte à cinq mille pour la check-list, qui doit énumérer un set
     entier : compter les manquantes d'un set de 452 cartes sur les deux cents
@@ -916,6 +1013,20 @@ export function searchNarutoPrints(
           limit * 3,
         ) as NarutoPrintDetail[]),
     );
+    /*
+      Cancelled S6 / HTML phantoms often keep a locale asset without a title
+      in that language — the JOIN above never emits them. Admin needs the slot.
+    */
+    if (includeUnprinted && requestedLang) {
+      rows.push(
+        ...loadUnprintedOrphanLangRows(
+          db,
+          requestedLang,
+          setId,
+          limit * 3,
+        ),
+      );
+    }
   }
 
   rows.sort((a, b) => {
@@ -936,13 +1047,21 @@ export function searchNarutoPrints(
 
   const listingLine = narutoSetListingLine(setId, requestedLang || undefined);
   const promoSet = setId?.trim().toLowerCase() === "promo";
+  /*
+    EU picker languages share the Promo checklist attestation (dig / PR / PS).
+    JA-only tourney stubs (`te0107-promo` eBay) hang FR/IT titles + borrow S3
+    art — without this gate, unfiltered search offers « TE-107 · promo » for
+    the S3 commune (catalogue admin already skips those tiles).
+  */
+  const gateUnattestedPromo =
+    promoSet || requestedLang === "fr" || requestedLang === "it";
   const seen = new Set<string>();
   const out: PrintCandidate[] = [];
   const enriched = withNarutoRetailArtFallback(rows);
   for (const row of enriched) {
-    if (row.printed === false) {
+    if (!narutoDetailIsPrinted(row.printed) && !includeUnprinted) {
       /*
-        Index : s6 FR « unreleased » → printed=false (préprod carddass.fr).
+        Index : s6 FR « unreleased » → printed=0 (préprod carddass.fr).
         Les inserts Kana / DVD attestés restent pickables.
       */
       const s6FrInsert =
@@ -950,16 +1069,33 @@ export function searchNarutoPrints(
         isNarutoS6FrPrintedNumber(row.number);
       if (!s6FrInsert) continue;
     }
-    if (promoSet && !belongsOnNarutoPromoChecklist(row.number)) continue;
+    /*
+      HTML-only phantoms (TA-090 « Le don de la copie ») — never FR paper.
+      Checklist hides them; admin (`includeUnprinted`) keeps the slot.
+    */
+    if (
+      !includeUnprinted &&
+      (!requestedLang || requestedLang === "fr") &&
+      isNarutoFrUnpublishedHtmlNumber(row.number)
+    ) {
+      continue;
+    }
+    if (
+      gateUnattestedPromo &&
+      isNarutoPromoChannelDetail(row) &&
+      !belongsOnNarutoPromoChecklist(row.number)
+    ) {
+      continue;
+    }
     if (
       listingLine &&
       narutoCatalogueLineForCard(row.number, row.setCode) !== listingLine
     )
       continue;
-    if (setId === "s6" && requestedLang === "fr") {
+    if (setId === "s6" && requestedLang === "fr" && !includeUnprinted) {
       /*
-        Chapitre FR = inédites Kana / DVD + reprints MIJ attestés
-        (`s6-fr-printed.json`). Les autres inserts blister restent S5.
+        Chapitre FR checklist = inédites Kana / DVD + reprints MIJ attestés
+        (`s6-fr-printed.json`). Admin (`includeUnprinted`) keeps cancelled S6.
       */
       if (!isNarutoS6FrPrintedNumber(row.number)) continue;
     }
@@ -1020,10 +1156,48 @@ export function searchNarutoPrints(
       .slice(0, limit);
   }
   /*
-    Set-scoped printKeys (`s2-ta0074` / `s3-ta0074`) are already distinct rows
-    in the index — no membership explode.
+    Paper FR checklist may list one number in several series while sqlite still
+    has a single set-scoped row (ex. TA-074 on S2+S3). Surface each set-scoped
+    key in unfiltered search so the picker matches the check-list.
   */
-  return out.slice(0, limit);
+  const expanded = expandFrChecklistSetScopedSiblings(out, requestedLang);
+  return expanded.slice(0, limit);
+}
+
+function expandFrChecklistSetScopedSiblings(
+  rows: readonly PrintCandidate[],
+  language?: string | null,
+): PrintCandidate[] {
+  const lang = language?.trim().toLowerCase();
+  if (lang && lang !== "fr") return [...rows];
+  const out = [...rows];
+  const seen = new Set(rows.map((row) => row.printKey));
+  for (const row of rows) {
+    /*
+      Tourney `promo-ta0074` is not a retail S2/S3 twin. Expanding it would
+      paint « TA-074 · promo » / rarity promo onto Series 2–3 checklist slots.
+    */
+    if (isNarutoPromoCandidate(row)) continue;
+    const tail = narutoCollectorRawFromPrintKey(row.printKey);
+    if (!tail) continue;
+    const sets = officialFrChecklistSetsForNumber(tail);
+    if (sets.length < 2) continue;
+    for (const set of sets) {
+      const key = mintNarutoPrintKey(tail, set);
+      if (!key || seen.has(key)) continue;
+      const looked = lookupNarutoPrint(key, {
+        language: lang || row.language || undefined,
+      });
+      out.push(
+        looked ?? {
+          ...stampNarutoCandidateSet(row, set),
+          printKey: key,
+        },
+      );
+      seen.add(key);
+    }
+  }
+  return out;
 }
 
 /** Texte / n° collectionneur — pour garder les extras deck après union. */
@@ -1047,16 +1221,46 @@ function narutoPrintCandidateMatchesQuery(
   return false;
 }
 
+/**
+ * Collector / disk id from a set-scoped key.
+ * `naruto:s2-ta0074` → `ta0074` (not `s2-ta0074`, which `narutoCatalogueLineForCard`
+ * misreads as EN CCG and then stamps USA series titles on FR rows).
+ */
 function narutoCollectorRawFromPrintKey(printKey: string): string {
-  return printKey.replace(/^naruto:/i, "").trim();
+  const parsed = parsePrintKey(printKey);
+  if (!parsed) return printKey.replace(/^naruto:/i, "").trim();
+  if (parsed.grouping) return `${parsed.number}-${parsed.grouping}`;
+  if (parsed.set === "promo" && !parsed.number.endsWith("-promo")) {
+    return `${parsed.number}-promo`;
+  }
+  if (
+    parsed.set === "prerelease" &&
+    !parsed.number.endsWith("-prerelease")
+  ) {
+    return `${parsed.number}-prerelease`;
+  }
+  return parsed.number;
+}
+
+function isNarutoPromoChannelDetail(row: {
+  setCode?: string | null;
+  number?: string | null;
+}): boolean {
+  const code = (row.setCode ?? "").trim().toLowerCase();
+  if (code === "promo") return true;
+  const id = parseNarutoCollector(row.number ?? "");
+  return (
+    id?.grouping === "promo" ||
+    id?.grouping === "cdf" ||
+    id?.family === "promo"
+  );
 }
 
 function isNarutoPromoCandidate(row: PrintCandidate): boolean {
-  const code = (row.setCode ?? "").trim().toLowerCase();
-  if (code === "promo") return true;
+  if (isNarutoPromoChannelDetail(row)) return true;
   const raw = narutoCollectorRawFromPrintKey(row.printKey);
   const id = parseNarutoCollector(raw);
-  return id?.grouping === "promo";
+  return id?.grouping === "promo" || id?.grouping === "cdf";
 }
 
 /** Sets from sqlite `print_sets` for one print key. */
@@ -1154,6 +1358,93 @@ function stampNarutoCandidateSet(
   };
 }
 
+const NARUTO_PRINT_DETAIL_SELECT = (db: DatabaseSync) =>
+  `SELECT p.print_key AS printKey,
+          p.set_code   AS setCode,
+          p.number     AS number,
+          p.card_type  AS cardType,
+          t.lang       AS lang,
+          t.full_name  AS fullName,
+          t.rarity     AS rarity,
+          a.art        AS art,
+          a.thumb      AS thumb,
+          ${printedColumnSql(db)} AS printed
+     FROM prints p
+     LEFT JOIN print_titles t
+            ON t.print_key = p.print_key
+     LEFT JOIN print_assets a
+            ON a.print_key = p.print_key AND a.lang = t.lang`;
+
+function lookupNarutoSetScopedPrintDetail(
+  printKey: string,
+  lang: string,
+): NarutoPrintDetail | null {
+  const parsed = parsePrintKey(printKey);
+  if (!parsed || parsed.game !== "naruto") return null;
+  if (!isNarutoCatalogueSetCode(parsed.set)) return null;
+
+  const requestedSet = parsed.set.trim().toLowerCase();
+  const number = parsed.grouping
+    ? `${parsed.number}-${parsed.grouping}`
+    : parsed.number;
+  const canonical = canonicalizeNarutoPrintKey(printKey);
+  const frChecklist = officialFrChecklistSetsForNumber(number);
+  /*
+    Never invent a ghost EU s1–s5 key (IT ledger mis-bucket) when the FR
+    paper checklist already places the collector elsewhere. Deck guarantees
+    and non-EU sets (maki / promo / s6+) stay allowed.
+  */
+  if (
+    /^s[1-5]$/.test(requestedSet) &&
+    frChecklist.length > 0 &&
+    !frChecklist.includes(requestedSet) &&
+    !deckSetsForPrintKey(printKey).includes(requestedSet)
+  ) {
+    return null;
+  }
+  const allowed =
+    frChecklist.includes(requestedSet) ||
+    deckSetsForPrintKey(printKey).includes(requestedSet) ||
+    mintNarutoPrintKey(number, requestedSet) === canonical;
+  if (!allowed) return null;
+
+  for (const pack of narutoIndexPacks()) {
+    const db = ensureNarutoPackIndex(pack);
+    if (!db) continue;
+
+    const exact = db
+      .prepare(
+        `${NARUTO_PRINT_DETAIL_SELECT(db)}
+            WHERE LOWER(p.set_code) = ? AND p.number = ?
+            ORDER BY (t.lang = ?) DESC
+            LIMIT 1`,
+      )
+      .get(requestedSet, number, lang) as NarutoPrintDetail | undefined;
+    if (exact) {
+      const row = { ...exact, printKey: canonical };
+      return withNarutoRetailArtFallback([row])[0] ?? row;
+    }
+
+    const template = db
+      .prepare(
+        `${NARUTO_PRINT_DETAIL_SELECT(db)}
+            WHERE p.number = ?
+            ORDER BY (t.lang = ?) DESC
+            LIMIT 1`,
+      )
+      .get(number, lang) as NarutoPrintDetail | undefined;
+    if (template) {
+      const row = {
+        ...template,
+        printKey: canonical,
+        setCode: requestedSet,
+      };
+      return withNarutoRetailArtFallback([row])[0] ?? row;
+    }
+  }
+  return null;
+}
+
 /**
  * Raw catalogue row for one print — what both the picker candidate and the
  * item metadata are built from, so the two never disagree.
@@ -1170,21 +1461,7 @@ export function lookupNarutoPrintDetail(
     for (const key of keys) {
       const row = db
         .prepare(
-          `SELECT p.print_key AS printKey,
-                  p.set_code   AS setCode,
-                  p.number     AS number,
-                  p.card_type  AS cardType,
-                  t.lang       AS lang,
-                  t.full_name  AS fullName,
-                  t.rarity     AS rarity,
-                  a.art        AS art,
-                  a.thumb      AS thumb,
-                  ${printedColumnSql(db)} AS printed
-             FROM prints p
-             LEFT JOIN print_titles t
-                    ON t.print_key = p.print_key
-             LEFT JOIN print_assets a
-                    ON a.print_key = p.print_key AND a.lang = t.lang
+          `${NARUTO_PRINT_DETAIL_SELECT(db)}
             WHERE p.print_key = ?
             ORDER BY (t.lang = ?) DESC
             LIMIT 1`,
@@ -1195,6 +1472,31 @@ export function lookupNarutoPrintDetail(
       }
     }
   }
+  return lookupNarutoSetScopedPrintDetail(printKey, lang);
+}
+
+/**
+ * EU UI: JA-only tourney stubs are not Promo (hors série). Prefer the retail
+ * checklist sibling so fiche / metadata never show « TE-107 · promo ».
+ */
+function lookupRetailSiblingForUnattestedPromo(
+  row: NarutoPrintDetail,
+  lang: string,
+): NarutoPrintDetail | null {
+  if (lang !== "fr" && lang !== "it") return null;
+  if (!isNarutoPromoChannelDetail(row)) return null;
+  if (belongsOnNarutoPromoChecklist(row.number)) return null;
+  const base =
+    narutoRetailDiskNumber(row.number) ?? narutoBaseDiskNumber(row.number);
+  if (!base) return null;
+  const sets = officialFrChecklistSetsForNumber(base);
+  const trySets = sets.length > 0 ? sets : ["s1", "s2", "s3", "s4", "s5", "s6"];
+  for (const set of trySets) {
+    const key = mintNarutoPrintKey(base, set);
+    if (!key || key === row.printKey) continue;
+    const hit = lookupNarutoPrintDetail(key, { language: lang });
+    if (hit && !isNarutoPromoChannelDetail(hit)) return hit;
+  }
   return null;
 }
 
@@ -1203,8 +1505,11 @@ export function lookupNarutoPrint(
   printKey: string,
   opts: { language?: string } = {},
 ): PrintCandidate | null {
+  const lang = (opts.language || "fr").toLowerCase();
   const row = lookupNarutoPrintDetail(printKey, opts);
-  return row ? toCandidate(row) : null;
+  if (!row) return null;
+  const retail = lookupRetailSiblingForUnattestedPromo(row, lang);
+  return toCandidate(retail ?? row);
 }
 
 export type { NarutoPrintRow };
@@ -1243,7 +1548,25 @@ function appendMissingPrintCandidates(
   const sid = setId?.trim().toLowerCase() || null;
   for (const printKey of printKeys) {
     if (seen.has(printKey)) continue;
-    const candidate = lookupNarutoPrint(printKey, { language: lang });
+    let candidate = lookupNarutoPrint(printKey, { language: lang });
+    if (!candidate && sid) {
+      const tail = printKey.replace(/^naruto:[^-\r\n]+-/i, "");
+      if (tail) {
+        for (const otherSet of officialFrChecklistSetsForNumber(tail)) {
+          if (otherSet === sid) continue;
+          const donorKey = mintNarutoPrintKey(tail, otherSet);
+          if (!donorKey || donorKey === printKey) continue;
+          const donor = lookupNarutoPrint(donorKey, { language: lang });
+          if (donor) {
+            candidate = {
+              ...stampNarutoCandidateSet(donor, sid),
+              printKey,
+            };
+            break;
+          }
+        }
+      }
+    }
     if (!candidate) continue;
     if (
       lang &&
@@ -1322,6 +1645,8 @@ export function unionNarutoSetPrintsWithSeriesDeckGuarantees(
 export function listNarutoSetPrints(input: {
   setId: string;
   language?: string | null;
+  /** Admin — include `printed: false` (HTML phantoms, cancelled S6). */
+  includeUnprinted?: boolean;
 }): PrintCandidate[] {
   const setId = input.setId.trim();
   if (!setId) return [];
@@ -1330,6 +1655,7 @@ export function listNarutoSetPrints(input: {
     setId,
     language: input.language ?? undefined,
     limit: 5000,
+    includeUnprinted: input.includeUnprinted,
   });
   const base = lang
     ? rows.filter((row) => (row.language ?? "").trim().toLowerCase() === lang)

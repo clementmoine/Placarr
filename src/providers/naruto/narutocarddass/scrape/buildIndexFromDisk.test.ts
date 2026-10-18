@@ -11,7 +11,7 @@ import {
 describe("buildIndexFromDisk promo faces", () => {
   it("indexes promo art without pack_documents appearances", () => {
     const root = mkdtempSync(path.join(tmpdir(), "naruto-promo-disk-"));
-    const cardDir = path.join(root, "cards", "promo", "pr0011", "fr");
+    const cardDir = path.join(root, "cards", "fr", "promo", "pr0011");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.carddass.jpg"), "face");
 
@@ -34,7 +34,7 @@ describe("buildIndexFromDisk promo faces", () => {
 
   it("indexes reconstructed-only promo faces", () => {
     const root = mkdtempSync(path.join(tmpdir(), "naruto-promo-recon-"));
-    const cardDir = path.join(root, "cards", "promo", "pr0093", "fr");
+    const cardDir = path.join(root, "cards", "fr", "promo", "pr0093");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.reconstructed.webp"), "recon");
     writeFileSync(
@@ -56,7 +56,7 @@ describe("buildIndexFromDisk promo faces", () => {
 
   it("indexes JA 巻ノ faces without FR checklist appearances", () => {
     const root = mkdtempSync(path.join(tmpdir(), "naruto-maki-disk-"));
-    const cardDir = path.join(root, "cards", "ninja", "ni0344", "ja");
+    const cardDir = path.join(root, "cards", "ja", "maki15", "ni0344");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.suruga.jpg"), "face");
 
@@ -81,7 +81,7 @@ describe("buildIndexFromDisk promo faces", () => {
 describe("attachNarutoDiskArtAssets", () => {
   it("fills titled printKeys that missed the disk walk", () => {
     const root = mkdtempSync(path.join(tmpdir(), "naruto-attach-disk-"));
-    const cardDir = path.join(root, "cards", "ninja", "ni0181", "ja");
+    const cardDir = path.join(root, "cards", "ja", "maki15", "ni0181");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.suruga.jpg"), "face");
 

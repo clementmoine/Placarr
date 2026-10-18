@@ -12,7 +12,7 @@ staging `data/naruto/carddass/staging/` (README).
 
 | Destination                                                       | Contenu                                                                 |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| **`cards/{family}/{id}/{lang}/`**                                 | Faces **utilisées** (art, `art.corrected`, `art.reconstructed`, thumb)  |
+| **`cards/{lang}/{set}/{id}/`**                                    | Faces **utilisées** (art, `art.corrected`, `art.reconstructed`, thumb)  |
 | **`staging/carddass-fr/`**                                        | Miroir site non utilisé + pages/PDF/CDX (inspectable)                   |
 | **`src/providers/naruto/narutocarddass/curated/cards/{family}/{id}/{lang}/`** | Reconstruct hand-made (`art.reconstructed.png`) + preuve (`source.jpg`) |
 | **`staging/bandaicg-en/`**, **`carddas-jp/`**                     | Autres lignes (≠ CACG FR)                                               |

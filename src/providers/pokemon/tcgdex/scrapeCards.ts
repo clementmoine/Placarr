@@ -21,7 +21,6 @@ import { httpGet } from "@/lib/http/httpClient";
 
 import {
   patchTcgdexSetCounts,
-  pruneTcgdexSets,
   tcgdexHarvestedSets,
   tcgdexSetIdsNeedingFrImageRefresh,
   writeTcgdexSet,
@@ -88,7 +87,7 @@ export async function harvestTcgdexCatalogue(
   emptyAtSource: string[];
   /** Sets dont l'identifiant interdit une clé de tirage. */
   unkeyable: string[];
-  /** Sets 100 % numériques, hors catalogue par principe. */
+  /** Sets numériques gardés avec `printed: false` (admin + filtre). */
   digitalOnly: string[];
 }> {
   const languages = opts.languages ?? TCGDEX_HARVEST_LANGUAGES;
@@ -102,19 +101,13 @@ export async function harvestTcgdexCatalogue(
   let titles = 0;
   const emptyAtSource: string[] = [];
   const unkeyable: string[] = [];
-  const digitalOnlySkipped: string[] = [];
+  const digitalOnlyKept: string[] = [];
 
   /*
-    Une étagère tient du carton. Les sets exclus — Pocket (jamais imprimé) et
-    misc/Jumbo (faces déjà sur le tirage standard) — n'entrent pas au catalogue.
-    La recherche distante les écartait déjà. Les écarter **à la moisson** plutôt
-    qu'à la lecture évite de stocker ce qu'on refuse de servir, et surtout évite
-    qu'un futur chemin de lecture oublie le filtre.
+    Pocket / misc : garder en sqlite avec `printed: false`. Checklist / search
+    les ignorent ; l'admin Catalogue les voit + filtre « Non imprimées ».
   */
   const digital = await digitalOnlySetIds();
-  // Ce qu'une passe antérieure aurait laissé entrer avant que le filtre existe.
-  const pruned = pruneTcgdexSets([...digital]);
-  if (pruned > 0) report(`${pruned} tirages numériques retirés du catalogue`);
 
   const needFrImages = new Set(tcgdexSetIdsNeedingFrImageRefresh());
   if (needFrImages.size > 0) {
@@ -182,9 +175,10 @@ export async function harvestTcgdexCatalogue(
         n'a encore aucune URL `/fr/` alors que l'EN est rempli, on re-télécharge
         pour promouvoir les faces FR (upsert préfère déjà `/fr/`).
       */
-      if (digital.has(remoteSetId.toLowerCase()) || digital.has(setId)) {
-        digitalOnlySkipped.push(`${language}:${remoteSetId}`);
-        continue;
+      const isDigital =
+        digital.has(remoteSetId.toLowerCase()) || digital.has(setId);
+      if (isDigital) {
+        digitalOnlyKept.push(`${language}:${remoteSetId}`);
       }
 
       const announced = brief.cardCount?.total ?? 0;
@@ -233,6 +227,7 @@ export async function harvestTcgdexCatalogue(
           localId,
           providerId,
           imageBaseUrl: card.image?.trim() || null,
+          ...(isDigital ? { printed: false } : {}),
         });
         titleRows.push({
           printKey,
@@ -278,7 +273,7 @@ export async function harvestTcgdexCatalogue(
   report(
     `Pokémon : ${sets} sets écrits, ${skipped} déjà complets, ${titles} titres` +
       ` — ${emptyAtSource.length} vides à la source, ${unkeyable.length} sans clé possible,` +
-      ` ${digitalOnlySkipped.length} numériques écartés`,
+      ` ${digitalOnlyKept.length} numériques (printed=false)`,
   );
   return {
     sets,
@@ -287,6 +282,6 @@ export async function harvestTcgdexCatalogue(
     titles,
     emptyAtSource,
     unkeyable,
-    digitalOnly: digitalOnlySkipped,
+    digitalOnly: digitalOnlyKept,
   };
 }

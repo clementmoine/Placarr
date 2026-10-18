@@ -20,6 +20,10 @@ export const SET_ENUMERATION_LIMIT = 5000;
 export async function enumerateSetPrints(input: {
   setId: string;
   language?: string | null;
+  /**
+   * Admin catalogue — keep `printed: false`. Default false (checklist / shelf).
+   */
+  includeUnprinted?: boolean;
   search: (opts: {
     query: string;
     setId: string;
@@ -30,14 +34,20 @@ export async function enumerateSetPrints(input: {
   const setId = input.setId.trim();
   if (!setId) return [];
   const language = input.language?.trim().toLowerCase();
-  const rows = await input.search({
+  const includeUnprinted = input.includeUnprinted === true;
+  let rows = await input.search({
     query: "",
     setId,
     language: language || undefined,
     limit: SET_ENUMERATION_LIMIT,
   });
-  if (!language) return rows;
-  return rows.filter(
-    (row) => (row.language ?? "").trim().toLowerCase() === language,
-  );
+  if (language) {
+    rows = rows.filter(
+      (row) => (row.language ?? "").trim().toLowerCase() === language,
+    );
+  }
+  if (!includeUnprinted) {
+    rows = rows.filter((row) => row.printed !== false);
+  }
+  return rows;
 }

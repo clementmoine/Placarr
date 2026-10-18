@@ -50,7 +50,7 @@ describe("localMediaFilePath", () => {
     writeFileSync(file, "y");
     expect(
       localMediaFilePath(
-        "/assets/naruto/carddass/cards/ninja/ni0001/fr/art.webp",
+        "/assets/naruto/carddass/cards/fr/s1/ni0001/art.webp",
       ),
     ).toBe(file);
   });

@@ -33,11 +33,15 @@ export type NarutoCardLine = "carddass-fr" | "en-ccg";
   le 2026-08-21 : elles appartiennent à un **autre jeu**, qui a son pack depuis.
   Les y laisser leur donnait la ligne Carddass, et avec elle son verso.
 */
+/*
+  European dedicated promo sequence `PR-011` / `pr0011` is Carddass (Kana).
+  Bandai USA uses `PR-US…` / `prus…` — those stay on EN_CCG (`prus` first).
+*/
 const CARDDASS_PREFIX =
-  /^(ni|te|ta|cl|ki|prni|prte|prta|prcl|prki|opni)[-]?\d/i;
-/** `nus` / `jus` / `prus` before `n` / `j` / `pr`. */
+  /^(ni|te|ta|cl|ki|prni|prte|prta|prcl|prki|opni|pr)[-]?\d/i;
+/** `nus` / `jus` / `prus` before bare `n` / `j` / `m` / `c` / `ps`. */
 const EN_CCG_PREFIX =
-  /^(nus|jus|mus|cus|prus|n|j|m|c|pr|ps)[-]?\d/i;
+  /^(nus|jus|mus|cus|prus|n|j|m|c|ps)[-]?\d/i;
 /** Arcade Data Carddass — autre provider ; ne jamais router vers en-ccg (N/M). */
 const DATA_CARDDASS_PREFIX = /^(dn|nm|nx)[-]?\d/i;
 

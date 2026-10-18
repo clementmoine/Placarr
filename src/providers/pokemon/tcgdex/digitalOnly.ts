@@ -1,10 +1,12 @@
 /**
- * Sets that do not belong on a Placarr cardboard shelf.
+ * Sets that are not cardboard collectibles on a Placarr shelf.
  *
  * - **tcgp** — Pokémon TCG Pocket: never printed.
  * - **misc** — TCGdex « Autre » (today: Cartes Jumbo): oversized promos whose
- *   faces already exist on the matching standard print. Harvesting them would
- *   duplicate art; listing them as « Sans catalogue » is a false gap.
+ *   faces already exist on the matching standard print.
+ *
+ * Kept in sqlite with `printed: false` (admin + filter). Checklist / search /
+ * set pickers hide them via `includeUnprinted: false`.
  *
  * Serie membership is read from TCGdex rather than written down here: Pocket
  * ships often, and misc may grow, without us editing a magic id list.

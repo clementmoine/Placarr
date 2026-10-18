@@ -136,7 +136,7 @@ describe("bilingual titles", () => {
     writeFileSync(path.join(dir, "back.dbscards.webp"), "");
     const en = lookupDbsCgPrint("dbscg:bt1-001", { language: "en" });
     expect(en?.cardBackUrl).toBe(
-      "/assets/dragonball/cg/cards/bt1/en/001/back.dbscards.webp",
+      "/assets/dragonball/cg/cards/en/bt1/001/back.dbscards.webp",
     );
   });
 });

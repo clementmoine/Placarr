@@ -41,6 +41,7 @@ export {
 
 export {
   applyHouseFoilFallback,
+  cssFinishResolveKey,
   getEffectPack,
   hotFoilStampUniforms,
   HOUSE_FOIL_FALLBACK_CSS_ID,

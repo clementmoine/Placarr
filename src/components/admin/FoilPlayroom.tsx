@@ -187,11 +187,22 @@ function ancestorBottomPad(el: HTMLElement): number {
 /**
  * Pin an element’s height to the remaining viewport below its top edge so
  * focus mode can fit the card without page scroll.
+ *
+ * Callback ref: the stage mounts only when focus/compare is open. A plain
+ * `useRef` + `[active]` effect can run once with `ref.current === null` (URL
+ * hydrate / first paint) and never sync again — the card then collapses to 0×0
+ * inside `OrientedMediaFrame` `fit="contain"`.
  */
 function useFillViewportBelow<T extends HTMLElement>(active: boolean) {
-  const ref = useRef<T | null>(null);
+  const elRef = useRef<T | null>(null);
+  const [node, setNode] = useState<T | null>(null);
+  const setRef = useCallback((el: T | null) => {
+    elRef.current = el;
+    setNode(el);
+  }, []);
+
   useLayoutEffect(() => {
-    const el = ref.current;
+    const el = elRef.current;
     if (!active || !el) {
       if (el) el.style.height = "";
       return;
@@ -213,8 +224,9 @@ function useFillViewportBelow<T extends HTMLElement>(active: boolean) {
       window.visualViewport?.removeEventListener("resize", sync);
       el.style.height = "";
     };
-  }, [active]);
-  return ref;
+  }, [active, node]);
+
+  return setRef;
 }
 
 const LAYOUTS: readonly {
@@ -1091,7 +1103,9 @@ export function FoilPlayroom({
     [focusIndex, materialsOrdered, selectMaterial],
   );
 
-  const focusStageRef = useFillViewportBelow<HTMLDivElement>(layout !== "grid");
+  const focusStageRef = useFillViewportBelow<HTMLDivElement>(
+    layout !== "grid" && Boolean(focusedMaterial),
+  );
 
   useEffect(() => {
     // Warm Frida navd in the background so Live opens hit the hot attach.

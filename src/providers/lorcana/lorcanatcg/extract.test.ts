@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import { selectLorcanaSteps } from "./extract";
 
 describe("selectLorcanaSteps", () => {
-  it("defaults to web + cards + mobile", () => {
-    expect(selectLorcanaSteps([])).toEqual(["web", "cards", "mobile"]);
+  it("defaults to web + cards + products + mobile", () => {
+    expect(selectLorcanaSteps([])).toEqual([
+      "web",
+      "cards",
+      "products",
+      "mobile",
+    ]);
   });
 
   it("honours --only and --skip", () => {
@@ -16,11 +21,13 @@ describe("selectLorcanaSteps", () => {
     expect(selectLorcanaSteps(["--skip", "mobile"])).toEqual([
       "web",
       "cards",
+      "products",
     ]);
   });
 
   it("keeps products under --offline, drops the rest", () => {
-    expect(selectLorcanaSteps(["--offline"])).toEqual([]);
+    // `products` can reuse on-disk lorcards staging; other defaults need net.
+    expect(selectLorcanaSteps(["--offline"])).toEqual(["products"]);
     expect(selectLorcanaSteps(["--only", "cards", "--offline"])).toEqual([]);
     expect(selectLorcanaSteps(["--only", "products", "--offline"])).toEqual([
       "products",

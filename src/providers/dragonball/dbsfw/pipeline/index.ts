@@ -3,7 +3,7 @@
  *
  * Le corps est commun à tous les packs de cartes — voir
  * `shared/cardCatalogue/pipeline`. Ne reste ici que ce qui est propre au pack :
- * sa base, son pipeline, et ce qu'une passe automatique s'autorise.
+ * sa base et son pipeline.
  */
 import { DBS_FW_EFFECT_PACK_ID } from "@/effects/dbsfw";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
@@ -22,8 +22,6 @@ const hooks = cardCatalogueHooks({
     );
     return runDbsFwPackPipeline(argv);
   },
-  // Même partage que les Masters : la synchro admin prend le graphe produit.
-  autoSkip: ["products"],
 });
 
 export const refreshDbsFwCatalog = hooks.refresh;

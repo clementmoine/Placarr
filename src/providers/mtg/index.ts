@@ -46,7 +46,6 @@ const built = createEmptyLocalTcgProvider({
       return listScryfallRemoteSets();
     },
   },
-  autoSkip: ["products"],
   runPipeline: async (argv) => {
     const { runMtgPackPipeline } = await import(
       /* webpackIgnore: true */

@@ -54,6 +54,7 @@ export const APP_HOLO_SHADER_IDS = [
   "rainbowPillars",
   "freeForm",
   "freeForm2",
+  "tinsel",
   "tempest",
   "calendarWave",
   "loreShine",
@@ -200,6 +201,19 @@ const APP_SHADERS: Readonly<Record<AppHoloShaderId, HoloShader>> = {
     filter: "brightness(0.6) contrast(5) saturate(2)",
   },
 
+  /** Web `.Tinsel` blends + app `tinseltexture` plate. */
+  tinsel: {
+    id: "tinsel",
+    backgroundImage: `url(${A}/tinseltexture.png), url(${A}/tinseltexture.png), url(${A}/rainbowgradientfreeform.png), url(${A}/freeform1pattern.png)`,
+    backgroundRepeat: "repeat, repeat, repeat, repeat",
+    backgroundSize: "100% 125%, 100% 125%, 75% 75%, 150% 125%",
+    backgroundPosition:
+      "center calc(var(--combined) * 3), center calc(var(--combined) * -1), var(--combined) var(--combined), var(--combined) var(--combined)",
+    backgroundBlendMode: "darken, multiply, overlay, normal",
+    mixBlendMode: "hard-light",
+    opacity: 0.75,
+  },
+
   tempest: {
     id: "tempest",
     backgroundImage: `url(${A}/tempestpatterns.png), url(${A}/rainbowgradienttempestglitter.png), url(${A}/inkwashmask.png)`,
@@ -304,6 +318,7 @@ const RECORDED: Readonly<Record<AppHoloShaderId, RecordedParams>> = {
   rainbowPillars: { inkwash: 0.55 }, // CardRainbowPillarsFoil
   freeForm: { inkwash: 0.9 }, // CardFreeForm1Foil
   freeForm2: { inkwash: 0.9 }, // CardFreeForm2Foil
+  tinsel: {}, // CardTinselMaterial — tinseltexture plate + web blends
   tempest: { inkwash: 0.1 }, // CardFoilTempest — the lightest, by a long way
   calendarWave: { inkwash: 0.65, glitter: 1.1 }, // CardFoilCalendarWave
   loreShine: {},

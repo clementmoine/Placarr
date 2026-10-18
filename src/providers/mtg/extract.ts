@@ -81,8 +81,6 @@ export async function runMtgPackPipeline(
 ): Promise<{ cards: number; products: number }> {
   const force = argv.includes("--force");
   const offline = argv.includes("--offline");
-  const skipProducts =
-    argv.includes("--skip-products") || skipToken(argv, "products");
   const skipBacks =
     argv.includes("--skip-backs") || skipToken(argv, "backs");
   const skipMtgcardsFaces = !argv.includes("--mtgcards-faces");
@@ -183,7 +181,6 @@ export async function runMtgPackPipeline(
       return seeded;
     },
     seedProducts: async () => {
-      if (skipProducts) return { written: 0, skipped: 0 };
       const products = await scrapeMtgcardsProducts({
         force,
         offline,

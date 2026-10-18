@@ -2,7 +2,7 @@
  * Crochets de catalogue du pack `pokemon`.
  *
  * Corps commun : `shared/cardCatalogue/pipeline`. Ici : ré-index Live +
- * cards-index, et le graphe produits pkmcards.fr (sauté en automatique).
+ * cards-index + graphe produits pkmcards.fr (toujours — Sync = surface complète).
  *
  * L'extract CDN / Unity / APK passe par Catalogue Extract (admin / worker
  * in-process) — ce pipeline catalogue ne le lance pas.
@@ -42,8 +42,7 @@ const hooks = cardCatalogueHooks({
   dbPath: cardsDbPath,
   // Identity corpus is catalog.sqlite; dbPath stays on live.sqlite for empty/stale.
   measureCorpus: () => measureCatalogDbCorpus(pokemonIdentityDbPath()),
-  runPipeline: async (argv) => {
-    const skipProducts = argv.includes("products");
+  runPipeline: async () => {
     try {
       indexLiveCards();
     } catch (err) {
@@ -59,15 +58,12 @@ const hooks = cardCatalogueHooks({
         `[pokemon catalog] cards-index ${faces.cards} stems (${faces.named} nommées) → ${faces.path}`,
       );
     }
-    if (!skipProducts) {
-      installProviderProductsContents(
-        POKEMON_PACK_ID,
-        POKEMON_PRODUCTS_CONTENTS,
-      );
-      await scrapeTcgCardsProducts("pkmcards", {});
-    }
+    installProviderProductsContents(
+      POKEMON_PACK_ID,
+      POKEMON_PRODUCTS_CONTENTS,
+    );
+    await scrapeTcgCardsProducts("pkmcards", {});
   },
-  autoSkip: ["products"],
 });
 
 export const refreshPokemonLiveCatalog = hooks.refresh;

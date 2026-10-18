@@ -103,29 +103,10 @@ describe("cardCatalogueHooks", () => {
       packId: "test/pack",
       dbPath: () => "/introuvable.sqlite",
       runPipeline,
-      autoSkip: ["products"],
     });
 
     await hooks.refresh();
     expect(runPipeline).toHaveBeenCalledWith([]);
-  });
-
-  /*
-    Un rafraîchissement horaire n'a pas les mêmes droits qu'un clic : le graphe
-    produit se moissonne sur un hôte qui ralentit les rafales.
-  */
-  it("saute ce qu'une passe automatique ne s'autorise pas", async () => {
-    tmpDataRoot();
-    const runPipeline = vi.fn().mockResolvedValue(undefined);
-    const hooks = cardCatalogueHooks({
-      packId: "test/pack",
-      dbPath: () => "/introuvable.sqlite",
-      runPipeline,
-      autoSkip: ["products"],
-    });
-
-    await hooks.refresh({ auto: true });
-    expect(runPipeline).toHaveBeenCalledWith(["--skip", "products"]);
   });
 
   it("compose only / langs / limit pour une passe manuelle ciblée", async () => {
@@ -135,7 +116,6 @@ describe("cardCatalogueHooks", () => {
       packId: "test/pack",
       dbPath: () => "/introuvable.sqlite",
       runPipeline,
-      autoSkip: ["products"],
     });
 
     await hooks.refresh({
@@ -160,7 +140,7 @@ describe("cardCatalogueHooks", () => {
       packId: "test/pack",
       dbPath: () => "/introuvable.sqlite",
       runPipeline,
-      autoSkip: ["products"],
+      autoSkip: ["checklist"],
     });
 
     await hooks.refresh({ auto: true, skip: ["arena"], only: ["faces"] });
@@ -168,7 +148,7 @@ describe("cardCatalogueHooks", () => {
       "--only",
       "faces",
       "--skip",
-      "products,arena",
+      "checklist,arena",
     ]);
   });
 

@@ -22,6 +22,7 @@ import {
 import {
   acquireFoilSlot,
   applyHouseFoilFallback,
+  cssFinishResolveKey,
   getEffectPack,
   getFoilCapabilities,
   hasFoilSlot,
@@ -420,8 +421,13 @@ export function FoilCardImage({
     needsFoilMask: material ? materialNeedsRole(material, "foilMask") : false,
     foilMaskUrl: effectiveMaskUrl,
   });
+  const cssFinishKey = cssFinishResolveKey({
+    finish,
+    materialName,
+    parseMaterialName: pack?.parseMaterialName,
+  });
   const fromPack = pack
-    ? pack.resolveCss(materialName ?? finish ?? "", varnishType, {
+    ? pack.resolveCss(cssFinishKey, varnishType, {
         foilMask: liveFoilMask,
         printKey,
         title,

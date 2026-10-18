@@ -139,17 +139,16 @@ describe("catalogueExtractRunner targets", () => {
     );
   });
 
-  it("Lorcana auto catalogue omits Unity and products but keeps official logos", async () => {
+  it("Lorcana without new APK skips Unity but still runs products", async () => {
     const cmd = await resolveCatalogueExtractPlan("lorcana", {
       skipUnity: true,
-      skipProducts: true,
     });
     expect(cmd.argv).toContain("lorcanaweb");
     expect(cmd.argv).toContain("lorcanacards");
-    expect(cmd.argv).toContain("lorcanaofficial");
+    expect(cmd.argv).toContain("lorcanaproducts");
     expect(cmd.argv).not.toContain("lorcanamobile");
-    expect(cmd.argv).not.toContain("lorcanaproducts");
     expect(cmd.prelude.some((line) => /skip Unity/i.test(line))).toBe(true);
+    expect(cmd.prelude.some((line) => /lorcards/i.test(line))).toBe(true);
   });
 
   it("pokemon catalogue uses a longer worker timeout than inventory", () => {
@@ -176,7 +175,7 @@ describe("catalogueExtractRunner targets", () => {
     expect(cmd.argv).toEqual(
       expect.arrayContaining(["--langs", "en,fr"]),
     );
-    expect(cmd.argv).toContain("--products");
+    expect(cmd.argv).not.toContain("--skip-products");
     expect(cmd.argv).not.toContain("--no-job");
     expect(cmd.prelude.some((l) => /inventory/i.test(l))).toBe(true);
     expect(cmd.prelude.some((l) => /Malie/i.test(l))).toBe(true);
@@ -199,45 +198,35 @@ describe("store APK prefix on extract", () => {
     });
   });
 
-  it("auto-sync without a new APK still runs a catalogue-only pass", () => {
+  it("auto-sync without a new APK still runs catalogue (Unity only skipped)", () => {
     expect(autoExtractPolicy(true, { status: "up-to-date", versionCode: 1 })).toEqual({
       skipUnity: true,
       preferCatalogueScope: true,
-      skipProducts: true,
-      skipAudits: true,
-      skipPaperFaces: true,
     });
     expect(
       autoExtractPolicy(true, { status: "unavailable", reason: "403" }),
     ).toEqual({
       skipUnity: true,
       preferCatalogueScope: true,
-      skipProducts: true,
-      skipAudits: true,
-      skipPaperFaces: true,
     });
     expect(autoExtractPolicy(true, { status: "updated", versionCode: 2 })).toEqual({
       skipUnity: false,
       preferCatalogueScope: false,
-      skipProducts: false,
-      skipAudits: false,
-      skipPaperFaces: false,
     });
     expect(
       autoExtractPolicy(false, { status: "up-to-date", versionCode: 1 }),
     ).toEqual({
       skipUnity: false,
       preferCatalogueScope: false,
-      skipProducts: false,
-      skipAudits: false,
-      skipPaperFaces: false,
     });
   });
 
-  it("omits Lorcana Unity and products when auto-sync skips them", () => {
-    expect(
-      lorcanaExtractProviders({ hasApk: true, skipUnity: true, skipProducts: true }),
-    ).toEqual(["lorcanaweb", "lorcanacards", "lorcanaofficial"]);
+  it("Lorcana providers always include products; Unity only with APK", () => {
+    expect(lorcanaExtractProviders({ hasApk: true, skipUnity: true })).toEqual([
+      "lorcanaweb",
+      "lorcanacards",
+      "lorcanaproducts",
+    ]);
     expect(lorcanaExtractProviders({ hasApk: true })).toEqual([
       "lorcanaweb",
       "lorcanacards",
@@ -246,20 +235,15 @@ describe("store APK prefix on extract", () => {
     ]);
   });
 
-  it("pokemon auto catalogue plan skips products and store audits", async () => {
+  it("pokemon catalogue plan always includes products and paper faces", async () => {
     const cmd = await resolveCatalogueExtractPlan("pokemon", {
       scope: "catalogue",
-      skipProducts: true,
-      skipAudits: true,
-      skipPaperFaces: true,
     });
     expect(cmd.argv).toContain("--refresh-manifests");
-    expect(cmd.argv).toContain("--skip-products");
-    expect(cmd.argv).toContain("--skip-paper-faces");
-    expect(cmd.argv).not.toContain("--products");
-    expect(cmd.argv).toEqual(
-      expect.arrayContaining(["--skip-apk-audit", "--skip-store-audit"]),
-    );
+    expect(cmd.argv).not.toContain("--skip-products");
+    expect(cmd.argv).not.toContain("--skip-paper-faces");
+    expect(cmd.prelude.some((l) => /pkmcards/i.test(l))).toBe(true);
+    expect(cmd.prelude.some((l) => /faces papier/i.test(l))).toBe(true);
   });
 });
 

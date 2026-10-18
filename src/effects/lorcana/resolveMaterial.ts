@@ -10,6 +10,8 @@ const VARNISH_SUFFIXES = [
   "MatteHotFoil",
   "SnowHotFoil",
   "HighGloss",
+  // Unity leaf `CardFreeForm2VarnishFoil` — generic varnish coat, not HotFoil.
+  "VarnishFoil",
 ] as const;
 
 function normalizeFinish(finish: string | null): string | null {

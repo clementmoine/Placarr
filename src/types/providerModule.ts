@@ -638,7 +638,7 @@ export type ProviderCatalogRefreshOpts = {
    * steps declared on the pack (`extract.pipelineSteps`).
    */
   only?: readonly string[];
-  /** Extra steps to skip (`--skip a,b`), merged with autoSkip when `auto`. */
+  /** Extra steps to skip (`--skip a,b`) — resume / rare pack hooks, not product opt-out. */
   skip?: readonly string[];
   /** Locale filter (`--langs fr,en`). */
   langs?: readonly string[];

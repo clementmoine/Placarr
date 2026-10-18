@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   __resetEffectPacksForTests,
   applyHouseFoilFallback,
+  cssFinishResolveKey,
   hotFoilStampUniforms,
   HOUSE_FOIL_FALLBACK_CSS_ID,
   pickDefaultCardBack,
@@ -147,6 +148,41 @@ describe("applyHouseFoilFallback", () => {
   it("stays flat for sealed packaging finishes", () => {
     expect(applyHouseFoilFallback(null, "sealed")).toBeNull();
     expect(applyHouseFoilFallback(null, "sealed-both")).toBeNull();
+  });
+});
+
+describe("cssFinishResolveKey", () => {
+  it("prefers catalogue finish over Unity material leaf", () => {
+    expect(
+      cssFinishResolveKey({
+        finish: "Lava",
+        materialName: "CardFoilLava",
+      }),
+    ).toBe("Lava");
+  });
+
+  it("peels Unity leaf via parseMaterialName when finish is absent", () => {
+    expect(
+      cssFinishResolveKey({
+        materialName: "CardFoilLava",
+        parseMaterialName: () => ({ finish: "Lava" }),
+      }),
+    ).toBe("Lava");
+  });
+
+  it("stays empty for varnish-only leaves the pack peels as finish-less", () => {
+    expect(
+      cssFinishResolveKey({
+        materialName: "CardVarnishSilver",
+        parseMaterialName: () => ({ finish: null }),
+      }),
+    ).toBe("");
+  });
+
+  it("keeps the leaf when no peeler is available", () => {
+    expect(
+      cssFinishResolveKey({ materialName: "PikachuFoil" }),
+    ).toBe("PikachuFoil");
   });
 });
 

@@ -3,20 +3,17 @@ import { describe, expect, it } from "vitest";
 import { selectPokemonSteps } from "./index";
 
 describe("selectPokemonSteps", () => {
-  it("defaults to malie → scrape → extract → paper-faces", () => {
+  it("defaults to the full Sync surface", () => {
     expect(selectPokemonSteps([])).toEqual([
       "malie",
       "scrape",
       "extract",
       "paper-faces",
+      "products",
     ]);
   });
 
-  it("adds products when --products is set", () => {
-    expect(selectPokemonSteps(["--products"])).toContain("products");
-  });
-
-  it("honours --only and --skip", () => {
+  it("honours --only and --skip (resume / checkpoint)", () => {
     expect(selectPokemonSteps(["--only", "extract"])).toEqual(["extract"]);
     expect(selectPokemonSteps(["--only", "malie,scrape"])).toEqual([
       "malie",
@@ -26,6 +23,7 @@ describe("selectPokemonSteps", () => {
       "malie",
       "scrape",
       "extract",
+      "products",
     ]);
   });
 

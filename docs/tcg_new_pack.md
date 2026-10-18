@@ -112,10 +112,14 @@ Une fois le pack branché, **ne pas** retoucher le core pour étendre le corpus 
 | Donnée | Chemin |
 | ------ | ------ |
 | Sets | harvest autoritaire → `listPrintSets` / `listRemotePrintSets` ; alpha → `catalogueSetCodes` |
-| Cartes | seed / install → `searchPrints` / `lookupPrint` / checklist |
-| Scellés | `seedProducts` + `products-contents.json` |
+| Cartes + noms | seed / install → `searchPrints` / `lookupPrint` / checklist |
+| Scellés + compositions | `seedProducts` + `product_contents` / `products-contents.json` |
 | Faces / dos | curated + install sous `data/<pack>/cards/` ; `effectPack` déjà sur `catalog` |
 | Foil materials | dump / kit déjà enregistré sur le pack d’effets |
+
+**Defaults extract** : si le pack a un step `products`, il est **dans** le
+chemin Sync (manuel **et** auto) — pas d’opt-in / opt-out CLI. Détail :
+[catalogue_contract.md](catalogue_contract.md) § Surface Sync TCG.
 
 Pack-side seulement : harvest STEPS (`selectCatalogueSteps`), parse des refs,
 nouveau finish shader, contenus scellés — **pas** une liste magique de sets

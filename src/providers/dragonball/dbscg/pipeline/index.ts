@@ -3,7 +3,7 @@
  *
  * Le corps est commun à tous les packs de cartes — voir
  * `shared/cardCatalogue/pipeline`. Ne reste ici que ce qui est propre au pack :
- * sa base, son pipeline, et ce qu'une passe automatique s'autorise.
+ * sa base et son pipeline.
  */
 import { DBS_CG_EFFECT_PACK_ID } from "@/effects/dbscg";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
@@ -22,11 +22,6 @@ const hooks = cardCatalogueHooks({
     );
     return runDbsCgPackPipeline(argv);
   },
-  /*
-    Le graphe produit vit sur le même hôte que `dbscards`, qui ralentit les
-    rafales : soixante-dix fiches, c'est un clic, pas un battement d'horloge.
-  */
-  autoSkip: ["products"],
 });
 
 export const refreshDbsCgCatalog = hooks.refresh;

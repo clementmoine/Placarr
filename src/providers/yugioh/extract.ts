@@ -57,8 +57,6 @@ export async function runYugiohPackPipeline(
   const skipFaces = argv.includes("--skip-faces");
   const skipScanflip = argv.includes("--skip-scanflip");
   const skipYgoprodeck = argv.includes("--skip-ygoprodeck");
-  const skipProducts =
-    argv.includes("--skip-products") || skipToken(argv, "products");
   const skipYgocardsFaces = !argv.includes("--ygocards-faces");
   const skipYgocardsList =
     argv.includes("--skip-ygocards-list") || skipToken(argv, "ygocards-list");
@@ -190,7 +188,6 @@ export async function runYugiohPackPipeline(
       return { prints, titles };
     },
     seedProducts: async () => {
-      if (skipProducts) return { written: 0, skipped: 0 };
       const products = await scrapeYgocardsProducts({
         force,
         offline,

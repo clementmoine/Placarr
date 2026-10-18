@@ -36,11 +36,32 @@ export const FOIL_META_KEYS = {
   sharedMotifs: "pokemon/foil/shared-motifs.json",
   fragStems: "pokemon/foil/frag-stems.json",
   lorcanaManifest: "lorcana/foil/manifest.json",
+  lorcanaWebRecipes: "lorcana/foil/web/recipes.json",
   liveFoilMasks: "pokemon/liveFoilMasks.json",
   liveOwned: "pokemon/liveOwned.json",
   reprintMeta: "pokemon/reprintMeta.json",
   lorcanaCardsIndex: "lorcana/cards-index.json",
 } as const;
+
+/** Shape written by dumpWeb / consumed by holoShader + cssRecipes. */
+export type LorcanaWebRecipesMeta = {
+  version?: number;
+  looks?: Record<
+    string,
+    {
+      backgroundImage: string;
+      backgroundRepeat?: string;
+      backgroundSize?: string;
+      backgroundPosition?: string;
+      backgroundBlendMode?: string;
+      mixBlendMode?: string;
+      opacity?: number;
+      filter?: string;
+    }
+  >;
+  finishMap?: Record<string, string>;
+  varnishMap?: Record<string, string>;
+};
 
 export function installFoilMetaFileReader(reader: FoilMetaFileReader): void {
   g.__PLACARR_FOIL_META_READER__ = reader;
@@ -102,6 +123,14 @@ export function loadFoilManifest(pack: string) {
       ? FOIL_META_KEYS.lorcanaManifest
       : `${pack}/foil/manifest.json`;
   return readDataJsonSync<Record<string, unknown>>(key, {});
+}
+
+/** Publisher CSS foil-inner dump (`dumpWeb` → recipes.json). */
+export function loadLorcanaWebRecipes(): LorcanaWebRecipesMeta {
+  return readDataJsonSync<LorcanaWebRecipesMeta>(
+    FOIL_META_KEYS.lorcanaWebRecipes,
+    { version: 1, looks: {}, finishMap: {}, varnishMap: {} },
+  );
 }
 
 export function loadMaterialSheets() {
@@ -201,12 +230,16 @@ async function runFoilMetaHydrate(
       const body = (await res.json()) as {
         cardsIndex?: unknown;
         manifest?: Record<string, unknown>;
+        webRecipes?: LorcanaWebRecipesMeta;
       };
       if (body.cardsIndex) {
         cache()[FOIL_META_KEYS.lorcanaCardsIndex] = body.cardsIndex;
       }
       if (body.manifest) {
         cache()[FOIL_META_KEYS.lorcanaManifest] = body.manifest;
+      }
+      if (body.webRecipes) {
+        cache()[FOIL_META_KEYS.lorcanaWebRecipes] = body.webRecipes;
       }
     }
   } catch {
@@ -235,6 +268,10 @@ async function runFoilMetaHydrate(
       {
         key: FOIL_META_KEYS.lorcanaManifest,
         url: "/assets/lorcana/manifest.json",
+      },
+      {
+        key: FOIL_META_KEYS.lorcanaWebRecipes,
+        url: "/assets/lorcana/web/recipes.json",
       },
     ].map(async ({ key, url }) => {
       if (cache()[key] !== undefined) return;

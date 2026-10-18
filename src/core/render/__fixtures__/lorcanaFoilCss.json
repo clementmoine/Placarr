@@ -20,14 +20,22 @@
   "filter": "contrast(2)saturate(1.5)"
  },
  ".FreeForm1 .foil-shine .foil-inner,.FreeForm2 .foil-shine .foil-inner": {
-  "background-image": "url(/assets/ff2c-CrtsMXCV.jpg),url(/assets/ff2-cqInX_CI.jpg),url(/assets/ff2-cqInX_CI.jpg)",
+  "background-image": "url(/assets/ff2-cqInX_CI.jpg),url(/assets/ff2c-CrtsMXCV.jpg),url(/assets/ff2-cqInX_CI.jpg)",
   "background-repeat": "repeat,repeat,repeat",
-  "background-size": "400%,80% 300%,80% 200%",
-  "background-position": "calc(var(--colorX) / 1.75) calc(var(--colorY) / 1.75), calc(var(--colorX) / 4) calc(-1 * var(--colorY) / 8), calc(-1 * (var(--colorX)) / 1.5) calc(-1 * var(--colorY) / 10)",
-  "background-blend-mode": "color, multiply, normal",
-  "mix-blend-mode": "multiply",
-  "opacity": ".5",
-  "filter": "brightness(.6)contrast(5)saturate(2)"
+  "background-size": "200% 200%,150% 200%,150% 200%",
+  "background-position": "calc(var(--colorX) * .2) calc(var(--colorY) * .2), var(--combined) var(--combined), calc(-1 * (var(--colorX)) * .2) calc(-1 * var(--colorY) * .1)",
+  "background-blend-mode": "color-burn, darken, normal",
+  "mix-blend-mode": "hard-light",
+  "opacity": ".5"
+ },
+ ".Tinsel .foil-shine .foil-inner": {
+  "background-image": "url(/assets/tins-BtWsldTp.png),url(/assets/tins-BtWsldTp.png),url(/assets/color-CDWTHKfk.jpg),url(/assets/ff2c-CrtsMXCV.jpg)",
+  "background-repeat": "repeat,repeat,repeat,repeat",
+  "background-size": "100% 125%,100% 125%,75% 75%,150% 125%",
+  "background-position": "center calc(var(--combined) * 3), center calc(var(--combined) * -1), var(--combined) var(--combined), var(--combined) var(--combined)",
+  "background-blend-mode": "darken, multiply, overlay, normal",
+  "mix-blend-mode": "hard-light",
+  "opacity": ".75"
  },
  ".Glitter .foil-shine .foil-inner": {
   "background-image": "url(/assets/glitter-B5ieUr43.jpg),url(/assets/ff2c-CrtsMXCV.jpg),url(/assets/glitter-B5ieUr43.jpg)",

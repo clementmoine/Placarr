@@ -354,6 +354,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
       timeoutMsByScope: { catalogue: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS },
       postExtract: "invalidatePokemonFoilNamesCache",
+      // Mirrors selectPokemonSteps defaults — SKUs/scellés/packshots included.
+      pipelineSteps: [
+        "malie",
+        "scrape",
+        "extract",
+        "paper-faces",
+        "products",
+      ],
     },
   },
   {
@@ -386,6 +394,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["catalog.sqlite", "foil/web"],
     extract: {
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+      // Mirrors selectLorcanaSteps defaults — SKUs/scellés/packshots included.
+      pipelineSteps: ["web", "cards", "products", "mobile"],
     },
   },
   {

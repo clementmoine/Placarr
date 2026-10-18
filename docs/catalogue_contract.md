@@ -148,6 +148,23 @@ Source vivante (API / cardlist / CDN / *cards.fr / punk-records / …)
 **Croissance** (nouveaux sets / cartes / scellés / faces) = Sync seul — garde
 `localTcgWiring.test.ts` + [tcg_new_pack.md](tcg_new_pack.md).
 
+### Surface Sync TCG (tous les packs)
+
+Un Sync **manuel** (admin Catalogue / extract) doit, dès qu’une source est
+câblée, enrichir **la même** sqlite pack avec :
+
+| Surface | Exemples |
+| ------- | -------- |
+| Sets / chapitres | harvest → `listPrintSets` / `catalogueSetCodes` |
+| Cartes + noms | seed / API / scrape → `prints` / `print_titles` |
+| Faces / dos | CDN, cardlist, curated → `data/<pack>/cards/` |
+| Effets foil | dump web / Unity / shaders → `foil/` + `effectPack` |
+| Produits scellés | `*cards.fr`, TCG Cards, packshots → `products` |
+| Compositions | `product_contents` / `products-contents.json` |
+
+Pas d’opt-out produits : admin Sync et lancement automatique font la même
+surface. `--skip` ne sert qu’à la **reprise** (steps déjà terminés d’un job).
+
 Inventaire des sources encore sous-exploitées :
 [catalogue_sources_underexploited.md](catalogue_sources_underexploited.md).
 

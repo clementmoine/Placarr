@@ -1,10 +1,12 @@
 /**
- * CSS look id membership — **client-safe**, no texture recipes.
+ * CSS look id membership — **client-safe**, no texture recipe bodies.
  *
- * Full look tables live in `holoShaders.ts` (+ Pokemon / Simey / house). Shelf
- * tiles only need to know whether a `finishShaders` value is a CSS id vs a
- * Unity material leaf; resolving the look happens inside FoilCardImage.
+ * Baseline ids stay listed here for shelf tiles (Unity leaf vs CSS id).
+ * Dump-discovered Lorcana looks (new publisher finishes) also count once
+ * `recipes.json` is hydrated via foilMetaLoad.
  */
+
+import { loadLorcanaWebRecipes } from "@/lib/foilMetaLoad";
 
 export const HOLO_SHADER_IDS = [
   "silver",
@@ -17,6 +19,7 @@ export const HOLO_SHADER_IDS = [
   "seaWave",
   "rainbowPillars",
   "freeForm",
+  "tinsel",
   "tempest",
   "calendarWave",
   "loreShine",
@@ -28,8 +31,7 @@ export const HOLO_SHADER_IDS = [
 export type HoloShaderId = (typeof HOLO_SHADER_IDS)[number];
 
 export function isHoloShaderId(value: unknown): value is HoloShaderId {
-  return (
-    typeof value === "string" &&
-    (HOLO_SHADER_IDS as readonly string[]).includes(value)
-  );
+  if (typeof value !== "string") return false;
+  if ((HOLO_SHADER_IDS as readonly string[]).includes(value)) return true;
+  return Boolean(loadLorcanaWebRecipes().looks?.[value]);
 }

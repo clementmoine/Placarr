@@ -1,16 +1,24 @@
 /**
- * Lorcana web CSS recipes — pack-specific defaults live here, not in core.
+ * Lorcana web CSS resolve — finish/varnish → look ids from dumpWeb recipes.json.
  *
- * Resolve: alias overrides → FinishName → camelCase id if ported → house flare.
- * Unknown catalogue finishes still render (`flare`) but gap audit flags them —
- * same honesty model as Pokémon CSS.
+ * Resolve: Unity aliases → dump finishMap → camelCase look if present → flare.
+ * Unknown catalogue finishes still render (`flare`) but gap audit flags them.
  */
 
 import { HOUSE_FOIL_FALLBACK_CSS_ID } from "@/core/render/foil/backend";
-import { HOLO_SHADER_IDS, type HoloShaderId } from "@/core/render/holoShaders";
+import {
+  HOLO_SHADER_IDS,
+  type HoloShaderId,
+} from "@/core/render/holoShaderIds";
+import { loadLorcanaWebRecipes } from "@/lib/foilMetaLoad";
+import {
+  LORCANA_WEB_TEXTURE_BASE,
+  textureStemsFromRecipes,
+  type LorcanaWebRecipesFile,
+} from "@/providers/lorcana/lorcanatcg/pipeline/webRecipes";
 
-/** Where transcribed CSS foil textures live for this pack. */
-export const WEB_TEXTURE_BASE = "/assets/lorcana/web";
+/** Where dumped CSS foil textures live for this pack. */
+export const WEB_TEXTURE_BASE = LORCANA_WEB_TEXTURE_BASE;
 
 /** Unknown catalogue finish → shared house flare (not Lorcana silver texture). */
 export const DEFAULT_FINISH_CSS_ID = HOUSE_FOIL_FALLBACK_CSS_ID;
@@ -18,21 +26,11 @@ export const DEFAULT_FINISH_CSS_ID = HOUSE_FOIL_FALLBACK_CSS_ID;
 /** Stamped coat when the varnish type has no dedicated CSS look. */
 export const DEFAULT_VARNISH_CSS_ID = "hotFoil";
 
-const PORTED = new Set<string>(HOLO_SHADER_IDS);
-
-/** Irregular catalogue finish → shader id. */
+/** Irregular catalogue / Unity names → dump look id. */
 const FINISH_CSS_ALIASES: Readonly<Record<string, string>> = {
   VertWave: "verticalWave",
-  VerticalWave: "verticalWave",
-  FreeForm1: "freeForm",
-  FreeForm2: "freeForm",
-  RainbowPillars: "rainbowPillars",
-  CalendarWave: "calendarWave",
-  SeaWave: "seaWave",
-};
-
-const VARNISH_CSS_ALIASES: Readonly<Record<string, string>> = {
-  ChromeRainbowHotFoil: "chromeRainbowHotFoil",
+  // Mis-peeled Unity leaf before `VarnishFoil` was a varnish suffix.
+  FreeForm2Varnish: "freeForm",
 };
 
 function toCamelFinish(name: string): string {
@@ -40,14 +38,83 @@ function toCamelFinish(name: string): string {
   return name.charAt(0).toLowerCase() + name.slice(1);
 }
 
-/** True when finish has a dedicated ported look (alias or camelCase id). */
+function dumpedRecipes(): LorcanaWebRecipesFile {
+  const raw = loadLorcanaWebRecipes();
+  return {
+    version: 1,
+    looks: raw.looks ?? {},
+    finishMap: raw.finishMap ?? {},
+    varnishMap: raw.varnishMap ?? {},
+  };
+}
+
+function lookExists(id: string): boolean {
+  if (dumpedRecipes().looks[id]) return true;
+  return (HOLO_SHADER_IDS as readonly string[]).includes(id);
+}
+
+/** Dump finishMap + Unity aliases (for tests / audits). */
+export function finishCssMap(): Readonly<Record<string, string>> {
+  return {
+    ...dumpedRecipes().finishMap,
+    ...FINISH_CSS_ALIASES,
+  };
+}
+
+/** Dump varnishMap (for tests / audits). */
+export function varnishCssMap(): Readonly<Record<string, string>> {
+  return { ...dumpedRecipes().varnishMap };
+}
+
+/**
+ * @deprecated Prefer {@link finishCssMap} / resolve.
+ * Snapshot getter so `Object.entries(FINISH_CSS)` still works in tests.
+ */
+export const FINISH_CSS: Readonly<Record<string, string>> = new Proxy(
+  {} as Record<string, string>,
+  {
+    ownKeys: () => Reflect.ownKeys(finishCssMap()),
+    get: (_t, prop: string | symbol) =>
+      typeof prop === "string" ? finishCssMap()[prop] : undefined,
+    getOwnPropertyDescriptor: (_t, prop: string | symbol) => {
+      if (typeof prop !== "string") return undefined;
+      const value = finishCssMap()[prop];
+      if (value == null) return undefined;
+      return { configurable: true, enumerable: true, value };
+    },
+    has: (_t, prop: string | symbol) =>
+      typeof prop === "string" && prop in finishCssMap(),
+  },
+);
+
+/** @deprecated Prefer {@link varnishCssMap} / resolve. */
+export const VARNISH_CSS: Readonly<Record<string, string>> = new Proxy(
+  {} as Record<string, string>,
+  {
+    ownKeys: () => Reflect.ownKeys(varnishCssMap()),
+    get: (_t, prop: string | symbol) =>
+      typeof prop === "string" ? varnishCssMap()[prop] : undefined,
+    getOwnPropertyDescriptor: (_t, prop: string | symbol) => {
+      if (typeof prop !== "string") return undefined;
+      const value = varnishCssMap()[prop];
+      if (value == null) return undefined;
+      return { configurable: true, enumerable: true, value };
+    },
+    has: (_t, prop: string | symbol) =>
+      typeof prop === "string" && prop in varnishCssMap(),
+  },
+);
+
+/** True when finish has a dedicated ported look (alias, dump map, or camelCase). */
 export function hasDedicatedCssFinish(finish: string): boolean {
   const trimmed = finish.trim();
   if (!trimmed || /^none$/i.test(trimmed)) return false;
   const alias = FINISH_CSS_ALIASES[trimmed];
-  if (alias && PORTED.has(alias)) return true;
+  if (alias && lookExists(alias)) return true;
+  const fromDump = dumpedRecipes().finishMap[trimmed];
+  if (fromDump && lookExists(fromDump)) return true;
   const camel = toCamelFinish(trimmed);
-  return PORTED.has(camel);
+  return lookExists(camel);
 }
 
 /**
@@ -61,19 +128,25 @@ export function isCssFinishFallbackOnly(finish: string): boolean {
   return resolveFinishId(trimmed) === DEFAULT_FINISH_CSS_ID;
 }
 
-/** HighGloss / *HotFoil share the stamped-coat CSS family — not a gap. */
+/** HighGloss / *HotFoil / Unity `VarnishFoil` share the stamped-coat CSS family. */
 export function isVarnishHotFoilFamily(varnish: string): boolean {
-  return /hotfoil/i.test(varnish) || /highgloss/i.test(varnish);
+  return (
+    /hotfoil/i.test(varnish) ||
+    /highgloss/i.test(varnish) ||
+    /^varnishfoil$/i.test(varnish)
+  );
 }
 
 /** True when varnish has a dedicated look (not merely the hotFoil family). */
 export function hasDedicatedCssVarnish(varnish: string): boolean {
   const trimmed = varnish.trim();
   if (!trimmed) return false;
-  const alias = VARNISH_CSS_ALIASES[trimmed];
-  if (alias && PORTED.has(alias)) return true;
+  const fromDump = dumpedRecipes().varnishMap[trimmed];
+  if (fromDump && fromDump !== DEFAULT_VARNISH_CSS_ID && lookExists(fromDump)) {
+    return true;
+  }
   const camel = toCamelFinish(trimmed);
-  if (PORTED.has(camel) && camel !== DEFAULT_VARNISH_CSS_ID) return true;
+  if (lookExists(camel) && camel !== DEFAULT_VARNISH_CSS_ID) return true;
   return false;
 }
 
@@ -91,51 +164,24 @@ export function isCssVarnishFallbackOnly(varnish: string): boolean {
 
 function resolveFinishId(finish: string): string {
   const alias = FINISH_CSS_ALIASES[finish];
-  if (alias) return alias;
+  if (alias && lookExists(alias)) return alias;
+  const fromDump = dumpedRecipes().finishMap[finish];
+  if (fromDump && lookExists(fromDump)) return fromDump;
   const camel = toCamelFinish(finish);
-  if (PORTED.has(camel)) return camel;
+  if (lookExists(camel)) return camel;
   return DEFAULT_FINISH_CSS_ID;
 }
 
 function resolveVarnishId(varnish: string): string {
-  const alias = VARNISH_CSS_ALIASES[varnish];
-  if (alias) return alias;
+  const fromDump = dumpedRecipes().varnishMap[varnish];
+  if (fromDump && lookExists(fromDump)) return fromDump;
   const camel = toCamelFinish(varnish);
-  if (PORTED.has(camel)) return camel;
-  // HotFoil family → hotFoil
+  if (lookExists(camel)) return camel;
   if (isVarnishHotFoilFamily(varnish)) {
     return DEFAULT_VARNISH_CSS_ID;
   }
   return DEFAULT_VARNISH_CSS_ID;
 }
-
-/** @deprecated Prefer resolve; snapshot for tests. */
-export const FINISH_CSS: Readonly<Record<string, string>> = {
-  Silver: "silver",
-  Satin: "satin",
-  Lore: "lore",
-  Lava: "lava",
-  Magma: "magma",
-  Glitter: "glitter",
-  VerticalWave: "verticalWave",
-  VertWave: "verticalWave",
-  SeaWave: "seaWave",
-  RainbowPillars: "rainbowPillars",
-  FreeForm1: "freeForm",
-  FreeForm2: "freeForm",
-  Tempest: "tempest",
-  CalendarWave: "calendarWave",
-};
-
-/** @deprecated Prefer resolve. */
-export const VARNISH_CSS: Readonly<Record<string, string>> = {
-  HighGloss: "hotFoil",
-  MatteHotFoil: "hotFoil",
-  MetallicHotFoil: "hotFoil",
-  SnowHotFoil: "hotFoil",
-  RainbowHotFoil: "hotFoil",
-  ChromeRainbowHotFoil: "chromeRainbowHotFoil",
-};
 
 export function resolveCssRecipe(
   finish: string,
@@ -151,31 +197,9 @@ export function resolveCssRecipe(
 }
 
 /**
- * Texture basenames under `/assets/lorcana/web/` used by ported CSS looks.
+ * Texture basenames under `/assets/lorcana/web/` used by dumped CSS looks.
  * DumpWeb treats other image stems as candidates for review (minus chrome).
  */
 export function lorcanaWebRecipeTextureStems(): ReadonlySet<string> {
-  // Keep explicit: matches `holoShaders.ts` `T` urls (parity-tested).
-  return new Set([
-    "silverc",
-    "satin",
-    "satinc",
-    "satind",
-    "vertwavec",
-    "vertwave",
-    "lava2",
-    "magma",
-    "glitter",
-    "ff2c",
-    "ff2",
-    "seawavec",
-    "seawave",
-    "pillar",
-    "pillar2",
-    "color",
-    "tempest",
-    "calc",
-    "calendarwave",
-    "lore",
-  ]);
+  return textureStemsFromRecipes(dumpedRecipes());
 }

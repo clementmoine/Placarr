@@ -1,6 +1,24 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveMaterialName } from "./resolveMaterial";
+import { parseMaterialName, resolveMaterialName } from "./resolveMaterial";
+
+describe("parseMaterialName", () => {
+  it.each([
+    ["CardFoilLava", { finish: "Lava", varnish: null }],
+    ["CardFoilVertWave", { finish: "VerticalWave", varnish: null }],
+    ["CardFreeForm2VarnishFoil", { finish: "FreeForm2", varnish: "VarnishFoil" }],
+    [
+      "CardFreeForm2RainbowHotFoil",
+      { finish: "FreeForm2", varnish: "RainbowHotFoil" },
+    ],
+    [
+      "CardTinselChromeRainbowHotFoilMaterial",
+      { finish: "Tinsel", varnish: "ChromeRainbowHotFoil" },
+    ],
+  ] as const)("%s → finish/varnish", (name, expected) => {
+    expect(parseMaterialName(name)).toEqual(expected);
+  });
+});
 
 describe("resolveMaterialName", () => {
   it.each([

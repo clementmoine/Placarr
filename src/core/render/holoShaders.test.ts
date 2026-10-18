@@ -108,6 +108,13 @@ describe("the library itself", () => {
     }
   });
 
+  it("opts every Lorcana look out of Simey pointer falloff", () => {
+    // cards.disneylorcana.com: foil-inner = print mask only, no spotlight radial.
+    for (const id of HOLO_SHADER_IDS) {
+      expect(holoShader(id)?.pointerFalloff, id).toBe(false);
+    }
+  });
+
   it("names only textures that ship with the app", () => {
     // The recipes were transcribed with the publisher's hashed asset names
     // rewritten to local ones. A typo there is invisible until a card renders
@@ -134,7 +141,7 @@ describe("the library itself", () => {
   it("keeps the everyday foil colourless", () => {
     // Silver is a metal, not a spectrum: it reached the right look only by
     // desaturating, and losing that filter turns every common card rainbow.
-    expect(holoShader("silver")!.filter).toContain("saturate(0.2)");
+    expect(holoShader("silver")!.filter).toMatch(/saturate\((0)?\.2\)/);
   });
 
   it("leaves no look sitting still while the light sweeps past", () => {

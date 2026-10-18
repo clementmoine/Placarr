@@ -26,7 +26,7 @@ describe("onepiece provider hooks", () => {
     ).resolves.toBeNull();
   });
 
-  it("skips sealed products on automatic catalogue refresh", async () => {
+  it("automatic catalogue refresh runs the full pipeline (no product skip)", async () => {
     const ran: string[][] = [];
     const { cardCatalogueHooks } = await import(
       "@/providers/shared/cardCatalogue/pipeline"
@@ -37,10 +37,9 @@ describe("onepiece provider hooks", () => {
       runPipeline: async (argv) => {
         ran.push([...argv]);
       },
-      autoSkip: ["products"],
     });
     await hooks.refresh({ auto: true });
-    expect(ran[0]).toEqual(["--skip", "products"]);
+    expect(ran[0]).toEqual([]);
   });
 });
 

@@ -109,6 +109,32 @@ export function applyHouseFoilFallback(
   return HOUSE_FOIL_FALLBACK_CSS_ID;
 }
 
+/**
+ * Catalogue finish string for `pack.resolveCss`.
+ *
+ * Prefer `finish` (`Lava`) over Unity `materialName` (`CardFoilLava`) — the
+ * leaf is a WebGL handle, not a CSS recipe key. When only the leaf is set,
+ * peel it via `parseMaterialName` so playroom / forced-Web paths still hit
+ * the publisher recipe instead of house flare.
+ */
+export function cssFinishResolveKey(opts: {
+  finish?: string | null;
+  materialName?: string | null;
+  parseMaterialName?: (name: string) => { finish: string | null };
+}): string {
+  const finish = (opts.finish ?? "").trim();
+  if (finish) return finish;
+  const material = (opts.materialName ?? "").trim();
+  if (!material) return "";
+  if (opts.parseMaterialName) {
+    // Pack recognized the leaf: use its finish, or "" for varnish-only
+    // (`CardVarnish*`) — never feed the Unity name into resolveCss.
+    return (opts.parseMaterialName(material).finish ?? "").trim();
+  }
+  // No peeler (Pokémon Unity leaf) — pass the leaf through for pack.resolveCss.
+  return material;
+}
+
 // ── Card-back resolve ───────────────────────────────────────────────────────
 
 /**

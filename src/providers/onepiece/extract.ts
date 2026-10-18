@@ -36,8 +36,6 @@ export async function runOnepiecePackPipeline(
   const offline = argv.includes("--offline");
   const skipFaces =
     argv.includes("--skip-faces") || skipToken(argv, "faces");
-  const skipProducts =
-    argv.includes("--skip-products") || skipToken(argv, "products");
   const skipBacks =
     argv.includes("--skip-backs") || skipToken(argv, "backs");
   const skipOpecardsList =
@@ -101,7 +99,6 @@ export async function runOnepiecePackPipeline(
       return seeded;
     },
     seedProducts: async () => {
-      if (skipProducts) return { written: 0, skipped: 0 };
       installProviderProductsContents(ONEPIECE_PACK_ID, ONEPIECE_PRODUCTS_CONTENTS);
       const products = await scrapeTcgCardsProducts("opecards", {
         force,
@@ -116,7 +113,7 @@ export async function runOnepiecePackPipeline(
   });
 }
 
-/** `--skip products,faces` from shared catalogue refresh argv. */
+/** `--skip faces,backs,…` from shared catalogue refresh argv. */
 function skipToken(argv: readonly string[], token: string): boolean {
   const idx = argv.indexOf("--skip");
   if (idx < 0) return false;

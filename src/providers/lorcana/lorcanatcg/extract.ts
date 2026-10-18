@@ -51,8 +51,8 @@ const PROVIDER_TO_STEP: Record<string, LorcanaStep> = {
  * Resolve which Lorcana extract passes to run.
  *
  * `--providers` (legacy) wins when present; otherwise `--only` / `--skip` /
- * `--offline` filter {@link LORCANA_STEPS}. Default = web + cards + mobile
- * (same as the historical default provider list).
+ * `--offline` filter {@link LORCANA_STEPS}. Default = web + cards + products
+ * + mobile (SKUs / scellés / packshots via lorcards + site officiel).
  */
 export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
   const providersIdx = argv.indexOf("--providers");
@@ -71,7 +71,7 @@ export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
 
   return selectCatalogueSteps(argv, LORCANA_STEPS, {
     online: LORCANA_ONLINE,
-    defaults: ["web", "cards", "mobile"],
+    defaults: ["web", "cards", "products", "mobile"],
   });
 }
 

@@ -22,12 +22,13 @@ export const POKEMON_STEPS = [
 ] as const;
 export type PokemonStep = (typeof POKEMON_STEPS)[number];
 
-/** Default Sync path — products opt-in via `--only products` or `--products`. */
+/** Default Sync path — full catalogue surface (identity + faces + sealed). */
 const POKEMON_DEFAULT_STEPS: PokemonStep[] = [
   "malie",
   "scrape",
   "extract",
   "paper-faces",
+  "products",
 ];
 
 const POKEMON_ONLINE = new Set<PokemonStep>([
@@ -37,20 +38,11 @@ const POKEMON_ONLINE = new Set<PokemonStep>([
   "products",
 ]);
 
-/**
- * Resolve which Pokémon extract passes to run.
- *
- * Explicit `--products` / `--skip-products` and friends still override after
- * this selection in {@link parseArgs}.
- */
+/** Resolve which Pokémon extract passes to run (full Sync surface by default). */
 export function selectPokemonSteps(argv: readonly string[]): PokemonStep[] {
-  // Legacy flag: include products in the default set when asked.
-  const withProducts = argv.includes("--products");
   return selectCatalogueSteps(argv, POKEMON_STEPS, {
     online: POKEMON_ONLINE,
-    defaults: withProducts
-      ? [...POKEMON_DEFAULT_STEPS, "products"]
-      : POKEMON_DEFAULT_STEPS,
+    defaults: POKEMON_DEFAULT_STEPS,
   });
 }
 
@@ -291,12 +283,9 @@ export type UpdateOpts = {
   strictApkScrape?: boolean;
   skipStoreAudit?: boolean;
   strictStoreAudit?: boolean;
-  /**
-   * Paper sealed-product graph from pkmcards.fr (TCG Cards family).
-   * Off by default on a Live dump; admin extract passes `--products`.
-   */
+  /** Paper sealed-product graph from pkmcards.fr (TCG Cards family). */
   skipProducts?: boolean;
-  /** Skip Coleka / TCGPlayer / pkmcards face harvest (auto catalogue pass). */
+  /** Skip Coleka / TCGPlayer / pkmcards face harvest (resume / step selection). */
   skipPaperFaces?: boolean;
   /** AbortSignal from CLI background-job cancel. */
   signal?: AbortSignal;
@@ -327,7 +316,7 @@ export async function runUpdate(
     if (signal?.aborted) throw new Error("foil extract cancelled");
   };
   throwIfAborted();
-  if (opts.skipProducts === false) {
+  if (!opts.skipProducts) {
     console.log("── products pkmcards.fr (papier scellé, famille TCG Cards)");
     installProviderProductsContents("pokemon", POKEMON_PRODUCTS_CONTENTS);
     const products = await scrapeTcgCardsProducts("pkmcards", {
@@ -870,7 +859,8 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string } {
     strictApkScrape: false,
     skipStoreAudit: false,
     strictStoreAudit: false,
-    skipProducts: true,
+    // Overwritten by applyPokemonSteps from step selection (products on by default).
+    skipProducts: false,
     skipPaperFaces: false,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -902,9 +892,6 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string } {
     else if (a === "--strict-apk-scrape") out.strictApkScrape = true;
     else if (a === "--skip-store-audit") out.skipStoreAudit = true;
     else if (a === "--strict-store-audit") out.strictStoreAudit = true;
-    else if (a === "--products") out.skipProducts = false;
-    else if (a === "--skip-products") out.skipProducts = true;
-    else if (a === "--skip-paper-faces") out.skipPaperFaces = true;
   }
   return out;
 }

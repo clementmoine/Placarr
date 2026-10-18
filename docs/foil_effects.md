@@ -10,15 +10,16 @@
 | ----------- | ------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **Pokémon** | WebGL   | TCG Live (Unity / HoloFoil GLES3)                                                           | `data/pokemon/foil/shaders` + `effects/pokemon/materials*`                                 |
 | **Pokémon** | CSS     | **Chorégraphie Simey** + **paint multi-locale Live** (faces / masks / FX) ; sinon `flare` | `holoShadersSimey` + ports ; `HoloCardImage` (`--foil-etch`, wp) |
-| **Lorcana** | CSS     | Site officiel Lorcana (viewer web)                                                          | dump `data/lorcana/foil/web` → `holoShadersApp` + `cssRecipes`                             |
+| **Lorcana** | CSS     | Site officiel `cards.disneylorcana.com`                                                     | `dumpWeb` → textures **+** `recipes.json` ; runtime `holoShader` / `cssRecipes` (pas le radial Simey) |
 | **Lorcana** | WebGL   | App Lorcana TCG (Unity)                                                                     | `data/lorcana/foil/shaders` + `manifest.json`                                              |
 
 **Règles :**
 
 1. Ne pas forcer une bijection entre CSS et WebGL du même pack — ce sont deux
    médias, deux sources. On mappe **par intention visuelle** (finish / leaf).
-2. Ne pas charger les `.css` upstream au runtime : on **adapte** dans
-   `HoloShader` (comme les recettes Lorcana dumpées).
+2. Ne pas charger les `.css` upstream au runtime : `dumpWeb` extrait les
+   règles `.foil-inner` vers `data/lorcana/foil/web/recipes.json` ; le runtime
+   lit ce dump (plus de transcription manuelle des looks).
 3. Assets officiels : faces sous `data/<pack>/cards/`, kit rendu sous `data/<pack>/foil/` → URL `/assets/<pack>/…`.
 4. Trees simey = foil reference `data/pokemon/foil/simey/` (textures = `foil/textures/simey_*`)
    (Simey CSS sync) — **même rôle** que le dump web Lorcana.

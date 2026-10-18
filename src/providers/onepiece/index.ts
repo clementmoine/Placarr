@@ -55,8 +55,6 @@ const built = createEmptyLocalTcgProvider({
     );
     return runOnepiecePackPipeline(argv);
   },
-  // Like Lorcana / DBS: hourly refresh revalidates cards, not the sealed graph.
-  autoSkip: ["products"],
 });
 
 export const onepieceLine = built.line;

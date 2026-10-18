@@ -10,6 +10,7 @@ import {
   loadFragStems,
   loadLiveFoilMasks,
   loadLiveOwned,
+  loadLorcanaWebRecipes,
   loadMaterialSheets,
   loadReprintMeta,
   loadSharedMotifs,
@@ -35,6 +36,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       cardsIndex: loadCardsIndexJson("lorcana"),
       manifest: loadFoilManifest("lorcana"),
+      webRecipes: loadLorcanaWebRecipes(),
     });
   }
   return NextResponse.json({

@@ -34,7 +34,7 @@ Objectif : sync auto **sans téléphone**. Frida = QA seulement, jamais une sour
 - Miroirs (couverture vérifiée) : **APKPure** (Lorcana ; probe via FlareSolverr, binaire via `d.cdnpure.com` — `d.apkpure.com` 403 le TLS Node même avec cookies Flare) puis **APKCombo** (TCG Live absent d’APKPure ; URL R2 présignée sans bot wall). Uptodown écarté : token Cloudflare Turnstile requis au download.
 - Garde-fous : versionCode introuvable = `unavailable` (jamais de download deviné) ; le `manifest.json` du XAPK doit nommer le bon package ; réponse non-ZIP (challenge Cloudflare) rejetée. **Analyse ouverte** : pin de la signature éditeur (apksigner) avant extract — le miroir reste un tiers.
 - Provenance inconnue (pas de `versionCode` dans le meta) → le prochain passage store établit la baseline.
-- Lorcana sans APK : phases web + cards seulement (CLI skip Unity déjà).
+- Lorcana sans APK : phases web + cards + products (CLI skip Unity déjà).
 - Gaps admin taguent `apk-gated` quand WebGL / back / UV manquent faute d’APK.
 
 Voir aussi : [foil_effects.md](foil_effects.md), [backlog.md](backlog.md) §Foil, `src/providers/pokemon/live/cdn/sources.ts`.

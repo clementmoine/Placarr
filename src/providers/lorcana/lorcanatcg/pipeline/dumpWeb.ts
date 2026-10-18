@@ -4,6 +4,7 @@
  * Fetches `https://cards.disneylorcana.com/fr-FR`, follows hashed CSS
  * (`routes-*.css` / `index-*.css`), downloads `/assets/<stem>-<hash>.ext`
  * and writes stable names `<stem>.ext` under `lorcana/web/`.
+ * Also parses `.foil-inner` rules → `lorcana/web/recipes.json` (runtime looks).
  * Set logos come from `api.lorcana.ravensburger.com/v3/catalog/fr`
  * (`card_sets[].thumbnail_image_url`) → `products/sets/{id}/logo.png`.
  * Provenance → `data/lorcana/logs/web-source.json`.
@@ -17,6 +18,11 @@ import { dataRoot, foilPackDir } from "@/lib/runtimeData";
 import { httpGet } from "@/lib/http/httpClient";
 import { lorcanaWebRecipeTextureStems } from "@/effects/lorcana/cssRecipes";
 import { ensureLorcanaSetLogoIndex } from "@/providers/lorcana/lorcanatcg/sources/setLogos";
+import {
+  recipesFromCssSheets,
+  textureStemsFromRecipes,
+  type LorcanaWebRecipesFile,
+} from "@/providers/lorcana/lorcanatcg/pipeline/webRecipes";
 
 const VIEWER_BASE = "https://cards.disneylorcana.com";
 const VIEWER_LOCALE = "fr-FR";
@@ -133,6 +139,7 @@ async function downloadAssets(
 async function scrapeViewer(): Promise<{
   refs: Record<string, string>;
   allStems: Record<string, string>;
+  cssSheets: string[];
 }> {
   const html = (await fetchBytes(`${VIEWER_BASE}/${VIEWER_LOCALE}`)).toString(
     "utf8",
@@ -141,11 +148,13 @@ async function scrapeViewer(): Promise<{
   console.log(`  CSS sheets: ${cssPaths.length}`);
   const merged: Record<string, string> = {};
   const allStems: Record<string, string> = {};
+  const cssSheets: string[] = [];
   for (const cssPath of cssPaths) {
     try {
       const css = (
         await fetchBytes(`${VIEWER_BASE.replace(/\/$/, "")}${cssPath}`)
       ).toString("utf8");
+      cssSheets.push(css);
       const discovered = parseAllAssetStems(css);
       const refs = parseAssetRefs(css);
       console.log(
@@ -161,7 +170,30 @@ async function scrapeViewer(): Promise<{
       console.log(`  ATTENTION CSS ${cssPath}: ${err}`);
     }
   }
-  return { refs: merged, allStems };
+  return { refs: merged, allStems, cssSheets };
+}
+
+function writeRecipesJson(dest: string, recipes: LorcanaWebRecipesFile): void {
+  fs.mkdirSync(dest, { recursive: true });
+  const ordered: LorcanaWebRecipesFile = {
+    version: 1,
+    looks: Object.fromEntries(
+      Object.entries(recipes.looks).sort(([a], [b]) => a.localeCompare(b)),
+    ),
+    finishMap: Object.fromEntries(
+      Object.entries(recipes.finishMap).sort(([a], [b]) => a.localeCompare(b)),
+    ),
+    varnishMap: Object.fromEntries(
+      Object.entries(recipes.varnishMap).sort(([a], [b]) =>
+        a.localeCompare(b),
+      ),
+    ),
+  };
+  fs.writeFileSync(
+    path.join(dest, "recipes.json"),
+    `${JSON.stringify(ordered, null, 2)}\n`,
+    "utf8",
+  );
 }
 
 function writeSourceJson(
@@ -221,17 +253,29 @@ export async function dumpLorcanaWeb(
   console.log(`Phase 1 — scrape ${VIEWER_BASE}/${VIEWER_LOCALE} CSS`);
   let refs: Record<string, string> = {};
   let allStems: Record<string, string> = {};
+  let cssSheets: string[] = [];
   try {
     const scraped = await scrapeViewer();
     refs = scraped.refs;
     allStems = scraped.allStems;
+    cssSheets = scraped.cssSheets;
   } catch (err) {
     console.log(`  Viewer scrape failed: ${err}`);
   }
-  const unlisted = unlistedFoilStemCandidates(
-    allStems,
-    lorcanaWebRecipeTextureStems(),
-  );
+
+  let recipes: LorcanaWebRecipesFile | null = null;
+  if (cssSheets.length > 0) {
+    recipes = recipesFromCssSheets(cssSheets);
+    writeRecipesJson(dest, recipes);
+    console.log(
+      `  recipes.json: ${Object.keys(recipes.looks).length} look(s), ${Object.keys(recipes.finishMap).length} finish(es)`,
+    );
+  }
+
+  const knownStems = recipes
+    ? textureStemsFromRecipes(recipes)
+    : lorcanaWebRecipeTextureStems();
+  const unlisted = unlistedFoilStemCandidates(allStems, knownStems);
   if (unlisted.length) {
     console.log(
       `  Asset stems from CSS (${unlisted.length}) — see logs/web-source.json`,
@@ -271,6 +315,7 @@ export async function dumpLorcanaWeb(
     files: written.length,
     stems: Object.keys(refs).sort(),
     unlistedStems: unlisted,
+    looks: recipes ? Object.keys(recipes.looks).sort() : [],
     setLogos,
     dest,
   };

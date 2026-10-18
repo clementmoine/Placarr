@@ -132,20 +132,12 @@ export async function resolveCatalogueExtractCommand(
   return resolveCatalogueExtractPlan(target, opts);
 }
 
-/** Lorcana in-process providers — Unity / products are optional. */
+/** Lorcana in-process providers — Unity only when an APK is available. */
 export function lorcanaExtractProviders(opts: {
   hasApk: boolean;
   skipUnity?: boolean;
-  skipProducts?: boolean;
 }): string[] {
-  const providers = ["lorcanaweb", "lorcanacards"];
-  if (!opts.skipProducts) {
-    providers.push("lorcanaproducts");
-  } else {
-    // Auto without a new APK skips the heavy lorcards.fr graph, but still
-    // harvests Disney official logos / missing SKUs so new sets appear.
-    providers.push("lorcanaofficial");
-  }
+  const providers = ["lorcanaweb", "lorcanacards", "lorcanaproducts"];
   if (opts.hasApk && !opts.skipUnity) providers.push("lorcanamobile");
   return providers;
 }
@@ -155,10 +147,8 @@ export async function resolveCatalogueExtractPlan(
   opts: {
     scope?: CatalogueExtractScope;
     completedSteps?: readonly string[];
+    /** Skip Unity dump when auto Sync saw no new APK (capability, not a product opt-out). */
     skipUnity?: boolean;
-    skipProducts?: boolean;
-    skipAudits?: boolean;
-    skipPaperFaces?: boolean;
   } = {},
 ): Promise<CatalogueExtractPlan> {
   const scope = opts.scope ?? "inventory";
@@ -180,7 +170,6 @@ export async function resolveCatalogueExtractPlan(
     const providers = lorcanaExtractProviders({
       hasApk: Boolean(apk),
       skipUnity: opts.skipUnity,
-      skipProducts: opts.skipProducts,
     });
     const argv = ["--providers", ...providers, ...skipArgs];
     const prelude: string[] = [...resumePrelude];
@@ -189,31 +178,19 @@ export async function resolveCatalogueExtractPlan(
       prelude.push(`apk=${apk}`);
     } else if (!apk) {
       prelude.push(
-        "skip Unity: no APK under data/lorcana/staging/apks/ (web + cards only)",
+        "skip Unity: no APK under data/lorcana/staging/apks/ (web + cards + products)",
       );
     } else {
-      prelude.push("skip Unity: APK unchanged — web + cards only");
+      prelude.push("skip Unity: APK unchanged — web + cards + products");
     }
-    if (!opts.skipProducts) {
-      prelude.push(
-        "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
-      );
-    } else {
-      prelude.push(
-        "auto: logos / SKU manquants via www.disneylorcana.com (sans graphe lorcards.fr)",
-      );
-    }
+    prelude.push(
+      "produits scellés lorcards.fr (famille TCG Cards) — HTML déjà là = reprise",
+    );
     return { target, argv, prelude };
   }
 
   if (target === "pokemon") {
     const argv = ["--langs", POKEMON_CATALOGUE_LANGS_CSV, ...skipArgs];
-    if (opts.skipProducts) argv.push("--skip-products");
-    else argv.push("--products");
-    if (opts.skipAudits) {
-      argv.push("--skip-apk-audit", "--skip-store-audit");
-    }
-    if (opts.skipPaperFaces) argv.push("--skip-paper-faces");
     const prelude =
       scope === "catalogue"
         ? [
@@ -226,18 +203,10 @@ export async function resolveCatalogueExtractPlan(
             ...resumePrelude,
             "Pokémon: inventory APK/config ∪ Malie → CDN sequential (workers=1, delay=0; misses logged)",
           ];
-    if (!opts.skipProducts) {
-      prelude.push(
-        "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
-      );
-    }
-    if (!opts.skipPaperFaces) {
-      prelude.push(
-        "faces papier : Coleka FR + TCGPlayer EN + pokemontcg.io + pkmcards.fr (toutes sources)",
-      );
-    } else {
-      prelude.push("faces papier skipped (auto catalogue)");
-    }
+    prelude.push(
+      "produits papier scellés pkmcards.fr (famille dbscards) — HTML déjà là = reprise",
+      "faces papier : Coleka FR + TCGPlayer EN + pokemontcg.io + pkmcards.fr (toutes sources)",
+    );
     if (scope === "catalogue") argv.push("--refresh-manifests");
     prelude.push(`langs=${POKEMON_CATALOGUE_LANGS_CSV}`, `scope=${scope}`);
     return { target, argv, prelude };
@@ -500,15 +469,12 @@ export async function maybeFetchStoreApkForExtract(
 }
 
 /**
- * Auto jobs still refresh CDN / LorcanaJSON when the APK did not move.
- * Unity + product graphs + paper faces stay on a new APK (or a manual Sync).
+ * Auto jobs still refresh the full catalogue surface when the APK did not
+ * move — only Unity (needs a new binary) is skipped.
  */
 export type AutoExtractPolicy = {
   skipUnity: boolean;
   preferCatalogueScope: boolean;
-  skipProducts: boolean;
-  skipAudits: boolean;
-  skipPaperFaces: boolean;
 };
 
 export function autoExtractPolicy(
@@ -519,17 +485,11 @@ export function autoExtractPolicy(
     return {
       skipUnity: false,
       preferCatalogueScope: false,
-      skipProducts: false,
-      skipAudits: false,
-      skipPaperFaces: false,
     };
   }
   return {
     skipUnity: true,
     preferCatalogueScope: true,
-    skipProducts: true,
-    skipAudits: true,
-    skipPaperFaces: true,
   };
 }
 
@@ -579,9 +539,6 @@ export async function runCatalogueExtractCommand(
     scope,
     completedSteps: options.completedSteps,
     skipUnity: policy.skipUnity,
-    skipProducts: policy.skipProducts,
-    skipAudits: policy.skipAudits,
-    skipPaperFaces: policy.skipPaperFaces,
   });
 
   for (const line of prelude) onLog(line);

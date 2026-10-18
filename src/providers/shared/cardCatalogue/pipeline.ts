@@ -42,11 +42,8 @@ export type CardCatalogueHooksInput = {
    */
   measureCorpus?: () => CatalogCorpusSnapshot;
   /**
-   * Ce qu'on saute quand la passe est **automatique**.
-   *
-   * Un rafraîchissement horaire n'a pas les mêmes droits qu'un clic : le graphe
-   * produit se moissonne sur un hôte qui ralentit les rafales, ce qui est
-   * acceptable à la demande et pas toutes les heures.
+   * Ce qu'on saute quand la passe est **automatique** (ex. checklist Naruto).
+   * Les produits scellés ne vont **pas** ici — Sync = surface complète.
    */
   autoSkip?: readonly string[];
   /**

@@ -6,10 +6,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { dataRoot } from "@/lib/runtimeData";
 import {
   canonicalizeNarutoPrintKey,
   isJpOnlyNarutoArtwork,
   mintNarutoPrintKey,
+  NARUTO_PACK_ID,
   narutoCollectorNumberKey,
   narutoDiskCardId,
   narutoNumbersEqual,
@@ -44,11 +46,18 @@ import {
   mergeNarutoCardsCaIntoIndex,
   type NarutoCardsCaCard,
 } from "../parse/catalogues";
-import { mergeNarutoCardsCaLedgerIntoIndex } from "../scrape/catalogues";
-import { mergeNarutoCardsNetLedgerIntoIndex } from "../scrape/catalogues";
-import { mergeCollectorsCometLedgerIntoIndex } from "../scrape/catalogues";
+import {
+  mergeCardgameclubItIntoIndex,
+  mergeCollectorsCometLedgerIntoIndex,
+  mergeNarutoCardsCaLedgerIntoIndex,
+  mergeNarutoCardsNetLedgerIntoIndex,
+  mergePrimegameItLedgerIntoIndex,
+} from "../scrape/catalogues";
 import { mergeFansetEnTitlesIntoIndex } from "../parse/catalogues";
-import { loadColekaCarddassFrLedger } from "../scrape/coleka";
+import {
+  loadColekaCarddassFrLedger,
+  mergeColekaS6ItIntoIndex,
+} from "../scrape/coleka";
 import { mergeTvTokyoJaNamesIntoIndex } from "../sources/faces";
 
 
@@ -697,8 +706,29 @@ export function mergeFoundCatalogueLedgers(input: {
   const narutocardsNet = mergeNarutoCardsNetLedgerIntoIndex(narutocards);
   const collectorsComet = mergeCollectorsCometLedgerIntoIndex(narutocardsNet);
   const brasilUs = mergeBrasilUsExclusivesIntoIndex(collectorsComet);
-  // IT volontairement hors assemblage catalogue (contrat JA+FR+EN).
-  const physicalCcg = mergeUserPhysicalCcgIntoIndex(brasilUs);
+  /*
+    Italian retail (S1–S6): curated cardgameclub + Coleka Rivalità Eterna +
+    primegame leftovers, then archive rarities. Honest titles only — faces
+    come from disk ingest (`cards/.../it/`).
+  */
+  const packDir = path.join(dataRoot(), NARUTO_PACK_ID);
+  const cardgameclubIt = mergeCardgameclubItIntoIndex({
+    prints: brasilUs.prints,
+    titles: brasilUs.titles,
+    packDir,
+  });
+  const colekaS6It = mergeColekaS6ItIntoIndex({
+    prints: cardgameclubIt.prints,
+    titles: cardgameclubIt.titles,
+    root: packDir,
+  });
+  const primegameIt = mergePrimegameItLedgerIntoIndex({
+    prints: colekaS6It.prints,
+    titles: colekaS6It.titles,
+    packDir,
+  });
+  const itRarities = mergeCardgameclubItRarities(primegameIt);
+  const physicalCcg = mergeUserPhysicalCcgIntoIndex(itRarities);
   const fansetEn = mergeFansetEnTitlesIntoIndex(physicalCcg);
   // En dernier : tout ce qui précède est attesté par une source officielle ou
   // une pièce en main, et garde donc la priorité sur un relevé de fan.
@@ -715,7 +745,7 @@ export function mergeFoundCatalogueLedgers(input: {
     titles: fixed.titles,
     hinokunianTitled: hinokunian.titled,
     titlesCorrected: fixed.corrected,
-    itRarities: [],
+    itRarities: itRarities.rarities,
     bggAdded: bgg.addedPrints,
     bggTitled: bgg.titled,
     bandaiAdded: bandai.addedPrints,

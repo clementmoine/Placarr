@@ -125,8 +125,8 @@ export function narutoCarddassPrintOrientation(
  */
 
 
-/** Langues catalogue (contrat JA original + FR + EN). Pas d’italien. */
-export const NARUTO_CATALOGUE_LANGUAGES = ["fr", "en", "ja"] as const;
+/** Langues catalogue : original japonais + retail EU (FR / EN / IT). */
+export const NARUTO_CATALOGUE_LANGUAGES = ["fr", "en", "ja", "it"] as const;
 
 function isNarutoCatalogueLanguage(lang: string | null | undefined): boolean {
   const code = (lang ?? "").trim().toLowerCase();
@@ -631,7 +631,7 @@ function europeanSetLanguages(): Map<string, string[]> {
     (s28) et le deck Tempête approche ont une impression FR tardive. Les
     séries 7–23 / 25–27 sont EN — des titres FR collés sur des reprints
     partagés ne doivent pas rouvrir le filtre FR sur « Quest for Power ».
-    L’italien n’est plus une langue de catalogue (filtré à l’assemblage).
+    L’italien retail couvre S1–S6 (Rivalità Eterna sortie, FR annulée).
   */
   /*
     Retail FR s'arrête à S5, sauf sorties tardives (s24 / s28 / Tempête) et le
@@ -657,7 +657,7 @@ function europeanSetLanguages(): Map<string, string[]> {
     }[]) {
       const code = row.setCode?.trim();
       const lang = row.lang?.trim().toLowerCase();
-      if (!code || lang === "ja" || lang === "it") continue;
+      if (!code || lang === "ja") continue;
       if (lang === "fr") {
         const id = code.toLowerCase();
         /*
@@ -669,6 +669,16 @@ function europeanSetLanguages(): Map<string, string[]> {
         if (series) {
           const n = Number(series[1]);
           if (n > 5 && !frenchLateSeries.has(id)) continue;
+        }
+      }
+      if (lang === "it") {
+        const id = code.toLowerCase();
+        // Retail IT Carddass = S1–S6 (+ promo / prerelease channels).
+        if (id === "promo" || id === "prerelease") {
+          // keep
+        } else {
+          const series = /^s(\d+)$/i.exec(code);
+          if (!series || Number(series[1]) > 6) continue;
         }
       }
       const set = found.get(code) ?? new Set<string>();

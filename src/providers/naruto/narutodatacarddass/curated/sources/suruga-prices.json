@@ -2,8 +2,8 @@
   "source": "Suruga-ya.jp used product detail (税込)",
   "sourceId": "suruga-ya-used",
   "packId": "naruto/data-carddass",
-  "fetchedAt": "2026-10-15T22:04:43.925Z",
-  "cardCount": 58,
+  "fetchedAt": "2026-10-17T22:13:11.546Z",
+  "cardCount": 73,
   "cards": [
     {
       "diskId": "dn-109t",
@@ -186,6 +186,15 @@
       "observedAt": "2026-10-15T17:29:24.370Z"
     },
     {
+      "diskId": "dn-136t",
+      "printed": "DN-136T",
+      "productId": "G8903775",
+      "priceYen": 1000,
+      "priceYenCents": 1000,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903775",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
       "diskId": "dn-146t",
       "printed": "DN-146T",
       "productId": "G8903785",
@@ -211,6 +220,24 @@
       "priceYenCents": 660,
       "productUrl": "https://www.suruga-ya.jp/product/detail/G8903789",
       "observedAt": "2026-10-15T17:29:24.370Z"
+    },
+    {
+      "diskId": "dn-151t",
+      "printed": "DN-151T",
+      "productId": "G8903790",
+      "priceYen": 700,
+      "priceYenCents": 700,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903790",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-152t",
+      "printed": "DN-152T",
+      "productId": "G8903791",
+      "priceYen": 610,
+      "priceYenCents": 610,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903791",
+      "observedAt": "2026-10-17T22:13:11.546Z"
     },
     {
       "diskId": "dn-154t",
@@ -357,6 +384,15 @@
       "observedAt": "2026-10-15T17:29:24.370Z"
     },
     {
+      "diskId": "dn-181t",
+      "printed": "DN-181T",
+      "productId": "G8903820",
+      "priceYen": 1100,
+      "priceYenCents": 1100,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903820",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
       "diskId": "dn-182t",
       "printed": "DN-182T",
       "productId": "G8903821",
@@ -499,6 +535,105 @@
       "priceYenCents": 3400,
       "productUrl": "https://www.suruga-ya.jp/product/detail/G8903859",
       "observedAt": "2026-10-15T22:04:43.925Z"
+    },
+    {
+      "diskId": "dn-224t",
+      "printed": "DN-224T",
+      "productId": "G8903863",
+      "priceYen": 760,
+      "priceYenCents": 760,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903863",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-225t",
+      "printed": "DN-225T",
+      "productId": "G8903864",
+      "priceYen": 3800,
+      "priceYenCents": 3800,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903864",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-226t",
+      "printed": "DN-226T",
+      "productId": "G8903865",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903865",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-227t",
+      "printed": "DN-227T",
+      "productId": "G8903866",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903866",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-228t",
+      "printed": "DN-228T",
+      "productId": "G8903867",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903867",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-229t",
+      "printed": "DN-229T",
+      "productId": "G8903868",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903868",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-231t",
+      "printed": "DN-231T",
+      "productId": "G8903870",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903870",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-232t",
+      "printed": "DN-232T",
+      "productId": "G8903871",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903871",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-234t",
+      "printed": "DN-234T",
+      "productId": "G8903873",
+      "priceYen": 770,
+      "priceYenCents": 770,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903873",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-237t",
+      "printed": "DN-237T",
+      "productId": "G8903876",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903876",
+      "observedAt": "2026-10-17T22:13:11.546Z"
+    },
+    {
+      "diskId": "dn-238t",
+      "printed": "DN-238T",
+      "productId": "G8903877",
+      "priceYen": 560,
+      "priceYenCents": 560,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903877",
+      "observedAt": "2026-10-17T22:13:11.546Z"
     },
     {
       "diskId": "dnp-024",

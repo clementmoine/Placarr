@@ -146,11 +146,6 @@ export async function installEbayFaces(
       continue;
     }
     const lang = row.lang.toLowerCase();
-    // Catalogue = JA + FR + EN. Les scans IT restent au ledger, pas sur disque.
-    if (lang === "it") {
-      skipped.push(`${diskId}/it`);
-      continue;
-    }
     const cardDir =
       narutoCardAbsDir(cardsDir, diskId, lang, row.setCode) ??
       path.join(cardsDir, "ninja", diskId, lang);
@@ -166,17 +161,36 @@ export async function installEbayFaces(
       skipped.push(key);
       continue;
     }
-    const buf = await downloadFaceImage(ebayListingImageFull(row.url), {
-      referer: "https://www.ebay.fr/",
-    });
+    /*
+      Prefer local staging bytes (IT batch already under staging/ebay/*-it.webp)
+      before hitting eBay CDN.
+    */
+    let buf: Buffer | null = null;
+    if (row.staging) {
+      const stagingPath = path.join(packRoot, row.staging);
+      if (existsSync(stagingPath)) {
+        try {
+          buf = readFileSync(stagingPath);
+        } catch {
+          buf = null;
+        }
+      }
+    }
+    if (!buf) {
+      buf = await downloadFaceImage(ebayListingImageFull(row.url), {
+        referer: lang === "it" ? "https://www.ebay.it/" : "https://www.ebay.fr/",
+      });
+    }
     if (!buf) {
       failed.push(key);
       continue;
     }
     if (row.staging) {
       const staging = path.join(packRoot, row.staging);
-      mkdirSync(path.dirname(staging), { recursive: true });
-      writeFileSync(staging, buf);
+      if (!existsSync(staging)) {
+        mkdirSync(path.dirname(staging), { recursive: true });
+        writeFileSync(staging, buf);
+      }
     }
     const saved = await saveNarutoFace({
       cardDir,

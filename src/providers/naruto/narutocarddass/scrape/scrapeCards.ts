@@ -38,6 +38,7 @@ import { materializeTinBoxPromos, TIN_BOX_PROMOS } from "../sealed";
 import { mergeAttestedPromos } from "../sources/promos";
 import { mergeS1FrPrerelease } from "../sources/promos";
 import {
+  isNarutoS6FrPrintedNumber,
   mergeCarteSemaineIntoIndex,
   writeCarteSemaineReport,
 } from "../sources/titles";
@@ -94,7 +95,11 @@ import {
 } from "../identity";
 import { syncOfficialFrChecklistAppearances } from "../identity";
 import { syncNarutoS6FrPrintedAppearances } from "../sources/titles";
-import { isNarutoLangPrinted, preferNarutoAppearanceSet } from "../identity";
+import {
+  isNarutoJapaneseVolumeSet,
+  isNarutoLangPrinted,
+  preferNarutoAppearanceSet,
+} from "../identity";
 import { normalizeNarutoLang } from "../disk";
 import { japaneseCatalogueSetsForPrintNumber } from "../sources/sealed";
 import {
@@ -598,11 +603,6 @@ function ingestNarutoCardDir(input: {
   family: string;
   appearanceSets: readonly string[];
 }): void {
-  /*
-    Contrat catalogue JA+FR+EN : une locale `it/` orpheline sur disque ne doit
-    plus entrer dans `print_assets` (ni réapparaître via bestFaceAcrossLocales).
-  */
-  if (normalizeNarutoLang(input.lang) === "it") return;
   if (!fs.statSync(input.cardDir).isDirectory()) return;
   const files = fs.readdirSync(input.cardDir);
   const art = pickArtForNarutoCardDir(input.cardDir, files, input.lang);
@@ -919,6 +919,9 @@ export function attachNarutoDiskArtAssets(input: {
   const numberByKey = new Map(
     input.prints.map((p) => [p.printKey, p.number] as const),
   );
+  const setCodeByKey = new Map(
+    input.prints.map((p) => [p.printKey, p.setCode] as const),
+  );
   const have = new Set(
     input.assets.map((a) => `${a.printKey}\0${a.lang.toLowerCase()}`),
   );
@@ -927,6 +930,16 @@ export function attachNarutoDiskArtAssets(input: {
   for (const title of input.titles) {
     const lang = title.lang.trim().toLowerCase();
     if (!lang) continue;
+    /*
+      巻ノ printKeys are JA-only. Attaching the shared FR disk face here is what
+      invents FR catalogue tiles for Japanese volumes.
+    */
+    if (
+      isNarutoJapaneseVolumeSet(setCodeByKey.get(title.printKey)) &&
+      lang !== "ja"
+    ) {
+      continue;
+    }
     const assetKey = `${title.printKey}\0${lang}`;
     if (have.has(assetKey)) continue;
     const number = numberByKey.get(title.printKey);
@@ -1368,15 +1381,18 @@ function assembleNarutoCatalogue(
   );
   const keptKeys = new Set(keptPrints.map((print) => print.printKey));
   /*
-    Contrat catalogue : original (ja) + fr + en. L’italien a existé en retail
-    (S1–S6) mais n’est plus une langue de catalogue — on le filtre ici pour
-    qu’aucun relevé / titre résiduel ne réapparaisse à la reconstruction.
+    S6 FR retail was cancelled — only Kana/DVD inserts in `s6-fr-printed.json`
+    keep a French title. Other s6 FR names are pre-prod carddass.fr leftovers
+    or Italian Coleka strings that contaminated the FR column.
   */
-  const keptTitles = withUsPromos.titles.filter(
-    (title) =>
-      keptKeys.has(title.printKey) &&
-      title.lang.trim().toLowerCase() !== "it",
-  );
+  const keptTitles = withUsPromos.titles.filter((title) => {
+    if (!keptKeys.has(title.printKey)) return false;
+    if (title.lang.trim().toLowerCase() !== "fr") return true;
+    const set = /^naruto:([a-z0-9]+)-/i.exec(title.printKey)?.[1]?.toLowerCase();
+    if (set !== "s6") return true;
+    const number = title.printKey.slice(title.printKey.indexOf("-") + 1);
+    return isNarutoS6FrPrintedNumber(number);
+  });
   return {
     prints: keptPrints,
     titles: keptTitles,
@@ -1484,6 +1500,10 @@ export async function scrapeNarutoCards(
     indexNarutoEnPackFromDisk();
     // `writeNarutoCompleteness` joins `dataRoot()` + pack id — do not pass pack root.
     const completeness = writeNarutoCompleteness();
+    const { writeLocaleAnomalyReport } = await import(
+      "../pipeline/localeAnomalies"
+    );
+    const anomalies = writeLocaleAnomalyReport();
     console.log(
       JSON.stringify(
         {
@@ -1505,6 +1525,10 @@ export async function scrapeNarutoCards(
           localeSpecificFaces,
           assetsMirrored: mirrored.mirrored,
           assetsDiskAttached: diskAttached.attached,
+          itTitles: assembled.titles.filter((t) => t.lang === "it").length,
+          itRarities: assembled.found.itRarities.length,
+          anomaliesFrOnEnOnly:
+            anomalies.anomalies.frTitlesOnEnOnlySeries.length,
           completenessJaImagePct: completeness.report.locales.ja?.image.pct,
           completenessJaTitleWithoutImage:
             completeness.report.locales.ja?.titleWithoutImage,
@@ -1808,9 +1832,7 @@ export async function scrapeNarutoCards(
   const printList = [...prints.values()].sort((a, b) =>
     a.printKey.localeCompare(b.printKey),
   );
-  let assetList = [...assetsByKey.values()].filter(
-    (a) => a.lang.trim().toLowerCase() !== "it",
-  );
+  let assetList = [...assetsByKey.values()];
   const thumbMapped = mapSiteMedThumbsOntoAssets(root, printList, assetList);
 
   console.log("── index catalog.sqlite");

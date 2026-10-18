@@ -32,9 +32,11 @@ import {
   expandNarutoPrintsToSetScoped,
   isJpOnlyNarutoArtwork,
   isNarutoCatalogueSetCode,
+  isNarutoJapaneseVolumeSet,
   narutoDiskCardId,
   parseNarutoCollector,
 } from "./identity";
+import { isNarutoS6FrPrintedNumber } from "./sources/titles";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
 import { foldNarutoCatalogueRecords } from "./pipeline";
 import { fillNarutoTitlesFromSiblingLocales } from "./pipeline/ledgers";
@@ -44,7 +46,6 @@ import { NARUTO_GAME } from "./parse/bandai";
 import { isNarutoLangPrinted } from "./identity";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
-import { isNarutoS6FrPrintedNumber } from "./sources/titles";
 import { narutoCardPathFromCollector } from "./disk";
 import { resolveNarutoDiskArtFilename } from "./diskArtAttachments";
 
@@ -408,16 +409,31 @@ export function writeNarutoCcgIndex(input: {
     Expand used to copy every locale onto every membership — checklist FR then
     listed Tempête reprints under Quest for Power, etc.
   */
-  const setAcceptsTitleLang = (setCode: string, lang: string): boolean => {
+  const setAcceptsTitleLang = (
+    setCode: string,
+    lang: string,
+    printKey: string,
+  ): boolean => {
     const l = lang.trim().toLowerCase();
     const set = setCode.trim().toLowerCase();
     if (!l || !set) return true;
     if (l === "en" || l === "ja") return true;
+    if (l === "it") {
+      if (set === "promo" || set === "prerelease") return true;
+      const series = /^s(\d+)$/.exec(set);
+      return !!series && Number(series[1]) <= 6;
+    }
     if (l !== "fr") return true;
     if (set === "promo" || set === "prerelease") return true;
-    if (set === "s6" || set === "s11" || set === "s24" || set === "s28") {
-      return true;
+    if (set === "s6") {
+      const number =
+        parsePrintKey(printKey)?.number ??
+        printKey.slice(printKey.lastIndexOf("-") + 1);
+      const grouping = parsePrintKey(printKey)?.grouping;
+      const raw = grouping ? `${number}-${grouping}` : number;
+      return isNarutoS6FrPrintedNumber(raw);
     }
+    if (set === "s11" || set === "s24" || set === "s28") return true;
     const series = /^s(\d+)$/.exec(set);
     if (series) {
       const n = Number(series[1]);
@@ -427,7 +443,7 @@ export function writeNarutoCcgIndex(input: {
   };
   const expandedTitles = expandRows(folded.titles, "titre").filter((row) => {
     const set = parsePrintKey(row.printKey)?.set ?? "";
-    return setAcceptsTitleLang(set, row.lang);
+    return setAcceptsTitleLang(set, row.lang, row.printKey);
   });
   const expandedAssets = expandRows(folded.assets ?? [], "face");
 
@@ -507,6 +523,11 @@ export function writeNarutoCcgIndex(input: {
         .filter((p) => isJpOnlyNarutoArtwork(p.number))
         .map((p) => p.printKey),
     );
+    const japaneseVolumePrintKeys = new Set(
+      expandedPrints
+        .filter((p) => isNarutoJapaneseVolumeSet(p.setCode))
+        .map((p) => p.printKey),
+    );
     const orphans = [
       ...unmappedRowKeys,
       ...expandedTitles
@@ -525,7 +546,8 @@ export function writeNarutoCcgIndex(input: {
     for (const t of expandedTitles) {
       if (t.nameLocaleFrom?.trim()) continue;
       if (
-        jpOnlyPrintKeys.has(t.printKey) &&
+        (jpOnlyPrintKeys.has(t.printKey) ||
+          japaneseVolumePrintKeys.has(t.printKey)) &&
         t.lang.toLowerCase() !== "ja"
       ) {
         continue;
@@ -534,7 +556,8 @@ export function writeNarutoCcgIndex(input: {
     }
     for (const a of expandedAssets) {
       if (
-        jpOnlyPrintKeys.has(a.printKey) &&
+        (jpOnlyPrintKeys.has(a.printKey) ||
+          japaneseVolumePrintKeys.has(a.printKey)) &&
         a.lang.toLowerCase() !== "ja"
       ) {
         continue;
@@ -639,7 +662,9 @@ export function exportNarutoCardsIndexJson(
   }
 
   for (const p of folded.prints) {
-    const jaOnly = isJpOnlyNarutoArtwork(p.number);
+    const jaOnly =
+      isJpOnlyNarutoArtwork(p.number) ||
+      isNarutoJapaneseVolumeSet(p.setCode);
     const printTitles = (titlesByPrint.get(p.printKey) ?? []).filter(
       (t) => !jaOnly || t.lang.toLowerCase() === "ja",
     );
@@ -679,11 +704,15 @@ export function exportNarutoCardsIndexJson(
     }
     index.cards[p.printKey] = entry;
   }
+  const setCodeByPrintKey = new Map(
+    folded.prints.map((p) => [p.printKey, p.setCode] as const),
+  );
   for (const a of folded.assets) {
     const entry = index.cards[a.printKey];
     if (!entry) continue;
     if (
-      isJpOnlyNarutoArtwork(entry.card) &&
+      (isJpOnlyNarutoArtwork(entry.card) ||
+        isNarutoJapaneseVolumeSet(setCodeByPrintKey.get(a.printKey))) &&
       a.lang.toLowerCase() !== "ja"
     ) {
       continue;
@@ -920,8 +949,13 @@ export function loadNarutoCardsIndexFromSqlite(
       cards: {},
     };
 
+    const setCodeByPrintKey = new Map(
+      prints.map((p) => [p.printKey, p.setCode] as const),
+    );
     for (const p of prints) {
-      const jaOnly = isJpOnlyNarutoArtwork(p.number);
+      const jaOnly =
+        isJpOnlyNarutoArtwork(p.number) ||
+        isNarutoJapaneseVolumeSet(p.setCode);
       const printTitles = (titlesByPrint.get(p.printKey) ?? []).filter(
         (t) => !jaOnly || t.lang.toLowerCase() === "ja",
       );
@@ -955,7 +989,8 @@ export function loadNarutoCardsIndexFromSqlite(
       const entry = index.cards[a.printKey];
       if (!entry) continue;
       if (
-        isJpOnlyNarutoArtwork(entry.card) &&
+        (isJpOnlyNarutoArtwork(entry.card) ||
+          isNarutoJapaneseVolumeSet(setCodeByPrintKey.get(a.printKey))) &&
         a.lang.toLowerCase() !== "ja"
       ) {
         continue;
@@ -972,10 +1007,13 @@ export function loadNarutoCardsIndexFromSqlite(
       When print_assets lagged behind disk (promo faces without appearances),
       fill empty lang.art from face.json / on-disk dumps so catalogue browse
       does not show « sans image » for cards that already have art on disk.
+      Never fill EU faces onto 巻ノ printKeys — that invents FR catalogue tiles.
     */
     const cardsRoot = packCardsDir(packId);
-    for (const entry of Object.values(index.cards)) {
+    for (const [printKey, entry] of Object.entries(index.cards)) {
+      const maki = isNarutoJapaneseVolumeSet(setCodeByPrintKey.get(printKey));
       for (const [lang, slot] of Object.entries(entry.langs)) {
+        if (maki && lang.toLowerCase() !== "ja") continue;
         if (slot.art?.trim()) continue;
         const pathId = narutoCardPathFromCollector(entry.card, lang);
         if (!pathId) continue;

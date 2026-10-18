@@ -141,14 +141,27 @@ function narutoFoldGroupKey(printKey: string, numberHint?: string): string {
   const disk = narutoDiskCardId(candidate) ?? candidate
   /*
     Attested FR S6 inserts keep their own set-scoped identity so they are not
-    folded onto a retail reprint of the same number.
+    folded onto a retail reprint of the same number. Unattested s6 ghosts stay
+    on the collector bucket (merged away via preferNarutoFoldPrintKey).
   */
-  if (
-    parsed.set.toLowerCase() === "s6" &&
-    (isNarutoS6FrPrintedNumber(candidate) ||
-      isNarutoS6FrPrintedNumber(parsed.number))
-  ) {
-    return `s6:${disk.toLowerCase()}`;
+  if (parsed.set.toLowerCase() === "s6") {
+    if (
+      isNarutoS6FrPrintedNumber(candidate) ||
+      isNarutoS6FrPrintedNumber(parsed.number)
+    ) {
+      return `s6:${disk.toLowerCase()}`;
+    }
+    return `collector:${disk.toLowerCase()}`;
+  }
+  /*
+    Other set-scoped memberships (`s1` / `maki3` / promo) must stay distinct.
+    Folding them onto one collector key made `preferNarutoFoldPrintKey` pick
+    `maki*` (localeCompare) and handed FR browse tiles a 巻ノ printKey — JA
+    checklist cards in the preferred-lang FR grid. Browse collapse already
+    merges by collector+lang with membershipLocaleScore.
+  */
+  if (isNarutoCatalogueSetCode(parsed.set)) {
+    return `set:${parsed.set.toLowerCase()}:${disk.toLowerCase()}`;
   }
   return `collector:${disk.toLowerCase()}`;
 }

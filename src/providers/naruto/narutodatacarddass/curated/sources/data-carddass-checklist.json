@@ -1,6 +1,6 @@
 {
   "source": "carddass.com mission (miroir) + fudanin formation/cross (Wayback) + hinokunian DN/DT + ebay seed",
-  "observed": "2026-10-15",
+  "observed": "2026-10-17",
   "url": "http://www.carddass.com/naruto/mission/cardlist/battle_card.shtml",
   "line": "data-carddass",
   "note": "Catalogue officiel assemblé 2026-09-09. NX hors chapitre 1 encore partiel (Wayback popups). SKU scellés retail non attestés.",
@@ -7261,8 +7261,8 @@
       "printed": "NF-52",
       "set": "nf",
       "number": "052",
-      "name": "suivre Naruto Ultimate Formation Card Naruto Uzumaki Shinobi W NF-052 BANDAI Japan",
-      "nameJa": "suivre Naruto Ultimate Formation Card Naruto Uzumaki Shinobi W NF-052 BANDAI Japan",
+      "name": "ナルト(疾)52 うちはサスケ — cardjpstore lot thumb (same listing as NFC-002)",
+      "nameJa": "ナルト(疾)52 うちはサスケ — cardjpstore lot thumb (same listing as NFC-002)",
       "note": "ebay mikanshop seed"
     },
     {
@@ -13612,6 +13612,6 @@
     "m",
     "ultimate-ninja-mission-physical"
   ],
-  "naoYoshiAppliedAt": "2026-10-15T22:21:34.946Z",
+  "naoYoshiAppliedAt": "2026-10-17T22:29:48.052Z",
   "naoYoshiSource": "nao-yoshi.seesaa.net"
 }

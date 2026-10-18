@@ -33,6 +33,7 @@ import {
   formatNarutoReference,
   isJpOnlyNarutoArtwork,
   isNarutoCatalogueSetCode,
+  isNarutoJapaneseVolumeSet,
   narutoCollectorKey,
   narutoCollectorNumberKey,
   parseNarutoCollector,
@@ -47,6 +48,8 @@ import {
   loadLocaleSpecificFaces,
 } from "@/lib/admin/localeSpecificFaces";
 import { catalogueCardPriceQuoteByPrintKey } from "@/lib/admin/catalogueCardPrices";
+
+export { isNarutoJapaneseVolumeSet };
 
 /** Client-safe catalogue browse row (API + UI). */
 export type CatalogueCardRow = {
@@ -360,11 +363,6 @@ export function narutoPrintKeySetCode(printKey: string): string | null {
   if (!m) return null;
   const set = m[1]!.toLowerCase();
   return isNarutoCatalogueSetCode(set) ? set : null;
-}
-
-/** JP Carddass volumes (`maki3` / 巻ノ参) — JA checklist only. */
-export function isNarutoJapaneseVolumeSet(setCode: string | null): boolean {
-  return !!setCode && /^maki\d+$/i.test(setCode);
 }
 
 export function narutoSetCodeTag(setCode: string | null): string | null {
@@ -800,6 +798,18 @@ export function buildCatalogueCardRows(
       if (isJpOnlyNarutoArtwork(entry.card) && lang.toLowerCase() !== "ja") {
         continue;
       }
+      /*
+        巻ノ memberships are the JA checklist axis. Disk attach often hangs the
+        shared FR recto on `maki*` printKeys (same `cards/{family}/{id}/fr/`);
+        without an EU `sN` sibling that FR shell becomes a browse tile and
+        contaminates the preferred-lang FR grid with Japanese volume cards.
+      */
+      if (
+        isNarutoJapaneseVolumeSet(narutoPrintKeySetCode(printKey)) &&
+        lang.toLowerCase() !== "ja"
+      ) {
+        continue;
+      }
       if (
         isNarutoMangaPrerelease(entry) &&
         lang.toLowerCase() !== "fr"
@@ -1188,6 +1198,60 @@ export function catalogueBackLangFromTierSlug(slug: string): string {
   return raw === "jp" ? "ja" : raw;
 }
 
+/** FR retail + late exceptions (S6 inserts, Rampage/s11, Sage's/s24, Storm3/s28). */
+function isNarutoFrenchRetailSet(set: string): boolean {
+  const id = set.trim().toLowerCase();
+  if (id === "promo" || id === "prerelease") return true;
+  const series = /^s(\d+)$/i.exec(id);
+  if (!series) return false;
+  const n = Number(series[1]);
+  if (n <= 5) return true;
+  return n === 6 || n === 11 || n === 24 || n === 28;
+}
+
+/** Italian Carddass retail = S1–S6 (+ promo / prerelease). */
+function isNarutoItalianRetailSet(set: string): boolean {
+  const id = set.trim().toLowerCase();
+  if (id === "promo" || id === "prerelease") return true;
+  const series = /^s(\d+)$/i.exec(id);
+  return !!series && Number(series[1]) <= 6;
+}
+
+/**
+ * Carddass preferred-lang axis: JA ↔ 巻ノ, FR/IT ↔ retail EU bands, EN ↔ non-maki.
+ * Blocks hung JA shop scans on EU-only printKeys (and FR art on EN-only CCG
+ * series) from the clean preferred grid — « Toutes locales » still lists all.
+ */
+export function matchesNarutoPreferredLocaleAxis(
+  row: CatalogueCardRow,
+  preferLang: string,
+): boolean {
+  if (!isFaceRow(row)) return true;
+  const want = preferLang.trim().toLowerCase();
+  if (!want) return true;
+  const sets =
+    row.appearanceSets?.length
+      ? row.appearanceSets
+      : ([narutoPrintKeySetCode(row.printKey)].filter(Boolean) as string[]);
+  if (want === "ja") {
+    if (isJpOnlyNarutoArtwork(row.card)) return true;
+    return sets.some((set) => isNarutoJapaneseVolumeSet(set));
+  }
+  if (want === "fr") {
+    if (!sets.length) return true;
+    return sets.some((set) => isNarutoFrenchRetailSet(set));
+  }
+  if (want === "it") {
+    if (!sets.length) return true;
+    return sets.some((set) => isNarutoItalianRetailSet(set));
+  }
+  if (want === "en") {
+    if (!sets.length) return true;
+    return sets.some((set) => !isNarutoJapaneseVolumeSet(set));
+  }
+  return true;
+}
+
 /**
  * Preferred-lang browse: neutral rectos stay visible under every language;
  * language-specific rectos only under their own `lang`.
@@ -1196,7 +1260,7 @@ export function catalogueBackLangFromTierSlug(slug: string): string {
 export function matchesCataloguePreferredLang(
   row: CatalogueCardRow,
   preferLang: string,
-  opts: { expandLocales?: boolean } = {},
+  opts: { expandLocales?: boolean; narutoLocaleAxis?: boolean } = {},
 ): boolean {
   const want = preferLang.trim().toLowerCase();
   if (!want) return true;
@@ -1217,6 +1281,12 @@ export function matchesCataloguePreferredLang(
     ) {
       return false;
     }
+    if (
+      opts.narutoLocaleAxis &&
+      !matchesNarutoPreferredLocaleAxis(row, want)
+    ) {
+      return false;
+    }
     return true;
   }
   // Neutral + expandLocales: one tile for the preferred lang (borrowed art OK).
@@ -1224,6 +1294,12 @@ export function matchesCataloguePreferredLang(
     if (row.lang.toLowerCase() !== want) return false;
     // Nameless empty invent shells (retail stub when promo holds the face).
     if ((row.missingArt || row.versoOnly) && !row.name?.trim()) return false;
+    if (
+      opts.narutoLocaleAxis &&
+      !matchesNarutoPreferredLocaleAxis(row, want)
+    ) {
+      return false;
+    }
     return true;
   }
   // Neutral + pickLang: single tile already — keep even if lang ≠ UI language.
@@ -1363,6 +1439,7 @@ export async function listCatalogueCards(
     rows = rows.filter((row) =>
       matchesCataloguePreferredLang(row, preferLang!, {
         expandLocales: expandsLocales,
+        narutoLocaleAxis: isNarutoUnifiedPack(input.pack),
       }),
     );
   }

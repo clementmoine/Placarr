@@ -233,10 +233,7 @@ export const narutocarddassModule = defineProvider({
       setId,
       catalogueBrowse,
     }),
-  /*
-    Catalogue : original japonais + fr + en. L’italien retail (S1–S6) n’est
-    plus une langue proposée — scrapers IT restent disponibles via `--locale s6it`.
-  */
+  /** Catalogue : original japonais + retail EU (FR / EN / IT). */
   listPrintLanguages: () => [...NARUTO_CATALOGUE_LANGUAGES],
   /*
     La langue choisit la **découpe**, pas seulement les libellés : le japonais

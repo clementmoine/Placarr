@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { NARUTO_CARDDASS_FINISHES, narutoCarddassEffectPack } from "@/effects/narutocarddass";
 import { narutoSetsUnreleasedInFrench, isNarutoLangPrinted, preferNarutoAppearanceSet } from "./identity";
-import { formatNarutoReference, listNarutoPrintSets, listNarutoSetPrints, lookupNarutoPrint, narutoCandidateCardBackUrl, searchNarutoPrints } from "./search";
+import {
+  formatNarutoReference,
+  listNarutoPrintSets,
+  listNarutoSetPrints,
+  lookupNarutoPrint,
+  NARUTO_CATALOGUE_LANGUAGES,
+  narutoCandidateCardBackUrl,
+  searchNarutoPrints,
+} from "./search";
 import { japaneseVolumeForNumber } from "./sources/sealed";
 
 // —— searchPrints ——
@@ -350,9 +358,13 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       ).toBe(true);
     });
 
-    it("no longer exposes Italian as a catalogue language", () => {
+    it("exposes Italian as a catalogue language when IT titles exist", () => {
+      expect(NARUTO_CATALOGUE_LANGUAGES).toContain("it");
       const rows = listNarutoSetPrints({ setId: "s1", language: "it" });
-      expect(rows).toEqual([]);
+      expect(rows.length).toBeGreaterThan(0);
+      expect(listNarutoSetPrints({ setId: "s6", language: "it" }).length).toBeGreaterThan(
+        0,
+      );
     });
 
     /*
@@ -580,8 +592,8 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
         Les séries 7 à 23 et 25–27 sont anglaises seules. Sage's Legacy (s24) et
         Storm 3 (s28) ont reçu une impression française tardive.
       */
-      expect(langs("s1")).toEqual(["en", "fr"]);
-      expect(langs("s6")).toEqual(["en", "fr"]);
+      expect(langs("s1")).toEqual(["en", "fr", "it"]);
+      expect(langs("s6")).toEqual(["en", "fr", "it"]);
       expect(langs("s7")).toEqual(["en"]);
       expect(langs("s24")).toEqual(["en", "fr"]);
       expect(langs("s28")).toEqual(["en", "fr"]);

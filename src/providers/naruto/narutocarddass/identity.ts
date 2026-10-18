@@ -751,6 +751,11 @@ export function isNarutoCatalogueSetCode(set: string): boolean {
   return SERIES_SET.test(set.trim());
 }
 
+/** JP Carddass volumes (`maki3` / 巻ノ参) — JA checklist / faces only. */
+export function isNarutoJapaneseVolumeSet(setCode: string | null | undefined): boolean {
+  return !!setCode && /^maki\d+$/i.test(setCode.trim());
+}
+
 /**
  * Collector segment for a set-scoped key: `ta0074`, `ni0023-cdf`.
  * Legacy family-as-set keys (`naruto:ni-0001`) use {@link narutoCollectorFromPrintIdentity}.

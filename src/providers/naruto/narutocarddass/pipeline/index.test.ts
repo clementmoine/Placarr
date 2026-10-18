@@ -94,6 +94,30 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
       });
       expect(folded.cards["naruto:ni-0086"]?.langs.fr?.printed).toBeUndefined();
     });
+
+    it("keeps 巻ノ and EU set-scoped memberships distinct", () => {
+      const folded = foldNarutoCardsIndex({
+        version: 1,
+        pack: "naruto/carddass",
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        cards: {
+          "naruto:maki1-ni0009": {
+            set: "ninja",
+            card: "ni0009",
+            langs: { ja: { name: "ミズキ" }, fr: { art: "art.jpg" } },
+          },
+          "naruto:s1-ni0009": {
+            set: "ninja",
+            card: "ni0009",
+            langs: { fr: { name: "Mizuki", art: "art.jpg" } },
+          },
+        },
+      });
+      expect(Object.keys(folded.cards).sort()).toEqual([
+        "naruto:maki1-ni0009",
+        "naruto:s1-ni0009",
+      ]);
+    });
   });
 
   describe("foldNarutoCatalogueRecords", () => {

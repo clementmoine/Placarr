@@ -222,14 +222,14 @@ async function runScrape(argv: readonly string[]): Promise<void> {
     if (wayback || sages) {
       await scrapeNarutoColekaSagesLegacyCards(shared);
     }
-    // IT (Rivalità / CardGameClub / Primegame) — opt-in only, hors contrat
-    // langues (original JA + FR + EN). Ne plus tourner avec le défaut `--locale fr`.
+    // IT (Rivalità / CardGameClub / Primegame / eBay) — opt-in `--locale s6it|ita`.
     if (s6it) {
       await scrapeNarutoColekaS6ItCards(shared);
       await scrapeCardgameclubItFaces({
         force: shared.force,
         delayMs: shared.delayMs,
         limit: shared.limit,
+        redownloadOnly: true,
       });
       await scrapePrimegameIt({
         force: shared.force,
@@ -237,6 +237,10 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         limit: shared.limit,
         faces: true,
       });
+      const ebayIt = await installEbayFaces({ force: shared.force });
+      console.log(
+        `── eBay IT faces : ${ebayIt.written.length} écrits, ${ebayIt.skipped.length} sautés, ${ebayIt.failed.length} échecs`,
+      );
     }
     if (wayback || colekafr) {
       await scrapeNarutoColekaCarddassFrCards(shared);

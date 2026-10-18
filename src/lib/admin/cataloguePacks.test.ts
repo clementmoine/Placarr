@@ -557,8 +557,9 @@ describe("Naruto catalogue lines", () => {
     expect(fr).toHaveLength(1);
     expect(fr[0]?.printKey).toBe("naruto:s1-ni0009");
     // One tile; every EU membership stays visible in the caption.
+    // 巻ノ printKeys never emit FR shells — appearanceSets stay on the EU axis.
     expect(fr[0]?.label).toBe("S1/S3/S4 · NI-009 — Mizuki");
-    expect(fr[0]?.appearanceSets).toEqual(["maki1", "s1", "s3", "s4"]);
+    expect(fr[0]?.appearanceSets).toEqual(["s1", "s3", "s4"]);
     const ja = rows.filter(
       (row) => /ni0*009/i.test(row.card) && row.lang === "ja",
     );
@@ -596,8 +597,105 @@ describe("Naruto catalogue lines", () => {
     expect(clFr?.label).toMatch(/^S1 · CL-001/);
     expect(clJa?.printKey).toBe("naruto:maki3-cl0001");
     expect(clJa?.label).toMatch(/^巻3 ·/);
-    expect(clFr?.appearanceSets).toEqual(["maki3", "s1"]);
+    expect(clFr?.appearanceSets).toEqual(["s1"]);
     expect(clJa?.appearanceSets).toEqual(["maki3", "s1"]);
+  });
+
+  it("does not invent FR browse tiles from Japanese volume printKeys alone", () => {
+    /*
+      Shared FR disk art often lands on maki* assets. Without an EU sN sibling,
+      that must not create a preferred-lang FR tile (JA catalogue contamination).
+    */
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:maki5-ni0999": {
+          set: "ninja",
+          card: "ni0999",
+          langs: {
+            ja: { name: "テスト", art: "art.suruga.jpg" },
+            fr: { art: "art.carddass.jpg" },
+          },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    expect(rows.filter((row) => row.lang === "fr")).toHaveLength(0);
+    const ja = rows.filter((row) => row.lang === "ja");
+    expect(ja).toHaveLength(1);
+    expect(ja[0]?.printKey).toBe("naruto:maki5-ni0999");
+    expect(ja[0]?.name).toBe("テスト");
+  });
+
+  it("keeps EN-only CCG series out of preferred FR", () => {
+    const row = {
+      printKey: "naruto:s10-n0361",
+      set: "ninja",
+      card: "n0361",
+      lang: "fr",
+      artUrl: "/x.jpg",
+      label: "S10 · N-361",
+      languageSpecific: false,
+      appearanceSets: ["s10"],
+    };
+    expect(
+      matchesCataloguePreferredLang(row, "fr", {
+        expandLocales: true,
+        narutoLocaleAxis: true,
+      }),
+    ).toBe(false);
+    expect(
+      matchesCataloguePreferredLang(
+        { ...row, printKey: "naruto:s1-ni0001", appearanceSets: ["s1"] },
+        "fr",
+        { expandLocales: true, narutoLocaleAxis: true },
+      ),
+    ).toBe(true);
+  });
+
+  it("does not contaminate preferred JA with EU-only FR/EN shells", async () => {
+    /*
+      Hung JA shop art on an sN key (no 巻ノ membership) must not appear in the
+      preferred-lang JA grid — mirror of FR-on-maki contamination.
+    */
+    const index = {
+      version: 1 as const,
+      pack: "naruto/carddass",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+      cards: {
+        "naruto:s1-ni0200": {
+          set: "ninja",
+          card: "ni0200",
+          langs: {
+            fr: { name: "Shikamaru", art: "art.jpg" },
+            en: { name: "Shikamaru", art: "art.jpg" },
+            ja: { art: "art.suruga.jpg" },
+          },
+        },
+        "naruto:maki1-ni0009": {
+          set: "ninja",
+          card: "ni0009",
+          langs: { ja: { name: "ミズキ", art: "art.suruga.jpg" } },
+        },
+      },
+    };
+    const rows = buildCatalogueCardRows("naruto/carddass", index);
+    expect(
+      matchesCataloguePreferredLang(
+        rows.find((r) => r.card === "ni0200" && r.lang === "ja")!,
+        "ja",
+        { expandLocales: true, narutoLocaleAxis: true },
+      ),
+    ).toBe(false);
+    expect(
+      matchesCataloguePreferredLang(
+        rows.find((r) => r.card === "ni0009" && r.lang === "ja")!,
+        "ja",
+        { expandLocales: true, narutoLocaleAxis: true },
+      ),
+    ).toBe(true);
   });
 
   it("does not show a borrowed sibling name on a locale tile", () => {

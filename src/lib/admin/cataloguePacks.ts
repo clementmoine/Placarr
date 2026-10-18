@@ -398,7 +398,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
-        "Naruto: Carddass JA+FR+EN + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
+        "Naruto: Carddass JA+FR+EN+IT + CCG EN (Wayback / Coleka / Storm 3) → data/naruto/carddass",
         "scellés catalogue : JA+FR+EN seulement (IT/DE/ES hors products-index)",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,

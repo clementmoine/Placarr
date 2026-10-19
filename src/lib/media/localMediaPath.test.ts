@@ -16,7 +16,7 @@ describe("localMediaFilePath", () => {
     process.env.PLACARR_DATA_DIR = dataRoot;
     mkdirSync(path.join(dataRoot, "uploads"), { recursive: true });
     mkdirSync(
-      path.join(dataRoot, "naruto", "carddass", "cards", "ninja", "ni0001", "fr"),
+      path.join(dataRoot, "naruto", "carddass", "cards", "fr", "s1", "ni0001"),
       { recursive: true },
     );
   });
@@ -42,9 +42,9 @@ describe("localMediaFilePath", () => {
       "naruto",
       "carddass",
       "cards",
-      "ninja",
-      "ni0001",
       "fr",
+      "s1",
+      "ni0001",
       "art.webp",
     );
     writeFileSync(file, "y");

@@ -2,8 +2,8 @@
  * Où vivent les faces du 疾風伝, et sous quel pack d'effets elles se rendent.
  *
  * Même ordre que {@link assetsCardUrl} / {@link packCardDir} :
- * `cards/{famille}/{langue}/{diskId}/fichier` — ex. `gaku/ja/gaku0038/`.
- * (Un ancien commentaire disait set/card/lang ; le disque n'a jamais suivi.)
+ * `cards/{langue}/{famille}/{diskId}/fichier` — ex. `ja/gaku/gaku0038/`
+ * (lang-first, la famille tient lieu de set).
  */
 import path from "node:path";
 
@@ -66,8 +66,8 @@ export function narutoShippudenAssetsCardUrl(
   return assetsPackFileUrl(
     NARUTO_SHIPPUDEN_PACK_ID,
     "cards",
-    family,
     lang?.trim().toLowerCase(),
+    family,
     normalizeShippudenDiskId(family, number),
     file,
   );

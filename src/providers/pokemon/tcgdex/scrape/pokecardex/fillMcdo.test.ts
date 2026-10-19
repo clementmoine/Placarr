@@ -37,7 +37,7 @@ describe("fillPokecardexMcdoCampaign", () => {
     expect(seen[0]).toContain("/sets/M23/FR/1.jpg?class=original");
     expect(seen[1]).toContain("/sets/M23/FR/2.jpg?class=original");
 
-    const cardDir = path.join(root, "2023sv", "fr", "001");
+    const cardDir = path.join(root, "fr", "2023sv", "001");
     expect(existsSync(path.join(cardDir, "art.pokecardex.jpg"))).toBe(true);
     writeFileSync(path.join(cardDir, "art.coleka.webp"), "photo");
     expect(

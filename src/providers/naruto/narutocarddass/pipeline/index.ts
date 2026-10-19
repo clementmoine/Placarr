@@ -609,6 +609,9 @@ export function planNarutoCardMove(
   if (isNarutoFamilyFolder(appearanceSet) && appearanceSet !== "promo") {
     return null;
   }
+  // Lang-first trees (`ja/<set>/<card>`) arrive here as (lang, set, card):
+  // never invert them back to set-first.
+  if (isNarutoLangDir(appearanceSet)) return null;
   if (appearanceSet === "promo" && !isNarutoLangDir(lang)) {
     return null;
   }

@@ -33,7 +33,7 @@ import {
   type LenticularPanelCrop,
 } from "./kayouLenticularArt";
 
-const HEAVEN_SCROLL_HR = "data/naruto/kayou/cards/smritiheavenscrolls1/en";
+const HEAVEN_SCROLL_HR = "data/naruto/kayou/cards/en/smritiheavenscrolls1";
 
 function rgbaLuminance(
   rgba: Uint8ClampedArray,

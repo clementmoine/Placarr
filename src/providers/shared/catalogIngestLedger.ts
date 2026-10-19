@@ -73,6 +73,25 @@ export function catalogArtefactIsFresh(
   return Boolean(hit && hit.contentHash === contentHash);
 }
 
+/**
+ * Hash-fresh **and** promoted less than `maxAgeMs` ago. For artefacts whose
+ * hash is computed from our own durable copy (self-hash loop): without a TTL
+ * they would stay "fresh" forever and never re-crawl the remote source.
+ */
+export function catalogArtefactIsFreshWithin(
+  ledger: CatalogIngestLedger,
+  artefactId: string,
+  contentHash: string,
+  maxAgeMs: number,
+  now: Date = new Date(),
+): boolean {
+  const hit = ledger.entries[artefactId];
+  if (!hit || hit.contentHash !== contentHash) return false;
+  const promotedMs = Date.parse(hit.promotedAt);
+  if (!Number.isFinite(promotedMs)) return false;
+  return now.getTime() - promotedMs < maxAgeMs;
+}
+
 /** Inverse of {@link catalogArtefactIsFresh} — true when a fetch is required. */
 export function catalogArtefactNeedsFetch(
   ledger: CatalogIngestLedger,

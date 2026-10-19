@@ -578,8 +578,22 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
         listNarutoPrintSets().find((set) => set.id === "s6")?.languages ?? [],
       ).toContain("fr");
 
-      // 6 inédites + 9 reprints blister Kana MIJ
+      // 6 inédites + 22 reprints MIJ (reconstruction footer, s6-fr-printed.json):
+      // 9 reprints blister Kana + 13 reconstructed faces.
       const chapter = [
+        "naruto:s6-ni0103",
+        "naruto:s6-ni0104",
+        "naruto:s6-ni0105",
+        "naruto:s6-ni0114",
+        "naruto:s6-ni0242",
+        "naruto:s6-ni0243",
+        "naruto:s6-ni0244",
+        "naruto:s6-ni0245",
+        "naruto:s6-ni0246",
+        "naruto:s6-ni0250",
+        "naruto:s6-ni0251",
+        "naruto:s6-ta0232",
+        "naruto:s6-ta0234",
         "naruto:s6-ni0206",
         "naruto:s6-ni0232",
         "naruto:s6-ni0236",
@@ -637,7 +651,8 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       const s3en = listNarutoSetPrints({ setId: "s3", language: "en" });
       expect(s3en.map((row) => row.printKey)).toContain("naruto:s3-m0092");
       const tp4 = listNarutoSetPrints({ setId: "tp4", language: "en" });
-      expect(tp4.map((row) => row.printKey)).toContain("naruto:tp4-m0092");
+      // CCG M-092 is keyed `s3-m0092` (EN) — no `tp4-` twin.
+      expect(tp4.map((row) => row.printKey)).not.toContain("naruto:tp4-m0092");
     });
 
     it("lists Tempête approche reprints as s11 FR, not s24/s28", () => {

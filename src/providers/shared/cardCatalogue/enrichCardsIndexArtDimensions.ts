@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { readFileImageMetrics } from "@/core/enrich/media/imageMetrics";
+import { readFileRawImageDimensions } from "@/core/enrich/media/imageMetrics";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { isCardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardDir } from "@/lib/packPaths";
@@ -10,7 +10,8 @@ import {
 } from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 
 /**
- * Probe on-disk face files for orientation. Soft no-op when no CardsIndex
+ * Probe on-disk face files for orientation (raw file pixels — never the
+ * margin-trimmed display box, which skews aspect and lenticular strip checks). Soft no-op when no CardsIndex
  * doc remains in sqlite (identity lives elsewhere).
  */
 export async function enrichCardsIndexArtDimensions(
@@ -42,7 +43,7 @@ export async function enrichCardsIndexArtDimensions(
         }),
         art,
       );
-      const dims = await readFileImageMetrics(artPath);
+      const dims = await readFileRawImageDimensions(artPath);
       if (!dims) continue;
       slot.artW = dims.width;
       slot.artH = dims.height;

@@ -105,7 +105,7 @@ describe("fillMcdnFacesForSet", () => {
     });
     expect(report.written).toBe(1);
     expect(seen[0]).toContain("/cards/full/30TH/30TH_FR_33.png");
-    const cardDir = path.join(root, "me5-5", "fr", "033");
+    const cardDir = path.join(root, "fr", "me5-5", "033");
     expect(existsSync(path.join(cardDir, "art.mcdn.png"))).toBe(true);
     const decision = JSON.parse(
       readFileSync(path.join(cardDir, "face.json"), "utf8"),
@@ -135,8 +135,8 @@ describe("parsePkmcardsPokemonSlug", () => {
 describe("buildPkmcardsAbbrToLiveStem", () => {
   it("reconnaît un stem Live déjà sur disque", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "pkm-map-"));
-    mkdirSync(path.join(root, "me5"), { recursive: true });
-    mkdirSync(path.join(root, "sv10"), { recursive: true });
+    mkdirSync(path.join(root, "fr", "me5"), { recursive: true });
+    mkdirSync(path.join(root, "fr", "sv10"), { recursive: true });
     const map = buildPkmcardsAbbrToLiveStem(root);
     expect(map.get("me5")?.liveStem).toBe("me5");
     expect(map.get("sv10")?.liveStem).toBe("sv10");
@@ -146,8 +146,8 @@ describe("buildPkmcardsAbbrToLiveStem", () => {
 describe("fillPkmcardsFaces", () => {
   it("prend art.pkmcards même si Live art.webp est déjà là (skip seulement la source)", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "pkm-fill-"));
-    const withLive = path.join(root, "me5", "fr", "002");
-    const already = path.join(root, "me5", "fr", "003");
+    const withLive = path.join(root, "fr", "me5", "002");
+    const already = path.join(root, "fr", "me5", "003");
     mkdirSync(withLive, { recursive: true });
     mkdirSync(already, { recursive: true });
     writeFileSync(path.join(withLive, "art.webp"), "live");
@@ -232,7 +232,7 @@ describe("fillPkmcardsFaces", () => {
 
   it("émet un heartbeat progress pendant le parcours", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "pkm-fill-prog-"));
-    mkdirSync(path.join(root, "me5"), { recursive: true });
+    mkdirSync(path.join(root, "fr", "me5"), { recursive: true });
     const entries = Array.from({ length: 5 }, (_, i) => ({
       itemId: String(i + 1),
       slug: `me5-fr-${String(i + 1).padStart(3, "0")}-x`,
@@ -300,7 +300,7 @@ describe("fillPokemonComMcdoCampaign", () => {
     });
     expect(report.written).toBe(2);
     expect(report.failed).toBe(0);
-    const cardDir = path.join(root, "2023sv", "en", "001");
+    const cardDir = path.join(root, "en", "2023sv", "001");
     expect(existsSync(path.join(cardDir, "art.pokemoncom.png"))).toBe(true);
     const decision = JSON.parse(
       readFileSync(path.join(cardDir, "face.json"), "utf8"),
@@ -352,8 +352,8 @@ describe("fillTcgplayerFacesForSet", () => {
     const dest = path.join(
       root,
       "cards",
-      "2023sv",
       "en",
+      "2023sv",
       "004",
       "art.tcgplayer.jpg",
     );
@@ -488,7 +488,7 @@ describe("fillTcgdexCatalogueFaces", () => {
     expect(seen[0]).toBe(
       "https://assets.tcgdex.net/fr/base/base1/4/high.webp",
     );
-    const dest = path.join(root, "base1", "fr", "004", "art.tcgdex.webp");
+    const dest = path.join(root, "fr", "base1", "004", "art.tcgdex.webp");
     expect(existsSync(dest)).toBe(true);
 
     const second = await fillTcgdexCatalogueFaces({
@@ -534,7 +534,7 @@ describe("fillTcgdexCatalogueFaces", () => {
     expect(report.failed).toBe(1);
     expect(seen.every((u) => u.includes("/fr/"))).toBe(true);
     expect(
-      existsSync(path.join(root, "s10p", "fr", "001", "art.tcgdex.webp")),
+      existsSync(path.join(root, "fr", "s10p", "001", "art.tcgdex.webp")),
     ).toBe(false);
   });
 });

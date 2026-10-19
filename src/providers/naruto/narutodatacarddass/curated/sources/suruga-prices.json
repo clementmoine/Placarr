@@ -2,8 +2,8 @@
   "source": "Suruga-ya.jp used product detail (税込)",
   "sourceId": "suruga-ya-used",
   "packId": "naruto/data-carddass",
-  "fetchedAt": "2026-10-17T22:13:11.546Z",
-  "cardCount": 73,
+  "fetchedAt": "2026-10-19T11:34:36.777Z",
+  "cardCount": 79,
   "cards": [
     {
       "diskId": "dn-109t",
@@ -636,6 +636,42 @@
       "observedAt": "2026-10-17T22:13:11.546Z"
     },
     {
+      "diskId": "dn-242t",
+      "printed": "DN-242T",
+      "productId": "G8903881",
+      "priceYen": 700,
+      "priceYenCents": 700,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903881",
+      "observedAt": "2026-10-19T11:34:36.777Z"
+    },
+    {
+      "diskId": "dn-244t",
+      "printed": "DN-244T",
+      "productId": "G8903883",
+      "priceYen": 570,
+      "priceYenCents": 570,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903883",
+      "observedAt": "2026-10-19T11:34:36.777Z"
+    },
+    {
+      "diskId": "dn-245t",
+      "printed": "DN-245T",
+      "productId": "G8903884",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903884",
+      "observedAt": "2026-10-19T11:34:36.777Z"
+    },
+    {
+      "diskId": "dn-246t",
+      "printed": "DN-246T",
+      "productId": "G8903885",
+      "priceYen": 6010,
+      "priceYenCents": 6010,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903885",
+      "observedAt": "2026-10-19T11:34:36.777Z"
+    },
+    {
       "diskId": "dnp-024",
       "printed": "DNP-024",
       "productId": "G3569062",
@@ -643,6 +679,24 @@
       "priceYenCents": 1260,
       "productUrl": "https://www.suruga-ya.jp/product/detail/G3569062",
       "observedAt": "2026-10-15T17:29:24.370Z"
+    },
+    {
+      "diskId": "nm-003",
+      "printed": "NM-003",
+      "productId": "G8903891",
+      "priceYen": 2740,
+      "priceYenCents": 2740,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903891",
+      "observedAt": "2026-10-19T11:34:36.777Z"
+    },
+    {
+      "diskId": "nm-004",
+      "printed": "NM-004",
+      "productId": "G8903892",
+      "priceYen": 2490,
+      "priceYenCents": 2490,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8903892",
+      "observedAt": "2026-10-19T11:34:36.777Z"
     },
     {
       "diskId": "nxp-003",

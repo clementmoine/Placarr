@@ -1,5 +1,5 @@
 /**
- * Moisson Coleka McDo → `art.coleka.*` under data/pokemon/cards/{set}/{lang}/{num}/.
+ * Moisson Coleka McDo → `art.coleka.*` under data/pokemon/cards/{lang}/{set}/{num}/.
  */
 import {
   existsSync,
@@ -98,15 +98,15 @@ export function colekaMcdoBranchContentHash(
   ].join("|");
 }
 
-/** Count ``art.coleka.*`` already promoted under cards/{set}/{lang}/. */
+/** Count ``art.coleka.*`` already promoted under cards/{lang}/{set}/. */
 export function countColekaMcdoFacesOnDisk(
   branch: ColekaMcdoBranch,
   cardsRoot?: string,
 ): number {
   const setDir = path.join(
     cardsRoot ?? path.join(process.cwd(), "data", "pokemon", "cards"),
-    branch.setId,
     branch.lang,
+    branch.setId,
   );
   if (!existsSync(setDir)) return 0;
   let n = 0;

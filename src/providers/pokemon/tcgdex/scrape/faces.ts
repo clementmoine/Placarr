@@ -253,17 +253,31 @@ type LogoSet = {
   officialAbbr?: string | null;
 };
 
-function liveStems(cardsRoot: string): Set<string> {
-  if (!existsSync(cardsRoot)) return new Set();
-  return new Set(
-    readdirSync(cardsRoot).filter((name) => {
+function subDirs(dir: string): string[] {
+  try {
+    return readdirSync(dir).filter((name) => {
       try {
-        return statSync(path.join(cardsRoot, name)).isDirectory();
+        return statSync(path.join(dir, name)).isDirectory();
       } catch {
         return false;
       }
-    }),
-  );
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Set stems on disk — layout is lang-first (`cards/{lang}/{set}/{num}/`), so
+ * top-level dirs are languages and the stems are one level below.
+ */
+function liveStems(cardsRoot: string): Set<string> {
+  const stems = new Set<string>();
+  if (!existsSync(cardsRoot)) return stems;
+  for (const lang of subDirs(cardsRoot)) {
+    for (const stem of subDirs(path.join(cardsRoot, lang))) stems.add(stem);
+  }
+  return stems;
 }
 
 function tcgdexIdCandidates(id: string): string[] {
@@ -489,7 +503,7 @@ export type TcgplayerFillReport = {
 
 /**
  * For each localId in `localIds`, fetch TCGdex EN card → TCGPlayer image →
- * `art.tcgplayer.jpg` under cards/{set}/en/{num}/.
+ * `art.tcgplayer.jpg` under cards/en/{set}/{num}/.
  */
 export async function fillTcgplayerFacesForSet(opts: {
   setId: string;
@@ -1149,7 +1163,7 @@ export async function fillMcdnGalleryFaces(
 // —— fillTcgdexCatalogueFaces.ts ——
 
 /**
- * Bulk TCGdex CDN faces → `art.tcgdex.png` under cards/{set}/{lang}/{num}/.
+ * Bulk TCGdex CDN faces → `art.tcgdex.png` under cards/{lang}/{set}/{num}/.
  *
  * Reads `prints.sqlite` image bases, localizes the CDN segment per language,
  * downloads `high.png` (fallback `low.webp`, then EN). Skip-existing so Sync

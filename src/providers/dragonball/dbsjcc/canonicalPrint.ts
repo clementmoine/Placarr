@@ -227,7 +227,7 @@ export function parseDbsjccCardFolder(folder: string): {
 }
 
 /**
- * Scan `data/dragonball/jcc/cards/{set}/fr/{number[-grouping]}/` for face hashes.
+ * Scan `data/dragonball/jcc/cards/fr/{set}/{number[-grouping]}/` for face hashes.
  */
 export function scanDbsjccFaceCandidates(
   packId: string = DBS_JCC_PACK_ID,
@@ -235,15 +235,15 @@ export function scanDbsjccFaceCandidates(
   const cardsRoot = packCardsDir(packId);
   if (!existsSync(cardsRoot)) return [];
   const out: DbsjccFaceCandidate[] = [];
-  for (const setCode of readdirSync(cardsRoot)) {
+  const frRoot = path.join(cardsRoot, "fr");
+  if (!existsSync(frRoot)) return [];
+  for (const setCode of readdirSync(frRoot)) {
     if (setCode.startsWith(".")) continue;
-    if (/\./.test(setCode)) continue; // back.webp at cards root
-    const frRoot = path.join(cardsRoot, setCode, "fr");
-    if (!existsSync(frRoot)) continue;
-    for (const folder of readdirSync(frRoot)) {
+    const setRoot = path.join(frRoot, setCode);
+    for (const folder of readdirSync(setRoot)) {
       const parsed = parseDbsjccCardFolder(folder);
       if (!parsed) continue;
-      const face = preferredFaceFile(path.join(frRoot, folder));
+      const face = preferredFaceFile(path.join(setRoot, folder));
       if (!face) continue;
       const artHash = hashFileSha256(face);
       if (!artHash) continue;

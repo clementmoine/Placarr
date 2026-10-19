@@ -8,10 +8,25 @@ import { dbscardsIndexPath } from "@/providers/shared/tcgcards/scrapeList";
 import { dbsmarketModule } from "./index";
 import {
   loadDbscardsPriceIndex,
+  loadDbscardsPriceIndexFromDisk,
   resetDbscardsPriceIndexCache,
 } from "./fetch";
 
 const hasMastersDump = existsSync(dbscardsIndexPath("dragonball/cg", "fr"));
+
+/**
+ * The local dump is whatever the last scrape kept (a partial refresh may carry
+ * only recent sets) — probe a priced Masters card that is actually in it
+ * instead of pinning a printKey the dump may not contain.
+ */
+const mastersSample = hasMastersDump
+  ? Object.values(loadDbscardsPriceIndexFromDisk()).find(
+      (card) =>
+        card.printKey.startsWith("dbscg:") &&
+        card.priceCents > 0 &&
+        card.name.trim().length > 0,
+    )
+  : undefined;
 
 describe("dbsmarketModule info", () => {
   it("is a reference EUR price source for DBS", () => {
@@ -43,13 +58,13 @@ describe("dbsmarketModule.refreshBarcodePriceOffers", () => {
     expect(offers).toEqual([]);
   });
 
-  it.skipIf(!hasMastersDump)(
+  it.skipIf(!mastersSample)(
     "emits a metadata-scoped EUR offer from the local Masters dump",
     async () => {
       const offers = await dbsmarketModule.refreshBarcodePriceOffers!(
         priceProbeContext({
-          printKey: "dbscg:bt2-103",
-          name: "Frappe cruelle de Freezer",
+          printKey: mastersSample!.printKey,
+          name: mastersSample!.name,
         }),
       );
       expect(offers.length).toBeGreaterThan(0);

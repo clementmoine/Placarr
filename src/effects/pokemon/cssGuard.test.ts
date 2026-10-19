@@ -6,7 +6,10 @@ import { describe, expect, it } from "vitest";
 import "@/effects";
 import { getEffectPack } from "@/core/render/foil";
 import { holoShader } from "@/core/render/holoShaders";
-import { HOUSE_HOLO_SHADER_IDS } from "@/core/render/holoShadersHouse";
+import {
+  HOUSE_HOLO_SHADER_IDS,
+  houseHoloShader,
+} from "@/core/render/holoShadersHouse";
 import {
   isPokemonHoloShaderId,
   POKEMON_CSS_DODGE_OPACITY_CEILING,
@@ -464,12 +467,27 @@ describe("every look answers the light", () => {
       "radiantHoloCoat",
       "radiantHoloSparkle",
     ]);
-    for (const id of [
-      ...HOUSE_HOLO_SHADER_IDS,
-      ...POKEMON_HOLO_SHADER_IDS,
-      ...SIMEY_HOLO_SHADER_IDS,
-    ]) {
-      const filter = holoShader(id)!.filter!;
+    /*
+      Resolve each pack's looks through that pack's table — not `holoShader()`.
+      Shared leaf names (`tinsel`) are Lorcana web in the global dispatcher once
+      recipes.json is loaded; this guard asserts Pokémon/house/simey plates still
+      answer the pointer even when Lorcana owns the same id globally.
+    */
+    const looks: Array<{ id: string; filter: string | undefined }> = [
+      ...HOUSE_HOLO_SHADER_IDS.map((id) => ({
+        id,
+        filter: houseHoloShader(id)?.filter,
+      })),
+      ...POKEMON_HOLO_SHADER_IDS.map((id) => ({
+        id,
+        filter: pokemonHoloShader(id)?.filter,
+      })),
+      ...SIMEY_HOLO_SHADER_IDS.map((id) => ({
+        id,
+        filter: simeyHoloShader(id)?.filter,
+      })),
+    ];
+    for (const { id, filter } of looks) {
       if (staticFilter.has(id)) {
         // Vendored coats lead with `brightness(…)`; the etch pass leads with
         // `invert(1)` because its plate is dumped in the opposite polarity.

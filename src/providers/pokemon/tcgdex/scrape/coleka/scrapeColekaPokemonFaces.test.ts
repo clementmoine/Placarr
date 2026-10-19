@@ -49,14 +49,14 @@ describe("coleka McDo staging purge", () => {
   it("purges_staging_when_faces_complete_on_disk", () => {
     const cards = path.join(root, "cards");
     const staging = path.join(root, "staging", "coleka-mcdo-m23fr");
-    mkdirSync(path.join(cards, "2023sv", "fr", "001"), { recursive: true });
-    mkdirSync(path.join(cards, "2023sv", "fr", "002"), { recursive: true });
+    mkdirSync(path.join(cards, "fr", "2023sv", "001"), { recursive: true });
+    mkdirSync(path.join(cards, "fr", "2023sv", "002"), { recursive: true });
     writeFileSync(
-      path.join(cards, "2023sv", "fr", "001", "art.coleka.webp"),
+      path.join(cards, "fr", "2023sv", "001", "art.coleka.webp"),
       "a",
     );
     writeFileSync(
-      path.join(cards, "2023sv", "fr", "002", "art.coleka.webp"),
+      path.join(cards, "fr", "2023sv", "002", "art.coleka.webp"),
       "b",
     );
     mkdirSync(staging, { recursive: true });
@@ -79,9 +79,9 @@ describe("coleka McDo staging purge", () => {
   it("keeps_staging_when_faces_incomplete", () => {
     const cards = path.join(root, "cards");
     const staging = path.join(root, "staging", "coleka-mcdo-m23fr");
-    mkdirSync(path.join(cards, "2023sv", "fr", "001"), { recursive: true });
+    mkdirSync(path.join(cards, "fr", "2023sv", "001"), { recursive: true });
     writeFileSync(
-      path.join(cards, "2023sv", "fr", "001", "art.coleka.webp"),
+      path.join(cards, "fr", "2023sv", "001", "art.coleka.webp"),
       "a",
     );
     mkdirSync(staging, { recursive: true });

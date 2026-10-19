@@ -49,7 +49,7 @@ describe("fillPokecardexFacesForSet", () => {
     });
     expect(report.written).toBe(1);
     expect(
-      existsSync(path.join(root, "dp1", "fr", "001", "art.pokecardex.jpg")),
+      existsSync(path.join(root, "fr", "dp1", "001", "art.pokecardex.jpg")),
     ).toBe(true);
   });
 });

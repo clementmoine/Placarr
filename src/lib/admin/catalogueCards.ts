@@ -684,12 +684,14 @@ function narutoBrowseIdentityKey(row: CatalogueCardRow): string {
     return `${collector}\0ja\0maki`;
   }
   /*
-    Shelf checklist lists NI-009 on S1 + S3 + S4 as distinct slots. Admin must
-    keep the same set-scoped keys — the old s2–s5 band hid S3/S4/S5 reprints.
+    Shelf checklist lists NI-009 on S1 + S3 + S4 as distinct slots, and CCG
+    reprints (`s8-n0261`, `s11-n0261`, `s15-n0261`) likewise. Admin must keep
+    the same set-scoped keys — a shared band hid S3/S4/S5 and S8/S15 tiles
+    whenever one sibling carried the FR name.
   */
   if (
     membership &&
-    /^s[1-5]$/i.test(membership) &&
+    /^s\d+$/i.test(membership) &&
     (lang === "fr" || lang === "it" || lang === "en")
   ) {
     return `${collector}\0${lang}\0${membership.toLowerCase()}`;

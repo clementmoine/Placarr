@@ -234,7 +234,14 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         "sources",
       ]);
       const files = listRelFiles(root);
-      expect(files.filter((f) => f.endsWith(".md"))).toEqual([]);
+      // `fr-finishes-wip.md` is the generated review sheet for the FR physical
+      // finishes ledgers (`scripts/render-naruto-fr-finishes-wip.ts`) — the one
+      // markdown allowed in the tree.
+      expect(
+        files.filter(
+          (f) => f.endsWith(".md") && f !== "sources/fr-finishes-wip.md",
+        ),
+      ).toEqual([]);
       expect(
         files.some(
           (f) => f.startsWith("en-ccg/") || f.startsWith("reconstructed/"),

@@ -52,3 +52,25 @@ export async function readFileImageMetrics(
     return null;
   }
 }
+
+/**
+ * Pixel size of the file as authored (EXIF-rotated), with **no** margin trim.
+ *
+ * Card-face catalogues (`artW`/`artH` on the cards-index) need the printed
+ * scan's real aspect: a trimmed content box turns a 320×450 Kayou strip into
+ * ~300×419 and silently drops it below the attested lenticular strip floor.
+ */
+export async function readFileRawImageDimensions(
+  filePath: string,
+): Promise<ImageDimensions | null> {
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const metadata = await sharp(filePath).metadata();
+    const { width, height } = metadata;
+    if (!width || !height) return null;
+    const swap = (metadata.orientation ?? 1) >= 5;
+    return swap ? { width: height, height: width } : { width, height };
+  } catch {
+    return null;
+  }
+}

@@ -63,8 +63,11 @@ import { narutoShippudenAssetsCardUrl, narutoShippudenCuratedDir, normalizeShipp
 
     it("installs under the name the effect pack asks for", () => {
       const [back] = listCuratedBackSources(cards);
+      // Effect pack serves backs per language (`backs/{lang}`), like the other packs.
+      const lang = /^back\.([a-z]+)\./.exec(back.destRel)?.[1];
+      expect(lang).toBe("ja");
       expect(narutoShippudenEffectPack.cardBackUrl).toBe(
-        `/assets/naruto/shippuden/cards/${back.destRel}`,
+        `/assets/naruto/shippuden/backs/${lang}`,
       );
     });
 

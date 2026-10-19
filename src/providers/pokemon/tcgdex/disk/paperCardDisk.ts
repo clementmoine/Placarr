@@ -1,5 +1,6 @@
 /**
- * Disk helpers for Pokémon paper faces under `data/pokemon/cards/{set}/{lang}/{num}/`.
+ * Disk helpers for Pokémon paper faces under `data/pokemon/cards/{lang}/{set}/{num}/`
+ * (lang-first, same order as `packCardDir`).
  */
 import path from "node:path";
 
@@ -37,8 +38,8 @@ export function pokemonPaperCardDir(opts: {
   const root = opts.cardsRoot ?? packCardsDir("pokemon");
   return path.join(
     root,
-    opts.setId.trim().toLowerCase(),
     opts.lang.trim().toLowerCase(),
+    opts.setId.trim().toLowerCase(),
     pokemonCardFolderId(opts.localId),
   );
 }
@@ -59,7 +60,7 @@ export function pokemonPaperCardDirFromPrintKey(
 }
 
 /**
- * `/assets/pokemon/cards/{set}/{lang}/{num}/{art}` when a local face exists.
+ * `/assets/pokemon/cards/{lang}/{set}/{num}/{art}` when a local face exists.
  * Prefers the requested language, then `fr`, then `en` — unless `languages`
  * is passed (check-list FR must not silently serve an EN scan).
  *

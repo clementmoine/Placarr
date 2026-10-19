@@ -103,8 +103,8 @@ describe("pokemon pack assets", () => {
         if (!m) continue;
         const cardDir = path.join(
           CARDS_ROOT,
-          m[1]!.toLowerCase(),
           m[2]!.toLowerCase(),
+          m[1]!.toLowerCase(),
           m[3]!,
         );
         if (!existsSync(cardDir)) continue;

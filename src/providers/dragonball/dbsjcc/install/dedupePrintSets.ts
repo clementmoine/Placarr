@@ -9,6 +9,7 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
+  readFileSync,
   renameSync,
   rmSync,
   writeFileSync,
@@ -678,6 +679,18 @@ function repairAssetUrlToPrintKey(
   return next;
 }
 
+function readExistingAliasLedger(file: string): Record<string, string> {
+  if (!existsSync(file)) return {};
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as {
+      aliases?: Record<string, string>;
+    };
+    return raw.aliases ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export async function dedupeDbsjccPrintSets(
   packId: string = DBS_JCC_PACK_ID,
 ): Promise<DedupePrintSetsReport> {
@@ -695,6 +708,21 @@ export async function dedupeDbsjccPrintSets(
     "print-key-aliases.json",
   );
   ensureDir(path.dirname(aliasLedgerPath));
+  /*
+    The ledger is curated history: legacy multi-set clones (`part3-d0123` →
+    `part2-d0123b`) were collapsed once their duplicate folders were purged, so
+    the face scan can no longer rediscover them. Keep every earlier alias whose
+    target is still a canonical print; fresh scan results win on conflict.
+  */
+  const canonicalKeys = new Set(prints.map((print) => print.printKey));
+  const previous = readExistingAliasLedger(aliasLedgerPath);
+  const aliases: Record<string, string> = {};
+  for (const [from, to] of Object.entries(previous)) {
+    if (from !== to && canonicalKeys.has(to)) aliases[from] = to;
+  }
+  for (const [from, to] of aliasToCanonical) {
+    if (from !== to) aliases[from] = to;
+  }
   writeFileSync(
     aliasLedgerPath,
     `${JSON.stringify(
@@ -702,7 +730,7 @@ export async function dedupeDbsjccPrintSets(
         version: 1,
         observed: new Date().toISOString().slice(0, 10),
         aliases: Object.fromEntries(
-          [...aliasToCanonical.entries()].filter(([from, to]) => from !== to),
+          Object.entries(aliases).sort(([a], [b]) => a.localeCompare(b)),
         ),
       },
       null,

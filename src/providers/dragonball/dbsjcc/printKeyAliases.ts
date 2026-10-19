@@ -74,7 +74,15 @@ export function resolveDbsjccPrintKeyAlias(
   const key = printKey.trim().toLowerCase();
   if (!key) return key;
   if (!cache) {
-    cache = loadFromSqlite(packId) ?? loadFromCurated() ?? new Map();
+    /*
+      Curated ledger is the editorial SSOT for legacy multi-set clones; the
+      sqlite doc is the last dedupe run. Union them (curated wins) so a rewrite
+      of one never silently drops aliases the other still carries.
+    */
+    cache = new Map([
+      ...(loadFromSqlite(packId) ?? []),
+      ...(loadFromCurated() ?? []),
+    ]);
   }
   return cache.get(key) ?? key;
 }

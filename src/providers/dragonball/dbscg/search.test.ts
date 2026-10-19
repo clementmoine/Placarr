@@ -131,7 +131,7 @@ describe("bilingual titles", () => {
       would have gone red the other way on a clean checkout. The file it needs
       is created here instead.
     */
-    const dir = path.join(tmp, "dragonball", "cg", "cards", "bt1", "en", "001");
+    const dir = path.join(tmp, "dragonball", "cg", "cards", "en", "bt1", "001");
     mkdirSync(dir, { recursive: true });
     writeFileSync(path.join(dir, "back.dbscards.webp"), "");
     const en = lookupDbsCgPrint("dbscg:bt1-001", { language: "en" });
@@ -152,7 +152,7 @@ describe("face preference", () => {
     // The URL names the source that won, not a generic copy of it: nothing is
     // duplicated to `art.webp` any more.
     expect(candidate?.imageUrl).toMatch(
-      /^\/assets\/dragonball\/cg\/cards\/bt1\/fr\/001\/art\.[a-z]+\.webp$/,
+      /^\/assets\/dragonball\/cg\/cards\/fr\/bt1\/001\/art\.[a-z]+\.webp$/,
     );
     expect(candidate?.thumbnailUrl).toBe(candidate?.imageUrl);
   });

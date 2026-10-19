@@ -87,6 +87,25 @@ describe("uniqueChapterSetFromGuarantees", () => {
       ),
     ).toBeNull();
   });
+
+  it("refuses Naruto window promos keyed under set promo", () => {
+    expect(
+      uniqueChapterSetFromGuarantees(
+        entry({
+          slug: "duopack-s28",
+          setCode: "s28",
+          guaranteedPrints: [
+            {
+              name: "PR-096",
+              slug: "x",
+              ref: null,
+              printKey: "naruto:promo-pr0096",
+            },
+          ],
+        }),
+      ),
+    ).toBeNull();
+  });
 });
 
 describe("backfillSealedProductSetLogos", () => {
@@ -215,5 +234,68 @@ describe("boutiqueCodeToCatalogueSetId", () => {
       entry({ slug: "b", setCode: "WHW", catalogueSetId: "10" }),
     ]);
     expect(map.get("whw")).toBe("10");
+  });
+
+  it("does not learn s28 → promo from a window-insert duopack", () => {
+    const map = boutiqueCodeToCatalogueSetId([
+      entry({
+        slug: "duopack-s28",
+        setCode: "s28",
+        catalogueSetId: "promo",
+      }),
+    ]);
+    expect(map.has("s28")).toBe(false);
+  });
+});
+
+describe("backfillSealedProductSetLogos Storm 3", () => {
+  it("keeps S28 boosters/displays on s28 despite a promo window insert", () => {
+    const products = {
+      "naruto::duopack": entry({
+        slug: "duopack-s28",
+        setCode: "s28",
+        guaranteedPrints: [
+          {
+            name: "PR-096",
+            slug: "pr",
+            ref: null,
+            printKey: "naruto:promo-pr0096",
+          },
+        ],
+      }),
+      "naruto::booster": entry({
+        slug: "booster-s28",
+        setCode: "s28",
+      }),
+      "naruto::display": entry({
+        slug: "display-s28-fr",
+        setCode: "s28",
+      }),
+    };
+    backfillSealedProductSetLogos("naruto/carddass", products);
+    expect(products["naruto::duopack"]?.catalogueSetId).not.toBe("promo");
+    expect(products["naruto::booster"]?.catalogueSetId).not.toBe("promo");
+    expect(products["naruto::display"]?.catalogueSetId).not.toBe("promo");
+  });
+
+  it("repairs a sqlite row already polluted as catalogueSetId=promo", () => {
+    const products = {
+      "naruto::duopack": entry({
+        slug: "duopack-s28",
+        setCode: "s28",
+        catalogueSetId: "promo",
+        guaranteeSets: ["promo"],
+        guaranteedPrints: [
+          {
+            name: "PR-096",
+            slug: "pr",
+            ref: null,
+            printKey: "naruto:promo-pr0096",
+          },
+        ],
+      }),
+    };
+    backfillSealedProductSetLogos("naruto/carddass", products);
+    expect(products["naruto::duopack"]?.catalogueSetId).toBe("s28");
   });
 });

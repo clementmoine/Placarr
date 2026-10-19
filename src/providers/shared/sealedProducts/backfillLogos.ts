@@ -29,11 +29,19 @@ export function sealedGuaranteedPrintSignature(
   return keys.join("\0");
 }
 
+/** Sets catalogue qui sont des bacs promo, pas un chapitre de série. */
+function isStandalonePromoSetId(setId: string): boolean {
+  const id = setId.trim().toLowerCase();
+  return id === "promo" || id === "promos";
+}
+
 /**
  * Unique chapter set from guaranteed prints.
  *
  * In-set promos (`p3`) keep the chapter. Standalone promo groupings (`d23`,
- * `pd1`, …) stay empty — their wordmark is not the main-set logo.
+ * `pd1`, …) et printKeys `…:promo-…` restent vides — sinon un duopack S28
+ * avec PR fenêtre (`naruto:promo-pr0096`) votait `catalogueSetId=promo` et
+ * `boutiqueCodeToCatalogueSetId` propageait `s28 → promo` à tous les scellés.
  */
 export function uniqueChapterSetFromGuarantees(
   entry: SealedProductEntry,
@@ -46,6 +54,7 @@ export function uniqueChapterSetFromGuarantees(
   for (const key of keys) {
     const parsed = parsePrintKey(key);
     if (!parsed?.set) return null;
+    if (isStandalonePromoSetId(parsed.set)) return null;
     const grouping = parsed.grouping?.trim().toLowerCase();
     if (grouping && !/^p\d+$/.test(grouping)) return null;
     sets.add(parsed.set);
@@ -101,6 +110,10 @@ export function boutiqueCodeToCatalogueSetId(
     const code = entry.setCode?.trim();
     const cat = entry.catalogueSetId?.trim();
     if (!code || !cat || code === cat) continue;
+    // Jamais `s28 → promo` : une insert fenêtre ne redéfinit pas la série.
+    if (isStandalonePromoSetId(cat) && !isStandalonePromoSetId(code)) {
+      continue;
+    }
     const key = code.toLowerCase();
     const byCat = votes.get(key) ?? new Map<string, number>();
     byCat.set(cat, (byCat.get(cat) ?? 0) + 1);
@@ -286,6 +299,24 @@ export function backfillSealedProductSetLogos(
         }
       }
       if (touched) filled += 1;
+    }
+  }
+
+  /*
+    Index déjà pollué (duopack S28 + PR fenêtre → catalogueSetId=promo écrit
+    en sqlite) : si le setCode boutique est une série, on le remet.
+  */
+  for (const entry of entries) {
+    const cat = entry.catalogueSetId?.trim();
+    const code = entry.setCode?.trim();
+    if (
+      cat &&
+      code &&
+      isStandalonePromoSetId(cat) &&
+      !isStandalonePromoSetId(code)
+    ) {
+      entry.catalogueSetId = code;
+      filled += 1;
     }
   }
 
